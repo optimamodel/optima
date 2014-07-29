@@ -1,17 +1,18 @@
 <div>
-  <h1>Hacked bar</h1>
+  <h1>Hacked svg</h1>
   <style>
 
-    .chart div {
+    .chart rect {
+      fill: steelblue;
+    }
+
+    .chart text {
+      fill: white;
       font: 10px sans-serif;
-      background-color: steelblue;
-      text-align: right;
-      padding: 3px;
-      margin: 1px;
-      color: white;
+      text-anchor: end;
     }
 
   </style>
-  <div class="chart">
+  <svg class="chart"></svg>
   </div>
 </div>
