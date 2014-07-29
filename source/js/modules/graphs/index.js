@@ -1,0 +1,3 @@
+define([
+  './graphs-ctrl'
+], function () {});
