@@ -96,8 +96,3 @@ directory and run:
 Check `p.conf` and `p-compiled.conf` for Protractor settings.
 
 Checkout [Protractor docs](https://github.com/angular/protractor/blob/master/docs/) for more information.
-
-## Future Releases
-
-You can checkout planned new features on the [Trello Board](https://trello.com/b/XXevXg3l/ngseed).
-Also feel free to create feature requests on github issues.
