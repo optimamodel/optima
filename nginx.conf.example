@@ -15,7 +15,7 @@ map $subdomain $root_folder {
 # https://github.com/h5bp/server-configs-nginx
 server {
   listen 80;
-  server_name ~^(?P<subdomain>.+?)?\.?ngseed\.dev$;
+  server_name ~^(?P<subdomain>.+?)?\.?optima\.dev$;
 
   # @FIXME update this path with yours
   set $host_path "{{ABSOLUTE_PATH_TO_PROJECT_SOURCE}}";
