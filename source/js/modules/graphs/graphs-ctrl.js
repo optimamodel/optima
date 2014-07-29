@@ -1,16 +1,25 @@
-define(['./module'], function (module) {
+define([
+  './module',
+  'd3'
+], function (module, d3) {
   'use strict';
 
   module.controller('GraphsController', ['$scope', function ($scope) {
 
-    $scope.options = {
-      days: Array.apply(null, Array(30)).map(function (item, i) { return i + 1; }),
-      months: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
-      years: Array.apply(null, Array(100)).map(function (item, i) { return i + 1900; })
-    };
+    var data = [4, 8, 15, 16, 23, 42];
 
-    $scope.user = {
-      sex: 'woman'
-    };
+    var x = d3.scale.linear()
+      .domain([0, d3.max(data)])
+      .range([0, 420]);
+
+    d3.select(".chart")
+      .selectAll("div")
+      .data(data)
+      .enter().append("div")
+      .style("width", function(d) {
+        return x(d) + "px";
+      })
+      .text(function(d) { return d; });
+
   }]);
 });

@@ -11,6 +11,7 @@ define([
   ]).config(['$stateProvider', function ($stateProvider) {
     $stateProvider
       .state('graphs', {
+        url: '/graphs',
         templateUrl: 'js/modules/graphs/graphs.html' ,
         controller: 'GraphsController'
       })
