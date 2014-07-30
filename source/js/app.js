@@ -4,6 +4,7 @@
  */
 define([
   'angular',
+  'n3-line-chart',
   'ui.router',
   './config',
   './modules/graphs/index',
@@ -17,6 +18,7 @@ define([
     'app.graphs',
     'app.home',
     'app.ui',
+    'n3-line-chart',
     'ui.router'
   ]).config(['$urlRouterProvider', function ($urlRouterProvider) {
     $urlRouterProvider.otherwise('/');

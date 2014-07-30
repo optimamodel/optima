@@ -1,18 +1,30 @@
 <div>
-  <h1>Hacked svg</h1>
   <style>
-
-    .chart rect {
-      fill: steelblue;
+    .chart-container {
+      height: 300px;
+      width: 500px;
     }
-
-    .chart text {
-      fill: white;
-      font: 10px sans-serif;
-      text-anchor: end;
-    }
-
   </style>
-  <svg class="chart"></svg>
+  <h1>Charts</h1>
+
+
+  <h2>Linear series</h2>
+  <div class="chart-container">
+    <linechart data="data1" options="options1" mode=""></linechart>
+  </div>
+
+  <h2>Log series</h2>
+  <div class="chart-container">
+    <linechart data="data2" options="options2" mode=""></linechart>
+  </div>
+
+  <h2>Time series</h2>
+  <div class="chart-container">
+    <linechart data="data3" options="options3" mode=""></linechart>
+  </div>
+
+  <h2>Area series</h2>
+  <div class="chart-container">
+    <linechart data="data4" options="options4" mode=""></linechart>
   </div>
 </div>
