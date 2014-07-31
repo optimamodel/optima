@@ -14,7 +14,8 @@ define({
     'moment'        : '../vendor/moment/moment',
     'n3-line-chart' : '../vendor/n3-line-chart/dist/line-chart',
     'ngResource'    : '../vendor/angular-resource/angular-resource',
-    'ui.router'     : '../vendor/angular-ui-router/release/angular-ui-router'
+    'ui.router'     : '../vendor/angular-ui-router/release/angular-ui-router',
+    'underscore'    : '../vendor/underscore/underscore'
   },
 
   shim: {

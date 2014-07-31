@@ -1,10 +1,12 @@
 define([
-  './module'
-], function (module) {
+  './module',
+  'underscore'
+], function (module, _) {
   'use strict';
 
   module.controller('AnalysesController', ['$scope', function ($scope) {
-    $scope.data1a = [{"x":2000,"val_0":0.200,"val_1":1.3,"val_2":1.4,"val_3":2.6,"val_4":4.0},
+
+    $scope.rawdata1a = [{"x":2000,"val_0":0.200,"val_1":1.3,"val_2":1.4,"val_3":2.6,"val_4":4.0},
                      {"x":2001,"val_0":0.199,"val_1":1.28,"val_2":1.38,"val_3":2.5,"val_4":3.8},
                      {"x":2002,"val_0":0.198,"val_1":1.27,"val_2":1.37,"val_3":2.3,"val_4":3.7},
                      {"x":2003,"val_0":0.198,"val_1":1.26,"val_2":1.36,"val_3":2.2,"val_4":3.65},
@@ -25,6 +27,20 @@ define([
                      {"x":2018,"val_0":0.194,"val_1":1.219,"val_2":1.315,"val_3":1.38,"val_4":3.058},
                      {"x":2019,"val_0":0.194,"val_1":1.219,"val_2":1.315,"val_3":1.37,"val_4":2.956},
                      {"x":2020,"val_0":0.194,"val_1":1.219,"val_2":1.315,"val_3":1.36,"val_4":2.825}];
+
+
+    $scope.toStacked = function(data) {
+      var result = [];
+      _(data).each(function(elem) {
+        elem.val_4 -=elem.val_3;
+        elem.val_3 -=elem.val_2;
+        elem.val_2 -=elem.val_1;
+        result.push(elem);
+      });
+      return result;
+    };
+
+    $scope.data1a = $scope.toStacked($scope.rawdata1a);
 
     $scope.options1a = {
       stacks: [{axis: "y", series: ["series_0", "series_1", "series_2", "series_3", "series_4"]}],
