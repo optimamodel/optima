@@ -28,13 +28,16 @@ define([
                      {"x":2019,"val_0":0.194,"val_1":1.219,"val_2":1.315,"val_3":1.37,"val_4":2.956},
                      {"x":2020,"val_0":0.194,"val_1":1.219,"val_2":1.315,"val_3":1.36,"val_4":2.825}];
 
+    $scope.subFixed = function(arg1, arg2) {
+      return parseFloat((arg1-arg2).toFixed(3));
+    }
 
     $scope.toStacked = function(data) {
       var result = [];
       _(data).each(function(elem) {
-        elem.val_4 -=elem.val_3;
-        elem.val_3 -=elem.val_2;
-        elem.val_2 -=elem.val_1;
+        elem.val_4 = $scope.subFixed(elem.val_4, elem.val_3);
+        elem.val_3 = $scope.subFixed(elem.val_3, elem.val_2);
+        elem.val_2 = $scope.subFixed(elem.val_2, elem.val_1);
         result.push(elem);
       });
       return result;
@@ -51,7 +54,7 @@ define([
           color: "#01008e",
           axis: "y",
           type: "area",
-          thickness: "1px",
+          thickness: "5px",
           id: "series_0"
         },
         {
@@ -60,7 +63,7 @@ define([
           color: "#008fff",
           type: "area",
           axis: "y",
-          thickness: "1px",
+          thickness: "5px",
           id: "series_1"
         },
         {
@@ -69,7 +72,7 @@ define([
           color: "#b4b4b4",
           type: "area",
           axis: "y",
-          thickness: "1px",
+          thickness: "5px",
           id: "series_2"
         },
         {
@@ -78,7 +81,7 @@ define([
           color: "#fc6c00",
           type: "area",
           axis: "y",
-          thickness: "1px",
+          thickness: "5px",
           id: "series_3"
         },
         {
@@ -87,7 +90,7 @@ define([
           color: "#7e0001",
           type: "area",
           axis: "y",
-          thickness: "1px",
+          thickness: "5px",
           id: "series_4"
         }
       ],
