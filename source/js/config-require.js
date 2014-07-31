@@ -22,7 +22,7 @@ define({
       'deps': ['jquery'],
       'exports': 'angular'
     },
-    'n3-line-chart': ['d3', 'moment'],
+    'n3-line-chart': ['angular', 'd3', 'moment'],
     'ngResource': ['angular'],
     'ui.router' : ['angular']
   }

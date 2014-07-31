@@ -2,10 +2,9 @@
 // ========
 
 .logo {
-  $svg-height: 24px;
-  $svg-width: 77px;
   @extend .logo.__m;
-  background-image: inline-asset('project/logo/logo.svg');
+  @include image-size('project/logo/logo.png');
+  background-image: inline-asset('project/logo/logo.png');
   background-repeat: no-repeat;
   background-size: 100% auto;
   display: inline-block;
@@ -13,7 +12,6 @@
   &:after {
     content: '';
     display: block;
-    padding-top: 100% * ($svg-height / $svg-width);
   }
 
   // Modifiers
