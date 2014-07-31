@@ -63,7 +63,7 @@ define([
       series: [
         {
           y: "val_0",
-          label: "Batmaaan",
+          label: "Dataset",
           color: "#d62728",
           axis: "y",
           type: "line",
@@ -134,7 +134,7 @@ define([
       series: [
         {
           y: "val_0",
-          label: "This",
+          label: "Dataset 1",
           type: "area",
           color: "#bcbd22",
           axis: "y",
@@ -143,7 +143,7 @@ define([
         },
         {
           y: "val_1",
-          label: "Is",
+          label: "Dataset 2",
           type: "column",
           color: "#17becf",
           axis: "y",
@@ -151,7 +151,7 @@ define([
         },
         {
           y: "val_2",
-          label: "Awesome",
+          label: "Dataset 3",
           color: "#9467bd",
           axis: "y",
           type: "line",
@@ -175,7 +175,7 @@ define([
         {
           id: "id_0",
           y: "val_0",
-          label: "Foo",
+          label: "Dataset 1",
           type: "column",
           color: "#1f77b4",
           axis: "y"
@@ -183,7 +183,7 @@ define([
         {
           id: "id_1",
           y: "val_1",
-          label: "Bar",
+          label: "Dataset 2",
           type: "column",
           color: "#ff7f0e",
           axis: "y"
@@ -191,7 +191,7 @@ define([
         {
           id: "id_2",
           y: "val_2",
-          label: "Baz",
+          label: "Dataset 3",
           type: "column",
           color: "#d62728",
           axis: "y"
