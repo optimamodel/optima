@@ -7,6 +7,7 @@ define([
   'n3-line-chart',
   'ui.router',
   './config',
+  './modules/analyses/index',
   './modules/graphs/index',
   './modules/home/index',
   './modules/ui/index'
@@ -15,6 +16,7 @@ define([
 
   return angular.module('app', [
     'app.constants',
+    'app.analyses',
     'app.graphs',
     'app.home',
     'app.ui',

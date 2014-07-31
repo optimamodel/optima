@@ -1,0 +1,3 @@
+define([
+  './analyses-ctrl'
+], function () {});
