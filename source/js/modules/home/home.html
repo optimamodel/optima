@@ -1,1 +1,28 @@
-It's as easy as 2 * 2 = {{ twoTimesTwo }}
+<div class="btn-group section">
+  <button type="button" class="btn" ng-class="{ __active: step === 1 }">1. Importing or entering data</button>
+  <button type="button" class="btn" ng-class="{ __active: step === 2 }">2. Model calibration</button>
+  <button type="button" class="btn" ng-class="{ __active: step === 3 }">3. Defining analyses</button>
+  <button type="button" class="btn" ng-class="{ __active: step === 4 }">4. Viewing and saving results</button>
+</div>
+
+<div class="section">
+  <div ng-show="step === 1">
+    <p>Here user should be given an option to enter or import data that will be used at next steps.</p>
+    <button type="button" class="btn" ng-click="step = step + 1">Next step &rarr;</button>
+  </div>
+  <div ng-show="step === 2">
+    <p>Provide user with options to calibrate a model of date visualization.</p>
+    <button type="button" class="btn" ng-click="step = step - 1">&larr; Previous step</button>
+    <button type="button" class="btn" ng-click="step = step + 1">Next &rarr;</button>
+  </div>
+  <div ng-show="step === 3">
+    <p>Defining analyses.</p>
+    <button type="button" class="btn" ng-click="step = step - 1">&larr; Previous step</button>
+    <button type="button" class="btn" ng-click="step = step + 1">Next &rarr;</button>
+  </div>
+  <div ng-show="step === 4">
+    <p>Show graph and allow user to save it as an image or document (PDF?).</p>
+    <button type="button" class="btn" ng-click="step = step - 1">&larr; Previous step</button>
+    <button type="button" class="btn">Save results</button>
+  </div>
+</div>
