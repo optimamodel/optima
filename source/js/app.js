@@ -1,7 +1,3 @@
-/**
- * loads sub modules and wraps them up into the main module.
- * This should be used for top-level module definitions only.
- */
 define([
   'angular',
   'n3-line-chart',
@@ -10,6 +6,7 @@ define([
   './modules/analyses/index',
   './modules/graphs/index',
   './modules/home/index',
+  './modules/import-export/index',
   './modules/ui/index'
 ], function (angular) {
   'use strict';
@@ -19,6 +16,7 @@ define([
     'app.analyses',
     'app.graphs',
     'app.home',
+    'app.import-export',
     'app.ui',
     'n3-line-chart',
     'ui.router'
