@@ -1,4 +1,12 @@
 .chart-container {
   height: 300px;
+  margin-top: 40px;
+  position: relative;
   width: 700px;
+}
+
+.chart-buttons {
+  position: absolute;
+  right: 0;
+  top: -30px;
 }
