@@ -6,10 +6,10 @@ define(['angular', 'saveAs'], function (angular, saveAs) {
       return {
         restrict: 'A',
         link: function (scope, elem, attrs) {
-          var html = '<div class="chart-buttons">' +
-            '<button class="svg">Save as SVG</button>' +
-            '<button class="pdf">Save as PDF</button>' +
-            '<button class="png">Save as PNG</button>' +
+          var html = '<div class="chart-buttons btn-group">' +
+            '<button class="btn svg">Save as SVG</button>' +
+            '<button class="btn pdf">Save as PDF</button>' +
+            '<button class="btn png">Save as PNG</button>' +
             '<div id="svgdataurl" style="display: none"></div>' +
             '<div id="pngdataurl" style="display: none"></div>' +
             '</div>';
