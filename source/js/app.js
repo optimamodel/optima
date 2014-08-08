@@ -10,6 +10,7 @@ define([
   './modules/analyses/index',
   './modules/graphs/index',
   './modules/home/index',
+  './modules/playground/index',
   './modules/ui/index'
 ], function (angular) {
   'use strict';
@@ -19,6 +20,7 @@ define([
     'app.analyses',
     'app.graphs',
     'app.home',
+    'app.playground',
     'app.ui',
     'n3-line-chart',
     'ui.router'
