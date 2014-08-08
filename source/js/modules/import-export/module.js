@@ -1,12 +1,12 @@
 define([
   'angular',
   'ui.router',
-  '../../config'
+  '../converter/converter-service'
 ], function (angular) {
   'use strict';
 
   return angular.module('app.import-export', [
-    'app.constants',
+    'app.converter',
     'ui.router'
   ]).config(['$stateProvider', function ($stateProvider) {
     $stateProvider
