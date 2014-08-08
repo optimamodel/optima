@@ -5,15 +5,23 @@
   <p>TODO</p>
 
   <h2>Export</h2>
+  <h4>Table</h4>
+
+  <table id="mockup-table" border="1">
+    <tr>
+      <td ng-repeat="header in json[0]">{{ header }}</td>
+    </tr>
+    <tr ng-repeat="row in json[1]">
+      <td ng-repeat="cell in row track by $index">{{ cell }}</td>
+    </tr>
+  </table>
+
   <h4>JSON to CVS</h4>
-  <pre>{{ cvs }}</pre>
   <button class="btn" ng-click="cvs.download()">Download</button>
 
   <h4>JSON to XLS</h4>
-  <pre>{{ xls }}</pre>
-  <button class="btn" ng-click="xls.download()">Download</button>
+  <button class="btn" ng-click="xlsx.download()">Download</button>
 
-  <h4>JSON to XLS</h4>
-  <pre>{{ mat }}</pre>
+  <h4>JSON to MAT</h4>
   <button class="btn" ng-click="mam.download()">Download</button>
 </div>

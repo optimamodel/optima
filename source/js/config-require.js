@@ -10,6 +10,8 @@ define({
     'async'         : '../vendor/requirejs-plugins/src/async',
     'd3'            : '../vendor/d3/d3',
     'domReady'      : '../vendor/requirejs-domready/domReady',
+    'js-xlsx'       : '../vendor/js-xlsx/dist/xlsx',
+    'jszip'         : '../vendor/js-xlsx/dist/jszip',
     'jquery'        : '../vendor/jquery/dist/jquery',
     'moment'        : '../vendor/moment/moment',
     'n3-line-chart' : '../vendor/n3-line-chart/dist/line-chart',
@@ -22,6 +24,10 @@ define({
     'angular': {
       'deps': ['jquery'],
       'exports': 'angular'
+    },
+    'js-xlsx': {
+      deps: ['jszip'],
+      exports: 'XLSX'
     },
     'n3-line-chart': ['angular', 'd3', 'moment'],
     'ngResource': ['angular'],

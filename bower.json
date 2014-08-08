@@ -13,6 +13,7 @@
     "angular-resource": "=1.2.16",
     "angular-ui-router": "=0.2.10",
     "d3": "=3.4.11",
+    "js-xlsx": "latest",
     "jquery": "=2.1.1",
     "n3-line-chart": "=1.1.2",
     "normalize-css": "=3.0.1",
