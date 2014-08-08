@@ -1,12 +1,13 @@
 .chart-container {
   height: 300px;
-  margin-top: 40px;
+  padding: 40px 10px 10px;
   position: relative;
   width: 700px;
+  border: 1px dashed #999;
 }
 
 .chart-buttons {
   position: absolute;
-  right: 0;
-  top: -30px;
+  right: 10px;
+  top: 10px;
 }
