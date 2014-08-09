@@ -21,11 +21,13 @@ define([
       ]
     ];
 
-    $scope.cvs = converter.json2cvs($scope.json);
+    $scope.export2cvs = function () {
+      converter.json2cvs($scope.json).download();
+    };
 
-    $timeout(function () {
-      $scope.xlsx = converter.json2xlsx('mockup-table');
-    });
+    $scope.export2xlsx = function () {
+      converter.json2xlsx('mockup-table').download();
+    };
 
   }]);
 });
