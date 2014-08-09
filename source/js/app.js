@@ -8,6 +8,7 @@ define([
   'ui.router',
   './config',
   './modules/analyses/index',
+  './modules/common/save-graph-as-directive',
   './modules/graphs/index',
   './modules/home/index',
   './modules/playground/index',
@@ -21,6 +22,7 @@ define([
     'app.graphs',
     'app.home',
     'app.playground',
+    'app.save-graph-as',
     'app.ui',
     'n3-line-chart',
     'ui.router'
