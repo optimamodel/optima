@@ -22,7 +22,13 @@
   </div>
   <div ng-show="step === 4">
     <p>Show graph and allow user to save it as an image or document (PDF?).</p>
-    <button type="button" class="btn" ng-click="step = step - 1">&larr; Previous step</button>
-    <button type="button" class="btn">Save results</button>
+    <!-- ng-if here allows graph to have proper dimentions -->
+    <div class="chart-container section" ng-if="step === 4">
+      <linechart save-graph-as data="data" options="options" mode=""></linechart>
+    </div>
+    <div class="section">
+      <button type="button" class="btn" ng-click="step = step - 1">&larr; Previous step</button>
+      <button type="button" class="btn">Save results</button>
+    </div>
   </div>
 </div>
