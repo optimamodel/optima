@@ -3,71 +3,54 @@
     <h4>Options editor</h4>
 
     <div class="section">
-      <h5>Series</h5>
-      <div class="section grid" ng-repeat="serie in options.series">
+      <h5>Series Labels</h5>
+      <div class="section grid" ng-repeat="serie in data">
         <div class="12">
-          <div class="4">y:</div>
-          <div class="8">{{ serie.y }}</div>
-        </div>
-        <div class="12">
-          <div class="4">label:</div>
-          <div class="8"><input class="txbox" ng-model="serie.label"></div>
-        </div>
-        <div class="12">
-          <div class="4">color:</div>
-          <div class="8"><input class="txbox" ng-model="serie.color"></div>
-        </div>
-        <div class="12">
-          <div class="4">axis:</div>
-          <div class="8">{{ serie.axis }}</div>
-        </div>
-        <div class="12">
-          <div class="4">type:</div>
-          <div class="8">
-            {{select.type}}
-            <select class="txbox" ng-model="serie.type">
-              <option value="line">Line</option>
-              <option value="area">Area</option>
-              <option value="column">Column</option>
-            </select>
-          </div>
-        </div>
-        <div class="12">
-          <div class="4">thickness:</div>
-          <div class="8"><input class="txbox" ng-model="serie.thickness"></div>
-        </div>
-        <div class="12">
-          <div class="4">id:</div>
-          <div class="8">{{ serie.id }}</div>
+          <div class="4">Key {{ $index + 1 }}</div>
+          <div class="8"><input class="txbox" ng-model="serie.key"></div>
         </div>
       </div>
-    </div>
-
-    <div class="section">
-      <label>Draw legend? <input type="checkbox" ng-model="options.drawLegend"></label>
-    </div>
-
-    <div class="section">
-      <label>Draw dots? <input type="checkbox" ng-model="options.drawDots"></label>
     </div>
 
     <div class="section grid">
       <div class="12">
-        <div class="4">Tooltip mode:</div>
+        <div class="4">
+          <label for="stacked">Stacked</label>
+        </div>
         <div class="8">
-          <select class="txbox" ng-model="options.tooltip.mode">
-            <option value="none">none</option>
-            <option value="axes">Axes</option>
-            <option value="scrubber">Scrubber</option>
-          </select>
+          <input type="checkbox" id="stacked" ng-model="options.chart.stacked">
         </div>
       </div>
     </div>
 
+    <div class="section grid">
+      <div class="12">
+        <div class="4">X Label</div>
+        <div class="8">
+          <input class="txbox" ng-model="options.chart.xAxis.axisLabel">
+        </div>
+      </div>
+    </div>
+    <div class="section grid">
+      <div class="12">
+        <div class="4">Y Label</div>
+        <div class="8">
+          <input class="txbox" ng-model="options.chart.yAxis.axisLabel">
+        </div>
+      </div>
+    </div>
+    <div class="section grid">
+      <div class="12">
+        <div class="4">Height</div>
+        <div class="8">
+          <input type="number" class="txbox" ng-model="options.chart.height">
+        </div>
+      </div>
+    </div>
   </div>
   <div class="9">
     <div class="chart-container">
-      <linechart data="data" options="options" mode=""></linechart>
+      <nvd3 data="data" options="options"></nvd3>
     </div>
   </div>
 </div>

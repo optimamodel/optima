@@ -1,266 +1,240 @@
 define([
   './module',
+  'd3',
   'underscore'
-], function (module, _) {
+], function (module, d3, _) {
   'use strict';
 
   module.controller('AnalysesController', ['$scope', function ($scope) {
 
-    $scope.rawdata1a = [
-      {"x":2000,"val_0":0.200,"val_1":1.3,"val_2":1.4,"val_3":2.6,"val_4":4.0},
-      {"x":2001,"val_0":0.199,"val_1":1.28,"val_2":1.38,"val_3":2.5,"val_4":3.8},
-      {"x":2002,"val_0":0.198,"val_1":1.27,"val_2":1.37,"val_3":2.3,"val_4":3.7},
-      {"x":2003,"val_0":0.198,"val_1":1.26,"val_2":1.36,"val_3":2.2,"val_4":3.65},
-      {"x":2004,"val_0":0.198,"val_1":1.25,"val_2":1.35,"val_3":2.1,"val_4":3.6},
-      {"x":2005,"val_0":0.198,"val_1":1.245,"val_2":1.345,"val_3":2.0,"val_4":3.56},
-      {"x":2006,"val_0":0.198,"val_1":1.24,"val_2":1.34,"val_3":1.9,"val_4":3.5},
-      {"x":2007,"val_0":0.195,"val_1":1.235,"val_2":1.335,"val_3":1.8,"val_4":3.4},
-      {"x":2008,"val_0":0.195,"val_1":1.23,"val_2":1.33,"val_3":1.7,"val_4":3.33},
-      {"x":2009,"val_0":0.195,"val_1":1.228,"val_2":1.327,"val_3":1.6,"val_4":3.31},
-      {"x":2010,"val_0":0.195,"val_1":1.227,"val_2":1.326,"val_3":1.6,"val_4":3.29},
-      {"x":2011,"val_0":0.194,"val_1":1.225,"val_2":1.325,"val_3":1.5,"val_4":3.285},
-      {"x":2012,"val_0":0.194,"val_1":1.224,"val_2":1.324,"val_3":1.45,"val_4":3.284},
-      {"x":2013,"val_0":0.194,"val_1":1.219,"val_2":1.317,"val_3":1.44,"val_4":3.283},
-      {"x":2014,"val_0":0.193,"val_1":1.219,"val_2":1.317,"val_3":1.43,"val_4":3.282},
-      {"x":2015,"val_0":0.194,"val_1":1.219,"val_2":1.317,"val_3":1.42,"val_4":3.281},
-      {"x":2016,"val_0":0.194,"val_1":1.219,"val_2":1.316,"val_3":1.41,"val_4":3.279},
-      {"x":2017,"val_0":0.194,"val_1":1.219,"val_2":1.316,"val_3":1.39,"val_4":3.145},
-      {"x":2018,"val_0":0.194,"val_1":1.219,"val_2":1.315,"val_3":1.38,"val_4":3.058},
-      {"x":2019,"val_0":0.194,"val_1":1.219,"val_2":1.315,"val_3":1.37,"val_4":2.956},
-      {"x":2020,"val_0":0.194,"val_1":1.219,"val_2":1.315,"val_3":1.36,"val_4":2.825}
-    ];
-
-    $scope.subFixed = function(arg1, arg2) {
-      return parseFloat((arg1-arg2).toFixed(3));
-    };
-
-    $scope.toStacked = function(data) {
-      var result = [];
-      _(data).each(function(elem) {
-        elem.val_4 = $scope.subFixed(elem.val_4, elem.val_3);
-        elem.val_3 = $scope.subFixed(elem.val_3, elem.val_2);
-        elem.val_2 = $scope.subFixed(elem.val_2, elem.val_1);
-        result.push(elem);
-      });
-      return result;
-    };
-
-    $scope.data1a = $scope.toStacked($scope.rawdata1a);
-
     $scope.options1a = {
-      stacks: [{axis: "y", series: ["series_0", "series_1", "series_2", "series_3", "series_4"]}],
-      series: [
-        {
-          y: "val_0",
-          label: "Low-risk males",
-          color: "#01008e",
-          axis: "y",
-          type: "area",
-          thickness: "5px",
-          id: "series_0"
+      chart: {
+        type: 'stackedAreaChart',
+        height: 450,
+        margin: {
+          top: 20,
+          right: 20,
+          bottom: 60,
+          left: 40
         },
-        {
-          y: "val_1",
-          label: "Low-risk females",
-          color: "#008fff",
-          type: "area",
-          axis: "y",
-          thickness: "5px",
-          id: "series_1"
+        x: function (d) {
+          return d[0];
         },
-        {
-          y: "val_2",
-          label: "Direct female sex workers",
-          color: "#b4b4b4",
-          type: "area",
-          axis: "y",
-          thickness: "5px",
-          id: "series_2"
+        y: function (d) {
+          return d[1];
         },
-        {
-          y: "val_3",
-          label: "Men who have sex with men",
-          color: "#fc6c00",
-          type: "area",
-          axis: "y",
-          thickness: "5px",
-          id: "series_3"
+        useVoronoi: false,
+        clipEdge: true,
+        transitionDuration: 500,
+        useInteractiveGuideline: true,
+        xAxis: {
+          axisLabel: 'Year',
+          showMaxMin: false,
+          tickFormat: function (d) {
+            return d;
+          }
         },
-        {
-          y: "val_4",
-          label: "Male high-risk drug users",
-          color: "#7e0001",
-          type: "area",
-          axis: "y",
-          thickness: "5px",
-          id: "series_4"
+        yAxis: {
+          tickFormat: function (d) {
+            return d3.format(',.2f')(d);
+          }
         }
-      ],
-      axes: {x: {type: "linear", key: "x"}, y: {type: "linear"}},
-      lineMode: "cardinal",
-      tension: 0.7,
-      tooltip: {mode: "scrubber"},
-      drawLegend: true,
-      drawDots: true,
-      columnsHGap: 5
+      }
     };
+
+    $scope.data1a = [
+      {
+        "key": "Low-risk males",
+        "values": [
+          [2000, 0.200],
+          [2001, 0.199],
+          [2002, 0.198],
+          [2003, 0.198],
+          [2004, 0.198],
+          [2005, 0.198],
+          [2006, 0.198],
+          [2007, 0.195],
+          [2008, 0.195],
+          [2009, 0.195],
+          [2010, 0.195],
+          [2011, 0.194],
+          [2012, 0.194],
+          [2013, 0.194],
+          [2014, 0.193],
+          [2015, 0.194],
+          [2016, 0.194],
+          [2017, 0.194],
+          [2018, 0.194],
+          [2019, 0.194],
+          [2020, 0.194],
+        ]
+      },
+
+      {
+        "key": "Low-risk females",
+        "values": [
+          [2000, 1.300],
+          [2001, 1.28],
+          [2002, 1.27],
+          [2003, 1.26],
+          [2004, 1.25],
+          [2005, 1.245],
+          [2006, 1.24],
+          [2007, 1.235],
+          [2008, 1.23],
+          [2009, 1.228],
+          [2010, 1.227],
+          [2011, 1.225],
+          [2012, 1.224],
+          [2013, 1.219],
+          [2014, 1.219],
+          [2015, 1.219],
+          [2016, 1.219],
+          [2017, 1.219],
+          [2018, 1.219],
+          [2019, 1.219],
+          [2020, 1.219],
+        ]
+      },
+
+      {
+        "key": "Direct female sex workers",
+        "values": [
+          [2000, 1.400],
+          [2001, 1.38],
+          [2002, 1.37],
+          [2003, 1.36],
+          [2004, 1.35],
+          [2005, 1.345],
+          [2006, 1.34],
+          [2007, 1.335],
+          [2008, 1.33],
+          [2009, 1.327],
+          [2010, 1.326],
+          [2011, 1.325],
+          [2012, 1.324],
+          [2013, 1.317],
+          [2014, 1.317],
+          [2015, 1.317],
+          [2016, 1.316],
+          [2017, 1.316],
+          [2018, 1.315],
+          [2019, 1.315],
+          [2020, 1.315]
+        ]
+      },
+
+      {
+        "key": "Men who have sex with men",
+        "values": [
+          [2000, 2.600],
+          [2001, 0.199],
+          [2002, 2.3],
+          [2003, 2.2],
+          [2004, 2.1],
+          [2005, 2.0],
+          [2006, 1.9],
+          [2007, 1.8],
+          [2008, 1.7],
+          [2009, 1.6],
+          [2010, 1.6],
+          [2011, 1.5],
+          [2012, 1.45],
+          [2013, 1.44],
+          [2014, 1.43],
+          [2015, 1.42],
+          [2016, 1.41],
+          [2017, 1.39],
+          [2018, 1.38],
+          [2019, 1.37],
+          [2020, 1.36]
+        ]
+      }
+    ];
  
  /********************************** 1b **************************************/
 
-  $scope.data1b = [
-    {"x":2000,"val_0":47,"val_1":55,"val_2":43,"val_3":93,"val_4":799,"val_5":28,"val_6":680,
-      "val_7":405,"val_8":107,"val_9":1010,"val_10":1223,"val_11":49, "val_12":595,"val_13":2337},
-    {"x":2012,"val_0":27,"val_1":30,"val_2":26,"val_3":96,"val_4":464,"val_5":17,"val_6":350,
-      "val_7":237,"val_8":56,"val_9":543,"val_10":499,"val_11":17, "val_12":184,"val_13":806},
-    {"x":2017,"val_0":19,"val_1":21,"val_2":18,"val_3":80,"val_4":324,"val_5":12,"val_6":241,
-      "val_7":164,"val_8":38,"val_9":376,"val_10":327,"val_11":11, "val_12":117,"val_13":659},
-    {"x":2025,"val_0":13,"val_1":15,"val_2":13,"val_3":74,"val_4":233,"val_5":9,"val_6":173,
-      "val_7":118,"val_8":27,"val_9":269,"val_10":220,"val_11":8, "val_12":75,"val_13":480},
-    {"x":2035,"val_0":10,"val_1":11,"val_2":10,"val_3":75,"val_4":176,"val_5":7,"val_6":132,
-      "val_7":89,"val_8":20,"val_9":202,"val_10":161,"val_11":6, "val_12":54,"val_13":338}
-  ];
-
-  $scope.options1b = {
-      stacks: [{axis: "y", series: [
-        "series_0", "series_1", "series_2", "series_3", "series_4", "series_5", "series_6",
-        "series_7", "series_8", "series_9", "series_10", "series_11", "series_12", "series_13"
-      ]}],
-      series: [
-        {
-          y: "val_0",
-          label: "TRU",
-          color: "#4A7EB0",
-          axis: "y",
-          type: "column",
-          thickness: "5px",
-          id: "series_0"
+    $scope.options1b = {
+      chart: {
+        type: 'multiBarChart',
+        height: 450,
+        margin: {
+          top: 20,
+          right: 20,
+          bottom: 60,
+          left: 45
         },
-        {
-          y: "val_1",
-          label: "MIN",
-          color: "#EC7D31",
-          type: "column",
-          axis: "y",
-          thickness: "5px",
-          id: "series_1"
+        clipEdge: true,
+        transitionDuration: 500,
+        stacked: true,
+        xAxis: {
+          axisLabel: 'Year',
+          showMaxMin: false,
+          tickFormat: function (d) {
+            return d;
+          }
         },
-        {
-          y: "val_2",
-          label: "UNI",
-          color: "#FFBF00",
-          type: "column",
-          axis: "y",
-          thickness: "5px",
-          id: "series_2"
-        },
-        {
-          y: "val_3",
-          label: "MSM",
-          color: "#fc6c00",
-          type: "column",
-          axis: "y",
-          thickness: "5px",
-          id: "series_3"
-        },
-        {
-          y: "val_4",
-          label: "MIG",
-          color: "#7e0001",
-          type: "column",
-          axis: "y",
-          thickness: "5px",
-          id: "series_4"
-        },
-        {
-          y: "val_5",
-          label: "PRI",
-          color: "#4A7EB0",
-          axis: "y",
-          type: "column",
-          thickness: "5px",
-          id: "series_5"
-        },
-        {
-          y: "val_6",
-          label: "FSW",
-          color: "#EC7D31",
-          type: "column",
-          axis: "y",
-          thickness: "5px",
-          id: "series_6"
-        },
-        {
-          y: "val_7",
-          label: "MELD",
-          color: "#FFBF00",
-          type: "column",
-          axis: "y",
-          thickness: "5px",
-          id: "series_7"
-        },
-        {
-          y: "val_8",
-          label: "FELD",
-          color: "#fc6c00",
-          type: "column",
-          axis: "y",
-          thickness: "5px",
-          id: "series_8"
-        },
-        {
-          y: "val_9",
-          label: "MAD",
-          color: "#7e0001",
-          type: "column",
-          axis: "y",
-          thickness: "5px",
-          id: "series_9"
-        },
-        {
-          y: "val_10",
-          label: "FAD",
-          color: "#FFBF00",
-          type: "column",
-          axis: "y",
-          thickness: "5px",
-          id: "series_10"
-        },
-        {
-          y: "val_11",
-          label: "MYTH",
-          color: "#fc6c00",
-          type: "column",
-          axis: "y",
-          thickness: "5px",
-          id: "series_11"
-        },
-        {
-          y: "val_12",
-          label: "PYTH",
-          color: "#7e0001",
-          type: "column",
-          axis: "y",
-          thickness: "5px",
-          id: "series_12"
-        },
-        {
-          y: "val_6",
-          label: "CHLD",
-          color: "#EC7D31",
-          type: "column",
-          axis: "y",
-          thickness: "5px",
-          id: "series_13"
+        yAxis: {
+          axisLabel: 'Number of Infections',
+          axisLabelDistance: 40,
+          tickFormat: function (d) {
+            return d;
+          }
         }
-      ],
-      axes: {x: {type: "linear", key: "x"}, y: {type: "linear"}},
-      lineMode: "cardinal",
-      tension: 0.7,
-      tooltip: {mode: "scrubber"},
-      drawLegend: true,
-      drawDots: true,
-      columnsHGap: 20
+      }
     };
- 
+
+    $scope.data1b = [
+      {
+        "key": "TRU",
+        "values": [
+          {"x": 2000, "y": 47, size: 47, y0: 47, y1: 47, "series": 0},
+          {"x": 2012, "y": 27, size: 27, y0: 27, y1: 27, "series": 0},
+          {"x": 2017, "y": 19, size: 19, y0: 19, y1: 19, "series": 0},
+          {"x": 2025, "y": 13, size: 13, y0: 13, y1: 13, "series": 0},
+          {"x": 2035, "y": 10, size: 10, y0: 10, y1: 10, "series": 0}
+        ]
+      },
+      {
+        "key": "MIN",
+        "values": [
+          { "x": 2000, "y": 55, size: 55, y0: 55, y1: 55, "series": 1 },
+          { "x": 2012, "y": 30, size: 30, y0: 30, y1: 30, "series": 1 },
+          { "x": 2017, "y": 21, size: 21, y0: 21, y1: 21, "series": 1 },
+          { "x": 2025, "y": 15, size: 15, y0: 15, y1: 15, "series": 1 },
+          { "x": 2035, "y": 11, size: 11, y0: 11, y1: 11, "series": 1 }
+        ]
+      },
+      {
+        "key": "UNI",
+        "values": [
+          { "x": 2000, "y": 43, size: 43, y0: 43, y1: 43, "series": 2 },
+          { "x": 2012, "y": 26, size: 26, y0: 26, y1: 26, "series": 2 },
+          { "x": 2017, "y": 18, size: 18, y0: 18, y1: 18, "series": 2 },
+          { "x": 2025, "y": 13, size: 13, y0: 13, y1: 13, "series": 2 },
+          { "x": 2035, "y": 10, size: 10, y0: 10, y1: 10, "series": 2 }
+        ]
+      },
+      {
+        "key": "MSM",
+        "values": [
+          { "x": 2000, "y": 93, size: 93, y0: 93, y1: 93, "series": 3 },
+          { "x": 2012, "y": 96, size: 96, y0: 96, y1: 96, "series": 3 },
+          { "x": 2017, "y": 80, size: 80, y0: 80, y1: 80, "series": 3 },
+          { "x": 2025, "y": 74, size: 74, y0: 74, y1: 74, "series": 3 },
+          { "x": 2035, "y": 75, size: 75, y0: 75, y1: 75, "series": 3 }
+        ]
+      },
+      {
+        "key": "MIG",
+        "values": [
+          { "x": 2000, "y": 799, size: 799, y0: 799, y1: 799, "series": 4 },
+          { "x": 2012, "y": 464, size: 464, y0: 464, y1: 464, "series": 4 },
+          { "x": 2017, "y": 324, size: 324, y0: 324, y1: 324, "series": 4 },
+          { "x": 2025, "y": 233, size: 233, y0: 233, y1: 233, "series": 4 },
+          { "x": 2035, "y": 176, size: 176, y0: 176, y1: 176, "series": 4 },
+        ]
+      }
+    ];
   }]);
 });
