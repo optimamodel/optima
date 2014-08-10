@@ -24,7 +24,7 @@
     <p>Show graph and allow user to save it as an image or document (PDF?).</p>
     <!-- ng-if here allows graph to have proper dimentions -->
     <div class="chart-container section" ng-if="step === 4">
-      <linechart save-graph-as data="data" options="options" mode=""></linechart>
+      <nvd3 save-graph-as data="data" options="options" mode=""></nvd3>
     </div>
     <div class="section">
       <button type="button" class="btn" ng-click="step = step - 1">&larr; Previous step</button>

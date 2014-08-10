@@ -22,12 +22,9 @@ define(['angular', 'saveAs'], function (angular, saveAs) {
             .on('click', '.svg', function (e) {
               e.preventDefault();
 
-              var xml = elem.find('svg')
-                .attr({
-                  'xmlns': 'http://www.w3.org/2000/svg',
-                  'version': 1.1
-                })
-                .parent().html();
+              var xml = elem.find('svg').html();
+
+              xml = '<svg xmlns="http://www.w3.org/2000/svg" version="1.1">' + xml + '</svg>';
 
               saveAs(new Blob([xml], { type: 'image/svg' }), 'graph.svg');
             })
