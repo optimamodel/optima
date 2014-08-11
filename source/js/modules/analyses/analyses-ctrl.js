@@ -151,8 +151,8 @@ define([
         ]
       }
     ];
- 
- /********************************** 1b **************************************/
+
+    /********************************** 1b **************************************/
 
     $scope.options1b = {
       chart: {
@@ -198,46 +198,46 @@ define([
       {
         "key": "MIN",
         "values": [
-          { "x": 2000, "y": 55, size: 55, y0: 55, y1: 55, "series": 1 },
-          { "x": 2012, "y": 30, size: 30, y0: 30, y1: 30, "series": 1 },
-          { "x": 2017, "y": 21, size: 21, y0: 21, y1: 21, "series": 1 },
-          { "x": 2025, "y": 15, size: 15, y0: 15, y1: 15, "series": 1 },
-          { "x": 2035, "y": 11, size: 11, y0: 11, y1: 11, "series": 1 }
+          {"x": 2000, "y": 55, size: 55, y0: 55, y1: 55, "series": 1},
+          {"x": 2012, "y": 30, size: 30, y0: 30, y1: 30, "series": 1},
+          {"x": 2017, "y": 21, size: 21, y0: 21, y1: 21, "series": 1},
+          {"x": 2025, "y": 15, size: 15, y0: 15, y1: 15, "series": 1},
+          {"x": 2035, "y": 11, size: 11, y0: 11, y1: 11, "series": 1}
         ]
       },
       {
         "key": "UNI",
         "values": [
-          { "x": 2000, "y": 43, size: 43, y0: 43, y1: 43, "series": 2 },
-          { "x": 2012, "y": 26, size: 26, y0: 26, y1: 26, "series": 2 },
-          { "x": 2017, "y": 18, size: 18, y0: 18, y1: 18, "series": 2 },
-          { "x": 2025, "y": 13, size: 13, y0: 13, y1: 13, "series": 2 },
-          { "x": 2035, "y": 10, size: 10, y0: 10, y1: 10, "series": 2 }
+          {"x": 2000, "y": 43, size: 43, y0: 43, y1: 43, "series": 2},
+          {"x": 2012, "y": 26, size: 26, y0: 26, y1: 26, "series": 2},
+          {"x": 2017, "y": 18, size: 18, y0: 18, y1: 18, "series": 2},
+          {"x": 2025, "y": 13, size: 13, y0: 13, y1: 13, "series": 2},
+          {"x": 2035, "y": 10, size: 10, y0: 10, y1: 10, "series": 2}
         ]
       },
       {
         "key": "MSM",
         "values": [
-          { "x": 2000, "y": 93, size: 93, y0: 93, y1: 93, "series": 3 },
-          { "x": 2012, "y": 96, size: 96, y0: 96, y1: 96, "series": 3 },
-          { "x": 2017, "y": 80, size: 80, y0: 80, y1: 80, "series": 3 },
-          { "x": 2025, "y": 74, size: 74, y0: 74, y1: 74, "series": 3 },
-          { "x": 2035, "y": 75, size: 75, y0: 75, y1: 75, "series": 3 }
+          {"x": 2000, "y": 93, size: 93, y0: 93, y1: 93, "series": 3},
+          {"x": 2012, "y": 96, size: 96, y0: 96, y1: 96, "series": 3},
+          {"x": 2017, "y": 80, size: 80, y0: 80, y1: 80, "series": 3},
+          {"x": 2025, "y": 74, size: 74, y0: 74, y1: 74, "series": 3},
+          {"x": 2035, "y": 75, size: 75, y0: 75, y1: 75, "series": 3}
         ]
       },
       {
         "key": "MIG",
         "values": [
-          { "x": 2000, "y": 799, size: 799, y0: 799, y1: 799, "series": 4 },
-          { "x": 2012, "y": 464, size: 464, y0: 464, y1: 464, "series": 4 },
-          { "x": 2017, "y": 324, size: 324, y0: 324, y1: 324, "series": 4 },
-          { "x": 2025, "y": 233, size: 233, y0: 233, y1: 233, "series": 4 },
-          { "x": 2035, "y": 176, size: 176, y0: 176, y1: 176, "series": 4 }
+          {"x": 2000, "y": 799, size: 799, y0: 799, y1: 799, "series": 4},
+          {"x": 2012, "y": 464, size: 464, y0: 464, y1: 464, "series": 4},
+          {"x": 2017, "y": 324, size: 324, y0: 324, y1: 324, "series": 4},
+          {"x": 2025, "y": 233, size: 233, y0: 233, y1: 233, "series": 4},
+          {"x": 2035, "y": 176, size: 176, y0: 176, y1: 176, "series": 4}
         ]
       }
     ];
 
- /********************************** 1c **************************************/
+    /********************************** 1c **************************************/
 
     $scope.options1c = {
       chart: {
@@ -283,69 +283,69 @@ define([
       {
         "key": "MIN",
         "values": [
-          { "x": 2000, "y": 55, size: 55, y0: 55, y1: 55, "series": 1 },
-          { "x": 2012, "y": 30, size: 30, y0: 30, y1: 30, "series": 1 },
-          { "x": 2017, "y": 21, size: 21, y0: 21, y1: 21, "series": 1 },
-          { "x": 2025, "y": 15, size: 15, y0: 15, y1: 15, "series": 1 },
-          { "x": 2035, "y": 11, size: 11, y0: 11, y1: 11, "series": 1 }
+          {"x": 2000, "y": 55, size: 55, y0: 55, y1: 55, "series": 1},
+          {"x": 2012, "y": 30, size: 30, y0: 30, y1: 30, "series": 1},
+          {"x": 2017, "y": 21, size: 21, y0: 21, y1: 21, "series": 1},
+          {"x": 2025, "y": 15, size: 15, y0: 15, y1: 15, "series": 1},
+          {"x": 2035, "y": 11, size: 11, y0: 11, y1: 11, "series": 1}
         ]
       },
       {
         "key": "UNI",
         "values": [
-          { "x": 2000, "y": 43, size: 43, y0: 43, y1: 43, "series": 2 },
-          { "x": 2012, "y": 26, size: 26, y0: 26, y1: 26, "series": 2 },
-          { "x": 2017, "y": 18, size: 18, y0: 18, y1: 18, "series": 2 },
-          { "x": 2025, "y": 13, size: 13, y0: 13, y1: 13, "series": 2 },
-          { "x": 2035, "y": 10, size: 10, y0: 10, y1: 10, "series": 2 }
+          {"x": 2000, "y": 43, size: 43, y0: 43, y1: 43, "series": 2},
+          {"x": 2012, "y": 26, size: 26, y0: 26, y1: 26, "series": 2},
+          {"x": 2017, "y": 18, size: 18, y0: 18, y1: 18, "series": 2},
+          {"x": 2025, "y": 13, size: 13, y0: 13, y1: 13, "series": 2},
+          {"x": 2035, "y": 10, size: 10, y0: 10, y1: 10, "series": 2}
         ]
       },
       {
         "key": "MSM",
         "values": [
-          { "x": 2000, "y": 93, size: 93, y0: 93, y1: 93, "series": 3 },
-          { "x": 2012, "y": 96, size: 96, y0: 96, y1: 96, "series": 3 },
-          { "x": 2017, "y": 80, size: 80, y0: 80, y1: 80, "series": 3 },
-          { "x": 2025, "y": 74, size: 74, y0: 74, y1: 74, "series": 3 },
-          { "x": 2035, "y": 75, size: 75, y0: 75, y1: 75, "series": 3 }
+          {"x": 2000, "y": 93, size: 93, y0: 93, y1: 93, "series": 3},
+          {"x": 2012, "y": 96, size: 96, y0: 96, y1: 96, "series": 3},
+          {"x": 2017, "y": 80, size: 80, y0: 80, y1: 80, "series": 3},
+          {"x": 2025, "y": 74, size: 74, y0: 74, y1: 74, "series": 3},
+          {"x": 2035, "y": 75, size: 75, y0: 75, y1: 75, "series": 3}
         ]
       },
       {
         "key": "MIG",
         "values": [
-          { "x": 2000, "y": 799, size: 799, y0: 799, y1: 799, "series": 4 },
-          { "x": 2012, "y": 464, size: 464, y0: 464, y1: 464, "series": 4 },
-          { "x": 2017, "y": 324, size: 324, y0: 324, y1: 324, "series": 4 },
-          { "x": 2025, "y": 233, size: 233, y0: 233, y1: 233, "series": 4 },
-          { "x": 2035, "y": 176, size: 176, y0: 176, y1: 176, "series": 4 }
+          {"x": 2000, "y": 799, size: 799, y0: 799, y1: 799, "series": 4},
+          {"x": 2012, "y": 464, size: 464, y0: 464, y1: 464, "series": 4},
+          {"x": 2017, "y": 324, size: 324, y0: 324, y1: 324, "series": 4},
+          {"x": 2025, "y": 233, size: 233, y0: 233, y1: 233, "series": 4},
+          {"x": 2035, "y": 176, size: 176, y0: 176, y1: 176, "series": 4}
         ]
       }
     ];
 
-   /********************************** 2a **************************************/
+    /********************************** 2a **************************************/
 
-   $scope.options2a = {
-     chart: {
-       type: 'lineChart',
-       height: 450,
-       margin: {
-         top: 20,
-         right: 20,
-         bottom: 60,
-         left: 50
-       },
-       xAxis: {
-         axisLabel: 'X Axis'
-       },
-       yAxis: {
-         axisLabel: 'Y Axis',
-         tickFormat: function (d) {
-           return d3.format(',.2f')(d);
-         },
-         axisLabelDistance: 35
-       }
-     }
-   };
+    $scope.options2a = {
+      chart: {
+        type: 'lineChart',
+        height: 450,
+        margin: {
+          top: 20,
+          right: 20,
+          bottom: 60,
+          left: 50
+        },
+        xAxis: {
+          axisLabel: 'X Axis'
+        },
+        yAxis: {
+          axisLabel: 'Y Axis',
+          tickFormat: function (d) {
+            return d3.format(',.2f')(d);
+          },
+          axisLabelDistance: 35
+        }
+      }
+    };
 
     $scope.data2a = [
       {
@@ -376,5 +376,44 @@ define([
       //Line chart data should be sent as an array of series objects.
       return sin;
     }
+
+    /********************************** 2b **************************************/
+
+    $scope.options2b = {
+      "chart": {
+        type: 'discreteBarChart',
+        height: 450,
+        margin : {
+          top: 20,
+          right: 20,
+          bottom: 60,
+          left: 55
+        },
+        x: function(d){return d.label;},
+        y: function(d){return d.value;},
+        showValues: true,
+        valueFormat: function(d){
+          return d3.format(',.4f')(d);
+        },
+        transitionDuration: 500,
+        yAxis: {
+          axisLabel: 'Infections',
+          axisLabelDistance: 30
+        }
+      }
+    };
+
+    $scope.data2b = [
+      {
+        "key": "Infections averted by spending 2007-2012",
+        "values": [
+          {"label": "2007-2012", "value": 3921},
+          {"label": "2007-2017", "value": 9003},
+          {"label": "2007-2025", "value": 11302},
+          {"label": "2007-2035", "value": 12875}
+        ]
+      }
+    ];
+
   }]);
 });
