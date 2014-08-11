@@ -387,7 +387,7 @@ define([
           top: 20,
           right: 20,
           bottom: 60,
-          left: 55
+          left: 60
         },
         x: function(d){return d.label;},
         y: function(d){return d.value;},
@@ -398,7 +398,10 @@ define([
         transitionDuration: 500,
         yAxis: {
           axisLabel: 'Infections',
-          axisLabelDistance: 30
+          axisLabelDistance: 25
+        },
+        xAxis: {
+          axisLabel: 'Years'
         }
       }
     };
@@ -412,6 +415,63 @@ define([
           {"label": "2007-2025", "value": 11302},
           {"label": "2007-2035", "value": 12875}
         ]
+      }
+    ];
+
+    /********************************** 3a **************************************/
+
+    $scope.options3a = {
+      chart: {
+        type: 'pieChart',
+        height: 500,
+        x: function(d){return d.key;},
+        y: function(d){return d.y;},
+        showLabels: false,
+        transitionDuration: 500,
+        labelThreshold: 0.01,
+        legend: {
+          margin: {
+            top: 5,
+            right: 35,
+            bottom: 5,
+            left: 0
+          }
+        }
+      }
+    };
+
+    $scope.data3a = [
+      {
+        key: "Behaviour change and communication",
+        y: 4
+      },
+      {
+        key: "Female sex workers",
+        y: 6
+      },
+      {
+        key: "Men who have sex with men",
+        y: 1
+      },
+      {
+        key: "Injecting drug users",
+        y: 20
+      },
+      {
+        key: "Sexually transmitted infections",
+        y: 2
+      },
+      {
+        key: "HIV counselling and testing",
+        y: 6
+      },
+      {
+        key: "Antiretroviral therapy",
+        y: 54
+      },
+      {
+        key: "Prevention of mother-to-child transmission",
+        y: 6
       }
     ];
 
