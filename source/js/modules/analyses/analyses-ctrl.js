@@ -66,7 +66,7 @@ define([
           [2017, 0.194],
           [2018, 0.194],
           [2019, 0.194],
-          [2020, 0.194],
+          [2020, 0.194]
         ]
       },
 
@@ -93,7 +93,7 @@ define([
           [2017, 1.219],
           [2018, 1.219],
           [2019, 1.219],
-          [2020, 1.219],
+          [2020, 1.219]
         ]
       },
 
@@ -232,10 +232,11 @@ define([
           { "x": 2012, "y": 464, size: 464, y0: 464, y1: 464, "series": 4 },
           { "x": 2017, "y": 324, size: 324, y0: 324, y1: 324, "series": 4 },
           { "x": 2025, "y": 233, size: 233, y0: 233, y1: 233, "series": 4 },
-          { "x": 2035, "y": 176, size: 176, y0: 176, y1: 176, "series": 4 },
+          { "x": 2035, "y": 176, size: 176, y0: 176, y1: 176, "series": 4 }
         ]
       }
     ];
+
  /********************************** 1c **************************************/
 
     $scope.options1c = {
@@ -316,9 +317,64 @@ define([
           { "x": 2012, "y": 464, size: 464, y0: 464, y1: 464, "series": 4 },
           { "x": 2017, "y": 324, size: 324, y0: 324, y1: 324, "series": 4 },
           { "x": 2025, "y": 233, size: 233, y0: 233, y1: 233, "series": 4 },
-          { "x": 2035, "y": 176, size: 176, y0: 176, y1: 176, "series": 4 },
+          { "x": 2035, "y": 176, size: 176, y0: 176, y1: 176, "series": 4 }
         ]
       }
     ];
+
+   /********************************** 2a **************************************/
+
+   $scope.options2a = {
+     chart: {
+       type: 'lineChart',
+       height: 450,
+       margin: {
+         top: 20,
+         right: 20,
+         bottom: 60,
+         left: 50
+       },
+       xAxis: {
+         axisLabel: 'X Axis'
+       },
+       yAxis: {
+         axisLabel: 'Y Axis',
+         tickFormat: function (d) {
+           return d3.format(',.2f')(d);
+         },
+         axisLabelDistance: 35
+       }
+     }
+   };
+
+    $scope.data2a = [
+      {
+        values: sinData(200),
+        key: 'Sine Wave 1',
+        color: '#ff7f0e'
+      },
+      {
+        values: sinData(150),
+        key: 'Sine Wave 2',
+        color: '#2ca02c'
+      },
+      {
+        values: sinData(100),
+        key: 'Sine Wave 3',
+        color: '#A09CF0'
+      }
+    ];
+
+    function sinData(koeff) {
+      var sin = [];
+
+      //Data is represented as an array of {x,y} pairs.
+      for (var i = 0; i < 500; i++) {
+        sin.push({x: i, y: Math.sin(i / koeff)});
+      }
+
+      //Line chart data should be sent as an array of series objects.
+      return sin;
+    }
   }]);
 });
