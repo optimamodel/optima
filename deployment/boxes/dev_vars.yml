@@ -1,0 +1,8 @@
+---
+  version: develop
+  git_repository: git@github.com:StarterSquad/Optima.git
+  install_dir: /opt/optima
+  log_file_path: /opt/optima/server/log
+  client_root_path: build
+  install_dir_client: "{{install_dir}}/client"
+  install_dir_api: "{{install_dir}}/server"

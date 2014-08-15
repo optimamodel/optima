@@ -1,11 +1,2 @@
 *.sublime-*
 .idea
-.sass-cache
-/build
-/coverage
-/selenium
-/source/vendor
-errors.log
-nginx.conf
-node_modules
-test-results-*.xml

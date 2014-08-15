@@ -1,0 +1,18 @@
+---
+- hosts: optima
+
+  vars:
+    # prudentia_dir -> is passed in the cmd line
+    - root_dir: ..
+
+  vars_files:
+    - "{{prudentia_dir}}/vars/global.yml"
+    - ./dev_vars.yml
+
+  tasks:
+    - include: "{{prudentia_dir}}/tasks/common-setup.yml"
+
+
+    - include: "{{root_dir}}/components/common.yml"
+
+    - include: "{{root_dir}}/components/client.yml"
