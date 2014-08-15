@@ -1,7 +1,3 @@
-/**
- * loads sub modules and wraps them up into the main module.
- * This should be used for top-level module definitions only.
- */
 define([
   'angular',
   'angular-nvd3',
@@ -12,6 +8,7 @@ define([
   './modules/graphs/index',
   './modules/home/index',
   './modules/playground/index',
+  './modules/import-export/index',
   './modules/ui/index'
 ], function (angular) {
   'use strict';
@@ -21,6 +18,7 @@ define([
     'app.analyses',
     'app.graphs',
     'app.home',
+    'app.import-export',
     'app.playground',
     'app.save-graph-as',
     'app.ui',
