@@ -29,5 +29,8 @@
     "karma-script-launcher": "=0.1.0",
     "protractor": "=1.0.0-rc4",
     "underscore": "=1.6.0"
+  },
+  "scripts": {
+    "postinstall": "node_modules/bower/bin/bower install"
   }
 }
