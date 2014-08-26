@@ -20,7 +20,7 @@
 
   <link rel="stylesheet" href="assets/css/main.css?bust=v0.4.0">
 </head>
-<body>
+<body ng-controller="MainCtrl">
 
 <div class="header">
   <div class="wrap">
@@ -28,11 +28,18 @@
       <i class="header_logo logo"></i>
     </a>
     <div class="float-right">
-      <menu class="header_menu">
-        <menu-i sref="about">About</menu-i>
-        <menu-i sref="help"><i class="ic __question-mark __inset"></i> Help</menu-i>
-        <menu-i sref="nan">Ben K.</menu-i>
-      </menu>
+      <ul class="header_menu menu">
+        <li class="menu_i">
+          <a class="menu_i_inner link __black __complex" ui-sref="about">About</a>
+        </li>
+        <li class="menu_i">
+          <a class="menu_i_inner link __black __complex" ui-sref="help">
+            <i class="ic __question-mark __inset ng-scope"></i>Help</a>
+        </li>
+        <li class="menu_i">
+          <a class="menu_i_inner link __black __complex" ui-sref="nan">Ben K.</a>
+        </li>
+      </ul>
     </div>
   </div>
 </div>
@@ -40,12 +47,7 @@
 
 <div class="elastic layout">
   <div class="elastic_col __shrink layout_aside">
-    <menu class="menu">
-      <menu-i sref="graphs">Samples</menu-i>
-      <menu-i sref="analyses">Analyses</menu-i>
-      <menu-i sref="playground">Playground</menu-i>
-      <menu-i sref="import-export">Import/Export</menu-i>
-    </menu>
+    <div data-menu="asideMenuSettings" template="accordion"></div>
   </div>
   <div class="elastic_col layout_cnt">
     <div ui-view></div>

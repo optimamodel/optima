@@ -1,6 +1,7 @@
 define([
   'angular',
   'angular-nvd3',
+  'ui.bootstrap',
   'ui.router',
   './config',
   './modules/analyses/index',
@@ -23,6 +24,7 @@ define([
     'app.save-graph-as',
     'app.ui',
     'nvd3',
+    'ui.bootstrap',
     'ui.router'
   ]).config(['$urlRouterProvider', function ($urlRouterProvider) {
     $urlRouterProvider.otherwise('/');

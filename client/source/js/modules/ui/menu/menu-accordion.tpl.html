@@ -1,0 +1,39 @@
+<accordion close-others="true">
+
+  <!-- Link -->
+  <div data-ng-repeat-start="item in settings.items"
+       data-ng-if="!item.subitems"
+       ng-click="item.click($event)"
+       class="panel __menu"
+       ng-class="{'__purple': item.active, 'panel-default': !item.active, '__disabled': item.isDisabled() }"
+       secured-by-any="{{ item.permissions }}">
+    <div class="panel-heading">
+      <h4 class="panel-title">
+        <a class="link" data-ng-href="{{ item.url }}" ng-class="{'__white': item.active}">{{ item.title }}</a>
+      </h4>
+    </div>
+  </div>
+
+  <!-- Links group -->
+  <accordion-group data-ng-repeat-end=""
+       is-open="item.active"
+       data-ng-if="item.subitems"
+       class="__menu"
+       ng-class="{'__purple': item.active, 'panel-default': !item.active}"
+       secured-by-any="{{ item.permissions }}">
+    <accordion-heading secured-by-any="{{ item.permissions }}">
+      {{ item.title }}
+      <i class="pull-right glyphicon"
+         ng-class="{'glyphicon-chevron-down': item.active, 'glyphicon-chevron-right': !item.active}"></i>
+    </accordion-heading>
+
+    <div class="list-group">
+      <a data-ng-repeat="sub in item.subitems"
+         class="list-group-item"
+         ng-class="{active: sub.active}"
+         data-ng-href="{{ sub.url }}"
+         secured-by-any="{{ sub.permissions }}">{{ sub.title }}</a>
+    </div>
+  </accordion-group>
+
+</accordion>
