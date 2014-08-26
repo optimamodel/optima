@@ -22,35 +22,33 @@
 </head>
 <body>
 
-<!-- Header -->
 <div class="header">
   <div class="wrap">
-    <div class="grid">
-      <div class="3">
-        <a ui-sref="home">
-          <i class="header_logo logo"></i>
-        </a>
-      </div>
-      <div class="9">
-        <menu class="header_menu">
-          <menu-i sref="graphs">Samples</menu-i>
-          <menu-i sref="analyses">Analyses</menu-i>
-          <menu-i sref="playground">Playground</menu-i>
-          <menu-i sref="import-export">Import/Export</menu-i>
-        </menu>
-      </div>
+    <a ui-sref="home">
+      <i class="header_logo logo"></i>
+    </a>
+    <div class="float-right">
+      <menu class="header_menu">
+        <menu-i sref="about">About</menu-i>
+        <menu-i sref="help"><i class="ic __question-mark __inset"></i> Help</menu-i>
+        <menu-i sref="nan">Ben K.</menu-i>
+      </menu>
     </div>
   </div>
 </div>
 <div class="header-push"></div>
 
-<!-- Content -->
-<div class="section __head __foot wrap">
-  <div class="grid">
-    <div class="3"></div>
-    <div class="9">
-      <div ui-view></div>
-    </div>
+<div class="elastic layout">
+  <div class="elastic_col __shrink layout_aside">
+    <menu class="menu">
+      <menu-i sref="graphs">Samples</menu-i>
+      <menu-i sref="analyses">Analyses</menu-i>
+      <menu-i sref="playground">Playground</menu-i>
+      <menu-i sref="import-export">Import/Export</menu-i>
+    </menu>
+  </div>
+  <div class="elastic_col layout_cnt">
+    <div ui-view></div>
   </div>
 </div>
 

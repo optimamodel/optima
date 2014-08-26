@@ -93,7 +93,8 @@ gulp.task('js', function () {
     baseUrl: 'source/js',
     insertRequire: ['main'],
     name: 'main',
-    wrap: true
+    wrap: true,
+    optimize: 'none'
   };
   var config = _(configBuild).extend(configRequire);
 
@@ -149,10 +150,8 @@ gulp.task('protractor-ci', function () {
 gulp.task('webdriver', webdriver);
 
 // Watch
-gulp.task('watch', ['sass', 'karma'], function () {
-  gulp.watch('source/sass/**/*.scss', function () {
-    gulp.run('sass');
-  });
+gulp.task('watch', ['sass'], function () {
+  gulp.watch('source/sass/**/*.scss', ['sass']);
 
   // enable Livereload
   livereload.listen();
