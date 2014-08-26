@@ -13,8 +13,12 @@
     vertical-align: top;
   }
 
+  &.__inset {
+    margin: -2px 2px -2px -2px;
+  }
+
   @each $icon in (
-    'startersquad'
+    'question-mark'
   ) {
     $icon-path: "base/icon/#{$icon}.png";
     &.__#{$icon} {
