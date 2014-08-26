@@ -7,7 +7,7 @@
 }
 
 .header {
-  @include position(fixed, 0 0 none);
+  @include position(absolute, 0 0 none);
   border-bottom: 1px solid $borders-color;
   padding: 10px 0;
   z-index: 1000;

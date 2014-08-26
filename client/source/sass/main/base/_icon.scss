@@ -18,7 +18,10 @@
   }
 
   @each $icon in (
-    'question-mark'
+    'circle-gray',
+    'donut-blue',
+    'plus',
+    'question-mark',
   ) {
     $icon-path: "base/icon/#{$icon}.png";
     &.__#{$icon} {
