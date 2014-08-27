@@ -18,7 +18,7 @@ server {
   server_name ~^(?P<subdomain>.+?)?\.?optima\.dev$;
 
   # @FIXME update this path with yours
-  set $host_path "{{ABSOLUTE_PATH_TO_PROJECT_SOURCE}}";
+  set $host_path "{{ABSOLUTE_PATH_TO_PROJECT_SOURCE}}/client";
 
   # Path for static files
   root $host_path/$root_folder;

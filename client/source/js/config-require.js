@@ -20,6 +20,7 @@ define({
     'nvd3'          : '../vendor/nvd3/nv.d3',
     'ngResource'    : '../vendor/angular-resource/angular-resource',
     'ui.router'     : '../vendor/angular-ui-router/release/angular-ui-router',
+    'ui.bootstrap'  : '../vendor/angular-bootstrap/ui-bootstrap-tpls',
     'underscore'    : '../vendor/underscore/underscore'
   },
 
@@ -36,6 +37,7 @@ define({
     'nvd3': ['d3'],
     'ngResource': ['angular'],
     'saveAs': ['canvas2blob'],
+    'ui.bootstrap': ['angular'],
     'ui.router' : ['angular']
   }
 });

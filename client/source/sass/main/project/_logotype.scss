@@ -2,7 +2,6 @@
 // ========
 
 .logo {
-  @extend .logo.__m;
   @include image-size('project/logo/logo.png');
   background-image: inline-asset('project/logo/logo.png');
   background-repeat: no-repeat;
@@ -12,16 +11,5 @@
   &:after {
     content: '';
     display: block;
-  }
-
-  // Modifiers
-  // ---------
-
-  &.__s {
-    width: 102px;
-  }
-
-  &.__m {
-    width: 154px;
   }
 }
