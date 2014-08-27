@@ -1,1 +1,27 @@
-js/modules/project/modify.html
+<h3>Rename project:</h3>
+
+<form class="grid" name="RenameProjectForm" ng-submit="renameProject()">
+  <div class="4">
+    <div class="txbox-group">
+      <input type="text" class="txobx-group_txbox txbox" placeholder="Project name" required>
+
+      <div class="txbox-group_btn">
+        <button type="submit" class="btn" ng-disabled="RenameProjectForm.$invalid">Save changes</button>
+      </div>
+    </div>
+  </div>
+</form>
+
+<h3 class="margin-top-s">Copy project to:</h3>
+
+<form class="grid" name="RenameProjectForm" ng-submit="renameProject()">
+  <div class="4">
+    <div class="txbox-group">
+      <input type="text" class="txobx-group_txbox txbox" placeholder="Project name" required>
+
+      <div class="txbox-group_btn">
+        <button type="submit" class="btn" ng-disabled="RenameProjectForm.$invalid">Copy</button>
+      </div>
+    </div>
+  </div>
+</form>
