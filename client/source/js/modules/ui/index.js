@@ -17,30 +17,26 @@ define([
           subitems: [
             {
               title: 'Create new project',
-              id: 'createNew',
               state: {
-                name: 'graphs'
+                name: 'project.create'
               }
             },
             {
               title: 'Upload data spreadsheet',
-              id: 'createNew',
               state: {
-                name: 'graphs'
+                name: 'project.upload-data'
               }
             },
             {
               title: 'Load existing project',
-              id: 'createNew',
               state: {
-                name: 'graphs'
+                name: 'project.load'
               }
             },
             {
               title: 'Modify existing project',
-              id: 'createNew',
               state: {
-                name: 'graphs'
+                name: 'project.modify'
               }
             }
           ]
@@ -52,19 +48,19 @@ define([
             {
               title: 'View model & data',
               state: {
-                name: 'graphs'
+                name: 'model.view'
               }
             },
             {
               title: 'Automatic calibration',
               state: {
-                name: 'graphs'
+                name: 'model.automatic-calibration'
               }
             },
             {
               title: 'Manual calibration',
               state: {
-                name: 'graphs'
+                name: 'model.manual-calibration'
               }
             }
           ]
@@ -76,20 +72,22 @@ define([
             {
               title: 'Define objectives',
               state: {
-                name: 'graphs'
+                name: 'optimization.objectives'
               }
             },
             {
               title: 'Define constraints',
               state: {
-                name: 'graphs'
+                name: 'optimization.constraints'
               }
             }
           ]
         },
         {
           title: 'View/output results',
-          id: 'create-load'
+          state: {
+            name: 'results'
+          }
         }
       ]
     };
