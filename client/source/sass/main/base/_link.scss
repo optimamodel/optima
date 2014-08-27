@@ -20,20 +20,20 @@
 
   // ### Colors
 
-  &.__black,
-  &.__blue {
-
-    &:hover {
-      @include link-color($color-red);
-    }
-  }
-
   &.__black{
     @include link-color(#000);
+
+    &:hover {
+      @include link-color($color-blue);
+    }
   }
 
   &.__blue {
     @include link-color($color-blue);
+
+    &:hover {
+      @include link-color($color-red);
+    }
   }
 
   &.__white {
