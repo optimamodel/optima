@@ -1,0 +1,42 @@
+<accordion class="accordion" close-others="true">
+
+  <!-- Link -->
+  <div data-ng-repeat-start="item in settings.items"
+       data-ng-if="!item.subitems"
+       ng-click="item.click($event)"
+       class="accordion_i"
+       ng-class="{ '__active': item.active }"
+       secured-by-any="{{ item.permissions }}">
+    <div class="panel-heading">
+      <h4 class="panel-title">
+        <a class="link" data-ng-href="{{ item.url }}">
+          <i class="ic __plus"></i>
+          {{ item.title }}
+        </a>
+      </h4>
+    </div>
+  </div>
+
+  <!-- Links group -->
+  <accordion-group data-ng-repeat-end=""
+       class="accordion_i"
+       is-open="item.active"
+       data-ng-if="item.subitems"
+       ng-class="{ '__active': item.active }"
+       secured-by-any="{{ item.permissions }}">
+    <accordion-heading secured-by-any="{{ item.permissions }}">
+      <i class="ic __plus"></i>
+      {{ item.title }}
+    </accordion-heading>
+
+    <ul>
+      <li data-ng-repeat="sub in item.subitems" ng-class="{ active: sub.active }">
+        <a class="link __black __complex" data-ng-href="{{ sub.url }}">
+          <i class="ic" ng-class="{ '__circle-gray': !sub.active, '__donut-blue': sub.active }"></i>
+          {{ sub.title }}
+        </a>
+      </li>
+    </ul>
+  </accordion-group>
+
+</accordion>

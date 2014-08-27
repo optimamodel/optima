@@ -3,13 +3,13 @@
 
 .header,
 .header-push {
-  height: 96px;
+  height: 60px;
 }
 
 .header {
-  @include position(fixed, 0 0 none);
-  background: #f7f7f7;
-  padding: 24px 0;
+  @include position(absolute, 0 0 none);
+  border-bottom: 1px solid $borders-color;
+  padding: 10px 0;
   z-index: 1000;
 
   &_logo {}
