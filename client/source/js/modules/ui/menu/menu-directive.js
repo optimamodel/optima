@@ -138,7 +138,6 @@ define(['jquery', 'underscore', './module'], function ($, _, module) {
 
             $scope.$on('$stateChangeSuccess', function (event, toState) {
               $scope.checkItems(toState);
-              console.log($scope._processedItems);
             });
           }
         ]
