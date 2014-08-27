@@ -18,6 +18,10 @@
     }
   }
 
+  &.__active .panel-title > a {
+    @extend .link.__blue;
+  }
+
   .panel-collapse {
     background: #f5f5f5;
 
@@ -47,5 +51,9 @@
         }
       }
     }
+  }
+
+  .ic {
+    margin-right: 8px;
   }
 }
