@@ -7,6 +7,7 @@
 // --------
 
 @include rich-selector(h1, h2, h3, h4, h5, h6) {
+  font-weight: $semi-bold;
   line-height: 1.1;
   margin: 36px 0 12px;
 }
@@ -27,19 +28,19 @@
 }
 
 @include rich-selector(h1) {
-  font-size: 38px;
+  font-size: 18px;
 }
 
 @include rich-selector(h2) {
-  font-size: 30px;
+  font-size: 16px;
 }
 
 @include rich-selector(h3) {
-  font-size: 24px;
+  font-size: 14px;
 }
 
 @include rich-selector(h4, h5, h6) {
-  font-size: 18px;
+  font-size: 13px;
 }
 
 // Block elements
