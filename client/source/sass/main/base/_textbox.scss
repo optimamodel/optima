@@ -44,6 +44,10 @@
     display: inline;
     width: 0;
 
+    &.__m {
+      width: 60px
+    }
+
     &.__s {
       padding: 2px;
       width: 48px;

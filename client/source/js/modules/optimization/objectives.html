@@ -7,7 +7,7 @@
     <div class="elastic_col __shrink __va-middle">
       Analysis:
     </div>
-    <div class="elastic_col __va-middle btn-group" ng-init="activeTab = 1">
+    <div class="elastic_col __va-middle btn-group" ng-init="activeTab = 2">
       <button class="btn __white" ng-class="{ __active: activeTab === 1 }" ng-click="activeTab = 1">Forecast outcomes</button>
       <button class="btn __white" ng-class="{ __active: activeTab === 2 }" ng-click="activeTab = 2">Minimize outcomes</button>
       <button class="btn __white" ng-class="{ __active: activeTab === 3 }" ng-click="activeTab = 3">Minimize money</button>
@@ -30,7 +30,55 @@
 
   <!-- Tabs 2 -->
   <div ng-show="activeTab === 2">
-    Tab 2
+    <p>Which a fixed amount of money available <input class="txbox __inline __s" type="text"> what is the optimal allocation of this funding to:</p>
+
+    <div class="checkbox-block">
+      <label>
+        <input type="checkbox">
+        Minimize HIV incidence
+      </label>
+    </div>
+
+    <div class="checkbox-block">
+      <label>
+        <input type="checkbox">
+        Minimize DALY's
+      </label>
+    </div>
+
+    <div class="checkbox-block">
+      <label>
+        <input type="checkbox">
+        Minimize HIV-related deaths
+      </label>
+    </div>
+
+    <div class="checkbox-block">
+      <label>
+        <input type="checkbox" style="height: 22px;">
+        Minimize HIV-related costs over
+        <input class="txbox __inline __s">
+        years with
+        <input class="txbox __inline __s">
+        % discounting
+      </label>
+    </div>
+
+    <div class="margin-top-xxs">
+      <button class="btn">Specify funding</button>
+      &nbsp;&nbsp;
+      <input class="txbox __inline">
+      &nbsp;&nbsp;
+      new infections = <input class="txbox __inline">
+      &nbsp;&nbsp;
+      DALY's = <input class="txbox __inline">
+      &nbsp;&nbsp;
+      deaths = <input class="txbox __inline">
+    </div>
+
+    <div class="margin-top-s">
+      Show the optimal allocation of funding for a fixed budget: range <input class="txbox __inline __s"> % to <input class="txbox __inline __s"> % of current budget <input class="txbox __inline __s">
+    </div>
   </div>
 
   <!-- Tabs 3 -->
