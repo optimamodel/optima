@@ -4,6 +4,11 @@
     {
         document.getElementById("file1").click();
     }
+    function exit_optima() {
+        if (confirm("Exit Optima?")) {
+            close();
+        }
+    }
 </script>
 
 
@@ -11,14 +16,15 @@
 <div class="rich text-center">
   <h1>Welcome to Optima!</h1>
 
+    <!-- CK: this whole block will need to change or just be removed if a project is loaded -->
     <div class="well">
         <div style="color: #ffad33; font-weight: bold">No project loaded.</div>
         <br><br>
         To begin, please create or load a project:
         <br><br>
-        <button class="btn">Create project</button>
+        <button class="btn">Create new project</button>
         <input type="file" id="file1" style="display:none">
-        <button class="btn" onclick="openFileOption();return;">Load project</button>
+        <button class="btn" onclick="openFileOption();return;">Load existing project</button>
     </div>
 
     <div class="well"> <!-- CK: This should be aligned at the :'s, and the "None" text will need to be dynamic -->
@@ -33,7 +39,7 @@
         <button class="btn" ui-sref="save-project">Save project</button> <!-- CK: grey out "Save project" button if no unsaved changes; pop up a little message saying "Project saved" if save successful -->
         <input type="file" id="file2" style="display:none">
         <button class="btn" onclick="openFileOption();return;">Save project as...</button> <!-- CK: gray out if no project loaded -->
-        <button class="btn" ui-sref="close();">Exit</button> <!-- CK: make actually work :) -->
+        <button class="btn" onclick="exit_optima();return;">Exit</button> <!-- CK: make actually work :) -->
     </div>
 
 </div>
