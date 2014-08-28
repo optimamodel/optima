@@ -2,7 +2,7 @@
 // ======
 
 .btn {
-  @extend .btn.__m, .btn.__white;
+  @extend .btn.__m, .btn.__blue;
   border-radius: 3px;
   border-style: solid;
   border-width: 1px;
@@ -67,6 +67,26 @@
     &.__active,
     &.__active:hover {
       background: linear-gradient(#FEA, #fff6d5);
+    }
+  }
+
+  &.__blue {
+    background: #00aeef;
+    border-color: #00aeef;
+    color: #FFF;
+
+    &:hover:not(:disabled) {
+      background: #01a5e2;
+    }
+
+    &.__active,
+    &:active:not(:disabled) {
+      background: #01a5e2;
+    }
+
+    &.__active,
+    &.__active:hover {
+      background: #01a5e2;
     }
   }
 
