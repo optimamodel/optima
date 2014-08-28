@@ -6,7 +6,7 @@ define([
 
   return angular.module('app.converter', [])
 
-    .service('converter', [function () {
+    .service('converter', function () {
       var service = {
         json2cvs: function (input) {
           var array = typeof input != 'object' ? JSON.parse(input) : input;
@@ -182,5 +182,5 @@ define([
       }
 
       return service;
-    }]);
+    });
 });

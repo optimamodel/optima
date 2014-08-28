@@ -8,13 +8,13 @@ define([
   return angular.module('app.analyses', [
     'app.constants',
     'ui.router'
-  ]).config(['$stateProvider', function ($stateProvider) {
+  ]).config(function ($stateProvider) {
     $stateProvider
       .state('analyses', {
         url: '/analyses',
         templateUrl: 'js/modules/analyses/analyses.html' ,
         controller: 'AnalysesController'
       })
-  }]);
+  });
 
 });

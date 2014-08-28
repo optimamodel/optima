@@ -8,13 +8,13 @@ define([
   return angular.module('app.graphs', [
     'app.constants',
     'ui.router'
-  ]).config(['$stateProvider', function ($stateProvider) {
+  ]).config(function ($stateProvider) {
     $stateProvider
       .state('graphs', {
         url: '/graphs',
         templateUrl: 'js/modules/graphs/graphs.html' ,
         controller: 'GraphsController'
       })
-  }]);
+  });
 
 });
