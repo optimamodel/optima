@@ -1,21 +1,27 @@
-<h3>Rename project:</h3>
+<div class="rich">
+  <div class="section">
+    <h3>Rename project:</h3>
 
-<form class="grid" name="RenameProjectForm" ng-submit="renameProject()">
-  <div class="4">
-    <input type="text" class="txbox __block" placeholder="Project name" required>
+    <form class="grid" name="RenameProjectForm" ng-submit="renameProject()">
+      <div class="4">
+        <input type="text" class="txbox __block" placeholder="Project name" required>
+      </div>
+      <div class="8">
+        <button type="submit" class="btn" style="width: 120px" ng-disabled="RenameProjectForm.$invalid">Save changes</button>
+      </div>
+    </form>
   </div>
-  <div class="8">
-    <button type="submit" class="btn" style="width: 120px" ng-disabled="RenameProjectForm.$invalid">Save changes</button>
-  </div>
-</form>
 
-<h3 class="margin-top-s">Copy project to:</h3>
+  <div class="section">
+    <h3>Copy project to:</h3>
 
-<form class="grid" name="RenameProjectForm" ng-submit="renameProject()">
-  <div class="4">
-    <input type="text" class="txbox __block" placeholder="Project name" required>
+    <form class="grid" name="RenameProjectForm" ng-submit="renameProject()">
+      <div class="4">
+        <input type="text" class="txbox __block" placeholder="Project name" required>
+      </div>
+      <div class="8">
+        <button type="submit" class="btn" style="width: 120px" ng-disabled="RenameProjectForm.$invalid">Copy</button>
+      </div>
+    </form>
   </div>
-  <div class="8">
-    <button type="submit" class="btn" style="width: 120px" ng-disabled="RenameProjectForm.$invalid">Copy</button>
-  </div>
-</form>
+</div>
