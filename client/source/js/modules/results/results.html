@@ -1,1 +1,100 @@
-js/modules/results/results.html
+<div class="page rich">
+  <div class="page_header">
+    <div class="elastic">
+      <div class="elastic_col __shrink __va-middle">
+        <h1>View/output results</h1>
+      </div>
+      <div class="elastic_col __va-middle">
+        <div class="elastic __fluid">
+          <div class="elastic_col __shrink __va-middle">
+            Start year:
+            <select class="txbox __inline" style="width: 60px">
+              <option value="">2014</option>
+              <option value="">2013</option>
+              <option value="">1995</option>
+            </select>
+          </div>
+          <div class="elastic_col __shrink __va-middle">
+            <label>
+              End year:
+              <select class="txbox __inline" style="width: 60px">
+                <option value="">2014</option>
+                <option value="">2013</option>
+                <option value="">1995</option>
+              </select>
+            </label>
+          </div>
+          <div class="elastic_col __shrink __va-middle">
+            <label>
+              <input type="checkbox">
+              All
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page_subheader">
+    <div class="elastic">
+      <div class="elastic_col __shrink __va-middle">
+        Compate outcomes for:
+      </div>
+      <div class="elastic_col __shrink __va-middle">
+        <label>
+          <input type="checkbox" checked>
+          No spending
+        </label>
+      </div>
+      <div class="elastic_col __shrink __va-middle">
+        <label>
+          <input type="checkbox">
+          Current spending
+        </label>
+      </div>
+      <div class="elastic_col __shrink __va-middle">
+        <label>
+          <input type="checkbox" checked>
+          Optimal spending
+        </label>
+      </div>
+      <div class="elastic_col __va-middle text-right">
+        <button class="btn">Show graphs</button>
+        <button class="btn">Show tables</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="section cf">
+      <div class="6">
+        <div class="graph-preview">
+          <nvd3 data="data" options="options"></nvd3>
+        </div>
+      </div>
+      <div class="6">
+        <div class="graph-preview">
+          <nvd3 data="data" options="options"></nvd3>
+        </div>
+      </div>
+    </div>
+    <div class="section cf">
+      <div class="6">
+        <div class="graph-preview">
+          <nvd3 data="data" options="options"></nvd3>
+        </div>
+      </div>
+      <div class="6">
+        <div class="graph-preview">
+          <nvd3 data="data" options="options"></nvd3>
+        </div>
+      </div>
+    </div>
+    <div class="section cf">
+      <div class="6">
+        <div class="graph-preview">
+          <nvd3 data="data" options="options"></nvd3>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
