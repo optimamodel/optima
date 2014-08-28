@@ -42,6 +42,12 @@
 
   &.__inline {
     display: inline;
+    width: 0;
+
+    &.__s {
+      padding: 2px;
+      width: 48px;
+    }
   }
 }
 

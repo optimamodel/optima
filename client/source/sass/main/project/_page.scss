@@ -16,4 +16,14 @@
       margin: 0;
     }
   }
+  
+  hr {
+    border: 0;
+    border-bottom: 1px solid $borders-color;
+    margin: 10px 0;
+
+    &.__dashed {
+      border-bottom-style: dashed;
+    }
+  }
 }
