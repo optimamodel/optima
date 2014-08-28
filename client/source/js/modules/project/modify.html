@@ -2,13 +2,10 @@
 
 <form class="grid" name="RenameProjectForm" ng-submit="renameProject()">
   <div class="4">
-    <div class="txbox-group">
-      <input type="text" class="txobx-group_txbox txbox" placeholder="Project name" required>
-
-      <div class="txbox-group_btn">
-        <button type="submit" class="btn" ng-disabled="RenameProjectForm.$invalid">Save changes</button>
-      </div>
-    </div>
+    <input type="text" class="txbox __block" placeholder="Project name" required>
+  </div>
+  <div class="8">
+    <button type="submit" class="btn" style="width: 120px" ng-disabled="RenameProjectForm.$invalid">Save changes</button>
   </div>
 </form>
 
@@ -16,12 +13,9 @@
 
 <form class="grid" name="RenameProjectForm" ng-submit="renameProject()">
   <div class="4">
-    <div class="txbox-group">
-      <input type="text" class="txobx-group_txbox txbox" placeholder="Project name" required>
-
-      <div class="txbox-group_btn">
-        <button type="submit" class="btn" ng-disabled="RenameProjectForm.$invalid">Copy</button>
-      </div>
-    </div>
+    <input type="text" class="txbox __block" placeholder="Project name" required>
+  </div>
+  <div class="8">
+    <button type="submit" class="btn" style="width: 120px" ng-disabled="RenameProjectForm.$invalid">Copy</button>
   </div>
 </form>
