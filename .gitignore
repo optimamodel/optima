@@ -1,4 +1,6 @@
 *.sublime-*
 .idea/
+support/
+package
 *.iml
 server/p-env
