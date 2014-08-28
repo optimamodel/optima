@@ -1,11 +1,10 @@
 define([
   './module',
-  'd3',
-  'underscore'
-], function (module, d3, _) {
+  'd3'
+], function (module, d3) {
   'use strict';
 
-  module.controller('AnalysesController', ['$scope', function ($scope) {
+  module.controller('AnalysesController', function ($scope) {
 
     $scope.options1a = {
       chart: {
@@ -475,5 +474,5 @@ define([
       }
     ];
 
-  }]);
+  });
 });

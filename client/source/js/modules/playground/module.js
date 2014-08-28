@@ -8,13 +8,13 @@ define([
   return angular.module('app.playground', [
       'app.constants',
       'ui.router'
-    ]).config(['$stateProvider', function ($stateProvider) {
+    ]).config(function ($stateProvider) {
     $stateProvider
       .state('playground', {
         url: '/playground',
         templateUrl: 'js/modules/playground/playground.html',
         controller: 'PlaygroundController'
       });
-  }]);
+  });
 
 });

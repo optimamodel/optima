@@ -3,7 +3,7 @@ define([
   'jquery',
   'underscore',
   'angular-mocks',
-  'Source/js/modules/interface/menu/menu-directive'
+  'Source/modules/ui/menu/menu-directive'
 ], function (angular, $, _) {
   'use strict';
 
@@ -11,7 +11,7 @@ define([
     var scope, location, parentScope;
     var $stateSpy = jasmine.createSpyObj('$state', ['href', 'get']);
 
-    beforeEach(module('bl.interface.menu'));
+    beforeEach(module('app.ui.menu'));
 
     beforeEach(module(function ($provide) {
       $provide.value('$state', $stateSpy);
@@ -19,7 +19,7 @@ define([
     }));
 
     beforeEach(inject(function ($rootScope, $compile, $location, $httpBackend) {
-      $httpBackend.when('GET', 'js/modules/interface/menu/menu-dropdown.tpl.html').respond('<div></div>');
+      $httpBackend.when('GET', 'js/modules/ui/menu/menu-dropdown.tpl.html').respond('<div></div>');
 
       location = $location;
       $('body').append('<div id="menu" data-menu="settings"></div>');
@@ -135,11 +135,11 @@ define([
       });
 
       it('should flatten items', function () {
-        expect(scope._processedItems).toHaveLength(3);
+        expect(scope._processedItems.length).toBe(3);
       });
 
       it('should flatten items and subitems', function () {
-        expect(scope._processedItems).toHaveLength(3);
+        expect(scope._processedItems.length).toBe(3);
       });
 
       it('should create a reference to parent in subitem', function () {
@@ -154,10 +154,6 @@ define([
 
       it('should use # as url when no state set', function () {
         expect(_(scope._processedItems).findWhere({ title: 'Sub-market' }).url).toBe('#');
-      });
-
-      it('should register permissions according to state.permissions', function () {
-        expect(scope._processedItems[0].permissions).toEqual('role1,role2');
       });
 
     });

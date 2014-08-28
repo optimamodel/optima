@@ -4,7 +4,7 @@ define([
 ], function (module, _) {
   'use strict';
 
-  module.controller('ImportExportController', ['$scope', '$timeout', 'converter', function ($scope, $timeout, converter) {
+  module.controller('ImportExportController', function ($scope, $timeout, converter) {
     /**
      * Init models
      */
@@ -29,5 +29,5 @@ define([
       converter.json2xlsx('mockup-table').download();
     };
 
-  }]);
+  });
 });

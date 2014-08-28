@@ -1,9 +1,7 @@
 define(['angular', './module'], function (angular, module) {
   'use strict';
 
-  return module.controller('PlaygroundController', [
-    '$scope',
-    function ($scope) {
+  return module.controller('PlaygroundController', function ($scope) {
 
     $scope.data = [
       {
@@ -88,6 +86,6 @@ define(['angular', './module'], function (angular, module) {
       }
     };
 
-  }]);
+  });
 
 });

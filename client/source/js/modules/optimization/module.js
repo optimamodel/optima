@@ -2,7 +2,7 @@ define(['angular', 'ui.router'], function (angular) {
   'use strict';
 
   return angular.module('app.optimization', ['ui.router'])
-    .config(['$stateProvider', function ($stateProvider) {
+    .config(function ($stateProvider) {
       $stateProvider
         .state('optimization', {
           url: '/optimization',
@@ -19,6 +19,6 @@ define(['angular', 'ui.router'], function (angular) {
           templateUrl: 'js/modules/optimization/constraints.html',
           controller: 'OptimizationConstraintsController'
         });
-    }]);
+    });
 
 });

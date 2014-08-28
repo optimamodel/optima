@@ -4,7 +4,7 @@ define([
 ], function (module, d3) {
   'use strict';
 
-  module.controller('GraphsController', ['$scope', function ($scope) {
+  module.controller('GraphsController', function ($scope) {
 
     // GRAPH 1
     // =======
@@ -316,5 +316,5 @@ define([
       }
     ];
 
-  }]);
+  });
 });

@@ -38,8 +38,8 @@ define([
     'nvd3',
     'ui.bootstrap',
     'ui.router'
-  ]).config(['$urlRouterProvider', function ($urlRouterProvider) {
+  ]).config(function ($urlRouterProvider) {
     $urlRouterProvider.otherwise('/');
-  }]);
+  });
 
 });

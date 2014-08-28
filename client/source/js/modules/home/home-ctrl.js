@@ -1,10 +1,10 @@
 /**
  * Home controller definition
  */
-define(['./module', 'saveAs'], function (module, saveAs) {
+define(['./module'], function (module) {
   'use strict';
 
-  module.controller('HomeController', ['$scope', function ($scope) {
+  module.controller('HomeController', function ($scope) {
     $scope.step = 1;
 
     $scope.data = [
@@ -79,5 +79,5 @@ define(['./module', 'saveAs'], function (module, saveAs) {
       }
     };
 
-  }]);
+  });
 });

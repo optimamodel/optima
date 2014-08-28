@@ -2,7 +2,7 @@ define(['angular', 'ui.router'], function (angular) {
   'use strict';
 
   return angular.module('app.project', ['ui.router'])
-    .config(['$stateProvider', function ($stateProvider) {
+    .config(function ($stateProvider) {
       $stateProvider
         .state('project', {
           url: '/project',
@@ -29,6 +29,6 @@ define(['angular', 'ui.router'], function (angular) {
           templateUrl: 'js/modules/project/modify.html',
           controller: 'ProjectModifyController'
         });
-    }]);
+    });
 
 });
