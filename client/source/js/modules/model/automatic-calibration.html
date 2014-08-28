@@ -1,1 +1,81 @@
-js/modules/model/automatic-calibration.html
+<div class="page rich">
+  <div class="page_header">
+    <div class="elastic">
+      <div class="elastic_col __shrink __va-middle">
+        <h1>Automatic calibration</h1>
+      </div>
+      <div class="elastic_col __va-middle text-right">
+
+        <div class="elastic __fluid float-right">
+          <div class="elastic_col __shrink">
+            <label>
+              Maximum time limit:
+              <select class="txbox __inline" style="width: 120px">
+                <option value="">1 minute</option>
+                <option value="">2 minutes</option>
+                <option value="">5 minutes</option>
+              </select>
+            </label>
+          </div>
+          <div class="elastic_col __shrink">
+            <button class="btn">Start fitting</button>
+          </div>
+          <div class="elastic_col __shrink">
+            <button class="btn __white">Stop fitting</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page_subheader">
+    <div class="elastic">
+      <div class="elastic_col __shrink __va-middle">
+        <label>
+          Mismatch:
+          <select class="txbox __inline" style="width: 60px">
+            <option value="">0.01%</option>
+            <option value="">0.02%</option>
+            <option value="">0.05%</option>
+          </select>
+        </label>
+      </div>
+      <div class="elastic_col __va-middle text-right">
+        <button class="btn">Save project</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="section cf">
+      <div class="6">
+        <div class="graph-preview">
+          <nvd3 data="data" options="options"></nvd3>
+        </div>
+      </div>
+      <div class="6">
+        <div class="graph-preview">
+          <nvd3 data="data" options="options"></nvd3>
+        </div>
+      </div>
+    </div>
+    <div class="section cf">
+      <div class="6">
+        <div class="graph-preview">
+          <nvd3 data="data" options="options"></nvd3>
+        </div>
+      </div>
+      <div class="6">
+        <div class="graph-preview">
+          <nvd3 data="data" options="options"></nvd3>
+        </div>
+      </div>
+    </div>
+    <div class="section cf">
+      <div class="6">
+        <div class="graph-preview">
+          <nvd3 data="data" options="options"></nvd3>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
