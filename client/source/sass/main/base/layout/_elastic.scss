@@ -37,4 +37,8 @@
   &.__justify {
     table-layout: fixed;
   }
+
+  &.__fluid {
+    width: auto;
+  }
 }
