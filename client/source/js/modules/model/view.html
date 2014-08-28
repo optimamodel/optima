@@ -1,1 +1,53 @@
-js/modules/model/view.html
+<div class="page rich">
+  <div class="page_header">
+    <h1>Model</h1>
+  </div>
+  <div class="page_subheader">
+    <div class="elastic">
+      <div class="elastic_col __shrink __va-middle">
+        <h3 class="text-mute float-left">Actions</h3>
+      </div>
+      <div class="elastic_col __va-middle text-right">
+        <button class="btn __white">View parameters</button>
+        <button class="btn __white">View statistics</button>
+        <button class="btn">Save parameters</button>
+        <button class="btn">Save statistics</button>
+        <button class="btn __white">Plot statistics</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="section cf">
+      <div class="6">
+        <div class="graph-preview">
+          <nvd3 data="data" options="options"></nvd3>
+        </div>
+      </div>
+      <div class="6">
+        <div class="graph-preview">
+          <nvd3 data="data" options="options"></nvd3>
+        </div>
+      </div>
+    </div>
+    <div class="section cf">
+      <div class="6">
+        <div class="graph-preview">
+          <nvd3 data="data" options="options"></nvd3>
+        </div>
+      </div>
+      <div class="6">
+        <div class="graph-preview">
+          <nvd3 data="data" options="options"></nvd3>
+        </div>
+      </div>
+    </div>
+    <div class="section cf">
+      <div class="6">
+        <div class="graph-preview">
+          <nvd3 data="data" options="options"></nvd3>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
