@@ -1,27 +1,42 @@
+<!-- CK: This should be moved to a better place -->
+<script>
+    function openFileOption()
+    {
+        document.getElementById("file3").click();
+    }
+</script>
+
 <div class="rich">
-  <form name="CreateProjectForm" ng-submit="createProject()">
-    <p>
-      Enter the name of the project and the numbers of population groups and HIV programs and click "Generate data template"
-    </p>
+    <form name="CreateProjectForm" ng-submit="createProject()">
+        <p>
+            <b>Instructions</b><br>
+            1. Enter the name of the project and the numbers of population groups and HIV programs.<br>
+            2. Click “Save project &amp; generate data template”.<br>
+            3. Fill in and save the resulting spreadsheet.<br>
+            4. When complete, click “Upload data spreadsheet”.
+        </p>
 
-    <div class="section grid">
-      <div class="4">
-        <input class="txbox" type="text" placeholder="Project name" required>
-      </div>
-    </div>
+        <div class="section grid">
+            <div class="4">
+                <input class="txbox" type="text" placeholder="Project name" required>
+            </div>
+        </div>
 
-    <div class="section grid">
-      <div class="4">
-        <input class="txbox" type="number" placeholder="Number of population groups" required>
-      </div>
-    </div>
+        <div class="section grid">
+            <div class="4">
+                <input class="txbox" type="number" placeholder="Number of population groups" required>
+            </div>
+        </div>
 
-    <div class="section grid">
-      <div class="4">
-        <input class="txbox" type="number" placeholder="Number of HIV programs" required>
-      </div>
-    </div>
+        <div class="section grid">
+            <div class="4">
+                <input class="txbox" type="number" placeholder="Number of HIV programs" required>
+            </div>
+        </div>
 
-    <button type="submit" class="btn section" ng-disabled="CreateProjectForm.$invalid">Generate data template</button>
-  </form>
+        <div class="section grid">
+            <input type="file" id="file3" style="display:none">
+            <button class="btn" onclick="openFileOption();return;">Save project &amp; generate data template</button> <!-- CK: open up file dialogue, then return to home screen -->
+        </div>
+    </form>
 </div>
