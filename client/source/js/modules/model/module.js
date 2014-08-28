@@ -10,7 +10,7 @@ define(['angular', 'ui.router'], function (angular) {
           template: '<div ui-view=""></div>'
         })
         .state('model.view', {
-          url: '/create',
+          url: '/view',
           templateUrl: 'js/modules/model/view.html',
           controller: 'ModelViewController'
         })
