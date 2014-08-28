@@ -28,12 +28,12 @@
         <p><b>Overall HIV prevalence:</b> None</p>
     </div>
 
-    <!-- CK: This should be a proper footer, not part of this page -->
+    <!-- CK: This should be a proper footer, not part of this page, and the buttons should be evenly distributed across the full width of the bottom (i.e. "Save project" on the left, "Save project as..." in the center, and "Exit" on the right) -->
     <div class="well">
-        <button class="btn" ui-sref="save-project">Save project</button> <!-- CK: grey out "Save project" button if no unsaved changes -->
-        <input type="file" id="file1" style="display:none">
-        <button class="btn" onclick="openFileOption();return;">Save project as...</button>
-        <button class="btn" onclick="close();return;">Exit</button>
+        <button class="btn" ui-sref="save-project">Save project</button> <!-- CK: grey out "Save project" button if no unsaved changes; pop up a little message saying "Project saved" if save successful -->
+        <input type="file" id="file2" style="display:none">
+        <button class="btn" onclick="openFileOption();return;">Save project as...</button> <!-- CK: gray out if no project loaded -->
+        <button class="btn" ui-sref="close();">Exit</button> <!-- CK: make actually work :) -->
     </div>
 
 </div>
