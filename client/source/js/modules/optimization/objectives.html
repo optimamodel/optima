@@ -1,1 +1,42 @@
-js/modules/optimization/objectives.html
+<div class="page">
+  <h3>Define objectives</h3>
+
+  <hr/>
+
+  <div class="elastic">
+    <div class="elastic_col __shrink __va-middle">
+      Analysis:
+    </div>
+    <div class="elastic_col __va-middle btn-group" ng-init="activeTab = 1">
+      <button class="btn __white" ng-class="{ __active: activeTab === 1 }" ng-click="activeTab = 1">Forecast outcomes</button>
+      <button class="btn __white" ng-class="{ __active: activeTab === 2 }" ng-click="activeTab = 2">Minimize outcomes</button>
+      <button class="btn __white" ng-class="{ __active: activeTab === 3 }" ng-click="activeTab = 3">Minimize money</button>
+    </div>
+  </div>
+
+  <hr class="__dashed"/>
+
+  <!-- Tabs 1 -->
+  <div ng-show="activeTab === 1">
+    <p>What are the incidence, prevalence, deaths, and DALY's according to:</p>
+
+    <button class="btn __white">No other non-constrained spending</button>
+    <button class="btn __white __active">User-specified funding</button>
+
+    <p>
+      Funding bby year over the program period <input class="txbox __inline __s" type="text"> and pre-determined allocation <button class="btn">Specify funding</button>
+    </p>
+  </div>
+
+  <!-- Tabs 2 -->
+  <div ng-show="activeTab === 2">
+    Tab 2
+  </div>
+
+  <!-- Tabs 3 -->
+  <div ng-show="activeTab === 3">
+    Tab 3
+  </div>
+
+  <hr class="__dashed"/>
+</div>
