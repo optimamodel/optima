@@ -1,1 +1,25 @@
-js/modules/project/create.html
+<form name="CreateProjectForm" ng-submit="createProject()">
+  <p>
+    Enter the name of the project and the numbers of population groups and HIV programs and click "Generate data template"
+  </p>
+
+  <div class="section grid">
+    <div class="4">
+      <input class="txbox" type="text" placeholder="Project name" required>
+    </div>
+  </div>
+
+  <div class="section grid">
+    <div class="4">
+      <input class="txbox" type="number" placeholder="Number of population groups" required>
+    </div>
+  </div>
+
+  <div class="section grid">
+    <div class="4">
+      <input class="txbox" type="number" placeholder="Number of HIV programs" required>
+    </div>
+  </div>
+
+  <button type="submit" class="btn section" ng-disabled="CreateProjectForm.$invalid">Generate data template</button>
+</form>
