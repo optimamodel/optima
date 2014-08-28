@@ -24,25 +24,29 @@
 <body ng-controller="MainCtrl">
 
 <div class="header">
-  <div class="wrap">
-    <a ui-sref="home">
-      <i class="header_logo logo"></i>
-    </a>
-    <div class="float-right">
-      <ul class="header_menu menu">
-        <li class="menu_i">
-          <a class="menu_i_inner link __black __complex" ui-sref="about">About</a>
-        </li>
-        <li class="menu_i">
-          <a class="menu_i_inner link __black __complex" ui-sref="help">
-            <i class="ic __question-mark __inset ng-scope"></i>Help</a>
-        </li>
-        <li class="menu_i">
-          <a class="menu_i_inner link __black __complex" ui-sref="nan">Ben K.</a>
-        </li>
-      </ul>
+    <div class="wrap">
+        <div class="float-left">
+            <ul class="header_menu menu">
+                <li class="menu_i">
+                    <button class="btn" ui-sref="about">About</button>
+                </li>
+            </ul>
+        </div>
+        <div class="float-left"> <!-- CK: the logo should be centered -->
+            <ul class="header_menu menu">
+                <a ui-sref="home">
+                    <i class="header_logo logo"></i>
+                </a>
+                </ul>
+            </div>
+        <div class="float-right"> <!-- CK: This floats off the right edge of the screen for me -->
+            <ul class="header_menu menu">
+                <li class="menu_i">
+                    <button class="btn" ui-sref="help">Help</button>
+                </li>
+            </ul>
+        </div>
     </div>
-  </div>
 </div>
 <div class="header-push"></div>
 

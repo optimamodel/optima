@@ -1,10 +1,39 @@
+<!-- CK: This should be moved to a better place -->
+<script>
+    function openFileOption()
+    {
+        document.getElementById("file1").click();
+    }
+</script>
+
+
+
 <div class="rich text-center">
-  <h1>Welcome to Optima</h1>
+  <h1>Welcome to Optima!</h1>
 
-  <p>Professional tools for creation and observing medical data. See how it works.</p>
+    <div class="well">
+        <div style="color: #ffad33; font-weight: bold">No project loaded.</div>
+        <br><br>
+        To begin, please create or load a project:
+        <br><br>
+        <button class="btn">Create project</button>
+        <input type="file" id="file1" style="display:none">
+        <button class="btn" onclick="openFileOption();return;">Load project</button>
+    </div>
 
-  <div class="well">
-    To start with Optima you need to import data
-    <button class="btn">Import data &rarr;</button>
-  </div>
+    <div class="well"> <!-- CK: This should be aligned at the :'s, and the "None" text will need to be dynamic -->
+        <p><b>Current project:</b> None</p>
+        <p><b>Time period:</b> None</p>
+        <p><b>Total population:</b> None</p>
+        <p><b>Overall HIV prevalence:</b> None</p>
+    </div>
+
+    <!-- CK: This should be a proper footer, not part of this page -->
+    <div class="well">
+        <button class="btn" ui-sref="save-project">Save project</button> <!-- CK: grey out "Save project" button if no unsaved changes -->
+        <input type="file" id="file1" style="display:none">
+        <button class="btn" onclick="openFileOption();return;">Save project as...</button>
+        <button class="btn" onclick="close();return;">Exit</button>
+    </div>
+
 </div>
