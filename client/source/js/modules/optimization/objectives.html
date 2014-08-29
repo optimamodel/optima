@@ -1,5 +1,15 @@
 <div class="page">
-  <h3>Define objectives</h3>
+  <div class="cf">
+    <h3 class="float-left">Define objectives</h3>
+    <div class="float-left margin-left-s">
+      Base year against which indicators are compared: <input class="txbox __inline __s" value="2013">
+      &nbsp;&nbsp;
+      End year when objectives are to be achieved: <input class="txbox __inline __s" value="2014">
+      <div class="margin-top-xxs">
+        What are the fiscal liabilities over <input class="txbox __inline __s" value="2014"> years with <input class="txbox __inline __s" value="0.02"> % discounting.
+      </div>
+    </div>
+  </div>
 
   <hr/>
 
@@ -7,7 +17,7 @@
     <div class="elastic_col __shrink __va-middle">
       Analysis:
     </div>
-    <div class="elastic_col __va-middle btn-group" ng-init="activeTab = 3">
+    <div class="elastic_col __va-middle btn-group" ng-init="activeTab = 1">
       <button class="btn __white" ng-class="{ __active: activeTab === 1 }" ng-click="activeTab = 1">Forecast outcomes</button>
       <button class="btn __white" ng-class="{ __active: activeTab === 2 }" ng-click="activeTab = 2">Minimize outcomes</button>
       <button class="btn __white" ng-class="{ __active: activeTab === 3 }" ng-click="activeTab = 3">Minimize money</button>
