@@ -1,182 +1,63 @@
-<div class="page">
-  <h3>Define constrains</h3>
-
-  <hr/>
-
-  <div class="elastic">
-    <div class="elastic_col __shrink __va-middle">
-      Treatment egilibility:
-    </div>
-    <div class="elastic_col __va-middle">
-      <button class="btn __white">All people leaving with HIV</button>
-      <button class="btn __white">All people leaving with HIV with CD4 count < 500</button>
-      <button class="btn __white">All people leaving with HIV with CD4 count < 350</button>
-      <button class="btn __white __active">All people diagnosed with HIV</button>
-      <button class="btn __white">All people diagnosed with HIV with CD4 count < 500</button>
-      <button class="btn __white">All people diagnosed with HIV with CD4 count < 350</button>
-    </div>
-  </div>
-
-  <hr/>
-
-  <div class="checkbox-block">
-    <label>
-      <input type="checkbox">
-      No one who starts ART is to stop receiving ART
-    </label>
-  </div>
-
-  <div class="checkbox-block">
-    <label>
-      <input type="checkbox" ng-model="showLevels">
-      Funding for programs are not to decrease from current levels by more than<span ng-show="showLevels">:</span>
-    </label>
-  </div>
-
-  <div style="margin-left: 15px;" ng-show="showLevels">
-
-    <div class="checkbox-block">
-      <label>
-        <input type="checkbox" style="height: 22px;">
-        <input class="txbox __inline __s" type="number">
-        % per year for ART
-      </label>
+<div class="page rich">
+    <div class="page_subheader">
+        <div class="elastic_col __va-middle text-right">
+            <div class="elastic __fluid float-right">
+                <div class="elastic_col __shrink">
+                    <label>
+                        Maximum time limit:
+                        <select class="txbox __inline" style="width: 120px">
+                            <option value="">1 minute</option>
+                            <option value="">5 minutes</option>
+                            <option value="">10 minutes</option>
+                            <option value="">30 minutes</option>
+                            <option value="">1 hour</option>
+                            <option value="">No limit</option>
+                        </select>
+                    </label>
+                </div>
+                <div class="elastic_col __shrink">
+                    <button class="btn">Start fitting</button>
+                </div>
+                <div class="elastic_col __shrink">
+                    <button class="btn">Stop fitting</button>
+                </div>
+                <div class="elastic_col __shrink">
+                    <button class="btn">Save</button>
+                </div>
+                <div class="elastic_col __shrink">
+                    <button class="btn">Revert</button>
+                </div>
+                <div class="elastic_col __shrink float-right">
+                    Current indicator: 23,283 infections <!-- CK: needs to be dynamic -->
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div class="checkbox-block">
-      <label>
-        <input type="checkbox" style="height: 22px;">
-        <input class="txbox __inline __s" type="number">
-        % per year for PMTCT
-      </label>
+    <div class="well">
+
+        <div class="grid">
+            <div class="section cf">
+                <div class="6">
+                    <h2>Original allocation</h2>
+                    <div class="chart-container">
+                        <nvd3 data="piedata" options="pieoptions"></nvd3>
+                    </div>
+                </div>
+                <div class="6">
+                    <h2>Current allocation</h2>
+                    <div class="chart-container">
+                        <nvd3 data="piedata" options="pieoptions"></nvd3>
+                    </div>
+                </div>
+                <div class="6">
+                    <h2>Indicator</h2>
+                    <div class="chart-container">
+                        <nvd3 data="linescatterdata" options="linescatteroptions"></nvd3>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-
-    <div class="checkbox-block">
-      <label>
-        <input type="checkbox" style="height: 22px;">
-        <input class="txbox __inline __s" type="number">
-        % per year for medical male circumcision
-      </label>
-    </div>
-
-    <div class="checkbox-block">
-      <label>
-        <input type="checkbox" style="height: 22px;">
-        <input class="txbox __inline __s" type="number">
-        % per year for prevention programs for sex workers
-      </label>
-    </div>
-
-    <div class="checkbox-block">
-      <label>
-        <input type="checkbox" style="height: 22px;">
-        <input class="txbox __inline __s" type="number">
-        % per year for OST
-      </label>
-    </div>
-
-    <div class="checkbox-block">
-      <label>
-        <input type="checkbox" style="height: 22px;">
-        <input class="txbox __inline __s" type="number">
-        % per year for prevention programs for MSM
-      </label>
-    </div>
-
-    <div class="checkbox-block">
-      <label>
-        <input type="checkbox" style="height: 22px;">
-        <input class="txbox __inline __s" type="number">
-        % per year for harm reduction programs for PWID
-      </label>
-    </div>
-
-  </div>
-
-  <hr class="__dashed"/>
-
-  <h4>Advanced settings:</h4>
-
-  <div class="checkbox-block">
-    <label>
-      <input type="checkbox" style="height: 22px;">
-      ART must reach at least
-      <input class="txbox __inline __s" type="number">
-      % of tratment-eligible PLHIV by year
-      <input class="txbox __inline __s" type="number">
-    </label>
-  </div>
-
-  <div class="checkbox-block">
-    <label>
-      <input type="checkbox" style="height: 22px;">
-      PMTCT must reach at least
-      <input class="txbox __inline __s" type="number">
-      % by year
-      <input class="txbox __inline __s" type="number">
-    </label>
-  </div>
-
-  <div class="checkbox-block">
-    <label>
-      <input type="checkbox" style="height: 22px;">
-      Medical male circumcision must reach at least
-      <input class="txbox __inline __s" type="number">
-      % by year
-      <input class="txbox __inline __s" type="number">
-    </label>
-  </div>
-
-  <div class="checkbox-block">
-    <label>
-      <input type="checkbox" style="height: 22px;">
-      Prevention programs for sex workers must reach at least
-      <input class="txbox __inline __s" type="number">
-      % by year
-      <input class="txbox __inline __s" type="number">
-    </label>
-  </div>
-
-  <hr class="__dashed"/>
-
-  <div class="checkbox-block">
-    <label>
-      <input type="checkbox" style="height: 22px;">
-      OST among PWID must reach at least
-      <input class="txbox __inline __s" type="number">
-      % by year
-      <input class="txbox __inline __s" type="number">
-    </label>
-  </div>
-
-  <div class="checkbox-block">
-    <label>
-      <input type="checkbox" style="height: 22px;">
-      Prevention programs for MSM must reach at least
-      <input class="txbox __inline __s" type="number">
-      % by year
-      <input class="txbox __inline __s" type="number">
-    </label>
-  </div>
-
-  <div class="checkbox-block">
-    <label>
-      <input type="checkbox" style="height: 22px;">
-      Harm reduction programs for PWID must reach at least
-      <input class="txbox __inline __s" type="number">
-      % by year
-      <input class="txbox __inline __s" type="number">
-    </label>
-  </div>
-
-  <div class="checkbox-block">
-    <label>
-      <input type="checkbox" style="height: 22px;">
-      At least __% of the population of PLHIV are to be diagnosed by
-      <input class="txbox __inline __s" type="number">
-      % by year
-      <input class="txbox __inline __s" type="number">
-    </label>
-  </div>
 
 </div>
