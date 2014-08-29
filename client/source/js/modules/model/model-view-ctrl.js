@@ -3,14 +3,14 @@ define(['./module'], function (module) {
 
     module.controller('ModelViewController', function ($scope) {
 
-        $scope.scatteroptions = {
+        $scope.scatteroptions = { /* CK: need axis labels to align better, and need right number! */
             chart: {
                 type: 'scatterChart',
                 height: 450,
                 margin: {
                     top: 20,
                     right: 20,
-                    bottom: 60,
+                    bottom: 100,
                     left: 40
                 },
                 x: function (d) {
@@ -19,14 +19,16 @@ define(['./module'], function (module) {
                 y: function (d) {
                     return d[1];
                 },
+                sizeRange: [100,100],
                 clipEdge: true,
                 transitionDuration: 500,
                 useInteractiveGuideline: true,
                 xAxis: {
                     showMaxMin: false,
                     ticks: 9,
-                    tickFormat: function (d, i) {
-                        return ['Parameter 1', 'Parameter 2', 'Parameter 3', 'Parameter 4', 'Parameter 5', 'Parameter 6', 'Parameter 7', 'Parameter 8', 'Parameter 9'][d];
+                    rotateLabels: -90,
+                    tickFormat: function (d) {
+                        return ['Parameter 0', 'Parameter 1', 'Parameter 2', 'Parameter 3', 'Parameter 4', 'Parameter 5', 'Parameter 6', 'Parameter 7', 'Parameter 8', 'Parameter 9'][d];
                     }
                 },
                 yAxis: {
