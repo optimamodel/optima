@@ -1,61 +1,151 @@
 define(['./module'], function (module) {
-  'use strict';
+    'use strict';
 
-  module.controller('ModelViewController', function ($scope) {
+    module.controller('ModelViewController', function ($scope) {
 
-    $scope.options = {
-      chart: {
-        type: 'lineChart',
-        height: 150,
-        margin: {
-          top: 20,
-          right: 20,
-          bottom: 60,
-          left: 50
-        },
-        xAxis: {
-          axisLabel: 'X Axis'
-        },
-        yAxis: {
-          axisLabel: 'Y Axis',
-          tickFormat: function (d) {
-            return d3.format(',.2f')(d);
-          },
-          axisLabelDistance: 35
-        }
-      }
-    };
+        $scope.scatteroptions = {
+            chart: {
+                type: 'stackedAreaChart',
+                height: 450,
+                margin: {
+                    top: 20,
+                    right: 20,
+                    bottom: 60,
+                    left: 40
+                },
+                x: function (d) {
+                    return d[0];
+                },
+                y: function (d) {
+                    return d[1];
+                },
+                useVoronoi: false,
+                clipEdge: true,
+                transitionDuration: 500,
+                useInteractiveGuideline: true,
+                xAxis: {
+                    axisLabel: 'Year',
+                    showMaxMin: false,
+                    tickFormat: function (d) {
+                        return d;
+                    }
+                },
+                yAxis: {
+                    tickFormat: function (d) {
+                        return d3.format(',.2f')(d);
+                    }
+                }
+            }
+        };
 
-    $scope.data = [
-      {
-        values: sinData(200),
-        key: 'Sine Wave 1',
-        color: '#ff7f0e'
-      },
-      {
-        values: sinData(150),
-        key: 'Sine Wave 2',
-        color: '#2ca02c'
-      },
-      {
-        values: sinData(100),
-        key: 'Sine Wave 3',
-        color: '#A09CF0'
-      }
-    ];
+        $scope.scatterdata = [
+            {
+                "key": "Low-risk males",
+                "values": [
+                    [2000, 0.200],
+                    [2001, 0.199],
+                    [2002, 0.198],
+                    [2003, 0.198],
+                    [2004, 0.198],
+                    [2005, 0.198],
+                    [2006, 0.198],
+                    [2007, 0.195],
+                    [2008, 0.195],
+                    [2009, 0.195],
+                    [2010, 0.195],
+                    [2011, 0.194],
+                    [2012, 0.194],
+                    [2013, 0.194],
+                    [2014, 0.193],
+                    [2015, 0.194],
+                    [2016, 0.194],
+                    [2017, 0.194],
+                    [2018, 0.194],
+                    [2019, 0.194],
+                    [2020, 0.194]
+                ]
+            },
 
-    function sinData(koeff) {
-      var sin = [];
+            {
+                "key": "Low-risk females",
+                "values": [
+                    [2000, 1.300],
+                    [2001, 1.28],
+                    [2002, 1.27],
+                    [2003, 1.26],
+                    [2004, 1.25],
+                    [2005, 1.245],
+                    [2006, 1.24],
+                    [2007, 1.235],
+                    [2008, 1.23],
+                    [2009, 1.228],
+                    [2010, 1.227],
+                    [2011, 1.225],
+                    [2012, 1.224],
+                    [2013, 1.219],
+                    [2014, 1.219],
+                    [2015, 1.219],
+                    [2016, 1.219],
+                    [2017, 1.219],
+                    [2018, 1.219],
+                    [2019, 1.219],
+                    [2020, 1.219]
+                ]
+            },
 
-      //Data is represented as an array of {x,y} pairs.
-      for (var i = 0; i < 500; i++) {
-        sin.push({x: i, y: Math.sin(i / koeff)});
-      }
+            {
+                "key": "Direct female sex workers",
+                "values": [
+                    [2000, 1.400],
+                    [2001, 1.38],
+                    [2002, 1.37],
+                    [2003, 1.36],
+                    [2004, 1.35],
+                    [2005, 1.345],
+                    [2006, 1.34],
+                    [2007, 1.335],
+                    [2008, 1.33],
+                    [2009, 1.327],
+                    [2010, 1.326],
+                    [2011, 1.325],
+                    [2012, 1.324],
+                    [2013, 1.317],
+                    [2014, 1.317],
+                    [2015, 1.317],
+                    [2016, 1.316],
+                    [2017, 1.316],
+                    [2018, 1.315],
+                    [2019, 1.315],
+                    [2020, 1.315]
+                ]
+            },
 
-      //Line chart data should be sent as an array of series objects.
-      return sin;
-    }
-
-  });
-
+            {
+                "key": "Men who have sex with men",
+                "values": [
+                    [2000, 2.600],
+                    [2001, 0.199],
+                    [2002, 2.3],
+                    [2003, 2.2],
+                    [2004, 2.1],
+                    [2005, 2.0],
+                    [2006, 1.9],
+                    [2007, 1.8],
+                    [2008, 1.7],
+                    [2009, 1.6],
+                    [2010, 1.6],
+                    [2011, 1.5],
+                    [2012, 1.45],
+                    [2013, 1.44],
+                    [2014, 1.43],
+                    [2015, 1.42],
+                    [2016, 1.41],
+                    [2017, 1.39],
+                    [2018, 1.38],
+                    [2019, 1.37],
+                    [2020, 1.36]
+                ]
+            }
+        ];
+    });
 });
