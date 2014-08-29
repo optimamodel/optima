@@ -1,8 +1,23 @@
 <!-- CK: This should be moved to a better place -->
 <script>
-    function openFileOption()
+    function openFileOption1()
     {
-        document.getElementById("file239483743").click();
+        document.getElementById("file01").click();
+    }
+
+    function openFileOption2()
+    {
+        document.getElementById("file02").click();
+    }
+
+    function openFileOption3()
+    {
+        document.getElementById("file03").click();
+    }
+
+    function openFileOption4()
+    {
+        document.getElementById("file04").click();
     }
 </script>
 
@@ -10,23 +25,50 @@
     <div class="page_subheader">
         <div class="elastic">
             <div class="elastic_col __va-middle text-center">
-                <button class="btn">Save all as PNG</button>
-                <button class="btn">Save all as SVG</button>
+                <input type="file" id="file01" style="display:none">
+                <button class="btn" onclick="openFileOption1();return;">Save all as PNG</button>
+                <button class="btn" onclick="openFileOption1();return;">Save all as SVG</button>
             </div>
         </div>
     </div>
 
 
     <div class="well">
-        <h2>Constants</h2>
+        <h1>Constants</h1>
         <div class="float-right">
-            <input type="file" id="file239483743" style="display:none">
-            <button class="btn" onclick="openFileOption();return;">Export to SVG</button>
-            <button class="btn" onclick="openFileOption();return;">Export to PNG</button>
-            <button class="btn" onclick="openFileOption();return;">Export to XLSX</button>
+            <input type="file" id="file02" style="display:none">
+            <button class="btn" onclick="openFileOption2();return;">Export to SVG</button>
+            <button class="btn" onclick="openFileOption2();return;">Export to PNG</button>
+            <button class="btn" onclick="openFileOption2();return;">Export to XLSX</button>
         </div>
         <div class="chart-container">
             <nvd3 data="scatterdata" options="scatteroptions"></nvd3>
+        </div>
+    </div>
+
+    <div class="well">
+        <h1>Behavioral parameters</h1>
+        <div class="float-right">
+            <input type="file" id="file03" style="display:none">
+            <button class="btn" onclick="openFileOption3();return;">Export to SVG</button>
+            <button class="btn" onclick="openFileOption3();return;">Export to PNG</button>
+            <button class="btn" onclick="openFileOption3();return;">Export to XLSX</button>
+        </div>
+        <div class="chart-container">
+            <nvd3 data="scatterdata" options="scatteroptions"></nvd3>
+        </div>
+    </div>
+
+    <div class="well">
+        <h1>Cost-coverage-outcome curves</h1>
+        <div class="float-right">
+            <input type="file" id="file04" style="display:none">
+            <button class="btn" onclick="openFileOption4();return;">Export to SVG</button>
+            <button class="btn" onclick="openFileOption4();return;">Export to PNG</button>
+            <button class="btn" onclick="openFileOption4();return;">Export to XLSX</button>
+        </div>
+        <div class="chart-container">
+            <nvd3 data="linedata" options="lineoptions"></nvd3>
         </div>
     </div>
 

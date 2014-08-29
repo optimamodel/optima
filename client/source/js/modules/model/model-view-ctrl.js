@@ -71,5 +71,42 @@ define(['./module'], function (module) {
             }
 
         ];
+
+
+        $scope.lineoptions = {
+            chart: {
+                type: 'lineChart',
+                height: 450,
+                margin: {
+                    top: 20,
+                    right: 20,
+                    bottom: 60,
+                    left: 50
+                },
+                xAxis: {
+                    axisLabel: 'Cost (US$ million)'
+                },
+                yAxis: {
+                    axisLabel: 'Outcome',
+                    tickFormat: function (d) {
+                        return d3.format(',.2f')(d);
+                    },
+                    axisLabelDistance: 35
+                }
+            }
+        };
+
+        $scope.linedata = [
+            {
+                values: sinData(50),
+                key: 'Model',
+                color: '#ff7f0e'
+            },
+            {
+                values: sinData(40),
+                key: 'Data',
+                color: '#A09CF0'
+            }
+        ];
     });
 });
