@@ -1,29 +1,33 @@
-<div class="page rich">
-  <div class="page_header">
-    <div class="elastic">
-      <div class="elastic_col __shrink __va-middle">
-        <h1>Model</h1>
-      </div>
-      <div class="elastic_col __va-middle text-right">
-        <button class="btn">Save all as PNG</button>
-        <button class="btn">Save all as SVG</button>
-      </div>
-    </div>
-  </div>
-  <div class="page_subheader">
-    <div class="elastic">
-      <div class="elastic_col __shrink __va-middle">
-        <h3 class="text-mute">Actions</h3>
-      </div>
-      <div class="elastic_col __va-middle text-right">
-        <button class="btn __white">View parameters</button>
-        <button class="btn __white">View statistics</button>
-        <button class="btn">Save parameters</button>
-        <button class="btn">Save statistics</button>
-        <button class="btn __white">Plot statistics</button>
-      </div>
-    </div>
-  </div>
+<!-- CK: This should be moved to a better place -->
+<script>
+    function openFileOption()
+    {
+        document.getElementById("file239483743").click();
+    }
+</script>
 
-<div class="grid" ng-include="'js/modules/model/manual-calibration.html'"></div>
+<div class="page rich">
+    <div class="page_subheader">
+        <div class="elastic">
+            <div class="elastic_col __va-middle text-center">
+                <button class="btn">Save all as PNG</button>
+                <button class="btn">Save all as SVG</button>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="well">
+        <h2>Constants</h2>
+        <div class="float-right">
+            <input type="file" id="file239483743" style="display:none">
+            <button class="btn" onclick="openFileOption();return;">Export to SVG</button>
+            <button class="btn" onclick="openFileOption();return;">Export to PNG</button>
+            <button class="btn" onclick="openFileOption();return;">Export to XLSX</button>
+        </div>
+        <div class="chart-container">
+            <nvd3 data="scatterdata" options="scatteroptions"></nvd3>
+        </div>
+    </div>
+
 </div>
