@@ -18,7 +18,7 @@ define([
                     }
                 },
                 {
-                    title: 'Create/load project',
+                    title: 'Step 1: Create/load project',
                     id: 'create-load',
                     subitems: [
                         {
@@ -48,7 +48,7 @@ define([
                     ]
                 },
                 {
-                    title: 'View & calibrate model',
+                    title: 'Step 2: View & calibrate model',
                     id: 'create-load',
                     subitems: [
                         {
@@ -72,7 +72,7 @@ define([
                     ]
                 },
                 {
-                    title: 'Optimization',
+                    title: 'Step 3: Optimization',
                     id: 'create-load',
                     subitems: [
                         {
@@ -90,7 +90,7 @@ define([
                     ]
                 },
                 {
-                    title: 'View/output results',
+                    title: 'Step 4: View/output results',
                     state: {
                         name: 'results'
                     }
