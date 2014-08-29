@@ -73,9 +73,9 @@ define(['./module'], function (module) {
         ];
 
 
-        $scope.lineoptions = {
+        $scope.linescatteroptions = {
             chart: {
-                type: 'lineChart',
+                type: 'scatterPlusLineChart',
                 height: 450,
                 margin: {
                     top: 20,
@@ -83,6 +83,8 @@ define(['./module'], function (module) {
                     bottom: 60,
                     left: 50
                 },
+                useInteractiveGuideline: true,
+                sizeRange: [100,100],
                 xAxis: {
                     axisLabel: 'Cost (US$ million)'
                 },
@@ -96,17 +98,34 @@ define(['./module'], function (module) {
             }
         };
 
-        $scope.linedata = [
+        $scope.linescatterdata = [
             {
-                values: sinData(50),
+                values: sinData(400),
                 key: 'Model',
                 color: '#ff7f0e'
             },
             {
-                values: sinData(40),
+                values: [
+                    {"x":100, "y":0.3},
+                    {"x":200, "y":0.7},
+                    {"x":300, "y":0.85},
+                ],
                 key: 'Data',
                 color: '#A09CF0'
             }
         ];
+
+
+        function sinData(koeff) {
+            var sin = [];
+
+            //Data is represented as an array of {x,y} pairs.
+            for (var i = 0; i < 500; i++) {
+                sin.push({x: i, y: Math.sin(i / koeff)});
+            }
+
+            //Line chart data should be sent as an array of series objects.
+            return sin;
+        }
     });
 });
