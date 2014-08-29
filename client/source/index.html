@@ -24,27 +24,18 @@
 <body ng-controller="MainCtrl">
 
 <div class="header">
-    <div class="wrap">
-        <div class="float-left">
-            <ul class="header_menu menu">
-                <li class="menu_i">
-                    <button class="btn" ui-sref="about">About</button>
-                </li>
-            </ul>
+    <div class="elastic">
+        <div class="elastic_col __shrink __va-middle">
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <!-- CK: trying to make things centered!! Dumbest way ever -->
         </div>
-        <div class="float-left"> <!-- CK: the logo should be centered -->
-            <ul class="header_menu menu">
-                <a ui-sref="home">
-                    <i class="header_logo logo"></i>
-                </a>
-                </ul>
-            </div>
-        <div class="float-right"> <!-- CK: This floats off the right edge of the screen for me -->
-            <ul class="header_menu menu">
-                <li class="menu_i">
-                    <button class="btn" ui-sref="help">Help</button>
-                </li>
-            </ul>
+        <div class="elastic_col __shrink __va-middle">
+            <button class="btn" ui-sref="about">About</button>
+        </div>
+        <div class="elastic_col __shrink __va-middle">
+            <i class="header_logo logo"></i>
+        </div>
+        <div class="elastic_col __shrink __va-middle">
+            <button class="btn" ui-sref="help">Help</button>
         </div>
     </div>
 </div>
