@@ -86,6 +86,12 @@ define([
                             state: {
                                 name: 'optimization.constraints'
                             }
+                        },
+                        {
+                            title: 'Optimize',
+                            state: {
+                                name: 'optimization.optimize'
+                            }
                         }
                     ]
                 },
