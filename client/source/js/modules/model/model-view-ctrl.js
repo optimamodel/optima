@@ -6,7 +6,7 @@ define(['./module'], function (module) {
         $scope.scatteroptions = { /* CK: need axis labels to align better, and need right number! */
             chart: {
                 type: 'scatterChart',
-                height: 450,
+                height: 250,
                 margin: {
                     top: 20,
                     right: 20,
@@ -76,7 +76,7 @@ define(['./module'], function (module) {
         $scope.linescatteroptions = {
             chart: {
                 type: 'scatterPlusLineChart',
-                height: 450,
+                height: 250,
                 margin: {
                     top: 20,
                     right: 20,
