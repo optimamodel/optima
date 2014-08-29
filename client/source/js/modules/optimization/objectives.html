@@ -7,7 +7,7 @@
     <div class="elastic_col __shrink __va-middle">
       Analysis:
     </div>
-    <div class="elastic_col __va-middle btn-group" ng-init="activeTab = 2">
+    <div class="elastic_col __va-middle btn-group" ng-init="activeTab = 3">
       <button class="btn __white" ng-class="{ __active: activeTab === 1 }" ng-click="activeTab = 1">Forecast outcomes</button>
       <button class="btn __white" ng-class="{ __active: activeTab === 2 }" ng-click="activeTab = 2">Minimize outcomes</button>
       <button class="btn __white" ng-class="{ __active: activeTab === 3 }" ng-click="activeTab = 3">Minimize money</button>
@@ -83,7 +83,161 @@
 
   <!-- Tabs 3 -->
   <div ng-show="activeTab === 3">
-    Tab 3
+    What is the minimum amount of money required to achieve the following objectives:
+
+    <!-- Reduce the incidence HIV -->
+    <div class="checkbox-block margin-top-xs">
+      <label>
+        <input type="checkbox">
+        Reduce the incidence HIV
+      </label>
+    </div>
+    <label class="radio-inline margin-left-s">
+      <input type="radio" style="height: 22px;" name="reduce1">
+      by <input class="txbox __inline __s">
+    </label>
+    <label class="radio-inline">
+      <input type="radio" style="height: 22px;" name="reduce1">
+      to < <input class="txbox __inline __s">
+    </label>
+
+    <!-- Reduce the incidence of sexually transmitted HIV -->
+    <div class="checkbox-block margin-top-xs">
+      <label>
+        <input type="checkbox">
+        Reduce the incidence of sexually transmitted HIV
+      </label>
+    </div>
+    <label class="radio-inline margin-left-s">
+      <input type="radio" style="height: 22px;" name="reduce2">
+      by <input class="txbox __inline __s">
+    </label>
+    <label class="radio-inline">
+      <input type="radio" style="height: 22px;" name="reduce2">
+      to < <input class="txbox __inline __s">
+    </label>
+
+    <!-- Reduce the incidence of injecting-related HIV -->
+    <div class="checkbox-block margin-top-xs">
+      <label>
+        <input type="checkbox">
+        Reduce the incidence of injecting-related HIV
+      </label>
+    </div>
+    <label class="radio-inline margin-left-s">
+      <input type="radio" style="height: 22px;" name="reduce3">
+      by <input class="txbox __inline __s">
+    </label>
+    <label class="radio-inline">
+      <input type="radio" style="height: 22px;" name="reduce3">
+      to < <input class="txbox __inline __s">
+    </label>
+
+    <!-- Reduce MTCT of HIV -->
+    <div class="checkbox-block margin-top-xs">
+      <label>
+        <input type="checkbox">
+        Reduce MTCT of HIV
+      </label>
+    </div>
+    <label class="radio-inline margin-left-s">
+      <input type="radio" style="height: 22px;" name="reduce4">
+      by <input class="txbox __inline __s">
+    </label>
+    <label class="radio-inline">
+      <input type="radio" style="height: 22px;" name="reduce4">
+      to < <input class="txbox __inline __s">
+    </label>
+
+    <!-- Reduce MTCT of HIV among breastfeeding mother -->
+    <div class="checkbox-block margin-top-xs">
+      <label>
+        <input type="checkbox">
+        Reduce MTCT of HIV among breastfeeding mother
+      </label>
+    </div>
+    <label class="radio-inline margin-left-s">
+      <input type="radio" style="height: 22px;" name="reduce5">
+      by <input class="txbox __inline __s">
+    </label>
+    <label class="radio-inline">
+      <input type="radio" style="height: 22px;" name="reduce5">
+      to < <input class="txbox __inline __s">
+    </label>
+
+    <!-- Reduce MTCT of HIV among non-breastfeeding mother -->
+    <div class="checkbox-block margin-top-xs">
+      <label>
+        <input type="checkbox">
+        Reduce MTCT of HIV among non-breastfeeding mother
+      </label>
+    </div>
+    <label class="radio-inline margin-left-s">
+      <input type="radio" style="height: 22px;" name="reduce6">
+      by <input class="txbox __inline __s">
+    </label>
+    <label class="radio-inline">
+      <input type="radio" style="height: 22px;" name="reduce6">
+      to < <input class="txbox __inline __s">
+    </label>
+
+    <!-- Reduce HIV-related deaths -->
+    <div class="checkbox-block margin-top-xs">
+      <label>
+        <input type="checkbox">
+        Reduce HIV-related deaths
+      </label>
+    </div>
+    <label class="radio-inline margin-left-s">
+      <input type="radio" style="height: 22px;" name="reduce7">
+      by <input class="txbox __inline __s">
+    </label>
+    <label class="radio-inline">
+      <input type="radio" style="height: 22px;" name="reduce7">
+      to < <input class="txbox __inline __s">
+    </label>
+
+    <!-- Reduce DALYs -->
+    <div class="checkbox-block margin-top-xs">
+      <label>
+        <input type="checkbox">
+        Reduce DALYs
+      </label>
+    </div>
+    <label class="radio-inline margin-left-s">
+      <input type="radio" style="height: 22px;" name="reduce8">
+      by <input class="txbox __inline __s">
+    </label>
+    <label class="radio-inline">
+      <input type="radio" style="height: 22px;" name="reduce8">
+      to < <input class="txbox __inline __s">
+    </label>
+
+    <div class="cf margin-top-s">
+      <div class="float-left">Calculate costs based on:</div>
+      <div class="float-left margin-left-xs">
+        <div class="radio-block">
+          <label>
+            <input type="radio" name="costsCalculationCriteria">
+            Historical data on program cost and outcomes
+          </label>
+        </div>
+
+        <div class="radio-block">
+          <label>
+            <input type="radio" name="costsCalculationCriteria">
+            Assumptions about technical efficiency gains {% by program}
+          </label>
+        </div>
+
+        <div class="radio-block">
+          <label>
+            <input type="radio" name="costsCalculationCriteria">
+            Other unit costs of programs
+          </label>
+        </div>
+      </div>
+    </div>
   </div>
 
   <hr class="__dashed"/>
