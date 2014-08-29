@@ -97,6 +97,7 @@ define([
                 },
                 {
                     title: 'Step 4: View/output results',
+                    id: 'create-load',
                     state: {
                         name: 'results'
                     }
