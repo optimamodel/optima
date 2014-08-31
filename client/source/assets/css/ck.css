@@ -1,26 +1,15 @@
-#centeredcontainer {
+.centeredcontainer {
     text-align: justify;
+    background: #afe8ff;
 }
-#centeredcontainer > div {
-    width: 20%; /* Declare your value. Can be in relative units. */
+.centeredcontainer > div {
+    width: 16%; /* Declare your value. Can be in relative units. */
     display: inline-block;
     vertical-align: top;
 }
 
-#centeredcontainer:after {
+.centeredcontainer:after {
     content: "";
     width: 100%;
     display: inline-block;
 }
-
-
-#bottommenu{color:#888; width:100%; float:left; text-align:center; background:#222; font-size:13px; height:70px; }
-.menu-header{margin:auto; padding:0; display:block;}
-#bottommenu ul{ margin:0; padding:0;}
-#bottommenu ul li{list-style-type:none; display:inline-block; position:relative; margin-top:0;}
-#bottommenu li a{ font-size:14px; color:#bbf; padding:10px 20px;}
-#bottommenu ul > li a:visited{background: #222;}
-#bottommenu ul > li:hover{background: #f0f url; color: #fff;}
-#bottommenu ul > li a:hover{color:#fff; display:block; background: #d35c08;}
-
-#bottommenu ul li a:hover{ color:#fff;}
