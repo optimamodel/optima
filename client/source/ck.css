@@ -1,0 +1,14 @@
+#centeredcontainer {
+    text-align: justify;
+}
+#centeredcontainer > div {
+    width: 20%; /* Declare your value. Can be in relative units. */
+    display: inline-block;
+    vertical-align: top;
+}
+
+#centeredcontainer:after {
+    content: "";
+    width: 100%;
+    display: inline-block;
+}
