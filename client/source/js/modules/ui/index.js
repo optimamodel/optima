@@ -72,7 +72,7 @@ define([
                     ]
                 },
                 {
-                    title: 'Step 3: Optimization',
+                    title: 'Step 3: Analysis',
                     id: 'create-load',
                     subitems: [
                         {
@@ -88,7 +88,7 @@ define([
                             }
                         },
                         {
-                            title: 'Optimize',
+                            title: 'Run analysis',
                             state: {
                                 name: 'optimization.optimize'
                             }
