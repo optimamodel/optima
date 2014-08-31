@@ -1,6 +1,6 @@
 .centeredcontainer {
     text-align: justify;
-    background: #afe8ff;
+    background: #e7f6ff;
 }
 .centeredcontainer > div {
     width: 16%; /* Declare your value. Can be in relative units. */
