@@ -9,7 +9,7 @@
        secured-by-any="{{ item.permissions }}">
     <div class="panel-heading">
       <h4 class="panel-title">
-        <a class="link" data-ng-href="{{ item.url }}">
+        <a class="link" ui-sref="{{ item.url }}">
           <i class="ic __plus"></i>
           {{ item.title }}
         </a>
@@ -31,7 +31,7 @@
 
     <ul>
       <li data-ng-repeat="sub in item.subitems" ng-class="{ active: sub.active }">
-        <a class="link __black __complex" data-ng-href="{{ sub.url }}">
+        <a class="link __black __complex" ui-sref="{{ sub.url }}">
           <i class="ic" ng-class="{ '__circle-gray': !sub.active, '__donut-blue': sub.active }"></i>
           {{ sub.title }}
         </a>

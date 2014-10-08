@@ -4,7 +4,7 @@
   data-ng-repeat-start="item in settings.items"
   secured-by-any="{{ item.permissions }}">
   <a class="{{ settings.baseClass }}_a"
-    data-ng-href="{{ item.url }}"  id="{{ item.title }}">
+     ui-sref="{{ item.url }}"  id="{{ item.title }}">
     <span class="{{ settings.baseClass }}_ic ftic"
       data-ng-class="'__' + item.icon">
     </span>
@@ -32,7 +32,7 @@
       data-ng-repeat-start="subitem in item.subitems"
       secured-by="{{ subitem.permissions }}">
       <a data-ng-if="subitem[0] !== '-'" class="{{ settings.baseClass }}_menu_a" id="{{ subitem.id }}"
-        data-ng-href="{{ subitem.url }}" data-ng-click="subitem.click($event)">
+         ui-sref="{{ subitem.url }}" data-ng-click="subitem.click($event)">
         {{ subitem.title }}
       </a>
       <hr class="__divider" data-ng-if="subitem[0] === '-'">
@@ -52,7 +52,7 @@
             data-ng-repeat="subsubitem in subitem.subitems"
             secured-by="{{ subsubitem.permissions }}">
           <a data-ng-if="subsubitem[0] !== '-'" class="{{ settings.baseClass }}_menu_a" id="{{ subsubitem.id }}"
-             data-ng-href="{{ subsubitem.url }}" data-ng-click="subsubitem.click($event)"
+             ui-sref="{{ subsubitem.url }}" data-ng-click="subsubitem.click($event)"
              data-ng-if="subitem.subitems">
             {{ subsubitem.title }}
           </a>
