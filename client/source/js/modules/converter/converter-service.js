@@ -1,7 +1,7 @@
 define([
   'angular',
-  'js-xlsx'
-], function (angular, xlsx) {
+//  'js-xlsx'
+], function (angular/*, xlsx*/) {
   'use strict';
 
   return angular.module('app.converter', [])
