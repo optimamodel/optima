@@ -75,10 +75,10 @@ define(['jquery', 'underscore', './module'], function ($, _, module) {
                 }
 
                 // If there is a state provided get a reference to it
-                item.url = $state.href(item.state.name, item.state.params);
+                item.url = item.state.name + '(' + (item.state.params ? JSON.stringify(item.state.params) : '{}') + ')';
 
               } else {
-                item.url = item.url || '#';
+                throw new Error('Menu accepts only states as targets for items.');
               }
             });
           };
