@@ -14,7 +14,7 @@ define({
     'd3'            : '../vendor/d3/d3',
     'domReady'      : '../vendor/requirejs-domready/domReady',
     'saveAs'        : '../vendor/FileSaver/FileSaver',
-    'js-xlsx'       : '../vendor/js-xlsx/dist/xlsx',
+//    'js-xlsx'       : '../vendor/js-xlsx/dist/xlsx',
     'jszip'         : '../vendor/js-xlsx/dist/jszip',
     'jquery'        : '../vendor/jquery/dist/jquery',
     'nvd3'          : '../vendor/nvd3/nv.d3',
@@ -29,10 +29,10 @@ define({
       'deps': ['jquery'],
       'exports': 'angular'
     },
-    'js-xlsx': {
-      deps: ['jszip'],
-      exports: 'XLSX'
-    },
+//    'js-xlsx': {
+//      deps: ['jszip'],
+//      exports: 'XLSX'
+//    },
     'angular-nvd3': ['angular', 'nvd3'],
     'nvd3': ['d3'],
     'ngResource': ['angular'],
