@@ -12,7 +12,6 @@ define({
     'canvg'         : '../vendor/canvg/dist/canvg.bundle',
     'canvas2blob'   : '../vendor/canvas-toBlob.js/canvas-toBlob',
     'd3'            : '../vendor/d3/d3',
-    'domReady'      : '../vendor/requirejs-domready/domReady',
     'saveAs'        : '../vendor/FileSaver/FileSaver',
 //    'js-xlsx'       : '../vendor/js-xlsx/dist/xlsx',
     'jszip'         : '../vendor/js-xlsx/dist/jszip',
