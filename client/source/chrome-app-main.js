@@ -11,7 +11,7 @@ chrome.app.runtime.onLaunched.addListener(function() {
   var width = 900;
   var height = 700;
 
-  chrome.app.window.create('source/index.html', {
+  chrome.app.window.create('index.html', {
     id: 'optimaID',
     outerBounds: {
       width: width,

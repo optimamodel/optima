@@ -7,6 +7,7 @@
     "16": "chrome-app-icon_16.png",
     "128": "chrome-app-icon_128.png"
   },
+  "permissions": [],
   "app": {
     "background": {
       "scripts": [
