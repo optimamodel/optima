@@ -18,7 +18,7 @@ define({
     'jszip'         : '../vendor/js-xlsx/dist/jszip',
     'jquery'        : '../vendor/jquery/dist/jquery',
     'nvd3'          : '../vendor/nvd3/nv.d3',
-    'ngResource'    : '../vendor/angular-resource/angular-resource',
+    'angular-resource'    : '../vendor/angular-resource/angular-resource',
     'ui.router'     : '../vendor/angular-ui-router/release/angular-ui-router',
     'ui.bootstrap'  : '../vendor/angular-bootstrap/ui-bootstrap-tpls',
     'underscore'    : '../vendor/underscore/underscore'
@@ -36,7 +36,7 @@ define({
     'angular-nvd3': ['angular', 'nvd3'],
     'nvd3': ['d3'],
     'd3-box': ['d3'],
-    'ngResource': ['angular'],
+    'angular-resource': ['angular'],
     'saveAs': ['canvas2blob'],
     'ui.bootstrap': ['angular'],
     'ui.router' : ['angular']
