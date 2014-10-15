@@ -1,4 +1,9 @@
-define(['angular', 'ui.router'], function (angular) {
+define([
+  'angular',
+  'ui.router',
+  '../resources/data-mocks',
+  '../../config'
+], function (angular) {
   'use strict';
 
   return angular.module('app.model', ['ui.router'])
@@ -12,17 +17,17 @@ define(['angular', 'ui.router'], function (angular) {
         .state('model.view', {
           url: '/view',
           templateUrl: 'js/modules/model/view.html',
-          controller: 'ModelViewController'
+          controller: 'GraphsController'
         })
         .state('model.automatic-calibration', {
           url: '/automatic-calibration',
           templateUrl: 'js/modules/model/automatic-calibration.html',
-          controller: 'ModelAutomaticCalibrationController'
+          controller: 'GraphsController'
         })
         .state('model.manual-calibration', {
           url: '/manual-calibration',
           templateUrl: 'js/modules/model/manual-calibration.html',
-          controller: 'ModelManualCalibrationController'
+          controller: 'GraphsController'
         });
     });
 
