@@ -49,6 +49,7 @@
     background: #FFF;
     border-color: #999999;
     color: #404446;
+    text-shadow: none;
 
     &:hover:not(:disabled) {
       background: #f5f5f5;
@@ -69,14 +70,17 @@
     background: #00aeef;
     border-color: #00aeef;
     color: #FFF;
+    text-shadow: 0 1px 1px rgba(black, .5);
 
     &:hover:not(:disabled) {
-      background: #01a5e2;
+      background: #0192cc;
+      border-color: #0183b5;
     }
 
     &.__active,
     &:active:not(:disabled) {
-      background: #01a5e2;
+      background: #0181b5;
+      border-color: #0183b5;
     }
 
     &.__active,
