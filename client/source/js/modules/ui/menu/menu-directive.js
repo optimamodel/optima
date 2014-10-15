@@ -60,7 +60,7 @@ define(['jquery', 'underscore', './module'], function ($, _, module) {
               // If there are subitems dive into next level of recursion
               // providing a reference to a parent item
               if (item.subitems) {
-                $scope._processItems(item.subitems, item);
+                return $scope._processItems(item.subitems, item);
               }
 
               if (parent) {
