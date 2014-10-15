@@ -12,7 +12,7 @@
   width: 100%;
 
   &:focus {
-    box-shadow: 0 0 6px 2px rgba($color-yellow, 0.7);
+    border-color: #00aeef;
     outline: 0;
   }
 
@@ -27,21 +27,35 @@
 
   &.__m {
     @include font-height(13px, 16px);
-    padding: 5px 10px;
+    padding: 5px;
+    border-radius: 4px;
+  }
+
+  &.__s {
+    padding: 3px;
+    border-radius: 3px;
   }
 
   // ### Colours
 
   &.__white {
     background: #FFF;
-    border-color: #999 #BBB #DDD;
-    box-shadow:
-      inset 0 1px 1px rgba(#000, 0.1),
-      0 1px 0 rgba(#FFF, 0.2);
+    border-color: #cccccc;
   }
 
+  // ### Positions
+
   &.__inline {
+    @extend .txbox.__inline.__m;
     display: inline;
+
+    &.__m {
+      width: 60px
+    }
+
+    &.__s {
+      width: 48px;
+    }
   }
 }
 
