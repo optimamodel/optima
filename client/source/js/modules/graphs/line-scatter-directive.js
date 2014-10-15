@@ -4,8 +4,7 @@ define(['./module', 'd3', 'd3-box'], function (module, d3) {
   module.directive('lineScatterChart', function () {
     return {
       scope: {
-        lineChartData: '=lineChartData',
-        boxChartData: '=boxChartData'
+        data: '='
       },
       link: function (scope, element, attrs) {
         function drawAxes(scales, labels, axesGroup) {
@@ -78,16 +77,22 @@ define(['./module', 'd3', 'd3-box'], function (module, d3) {
         var lineChartInstance = new LineChart(chartGroup, chart_size, 100);
         //var scatterChartInstance = new ScatterChart(chartGroup, chart_size, 100);
 
-        var calculatedBoxScales = boxChartInstance.scales(scope.boxChartData);
-        var calculatedLineScales = lineChartInstance.scales(scope.lineChartData);
-        // FIXME: uncomment this
-        //var calculatedScatterScales = scatterChartInstance.scales(scope.lineChartData);
+        scope.data.$promise.then(function(d){
+          var scatterErrorData = d['scatter-error'];
+          var lineData = d['line'];
 
-        drawAxes(calculatedLineScales, { x: 'Label X', y: 'Label Y' }, axesGroup);
-        boxChartInstance.draw(scope.boxChartData);
-        lineChartInstance.draw(scope.lineChartData);
-        // FIXME: uncomment this
-        // scatterChartInstance.draw(lineChartData);
+          var calculatedBoxScales = boxChartInstance.scales(scatterErrorData);
+          var calculatedLineScales = lineChartInstance.scales(lineData);
+          // FIXME: uncomment this
+          //var calculatedScatterScales = scatterChartInstance.scales(scope.lineChartData);
+
+          drawAxes(calculatedLineScales, { x: 'Label X', y: 'Label Y' }, axesGroup);
+          boxChartInstance.draw(scatterErrorData);
+          lineChartInstance.draw(lineData);
+          // FIXME: uncomment this
+          // scatterChartInstance.draw(lineChartData);
+        });
+
       }
     }
   });
