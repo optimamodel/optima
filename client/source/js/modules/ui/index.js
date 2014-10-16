@@ -104,9 +104,20 @@ define([
                 {
                     title: 'Step 4: View/output results',
                     id: 'create-load',
-                    state: {
-                        name: 'results'
-                    }
+                    subitems: [
+                        {
+                            title: 'Epidemiological results',
+                            state: {
+                                name: 'results.epiresults'
+                            }
+                        },
+                        {
+                            title: 'Economic results',
+                            state: {
+                                name: 'results.econresults'
+                            }
+                        }
+                    ]
                 }
             ]
         };
