@@ -14,16 +14,6 @@ define(['angular', 'ui.router'], function (angular) {
           templateUrl: 'js/modules/project/create.html',
           controller: 'ProjectCreateController'
         })
-        .state('project.upload-data', {
-          url: '/upload-data',
-          templateUrl: 'js/modules/project/upload-data.html',
-          controller: 'ProjectUploadDataController'
-        })
-        .state('project.load', {
-          url: '/load',
-          templateUrl: 'js/modules/project/load.html',
-          controller: 'ProjectLoadController'
-        })
         .state('project.modify', {
           url: '/modify',
           templateUrl: 'js/modules/project/modify.html',

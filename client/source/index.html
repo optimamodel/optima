@@ -47,8 +47,8 @@
       <br>
       <div></div>
       <div><button class="btn" ui-sref="save-project">Save project</button></div> <!-- CK: grey out "Save project" button if no unsaved changes; pop up a little message saying "Project saved" if save successful -->
-      <div><input type="file" id="file2" style="display:none"><button class="btn" onclick="openFileOption();return;">Save as...</button></div> <!-- CK: gray out if no project loaded -->
-      <div><button class="btn" onclick="exit_optima();return;">Exit</button></div> <!-- CK: make actually work :) -->
+      <div><input type="file" id="file2" style="display:none"><button class="btn">Save as...</button></div> <!-- CK: gray out if no project loaded -->
+      <div><button class="btn" ng-click="exitApp()">Exit</button></div>
       <div></div>
     </div>
 
@@ -57,32 +57,7 @@
 
 <!-- Scripts -->
 <script src="vendor/requirejs/require.js"></script>
-<script>
-  // obtain requirejs config
-  require(['require', './js/config-require'], function (require, config) {
-
-    // set cache beater
-    config.urlArgs = 'bust=v0.4.0';
-
-    // update global require config
-    window.require.config(config);
-
-    // load app
-    require(['./js/main.js']);
-  });
-</script>
-
-<script>
-  function openFileOption()
-  {
-    document.getElementById("file1").click();
-  }
-  function exit_optima() {
-    if (confirm("Exit Optima?")) {
-      close();
-    }
-  }
-</script>
+<script src="js/start.js"></script>
 
 </body>
 </html>
