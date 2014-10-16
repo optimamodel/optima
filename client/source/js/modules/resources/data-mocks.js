@@ -21,7 +21,6 @@ define([
             },
             lineWith: {
               method: 'GET',
-              isArray: true,
               params: {
                 path: 'line'
               }
