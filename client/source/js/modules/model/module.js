@@ -17,17 +17,17 @@ define([
         .state('model.view', {
           url: '/view',
           templateUrl: 'js/modules/model/view.html',
-          controller: 'GraphsController'
+          controller: 'ModelViewController'
         })
         .state('model.automatic-calibration', {
           url: '/automatic-calibration',
           templateUrl: 'js/modules/model/automatic-calibration.html',
-          controller: 'GraphsController'
+          controller: 'ModelAutomaticCalibrationController'
         })
         .state('model.manual-calibration', {
           url: '/manual-calibration',
           templateUrl: 'js/modules/model/manual-calibration.html',
-          controller: 'GraphsController'
+          controller: 'ModelManualCalibrationController'
         });
     });
 

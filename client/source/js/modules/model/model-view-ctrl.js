@@ -108,7 +108,7 @@ define(['./module'], function (module) {
                 values: [
                     {"x":100, "y":0.3},
                     {"x":200, "y":0.7},
-                    {"x":300, "y":0.85},
+                    {"x":300, "y":0.85}
                 ],
                 key: 'Data',
                 color: '#A09CF0'
