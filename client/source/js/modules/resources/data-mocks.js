@@ -9,12 +9,18 @@ define([
     .service('dataMocks', [
       '$resource',
       function ($resource) {
-        return $resource('/api/data/:path',
-          {},
+        return $resource('/api/data/:path/:num',
+          {num: '@num'},
           {
             line: {
               method: 'GET',
               isArray: true,
+              params: {
+                path: 'line'
+              }
+            },
+            lineWith: {
+              method: 'GET',
               params: {
                 path: 'line'
               }
