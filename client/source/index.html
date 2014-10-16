@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html ng-csp>
+<html>
 <head>
   <meta charset="utf-8">
   <title>Optima</title>
@@ -18,46 +18,71 @@
   <meta name="msapplication-TileColor" content="#ffffff">
   <meta name="msapplication-config" content="assets/images/project/browserconfig.xml">
 
-  <link rel="stylesheet" href="vendor/angular/angular-csp.css">
   <link rel="stylesheet" href="assets/css/main.css?bust=v0.4.0">
+  <link rel="stylesheet" href="assets/css/ck.css"> <!-- CK: Should be done properly, i.e. with SASS -->
 </head>
 <body ng-controller="MainCtrl">
 
-<div class="header">
-  <div class="wrap">
-    <a ui-sref="home">
-      <i class="header_logo logo"></i>
-    </a>
-    <div class="float-right">
-      <ul class="header_menu menu">
-        <li class="menu_i">
-          <a class="menu_i_inner link __black __complex" ui-sref="about">About</a>
-        </li>
-        <li class="menu_i">
-          <a class="menu_i_inner link __black __complex" ui-sref="help">
-            <i class="ic __question-mark __inset ng-scope"></i>Help</a>
-        </li>
-        <li class="menu_i">
-          <a class="menu_i_inner link __black __complex" ui-sref="nan">Ben K.</a>
-        </li>
-      </ul>
-    </div>
-  </div>
+<div class="centeredcontainer">
+  <br>
+  <div></div>
+  <div></div>
+  <div><button class="btn" ui-sref="about">About</button></div>
+  <div><i class="header_logo logo"></i></div>
+  <div><button class="btn" ui-sref="help">Help</button></div>
+  <div></div>
 </div>
-<div class="header-push"></div>
 
 <div class="elastic layout">
   <div class="elastic_col __shrink layout_aside">
-    <div data-menu="asideMenuSettings" template="accordion"></div>
+    <div data-menu="asideMenuSettings" template="accordion">
+    </div>
   </div>
   <div class="elastic_col layout_cnt">
     <div ui-view></div>
+
+    <!-- CK: This should be a proper footer, not part of this page, and the buttons should be evenly distributed across the full width of the bottom (i.e. "Save project" on the left, "Save project as..." in the center, and "Exit" on the right) -->
+    <br><br>
+    <div class="centeredcontainer">
+      <br>
+      <div></div>
+      <div><button class="btn" ui-sref="save-project">Save project</button></div> <!-- CK: grey out "Save project" button if no unsaved changes; pop up a little message saying "Project saved" if save successful -->
+      <div><input type="file" id="file2" style="display:none"><button class="btn" onclick="openFileOption();return;">Save as...</button></div> <!-- CK: gray out if no project loaded -->
+      <div><button class="btn" onclick="exit_optima();return;">Exit</button></div> <!-- CK: make actually work :) -->
+      <div></div>
+    </div>
+
   </div>
 </div>
 
 <!-- Scripts -->
 <script src="vendor/requirejs/require.js"></script>
-<script src="js/start.js"></script>
+<script>
+  // obtain requirejs config
+  require(['require', './js/config-require'], function (require, config) {
+
+    // set cache beater
+    config.urlArgs = 'bust=v0.4.0';
+
+    // update global require config
+    window.require.config(config);
+
+    // load app
+    require(['./js/main.js']);
+  });
+</script>
+
+<script>
+  function openFileOption()
+  {
+    document.getElementById("file1").click();
+  }
+  function exit_optima() {
+    if (confirm("Exit Optima?")) {
+      close();
+    }
+  }
+</script>
 
 </body>
 </html>

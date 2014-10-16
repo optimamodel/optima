@@ -1,10 +1,42 @@
+<!-- CK: This should be moved to a better place -->
+<script>
+    function openFileOption()
+    {
+        document.getElementById("file1").click();
+    }
+    function exit_optima() {
+        if (confirm("Exit Optima?")) {
+            close();
+        }
+    }
+</script>
+
+
+
 <div class="rich text-center">
-  <h1>Welcome to Optima</h1>
+  <h1>Welcome to Optima!</h1>
 
-  <p>Professional tools for creation and observing medical data. See how it works.</p>
+    <!-- CK: this whole block will need to change or just be removed if a project is loaded -->
+    <div class="well">
+        <div style="color: #ffad33; font-weight: bold">No project loaded.</div>
+        <br><br>
+        To begin, please create or load a project:
+        <br><br>
+        <button class="btn">Create new project</button>
+        <input type="file" id="file1" style="display:none">
+        <button class="btn" onclick="openFileOption();return;">Load existing project</button>
+        <br>
+        <br>
+        <table style="margin-left:auto; margin-right:auto;">
+            <tr><td align="right"><b>Current project:&nbsp;</b></td> <td>None</td></tr>
+            <tr><td align="right"><b>Time period:&nbsp;</b></td> <td>None</td></tr>
+            <tr><td align="right"><b>Total population:&nbsp;</b></td> <td>None</td></tr>
+            <tr><td align="right"><b>Number of PLHIV:&nbsp;</b></td> <td>None</td></tr>
+            <tr><td align="right"><b>Current annual incidence:&nbsp;</b></td> <td>None</td></tr>
+            <tr><td align="right"><b>Overall HIV prevalence:&nbsp;</b></td> <td>None</td></tr>
+        </table>
+        <br>
+        <br>
+    </div>
 
-  <div class="well">
-    To start with Optima you need to import data
-    <button class="btn">Import data &rarr;</button>
-  </div>
 </div>
