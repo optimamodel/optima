@@ -14,9 +14,13 @@
                 <button class="btn" onclick="openFileOption1();return;">Save all as PNG</button>
                 <button class="btn" onclick="openFileOption1();return;">Save all as SVG</button>
                 <br><br>
-                <input class="txbox" type="text" placeholder="Number of data points" required ng-model="numberOfPoints">
+                        <div class="section grid">
+            <div class="4">
+                <input class="txbox" type="text" placeholder="End year" required ng-model="numberOfPoints">
                 <br><br>
                 <button class="btn" ng-click="simulate()">Run simulation</button>
+                </div>
+                </div>
             </div>
 
         </div>
