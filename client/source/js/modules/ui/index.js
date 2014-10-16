@@ -117,5 +117,8 @@ define([
             ]
         };
 
+        $scope.exitApp = function () {
+            window.close();
+        }
     });
 });
