@@ -12,7 +12,7 @@ define({
     'canvg'         : '../vendor/canvg/dist/canvg.bundle',
     'canvas2blob'   : '../vendor/canvas-toBlob.js/canvas-toBlob',
     'd3'            : '../vendor/d3/d3',
-    'd3-box'        : '../../assets/js/box.d3',
+    'd3-box'        : '../assets/js/box.d3',
     'saveAs'        : '../vendor/FileSaver/FileSaver',
 //    'js-xlsx'       : '../vendor/js-xlsx/dist/xlsx',
     'jszip'         : '../vendor/js-xlsx/dist/jszip',
