@@ -1,0 +1,331 @@
+<!-- CK: This should be moved to a better place -->
+<script>
+  function openFileOption1()
+  {
+    document.getElementById("file01").click();
+  }
+</script>
+
+<div class="page rich">
+<div class="page_header">
+  <div class="elastic">
+    <div class="elastic_col __shrink __va-middle">
+      <h1>View/output results</h1>
+    </div>
+    <div class="elastic_col __va-middle">
+      <div class="elastic __fluid">
+        <div class="elastic_col __shrink __va-middle">
+          Start year:
+          <select class="txbox __inline" style="width: 60px">
+            <option value="">2000</option>
+            <option value="">2001</option>
+            <option value="">2002</option>
+            <option value="">2003</option>
+            <option value="">2004</option>
+            <option value="">2005</option>
+            <option value="">2006</option>
+            <option value="">2007</option>
+            <option value="">2008</option>
+            <option value="">2009</option>
+            <option value="">2010</option>
+            <option value="">2011</option>
+            <option value="">2012</option>
+            <option value="">2013</option>
+            <option value="">2014</option>
+            <option value="">2015</option>
+            <option value="">2016</option>
+            <option value="">2017</option>
+            <option value="">2018</option>
+            <option value="">2019</option>
+            <option value="">2020</option>
+            <option value="">2021</option>
+            <option value="">2022</option>
+            <option value="">2023</option>
+            <option value="">2024</option>
+            <option value="">2025</option>
+            <option value="">2026</option>
+            <option value="">2027</option>
+            <option value="">2028</option>
+            <option value="">2029</option>
+            <option value="">2030</option>
+            <option value="">2031</option>
+            <option value="">2032</option>
+            <option value="">2033</option>
+            <option value="">2034</option>
+            <option value="">2035</option>
+            <option value="">2036</option>
+            <option value="">2037</option>
+            <option value="">2038</option>
+            <option value="">2039</option>
+            <option value="">2040</option>
+            <option value="">2041</option>
+            <option value="">2042</option>
+            <option value="">2043</option>
+            <option value="">2044</option>
+            <option value="">2045</option>
+            <option value="">2046</option>
+            <option value="">2047</option>
+            <option value="">2048</option>
+            <option value="">2049</option>
+            <option value="">2050</option>
+          </select>
+        </div>
+        <div class="elastic_col __shrink __va-middle">
+          <label>
+            End year:
+            <select class="txbox __inline" style="width: 60px">
+              <option value="">2000</option>
+              <option value="">2001</option>
+              <option value="">2002</option>
+              <option value="">2003</option>
+              <option value="">2004</option>
+              <option value="">2005</option>
+              <option value="">2006</option>
+              <option value="">2007</option>
+              <option value="">2008</option>
+              <option value="">2009</option>
+              <option value="">2010</option>
+              <option value="">2011</option>
+              <option value="">2012</option>
+              <option value="">2013</option>
+              <option value="">2014</option>
+              <option value="">2015</option>
+              <option value="">2016</option>
+              <option value="">2017</option>
+              <option value="">2018</option>
+              <option value="">2019</option>
+              <option value="">2020</option>
+              <option value="">2021</option>
+              <option value="">2022</option>
+              <option value="">2023</option>
+              <option value="">2024</option>
+              <option value="">2025</option>
+              <option value="">2026</option>
+              <option value="">2027</option>
+              <option value="">2028</option>
+              <option value="">2029</option>
+              <option value="">2030</option>
+              <option value="">2031</option>
+              <option value="">2032</option>
+              <option value="">2033</option>
+              <option value="">2034</option>
+              <option value="">2035</option>
+              <option value="">2036</option>
+              <option value="">2037</option>
+              <option value="">2038</option>
+              <option value="">2039</option>
+              <option value="">2040</option>
+              <option value="">2041</option>
+              <option value="">2042</option>
+              <option value="">2043</option>
+              <option value="">2044</option>
+              <option value="">2045</option>
+              <option value="">2046</option>
+              <option value="">2047</option>
+              <option value="">2048</option>
+              <option value="">2049</option>
+              <option value="">2050</option>
+            </select>
+          </label>
+        </div>
+        <div class="elastic_col __shrink __va-middle">
+          <label>
+            <input type="checkbox">
+            All
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page_subheader">
+  <div class="elastic">
+    <div class="elastic_col __va-middle text-center">
+      <input type="file" id="file01" style="display:none">
+      <button class="btn" onclick="openFileOption1();return;">Save all as PNG</button>
+      <button class="btn" onclick="openFileOption1();return;">Save all as SVG</button>
+      <button class="btn" onclick="openFileOption1();return;">Save all as XLSX</button>
+    </div>
+  </div>
+	<br><br>
+  <div class="elastic">
+    <div class="elastic_col __shrink __va-middle">
+      Compare results for:
+    </div>
+    <div class="elastic_col __shrink __va-middle">
+      <label>
+        <input type="checkbox">
+        No spending
+      </label>
+    </div>
+    <div class="elastic_col __shrink __va-middle">
+      <label>
+        <input type="checkbox" checked>
+        Current spending
+      </label>
+    </div>
+    <div class="elastic_col __shrink __va-middle">
+      <label>
+        <input type="checkbox" checked>
+        Optimal spending
+      </label>
+    </div>
+  </div>
+	<br><br>
+  <div class="checkbox-block">
+		<div class="elastic">
+		  <div class="elastic_col __shrink __va-middle">
+		    View results:
+		  </div>
+		  <div class="elastic_col __shrink __va-middle">
+		    <label>
+		      <!--<input type="checkbox" ng-model="showAlloc">Allocations-->
+		      <input type="checkbox" checked>Allocations
+						<span ng-show="showAlloc"></span>
+		    </label>
+		  </div>
+		  <div class="elastic_col __shrink __va-middle">
+		    <label>
+					<input type="checkbox" ng-model="showCosts" checked>HIV-related costs
+						<span ng-show="showCosts"></span>
+		    </label>
+		  </div>
+		  <div class="elastic_col __shrink __va-middle">
+		    <label>
+					<input type="checkbox" checked ng-model="showRoi">Return on investment
+						<span ng-show="showRoi"></span>
+		    </label>
+		  </div>
+		  <div class="elastic_col __shrink __va-middle">
+		    <label>
+					<input type="checkbox" ng-model="showOne">Cost of one new infection
+						<span ng-show="showOne"></span>
+		    </label>
+		  </div>
+		</div>
+  </div>
+</div>
+
+<div class="checkbox-block">
+	<label>
+		<input type="checkbox" ng-model="showCalcs">
+			Further calculations<span ng-show="showCalcs">:</span>
+	</label>
+</div><br>
+	<div style="margin-left: 15px;" ng-show="showCalcs">
+		<div class="checkbox-block">
+			<label><input type="checkbox" style="height: 12px;">
+				Cost per infection averted: $12,000
+			</label>
+		</div>
+		<div class="checkbox-block">
+			<label><input type="checkbox" style="height: 12px;">
+				Cost per AIDS-related death averted: $40,000
+			</label>
+		</div>
+		<div class="checkbox-block">
+			<label><input type="checkbox" style="height: 12px;">
+				Cost per DALY averted: $2,000
+			</label>
+		</div>
+	</div>
+
+
+<br><br>
+
+<div class="well">
+  <div class="grid">
+		  <div class="section cf">
+		    <div class="6">
+		      <h2>Original allocation</h2>
+		      <button class="btn" onclick="openFileOption1();return;">Export to SVG</button>
+		      <button class="btn" onclick="openFileOption1();return;">Export to PNG</button>
+		      <button class="btn" onclick="openFileOption1();return;">Export to XLSX</button>
+		      <div class="chart-container">
+		        <nvd3 data="piedata" options="pieoptions"></nvd3>
+		      </div>
+		    </div>
+		    <div class="6">
+		      <h2>Current allocation</h2>
+		      <button class="btn" onclick="openFileOption1();return;">Export to SVG</button>
+		      <button class="btn" onclick="openFileOption1();return;">Export to PNG</button>
+		      <button class="btn" onclick="openFileOption1();return;">Export to XLSX</button>
+		      <div class="chart-container">
+		        <nvd3 data="piedata" options="pieoptions"></nvd3>
+		      </div>
+		    </div>
+		  </div>
+
+		<div ng-show="showCosts">   
+		  <div class="section cf">
+		    <div class="6">
+		      <h1>Annual HIV-related costs</h1>
+		      <button class="btn" onclick="openFileOption1();return;">Export to SVG</button>
+		      <button class="btn" onclick="openFileOption1();return;">Export to PNG</button>
+		      <button class="btn" onclick="openFileOption1();return;">Export to XLSX</button>
+					<div class="chart-container">
+				  	<nvd3 data="linescatterdata" options="linescatteroptions"></nvd3>
+				  </div>
+		    </div>
+		    <div class="6">
+		      <h1>Cumulative HIV-related costs</h1>
+		      <button class="btn" onclick="openFileOption1();return;">Export to SVG</button>
+		      <button class="btn" onclick="openFileOption1();return;">Export to PNG</button>
+		      <button class="btn" onclick="openFileOption1();return;">Export to XLSX</button>
+		      <div class="chart-container">
+		        <nvd3 data="linescatterdata" options="linescatteroptions"></nvd3>
+		      </div>
+		    </div>
+		  </div>
+		</div>
+
+		<div ng-show="showRoi">   
+		  <div class="section cf">
+		    <div class="6">
+		      <h1>Annual return on investment</h1>
+		      <button class="btn" onclick="openFileOption1();return;">Export to SVG</button>
+		      <button class="btn" onclick="openFileOption1();return;">Export to PNG</button>
+		      <button class="btn" onclick="openFileOption1();return;">Export to XLSX</button>
+					<div class="chart-container">
+				  	<nvd3 data="linescatterdata" options="linescatteroptions"></nvd3>
+				  </div>
+		    </div>
+		    <div class="6">
+		      <h1>Cumulative return on investment</h1>
+		      <button class="btn" onclick="openFileOption1();return;">Export to SVG</button>
+		      <button class="btn" onclick="openFileOption1();return;">Export to PNG</button>
+		      <button class="btn" onclick="openFileOption1();return;">Export to XLSX</button>
+		      <div class="chart-container">
+		        <nvd3 data="linescatterdata" options="linescatteroptions"></nvd3>
+		      </div>
+		    </div>
+		  </div>
+		</div>
+
+		<div ng-show="showOne">   
+		  <div class="section cf">
+		    <div class="6">
+		      <h1>Annual cost of one new infection</h1>
+		      <button class="btn" onclick="openFileOption1();return;">Export to SVG</button>
+		      <button class="btn" onclick="openFileOption1();return;">Export to PNG</button>
+		      <button class="btn" onclick="openFileOption1();return;">Export to XLSX</button>
+					<div class="chart-container">
+				  	<nvd3 data="linescatterdata" options="linescatteroptions"></nvd3>
+				  </div>
+		    </div>
+		    <div class="6">
+		      <h1>Cumulative cost of one new infection</h1>
+		      <button class="btn" onclick="openFileOption1();return;">Export to SVG</button>
+		      <button class="btn" onclick="openFileOption1();return;">Export to PNG</button>
+		      <button class="btn" onclick="openFileOption1();return;">Export to XLSX</button>
+		      <div class="chart-container">
+		        <nvd3 data="linescatterdata" options="linescatteroptions"></nvd3>
+		      </div>
+		    </div>
+		  </div>
+		</div>
+  </div>
+</div>
+
+</div>
