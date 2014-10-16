@@ -92,10 +92,10 @@ define(['./module'], function (module) {
                 useInteractiveGuideline: true,
                 sizeRange: [100,100],
                 xAxis: {
-                    axisLabel: 'Cost (US$ million)'
+                    axisLabel: 'Year'
                 },
                 yAxis: {
-                    axisLabel: 'Outcome',
+                    axisLabel: 'Prevalence (%)',
                     tickFormat: function (d) {
                         return d3.format(',.2f')(d);
                     },
