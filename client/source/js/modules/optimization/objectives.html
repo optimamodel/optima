@@ -1,17 +1,8 @@
 <div class="page">
-  <div class="cf">
-    <h3 class="float-left">Define objectives</h3>
-    <div class="float-left margin-left-s">
-      Base year against which indicators are compared: <input class="txbox __inline __s" value="2013">
-      &nbsp;&nbsp;
-      End year when objectives are to be achieved: <input class="txbox __inline __s" value="2014">
-      <div class="margin-top-xxs">
-        What are the fiscal liabilities over <input class="txbox __inline __s" value="2014"> years with <input class="txbox __inline __s" value="0.02"> % discounting.
-      </div>
-    </div>
-  </div>
 
-  <hr/>
+  <h3>Define objectives</h3>
+
+  <hr>
 
   <div class="elastic">
     <div class="elastic_col __shrink __va-middle">
@@ -19,7 +10,7 @@
     </div>
     <div class="elastic_col __va-middle btn-group" ng-init="activeTab = 1">
       <button class="btn __white" ng-class="{ __active: activeTab === 1 }" ng-click="activeTab = 1">Forecast outcomes</button>
-      <button class="btn __white" ng-class="{ __active: activeTab === 2 }" ng-click="activeTab = 2">Minimize outcomes</button>
+      <button class="btn __white" ng-class="{ __active: activeTab === 2 }" ng-click="activeTab = 2">Optimize outcomes</button>
       <button class="btn __white" ng-class="{ __active: activeTab === 3 }" ng-click="activeTab = 3">Minimize money</button>
     </div>
   </div>
@@ -28,45 +19,109 @@
 
   <!-- Tabs 1 -->
   <div ng-show="activeTab === 1">
-    <p>What are the incidence, prevalence, deaths, and DALY's according to:</p>
+
+    <div class="cf">
+      <div class="float-left margin-left-s">
+        Year to project outcomes to: <input class="txbox __inline __s" value="2020">
+        <div class="margin-top-xxs">
+          What are the fiscal liabilities over <input class="txbox __inline __s" value="80"> years with <input class="txbox __inline __s" value="3"> % discounting.
+        </div>
+      </div>
+    </div>
+
+    <hr>
+
+    <p>Outcomes to forecast:</p>
+
+    <div class="checkbox-block">
+      <label><input type="checkbox"> Prevalence - by population</label>
+    </div>
+
+    <div class="checkbox-block">
+      <label><input type="checkbox"> Prevalence - overall</label>
+    </div>
+
+    <div class="checkbox-block">
+      <label><input type="checkbox"> Incidence - annual</label>
+    </div>
+
+    <div class="checkbox-block">
+      <label><input type="checkbox"> Incidence - cumulative</label>
+    </div>
+
+    <div class="checkbox-block">
+      <label><input type="checkbox"> AIDS-related deaths - annual</label>
+    </div>
+
+    <div class="checkbox-block">
+      <label><input type="checkbox"> AIDS-related deaths - cumulative</label>
+    </div>
+
+    <div class="checkbox-block">
+      <label><input type="checkbox"> DALYs - annual</label>
+    </div>
+
+    <div class="checkbox-block">
+      <label><input type="checkbox"> DALYs - cumulative</label>
+    </div>
+
+    <p>Forecast these outcomes according to:</p>
 
     <button class="btn __white">No other non-constrained spending</button>
-    <button class="btn __white __active">User-specified funding</button>
+    <button class="btn __white">User-specified funding</button>
 
     <p>
-      Funding bby year over the program period <input class="txbox __inline __s" type="text"> and pre-determined allocation <button class="btn">Specify funding</button>
+      Funding by year over the program period <input class="txbox __inline __s" type="text"> and pre-determined allocation
     </p>
   </div>
 
   <!-- Tabs 2 -->
   <div ng-show="activeTab === 2">
-    <p>Which a fixed amount of money available <input class="txbox __inline __s" type="text"> what is the optimal allocation of this funding to:</p>
+
+    <div class="cf">
+      <div class="float-left margin-left-s">
+        Year to begin optimization from: <input class="txbox __inline __s" value="2013">
+        <div class="margin-top-xxs">
+          Number of years to optimize funding for: <input class="txbox __inline __s" value="10">
+        </div>
+        <div class="margin-top-xxs">
+          Year to project outcomes to: <input class="txbox __inline __s" value="2030">
+        </div>
+        <div class="margin-top-xxs">
+          What are the fiscal liabilities over <input class="txbox __inline __s" value="80"> years with <input class="txbox __inline __s" value="3"> % discounting.
+        </div>
+      </div>
+    </div>
+
+    <hr>
+
+    <p>With a fixed amount of money available <input class="txbox __inline __s" type="text"> what is the optimal allocation of this funding to:</p>
 
     <div class="checkbox-block">
       <label>
-        <input type="checkbox">
-        Minimize HIV incidence
+        <input type="checkbox" ng-model="weightIncidence">
+        Minimize cumulative HIV incidence<span ng-show="weightIncidence"></span>
       </label>
     </div>
 
     <div class="checkbox-block">
       <label>
-        <input type="checkbox">
-        Minimize DALY's
+        <input type="checkbox" ng-model="weightDalys">
+        Minimize cumulative DALYs<span ng-show="weightDalys"></span>
       </label>
     </div>
 
     <div class="checkbox-block">
       <label>
-        <input type="checkbox">
-        Minimize HIV-related deaths
+        <input type="checkbox" ng-model="weightDeaths">
+        Minimize cumulative HIV-related deaths<span ng-show="weightDeaths"></span>
       </label>
     </div>
 
     <div class="checkbox-block">
       <label>
         <input type="checkbox" style="height: 22px;">
-        Minimize HIV-related costs over
+        Minimize total HIV-related costs over
         <input class="txbox __inline __s">
         years with
         <input class="txbox __inline __s">
@@ -74,16 +129,24 @@
       </label>
     </div>
 
-    <div class="margin-top-xxs">
-      <button class="btn">Specify funding</button>
-      &nbsp;&nbsp;
-      <input class="txbox __inline">
-      &nbsp;&nbsp;
-      new infections = <input class="txbox __inline">
-      &nbsp;&nbsp;
-      DALY's = <input class="txbox __inline">
-      &nbsp;&nbsp;
-      deaths = <input class="txbox __inline">
+<br>
+
+    <div ng-show="weightIncidence">
+      <div style="margin-left: 24px">
+        Incidence weighting  =  <input class="txbox __inline __s" value="1">
+      </div>
+    </div>
+
+    <div ng-show="weightDalys">
+      <div style="margin-left: 50px">
+        DALY weighting  =  <input class="txbox __inline __s" value="1">
+      </div>
+    </div>
+
+    <div ng-show="weightDeaths">
+      <div style="margin-left: 45px">
+        Death weighting  =  <input class="txbox __inline __s" value="1">
+      </div>
     </div>
 
     <div class="margin-top-s">
@@ -93,13 +156,31 @@
 
   <!-- Tabs 3 -->
   <div ng-show="activeTab === 3">
+
+    <div class="cf">
+      <div class="float-left margin-left-s">
+        Base year against which indicators are compared: <input class="txbox __inline __s" value="2013">
+        <div class="margin-top-xxs">
+          End year when objectives are to be achieved: <input class="txbox __inline __s" value="2020">
+        </div>
+        <div class="margin-top-xxs">
+          Year to project outcomes to: <input class="txbox __inline __s" value="2030">
+        </div>
+        <div class="margin-top-xxs">
+          What are the fiscal liabilities over <input class="txbox __inline __s" value="80"> years with <input class="txbox __inline __s" value="3"> % discounting.
+        </div>
+      </div>
+    </div>
+
+    <hr>
+
     What is the minimum amount of money required to achieve the following objectives:
 
-    <!-- Reduce the incidence HIV -->
-    <div class="checkbox-block margin-top-s">
+    <!-- Reduce the incidence of HIV -->
+    <div class="checkbox-block margin-top-xs">
       <label>
         <input type="checkbox">
-        Reduce the incidence HIV
+        Reduce the annual incidence of HIV
       </label>
     </div>
     <label class="radio-inline margin-left-s">
@@ -112,10 +193,10 @@
     </label>
 
     <!-- Reduce the incidence of sexually transmitted HIV -->
-    <div class="checkbox-block margin-top-s">
+    <div class="checkbox-block margin-top-xs">
       <label>
         <input type="checkbox">
-        Reduce the incidence of sexually transmitted HIV
+        Reduce the annual incidence of sexually transmitted HIV
       </label>
     </div>
     <label class="radio-inline margin-left-s">
@@ -128,10 +209,10 @@
     </label>
 
     <!-- Reduce the incidence of injecting-related HIV -->
-    <div class="checkbox-block margin-top-s">
+    <div class="checkbox-block margin-top-xs">
       <label>
         <input type="checkbox">
-        Reduce the incidence of injecting-related HIV
+        Reduce the annual incidence of injecting-related HIV
       </label>
     </div>
     <label class="radio-inline margin-left-s">
@@ -144,10 +225,10 @@
     </label>
 
     <!-- Reduce MTCT of HIV -->
-    <div class="checkbox-block margin-top-s">
+    <div class="checkbox-block margin-top-xs">
       <label>
         <input type="checkbox">
-        Reduce MTCT of HIV
+        Reduce annual mother-to-child-transmission of HIV
       </label>
     </div>
     <label class="radio-inline margin-left-s">
@@ -160,10 +241,10 @@
     </label>
 
     <!-- Reduce MTCT of HIV among breastfeeding mother -->
-    <div class="checkbox-block margin-top-s">
+    <div class="checkbox-block margin-top-xs">
       <label>
         <input type="checkbox">
-        Reduce MTCT of HIV among breastfeeding mother
+        Reduce annual mother-to-child-transmission of HIV among breastfeeding mothers
       </label>
     </div>
     <label class="radio-inline margin-left-s">
@@ -176,10 +257,10 @@
     </label>
 
     <!-- Reduce MTCT of HIV among non-breastfeeding mother -->
-    <div class="checkbox-block margin-top-s">
+    <div class="checkbox-block margin-top-xs">
       <label>
         <input type="checkbox">
-        Reduce MTCT of HIV among non-breastfeeding mother
+        Reduce annual mother-to-child-transmission of HIV among non-breastfeeding mothers
       </label>
     </div>
     <label class="radio-inline margin-left-s">
@@ -192,10 +273,10 @@
     </label>
 
     <!-- Reduce HIV-related deaths -->
-    <div class="checkbox-block margin-top-s">
+    <div class="checkbox-block margin-top-xs">
       <label>
         <input type="checkbox">
-        Reduce HIV-related deaths
+        Reduce annual AIDS-related deaths
       </label>
     </div>
     <label class="radio-inline margin-left-s">
@@ -208,10 +289,10 @@
     </label>
 
     <!-- Reduce DALYs -->
-    <div class="checkbox-block margin-top-s">
+    <div class="checkbox-block margin-top-xs">
       <label>
         <input type="checkbox">
-        Reduce DALYs
+        Reduce annual DALYs
       </label>
     </div>
     <label class="radio-inline margin-left-s">
