@@ -34,7 +34,7 @@ define([
                             }
                         },
                         {
-                            title: 'Load existing project',
+                            title: 'Open existing project',
                             state: {
                                 name: 'project.load'
                             }
