@@ -18,7 +18,7 @@ define([
                     }
                 },
                 {
-                    title: 'Step 1: Create/load project',
+                    title: 'Step 1: Create/open project',
                     id: 'create-load',
                     subitems: [
                         {
@@ -49,12 +49,6 @@ define([
                                       alert(event.target.files[0].name);
                                   })
                                   .click();
-                            }
-                        },
-                        {
-                            title: 'Modify existing project',
-                            state: {
-                                name: 'project.modify'
                             }
                         }
                     ]
