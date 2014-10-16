@@ -3,8 +3,7 @@
     function openFileOption()
     {
         document.getElementById("file1").click();
-    }
-    function exit_optima() {
+    } exit_optima() {
         if (confirm("Exit Optima?")) {
             close();
         }
@@ -16,19 +15,19 @@
 <div class="rich text-center">
   <h1>Welcome to Optima!</h1>
 
-    <!-- CK: this whole block will need to change or just be removed if a project is loaded -->
+    <!-- CK: this whole block will need to change or just be removed if a session is loaded -->
     <div class="well">
-        <div style="color: #ffad33; font-weight: bold">No project loaded.</div>
+        <div style="color: #ffad33; font-weight: bold">No session loaded.</div>
         <br><br>
-        To begin, please create or load a project:
+        To begin, please create or load a session:
         <br><br>
-        <button class="btn">Create new project</button>
+        <button class="btn">Create new session</button>
         <input type="file" id="file1" style="display:none">
-        <button class="btn" onclick="openFileOption();return;">Load existing project</button>
+        <button class="btn" onclick="openFileOption();return;">Load existing session</button>
         <br>
         <br>
         <table style="margin-left:auto; margin-right:auto;">
-            <tr><td align="right"><b>Current project:&nbsp;</b></td> <td>None</td></tr>
+            <tr><td align="right"><b>Current session:&nbsp;</b></td> <td>None</td></tr>
             <tr><td align="right"><b>Time period:&nbsp;</b></td> <td>None</td></tr>
             <tr><td align="right"><b>Total population:&nbsp;</b></td> <td>None</td></tr>
             <tr><td align="right"><b>Number of PLHIV:&nbsp;</b></td> <td>None</td></tr>
