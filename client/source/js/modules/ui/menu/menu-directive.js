@@ -77,8 +77,8 @@ define(['jquery', 'underscore', './module'], function ($, _, module) {
                 // If there is a state provided get a reference to it
                 item.url = item.state.name + '(' + (item.state.params ? JSON.stringify(item.state.params) : '{}') + ')';
 
-              } else {
-                throw new Error('Menu accepts only states as targets for items.');
+              } else if (!item.click) {
+                throw new Error('Menu accepts only states and clicks as targets for items.');
               }
             });
           };

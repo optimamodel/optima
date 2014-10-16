@@ -29,14 +29,26 @@ define([
                         },
                         {
                             title: 'Upload data spreadsheet',
-                            state: {
-                                name: 'project.upload-data'
+                            click: function () {
+                                angular
+                                  .element('<input type="file">')
+                                  .change(function (event) {
+                                      // TODO
+                                      alert(event.target.files[0].name);
+                                  })
+                                  .click();
                             }
                         },
                         {
                             title: 'Open existing project',
-                            state: {
-                                name: 'project.load'
+                            click: function () {
+                                angular
+                                  .element('<input type="file">')
+                                  .change(function (event) {
+                                      // TODO
+                                      alert(event.target.files[0].name);
+                                  })
+                                  .click();
                             }
                         },
                         {
