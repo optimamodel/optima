@@ -13,7 +13,12 @@
                 <input type="file" id="file01" style="display:none">
                 <button class="btn" onclick="openFileOption1();return;">Save all as PNG</button>
                 <button class="btn" onclick="openFileOption1();return;">Save all as SVG</button>
+                <br><br>
+                <input class="txbox" type="text" placeholder="Number of data points" required> <!-- CK: Send the data value entered here is as the input to generatedata() -->
+                <br><br>
+                <button class="btn" onclick="generatedata(numpoints)">Run simulation</button> <!-- CK: When clicked, this button should run generatedata(), take the output, and plot it in the 4 "linescatterdata" charts below (or at least one of them) -->
             </div>
+
         </div>
     </div>
 
@@ -51,6 +56,7 @@
     </div>
 
 
+    <!--
     <div class="well">
         <h1>Testing, treatment &amp; deaths</h1>
         <button class="btn" onclick="openFileOption1();return;">Export to SVG</button>
@@ -145,6 +151,6 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div>-->
 
 </div>
