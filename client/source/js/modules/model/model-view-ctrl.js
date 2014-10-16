@@ -1,7 +1,12 @@
 define(['./module'], function (module) {
     'use strict';
 
-    module.controller('ModelViewController', function ($scope) {
+    module.controller('ModelViewController', function ($scope, dataMocks) {
+
+      <!-- CK: When clicked, this button should run simulate(), take the output, and plot it in the 4 "linescatterdata" charts below (or at least one of them) -->
+      $scope.simulate = function () {
+        dataMocks.lineWith({num: $scope.numberOfPoints})
+      };
 
         $scope.scatteroptions = { /* CK: need axis labels to align better, and need right number! */
             chart: {
