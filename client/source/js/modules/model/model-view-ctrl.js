@@ -5,7 +5,8 @@ define(['./module'], function (module) {
 
       <!-- CK: When clicked, this button should run simulate(), take the output, and plot it in the 4 "linescatterdata" charts below (or at least one of them) -->
       $scope.simulate = function () {
-        dataMocks.lineWith({num: $scope.numberOfPoints})
+        var generatedDataSet = dataMocks.lineWith({num: $scope.numberOfPoints});
+        $scope.linescatterdata = [generatedDataSet];
       };
 
         $scope.scatteroptions = { /* CK: need axis labels to align better, and need right number! */
@@ -103,34 +104,6 @@ define(['./module'], function (module) {
             }
         };
 
-        $scope.linescatterdata = [
-            {
-                values: sinData(400),
-                key: 'Model',
-                color: '#ff7f0e'
-            },
-            {
-                values: [
-                    {"x":100, "y":0.3},
-                    {"x":200, "y":0.7},
-                    {"x":300, "y":0.85}
-                ],
-                key: 'Data',
-                color: '#A09CF0'
-            }
-        ];
-
-
-        function sinData(koeff) {
-            var sin = [];
-
-            //Data is represented as an array of {x,y} pairs.
-            for (var i = 0; i < 500; i++) {
-                sin.push({x: i, y: Math.sin(i / koeff)});
-            }
-
-            //Line chart data should be sent as an array of series objects.
-            return sin;
-        }
+        $scope.linescatterdata = [];
     });
 });
