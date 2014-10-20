@@ -1,11 +1,3 @@
-<!-- CK: This should be moved to a better place -->
-<script>
-    function openFileOption()
-    {
-        document.getElementById("file3").click();
-    }
-</script>
-
 <div class="rich">
     <form name="CreateProjectForm" ng-submit="createProject()">
         <p>
@@ -18,7 +10,7 @@
 
         <div class="section grid">
             <div class="4">
-                <input class="txbox" type="text" placeholder="Project name" required>
+                <input class="txbox" type="text" placeholder="Project name" ng-model="projectName" required>
             </div>
         </div>
 
@@ -36,7 +28,7 @@
 
         <div class="section grid">
             <input type="file" id="file3" style="display:none">
-            <button class="btn" onclick="openFileOption();return;">Save project &amp; generate data template</button> <!-- CK: open up file dialogue, then return to home screen -->
+            <button class="btn" type="submit">Save project &amp; generate data template</button>
         </div>
     </form>
 </div>
