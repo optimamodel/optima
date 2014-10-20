@@ -1,4 +1,5 @@
 from flask import Flask
+from flask import helpers
 from generators.line import generatedata
 import json
 
@@ -37,9 +38,18 @@ def lineScatterError():
     return app.send_static_file('line-scatter-error-chart.json')
 
 
-@app.route('/api/data/download', methods=['GET'])
-def downloadExcel():
-    return app.send_static_file('example.xlsx')
+@app.route('/api/data/download/<downloadName>', methods=['GET'])
+def downloadExcel(downloadName):
+    example_excel_file_name = 'example.xlsx'
+
+    file_path = helpers.safe_join(app.static_folder, example_excel_file_name)
+    options = {
+        'cache_timeout': app.get_send_file_max_age(example_excel_file_name),
+        'conditional': True,
+        'attachment_filename': downloadName
+    }
+    return helpers.send_file(file_path, **options)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
