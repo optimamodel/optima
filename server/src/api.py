@@ -19,7 +19,6 @@ def lineParam(numpoints):
         "key": "Line series",
         "color": "#ff7f0e"
     })
-    #return app.send_static_file('line-chart.json')
 
 @app.route('/api/data/stacked-area', methods=['GET'])
 def stackedArea():
@@ -37,6 +36,10 @@ def pie():
 def lineScatterError():
     return app.send_static_file('line-scatter-error-chart.json')
 
+
+@app.route('/api/data/download', methods=['GET'])
+def downloadExcel():
+    return app.send_static_file('example.xlsx')
 
 if __name__ == '__main__':
     app.run(debug=True)
