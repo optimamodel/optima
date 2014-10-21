@@ -6,13 +6,13 @@ This function loads the spreadsheet data into Optima.
 Version: 2014oct16
 """
 
-def loaddata(filename='epi-template.xlsx',verbose=True):
+def loaddata(filename='./epi-template.xlsx',verbose=True):
     
     ###########################################################################
     ## Preliminaries
     ###########################################################################
     
-    print('Loading data...')
+    print('Loading data from %s...' % filename)
     from pylab import nan # For reading in empty values
     from xlrd import open_workbook # For opening Excel spreadsheets
     from bunch import Bunch as struct # Replicate Matlab-like structure behavior
@@ -46,7 +46,10 @@ def loaddata(filename='epi-template.xlsx',verbose=True):
     ###########################################################################
     
     data = struct() # Create structure for holding structures
+    print('opening workbook %s' % filename)
     spreadsheet = open_workbook(filename) # Open spreadsheet
+    print('opened workbook %s' % filename)
+    print(spreadsheet)
     for i,datanames in enumerate([basicdata, matrices, constants]): # Loop over each type of data, but treat constants differently
         for j in range(len(datanames)): # Loop over each spreadsheet for that data -- just one for constants
             if verbose: print('  Loading "%s"...' % sheetnames[i][j])
