@@ -1,35 +1,26 @@
-<!-- CK: This should be moved to a better place -->
-<script>
-    function openFileOption1()
-    {
-        document.getElementById("file01").click();
-    }
-</script>
-
 <div class="page rich">
     <div class="page_subheader">
         <div class="elastic">
             <div class="elastic_col __va-middle text-center">
                 <input type="file" id="file01" style="display:none">
-                <button class="btn" onclick="openFileOption1();return;">Save all as PNG</button>
-                <button class="btn" onclick="openFileOption1();return;">Save all as SVG</button>
+                <button class="btn" ng-click="openFileOption1()">Save all as PNG</button>
+                <button class="btn" ng-click="openFileOption1()">Save all as SVG</button>
                 <br><br>
-                        <div class="section grid">
-            <div class="4">
-                <input class="txbox" type="text" placeholder="End year" required ng-model="numberOfPoints">
-                <br><br>
-                <button class="btn" ng-click="simulate()">Run simulation</button>
-                </div>
+                <div class="section grid">
+                    <div class="4">
+                        <input class="txbox" type="text" placeholder="End year" required ng-model="numberOfPoints">
+                        <br><br>
+                        <button class="btn" ng-click="simulate()">Run simulation</button>
+                    </div>
                 </div>
             </div>
-
         </div>
     </div>
 
     <h1>Prevalences</h1>
-    <button class="btn" onclick="openFileOption1();return;">Export to SVG</button>
-    <button class="btn" onclick="openFileOption1();return;">Export to PNG</button>
-    <button class="btn" onclick="openFileOption1();return;">Export to XLSX</button>
+    <button class="btn" ng-click="openFileOption1()">Export to SVG</button>
+    <button class="btn" ng-click="openFileOption1()">Export to PNG</button>
+    <button class="btn" ng-click="openFileOption1()">Export to XLSX</button>
     <div class="well">
         <div class="grid">
             <div class="section cf">
@@ -58,103 +49,4 @@
             </div>
         </div>
     </div>
-
-
-    <!--
-    <div class="well">
-        <h1>Testing, treatment &amp; deaths</h1>
-        <button class="btn" onclick="openFileOption1();return;">Export to SVG</button>
-        <button class="btn" onclick="openFileOption1();return;">Export to PNG</button>
-        <button class="btn" onclick="openFileOption1();return;">Export to XLSX</button>
-        <div class="grid">
-            <div class="section cf">
-                <div class="6">
-                    <div class="chart-container">
-                        <nvd3 data="linescatterdata" options="linescatteroptions"></nvd3>
-                    </div>
-                </div>
-                <div class="6">
-                    <div class="chart-container">
-                        <nvd3 data="linescatterdata" options="linescatteroptions"></nvd3>
-                    </div>
-                </div>
-                <div class="6">
-                    <div class="chart-container">
-                        <nvd3 data="linescatterdata" options="linescatteroptions"></nvd3>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-
-    <div class="well">
-        <h1>Constants</h1>
-        <button class="btn" onclick="openFileOption1();return;">Export to SVG</button>
-        <button class="btn" onclick="openFileOption1();return;">Export to PNG</button>
-        <button class="btn" onclick="openFileOption1();return;">Export to XLSX</button>
-        <div class="chart-container">
-            <nvd3 data="scatterdata" options="scatteroptions"></nvd3>
-        </div>
-    </div>
-
-    <div class="well">
-        <h1>Behavioral parameters</h1>
-        <div class="float-right">
-            <button class="btn" onclick="openFileOption1();return;">Export to SVG</button>
-            <button class="btn" onclick="openFileOption1();return;">Export to PNG</button>
-            <button class="btn" onclick="openFileOption1();return;">Export to XLSX</button>
-        </div>
-        <div class="chart-container">
-            <nvd3 data="scatterdata" options="scatteroptions"></nvd3>
-        </div>
-    </div>
-
-
-
-    <div class="well">
-        <h1>Cost-coverage-outcome curves</h1>
-        <button class="btn" onclick="openFileOption1();return;">Export to SVG</button>
-        <button class="btn" onclick="openFileOption1();return;">Export to PNG</button>
-        <button class="btn" onclick="openFileOption1();return;">Export to XLSX</button>
-        <div class="grid">
-            <div class="section cf">
-                <div class="6">
-                    <div class="chart-container">
-                        <nvd3 data="linescatterdata" options="linescatteroptions"></nvd3>
-                    </div>
-                </div>
-                <div class="6">
-                    <div class="chart-container">
-                        <nvd3 data="linescatterdata" options="linescatteroptions"></nvd3>
-                    </div>
-                </div>
-            </div>
-            <div class="section cf">
-                <div class="6">
-                    <div class="chart-container">
-                        <nvd3 data="linescatterdata" options="linescatteroptions"></nvd3>
-                    </div>
-                </div>
-                <div class="6">
-                    <div class="chart-container">
-                        <nvd3 data="linescatterdata" options="linescatteroptions"></nvd3>
-                    </div>
-                </div>
-            </div>
-            <div class="section cf">
-                <div class="6">
-                    <div class="chart-container">
-                        <nvd3 data="linescatterdata" options="linescatteroptions"></nvd3>
-                    </div>
-                </div>
-                <div class="6">
-                    <div class="chart-container">
-                        <nvd3 data="linescatterdata" options="linescatteroptions"></nvd3>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>-->
-
 </div>

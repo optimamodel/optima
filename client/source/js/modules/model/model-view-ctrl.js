@@ -1,4 +1,4 @@
-define(['./module'], function (module) {
+define(['./module', 'angular'], function (module, angular) {
     'use strict';
 
     module.controller('ModelViewController', function ($scope, dataMocks) {
@@ -7,6 +7,10 @@ define(['./module'], function (module) {
       $scope.simulate = function () {
         var generatedDataSet = dataMocks.lineWith({num: $scope.numberOfPoints});
         $scope.linescatterdata = [generatedDataSet];
+      };
+
+      $scope.openFileOption1 = function () {
+        angular.element('#file01').click();
       };
 
         $scope.scatteroptions = { /* CK: need axis labels to align better, and need right number! */
