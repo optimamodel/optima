@@ -1,7 +1,7 @@
-define(['./module', 'd3', 'd3-box'], function (module, d3) {
+define(['angular', 'd3', 'd3-box'], function (angular, d3) {
   'use strict';
 
-  module.directive('lineScatterChart', function () {
+  angular.module('app.line-scatter-chart', []).directive('lineScatterChart', function () {
     return {
       scope: {
         data: '='
