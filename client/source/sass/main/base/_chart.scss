@@ -102,19 +102,38 @@
 
 .line_chart_path {
     fill: none;
-    stroke: DeepPink;
+    stroke: #0f207d;
     stroke-width: 2px;
     pointer-events: none;
+}
+
+.line_chart_path_area1,
+.line_chart_path_area2 {
+    fill: none;
+    stroke: #76a8ff;
+    stroke-width: 2px;
+    pointer-events: none;
+}
+
+.area_chart_path {
+    fill: #9aceff;
+    pointer-events: none;
+}
+
+.scatter_chart_circle {
+  stroke: #333;
+  stroke-width: 0.5px;
+  fill: #666;
 }
 
 .line_chart_circle {
     stroke: black;
     stroke-width: 0.5px;
-    fill: DeepPink;
+    fill: #123ddc;
 }
 
 .line_chart_circle_transition {
-    fill: Magenta;
+    fill: #122faa;
 }
 
 

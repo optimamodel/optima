@@ -51,6 +51,12 @@ define([
               params: {
                 path: 'line-scatter-error'
               }
+            },
+            lineScatterArea: {
+              method: 'GET',
+              params: {
+                path: 'line-scatter-area'
+              }
             }
           }
         );
