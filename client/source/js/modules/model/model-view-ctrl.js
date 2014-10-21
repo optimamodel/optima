@@ -3,7 +3,6 @@ define(['./module', 'angular'], function (module, angular) {
 
     module.controller('ModelViewController', function ($scope, dataMocks) {
 
-      <!-- CK: When clicked, this button should run simulate(), take the output, and plot it in the 4 "linescatterdata" charts below (or at least one of them) -->
       $scope.simulate = function () {
         var generatedDataSet = dataMocks.lineWith({num: $scope.numberOfPoints});
         $scope.linescatterdata = [generatedDataSet];
