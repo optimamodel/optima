@@ -22,39 +22,46 @@
             <div class="section cf">
                 <div class="6">
                     <h2>Prevalences, diagnoses, &amp; deaths</h2>
-		<div class="section cf">
-                <div class="6">
-                    <div class="chart-container">
-                        <nvd3 data="linescatterdata" options="linescatteroptions"></nvd3>
+                    <div class="section cf">
+                        <div class="6">
+                            <div class="chart-container">
+                                <nvd3 data="linescatterdata" options="linescatteroptions"></nvd3>
+                            </div>
+                        </div>
+                        <div class="6">
+                            <div class="chart-container">
+                                <nvd3 data="linescatterdata" options="linescatteroptions"></nvd3>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="6">
-                    <div class="chart-container">
-                        <nvd3 data="linescatterdata" options="linescatteroptions"></nvd3>
+                    <div class="section cf">
+                        <div class="6">
+                            <div class="chart-container">
+                                <nvd3 data="linescatterdata" options="linescatteroptions"></nvd3>
+                            </div>
+                        </div>
+                        <div class="6">
+                            <div class="chart-container">
+                                <nvd3 data="linescatterdata" options="linescatteroptions"></nvd3>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
-            <div class="section cf">
-                <div class="6">
-                    <div class="chart-container">
-                        <nvd3 data="linescatterdata" options="linescatteroptions"></nvd3>
-                    </div>
-                </div>
-                <div class="6">
-                    <div class="chart-container">
-                        <nvd3 data="linescatterdata" options="linescatteroptions"></nvd3>
-                    </div>
-                </div>
-            </div>
                 </div>
                 <div class="6">
                     <h2>Edit parameters</h2>
-                    <table class="section" id="mockup-table" border="1" width="100%">
+                    <table class="section table table-bordered">
                         <tr>
-                            <td ng-repeat="header in json[0]"><b>{{ header }}</b></td>
+                            <td ng-repeat="header in json.headers"><b>{{ header }}</b></td>
                         </tr>
-                        <tr ng-repeat="row in json[1]">
-                            <td ng-repeat="cell in row track by $index">{{ cell }}</td>
+                        <tr ng-repeat="row in json.rows">
+                            <td style="width: 50px">{{ row.title }}</td>
+                            <td>
+                              <span ng-hide="editing" ng-click="editing = true">{{ row.value }}</span>
+                              <span ng-show="editing">
+                                <input class="txbox __inline" ng-model="row.value">
+                                <button class="btn" ng-click="editing = false; doneEditingParameter();">Ok</button>
+                              </span>
+                            </td>
                         </tr>
                     </table>
                 </div>
