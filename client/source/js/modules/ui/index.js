@@ -33,7 +33,7 @@ define([
                                 angular
                                   .element('<input type="file">')
                                   .change(function (event) {
-                                      // TODO
+                                      // TODO: POST /api/data/upload + file
                                       alert(event.target.files[0].name);
                                   })
                                   .click();
