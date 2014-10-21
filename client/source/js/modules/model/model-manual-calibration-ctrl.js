@@ -58,17 +58,39 @@ define(['./module'], function (module) {
           return sin;
       }
 
-      $scope.json = [
-          ['Parameter', 'Value'],
-          [
-              ['Param. 1', 0.23],
-              ['Param. 2', 0.24],
-              ['Param. 3', 0.82],
-              ['Param. 4', 0.83],
-              ['Param. 5', 0.71],
-              ['Param. 6', 0.45]
-          ]
-      ];
+      $scope.json = {
+        headers: ['Parameter', 'Value'],
+        rows: [
+          {
+            title: 'Param. 1',
+            value: 0.23
+          },
+          {
+            title: 'Param. 2',
+            value: 0.24
+          },
+          {
+            title: 'Param. 3',
+            value: 0.82
+          },
+          {
+            title: 'Param. 4',
+            value: 0.83
+          },
+          {
+            title: 'Param. 5',
+            value: 0.71
+          },
+          {
+            title: 'Param. 6',
+            value: 0.45
+          }
+        ]
+      };
+
+    $scope.doneEditingParameter = function () {
+      console.log("I'm editing callback. Do what you have to do with me :(");
+    };
 
   });
 
