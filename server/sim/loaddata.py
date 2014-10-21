@@ -16,8 +16,6 @@ def loaddata(filename='example.xlsx',verbose=True):
     from pylab import nan # For reading in empty values
     from xlrd import open_workbook # For opening Excel spreadsheets
     from bunch import Bunch as struct # Replicate Matlab-like structure behavior
-    filename = 'example.xlsx'
-    verbose = True
     
     
     ###########################################################################
