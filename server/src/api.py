@@ -37,6 +37,10 @@ def pie():
 def lineScatterError():
     return app.send_static_file('line-scatter-error-chart.json')
 
+@app.route('/api/data/line-scatter-area', methods=['GET'])
+def lineScatterArea():
+    return app.send_static_file('line-scatter-area-chart.json')
+
 
 @app.route('/api/data/download/<downloadName>', methods=['GET'])
 def downloadExcel(downloadName):
