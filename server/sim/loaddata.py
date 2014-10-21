@@ -6,7 +6,7 @@ This function loads the spreadsheet data into Optima.
 Version: 2014oct16
 """
 
-def loaddata(filename='example.xlsx',verbose=True):
+def loaddata(filename='epi-template.xlsx',verbose=True):
     
     ###########################################################################
     ## Preliminaries
