@@ -1,9 +1,20 @@
+import os
 from flask import Flask
 from flask import helpers
+from flask import request
+from werkzeug import secure_filename
 from generators.line import generatedata
 import json
 
+UPLOAD_FOLDER = '/tmp/uploads' #todo configure
+ALLOWED_EXTENSIONS=set(['txt','xlsx','xls'])
+
 app = Flask(__name__)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
 @app.route('/api', methods=['GET'])
 def root():
@@ -54,6 +65,22 @@ def downloadExcel(downloadName):
     }
     return helpers.send_file(file_path, **options)
 
+@app.route('/api/data/upload', methods=['POST'])
+def uploadExcel():
+    reply = {'status':'NOK'}
+    try:
+        file = request.files['file']
+        if file:
+            filename = secure_filename(file.filename)
+            reply['file'] = filename
+            if allowed_file(filename):
+                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                reply['status'] = 'OK'
+            else:
+                reply['reason'] = 'invalid file extension:'+ filename
+    except:
+        pass
+    return json.dumps(reply)
 
 if __name__ == '__main__':
     app.run(debug=True)
