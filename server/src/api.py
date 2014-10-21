@@ -5,6 +5,9 @@ from flask import request
 from werkzeug import secure_filename
 from generators.line import generatedata
 import json
+import traceback
+import sys
+from sim.loaddata import loaddata
 
 UPLOAD_FOLDER = '/tmp/uploads' #todo configure
 ALLOWED_EXTENSIONS=set(['txt','xlsx','xls'])
@@ -74,12 +77,20 @@ def uploadExcel():
             filename = secure_filename(file.filename)
             reply['file'] = filename
             if allowed_file(filename):
-                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                server_filename = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                file.save(server_filename)
+#                epi_file_name = 'epi-template.xlsx'
+#                file_path = helpers.safe_join(app.static_folder, epi_file_name)
+
+                data = loaddata(server_filename) #gives an error for an example file...
                 reply['status'] = 'OK'
+                print(data)
             else:
                 reply['reason'] = 'invalid file extension:'+ filename
-    except:
-        pass
+    except Exception, err:
+        var = traceback.format_exc()
+        print(var)
+        reply['exception'] = var
     return json.dumps(reply)
 
 if __name__ == '__main__':
