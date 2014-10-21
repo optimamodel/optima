@@ -1,6 +1,7 @@
 define([
   'angular',
   'angular-nvd3',
+  'ng-file-upload',
   'ui.bootstrap',
   'ui.router',
   './config',
@@ -23,6 +24,7 @@ define([
   'use strict';
 
   return angular.module('app', [
+    'angularFileUpload',
     'app.about',
     'app.constants',
     'app.analyses',

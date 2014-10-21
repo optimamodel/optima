@@ -8,7 +8,21 @@ define([
     return angular.module('app.ui', [
         'app.ui.button-choicebox',
         'app.ui.menu'
-    ]).controller('MainCtrl', function ($scope) {
+    ]).controller('MainCtrl', function ($scope, $upload) {
+
+      // https://github.com/danialfarid/angular-file-upload
+      function uploadDataSpreadsheet(file) {
+        $scope.upload = $upload.upload({
+          url: '/api/data/upload',
+          file: file
+        }).progress(function(evt) {
+          console.log('percent: ' + parseInt(100.0 * evt.loaded / evt.total));
+        }).success(function(data, status, headers, config) {
+          alert('Data spreadsheet was successfully uploaded. For now you can only check that in the console')
+          console.log(data);
+        });
+      }
+
         $scope.asideMenuSettings = {
             items: [
                 {
@@ -33,8 +47,7 @@ define([
                                 angular
                                   .element('<input type="file">')
                                   .change(function (event) {
-                                      // TODO: POST /api/data/upload + file
-                                      alert(event.target.files[0].name);
+                                    uploadDataSpreadsheet(event.target.files[0]);
                                   })
                                   .click();
                             }

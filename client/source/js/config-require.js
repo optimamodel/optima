@@ -17,6 +17,8 @@ define({
 //    'js-xlsx'       : '../vendor/js-xlsx/dist/xlsx',
     'jszip'         : '../vendor/js-xlsx/dist/jszip',
     'jquery'        : '../vendor/jquery/dist/jquery',
+    'ng-file-upload': './vendor/ng-file-upload/angular-file-upload',
+    'ng-file-upload-html5-shim': './vendor/ng-file-upload/angular-file-upload-html5-shim',
     'nvd3'          : '../vendor/nvd3/nv.d3',
     'angular-resource'    : '../vendor/angular-resource/angular-resource',
     'ui.router'     : '../vendor/angular-ui-router/release/angular-ui-router',
@@ -26,7 +28,7 @@ define({
 
   shim: {
     'angular': {
-      'deps': ['jquery'],
+      'deps': ['ng-file-upload-html5-shim', 'jquery'],
       'exports': 'angular'
     },
 //    'js-xlsx': {
@@ -37,6 +39,7 @@ define({
     'nvd3': ['d3'],
     'd3-box': ['d3'],
     'angular-resource': ['angular'],
+    'ng-file-upload': ['angular'],
     'saveAs': ['canvas2blob'],
     'ui.bootstrap': ['angular'],
     'ui.router' : ['angular']
