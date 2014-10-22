@@ -6,7 +6,7 @@ This function loads the spreadsheet data into Optima.
 Version: 2014oct16
 """
 
-def loaddata(filename='./old-epi-template.xlsx',verbose=True):
+def loaddata(filename='./epi-template.xlsx',verbose=True):
     
     ###########################################################################
     ## Preliminaries
@@ -45,8 +45,9 @@ def loaddata(filename='./old-epi-template.xlsx',verbose=True):
     ## Load data sheets
     ###########################################################################
     
-    data = struct() # Create structure for holding structures
-    programs =struct() # Create structure for holding program data
+    data = struct() # Create structure for holding data
+    programs = struct() # Create structure for holding program data
+    programnames = [] # Create list for storing program names (probably unnecessary?)
 
     print('opening workbook %s' % filename)
     spreadsheet = open_workbook(filename) # Open spreadsheet
@@ -74,22 +75,28 @@ def loaddata(filename='./old-epi-template.xlsx',verbose=True):
                         thispar = namelist[parcount][0] # Get the name of this parameter, e.g. 'trans'
                         data[name][thispar] = struct() # Need yet another structure if it's a constant!
 
-                    procategory = sheetdata.cellvalue(r,21) # See what's in the 20th column - any program data?
-                    if len(procategory): # It's not blank: there is a program that affects this parameter
-                        if verbose: print('    Loading "%s"...' % procategory)
-                        if : # Check if this program is already in the program list
-                        else: # This is the first time we've encountered this program; add it to the list of unique program names
-                        procount += 1 # Increment the program count -- this isn't right currently
-
-
-
                 else: # The first column is blank: it's time for the data
                     subparam = sheetdata.cell_value(r,1) # Get the name of a subparameter, e.g. 'FSW', population size for a given population
                     if len(subparam): # The subparameter name isn't blank, load something!
                         thesedata = sheetdata.row_values(r,start_colx=2,end_colx=20) # Data starts in 3rd column, finishes in 21st column
                         thesedata = map(lambda val: nan if val=='' else val, thesedata) # Replace blanks with nan
-                        if i==0 or i==1: # It's basic data or a matrix, just append the data
+                        if i==0: # It's basic data, append the data and check for programs
                             data[name][thispar].append(thesedata) # Store data
+
+                            procategory = sheetdata.cell_value(r,19) # See what's in the 18th column - any program data?
+                            if len(procategory): # It's not blank: there is a program that affects this parameter
+                                if verbose: print('    Loading "%s"...' % procategory)
+                                programs[thispar] = struct() # Create structure for storing program details (this is hideous, fix later. Could prob be a list)
+                                programs[thispar][subparam] = struct() # Create structure for storing program details (this is hideous, fix later. Could prob be a list)
+                                programs[thispar][subparam][procategory] = 1 # Store program name (this is hideous, fix later. Could prob be a list)
+                                if sheetdata.cell_value(r,21): # Any behavoiural assumptions to store?
+                                    assumptions = sheetdata.row_values(r,start_colx=20,end_colx=21) # Data starts in 3rd column, finishes in 21st column
+                                    assumptions = map(lambda val: nan if val=='' else val, assumptions) # Replace blanks with nan
+                                    programs[procategory][thispar][subparam].append(assumptions) # Store data in form program name/beahviour/pop
+                            
+                        if i==1: # It's a matrix, append the data 
+                            data[name][thispar].append(thesedata) # Store data
+                                                        
                         if i==2: # It's a constant, create a new dictionary entry
                             subpar = namelist[parcount][1].pop(0) # Pop first entry of subparameter list, which is namelist[parcount][1]
                             data[name][thispar][subpar] = thesedata # Store data
