@@ -6,7 +6,7 @@ This function loads the spreadsheet data into Optima.
 Version: 2014oct16
 """
 
-def loaddata(filename='./epi-template.xlsx',verbose=True):
+def loaddata(filename='./old-epi-template.xlsx',verbose=True):
     
     ###########################################################################
     ## Preliminaries
@@ -46,10 +46,13 @@ def loaddata(filename='./epi-template.xlsx',verbose=True):
     ###########################################################################
     
     data = struct() # Create structure for holding structures
+    programs =struct() # Create structure for holding program data
+
     print('opening workbook %s' % filename)
     spreadsheet = open_workbook(filename) # Open spreadsheet
     print('opened workbook %s' % filename)
     print(spreadsheet)
+
     for i,datanames in enumerate([basicdata, matrices, constants]): # Loop over each type of data, but treat constants differently
         for j in range(len(datanames)): # Loop over each spreadsheet for that data -- just one for constants
             if verbose: print('  Loading "%s"...' % sheetnames[i][j])
@@ -58,6 +61,7 @@ def loaddata(filename='./epi-template.xlsx',verbose=True):
             data[name] = struct() # Create structure for holding data, e.g. data.epi
             sheetdata = spreadsheet.sheet_by_name(sheetnames[i][j]) # Load this spreadsheet
             parcount = -1 # Initialize the parameter count
+            procount = -1 # Initialize the program count
             for r in range(sheetdata.nrows): # Loop over each row in the spreadsheet
                 paramcategory = sheetdata.cell_value(r,0) # See what's in the first column for this row
                 if len(paramcategory): # It's not blank: e.g. "HIV prevalence"
@@ -69,10 +73,20 @@ def loaddata(filename='./epi-template.xlsx',verbose=True):
                     if i==2: # It's a constant
                         thispar = namelist[parcount][0] # Get the name of this parameter, e.g. 'trans'
                         data[name][thispar] = struct() # Need yet another structure if it's a constant!
+
+                    procategory = sheetdata.cellvalue(r,21) # See what's in the 20th column - any program data?
+                    if len(procategory): # It's not blank: there is a program that affects this parameter
+                        if verbose: print('    Loading "%s"...' % procategory)
+                        if : # Check if this program is already in the program list
+                        else: # This is the first time we've encountered this program; add it to the list of unique program names
+                        procount += 1 # Increment the program count -- this isn't right currently
+
+
+
                 else: # The first column is blank: it's time for the data
                     subparam = sheetdata.cell_value(r,1) # Get the name of a subparameter, e.g. 'FSW', population size for a given population
                     if len(subparam): # The subparameter name isn't blank, load something!
-                        thesedata = sheetdata.row_values(r,start_colx=2,end_colx=sheetdata.ncols) # Data starts in 3rd column
+                        thesedata = sheetdata.row_values(r,start_colx=2,end_colx=20) # Data starts in 3rd column, finishes in 21st column
                         thesedata = map(lambda val: nan if val=='' else val, thesedata) # Replace blanks with nan
                         if i==0 or i==1: # It's basic data or a matrix, just append the data
                             data[name][thispar].append(thesedata) # Store data
