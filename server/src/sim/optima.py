@@ -12,7 +12,7 @@ Version: 2014sep24
 """
 
 ## Set parameters
-filename = 'epi-template.xlsx'
+filename = 'old-epi-template.xlsx'
 
 
 print('WELCOME TO OPTIMA')
