@@ -6,7 +6,10 @@ This function loads the spreadsheet data into Optima.
 Version: 2014oct16
 """
 
-def loaddata(filename='./epi-template.xlsx',verbose=True):
+#def loaddata(filename='./epi-template.xlsx',verbose=True):
+if 1:
+    filename='./epi-template.xlsx'
+    verbose=True
     
     ###########################################################################
     ## Preliminaries
@@ -82,8 +85,9 @@ def loaddata(filename='./epi-template.xlsx',verbose=True):
                         thesedata = map(lambda val: nan if val=='' else val, thesedata) # Replace blanks with nan
                         if i==0: # It's basic data, append the data and check for programs
                             data[name][thispar].append(thesedata) # Store data
-
-                            procategory = sheetdata.cell_value(r,21) # See what's in the 18th column - any program data?
+                            
+                            print('dude this code sucks ccocs')
+                            procategory = sheetdata.cell_value(r,19) # See what's in the 18th column - any program data? # WARNING KLUDGY AND AWFUL AND DISGUSTING
                             if len(procategory): # It's not blank: there is a program that affects this parameter
                                 if verbose: print('    Loading "%s"...' % procategory)
                                 programs[thispar] = struct() # Create structure for storing program details (this is hideous, fix later. Could prob be a list)
@@ -102,4 +106,4 @@ def loaddata(filename='./epi-template.xlsx',verbose=True):
                             data[name][thispar][subpar] = thesedata # Store data
     
     if verbose: print('  ...done loading data.')
-    return data
+#    return data
