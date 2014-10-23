@@ -83,14 +83,14 @@ def loaddata(filename='./epi-template.xlsx',verbose=True):
                         if i==0: # It's basic data, append the data and check for programs
                             data[name][thispar].append(thesedata) # Store data
 
-                            procategory = sheetdata.cell_value(r,19) # See what's in the 18th column - any program data?
+                            procategory = sheetdata.cell_value(r,21) # See what's in the 18th column - any program data?
                             if len(procategory): # It's not blank: there is a program that affects this parameter
                                 if verbose: print('    Loading "%s"...' % procategory)
                                 programs[thispar] = struct() # Create structure for storing program details (this is hideous, fix later. Could prob be a list)
                                 programs[thispar][subparam] = struct() # Create structure for storing program details (this is hideous, fix later. Could prob be a list)
                                 programs[thispar][subparam][procategory] = 1 # Store program name (this is hideous, fix later. Could prob be a list)
-                                if sheetdata.cell_value(r,21): # Any behavoiural assumptions to store?
-                                    assumptions = sheetdata.row_values(r,start_colx=20,end_colx=21) # Data starts in 3rd column, finishes in 21st column
+                                if sheetdata.cell_value(r,23): # Any behavoiural assumptions to store?
+                                    assumptions = sheetdata.row_values(r,start_colx=23,end_colx=24) # Data starts in 3rd column, finishes in 21st column
                                     assumptions = map(lambda val: nan if val=='' else val, assumptions) # Replace blanks with nan
                                     programs[procategory][thispar][subparam].append(assumptions) # Store data in form program name/beahviour/pop
                             
