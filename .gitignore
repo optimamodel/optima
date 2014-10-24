@@ -3,4 +3,5 @@
 support/
 package
 *.iml
+*.pyc
 server/p-env

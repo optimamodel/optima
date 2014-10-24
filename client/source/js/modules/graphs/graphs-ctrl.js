@@ -2,9 +2,7 @@ define([
   './module'
 ], function (module) {
   'use strict';
-
   module.controller('GraphsController', function ($scope, dataMocks) {
-
     // GRAPH 1
     // =======
 
@@ -176,5 +174,11 @@ define([
     // =======
 
     $scope.data5 = dataMocks.lineScatterError();
-  })
+
+    // GRAPH 6
+    // =======
+
+    $scope.data6 = dataMocks.lineScatterArea();
+
+  });
 });

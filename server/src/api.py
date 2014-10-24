@@ -1,8 +1,23 @@
+import os
 from flask import Flask
+from flask import helpers
+from flask import request
+from werkzeug import secure_filename
 from generators.line import generatedata
 import json
+import traceback
+import sys
+from sim.loaddata import loaddata
+
+UPLOAD_FOLDER = '/tmp/uploads' #todo configure
+ALLOWED_EXTENSIONS=set(['txt','xlsx','xls'])
 
 app = Flask(__name__)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
 @app.route('/api', methods=['GET'])
 def root():
@@ -19,7 +34,6 @@ def lineParam(numpoints):
         "key": "Line series",
         "color": "#ff7f0e"
     })
-    #return app.send_static_file('line-chart.json')
 
 @app.route('/api/data/stacked-area', methods=['GET'])
 def stackedArea():
@@ -37,6 +51,47 @@ def pie():
 def lineScatterError():
     return app.send_static_file('line-scatter-error-chart.json')
 
+@app.route('/api/data/line-scatter-area', methods=['GET'])
+def lineScatterArea():
+    return app.send_static_file('line-scatter-area-chart.json')
+
+
+@app.route('/api/data/download/<downloadName>', methods=['GET'])
+def downloadExcel(downloadName):
+    example_excel_file_name = 'example.xlsx'
+
+    file_path = helpers.safe_join(app.static_folder, example_excel_file_name)
+    options = {
+        'cache_timeout': app.get_send_file_max_age(example_excel_file_name),
+        'conditional': True,
+        'attachment_filename': downloadName
+    }
+    return helpers.send_file(file_path, **options)
+
+@app.route('/api/data/upload', methods=['POST'])
+def uploadExcel():
+    reply = {'status':'NOK'}
+    try:
+        file = request.files['file']
+        if file:
+            filename = secure_filename(file.filename)
+            reply['file'] = filename
+            if allowed_file(filename):
+                server_filename = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                file.save(server_filename)
+#                epi_file_name = 'epi-template.xlsx'
+#                file_path = helpers.safe_join(app.static_folder, epi_file_name)
+
+                data = loaddata(server_filename) #gives an error for an example file...
+                reply['status'] = 'OK'
+                print(data)
+            else:
+                reply['reason'] = 'invalid file extension:'+ filename
+    except Exception, err:
+        var = traceback.format_exc()
+        print(var)
+        reply['exception'] = var
+    return json.dumps(reply)
 
 if __name__ == '__main__':
     app.run(debug=True)

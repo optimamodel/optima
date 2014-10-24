@@ -1,18 +1,18 @@
 define([
   'angular',
-  'ui.router',
-  '../resources/data-mocks',
-  '../../config'
+  'ui.router'
 ], function (angular) {
   'use strict';
 
-  return angular.module('app.model', ['ui.router'])
+  return angular.module('app.model', [
+    'ui.router'
+  ])
     .config(function ($stateProvider) {
       $stateProvider
         .state('model', {
           url: '/model',
           abstract: true,
-          template: '<div ui-view=""></div>'
+          template: '<div ui-view></div>'
         })
         .state('model.view', {
           url: '/view',

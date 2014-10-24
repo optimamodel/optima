@@ -1,12 +1,15 @@
-define(['./module'], function (module) {
+define(['./module', 'angular'], function (module, angular) {
     'use strict';
 
     module.controller('ModelViewController', function ($scope, dataMocks) {
 
-      <!-- CK: When clicked, this button should run simulate(), take the output, and plot it in the 4 "linescatterdata" charts below (or at least one of them) -->
       $scope.simulate = function () {
         var generatedDataSet = dataMocks.lineWith({num: $scope.numberOfPoints});
         $scope.linescatterdata = [generatedDataSet];
+      };
+
+      $scope.openFileOption1 = function () {
+        angular.element('#file01').click();
       };
 
         $scope.scatteroptions = { /* CK: need axis labels to align better, and need right number! */
@@ -92,10 +95,10 @@ define(['./module'], function (module) {
                 useInteractiveGuideline: true,
                 sizeRange: [100,100],
                 xAxis: {
-                    axisLabel: 'Cost (US$ million)'
+                    axisLabel: 'Year'
                 },
                 yAxis: {
-                    axisLabel: 'Outcome',
+                    axisLabel: 'Prevalence (%)',
                     tickFormat: function (d) {
                         return d3.format(',.2f')(d);
                     },

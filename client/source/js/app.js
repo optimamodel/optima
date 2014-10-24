@@ -1,12 +1,14 @@
 define([
   'angular',
   'angular-nvd3',
+  'ng-file-upload',
   'ui.bootstrap',
   'ui.router',
   './config',
   './modules/about/index',
   './modules/analyses/index',
   './modules/common/save-graph-as-directive',
+  './modules/d3-charts/index',
   './modules/graphs/index',
   './modules/help/index',
   './modules/home/index',
@@ -21,9 +23,11 @@ define([
   'use strict';
 
   return angular.module('app', [
+    'angularFileUpload',
     'app.about',
-    'app.constants',
     'app.analyses',
+    'app.constants',
+    'app.d3-charts',
     'app.graphs',
     'app.help',
     'app.home',
