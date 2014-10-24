@@ -42,7 +42,7 @@ define([
                             }
                         },
                         {
-                            title: 'Upload data spreadsheet',
+                            title: 'Upload Optima spreadsheet',
                             click: function () {
                                 angular
                                   .element('<input type="file">')
@@ -71,7 +71,7 @@ define([
                     id: 'create-load',
                     subitems: [
                         {
-                            title: 'View model & data',
+                            title: 'View data & model estimates',
                             state: {
                                 name: 'model.view'
                             }
@@ -91,17 +91,17 @@ define([
                     ]
                 },
                 {
-                    title: 'Step 3: Analysis',
+                    title: 'Step 3: Analysis & optimization',
                     id: 'create-load',
                     subitems: [
                         {
-                            title: 'Define objectives',
+                            title: 'Define optimization objectives',
                             state: {
                                 name: 'optimization.objectives'
                             }
                         },
                         {
-                            title: 'Define constraints',
+                            title: 'Define optimization constraints',
                             state: {
                                 name: 'optimization.constraints'
                             }
