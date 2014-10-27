@@ -5,7 +5,9 @@ if [ -d "node_modules" ]; then
 fi
 
 if [ -d "source/vendor" ]; then
-  node_modules/bower/bin/bower prune
+  if [ -d "node_modules/bower/bin" ]; then
+    node_modules/bower/bin/bower prune
+  fi
 fi
 
 # install npm and bower deps
