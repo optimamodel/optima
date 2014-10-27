@@ -42,17 +42,6 @@ define([
                             }
                         },
                         {
-                            title: 'Upload Optima spreadsheet',
-                            click: function () {
-                                angular
-                                  .element('<input type="file">')
-                                  .change(function (event) {
-                                    uploadDataSpreadsheet(event.target.files[0]);
-                                  })
-                                  .click();
-                            }
-                        },
-                        {
                             title: 'Open existing project',
                             click: function () {
                                 angular
@@ -60,6 +49,17 @@ define([
                                   .change(function (event) {
                                       // TODO
                                       alert(event.target.files[0].name);
+                                  })
+                                  .click();
+                            }
+                        },
+                        {
+                            title: 'Upload Optima spreadsheet',
+                            click: function () {
+                                angular
+                                  .element('<input type="file">')
+                                  .change(function (event) {
+                                    uploadDataSpreadsheet(event.target.files[0]);
                                   })
                                   .click();
                             }
