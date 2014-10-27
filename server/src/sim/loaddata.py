@@ -3,11 +3,11 @@ LOADDATA
 
 This function loads the spreadsheet data into Optima.
 
-Version: 2014oct16
+Version: 2014oct25
 """
 
-#def loaddata(filename='./epi-template.xlsx',verbose=True):
-if 1:
+def loaddata(filename='./epi-template.xlsx',verbose=True):
+#if 1: # For troubleshooting
     filename='./epi-template.xlsx'
     verbose=True
     
@@ -16,7 +16,7 @@ if 1:
     ###########################################################################
     
     print('Loading data from %s...' % filename)
-    from pylab import nan # For reading in empty values
+    from matplotlib.pylab import nan # For reading in empty values
     from xlrd import open_workbook # For opening Excel spreadsheets
     from bunch import Bunch as struct # Replicate Matlab-like structure behavior
     
@@ -106,4 +106,4 @@ if 1:
                             data[name][thispar][subpar] = thesedata # Store data
     
     if verbose: print('  ...done loading data.')
-#    return data
+    return data

@@ -17,7 +17,7 @@ Version: 2014sep25
 ###############################################################################
 
 ## Imports
-from pylab import array, zeros, r_ # For creating arrays
+from matplotlib.pylab import array, zeros, r_ # For creating arrays
 from bunch import Bunch as struct # Replicate Matlab-like structure behavior
 
 ## TEMP

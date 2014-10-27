@@ -16,7 +16,7 @@ def data2pars(data,verbose=True):
 
     print('Converting data to parameters...')
     from bunch import Bunch as struct # Replicate Matlab-like structure behavior
-    from pylab import array, isnan, zeros, shape, mean
+    from matplotlib.pylab import array, isnan, zeros, shape, mean
     
     def sanitize(arraywithnans):
         """ Sanitize input to remove NaNs. Warning, does not work on multidimensional data!! """
