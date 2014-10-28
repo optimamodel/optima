@@ -1,10 +1,10 @@
 """
-MANUALCALIBRATION
+MANUALFIT
 
 Version: 2014oct28
 """
 
-def manualcalibration(projectfilename='Test.mat', paramtable):
+def manualfit(projectfilename='Test.mat', paramtable):
     # Get input data from the editable table in the form of [parameter, value], e.g.
     
     # The project data file name needs to be 
