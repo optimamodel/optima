@@ -23,6 +23,11 @@ define(['angular', 'ui.router'], function (angular) {
                     url: '/optimize',
                     templateUrl: 'js/modules/optimization/optimize.html',
                     controller: 'OptimizationOptimizeController'
+                })
+                .state('optimization.results', {
+                    url: '/results',
+                    templateUrl: 'js/modules/optimization/results.html',
+                    controller: 'OptimizationResultsController'
                 });
         });
 

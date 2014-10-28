@@ -26,13 +26,7 @@ define([
         $scope.asideMenuSettings = {
             items: [
                 {
-                    title: 'Home',
-                    state: {
-                        name: 'home'
-                    }
-                },
-                {
-                    title: 'Step 1: Create/open project',
+                    title: 'Create/open project',
                     id: 'create-load',
                     subitems: [
                         {
@@ -67,7 +61,7 @@ define([
                     ]
                 },
                 {
-                    title: 'Step 2: View & calibrate model',
+                    title: 'View & calibrate model',
                     id: 'create-load',
                     subitems: [
                         {
@@ -91,7 +85,25 @@ define([
                     ]
                 },
                 {
-                    title: 'Step 3: Analysis & optimization',
+                    title: 'Forecasts & counterfactuals',
+                    id: 'create-load',
+                    subitems: [
+                        {
+                            title: 'Manage counterfactuals',
+                            state: {
+                                name: 'forecasts.counterfactuals'
+                            }
+                        },
+                        {
+                            title: 'View results',
+                            state: {
+                                name: 'forecasts.results'
+                            }
+                        }
+                    ]
+                },
+                {
+                    title: 'Analysis & optimization',
                     id: 'create-load',
                     subitems: [
                         {
@@ -107,27 +119,15 @@ define([
                             }
                         },
                         {
-                            title: 'Run analysis',
+                            title: 'Run optimization',
                             state: {
                                 name: 'optimization.optimize'
                             }
-                        }
-                    ]
-                },
-                {
-                    title: 'Step 4: View/output results',
-                    id: 'create-load',
-                    subitems: [
-                        {
-                            title: 'Epidemiological results',
-                            state: {
-                                name: 'results.epiresults'
-                            }
                         },
                         {
-                            title: 'Economic results',
+                            title: 'View results',
                             state: {
-                                name: 'results.econresults'
+                                name: 'optimization.results'
                             }
                         }
                     ]
