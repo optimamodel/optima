@@ -26,15 +26,14 @@ def data2pars(data,verbose=True):
         
     def data2par(dataarray):
         """ Take an array of data and turn it into default parameters -- here, just take the means """
-        from time import sleep
+#        from time import sleep
         nrows = shape(dataarray)[0] # See how many rows need to be filled (either npops or 1)
         
         output = struct() # Create structure
         output.t = 1 # Set default time pameter -- constant (1) by default
         output.p = zeros(nrows) # Initialize arra for holding population parameters
-        print dataarray
-        sleep(0.3)
-        
+#        print dataarray
+#        sleep(0.3)
         
         for r in xrange(nrows): 
             output.p[r] = mean(sanitize(dataarray[r])) # Calculate mean for each population

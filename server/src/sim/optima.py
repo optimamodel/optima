@@ -19,7 +19,7 @@ print('WELCOME TO OPTIMA')
 from loaddata import loaddata
 from data2pars import data2pars
 
-data = loaddata(filename)
+data, programs = loaddata(filename)
 P = data2pars(data)
 
 print('Done.')
