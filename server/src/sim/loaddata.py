@@ -3,7 +3,7 @@ LOADDATA
 
 This function loads the spreadsheet data into Optima.
 
-Version: 2014oct25
+Version: 2014oct28
 """
 
 def loaddata(filename='example.xlsx',verbose=True):
