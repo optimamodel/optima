@@ -28,6 +28,6 @@ updatedata(projectname='example')
 
 print('Running simulation...')
 from runsimulation import runsimulation
-runsimulation(projectname='example')
+runsimulation(projectdatafile='example.mat')
 
 print('Done.')

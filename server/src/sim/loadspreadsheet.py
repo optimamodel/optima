@@ -34,7 +34,7 @@ def loadspreadsheet(filename='example.xlsx',verbose=True):
     meta = [['meta', ['pops', 'progs']]]
     
     basicdata = [['epi',  ['popsize','hivprev','hivprevlow','hivprevhigh','stiprev','tbprev']], \
-                 ['txrx', ['testrate','aidstestrate','numtests','numdiagnoses','numinfections','numdeaths','num1stline','num2ndline','numpmtct','numbreastpmtct']], \
+                 ['txrx', ['testrate','aidstestrate','numtests','numdiagnoses','numinfections','numdeaths','numfirstline','numsecondline','numpmtct','numbreastpmtct']], \
                  ['sex',  ['numactsreg','numactscas','numactscom','condomreg','condomcas','condomcom','circum']], \
                  ['drug', ['numinject','sharing','ost']]]
                  
@@ -45,7 +45,7 @@ def loadspreadsheet(filename='example.xlsx',verbose=True):
                             ['cd4trans', ['acute','gt500','gt350','gt200','aids']], \
                             ['prog',     ['acute','gt500','gt350','gt200']],\
                             ['recov',    ['gt500','gt350','gt200','aids']],\
-                            ['fail',     ['1st','2nd']],\
+                            ['fail',     ['first','second']],\
                             ['death',    ['background','inj','acute','gt500','gt350','gt200','aids','treat','tb']],\
                             ['eff',      ['condom','circ','dx','sti','meth','pmtct','tx']]]], \
                 ['econ',   [['dalys',    ['acute','gt500','gt350','gt200','aids','tx']], \
@@ -125,7 +125,7 @@ def loadspreadsheet(filename='example.xlsx',verbose=True):
                             data[name][thispar].append(thesedata) # Store data
                             
                             # Load program data -- only exists for basic data
-                            programname = sheetdata.cell_value(row, programcols[0])
+                            programname = str(sheetdata.cell_value(row, programcols[0])) # Convert to plain string since otherwise can't be used as a dict key
                             if not(programname==''): # Not blank: a program exists!
                                 if not(programs.has_key(programname)): programs[programname] = [] # Create new list if none exists
                                 outcomes = sheetdata.row_values(row, start_colx=programcols[1], end_colx=programcols[2]) # Get outcome data
