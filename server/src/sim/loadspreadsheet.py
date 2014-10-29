@@ -1,12 +1,12 @@
 """
-LOADDATA
+LOADSPREADSHEET
 
 This function loads the spreadsheet data into Optima.
 
 Version: 2014oct28
 """
 
-def loaddata(filename='example.xlsx',verbose=True):
+def loadspreadsheet(filename='example.xlsx',verbose=True):
 #if 1: # For troubleshooting
 #    filename='example.xlsx'
 #    verbose=True

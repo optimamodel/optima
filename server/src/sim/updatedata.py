@@ -1,17 +1,17 @@
 """
 UPDATEDATA
 
-Version: 2014oct28
+Version: 2014oct29
 """
 
 def updatedata(projectname='example'):
     
     # Load the Excel spreadsheet, read it in (via loaddata.py), and save it somewhere
-    from loaddata import loaddata
+    from loadspreadsheet import loadspreadsheet
     from makepars import makepars
     projectfilename = projectname+'.mat'
-    templatename = projectname+'.xlsx'
-    data, programs = loaddata(templatename)
+    spreadsheetname = projectname+'.xlsx'
+    data, programs = loadspreadsheet(spreadsheetname)
     G, P = makepars(data)
     
     # Update the data file
