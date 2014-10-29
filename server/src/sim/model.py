@@ -27,19 +27,7 @@ data = loaddata('example.xlsx')
 P = data2pars(data)
 
 verbose = True
-pg = struct()
-pg.nstates = 1+5*5
-pg.npops = 6
-pg.npts = 150
-pg.timestep = 0.1
 
-pg.ncd4 = 5
-pg.sus = array([0])
-pg.undiag = r_[1:6]
-pg.diag   = r_[6:11]
-pg.treat1 = r_[11:16]
-pg.fail   = r_[16:21]
-pg.treat2 = r_[21:26]
 
 sim = struct()
 sim.popnames = ['GM','GF','FSW','CSW','MSM','PWID']
