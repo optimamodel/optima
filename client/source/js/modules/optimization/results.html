@@ -1,0 +1,63 @@
+<div class="page rich">
+    <div class="page_subheader">
+        <div class="elastic_col __va-middle text-right">
+            <div class="elastic __fluid float-right">
+                <div class="elastic_col __shrink">
+                    <label>
+                        Maximum time limit:
+                        <select class="txbox __inline" style="width: 120px">
+                            <option value="">1 minute</option>
+                            <option value="">5 minutes</option>
+                            <option value="">10 minutes</option>
+                            <option value="">30 minutes</option>
+                            <option value="">1 hour</option>
+                            <option value="">No limit</option>
+                        </select>
+                    </label>
+                </div>
+                <div class="elastic_col __shrink">
+                    <button class="btn">Start analysis</button>
+                </div>
+                <div class="elastic_col __shrink">
+                    <button class="btn">Stop analysis</button>
+                </div>
+                <div class="elastic_col __shrink">
+                    <button class="btn">Save</button>
+                </div>
+                <div class="elastic_col __shrink">
+                    <button class="btn">Revert</button>
+                </div>
+                <div class="elastic_col __shrink float-right">
+                    Current indicator: 23,283 infections <!-- CK: needs to be dynamic -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="well">
+
+        <div class="grid">
+            <div class="section cf">
+                <div class="6">
+                    <h2>Original allocation</h2>
+                    <div class="chart-container">
+                        <nvd3 data="piedata" options="pieoptions"></nvd3>
+                    </div>
+                </div>
+                <div class="6">
+                    <h2>Current allocation</h2>
+                    <div class="chart-container">
+                        <nvd3 data="piedata" options="pieoptions"></nvd3>
+                    </div>
+                </div>
+                <div class="6">
+                    <h2>Indicator</h2>
+                    <div class="chart-container">
+                        <nvd3 data="linescatterdata" options="linescatteroptions"></nvd3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>

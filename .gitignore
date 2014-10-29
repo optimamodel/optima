@@ -5,3 +5,6 @@ package
 *.iml
 *.pyc
 server/p-env
+server/build
+\~\$*
+*.prj
