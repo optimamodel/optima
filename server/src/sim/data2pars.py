@@ -1,12 +1,12 @@
 """
-DATA2PARS
+MAKEPARS
 
 This function turns the data into model parameters.
 
-Version: 2014oct16
+Version: 2014oct28
 """
 
-def data2pars(data,verbose=True):
+def makepars(data,verbose=True):
     
     
     
@@ -40,13 +40,14 @@ def data2pars(data,verbose=True):
         
         return output
     
-    P = struct() # Initialize parameters structure
     
     
     
     ###############################################################################
     ## Loop over quantities
     ###############################################################################
+    
+    P = struct() # Initialize parameters structure
     
     ## Epidemilogy parameters -- most are data
     P.popsize = data2par(data.epi.popsize) # Population size -- TODO: don't take average for this!
@@ -80,7 +81,30 @@ def data2pars(data,verbose=True):
                 P.const[parname][parname2] = data.const[parname][parname2][0] # Taking best value only, hence the 0
         else:
             P.const[parname] = data.const[parname][0]
+            
+            
+            
+    
+    ###############################################################################
+    ## Set up general parameters
+    ###############################################################################
+    
+    from matplotlib.pylab import r_
+    
+    G = struct()
+    G.nstates = 1+5*5
+    G.npops = 6
+    G.npts = 150
+    G.timestep = 0.1
+    
+    G.ncd4 = 5 # 
+    G.sus = array([0])
+    G.undiag = r_[0*G.ncd4+1:1*G.ncd4+1]
+    G.diag   = r_[1*G.ncd4+1:2*G.ncd4+1]
+    G.treat1 = r_[2*G.ncd4+1:3*G.ncd4+1]
+    G.fail   = r_[3*G.ncd4+1:4*G.ncd4+1]
+    G.treat2 = r_[4*G.ncd4+1:5*G.ncd4+1]
 
     if verbose: print('  ...done converting data to parameters.')
     
-    return P
+    return G, P
