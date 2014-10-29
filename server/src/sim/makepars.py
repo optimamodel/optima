@@ -6,7 +6,7 @@ This function turns the data into model parameters.
 Version: 2014oct28
 """
 
-def makepars(data,verbose=True):
+def makepars(data,verbose=2):
     
     
     
@@ -14,7 +14,7 @@ def makepars(data,verbose=True):
     ## Preliminaries
     ###############################################################################
 
-    print('Converting data to parameters...')
+    if verbose>=1: print('Converting data to parameters...')
     from bunch import Bunch as struct # Replicate Matlab-like structure behavior
     from matplotlib.pylab import array, isnan, zeros, shape, mean
     
@@ -101,6 +101,6 @@ def makepars(data,verbose=True):
     G.fail   = r_[3*G.ncd4+1:4*G.ncd4+1]
     G.tx2 = r_[4*G.ncd4+1:5*G.ncd4+1]
 
-    if verbose: print('  ...done converting data to parameters.')
+    if verbose>=2: print('  ...done converting data to parameters.')
     
     return G, P
