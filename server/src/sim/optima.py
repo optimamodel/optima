@@ -30,4 +30,9 @@ print('Running simulation...')
 from runsimulation import runsimulation
 runsimulation(projectdatafile='example.prj')
 
+print('Loading results...')
+from dataio import loaddata
+D = loaddata('example.prj')
+
+
 print('Done.')
