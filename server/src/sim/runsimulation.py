@@ -22,10 +22,10 @@ def runsimulation(projectdatafile='example.prj', startyear=2000, endyear=2030, v
     options.dt = 0.2
     
     from makemodelpars import makemodelpars
-    D.Q = makemodelpars(D.P, options, verbose=verbose)
+    D.M = makemodelpars(D.P, options, verbose=verbose)
     
     from model import model
-    D.sim = model(D.G, D.P, options, verbose=verbose)
+    D.sim = model(D.G, D.M, options, verbose=verbose)
     
     savedata(projectdatafile, D, verbose=verbose)
     if verbose>=2: print('  ...done running simulation.')
