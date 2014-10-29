@@ -69,15 +69,70 @@ def model(G, P, options, verbose=2): # extraoutput is to calculate death rates e
             allpeople[pop,t] = sum(people[:,pop,t]) # All people in this population group at this time point
             if not(allpeople[pop,t]>0): raise Exception('No people in population %i at timestep %i (time %0.1f)' % (pop, t, S.tvec[t]))
             effundx = sum(cd4trans * people[G.undx,pop,t]); # Effective number of infecious undiagnosed people
-            effdx   = sum(dxfactor * (people[G.dx,pop,t]+people[G.fail,pop,t])); # ...and diagnosed/failed
+            effdx   = sum(dxfactor * (people[G.dx,pop,t]+people[G.fail,pop,t])) # ...and diagnosed/failed
             efftx   = sum(txfactor * (people[G.tx1,pop,t]+people[G.tx2,pop,t])) # ...and treated
             effhivprevalence[pop]=(effundx+effdx+efftx)/allpeople[pop,t]; # Calculate HIV "prevalence", scaled for infectiousness based on CD4 count; assume that treatment failure infectiousness is same as corresponding CD4 count
             if not(effhivprevalence[pop]>=0): raise Exception('HIV prevalence invalid in population %s! (=%f)' % (pop,effhivprevalence[pop]) )
         
         ## Calculate force-of-infection (forceinf)
         forceinfvec = zeros(G.npops) # Initialize force-of-infection vector for each population group
-        for pop in range(G.npops):    
-            forceinfvec[pop] = tmpnumactsvec[pop]*tmpforceinfvec[pop] # TODO: um, calculate properly....
+        # Sexual partnerships
+        for psh in range(Q.nsexpartnerships): # Loop over all sexual partnerships
+            
+            # Amazingly, the code runs faster if these are pulled out of the equations for forceinf!
+            popM = Q.sexpartnershippop[psh,1]; # "Male" population (e.g. 5 = CSW)
+            popF = Q.sexpartnershippop[psh,2]; # "Female" population (e.g. 10 = FIDU), but includes MSM and waria
+            numacts = dt*Q.numacts[psh,:,t]; # Number of acts per person per year; 2nd dimension is insertive vs. receptive
+            condomeffect=1-pm.condomprob(psh,t)*pm.condomefficacy; # Condom use
+            circumcisioneffectM=1-pm.circumcisionefficacy*pm.circumcisionprob(popM,t); # Effect of circumcisionumcision
+            circumcisioneffectF=1; # circumcision has no effect on the receptive population
+            otherinterventioneffectM=1;# Turn off for now 1-pm.otherinterventionefficacy*pm.otherinterventionprob(popM,t); # An "other" intervention, e.g. PEP
+            otherinterventioneffectF=1;# Turn off for now 1-pm.otherinterventionefficacy*pm.otherinterventionprob(popF,t); # An "other" intervention, e.g. PEP
+            stieffectM=1+pm.stitransincrease*pm.stiprevalence(popM,t); # STI prevalence effect
+            stieffectF=1+pm.stitransincrease*pm.stiprevalence(popF,t);
+            transmissibilityM=pm.sexpartnershiptrans(psh,1); # Insertive transmissibility
+            transmissibilityF=pm.sexpartnershiptrans(psh,2); # Receptive transmissibility
+            
+            forceinfM = 1 - (1-transmissibilityM*circumcisioneffectM*stieffectM*otherinterventioneffectM) ^ (numacts(1)*condomeffect*effectivehivprevalence(popF)); #/populationsizeM); # The chance of person B infecting person A; pm.cst{psh}(3)=trans; only males are protected by circumcisionumcision
+            forceinfF = 1 - (1-transmissibilityF*circumcisioneffectF*stieffectF*otherinterventioneffectF) ^ (numacts(2)*condomeffect*effectivehivprevalence(popM)); #/populationsizeF); # The chance of person A infecting person B
+            if any([forceinfM forceinfF]~=median([[forceinfM forceinfF];[0 0];[1 1]])), badforceinf('sex'), end # Error checking: make sure both values lie between 0 and 1
+            
+            forceinfvec(popM)=1-(1-forceinfvec(popM))*(1-forceinfM); # Calculate the new "male" forceinf, ensuring that it never gets above 1
+            forceinfvec(popF)=1-(1-forceinfvec(popF))*(1-forceinfF); # Calculate the new "female" forceinf
+            
+            if extraoutput # Store information for calculating how many infections are caused by each population
+                forceinfmatrix(popM,popF)=1-(1-forceinfmatrix(popM,popF))*(1-forceinfF); # Calculate how many people the male population infected
+                forceinfmatrix(popF,popM)=1-(1-forceinfmatrix(popF,popM))*(1-forceinfM); # Calculate how many people the female population infected
+            end
+        end
+        
+        
+        # Injecting partnerships
+        for psh=1:pg.ninjpartnerships # Loop over all injecting partnerships
+            
+            # Amazingly, the code runs faster if these are pulled out of the equations for forceinf!
+            popM=pm.injpartnershippop(psh,1); # "Male" population (e.g. 5 = CSW)
+            popF=pm.injpartnershippop(psh,2); # "Female" population (e.g. 10 = FIDU), but includes MSM and waria
+            baseforceinfM=pm.transinjecting;
+            baseforceinfF=pm.transinjecting;
+            cleaningeffect=1-pm.syringecleaningefficacy*pm.syringecleaningprob(t);
+            methadoneeffect=1-pm.methadoneefficacy*pm.methadoneprob(t);
+            numsharedinjections=dt*pm.numinjectionpairs(psh,:,t)*pm.syringesharingprob(t);
+           
+            # WARNING, be careful about population size here too
+            forceinfM=1 - (1-baseforceinfM*cleaningeffect) ^ (numsharedinjections(1)*methadoneeffect * effectivehivprevalence(popF)); #/populationsizeM); # Force of infection
+            forceinfF=1 - (1-baseforceinfF*cleaningeffect) ^ (numsharedinjections(2)*methadoneeffect * effectivehivprevalence(popM)); #/populationsizeF); # Force of infection
+            if any([forceinfM forceinfF]~=median([[forceinfM forceinfF];[0 0];[1 1]])), badforceinf('inj'), end # Error checking: make sure both values lie between 0 and 1
+            
+            forceinfvec(popM)=1-(1-forceinfvec(popM))*(1-forceinfM); # Calculate the new "male" forceinf, ensuring that it never gets above 1
+            forceinfvec(popF)=1-(1-forceinfvec(popF))*(1-forceinfF); # Calculate the new "female" forceinf
+            
+            if extraoutput # Store information for calculating how many infections are caused by each population
+                forceinfmatrix(popM,popF)=1-(1-forceinfmatrix(popM,popF))*(1-forceinfF); # Calculate how many people the male population infected
+                forceinfmatrix(popF,popM)=1-(1-forceinfmatrix(popF,popM))*(1-forceinfM); # Calculate how many people the female population infected
+            end
+            
+        end
     
     
     
