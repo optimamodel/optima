@@ -13,12 +13,12 @@ def updatedata(projectname='example', verbose=2):
     spreadsheetname = projectname+'.xlsx'
     
     from loadspreadsheet import loadspreadsheet
-    from makepars import makepars
+    from makedatapars import makedatapars
     from dataio import loaddata, savedata
     
     D = loaddata(projectfilename, verbose=verbose) # Load existing file
     D.data, D.programs = loadspreadsheet(spreadsheetname, verbose=verbose)
-    D = makepars(D, verbose=verbose) # Update parameters
+    D = makedatapars(D, verbose=verbose) # Update parameters
     
     savedata(projectfilename, D, verbose=verbose) # Update the data file
     
