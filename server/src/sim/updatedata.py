@@ -15,9 +15,8 @@ def updatedata(projectname='example'):
     G, P = makepars(data)
     
     # Update the data file
-    from scipy.io import savemat, loadmat
-    D = loadmat(projectfilename)
-    D.update({'data':data, 'programs':programs, 'P':P, 'G':G})
-    savemat(projectfilename,D)
+    from dataio import savedata
+    D = {'data':data, 'programs':programs, 'P':P, 'G':G}
+    savedata(projectfilename,D)
     
     return None

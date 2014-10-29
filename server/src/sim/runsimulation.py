@@ -9,9 +9,9 @@ Version: 2014oct28
 
 def runsimulation(projectdatafile='example.mat', endyear=2030):
     # The project data file name needs to be 
-    from scipy.io import loadmat, savemat
+    from dataio import loaddata, savedata
     
-    D = loadmat(projectdatafile)
+    D = loaddata(projectdatafile)
     
     
     
