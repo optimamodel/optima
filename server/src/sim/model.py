@@ -8,31 +8,33 @@ Version: 2014sep25
 
 
 
-def model(G, P, verbose=2): # extraoutput is to calculate death rates etc.
+def model(G, P, options, verbose=2): # extraoutput is to calculate death rates etc.
 
     if verbose>=1: print('Running model...')
+    
 
-
+    
     ###############################################################################
     ## Setup
     ###############################################################################
 
     ## Imports
-    from matplotlib.pylab import array, zeros, r_ # For creating arrays
+    from matplotlib.pylab import array, zeros, arange # For creating arrays
     from bunch import Bunch as struct # Replicate Matlab-like structure behavior
     
-    sim = struct()
-    sim.popnames = ['GM','GF','FSW','CSW','MSM','PWID']
-    ## /TEMP
-    
+    S = struct() # Sim output structure
+    S.tvec = arange(options.startyear, options.endyear, options.dt) # Time vector
+    dt = options.dt # Shorten dt
+    npts = len(S.tvec) # Number of time points
     
     ## Initialize basic quantities and arrays
-    people = zeros((G.nstates, G.npops, G.npts)) # Initialize matrix to hold everything
-    sim.allpeople = zeros((G.npops, G.npts))
-    people[0, :, 0] = P.popsize.p * (1-P.hivprev.p) # Set initial population sizes -- TODO: calculate properly
+    people = zeros((G.nstates, G.npops, npts)) # Initialize matrix to hold everything
+    allpeople = zeros((G.npops, npts))
+    people[0, :, 0] = P.popsize.p * (1-P.hivprev.p) # Set initial population sizes -- # TODO: calculate properly
     people[1, :, 0] = P.popsize.p * P.hivprev.p # Set initial population sizes
     effectivehivprevalence = zeros((G.npops,1)) # HIV effective prevalence (prevalence times infectiousness)
-    dt = G.timestep;
+    
+
     
     
     ###############################################################################
@@ -66,19 +68,19 @@ def model(G, P, verbose=2): # extraoutput is to calculate death rates etc.
     
     
     
-    for t in range(G.npts): # Loop over time; we'll skip the last timestep for people since we don't need to know what happens after that
+    for t in range(npts): # Loop over time; we'll skip the last timestep for people since we don't need to know what happens after that
         
         
         ## Calculate HIV prevalence
         
         for pop in range(G.npops): # Loop over each population group
-            sim.allpeople[pop,t] = sum(people[:,pop,t]) # All people in this population group at this time point
-            effectiveundiag = sum(h2a(P.const.cd4trans) * people[G.undiag,pop,t]); # Effective number of infecious undiagnosed people
-            effectivediag   = sum(dxfactor * (people[G.diag,pop,t]+people[G.fail,pop,t])); # ...and diagnosed/failed
-            effectivetreat  = sum(P.const.eff.tx * dxfactor * (people[G.treat1,pop,t]+people[G.treat2,pop,t])) # ...and treated
-            effectivehivprevalence[pop]=(effectiveundiag+effectivediag+effectivetreat)/sim.allpeople[pop,t]; # Calculate HIV "prevalence", scaled for infectiousness based on CD4 count; assume that treatment failure infectiousness is same as corresponding CD4 count
-            if not(effectivehivprevalence[pop]>=0): 
-                raise Exception('HIV prevalence invalid in %s! (=%f)' % (sim.popnames[pop],effectivehivprevalence[pop]) )
+            allpeople[pop,t] = sum(people[:,pop,t]) # All people in this population group at this time point
+            if not(allpeople[pop,t]>0): raise Exception('No people in population %i at timestep %i (time %0.1f)' % (pop, t, S.tvec[t]))
+            effectiveundiag = sum(h2a(P.const.cd4trans) * people[G.undx,pop,t]); # Effective number of infecious undiagnosed people
+            effectivediag   = sum(dxfactor * (people[G.dx,pop,t]+people[G.fail,pop,t])); # ...and diagnosed/failed
+            effectivetreat  = sum(P.const.eff.tx * dxfactor * (people[G.tx1,pop,t]+people[G.tx2,pop,t])) # ...and treated
+            effectivehivprevalence[pop]=(effectiveundiag+effectivediag+effectivetreat)/allpeople[pop,t]; # Calculate HIV "prevalence", scaled for infectiousness based on CD4 count; assume that treatment failure infectiousness is same as corresponding CD4 count
+            if not(effectivehivprevalence[pop]>=0): raise Exception('HIV prevalence invalid in population %s! (=%f)' % (pop,effectivehivprevalence[pop]) )
         
         ## Calculate force-of-infection (forceinf)
         forceinfvec = zeros(G.npops) # Initialize force-of-infection vector for each population group
@@ -99,35 +101,35 @@ def model(G, P, verbose=2): # extraoutput is to calculate death rates etc.
         
         for cd4 in range(G.ncd4):
             print('hi')
-            progin = dt*h2a(P.const.prog)[cd4-1]*people[G.undiag[cd4-1],:,t] if cd4>0 else 0
-            progout = dt*h2a(P.const.prog)[cd4]  *people[G.undiag[cd4],:,t] if cd4<G.ncd4-1 else 0
+            progin = dt*h2a(P.const.prog)[cd4-1]*people[G.undx[cd4-1],:,t] if cd4>0 else 0
+            progout = dt*h2a(P.const.prog)[cd4]  *people[G.undx[cd4],:,t] if cd4<G.ncd4-1 else 0
             testingrate = dt*P.hivtest.p[0] if cd4<G.ncd4-1 else dt*P.aidstest.p # TODO: Fix testing!
-            hivdeaths = dt*h2a(P.const.death)[cd4]*people[G.undiag[cd4],:,t]; 
-            dU.append(progin-progout - hivdeaths - (dt*P.const.death.background+testingrate)*people[G.undiag[cd4],:,t])
+            hivdeaths = dt*h2a(P.const.death)[cd4]*people[G.undx[cd4],:,t]; 
+            dU.append(progin-progout - hivdeaths - (dt*P.const.death.background+testingrate)*people[G.undx[cd4],:,t])
         dU[0] = dU[0] + forceinfvec*people[0,:,t] # Add newly infected people
     
         ## Diagnosed
         for cd4 in range(G.ncd4):
-            progin = dt*h2a(P.const.prog)[cd4-1]*people[G.diag[cd4-1],:,t] if cd4>0 else 0
-            progout = dt*h2a(P.const.prog)[cd4] *people[G.diag[cd4],:,t] if cd4<G.ncd4-1 else 0
+            progin = dt*h2a(P.const.prog)[cd4-1]*people[G.dx[cd4-1],:,t] if cd4>0 else 0
+            progout = dt*h2a(P.const.prog)[cd4] *people[G.dx[cd4],:,t] if cd4<G.ncd4-1 else 0
             testingrate = dt*P.hivtest.p[0] if cd4<G.ncd4-1 else dt*P.aidstest.p # TODO: Fix testing!
-            newdiagnoses = testingrate * people[G.undiag[cd4],:,t]
-            hivdeaths = dt*h2a(P.const.death)[cd4]*people[G.diag[cd4],:,t]
-            dD.append(progin-progout + newdiagnoses - hivdeaths - (dt*P.const.death.background)*people[G.diag[cd4],:,t]) # TODO: treatment
+            newdiagnoses = testingrate * people[G.undx[cd4],:,t]
+            hivdeaths = dt*h2a(P.const.death)[cd4]*people[G.dx[cd4],:,t]
+            dD.append(progin-progout + newdiagnoses - hivdeaths - (dt*P.const.death.background)*people[G.dx[cd4],:,t]) # TODO: treatment
     
     #
     #    # 1st-line treatment
     #    for cd4=1:G.ncd4
-    #        if cd4<G.ncd4, recovin=dt*pm.recoveryrate(cd4)   *people(G.treat1(cd4+1),:,t); else  recovin=0; end
-    #        if cd4>1,       recovout=dt*pm.recoveryrate(cd4-1)*people(G.treat1(cd4),:,t);   else recovout=0; end
-    #        peopletotakeoffart = fractionofpeopletotakeoffart*people(G.treat1(cd4),:,t);
-    #        newtreat=dt*pm.treatment1rate(cd4,t)*people(G.diag(cd4),:,t) - peopletotakeoffart*G.maxrate*dt; # WARNING, KLUDGY way to avoid errors by reducing maximum rate
-    #        hivdeaths=dt*pm.deathtreatment*people(G.treat1(cd4),:,t); sim.hivdeaths(:,t)=sim.hivdeaths(:,t)+hivdeaths'/dt;
-    #        dT1{cd4}=recovin - recovout + newtreat - hivdeaths - (dt*pm.deathbackground+dt*pm.treatment1failurerate).*people(G.treat1(cd4),:,t);
+    #        if cd4<G.ncd4, recovin=dt*pm.recoveryrate(cd4)   *people(G.tx1(cd4+1),:,t); else  recovin=0; end
+    #        if cd4>1,       recovout=dt*pm.recoveryrate(cd4-1)*people(G.tx1(cd4),:,t);   else recovout=0; end
+    #        peopletotakeoffart = fractionofpeopletotakeoffart*people(G.tx1(cd4),:,t);
+    #        newtreat=dt*pm.treatment1rate(cd4,t)*people(G.dx(cd4),:,t) - peopletotakeoffart*G.maxrate*dt; # WARNING, KLUDGY way to avoid errors by reducing maximum rate
+    #        hivdeaths=dt*pm.deathtreatment*people(G.tx1(cd4),:,t); S.hivdeaths(:,t)=S.hivdeaths(:,t)+hivdeaths'/dt;
+    #        dT1{cd4}=recovin - recovout + newtreat - hivdeaths - (dt*pm.deathbackground+dt*pm.treatment1failurerate).*people(G.tx1(cd4),:,t);
     #        if extraoutput
-    #            sim.newtreat1(:,t)=sim.newtreat1(:,t)+squeeze(newtreat)'/dt; 
-    #            sim.tx1bycd4(cd4,:,t)=sim.tx1bycd4(cd4,:,t)+newtreat/dt;
-    #            sim.deathsbycd4(cd4,:,t)=sim.deathsbycd4(cd4,:,t)+hivdeaths/dt;
+    #            S.newtreat1(:,t)=S.newtreat1(:,t)+squeeze(newtreat)'/dt; 
+    #            S.tx1bycd4(cd4,:,t)=S.tx1bycd4(cd4,:,t)+newtreat/dt;
+    #            S.deathsbycd4(cd4,:,t)=S.deathsbycd4(cd4,:,t)+hivdeaths/dt;
     #        end
     #    end
     #
@@ -135,19 +137,19 @@ def model(G, P, verbose=2): # extraoutput is to calculate death rates etc.
     #    for cd4=1:G.ncd4
     #        if cd4>1,        progin=dt*pm.progressionrate(cd4-1)*people(G.fail(cd4-1),:,t); else  progin=0; end
     #        if cd4<G.ncd4, progout=dt*pm.progressionrate(cd4)  *people(G.fail(cd4),:,t);   else progout=0; end
-    #        peopletotakeoffart = fractionofpeopletotakeoffart*people(G.treat1(cd4),:,t)*G.maxrate*dt;
-    #        hivdeaths=dt*pm.deathhiv(cd4)*people(G.fail(cd4),:,t); sim.hivdeaths(:,t)=sim.hivdeaths(:,t)+hivdeaths'/dt;
-    #        dF{cd4}=progin-progout + peopletotakeoffart - hivdeaths + dt*pm.treatment1failurerate*people(G.treat1(cd4),:,t) + dt*pm.treatment2failurerate*people(G.treat2(cd4),:,t) - (dt*pm.deathbackground+dt*pm.treatment2rate(t)).*people(G.fail(cd4),:,t);
+    #        peopletotakeoffart = fractionofpeopletotakeoffart*people(G.tx1(cd4),:,t)*G.maxrate*dt;
+    #        hivdeaths=dt*pm.deathhiv(cd4)*people(G.fail(cd4),:,t); S.hivdeaths(:,t)=S.hivdeaths(:,t)+hivdeaths'/dt;
+    #        dF{cd4}=progin-progout + peopletotakeoffart - hivdeaths + dt*pm.treatment1failurerate*people(G.tx1(cd4),:,t) + dt*pm.treatment2failurerate*people(G.tx2(cd4),:,t) - (dt*pm.deathbackground+dt*pm.treatment2rate(t)).*people(G.fail(cd4),:,t);
     #
     #    end
     #
     #    # 2nd-line treatment
     #    for cd4=1:G.ncd4
-    #        if cd4<G.ncd4, recovin=dt*pm.recoveryrate(cd4)   *people(G.treat2(cd4+1),:,t); else  recovin=0; end
-    #        if cd4>1,       recovout=dt*pm.recoveryrate(cd4-1)*people(G.treat2(cd4),:,t);   else recovout=0; end
+    #        if cd4<G.ncd4, recovin=dt*pm.recoveryrate(cd4)   *people(G.tx2(cd4+1),:,t); else  recovin=0; end
+    #        if cd4>1,       recovout=dt*pm.recoveryrate(cd4-1)*people(G.tx2(cd4),:,t);   else recovout=0; end
     #        newtreat=dt*pm.treatment2rate(t).*people(G.fail(cd4),:,t);
-    #        hivdeaths=dt*pm.deathtreatment*people(G.treat2(cd4),:,t); sim.hivdeaths(:,t)=sim.hivdeaths(:,t)+hivdeaths'/dt;
-    #        dT2{cd4}=recovin-recovout + newtreat - hivdeaths - (dt*pm.deathbackground+dt*pm.treatment2failurerate).*people(G.treat2(cd4),:,t);
+    #        hivdeaths=dt*pm.deathtreatment*people(G.tx2(cd4),:,t); S.hivdeaths(:,t)=S.hivdeaths(:,t)+hivdeaths'/dt;
+    #        dT2{cd4}=recovin-recovout + newtreat - hivdeaths - (dt*pm.deathbackground+dt*pm.treatment2failurerate).*people(G.tx2(cd4),:,t);
     #    end    
     #    
     #
@@ -172,3 +174,4 @@ def model(G, P, verbose=2): # extraoutput is to calculate death rates etc.
     #end
     
     if verbose>=2: print('  ...done running model.')
+    return S

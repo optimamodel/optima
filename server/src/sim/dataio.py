@@ -24,7 +24,7 @@ def savedata(filename, data, update=True, verbose=1):
             origdata = data
         dump(data, fid, protocol=-1)
     except: # If that fails, save a new file
-        if verbose>=1: print('  Creating new file')
+        if verbose>=1: print('  ..creating new file')
         dump(data, fid, protocol=-1)
     if verbose>=1: print(' ...done saving data.')
 
