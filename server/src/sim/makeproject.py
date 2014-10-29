@@ -11,6 +11,6 @@ def makeproject(projectname='example', numpopgroups=6, numprograms=8, startyear=
     
     # Make an Excel template and then prompt the user to save it
     from maketemplate import maketemplate
-    templatename = maketemplate(projectname, numpopgroups, numprograms, startyear, endyear)
+    spreadsheetname = maketemplate(projectname, numpopgroups, numprograms, startyear, endyear)
     
-    return templatename
+    return spreadsheetname
