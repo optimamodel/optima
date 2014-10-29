@@ -1,7 +1,8 @@
 """
 MANUALFIT
-
+Automatic calibration
 Version: 2014oct28
+
 """
 
 def autofit(projectfilename='example.prj', paramtable):

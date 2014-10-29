@@ -1,8 +1,8 @@
 """
 RUNSIMULATION
-
+View data and model estimates
 Version: 2014oct29
-
+need to change UI
 
 
 """
