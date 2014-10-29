@@ -22,14 +22,14 @@
     tags: api
 
   - name: API | Copy upstart script
-    template: src={{root_dir}}/components/templates/api/python-upstart.conf.j2 dest=/etc/init/example-api.conf backup=yes
+    template: src={{root_dir}}/components/templates/upstart.conf.j2 dest=/etc/init/optima-api.conf backup=yes
     sudo: yes
     tags:
       - api
       - update
 
   - name: API | Restart
-    service: name=example-api state=restarted
+    service: name=optima-api state=restarted
     sudo: yes
     tags:
       - api
