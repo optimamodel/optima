@@ -9,26 +9,32 @@ Version: 2014oct29
 """
 
 
-def savedata(filename, data, update=True):
-    from bunch import unbunchify
-    from scipy.io import loadmat, savemat
-    data = unbunchify(data)
+
+def savedata(filename, data, update=True, verbose=1):
+    if verbose>=1: print('Saving data...')
+    from cPickle import dump, load
+    fid = open(filename,'wb')
     
     try: # First try loading the file and updating it
-        origdata = loadmat(filename)
-        if update: origdata.update(data)
-        else: origdata = data
-        savemat(filename,origdata)
+        fid2 = open(filename,'rb')
+        origdata = load(fid2)
+        if update: 
+            origdata.update(data)
+        else: 
+            origdata = data
+        dump(data, fid, protocol=-1)
     except: # If that fails, save a new file
-        savemat(filename, data)
-    
-    return None
+        if verbose>=1: print('  Creating new file')
+        dump(data, fid, protocol=-1)
+    if verbose>=1: print(' ...done saving data.')
 
 
 
-def loaddata(filename):
-    from bunch import bunchify
-    from scipy.io import loadmat
-    data = loadmat(filename)
-    data = bunchify(data)
+
+def loaddata(filename, verbose=1):
+    if verbose>=1: print('Loading data...')
+    from cPickle import load
+    fid = open(filename,'rb')
+    data = load(fid)
+    if verbose>=1: print('  ...done loading data.')
     return data
