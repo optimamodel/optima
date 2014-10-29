@@ -6,7 +6,7 @@ This function turns the data into model parameters.
 Version: 2014oct29
 """
 
-def makepars(data,verbose=2):
+def makepars(D, verbose=2):
     
     
     ###############################################################################
@@ -43,40 +43,41 @@ def makepars(data,verbose=2):
     ## Loop over quantities
     ###############################################################################
     
-    P = struct() # Initialize parameters structure
+    D.P = struct() # Initialize parameters structure
+    D.P.__doc__ = 'Parameters that have been directly derived from the data, which are then used to create the model parameters'
     
     ## Epidemilogy parameters -- most are data
-    P.popsize = data2par(data.epi.popsize) # Population size -- TODO: don't take average for this!
-    P.hivprev = data2par(data.epi.hivprev) # Initial HIV prevalence -- TODO: don't take average for this
-    P.stiprev = data2par(data.epi.stiprev) # STI prevalence
+    D.P.popsize = data2par(D.data.epi.popsize) # Population size -- TODO: don't take average for this!
+    D.P.hivprev = data2par(D.data.epi.hivprev) # Initial HIV prevalence -- TODO: don't take average for this
+    D.P.stiprev = data2par(D.data.epi.stiprev) # STI prevalence
     ## TB prevalence @@@
     
     ## Testing parameters -- most are data
-    P.hivtest = data2par(data.txrx.testrate) # HIV testing rates
-    P.aidstest = data2par(data.txrx.aidstestrate) # AIDS testing rates
+    D.P.hivtest = data2par(D.data.txrx.testrate) # HIV testing rates
+    D.P.aidstest = data2par(D.data.txrx.aidstestrate) # AIDS testing rates
     
     ## Sexual behavior parameters -- all are parameters so can loop over all
-    for parname in data.sex.keys():
-        P[parname] = data2par(data.sex[parname])
+    for parname in D.data.sex.keys():
+        D.P[parname] = data2par(D.data.sex[parname])
     
     ## Drug behavior parameters
-    P.numinject = data2par(data.drug.numinject)
-    P.ost = data2par(data.drug.ost)
-    P.sharing = data2par(data.drug.sharing)
+    D.P.numinject = data2par(D.data.drug.numinject)
+    D.P.ost = data2par(D.data.drug.ost)
+    D.P.sharing = data2par(D.data.drug.sharing)
     
     ## Matrices can be used directly
-    P.pships = data.pships
-    P.transit = data.transit
+    D.P.pships = D.data.pships
+    D.P.transit = D.data.transit
     
     ## Constants...just take the best value for now -- TODO: use the uncertainty
-    P.const = struct()
-    for parname in data.const.keys():
-        if type(data.const[parname])==struct:
-            P.const[parname] = struct()
-            for parname2 in data.const[parname].keys():
-                P.const[parname][parname2] = data.const[parname][parname2][0] # Taking best value only, hence the 0
+    D.P.const = struct()
+    for parname in D.data.const.keys():
+        if type(D.data.const[parname])==struct:
+            D.P.const[parname] = struct()
+            for parname2 in D.data.const[parname].keys():
+                D.P.const[parname][parname2] = D.data.const[parname][parname2][0] # Taking best value only, hence the 0
         else:
-            P.const[parname] = data.const[parname][0]
+            D.P.const[parname] = D.data.const[parname][0]
             
             
             
@@ -84,23 +85,19 @@ def makepars(data,verbose=2):
     ###############################################################################
     ## Set up general parameters
     ###############################################################################
-    
-    from matplotlib.pylab import r_
-    
-    G = struct()
-    G.ncd4 = len(data.const.cd4trans) # Get number of CD4 states from the length of a reliable field, like CD4-related transmissibility
-    G.nstates = 1+G.ncd4*5 # Five are undiagnosed, diagnosed, 1st line, failure, 2nd line
-    G.npops = len(data.meta.pops.short) # First place populations are defined
+    D.G.ncd4 = len(D.data.const.cd4trans) # Get number of CD4 states from the length of a reliable field, like CD4-related transmissibility
+    D.G.nstates = 1+D.G.ncd4*5 # Five are undiagnosed, diagnosed, 1st line, failure, 2nd line, plus susceptible
     
     # Define CD4 states
-    G.sus = array([0])
-    G.undx = r_[0*G.ncd4+1:1*G.ncd4+1]
-    G.dx   = r_[1*G.ncd4+1:2*G.ncd4+1]
-    G.tx1 = r_[2*G.ncd4+1:3*G.ncd4+1]
-    G.fail   = r_[3*G.ncd4+1:4*G.ncd4+1]
-    G.tx2 = r_[4*G.ncd4+1:5*G.ncd4+1]
+    from matplotlib.pylab import arange
+    D.G.sus  = arange(0,1)
+    D.G.undx = arange(0*D.G.ncd4+1, 1*D.G.ncd4+1)
+    D.G.dx   = arange(1*D.G.ncd4+1, 2*D.G.ncd4+1)
+    D.G.tx1  = arange(2*D.G.ncd4+1, 3*D.G.ncd4+1)
+    D.G.fail = arange(3*D.G.ncd4+1, 4*D.G.ncd4+1)
+    D.G.tx2  = arange(4*D.G.ncd4+1, 5*D.G.ncd4+1)
 
 
     if verbose>=2: print('  ...done converting data to parameters.')
     
-    return G, P
+    return D

@@ -8,21 +8,18 @@ def updatedata(projectname='example', verbose=2):
     
     # Load the Excel spreadsheet, read it in (via loaddata.py), and save it somewhere
     if verbose>=1: print('Updating data...')
-    from loadspreadsheet import loadspreadsheet
-    from makepars import makepars
-    from bunch import Bunch as struct
+    
     projectfilename = projectname+'.prj'
     spreadsheetname = projectname+'.xlsx'
-    data, programs = loadspreadsheet(spreadsheetname)
-    G, P = makepars(data)
     
-    # Update the data file
-    from dataio import savedata
-    D = struct()
-    D.data = data
-    D.programs = programs
-    D.P = P
-    D.G = G # WARNING KLUDGY
-    savedata(projectfilename,D)
+    from loadspreadsheet import loadspreadsheet
+    from makepars import makepars
+    from dataio import loaddata, savedata
+    
+    D = loaddata(projectfilename, verbose=verbose) # Load existing file
+    D.data, D.programs = loadspreadsheet(spreadsheetname, verbose=verbose)
+    D = makepars(D, verbose=verbose) # Update parameters
+    
+    savedata(projectfilename, D, verbose=verbose) # Update the data file
     
     if verbose>=2: print('  ...done updating data.')
