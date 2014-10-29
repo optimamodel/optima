@@ -2,6 +2,9 @@
 RUNSIMULATION
 
 Version: 2014oct28
+
+
+
 """
 
 def runsimulation(projectdatafile='example.mat', endyear=2030):
@@ -14,4 +17,4 @@ def runsimulation(projectdatafile='example.mat', endyear=2030):
     
     
     
-    return plotdata
+    return None
