@@ -22,9 +22,9 @@ from bunch import Bunch as struct # Replicate Matlab-like structure behavior
 
 ## TEMP
 from loaddata import loaddata
-from data2pars import data2pars
-data = loaddata('example.xlsx')
-P = data2pars(data)
+from makepars import makepars
+data, programs = loaddata('example.xlsx')
+G, P = makepars(data)
 
 verbose = True
 
