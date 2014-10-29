@@ -22,7 +22,7 @@ def updatedata(projectname='example', verbose=2):
     D.data = data
     D.programs = programs
     D.P = P
-    D.G = dict(G) # WARNING KLUDGY
+    D.G = G # WARNING KLUDGY
     savedata(projectfilename,D)
     
     if verbose>=2: print('  ...done updating data.')
