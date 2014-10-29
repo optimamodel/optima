@@ -5,12 +5,12 @@ This function does everything. The basic procedure is as follows:
 
 1. makeproject -- initialize the project file
 
-1. loaddata -- load the data into a structure
+1. loadspreadsheet -- load the data into a structure
 2. data2pars -- convert the data into model parameters
 3. setupmodel -- reconcile partnerships and calculate parameters to go into the model
 4. model -- actually run the model
 
-Version: 2014oct28
+Version: 2014oct29
 """
 print('WELCOME TO OPTIMA')
 
@@ -20,7 +20,7 @@ projectname = 'example'
 
 print('Making project...')
 from makeproject import makeproject
-templatename = makeproject(projectname='example', numpopgroups=6, numprograms=8, startyear=2000, endyear=2015)
+spreadsheetname = makeproject(projectname='example', numpopgroups=6, numprograms=8, startyear=2000, endyear=2015)
 
 print('Uploading spreadsheet...')
 from updatedata import updatedata

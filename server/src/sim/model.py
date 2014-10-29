@@ -21,9 +21,9 @@ from matplotlib.pylab import array, zeros, r_ # For creating arrays
 from bunch import Bunch as struct # Replicate Matlab-like structure behavior
 
 ## TEMP
-from loaddata import loaddata
+from loadspreadsheet import loadspreadsheet
 from makepars import makepars
-data, programs = loaddata('example.xlsx')
+data, programs = loadspreadsheet('example.xlsx')
 G, P = makepars(data)
 
 verbose = True
