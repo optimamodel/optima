@@ -8,12 +8,23 @@ readout!) and inflexible.
 Version: 2014oct29
 """
 
-def savedata(filename, data):
-    from bunch import Bunch as unbunchify
-    from scipy.io import savemat
+
+def savedata(filename, data, update=True):
+    from bunch import unbunchify
+    from scipy.io import loadmat, savemat
     data = unbunchify(data)
-    savemat(filename,data)
+    
+    try: # First try loading the file and updating it
+        origdata = loadmat(filename)
+        if update: origdata.update(data)
+        else: origdata = data
+        savemat(filename,origdata)
+    except: # If that fails, save a new file
+        savemat(filename, data)
+    
     return None
+
+
 
 def loaddata(filename):
     from bunch import bunchify
