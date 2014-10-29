@@ -56,7 +56,9 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
     ###########################################################################
     
     data = struct() # Create structure for holding data
+    data.__doc__ = 'Raw data as loaded from the spreadsheet, including both epidemiological and behavioral data, plus economics and velociraptors.'
     programs = struct() # Create structure for holding program data
+    programs.__doc__ = 'Parameters that define the HIV programs -- cost-coverage and coverage-outcome curves.'
     spreadsheet = open_workbook(filename) # Open spreadsheet
 
     for sheettype,datanames in enumerate([meta, basicdata, matrices, constants, costcov]): # Loop over each type of data, but treat constants differently

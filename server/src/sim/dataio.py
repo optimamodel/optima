@@ -10,31 +10,31 @@ Version: 2014oct29
 
 
 
-def savedata(filename, data, update=True, verbose=1):
+def savedata(filename, data, update=True, verbose=2):
     if verbose>=1: print('Saving data...')
     from cPickle import dump, load
-    fid = open(filename,'wb')
     
     try: # First try loading the file and updating it
-        fid2 = open(filename,'rb')
-        origdata = load(fid2)
-        if update: 
-            origdata.update(data)
-        else: 
-            origdata = data
-        dump(data, fid, protocol=-1)
+        rfid = open(filename,'rb') # "Read file ID" -- This will fail if the file doesn't exist
+        origdata = load(rfid)
+        if update: origdata.update(data)
+        else: origdata = data
+        wfid = open(filename,'wb')
+        dump(data, wfid, protocol=-1)
+        if verbose>=2: print('  ..updated file')
     except: # If that fails, save a new file
-        if verbose>=1: print('  ..creating new file')
-        dump(data, fid, protocol=-1)
-    if verbose>=1: print(' ...done saving data.')
+        wfid = open(filename,'wb')
+        dump(data, wfid, protocol=-1)
+        if verbose>=2: print('  ..created new file')
+    if verbose>=2: print(' ...done saving data.')
 
 
 
 
-def loaddata(filename, verbose=1):
+def loaddata(filename, verbose=2):
     if verbose>=1: print('Loading data...')
     from cPickle import load
-    fid = open(filename,'rb')
-    data = load(fid)
-    if verbose>=1: print('  ...done loading data.')
+    rfid = open(filename,'rb')
+    data = load(rfid)
+    if verbose>=2: print('  ...done loading data.')
     return data
