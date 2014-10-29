@@ -3,11 +3,10 @@ MAKEPARS
 
 This function turns the data into model parameters.
 
-Version: 2014oct28
+Version: 2014oct29
 """
 
 def makepars(data,verbose=2):
-    
     
     
     ###############################################################################
@@ -100,6 +99,7 @@ def makepars(data,verbose=2):
     G.tx1 = r_[2*G.ncd4+1:3*G.ncd4+1]
     G.fail   = r_[3*G.ncd4+1:4*G.ncd4+1]
     G.tx2 = r_[4*G.ncd4+1:5*G.ncd4+1]
+
 
     if verbose>=2: print('  ...done converting data to parameters.')
     
