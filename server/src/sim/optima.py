@@ -3,23 +3,31 @@ OPTIMA
 
 This function does everything. The basic procedure is as follows:
 
+1. makeproject -- initialize the project file
+
 1. loaddata -- load the data into a structure
 2. data2pars -- convert the data into model parameters
 3. setupmodel -- reconcile partnerships and calculate parameters to go into the model
 4. model -- actually run the model
 
-Version: 2014sep24
+Version: 2014oct28
 """
+print('WELCOME TO OPTIMA')
+
 
 ## Set parameters
-filename = 'example.xlsx'
+projectname = 'example'
 
+print('Making project...')
+from makeproject import makeproject
+templatename = makeproject(projectname='example', numpopgroups=6, numprograms=8, startyear=2000, endyear=2015)
 
-print('WELCOME TO OPTIMA')
-from loaddata import loaddata
-from data2pars import data2pars
+print('Uploading spreadsheet...')
+from updatedata import updatedata
+updatedata(projectname='example')
 
-data, programs = loaddata(filename)
-P = data2pars(data)
+print('Running simulation...')
+from runsimulation import runsimulation
+runsimulation(projectname='example')
 
 print('Done.')
