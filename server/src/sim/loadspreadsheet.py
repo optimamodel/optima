@@ -3,19 +3,16 @@ LOADSPREADSHEET
 
 This function loads the spreadsheet data into Optima.
 
-Version: 2014oct28
+Version: 2014oct29
 """
 
-def loadspreadsheet(filename='example.xlsx',verbose=True):
-#if 1: # For troubleshooting
-#    filename='example.xlsx'
-#    verbose=True
-    
+def loadspreadsheet(filename='example.xlsx',verbose=2):
+
     ###########################################################################
     ## Preliminaries
     ###########################################################################
     
-    print('Loading data from %s...' % filename)
+    if verbose>=1: print('Loading data from %s...' % filename)
     from matplotlib.pylab import nan, array # For reading in empty values
     from xlrd import open_workbook # For opening Excel spreadsheets
     from bunch import Bunch as struct # Replicate Matlab-like structure behavior
@@ -65,7 +62,7 @@ def loadspreadsheet(filename='example.xlsx',verbose=True):
     for sheettype,datanames in enumerate([meta, basicdata, matrices, constants, costcov]): # Loop over each type of data, but treat constants differently
         for dataname in range(len(datanames)): # Loop over each spreadsheet for that data -- just one for constants
             
-            if verbose: print('  Loading "%s"...' % sheetnames[sheettype][dataname])
+            if verbose>=2: print('  Loading "%s"...' % sheetnames[sheettype][dataname])
             name = datanames[dataname][0] # Pull out the name of this field, e.g. 'epi'
             namelist = datanames[dataname][1] # Pull out the list subfields, e.g. ['popsize','hivprev'...]
             data[name] = struct() # Create structure for holding data, e.g. data.epi
@@ -82,7 +79,7 @@ def loadspreadsheet(filename='example.xlsx',verbose=True):
             for row in range(sheetdata.nrows): 
                 paramcategory = sheetdata.cell_value(row,0) # See what's in the first column for this row
                 if not(paramcategory==''): # It's not blank: e.g. "HIV prevalence"
-                    if verbose: print('    Loading "%s"...' % paramcategory)
+                    if verbose>=2: print('    Loading "%s"...' % paramcategory)
                     parcount += 1 # Increment the parameter count
                     
                     if sheettype==0: # Metadata
@@ -144,5 +141,5 @@ def loadspreadsheet(filename='example.xlsx',verbose=True):
                             subpar = namelist[parcount][1].pop(0) # Pop first entry of subparameter list, which is namelist[parcount][1]
                             data[name][thispar][subpar] = thesedata # Store data
     
-    if verbose: print('  ...done loading data.')
+    if verbose>=2: print('  ...done loading data.')
     return data, programs
