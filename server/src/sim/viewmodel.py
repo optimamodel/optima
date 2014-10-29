@@ -1,6 +1,7 @@
 """
 MAKETEMPLATE
-
+http://54.200.79.218/#/model/view
+it should return data for graphs
 Version: 2014oct28
 """
 
