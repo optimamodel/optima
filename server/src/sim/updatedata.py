@@ -11,7 +11,7 @@ def updatedata(projectname='example', verbose=2):
     from loadspreadsheet import loadspreadsheet
     from makepars import makepars
     from bunch import Bunch as struct
-    projectfilename = projectname+'.mat'
+    projectfilename = projectname+'.prj'
     spreadsheetname = projectname+'.xlsx'
     data, programs = loadspreadsheet(spreadsheetname)
     G, P = makepars(data)
