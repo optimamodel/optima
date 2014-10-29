@@ -18,28 +18,25 @@ def model(G, P, options, verbose=2): # extraoutput is to calculate death rates e
     ## Setup
     ###############################################################################
 
+
     ## Imports
     from matplotlib.pylab import array, zeros, arange # For creating arrays
     from bunch import Bunch as struct # Replicate Matlab-like structure behavior
     
+    
+    ## Initialize basic quantities and arrays
     S = struct() # Sim output structure
     S.tvec = arange(options.startyear, options.endyear, options.dt) # Time vector
     dt = options.dt # Shorten dt
     npts = len(S.tvec) # Number of time points
     
-    ## Initialize basic quantities and arrays
     people = zeros((G.nstates, G.npops, npts)) # Initialize matrix to hold everything
     allpeople = zeros((G.npops, npts))
     people[0, :, 0] = P.popsize.p * (1-P.hivprev.p) # Set initial population sizes -- # TODO: calculate properly
     people[1, :, 0] = P.popsize.p * P.hivprev.p # Set initial population sizes
-    effectivehivprevalence = zeros((G.npops,1)) # HIV effective prevalence (prevalence times infectiousness)
+    effhivprevalence = zeros((G.npops,1)) # HIV effective prevalence (prevalence times infectiousness)
+    dU = []; dD = []; dT1 = []; dF = []; dT2 = [] # Initialize differences
     
-
-    
-    
-    ###############################################################################
-    ## Stuff I don't quite know what to do with -- not crap but not in the best place either
-    ###############################################################################
     
     ## Convert a health state structure to an array
     def h2a(parstruct):
@@ -50,15 +47,13 @@ def model(G, P, options, verbose=2): # extraoutput is to calculate death rates e
             except: print('State %s not found' % state)
         return array(outarray)
     
-    ## Calculate other things outside the loop
-    dxfactor = P.const.eff.dx * h2a(P.const.cd4trans)
     
-    # TODO: calculate properly, reconciling acts
-    tmpnumactsvec = zeros(G.npops)
-    tmpforceinfvec = zeros(G.npops)
-    for pop in range(G.npops): # TODO: only loop over actual partnerhsips
-        tmpnumactsvec[pop] = P.condomreg.p[pop]*P.numactsreg.p[pop] + P.condomcas.p[pop] * P.numactscas.p[pop] + P.condomcom.p[pop] * P.numactscom.p[pop]
-        tmpforceinfvec[pop] = P.const.trans.mfr # TODO: use something real
+    ## Calculate other things outside the loop
+    cd4trans = h2a(P.const.cd4trans) # Convert a dictionary to an array
+    dxfactor = P.const.eff.dx * cd4trans # Include diagnosis efficacy
+    txfactor = P.const.eff.tx * dxfactor # And treatment efficacy
+    
+    
     
     
     
@@ -66,21 +61,18 @@ def model(G, P, options, verbose=2): # extraoutput is to calculate death rates e
     ## Run the model -- numerically integrate over time
     ###############################################################################
     
-    
-    
     for t in range(npts): # Loop over time; we'll skip the last timestep for people since we don't need to know what happens after that
         
         
         ## Calculate HIV prevalence
-        
         for pop in range(G.npops): # Loop over each population group
             allpeople[pop,t] = sum(people[:,pop,t]) # All people in this population group at this time point
             if not(allpeople[pop,t]>0): raise Exception('No people in population %i at timestep %i (time %0.1f)' % (pop, t, S.tvec[t]))
-            effectiveundiag = sum(h2a(P.const.cd4trans) * people[G.undx,pop,t]); # Effective number of infecious undiagnosed people
-            effectivediag   = sum(dxfactor * (people[G.dx,pop,t]+people[G.fail,pop,t])); # ...and diagnosed/failed
-            effectivetreat  = sum(P.const.eff.tx * dxfactor * (people[G.tx1,pop,t]+people[G.tx2,pop,t])) # ...and treated
-            effectivehivprevalence[pop]=(effectiveundiag+effectivediag+effectivetreat)/allpeople[pop,t]; # Calculate HIV "prevalence", scaled for infectiousness based on CD4 count; assume that treatment failure infectiousness is same as corresponding CD4 count
-            if not(effectivehivprevalence[pop]>=0): raise Exception('HIV prevalence invalid in population %s! (=%f)' % (pop,effectivehivprevalence[pop]) )
+            effundx = sum(cd4trans * people[G.undx,pop,t]); # Effective number of infecious undiagnosed people
+            effdx   = sum(dxfactor * (people[G.dx,pop,t]+people[G.fail,pop,t])); # ...and diagnosed/failed
+            efftx   = sum(txfactor * (people[G.tx1,pop,t]+people[G.tx2,pop,t])) # ...and treated
+            effhivprevalence[pop]=(effundx+effdx+efftx)/allpeople[pop,t]; # Calculate HIV "prevalence", scaled for infectiousness based on CD4 count; assume that treatment failure infectiousness is same as corresponding CD4 count
+            if not(effhivprevalence[pop]>=0): raise Exception('HIV prevalence invalid in population %s! (=%f)' % (pop,effhivprevalence[pop]) )
         
         ## Calculate force-of-infection (forceinf)
         forceinfvec = zeros(G.npops) # Initialize force-of-infection vector for each population group
