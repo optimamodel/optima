@@ -10,28 +10,28 @@
 
         <div class="section grid">
             <div class="4">
-                <input class="txbox" type="text" placeholder="Project name" ng-model="projectName" required>
+                <input class="txbox" type="text" placeholder="Project name" ng-model="projectParams.name" required>
             </div>
         </div>
 
         <div class="section grid">
             <div class="4">
-                <input class="txbox" type="number" placeholder="Number of population groups" required>
+                <input class="txbox" type="number" placeholder="Number of population groups" ng-model="projectParams.npops"required>
             </div>
         </div>
 
         <div class="section grid">
             <div class="4">
-                <input class="txbox" type="number" placeholder="Number of HIV programs" required>
+                <input class="txbox" type="number" placeholder="Number of HIV programs" ng-model="projectParams.nprogs"required>
             </div>
         </div>
 
         <div class="section grid">
             <div class="2">
-                <input class="txbox" type="number" min="1900" placeholder="Start year" required>
+                <input class="txbox" type="number" min="1900" placeholder="Start year" ng-model="projectParams.datastart"required>
             </div>
             <div class="2">
-                <input class="txbox" type="number" min="1900" placeholder="End year" required>
+                <input class="txbox" type="number" min="1900" placeholder="End year" ng-model="projectParams.dataend"required>
             </div>
         </div>
 
