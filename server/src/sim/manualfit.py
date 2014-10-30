@@ -4,8 +4,8 @@ http://54.200.79.218/#/model/manual-calibration
 Version: 2014oct28
 """
 
-def manualfit(projectfilename='example.prj', paramtable):
-    # Get input data from the editable table in the form of [parameter, value], e.g.
+def manualfit(projectfilename='example.prj', paramname, paramvalue):
+    # Get input data from the editable table in the form of parameter name, parameter value, e.g. 'D.data.epi.p', 3.234
     
     # The project data file name needs to be 
     from matplotlib.pylab import rand, r_, exp # KLUDGY
@@ -16,7 +16,7 @@ def manualfit(projectfilename='example.prj', paramtable):
     plotdata = []
     for p in range(nplots):
         plotdata.append(struct())
-        plotdata[p].xmodeldata = r_[2000:endyear+1] # Model output
+        plotdata[p].xmodeldata = r_[2000:2015] # Model output
         plotdata[p].ymodeldata = exp(-rand(len(plotdata[p].xmodeldata)))
         plotdata[p].xexpdata = [2000, 2005, 2008] # Experimental data
         plotdata[p].yexpdata = [0.3, 0.4, 0.6]
