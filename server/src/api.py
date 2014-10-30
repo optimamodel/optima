@@ -2,12 +2,14 @@ import os
 from flask import Flask
 from flask import helpers
 from flask import request
+from flask import jsonify
 from werkzeug import secure_filename
 from generators.line import generatedata
 import json
 import traceback
 import sys
 from sim.loaddata import loaddata
+from sim.makeproject import makeproject
 
 UPLOAD_FOLDER = '/tmp/uploads' #todo configure
 ALLOWED_EXTENSIONS=set(['txt','xlsx','xls'])
@@ -55,6 +57,22 @@ def lineScatterError():
 def lineScatterArea():
     return app.send_static_file('line-scatter-area-chart.json')
 
+
+@app.route('/api/project/create/<projectName>', methods=['POST'])
+# expects json with the following arguments (see example):
+# {"npops":6,"nprogs":8, "datastart":2000, "dataend":2015}
+def createProject(projectName):
+    print("createProject %s" % projectName)
+    data = json.loads(request.data)
+    data = dict([(x,int(y)) for (x,y) in data.items()])
+    print(data)
+    makeproject_args = {"projectname":projectName}
+    makeproject_args = dict(makeproject_args.items() + data.items())
+    print(makeproject_args)
+    new_project_template = makeproject(**makeproject_args) # makeproject is supposed to return the name of the existing file...
+    print("new_project_template: %s" % new_project_template)
+    (dirname, basename) = os.path.split(new_project_template)
+    return helpers.send_from_directory(dirname, basename)
 
 @app.route('/api/data/download/<downloadName>', methods=['GET'])
 def downloadExcel(downloadName):
