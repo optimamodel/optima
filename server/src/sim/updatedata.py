@@ -14,8 +14,8 @@ def updatedata(projectname='example', loaddir = '', verbose=2):
     spreadsheetname = projectname+'.xlsx'
 
     if loaddir:
-        projectfilename = os.join(loaddir, projectfilename)
-        spreadsheetname = os.join(loaddir, spreadsheetname)
+        projectfilename = os.path.join(loaddir, projectfilename)
+        spreadsheetname = os.path.join(loaddir, spreadsheetname)
     
     from loadspreadsheet import loadspreadsheet
     from makedatapars import makedatapars
