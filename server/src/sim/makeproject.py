@@ -4,13 +4,14 @@ http://54.200.79.218/#/project/create
 Version: 2014oct29
 """
 
-def makeproject(projectname='example', npops=6, nprogs=8, datastart=2000, dataend=2015, verbose=2):
+def makeproject(projectname='example', npops=6, nprogs=8, datastart=2000, dataend=2015, loaddir = '', verbose=2):
     if verbose>=1: 
         print("Making project %s, npops=%s, nprogs=%s, datastart = %s, dataend = %s..." % (projectname, npops, nprogs, datastart, dataend))
     
-    from dataio import savedata
+    from dataio import savedata, normalize_file
     from bunch import Bunch as struct
-    projectfilename = projectname+'.prj'
+    projectfilename = normalize_file(projectname+'.prj')
+    spreadsheetname = projectname + '.xlsx'
     
     D = struct() # Data structure for saving everything
     D.__doc__ = 'Data structure for storing everything -- data, parameters, simulation results, velociraptors, etc.'
@@ -25,7 +26,7 @@ def makeproject(projectname='example', npops=6, nprogs=8, datastart=2000, dataen
     return result_file_name
     # Make an Excel template and then prompt the user to save it #TODO
     from makespreadsheet import makespreadsheet
-    spreadsheetname = makespreadsheet(projectname, npops, nprogs, datastart, dataend, verbose=verbose)
+    makespreadsheet(spreadsheetname, npops, nprogs, datastart, dataend, verbose=verbose)
     
-    if verbose>=2: print('  ...done making project %s.' % projectname)
+    if verbose>=2: print('  ...done making project %s., created spreadsheet %s' % (projectname, spreadsheetname))
     return spreadsheetname
