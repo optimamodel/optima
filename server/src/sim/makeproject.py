@@ -23,9 +23,9 @@ def makeproject(projectname='example', npops=6, nprogs=8, datastart=2000, dataen
     D.G.dataend = dataend
     result_file_name = savedata(projectfilename, D, verbose=verbose) # Create project -- #TODO: check if an existing project exists and don't overwrite it
     return result_file_name
-    # Make an Excel template and then prompt the user to save it
-#    from makespreadsheet import makespreadsheet
-#    spreadsheetname = makespreadsheet(projectname, npops, nprogs, datastart, dataend, verbose=verbose)
+    # Make an Excel template and then prompt the user to save it #TODO
+    from makespreadsheet import makespreadsheet
+    spreadsheetname = makespreadsheet(projectname, npops, nprogs, datastart, dataend, verbose=verbose)
     
-#    if verbose>=2: print('  ...done making project.')
-#    return spreadsheetname
+    if verbose>=2: print('  ...done making project %s.' % projectname)
+    return spreadsheetname
