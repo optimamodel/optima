@@ -115,6 +115,10 @@ def model(G, M, options, verbose=2): # extraoutput is to calculate death rates e
                     if not(all(forceinfvec>=0)): raise Exception('Injecting force-of-infection is invalid')
         
         
+        
+        
+        
+        
         ###############################################################################
         ## The ODEs
         ###############################################################################
@@ -126,57 +130,94 @@ def model(G, M, options, verbose=2): # extraoutput is to calculate death rates e
         prog = h2a(M.const.prog)
         death = h2a(M.const.death)
         recov = h2a(M.const.recov)
+        testingrate = [0]*G.ncd4
+        newdiagnoses = [0]*G.ncd4
+        newtreat1 = [0]*G.ncd4
+        newtreat2 = [0]*G.ncd4
+        newfail1 = [0]*G.ncd4
+        newfail2 = [0]*G.ncd4
+        background = M.const.death.background
+        
         
         
         ## Undiagnosed
         for cd4 in range(G.ncd4):
-            progin = dt*prog[cd4-1]*people[G.undx[cd4-1],:,t] if cd4>0 else 0
-            progout = dt*prog[cd4] *people[G.undx[cd4],:,t] if cd4<G.ncd4-1 else 0
-            testingrate = M.hivtest[:,t] if cd4<G.ncd4-1 else dt*M.aidstest[t]
-            newdiagnoses = dt*testingrate * people[G.undx[cd4],:,t]
-            hivdeaths = dt*death[cd4]*people[G.undx[cd4],:,t]; 
-            dU.append(progin-progout - hivdeaths - newdiagnoses - dt*M.const.death.background*people[G.undx[cd4],:,t])
+            if cd4>0: 
+                progin = dt*prog[cd4-1]*people[G.undx[cd4-1],:,t]
+            else: 
+                progin = 0
+            if cd4<G.ncd4-1: 
+                progout = dt*prog[cd4] *people[G.undx[cd4],:,t]
+                testingrate[cd4] = M.hivtest[:,t]
+            else: 
+                progout = 0
+                testingrate[cd4] = dt*M.aidstest[t]
+            newdiagnoses[cd4] = dt*testingrate[cd4] * people[G.undx[cd4],:,t]
+            hivdeaths = dt*death[cd4]*people[G.undx[cd4],:,t]
+            dU.append(progin-progout - hivdeaths - newdiagnoses[cd4] - dt*background*people[G.undx[cd4],:,t])
         dU[0] = dU[0] - dS # Add newly infected people
         
     
         ## Diagnosed
         for cd4 in range(G.ncd4):
-            progin  = dt*prog[cd4-1]*people[G.dx[cd4-1],:,t] if cd4>0 else 0
-            progout = dt*prog[cd4]  *people[G.dx[cd4],:,t] if cd4<G.ncd4-1 else 0
-            testingrate = M.hivtest[:,t] if cd4<G.ncd4-1 else dt*M.aidstest[t]
-            newdiagnoses = dt*testingrate * people[G.undx[cd4],:,t]
-            newtreat = dt*M.tx1[t] * people[G.dx[cd4],:,t]
+            if cd4>0: 
+                progin  = dt*prog[cd4-1]*people[G.dx[cd4-1],:,t]
+            else: 
+                progin = 0
+            if cd4<G.ncd4-1: 
+                progout = dt*prog[cd4]*people[G.dx[cd4],:,t]
+            else: 
+                progout = 0
+            newtreat1[cd4] = dt*M.tx1[t] * people[G.dx[cd4],:,t]
             hivdeaths = dt*death[cd4]*people[G.dx[cd4],:,t]
-            dD.append(progin-progout + newdiagnoses - newtreat - hivdeaths - dt*M.const.death.background*people[G.dx[cd4],:,t])
+            dD.append(progin-progout + newdiagnoses[cd4] - newtreat1[cd4] - hivdeaths - dt*background*people[G.dx[cd4],:,t])
         
     
         ## 1st-line treatment
         for cd4 in range(G.ncd4):
-            recovin = dt*recov[cd4]*people[G.tx1[cd4+1],:,t) if (cd4<G.ncd4 and cd4>0) else 0
-            recovout = dt*recov[cd4]*people[G.tx1[cd4],:,t) if (cd4<G.ncd4 and cd4>0) else 0
-            if cd4>1,       recovout=dt*pm.recoveryrate(cd4-1)*people(G.tx1(cd4),:,t);   else recovout=0; end
-            peopletotakeoffart = fractionofpeopletotakeoffart*people(G.tx1(cd4),:,t);
-            newtreat=dt*pm.treatment1rate(cd4,t)*people(G.dx(cd4),:,t) - peopletotakeoffart*G.maxrate*dt; # WARNING, KLUDGY way to avoid errors by reducing maximum rate
-            hivdeaths=dt*pm.deathtreatment*people(G.tx1(cd4),:,t); S.hivdeaths(:,t)=S.hivdeaths(:,t)+hivdeaths'/dt;
-            dT1{cd4}=recovin - recovout + newtreat - hivdeaths - (dt*pm.deathbackground+dt*pm.treatment1failurerate).*people(G.tx1(cd4),:,t);
+            if (cd4>0 and cd4<G.ncd4-1): # CD4>0 stops people from moving back into acute
+                recovin = dt*recov[cd4-1]*people[G.tx1[cd4+1],:,t]
+            else: 
+                recovin = 0 
+            if cd4>1: # CD4>1 stops people from moving back into acute
+                recovout = dt*recov[cd4-2]*people[G.tx1[cd4],:,t]
+            else: 
+                recovout = 0
+            newfail1[cd4] = dt*M.const.fail.first * people[G.tx1[cd4],:,t]
+            hivdeaths = dt*death[cd4]*people[G.tx1[cd4],:,t]
+            dT1.append(recovin - recovout + newtreat1[cd4] - newfail1[cd4] - hivdeaths - dt*background*people[G.tx1[cd4],:,t])
 
-#    
-#        # Treatment failure
-#        for cd4 in range(G.ncd4):
-#            if cd4>1,        progin=dt*pm.progressionrate(cd4-1)*people(G.fail(cd4-1),:,t); else  progin=0; end
-#            if cd4<G.ncd4, progout=dt*pm.progressionrate(cd4)  *people(G.fail(cd4),:,t);   else progout=0; end
-#            peopletotakeoffart = fractionofpeopletotakeoffart*people(G.tx1(cd4),:,t)*G.maxrate*dt;
-#            hivdeaths=dt*pm.deathhiv(cd4)*people(G.fail(cd4),:,t); S.hivdeaths(:,t)=S.hivdeaths(:,t)+hivdeaths'/dt;
-#            dF{cd4}=progin-progout + peopletotakeoffart - hivdeaths + dt*pm.treatment1failurerate*people(G.tx1(cd4),:,t) + dt*pm.treatment2failurerate*people(G.tx2(cd4),:,t) - (dt*pm.deathbackground+dt*pm.treatment2rate(t)).*people(G.fail(cd4),:,t);
-#    
-#        # 2nd-line treatment
-#        for cd4 in range(G.ncd4):
-#            if cd4<G.ncd4, recovin=dt*pm.recoveryrate(cd4)   *people(G.tx2(cd4+1),:,t); else  recovin=0; end
-#            if cd4>1,       recovout=dt*pm.recoveryrate(cd4-1)*people(G.tx2(cd4),:,t);   else recovout=0; end
-#            newtreat=dt*pm.treatment2rate(t).*people(G.fail(cd4),:,t);
-#            hivdeaths=dt*pm.deathtreatment*people(G.tx2(cd4),:,t); S.hivdeaths(:,t)=S.hivdeaths(:,t)+hivdeaths'/dt;
-#            dT2{cd4}=recovin-recovout + newtreat - hivdeaths - (dt*pm.deathbackground+dt*pm.treatment2failurerate).*people(G.tx2(cd4),:,t);
+    
+        ## Treatment failure
+        for cd4 in range(G.ncd4):
+            if cd4>0:
+                progin = dt*prog[cd4-1]*people[G.fail[cd4-1],:,t] 
+            else: 
+                progin = 0
+            if cd4<G.ncd4-1: 
+                progout = dt*prog[cd4]*people[G.fail[cd4],:,t] 
+            else: 
+                progout = 0
+            newtreat2[cd4] = dt*M.tx2[t] * people[G.fail[cd4],:,t]
+            newfail2[cd4] = dt*M.const.fail.second * people[G.tx2[cd4],:,t]
+            hivdeaths = dt*death[cd4]*people[G.fail[cd4],:,t]
+            dF.append(progin - progout + newfail1[cd4] + newfail2[cd4] - newtreat2[cd4] - hivdeaths - dt*background*people[G.fail[cd4],:,t])
         
+     
+        ## 2nd-line treatment
+        for cd4 in range(G.ncd4):
+            if (cd4>0 and cd4<G.ncd4-1): # CD4>0 stops people from moving back into acute
+                recovin = dt*recov[cd4-1]*people[G.tx2[cd4+1],:,t]
+            else: 
+                recovin = 0 
+            if cd4>1: # CD4>1 stops people from moving back into acute
+                recovout = dt*recov[cd4-2]*people[G.tx2[cd4],:,t]
+            else: 
+                recovout = 0
+            hivdeaths = dt*death[cd4]*people[G.tx2[cd4],:,t]
+            dT2.append(recovin - recovout + newtreat2[cd4] - newfail2[cd4] - hivdeaths - dt*background*people[G.tx2[cd4],:,t])
+        
+        print('hi')
 #    
 #        
 #        
