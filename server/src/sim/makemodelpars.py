@@ -99,21 +99,17 @@ def makemodelpars(P, options, verbose=2):
         
     
     # Calculate number of acts
-    totalacts = struct()
+    M.totalacts = struct()
+    M.totalacts.__doc__ = 'Balanced numbers of acts'
     for act in ['reg','cas','com','drug']:
         npops = len(M.popsize[:,0])
-        totalacts[act] = zeros((npops,npops,npts))
+        M.totalacts[act] = zeros((npops,npops,npts))
         for t in range(npts):
-            totalacts[act][:,:,t] = reconcileacts(P.pships[act], M.popsize[:,t], M.numacts[act][:,t])
+            M.totalacts[act][:,:,t] = reconcileacts(P.pships[act], M.popsize[:,t], M.numacts[act][:,t])
         
+    # Apply interventions?
     
-    
-    
-    # Reconcile number of acts
-    
-    # Apply interventions
-    
-    # Sum matrices
+    # Sum matrices?
 
     if verbose>=2: print('  ...done making model parameters.')
     return M
