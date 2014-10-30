@@ -16,16 +16,18 @@ def runsimulation(projectdatafile='example.prj', startyear=2000, endyear=2030, v
     
     # Create options structure
     from bunch import Bunch as struct
+    from matplotlib.pylab import arange
     options = struct()
     options.startyear = startyear
     options.endyear = endyear
     options.dt = 0.2
+    options.tvec = arange(options.startyear, options.endyear, options.dt) # Time vector
     
     from makemodelpars import makemodelpars
-    D.Q = makemodelpars(D.P, options, verbose=verbose)
+    D.M = makemodelpars(D.P, options, verbose=verbose)
     
     from model import model
-    D.sim = model(D.G, D.P, options, verbose=verbose)
+    D.sim = model(D.G, D.M, options, verbose=verbose)
     
     savedata(projectdatafile, D, verbose=verbose)
     if verbose>=2: print('  ...done running simulation.')
