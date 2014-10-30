@@ -107,7 +107,6 @@ def doRunSimulation():
     }
     return helpers.send_file(data_file_path, **options)
 
-
 @app.route('/api/data/download/<downloadName>', methods=['GET'])
 def downloadExcel(downloadName):
     example_excel_file_name = 'example.xlsx'
