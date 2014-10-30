@@ -1,4 +1,5 @@
 import os
+import shutil
 from flask import Flask
 from flask import helpers
 from flask import request
@@ -10,6 +11,7 @@ import traceback
 import sys
 from sim.dataio import loaddata
 from sim.dataio import savedata
+from sim.dataio import normalize_file
 from sim.updatedata import updatedata
 from sim.loaddata import loaddata
 from sim.makeproject import makeproject
@@ -72,12 +74,12 @@ def doManualCalibration():
     print("unbunchified fits: %s" % fits)
     return jsonify(fits[0])
 
-@app.route('/api/project/create/<projectName>', methods=['POST'])
+@app.route('/api/project/create/<projectName>')
 # expects json with the following arguments (see example):
 # {"npops":6,"nprogs":8, "datastart":2000, "dataend":2015}
 def createProject(projectName):
     print("createProject %s" % projectName)
-    data = json.loads(request.data)
+    data = json.loads(request.args.get('params'))
     data = dict([(x,int(y)) for (x,y) in data.items()])
     print(data)
     makeproject_args = {"projectname":projectName}
@@ -86,7 +88,12 @@ def createProject(projectName):
     new_project_template = makeproject(**makeproject_args) # makeproject is supposed to return the name of the existing file...
     print("new_project_template: %s" % new_project_template)
     (dirname, basename) = os.path.split(new_project_template)
-    return helpers.send_from_directory(dirname, basename)
+    xlsname = projectName + '.xlsx'
+    srcfile = helpers.safe_join(app.static_folder,'example.xlsx')
+    dstfile =  helpers.safe_join(dirname, xlsname)
+    shutil.copy(srcfile, dstfile)
+
+    return helpers.send_from_directory(dirname, xlsname)
 
 @app.route('/api/calibrate/view', methods=['POST'])
 def doRunSimulation():
