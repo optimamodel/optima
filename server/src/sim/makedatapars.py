@@ -1,12 +1,12 @@
 """
-MAKEPARS
+MAKEDATAPARS
 
 This function turns the data into model parameters.
 
 Version: 2014oct29
 """
 
-def makepars(D, verbose=2):
+def makedatapars(D, verbose=2):
     
     
     ###############################################################################
