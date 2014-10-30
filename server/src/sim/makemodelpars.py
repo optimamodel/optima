@@ -95,6 +95,7 @@ def makemodelpars(P, options, verbose=2):
                 pshipacts[pop2,pop1] = balanced/popsize[pop2]; # Divide by population size to get per-person estimate
                 pshipacts[pop1,pop2] = balanced/popsize[pop1]; # ...and for the other population
 
+        print('hi')
         return pshipacts
         
     
