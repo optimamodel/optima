@@ -43,8 +43,10 @@ def model(G, M, options, verbose=2): # extraoutput is to calculate death rates e
         healthstates = ['acute','gt500','gt350','gt200','aids'] # TODO, don't redefine these or hard-code them
         outarray = []
         for state in healthstates:
-            try: outarray.append(parstruct[state])
-            except: print('State %s not found' % state)
+            try: 
+                outarray.append(parstruct[state])
+            except: 
+                if verbose>=3: print('    State %s not found' % state)
         return array(outarray)
     
     
@@ -217,27 +219,28 @@ def model(G, M, options, verbose=2): # extraoutput is to calculate death rates e
             hivdeaths = dt*death[cd4]*people[G.tx2[cd4],:,t]
             dT2.append(recovin - recovout + newtreat2[cd4] - newfail2[cd4] - hivdeaths - dt*background*people[G.tx2[cd4],:,t])
         
-        print('hi')
-#    
-#        
-#        
-#        ## Update next time point and check for errors
-#        if t<G.npts
-#            change=[dS;vertcat(dU{:});vertcat(dD{:});vertcat(dT1{:});vertcat(dF{:});vertcat(dT2{:})]; # Combine all changes into a single array
-#            people(:,:,t+1)=people(:,:,t)+change; # Update people array unless it's the last timestep
-#            # Calculate correct population size
-#            newpeople=pm.populationsize(:,t+1)'-squeeze(sum(people(:,:,t+1),1)); # Was just the difference in pm.populationsize -- which could be totally different from the actual number of people!
-#            for j=1:G.npops # Loop over each population, since some might grow and others might shrink
-#                if newpeople(j)>=0 # People are entering: they enter the susceptible population
-#                    people(1,j,t+1)=people(1,j,t+1)+newpeople(j); # Number of people entering is the difference between the current model population size and the next time step's defined population size
-#                else # People are leaving: they leave from each health state equally
-#                    people(:,j,t+1)=people(:,j,t+1)*pm.populationsize(j,t)/sum(people(:,j,t));
-#                end
-#            end
-#            if ~all(all(people(:,:,t+1)>=0)), badpeople(), end # If not every element is a real number >0, throw an error
-#        end
-#    
-#    end
+     
+        ## Update next time point and check for errors
+        if t<npts-1:
+            change = zeros((G.nstates,G.npops))
+            change[G.sus,:] = dS
+            for cd4 in range(G.ncd4): # TODO: this could be made much more efficient
+                change[G.undx[cd4],:] = dU[cd4]
+                change[G.dx[cd4],:] = dD[cd4]
+                change[G.tx1[cd4],:] = dT1[cd4]
+                change[G.fail[cd4],:] = dF[cd4]
+                change[G.tx2[cd4],:] = dT2[cd4]
+            people[:,:,t+1] = people[:,:,t] + change # Update people array unless it's the last timestep
+            # Calculate correct population size
+            newpeople = M.popsize[:,t+1] # Was just the difference in pm.populationsize -- which could be totally different from the actual number of people!
+            for pop in range(G.npops): # Loop over each population, since some might grow and others might shrink
+                if newpeople[pop]>=0: # People are entering: they enter the susceptible population
+                    people[0,pop,t+1] += newpeople[pop] # Number of people entering is the difference between the current model population size and the next time step's defined population size
+                else: # People are leaving: they leave from each health state equally
+                    people[:,pop,t+1] *= M.popsize[pop,t]/sum(people[:,pop,t]);
+            if not((people[:,:,t+1]>=0).all()):
+                raise Exception('Non-positive people found') # If not every element is a real number >0, throw an error
     
+    S.people = people
     if verbose>=2: print('  ...done running model.')
     return S

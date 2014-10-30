@@ -17,7 +17,7 @@ print('WELCOME TO OPTIMA')
 
 ## Set parameters
 projectname = 'example'
-verbose = 1
+verbose = 2
 
 print('1. Making project...')
 from makeproject import makeproject
