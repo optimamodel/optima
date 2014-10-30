@@ -26,7 +26,7 @@ def model(G, P, options, verbose=2): # extraoutput is to calculate death rates e
     
     ## Initialize basic quantities and arrays
     S = struct() # Sim output structure
-    S.tvec = arange(options.startyear, options.endyear, options.dt) # Time vector
+    S.tvec = options.tvec # Time vector
     dt = options.dt # Shorten dt
     npts = len(S.tvec) # Number of time points
     
