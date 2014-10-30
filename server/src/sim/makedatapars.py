@@ -1,12 +1,12 @@
 """
-MAKEPARS
+MAKEDATAPARS
 
 This function turns the data into model parameters.
 
 Version: 2014oct29
 """
 
-def makepars(D, verbose=2):
+def makedatapars(D, verbose=2):
     
     
     ###############################################################################
@@ -29,7 +29,8 @@ def makepars(D, verbose=2):
         
         output = struct() # Create structure
         output.t = 1 # Set default time pameter -- constant (1) by default
-        output.p = zeros(nrows) # Initialize arra for holding population parameters
+        output.y = [D.G.datastart, D.G.dataend] # Set default control years -- start and end of the data
+        output.p = zeros(nrows) # Initialize array for holding population parameters
         
         for r in xrange(nrows): 
             output.p[r] = mean(sanitize(dataarray[r])) # Calculate mean for each population
