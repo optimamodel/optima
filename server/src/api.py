@@ -12,6 +12,7 @@ from sim.loaddata import loaddata
 from sim.makeproject import makeproject
 from sim.manualfit import manualfit
 from sim.bunch import unbunchify
+from sim.runsimulation import runsimulation
 
 UPLOAD_FOLDER = '/tmp/uploads' #todo configure
 ALLOWED_EXTENSIONS=set(['txt','xlsx','xls'])
@@ -83,6 +84,29 @@ def createProject(projectName):
     print("new_project_template: %s" % new_project_template)
     (dirname, basename) = os.path.split(new_project_template)
     return helpers.send_from_directory(dirname, basename)
+
+@app.route('/api/calibrate/view', methods=['POST'])
+def doRunSimulation():
+    data = json.loads(request.data)
+    #expects json: {"projectdatafile:<name>,"startyear":year,"endyear":year}
+    args = {"loaddir": app.static_folder}
+    projectdatafile = data.get("projectdatafile")
+    if projectdatafile:
+        args["projectdatafile"] = helpers.safe_join(app.static_folder, projectdatafile)
+    startyear = data.get("startyear")
+    if startyear:
+        args["startyear"] = int(startyear)
+    endyear = data.get("endyear")
+    if endyear:
+        args["endyear"] = int(endyear)
+    data_file_path = runsimulation(**args) 
+    options = {
+        'cache_timeout': app.get_send_file_max_age(example_excel_file_name),
+        'conditional': True,
+        'attachment_filename': downloadName
+    }
+    return helpers.send_file(data_file_path, **options)
+
 
 @app.route('/api/data/download/<downloadName>', methods=['GET'])
 def downloadExcel(downloadName):

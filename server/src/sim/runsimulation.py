@@ -6,9 +6,15 @@ need to change UI
 
 
 """
+import os
 
-def runsimulation(projectdatafile='example.prj', startyear=2000, endyear=2030, verbose=2):
-    if verbose>=1: print('Running simulation...')
+def runsimulation(projectdatafile='example.prj', startyear=2000, endyear=2030, loaddir = '', verbose=2):
+    # todo: it should not overwrite the original file
+    if loaddir:
+        projectdatafile = os.path.join(loaddir, projectdatafile)
+    if verbose>=1: 
+        data = (projectdatafile, startyear, endyear)
+        print('Running simulation (projectdatafile = %s, startyear = %s, endyear = %s)...' % data)
     
     # Load data
     from dataio import loaddata, savedata
@@ -29,5 +35,5 @@ def runsimulation(projectdatafile='example.prj', startyear=2000, endyear=2030, v
     from model import model
     D.sim = model(D.G, D.M, options, verbose=verbose)
     
-    savedata(projectdatafile, D, verbose=verbose)
+    new_file_name = savedata(projectdatafile, D, verbose=verbose)
     if verbose>=2: print('  ...done running simulation.')
