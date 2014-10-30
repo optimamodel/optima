@@ -8,11 +8,17 @@ from generators.line import generatedata
 import json
 import traceback
 import sys
+<<<<<<< HEAD
+from sim.dataio import loaddata
+from sim.dataio import savedata
+from sim.updatedata import updatedata
+=======
 from sim.loaddata import loaddata
 from sim.makeproject import makeproject
 from sim.manualfit import manualfit
 from sim.bunch import unbunchify
 from sim.runsimulation import runsimulation
+>>>>>>> develop
 
 UPLOAD_FOLDER = '/tmp/uploads' #todo configure
 ALLOWED_EXTENSIONS=set(['txt','xlsx','xls'])
@@ -123,17 +129,32 @@ def downloadExcel(downloadName):
 def uploadExcel():
     reply = {'status':'NOK'}
     try:
+        loaddir = app.config['UPLOAD_FOLDER']
+        example_prj = 'example.prj'
+        try: 
+            example_in_filename = helpers.safe_join(app.static_folder, example_prj)
+            example_out_filename = helpers.safe_join(loaddir, example_prj)
+            data = loaddata(example_in_filename)
+            savedata(example_out_filename)
+        except Exception, err:
+            var = traceback.format_exc()
+            print(var)
+            # eat it here
+            
         file = request.files['file']
         if file:
             filename = secure_filename(file.filename)
             reply['file'] = filename
             if allowed_file(filename):
-                server_filename = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                server_filename = os.path.join(loaddir, filename)
                 file.save(server_filename)
+                file_basename, file_extension = os.path.splitext(filename)
+                out_filename = updatedata(file_basename, loaddir)
+                data = loaddata(server_filename)
 #                epi_file_name = 'epi-template.xlsx'
 #                file_path = helpers.safe_join(app.static_folder, epi_file_name)
 
-                data = loaddata(server_filename) #gives an error for an example file...
+ #               data = loaddata(server_filename) #gives an error for an example file...
                 reply['status'] = 'OK'
                 print(data)
             else:
