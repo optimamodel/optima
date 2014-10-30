@@ -8,17 +8,14 @@ from generators.line import generatedata
 import json
 import traceback
 import sys
-<<<<<<< HEAD
 from sim.dataio import loaddata
 from sim.dataio import savedata
 from sim.updatedata import updatedata
-=======
 from sim.loaddata import loaddata
 from sim.makeproject import makeproject
 from sim.manualfit import manualfit
 from sim.bunch import unbunchify
 from sim.runsimulation import runsimulation
->>>>>>> develop
 
 UPLOAD_FOLDER = '/tmp/uploads' #todo configure
 ALLOWED_EXTENSIONS=set(['txt','xlsx','xls'])
