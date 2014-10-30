@@ -20,7 +20,7 @@ def runsimulation(projectdatafile='example.prj', startyear=2000, endyear=2030, v
     options = struct()
     options.startyear = startyear
     options.endyear = endyear
-    options.dt = 0.2
+    options.dt = 0.1
     options.tvec = arange(options.startyear, options.endyear, options.dt) # Time vector
     
     from makemodelpars import makemodelpars
