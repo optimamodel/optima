@@ -42,6 +42,10 @@ def makemodelpars(P, options, verbose=2):
     ## Testing parameters -- most are data
     M.hivtest = dpar2mpar(P.hivtest) # HIV testing rates
     M.aidstest = dpar2mpar(P.aidstest) # AIDS testing rates
+    blank = struct()
+    blank.p = [0] # WARNING # TODO KLUDGY
+    M.tx1 = dpar2mpar(blank)
+    M.tx2 = dpar2mpar(blank)
     
     ## Sexual behavior parameters -- all are parameters so can loop over all
     M.circum = dpar2mpar(P.circum) # Circumcision
