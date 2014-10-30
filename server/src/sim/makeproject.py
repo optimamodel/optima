@@ -5,7 +5,8 @@ Version: 2014oct29
 """
 
 def makeproject(projectname='example', npops=6, nprogs=8, datastart=2000, dataend=2015, verbose=2):
-    if verbose>=1: print('Making project...')
+    if verbose>=1: 
+        print("Making project %s, npops=%s, nprogs=%s, datastart = %s, dataend = %s..." % (projectname, npops, nprogs, datastart, dataend))
     
     from dataio import savedata
     from bunch import Bunch as struct
@@ -20,11 +21,11 @@ def makeproject(projectname='example', npops=6, nprogs=8, datastart=2000, dataen
     D.G.projectname = projectname
     D.G.datastart = datastart
     D.G.dataend = dataend
-    savedata(projectfilename, D, verbose=verbose) # Create project -- #TODO: check if an existing project exists and don't overwrite it
-    
+    result_file_name = savedata(projectfilename, D, verbose=verbose) # Create project -- #TODO: check if an existing project exists and don't overwrite it
+    return result_file_name
     # Make an Excel template and then prompt the user to save it
-    from makespreadsheet import makespreadsheet
-    spreadsheetname = makespreadsheet(projectname, npops, nprogs, datastart, dataend, verbose=verbose)
+#    from makespreadsheet import makespreadsheet
+#    spreadsheetname = makespreadsheet(projectname, npops, nprogs, datastart, dataend, verbose=verbose)
     
-    if verbose>=2: print('  ...done making project.')
-    return spreadsheetname
+#    if verbose>=2: print('  ...done making project.')
+#    return spreadsheetname
