@@ -74,9 +74,13 @@ def model(G, P, options, verbose=2): # extraoutput is to calculate death rates e
             effhivprevalence[pop]=(effundx+effdx+efftx)/allpeople[pop,t]; # Calculate HIV "prevalence", scaled for infectiousness based on CD4 count; assume that treatment failure infectiousness is same as corresponding CD4 count
             if not(effhivprevalence[pop]>=0): raise Exception('HIV prevalence invalid in population %s! (=%f)' % (pop,effhivprevalence[pop]) )
         
+        ###############################################################################
         ## Calculate force-of-infection (forceinf)
         forceinfvec = zeros(G.npops) # Initialize force-of-infection vector for each population group
+        
         # Sexual partnerships
+        for pop in range(G.npops):
+            
         for psh in range(Q.nsexpartnerships): # Loop over all sexual partnerships
             
             # Amazingly, the code runs faster if these are pulled out of the equations for forceinf!
