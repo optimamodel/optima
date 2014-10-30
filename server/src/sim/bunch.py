@@ -28,6 +28,7 @@ converted via Bunch.to/fromDict().
 
 Modified (slightly) by Cliff Kerr on 2014sep24
 """
+import numpy as np
 
 __version__ = '1.0.1'
 VERSION = tuple(map(int, __version__.split('.')))
@@ -276,6 +277,8 @@ def unbunchify(x):
         return dict( (k, unbunchify(v)) for k,v in x.iteritems() )
     elif isinstance(x, (list, tuple)):
         return type(x)( unbunchify(v) for v in x )
+    elif isinstance(x, np.ndarray):
+        return [unbunchify(v) for v in x.tolist()]
     else:
         return x
 

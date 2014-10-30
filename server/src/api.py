@@ -60,6 +60,14 @@ def lineScatterError():
 def lineScatterArea():
     return app.send_static_file('line-scatter-area-chart.json')
 
+@app.route('/api/calibrate/manual', methods=['POST'])
+def doManualCalibration():
+    data = json.loads(request.data)
+    fits = manualfit(data)
+    print("fits: %s" % fits)
+    fits = [unbunchify(x) for x in fits]
+    print("unbunchified fits: %s" % fits)
+    return jsonify(fits[0])
 
 @app.route('/api/project/create/<projectName>', methods=['POST'])
 # expects json with the following arguments (see example):
