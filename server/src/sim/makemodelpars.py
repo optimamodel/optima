@@ -99,10 +99,13 @@ def makemodelpars(P, options, verbose=2):
         
     
     # Calculate number of acts
-    # WARNING -- introduce time 
     totalacts = struct()
     for act in ['reg','cas','com','drug']:
-        totalacts[act] = reconcileacts(P.pships[act], M.popsize[:,0], M.numacts[act][:,0]) # TODO -- time
+        npops = len(M.popsize[:,0])
+        totalacts[act] = zeros((npops,npops,npts))
+        for t in range(npts):
+            totalacts[act][:,:,t] = reconcileacts(P.pships[act], M.popsize[:,t], M.numacts[act][:,t])
+        
     
     
     
