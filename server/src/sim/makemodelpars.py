@@ -61,19 +61,48 @@ def makemodelpars(P, options, verbose=2):
     
     
     ## WARNING need to introduce time!
-    def reconcileacts(numacts, popsize, pships):
-        from matplotlib.pylab import shape
-        npops = shape(numacts)[0]
-        popacts = zeros((npops,npts))
-        for pop in range(npops):
-            popacts[pop] = numacts[pop,:] * popsize[pop,:]
+    def reconcileacts(mixmatrix,popsize,popacts):
+        from matplotlib.pylab import array
+        eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
+
+        # Make sure the dimensions all agree
+        npop=len(popsize); # Number of populations
         
-        return totalacts
+        # WARNING, NOT SURE ABOUT THIS
+        # Make matrix symmetric
+        mixmatrix = array(mixmatrix)
+        symmetricmatrix=zeros((npop,npop));
+        for pop1 in range(npop):
+            for pop2 in range(npop):
+                symmetricmatrix[pop1,pop2] = symmetricmatrix[pop1,pop2] + (mixmatrix[pop1,pop2] + mixmatrix[pop2,pop1]) / float(eps+((mixmatrix[pop1,pop2]>0)+(mixmatrix[pop2,pop1]>0)))
+
+        # The probability of interaction is dependent on the population size...not
+        # sure exactly why this works, but, um, it does :)
+        for pop1 in range(npop):
+            symmetricmatrix[pop1,:]=symmetricmatrix[pop1,:]*popsize[pop1];
+        
+        # Divide by the sum of the column to normalize the probability, then
+        # multiply by the number of acts and population size to get total number of
+        # acts
+        for pop1 in range(npop):
+            symmetricmatrix[:,pop1]=popsize[pop1]*popacts[pop1]*symmetricmatrix[:,pop1]/sum(symmetricmatrix[:,pop1]);
+        
+        # Reconcile different estimates of number of acts, which must balance
+        pshipacts=zeros((npop,npop));
+        for pop1 in range(npop):
+            for pop2 in range(npop):
+                balanced = (symmetricmatrix[pop1,pop2] * popsize[pop1] + symmetricmatrix[pop2,pop1] * popsize[pop2])/(popsize[pop1]+popsize[pop2]); # here are two estimates for each interaction; reconcile them here
+                pshipacts[pop2,pop1] = balanced/popsize[pop2]; # Divide by population size to get per-person estimate
+                pshipacts[pop1,pop2] = balanced/popsize[pop1]; # ...and for the other population
+
+        return pshipacts
+        
     
     # Calculate number of acts
+    # WARNING -- introduce time 
     totalacts = struct()
     for act in ['reg','cas','com','drug']:
-        totalacts[act] = reconcileacts(M.numacts[act], M.popsize, P.pships[act])
+        totalacts[act] = reconcileacts(P.pships[act], M.popsize[:,0], M.numacts[act][:,0]) # TODO -- time
     
     
     
