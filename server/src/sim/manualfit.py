@@ -4,7 +4,7 @@ http://54.200.79.218/#/model/manual-calibration
 Version: 2014oct28
 """
 
-def manualfit(projectfilename='example.prj', tableparams):
+def manualfit(tableparams, projectfilename='example.prj'):
     # Get input data from the editable table in the form of parameter name, parameter value, e.g. 'D.data.epi.p', 3.234
     
     # The project data file name needs to be 
