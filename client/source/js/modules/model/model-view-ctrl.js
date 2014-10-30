@@ -1,11 +1,18 @@
 define(['./module', 'angular'], function (module, angular) {
     'use strict';
 
-    module.controller('ModelViewController', function ($scope, dataMocks) {
+    module.controller('ModelViewController', function ($scope, $http, dataMocks) {
+
+      $scope.simulationOptions = {};
 
       $scope.simulate = function () {
-        var generatedDataSet = dataMocks.lineWith({num: $scope.numberOfPoints});
-        $scope.linescatterdata = [generatedDataSet];
+        //var generatedDataSet = dataMocks.lineWith({num: $scope.numberOfPoints});
+        //$scope.linescatterdata = [generatedDataSet];
+
+          $http.post('/api/calibrate/view', $scope.simulationOptions)
+            .success(function (data) {
+                console.log(data);
+            })
       };
 
       $scope.openFileOption1 = function () {

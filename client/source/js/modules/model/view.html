@@ -7,9 +7,15 @@
                 <button class="btn" ng-click="openFileOption1()">Save all as SVG</button>
                 <br><br>
                 <div class="section grid">
+                    <div class="2">
+                        <input class="txbox" type="text" placeholder="Start year" required ng-model="simulationOptions.startyear">
+                    </div>
+                    <div class="2">
+                        <input class="txbox" type="text" placeholder="End year" required ng-model="simulationOptions.endyear">
+                    </div>
+                </div>
+                <div class="section grid">
                     <div class="4">
-                        <input class="txbox" type="text" placeholder="End year" required ng-model="numberOfPoints">
-                        <br><br>
                         <button class="btn" ng-click="simulate()">Run simulation</button>
                     </div>
                 </div>
