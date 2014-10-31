@@ -8,7 +8,11 @@ Version: 2014oct29
 
 def makedatapars(D, verbose=2):
     
-    
+    """
+    Modifies in-place the data (which were read from the spreadsheet).
+    These data are then used to update the corresponding model (project).
+    This method should be called before any simulation can run.
+    """
     ###############################################################################
     ## Preliminaries
     ###############################################################################

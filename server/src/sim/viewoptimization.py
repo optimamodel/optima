@@ -29,11 +29,11 @@ def viewoptimization(projectname='example', startyear=2000, endyear=2015):
         lineplotdata[p].ylabel = 'Prevalence'
         
         # e.g. 
-        from matplotlib.pylab import plot, hold, scatter, subplot
-        subplot(6,2,p)
-        plot(plotdata[p].xmodeldata, plotdata[p].ymodeldata)
-        hold(True)
-        scatter(plotdata[p].xexpdata, plotdata[p].yexpdata);
+#        from matplotlib.pylab import plot, hold, scatter, subplot
+#        subplot(6,2,p)
+#        plot(plotdata[p].xmodeldata, plotdata[p].ymodeldata)
+#        hold(True)
+#        scatter(plotdata[p].xexpdata, plotdata[p].yexpdata);
         
 
     

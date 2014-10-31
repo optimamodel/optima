@@ -24,11 +24,11 @@ def autofit(projectfilename='example.prj', paramtable):
         plotdata[p].xlabel = 'Year'
         plotdata[p].ylabel = 'Prevalence'
         
-        # e.g. 
-        from matplotlib.pylab import plot, hold, scatter, subplot
-        subplot(3,2,p)
-        plot(plotdata[p].xmodeldata, plotdata[p].ymodeldata)
-        hold(True)
-        scatter(plotdata[p].xexpdata, plotdata[p].yexpdata);
+#        # e.g. 
+#        from matplotlib.pylab import plot, hold, scatter, subplot
+#        subplot(3,2,p)
+#        plot(plotdata[p].xmodeldata, plotdata[p].ymodeldata)
+#        hold(True)
+#        scatter(plotdata[p].xexpdata, plotdata[p].yexpdata);
     
     return plotdata

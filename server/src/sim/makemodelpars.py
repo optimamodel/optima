@@ -7,6 +7,9 @@ Version: 2014oct29
 """
 
 def makemodelpars(P, options, verbose=2):
+    """
+    Prepares model parameters to run the simulation.
+    """
     if verbose>=1: print('Making model parameters...')
     
     from matplotlib.pylab import zeros, array

@@ -27,10 +27,10 @@ def manualfit(projectfilename='example.prj', paramtable={}, verbose = 2):
         plotdata[p].ylabel = 'Prevalence'
         
         # e.g. 
-        from matplotlib.pylab import plot, hold, scatter, subplot
-        subplot(3,2,p)
-        plot(plotdata[p].xmodeldata, plotdata[p].ymodeldata)
-        hold(True)
-        scatter(plotdata[p].xexpdata, plotdata[p].yexpdata);
+#        from matplotlib.pylab import plot, hold, scatter, subplot
+#        subplot(3,2,p)
+#        plot(plotdata[p].xmodeldata, plotdata[p].ymodeldata)
+#        hold(True)
+#        scatter(plotdata[p].xexpdata, plotdata[p].yexpdata);
     
     return plotdata
