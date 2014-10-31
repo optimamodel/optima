@@ -91,7 +91,7 @@ def createProject(projectName):
     print("new_project_template: %s" % new_project_template)
     (dirname, basename) = os.path.split(new_project_template)
     xlsname = projectName + '.xlsx'
-    srcfile = helpers.safe_join(app.static_folder,'example.xlsx')
+    srcfile = helpers.safe_join(app.static_folder,'epi-template.xlsx')
     dstfile =  helpers.safe_join(dirname, xlsname)
     shutil.copy(srcfile, dstfile)
 

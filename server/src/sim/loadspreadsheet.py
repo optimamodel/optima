@@ -22,7 +22,7 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
     ## Define the spreadsheet and parameter names
     ###########################################################################
     
-    sheetnames = [['Populations and programs'], \
+    sheetnames = [['Programs'], \
                   ['Epidemiology', 'Testing and treatment', 'Sexual behavior', 'Drug behavior'], \
                   ['Partnerships', 'Transitions'], \
                   ['Constants', 'Economics'], \
