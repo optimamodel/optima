@@ -6,12 +6,7 @@ define(['./module', 'underscore'], function (module, _) {
     $scope.pie1 = { title: '', data: [] };
     $scope.pie2 = { title: '', data: [] };
 
-    $scope.linescatterdata = [{ "values": [
-        {"x": 1, "y": 0.6131168519734338, "series": 0},
-        { "x": 2, "y": 0.6078366513401895, "series": 0 },
-        {"x": 3, "y": 0.6025294358447186, "series": 0}
-      ], "key": "Infections", "color": "#ff7f0e"
-    }];
+    $scope.linescatterdata = [{ "values": [], "key": "Infections", "color": "#ff7f0e" }];
 
 
     // @todo now it's just mocked labels
@@ -54,9 +49,13 @@ define(['./module', 'underscore'], function (module, _) {
         .success(function (response) {
           $scope.startRun = true;
 
-          setupPie($scope.pie1, response.dataplot[0]);
-          setupPie($scope.pie2, response.dataplot[1]);
-          setupLine($scope.linescatterdata, $scope.linescatteroptions, response.lineplot[0]);
+          if (response.dataplot && response.lineplot) {
+            setupPie($scope.pie1, response.dataplot[0]);
+            setupPie($scope.pie2, response.dataplot[1]);
+            setupLine($scope.linescatterdata, $scope.linescatteroptions, response.lineplot[0]);
+          } else {
+            alert(response.reason);
+          }
         });
     };
 
