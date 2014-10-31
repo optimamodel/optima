@@ -1,11 +1,11 @@
-import os
-import shutil
-from flask import Flask, Blueprint, helpers, request, jsonify, session, redirect
-from werkzeug import secure_filename
 import json
-import traceback
+import fnmatch
+from flask import Flask, Blueprint, url_for, helpers, request, jsonify, session, redirect
+import shutil
+from werkzeug import secure_filename
+import os
 import sys
-from flask import Blueprint, url_for, helpers, request, jsonify, session, redirect
+import traceback
 from sim.dataio import loaddata, savedata, normalize_file, DATADIR
 from sim.updatedata import updatedata
 from sim.loadspreadsheet import loadspreadsheet
@@ -71,6 +71,17 @@ Returns the current project name.
 @project.route('/name')
 def getProjectInfo():
     return jsonify({"project":session.get('project_name','')})
+
+"""
+Returns the list of existing projects.
+"""
+@project.route('/list')
+def getProjectList():
+    projects = []
+    for file in os.listdir(loaddir(project)):
+        if fnmatch.fnmatch(file, '*.prj'):
+            projects.append(file)
+    return jsonify({"projects":projects})
 
 
 """
