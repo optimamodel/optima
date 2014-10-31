@@ -4,6 +4,7 @@ from flask import Flask
 from flask import helpers
 from flask import request
 from flask import jsonify
+from flask import session
 from werkzeug import secure_filename
 from generators.line import generatedata
 import json
@@ -18,12 +19,14 @@ from sim.makeproject import makeproject
 from sim.manualfit import manualfit
 from sim.bunch import unbunchify
 from sim.runsimulation import runsimulation
+from sim.optimize import optimize
 
 UPLOAD_FOLDER = '/tmp/uploads' #todo configure
 ALLOWED_EXTENSIONS=set(['txt','xlsx','xls'])
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.secret_key = 'F12Zr47j\3yX R~X@H!jmM]Lwf/,?KT'
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -78,6 +81,7 @@ def doManualCalibration():
 # expects json with the following arguments (see example):
 # {"npops":6,"nprogs":8, "datastart":2000, "dataend":2015}
 def createProject(projectName):
+    session.clear()
     print("createProject %s" % projectName)
     data = json.loads(request.args.get('params'))
     data = dict([(x,int(y)) for (x,y) in data.items()])
@@ -94,6 +98,14 @@ def createProject(projectName):
     shutil.copy(srcfile, dstfile)
 
     return helpers.send_from_directory(dirname, xlsname)
+
+@app.route('/api/project/open/<projectName>')
+# expects project name, will put it into session
+# todo: only if it can be found
+def openProject(projectName):
+    session.clear()
+    session['projectName'] = projectName
+    return jsonify({'status':'OK', 'projectName':projectName})
 
 @app.route('/api/calibrate/view', methods=['POST'])
 def doRunSimulation():
@@ -169,8 +181,8 @@ def uploadExcel():
         reply['exception'] = var
     return json.dumps(reply)
 
-@app.route('/api/analysis/optimisation/define', methods=['POST'])
-def defineObjectives():
+@app.route('/api/analysis/optimisation/define/<defineType>', methods=['POST'])
+def defineObjectives(defineType):
     data = json.loads(request.data)
     json_file = os.path.join(app.config['UPLOAD_FOLDER'], "optimisation.json")
     with open(json_file, 'w') as outfile:
@@ -181,9 +193,13 @@ def defineObjectives():
 def runOptimisation():
     # should call method in optimize.py but it's not implemented yet. for now just returns back the file
     json_file = os.path.join(app.config['UPLOAD_FOLDER'], "optimisation.json")
+    if (not os.path.exists(json_file)):
+        return json.dumps({"status":"NOK", "reason":"Define the optimisation objectives first"})
     with open(json_file, 'r') as infile:
         data = json.load(infile)
-    return json.dumps(data)
+    (lineplot, dataplot) = optimize()
+    (lineplot, dataplot) = (unbunchify(lineplot), unbunchify(dataplot))
+    return json.dumps({"lineplot":lineplot, "dataplot":dataplot})
 
 if __name__ == '__main__':
     app.run(debug=True)
