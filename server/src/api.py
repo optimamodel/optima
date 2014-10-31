@@ -1,10 +1,6 @@
 import os
 import shutil
-from flask import Flask
-from flask import helpers
-from flask import request
-from flask import jsonify
-from flask import session
+from flask import Flask, helpers, request, jsonify, session, redirect
 from werkzeug import secure_filename
 from generators.line import generatedata
 import json
@@ -26,18 +22,22 @@ app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.secret_key = 'F12Zr47j\3yX R~X@H!jmM]Lwf/,?KT'
 
+""" Finds out if this file is allowed to be uploaded """
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
+""" API root, nothing interesting here """
 @app.route('/api', methods=['GET'])
 def root():
     return 'API is running!'
 
+""" mocks up data for line graph """
 @app.route('/api/data/line', methods=['GET'])
 def line():
     return app.send_static_file('line-chart.json')
 
+""" mocks up data for line graph with generated data """
 @app.route('/api/data/line/<int:numpoints>', methods=['GET'])
 def lineParam(numpoints):
     return json.dumps({
@@ -46,26 +46,35 @@ def lineParam(numpoints):
         "color": "#ff7f0e"
     })
 
+""" mocks up data for stacked area """
 @app.route('/api/data/stacked-area', methods=['GET'])
 def stackedArea():
     return app.send_static_file('stacked-area-chart.json')
 
+""" mocks up data for multi bar area """
 @app.route('/api/data/multi-bar', methods=['GET'])
 def multiBar():
     return app.send_static_file('multi-bar-chart.json')
 
+""" mocks up data for pie graph """
 @app.route('/api/data/pie', methods=['GET'])
 def pie():
     return app.send_static_file('pie-chart.json')
 
+""" mocks up data for line scatter graph with errors """
 @app.route('/api/data/line-scatter-error', methods=['GET'])
 def lineScatterError():
     return app.send_static_file('line-scatter-error-chart.json')
 
+""" mocks up data for line scatter graph """
 @app.route('/api/data/line-scatter-area', methods=['GET'])
 def lineScatterArea():
     return app.send_static_file('line-scatter-area-chart.json')
 
+""" 
+Uses provided parameters to manually calibrate the model (update it with these data) 
+TODO: do it with the project which is currently in scope
+"""
 @app.route('/api/calibrate/manual', methods=['POST'])
 def doManualCalibration():
     data = json.loads(request.data)
@@ -75,6 +84,11 @@ def doManualCalibration():
     print("unbunchified fits: %s" % fits)
     return jsonify(fits[0])
 
+"""
+Creates the project with the given name and provided parameters.
+Result: on the backend, new project is stored, 
+spreadsheet with specified name and parameters given back to the user.
+"""
 @app.route('/api/project/create/<projectName>')
 # expects json with the following arguments (see example):
 # {"npops":6,"nprogs":8, "datastart":2000, "dataend":2015}
@@ -97,14 +111,22 @@ def createProject(projectName):
 
     return helpers.send_from_directory(dirname, xlsname)
 
+"""
+Opens the project with the given name.
+If the project exists, should put it in session and return to the user.
+"""
 @app.route('/api/project/open/<projectName>')
 # expects project name, will put it into session
 # todo: only if it can be found
 def openProject(projectName):
     session.clear()
-    session['projectName'] = projectName
-    return jsonify({'status':'OK', 'projectName':projectName})
+    session['projectName'] = projectName 
+    return redirect('/')
 
+"""
+Starts calibration for the given project and given date range. 
+Returns back the file with the simulation data. (?) #FIXME find out how to use it
+"""
 @app.route('/api/calibrate/view', methods=['POST'])
 def doRunSimulation():
     data = json.loads(request.data)
@@ -131,6 +153,9 @@ def doRunSimulation():
     }
     return helpers.send_file(data_file_path, **options)
 
+"""
+Download example Excel file.
+"""
 @app.route('/api/data/download/<downloadName>', methods=['GET'])
 def downloadExcel(downloadName):
     example_excel_file_name = 'example.xlsx'
@@ -143,6 +168,10 @@ def downloadExcel(downloadName):
     }
     return helpers.send_file(file_path, **options)
 
+"""
+Uploads Excel file, uses it to update the corresponding model.
+Precondition: model should exist.
+"""
 @app.route('/api/data/upload', methods=['POST'])
 def uploadExcel():
     reply = {'status':'NOK'}
@@ -176,6 +205,9 @@ def uploadExcel():
     reply['result'] = 'Project %s is updated' % file_basename
     return json.dumps(reply)
 
+"""
+Defines optimisation objectives from the data collected on the frontend.
+"""
 @app.route('/api/analysis/optimisation/define/<defineType>', methods=['POST'])
 def defineObjectives(defineType):
     data = json.loads(request.data)
@@ -184,6 +216,9 @@ def defineObjectives(defineType):
         json.dump(data, outfile)
     return json.dumps({'status':'OK'})
 
+"""
+Starts optimisation for the current model. Gives back line plot and two pie plots.
+"""
 @app.route('/api/analysis/optimisation/start')
 def runOptimisation():
     # should call method in optimize.py but it's not implemented yet. for now just returns back the file
