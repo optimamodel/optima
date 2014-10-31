@@ -10,7 +10,7 @@ Version: 2014oct29
 
 import os
 
-DATADIR="/tmp/upload"
+DATADIR="/tmp/uploads"
 
 def normalize_file(filename):
     result = filename
