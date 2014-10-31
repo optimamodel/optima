@@ -13,6 +13,10 @@ import os
 DATADIR="/tmp/uploads"
 
 def normalize_file(filename):
+    """
+    "Normalizes" filename:  if it is full path, leaves it alone. 
+                            otherwise, prepends it with DATADIR.
+    """
     result = filename
     if not os.path.exists(DATADIR):
         os.makedirs(DATADIR)
@@ -22,6 +26,9 @@ def normalize_file(filename):
 
 
 def savedata(filename, data, update=True, verbose=2):
+    """
+    Saves the pickled data into the file (either updates it or just overwrites)
+    """
     if verbose>=1: print('Saving data...')
     from cPickle import dump, load
     
@@ -44,6 +51,9 @@ def savedata(filename, data, update=True, verbose=2):
 
 
 def loaddata(filename, verbose=2):
+    """
+    Loads the file and unpickles data from it.
+    """
     filename = normalize_file(filename)
     if verbose>=1: print('Loading data...')
     from cPickle import load

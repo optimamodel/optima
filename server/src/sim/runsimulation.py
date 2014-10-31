@@ -10,15 +10,17 @@ import os
 
 def runsimulation(projectdatafile='example.prj', startyear=2000, endyear=2030, loaddir = '', verbose=2):
     # todo: it should not overwrite the original file
-    if loaddir:
-        projectdatafile = os.path.join(loaddir, projectdatafile)
+#    if loaddir:
+#        projectdatafile = os.path.join(loaddir, projectdatafile)
     if verbose>=1: 
         data = (projectdatafile, startyear, endyear)
         print('Running simulation (projectdatafile = %s, startyear = %s, endyear = %s)...' % data)
     
     # Load data
-    from dataio import loaddata, savedata
+    from dataio import loaddata, savedata, normalize_file
+    projectdatafile = normalize_file(projectdatafile)
     D = loaddata(projectdatafile, verbose=verbose)
+    print("D = %s" % D)
     
     # Create options structure
     from bunch import Bunch as struct

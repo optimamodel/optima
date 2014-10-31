@@ -7,7 +7,11 @@ import os
 
 def updatedata(projectname='example', loaddir = '', verbose=2):
     
-    # Load the Excel spreadsheet (for the given project), read it in (via loaddata.py), and save it somewhere
+    """
+    Load the Excel spreadsheet (for the given project), assuming it's in the standard uploads directory
+    loads the data for the given project,
+    updates the model based on the speardsheet contents
+    """
     if verbose>=1: print('Updating data... %s' % projectname)
     
     projectfilename = projectname+'.prj'

@@ -1,5 +1,8 @@
 
-def ballsd(function, x, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, pinitial = None, sinitial = None, xmin = None, xmax = None, MaxRangeIter = 1000, MaxFunEvals = None, MaxIter = 1e4, TolFun = 1e-6, TolX = None, StallIterLimit = 100, fulloutput = False, maxarraysize = 1e6):
+def ballsd(function, x, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, \
+    pinitial = None, sinitial = None, xmin = None, xmax = None, MaxRangeIter = 1000, \
+    MaxFunEvals = None, MaxIter = 1e4, TolFun = 1e-6, TolX = None, StallIterLimit = 100, \
+    fulloutput = False, maxarraysize = 1e6):
     """
     BALLSD
     
