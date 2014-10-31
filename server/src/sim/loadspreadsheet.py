@@ -14,7 +14,7 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
     
     if verbose>=1: print('Loading data from %s...' % filename)
     from matplotlib.pylab import nan, array # For reading in empty values
-    from xlrd import open_workbook # For opening Excel spreadsheets
+    from xlrd import open_workbook, XL_CELL_BLANK, XL_CELL_EMPTY # For opening Excel spreadsheets
     from bunch import Bunch as struct # Replicate Matlab-like structure behavior
     
     
@@ -50,7 +50,12 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
     
     costcov = [['costcov',  ['cost', 'cov']]]
     
-    
+    dud_types = set([XL_CELL_BLANK, XL_CELL_EMPTY])
+
+    def is_empty_row(worksheet, row_number):
+        rowf = set([ ty for ty in worksheet.row_types(row_number) ])
+        return (rowf.union(dud_types)==dud_types)
+
     ###########################################################################
     ## Load data sheets
     ###########################################################################
@@ -79,10 +84,25 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
             
             # Loop over each row in the spreadsheet
             for row in range(sheetdata.nrows): 
+                empty_previous_row = row>0 and is_empty_row(sheetdata, row-1)
+
                 paramcategory = sheetdata.cell_value(row,0) # See what's in the first column for this row
-                if not(paramcategory==''): # It's not blank: e.g. "HIV prevalence"
+                has_title = False
+                has_data = False
+
+                if (paramcategory!='' and (row==0 or empty_previous_row)): has_title = True
+
+                if (sheettype!=2 and paramcategory==''): has_data = True
+                if (sheettype==2 and paramcategory!='' and (row>1 and not empty_previous_row)): has_data = True
+
+                print ("row: %s empty: %s, has_data: %s has_title: %s" % (row, empty_previous_row, has_data, has_title))
+
+
+                if has_title: # It's not blank: e.g. "HIV prevalence"
                     if verbose>=2: print('    Loading "%s"...' % paramcategory)
                     parcount += 1 # Increment the parameter count
+
+                    print("sheettype=%s namelist = %s parcount = %s" % (sheettype, namelist, parcount))
                     
                     if sheettype==0: # Metadata
                         thispar = namelist[parcount] # Get the name of this parameter, e.g. 'pop'
@@ -102,8 +122,10 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
                         data[name][thispar] = struct() # Need yet another structure if it's a constant!
 
                 
-                if paramcategory=='': # The first column is blank: it's time for the data
-                    subparam = sheetdata.cell_value(row, 1) # Get the name of a subparameter, e.g. 'FSW', population size for a given population
+                if has_data: # The first column is blank: it's time for the data
+                    subpar_index = 0 if sheettype == 2 else 1 # matrix does not have an empty column to the left
+                    subparam = sheetdata.cell_value(row, subpar_index) # Get the name of a subparameter, e.g. 'FSW', population size for a given population
+                    print ("paramcategory = %s, subparam = %s, subpar_index = %s" % (paramcategory, subparam, subpar_index))
                     if not(subparam==''): # The subparameter name isn't blank, load something!
                         
                         # It's meta-data, split into pieces
@@ -132,13 +154,13 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
                         
                         # It's a matrix, append the data                                     
                         if sheettype==2: 
-                            thesedata = sheetdata.row_values(row, start_colx=2, end_colx=sheetdata.ncols) # Data starts in 3rd column, finishes in 21st column
+                            thesedata = sheetdata.row_values(row, start_colx=1, end_colx=15) # Data starts in 2nd column, finishes in 14th column
                             thesedata = map(lambda val: 0 if val=='' else val, thesedata) # Replace blanks with nan
                             data[name][thispar].append(thesedata) # Store data
                         
                         # It's a constant, create a new dictionary entry
                         if sheettype==3: 
-                            thesedata = sheetdata.row_values(row, start_colx=2, end_colx=5) # Data starts in 3rd column, finishes in 21st column
+                            thesedata = sheetdata.row_values(row, start_colx=2, end_colx=5) # Data starts in 3rd column, finishes in 5th column
                             thesedata = map(lambda val: 0 if val=='' else val, thesedata) # Replace blanks with nan
                             subpar = namelist[parcount][1].pop(0) # Pop first entry of subparameter list, which is namelist[parcount][1]
                             data[name][thispar][subpar] = thesedata # Store data
