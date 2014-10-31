@@ -14,7 +14,7 @@ from sim.dataio import loaddata
 from sim.dataio import savedata
 from sim.dataio import normalize_file
 from sim.updatedata import updatedata
-from sim.loaddata import loaddata
+from sim.loadspreadsheet import loadspreadsheet
 from sim.makeproject import makeproject
 from sim.manualfit import manualfit
 from sim.bunch import unbunchify
