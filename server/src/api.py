@@ -119,7 +119,11 @@ def doRunSimulation():
     endyear = data.get("endyear")
     if endyear:
         args["endyear"] = int(endyear)
-    data_file_path = runsimulation(**args) 
+    try:
+        data_file_path = runsimulation(**args) 
+    except Exception, err:
+        var = traceback.format_exc()
+        return json.dumps({"status":"NOK", "exception":var})    
     options = {
         'cache_timeout': app.get_send_file_max_age(example_excel_file_name),
         'conditional': True,
