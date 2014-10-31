@@ -86,6 +86,7 @@ def makedatapars(D, verbose=2):
     ###############################################################################
     ## Set up general parameters
     ###############################################################################
+    D.G.meta = D.data.meta # Copy metadata
     D.G.ncd4 = len(D.data.const.cd4trans) # Get number of CD4 states from the length of a reliable field, like CD4-related transmissibility
     D.G.nstates = 1+D.G.ncd4*5 # Five are undiagnosed, diagnosed, 1st line, failure, 2nd line, plus susceptible
     
