@@ -3,8 +3,14 @@ define(['./module'], function (module) {
 
   module.controller('OptimizationObjectivesController', function ($scope, $http) {
 
-    $scope.defineOptimization = function () {
-      $http.post('/api/analysis/optimisation/define', {})
+    $scope.params = {
+      forecast: {},
+      optimize: {},
+      minimize: {}
+    };
+
+    $scope.submit = function (type) {
+      $http.post('/api/analysis/optimisation/define/' + type, $scope.params[type])
         .success(function (response) {
           console.log('post to /api/analysis/optimisation/define is done!', response);
         })
