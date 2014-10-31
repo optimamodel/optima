@@ -9,7 +9,7 @@ Version: 2014oct29
 def makemodelpars(P, options, verbose=2):
     if verbose>=1: print('Making model parameters...')
     
-    from matplotlib.pylab import zeros
+    from matplotlib.pylab import zeros, array
     from bunch import Bunch as struct # Replicate Matlab-like structure behavior
     M = struct()
     M.__doc__ = 'Model parameters to be used directly in the model, calculated from data parameters P.'
@@ -22,8 +22,15 @@ def makemodelpars(P, options, verbose=2):
     def dpar2mpar(datapar):
         """ Take data parameters and turn them into model parameters """
         npops = len(datapar.p)
-        output = zeros((npops,npts))
-        for pop in range(npops): output[pop,:] = datapar.p[pop] # TODO: use time!
+        
+        if npops>1:
+            output = zeros((npops,npts))
+            for pop in range(npops):
+                output[pop,:] = datapar.p[pop] # TODO: use time!
+        else:
+            output = zeros(npts)
+            output[:] = datapar.p[0] # TODO: use time!
+        
         return output
     
     ## Epidemilogy parameters -- most are data
@@ -35,6 +42,10 @@ def makemodelpars(P, options, verbose=2):
     ## Testing parameters -- most are data
     M.hivtest = dpar2mpar(P.hivtest) # HIV testing rates
     M.aidstest = dpar2mpar(P.aidstest) # AIDS testing rates
+    blank = struct()
+    blank.p = [0] # WARNING # TODO KLUDGY
+    M.tx1 = dpar2mpar(blank)
+    M.tx2 = dpar2mpar(blank)
     
     ## Sexual behavior parameters -- all are parameters so can loop over all
     M.circum = dpar2mpar(P.circum) # Circumcision
@@ -52,9 +63,11 @@ def makemodelpars(P, options, verbose=2):
     M.ost = dpar2mpar(P.ost)
     M.sharing = dpar2mpar(P.sharing)
     
-    ## Matrices can be used directly
-    M.pships = P.pships
-    M.transit = P.transit
+    ## Matrices can be used almost directly
+    M.pships = struct()
+    M.transit = struct()
+    for key in P.pships.keys(): M.pships[key] = array(P.pships[key])
+    for key in P.transit.keys(): M.transit[key] = array(P.transit[key])
     
     ## Constants...can be used directly -- # TODO should this be copy?
     M.const = P.const
@@ -85,7 +98,7 @@ def makemodelpars(P, options, verbose=2):
         # multiply by the number of acts and population size to get total number of
         # acts
         for pop1 in range(npop):
-            symmetricmatrix[:,pop1]=popsize[pop1]*popacts[pop1]*symmetricmatrix[:,pop1]/sum(symmetricmatrix[:,pop1]);
+            symmetricmatrix[:,pop1]=popsize[pop1]*popacts[pop1]*symmetricmatrix[:,pop1] / float(eps+sum(symmetricmatrix[:,pop1]))
         
         # Reconcile different estimates of number of acts, which must balance
         pshipacts=zeros((npop,npop));
@@ -99,21 +112,17 @@ def makemodelpars(P, options, verbose=2):
         
     
     # Calculate number of acts
-    totalacts = struct()
+    M.totalacts = struct()
+    M.totalacts.__doc__ = 'Balanced numbers of acts'
     for act in ['reg','cas','com','drug']:
         npops = len(M.popsize[:,0])
-        totalacts[act] = zeros((npops,npops,npts))
+        M.totalacts[act] = zeros((npops,npops,npts))
         for t in range(npts):
-            totalacts[act][:,:,t] = reconcileacts(P.pships[act], M.popsize[:,t], M.numacts[act][:,t])
+            M.totalacts[act][:,:,t] = reconcileacts(P.pships[act], M.popsize[:,t], M.numacts[act][:,t])
         
+    # Apply interventions?
     
-    
-    
-    # Reconcile number of acts
-    
-    # Apply interventions
-    
-    # Sum matrices
+    # Sum matrices?
 
     if verbose>=2: print('  ...done making model parameters.')
     return M
