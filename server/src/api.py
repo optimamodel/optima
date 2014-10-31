@@ -12,7 +12,7 @@ import traceback
 import sys
 from sim.dataio import loaddata, savedata, normalize_file, DATADIR
 from sim.updatedata import updatedata
-from sim.loaddata import loaddata
+from sim.loadspreadsheet import loadspreadsheet
 from sim.makeproject import makeproject
 from sim.manualfit import manualfit
 from sim.bunch import unbunchify
