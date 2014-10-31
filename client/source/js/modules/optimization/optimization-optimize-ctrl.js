@@ -47,12 +47,11 @@ define(['./module', 'underscore'], function (module, _) {
     $scope.startAnalysis = function () {
       $http.get('/api/analysis/optimisation/start')
         .success(function (response) {
-          $scope.startRun = true;
-
           if (response.dataplot && response.lineplot) {
             setupPie($scope.pie1, response.dataplot[0]);
             setupPie($scope.pie2, response.dataplot[1]);
             setupLine($scope.linescatterdata, $scope.linescatteroptions, response.lineplot[0]);
+            $scope.startRun = true;
           } else {
             alert(response.reason);
           }
