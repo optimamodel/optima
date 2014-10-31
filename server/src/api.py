@@ -10,9 +10,7 @@ from generators.line import generatedata
 import json
 import traceback
 import sys
-from sim.dataio import loaddata
-from sim.dataio import savedata
-from sim.dataio import normalize_file
+from sim.dataio import loaddata, savedata, normalize_file, DATADIR
 from sim.updatedata import updatedata
 from sim.loaddata import loaddata
 from sim.makeproject import makeproject
@@ -21,7 +19,7 @@ from sim.bunch import unbunchify
 from sim.runsimulation import runsimulation
 from sim.optimize import optimize
 
-UPLOAD_FOLDER = '/tmp/uploads' #todo configure
+UPLOAD_FOLDER = DATADIR #'/tmp/uploads' #todo configure
 ALLOWED_EXTENSIONS=set(['txt','xlsx','xls'])
 
 app = Flask(__name__)
@@ -144,41 +142,34 @@ def downloadExcel(downloadName):
 @app.route('/api/data/upload', methods=['POST'])
 def uploadExcel():
     reply = {'status':'NOK'}
-    try:
-        loaddir = app.config['UPLOAD_FOLDER']
-        example_prj = 'example.prj'
-        try: 
-            example_in_filename = helpers.safe_join(app.static_folder, example_prj)
-            example_out_filename = helpers.safe_join(loaddir, example_prj)
-            data = loaddata(example_in_filename)
-            savedata(example_out_filename)
-        except Exception, err:
-            var = traceback.format_exc()
-            print(var)
-            # eat it here
-            
-        file = request.files['file']
-        if file:
-            filename = secure_filename(file.filename)
-            reply['file'] = filename
-            if allowed_file(filename):
-                server_filename = os.path.join(loaddir, filename)
-                file.save(server_filename)
-                file_basename, file_extension = os.path.splitext(filename)
-                out_filename = updatedata(file_basename, loaddir)
-                data = loaddata(server_filename)
-#                epi_file_name = 'epi-template.xlsx'
-#                file_path = helpers.safe_join(app.static_folder, epi_file_name)
+    file = request.files['file']
+    loaddir = app.config['UPLOAD_FOLDER']
+    if not file:
+        reply['reason'] = 'No file is submitted!'
+        return json.dumps(reply)
 
- #               data = loaddata(server_filename) #gives an error for an example file...
-                reply['status'] = 'OK'
-                print(data)
-            else:
-                reply['reason'] = 'invalid file extension:'+ filename
+    filename = secure_filename(file.filename)
+    if not allowed_file(filename):
+        reply['reason'] = 'File type of %s is not accepted!' % filename
+        return json.dumps(reply)
+
+    file_basename, file_extension = os.path.splitext(filename)
+    project_name = helpers.safe_join(loaddir, file_basename+'.prj')
+    print("project name: %s" % project_name)
+    if not os.path.exists(project_name):
+        reply['reason'] = 'Project %s does not exist' % file_basename
+        return json.dumps(reply)
+
+    try:
+        out_filename = updatedata(file_basename, loaddir)
+        data = loaddata(project_name)
     except Exception, err:
         var = traceback.format_exc()
-        print(var)
         reply['exception'] = var
+        return json.dumps(reply)      
+
+    reply['status'] = 'OK'
+    reply['result'] = 'Project %s is updated' % file_basename
     return json.dumps(reply)
 
 @app.route('/api/analysis/optimisation/define/<defineType>', methods=['POST'])
