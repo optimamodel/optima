@@ -16,7 +16,7 @@
                     </label>
                 </div>
                 <div class="elastic_col __shrink">
-                    <button class="btn">Start analysis</button>
+                    <button class="btn" ng-click="startAnalysis()">Start analysis</button>
                 </div>
                 <div class="elastic_col __shrink">
                     <button class="btn">Stop analysis</button>
@@ -34,20 +34,20 @@
         </div>
     </div>
 
-    <div class="well">
+    <div class="well" ng-if="startRun">
 
         <div class="grid">
             <div class="section cf">
                 <div class="6">
-                    <h2>Original allocation</h2>
+                    <h2>{{ pie1.title }}</h2>
                     <div class="chart-container">
-                        <nvd3 data="piedata" options="pieoptions"></nvd3>
+                        <nvd3 data="pie1.data" options="pieoptions"></nvd3>
                     </div>
                 </div>
                 <div class="6">
-                    <h2>Current allocation</h2>
+                    <h2>{{ pie2.title }}</h2>
                     <div class="chart-container">
-                        <nvd3 data="piedata" options="pieoptions"></nvd3>
+                        <nvd3 data="pie2.data" options="pieoptions"></nvd3>
                     </div>
                 </div>
                 <div class="6">
