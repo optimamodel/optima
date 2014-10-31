@@ -181,8 +181,8 @@ def uploadExcel():
         reply['exception'] = var
     return json.dumps(reply)
 
-@app.route('/api/analysis/optimisation/define', methods=['POST'])
-def defineObjectives():
+@app.route('/api/analysis/optimisation/define/<defineType>', methods=['POST'])
+def defineObjectives(defineType):
     data = json.loads(request.data)
     json_file = os.path.join(app.config['UPLOAD_FOLDER'], "optimisation.json")
     with open(json_file, 'w') as outfile:
@@ -192,9 +192,11 @@ def defineObjectives():
 @app.route('/api/analysis/optimisation/start')
 def runOptimisation():
     # should call method in optimize.py but it's not implemented yet. for now just returns back the file
-   # json_file = os.path.join(app.config['UPLOAD_FOLDER'], "optimisation.json")
-   # with open(json_file, 'r') as infile:
-    #    data = json.load(infile)
+    json_file = os.path.join(app.config['UPLOAD_FOLDER'], "optimisation.json")
+    if (not os.path.exists(json_file)):
+        return json.dumps({"status":"NOK", "reason":"Define the optimisation objectives first"})
+    with open(json_file, 'r') as infile:
+        data = json.load(infile)
     (lineplot, dataplot) = optimize()
     (lineplot, dataplot) = (unbunchify(lineplot), unbunchify(dataplot))
     return json.dumps({"lineplot":lineplot, "dataplot":dataplot})
