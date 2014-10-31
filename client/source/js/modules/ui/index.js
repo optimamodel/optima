@@ -13,7 +13,7 @@ define([
       // https://github.com/danialfarid/angular-file-upload
       function uploadDataSpreadsheet(file) {
         $scope.upload = $upload.upload({
-          url: '/api/data/upload',
+          url: '/api/project/update',
           file: file
         }).progress(function(evt) {
           console.log('percent: ' + parseInt(100.0 * evt.loaded / evt.total));
