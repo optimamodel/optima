@@ -32,8 +32,8 @@ TODO: do it with the project which is currently in scope
 def doManualCalibration():
     data = json.loads(request.data)
     project_name = session.get('project_name', '')
-    if project_name = '':
-        return jsonify({'status':'NOK', 'no project is open'})
+    if project_name == '':
+        return jsonify({'status':'NOK', 'reason':'no project is open'})
 
     file_name = helpers.safe_join(loaddir(model), project_name+'.prj')
     print("project file_name: %s" % file_name)
@@ -58,7 +58,7 @@ def doRunSimulation():
     args = {"loaddir": model.static_folder}
     projectdatafile = data.get("projectdatafile")
     if projectdatafile:
-        args["projectdatafile"] = helpers.safe_join(app.static_folder, projectdatafile)
+        args["projectdatafile"] = helpers.safe_join(model.static_folder, projectdatafile)
     startyear = data.get("startyear")
     if startyear:
         args["startyear"] = int(startyear)
