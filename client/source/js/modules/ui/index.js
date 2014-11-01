@@ -37,14 +37,8 @@ define([
                         },
                         {
                             title: 'Open existing project',
-                            click: function () {
-                                angular
-                                    .element('<input type="file">')
-                                    .change(function (event) {
-                                        // TODO
-                                        alert(event.target.files[0].name);
-                                    })
-                                    .click();
+                            state: {
+                                name: 'project.open'
                             }
                         },
                         {

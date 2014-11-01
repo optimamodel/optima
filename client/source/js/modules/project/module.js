@@ -1,7 +1,14 @@
-define(['angular', 'ui.router'], function (angular) {
+define([
+  'angular',
+  'ui.router',
+  '../resources/project'
+], function (angular) {
   'use strict';
 
-  return angular.module('app.project', ['ui.router'])
+  return angular.module('app.project', [
+    'app.resources.project',
+    'ui.router'
+  ])
     .config(function ($stateProvider) {
       $stateProvider
         .state('project', {
@@ -14,10 +21,15 @@ define(['angular', 'ui.router'], function (angular) {
           templateUrl: 'js/modules/project/create.html',
           controller: 'ProjectCreateController'
         })
-        .state('project.modify', {
-          url: '/modify',
-          templateUrl: 'js/modules/project/modify.html',
-          controller: 'ProjectModifyController'
+        .state('project.open', {
+          url: '/open',
+          templateUrl: 'js/modules/project/open.html',
+          controller: 'ProjectOpenController',
+          resolve: {
+            projects: function (Project) {
+              return Project.list().$promise;
+            }
+          }
         });
     });
 
