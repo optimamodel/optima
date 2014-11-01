@@ -1,4 +1,4 @@
 define([
   './project-create-ctrl',
-  './project-modify-ctrl'
+  './project-open-ctrl'
 ], function () {});
