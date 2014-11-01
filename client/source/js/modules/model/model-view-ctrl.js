@@ -9,7 +9,7 @@ define(['./module', 'angular'], function (module, angular) {
         //var generatedDataSet = dataMocks.lineWith({num: $scope.numberOfPoints});
         //$scope.linescatterdata = [generatedDataSet];
 
-          $http.post('/api/calibrate/view', $scope.simulationOptions)
+          $http.post('/api/model/view', $scope.simulationOptions)
             .success(function (data) {
                 console.log(data);
             })
