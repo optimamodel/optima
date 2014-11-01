@@ -33,94 +33,94 @@
     </div>
 
     <div class="section grid">
-
-      <h2>Populations</h2>
-
-      <div class="section grid">
-        <div class="6">
-          <p>Available populations:</p>
-
-          <div id="div1" class="some-container" ondrop="drop(event)" ondragover="allowDrop(event)">
-            <div id="drag01" draggable="true" ondragstart="drag(event)" class="smth">
-              Female sex workers
-            </div>
-            <div id="drag02" draggable="true" ondragstart="drag(event)" class="smth">
-              Clients of sex workers
-            </div>
-            <div id="drag03" draggable="true" ondragstart="drag(event)" class="smth">
-              Men who have sex with men
-            </div>
-            <div id="drag04" draggable="true" ondragstart="drag(event)" class="smth">
-              Males who inject drugs
-            </div>
-            <div id="drag05" draggable="true" ondragstart="drag(event)" class="smth">
-              Females who inject drugs
-            </div>
-            <div id="drag06" draggable="true" ondragstart="drag(event)" class="smth">
-              Transgender individuals
-            </div>
-            <div id="drag07" draggable="true" ondragstart="drag(event)" class="smth">
-              Infants (0-2)
-            </div>
-            <div id="drag08" draggable="true" ondragstart="drag(event)" class="smth">
-              Children (2-15)
-            </div>
-            <div id="drag09" draggable="true" ondragstart="drag(event)" class="smth">
-              Young females (15-20)
-            </div>
-            <div id="drag10" draggable="true" ondragstart="drag(event)" class="smth">
-              Young males (15-20)
-            </div>
-            <div id="drag11" draggable="true" ondragstart="drag(event)" class="smth">
-              Adult females (20-50)
-            </div>
-            <div id="drag12" draggable="true" ondragstart="drag(event)" class="smth">
-              Adult males (20-50)
-            </div>
-            <div id="drag13" draggable="true" ondragstart="drag(event)" class="smth">
-              Older females (50+)
-            </div>
-            <div id="drag14" draggable="true" ondragstart="drag(event)" class="smth">
-              Older males (50+)
-            </div>
-            <div id="drag15" draggable="true" ondragstart="drag(event)" class="smth">
-              Other males
-            </div>
-            <div id="drag16" draggable="true" ondragstart="drag(event)" class="smth">
-              Other females
-            </div>
-            <div id="drag17" draggable="true" ondragstart="drag(event)" class="smth">
-              Other (user-defined)
-            </div>
-            <div id="drag19" draggable="true" ondragstart="drag(event)" class="smth">
-              Other (user-defined)
-            </div>
-            <div id="drag10" draggable="true" ondragstart="drag(event)" class="smth">
-              Other (user-defined)
-            </div>
-            <div id="drag20" draggable="true" ondragstart="drag(event)" class="smth">
-              Other (user-defined)
-            </div>
-          </div>
-        </div>
-        <div class="6">
-          <p>Populations in the model:</p>
-
-          <div id="div1" class="some-container" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
-          <br>
-        </div>
+      <div class="2">
+        <input class="txbox" type="number" min="1900" placeholder="Start year" ng-model="projectParams.datastart" required>
       </div>
-
-
+      <div class="2">
+        <input class="txbox" type="number" min="1900" placeholder="End year" ng-model="projectParams.dataend" required>
+      </div>
     </div>
-
-    <h2>Programs</h2>
 
     <div class="section grid">
       <div class="6">
-        <p>Available programs:</p>
+        <p><b>Available populations:</b></p>
 
-        <div id="div2" class="some-container" ondrop="drop(event)" ondragover="allowDrop(event)">
+        <div class="some-container" ondrop="drop(event)" ondragover="allowDrop(event)">
+          <div id="drag01" draggable="true" ondragstart="drag(event)" class="smth">
+            Female sex workers
+          </div>
+          <div id="drag02" draggable="true" ondragstart="drag(event)" class="smth">
+            Clients of sex workers
+          </div>
+          <div id="drag03" draggable="true" ondragstart="drag(event)" class="smth">
+            Men who have sex with men
+          </div>
+          <div id="drag04" draggable="true" ondragstart="drag(event)" class="smth">
+            Males who inject drugs
+          </div>
+          <div id="drag05" draggable="true" ondragstart="drag(event)" class="smth">
+            Females who inject drugs
+          </div>
+          <div id="drag06" draggable="true" ondragstart="drag(event)" class="smth">
+            Transgender individuals
+          </div>
+          <div id="drag07" draggable="true" ondragstart="drag(event)" class="smth">
+            Infants (0-2)
+          </div>
+          <div id="drag08" draggable="true" ondragstart="drag(event)" class="smth">
+            Children (2-15)
+          </div>
+          <div id="drag09" draggable="true" ondragstart="drag(event)" class="smth">
+            Young females (15-20)
+          </div>
+          <div id="drag10" draggable="true" ondragstart="drag(event)" class="smth">
+            Young males (15-20)
+          </div>
+          <div id="drag11" draggable="true" ondragstart="drag(event)" class="smth">
+            Adult females (20-50)
+          </div>
+          <div id="drag12" draggable="true" ondragstart="drag(event)" class="smth">
+            Adult males (20-50)
+          </div>
+          <div id="drag13" draggable="true" ondragstart="drag(event)" class="smth">
+            Older females (50+)
+          </div>
+          <div id="drag14" draggable="true" ondragstart="drag(event)" class="smth">
+            Older males (50+)
+          </div>
+          <div id="drag15" draggable="true" ondragstart="drag(event)" class="smth">
+            Other males
+          </div>
+          <div id="drag16" draggable="true" ondragstart="drag(event)" class="smth">
+            Other females
+          </div>
+          <div id="drag17" draggable="true" ondragstart="drag(event)" class="smth">
+            Other (user-defined)
+          </div>
+          <div id="drag19" draggable="true" ondragstart="drag(event)" class="smth">
+            Other (user-defined)
+          </div>
+          <div id="drag20" draggable="true" ondragstart="drag(event)" class="smth">
+            Other (user-defined)
+          </div>
+          <div id="drag201" draggable="true" ondragstart="drag(event)" class="smth">
+            Other (user-defined)
+          </div>
+        </div>
+      </div>
+      <div class="6">
+        <p><b>Populations in the model:</b></p>
+
+        <div id="div1" class="some-container" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+        <br>
+      </div>
+    </div>
+
+    <div class="section grid">
+      <div class="6">
+        <p><b>Available programs:</b></p>
+
+        <div class="some-container" ondrop="drop(event)" ondragover="allowDrop(event)">
           <div id="drag21" draggable="true" ondragstart="drag(event)" class="smth">
             HIV testing & counseling
           </div>
@@ -160,34 +160,18 @@
           <div id="drag33" draggable="true" ondragstart="drag(event)" class="smth">
             Other (user-defined)
           </div>
-          <div id="drag34" draggable="true" ondragstart="drag(event)"></div>
         </div>
       </div>
 
       <div class="6">
-        <p>Programs in the model:</p>
+        <p><b>Programs in the model:</b></p>
 
         <div id="div2" class="some-container" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
       </div>
     </div>
 
-    <br>
-    <br>
-
-    <div class="section grid">
-      <div class="2">
-        <input class="txbox" type="number" min="1900" placeholder="Start year" ng-model="projectParams.datastart" required>
-      </div>
-      <div class="2">
-        <input class="txbox" type="number" min="1900" placeholder="End year" ng-model="projectParams.dataend" required>
-      </div>
-    </div>
-
-    <div class="section grid">
-      <div class="4">
-        <input type="file" id="file3" style="display:none">
-        <button class="btn __block" type="submit">Save project &amp; generate Optima template</button>
-      </div>
+    <div class="section text-center">
+      <button class="btn" type="submit">Save project &amp; generate Optima template</button>
     </div>
   </form>
 </div>
