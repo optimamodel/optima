@@ -4,7 +4,7 @@
 
     <ul>
       <li ng-repeat="project in projects track by $index">
-        {{ project }}
+        <a ng-click="open(project)" href="#">{{ project }}</a>
       </li>
     </ul>
 
