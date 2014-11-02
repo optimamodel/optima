@@ -28,17 +28,28 @@ Creates the project with the given name and provided parameters.
 Result: on the backend, new project is stored, 
 spreadsheet with specified name and parameters given back to the user.
 """
-@project.route('/create/<project_name>')
+@project.route('/create/<project_name>', methods=['POST'])
 # expects json with the following arguments (see example):
 # {"npops":6,"nprogs":8, "datastart":2000, "dataend":2015}
 def createProject(project_name):
     session.clear()
     print("createProject %s" % project_name)
-    data = json.loads(request.args.get('params'))
-    data = dict([(x,int(y)) for (x,y) in data.items()])
+    data = request.form
+    if data:
+        data = json.loads(data['params'])
+#    data = json.loads(request.args.get('params'))
+#    data = dict([(x,int(y)) for (x,y) in data.items()])
     print(data)
     makeproject_args = {"projectname":project_name}
-    makeproject_args = dict(makeproject_args.items() + data.items())
+    if data['datastart']:
+        makeproject_args['datastart'] = int(data['datastart'])
+    if data['dataend']:
+        makeproject_args['dataend'] = int(data['dataend'])
+    if data['programs']:
+        makeproject_args['nprogs'] = len(data['programs'])
+    if data['populations']:
+        makeproject_args['npops'] = len(data['populations'])
+#    makeproject_args = dict(makeproject_args.items() + data.items())
     print(makeproject_args)
     new_project_template = makeproject(**makeproject_args) # makeproject is supposed to return the name of the existing file...
     print("new_project_template: %s" % new_project_template)
