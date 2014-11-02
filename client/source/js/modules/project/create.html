@@ -1,23 +1,6 @@
 <div class="rich">
 
-  <script>
-    function allowDrop (event) {
-      event.preventDefault();
-    }
-
-    function drag (event) {
-      event.dataTransfer.setData("text", event.target.id);
-    }
-
-    function drop(ev) {
-      ev.preventDefault();
-      var data = ev.dataTransfer.getData("text");
-      ev.target.appendChild(document.getElementById(data));
-    }
-
-  </script>
-
-  <form name="CreateProjectForm" ng-submit="createProject()">
+  <form name="CreateProjectForm" ng-submit="createProject()" novalidate="novalidate">
     <p>
       <b>Instructions</b><br>
       1. Enter the name of the project and the numbers of population groups and HIV programs.<br>
@@ -54,7 +37,7 @@
           </li>
           <li>
             <input class="txbox __inline" ng-model="newPopulation" placeholder="Other (type name here)" style="width: 200px">
-            <button class="btn" ng-click="addPopulation()">Add</button>
+            <button class="btn" type="button" ng-click="addPopulation($event)">Add</button>
           </li>
         </ul>
       </div>
@@ -70,7 +53,7 @@
           </li>
           <li>
             <input class="txbox __inline" ng-model="newProgram" placeholder="Other (type name here)" style="width: 200px">
-            <button class="btn" ng-click="addProgram($event)">Add</button>
+            <button class="btn" type="button" ng-click="addProgram($event)">Add</button>
           </li>
         </ul>
       </div>
