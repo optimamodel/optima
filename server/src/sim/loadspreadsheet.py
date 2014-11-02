@@ -1,11 +1,3 @@
-"""
-LOADSPREADSHEET
-
-This function loads the spreadsheet data into Optima.
-
-Version: 2014oct29
-"""
-
 def loadspreadsheet(filename='example.xlsx',verbose=2):
     """
     Loads the spreadsheet (i.e. reads its contents into the data structure).
@@ -90,25 +82,10 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
             
             # Loop over each row in the spreadsheet
             for row in range(sheetdata.nrows): 
-                empty_previous_row = row>0 and is_empty_row(sheetdata, row-1)
-
                 paramcategory = sheetdata.cell_value(row,0) # See what's in the first column for this row
-                has_title = False
-                has_data = False
-
-                if (paramcategory!=''): has_title = True
-                if (paramcategory==''): has_data = True
-
-                if verbose >=3:
-                    print ("row: %s empty: %s, has_data: %s has_title: %s" % (row, empty_previous_row, has_data, has_title))
-
-
-                if has_title: # It's not blank: e.g. "HIV prevalence"
-                    if verbose>=3: 
-                        print('    Loading "%s"...' % paramcategory)
+                if not(paramcategory==''): # It's not blank: e.g. "HIV prevalence"
+                    if verbose>=2: print('    Loading "%s"...' % paramcategory)
                     parcount += 1 # Increment the parameter count
-
-                    print("sheettype=%s namelist = %s parcount = %s" % (sheettype, namelist, parcount))
                     
                     if sheettype==0: # Metadata
                         thispar = namelist[parcount] # Get the name of this parameter, e.g. 'pop'
@@ -128,7 +105,7 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
                         data[name][thispar] = struct() # Need yet another structure if it's a constant!
 
                 
-                if has_data: # The first column is blank: it's time for the data
+                if paramcategory=='': # The first column is blank: it's time for the data
                     subparam = sheetdata.cell_value(row, 1) # Get the name of a subparameter, e.g. 'FSW', population size for a given population
                     if verbose >=3:
                         print ("paramcategory = %s, subparam = %s, subpar_index = %s" % (paramcategory, subparam, subpar_index))
@@ -160,7 +137,7 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
                         
                         # It's a matrix, append the data                                     
                         if sheettype==2: 
-                            thesedata = sheetdata.row_values(row, start_colx=1, end_colx=sheetdata.ncols) # Data starts in 2nd column, finishes in 14th column
+                            thesedata = sheetdata.row_values(row, start_colx=2, end_colx=sheetdata.ncols) # Data starts in 3rd column
                             thesedata = map(lambda val: 0 if val=='' else val, thesedata) # Replace blanks with nan
                             data[name][thispar].append(thesedata) # Store data
                         
