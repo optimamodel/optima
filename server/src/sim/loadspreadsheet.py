@@ -51,12 +51,13 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
                                                       ['fail',     ['first','second']],\
                                                       ['death',    ['background','inj','acute','gt500','gt350','gt200','aids','treat','tb']],\
                                                       ['eff',      ['condom','circ','dx','sti','meth','pmtct','tx']]]], \
-                 ['Disutilities & costs', 'costs',   [['disutil',  ['acute','gt500','gt350','gt200','aids','tx']], \
+                 ['Disutilities & costs', 'cost',    [['disutil',  ['acute','gt500','gt350','gt200','aids','tx']], \
                                                       ['health',    ['acute','gt500','gt350','gt200','aids']], \
                                                       ['social',    ['acute','gt500','gt350','gt200','aids']]]]
                 ]
     
-    sheetstructure = [metadata, keydata, timedata, matrices, constants]
+    sheetstructure = [metadata, keydata, timedata, matrices, constants] 
+    print('WARNING should change this to have read-in directly based on each class')
     
 
 
@@ -73,12 +74,12 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
     for sheetclass in sheetstructure: # Loop over each type of data, but treat constants differently
         for sheet in sheetclass: # Loop over each spreadsheet for that data -- just one for constants
             sheetname = sheet[0] # Name of the spreadsheet
-            parname = sheet[1] # Pull out the name of this field, e.g. 'epi'
+            name = sheet[1] # Pull out the name of this field, e.g. 'epi'
             subparlist = sheet[2] # List of subparameters
             if verbose>=2: print('  Loading "%s"...' % sheetname)
             
             
-            data[parname] = struct() # Create structure for holding data, e.g. data.epi
+            data[name] = struct() # Create structure for holding data, e.g. data.epi
             sheetdata = spreadsheet.sheet_by_name(sheetname) # Load this spreadsheet
             parcount = -1 # Initialize the parameter count
             
@@ -96,22 +97,19 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
                     if verbose>=2: print('    Loading "%s"...' % paramcategory)
                     parcount += 1 # Increment the parameter count
                     
-                    if sheettype==0: # Metadata
-                        thispar = namelist[parcount] # Get the name of this parameter, e.g. 'pop'
+                    if name=='meta': # Metadata
+                        thispar = subparlist[parcount] # Get the name of this parameter, e.g. 'pop'
                         data[name][thispar] = struct() # Initialize to empty list
-                        data[name][thispar].short = []
-                        data[name][thispar].long = []
-                        if parcount==0:
-                            data[name][thispar].male = []
-                            data[name][thispar].pwid = []
+                        data[name][thispar].short = [] # Store short population/program names, e.g. "FSW"
+                        data[name][thispar].long = [] # Store long population/program names, e.g. "Female sex workers"
                     
-                    if sheettype==1 or sheettype==2 or sheettype==4: # It's basic data or a matrix
-                        thispar = namelist[parcount] # Get the name of this parameter, e.g. 'popsize'                    
-                        data[name][thispar] = [] # Initialize to empty list
-                    
-                    if sheettype==3: # It's a constant
-                        thispar = namelist[parcount][0] # Get the name of this parameter, e.g. 'trans'
+                    elif name=='const' or name=='cost': # It's a constant or a cost: create a structure
+                        thispar = subparlist[parcount][0] # Get the name of this parameter, e.g. 'trans'
                         data[name][thispar] = struct() # Need yet another structure if it's a constant!
+                        
+                    else: # It's basic data or a matrix: create an empty list
+                        thispar = subparlist[parcount] # Get the name of this parameter, e.g. 'popsize'                    
+                        data[name][thispar] = [] # Initialize to empty list
 
                 
                 if paramcategory=='': # The first column is blank: it's time for the data
@@ -121,13 +119,10 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
                         if verbose >=3: print("      Parameter: subparam" % subparam)
                         
                         # It's meta-data, split into pieces
-                        if sheettype==0: 
+                        if name=='meta': 
                             thesedata = sheetdata.row_values(row, start_colx=2, end_colx=6) # Data starts in 3rd column, finishes in 6th column
                             data[name][thispar].short.append(thesedata[0])
                             data[name][thispar].long.append(thesedata[1])
-                            if parcount==0:
-                                data[name][thispar].male.append(thesedata[2])
-                                data[name][thispar].pwid.append(thesedata[3])
                         
                         # It's basic data, append the data and check for programs
                         if sheettype==1: 
@@ -145,16 +140,16 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
                                 programs[programname].append([[name,thispar], outcomes]) # Append to program
                         
                         # It's a matrix, append the data                                     
-                        if sheettype==2: 
+                        elif name=='pships' or name=='transit':
                             thesedata = sheetdata.row_values(row, start_colx=2, end_colx=sheetdata.ncols) # Data starts in 3rd column
                             thesedata = map(lambda val: 0 if val=='' else val, thesedata) # Replace blanks with nan
                             data[name][thispar].append(thesedata) # Store data
                         
                         # It's a constant, create a new dictionary entry
-                        if sheettype==3: 
+                        elif name=='const' or name=='cost':
                             thesedata = sheetdata.row_values(row, start_colx=2, end_colx=5) # Data starts in 3rd column, finishes in 5th column
                             thesedata = map(lambda val: 0 if val=='' else val, thesedata) # Replace blanks with nan
-                            subpar = namelist[parcount][1].pop(0) # Pop first entry of subparameter list, which is namelist[parcount][1]
+                            subpar = subparlist[parcount][1].pop(0) # Pop first entry of subparameter list, which is namelist[parcount][1]
                             data[name][thispar][subpar] = thesedata # Store data
     
     if verbose>=2: print('  ...done loading data.')
