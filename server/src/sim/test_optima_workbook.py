@@ -4,7 +4,9 @@ from optima_workbook import OptimaWorkbook
 
 class TestOptimaWorkbook(unittest.TestCase):
   def test_create_workboook_with_defaults(self):
-    book = OptimaWorkbook('test_example')
+    populations = ['General males', 'General females', 'Female sex workers']
+    programs = ['Behavior change', 'Needle-syringe program', 'HIV counseling and testing']
+    book = OptimaWorkbook('test_example', populations, programs)
     path = '/tmp/test_example.xlsx'
     if os.path.exists(path):
       os.remove(path)

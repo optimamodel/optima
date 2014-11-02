@@ -9,6 +9,18 @@ import xlsxwriter
 from xlsxwriter.utility import *
 from collections import OrderedDict
 import os
+
+
+def abbreviate(param):
+  words = re.sub('([^a-z0-9+]+)',' ',param.lower()).strip().split()
+  short_param = ''
+  for w in words:
+    if re.match('[a-z]+',w):
+      short_param += w[0]
+    else:
+      short_param += w
+  return short_param.upper()
+
 """
 class OptimaRange:
   def __init__(self, name, row_names, column_names):
@@ -58,16 +70,21 @@ class OptimaWorkbook:
                  ('consts', 'Costs and disutilities'), \
                  ('macroecon', 'Macroeconomics')])
 
-  def __init__(self, name, npops = 6, nprogs = 8, data_start = 2000, data_end = 2015, verbose = 2):
+  def __init__(self, name, pops, progs, data_start = 2000, data_end = 2015, verbose = 2):
     self.name = name
-    self.npops = npops
-    self.nprogs = nprogs
+    self.pops = pops
+    self.progs = progs
     self.data_start = data_start
     self.data_end = data_end
     self.verbose = verbose
     self.book = None
     self.sheets = None
     self.formats = None
+
+    self.npops = len(pops)
+    self.nprogs = len(progs)
+    self.coded_pops = OrderedDict([(abbreviate(item), item) for item in self.pops])
+    self.coded_progs = OrderedDict([(abbreviate(item), item) for item in self.progs])
 
   def write_block_name(self, sheet, name, row):
     sheet.write(row, 0, name, self.formats['bold'])
@@ -81,6 +98,8 @@ class OptimaWorkbook:
   def generate_pp(self):
     pp_sheet = self.sheets['pp']
     pp_sheet.protect()
+    pp_sheet.set_column(2,2,15)
+    pp_sheet.set_column(3,3,40)
     current_row = 0
     first_col = 2
     self.write_block_name(pp_sheet, 'Populations', current_row)
@@ -93,10 +112,10 @@ class OptimaWorkbook:
 #      print "PopulationsRange = %s", pop_range_name
 #    self.book.define_name('PopulationsRange',pop_range_name)
 
-    for i in range(pop_range.num_rows):
+    for i, item in enumerate(self.coded_pops):
       self.write_rowcol_name(pp_sheet, pop_range.first_row+i, pop_range.first_col-1, i+1)
-      self.write_unlocked(pp_sheet, pop_range.first_row+i, pop_range.first_col, "POP%s" % str(i+1))
-      self.write_unlocked(pp_sheet, pop_range.first_row+i, pop_range.first_col+1, "Population %s" % str(i+1))
+      self.write_unlocked(pp_sheet, pop_range.first_row+i, pop_range.first_col, item)
+      self.write_unlocked(pp_sheet, pop_range.first_row+i, pop_range.first_col+1, self.coded_pops[item])
 
     current_row += 2 + pop_range.num_rows + 1
 
@@ -106,10 +125,10 @@ class OptimaWorkbook:
 
     prog_range = SheetRange(current_row+2, first_col, self.nprogs, 2)
 #    self.book.define_name('ProgramsRange',"'%s!%s" % (OptimaWorkbook.sheet_names['pp'], prog_range.get_address()))
-    for i in range(prog_range.num_rows):
+    for i, item in enumerate(self.coded_progs):
       self.write_rowcol_name(pp_sheet, prog_range.first_row+i, prog_range.first_col-1, i+1)
-      self.write_unlocked(pp_sheet, prog_range.first_row+i, prog_range.first_col, "PRG%s" % str(i+1))
-      self.write_unlocked(pp_sheet, prog_range.first_row+i, prog_range.first_col+1, "Program %s" % str(i+1))
+      self.write_unlocked(pp_sheet, prog_range.first_row+i, prog_range.first_col, item)
+      self.write_unlocked(pp_sheet, prog_range.first_row+i, prog_range.first_col+1, self.coded_progs[item])
 
   def generate_cc(self):
     cc_sheet = self.sheets['cc']

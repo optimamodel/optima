@@ -21,13 +21,3 @@ def project_exists(folder, name):
   project_name = helpers.safe_join(folder, name+'.prj')
   print("project name: %s" % project_name)
   return os.path.exists(project_name)
-
-def abbreviate(param):
-  words = re.sub('([^a-z0-9+]+)',' ',param.lower()).strip().split()
-  short_param = ''
-  for w in words:
-    if re.match('[a-z]+',w):
-      short_param += w[0]
-    else:
-      short_param += w
-  return short_param
