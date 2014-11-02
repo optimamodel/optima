@@ -27,10 +27,11 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
     ## Define the spreadsheet and parameter names
     ###########################################################################
     
-    sheetnames = [['Programs'], \
-                  ['Epidemiology', 'Testing and treatment', 'Sexual behavior', 'Drug behavior'], \
+    sheetnames = [['Populations & programs'], \
+                  ['Demographics & HIV prevalence'], \
+                  ['Cost & coverage', 'Other prevalences', 'Optional indicators', 'Epidemiology', 'Testing & treatment', 'Sexual behavior', 'Injecting behavior', 'Macroeconomics'], \
                   ['Partnerships', 'Transitions'], \
-                  ['Constants', 'Economics'], \
+                  ['Constants', 'Disutilities & costs'], \
                   ['Cost and coverage']]
     
     meta = [['meta', ['pops', 'progs']]]
@@ -95,16 +96,16 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
                 has_title = False
                 has_data = False
 
-                if (paramcategory!='' and (row==0 or empty_previous_row)): has_title = True
+                if (paramcategory!=''): has_title = True
+                if (paramcategory==''): has_data = True
 
-                if (sheettype!=2 and paramcategory==''): has_data = True
-                if (sheettype==2 and paramcategory!='' and (row>1 and not empty_previous_row)): has_data = True
-
-                print ("row: %s empty: %s, has_data: %s has_title: %s" % (row, empty_previous_row, has_data, has_title))
+                if verbose >=3:
+                    print ("row: %s empty: %s, has_data: %s has_title: %s" % (row, empty_previous_row, has_data, has_title))
 
 
                 if has_title: # It's not blank: e.g. "HIV prevalence"
-                    if verbose>=2: print('    Loading "%s"...' % paramcategory)
+                    if verbose>=3: 
+                        print('    Loading "%s"...' % paramcategory)
                     parcount += 1 # Increment the parameter count
 
                     print("sheettype=%s namelist = %s parcount = %s" % (sheettype, namelist, parcount))
@@ -128,9 +129,9 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
 
                 
                 if has_data: # The first column is blank: it's time for the data
-                    subpar_index = 0 if sheettype == 2 else 1 # matrix does not have an empty column to the left
-                    subparam = sheetdata.cell_value(row, subpar_index) # Get the name of a subparameter, e.g. 'FSW', population size for a given population
-                    print ("paramcategory = %s, subparam = %s, subpar_index = %s" % (paramcategory, subparam, subpar_index))
+                    subparam = sheetdata.cell_value(row, 1) # Get the name of a subparameter, e.g. 'FSW', population size for a given population
+                    if verbose >=3:
+                        print ("paramcategory = %s, subparam = %s, subpar_index = %s" % (paramcategory, subparam, subpar_index))
                     if not(subparam==''): # The subparameter name isn't blank, load something!
                         
                         # It's meta-data, split into pieces
@@ -159,7 +160,7 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
                         
                         # It's a matrix, append the data                                     
                         if sheettype==2: 
-                            thesedata = sheetdata.row_values(row, start_colx=1, end_colx=15) # Data starts in 2nd column, finishes in 14th column
+                            thesedata = sheetdata.row_values(row, start_colx=1, end_colx=sheetdata.ncols) # Data starts in 2nd column, finishes in 14th column
                             thesedata = map(lambda val: 0 if val=='' else val, thesedata) # Replace blanks with nan
                             data[name][thispar].append(thesedata) # Store data
                         
