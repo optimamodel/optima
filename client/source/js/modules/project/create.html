@@ -1,6 +1,6 @@
 <div class="rich">
 
-  <form name="CreateProjectForm" ng-submit="createProject()" novalidate="novalidate">
+  <form id="createForm" name="CreateProjectForm" action="{{ formAction }}" method="post" ng-submit="prepareCreateForm()" novalidate="novalidate">
     <p>
       <b>Instructions</b><br>
       1. Enter the name of the project and the numbers of population groups and HIV programs.<br>
@@ -62,5 +62,7 @@
     <div class="section text-center">
       <button class="btn" type="submit">Save project &amp; generate Optima template</button>
     </div>
+
+    <input type="hidden" name="params" value="{{ formParams }}">
   </form>
 </div>
