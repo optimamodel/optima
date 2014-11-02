@@ -21,16 +21,28 @@ def abbreviate(param):
       short_param += w
   return short_param.upper()
 
+class Assumption: #simulacrum of enums (no such thing in Python 2.7)
+  PERCENTAGE = 'percentage'
+  SCIENTIFIC = 'scientific'
+  NUMBER = 'number'
 
+""" the content of the data ranges (row names, column names, optional data and assumptions) """
 class OptimaContent:
   def __init__(self, name, row_names, column_names, data = None):
     self.name = name
     self.row_names = row_names
     self.column_names = column_names
     self.data = data
+    self.assumption = None
 
   def has_data(self):
     return self.data != None
+
+  def add_assumption(self, assumption):
+    self.assumption = assumption
+
+  def has_assumption(self):
+    return self.assumption != None
 
 """ It's not truly pythonic, they cay, to have class methods """
 def make_matrix_range(name, params):
@@ -50,13 +62,22 @@ def make_ref_years_range(name, ref_range, data_start, data_end):
   params = ref_range.param_refs()
   return make_years_range(name, params, data_start, data_end)
 
-
+""" the formats used in the workbook """
 class OptimaFormats:
+  BG_COLOR = '#B3DEE5'
+  BORDER_COLOR = 'white'
   def __init__(self, book):
     self.formats = {}
     self.book = book
-    self.formats['unlocked'] = self.book.add_format({'locked':0, 'bg_color':'#B3DEE5','border':1, 'border_color':'white'})
+    self.formats['unlocked'] = self.book.add_format({'locked':0, \
+      'bg_color':OptimaFormats.BG_COLOR,'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
     self.formats['bold'] = self.book.add_format({'bold':1})
+    self.formats['percentage'] = self.book.add_format({'locked':0, 'num_format':0x09, \
+      'bg_color':OptimaFormats.BG_COLOR,'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
+    self.formats['scientific'] = self.book.add_format({'locked':0, 'num_format':0x0b, \
+      'bg_color':OptimaFormats.BG_COLOR,'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
+    self.formats['number'] = self.book.add_format({'locked':0, 'num_format':0x04, \
+      'bg_color':OptimaFormats.BG_COLOR,'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
 
   def write_block_name(self, sheet, name, row):
     sheet.write(row, 0, name, self.formats['bold'])
@@ -64,11 +85,18 @@ class OptimaFormats:
   def write_rowcol_name(self, sheet, row, col, name):
     sheet.write(row, col, name, self.formats['bold'])
 
+  def write_option(self, sheet, row, col, name = 'OR'):
+    sheet.write(row, col, name, self.formats['bold'])
+
   def write_unlocked(self, sheet, row, col, data):
     sheet.write(row, col, data, self.formats['unlocked'])
 
   def write_empty_unlocked(self, sheet, row, col):
     sheet.write_blank(row, col, None, self.formats['unlocked'])
+
+  """ assumption: scientific, percentage or number """
+  def write_empty_assumption(self, sheet, row, col, assumption):
+    sheet.write_blank(row, col, None, self.formats[assumption])
 
 
 class SheetRange:
@@ -112,7 +140,9 @@ class TitledRange:
   def emit(self, formats):
     formats.write_block_name(self.sheet, self.content.name, self.first_row)
     for i, name in enumerate(self.content.column_names):
-      formats.write_rowcol_name(self.sheet, self.first_row+1, TitledRange.FIRST_COL+i,name)
+      formats.write_rowcol_name(self.sheet, self.first_row+1, self.data_range.first_col+i,name)
+    if self.content.has_assumption():
+      formats.write_rowcol_name(self.sheet, self.first_row+1, self.data_range.last_col+2, 'Assumption')
     for i, name in enumerate(self.content.row_names):
       formats.write_rowcol_name(self.sheet, self.data_range.first_row+i, self.data_range.first_col-1, name)
       if self.content.has_data():
@@ -121,6 +151,11 @@ class TitledRange:
       else:
         for j in range(self.data_range.num_cols):
           formats.write_empty_unlocked(self.sheet, self.data_range.first_row+i, self.data_range.first_col+j)
+      if self.content.has_assumption():
+        formats.write_option(self.sheet, self.data_range.first_row+i, self.data_range.last_col+1)
+        formats.write_empty_assumption(self.sheet, self.data_range.first_row+i, self.data_range.last_col+2, \
+          self.content.assumption)
+
     return self.first_row + self.num_rows() + 1 # for spacing
 
   def param_refs(self):
@@ -128,7 +163,7 @@ class TitledRange:
 
 class OptimaWorkbook:
   sheet_names = OrderedDict([('pp','Populations and programs'), \
-                 ('cc', 'Cost and coverage'), \
+                 ('cc', 'Cost & coverage'), \
                  ('epi', 'Epidemiology'), \
                  ('opid', 'Optional indicators'), \
                  ('txrx', 'Testing and treatment'), \
@@ -175,7 +210,24 @@ class OptimaWorkbook:
     current_row = 0
 
     coverage_content = make_ref_years_range('Coverage', self.prog_range, self.data_start, self.data_end)
+    coverage_content.add_assumption(Assumption.PERCENTAGE)
     coverage_range = TitledRange(cc_sheet, current_row, coverage_content)
+    current_row = coverage_range.emit(self.formats)
+
+    self.formats.write_option(cc_sheet, current_row, 10, "AND EITHER")
+    current_row +=2
+
+    total_program_cost_content = make_ref_years_range('Total program cost', self.prog_range, self.data_start, self.data_end)
+    total_program_cost_content.add_assumption(Assumption.SCIENTIFIC)
+    coverage_range = TitledRange(cc_sheet, current_row, total_program_cost_content)
+    current_row = coverage_range.emit(self.formats)
+
+    self.formats.write_option(cc_sheet, current_row, 10)
+    current_row +=2
+
+    unit_cost_content = make_ref_years_range('Unit cost', self.prog_range, self.data_start, self.data_end)
+    unit_cost_content.add_assumption(Assumption.NUMBER)
+    coverage_range = TitledRange(cc_sheet, current_row, unit_cost_content)
     current_row = coverage_range.emit(self.formats)
 
 
