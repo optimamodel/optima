@@ -165,9 +165,13 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
                             data[name][thispar].short.append(thesedata[0])
                             data[name][thispar].long.append(thesedata[1])
                         
+                        # It's key data, save both the values and uncertainties
+                        if groupname=='keydata':
+                            thesedata = sheetdata.row_values(row, start_colx=2, end_colx=lastdatacol) # Data starts in 3rd column
+                        
                         # It's basic data, append the data and check for programs
                         if groupname=='timedata': 
-                            thesedata = sheetdata.row_values(row, start_colx=2, end_colx=lastdatacol) # Data starts in 3rd column, finishes in 21st column
+                            thesedata = sheetdata.row_values(row, start_colx=2, end_colx=lastdatacol) # Data starts in 3rd column
                             thesedata = map(lambda val: nan if val=='' else val, thesedata) # Replace blanks with nan
                             assumptiondata = sheetdata.cell_value(row, assumptioncol)
                             if assumptiondata != '': thesedata = [assumptiondata] # Replace the (presumably blank) data if a non-blank assumption has been entered
@@ -179,6 +183,7 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
                                 if not(programs.has_key(programname)): programs[programname] = [] # Create new list if none exists
                                 outcomes = sheetdata.row_values(row, start_colx=programcols[1], end_colx=programcols[2]) # Get outcome data
                                 programs[programname].append([[name,thispar], outcomes]) # Append to program
+                        
                         
                         # It's a matrix, append the data                                     
                         elif groupname=='matrices':
