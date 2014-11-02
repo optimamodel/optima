@@ -11,7 +11,7 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
     
     if verbose>=1: print('Loading data from %s...' % filename)
     from matplotlib.pylab import nan, array # For reading in empty values
-    from xlrd import open_workbook, XL_CELL_BLANK, XL_CELL_EMPTY # For opening Excel spreadsheets
+    from xlrd import open_workbook # For opening Excel spreadsheets
     from bunch import Bunch as struct # Replicate Matlab-like structure behavior
     
     
@@ -19,40 +19,46 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
     ## Define the spreadsheet and parameter names
     ###########################################################################
     
-    sheetnames = [['Populations & programs'], \
-                  ['Demographics & HIV prevalence'], \
-                  ['Cost & coverage', 'Other prevalences', 'Optional indicators', 'Epidemiology', 'Testing & treatment', 'Sexual behavior', 'Injecting behavior', 'Macroeconomics'], \
-                  ['Partnerships', 'Transitions'], \
-                  ['Constants', 'Disutilities & costs'], \
-                  ['Cost and coverage']]
+    # Metadata -- population and program names -- array sizes are (# populations) and (# programs)
+    metadata = [['Populations & programs', 'meta', ['pops', 'progs']]]
     
-    meta = [['meta', ['pops', 'progs']]]
+    # Key data -- array sizes are time x population x uncertainty
+    keydata =  [['Demographics & HIV prevalence', 'key', ['popsize', 'hivprev']]]
     
-    basicdata = [['epi',  ['popsize','hivprev','hivprevlow','hivprevhigh','stiprev','tbprev']], \
-                 ['txrx', ['testrate','aidstestrate','numtests','numdiagnoses','numinfections','numdeaths','numfirstline','numsecondline','numpmtct','numbreastpmtct']], \
-                 ['sex',  ['numactsreg','numactscas','numactscom','condomreg','condomcas','condomcom','circum']], \
-                 ['drug', ['numinject','sharing','ost']]]
+    # Time data -- array sizes are time x population
+    timedata = [
+                 ['Cost & coverage',     'costcov', ['cost', 'cov']], \
+                 ['Other prevalences',   'epi',     ['stiprevulc', 'stiprevdis', 'tbprev']], \
+                 ['Optional indicators', 'opt',     ['stiprevulc', 'stiprevdis', 'tbprev']], \
+                 ['Testing & treatment', 'txrx',    ['testrate', 'aidstestrate', 'numtests', 'numdiagnoses', 'numinfections', 'numdeaths', 'numfirstline', 'numsecondline', 'numpmtct','numbreastpmtct']], \
+                 ['Sexual behavior',     'sex',     ['numactsreg', 'numactscas', 'numactscom', 'condomreg', 'condomcas', 'condomcom', 'circum']], \
+                 ['Injecting behavior',  'drug',    ['numinject', 'sharing', 'ost']], \
+                 ['Macroeconomics',      'macro',   ['gdp', 'revenue', 'totalexpend', 'totalhealth', 'domestichealth']]
+                ]
                  
-    matrices = [['pships',  ['reg','cas','com','drug']], \
-                ['transit', ['asym','sym']]]
+    # Matrix data -- array sizes are population x population
+    matrices = [
+                ['Partnerships', 'pships',  ['reg','cas','com','drug']], \
+                ['Transitions',  'transit', ['asym','sym']]
+               ]
     
-    constants = [['const', [['trans',    ['mfi','mfr','mmi','mmr','inj','mtct']], \
-                            ['cd4trans', ['acute','gt500','gt350','gt200','aids']], \
-                            ['prog',     ['acute','gt500','gt350','gt200']],\
-                            ['recov',    ['gt500','gt350','gt200','aids']],\
-                            ['fail',     ['first','second']],\
-                            ['death',    ['background','inj','acute','gt500','gt350','gt200','aids','treat','tb']],\
-                            ['eff',      ['condom','circ','dx','sti','meth','pmtct','tx']]]], \
-                ['econ',   [['dalys',    ['acute','gt500','gt350','gt200','aids','tx']], \
-                            ['costs',    ['acute','gt500','gt350','gt200','aids']]]]]
+    # Constants -- array sizes are scalars x uncertainty
+    constants = [
+                 ['Constants', 'const',              [['trans',    ['mfi','mfr','mmi','mmr','inj','mtct']], \
+                                                      ['cd4trans', ['acute','gt500','gt350','gt200','aids']], \
+                                                      ['prog',     ['acute','gt500','gt350','gt200']],\
+                                                      ['recov',    ['gt500','gt350','gt200','aids']],\
+                                                      ['fail',     ['first','second']],\
+                                                      ['death',    ['background','inj','acute','gt500','gt350','gt200','aids','treat','tb']],\
+                                                      ['eff',      ['condom','circ','dx','sti','meth','pmtct','tx']]]], \
+                 ['Disutilities & costs', 'costs',   [['disutil',  ['acute','gt500','gt350','gt200','aids','tx']], \
+                                                      ['health',    ['acute','gt500','gt350','gt200','aids']], \
+                                                      ['social',    ['acute','gt500','gt350','gt200','aids']]]]
+                ]
     
-    costcov = [['costcov',  ['cost', 'cov']]]
+    sheetstructure = [metadata, keydata, timedata, matrices, constants]
     
-    dud_types = set([XL_CELL_BLANK, XL_CELL_EMPTY])
 
-    def is_empty_row(worksheet, row_number):
-        rowf = set([ ty for ty in worksheet.row_types(row_number) ])
-        return (rowf.union(dud_types)==dud_types)
 
     ###########################################################################
     ## Load data sheets
@@ -64,25 +70,28 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
     programs.__doc__ = 'Parameters that define the HIV programs -- cost-coverage and coverage-outcome curves.'
     spreadsheet = open_workbook(filename) # Open spreadsheet
 
-    for sheettype,datanames in enumerate([meta, basicdata, matrices, constants, costcov]): # Loop over each type of data, but treat constants differently
-        for dataname in range(len(datanames)): # Loop over each spreadsheet for that data -- just one for constants
+    for sheetclass in sheetstructure: # Loop over each type of data, but treat constants differently
+        for sheet in sheetclass: # Loop over each spreadsheet for that data -- just one for constants
+            sheetname = sheet[0] # Name of the spreadsheet
+            parname = sheet[1] # Pull out the name of this field, e.g. 'epi'
+            subparlist = sheet[2] # List of subparameters
+            if verbose>=2: print('  Loading "%s"...' % sheetname)
             
-            if verbose>=2: print('  Loading "%s"...' % sheetnames[sheettype][dataname])
-            name = datanames[dataname][0] # Pull out the name of this field, e.g. 'epi'
-            namelist = datanames[dataname][1] # Pull out the list subfields, e.g. ['popsize','hivprev'...]
-            data[name] = struct() # Create structure for holding data, e.g. data.epi
-            sheetdata = spreadsheet.sheet_by_name(sheetnames[sheettype][dataname]) # Load this spreadsheet
+            
+            data[parname] = struct() # Create structure for holding data, e.g. data.epi
+            sheetdata = spreadsheet.sheet_by_name(sheetname) # Load this spreadsheet
             parcount = -1 # Initialize the parameter count
             
-            if sheettype==1: # Initialize row counts
-                lastcol = sheetdata.ncols - 8 # The 8 makes sense...
-                assumptioncol = lastcol + 1 # The "OR" space is in between
+            if sheetname=='Demographics & HIV prevalence': # Initialize row counts by using the first sheet that uses year ranges
+                lastdatacol = sheetdata.ncols - 8 # The 8 makes sense...
+                assumptioncol = lastdatacol + 1 # The "OR" space is in between
                 programcols = assumptioncol + array([3,5,7]) # Sorry for the weird numbering...not sure what the deal is
             
             
             # Loop over each row in the spreadsheet
             for row in range(sheetdata.nrows): 
                 paramcategory = sheetdata.cell_value(row,0) # See what's in the first column for this row
+                
                 if not(paramcategory==''): # It's not blank: e.g. "HIV prevalence"
                     if verbose>=2: print('    Loading "%s"...' % paramcategory)
                     parcount += 1 # Increment the parameter count
@@ -107,9 +116,9 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
                 
                 if paramcategory=='': # The first column is blank: it's time for the data
                     subparam = sheetdata.cell_value(row, 1) # Get the name of a subparameter, e.g. 'FSW', population size for a given population
-                    if verbose >=3:
-                        print ("paramcategory = %s, subparam = %s, subpar_index = %s" % (paramcategory, subparam, subpar_index))
+                    
                     if not(subparam==''): # The subparameter name isn't blank, load something!
+                        if verbose >=3: print("      Parameter: subparam" % subparam)
                         
                         # It's meta-data, split into pieces
                         if sheettype==0: 
