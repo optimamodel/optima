@@ -52,8 +52,8 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
                                                       ['death',    ['acute','gt500','gt350','gt200','aids','treat','tb']],\
                                                       ['eff',      ['condom','circ','dx','sti','meth','pmtct','tx']]]], \
                  ['Disutilities & costs', 'cost',    [['disutil',  ['acute','gt500','gt350','gt200','aids','tx']], \
-                                                      ['health',    ['acute','gt500','gt350','gt200','aids']], \
-                                                      ['social',    ['acute','gt500','gt350','gt200','aids']]]]
+                                                      ['health',   ['acute','gt500','gt350','gt200','aids']], \
+                                                      ['social',   ['acute','gt500','gt350','gt200','aids']]]]
                 ]
     
     
@@ -166,14 +166,14 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
                             data[name][thispar].long.append(thesedata[1])
                         
                         # It's basic data, append the data and check for programs
-                        if sheettype==1: 
-                            thesedata = sheetdata.row_values(row, start_colx=2, end_colx=lastcol) # Data starts in 3rd column, finishes in 21st column
+                        if groupname=='timedata': 
+                            thesedata = sheetdata.row_values(row, start_colx=2, end_colx=lastdatacol) # Data starts in 3rd column, finishes in 21st column
                             thesedata = map(lambda val: nan if val=='' else val, thesedata) # Replace blanks with nan
                             assumptiondata = sheetdata.cell_value(row, assumptioncol)
                             if assumptiondata != '': thesedata = [assumptiondata] # Replace the (presumably blank) data if a non-blank assumption has been entered
                             data[name][thispar].append(thesedata) # Store data
                             
-                            # Load program data -- only exists for basic data
+                            # Load program data -- only exists for time data
                             programname = str(sheetdata.cell_value(row, programcols[0])) # Convert to plain string since otherwise can't be used as a dict key
                             if programname != '': # Not blank: a program exists!
                                 if not(programs.has_key(programname)): programs[programname] = [] # Create new list if none exists
@@ -181,7 +181,7 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
                                 programs[programname].append([[name,thispar], outcomes]) # Append to program
                         
                         # It's a matrix, append the data                                     
-                        elif name=='pships' or name=='transit':
+                        elif groupname=='matrices':
                             thesedata = sheetdata.row_values(row, start_colx=2, end_colx=sheetdata.ncols) # Data starts in 3rd column
                             thesedata = map(lambda val: 0 if val=='' else val, thesedata) # Replace blanks with nan
                             data[name][thispar].append(thesedata) # Store data
