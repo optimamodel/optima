@@ -27,9 +27,9 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
     
     # Time data -- array sizes are time x population
     timedata = [
-                 ['Cost & coverage',     'costcov', ['cost', 'cov']], \
-                 ['Other prevalences',   'epi',     ['death', 'stiprevulc', 'stiprevdis', 'tbprev']], \
-                 ['Optional indicators', 'opt',     ['stiprevulc', 'stiprevdis', 'tbprev']], \
+                 ['Cost & coverage',     'costcov', ['cov', 'total', 'unit']], \
+                 ['Other epidemiology',  'epi',     ['death', 'stiprevulc', 'stiprevdis', 'tbprev']], \
+                 ['Optional indicators', 'opt',     ['numtest', 'numdiag', 'numinfect', 'prev', 'death', 'newtreat']], \
                  ['Testing & treatment', 'txrx',    ['testrate', 'aidstestrate', 'numtests', 'numdiagnoses', 'numinfections', 'numdeaths', 'numfirstline', 'numsecondline', 'numpmtct','numbreastpmtct']], \
                  ['Sexual behavior',     'sex',     ['numactsreg', 'numactscas', 'numactscom', 'condomreg', 'condomcas', 'condomcom', 'circum']], \
                  ['Injecting behavior',  'drug',    ['numinject', 'sharing', 'ost']], \
@@ -44,7 +44,7 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
     
     # Constants -- array sizes are scalars x uncertainty
     constants = [
-                 ['Constants', 'const',              [['trans',    ['mfi','mfr','mmi','mmr','inj','mtct']], \
+                 ['Constants', 'const',              [['trans',    ['mfi', 'mfr', 'mmi', 'mmr', 'inj', 'mtctbreast', 'mtctnobreast']], \
                                                       ['cd4trans', ['acute','gt500','gt350','gt200','aids']], \
                                                       ['prog',     ['acute','gt500','gt350','gt200']],\
                                                       ['recov',    ['gt500','gt350','gt200','aids']],\
@@ -99,9 +99,9 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
                 for col in range(sheetdata.ncols):
                     thiscell = sheetdata.cell_value(1,col) # 1 is the 2nd row which is where the year data should be
                     if thiscell=='' and len(data.epiyears)>0: #  We've gotten to the end
-                        lastdatacol = col-1 # Store this column number
+                        lastdatacol = col # Store this column number
                         break # Quit
-                    else: # Nope, more years, keep going
+                    elif thiscell != '': # Nope, more years, keep going
                         data.epiyears.append(float(thiscell)) # Add this year
             
             if name == 'macro': # Need to gather year ranges for economic data
@@ -109,13 +109,13 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
                 for col in range(sheetdata.ncols):
                     thiscell = sheetdata.cell_value(1,col) # 1 is the 2nd row which is where the year data should be
                     if thiscell=='' and len(data.econyears)>0: #  We've gotten to the end
-                        lastdatacol = col-1 # Store this column number
+                        lastdatacol = col # Store this column number
                         break # Quit
-                    else: # Nope, more years, keep going
+                    elif thiscell != '': # Nope, more years, keep going
                         data.econyears.append(float(thiscell)) # Add this year
                 
-                assumptioncol = lastdatacol + 1 # The "OR" space is in between
-                programcols = assumptioncol + array([3,5,6,8,9]) # Sorry for the weird numbering...not sure what the deal is
+            assumptioncol = lastdatacol + 1 # The "OR" space is in between
+            programcols = assumptioncol + array([3,5,6,8,9]) # Sorry for the weird numbering...not sure what the deal is
             
             
             
@@ -157,7 +157,7 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
                     subparam = sheetdata.cell_value(row, 1) # Get the name of a subparameter, e.g. 'FSW', population size for a given population
                     
                     if subparam != '': # The subparameter name isn't blank, load something!
-                        if verbose >=3: print("      Parameter: subparam" % subparam)
+                        if verbose >=3: print("      Parameter: %s" % subparam)
                         
                         # It's meta-data, split into pieces
                         if groupname=='meta': 
@@ -167,7 +167,21 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
                         
                         # It's key data, save both the values and uncertainties
                         if groupname=='keydata':
-                            thesedata = sheetdata.row_values(row, start_colx=2, end_colx=lastdatacol) # Data starts in 3rd column
+                            if len(data[name][thispar])==0: 
+                                data[name][thispar].append([]) # Create new variable
+                            thesedata = sheetdata.row_values(row, start_colx=3, end_colx=lastdatacol) # Data starts in 4th column
+                            thesedata = map(lambda val: nan if val=='' else val, thesedata) # Replace blanks with nan
+                            assumptiondata = sheetdata.cell_value(row, assumptioncol)
+                            if assumptiondata != '': thesedata = [assumptiondata] # Replace the (presumably blank) data if a non-blank assumption has been entered
+                            print(row)
+                            print(subparam)
+                            print(thesedata)
+                            if len(data[name][thispar][-1])<3: # 3 for high, best, low
+                                data[name][thispar][-1].append(thesedata) # Actually append the data
+                            else:
+                                data[name][thispar].append([]) # Create new row
+                                data[name][thispar][-1].append(thesedata) # Actually append the data
+                            
                         
                         # It's basic data, append the data and check for programs
                         if groupname=='timedata': 
@@ -178,25 +192,29 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
                             data[name][thispar].append(thesedata) # Store data
                             
                             # Load program data -- only exists for time data
-                            programname = str(sheetdata.cell_value(row, programcols[0])) # Convert to plain string since otherwise can't be used as a dict key
-                            if programname != '': # Not blank: a program exists!
-                                if not(programs.has_key(programname)): programs[programname] = [] # Create new list if none exists
-                                outcomes = sheetdata.row_values(row, start_colx=programcols[1], end_colx=programcols[2]) # Get outcome data
-                                programs[programname].append([[name,thispar], outcomes]) # Append to program
+                            if sheetdata.ncols>=programcols[-1]: # Don't try to read more data than exist
+                                programname = str(sheetdata.cell_value(row, programcols[0])) # Convert to plain string since otherwise can't be used as a dict key
+                                if programname != '': # Not blank: a program exists!
+                                    if not(programs.has_key(programname)): programs[programname] = [] # Create new list if none exists
+                                    zerocov = sheetdata.row_values(row, start_colx=programcols[1], end_colx=programcols[2]+1) # Get outcome data
+                                    fullcov = sheetdata.row_values(row, start_colx=programcols[3], end_colx=programcols[4]+1) # Get outcome data
+                                    programs[programname].append([[name,thispar], [zerocov, fullcov]]) # Append to program
                         
                         
                         # It's a matrix, append the data                                     
                         elif groupname=='matrices':
                             thesedata = sheetdata.row_values(row, start_colx=2, end_colx=sheetdata.ncols) # Data starts in 3rd column
-                            thesedata = map(lambda val: 0 if val=='' else val, thesedata) # Replace blanks with nan
+                            thesedata = map(lambda val: 0 if val=='' else val, thesedata) # Replace blanks with 0
                             data[name][thispar].append(thesedata) # Store data
                         
                         # It's a constant, create a new dictionary entry
                         elif name=='const' or name=='cost':
                             thesedata = sheetdata.row_values(row, start_colx=2, end_colx=5) # Data starts in 3rd column, finishes in 5th column
-                            thesedata = map(lambda val: 0 if val=='' else val, thesedata) # Replace blanks with nan
+                            thesedata = map(lambda val: nan if val=='' else val, thesedata) # Replace blanks with nan
                             subpar = subparlist[parcount][1].pop(0) # Pop first entry of subparameter list, which is namelist[parcount][1]
                             data[name][thispar][subpar] = thesedata # Store data
     
     if verbose>=2: print('  ...done loading data.')
     return data, programs
+
+data = loadspreadsheet(verbose=10)[0]
