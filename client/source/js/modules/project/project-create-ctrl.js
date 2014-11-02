@@ -1,7 +1,12 @@
-define(['./module', 'underscore'], function (module, _) {
+define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ProjectCreateController', function ($scope, $window) {
+
+    $scope.projectParams = {
+      name: '',
+      category: ''
+    };
 
     $scope.populations = [
       {name: 'Female sex workers', active: false},
@@ -60,15 +65,25 @@ define(['./module', 'underscore'], function (module, _) {
         .value();
     };
 
-    $scope.createProject = function () {
+    $scope.prepareCreateForm = function () {
+      if ($scope.CreateProjectForm.$invalid) {
+        alert('Please fill in all the required project fields');
+        return false;
+      }
+
       var params = _($scope.projectParams).omit('name');
       params.programs = toNamesArray($scope.programs);
       params.populations = toNamesArray($scope.populations);
-      console.log(params);
 
-      $window.open('/api/project/create/' + $scope.projectParams.name +
-      '?params=' + JSON.stringify(params));
-    }
+      $scope.formAction = '/api/project/create/' + $scope.projectParams.name;
+      $scope.formParams = JSON.stringify(params);
+
+      // according to documentation it should have been working without this line, but no cigar
+      // https://docs.angularjs.org/api/ng/directive/ngSubmit
+      document.getElementById('createForm').submit();
+
+      return true;
+    };
 
   });
 
