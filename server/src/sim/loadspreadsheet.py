@@ -28,12 +28,12 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
     # Time data -- array sizes are time x population
     timedata = [
                  ['Cost & coverage',     'costcov', ['cost', 'cov']], \
-                 ['Other prevalences',   'epi',     ['stiprevulc', 'stiprevdis', 'tbprev']], \
+                 ['Other prevalences',   'epi',     ['death', 'stiprevulc', 'stiprevdis', 'tbprev']], \
                  ['Optional indicators', 'opt',     ['stiprevulc', 'stiprevdis', 'tbprev']], \
                  ['Testing & treatment', 'txrx',    ['testrate', 'aidstestrate', 'numtests', 'numdiagnoses', 'numinfections', 'numdeaths', 'numfirstline', 'numsecondline', 'numpmtct','numbreastpmtct']], \
                  ['Sexual behavior',     'sex',     ['numactsreg', 'numactscas', 'numactscom', 'condomreg', 'condomcas', 'condomcom', 'circum']], \
                  ['Injecting behavior',  'drug',    ['numinject', 'sharing', 'ost']], \
-                 ['Macroeconomics',      'macro',   ['gdp', 'revenue', 'totalexpend', 'totalhealth', 'domestichealth']]
+                 ['Macroeconomics',      'macro',   ['gdp', 'revenue', 'govtexpend', 'totalhealth', 'domestichealth', 'domestichiv', 'globalfund', 'pepfar', 'otherint', 'private']]
                 ]
                  
     # Matrix data -- array sizes are population x population
@@ -49,7 +49,7 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
                                                       ['prog',     ['acute','gt500','gt350','gt200']],\
                                                       ['recov',    ['gt500','gt350','gt200','aids']],\
                                                       ['fail',     ['first','second']],\
-                                                      ['death',    ['background','inj','acute','gt500','gt350','gt200','aids','treat','tb']],\
+                                                      ['death',    ['acute','gt500','gt350','gt200','aids','treat','tb']],\
                                                       ['eff',      ['condom','circ','dx','sti','meth','pmtct','tx']]]], \
                  ['Disutilities & costs', 'cost',    [['disutil',  ['acute','gt500','gt350','gt200','aids','tx']], \
                                                       ['health',    ['acute','gt500','gt350','gt200','aids']], \
