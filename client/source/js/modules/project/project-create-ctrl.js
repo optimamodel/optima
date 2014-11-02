@@ -4,8 +4,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   module.controller('ProjectCreateController', function ($scope, $window) {
 
     $scope.projectParams = {
-      name: '',
-      category: ''
+      name: ''
     };
 
     $scope.populations = [
