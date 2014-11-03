@@ -242,6 +242,19 @@ class OptimaWorkbook:
     self.npops = len(pops)
     self.nprogs = len(progs)
 
+  def emit_years_block(self, name, current_row, row_names, assumption = None, programs = False, row_levels = False):
+    content = make_years_range(name, row_names, self.data_start, self.data_end)
+    if assumption is not None:
+      content.add_assumption(assumption)
+    if programs:
+      content.add_programs()
+    if row_levels:
+      content.add_row_levels()
+    the_range = TitledRange(self.current_sheet, current_row, content)
+    current_row = the_range.emit(self.formats)
+    return current_row
+  
+
   def emit_ref_years_block(self, name, current_row, ref_range, assumption = None, programs = False, row_levels = False):
     content = make_ref_years_range(name, ref_range, self.data_start, self.data_end)
     if assumption is not None:
@@ -303,6 +316,15 @@ class OptimaWorkbook:
     'Prevalence of any ulcerative STIs', 'Prevalence of any discharging STIs', 'Tuberculosis prevalence']:
       current_row = self.emit_ref_years_block(name, current_row, self.pop_range, Assumption.PERCENTAGE, programs = True)
 
+  def generate_opid(self):
+    self.current_sheet = self.sheets['opid']
+    self.current_sheet.protect()
+    current_row = 0
+
+    for name in ['Number of HIV tests', 'Number of diagnoses', 'Modeled estimate of new infections per year', \
+    'Modeled estimate of HIV prevalence', 'Number of HIV-related deaths', 'Number of people initiating ART each year']:
+      current_row = self.emit_years_block(name, current_row, ['Total'], Assumption.NUMBER)
+
   def create(self, path):
     if self.verbose >=1: 
       print("""Creating workbook %s with parameters:
@@ -317,5 +339,6 @@ class OptimaWorkbook:
     self.generate_cc()
     self.generate_demo()
     self.generate_epi()
+    self.generate_opid()
     self.book.close()
 
