@@ -46,15 +46,24 @@ def makedatapars(D, verbose=2):
     D.P = struct() # Initialize parameters structure
     D.P.__doc__ = 'Parameters that have been directly derived from the data, which are then used to create the model parameters'
     
-    ## Epidemilogy parameters -- most are data
-    D.P.popsize = data2par(D.data.epi.popsize) # Population size -- # TODO: don't take average for this!
-    D.P.hivprev = data2par(D.data.epi.hivprev) # Initial HIV prevalence -- # TODO: don't take average for this
-    D.P.stiprev = data2par(D.data.epi.stiprev) # STI prevalence
-    ## TB prevalence @@@
+    ## Key parameters
+    D.P.popsize = data2par(D.data.key.popsize[0]) # Population size -- # TODO: don't take average for this, and use uncertainties!
+    D.P.hivprev = data2par(D.data.key.hivprev[0]) # Initial HIV prevalence -- # TODO: don't take average for this, and use uncertainties!
     
-    ## Testing parameters -- most are data
+    ## Epidemiology parameters
+    D.P.death = data2par(D.data.epi.death) # STI prevalence -- discharge    
+    D.P.stiprevulc = data2par(D.data.epi.stiprevulc) # STI prevalence -- discharge
+    D.P.stiprevdis = data2par(D.data.epi.stiprevdis) # STI prevalence -- discharge
+    D.P.tbprev = data2par(D.data.epi.tbprev) # STI prevalence -- discharge
+    
+    ## Testing parameters
     D.P.hivtest = data2par(D.data.txrx.testrate) # HIV testing rates
     D.P.aidstest = data2par(D.data.txrx.aidstestrate) # AIDS testing rates
+    D.P.firstline = data2par(D.data.txrx.numfirstline) # Number on first-line treatment
+    D.P.secondline = data2par(D.data.txrx.numsecondline) # Number on second-line treatment
+    D.P.pmtct = data2par(D.data.txrx.numpmtct) # Number on PMTCT
+    D.P.birth = data2par(D.data.txrx.birth) # Birth rates
+    D.P.breast = data2par(D.data.txrx.numbreastpmtct) # Breastfeeding rates
     
     ## Sexual behavior parameters -- all are parameters so can loop over all
     for parname in D.data.sex.keys():
