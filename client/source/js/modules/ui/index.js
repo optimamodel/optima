@@ -1,14 +1,18 @@
 define([
     'angular',
     './button-choicebox/index',
-    './menu/index'
+    './menu/index',
+    '../common/active-project-service'
 ], function (angular) {
     'use strict';
 
     return angular.module('app.ui', [
+        'app.active-project',
         'app.ui.button-choicebox',
         'app.ui.menu'
-    ]).controller('MainCtrl', function ($scope, $upload) {
+    ]).controller('MainCtrl', function ($scope, $upload, activeProject) {
+
+        $scope.activeProject = activeProject;
 
       // https://github.com/danialfarid/angular-file-upload
       function uploadDataSpreadsheet(file) {
