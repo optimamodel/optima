@@ -1,17 +1,11 @@
-"""
-RUNSIMULATION
-View data and model estimates
-Version: 2014oct29
-need to change UI
-
-
-"""
-import os
-
 def runsimulation(projectdatafile='example.prj', startyear=2000, endyear=2030, loaddir = '', verbose=2):
-    # todo: it should not overwrite the original file
-#    if loaddir:
-#        projectdatafile = os.path.join(loaddir, projectdatafile)
+    """
+    RUNSIMULATION
+    View data and model estimates
+    Version: 2014oct29
+    need to change UI
+    """
+
     if verbose>=1: 
         data = (projectdatafile, startyear, endyear)
         print('Running simulation (projectdatafile = %s, startyear = %s, endyear = %s)...' % data)
@@ -37,5 +31,5 @@ def runsimulation(projectdatafile='example.prj', startyear=2000, endyear=2030, l
     from model import model
     D.sim = model(D.G, D.M, options, verbose=verbose)
     
-    new_file_name = savedata(projectdatafile, D, verbose=verbose)
+    savedata(projectdatafile, D, verbose=verbose)
     if verbose>=2: print('  ...done running simulation.')
