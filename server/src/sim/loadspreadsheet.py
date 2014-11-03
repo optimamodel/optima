@@ -175,9 +175,6 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
                             thesedata = map(lambda val: nan if val=='' else val, thesedata) # Replace blanks with nan
                             assumptiondata = sheetdata.cell_value(row, assumptioncol)
                             if assumptiondata != '': thesedata = [assumptiondata] # Replace the (presumably blank) data if a non-blank assumption has been entered
-                            print(row)
-                            print(subparam)
-                            print(thesedata)
                             if len(data[name][thispar][-1])<3: # 3 for high, best, low
                                 data[name][thispar][-1].append(thesedata) # Actually append the data
                             else:

@@ -47,8 +47,8 @@ def makedatapars(D, verbose=2):
     D.P.__doc__ = 'Parameters that have been directly derived from the data, which are then used to create the model parameters'
     
     ## Epidemilogy parameters -- most are data
-    D.P.popsize = data2par(D.data.epi.popsize) # Population size -- TODO: don't take average for this!
-    D.P.hivprev = data2par(D.data.epi.hivprev) # Initial HIV prevalence -- TODO: don't take average for this
+    D.P.popsize = data2par(D.data.epi.popsize) # Population size -- # TODO: don't take average for this!
+    D.P.hivprev = data2par(D.data.epi.hivprev) # Initial HIV prevalence -- # TODO: don't take average for this
     D.P.stiprev = data2par(D.data.epi.stiprev) # STI prevalence
     ## TB prevalence @@@
     
