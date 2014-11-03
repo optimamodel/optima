@@ -217,4 +217,4 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
     if verbose>=2: print('  ...done loading data.')
     return data, programs
 
-data = loadspreadsheet(verbose=10)[0]
+#data = loadspreadsheet(verbose=10)[0]
