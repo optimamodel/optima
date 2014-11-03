@@ -153,7 +153,11 @@ class TitledRange:
     first_data_col = TitledRange.FIRST_COL
     if self.content.has_row_levels():
       first_data_col +=1
-    self.data_range = SheetRange(first_row+2, first_data_col, len(self.content.row_names), len(self.content.column_names))
+    num_data_rows = len(self.content.row_names)
+    if self.content.has_row_levels():
+      num_data_rows *= len(self.content.row_levels)
+      num_data_rows += len(self.content.row_names)-1
+    self.data_range = SheetRange(first_row+2, first_data_col, num_data_rows, len(self.content.column_names))
     self.first_row = first_row
 
   def num_rows(self):
@@ -162,42 +166,50 @@ class TitledRange:
   """ emits the range and returns the new current row in the given sheet """
   def emit(self, formats):
     formats.write_block_name(self.sheet, self.content.name, self.first_row)
+
     for i, name in enumerate(self.content.column_names):
       formats.write_rowcol_name(self.sheet, self.first_row+1, self.data_range.first_col+i,name)
     if self.content.has_assumption():
       formats.write_rowcol_name(self.sheet, self.first_row+1, self.data_range.last_col+2, 'Assumption')
+
+    current_row = self.data_range.first_row
+    num_levels = len(self.content.row_levels) if self.content.has_row_levels() else 1
     for i, names in enumerate(self.content.get_row_names()):
       start_col = self.data_range.first_col - len(names)
       for n, name in enumerate(names):
-        formats.write_rowcol_name(self.sheet, self.data_range.first_row+i, start_col+n, name)
+        formats.write_rowcol_name(self.sheet, current_row, start_col+n, name)
       if self.content.has_data():
         for j, item in enumerate(self.content.data[i]):
-          formats.write_unlocked(self.sheet, self.data_range.first_row+i, self.data_range.first_col+j, item)
+          formats.write_unlocked(self.sheet, current_row, self.data_range.first_col+j, item)
       else:
         for j in range(self.data_range.num_cols):
-          formats.write_empty_unlocked(self.sheet, self.data_range.first_row+i, self.data_range.first_col+j)
+          formats.write_empty_unlocked(self.sheet, current_row, self.data_range.first_col+j)
       if self.content.has_assumption():
-        formats.write_option(self.sheet, self.data_range.first_row+i, self.data_range.last_col+1)
-        formats.write_empty_assumption(self.sheet, self.data_range.first_row+i, self.data_range.last_col+2, \
+        formats.write_option(self.sheet, current_row, self.data_range.last_col+1)
+        formats.write_empty_assumption(self.sheet, current_row, self.data_range.last_col+2, \
           self.content.assumption)
+      current_row+=1
+      if num_levels > 1 and ((i+1) % num_levels)==0: # shift between the blocks
+        current_row +=1
 
-    return self.first_row + self.num_rows() + 1 # for spacing
+    return current_row + 1 # for spacing
 
   def param_refs(self):
     return self.data_range.param_refs(self.sheet.get_name())
 
 class OptimaWorkbook:
-  sheet_names = OrderedDict([('pp','Populations and programs'), \
+  sheet_names = OrderedDict([('pp','Populations & programs'), \
                  ('cc', 'Cost & coverage'), \
-                 ('epi', 'Epidemiology'), \
+                 ('demo', 'Demographics & HIV prevalence'), \
+                 ('epi', 'Other epidemiology'), \
                  ('opid', 'Optional indicators'), \
-                 ('txrx', 'Testing and treatment'), \
+                 ('txrx', 'Testing & treatment'), \
                  ('sex', 'Sexual behavior'), \
                  ('drug', 'Drug behavior'), \
                  ('partner', 'Partnerships'), \
                  ('trans', 'Transitions'), \
                  ('constants', 'Constants'), \
-                 ('consts', 'Costs and disutilities'), \
+                 ('consts', 'Costs & disutilities'), \
                  ('macroecon', 'Macroeconomics')])
 
   def __init__(self, name, pops, progs, data_start = 2000, data_end = 2015, verbose = 2):
@@ -255,6 +267,22 @@ class OptimaWorkbook:
     coverage_range = TitledRange(cc_sheet, current_row, unit_cost_content)
     current_row = coverage_range.emit(self.formats)
 
+  def generate_demo(self):
+    demo_sheet = self.sheets['demo']
+    demo_sheet.protect()
+    current_row = 0
+
+    popsize_content = make_ref_years_range('Population size', self.pop_range, self.data_start, self.data_end)
+    popsize_content.add_assumption(Assumption.SCIENTIFIC)
+    popsize_content.add_row_levels()
+    popsize_range = TitledRange(demo_sheet, current_row, popsize_content)
+    current_row = popsize_range.emit(self.formats)
+
+    hiv_content = make_ref_years_range('HIV prevalence', self.pop_range, self.data_start, self.data_end)
+    popsize_content.add_assumption(Assumption.PERCENTAGE)
+    popsize_content.add_row_levels()
+    popsize_range = TitledRange(demo_sheet, current_row, popsize_content)
+    current_row = popsize_range.emit(self.formats)
 
   def create(self, path):
     if self.verbose >=1: 
@@ -268,5 +296,6 @@ class OptimaWorkbook:
       self.sheets[name] = self.book.add_worksheet(OptimaWorkbook.sheet_names[name])
     self.generate_pp()
     self.generate_cc()
+    self.generate_demo()
     self.book.close()
 
