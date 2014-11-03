@@ -34,6 +34,8 @@ class OptimaContent:
     self.column_names = column_names
     self.data = data
     self.assumption = None
+    self.programs = False
+    self.row_levels = None
 
   def has_data(self):
     return self.data != None
@@ -43,6 +45,24 @@ class OptimaContent:
 
   def has_assumption(self):
     return self.assumption != None
+
+  def add_programs(self):
+    self.programs = True
+
+  def has_programs(self):
+    return self.programs
+
+  def add_row_levels(self): # right now assume the row levels are hard coded, as it is only needed once
+    self.row_levels = ['high', 'best', 'low']
+
+  def has_row_levels(self):
+    return self.row_levels != None
+
+  def get_row_names(self):
+    if not self.has_row_levels():
+      return [[name] for name in self.row_names]
+    else:
+      return [[name, level] for name in self.row_names for level in self.row_levels]
 
 """ It's not truly pythonic, they cay, to have class methods """
 def make_matrix_range(name, params):
@@ -129,8 +149,11 @@ class TitledRange:
   FIRST_COL = 2
   def __init__(self, sheet, first_row, content):
     self.sheet = sheet
-    self.data_range = SheetRange(first_row+2, TitledRange.FIRST_COL, len(content.row_names), len(content.column_names))
     self.content = content
+    first_data_col = TitledRange.FIRST_COL
+    if self.content.has_row_levels():
+      first_data_col +=1
+    self.data_range = SheetRange(first_row+2, first_data_col, len(self.content.row_names), len(self.content.column_names))
     self.first_row = first_row
 
   def num_rows(self):
@@ -143,8 +166,10 @@ class TitledRange:
       formats.write_rowcol_name(self.sheet, self.first_row+1, self.data_range.first_col+i,name)
     if self.content.has_assumption():
       formats.write_rowcol_name(self.sheet, self.first_row+1, self.data_range.last_col+2, 'Assumption')
-    for i, name in enumerate(self.content.row_names):
-      formats.write_rowcol_name(self.sheet, self.data_range.first_row+i, self.data_range.first_col-1, name)
+    for i, names in enumerate(self.content.get_row_names()):
+      start_col = self.data_range.first_col - len(names)
+      for n, name in enumerate(names):
+        formats.write_rowcol_name(self.sheet, self.data_range.first_row+i, start_col+n, name)
       if self.content.has_data():
         for j, item in enumerate(self.content.data[i]):
           formats.write_unlocked(self.sheet, self.data_range.first_row+i, self.data_range.first_col+j, item)
