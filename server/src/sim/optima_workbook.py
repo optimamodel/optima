@@ -21,10 +21,11 @@ def abbreviate(param):
       short_param += w
   return short_param.upper()
 
-class Assumption: #simulacrum of enums (no such thing in Python 2.7)
-  PERCENTAGE = 'percentage'
-  SCIENTIFIC = 'scientific'
-  NUMBER = 'number'
+#class Assumption: #simulacrum of enums (no such thing in Python 2.7)
+#  PERCENTAGE = 'percentage'
+#  SCIENTIFIC = 'scientific'
+#  NUMBER = 'number'
+#  GENERAL = 'general'
 
 """ the content of the data ranges (row names, column names, optional data and assumptions) """
 class OptimaContent:
@@ -33,15 +34,19 @@ class OptimaContent:
     self.row_names = row_names
     self.column_names = column_names
     self.data = data
-    self.assumption = None
+    self.assumption = False
     self.programs = False
     self.row_levels = None
+    self.row_format = OptimaFormats.GENERAL
+
+  def set_row_format(self, row_format):
+    self.row_format = row_format
 
   def has_data(self):
     return self.data != None
 
-  def add_assumption(self, assumption):
-    self.assumption = assumption
+  def add_assumption(self):
+    self.assumption = True
 
   def has_assumption(self):
     return self.assumption != None
@@ -86,17 +91,27 @@ def make_ref_years_range(name, ref_range, data_start, data_end):
 class OptimaFormats:
   BG_COLOR = '#B3DEE5'
   BORDER_COLOR = 'white'
+
+  PERCENTAGE = 'percentage'
+  SCIENTIFIC = 'scientific'
+  NUMBER = 'number'
+  GENERAL = 'general'
+
   def __init__(self, book):
     self.formats = {}
     self.book = book
+    # locked formats
+    self.formats['bold'] = self.book.add_format({'bold':1})
+    # unlocked formats
     self.formats['unlocked'] = self.book.add_format({'locked':0, \
       'bg_color':OptimaFormats.BG_COLOR,'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
-    self.formats['bold'] = self.book.add_format({'bold':1})
     self.formats['percentage'] = self.book.add_format({'locked':0, 'num_format':0x09, \
       'bg_color':OptimaFormats.BG_COLOR,'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
     self.formats['scientific'] = self.book.add_format({'locked':0, 'num_format':0x0b, \
       'bg_color':OptimaFormats.BG_COLOR,'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
     self.formats['number'] = self.book.add_format({'locked':0, 'num_format':0x04, \
+      'bg_color':OptimaFormats.BG_COLOR,'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
+    self.formats['general'] = self.book.add_format({'locked':0, 'num_format':0x00, \
       'bg_color':OptimaFormats.BG_COLOR,'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
 
   def write_block_name(self, sheet, name, row):
@@ -108,16 +123,11 @@ class OptimaFormats:
   def write_option(self, sheet, row, col, name = 'OR'):
     sheet.write(row, col, name, self.formats['bold'])
 
-  def write_unlocked(self, sheet, row, col, data):
-    sheet.write(row, col, data, self.formats['unlocked'])
+  def write_unlocked(self, sheet, row, col, data, row_format = 'unlocked'):
+    sheet.write(row, col, data, self.formats[row_format])
 
-  def write_empty_unlocked(self, sheet, row, col):
-    sheet.write_blank(row, col, None, self.formats['unlocked'])
-
-  """ assumption: scientific, percentage or number """
-  def write_empty_assumption(self, sheet, row, col, assumption):
-    sheet.write_blank(row, col, None, self.formats[assumption])
-
+  def write_empty_unlocked(self, sheet, row, col, row_format = 'unlocked'):
+    sheet.write_blank(row, col, None, self.formats[row_format])
 
 class SheetRange:
   def __init__(self, first_row, first_col, num_rows, num_cols):
@@ -184,25 +194,30 @@ class TitledRange:
 
     current_row = self.data_range.first_row
     num_levels = len(self.content.row_levels) if self.content.has_row_levels() else 1
+    #iterate over rows
     for i, names in enumerate(self.content.get_row_names()):
       start_col = self.data_range.first_col - len(names)
+      #emit row name(s)
       for n, name in enumerate(names):
         formats.write_rowcol_name(self.sheet, current_row, start_col+n, name)
+      #emit data if present
       if self.content.has_data():
         for j, item in enumerate(self.content.data[i]):
-          formats.write_unlocked(self.sheet, current_row, self.data_range.first_col+j, item)
+          formats.write_unlocked(self.sheet, current_row, self.data_range.first_col+j, item, self.content.row_format)
       else:
         for j in range(self.data_range.num_cols):
-          formats.write_empty_unlocked(self.sheet, current_row, self.data_range.first_col+j)
+          formats.write_empty_unlocked(self.sheet, current_row, self.data_range.first_col+j, self.content.row_format)
+      #emit assumption
       if self.content.has_assumption():
         formats.write_option(self.sheet, current_row, self.data_range.last_col+1)
-        formats.write_empty_assumption(self.sheet, current_row, self.data_range.last_col+2, \
-          self.content.assumption)
-      if self.content.has_programs(): #so far assumption seems to also be present in this case and with the same format
+        formats.write_empty_unlocked(self.sheet, current_row, self.data_range.last_col+2, \
+          self.content.row_format)
+      #emit programs
+      if self.content.has_programs(): 
         formats.write_option(self.sheet, current_row, self.data_range.last_col+1)
-        for num in [5,7,8,10,11]:
-          formats.write_empty_assumption(self.sheet, current_row, self.data_range.last_col+num, \
-            self.content.assumption)
+        formats.write_empty_unlocked(self.sheet, current_row, self.data_range.last_col+5, OptimaFormats.GENERAL)
+        for num in [7,8,10,11]:
+          formats.write_empty_unlocked(self.sheet, current_row, self.data_range.last_col+num, OptimaFormats.PERCENTAGE)
       current_row+=1
       if num_levels > 1 and ((i+1) % num_levels)==0: # shift between the blocks
         current_row +=1
@@ -242,10 +257,12 @@ class OptimaWorkbook:
     self.npops = len(pops)
     self.nprogs = len(progs)
 
-  def emit_years_block(self, name, current_row, row_names, assumption = None, programs = False, row_levels = False):
+  def emit_years_block(self, name, current_row, row_names, row_format = OptimaFormats.GENERAL, \
+    assumption = False, programs = False, row_levels = False):
     content = make_years_range(name, row_names, self.data_start, self.data_end)
-    if assumption is not None:
-      content.add_assumption(assumption)
+    content.set_row_format(row_format)
+    if assumption:
+      content.add_assumption()
     if programs:
       content.add_programs()
     if row_levels:
@@ -255,10 +272,12 @@ class OptimaWorkbook:
     return current_row
   
 
-  def emit_ref_years_block(self, name, current_row, ref_range, assumption = None, programs = False, row_levels = False):
+  def emit_ref_years_block(self, name, current_row, ref_range, row_format = OptimaFormats.GENERAL, \
+    assumption = None, programs = False, row_levels = False):
     content = make_ref_years_range(name, ref_range, self.data_start, self.data_end)
-    if assumption is not None:
-      content.add_assumption(assumption)
+    content.set_row_format(row_format)
+    if assumption:
+      content.add_assumption()
     if programs:
       content.add_programs()
     if row_levels:
@@ -287,25 +306,25 @@ class OptimaWorkbook:
     self.current_sheet.protect()
     current_row = 0
 
-    current_row = self.emit_ref_years_block('Coverage', current_row, self.prog_range, Assumption.PERCENTAGE)
+    current_row = self.emit_ref_years_block('Coverage', current_row, self.prog_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
 
     self.formats.write_option(self.current_sheet, current_row, 10, "AND EITHER")
     current_row +=2
 
-    current_row = self.emit_ref_years_block('Total program cost', current_row, self.prog_range, Assumption.SCIENTIFIC)
+    current_row = self.emit_ref_years_block('Total program cost', current_row, self.prog_range, row_format = OptimaFormats.SCIENTIFIC, assumption = True)
 
     self.formats.write_option(self.current_sheet, current_row, 10)
     current_row +=2
 
-    current_row = self.emit_ref_years_block('Unit cost', current_row, self.prog_range, Assumption.NUMBER)
+    current_row = self.emit_ref_years_block('Unit cost', current_row, self.prog_range, row_format = OptimaFormats.NUMBER, assumption = True)
 
   def generate_demo(self):
     self.current_sheet = self.sheets['demo']
     self.current_sheet.protect()
     current_row = 0
 
-    current_row = self.emit_ref_years_block('Population size', current_row, self.pop_range, Assumption.SCIENTIFIC, row_levels = True)
-    current_row = self.emit_ref_years_block('HIV prevalence', current_row, self.pop_range, Assumption.PERCENTAGE, row_levels = True)
+    current_row = self.emit_ref_years_block('Population size', current_row, self.pop_range, row_format = OptimaFormats.SCIENTIFIC, assumption = True, row_levels = True)
+    current_row = self.emit_ref_years_block('HIV prevalence', current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True, row_levels = True)
 
   def generate_epi(self):
     self.current_sheet = self.sheets['epi']
@@ -314,7 +333,7 @@ class OptimaWorkbook:
 
     for name in ['Percentage of people who die from non-HIV-related causes per year', \
     'Prevalence of any ulcerative STIs', 'Prevalence of any discharging STIs', 'Tuberculosis prevalence']:
-      current_row = self.emit_ref_years_block(name, current_row, self.pop_range, Assumption.PERCENTAGE, programs = True)
+      current_row = self.emit_ref_years_block(name, current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True, programs = True)
 
   def generate_opid(self):
     self.current_sheet = self.sheets['opid']
@@ -323,7 +342,34 @@ class OptimaWorkbook:
 
     for name in ['Number of HIV tests', 'Number of diagnoses', 'Modeled estimate of new infections per year', \
     'Modeled estimate of HIV prevalence', 'Number of HIV-related deaths', 'Number of people initiating ART each year']:
-      current_row = self.emit_years_block(name, current_row, ['Total'], Assumption.NUMBER)
+      current_row = self.emit_years_block(name, current_row, ['Total'], row_format = OptimaFormats.NUMBER, assumption = True)
+
+  def generate_txrx(self):
+    self.current_sheet = self.sheets['txrx']
+    self.current_sheet.protect()
+    current_row = 0
+
+    current_row = self.emit_years_block('Number of people on second-line treatment', current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption = True, programs = True)
+    current_row = self.emit_years_block('Percentage of women on PMTCT (Option B/B+)', current_row, ['Total'], row_format = OptimaFormats.PERCENTAGE, assumption = True, programs = True)
+    current_row = self.emit_ref_years_block('Birth rate (births/woman/year)', current_row, self.pop_range, row_format = OptimaFormats.NUMBER, assumption = True, programs = True)
+    current_row = self.emit_years_block('Percentage of HIV-positive women who breastfeed', current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption = True, programs = True)
+
+  def generate_sex(self):
+    self.current_sheet = self.sheets['sex']
+    self.current_sheet.protect()
+    current_row = 0
+    names_formats = [('Number of acts with regular partners per person per year', OptimaFormats.GENERAL), \
+    ('Number of acts with casual partners per person per year', OptimaFormats.GENERAL), \
+    ('Number of acts with commercial partners per person per year', OptimaFormats.GENERAL), \
+    ('Percentage of people who used a condom at last act with regular partners', OptimaFormats.PERCENTAGE), \
+    ('Percentage of people who used a condom at last act with casual partners', OptimaFormats.PERCENTAGE), \
+    ('Percentage of people who used a condom at last act with commercial partners', OptimaFormats.PERCENTAGE), \
+    ('Male circumcision prevalence', OptimaFormats.PERCENTAGE)]
+
+    for (name, row_format) in names_formats:
+      current_row = self.emit_ref_years_block(name, current_row, self.pop_range, row_format = row_format, assumption = True, programs = True)
+
+
 
   def create(self, path):
     if self.verbose >=1: 
@@ -340,5 +386,7 @@ class OptimaWorkbook:
     self.generate_demo()
     self.generate_epi()
     self.generate_opid()
+    self.generate_txrx()
+    self.generate_sex()
     self.book.close()
 
