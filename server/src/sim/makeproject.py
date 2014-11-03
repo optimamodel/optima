@@ -8,9 +8,9 @@ def makeproject(projectname='example', npops=6, nprogs=8, datastart=2000, dataen
     if verbose>=1: 
         print("Making project %s, npops=%s, nprogs=%s, datastart = %s, dataend = %s..." % (projectname, npops, nprogs, datastart, dataend))
     
-    from dataio import savedata, normalize_file
+    from dataio import savedata, fullpath
     from bunch import Bunch as struct
-    projectfilename = normalize_file(projectname+'.prj')
+    projectfilename = fullpath(projectname+'.prj')
     spreadsheetname = projectname + '.xlsx'
     
     D = struct() # Data structure for saving everything

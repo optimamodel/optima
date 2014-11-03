@@ -19,19 +19,19 @@ print('WELCOME TO OPTIMA')
 projectname = 'example'
 verbose = 2
 
-print('1. Making project...')
+print('\n\n\n1. Making project...')
 from makeproject import makeproject
 spreadsheetname = makeproject(projectname='example', npops=6, nprogs=8, datastart=2000, dataend=2015, verbose=verbose)
 
-print('2. Uploading spreadsheet...')
+print('\n\n\n2. Uploading spreadsheet...')
 from updatedata import updatedata
 updatedata(projectname='example', verbose=verbose)
 
-print('3. Running simulation...')
+print('\n\n\n3. Running simulation...')
 from runsimulation import runsimulation
 runsimulation(projectdatafile='example.prj', verbose=verbose)
 
-print('4. Loading results...')
+print('\n\n\n4. Loading results...')
 from dataio import loaddata
 D = loaddata('example.prj', verbose=verbose)
 
