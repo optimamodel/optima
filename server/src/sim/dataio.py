@@ -1,15 +1,15 @@
 """
 DATAIO
 
-Data input/output. Converts structures to dictionaries so they can be saved by
-savemat. Why not use pickle, you ask? Because picke is slow (10x slower for
-readout!) and inflexible.
+Data input/output. Uses pickle because savemat() can't handle arbitrary data
+structures, even though savemat() is (much) faster, and the compatibility with
+Matlab would be nice.
 
-Version: 2014nov03
+Version: 2014nov03 by cliffk
 """
 
 
-def normalize_file(filename, datadir='/tmp/uploads'):
+def fullpath(filename, datadir='/tmp/uploads'):
     """
     "Normalizes" filename:  if it is full path, leaves it alone. Otherwise, prepends it with datadir.
     """
@@ -25,12 +25,12 @@ def normalize_file(filename, datadir='/tmp/uploads'):
 
 def savedata(filename, data, update=True, verbose=2):
     """
-    Saves the pickled data into the file (either updates it or just overwrites)
+    Saves the pickled data into the file (either updates it or just overwrites).
     """
     if verbose>=1: print('Saving data...')
     from cPickle import dump, load
     
-    filename = normalize_file(filename)
+    filename = fullpath(filename)
     try: # First try loading the file and updating it
         rfid = open(filename,'rb') # "Read file ID" -- This will fail if the file doesn't exist
         origdata = load(rfid)
@@ -53,7 +53,7 @@ def loaddata(filename, verbose=2):
     """
     Loads the file and unpickles data from it.
     """
-    filename = normalize_file(filename)
+    filename = fullpath(filename)
     if verbose>=1: print('Loading data...')
     from cPickle import load
     rfid = open(filename,'rb')

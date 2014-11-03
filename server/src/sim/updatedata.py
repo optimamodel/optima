@@ -1,23 +1,19 @@
-"""
-UPDATEDATA
-Upload Optima spreadsheet
-Version: 2014oct29
-"""
-import os
-
-def updatedata(projectname='example', loaddir = '', verbose=2):
-    
+def updatedata(projectname='example', loaddir='', verbose=2):
     """
     Load the Excel spreadsheet (for the given project), assuming it's in the standard uploads directory
     loads the data for the given project,
     updates the model based on the speardsheet contents
+    
+    Version: 2014nov03 by cliffk
     """
+    
     if verbose>=1: print('Updating data... %s' % projectname)
     
     projectfilename = projectname+'.prj'
     spreadsheetname = projectname+'.xlsx'
 
     if loaddir:
+        import os
         projectfilename = os.path.join(loaddir, projectfilename)
         spreadsheetname = os.path.join(loaddir, spreadsheetname)
     

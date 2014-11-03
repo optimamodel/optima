@@ -1,13 +1,9 @@
-"""
-MAKEPROJECT
-http://54.200.79.218/#/project/create
-Version: 2014oct29
-"""
-
 def makeproject(projectname='example', npops=6, nprogs=8, datastart=2000, dataend=2015, loaddir = '', verbose=2):
     """
     Initializes the empty project. Only the "Global" parameters are added on this step.
     The rest of the parameters is calculated after the model is updated with the data from the spreadsheet.
+    
+    Version: 2014nov03 by cliffk
     """
     if verbose>=1: 
         print("Making project %s, npops=%s, nprogs=%s, datastart = %s, dataend = %s..." % (projectname, npops, nprogs, datastart, dataend))

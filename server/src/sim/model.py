@@ -4,7 +4,7 @@ def model(G, M, options, verbose=2): # extraoutput is to calculate death rates e
     
     This function runs the model.
     
-    Version: 2014sep25
+    Version: 2014nov03 by cliffk
     """
 
     if verbose>=1: print('Running model...')
