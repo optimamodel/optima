@@ -237,9 +237,22 @@ class OptimaWorkbook:
     self.book = None
     self.sheets = None
     self.formats = None
+    self.current_sheet = None
 
     self.npops = len(pops)
     self.nprogs = len(progs)
+
+  def emit_ref_years_block(self, name, current_row, ref_range, assumption = None, programs = False, row_levels = False):
+    content = make_ref_years_range(name, ref_range, self.data_start, self.data_end)
+    if assumption is not None:
+      content.add_assumption(assumption)
+    if programs:
+      content.add_programs()
+    if row_levels:
+      content.add_row_levels()
+    the_range = TitledRange(self.current_sheet, current_row, content)
+    current_row = the_range.emit(self.formats)
+    return current_row
 
   def generate_pp(self):
     pp_sheet = self.sheets['pp']
@@ -257,47 +270,38 @@ class OptimaWorkbook:
     current_row = self.prog_range.emit(self.formats)
 
   def generate_cc(self):
-    cc_sheet = self.sheets['cc']
-    cc_sheet.protect()
+    self.current_sheet = self.sheets['cc']
+    self.current_sheet.protect()
     current_row = 0
 
-    coverage_content = make_ref_years_range('Coverage', self.prog_range, self.data_start, self.data_end)
-    coverage_content.add_assumption(Assumption.PERCENTAGE)
-    coverage_range = TitledRange(cc_sheet, current_row, coverage_content)
-    current_row = coverage_range.emit(self.formats)
+    current_row = self.emit_ref_years_block('Coverage', current_row, self.prog_range, Assumption.PERCENTAGE)
 
-    self.formats.write_option(cc_sheet, current_row, 10, "AND EITHER")
+    self.formats.write_option(self.current_sheet, current_row, 10, "AND EITHER")
     current_row +=2
 
-    total_program_cost_content = make_ref_years_range('Total program cost', self.prog_range, self.data_start, self.data_end)
-    total_program_cost_content.add_assumption(Assumption.SCIENTIFIC)
-    coverage_range = TitledRange(cc_sheet, current_row, total_program_cost_content)
-    current_row = coverage_range.emit(self.formats)
+    current_row = self.emit_ref_years_block('Total program cost', current_row, self.prog_range, Assumption.SCIENTIFIC)
 
-    self.formats.write_option(cc_sheet, current_row, 10)
+    self.formats.write_option(self.current_sheet, current_row, 10)
     current_row +=2
 
-    unit_cost_content = make_ref_years_range('Unit cost', self.prog_range, self.data_start, self.data_end)
-    unit_cost_content.add_assumption(Assumption.NUMBER)
-    coverage_range = TitledRange(cc_sheet, current_row, unit_cost_content)
-    current_row = coverage_range.emit(self.formats)
+    current_row = self.emit_ref_years_block('Unit cost', current_row, self.prog_range, Assumption.NUMBER)
 
   def generate_demo(self):
-    demo_sheet = self.sheets['demo']
-    demo_sheet.protect()
+    self.current_sheet = self.sheets['demo']
+    self.current_sheet.protect()
     current_row = 0
 
-    popsize_content = make_ref_years_range('Population size', self.pop_range, self.data_start, self.data_end)
-    popsize_content.add_assumption(Assumption.SCIENTIFIC)
-    popsize_content.add_row_levels()
-    popsize_range = TitledRange(demo_sheet, current_row, popsize_content)
-    current_row = popsize_range.emit(self.formats)
+    current_row = self.emit_ref_years_block('Population size', current_row, self.pop_range, Assumption.SCIENTIFIC, row_levels = True)
+    current_row = self.emit_ref_years_block('HIV prevalence', current_row, self.pop_range, Assumption.PERCENTAGE, row_levels = True)
 
-    hiv_content = make_ref_years_range('HIV prevalence', self.pop_range, self.data_start, self.data_end)
-    popsize_content.add_assumption(Assumption.PERCENTAGE)
-    popsize_content.add_row_levels()
-    popsize_range = TitledRange(demo_sheet, current_row, popsize_content)
-    current_row = popsize_range.emit(self.formats)
+  def generate_epi(self):
+    self.current_sheet = self.sheets['epi']
+    self.current_sheet.protect()
+    current_row = 0
+
+    for name in ['Percentage of people who die from non-HIV-related causes per year', \
+    'Prevalence of any ulcerative STIs', 'Prevalence of any discharging STIs', 'Tuberculosis prevalence']:
+      current_row = self.emit_ref_years_block(name, current_row, self.pop_range, Assumption.PERCENTAGE, programs = True)
 
   def create(self, path):
     if self.verbose >=1: 
@@ -312,5 +316,6 @@ class OptimaWorkbook:
     self.generate_pp()
     self.generate_cc()
     self.generate_demo()
+    self.generate_epi()
     self.book.close()
 
