@@ -166,11 +166,21 @@ class TitledRange:
   """ emits the range and returns the new current row in the given sheet """
   def emit(self, formats):
     formats.write_block_name(self.sheet, self.content.name, self.first_row)
+    if self.content.has_programs():
+      formats.write_rowcol_name(self.sheet, self.first_row, self.data_range.last_col + 7, 'Zero coverage')
+      formats.write_rowcol_name(self.sheet, self.first_row, self.data_range.last_col + 10, 'Full coverage')
 
     for i, name in enumerate(self.content.column_names):
       formats.write_rowcol_name(self.sheet, self.first_row+1, self.data_range.first_col+i,name)
     if self.content.has_assumption():
       formats.write_rowcol_name(self.sheet, self.first_row+1, self.data_range.last_col+2, 'Assumption')
+    if self.content.has_programs():
+      formats.write_rowcol_name(self.sheet, self.first_row+1, self.data_range.last_col+5, 'Programs')
+      formats.write_rowcol_name(self.sheet, self.first_row+1, self.data_range.last_col+7, 'Min')
+      formats.write_rowcol_name(self.sheet, self.first_row+1, self.data_range.last_col+8, 'Max')
+      formats.write_rowcol_name(self.sheet, self.first_row+1, self.data_range.last_col+10, 'Min')
+      formats.write_rowcol_name(self.sheet, self.first_row+1, self.data_range.last_col+11, 'Max')
+
 
     current_row = self.data_range.first_row
     num_levels = len(self.content.row_levels) if self.content.has_row_levels() else 1
@@ -188,6 +198,11 @@ class TitledRange:
         formats.write_option(self.sheet, current_row, self.data_range.last_col+1)
         formats.write_empty_assumption(self.sheet, current_row, self.data_range.last_col+2, \
           self.content.assumption)
+      if self.content.has_programs(): #so far assumption seems to also be present in this case and with the same format
+        formats.write_option(self.sheet, current_row, self.data_range.last_col+1)
+        for num in [5,7,8,10,11]:
+          formats.write_empty_assumption(self.sheet, current_row, self.data_range.last_col+num, \
+            self.content.assumption)
       current_row+=1
       if num_levels > 1 and ((i+1) % num_levels)==0: # shift between the blocks
         current_row +=1
