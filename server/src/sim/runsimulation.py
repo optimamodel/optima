@@ -2,8 +2,8 @@ def runsimulation(projectdatafile='example.prj', startyear=2000, endyear=2030, l
     """
     RUNSIMULATION
     View data and model estimates
-    Version: 2014oct29
-    need to change UI
+    
+    Version: 2014nov03 by cliffk
     """
 
     if verbose>=1: 

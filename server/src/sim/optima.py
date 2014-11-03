@@ -10,7 +10,7 @@ This function does everything. The basic procedure is as follows:
 3. setupmodel -- reconcile partnerships and calculate parameters to go into the model
 4. model -- actually run the model
 
-Version: 2014oct29
+Version: 2014nov03 by cliffk
 """
 print('WELCOME TO OPTIMA')
 

@@ -4,6 +4,8 @@ def makedatapars(D, verbose=2):
     parameters that can be used in the model. These are then used 
     These data are then used to update the corresponding model (project).
     This method should be called before any simulation can run.
+    
+    Version: 2014nov03 by cliffk
     """
     
     ###############################################################################
