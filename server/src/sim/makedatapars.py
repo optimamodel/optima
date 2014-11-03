@@ -16,21 +16,25 @@ def makedatapars(D, verbose=2):
     from bunch import Bunch as struct # Replicate Matlab-like structure behavior
     from matplotlib.pylab import array, isnan, zeros, shape, mean
     
+    
     def sanitize(arraywithnans):
         """ Sanitize input to remove NaNs. Warning, does not work on multidimensional data!! """
         arraywithnans = array(arraywithnans) # Make sure it's an array
         sanitized = arraywithnans[~isnan(arraywithnans)]
+        if len(sanitized)==0:
+                sanitized = 0
+                print('                WARNING, no data entered for this parameter, assuming 0')
+
         return sanitized
         
+    
     def data2par(dataarray):
         """ Take an array of data and turn it into default parameters -- here, just take the means """
         nrows = shape(dataarray)[0] # See how many rows need to be filled (either npops or 1)
-        
         output = struct() # Create structure
         output.t = 1 # Set default time pameter -- constant (1) by default
         output.y = [D.G.datastart, D.G.dataend] # Set default control years -- start and end of the data
         output.p = zeros(nrows) # Initialize array for holding population parameters
-        
         for r in xrange(nrows): 
             output.p[r] = mean(sanitize(dataarray[r])) # Calculate mean for each population
         
@@ -47,47 +51,34 @@ def makedatapars(D, verbose=2):
     D.P.__doc__ = 'Parameters that have been directly derived from the data, which are then used to create the model parameters'
     
     ## Key parameters
-    D.P.popsize = data2par(D.data.key.popsize[0]) # Population size -- # TODO: don't take average for this, and use uncertainties!
-    D.P.hivprev = data2par(D.data.key.hivprev[0]) # Initial HIV prevalence -- # TODO: don't take average for this, and use uncertainties!
+    for parname in D.data.key.keys():
+        if verbose>=3: print('  Converting data parameter %s...' % parname)
+        D.P[parname] = data2par(D.data.key[parname][0]) # Population size and prevalence -- # TODO: don't take average for this, and use uncertainties!
     
-    ## Epidemiology parameters
-    D.P.death = data2par(D.data.epi.death) # STI prevalence -- discharge    
-    D.P.stiprevulc = data2par(D.data.epi.stiprevulc) # STI prevalence -- discharge
-    D.P.stiprevdis = data2par(D.data.epi.stiprevdis) # STI prevalence -- discharge
-    D.P.tbprev = data2par(D.data.epi.tbprev) # STI prevalence -- discharge
-    
-    ## Testing parameters
-    D.P.hivtest = data2par(D.data.txrx.testrate) # HIV testing rates
-    D.P.aidstest = data2par(D.data.txrx.aidstestrate) # AIDS testing rates
-    D.P.firstline = data2par(D.data.txrx.numfirstline) # Number on first-line treatment
-    D.P.secondline = data2par(D.data.txrx.numsecondline) # Number on second-line treatment
-    D.P.pmtct = data2par(D.data.txrx.numpmtct) # Number on PMTCT
-    D.P.birth = data2par(D.data.txrx.birth) # Birth rates
-    D.P.breast = data2par(D.data.txrx.numbreastpmtct) # Breastfeeding rates
-    
-    ## Sexual behavior parameters -- all are parameters so can loop over all
-    for parname in D.data.sex.keys():
-        D.P[parname] = data2par(D.data.sex[parname])
-    
-    ## Drug behavior parameters
-    D.P.numinject = data2par(D.data.drug.numinject)
-    D.P.ost = data2par(D.data.drug.ost)
-    D.P.sharing = data2par(D.data.drug.sharing)
+    ## Loop over parameters that can be converted automatically
+    for parclass in ['epi', 'txrx', 'sex', 'inj']:
+        for parname in D.data[parclass].keys():
+            if verbose>=3: print('  Converting data parameter %s.%s...' % (parclass, parname))
+            D.P[parname] = data2par(D.data[parclass][parname])
     
     ## Matrices can be used directly
-    D.P.pships = D.data.pships
-    D.P.transit = D.data.transit
+    for parclass in ['pships', 'transit']:
+        if verbose>=3: print('  Converting data parameter %s...' % parclass)
+        D.P[parclass] = D.data[parclass]
     
-    ## Constants...just take the best value for now -- TODO: use the uncertainty
+    ## Constants...just take the best value for now -- # TODO: use the uncertainty
     D.P.const = struct()
-    for parname in D.data.const.keys():
-        if type(D.data.const[parname])==struct:
-            D.P.const[parname] = struct()
-            for parname2 in D.data.const[parname].keys():
-                D.P.const[parname][parname2] = D.data.const[parname][parname2][0] # Taking best value only, hence the 0
+    for parclass in D.data.const.keys():
+        if verbose>=3: print('  Converting data parameter %s...' % parclass)
+        if type(D.data.const[parclass])==struct: 
+            D.P.const[parclass] = struct()
+            for parname in D.data.const[parclass].keys():
+                if verbose>=3: print('    Converting data parameter %s...' % parname)
+                D.P.const[parclass][parname] = D.data.const[parclass][parname][0] # Taking best value only, hence the 0
         else:
-            D.P.const[parname] = D.data.const[parname][0]
-            
+            D.P.const[parclass] = D.data.const[parclass][0]
+    
+    ## TODO: disutility, economic data etc.
             
             
     
