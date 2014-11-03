@@ -1,18 +1,11 @@
-"""
-MAKEDATAPARS
-
-This function turns the data into model parameters.
-
-Version: 2014oct29
-"""
-
 def makedatapars(D, verbose=2):
-    
     """
-    Modifies in-place the data (which were read from the spreadsheet).
+    Translates the raw data (which were read from the spreadsheet). into
+    parameters that can be used in the model. These are then used 
     These data are then used to update the corresponding model (project).
     This method should be called before any simulation can run.
     """
+    
     ###############################################################################
     ## Preliminaries
     ###############################################################################
