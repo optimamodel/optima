@@ -5,24 +5,22 @@ Data input/output. Converts structures to dictionaries so they can be saved by
 savemat. Why not use pickle, you ask? Because picke is slow (10x slower for
 readout!) and inflexible.
 
-Version: 2014oct29
+Version: 2014nov03
 """
 
-import os
 
-DATADIR="/tmp/uploads"
-
-def normalize_file(filename):
+def normalize_file(filename, datadir='/tmp/uploads'):
     """
-    "Normalizes" filename:  if it is full path, leaves it alone. 
-                            otherwise, prepends it with DATADIR.
+    "Normalizes" filename:  if it is full path, leaves it alone. Otherwise, prepends it with datadir.
     """
+    import os
     result = filename
-    if not os.path.exists(DATADIR):
-        os.makedirs(DATADIR)
+    if not(os.path.exists(datadir)):
+        os.makedirs(datadir)
     if os.path.dirname(filename)=='':
-        result = os.path.join(DATADIR, filename)
+        result = os.path.join(datadir, filename)
     return result
+
 
 
 def savedata(filename, data, update=True, verbose=2):
@@ -47,6 +45,7 @@ def savedata(filename, data, update=True, verbose=2):
         if verbose>=2: print('  ..created new file')
     if verbose>=2: print(' ...done saving data.')
     return filename
+
 
 
 
