@@ -3,6 +3,8 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
     Loads the spreadsheet (i.e. reads its contents into the data structure).
     This data structure is used in the next step to update the corresponding model.
     The spreadsheet is assumed to be in the format specified in example.xlsx.
+    
+    Version: 2014nov03
     """
 
     ###########################################################################
@@ -216,5 +218,3 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
     
     if verbose>=2: print('  ...done loading data.')
     return data, programs
-
-data = loadspreadsheet(verbose=10)[0]
