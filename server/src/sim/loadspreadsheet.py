@@ -32,7 +32,7 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
                  ['Cost & coverage',     'costcov', ['cov', 'total', 'unit']], \
                  ['Other epidemiology',  'epi',     ['death', 'stiprevulc', 'stiprevdis', 'tbprev']], \
                  ['Optional indicators', 'opt',     ['numtest', 'numdiag', 'numinfect', 'prev', 'death', 'newtreat']], \
-                 ['Testing & treatment', 'txrx',    ['testrate', 'aidstestrate', 'numtests', 'numdiagnoses', 'numinfections', 'numdeaths', 'numfirstline', 'numsecondline', 'numpmtct','numbreastpmtct']], \
+                 ['Testing & treatment', 'txrx',    ['testrate', 'aidstestrate', 'numfirstline', 'numsecondline', 'numpmtct', 'birth', 'breast']], \
                  ['Sexual behavior',     'sex',     ['numactsreg', 'numactscas', 'numactscom', 'condomreg', 'condomcas', 'condomcom', 'circum']], \
                  ['Injecting behavior',  'drug',    ['numinject', 'sharing', 'ost']], \
                  ['Macroeconomics',      'macro',   ['gdp', 'revenue', 'govtexpend', 'totalhealth', 'domestichealth', 'domestichiv', 'globalfund', 'pepfar', 'otherint', 'private']]
@@ -170,16 +170,14 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
                         # It's key data, save both the values and uncertainties
                         if groupname=='keydata':
                             if len(data[name][thispar])==0: 
-                                data[name][thispar].append([]) # Create new variable
+                                data[name][thispar] = [[] for z in range(3)] # Create new variable for best, low, high
                             thesedata = sheetdata.row_values(row, start_colx=3, end_colx=lastdatacol) # Data starts in 4th column
                             thesedata = map(lambda val: nan if val=='' else val, thesedata) # Replace blanks with nan
                             assumptiondata = sheetdata.cell_value(row, assumptioncol)
                             if assumptiondata != '': thesedata = [assumptiondata] # Replace the (presumably blank) data if a non-blank assumption has been entered
-                            if len(data[name][thispar][-1])<3: # 3 for high, best, low
-                                data[name][thispar][-1].append(thesedata) # Actually append the data
-                            else:
-                                data[name][thispar].append([]) # Create new row
-                                data[name][thispar][-1].append(thesedata) # Actually append the data
+                            blhindices = {'best':0, 'low':1, 'high':2} # Define best-low-high indices
+                            blh = sheetdata.cell_value(row, 2) # Read in whether indicator is best, low, or high
+                            data[name][thispar][blhindices[blh]].append(thesedata) # Actually append the data
                             
                         
                         # It's basic data, append the data and check for programs
