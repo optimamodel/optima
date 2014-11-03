@@ -13,7 +13,7 @@ define([
       // https://github.com/danialfarid/angular-file-upload
       function uploadDataSpreadsheet(file) {
         $scope.upload = $upload.upload({
-          url: '/api/data/upload',
+          url: '/api/project/update',
           file: file
         }).progress(function(evt) {
           console.log('percent: ' + parseInt(100.0 * evt.loaded / evt.total));
@@ -37,14 +37,8 @@ define([
                         },
                         {
                             title: 'Open existing project',
-                            click: function () {
-                                angular
-                                    .element('<input type="file">')
-                                    .change(function (event) {
-                                        // TODO
-                                        alert(event.target.files[0].name);
-                                    })
-                                    .click();
+                            state: {
+                                name: 'project.open'
                             }
                         },
                         {
