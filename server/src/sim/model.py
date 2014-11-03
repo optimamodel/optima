@@ -1,14 +1,11 @@
-"""
-MODEL
-
-This function runs the model.
-
-Version: 2014sep25
-"""
-
-
-
 def model(G, M, options, verbose=2): # extraoutput is to calculate death rates etc.
+    """
+    MODEL
+    
+    This function runs the model.
+    
+    Version: 2014sep25
+    """
 
     if verbose>=1: print('Running model...')
     
