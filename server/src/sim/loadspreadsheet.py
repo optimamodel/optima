@@ -34,13 +34,13 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
                  ['Optional indicators', 'opt',     ['numtest', 'numdiag', 'numinfect', 'prev', 'death', 'newtreat']], \
                  ['Testing & treatment', 'txrx',    ['testrate', 'aidstestrate', 'numfirstline', 'numsecondline', 'numpmtct', 'birth', 'breast']], \
                  ['Sexual behavior',     'sex',     ['numactsreg', 'numactscas', 'numactscom', 'condomreg', 'condomcas', 'condomcom', 'circum']], \
-                 ['Injecting behavior',  'drug',    ['numinject', 'sharing', 'ost']], \
+                 ['Injecting behavior',  'inj',     ['numinject', 'sharing', 'ost']], \
                  ['Macroeconomics',      'macro',   ['gdp', 'revenue', 'govtexpend', 'totalhealth', 'domestichealth', 'domestichiv', 'globalfund', 'pepfar', 'otherint', 'private']]
                 ]
                  
     # Matrix data -- array sizes are population x population
     matrices = [
-                ['Partnerships', 'pships',  ['reg','cas','com','drug']], \
+                ['Partnerships', 'pships',  ['reg','cas','com','inj']], \
                 ['Transitions',  'transit', ['asym','sym']]
                ]
     

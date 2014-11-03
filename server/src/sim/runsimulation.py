@@ -12,7 +12,6 @@ def runsimulation(projectdatafile='example.prj', startyear=2000, endyear=2030, l
     from dataio import loaddata, savedata, fullpath
     projectdatafile = fullpath(projectdatafile)
     D = loaddata(projectdatafile, verbose=verbose)
-    print("D = %s" % D)
     
     # Create options structure
     from bunch import Bunch as struct
