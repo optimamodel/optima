@@ -21,15 +21,15 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     ];
 
     $scope.programs = [
-      {name: 'HIV testing & counseling', active: false},
-      {name: 'Female sex workers', active: false},
-      {name: 'Men who have sex with men', active: false},
-      {name: 'Antiretroviral therapy', active: false},
-      {name: 'Prevention of mother-to-child transmission', active: false},
-      {name: 'Behavior change & communication', active: false},
-      {name: 'Needle-syringe program', active: false},
-      {name: 'Opiate substitution therapy', active: false},
-      {name: 'Cash transfers', active: false}
+      {name: 'HIV testing & counseling', acronym: 'FSW', active: false},
+      {name: 'Female sex workers', acronym: 'FSW', active: false},
+      {name: 'Men who have sex with men', acronym: 'FSW', active: false},
+      {name: 'Antiretroviral therapy', acronym: 'FSW', active: false},
+      {name: 'Prevention of mother-to-child transmission', acronym: 'FSW', active: false},
+      {name: 'Behavior change & communication', acronym: 'FSW', active: false},
+      {name: 'Needle-syringe program', acronym: 'FSW', active: false},
+      {name: 'Opiate substitution therapy', acronym: 'FSW', active: false},
+      {name: 'Cash transfers', acronym: 'FSW', active: false}
     ];
 
     $scope.openAddPopulationModal = function ($event) {
