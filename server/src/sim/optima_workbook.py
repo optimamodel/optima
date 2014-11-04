@@ -251,15 +251,17 @@ class OptimaWorkbook:
                  ('partner', 'Partnerships'), \
                  ('trans', 'Transitions'), \
                  ('constants', 'Constants'), \
-                 ('costs', 'Costs & disutilities'), \
+                 ('discosts', 'Disutilities & costs'), \
                  ('macroecon', 'Macroeconomics')])
 
-  def __init__(self, name, pops, progs, data_start = 2000, data_end = 2015, verbose = 2):
+  def __init__(self, name, pops, progs, data_start = 2000, data_end = 2015, econ_data_start = 2015, econ_data_end = 2030, verbose = 2):
     self.name = name
     self.pops = pops
     self.progs = progs
     self.data_start = data_start
     self.data_end = data_end
+    self.econ_data_start = econ_data_start
+    self.econ_data_end = econ_data_end
     self.verbose = verbose
     self.book = None
     self.sheets = None
@@ -276,6 +278,21 @@ class OptimaWorkbook:
 
   def ref_prog_range(self):
     return self.prog_range.param_refs()
+
+  def emit_content_block(self, name, current_row, row_names, column_names, data = None, row_format = OptimaFormats.GENERAL, \
+    assumption = False, programs = False, row_levels = False):
+    content = OptimaContent(name, row_names, column_names, data)
+    content.set_row_format(row_format)
+    if assumption:
+      content.add_assumption()
+    if programs:
+      content.add_programs()
+    if row_levels:
+      content.add_row_levels()
+    the_range = TitledRange(self.current_sheet, current_row, content)
+    current_row = the_range.emit(self.formats)
+    return current_row
+
 
   def emit_matrix_block(self, name, current_row, row_names):
     content = make_matrix_range(name, row_names)
@@ -439,6 +456,7 @@ class OptimaWorkbook:
     self.current_sheet.protect()
     self.current_sheet.set_column(1,1,40)
     current_row = 0
+
     names_rows_data_format = [('Interaction-related transmissibility (% per act)', \
       ['Heterosexual insertive', 'Heterosexual receptive', 'Homosexual insertive', 'Homosexual receptive', \
       'Injecting', 'Mother-to-child (breastfeeding)','Mother-to-child (non-breastfeeding)'], \
@@ -464,7 +482,35 @@ class OptimaWorkbook:
     for (name, row_names, data, format) in names_rows_data_format:
       current_row = self.emit_constants_block(name, current_row, row_names, data, format)
 
+  def generate_discosts(self):
+    self.current_sheet = self.sheets['discosts']
+    self.current_sheet.protect()
+    self.current_sheet.set_column(1,1,40)
+    current_row = 0
 
+    names_rows_data_format = [('Disutility weights', \
+      ['Untreated HIV, acute','Untreated HIV, CD4>500','Untreated HIV, 350<CD4<500','Untreated HIV, 200<CD4<350', \
+      'Untreated HIV, CD4<200','Treated HIV'], [0.05, 0.10, 0.15, 0.22, 0.55, 0.05], OptimaFormats.NUMBER), \
+    ('HIV-related health care costs (excluding treatment)', \
+      ['Acute','CD4>500','500>CD4>350','350>CD4>200','CD4<200'], [0, 0, 1000, 5000, 50000], OptimaFormats.GENERAL), \
+    ('Social mitigation costs', \
+      ['Acute', 'CD4>500', '500>CD4>350', '350>CD4>200', 'CD4<200'], [0, 0, 0, 1000, 8000], OptimaFormats.GENERAL)]
+    for (name, row_names, data, format) in names_rows_data_format:
+      current_row = self.emit_constants_block(name, current_row, row_names, data, format)
+
+  def generate_macroecon(self):
+    self.current_sheet = self.sheets['macroecon']
+    self.current_sheet.protect()
+    current_row = 0
+
+    names = ['Gross domestic product', 'Government revenue', 'Government expenditure', \
+    'Total domestic and international health expenditure', 'General government health expenditure', \
+    'Domestic HIV spending', 'Global Fund HIV commitments', 'PEPFAR HIV commitments', \
+    'Other international HIV commitments', 'Private HIV spending']
+
+    econ_years_range = years_range(self.econ_data_start, self.econ_data_end)
+    for name in names:
+      current_row = self.emit_content_block(name, current_row, ['Total'], econ_years_range, assumption = True)
 
   def create(self, path):
     if self.verbose >=1: 
@@ -487,5 +533,7 @@ class OptimaWorkbook:
     self.generate_partner()
     self.generate_trans()
     self.generate_constants()
+    self.generate_discosts()
+    self.generate_macroecon()
     self.book.close()
 
