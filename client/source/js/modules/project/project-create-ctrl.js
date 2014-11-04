@@ -1,42 +1,78 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
-  module.controller('ProjectCreateController', function ($scope, $window) {
+  module.controller('ProjectCreateController', function ($scope, $modal) {
 
     $scope.projectParams = {
       name: ''
     };
 
     $scope.populations = [
-      {name: 'Female sex workers', active: false},
-      {name: 'Clients of sex workers', active: false},
-      {name: 'Men who have sex with men', active: false},
-      {name: 'Males who inject drugs', active: false},
-      {name: 'Females who inject drugs', active: false},
-      {name: 'Transgender individuals', active: false},
-      {name: 'Infants (0-2)', active: false},
-      {name: 'Children (2-15)', active: false},
-      {name: 'Young females (15-20)', active: false},
-      {name: 'Young males (15-20)', active: false},
-      {name: 'Adult females (20-50)', active: false},
-      {name: 'Adult males (20-50)', active: false},
-      {name: 'Older females (50+)', active: false},
-      {name: 'Older males (50+)', active: false},
-      {name: 'Other males', active: false},
-      {name: 'Other females', active: false}
+      { name: 'Female sex workers', acronym: 'FSW', active: false },
+      { name: 'Clients of sex workers', acronym: 'CSW', active: false },
+      { name: 'Men who have sex with men', acronym: 'MSM', active: false },
+      { name: 'Males who inject drugs', acronym: 'MID', active: false },
+      { name: 'Females who inject drugs', acronym: 'FID', active: false },
+      { name: 'Transgender individuals', acronym: 'TI', active: false },
+      { name: 'Children (2-15)', acronym: 'C215', active: false },
+      { name: 'Infants (0-2)', acronym: 'I02', active: false },
+      { name: 'Other males [open text box to enter age range]', acronym: 'OM', active: false },
+      { name: 'Other females [open text box to enter age range]', acronym: 'OF', active: false }
     ];
 
     $scope.programs = [
-      {name: 'HIV testing & counseling', active: false},
-      {name: 'Female sex workers', active: false},
-      {name: 'Men who have sex with men', active: false},
-      {name: 'Antiretroviral therapy', active: false},
-      {name: 'Prevention of mother-to-child transmission', active: false},
-      {name: 'Behavior change & communication', active: false},
-      {name: 'Needle-syringe program', active: false},
-      {name: 'Opiate substitution therapy', active: false},
-      {name: 'Cash transfers', active: false}
+      {name: 'HIV testing & counseling', acronym: 'FSW', active: false},
+      {name: 'Female sex workers', acronym: 'FSW', active: false},
+      {name: 'Men who have sex with men', acronym: 'FSW', active: false},
+      {name: 'Antiretroviral therapy', acronym: 'FSW', active: false},
+      {name: 'Prevention of mother-to-child transmission', acronym: 'FSW', active: false},
+      {name: 'Behavior change & communication', acronym: 'FSW', active: false},
+      {name: 'Needle-syringe program', acronym: 'FSW', active: false},
+      {name: 'Opiate substitution therapy', acronym: 'FSW', active: false},
+      {name: 'Cash transfers', acronym: 'FSW', active: false}
     ];
+
+    $scope.openAddPopulationModal = function ($event) {
+      if ($event) {
+        $event.preventDefault();
+      }
+
+      return $modal.open({
+        templateUrl: 'js/modules/project/create-population-modal.html',
+        controller: 'ProjectCreatePopulationModalController',
+        resolve: {
+          population: function () {
+            return {
+              sex: 'male'
+            };
+          }
+        }
+      }).result.then(
+        function (newPopulation) {
+          newPopulation.active = true;
+          $scope.populations.push(newPopulation);
+        });
+    };
+
+    $scope.openEditPopulationModal = function ($event, population) {
+      if ($event) {
+        $event.preventDefault();
+      }
+
+      return $modal.open({
+        templateUrl: 'js/modules/project/create-population-modal.html',
+        controller: 'ProjectCreatePopulationModalController',
+        resolve: {
+          population: function () {
+            return population;
+          }
+        }
+      }).result.then(
+        function (newPopulation) {
+          population.active = true;
+          _(population).extend(newPopulation);
+        });
+    };
 
     var addItemTo = function (collection, itemName) {
       collection.push({
@@ -60,7 +96,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     var toNamesArray = function (collection) {
       return _(collection).chain()
         .where({ active: true })
-        .pluck('name')
+        .map(function (item) {
+          return _(item).omit(['active', '$$hashKey'])
+        })
         .value();
     };
 

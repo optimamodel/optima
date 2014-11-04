@@ -37,19 +37,37 @@
       <div class="6">
         <p><b>Available populations:</b></p>
 
-        <ul class="list __unstyled">
-          <li ng-repeat="item in populations">
-            <label>
-              <input type="checkbox" ng-model="item.active">
-              {{ item.name }}
-            </label>
-          </li>
-          <li>
-            <input class="txbox __inline" ng-model="newPopulation" placeholder="Other (type name here)" style="width: 200px">
-            <button class="btn" type="button" ng-click="addPopulation($event)">Add</button>
-          </li>
-        </ul>
+        <table class="section table table-bordered">
+          <thead>
+          <tr>
+            <td><b>Active</b></td>
+            <td><b>Name</b></td>
+            <td><b>Acronym</b></td>
+            <td>&nbsp;</td>
+          </tr>
+          </thead>
+          <tbody>
+          <tr ng-repeat="row in populations">
+            <td class="text-center" style="width: 50px">
+              <input type="checkbox" ng-model="row.active">
+            </td>
+            <td style="width: 300px">{{ row.name }}</td>
+            <td style="width: 150px">{{ row.acronym }}</td>
+            <td>
+              <button role="button" class="btn" ng-click="openEditPopulationModal($event, row)">Edit</button>
+            </td>
+          </tr>
+          </tbody>
+          <tfoot>
+          <tr>
+            <td colspan="4" class="text-right">
+              <button role="button" class="btn" ng-click="openAddPopulationModal($event)">Add population</button>
+            </td>
+          </tr>
+          </tfoot>
+        </table>
       </div>
+
       <div class="6">
         <p><b>Available programs:</b></p>
 
