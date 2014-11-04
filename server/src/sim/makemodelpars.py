@@ -39,12 +39,14 @@ def makemodelpars(P, options, verbose=2):
     ## Epidemilogy parameters -- most are data
     M.popsize = dpar2mpar(P.popsize) # Population size -- TODO: don't take average for this!
     M.hivprev = dpar2mpar(P.hivprev) # Initial HIV prevalence -- TODO: don't take average for this
-    M.stiprev = dpar2mpar(P.stiprev) # STI prevalence
+    M.stiprevulc = dpar2mpar(P.stiprevulc) # STI prevalence
+    M.stiprevdis = dpar2mpar(P.stiprevdis) # STI prevalence
+    M.death = dpar2mpar(P.death) # Death rates
     ## TB prevalence @@@
     
     ## Testing parameters -- most are data
-    M.hivtest = dpar2mpar(P.hivtest) # HIV testing rates
-    M.aidstest = dpar2mpar(P.aidstest) # AIDS testing rates
+    M.hivtest = dpar2mpar(P.testrate) # HIV testing rates
+    M.aidstest = dpar2mpar(P.aidstestrate) # AIDS testing rates
     blank = struct()
     blank.p = [0] # WARNING # TODO KLUDGY
     M.tx1 = dpar2mpar(blank)
@@ -57,7 +59,7 @@ def makemodelpars(P, options, verbose=2):
     M.numacts.reg = dpar2mpar(P.numactsreg) # ...
     M.numacts.cas = dpar2mpar(P.numactscas) # ...
     M.numacts.com = dpar2mpar(P.numactscom) # ...
-    M.numacts.drug = dpar2mpar(P.numinject) # ..
+    M.numacts.inj = dpar2mpar(P.numinject) # ..
     M.condom.reg = dpar2mpar(P.condomreg) # ...
     M.condom.cas = dpar2mpar(P.condomcas) # ...
     M.condom.com = dpar2mpar(P.condomcom) # ...
@@ -117,7 +119,7 @@ def makemodelpars(P, options, verbose=2):
     # Calculate number of acts
     M.totalacts = struct()
     M.totalacts.__doc__ = 'Balanced numbers of acts'
-    for act in ['reg','cas','com','drug']:
+    for act in P.pships.keys():
         npops = len(M.popsize[:,0])
         M.totalacts[act] = zeros((npops,npops,npts))
         for t in range(npts):

@@ -82,10 +82,10 @@ def model(G, M, options, verbose=2): # extraoutput is to calculate death rates e
             for popF in range(G.npops):
                 
                 circeff = 1 - M.const.eff.circ*M.circum[popM,t] # Effect of circumcision
-                stieffM = 1 + M.const.eff.sti*M.stiprev[popM,t] # STI prevalence effect
-                stieffF = 1 + M.const.eff.sti*M.stiprev[popF,t] # STI prevalence effect
-                transM = M.const.trans.mmi if G.meta.pops.male[popF] else M.const.trans.mfi
-                transF = M.const.trans.mmr if G.meta.pops.male[popF] else M.const.trans.mfr
+                stieffM = 1 + M.const.eff.sti*M.stiprevulc[popM,t] # STI prevalence effect
+                stieffF = 1 + M.const.eff.sti*M.stiprevulc[popF,t] # STI prevalence effect
+                transM = M.const.trans.mmi if G.male[popF] else M.const.trans.mfi
+                transF = M.const.trans.mmr if G.male[popF] else M.const.trans.mfr
                 
                 for act in ['reg','cas','com']:
                     if M.pships[act][popM,popF]>0:
@@ -104,9 +104,9 @@ def model(G, M, options, verbose=2): # extraoutput is to calculate death rates e
 #        metheff = 1 - M.const.eff.meth*M.ost[t] # TODO: methadone should be subtracted from population size
         for pop1 in range(G.npops):
             for pop2 in range(G.npops):
-                if M.pships.drug[pop1,pop2]>0:
-                    numacts1 = M.sharing[t] * M.totalacts.drug[pop1,pop2,t] / 2 # Number of acts per person per year -- /2 since otherwise double-count# TODO
-                    numacts2 = M.sharing[t] * M.totalacts.drug[pop2,pop1,t] / 2 # Number of acts per person per year
+                if M.pships.inj[pop1,pop2]>0:
+                    numacts1 = M.sharing[t] * M.totalacts.inj[pop1,pop2,t] / 2 # Number of acts per person per year -- /2 since otherwise double-count# TODO
+                    numacts2 = M.sharing[t] * M.totalacts.inj[pop2,pop1,t] / 2 # Number of acts per person per year
                     forceinf1 = 1 - (1-M.const.trans.inj) ** (dt*numacts1*effhivprev[pop2]) # Force of infection
                     forceinf2 = 1 - (1-M.const.trans.inj) ** (dt*numacts2*effhivprev[pop1]) # Force of infection
                     forceinfvec[pop1] = 1 - (1-forceinfvec[pop1]) * (1-forceinf1) # Calculate the new "male" forceinf, ensuring that it never gets above 1
@@ -135,7 +135,7 @@ def model(G, M, options, verbose=2): # extraoutput is to calculate death rates e
         newtreat2 = [0]*G.ncd4
         newfail1 = [0]*G.ncd4
         newfail2 = [0]*G.ncd4
-        background = M.const.death.background
+        background = M.death[:,t]
         
         
         

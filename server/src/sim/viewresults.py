@@ -1,11 +1,9 @@
-"""
-MAKETEMPLATE
-http://54.200.79.218/#/model/view
-it should return data for graphs
-Version: 2014oct29
-"""
-
-def viewmodel(projectname='example', startyear=2000, endyear=2015):
+def viewmodel(S, startyear=2000, endyear=2015):
+    """
+    Generate all outputs required for the model, including prevalence, incidence,
+    deaths, etc.
+    Version: 2014nov04
+    """
     
     # Generate data for scatter and line plots
     nplots = 6
