@@ -16,7 +16,7 @@ def makespreadsheet(path, pops, progs, datastart=2000, dataend=2015, \
              econ_datastart = %s, econ_dataend = %s""" % \
              (path, pops, progs, datastart, dataend, econ_datastart, econ_dataend))
     (folder, name) = os.path.split(path)
-    book = OptimaWorkbook(name, pops, progs, datastart, dataend)
+    book = OptimaWorkbook(name, pops, progs, datastart, dataend, econ_datastart, econ_dataend)
     book.create(path)
     
     loadspreadsheet(path)

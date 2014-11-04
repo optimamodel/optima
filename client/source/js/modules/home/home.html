@@ -1,13 +1,20 @@
 <div class="text-center">
   <h1>Welcome to Optima!</h1>
 
-  <!-- CK: This whole block will need to change or just be removed if a project is loaded -->
-  <div class="well">
+  <div class="well" ng-hide="projectName">
     <br><br>
     To begin, please create or open a project:
     <br><br>
     <a class="btn" ui-sref="project.create">Create new project</a>
     <a class="btn" ui-sref="project.open">Open existing project</a>
+  </div>
+
+  <div class="well" ng-show="projectName">
+    Active project name is <b>{{ projectName }}</b>
+    <br><br>
+    You can also <a class="link __black" ui-sref="project.create">create new</a>
+    or <a class="link __black" ui-sref="project.open">open existing</a> project.
+  </div>
 
     <!-- AS: Marelize didn't like this, but it may be good to show when a project is loaded
 
@@ -27,5 +34,4 @@
 
     -->
 
-  </div>
 </div>

@@ -7,6 +7,7 @@ define([
   './config',
   './modules/about/index',
   './modules/analyses/index',
+  './modules/common/active-project-service',
   './modules/common/save-graph-as-directive',
   './modules/d3-charts/index',
   './modules/graphs/index',
@@ -26,6 +27,7 @@ define([
   return angular.module('app', [
     'angularFileUpload',
     'app.about',
+    'app.active-project',
     'app.analyses',
     'app.constants',
     'app.d3-charts',
