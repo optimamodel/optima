@@ -41,25 +41,29 @@ def createProject(project_name):
 #    data = dict([(x,int(y)) for (x,y) in data.items()])
     print(data)
     makeproject_args = {"projectname":project_name}
-    if data['datastart']:
+    if data.get('datastart'):
         makeproject_args['datastart'] = int(data['datastart'])
-    if data['dataend']:
+    if data.get('dataend'):
         makeproject_args['dataend'] = int(data['dataend'])
-    if data['programs']:
-        makeproject_args['nprogs'] = len(data['programs'])
-    if data['populations']:
-        makeproject_args['npops'] = len(data['populations'])
+    if data.get('econ_datastart'):
+        makeproject_args['econ_datastart'] = int(data['econ_datastart'])
+    if data.get('econ_dataend'):
+        makeproject_args['econ_dataend'] = int(data['econ_dataend'])
+    if data.get('programs'):
+        makeproject_args['progs'] = data['programs']
+    if data.get('populations'):
+        makeproject_args['pops'] = data['populations']
 #    makeproject_args = dict(makeproject_args.items() + data.items())
     print(makeproject_args)
     new_project_template = makeproject(**makeproject_args) # makeproject is supposed to return the name of the existing file...
     print("new_project_template: %s" % new_project_template)
     (dirname, basename) = os.path.split(new_project_template)
-    xlsname = project_name + '.xlsx'
-    srcfile = helpers.safe_join(project.static_folder,'example.xlsx')
-    dstfile =  helpers.safe_join(dirname, xlsname)
-    shutil.copy(srcfile, dstfile)
+#    xlsname = project_name + '.xlsx'
+#    srcfile = helpers.safe_join(project.static_folder,'example.xlsx')
+#    dstfile =  helpers.safe_join(dirname, xlsname)
+#    shutil.copy(srcfile, dstfile)
 
-    return helpers.send_from_directory(dirname, xlsname)
+    return helpers.send_from_directory(dirname, basename)
 
 """
 Opens the project with the given name.
