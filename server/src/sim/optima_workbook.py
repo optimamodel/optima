@@ -86,6 +86,11 @@ def make_parameter_range(name, params):
   coded_params = [list((abbreviate(item), item)) for item in params]
   return OptimaContent(name, row_names, column_names, coded_params)
 
+def make_constant_range(name, row_names, best_data):
+  column_names = ['best', 'low', 'high']
+  range_data = [[item, None, None] for item in best_data]
+  return OptimaContent(name, row_names, column_names, range_data)
+
 def make_ref_years_range(name, ref_range, data_start, data_end):
   params = ref_range.param_refs()
   return make_years_range(name, params, data_start, data_end)
@@ -96,6 +101,7 @@ class OptimaFormats:
   BORDER_COLOR = 'white'
 
   PERCENTAGE = 'percentage'
+  DECIMAL_PERCENTAGE = 'decimal_percentage'
   SCIENTIFIC = 'scientific'
   NUMBER = 'number'
   GENERAL = 'general'
@@ -109,6 +115,8 @@ class OptimaFormats:
     self.formats['unlocked'] = self.book.add_format({'locked':0, \
       'bg_color':OptimaFormats.BG_COLOR,'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
     self.formats['percentage'] = self.book.add_format({'locked':0, 'num_format':0x09, \
+      'bg_color':OptimaFormats.BG_COLOR,'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
+    self.formats['decimal_percentage'] = self.book.add_format({'locked':0, 'num_format':0x0a, \
       'bg_color':OptimaFormats.BG_COLOR,'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
     self.formats['scientific'] = self.book.add_format({'locked':0, 'num_format':0x0b, \
       'bg_color':OptimaFormats.BG_COLOR,'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
@@ -243,7 +251,7 @@ class OptimaWorkbook:
                  ('partner', 'Partnerships'), \
                  ('trans', 'Transitions'), \
                  ('constants', 'Constants'), \
-                 ('consts', 'Costs & disutilities'), \
+                 ('costs', 'Costs & disutilities'), \
                  ('macroecon', 'Macroeconomics')])
 
   def __init__(self, name, pops, progs, data_start = 2000, data_end = 2015, verbose = 2):
@@ -271,6 +279,13 @@ class OptimaWorkbook:
 
   def emit_matrix_block(self, name, current_row, row_names):
     content = make_matrix_range(name, row_names)
+    the_range = TitledRange(self.current_sheet, current_row, content)
+    current_row = the_range.emit(self.formats)
+    return current_row
+
+  def emit_constants_block(self, name, current_row, row_names, best_data, row_format = OptimaFormats.GENERAL):
+    content = make_constant_range(name, row_names, best_data)
+    content.set_row_format(row_format)
     the_range = TitledRange(self.current_sheet, current_row, content)
     current_row = the_range.emit(self.formats)
     return current_row
@@ -419,6 +434,38 @@ class OptimaWorkbook:
     for name in names:
       current_row = self.emit_matrix_block(name, current_row, self.ref_pop_range())
 
+  def generate_constants(self):
+    self.current_sheet = self.sheets['constants']
+    self.current_sheet.protect()
+    self.current_sheet.set_column(1,1,40)
+    current_row = 0
+    names_rows_data_format = [('Interaction-related transmissibility (% per act)', \
+      ['Heterosexual insertive', 'Heterosexual receptive', 'Homosexual insertive', 'Homosexual receptive', \
+      'Injecting', 'Mother-to-child (breastfeeding)','Mother-to-child (non-breastfeeding)'], \
+      [0.0004, 0.0010, 0.0006, 0.0050, 0.0030, 0.05, 0.03], OptimaFormats.DECIMAL_PERCENTAGE), \
+    ('Relative disease-related transmissibility', \
+      ['Acute infection','Above CD4(500)','CD4(350-500)','CD4(200-350)','Below CD4(200)'], \
+      [10,1,1,1,3.8], OptimaFormats.NUMBER), \
+    ('Disease progression rate (% per year)', \
+      ['Acute to CD4 (>500)','CD4 (500) to CD4 (350-500)','CD4(350,500) to CD4(200-350)','CD4 (200-350) to CD4 (200)'], \
+      [10.00, 0.25, 0.25, 0.50], OptimaFormats.PERCENTAGE), \
+    ('Treatment recovery rate (% per year)', \
+      ['CD4 (350-500) to CD4 (>500)','CD4(200-350) to CD4  (350-500)','CD4 (<200)  to CD4 (200-350)'], \
+      [0.45, 0.70, 0.36], OptimaFormats.PERCENTAGE), \
+    ('Treatment failure rate (% per year)', \
+      ['1st-line','2nd-line'], [0.05,0.05], OptimaFormats.PERCENTAGE), \
+    ('Death rate (% mortality per year)', \
+      ['Acute infection','CD4 (>500)','CD4 (350-500)','CD4 (200-350)','CD4 (<200)','On treatment','Tuberculosis cofactor'], \
+      [0, 0.0005, 0.0010, 0.01, 0.49, 0.04, 0.02], OptimaFormats.DECIMAL_PERCENTAGE), \
+    ('Relative transmissibility', \
+      ['Condom','Circumcision','Diagnosis behavior change','STI cofactor increase','Methadone','PMTCT','Treatment'], \
+      [0.05, 0.30, 0.65, 3.50, 0.05, 0.05, 0.30], OptimaFormats.PERCENTAGE)]
+
+    for (name, row_names, data, format) in names_rows_data_format:
+      current_row = self.emit_constants_block(name, current_row, row_names, data, format)
+
+
+
   def create(self, path):
     if self.verbose >=1: 
       print("""Creating workbook %s with parameters:
@@ -439,5 +486,6 @@ class OptimaWorkbook:
     self.generate_drug()
     self.generate_partner()
     self.generate_trans()
+    self.generate_constants()
     self.book.close()
 
