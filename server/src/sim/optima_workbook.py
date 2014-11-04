@@ -80,10 +80,21 @@ def make_matrix_range(name, params):
 def make_years_range(name, params, data_start, data_end):
   return OptimaContent(name, params, years_range(data_start, data_end))
 
+""" 
+every params array is a dictionary with at least these entries:
+name - param name
+acronym - param acronym
+"""
 def make_parameter_range(name, params):
   column_names = ['Short name', 'Long name']
   row_names = range(1, len(params)+1)
-  coded_params = [list((abbreviate(item), item)) for item in params]
+  coded_params = []
+  for item in params:
+    if type(item) is dict:
+      name = item['name']
+      acronym = item.get('acronym', abbreviate(name))
+      coded_params.append([acronym, name])
+#  coded_params = [list((item['acronym'], item['name'])) for item in params]
   return OptimaContent(name, row_names, column_names, coded_params)
 
 def make_constant_range(name, row_names, best_data):
