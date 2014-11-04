@@ -19,6 +19,25 @@
   <meta name="msapplication-config" content="assets/images/project/browserconfig.xml">
 
   <link rel="stylesheet" href="assets/css/main.css?bust=v0.4.0">
+
+  <style>
+    [ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak, .ng-hide {
+      display: none !important;
+    }
+
+    ng\:form {
+      display: block;
+    }
+
+    .ng-animate-block-transitions {
+      -webkit-transition: 0s all !important;
+      transition: 0s all !important;
+    }
+
+    .ng-hide-add-active, .ng-hide-remove {
+      display: block !important;
+    }
+  </style>
 </head>
 <body ng-controller="MainCtrl">
 
@@ -52,15 +71,18 @@
   </div>
 </div>
 
-<div class="actionbar">
+<div class="actionbar" ng-cloak>
   <div class="elastic __fluid">
-    <div class="elastic_col">
+    <div class="elastic_col __va-middle" ng-show="activeProject.name">
+      Project: <b>{{ activeProject.name }}</b>
+    </div>
+    <div class="elastic_col __va-middle">
       <button class="btn" ui-sref="save-project">Save project</button>
     </div>
-    <div class="elastic_col">
+    <div class="elastic_col __va-middle">
       <button class="btn">Save as...</button>
     </div>
-    <div class="elastic_col">
+    <div class="elastic_col __va-middle">
       <button class="btn" ng-click="exitApp()">Exit</button>
     </div>
   </div>
