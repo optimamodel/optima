@@ -1,58 +1,52 @@
-<div class="page rich">
-    <div class="page_subheader">
-        <div class="elastic">
-            <div class="elastic_col __va-middle text-center">
-                <input type="file" id="file01" style="display:none">
-                <button class="btn" ng-click="openFileOption1()">Save all as PNG</button>
-                <button class="btn" ng-click="openFileOption1()">Save all as SVG</button>
-                <br><br>
-                <div class="section grid">
-                    <div class="2">
-                        <input class="txbox" type="text" placeholder="Start year" required ng-model="simulationOptions.startyear">
-                    </div>
-                    <div class="2">
-                        <input class="txbox" type="text" placeholder="End year" required ng-model="simulationOptions.endyear">
-                    </div>
-                </div>
-                <div class="section grid">
-                    <div class="4">
-                        <button class="btn" ng-click="simulate()">Run simulation</button>
-                    </div>
-                </div>
-            </div>
-        </div>
+<div class="page_subheader section grid">
+  <div class="2">
+    <input class="txbox" type="text" placeholder="Start year" required ng-model="simulationOptions.startyear">
+  </div>
+  <div class="2">
+    <input class="txbox" type="text" placeholder="End year" required ng-model="simulationOptions.endyear">
+  </div>
+  <div class="4">
+    <button class="btn" ng-click="simulate()">Run simulation</button>
+  </div>
+</div>
+
+<div class="well section">
+  <div class="grid">
+    <div class="section cf">
+      <div class="4">
+        <select class="txbox">
+          <option value="">prevalence</option>
+          <option value="">treatment</option>
+          <option value="">deaths</option>
+          <option value="">trends in new infections by population group</option>
+          <option value="">diagnoses</option>
+        </select>
+      </div>
     </div>
 
-    <h1>Prevalences</h1>
-    <button class="btn" ng-click="openFileOption1()">Export to SVG</button>
-    <button class="btn" ng-click="openFileOption1()">Export to PNG</button>
-    <button class="btn" ng-click="openFileOption1()">Export to XLSX</button>
-    <div class="well">
-        <div class="grid">
-            <div class="section cf">
-                <div class="6">
-                    <div class="chart-container">
-                        <nvd3 data="linescatterdata" options="linescatteroptions"></nvd3>
-                    </div>
-                </div>
-                <div class="6">
-                    <div class="chart-container">
-                        <nvd3 data="linescatterdata" options="linescatteroptions"></nvd3>
-                    </div>
-                </div>
-            </div>
-            <div class="section cf">
-                <div class="6">
-                    <div class="chart-container">
-                        <nvd3 data="linescatterdata" options="linescatteroptions"></nvd3>
-                    </div>
-                </div>
-                <div class="6">
-                    <div class="chart-container">
-                        <nvd3 data="linescatterdata" options="linescatteroptions"></nvd3>
-                    </div>
-                </div>
-            </div>
+    <div class="section cf">
+      <div class="6">
+        <div class="chart-container">
+          <nvd3 data="linescatterdata" options="linescatteroptions"></nvd3>
         </div>
+      </div>
+      <div class="6">
+        <div class="chart-container">
+          <nvd3 data="linescatterdata" options="linescatteroptions"></nvd3>
+        </div>
+      </div>
     </div>
+    <div class="section cf">
+      <div class="6">
+        <div class="chart-container">
+          <nvd3 data="linescatterdata" options="linescatteroptions"></nvd3>
+        </div>
+      </div>
+      <div class="6">
+        <div class="chart-container">
+          <nvd3 data="linescatterdata" options="linescatteroptions"></nvd3>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
