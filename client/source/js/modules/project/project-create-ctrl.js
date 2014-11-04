@@ -96,7 +96,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     var toNamesArray = function (collection) {
       return _(collection).chain()
         .where({ active: true })
-        .pluck('name')
+        .map(function (item) {
+          return _(item).omit(['active', '$$hashKey'])
+        })
         .value();
     };
 
