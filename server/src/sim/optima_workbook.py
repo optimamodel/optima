@@ -82,7 +82,7 @@ def make_years_range(name, params, data_start, data_end):
 
 def make_parameter_range(name, params):
   column_names = ['Short name', 'Long name']
-  row_names = range(1, len(params))
+  row_names = range(1, len(params)+1)
   coded_params = [list((abbreviate(item), item)) for item in params]
   return OptimaContent(name, row_names, column_names, coded_params)
 
