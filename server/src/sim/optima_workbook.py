@@ -235,7 +235,7 @@ class OptimaWorkbook:
                  ('opid', 'Optional indicators'), \
                  ('txrx', 'Testing & treatment'), \
                  ('sex', 'Sexual behavior'), \
-                 ('drug', 'Drug behavior'), \
+                 ('drug', 'Injecting behavior'), \
                  ('partner', 'Partnerships'), \
                  ('trans', 'Transitions'), \
                  ('constants', 'Constants'), \
@@ -253,9 +253,17 @@ class OptimaWorkbook:
     self.sheets = None
     self.formats = None
     self.current_sheet = None
+    self.prog_range = None
+    self.pop_range = None
 
     self.npops = len(pops)
     self.nprogs = len(progs)
+
+  def ref_pop_range(self):
+    return self.pop_range.param_refs()
+
+  def ref_prog_range(self):
+    return self.prog_range.param_refs()
 
   def emit_years_block(self, name, current_row, row_names, row_format = OptimaFormats.GENERAL, \
     assumption = False, programs = False, row_levels = False):
@@ -369,7 +377,16 @@ class OptimaWorkbook:
     for (name, row_format) in names_formats:
       current_row = self.emit_ref_years_block(name, current_row, self.pop_range, row_format = row_format, assumption = True, programs = True)
 
+  def generate_drug(self):
+    self.current_sheet = self.sheets['drug']
+    self.current_sheet.protect()
+    current_row = 0
+    names_formats_ranges = [('Average number of injections per person per year', OptimaFormats.GENERAL, self.ref_pop_range()), \
+    ('Percentage of people who receptively shared a needle at last injection', OptimaFormats.PERCENTAGE, ['Average']), \
+    ('Percentage of people who inject drugs on opiate substitution therapy', OptimaFormats.PERCENTAGE, ['Average'])]
 
+    for (name, row_format, row_range) in names_formats_ranges:
+      current_row = self.emit_years_block(name, current_row, row_range, row_format = row_format, assumption = True, programs = True)
 
   def create(self, path):
     if self.verbose >=1: 
@@ -388,5 +405,6 @@ class OptimaWorkbook:
     self.generate_opid()
     self.generate_txrx()
     self.generate_sex()
+    self.generate_drug()
     self.book.close()
 
