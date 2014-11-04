@@ -74,11 +74,10 @@ If the project exists, should put it in session and return to the user.
 # todo: only if it can be found
 def openProject(project_name):
     if not project_exists(loaddir(project), project_name):
-      return jsonify({'status':'NOK','reason':'No such project %s' % project_name})
+        return jsonify({'status':'NOK','reason':'No such project %s' % project_name})
     else:
-      session.clear()
-      session['project_name'] = project_name 
-      return redirect(url_for('site'))
+        session['project_name'] = project_name
+        return redirect(url_for('site'))
 
 """
 Returns the current project name.
@@ -98,6 +97,23 @@ def getProjectList():
             projects.append(file)
     return jsonify({"projects":projects})
 
+
+"""
+Deletes the given project (and eventually, corresponding excel files)
+"""
+@project.route('/delete/<project_name>')
+def deleteProject(project_name):
+    project_path = helpers.safe_join(loaddir(project), project_name+'.prj')
+    if os.path.exists(project_path):
+        os.remove(project_path)
+        spreadsheet_path = helpers.safe_join(loaddir(project), project_name+'.xlsx')
+        if os.path.exists(spreadsheet_path):
+            os.remove(spreadsheet_path)
+        if session.get('project_name', '') == project_name:
+            session.pop('project_name', None)
+        return jsonify({'status':'OK','reason':'Project %s deleted.' % project_name})
+    else:
+        return jsonify({'status':'NOK', 'reason':'Project %s did not exist.' % project_name})
 
 """
 Download example Excel file.
