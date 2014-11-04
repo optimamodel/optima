@@ -63,21 +63,15 @@ define([
                     id: 'create-load',
                     subitems: [
                         {
-                            title: 'View data & model estimates',
+                            title: 'View data & model calibration',
                             state: {
                                 name: 'model.view'
                             }
                         },
                         {
-                            title: 'Automatic calibration',
+                            title: 'Define cost-coverage-outcome assumptions',
                             state: {
-                                name: 'model.automatic-calibration'
-                            }
-                        },
-                        {
-                            title: 'Manual calibration',
-                            state: {
-                                name: 'model.manual-calibration'
+                                name: 'model.define-cost-coverage-outcome'
                             }
                         }
                     ]

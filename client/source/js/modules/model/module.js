@@ -16,18 +16,11 @@ define([
         })
         .state('model.view', {
           url: '/view',
-          templateUrl: 'js/modules/model/view.html',
-          controller: 'ModelViewController'
+          templateUrl: 'js/modules/model/view-calibration.html'
         })
-        .state('model.automatic-calibration', {
-          url: '/automatic-calibration',
-          templateUrl: 'js/modules/model/automatic-calibration.html',
-          controller: 'ModelAutomaticCalibrationController'
-        })
-        .state('model.manual-calibration', {
-          url: '/manual-calibration',
-          templateUrl: 'js/modules/model/manual-calibration.html',
-          controller: 'ModelManualCalibrationController'
+        .state('model.define-cost-coverage-outcome', {
+          url: '/define-cost-coverage-outcome',
+          templateUrl: 'js/modules/model/define-cost-coverage-outcome.html'
         });
     });
 
