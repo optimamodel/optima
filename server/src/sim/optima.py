@@ -29,11 +29,15 @@ updatedata(projectname='example', verbose=verbose)
 
 print('\n\n\n3. Running simulation...')
 from runsimulation import runsimulation
-runsimulation(projectdatafile='example.prj', verbose=verbose)
+D = runsimulation(projectdatafile='example.prj', verbose=verbose)
 
-print('\n\n\n4. Loading results...')
-from dataio import loaddata
-D = loaddata('example.prj', verbose=verbose)
+print('\n\n\n4. Viewing results...')
+from makeresults import makeresults
+D = makeresults('example.prj', verbose=verbose)
+
+#print('\n\n\n4. Loading results...')
+#from dataio import loaddata
+#D = loaddata('example.prj', verbose=verbose)
 
 
 print('Done.')

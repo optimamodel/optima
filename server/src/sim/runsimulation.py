@@ -28,8 +28,9 @@ def runsimulation(projectdatafile='example.prj', startyear=2000, endyear=2030, l
     
     # Run model
     from model import model
-    D.sim = model(D.G, D.M, options, verbose=verbose)
+    D.S = model(D.G, D.M, options, verbose=verbose)
     
     # Save output
     savedata(projectdatafile, D, verbose=verbose)
     if verbose>=2: print('  ...done running simulation.')
+    return D
