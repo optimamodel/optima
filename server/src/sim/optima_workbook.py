@@ -21,6 +21,9 @@ def abbreviate(param):
       short_param += w
   return short_param.upper()
 
+def years_range(data_start, data_end):
+  return [str(x) for x in range(data_start, data_end+1)]
+
 #class Assumption: #simulacrum of enums (no such thing in Python 2.7)
 #  PERCENTAGE = 'percentage'
 #  SCIENTIFIC = 'scientific'
@@ -39,6 +42,7 @@ class OptimaContent:
     self.row_levels = None
     self.row_format = OptimaFormats.GENERAL
 
+
   def set_row_format(self, row_format):
     self.row_format = row_format
 
@@ -49,7 +53,7 @@ class OptimaContent:
     self.assumption = True
 
   def has_assumption(self):
-    return self.assumption != None
+    return self.assumption
 
   def add_programs(self):
     self.programs = True
@@ -74,8 +78,7 @@ def make_matrix_range(name, params):
   return OptimaContent(name, params, params)
 
 def make_years_range(name, params, data_start, data_end):
-  years_range = [str(x) for x in range(data_start, data_end+1)]
-  return OptimaContent(name, params, years_range)
+  return OptimaContent(name, params, years_range(data_start, data_end))
 
 def make_parameter_range(name, params):
   column_names = ['Short name', 'Long name']
@@ -157,6 +160,7 @@ class SheetRange:
 
 class TitledRange:
   FIRST_COL = 2
+  ROW_INTERVAL = 3
   def __init__(self, sheet, first_row, content):
     self.sheet = sheet
     self.content = content
@@ -222,7 +226,7 @@ class TitledRange:
       if num_levels > 1 and ((i+1) % num_levels)==0: # shift between the blocks
         current_row +=1
 
-    return current_row + 1 # for spacing
+    return current_row + TitledRange.ROW_INTERVAL # for spacing
 
   def param_refs(self):
     return self.data_range.param_refs(self.sheet.get_name())
@@ -264,6 +268,13 @@ class OptimaWorkbook:
 
   def ref_prog_range(self):
     return self.prog_range.param_refs()
+
+  def emit_matrix_block(self, name, current_row, row_names):
+    content = make_matrix_range(name, row_names)
+    the_range = TitledRange(self.current_sheet, current_row, content)
+    current_row = the_range.emit(self.formats)
+    return current_row
+
 
   def emit_years_block(self, name, current_row, row_names, row_format = OptimaFormats.GENERAL, \
     assumption = False, programs = False, row_levels = False):
@@ -388,6 +399,26 @@ class OptimaWorkbook:
     for (name, row_format, row_range) in names_formats_ranges:
       current_row = self.emit_years_block(name, current_row, row_range, row_format = row_format, assumption = True, programs = True)
 
+  def generate_partner(self):
+    self.current_sheet = self.sheets['partner']
+    self.current_sheet.protect()
+    current_row = 0
+    names = ['Interactions between regular partners', 'Interactions between casual partners', \
+    'Interactions between commercial partners', 'Interactions between people who inject drugs']
+
+    for name in names:
+      current_row = self.emit_matrix_block(name, current_row, self.ref_pop_range())
+
+  def generate_trans(self):
+    self.current_sheet = self.sheets['trans']
+    self.current_sheet.protect()
+    current_row = 0
+    names = ['Age-related population transitions (average number of years before movement)', \
+    'Risk-related population transitions (average number of years before movement)']
+
+    for name in names:
+      current_row = self.emit_matrix_block(name, current_row, self.ref_pop_range())
+
   def create(self, path):
     if self.verbose >=1: 
       print("""Creating workbook %s with parameters:
@@ -406,5 +437,7 @@ class OptimaWorkbook:
     self.generate_txrx()
     self.generate_sex()
     self.generate_drug()
+    self.generate_partner()
+    self.generate_trans()
     self.book.close()
 
