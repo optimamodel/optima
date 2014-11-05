@@ -16,6 +16,7 @@ from sim.runsimulation import runsimulation
 from sim.optimize import optimize
 from optima.analysis import analysis
 from optima.data import data
+from optima.login import login
 from optima.model import model
 from optima.project import project
 from optima.utils import allowed_file
@@ -27,6 +28,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.secret_key = 'F12Zr47j\3yX R~X@H!jmM]Lwf/,?KT'
 
 app.register_blueprint(data, url_prefix = '/api/data')
+app.register_blueprint(login, url_prefix = '/api/user')
 app.register_blueprint(project, url_prefix = '/api/project')
 app.register_blueprint(model, url_prefix = '/api/model')
 app.register_blueprint(analysis, url_prefix = '/api/analysis')
