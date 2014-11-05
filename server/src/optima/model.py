@@ -14,6 +14,7 @@ from sim.manualfit import manualfit
 from sim.bunch import unbunchify
 from sim.runsimulation import runsimulation
 from sim.optimize import optimize
+from utils import loaddir
 
 """ route prefix: /api/model """
 model = Blueprint('model',  __name__, static_folder = '../static')
@@ -54,11 +55,13 @@ Returns back the file with the simulation data. (?) #FIXME find out how to use i
 @model.route('/view', methods=['POST'])
 def doRunSimulation():
     data = json.loads(request.data)
-    #expects json: {"projectdatafile:<name>,"startyear":year,"endyear":year}
-    args = {"loaddir": model.static_folder}
-    projectdatafile = data.get("projectdatafile")
-    if projectdatafile:
-        args["projectdatafile"] = helpers.safe_join(model.static_folder, projectdatafile)
+    project_name = session.get('project_name', '')
+    if project_name == '':
+        return jsonify({'status':'NOK', 'reason':'no project is open'})
+
+    #expects json: {"startyear":year,"endyear":year} and gets project_name from session
+    args = {}
+    args["projectdatafile"] = helpers.safe_join(loaddir(model), project_name+'.prj')
     startyear = data.get("startyear")
     if startyear:
         args["startyear"] = int(startyear)
@@ -69,10 +72,11 @@ def doRunSimulation():
         data_file_path = runsimulation(**args) 
     except Exception, err:
         var = traceback.format_exc()
-        return json.dumps({"status":"NOK", "exception":var})    
-    options = {
-        'cache_timeout': model.get_send_file_max_age(example_excel_file_name),
-        'conditional': True,
-        'attachment_filename': downloadName
-    }
-    return helpers.send_file(data_file_path, **options)
+        return jsonify({"status":"NOK", "exception":var})
+    return jsonify({"status":"OK", "reason":'performed simulation for the project %s' % project_name})
+#    options = {
+#        'cache_timeout': model.get_send_file_max_age(example_excel_file_name),
+#        'conditional': True,
+#        'attachment_filename': downloadName
+#    }
+#    return helpers.send_file(data_file_path, **options)
