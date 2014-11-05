@@ -29,6 +29,11 @@ def model(G, M, options, verbose=2): # extraoutput is to calculate death rates e
     
     people = zeros((G.nstates, G.npops, npts)) # Initialize matrix to hold everything
     allpeople = zeros((G.npops, npts))
+    S.inci = zeros((G.npops, npts))
+    S.dx = zeros((G.npops, npts))
+    S.newtx1 = zeros((G.npops, npts))
+    S.newtx2 = zeros((G.npops, npts))
+    S.death = zeros((G.npops, npts))
     people[0, :, 0] = M.popsize[:,0] * (1-M.hivprev[:,0]) # Set initial population sizes
     people[1, :, 0] = M.popsize[:,0] * M.hivprev[:,0] # Set initial population sizes -- # TODO: equilibrate
     effhivprev = zeros((G.npops,1)) # HIV effective prevalence (prevalence times infectiousness)
@@ -43,7 +48,7 @@ def model(G, M, options, verbose=2): # extraoutput is to calculate death rates e
             try: 
                 outarray.append(parstruct[state])
             except: 
-                if verbose>=3: print('    State %s not found' % state)
+                if verbose>=4: print('    State %s not found' % state)
         return array(outarray)
     
     
@@ -139,6 +144,7 @@ def model(G, M, options, verbose=2): # extraoutput is to calculate death rates e
         
         
         
+        
         ## Undiagnosed
         for cd4 in range(G.ncd4):
             if cd4>0: 
@@ -152,8 +158,11 @@ def model(G, M, options, verbose=2): # extraoutput is to calculate death rates e
                 progout = 0
                 testingrate[cd4] = dt*M.aidstest[t]
             newdiagnoses[cd4] = dt*testingrate[cd4] * people[G.undx[cd4],:,t]
+            S.tx[:,t] += newdiagnoses[cd4]/dt # Save annual diagnoses data
             hivdeaths = dt*death[cd4]*people[G.undx[cd4],:,t]
+            S.death[:,t] += hivdeaths[cd4]/dt # Save annual diagnoses data
             dU.append(progin-progout - hivdeaths - newdiagnoses[cd4] - dt*background*people[G.undx[cd4],:,t])
+            
         dU[0] = dU[0] - dS # Add newly infected people
         
     
@@ -168,7 +177,9 @@ def model(G, M, options, verbose=2): # extraoutput is to calculate death rates e
             else: 
                 progout = 0
             newtreat1[cd4] = dt*M.tx1[t] * people[G.dx[cd4],:,t]
+            S.newtx1[:,t] += newtreat1[cd4]/dt # Save annual diagnoses data
             hivdeaths = dt*death[cd4]*people[G.dx[cd4],:,t]
+            S.death[:,t] += hivdeaths[cd4]/dt # Save annual diagnoses data
             dD.append(progin-progout + newdiagnoses[cd4] - newtreat1[cd4] - hivdeaths - dt*background*people[G.dx[cd4],:,t])
         
     
@@ -184,6 +195,7 @@ def model(G, M, options, verbose=2): # extraoutput is to calculate death rates e
                 recovout = 0
             newfail1[cd4] = dt*M.const.fail.first * people[G.tx1[cd4],:,t]
             hivdeaths = dt*death[cd4]*people[G.tx1[cd4],:,t]
+            S.death[:,t] += hivdeaths[cd4]/dt # Save annual deats data
             dT1.append(recovin - recovout + newtreat1[cd4] - newfail1[cd4] - hivdeaths - dt*background*people[G.tx1[cd4],:,t])
 
     
@@ -198,8 +210,10 @@ def model(G, M, options, verbose=2): # extraoutput is to calculate death rates e
             else: 
                 progout = 0
             newtreat2[cd4] = dt*M.tx2[t] * people[G.fail[cd4],:,t]
+            S.newtx2[:,t] += newtreat2[cd4]/dt # Save annual treatment data
             newfail2[cd4] = dt*M.const.fail.second * people[G.tx2[cd4],:,t]
             hivdeaths = dt*death[cd4]*people[G.fail[cd4],:,t]
+            S.death[:,t] += hivdeaths[cd4]/dt # Save annual deaths data
             dF.append(progin - progout + newfail1[cd4] + newfail2[cd4] - newtreat2[cd4] - hivdeaths - dt*background*people[G.fail[cd4],:,t])
         
      
@@ -214,6 +228,7 @@ def model(G, M, options, verbose=2): # extraoutput is to calculate death rates e
             else: 
                 recovout = 0
             hivdeaths = dt*death[cd4]*people[G.tx2[cd4],:,t]
+            S.death[:,t] += hivdeaths[cd4]/dt # Save annual deaths data
             dT2.append(recovin - recovout + newtreat2[cd4] - newfail2[cd4] - hivdeaths - dt*background*people[G.tx2[cd4],:,t])
         
      
@@ -238,6 +253,6 @@ def model(G, M, options, verbose=2): # extraoutput is to calculate death rates e
             if not((people[:,:,t+1]>=0).all()):
                 raise Exception('Non-positive people found') # If not every element is a real number >0, throw an error
     
-    S.people = people
+    S.people = people # Copy final people array
     if verbose>=2: print('  ...done running model.')
     return S

@@ -133,7 +133,7 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
                 
                 
                 if paramcategory != '': # It's not blank: e.g. "HIV prevalence"
-                    if verbose>=2: print('    Loading "%s"...' % paramcategory)
+                    if verbose>=3: print('    Loading "%s"...' % paramcategory)
                     parcount += 1 # Increment the parameter count
                     
                     if groupname=='metadata': # Metadata
@@ -159,7 +159,7 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
                     subparam = sheetdata.cell_value(row, 1) # Get the name of a subparameter, e.g. 'FSW', population size for a given population
                     
                     if subparam != '': # The subparameter name isn't blank, load something!
-                        if verbose >=3: print("      Parameter: %s" % subparam)
+                        if verbose >=4: print("      Parameter: %s" % subparam)
                         
                         # It's meta-data, split into pieces
                         if groupname=='metadata': 
