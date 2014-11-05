@@ -1,9 +1,20 @@
 def manualfit(D, F, startyear=2000, endyear=2015, dosave=False, verbose=2):
     """
-    Manual fitting code. Edit the structure F and rerun.
+    Manual metaparameter fitting code.
     
+    Example usage:
+        ipython --pylab # Run Python with Pylab
+        ion() # Turn on interactive plotting
+        import optima # Run Optima
+        F = D.F # Shorten name for fitted parameters
+        D = manualfit(D, F) # Run manualfit
+        F.force *= 0 # Make a modification
+        D = manualfit(D, F) # Rerun manualfit
+        D = manualfit(D, F, dosave=True) # If the result is good, save
+        
     Version: 2014nov05
     """
+    
     from printv import printv
     from bunch import Bunch as struct
     from matplotlib.pylab import arange
