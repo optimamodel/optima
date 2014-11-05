@@ -1,4 +1,4 @@
-def runsimulation(projectdatafile='example.prj', startyear=2000, endyear=2030, loaddir = '', verbose=2):
+def runsimulation(projectdatafile='example.prj', startyear=2000, endyear=2030, verbose=2):
     """
     RUNSIMULATION
     View data and model estimates
@@ -32,4 +32,5 @@ def runsimulation(projectdatafile='example.prj', startyear=2000, endyear=2030, l
     D.sim = model(D.G, D.M, options, verbose=verbose)
     
     savedata(projectdatafile, D, verbose=verbose)
-    if verbose>=2: print('  ...done running simulation.')
+    # todo generate graphs?..
+    if verbose>=2: print('  ...done running simulation for project %s.' % projectdatafile)
