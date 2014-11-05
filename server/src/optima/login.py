@@ -15,7 +15,7 @@ from flask import Flask, render_template, request, g, session, flash, \
      redirect, url_for, abort, Blueprint
 
 """ route prefix: /api/user """
-login = Blueprint('login',  __name__, static_folder = '../static')
+logintest = Blueprint('login',  __name__, static_folder = '../static')
 
 from api import oid
 from sqlalchemy import create_engine, Column, Integer, String
@@ -65,25 +65,25 @@ class User(Base):
         self.openid = openid
 
 
-@login.before_request
+@logintest.before_request
 def before_request():
     g.user = None
     if 'openid' in session:
         g.user = User.query.filter_by(openid=session['openid']).first()
 
 
-@login.after_request
+@logintest.after_request
 def after_request(response):
     db_session.remove()
     return response
 
 
-@login.route('/loginform')
-def index():
+@logintest.route('/loginform')
+def login_form():
     return render_template('index.html')
 
 
-@login.route('/login', methods=['GET', 'POST'])
+@logintest.route('/login', methods=['GET', 'POST'])
 @oid.loginhandler
 def login():
     """Does the login via OpenID.  Has to call into `oid.try_login`
@@ -124,13 +124,13 @@ def create_or_login(resp):
                             email=resp.email))
 
 
-@login.route('/create-profile', methods=['GET', 'POST'])
+@logintest.route('/create-profile', methods=['GET', 'POST'])
 def create_profile():
     """If this is the user's first login, the create_or_login function
     will redirect here so that the user can set up his profile.
     """
     if g.user is not None or 'openid' not in session:
-        return redirect(url_for('index'))
+        return redirect(url_for('login_form'))
     if request.method == 'POST':
         name = request.form['name']
         email = request.form['email']
@@ -146,7 +146,7 @@ def create_profile():
     return render_template('create_profile.html', next_url=oid.get_next_url())
 
 
-@login.route('/profile', methods=['GET', 'POST'])
+@logintest.route('/profile', methods=['GET', 'POST'])
 def edit_profile():
     """Updates a profile"""
     if g.user is None:
@@ -158,7 +158,7 @@ def edit_profile():
             db_session.commit()
             session['openid'] = None
             flash(u'Profile deleted')
-            return redirect(url_for('index'))
+            return redirect(url_for('login_form'))
         form['name'] = request.form['name']
         form['email'] = request.form['email']
         if not form['name']:
@@ -174,7 +174,7 @@ def edit_profile():
     return render_template('edit_profile.html', form=form)
 
 
-@login.route('/logout')
+@logintest.route('/logout')
 def logout():
     session.pop('openid', None)
     flash(u'You have been signed out')
