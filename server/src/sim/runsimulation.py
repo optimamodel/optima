@@ -1,17 +1,12 @@
-def runsimulation(projectdatafile='example.prj', startyear=2000, endyear=2030, loaddir = '', verbose=2):
+def runsimulation(D, startyear=2000, endyear=2030, verbose=2):
     """
     RUNSIMULATION
     View data and model estimates
     
-    Version: 2014nov03 by cliffk
+    Version: 2014nov05 by cliffk
     """
 
-    if verbose>=1: print('Running simulation (projectdatafile = %s, startyear = %s, endyear = %s)...' % (projectdatafile, startyear, endyear))
-    
-    # Load data
-    from dataio import loaddata, savedata, fullpath
-    projectdatafile = fullpath(projectdatafile)
-    D = loaddata(projectdatafile, verbose=verbose)
+    if verbose>=1: print('Running simulation (projectfilename = %s, startyear = %s, endyear = %s)...' % (D.projectfilename, startyear, endyear))
     
     # Create options structure
     from bunch import Bunch as struct
@@ -31,6 +26,7 @@ def runsimulation(projectdatafile='example.prj', startyear=2000, endyear=2030, l
     D.S = model(D.G, D.M, options, verbose=verbose)
     
     # Save output
-    savedata(projectdatafile, D, verbose=verbose)
+    from dataio import savedata
+    savedata(D.projectfilename, D, verbose=verbose)
     if verbose>=2: print('  ...done running simulation.')
     return D

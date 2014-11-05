@@ -10,7 +10,7 @@ This function does everything. The basic procedure is as follows:
 3. setupmodel -- reconcile partnerships and calculate parameters to go into the model
 4. model -- actually run the model
 
-Version: 2014nov03 by cliffk
+Version: 2014nov05 by cliffk
 """
 print('WELCOME TO OPTIMA')
 
@@ -21,19 +21,19 @@ verbose = 10
 
 print('\n\n\n1. Making project...')
 from makeproject import makeproject
-spreadsheetname = makeproject(projectname='example', npops=6, nprogs=8, datastart=2000, dataend=2015, verbose=verbose)
+D = makeproject(projectname='example', npops=6, nprogs=8, datastart=2000, dataend=2015, verbose=verbose)
 
 print('\n\n\n2. Uploading spreadsheet...')
 from updatedata import updatedata
-updatedata(projectname='example', verbose=verbose)
+D = updatedata(D, verbose=verbose)
 
 print('\n\n\n3. Running simulation...')
 from runsimulation import runsimulation
-D = runsimulation(projectdatafile='example.prj', verbose=verbose)
+D = runsimulation(D, verbose=verbose)
 
 print('\n\n\n4. Viewing results...')
-from makeresults import makeresults
-D = makeresults('example.prj', verbose=verbose)
+from epiresults import epiresults
+D = epiresults(D, verbose=verbose)
 
 #print('\n\n\n4. Loading results...')
 #from dataio import loaddata
