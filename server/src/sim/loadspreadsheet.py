@@ -96,7 +96,7 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
             
             
             ## Calculate columns for which data are entered, and store the year ranges
-            if groupname == 'keydata' or groupname == 'timedata': # Need to gather year ranges for epidemic etc. data
+            if groupname == 'keydata' or (groupname == 'timedata' and name != 'macro'): # Need to gather year ranges for epidemic etc. data
                 data.epiyears = [] # Initialize epidemiology data years
                 for col in range(sheetdata.ncols):
                     thiscell = sheetdata.cell_value(1,col) # 1 is the 2nd row which is where the year data should be
@@ -162,7 +162,7 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
                         if verbose >=3: print("      Parameter: %s" % subparam)
                         
                         # It's meta-data, split into pieces
-                        if groupname=='meta': 
+                        if groupname=='metadata': 
                             thesedata = sheetdata.row_values(row, start_colx=2, end_colx=6) # Data starts in 3rd column, finishes in 6th column
                             data[name][thispar].short.append(thesedata[0])
                             data[name][thispar].long.append(thesedata[1])

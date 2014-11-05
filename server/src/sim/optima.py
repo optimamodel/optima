@@ -17,7 +17,7 @@ print('WELCOME TO OPTIMA')
 
 ## Set parameters
 projectname = 'example'
-verbose = 10
+verbose = 2
 
 print('\n\n\n1. Making project...')
 from makeproject import makeproject
@@ -37,11 +37,6 @@ D = epiresults(D, verbose=verbose)
 
 print('\n\n\n4. Viewing results...')
 from viewresults import viewresults
-D = viewresults(D, whichgraphs={'prevpop':1, 'prevtot':1, 'incipop':1, 'prevtot':1, 'dalypop':1, 'dalytot':1, 'deathpop':1, 'deathtot':1}, verbose=verbose)
+viewresults(D, whichgraphs={'prev':1, 'inci':1, 'daly':1, 'death':1, 'pops':1, 'tot':1}, verbose=verbose)
 
-#print('\n\n\n4. Loading results...')
-#from dataio import loaddata
-#D = loaddata('example.prj', verbose=verbose)
-
-
-print('Done.')
+print('DONE.')
