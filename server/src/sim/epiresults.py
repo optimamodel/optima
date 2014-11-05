@@ -86,5 +86,3 @@ def epiresults(D, verbose=2):
     
     if verbose>=2: print('  ...done running epidemiology results.')
     return D
-
-epiresults(D)
