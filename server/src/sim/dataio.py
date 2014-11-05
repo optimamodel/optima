@@ -5,11 +5,11 @@ Data input/output. Uses pickle because savemat() can't handle arbitrary data
 structures, even though savemat() is (much) faster, and the compatibility with
 Matlab would be nice.
 
-Version: 2014nov03 by cliffk
+Version: 2014nov05 by cliffk
 """
 
 
-def fullpath(filename, datadir='/tmp/uploads'):
+def fullpath(filename, datadir='.'):
     """
     "Normalizes" filename:  if it is full path, leaves it alone. Otherwise, prepends it with datadir.
     """

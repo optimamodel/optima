@@ -5,11 +5,11 @@ values according to the current colormap. It automatically scales the
 vector to provide maximum dynamic range for the color map.
 
 Usage:
-  colors=vectocolor(vector,cmap=None)
+  colors = vectocolor(vector, cmap=None)
 
 where:
   colors is an Nx4 list of RGB-alpha color values
-  vector is the input vector (or list, it's converted to an array)
+  vector is the input vector (or list, it's converted to an array; or a scalar)
   cmap is the colormap (default: jet)
 
 Example:
@@ -19,7 +19,7 @@ Example:
 	c=vectocolor(y);
 	scatter(x,y,20,c)
 
-Version: 2012sep13 by cliffk
+Version: 2014nov05 by cliffk
 """
 
 def vectocolor(vector,cmap=None):
@@ -27,7 +27,10 @@ def vectocolor(vector,cmap=None):
 
    if cmap==None:
       from pylab import cm
-      cmap=cm.jet;
+      cmap=cm.jet # TODO: use more awesome colormap
+      
+   if type(vector)==int:
+      vector = range(vector) # They've netered a scalar, not a vector, so convert it to a vector
    
    # The vector has elements
    if len(vector):
