@@ -1,8 +1,8 @@
-def viewmodel(S, startyear=2000, endyear=2015):
+def viewmodel(D, whichgraphs={'prevpop':1, 'prevtot':1, 'incipop':1, 'prevtot':1, 'dalypop':1, 'dalytot':1, 'deathpop':1, 'deathtot':1}, startyear=2000, endyear=2015, verbose=2):
     """
     Generate all outputs required for the model, including prevalence, incidence,
     deaths, etc.
-    Version: 2014nov04
+    Version: 2014nov05
     """
     
     # Generate data for scatter and line plots
