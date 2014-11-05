@@ -11,6 +11,7 @@ from sim.updatedata import updatedata
 from sim.loadspreadsheet import loadspreadsheet
 from sim.makeproject import makeproject
 from sim.manualfit import manualfit
+from sim.autofit import autofit
 from sim.bunch import unbunchify
 from sim.runsimulation import runsimulation
 from sim.optimize import optimize
@@ -24,6 +25,31 @@ model.config = {}
 def record_params(setup_state):
   app = setup_state.app
   model.config = dict([(key,value) for (key,value) in app.config.iteritems()])
+
+
+""" 
+Uses provided parameters to manually calibrate the model (update it with these data) 
+TODO: do it with the project which is currently in scope
+"""
+@model.route('/calibrate/auto', methods=['POST'])
+def doAutoCalibration():
+    print('data: %s' % request.data)
+    data = json.loads(request.data)
+    project_name = session.get('project_name', '')
+    if project_name == '':
+        return jsonify({'status':'NOK', 'reason':'no project is open'})
+
+    file_name = helpers.safe_join(loaddir(model), project_name+'.prj')
+    print("project file_name: %s" % file_name)
+    if not os.path.exists(file_name):
+        reply['reason'] = 'File for project %s does not exist' % project_name
+
+    fits = autofit(file_name, data)
+    print("fits: %s" % fits)
+    fits = [unbunchify(x) for x in fits]
+    print("unbunchified fits: %s" % fits)
+    return jsonify(fits[0])
+
 
 """ 
 Uses provided parameters to manually calibrate the model (update it with these data) 
