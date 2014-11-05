@@ -45,7 +45,7 @@ def epiresults(D, verbose=2):
         ##########################################################################
         if epi=='prev':
             
-            if verbose>=3: print('  Calculating prevalence...')
+            if verbose>=3: print('    Calculating prevalence...')
         
             # Calculate prevalence
             for t in range(npts):
@@ -57,21 +57,59 @@ def epiresults(D, verbose=2):
             D.O.prev.ylabel = 'Prevalence (%)'
 
 
+
         ##########################################################################
         ## Incidence
         ##########################################################################
         if epi=='inci':
             
-            if verbose>=3: print('  Calculating incidence...')
+            if verbose>=3: print('    Calculating incidence...')
         
             # Calculate incidence
             for t in range(npts):
-                D.O.prev.pops[:,t] = D.S.people[1:,:,t].sum(axis=0) / D.S.people[:,:,t].sum(axis=0) * D.O.percent
-                D.O.prev.tot[t] = D.S.people[1:,:,t].sum() / D.S.people[:,:,t].sum() * D.O.percent
+                D.O.inci.pops[:,t] = D.S.inci[:,t] # Simple
+                D.O.inci.tot[t] = D.S.inci[:,t].sum()
             
             # Find incidence data    
             epidata = D.data.opt.numinfect # TODO: include uncertainties
-            D.O.prev.ylabel = 'New HIV infections per year'
+            D.O.inci.ylabel = 'New HIV infections per year'
+
+
+
+        ##########################################################################
+        ## Deaths
+        ##########################################################################
+        if epi=='death':
+            
+            if verbose>=3: print('  Calculating deaths...')
+        
+            # Calculate incidence
+            for t in range(npts):
+                D.O.death.pops[:,t] = D.S.death[:,t] # Simple
+                D.O.death.tot[t] = D.S.death[:,t].sum()
+            
+            # Find incidence data    
+            epidata = D.data.opt.death # TODO: include uncertainties
+            D.O.inci.ylabel = 'New HIV infections per year'
+
+
+
+
+        ##########################################################################
+        ## Incidence
+        ##########################################################################
+        if epi=='daly':
+            
+            if verbose>=3: print('    Calculating DALYs...')
+        
+            # Calculate incidence
+            for t in range(npts):
+                D.O.inci.pops[:,t] = D.S.inci[:,t] # Simple
+                D.O.inci.tot[t] = D.S.inci[:,t].sum()
+            
+            # Find incidence data    
+            epidata = D.data.opt.numinfect # TODO: include uncertainties
+            D.O.inci.ylabel = 'New HIV infections per year'
             
             
 
