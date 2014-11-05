@@ -1,22 +1,17 @@
-"""
-MAKEMODELPARS
-
-Calculate all acts and reconcile them between populations.
-
-Version: 2014oct29
-"""
-
 def makemodelpars(P, options, verbose=2):
     """
     Prepares model parameters to run the simulation.
-    """
-    if verbose>=1: print('Making model parameters...')
     
+    Version: 2014nov05
+    """
+    
+    from printv import printv
     from matplotlib.pylab import zeros, array
     from bunch import Bunch as struct # Replicate Matlab-like structure behavior
+    printv('Making model parameters...', 1, verbose)
+    
     M = struct()
     M.__doc__ = 'Model parameters to be used directly in the model, calculated from data parameters P.'
-    
     tvec = options.tvec # Shorten time vector
     npts = len(tvec) # Number of time points # TODO probably shouldn't be repeated from model.m
     
@@ -129,5 +124,5 @@ def makemodelpars(P, options, verbose=2):
     
     # Sum matrices?
 
-    if verbose>=2: print('  ...done making model parameters.')
+    printv('...done making model parameters.', 2, verbose)
     return M

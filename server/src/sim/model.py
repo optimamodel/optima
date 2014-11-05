@@ -4,12 +4,10 @@ def model(G, M, options, verbose=2): # extraoutput is to calculate death rates e
     
     This function runs the model.
     
-    Version: 2014nov03 by cliffk
+    Version: 2014nov05 by cliffk
     """
 
-    if verbose>=1: print('Running model...')
     
-
     
     ###############################################################################
     ## Setup
@@ -19,6 +17,8 @@ def model(G, M, options, verbose=2): # extraoutput is to calculate death rates e
     ## Imports
     from matplotlib.pylab import array, zeros # For creating arrays
     from bunch import Bunch as struct # Replicate Matlab-like structure behavior
+    from printv import printv
+    printv('Running model...', 1, verbose)
     
     
     ## Initialize basic quantities and arrays
@@ -48,7 +48,7 @@ def model(G, M, options, verbose=2): # extraoutput is to calculate death rates e
             try: 
                 outarray.append(parstruct[state])
             except: 
-                if verbose>=4: print('    State %s not found' % state)
+                printv('State %s not found' % state, 4, verbose)
         return array(outarray)
     
     
@@ -254,5 +254,5 @@ def model(G, M, options, verbose=2): # extraoutput is to calculate death rates e
                 raise Exception('Non-positive people found') # If not every element is a real number >0, throw an error
     
     S.people = people # Copy final people array
-    if verbose>=2: print('  ...done running model.')
+    printv('  ...done running model.', 2, verbose)
     return S
