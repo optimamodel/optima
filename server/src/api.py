@@ -1,6 +1,14 @@
 import os
 import shutil
 from flask import Flask, helpers, request, jsonify, session, redirect
+from flask.ext.openid import OpenID
+from openid.extensions import pape
+
+
+app = Flask(__name__)
+oid = OpenID(app, safe_roots=[], extension_responses=[pape.Response])
+
+
 from werkzeug import secure_filename
 from generators.line import generatedata
 import json
@@ -21,8 +29,9 @@ from optima.model import model
 from optima.project import project
 from optima.utils import allowed_file
 
+
 UPLOAD_FOLDER = DATADIR #'/tmp/uploads' #todo configure
-app = Flask(__name__)
+
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.secret_key = 'F12Zr47j\3yX R~X@H!jmM]Lwf/,?KT'
