@@ -13,11 +13,13 @@ def autofit(projectfilename='example.prj', paramtable = {}):
     from bunch import Bunch as struct # Replicate Matlab-like structure behavior
     
     # Generate data for scatter and line plots
-    nplots = 6
+    nplots = 4
+    beginyear = 2000
+    endyear = 2015
     plotdata = []
     for p in range(nplots):
         plotdata.append(struct())
-        plotdata[p].xmodeldata = r_[2000:endyear+1] # Model output
+        plotdata[p].xmodeldata = r_[beginyear:endyear+1] # Model output
         plotdata[p].ymodeldata = exp(-rand(len(plotdata[p].xmodeldata)))
         plotdata[p].xexpdata = [2000, 2005, 2008] # Experimental data
         plotdata[p].yexpdata = [0.3, 0.4, 0.6]
