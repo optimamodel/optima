@@ -1,4 +1,4 @@
-def updatedata(projectname='example', loaddir='', verbose=2):
+def updatedata(D, loaddir='', verbose=2):
     """
     Load the Excel spreadsheet (for the given project), assuming it's in the standard uploads directory
     loads the data for the given project,
@@ -7,26 +7,17 @@ def updatedata(projectname='example', loaddir='', verbose=2):
     Version: 2014nov03 by cliffk
     """
     
-    if verbose>=1: print('Updating data... %s' % projectname)
-    
-    projectfilename = projectname+'.prj'
-    spreadsheetname = projectname+'.xlsx'
-
-    if loaddir:
-        import os
-        projectfilename = os.path.join(loaddir, projectfilename)
-        spreadsheetname = os.path.join(loaddir, spreadsheetname)
+    if verbose>=1: print('Updating data... %s' % D.projectname)
     
     from loadspreadsheet import loadspreadsheet
     from makedatapars import makedatapars
-    from dataio import loaddata, savedata
+    from dataio import savedata
     
-    D = loaddata(projectfilename, verbose=verbose) # Load existing file
-    D.data, D.programs = loadspreadsheet(spreadsheetname, verbose=verbose)
+    D.data, D.programs = loadspreadsheet(D.spreadsheetname, verbose=verbose)
     D = makedatapars(D, verbose=verbose) # Update parameters
     
-    savedata(projectfilename, D, verbose=verbose) # Update the data file
+    savedata(D.projectfilename, D, verbose=verbose) # Update the data file
     
-    if verbose>=2: print('  ...done updating data: %s.' % projectfilename)
+    if verbose>=2: print('  ...done updating data: %s.' % D.projectfilename)
 
-    return projectfilename
+    return D

@@ -1,4 +1,4 @@
-def epiresults(D, startyear=2000, endyear=2015):
+def epiresults(D, startyear=2000, endyear=2015, verbose=2):
     """
     Generate all outputs required for the model:
         Prevalence
@@ -8,8 +8,12 @@ def epiresults(D, startyear=2000, endyear=2015):
     
     For each, calculate for both overall and per population.
 
-    Version: 2014nov04
+    Version: 2014nov05
     """
+    
+    if verbose>=1: print('Calculating epidemiology results...')
+    
+#    from bunch import Bunch as struct
     
     ##########################################################################
     ## Prevalence
@@ -37,16 +41,16 @@ def epiresults(D, startyear=2000, endyear=2015):
     ##########################################################################
     
     # Generate data for scatter and line plots
-    nplots = 6
-    plotdata = []
-    for p in range(nplots):
-        plotdata.append(struct())
-        plotdata[p].xmodeldata = r_[2000:endyear+1] # Model output
-        plotdata[p].ymodeldata = exp(-rand(len(plotdata[p].xmodeldata)))
-        plotdata[p].xexpdata = [2000, 2005, 2008] # Experimental data
-        plotdata[p].yexpdata = [0.3, 0.4, 0.6]
-        plotdata[p].xlabel = 'Year'
-        plotdata[p].ylabel = 'Prevalence'
+#    nplots = 6
+#    plotdata = []
+#    for p in range(nplots):
+#        plotdata.append(struct())
+#        plotdata[p].xmodeldata = r_[2000:endyear+1] # Model output
+#        plotdata[p].ymodeldata = exp(-rand(len(plotdata[p].xmodeldata)))
+#        plotdata[p].xexpdata = [2000, 2005, 2008] # Experimental data
+#        plotdata[p].yexpdata = [0.3, 0.4, 0.6]
+#        plotdata[p].xlabel = 'Year'
+#        plotdata[p].ylabel = 'Prevalence'
         
         # e.g. 
 #        from matplotlib.pylab import plot, hold, scatter, subplot
@@ -55,4 +59,5 @@ def epiresults(D, startyear=2000, endyear=2015):
 #        hold(True)
 #        scatter(plotdata[p].xexpdata, plotdata[p].yexpdata);
     
-    return O
+    if verbose>=2: print('  ...done running epidemiology results.')
+    return D
