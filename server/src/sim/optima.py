@@ -39,4 +39,4 @@ print('\n\n\n4. Viewing results...')
 from viewresults import viewresults
 viewresults(D, whichgraphs={'prev':1, 'inci':1, 'daly':1, 'death':1, 'pops':1, 'tot':1}, onefig=True, verbose=verbose)
 
-print('DONE.')
+print('\n\n\nDONE.')
