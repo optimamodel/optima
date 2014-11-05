@@ -15,7 +15,7 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
 
 
     ## Imports
-    from matplotlib.pylab import array, zeros # For creating arrays
+    from matplotlib.pylab import array, zeros, exp # For creating arrays
     from bunch import Bunch as struct # Replicate Matlab-like structure behavior
     from printv import printv
     printv('Running model...', 1, verbose)
@@ -58,6 +58,18 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
     txfactor = M.const.eff.tx * dxfactor # And treatment efficacy
     
     
+    ## Calculate fitted time series from fitted parameters
+    def fit2time(pars, tvec):
+        A = pars[0]
+        B = pars[1]
+        C = pars[2]
+        D = pars[3]
+        timeseries = (B-A)/(1+exp(-(tvec-C)/D))+A;
+        return timeseries
+    
+    dxtime = fit2time(F.dx, S.tvec)
+    tx1time = fit2time(F.tx1, S.tvec)
+    tx2time = fit2time(F.tx2, S.tvec)
     
     
     
@@ -129,9 +141,9 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
         ###############################################################################
     
         ## Susceptibles
-        dS = -forceinfvec * people[0,:,t] # Change in number of susceptibles -- note, death rate already taken into account in pm.totalpop and dt
+        dS = -forceinfvec * F.force * people[0,:,t] # Change in number of susceptibles -- note, death rate already taken into account in pm.totalpop and dt
         S.inci[:,t] -= dS # New infections
-        dU = []; dD = []; dT1 = []; dF = []; dT2 = []; 
+        dU = []; dD = []; dT1 = []; dF = []; dT2 = [];
         
         prog = h2a(M.const.prog)
         death = h2a(M.const.death)
@@ -159,7 +171,7 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
             else: 
                 progout = 0
                 testingrate[cd4] = dt*M.aidstest[t]
-            newdiagnoses[cd4] = dt*testingrate[cd4] * people[G.undx[cd4],:,t]
+            newdiagnoses[cd4] = dt*testingrate[cd4]*dxtime[t] * people[G.undx[cd4],:,t]
             S.newtx1[:,t] += newdiagnoses[cd4]/dt # Save annual diagnoses data
             hivdeaths = dt*death[cd4]*people[G.undx[cd4],:,t]
             S.death[:,t] += hivdeaths[cd4]/dt # Save annual diagnoses data
@@ -178,7 +190,7 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
                 progout = dt*prog[cd4]*people[G.dx[cd4],:,t]
             else: 
                 progout = 0
-            newtreat1[cd4] = dt*M.tx1[t] * people[G.dx[cd4],:,t]
+            newtreat1[cd4] = dt*M.tx1[t]*tx1time[t] * people[G.dx[cd4],:,t]
             S.newtx1[:,t] += newtreat1[cd4]/dt # Save annual diagnoses data
             hivdeaths = dt*death[cd4]*people[G.dx[cd4],:,t]
             S.death[:,t] += hivdeaths[cd4]/dt # Save annual diagnoses data
@@ -211,7 +223,7 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
                 progout = dt*prog[cd4]*people[G.fail[cd4],:,t] 
             else: 
                 progout = 0
-            newtreat2[cd4] = dt*M.tx2[t] * people[G.fail[cd4],:,t]
+            newtreat2[cd4] = dt*M.tx2[t]*tx2time[t] * people[G.fail[cd4],:,t]
             S.newtx2[:,t] += newtreat2[cd4]/dt # Save annual treatment data
             newfail2[cd4] = dt*M.const.fail.second * people[G.tx2[cd4],:,t]
             hivdeaths = dt*death[cd4]*people[G.fail[cd4],:,t]

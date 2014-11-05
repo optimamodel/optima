@@ -1,14 +1,23 @@
-def manualfit(D, F, dosave=False, verbose=2):
+def manualfit(D, F, startyear=2000, endyear=2015, dosave=False, verbose=2):
     """
     Manual fitting code. Edit the structure F and rerun.
     
     Version: 2014nov05
     """
-    from printv import printv    
+    from printv import printv
+    from bunch import Bunch as struct
+    from matplotlib.pylab import arange
+    
+    ## TODO: don't just copy from runsimulation()
+    options = struct()
+    options.startyear = startyear
+    options.endyear = endyear
+    options.dt = 0.1
+    options.tvec = arange(options.startyear, options.endyear, options.dt) # Time vector
     
     printv('1. Running simulation...', 1, verbose)
-    from runsimulation import runsimulation
-    D = runsimulation(D, startyear=2000, endyear=2015, verbose=verbose)
+    from model import model
+    D.S = model(D.G, D.M, F, options, verbose=2)
     
     printv('2. Making results...', 1, verbose)
     from epiresults import epiresults
@@ -20,7 +29,8 @@ def manualfit(D, F, dosave=False, verbose=2):
     
     if dosave:
         from dataio import savedata
+        D.F = F
         savedata(D.projectfilename, D, verbose=verbose)
-        printv('...done running simulation.', 2, verbose)
+        printv('...done manual fitting.', 2, verbose)
     
     return D
