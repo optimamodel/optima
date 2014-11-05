@@ -1,4 +1,4 @@
-def makemodelpars(P, options, verbose=2):
+def makemodelpars(P, G, options, verbose=2):
     """
     Prepares model parameters to run the simulation.
     
@@ -6,7 +6,7 @@ def makemodelpars(P, options, verbose=2):
     """
     
     from printv import printv
-    from matplotlib.pylab import zeros, array
+    from matplotlib.pylab import zeros, array, ones
     from bunch import Bunch as struct # Replicate Matlab-like structure behavior
     printv('Making model parameters...', 1, verbose)
     
@@ -123,6 +123,17 @@ def makemodelpars(P, options, verbose=2):
     # Apply interventions?
     
     # Sum matrices?
+    
+    # Initialize fitted parameters
+    F = struct()
+    F.__doc__ = 'Fitted parameters structure: initial prevalence, force-of-infection, diagnoses, treatment'
+    F.init = ones(G.npops)
+    F.force = ones(G.npops)
+    F.dx = array([1, 1, (G.datastart+G.dataend)/2, 1])
+    F.tx1 = array([1, 1, (G.datastart+G.dataend)/2, 1])
+    F.tx2 = array([1, 1, (G.datastart+G.dataend)/2, 1])
+    
+    
 
     printv('...done making model parameters.', 2, verbose)
-    return M
+    return M, F

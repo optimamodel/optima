@@ -1,36 +1,26 @@
-"""
-MANUALFIT
-http://54.200.79.218/#/model/manual-calibration
-Version: 2014oct28
-"""
-
-def manualfit(projectfilename='example.prj', paramtable={}, verbose = 2):
-    # Get input data from the editable table in the form of parameter name, parameter value, e.g. 'D.data.epi.p', 3.234
-    if verbose == 1:
-        print("manualfit(projectfilename=%s, paramtable=%s)" % (projectfilename, paramtable))
-    # The project data file name needs to be 
-    from matplotlib.pylab import rand, r_, exp # KLUDGY
-    from bunch import Bunch as struct # Replicate Matlab-like structure behavior
+def manualfit(D, F, dosave=False, verbose=2):
+    """
+    Manual fitting code. Edit the structure F and rerun.
     
-    # Generate data for scatter and line plots
-    nplots = 6
-    beginyear = 2000
-    endyear = 2015
-    plotdata = []
-    for p in range(nplots):
-        plotdata.append(struct())
-        plotdata[p].xmodeldata = r_[beginyear:endyear+1] # Model output
-        plotdata[p].ymodeldata = exp(-rand(len(plotdata[p].xmodeldata)))
-        plotdata[p].xexpdata = [2000, 2005, 2008] # Experimental data
-        plotdata[p].yexpdata = [0.3, 0.4, 0.6]
-        plotdata[p].xlabel = 'Year'
-        plotdata[p].ylabel = 'Prevalence'
-        
-        # e.g. 
-#        from matplotlib.pylab import plot, hold, scatter, subplot
-#        subplot(3,2,p)
-#        plot(plotdata[p].xmodeldata, plotdata[p].ymodeldata)
-#        hold(True)
-#        scatter(plotdata[p].xexpdata, plotdata[p].yexpdata);
+    Version: 2014nov05
+    """
+    from printv import printv    
     
-    return plotdata
+    printv('1. Running simulation...', 1, verbose)
+    from runsimulation import runsimulation
+    D = runsimulation(D, startyear=2000, endyear=2015, verbose=verbose)
+    
+    printv('2. Making results...', 1, verbose)
+    from epiresults import epiresults
+    D = epiresults(D, verbose=verbose)
+    
+    printv('3. Viewing results...', 1, verbose)
+    from viewresults import viewresults
+    viewresults(D, whichgraphs={'prev':1, 'inci':1, 'daly':1, 'death':1, 'pops':1, 'tot':1}, onefig=True, verbose=verbose)
+    
+    if dosave:
+        from dataio import savedata
+        savedata(D.projectfilename, D, verbose=verbose)
+        printv('...done running simulation.', 2, verbose)
+    
+    return D

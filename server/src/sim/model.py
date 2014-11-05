@@ -1,4 +1,4 @@
-def model(G, M, options, verbose=2): # extraoutput is to calculate death rates etc.
+def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rates etc.
     """
     MODEL
     
@@ -35,7 +35,7 @@ def model(G, M, options, verbose=2): # extraoutput is to calculate death rates e
     S.newtx2 = zeros((G.npops, npts))
     S.death = zeros((G.npops, npts))
     people[0, :, 0] = M.popsize[:,0] * (1-M.hivprev[:,0]) # Set initial population sizes
-    people[1, :, 0] = M.popsize[:,0] * M.hivprev[:,0] # Set initial population sizes -- # TODO: equilibrate
+    people[1, :, 0] = M.popsize[:,0] * M.hivprev[:,0] * F.init # Set initial population sizes -- # TODO: equilibrate
     effhivprev = zeros((G.npops,1)) # HIV effective prevalence (prevalence times infectiousness)
     dU = []; dD = []; dT1 = []; dF = []; dT2 = [] # Initialize differences
     
@@ -48,7 +48,7 @@ def model(G, M, options, verbose=2): # extraoutput is to calculate death rates e
             try: 
                 outarray.append(parstruct[state])
             except: 
-                printv('State %s not found' % state, 4, verbose)
+                printv('State %s not found' % state, 10, verbose)
         return array(outarray)
     
     
@@ -66,6 +66,7 @@ def model(G, M, options, verbose=2): # extraoutput is to calculate death rates e
     ###############################################################################
     
     for t in range(npts): # Loop over time; we'll skip the last timestep for people since we don't need to know what happens after that
+        printv('Timestep %i of %i' % (t, npts), 5, verbose)
         
         
         ## Calculate HIV prevalence
@@ -129,6 +130,7 @@ def model(G, M, options, verbose=2): # extraoutput is to calculate death rates e
     
         ## Susceptibles
         dS = -forceinfvec * people[0,:,t] # Change in number of susceptibles -- note, death rate already taken into account in pm.totalpop and dt
+        S.inci[:,t] -= dS # New infections
         dU = []; dD = []; dT1 = []; dF = []; dT2 = []; 
         
         prog = h2a(M.const.prog)
@@ -158,7 +160,7 @@ def model(G, M, options, verbose=2): # extraoutput is to calculate death rates e
                 progout = 0
                 testingrate[cd4] = dt*M.aidstest[t]
             newdiagnoses[cd4] = dt*testingrate[cd4] * people[G.undx[cd4],:,t]
-            S.tx[:,t] += newdiagnoses[cd4]/dt # Save annual diagnoses data
+            S.newtx1[:,t] += newdiagnoses[cd4]/dt # Save annual diagnoses data
             hivdeaths = dt*death[cd4]*people[G.undx[cd4],:,t]
             S.death[:,t] += hivdeaths[cd4]/dt # Save annual diagnoses data
             dU.append(progin-progout - hivdeaths - newdiagnoses[cd4] - dt*background*people[G.undx[cd4],:,t])
