@@ -17,7 +17,7 @@ print('WELCOME TO OPTIMA')
 
 ## Set parameters
 projectname = 'example'
-verbose = 2
+verbose = 4
 
 print('\n\n\n1. Making project...')
 from makeproject import makeproject
@@ -29,7 +29,7 @@ D = updatedata(D, verbose=verbose)
 
 print('\n\n\n3. Running simulation...')
 from runsimulation import runsimulation
-D = runsimulation(D, verbose=verbose)
+D = runsimulation(D, startyear=2000, endyear=2015, verbose=verbose)
 
 print('\n\n\n4. Making results...')
 from epiresults import epiresults
@@ -37,6 +37,6 @@ D = epiresults(D, verbose=verbose)
 
 print('\n\n\n4. Viewing results...')
 from viewresults import viewresults
-viewresults(D, whichgraphs={'prev':1, 'inci':1, 'daly':1, 'death':1, 'pops':1, 'tot':1}, verbose=verbose)
+viewresults(D, whichgraphs={'prev':1, 'inci':1, 'daly':1, 'death':1, 'pops':1, 'tot':1}, onefig=True, verbose=verbose)
 
 print('DONE.')

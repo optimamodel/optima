@@ -59,8 +59,9 @@ def makedatapars(D, verbose=2):
     
     ## Loop over parameters that can be converted automatically
     for parclass in ['epi', 'txrx', 'sex', 'inj']:
+        printv('Converting data parameter %s...' % parclass, 3, verbose)
         for parname in D.data[parclass].keys():
-            printv('Converting data parameter %s.%s...' % (parclass, parname), 3, verbose)
+            printv('Converting data parameter %s...' % parname, 4, verbose)
             D.P[parname] = data2par(D.data[parclass][parname])
     
     ## Matrices can be used directly
@@ -69,16 +70,15 @@ def makedatapars(D, verbose=2):
         D.P[parclass] = D.data[parclass]
     
     ## Constants...just take the best value for now -- # TODO: use the uncertainty
-    D.P.const = struct()
-    for parclass in D.data.const.keys():
-        printv('Converting data parameter %s...' % parclass, 3, verbose)
-        if type(D.data.const[parclass])==struct: 
-            D.P.const[parclass] = struct()
-            for parname in D.data.const[parclass].keys():
-                printv('Converting data parameter %s...' % parname, 3, verbose)
-                D.P.const[parclass][parname] = D.data.const[parclass][parname][0] # Taking best value only, hence the 0
-        else:
-            D.P.const[parclass] = D.data.const[parclass][0]
+    for uberclass in ['const', 'cost']:
+        D.P[uberclass] = struct()
+        for parclass in D.data[uberclass].keys():
+            printv('Converting data parameter %s...' % parclass, 3, verbose)
+            if type(D.data[uberclass][parclass])==struct: 
+                D.P[uberclass][parclass] = struct()
+                for parname in D.data[uberclass][parclass].keys():
+                    printv('Converting data parameter %s...' % parname, 4, verbose)
+                    D.P[uberclass][parclass][parname] = D.data[uberclass][parclass][parname][0] # Taking best value only, hence the 0
     
     ## TODO: disutility, economic data etc.
             

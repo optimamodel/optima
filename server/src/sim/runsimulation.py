@@ -22,11 +22,11 @@ def runsimulation(D, startyear=2000, endyear=2030, verbose=2):
     
     # Convert data parameters to model parameters
     from makemodelpars import makemodelpars
-    D.M = makemodelpars(D.P, options, verbose=verbose)
+    D.M, D.F = makemodelpars(D.P, D.G, options, verbose=verbose)
     
     # Run model
     from model import model
-    D.S = model(D.G, D.M, options, verbose=verbose)
+    D.S = model(D.G, D.M, D.F, options, verbose=verbose)
     
     # Save output
     from dataio import savedata
