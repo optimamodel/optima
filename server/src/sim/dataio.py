@@ -8,6 +8,7 @@ Matlab would be nice.
 Version: 2014nov05 by cliffk
 """
 
+from printv import printv
 
 def fullpath(filename, datadir='.'):
     """
@@ -27,7 +28,7 @@ def savedata(filename, data, update=True, verbose=2):
     """
     Saves the pickled data into the file (either updates it or just overwrites).
     """
-    if verbose>=1: print('Saving data...')
+    printv('Saving data...', 1, verbose)
     from cPickle import dump, load
     
     filename = fullpath(filename)
@@ -38,12 +39,12 @@ def savedata(filename, data, update=True, verbose=2):
         else: origdata = data
         wfid = open(filename,'wb')
         dump(data, wfid, protocol=-1)
-        if verbose>=2: print('  ..updated file')
+        printv('..updated file', 3, verbose)
     except: # If that fails, save a new file
         wfid = open(filename,'wb')
         dump(data, wfid, protocol=-1)
-        if verbose>=2: print('  ..created new file')
-    if verbose>=2: print(' ...done saving data.')
+        printv('..created new file', 3, verbose)
+    printv(' ...done saving data.', 2, verbose)
     return filename
 
 
@@ -54,9 +55,9 @@ def loaddata(filename, verbose=2):
     Loads the file and unpickles data from it.
     """
     filename = fullpath(filename)
-    if verbose>=1: print('Loading data...')
+    printv('Loading data...', 1, verbose)
     from cPickle import load
     rfid = open(filename,'rb')
     data = load(rfid)
-    if verbose>=2: print('  ...done loading data.')
+    printv('...done loading data.', 2, verbose)
     return data

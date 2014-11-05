@@ -3,13 +3,13 @@ def makeproject(projectname='example', npops=6, nprogs=8, datastart=2000, dataen
     Initializes the empty project. Only the "Global" parameters are added on this step.
     The rest of the parameters is calculated after the model is updated with the data from the spreadsheet.
     
-    Version: 2014nov03 by cliffk
+    Version: 2014nov05 by cliffk
     """
-    if verbose>=1: 
-        print("Making project %s, npops=%s, nprogs=%s, datastart = %s, dataend = %s..." % (projectname, npops, nprogs, datastart, dataend))
-    
     from dataio import savedata, fullpath
     from bunch import Bunch as struct
+    from printv import printv
+    printv("Making project %s, npops=%s, nprogs=%s, datastart = %s, dataend = %s..." % (projectname, npops, nprogs, datastart, dataend), 1, verbose)
+    
     D = struct() # Data structure for saving everything
     D.projectname = projectname
     D.projectfilename = fullpath(projectname+'.prj')
@@ -28,5 +28,5 @@ def makeproject(projectname='example', npops=6, nprogs=8, datastart=2000, dataen
 #    from makespreadsheet import makespreadsheet 
 #    makespreadsheet(D.spreadsheetname, npops, nprogs, datastart, dataend, verbose=verbose)
     
-    if verbose>=2: print('  ...done making project %s., created spreadsheet %s' % (D.projectname, D.spreadsheetname))
+    printv('  ...done making project %s., created spreadsheet %s' % (D.projectname, D.spreadsheetname), 2, verbose)
     return D
