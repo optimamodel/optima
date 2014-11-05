@@ -13,10 +13,11 @@
 """
 from flask import Flask, render_template, request, g, session, flash, \
      redirect, url_for, abort, Blueprint
-from flask.ext.openid import OpenID
 
-from openid.extensions import pape
+""" route prefix: /api/user """
+login = Blueprint('login',  __name__, static_folder = '../static')
 
+from api import oid
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
@@ -29,13 +30,13 @@ app.config.update(
     DEBUG = True
 )
 """
-login = Blueprint('login',  __name__, static_folder = '../static')
+
 
 # setup flask-openid
 """
 oid = OpenID(app, safe_roots=[], extension_responses=[pape.Response])
 """
-oid = OpenID(login, safe_roots=[], extension_responses=[pape.Response])
+
 
 # setup sqlalchemy
 """
@@ -121,28 +122,6 @@ def create_or_login(resp):
     return redirect(url_for('create_profile', next=oid.get_next_url(),
                             name=resp.fullname or resp.nickname,
                             email=resp.email))
-
-
-@login.route('/create-profile', methods=['GET', 'POST'])
-def create_profile():
-    """If this is the user's first login, the create_or_login function
-    will redirect here so that the user can set up his profile.
-    """
-    if g.user is not None or 'openid' not in session:
-        return redirect(url_for('index'))
-    if request.method == 'POST':
-        name = request.form['name']
-        email = request.form['email']
-        if not name:
-            flash(u'Error: you have to provide a name')
-        elif '@' not in email:
-            flash(u'Error: you have to enter a valid email address')
-        else:
-            flash(u'Profile successfully created')
-            db_session.add(User(name, email, session['openid']))
-            db_session.commit()
-            return redirect(oid.get_next_url())
-    return render_template('create_profile.html', next_url=oid.get_next_url())
 
 
 @login.route('/profile', methods=['GET', 'POST'])
