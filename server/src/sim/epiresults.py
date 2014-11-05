@@ -53,22 +53,42 @@ def epiresults(D, verbose=2):
                 D.O.prev.tot[t] = D.S.people[1:,:,t].sum() / D.S.people[:,:,t].sum() * D.O.percent
             
             # Find prevalence data    
-            D.O.prev.ydata = zeros((D.G.npops,ndatayears))
-            epidata = D.data.key.hivprev[0]
+            epidata = D.data.key.hivprev[0] # TODO: include uncertainties
             D.O.prev.ylabel = 'Prevalence (%)'
+
+
+        ##########################################################################
+        ## Incidence
+        ##########################################################################
+        if epi=='inci':
+            
+            if verbose>=3: print('  Calculating incidence...')
+        
+            # Calculate incidence
+            for t in range(npts):
+                D.O.prev.pops[:,t] = D.S.people[1:,:,t].sum(axis=0) / D.S.people[:,:,t].sum(axis=0) * D.O.percent
+                D.O.prev.tot[t] = D.S.people[1:,:,t].sum() / D.S.people[:,:,t].sum() * D.O.percent
+            
+            # Find incidence data    
+            epidata = D.data.opt.numinfect # TODO: include uncertainties
+            D.O.prev.ylabel = 'New HIV infections per year'
             
             
 
         ##########################################################################
         ## Finish processing data
         ##########################################################################
-        for p in range(D.G.npops):
-            thispopdata = epidata[p]
-            if len(thispopdata) == 1: 
-                thispopdata = nan+zeros(ndatayears) # If it's an assumption, just set with nans
-            elif len(thispopdata) != ndatayears:
-                raise Exception('Expect data length of 1 or %i, actually %i' % (ndatayears, len(thispopdata)))
-            D.O[epi].ydata[p,:] = array(thispopdata) * D.O.percent
+        try:
+            for p in range(D.G.npops):
+                thispopdata = epidata[p]
+                if len(thispopdata) == 1: 
+                    thispopdata = nan+zeros(ndatayears) # If it's an assumption, just set with nans
+                elif len(thispopdata) != ndatayears:
+                    raise Exception('Expect data length of 1 or %i, actually %i' % (ndatayears, len(thispopdata)))
+                D.O[epi].ydata[p,:] = array(thispopdata) * D.O.percent
+            
+        except:
+            print('Probably not implemented yet')
 #
 #            
 #    
