@@ -31,9 +31,13 @@ print('\n\n\n3. Running simulation...')
 from runsimulation import runsimulation
 D = runsimulation(D, verbose=verbose)
 
-print('\n\n\n4. Viewing results...')
+print('\n\n\n4. Making results...')
 from epiresults import epiresults
 D = epiresults(D, verbose=verbose)
+
+print('\n\n\n4. Viewing results...')
+from viewresults import viewresults
+D = viewresults(D, whichgraphs={'prevpop':1, 'prevtot':1, 'incipop':1, 'prevtot':1, 'dalypop':1, 'dalytot':1, 'deathpop':1, 'deathtot':1}, verbose=verbose)
 
 #print('\n\n\n4. Loading results...')
 #from dataio import loaddata
