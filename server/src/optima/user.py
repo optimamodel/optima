@@ -15,7 +15,7 @@ from flask import Flask, render_template, request, jsonify, g, session, flash, \
      redirect, url_for, abort, Blueprint
 from flask.ext.openid import OpenID
 from openid.extensions import pape
-
+import logging
 # route prefix: /api/user
 user = Blueprint('user',  __name__, static_folder = '../static')
 
@@ -28,13 +28,12 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
   
 # setup flask
-"""app = Flask(__name__)
+"""app = Flask(__name__)"""
 app.config.update(
     DATABASE_URI = 'postgresql+pypostgresql://postgres:postgres@localhost:5432/optima',
-    '''SECRET_KEY = 'development key','''
     DEBUG = True
 )
-"""
+
 
 
 # setup flask-openid
@@ -44,18 +43,18 @@ oid = OpenID(app, safe_roots=[], extension_responses=[pape.Response])
 
 
 # setup sqlalchemy
-"""
+
 engine = create_engine(app.config['DATABASE_URI'])
 db_session = scoped_session(sessionmaker(autocommit=True,
                                          autoflush=True,
                                          bind=engine))
-"""
+
 Base = declarative_base()
-"""Base.query = db_session.query_property()
+Base.query = db_session.query_property()
 
 def init_db():
     Base.metadata.create_all(bind=engine)
-"""
+
 
 class User(Base):
     __tablename__ = 'users'
@@ -93,13 +92,15 @@ def login_form():
 def login():
     # Does the login via OpenID.  Has to call into `oid.try_login`
     # to start the OpenID machinery.
-    
+    logging.warning('Inside login')
     # If we are already logged in, go back to were we came from
     if g.user is not None:
         return redirect(oid.get_next_url())
-        
+    logging.warning(request)    
+    logging.warning(request.method)
     # If we are trying to login
     if request.method == 'POST':
+        
         openid = request.form.get('openid')
         print(openid);
         if openid:
