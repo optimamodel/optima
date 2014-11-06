@@ -1,19 +1,23 @@
 define([
     'angular',
     './button-choicebox/index',
-    './menu/index'
+    './menu/index',
+    '../common/active-project-service'
 ], function (angular) {
     'use strict';
 
     return angular.module('app.ui', [
+        'app.active-project',
         'app.ui.button-choicebox',
         'app.ui.menu'
-    ]).controller('MainCtrl', function ($scope, $upload) {
+    ]).controller('MainCtrl', function ($scope, $upload, activeProject) {
+
+        $scope.activeProject = activeProject;
 
       // https://github.com/danialfarid/angular-file-upload
       function uploadDataSpreadsheet(file) {
         $scope.upload = $upload.upload({
-          url: '/api/data/upload',
+          url: '/api/project/update',
           file: file
         }).progress(function(evt) {
           console.log('percent: ' + parseInt(100.0 * evt.loaded / evt.total));
@@ -37,14 +41,8 @@ define([
                         },
                         {
                             title: 'Open existing project',
-                            click: function () {
-                                angular
-                                    .element('<input type="file">')
-                                    .change(function (event) {
-                                        // TODO
-                                        alert(event.target.files[0].name);
-                                    })
-                                    .click();
+                            state: {
+                                name: 'project.open'
                             }
                         },
                         {
@@ -65,21 +63,15 @@ define([
                     id: 'create-load',
                     subitems: [
                         {
-                            title: 'View data & model estimates',
+                            title: 'View data & model calibration',
                             state: {
                                 name: 'model.view'
                             }
                         },
                         {
-                            title: 'Automatic calibration',
+                            title: 'Define cost-coverage-outcome assumptions',
                             state: {
-                                name: 'model.automatic-calibration'
-                            }
-                        },
-                        {
-                            title: 'Manual calibration',
-                            state: {
-                                name: 'model.manual-calibration'
+                                name: 'model.define-cost-coverage-outcome'
                             }
                         }
                     ]

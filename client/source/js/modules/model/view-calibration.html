@@ -1,0 +1,12 @@
+<div class="page rich">
+
+  <div class="btn-group section" ng-init="activeTab = 'view'">
+    <button class="btn __white" ng-class="{ __active: activeTab === 'view' }" ng-click="activeTab = 'view'">View data & model calibration</button>
+    <button class="btn __white" ng-class="{ __active: activeTab === 'auto' }" ng-click="activeTab = 'auto'">Automatic calibration</button>
+    <button class="btn __white" ng-class="{ __active: activeTab === 'manual' }" ng-click="activeTab = 'manual'">Manual calibration</button>
+  </div>
+
+  <div ng-if="activeTab === 'view'" ng-include="'js/modules/model/view.html'" ng-controller="ModelViewController"></div>
+  <div ng-if="activeTab === 'auto'" ng-include="'js/modules/model/automatic-calibration.html'" ng-controller="ModelAutomaticCalibrationController"></div>
+  <div ng-if="activeTab === 'manual'" ng-include="'js/modules/model/manual-calibration.html'" ng-controller="ModelManualCalibrationController"></div>
+</div>
