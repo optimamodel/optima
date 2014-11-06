@@ -23,7 +23,7 @@ These APIs allow front-end to get current user or login a user.
 	name: "Iwein Fuld" 
    }`
   
-* `/api/user/login?openid=<networks open id>&next=<url to go to after login>`
+* `/api/user/login/<networks open id>/<url to go to after login>`
 
   User is redirected to selected network.
   
@@ -33,7 +33,7 @@ These APIs allow front-end to get current user or login a user.
   
   For Yahoo!
   
-  `/api/user/login?openid=yahoo.com&next=http://optima.dev`
+  `/api/user/login/yahoo.com/http://optima.dev`
 
 * `/api/user/logout`
 
