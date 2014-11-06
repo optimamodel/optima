@@ -6,7 +6,7 @@ from werkzeug import secure_filename
 import os
 import sys
 import traceback
-from sim.dataio import loaddata, savedata, DATADIR
+from sim.dataio import loaddata, savedata, DATADIR, PROJECTDIR, TEMPLATEDIR
 from sim.updatedata import updatedata
 from sim.loadspreadsheet import loadspreadsheet
 from sim.makeproject import makeproject
@@ -58,7 +58,7 @@ def createProject(project_name):
     D = makeproject(**makeproject_args) # makeproject is supposed to return the name of the existing file...
     new_project_template = D.spreadsheetname
     print("new_project_template: %s" % new_project_template)
-    (dirname, basename) = os.path.split(new_project_template)
+    (dirname, basename) = (TEMPLATEDIR, new_project_template)
 #    xlsname = project_name + '.xlsx'
 #    srcfile = helpers.safe_join(project.static_folder,'example.xlsx')
 #    dstfile =  helpers.safe_join(dirname, xlsname)
@@ -74,7 +74,7 @@ If the project exists, should put it in session and return to the user.
 # expects project name, will put it into session
 # todo: only if it can be found
 def openProject(project_name):
-    if not project_exists(loaddir(project), project_name):
+    if not project_exists(project_name):
       return jsonify({'status':'NOK','reason':'No such project %s' % project_name})
     else:
       session.clear()
@@ -94,11 +94,10 @@ Returns the list of existing projects.
 @project.route('/list')
 def getProjectList():
     projects = []
-    for file in os.listdir(loaddir(project)):
+    for file in os.listdir(PROJECTDIR):
         if fnmatch.fnmatch(file, '*.prj'):
             projects.append(file)
     return jsonify({"projects":projects})
-
 
 """
 Download example Excel file.
@@ -126,7 +125,7 @@ def uploadExcel():
     loaddir = project.config['UPLOAD_FOLDER']
     print("loaddir = %s" % loaddir)
     if not loaddir:
-      loaddir = DATADIR
+        loaddir = DATADIR
     print("loaddir = DATADIR")
     if not file:
         reply['reason'] = 'No file is submitted!'
@@ -137,8 +136,13 @@ def uploadExcel():
         reply['reason'] = 'File type of %s is not accepted!' % filename
         return json.dumps(reply)
 
+    reply['file'] = filename
+    if allowed_file(filename):
+        server_filename = os.path.join(loaddir, filename)
+        file.save(server_filename)
+
     file_basename, file_extension = os.path.splitext(filename)
-    project_name = helpers.safe_join(loaddir, file_basename+'.prj')
+    project_name = helpers.safe_join(PROJECTDIR, file_basename+'.prj')
     print("project name: %s" % project_name)
     if not os.path.exists(project_name):
         reply['reason'] = 'Project %s does not exist' % file_basename

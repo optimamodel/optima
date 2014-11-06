@@ -9,11 +9,12 @@ def updatedata(D, loaddir='', verbose=2):
     
     from loadspreadsheet import loadspreadsheet
     from makedatapars import makedatapars
-    from dataio import savedata
+    from dataio import savedata, fullpath
     from printv import printv
     printv('Updating data... %s with spreadsheet %s' % (D.projectname, D.spreadsheetname), 1, verbose)
     
-    D.data, D.programs = loadspreadsheet(D.spreadsheetname, verbose=verbose)
+    datapath = fullpath(D.spreadsheetname)
+    D.data, D.programs = loadspreadsheet(datapath, verbose=verbose)
     D = makedatapars(D, verbose=verbose) # Update parameters
     savedata(D.projectfilename, D, verbose=verbose) # Update the data file
     
