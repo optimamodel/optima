@@ -280,6 +280,7 @@ def unbunchify(x):
     elif isinstance(x, np.ndarray):
         return [unbunchify(v) for v in x.tolist()]
     else:
+        print ("x= %s, type(x) = %s" % (x, type(x)))
         return x
 
 

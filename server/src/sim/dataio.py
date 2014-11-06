@@ -69,5 +69,5 @@ def loaddata(filename, verbose=2):
         filename = projectpath(filename)
     rfid = open(filename,'rb')
     data = load(rfid)
-    printv('...done loading data: %s' % data, 2, verbose)
+    printv('...done loading data.', 2, verbose)
     return data
