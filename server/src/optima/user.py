@@ -128,57 +128,6 @@ def create_or_login(resp):
         db_session.commit()
         return redirect(oid.get_next_url())
 
-
-@user.route('/create-profile', methods=['GET', 'POST'])
-def create_profile():
-    """If this is the user's first login, the create_or_login function
-    will redirect here so that the user can set up his profile.
-    """
-    if g.user is not None or 'openid' not in session:
-        return redirect(url_for('login_form'))
-    if request.method == 'POST':
-        name = request.form['name']
-        email = request.form['email']
-        if not name:
-            flash(u'Error: you have to provide a name')
-        elif '@' not in email:
-            flash(u'Error: you have to enter a valid email address')
-        else:
-            flash(u'Profile successfully created')
-            db_session.add(UserDb(name, email, session['openid']))
-            db_session.commit()
-            return redirect(oid.get_next_url())
-    return render_template('create_profile.html', next_url=oid.get_next_url())
-
-
-@user.route('/profile', methods=['GET', 'POST'])
-def edit_profile():
-    """Updates a profile"""
-    if g.user is None:
-        abort(401)
-    form = dict(name=g.user.name, email=g.user.email)
-    if request.method == 'POST':
-        if 'delete' in request.form:
-            db_session.delete(g.user)
-            db_session.commit()
-            session['openid'] = None
-            flash(u'Profile deleted')
-            return redirect(url_for('login_form'))
-        form['name'] = request.form['name']
-        form['email'] = request.form['email']
-        if not form['name']:
-            flash(u'Error: you have to provide a name')
-        elif '@' not in form['email']:
-            flash(u'Error: you have to enter a valid email address')
-        else:
-            flash(u'Profile successfully created')
-            g.user.name = form['name']
-            g.user.email = form['email']
-            db_session.commit()
-            return redirect(url_for('edit_profile'))
-    return render_template('edit_profile.html', form=form)
-
-
 @user.route('/logout')
 def logout():
     session.pop('openid', None)
