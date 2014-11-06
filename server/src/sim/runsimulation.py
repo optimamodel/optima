@@ -31,5 +31,6 @@ def runsimulation(D, startyear=2000, endyear=2030, verbose=2):
     # Save output
     from dataio import savedata
     savedata(D.projectfilename, D, verbose=verbose)
-    printv('...done running simulation.', 2, verbose)
+    printv('...done running simulation for project %s.' % D.projectfilename, 2, verbose)
     return D
+    # should frontend do anything with the model? 

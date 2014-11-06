@@ -10,7 +10,9 @@ Version: 2014nov05 by cliffk
 
 from printv import printv
 
-def fullpath(filename, datadir='.'):
+DATADIR="/tmp/uploads"
+
+def fullpath(filename, datadir=DATADIR):
     """
     "Normalizes" filename:  if it is full path, leaves it alone. Otherwise, prepends it with datadir.
     """

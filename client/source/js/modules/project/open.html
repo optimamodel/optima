@@ -1,0 +1,17 @@
+<div class="rich">
+  <div class="section" ng-show="projects.length">
+    <h3>Open project:</h3>
+
+    <ul>
+      <li ng-repeat="project in projects track by $index">
+        <a ng-click="open(project)" href="#">{{ project }}</a>
+      </li>
+    </ul>
+  </div>
+
+  <div ng-hide="projects.length">
+    <h3>No projects found</h3>
+
+    There are no projects found. Please <a ui-sref="project.create">create a project</a> first.
+  </div>
+</div>

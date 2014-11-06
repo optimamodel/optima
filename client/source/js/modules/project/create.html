@@ -1,149 +1,120 @@
 <div class="rich">
-    <form name="CreateProjectForm" ng-submit="createProject()">
-        <p>
-            <b>Instructions</b><br>
-            1. Enter the name of the project and the numbers of population groups and HIV programs.<br>
-            2. Click “Save project &amp; generate Optima template”.<br>
-            3. This will generate a blank Excel spreadsheet. Use Excel to enter data into this spreadsheet.<br>
-            4. When complete, return to Optima, click “Upload Optima spreadsheet”, and select this spreadsheet.
-        </p>
 
-        <div class="section grid">
-            <div class="4">
-                <input class="txbox" type="text" placeholder="Project name" ng-model="projectParams.name" required>
-            </div>
-        </div>
+  <form id="createForm" name="CreateProjectForm" action="{{ formAction }}" method="post" ng-submit="prepareCreateForm()" novalidate="novalidate">
+    <p>
+      <b>Instructions</b><br>
+      1. Enter the name of the project and the numbers of population groups and HIV programs.<br>
+      2. Click “Save project &amp; generate Optima template”.<br>
+      3. This will generate a blank Excel spreadsheet. Use Excel to enter data into this spreadsheet.<br>
+      4. When complete, return to Optima, click “Upload Optima spreadsheet”, and select this spreadsheet.
+    </p>
 
-        <div class="section grid">
-            <style>
-#div1 {width:300px;padding:10px;border:1px solid #aaaaaa;}
-#div2 {width:300px;padding:10px;border:1px solid #aaaaaa;}
-#drag1 {}
-#drag2 {background:#aaaaff; width:250px; margin:10px 10px 10px 10px; text-align:center;}
-</style>
-<script>
-function allowDrop1(ev) {
-    ev.preventDefault();
-}
+    <div class="section grid">
+      <div class="6">
+        <input class="txbox" type="text" placeholder="Project name" ng-model="projectParams.name" required>
+      </div>
+    </div>
 
-function allowDrop2(ev) {
-    ev.preventDefault();
-}
+    <div class="section grid">
+      <div class="3">
+        <input class="txbox" type="number" min="1900" placeholder="Epidemic data start year" ng-model="projectParams.datastart" required>
+      </div>
+      <div class="3">
+        <input class="txbox" type="number" min="1900" placeholder="Epidemic data end year" ng-model="projectParams.dataend" required>
+      </div>
+    </div>
 
-function drag1(ev) {
-    ev.dataTransfer.setData("text/html", ev.target.id);
-}
+    <div class="section grid">
+      <div class="3">
+        <input class="txbox" type="number" min="1900" placeholder="Economic projection start year" ng-model="projectParams.econ_datastart" required>
+      </div>
+      <div class="3">
+        <input class="txbox" type="number" min="1900" placeholder="Economic projection end year" ng-model="projectParams.econ_dataend" required>
+      </div>
+    </div>
 
-function drop1(ev) {
-    ev.preventDefault();
-    var data = ev.dataTransfer.getData("text/html");
-    ev.target.appendChild(document.getElementById(data));
-}
+    <div class="section grid">
+      <div class="6">
+        <p><b>Available populations:</b></p>
 
-function drag2(ev) {
-    ev.dataTransfer.setData("text/html", ev.target.id);
-}
+        <table class="section table table-bordered">
+          <thead>
+          <tr>
+            <td><b>Active</b></td>
+            <td><b>Name</b></td>
+            <td><b>Acronym</b></td>
+            <td>&nbsp;</td>
+          </tr>
+          </thead>
+          <tbody>
+          <tr ng-repeat="row in populations">
+            <td class="text-center" style="width: 50px">
+              <input type="checkbox" ng-model="row.active">
+            </td>
+            <td style="width: 300px">{{ row.name }}</td>
+            <td style="width: 150px">{{ row.acronym }}</td>
+            <td>
+              <button role="button" class="btn" ng-click="openEditPopulationModal($event, row)">Edit</button>
+            </td>
+          </tr>
+          </tbody>
+          <tfoot>
+          <tr>
+            <td colspan="4" class="text-right">
+              <button role="button" class="btn" ng-click="openAddPopulationModal($event)">Add a population</button>
+            </td>
+          </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
 
-function drop2(ev) {
-    ev.preventDefault();
-    var data = ev.dataTransfer.getData("text/html");
-    ev.target.appendChild(document.getElementById(data));
-}
-</script>
-</head>
-<body>
+    <div class="section grid">
+      <div class="6">
+        <p><b>Available programs:</b></p>
 
-<h2>Populations</h2>
+        <table class="section table table-bordered">
+          <thead>
+          <tr>
+            <td><b>Active</b></td>
+            <td><b>Name</b></td>
+            <td><b>Acronym</b></td>
+            <td><b>Indicators</b></td>
+            <td>&nbsp;</td>
+          </tr>
+          </thead>
+          <tbody>
+          <tr ng-show="programs.length" ng-repeat="row in programs">
+            <td class="text-center" style="width: 50px">
+              <input type="checkbox" ng-model="row.active">
+            </td>
+            <td style="width: 300px">{{ row.name }}</td>
+            <td style="width: 150px">{{ row.acronym }}</td>
+            <td class="text-center" style="width: 50px">{{ row.indicators.length }}</td>
+            <td>
+              <button role="button" class="btn" ng-click="openEditProgramModal($event, row)">Edit</button>
+            </td>
+          </tr>
+          <tr ng-show="!programs.length">
+            <td class="text-center" colspan="5">No programs set yet</td>
+          </tr>
+          </tbody>
+          <tfoot>
+          <tr>
+            <td colspan="5" class="text-right">
+              <button role="button" class="btn" ng-click="openAddProgramModal($event)">Add a program</button>
+            </td>
+          </tr>
+          </tfoot>
+        </table>
 
-        <div class="section grid">
-            <div class="2" style="margin:20px 20px 20px 20px;">
-<p>Available populations:</p>
+      </div>
+    </div>
 
-<div id="div1" ondrop="drop1(event)" ondragover="allowDrop1(event)">
-<div id="drag01" draggable="true" ondragstart="drag1(event)" style="background:#aaaaff; width:250px; margin:10px 10px 10px 10px; text-align:center;">Female sex workers</div>
-<div id="drag02" draggable="true" ondragstart="drag1(event)" style="background:#aaaaff; width:250px; margin:10px 10px 10px 10px; text-align:center;">Clients of sex workers</div>
-<div id="drag03" draggable="true" ondragstart="drag1(event)" style="background:#aaaaff; width:250px; margin:10px 10px 10px 10px; text-align:center;">Men who have sex with men</div>
-<div id="drag04" draggable="true" ondragstart="drag1(event)" style="background:#aaaaff; width:250px; margin:10px 10px 10px 10px; text-align:center;">Males who inject drugs</div>
-<div id="drag05" draggable="true" ondragstart="drag1(event)" style="background:#aaaaff; width:250px; margin:10px 10px 10px 10px; text-align:center;">Females who inject drugs</div>
-<div id="drag06" draggable="true" ondragstart="drag1(event)" style="background:#aaaaff; width:250px; margin:10px 10px 10px 10px; text-align:center;">Transgender individuals</div>
-<div id="drag07" draggable="true" ondragstart="drag1(event)" style="background:#aaaaff; width:250px; margin:10px 10px 10px 10px; text-align:center;">Infants (0-2)</div>
-<div id="drag08" draggable="true" ondragstart="drag1(event)" style="background:#aaaaff; width:250px; margin:10px 10px 10px 10px; text-align:center;">Children (2-15)</div>
-<div id="drag09" draggable="true" ondragstart="drag1(event)" style="background:#aaaaff; width:250px; margin:10px 10px 10px 10px; text-align:center;">Young females (15-20)</div>
-<div id="drag10" draggable="true" ondragstart="drag1(event)" style="background:#aaaaff; width:250px; margin:10px 10px 10px 10px; text-align:center;">Young males (15-20)</div>
-<div id="drag11" draggable="true" ondragstart="drag1(event)" style="background:#aaaaff; width:250px; margin:10px 10px 10px 10px; text-align:center;">Adult females (20-50)</div>
-<div id="drag12" draggable="true" ondragstart="drag1(event)" style="background:#aaaaff; width:250px; margin:10px 10px 10px 10px; text-align:center;">Adult males (20-50)</div>
-<div id="drag13" draggable="true" ondragstart="drag1(event)" style="background:#aaaaff; width:250px; margin:10px 10px 10px 10px; text-align:center;">Older females (50+)</div>
-<div id="drag14" draggable="true" ondragstart="drag1(event)" style="background:#aaaaff; width:250px; margin:10px 10px 10px 10px; text-align:center;">Older males (50+)</div>
-<div id="drag15" draggable="true" ondragstart="drag1(event)" style="background:#aaaaff; width:250px; margin:10px 10px 10px 10px; text-align:center;">Other males</div>
-<div id="drag16" draggable="true" ondragstart="drag1(event)" style="background:#aaaaff; width:250px; margin:10px 10px 10px 10px; text-align:center;">Other females</div>
-<div id="drag17" draggable="true" ondragstart="drag1(event)" style="background:#aaaaff; width:250px; margin:10px 10px 10px 10px; text-align:center;">Other (user-defined)</div>
-<div id="drag19" draggable="true" ondragstart="drag1(event)" style="background:#aaaaff; width:250px; margin:10px 10px 10px 10px; text-align:center;">Other (user-defined)</div>
-<div id="drag10" draggable="true" ondragstart="drag1(event)" style="background:#aaaaff; width:250px; margin:10px 10px 10px 10px; text-align:center;">Other (user-defined)</div>
-<div id="drag20" draggable="true" ondragstart="drag1(event)" style="background:#aaaaff; width:250px; margin:10px 10px 10px 10px; text-align:center;">Other (user-defined)</div>
-</div>
-            </div>
-            <div class="2" style="margin:20px 20px 20px 20px;">
-<p>Populations in the model:</p>
-<div id="div1" ondrop="drop1(event)" ondragover="allowDrop1(event)"></div>
-<br>
-            </div>
-        </div>
+    <div class="section text-center">
+      <button class="btn" type="submit">Create project &amp; Optima template</button>
+    </div>
 
-
-
-
-        </div>
-
-<h2>Programs</h2>
-
-        <div class="section grid">
-            <div class="2" style="margin:20px 20px 20px 20px;">
-                <p>Available programs:</p>
-
-<div id="div2" ondrop="drop2(event)" ondragover="allowDrop2(event)">
-<div id="drag21" draggable="true" ondragstart="drag2(event)" style="background:#aaaaff; width:250px; margin:10px 10px 10px 10px; text-align:center;">HIV testing & counseling</div>
-<div id="drag22" draggable="true" ondragstart="drag2(event)" style="background:#aaaaff; width:250px; margin:10px 10px 10px 10px; text-align:center;">Female sex workers</div>
-<div id="drag23" draggable="true" ondragstart="drag2(event)" style="background:#aaaaff; width:250px; margin:10px 10px 10px 10px; text-align:center;">Men who have sex with men</div>
-<div id="drag24" draggable="true" ondragstart="drag2(event)" style="background:#aaaaff; width:250px; margin:10px 10px 10px 10px; text-align:center;">Antiretroviral therapy</div>
-<div id="drag25" draggable="true" ondragstart="drag2(event)" style="background:#aaaaff; width:250px; margin:10px 10px 10px 10px; text-align:center;">Prevention of mother-to-child transmission</div>
-<div id="drag26" draggable="true" ondragstart="drag2(event)" style="background:#aaaaff; width:250px; margin:10px 10px 10px 10px; text-align:center;">Behavior change & communication</div>
-<div id="drag27" draggable="true" ondragstart="drag2(event)" style="background:#aaaaff; width:250px; margin:10px 10px 10px 10px; text-align:center;">Needle-syringe program</div>
-<div id="drag28" draggable="true" ondragstart="drag2(event)" style="background:#aaaaff; width:250px; margin:10px 10px 10px 10px; text-align:center;">Opiate substitution therapy</div>
-<div id="drag29" draggable="true" ondragstart="drag2(event)" style="background:#aaaaff; width:250px; margin:10px 10px 10px 10px; text-align:center;">Cash transfers</div>
-<div id="drag30" draggable="true" ondragstart="drag2(event)" style="background:#aaaaff; width:250px; margin:10px 10px 10px 10px; text-align:center;">Other (user-defined)</div>
-<div id="drag31" draggable="true" ondragstart="drag2(event)" style="background:#aaaaff; width:250px; margin:10px 10px 10px 10px; text-align:center;">Other (user-defined)</div>
-<div id="drag32" draggable="true" ondragstart="drag2(event)" style="background:#aaaaff; width:250px; margin:10px 10px 10px 10px; text-align:center;">Other (user-defined)</div>
-<div id="drag33" draggable="true" ondragstart="drag2(event)" style="background:#aaaaff; width:250px; margin:10px 10px 10px 10px; text-align:center;">Other (user-defined)</div>
-<div id="drag34" draggable="true" ondragstart="drag2(event)"></div>
-</div>
-            </div>
-            <div class="2" style="margin:20px 20px 20px 20px;">
-<p>Programs in the model:</p>
-<div id="div2" ondrop="drop2(event)" ondragover="allowDrop2(event)"></div>
-            </div>
-        </div>
-
-
-
-<br>
-
-
-<br>
-
-        <div class="section grid">
-            <div class="2">
-                <input class="txbox" type="number" min="1900" placeholder="Start year" ng-model="projectParams.datastart"required>
-            </div>
-            <div class="2">
-                <input class="txbox" type="number" min="1900" placeholder="End year" ng-model="projectParams.dataend"required>
-            </div>
-        </div>
-
-        <div class="section grid">
-            <div class="4">
-                <input type="file" id="file3" style="display:none">
-                <button class="btn __block" type="submit">Save project &amp; generate Optima template</button>
-            </div>
-        </div>
-    </form>
+    <input type="hidden" name="params" value="{{ formParams }}">
+  </form>
 </div>
