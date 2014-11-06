@@ -61,28 +61,53 @@
           <tfoot>
           <tr>
             <td colspan="4" class="text-right">
-              <button role="button" class="btn" ng-click="openAddPopulationModal($event)">Add population</button>
+              <button role="button" class="btn" ng-click="openAddPopulationModal($event)">Add a population</button>
             </td>
           </tr>
           </tfoot>
         </table>
       </div>
+    </div>
 
+    <div class="section grid">
       <div class="6">
         <p><b>Available programs:</b></p>
 
-        <ul class="list __unstyled">
-          <li ng-repeat="item in programs">
-            <label>
-              <input type="checkbox" ng-model="item.active">
-              {{ item.name }}
-            </label>
-          </li>
-          <li>
-            <input class="txbox __inline" ng-model="newProgram" placeholder="Other (type name here)" style="width: 200px">
-            <button class="btn" type="button" ng-click="addProgram($event)">Add</button>
-          </li>
-        </ul>
+        <table class="section table table-bordered">
+          <thead>
+          <tr>
+            <td><b>Active</b></td>
+            <td><b>Name</b></td>
+            <td><b>Acronym</b></td>
+            <td><b>Indicators</b></td>
+            <td>&nbsp;</td>
+          </tr>
+          </thead>
+          <tbody>
+          <tr ng-show="programs.length" ng-repeat="row in programs">
+            <td class="text-center" style="width: 50px">
+              <input type="checkbox" ng-model="row.active">
+            </td>
+            <td style="width: 300px">{{ row.name }}</td>
+            <td style="width: 150px">{{ row.acronym }}</td>
+            <td class="text-center" style="width: 50px">{{ row.indicators.length }}</td>
+            <td>
+              <button role="button" class="btn" ng-click="openEditProgramModal($event, row)">Edit</button>
+            </td>
+          </tr>
+          <tr ng-show="!programs.length">
+            <td class="text-center" colspan="5">No programs set yet</td>
+          </tr>
+          </tbody>
+          <tfoot>
+          <tr>
+            <td colspan="5" class="text-right">
+              <button role="button" class="btn" ng-click="openAddProgramModal($event)">Add a program</button>
+            </td>
+          </tr>
+          </tfoot>
+        </table>
+
       </div>
     </div>
 
