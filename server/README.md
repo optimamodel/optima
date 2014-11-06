@@ -4,7 +4,7 @@ Installation
   This component requires ([pip](http://pip.readthedocs.org/en/latest/installing.html)) and [PostgreSQL](http://www.postgresql.org/download/).
 
     # Configure database parameters in `src\api.py` file
-    
+    app.config['DATABASE_URI'] = 'postgresql+psycopg2://optima:optima@localhost:5432/optima'
 
     # Run the server
     ./run.sh
@@ -23,7 +23,7 @@ These APIs allow front-end to get current user or login a user.
 	name: "Iwein Fuld" 
    }`
   
-* `/api/user/login/<networks open id>/<url to go to after login>`
+* `/api/user/login?openid=<networks open id>&next=<url to go to after login>`
 
   User is redirected to selected network.
   
@@ -33,7 +33,7 @@ These APIs allow front-end to get current user or login a user.
   
   For Yahoo!
   
-  `/api/user/login/yahoo.com/http://optima.dev`
+  `/api/user/login?openid=yahoo.com&next=http://optima.dev`
 
 * `/api/user/logout`
 
