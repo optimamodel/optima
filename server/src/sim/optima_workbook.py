@@ -94,7 +94,8 @@ def make_parameter_range(name, params):
       name = item['name']
       acronym = item.get('acronym', abbreviate(name))
       coded_params.append([acronym, name])
-#  coded_params = [list((item['acronym'], item['name'])) for item in params]
+    else:
+      coded_params = [list((abbreviate(item), item)) for item in params]
   return OptimaContent(name, row_names, column_names, coded_params)
 
 def make_constant_range(name, row_names, best_data):
@@ -225,6 +226,7 @@ class TitledRange:
         formats.write_rowcol_name(self.sheet, current_row, start_col+n, name)
       #emit data if present
       if self.content.has_data():
+        print self.content.data
         for j, item in enumerate(self.content.data[i]):
           formats.write_unlocked(self.sheet, current_row, self.data_range.first_col+j, item, self.content.row_format)
       else:

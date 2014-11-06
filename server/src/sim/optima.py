@@ -13,18 +13,23 @@ This function does everything. The basic procedure is as follows:
 Version: 2014nov05 by cliffk
 """
 print('WELCOME TO OPTIMA')
-
+import shutil
+import os
 
 ## Set parameters
 projectname = 'example'
 verbose = 4
 
 print('\n\n\n1. Making project...')
-from makeproject import makeproject
-D = makeproject(projectname='example', npops=6, nprogs=8, datastart=2000, dataend=2015, verbose=verbose)
+from makeproject import makeproject, default_pops, default_progs
+if os.path.exists(projectname+'.xlsx'):
+  shutil.copy(projectname+'.xlsx', projectname+'_data.xlsx')
+D = makeproject(projectname='example', pops=default_pops, progs = default_progs, datastart=2000, dataend=2015, verbose=verbose)
 
 print('\n\n\n2. Uploading spreadsheet...')
 from updatedata import updatedata
+if os.path.exists(projectname+'_data.xlsx'):
+  shutil.copy(projectname+'_data.xlsx', projectname+'.xlsx')
 D = updatedata(D, verbose=verbose)
 
 print('\n\n\n3. Running simulation...')

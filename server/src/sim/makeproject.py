@@ -3,9 +3,10 @@ MAKEPROJECT
 http://54.200.79.218/#/project/create
 Version: 2014nov05 by cliffk
 """
+import os
 
-default_pops = ['General males','General females','Female sex workers','Clients of sex workers' \
-'Men who have sex with men''People who inject drugs']
+default_pops = ['General males','General females','Female sex workers','Clients of sex workers', \
+'Men who have sex with men','People who inject drugs']
 
 default_progs = ['Behavior change','Female sex workers','Needle-syringe program', \
 'Men who have sex with men','HIV counseling & testing','Voluntary male circumcision', \
@@ -29,7 +30,11 @@ def makeproject(projectname='example', pops = default_pops, progs = default_prog
     D = struct() # Data structure for saving everything
     D.projectname = projectname
     D.projectfilename = fullpath(projectname+'.prj')
-    D.spreadsheetname = fullpath(projectname + '.xlsx')
+    #hack for your example, Cliff ;-)
+    spreadsheetname = projectname + '.xlsx'
+    if not os.path.exists(spreadsheetname):
+        spreadsheetname = fullpath(spreadsheetname)
+    D.spreadsheetname = spreadsheetname
     D.__doc__ = 'Data structure for storing everything -- data, parameters, simulation results, velociraptors, etc.'
     
     D.G = struct() # "G" for "general parameters"

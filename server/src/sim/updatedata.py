@@ -11,7 +11,7 @@ def updatedata(D, loaddir='', verbose=2):
     from makedatapars import makedatapars
     from dataio import savedata
     from printv import printv
-    printv('Updating data... %s' % D.projectname, 1, verbose)
+    printv('Updating data... %s with spreadsheet %s' % (D.projectname, D.spreadsheetname), 1, verbose)
     
     D.data, D.programs = loadspreadsheet(D.spreadsheetname, verbose=verbose)
     D = makedatapars(D, verbose=verbose) # Update parameters
