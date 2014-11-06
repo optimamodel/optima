@@ -9,7 +9,7 @@ def optimize(projectname='example', maxtime=60, objectives=[]):
      from dataio import loaddata, savedata
      D = loaddata(projectname+'.prj')
      from ballsd import ballsd
-     ballsd(M, objectives) # Optimize parameters
+     ballsd(D.M, objectives) # Optimize parameters
     
      # Generate data for scatter and line plots
      lineplotdata.append(struct())

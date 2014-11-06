@@ -8,6 +8,8 @@ import traceback
 import sys
 from sim.dataio import loaddata, savedata, DATADIR
 from sim.optimize import optimize
+from utils import loaddir
+
 
 """ route prefix: /api/analysis """
 analysis = Blueprint('analysis',  __name__, static_folder = '../static')
@@ -35,12 +37,22 @@ Starts optimisation for the current model. Gives back line plot and two pie plot
 @analysis.route('/optimisation/start')
 def runOptimisation():
     # should call method in optimize.py but it's not implemented yet. for now just returns back the file
+    reply = {'status':'NOK'}
+    project_name = session.get('project_name', '')
+    if project_name == '':
+        reply['reason'] = 'No project is open'
+        return jsonify(reply)
+
+    file_name = helpers.safe_join(loaddir(analysis), project_name+'.prj')
+    print("project file_name: %s" % file_name)
+    if not os.path.exists(file_name):
+        reply['reason'] = 'File for project %s does not exist' % project_name
+        return jsonify(reply)
     json_file = os.path.join(analysis.config['UPLOAD_FOLDER'], "optimisation.json")
     if (not os.path.exists(json_file)):
-        return json.dumps({"status":"NOK", "reason":"Define the optimisation objectives first"})
-    with open(json_file, 'r') as infile:
-        data = json.load(infile)
-    (lineplot, dataplot) = optimize()
+        reply["reason"] = "Define the optimisation objectives first"
+        return jsonify(reply)
+    (lineplot, dataplot) = optimize(project_name)
     (lineplot, dataplot) = (unbunchify(lineplot), unbunchify(dataplot))
     return json.dumps({"lineplot":lineplot, "dataplot":dataplot})
 
