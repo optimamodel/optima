@@ -67,10 +67,9 @@ def doManualCalibration():
     if not os.path.exists(file_name):
         reply['reason'] = 'File for project %s does not exist' % project_name
 
-    fits = manualfit(file_name, data)
-    print("fits: %s" % fits)
-    fits = [unbunchify(x) for x in fits]
-    print("unbunchified fits: %s" % fits)
+    D = manualfit(file_name, data)
+    print("D: %s" % D)
+    fits = {} #todo: how to get graphs from the model after calibration? @cliffkerr ?
     return jsonify(fits[0])
 
 
