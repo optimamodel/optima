@@ -29,11 +29,8 @@ UPLOAD_FOLDER = DATADIR #'/tmp/uploads' #todo configure
 
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config.update(
+app.config['DATABASE_URI'] = 'postgresql+psycopg2://postgres:root@localhost:5432/optima'
 
-    DATABASE_URI = 'postgresql+psycopg2://postgres:root@localhost:5432/optima',
-    DEBUG = True
-)
 app.secret_key = 'F12Zr47j\3yX R~X@H!jmM]Lwf/,?KT'
 
 app.register_blueprint(data, url_prefix = '/api/data')
