@@ -12,6 +12,8 @@ from printv import printv
 import os
 
 DATADIR="/tmp/uploads"
+TEMPLATEDIR = "/tmp/templates"
+PROJECTDIR = "/tmp/projects"
 
 def fullpath(filename, datadir=DATADIR):
     """
@@ -21,11 +23,15 @@ def fullpath(filename, datadir=DATADIR):
     result = filename
     if not(os.path.exists(datadir)):
         os.makedirs(datadir)
-    if os.path.dirname(filename)=='':
+    if os.path.dirname(filename)=='' and not os.path.exists(filename):
         result = os.path.join(datadir, filename)
     return result
 
+def templatepath(filename):
+    return fullpath(filename, TEMPLATEDIR)
 
+def projectpath(filename):
+    return fullpath(filename, PROJECTDIR)
 
 def savedata(filename, data, update=True, verbose=2):
     """
@@ -34,7 +40,7 @@ def savedata(filename, data, update=True, verbose=2):
     printv('Saving data...', 1, verbose)
     from cPickle import dump, load
     
-    filename = fullpath(filename)
+    filename = projectpath(filename)
     try: # First try loading the file and updating it
         rfid = open(filename,'rb') # "Read file ID" -- This will fail if the file doesn't exist
         origdata = load(rfid)
@@ -47,7 +53,7 @@ def savedata(filename, data, update=True, verbose=2):
         wfid = open(filename,'wb')
         dump(data, wfid, protocol=-1)
         printv('..created new file', 3, verbose)
-    printv(' ...done saving data.', 2, verbose)
+    printv(' ...done saving data at %s.' % filename, 2, verbose)
     return filename
 
 
@@ -60,7 +66,7 @@ def loaddata(filename, verbose=2):
     from cPickle import load
     printv('Loading data...', 1, verbose)
     if not os.path.exists(filename):
-        filename = fullpath(filename)
+        filename = projectpath(filename)
     rfid = open(filename,'rb')
     data = load(rfid)
     printv('...done loading data.', 2, verbose)
