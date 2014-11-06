@@ -78,6 +78,9 @@ def doManualCalibration():
     endyear = data.get("endyear")
     if endyear:
         args["endyear"] = int(endyear)
+    dosave = data.get("dosave")
+    if dosave:
+        args["dosave"] = dosave
     try:
         D = load_model(project_name)
         args['D'] = D
