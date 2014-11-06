@@ -1,22 +1,17 @@
-"""
-MAKEMODELPARS
-
-Calculate all acts and reconcile them between populations.
-
-Version: 2014oct29
-"""
-
-def makemodelpars(P, options, verbose=2):
+def makemodelpars(P, G, options, verbose=2):
     """
     Prepares model parameters to run the simulation.
-    """
-    if verbose>=1: print('Making model parameters...')
     
-    from matplotlib.pylab import zeros, array
+    Version: 2014nov05
+    """
+    
+    from printv import printv
+    from matplotlib.pylab import zeros, array, ones
     from bunch import Bunch as struct # Replicate Matlab-like structure behavior
+    printv('Making model parameters...', 1, verbose)
+    
     M = struct()
     M.__doc__ = 'Model parameters to be used directly in the model, calculated from data parameters P.'
-    
     tvec = options.tvec # Shorten time vector
     npts = len(tvec) # Number of time points # TODO probably shouldn't be repeated from model.m
     
@@ -39,12 +34,14 @@ def makemodelpars(P, options, verbose=2):
     ## Epidemilogy parameters -- most are data
     M.popsize = dpar2mpar(P.popsize) # Population size -- TODO: don't take average for this!
     M.hivprev = dpar2mpar(P.hivprev) # Initial HIV prevalence -- TODO: don't take average for this
-    M.stiprev = dpar2mpar(P.stiprev) # STI prevalence
+    M.stiprevulc = dpar2mpar(P.stiprevulc) # STI prevalence
+    M.stiprevdis = dpar2mpar(P.stiprevdis) # STI prevalence
+    M.death = dpar2mpar(P.death) # Death rates
     ## TB prevalence @@@
     
     ## Testing parameters -- most are data
-    M.hivtest = dpar2mpar(P.hivtest) # HIV testing rates
-    M.aidstest = dpar2mpar(P.aidstest) # AIDS testing rates
+    M.hivtest = dpar2mpar(P.testrate) # HIV testing rates
+    M.aidstest = dpar2mpar(P.aidstestrate) # AIDS testing rates
     blank = struct()
     blank.p = [0] # WARNING # TODO KLUDGY
     M.tx1 = dpar2mpar(blank)
@@ -57,7 +54,7 @@ def makemodelpars(P, options, verbose=2):
     M.numacts.reg = dpar2mpar(P.numactsreg) # ...
     M.numacts.cas = dpar2mpar(P.numactscas) # ...
     M.numacts.com = dpar2mpar(P.numactscom) # ...
-    M.numacts.drug = dpar2mpar(P.numinject) # ..
+    M.numacts.inj = dpar2mpar(P.numinject) # ..
     M.condom.reg = dpar2mpar(P.condomreg) # ...
     M.condom.cas = dpar2mpar(P.condomcas) # ...
     M.condom.com = dpar2mpar(P.condomcom) # ...
@@ -117,7 +114,7 @@ def makemodelpars(P, options, verbose=2):
     # Calculate number of acts
     M.totalacts = struct()
     M.totalacts.__doc__ = 'Balanced numbers of acts'
-    for act in ['reg','cas','com','drug']:
+    for act in P.pships.keys():
         npops = len(M.popsize[:,0])
         M.totalacts[act] = zeros((npops,npops,npts))
         for t in range(npts):
@@ -126,6 +123,17 @@ def makemodelpars(P, options, verbose=2):
     # Apply interventions?
     
     # Sum matrices?
+    
+    # Initialize fitted parameters
+    F = struct()
+    F.__doc__ = 'Fitted parameters structure: initial prevalence, force-of-infection, diagnoses, treatment'
+    F.init = ones(G.npops)
+    F.force = ones(G.npops)
+    F.dx = array([1, 1, (G.datastart+G.dataend)/2, 1])
+    F.tx1 = array([1, 1, (G.datastart+G.dataend)/2, 1])
+    F.tx2 = array([1, 1, (G.datastart+G.dataend)/2, 1])
+    
+    
 
-    if verbose>=2: print('  ...done making model parameters.')
-    return M
+    printv('...done making model parameters.', 2, verbose)
+    return M, F

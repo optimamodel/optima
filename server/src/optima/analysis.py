@@ -6,7 +6,7 @@ from generators.line import generatedata
 import json
 import traceback
 import sys
-from sim.dataio import loaddata, savedata, normalize_file, DATADIR
+from sim.dataio import loaddata, savedata, DATADIR
 from sim.optimize import optimize
 
 """ route prefix: /api/analysis """

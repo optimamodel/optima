@@ -1,38 +1,39 @@
 """
 DATAIO
 
-Data input/output. Converts structures to dictionaries so they can be saved by
-savemat. Why not use pickle, you ask? Because picke is slow (10x slower for
-readout!) and inflexible.
+Data input/output. Uses pickle because savemat() can't handle arbitrary data
+structures, even though savemat() is (much) faster, and the compatibility with
+Matlab would be nice.
 
-Version: 2014oct29
+Version: 2014nov05 by cliffk
 """
 
-import os
+from printv import printv
 
 DATADIR="/tmp/uploads"
 
-def normalize_file(filename):
+def fullpath(filename, datadir=DATADIR):
     """
-    "Normalizes" filename:  if it is full path, leaves it alone. 
-                            otherwise, prepends it with DATADIR.
+    "Normalizes" filename:  if it is full path, leaves it alone. Otherwise, prepends it with datadir.
     """
+    import os
     result = filename
-    if not os.path.exists(DATADIR):
-        os.makedirs(DATADIR)
+    if not(os.path.exists(datadir)):
+        os.makedirs(datadir)
     if os.path.dirname(filename)=='':
-        result = os.path.join(DATADIR, filename)
+        result = os.path.join(datadir, filename)
     return result
+
 
 
 def savedata(filename, data, update=True, verbose=2):
     """
-    Saves the pickled data into the file (either updates it or just overwrites)
+    Saves the pickled data into the file (either updates it or just overwrites).
     """
-    if verbose>=1: print('Saving data...')
+    printv('Saving data...', 1, verbose)
     from cPickle import dump, load
     
-    filename = normalize_file(filename)
+    filename = fullpath(filename)
     try: # First try loading the file and updating it
         rfid = open(filename,'rb') # "Read file ID" -- This will fail if the file doesn't exist
         origdata = load(rfid)
@@ -40,13 +41,14 @@ def savedata(filename, data, update=True, verbose=2):
         else: origdata = data
         wfid = open(filename,'wb')
         dump(data, wfid, protocol=-1)
-        if verbose>=2: print('  ..updated file')
+        printv('..updated file', 3, verbose)
     except: # If that fails, save a new file
         wfid = open(filename,'wb')
         dump(data, wfid, protocol=-1)
-        if verbose>=2: print('  ..created new file')
-    if verbose>=2: print(' ...done saving data.')
+        printv('..created new file', 3, verbose)
+    printv(' ...done saving data.', 2, verbose)
     return filename
+
 
 
 
@@ -54,10 +56,10 @@ def loaddata(filename, verbose=2):
     """
     Loads the file and unpickles data from it.
     """
-    filename = normalize_file(filename)
-    if verbose>=1: print('Loading data...')
+    filename = fullpath(filename)
+    printv('Loading data...', 1, verbose)
     from cPickle import load
     rfid = open(filename,'rb')
     data = load(rfid)
-    if verbose>=2: print('  ...done loading data.')
+    printv('...done loading data.', 2, verbose)
     return data

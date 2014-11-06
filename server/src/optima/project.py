@@ -6,7 +6,7 @@ from werkzeug import secure_filename
 import os
 import sys
 import traceback
-from sim.dataio import loaddata, savedata, normalize_file, DATADIR
+from sim.dataio import loaddata, savedata, DATADIR
 from sim.updatedata import updatedata
 from sim.loadspreadsheet import loadspreadsheet
 from sim.makeproject import makeproject
@@ -55,7 +55,8 @@ def createProject(project_name):
         makeproject_args['pops'] = data['populations']
 #    makeproject_args = dict(makeproject_args.items() + data.items())
     print(makeproject_args)
-    new_project_template = makeproject(**makeproject_args) # makeproject is supposed to return the name of the existing file...
+    D = makeproject(**makeproject_args) # makeproject is supposed to return the name of the existing file...
+    new_project_template = D.spreadsheetname
     print("new_project_template: %s" % new_project_template)
     (dirname, basename) = os.path.split(new_project_template)
 #    xlsname = project_name + '.xlsx'
@@ -144,8 +145,8 @@ def uploadExcel():
         return json.dumps(reply)
 
     try:
-        out_filename = updatedata(file_basename, loaddir)
         data = loaddata(project_name)
+        D = updatedata(data, loaddir)
     except Exception, err:
         var = traceback.format_exc()
         reply['exception'] = var
