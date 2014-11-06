@@ -99,7 +99,6 @@ def getProjectList():
             projects.append(file)
     return jsonify({"projects":projects})
 
-
 """
 Download example Excel file.
 """
