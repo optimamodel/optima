@@ -26,23 +26,7 @@ oid = OpenID(app, safe_roots=[], extension_responses=[pape.Response])
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-  
-# setup flask
-"""app = Flask(__name__)"""
-app.config.update(
-
-    DATABASE_URI = 'postgresql+psycopg2://postgres:root@localhost:5432/optima',
-    DEBUG = True
-)
-
-
-
-# setup flask-openid
-"""
-oid = OpenID(app, safe_roots=[], extension_responses=[pape.Response])
-"""
-
-
+import logging  
 # setup sqlalchemy
 
 engine = create_engine(app.config['DATABASE_URI'])
@@ -75,6 +59,7 @@ class User(Base):
 def before_request():
     g.user = None
     if 'openid' in session:
+        logging.warning('before_request')
         g.user = User.query.filter_by(openid=session['openid']).first()
 
 
@@ -113,6 +98,15 @@ def login():
                       'next': oid.get_next_url(),
                       'error': oid.fetch_error() 
                   })
+
+@user.route('/current', methods=['GET'])
+def current_user():
+    g.user = None
+    if 'openid' in session:
+        g.user = User.query.filter_by(openid=session['openid']).first()
+        return jsonify({ 'email': g.user.email, 'name': g.user.name })  
+
+    abort(401)
 
 @oid.after_login
 def create_or_login(resp):
