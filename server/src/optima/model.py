@@ -49,10 +49,22 @@ def doAutoCalibration():
     file_name = helpers.safe_join(PROJECTDIR, project_name+'.prj')
     print("project file_name: %s" % file_name)
     fits = autofit(file_name, data)
-    print("fits: %s" % fits)
-    fits = [unbunchify(x) for x in fits]
-    print("unbunchified fits: %s" % fits)
-    return jsonify(fits[0])
+    # autofit is not implemented yet, so just run the simulation #TODO #FIXME
+    try:
+        D = load_model(project_name)
+        D = runsimulation(**args) 
+        D = epiresults(D)
+        D_dict = unbunchify(D)
+    except Exception, err:
+        var = traceback.format_exc()
+        return jsonify({"status":"NOK", "exception":var})
+    return jsonify(D_dict.get('O',{}))
+
+
+#    print("fits: %s" % fits)
+#    fits = [unbunchify(x) for x in fits]
+#    print("unbunchified fits: %s" % fits)
+#    return jsonify(fits[0])
 
 
 """ 
