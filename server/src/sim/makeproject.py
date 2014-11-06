@@ -1,7 +1,7 @@
 """
 MAKEPROJECT
 http://54.200.79.218/#/project/create
-Version: 2014oct29
+Version: 2014nov05 by cliffk
 """
 
 default_pops = ['General males','General females','Female sex workers','Clients of sex workers' \
@@ -17,35 +17,32 @@ def makeproject(projectname='example', pops = default_pops, progs = default_prog
     Initializes the empty project. Only the "Global" parameters are added on this step.
     The rest of the parameters is calculated after the model is updated with the data from the spreadsheet.
     """
-    if verbose>=1: 
-        print("""Making project %s: 
+    from dataio import savedata, fullpath
+    from bunch import Bunch as struct
+    from printv import printv
+
+    printv("""Making project %s: 
             pops=%s, progs=%s, datastart = %s, dataend = %s,
             econ_datastart=%s, econ_dataend=%s""" % \
-            (projectname, pops, progs, datastart, dataend, econ_datastart, econ_datastart))
-    
-    from dataio import savedata, normalize_file
-    from bunch import Bunch as struct
-    projectfilename = normalize_file(projectname+'.prj')
-    spreadsheetname = normalize_file(projectname + '.xlsx')
+            (projectname, pops, progs, datastart, dataend, econ_datastart, econ_datastart), 1, verbose)
 
-    npops = len(pops)
-    nprogs = len(progs)
-    
     D = struct() # Data structure for saving everything
+    D.projectname = projectname
+    D.projectfilename = fullpath(projectname+'.prj')
+    D.spreadsheetname = fullpath(projectname + '.xlsx')
     D.__doc__ = 'Data structure for storing everything -- data, parameters, simulation results, velociraptors, etc.'
+    
     D.G = struct() # "G" for "general parameters"
     D.G.__doc__ = 'General parameters for the model, including the number of population groups, project name, etc.'
-    D.G.npops = npops
-    D.G.nprogs = nprogs
+    D.G.npops = len(pops)
+    D.G.nprogs = len(progs)
     D.G.projectname = projectname
     D.G.datastart = datastart
     D.G.dataend = dataend
-    result_file_name = savedata(projectfilename, D, verbose=verbose) # Create project -- #TODO: check if an existing project exists and don't overwrite it
-#    return result_file_name
-    # Make an Excel template and then prompt the user to save it #TODO #FIXME
+    savedata(D.projectfilename, D, verbose=verbose) # Create project -- #TODO: check if an existing project exists and don't overwrite it
+    # Make an Excel template and then prompt the user to save it
     from makespreadsheet import makespreadsheet 
-    makespreadsheet(spreadsheetname, pops, progs, datastart, dataend, econ_datastart, econ_dataend, verbose=verbose)
+    makespreadsheet(D.spreadsheetname, pops, progs, datastart, dataend, econ_datastart, econ_dataend, verbose=verbose)
     
-    if verbose>=2: print('  ...done making project %s., created spreadsheet %s' \
-        % (projectname, spreadsheetname))
-    return spreadsheetname
+    printv('  ...done making project %s., created spreadsheet %s' % (D.projectname, D.spreadsheetname), 2, verbose)
+    return D

@@ -6,7 +6,7 @@ from generators.line import generatedata
 import json
 import traceback
 import sys
-from sim.dataio import loaddata, savedata, normalize_file, DATADIR
+from sim.dataio import loaddata, savedata, DATADIR
 from sim.updatedata import updatedata
 from sim.loadspreadsheet import loadspreadsheet
 from sim.makeproject import makeproject
@@ -67,10 +67,9 @@ def doManualCalibration():
     if not os.path.exists(file_name):
         reply['reason'] = 'File for project %s does not exist' % project_name
 
-    fits = manualfit(file_name, data)
-    print("fits: %s" % fits)
-    fits = [unbunchify(x) for x in fits]
-    print("unbunchified fits: %s" % fits)
+    D = manualfit(file_name, data)
+    print("D: %s" % D)
+    fits = {} #todo: how to get graphs from the model after calibration? @cliffkerr ?
     return jsonify(fits[0])
 
 
@@ -87,7 +86,8 @@ def doRunSimulation():
 
     #expects json: {"startyear":year,"endyear":year} and gets project_name from session
     args = {}
-    args["projectdatafile"] = helpers.safe_join(loaddir(model), project_name+'.prj')
+    project_file = helpers.safe_join(loaddir(model), project_name+'.prj')
+    args['D'] = loaddata(project_file)
     startyear = data.get("startyear")
     if startyear:
         args["startyear"] = int(startyear)
