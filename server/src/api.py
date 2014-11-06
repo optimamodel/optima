@@ -1,13 +1,8 @@
 import os
 import shutil
 from flask import Flask, helpers, request, jsonify, session, redirect
-from flask.ext.openid import OpenID
-from openid.extensions import pape
-
 
 app = Flask(__name__)
-oid = OpenID(app, safe_roots=[], extension_responses=[pape.Response])
-
 
 from werkzeug import secure_filename
 from generators.line import generatedata
@@ -24,7 +19,7 @@ from sim.runsimulation import runsimulation
 from sim.optimize import optimize
 from optima.analysis import analysis
 from optima.data import data
-from optima.login import logintest
+from optima.login import user
 from optima.model import model
 from optima.project import project
 from optima.utils import allowed_file
@@ -37,7 +32,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.secret_key = 'F12Zr47j\3yX R~X@H!jmM]Lwf/,?KT'
 
 app.register_blueprint(data, url_prefix = '/api/data')
-app.register_blueprint(logintest, url_prefix = '/api/user')
+app.register_blueprint(user, url_prefix = '/api/user')
 app.register_blueprint(project, url_prefix = '/api/project')
 app.register_blueprint(model, url_prefix = '/api/model')
 app.register_blueprint(analysis, url_prefix = '/api/analysis')

@@ -11,17 +11,22 @@
     :copyright: (c) 2010 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
-from flask import Flask, render_template, request, g, session, flash, \
+from flask import Flask, render_template, request, jsonify, g, session, flash, \
      redirect, url_for, abort, Blueprint
+from flask.ext.openid import OpenID
+from openid.extensions import pape
 
-""" route prefix: /api/user """
-logintest = Blueprint('login',  __name__, static_folder = '../static')
+# route prefix: /api/user
+user = Blueprint('login',  __name__, static_folder = '../static')
 
-from api import oid
+from api import app
+
+oid = OpenID(app, safe_roots=[], extension_responses=[pape.Response])
+
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-
+  
 # setup flask
 """app = Flask(__name__)
 app.config.update(
@@ -65,43 +70,48 @@ class User(Base):
         self.openid = openid
 
 
-@logintest.before_request
+@user.before_request
 def before_request():
     g.user = None
     if 'openid' in session:
         g.user = User.query.filter_by(openid=session['openid']).first()
 
 
-@logintest.after_request
+@user.after_request
 def after_request(response):
-    db_session.remove()
+    #db_session.remove()
     return response
 
 
-@logintest.route('/loginform')
+@user.route('/loginform')
 def login_form():
     return render_template('index.html')
 
 
-@logintest.route('/login', methods=['GET', 'POST'])
+@user.route('/login', methods=['GET', 'POST'])
 @oid.loginhandler
 def login():
-    """Does the login via OpenID.  Has to call into `oid.try_login`
-    to start the OpenID machinery.
-    """
-    # if we are already logged in, go back to were we came from
+    # Does the login via OpenID.  Has to call into `oid.try_login`
+    # to start the OpenID machinery.
+    
+    # If we are already logged in, go back to were we came from
     if g.user is not None:
         return redirect(oid.get_next_url())
+        
+    # If we are trying to login
     if request.method == 'POST':
         openid = request.form.get('openid')
+        print(openid);
         if openid:
             pape_req = pape.Request([])
             return oid.try_login(openid, ask_for=['email', 'nickname'],
                                          ask_for_optional=['fullname'],
                                          extensions=[pape_req])
-    return render_template('login.html', next=oid.get_next_url(),
-                           error=oid.fetch_error())
-
+                                         
+    return jsonify({ 'status': 'Login',
+                      'next': oid.get_next_url(),
+                      'error': oid.fetch_error() 
+                  })
 
 @oid.after_login
 def create_or_login(resp):
@@ -124,7 +134,7 @@ def create_or_login(resp):
                             email=resp.email))
 
 
-@logintest.route('/create-profile', methods=['GET', 'POST'])
+@user.route('/create-profile', methods=['GET', 'POST'])
 def create_profile():
     """If this is the user's first login, the create_or_login function
     will redirect here so that the user can set up his profile.
@@ -146,7 +156,7 @@ def create_profile():
     return render_template('create_profile.html', next_url=oid.get_next_url())
 
 
-@logintest.route('/profile', methods=['GET', 'POST'])
+@user.route('/profile', methods=['GET', 'POST'])
 def edit_profile():
     """Updates a profile"""
     if g.user is None:
@@ -174,7 +184,7 @@ def edit_profile():
     return render_template('edit_profile.html', form=form)
 
 
-@logintest.route('/logout')
+@user.route('/logout')
 def logout():
     session.pop('openid', None)
     flash(u'You have been signed out')
