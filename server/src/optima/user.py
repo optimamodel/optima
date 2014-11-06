@@ -17,7 +17,7 @@ from flask.ext.openid import OpenID
 from openid.extensions import pape
 
 # route prefix: /api/user
-user = Blueprint('login',  __name__, static_folder = '../static')
+user = Blueprint('user',  __name__, static_folder = '../static')
 
 from api import app
 
