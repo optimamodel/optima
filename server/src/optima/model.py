@@ -127,7 +127,7 @@ def doRunSimulation():
 
     #expects json: {"startyear":year,"endyear":year} and gets project_name from session
     args = {}
-    args['D'] = load_model(loaddir(model), project_file)
+    args['D'] = load_model(loaddir(model), project_name)
     startyear = data.get("startyear")
     if startyear:
         args["startyear"] = int(startyear)
