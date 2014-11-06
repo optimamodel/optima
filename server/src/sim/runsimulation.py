@@ -22,7 +22,7 @@ def runsimulation(D, startyear=2000, endyear=2030, verbose=2):
     
     # Convert data parameters to model parameters
     from makemodelpars import makemodelpars
-    D.M, D.F = makemodelpars(D.P, D.G, options, verbose=verbose)
+    D.M = makemodelpars(D.P, options, verbose=verbose)
     
     # Run model
     from model import model
