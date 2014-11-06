@@ -12,10 +12,10 @@ from sim.loadspreadsheet import loadspreadsheet
 from sim.makeproject import makeproject
 from sim.manualfit import manualfit
 from sim.autofit import autofit
-from sim.bunch import unbunchify
+from sim.bunch import unbunchify, Bunch as struct
 from sim.runsimulation import runsimulation
 from sim.optimize import optimize
-from utils import loaddir
+from utils import loaddir, load_model, save_model
 
 """ route prefix: /api/model """
 model = Blueprint('model',  __name__, static_folder = '../static')
@@ -77,6 +77,44 @@ def doManualCalibration():
 
 
 """
+Returns the parameters of the given model.
+"""
+@model.route('/parameters/<group>')
+def getModelParameters(group):
+    project_name = session.get('project_name', '')
+    if project_name == '':
+        return jsonify({'status':'NOK', 'reason':'no project is open'})
+    D = load_model(loaddir(model), project_name)
+    print ("D: %s" % D)
+    result = unbunchify(D)
+    print "result: %s" % result
+    return jsonify(result.get(group,{}))
+
+"""
+Sets the given group parameters for the given model.
+"""
+@model.route('/parameters/<group>', methods=['POST'])
+def setModelParameters(group):
+    data = json.loads(request.data)
+    print("set parameters group: %s for data: %s" % (group, data))
+    project_name = session.get('project_name', '')
+    if project_name == '':
+        return jsonify({'status':'NOK', 'reason':'no project is open'})
+    try:
+        D = load_model(loaddir(model), project_name)
+        print ("D: %s" % D)
+        D_dict = unbunchify(D)
+        D_dict[group] = data
+        D_mod = struct(D_dict)
+        save_model(loaddir(model), project_name, D_mod)
+    except Exception, err:
+        var = traceback.format_exc()
+        return jsonify({"status":"NOK", "exception":var})        
+    print "D as dict: %s" % D_dict
+    return jsonify({"status":"OK", "project":project_name, "group":group})
+
+
+"""
 Starts simulation for the given project and given date range. 
 Returns back the file with the simulation data. (?) #FIXME find out how to use it
 """
@@ -89,8 +127,7 @@ def doRunSimulation():
 
     #expects json: {"startyear":year,"endyear":year} and gets project_name from session
     args = {}
-    project_file = helpers.safe_join(loaddir(model), project_name+'.prj')
-    args['D'] = loaddata(project_file)
+    args['D'] = load_model(loaddir(model), project_file)
     startyear = data.get("startyear")
     if startyear:
         args["startyear"] = int(startyear)
