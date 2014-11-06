@@ -38,7 +38,7 @@ def init_db():
     Base.metadata.create_all(bind=engine)
 
 
-class User(Base):
+class UserDb(Base):
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True)
     name = Column(String(60))
@@ -55,7 +55,7 @@ class User(Base):
 def before_request():
     g.user = None
     if 'openid' in session:
-        g.user = User.query.filter_by(openid=session['openid']).first()
+        g.user = UserDb.query.filter_by(openid=session['openid']).first()
 
 
 @user.after_request
@@ -63,10 +63,10 @@ def after_request(response):
     #db_session.remove()
     return response
 
-@user.route('/login/<open_id>/<next_url>', methods=['GET'])
+@user.route('/login', methods=['GET'])
 @oid.loginhandler
-def login(open_id, next_url):
-  
+def login():
+      
     # Does the login via OpenID.  Has to call into `oid.try_login`
     # to start the OpenID machinery.
     # If we are already logged in, go back to were we came from
@@ -74,11 +74,12 @@ def login(open_id, next_url):
         return redirect(oid.get_next_url())
     
     # If we are trying to login
-
     if request.method == 'GET':
         
-        if open_id is None or next_url is None:
-            abour(401)
+        open_id = request.values.get('openid');
+        
+        if open_id is None:
+            abort(401)
         
         if open_id:
             pape_req = pape.Request([])
@@ -86,16 +87,13 @@ def login(open_id, next_url):
                                          ask_for_optional=['fullname'],
                                          extensions=[pape_req])
                                          
-    return jsonify({ 'status': 'Login',
-                      'next': oid.get_next_url(),
-                      'error': oid.fetch_error() 
-                  })
+    abort(401)
 
 @user.route('/current', methods=['GET'])
 def current_user():
     g.user = None
     if 'openid' in session:
-        g.user = User.query.filter_by(openid=session['openid']).first()
+        g.user = UserDb.query.filter_by(openid=session['openid']).first()
         return jsonify({ 'email': g.user.email, 'name': g.user.name })  
 
     abort(401)
@@ -111,7 +109,7 @@ def create_or_login(resp):
     if 'pape' in resp.extensions:
         pape_resp = resp.extensions['pape']
         session['auth_time'] = pape_resp.auth_time
-    user = User.query.filter_by(openid=resp.identity_url).first()
+    user = UserDb.query.filter_by(openid=resp.identity_url).first()
     if user is not None:
         flash(u'Successfully signed in')
         g.user = user
@@ -126,7 +124,7 @@ def create_or_login(resp):
         flash(u'Error: you have to enter a valid email address')
     else:
         flash(u'Profile successfully created')
-        db_session.add(User(name, email, session['openid']))
+        db_session.add(UserDb(name, email, session['openid']))
         db_session.commit()
         return redirect(oid.get_next_url())
 
@@ -147,7 +145,7 @@ def create_profile():
             flash(u'Error: you have to enter a valid email address')
         else:
             flash(u'Profile successfully created')
-            db_session.add(User(name, email, session['openid']))
+            db_session.add(UserDb(name, email, session['openid']))
             db_session.commit()
             return redirect(oid.get_next_url())
     return render_template('create_profile.html', next_url=oid.get_next_url())
