@@ -28,7 +28,9 @@ def project_exists(name, folder = PROJECTDIR):
 """
 def load_model(name, folder = PROJECTDIR):
   project_file = helpers.safe_join(folder, name+'.prj')
-  return loaddata(project_file)
+  data = loaddata(project_file)
+  print ("data: %s" % data)
+  return data
 
 def save_model(name, model, folder = PROJECTDIR):
   project_file = helpers.safe_join(folder, name+'.prj')
