@@ -18,6 +18,7 @@ def makeproject(projectname='example', pops = default_pops, progs = default_prog
     Initializes the empty project. Only the "Global" parameters are added on this step.
     The rest of the parameters is calculated after the model is updated with the data from the spreadsheet.
     """
+    from matplotlib.pylab import ones, array
     from dataio import savedata, fullpath
     from bunch import Bunch as struct
     from printv import printv
@@ -44,6 +45,17 @@ def makeproject(projectname='example', pops = default_pops, progs = default_prog
     D.G.projectname = projectname
     D.G.datastart = datastart
     D.G.dataend = dataend
+    
+    # Initialize fitted parameters
+    D.F = struct()
+    D.F.__doc__ = 'Fitted parameters structure: initial prevalence, force-of-infection, diagnoses, treatment'
+    D.F.init = ones(D.G.npops)
+    D.F.force = ones(D.G.npops)
+    D.F.dx = array([1, 1, (D.G.datastart+D.G.dataend)/2, 1])
+    D.F.tx1 = array([1, 1, (D.G.datastart+D.G.dataend)/2, 1])
+    D.F.tx2 = array([1, 1, (D.G.datastart+D.G.dataend)/2, 1])    
+    
+    
     savedata(D.projectfilename, D, verbose=verbose) # Create project -- #TODO: check if an existing project exists and don't overwrite it
     # Make an Excel template and then prompt the user to save it
     from makespreadsheet import makespreadsheet 
