@@ -43,11 +43,11 @@ def runOptimisation():
         reply['reason'] = 'No project is open'
         return jsonify(reply)
 
-    file_name = helpers.safe_join(loaddir(analysis), project_name+'.prj')
-    print("project file_name: %s" % file_name)
-    if not os.path.exists(file_name):
+    if not project_exists(project_name):
         reply['reason'] = 'File for project %s does not exist' % project_name
         return jsonify(reply)
+    file_name = helpers.safe_join(PROJECTDIR, project_name+'.prj')
+    print("project file_name: %s" % file_name)
     json_file = os.path.join(analysis.config['UPLOAD_FOLDER'], "optimisation.json")
     if (not os.path.exists(json_file)):
         reply["reason"] = "Define the optimisation objectives first"

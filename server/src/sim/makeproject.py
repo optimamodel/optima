@@ -19,7 +19,7 @@ def makeproject(projectname='example', pops = default_pops, progs = default_prog
     The rest of the parameters is calculated after the model is updated with the data from the spreadsheet.
     """
     from matplotlib.pylab import ones, array
-    from dataio import savedata, fullpath
+    from dataio import savedata, fullpath, projectpath
     from bunch import Bunch as struct
     from printv import printv
 
@@ -30,12 +30,8 @@ def makeproject(projectname='example', pops = default_pops, progs = default_prog
 
     D = struct() # Data structure for saving everything
     D.projectname = projectname
-    D.projectfilename = fullpath(projectname+'.prj')
-    #hack for your example, Cliff ;-)
-    spreadsheetname = projectname + '.xlsx'
-    if not os.path.exists(spreadsheetname):
-        spreadsheetname = fullpath(spreadsheetname)
-    D.spreadsheetname = spreadsheetname
+    D.projectfilename = projectpath(projectname+'.prj')
+    D.spreadsheetname = projectname + '.xlsx'
     D.__doc__ = 'Data structure for storing everything -- data, parameters, simulation results, velociraptors, etc.'
     
     D.G = struct() # "G" for "general parameters"

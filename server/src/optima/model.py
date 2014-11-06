@@ -15,7 +15,7 @@ from sim.autofit import autofit
 from sim.bunch import unbunchify, Bunch as struct
 from sim.runsimulation import runsimulation
 from sim.optimize import optimize
-from utils import loaddir, load_model, save_model
+from utils import loaddir, load_model, save_model, project_exists
 
 """ route prefix: /api/model """
 model = Blueprint('model',  __name__, static_folder = '../static')
@@ -41,12 +41,12 @@ def doAutoCalibration():
         reply['reason'] = 'No project is open'
         return jsonify(reply)
 
-    file_name = helpers.safe_join(loaddir(model), project_name+'.prj')
-    print("project file_name: %s" % file_name)
-    if not os.path.exists(file_name):
+    if not project_exists(project_name):
         reply['reason'] = 'File for project %s does not exist' % project_name
         return jsonify(reply)
 
+    file_name = helpers.safe_join(PROJECTDIR, project_name+'.prj')
+    print("project file_name: %s" % file_name)
     fits = autofit(file_name, data)
     print("fits: %s" % fits)
     fits = [unbunchify(x) for x in fits]
@@ -65,11 +65,11 @@ def doManualCalibration():
     if project_name == '':
         return jsonify({'status':'NOK', 'reason':'no project is open'})
 
-    file_name = helpers.safe_join(loaddir(model), project_name+'.prj')
-    print("project file_name: %s" % file_name)
-    if not os.path.exists(file_name):
+    if not project_exists(project_name):
         reply['reason'] = 'File for project %s does not exist' % project_name
 
+    file_name = helpers.safe_join(PROJECTDIR, project_name+'.prj')
+    print("project file_name: %s" % file_name)
     D = manualfit(file_name, data)
     print("D: %s" % D)
     fits = {} #todo: how to get graphs from the model after calibration? @cliffkerr ?
@@ -84,7 +84,7 @@ def getModelParameters(group):
     project_name = session.get('project_name', '')
     if project_name == '':
         return jsonify({'status':'NOK', 'reason':'no project is open'})
-    D = load_model(loaddir(model), project_name)
+    D = load_model(project_name)
     print ("D: %s" % D)
     result = unbunchify(D)
     print "result: %s" % result
@@ -101,7 +101,7 @@ def setModelParameters(group):
     if project_name == '':
         return jsonify({'status':'NOK', 'reason':'no project is open'})
     try:
-        D = load_model(loaddir(model), project_name)
+        D = load_model(project_name)
         print ("D: %s" % D)
         D_dict = unbunchify(D)
         D_dict[group] = data
@@ -127,7 +127,7 @@ def doRunSimulation():
 
     #expects json: {"startyear":year,"endyear":year} and gets project_name from session
     args = {}
-    args['D'] = load_model(loaddir(model), project_name)
+    args['D'] = load_model(project_name)
     startyear = data.get("startyear")
     if startyear:
         args["startyear"] = int(startyear)

@@ -1,3 +1,5 @@
+from dataio import templatepath
+
 def loadspreadsheet(filename='example.xlsx',verbose=2):
     """
     Loads the spreadsheet (i.e. reads its contents into the data structure).

@@ -1,5 +1,5 @@
 import os
-from sim.dataio import DATADIR, loaddata, savedata
+from sim.dataio import DATADIR, PROJECTDIR, loaddata, savedata
 from flask import helpers
 
 ALLOWED_EXTENSIONS=set(['txt','xlsx','xls'])
@@ -17,7 +17,7 @@ def loaddir(app):
     loaddir = DATADIR
   return loaddir
 
-def project_exists(folder, name):
+def project_exists(name, folder = PROJECTDIR):
   project_name = helpers.safe_join(folder, name+'.prj')
   print("project name: %s" % project_name)
   return os.path.exists(project_name)
@@ -26,10 +26,10 @@ def project_exists(folder, name):
   loads the project with the given name from the given folder
   returns the model (D).
 """
-def load_model(folder, name):
+def load_model(name, folder = PROJECTDIR):
   project_file = helpers.safe_join(folder, name+'.prj')
   return loaddata(project_file)
 
-def save_model(folder, name, model):
+def save_model(name, model, folder = PROJECTDIR):
   project_file = helpers.safe_join(folder, name+'.prj')
   return savedata(project_file, model)
