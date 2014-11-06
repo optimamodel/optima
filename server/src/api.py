@@ -19,7 +19,7 @@ from sim.runsimulation import runsimulation
 from sim.optimize import optimize
 from optima.analysis import analysis
 from optima.data import data
-from optima.login import user
+from optima.user import user
 from optima.model import model
 from optima.project import project
 from optima.utils import allowed_file
