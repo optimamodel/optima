@@ -15,7 +15,7 @@ from flask import Flask, render_template, request, jsonify, g, session, flash, \
      redirect, url_for, abort, Blueprint
 from flask.ext.openid import OpenID
 from openid.extensions import pape
-import logging
+
 # route prefix: /api/user
 user = Blueprint('user',  __name__, static_folder = '../static')
 
@@ -30,7 +30,8 @@ from sqlalchemy.ext.declarative import declarative_base
 # setup flask
 """app = Flask(__name__)"""
 app.config.update(
-    DATABASE_URI = 'postgresql+pypostgresql://postgres:postgres@localhost:5432/optima',
+
+    DATABASE_URI = 'postgresql+psycopg2://postgres:root@localhost:5432/optima',
     DEBUG = True
 )
 
@@ -45,7 +46,8 @@ oid = OpenID(app, safe_roots=[], extension_responses=[pape.Response])
 # setup sqlalchemy
 
 engine = create_engine(app.config['DATABASE_URI'])
-db_session = scoped_session(sessionmaker(autocommit=True,
+
+db_session = scoped_session(sessionmaker(autocommit=False,
                                          autoflush=True,
                                          bind=engine))
 
@@ -92,12 +94,10 @@ def login_form():
 def login():
     # Does the login via OpenID.  Has to call into `oid.try_login`
     # to start the OpenID machinery.
-    logging.warning('Inside login')
     # If we are already logged in, go back to were we came from
     if g.user is not None:
         return redirect(oid.get_next_url())
-    logging.warning(request)    
-    logging.warning(request.method)
+    
     # If we are trying to login
     if request.method == 'POST':
         
@@ -130,9 +130,24 @@ def create_or_login(resp):
         flash(u'Successfully signed in')
         g.user = user
         return redirect(oid.get_next_url())
+
+    name = resp.fullname or resp.nickname
+    email = resp.email
+
+    if not name:
+        flash(u'Error: you have to provide a name')
+    elif '@' not in email:
+        flash(u'Error: you have to enter a valid email address')
+    else:
+        flash(u'Profile successfully created')
+        db_session.add(User(name, email, session['openid']))
+        db_session.commit()
+        return redirect(oid.get_next_url())
+    """
     return redirect(url_for('create_profile', next=oid.get_next_url(),
                             name=resp.fullname or resp.nickname,
                             email=resp.email))
+    """
 
 
 @user.route('/create-profile', methods=['GET', 'POST'])
@@ -191,7 +206,7 @@ def logout():
     flash(u'You have been signed out')
     return redirect(oid.get_next_url())
 
-
+init_db()
 """if __name__ == '__main__':
     init_db()
     app.run()"""
