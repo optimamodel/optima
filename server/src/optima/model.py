@@ -6,13 +6,13 @@ from generators.line import generatedata
 import json
 import traceback
 import sys
-from sim.dataio import loaddata, savedata, DATADIR
+from sim.dataio import loaddata, savedata, DATADIR, PROJECTDIR
 from sim.updatedata import updatedata
 from sim.loadspreadsheet import loadspreadsheet
 from sim.makeproject import makeproject
 from sim.manualfit import manualfit
 from sim.autofit import autofit
-from sim.bunch import unbunchify, Bunch as struct
+from sim.bunch import unbunchify, bunchify, Bunch as struct
 from sim.runsimulation import runsimulation
 from sim.optimize import optimize
 from sim.epiresults import epiresults
@@ -65,16 +65,30 @@ def doManualCalibration():
     project_name = session.get('project_name', '')
     if project_name == '':
         return jsonify({'status':'NOK', 'reason':'no project is open'})
-
     if not project_exists(project_name):
         reply['reason'] = 'File for project %s does not exist' % project_name
-
     file_name = helpers.safe_join(PROJECTDIR, project_name+'.prj')
     print("project file_name: %s" % file_name)
-    D = manualfit(file_name, data)
-    print("D: %s" % D)
-    fits = {} #todo: how to get graphs from the model after calibration? @cliffkerr ?
-    return jsonify(fits[0])
+
+    #expects json: {"startyear":year,"endyear":year} and gets project_name from session
+    args = {}
+    startyear = data.get("startyear")
+    if startyear:
+        args["startyear"] = int(startyear)
+    endyear = data.get("endyear")
+    if endyear:
+        args["endyear"] = int(endyear)
+    try:
+        D = load_model(project_name)
+        args['D'] = D
+        F = bunchify(data.get("F",{}))
+        args['F'] = F
+        D = manualfit(**args) 
+        D_dict = unbunchify(D)
+    except Exception, err:
+        var = traceback.format_exc()
+        return jsonify({"status":"NOK", "exception":var})
+    return jsonify(D_dict.get('O',{}))
 
 
 """
