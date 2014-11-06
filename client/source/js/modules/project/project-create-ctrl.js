@@ -20,17 +20,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       { name: 'Other females [open text box to enter age range]', acronym: 'OF', active: false }
     ];
 
-    $scope.programs = [
-      {name: 'HIV testing & counseling', acronym: 'FSW', active: false},
-      {name: 'Female sex workers', acronym: 'FSW', active: false},
-      {name: 'Men who have sex with men', acronym: 'FSW', active: false},
-      {name: 'Antiretroviral therapy', acronym: 'FSW', active: false},
-      {name: 'Prevention of mother-to-child transmission', acronym: 'FSW', active: false},
-      {name: 'Behavior change & communication', acronym: 'FSW', active: false},
-      {name: 'Needle-syringe program', acronym: 'FSW', active: false},
-      {name: 'Opiate substitution therapy', acronym: 'FSW', active: false},
-      {name: 'Cash transfers', acronym: 'FSW', active: false}
-    ];
+    $scope.programs = [];
 
     $scope.openAddPopulationModal = function ($event) {
       if ($event) {
@@ -74,26 +64,47 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         });
     };
 
-    var addItemTo = function (collection, itemName) {
-      collection.push({
-        name: itemName,
-        active: true
-      });
+    $scope.openAddProgramModal = function ($event) {
+      if ($event) {
+        $event.preventDefault();
+      }
+
+      return $modal.open({
+        templateUrl: 'js/modules/project/create-program-modal.html',
+        controller: 'ProjectCreateProgramModalController',
+        resolve: {
+          program: function () {
+            return null;
+          }
+        }
+      }).result.then(
+        function (newProgram) {
+          newProgram.active = true;
+          $scope.programs.push(newProgram);
+        });
     };
 
-    $scope.addPopulation = function ($event) {
-      $event.preventDefault();
-      addItemTo($scope.populations, $scope.newPopulation);
-      $scope.newPopulation = '';
+    $scope.openEditProgramModal = function ($event, program) {
+      if ($event) {
+        $event.preventDefault();
+      }
+
+      return $modal.open({
+        templateUrl: 'js/modules/project/create-program-modal.html',
+        controller: 'ProjectCreateProgramModalController',
+        resolve: {
+          program: function () {
+            return program;
+          }
+        }
+      }).result.then(
+        function (newProgram) {
+          program.active = true;
+          _(program).extend(newProgram);
+        });
     };
 
-    $scope.addProgram = function ($event) {
-      $event.preventDefault();
-      addItemTo($scope.programs, $scope.newProgram);
-      $scope.newProgram = '';
-    };
-
-    var toNamesArray = function (collection) {
+    var toCleanArray = function (collection) {
       return _(collection).chain()
         .where({ active: true })
         .map(function (item) {
@@ -109,8 +120,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       }
 
       var params = _($scope.projectParams).omit('name');
-      params.programs = toNamesArray($scope.programs);
-      params.populations = toNamesArray($scope.populations);
+      params.programs = toCleanArray($scope.programs);
+      _(params.programs).map(function (item) {
+        item.indicators = toCleanArray(item.indicators);
+        return item;
+      });
+      params.populations = toCleanArray($scope.populations);
 
       $scope.formAction = '/api/project/create/' + $scope.projectParams.name;
       $scope.formParams = JSON.stringify(params);
