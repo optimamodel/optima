@@ -45,3 +45,5 @@ def manualfit(D, F, startyear=2000, endyear=2015, dosave=False, verbose=2):
         printv('...done manual fitting.', 2, verbose)
     
     return D
+    #this is great, but at the end, frontend needs to get the graphs (no need to actually draw them in python on the server).
+    #the only thing that has to go to the frontend is the graph data, we'll take care of the rest.
