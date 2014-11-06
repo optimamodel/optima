@@ -104,6 +104,23 @@ def getModelParameters(group):
     print "result: %s" % result
     return jsonify(result.get(group,{}))
 
+
+"""
+Returns the parameters of the given model in the given group / subgroup.
+"""
+@model.route('/parameters/<group>/<subgroup>')
+def getModelSubParameters(group, subgroup):
+    project_name = session.get('project_name', '')
+    if project_name == '':
+        return jsonify({'status':'NOK', 'reason':'no project is open'})
+    D = load_model(project_name)
+    result = unbunchify(D)
+    the_group = result.get(group,{})
+    the_subgroup = the_group.get(subgroup, {})
+    print "result: %s" % the_subgroup
+    return jsonify(the_subgroup)
+
+
 """
 Sets the given group parameters for the given model.
 """
