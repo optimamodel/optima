@@ -33,16 +33,19 @@ TODO: do it with the project which is currently in scope
 """
 @model.route('/calibrate/auto', methods=['POST'])
 def doAutoCalibration():
+    reply = {'status':'NOK'}
     print('data: %s' % request.data)
     data = json.loads(request.data)
     project_name = session.get('project_name', '')
     if project_name == '':
-        return jsonify({'status':'NOK', 'reason':'no project is open'})
+        reply['reason'] = 'No project is open'
+        return jsonify(reply)
 
     file_name = helpers.safe_join(loaddir(model), project_name+'.prj')
     print("project file_name: %s" % file_name)
     if not os.path.exists(file_name):
         reply['reason'] = 'File for project %s does not exist' % project_name
+        return jsonify(reply)
 
     fits = autofit(file_name, data)
     print("fits: %s" % fits)
