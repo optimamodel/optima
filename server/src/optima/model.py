@@ -80,6 +80,21 @@ def doManualCalibration():
 """
 Returns the parameters of the given model.
 """
+@model.route('/parameters')
+def getModel():
+    project_name = session.get('project_name', '')
+    if project_name == '':
+        return jsonify({'status':'NOK', 'reason':'no project is open'})
+    D = load_model(project_name)
+    print ("D: %s" % D)
+    result = unbunchify(D)
+    print "result: %s" % result
+    return jsonify(result)
+
+
+"""
+Returns the parameters of the given model in the given group.
+"""
 @model.route('/parameters/<group>')
 def getModelParameters(group):
     project_name = session.get('project_name', '')
