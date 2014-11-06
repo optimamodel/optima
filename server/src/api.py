@@ -29,7 +29,7 @@ UPLOAD_FOLDER = DATADIR #'/tmp/uploads' #todo configure
 
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['DATABASE_URI'] = 'postgresql+psycopg2://postgres:root@localhost:5432/optima'
+app.config['DATABASE_URI'] = 'postgresql+psycopg2://optima:optima@localhost:5432/optima'
 
 app.secret_key = 'F12Zr47j\3yX R~X@H!jmM]Lwf/,?KT'
 
