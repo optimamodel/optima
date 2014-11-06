@@ -86,7 +86,6 @@ def getModel():
     if project_name == '':
         return jsonify({'status':'NOK', 'reason':'no project is open'})
     D = load_model(project_name)
-    print ("D: %s" % D)
     result = unbunchify(D)
     print "result: %s" % result
     return jsonify(result)
@@ -101,7 +100,6 @@ def getModelParameters(group):
     if project_name == '':
         return jsonify({'status':'NOK', 'reason':'no project is open'})
     D = load_model(project_name)
-    print ("D: %s" % D)
     result = unbunchify(D)
     print "result: %s" % result
     return jsonify(result.get(group,{}))
@@ -118,7 +116,6 @@ def setModelParameters(group):
         return jsonify({'status':'NOK', 'reason':'no project is open'})
     try:
         D = load_model(project_name)
-        print ("D: %s" % D)
         D_dict = unbunchify(D)
         D_dict[group] = data
         D_mod = struct(D_dict)
