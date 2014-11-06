@@ -9,6 +9,7 @@ Version: 2014nov05 by cliffk
 """
 
 from printv import printv
+import os
 
 DATADIR="/tmp/uploads"
 
@@ -56,9 +57,10 @@ def loaddata(filename, verbose=2):
     """
     Loads the file and unpickles data from it.
     """
-    filename = fullpath(filename)
-    printv('Loading data...', 1, verbose)
     from cPickle import load
+    printv('Loading data...', 1, verbose)
+    if not os.path.exists(filename):
+        filename = fullpath(filename)
     rfid = open(filename,'rb')
     data = load(rfid)
     printv('...done loading data.', 2, verbose)
