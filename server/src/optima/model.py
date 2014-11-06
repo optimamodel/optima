@@ -15,6 +15,7 @@ from sim.autofit import autofit
 from sim.bunch import unbunchify, Bunch as struct
 from sim.runsimulation import runsimulation
 from sim.optimize import optimize
+from sim.epiresults import epiresults
 from utils import loaddir, load_model, save_model, project_exists
 
 """ route prefix: /api/model """
@@ -135,11 +136,13 @@ def doRunSimulation():
     if endyear:
         args["endyear"] = int(endyear)
     try:
-        data_file_path = runsimulation(**args) 
+        D = runsimulation(**args) 
+        D = epiresults(D)
+        D_dict = unbunchify(D)
     except Exception, err:
         var = traceback.format_exc()
         return jsonify({"status":"NOK", "exception":var})
-    return jsonify({"status":"OK", "reason":'performed simulation for the project %s' % project_name})
+    return jsonify(D_dict.get('O',{}))
 #    options = {
 #        'cache_timeout': model.get_send_file_max_age(example_excel_file_name),
 #        'conditional': True,
