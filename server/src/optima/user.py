@@ -24,8 +24,7 @@ oid = OpenID(app, safe_roots=[], extension_responses=[pape.Response])
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-import logging
-  
+
 # setup sqlalchemy
 engine = create_engine(app.config['DATABASE_URI'])
 db_session = scoped_session(sessionmaker(autocommit=False,
@@ -56,7 +55,6 @@ class User(Base):
 def before_request():
     g.user = None
     if 'openid' in session:
-        logging.warning('before_request')
         g.user = User.query.filter_by(openid=session['openid']).first()
 
 
@@ -65,15 +63,10 @@ def after_request(response):
     #db_session.remove()
     return response
 
-
-@user.route('/loginform')
-def login_form():
-    return render_template('index.html')
-
-
-@user.route('/login', methods=['GET', 'POST'])
+@user.route('/login/<open_id>/<next_url>', methods=['GET'])
 @oid.loginhandler
-def login():
+def login(open_id, next_url):
+  
     # Does the login via OpenID.  Has to call into `oid.try_login`
     # to start the OpenID machinery.
     # If we are already logged in, go back to were we came from
@@ -81,13 +74,15 @@ def login():
         return redirect(oid.get_next_url())
     
     # If we are trying to login
-    if request.method == 'POST':
+
+    if request.method == 'GET':
         
-        openid = request.form.get('openid')
-        print(openid);
-        if openid:
+        if open_id is None or next_url is None:
+            abour(401)
+        
+        if open_id:
             pape_req = pape.Request([])
-            return oid.try_login(openid, ask_for=['email', 'nickname'],
+            return oid.try_login(open_id, ask_for=['email', 'nickname'],
                                          ask_for_optional=['fullname'],
                                          extensions=[pape_req])
                                          
@@ -134,11 +129,6 @@ def create_or_login(resp):
         db_session.add(User(name, email, session['openid']))
         db_session.commit()
         return redirect(oid.get_next_url())
-    """
-    return redirect(url_for('create_profile', next=oid.get_next_url(),
-                            name=resp.fullname or resp.nickname,
-                            email=resp.email))
-    """
 
 
 @user.route('/create-profile', methods=['GET', 'POST'])
@@ -195,10 +185,6 @@ def edit_profile():
 def logout():
     session.pop('openid', None)
     flash(u'You have been signed out')
-    return redirect(oid.get_next_url())
+    return jsonify({'status': 'OK'})
 
 init_db()
-"""if __name__ == '__main__':
-    init_db()
-    app.run()"""
-
