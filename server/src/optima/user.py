@@ -1,15 +1,13 @@
 #!/bin/env python
 # -*- coding: utf-8 -*-
 """
-    OpenID Example
-    ~~~~~~~~~~~~~~
+User Module
+~~~~~~~~~~~~~~
 
-    This simple application shows how to integrate OpenID in your application.
+1. Get current logged in user.
+2. Login a user using openid.
+3. Logout.
 
-    This example requires SQLAlchemy as a dependency.
-
-    :copyright: (c) 2010 by Armin Ronacher.
-    :license: BSD, see LICENSE for more details.
 """
 from flask import Flask, render_template, request, jsonify, g, session, flash, \
      redirect, url_for, abort, Blueprint
@@ -29,7 +27,6 @@ from sqlalchemy.ext.declarative import declarative_base
 
 # setup sqlalchemy
 engine = create_engine(app.config['DATABASE_URI'])
-
 db_session = scoped_session(sessionmaker(autocommit=False,
                                          autoflush=True,
                                          bind=engine))
