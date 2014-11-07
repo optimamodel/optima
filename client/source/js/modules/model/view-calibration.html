@@ -144,38 +144,23 @@
 
       <div class="section cf">
         <div class="4">
-          <select class="txbox">
-            <option value="1">prevalence</option>
-            <option value="2">treatment</option>
-            <option value="3">deaths</option>
-            <option value="4">trends in new infections by population group</option>
-            <option value="5">diagnoses</option>
+          <select class="txbox" ng-model="graphType">
+            <option value="prev">Prevalence (%)</option>
+            <option value="daly">Disability-adjusted life years per year</option>
+            <option value="death">HIV-related deaths per year</option>
+            <option value="inci">New HIV infections per year</option>
           </select>
         </div>
       </div>
 
       <div class="section grid">
-        <div class="6">
+        <div class="6" ng-repeat="graph in graphs">
           <div class="chart-container">
-            <nvd3 data="linescatterdata" options="linescatteroptions"></nvd3>
-          </div>
-        </div>
-        <div class="6">
-          <div class="chart-container">
-            <nvd3 data="linescatterdata" options="linescatteroptions"></nvd3>
-          </div>
-        </div>
-        <div class="6">
-          <div class="chart-container">
-            <nvd3 data="linescatterdata" options="linescatteroptions"></nvd3>
-          </div>
-        </div>
-        <div class="6">
-          <div class="chart-container">
-            <nvd3 data="linescatterdata" options="linescatteroptions"></nvd3>
+            <nvd3 data="graph.data" options="graph.options"></nvd3>
           </div>
         </div>
       </div>
+
     </div>
   </div>
 
