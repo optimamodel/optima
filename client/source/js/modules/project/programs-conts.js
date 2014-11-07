@@ -500,7 +500,250 @@ define(['./module'], function (module) {
           ]
         }
       ]
-    }    
+    },
+    {
+      name: '04 Programme management and administration',
+      acronym: '04',
+      programs: [
+        {
+          name: '04.01 Planning, coordination and programme management',
+          acronym: '04.01',
+          indicators: [
+          ]
+        },
+        {
+          name: '04.02 Administration and transaction costs associated with managing and disbursing funds',
+          acronym: '04.02',
+          indicators: [
+          ]
+        },
+        {
+          name: '04.03 Monitoring and evaluation',
+          acronym: '04.03',
+          indicators: [
+          ]
+        },
+        {
+          name: '04.04 Operations research',
+          acronym: '04.04',
+          indicators: [
+          ]
+        },
+        {
+          name: '04.05 Serological-surveillance (serosurveillance)',
+          acronym: '04.05',
+          indicators: [
+          ]
+        },
+        {
+          name: '04.06 HIV drug-resistance surveillance',
+          acronym: '04.06',
+          indicators: [
+          ]
+        },
+        {
+          name: '04.07 Drug supply systems',
+          acronym: '04.07',
+          indicators: [
+          ]
+        },
+        {
+          name: '04.08 Information technology',
+          acronym: '04.08',
+          indicators: [
+          ]
+        },
+        {
+          name: '04.09 Patient tracking',
+          acronym: '04.09',
+          indicators: [
+          ]
+        },
+        {
+          name: '04.10 Upgrading and construction of infrastructure',
+          acronym: '04.10',
+          indicators: [
+          ]
+        },
+        {
+          name: '04.11 Mandatory HIV testing (not VCT)',
+          acronym: '04.11',
+          indicators: [
+          ]
+        },
+        {
+          name: '04.98 Programme management and administration not disaggregated by type',
+          acronym: '04.98',
+          indicators: [
+          ]
+        },
+        {
+          name: '04.99 Programme management and administration n.e.c',
+          acronym: '04.99',
+          indicators: [
+          ]
+        }
+      ]
+    },
+    {
+     name: '05 Human resources',
+     acronym: '05',
+     programs: [
+       {
+         name: '05.01 Monetary incentives for human resources',
+         acronym: '05.01',
+         indicators: []
+       },
+       {
+         name: '05.02 Formative education to build-up an HIV workforce',
+         acronym: '05.02',
+         indicators: []
+       },
+       {
+         name: '05.03 Training',
+         acronym: '05.03',
+         indicators: []
+       },
+       {
+         name: '05.98 Human resources not disaggregated by type',
+         acronym: '05.98',
+         indicators: []
+       },
+       {
+         name: '05.99 Human resources n.e.c.',
+         acronym: '05.99',
+         indicators: []
+       }
+     ]
+   },
+   {
+     name: '06 Social protection and social services  (excluding OVC)',
+     acronym: '06',
+     programs: [
+       {
+         name: '06.01 Social protection through monetary benefits',
+         acronym: '06.01',
+         indicators: []
+       },
+       {
+         name: '06.02 Social protection through in-kind benefits',
+         acronym: '06.02',
+         indicators: []
+       },
+       {
+         name: '06.03 Social protection through provision of social services',
+         acronym: '06.03',
+         indicators: []
+       },
+       {
+         name: '06.04 HIV-specific income generation projects',
+         acronym: '06.04',
+         indicators: []
+       },
+       {
+         name: '06.98 Social protection services and social services not disaggregated by type',
+         acronym: '06.98',
+         indicators: []
+       },
+       {
+         name: '06.99 Social protection services and social services n.e.c.',
+         acronym: '06.99',
+         indicators: []
+       }
+     ]
+   },
+   {
+     name: '07 Enabling environment',
+     acronym: '07',
+     programs: [
+       {
+         name: '07.01 Advocacy',
+         acronym: '07.01',
+         indicators: []
+       },
+       {
+         name: '07.02 Human rights programmes',
+         acronym: '07.02',
+         indicators: []
+       },
+       {
+         name: '07.03 AIDS-specific institutional development',
+         acronym: '07.03',
+         indicators: []
+       },
+       {
+         name: '07.04 AIDS-specific programmes focused on women',
+         acronym: '07.04',
+         indicators: []
+       },
+       {
+         name: '07.05 Programmes to reduce Gender Based Violence',
+         acronym: '07.05',
+         indicators: []
+       },
+       {
+         name: '07.98 Enabling environment not disaggregated by type',
+         acronym: '07.98',
+         indicators: []
+       },
+       {
+         name: '07.99 Enabling environment n.e.c.',
+         acronym: '07.99',
+         indicators: []
+       }
+     ]
+    },      
+    {
+      name: '08 HIV and AIDS-related research (excluding operations research )',
+      acronym: '08',
+      programs: [
+       {
+         name: '08.01 Biomedical research',
+         acronym: '02.02.01',
+         indicators: []
+       },
+       {
+         name: '08.02 Clinical research',
+         acronym: '08.02',
+         indicators: []
+       },
+       {
+         name: '08.03 Epidemiological research',
+         acronym: '08.03',
+         indicators: []
+       },
+       {
+         name: '08.04 Social science research',
+         acronym: '08.04',
+         indicators: []
+       },
+       {
+         name: '08.05 Vaccine-related research',
+         acronym: '08.05',
+         indicators: []
+       },
+       {
+         name: '08.98 HIV and AIDS-related research activities not disaggregated by type',
+         acronym: '08.98',
+         indicators: []
+       },
+       {
+         name: '08.99 HIV and AIDS-related research activities n.e.c.',
+         acronym: '08.99',
+         indicators: []
+       },
+       {
+         name: '08.99.98 All other HIV activities not disaggregated by intervention and not classifiable in categories ASC.01.98 to ASC.08.98',
+         acronym: '08.99.98',
+         indicators: []
+       },
+       {
+         name: '08.99.99 All other HIV activities not classifiable in categories ASC.01.99 to ASC.08.99',
+         acronym: '08.99.99',
+         indicators: []
+       }
+     ]
+   }
   ]);
 
 });
