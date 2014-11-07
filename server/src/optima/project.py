@@ -12,7 +12,7 @@ from sim.loadspreadsheet import loadspreadsheet
 from sim.makeproject import makeproject
 from sim.optimize import optimize
 from optima.data import data
-from utils import *
+from utils import upload_dir_user
 
 """ route prefix: /api/project """
 project = Blueprint('project',  __name__, static_folder = '../static')
@@ -32,6 +32,8 @@ spreadsheet with specified name and parameters given back to the user.
 # expects json with the following arguments (see example):
 # {"npops":6,"nprogs":8, "datastart":2000, "dataend":2015}
 def createProject(project_name):
+
+    path = upload_dir_user()
     session.clear()
     print("createProject %s" % project_name)
     data = request.form
@@ -53,8 +55,11 @@ def createProject(project_name):
         makeproject_args['progs'] = data['programs']
     if data.get('populations'):
         makeproject_args['pops'] = data['populations']
-#    makeproject_args = dict(makeproject_args.items() + data.items())
+    
+    makeproject_args['path'] = path
+    #    makeproject_args = dict(makeproject_args.items() + data.items())
     print(makeproject_args)
+    
     new_project_template = makeproject(**makeproject_args) # makeproject is supposed to return the name of the existing file...
     print("new_project_template: %s" % new_project_template)
     (dirname, basename) = os.path.split(new_project_template)
@@ -73,7 +78,8 @@ If the project exists, should put it in session and return to the user.
 # expects project name, will put it into session
 # todo: only if it can be found
 def openProject(project_name):
-    if not project_exists(loaddir(project), project_name):
+    project_path = helpers.safe_join(upload_dir_user(), project_name+'.prj')
+    if not os.path.exists(project_path):
         return jsonify({'status':'NOK','reason':'No such project %s' % project_name})
     else:
         session['project_name'] = project_name
@@ -92,7 +98,8 @@ Returns the list of existing projects.
 @project.route('/list')
 def getProjectList():
     projects = []
-    for file in os.listdir(loaddir(project)):
+    path = upload_dir_user()
+    for file in os.listdir(path):
         if fnmatch.fnmatch(file, '*.prj'):
             projects.append(file)
     return jsonify({"projects":projects})
@@ -103,7 +110,7 @@ Deletes the given project (and eventually, corresponding excel files)
 """
 @project.route('/delete/<project_name>')
 def deleteProject(project_name):
-    project_path = helpers.safe_join(loaddir(project), project_name+'.prj')
+    project_path = helpers.safe_join(upload_dir_user(), project_name+'.prj')
     if os.path.exists(project_path):
         os.remove(project_path)
         spreadsheet_path = helpers.safe_join(loaddir(project), project_name+'.xlsx')

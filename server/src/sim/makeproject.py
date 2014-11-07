@@ -12,7 +12,7 @@ default_progs = ['Behavior change','Female sex workers','Needle-syringe program'
 'Antiretroviral treatment','Prevention of mother-to-child transmission']
 
 def makeproject(projectname='example', pops = default_pops, progs = default_progs, datastart=2000, dataend=2015, \
-    econ_datastart=2015, econ_dataend=2030, verbose=2):
+    econ_datastart=2015, econ_dataend=2030, verbose=2, path=None):
     """
     Initializes the empty project. Only the "Global" parameters are added on this step.
     The rest of the parameters is calculated after the model is updated with the data from the spreadsheet.
@@ -25,8 +25,8 @@ def makeproject(projectname='example', pops = default_pops, progs = default_prog
     
     from dataio import savedata, normalize_file
     from bunch import Bunch as struct
-    projectfilename = normalize_file(projectname+'.prj')
-    spreadsheetname = normalize_file(projectname + '.xlsx')
+    projectfilename = normalize_file(projectname+'.prj',path)
+    spreadsheetname = normalize_file(projectname + '.xlsx',path)
 
     npops = len(pops)
     nprogs = len(progs)
@@ -40,7 +40,7 @@ def makeproject(projectname='example', pops = default_pops, progs = default_prog
     D.G.projectname = projectname
     D.G.datastart = datastart
     D.G.dataend = dataend
-    result_file_name = savedata(projectfilename, D, verbose=verbose) # Create project -- #TODO: check if an existing project exists and don't overwrite it
+    result_file_name = savedata(projectfilename, D, verbose=verbose, path=path) # Create project -- #TODO: check if an existing project exists and don't overwrite it
 #    return result_file_name
     # Make an Excel template and then prompt the user to save it #TODO #FIXME
     from makespreadsheet import makespreadsheet 
