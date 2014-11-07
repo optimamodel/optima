@@ -182,7 +182,7 @@ def doRunSimulation():
     data = json.loads(request.data)
     project_name = session.get('project_name', '')
     if project_name == '':
-        return jsonify({'status':'NOK', 'reason':'no project is open'})
+        return jsonify({"status":"NOK", "reason":"no project is open"})
 
     #expects json: {"startyear":year,"endyear":year} and gets project_name from session
     args = {}

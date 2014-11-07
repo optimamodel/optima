@@ -63,7 +63,7 @@ def createProject(project_name):
 #    srcfile = helpers.safe_join(project.static_folder,'example.xlsx')
 #    dstfile =  helpers.safe_join(dirname, xlsname)
 #    shutil.copy(srcfile, dstfile)
-
+    session['project_name'] = project_name 
     return helpers.send_from_directory(dirname, basename)
 
 """
@@ -77,7 +77,6 @@ def openProject(project_name):
     if not project_exists(project_name):
       return jsonify({'status':'NOK','reason':'No such project %s' % project_name})
     else:
-      session.clear()
       session['project_name'] = project_name 
       return redirect(url_for('site'))
 
@@ -156,6 +155,7 @@ def uploadExcel():
         reply['exception'] = var
         return json.dumps(reply)      
 
+    session['project_name'] = project_name 
     reply['status'] = 'OK'
     reply['result'] = 'Project %s is updated' % file_basename
     return json.dumps(reply)
