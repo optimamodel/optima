@@ -11,7 +11,7 @@ User Module
 """
 from flask import Flask, render_template, request, jsonify, g, session, flash, \
      redirect, url_for, abort, Blueprint
-from flask.ext.openid import OpenID
+from flask.ext.login import LoginManager, login_user, current_user, logout_user, AnonymousUserMixin
 from openid.extensions import pape
 
 # route prefix: /api/user
@@ -19,12 +19,15 @@ user = Blueprint('user',  __name__, static_folder = '../static')
 
 from api import app
 
-from sqlalchemy import create_engine, Column, Integer, String
+from sqlalchemy import create_engine, Column, Integer, String, Boolean
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
 # System Imports
 import hashlib
+
+# Login Manager
+login_manager = LoginManager()
 
 # setup sqlalchemy
 engine = create_engine(app.config['DATABASE_URI'])
@@ -50,7 +53,24 @@ class UserDb(Base):
         self.name = name
         self.email = email
         self.password = password
+    
+    def get_id(self):
+        return self.id
 
+    def is_active(self):
+        return True
+
+    def is_anonymous(self):
+        return False
+    
+    def is_authenticated(self):
+        return True
+
+
+@user.record
+def record_params(setup_state):
+  app = setup_state.app
+  login_manager.init_app(app)
 
 @user.before_request
 def before_request():
@@ -82,13 +102,10 @@ def create_user():
             db_session.commit()
             
             # Login this user
-            session['userid'] = u.id
-            
-            # Remember the user
-            g.user = u
+            login_user(u)
             
             # Return user info
-            return jsonify({'email': g.user.email, 'name': g.user.name })
+            return jsonify({'email': u.email, 'name': u.name })
             
     
     # We are here implies username is already taken
@@ -99,7 +116,9 @@ def create_user():
 def login():
       
     # Make sure user is not logged in already.
-    if g.user is None:
+    cu = current_user
+    
+    if cu.is_anonymous():
         
         # Make sure user is valid.
         username = request.values.get('username')
@@ -110,40 +129,50 @@ def login():
             password = hashlib.sha224( request.values.get('password') ).hexdigest()
             
             # Get user for this username
-            u = UserDb.query.filter_by( email=username ).first()
+            try:
+                u = UserDb.query.filter_by( email=username ).first()
+            except:
+                u = None
             
             # Make sure user is valid and password matches
             if u is not None and u.password == password:
                 
                 # Login the user
-                session['userid'] = u.id
-                
-                # Remember the user
-                g.user = u
+                login_user(u)
                 
                 # Return user info
-                return jsonify({'email': g.user.email, 'name': g.user.name })
+                return jsonify({'email': u.email, 'name': u.name })
                 
         
         # If we come here, login is not successful    
         abort(401)
                                          
     # User already loggedin
-    return jsonify({'email': g.user.email, 'name': g.user.name })
+    return jsonify({'email': cu.email, 'name': cu.name })
 
 @user.route('/current', methods=['GET'])
-def current_user():
-    g.user = None
-    if 'userid' in session:
-        g.user = UserDb.query.filter_by(id=session['userid']).first()
-        return jsonify({ 'email': g.user.email, 'name': g.user.name })  
+def current_user_api():
+    cu = current_user
+    if cu.is_anonymous() == False:
+        return jsonify({ 'email': cu.email, 'name': cu.name })  
 
     abort(401)
 
 @user.route('/logout')
 def logout():
-    session.pop('userid', None)
+    logout_user()
     flash(u'You have been signed out')
     return jsonify({'status': 'OK'})
+    
+#For Login Manager
+@login_manager.user_loader
+def load_user(userid):
+    u = None;    
+    try:
+        u = UserDb.query.filter_by(id=userid).first()
+    except:
+        u = None;
+        
+    return u
 
 init_db()
