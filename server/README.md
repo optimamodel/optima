@@ -57,7 +57,8 @@ These APIs allow front-end to get current user or login a user.
   On successful login, user is sent back this JSON:
   
   `{
-	status: "OK"
+	email: "iwein@startersquad.com"
+	name: "Iwein Fuld" 
    }`
   
   On login error, a 401 Unauthorized response is returned.
