@@ -32,14 +32,19 @@ class ProjectDb(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(60))
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    datastart = db.Column(db.DateTime)
-    dataend = db.Column(db.DateTime)
-    econ_datastart = db.Column(db.DateTime)
-    econ_dataend = db.Column(db.DateTime)
+    datastart = db.Column(db.String(20))
+    dataend = db.Column(db.String(20))
+    econ_datastart = db.Column(db.String(20))
+    econ_dataend = db.Column(db.String(20))
     programs = db.Column(db.String(60))
     populations = db.Column(db.String(60))
 
-    def __init__(self, name, email, openid):
+    def __init__(self, name, user_id, datastart, dataend, econ_datastart, econ_dataend, programs, populations):
         self.name = name
-        self.email = email
-        self.openid = openid
+        self.user_id = user_id
+        self.datastart = datastart
+        self.dataend = dataend
+        self.econ_datastart = econ_datastart
+        self.econ_dataend = econ_dataend
+        self.programs = programs    
+        self.populations = populations

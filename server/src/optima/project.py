@@ -13,7 +13,7 @@ from sim.makeproject import makeproject
 from sim.optimize import optimize
 from optima.data import data
 from utils import upload_dir_user
-from flask.ext.login import login_required
+from flask.ext.login import login_required, current_user
 
 
 """ route prefix: /api/project """
@@ -36,7 +36,9 @@ spreadsheet with specified name and parameters given back to the user.
 # {"npops":6,"nprogs":8, "datastart":2000, "dataend":2015}
 def createProject(project_name):
 
+    # gettin current user path
     path = upload_dir_user()
+
     session.clear()
     print("createProject %s" % project_name)
     data = request.form
@@ -46,20 +48,51 @@ def createProject(project_name):
 #    data = dict([(x,int(y)) for (x,y) in data.items()])
     print(data)
     makeproject_args = {"projectname":project_name}
+    name = project_name
     if data.get('datastart'):
-        makeproject_args['datastart'] = int(data['datastart'])
+        datastart  = makeproject_args['datastart'] = int(data['datastart'])
+    else:
+        datastart = ''
+
     if data.get('dataend'):
-        makeproject_args['dataend'] = int(data['dataend'])
+        dataend = makeproject_args['dataend'] = int(data['dataend'])
+    else:
+        dataend = ''
+
     if data.get('econ_datastart'):
-        makeproject_args['econ_datastart'] = int(data['econ_datastart'])
+        econ_datastart = makeproject_args['econ_datastart'] = int(data['econ_datastart'])
+    else:
+        econ_datastart = ''
+
     if data.get('econ_dataend'):
-        makeproject_args['econ_dataend'] = int(data['econ_dataend'])
+        econ_dataend = makeproject_args['econ_dataend'] = int(data['econ_dataend'])
+    else:
+       econ_dataend  = ''
+
     if data.get('programs'):
-        makeproject_args['progs'] = data['programs']
+        programs = makeproject_args['progs'] = data['programs']
+    else:
+        programs = ''
+
     if data.get('populations'):
-        makeproject_args['pops'] = data['populations']
+        populations = makeproject_args['pops'] = data['populations']
+    else:
+        populations = ''
     
     makeproject_args['path'] = path
+    
+    from api import db
+    from models import ProjectDb
+    
+    # get current user 
+    cu = current_user
+    if cu.is_anonymous() == False:
+   
+        # Save to db
+        p = ProjectDb(name, cu.id, datastart, dataend, econ_datastart, econ_dataend, programs, populations)
+        db.session.add(p)
+        db.session.commit()
+
     #    makeproject_args = dict(makeproject_args.items() + data.items())
     print(makeproject_args)
     

@@ -36,8 +36,8 @@ def record_params(setup_state):
 @user.before_request
 def before_request():
     g.user = None
-    if 'userid' in session:
-        g.user = UserDb.query.filter_by(id=session['userid']).first()
+    if 'user_id' in session:
+        g.user = UserDb.query.filter_by(id=session['user_id']).first()
 
 @user.route('/create', methods=['POST'])
 def create_user():
