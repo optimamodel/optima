@@ -91,9 +91,9 @@ def make_parameter_range(name, params):
   coded_params = []
   for item in params:
     if type(item) is dict:
-      name = item['name']
-      acronym = item.get('acronym', abbreviate(name))
-      coded_params.append([acronym, name])
+      item_name = item['name']
+      acronym = item.get('acronym', abbreviate(item_name))
+      coded_params.append([acronym, item_name])
     else:
       coded_params = [list((abbreviate(item), item)) for item in params]
   return OptimaContent(name, row_names, column_names, coded_params)
