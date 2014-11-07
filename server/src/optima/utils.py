@@ -27,8 +27,8 @@ def project_exists(folder, name):
 def upload_dir_user():
     from models import UserDb
     user = None
-    if 'openid' in session:
-        user = UserDb.query.filter_by(openid=session['openid']).first()
+    if '_id' in session:
+        user = UserDb.query.filter_by(id=session['_id']).first()
         return os.path.join(DATADIR, str(user.id))
     return DATADIR
 

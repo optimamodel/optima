@@ -5,20 +5,33 @@ class UserDb(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(60))
     email = db.Column(db.String(200))
-    openid = db.Column(db.String(200))
-    projects = db.relationship('ProjectDb', backref='user',
+    password = db.Column(db.String(200))
+    projects = db.relationship('ProjectDb', backref='users',
                                 lazy='dynamic')
 
-    def __init__(self, name, email, openid):
+    def __init__(self, name, email, password):
         self.name = name
         self.email = email
-        self.openid = openid
+        self.password = password
+    
+    def get_id(self):
+        return self.id
 
-class ProjectDb(db.Model)
+    def is_active(self):
+        return True
+
+    def is_anonymous(self):
+        return False
+    
+    def is_authenticated(self):
+        return True
+
+
+class ProjectDb(db.Model):
     __tablename__ = 'projects'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(60))
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     datastart = db.Column(db.DateTime)
     dataend = db.Column(db.DateTime)
     econ_datastart = db.Column(db.DateTime)
