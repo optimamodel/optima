@@ -22,18 +22,45 @@ These APIs allow front-end to get current user or login a user.
 	email: "iwein@startersquad.com"
 	name: "Iwein Fuld" 
    }`
-  
-* `/api/user/login?openid=<networks open id>&next=<url to go to after login>`
 
-  User is redirected to selected network.
+* `/api/user/create`
+
+  Following data is posted when creating a new user:
   
-  On successful login, user is redirected to url given in next.
+  `{
+	email: "iwein@startersquad.com"
+	name: "Iwein Fuld"
+	password: 'whatever' 
+   }`
+   
+  On success, user is sent back this JSON:
   
-  Examples:
+  `{
+	status: "OK"
+   }` 
+   
+   On name already used, user is sent back this JSON:
+   
+   `{
+ 	 status: "Username in use"
+    }`
   
-  For Yahoo!
+* `/api/user/login`
+
+  Following data is posted when doing login:
   
-  `/api/user/login?openid=yahoo.com&next=http://optima.dev`
+  `
+	username: "iwein@startersquad.com"
+	password: "whatever" 
+   `
+  
+  On successful login, user is sent back this JSON:
+  
+  `{
+	status: "OK"
+   }`
+  
+  On login error, a 401 Unauthorized response is returned.
 
 * `/api/user/logout`
 
