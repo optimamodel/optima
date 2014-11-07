@@ -72,6 +72,11 @@ define(['./module', 'angular'], function (module, angular) {
         values: [],
         key: 'Model',
         color: '#ff7f0e'
+      },
+      {
+        values: [],
+        key: 'Error',
+        color: '#333333'
       }
     ];
 
@@ -85,8 +90,10 @@ define(['./module', 'angular'], function (module, angular) {
 
     var prepareGraphs = function (response, type) {
       var graphs = [];
+      var data = response[type];
+      var scatterDataAvailable = data.pops.length === data.ydata.length;
 
-      _(response[type].pops).each(function (population) {
+      _(data.pops).each(function (population, populationIndex) {
         var graph = {
           options: angular.copy(linescatteroptions),
           data: angular.copy(linescatterdata)
@@ -98,6 +105,23 @@ define(['./module', 'angular'], function (module, angular) {
             y: response.tvec[i]
           };
         });
+
+        graph.options.chart.xAxis.axisLabel = data.xlabel;
+        graph.options.chart.yAxis.axisLabel = data.ylabel;
+
+        if (scatterDataAvailable) {
+          graph.data[1].values = _(data.ydata[populationIndex]).chain()
+            .map(function (value, i) {
+              return {
+                x: value,
+                y: response.tvec[i]
+              };
+            })
+            .filter(function (value) {
+              return !!value.x;
+            })
+            .value();
+        }
 
         graphs.push(graph);
       });
@@ -148,7 +172,7 @@ define(['./module', 'angular'], function (module, angular) {
     };
 
     $scope.$watch('graphType', function (newValue) {
-      if (newValue) {
+      if (newValue && !_($scope.parameters.cache.response).isEmpty()) {
         $scope.graphs = prepareGraphs($scope.parameters.cache.response, $scope.graphType);
       }
     });
