@@ -174,5 +174,9 @@ def load_user(userid):
         u = None;
         
     return u
+    
+@login_manager.unauthorized_handler
+def unauthorized_handler():
+    abort(401)
 
 init_db()
