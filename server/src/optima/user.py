@@ -9,7 +9,7 @@ User Module
 3. Logout.
 
 """
-from flask import Flask, render_template, request, jsonify, g, session, flash, \
+from flask import Flask, request, jsonify, g, session, flash, \
      redirect, url_for, abort, Blueprint
 from flask.ext.openid import OpenID
 from openid.extensions import pape
@@ -17,38 +17,9 @@ from openid.extensions import pape
 # route prefix: /api/user
 user = Blueprint('user',  __name__, static_folder = '../static')
 
-from api import app
-
+from api import app, db
+from models import UserDb
 oid = OpenID(app, safe_roots=[], extension_responses=[pape.Response])
-
-from sqlalchemy import create_engine, Column, Integer, String
-from sqlalchemy.orm import scoped_session, sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
-
-# setup sqlalchemy
-engine = create_engine(app.config['DATABASE_URI'])
-db_session = scoped_session(sessionmaker(autocommit=False,
-                                         autoflush=True,
-                                         bind=engine))
-
-Base = declarative_base()
-Base.query = db_session.query_property()
-
-def init_db():
-    Base.metadata.create_all(bind=engine)
-
-
-class UserDb(Base):
-    __tablename__ = 'users'
-    id = Column(Integer, primary_key=True)
-    name = Column(String(60))
-    email = Column(String(200))
-    openid = Column(String(200))
-
-    def __init__(self, name, email, openid):
-        self.name = name
-        self.email = email
-        self.openid = openid
 
 
 @user.before_request
@@ -60,7 +31,6 @@ def before_request():
 
 @user.after_request
 def after_request(response):
-    #db_session.remove()
     return response
 
 @user.route('/login', methods=['GET'])
@@ -124,8 +94,9 @@ def create_or_login(resp):
         flash(u'Error: you have to enter a valid email address')
     else:
         flash(u'Profile successfully created')
-        db_session.add(UserDb(name, email, session['openid']))
-        db_session.commit()
+        db.session.add(UserDb(name, email, session['openid']))
+        db.session.commit()
+         
         return redirect(oid.get_next_url())
 
 @user.route('/logout')
@@ -133,5 +104,3 @@ def logout():
     session.pop('openid', None)
     flash(u'You have been signed out')
     return jsonify({'status': 'OK'})
-
-init_db()
