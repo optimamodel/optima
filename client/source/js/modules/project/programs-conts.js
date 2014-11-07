@@ -271,7 +271,117 @@ define(['./module'], function (module) {
               active: true
             }
           ]
-        }
+        },
+        {
+          name: '02.01.02 Opportunistic infection (OI) outpatient prophylaxis and treatment',
+          acronym: '02.01.02',
+          indicators: [
+            {
+              name: 'Testing rates in all populations (This will be listed under care and treatment in future)',
+              active: true
+            }
+          ]
+        },
+        {
+          name: '02.01.03 Antiretroviral therapy',
+          acronym: '02.01.03',
+          indicators: [
+            {
+              name: 'Testing rates in all populations (This will be listed under care and treatment in future)',
+              active: true
+            }
+          ]
+        },
+        {
+          name: '02.01.04 Nutritional support associated to ARV therapy',
+          acronym: '02.01.04',
+          indicators: [
+            {
+              name: 'Testing rates in all populations (This will be listed under care and treatment in future)',
+              active: true
+            }
+          ]
+        },
+        {
+          name: '02.01.05 Specific HIV-related  laboratory monitoring',
+          acronym: '02.01.05',
+          indicators: [
+            {
+              name: 'Testing rates in all populations (This will be listed under care and treatment in future)',
+              active: true
+            }
+          ]
+        },
+        {
+          name: '02.01.06 Dental programmes for PLHIV',
+          acronym: '02.01.06',
+          indicators: [
+            {
+              name: 'Testing rates in all populations (This will be listed under care and treatment in future)',
+              active: true
+            }
+          ]
+        },
+        {
+          name: '02.01.07 Psychological treatment and support services',
+          acronym: '02.01.07',
+          indicators: [
+            {
+              name: 'Testing rates in all populations (This will be listed under care and treatment in future)',
+              active: true
+            }
+          ]
+        },
+        {
+          name: '02.01.08 Outpatient palliative care',
+          acronym: '02.01.08',
+          indicators: [
+            {
+              name: 'Testing rates in all populations (This will be listed under care and treatment in future)',
+              active: true
+            }
+          ]
+        },
+        {
+          name: '02.01.09 Home-based care',
+          acronym: '02.01.09',
+          indicators: [
+            {
+              name: 'Testing rates in all populations (This will be listed under care and treatment in future)',
+              active: true
+            }
+          ]
+        },
+        {
+          name: '02.01.10 Traditional medicine and informal care and treatment services',
+          acronym: '02.01.10',
+          indicators: [
+            {
+              name: 'Testing rates in all populations (This will be listed under care and treatment in future)',
+              active: true
+            }
+          ]
+        },
+        {
+          name: '02.01.98 Outpatient care services not disaggregated by intervention',
+          acronym: '02.01.98',
+          indicators: [
+            {
+              name: 'Testing rates in all populations (This will be listed under care and treatment in future)',
+              active: true
+            }
+          ]
+        },
+        {
+          name: '02.01.99 Outpatient care services n.e.c.',
+          acronym: '02.01.99',
+          indicators: [
+            {
+              name: 'Testing rates in all populations (This will be listed under care and treatment in future)',
+              active: true
+            }
+          ]
+        },
       ]
     },
     {
@@ -281,6 +391,48 @@ define(['./module'], function (module) {
         {
           name: '02.02.01 Inpatient treatment of opportunistic infections (OI)',
           acronym: '02.02.01',
+          indicators: [
+            { name: 'Informs Optima HIV expenditure unit costs for PLHIV with CD4<200', active: true }
+          ]
+        },
+        {
+          name: '02.02.02 Inpatient palliative care',
+          acronym: '02.02.02',
+          indicators: [
+            { name: 'Informs Optima HIV expenditure unit costs for PLHIV with CD4<200', active: true }
+          ]
+        },
+        {
+          name: '02.02.98 Inpatient care services not disaggregated by intervention',
+          acronym: '02.02.98',
+          indicators: [
+            { name: 'Informs Optima HIV expenditure unit costs for PLHIV with CD4<200', active: true }
+          ]
+        },
+        {
+          name: '02.02.99 Inpatient care services n.e.c.',
+          acronym: '02.02.99',
+          indicators: [
+            { name: 'Informs Optima HIV expenditure unit costs for PLHIV with CD4<200', active: true }
+          ]
+        },
+        {
+          name: '02.03 Patient transport and emergency rescue',
+          acronym: '02.03',
+          indicators: [
+            { name: 'Informs Optima HIV expenditure unit costs for PLHIV with CD4<200', active: true }
+          ]
+        },
+        {
+          name: '02.98 Care and treatment services not disaggregated by intervention',
+          acronym: '02.98',
+          indicators: [
+            { name: 'Informs Optima HIV expenditure unit costs for PLHIV with CD4<200', active: true }
+          ]
+        },
+        {
+          name: '02.99 Care and treatment services n.e.c.',
+          acronym: '02.99',
           indicators: [
             { name: 'Informs Optima HIV expenditure unit costs for PLHIV with CD4<200', active: true }
           ]
