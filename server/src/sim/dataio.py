@@ -12,12 +12,16 @@ import os
 
 DATADIR="/tmp/uploads"
 
-def normalize_file(filename):
+def normalize_file(filename, path=None):
     """
     "Normalizes" filename:  if it is full path, leaves it alone. 
                             otherwise, prepends it with DATADIR.
     """
     result = filename
+
+    if path is not None:
+        DATADIR = path
+    
     if not os.path.exists(DATADIR):
         os.makedirs(DATADIR)
     if os.path.dirname(filename)=='':
@@ -25,14 +29,14 @@ def normalize_file(filename):
     return result
 
 
-def savedata(filename, data, update=True, verbose=2):
+def savedata(filename, data, update=True, verbose=2, path=None):
     """
     Saves the pickled data into the file (either updates it or just overwrites)
     """
     if verbose>=1: print('Saving data...')
     from cPickle import dump, load
     
-    filename = normalize_file(filename)
+    filename = normalize_file(filename,path)
     try: # First try loading the file and updating it
         rfid = open(filename,'rb') # "Read file ID" -- This will fail if the file doesn't exist
         origdata = load(rfid)

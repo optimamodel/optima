@@ -1,6 +1,7 @@
 import os
 from sim.dataio import DATADIR
-from flask import helpers
+from flask import helpers, session
+
 
 ALLOWED_EXTENSIONS=set(['txt','xlsx','xls'])
 
@@ -21,3 +22,13 @@ def project_exists(folder, name):
   project_name = helpers.safe_join(folder, name+'.prj')
   print("project name: %s" % project_name)
   return os.path.exists(project_name)
+
+
+def upload_dir_user():
+    from models import UserDb
+    user = None
+    if 'openid' in session:
+        user = UserDb.query.filter_by(openid=session['openid']).first()
+        return os.path.join(DATADIR, str(user.id))
+    return DATADIR
+
