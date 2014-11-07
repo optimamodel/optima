@@ -28,7 +28,7 @@ def upload_dir_user():
     from models import UserDb
     user = None
     if '_id' in session:
-        user = UserDb.query.filter_by(id=session['_id']).first()
+        user = UserDb.query.filter_by(id=session['user_id']).first()
         return os.path.join(DATADIR, str(user.id))
     return DATADIR
 

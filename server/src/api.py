@@ -29,7 +29,7 @@ UPLOAD_FOLDER = DATADIR #'/tmp/uploads' #todo configure
 
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql+psycopg2://postgres:root@localhost:5432/optima_new'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql+psycopg2://optima:optima@localhost:5432/optima'
 
 db = SQLAlchemy(app)
 from optima.user import user
