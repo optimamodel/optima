@@ -438,7 +438,69 @@ define(['./module'], function (module) {
           ]
         }
       ]
-    }
+    },
+    {
+      name: '03 Orphans and vulnerable children (OVC)',
+      acronym: '03',
+      programs: [
+        {
+          name: '03.01 OVC Education',
+          acronym: '03.01',
+          indicators: [
+            { name: 'Influences DALYs and may influence behaviour with older partners', active: true }
+          ]
+        },
+        {
+          name: '03.02 OVC Basic health care',
+          acronym: '03.02',
+          indicators: [
+            { name: 'Influences DALYs and may influence behaviour with older partners', active: true }
+          ]
+        },
+        {
+          name: '03.03 OVC Family/home support',
+          acronym: '03.03',
+          indicators: [
+            { name: 'Influences DALYs and may influence behaviour with older partners', active: true }
+          ]
+        },
+        {
+          name: '03.04 OVC Community support',
+          acronym: '03.04',
+          indicators: [
+            { name: 'Influences DALYs and may influence behaviour with older partners', active: true }
+          ]
+        },
+        {
+          name: '03.05 OVC Social Services and Administrative costs',
+          acronym: '03.05',
+          indicators: [
+            { name: 'Influences DALYs and may influence behaviour with older partners', active: true }
+          ]
+        },
+        {
+          name: '03.06 OVC Institutional care',
+          acronym: '03.06',
+          indicators: [
+            { name: 'Influences DALYs and may influence behaviour with older partners', active: true }
+          ]
+        },
+        {
+          name: '03.98 OVC Services not disaggregated by intervention',
+          acronym: '03.98',
+          indicators: [
+            { name: 'Influences DALYs and may influence behaviour with older partners', active: true }
+          ]
+        },
+        {
+          name: '03.99 OVC services n.e.c',
+          acronym: '03.99',
+          indicators: [
+            { name: 'Influences DALYs and may influence behaviour with older partners', active: true }
+          ]
+        }
+      ]
+    }    
   ]);
 
 });
