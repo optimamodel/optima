@@ -13,6 +13,8 @@ from sim.makeproject import makeproject
 from sim.optimize import optimize
 from optima.data import data
 from utils import upload_dir_user
+from flask.ext.login import login_required
+
 
 """ route prefix: /api/project """
 project = Blueprint('project',  __name__, static_folder = '../static')
@@ -29,6 +31,7 @@ Result: on the backend, new project is stored,
 spreadsheet with specified name and parameters given back to the user.
 """
 @project.route('/create/<project_name>', methods=['POST'])
+@login_required
 # expects json with the following arguments (see example):
 # {"npops":6,"nprogs":8, "datastart":2000, "dataend":2015}
 def createProject(project_name):

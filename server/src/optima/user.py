@@ -11,96 +11,130 @@ User Module
 """
 from flask import Flask, request, jsonify, g, session, flash, \
      redirect, url_for, abort, Blueprint
-from flask.ext.openid import OpenID
+from flask.ext.login import LoginManager, login_user, current_user, logout_user, AnonymousUserMixin
 from openid.extensions import pape
 
 # route prefix: /api/user
 user = Blueprint('user',  __name__, static_folder = '../static')
 
+
 from api import app, db
 from models import UserDb
-oid = OpenID(app, safe_roots=[], extension_responses=[pape.Response])
 
+# System Imports
+import hashlib
+
+# Login Manager
+login_manager = LoginManager()
+
+
+@user.record
+def record_params(setup_state):
+  app = setup_state.app
+  login_manager.init_app(app)
 
 @user.before_request
 def before_request():
     g.user = None
-    if 'openid' in session:
-        g.user = UserDb.query.filter_by(openid=session['openid']).first()
+    if 'userid' in session:
+        g.user = UserDb.query.filter_by(id=session['userid']).first()
 
+@user.route('/create', methods=['POST'])
+def create_user():
+    
+    # Check if the user already exists
+    email = request.values.get('email')
+    name = request.values.get('name')
+    password = hashlib.sha224( request.values.get('password') ).hexdigest()
+    
+    if email is not None and name is not None and password is not None:
+        
+        # Get user for this username (if exists)
+        try:
+            no_of_users = UserDb.query.filter_by( email=email ).count()
+        except:
+            no_of_users = 0
+        
+        if no_of_users == 0:
+            
+            # Save to db
+            u = UserDb(name, email, password)
+            db.session.add( u )
+            db.session.commit()
+            
+            # Login this user
+            login_user(u)
+            
+            # Return user info
+            return jsonify({'email': u.email, 'name': u.name })
+            
+    
+    # We are here implies username is already taken
+    return jsonify({'status': 'Username in use'})
 
-@user.after_request
-def after_request(response):
-    return response
-
-@user.route('/login', methods=['GET'])
-@oid.loginhandler
+@user.route('/login', methods=['POST'])
 def login():
       
-    # Does the login via OpenID.  Has to call into `oid.try_login`
-    # to start the OpenID machinery.
-    # If we are already logged in, go back to were we came from
-    if g.user is not None:
-        return redirect(oid.get_next_url())
+    # Make sure user is not logged in already.
+    cu = current_user
     
-    # If we are trying to login
-    if request.method == 'GET':
+    if cu.is_anonymous():
         
-        open_id = request.values.get('openid');
+        # Make sure user is valid.
+        username = request.values.get('username')
         
-        if open_id is None:
-            abort(401)
+        if username is not None:
         
-        if open_id:
-            pape_req = pape.Request([])
-            return oid.try_login(open_id, ask_for=['email', 'nickname'],
-                                         ask_for_optional=['fullname'],
-                                         extensions=[pape_req])
+            # Get hashsed password
+            password = hashlib.sha224( request.values.get('password') ).hexdigest()
+            
+            # Get user for this username
+            try:
+                u = UserDb.query.filter_by( email=username ).first()
+            except:
+                u = None
+            
+            # Make sure user is valid and password matches
+            if u is not None and u.password == password:
+                
+                # Login the user
+                login_user(u)
+                
+                # Return user info
+                return jsonify({'email': u.email, 'name': u.name })
+                
+        
+        # If we come here, login is not successful    
+        abort(401)
                                          
-    abort(401)
+    # User already loggedin
+    return jsonify({'email': cu.email, 'name': cu.name })
 
 @user.route('/current', methods=['GET'])
-def current_user():
-    g.user = None
-    if 'openid' in session:
-        g.user = UserDb.query.filter_by(openid=session['openid']).first()
-        return jsonify({ 'email': g.user.email, 'name': g.user.name })  
+def current_user_api():
+    cu = current_user
+    if cu.is_anonymous() == False:
+        return jsonify({ 'email': cu.email, 'name': cu.name })  
 
     abort(401)
-
-@oid.after_login
-def create_or_login(resp):
-    """This is called when login with OpenID succeeded and it's not
-    necessary to figure out if this is the users's first login or not.
-    This function has to redirect otherwise the user will be presented
-    with a terrible URL which we certainly don't want.
-    """
-    session['openid'] = resp.identity_url
-    if 'pape' in resp.extensions:
-        pape_resp = resp.extensions['pape']
-        session['auth_time'] = pape_resp.auth_time
-    user = UserDb.query.filter_by(openid=resp.identity_url).first()
-    if user is not None:
-        flash(u'Successfully signed in')
-        g.user = user
-        return redirect(oid.get_next_url())
-
-    name = resp.fullname or resp.nickname
-    email = resp.email
-
-    if not name:
-        flash(u'Error: you have to provide a name')
-    elif '@' not in email:
-        flash(u'Error: you have to enter a valid email address')
-    else:
-        flash(u'Profile successfully created')
-        db.session.add(UserDb(name, email, session['openid']))
-        db.session.commit()
-         
-        return redirect(oid.get_next_url())
 
 @user.route('/logout')
 def logout():
-    session.pop('openid', None)
+    logout_user()
     flash(u'You have been signed out')
     return jsonify({'status': 'OK'})
+
+#For Login Manager
+@login_manager.user_loader
+def load_user(userid):
+    u = None;    
+    try:
+        u = UserDb.query.filter_by(id=userid).first()
+    except:
+        u = None;
+        
+    return u
+    
+@login_manager.unauthorized_handler
+def unauthorized_handler():
+    abort(401)
