@@ -38,7 +38,8 @@ def createProject(project_name):
     # getting current user path
     path = upload_dir_user()
 
-    session.clear()
+    #session.clear() # had to commit this line to check user session
+
     print("createProject %s" % project_name)
     data = request.form
     if data:
@@ -156,16 +157,34 @@ Deletes the given project (and eventually, corresponding excel files)
 """
 @project.route('/delete/<project_name>')
 def deleteProject(project_name):
+
     # getting current user path
     path = upload_dir_user()
+
     project_path = helpers.safe_join(path, project_name+'.prj')
+
     if os.path.exists(project_path):
         os.remove(project_path)
-        spreadsheet_path = helpers.safe_join(loaddir(project), project_name+'.xlsx')
+        spreadsheet_path = helpers.safe_join(path, project_name+'.xlsx')
         if os.path.exists(spreadsheet_path):
             os.remove(spreadsheet_path)
         if session.get('project_name', '') == project_name:
             session.pop('project_name', None)
+
+        # Get current user 
+        cu = current_user
+        if cu.is_anonymous() == False:
+        
+            from api import db
+            from models import ProjectDb
+
+            # Get project row for current user with project name
+            project = ProjectDb.query.filter_by(user_id= cu.id,name=project_name).first()
+
+            # delete project row
+            db.session.delete(project)
+            db.session.commit()
+
         return jsonify({'status':'OK','reason':'Project %s deleted.' % project_name})
     else:
         return jsonify({'status':'NOK', 'reason':'Project %s did not exist.' % project_name})
@@ -219,6 +238,7 @@ def uploadExcel():
     try:
         out_filename = updatedata(file_basename, loaddir)
         data = loaddata(project_name)
+
     except Exception, err:
         var = traceback.format_exc()
         reply['exception'] = var
