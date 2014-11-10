@@ -15,7 +15,6 @@ from optima.data import data
 from utils import upload_dir_user
 from flask.ext.login import login_required, current_user
 
-
 """ route prefix: /api/project """
 project = Blueprint('project',  __name__, static_folder = '../static')
 project.config = {}
@@ -36,7 +35,7 @@ spreadsheet with specified name and parameters given back to the user.
 # {"npops":6,"nprogs":8, "datastart":2000, "dataend":2015}
 def createProject(project_name):
 
-    # gettin current user path
+    # getting current user path
     path = upload_dir_user()
 
     session.clear()
@@ -114,7 +113,10 @@ If the project exists, should put it in session and return to the user.
 # expects project name, will put it into session
 # todo: only if it can be found
 def openProject(project_name):
-    project_path = helpers.safe_join(upload_dir_user(), project_name+'.prj')
+    
+    # getting current user path
+    path = upload_dir_user()
+    project_path = helpers.safe_join(path, project_name+'.prj')
     if not os.path.exists(project_path):
         return jsonify({'status':'NOK','reason':'No such project %s' % project_name})
     else:
@@ -129,15 +131,23 @@ def getProjectInfo():
     return jsonify({"project":session.get('project_name','')})
 
 """
-Returns the list of existing projects.
+Returns the list of existing projects from db.
 """
 @project.route('/list')
 def getProjectList():
     projects = []
-    path = upload_dir_user()
-    for file in os.listdir(path):
-        if fnmatch.fnmatch(file, '*.prj'):
-            projects.append(file)
+    
+    # Get current user 
+    cu = current_user
+    if cu.is_anonymous() == False:
+        from api import db
+        from models import ProjectDb
+        
+        # Get projects for current user
+        projList = ProjectDb.query.filter_by(user_id=cu.id)
+        for project in projList:
+             projects.append(project.name)
+   
     return jsonify({"projects":projects})
 
 
@@ -146,7 +156,9 @@ Deletes the given project (and eventually, corresponding excel files)
 """
 @project.route('/delete/<project_name>')
 def deleteProject(project_name):
-    project_path = helpers.safe_join(upload_dir_user(), project_name+'.prj')
+    # getting current user path
+    path = upload_dir_user()
+    project_path = helpers.safe_join(path, project_name+'.prj')
     if os.path.exists(project_path):
         os.remove(project_path)
         spreadsheet_path = helpers.safe_join(loaddir(project), project_name+'.xlsx')
@@ -181,7 +193,9 @@ Precondition: model should exist.
 def uploadExcel():
     reply = {'status':'NOK'}
     file = request.files['file']
-    loaddir = project.config['UPLOAD_FOLDER']
+  
+    # getting current user path
+    loaddir =  upload_dir_user()
     print("loaddir = %s" % loaddir)
     if not loaddir:
       loaddir = DATADIR
