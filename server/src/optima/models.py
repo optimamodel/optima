@@ -1,4 +1,5 @@
 from api import db
+from sqlalchemy.dialects.postgresql import JSON
 
 class UserDb(db.Model):
     __tablename__ = 'users'
@@ -36,8 +37,8 @@ class ProjectDb(db.Model):
     dataend = db.Column(db.String(20))
     econ_datastart = db.Column(db.String(20))
     econ_dataend = db.Column(db.String(20))
-    programs = db.Column(db.String(60))
-    populations = db.Column(db.String(60))
+    programs = db.Column(JSON)
+    populations = db.Column(JSON)
 
     def __init__(self, name, user_id, datastart, dataend, econ_datastart, econ_dataend, programs, populations):
         self.name = name
