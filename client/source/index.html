@@ -62,7 +62,7 @@
 </div>
 
 <div class="elastic layout">
-  <div class="elastic_col __shrink layout_aside">
+  <div class="elastic_col __shrink layout_aside" ng-if="userLogged()">
     <div data-menu="asideMenuSettings" template="accordion">
     </div>
   </div>
@@ -71,8 +71,8 @@
   </div>
 </div>
 
-<div class="actionbar" ng-cloak>
-  <div class="elastic __fluid">
+<div class="actionbar" style="margin-top: -50px" ng-cloak>
+  <div class="elastic __fluid" ng-if="userLogged()">
     <div class="elastic_col __va-middle" ng-show="activeProject.name">
       Project: <b>{{ activeProject.name }}</b>
     </div>
@@ -83,7 +83,15 @@
       <button class="btn">Save as...</button>
     </div>
     <div class="elastic_col __va-middle">
-      <button class="btn" ng-click="exitApp()">Exit</button>
+      <button class="btn" ng-click="logout()">Exit</button>
+    </div>
+  </div>
+  <div class="elastic __fluid" ng-if="!userLogged()">
+    <div class="elastic_col __va-middle">
+      <button class="btn" ui-sref="login">Log in</button>
+    </div>
+    <div class="elastic_col __va-middle">
+      <button class="btn" ui-sref="register">Register</button>
     </div>
   </div>
 </div>
