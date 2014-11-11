@@ -12,7 +12,6 @@ User Module
 from flask import Flask, render_template, request, jsonify, g, session, flash, \
      redirect, url_for, abort, Blueprint
 from flask.ext.login import LoginManager, login_user, current_user, logout_user, AnonymousUserMixin
-from openid.extensions import pape
 
 # route prefix: /api/user
 user = Blueprint('user',  __name__, static_folder = '../static')
