@@ -36,8 +36,9 @@ These APIs allow front-end to get current user or login a user.
   On success, user is sent back this JSON:
   
   `{
-	status: "OK"
-   }` 
+     "email": "iwein@startersquad.com",
+     "name": "Iwein Fuld"
+   }`
    
    On name already used, user is sent back this JSON:
    
@@ -51,7 +52,7 @@ These APIs allow front-end to get current user or login a user.
   
   `
 	username: "iwein@startersquad.com"
-	password: "whatever" 
+	password: "whatever"
    `
   
   On successful login, user is sent back this JSON:
