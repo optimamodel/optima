@@ -79,12 +79,12 @@ def before_request():
 
 @user.route('/create', methods=['POST'])
 def create_user():
-    
+
     # Check if the user already exists
-    email = request.values.get('email')
-    name = request.values.get('name')
-    password = hashlib.sha224( request.values.get('password') ).hexdigest()
-    
+    email = request.json['email']
+    name = request.json['name']
+    password = hashlib.sha224( request.json['password'] ).hexdigest()
+
     if email is not None and name is not None and password is not None:
         
         # Get user for this username (if exists)
@@ -105,10 +105,9 @@ def create_user():
             
             # Return user info
             return jsonify({'email': u.email, 'name': u.name })
-            
-    
+
     # We are here implies username is already taken
-    return jsonify({'status': 'Username in use'})
+    return jsonify({'status': 'This email is already in use'})
 
 
 @user.route('/login', methods=['POST'])
@@ -120,22 +119,22 @@ def login():
     if cu.is_anonymous():
         
         # Make sure user is valid.
-        username = request.values.get('username')
+        username = request.json['email']
         
         if username is not None:
-        
+
             # Get hashsed password
-            password = hashlib.sha224( request.values.get('password') ).hexdigest()
+            password = hashlib.sha224( request.json['password'] ).hexdigest()
             
             # Get user for this username
             try:
                 u = UserDb.query.filter_by( email=username ).first()
             except:
                 u = None
-            
+
             # Make sure user is valid and password matches
             if u is not None and u.password == password:
-                
+
                 # Login the user
                 login_user(u)
                 

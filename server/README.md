@@ -51,7 +51,7 @@ These APIs allow front-end to get current user or login a user.
   Following data is posted when doing login:
   
   `
-	username: "iwein@startersquad.com"
+	email: "iwein@startersquad.com"
 	password: "whatever"
    `
   
