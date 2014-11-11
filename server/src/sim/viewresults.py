@@ -1,11 +1,11 @@
-def viewresults(D, whichgraphs={'prev':1, 'inci':1, 'daly':1, 'death':1, 'pops':1, 'tot':1}, startyear=2000, endyear=2015, verbose=2, onefig=False):
+def viewresults(D, whichgraphs={'prev':1, 'inci':1, 'daly':1, 'death':1, 'pops':1, 'tot':1}, startyear=2000, endyear=2015, verbose=2, onefig=False, show_wait=False):
     """
     Generate all outputs required for the model, including prevalence, incidence,
     deaths, etc.
     Version: 2014nov05
     """
     
-    from matplotlib.pylab import figure, plot, hold, scatter, xlabel, ylabel, xlim, ylim, legend, title, ndim, ceil, sqrt, subplot
+    from matplotlib.pylab import figure, plot, hold, scatter, xlabel, ylabel, xlim, ylim, legend, title, ndim, ceil, sqrt, subplot, show
     
 #    D.O = deepcopy(D.D.O) # Because otherwise it's a frickin' pointer
 
@@ -60,3 +60,5 @@ def viewresults(D, whichgraphs={'prev':1, 'inci':1, 'daly':1, 'death':1, 'pops':
                     ylabel(D.O[graph].ylabel)
                     xlim(xmin=startyear, xmax=endyear)
                     ylim(ymin=0)
+    if show_wait:
+        show()
