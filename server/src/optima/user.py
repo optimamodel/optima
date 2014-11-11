@@ -29,7 +29,7 @@ import hashlib
 login_manager = LoginManager()
 
 # setup sqlalchemy
-engine = create_engine(app.config['DATABASE_URI'])
+engine = create_engine('postgresql+psycopg2://optima:optima@localhost:5432/optima')
 db_session = scoped_session(sessionmaker(autocommit=False,
                                          autoflush=True,
                                          bind=engine))
