@@ -5,7 +5,7 @@ User Module
 ~~~~~~~~~~~~~~
 
 1. Get current logged in user.
-2. Login a user using openid.
+2. Login a user using username and password.
 3. Logout.
 
 """
