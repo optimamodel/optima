@@ -1,36 +1,49 @@
-"""
-MANUALFIT
-http://54.200.79.218/#/model/manual-calibration
-Version: 2014oct28
-"""
-
-def manualfit(projectfilename='example.prj', paramtable={}, verbose = 2):
-    # Get input data from the editable table in the form of parameter name, parameter value, e.g. 'D.data.epi.p', 3.234
-    if verbose == 1:
-        print("manualfit(projectfilename=%s, paramtable=%s)" % (projectfilename, paramtable))
-    # The project data file name needs to be 
-    from matplotlib.pylab import rand, r_, exp # KLUDGY
-    from bunch import Bunch as struct # Replicate Matlab-like structure behavior
+def manualfit(D, F, startyear=2000, endyear=2015, dosave=False, verbose=2):
+    """
+    Manual metaparameter fitting code.
     
-    # Generate data for scatter and line plots
-    nplots = 6
-    beginyear = 2000
-    endyear = 2015
-    plotdata = []
-    for p in range(nplots):
-        plotdata.append(struct())
-        plotdata[p].xmodeldata = r_[beginyear:endyear+1] # Model output
-        plotdata[p].ymodeldata = exp(-rand(len(plotdata[p].xmodeldata)))
-        plotdata[p].xexpdata = [2000, 2005, 2008] # Experimental data
-        plotdata[p].yexpdata = [0.3, 0.4, 0.6]
-        plotdata[p].xlabel = 'Year'
-        plotdata[p].ylabel = 'Prevalence'
+    Example usage:
+        ipython --pylab # Run Python with Pylab
+        ion() # Turn on interactive plotting
+        import optima # Run Optima
+        F = D.F # Shorten name for fitted parameters
+        D = manualfit(D, F) # Run manualfit
+        F.force *= 0 # Make a modification
+        D = manualfit(D, F) # Rerun manualfit
+        D = manualfit(D, F, dosave=True) # If the result is good, save
         
-        # e.g. 
-#        from matplotlib.pylab import plot, hold, scatter, subplot
-#        subplot(3,2,p)
-#        plot(plotdata[p].xmodeldata, plotdata[p].ymodeldata)
-#        hold(True)
-#        scatter(plotdata[p].xexpdata, plotdata[p].yexpdata);
+    Version: 2014nov05
+    """
     
-    return plotdata
+    from printv import printv
+    from bunch import Bunch as struct
+    from matplotlib.pylab import arange
+    
+    ## TODO: don't just copy from runsimulation()
+    options = struct()
+    options.startyear = startyear
+    options.endyear = endyear
+    options.dt = 0.1
+    options.tvec = arange(options.startyear, options.endyear, options.dt) # Time vector
+    
+    printv('1. Running simulation...', 1, verbose)
+    from model import model
+    D.S = model(D.G, D.M, F, options, verbose=2)
+    
+    printv('2. Making results...', 1, verbose)
+    from epiresults import epiresults
+    D = epiresults(D, verbose=verbose)
+    
+#    printv('3. Viewing results...', 1, verbose)
+#    from viewresults import viewresults
+#    viewresults(D, whichgraphs={'prev':1, 'inci':1, 'daly':1, 'death':1, 'pops':1, 'tot':1}, onefig=True, verbose=verbose)
+    
+    if dosave:
+        from dataio import savedata
+        D.F = F
+        savedata(D.projectfilename, D, verbose=verbose)
+        printv('...done manual fitting.', 2, verbose)
+    
+    return D
+    #this is great, but at the end, frontend needs to get the graphs (no need to actually draw them in python on the server).
+    #the only thing that has to go to the frontend is the graph data, we'll take care of the rest.

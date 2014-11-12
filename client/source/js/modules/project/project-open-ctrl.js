@@ -12,6 +12,7 @@ define(['./module', 'underscore'], function (module, _) {
           if (response && response.status === 'NOK') {
             alert(response.reason);
           }
+          location.href = '/';
         })
     }
   });

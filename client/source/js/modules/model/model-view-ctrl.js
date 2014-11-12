@@ -1,119 +1,181 @@
 define(['./module', 'angular'], function (module, angular) {
-    'use strict';
+  'use strict';
 
-    module.controller('ModelViewController', function ($scope, $http, dataMocks) {
+  module.controller('ModelViewController', function ($scope, $http, Model, f, meta) {
 
-      $scope.simulationOptions = {};
+    $scope.parameters = {
+      types: {
+        force: 'Force-of-infection for ',
+        init: 'Initial prevalence for ',
+        dx: [
+          'Testing rate initial value',
+          'Testing rate final value',
+          'Testing rate midpoint',
+          'Testing rate slope'
+        ],
+        tx1: [
+          'First-line ART initial value',
+          'First-line ART final value',
+          'First-line ART midpoint',
+          'First-line ART slope'
+        ],
+        tx2: [
+          'Second-line initial value',
+          'Second-line final value',
+          'Second-line midpoint',
+          'Second-line slope'
+        ]
+      },
+      meta: meta,
+      f: f,
+      cache: {
+        f: angular.copy(f),
+        response: null
+      }
+    };
 
-      $scope.simulate = function () {
-        //var generatedDataSet = dataMocks.lineWith({num: $scope.numberOfPoints});
-        //$scope.linescatterdata = [generatedDataSet];
+    $scope.enableManualCalibration = false;
 
-          $http.post('/api/model/view', $scope.simulationOptions)
-            .success(function (data) {
-                console.log(data);
+    // to store years from UI
+    $scope.simulationOptions = {};
+    $scope.graphs = [];
+
+    $scope.graphType = 'prev';
+
+    var linescatteroptions = {
+      chart: {
+        type: 'scatterPlusLineChart',
+        height: 250,
+        margin: {
+          top: 20,
+          right: 20,
+          bottom: 60,
+          left: 50
+        },
+        useInteractiveGuideline: true,
+        sizeRange: [100, 100],
+        xAxis: {
+          axisLabel: 'Year'
+        },
+        yAxis: {
+          axisLabel: 'Prevalence (%)',
+          tickFormat: function (d) {
+            return d3.format(',.2f')(d);
+          },
+          axisLabelDistance: 35
+        }
+      }
+    };
+
+    var linescatterdata = [
+      {
+        values: [],
+        key: 'Model',
+        color: '#ff7f0e'
+      },
+      {
+        values: [],
+        key: 'Error',
+        color: '#333333'
+      }
+    ];
+
+    $scope.doneEditingParameter = function () {
+      console.log("I'm editing callback. Do what you have to do with me :(");
+    };
+
+    /*
+     * Methods
+     */
+
+    var prepareGraphs = function (response, type) {
+      var graphs = [];
+      var data = response[type];
+      var scatterDataAvailable = data.pops.length === data.ydata.length;
+
+      _(data.pops).each(function (population, populationIndex) {
+        var graph = {
+          options: angular.copy(linescatteroptions),
+          data: angular.copy(linescatterdata)
+        };
+
+        graph.data[0].values = _(population).map(function (value, i) {
+          return {
+            x: value,
+            y: response.tvec[i]
+          };
+        });
+
+        graph.options.chart.xAxis.axisLabel = data.xlabel;
+        graph.options.chart.yAxis.axisLabel = data.ylabel;
+
+        if (scatterDataAvailable) {
+          graph.data[1].values = _(data.ydata[populationIndex]).chain()
+            .map(function (value, i) {
+              return {
+                x: value,
+                y: response.tvec[i]
+              };
             })
-      };
+            .filter(function (value) {
+              return !!value.x;
+            })
+            .value();
+        }
 
-      $scope.openFileOption1 = function () {
-        angular.element('#file01').click();
-      };
+        graphs.push(graph);
+      });
 
-        $scope.scatteroptions = { /* CK: need axis labels to align better, and need right number! */
-            chart: {
-                type: 'scatterChart',
-                height: 250,
-                margin: {
-                    top: 20,
-                    right: 20,
-                    bottom: 100,
-                    left: 40
-                },
-                x: function (d) {
-                    return d[0];
-                },
-                y: function (d) {
-                    return d[1];
-                },
-                sizeRange: [100,100],
-                clipEdge: true,
-                transitionDuration: 500,
-                useInteractiveGuideline: true,
-                xAxis: {
-                    showMaxMin: false,
-                    ticks: 9,
-                    rotateLabels: -90,
-                    tickFormat: function (d) {
-                        return ['Parameter 0', 'Parameter 1', 'Parameter 2', 'Parameter 3', 'Parameter 4', 'Parameter 5', 'Parameter 6', 'Parameter 7', 'Parameter 8', 'Parameter 9'][d];
-                    }
-                },
-                yAxis: {
-                    tickFormat: function (d) {
-                        return d3.format(',.2f')(d);
-                    }
-                }
-            }
-        };
+      return graphs;
+    };
 
-        $scope.scatterdata = [
-            {
-                "key": "Model",
-                "values": [
-                    [1, 0.200],
-                    [2, 1.199],
-                    [3, 2.198],
-                    [4, 3.198],
-                    [5, 0.198],
-                    [6, 4.198],
-                    [7, 3.198],
-                    [8, 2.595],
-                    [9, 1.195]
-                ]
-            },
+    var prepareF = function (f) {
+      var F = angular.copy(f);
 
-            {
-                "key": "Data",
-                "values": [
-                    [1, 0.200],
-                    [2, 1.599],
-                    [3, 2.298],
-                    [4, 3.798],
-                    [5, 0.898],
-                    [6, 4.298],
-                    [7, 3.598],
-                    [8, 2.295],
-                    [9, 1.895]
-                ]
-            }
+      F.dx = _(F.dx).map(parseFloat);
+      F.force = _(F.force).map(parseFloat);
+      F.init = _(F.init).map(parseFloat);
+      F.tx1 = _(F.tx1).map(parseFloat);
+      F.tx2 = _(F.tx2).map(parseFloat);
 
-        ];
+      return F;
+    };
 
+    $scope.simulate = function () {
+      $http.post('/api/model/view', $scope.simulationOptions)
+        .success(function (response) {
+          $scope.graphs = prepareGraphs(response, $scope.graphType);
+          $scope.parameters.cache.response = response;
+        });
+    };
 
-        $scope.linescatteroptions = {
-            chart: {
-                type: 'scatterPlusLineChart',
-                height: 250,
-                margin: {
-                    top: 20,
-                    right: 20,
-                    bottom: 60,
-                    left: 50
-                },
-                useInteractiveGuideline: true,
-                sizeRange: [100,100],
-                xAxis: {
-                    axisLabel: 'Year'
-                },
-                yAxis: {
-                    axisLabel: 'Prevalence (%)',
-                    tickFormat: function (d) {
-                        return d3.format(',.2f')(d);
-                    },
-                    axisLabelDistance: 35
-                }
-            }
-        };
+    $scope.previewManualCalibration = function () {
+      Model.saveCalibrateManual({ F: prepareF($scope.parameters.f) },
+        function (response) {
+          $scope.graphs = prepareGraphs(response, $scope.graphType);
+          $scope.parameters.cache.response = response;
+        });
+    };
 
-        $scope.linescatterdata = [];
+    $scope.saveManualCalibration = function () {
+      Model.saveCalibrateManual({
+        F: prepareF($scope.parameters.f),
+        dosave: true
+      }, function (response) {
+        $scope.graphs = prepareGraphs(response, $scope.graphType);
+        $scope.parameters.cache.response = response;
+      });
+    };
+
+    $scope.revertManualCalibration = function () {
+      angular.extend($scope.parameters.f, $scope.parameters.cache.f);
+    };
+
+    $scope.$watch('graphType', function (newValue) {
+      if (newValue && !_($scope.parameters.cache.response).isEmpty()) {
+        $scope.graphs = prepareGraphs($scope.parameters.cache.response, $scope.graphType);
+      }
     });
+
+  });
 });

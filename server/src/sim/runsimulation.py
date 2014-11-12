@@ -1,36 +1,36 @@
-def runsimulation(projectdatafile='example.prj', startyear=2000, endyear=2030, verbose=2):
+def runsimulation(D, startyear=2000, endyear=2030, verbose=2):
     """
     RUNSIMULATION
     View data and model estimates
-    Version: 2014oct29
-    need to change UI
+    
+    Version: 2014nov05 by cliffk
     """
 
-    if verbose>=1: 
-        data = (projectdatafile, startyear, endyear)
-        print('Running simulation (projectdatafile = %s, startyear = %s, endyear = %s)...' % data)
     
-    # Load data
-    from dataio import loaddata, savedata, normalize_file
-    projectdatafile = normalize_file(projectdatafile)
-    D = loaddata(projectdatafile, verbose=verbose)
-    print("D = %s" % D)
     
     # Create options structure
     from bunch import Bunch as struct
     from matplotlib.pylab import arange
+    from printv import printv
+    printv('Running simulation...', 1, verbose)
+    
     options = struct()
     options.startyear = startyear
     options.endyear = endyear
     options.dt = 0.1
     options.tvec = arange(options.startyear, options.endyear, options.dt) # Time vector
     
+    # Convert data parameters to model parameters
     from makemodelpars import makemodelpars
     D.M = makemodelpars(D.P, options, verbose=verbose)
     
+    # Run model
     from model import model
-    D.sim = model(D.G, D.M, options, verbose=verbose)
+    D.S = model(D.G, D.M, D.F, options, verbose=verbose)
     
-    savedata(projectdatafile, D, verbose=verbose)
-    # todo generate graphs?..
-    if verbose>=2: print('  ...done running simulation for project %s.' % projectdatafile)
+    # Save output
+    from dataio import savedata
+    savedata(D.projectfilename, D, verbose=verbose)
+    printv('...done running simulation for project %s.' % D.projectfilename, 2, verbose)
+    return D
+    # should frontend do anything with the model? 

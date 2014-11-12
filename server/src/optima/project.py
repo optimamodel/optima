@@ -6,13 +6,13 @@ from werkzeug import secure_filename
 import os
 import sys
 import traceback
-from sim.dataio import loaddata, savedata, normalize_file, DATADIR
+from sim.dataio import loaddata, savedata,upload_dir_user, DATADIR, PROJECTDIR, TEMPLATEDIR
 from sim.updatedata import updatedata
 from sim.loadspreadsheet import loadspreadsheet
 from sim.makeproject import makeproject
 from sim.optimize import optimize
 from optima.data import data
-from utils import upload_dir_user
+#from utils import upload_dir_user
 from flask.ext.login import login_required, current_user
 
 """ route prefix: /api/project """
@@ -34,9 +34,6 @@ spreadsheet with specified name and parameters given back to the user.
 # expects json with the following arguments (see example):
 # {"npops":6,"nprogs":8, "datastart":2000, "dataend":2015}
 def createProject(project_name):
-
-    # getting current user path
-    path = upload_dir_user()
 
     #session.clear() # had to commit this line to check user session
 
@@ -79,8 +76,6 @@ def createProject(project_name):
     else:
         populations = ''
     
-    makeproject_args['path'] = path
-    
     from api import db
     from models import ProjectDb
     
@@ -95,15 +90,17 @@ def createProject(project_name):
 
     #    makeproject_args = dict(makeproject_args.items() + data.items())
     print(makeproject_args)
-    
-    new_project_template = makeproject(**makeproject_args) # makeproject is supposed to return the name of the existing file...
+
+    D = makeproject(**makeproject_args) # makeproject is supposed to return the name of the existing file...
+    new_project_template = D.spreadsheetname
+
     print("new_project_template: %s" % new_project_template)
-    (dirname, basename) = os.path.split(new_project_template)
+    (dirname, basename) = (upload_dir_user(TEMPLATEDIR), new_project_template)
 #    xlsname = project_name + '.xlsx'
 #    srcfile = helpers.safe_join(project.static_folder,'example.xlsx')
 #    dstfile =  helpers.safe_join(dirname, xlsname)
 #    shutil.copy(srcfile, dstfile)
-
+    session['project_name'] = project_name 
     return helpers.send_from_directory(dirname, basename)
 
 """
@@ -116,7 +113,8 @@ If the project exists, should put it in session and return to the user.
 def openProject(project_name):
     
     # getting current user path
-    path = upload_dir_user()
+    path = upload_dir_user(PROJECTDIR)
+
     project_path = helpers.safe_join(path, project_name+'.prj')
     if not os.path.exists(project_path):
         return jsonify({'status':'NOK','reason':'No such project %s' % project_name})
@@ -151,7 +149,6 @@ def getProjectList():
    
     return jsonify({"projects":projects})
 
-
 """
 Deletes the given project (and eventually, corresponding excel files)
 """
@@ -159,13 +156,11 @@ Deletes the given project (and eventually, corresponding excel files)
 def deleteProject(project_name):
 
     # getting current user path
-    path = upload_dir_user()
-
-    project_path = helpers.safe_join(path, project_name+'.prj')
+    project_path = helpers.safe_join(upload_dir_user(PROJECTDIR), project_name+'.prj')
 
     if os.path.exists(project_path):
         os.remove(project_path)
-        spreadsheet_path = helpers.safe_join(path, project_name+'.xlsx')
+        spreadsheet_path = helpers.safe_join(upload_dir_user(TEMPLATEDIR), project_name+'.xlsx')
         if os.path.exists(spreadsheet_path):
             os.remove(spreadsheet_path)
         if session.get('project_name', '') == project_name:
@@ -214,10 +209,10 @@ def uploadExcel():
     file = request.files['file']
   
     # getting current user path
-    loaddir =  upload_dir_user()
+    loaddir =  upload_dir_user(PROJECTDIR)
     print("loaddir = %s" % loaddir)
     if not loaddir:
-      loaddir = DATADIR
+        loaddir = DATADIR
     print("loaddir = DATADIR")
     if not file:
         reply['reason'] = 'No file is submitted!'
@@ -228,22 +223,28 @@ def uploadExcel():
         reply['reason'] = 'File type of %s is not accepted!' % filename
         return json.dumps(reply)
 
+    reply['file'] = filename
+    if allowed_file(filename):
+        server_filename = os.path.join(loaddir, filename)
+        file.save(server_filename)
+
     file_basename, file_extension = os.path.splitext(filename)
-    project_name = helpers.safe_join(loaddir, file_basename+'.prj')
+    project_name = helpers.safe_join(PROJECTDIR, file_basename+'.prj')
     print("project name: %s" % project_name)
     if not os.path.exists(project_name):
         reply['reason'] = 'Project %s does not exist' % file_basename
         return json.dumps(reply)
 
     try:
-        out_filename = updatedata(file_basename, loaddir)
         data = loaddata(project_name)
 
+        D = updatedata(data, loaddir)
     except Exception, err:
         var = traceback.format_exc()
         reply['exception'] = var
         return json.dumps(reply)      
 
+    session['project_name'] = project_name 
     reply['status'] = 'OK'
     reply['result'] = 'Project %s is updated' % file_basename
     return json.dumps(reply)

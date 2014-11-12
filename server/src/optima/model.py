@@ -6,16 +6,17 @@ from generators.line import generatedata
 import json
 import traceback
 import sys
-from sim.dataio import loaddata, savedata, normalize_file, DATADIR
+from sim.dataio import loaddata, savedata, DATADIR, PROJECTDIR
 from sim.updatedata import updatedata
 from sim.loadspreadsheet import loadspreadsheet
 from sim.makeproject import makeproject
 from sim.manualfit import manualfit
 from sim.autofit import autofit
-from sim.bunch import unbunchify
+from sim.bunch import unbunchify, bunchify, Bunch as struct
 from sim.runsimulation import runsimulation
 from sim.optimize import optimize
-from utils import loaddir
+from sim.epiresults import epiresults
+from utils import loaddir, load_model, save_model, project_exists
 
 """ route prefix: /api/model """
 model = Blueprint('model',  __name__, static_folder = '../static')
@@ -33,22 +34,37 @@ TODO: do it with the project which is currently in scope
 """
 @model.route('/calibrate/auto', methods=['POST'])
 def doAutoCalibration():
+    reply = {'status':'NOK'}
     print('data: %s' % request.data)
     data = json.loads(request.data)
     project_name = session.get('project_name', '')
     if project_name == '':
-        return jsonify({'status':'NOK', 'reason':'no project is open'})
+        reply['reason'] = 'No project is open'
+        return jsonify(reply)
 
-    file_name = helpers.safe_join(loaddir(model), project_name+'.prj')
-    print("project file_name: %s" % file_name)
-    if not os.path.exists(file_name):
+    if not project_exists(project_name):
         reply['reason'] = 'File for project %s does not exist' % project_name
+        return jsonify(reply)
 
+    file_name = helpers.safe_join(PROJECTDIR, project_name+'.prj')
+    print("project file_name: %s" % file_name)
     fits = autofit(file_name, data)
-    print("fits: %s" % fits)
-    fits = [unbunchify(x) for x in fits]
-    print("unbunchified fits: %s" % fits)
-    return jsonify(fits[0])
+    # autofit is not implemented yet, so just run the simulation #TODO #FIXME
+    try:
+        D = load_model(project_name)
+        D = runsimulation(**args) 
+        D = epiresults(D)
+        D_dict = unbunchify(D)
+    except Exception, err:
+        var = traceback.format_exc()
+        return jsonify({"status":"NOK", "exception":var})
+    return jsonify(D_dict.get('O',{}))
+
+
+#    print("fits: %s" % fits)
+#    fits = [unbunchify(x) for x in fits]
+#    print("unbunchified fits: %s" % fits)
+#    return jsonify(fits[0])
 
 
 """ 
@@ -61,17 +77,100 @@ def doManualCalibration():
     project_name = session.get('project_name', '')
     if project_name == '':
         return jsonify({'status':'NOK', 'reason':'no project is open'})
-
-    file_name = helpers.safe_join(loaddir(model), project_name+'.prj')
-    print("project file_name: %s" % file_name)
-    if not os.path.exists(file_name):
+    if not project_exists(project_name):
         reply['reason'] = 'File for project %s does not exist' % project_name
+    file_name = helpers.safe_join(PROJECTDIR, project_name+'.prj')
+    print("project file_name: %s" % file_name)
 
-    fits = manualfit(file_name, data)
-    print("fits: %s" % fits)
-    fits = [unbunchify(x) for x in fits]
-    print("unbunchified fits: %s" % fits)
-    return jsonify(fits[0])
+    #expects json: {"startyear":year,"endyear":year} and gets project_name from session
+    args = {}
+    startyear = data.get("startyear")
+    if startyear:
+        args["startyear"] = int(startyear)
+    endyear = data.get("endyear")
+    if endyear:
+        args["endyear"] = int(endyear)
+    dosave = data.get("dosave")
+    if dosave:
+        args["dosave"] = dosave
+    try:
+        D = load_model(project_name)
+        args['D'] = D
+        F = bunchify(data.get("F",{}))
+        args['F'] = F
+        D = manualfit(**args) 
+        D_dict = unbunchify(D)
+    except Exception, err:
+        var = traceback.format_exc()
+        return jsonify({"status":"NOK", "exception":var})
+    return jsonify(D_dict.get('O',{}))
+
+
+"""
+Returns the parameters of the given model.
+"""
+@model.route('/parameters')
+def getModel():
+    project_name = session.get('project_name', '')
+    if project_name == '':
+        return jsonify({'status':'NOK', 'reason':'no project is open'})
+    D = load_model(project_name)
+    result = unbunchify(D)
+    print "result: %s" % result
+    return jsonify(result)
+
+
+"""
+Returns the parameters of the given model in the given group.
+"""
+@model.route('/parameters/<group>')
+def getModelParameters(group):
+    project_name = session.get('project_name', '')
+    if project_name == '':
+        return jsonify({'status':'NOK', 'reason':'no project is open'})
+    D = load_model(project_name)
+    result = unbunchify(D)
+    print "result: %s" % result
+    return jsonify(result.get(group,{}))
+
+
+"""
+Returns the parameters of the given model in the given group / subgroup.
+"""
+@model.route('/parameters/<group>/<subgroup>')
+def getModelSubParameters(group, subgroup):
+    project_name = session.get('project_name', '')
+    if project_name == '':
+        return jsonify({'status':'NOK', 'reason':'no project is open'})
+    D = load_model(project_name)
+    result = unbunchify(D)
+    the_group = result.get(group,{})
+    the_subgroup = the_group.get(subgroup, {})
+    print "result: %s" % the_subgroup
+    return jsonify(the_subgroup)
+
+
+"""
+Sets the given group parameters for the given model.
+"""
+@model.route('/parameters/<group>', methods=['POST'])
+def setModelParameters(group):
+    data = json.loads(request.data)
+    print("set parameters group: %s for data: %s" % (group, data))
+    project_name = session.get('project_name', '')
+    if project_name == '':
+        return jsonify({'status':'NOK', 'reason':'no project is open'})
+    try:
+        D = load_model(project_name)
+        D_dict = unbunchify(D)
+        D_dict[group] = data
+        D_mod = struct(D_dict)
+        save_model(loaddir(model), project_name, D_mod)
+    except Exception, err:
+        var = traceback.format_exc()
+        return jsonify({"status":"NOK", "exception":var})        
+    print "D as dict: %s" % D_dict
+    return jsonify({"status":"OK", "project":project_name, "group":group})
 
 
 """
@@ -83,11 +182,11 @@ def doRunSimulation():
     data = json.loads(request.data)
     project_name = session.get('project_name', '')
     if project_name == '':
-        return jsonify({'status':'NOK', 'reason':'no project is open'})
+        return jsonify({"status":"NOK", "reason":"no project is open"})
 
     #expects json: {"startyear":year,"endyear":year} and gets project_name from session
     args = {}
-    args["projectdatafile"] = helpers.safe_join(loaddir(model), project_name+'.prj')
+    args['D'] = load_model(project_name)
     startyear = data.get("startyear")
     if startyear:
         args["startyear"] = int(startyear)
@@ -95,11 +194,13 @@ def doRunSimulation():
     if endyear:
         args["endyear"] = int(endyear)
     try:
-        data_file_path = runsimulation(**args) 
+        D = runsimulation(**args) 
+        D = epiresults(D)
+        D_dict = unbunchify(D)
     except Exception, err:
         var = traceback.format_exc()
         return jsonify({"status":"NOK", "exception":var})
-    return jsonify({"status":"OK", "reason":'performed simulation for the project %s' % project_name})
+    return jsonify(D_dict.get('O',{}))
 #    options = {
 #        'cache_timeout': model.get_send_file_max_age(example_excel_file_name),
 #        'conditional': True,
