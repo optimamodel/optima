@@ -1,0 +1,20 @@
+---
+  - include: "{{prudentia_dir}}/tasks/postgres_9.3.yml"
+    tags: db
+
+  - name: Database | Create db
+    postgresql_db: name={{item}}
+    sudo_user: postgres
+    sudo: yes
+    tags: db
+    with_items: 
+     - optima
+
+  - name: Database | Create user
+    postgresql_user: name={{item}} password={{item}} role_attr_flags=SUPERUSER
+    sudo_user: postgres
+    sudo: yes
+    tags: db
+    with_items: 
+     - optima
+

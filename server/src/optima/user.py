@@ -5,14 +5,13 @@ User Module
 ~~~~~~~~~~~~~~
 
 1. Get current logged in user.
-2. Login a user using openid.
+2. Login a user using username and password.
 3. Logout.
 
 """
 from flask import Flask, request, jsonify, g, session, flash, \
      redirect, url_for, abort, Blueprint
 from flask.ext.login import LoginManager, login_user, current_user, logout_user, AnonymousUserMixin
-from openid.extensions import pape
 
 # route prefix: /api/user
 user = Blueprint('user',  __name__, static_folder = '../static')
@@ -27,7 +26,6 @@ import hashlib
 # Login Manager
 login_manager = LoginManager()
 
-
 @user.record
 def record_params(setup_state):
   app = setup_state.app
@@ -41,12 +39,12 @@ def before_request():
 
 @user.route('/create', methods=['POST'])
 def create_user():
-    
+
     # Check if the user already exists
-    email = request.values.get('email')
-    name = request.values.get('name')
-    password = hashlib.sha224( request.values.get('password') ).hexdigest()
-    
+    email = request.json['email']
+    name = request.json['name']
+    password = hashlib.sha224( request.json['password'] ).hexdigest()
+
     if email is not None and name is not None and password is not None:
         
         # Get user for this username (if exists)
@@ -67,10 +65,9 @@ def create_user():
             
             # Return user info
             return jsonify({'email': u.email, 'name': u.name })
-            
-    
+
     # We are here implies username is already taken
-    return jsonify({'status': 'Username in use'})
+    return jsonify({'status': 'This email is already in use'})
 
 @user.route('/login', methods=['POST'])
 def login():
@@ -81,22 +78,22 @@ def login():
     if cu.is_anonymous():
         
         # Make sure user is valid.
-        username = request.values.get('username')
+        username = request.json['email']
         
         if username is not None:
-        
+
             # Get hashsed password
-            password = hashlib.sha224( request.values.get('password') ).hexdigest()
+            password = hashlib.sha224( request.json['password'] ).hexdigest()
             
             # Get user for this username
             try:
                 u = UserDb.query.filter_by( email=username ).first()
             except:
                 u = None
-            
+
             # Make sure user is valid and password matches
             if u is not None and u.password == password:
-                
+
                 # Login the user
                 login_user(u)
                 

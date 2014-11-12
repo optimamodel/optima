@@ -91,10 +91,11 @@ def make_parameter_range(name, params):
   coded_params = []
   for item in params:
     if type(item) is dict:
-      name = item['name']
-      acronym = item.get('acronym', abbreviate(name))
-      coded_params.append([acronym, name])
-#  coded_params = [list((item['acronym'], item['name'])) for item in params]
+      item_name = item['name']
+      acronym = item.get('acronym', abbreviate(item_name))
+      coded_params.append([acronym, item_name])
+    else:
+      coded_params = [list((abbreviate(item), item)) for item in params]
   return OptimaContent(name, row_names, column_names, coded_params)
 
 def make_constant_range(name, row_names, best_data):
@@ -225,6 +226,7 @@ class TitledRange:
         formats.write_rowcol_name(self.sheet, current_row, start_col+n, name)
       #emit data if present
       if self.content.has_data():
+        print self.content.data
         for j, item in enumerate(self.content.data[i]):
           formats.write_unlocked(self.sheet, current_row, self.data_range.first_col+j, item, self.content.row_format)
       else:
@@ -402,8 +404,8 @@ class OptimaWorkbook:
     self.current_sheet.protect()
     current_row = 0
 
-    for name in ['Number of HIV tests', 'Number of diagnoses', 'Modeled estimate of new infections per year', \
-    'Modeled estimate of HIV prevalence', 'Number of HIV-related deaths', 'Number of people initiating ART each year']:
+    for name in ['Number of HIV tests per year', 'Number of diagnoses per year', 'Modeled estimate of new infections per year', \
+    'Modeled estimate of HIV prevalence', 'Number of AIDS-related deaths', 'Number of people initiating ART each year']:
       current_row = self.emit_years_block(name, current_row, ['Total'], row_format = OptimaFormats.NUMBER, assumption = True)
 
   def generate_txrx(self):
@@ -411,6 +413,9 @@ class OptimaWorkbook:
     self.current_sheet.protect()
     current_row = 0
 
+    current_row = self.emit_years_block('Percentage of population tested for HIV in the last 12 months', current_row, ['Total'], row_format = OptimaFormats.PERCENTAGE, assumption = True, programs = True)
+    current_row = self.emit_years_block('Probability of a person with CD4 <200 being tested per year', current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption = True, programs = True)
+    current_row = self.emit_years_block('Number of people on first-line treatment', current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption = True, programs = True)
     current_row = self.emit_years_block('Number of people on second-line treatment', current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption = True, programs = True)
     current_row = self.emit_years_block('Percentage of women on PMTCT (Option B/B+)', current_row, ['Total'], row_format = OptimaFormats.PERCENTAGE, assumption = True, programs = True)
     current_row = self.emit_ref_years_block('Birth rate (births/woman/year)', current_row, self.pop_range, row_format = OptimaFormats.NUMBER, assumption = True, programs = True)
@@ -426,7 +431,7 @@ class OptimaWorkbook:
     ('Percentage of people who used a condom at last act with regular partners', OptimaFormats.PERCENTAGE), \
     ('Percentage of people who used a condom at last act with casual partners', OptimaFormats.PERCENTAGE), \
     ('Percentage of people who used a condom at last act with commercial partners', OptimaFormats.PERCENTAGE), \
-    ('Male circumcision prevalence', OptimaFormats.PERCENTAGE)]
+    ('Percentage of males who have been circumcised', OptimaFormats.PERCENTAGE)]
 
     for (name, row_format) in names_formats:
       current_row = self.emit_ref_years_block(name, current_row, self.pop_range, row_format = row_format, assumption = True, programs = True)
@@ -437,7 +442,7 @@ class OptimaWorkbook:
     current_row = 0
     names_formats_ranges = [('Average number of injections per person per year', OptimaFormats.GENERAL, self.ref_pop_range()), \
     ('Percentage of people who receptively shared a needle at last injection', OptimaFormats.PERCENTAGE, ['Average']), \
-    ('Percentage of people who inject drugs on opiate substitution therapy', OptimaFormats.PERCENTAGE, ['Average'])]
+    ('Percentage of people who inject drugs who are on opiate substitution therapy', OptimaFormats.PERCENTAGE, ['Average'])]
 
     for (name, row_format, row_range) in names_formats_ranges:
       current_row = self.emit_years_block(name, current_row, row_range, row_format = row_format, assumption = True, programs = True)
@@ -473,21 +478,21 @@ class OptimaWorkbook:
       'Injecting', 'Mother-to-child (breastfeeding)','Mother-to-child (non-breastfeeding)'], \
       [0.0004, 0.0010, 0.0006, 0.0050, 0.0030, 0.05, 0.03], OptimaFormats.DECIMAL_PERCENTAGE), \
     ('Relative disease-related transmissibility', \
-      ['Acute infection','Above CD4(500)','CD4(350-500)','CD4(200-350)','Below CD4(200)'], \
+      ['Acute infection','CD4(>500)','CD4(350-500)','CD4(200-350)','CD4(<200)'], \
       [10,1,1,1,3.8], OptimaFormats.NUMBER), \
     ('Disease progression rate (% per year)', \
-      ['Acute to CD4 (>500)','CD4 (500) to CD4 (350-500)','CD4(350,500) to CD4(200-350)','CD4 (200-350) to CD4 (200)'], \
-      [10.00, 0.25, 0.25, 0.50], OptimaFormats.PERCENTAGE), \
+      ['Acute to CD4(>500)','CD4(500) to CD4(350-500)','CD4(350,500) to CD4(200-350)','CD4(200-350) to CD4(200)'], \
+      [1.00, 0.25, 0.25, 0.50], OptimaFormats.PERCENTAGE), \
     ('Treatment recovery rate (% per year)', \
-      ['CD4 (350-500) to CD4 (>500)','CD4(200-350) to CD4  (350-500)','CD4 (<200)  to CD4 (200-350)'], \
+      ['CD4(350-500) to CD4 (>500)','CD4(200-350) to CD4(350-500)','CD4(<200) to CD4(200-350)'], \
       [0.45, 0.70, 0.36], OptimaFormats.PERCENTAGE), \
     ('Treatment failure rate (% per year)', \
-      ['1st-line','2nd-line'], [0.05,0.05], OptimaFormats.PERCENTAGE), \
+      ['First-line treatment','Second-line treatment'], [0.2,0.1], OptimaFormats.PERCENTAGE), \
     ('Death rate (% mortality per year)', \
-      ['Acute infection','CD4 (>500)','CD4 (350-500)','CD4 (200-350)','CD4 (<200)','On treatment','Tuberculosis cofactor'], \
+      ['Acute infection','CD4(>500)','CD4(350-500)','CD4(200-350)','CD4(<200)','On treatment','Tuberculosis cofactor'], \
       [0, 0.0005, 0.0010, 0.01, 0.49, 0.04, 0.02], OptimaFormats.DECIMAL_PERCENTAGE), \
     ('Relative transmissibility', \
-      ['Condom','Circumcision','Diagnosis behavior change','STI cofactor increase','Methadone','PMTCT','Treatment'], \
+      ['Condom','Circumcision','Diagnosis behavior change','STI cofactor increase','Opiate substitution therapy','PMTCT','ARV Treatment'], \
       [0.05, 0.30, 0.65, 3.50, 0.05, 0.05, 0.30], OptimaFormats.PERCENTAGE)]
 
     for (name, row_names, data, format) in names_rows_data_format:
@@ -500,12 +505,12 @@ class OptimaWorkbook:
     current_row = 0
 
     names_rows_data_format = [('Disutility weights', \
-      ['Untreated HIV, acute','Untreated HIV, CD4>500','Untreated HIV, 350<CD4<500','Untreated HIV, 200<CD4<350', \
-      'Untreated HIV, CD4<200','Treated HIV'], [0.05, 0.10, 0.15, 0.22, 0.55, 0.05], OptimaFormats.NUMBER), \
+      ['Untreated HIV, acute','Untreated HIV, CD4(>500)','Untreated HIV, CD4(350-500)','Untreated HIV, CD4(200-350)', \
+      'Untreated HIV, CD4(<200)','Treated HIV'], [0.05, 0.10, 0.15, 0.22, 0.55, 0.05], OptimaFormats.NUMBER), \
     ('HIV-related health care costs (excluding treatment)', \
-      ['Acute','CD4>500','500>CD4>350','350>CD4>200','CD4<200'], [0, 0, 1000, 5000, 50000], OptimaFormats.GENERAL), \
+      ['Acute infection','CD4(>500)','CD4(350-500)','CD4(200-350)','CD4(<200)'], [0, 0, 1000, 5000, 50000], OptimaFormats.GENERAL), \
     ('Social mitigation costs', \
-      ['Acute', 'CD4>500', '500>CD4>350', '350>CD4>200', 'CD4<200'], [0, 0, 0, 1000, 8000], OptimaFormats.GENERAL)]
+      ['Acute infection', 'CD4(>500)', 'CD4(350-500)', 'CD4(200-350)', 'CD4(<200)'], [0, 0, 0, 1000, 8000], OptimaFormats.GENERAL)]
     for (name, row_names, data, format) in names_rows_data_format:
       current_row = self.emit_constants_block(name, current_row, row_names, data, format)
 
