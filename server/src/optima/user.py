@@ -117,6 +117,7 @@ def current_user_api():
 
 @user.route('/logout')
 def logout():
+    session.clear()
     logout_user()
     flash(u'You have been signed out')
     return jsonify({'status': 'OK'})
