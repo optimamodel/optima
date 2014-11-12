@@ -53,7 +53,7 @@ def root():
     return 'Optima API v.1.0.0'
 
 def init_db():
-    from optima.models import db
+    from optima.dbmodels import db
     db.create_all()
 
 if __name__ == '__main__':
