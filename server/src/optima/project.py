@@ -209,7 +209,7 @@ def uploadExcel():
     file = request.files['file']
   
     # getting current user path
-    loaddir =  upload_dir_user(PROJECTDIR)
+    loaddir =  upload_dir_user(DATADIR)
     print("loaddir = %s" % loaddir)
     if not loaddir:
         loaddir = DATADIR
