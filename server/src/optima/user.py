@@ -18,7 +18,7 @@ user = Blueprint('user',  __name__, static_folder = '../static')
 
 
 from api import app, db
-from models import UserDb
+from dbmodels import UserDb
 
 # System Imports
 import hashlib
