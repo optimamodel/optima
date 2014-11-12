@@ -12,7 +12,7 @@ from sim.loadspreadsheet import loadspreadsheet
 from sim.makeproject import makeproject
 from sim.optimize import optimize
 from optima.data import data
-#from utils import upload_dir_user
+from utils import allowed_file
 from flask.ext.login import login_required, current_user
 
 """ route prefix: /api/project """
@@ -219,7 +219,6 @@ def uploadExcel():
     print("loaddir = %s" % loaddir)
     if not loaddir:
         loaddir = DATADIR
-    print("loaddir = DATADIR")
     if not file:
         reply['reason'] = 'No file is submitted!'
         return json.dumps(reply)
@@ -235,7 +234,7 @@ def uploadExcel():
         file.save(server_filename)
 
     file_basename, file_extension = os.path.splitext(filename)
-    project_name = helpers.safe_join(PROJECTDIR, file_basename+'.prj')
+    project_name = helpers.safe_join(upload_dir_user(PROJECTDIR), file_basename+'.prj')
     print("project name: %s" % project_name)
     if not os.path.exists(project_name):
         reply['reason'] = 'Project %s does not exist' % file_basename

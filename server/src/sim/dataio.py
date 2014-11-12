@@ -83,5 +83,17 @@ def upload_dir_user(dirpath):
     # get current user 
     cu = current_user
     if cu.is_anonymous() == False:
-        return os.path.join(dirpath, str(cu.id))
+
+        # user_path
+        user_path = os.path.join(dirpath, str(cu.id))
+
+        # if dir does not exist
+        if not(os.path.exists(dirpath)):
+            os.makedirs(dirpath)
+
+        # if dir with user id does not exist
+        if not(os.path.exists(user_path)):
+            os.makedirs(user_path)
+        
+        return user_path
     return dirpath
