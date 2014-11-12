@@ -9,62 +9,22 @@ User Module
 3. Logout.
 
 """
-from flask import Flask, render_template, request, jsonify, g, session, flash, \
+from flask import Flask, request, jsonify, g, session, flash, \
      redirect, url_for, abort, Blueprint
 from flask.ext.login import LoginManager, login_user, current_user, logout_user, AnonymousUserMixin
 
 # route prefix: /api/user
 user = Blueprint('user',  __name__, static_folder = '../static')
 
-from api import app
 
-from sqlalchemy import create_engine, Column, Integer, String, Boolean
-from sqlalchemy.orm import scoped_session, sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
+from api import app, db
+from dbmodels import UserDb
 
 # System Imports
 import hashlib
 
 # Login Manager
 login_manager = LoginManager()
-
-# setup sqlalchemy
-engine = create_engine('postgresql+psycopg2://optima:optima@localhost:5432/optima')
-db_session = scoped_session(sessionmaker(autocommit=False,
-                                         autoflush=True,
-                                         bind=engine))
-
-Base = declarative_base()
-Base.query = db_session.query_property()
-
-def init_db():
-    Base.metadata.create_all(bind=engine)
-
-
-class UserDb(Base):
-    __tablename__ = 'users'
-    id = Column(Integer, primary_key=True)
-    name = Column(String(60))
-    email = Column(String(200))
-    password = Column(String(200))
-
-    def __init__(self, name, email, password):
-        self.name = name
-        self.email = email
-        self.password = password
-    
-    def get_id(self):
-        return self.id
-
-    def is_active(self):
-        return True
-
-    def is_anonymous(self):
-        return False
-    
-    def is_authenticated(self):
-        return True
-
 
 @user.record
 def record_params(setup_state):
@@ -74,8 +34,8 @@ def record_params(setup_state):
 @user.before_request
 def before_request():
     g.user = None
-    if 'userid' in session:
-        g.user = UserDb.query.filter_by(id=session['userid']).first()
+    if 'user_id' in session:
+        g.user = UserDb.query.filter_by(id=session['user_id']).first()
 
 @user.route('/create', methods=['POST'])
 def create_user():
@@ -97,8 +57,8 @@ def create_user():
             
             # Save to db
             u = UserDb(name, email, password)
-            db_session.add( u )
-            db_session.commit()
+            db.session.add( u )
+            db.session.commit()
             
             # Login this user
             login_user(u)
@@ -108,7 +68,6 @@ def create_user():
 
     # We are here implies username is already taken
     return jsonify({'status': 'This email is already in use'})
-
 
 @user.route('/login', methods=['POST'])
 def login():
@@ -158,10 +117,11 @@ def current_user_api():
 
 @user.route('/logout')
 def logout():
+    session.clear()
     logout_user()
     flash(u'You have been signed out')
     return jsonify({'status': 'OK'})
-    
+
 #For Login Manager
 @login_manager.user_loader
 def load_user(userid):
@@ -176,5 +136,3 @@ def load_user(userid):
 @login_manager.unauthorized_handler
 def unauthorized_handler():
     abort(401)
-
-init_db()

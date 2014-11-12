@@ -20,18 +20,21 @@ define([
       '$q', 'activeProject', 'Project', 'User',
       function ($q, activeProject, Project, User) {
 
-        User
-          .getCurrent(function (user) {
-            window.user = user;
+        var bootstrap = function () {
+          angular.bootstrap(document, ['app']);
+        };
 
-            Project.getCurrent(function (project) {
-              activeProject.name = project.project;
-            });
-          })
-          .$promise
-          .finally(function () {
-            angular.bootstrap(document, ['app']);
-          });
+        $q.all([
+
+          User.getCurrent(function (user) {
+            window.user = user;
+          }).$promise,
+
+          Project.getCurrent(function (project) {
+            activeProject.name = project.project;
+          }).$promise
+
+        ]).then(bootstrap, bootstrap);
 
       }]);
 });
