@@ -77,7 +77,7 @@ def createProject(project_name):
         populations = ''
     
     from api import db
-    from models import ProjectDb
+    from dbmodels import ProjectDb
     
     # get current user 
     cu = current_user
@@ -143,7 +143,7 @@ def getProjectList():
     cu = current_user
     if cu.is_anonymous() == False:
         from api import db
-        from models import ProjectDb
+        from dbmodels import ProjectDb
         
         # Get projects for current user
         projList = ProjectDb.query.filter_by(user_id=cu.id)
@@ -175,7 +175,7 @@ def deleteProject(project_name):
         if cu.is_anonymous() == False:
         
             from api import db
-            from models import ProjectDb
+            from dbmodels import ProjectDb
 
             # Get project row for current user with project name
             project = ProjectDb.query.filter_by(user_id= cu.id,name=project_name).first()
