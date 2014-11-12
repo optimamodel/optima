@@ -82,10 +82,23 @@ def createProject(project_name):
     # get current user 
     cu = current_user
     if cu.is_anonymous() == False:
-   
+        proj = None
+        proj = ProjectDb.query.filter_by(user_id=cu.id, name=name).first()
+        
+        # update existing 
+        if proj is not None:
+            proj.datastart = datastart
+            proj.dataend = dataend
+            proj.econ_datastart = econ_datastart
+            proj.econ_dataend = econ_dataend    
+            proj.programs = programs 
+            proj.populations = populations  
+        else:
+            # create new project
+            proj = ProjectDb(name, cu.id, datastart, dataend, econ_datastart, econ_dataend, programs, populations)
+        
         # Save to db
-        p = ProjectDb(name, cu.id, datastart, dataend, econ_datastart, econ_dataend, programs, populations)
-        db.session.add(p)
+        db.session.add(proj)
         db.session.commit()
 
     #    makeproject_args = dict(makeproject_args.items() + data.items())
