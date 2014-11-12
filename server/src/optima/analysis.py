@@ -9,7 +9,7 @@ import sys
 from sim.dataio import loaddata, savedata, DATADIR
 from sim.optimize import optimize
 from utils import loaddir
-
+from flask.ext.login import login_required
 
 """ route prefix: /api/analysis """
 analysis = Blueprint('analysis',  __name__, static_folder = '../static')
@@ -24,6 +24,7 @@ def record_params(setup_state):
 Defines optimisation objectives from the data collected on the frontend.
 """
 @analysis.route('/optimisation/define/<defineType>', methods=['POST'])
+@login_required
 def defineObjectives(defineType):
     data = json.loads(request.data)
     json_file = os.path.join(analysis.config['UPLOAD_FOLDER'], "optimisation.json")
@@ -35,6 +36,7 @@ def defineObjectives(defineType):
 Starts optimisation for the current model. Gives back line plot and two pie plots.
 """
 @analysis.route('/optimisation/start')
+@login_required
 def runOptimisation():
     # should call method in optimize.py but it's not implemented yet. for now just returns back the file
     reply = {'status':'NOK'}

@@ -17,6 +17,7 @@ from sim.runsimulation import runsimulation
 from sim.optimize import optimize
 from sim.epiresults import epiresults
 from utils import loaddir, load_model, save_model, project_exists
+from flask.ext.login import login_required
 
 """ route prefix: /api/model """
 model = Blueprint('model',  __name__, static_folder = '../static')
@@ -33,6 +34,7 @@ Uses provided parameters to manually calibrate the model (update it with these d
 TODO: do it with the project which is currently in scope
 """
 @model.route('/calibrate/auto', methods=['POST'])
+@login_required
 def doAutoCalibration():
     reply = {'status':'NOK'}
     print('data: %s' % request.data)
@@ -72,6 +74,7 @@ Uses provided parameters to manually calibrate the model (update it with these d
 TODO: do it with the project which is currently in scope
 """
 @model.route('/calibrate/manual', methods=['POST'])
+@login_required
 def doManualCalibration():
     data = json.loads(request.data)
     project_name = session.get('project_name', '')
@@ -110,6 +113,7 @@ def doManualCalibration():
 Returns the parameters of the given model.
 """
 @model.route('/parameters')
+@login_required
 def getModel():
     project_name = session.get('project_name', '')
     if project_name == '':
@@ -124,6 +128,7 @@ def getModel():
 Returns the parameters of the given model in the given group.
 """
 @model.route('/parameters/<group>')
+@login_required
 def getModelParameters(group):
     project_name = session.get('project_name', '')
     if project_name == '':
@@ -138,6 +143,7 @@ def getModelParameters(group):
 Returns the parameters of the given model in the given group / subgroup.
 """
 @model.route('/parameters/<group>/<subgroup>')
+@login_required
 def getModelSubParameters(group, subgroup):
     project_name = session.get('project_name', '')
     if project_name == '':
@@ -154,6 +160,7 @@ def getModelSubParameters(group, subgroup):
 Sets the given group parameters for the given model.
 """
 @model.route('/parameters/<group>', methods=['POST'])
+@login_required
 def setModelParameters(group):
     data = json.loads(request.data)
     print("set parameters group: %s for data: %s" % (group, data))
@@ -178,6 +185,7 @@ Starts simulation for the given project and given date range.
 Returns back the file with the simulation data. (?) #FIXME find out how to use it
 """
 @model.route('/view', methods=['POST'])
+@login_required
 def doRunSimulation():
     data = json.loads(request.data)
     project_name = session.get('project_name', '')

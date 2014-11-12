@@ -108,6 +108,7 @@ Opens the project with the given name.
 If the project exists, should put it in session and return to the user.
 """
 @project.route('/open/<project_name>')
+@login_required
 # expects project name, will put it into session
 # todo: only if it can be found
 def openProject(project_name):
@@ -126,6 +127,7 @@ def openProject(project_name):
 Returns the current project name.
 """
 @project.route('/name')
+@login_required
 def getProjectInfo():
     return jsonify({"project":session.get('project_name','')})
 
@@ -133,6 +135,7 @@ def getProjectInfo():
 Returns the list of existing projects from db.
 """
 @project.route('/list')
+@login_required
 def getProjectList():
     projects = []
     
@@ -153,6 +156,7 @@ def getProjectList():
 Deletes the given project (and eventually, corresponding excel files)
 """
 @project.route('/delete/<project_name>')
+@login_required
 def deleteProject(project_name):
 
     # getting current user path
@@ -188,6 +192,7 @@ def deleteProject(project_name):
 Download example Excel file.
 """
 @project.route('/download/<downloadName>', methods=['GET'])
+@login_required
 def downloadExcel(downloadName):
     example_excel_file_name = 'example.xlsx'
 
@@ -204,6 +209,7 @@ Uploads Excel file, uses it to update the corresponding model.
 Precondition: model should exist.
 """
 @project.route('/update', methods=['POST'])
+@login_required
 def uploadExcel():
     reply = {'status':'NOK'}
     file = request.files['file']
