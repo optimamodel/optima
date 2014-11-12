@@ -19,17 +19,20 @@ from sim.runsimulation import runsimulation
 from sim.optimize import optimize
 from optima.analysis import analysis
 from optima.data import data
-from optima.user import user
 from optima.model import model
 from optima.project import project
 from optima.utils import allowed_file
+from flask.ext.sqlalchemy import SQLAlchemy
 
 
 UPLOAD_FOLDER = DATADIR #'/tmp/uploads' #todo configure
 
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['DATABASE_URI'] = 'postgresql+psycopg2://optima:optima@localhost:5432/optima'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql+psycopg2://optima:optima@localhost:5432/optima'
+
+db = SQLAlchemy(app)
+from optima.user import user
 
 app.secret_key = 'F12Zr47j\3yX R~X@H!jmM]Lwf/,?KT'
 
@@ -49,5 +52,10 @@ def site():
 def root():
     return 'Optima API v.1.0.0'
 
+def init_db():
+    from optima.dbmodels import db
+    db.create_all()
+
 if __name__ == '__main__':
+    init_db()
     app.run(debug=True)

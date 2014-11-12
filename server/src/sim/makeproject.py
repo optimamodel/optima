@@ -26,6 +26,7 @@ def makeproject(projectname='example', pops = default_pops, progs = default_prog
     printv("""Making project %s: 
             pops=%s, progs=%s, datastart = %s, dataend = %s,
             econ_datastart=%s, econ_dataend=%s""" % \
+
             (projectname, pops, progs, datastart, dataend, econ_datastart, econ_datastart), 1, verbose)
 
     D = struct() # Data structure for saving everything
@@ -54,6 +55,7 @@ def makeproject(projectname='example', pops = default_pops, progs = default_prog
     
     savedata(D.projectfilename, D, verbose=verbose) # Create project -- #TODO: check if an existing project exists and don't overwrite it
     # Make an Excel template and then prompt the user to save it
+
     from makespreadsheet import makespreadsheet 
     makespreadsheet(D.spreadsheetname, pops, progs, datastart, dataend, econ_datastart, econ_dataend, verbose=verbose)
     
