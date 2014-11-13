@@ -172,13 +172,64 @@
     <div class="well section">
         <div class="grid">
             <div class="section cf">
-                <div class="4">
-                    <select class="txbox" ng-model="graphType">
-                        <option value="prev">Prevalence</option>
-                        <option value="daly">DALYs per year</option>
-                        <option value="death">HIV-related deaths per year</option>
-                        <option value="inci">New HIV infections per year</option>
-                    </select>
+                <h1>Results</h1>
+
+
+                <div class="3">
+                    <b>Prevalence</b>
+                    <div><label class="checkbox-inline">
+                        <input type="checkbox" ng-model="prevoverall">
+                        Overall
+                    </label>
+                    </div>
+                    <div><label class="checkbox-inline">
+                        <input type="checkbox" ng-model="prevbypop">
+                        Per population
+                    </label>
+                    </div>
+                </div>
+
+
+                <div class="3">
+                    <b>New infections</b>
+                    <div><label class="checkbox-inline">
+                        <input type="checkbox" ng-model="newinfoverall">
+                        Overall
+                    </label>
+                    </div>
+                    <div><label class="checkbox-inline">
+                        <input type="checkbox" ng-model="newinfbypop">
+                        Per population
+                    </label>
+                    </div>
+                </div>
+
+                <div class="3">
+                    <b>HIV-related deaths</b>
+                    <div><label class="checkbox-inline">
+                        <input type="checkbox" ng-model="deathoverall">
+                        Overall
+                    </label>
+                    </div>
+                    <div><label class="checkbox-inline">
+                        <input type="checkbox" ng-model="deathbypop">
+                        Per population
+                    </label>
+                    </div>
+                </div>
+
+                <div class="3">
+                    <b>Disablity-adjusted life years</b>
+                    <div><label class="checkbox-inline">
+                        <input type="checkbox" ng-model="dalyoverall">
+                        Overall
+                    </label>
+                    </div>
+                    <div><label class="checkbox-inline">
+                        <input type="checkbox" ng-model="dalybypop">
+                        Per population
+                    </label>
+                    </div>
                 </div>
             </div>
 
