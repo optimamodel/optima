@@ -1,8 +1,7 @@
-# -*- coding: utf-8 -*-
 """
 Creates and updates cost-coverage curves and coverage-outcome curves
     
-Version: 2014nov12
+Version: 2014nov13
 """
 ###############################################################################
 ## Set up
@@ -12,6 +11,7 @@ import numpy as np
 import math
 from matplotlib.pylab import zeros, figure, plot, hold, xlabel, ylabel, title
 import scipy.stats as stats
+from bunch import Bunch as struct
 
 ###############################################################################
 ## Make cost coverage curve
@@ -65,7 +65,16 @@ def makecc(D, progname, ccparams, makeplot = 1):
         xlabel('USD')
         ylabel('proportion covered')
     
-    return xvalscc, yvalscc
+    plotdata = struct()
+    plotdata.xlinedata = xvalscc
+    plotdata.ylinedata = yvalscc
+    plotdata.xscatterdata = totalcost
+    plotdata.yscatterdata = coverage
+    plotdata.title = progname
+    plotdata.xlabel = 'USD'
+    plotdata.ylabel = 'Proportion covered'
+    
+    return plotdata, xvalscc, yvalscc
 
 
 ###############################################################################
@@ -170,8 +179,21 @@ def makeco(D, progname, effectname, coparams=[], makeplot = 1):
             title(effectname[0][1]+ ' ' + effectname[1][0])
             xlabel('proportion covered')
             ylabel('outcome')
-                
-    return D
+    
+    plotdata = struct()
+    plotdata.xlinedata = xvalsco # X data for all line plots
+    plotdata.ylinedata1 = yvalsco # Y data for first line plot
+    plotdata.ylinedata2 = np.linspace(muz,muf,1000) # Y data for second line plot
+    plotdata.ylinedata3 = ymax  # Y data for third line plot
+    plotdata.ylinedata4 = ymin  # Y data for fourth line plot
+    plotdata.xscatterdata = coverage
+    plotdata.yscatterdata = outcome
+    plotdata.title = effectname[0][1]+ ' ' + effectname[1][0]
+    plotdata.xlabel = 'Proportion covered'
+    plotdata.ylabel = 'Outcome'
+        
+    
+    return plotdata, D
 
 
 ###############################################################################
@@ -273,10 +295,24 @@ def makecco(D, progname, ccparams, coparams=[], makeplot = 1):
                 xlabel('USD')
                 ylabel('outcome')
                 
+    plotdata = struct()
+    plotdata.xlinedata = xvalscco # X data for all line plots
+    plotdata.ylinedata1 = yvalscco # Y data for first line plot
+    plotdata.ylinedata2 = mediancco # Y data for second line plot
+    plotdata.ylinedata3 = ymax  # Y data for third line plot
+    plotdata.ylinedata4 = ymin  # Y data for fourth line plot
+    plotdata.xscatterdata = totalcost
+    plotdata.yscatterdata = outcome
+    plotdata.title = effectname[0][1]+ ' ' + effectname[1][0]
+    plotdata.xlabel = 'USD'
+    plotdata.ylabel = 'Outcome'
+    
+    return plotdata
+                
 ## Example of use
-progname = 'MSM'
-ccparams = [0.9, 0.2, 800000.0, 7e6]
-makecco(D, progname, ccparams)
+#progname = 'MSM'
+#ccparams = [0.9, 0.2, 800000.0, 7e6]
+#makecco(D, progname, ccparams)
 
 
    
