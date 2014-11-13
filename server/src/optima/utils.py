@@ -27,10 +27,18 @@ def project_exists(name, folder = PROJECTDIR):
   returns the model (D).
 """
 def load_model(name, folder = PROJECTDIR):
-  project_file = helpers.safe_join(upload_dir_user(folder), name+'.prj')
+  print("load_model %s %s" % (name, folder))
+  project_file = name
+  user_dir = upload_dir_user(folder)
+  if not project_file.startswith(user_dir):
+    project_file = helpers.safe_join(user_dir, name+'.prj')
+  print("project file: %s" % project_file)
   data = loaddata(project_file)
   return data
 
 def save_model(name, model, folder = PROJECTDIR):
-  project_file = helpers.safe_join(upload_dir_user(folder), name+'.prj')
+  project_file = name
+  user_dir = upload_dir_user(folder)
+  if not project_file.startswith(user_dir):
+    project_file = helpers.safe_join(user_dir, name+'.prj')
   return savedata(project_file, model)
