@@ -11,23 +11,6 @@
 <hr class="__dashed"/>
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 <!-- Tabs 1 -->
 <div ng-show="activeTab === 1">
 
@@ -134,11 +117,6 @@
     </div>
 
 </div>
-
-
-
-
-
 
 
 <div class="section" ng-if="minimizationType == 'money'">
@@ -537,7 +515,7 @@
 
 
 <!-- Tabs 2 -->
-<div ng-show="activeTab === 3">
+<div ng-if="activeTab === 3">
 
     <div class="well section">
         <div class="grid">
@@ -588,7 +566,7 @@
                 <h1>Allocations</h1>
 
                 <div class="grid">
-                    <div class="4">
+                    <div class="6">
                         <h2>Original allocation</h2>
                         <button class="btn" onclick="openFileOption1();return;">Export figure</button>
                         <button class="btn" onclick="openFileOption1();return;">Export table</button>
@@ -596,7 +574,7 @@
                             <nvd3 data="piedata1" options="pieoptions"></nvd3>
                         </div>
                     </div>
-                    <div class="4">
+                    <div class="6">
                         <h2>Optimal allocation</h2>
                         <button class="btn" onclick="openFileOption1();return;">Export figure</button>
                         <button class="btn" onclick="openFileOption1();return;">Export table</button>
