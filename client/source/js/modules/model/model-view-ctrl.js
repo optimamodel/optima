@@ -66,7 +66,10 @@ define(['./module', 'angular'], function (module, angular) {
         useInteractiveGuideline: true,
         sizeRange: [100, 100],
         xAxis: {
-          axisLabel: 'Year'
+          axisLabel: 'Year',
+          tickFormat: function (d) {
+            return d3.format('d')(d);
+          }
         },
         yAxis: {
           axisLabel: 'Prevalence (%)',
