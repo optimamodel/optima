@@ -199,13 +199,16 @@ def makeco(D, progname, effectname, coparams=[], makeplot = 1):
 ###############################################################################
 ## Make cost outcome curve
 ###############################################################################
-def makecco(D, progname, ccparams, coparams=[], makeplot = 1):
+default_ccparams = [0.9, 0.2, 800000.0, 7e6]
+default_coparams = []
+def makecco(D, progname = 'MSM', ccparams = default_ccparams, coparams=default_coparams, makeplot = 1):
 
     ## Extract info from data structure
     prognumber = D.data.meta.progs.short.index(progname) # get program number
 
     # Get the cost-coverage and coverage-outcome relationships            
-    xvalscc, yvalscc = makecc(D, progname, ccparams)
+    plotdata_cc, xvalscc, yvalscc = makecc(D, progname, ccparams)
+    plotdata_co = {}
     
     ## Initialise storage of outputs   
     for effectname in D.programs[progname]:
@@ -239,7 +242,7 @@ def makecco(D, progname, ccparams, coparams=[], makeplot = 1):
             # Parameters for coverage-outcome curves
             muz, muf = (zeromax+zeromin)/2, (fullmax+fullmin)/2  # Mean calcs
 
-            D = makeco(D, progname, effectname)
+            plotdata_co[effectname], D = makeco(D, progname, effectname)
 
             # Extract samples of start and end points
             zerosample = D.programs[progname][effectnumber][3][0]
@@ -307,7 +310,7 @@ def makecco(D, progname, ccparams, coparams=[], makeplot = 1):
     plotdata.xlabel = 'USD'
     plotdata.ylabel = 'Outcome'
     
-    return plotdata
+    return plotdata, plotdata_cc, plotdata_co
                 
 ## Example of use
 #progname = 'MSM'
