@@ -30,7 +30,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             }
 
             return $modal.open({
-                templateUrl: 'js/modules/project/analysis-scenarios-modal.html',
+                templateUrl: 'js/modules/analysis/analysis-scenarios-modal.html',
                 controller: 'AnalysisScenariosModalController',
                 resolve: {
                     scenario: function () {
@@ -52,7 +52,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             }
 
             return $modal.open({
-                templateUrl: 'js/modules/project/analysis-scenarios-modal.html',
+                templateUrl: 'js/modules/analysis/analysis-scenarios-modal.html',
                 controller: 'AnalysisScenariosModalController',
                 resolve: {
                     scenario: function () {
