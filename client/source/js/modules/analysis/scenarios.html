@@ -1,74 +1,116 @@
 <div class="rich">
-  <h1>Analyses</h1>
 
-  <h2>1. Project Outcomes.</h2>
+    <div class="section grid">
+        <div class="6">
+            <h1>Manage scenarios</h1>
 
-  <h3>1a. Projection of Epidemic Dynamics.</h3>
-  <p>New infections over time, by population and overall (line graph).</p>
-  <div class="chart-container">
-    <nvd3 data="data1a" options="options1a"></nvd3>
-  </div>
+            <table class="section table table-bordered">
+                <thead>
+                <tr>
+                    <td><b>Active</b></td>
+                    <td><b>Name</b></td>
+                    <td>&nbsp;</td>
+                </tr>
+                </thead>
+                <tbody>
+                <tr ng-repeat="row in scenarios">
+                    <td class="text-center" style="width: 50px">
+                        <input type="checkbox" ng-model="row.active">
+                    </td>
+                    <td style="width: 300px">{{ row.name }}</td>
+                    <td>
+                        <button role="button" class="btn" ng-click="openEditScenarioModal($event, row)">Edit</button>
+                    </td>
+                </tr>
+                </tbody>
+                <tfoot>
+                <tr>
+                    <td colspan="4" class="text-right">
+                        <button role="button" class="btn" ng-click="openAddScenarioModal($event)">Add a scenario</button>
+                    </td>
+                </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
 
-  <h3>1b. Projection of Epidemic Dynamics.</h3>
-  <p>New infections by population (stacked bars).</p>
-  <div class="chart-container">
-    <nvd3 data="data1b" options="options1b"></nvd3>
-  </div>
 
-  <h3>1c. Projection of Epidemic Dynamics.</h3>
-  <p>HIV incidence - as 1b, but per capita instead of absolute values.</p>
-  <div class="chart-container">
-    <nvd3 data="data1c" options="options1c"></nvd3>
-  </div>
+    <div class="well section">
+        <div class="grid">
+            <div class="section cf">
 
-  <h2>2. Optimize Outcomes.</h2>
+                <h1>View results</h1>
 
-  <h3>2a. Intervention Impact/cost-effectiveness.</h3>
-  <p>For different programmatic spending scenarios.</p>
-  <div class="chart-container">
-    <nvd3 data="data2a" options="options2a"></nvd3>
-  </div>
+                <div class="3">
+                    <b>Prevalence</b>
+                    <div><label class="checkbox-inline">
+                        <input type="checkbox" ng-model="prevoverall">
+                        Overall
+                    </label>
+                    </div>
+                    <div><label class="checkbox-inline">
+                        <input type="checkbox" ng-model="prevbypop">
+                        Per population
+                    </label>
+                    </div>
+                </div>
 
-  <h3>2b. Intervention Impact/cost-effectiveness.</h3>
-  <p><abbr class="small-caps">HIV</abbr> infections averted in different time periods.</p>
-  <div class="chart-container">
-    <nvd3 data="data2b" options="options2b"></nvd3>
-  </div>
 
-  <h2>3. Minimize money</h2>
+                <div class="3">
+                    <b>New infections</b>
+                    <div><label class="checkbox-inline">
+                        <input type="checkbox" ng-model="newinfoverall">
+                        Overall
+                    </label>
+                    </div>
+                    <div><label class="checkbox-inline">
+                        <input type="checkbox" ng-model="newinfbypop">
+                        Per population
+                    </label>
+                    </div>
+                </div>
 
-  <h3>3a. Fixed-budget optimization.</h3>
-  <p>Optimal resource allocation within the <abbr class="small-caps">AIDS</abbr> response budget to achieve a defined impact.</p>
-  <div class="chart-container">
-    <nvd3 data="data3a" options="options3a"></nvd3>
-  </div>
+                <div class="3">
+                    <b>HIV-related deaths</b>
+                    <div><label class="checkbox-inline">
+                        <input type="checkbox" ng-model="deathoverall">
+                        Overall
+                    </label>
+                    </div>
+                    <div><label class="checkbox-inline">
+                        <input type="checkbox" ng-model="deathbypop">
+                        Per population
+                    </label>
+                    </div>
+                </div>
 
-  <h3>3b. Fixed-outcome optimization.</h3>
-  <p>Includes assumptions on program coverage over time.</p>
+                <div class="3">
+                    <b>Disablity-adjusted life years</b>
+                    <div><label class="checkbox-inline">
+                        <input type="checkbox" ng-model="dalyoverall">
+                        Overall
+                    </label>
+                    </div>
+                    <div><label class="checkbox-inline">
+                        <input type="checkbox" ng-model="dalybypop">
+                        Per population
+                    </label>
+                    </div>
+                </div>
+            </div>
 
-  <h3>3c. Optimization: various budgets.</h3>
-  <p>Optimal resource allocation across programs at different funding levels.</p>
+            <div class="section grid">
+                <div class="6" ng-repeat="graph in graphs">
+                    <div class="chart-container">
+                        <nvd3 data="graph.data" options="graph.options"></nvd3>
+                    </div>
+                </div>
+            </div>
 
-  <h3>3d. Optimization: corresponding outcome indicator(s) relevant to 3c.</h3>
-  
-  <h3>3e. Optimization: cumulative healthcare costs over time.</h3>
-  <p>Includes assumptions of treatment coverage over time.</p>
+        </div>
+    </div>
 
-  <h3>3f. Optimization: Annual care costs over time.</h3>
-  <p>Includes assumptions of treatment coverage over time.</p>
 
-  <h3>3g. Optimization: Health care commitments for current <abbr class="small-caps">PLHIV</abbr>.</h3>
-  <p>User to set <abbr class="small-caps">ART</abbr> coverage target.</p>
 
-  <h3>3h. Optimization: Health care commitments for future <abbr class="small-caps">PLHIV</abbr>.</h3>
-  <p>User to set <abbr class="small-caps">ART</abbr> coverage target.</p>
-
-  <h3>3i. Optimization: Incidence (or prevalence) over time.</h3>
-  <p>User choice of spending scenarios incl. optimal.</p>
-
-  <h3>3j. Optimization: <abbr class="small-caps">AIDS</abbr> deaths (or <abbr class="small-caps">DALY</abbr>s) over time.</h3>
-  <p>User choice of spending scenarios incl. optimal.</p>
-
-  <h3>3k. Costs caused by one new <abbr class="small-caps">HIV</abbr> infection.</h3>
-
+<input type="hidden" name="params" value="{{ formParams }}">
 </div>
