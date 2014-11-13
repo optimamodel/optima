@@ -6,6 +6,7 @@ define([
   'ui.router',
   './config',
   './modules/about/index',
+  './modules/contact/index',
   './modules/auth/index',
   './modules/analysis/index',
   './modules/common/active-project-service',
@@ -29,6 +30,7 @@ define([
   return angular.module('app', [
     'angularFileUpload',
     'app.about',
+    'app.contact',
     'app.auth',
     'app.active-project',
     'app.analysis',
