@@ -4,20 +4,20 @@ def updatedata(D, loaddir='', verbose=2):
     loads the data for the given project,
     updates the model based on the speardsheet contents
     
-    Version: 2014nov03 by cliffk
+    Version: 2014nov05 by cliffk
     """
-    
-    if verbose>=1: print('Updating data... %s' % D.projectname)
     
     from loadspreadsheet import loadspreadsheet
     from makedatapars import makedatapars
-    from dataio import savedata
+    from dataio import savedata, fullpath
+    from printv import printv
+    printv('Updating data... %s with spreadsheet %s' % (D.projectname, D.spreadsheetname), 1, verbose)
     
-    D.data, D.programs = loadspreadsheet(D.spreadsheetname, verbose=verbose)
+    datapath = fullpath(D.spreadsheetname)
+    D.data, D.programs = loadspreadsheet(datapath, verbose=verbose)
     D = makedatapars(D, verbose=verbose) # Update parameters
-    
     savedata(D.projectfilename, D, verbose=verbose) # Update the data file
     
-    if verbose>=2: print('  ...done updating data: %s.' % D.projectfilename)
+    printv('  ...done updating data: %s.' % D.projectfilename, 2, verbose)
 
     return D

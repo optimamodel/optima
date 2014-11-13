@@ -5,16 +5,18 @@ def makedatapars(D, verbose=2):
     These data are then used to update the corresponding model (project).
     This method should be called before any simulation can run.
     
-    Version: 2014nov03 by cliffk
+    Version: 2014nov05 by cliffk
     """
     
     ###############################################################################
     ## Preliminaries
     ###############################################################################
 
-    if verbose>=1: print('Converting data to parameters...')
+    
+    from printv import printv
     from bunch import Bunch as struct # Replicate Matlab-like structure behavior
     from matplotlib.pylab import array, isnan, zeros, shape, mean
+    printv('Converting data to parameters...', 1, verbose)
     
     
     def sanitize(arraywithnans):
@@ -52,31 +54,31 @@ def makedatapars(D, verbose=2):
     
     ## Key parameters
     for parname in D.data.key.keys():
-        if verbose>=3: print('  Converting data parameter %s...' % parname)
+        printv('Converting data parameter %s...' % parname, 2, verbose)
         D.P[parname] = data2par(D.data.key[parname][0]) # Population size and prevalence -- # TODO: don't take average for this, and use uncertainties!
     
     ## Loop over parameters that can be converted automatically
     for parclass in ['epi', 'txrx', 'sex', 'inj']:
+        printv('Converting data parameter %s...' % parclass, 3, verbose)
         for parname in D.data[parclass].keys():
-            if verbose>=3: print('  Converting data parameter %s.%s...' % (parclass, parname))
+            printv('Converting data parameter %s...' % parname, 4, verbose)
             D.P[parname] = data2par(D.data[parclass][parname])
     
     ## Matrices can be used directly
     for parclass in ['pships', 'transit']:
-        if verbose>=3: print('  Converting data parameter %s...' % parclass)
+        printv('Converting data parameter %s...' % parclass, 3, verbose)
         D.P[parclass] = D.data[parclass]
     
     ## Constants...just take the best value for now -- # TODO: use the uncertainty
-    D.P.const = struct()
-    for parclass in D.data.const.keys():
-        if verbose>=3: print('  Converting data parameter %s...' % parclass)
-        if type(D.data.const[parclass])==struct: 
-            D.P.const[parclass] = struct()
-            for parname in D.data.const[parclass].keys():
-                if verbose>=3: print('    Converting data parameter %s...' % parname)
-                D.P.const[parclass][parname] = D.data.const[parclass][parname][0] # Taking best value only, hence the 0
-        else:
-            D.P.const[parclass] = D.data.const[parclass][0]
+    for uberclass in ['const', 'cost']:
+        D.P[uberclass] = struct()
+        for parclass in D.data[uberclass].keys():
+            printv('Converting data parameter %s...' % parclass, 3, verbose)
+            if type(D.data[uberclass][parclass])==struct: 
+                D.P[uberclass][parclass] = struct()
+                for parname in D.data[uberclass][parclass].keys():
+                    printv('Converting data parameter %s...' % parname, 4, verbose)
+                    D.P[uberclass][parclass][parname] = D.data[uberclass][parclass][parname][0] # Taking best value only, hence the 0
     
     ## TODO: disutility, economic data etc.
             
@@ -111,6 +113,6 @@ def makedatapars(D, verbose=2):
     D.G.pwid = D.G.pwid>0 # Convert to Boolean array
 
 
-    if verbose>=2: print('  ...done converting data to parameters.')
+    printv('...done converting data to parameters.', 2, verbose)
     
     return D

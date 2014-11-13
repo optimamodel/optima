@@ -6,11 +6,14 @@ def runsimulation(D, startyear=2000, endyear=2030, verbose=2):
     Version: 2014nov05 by cliffk
     """
 
-    if verbose>=1: print('Running simulation (projectfilename = %s, startyear = %s, endyear = %s)...' % (D.projectfilename, startyear, endyear))
+    
     
     # Create options structure
     from bunch import Bunch as struct
     from matplotlib.pylab import arange
+    from printv import printv
+    printv('Running simulation...', 1, verbose)
+    
     options = struct()
     options.startyear = startyear
     options.endyear = endyear
@@ -23,10 +26,11 @@ def runsimulation(D, startyear=2000, endyear=2030, verbose=2):
     
     # Run model
     from model import model
-    D.S = model(D.G, D.M, options, verbose=verbose)
+    D.S = model(D.G, D.M, D.F, options, verbose=verbose)
     
     # Save output
     from dataio import savedata
     savedata(D.projectfilename, D, verbose=verbose)
-    if verbose>=2: print('  ...done running simulation.')
+    printv('...done running simulation for project %s.' % D.projectfilename, 2, verbose)
     return D
+    # should frontend do anything with the model? 

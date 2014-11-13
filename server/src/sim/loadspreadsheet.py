@@ -1,21 +1,23 @@
+from dataio import templatepath
+
 def loadspreadsheet(filename='example.xlsx',verbose=2):
     """
     Loads the spreadsheet (i.e. reads its contents into the data structure).
     This data structure is used in the next step to update the corresponding model.
     The spreadsheet is assumed to be in the format specified in example.xlsx.
     
-    Version: 2014nov03
+    Version: 2014nov05
     """
 
     ###########################################################################
     ## Preliminaries
     ###########################################################################
     
-    if verbose>=1: print('Loading data from %s...' % filename)
+    from printv import printv
     from matplotlib.pylab import nan, array # For reading in empty values
     from xlrd import open_workbook # For opening Excel spreadsheets
     from bunch import Bunch as struct # Replicate Matlab-like structure behavior
-    
+    printv('Loading data from %s...' % filename, 1, verbose)
     
     ###########################################################################
     ## Define the spreadsheet and parameter names
@@ -92,7 +94,7 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
             data[name] = struct() # Create structure for holding data, e.g. data.epi
             sheetdata = spreadsheet.sheet_by_name(sheetname) # Load this spreadsheet
             parcount = -1 # Initialize the parameter count
-            if verbose>=2: print('  Loading "%s"...' % sheetname)
+            printv('  Loading "%s"...' % sheetname, 2, verbose)
             
             
             ## Calculate columns for which data are entered, and store the year ranges
@@ -133,7 +135,7 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
                 
                 
                 if paramcategory != '': # It's not blank: e.g. "HIV prevalence"
-                    if verbose>=2: print('    Loading "%s"...' % paramcategory)
+                    printv('Loading "%s"...' % paramcategory, 3, verbose)
                     parcount += 1 # Increment the parameter count
                     
                     if groupname=='metadata': # Metadata
@@ -159,7 +161,7 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
                     subparam = sheetdata.cell_value(row, 1) # Get the name of a subparameter, e.g. 'FSW', population size for a given population
                     
                     if subparam != '': # The subparameter name isn't blank, load something!
-                        if verbose >=3: print("      Parameter: %s" % subparam)
+                        printv('Parameter: %s' % subparam, 4, verbose)
                         
                         # It's meta-data, split into pieces
                         if groupname=='metadata': 
@@ -211,5 +213,5 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
                             subpar = subparlist[parcount][1].pop(0) # Pop first entry of subparameter list, which is namelist[parcount][1]
                             data[name][thispar][subpar] = thesedata # Store data
     
-    if verbose>=2: print('  ...done loading data.')
+    printv('...done loading data.', 2, verbose)
     return data, programs

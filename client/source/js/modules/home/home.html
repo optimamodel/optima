@@ -1,47 +1,37 @@
-<!-- CK: This should be moved to a better place -->
-<script>
-    function openFileOption()
-    {
-        document.getElementById("file1").click();
-    }
-    function exit_optima() {
-        if (confirm("Exit Optima?")) {
-            close();
-        }
-    }
-</script>
-
-
-
-<div class="rich text-center">
+<div class="text-center">
   <h1>Welcome to Optima!</h1>
 
-    <!-- CK: This whole block will need to change or just be removed if a project is loaded -->
-    <div class="well">
-        <br><br>
-        To begin, please create or open a project:
-        <br><br>
-        <button class="btn" onclick="location.href='#/project/create';">Create new project</button>
-        <input type="file" id="file1" style="display:none">
-        <button class="btn" onclick="openFileOption();return;">Open existing project</button>
+  <div class="well" ng-hide="projectName">
+    <br><br>
+    To begin, please create or open a project:
+    <br><br>
+    <a class="btn" ui-sref="project.create">Create new project</a>
+    <a class="btn" ui-sref="project.open">Open existing project</a>
+  </div>
 
-				<!-- AS: Marelize didn't like this, but it may be good to show when a project is loaded
+  <div class="well" ng-show="activeProject.name">
+    Active project name is <b>{{ activeProject.name }}</b>
+    <br><br>
+    You can also <a class="link __black" ui-sref="project.create">create new</a>
+    or <a class="link __black" ui-sref="project.open">open existing</a> project.
+  </div>
 
-        <br><br><br>
-					Summary of open project:
-        <br><br>
-        <table style="margin-left:auto; margin-right:auto;">
-            <tr><td align="right"><b>Project name:&nbsp;</b></td> <td>No project open</td></tr>
-            <tr><td align="right"><b>Total population in 2013:&nbsp;</b></td> <td>No project open</td></tr>
-            <tr><td align="right"><b>Total number of PLHIV in 2013:&nbsp;</b></td> <td>No project open</td></tr>
-            <tr><td align="right"><b>Total annual incidence in 2013:&nbsp;</b></td> <td>No project open</td></tr>
-            <tr><td align="right"><b>Overall HIV prevalence in 2013:&nbsp;</b></td> <td>No project open</td></tr>
-	    			<tr><td align="right"><b>Projection time period:&nbsp;</b></td> <td>No project open</td></tr>
-        </table>
-        <br>
-        <br>
-			
-				-->	
+    <!-- AS: Marelize didn't like this, but it may be good to show when a project is loaded
 
-    </div>
+    <br><br><br>
+      Summary of open project:
+    <br><br>
+    <table style="margin-left:auto; margin-right:auto;">
+        <tr><td align="right"><b>Project name:&nbsp;</b></td> <td>No project open</td></tr>
+        <tr><td align="right"><b>Total population in 2013:&nbsp;</b></td> <td>No project open</td></tr>
+        <tr><td align="right"><b>Total number of PLHIV in 2013:&nbsp;</b></td> <td>No project open</td></tr>
+        <tr><td align="right"><b>Total annual incidence in 2013:&nbsp;</b></td> <td>No project open</td></tr>
+        <tr><td align="right"><b>Overall HIV prevalence in 2013:&nbsp;</b></td> <td>No project open</td></tr>
+        <tr><td align="right"><b>Projection time period:&nbsp;</b></td> <td>No project open</td></tr>
+    </table>
+    <br>
+    <br>
+
+    -->
+
 </div>

@@ -16,4 +16,8 @@
 
     - include: "{{root_dir}}/components/common.yml"
 
+    - include: "{{root_dir}}/components/db.yml"
+
     - include: "{{root_dir}}/components/client.yml"
+
+    - include: "{{root_dir}}/components/api.yml"

@@ -8,29 +8,46 @@ Matlab would be nice.
 Version: 2014nov05 by cliffk
 """
 
+from printv import printv
+import os
+from flask.ext.login import current_user
 
-def fullpath(filename, datadir='.'):
+DATADIR="/tmp/uploads"
+TEMPLATEDIR = "/tmp/templates"
+PROJECTDIR = "/tmp/projects"
+
+def fullpath(filename, datadir=DATADIR):
     """
     "Normalizes" filename:  if it is full path, leaves it alone. Otherwise, prepends it with datadir.
     """
     import os
     result = filename
+
+    # get user dir path
+    datadir = upload_dir_user(datadir)
+
     if not(os.path.exists(datadir)):
         os.makedirs(datadir)
-    if os.path.dirname(filename)=='':
+    if os.path.dirname(filename)=='' and not os.path.exists(filename):
         result = os.path.join(datadir, filename)
+
     return result
 
+def templatepath(filename):
+    return fullpath(filename, TEMPLATEDIR)
 
+def projectpath(filename):
+    return fullpath(filename, PROJECTDIR)
 
-def savedata(filename, data, update=True, verbose=2):
+def savedata(filename, data, update=True, verbose=2, path=None):
     """
     Saves the pickled data into the file (either updates it or just overwrites).
     """
-    if verbose>=1: print('Saving data...')
+    printv('Saving data...', 1, verbose)
     from cPickle import dump, load
     
-    filename = fullpath(filename)
+    filename = projectpath(filename)
+
     try: # First try loading the file and updating it
         rfid = open(filename,'rb') # "Read file ID" -- This will fail if the file doesn't exist
         origdata = load(rfid)
@@ -38,25 +55,45 @@ def savedata(filename, data, update=True, verbose=2):
         else: origdata = data
         wfid = open(filename,'wb')
         dump(data, wfid, protocol=-1)
-        if verbose>=2: print('  ..updated file')
+        printv('..updated file', 3, verbose)
     except: # If that fails, save a new file
         wfid = open(filename,'wb')
         dump(data, wfid, protocol=-1)
-        if verbose>=2: print('  ..created new file')
-    if verbose>=2: print(' ...done saving data.')
+        printv('..created new file', 3, verbose)
+    printv(' ...done saving data at %s.' % filename, 2, verbose)
     return filename
-
-
 
 
 def loaddata(filename, verbose=2):
     """
     Loads the file and unpickles data from it.
     """
-    filename = fullpath(filename)
-    if verbose>=1: print('Loading data...')
     from cPickle import load
+    printv('Loading data...', 1, verbose)
+    if not os.path.exists(filename):
+        filename = projectpath(filename)
     rfid = open(filename,'rb')
     data = load(rfid)
-    if verbose>=2: print('  ...done loading data.')
+
+    printv('...done loading data.', 2, verbose)
     return data
+
+def upload_dir_user(dirpath):
+
+    # get current user 
+    cu = current_user
+    if cu.is_anonymous() == False:
+
+        # user_path
+        user_path = os.path.join(dirpath, str(cu.id))
+
+        # if dir does not exist
+        if not(os.path.exists(dirpath)):
+            os.makedirs(dirpath)
+
+        # if dir with user id does not exist
+        if not(os.path.exists(user_path)):
+            os.makedirs(user_path)
+        
+        return user_path
+    return dirpath

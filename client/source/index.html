@@ -19,47 +19,77 @@
   <meta name="msapplication-config" content="assets/images/project/browserconfig.xml">
 
   <link rel="stylesheet" href="assets/css/main.css?bust=v0.4.0">
-  <link rel="stylesheet" href="assets/css/ck.css"> <!-- CK: Should be done properly, i.e. with SASS -->
+
+  <style>
+    [ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak, .ng-hide {
+      display: none !important;
+    }
+
+    ng\:form {
+      display: block;
+    }
+
+    .ng-animate-block-transitions {
+      -webkit-transition: 0s all !important;
+      transition: 0s all !important;
+    }
+
+    .ng-hide-add-active, .ng-hide-remove {
+      display: block !important;
+    }
+  </style>
 </head>
 <body ng-controller="MainCtrl">
 
-<div class="centeredcontainer">
-  <br>
-  <div></div>
-  <div></div>
-  <div>
-    <button class="btn" ui-sref="about">About</button>
-    &nbsp;&nbsp;&nbsp;
-    <button class="btn" ui-sref="contact">Contact</button>
+<div class="actionbar">
+  <div class="elastic __fluid">
+    <div class="elastic_col __va-middle">
+      <a class="btn" ui-sref="about">About</a>
+    </div>
+    <div class="elastic_col __va-middle">
+      <a class="btn" ui-sref="contact">Contact</a>
+    </div>
+    <div class="elastic_col __va-middle">
+      <i class="header_logo logo"></i>
+    </div>
+    <div class="elastic_col __va-middle">
+      <a class="btn" ui-sref="help">Help</a>
+    </div>
+    <div class="elastic_col __va-middle">
+      <a class="btn" ui-sref="website">Website</a>
+    </div>
   </div>
-  <div><i class="header_logo logo"></i></div>
-  <div>
-    <button class="btn" ui-sref="help">Help</button>
-    &nbsp;&nbsp;&nbsp;
-    <button class="btn" ui-sref="website">Website</button>
-  </div>
-  <div></div>
 </div>
 
 <div class="elastic layout">
-  <div class="elastic_col __shrink layout_aside">
+  <div class="elastic_col __shrink layout_aside" ng-if="userLogged()">
     <div data-menu="asideMenuSettings" template="accordion">
     </div>
   </div>
   <div class="elastic_col layout_cnt">
     <div ui-view></div>
+  </div>
+</div>
 
-    <!-- CK: This should be a proper footer, not part of this page, and the buttons should be evenly distributed across the full width of the bottom (i.e. "Save project" on the left, "Save project as..." in the center, and "Exit" on the right) -->
-    <br><br>
-    <div class="centeredcontainer">
-      <br>
-      <div></div>
-      <div><button class="btn" ui-sref="save-project">Save project</button></div> <!-- CK: grey out "Save project" button if no unsaved changes; pop up a little message saying "Project saved" if save successful -->
-      <div><input type="file" id="file2" style="display:none"><button class="btn">Save as...</button></div> <!-- CK: gray out if no project loaded -->
-      <div><button class="btn" ng-click="exitApp()">Exit</button></div>
-      <div></div>
+<div class="actionbar" style="margin-top: -50px" ng-cloak>
+  <div class="elastic __fluid" ng-if="userLogged()">
+    <div class="elastic_col __va-middle" ng-show="activeProject.name">
+      Project: <b>{{ activeProject.name }}</b>
     </div>
-
+    <div class="elastic_col __va-middle">
+      Logged in as: <b>{{ user.name }}</b>
+    </div>
+    <div class="elastic_col __va-middle">
+      <button class="btn" ng-click="logout()">Exit</button>
+    </div>
+  </div>
+  <div class="elastic __fluid" ng-if="!userLogged()">
+    <div class="elastic_col __va-middle">
+      <button class="btn" ui-sref="login">Log in</button>
+    </div>
+    <div class="elastic_col __va-middle">
+      <button class="btn" ui-sref="register">Register</button>
+    </div>
   </div>
 </div>
 
