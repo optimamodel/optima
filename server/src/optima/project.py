@@ -142,7 +142,12 @@ Returns the current project name.
 @project.route('/name')
 @login_required
 def getProjectInfo():
-    return jsonify({"project":session.get('project_name','')})
+    
+    project_name = session.get('project_name','')
+    # if project name is coming as param
+    if request.args.get('proj') != None and request.args.get('proj') != "":
+        project_name = request.args.get('proj')
+    return jsonify({"project": project_name})
 
 """
 Returns the list of existing projects from db.

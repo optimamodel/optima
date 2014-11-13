@@ -41,6 +41,12 @@ def runOptimisation():
     # should call method in optimize.py but it's not implemented yet. for now just returns back the file
     reply = {'status':'NOK'}
     project_name = session.get('project_name', '')
+    
+    # if project name is coming as param
+    proj = request.args.get('proj')
+    if proj != None and proj != "":
+        project_name = proj
+
     if project_name == '':
         reply['reason'] = 'No project is open'
         return jsonify(reply)
