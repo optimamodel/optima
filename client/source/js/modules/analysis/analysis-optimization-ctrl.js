@@ -1,9 +1,11 @@
 define([
-  './module',
+  './module'
 ], function (module) {
   'use strict';
 
   module.controller('AnalysisOptimizationController', function ($scope) {
+
+      $scope.minimizationType = 'outcomes';
 
       $scope.pieoptions = {
           chart: {
