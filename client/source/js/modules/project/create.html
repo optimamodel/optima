@@ -1,41 +1,39 @@
 <div class="rich">
 
   <form id="createForm" name="CreateProjectForm" action="{{ formAction }}" method="post" ng-submit="prepareCreateForm()" novalidate="novalidate">
-    <p>
-      <b>Instructions</b><br>
-      1. Enter the name of the project and the numbers of population groups and HIV programs.<br>
-      2. Click “Save project &amp; generate Optima template”.<br>
-      3. This will generate a blank Excel spreadsheet. Use Excel to enter data into this spreadsheet.<br>
-      4. When complete, return to Optima, click “Upload Optima spreadsheet”, and select this spreadsheet.
-    </p>
 
     <div class="section grid">
       <div class="6">
-        <input class="txbox" type="text" placeholder="Project name" ng-model="projectParams.name" required>
+         <b>Project name</b>
+        <input class="txbox" type="text" placeholder="e.g. Example" ng-model="projectParams.name" required>
       </div>
     </div>
 
     <div class="section grid">
       <div class="3">
-        <input class="txbox" type="number" min="1900" placeholder="Epidemic data start year" ng-model="projectParams.datastart" required>
+          <b>Epidemic data start year</b>
+        <input class="txbox" type="number" min="1900" placeholder="e.g. 2000" ng-model="projectParams.datastart" required>
       </div>
       <div class="3">
-        <input class="txbox" type="number" min="1900" placeholder="Epidemic data end year" ng-model="projectParams.dataend" required>
+          <b>Epidemic data end year</b>
+        <input class="txbox" type="number" min="1900" placeholder="e.g. 2015" ng-model="projectParams.dataend" required>
       </div>
     </div>
 
     <div class="section grid">
       <div class="3">
-        <input class="txbox" type="number" min="1900" placeholder="Economic projection start year" ng-model="projectParams.econ_datastart" required>
+          <b>Economic projection start year</b>
+        <input class="txbox" type="number" min="1900" placeholder="e.g. 2010" ng-model="projectParams.econ_datastart" required>
       </div>
       <div class="3">
-        <input class="txbox" type="number" min="1900" placeholder="Economic projection end year" ng-model="projectParams.econ_dataend" required>
+          <b>Economic projection end year</b>
+        <input class="txbox" type="number" min="1900" placeholder="e.g. 2030" ng-model="projectParams.econ_dataend" required>
       </div>
     </div>
 
     <div class="section grid">
       <div class="6">
-        <p><b>Available populations:</b></p>
+        <p><br><br><b>Available populations:</b></p>
 
         <table class="section table table-bordered">
           <thead>
