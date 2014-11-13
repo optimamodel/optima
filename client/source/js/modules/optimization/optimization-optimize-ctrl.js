@@ -21,43 +21,6 @@ define(['./module', 'underscore'], function (module, _) {
       "Prevention of mother-to-child transmission"
     ];
 
-    var setupPie = function (container, data) {
-      container.title = data.title;
-      container.data = _(data.piedata).map(function (value, i) {
-        return {
-          key: pieLabels[i],
-          y: value
-        };
-      });
-    };
-
-    var setupLine = function (container, options, data) {
-      options.xAxis.axisLabel = data.xlabel;
-      options.yAxis.axisLabel = data.ylabel;
-      container.values = _(data.xmodeldata).map(function (value, i) {
-        return {
-          series: 0,
-          x: value,
-          y: data.ymodeldata[i]
-        };
-      });
-    };
-
-    $scope.startRun = false;
-    $scope.startAnalysis = function () {
-      $http.get('/api/analysis/optimisation/start')
-        .success(function (response) {
-          if (response.dataplot && response.lineplot) {
-            setupPie($scope.pie1, response.dataplot[0]);
-            setupPie($scope.pie2, response.dataplot[1]);
-            setupLine($scope.linescatterdata, $scope.linescatteroptions, response.lineplot[0]);
-            $scope.startRun = true;
-          } else {
-            alert(response.reason);
-          }
-        });
-    };
-
     $scope.pieoptions = {
       chart: {
         type: 'pieChart',
@@ -105,6 +68,47 @@ define(['./module', 'underscore'], function (module, _) {
           axisLabelDistance: 35
         }
       }
+    };
+
+    var setupPie = function (container, data) {
+      container.title = data.title;
+      container.data = _(data.piedata).map(function (value, i) {
+        return {
+          key: pieLabels[i],
+          y: value
+        };
+      });
+    };
+
+    var setupLine = function (container, options, data) {
+      options.xAxis.axisLabel = data.xlabel;
+      options.yAxis.axisLabel = data.ylabel;
+      container.values = _(data.xmodeldata).map(function (value, i) {
+        return {
+          series: 0,
+          x: value,
+          y: data.ymodeldata[i]
+        };
+      });
+    };
+
+
+    // Methods
+    // =======
+
+    $scope.startRun = false;
+    $scope.startAnalysis = function () {
+      $http.get('/api/analysis/optimisation/start')
+        .success(function (response) {
+          if (response.dataplot && response.lineplot) {
+            setupPie($scope.pie1, response.dataplot[0]);
+            setupPie($scope.pie2, response.dataplot[1]);
+            setupLine($scope.linescatterdata, $scope.linescatteroptions, response.lineplot[0]);
+            $scope.startRun = true;
+          } else {
+            alert(response.reason);
+          }
+        });
     };
   });
 

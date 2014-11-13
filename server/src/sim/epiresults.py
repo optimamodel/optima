@@ -11,15 +11,17 @@ def epiresults(D, verbose=2):
     Version: 2014nov05
     """
     
-    if verbose>=1: print('Calculating epidemiology results...')
     
     ##########################################################################
     ## Preliminaries
     ##########################################################################
     
-    from matplotlib.pylab import zeros, nan, array
+    from matplotlib.pylab import zeros, nan, array, size
     from bunch import Bunch as struct
     from vectocolor import vectocolor
+    from printv import printv
+    printv('Calculating epidemiology results...', 1, verbose)
+    
     D.O = struct()
     D.O.__doc__ = 'Output structure containing everything that might need to be plotted'
     D.O.tvec = D.S.tvec # Copy time vector
@@ -28,7 +30,6 @@ def epiresults(D, verbose=2):
     D.O.popcolors = vectocolor(D.G.npops)
     D.O.colorm = (0,0.3,1) # Model color
     D.O.colord = (0,0,0) # Data color
-    D.O.percent = 100 # Whether or not to use percents
     D.O.xdata = D.data.epiyears
     ndatayears = len(D.O.xdata)
     
@@ -36,7 +37,6 @@ def epiresults(D, verbose=2):
         D.O[epi] = struct()
         D.O[epi].pops = zeros((D.G.npops, npts)) # Careful, can't use pop since it's a method!
         D.O[epi].tot = zeros(npts)
-        D.O[epi].ydata = zeros((D.G.npops,ndatayears))
         D.O[epi].xlabel = 'Years'
         
         
@@ -45,16 +45,18 @@ def epiresults(D, verbose=2):
         ##########################################################################
         if epi=='prev':
             
-            if verbose>=3: print('  Calculating prevalence...')
+            printv('Calculating prevalence...', 3, verbose)
         
             # Calculate prevalence
             for t in range(npts):
-                D.O.prev.pops[:,t] = D.S.people[1:,:,t].sum(axis=0) / D.S.people[:,:,t].sum(axis=0) * D.O.percent
-                D.O.prev.tot[t] = D.S.people[1:,:,t].sum() / D.S.people[:,:,t].sum() * D.O.percent
+                D.O.prev.pops[:,t] = D.S.people[1:,:,t].sum(axis=0) / D.S.people[:,:,t].sum(axis=0)
+                D.O.prev.tot[t] = D.S.people[1:,:,t].sum() / D.S.people[:,:,t].sum()
             
             # Find prevalence data    
-            epidata = D.data.key.hivprev[0] # TODO: include uncertainties
+            epidata = array(D.data.key.hivprev[0]) # TODO: include uncertainties            
+            D.O.prev.ydata = zeros((D.G.npops,ndatayears))
             D.O.prev.ylabel = 'Prevalence (%)'
+
 
 
         ##########################################################################
@@ -62,80 +64,82 @@ def epiresults(D, verbose=2):
         ##########################################################################
         if epi=='inci':
             
-            if verbose>=3: print('  Calculating incidence...')
+            printv('Calculating incidence...', 3, verbose)
         
             # Calculate incidence
             for t in range(npts):
-                D.O.prev.pops[:,t] = D.S.people[1:,:,t].sum(axis=0) / D.S.people[:,:,t].sum(axis=0) * D.O.percent
-                D.O.prev.tot[t] = D.S.people[1:,:,t].sum() / D.S.people[:,:,t].sum() * D.O.percent
+                D.O.inci.pops[:,t] = D.S.inci[:,t] # Simple
+                D.O.inci.tot[t] = D.S.inci[:,t].sum()
             
             # Find incidence data    
-            epidata = D.data.opt.numinfect # TODO: include uncertainties
-            D.O.prev.ylabel = 'New HIV infections per year'
+            epidata = D.data.opt.numinfect[0]
+            D.O.inci.ydata = zeros(ndatayears)
+            D.O.inci.ylabel = 'New HIV infections per year'
+
+
+
+        ##########################################################################
+        ## Deaths
+        ##########################################################################
+        if epi=='death':
             
+            printv('Calculating deaths...', 3, verbose)
+        
+            # Calculate incidence
+            for t in range(npts):
+                D.O.death.pops[:,t] = D.S.death[:,t] # Simple
+                D.O.death.tot[t] = D.S.death[:,t].sum()
             
+            # Find incidence data    
+            epidata = D.data.opt.death[0]
+            D.O.death.ydata = zeros(ndatayears)
+            D.O.death.ylabel = 'HIV-related deaths per year'
+
+
+
+
+        ##########################################################################
+        ## DALYs
+        ##########################################################################
+        if epi=='daly':
+            
+            printv('Calculating DALYs...', 3, verbose)
+        
+            # Calculate DALYs
+            disutils = [D.P.cost.disutil[key] for key in ['acute', 'gt500', 'gt350', 'gt200', 'aids']]
+            for t in range(npts):
+                for p in range(D.G.npops):
+                    for state in [D.G.undx, D.G.dx, D.G.fail]:
+                        D.O.daly.pops[p,t] += sum(D.S.people[array(state),p,t] * array(disutils))
+                    for state in [D.G.tx1, D.G.tx2]:
+                        D.O.daly.pops[p,t] += sum(D.S.people[array(state),p,t] * D.P.cost.disutil.tx)
+                
+                D.O.daly.tot[t] = D.O.daly.pops[:,t].sum()
+            
+            # Find DALYs data haha LOL
+            epidata = nan+zeros(ndatayears) # No data
+            D.O.daly.ydata = zeros(ndatayears)
+            D.O.daly.ylabel = 'Disability-adjusted life years per year'
+
+
 
         ##########################################################################
         ## Finish processing data
         ##########################################################################
-        try:
+        if size(epidata[0])==1: # TODO: make this less shitty, easier way of checking what shape the data is I'm sure
+            D.O[epi].ydata[:] = array(epidata)
+        elif size(epidata)==D.G.npops:
             for p in range(D.G.npops):
                 thispopdata = epidata[p]
                 if len(thispopdata) == 1: 
                     thispopdata = nan+zeros(ndatayears) # If it's an assumption, just set with nans
                 elif len(thispopdata) != ndatayears:
                     raise Exception('Expect data length of 1 or %i, actually %i' % (ndatayears, len(thispopdata)))
-                D.O[epi].ydata[p,:] = array(thispopdata) * D.O.percent
-            
-        except:
-            print('Probably not implemented yet')
-#
-#            
-#    
-#    
-#    
-#    ##########################################################################
-#    ## Incidence
-#    ##########################################################################
-#    if verbose>=3: print('  Calculating incidence...')
-#    D.O.prev = struct()
-#    D.O.prev.pops = zeros((D.G.npops, npts)) # Careful, can't use pop since it's a method!
-#    D.O.prev.tot = zeros(npts)
-#    
-#    # Calculate prevalence
-#    for t in range(npts):
-#        D.O.prev.pops[:,t] = D.S.people[1:,:,t].sum(axis=0) / D.S.people[:,:,t].sum(axis=0) * D.O.percent
-#        D.O.prev.tot[t] = D.S.people[1:,:,t].sum() / D.S.people[:,:,t].sum() * D.O.percent
-#    
-#    # Find prevalence data    
-#    D.O.prev.xdata = D.data.epiyears
-#    ndatayears = len(D.O.prev.xdata)
-#    D.O.prev.ydata = zeros((D.G.npops,ndatayears))
-#    for p in range(D.G.npops):
-#        thispopprev = D.data.key.hivprev[0][p]
-#        if len(thispopprev) == 1: 
-#            thispopprev = nan+zeros(ndatayears) # If it's an assumption, just set with nans
-#        elif len(thispopprev) != ndatayears:
-#            raise Exception('Expect data length of 1 or %i, actually %i' % (ndatayears, len(thispopprev)))
-#        D.O.prev.ydata[p,:] = array(thispopprev) * D.O.percent
-#        
-#    # Define labels
-#    D.O.prev.xlabel = 'Years'
-#    D.O.prev.ylabel = 'Prevalence (%)'
-    
-    
-    
-    ##########################################################################
-    ## DALYs
-    ##########################################################################
-    
-    
-    
-    
-    ##########################################################################
-    ## Deaths
-    ##########################################################################
+                D.O[epi].ydata[p,:] = array(thispopdata)
+        else:
+            raise Exception("Can't figure out size of epidata; doesn't seem to be a vector or a matrix")
+
    
     
-    if verbose>=2: print('  ...done running epidemiology results.')
+    printv('...done running epidemiology results.', 2, verbose)
     return D

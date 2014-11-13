@@ -1,12 +1,14 @@
 define([
   'angular',
   'ui.router',
+  '../common/active-project-service',
   '../../config'
 ], function (angular) {
   'use strict';
 
   return angular.module('app.home', [
     'app.constants',
+    'app.active-project',
     'ui.router'
   ]).config(function ($stateProvider) {
     $stateProvider

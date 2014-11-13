@@ -13,23 +13,38 @@ This function does everything. The basic procedure is as follows:
 Version: 2014nov05 by cliffk
 """
 print('WELCOME TO OPTIMA')
+import shutil
+import os
+import argparse
 
+parser = argparse.ArgumentParser(description = "OPTIMA global procedure")
+parser.add_argument("-p", "--projectname", type=str, default="example", help = "source project name")
+parser.add_argument("-v", "--verbose", type=int, default=4,
+                    help="increase output verbosity")
+parser.add_argument("-w","--wait", help="wait for user input after showing graphs", action="store_true")
+args = parser.parse_args()
 
 ## Set parameters
-projectname = 'example'
-verbose = 2
+projectname = args.projectname #'example'
+verbose = args.verbose #4
+show_wait = args.wait
+
 
 print('\n\n\n1. Making project...')
-from makeproject import makeproject
-D = makeproject(projectname='example', npops=6, nprogs=8, datastart=2000, dataend=2015, verbose=verbose)
+from makeproject import makeproject, default_pops, default_progs
+if os.path.exists(projectname+'.xlsx'):
+  shutil.copy(projectname+'.xlsx', projectname+'_data.xlsx')
+D = makeproject(projectname='example', pops=default_pops, progs = default_progs, datastart=2000, dataend=2015, verbose=verbose)
 
 print('\n\n\n2. Uploading spreadsheet...')
 from updatedata import updatedata
+if os.path.exists(projectname+'_data.xlsx'):
+  shutil.copy(projectname+'_data.xlsx', projectname+'.xlsx')
 D = updatedata(D, verbose=verbose)
 
 print('\n\n\n3. Running simulation...')
 from runsimulation import runsimulation
-D = runsimulation(D, verbose=verbose)
+D = runsimulation(D, startyear=2000, endyear=2015, verbose=verbose)
 
 print('\n\n\n4. Making results...')
 from epiresults import epiresults
@@ -37,6 +52,6 @@ D = epiresults(D, verbose=verbose)
 
 print('\n\n\n4. Viewing results...')
 from viewresults import viewresults
-viewresults(D, whichgraphs={'prev':1, 'inci':1, 'daly':1, 'death':1, 'pops':1, 'tot':1}, verbose=verbose)
+viewresults(D, whichgraphs={'prev':1, 'inci':1, 'daly':1, 'death':1, 'pops':1, 'tot':1}, onefig=True, verbose=verbose, show_wait=show_wait)
 
-print('DONE.')
+print('\n\n\nDONE.')
