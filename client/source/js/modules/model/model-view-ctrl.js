@@ -101,8 +101,8 @@ define(['./module', 'angular'], function (module, angular) {
 
         graph.data[0].values = _(population).map(function (value, i) {
           return {
-            x: value,
-            y: response.tvec[i]
+            x: response.tvec[i],
+            y: value
           };
         });
 
@@ -113,8 +113,8 @@ define(['./module', 'angular'], function (module, angular) {
           graph.data[1].values = _(data.ydata[populationIndex]).chain()
             .map(function (value, i) {
               return {
-                x: value,
-                y: response.tvec[i]
+                x: response.tvec[i],
+                y: value
               };
             })
             .filter(function (value) {
