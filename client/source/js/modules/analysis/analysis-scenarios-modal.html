@@ -1,13 +1,13 @@
 <div>
-  <div class="modal-header">{{ isNew ? 'Create' : 'Edit'}} a population</div>
+  <div class="modal-header">{{ isNew ? 'Create' : 'Edit'}} a scenario</div>
 
-  <form class="modal-body" name="PopulationForm" novalidate="novalidate" ng-submit="submit(PopulationForm)">
+  <form class="modal-body" name="scenarioForm" novalidate="novalidate" ng-submit="submit(scenarioForm)">
     <div class="section grid">
       <div class="++2 3">
         Name
       </div>
       <div class="5 2++">
-        <input class="txbox __block" ng-model="population.name" required autofocus>
+        <input class="txbox __block" ng-model="scenario.name" required autofocus>
       </div>
     </div>
 
@@ -16,7 +16,7 @@
         Acronym
       </div>
       <div class="5 2++">
-        <input class="txbox __block" ng-model="population.acronym" required>
+        <input class="txbox __block" ng-model="scenario.acronym" required>
       </div>
     </div>
 
@@ -25,7 +25,7 @@
         Sex
       </div>
       <div class="5 2++">
-        <select class="txbox" ng-model="population.sex">
+        <select class="txbox" ng-model="scenario.sex">
           <option value="male">Male</option>
           <option value="female">Female</option>
           <option value="other">Both/other</option>
@@ -36,31 +36,31 @@
     <div class="section grid">
         <div class="++5 5 2++">
             <label>
-                <input type="checkbox" ng-model="population.heterosexual">
+                <input type="checkbox" ng-model="scenario.heterosexual">
                 Engages in heterosexual sex
             </label>
         </div>
         <div class="++5 5 2++">
             <label>
-                <input type="checkbox" ng-model="population.homosexual">
+                <input type="checkbox" ng-model="scenario.homosexual">
                 Engages in homosexual sex
             </label>
         </div>
       <div class="++5 5 2++">
         <label>
-          <input type="checkbox" ng-model="population.injects_drugs">
+          <input type="checkbox" ng-model="scenario.injects_drugs">
           Injects drugs
         </label>
       </div>
         <div class="++5 5 2++">
             <label>
-                <input type="checkbox" ng-model="population.sex_work_provider">
+                <input type="checkbox" ng-model="scenario.sex_work_provider">
                 Commercial sex provider
             </label>
         </div>
         <div class="++5 5 2++">
             <label>
-                <input type="checkbox" ng-model="population.sex_work_client">
+                <input type="checkbox" ng-model="scenario.sex_work_client">
                 Commercial sex client
             </label>
         </div>
