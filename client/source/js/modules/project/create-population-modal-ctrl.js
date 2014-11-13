@@ -9,7 +9,7 @@ define(['./module'], function (module) {
 
     $scope.submit = function (form) {
       if (form.$invalid) {
-        alert('Please fill in the form correctly');
+        alert('Your valiant attempts to fill in the form correctly have failed; please try again');
       }
 
       $modalInstance.close($scope.population);
