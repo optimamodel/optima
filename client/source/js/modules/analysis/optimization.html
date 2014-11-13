@@ -50,11 +50,11 @@
     <h2>Optimization type</h2>
     <div class="float-left margin-left-s">
         <label class="checkbox-inline">
-            <input type="checkbox" ng-model="minimizeoutcomes">
+            <input type="radio" name="minimizationType" ng-model="minimizationType" value="outcomes">
             Minimize outcomes
         </label>
         <label class="checkbox-inline">
-            <input type="checkbox" ng-model="minimizemoney">
+            <input type="radio" name="minimizationType" ng-model="minimizationType" value="money">
             Minimize money
         </label>
     </div>
@@ -64,7 +64,7 @@
 <hr>
 
 
-<div class="section" ng-if="minimizeoutcomes">
+<div class="section" ng-if="minimizationType == 'outcomes'">
 
     <p>
         With a fixed amount of money available:
@@ -141,7 +141,7 @@
 
 
 
-<div class="section" ng-if="minimizemoney">
+<div class="section" ng-if="minimizationType == 'money'">
     What is the minimum amount of money required to achieve the following objectives:
 
     <!-- Reduce the incidence of HIV -->
