@@ -7,8 +7,8 @@ define(['./module'], function (module) {
       acronym: '01',
       programs: [
         {
-          name: '01.01 Communication for social and behavioural change',
-          acronym: '01.01',
+          name: 'Behavior change and communication',
+          acronym: 'BCC',
           indicators: [
             { name: 'Condom use among general population males and females', active: true },
             { name: 'VMMC uptake and ART adherence', active: false },
