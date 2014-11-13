@@ -232,12 +232,12 @@ def doCostCoverage():
     args['D'] = load_model(project_name)
     args = pick_params(["progname", "ccparams", "coparams"], data, args)
     try:
-        makecco(**args)
+        plotdata, plotdata_cc, plotdata_co = makecco(**args)
 #        D = runsimulation(**args) 
 #        D = epiresults(D)
 #        D_dict = unbunchify(D)
     except Exception, err:
         var = traceback.format_exc()
         return jsonify({"status":"NOK", "exception":var})
-    return jsonify({"status":"OK"})
+    return jsonify({"status":"OK", "plotdata": plotdata, "plotdata_cc": plotdata_cc, "plotdata_co": plotdata_co})
 #    return jsonify(D_dict.get('O',{}))
