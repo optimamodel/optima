@@ -225,7 +225,7 @@ define(['./module'], function (module) {
             { name: 'Uptake of other programs and services', active: true },
             { name: 'Linkages to biomedical services', active: false }
           ]
-        },        
+        },
         {
           name: 'Pre-Exposure prophylaxis (PrEP)',
           acronym: 'PrEP',
@@ -235,7 +235,7 @@ define(['./module'], function (module) {
             { name: 'Uptake of other programs and services', active: true },
             { name: 'Linkages to biomedical services', active: false }
           ]
-        },        
+        },
         {
           name: '01.98 Prevention activities not disaggregated by intervention',
           acronym: '01.98',
@@ -245,7 +245,7 @@ define(['./module'], function (module) {
             { name: 'Uptake of other programs and services', active: true },
             { name: 'Linkages to biomedical services', active: false }
           ]
-        },        
+        },
         {
           name: '01.99 Prevention activities n.e.c.',
           acronym: '01.99',
@@ -255,7 +255,7 @@ define(['./module'], function (module) {
             { name: 'Uptake of other programs and services', active: true },
             { name: 'Linkages to biomedical services', active: false }
           ]
-        }        
+        }
       ]
     },
     {
@@ -692,7 +692,7 @@ define(['./module'], function (module) {
          indicators: []
        }
      ]
-    },      
+    },
     {
       name: '08 HIV and AIDS-related research (excluding operations research )',
       acronym: '08',
