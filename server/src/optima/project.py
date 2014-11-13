@@ -79,11 +79,17 @@ def createProject(project_name):
     from api import db
     from dbmodels import ProjectDb
     
+    print("User based processing")
+    
     # get current user 
     cu = current_user
     if cu.is_anonymous() == False:
-        proj = None
-        proj = ProjectDb.query.filter_by(user_id=cu.id, name=name).first()
+        
+        # See if there is matching project
+        try:
+            proj = ProjectDb.query.filter_by(user_id=cu.id, name=name).first()
+        except:
+            proj = None
         
         # update existing 
         if proj is not None:
