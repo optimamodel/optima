@@ -131,6 +131,7 @@ Returns the parameters of the given model in the given group.
 @model.route('/parameters/<group>')
 @login_required
 def getModelParameters(group):
+    print("getModelParameters: %s" % group)
     project_name = session.get('project_name', '')
     if project_name == '':
         return jsonify({'status':'NOK', 'reason':'no project is open'})
@@ -146,6 +147,7 @@ Returns the parameters of the given model in the given group / subgroup.
 @model.route('/parameters/<group>/<subgroup>')
 @login_required
 def getModelSubParameters(group, subgroup):
+    print("getModelParameters: %s %s" % (group, subgroup))
     project_name = session.get('project_name', '')
     if project_name == '':
         return jsonify({'status':'NOK', 'reason':'no project is open'})
