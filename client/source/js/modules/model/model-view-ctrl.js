@@ -34,6 +34,17 @@ define(['./module', 'angular'], function (module, angular) {
       }
     };
 
+    $scope.types = [
+      { id: 'prev', name: 'Prevalence', active: true, total: false },
+      { id: 'daly', name: 'DALYs per year', active: false, total: false },
+      { id: 'death', name: 'HIV-related deaths per year', active: false, total: false },
+      { id: 'inci', name: 'New HIV infections per year', active: false, total: false }
+    ];
+
+    var getActiveOptions = function () {
+      return _($scope.types).chain().where({ active: true }).pluck('id').value();
+    };
+
     $scope.enableManualCalibration = false;
 
     // to store years from UI
@@ -88,42 +99,45 @@ define(['./module', 'angular'], function (module, angular) {
      * Methods
      */
 
-    var prepareGraphs = function (response, type) {
+    var prepareGraphs = function (response, types) {
       var graphs = [];
-      var data = response[type];
-      var scatterDataAvailable = data.pops.length === data.ydata.length;
 
-      _(data.pops).each(function (population, populationIndex) {
-        var graph = {
-          options: angular.copy(linescatteroptions),
-          data: angular.copy(linescatterdata)
-        };
+      _(types).each(function (type) {
+        var data = response[type];
+        var scatterDataAvailable = data.pops.length === data.ydata.length;
 
-        graph.data[0].values = _(population).map(function (value, i) {
-          return {
-            x: response.tvec[i],
-            y: value
+        _(data.pops).each(function (population, populationIndex) {
+          var graph = {
+            options: angular.copy(linescatteroptions),
+            data: angular.copy(linescatterdata)
           };
+
+          graph.data[0].values = _(population).map(function (value, i) {
+            return {
+              x: response.tvec[i],
+              y: value
+            };
+          });
+
+          graph.options.chart.xAxis.axisLabel = data.xlabel;
+          graph.options.chart.yAxis.axisLabel = data.ylabel;
+
+          if (scatterDataAvailable) {
+            graph.data[1].values = _(data.ydata[populationIndex]).chain()
+              .map(function (value, i) {
+                return {
+                  x: response.tvec[i],
+                  y: value
+                };
+              })
+              .filter(function (value) {
+                return !!value.x;
+              })
+              .value();
+          }
+
+          graphs.push(graph);
         });
-
-        graph.options.chart.xAxis.axisLabel = data.xlabel;
-        graph.options.chart.yAxis.axisLabel = data.ylabel;
-
-        if (scatterDataAvailable) {
-          graph.data[1].values = _(data.ydata[populationIndex]).chain()
-            .map(function (value, i) {
-              return {
-                x: response.tvec[i],
-                y: value
-              };
-            })
-            .filter(function (value) {
-              return !!value.x;
-            })
-            .value();
-        }
-
-        graphs.push(graph);
       });
 
       return graphs;
@@ -144,7 +158,7 @@ define(['./module', 'angular'], function (module, angular) {
     $scope.simulate = function () {
       $http.post('/api/model/view', $scope.simulationOptions)
         .success(function (response) {
-          $scope.graphs = prepareGraphs(response, $scope.graphType);
+          $scope.graphs = prepareGraphs(response, getActiveOptions());
           $scope.parameters.cache.response = response;
         });
     };
