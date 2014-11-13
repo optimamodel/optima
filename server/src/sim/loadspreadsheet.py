@@ -197,7 +197,7 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
                                     if not(programs.has_key(programname)): programs[programname] = [] # Create new list if none exists
                                     zerocov = sheetdata.row_values(row, start_colx=programcols[1], end_colx=programcols[2]+1) # Get outcome data
                                     fullcov = sheetdata.row_values(row, start_colx=programcols[3], end_colx=programcols[4]+1) # Get outcome data
-                                    programs[programname].append([[name,thispar], [zerocov, fullcov]]) # Append to program
+                                    programs[programname].append([[name,thispar], [subparam], [zerocov, fullcov]]) # Append to program
                         
                         
                         # It's a matrix, append the data                                     
