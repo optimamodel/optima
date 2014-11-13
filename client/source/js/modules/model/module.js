@@ -34,7 +34,13 @@ define([
         })
         .state('model.define-cost-coverage-outcome', {
           url: '/define-cost-coverage-outcome',
-          templateUrl: 'js/modules/model/define-cost-coverage-outcome.html'
+          controller: 'ModelViewCalibrationController',
+          templateUrl: 'js/modules/model/define-cost-coverage-outcome.html',
+          resolve: {
+            meta: function (Model) {
+              return Model.getParametersDataMeta().$promise;
+            }
+          }
         });
     });
 
