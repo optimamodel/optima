@@ -14,141 +14,119 @@
 <!-- Tabs 2 -->
 <div ng-show="activeTab === 1">
 
-    <div class="cf">
-        <h2>Basic options</h2>
-        <div class="float-left margin-left-s">
-            Year to begin optimization from: <input class="txbox __inline __s" value="2013" ng-model="params.optimize.startYear">
-            <div class="margin-top-xxs">
-                Number of years to optimize funding for: <input class="txbox __inline __s" value="10" ng-model="params.optimize.numberOfFundingYears">
-            </div>
-            <div class="margin-top-xxs">
-                Year to project outcomes to: <input class="txbox __inline __s" value="2030" ng-model="params.optimize.outcomeYear">
-            </div>
+<div class="cf">
+    <h2>Basic options</h2>
+    <div class="float-left margin-left-s">
+        Year to begin optimization from: <input class="txbox __inline __s" value="2013" ng-model="params.optimize.startYear">
+        <div class="margin-top-xxs">
+            Number of years to optimize funding for: <input class="txbox __inline __s" value="10" ng-model="params.optimize.numberOfFundingYears">
+        </div>
+        <div class="margin-top-xxs">
+            Year to project outcomes to: <input class="txbox __inline __s" value="2030" ng-model="params.optimize.outcomeYear">
+        </div>
+    </div>
+</div>
+
+<hr>
+
+<div class="section grid">
+    <h2>Optimization type</h2>
+    <div class="float-left margin-left-s">
+        <form action="">
+            <label>
+                <input type="radio" name="optimizewhat" value="Minimize outcomes" ng-model="minimizeoutcomes" checked>
+                Minimize outcomes
+            </label><br>
+            <label>
+                <input type="radio" name="optimizewhat" value="Minimize money" ng-model="minimizemoney" >
+                Minimize money
+            </label><br>
+        </form>
+    </div>
+</div>
+
+
+<hr>
+
+
+<div class="section" ng-if="minimizeoutcomes">
+
+    <p>
+        With a fixed amount of money available:
+        <input class="txbox __inline __s" type="text" ng-model="params.optimize.fixedMoneyAmount">
+        , what is the optimal allocation of this funding to:
+    </p>
+
+    <div class="checkbox-block">
+        <label>
+            <input type="checkbox"  ng-model="params.optimize.weightIncidence.minimize">
+            Minimize cumulative HIV incidence
+        </label>
+    </div>
+
+    <div class="checkbox-block">
+        <label>
+            <input type="checkbox" ng-model="params.optimize.weightDalys.minimize">
+            Minimize cumulative DALYs
+        </label>
+    </div>
+
+    <div class="checkbox-block">
+        <label>
+            <input type="checkbox" ng-model="params.optimize.weightDeaths.minimize">
+            Minimize cumulative HIV-related deaths
+        </label>
+    </div>
+
+    <div class="checkbox-block">
+        <label>
+            <input type="checkbox" ng-model="params.optimize.totalHivCosts.minimize" style="height: 22px;">
+            Minimize total HIV-related costs over
+            <input class="txbox __inline __s" ng-model="params.optimize.totalHivCosts.years">
+            years with
+            <input class="txbox __inline __s" ng-model="params.optimize.totalHivCosts.discounting">
+            % discounting
+        </label>
+    </div>
+
+    <br>
+
+    <div ng-show="params.optimize.weightIncidence.minimize">
+        <div style="margin-left: 24px">
+            Incidence weighting  =  <input class="txbox __inline __s" value="1" ng-model="params.optimize.weightIncidence.value">
         </div>
     </div>
 
-    <hr>
-
-    <div class="section grid">
-        <h2>Optimization type</h2>
-        <div class="float-left margin-left-s">
-            <form action="">
-                <label>
-                    <input type="radio" name="eligibility" value="Minimize outcomes" ng-model="minimizeoutcomes" checked>
-                    Minimize outcomes
-                </label><br>
-                <label>
-                    <input type="radio" name="eligibility" value="Minimize money" ng-model="minimizemoney" >
-                    Minimize money
-                </label><br>
-            </form>
+    <div ng-show="params.optimize.weightDalys.minimize">
+        <div style="margin-left: 50px">
+            DALY weighting  =  <input class="txbox __inline __s" value="1" ng-model="params.optimize.weightDalys.value">
         </div>
     </div>
 
-
-    <hr>
-
-
-    <div class="section" ng-if="minimizeoutcomes">
-
-        <p>
-            With a fixed amount of money available:
-            <input class="txbox __inline __s" type="text" ng-model="params.optimize.fixedMoneyAmount">
-            , what is the optimal allocation of this funding to:
-        </p>
-
-        <div class="checkbox-block">
-            <label>
-                <input type="checkbox"  ng-model="params.optimize.weightIncidence.minimize">
-                Minimize cumulative HIV incidence
-            </label>
+    <div ng-show="params.optimize.weightDeaths.minimize">
+        <div style="margin-left: 45px">
+            Death weighting  =  <input class="txbox __inline __s" value="1" ng-model="params.optimize.weightDeaths.value">
         </div>
+    </div>
 
-        <div class="checkbox-block">
-            <label>
-                <input type="checkbox" ng-model="params.optimize.weightDalys.minimize">
-                Minimize cumulative DALYs
-            </label>
-        </div>
-
-        <div class="checkbox-block">
-            <label>
-                <input type="checkbox" ng-model="params.optimize.weightDeaths.minimize">
-                Minimize cumulative HIV-related deaths
-            </label>
-        </div>
-
-        <div class="checkbox-block">
-            <label>
-                <input type="checkbox" ng-model="params.optimize.totalHivCosts.minimize" style="height: 22px;">
-                Minimize total HIV-related costs over
-                <input class="txbox __inline __s" ng-model="params.optimize.totalHivCosts.years">
-                years with
-                <input class="txbox __inline __s" ng-model="params.optimize.totalHivCosts.discounting">
-                % discounting
-            </label>
-        </div>
-
-        <br>
-
-        <div ng-show="params.optimize.weightIncidence.minimize">
-            <div style="margin-left: 24px">
-                Incidence weighting  =  <input class="txbox __inline __s" value="1" ng-model="params.optimize.weightIncidence.value">
-            </div>
-        </div>
-
-        <div ng-show="params.optimize.weightDalys.minimize">
-            <div style="margin-left: 50px">
-                DALY weighting  =  <input class="txbox __inline __s" value="1" ng-model="params.optimize.weightDalys.value">
-            </div>
-        </div>
-
-        <div ng-show="params.optimize.weightDeaths.minimize">
-            <div style="margin-left: 45px">
-                Death weighting  =  <input class="txbox __inline __s" value="1" ng-model="params.optimize.weightDeaths.value">
-            </div>
-        </div>
-
-        <div class="margin-top-s">
-            Show the optimal allocation of funding for a fixed budget: range
-            <input class="txbox __inline __s" ng-model="params.optimize.fixedBudgetFundingOptimalAllocation.min">
-            % to
-            <input class="txbox __inline __s" ng-model="params.optimize.fixedBudgetFundingOptimalAllocation.max">
-            % of current budget
-            <input class="txbox __inline __s" ng-model="params.optimize.fixedBudgetFundingOptimalAllocation.amount">
-        </div>
-
+    <div class="margin-top-s">
+        Show the optimal allocation of funding for a fixed budget: range
+        <input class="txbox __inline __s" ng-model="params.optimize.fixedBudgetFundingOptimalAllocation.min">
+        % to
+        <input class="txbox __inline __s" ng-model="params.optimize.fixedBudgetFundingOptimalAllocation.max">
+        % of current budget
+        <input class="txbox __inline __s" ng-model="params.optimize.fixedBudgetFundingOptimalAllocation.amount">
     </div>
 
 </div>
 
-<!-- Tabs 3 -->
-<div ng-show="activeTab === 3">
 
-    <div class="cf">
-        <div class="float-left margin-left-s">
-            Base year against which indicators are compared:
-            <input class="txbox __inline __s" value="2013" ng-model="params.minimize.baseYear">
-            <div class="margin-top-xxs">
-                End year when objectives are to be achieved:
-                <input class="txbox __inline __s" value="2020" ng-model="params.minimize.endYear">
-            </div>
-            <div class="margin-top-xxs">
-                Year to project outcomes to:
-                <input class="txbox __inline __s" value="2030" ng-model="params.minimize.outcomeYear">
-            </div>
-            <div class="margin-top-xxs">
-                What are the fiscal liabilities over
-                <input class="txbox __inline __s" value="80" ng-model="params.minimize.fiscalLiabilities.years">
-                years with
-                <input class="txbox __inline __s" value="3" ng-model="params.minimize.fiscalLiabilities.discounting">
-                % discounting.
-            </div>
-        </div>
-    </div>
 
-    <hr>
 
+
+
+
+<div class="section" ng-if="minimizemoney">
     What is the minimum amount of money required to achieve the following objectives:
 
     <!-- Reduce the incidence of HIV -->
@@ -305,9 +283,22 @@
         </div>
     </div>
 
-    <div class="margin-top-s">
-        <button class="btn" ng-click="submit('minimize')">Submit</button>
-    </div>
+
+</div>
+
+
+
+
+</div>
+
+<!-- Tabs 3 -->
+<div ng-show="activeTab === 3">
+
+
+
+
+
+
 
 </div>
 
