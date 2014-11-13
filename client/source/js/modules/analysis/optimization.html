@@ -32,16 +32,14 @@
 <div class="section grid">
     <h2>Optimization type</h2>
     <div class="float-left margin-left-s">
-        <form action="">
-            <label>
-                <input type="radio" name="optimizewhat" value="Minimize outcomes" ng-model="minimizeoutcomes" checked>
-                Minimize outcomes
-            </label><br>
-            <label>
-                <input type="radio" name="optimizewhat" value="Minimize money" ng-model="minimizemoney" >
-                Minimize money
-            </label><br>
-        </form>
+        <label class="checkbox-inline">
+            <input type="checkbox" ng-model="minimizeoutcomes">
+            Minimize outcomes
+        </label>
+        <label class="checkbox-inline">
+            <input type="checkbox" ng-model="minimizemoney">
+            Minimize money
+        </label>
     </div>
 </div>
 
