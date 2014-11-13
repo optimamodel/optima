@@ -20,10 +20,10 @@ define(['./module', 'angular'], function (module, angular) {
           'First-line ART slope'
         ],
         tx2: [
-          'Second-line initial value',
-          'Second-line final value',
-          'Second-line midpoint',
-          'Second-line slope'
+          'Second-line ART initial value',
+          'Second-line ART final value',
+          'Second-line ART midpoint',
+          'Second-line ART slope'
         ]
       },
       meta: meta,
@@ -101,8 +101,8 @@ define(['./module', 'angular'], function (module, angular) {
 
         graph.data[0].values = _(population).map(function (value, i) {
           return {
-            y: value,
-            x: response.tvec[i]
+            x: response.tvec[i],
+            y: value
           };
         });
 
@@ -113,8 +113,8 @@ define(['./module', 'angular'], function (module, angular) {
           graph.data[1].values = _(data.ydata[populationIndex]).chain()
             .map(function (value, i) {
               return {
-                y: value,
-                x: response.xdata[i]
+                x: response.tvec[i],
+                y: value
               };
             })
             .filter(function (value) {

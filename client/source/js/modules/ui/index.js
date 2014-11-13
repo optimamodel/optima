@@ -73,49 +73,18 @@ define([
             ]
           },
           {
-            title: 'Forecasts & counterfactuals',
-            id: 'create-load',
+            title: 'Analysis',
             subitems: [
               {
-                title: 'Manage counterfactuals',
+                title: 'Scenario analyses',
                 state: {
-                  name: 'forecasts.counterfactuals'
+                  name: 'analysis.scenarios'
                 }
               },
               {
-                title: 'View results',
+                title: 'Optimization analyses',
                 state: {
-                  name: 'forecasts.results'
-                }
-              }
-            ]
-          },
-          {
-            title: 'Analysis & optimization',
-            id: 'create-load',
-            subitems: [
-              {
-                title: 'Define optimization objectives',
-                state: {
-                  name: 'optimization.objectives'
-                }
-              },
-              {
-                title: 'Define optimization constraints',
-                state: {
-                  name: 'optimization.constraints'
-                }
-              },
-              {
-                title: 'Run optimization',
-                state: {
-                  name: 'optimization.optimize'
-                }
-              },
-              {
-                title: 'View results',
-                state: {
-                  name: 'optimization.results'
+                  name: 'analysis.optimization'
                 }
               }
             ]
