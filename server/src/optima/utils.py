@@ -42,3 +42,10 @@ def save_model(name, model, folder = PROJECTDIR):
   if not project_file.startswith(user_dir):
     project_file = helpers.safe_join(user_dir, name+'.prj')
   return savedata(project_file, model)
+
+def pick_params(params, data, args = {}):
+  for param in params:
+    the_value = data.get(param)
+    if the_value:
+        args[param] = the_value
+  return args
