@@ -16,7 +16,8 @@ from sim.bunch import unbunchify, bunchify, Bunch as struct
 from sim.runsimulation import runsimulation
 from sim.optimize import optimize
 from sim.epiresults import epiresults
-from utils import loaddir, load_model, save_model, project_exists
+from sim.makeccocs import makecco
+from utils import loaddir, load_model, save_model, project_exists, pick_params
 from flask.ext.login import login_required
 
 """ route prefix: /api/model """
@@ -215,3 +216,28 @@ def doRunSimulation():
 #        'attachment_filename': downloadName
 #    }
 #    return helpers.send_file(data_file_path, **options)
+
+
+"""
+Calls makecco with parameters supplied from frontend
+"""
+@model.route('/costcoverage', methods=['POST'])
+@login_required
+def doCostCoverage():
+    data = json.loads(request.data)
+    project_name = session.get('project_name', '')
+    if project_name == '':
+        return jsonify({"status":"NOK", "reason":"no project is open"})
+    args = {}
+    args['D'] = load_model(project_name)
+    args = pick_params(["progname", "ccparams", "coparams"], data, args)
+    try:
+        makecco(**args)
+#        D = runsimulation(**args) 
+#        D = epiresults(D)
+#        D_dict = unbunchify(D)
+    except Exception, err:
+        var = traceback.format_exc()
+        return jsonify({"status":"NOK", "exception":var})
+    return jsonify({"status":"OK"})
+#    return jsonify(D_dict.get('O',{}))
