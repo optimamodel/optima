@@ -9,7 +9,6 @@
                 <tr>
                     <td><b>Active</b></td>
                     <td><b>Name</b></td>
-                    <td><b>Acronym</b></td>
                     <td>&nbsp;</td>
                 </tr>
                 </thead>
@@ -19,7 +18,6 @@
                         <input type="checkbox" ng-model="row.active">
                     </td>
                     <td style="width: 300px">{{ row.name }}</td>
-                    <td style="width: 150px">{{ row.acronym }}</td>
                     <td>
                         <button role="button" class="btn" ng-click="openEditScenarioModal($event, row)">Edit</button>
                     </td>

@@ -8,19 +8,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         };
 
         $scope.scenarios = [
-            { name: 'Female sex workers', acronym: 'FSW', active: false },
-            { name: 'Clients of sex workers', acronym: 'CSW', active: false },
-            { name: 'Men who have sex with men', acronym: 'MSM', active: false },
-            { name: 'People who inject drugs', acronym: 'PWID', active: false },
-            { name: 'Males who inject drugs', acronym: 'MWID', active: false },
-            { name: 'Females who inject drugs', acronym: 'FWID', active: false },
-            { name: 'Transgender individuals', acronym: 'TG', active: false },
-            { name: 'Children (2-15)', acronym: 'CHLD', active: false },
-            { name: 'Infants (0-2)', acronym: 'INF', active: false },
-            { name: 'Other males (15-49)', acronym: 'OM15-49', active: false },
-            { name: 'Other females (15-49)', acronym: 'OF15-49', active: false },
-            { name: 'Other males [enter age]', acronym: 'OM', active: false },
-            { name: 'Other females [enter age]', acronym: 'OF', active: false }
+            { name: 'Conditions remain according to model calibration', active: true }
         ];
 
 
