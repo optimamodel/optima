@@ -20,10 +20,10 @@ define(['./module', 'angular'], function (module, angular) {
           'First-line ART slope'
         ],
         tx2: [
-          'Second-line initial value',
-          'Second-line final value',
-          'Second-line midpoint',
-          'Second-line slope'
+          'Second-line ART initial value',
+          'Second-line ART final value',
+          'Second-line ART midpoint',
+          'Second-line ART slope'
         ]
       },
       meta: meta,
