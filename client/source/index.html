@@ -41,24 +41,16 @@
 </head>
 <body ng-controller="MainCtrl">
 
-<div class="actionbar">
+<div class="actionbar" style="padding-left: 220px;">
     <div class="elastic __fluid">
-        <div>
-            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-        </div>
         <div class="elastic_col __va-middle">
             <i class="header_logo logo"></i>
         </div>
     </div>
 </div>
 
-<div class="actionbar">
+<div class="actionbar" style="padding-left: 220px;">
     <div class="elastic __fluid">
-        <div>
-            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-        </div>
         <div class="elastic_col __va-middle">
             <a class="btn" ui-sref="about">About</a>
         </div>
@@ -69,7 +61,7 @@
             <a class="btn" ui-sref="help">Help</a>
         </div>
         <div class="elastic_col __va-middle">
-            <a class="btn" onclick="window.open('http://optimamodel.com', '_blank');">Website</a>
+            <a class="btn" href="http://optimamodel.com" target="_blank">Website</a>
         </div>
         <div class="elastic_col __va-middle">
             <button class="btn" ng-click="logout()">Log out</button>
@@ -96,13 +88,13 @@
             Logged in as: <b>{{ user.name }}</b>
         </div>
         <div class="elastic_col __va-middle">
-            <i class="header_logo kirbylogo"></i>
+            <i class="ic __kirby-logo"></i>
         </div>
         <div class="elastic_col __va-middle">
-            <i class="header_logo unswlogo"></i>
+            <i class="ic __unsw-logo"></i>
         </div>
         <div class="elastic_col __va-middle">
-            <i class="header_logo wblogo"></i>
+            <i class="ic __world-bank-logo"></i>
         </div>
     </div>
     <div class="elastic __fluid" ng-if="!userLogged()">
