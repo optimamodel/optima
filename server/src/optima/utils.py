@@ -34,3 +34,10 @@ def load_model(name, folder = PROJECTDIR):
 def save_model(name, model, folder = PROJECTDIR):
   project_file = helpers.safe_join(upload_dir_user(folder), name+'.prj')
   return savedata(project_file, model)
+
+def pick_params(params, data, args = {}):
+  for param in params:
+    the_value = data.get(param)
+    if the_value:
+        args[param] = the_value
+  return args
