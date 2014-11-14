@@ -1,18 +1,18 @@
 define(['./module'], function (module) {
   'use strict';
 
-  module.controller('ProjectCreatePopulationModalController', function ($scope, $modalInstance, population) {
+  module.controller('AnalysisScenariosModalController', function ($scope, $modalInstance, scenario) {
 
-    $scope.isNew = !population.name;
+    $scope.isNew = !scenario.name;
 
-    $scope.population = population;
+    $scope.scenario = scenario;
 
     $scope.submit = function (form) {
       if (form.$invalid) {
         alert('Your valiant attempts to fill in the form correctly have failed. Please try again');
       }
 
-      $modalInstance.close($scope.population);
+      $modalInstance.close($scope.scenario);
     };
 
   });
