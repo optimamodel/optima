@@ -16,7 +16,8 @@ from sim.bunch import unbunchify, bunchify, Bunch as struct
 from sim.runsimulation import runsimulation
 from sim.optimize import optimize
 from sim.epiresults import epiresults
-from utils import loaddir, load_model, save_model, project_exists
+from sim.makeccocs import makecco
+from utils import loaddir, load_model, save_model, project_exists, pick_params
 from flask.ext.login import login_required
 
 """ route prefix: /api/model """
@@ -148,6 +149,7 @@ Returns the parameters of the given model in the given group.
 @model.route('/parameters/<group>')
 @login_required
 def getModelParameters(group):
+    print("getModelParameters: %s" % group)
     project_name = session.get('project_name', '')
     
     # if project name is coming as param
@@ -169,6 +171,7 @@ Returns the parameters of the given model in the given group / subgroup.
 @model.route('/parameters/<group>/<subgroup>')
 @login_required
 def getModelSubParameters(group, subgroup):
+    print("getModelParameters: %s %s" % (group, subgroup))
     project_name = session.get('project_name', '')
     
     # if project name is coming as param
@@ -257,3 +260,28 @@ def doRunSimulation():
 #        'attachment_filename': downloadName
 #    }
 #    return helpers.send_file(data_file_path, **options)
+
+
+"""
+Calls makecco with parameters supplied from frontend
+"""
+@model.route('/costcoverage', methods=['POST'])
+@login_required
+def doCostCoverage():
+    data = json.loads(request.data)
+    project_name = session.get('project_name', '')
+    if project_name == '':
+        return jsonify({"status":"NOK", "reason":"no project is open"})
+    args = {}
+    args['D'] = load_model(project_name)
+    args = pick_params(["progname", "ccparams", "coparams"], data, args)
+    try:
+        plotdata, plotdata_cc, plotdata_co = makecco(**args)
+#        D = runsimulation(**args) 
+#        D = epiresults(D)
+#        D_dict = unbunchify(D)
+    except Exception, err:
+        var = traceback.format_exc()
+        return jsonify({"status":"NOK", "exception":var})
+    return jsonify({"status":"OK", "plotdata": plotdata, "plotdata_cc": plotdata_cc, "plotdata_co": plotdata_co})
+#    return jsonify(D_dict.get('O',{}))

@@ -1,0 +1,116 @@
+<div class="rich">
+
+    <div class="section grid">
+        <div class="6">
+            <h1>Manage scenarios</h1>
+
+            <table class="section table table-bordered">
+                <thead>
+                <tr>
+                    <td><b>Active</b></td>
+                    <td><b>Name</b></td>
+                    <td>&nbsp;</td>
+                </tr>
+                </thead>
+                <tbody>
+                <tr ng-repeat="row in scenarios">
+                    <td class="text-center" style="width: 50px">
+                        <input type="checkbox" ng-model="row.active">
+                    </td>
+                    <td style="width: 300px">{{ row.name }}</td>
+                    <td>
+                        <button role="button" class="btn" ng-click="openEditScenarioModal($event, row)">Edit</button>
+                    </td>
+                </tr>
+                </tbody>
+                <tfoot>
+                <tr>
+                    <td colspan="4" class="text-right">
+                        <button role="button" class="btn" ng-click="openAddScenarioModal($event)">Add a scenario</button>
+                    </td>
+                </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+
+    <div class="well section">
+        <div class="grid">
+            <div class="section cf">
+
+                <h1>View results</h1>
+
+                <div class="3">
+                    <b>Prevalence</b>
+                    <div><label class="checkbox-inline">
+                        <input type="checkbox" ng-model="prevoverall">
+                        Overall
+                    </label>
+                    </div>
+                    <div><label class="checkbox-inline">
+                        <input type="checkbox" ng-model="prevbypop">
+                        Per population
+                    </label>
+                    </div>
+                </div>
+
+
+                <div class="3">
+                    <b>New infections</b>
+                    <div><label class="checkbox-inline">
+                        <input type="checkbox" ng-model="newinfoverall">
+                        Overall
+                    </label>
+                    </div>
+                    <div><label class="checkbox-inline">
+                        <input type="checkbox" ng-model="newinfbypop">
+                        Per population
+                    </label>
+                    </div>
+                </div>
+
+                <div class="3">
+                    <b>HIV-related deaths</b>
+                    <div><label class="checkbox-inline">
+                        <input type="checkbox" ng-model="deathoverall">
+                        Overall
+                    </label>
+                    </div>
+                    <div><label class="checkbox-inline">
+                        <input type="checkbox" ng-model="deathbypop">
+                        Per population
+                    </label>
+                    </div>
+                </div>
+
+                <div class="3">
+                    <b>Disablity-adjusted life years</b>
+                    <div><label class="checkbox-inline">
+                        <input type="checkbox" ng-model="dalyoverall">
+                        Overall
+                    </label>
+                    </div>
+                    <div><label class="checkbox-inline">
+                        <input type="checkbox" ng-model="dalybypop">
+                        Per population
+                    </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section grid">
+                <div class="6" ng-repeat="graph in graphs">
+                    <div class="chart-container">
+                        <nvd3 data="graph.data" options="graph.options"></nvd3>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+
+
+<input type="hidden" name="params" value="{{ formParams }}">
+</div>
