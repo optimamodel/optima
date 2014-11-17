@@ -1,7 +1,10 @@
 Installation & Configuration
 ----------------------------
 
-  This component requires ([EB Command Line Tools](http://aws.amazon.com/code/6752709412171743)).
+  This component requires ([EB Command Line Tools](http://aws.amazon.com/code/6752709412171743)) and boto.
+
+    # Install boto
+	pip install boto
 
     # Configure AWS parameters in `worker\run.sh` file
 	#Set to location of eb tools downloaded. You need to point to the eb executable for your platform. Example:
@@ -92,3 +95,11 @@ Delete an EB Application
 	# Select y when prompted
 	Delete application? [y/n]: y
 	...
+
+
+Push code to EB Application
+---------------------------
+
+    # Run command parent directory of local git repository
+	git aws.push
+
