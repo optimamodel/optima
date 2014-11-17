@@ -8,3 +8,4 @@ server/p-env
 server/build
 \~\$*
 *.prj
+.elasticbeanstalk/
