@@ -15,7 +15,7 @@ EB_REGION="us-west-2"
 EB_APP_NAME="optima"
 
 # Environment Tier
-EB_ENVIRONMENT_TIER="WebServer::Standard::1.0"
+EB_ENVIRONMENT_TIER="Worker::SQS/HTTP::1.0"
 
 # Solution Stack
 EB_SOLUTION_STACK="64bit Amazon Linux 2014.03 v1.0.9 running Python 2.7"

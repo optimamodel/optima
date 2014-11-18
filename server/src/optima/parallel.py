@@ -49,9 +49,6 @@ def parallel_execution( nprocesses, someparameter ):
         # Write to the queue
         optima_queue.write( m )
         
-        # Process message
-        runprocess( )
-        
     result = []
     for i in range( nprocesses ):
         rs = q.get_messages()
@@ -66,32 +63,6 @@ def parallel_execution( nprocesses, someparameter ):
     
     # Return result as JSON
     return json.dumps( result )
-
-def runprocess():
-    
-    # Read from the queue
-    rs = optima_queue.get_messages()
-    
-    # Get the first message
-    m = rs[0]
-    req = json.loads( m.get_body() )
-    
-    # Delete the message
-    optima_queue.delete_message(m)
-    
-    i = req['iteration']
-    someparameter = req['parameter']
-    
-    output = someparameter+i*2
-    
-    # Get the response queue
-    rs_queue = conn.get_queue( req['responseq']  )
-    
-    m = Message()
-    m.set_body( json.dumps({ 'output': output } ) )
-    
-    # Write the response
-    rs_queue.write( m )
     
 def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
     return ''.join(random.choice(chars) for _ in range(size))
