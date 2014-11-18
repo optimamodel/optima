@@ -1,26 +1,26 @@
 """
 DATAIO
 
-Data input/output. Uses pickle because savemat() can't handle arbitrary data
-structures, even though savemat() is (much) faster, and the compatibility with
-Matlab would be nice.
+Data input/output. Uses JSON format.
 
-Version: 2014nov05 by cliffk
+Version: 2014nov17 by cliffk
 """
 
 from printv import printv
 import os
-from flask.ext.login import current_user
+
 
 DATADIR="/tmp/uploads"
 TEMPLATEDIR = "/tmp/templates"
 PROJECTDIR = "/tmp/projects"
 
+
+
 def fullpath(filename, datadir=DATADIR):
     """
     "Normalizes" filename:  if it is full path, leaves it alone. Otherwise, prepends it with datadir.
     """
-    import os
+    
     result = filename
 
     # get user dir path
@@ -39,6 +39,9 @@ def templatepath(filename):
 def projectpath(filename):
     return fullpath(filename, PROJECTDIR)
 
+
+
+
 def savedata(filename, data, update=True, verbose=2, path=None):
     """
     Saves the pickled data into the file (either updates it or just overwrites).
@@ -54,14 +57,16 @@ def savedata(filename, data, update=True, verbose=2, path=None):
         if update: origdata.update(data)
         else: origdata = data
         wfid = open(filename,'wb')
-        dump(data, wfid, protocol=-1)
+        dump(data, wfid)
         printv('..updated file', 3, verbose)
     except: # If that fails, save a new file
         wfid = open(filename,'wb')
-        dump(data, wfid, protocol=-1)
+        dump(data, wfid)
         printv('..created new file', 3, verbose)
     printv(' ...done saving data at %s.' % filename, 2, verbose)
     return filename
+
+
 
 
 def loaddata(filename, verbose=2):
@@ -78,22 +83,29 @@ def loaddata(filename, verbose=2):
     printv('...done loading data.', 2, verbose)
     return data
 
+
+
 def upload_dir_user(dirpath):
+    
+    try:
+        from flask.ext.login import current_user
 
-    # get current user 
-    cu = current_user
-    if cu.is_anonymous() == False:
-
-        # user_path
-        user_path = os.path.join(dirpath, str(cu.id))
-
-        # if dir does not exist
-        if not(os.path.exists(dirpath)):
-            os.makedirs(dirpath)
-
-        # if dir with user id does not exist
-        if not(os.path.exists(user_path)):
-            os.makedirs(user_path)
-        
-        return user_path
+        # get current user 
+        if current_user.is_anonymous() == False:
+    
+            # user_path
+            user_path = os.path.join(dirpath, str(current_user.id))
+    
+            # if dir does not exist
+            if not(os.path.exists(dirpath)):
+                os.makedirs(dirpath)
+    
+            # if dir with user id does not exist
+            if not(os.path.exists(user_path)):
+                os.makedirs(user_path)
+            
+            return user_path
+    except:
+        return dirpath
+    
     return dirpath
