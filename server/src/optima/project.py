@@ -119,7 +119,6 @@ def createProject(project_name):
 #    srcfile = helpers.safe_join(project.static_folder,'example.xlsx')
 #    dstfile =  helpers.safe_join(dirname, xlsname)
 #    shutil.copy(srcfile, dstfile)
-    session['project_name'] = project_name 
     return helpers.send_from_directory(dirname, basename)
 
 """
@@ -128,7 +127,7 @@ If the project exists, should put it in session and return to the user.
 """
 @project.route('/open/<project_name>')
 @login_required
-# expects project name, will put it into session
+# expects project name, 
 # todo: only if it can be found
 def openProject(project_name):
     
@@ -139,20 +138,19 @@ def openProject(project_name):
     if not os.path.exists(project_path):
         return jsonify({'status':'NOK','reason':'No such project %s' % project_name})
     else:
-        session['project_name'] = project_name
         return redirect(url_for('site'))
 
 """
 Returns the current project name.
 """
-@project.route('/name')
+@project.route('/name/<project_name>')
 @login_required
-def getProjectInfo():
+# expects project name
+def getProjectInfo(project_name):
     
-    project_name = session.get('project_name','')
     # if project name is coming as param
-    if request.args.get('proj') != None and request.args.get('proj') != "":
-        project_name = request.args.get('proj')
+    if project_name == None or project_name == "":
+        return jsonify({'status':'NOK','reason':'Project name is invalid'})
     return jsonify({"project": project_name})
 
 """
@@ -191,8 +189,6 @@ def deleteProject(project_name):
         spreadsheet_path = helpers.safe_join(upload_dir_user(TEMPLATEDIR), project_name+'.xlsx')
         if os.path.exists(spreadsheet_path):
             os.remove(spreadsheet_path)
-        if session.get('project_name', '') == project_name:
-            session.pop('project_name', None)
 
         # Get current user 
         cu = current_user
@@ -273,7 +269,6 @@ def uploadExcel():
         reply['exception'] = var
         return json.dumps(reply)      
 
-    session['project_name'] = project_name 
     reply['status'] = 'OK'
     reply['result'] = 'Project %s is updated' % file_basename
     return json.dumps(reply)
