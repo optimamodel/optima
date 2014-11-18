@@ -35,17 +35,11 @@ def defineObjectives(defineType):
 """
 Starts optimisation for the current model. Gives back line plot and two pie plots.
 """
-@analysis.route('/optimisation/start')
+@analysis.route('/optimisation/start/<project_name>')
 @login_required
-def runOptimisation():
+def runOptimisation(project_name):
     # should call method in optimize.py but it's not implemented yet. for now just returns back the file
     reply = {'status':'NOK'}
-    project_name = session.get('project_name', '')
-    
-    # if project name is coming as param
-    proj = request.args.get('proj')
-    if proj != None and proj != "":
-        project_name = proj
 
     if project_name == '':
         reply['reason'] = 'No project is open'
