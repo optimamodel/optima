@@ -1,13 +1,28 @@
 Installation
 ------------
 
-  This component requires ([pip](http://pip.readthedocs.org/en/latest/installing.html)) and [PostgreSQL](http://www.postgresql.org/download/).
+  This component requires ([pip](http://pip.readthedocs.org/en/latest/installing.html)), [PostgreSQL](http://www.postgresql.org/download/) and [VirtualEnv](http://virtualenv.readthedocs.org/en/latest/).
+
+    # Install virtual env
+    pip install virtualenv
 
     # Configure database parameters in `src\api.py` file
     app.config['DATABASE_URI'] = 'postgresql+psycopg2://optima:optima@localhost:5432/optima'
 
     # Run the server
     ./run.sh
+
+Tests
+------------
+
+In order to run the testsuite you need to have "nose" installed.
+
+    # Install nose
+    pip install nose
+
+Run the testsuite from your server directory:
+
+    nosetests
 
 User API
 ------------
