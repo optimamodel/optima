@@ -12,6 +12,14 @@ import math
 from matplotlib.pylab import zeros, figure, plot, hold, xlabel, ylabel, title
 import scipy.stats as stats
 from bunch import Bunch as struct
+from dataio import loaddata, savedata
+
+## Set defaults
+default_progname = 'FSW'
+default_ccparams = [0.9, 0.2, 800000.0, 7e6]
+default_coparams = []
+default_makeplot = 1
+
 
 ###############################################################################
 ## Make cost coverage curve
@@ -24,7 +32,11 @@ from bunch import Bunch as struct
 #        ccparams(2) = the 'known' funding requirements to achieve ccparams(2)
 #        ccparams(3) = desired upper x limit
 ###############################################################################
-def makecc(D, progname, ccparams, makeplot = 1):
+def makecc(D = [], projectname = 'example', progname = default_progname, ccparams = default_ccparams, makeplot = default_makeplot):
+    
+    ## Load data structure if it hasn't been passed as an argument... 
+    if not D:
+        D = loaddata(projectname+'.prj')
     
     ## Extract info from data structure
     prognumber = D.data.meta.progs.short.index(progname) # get program number
@@ -99,7 +111,11 @@ def makecc(D, progname, ccparams, makeplot = 1):
 #        coparams(2) = the lower bound for the outcome when coverage = 1
 #        coparams(3) = the upper bound for the outcome when coverage = 1
 ###############################################################################
-def makeco(D, progname, effectname, coparams=[], makeplot = 1):
+def makeco(effectname, D = [], projectname='example', progname = default_progname, coparams=default_coparams, makeplot = default_makeplot):
+
+    ## Load data structure if it hasn't been passed as an argument... 
+    if not D:
+        D = loaddata(projectname+'.prj')
 
     ## Extract info from data structure
     prognumber = D.data.meta.progs.short.index(progname) # get program number
@@ -207,7 +223,6 @@ def makeco(D, progname, effectname, coparams=[], makeplot = 1):
         plotdata.title = effectname[0][1]+ ' ' + effectname[1][0]
         plotdata.xlabel = 'Proportion covered'
         plotdata.ylabel = 'Outcome'
-        
     
         return plotdata, D
 
@@ -215,15 +230,17 @@ def makeco(D, progname, effectname, coparams=[], makeplot = 1):
 ###############################################################################
 ## Make cost outcome curve
 ###############################################################################
-default_ccparams = [0.9, 0.2, 800000.0, 7e6]
-default_coparams = []
-def makecco(D, progname = 'MSM', ccparams = default_ccparams, coparams=default_coparams, makeplot = 1):
+def makecco(D = [], projectname='example', progname=default_progname, ccparams=default_ccparams, coparams=default_coparams, makeplot=default_makeplot):
+
+    ## Load data structure if it hasn't been passed as an argument... 
+    if not D:
+        D = loaddata(projectname+'.prj')
 
     ## Extract info from data structure
     prognumber = D.data.meta.progs.short.index(progname) # get program number
 
     # Get the cost-coverage and coverage-outcome relationships            
-    plotdata_cc, xvalscc, yvalscc = makecc(D, progname, ccparams, makeplot)
+    plotdata_cc, xvalscc, yvalscc = makecc(D)
     
     ## Initialise storage of outputs   
     plotdata_co = {}
@@ -262,7 +279,7 @@ def makecco(D, progname = 'MSM', ccparams = default_ccparams, coparams=default_c
 
             # Parameters for coverage-outcome curves
             muz, muf = (zeromax+zeromin)/2, (fullmax+fullmin)/2  # Mean calcs
-            plotdata_co[effectnumber], D = makeco(D, progname, effectname, coparams, makeplot)
+            plotdata_co[effectnumber], D = makeco(effectname, D)
 
             # Extract samples of start and end points
             zerosample = D.programs[progname][effectnumber][3][0]
@@ -334,6 +351,5 @@ def makecco(D, progname = 'MSM', ccparams = default_ccparams, coparams=default_c
     return plotdata, plotdata_cc, plotdata_co
                 
 ## Example of use
-progname = 'HTC'
-plotdata_cco, plotdata_cc, plotdata_co = makecco(D, progname)
+plotdata_cco, plotdata_cc, plotdata_co = makecco()
 
