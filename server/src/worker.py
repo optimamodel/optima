@@ -30,7 +30,11 @@ conn = boto.sqs.connect_to_region( region )
 @application.route('/execute', methods=['POST'])
 def optima_compute():
     application.logger.info("Inside the request")
-    application.logger.info(request.json)
+    application.logger.info(request)
+    try:
+        application.logger.info(request.json)
+    except Exception as ex:
+        application.logger.error('Error processing message: %s' % request.json)
     
     response = None
     if request.json is None:
