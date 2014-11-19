@@ -17,7 +17,7 @@ Installation & Configuration
 	AWS_SECRET_ACCESS_KEY="<Access Key Secret>"
 
 	#Set region from one of these keys: http://docs.aws.amazon.com/general/latest/gr/rande.html#elasticbeanstalk_region
-	EB_REGION="us-east-1"
+	AWS_DEFAULT_REGION="us-east-1"
   
 
 Create an EB Application
