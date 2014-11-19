@@ -172,7 +172,7 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
                         
                         # It's meta-data, split into pieces
                         if groupname=='metadata': 
-                            thesedata = sheetdata.row_values(row, start_colx=2, end_colx=10) # Data starts in 3rd column, finishes in 6th column
+                            thesedata = sheetdata.row_values(row, start_colx=2, end_colx=11) # Data starts in 3rd column, finishes in 11th column
                             data[name][thispar].short.append(thesedata[0])
                             data[name][thispar].long.append(thesedata[1])
                             data[name][thispar].male.append(thesedata[2])
