@@ -70,16 +70,17 @@ def optima_compute():
             # Get the response queue
             rs_queue = conn.get_queue( queue )
     
-            m = Message()
-            m.set_body( json.dumps({ 'output': output } ) )
+            # Make sure queue is valid
+            if rs_queue is not None:
+                m = Message()
+                m.set_body( json.dumps({ 'output': output } ) )
     
-            application.logger.info('Write to response queue')
+                application.logger.info('Write to response queue')
     
-            # Write the response
-            rs_queue.write( m )
+                # Write the response
+                rs_queue.write( m )
             
             application.logger.info('We are done!')
-            
             response = Response("", status=200)
         except Exception as ex:
             application.logger.error('Error processing message: %s' % request.json)
