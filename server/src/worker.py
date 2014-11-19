@@ -21,7 +21,6 @@ def optima_compute():
         # Expect application/json request
         response = Response("", status=415)
     else:
-        message = dict()
         #try:
         # Action to be performed
         action = request.json['action']
