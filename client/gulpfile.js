@@ -1,6 +1,5 @@
 var _ = require('underscore');
 var autoprefix = require('gulp-autoprefixer');
-var deploy = require('gulp-gh-pages');
 var es = require('event-stream');
 var gulp = require('gulp');
 var karma = require('gulp-karma');
@@ -27,7 +26,7 @@ gulp.task('bump-version', function () {
     var branch = data.toString();
 
     // Verify we're on a release branch
-    if (/^release\/.*/.test(branch)) {
+    if (/^(release|hotfix)\/.*/.test(branch)) {
       var newVersion = branch.split('/')[1].trim();
 
       // Update client index.html
@@ -73,29 +72,19 @@ gulp.task('copy', ['sass'], function () {
     // minify requirejs
     gulp.src(['build/vendor/requirejs/require.js'])
       .pipe(uglify().on('error', handleError))
-      .pipe(gulp.dest('build/vendor/requirejs')),
-    // minify domReady
-    gulp.src(['build/vendor/requirejs-domready/domReady.js'])
-      .pipe(uglify().on('error', handleError))
-      .pipe(gulp.dest('build/vendor/requirejs-domready'))
+      .pipe(gulp.dest('build/vendor/requirejs'))
   );
-});
-
-// Publish to GitHub Pages
-gulp.task('gh-pages', ['js', 'copy'], function () {
-  return gulp.src("./build/**/*")
-    .pipe(deploy());
 });
 
 // JavaScript
 gulp.task('js', function () {
   var configRequire = require('./source/js/config-require.js');
   var configBuild = {
-    baseUrl: 'source/js',
-    insertRequire: ['main'],
-    name: 'main',
-    wrap: true,
-    optimize: 'none'
+    baseUrl: 'source',
+    insertRequire: ['js/main'],
+    name: 'js/main',
+    optimize: 'none',
+    wrap: true
   };
   var config = _(configBuild).extend(configRequire);
 
@@ -166,6 +155,6 @@ gulp.task('watch', ['sass'], function () {
 });
 
 gulp.task('default', ['js', 'copy'], function () {
-  gulp.run('karma-ci');
+  //gulp.run('karma-ci');
 //  gulp.run('protractor-ci');
 });
