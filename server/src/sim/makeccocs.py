@@ -20,10 +20,9 @@ default_ccparams = [0.9, 0.2, 800000.0, 7e6]
 default_coparams = []
 default_makeplot = 1
 
-
 ###############################################################################
 ## Make cost coverage curve
-# Inputs: 
+# Inputs:
 #    D is the data structure generated from reading in the spreadsheet
 #    progname is the program
 #    ccparams is the parameter structure for the cost-coverage curves, obtained from the GUI
