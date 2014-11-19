@@ -143,13 +143,17 @@ def openProject(project_name):
 """
 Returns the current project name.
 """
-@project.route('/name/<project_name>')
+@project.route('/name')
 @login_required
-# expects project name
-def getProjectInfo(project_name):
+def getProjectInfo():
     
-    # if project name is coming as param
-    if project_name == None or project_name == "":
+    # get project name
+    try:
+        project_name = request.headers['project_name']
+    except:
+        project_name = ''
+
+    if project_name == '':
         return jsonify({'status':'NOK','reason':'Project name is invalid'})
     return jsonify({"project": project_name})
 
