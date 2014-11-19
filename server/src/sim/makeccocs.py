@@ -351,5 +351,4 @@ def makecco(D = [], projectname='example', progname=default_progname, ccparams=d
     return plotdata, plotdata_cc, plotdata_co
                 
 ## Example of use
-plotdata_cco, plotdata_cc, plotdata_co = makecco()
-
+# plotdata_cco, plotdata_cc, plotdata_co = makecco()
