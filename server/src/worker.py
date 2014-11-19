@@ -4,32 +4,41 @@ import boto.sqs
 from boto.sqs.message import Message
 import json
 import boto
+import logging
+import os
 
 # Create and configure the Flask app
 application = flask.Flask(__name__)
 application.debug = True
 
 # Connect to AWS region.
-conn = boto.sqs.connect_to_region(
-    "us-east-1" )
+region = os.environ.get('AWS_DEFAULT_REGION')
+if region is None:
+    region = "us-west-2"
+
+conn = boto.sqs.connect_to_region( region )
 
 @application.route('/', methods=['POST'])
 def optima_compute():
 
+    print request.json
+    
     response = None
     if request.json is None:
         # Expect application/json request
         response = Response("", status=415)
     else:
         try:
+            js = json.loads(request.json)
+            
             # Action to be performed
-            action = request.json['action']
+            action = js['action']
             
             # Queue to send response back to
-            queue = request.json['responseq']
+            queue = js['responseq']
             
             # Check action to determine processing. We just have one command now
-            output = runprocess( request.json )
+            output = runprocess( js )
             
             # Get the response queue
             rs_queue = conn.get_queue( queue )
@@ -59,4 +68,9 @@ def runprocess( req ):
 
 
 if __name__ == '__main__':
-    application.run(host='0.0.0.0')
+    port = int(os.environ.get('AWS_WORKER_PORT'))
+    
+    if port is None:
+        port = 5000
+    
+    application.run(host='0.0.0.0', port=port)
