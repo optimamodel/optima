@@ -10,7 +10,7 @@ Version: 2014nov13
 import numpy as np
 import math
 from matplotlib.pylab import zeros, figure, plot, hold, xlabel, ylabel, title
-import scipy.stats as stats
+from truncnorm import truncnorm
 from bunch import Bunch as struct
 
 ###############################################################################
@@ -121,16 +121,16 @@ def makeco(D, progname, effectname, coparams=[], makeplot = 1):
         muf, stdevf = (fullmax+fullmin)/2, (fullmax-fullmin)/4 # Mean and standard deviation calcs
         
         ## Generate sample of zero-coverage behaviour
-        zerosample = stats.truncnorm.rvs((0 - muz) / stdevz, (1 - muz) / stdevz, loc=muz, scale=stdevz, size = 1000)
+        zerosample = truncnorm((0 - muz) / stdevz, (1 - muz) / stdevz, loc=muz, scale=stdevz, size = 1000)
     
         ## Generate sample of full-coverage behaviour
         fullsample = zeros(len(zerosample))
         if muf > muz: # Apply this if the c/o curve is increasing
             for i in range(len(zerosample)):
-                fullsample[i] = stats.truncnorm.rvs((zerosample[i] - muf) / stdevf, (1 - muf) / stdevf, loc=muf, scale=stdevf, size = 1) # draw possible values for behvaiour at maximal coverage
+                fullsample[i] = truncnorm((zerosample[i] - muf) / stdevf, (1 - muf) / stdevf, loc=muf, scale=stdevf, size = 1) # draw possible values for behvaiour at maximal coverage
         else:  # Apply this if the c/o curve is decreasing
             for i in range(len(zerosample)):
-                fullsample[i] = stats.truncnorm.rvs((0 - muf) / stdevf, (zerosample[i] - muf) / stdevf, loc=muf, scale=stdevf, size = 1) # draw possible values for behvaiour at maximal coverage
+                fullsample[i] = truncnorm((0 - muf) / stdevf, (zerosample[i] - muf) / stdevf, loc=muf, scale=stdevf, size = 1) # draw possible values for behvaiour at maximal coverage
         
         ## General set of coverage-outcome relationships
         xvalsco = np.linspace(0,1,1000) # take 1000 points along the unit interval
