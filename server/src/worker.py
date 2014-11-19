@@ -48,6 +48,9 @@ def optima_compute():
 
     return response
 
+@application.route('/info', methods=['GET'])
+def root():
+    return 'Optima Worker v.1.0.0'
  
 def runprocess( req ):    
     i = req['iteration']
