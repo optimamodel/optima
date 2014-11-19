@@ -15,14 +15,9 @@ Installation
 Tests
 ------------
 
-In order to run the testsuite you need to have "nose" installed.
-
-    # Install nose
-    pip install nose
-
 Run the testsuite from your server directory:
 
-    nosetests
+    ./test.sh
 
 User API
 ------------
