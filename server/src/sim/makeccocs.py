@@ -214,10 +214,9 @@ def makeco(effectname, D = [], projectname='example', progname = default_prognam
         # Create and populate output structure with plotting data
         plotdata = {}
         plotdata['xlinedata'] = xvalsco # X data for all line plots
-        plotdata['ylinedata1'] = yvalsco # Y data for first line plot
-        plotdata['ylinedata2'] = np.linspace(muz,muf,1000) # Y data for second line plot
-        plotdata['ylinedata3'] = ymax  # Y data for third line plot
-        plotdata['ylinedata4'] = ymin  # Y data for fourth line plot
+        plotdata['ylinedata1'] = np.linspace(muz,muf,1000) # Y data for second line plot
+        plotdata['ylinedata2'] = ymax  # Y data for third line plot
+        plotdata['ylinedata3'] = ymin  # Y data for fourth line plot
         plotdata['xscatterdata'] = coverage
         plotdata['yscatterdata'] = outcome
         plotdata['title'] = effectname[0][1]+ ' ' + effectname[1][0]
@@ -342,10 +341,9 @@ def makecco(D = [], projectname='example', progname=default_progname, ccparams=d
             # Create and populate output structure with plotting data
             plotdata[effectnumber] = {}
             plotdata[effectnumber]['xlinedata'] = xvalscco # X data for all line plots
-            plotdata[effectnumber]['ylinedata1'] = yvalscco # Y data for first line plot
-            plotdata[effectnumber]['ylinedata2'] = mediancco # Y data for second line plot
-            plotdata[effectnumber]['ylinedata3'] = ymax  # Y data for third line plot
-            plotdata[effectnumber]['ylinedata4'] = ymin  # Y data for fourth line plot
+            plotdata[effectnumber]['ylinedata1'] = mediancco # Y data for second line plot
+            plotdata[effectnumber]['ylinedata2'] = ymax  # Y data for third line plot
+            plotdata[effectnumber]['ylinedata3'] = ymin  # Y data for fourth line plot
             plotdata[effectnumber]['xscatterdata'] = totalcost
             plotdata[effectnumber]['yscatterdata'] = outcome
             plotdata[effectnumber]['title'] = effectname[0][1]+ ' ' + effectname[1][0]
