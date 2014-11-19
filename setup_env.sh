@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # EB tools
-EB=
-AWS_REPO_SETUP=
+export EB=
+export AWS_REPO_SETUP=
 
 export AWS_ACCESS_KEY_ID=
 export AWS_SECRET_ACCESS_KEY=

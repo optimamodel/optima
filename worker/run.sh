@@ -36,16 +36,16 @@ if [ -n "${EB}" ]; then
 		
 	elif [ "${1}" = "--start" ]; then
 		echo "Run EB application"
-		${EB_PATH}/eb start
+		${EB} start
 	elif [ "${1}" = "--stop" ]; then
 		echo "Stop EB application"
-		${EB_PATH}/eb stop
+		${EB} stop
 	elif [ "${1}" = "--delete" ]; then
 		echo "Delete EB application"
-		${EB_PATH}/eb delete
+		${EB} delete
 	elif [ "${1}" = "--branch" ]; then
 		echo "Setup EB branch"
-		${EB_PATH}/eb branch
+		${EB} branch
 	else
 		echo "--setup    Setup application"
 		echo "--start    Start application"
