@@ -18,7 +18,7 @@ def loaddir(app):
   return loaddir
 
 def project_exists(name, folder = PROJECTDIR):
-  project_name = helpers.safe_join(folder, name+'.prj')
+  project_name = helpers.safe_join(upload_dir_user(folder), name+'.prj')
   print("project name: %s" % project_name)
   return os.path.exists(project_name)
 
