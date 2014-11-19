@@ -5,11 +5,17 @@ from boto.sqs.message import Message
 import json
 import boto
 import logging
+from logging.handlers import RotatingFileHandler
+
 import os
 
 # Create and configure the Flask app
 application = flask.Flask(__name__)
 application.debug = True
+
+handler = RotatingFileHandler('optima-worker.log', maxBytes=10000, backupCount=1)
+handler.setLevel(logging.INFO)
+application.logger.addHandler(handler)
 
 # Connect to AWS region.
 region = os.environ.get('AWS_DEFAULT_REGION')
@@ -21,7 +27,7 @@ conn = boto.sqs.connect_to_region( region )
 @application.route('/', methods=['POST'])
 def optima_compute():
 
-    print request.json
+    application.logger.info(request.json)
     
     response = None
     if request.json is None:
@@ -29,7 +35,10 @@ def optima_compute():
         response = Response("", status=415)
     else:
         try:
+            
             js = json.loads(request.json)
+            
+            application.logger.info('Begin json analysis')
             
             # Action to be performed
             action = js['action']
@@ -37,8 +46,12 @@ def optima_compute():
             # Queue to send response back to
             queue = js['responseq']
             
+            application.logger.info('Begin message processing')
+            
             # Check action to determine processing. We just have one command now
             output = runprocess( js )
+            
+            application.logger.info('Get the response queue')
             
             # Get the response queue
             rs_queue = conn.get_queue( queue )
@@ -46,12 +59,16 @@ def optima_compute():
             m = Message()
             m.set_body( json.dumps({ 'output': output } ) )
     
+            application.logger.info('Write to response queue')
+    
             # Write the response
             rs_queue.write( m )
             
+            application.logger.info('We are done!')
+            
             response = Response("", status=200)
         except Exception as ex:
-            logging.exception('Error processing message: %s' % request.json)
+            application.logger.error('Error processing message: %s' % request.json)
             response = Response(ex.message, status=500)
 
     return response
