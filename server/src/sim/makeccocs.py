@@ -10,7 +10,7 @@ Version: 2014nov13
 import numpy as np
 import math
 from matplotlib.pylab import zeros, figure, plot, hold, xlabel, ylabel, title
-import scipy.stats as stats
+from truncnorm import truncnorm
 from bunch import Bunch as struct
 from dataio import loaddata, savedata
 
@@ -86,14 +86,14 @@ def makecc(D = [], projectname = 'example', progname = default_progname, ccparam
         ylabel('proportion covered')
     
     # Create and populate output structure with plotting data
-    plotdata = struct()
-    plotdata.xlinedata = xvalscc
-    plotdata.ylinedata = yvalscc
-    plotdata.xscatterdata = totalcost
-    plotdata.yscatterdata = coverage
-    plotdata.title = progname
-    plotdata.xlabel = 'USD'
-    plotdata.ylabel = 'Proportion covered'
+    plotdata = {}
+    plotdata['xlinedata'] = xvalscc
+    plotdata['ylinedata'] = yvalscc
+    plotdata['xscatterdata'] = totalcost
+    plotdata['yscatterdata'] = coverage
+    plotdata['title'] = progname
+    plotdata['xlabel'] = 'USD'
+    plotdata['ylabel'] = 'Proportion covered'
     
     return plotdata, xvalscc, yvalscc
 
@@ -112,6 +112,7 @@ def makecc(D = [], projectname = 'example', progname = default_progname, ccparam
 ###############################################################################
 def makeco(effectname, D = [], projectname='example', progname = default_progname, coparams=default_coparams, makeplot = default_makeplot):
 
+    print("makeco(%s)" % effectname)
     ## Load data structure if it hasn't been passed as an argument... 
     if not D:
         D = loaddata(projectname+'.prj')
@@ -167,16 +168,16 @@ def makeco(effectname, D = [], projectname='example', progname = default_prognam
         muf, stdevf = (fullmax+fullmin)/2, (fullmax-fullmin)/4 # Mean and standard deviation calcs
         
         ## Generate sample of zero-coverage behaviour
-        zerosample = stats.truncnorm.rvs((0 - muz) / stdevz, (1 - muz) / stdevz, loc=muz, scale=stdevz, size = 1000)
+        zerosample = truncnorm((0 - muz) / stdevz, (1 - muz) / stdevz, loc=muz, scale=stdevz, size = 1000)
     
         ## Generate sample of full-coverage behaviour
         fullsample = zeros(len(zerosample))
         if muf > muz: # Apply this if the c/o curve is increasing
             for i in range(len(zerosample)):
-                fullsample[i] = stats.truncnorm.rvs((zerosample[i] - muf) / stdevf, (1 - muf) / stdevf, loc=muf, scale=stdevf, size = 1) # draw possible values for behvaiour at maximal coverage
+                fullsample[i] = truncnorm((zerosample[i] - muf) / stdevf, (1 - muf) / stdevf, loc=muf, scale=stdevf, size = 1) # draw possible values for behvaiour at maximal coverage
         else:  # Apply this if the c/o curve is decreasing
             for i in range(len(zerosample)):
-                fullsample[i] = stats.truncnorm.rvs((0 - muf) / stdevf, (zerosample[i] - muf) / stdevf, loc=muf, scale=stdevf, size = 1) # draw possible values for behvaiour at maximal coverage
+                fullsample[i] = truncnorm((0 - muf) / stdevf, (zerosample[i] - muf) / stdevf, loc=muf, scale=stdevf, size = 1) # draw possible values for behvaiour at maximal coverage
         
         ## General set of coverage-outcome relationships
         xvalsco = np.linspace(0,1,1000) # take 1000 points along the unit interval
@@ -211,17 +212,17 @@ def makeco(effectname, D = [], projectname='example', progname = default_prognam
             ylabel('outcome')
     
         # Create and populate output structure with plotting data
-        plotdata = struct()
-        plotdata.xlinedata = xvalsco # X data for all line plots
-        plotdata.ylinedata1 = yvalsco # Y data for first line plot
-        plotdata.ylinedata2 = np.linspace(muz,muf,1000) # Y data for second line plot
-        plotdata.ylinedata3 = ymax  # Y data for third line plot
-        plotdata.ylinedata4 = ymin  # Y data for fourth line plot
-        plotdata.xscatterdata = coverage
-        plotdata.yscatterdata = outcome
-        plotdata.title = effectname[0][1]+ ' ' + effectname[1][0]
-        plotdata.xlabel = 'Proportion covered'
-        plotdata.ylabel = 'Outcome'
+        plotdata = {}
+        plotdata['xlinedata'] = xvalsco # X data for all line plots
+        plotdata['ylinedata1'] = yvalsco # Y data for first line plot
+        plotdata['ylinedata2'] = np.linspace(muz,muf,1000) # Y data for second line plot
+        plotdata['ylinedata3'] = ymax  # Y data for third line plot
+        plotdata['ylinedata4'] = ymin  # Y data for fourth line plot
+        plotdata['xscatterdata'] = coverage
+        plotdata['yscatterdata'] = outcome
+        plotdata['title'] = effectname[0][1]+ ' ' + effectname[1][0]
+        plotdata['xlabel'] = 'Proportion covered'
+        plotdata['ylabel'] = 'Outcome'
     
         return plotdata, D
 
@@ -246,7 +247,9 @@ def makecco(D = [], projectname='example', progname=default_progname, ccparams=d
     plotdata = {}         
 
     # Loop over behavioural effects
+    print "progname: %s programs: %s meta: %s" % (progname, D.programs, D.data.meta.pops.short)
     for effectname in D.programs[progname]:
+        print "effectname: %s" % effectname
 
         ## Get population info
         popname = effectname[1]
@@ -255,7 +258,8 @@ def makecco(D = [], projectname='example', progname=default_progname, ccparams=d
         ## Only going to make cost-outcome curves if a program affects a specific population -- otherwise will just make cost-coverage curves
         if popname[0] not in D.data.meta.pops.short:
             return [], plotdata_cc, []
-        else:            
+        else:          
+            print ("ccparams: %s" % ccparams)  
             ## Initialise storage of plotting data
             popnumber = D.data.meta.pops.short.index(popname[0]) 
 
@@ -274,6 +278,7 @@ def makecco(D = [], projectname='example', progname=default_progname, ccparams=d
             
             # Parameters for cost-coverage curves
             saturation = ccparams[0]
+            print("saturation: %s" % saturation)
             growthrate = (-1/ccparams[2])*math.log((2*saturation)/(ccparams[1]+saturation) - 1)
 
             # Parameters for coverage-outcome curves
@@ -335,20 +340,19 @@ def makecco(D = [], projectname='example', progname=default_progname, ccparams=d
                 ylabel('outcome')
                 
             # Create and populate output structure with plotting data
-            plotdata[effectnumber] = struct()
-            plotdata[effectnumber].xlinedata = xvalscco # X data for all line plots
-            plotdata[effectnumber].ylinedata1 = yvalscco # Y data for first line plot
-            plotdata[effectnumber].ylinedata2 = mediancco # Y data for second line plot
-            plotdata[effectnumber].ylinedata3 = ymax  # Y data for third line plot
-            plotdata[effectnumber].ylinedata4 = ymin  # Y data for fourth line plot
-            plotdata[effectnumber].xscatterdata = totalcost
-            plotdata[effectnumber].yscatterdata = outcome
-            plotdata[effectnumber].title = effectname[0][1]+ ' ' + effectname[1][0]
-            plotdata[effectnumber].xlabel = 'USD'
-            plotdata[effectnumber].ylabel = 'Outcome'
+            plotdata[effectnumber] = {}
+            plotdata[effectnumber]['xlinedata'] = xvalscco # X data for all line plots
+            plotdata[effectnumber]['ylinedata1'] = yvalscco # Y data for first line plot
+            plotdata[effectnumber]['ylinedata2'] = mediancco # Y data for second line plot
+            plotdata[effectnumber]['ylinedata3'] = ymax  # Y data for third line plot
+            plotdata[effectnumber]['ylinedata4'] = ymin  # Y data for fourth line plot
+            plotdata[effectnumber]['xscatterdata'] = totalcost
+            plotdata[effectnumber]['yscatterdata'] = outcome
+            plotdata[effectnumber]['title'] = effectname[0][1]+ ' ' + effectname[1][0]
+            plotdata[effectnumber]['xlabel'] = 'USD'
+            plotdata[effectnumber]['ylabel'] = 'Outcome'
     
     return plotdata, plotdata_cc, plotdata_co
                 
 ## Example of use
-plotdata_cco, plotdata_cc, plotdata_co = makecco()
-
+# plotdata_cco, plotdata_cc, plotdata_co = makecco()

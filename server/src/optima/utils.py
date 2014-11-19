@@ -1,6 +1,8 @@
 import os
 from sim.dataio import DATADIR, PROJECTDIR, loaddata, savedata, upload_dir_user
 from flask import helpers, session
+import numpy as np
+from sim.bunch import Bunch as struct
 
 ALLOWED_EXTENSIONS=set(['txt','xlsx','xls'])
 
@@ -49,3 +51,18 @@ def pick_params(params, data, args = {}):
     if the_value:
         args[param] = the_value
   return args
+
+"""
+   makes an object frontend-friendly :)
+"""
+def for_fe(item):
+  if isinstance(item, np.ndarray):
+    print ("item is nparray")
+    return item.tolist()
+  elif isinstance(item, struct):
+    print("item is bunch")
+    return item.toDict()
+  elif isinstance(item, dict):
+    return dict( (k, for_fe(v)) for k,v in item.iteritems() )
+  else:
+    return item
