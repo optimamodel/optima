@@ -8,7 +8,7 @@ import traceback
 import sys
 from sim.dataio import loaddata, savedata, DATADIR
 from sim.optimize import optimize
-from utils import loaddir
+from utils import loaddir,project_exists
 from flask.ext.login import login_required
 
 """ route prefix: /api/analysis """
@@ -35,11 +35,17 @@ def defineObjectives(defineType):
 """
 Starts optimisation for the current model. Gives back line plot and two pie plots.
 """
-@analysis.route('/optimisation/start/<project_name>')
+@analysis.route('/optimisation/start')
 @login_required
-def runOptimisation(project_name):
+def runOptimisation():
     # should call method in optimize.py but it's not implemented yet. for now just returns back the file
     reply = {'status':'NOK'}
+    
+    # get project name
+    try:
+        project_name = request.headers['project_name']
+    except:
+        project_name = ''
 
     if project_name == '':
         reply['reason'] = 'No project is open'

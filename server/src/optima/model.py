@@ -42,7 +42,10 @@ def doAutoCalibration():
     data = json.loads(request.data)
 
     # get project name 
-    project_name = data.get('project_name')
+    try:
+        project_name = request.headers['project_name']
+    except:
+        project_name = ''
 
     if project_name == '':
         reply['reason'] = 'No project is open'
@@ -83,7 +86,10 @@ def doManualCalibration():
     data = json.loads(request.data)
    
     # get project name
-    project_name = data.get('project_name')
+    try:
+        project_name = request.headers['project_name']
+    except:
+        project_name = ''
 
     if project_name == '':
         return jsonify({'status':'NOK', 'reason':'no project is open'})
@@ -119,10 +125,15 @@ def doManualCalibration():
 """
 Returns the parameters of the given model.
 """
-@model.route('/parameters/<project_name>')
+@model.route('/parameters')
 @login_required
-def getModel(project_name):
-    print('project_name: ' + project_name)
+def getModel():
+    
+    try:
+        project_name = request.headers['project_name']
+    except:
+        project_name = ''
+
     if project_name == '':
         return jsonify({'status':'NOK', 'reason':'no project is open'})
     D = load_model(project_name)
@@ -134,11 +145,16 @@ def getModel(project_name):
 """
 Returns the parameters of the given model in the given group.
 """
-@model.route('/parameters/<group>/<project_name>')
+@model.route('/parameters/<group>')
 @login_required
-def getModelParameters(group, project_name):
-    print("getModelParameters: %s %s" % (group, project_name))
-    print('project_name: ' + project_name)
+def getModelParameters(group):
+    print("getModelParameters: %s" % group)
+   
+    try:
+        project_name = request.headers['project_name']
+    except:
+        project_name = ''
+
     if project_name == '':
         return jsonify({'status':'NOK', 'reason':'no project is open'})
     D = load_model(project_name)
@@ -150,11 +166,16 @@ def getModelParameters(group, project_name):
 """
 Returns the parameters of the given model in the given group / subgroup/ project.
 """
-@model.route('/parameters/<group>/<subgroup>/<project_name>')
+@model.route('/parameters/<group>/<subgroup>')
 @login_required
-def getModelSubParameters(group, subgroup, project_name):
-    print("getModelSubParameters: %s %s %s" % (group, subgroup, project_name))
-    print('project_name: ' + project_name)
+def getModelSubParameters(group, subgroup):
+    print("getModelSubParameters: %s %s" % (group, subgroup))
+    
+    try:
+        project_name = request.headers['project_name']
+    except:
+        project_name = ''
+
     if project_name == '':
         return jsonify({'status':'NOK', 'reason':'no project is open'})
     D = load_model(project_name)
@@ -175,7 +196,10 @@ def setModelParameters(group):
     print("set parameters group: %s for data: %s" % (group, data))
     
     # get project name
-    project_name = data.get('project_name')
+    try:
+        project_name = request.headers['project_name']
+    except:
+        project_name = ''
    
     if project_name == '':
         return jsonify({'status':'NOK', 'reason':'no project is open'})
@@ -202,7 +226,10 @@ def doRunSimulation():
     data = json.loads(request.data)
     
     # get project name
-    project_name = data.get('project_name')
+    try:
+        project_name = request.headers['project_name']
+    except:
+        project_name = ''
     
     if project_name == '':
         return jsonify({"status":"NOK", "reason":"no project is open"})
@@ -239,7 +266,13 @@ Calls makecco with parameters supplied from frontend
 @login_required
 def doCostCoverage():
     data = json.loads(request.data)
-    project_name = data.get('project_name')
+    
+    # get project name
+    try:
+        project_name = request.headers['project_name']
+    except:
+        project_name = ''
+
     if project_name == '':
         return jsonify({"status":"NOK", "reason":"no project is open"})
     args = {}
