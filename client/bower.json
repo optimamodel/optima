@@ -22,9 +22,6 @@
     "ng-file-upload": "~1.6.8",
     "normalize-css": "=3.0.1",
     "requirejs": "=2.1.13",
-    "requirejs-domready": "=2.0.1",
-    "requirejs-plugins": "=1.0.2",
-    "requirejs-text": "=2.0.12",
     "underscore": "=1.6.0"
   },
   "resolutions": {
