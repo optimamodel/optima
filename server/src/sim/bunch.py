@@ -33,8 +33,13 @@ import numpy as np
 __version__ = '1.0.1'
 VERSION = tuple(map(int, __version__.split('.')))
 
-__all__ = ('Bunch', 'bunchify','unbunchify',)
+__all__ = ('Bunch', 'bunchify','unbunchify','to_array')
 
+def float_array(data):
+    return np.asarray(data, np.float)
+
+def int_array(data):
+    return np.asarray(data, np.int)
 
 class Bunch(dict):
     """ A dictionary that provides attribute-style access.
