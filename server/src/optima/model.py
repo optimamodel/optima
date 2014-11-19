@@ -43,7 +43,7 @@ def doAutoCalibration():
 
     # get project name 
     try:
-        project_name = request.headers['project_name']
+        project_name = request.headers['project']
     except:
         project_name = ''
 
@@ -87,7 +87,7 @@ def doManualCalibration():
    
     # get project name
     try:
-        project_name = request.headers['project_name']
+        project_name = request.headers['project']
     except:
         project_name = ''
 
@@ -130,7 +130,7 @@ Returns the parameters of the given model.
 def getModel():
     
     try:
-        project_name = request.headers['project_name']
+        project_name = request.headers['project']
     except:
         project_name = ''
 
@@ -151,7 +151,7 @@ def getModelParameters(group):
     print("getModelParameters: %s" % group)
    
     try:
-        project_name = request.headers['project_name']
+        project_name = request.headers['project']
     except:
         project_name = ''
 
@@ -172,7 +172,7 @@ def getModelSubParameters(group, subgroup):
     print("getModelSubParameters: %s %s" % (group, subgroup))
     
     try:
-        project_name = request.headers['project_name']
+        project_name = request.headers['project']
     except:
         project_name = ''
 
@@ -197,7 +197,7 @@ def setModelParameters(group):
     
     # get project name
     try:
-        project_name = request.headers['project_name']
+        project_name = request.headers['project']
     except:
         project_name = ''
    
@@ -227,7 +227,7 @@ def doRunSimulation():
     
     # get project name
     try:
-        project_name = request.headers['project_name']
+        project_name = request.headers['project']
     except:
         project_name = ''
     
@@ -269,7 +269,7 @@ def doCostCoverage():
     
     # get project name
     try:
-        project_name = request.headers['project_name']
+        project_name = request.headers['project']
     except:
         project_name = ''
 
