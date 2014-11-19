@@ -29,7 +29,7 @@ conn = boto.sqs.connect_to_region( region )
 
 @application.route('/execute', methods=['POST'])
 def optima_compute():
-
+    application.logger.info("Inside the request")
     application.logger.info(request.json)
     
     response = None
