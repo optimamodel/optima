@@ -149,7 +149,7 @@ def getProjectInfo():
     
     # get project name
     try:
-        project_name = request.headers['project_name']
+        project_name = request.headers['project']
     except:
         project_name = ''
 
