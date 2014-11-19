@@ -1,3 +1,4 @@
 Flask==0.10
 xlrd==0.9.3
 XlsxWriter==0.6.1
+boto==2.34.0
