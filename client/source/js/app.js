@@ -1,5 +1,6 @@
 define([
   'angular',
+  'angular-loading-bar',
   'angular-nvd3',
   'ng-file-upload',
   'ui.bootstrap',
@@ -29,6 +30,7 @@ define([
 
   return angular.module('app', [
     'angularFileUpload',
+    'angular-loading-bar',
     'app.about',
     'app.contact',
     'app.auth',
