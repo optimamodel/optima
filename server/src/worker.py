@@ -32,8 +32,12 @@ def optima_compute():
     application.logger.info("Inside the request")
     try:
         application.logger.info(request.data)
-        application.logger.info(request.get_json( force=True ))
-        application.logger.info(request.json)
+        
+        m = Message()
+        application.logger.info(m.decode( request.data ))
+        
+        m = m.decode( request.data )
+        application.logger.info(m.get_body())
     except Exception as ex:
         application.logger.error('Error processing message: %s' % request.json)
     
