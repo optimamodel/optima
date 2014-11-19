@@ -25,9 +25,7 @@ def makeproject(projectname='example', pops = default_pops, progs = default_prog
 
     printv("""Making project %s: 
             pops=%s, progs=%s, datastart = %s, dataend = %s,
-            econ_datastart=%s, econ_dataend=%s""" % \
-
-            (projectname, pops, progs, datastart, dataend, econ_datastart, econ_datastart), 1, verbose)
+            econ_datastart=%s, econ_dataend=%s""" % (projectname, pops, progs, datastart, dataend, econ_datastart, econ_datastart), 1, verbose)
 
     D = struct() # Data structure for saving everything
     D.projectname = projectname
@@ -54,10 +52,13 @@ def makeproject(projectname='example', pops = default_pops, progs = default_prog
     
     
     savedata(D.projectfilename, D, verbose=verbose) # Create project -- #TODO: check if an existing project exists and don't overwrite it
-    # Make an Excel template and then prompt the user to save it
-
-    from makespreadsheet import makespreadsheet 
-    makespreadsheet(D.spreadsheetname, pops, progs, datastart, dataend, econ_datastart, econ_dataend, verbose=verbose)
     
-    printv('  ...done making project %s., created spreadsheet %s' % (D.projectname, D.spreadsheetname), 2, verbose)
+    # Make an Excel template and then prompt the user to save it
+    if projectname == 'example': # Don't make a new spreadsheet, but just use the existing one, if the project name is "example"
+        print('WARNING, Project name set to "example", not creating a new spreadsheet!')
+    else: # Make a new spreadsheet
+        from makespreadsheet import makespreadsheet 
+        makespreadsheet(D.spreadsheetname, pops, progs, datastart, dataend, econ_datastart, econ_dataend, verbose=verbose)
+    
+    printv('  ...done making project %s, created spreadsheet %s' % (D.projectname, D.spreadsheetname), 2, verbose)
     return D
