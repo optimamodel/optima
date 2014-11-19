@@ -2,7 +2,7 @@ import flask
 from flask import request, Response
 import boto.sqs
 from boto.sqs.message import Message
-
+import json
 import boto
 
 # Create and configure the Flask app
