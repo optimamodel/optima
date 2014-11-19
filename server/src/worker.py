@@ -9,6 +9,10 @@ import boto
 application = flask.Flask(__name__)
 application.debug = True
 
+# Connect to AWS region.
+conn = boto.sqs.connect_to_region(
+    "us-east-1" )
+
 @application.route('/', methods=['POST'])
 def optima_compute():
 
