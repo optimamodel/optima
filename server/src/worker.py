@@ -9,7 +9,7 @@ import boto
 application = flask.Flask(__name__)
 application.debug = True
 
-@application.route('/optima-compute', methods=['POST'])
+@application.route('/', methods=['POST'])
 def optima_compute():
 
     response = None
