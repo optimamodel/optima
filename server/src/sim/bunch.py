@@ -28,7 +28,6 @@ converted via Bunch.to/fromDict().
 
 Modified (slightly) by Cliff Kerr on 2014sep24
 """
-import numpy as np
 
 __version__ = '1.0.1'
 VERSION = tuple(map(int, __version__.split('.')))
@@ -273,16 +272,18 @@ def unbunchify(x):
         
         nb. As dicts are not hashable, they cannot be nested in sets/frozensets.
     """
+    from matplotlib.pylab import ndarray, isnan # CK: replaced dependence on NumPy with Matplotlib
+
     if isinstance(x, dict):
         return dict( (k, unbunchify(v)) for k,v in x.iteritems() )
     elif isinstance(x, (list, tuple)):
         return type(x)( unbunchify(v) for v in x )
-    elif isinstance(x, np.ndarray):
+    elif isinstance(x, ndarray):
         return [unbunchify(v) for v in x.tolist()]
-    elif isinstance(x, float) and np.isnan(x):
+    elif isinstance(x, float) and isnan(x):
         return None
     else:
-        print ("x= %s, type(x) = %s" % (x, type(x)))
+#        print ("x= %s, type(x) = %s" % (x, type(x))) # CK: What the hell was that doing there!?
         return x
 
 
