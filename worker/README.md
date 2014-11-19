@@ -20,8 +20,10 @@ Installation & Configuration
 	export AWS_DEFAULT_REGION="us-east-1"
 
 	#Set defined variables in current shell
-	export source setup_env.sh
+	source setup_env.sh
 
+
+Please note that `source setup_env.sh` command needs to be run on every new terminal window opened.
 
 Architecture
 ------------
@@ -67,6 +69,22 @@ We will need to capture responses from all workers:
     # We are done, delete response q
     q.delete()   
 
+All slave instances run `server/src/worker.py`. New messages are posted to the root `/` Based on action, worker threads can perform different computation.
+
+Development Environment
+-----------------------
+
+To facilitate development, but without having to continually publish to AWS for testing parallel execution, a local development environment can be setup. Use the steps described below to set it up. 
+
+You need to create a new SQS queue with a unique name that will be used during development. This ensures that your queue does not conflict with existing queues used on production or by other developers. Visit this link to setup the queue: https://console.aws.amazon.com/sqs/home?region=us-west-2
+
+The environment variable `AWS_WORKER_QUEUE_PREFIX` needs to be set to the name of the queue created. This can be done by setting the statement in `setup_env.sh` and invoking it using `source setup_env.sh`.
+
+If the API server is now started (using `./run.sh` in `server` directory), it will push worker tasks to the new queue.
+
+The `worker/develop.sh` is a development tool that pulls messages from queue defined in `AWS_WORKER_QUEUE_PREFIX` and posts them in an HTTP post to the worker thread. This tool needs to be run during development.
+
+Finally, `python server/src/worker.py` needs to be started to receive post messages.
 
 Create an EB Application
 ------------------------
