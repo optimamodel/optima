@@ -119,7 +119,6 @@ def createProject(project_name):
 #    srcfile = helpers.safe_join(project.static_folder,'example.xlsx')
 #    dstfile =  helpers.safe_join(dirname, xlsname)
 #    shutil.copy(srcfile, dstfile)
-    session['project_name'] = project_name 
     return helpers.send_from_directory(dirname, basename)
 
 """
@@ -128,7 +127,7 @@ If the project exists, should put it in session and return to the user.
 """
 @project.route('/open/<project_name>')
 @login_required
-# expects project name, will put it into session
+# expects project name, 
 # todo: only if it can be found
 def openProject(project_name):
     
@@ -139,7 +138,6 @@ def openProject(project_name):
     if not os.path.exists(project_path):
         return jsonify({'status':'NOK','reason':'No such project %s' % project_name})
     else:
-        session['project_name'] = project_name
         return redirect(url_for('site'))
 
 """
@@ -148,7 +146,16 @@ Returns the current project name.
 @project.route('/name')
 @login_required
 def getProjectInfo():
-    return jsonify({"project":session.get('project_name','')})
+    
+    # get project name
+    try:
+        project_name = request.headers['project']
+    except:
+        project_name = ''
+
+    if project_name == '':
+        return jsonify({'status':'NOK','reason':'Project name is invalid'})
+    return jsonify({"project": project_name})
 
 """
 Returns the list of existing projects from db.
@@ -186,8 +193,6 @@ def deleteProject(project_name):
         spreadsheet_path = helpers.safe_join(upload_dir_user(TEMPLATEDIR), project_name+'.xlsx')
         if os.path.exists(spreadsheet_path):
             os.remove(spreadsheet_path)
-        if session.get('project_name', '') == project_name:
-            session.pop('project_name', None)
 
         # Get current user 
         cu = current_user
@@ -268,7 +273,6 @@ def uploadExcel():
         reply['exception'] = var
         return json.dumps(reply)      
 
-    session['project_name'] = project_name 
     reply['status'] = 'OK'
     reply['result'] = 'Project %s is updated' % file_basename
     return json.dumps(reply)
