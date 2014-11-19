@@ -15,7 +15,6 @@ TEMPLATEDIR = "/tmp/templates"
 PROJECTDIR = "/tmp/projects"
 
 
-
 def fullpath(filename, datadir=DATADIR):
     """
     "Normalizes" filename:  if it is full path, leaves it alone. Otherwise, prepends it with datadir.
@@ -47,21 +46,23 @@ def savedata(filename, data, update=True, verbose=2, path=None):
     Saves the pickled data into the file (either updates it or just overwrites).
     """
     printv('Saving data...', 1, verbose)
-    from cPickle import dump, load
+
+    from json import dump, load
+    from bunch import Bunch as struct
     
     filename = projectpath(filename)
 
     try: # First try loading the file and updating it
         rfid = open(filename,'rb') # "Read file ID" -- This will fail if the file doesn't exist
-        origdata = load(rfid)
+        origdata = struct.fromDict(load(rfid))
         if update: origdata.update(data)
         else: origdata = data
         wfid = open(filename,'wb')
-        dump(data, wfid)
+        dump(data.toDict(), wfid)
         printv('..updated file', 3, verbose)
     except: # If that fails, save a new file
         wfid = open(filename,'wb')
-        dump(data, wfid)
+        dump(data.toDict(), wfid)
         printv('..created new file', 3, verbose)
     printv(' ...done saving data at %s.' % filename, 2, verbose)
     return filename
@@ -73,12 +74,13 @@ def loaddata(filename, verbose=2):
     """
     Loads the file and unpickles data from it.
     """
-    from cPickle import load
+    from json import load
+    from bunch import Bunch as struct
     printv('Loading data...', 1, verbose)
     if not os.path.exists(filename):
         filename = projectpath(filename)
     rfid = open(filename,'rb')
-    data = load(rfid)
+    data = struct.fromDict(load(rfid))
 
     printv('...done loading data.', 2, verbose)
     return data

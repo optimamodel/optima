@@ -11,7 +11,7 @@ import numpy as np
 import math
 from matplotlib.pylab import zeros, figure, plot, hold, xlabel, ylabel, title
 from truncnorm import truncnorm
-from bunch import Bunch as struct
+from bunch import Bunch as struct, float_array
 
 ###############################################################################
 ## Make cost coverage curve
@@ -48,12 +48,12 @@ def makecc(D, progname, ccparams, makeplot = 1):
 
         ## Get around situations where there's an assumption for coverage but not for total cost, or vice versa
         if (len(coverage) == 1 and len(totalcost) > 1): 
-            totalcost = np.asarray(totalcost)
+            totalcost = float_array(totalcost) # to handle None as NAN
             totalcost = totalcost[~np.isnan(totalcost)]
             totalcost = totalcost[-1]
             plot(totalcost, coverage, 'ro')
         elif (len(totalcost) == 1 and len(coverage) > 1):
-            coverage = np.asarray(coverage)
+            coverage = float_array(coverage)
             coverage = coverage[~np.isnan(coverage)]
             coverage = coverage[-1]
             plot(totalcost, coverage, 'ro')
@@ -162,12 +162,12 @@ def makeco(D, progname, effectname, coparams=[], makeplot = 1):
             
             ## Get around situations where there's an assumption for coverage but not for behaviour, or vice versa
             if (len(coverage) == 1 and len(outcome) > 1): 
-                outcome = np.asarray(outcome)
+                outcome = float_array(outcome)
                 outcome = outcome[~np.isnan(outcome)]
                 outcome = outcome[-1]
                 plot(coverage, outcome, 'ro')
             elif (len(outcome) == 1 and len(coverage) > 1):
-                coverage = np.asarray(coverage)
+                coverage = float_array(coverage)
                 coverage = coverage[~np.isnan(coverage)]
                 coverage = coverage[-1]
                 plot(coverage, outcome, 'ro')
@@ -280,12 +280,12 @@ def makecco(D, progname = 'MSM', ccparams = default_ccparams, coparams=default_c
 
                 ## Get around situations where there's an assumption for coverage but not for behaviour, or vice versa
                 if (len(totalcost) == 1 and len(outcome) > 1): 
-                    outcome = np.asarray(outcome)
+                    outcome = float_array(outcome)
                     outcome = outcome[~np.isnan(outcome)]
                     outcome = outcome[-1]
                     plot(totalcost, outcome, 'ro')
                 elif (len(outcome) == 1 and len(totalcost) > 1):
-                    totalcost = np.asarray(totalcost)
+                    totalcost = float_array(totalcost)
                     totalcost = totalcost[~np.isnan(totalcost)]
                     totalcost = totalcost[-1]
                     plot(totalcost, outcome, 'ro')
