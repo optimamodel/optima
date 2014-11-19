@@ -23,6 +23,51 @@ Installation & Configuration
 	export source setup_env.sh
 
 
+Architecture
+------------
+
+The master thread queues operations to a single request queue. Example of this can be found in `server/src/parallel.py`
+
+	# Imports
+	import boto.sqs
+	from boto.sqs.message import Message
+
+	# Connect to AWS region.
+	conn = boto.sqs.connect_to_region( os.environ['AWS_DEFAULT_REGION'] )
+    
+	# Get the optima queue. We will error out if no queue is found. This is what is desired.
+	optima_queue = conn.get_all_queues( os.environ['AWS_WORKER_QUEUE_PREFIX'] )
+	optima_queue = optima_queue[0]
+
+    # A new queue to get response from all slave workers. Needs to be unique across all api calls
+    response_queue_id = id_generator()
+    q=conn.create_queue(response_queue_id)
+
+    # Prepate a new message
+    m = Message()
+    m.set_body( json.dumps({'action': 'addition', 'iteration': i, 'parameter': someparameter, 'responseq': response_queue_id } ) )
+
+    # Write to the queue
+    optima_queue.write( m )
+
+We will need to capture responses from all workers:
+
+    result = []
+    for i in range( nprocesses ):
+        # We expect the process to complete in 3 minutes or less
+        rs = q.get_messages(num_messages=1, wait_time_seconds=20)
+        
+        if ( len(rs) > 0 ):
+            m = rs[0]
+            resp = json.loads( m.get_body() )
+            q.delete_message(m)
+        
+            result.append(resp['output'])
+   
+    # We are done, delete response q
+    q.delete()   
+
+
 Create an EB Application
 ------------------------
 
