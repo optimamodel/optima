@@ -278,11 +278,11 @@ def unbunchify(x):
     elif isinstance(x, (list, tuple)):
         return type(x)( unbunchify(v) for v in x )
     elif isinstance(x, np.ndarray):
-        return [unbunchify(v) for v in x.tolist()]
+        print("x is numpy array")
+        return x.tolist()
     elif isinstance(x, float) and np.isnan(x):
         return None
     else:
-        print ("x= %s, type(x) = %s" % (x, type(x)))
         return x
 
 
