@@ -30,25 +30,27 @@ conn = boto.sqs.connect_to_region( region )
 @application.route('/execute', methods=['POST'])
 def optima_compute():
     application.logger.info("Inside the request")
+    
+    # Assume we got nothing
+    js = None
+    
+    # Try to get JSON string
     try:
-        application.logger.info(request.data)
-        
         m = Message()
-        application.logger.info(m.decode( request.data ))
-        
-        m = m.decode( request.data )
-        application.logger.info(m.get_body())
+        js = m.decode( request.data )
+        application.logger.info('Received: %s' % js )
     except Exception as ex:
-        application.logger.error('Error processing message: %s' % request.json)
+        application.logger.error('Error getting JSON: %s' % request.data)
     
     response = None
-    if request.json is None:
+    if js is None:
         # Expect application/json request
-        response = Response("", status=415)
+        response = Response(request.data, status=415)
     else:
         try:
             
-            js = json.loads(request.json)
+            # Parse json
+            js = json.loads( js )
             
             application.logger.info('Begin json analysis')
             
