@@ -41,7 +41,7 @@
 </head>
 <body ng-controller="MainCtrl">
 
-<div class="actionbar" style="padding-left: 220px;">
+<div class="actionbar" ng-class="{ 'padding-left-l': userLogged() }">
     <div class="elastic __fluid">
         <div class="elastic_col __va-middle">
             <i class="header_logo logo"></i>
@@ -49,7 +49,7 @@
     </div>
 </div>
 
-<div class="actionbar" style="padding-left: 220px;">
+<div class="actionbar" ng-class="{ 'padding-left-l': userLogged() }" ng-cloak>
     <div class="elastic __fluid">
         <div class="elastic_col __va-middle">
             <a class="btn" ui-sref="about">About</a>
@@ -63,7 +63,7 @@
         <div class="elastic_col __va-middle">
             <a class="btn" href="http://optimamodel.com" target="_blank">Website</a>
         </div>
-        <div class="elastic_col __va-middle">
+        <div class="elastic_col __va-middle" ng-if="userLogged()">
             <button class="btn" ng-click="logout()">Log out</button>
         </div>
     </div>
@@ -109,7 +109,13 @@
 
 <!-- Scripts -->
 <script src="vendor/requirejs/require.js"></script>
-<script src="js/start.js"></script>
+<script>
+    require(['require', './js/config-require'], function (require, config) {
+        config.urlArgs = 'bust=v1.0.1';
+        window.require.config(config);
+        require(['./js/main.js']);
+    });
+</script>
 
 </body>
 </html>

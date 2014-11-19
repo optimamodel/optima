@@ -8,6 +8,9 @@
     with_items:
       - libfreetype6-dev
       - pkg-config
+      - libblas-dev
+      - liblapack-dev
+      - gfortran
 
   - name: API | Install python dependencies
     pip: requirements={{install_dir_api}}/requirements.txt state=present
