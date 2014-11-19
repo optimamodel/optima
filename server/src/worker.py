@@ -15,7 +15,10 @@ application.debug = True
 
 handler = RotatingFileHandler('optima-worker.log', maxBytes=10000, backupCount=1)
 handler.setLevel(logging.INFO)
+application.logger.handlers = []
 application.logger.addHandler(handler)
+
+application.logger.info("Worker setting up...")
 
 # Connect to AWS region.
 region = os.environ.get('AWS_DEFAULT_REGION')
@@ -83,6 +86,7 @@ def runprocess( req ):
     output = someparameter+i*2
     return output
 
+application.logger.info("Worker setup complete")
 
 if __name__ == '__main__':
     port = int(os.environ.get('AWS_WORKER_PORT'))
