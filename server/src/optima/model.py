@@ -234,6 +234,7 @@ def doCostCoverage():
     args['D'] = load_model(project_name)
     args = pick_params(["progname", "ccparams", "coparams"], data, args)
     try:
+        args['ccparams'] = [0.9, 0.2, 800000.0, 7e6]
         plotdata, plotdata_cc, plotdata_co = makecco(**args)
 #        D = runsimulation(**args) 
 #        D = epiresults(D)
