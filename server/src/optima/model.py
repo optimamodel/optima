@@ -17,7 +17,7 @@ from sim.runsimulation import runsimulation
 from sim.optimize import optimize
 from sim.epiresults import epiresults
 from sim.makeccocs import makecco
-from utils import loaddir, load_model, save_model, project_exists, pick_params
+from utils import loaddir, load_model, save_model, project_exists, pick_params, for_fe
 from flask.ext.login import login_required
 
 """ route prefix: /api/model """
@@ -234,6 +234,7 @@ def doCostCoverage():
     args['D'] = load_model(project_name)
     args = pick_params(["progname", "ccparams", "coparams"], data, args)
     try:
+        args['ccparams'] = [0.9, 0.2, 800000.0, 7e6]
         plotdata, plotdata_cc, plotdata_co = makecco(**args)
 #        D = runsimulation(**args) 
 #        D = epiresults(D)
@@ -241,5 +242,6 @@ def doCostCoverage():
     except Exception, err:
         var = traceback.format_exc()
         return jsonify({"status":"NOK", "exception":var})
-    return jsonify({"status":"OK", "plotdata": plotdata, "plotdata_cc": plotdata_cc, "plotdata_co": plotdata_co})
+    return jsonify({"status":"OK", "plotdata": for_fe(plotdata), \
+        "plotdata_cc": for_fe(plotdata_cc), "plotdata_co": for_fe(plotdata_co)})
 #    return jsonify(D_dict.get('O',{}))
