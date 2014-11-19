@@ -283,7 +283,7 @@ def unbunchify(x):
     elif isinstance(x, float) and isnan(x):
         return None
     else:
-        print ("x= %s, type(x) = %s" % (x, type(x)))
+#        print ("x= %s, type(x) = %s" % (x, type(x))) # CK: What the hell was that doing there!?
         return x
 
 
