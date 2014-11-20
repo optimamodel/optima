@@ -1,9 +1,8 @@
 #!/bin/env python
 # -*- coding: utf-8 -*-
 from api import app
-import unittest
 
-class OptimaTestCase(unittest.TestCase):
+class OptimaTestCase(object):
 
     def setUp(self):
         app.config['TESTING'] = True
@@ -13,6 +12,3 @@ class OptimaTestCase(unittest.TestCase):
 
     def tearDown(self):
         pass
-
-if __name__ == '__main__':
-    unittest.main()

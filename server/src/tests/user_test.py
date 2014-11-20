@@ -3,7 +3,7 @@
 from optima_test_base import OptimaTestCase
 import unittest
 
-class UserTestCase(OptimaTestCase):
+class UserTestCase(OptimaTestCase, unittest.TestCase):
 
     def setUp(self):
         super(UserTestCase, self).setUp()

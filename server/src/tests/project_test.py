@@ -4,7 +4,7 @@ from optima_test_base import OptimaTestCase
 import unittest
 import json
 
-class ProjectTestCase(OptimaTestCase):
+class ProjectTestCase(OptimaTestCase, unittest.TestCase):
 
     def setUp(self):
         super(ProjectTestCase, self).setUp()
