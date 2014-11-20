@@ -237,6 +237,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       // according to documentation it should have been working without this line, but no cigar
       // https://docs.angularjs.org/api/ng/directive/ngSubmit
+      document.getElementById('createForm').action = $scope.formAction;
       document.getElementById('createForm').submit();
 
       // update active project
