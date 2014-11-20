@@ -33,10 +33,9 @@ default_effectname = [['sex', 'condomcom'], [u'CSW'], [[0.7, 0.8], [0.92, 0.97]]
 #            ccparams(1) = the 'known' coverage level
 #            ccparams(2) = the 'known' funding requirements to achieve ccparams(2)
 #            ccparams(3) = desired upper x limit
-#    4. makeplot: boolean
 
 #    Output types:
-#    1. plotdata: dictionary
+#    1. plotdata
 
 ###############################################################################
 def makecc(datain = default_datain, progname = default_progname, ccparams = default_ccparams, makeplot = default_makeplot):
@@ -122,8 +121,8 @@ def makecc(datain = default_datain, progname = default_progname, ccparams = defa
 #        coparams(3) = the upper bound for the outcome when coverage = 1
 
 #    Output types:
-#    1. plotdata: dictionary
-#    2. D: bunch
+#    1. plotdata
+#    2. D
 
 ###############################################################################
 def makeco(datain = default_datain, progname = default_progname, effectname = default_effectname, coparams=default_coparams, makeplot = default_makeplot):
@@ -260,9 +259,9 @@ def makeco(datain = default_datain, progname = default_progname, effectname = de
 #        coparams(2) = the lower bound for the outcome when coverage = 1
 #        coparams(3) = the upper bound for the outcome when coverage = 1
 
-#    Output types:
-#    1. plotdata: dictionary
-#    2. D: bunch
+#    Output 
+#    1. plotdata
+#    2. D
 ###############################################################################
 def makecco(datain = default_datain, progname = default_progname, effectname = default_effectname, ccparams=default_ccparams, coparams=default_coparams, makeplot=default_makeplot):
 
