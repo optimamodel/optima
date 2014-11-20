@@ -56,13 +56,15 @@ def pick_params(params, data, args = {}):
    makes an object frontend-friendly :)
 """
 def for_fe(item):
+  if isinstance(item, list):
+    return [for_fe(v) for v in item]
   if isinstance(item, np.ndarray):
-    print ("item is nparray")
-    return item.tolist()
+    return [for_fe(v) for v in item.tolist()]
   elif isinstance(item, struct):
-    print("item is bunch")
     return item.toDict()
   elif isinstance(item, dict):
     return dict( (k, for_fe(v)) for k,v in item.iteritems() )
+  elif isinstance(item, float) and np.isnan(item):
+    return None
   else:
     return item
