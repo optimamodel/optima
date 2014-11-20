@@ -68,19 +68,23 @@ def savedata(filename, data, update=True, verbose=2, path=None):
     return filename
 
 
-
-
 def loaddata(filename, verbose=2):
     """
-    Loads the file and unpickles data from it.
+    Loads the file and imports json data from it.
+    If the file cannot be load as json, tries loading it with cPickle.
     """
-    from json import load
     from bunch import Bunch as struct
     printv('Loading data...', 1, verbose)
     if not os.path.exists(filename):
         filename = projectpath(filename)
-    rfid = open(filename,'rb')
-    data = struct.fromDict(load(rfid))
+    try:
+        import json
+        rfid = open(filename,'rb')
+        data = struct.fromDict(json.load(rfid))
+    except: #try the old approach
+        import cPickle
+        rfid = open(filename, 'rb')
+        data = cPickle.load(rfid)
 
     printv('...done loading data.', 2, verbose)
     return data
