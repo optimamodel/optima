@@ -5,6 +5,10 @@ import unittest
 import json
 
 class ProjectTestCase(OptimaTestCase, unittest.TestCase):
+    """
+    Test class for the project blueprint covering all /api/project endpoints.
+
+    """
 
     def setUp(self):
         super(ProjectTestCase, self).setUp()
