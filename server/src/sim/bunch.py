@@ -34,11 +34,13 @@ VERSION = tuple(map(int, __version__.split('.')))
 
 __all__ = ('Bunch', 'bunchify','unbunchify','to_array')
 
+from matplotlib.pylab import asarray
+
 def float_array(data):
-    return np.asarray(data, np.float)
+    return asarray(data, float)
 
 def int_array(data):
-    return np.asarray(data, np.int)
+    return asarray(data, int)
 
 class Bunch(dict):
     """ A dictionary that provides attribute-style access.
