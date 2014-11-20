@@ -3,7 +3,7 @@ define(['./module'], function (module) {
 
   return module.controller('LoginController', function ($scope, $window, User) {
 
-    $scope.error = false;
+    $scope.error = '';
 
     $scope.login = function () {
       $scope.$broadcast('form-input-check-validity');
@@ -12,7 +12,7 @@ define(['./module'], function (module) {
         return;
       }
 
-      $scope.error = false;
+      $scope.error = '';
 
       User.login({
         email: $scope.email,
@@ -23,8 +23,12 @@ define(['./module'], function (module) {
           $window.location = '/';
         },
         // error
-        function () {
-          $scope.error = true;
+        function (error) {
+          if (error.status === 401) {
+            $scope.error = 'Wrong email or password. Please check credentials and try again';
+          } else {
+            $scope.error = 'Server feels bad. Please try again in a bit';
+          }
         }
       );
     };
