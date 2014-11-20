@@ -82,7 +82,7 @@ The environment variable `AWS_WORKER_QUEUE_PREFIX` needs to be set to the name o
 
 If the API server is now started (using `./run.sh` in `server` directory), it will push worker tasks to the new queue.
 
-The `worker/develop.sh` is a development tool that pulls messages from queue defined in `AWS_WORKER_QUEUE_PREFIX` and posts them in an HTTP post to the worker thread. This tool needs to be run during development.
+The `worker/eb_sim.sh` is a Elastic Beanstalk simulation tool that pulls messages from queue defined in `AWS_WORKER_QUEUE_PREFIX` and posts them in an HTTP post to the worker thread. This behavior is similar to how Elatic Beanstalk behaves on AWS. This tool needs to be run during development.
 
 Finally, `python server/src/worker.py` needs to be started to receive post messages.
 

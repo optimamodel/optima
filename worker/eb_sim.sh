@@ -15,4 +15,4 @@ then
   pip install -r ./requirements.txt
 fi
 
-python develop.py loop
+python ebsim.py loop
