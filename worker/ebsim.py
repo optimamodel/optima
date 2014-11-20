@@ -38,7 +38,7 @@ def loop():
                 print m.get_body()
                 
                 # Make a post request
-                r = requests.post('http://localhost:5001/', json=m.get_body())
+                r = requests.post('http://localhost:%s/' % os.environ['AWS_WORKER_PORT'], data=m.encode(m.get_body()))
                 
                 # Done processing, delete message
                 optima_queue.delete_message(m)
