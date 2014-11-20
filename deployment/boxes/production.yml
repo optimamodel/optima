@@ -5,6 +5,7 @@
     # prudentia_dir -> is passed in the cmd line
     - root_dir: ..
     - version: develop
+    - db_url: postgresql://optima:optima@localhost:5432/optima
 
   vars_files:
     - "{{prudentia_dir}}/vars/global.yml"
