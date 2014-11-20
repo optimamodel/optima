@@ -4,6 +4,10 @@ from optima_test_base import OptimaTestCase
 import unittest
 
 class UserTestCase(OptimaTestCase, unittest.TestCase):
+    """
+    Test class for the user blueprint covering all /api/user endpoints.
+
+    """
 
     def setUp(self):
         super(UserTestCase, self).setUp()

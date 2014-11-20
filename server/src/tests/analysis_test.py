@@ -5,6 +5,10 @@ import unittest
 import json
 
 class AnalysisTestCase(OptimaTestCase, unittest.TestCase):
+    """
+    Test class for the analysis blueprint covering all /api/analysis endpoints.
+
+    """
 
     def setUp(self):
         super(AnalysisTestCase, self).setUp()
