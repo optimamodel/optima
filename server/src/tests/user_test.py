@@ -2,9 +2,12 @@
 # -*- coding: utf-8 -*-
 from optima_test_base import OptimaTestCase
 import unittest
-import json
 
-class UserTestCase(OptimaTestCase):
+class UserTestCase(OptimaTestCase, unittest.TestCase):
+    """
+    Test class for the user blueprint covering all /api/user endpoints.
+
+    """
 
     def setUp(self):
         super(UserTestCase, self).setUp()
