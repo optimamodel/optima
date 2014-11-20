@@ -4,13 +4,13 @@ from optima_test_base import OptimaTestCase
 import unittest
 import json
 
-class AnalysisTestCase(OptimaTestCase):
+class AnalysisTestCase(OptimaTestCase, unittest.TestCase):
 
     def setUp(self):
-        super(ProjectTestCase, self).setUp()
+        super(AnalysisTestCase, self).setUp()
 
     def tearDown(self):
-        super(ProjectTestCase, self).tearDown()
+        super(AnalysisTestCase, self).tearDown()
 
     def test_optimisation_start_response_without_a_project(self):
         response = self.test_client.get('/api/analysis/optimisation/start', follow_redirects=True)
