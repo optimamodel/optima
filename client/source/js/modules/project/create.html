@@ -1,6 +1,6 @@
 <div class="rich">
 
-  <form id="createForm" name="CreateProjectForm" action="{{ formAction }}" method="post" ng-submit="prepareCreateForm()" novalidate="novalidate">
+  <form id="createForm" name="CreateProjectForm" action="" method="post" ng-submit="prepareCreateForm()" novalidate="novalidate">
 
     <div class="section grid">
       <div class="6">
@@ -120,6 +120,6 @@
       <button class="btn" type="submit" style="background: #008800;"><b>Create project &amp; Optima template</b></button>
     </div>
 
-    <input type="hidden" name="params" value="{{ formParams }}">
+    <input type="hidden" id="params" name="params" value="{{ formParams }}">
   </form>
 </div>

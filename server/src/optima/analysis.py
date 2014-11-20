@@ -40,7 +40,13 @@ Starts optimisation for the current model. Gives back line plot and two pie plot
 def runOptimisation():
     # should call method in optimize.py but it's not implemented yet. for now just returns back the file
     reply = {'status':'NOK'}
-    project_name = session.get('project_name', '')
+    
+    # get project name
+    try:
+        project_name = request.headers['project']
+    except:
+        project_name = ''
+
     if project_name == '':
         reply['reason'] = 'No project is open'
         return jsonify(reply)

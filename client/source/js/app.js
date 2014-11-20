@@ -1,5 +1,6 @@
 define([
   'angular',
+  'angular-loading-bar',
   'angular-nvd3',
   'ng-file-upload',
   'ui.bootstrap',
@@ -11,6 +12,7 @@ define([
   './modules/analysis/index',
   './modules/common/active-project-service',
   './modules/common/form-input-validate-directive',
+  './modules/common/local-storage-service',
   './modules/common/save-graph-as-directive',
   './modules/d3-charts/index',
   './modules/graphs/index',
@@ -29,6 +31,7 @@ define([
 
   return angular.module('app', [
     'angularFileUpload',
+    'angular-loading-bar',
     'app.about',
     'app.contact',
     'app.auth',
@@ -41,6 +44,7 @@ define([
     'app.help',
     'app.home',
     'app.import-export',
+    'app.local-storage',
     'app.model',
     'app.optimization',
     'app.playground',
@@ -87,10 +91,14 @@ define([
       $urlRouterProvider.otherwise('/');
     })
 
-    .run(function ($rootScope, $state, UserManager) {
+    .run(function ($rootScope, $state, UserManager, localStorage, activeProject) {
       if (window.user) {
         UserManager.set(window.user);
         delete window.user;
+      }
+
+      if (localStorage.project) {
+        activeProject.setValue(localStorage.project);
       }
 
       var isStatePublic = function (stateName) {
