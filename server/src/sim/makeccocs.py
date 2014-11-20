@@ -427,4 +427,4 @@ def plotallcurves(datain = default_datain, progname=default_progname, ccparams=d
                 
                 
 ## Example of use
-plotdata_cco, plotdata_co, plotdata_cc = plotallcurves()
+#plotdata_cco, plotdata_co, plotdata_cc = plotallcurves()
