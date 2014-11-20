@@ -12,6 +12,11 @@ Installation
     # Run the server
     ./run.sh
 
+Database migrations
+___________________
+
+  See db/README
+
 Tests
 ------------
 
