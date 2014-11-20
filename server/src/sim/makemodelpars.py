@@ -16,7 +16,6 @@ def makemodelpars(P, options, verbose=2):
     npts = len(tvec) # Number of time points # TODO probably shouldn't be repeated from model.m
     
     
-    
     def dpar2mpar(datapar):
         """ Take data parameters and turn them into model parameters """
         npops = len(datapar.p)
