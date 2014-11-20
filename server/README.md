@@ -19,6 +19,10 @@ Run the testsuite from your server directory:
 
     ./test.sh
 
+In order to run a single test file and activate logging you can use:
+
+    nosetests --nocapture src/tests/analysis_test.py
+
 User API
 ------------
 
@@ -27,57 +31,57 @@ These APIs allow front-end to get current user or login a user.
 * `/api/user/current`
 
   Returns `401 Unauthorized` if user is not logged in. Otherwise this JSON:
-  
+
   `{
 	email: "iwein@startersquad.com"
-	name: "Iwein Fuld" 
+	name: "Iwein Fuld"
    }`
 
 * `/api/user/create`
 
   Following data is posted when creating a new user:
-  
+
   `{
 	email: "iwein@startersquad.com"
 	name: "Iwein Fuld"
-	password: 'whatever' 
+	password: 'whatever'
    }`
-   
+
   On success, user is sent back this JSON:
-  
+
   `{
      "email": "iwein@startersquad.com",
      "name": "Iwein Fuld"
    }`
-   
+
    On name already used, user is sent back this JSON:
-   
+
    `{
  	 status: "Username in use"
     }`
-  
+
 * `/api/user/login`
 
   Following data is posted when doing login:
-  
+
   `
 	email: "iwein@startersquad.com"
 	password: "whatever"
    `
-  
+
   On successful login, user is sent back this JSON:
-  
+
   `{
 	email: "iwein@startersquad.com"
-	name: "Iwein Fuld" 
+	name: "Iwein Fuld"
    }`
-  
+
   On login error, a 401 Unauthorized response is returned.
 
 * `/api/user/logout`
 
   User is logged out. Following JSON is returned:
-  
+
   `{
 	status: "OK"
    }`
