@@ -1,15 +1,14 @@
 """
 Creates and updates cost-coverage curves and coverage-outcome curves
     
-Version: 2014nov13
+Version: 2014nov19
 """
 ###############################################################################
 ## Set up
 ###############################################################################
 
-import numpy as np
 import math
-from matplotlib.pylab import zeros, figure, plot, hold, xlabel, ylabel, title
+from matplotlib.pylab import linspace, exp, isnan, asarray, zeros, figure, plot, hold, xlabel, ylabel, title
 from truncnorm import truncnorm
 from bunch import Bunch as struct, float_array
 
@@ -37,8 +36,8 @@ def makecc(D, progname, ccparams, makeplot = 1):
     xupperlim = ccparams[3] 
 
     ## Create lines to plot    
-    xvalscc = np.linspace(0,xupperlim,1000) # take 1000 points between 0 and user-specified max
-    yvalscc = 2*saturation / (1 + np.exp(-growthrate*xvalscc)) - saturation # calculate logistic function
+    xvalscc = linspace(0,xupperlim,1000) # take 1000 points between 0 and user-specified max
+    yvalscc = 2*saturation / (1 + exp(-growthrate*xvalscc)) - saturation # calculate logistic function
 
     # Plot (to check it's working; delete once plotting enabled in GUI)
     if makeplot:
@@ -48,18 +47,18 @@ def makecc(D, progname, ccparams, makeplot = 1):
 
         ## Get around situations where there's an assumption for coverage but not for total cost, or vice versa
         if (len(coverage) == 1 and len(totalcost) > 1): 
-            totalcost = float_array(totalcost) # to handle None as NAN
-            totalcost = totalcost[~np.isnan(totalcost)]
+            totalcost = float_array(totalcost)
+            totalcost = totalcost[~isnan(totalcost)]
             totalcost = totalcost[-1]
             plot(totalcost, coverage, 'ro')
         elif (len(totalcost) == 1 and len(coverage) > 1):
             coverage = float_array(coverage)
-            coverage = coverage[~np.isnan(coverage)]
+            coverage = coverage[~isnan(coverage)]
             coverage = coverage[-1]
             plot(totalcost, coverage, 'ro')
         else:
             for i in range(len(coverage)):
-                if (~math.isnan(coverage[i]) and ~math.isnan(totalcost[i])):
+                if (~isnan(coverage[i]) and ~isnan(totalcost[i])):
                     plot(totalcost[i], coverage[i], 'ro')
         title(progname)
         xlabel('USD')
@@ -133,10 +132,10 @@ def makeco(D, progname, effectname, coparams=[], makeplot = 1):
                 fullsample[i] = truncnorm((0 - muf) / stdevf, (zerosample[i] - muf) / stdevf, loc=muf, scale=stdevf, size = 1) # draw possible values for behvaiour at maximal coverage
         
         ## General set of coverage-outcome relationships
-        xvalsco = np.linspace(0,1,1000) # take 1000 points along the unit interval
+        xvalsco = linspace(0,1,1000) # take 1000 points along the unit interval
         yvalsco = zeros((1000,len(fullsample))) 
         for i in range(len(fullsample)):
-            yvalsco[:,i] = np.linspace(zerosample[i],fullsample[i],1000) # Generate 1000 straight lines
+            yvalsco[:,i] = linspace(zerosample[i],fullsample[i],1000) # Generate 1000 straight lines
             
         ## Upper and lower bounds of line set
         ymin, ymax = zeros(1000), zeros(1000)
@@ -156,19 +155,19 @@ def makeco(D, progname, effectname, coparams=[], makeplot = 1):
             figure()
             hold(True)
             plot(xvalsco, yvalsco, color = '0.75')
-            plot(xvalsco, np.linspace(muz,muf,1000), color = 'b', lw = 2)
+            plot(xvalsco, linspace(muz,muf,1000), color = 'b', lw = 2)
             plot(xvalsco, ymax, 'k--', lw = 2)
             plot(xvalsco, ymin, 'k--', lw = 2)
             
             ## Get around situations where there's an assumption for coverage but not for behaviour, or vice versa
             if (len(coverage) == 1 and len(outcome) > 1): 
                 outcome = float_array(outcome)
-                outcome = outcome[~np.isnan(outcome)]
+                outcome = outcome[~isnan(outcome)]
                 outcome = outcome[-1]
                 plot(coverage, outcome, 'ro')
             elif (len(outcome) == 1 and len(coverage) > 1):
                 coverage = float_array(coverage)
-                coverage = coverage[~np.isnan(coverage)]
+                coverage = coverage[~isnan(coverage)]
                 coverage = coverage[-1]
                 plot(coverage, outcome, 'ro')
             else:
@@ -183,7 +182,7 @@ def makeco(D, progname, effectname, coparams=[], makeplot = 1):
     plotdata = struct()
     plotdata.xlinedata = xvalsco # X data for all line plots
     plotdata.ylinedata1 = yvalsco # Y data for first line plot
-    plotdata.ylinedata2 = np.linspace(muz,muf,1000) # Y data for second line plot
+    plotdata.ylinedata2 = linspace(muz,muf,1000) # Y data for second line plot
     plotdata.ylinedata3 = ymax  # Y data for third line plot
     plotdata.ylinedata4 = ymin  # Y data for fourth line plot
     plotdata.xscatterdata = coverage
@@ -253,9 +252,9 @@ def makecco(D, progname = 'MSM', ccparams = default_ccparams, coparams=default_c
             yvalscco = zeros((1000, len(fullsample)))
         
             for i in range(len(fullsample)):
-                yvalscco[:,i] = (fullsample[i]-zerosample[i])*(2*saturation / (1 + np.exp(-growthrate*xvalscco)) - saturation) + zerosample[i] # Generate 1000 cost-outcome curves
+                yvalscco[:,i] = (fullsample[i]-zerosample[i])*(2*saturation / (1 + exp(-growthrate*xvalscco)) - saturation) + zerosample[i] # Generate 1000 cost-outcome curves
         
-            mediancco = (muf-muz)*(2*saturation / (1 + np.exp(-growthrate*xvalscco)) - saturation) + muz # Generate median cost-outcome curve
+            mediancco = (muf-muz)*(2*saturation / (1 + exp(-growthrate*xvalscco)) - saturation) + muz # Generate median cost-outcome curve
             
             ## Upper and lower bounds of line set
             ymin, ymax = zeros(1000), zeros(1000)
@@ -281,12 +280,12 @@ def makecco(D, progname = 'MSM', ccparams = default_ccparams, coparams=default_c
                 ## Get around situations where there's an assumption for coverage but not for behaviour, or vice versa
                 if (len(totalcost) == 1 and len(outcome) > 1): 
                     outcome = float_array(outcome)
-                    outcome = outcome[~np.isnan(outcome)]
+                    outcome = outcome[~isnan(outcome)]
                     outcome = outcome[-1]
                     plot(totalcost, outcome, 'ro')
                 elif (len(outcome) == 1 and len(totalcost) > 1):
                     totalcost = float_array(totalcost)
-                    totalcost = totalcost[~np.isnan(totalcost)]
+                    totalcost = totalcost[~isnan(totalcost)]
                     totalcost = totalcost[-1]
                     plot(totalcost, outcome, 'ro')
                 else:

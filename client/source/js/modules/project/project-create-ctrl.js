@@ -1,7 +1,7 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
-  module.controller('ProjectCreateController', function ($scope, $modal) {
+  module.controller('ProjectCreateController', function ($scope, $state, $modal, activeProject) {
 
     $scope.projectParams = {
       name: ''
@@ -237,7 +237,14 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       // according to documentation it should have been working without this line, but no cigar
       // https://docs.angularjs.org/api/ng/directive/ngSubmit
+      document.getElementById('createForm').action = $scope.formAction;
+      document.getElementById('params').value = $scope.formParams;
       document.getElementById('createForm').submit();
+
+      // update active project
+      activeProject.setValue($scope.projectParams.name);
+
+      $state.go('home');
 
       return true;
     };

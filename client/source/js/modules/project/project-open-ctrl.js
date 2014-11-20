@@ -1,7 +1,7 @@
 define(['./module', 'underscore'], function (module, _) {
   'use strict';
 
-  module.controller('ProjectOpenController', function ($scope, $http, projects) {
+  module.controller('ProjectOpenController', function ($scope, $http, activeProject, localStorage, projects) {
     $scope.projects = _(projects.projects).map(function (fileName) {
       return fileName.split('.')[0];
     });
@@ -11,9 +11,10 @@ define(['./module', 'underscore'], function (module, _) {
         .success(function (response) {
           if (response && response.status === 'NOK') {
             alert(response.reason);
+            return;
           }
-          location.href = '/';
-        })
+          activeProject.setValue(name);
+        });
     }
   });
 
