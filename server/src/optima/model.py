@@ -49,8 +49,6 @@ def doAutoCalibration():
         reply['reason'] = 'File for project %s does not exist' % project_name
         return jsonify(reply)
 
-    file_name = helpers.safe_join(PROJECTDIR, project_name+'.prj')
-    print("project file_name: %s" % file_name)
     fits = autofit(file_name, data)
     # autofit is not implemented yet, so just run the simulation #TODO #FIXME
     try:
@@ -83,8 +81,6 @@ def doManualCalibration():
         return jsonify({'status':'NOK', 'reason':'no project is open'})
     if not project_exists(project_name):
         reply['reason'] = 'File for project %s does not exist' % project_name
-    file_name = helpers.safe_join(PROJECTDIR, project_name+'.prj')
-    print("project file_name: %s" % file_name)
 
     #expects json: {"startyear":year,"endyear":year} and gets project_name from session
     args = {}
@@ -175,7 +171,7 @@ def setModelParameters(group):
         D_dict = unbunchify(D)
         D_dict[group] = data
         D_mod = struct(D_dict)
-        save_model(loaddir(model), project_name, D_mod)
+        save_model(project_name, D_mod)
     except Exception, err:
         var = traceback.format_exc()
         return jsonify({"status":"NOK", "exception":var})        

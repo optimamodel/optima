@@ -14,6 +14,9 @@ DATADIR="/tmp/uploads"
 TEMPLATEDIR = "/tmp/templates"
 PROJECTDIR = "/tmp/projects"
 
+EXT_JSON = ".json"
+EXT_PRJ = ".prj"
+
 
 def fullpath(filename, datadir=DATADIR):
     """

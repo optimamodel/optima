@@ -6,9 +6,9 @@ from generators.line import generatedata
 import json
 import traceback
 import sys
-from sim.dataio import loaddata, savedata, DATADIR
+from sim.dataio import loaddata, savedata, DATADIR, PROJECTDIR
 from sim.optimize import optimize
-from utils import loaddir
+from utils import loaddir, load_model, project_exists
 from flask.ext.login import login_required
 
 """ route prefix: /api/analysis """
@@ -48,13 +48,19 @@ def runOptimisation():
     if not project_exists(project_name):
         reply['reason'] = 'File for project %s does not exist' % project_name
         return jsonify(reply)
-    file_name = helpers.safe_join(PROJECTDIR, project_name+'.prj')
-    print("project file_name: %s" % file_name)
     json_file = os.path.join(analysis.config['UPLOAD_FOLDER'], "optimisation.json")
     if (not os.path.exists(json_file)):
         reply["reason"] = "Define the optimisation objectives first"
         return jsonify(reply)
-    (lineplot, dataplot) = optimize(project_name)
-    (lineplot, dataplot) = (unbunchify(lineplot), unbunchify(dataplot))
-    return json.dumps({"lineplot":lineplot, "dataplot":dataplot})
+    try:
+        print("about to load model for project %s ..." % project_name)
+        D = load_model(project_name)
+        (lineplot, dataplot) = optimize(D)
+        (lineplot, dataplot) = (unbunchify(lineplot), unbunchify(dataplot))
+        return json.dumps({"lineplot":lineplot, "dataplot":dataplot})
+    except Exception, err:
+        var = traceback.format_exc()
+        return jsonify({"status":"NOK", "exception":var})
+    return jsonify(D_dict.get('O',{}))
+
 
