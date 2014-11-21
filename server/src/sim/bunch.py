@@ -32,8 +32,15 @@ Modified (slightly) by Cliff Kerr on 2014sep24
 __version__ = '1.0.1'
 VERSION = tuple(map(int, __version__.split('.')))
 
-__all__ = ('Bunch', 'bunchify','unbunchify',)
+__all__ = ('Bunch', 'bunchify','unbunchify','to_array')
 
+from matplotlib.pylab import asarray
+
+def float_array(data):
+    return asarray(data, float)
+
+def int_array(data):
+    return asarray(data, int)
 
 class Bunch(dict):
     """ A dictionary that provides attribute-style access.
