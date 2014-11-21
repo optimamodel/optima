@@ -14,6 +14,8 @@ DATADIR="/tmp/uploads"
 TEMPLATEDIR = "/tmp/templates"
 PROJECTDIR = "/tmp/projects"
 
+EXT_JSON = ".json"
+EXT_PRJ = ".prj"
 
 
 def fullpath(filename, datadir=DATADIR):
@@ -47,38 +49,45 @@ def savedata(filename, data, update=True, verbose=2, path=None):
     Saves the pickled data into the file (either updates it or just overwrites).
     """
     printv('Saving data...', 1, verbose)
-    from cPickle import dump, load
+
+    from json import dump, load
+    from bunch import Bunch as struct
     
     filename = projectpath(filename)
 
     try: # First try loading the file and updating it
         rfid = open(filename,'rb') # "Read file ID" -- This will fail if the file doesn't exist
-        origdata = load(rfid)
+        origdata = struct.fromDict(load(rfid))
         if update: origdata.update(data)
         else: origdata = data
         wfid = open(filename,'wb')
-        dump(data, wfid)
+        dump(data.toDict(), wfid)
         printv('..updated file', 3, verbose)
     except: # If that fails, save a new file
         wfid = open(filename,'wb')
-        dump(data, wfid)
+        dump(data.toDict(), wfid)
         printv('..created new file', 3, verbose)
     printv(' ...done saving data at %s.' % filename, 2, verbose)
     return filename
 
 
-
-
 def loaddata(filename, verbose=2):
     """
-    Loads the file and unpickles data from it.
+    Loads the file and imports json data from it.
+    If the file cannot be load as json, tries loading it with cPickle.
     """
-    from cPickle import load
+    from bunch import Bunch as struct
     printv('Loading data...', 1, verbose)
     if not os.path.exists(filename):
         filename = projectpath(filename)
-    rfid = open(filename,'rb')
-    data = load(rfid)
+    try:
+        import json
+        rfid = open(filename,'rb')
+        data = struct.fromDict(json.load(rfid))
+    except: #try the old approach
+        import cPickle
+        rfid = open(filename, 'rb')
+        data = cPickle.load(rfid)
 
     printv('...done loading data.', 2, verbose)
     return data

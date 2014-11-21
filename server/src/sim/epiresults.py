@@ -17,9 +17,10 @@ def epiresults(D, verbose=2):
     ##########################################################################
     
     from matplotlib.pylab import zeros, nan, array, size
-    from bunch import Bunch as struct
+    from bunch import Bunch as struct, float_array, int_array
     from vectocolor import vectocolor
     from printv import printv
+    import numpy as np
     printv('Calculating epidemiology results...', 1, verbose)
     
     D.O = struct()
@@ -53,7 +54,7 @@ def epiresults(D, verbose=2):
                 D.O.prev.tot[t] = D.S.people[1:,:,t].sum() / D.S.people[:,:,t].sum()
             
             # Find prevalence data    
-            epidata = array(D.data.key.hivprev[0]) # TODO: include uncertainties            
+            epidata = np.asarray(D.data.key.hivprev[0]) # TODO: include uncertainties            
             D.O.prev.ydata = zeros((D.G.npops,ndatayears))
             D.O.prev.ylabel = 'Prevalence (%)'
 
@@ -110,9 +111,9 @@ def epiresults(D, verbose=2):
             for t in range(npts):
                 for p in range(D.G.npops):
                     for state in [D.G.undx, D.G.dx, D.G.fail]:
-                        D.O.daly.pops[p,t] += sum(D.S.people[array(state),p,t] * array(disutils))
+                        D.O.daly.pops[p,t] += sum(D.S.people[int_array(state),p,t] * float_array(disutils))
                     for state in [D.G.tx1, D.G.tx2]:
-                        D.O.daly.pops[p,t] += sum(D.S.people[array(state),p,t] * D.P.cost.disutil.tx)
+                        D.O.daly.pops[p,t] += sum(D.S.people[int_array(state),p,t] * D.P.cost.disutil.tx)
                 
                 D.O.daly.tot[t] = D.O.daly.pops[:,t].sum()
             
@@ -127,7 +128,7 @@ def epiresults(D, verbose=2):
         ## Finish processing data
         ##########################################################################
         if size(epidata[0])==1: # TODO: make this less shitty, easier way of checking what shape the data is I'm sure
-            D.O[epi].ydata[:] = array(epidata)
+            D.O[epi].ydata[:] = float_array(epidata)
         elif size(epidata)==D.G.npops:
             for p in range(D.G.npops):
                 thispopdata = epidata[p]
@@ -135,7 +136,7 @@ def epiresults(D, verbose=2):
                     thispopdata = nan+zeros(ndatayears) # If it's an assumption, just set with nans
                 elif len(thispopdata) != ndatayears:
                     raise Exception('Expect data length of 1 or %i, actually %i' % (ndatayears, len(thispopdata)))
-                D.O[epi].ydata[p,:] = array(thispopdata)
+                D.O[epi].ydata[p,:] = float_array(thispopdata)
         else:
             raise Exception("Can't figure out size of epidata; doesn't seem to be a vector or a matrix")
 

@@ -115,10 +115,6 @@ def createProject(project_name):
 
     print("new_project_template: %s" % new_project_template)
     (dirname, basename) = (upload_dir_user(TEMPLATEDIR), new_project_template)
-#    xlsname = project_name + '.xlsx'
-#    srcfile = helpers.safe_join(project.static_folder,'example.xlsx')
-#    dstfile =  helpers.safe_join(dirname, xlsname)
-#    shutil.copy(srcfile, dstfile)
     return helpers.send_from_directory(dirname, basename)
 
 """
