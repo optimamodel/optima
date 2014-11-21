@@ -13,6 +13,7 @@ from sim.makeproject import makeproject
 from sim.optimize import optimize
 from optima.data import data
 from utils import allowed_file, project_file_exists, delete_project_file, delete_spreadsheet
+from utils import check_project_name, load_model, save_model
 from flask.ext.login import login_required, current_user
 
 """ route prefix: /api/project """
@@ -44,7 +45,7 @@ def createProject(project_name):
 #    data = json.loads(request.args.get('params'))
 #    data = dict([(x,int(y)) for (x,y) in data.items()])
     print(data)
-    makeproject_args = {"projectname":project_name}
+    makeproject_args = {"projectname":project_name, "savetofile":False}
     name = project_name
     if data.get('datastart'):
         datastart  = makeproject_args['datastart'] = int(data['datastart'])
@@ -235,6 +236,7 @@ Precondition: model should exist.
 """
 @project.route('/update', methods=['POST'])
 @login_required
+@check_project_name
 def uploadExcel():
     reply = {'status':'NOK'}
     file = request.files['file']
@@ -259,16 +261,18 @@ def uploadExcel():
         file.save(server_filename)
 
     file_basename, file_extension = os.path.splitext(filename)
-    project_name = helpers.safe_join(upload_dir_user(PROJECTDIR), file_basename+'.prj')
+#    project_name = helpers.safe_join(upload_dir_user(PROJECTDIR), file_basename+'.prj')
+    project_name = request.project_name
     print("project name: %s" % project_name)
-    if not os.path.exists(project_name):
-        reply['reason'] = 'Project %s does not exist' % file_basename
-        return json.dumps(reply)
+#    if not os.path.exists(project_name):
+#        reply['reason'] = 'Project %s does not exist' % file_basename
+#        return json.dumps(reply)
 
     try:
-        data = loaddata(project_name)
+        D = load_model(project_name)
+        D = updatedata(D, savetofile = False)
 
-        D = updatedata(data, loaddir)
+        save_model(project_name, D)
     except Exception, err:
         var = traceback.format_exc()
         reply['exception'] = var
