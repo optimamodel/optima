@@ -39,8 +39,10 @@ class ProjectDb(db.Model):
     econ_dataend = db.Column(db.String(20))
     programs = db.Column(JSON)
     populations = db.Column(JSON)
+    model = db.Column(JSON)
 
-    def __init__(self, name, user_id, datastart, dataend, econ_datastart, econ_dataend, programs, populations):
+    def __init__(self, name, user_id, datastart, dataend, econ_datastart, \
+        econ_dataend, programs, populations, model = {}):
         self.name = name
         self.user_id = user_id
         self.datastart = datastart
@@ -49,3 +51,4 @@ class ProjectDb(db.Model):
         self.econ_dataend = econ_dataend
         self.programs = programs    
         self.populations = populations
+        self.model = model
