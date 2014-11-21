@@ -148,17 +148,9 @@ Returns the current project name.
 """
 @project.route('/name')
 @login_required
+@check_project_name
 def getProjectInfo():
-    
-    # get project name
-    try:
-        project_name = request.headers['project']
-    except:
-        project_name = ''
-
-    if project_name == '':
-        return jsonify({'status':'NOK','reason':'Project name is invalid'})
-    return jsonify({"project": project_name})
+    return jsonify({"project": request.project_name})
 
 """
 Returns the list of existing projects from db.
@@ -184,7 +176,7 @@ def getProjectList():
 """
 Deletes the given project (and eventually, corresponding excel files)
 """
-@project.route('/delete/<project_name>')
+@project.route('/delete/<project_name>', methods=['POST'])
 @login_required
 def deleteProject(project_name):
     print("deleteProject %s" % project_name)
