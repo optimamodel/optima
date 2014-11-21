@@ -25,6 +25,13 @@ def manualfit(D, F, startyear=2000, endyear=2015, dosave=False, verbose=2):
     options.endyear = endyear
     options.dt = 0.1
     options.tvec = arange(options.startyear, options.endyear, options.dt) # Time vector
+
+    # Convert data parameters to model parameters
+    # (I copied it so that this code won't throw)
+    print ("D: %s" % D)
+    if not 'M' in D:
+        from makemodelpars import makemodelpars
+        D.M = makemodelpars(D.P, options, verbose=verbose)
     
     printv('1. Running simulation...', 1, verbose)
     from model import model
@@ -45,5 +52,3 @@ def manualfit(D, F, startyear=2000, endyear=2015, dosave=False, verbose=2):
         printv('...done manual fitting.', 2, verbose)
     
     return D
-    #this is great, but at the end, frontend needs to get the graphs (no need to actually draw them in python on the server).
-    #the only thing that has to go to the frontend is the graph data, we'll take care of the rest.
