@@ -29,9 +29,8 @@ def manualfit(D, F, startyear=2000, endyear=2015, dosave=False, verbose=2):
     # Convert data parameters to model parameters
     # (I copied it so that this code won't throw)
     print ("D: %s" % D)
-    if not 'M' in D:
-        from makemodelpars import makemodelpars
-        D.M = makemodelpars(D.P, options, verbose=verbose)
+    from makemodelpars import makemodelpars
+    D.M = makemodelpars(D.P, options, verbose=verbose)
     
     printv('1. Running simulation...', 1, verbose)
     from model import model
