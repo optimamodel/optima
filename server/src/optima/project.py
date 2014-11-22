@@ -177,7 +177,7 @@ def getProjectList():
 """
 Deletes the given project (and eventually, corresponding excel files)
 """
-@project.route('/delete/<project_name>', methods=['POST'])
+@project.route('/delete/<project_name>', methods=['DELETE'])
 @login_required
 def deleteProject(project_name):
     print("deleteProject %s" % project_name)
