@@ -143,13 +143,16 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
                         data[name][thispar] = struct() # Initialize to empty list
                         data[name][thispar].short = [] # Store short population/program names, e.g. "FSW"
                         data[name][thispar].long = [] # Store long population/program names, e.g. "Female sex workers"
-                        data[name][thispar].male = [] # Store whether or not this population is male
-                        data[name][thispar].female = [] # Store whether or not this population is female
-                        data[name][thispar].hetero = [] # Store whether or not this population is heterosexual
-                        data[name][thispar].homo = [] # Store whether or not this population is homosexual 
-                        data[name][thispar].injects = [] # Store whether or not this population injects drugs
-                        data[name][thispar].sexworker = [] # Store whether or not this population is a sex worker
-                        data[name][thispar].client = [] # Store whether or not this population is a client of sex workers
+                        if thispar=='pops':
+                            data[name][thispar].male = [] # Store whether or not this population is male
+                            data[name][thispar].female = [] # Store whether or not this population is female
+                            data[name][thispar].hetero = [] # Store whether or not this population is heterosexual
+                            data[name][thispar].homo = [] # Store whether or not this population is homosexual 
+                            data[name][thispar].injects = [] # Store whether or not this population injects drugs
+                            data[name][thispar].sexworker = [] # Store whether or not this population is a sex worker
+                            data[name][thispar].client = [] # Store whether or not this population is a client of sex workers
+                        if thispar=='progs':
+                            data[name][thispar].saturating = [] # Store whether or not this program is saturating
 
                     elif groupname=='keydata' or groupname=='timedata' or groupname=='matrices': # It's basic data or a matrix: create an empty list
                         thispar = subparlist[parcount] # Get the name of this parameter, e.g. 'popsize'                    
@@ -172,16 +175,20 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
                         
                         # It's meta-data, split into pieces
                         if groupname=='metadata': 
-                            thesedata = sheetdata.row_values(row, start_colx=2, end_colx=11) # Data starts in 3rd column, finishes in 11th column
-                            data[name][thispar].short.append(thesedata[0])
-                            data[name][thispar].long.append(thesedata[1])
-                            data[name][thispar].male.append(thesedata[2])
-                            data[name][thispar].female.append(thesedata[3])
-                            data[name][thispar].hetero.append(thesedata[4])
-                            data[name][thispar].homo.append(thesedata[5])
-                            data[name][thispar].injects.append(thesedata[6])
-                            data[name][thispar].sexworker.append(thesedata[7])
-                            data[name][thispar].client.append(thesedata[8])
+                            thesedata = sheetdata.row_values(row, start_colx=2, end_colx=12) # Data starts in 3rd column, finishes in 11th column
+                            data[name][thispar].code.append(thesedata[0])
+                            data[name][thispar].short.append(thesedata[1])
+                            data[name][thispar].long.append(thesedata[2])
+                            if thispar=='pops':
+                                data[name][thispar].male.append(thesedata[3])
+                                data[name][thispar].female.append(thesedata[4])
+                                data[name][thispar].hetero.append(thesedata[5])
+                                data[name][thispar].homo.append(thesedata[6])
+                                data[name][thispar].injects.append(thesedata[7])
+                                data[name][thispar].sexworker.append(thesedata[8])
+                                data[name][thispar].client.append(thesedata[9])
+                            if thispar=='progs':
+                                data[name][thispar].saturating.append(thesedata[3])
                         
                         # It's key data, save both the values and uncertainties
                         if groupname=='keydata':
