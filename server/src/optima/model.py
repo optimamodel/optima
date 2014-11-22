@@ -56,17 +56,11 @@ def doAutoCalibration():
         D = load_model(project_name)
         D = runsimulation(**args) 
         D = epiresults(D)
-        D_dict = unbunchify(D)
+        D_dict = D.toDict()
     except Exception, err:
         var = traceback.format_exc()
         return jsonify({"status":"NOK", "exception":var})
     return jsonify(D_dict.get('O',{}))
-
-
-#    print("fits: %s" % fits)
-#    fits = [unbunchify(x) for x in fits]
-#    print("unbunchified fits: %s" % fits)
-#    return jsonify(fits[0])
 
 
 """ 
@@ -130,9 +124,8 @@ Returns the parameters of the given model in the given group.
 @check_project_name
 def getModelParameters(group):
     print("getModelParameters: %s" % group)
-    D = load_model(request.project_name)
-    result = D.toDict()
-    return jsonify(result.get(group,{}))
+    D_dict = load_model(request.project_name, as_bunch = False)
+    return jsonify(D_dict.get(group,{}))
 
 
 """
@@ -143,9 +136,8 @@ Returns the parameters of the given model in the given group / subgroup/ project
 @check_project_name
 def getModelSubParameters(group, subgroup):
     print("getModelSubParameters: %s %s" % (group, subgroup))
-    D = load_model(request.project_name)
-    result = D.toDict()
-    the_group = result.get(group,{})
+    D_dict = load_model(request.project_name, as_bunch = False)
+    the_group = D_dict.get(group,{})
     the_subgroup = the_group.get(subgroup, {})
     print "result: %s" % the_subgroup
     return jsonify(the_subgroup)
@@ -162,11 +154,9 @@ def setModelParameters(group):
     print("set parameters group: %s for data: %s" % (group, data))
     project_name = request.project_name
     try:
-        D = load_model(project_name)
-        D_dict = unbunchify(D)
+        D_dict = load_model(project_name, as_bunch = False)
         D_dict[group] = data
-        D_mod = struct(D_dict)
-        save_model(loaddir(model), project_name, D_mod)
+        save_model(loaddir(model), project_name, D_dict)
     except Exception, err:
         var = traceback.format_exc()
         return jsonify({"status":"NOK", "exception":var})        
@@ -196,7 +186,7 @@ def doRunSimulation():
     try:
         D = runsimulation(**args) 
         D = epiresults(D)
-        D_dict = unbunchify(D)
+        D_dict = D.toDict()
     except Exception, err:
         var = traceback.format_exc()
         return jsonify({"status":"NOK", "exception":var})
@@ -222,11 +212,7 @@ def doCostCoverage():
     args = pick_params(["progname", "ccparams", "coparams"], data, args)
     try:
         plotdata, plotdata_cc, plotdata_co = makecco(**args)
-#        D = runsimulation(**args) 
-#        D = epiresults(D)
-#        D_dict = unbunchify(D)
     except Exception, err:
         var = traceback.format_exc()
         return jsonify({"status":"NOK", "exception":var})
     return jsonify({"status":"OK", "plotdata": plotdata, "plotdata_cc": plotdata_cc, "plotdata_co": plotdata_co})
-#    return jsonify(D_dict.get('O',{}))

@@ -84,6 +84,7 @@ def createProject(project_name):
     
     # get current user 
     cu = current_user
+    proj = None
     if cu.is_anonymous() == False:
         
         # See if there is matching project
@@ -252,13 +253,8 @@ def uploadExcel():
         server_filename = os.path.join(loaddir, filename)
         file.save(server_filename)
 
-    file_basename, file_extension = os.path.splitext(filename)
-#    project_name = helpers.safe_join(upload_dir_user(PROJECTDIR), file_basename+'.prj')
     project_name = request.project_name
     print("project name: %s" % project_name)
-#    if not os.path.exists(project_name):
-#        reply['reason'] = 'Project %s does not exist' % file_basename
-#        return json.dumps(reply)
 
     try:
         D = load_model(project_name)

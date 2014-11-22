@@ -92,13 +92,13 @@ def delete_spreadsheet(name):
   loads the project with the given name from the given folder
   returns the model (D).
 """
-def load_model_file(name, folder = PROJECTDIR):
+def load_model_file(name, folder = PROJECTDIR, as_bunch = True):
   print("load_model %s %s" % (name, folder))
   project_file = project_path(name, folder)
   data = loaddata(project_file)
   return data
 
-def load_model(name):
+def load_model(name, as_bunch = True):
   print("load_model:%s" % name)
   model = None
   try:
@@ -112,10 +112,12 @@ def load_model(name):
   except:
     pass
   if model is None or len(model.keys())==0:
-    return load_model_file(name)
+    return load_model_file(name, as_bunch = as_bunch)
   else:
     from sim.bunch import Bunch
-    return Bunch.fromDict(model)
+    if as_bunch:
+      model = Bunch.fromDict(model)
+    return model
 
 def save_model_file(name, model, folder = PROJECTDIR):
   project_file = project_path(name, folder)
@@ -124,9 +126,12 @@ def save_model_file(name, model, folder = PROJECTDIR):
 def save_model_db(name, model):
   from api import db
   from dbmodels import ProjectDb
+  from sim.bunch import Bunch
   cu = current_user
   proj = ProjectDb.query.filter_by(user_id=cu.id, name=name).first()
-  proj.model = model.toDict()
+  if isinstance(model, Bunch):
+    model = model.toDict()
+  proj.model = model
   db.session.add(proj)
   db.session.commit()
 
