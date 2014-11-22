@@ -28,7 +28,7 @@ In order to run a single test file and activate logging you can use:
 
     nosetests --nocapture src/tests/analysis_test.py
 
-Make sure you have user "test" with the password "test" in order to run the tests using database.
+Make sure you have user "test" with the password "test" and database "optima_test" in order to run the tests using database.
 
 User API
 ------------
