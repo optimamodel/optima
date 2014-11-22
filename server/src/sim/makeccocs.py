@@ -424,7 +424,7 @@ def plotallcurves(datain = default_datain, progname=default_progname, ccparams=d
         plotdata[effectnumber], plotdata_co[effectnumber], plotdata_cc = makecco(D, progname, effectname, ccparams, coparams, makeplot)
 
     return plotdata, plotdata_co, plotdata_cc
-                
+ 
                 
 ## Example of use
 plotdata_cco, plotdata_co, plotdata_cc = plotallcurves()
