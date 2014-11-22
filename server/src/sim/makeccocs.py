@@ -19,7 +19,7 @@ default_progname = 'MSM'
 default_ccparams = [0.9, 0.2, 800000.0, 7e6]
 default_coparams = []
 default_makeplot = 1
-default_datain = 'example' # alternately, use 'example'
+default_datain = 'example' # use 'example' or D
 default_effectname = [['sex', 'condomcom'], [u'CSW'], [[0.7, 0.8], [0.92, 0.97]]]
 
 ###############################################################################
