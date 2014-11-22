@@ -231,6 +231,9 @@ Precondition: model should exist.
 @login_required
 @check_project_name
 def uploadExcel():
+    project_name = request.project_name
+    print("project name: %s" % project_name)
+
     reply = {'status':'NOK'}
     file = request.files['file']
   
@@ -243,18 +246,16 @@ def uploadExcel():
         reply['reason'] = 'No file is submitted!'
         return json.dumps(reply)
 
-    filename = secure_filename(file.filename)
-    if not allowed_file(filename):
-        reply['reason'] = 'File type of %s is not accepted!' % filename
+    source_filename = secure_filename(file.filename)
+    if not allowed_file(source_filename):
+        reply['reason'] = 'File type of %s is not accepted!' % source_filename
         return json.dumps(reply)
 
-    reply['file'] = filename
-    if allowed_file(filename):
-        server_filename = os.path.join(loaddir, filename)
-        file.save(server_filename)
+    reply['file'] = source_filename
 
-    project_name = request.project_name
-    print("project name: %s" % project_name)
+    filename = project_name + '.xlsx'
+    server_filename = os.path.join(loaddir, filename)
+    file.save(server_filename)
 
     try:
         D = load_model(project_name)
@@ -267,5 +268,5 @@ def uploadExcel():
         return json.dumps(reply)      
 
     reply['status'] = 'OK'
-    reply['result'] = 'Project %s is updated' % file_basename
+    reply['result'] = 'Project %s is updated' % project_name
     return json.dumps(reply)
