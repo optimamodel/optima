@@ -13,7 +13,7 @@ default_progs = ['Behavior change','Female sex workers','Needle-syringe program'
 'Antiretroviral treatment','Prevention of mother-to-child transmission']
 
 def makeproject(projectname='example', pops = default_pops, progs = default_progs, datastart=2000, dataend=2015, \
-    econ_datastart=2015, econ_dataend=2030, verbose=2):
+    econ_datastart=2015, econ_dataend=2030, verbose=2, savetofile = True):
     """
     Initializes the empty project. Only the "Global" parameters are added on this step.
     The rest of the parameters is calculated after the model is updated with the data from the spreadsheet.
@@ -51,7 +51,8 @@ def makeproject(projectname='example', pops = default_pops, progs = default_prog
     D.F.tx2 = array([1, 1, (D.G.datastart+D.G.dataend)/2, 1])    
     
     
-    savedata(D.projectfilename, D, verbose=verbose) # Create project -- #TODO: check if an existing project exists and don't overwrite it
+    if savetofile: #False if we are using database
+        savedata(D.projectfilename, D, verbose=verbose) # Create project -- #TODO: check if an existing project exists and don't overwrite it
     
     # Make an Excel template and then prompt the user to save it
     if projectname == 'example': # Don't make a new spreadsheet, but just use the existing one, if the project name is "example"
