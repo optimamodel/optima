@@ -25,7 +25,9 @@
     tags: api
 
   - name: API | Setup migrations in the database if needed
-    shell: if ! psql -U optima -c '\d+' | grep migrate_version >/dev/null ; then migrate version_control {{db_url}} {{install_dir}}/server/db/ ; fi
+    shell: if ! psql -U optima -h {{db_host}} -c '\d+' | grep migrate_version >/dev/null ; then migrate version_control {{db_url}} {{install_dir}}/server/db/ ; fi
+    environment: 
+      PGPASSWORD: "{{ db_password }}"
 
   - name: API | Upgrade database
     command: migrate upgrade {{db_url}} {{install_dir}}/server/db/
