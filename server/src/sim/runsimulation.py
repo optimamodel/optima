@@ -1,24 +1,3 @@
-def results(Sarray, quantiles):
-    """
-    Take an array of simulation results and calculate the corresponding uncertainty
-    intervals defined by the list quantiles.
-    
-    Version: 2014nov23 by cliffk
-    """
-    
-    from bunch import Bunch as struct
-    
-    S = struct()
-    
-    
-    S = Sarray
-    
-    return S
-
-
-
-
-
 def runsimulation(D, startyear=2000, endyear=2030, verbose=2):
     """
     RUNSIMULATION
@@ -44,14 +23,14 @@ def runsimulation(D, startyear=2000, endyear=2030, verbose=2):
     
     # Run model
     from model import model
-    Sarray = []
+    allsims = []
     for s in range(D.opt.nsims): # TODO -- parallelize
-        tmpS = model(D.G, D.M, D.F[s], D.opt, verbose=verbose)
-        Sarray.append(tmpS)
+        S = model(D.G, D.M, D.F[s], D.opt, verbose=verbose)
+        allsims.append(S)
     
     # Calculate results
-    D.R = results(Sarray, D.opt.quantiles)
-    
+    from makeresults import makeresults
+    D.R = makeresults(allsims, D.opt.quantiles, verbose=verbose)
     
     # Save output
     from dataio import savedata
