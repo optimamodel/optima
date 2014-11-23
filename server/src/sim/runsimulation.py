@@ -17,7 +17,8 @@ def runsimulation(D, startyear=2000, endyear=2030, verbose=2):
     options = struct()
     options.startyear = startyear
     options.endyear = endyear
-    options.dt = 0.1
+    options.dt = 0.1 # Timestep
+    options.nsims = 4 # Number of simulations to store for purposes of uncertainty
     options.tvec = arange(options.startyear, options.endyear, options.dt) # Time vector
     
     # Convert data parameters to model parameters
@@ -26,7 +27,9 @@ def runsimulation(D, startyear=2000, endyear=2030, verbose=2):
     
     # Run model
     from model import model
-    D.S = model(D.G, D.M, D.F, options, verbose=verbose)
+    D.S = []
+    for s in range(options.nsims):
+        D.S = model(D.G, D.M, D.F, options, verbose=verbose)
     
     # Save output
     from dataio import savedata

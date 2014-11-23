@@ -8,7 +8,7 @@ def epiresults(D, verbose=2):
     
     For each, calculate for both overall and per population.
 
-    Version: 2014nov05
+    Version: 2014nov22
     """
     
     
@@ -16,11 +16,10 @@ def epiresults(D, verbose=2):
     ## Preliminaries
     ##########################################################################
     
-    from matplotlib.pylab import zeros, nan, array, size
-    from bunch import Bunch as struct, float_array, int_array
+    from matplotlib.pylab import zeros, nan, size, asarray
+    from bunch import Bunch as struct
     from vectocolor import vectocolor
     from printv import printv
-    import numpy as np
     printv('Calculating epidemiology results...', 1, verbose)
     
     D.O = struct()
@@ -54,7 +53,7 @@ def epiresults(D, verbose=2):
                 D.O.prev.tot[t] = D.S.people[1:,:,t].sum() / D.S.people[:,:,t].sum()
             
             # Find prevalence data    
-            epidata = np.asarray(D.data.key.hivprev[0]) # TODO: include uncertainties            
+            epidata = asarray(D.data.key.hivprev[0]) # TODO: include uncertainties            
             D.O.prev.ydata = zeros((D.G.npops,ndatayears))
             D.O.prev.ylabel = 'Prevalence (%)'
 
