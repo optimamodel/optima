@@ -17,7 +17,7 @@ def epiresults(D, verbose=2):
     ##########################################################################
     
     from matplotlib.pylab import zeros, nan, size, asarray
-    from bunch import Bunch as struct
+    from bunch import Bunch as struct, int_array, float_array
     from vectocolor import vectocolor
     from printv import printv
     printv('Calculating epidemiology results...', 1, verbose)
