@@ -60,7 +60,7 @@ def makemodelpars(P, options, verbose=2):
     M.condom.com = dpar2mpar(P.condomcom) # ...
     
     ## Drug behavior parameters
-    M.ost = dpar2mpar(P.ost)
+    M.numost = dpar2mpar(P.numost)
     M.sharing = dpar2mpar(P.sharing)
     
     ## Matrices can be used almost directly
