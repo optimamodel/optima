@@ -15,14 +15,11 @@ Version: 2014nov23 by cliffk
 
 
 print('WELCOME TO OPTIMA')
-import shutil
-import os
-import argparse
 
+import argparse
 parser = argparse.ArgumentParser(description = "OPTIMA global procedure")
 parser.add_argument("-p", "--projectname", type=str, default="example", help = "source project name")
-parser.add_argument("-v", "--verbose", type=int, default=4,
-                    help="increase output verbosity")
+parser.add_argument("-v", "--verbose", type=int, default=4, help="increase output verbosity")
 parser.add_argument("-w","--wait", help="wait for user input after showing graphs", action="store_true")
 args = parser.parse_args()
 
@@ -30,7 +27,6 @@ args = parser.parse_args()
 projectname = args.projectname #'example'
 verbose = args.verbose #4
 show_wait = args.wait
-
 
 print('\n\n\n1. Making project...')
 from makeproject import makeproject, default_pops, default_progs
