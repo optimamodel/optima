@@ -1,4 +1,4 @@
-def updatedata(D, loaddir='', verbose=2):
+def updatedata(D, loaddir='', verbose=2, savetofile = True):
     """
     Load the Excel spreadsheet (for the given project), assuming it's in the standard uploads directory
     loads the data for the given project,
@@ -16,7 +16,8 @@ def updatedata(D, loaddir='', verbose=2):
     datapath = fullpath(D.spreadsheetname)
     D.data, D.programs = loadspreadsheet(datapath, verbose=verbose)
     D = makedatapars(D, verbose=verbose) # Update parameters
-    savedata(D.projectfilename, D, verbose=verbose) # Update the data file
+    if savetofile:
+        savedata(D.projectfilename, D, verbose=verbose) # Update the data file
     
     printv('  ...done updating data: %s.' % D.projectfilename, 2, verbose)
 

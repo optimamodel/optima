@@ -9,7 +9,7 @@ Setup Migrations
 
 Database migrations are setup to be done automatically during deploy. To run them yourself, do the following:
 
-    pip install sqlalchemy-migrate
+    pip install sqlalchemy-migrate psycopg2
 
     cd <your-git-root>/Optima/
 
