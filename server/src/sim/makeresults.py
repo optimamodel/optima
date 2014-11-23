@@ -18,9 +18,10 @@ def makeresults(D, quantiles=None, verbose=2):
     ## Preliminaries
     ##########################################################################
     
-    from matplotlib.pylab import zeros
+    from matplotlib.pylab import zeros, array
     from bunch import Bunch as struct, int_array, float_array
     from printv import printv
+    from quantile import quantile
     printv('Calculating results...', 1, verbose)
     
     D.R = struct()
@@ -45,6 +46,10 @@ def makeresults(D, quantiles=None, verbose=2):
         if epi=='prev':
             
             printv('Calculating prevalence...', 3, verbose)
+            
+            allpeople = array([D.S[s].people for s in range(D.S.opt.nsims)]) # WARNING, might use stupid amounts of memory
+            tmpprevpops = allpeople[:,1:,:,:].sum(axis=1) / allpeople[:,:,:,:].sum(axis=1)
+            D.R.prev.pops = quantile(tmpprevpops, quantiles=quantiles)
         
             # Calculate prevalence
             for t in range(npts):
