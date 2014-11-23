@@ -105,9 +105,7 @@ def load_model(name, as_bunch = True):
     from api import db
     from dbmodels import ProjectDb
     cu = current_user
-    print("cu: %s" % cu)
     proj = ProjectDb.query.filter_by(user_id=cu.id, name=name).first()
-    print("proj: %s" % proj)
     model = proj.model
   except:
     pass
@@ -124,6 +122,7 @@ def save_model_file(name, model, folder = PROJECTDIR):
   return savedata(project_file, model)
 
 def save_model_db(name, model):
+  print("save_model_db %s" % name)
   from api import db
   from dbmodels import ProjectDb
   from sim.bunch import Bunch
