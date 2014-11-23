@@ -1,10 +1,8 @@
 """
 MAKEPROJECT
 http://54.200.79.218/#/project/create
-Version: 2014nov05 by cliffk
+Version: 2014nov22 by cliffk
 """
-import os
-
 default_pops = ['General males','General females','Female sex workers','Clients of sex workers', \
 'Men who have sex with men','People who inject drugs']
 
@@ -19,7 +17,7 @@ def makeproject(projectname='example', pops = default_pops, progs = default_prog
     The rest of the parameters is calculated after the model is updated with the data from the spreadsheet.
     """
     from matplotlib.pylab import ones, array
-    from dataio import savedata, fullpath, projectpath
+    from dataio import savedata, projectpath
     from bunch import Bunch as struct
     from printv import printv
 
