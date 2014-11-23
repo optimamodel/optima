@@ -1,4 +1,4 @@
-def epiresults(D, verbose=2):
+def gatherplotdata(D, verbose=2):
     """
     Generate all outputs required for the model:
         Prevalence
