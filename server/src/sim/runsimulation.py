@@ -1,10 +1,15 @@
-def uncertainties(Sarray, quantiles):
+def results(Sarray, quantiles):
     """
     Take an array of simulation results and calculate the corresponding uncertainty
     intervals defined by the list quantiles.
     
     Version: 2014nov23 by cliffk
     """
+    
+    from bunch import Bunch as struct
+    
+    S = struct()
+    
     
     S = Sarray
     
@@ -27,7 +32,7 @@ def runsimulation(D, startyear=2000, endyear=2030, verbose=2):
     
     # update options structure
     from setoptions import setoptions
-    D.opt = setoptions(D, startyear, endyear)
+    D.opt = setoptions(opt=D.opt, startyear=startyear, endyear=endyear)
     
     # Convert data parameters to model parameters
     from makemodelpars import makemodelpars
@@ -35,7 +40,7 @@ def runsimulation(D, startyear=2000, endyear=2030, verbose=2):
     
     # Create fitted parameters
     from makefittedpars import makefittedpars
-    D.F = makefittedpars()
+    D.F = makefittedpars(D.G, D.opt, verbose=verbose)
     
     # Run model
     from model import model
@@ -44,8 +49,8 @@ def runsimulation(D, startyear=2000, endyear=2030, verbose=2):
         tmpS = model(D.G, D.M, D.F[s], D.opt, verbose=verbose)
         Sarray.append(tmpS)
     
-    # Calculate statistics
-    D.S = uncertainties(Sarray, D.opt.quantiles)
+    # Calculate results
+    D.R = results(Sarray, D.opt.quantiles)
     
     
     # Save output
