@@ -10,8 +10,10 @@ This function does everything. The basic procedure is as follows:
 3. setupmodel -- reconcile partnerships and calculate parameters to go into the model
 4. model -- actually run the model
 
-Version: 2014nov22 by cliffk
+Version: 2014nov23 by cliffk
 """
+
+
 print('WELCOME TO OPTIMA')
 import shutil
 import os
@@ -32,14 +34,10 @@ show_wait = args.wait
 
 print('\n\n\n1. Making project...')
 from makeproject import makeproject, default_pops, default_progs
-if os.path.exists(projectname+'.xlsx'):
-  shutil.copy(projectname+'.xlsx', projectname+'_data.xlsx')
 D = makeproject(projectname='example', pops=default_pops, progs = default_progs, datastart=2000, dataend=2015, verbose=verbose)
 
 print('\n\n\n2. Uploading spreadsheet...')
 from updatedata import updatedata
-if os.path.exists(projectname+'_data.xlsx'):
-  shutil.copy(projectname+'_data.xlsx', projectname+'.xlsx')
 D = updatedata(D, verbose=verbose)
 
 print('\n\n\n3. Running simulation...')

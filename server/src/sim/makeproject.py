@@ -39,16 +39,6 @@ def makeproject(projectname='example', pops = default_pops, progs = default_prog
     D.G.datastart = datastart
     D.G.dataend = dataend
     
-    # Initialize fitted parameters
-    D.F = struct()
-    D.F.__doc__ = 'Fitted parameters structure: initial prevalence, force-of-infection, diagnoses, treatment'
-    D.F.init = ones(D.G.npops)
-    D.F.force = ones(D.G.npops)
-    D.F.dx = array([1, 1, (D.G.datastart+D.G.dataend)/2, 1])
-    D.F.tx1 = array([1, 1, (D.G.datastart+D.G.dataend)/2, 1])
-    D.F.tx2 = array([1, 1, (D.G.datastart+D.G.dataend)/2, 1])    
-    
-    
     if savetofile: #False if we are using database
         savedata(D.projectfilename, D, verbose=verbose) # Create project -- #TODO: check if an existing project exists and don't overwrite it
     

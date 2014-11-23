@@ -1,4 +1,4 @@
-def makemodelpars(P, options, verbose=2):
+def makemodelpars(P, opt, verbose=2):
     """
     Prepares model parameters to run the simulation.
     
@@ -6,13 +6,13 @@ def makemodelpars(P, options, verbose=2):
     """
     
     from printv import printv
-    from matplotlib.pylab import zeros, array, ones
+    from matplotlib.pylab import zeros, array
     from bunch import Bunch as struct # Replicate Matlab-like structure behavior
     printv('Making model parameters...', 1, verbose)
     
     M = struct()
     M.__doc__ = 'Model parameters to be used directly in the model, calculated from data parameters P.'
-    tvec = options.tvec # Shorten time vector
+    tvec = opt.tvec # Shorten time vector
     npts = len(tvec) # Number of time points # TODO probably shouldn't be repeated from model.m
     
     
