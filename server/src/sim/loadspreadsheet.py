@@ -125,7 +125,7 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
             assumptioncol = lastdatacol + 1 # The "OR" space is in between
             ncolsperprog = 5 # Number of columns necessary for defining a single program; name, zero-spend-min, zero-spend-max, full-spend-min, full-spend-max
             nprogblocks = 4 # Number of program blocks
-            programcols = assumptioncol + array([array(range(ncolsperprog))+(2+ncolsperprog)*i for i in range(nprogblocks)]) # Calculate which columns the program data is stored in
+            programcols = assumptioncol + 3 + array([array(range(ncolsperprog))+(1+ncolsperprog)*i for i in range(nprogblocks)]) # Calculate which columns the program data is stored in
             
             
             
@@ -242,7 +242,7 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
                                         if not(programs.has_key(programname)): programs[programname] = [] # Create new list if none exists
                                         zerocov = sheetdata.row_values(row, start_colx=programcols[progblock][1], end_colx=programcols[progblock][2]+1) # Get outcome data
                                         fullcov = sheetdata.row_values(row, start_colx=programcols[progblock][3], end_colx=programcols[progblock][4]+1) # Get outcome data
-                                        programs[programname].append([[name,thispar], [subparam], [zerocov, fullcov]]) # Append to program
+                                        programs[programname].append([[name,thispar], [subparam], [zerocov, fullcov]]) # Append to program # TODO -- not sure if subparam is useful here, an index would probably be more useful
                         
                         
                         # It's a matrix, append the data                                     
