@@ -1,3 +1,26 @@
+def makespreadsheet(name, pops, progs, datastart=2000, dataend=2015, econ_datastart=2015, econ_dataend=2030, verbose=2):
+    """
+    MAKESPREADSHEET
+    
+    Generate the Optima spreadsheet
+    
+    Version: 2014nov19
+    """
+    
+    from printv import printv
+    from dataio import templatepath
+    from makeworkbook import OptimaWorkbook
+
+    printv("""Generating spreadsheet with parameters:
+             name = %s, pops = %s, progs = %s, datastart = %s, dataend = %s, 
+             econ_datastart = %s, econ_dataend = %s""" % (name, pops, progs, datastart, dataend, econ_datastart, econ_dataend), 1, verbose)
+    path = templatepath(name)
+    book = OptimaWorkbook(name, pops, progs, datastart, dataend, econ_datastart, econ_dataend)
+    book.create(path)
+    
+    printv('  ...done making spreadsheet %s.' % path, 2, verbose)
+    return path
+
 default_pops = ['General males','General females','Female sex workers','Clients of sex workers', \
 'Men who have sex with men','People who inject drugs']
 
@@ -47,7 +70,6 @@ def makeproject(projectname='example', pops = default_pops, progs = default_prog
     if projectname == 'example': # Don't make a new spreadsheet, but just use the existing one, if the project name is "example"
         print('WARNING, Project name set to "example", not creating a new spreadsheet!')
     else: # Make a new spreadsheet
-        from makespreadsheet import makespreadsheet 
         makespreadsheet(D.spreadsheetname, pops, progs, datastart, dataend, econ_datastart, econ_dataend, verbose=verbose)
     
     printv('  ...done making project %s, created spreadsheet %s' % (D.projectname, D.spreadsheetname), 2, verbose)
