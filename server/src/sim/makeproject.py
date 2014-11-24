@@ -1,11 +1,4 @@
-default_pops = ['General males','General females','Female sex workers','Clients of sex workers', \
-'Men who have sex with men','People who inject drugs']
-
-default_progs = ['Behavior change','Female sex workers','Needle-syringe program', \
-'Men who have sex with men','HIV counseling & testing','Voluntary male circumcision', \
-'Antiretroviral treatment','Prevention of mother-to-child transmission']
-
-def makeproject(projectname='example', pops = default_pops, progs = default_progs, datastart=2000, dataend=2015, \
+def makeproject(projectname='example', pops = ['']*6, progs = ['']*5, datastart=2000, dataend=2015, \
     econ_datastart=2015, econ_dataend=2030, verbose=2, savetofile = True):
     """
     Initializes the empty project. Only the "Global" parameters are added on this step.

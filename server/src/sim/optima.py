@@ -35,8 +35,8 @@ verbose = args.verbose #4
 show_wait = args.wait
 
 print('\n\n\n1. Making project...')
-from makeproject import makeproject, default_pops, default_progs
-D = makeproject(projectname='example', pops=default_pops, progs = default_progs, datastart=2000, dataend=2015, verbose=verbose)
+from makeproject import makeproject
+D = makeproject(projectname='example', pops=['']*6, progs = ['']*7, datastart=2000, dataend=2015, verbose=verbose)
 
 print('\n\n\n2. Uploading spreadsheet...')
 from updatedata import updatedata
