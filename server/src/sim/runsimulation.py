@@ -27,6 +27,7 @@ def runsimulation(D, startyear=2000, endyear=2030, verbose=2):
     for s in range(D.opt.nsims): # TODO -- parallelize
         S = model(D.G, D.M, D.F[s], D.opt, verbose=verbose)
         allsims.append(S)
+    D.S = allsims[0] # Save one full sim structure for troubleshooting and funsies
     
     # Calculate results
     from makeresults import makeresults

@@ -58,6 +58,8 @@ def viewresults(O, whichgraphs={'prev':[1,1], 'inci':[1,1], 'daly':[1,1], 'death
                     if ndim(O[graph].ydata)==1:
                         scatter(O.xdata, O[graph].ydata*percent, c=O.colord)
                     
+                    title('Overall')
+                    legend(('Model','Data'))
                     xlabel(O[graph].xlabel)
                     ylabel(O[graph].ylabel)
                     xlim(xmin=startyear, xmax=endyear)

@@ -34,8 +34,8 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
     S.newtx1 = zeros((G.npops, npts))
     S.newtx2 = zeros((G.npops, npts))
     S.death = zeros((G.npops, npts))
-    people[0, :, 0] = M.popsize[:,0] * (1-M.hivprev[:,0]) # Set initial population sizes
-    people[1, :, 0] = M.popsize[:,0] * M.hivprev[:,0] * F.init # Set initial population sizes -- # TODO: equilibrate
+    people[0, :, 0] = M.popsize[:,0] * (1-M.hivprev) # Set initial population sizes
+    people[1, :, 0] = M.popsize[:,0] * M.hivprev * F.init # Set initial population sizes -- # TODO: equilibrate
     effhivprev = zeros((G.npops,1)) # HIV effective prevalence (prevalence times infectiousness)
     dU = []; dD = []; dT1 = []; dF = []; dT2 = [] # Initialize differences
     
