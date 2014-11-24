@@ -86,7 +86,7 @@ def gatherplotdata(D, verbose=2):
             printv('Calculating second-line treatment...', 3, verbose)
             epidata = D.data.txrx.numsecondline[0]
             D.O.tx2.ydata = zeros(ndatayears)
-            D.O.tx2.ylabel = 'Number of people on first-line treatment'
+            D.O.tx2.ylabel = 'Number of people on second-line treatment'
 
         ##########################################################################
         ## Finish processing data

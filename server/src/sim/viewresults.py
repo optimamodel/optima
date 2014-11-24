@@ -11,10 +11,10 @@ def viewresults(O, whichgraphs={'prev':[1,1], 'inci':[1,1], 'daly':[1,1], 'death
     
     if onefig:
         figh = figure(figsize=(24,16))
-        figh.subplots_adjust(left=0.01) # Less space on left
+        figh.subplots_adjust(left=0.04) # Less space on left
         figh.subplots_adjust(right=0.99) # Less space on right
         figh.subplots_adjust(top=0.98) # Less space on bottom
-        figh.subplots_adjust(bottom=0.02) # Less space on bottom
+        figh.subplots_adjust(bottom=0.04) # Less space on bottom
         figh.subplots_adjust(wspace=0.5) # More space between
         figh.subplots_adjust(hspace=0.5) # More space between
         nplots = sum([whichgraphs[key][i]*[npops,1][i] for i in range(2) for key in whichgraphs.keys()])

@@ -172,9 +172,9 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
                 progout = 0
                 testingrate[cd4] = dt*M.aidstest[t]
             newdiagnoses[cd4] = dt*testingrate[cd4]*dxtime[t] * people[G.undx[cd4],:,t]
-            S.newtx1[:,t] += newdiagnoses[cd4]/dt # Save annual diagnoses data
+            S.dx[:,t] += newdiagnoses[cd4]/dt # Save annual diagnoses data
             hivdeaths = dt*death[cd4]*people[G.undx[cd4],:,t]
-            S.death[:,t] += hivdeaths[cd4]/dt # Save annual diagnoses data
+            S.death[:,t] += hivdeaths[cd4]/dt # Save annual death data
             dU.append(progin-progout - hivdeaths - newdiagnoses[cd4] - dt*background*people[G.undx[cd4],:,t])
             
         dU[0] = dU[0] - dS # Add newly infected people
@@ -191,9 +191,9 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
             else: 
                 progout = 0
             newtreat1[cd4] = dt*M.tx1[t]*tx1time[t] * people[G.dx[cd4],:,t]
-            S.newtx1[:,t] += newtreat1[cd4]/dt # Save annual diagnoses data
+            S.newtx1[:,t] += newtreat1[cd4]/dt # Save annual treatment data
             hivdeaths = dt*death[cd4]*people[G.dx[cd4],:,t]
-            S.death[:,t] += hivdeaths[cd4]/dt # Save annual diagnoses data
+            S.death[:,t] += hivdeaths[cd4]/dt # Save annual deaths data
             dD.append(progin-progout + newdiagnoses[cd4] - newtreat1[cd4] - hivdeaths - dt*background*people[G.dx[cd4],:,t])
         
     
@@ -209,7 +209,7 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
                 recovout = 0
             newfail1[cd4] = dt*M.const.fail.first * people[G.tx1[cd4],:,t]
             hivdeaths = dt*death[cd4]*people[G.tx1[cd4],:,t]
-            S.death[:,t] += hivdeaths[cd4]/dt # Save annual deats data
+            S.death[:,t] += hivdeaths[cd4]/dt # Save annual deaths data
             dT1.append(recovin - recovout + newtreat1[cd4] - newfail1[cd4] - hivdeaths - dt*background*people[G.tx1[cd4],:,t])
 
     
