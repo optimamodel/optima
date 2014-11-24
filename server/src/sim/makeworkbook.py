@@ -430,7 +430,8 @@ class OptimaWorkbook:
     ('Percentage of people who used a condom at last act with regular partners', OptimaFormats.PERCENTAGE), \
     ('Percentage of people who used a condom at last act with casual partners', OptimaFormats.PERCENTAGE), \
     ('Percentage of people who used a condom at last act with commercial partners', OptimaFormats.PERCENTAGE), \
-    ('Percentage of males who have been circumcised', OptimaFormats.PERCENTAGE)]
+    ('Percentage of males who have been circumcised', OptimaFormats.PERCENTAGE), \
+    ('Number of voluntary medical male circumcisions performed', OptimaFormats.GENERAL)]
 
     for (name, row_format) in names_formats:
       current_row = self.emit_ref_years_block(name, current_row, self.pop_range, row_format = row_format, assumption = True, programs = True)
