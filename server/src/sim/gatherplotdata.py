@@ -98,7 +98,24 @@ def gatherepidata(D, verbose=2):
         else:
             raise Exception("Can't figure out size of epidata; doesn't seem to be a vector or a matrix")
 
-   
-    
     printv('...done running epidemiology results.', 2, verbose)
     return E
+
+
+
+def gatheroptimdata(D):
+    """ Return the data for plotting the two pie charts -- current allocation and optimal. """
+    from bunch import Bunch as struct
+    
+    O = struct()
+    O.legend = D.data.meta.progs.short
+    
+    O.pie1 = struct()
+    O.pie1.name = 'Original'
+    O.pie1.val = D.A.orig.cost
+    
+    O.pie2 = struct()
+    O.pie2.name = 'Optimal'
+    O.pie2.val = D.A.optimal.cost
+    
+    return O

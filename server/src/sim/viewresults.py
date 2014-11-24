@@ -1,4 +1,4 @@
-def viewresults(O, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'death':[0,1], 'dx':[0,1], 'tx1':[0,1], 'tx2':[0,1]}, startyear=2000, endyear=2015, onefig=True, verbose=2, show_wait=False):
+def viewepiresults(O, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'death':[0,1], 'dx':[0,1], 'tx1':[0,1], 'tx2':[0,1]}, startyear=2000, endyear=2015, onefig=True, verbose=2, show_wait=False):
     """
     Generate all outputs required for the model, including prevalence, incidence,
     deaths, etc.
@@ -64,7 +64,26 @@ def viewresults(O, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'death
                     ylabel(O[graph].ylabel)
                     xlim(xmin=startyear, xmax=endyear)
                     ylim(ymin=0)
-                    
 
-        if show_wait:
-            show()
+        if show_wait: show()
+
+
+
+
+def viewallocpies(plotdata, show_wait=False):
+    """ Little function to plot optimization pies """
+    from matplotlib.pylab import figure, pie, legend, title, subplot, show
+    
+    figure(figsize=(12,4))
+    
+    subplot(1,3,1)
+    pie(plotdata.pie1.val)
+    title(plotdata.pie1.name)
+    
+    subplot(1,3,2)
+    pie(plotdata.pie2.val)
+    title(plotdata.pie2.name)
+    
+    legend(plotdata.legend, bbox_to_anchor=(2, 0.8))
+    
+    if show_wait: show()
