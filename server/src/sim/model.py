@@ -94,7 +94,7 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
         ## Calculate force-of-infection (forceinf)
         ###############################################################################
         
-        # Initialize force-of-infection vector for each population group
+        # Reset force-of-infection vector for each population group
         forceinfvec = zeros(npops)
         
         ## Sexual partnerships -- # TODO make more efficient
@@ -113,16 +113,15 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
                         numactsF = M.totalacts[act][popF,popM,t]; # Number of acts per person per year (receptive partner)
                         condomprob = (M.condom[act][popM,t] + M.condom[act][popF,t]) / 2 # Reconcile condom probability
                         condomeff = 1 - (1-M.const.eff.condom) * condomprob # Effect of condom use
-                        forceinfM = 1 - (1-transM*circeff*stieffM) ** (dt*numactsM*condomeff*effhivprev[popF]) # The chance of person A infecting person B -- # TODO: Implement PrEP etc here
-                        forceinfF = 1 - (1-transF*circeff*stieffF) ** (dt*numactsF*condomeff*effhivprev[popM]) # The chance of person B infecting person A
-                        
-                        
-                        ### Is this the right place to multiply by dt???  
-                        
-                        
+                        forceinfM = 1 - (1-transM*circeff*stieffM) ** (dt*numactsM*condomeff*effhivprev[popF]) # The chance of "female" infecting "male" -- # TODO: Implement PrEP etc here
+                        forceinfF = 1 - (1-transF*circeff*stieffF) ** (dt*numactsF*condomeff*effhivprev[popM]) # The chance of "male" infecting "female"
                         forceinfvec[popM] = 1 - (1-forceinfvec[popM]) * (1-forceinfM) # Calculate the new "male" forceinf, ensuring that it never gets above 1
                         forceinfvec[popF] = 1 - (1-forceinfvec[popF]) * (1-forceinfF) # Calculate the new "female" forceinf, ensuring that it never gets above 1
                         if not(all(forceinfvec>=0)): raise Exception('Sexual force-of-infection is invalid')
+                            
+                            
+                        ### Continue debugging from here...                            
+                            
         
         ## Injecting partnerships -- # TODO make more efficient
 #        metheff = 1 - M.const.eff.meth*M.ost[t] # TODO: methadone should be subtracted from population size
@@ -131,8 +130,8 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
                 if M.pships.inj[pop1,pop2]>0:
                     numacts1 = M.sharing[t] * M.totalacts.inj[pop1,pop2,t] / 2 # Number of acts per person per year -- /2 since otherwise double-count# TODO
                     numacts2 = M.sharing[t] * M.totalacts.inj[pop2,pop1,t] / 2 # Number of acts per person per year
-                    forceinf1 = 1 - (1-M.const.trans.inj) ** (dt*numacts1*effhivprev[pop2]) # Force of infection
-                    forceinf2 = 1 - (1-M.const.trans.inj) ** (dt*numacts2*effhivprev[pop1]) # Force of infection
+                    forceinf1 = 1 - (1-M.const.trans.inj) ** (dt*numacts1*effhivprev[pop2]) # The chance of "2" infecting "1"
+                    forceinf2 = 1 - (1-M.const.trans.inj) ** (dt*numacts2*effhivprev[pop1]) # The chance of "1" infecting "2"
                     forceinfvec[pop1] = 1 - (1-forceinfvec[pop1]) * (1-forceinf1) # Calculate the new "male" forceinf, ensuring that it never gets above 1
                     forceinfvec[pop2] = 1 - (1-forceinfvec[pop2]) * (1-forceinf2) # Calculate the new "male" forceinf, ensuring that it never gets above 1
                     if not(all(forceinfvec>=0)): raise Exception('Injecting force-of-infection is invalid')
