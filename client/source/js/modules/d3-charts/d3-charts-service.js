@@ -3,7 +3,7 @@ define(['./module', 'd3', 'd3-box'], function (module, d3) {
 
   module.service('d3Charts', function () {
 
-    function LineChart(chart, suffix, chart_size, transitionTimeout) {
+    function LineChart(chart, suffix, chartSize, transitionTimeout) {
       var xScale, yScale;
 
       var className = 'line_chart_path' + suffix;
@@ -12,12 +12,12 @@ define(['./module', 'd3', 'd3-box'], function (module, d3) {
         var xExtent = d3.extent(dataset, function (d) {
           return d[0];
         });
-        xScale = d3.scale.linear().domain(xExtent).range([0, chart_size.width]);
+        xScale = d3.scale.linear().domain(xExtent).range([0, chartSize.width]);
 
         var yMax = d3.max(dataset, function (d) {
           return d[1];
         });
-        yScale = d3.scale.linear().domain([0, yMax]).range([chart_size.height, 0]);
+        yScale = d3.scale.linear().domain([0, yMax]).range([chartSize.height, 0]);
 
         return { x: xScale, y: yScale };
       };
@@ -173,7 +173,7 @@ define(['./module', 'd3', 'd3-box'], function (module, d3) {
       }
     }
 
-    function ScatterChart(chart, suffix, chart_size, transitionTimeout) {
+    function ScatterChart(chart, suffix, chartSize, transitionTimeout) {
       var xScale, yScale,
         className = 'scatter_chart_circle' + suffix;
 
@@ -181,12 +181,15 @@ define(['./module', 'd3', 'd3-box'], function (module, d3) {
         var xExtent = d3.extent(dataset, function (d) {
           return d[0];
         });
-        xScale = d3.scale.linear().domain(xExtent).range([0, chart_size.width]);
+        xScale = d3.scale.linear()
+          .domain(xExtent)
+          .range([0, chartSize.width]);
 
-        var yMax = d3.max(dataset, function (d) {
-          return d[1];
-        });
-        yScale = d3.scale.linear().domain([0, yMax]).range([chart_size.height, 0]);
+        var yMax = d3.max(dataset, function (d) { return d[1]; });
+
+        yScale = d3.scale.linear()
+          .domain([0, yMax])
+          .range([chartSize.height, 0]);
 
         return { x: xScale, y: yScale };
       };
@@ -216,11 +219,10 @@ define(['./module', 'd3', 'd3-box'], function (module, d3) {
           .attr('class', className)
           .on('mouseover', function (d) {
             var point = d3.select(this);
-            point.transition().attr('r', 8);
+            point.transition().attr('r', 6);
           })
           .on('mouseout', function () {
             d3.select(this).transition().attr('r', 4);
-
           })
           .transition()
           .duration(transitionTimeout)
@@ -264,14 +266,23 @@ define(['./module', 'd3', 'd3-box'], function (module, d3) {
       }
     }
 
-    function drawAxes(scales, labels, axesGroup, chartSize, margins) {
-      var xLabel = labels.x;
-      var yLabel = labels.y;
+    function drawAxes(scales, options, axesGroup, chartSize) {
+      var xLabel = options.xAxis.axisLabel;
+      var yLabel = options.yAxis.axisLabel;
 
       var domain = scales.x.domain();
-      var xTicks = domain[1] - domain[0] + 1;
-      var xAxis = d3.svg.axis().scale(scales.x).orient('bottom').ticks(xTicks);
-      var yAxis = d3.svg.axis().scale(scales.y).orient('left');
+      scales.x.domain([Math.ceil(domain[0]), Math.ceil(domain[1])]);
+
+      var xAxis = d3.svg.axis()
+        .scale(scales.x)
+        .tickFormat(options.xAxis.tickFormat)
+        .orient('bottom')
+        .ticks(Math.floor(chartSize.width / 50));
+
+      var yAxis = d3.svg.axis()
+        .scale(scales.y)
+        .tickFormat(options.yAxis.tickFormat)
+        .orient('left');
 
       if (axesGroup.select('.x.axis').empty()) {
         axesGroup.append('g')
@@ -287,7 +298,7 @@ define(['./module', 'd3', 'd3-box'], function (module, d3) {
           .append('text')
           .text(xLabel)
           .attr('x', chartSize.width / 2)
-          .attr('y', margins.bottom - 3)
+          .attr('y', options.margin.bottom - 3)
           .attr('id', 'xLabel');
 
         axesGroup.select('.y.axis')
@@ -296,7 +307,7 @@ define(['./module', 'd3', 'd3-box'], function (module, d3) {
           .attr('text-anchor', 'middle')
           .attr('transform', 'rotate (-270, 0, 0)')
           .attr('x', chartSize.height / 2)
-          .attr('y', margins.left - 3)
+          .attr('y', options.margin.left - 3)
           .attr('id', 'yLabel');
       } else {
         document.getElementById('xLabel').textContent = xLabel;

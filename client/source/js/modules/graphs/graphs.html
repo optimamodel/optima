@@ -23,13 +23,17 @@
     <nvd3 data="data4" options="options4" save-graph-as></nvd3>
   </div>
 
-  <h2>Combined line/scatter</h2>
-  <div class="chart-container">
-    <div line-scatter-chart data="data5" save-graph-as></div>
+  <div ng-if="data5">
+    <h2>Combined line/scatter</h2>
+    <div class="chart-container">
+      <div line-scatter-chart data="data5" options="options5" save-graph-as></div>
+    </div>
   </div>
 
-  <h2>Combined line/area/scatter</h2>
-  <div class="chart-container">
-    <div line-scatter-area-chart data="data6" save-graph-as></div>
+  <div ng-if="data6">
+    <h2>Combined line/area/scatter</h2>
+    <div class="chart-container">
+      <div line-scatter-area-chart data="data6" options="options6" save-graph-as></div>
+    </div>
   </div>
 </div>
