@@ -26,27 +26,28 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2):
     tstart = time()
     elapsed = 0
     iteration = 0
+    nallocs = 2 # WARNING, will want to do this better
+    for alloc in range(nallocs): D.A.opti = D.A.orig # Just copy for now
     while elapsed<timelimit:
         iteration += 1
         elapsed = time() - tstart
-        D.S0 = model(D.G, D.M, D.F[0], D.opt, verbose=verbose)
-        D.S1 = model(D.G, D.M, D.F[1], D.opt, verbose=verbose)
+        D.A.S = [] # Data.Allocations.Simulations
+        D.A.mismatches = []
+        for alloc in range(nallocs):
+            D.A.S.append((model(D.G, D.M, D.F[alloc], D.opt, verbose=verbose)))
+            D.A.mismatches.append(-1)
         printv('Iteration: %i | Elapsed: %f s |  Limit: %f s' % (iteration, elapsed, timelimit), 2, verbose)
-        D.S0.mismatch = -1 # Mismatch for this simulation
-        D.S1.mismatch = -1 # Mismatch for this simulation
     
-    D.A.optimal = D.A.orig # Just copy for now
-    
-    allsims = [D.S0, D.S1]
     
     # Calculate results
     from makeresults import makeresults
-    D.R = makeresults(allsims, D, D.opt.quantiles, verbose=verbose)
+    D.A.R = [] # Data.Allocations.Results
+    for alloc in range(nallocs): 
+        D.A.R.append(makeresults([D.A[alloc].S], D, D.opt.quantiles, verbose=verbose))
     
     # Gather plot data
     from gatherplotdata import gatheroptimdata
     D.plot.O = gatheroptimdata(D, verbose=verbose)
-    
     
     printv('...done optimizing programs.', 2, verbose)
     return D
