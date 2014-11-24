@@ -39,12 +39,12 @@ print('\n\n\n3. Running simulation...')
 from runsimulation import runsimulation
 D = runsimulation(D, startyear=2000, endyear=2015, verbose=verbose)
 
-print('\n\n\n4. Making results...')
-from epiresults import epiresults
-D = epiresults(D, verbose=verbose)
+print('\n\n\n4. Making plot data...')
+from gatherplotdata import gatherplotdata
+D = gatherplotdata(D, verbose=verbose)
 
 print('\n\n\n5. Viewing results...')
 from viewresults import viewresults
-viewresults(D, whichgraphs={'prev':1, 'inci':1, 'daly':1, 'death':1, 'pops':1, 'tot':1}, onefig=True, verbose=verbose, show_wait=show_wait)
+viewresults(D.O, whichgraphs={'prev':[1,1], 'inci':[1,1], 'daly':[1,1], 'death':[1,1], 'dx':[1,1], 'tx1':[1,1], 'tx2':[1,1]}, onefig=True, verbose=verbose, show_wait=show_wait)
 
 print('\n\n\nDONE.')

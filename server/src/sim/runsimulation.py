@@ -30,7 +30,7 @@ def runsimulation(D, startyear=2000, endyear=2030, verbose=2):
     
     # Calculate results
     from makeresults import makeresults
-    D.R = makeresults(allsims, D.opt.quantiles, verbose=verbose)
+    D.R = makeresults(allsims, D, D.opt.quantiles, verbose=verbose)
     
     # Save output
     from dataio import savedata

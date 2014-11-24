@@ -1,4 +1,4 @@
-def makeresults(D, quantiles=None, verbose=2):
+def makeresults(allsims, D, quantiles=None, verbose=2):
     """
     Generate all outputs required for the model:
         Prevalence
@@ -18,96 +18,76 @@ def makeresults(D, quantiles=None, verbose=2):
     ## Preliminaries
     ##########################################################################
     
-    from matplotlib.pylab import zeros, array
-    from bunch import Bunch as struct, int_array, float_array
+    from matplotlib.pylab import array, concatenate
+    from bunch import Bunch as struct
     from printv import printv
     from quantile import quantile
     printv('Calculating results...', 1, verbose)
     
-    D.R = struct()
-    D.R.__doc__ = 'Output structure containing everything that might need to be plotted'
-    D.R.tvec = D.S.tvec # Copy time vector
-    npts = len(D.R.tvec)
-    if quantiles==None: quantiles=D.opt.quantiles # If not supplied as an argument, use pre-saved quantiles
-    nquantiles = len(quantiles)
+    R = struct()
+    R.__doc__ = 'Output structure containing all worthwhile results from the model'
+    R.tvec = allsims[0].tvec # Copy time vector
+    nsims = len(allsims) # Number of simulations to average over
+    if quantiles==None: quantiles = D.opt.quantiles # If no quantiles are specified, just use the default ones
+    allpeople = array([allsims[s].people for s in range(nsims)]) # WARNING, might use stupid amounts of memory
     
     for epi in ['prev', 'inci', 'daly', 'death', 'tx1', 'tx2', 'dx']:
-        D.R[epi] = struct()
-        D.R[epi].pops = []
-        D.R[epi].tot = []
-        for q in range(nquantiles): # Create an array for storing data for each quantile
-            D.R[epi].pops.append(zeros((D.G.npops, npts))) # Careful, can't use pop since it's a method!
-            D.R[epi].tot.append(zeros(npts))
+        R[epi] = struct()
+        R[epi].pops = []
+        R[epi].tot = []
         
         
-        ##########################################################################
-        ## Prevalence
-        ##########################################################################
         if epi=='prev':
-            
             printv('Calculating prevalence...', 3, verbose)
+            R.prev.pops = quantile(allpeople[:,1:,:,:].sum(axis=1) / allpeople[:,:,:,:].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
+            R.prev.tot = quantile(allpeople[:,1:,:,:].sum(axis=(1,2)) / allpeople[:,:,:,:].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
             
-            allpeople = array([D.S[s].people for s in range(D.S.opt.nsims)]) # WARNING, might use stupid amounts of memory
-            tmpprevpops = allpeople[:,1:,:,:].sum(axis=1) / allpeople[:,:,:,:].sum(axis=1)
-            D.R.prev.pops = quantile(tmpprevpops, quantiles=quantiles)
         
-            # Calculate prevalence
-            for t in range(npts):
-                D.R.prev.pops[:,t] = D.S.people[1:,:,t].sum(axis=0) / D.S.people[:,:,t].sum(axis=0)
-                D.R.prev.tot[t] = D.S.people[1:,:,t].sum() / D.S.people[:,:,t].sum()
-            
-
-
-        ##########################################################################
-        ## Incidence
-        ##########################################################################
         if epi=='inci':
-            
             printv('Calculating incidence...', 3, verbose)
+            allinci = array([allsims[s].inci for s in range(nsims)])
+            R.inci.pops = quantile(allinci, quantiles=quantiles)
+            R.inci.tot = quantile(allinci.sum(axis=1), quantiles=quantiles) # Axis 1 is populations
         
-            # Calculate incidence
-            for t in range(npts):
-                D.R.inci.pops[:,t] = D.S.inci[:,t] # Simple
-                D.R.inci.tot[t] = D.S.inci[:,t].sum()
-            
-
-
-        ##########################################################################
-        ## Deaths
-        ##########################################################################
+        
         if epi=='death':
-            
             printv('Calculating deaths...', 3, verbose)
-        
-            # Calculate incidence
-            for t in range(npts):
-                D.R.death.pops[:,t] = D.S.death[:,t] # Simple
-                D.R.death.tot[t] = D.S.death[:,t].sum()
-            
+            alldeaths = array([allsims[s].inci for s in range(nsims)])
+            R.death.pops = quantile(alldeaths, quantiles=quantiles)
+            R.death.tot = quantile(alldeaths.sum(axis=1), quantiles=quantiles) # Axis 1 is populations
 
 
-
-        ##########################################################################
-        ## DALYs
-        ##########################################################################
         if epi=='daly':
-            
             printv('Calculating DALYs...', 3, verbose)
-        
-            # Calculate DALYs
             disutils = [D.P.cost.disutil[key] for key in ['acute', 'gt500', 'gt350', 'gt200', 'aids']]
-            for t in range(npts):
-                for p in range(D.G.npops):
-                    for state in [D.G.undx, D.G.dx, D.G.fail]:
-                        D.R.daly.pops[p,t] += sum(D.S.people[int_array(state),p,t] * float_array(disutils))
-                    for state in [D.G.tx1, D.G.tx2]:
-                        D.R.daly.pops[p,t] += sum(D.S.people[int_array(state),p,t] * D.P.cost.disutil.tx)
-                
-                D.R.daly.tot[t] = D.R.daly.pops[:,t].sum()
+            tmpdalypops = allpeople[:,concatenate([D.G.tx1, D.G.tx2]),:,:].sum(axis=1) * D.P.cost.disutil.tx
+            tmpdalytot = allpeople[:,concatenate([D.G.tx1, D.G.tx2]),:,:].sum(axis=(1,2)) * D.P.cost.disutil.tx
+            for h in range(len(disutils)): # Loop over health states
+                healthstates = array([D.G.undx[h], D.G.dx[h], D.G.fail[h]])
+                tmpdalypops += allpeople[:,healthstates,:,:].sum(axis=1) * disutils[h]
+                tmpdalytot += allpeople[:,healthstates,:,:].sum(axis=(1,2)) * disutils[h]
+            R.daly.pops = quantile(tmpdalypops, quantiles=quantiles)
+            R.daly.tot = quantile(tmpdalytot, quantiles=quantiles)
+            
+        
+        if epi=='dx':
+            printv('Calculating diagnoses...', 3, verbose)
+            alldx = array([allsims[s].dx for s in range(nsims)])
+            R.dx.pops = quantile(alldx, quantiles=quantiles)
+            R.dx.tot = quantile(alldx.sum(axis=1), quantiles=quantiles) # Axis 1 is populations
+            
+        
+        if epi=='tx1':
+            printv('Calculating number of people on first-line treatment...', 3, verbose)
+            R.tx1.pops = quantile(allpeople[:,D.G.tx1,:,:].sum(axis=1), quantiles=quantiles) # Sum over health states
+            R.tx1.tot = quantile(allpeople[:,D.G.tx1,:,:].sum(axis=(1,2)), quantiles=quantiles) # Sum over health states and populations
+            
+        
+        if epi=='tx2':
+            printv('Calculating number of people on second-line treatment...', 3, verbose)
+            R.tx2.pops = quantile(allpeople[:,D.G.tx2,:,:].sum(axis=1), quantiles=quantiles) # Sum over health states
+            R.tx2.tot = quantile(allpeople[:,D.G.tx2,:,:].sum(axis=(1,2)), quantiles=quantiles) # Sum over health states and populations
             
 
-
-   
-    
     printv('...done calculating results.', 2, verbose)
-    return D
+    return R

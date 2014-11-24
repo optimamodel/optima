@@ -17,15 +17,14 @@ def gatherplotdata(D, verbose=2):
     ##########################################################################
     
     from matplotlib.pylab import zeros, nan, size, asarray
-    from bunch import Bunch as struct, int_array, float_array
+    from bunch import Bunch as struct, float_array
     from vectocolor import vectocolor
     from printv import printv
     printv('Calculating epidemiology results...', 1, verbose)
     
     D.O = struct()
     D.O.__doc__ = 'Output structure containing everything that might need to be plotted'
-    D.O.tvec = D.S.tvec # Copy time vector
-    npts = len(D.O.tvec)
+    D.O.tvec = D.R.tvec # Copy time vector
     D.O.poplabels = D.G.meta.pops.long
     D.O.popcolors = vectocolor(D.G.npops)
     D.O.colorm = (0,0.3,1) # Model color
@@ -33,95 +32,61 @@ def gatherplotdata(D, verbose=2):
     D.O.xdata = D.data.epiyears
     ndatayears = len(D.O.xdata)
     
-    for epi in ['prev', 'inci', 'daly', 'death']:
+    for epi in ['prev', 'inci', 'daly', 'death', 'dx', 'tx1', 'tx2']:
         D.O[epi] = struct()
-        D.O[epi].pops = zeros((D.G.npops, npts)) # Careful, can't use pop since it's a method!
-        D.O[epi].tot = zeros(npts)
+        D.O[epi].pops = []
+        D.O[epi].tot = struct()
+        for p in range(D.G.npops):
+            D.O[epi].pops.append(struct())
+            D.O[epi].pops[p].best = D.R[epi].pops[0][p,:]
+            D.O[epi].pops[p].low = D.R[epi].pops[1][p,:]
+            D.O[epi].pops[p].high = D.R[epi].pops[2][p,:]
+        D.O[epi].tot.best = D.R[epi].tot[0]
+        D.O[epi].tot.low = D.R[epi].tot[1]
+        D.O[epi].tot.high = D.R[epi].tot[2]
         D.O[epi].xlabel = 'Years'
         
-        
-        ##########################################################################
-        ## Prevalence
-        ##########################################################################
         if epi=='prev':
-            
-            printv('Calculating prevalence...', 3, verbose)
-        
-            # Calculate prevalence
-            for t in range(npts):
-                D.O.prev.pops[:,t] = D.S.people[1:,:,t].sum(axis=0) / D.S.people[:,:,t].sum(axis=0)
-                D.O.prev.tot[t] = D.S.people[1:,:,t].sum() / D.S.people[:,:,t].sum()
-            
-            # Find prevalence data    
-            epidata = asarray(D.data.key.hivprev[0]) # TODO: include uncertainties            
+            printv('Gathering prevalence...', 3, verbose)
+            epidata = asarray(D.data.key.hivprev[0]) # TODO: include uncertainties
             D.O.prev.ydata = zeros((D.G.npops,ndatayears))
             D.O.prev.ylabel = 'Prevalence (%)'
 
-
-
-        ##########################################################################
-        ## Incidence
-        ##########################################################################
         if epi=='inci':
-            
             printv('Calculating incidence...', 3, verbose)
-        
-            # Calculate incidence
-            for t in range(npts):
-                D.O.inci.pops[:,t] = D.S.inci[:,t] # Simple
-                D.O.inci.tot[t] = D.S.inci[:,t].sum()
-            
-            # Find incidence data    
             epidata = D.data.opt.numinfect[0]
             D.O.inci.ydata = zeros(ndatayears)
             D.O.inci.ylabel = 'New HIV infections per year'
 
-
-
-        ##########################################################################
-        ## Deaths
-        ##########################################################################
         if epi=='death':
-            
             printv('Calculating deaths...', 3, verbose)
-        
-            # Calculate incidence
-            for t in range(npts):
-                D.O.death.pops[:,t] = D.S.death[:,t] # Simple
-                D.O.death.tot[t] = D.S.death[:,t].sum()
-            
-            # Find incidence data    
             epidata = D.data.opt.death[0]
             D.O.death.ydata = zeros(ndatayears)
             D.O.death.ylabel = 'HIV-related deaths per year'
 
-
-
-
-        ##########################################################################
-        ## DALYs
-        ##########################################################################
         if epi=='daly':
-            
             printv('Calculating DALYs...', 3, verbose)
-        
-            # Calculate DALYs
-            disutils = [D.P.cost.disutil[key] for key in ['acute', 'gt500', 'gt350', 'gt200', 'aids']]
-            for t in range(npts):
-                for p in range(D.G.npops):
-                    for state in [D.G.undx, D.G.dx, D.G.fail]:
-                        D.O.daly.pops[p,t] += sum(D.S.people[int_array(state),p,t] * float_array(disutils))
-                    for state in [D.G.tx1, D.G.tx2]:
-                        D.O.daly.pops[p,t] += sum(D.S.people[int_array(state),p,t] * D.P.cost.disutil.tx)
-                
-                D.O.daly.tot[t] = D.O.daly.pops[:,t].sum()
-            
-            # Find DALYs data haha LOL
             epidata = nan+zeros(ndatayears) # No data
             D.O.daly.ydata = zeros(ndatayears)
             D.O.daly.ylabel = 'Disability-adjusted life years per year'
-
-
+            
+        if epi=='dx':
+            printv('Calculating diagnoses...', 3, verbose)
+            epidata = D.data.opt.numdiag[0]
+            D.O.dx.ydata = zeros(ndatayears)
+            D.O.dx.ylabel = 'New HIV diagnoses per year'
+        
+        if epi=='tx1':
+            printv('Calculating first-line treatment...', 3, verbose)
+            epidata = D.data.txrx.numfirstline[0]
+            D.O.tx1.ydata = zeros(ndatayears)
+            D.O.tx1.ylabel = 'Number of people on first-line treatment'
+        
+        if epi=='tx2':
+            printv('Calculating second-line treatment...', 3, verbose)
+            epidata = D.data.txrx.numsecondline[0]
+            D.O.tx2.ydata = zeros(ndatayears)
+            D.O.tx2.ylabel = 'Number of people on first-line treatment'
 
         ##########################################################################
         ## Finish processing data
