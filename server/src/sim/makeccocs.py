@@ -19,7 +19,7 @@ default_progname = 'MSM'
 default_ccparams = [0.9, 0.2, 800000.0, 7e6]
 default_coparams = []
 default_makeplot = 1
-default_datain = programs # use 'example' or programs
+default_datain = D # use 'example' or programs
 default_effectname = [['sex', 'condomcom'], [u'CSW'], [[0.7, 0.8], [0.92, 0.97]]]
 
 ###############################################################################
@@ -44,10 +44,10 @@ def makecc(datain = default_datain, progname = default_progname, ccparams = defa
     if isinstance(datain, str):
         D, programs = loaddata(datain+'.prj')
     else:
-        programs = datain
+        D = datain
     
     ## Check that the selected program is in the program list 
-    if progname not in programs.keys():
+    if progname not in D.programs.keys():
         raise Exception('Please select one of the following programs %s' % D.programs.keys())
 
     ## Extract info from data structure
