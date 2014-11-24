@@ -1,4 +1,4 @@
-def makeproject(projectname='example', pops = ['']*6, progs = ['']*5, datastart=2000, dataend=2015, \
+def makeproject(projectname='example', pops = ['']*6, progs = ['']*7, datastart=2000, dataend=2015, \
     econ_datastart=2015, econ_dataend=2030, verbose=2, savetofile = True):
     """
     Initializes the empty project. Only the "Global" parameters are added on this step.
@@ -32,6 +32,9 @@ def makeproject(projectname='example', pops = ['']*6, progs = ['']*5, datastart=
     D.G.projectname = projectname
     D.G.datastart = datastart
     D.G.dataend = dataend
+    
+    D.plot = struct()
+    D.plot.__doc__ = 'Structure for storing all plot data: not just time series but also labels, colors, etc.'
     
     if savetofile: #False if we are using database
         savedata(D.projectfilename, D, verbose=verbose) # Create project -- #TODO: check if an existing project exists and don't overwrite it
