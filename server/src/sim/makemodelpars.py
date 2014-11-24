@@ -6,7 +6,7 @@ def makemodelpars(P, opt, verbose=2):
     """
     
     from printv import printv
-    from matplotlib.pylab import zeros, array
+    from matplotlib.pylab import zeros, array, exp
     from bunch import Bunch as struct # Replicate Matlab-like structure behavior
     printv('Making model parameters...', 1, verbose)
     
@@ -20,7 +20,6 @@ def makemodelpars(P, opt, verbose=2):
     def dpar2mpar(datapar):
         """ Take data parameters and turn them into model parameters """
         npops = len(datapar.p)
-        
         if npops>1:
             output = zeros((npops,npts))
             for pop in range(npops):
@@ -31,9 +30,21 @@ def makemodelpars(P, opt, verbose=2):
         
         return output
     
+    
+    def grow(popsizes, growth):
+        """ Define a special function for population growth, which is just an exponential growth curve """
+        npops = len(popsizes)        
+        output = zeros((npops,npts))
+        for pop in range(npops):
+            output[pop,:] = popsizes[pop]*exp(growth*(tvec-tvec[0])) # Special function for population growth
+            
+        return output
+    
+    
+    
     ## Epidemilogy parameters -- most are data
-    M.popsize = dpar2mpar(P.popsize) # Population size -- TODO: don't take average for this!
-    M.hivprev = dpar2mpar(P.hivprev)[:,0] # Initial HIV prevalence -- only take initial point -- TODO: don't take average for this
+    M.popsize = grow(P.popsize, opt.growth) # Population size
+    M.hivprev = P.hivprev # Initial HIV prevalence
     M.stiprevulc = dpar2mpar(P.stiprevulc) # STI prevalence
     M.stiprevdis = dpar2mpar(P.stiprevdis) # STI prevalence
     M.death = dpar2mpar(P.death) # Death rates

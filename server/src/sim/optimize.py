@@ -32,9 +32,7 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2):
         printv('Iteration: %i | Elapsed: %f s |  Limit: %f s' % (iteration, elapsed, timelimit), 2, verbose)
         D.S.mismatch = -1 # Mismatch for this simulation
     
-    D.A = struct()
-    D.A.__doc__ = 'Optimal allocation results'
-    D.A.orig = zeros(len(D.data.costcov.cost))
+    D.A.optimal = D.A.orig # Just copy for now
     
     allsims = [D.S]
     
@@ -51,16 +49,36 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2):
 
 
 def gatheroptimdata(D):
-    """
-    Return the data for plotting the optimization pie charts.
-    """
+    """ Return the data for plotting the two pie charts -- current allocation and optimal. """
+    plotdata = struct()
+    plotdata.legend = D.data.meta.progs.short
     
+    plotdata.pie1 = struct()
+    plotdata.pie1.name = 'Original'
+    plotdata.pie1.val = D.A.orig.cost
     
+    plotdata.pie2 = struct()
+    plotdata.pie2.name = 'Optimal'
+    plotdata.pie2.val = D.A.optimal.cost
     
-    optim = struct()
+    return plotdata
+
+
+def viewoptimization(plotdata):
+    """ Little function to plot optimization pies """
+    from matplotlib.pylab import figure, pie, legend, title, subplot
     
-    return optim
+    figure(figsize=(12,4))
     
+    subplot(1,3,1)
+    pie(plotdata.pie1.val)
+    title(plotdata.pie1.name)
+    
+    subplot(1,3,2)
+    pie(plotdata.pie2.val)
+    title(plotdata.pie2.name)
+    
+    legend(plotdata.legend, bbox_to_anchor=(2, 0.8))
 
 
 
@@ -89,13 +107,14 @@ def defaultobjectives(D, verbose=2):
     ob.outcome.cost = False # "Minimize cumulative DALYs"
     ob.outcome.costweight = 1 # "Cost weighting"
     
+    ob.money = struct()
     ob.money.objectives = struct()
     for objective in ['inci', 'incisex', 'inciinj', 'mtct', 'mtctbreast', 'mtctnonbreast', 'deaths', 'dalys']:
         ob.money.objectives[objective] = struct()
         ob.money.objectives[objective].use = False # TIck box: by default don't use
         ob.money.objectives[objective].by = 0.5 # "By" text entry box: 0.5 = 50% reduction
         ob.money.objectives[objective].to = 0 # "To" text entry box: don't use if set to 0
-    ob.money.inci.use = True # Set incidence to be on by default
+    ob.money.objectives.inci.use = True # Set incidence to be on by default
     
     ob.money.costs = struct()
     for prog in D.programs.keys():
