@@ -8,19 +8,19 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.populations = [
-      { internalName:"FSW", shortName: "FSW", fullName: "Female sex workers", sex: "female", injects_drugs: false, heterosexual: true, homosexual: false, sex_work_provider: true, sex_work_client: false },
-      { internalName:"CSW", shortName: "Clients", fullName: "Clients of sex workers", sex: "male", injects_drugs: false, heterosexual: true, homosexual: false, sex_work_provider: false, sex_work_client: true },
-      { internalName:"MSM", shortName: "MSM", fullName: "Men who have sex with men", sex: "male", injects_drugs: false, heterosexual: false, homosexual: true, sex_work_provider: false, sex_work_client: false },
-      { internalName:"TI", shortName: "Transgender", fullName: "Transgender individuals", sex: "other", injects_drugs: false, heterosexual: false, homosexual: true, sex_work_provider: false, sex_work_client: false },
-      { internalName:"PWID", shortName: "PWID", fullName: "People who inject drugs", sex: "other", injects_drugs: true, heterosexual: true, homosexual: false, sex_work_provider: false, sex_work_client: false },
-      { internalName:"MWID", shortName: "Male PWID", fullName: "Males who inject drugs", sex: "male", injects_drugs: true, heterosexual: true, homosexual: false, sex_work_provider: false, sex_work_client: false },
-      { internalName:"FWID", shortName: "Female PWID", fullName: "Females who inject drugs", sex: "female", injects_drugs: true, heterosexual: true, homosexual: false, sex_work_provider: false, sex_work_client: false },
-      { internalName:"CHILD", shortName: "Children", fullName: "Children (2-15)", sex: "other", injects_drugs: false, heterosexual: false, homosexual: false, sex_work_provider: false, sex_work_client: false },
-      { internalName:"INF", shortName: "Infants", fullName: "Infants (0-2)", sex: "other", injects_drugs: false, heterosexual: false, homosexual: false, sex_work_provider: false, sex_work_client: false },
-      { internalName:"OM15_49", shortName: "Males 15-49", fullName: "Other males (15-49)", sex: "male", injects_drugs: false, heterosexual: true, homosexual: false, sex_work_provider: false, sex_work_client: false },
-      { internalName:"OF15_49", shortName: "Females 15-49", fullName: "Other females (15-49)", sex: "female", injects_drugs: false, heterosexual: true, homosexual: false, sex_work_provider: false, sex_work_client: false },
-      { internalName:"OM", shortName: "Other males", fullName: "Other males [enter age]", sex: "male", injects_drugs: false, heterosexual: true, homosexual: false, sex_work_provider: false, sex_work_client: false },
-      { internalName:"OF", shortName: "Other females", fullName: "Other females [enter age]", sex: "female", injects_drugs: false, heterosexual: true, homosexual: false, sex_work_provider: false, sex_work_client: false }
+      { active: false, internal_name:"FSW", short_name: "FSW", name: "Female sex workers", sex: "female", injects_drugs: false, heterosexual: true, homosexual: false, sex_work_provider: true, sex_work_client: false },
+      { active: false, internal_name:"CSW", short_name: "Clients", name: "Clients of sex workers", sex: "male", injects_drugs: false, heterosexual: true, homosexual: false, sex_work_provider: false, sex_work_client: true },
+      { active: false, internal_name:"MSM", short_name: "MSM", name: "Men who have sex with men", sex: "male", injects_drugs: false, heterosexual: false, homosexual: true, sex_work_provider: false, sex_work_client: false },
+      { active: false, internal_name:"TI", short_name: "Transgender", name: "Transgender individuals", sex: "other", injects_drugs: false, heterosexual: false, homosexual: true, sex_work_provider: false, sex_work_client: false },
+      { active: false, internal_name:"PWID", short_name: "PWID", name: "People who inject drugs", sex: "other", injects_drugs: true, heterosexual: true, homosexual: false, sex_work_provider: false, sex_work_client: false },
+      { active: false, internal_name:"MWID", short_name: "Male PWID", name: "Males who inject drugs", sex: "male", injects_drugs: true, heterosexual: true, homosexual: false, sex_work_provider: false, sex_work_client: false },
+      { active: false, internal_name:"FWID", short_name: "Female PWID", name: "Females who inject drugs", sex: "female", injects_drugs: true, heterosexual: true, homosexual: false, sex_work_provider: false, sex_work_client: false },
+      { active: false, internal_name:"CHILD", short_name: "Children", name: "Children (2-15)", sex: "other", injects_drugs: false, heterosexual: false, homosexual: false, sex_work_provider: false, sex_work_client: false },
+      { active: false, internal_name:"INF", short_name: "Infants", name: "Infants (0-2)", sex: "other", injects_drugs: false, heterosexual: false, homosexual: false, sex_work_provider: false, sex_work_client: false },
+      { active: false, internal_name:"OM15_49", short_name: "Males 15-49", name: "Other males (15-49)", sex: "male", injects_drugs: false, heterosexual: true, homosexual: false, sex_work_provider: false, sex_work_client: false },
+      { active: false, internal_name:"OF15_49", short_name: "Females 15-49", name: "Other females (15-49)", sex: "female", injects_drugs: false, heterosexual: true, homosexual: false, sex_work_provider: false, sex_work_client: false },
+      { active: false, internal_name:"OM", short_name: "Other males", name: "Other males [enter age]", sex: "male", injects_drugs: false, heterosexual: true, homosexual: false, sex_work_provider: false, sex_work_client: false },
+      { active: false, internal_name:"OF", short_name: "Other females", name: "Other females [enter age]", sex: "female", injects_drugs: false, heterosexual: true, homosexual: false, sex_work_provider: false, sex_work_client: false }
     ];
 
     $scope.programs = [
