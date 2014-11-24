@@ -416,7 +416,7 @@ class OptimaWorkbook:
     current_row = self.emit_years_block('Probability of a person with CD4 <200 being tested per year', current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption = True, programs = True)
     current_row = self.emit_years_block('Number of people on first-line treatment', current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption = True, programs = True)
     current_row = self.emit_years_block('Number of people on second-line treatment', current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption = True, programs = True)
-    current_row = self.emit_years_block('Percentage of women on PMTCT (Option B/B+)', current_row, ['Total'], row_format = OptimaFormats.PERCENTAGE, assumption = True, programs = True)
+    current_row = self.emit_years_block('Number of women on PMTCT (Option B/B+)', current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption = True, programs = True)
     current_row = self.emit_ref_years_block('Birth rate (births/woman/year)', current_row, self.pop_range, row_format = OptimaFormats.NUMBER, assumption = True, programs = True)
     current_row = self.emit_years_block('Percentage of HIV-positive women who breastfeed', current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption = True, programs = True)
 
