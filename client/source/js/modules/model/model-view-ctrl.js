@@ -100,6 +100,37 @@ define(['./module', 'angular'], function (module, angular) {
         var data = response[type.id];
         var scatterDataAvailable = data.pops.length === data.ydata.length;
 
+        if (type.total) {
+          var graph = {
+            options: angular.copy(linescatteroptions),
+            data: angular.copy(linescatterdata),
+            type: type,
+            title: 'Showing total data for "' + type.name + '"'
+          };
+
+          graph.data.line = _(data.tot).map(function (value, i) {
+            //      x                 y
+            return [response.tvec[i], value];
+          });
+
+          graph.options.xAxis.axisLabel = data.xlabel;
+          graph.options.yAxis.axisLabel = data.ylabel;
+
+          if (data.ydata.length === 1) {
+            graph.data['scatter-error'] = _(data.ydata).chain()
+            .map(function (value, i) {
+              //      x                 y
+              return [response.xdata[i], value];
+            })
+            .filter(function (value) {
+              return !!value[1];
+            })
+            .value();
+          }
+
+          graphs.push(graph);
+        }
+
         if (type.byPopulation) {
           _(data.pops).each(function (population, populationIndex) {
             var graph = {
@@ -131,37 +162,6 @@ define(['./module', 'angular'], function (module, angular) {
 
             graphs.push(graph);
           });
-        }
-
-        if (type.total) {
-          var graph = {
-            options: angular.copy(linescatteroptions),
-            data: angular.copy(linescatterdata),
-            type: type,
-            title: 'Showing total data for "' + type.name + '"'
-          };
-
-          graph.data.line = _(data.tot).map(function (value, i) {
-            //      x                 y
-            return [response.tvec[i], value];
-          });
-
-          graph.options.xAxis.axisLabel = data.xlabel;
-          graph.options.yAxis.axisLabel = data.ylabel;
-
-          if (data.ydata.length === 1) {
-            graph.data['scatter-error'] = _(data.ydata).chain()
-              .map(function (value, i) {
-                //      x                 y
-                return [response.xdata[i], value];
-              })
-              .filter(function (value) {
-                return !!value[1];
-              })
-              .value();
-          }
-
-          graphs.push(graph);
         }
 
       });
