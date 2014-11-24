@@ -26,6 +26,10 @@ define(['./module', 'underscore'], function (module, _) {
           }
 
           $scope.projects.splice($scope.projects.indexOf(name), 1);
+
+          if (activeProject.name === name) {
+            activeProject.setValue('');
+          }
         })
         .error(function () {
           alert('Could not remove the project')
