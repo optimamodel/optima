@@ -103,6 +103,55 @@ def gatherepidata(D, verbose=2):
 
 
 
+
+def gatherscenariodata(D, verbose=2):
+    """
+    Generate all outputs required for the model:
+        Prevalence
+        Incidence
+        DALYs
+        Deaths
+        Diagnoses
+        Treatment 1
+        Treatment 2
+    
+    For each, calculate for both overall and per population. Unlike gatherepidata,
+    this code doesn't gather experimental data, but does handle multiple simultaneous
+    runs.
+
+    Version: 2014nov24
+    """
+    
+    from bunch import Bunch as struct
+    from printv import printv
+    printv('Calculating epidemiology results...', 1, verbose)
+    
+    E = struct()
+    E.__doc__ = 'Output structure containing everything that might need to be plotted'
+    E.tvec = D.R.tvec # Copy time vector
+    E.poplabels = D.G.meta.pops.long
+    E.colorm = (0,0.3,1) # Model color
+    E.colord = (0,0,0) # Data color
+    
+    for epi in ['prev', 'inci', 'daly', 'death', 'dx', 'tx1', 'tx2']:
+        E[epi] = struct()
+        E[epi].pops = []
+        E[epi].tot = struct()
+        for p in range(D.G.npops):
+            E[epi].pops.append(struct())
+            E[epi].pops[p].best = D.R[epi].pops[0][p,:]
+            E[epi].pops[p].low = D.R[epi].pops[1][p,:]
+            E[epi].pops[p].high = D.R[epi].pops[2][p,:]
+        E[epi].tot.best = D.R[epi].tot[0]
+        E[epi].tot.low = D.R[epi].tot[1]
+        E[epi].tot.high = D.R[epi].tot[2]
+        E[epi].xlabel = 'Years'
+        
+
+    printv('...done running scenario results.', 2, verbose)
+    return E
+
+
 def gatheroptimdata(D):
     """ Return the data for plotting the two pie charts -- current allocation and optimal. """
     from bunch import Bunch as struct
