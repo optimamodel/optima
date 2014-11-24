@@ -8,8 +8,9 @@ def quantile(data, quantiles=[0.5, 0.25, 0.75]):
     """
     from matplotlib.pylab import array
     nsamples = len(data) # Number of samples in the dataset
-    indices = (array(quantiles)*nsamples).round().astype(int) # Calculate the indices to pull out
-    array(data).sort(axis=0) # Do the actual sorting along the 
-    output = array(data)[indices] # Trim down to the desired quantiles
+    indices = (array(quantiles)*(nsamples-1)).round().astype(int) # Calculate the indices to pull out
+    output = array(data)
+    output.sort(axis=0) # Do the actual sorting along the 
+    output = output[indices] # Trim down to the desired quantiles
     
     return output
