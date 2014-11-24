@@ -5,7 +5,7 @@ def viewresults(O, whichgraphs={'prev':[1,1], 'inci':[1,1], 'daly':[1,1], 'death
     Version: 2014nov23
     """
     
-    from matplotlib.pylab import figure, plot, hold, scatter, xlabel, ylabel, xlim, ylim, legend, title, ndim, ceil, sqrt, subplot, show
+    from matplotlib.pylab import figure, plot, hold, scatter, xlabel, ylabel, xlim, ylim, legend, title, ndim, ceil, sqrt, subplot, show, fill_between
     
     npops = len(O.prev.pops) # Calculate number of populations
     
@@ -34,6 +34,7 @@ def viewresults(O, whichgraphs={'prev':[1,1], 'inci':[1,1], 'daly':[1,1], 'death
                         else:
                             figure()
                         hold(True)
+                        fill_between(O.tvec, O[graph].pops[p].low*percent, O[graph].pops[p].high*percent, alpha=0.2, edgecolor='none')
                         plot(O.tvec, O[graph].pops[p].best*percent, c=O.colorm)
                         if ndim(O[graph].ydata)==2:
                             scatter(O.xdata, O[graph].ydata[p,:]*percent, c=O.colord)
@@ -52,10 +53,8 @@ def viewresults(O, whichgraphs={'prev':[1,1], 'inci':[1,1], 'daly':[1,1], 'death
                     else:
                         figure()
                     hold(True)
-                    try:
-                        plot(O.tvec, O[graph].tot.best*percent, c=O.colorm)
-                    except:
-                        print('hi')
+                    fill_between(O.tvec, O[graph].tot.low*percent, O[graph].tot.high*percent, alpha=0.2, edgecolor='none')
+                    plot(O.tvec, O[graph].tot.best*percent, c=O.colorm)
                     if ndim(O[graph].ydata)==1:
                         scatter(O.xdata, O[graph].ydata*percent, c=O.colord)
                     
