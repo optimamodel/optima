@@ -12,11 +12,11 @@ def manualfit(D, F, startyear=2000, endyear=2015, verbose=2):
         D = manualfit(D, F) # Rerun manualfit
         D = manualfit(D, F, dosave=True) # If the result is good, save
         
-    Version: 2014nov05
+    Version: 2014nov24
     """
     
     from printv import printv
-    printv('Running manual fitting...', 1, verbose)
+    printv('Running manual calibration...', 1, verbose)
     
     # Update options structure
     from setoptions import setoptions
@@ -37,5 +37,5 @@ def manualfit(D, F, startyear=2000, endyear=2015, verbose=2):
     from makeresults import makeresults
     D.R = makeresults(allsims, D, D.opt.quantiles, verbose=verbose)
     
-    printv('...done manual fitting.', 2, verbose)
+    printv('...done with manual calibration.', 2, verbose)
     return D

@@ -8,7 +8,7 @@ def gatherplotdata(D, verbose=2):
     
     For each, calculate for both overall and per population.
 
-    Version: 2014nov22
+    Version: 2014nov24
     """
     
     
@@ -18,7 +18,6 @@ def gatherplotdata(D, verbose=2):
     
     from matplotlib.pylab import zeros, nan, size, asarray
     from bunch import Bunch as struct, float_array
-    from vectocolor import vectocolor
     from printv import printv
     printv('Calculating epidemiology results...', 1, verbose)
     
