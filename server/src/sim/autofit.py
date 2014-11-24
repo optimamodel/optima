@@ -1,4 +1,4 @@
-def autofit(D, timelimit, startyear=2000, endyear=2015, verbose=2):
+def autofit(D, timelimit=60, startyear=2000, endyear=2015, verbose=2):
     """
     Automatic metaparameter fitting code.
     
@@ -62,7 +62,7 @@ def performfit(D, timelimit, verbose=2):
     while elapsed<timelimit:
         iteration += 1
         elapsed = time() - tstart
-        S = model(D.G, D.M, D.F, D.opt, verbose=verbose)
+        S = model(D.G, D.M, D.F[0], D.opt, verbose=verbose)
         print('Iteration: %i Elapsed vs. limit: %f %f' % (iteration, elapsed, timelimit))
         
     err = -1

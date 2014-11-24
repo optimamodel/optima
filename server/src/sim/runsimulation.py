@@ -9,7 +9,7 @@ def runsimulation(D, startyear=2000, endyear=2030, verbose=2):
     from printv import printv
     printv('Running simulation...', 1, verbose)
     
-    # update options structure
+    # Update options structure
     from setoptions import setoptions
     D.opt = setoptions(opt=D.opt, startyear=startyear, endyear=endyear)
     
