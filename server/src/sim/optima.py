@@ -46,19 +46,19 @@ from runsimulation import runsimulation
 D = runsimulation(D, startyear=2000, endyear=2015, verbose=verbose)
 
 print('\n\n\n4. Making plot data...')
-from gatherplotdata import gatherplotdata
-D = gatherplotdata(D, verbose=verbose)
+from gatherplotdata import gatherepidata
+D.E = gatherepidata(D, verbose=verbose)
 
 print('\n\n\n5. Viewing results...')
 from viewresults import viewresults
-viewresults(D.O, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'death':[0,1], 'dx':[0,1], 'tx1':[0,1], 'tx2':[0,1]}, startyear=2000, endyear=2015, onefig=True, verbose=verbose, show_wait=show_wait)
+viewresults(D.E, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'death':[0,1], 'dx':[0,1], 'tx1':[0,1], 'tx2':[0,1]}, startyear=2000, endyear=2015, onefig=True, verbose=verbose, show_wait=show_wait)
 
 print('\n\n\n6. Automatic calibration...')
 from autofit import autofit
 D = autofit(D, timelimit=5, startyear=2000, endyear=2015, verbose=verbose)
 
 print('\n\n\n7. Viewing results again...')
-viewresults(D.O)
+viewresults(D.E)
 
 print('\n\n\n8. Running scenarios...')
 print('TBA')
