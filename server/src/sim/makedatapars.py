@@ -32,13 +32,22 @@ def makedatapars(D, verbose=2):
     
     def data2par(dataarray):
         """ Take an array of data and turn it into default parameters -- here, just take the means """
-        nrows = shape(dataarray)[0] # See how many rows need to be filled (either npops or 1)
+        nrows = shape(dataarray)[0] # See how many rows need to be filled (either npops, nprogs, or 1)
         output = struct() # Create structure
         output.t = 1 # Set default time pameter -- constant (1) by default
         output.y = [D.G.datastart, D.G.dataend] # Set default control years -- start and end of the data
         output.p = zeros(nrows) # Initialize array for holding population parameters
         for r in xrange(nrows): 
             output.p[r] = mean(sanitize(dataarray[r])) # Calculate mean for each population
+        
+        return output
+
+    def dataindex(dataarray, index):
+        """ Take an array of data return either the first or last (...or some other) non-NaN entry """
+        nrows = shape(dataarray)[0] # See how many rows need to be filled (either npops, nprogs, or 1)
+        output = zeros(nrows) # Create structure
+        for r in xrange(nrows): 
+            output[r] = sanitize(dataarray[r])[index] # Return the specified index -- usually either the first [0] or last [-1]
         
         return output
     
@@ -55,7 +64,7 @@ def makedatapars(D, verbose=2):
     ## Key parameters
     for parname in D.data.key.keys():
         printv('Converting data parameter %s...' % parname, 2, verbose)
-        D.P[parname] = data2par(D.data.key[parname][0]) # Population size and prevalence -- # TODO: don't take average for this, and use uncertainties!
+        D.P[parname] = dataindex(D.data.key[parname][0], 0) # Population size and prevalence -- # TODO: don't take average for this, and use uncertainties!
     
     ## Loop over parameters that can be converted automatically
     for parclass in ['epi', 'txrx', 'sex', 'inj']:
@@ -79,6 +88,13 @@ def makedatapars(D, verbose=2):
                 for parname in D.data[uberclass][parclass].keys():
                     printv('Converting data parameter %s...' % parname, 4, verbose)
                     D.P[uberclass][parclass][parname] = D.data[uberclass][parclass][parname][0] # Taking best value only, hence the 0
+    
+    ## Program cost data
+    D.A = struct() # Initialize allocations structure
+    D.A.__doc__ = 'Allocation results -- current and optimal'
+    D.A.orig = struct() # Original allocations
+    D.A.orig.cost = dataindex(D.data.costcov.cost, -1) # Pull out last entry for each program
+    
     
     ## TODO: disutility, economic data etc.
             

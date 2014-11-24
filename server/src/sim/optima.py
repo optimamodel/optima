@@ -6,13 +6,12 @@ This function does everything. The basic procedure is as follows:
 1. makeproject -- initialize the project file
 2. updatedata -- load the data into a structure
 3. runsimulation -- run the simulation
-4. epiresults -- calculate the results
+4. gatherplotdata -- gather the data for the plots
 5. viewresults -- display the results
 6. autofit -- automatically calibrate
 7. viewresults -- display the updated results
-...
-8. scenarios -- run some scenarios
-9. viewscenarios -- view the results of the scenarios
+# 8. scenarios -- run some scenarios
+# 9. viewscenarios -- view the results of the scenarios
 10. optimize -- run an optimization
 11. viewoptimization -- view an optimization
 
@@ -60,5 +59,19 @@ D = autofit(D, timelimit=5, startyear=2000, endyear=2015, verbose=verbose)
 
 print('\n\n\n7. Viewing results again...')
 viewresults(D.O)
+
+print('\n\n\n8. Running scenarios...')
+print('TBA')
+
+print('\n\n\n9. Viewing scenarios...')
+print('TBA')
+
+print('\n\n\n10. Running optimization...')
+from optimize import optimize
+D = optimize(D, objectives=None, constraints=None, timelimit=5, verbose=2)
+
+print('\n\n\n11. Viewing optimization...')
+from optimize import viewoptimization
+viewoptimization(D.O.optim)
 
 print('\n\n\nDONE.')
