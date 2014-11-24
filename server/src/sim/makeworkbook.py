@@ -494,8 +494,9 @@ class OptimaWorkbook:
       ['Acute infection','CD4(>500)','CD4(350-500)','CD4(200-350)','CD4(<200)','On treatment','Tuberculosis cofactor'], \
       [0, 0.0005, 0.0010, 0.01, 0.49, 0.04, 0.02], OptimaFormats.DECIMAL_PERCENTAGE), \
     ('Relative transmissibility', \
-      ['Condom','Circumcision','Diagnosis behavior change','STI cofactor increase','Opiate substitution therapy','PMTCT','ARV Treatment'], \
-      [0.05, 0.30, 0.65, 3.50, 0.05, 0.05, 0.30], OptimaFormats.PERCENTAGE)]
+      ['Condom','Circumcision','Diagnosis behavior change','STI cofactor increase','Opiate substitution therapy',\
+      'PMTCT','ARV Treatment', 'Pre-exposure prophylaxis', 'Post-exposure prophylaxis'], \
+      [0.05, 0.30, 0.65, 3.50, 0.05, 0.05, 0.30, 0.5, 0.5], OptimaFormats.PERCENTAGE)]
 
     for (name, row_names, data, format) in names_rows_data_format:
       current_row = self.emit_constants_block(name, current_row, row_names, data, format)
