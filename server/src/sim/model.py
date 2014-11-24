@@ -109,14 +109,19 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
                 
                 for act in ['reg','cas','com']:
                     if M.pships[act][popM,popF]>0:
-                        numactsM = M.totalacts[act][popM,popF,t]; # Number of acts per person per year
-                        numactsF = M.totalacts[act][popF,popM,t]; # Number of acts per person per year
+                        numactsM = M.totalacts[act][popM,popF,t]; # Number of acts per person per year (insertive partner)
+                        numactsF = M.totalacts[act][popF,popM,t]; # Number of acts per person per year (receptive partner)
                         condomprob = (M.condom[act][popM,t] + M.condom[act][popF,t]) / 2 # Reconcile condom probability
-                        condomeff = 1 - (1-M.const.eff.condom) * condomprob*M.const.eff.condom # Effect of condom use
-                        forceinfM = 1 - (1-transM*circeff*stieffM) ** (dt*numactsM*condomeff*effhivprev[popF]) # The chance of person B infecting person A
+                        condomeff = 1 - (1-M.const.eff.condom) * condomprob # Effect of condom use
+                        forceinfM = 1 - (1-transM*circeff*stieffM) ** (dt*numactsM*condomeff*effhivprev[popF]) # The chance of person A infecting person B -- # TODO: Implement PrEP etc here
                         forceinfF = 1 - (1-transF*circeff*stieffF) ** (dt*numactsF*condomeff*effhivprev[popM]) # The chance of person B infecting person A
+                        
+                        
+                        ### Is this the right place to multiply by dt???  
+                        
+                        
                         forceinfvec[popM] = 1 - (1-forceinfvec[popM]) * (1-forceinfM) # Calculate the new "male" forceinf, ensuring that it never gets above 1
-                        forceinfvec[popF] = 1 - (1-forceinfvec[popF]) * (1-forceinfF) # Calculate the new "male" forceinf, ensuring that it never gets above 1
+                        forceinfvec[popF] = 1 - (1-forceinfvec[popF]) * (1-forceinfF) # Calculate the new "female" forceinf, ensuring that it never gets above 1
                         if not(all(forceinfvec>=0)): raise Exception('Sexual force-of-infection is invalid')
         
         ## Injecting partnerships -- # TODO make more efficient
