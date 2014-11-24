@@ -35,14 +35,14 @@ define(['./module', 'angular'], function (module, angular) {
     };
 
     $scope.types = [
-      { id: 'prev', name: 'Prevalence', active: true, total: false },
-      { id: 'daly', name: 'DALYs per year', active: false, total: false },
-      { id: 'death', name: 'HIV-related deaths per year', active: false, total: false },
-      { id: 'inci', name: 'New HIV infections per year', active: false, total: false }
+      { id: 'prev', name: 'Prevalence', active: true, byPopulation: true, total: false },
+      { id: 'daly', name: 'DALYs per year', active: false, byPopulation: false, total: false },
+      { id: 'death', name: 'HIV-related deaths per year', active: false, byPopulation: false, total: false },
+      { id: 'inci', name: 'New HIV infections per year', active: false, byPopulation: false, total: false }
     ];
 
     var getActiveOptions = function () {
-      return _($scope.types).chain().where({ active: true }).pluck('id').value();
+      return _($scope.types).where({ active: true });
     };
 
     $scope.enableManualCalibration = false;
@@ -51,8 +51,6 @@ define(['./module', 'angular'], function (module, angular) {
     $scope.simulationOptions = {};
     $scope.graphs = [];
 
-    $scope.graphType = 'prev';
-
     var linescatteroptions = {
       height: 250,
       width: 400,
@@ -60,7 +58,7 @@ define(['./module', 'angular'], function (module, angular) {
         top: 20,
         right: 20,
         bottom: 60,
-        left: 50
+        left: 100
       },
       xAxis: {
         axisLabel: 'Year',
@@ -89,20 +87,28 @@ define(['./module', 'angular'], function (module, angular) {
      * Methods
      */
 
-    var prepareGraphs = function (response, types) {
-      var graphs = [];
+    var prepareGraphs = function (response) {
+      var graphs = [], types;
+
+      if (!response) {
+        return graphs;
+      }
+
+      types = getActiveOptions();
 
       _(types).each(function (type) {
-        var data = response[type];
+        var data = response[type.id];
         var scatterDataAvailable = data.pops.length === data.ydata.length;
 
-        _(data.pops).each(function (population, populationIndex) {
+        if (type.total) {
           var graph = {
             options: angular.copy(linescatteroptions),
-            data: angular.copy(linescatterdata)
+            data: angular.copy(linescatterdata),
+            type: type,
+            title: 'Showing total data for "' + type.name + '"'
           };
 
-          graph.data.line = _(population).map(function (value, i) {
+          graph.data.line = _(data.tot).map(function (value, i) {
             //      x                 y
             return [response.tvec[i], value];
           });
@@ -110,20 +116,54 @@ define(['./module', 'angular'], function (module, angular) {
           graph.options.xAxis.axisLabel = data.xlabel;
           graph.options.yAxis.axisLabel = data.ylabel;
 
-          if (scatterDataAvailable) {
-            graph.data['scatter-error'] = _(data.ydata[populationIndex]).chain()
-              .map(function (value, i) {
-                //      x                 y
-                return [response.tvec[i], value];
-              })
-              .filter(function (value) {
-                return !!value[1];
-              })
-              .value();
+          if (data.ydata.length === 1) {
+            graph.data['scatter-error'] = _(data.ydata).chain()
+            .map(function (value, i) {
+              //      x                 y
+              return [response.xdata[i], value];
+            })
+            .filter(function (value) {
+              return !!value[1];
+            })
+            .value();
           }
 
           graphs.push(graph);
-        });
+        }
+
+        if (type.byPopulation) {
+          _(data.pops).each(function (population, populationIndex) {
+            var graph = {
+              options: angular.copy(linescatteroptions),
+              data: angular.copy(linescatterdata),
+              type: type,
+              title: 'Showing ' + type.name + ' for population "' + $scope.parameters.meta.pops.long[populationIndex] + '"'
+            };
+
+            graph.data.line = _(population).map(function (value, i) {
+              //      x                 y
+              return [response.tvec[i], value];
+            });
+
+            graph.options.xAxis.axisLabel = data.xlabel;
+            graph.options.yAxis.axisLabel = data.ylabel;
+
+            if (scatterDataAvailable) {
+              graph.data['scatter-error'] = _(data.ydata[populationIndex]).chain()
+                .map(function (value, i) {
+                  //      x                 y
+                  return [response.xdata[i], value];
+                })
+                .filter(function (value) {
+                  return !!value[1];
+                })
+                .value();
+            }
+
+            graphs.push(graph);
+          });
+        }
+
       });
 
       return graphs;
@@ -141,41 +181,35 @@ define(['./module', 'angular'], function (module, angular) {
       return F;
     };
 
+    var updateGraphs = function (data) {
+      $scope.graphs = prepareGraphs(data);
+      $scope.parameters.cache.response = data;
+    };
+
     $scope.simulate = function () {
       $http.post('/api/model/view', $scope.simulationOptions)
-        .success(function (response) {
-          $scope.graphs = prepareGraphs(response, getActiveOptions());
-          $scope.parameters.cache.response = response;
-        });
+        .success(updateGraphs);
     };
 
     $scope.previewManualCalibration = function () {
-      Model.saveCalibrateManual({ F: prepareF($scope.parameters.f) },
-        function (response) {
-          $scope.graphs = prepareGraphs(response, $scope.graphType);
-          $scope.parameters.cache.response = response;
-        });
+      Model.saveCalibrateManual({ F: prepareF($scope.parameters.f) }, updateGraphs);
     };
 
     $scope.saveManualCalibration = function () {
       Model.saveCalibrateManual({
         F: prepareF($scope.parameters.f),
         dosave: true
-      }, function (response) {
-        $scope.graphs = prepareGraphs(response, $scope.graphType);
-        $scope.parameters.cache.response = response;
-      });
+      }, updateGraphs);
     };
 
     $scope.revertManualCalibration = function () {
       angular.extend($scope.parameters.f, $scope.parameters.cache.f);
     };
 
-    $scope.$watch('graphType', function (newValue) {
-      if (newValue && !_($scope.parameters.cache.response).isEmpty()) {
-        $scope.graphs = prepareGraphs($scope.parameters.cache.response, $scope.graphType);
-      }
-    });
+    $scope.onGraphTypeChange = function (type) {
+      type.active = type.total || type.byPopulation;
+      updateGraphs($scope.parameters.cache.response);
+    };
 
   });
 });
