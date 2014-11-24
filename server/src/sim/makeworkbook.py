@@ -80,21 +80,62 @@ def make_years_range(name, params, data_start, data_end):
   return OptimaContent(name, params, years_range(data_start, data_end))
 
 """ 
-every params array is a dictionary with at least these entries:
-name - param name
-acronym - param acronym
+every populations item is a dictionary is expected to have the following fields:
+internal_name, short_name, name, male, female, injects, hetero, homo, sexworker, client
+(3x str, 7x bool)
 """
-def make_parameter_range(name, params):
-  column_names = ['Short name', 'Long name']
-  row_names = range(1, len(params)+1)
+def make_populations_range(name, items):
+  column_names = ['Internal name','Short name','Long name','Male','Female','Injects','Heterosexual', \
+  'Homosexual','Sex worker','Client']
+  row_names = range(1, len(items)+1)
   coded_params = []
-  for item in params:
+  for item in items:
     if type(item) is dict:
       item_name = item['name']
-      acronym = item.get('acronym', abbreviate(item_name))
-      coded_params.append([acronym, item_name])
-    else:
-      coded_params = [list((abbreviate(item), item)) for item in params]
+      internal_name = item.get('internal_name', abbreviate(item_name))
+      short_name = item.get('short_name', abbreviate(item_name))
+      male = item.get('male', False)
+      female = item.get('female', False)
+      injects = item.get('injects',False)
+      hetero = item.get('hetero',False)
+      homo = item.get('homo',False)
+      sexworker = item.get('injects',False)
+      client = item.get('injects',False)      
+    else: # backward compatibility :) might raise exception which is ok
+      item_name = item
+      internal_name = abbreviate(item_name)
+      short_name = internal_name
+      male = False
+      female = False
+      injects = False
+      hetero = False
+      homo = False
+      sexworker = False
+      client = False      
+    coded_params.append([internal_name, short_name, item_name, male, female, injects, hetero, homo, sexworker, client])
+  return OptimaContent(name, row_names, column_names, coded_params)
+
+""" 
+every programs item is a dictionary is expected to have the following fields:
+internal_name, short_name, name, saturating
+(3x str, 1x bool)
+"""
+def make_programs_range(name, items):
+  column_names = ['Internal name','Short name','Long name','Saturating']
+  row_names = range(1, len(items)+1)
+  coded_params = []
+  for item in items:
+    if type(item) is dict:
+      item_name = item['name']
+      internal_name = item.get('internal_name', abbreviate(item_name))
+      short_name = item.get('short_name', abbreviate(item_name))
+      saturating = item.get('saturating', False)
+    else: # backward compatibility :) might raise exception which is ok
+      item_name = item
+      internal_name = abbreviate(item_name)
+      short_name = internal_name
+      saturating = False      
+    coded_params.append([internal_name, short_name, item_name, saturating])
   return OptimaContent(name, row_names, column_names, coded_params)
 
 def make_constant_range(name, row_names, best_data):
@@ -145,8 +186,13 @@ class OptimaFormats:
   def write_option(self, sheet, row, col, name = 'OR'):
     sheet.write(row, col, name, self.formats['bold'])
 
+  #special processing for bool values (to keep the content separate from representation)
   def write_unlocked(self, sheet, row, col, data, row_format = 'unlocked'):
-    sheet.write(row, col, data, self.formats[row_format])
+    if type(data)==bool:
+      bool_data = 'TRUE' if data else 'FALSE'
+      sheet.write(row, col, bool_data, self.formats[row_format])
+    else:
+      sheet.write(row, col, data, self.formats[row_format])
 
   def write_empty_unlocked(self, sheet, row, col, row_format = 'unlocked'):
     sheet.write_blank(row, col, None, self.formats[row_format])
@@ -353,14 +399,15 @@ class OptimaWorkbook:
     pp_sheet = self.sheets['pp']
     pp_sheet.protect()
     pp_sheet.set_column(2,2,15)
-    pp_sheet.set_column(3,3,40)
+    pp_sheet.set_column(3,3,15)
+    pp_sheet.set_column(4,4,40)
     current_row = 0
 
-    pop_content = make_parameter_range('Populations', self.pops)
+    pop_content = make_populations_range('Populations', self.pops)
     self.pop_range = TitledRange(pp_sheet, current_row, pop_content) # we'll need it for references
     current_row = self.pop_range.emit(self.formats)
 
-    prog_content = make_parameter_range('Programs', self.progs)
+    prog_content = make_programs_range('Programs', self.progs)
     self.prog_range = TitledRange(pp_sheet, current_row, prog_content) # ditto
     current_row = self.prog_range.emit(self.formats)
 
