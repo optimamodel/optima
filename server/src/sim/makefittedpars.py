@@ -1,3 +1,12 @@
+def perturb(n=1, perturbation=0.1):
+    """
+    Define an array of numbers evenly perturbed with a mean of 1.
+    """
+    from matplotlib.pylab import rand
+    output = 1 + 2*perturbation*(rand(n)-0.5)
+    return output
+    
+
 def makefittedpars(G, opt, verbose=2):
     """
     Prepares model parameters to run the simulation.
@@ -15,10 +24,10 @@ def makefittedpars(G, opt, verbose=2):
     for s in range(opt.nsims):
         F.append(struct())
         F[s].__doc__ = 'Fitted parameters for simulation %i: initial prevalence, force-of-infection, diagnoses, treatment' % s
-        F[s].init = ones(G.npops)
-        F[s].force = ones(G.npops)
-        F[s].dx = array([1, 1, (G.datastart+G.dataend)/2, 1])
-        F[s].tx1 = array([1, 1, (G.datastart+G.dataend)/2, 1])
-        F[s].tx2 = array([1, 1, (G.datastart+G.dataend)/2, 1])
+        F[s].init = perturb(G.npops)
+        F[s].force = perturb(G.npops)
+        F[s].dx = array([perturb(), perturb(), (G.datastart+G.dataend)/2, 1])
+        F[s].tx1 = array([perturb(), perturb(), (G.datastart+G.dataend)/2, 1])
+        F[s].tx2 = array([perturb(), perturb(), (G.datastart+G.dataend)/2, 1])
     
     return F
