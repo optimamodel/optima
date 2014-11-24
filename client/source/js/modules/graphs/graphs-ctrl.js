@@ -92,7 +92,7 @@ define([
         xAxis: {
           showMaxMin: false,
           tickFormat: function (d) {
-            return d3.time.format('%x')(new Date(d))
+            return d3.time.format('%x')(new Date(d));
           }
         },
         yAxis: {
@@ -172,13 +172,64 @@ define([
 
     // GRAPH 5
     // =======
+    $scope.options5 = {
+      height: 300,
+      width: 900,
+      margin: {
+        top: 20,
+        right: 20,
+        bottom: 60,
+        left: 60
+      },
+      xAxis: {
+        axisLabel: 'Axis X',
+        tickFormat: function (d) {
+          return d3.format('d')(d);
+        }
+      },
+      yAxis: {
+        axisLabel: 'Axis Y',
+        tickFormat: function (d) {
+          return d3.format(',.2f')(d);
+        }
+      }
+    };
 
-    $scope.data5 = dataMocks.lineScatterError();
+    dataMocks.lineScatterError().$promise.then(function (data) {
+      $scope.data5 = data;
+    });
+
+
 
     // GRAPH 6
     // =======
 
-    $scope.data6 = dataMocks.lineScatterArea();
+    $scope.options6 = {
+      height: 300,
+      width: 900,
+      margin: {
+        top: 20,
+        right: 20,
+        bottom: 60,
+        left: 60
+      },
+      xAxis: {
+        axisLabel: 'Axis X',
+        tickFormat: function (d) {
+          return d3.format('d')(d);
+        }
+      },
+      yAxis: {
+        axisLabel: 'Axis Y',
+        tickFormat: function (d) {
+          return d3.format(',.2f')(d);
+        }
+      }
+    };
+
+    dataMocks.lineScatterArea().$promise.then(function (data) {
+      $scope.data6 = data;
+    });
 
   });
 });

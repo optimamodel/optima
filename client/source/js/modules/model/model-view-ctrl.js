@@ -54,45 +54,32 @@ define(['./module', 'angular'], function (module, angular) {
     $scope.graphType = 'prev';
 
     var linescatteroptions = {
-      chart: {
-        type: 'scatterPlusLineChart',
-        height: 250,
-        margin: {
-          top: 20,
-          right: 20,
-          bottom: 60,
-          left: 50
-        },
-        useInteractiveGuideline: true,
-        sizeRange: [100, 100],
-        xAxis: {
-          axisLabel: 'Year',
-          tickFormat: function (d) {
-            return d3.format('d')(d);
-          }
-        },
-        yAxis: {
-          axisLabel: 'Prevalence (%)',
-          tickFormat: function (d) {
-            return d3.format(',.2f')(d);
-          },
-          axisLabelDistance: 35
+      height: 250,
+      width: 400,
+      margin: {
+        top: 20,
+        right: 20,
+        bottom: 60,
+        left: 50
+      },
+      xAxis: {
+        axisLabel: 'Year',
+        tickFormat: function (d) {
+          return d3.format('d')(d);
+        }
+      },
+      yAxis: {
+        axisLabel: 'Prevalence (%)',
+        tickFormat: function (d) {
+          return d3.format(',.2f')(d);
         }
       }
     };
 
-    var linescatterdata = [
-      {
-        values: [],
-        key: 'Model',
-        color: '#ff7f0e'
-      },
-      {
-        values: [],
-        key: 'Error',
-        color: '#333333'
-      }
-    ];
+    var linescatterdata = {
+      line: [],
+      'scatter-error': []
+  };
 
     $scope.doneEditingParameter = function () {
       console.log("I'm editing callback. Do what you have to do with me :(");
@@ -115,26 +102,22 @@ define(['./module', 'angular'], function (module, angular) {
             data: angular.copy(linescatterdata)
           };
 
-          graph.data[0].values = _(population).map(function (value, i) {
-            return {
-              x: response.tvec[i],
-              y: value
-            };
+          graph.data.line = _(population).map(function (value, i) {
+            //      x                 y
+            return [response.tvec[i], value];
           });
 
-          graph.options.chart.xAxis.axisLabel = data.xlabel;
-          graph.options.chart.yAxis.axisLabel = data.ylabel;
+          graph.options.xAxis.axisLabel = data.xlabel;
+          graph.options.yAxis.axisLabel = data.ylabel;
 
           if (scatterDataAvailable) {
-            graph.data[1].values = _(data.ydata[populationIndex]).chain()
+            graph.data['scatter-error'] = _(data.ydata[populationIndex]).chain()
               .map(function (value, i) {
-                return {
-                  x: response.tvec[i],
-                  y: value
-                };
+                //      x                 y
+                return [response.tvec[i], value];
               })
               .filter(function (value) {
-                return !!value.x;
+                return !!value[1];
               })
               .value();
           }
