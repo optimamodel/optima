@@ -45,6 +45,6 @@ D = gatherplotdata(D, verbose=verbose)
 
 print('\n\n\n5. Viewing results...')
 from viewresults import viewresults
-viewresults(D.O, whichgraphs={'prev':[0,0], 'inci':[1,1], 'daly':[0,0], 'death':[0,0], 'dx':[0,0], 'tx1':[0,0], 'tx2':[0,0]}, onefig=True, verbose=verbose, show_wait=show_wait)
+viewresults(D.O, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'death':[0,1], 'dx':[0,1], 'tx1':[0,1], 'tx2':[0,1]}, onefig=True, verbose=verbose, show_wait=show_wait)
 
 print('\n\n\nDONE.')
