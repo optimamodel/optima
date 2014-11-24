@@ -26,7 +26,6 @@ def gatherplotdata(D, verbose=2):
     D.O.__doc__ = 'Output structure containing everything that might need to be plotted'
     D.O.tvec = D.R.tvec # Copy time vector
     D.O.poplabels = D.G.meta.pops.long
-    D.O.popcolors = vectocolor(D.G.npops)
     D.O.colorm = (0,0.3,1) # Model color
     D.O.colord = (0,0,0) # Data color
     D.O.xdata = D.data.epiyears

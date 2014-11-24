@@ -1,4 +1,4 @@
-def manualfit(D, F, startyear=2000, endyear=2015, dosave=False, verbose=2):
+def manualfit(D, F, startyear=2000, endyear=2015, verbose=2):
     """
     Manual metaparameter fitting code.
     
@@ -16,38 +16,26 @@ def manualfit(D, F, startyear=2000, endyear=2015, dosave=False, verbose=2):
     """
     
     from printv import printv
-    from bunch import Bunch as struct
-    from matplotlib.pylab import arange
+    printv('Running manual fitting...', 1, verbose)
     
-    ## TODO: don't just copy from runsimulation()
-    options = struct()
-    options.startyear = startyear
-    options.endyear = endyear
-    options.dt = 0.1
-    options.tvec = arange(options.startyear, options.endyear, options.dt) # Time vector
-
+    # Update options structure
+    from setoptions import setoptions
+    D.opt = setoptions(opt=D.opt, startyear=startyear, endyear=endyear)
+    
     # Convert data parameters to model parameters
-    # (I copied it so that this code won't throw)
-    print ("D: %s" % D)
     from makemodelpars import makemodelpars
-    D.M = makemodelpars(D.P, options, verbose=verbose)
+    D.M = makemodelpars(D.P, D.opt, verbose=verbose)
     
-    printv('1. Running simulation...', 1, verbose)
+    # Run model
     from model import model
-    D.S = model(D.G, D.M, F, options, verbose=2)
+    allsims = []
+    D.F = F
+    D.S = model(D.G, D.M, D.F, D.opt, verbose=verbose)
+    allsims.append(D.S)
     
-    printv('2. Making results...', 1, verbose)
-    from epiresults import epiresults
-    D = epiresults(D, verbose=verbose)
+    # Calculate results
+    from makeresults import makeresults
+    D.R = makeresults(allsims, D, D.opt.quantiles, verbose=verbose)
     
-#    printv('3. Viewing results...', 1, verbose)
-#    from viewresults import viewresults
-#    viewresults(D, whichgraphs={'prev':1, 'inci':1, 'daly':1, 'death':1, 'pops':1, 'tot':1}, onefig=True, verbose=verbose)
-    
-    if dosave:
-        from dataio import savedata
-        D.F = F
-        savedata(D.projectfilename, D, verbose=verbose)
-        printv('...done manual fitting.', 2, verbose)
-    
+    printv('...done manual fitting.', 2, verbose)
     return D
