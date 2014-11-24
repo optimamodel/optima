@@ -42,6 +42,6 @@ define(['./module'], function (module) {
         lineChartInstance.draw(lineData);
         scatterChartInstance.draw(d['scatter-error']);
       }
-    }
+    };
   });
 });

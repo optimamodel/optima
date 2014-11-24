@@ -92,7 +92,7 @@ define([
         xAxis: {
           showMaxMin: false,
           tickFormat: function (d) {
-            return d3.time.format('%x')(new Date(d))
+            return d3.time.format('%x')(new Date(d));
           }
         },
         yAxis: {
