@@ -19,7 +19,7 @@ default_progname = 'MSM'
 default_ccparams = [0.9, 0.2, 800000.0, 7e6]
 default_coparams = []
 default_makeplot = 1
-default_datain = 'example' # use 'example' or D
+default_datain = programs # use 'example' or programs
 default_effectname = [['sex', 'condomcom'], [u'CSW'], [[0.7, 0.8], [0.92, 0.97]]]
 
 ###############################################################################
@@ -42,13 +42,13 @@ def makecc(datain = default_datain, progname = default_progname, ccparams = defa
     
     ## Load data structure if it hasn't been passed as an argument... 
     if isinstance(datain, str):
-        D = loaddata(datain+'.prj')
+        D, programs = loaddata(datain+'.prj')
     else:
-        D = datain
+        programs = datain
     
     ## Check that the selected program is in the program list 
-    if progname not in D.programs.keys():
-        raise Exception('Please selsect one of the following programs %s' % D.programs.keys())
+    if progname not in programs.keys():
+        raise Exception('Please select one of the following programs %s' % D.programs.keys())
 
     ## Extract info from data structure
     prognumber = D.data.meta.progs.short.index(progname) # get program number
@@ -320,7 +320,7 @@ def makecco(datain = default_datain, progname = default_progname, effectname = d
         zerosample = D.programs[progname][effectnumber][3][0]
         fullsample = D.programs[progname][effectnumber][3][1]
 
-        # CCreate x dataset and initialise y dataset
+        # Create x dataset and initialise y dataset
         xvalscco = xvalscc
         yvalscco = zeros((1000, len(fullsample)))
         
