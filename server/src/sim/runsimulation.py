@@ -1,9 +1,8 @@
 def runsimulation(D, startyear=2000, endyear=2030, verbose=2):
     """
-    RUNSIMULATION
-    Calculate model estimates
+    Calculate initial model estimates.
     
-    Version: 2014nov23 by cliffk
+    Version: 2014nov24 by cliffk
     """
     
     from printv import printv
@@ -33,8 +32,12 @@ def runsimulation(D, startyear=2000, endyear=2030, verbose=2):
     from makeresults import makeresults
     D.R = makeresults(allsims, D, D.opt.quantiles, verbose=verbose)
     
+    # Gather plot data
+    from gatherplotdata import gatherepidata
+    D.plot.E = gatherepidata(D, verbose=verbose)
+    
     # Save output
     from dataio import savedata
-    savedata(D.projectfilename, D, verbose=verbose)
-    printv('...done running simulation for project %s.' % D.projectfilename, 2, verbose)
+    savedata(D.G.projectfilename, D, verbose=verbose)
+    printv('...done running simulation for project %s.' % D.G.projectfilename, 2, verbose)
     return D

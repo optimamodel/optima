@@ -45,33 +45,30 @@ print('\n\n\n3. Running simulation...')
 from runsimulation import runsimulation
 D = runsimulation(D, startyear=2000, endyear=2015, verbose=verbose)
 
-print('\n\n\n4. Making plot data...')
-from gatherplotdata import gatherepidata
-D.E = gatherepidata(D, verbose=verbose)
+print('\n\n\n4. Viewing results...')
+from viewresults import viewepiresults
+viewepiresults(D.plot.E, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'death':[0,1], 'dx':[0,1], 'tx1':[0,1], 'tx2':[0,1]}, startyear=2000, endyear=2015, onefig=True, verbose=verbose, show_wait=show_wait)
 
-print('\n\n\n5. Viewing results...')
-from viewresults import viewresults
-viewresults(D.E, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'death':[0,1], 'dx':[0,1], 'tx1':[0,1], 'tx2':[0,1]}, startyear=2000, endyear=2015, onefig=True, verbose=verbose, show_wait=show_wait)
-
-print('\n\n\n6. Automatic calibration...')
+print('\n\n\n5. Automatic calibration...')
 from autofit import autofit
 D = autofit(D, timelimit=5, startyear=2000, endyear=2015, verbose=verbose)
 
-print('\n\n\n7. Viewing results again...')
-viewresults(D.E)
+print('\n\n\n6. Viewing results again...')
+viewepiresults(D.plot.E)
 
-print('\n\n\n8. Running scenarios...')
+print('\n\n\n7. Running scenarios...')
 print('TBA')
 
-print('\n\n\n9. Viewing scenarios...')
+print('\n\n\n8. Viewing scenarios...')
 print('TBA')
 
-print('\n\n\n10. Running optimization...')
+print('\n\n\n9. Running optimization...')
 from optimize import optimize
 D = optimize(D, objectives=None, constraints=None, timelimit=5, verbose=2)
 
-print('\n\n\n11. Viewing optimization...')
-from optimize import viewoptimization
-viewoptimization(D.O.optim)
+print('\n\n\n10. Viewing optimization...')
+from viewresults import viewallocpies, viewmodels
+viewallocpies(D.plot.O)
+viewmodels(D.plot.O)
 
 print('\n\n\nDONE.')

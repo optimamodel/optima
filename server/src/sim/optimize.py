@@ -1,5 +1,5 @@
-from bunch import Bunch as struct
 from printv import printv
+from bunch import Bunch as struct
 
 def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2):
     """
@@ -22,63 +22,34 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2):
     if constraints==None: constraints = defaultconstraints(D, verbose=verbose)
     
     # Run optimization # TODO -- actually implement :)
+    print('!!! TODO !!!')
     tstart = time()
     elapsed = 0
     iteration = 0
     while elapsed<timelimit:
         iteration += 1
         elapsed = time() - tstart
-        D.S = model(D.G, D.M, D.F[0], D.opt, verbose=verbose)
+        D.S0 = model(D.G, D.M, D.F[0], D.opt, verbose=verbose)
+        D.S1 = model(D.G, D.M, D.F[1], D.opt, verbose=verbose)
         printv('Iteration: %i | Elapsed: %f s |  Limit: %f s' % (iteration, elapsed, timelimit), 2, verbose)
-        D.S.mismatch = -1 # Mismatch for this simulation
+        D.S0.mismatch = -1 # Mismatch for this simulation
+        D.S1.mismatch = -1 # Mismatch for this simulation
     
     D.A.optimal = D.A.orig # Just copy for now
     
-    allsims = [D.S]
+    allsims = [D.S0, D.S1]
     
     # Calculate results
     from makeresults import makeresults
     D.R = makeresults(allsims, D, D.opt.quantiles, verbose=verbose)
     
-    # Gather data into a simple structure for plotting -- Z for "optimiZation"
-    D.O.optim = gatheroptimdata(D)
+    # Gather plot data
+    from gatherplotdata import gatheroptimdata
+    D.plot.O = gatheroptimdata(D, verbose=verbose)
+    
     
     printv('...done optimizing programs.', 2, verbose)
     return D
-
-
-
-def gatheroptimdata(D):
-    """ Return the data for plotting the two pie charts -- current allocation and optimal. """
-    plotdata = struct()
-    plotdata.legend = D.data.meta.progs.short
-    
-    plotdata.pie1 = struct()
-    plotdata.pie1.name = 'Original'
-    plotdata.pie1.val = D.A.orig.cost
-    
-    plotdata.pie2 = struct()
-    plotdata.pie2.name = 'Optimal'
-    plotdata.pie2.val = D.A.optimal.cost
-    
-    return plotdata
-
-
-def viewoptimization(plotdata):
-    """ Little function to plot optimization pies """
-    from matplotlib.pylab import figure, pie, legend, title, subplot
-    
-    figure(figsize=(12,4))
-    
-    subplot(1,3,1)
-    pie(plotdata.pie1.val)
-    title(plotdata.pie1.name)
-    
-    subplot(1,3,2)
-    pie(plotdata.pie2.val)
-    title(plotdata.pie2.name)
-    
-    legend(plotdata.legend, bbox_to_anchor=(2, 0.8))
 
 
 
