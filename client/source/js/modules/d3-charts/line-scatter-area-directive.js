@@ -63,6 +63,6 @@ define(['./module'], function (module) {
         scatterChartInstance.draw(scatterData);
 
       }
-    }
+    };
   });
 });
