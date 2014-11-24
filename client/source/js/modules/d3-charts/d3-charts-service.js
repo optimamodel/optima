@@ -38,10 +38,10 @@ define(['./module', 'd3', 'd3-box'], function (module, d3) {
           var line = d3.svg.line()
             .interpolate('basis')
             .x(function (d) {
-              return xScale(d[0])
+              return xScale(d[0]);
             })
             .y(function (d) {
-              return yScale(d[1])
+              return yScale(d[1]);
             });
 
           chart.append('path')
