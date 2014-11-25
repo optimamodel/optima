@@ -12,7 +12,7 @@ import math
 from matplotlib.pylab import zeros, figure, plot, hold, xlabel, ylabel, title
 from truncnorm import truncnorm
 from bunch import Bunch as struct
-from dataio import loaddata, savedata
+from dataio import loaddata
 
 ## Set defaults for testing
 default_progname = 'MSM'
@@ -20,7 +20,7 @@ default_ccparams = [0.9, 0.2, 800000.0, 7e6]
 default_coparams = []
 default_makeplot = 1
 default_datain = D # use 'example' or programs
-default_effectname = [['sex', 'condomcom'], [u'CSW'], [[0.7, 0.8], [0.92, 0.97]]]
+default_effectname = [['sex', 'condomcas'], [u'MSM'], [[0.3, 0.5], [0.7, 0.9]]]
 
 ###############################################################################
 ## Make cost coverage curve
@@ -51,11 +51,45 @@ def makecc(datain = default_datain, progname = default_progname, ccparams = defa
         raise Exception('Please select one of the following programs %s' % D.programs.keys())
 
     ## Extract info from data structure
-    prognumber = D.data.meta.progs.short.index(progname) # get program number
-    totalcost = D.data.costcov.total[prognumber] # get total cost data
-    coverage = D.data.costcov.cov[prognumber] # get program coverage data
+    prognumber = D.data.meta.progs.code.index(progname) # get program number
+    coverage = D.data.costcov.cov[prognumber] # get program coverage levels
+    
+    # For saturating programs... 
+    if D.data.meta.progs.saturating[prognumber]:
+        totalcost = D.data.costcov.cost[prognumber]
+        
+        ## Check inputs from GUI 
+        if (ccparams[0] <= 0 or ccparams[0] > 1):
+            raise Exception('Please enter a value between 0 and 1 for the saturation coverage level')
+        if (ccparams[1] < 0 or ccparams[1] > 1):
+            raise Exception('Please enter a value between 0 and 1 for the coverage level in Question 2')
+        if (ccparams[1] == 0 or ccparams[2] == 0):
+            raise Exception('Please enter non-zero values for the cost and coverage level estimates in Question 2')
+        if ccparams[2] < 0:
+            raise Exception('Negative funding levels are not permitted, please revise')
 
-    ## Get scatter data
+        ## Convert inputs from GUI into parameters needed for curves
+        saturation = ccparams[0]
+        growthrate = (-1/ccparams[2])*math.log((2*ccparams[0])/(ccparams[1]+ccparams[0]) - 1)
+        xupperlim = ccparams[3] 
+
+        ## Create logistic relationship 
+        xvalscc = np.linspace(0,xupperlim,1000) # take 1000 points between 0 and user-specified max
+        yvalscc = 2*saturation / (1 + np.exp(-growthrate*xvalscc)) - saturation # calculate logistic function
+
+    # ... for unit cost programs...
+    else:
+        unitcost = D.data.costcov.cost[prognumber]
+        for i in range(len(unitcost)):
+            totalcost.append(unitcost[i]*coverage[i])
+            if not isnan(unitcost[i]):
+                slope = unitcost[i] # this updates so the slope is the most recent unit cost
+
+        ## Create linear relationship
+        xvalscc = np.linspace(0,7e6,1000) # take 1000 points between 0 and some arbitrary max
+        yvalscc = xvalscc*slope # calculate linear function
+
+    # Get scatter data
     if (len(coverage) == 1 and len(totalcost) > 1): 
         totalcost = np.asarray(totalcost)
         totalcost = totalcost[~np.isnan(totalcost)]
@@ -64,25 +98,7 @@ def makecc(datain = default_datain, progname = default_progname, ccparams = defa
         coverage = np.asarray(coverage)
         coverage = coverage[~np.isnan(coverage)]
         coverage = coverage[-1]
-    
-    ## Check inputs from GUI 
-    if (ccparams[0] <= 0 or ccparams[0] > 1):
-        raise Exception('Please enter a value between 0 and 1 for the saturation coverage level')
-    if (ccparams[1] < 0 or ccparams[1] > 1):
-        raise Exception('Please enter a value between 0 and 1 for the coverage level in Question 2')
-    if (ccparams[1] == 0 or ccparams[2] == 0):
-        raise Exception('Please enter non-zero values for the cost and coverage level estimates in Question 2')
-    if ccparams[2] < 0:
-        raise Exception('Negative funding levels are not permitted, please revise')
-
-    ## Convert inputs from GUI into parameters needed for curves
-    saturation = ccparams[0]
-    growthrate = (-1/ccparams[2])*math.log((2*ccparams[0])/(ccparams[1]+ccparams[0]) - 1)
-    xupperlim = ccparams[3] 
-
-    ## Create lines to plot    
-    xvalscc = np.linspace(0,xupperlim,1000) # take 1000 points between 0 and user-specified max
-    yvalscc = 2*saturation / (1 + np.exp(-growthrate*xvalscc)) - saturation # calculate logistic function
+        
 
     # Plot (to check it's working; delete once plotting enabled in GUI)
     if makeplot:
@@ -106,6 +122,28 @@ def makecc(datain = default_datain, progname = default_progname, ccparams = defa
     
     return plotdata, xvalscc, yvalscc
 
+###############################################################################
+## Generate samples of behaviour at zero and full coverage
+###############################################################################
+def makesamples(coparams, samplesize=1000):
+
+    ## Convert inputs from GUI into parameters needed for lines
+    muz, stdevz = (coparams[0]+coparams[1])/2, (coparams[1]-coparams[0])/4 # Mean and standard deviation calcs
+    muf, stdevf = (coparams[2]+coparams[3])/2, (coparams[3]-coparams[2])/4 # Mean and standard deviation calcs
+
+    ## Generate sample of zero-coverage behaviour
+    zerosample = truncnorm((0 - muz) / stdevz, (1 - muz) / stdevz, loc=muz, scale=stdevz, size = samplesize)
+    
+    ## Generate sample of full-coverage behaviour
+    fullsample = zeros(samplesize)
+    if muf > muz: # Apply this if the c/o curve is increasing
+        for i in range(samplesize):
+            fullsample[i] = truncnorm((zerosample[i] - muf) / stdevf, (1 - muf) / stdevf, loc=muf, scale=stdevf, size = 1) # draw possible values for behvaiour at maximal coverage
+        else:  # Apply this if the c/o curve is decreasing
+            for i in range(samplesize):
+                fullsample[i] = truncnorm((0 - muf) / stdevf, (zerosample[i] - muf) / stdevf, loc=muf, scale=stdevf, size = 1) # draw possible values for behvaiour at maximal coverage
+                
+    return zerosample, fullsample
 
 ###############################################################################
 ## Make coverage outcome curve
@@ -123,7 +161,6 @@ def makecc(datain = default_datain, progname = default_progname, ccparams = defa
 #    Output types:
 #    1. plotdata
 #    2. D
-
 ###############################################################################
 def makeco(datain = default_datain, progname = default_progname, effectname = default_effectname, coparams=default_coparams, makeplot = default_makeplot):
 
@@ -141,7 +178,7 @@ def makeco(datain = default_datain, progname = default_progname, effectname = de
         raise Exception('Please select one of the following effects %s' % D.programs[progname])
 
     ## Extract info from data structure
-    prognumber = D.data.meta.progs.short.index(progname) # get program number
+    prognumber = D.data.meta.progs.code.index(progname) # get program number
     
     ## Get population info
     popname = effectname[1]
@@ -182,21 +219,8 @@ def makeco(datain = default_datain, progname = default_progname, effectname = de
         if ([zeromin, zeromax, fullmin, fullmax] < [0,0,0,0] or [zeromin, zeromax, fullmin, fullmax] > [1,1,1,1]):
             raise Exception('Please enter values between 0 and 1 for the ranges of behaviour at zero and full coverage')
             
-        ## Convert inputs from GUI into parameters needed for lines
-        muz, stdevz = (zeromax+zeromin)/2, (zeromax-zeromin)/4 # Mean and standard deviation calcs
-        muf, stdevf = (fullmax+fullmin)/2, (fullmax-fullmin)/4 # Mean and standard deviation calcs
-        
         ## Generate sample of zero-coverage behaviour
-        zerosample = truncnorm((0 - muz) / stdevz, (1 - muz) / stdevz, loc=muz, scale=stdevz, size = 1000)
-    
-        ## Generate sample of full-coverage behaviour
-        fullsample = zeros(len(zerosample))
-        if muf > muz: # Apply this if the c/o curve is increasing
-            for i in range(len(zerosample)):
-                fullsample[i] = truncnorm((zerosample[i] - muf) / stdevf, (1 - muf) / stdevf, loc=muf, scale=stdevf, size = 1) # draw possible values for behvaiour at maximal coverage
-        else:  # Apply this if the c/o curve is decreasing
-            for i in range(len(zerosample)):
-                fullsample[i] = truncnorm((0 - muf) / stdevf, (zerosample[i] - muf) / stdevf, loc=muf, scale=stdevf, size = 1) # draw possible values for behvaiour at maximal coverage
+        zerosample, fullsample = makesamples([zeromin, zeromax, fullmin, fullmax], 1000)
         
         ## General set of coverage-outcome relationships
         xvalsco = np.linspace(0,1,1000) # take 1000 points along the unit interval
@@ -211,11 +235,11 @@ def makeco(datain = default_datain, progname = default_progname, effectname = de
             ymin[i] = min(yvalsco[i,:])
             
         ## Append range of start and end points to data structure NB THERE MUST BE A BETTER WAY TO DO THIS
-        if len(effectname) == 3: # There's no existing info here, append
-            effectname.append([zerosample, fullsample])
-        else:
-            effectname[3] = [zerosample, fullsample] # There is existing info here, overwrite
-        D.programs[progname][effectnumber] = effectname
+ #       if len(effectname) == 3: # There's no existing info here, append
+ #           effectname.append([zerosample, fullsample])
+ #       else:
+ #           effectname[3] = [zerosample, fullsample] # There is existing info here, overwrite
+ #       D.programs[progname][effectnumber] = effectname
 
         ## Plot results (probably delete once in GUI)                            
         if makeplot:
@@ -243,8 +267,17 @@ def makeco(datain = default_datain, progname = default_progname, effectname = de
         plotdata['xlabel'] = 'Proportion covered'
         plotdata['ylabel'] = 'Outcome'
     
-        return plotdata, D
+        return plotdata
 
+###############################################################################
+# Create cco equation
+###############################################################################
+def ccoeqn(x, p):
+    '''
+    Equation defining cco curves.
+    '''
+    y = (p[3]-p[2]) * ( 2*p[0] / (1 + np.exp(-p[1]*x)) - p[0]) + p[2]
+    return y
 
 ###############################################################################
 ## Make single cost outcome curve
@@ -279,14 +312,13 @@ def makecco(datain = default_datain, progname = default_progname, effectname = d
         raise Exception('Please select one of the following effects %s' % D.programs[progname])
 
     ## Extract info from data structure
-    prognumber = D.data.meta.progs.short.index(progname) # get program number
+    prognumber = D.data.meta.progs.code.index(progname) # get program number
 
     # Get the cost-coverage and coverage-outcome relationships            
     plotdata_cc, xvalscc, yvalscc = makecc(D, progname, ccparams, makeplot=0)
 
     ## Get population info
     popname = effectname[1]
-    effectnumber = D.programs[progname].index(effectname)
     
     ## Only going to make cost-outcome curves if a program affects a specific population -- otherwise will just make cost-coverage curves
     if popname[0] not in D.data.meta.pops.short:
@@ -312,13 +344,11 @@ def makecco(datain = default_datain, progname = default_progname, effectname = d
         saturation = ccparams[0]
         growthrate = (-1/ccparams[2])*math.log((2*saturation)/(ccparams[1]+saturation) - 1)
 
-        # Parameters for coverage-outcome curves
-        muz, muf = (zeromax+zeromin)/2, (fullmax+fullmin)/2  # Mean calcs
-        plotdata_co, D = makeco(D, progname, effectname, coparams, makeplot)
+        ## Generate samples of zero-coverage and full-coverage behaviour
+        zerosample, fullsample = makesamples([zeromin, zeromax, fullmin, fullmax], 1000)
 
-        # Extract samples of start and end points
-        zerosample = D.programs[progname][effectnumber][3][0]
-        fullsample = D.programs[progname][effectnumber][3][1]
+        # Get the coverage-outcome relationships            
+        plotdata_co = makeco(D, progname, effectname, coparams, makeplot)
 
         # Create x dataset and initialise y dataset
         xvalscco = xvalscc
@@ -329,7 +359,7 @@ def makecco(datain = default_datain, progname = default_progname, effectname = d
             yvalscco[:,i] = (fullsample[i]-zerosample[i])*(2*saturation / (1 + np.exp(-growthrate*xvalscco)) - saturation) + zerosample[i] # Generate 1000 cost-outcome curves
 
         # Median line
-        mediancco = (muf-muz)*(2*saturation / (1 + np.exp(-growthrate*xvalscco)) - saturation) + muz # Generate median cost-outcome curve
+        mediancco = ccoeqn(xvalscco, [saturation, growthrate, muz, muf])# Generate median cost-outcome curve
         
         ## Create upper and lower bounds of line set
         ymin, ymax = zeros(1000), zeros(1000)
@@ -338,7 +368,7 @@ def makecco(datain = default_datain, progname = default_progname, effectname = d
             ymin[i] = min(yvalscco[i,:])
                 
         ## Extract scatter data
-        totalcost = D.data.costcov.total[prognumber] # get total cost data
+        totalcost = D.data.costcov.cost[prognumber] # get total cost data
         outcome = D.data[effectname[0][0]][effectname[0][1]][popnumber]
 
         ## Get around situations where there's an assumption for coverage but not for behaviour, or vice versa
@@ -427,4 +457,4 @@ def plotallcurves(datain = default_datain, progname=default_progname, ccparams=d
  
                 
 ## Example of use
-#plotdata_cco, plotdata_co, plotdata_cc = plotallcurves()
+plotdata_cco, plotdata_co, plotdata_cc = plotallcurves()
