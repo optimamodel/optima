@@ -14,8 +14,9 @@ This function does everything. The basic procedure is as follows:
 9. optimize -- run an optimization
 11. viewoptimization -- view an optimization
 
-Version: 2014nov24 by cliffk
+Version: 2014nov25 by cliffk
 """
+
 
 print('WELCOME TO OPTIMA')
 
@@ -37,11 +38,11 @@ print('\n\n\n1. Making project...')
 from makeproject import makeproject
 D = makeproject(projectname='example', pops=['']*6, progs = ['']*7, datastart=2000, dataend=2015, verbose=verbose)
 
-print('\n\n2. Uploading spreadsheet...')
+print('\n\n\n2. Uploading spreadsheet...')
 from updatedata import updatedata
 D = updatedata(D, verbose=verbose)
 
-print('\n\n3. Running simulation...')
+print('\n\n\n3. Running simulation...')
 from runsimulation import runsimulation
 D = runsimulation(D, startyear=2000, endyear=2015, verbose=verbose)
 
@@ -72,14 +73,5 @@ print('\n\n\n10. Viewing optimization...')
 from viewresults import viewallocpies
 viewallocpies(D.plot.OA)
 viewmodels(D.plot.OM)
-=======
-print('\n\n4. Making plot data...')
-from gatherplotdata import gatherplotdata
-D = gatherplotdata(D, verbose=verbose)
 
-print('\n\n5. Viewing results...')
-from viewresults import viewresults
-viewresults(D.O, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'death':[0,1], 'dx':[0,1], 'tx1':[0,1], 'tx2':[0,1]}, onefig=True, verbose=verbose, show_wait=show_wait)
-
-print('\n\nDONE.')
-
+print('\n\n\nDONE.')

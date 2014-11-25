@@ -15,6 +15,8 @@ def makemodelpars(P, opt, verbose=2):
     tvec = opt.tvec # Shorten time vector
     npts = len(tvec) # Number of time points # TODO probably shouldn't be repeated from model.m
     
+    
+    
     def dpar2mpar(datapar):
         """ Take data parameters and turn them into model parameters """
         npops = len(datapar.p)
@@ -81,6 +83,7 @@ def makemodelpars(P, opt, verbose=2):
     ## Constants...can be used directly -- # TODO should this be copy?
     M.const = P.const
     
+    
     ## WARNING need to introduce time!
     def reconcileacts(mixmatrix,popsize,popacts):
         from numpy import array
@@ -118,6 +121,7 @@ def makemodelpars(P, opt, verbose=2):
 
         return pshipacts
         
+    
     # Calculate number of acts
     M.totalacts = struct()
     M.totalacts.__doc__ = 'Balanced numbers of acts'
@@ -136,6 +140,4 @@ def makemodelpars(P, opt, verbose=2):
     
 
     printv('...done making model parameters.', 2, verbose)
-    
     return M
-    

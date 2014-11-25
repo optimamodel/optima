@@ -5,17 +5,19 @@ def makedatapars(D, verbose=2):
     These data are then used to update the corresponding model (project).
     This method should be called before any simulation can run.
     
-    Version: 2014nov05 by cliffk
+    Version: 2014nov25 by cliffk
     """
     
     ###############################################################################
     ## Preliminaries
     ###############################################################################
 
+    
     from printv import printv
     from bunch import Bunch as struct # Replicate Matlab-like structure behavior
     from numpy import array, isnan, zeros, shape, mean
     printv('Converting data to parameters...', 1, verbose)
+    
     
     def sanitize(arraywithnans):
         """ Sanitize input to remove NaNs. Warning, does not work on multidimensional data!! """
@@ -27,6 +29,7 @@ def makedatapars(D, verbose=2):
 
         return sanitized
         
+    
     def data2par(dataarray):
         """ Take an array of data and turn it into default parameters -- here, just take the means """
         nrows = shape(dataarray)[0] # See how many rows need to be filled (either npops, nprogs, or 1)
@@ -49,6 +52,8 @@ def makedatapars(D, verbose=2):
         return output
     
     
+    
+    
     ###############################################################################
     ## Loop over quantities
     ###############################################################################
@@ -57,8 +62,6 @@ def makedatapars(D, verbose=2):
     D.P.__doc__ = 'Parameters that have been directly derived from the data, which are then used to create the model parameters'
     
     ## Key parameters
-    #
-    # TODO: hivprev shouldn't vary with time... it's just an initial condition
     for parname in D.data.key.keys():
         printv('Converting data parameter %s...' % parname, 2, verbose)
         D.P[parname] = dataindex(D.data.key[parname][0], 0) # Population size and prevalence -- # TODO: don't take average for this, and use uncertainties!
@@ -123,7 +126,7 @@ def makedatapars(D, verbose=2):
         D.G.pwid += array(D.data.pships.inj).sum(axis=ax) # Find injecting acts
     D.G.pwid = D.G.pwid>0 # Convert to Boolean array
 
+
     printv('...done converting data to parameters.', 2, verbose)
     
     return D
-
