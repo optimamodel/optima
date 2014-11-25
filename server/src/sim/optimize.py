@@ -39,12 +39,13 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2):
     
     # Calculate results
     from makeresults import makeresults
-    for alloc in range(nallocs): 
+    for alloc in range(len(D.A)):
         D.A[alloc].R = makeresults(D, [D.A[alloc].S], D.opt.quantiles, verbose=verbose)
     
     # Gather plot data
-    from gatherplotdata import gatheroptimdata
-    D.plot.O = gatheroptimdata(D, D.A, verbose=verbose)
+    from gatherplotdata import gatheroptimdata, gathermultidata
+    D.plot.OA = gatheroptimdata(D, D.A, verbose=verbose)
+    D.plot.OM = gathermultidata(D, D.A, verbose=verbose)
     
     printv('...done optimizing programs.', 2, verbose)
     return D

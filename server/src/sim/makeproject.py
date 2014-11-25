@@ -15,6 +15,8 @@ def makeproject(projectname='example', pops = ['']*6, progs = ['']*5, datastart=
 
     D = struct() # Data structure for saving everything
     D.__doc__ = 'Data structure for storing everything -- data, parameters, simulation results, velociraptors, etc.'
+    D.plot = struct() # Initialize plotting data
+    D.plot.__doc__ = 'Plotting data, including labels, colors, etc., for epidemiology data (E), optimization data (O), and scenario data (S)'
     
     # Initialize options
     from setoptions import setoptions

@@ -6,13 +6,12 @@ This function does everything. The basic procedure is as follows:
 1. makeproject -- initialize the project file
 2. updatedata -- load the data into a structure
 3. runsimulation -- run the simulation
-4. gatherplotdata -- gather the data for the plots
-5. viewresults -- display the results
-6. autofit -- automatically calibrate
-7. viewresults -- display the updated results
-# 8. scenarios -- run some scenarios
-# 9. viewscenarios -- view the results of the scenarios
-10. optimize -- run an optimization
+4. viewresults -- display the results
+5. autofit -- automatically calibrate
+6. viewresults -- display the updated results
+# 7. scenarios -- run some scenarios
+# 8. viewscenarios -- view the results of the scenarios
+9. optimize -- run an optimization
 11. viewoptimization -- view an optimization
 
 Version: 2014nov24 by cliffk
@@ -26,12 +25,15 @@ parser = argparse.ArgumentParser(description = "OPTIMA global procedure")
 parser.add_argument("-p", "--projectname", type=str, default="example", help = "source project name")
 parser.add_argument("-v", "--verbose", type=int, default=4, help="increase output verbosity")
 parser.add_argument("-w","--wait", help="wait for user input after showing graphs", action="store_true")
+parser.add_argument("-t", "--timelimit", type=int, default=3, help="time limit")
+
 args = parser.parse_args()
 
 ## Set parameters
 projectname = args.projectname #'example'
-verbose = args.verbose #4
-show_wait = args.wait
+verbose = args.verbose # 4
+show_wait = args.wait # True
+timelimit = args.timelimit # 3 seconds
 
 print('\n\n\n1. Making project...')
 from makeproject import makeproject
@@ -51,7 +53,7 @@ viewepiresults(D.plot.E, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 
 
 print('\n\n\n5. Automatic calibration...')
 from autofit import autofit
-D = autofit(D, timelimit=5, startyear=2000, endyear=2015, verbose=verbose)
+D = autofit(D, timelimit=timelimit, startyear=2000, endyear=2015, verbose=verbose)
 
 print('\n\n\n6. Viewing results again...')
 viewepiresults(D.plot.E)
@@ -64,11 +66,11 @@ print('TBA')
 
 print('\n\n\n9. Running optimization...')
 from optimize import optimize
-D = optimize(D, objectives=None, constraints=None, timelimit=5, verbose=2)
+D = optimize(D, objectives=None, constraints=None, timelimit=timelimit, verbose=2)
 
 print('\n\n\n10. Viewing optimization...')
 from viewresults import viewallocpies, viewmodels
-viewallocpies(D.plot.O)
-viewmodels(D.plot.O)
+viewallocpies(D.plot.OA)
+viewmodels(D.plot.OM)
 
 print('\n\n\nDONE.')
