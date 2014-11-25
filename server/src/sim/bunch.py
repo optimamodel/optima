@@ -34,7 +34,7 @@ VERSION = tuple(map(int, __version__.split('.')))
 
 __all__ = ('Bunch', 'bunchify','unbunchify','to_array')
 
-from matplotlib.pylab import asarray
+from matplotlib.pylab import ndarray, isnan, asarray # CK: replaced dependence on NumPy with Matplotlib
 
 def float_array(data):
     return asarray(data, float)
@@ -279,8 +279,6 @@ def unbunchify(x):
         
         nb. As dicts are not hashable, they cannot be nested in sets/frozensets.
     """
-    from matplotlib.pylab import ndarray, isnan # CK: replaced dependence on NumPy with Matplotlib
-
     if isinstance(x, dict):
         return dict( (k, unbunchify(v)) for k,v in x.iteritems() )
     elif isinstance(x, (list, tuple)):
@@ -300,7 +298,7 @@ try:
     try:
         import json
     except ImportError:
-        import simplejson as json
+        import simplejson as json # analysis:ignore -- Pylint incorrectly complains about this line
     
     def toJSON(self, **options):
         """ Serializes this Bunch to JSON. Accepts the same keyword options as `json.dumps()`.
