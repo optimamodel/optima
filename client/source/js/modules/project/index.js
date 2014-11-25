@@ -1,7 +1,7 @@
 define([
   './create-population-modal-ctrl',
   './create-program-modal-ctrl',
-  './programs-conts',
+  './constants',
   './project-create-ctrl',
   './project-open-ctrl'
 ], function () {});
