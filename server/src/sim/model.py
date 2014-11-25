@@ -192,38 +192,38 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
             newdiagnoses[cd4] = dt*people[G.undx[cd4],:,t]*testingrate[cd4]*dxtime[t]
             hivdeaths         = dt*people[G.undx[cd4],:,t]*death[cd4]
             otherdeaths       = dt*people[G.undx[cd4],:,t]*background
-            dU.append(progin - progout - newdiagnoses[cd4] - hivdeaths - otherdeaths)
-            S.dx[:,t]    += newdiagnoses[cd4]/dt # Save annual diagnoses data
-            S.death[:,t] += hivdeaths[cd4]/dt    # Save annual deaths data
-            
-        dU[0] = dU[0] - dS # Add newly infected people
+            dU.append(progin - progout - newdiagnoses[cd4] - hivdeaths - otherdeaths) # Add in new infections after loop
+            S.dx[:,t]    += newdiagnoses[cd4]/dt # Save annual diagnoses 
+            S.death[:,t] += hivdeaths[cd4]/dt    # Save annual HIV deaths 
+        dU[0] = dU[0] + newinfections # Now add newly infected people
         
         ## Diagnosed
         for cd4 in range(ncd4):
             if cd4>0: 
-                progin  = dt*prog[cd4-1]*people[G.dx[cd4-1],:,t]
+                progin = dt*prog[cd4-1]*people[G.dx[cd4-1],:,t]
             else: 
-                progin = 0
+                progin = 0 # Cannot progress into acute stage
             if cd4<ncd4-1: 
                 progout = dt*prog[cd4]*people[G.dx[cd4],:,t]
             else: 
-                progout = 0
-            newtreat1[cd4] = dt*M.tx1[t]*tx1time[t] * people[G.dx[cd4],:,t]
-            S.newtx1[:,t] += newtreat1[cd4]/dt # Save annual diagnoses data
-            hivdeaths = dt*death[cd4]*people[G.dx[cd4],:,t]
-            S.death[:,t] += hivdeaths[cd4]/dt # Save annual diagnoses data
-            dD.append(progin-progout + newdiagnoses[cd4] - newtreat1[cd4] - hivdeaths - dt*background*people[G.dx[cd4],:,t])
+                progout = 0 # Cannot progress out of AIDS stage
+            newtreat1[cd4] = dt*people[G.dx[cd4],:,t]*M.tx1[t]*tx1time[t] # TODO - shouldn't M.tx1 be broken down by CD4???
+            hivdeaths      = dt*people[G.dx[cd4],:,t]*death[cd4]
+            otherdeaths    = dt*people[G.dx[cd4],:,t]*background
+            dD.append(progin - progout + newdiagnoses[cd4] - newtreat1[cd4] - hivdeaths - otherdeaths)
+            S.newtx1[:,t] += newtreat1[cd4]/dt # Save annual treatment initiation
+            S.death[:,t]  += hivdeaths[cd4]/dt # Save annual HIV deaths 
         
         ## 1st-line treatment
         for cd4 in range(ncd4):
             if (cd4>0 and cd4<ncd4-1): # CD4>0 stops people from moving back into acute
                 recovin = dt*recov[cd4-1]*people[G.tx1[cd4+1],:,t]
             else: 
-                recovin = 0 
+                recovin = 0
             if cd4>1: # CD4>1 stops people from moving back into acute
                 recovout = dt*recov[cd4-2]*people[G.tx1[cd4],:,t]
             else: 
-                recovout = 0
+                recovout = 0 # Cannot progress out of AIDS stage
             newfail1[cd4] = dt*M.const.fail.first * people[G.tx1[cd4],:,t]
             hivdeaths = dt*death[cd4]*people[G.tx1[cd4],:,t]
             S.death[:,t] += hivdeaths[cd4]/dt # Save annual deats data
