@@ -55,7 +55,7 @@ def runscenarios(D, scenariolist=None, verbose=2):
 
 def makescenarios(D, scenariolist, verbose=2):
     """ Convert a list of scenario parameters into a list of changes to model parameters """
-    from pylab import find, linspace
+#    from numpy import find, linspace
     
     nscenarios = len(scenariolist)
     scenariopars = [struct() for s in range(nscenarios)]

@@ -22,7 +22,7 @@ def runsimulation(D, startyear=2000, endyear=2030, verbose=2):
         D.M = makemodelpars(D.P, D.opt, verbose=verbose)
     
     # Create fitted parameters
-    if 'M' not in D.keys():
+    if 'F' not in D.keys():
         dosave = True
         from makefittedpars import makefittedpars
         D.F = makefittedpars(D.G, D.opt, verbose=verbose)
