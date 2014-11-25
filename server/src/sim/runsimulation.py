@@ -7,18 +7,25 @@ def runsimulation(D, startyear=2000, endyear=2030, verbose=2):
     
     from printv import printv
     printv('Running simulation...', 1, verbose)
+    dosave = False # Flag for whether or not to save
     
     # Update options structure
-    from setoptions import setoptions
-    D.opt = setoptions(opt=D.opt, startyear=startyear, endyear=endyear)
+    if 'opt' not in D.keys():
+        dosave = True
+        from setoptions import setoptions
+        D.opt = setoptions(opt=D.opt, startyear=startyear, endyear=endyear)
     
     # Convert data parameters to model parameters
-    from makemodelpars import makemodelpars
-    D.M = makemodelpars(D.P, D.opt, verbose=verbose)
+    if 'M' not in D.keys():
+        dosave = True
+        from makemodelpars import makemodelpars
+        D.M = makemodelpars(D.P, D.opt, verbose=verbose)
     
     # Create fitted parameters
-    from makefittedpars import makefittedpars
-    D.F = makefittedpars(D.G, D.opt, verbose=verbose)
+    if 'M' not in D.keys():
+        dosave = True
+        from makefittedpars import makefittedpars
+        D.F = makefittedpars(D.G, D.opt, verbose=verbose)
     
     # Run model
     from model import model
@@ -37,7 +44,9 @@ def runsimulation(D, startyear=2000, endyear=2030, verbose=2):
     D.plot.E = gatherepidata(D, D.R, verbose=verbose)
     
     # Save output
-    from dataio import savedata
-    savedata(D.G.projectfilename, D, verbose=verbose)
+    if dosave:
+        from dataio import savedata
+        savedata(D.G.projectfilename, D, verbose=verbose)
+    
     printv('...done running simulation for project %s.' % D.G.projectfilename, 2, verbose)
     return D
