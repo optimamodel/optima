@@ -185,10 +185,10 @@ def makeco(datain = default_datain, progname = default_progname, effectname = de
     effectnumber = D.programs[progname].index(effectname)
         
     ## Only going to make cost-outcome curves if a program affects a SPECIFIC population -- otherwise will just make cost-coverage curves
-    if popname[0] not in D.data.meta.pops.short:
+    if popname[0] not in D.data.meta.pops.code:
         return [], D
     else:
-        popnumber = D.data.meta.pops.short.index(popname[0]) 
+        popnumber = D.data.meta.pops.code.index(popname[0]) 
         
         # Get data for scatter plots
         outcome = D.data[effectname[0][0]][effectname[0][1]][popnumber]
