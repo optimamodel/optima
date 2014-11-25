@@ -45,8 +45,8 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
     # dU = []; dD = []; dT1 = []; dF = []; dT2 = []; # Initialize differences
     
     ## Set initial epidemic conditions 
-    people[0, :, 0] = M.popsize[:,0] * (1-M.hivprev[:,0]) # Set initial susceptible population
-    people[1, :, 0] = M.popsize[:,0] * M.hivprev[:,0] * F.init # Set initial infected population -- # TODO: equilibrate
+    people[0, :, 0] = M.popsize[:,0] * (1-M.hivprev) # Set initial susceptible population
+    people[1, :, 0] = M.popsize[:,0] * M.hivprev * F.init # Set initial infected population -- # TODO: equilibrate
     
     ## Convert a health state structure to an array
     def h2a(parstruct):
