@@ -20,10 +20,9 @@ def gatherepidata(D, R, verbose=2):
     
     for epi in ['prev', 'inci', 'daly', 'death', 'dx', 'tx1', 'tx2']:
         E[epi] = struct()
-        E[epi].pops = []
+        E[epi].pops = [struct()]*D.G.npops
         E[epi].tot = struct()
         for p in range(D.G.npops):
-            E[epi].pops.append(struct())
             E[epi].pops[p].best = R[epi].pops[0][p,:]
             E[epi].pops[p].low = R[epi].pops[1][p,:]
             E[epi].pops[p].high = R[epi].pops[2][p,:]
@@ -93,9 +92,8 @@ def gathermultidata(D, Rarr, verbose=2):
     
     for epi in ['prev', 'inci', 'daly', 'death', 'dx', 'tx1', 'tx2']:
         M[epi] = struct()
-        M[epi].pops = []
+        M[epi].pops = [struct()]*D.G.npops
         for p in range(D.G.npops):
-            M[epi].pops.append(struct())
             M[epi].pops[p].data = []
             M[epi].pops[p].legend = []
             M[epi].pops[p].title = epititles[epi] + ' - ' + D.G.meta.pops.short[p]
