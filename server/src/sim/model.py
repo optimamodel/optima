@@ -18,17 +18,6 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
     from printv import printv
     printv('Running model...', 1, verbose)
     
-    
-
-
-    tmp1 = zeros((1, 4));
-    tmp1[0,0] = 5
-    tmp1[0,2] = 4
-    
-    a = maximum(tmp1, 3)
-    
-    print(a)
-    
     ## Initialize basic quantities
     S      = struct()     # Sim output structure
     S.tvec = options.tvec # Append time vector
@@ -200,11 +189,12 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
             else: 
                 progout = 0  # Cannot progress out of AIDS stage
                 testingrate[cd4] = maximum(M.hivtest[:,t], M.aidstest[t]) # Testing rate in the AIDS stage (if larger!)
-            newdiagnoses[cd4] = dt*testingrate[cd4]*dxtime[t] * people[G.undx[cd4],:,t]
-            S.newtx1[:,t] += newdiagnoses[cd4]/dt # Save annual diagnoses data
-            hivdeaths = dt*death[cd4]*people[G.undx[cd4],:,t]
-            S.death[:,t] += hivdeaths[cd4]/dt # Save annual diagnoses data
-            dU.append(progin-progout - hivdeaths - newdiagnoses[cd4] - dt*background*people[G.undx[cd4],:,t])
+            newdiagnoses[cd4] = dt*people[G.undx[cd4],:,t]*testingrate[cd4]*dxtime[t]
+            hivdeaths         = dt*people[G.undx[cd4],:,t]*death[cd4]
+            otherdeaths       = dt*people[G.undx[cd4],:,t]*background
+            dU.append(progin - progout - newdiagnoses[cd4] - hivdeaths - otherdeaths)
+            S.dx[:,t]    += newdiagnoses[cd4]/dt # Save annual diagnoses data
+            S.death[:,t] += hivdeaths[cd4]/dt    # Save annual deaths data
             
         dU[0] = dU[0] - dS # Add newly infected people
         
