@@ -45,8 +45,8 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
     # dU = []; dD = []; dT1 = []; dF = []; dT2 = []; # Initialize differences
     
     ## Set initial epidemic conditions 
-    people[0, :, 0] = M.popsize[:,0] * (1-M.hivprev) # Set initial susceptible population
-    people[1, :, 0] = M.popsize[:,0] * M.hivprev * F.init # Set initial infected population -- # TODO: equilibrate
+    people[0, :, 0]  = M.popsize[:,0] * (1-M.hivprev) # Set initial susceptible population
+    people[1:, :, 0] = M.popsize[:,0] * M.hivprev * F.init # Set initial infected population -- # TODO: equilibrate to determine F.init
     
     ## Convert a health state structure to an array
     def h2a(parstruct):
@@ -82,7 +82,8 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
     ## Run the model -- numerically integrate over time
     ###############################################################################
     
-    for t in range(npts): # Loop over time; we'll skip the last timestep for people since we don't need to know what happens after that
+    # Loop over time
+    for t in range(npts): # Skip the last timestep for people since we don't need to know what happens after that
         printv('Timestep %i of %i' % (t+1, npts), 4, verbose)
         
         ## Calculate "effcetive" HIV prevalence -- taking diagnosis and treatment into account
@@ -149,7 +150,6 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
                     forceinfvec[pop1] = 1 - (1-forceinfvec[pop1]) * (1-forceinf1) # Calculate the new "male" forceinf, ensuring that it never gets above 1
                     forceinfvec[pop2] = 1 - (1-forceinfvec[pop2]) * (1-forceinf2) # Calculate the new "male" forceinf, ensuring that it never gets above 1
                     if not(all(forceinfvec>=0)): raise Exception('Injecting force-of-infection is invalid')
-        
   
         ###############################################################################
         ## The ODEs
@@ -174,7 +174,7 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
         background   = M.death[:, t] # TODO make OST effect this death rates
         
         ## Susceptibles
-        dS          = -newinfections # Change in number of susceptibles -- death rate already taken into account in pm.totalpop and dt
+        dS = -newinfections # Change in number of susceptibles -- death rate already taken into account in pm.totalpop and dt
         S.inci[:,t] = newinfections  # Store new infections
 
         ## Undiagnosed
@@ -219,48 +219,55 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
             if (cd4>0 and cd4<ncd4-1): # CD4>0 stops people from moving back into acute
                 recovin = dt*recov[cd4-1]*people[G.tx1[cd4+1],:,t]
             else: 
-                recovin = 0
+                recovin = 0 # Cannot recover in to acute or AIDS stage
             if cd4>1: # CD4>1 stops people from moving back into acute
                 recovout = dt*recov[cd4-2]*people[G.tx1[cd4],:,t]
             else: 
-                recovout = 0 # Cannot progress out of AIDS stage
-            newfail1[cd4] = dt*M.const.fail.first * people[G.tx1[cd4],:,t]
-            hivdeaths = dt*death[cd4]*people[G.tx1[cd4],:,t]
-            S.death[:,t] += hivdeaths[cd4]/dt # Save annual deaths data
-            dT1.append(recovin - recovout + newtreat1[cd4] - newfail1[cd4] - hivdeaths - dt*background*people[G.tx1[cd4],:,t])
+                recovout = 0 # Cannot recover out of gt500 stage (or acute stage)
+            newfail1[cd4] = dt*people[G.tx1[cd4],:,t]*M.const.fail.first 
+            hivdeaths     = dt*people[G.tx1[cd4],:,t]*death[cd4]
+            otherdeaths   = dt*people[G.tx1[cd4],:,t]*background
+            dT1.append(recovin - recovout + newtreat1[cd4] - newfail1[cd4] - hivdeaths - otherdeaths)
+            S.death[:,t] += hivdeaths[cd4]/dt # Save annual HIV deaths 
 
         ## Treatment failure
         for cd4 in range(ncd4):
             if cd4>0:
                 progin = dt*prog[cd4-1]*people[G.fail[cd4-1],:,t] 
             else: 
-                progin = 0
+                progin = 0 # Cannot progress into acute stage
             if cd4<ncd4-1: 
                 progout = dt*prog[cd4]*people[G.fail[cd4],:,t] 
             else: 
-                progout = 0
-            newtreat2[cd4] = dt*M.tx2[t]*tx2time[t] * people[G.fail[cd4],:,t]
-            S.newtx2[:,t] += newtreat2[cd4]/dt # Save annual treatment data
-            newfail2[cd4] = dt*M.const.fail.second * people[G.tx2[cd4],:,t]
-            hivdeaths = dt*death[cd4]*people[G.fail[cd4],:,t]
-            S.death[:,t] += hivdeaths[cd4]/dt # Save annual deaths data
-            dF.append(progin - progout + newfail1[cd4] + newfail2[cd4] - newtreat2[cd4] - hivdeaths - dt*background*people[G.fail[cd4],:,t])
-        
+                progout = 0 # Cannot progress out of AIDS stage
+            newtreat2[cd4] = dt*people[G.fail[cd4],:,t]*M.tx2[t]*tx2time[t]
+            newfail2[cd4]  = dt*people[G.tx2[cd4] ,:,t]*M.const.fail.second # Newly failed from ART2
+            hivdeaths      = dt*people[G.fail[cd4],:,t]*death[cd4]
+            otherdeaths    = dt*people[G.fail[cd4],:,t]*background
+            dF.append(progin - progout + newfail1[cd4] + newfail2[cd4] - newtreat2[cd4] - hivdeaths - otherdeaths)
+            S.newtx2[:,t] += newtreat2[cd4]/dt # Save annual treatment initiation
+            S.death[:,t]  += hivdeaths[cd4]/dt # Save annual HIV deaths
+            
         ## 2nd-line treatment
         for cd4 in range(ncd4):
             if (cd4>0 and cd4<ncd4-1): # CD4>0 stops people from moving back into acute
                 recovin = dt*recov[cd4-1]*people[G.tx2[cd4+1],:,t]
             else: 
-                recovin = 0 
+                recovin = 0 # Cannot recover in to acute or AIDS stage
             if cd4>1: # CD4>1 stops people from moving back into acute
                 recovout = dt*recov[cd4-2]*people[G.tx2[cd4],:,t]
             else: 
-                recovout = 0
-            hivdeaths = dt*death[cd4]*people[G.tx2[cd4],:,t]
+                recovout = 0 # Cannot recover out of gt500 stage (or acute stage)
+            hivdeaths   = dt*people[G.tx2[cd4],:,t]*death[cd4]
+            otherdeaths = dt*people[G.tx2[cd4],:,t]*background
+            dT2.append(recovin - recovout + newtreat2[cd4] - newfail2[cd4] - hivdeaths - otherdeaths)
             S.death[:,t] += hivdeaths[cd4]/dt # Save annual deaths data
-            dT2.append(recovin - recovout + newtreat2[cd4] - newfail2[cd4] - hivdeaths - dt*background*people[G.tx2[cd4],:,t])
-        
+
+        ###############################################################################
         ## Update next time point and check for errors
+        ###############################################################################
+        
+        # Ignore the last time point, we don't want to update further
         if t<npts-1:
             change = zeros((G.nstates, npops))
             change[G.sus,:] = dS
@@ -270,12 +277,11 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
                 change[G.tx1[cd4],:]  = dT1[cd4]
                 change[G.fail[cd4],:] = dF[cd4]
                 change[G.tx2[cd4],:]  = dT2[cd4]
-            people[:,:,t+1] = people[:,:,t] + change # Update people array unless it's the last timestep
-            # Calculate correct population size
-            newpeople = M.popsize[:,t+1] # Was just the difference in pm.populationsize -- which could be totally different from the actual number of people!
+            people[:,:,t+1] = people[:,:,t] + change # Update people array
+            newpeople = M.popsize[:,t+1]-sum(people[:,:,t+1]) # Number of people to add according to M.popsize (can be negative)
             for pop in range(npops): # Loop over each population, since some might grow and others might shrink
                 if newpeople[pop]>=0: # People are entering: they enter the susceptible population
-                    people[0,pop,t+1] += newpeople[pop] # Number of people entering is the difference between the current model population size and the next time step's defined population size
+                    people[0,pop,t+1] += newpeople[pop]
                 else: # People are leaving: they leave from each health state equally
                     people[:,pop,t+1] *= M.popsize[pop,t]/sum(people[:,pop,t]);
             if not((people[:,:,t+1]>=0).all()):
