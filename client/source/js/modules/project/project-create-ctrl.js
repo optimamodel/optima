@@ -234,14 +234,63 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         function (newProgram) {
           program.active = true;
           _(program).extend(newProgram);
-        });
+        }
+      );
+    };
+
+    $scope.copyProgram = function ($event, existingProgram) {
+      if ($event) {
+        $event.preventDefault();
+      }
+
+      var program = angular.copy(existingProgram);
+      $scope.programs.push(program);
+
+      return $modal.open({
+        templateUrl: 'js/modules/project/create-program-modal.html',
+        controller: 'ProjectCreateProgramModalController',
+        resolve: {
+          program: function () {
+            return program;
+          }
+        }
+      }).result.then(
+        function (newProgram) {
+          program.active = true;
+          _(program).extend(newProgram);
+        }
+      );
+    };
+
+    $scope.copyPopulation = function ($event, existingPopulation) {
+      if ($event) {
+        $event.preventDefault();
+      }
+
+      var population = angular.copy(existingPopulation);
+      $scope.populations.push(population);
+
+      return $modal.open({
+        templateUrl: 'js/modules/project/create-population-modal.html',
+        controller: 'ProjectCreatePopulationModalController',
+        resolve: {
+          population: function () {
+            return population;
+          }
+        }
+      }).result.then(
+        function (newPopulation) {
+          population.active = true;
+          _(population).extend(newPopulation);
+        }
+      );
     };
 
     var toCleanArray = function (collection) {
       return _(collection).chain()
         .where({ active: true })
         .map(function (item) {
-          return _(item).omit(['active', '$$hashKey'])
+          return _(item).omit(['active', '$$hashKey']);
         })
         .value();
     };
