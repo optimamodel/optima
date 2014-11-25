@@ -34,7 +34,7 @@ VERSION = tuple(map(int, __version__.split('.')))
 
 __all__ = ('Bunch', 'bunchify','unbunchify','to_array')
 
-from numpy import ndarray, isnan, asarray
+from numpy import ndarray, isnan, asarray, array_equal
 
 def float_array(data):
     return asarray(data, float)
@@ -226,7 +226,29 @@ class Bunch(dict):
         """
         return bunchify(d)
 
+    def __eq__(self,other):
+        '''Recursively check if two Bunch objects contain identical data'''
+        if not isinstance(other,self.__class__):
+            raise TypeError
 
+        if isinstance(self,Bunch):
+            # Check the fields are the same
+            if not self.viewkeys() == other.viewkeys():
+                # viewkeys() is a dictionary view object so the ordering of the keys doesn't affect the result
+                return False
+            for s in self.keys():
+                if isinstance(self[s],ndarray):
+                    if not array_equal(self[s],other[s]):
+                        return false
+                elif self[s] != other[s]:
+                    return False
+        else:
+            if self != other:
+                return False
+        return True
+
+    def __ne__(self, other):
+            return not self.__eq__(other)
 
 # While we could convert abstract types like Mapping or Iterable, I think
 # bunchify is more likely to "do what you mean" if it is conservative about
