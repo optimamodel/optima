@@ -44,8 +44,7 @@ The master thread queues operations to a single request queue. Example of this c
 	conn = boto.sqs.connect_to_region( os.environ['AWS_DEFAULT_REGION'] )
     
 	# Get the optima queue. We will error out if no queue is found. This is what is desired.
-	optima_queue = conn.get_all_queues( os.environ['AWS_WORKER_QUEUE_PREFIX'] )
-	optima_queue = optima_queue[0]
+	optima_queue = conn.get_queue( os.environ['AWS_WORKER_QUEUE'] )
 
     # A new queue to get response from all slave workers. Needs to be unique across all api calls
     response_queue_id = id_generator()
@@ -99,14 +98,17 @@ Setup an EB Application
 	./worker/run.sh --init
 	
 	...
+	
 	# Enter Access key and secret 
 	You have not yet set up your credentials or your credentials are incorrect 
 	You must provide your credentials.
 	(aws-access-id):
 	(aws-secret-key):
-	...
+	
 	...
 	
+	Setup EB application
+	Application optima has been created.
 
 
 Start an EB Environment

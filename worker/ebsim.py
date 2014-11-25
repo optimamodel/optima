@@ -21,8 +21,7 @@ def loop():
     print "Getting queue..."
     
     # Get the optima queue. We will error out if no queue is found. This is what is desired.
-    optima_queue = conn.get_all_queues( os.environ['AWS_WORKER_QUEUE_PREFIX'] )
-    optima_queue = optima_queue[0]
+    optima_queue = conn.get_queue( os.environ['AWS_WORKER_QUEUE'] )
     
     print "Going in a loop reading queue"
     
