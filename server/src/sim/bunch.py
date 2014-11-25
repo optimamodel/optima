@@ -34,7 +34,7 @@ VERSION = tuple(map(int, __version__.split('.')))
 
 __all__ = ('Bunch', 'bunchify','unbunchify','to_array')
 
-from matplotlib.pylab import ndarray, isnan, asarray # CK: replaced dependence on NumPy with Matplotlib
+from numpy import ndarray, isnan, asarray
 
 def float_array(data):
     return asarray(data, float)

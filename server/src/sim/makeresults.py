@@ -14,7 +14,7 @@ def makeresults(D, allsims=None, quantiles=None, verbose=2):
     Version: 2014nov24
     """
     
-    from matplotlib.pylab import array, concatenate
+    from numpy import array, concatenate
     from bunch import Bunch as struct
     from printv import printv
     from quantile import quantile

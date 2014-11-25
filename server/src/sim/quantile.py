@@ -6,7 +6,7 @@ def quantile(data, quantiles=[0.5, 0.25, 0.75]):
     
     Version: 2014nov23
     """
-    from matplotlib.pylab import array
+    from numpy import array
     nsamples = len(data) # Number of samples in the dataset
     indices = (array(quantiles)*(nsamples-1)).round().astype(int) # Calculate the indices to pull out
     output = array(data)

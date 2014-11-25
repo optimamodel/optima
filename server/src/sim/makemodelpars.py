@@ -6,7 +6,7 @@ def makemodelpars(P, opt, verbose=2):
     """
     
     from printv import printv
-    from matplotlib.pylab import zeros, array, exp
+    from numpy import zeros, array, exp
     from bunch import Bunch as struct # Replicate Matlab-like structure behavior
     printv('Making model parameters...', 1, verbose)
     
@@ -86,7 +86,7 @@ def makemodelpars(P, opt, verbose=2):
     
     ## WARNING need to introduce time!
     def reconcileacts(mixmatrix,popsize,popacts):
-        from matplotlib.pylab import array
+        from numpy import array
         eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
 
         # Make sure the dimensions all agree
