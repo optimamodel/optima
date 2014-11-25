@@ -15,7 +15,26 @@ define(['./module', 'underscore'], function (module, _) {
           }
           activeProject.setValue(name);
         });
-    }
+    };
+
+    $scope.delete = function (name) {
+      $http.delete('/api/project/delete/' + name)
+        .success(function (response) {
+          if (response && response.status === 'NOK') {
+            alert(response.reason);
+            return;
+          }
+
+          $scope.projects.splice($scope.projects.indexOf(name), 1);
+
+          if (activeProject.name === name) {
+            activeProject.setValue('');
+          }
+        })
+        .error(function () {
+          alert('Could not remove the project')
+        });
+    };
   });
 
 });
