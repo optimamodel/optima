@@ -1,3 +1,6 @@
+epititles = {'prev':'Prevalence', 'inci':'New infections', 'daly':'DALYs', 'death':'Deaths', 'dx':'Diagnoses', 'tx1':'First-line treatment', 'tx2':'Second-line treatment'}
+epiylabels = {'prev':'Prevalence (%)', 'inci':'New HIV infections per year', 'daly':'DALYs per year', 'death':'HIV-related deaths per year', 'dx':'HIV diagnoses per year', 'tx1':'People on 1st-line treatment', 'tx2':'People on 2nd-line treatment'}
+
 def gatherepidata(D, R, verbose=2):
     """ Gather standard epidemiology results into a form suitable for plotting. """
     from matplotlib.pylab import zeros, nan, size, array
@@ -8,9 +11,10 @@ def gatherepidata(D, R, verbose=2):
     E = struct()
     E.__doc__ = 'Output structure containing everything that might need to be plotted'
     E.tvec = R.tvec # Copy time vector
-    E.poplabels = D.G.meta.pops.long
+    E.poplabels = D.G.meta.pops.short
     E.colorm = (0,0.3,1) # Model color
     E.colord = (0,0,0) # Data color
+    E.legend = ('Model', 'Data')
     E.xdata = D.data.epiyears
     ndatayears = len(E.xdata)
     
@@ -23,52 +27,36 @@ def gatherepidata(D, R, verbose=2):
             E[epi].pops[p].best = R[epi].pops[0][p,:]
             E[epi].pops[p].low = R[epi].pops[1][p,:]
             E[epi].pops[p].high = R[epi].pops[2][p,:]
+            E[epi].pops[p].title = epititles[epi] + ' - ' + D.G.meta.pops.short[p]
+            E[epi].pops[p].ylabel = epiylabels[epi]
         E[epi].tot.best = R[epi].tot[0]
         E[epi].tot.low = R[epi].tot[1]
         E[epi].tot.high = R[epi].tot[2]
+        E[epi].tot.title = epititles[epi] + ' - Overall'
+        E[epi].tot.ylabel = epiylabels[epi]
         E[epi].xlabel = 'Years'
         
         if epi=='prev':
-            printv('Gathering prevalence...', 3, verbose)
             epidata = array(D.data.key.hivprev[0]) # TODO: include uncertainties
             E.prev.ydata = zeros((D.G.npops,ndatayears))
-            E.prev.ylabel = 'Prevalence (%)'
-
         if epi=='inci':
-            printv('Gathering incidence...', 3, verbose)
             epidata = D.data.opt.numinfect[0]
             E.inci.ydata = zeros(ndatayears)
-            E.inci.ylabel = 'New HIV infections per year'
-
         if epi=='death':
-            printv('Gathering deaths...', 3, verbose)
             epidata = D.data.opt.death[0]
             E.death.ydata = zeros(ndatayears)
-            E.death.ylabel = 'HIV-related deaths per year'
-
         if epi=='daly':
-            printv('Gathering DALYs...', 3, verbose)
             epidata = nan+zeros(ndatayears) # No data
             E.daly.ydata = zeros(ndatayears)
-            E.daly.ylabel = 'Disability-adjusted life years per year'
-            
         if epi=='dx':
-            printv('Gathering diagnoses...', 3, verbose)
             epidata = D.data.opt.numdiag[0]
             E.dx.ydata = zeros(ndatayears)
-            E.dx.ylabel = 'New HIV diagnoses per year'
-        
         if epi=='tx1':
-            printv('Gathering first-line treatment...', 3, verbose)
             epidata = D.data.txrx.numfirstline[0]
             E.tx1.ydata = zeros(ndatayears)
-            E.tx1.ylabel = 'Number of people on first-line treatment'
-        
         if epi=='tx2':
-            printv('Gathering second-line treatment...', 3, verbose)
             epidata = D.data.txrx.numsecondline[0]
             E.tx2.ydata = zeros(ndatayears)
-            E.tx2.ylabel = 'Number of people on second-line treatment'
 
 
         if size(epidata[0])==1: # TODO: make this less shitty, easier way of checking what shape the data is I'm sure
@@ -106,15 +94,23 @@ def gathermultidata(D, Rarr, verbose=2):
     for epi in ['prev', 'inci', 'daly', 'death', 'dx', 'tx1', 'tx2']:
         M[epi] = struct()
         M[epi].pops = []
-        M[epi].tot = []
+        M[epi].tot = struct()
         for p in range(D.G.npops):
-            M[epi].pops.append([])
+            M[epi].pops.append(struct())
+            M[epi].pops[p].data = []
+            M[epi].pops[p].legend = D.G.meta.pops.short[p]
+            M[epi].pops[p].title = epititles[epi] + ' - ' + D.G.meta.pops.short[p]
+            M[epi].pops[p].ylabel = epiylabels[epi]
             for sim in range(M.nsims):
-                M[epi].pops[p].append(Rarr[sim].R[epi].pops[0][p,:])
+                M[epi].pops[p].data.append(Rarr[sim].R[epi].pops[0][p,:])
+        M[epi].tot.data = []
+        M[epi].tot.legend = []
+        M[epi].tot.title = epititles[epi] + ' - Overall'
+        M[epi].tot.ylabel = epiylabels[epi]
         for sim in range(M.nsims):
-            M[epi].tot.append(Rarr[sim].R[epi].tot[0])
+            M[epi].tot.data.append(Rarr[sim].R[epi].tot[0])
+            M[epi].legend.append(Rarr[sim].label) # Add legends
         M[epi].xlabel = 'Years'
-        print('!!! Add correct labels')
         
     printv('...done gathering multi-simulation results.', 4, verbose)
     return M
@@ -127,7 +123,7 @@ def gatheroptimdata(D, A, verbose=2):
     printv('Gathering optimization results...', 3, verbose)
     
     O = struct()
-    O.legend = D.data.meta.progs.short
+    O.legend = D.G.meta.progs.short
     
     O.pie1 = struct()
     O.pie1.name = 'Original'
