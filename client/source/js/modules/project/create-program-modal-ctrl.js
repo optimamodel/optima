@@ -1,4 +1,4 @@
-define(['./module', 'angular', 'underscore'], function (module, angular, _) {
+define(['./module'], function (module) {
   'use strict';
 
   module.controller('ProjectCreateProgramModalController', function ($scope, $modalInstance, program) {
@@ -14,7 +14,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         alert('Please fill in the form correctly');
       }
 
-      $modalInstance.close(program);
+      $modalInstance.close($scope.program);
     };
 
     initialize();
