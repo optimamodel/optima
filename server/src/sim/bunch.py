@@ -34,7 +34,9 @@ VERSION = tuple(map(int, __version__.split('.')))
 
 __all__ = ('Bunch', 'bunchify','unbunchify','to_array')
 
-from numpy import ndarray, isnan, asarray, array_equal
+from numpy import ndarray, isnan, asarray, dtype, array_equal
+
+NP_ARRAY_KEYS = set(["np_array", "np_dtype"])
 
 def float_array(data):
     return asarray(data, float)
@@ -277,7 +279,11 @@ def bunchify(x):
         nb. As dicts are not hashable, they cannot be nested in sets/frozensets.
     """
     if isinstance(x, dict):
-        return Bunch( (k, bunchify(v)) for k,v in x.iteritems() )
+        dk = x.keys()
+        if len(dk) == 2 and set(dk) == NP_ARRAY_KEYS:
+            return asarray(bunchify(x['np_array']), dtype(x['np_dtype']))
+        else:
+            return Bunch( (k, bunchify(v)) for k,v in x.iteritems() )
     elif isinstance(x, (list, tuple)):
         return type(x)( bunchify(v) for v in x )
     else:
@@ -306,7 +312,7 @@ def unbunchify(x):
     elif isinstance(x, (list, tuple)):
         return type(x)( unbunchify(v) for v in x )
     elif isinstance(x, ndarray):
-        return [unbunchify(v) for v in x.tolist()]
+        return {"np_array":[unbunchify(v) for v in x.tolist()], "np_dtype":x.dtype.name}
     elif isinstance(x, float) and isnan(x):
         return None
     else:
