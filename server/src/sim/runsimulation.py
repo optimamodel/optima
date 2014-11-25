@@ -6,8 +6,6 @@ def runsimulation(D, startyear=2000, endyear=2030, verbose=2):
     Version: 2014nov05 by cliffk
     """
 
-    
-    
     # Create options structure
     from bunch import Bunch as struct
     from matplotlib.pylab import arange
