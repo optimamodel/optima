@@ -11,7 +11,9 @@ define(['./module'], function (module) {
     };
 
     $scope.submit = function (form) {
-      if (form.$invalid) {
+      if ($scope.population.male && $scope.population.female) {
+        alert('Please select either male, female or none of them.');
+      } else if (form.$invalid) {
         alert('Please fill in the form correctly');
       } else {
         $modalInstance.close($scope.population);
