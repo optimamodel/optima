@@ -14,8 +14,20 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
     ## Imports
     from matplotlib.pylab import array, zeros, exp # For creating arrays
     from bunch  import Bunch as struct # Replicate Matlab-like structure behavior
+    from numpy  import maximum
     from printv import printv
     printv('Running model...', 1, verbose)
+    
+    
+
+
+    tmp1 = zeros((1, 4));
+    tmp1[0,0] = 5
+    tmp1[0,2] = 4
+    
+    a = maximum(tmp1, 3)
+    
+    print(a)
     
     ## Initialize basic quantities
     S      = struct()     # Sim output structure
@@ -150,7 +162,6 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
                     if not(all(forceinfvec>=0)): raise Exception('Injecting force-of-infection is invalid')
         
   
-        
         ###############################################################################
         ## The ODEs
         ###############################################################################
@@ -182,13 +193,13 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
             if cd4>0: 
                 progin = dt*prog[cd4-1]*people[G.undx[cd4-1],:,t]
             else: 
-                progin = 0
+                progin = 0 # Cannot progress into acute stage
             if cd4<ncd4-1: 
                 progout = dt*prog[cd4]*people[G.undx[cd4],:,t]
-                testingrate[cd4] = M.hivtest[:,t]
+                testingrate[cd4] = M.hivtest[:,t] # Population specific testing rates
             else: 
-                progout = 0
-                testingrate[cd4] = M.aidstest[t]
+                progout = 0  # Cannot progress out of AIDS stage
+                testingrate[cd4] = maximum(M.hivtest[:,t], M.aidstest[t]) # Testing rate in the AIDS stage (if larger!)
             newdiagnoses[cd4] = dt*testingrate[cd4]*dxtime[t] * people[G.undx[cd4],:,t]
             S.newtx1[:,t] += newdiagnoses[cd4]/dt # Save annual diagnoses data
             hivdeaths = dt*death[cd4]*people[G.undx[cd4],:,t]
