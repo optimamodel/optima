@@ -27,6 +27,6 @@ def perturb(n=1, perturbation=0.5):
     """
     Define an array of numbers evenly perturbed with a mean of 1.
     """
-    from numpy import rand
+    from numpy.random import rand
     output = 1 + 2*perturbation*(rand(n)-0.5)
     return output
