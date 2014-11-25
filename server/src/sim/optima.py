@@ -4,20 +4,17 @@ OPTIMA
 This function does everything. The basic procedure is as follows:
 
 1. makeproject -- initialize the project file
+2. updatedata -- load the data into a structure
+3. runsimulation -- run the simulation
+4. epiresults -- calculate the results
+5. viewresults -- display the results
 
-1. loadspreadsheet -- load the data into a structure
-2. data2pars -- convert the data into model parameters
-3. setupmodel -- reconcile partnerships and calculate parameters to go into the model
-4. model -- actually run the model
-
-Version: 2014nov19 by cliffk
+Version: 2014nov23 by cliffk
 """
 
 print('WELCOME TO OPTIMA')
-import shutil
-import os
-import argparse
 
+import argparse
 parser = argparse.ArgumentParser(description = "OPTIMA global procedure")
 parser.add_argument("-p", "--projectname", type=str, default="example", help = "source project name")
 parser.add_argument("-v", "--verbose",     type=int, default=4, help="increase output verbosity")
@@ -31,26 +28,23 @@ show_wait   = args.wait
 
 print('\n\n1. Making project...')
 from makeproject import makeproject, default_pops, default_progs
-if os.path.exists(projectname+'.xlsx'):
-  shutil.copy(projectname+'.xlsx', projectname+'_data.xlsx')
 D = makeproject(projectname='example', pops=default_pops, progs = default_progs, datastart=2000, dataend=2015, verbose=verbose)
 
 print('\n\n2. Uploading spreadsheet...')
 from updatedata import updatedata
-if os.path.exists(projectname+'_data.xlsx'):
-  shutil.copy(projectname+'_data.xlsx', projectname+'.xlsx')
 D = updatedata(D, verbose=verbose)
 
 print('\n\n3. Running simulation...')
 from runsimulation import runsimulation
 D = runsimulation(D, startyear=2000, endyear=2015, verbose=verbose)
 
-print('\n\n4. Making results...')
-from epiresults import epiresults
-D = epiresults(D, verbose=verbose)
+print('\n\n4. Making plot data...')
+from gatherplotdata import gatherplotdata
+D = gatherplotdata(D, verbose=verbose)
 
 print('\n\n5. Viewing results...')
 from viewresults import viewresults
-viewresults(D, whichgraphs={'prev':1, 'inci':1, 'daly':1, 'death':1, 'pops':1, 'tot':1}, onefig=True, verbose=verbose, show_wait=show_wait)
+viewresults(D.O, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'death':[0,1], 'dx':[0,1], 'tx1':[0,1], 'tx2':[0,1]}, onefig=True, verbose=verbose, show_wait=show_wait)
 
 print('\n\nDONE.')
+

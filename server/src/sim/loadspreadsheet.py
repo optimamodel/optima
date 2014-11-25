@@ -1,13 +1,12 @@
-from dataio import templatepath
-
 def loadspreadsheet(filename='example.xlsx',verbose=2):
     """
     Loads the spreadsheet (i.e. reads its contents into the data structure).
     This data structure is used in the next step to update the corresponding model.
     The spreadsheet is assumed to be in the format specified in example.xlsx.
     
-    Version: 2014nov05
+    Version: 2014nov22
     """
+    
 
     ###########################################################################
     ## Preliminaries
@@ -19,24 +18,28 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
     from bunch import Bunch as struct # Replicate Matlab-like structure behavior
     printv('Loading data from %s...' % filename, 1, verbose)
     
+    
     ###########################################################################
     ## Define the spreadsheet and parameter names
     ###########################################################################
     
     # Metadata -- population and program names -- array sizes are (# populations) and (# programs)
+    # groupname   sheetname                 name    thispar
     metadata = [['Populations & programs', 'meta', ['pops', 'progs']]]
     
     # Key data -- array sizes are time x population x uncertainty
     keydata =  [['Demographics & HIV prevalence', 'key', ['popsize', 'hivprev']]]
     
+    # Cost-coverage data -- array sizes are time x programs x cost/coverage
+    cocodata = [['Cost & coverage',     'costcov', ['cov', 'cost']]]
+    
     # Time data -- array sizes are time x population
     timedata = [
-                 ['Cost & coverage',     'costcov', ['cov', 'total', 'unit']], \
                  ['Other epidemiology',  'epi',     ['death', 'stiprevulc', 'stiprevdis', 'tbprev']], \
                  ['Optional indicators', 'opt',     ['numtest', 'numdiag', 'numinfect', 'prev', 'death', 'newtreat']], \
-                 ['Testing & treatment', 'txrx',    ['testrate', 'aidstestrate', 'numfirstline', 'numsecondline', 'numpmtct', 'birth', 'breast']], \
-                 ['Sexual behavior',     'sex',     ['numactsreg', 'numactscas', 'numactscom', 'condomreg', 'condomcas', 'condomcom', 'circum']], \
-                 ['Injecting behavior',  'inj',     ['numinject', 'sharing', 'ost']], \
+                 ['Testing & treatment', 'txrx',    ['testrate', 'aidstestrate', 'numfirstline', 'numsecondline', 'prep', 'pep', 'numpmtct', 'birth', 'breast']], \
+                 ['Sexual behavior',     'sex',     ['numactsreg', 'numactscas', 'numactscom', 'condomreg', 'condomcas', 'condomcom', 'circum', 'numcircum']], \
+                 ['Injecting behavior',  'inj',     ['numinject', 'sharing', 'numost']], \
                  ['Macroeconomics',      'macro',   ['gdp', 'revenue', 'govtexpend', 'totalhealth', 'domestichealth', 'domestichiv', 'globalfund', 'pepfar', 'otherint', 'private']]
                 ]
                  
@@ -49,21 +52,22 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
     # Constants -- array sizes are scalars x uncertainty
     constants = [
                  ['Constants', 'const',              [['trans',    ['mfi', 'mfr', 'mmi', 'mmr', 'inj', 'mtctbreast', 'mtctnobreast']], \
-                                                      ['cd4trans', ['acute','gt500','gt350','gt200','aids']], \
-                                                      ['prog',     ['acute','gt500','gt350','gt200']],\
-                                                      ['recov',    ['gt500','gt350','gt200','aids']],\
-                                                      ['fail',     ['first','second']],\
-                                                      ['death',    ['acute','gt500','gt350','gt200','aids','treat','tb']],\
-                                                      ['eff',      ['condom','circ','dx','sti','meth','pmtct','tx']]]], \
-                 ['Disutilities & costs', 'cost',    [['disutil',  ['acute','gt500','gt350','gt200','aids','tx']], \
-                                                      ['health',   ['acute','gt500','gt350','gt200','aids']], \
-                                                      ['social',   ['acute','gt500','gt350','gt200','aids']]]]
+                                                      ['cd4trans', ['acute', 'gt500', 'gt350', 'gt200', 'aids']], \
+                                                      ['prog',     ['acute', 'gt500', 'gt350', 'gt200']],\
+                                                      ['recov',    ['gt500', 'gt350', 'gt200', 'aids']],\
+                                                      ['fail',     ['first', 'second']],\
+                                                      ['death',    ['acute', 'gt500', 'gt350', 'gt200', 'aids', 'treat', 'tb']],\
+                                                      ['eff',      ['condom', 'circ', 'dx', 'sti', 'meth', 'pmtct', 'tx', 'prep', 'pep']]]], \
+                 ['Disutilities & costs', 'cost',    [['disutil',  ['acute', 'gt500', 'gt350', 'gt200', 'aids','tx']], \
+                                                      ['health',   ['acute', 'gt500', 'gt350', 'gt200', 'aids']], \
+                                                      ['social',   ['acute', 'gt500', 'gt350', 'gt200', 'aids']]]]
                 ]
     
     
     ## Ugly, but allow the list of groups to be used as name and also as variables
     sheetstructure = struct()
     sheetstructure.metadata = metadata
+    sheetstructure.cocodata = cocodata
     sheetstructure.keydata = keydata
     sheetstructure.timedata = timedata
     sheetstructure.matrices = matrices
@@ -98,7 +102,7 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
             
             
             ## Calculate columns for which data are entered, and store the year ranges
-            if groupname == 'keydata' or (groupname == 'timedata' and name != 'macro'): # Need to gather year ranges for epidemic etc. data
+            if groupname in ['keydata', 'cocodata', 'timedata']  and name != 'macro': # Need to gather year ranges for epidemic etc. data
                 data.epiyears = [] # Initialize epidemiology data years
                 for col in range(sheetdata.ncols):
                     thiscell = sheetdata.cell_value(1,col) # 1 is the 2nd row which is where the year data should be
@@ -119,7 +123,9 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
                         data.econyears.append(float(thiscell)) # Add this year
                 
             assumptioncol = lastdatacol + 1 # The "OR" space is in between
-            programcols = assumptioncol + array([3,5,6,8,9]) # Sorry for the weird numbering...not sure what the deal is
+            ncolsperprog = 5 # Number of columns necessary for defining a single program; name, zero-spend-min, zero-spend-max, full-spend-min, full-spend-max
+            nprogblocks = 4 # Number of program blocks
+            programcols = assumptioncol + 3 + array([array(range(ncolsperprog))+(1+ncolsperprog)*i for i in range(nprogblocks)]) # Calculate which columns the program data is stored in
             
             
             
@@ -133,25 +139,34 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
             for row in range(sheetdata.nrows): 
                 paramcategory = sheetdata.cell_value(row,0) # See what's in the first column for this row
                 
-                
                 if paramcategory != '': # It's not blank: e.g. "HIV prevalence"
                     printv('Loading "%s"...' % paramcategory, 3, verbose)
                     parcount += 1 # Increment the parameter count
                     
-                    if groupname=='metadata': # Metadata
+                    # It's metadata: pull out each of the pieces
+                    if groupname=='metadata': 
                         thispar = subparlist[parcount] # Get the name of this parameter, e.g. 'pop'
                         data[name][thispar] = struct() # Initialize to empty list
+                        data[name][thispar].code = [] # Store code population/program names, e.g. "FSW"
                         data[name][thispar].short = [] # Store short population/program names, e.g. "FSW"
                         data[name][thispar].long = [] # Store long population/program names, e.g. "Female sex workers"
-                        data[name][thispar].male = [] # Store whether or not this population is male
-                        data[name][thispar].female = [] # Store whether or not this population is female
-                        data[name][thispar].hetero = [] # Store whether or not this population is heterosexual
-                        data[name][thispar].homo = [] # Store whether or not this population is homosexual 
-                        data[name][thispar].injects = [] # Store whether or not this population injects drugs
-                        data[name][thispar].sexworker = [] # Store whether or not this population is a sex worker
-                        data[name][thispar].client = [] # Store whether or not this population is a client of sex workers
-
-                    elif groupname=='keydata' or groupname=='timedata' or groupname=='matrices': # It's basic data or a matrix: create an empty list
+                        if thispar=='pops':
+                            data[name][thispar].male = [] # Store whether or not this population is male
+                            data[name][thispar].female = [] # Store whether or not this population is female
+                            data[name][thispar].hetero = [] # Store whether or not this population is heterosexual
+                            data[name][thispar].homo = [] # Store whether or not this population is homosexual 
+                            data[name][thispar].injects = [] # Store whether or not this population injects drugs
+                            data[name][thispar].sexworker = [] # Store whether or not this population is a sex worker
+                            data[name][thispar].client = [] # Store whether or not this population is a client of sex workers
+                        if thispar=='progs':
+                            data[name][thispar].saturating = [] # Store whether or not this program is saturating
+                    
+                    # It's cost-coverage data: store cost and coverage for each program
+                    elif groupname=='cocodata': 
+                        data[name][subparlist[0]] = [] # Initialize coverage to an empty list -- i.e. data.costcov.cov
+                        data[name][subparlist[1]] = [] # Initialize cost to an empty list -- i.e. data.costcov.cost
+                        
+                    elif groupname in ['keydata', 'timedata', 'matrices']: # It's basic data or a matrix: create an empty list
                         thispar = subparlist[parcount] # Get the name of this parameter, e.g. 'popsize'                    
                         data[name][thispar] = [] # Initialize to empty list
     
@@ -172,16 +187,31 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
                         
                         # It's meta-data, split into pieces
                         if groupname=='metadata': 
-                            thesedata = sheetdata.row_values(row, start_colx=2, end_colx=11) # Data starts in 3rd column, finishes in 11th column
-                            data[name][thispar].short.append(thesedata[0])
-                            data[name][thispar].long.append(thesedata[1])
-                            data[name][thispar].male.append(thesedata[2])
-                            data[name][thispar].female.append(thesedata[3])
-                            data[name][thispar].hetero.append(thesedata[4])
-                            data[name][thispar].homo.append(thesedata[5])
-                            data[name][thispar].injects.append(thesedata[6])
-                            data[name][thispar].sexworker.append(thesedata[7])
-                            data[name][thispar].client.append(thesedata[8])
+                            thesedata = sheetdata.row_values(row, start_colx=2, end_colx=12) # Data starts in 3rd column, finishes in 11th column
+                            data[name][thispar].code.append(thesedata[0])
+                            data[name][thispar].short.append(thesedata[1])
+                            data[name][thispar].long.append(thesedata[2])
+                            if thispar=='pops':
+                                data[name][thispar].male.append(thesedata[3])
+                                data[name][thispar].female.append(thesedata[4])
+                                data[name][thispar].hetero.append(thesedata[5])
+                                data[name][thispar].homo.append(thesedata[6])
+                                data[name][thispar].injects.append(thesedata[7])
+                                data[name][thispar].sexworker.append(thesedata[8])
+                                data[name][thispar].client.append(thesedata[9])
+                            if thispar=='progs':
+                                data[name][thispar].saturating.append(thesedata[3])
+                                
+                        # It's cost-coverage data, save the cost and coverage values separately
+                        if groupname=='cocodata':
+                            thesedata = sheetdata.row_values(row, start_colx=3, end_colx=lastdatacol) # Data starts in 4th column
+                            thesedata = map(lambda val: nan if val=='' else val, thesedata) # Replace blanks with nan
+                            assumptiondata = sheetdata.cell_value(row, assumptioncol)
+                            if assumptiondata != '': thesedata = [assumptiondata] # Replace the (presumably blank) data if a non-blank assumption has been entered
+                            ccindices = {'Coverage':0, 'Cost':1} # Define best-low-high indices
+                            cc = sheetdata.cell_value(row, 2) # Read in whether indicator is best, low, or high
+                            data[name][subparlist[ccindices[cc]]].append(thesedata) # Actually append the data
+                        
                         
                         # It's key data, save both the values and uncertainties
                         if groupname=='keydata':
@@ -205,13 +235,14 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
                             data[name][thispar].append(thesedata) # Store data
                             
                             # Load program data -- only exists for time data
-                            if sheetdata.ncols>=programcols[-1]: # Don't try to read more data than exist
-                                programname = str(sheetdata.cell_value(row, programcols[0])) # Convert to plain string since otherwise can't be used as a dict key
-                                if programname != '': # Not blank: a program exists!
-                                    if not(programs.has_key(programname)): programs[programname] = [] # Create new list if none exists
-                                    zerocov = sheetdata.row_values(row, start_colx=programcols[1], end_colx=programcols[2]+1) # Get outcome data
-                                    fullcov = sheetdata.row_values(row, start_colx=programcols[3], end_colx=programcols[4]+1) # Get outcome data
-                                    programs[programname].append([[name,thispar], [subparam], [zerocov, fullcov]]) # Append to program
+                            if sheetdata.ncols>=programcols[-1][-1]: # Don't try to read more data than exist
+                                for progblock in range(len(programcols)): # Loop over each program block
+                                    programname = str(sheetdata.cell_value(row, programcols[progblock][0])) # Convert to plain string since otherwise can't be used as a dict key
+                                    if programname != '': # Not blank: a program exists!
+                                        if not(programs.has_key(programname)): programs[programname] = [] # Create new list if none exists
+                                        zerocov = sheetdata.row_values(row, start_colx=programcols[progblock][1], end_colx=programcols[progblock][2]+1) # Get outcome data
+                                        fullcov = sheetdata.row_values(row, start_colx=programcols[progblock][3], end_colx=programcols[progblock][4]+1) # Get outcome data
+                                        programs[programname].append([[name,thispar], [subparam], [zerocov, fullcov]]) # Append to program # TODO -- not sure if subparam is useful here, an index would probably be more useful
                         
                         
                         # It's a matrix, append the data                                     

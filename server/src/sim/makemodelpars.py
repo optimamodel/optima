@@ -1,4 +1,4 @@
-def makemodelpars(P, options, verbose=2):
+def makemodelpars(P, opt, verbose=2):
     """
     Prepares model parameters to run the simulation.
     
@@ -12,7 +12,7 @@ def makemodelpars(P, options, verbose=2):
     
     M = struct()
     M.__doc__ = 'Model parameters to be used directly in the model, calculated from data parameters P.'
-    tvec = options.tvec # Shorten time vector
+    tvec = opt.tvec # Shorten time vector
     npts = len(tvec) # Number of time points # TODO probably shouldn't be repeated from model.m
     
     def dpar2mpar(datapar):
@@ -31,7 +31,7 @@ def makemodelpars(P, options, verbose=2):
     
     ## Epidemilogy parameters -- most are data
     M.popsize = dpar2mpar(P.popsize) # Population size -- TODO: don't take average for this!
-    M.hivprev = dpar2mpar(P.hivprev) # Initial HIV prevalence -- TODO: don't take average for this
+    M.hivprev = dpar2mpar(P.hivprev)[:,0] # Initial HIV prevalence -- only take initial point
     M.stiprevulc = dpar2mpar(P.stiprevulc) # STI prevalence
     M.stiprevdis = dpar2mpar(P.stiprevdis) # STI prevalence
     M.death = dpar2mpar(P.death) # Death rates
@@ -58,7 +58,7 @@ def makemodelpars(P, options, verbose=2):
     M.condom.com  = dpar2mpar(P.condomcom) # ...
     
     ## Drug behavior parameters
-    M.ost = dpar2mpar(P.ost)
+    M.numost = dpar2mpar(P.numost)
     M.sharing = dpar2mpar(P.sharing)
     
     ## Matrices can be used almost directly
@@ -69,7 +69,6 @@ def makemodelpars(P, options, verbose=2):
     
     ## Constants...can be used directly -- # TODO should this be copy?
     M.const = P.const
-    
     
     ## WARNING need to introduce time!
     def reconcileacts(mixmatrix,popsize,popacts):
@@ -108,7 +107,6 @@ def makemodelpars(P, options, verbose=2):
 
         return pshipacts
         
-    
     # Calculate number of acts
     M.totalacts = struct()
     M.totalacts.__doc__ = 'Balanced numbers of acts'
