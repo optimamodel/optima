@@ -26,25 +26,6 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
     npops  = G.npops      # Shorten number of pops
     ncd4   = G.ncd4       # Shorten number of CD4 states
     
-<<<<<<< HEAD
-    ## Initialize basic quantities and arrays
-    S = struct() # Sim output structure
-    S.tvec = options.tvec # Time vector
-    dt = options.dt # Shorten dt
-    npts = len(S.tvec) # Number of time points
-    
-    people = zeros((G.nstates, G.npops, npts)) # Initialize matrix to hold everything
-    allpeople = zeros((G.npops, npts))
-    S.inci = zeros((G.npops, npts))
-    S.dx = zeros((G.npops, npts))
-    S.newtx1 = zeros((G.npops, npts))
-    S.newtx2 = zeros((G.npops, npts))
-    S.death = zeros((G.npops, npts))
-    people[0, :, 0] = M.popsize[:,0] * (1-M.hivprev) # Set initial population sizes
-    people[1, :, 0] = M.popsize[:,0] * M.hivprev * F.init # Set initial population sizes -- # TODO: equilibrate
-    effhivprev = zeros((G.npops,1)) # HIV effective prevalence (prevalence times infectiousness)
-    dU = []; dD = []; dT1 = []; dF = []; dT2 = [] # Initialize differences
-=======
     ## Initialize arrays
     people     = zeros((G.nstates, npops, npts)) # Matrix to hold everything
     allpeople  = zeros((npops, npts)) # Population sizes
@@ -62,7 +43,6 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
     S.death    = zeros((npops, npts)) # Number of deaths per timestep
     effhivprev = zeros((npops, 1))    # HIV effective prevalence (prevalence times infectiousness)
     # dU = []; dD = []; dT1 = []; dF = []; dT2 = []; # Initialize differences
->>>>>>> roo_backend_checks
     
     ## Set initial epidemic conditions 
     people[0, :, 0] = M.popsize[:,0] * (1-M.hivprev[:,0]) # Set initial susceptible population
