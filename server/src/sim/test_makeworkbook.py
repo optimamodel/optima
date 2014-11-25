@@ -26,8 +26,9 @@ class TestOptimaWorkbook(unittest.TestCase):
 
     def test_range_references(self):
         range = SheetRange(0,0,5,5)
-        refs = range.param_refs("Test Sheet")
+        refs = range.param_refs("Test Sheet", 0)
         print(refs)
+        #taking param refs from the 1st column
         expected_refs = ["='Test Sheet'!$A$1", "='Test Sheet'!$A$2", "='Test Sheet'!$A$3", "='Test Sheet'!$A$4", "='Test Sheet'!$A$5"]
         self.assertEqual(refs, expected_refs)
 
@@ -42,7 +43,8 @@ class TestOptimaWorkbook(unittest.TestCase):
         content_range = TitledRange(test_sheet, 0, content)
         ref_content = make_ref_years_range('Coverage', content_range, 2000, 2015)
         names = ref_content.row_names
-        self.assertEqual(ref_content.row_names, ["='Test Sheet'!$C$3", "='Test Sheet'!$C$4", "='Test Sheet'!$C$5"])
+        #by default reference names are taken from the 2nd column
+        self.assertEqual(ref_content.row_names, ["='Test Sheet'!$D$3", "='Test Sheet'!$D$4", "='Test Sheet'!$D$5"])
 
 if __name__ == '__main__':
     unittest.main()

@@ -178,6 +178,9 @@ class OptimaFormats:
         self.book = book
         # locked formats
         self.formats['bold'] = self.book.add_format({'bold':1})
+        self.formats['rc_title'] = {}
+        self.formats['rc_title']['right'] = self.book.add_format({'bold':1, 'align':'right'})
+        self.formats['rc_title']['left'] = self.book.add_format({'bold':1, 'align':'left'})
         # unlocked formats
         self.formats['unlocked'] = self.book.add_format({'locked':0, \
         'bg_color':OptimaFormats.BG_COLOR,'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
@@ -195,8 +198,8 @@ class OptimaFormats:
     def write_block_name(self, sheet, name, row):
         sheet.write(row, 0, name, self.formats['bold'])
 
-    def write_rowcol_name(self, sheet, row, col, name):
-        sheet.write(row, col, name, self.formats['bold'])
+    def write_rowcol_name(self, sheet, row, col, name, align = 'right'):
+        sheet.write(row, col, name, self.formats['rc_title'][align])
 
     def write_option(self, sheet, row, col, name = 'OR'):
         sheet.write(row, col, name, self.formats['bold'])
@@ -233,9 +236,9 @@ class SheetRange:
         return xl_rowcol_to_cell(row, col, row_abs = True, col_abs = True)
 
     """ gives the list of references to the entries in the row names (which are parameters) """
-    def param_refs(self, sheet_name):
+    def param_refs(self, sheet_name, column_number = 1):
         par_range = range(self.first_row, self.last_row +1)
-        return [ "='%s'!%s" % (sheet_name, self.get_cell_address(row, self.first_col)) for row in par_range ]
+        return [ "='%s'!%s" % (sheet_name, self.get_cell_address(row, self.first_col + column_number)) for row in par_range ]
 
 
 class TitledRange:
@@ -259,7 +262,7 @@ class TitledRange:
         return self.data_range.num_rows + 2
 
     """ emits the range and returns the new current row in the given sheet """
-    def emit(self, formats):
+    def emit(self, formats, rc_title_align = 'right'): #only important for row/col titles
         #top-top headers
         formats.write_block_name(self.sheet, self.content.name, self.first_row)
         if self.content.has_programs():
@@ -268,7 +271,7 @@ class TitledRange:
 
         #headers
         for i, name in enumerate(self.content.column_names):
-            formats.write_rowcol_name(self.sheet, self.first_row+1, self.data_range.first_col+i,name)
+            formats.write_rowcol_name(self.sheet, self.first_row+1, self.data_range.first_col+i,name, rc_title_align)
             if self.content.has_assumption():
                 formats.write_rowcol_name(self.sheet, self.first_row+1, self.data_range.last_col+2, 'Assumption')
             if self.content.has_programs():
@@ -314,8 +317,8 @@ class TitledRange:
         #done! return the new current_row plus spacing
         return current_row + TitledRange.ROW_INTERVAL # for spacing
 
-    def param_refs(self):
-        return self.data_range.param_refs(self.sheet.get_name())
+    def param_refs(self, column_number = 1):
+        return self.data_range.param_refs(self.sheet.get_name(), column_number)
 
 class OptimaWorkbook:
     sheet_names = OrderedDict([('pp','Populations & programs'), \
@@ -348,15 +351,12 @@ class OptimaWorkbook:
         self.current_sheet = None
         self.prog_range = None
         self.pop_range = None
+        self.ref_pop_range = None
+        self.ref_pop_range_internal = None
+        self.ref_prog_range = None
 
         self.npops = len(pops)
         self.nprogs = len(progs)
-
-    def ref_pop_range(self):
-        return self.pop_range.param_refs()
-
-    def ref_prog_range(self):
-        return self.prog_range.param_refs()
 
     def emit_content_block(self, name, current_row, row_names, column_names, data = None, \
         row_format = OptimaFormats.GENERAL, assumption = False, programs = False, row_levels = None):
@@ -373,8 +373,10 @@ class OptimaWorkbook:
         return current_row
 
 
-    def emit_matrix_block(self, name, current_row, row_names):
-        content = make_matrix_range(name, row_names)
+    def emit_matrix_block(self, name, current_row, row_names, column_names = None):
+        if column_names is None:
+            column_names = row_names
+        content = OptimaContent(name, row_names, column_names)
         the_range = TitledRange(self.current_sheet, current_row, content)
         current_row = the_range.emit(self.formats)
         return current_row
@@ -388,7 +390,7 @@ class OptimaWorkbook:
 
 
     def emit_years_block(self, name, current_row, row_names, row_format = OptimaFormats.GENERAL, \
-        assumption = False, programs = False, row_levels = None):
+        assumption = False, programs = False, row_levels = None, row_formats = None):
         content = make_years_range(name, row_names, self.data_start, self.data_end)
         content.set_row_format(row_format)
         if assumption:
@@ -397,6 +399,8 @@ class OptimaWorkbook:
             content.add_programs()
         if row_levels is not None:
             content.set_row_levels(row_levels)
+        if row_formats is not None:
+            content.set_row_formats(row_formats)
         the_range = TitledRange(self.current_sheet, current_row, content)
         current_row = the_range.emit(self.formats)
         return current_row
@@ -406,8 +410,6 @@ class OptimaWorkbook:
         assumption = None, programs = False, row_levels = None, row_formats = None):
         content = make_ref_years_range(name, ref_range, self.data_start, self.data_end)
         content.set_row_format(row_format)
-        if row_formats is not None:
-            content.set_row_formats(row_formats)
         if assumption:
             content.add_assumption()
         if programs:
@@ -426,15 +428,23 @@ class OptimaWorkbook:
         pp_sheet.set_column(2,2,15)
         pp_sheet.set_column(3,3,15)
         pp_sheet.set_column(4,4,40)
+        pp_sheet.set_column(7,7,12)
+        pp_sheet.set_column(8,8,12)
+        pp_sheet.set_column(9,9,12)
         current_row = 0
 
         pop_content = make_populations_range('Populations', self.pops)
         self.pop_range = TitledRange(pp_sheet, current_row, pop_content) # we'll need it for references
-        current_row = self.pop_range.emit(self.formats)
+        current_row = self.pop_range.emit(self.formats, 'left')
 
         prog_content = make_programs_range('Programs', self.progs)
         self.prog_range = TitledRange(pp_sheet, current_row, prog_content) # ditto
-        current_row = self.prog_range.emit(self.formats)
+        current_row = self.prog_range.emit(self.formats, 'left')
+
+        self.ref_pop_range = self.pop_range.param_refs()
+        self.ref_pop_range_internal = self.pop_range.param_refs(0)
+
+        self.ref_prog_range = self.prog_range.param_refs()
 
     def generate_cc(self):
         row_levels = ['Coverage', 'Cost']
@@ -442,7 +452,7 @@ class OptimaWorkbook:
         self.current_sheet.protect()
         current_row = 0
 
-        current_row = self.emit_ref_years_block('Cost & coverage', current_row, self.prog_range, row_formats = [OptimaFormats.PERCENTAGE,OptimaFormats.NUMBER], assumption = True, row_levels = row_levels)
+        current_row = self.emit_years_block('Cost & coverage', current_row, self.ref_prog_range, row_formats = [OptimaFormats.PERCENTAGE,OptimaFormats.NUMBER], assumption = True, row_levels = row_levels)
 
     def generate_demo(self):
         row_levels = ['high', 'best', 'low']
@@ -506,7 +516,7 @@ class OptimaWorkbook:
         self.current_sheet = self.sheets['drug']
         self.current_sheet.protect()
         current_row = 0
-        names_formats_ranges = [('Average number of injections per person per year', OptimaFormats.GENERAL, self.ref_pop_range()), \
+        names_formats_ranges = [('Average number of injections per person per year', OptimaFormats.GENERAL, self.ref_pop_range), \
         ('Percentage of people who receptively shared a needle at last injection', OptimaFormats.PERCENTAGE, ['Average']), \
         ('Number of people who inject drugs who are on opiate substitution therapy', OptimaFormats.GENERAL, ['Average'])]
 
@@ -521,7 +531,7 @@ class OptimaWorkbook:
         'Interactions between commercial partners', 'Interactions between people who inject drugs']
 
         for name in names:
-            current_row = self.emit_matrix_block(name, current_row, self.ref_pop_range())
+            current_row = self.emit_matrix_block(name, current_row, self.ref_pop_range, self.ref_pop_range_internal)
 
     def generate_trans(self):
         self.current_sheet = self.sheets['trans']
@@ -531,7 +541,7 @@ class OptimaWorkbook:
         'Risk-related population transitions (average number of years before movement)']
 
         for name in names:
-            current_row = self.emit_matrix_block(name, current_row, self.ref_pop_range())
+            current_row = self.emit_matrix_block(name, current_row, self.ref_pop_range, self.ref_pop_range_internal)
 
     def generate_constants(self):
         self.current_sheet = self.sheets['constants']
