@@ -24,7 +24,6 @@ def viewepiresults(E, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'de
     for graph in whichgraphs.keys(): # Loop over each type of data, e.g. prevalence
         for popstot in range(2): # Loop over population or total graphs
             if whichgraphs[graph][popstot]:
-                percent = 100 if graph=='prev' else 1 # Multiply by 100 if the graph is prevalence
                 
                 if popstot==0: # Population graphs
                     for p in range(npops):
@@ -34,10 +33,10 @@ def viewepiresults(E, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'de
                         else:
                             figure()
                         hold(True)
-                        fill_between(E.tvec, E[graph].pops[p].low*percent, E[graph].pops[p].high*percent, alpha=0.2, edgecolor='none')
-                        plot(E.tvec, E[graph].pops[p].best*percent, c=E.colorm)
+                        fill_between(E.tvec, E[graph].pops[p].low, E[graph].pops[p].high, alpha=0.2, edgecolor='none')
+                        plot(E.tvec, E[graph].pops[p].best, c=E.colorm)
                         if ndim(E[graph].ydata)==2:
-                            scatter(E.xdata, E[graph].ydata[p,:]*percent, c=E.colord)
+                            scatter(E.xdata, E[graph].ydata[p], c=E.colord)
                         
                         title(E[graph].pops[p].title)
                         legend(('Model','Data'))
@@ -53,10 +52,10 @@ def viewepiresults(E, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'de
                     else:
                         figure()
                     hold(True)
-                    fill_between(E.tvec, E[graph].tot.low*percent, E[graph].tot.high*percent, alpha=0.2, edgecolor='none')
-                    plot(E.tvec, E[graph].tot.best*percent, c=E.colorm)
+                    fill_between(E.tvec, E[graph].tot.low, E[graph].tot.high, alpha=0.2, edgecolor='none')
+                    plot(E.tvec, E[graph].tot.best, c=E.colorm)
                     if ndim(E[graph].ydata)==1:
-                        scatter(E.xdata, E[graph].ydata*percent, c=E.colord)
+                        scatter(E.xdata, E[graph].ydata, c=E.colord)
                     
                     title('Overall')
                     legend(('Model','Data'))
@@ -95,8 +94,6 @@ def viewmodels(M, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'death'
     for graph in whichgraphs.keys(): # Loop over each type of data, e.g. prevalence
         for popstot in range(2): # Loop over population or total graphs
             if whichgraphs[graph][popstot]:
-                percent = 100 if graph=='prev' else 1 # Multiply by 100 if the graph is prevalence
-                
                 if popstot==0: # Population graphs
                     for p in range(npops):
                         if onefig:
@@ -106,7 +103,7 @@ def viewmodels(M, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'death'
                             figure()
                         hold(True)
                         for sim in range(M.nsims):
-                            plot(M.tvec, M[graph].pops[p].data[sim]*percent)
+                            plot(M.tvec, M[graph].pops[p].data[sim])
                         
                         title(M[graph].pops[p].title)
                         legend(M[graph].pops[p].legend)
@@ -123,7 +120,7 @@ def viewmodels(M, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'death'
                         figure()
                     hold(True)
                     for sim in range(M.nsims):
-                        plot(M.tvec, M[graph].tot.data[sim]*percent)
+                        plot(M.tvec, M[graph].tot.data[sim])
                     
                     title(M[graph].tot.title)
                     legend(M[graph].tot.legend)
