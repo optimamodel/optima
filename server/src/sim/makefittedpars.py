@@ -11,7 +11,7 @@ def makefittedpars(G, opt, verbose=2):
     printv('Making fitted parameters...', 1, verbose)
     
     # Initialize fitted parameters
-    F = [struct()]*opt.nsims
+    F = [struct() for s in range(opt.nsims)]
     for s in range(opt.nsims):
         F[s].__doc__ = 'Fitted parameters for simulation %i: initial prevalence, force-of-infection, diagnoses, treatment' % s
         F[s].init = perturb(G.npops)

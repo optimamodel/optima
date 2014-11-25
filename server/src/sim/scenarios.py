@@ -22,26 +22,26 @@ def runscenarios(D, scenariolist=None, verbose=2):
     nscenarios = len(scenariolist)
     
     # Convert the list of scenarios to the actual parameters to use in the model
-    scenariopars = makescenarios(D.M, scenariolist, verbose=verbose)
+    scenariopars = makescenarios(D, scenariolist, verbose=verbose)
     
     M = []
     for scen in range(nscenarios):
         M.append(deepcopy(D.M)) # Make a copy of the model parameters
         M[scen].update(scenariopars[scen].M) # Update with selected scenario model parameters
     
-    
     # Run scenarios # TODO -- actually implement :)
     print('!!! TODO !!!')
-    D.scens = [struct()]*nscenarios
+    D.scens = [struct() for s in range(nscenarios)]
     for scen in range(nscenarios):
         D.scens[scen].label = scenariolist[scen].name # Copy name
-        D.scens[scen].S = model(D.G, M[scen], D.F[0], D.opt, verbose=verbose) # At the moment, D.F is changing -- but need allocation to change
+        D.scens[scen].M = scenariopars[scen].M
+        D.scens[scen].S = model(D.G, D.scens[scen].M, D.F[scen], D.opt, verbose=verbose) # TODO don't change F
         printv('Scenario: %i/%i' % (scen, nscenarios), 2, verbose)
     
     # Calculate results
     from makeresults import makeresults
     for scen in range(nscenarios):
-        D.scens.R = makeresults(D, [D.scens[scen].S], D.opt.quantiles, verbose=verbose)
+        D.scens[scen].R = makeresults(D, [D.scens[scen].S], D.opt.quantiles, verbose=verbose)
     
     # Gather plot data
     from gatherplotdata import gathermultidata
@@ -58,7 +58,7 @@ def makescenarios(D, scenariolist, verbose=2):
     from pylab import find, linspace
     
     nscenarios = len(scenariolist)
-    scenariopars = [struct()]*nscenarios
+    scenariopars = [struct() for s in range(nscenarios)]
     
     # From http://stackoverflow.com/questions/14692690/access-python-nested-dictionary-items-via-a-list-of-keys
     def getnested(nesteddict, maplist): return reduce(lambda d, k: d[k], maplist, nesteddict)
@@ -66,18 +66,18 @@ def makescenarios(D, scenariolist, verbose=2):
     
     for scen in range(nscenarios):
         scenariopars[scen].name = scenariolist[scen].name
-        npars = len(scenariopars[scen].pars)
         scenariopars[scen].M = deepcopy(D.M) # Copy the whole thing...too hard to generate nested dictionaries on the fly
-        for par in range(npars):
-            thesepars = scenariolist[scen].pars[par] # Shorten name
-            original = getnested(scenariopars[scen].M, thesepars.keys)
-            initialindex = find(abs(D.opt.tvec - thesepars.startyear)<1e-6)
-            finalindex = find(abs(D.opt.tvec - thesepars.startyear)<1e-6)
-            initialvalue = original[initialindex] if thesepars.startval == -1 else thesepars.startval 
-            finalvalue = original[finalindex] if thesepars.endval == -1 else thesepars.endval
-            npts = finalindex-initialindex+1
-            newvalues = linspace(initialvalue, finalvalue, npts)
-            scenariopars[scen].M[initialvalue:finalvalue+1] = newvalues
+#        for par in range(len(scenariolist[scen].pars)):
+#            thesepars = scenariolist[scen].pars[par] # Shorten name
+#            original = getnested(scenariopars[scen].M, thesepars.keys)[thesepars.pop]
+#            initialindex = find(abs(D.opt.tvec - thesepars.startyear)<1e-6)
+#            finalindex = find(abs(D.opt.tvec - thesepars.startyear)<1e-6)
+#            initialvalue = original[initialindex] if thesepars.startval == -1 else thesepars.startval 
+#            finalvalue = original[finalindex] if thesepars.endval == -1 else thesepars.endval
+#            npts = finalindex-initialindex+1
+#            newvalues = linspace(initialvalue, finalvalue, npts)
+#            original[initialvalue:finalvalue+1] = newvalues
+#            setnested(scenariopars[scen].M, thesepars.keys, original)
             
     return scenariopars
 
@@ -88,13 +88,13 @@ def defaultscenarios(D, verbose=2):
     """ Define a list of default scenarios """
     
     # Start at the very beginning, a very good place to start :)
-    scenariolist = [struct()]*2
+    scenariolist = [struct() for s in range(2)]
     
     scenariolist[0].name = 'Current conditions'
     scenariolist[0].pars = [] # No changes
     
     scenariolist[1].name = '100% condom use in KAPs'
-    scenariolist[1].pars = [struct()]*4
+    scenariolist[1].pars = [struct() for s in range(4)]
     # MSM regular condom use
     scenariolist[1].pars[0].keys = ['condom','reg']
     scenariolist[1].pars[0].pop = 0
