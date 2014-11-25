@@ -139,11 +139,11 @@ def makesamples(coparams, samplesize=1000):
     if muf > muz: # Apply this if the c/o curve is increasing
         for i in range(samplesize):
             fullsample[i] = truncnorm((zerosample[i] - muf) / stdevf, (1 - muf) / stdevf, loc=muf, scale=stdevf, size = 1) # draw possible values for behvaiour at maximal coverage
-        else:  # Apply this if the c/o curve is decreasing
-            for i in range(samplesize):
-                fullsample[i] = truncnorm((0 - muf) / stdevf, (zerosample[i] - muf) / stdevf, loc=muf, scale=stdevf, size = 1) # draw possible values for behvaiour at maximal coverage
-                
-    return zerosample, fullsample
+    else:  # Apply this if the c/o curve is decreasing
+        for i in range(samplesize):
+            fullsample[i] = truncnorm((0 - muf) / stdevf, (zerosample[i] - muf) / stdevf, loc=muf, scale=stdevf, size = 1) # draw possible values for behvaiour at maximal coverage
+    
+    return zerosample, fullsample, muz, stdevz, muf, stdevf
 
 ###############################################################################
 ## Make coverage outcome curve
@@ -220,7 +220,7 @@ def makeco(datain = default_datain, progname = default_progname, effectname = de
             raise Exception('Please enter values between 0 and 1 for the ranges of behaviour at zero and full coverage')
             
         ## Generate sample of zero-coverage behaviour
-        zerosample, fullsample = makesamples([zeromin, zeromax, fullmin, fullmax], 1000)
+        zerosample, fullsample, muz, stdevz, muf, stdevf = makesamples([zeromin, zeromax, fullmin, fullmax], 1000)
         
         ## General set of coverage-outcome relationships
         xvalsco = np.linspace(0,1,1000) # take 1000 points along the unit interval
@@ -245,7 +245,6 @@ def makeco(datain = default_datain, progname = default_progname, effectname = de
         if makeplot:
             figure()
             hold(True)
-#            plot(xvalsco, yvalsco, color = '0.75')
             plot(xvalsco, np.linspace(muz,muf,1000), color = 'b', lw = 2)
             plot(xvalsco, ymax, 'k--', lw = 2)
             plot(xvalsco, ymin, 'k--', lw = 2)
@@ -345,7 +344,7 @@ def makecco(datain = default_datain, progname = default_progname, effectname = d
         growthrate = (-1/ccparams[2])*math.log((2*saturation)/(ccparams[1]+saturation) - 1)
 
         ## Generate samples of zero-coverage and full-coverage behaviour
-        zerosample, fullsample = makesamples([zeromin, zeromax, fullmin, fullmax], 1000)
+        zerosample, fullsample, muz, stdevz, muf, stdevf = makesamples([zeromin, zeromax, fullmin, fullmax], 1000)
 
         # Get the coverage-outcome relationships            
         plotdata_co = makeco(D, progname, effectname, coparams, makeplot)
