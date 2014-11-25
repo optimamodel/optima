@@ -1,6 +1,6 @@
 import os
 import shutil
-from flask import Flask, helpers, request, jsonify, session, redirect
+from flask import Flask, helpers, request, jsonify, session, redirect, abort
 
 app = Flask(__name__)
 
@@ -41,6 +41,29 @@ app.register_blueprint(user, url_prefix = '/api/user')
 app.register_blueprint(project, url_prefix = '/api/project')
 app.register_blueprint(model, url_prefix = '/api/model')
 app.register_blueprint(analysis, url_prefix = '/api/analysis')
+
+# Execute this method after every request.
+# Check response and return exception if status is not OK.
+@app.after_request
+def check_response_for_errors(response):
+    responseJS = None
+    try:
+        # Load JSON from string
+        responseJS = json.loads( response.get_data() )
+    except :
+        pass
+    
+    # Make sure the response status was OK. Response body is javascript that is successfully
+    # parsed. And status in JSON is NOK implying there was an error.
+    if response.status_code == 200 and responseJS is not None and responseJS['status'] == "NOK":
+        if responseJS['reason'] is not None:
+            abort(500, responseJS['reason'])
+        else:
+            # If we do not have a reason for error. Just abort.
+            abort(500)
+    
+    return response
+
 
 """ site - needed to correctly redirect to it from blueprints """
 @app.route('/')
