@@ -1,9 +1,15 @@
 Installation & Configuration
 ----------------------------
 
-  This component requires ([EB Command Line Tools](http://aws.amazon.com/code/6752709412171743)) and boto.
+  This component requires ([EB Command Line Tools 3.x](http://docs.aws.amazon.com/elasticbeanstalk/latest/dg/eb-cli3-getting-set-up.html)) and boto.
 
-    # Install boto
+    # Make sure setup tools are upto date
+	pip install --upgrade setuptools
+	
+	# Install EB Command Line Tools
+	pip install awsebcli
+	
+	# Install boto
 	pip install boto
 
     # Configure AWS parameters in `setup_env.sh` file
@@ -86,87 +92,41 @@ The `worker/eb_sim.sh` is a Elastic Beanstalk simulation tool that pulls message
 
 Finally, `python server/src/worker.py` needs to be started to receive post messages.
 
-Create an EB Application
+Setup an EB Application
 ------------------------
 
     # Run setup from parent directory of local git repository
-	./worker/run.sh --setup
+	./worker/run.sh --init
 	
 	...
-	# Accept default values
-	Enter your AWS Access Key ID (current value is "*****"):
-	Enter your AWS Secret Access Key (current value is "*****"):
-	Setting AWS Elastic Beanstalk region to "US East (Virginia)".
-	Enter an AWS Elastic Beanstalk application name (current value is "optima"):
-	Enter an AWS Elastic Beanstalk environment name (current value is "optima-env"):
-	Setting environment tier to "WebServer::Standard::1.0".
-	Setting solution stack to "64bit Amazon Linux 2014.03 v1.0.9 running Python 2.7".
+	# Enter Access key and secret 
+	You have not yet set up your credentials or your credentials are incorrect 
+	You must provide your credentials.
+	(aws-access-id):
+	(aws-secret-key):
 	...
-	# Use LoadBalanced
-	Select an environment type (current value is "LoadBalanced").
-	Available environment types are:
-	1) LoadBalanced
-	2) SingleInstance
-	Select (1 to 2):
-	...
-	# Select no for RDS instance
-	Create an RDS DB Instance? [y/n] (current value is "No"):
-	...
-	# Select default instance profile
-	Attach an instance profile (current value is "aws-elasticbeanstalk-ec2-role"):
-	1) [Create a default instance profile]
-	2) aws-elasticbeanstalk-ec2-role
-	3) [Other instance profile]
-	Select (1 to 3):
-	...
-	# Select default values
-	Configuring git
-	 AWS Region [default to us-east-1]:
-	 AWS Elastic Beanstalk Application [default to optima]: 
-	 AWS Elastic Beanstalk Environment [default to optima-env]:
 	...
 	
 
 
-Start an EB Application
+Start an EB Environment
 -----------------------
 
     # Run command parent directory of local git repository
-	./worker/run.sh --start
-	
-	...
-	# Select y when prompted
-	Terminate environment? [y/n]: y
-	...
+	./worker/run.sh --create	
 
 
-Stop an EB Application
-----------------------
 
-    # Run command parent directory of local git repository
-	./worker/run.sh --stop
-	
-	...
-	# Select y when prompted
-	Terminate environment? [y/n]: y
-	...
-
-
-Delete an EB Application
-----------------------
-
-    # Run command parent directory of local git repository
-	./worker/run.sh --d
-	
-	...
-	# Select y when prompted
-	Delete application? [y/n]: y
-	...
-
-
-Push code to EB Application
+Terminate an EB Environment
 ---------------------------
 
     # Run command parent directory of local git repository
-	git aws.push
+	./worker/run.sh --terminate	
+
+
+Deploy latest code to EB Environment
+------------------------------------
+
+    # Run command parent directory of local git repository
+	./worker/run.sh --deploy
 
