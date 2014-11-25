@@ -1,159 +1,18 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
-  module.controller('ProjectCreateController', function ($scope, $state, $modal, activeProject) {
+  module.controller('ProjectCreateController', function ($scope, $state, $modal,
+    activeProject, DEFAULT_PROGRAMS, DEFAULT_POPULATIONS) {
 
     $scope.projectParams = {
       name: ''
     };
 
-    $scope.populations = [
-      { name: 'Female sex workers', acronym: 'FSW', active: false },
-      { name: 'Clients of sex workers', acronym: 'CSW', active: false },
-      { name: 'Men who have sex with men', acronym: 'MSM', active: false },
-      { name: 'People who inject drugs', acronym: 'PWID', active: false },
-      { name: 'Males who inject drugs', acronym: 'MWID', active: false },
-      { name: 'Females who inject drugs', acronym: 'FWID', active: false },
-      { name: 'Transgender individuals', acronym: 'TG', active: false },
-      { name: 'Children (2-15)', acronym: 'CHLD', active: false },
-      { name: 'Infants (0-2)', acronym: 'INF', active: false },
-      { name: 'Other males (15-49)', acronym: 'OM15-49', active: false },
-      { name: 'Other females (15-49)', acronym: 'OF15-49', active: false },
-      { name: 'Other males [enter age]', acronym: 'OM', active: false },
-      { name: 'Other females [enter age]', acronym: 'OF', active: false }
-    ];
+    $scope.populations = DEFAULT_POPULATIONS;
+    $scope.programs = DEFAULT_PROGRAMS;
 
-    $scope.programs = [
-        {
-            name: 'Behavior change and communication',
-            acronym: 'BCC',
-            indicators: [
-                { name: 'Condom use among general population males and females', active: true },
-                { name: 'VMMC uptake and ART adherence', active: false },
-                { name: 'Uptake of other programs and services', active: false },
-                { name: 'Linkages to biomedical services', active: true }
-            ]
-        },
-        {
-            name: 'HIV testing and counseling',
-            acronym: 'HTC',
-            indicators: [
-                { name: 'Relative increase in condom use and testing in general populations', active: false },
-                { name: 'VMMC uptake and ART adherence', active: true },
-                { name: 'Uptake of other programs and services', active: true },
-                { name: 'Linkages to biomedical services', active: false }
-            ]
-        },
-        {
-            name: 'Programs for female sex workers and their clients',
-            acronym: 'PFSW',
-            indicators: [
-                { name: 'Relative increase in condom use and testing in general populations', active: false },
-                { name: 'VMMC uptake and ART adherence', active: true },
-                { name: 'Uptake of other programs and services', active: true },
-                { name: 'Linkages to biomedical services', active: false }
-            ]
-        },
-        {
-            name: 'Programs for men who have sex with men',
-            acronym: 'PMSM',
-            indicators: [
-                { name: 'Relative increase in condom use and testing in general populations', active: false },
-                { name: 'VMMC uptake and ART adherence', active: true },
-                { name: 'Uptake of other programs and services', active: true },
-                { name: 'Linkages to biomedical services', active: false }
-            ]
-        },
-        {
-            name: 'Needle-syringe program',
-            acronym: 'NSP',
-            indicators: [
-                { name: 'Relative increase in condom use and testing in general populations', active: false },
-                { name: 'VMMC uptake and ART adherence', active: true },
-                { name: 'Uptake of other programs and services', active: true },
-                { name: 'Linkages to biomedical services', active: false }
-            ]
-        },
-        {
-            name: 'Opiate substitution therapy',
-            acronym: 'OST',
-            indicators: [
-                { name: 'Relative increase in condom use and testing in general populations', active: false },
-                { name: 'VMMC uptake and ART adherence', active: true },
-                { name: 'Uptake of other programs and services', active: true },
-                { name: 'Linkages to biomedical services', active: false }
-            ]
-        },
-        {
-            name: 'Sexually transmitted infections',
-            acronym: 'STI',
-            indicators: [
-                { name: 'Relative increase in condom use and testing in general populations', active: false },
-                { name: 'VMMC uptake and ART adherence', active: true },
-                { name: 'Uptake of other programs and services', active: true },
-                { name: 'Linkages to biomedical services', active: false }
-            ]
-        },
-        {
-            name: 'Prevention of mother-to-child transmission',
-            acronym: 'PMTCT',
-            indicators: [
-                { name: 'Relative increase in condom use and testing in general populations', active: false },
-                { name: 'VMMC uptake and ART adherence', active: true },
-                { name: 'Uptake of other programs and services', active: true },
-                { name: 'Linkages to biomedical services', active: false }
-            ]
-        },
-        {
-            name: 'Voluntary medical male circumcision',
-            acronym: 'VMMC',
-            indicators: [
-                { name: 'Relative increase in condom use and testing in general populations', active: false },
-                { name: 'VMMC uptake and ART adherence', active: true },
-                { name: 'Uptake of other programs and services', active: true },
-                { name: 'Linkages to biomedical services', active: false }
-            ]
-        },
-        {
-            name: 'Antiretroviral therapy',
-            acronym: 'ART',
-            indicators: [
-                {
-                    name: 'Testing rates in all populations (This will be listed under care and treatment in future)',
-                    active: true
-                }
-            ]
-        }
-
-    ];
-
-    $scope.openAddPopulationModal = function ($event) {
-      if ($event) {
-        $event.preventDefault();
-      }
-
-      return $modal.open({
-        templateUrl: 'js/modules/project/create-population-modal.html',
-        controller: 'ProjectCreatePopulationModalController',
-        resolve: {
-          population: function () {
-            return {
-              sex: 'male'
-            };
-          }
-        }
-      }).result.then(
-        function (newPopulation) {
-          newPopulation.active = true;
-          $scope.populations.push(newPopulation);
-        });
-    };
-
-    $scope.openEditPopulationModal = function ($event, population) {
-      if ($event) {
-        $event.preventDefault();
-      }
-
+    // Helper function to open a population modal
+    var openPopulationModal = function(population) {
       return $modal.open({
         templateUrl: 'js/modules/project/create-population-modal.html',
         controller: 'ProjectCreatePopulationModalController',
@@ -162,38 +21,64 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             return population;
           }
         }
-      }).result.then(
+      });
+    };
+
+    /*
+    * Creates a new population and opens a modal for editing.
+    *
+    * The entry is only pushed to the list of populations if editing in the modal
+    * ended with a successful save.
+    */
+    $scope.openAddPopulationModal = function ($event) {
+      if ($event) {
+        $event.preventDefault();
+      }
+      var population = {};
+
+      return openPopulationModal(population).result.then(
         function (newPopulation) {
-          population.active = true;
-          _(population).extend(newPopulation);
-        });
-    };
-
-    $scope.openAddProgramModal = function ($event) {
-      if ($event) {
-        $event.preventDefault();
-      }
-
-      return $modal.open({
-        templateUrl: 'js/modules/project/create-program-modal.html',
-        controller: 'ProjectCreateProgramModalController',
-        resolve: {
-          program: function () {
-            return null;
-          }
+          $scope.populations.push(newPopulation);
         }
-      }).result.then(
-        function (newProgram) {
-          newProgram.active = true;
-          $scope.programs.push(newProgram);
-        });
+      );
     };
 
-    $scope.openEditProgramModal = function ($event, program) {
+    /*
+    * Opens a modal for editing an existing population.
+    */
+    $scope.openEditPopulationModal = function ($event, population) {
       if ($event) {
         $event.preventDefault();
       }
 
+      return openPopulationModal(population).result.then(
+        function (newPopulation) {
+          _(population).extend(newPopulation);
+        }
+      );
+    };
+
+    /*
+    * Makes a copy of an existing population and opens a modal for editing.
+    *
+    * The entry is only pushed to the list of populations if editing in the
+    * modal ended with a successful save.
+    */
+    $scope.copyPopulationAndOpenModal = function ($event, existingPopulation) {
+      if ($event) {
+        $event.preventDefault();
+      }
+      var population = angular.copy(existingPopulation);
+
+      return openPopulationModal(population).result.then(
+        function (newPopulation) {
+          $scope.populations.push(newPopulation);
+        }
+      );
+    };
+
+    // Helper function to open a program modal
+    var openProgramModal = function(program) {
       return $modal.open({
         templateUrl: 'js/modules/project/create-program-modal.html',
         controller: 'ProjectCreateProgramModalController',
@@ -202,18 +87,71 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             return program;
           }
         }
-      }).result.then(
-        function (newProgram) {
-          program.active = true;
-          _(program).extend(newProgram);
-        });
+      });
     };
 
+    /*
+    * Creates a new program and opens a modal for editing.
+    *
+    * The entry is only pushed to the list of programs if editing in the modal
+    * ended with a successful save.
+    */
+    $scope.openAddProgramModal = function ($event) {
+      if ($event) {
+        $event.preventDefault();
+      }
+      var program = {};
+
+      return openProgramModal(program).result.then(
+        function (newProgram) {
+          $scope.programs.push(newProgram);
+        }
+      );
+    };
+
+    /*
+    * Opens a modal for editing an existing program.
+    */
+    $scope.openEditProgramModal = function ($event, program) {
+      if ($event) {
+        $event.preventDefault();
+      }
+
+      return openProgramModal(program).result.then(
+        function (newProgram) {
+          _(program).extend(newProgram);
+        }
+      );
+    };
+
+    /*
+     * Makes a copy of an existing program and opens a modal for editing.
+     *
+     * The entry is only pushed to the list of programs if editing in the modal
+     * ended with a successful save.
+     */
+    $scope.copyProgram = function ($event, existingProgram) {
+      if ($event) {
+        $event.preventDefault();
+      }
+      var program = angular.copy(existingProgram);
+
+      return openProgramModal(program).result.then(
+        function (newProgram) {
+          $scope.programs.push(newProgram);
+        }
+      );
+    };
+
+    /*
+     * Returns a collection of entries where all non-active antries are filtered
+     * out and the active attribute is removed from each of these entries.
+     */
     var toCleanArray = function (collection) {
       return _(collection).chain()
         .where({ active: true })
         .map(function (item) {
-          return _(item).omit(['active', '$$hashKey'])
+          return _(item).omit(['active', '$$hashKey']);
         })
         .value();
     };
@@ -226,10 +164,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       var params = _($scope.projectParams).omit('name');
       params.programs = toCleanArray($scope.programs);
-      _(params.programs).map(function (item) {
-        item.indicators = toCleanArray(item.indicators);
-        return item;
-      });
       params.populations = toCleanArray($scope.populations);
 
       $scope.formAction = '/api/project/create/' + $scope.projectParams.name;

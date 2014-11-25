@@ -50,13 +50,21 @@ def doAutoCalibration():
 
     file_name = helpers.safe_join(PROJECTDIR, project_name+'.prj')
     print("project file_name: %s" % file_name)
-    fits = autofit(file_name, data)
-    # autofit is not implemented yet, so just run the simulation #TODO #FIXME
     try:
         D = load_model(project_name)
-        D = runsimulation(**args) 
-        D = epiresults(D)
+        args = {}
+        startyear = data.get("startyear")
+        if startyear:
+            args["startyear"] = int(startyear)
+        endyear = data.get("endyear")
+        if endyear:
+            args["endyear"] = int(endyear)
+        timelimit = data.get("timelimit")
+        if timelimit:
+            args["timelimit"] = int(timelimit)
+        D = autofit(D, **args)
         D_dict = D.toDict()
+        save_model(project_name, D_dict)
     except Exception, err:
         var = traceback.format_exc()
         return jsonify({"status":"NOK", "exception":var})
@@ -72,7 +80,7 @@ TODO: do it with the project which is currently in scope
 @check_project_name
 def doManualCalibration():
     data = json.loads(request.data)
-   
+    print("/api/model/calibrate/manual %s" % data)
     # get project name
     project_name = request.project_name
     if not project_exists(project_name):
@@ -89,8 +97,6 @@ def doManualCalibration():
     if endyear:
         args["endyear"] = int(endyear)
     dosave = data.get("dosave")
-    if dosave:
-        args["dosave"] = dosave
     try:
         D = load_model(project_name)
         args['D'] = D
@@ -98,6 +104,9 @@ def doManualCalibration():
         args['F'] = F
         D = manualfit(**args) 
         D_dict = D.toDict()
+        if dosave:
+            print("model: %s" % project_name)
+            save_model(project_name, D_dict)
     except Exception, err:
         var = traceback.format_exc()
         return jsonify({"status":"NOK", "exception":var})
@@ -156,7 +165,7 @@ def setModelParameters(group):
     try:
         D_dict = load_model(project_name, as_bunch = False)
         D_dict[group] = data
-        save_model(loaddir(model), project_name, D_dict)
+        save_model(project_name, D_dict)
     except Exception, err:
         var = traceback.format_exc()
         return jsonify({"status":"NOK", "exception":var})        
@@ -187,6 +196,7 @@ def doRunSimulation():
         D = runsimulation(**args) 
         D = epiresults(D)
         D_dict = D.toDict()
+        save_model(request.project_name, D_dict)
     except Exception, err:
         var = traceback.format_exc()
         return jsonify({"status":"NOK", "exception":var})
