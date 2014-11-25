@@ -15,7 +15,6 @@ application.debug = True
 
 handler = RotatingFileHandler('optima-worker.log', maxBytes=10000, backupCount=1)
 handler.setLevel(logging.INFO)
-application.logger.handlers = []
 application.logger.addHandler(handler)
 
 application.logger.info("Worker setting up...")

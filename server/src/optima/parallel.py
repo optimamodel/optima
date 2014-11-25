@@ -25,7 +25,6 @@ conn = boto.sqs.connect_to_region( os.environ['AWS_DEFAULT_REGION'] )
     
 # Get the optima queue. We will error out if no queue is found. This is what is desired.
 optima_queue = conn.get_queue( os.environ['AWS_WORKER_QUEUE'] )
-optima_queue = optima_queue[0]
 
 @parallel.route('/execute/<nprocesses>/<someparameter>', methods=['GET'])
 def parallel_execution( nprocesses, someparameter ):
