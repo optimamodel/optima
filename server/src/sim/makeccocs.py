@@ -313,9 +313,6 @@ def makecco(datain = default_datain, progname = default_progname, effectname = d
     ## Extract info from data structure
     prognumber = D.data.meta.progs.code.index(progname) # get program number
 
-    # Get the cost-coverage and coverage-outcome relationships            
-#    plotdata_cc, xvalscc, yvalscc = makecc(D, progname, ccparams, makeplot=0)
-
     ## Get population info
     popname = effectname[1]
     
@@ -437,7 +434,10 @@ def plotallcurves(datain = default_datain, progname=default_progname, ccparams=d
     else:
         D = datain
     
-    ## Check that the selected program is in the program list 
+     # Get the cost-coverage and coverage-outcome relationships            
+    plotdata_cc, xvalscc, yvalscc = makecc(D, progname, ccparams, makeplot=1)
+
+   ## Check that the selected program is in the program list 
     if progname not in D.programs.keys():
         raise Exception('Please select one of the following programs %s' % D.programs.keys())
 
@@ -456,4 +456,4 @@ def plotallcurves(datain = default_datain, progname=default_progname, ccparams=d
  
                 
 ## Example of use
-plotdata_cco, plotdata_co, plotdata_cc = plotallcurves()
+#plotdata_cco, plotdata_co, plotdata_cc = plotallcurves()
