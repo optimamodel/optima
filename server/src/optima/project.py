@@ -12,7 +12,7 @@ from sim.loadspreadsheet import loadspreadsheet
 from sim.makeproject import makeproject
 from sim.optimize import optimize
 from optima.data import data
-from utils import allowed_file, project_file_exists, delete_project_file, delete_spreadsheet
+from utils import allowed_file, project_exists, project_file_exists, delete_project_file, delete_spreadsheet
 from utils import check_project_name, load_model, save_model
 from flask.ext.login import login_required, current_user
 
@@ -130,15 +130,14 @@ If the project exists, should put it in session and return to the user.
 # todo: only if it can be found
 def openProject(project_name):
     
-    cu = current_user
     proj_exists = False
-    if cu.is_anonymous() == False:    
-        try:
-            proj_exists = ProjectDb.query.filter_by(user_id=cu.id, name=project_name).count() > 0
-        except:
-            proj_exists = False
-        if not proj_exists: # try reading this from file and resaving
-            proj_exists = project_file_exists(project_name)
+    try: #first check DB
+        proj_exists = project_exists(project_name)
+        print("proj_exists: %s" % proj_exists)
+    except:
+        proj_exists = False
+    if not proj_exists: # try reading this from file and resaving
+        proj_exists = project_file_exists(project_name)
     if not proj_exists:
         return jsonify({'status':'NOK','reason':'No such project %s' % project_name})
     else:
