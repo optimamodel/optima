@@ -52,4 +52,5 @@ class OptimaTestCase(unittest.TestCase):
     def tearDown(self):
         db.session.remove()
         db.drop_all()
+        db.get_engine(app).dispose()
         print "db dropped"

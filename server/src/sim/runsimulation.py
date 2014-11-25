@@ -5,7 +5,14 @@ def runsimulation(D, startyear=2000, endyear=2030, verbose=2):
     
     Version: 2014nov23 by cliffk
     """
+<<<<<<< HEAD
     
+=======
+
+    # Create options structure
+    from bunch import Bunch as struct
+    from matplotlib.pylab import arange
+>>>>>>> roo_backend_checks
     from printv import printv
     printv('Running simulation...', 1, verbose)
     

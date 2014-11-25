@@ -6,7 +6,11 @@ def makemodelpars(P, opt, verbose=2):
     """
     
     from printv import printv
+<<<<<<< HEAD
     from matplotlib.pylab import zeros, array
+=======
+    from matplotlib.pylab import zeros, array #, ones
+>>>>>>> roo_backend_checks
     from bunch import Bunch as struct # Replicate Matlab-like structure behavior
     printv('Making model parameters...', 1, verbose)
     
@@ -14,8 +18,6 @@ def makemodelpars(P, opt, verbose=2):
     M.__doc__ = 'Model parameters to be used directly in the model, calculated from data parameters P.'
     tvec = opt.tvec # Shorten time vector
     npts = len(tvec) # Number of time points # TODO probably shouldn't be repeated from model.m
-    
-    
     
     def dpar2mpar(datapar):
         """ Take data parameters and turn them into model parameters """
@@ -48,16 +50,16 @@ def makemodelpars(P, opt, verbose=2):
     M.tx2 = dpar2mpar(blank)
     
     ## Sexual behavior parameters -- all are parameters so can loop over all
-    M.circum = dpar2mpar(P.circum) # Circumcision
+    M.circum  = dpar2mpar(P.circum) # Circumcision
     M.numacts = struct()
-    M.condom = struct()
+    M.condom  = struct()
     M.numacts.reg = dpar2mpar(P.numactsreg) # ...
     M.numacts.cas = dpar2mpar(P.numactscas) # ...
     M.numacts.com = dpar2mpar(P.numactscom) # ...
     M.numacts.inj = dpar2mpar(P.numinject) # ..
-    M.condom.reg = dpar2mpar(P.condomreg) # ...
-    M.condom.cas = dpar2mpar(P.condomcas) # ...
-    M.condom.com = dpar2mpar(P.condomcom) # ...
+    M.condom.reg  = dpar2mpar(P.condomreg) # ...
+    M.condom.cas  = dpar2mpar(P.condomcas) # ...
+    M.condom.com  = dpar2mpar(P.condomcom) # ...
     
     ## Drug behavior parameters
     M.numost = dpar2mpar(P.numost)
@@ -129,4 +131,6 @@ def makemodelpars(P, opt, verbose=2):
     
 
     printv('...done making model parameters.', 2, verbose)
+    
     return M
+    
