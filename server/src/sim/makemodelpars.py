@@ -31,7 +31,7 @@ def makemodelpars(P, opt, verbose=2):
     
     ## Epidemilogy parameters -- most are data
     M.popsize = dpar2mpar(P.popsize) # Population size -- TODO: don't take average for this!
-    M.hivprev = dpar2mpar(P.hivprev)[:,0] # Initial HIV prevalence -- only take initial point -- TODO: don't take average for this
+    M.hivprev = dpar2mpar(P.hivprev)[:,0] # Initial HIV prevalence -- only take initial point
     M.stiprevulc = dpar2mpar(P.stiprevulc) # STI prevalence
     M.stiprevdis = dpar2mpar(P.stiprevdis) # STI prevalence
     M.death = dpar2mpar(P.death) # Death rates
