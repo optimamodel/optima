@@ -15,7 +15,7 @@ from bunch import Bunch as struct
 from dataio import loaddata
 
 ## Set defaults for testing
-default_progname = 'MSM'
+default_progname = 'FSW'
 default_ccparams = [0.9, 0.2, 800000.0, 7e6]
 default_coparams = []
 default_makeplot = 1
@@ -24,7 +24,7 @@ default_effectname = [['sex', 'condomcas'], [u'MSM'], [[0.3, 0.5], [0.7, 0.9]]]
 
 
 # Initialise storage of parameters. Meant to replicate the style of D.P
-C = struct.fromkeys(D.P)
+C = struct.fromkeys(D.P, [])
 
 ###############################################################################
 ## Make cost coverage curve
@@ -335,7 +335,7 @@ def makecco(datain = default_datain, progname = default_progname, effectname = d
     
     ## Only going to make cost-outcome curves if a program affects a specific population -- otherwise will just make cost-coverage curves
     if popname[0] not in D.data.meta.pops.short:
-        return [], []
+        return [], [], []
     else:          
         popnumber = D.data.meta.pops.short.index(popname[0]) 
 
@@ -470,14 +470,19 @@ def plotallcurves(datain = default_datain, progname=default_progname, ccparams=d
     # Loop over behavioural effects
     for effectname in D.programs[progname]:
 
-        ## Store outputs
-        effectnumber = D.programs[progname].index(effectname)    
-        plotdata[effectnumber], plotdata_co[effectnumber], storeparams = makecco(D, progname, effectname, ccparams, coparams, makeplot)
-        C.params[effectname] = struct()
-        
+        popname = effectname[1]
+    
+        if popname[0] in D.data.meta.pops.short:
 
-    return plotdata, plotdata_co, plotdata_cc, storeparams 
- 
-                
+            popnumber = D.data.meta.pops.short.index(popname[0]) 
+
+            ## Store outputs
+            effectnumber = D.programs[progname].index(effectname)    
+            plotdata[effectnumber], plotdata_co[effectnumber], storeparams = makecco(D, progname, effectname, ccparams, coparams, makeplot)
+            C[effectname[0][1]] = [popname[0], storeparams]
+
+    return plotdata, plotdata_co, plotdata_cc, C
+      
 ## Example of use
-plotdata_cco, plotdata_co, plotdata_cc, storeparams = plotallcurves()
+#plotdata_cco, plotdata_co, plotdata_cc, C = plotallcurves()
+#plotdata, plotdata_co, storeparams = makecco(D, progname=default_progname, effectname = default_effectname, ccparams = default_ccparams, coparams = default_coparams, makeplot=1)
