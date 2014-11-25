@@ -80,9 +80,10 @@ def makecc(datain = default_datain, progname = default_progname, ccparams = defa
     # ... for unit cost programs...
     else:
         unitcost = D.data.costcov.cost[prognumber]
+        totalcost = []
         for i in range(len(unitcost)):
             totalcost.append(unitcost[i]*coverage[i])
-            if not isnan(unitcost[i]):
+            if not np.isnan(unitcost[i]):
                 slope = unitcost[i] # this updates so the slope is the most recent unit cost
 
         ## Create linear relationship
@@ -182,7 +183,6 @@ def makeco(datain = default_datain, progname = default_progname, effectname = de
     
     ## Get population info
     popname = effectname[1]
-    effectnumber = D.programs[progname].index(effectname)
         
     ## Only going to make cost-outcome curves if a program affects a SPECIFIC population -- otherwise will just make cost-coverage curves
     if popname[0] not in D.data.meta.pops.code:
@@ -314,7 +314,7 @@ def makecco(datain = default_datain, progname = default_progname, effectname = d
     prognumber = D.data.meta.progs.code.index(progname) # get program number
 
     # Get the cost-coverage and coverage-outcome relationships            
-    plotdata_cc, xvalscc, yvalscc = makecc(D, progname, ccparams, makeplot=0)
+#    plotdata_cc, xvalscc, yvalscc = makecc(D, progname, ccparams, makeplot=0)
 
     ## Get population info
     popname = effectname[1]
