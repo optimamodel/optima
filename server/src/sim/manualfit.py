@@ -17,15 +17,7 @@ def manualfit(D, F, startyear=2000, endyear=2015, verbose=2):
     
     from printv import printv
     printv('Running manual calibration...', 1, verbose)
-    
-    # Update options structure
-    from setoptions import setoptions
-    D.opt = setoptions(opt=D.opt, startyear=startyear, endyear=endyear)
-    
-    # Convert data parameters to model parameters
-    from makemodelpars import makemodelpars
-    D.M = makemodelpars(D.P, D.opt, verbose=verbose)
-    
+
     # Run model
     from model import model
     allsims = []
@@ -35,7 +27,11 @@ def manualfit(D, F, startyear=2000, endyear=2015, verbose=2):
     
     # Calculate results
     from makeresults import makeresults
-    D.R = makeresults(allsims, D, D.opt.quantiles, verbose=verbose)
+    D.R = makeresults(D, allsims, D.opt.quantiles, verbose=verbose)
+
+    # Gather plot data
+    from gatherplotdata import gatherepidata
+    D.plot.E = gatherepidata(D, D.R, verbose=verbose)
     
     printv('...done with manual calibration.', 2, verbose)
     return D

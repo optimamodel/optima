@@ -30,11 +30,11 @@ def autofit(D, timelimit=60, startyear=2000, endyear=2015, verbose=2):
     
     # Calculate results
     from makeresults import makeresults
-    D.R = makeresults(allsims, D, D.opt.quantiles, verbose=verbose)
+    D.R = makeresults(D, allsims, D.opt.quantiles, verbose=verbose)
 
     # Gather plot data
     from gatherplotdata import gatherepidata
-    D.plot.E = gatherepidata(D, verbose=verbose)
+    D.plot.E = gatherepidata(D, D.R, verbose=verbose)
     
     printv('...done with automatic calibration.', 2, verbose)
     return D
