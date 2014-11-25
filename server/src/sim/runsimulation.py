@@ -5,7 +5,7 @@ def runsimulation(D, startyear=2000, endyear=2030, verbose=2):
     
     Version: 2014nov23 by cliffk
     """
-    
+
     from printv import printv
     printv('Running simulation...', 1, verbose)
     
