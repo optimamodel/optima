@@ -55,7 +55,7 @@ def check_response_for_errors(response):
     
     # Make sure the response status was OK. Response body is javascript that is successfully
     # parsed. And status in JSON is NOK implying there was an error.
-    if response.status_code == 200 and responseJS is not None and responseJS['status'] == "NOK":
+    if response.status_code == 200 and responseJS is not None and 'status' in responseJS and responseJS['status'] == "NOK":
         if responseJS['reason'] is not None:
             abort(500, responseJS['reason'])
         else:
