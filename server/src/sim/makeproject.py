@@ -1,9 +1,25 @@
-"""
-MAKEPROJECT
-http://54.200.79.218/#/project/create
-Version: 2014nov05 by cliffk
-"""
-import os
+def makespreadsheet(name, pops, progs, datastart=2000, dataend=2015, econ_datastart=2015, econ_dataend=2030, verbose=2):
+    """
+    MAKESPREADSHEET
+    
+    Generate the Optima spreadsheet
+    
+    Version: 2014nov19
+    """
+    
+    from printv import printv
+    from dataio import templatepath
+    from makeworkbook import OptimaWorkbook
+
+    printv("""Generating spreadsheet with parameters:
+             name = %s, pops = %s, progs = %s, datastart = %s, dataend = %s, 
+             econ_datastart = %s, econ_dataend = %s""" % (name, pops, progs, datastart, dataend, econ_datastart, econ_dataend), 1, verbose)
+    path = templatepath(name)
+    book = OptimaWorkbook(name, pops, progs, datastart, dataend, econ_datastart, econ_dataend)
+    book.create(path)
+    
+    printv('  ...done making spreadsheet %s.' % path, 2, verbose)
+    return path
 
 default_pops = ['General males','General females','Female sex workers','Clients of sex workers', \
 'Men who have sex with men','People who inject drugs']
@@ -13,13 +29,15 @@ default_progs = ['Behavior change','Female sex workers','Needle-syringe program'
 'Antiretroviral treatment','Prevention of mother-to-child transmission']
 
 def makeproject(projectname='example', pops = default_pops, progs = default_progs, datastart=2000, dataend=2015, \
-    econ_datastart=2015, econ_dataend=2030, verbose=2):
+    econ_datastart=2015, econ_dataend=2030, verbose=2, savetofile = True):
     """
     Initializes the empty project. Only the "Global" parameters are added on this step.
     The rest of the parameters is calculated after the model is updated with the data from the spreadsheet.
+    
+    Version: 2014nov22 by cliffk
     """
-    from matplotlib.pylab import ones, array
-    from dataio import savedata, fullpath, projectpath
+    
+    from dataio import savedata, projectpath
     from bunch import Bunch as struct
     from printv import printv
 
@@ -28,10 +46,14 @@ def makeproject(projectname='example', pops = default_pops, progs = default_prog
             econ_datastart=%s, econ_dataend=%s""" % (projectname, pops, progs, datastart, dataend, econ_datastart, econ_datastart), 1, verbose)
 
     D = struct() # Data structure for saving everything
+    D.__doc__ = 'Data structure for storing everything -- data, parameters, simulation results, velociraptors, etc.'
     D.projectname = projectname
     D.projectfilename = projectpath(projectname+'.prj')
     D.spreadsheetname = projectname + '.xlsx'
-    D.__doc__ = 'Data structure for storing everything -- data, parameters, simulation results, velociraptors, etc.'
+    
+    # Initialize options
+    from setoptions import setoptions
+    D.opt = setoptions()
     
     D.G = struct() # "G" for "general parameters"
     D.G.__doc__ = 'General parameters for the model, including the number of population groups, project name, etc.'
@@ -41,23 +63,13 @@ def makeproject(projectname='example', pops = default_pops, progs = default_prog
     D.G.datastart = datastart
     D.G.dataend = dataend
     
-    # Initialize fitted parameters
-    D.F = struct()
-    D.F.__doc__ = 'Fitted parameters structure: initial prevalence, force-of-infection, diagnoses, treatment'
-    D.F.init = ones(D.G.npops)
-    D.F.force = ones(D.G.npops)
-    D.F.dx = array([1, 1, (D.G.datastart+D.G.dataend)/2, 1])
-    D.F.tx1 = array([1, 1, (D.G.datastart+D.G.dataend)/2, 1])
-    D.F.tx2 = array([1, 1, (D.G.datastart+D.G.dataend)/2, 1])    
-    
-    
-    savedata(D.projectfilename, D, verbose=verbose) # Create project -- #TODO: check if an existing project exists and don't overwrite it
+    if savetofile: #False if we are using database
+        savedata(D.projectfilename, D, verbose=verbose) # Create project -- #TODO: check if an existing project exists and don't overwrite it
     
     # Make an Excel template and then prompt the user to save it
     if projectname == 'example': # Don't make a new spreadsheet, but just use the existing one, if the project name is "example"
         print('WARNING, Project name set to "example", not creating a new spreadsheet!')
     else: # Make a new spreadsheet
-        from makespreadsheet import makespreadsheet 
         makespreadsheet(D.spreadsheetname, pops, progs, datastart, dataend, econ_datastart, econ_dataend, verbose=verbose)
     
     printv('  ...done making project %s, created spreadsheet %s' % (D.projectname, D.spreadsheetname), 2, verbose)

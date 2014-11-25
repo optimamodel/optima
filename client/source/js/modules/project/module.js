@@ -1,11 +1,13 @@
 define([
   'angular',
   'ui.router',
+  '../common/active-project-service',
   '../resources/project'
 ], function (angular) {
   'use strict';
 
   return angular.module('app.project', [
+    'app.active-project',
     'app.resources.project',
     'ui.router'
   ])

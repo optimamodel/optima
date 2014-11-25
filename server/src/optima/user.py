@@ -39,7 +39,8 @@ def before_request():
 
 @user.route('/create', methods=['POST'])
 def create_user():
-
+    print("create request: %s %s" % (request, request.data))
+    print("/user/create %s" % request.get_json(force=True))
     # Check if the user already exists
     email = request.json['email']
     name = request.json['name']
@@ -71,7 +72,7 @@ def create_user():
 
 @user.route('/login', methods=['POST'])
 def login():
-      
+    print("/user/login %s" % request.get_json(force=True))
     # Make sure user is not logged in already.
     cu = current_user
     

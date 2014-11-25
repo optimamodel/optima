@@ -1,36 +1,40 @@
 def runsimulation(D, startyear=2000, endyear=2030, verbose=2):
     """
     RUNSIMULATION
-    View data and model estimates
+    Calculate model estimates
     
-    Version: 2014nov05 by cliffk
+    Version: 2014nov23 by cliffk
     """
 
-    
-    
-    # Create options structure
-    from bunch import Bunch as struct
-    from matplotlib.pylab import arange
     from printv import printv
     printv('Running simulation...', 1, verbose)
     
-    options = struct()
-    options.startyear = startyear
-    options.endyear = endyear
-    options.dt = 0.1
-    options.tvec = arange(options.startyear, options.endyear, options.dt) # Time vector
+    # update options structure
+    from setoptions import setoptions
+    D.opt = setoptions(opt=D.opt, startyear=startyear, endyear=endyear)
     
     # Convert data parameters to model parameters
     from makemodelpars import makemodelpars
-    D.M = makemodelpars(D.P, options, verbose=verbose)
+    D.M = makemodelpars(D.P, D.opt, verbose=verbose)
+    
+    # Create fitted parameters
+    from makefittedpars import makefittedpars
+    D.F = makefittedpars(D.G, D.opt, verbose=verbose)
     
     # Run model
     from model import model
-    D.S = model(D.G, D.M, D.F, options, verbose=verbose)
+    allsims = []
+    for s in range(D.opt.nsims): # TODO -- parallelize
+        S = model(D.G, D.M, D.F[s], D.opt, verbose=verbose)
+        allsims.append(S)
+    D.S = allsims[0] # Save one full sim structure for troubleshooting and funsies
+    
+    # Calculate results
+    from makeresults import makeresults
+    D.R = makeresults(allsims, D, D.opt.quantiles, verbose=verbose)
     
     # Save output
     from dataio import savedata
     savedata(D.projectfilename, D, verbose=verbose)
     printv('...done running simulation for project %s.' % D.projectfilename, 2, verbose)
     return D
-    # should frontend do anything with the model? 

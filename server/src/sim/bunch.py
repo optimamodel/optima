@@ -28,13 +28,19 @@ converted via Bunch.to/fromDict().
 
 Modified (slightly) by Cliff Kerr on 2014sep24
 """
-import numpy as np
 
 __version__ = '1.0.1'
 VERSION = tuple(map(int, __version__.split('.')))
 
-__all__ = ('Bunch', 'bunchify','unbunchify',)
+__all__ = ('Bunch', 'bunchify','unbunchify','to_array')
 
+from matplotlib.pylab import ndarray, isnan, asarray # CK: replaced dependence on NumPy with Matplotlib
+
+def float_array(data):
+    return asarray(data, float)
+
+def int_array(data):
+    return asarray(data, int)
 
 class Bunch(dict):
     """ A dictionary that provides attribute-style access.
@@ -277,11 +283,12 @@ def unbunchify(x):
         return dict( (k, unbunchify(v)) for k,v in x.iteritems() )
     elif isinstance(x, (list, tuple)):
         return type(x)( unbunchify(v) for v in x )
-    elif isinstance(x, np.ndarray):
-        return x.tolist()
-    elif isinstance(x, float) and np.isnan(x):
+    elif isinstance(x, ndarray):
+        return [unbunchify(v) for v in x.tolist()]
+    elif isinstance(x, float) and isnan(x):
         return None
     else:
+#        print ("x= %s, type(x) = %s" % (x, type(x))) # CK: What the hell was that doing there!?
         return x
 
 
@@ -291,7 +298,7 @@ try:
     try:
         import json
     except ImportError:
-        import simplejson as json
+        import simplejson as json # analysis:ignore -- Pylint incorrectly complains about this line
     
     def toJSON(self, **options):
         """ Serializes this Bunch to JSON. Accepts the same keyword options as `json.dumps()`.

@@ -1,12 +1,26 @@
 <div class="rich">
   <div class="section" ng-show="projects.length">
-    <h3>Open project:</h3>
+    <h3>Available projects:</h3>
 
-    <ul>
-      <li ng-repeat="project in projects track by $index">
-        <a ng-click="open(project)" href="#">{{ project }}</a>
-      </li>
-    </ul>
+    <table class="table table-bordered table-hover table-striped" style="width: auto">
+      <thead>
+      <th>Name</th>
+      <th colspan="2">Actions</th>
+      </thead>
+      <tbody>
+      <tr ng-repeat="project in projects track by $index">
+        <td>
+          {{ project }}
+        </td>
+        <td>
+          <button class="btn __white" ng-click="open(project)">open</button>
+        </td>
+        <td>
+          <button class="btn __red" ng-click="delete(project)">remove</button>
+        </td>
+      </tr>
+      </tbody>
+    </table>
   </div>
 
   <div ng-hide="projects.length">

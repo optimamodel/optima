@@ -4,7 +4,7 @@ server {
     charset utf-8;
 
     set $host_path "{{install_dir}}/client";
-    root $host_path/{{ client_root_path }};
+    root $host_path/build;
 
     location / {
         index index.html;
