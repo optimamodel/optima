@@ -4,10 +4,8 @@ Run optimization. The data structure "objectives" is from the "Optimize outcomes
 Version: 2014oct29
 """
 
-def optimize(projectname='example', maxtime=60, objectives=[]):
+def optimize(D, maxtime=60, objectives=[]):
    
-     from dataio import loaddata, savedata
-     D = loaddata(projectname+'.prj')
      from ballsd import ballsd
      ballsd(D.M, objectives) # Optimize parameters
     
@@ -28,11 +26,11 @@ def optimize(projectname='example', maxtime=60, objectives=[]):
      # e.g. 
      from matplotlib.pylab import plot, hold, scatter, subplot
      
-     subplot(2,2,1)
-     plot(plotdata[p].xmodeldata, plotdata[p].ymodeldata)
-     subplot(3,2,p)
-     plot(plotdata[p].xmodeldata, plotdata[p].ymodeldata)
-     hold(True)
-     scatter(plotdata[p].xexpdata, plotdata[p].yexpdata);
+#     subplot(2,2,1)
+#     plot(plotdata[p].xmodeldata, plotdata[p].ymodeldata)
+#     subplot(3,2,p)
+#     plot(plotdata[p].xmodeldata, plotdata[p].ymodeldata)
+#     hold(True)
+#     scatter(plotdata[p].xexpdata, plotdata[p].yexpdata);
     
      return lineplotdata, pieplotdata

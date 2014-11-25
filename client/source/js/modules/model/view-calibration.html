@@ -159,35 +159,37 @@
 
     <div class="well section">
         <div class="grid">
-            <div class="section cf">
-              <h1>Results</h1>
+          <div class="section cf">
+            <h1>Results</h1>
 
-              <div class="3" ng-repeat="type in types">
-                <b>{{ type.name }}</b>
-                <div>
-                  <label class="checkbox-inline">
-                    <input type="checkbox" ng-model="type.total">
-                    Overall
-                  </label>
-                </div>
-                <div>
-                  <label class="checkbox-inline">
-                    <input type="checkbox" ng-model="type.active">
-                    Per population
-                  </label>
-                </div>
+            <div class="3" ng-repeat="type in types">
+              <b>{{ type.name }}</b>
+              <div>
+                <label class="checkbox-inline">
+                  <input type="checkbox" ng-model="type.total" ng-change="onGraphTypeChange(type)">
+                  Overall
+                </label>
               </div>
-
+              <div>
+                <label class="checkbox-inline">
+                  <input type="checkbox" ng-model="type.byPopulation" ng-change="onGraphTypeChange(type)">
+                  Per population
+                </label>
+              </div>
             </div>
 
-            <div class="section grid">
-                <div class="6" ng-repeat="graph in graphs">
-                    <div class="chart-container">
-                        <nvd3 data="graph.data" options="graph.options"></nvd3>
-                    </div>
-                </div>
-            </div>
+          </div>
 
+          <div class="section elastic" ng-repeat="graph in graphs">
+            <div class="elastic_col __shrink" style="width: 430px">
+              <div class="chart-container">
+                <div line-scatter-chart data="graph.data" options="graph.options" save-graph-as></div>
+              </div>
+            </div>
+            <div class="elastic_col">
+              <h3>{{ graph.title }}</h3>
+            </div>
+          </div>
         </div>
     </div>
 

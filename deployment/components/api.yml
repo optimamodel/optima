@@ -24,6 +24,17 @@
     sudo: yes
     tags: api
 
+  - name: API | Setup migrations in the database if needed
+    shell: if ! psql -U optima -h {{db_host}} -c '\d+' | grep migrate_version >/dev/null ; then migrate version_control {{db_url}} {{install_dir}}/server/db/ ; fi
+    environment: 
+      PGPASSWORD: "{{ db_password }}"
+
+  - name: API | Upgrade database
+    command: migrate upgrade {{db_url}} {{install_dir}}/server/db/
+    tags:
+      - api
+      - update
+
   - name: API | Copy upstart script
     template: src={{root_dir}}/components/templates/upstart.conf.j2 dest=/etc/init/optima-api.conf backup=yes
     sudo: yes

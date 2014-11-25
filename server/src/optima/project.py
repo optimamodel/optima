@@ -12,7 +12,8 @@ from sim.loadspreadsheet import loadspreadsheet
 from sim.makeproject import makeproject
 from sim.optimize import optimize
 from optima.data import data
-from utils import allowed_file
+from utils import allowed_file, project_file_exists, delete_project_file, delete_spreadsheet
+from utils import check_project_name, load_model, save_model
 from flask.ext.login import login_required, current_user
 
 """ route prefix: /api/project """
@@ -44,7 +45,7 @@ def createProject(project_name):
 #    data = json.loads(request.args.get('params'))
 #    data = dict([(x,int(y)) for (x,y) in data.items()])
     print(data)
-    makeproject_args = {"projectname":project_name}
+    makeproject_args = {"projectname":project_name, "savetofile":False}
     name = project_name
     if data.get('datastart'):
         datastart  = makeproject_args['datastart'] = int(data['datastart'])
@@ -69,12 +70,12 @@ def createProject(project_name):
     if data.get('programs'):
         programs = makeproject_args['progs'] = data['programs']
     else:
-        programs = ''
+        programs = {}
 
     if data.get('populations'):
         populations = makeproject_args['pops'] = data['populations']
     else:
-        populations = ''
+        populations = {}
     
     from api import db
     from dbmodels import ProjectDb
@@ -83,6 +84,7 @@ def createProject(project_name):
     
     # get current user 
     cu = current_user
+    proj = None
     if cu.is_anonymous() == False:
         
         # See if there is matching project
@@ -104,22 +106,18 @@ def createProject(project_name):
             proj = ProjectDb(name, cu.id, datastart, dataend, econ_datastart, econ_dataend, programs, populations)
         
         # Save to db
-        db.session.add(proj)
-        db.session.commit()
 
     #    makeproject_args = dict(makeproject_args.items() + data.items())
     print(makeproject_args)
 
     D = makeproject(**makeproject_args) # makeproject is supposed to return the name of the existing file...
+    proj.model = D.toDict()
+    db.session.add(proj)
+    db.session.commit()
     new_project_template = D.spreadsheetname
 
     print("new_project_template: %s" % new_project_template)
     (dirname, basename) = (upload_dir_user(TEMPLATEDIR), new_project_template)
-#    xlsname = project_name + '.xlsx'
-#    srcfile = helpers.safe_join(project.static_folder,'example.xlsx')
-#    dstfile =  helpers.safe_join(dirname, xlsname)
-#    shutil.copy(srcfile, dstfile)
-    session['project_name'] = project_name 
     return helpers.send_from_directory(dirname, basename)
 
 """
@@ -128,18 +126,22 @@ If the project exists, should put it in session and return to the user.
 """
 @project.route('/open/<project_name>')
 @login_required
-# expects project name, will put it into session
+# expects project name, 
 # todo: only if it can be found
 def openProject(project_name):
     
-    # getting current user path
-    path = upload_dir_user(PROJECTDIR)
-
-    project_path = helpers.safe_join(path, project_name+'.prj')
-    if not os.path.exists(project_path):
+    cu = current_user
+    proj_exists = False
+    if cu.is_anonymous() == False:    
+        try:
+            proj_exists = ProjectDb.query.filter_by(user_id=cu.id, name=project_name).count() > 0
+        except:
+            proj_exists = False
+        if not proj_exists: # try reading this from file and resaving
+            proj_exists = project_file_exists(project_name)
+    if not proj_exists:
         return jsonify({'status':'NOK','reason':'No such project %s' % project_name})
     else:
-        session['project_name'] = project_name
         return redirect(url_for('site'))
 
 """
@@ -147,8 +149,9 @@ Returns the current project name.
 """
 @project.route('/name')
 @login_required
+@check_project_name
 def getProjectInfo():
-    return jsonify({"project":session.get('project_name','')})
+    return jsonify({"project": request.project_name})
 
 """
 Returns the list of existing projects from db.
@@ -174,21 +177,15 @@ def getProjectList():
 """
 Deletes the given project (and eventually, corresponding excel files)
 """
-@project.route('/delete/<project_name>')
+@project.route('/delete/<project_name>', methods=['DELETE'])
 @login_required
 def deleteProject(project_name):
-
-    # getting current user path
-    project_path = helpers.safe_join(upload_dir_user(PROJECTDIR), project_name+'.prj')
-
-    if os.path.exists(project_path):
-        os.remove(project_path)
-        spreadsheet_path = helpers.safe_join(upload_dir_user(TEMPLATEDIR), project_name+'.xlsx')
-        if os.path.exists(spreadsheet_path):
-            os.remove(spreadsheet_path)
-        if session.get('project_name', '') == project_name:
-            session.pop('project_name', None)
-
+    print("deleteProject %s" % project_name)
+    try:
+        delete_project_file(project_name)
+        print("project file %s deleted" % project_name)
+        delete_spreadsheet(project_name)
+        print("spreadsheets for %s deleted" % project_name)
         # Get current user 
         cu = current_user
         if cu.is_anonymous() == False:
@@ -197,15 +194,18 @@ def deleteProject(project_name):
             from dbmodels import ProjectDb
 
             # Get project row for current user with project name
-            project = ProjectDb.query.filter_by(user_id= cu.id,name=project_name).first()
+            db.session.query(ProjectDb).filter_by(user_id= cu.id,name=project_name).delete()
 
             # delete project row
-            db.session.delete(project)
+#            db.session.delete(project)
             db.session.commit()
 
         return jsonify({'status':'OK','reason':'Project %s deleted.' % project_name})
-    else:
-        return jsonify({'status':'NOK', 'reason':'Project %s did not exist.' % project_name})
+    except Exception, err:
+        var = traceback.format_exc()
+        reply = {'status':'NOK', 'reason':'Project %s did not exist.' % project_name}
+        reply['exception'] = var
+        return jsonify(reply)
 
 """
 Download example Excel file.
@@ -229,7 +229,11 @@ Precondition: model should exist.
 """
 @project.route('/update', methods=['POST'])
 @login_required
+@check_project_name
 def uploadExcel():
+    project_name = request.project_name
+    print("project name: %s" % project_name)
+
     reply = {'status':'NOK'}
     file = request.files['file']
   
@@ -242,33 +246,27 @@ def uploadExcel():
         reply['reason'] = 'No file is submitted!'
         return json.dumps(reply)
 
-    filename = secure_filename(file.filename)
-    if not allowed_file(filename):
-        reply['reason'] = 'File type of %s is not accepted!' % filename
+    source_filename = secure_filename(file.filename)
+    if not allowed_file(source_filename):
+        reply['reason'] = 'File type of %s is not accepted!' % source_filename
         return json.dumps(reply)
 
-    reply['file'] = filename
-    if allowed_file(filename):
-        server_filename = os.path.join(loaddir, filename)
-        file.save(server_filename)
+    reply['file'] = source_filename
 
-    file_basename, file_extension = os.path.splitext(filename)
-    project_name = helpers.safe_join(upload_dir_user(PROJECTDIR), file_basename+'.prj')
-    print("project name: %s" % project_name)
-    if not os.path.exists(project_name):
-        reply['reason'] = 'Project %s does not exist' % file_basename
-        return json.dumps(reply)
+    filename = project_name + '.xlsx'
+    server_filename = os.path.join(loaddir, filename)
+    file.save(server_filename)
 
     try:
-        data = loaddata(project_name)
+        D = load_model(project_name)
+        D = updatedata(D, savetofile = False)
 
-        D = updatedata(data, loaddir)
+        save_model(project_name, D)
     except Exception, err:
         var = traceback.format_exc()
         reply['exception'] = var
         return json.dumps(reply)      
 
-    session['project_name'] = project_name 
     reply['status'] = 'OK'
-    reply['result'] = 'Project %s is updated' % file_basename
+    reply['result'] = 'Project %s is updated' % project_name
     return json.dumps(reply)

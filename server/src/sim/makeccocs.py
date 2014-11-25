@@ -1,17 +1,16 @@
 """
 Creates and updates cost-coverage curves and coverage-outcome curves
     
-Version: 2014nov13
+Version: 2014nov19
 """
 ###############################################################################
 ## Set up
 ###############################################################################
 
-import numpy as np
 import math
-from matplotlib.pylab import zeros, figure, plot, hold, xlabel, ylabel, title
+from matplotlib.pylab import linspace, exp, isnan, asarray, zeros, figure, plot, hold, xlabel, ylabel, title
 from truncnorm import truncnorm
-from bunch import Bunch as struct
+from bunch import Bunch as struct, float_array
 from dataio import loaddata
 
 ## Set defaults for testing
@@ -19,12 +18,9 @@ default_progname = 'FSW'
 default_ccparams = [0.9, 0.2, 800000.0, 7e6]
 default_coparams = []
 default_makeplot = 1
-default_datain = D # use 'example' or programs
+#default_datain = D # use 'example' or programs
 default_effectname = [['sex', 'condomcas'], [u'MSM'], [[0.3, 0.5], [0.7, 0.9]]]
 
-
-# Initialise storage of parameters. Meant to replicate the style of D.P
-C = struct.fromkeys(D.P, [])
 
 ###############################################################################
 ## Make cost coverage curve
@@ -42,7 +38,7 @@ C = struct.fromkeys(D.P, [])
 #    1. plotdata
 
 ###############################################################################
-def makecc(datain = default_datain, progname = default_progname, ccparams = default_ccparams, makeplot = default_makeplot):
+def makecc(datain, progname = default_progname, ccparams = default_ccparams, makeplot = default_makeplot):
     
     ## Load data structure if it hasn't been passed as an argument... 
     if isinstance(datain, str):
@@ -81,7 +77,7 @@ def makecc(datain = default_datain, progname = default_progname, ccparams = defa
         storeparams = [saturation, growthrate]
 
         # Create logistic relationship 
-        xvalscc = np.linspace(0,xupperlim,1000) # take 1000 points between 0 and user-specified max
+        xvalscc = linspace(0,xupperlim,1000) # take 1000 points between 0 and user-specified max
         yvalscc = 2*saturation / (1 + np.exp(-growthrate*xvalscc)) - saturation # calculate logistic function
 
     # ... for unit cost programs...
@@ -90,20 +86,20 @@ def makecc(datain = default_datain, progname = default_progname, ccparams = defa
         totalcost = []
         for i in range(len(unitcost)):
             totalcost.append(unitcost[i]*coverage[i])
-            if not np.isnan(unitcost[i]):
+            if not isnan(unitcost[i]):
                 slope = unitcost[i] # this updates so the slope is the most recent unit cost
 
         ## Create linear relationship
-        xvalscc = np.linspace(0,7e6,1000) # take 1000 points between 0 and some arbitrary max
+        xvalscc = linspace(0,7e6,1000) # take 1000 points between 0 and some arbitrary max
         yvalscc = xvalscc*slope # calculate linear function
 
     # Get scatter data
     if (len(coverage) == 1 and len(totalcost) > 1): 
-        totalcost = np.asarray(totalcost)
+        totalcost = float_array(totalcost)
         totalcost = totalcost[~np.isnan(totalcost)]
         totalcost = totalcost[-1]
     elif (len(totalcost) == 1 and len(coverage) > 1):
-        coverage = np.asarray(coverage)
+        coverage = float_array(coverage)
         coverage = coverage[~np.isnan(coverage)]
         coverage = coverage[-1]
         
@@ -175,7 +171,7 @@ def makesamples(muz, stdevz, muf, stdevf, samplesize=1000):
 #    1. plotdata
 #    2. D
 ###############################################################################
-def makeco(datain = default_datain, progname = default_progname, effectname = default_effectname, coparams=default_coparams, makeplot = default_makeplot):
+def makeco(datain, progname = default_progname, effectname = default_effectname, coparams=default_coparams, makeplot = default_makeplot):
 
     ## Load data structure if it hasn't been passed as an argument... 
     if isinstance(datain, str):
@@ -240,10 +236,10 @@ def makeco(datain = default_datain, progname = default_progname, effectname = de
         storeparams = [muz, stdevz, muf, stdevf]
         
         ## General set of coverage-outcome relationships
-        xvalsco = np.linspace(0,1,1000) # take 1000 points along the unit interval
+        xvalsco = linspace(0,1,1000) # take 1000 points along the unit interval
         yvalsco = zeros((1000,len(fullsample)))
         for i in range(len(fullsample)):
-            yvalsco[:,i] = np.linspace(zerosample[i],fullsample[i],1000) # Generate 1000 straight lines
+            yvalsco[:,i] = linspace(zerosample[i],fullsample[i],1000) # Generate 1000 straight lines
             
         ## Upper and lower bounds of line set
         ymin, ymax = zeros(1000), zeros(1000)
@@ -262,7 +258,7 @@ def makeco(datain = default_datain, progname = default_progname, effectname = de
         if makeplot:
             figure()
             hold(True)
-            plot(xvalsco, np.linspace(muz,muf,1000), color = 'b', lw = 2)
+            plot(xvalsco, linspace(muz,muf,1000), color = 'b', lw = 2)
             plot(xvalsco, ymax, 'k--', lw = 2)
             plot(xvalsco, ymin, 'k--', lw = 2)
             plot(coverage, outcome, 'ro')
@@ -273,8 +269,8 @@ def makeco(datain = default_datain, progname = default_progname, effectname = de
         # Create and populate output structure with plotting data
         plotdata = {}
         plotdata['xlinedata'] = xvalsco # X data for all line plots
-        plotdata['ylinedata'] = [np.linspace(muz,muf,1000), ymax, ymin] # ALL Y data (for three lines)
-        plotdata['ylinedata1'] = np.linspace(muz,muf,1000) # Y data for first line on plot
+        plotdata['ylinedata'] = [linspace(muz,muf,1000), ymax, ymin] # ALL Y data (for three lines)
+        plotdata['ylinedata1'] = linspace(muz,muf,1000) # Y data for first line on plot
         plotdata['ylinedata2'] = ymax  # Y data for second line on plot
         plotdata['ylinedata3'] = ymin  # Y data for third line on plot
         plotdata['xscatterdata'] = coverage # X scatter data
@@ -312,7 +308,7 @@ def ccoeqn(x, p):
 #    1. plotdata
 #    2. D
 ###############################################################################
-def makecco(datain = default_datain, progname = default_progname, effectname = default_effectname, ccparams=default_ccparams, coparams=default_coparams, makeplot=default_makeplot):
+def makecco(datain, progname = default_progname, effectname = default_effectname, ccparams=default_ccparams, coparams=default_coparams, makeplot=default_makeplot):
 
     ## Load data structure if it hasn't been passed as an argument... 
     if isinstance(datain, str):
@@ -391,12 +387,12 @@ def makecco(datain = default_datain, progname = default_progname, effectname = d
 
         ## Get around situations where there's an assumption for coverage but not for behaviour, or vice versa
         if (len(totalcost) == 1 and len(outcome) > 1): 
-            outcome = np.asarray(outcome)
-            outcome = outcome[~np.isnan(outcome)]
+            outcome = float_array(outcome)
+            outcome = outcome[~isnan(outcome)]
             outcome = outcome[-1]
         elif (len(outcome) == 1 and len(totalcost) > 1):
-            totalcost = np.asarray(totalcost)
-            totalcost = totalcost[~np.isnan(totalcost)]
+            totalcost = float_array(totalcost)
+            totalcost = totalcost[~isnan(totalcost)]
             totalcost = totalcost[-1]
 
         ## Plot results (probably delete once in GUI)                            
@@ -448,7 +444,7 @@ def makecco(datain = default_datain, progname = default_progname, effectname = d
 #    2. plotdata_co
 #    2. plotdata_cco
 ###############################################################################
-def plotallcurves(datain = default_datain, progname=default_progname, ccparams=default_ccparams, coparams=default_coparams, makeplot=default_makeplot):
+def plotallcurves(datain, progname=default_progname, ccparams=default_ccparams, coparams=default_coparams, makeplot=default_makeplot):
 
     ## Load data structure if it hasn't been passed as an argument... 
     if isinstance(datain, str):
