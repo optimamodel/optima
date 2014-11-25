@@ -1,10 +1,8 @@
 def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rates etc.
     """
-    MODEL
-    
     This function runs the model.
     
-    Version: 2014nov05 by cliffk
+    Version: 2014nov25 by cliffk
     """
 
     ###############################################################################
@@ -12,7 +10,7 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
     ###############################################################################
 
     ## Imports
-    from numpy import array, zeros, exp # For creating arrays
+    from numpy import array, zeros, exp, maximum # For creating arrays
     from bunch import Bunch as struct # Replicate Matlab-like structure behavior
     from printv import printv
     printv('Running model...', 1, verbose)
@@ -41,7 +39,7 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
     S.newtx2   = zeros((npops, npts)) # Number initiating ART2 per timestep
     S.death    = zeros((npops, npts)) # Number of deaths per timestep
     effhivprev = zeros((npops, 1))    # HIV effective prevalence (prevalence times infectiousness)
-    # dU = []; dD = []; dT1 = []; dF = []; dT2 = []; # Initialize differences
+
     
     ## Set initial epidemic conditions 
     people[0, :, 0]  = M.popsize[:,0] * (1-M.hivprev) # Set initial susceptible population
@@ -83,9 +81,9 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
     
     # Loop over time
     for t in range(npts): # Skip the last timestep for people since we don't need to know what happens after that
-        printv('Timestep %i of %i' % (t+1, npts), 4, verbose)
+        printv('Timestep %i of %i' % (t+1, npts), 5, verbose)
         
-        ## Calculate "effcetive" HIV prevalence -- taking diagnosis and treatment into account
+        ## Calculate "effective" HIV prevalence -- taking diagnosis and treatment into account
         for pop in range(npops): # Loop over each population group
             allpeople[pop,t] = sum(people[:,pop,t]) # All people in this population group at this time point
             if not(allpeople[pop,t]>0): raise Exception('No people in population %i at timestep %i (time %0.1f)' % (pop, t, S.tvec[t]))
@@ -108,14 +106,14 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
         for popM in range(npops):
             for popF in range(npops):
                 
-                # Transmissability (depends on receptive population being male or female)
-                transM = M.const.trans.mmi if G.male[popF] else M.const.trans.mfi # Insertive transmissability
-                transF = M.const.trans.mmr if G.male[popF] else M.const.trans.mfr # Receptive transmissability
-                
+                # Transmissibility (depends on receptive population being male or female)
+                transM = M.const.trans.mmi if G.male[popF] else M.const.trans.mfi # Insertive transmissibility
+                transF = M.const.trans.mmr if G.male[popF] else M.const.trans.mfr # Receptive transmissibility
+
                 # Transmission effects
                 circeff = 1 - M.const.eff.circ * M.circum[popM,t] # Effect of circumcision -- # TODO: check this is capturing what we want, i.e shouldn't it only be for susceptibles?
-                stieffM = 1 + M.const.eff.sti  * M.stiprevulc[popM,t] # Male STI prevalence effect
-                stieffF = 1 + M.const.eff.sti  * M.stiprevulc[popF,t] # Female STI prevalence effect
+                stieffM = 1 + M.const.eff.sti  * (M.stiprevulc[popM,t] + M.stiprevdis[popM,t])  # Male STI prevalence effect
+                stieffF = 1 + M.const.eff.sti  * (M.stiprevulc[popF,t] + M.stiprevdis[popF,t]) # Female STI prevalence effect
                 
                 # Iterate through the sexual act types
                 for act in ['reg','cas','com']:
@@ -123,7 +121,7 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
                         numactsM = M.totalacts[act][popM,popF,t]; # Number of acts per person per year (insertive partner)
                         numactsF = M.totalacts[act][popF,popM,t]; # Number of acts per person per year (receptive partner)
                         condomprob = (M.condom[act][popM,t] + M.condom[act][popF,t]) / 2 # Reconcile condom probability
-                        condomeff = 1 - (1-M.const.eff.condom) * condomprob # Effect of condom use
+                        condomeff = 1 - condomprob*M.const.eff.condom # Effect of condom use
                         forceinfM = 1 - (1-transM*circeff*stieffM) ** (dt*numactsM*condomeff*effhivprev[popF]) # The chance of "female" infecting "male" -- # TODO: Implement PrEP etc here
                         forceinfF = 1 - (1-transF*circeff*stieffF) ** (dt*numactsF*condomeff*effhivprev[popM]) # The chance of "male" infecting "female"
                         forceinfvec[popM] = 1 - (1-forceinfvec[popM]) * (1-forceinfM) # Calculate the new "male" forceinf, ensuring that it never gets above 1
@@ -149,7 +147,12 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
                     forceinfvec[pop1] = 1 - (1-forceinfvec[pop1]) * (1-forceinf1) # Calculate the new "male" forceinf, ensuring that it never gets above 1
                     forceinfvec[pop2] = 1 - (1-forceinfvec[pop2]) * (1-forceinf2) # Calculate the new "male" forceinf, ensuring that it never gets above 1
                     if not(all(forceinfvec>=0)): raise Exception('Injecting force-of-infection is invalid')
-  
+        
+        
+        
+        
+        
+        
         ###############################################################################
         ## The ODEs
         ###############################################################################
@@ -176,6 +179,7 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
         dS = -newinfections # Change in number of susceptibles -- death rate already taken into account in pm.totalpop and dt
         S.inci[:,t] = newinfections  # Store new infections
 
+
         ## Undiagnosed
         for cd4 in range(ncd4):
             if cd4>0: 
@@ -196,6 +200,7 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
             S.death[:,t] += hivdeaths[cd4]/dt    # Save annual HIV deaths 
         dU[0] = dU[0] + newinfections # Now add newly infected people
         
+    
         ## Diagnosed
         for cd4 in range(ncd4):
             if cd4>0: 
@@ -213,6 +218,7 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
             S.newtx1[:,t] += newtreat1[cd4]/dt # Save annual treatment initiation
             S.death[:,t]  += hivdeaths[cd4]/dt # Save annual HIV deaths 
         
+    
         ## 1st-line treatment
         for cd4 in range(ncd4):
             if (cd4>0 and cd4<ncd4-1): # CD4>0 stops people from moving back into acute
@@ -229,6 +235,7 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
             dT1.append(recovin - recovout + newtreat1[cd4] - newfail1[cd4] - hivdeaths - otherdeaths)
             S.death[:,t] += hivdeaths[cd4]/dt # Save annual HIV deaths 
 
+    
         ## Treatment failure
         for cd4 in range(ncd4):
             if cd4>0:
@@ -247,6 +254,7 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
             S.newtx2[:,t] += newtreat2[cd4]/dt # Save annual treatment initiation
             S.death[:,t]  += hivdeaths[cd4]/dt # Save annual HIV deaths
             
+
         ## 2nd-line treatment
         for cd4 in range(ncd4):
             if (cd4>0 and cd4<ncd4-1): # CD4>0 stops people from moving back into acute
@@ -261,6 +269,7 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
             otherdeaths = dt*people[G.tx2[cd4],:,t]*background
             dT2.append(recovin - recovout + newtreat2[cd4] - newfail2[cd4] - hivdeaths - otherdeaths)
             S.death[:,t] += hivdeaths[cd4]/dt # Save annual deaths data
+
 
         ###############################################################################
         ## Update next time point and check for errors
@@ -277,7 +286,7 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
                 change[G.fail[cd4],:] = dF[cd4]
                 change[G.tx2[cd4],:]  = dT2[cd4]
             people[:,:,t+1] = people[:,:,t] + change # Update people array
-            newpeople = M.popsize[:,t+1]-sum(people[:,:,t+1]) # Number of people to add according to M.popsize (can be negative)
+            newpeople = M.popsize[:,t+1]-people[:,:,t+1].sum(axis=0) # Number of people to add according to M.popsize (can be negative)
             for pop in range(npops): # Loop over each population, since some might grow and others might shrink
                 if newpeople[pop]>=0: # People are entering: they enter the susceptible population
                     people[0,pop,t+1] += newpeople[pop]
@@ -288,8 +297,6 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
     
     # Append final people array to sim output
     S.people = people
+
     printv('  ...done running model.', 2, verbose)
-    
     return S
-    
-    
