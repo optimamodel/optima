@@ -90,10 +90,9 @@ def makedatapars(D, verbose=2):
                     D.P[uberclass][parclass][parname] = D.data[uberclass][parclass][parname][0] # Taking best value only, hence the 0
     
     ## Program cost data
-    D.A = struct() # Initialize allocations structure
-    D.A.__doc__ = 'Allocation results -- current and optimal'
-    D.A.orig = struct() # Original allocations
-    D.A.orig.cost = dataindex(D.data.costcov.cost, -1) # Pull out last entry for each program
+    D.A = [] # Initialize allocations list
+    D.A.append(struct()) # Original allocations
+    D.A[0].alloc = dataindex(D.data.costcov.cost, -1) # Pull out last allocation for each program
     
     
     ## TODO: disutility, economic data etc.
