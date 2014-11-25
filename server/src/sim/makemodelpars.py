@@ -6,11 +6,7 @@ def makemodelpars(P, opt, verbose=2):
     """
     
     from printv import printv
-<<<<<<< HEAD
-    from matplotlib.pylab import zeros, array
-=======
     from matplotlib.pylab import zeros, array #, ones
->>>>>>> roo_backend_checks
     from bunch import Bunch as struct # Replicate Matlab-like structure behavior
     printv('Making model parameters...', 1, verbose)
     
@@ -74,7 +70,6 @@ def makemodelpars(P, opt, verbose=2):
     ## Constants...can be used directly -- # TODO should this be copy?
     M.const = P.const
     
-    
     ## WARNING need to introduce time!
     def reconcileacts(mixmatrix,popsize,popacts):
         from matplotlib.pylab import array
@@ -112,7 +107,6 @@ def makemodelpars(P, opt, verbose=2):
 
         return pshipacts
         
-    
     # Calculate number of acts
     M.totalacts = struct()
     M.totalacts.__doc__ = 'Balanced numbers of acts'
