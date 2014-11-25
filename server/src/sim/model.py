@@ -187,17 +187,6 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
                 progout = dt*prog[cd4]*people[G.undx[cd4],:,t]
                 testingrate[cd4] = M.hivtest[:,t] # Population specific testing rates
             else: 
-<<<<<<< HEAD
-                progout = 0
-                testingrate[cd4] = dt*M.aidstest[t]
-            newdiagnoses[cd4] = dt*testingrate[cd4]*dxtime[t] * people[G.undx[cd4],:,t]
-            S.dx[:,t] += newdiagnoses[cd4]/dt # Save annual diagnoses data
-            hivdeaths = dt*death[cd4]*people[G.undx[cd4],:,t]
-            S.death[:,t] += hivdeaths[cd4]/dt # Save annual death data
-            dU.append(progin-progout - hivdeaths - newdiagnoses[cd4] - dt*background*people[G.undx[cd4],:,t])
-            
-        dU[0] = dU[0] - dS # Add newly infected people
-=======
                 progout = 0  # Cannot progress out of AIDS stage
                 testingrate[cd4] = maximum(M.hivtest[:,t], M.aidstest[t]) # Testing rate in the AIDS stage (if larger!)
             newdiagnoses[cd4] = dt*people[G.undx[cd4],:,t]*testingrate[cd4]*dxtime[t]
@@ -207,7 +196,6 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
             S.dx[:,t]    += newdiagnoses[cd4]/dt # Save annual diagnoses 
             S.death[:,t] += hivdeaths[cd4]/dt    # Save annual HIV deaths 
         dU[0] = dU[0] + newinfections # Now add newly infected people
->>>>>>> roo_backend_checks
         
         ## Diagnosed
         for cd4 in range(ncd4):
@@ -218,14 +206,6 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
             if cd4<ncd4-1: 
                 progout = dt*prog[cd4]*people[G.dx[cd4],:,t]
             else: 
-<<<<<<< HEAD
-                progout = 0
-            newtreat1[cd4] = dt*M.tx1[t]*tx1time[t] * people[G.dx[cd4],:,t]
-            S.newtx1[:,t] += newtreat1[cd4]/dt # Save annual treatment data
-            hivdeaths = dt*death[cd4]*people[G.dx[cd4],:,t]
-            S.death[:,t] += hivdeaths[cd4]/dt # Save annual deaths data
-            dD.append(progin-progout + newdiagnoses[cd4] - newtreat1[cd4] - hivdeaths - dt*background*people[G.dx[cd4],:,t])
-=======
                 progout = 0 # Cannot progress out of AIDS stage
             newtreat1[cd4] = dt*people[G.dx[cd4],:,t]*M.tx1[t]*tx1time[t] # TODO - shouldn't M.tx1 be broken down by CD4???
             hivdeaths      = dt*people[G.dx[cd4],:,t]*death[cd4]
@@ -233,7 +213,6 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
             dD.append(progin - progout + newdiagnoses[cd4] - newtreat1[cd4] - hivdeaths - otherdeaths)
             S.newtx1[:,t] += newtreat1[cd4]/dt # Save annual treatment initiation
             S.death[:,t]  += hivdeaths[cd4]/dt # Save annual HIV deaths 
->>>>>>> roo_backend_checks
         
         ## 1st-line treatment
         for cd4 in range(ncd4):
