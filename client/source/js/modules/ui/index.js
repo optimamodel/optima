@@ -97,11 +97,15 @@ define([
         $scope.upload = $upload.upload({
           url: '/api/project/update',
           file: file
-        }).progress(function (evt) {
-          console.log('percent: ' + parseInt(100.0 * evt.loaded / evt.total));
-        }).success(function (data, status, headers, config) {
-          alert('Data spreadsheet was successfully uploaded. For now you can only check that in the console')
-          console.log(data);
+        }).success(function (data) {
+          if (data.status === 'NOK') {
+            alert("Something went wrong during an upload.\nSee the error:\n" + data.reason);
+          } else if (data.status === 'OK') {
+            alert(data.file + " was successfully uploaded.\n" + data.result);
+          } else {
+            alert('Sorry, but server feels bad now. Please, give it some time to recover')
+          }
+
         });
       }
 
