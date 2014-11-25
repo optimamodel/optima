@@ -63,107 +63,98 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     ];
 
     $scope.programs = [
-        {
-            name: 'Behavior change and communication',
-            acronym: 'BCC',
-            indicators: [
-                { name: 'Condom use among general population males and females', active: true },
-                { name: 'VMMC uptake and ART adherence', active: false },
-                { name: 'Uptake of other programs and services', active: false },
-                { name: 'Linkages to biomedical services', active: true }
-            ]
-        },
-        {
-            name: 'HIV testing and counseling',
-            acronym: 'HTC',
-            indicators: [
-                { name: 'Relative increase in condom use and testing in general populations', active: false },
-                { name: 'VMMC uptake and ART adherence', active: true },
-                { name: 'Uptake of other programs and services', active: true },
-                { name: 'Linkages to biomedical services', active: false }
-            ]
-        },
-        {
-            name: 'Programs for female sex workers and their clients',
-            acronym: 'PFSW',
-            indicators: [
-                { name: 'Relative increase in condom use and testing in general populations', active: false },
-                { name: 'VMMC uptake and ART adherence', active: true },
-                { name: 'Uptake of other programs and services', active: true },
-                { name: 'Linkages to biomedical services', active: false }
-            ]
-        },
-        {
-            name: 'Programs for men who have sex with men',
-            acronym: 'PMSM',
-            indicators: [
-                { name: 'Relative increase in condom use and testing in general populations', active: false },
-                { name: 'VMMC uptake and ART adherence', active: true },
-                { name: 'Uptake of other programs and services', active: true },
-                { name: 'Linkages to biomedical services', active: false }
-            ]
-        },
-        {
-            name: 'Needle-syringe program',
-            acronym: 'NSP',
-            indicators: [
-                { name: 'Relative increase in condom use and testing in general populations', active: false },
-                { name: 'VMMC uptake and ART adherence', active: true },
-                { name: 'Uptake of other programs and services', active: true },
-                { name: 'Linkages to biomedical services', active: false }
-            ]
-        },
-        {
-            name: 'Opiate substitution therapy',
-            acronym: 'OST',
-            indicators: [
-                { name: 'Relative increase in condom use and testing in general populations', active: false },
-                { name: 'VMMC uptake and ART adherence', active: true },
-                { name: 'Uptake of other programs and services', active: true },
-                { name: 'Linkages to biomedical services', active: false }
-            ]
-        },
-        {
-            name: 'Sexually transmitted infections',
-            acronym: 'STI',
-            indicators: [
-                { name: 'Relative increase in condom use and testing in general populations', active: false },
-                { name: 'VMMC uptake and ART adherence', active: true },
-                { name: 'Uptake of other programs and services', active: true },
-                { name: 'Linkages to biomedical services', active: false }
-            ]
-        },
-        {
-            name: 'Prevention of mother-to-child transmission',
-            acronym: 'PMTCT',
-            indicators: [
-                { name: 'Relative increase in condom use and testing in general populations', active: false },
-                { name: 'VMMC uptake and ART adherence', active: true },
-                { name: 'Uptake of other programs and services', active: true },
-                { name: 'Linkages to biomedical services', active: false }
-            ]
-        },
-        {
-            name: 'Voluntary medical male circumcision',
-            acronym: 'VMMC',
-            indicators: [
-                { name: 'Relative increase in condom use and testing in general populations', active: false },
-                { name: 'VMMC uptake and ART adherence', active: true },
-                { name: 'Uptake of other programs and services', active: true },
-                { name: 'Linkages to biomedical services', active: false }
-            ]
-        },
-        {
-            name: 'Antiretroviral therapy',
-            acronym: 'ART',
-            indicators: [
-                {
-                    name: 'Testing rates in all populations (This will be listed under care and treatment in future)',
-                    active: true
-                }
-            ]
-        }
-
+      {
+        active: false, internal_name: "COND", short_name: "Condoms",
+        name: "Condom promotion and distribution", saturating: true
+      },
+      {
+        active: false, internal_name: "SBCC", short_name: "SBCC",
+        name: "Social and behavior change communication", saturating: true
+      },
+      {
+        active: false, internal_name: "STI", short_name: "STI",
+        name: "Diagnosis and treatment of sexually transmitted infections", saturating: true
+      },
+      {
+        active: false, internal_name: "VMMC", short_name: "VMMC",
+        name: "Voluntary medical male circumcision", saturating: false
+      },
+      {
+        active: false, internal_name: "CT", short_name: "Cash transfers",
+        name: "Cash transfers for HIV risk reduction", saturating: true
+      },
+      {
+        active: false, internal_name: "FSWP", short_name: "FSW programs",
+        name: "Programs for female sex workers and clients", saturating: true
+      },
+      {
+        active: false, internal_name: "MSMP", short_name: "MSM programs",
+        name: "Programs for men who have sex with men", saturating: true
+      },
+      {
+        active: false, internal_name: "PWIDP", short_name: "PWID programs",
+        name: "Programs for people who inject drugs", saturating: true
+      },
+      {
+        active: false, internal_name: "OST", short_name: "OST",
+        name: "Opiate substitution therapy", saturating: false
+      },
+      {
+        active: false, internal_name: "NSP", short_name: "NSP",
+        name: "Needle-syringe program", saturating: true
+      },
+      {
+        active: false, internal_name: "PREP", short_name: "PrEP",
+        name: "Pre-exposure prophylaxis/microbicides", saturating: true
+      },
+      {
+        active: false, internal_name: "PEP", short_name: "PEP",
+        name: "Post-exposure prophylaxis", saturating: true
+      },
+      {
+        active: false, internal_name: "HTC", short_name: "HTC",
+        name: "HIV testing and counseling", saturating: true
+      },
+      {
+        active: false, internal_name: "ART", short_name: "ART",
+        name: "Antiretroviral therapy", saturating: false
+      },
+      {
+        active: false, internal_name: "PMTCT", short_name: "PMTCT",
+        name: "Prevention of mother-to-child transmission", saturating: false
+      },
+      {
+        active: false, internal_name: "CARE", short_name: "Other care",
+        name: "Other HIV care", saturating: false
+      },
+      {
+        active: false, internal_name: "OVC", short_name: "OVC",
+        name: "Orphans and vulnerable children", saturating: false
+      },
+      {
+        active: false, internal_name: "MGMT", short_name: "MGMT",
+        name: "Management", saturating: false
+      },
+      {
+        active: false, internal_name: "HR", short_name: "HR",
+        name: "HR and training", saturating: false
+      },
+      {
+        active: false, internal_name: "ENV", short_name: "ENV",
+        name: "Enabling environment", saturating: false
+      },
+      {
+        active: false, internal_name: "SP", short_name: "SP",
+        name: "Social protection", saturating: false
+      },
+      {
+        active: false, internal_name: "MESR", short_name: "M&E",
+        name: "Monitoring, evaluation, surveillance, and research", saturating: false
+      },
+      {
+        active: false, internal_name: "INFR", short_name: "INFR",
+        name: "Health infrastructure", saturating: false
+      }
     ];
 
     $scope.openAddPopulationModal = function ($event) {
@@ -176,9 +167,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         controller: 'ProjectCreatePopulationModalController',
         resolve: {
           population: function () {
-            return {
-              sex: 'male'
-            };
+            return {};
           }
         }
       }).result.then(
@@ -218,7 +207,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         controller: 'ProjectCreateProgramModalController',
         resolve: {
           program: function () {
-            return null;
+            return {};
           }
         }
       }).result.then(
@@ -265,10 +254,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       var params = _($scope.projectParams).omit('name');
       params.programs = toCleanArray($scope.programs);
-      _(params.programs).map(function (item) {
-        item.indicators = toCleanArray(item.indicators);
-        return item;
-      });
       params.populations = toCleanArray($scope.populations);
 
       $scope.formAction = '/api/project/create/' + $scope.projectParams.name;

@@ -1,58 +1,40 @@
 <div>
-  <div class="modal-header">Add a program</div>
+  <div class="modal-header">{{ isNew ? 'Create' : 'Edit'}} a program</div>
 
   <form class="modal-body" name="PopulationForm" novalidate="novalidate" ng-submit="submit(PopulationForm)">
     <div class="section grid">
-      <div class="3">
-        Summary Program
+      <div class="++2 3">
+        Name
       </div>
-      <div class="9">
-        <select class="txbox __block"
-                ng-model="program.summary_program"
-                ng-options="p as p.name for p in summaryPrograms"
-                required></select>
+      <div class="5 2++">
+        <input class="txbox __block" ng-model="program.name" required autofocus>
       </div>
     </div>
 
-    <div class="section" ng-show="program.summary_program.programs.length">
-      <div class="grid section">
-        <div class="3">
-          Program
-        </div>
-        <div class="9">
-          <select class="txbox __block"
-                  ng-model="program.program"
-                  ng-options="p as p.name for p in program.summary_program.programs"
-                  required></select>
-        </div>
+    <div class="section grid">
+      <div class="++2 3">
+        Short Name
       </div>
-
-      <div class="grid section" ng-show="program.program.acronym">
-        <div class="3">
-          Acronym
-        </div>
-        <div class="9">
-          {{ program.program.acronym }}
-        </div>
+      <div class="5 2++">
+        <input class="txbox __block" ng-model="program.short_name" required>
       </div>
+    </div>
 
-      <div class="grid section" ng-show="program.program.acronym">
-        <div class="3">
-          Indicators
-        </div>
-        <div class="9">
-          <ul class="list __unstyled">
-            <li ng-repeat="i in program.program.indicators">
-              <label>
-                <input type="checkbox" ng-model="i.active"> {{ i.name }}
-              </label>
-            </li>
-            <li class="margin-top-xs">
-              <input class="txbox __inline" ng-model="newIndicator.name" placeholder="Other (type name here)" style="width: 200px">
-              <button class="btn" type="button" ng-click="addIndicator($event)">Add</button>
-            </li>
-          </ul>
-        </div>
+    <div class="section grid">
+      <div class="++2 3">
+        Internal Name
+      </div>
+      <div class="5 2++">
+        <input class="txbox __block" ng-model="program.internal_name" required>
+      </div>
+    </div>
+
+    <div class="section grid">
+      <div class="++5 5 2++">
+        <label>
+          <input type="checkbox" ng-model="program.saturating">
+          Saturating
+        </label>
       </div>
     </div>
 

@@ -85,21 +85,23 @@
           <tr>
             <td><b>Active</b></td>
             <td><b>Name</b></td>
-            <td><b>Acronym</b></td>
-            <td><b>Indicators</b></td>
+            <td><b>Short Name</b></td>
+            <td><b>Internal Name</b></td>
+            <td><b>Saturating</b></td>
             <td>&nbsp;</td>
           </tr>
           </thead>
           <tbody>
-          <tr ng-show="programs.length" ng-repeat="row in programs">
+          <tr ng-show="programs.length" ng-repeat="program in programs">
             <td class="text-center" style="width: 50px">
-              <input type="checkbox" ng-model="row.active">
+              <input type="checkbox" ng-model="program.active">
             </td>
-            <td style="width: 300px">{{ row.name }}</td>
-            <td style="width: 150px">{{ row.acronym }}</td>
-            <td class="text-center" style="width: 50px">{{ row.indicators.length }}</td>
+            <td style="width: 300px">{{ program.name }}</td>
+            <td style="width: 150px">{{ program.short_name }}</td>
+            <td style="width: 150px">{{ program.internal_name }}</td>
+            <td style="width: 150px"><input type="checkbox" ng-model="program.saturating" disabled/></td>
             <td>
-              <button role="button" class="btn" ng-click="openEditProgramModal($event, row)">Edit</button>
+              <button role="button" class="btn" ng-click="openEditProgramModal($event, program)">Edit</button>
             </td>
           </tr>
           <tr ng-show="!programs.length">
