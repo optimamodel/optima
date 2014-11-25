@@ -194,7 +194,6 @@ def doRunSimulation():
         args["endyear"] = int(endyear)
     try:
         D = runsimulation(**args) 
-        D = epiresults(D)
         D_dict = D.toDict()
         save_model(request.project_name, D_dict)
     except Exception, err:

@@ -34,7 +34,7 @@ VERSION = tuple(map(int, __version__.split('.')))
 
 __all__ = ('Bunch', 'bunchify','unbunchify','to_array')
 
-from numpy import ndarray, isnan, asarray, dtype, array_equal
+from numpy import ndarray, isnan, asarray, dtype, array_equal, nan
 
 NP_ARRAY_KEYS = set(["np_array", "np_dtype"])
 
@@ -286,6 +286,8 @@ def bunchify(x):
             return Bunch( (k, bunchify(v)) for k,v in x.iteritems() )
     elif isinstance(x, (list, tuple)):
         return type(x)( bunchify(v) for v in x )
+    elif x is None:
+        return nan
     else:
         return x
 
