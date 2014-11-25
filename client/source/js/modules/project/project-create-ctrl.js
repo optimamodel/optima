@@ -157,135 +157,142 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       }
     ];
 
-    $scope.openAddPopulationModal = function ($event) {
-      if ($event) {
-        $event.preventDefault();
-      }
-
+    // Helper function to open a population modal
+    var openPopulationModal = function(population) {
       return $modal.open({
         templateUrl: 'js/modules/project/create-population-modal.html',
         controller: 'ProjectCreatePopulationModalController',
         resolve: {
           population: function () {
-            return {};
+            return population;
           }
         }
-      }).result.then(
-        function (newPopulation) {
-          newPopulation.active = true;
-          $scope.populations.push(newPopulation);
-        });
+      });
     };
 
+    /*
+    * Creates a new population and opens a modal for editing.
+    *
+    * The entry is only pushed to the list of populations if editing in the modal
+    * ended with a successful save.
+    */
+    $scope.openAddPopulationModal = function ($event) {
+      if ($event) {
+        $event.preventDefault();
+      }
+      var population = {};
+
+      return openPopulationModal(population).result.then(
+        function (newPopulation) {
+          $scope.populations.push(newPopulation);
+        }
+      );
+    };
+
+    /*
+    * Opens a modal for editing an existing population.
+    */
     $scope.openEditPopulationModal = function ($event, population) {
       if ($event) {
         $event.preventDefault();
       }
 
-      return $modal.open({
-        templateUrl: 'js/modules/project/create-population-modal.html',
-        controller: 'ProjectCreatePopulationModalController',
-        resolve: {
-          population: function () {
-            return population;
-          }
-        }
-      }).result.then(
+      return openPopulationModal(population).result.then(
         function (newPopulation) {
-          population.active = true;
           _(population).extend(newPopulation);
-        });
+        }
+      );
     };
 
-    $scope.openAddProgramModal = function ($event) {
+    /*
+    * Makes a copy of an existing population and opens a modal for editing.
+    *
+    * The entry is only pushed to the list of populations if editing in the
+    * modal ended with a successful save.
+    */
+    $scope.copyPopulationAndOpenModal = function ($event, existingPopulation) {
       if ($event) {
         $event.preventDefault();
       }
+      var population = angular.copy(existingPopulation);
 
+      return openPopulationModal(population).result.then(
+        function (newPopulation) {
+          $scope.populations.push(newPopulation);
+        }
+      );
+    };
+
+    // Helper function to open a program modal
+    var openProgramModal = function(program) {
       return $modal.open({
         templateUrl: 'js/modules/project/create-program-modal.html',
         controller: 'ProjectCreateProgramModalController',
         resolve: {
           program: function () {
-            return {};
+            return program;
           }
         }
-      }).result.then(
-        function (newProgram) {
-          newProgram.active = true;
-          $scope.programs.push(newProgram);
-        });
+      });
     };
 
+    /*
+    * Creates a new program and opens a modal for editing.
+    *
+    * The entry is only pushed to the list of programs if editing in the modal
+    * ended with a successful save.
+    */
+    $scope.openAddProgramModal = function ($event) {
+      if ($event) {
+        $event.preventDefault();
+      }
+      var program = {};
+
+      return openProgramModal(program).result.then(
+        function (newProgram) {
+          $scope.programs.push(newProgram);
+        }
+      );
+    };
+
+    /*
+    * Opens a modal for editing an existing program.
+    */
     $scope.openEditProgramModal = function ($event, program) {
       if ($event) {
         $event.preventDefault();
       }
 
-      return $modal.open({
-        templateUrl: 'js/modules/project/create-program-modal.html',
-        controller: 'ProjectCreateProgramModalController',
-        resolve: {
-          program: function () {
-            return program;
-          }
-        }
-      }).result.then(
+      return openProgramModal(program).result.then(
         function (newProgram) {
-          program.active = true;
           _(program).extend(newProgram);
         }
       );
     };
 
+    /*
+     * Makes a copy of an existing program and opens a modal for editing.
+     *
+     * The entry is only pushed to the list of programs if editing in the modal
+     * ended with a successful save.
+     */
     $scope.copyProgram = function ($event, existingProgram) {
       if ($event) {
         $event.preventDefault();
       }
-
       var program = angular.copy(existingProgram);
-      $scope.programs.push(program);
 
-      return $modal.open({
-        templateUrl: 'js/modules/project/create-program-modal.html',
-        controller: 'ProjectCreateProgramModalController',
-        resolve: {
-          program: function () {
-            return program;
-          }
-        }
-      }).result.then(
+      return openProgramModal(program).result.then(
         function (newProgram) {
-          program.active = true;
-          _(program).extend(newProgram);
+          $scope.programs.push(newProgram);
         }
       );
     };
 
-    $scope.copyPopulation = function ($event, existingPopulation) {
-      if ($event) {
-        $event.preventDefault();
-      }
-
-      var population = angular.copy(existingPopulation);
-      $scope.populations.push(population);
-
-      return $modal.open({
-        templateUrl: 'js/modules/project/create-population-modal.html',
-        controller: 'ProjectCreatePopulationModalController',
-        resolve: {
-          population: function () {
-            return population;
-          }
-        }
-      }).result.then(
-        function (newPopulation) {
-          population.active = true;
-          _(population).extend(newPopulation);
-        }
-      );
-    };
-
+    /*
+     * Returns a collection of entries where all non-active antries are filtered
+     * out and the active attribute is removed from each of these entries.
+     */
     var toCleanArray = function (collection) {
       return _(collection).chain()
         .where({ active: true })

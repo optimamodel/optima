@@ -7,6 +7,7 @@ define(['./module'], function (module) {
     var initialize = function() {
       $scope.isNew = !population.name;
       $scope.population = population;
+      $scope.population.active = true;
     };
 
     $scope.submit = function (form) {
