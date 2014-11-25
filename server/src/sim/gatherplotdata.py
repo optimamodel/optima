@@ -94,22 +94,23 @@ def gathermultidata(D, Rarr, verbose=2):
     for epi in ['prev', 'inci', 'daly', 'death', 'dx', 'tx1', 'tx2']:
         M[epi] = struct()
         M[epi].pops = []
-        M[epi].tot = struct()
         for p in range(D.G.npops):
             M[epi].pops.append(struct())
             M[epi].pops[p].data = []
-            M[epi].pops[p].legend = D.G.meta.pops.short[p]
+            M[epi].pops[p].legend = []
             M[epi].pops[p].title = epititles[epi] + ' - ' + D.G.meta.pops.short[p]
             M[epi].pops[p].ylabel = epiylabels[epi]
             for sim in range(M.nsims):
                 M[epi].pops[p].data.append(Rarr[sim].R[epi].pops[0][p,:])
+                M[epi].pops[p].legend.append(Rarr[sim].label)
+        M[epi].tot = struct()
         M[epi].tot.data = []
         M[epi].tot.legend = []
         M[epi].tot.title = epititles[epi] + ' - Overall'
         M[epi].tot.ylabel = epiylabels[epi]
         for sim in range(M.nsims):
             M[epi].tot.data.append(Rarr[sim].R[epi].tot[0])
-            M[epi].legend.append(Rarr[sim].label) # Add legends
+            M[epi].tot.legend.append(Rarr[sim].label) # Add legends
         M[epi].xlabel = 'Years'
         
     printv('...done gathering multi-simulation results.', 4, verbose)

@@ -106,10 +106,10 @@ def viewmodels(M, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'death'
                             figure()
                         hold(True)
                         for sim in range(M.nsims):
-                            plot(M.tvec, M[graph].pops[p][sim]*percent)
+                            plot(M.tvec, M[graph].pops[p].data[sim]*percent)
                         
-                        title(M.poplabels[p])
-                        legend(('Model','Data'))
+                        title(M[graph].pops[p].title)
+                        legend(M[graph].pops[p].legend)
                         xlabel(M[graph].xlabel)
                         ylabel(M[graph].pops[p].ylabel)
                         xlim(xmin=startyear, xmax=endyear)
@@ -123,10 +123,10 @@ def viewmodels(M, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'death'
                         figure()
                     hold(True)
                     for sim in range(M.nsims):
-                        plot(M.tvec, M[graph].tot[sim]*percent)
+                        plot(M.tvec, M[graph].tot.data[sim]*percent)
                     
-                    title('Overall')
-                    legend(('Model','Data'))
+                    title(M[graph].tot.title)
+                    legend(M[graph].tot.legend)
                     xlabel(M[graph].xlabel)
                     ylabel(M[graph].tot.ylabel)
                     xlim(xmin=startyear, xmax=endyear)
