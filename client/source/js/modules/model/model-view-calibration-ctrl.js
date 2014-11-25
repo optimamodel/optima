@@ -13,9 +13,9 @@ define(['./module', 'underscore'], function (module, _) {
     });
     $scope.activeProgram = $scope.programs[0];
 
-    $scope.saturationCoverageLevel = 1;
-    $scope.fundingNeededPercent = 1;
-    $scope.fundingNeededValue = 1;
+    $scope.saturationCoverageLevel = 0.9;
+    $scope.fundingNeededPercent = 0.2;
+    $scope.fundingNeededValue = 800000;
     $scope.behaviorWithoutMin = 1;
     $scope.behaviorWithoutMax = 1;
     $scope.behaviorWithMin = 1;
@@ -28,7 +28,7 @@ define(['./module', 'underscore'], function (module, _) {
           $scope.saturationCoverageLevel,
           $scope.fundingNeededPercent,
           $scope.fundingNeededValue,
-          1
+          7000000
         ],
         coparams: [
           $scope.behaviorWithoutMin,
