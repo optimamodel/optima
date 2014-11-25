@@ -28,7 +28,6 @@ def manualfit(D, F, startyear=2000, endyear=2015, dosave=False, verbose=2):
 
     # Convert data parameters to model parameters
     # (I copied it so that this code won't throw)
-    print ("D: %s" % D)
     from makemodelpars import makemodelpars
     D.M = makemodelpars(D.P, options, verbose=verbose)
     
@@ -43,10 +42,10 @@ def manualfit(D, F, startyear=2000, endyear=2015, dosave=False, verbose=2):
 #    printv('3. Viewing results...', 1, verbose)
 #    from viewresults import viewresults
 #    viewresults(D, whichgraphs={'prev':1, 'inci':1, 'daly':1, 'death':1, 'pops':1, 'tot':1}, onefig=True, verbose=verbose)
-    
+
+    D.F = F
     if dosave:
         from dataio import savedata
-        D.F = F
         savedata(D.projectfilename, D, verbose=verbose)
         printv('...done manual fitting.', 2, verbose)
     
