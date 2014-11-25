@@ -3,7 +3,7 @@ epiylabels = {'prev':'Prevalence (%)', 'inci':'New HIV infections per year', 'da
 
 def gatherepidata(D, R, verbose=2):
     """ Gather standard epidemiology results into a form suitable for plotting. """
-    from numpy import zeros, nan, size, array
+    from numpy import zeros, nan, size, array, asarray
     from bunch import Bunch as struct, float_array
     from printv import printv
     printv('Gathering epidemiology results...', 3, verbose)
@@ -69,7 +69,7 @@ def gatherepidata(D, R, verbose=2):
                     thispopdata = nan+zeros(ndatayears) # If it's an assumption, just set with nans
                 elif len(thispopdata) != ndatayears:
                     raise Exception('Expect data length of 1 or %i, actually %i' % (ndatayears, len(thispopdata)))
-                E[epi].ydata[p] = (array(thispopdata)*percent).tolist() # Stupid, but make sure it's an array, then make sure it's a list
+                E[epi].ydata[p] = (asarray(thispopdata)*percent).tolist() # Stupid, but make sure it's an array, then make sure it's a list
         else:
             raise Exception("Can't figure out size of epidata; doesn't seem to be a vector or a matrix")
 
