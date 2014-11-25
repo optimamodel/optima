@@ -13,9 +13,9 @@ define(['./module'], function (module) {
     $scope.submit = function (form) {
       if (form.$invalid) {
         alert('Please fill in the form correctly');
+      } else {
+        $modalInstance.close($scope.population);
       }
-
-      $modalInstance.close($scope.population);
     };
 
     initialize();

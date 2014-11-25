@@ -13,9 +13,10 @@ define(['./module'], function (module) {
     $scope.submit = function (form) {
       if (form.$invalid) {
         alert('Please fill in the form correctly');
+      } else {
+        $modalInstance.close($scope.program);
       }
 
-      $modalInstance.close($scope.program);
     };
 
     initialize();
