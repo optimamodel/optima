@@ -1,10 +1,9 @@
 def gatherepidata(D, R, verbose=2):
     """ Gather standard epidemiology results into a form suitable for plotting. """
-    
     from matplotlib.pylab import zeros, nan, size, array
     from bunch import Bunch as struct, float_array
     from printv import printv
-    printv('Calculating epidemiology results...', 1, verbose)
+    printv('Gathering epidemiology results...', 3, verbose)
     
     E = struct()
     E.__doc__ = 'Output structure containing everything that might need to be plotted'
@@ -36,37 +35,37 @@ def gatherepidata(D, R, verbose=2):
             E.prev.ylabel = 'Prevalence (%)'
 
         if epi=='inci':
-            printv('Calculating incidence...', 3, verbose)
+            printv('Gathering incidence...', 3, verbose)
             epidata = D.data.opt.numinfect[0]
             E.inci.ydata = zeros(ndatayears)
             E.inci.ylabel = 'New HIV infections per year'
 
         if epi=='death':
-            printv('Calculating deaths...', 3, verbose)
+            printv('Gathering deaths...', 3, verbose)
             epidata = D.data.opt.death[0]
             E.death.ydata = zeros(ndatayears)
             E.death.ylabel = 'HIV-related deaths per year'
 
         if epi=='daly':
-            printv('Calculating DALYs...', 3, verbose)
+            printv('Gathering DALYs...', 3, verbose)
             epidata = nan+zeros(ndatayears) # No data
             E.daly.ydata = zeros(ndatayears)
             E.daly.ylabel = 'Disability-adjusted life years per year'
             
         if epi=='dx':
-            printv('Calculating diagnoses...', 3, verbose)
+            printv('Gathering diagnoses...', 3, verbose)
             epidata = D.data.opt.numdiag[0]
             E.dx.ydata = zeros(ndatayears)
             E.dx.ylabel = 'New HIV diagnoses per year'
         
         if epi=='tx1':
-            printv('Calculating first-line treatment...', 3, verbose)
+            printv('Gathering first-line treatment...', 3, verbose)
             epidata = D.data.txrx.numfirstline[0]
             E.tx1.ydata = zeros(ndatayears)
             E.tx1.ylabel = 'Number of people on first-line treatment'
         
         if epi=='tx2':
-            printv('Calculating second-line treatment...', 3, verbose)
+            printv('Gathering second-line treatment...', 3, verbose)
             epidata = D.data.txrx.numsecondline[0]
             E.tx2.ydata = zeros(ndatayears)
             E.tx2.ylabel = 'Number of people on second-line treatment'
@@ -85,57 +84,58 @@ def gatherepidata(D, R, verbose=2):
         else:
             raise Exception("Can't figure out size of epidata; doesn't seem to be a vector or a matrix")
 
-    printv('...done running epidemiology results.', 2, verbose)
+    printv('...done gathering epidemiology results.', 4, verbose)
     return E
 
 
 
 
-def gathermultidata(D, R, verbose=2):
+def gathermultidata(D, Rarr, verbose=2):
     """ Gather multi-simulation results (scenarios and optimizations) into a form suitable for plotting. """
-    
     from bunch import Bunch as struct
     from printv import printv
-    printv('Calculating multi-simulation results...', 1, verbose)
+    printv('Gathering multi-simulation results...', 3, verbose)
+    
     
     M = struct()
     M.__doc__ = 'Output structure containing everything that might need to be plotted'
-    M.tvec = R.tvec # Copy time vector
+    M.nsims = len(Rarr) # Number of simulations
+    M.tvec = Rarr[0].R.tvec # Copy time vector
     M.poplabels = D.G.meta.pops.long
-    M.colorm = (0,0.3,1) # Model color
-    M.colord = (0,0,0) # Data color
     
     for epi in ['prev', 'inci', 'daly', 'death', 'dx', 'tx1', 'tx2']:
         M[epi] = struct()
         M[epi].pops = []
-        M[epi].tot = struct()
+        M[epi].tot = []
         for p in range(D.G.npops):
-            M[epi].pops.append(struct())
-            M[epi].pops[p].best = R[epi].pops[0][p,:]
-            M[epi].pops[p].low = R[epi].pops[1][p,:]
-            M[epi].pops[p].high = R[epi].pops[2][p,:]
-        M[epi].tot.best = R[epi].tot[0]
-        M[epi].tot.low = R[epi].tot[1]
-        M[epi].tot.high = R[epi].tot[2]
+            M[epi].pops.append([])
+            for sim in range(M.nsims):
+                M[epi].pops[p].append(Rarr[sim].R[epi].pops[0][p,:])
+        for sim in range(M.nsims):
+            M[epi].tot.append(Rarr[sim].R[epi].tot[0])
         M[epi].xlabel = 'Years'
+        print('!!! Add correct labels')
         
-    printv('...done running multi-simulation results.', 2, verbose)
+    printv('...done gathering multi-simulation results.', 4, verbose)
     return M
 
 
-def gatheroptimdata(D, A):
+def gatheroptimdata(D, A, verbose=2):
     """ Return the data for plotting the two pie charts -- current allocation and optimal. """
     from bunch import Bunch as struct
+    from printv import printv
+    printv('Gathering optimization results...', 3, verbose)
     
     O = struct()
     O.legend = D.data.meta.progs.short
     
     O.pie1 = struct()
     O.pie1.name = 'Original'
-    O.pie1.val = A.orig.cost
+    O.pie1.val = A[0].alloc
     
     O.pie2 = struct()
     O.pie2.name = 'Optimal'
-    O.pie2.val = A.optimal.cost
+    O.pie2.val = A[1].alloc
     
+    printv('...done gathering optimization results.', 4, verbose)
     return O
