@@ -29,6 +29,8 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2):
     iteration = 0
     nallocs = 1 # WARNING, will want to do this better
     for alloc in range(nallocs): D.A.append(deepcopy(D.A[0])) # Just copy for now
+    D.A[0].label = 'Original'
+    D.A[1].label = 'Optimal'
     while elapsed<timelimit:
         iteration += 1
         elapsed = time() - tstart

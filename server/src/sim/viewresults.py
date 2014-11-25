@@ -39,10 +39,10 @@ def viewepiresults(E, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'de
                         if ndim(E[graph].ydata)==2:
                             scatter(E.xdata, E[graph].ydata[p,:]*percent, c=E.colord)
                         
-                        title(E.poplabels[p])
+                        title(E[graph].pops[p].title)
                         legend(('Model','Data'))
                         xlabel(E[graph].xlabel)
-                        ylabel(E[graph].ylabel)
+                        ylabel(E[graph].pops[p].ylabel)
                         xlim(xmin=startyear, xmax=endyear)
                         ylim(ymin=0)
                 
@@ -61,7 +61,7 @@ def viewepiresults(E, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'de
                     title('Overall')
                     legend(('Model','Data'))
                     xlabel(E[graph].xlabel)
-                    ylabel(E[graph].ylabel)
+                    ylabel(E[graph].tot.ylabel)
                     xlim(xmin=startyear, xmax=endyear)
                     ylim(ymin=0)
 
@@ -111,7 +111,7 @@ def viewmodels(M, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'death'
                         title(M.poplabels[p])
                         legend(('Model','Data'))
                         xlabel(M[graph].xlabel)
-#                        ylabel(M[graph].ylabel)
+                        ylabel(M[graph].pops[p].ylabel)
                         xlim(xmin=startyear, xmax=endyear)
                         ylim(ymin=0)
                 
@@ -128,7 +128,7 @@ def viewmodels(M, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'death'
                     title('Overall')
                     legend(('Model','Data'))
                     xlabel(M[graph].xlabel)
-#                    ylabel(M[graph].ylabel)
+                    ylabel(M[graph].tot.ylabel)
                     xlim(xmin=startyear, xmax=endyear)
                     ylim(ymin=0)
 
