@@ -6,7 +6,7 @@ def setoptions(opt=None, **kwargs):
     """
     
     from bunch import Bunch as struct
-    from matplotlib.pylab import arange
+    from numpy import arange
     
     # If no options structure is fed in, 
     if opt==None: 

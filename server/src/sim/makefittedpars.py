@@ -6,7 +6,7 @@ def makefittedpars(G, opt, verbose=2):
     """
     
     from printv import printv
-    from matplotlib.pylab import array
+    from numpy import array
     from bunch import Bunch as struct # Replicate Matlab-like structure behavior
     printv('Making fitted parameters...', 1, verbose)
     
@@ -27,6 +27,6 @@ def perturb(n=1, perturbation=0.5):
     """
     Define an array of numbers evenly perturbed with a mean of 1.
     """
-    from matplotlib.pylab import rand
+    from numpy import rand
     output = 1 + 2*perturbation*(rand(n)-0.5)
     return output

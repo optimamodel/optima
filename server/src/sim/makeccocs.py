@@ -8,7 +8,8 @@ Version: 2014nov19
 ###############################################################################
 
 import math
-from matplotlib.pylab import linspace, exp, isnan, asarray, zeros, figure, plot, hold, xlabel, ylabel, title
+from matplotlib.pylab import figure, plot, hold, xlabel, ylabel, title
+from numpy import linspace, exp, isnan, zeros
 from truncnorm import truncnorm
 from bunch import Bunch as struct, float_array
 

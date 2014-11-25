@@ -15,7 +15,7 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
 
 
     ## Imports
-    from matplotlib.pylab import array, zeros, exp # For creating arrays
+    from numpy import array, zeros, exp # For creating arrays
     from bunch import Bunch as struct # Replicate Matlab-like structure behavior
     from printv import printv
     printv('Running model...', 1, verbose)

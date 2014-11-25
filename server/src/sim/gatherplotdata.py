@@ -3,7 +3,7 @@ epiylabels = {'prev':'Prevalence (%)', 'inci':'New HIV infections per year', 'da
 
 def gatherepidata(D, R, verbose=2):
     """ Gather standard epidemiology results into a form suitable for plotting. """
-    from matplotlib.pylab import zeros, nan, size, array
+    from numpy import zeros, nan, size, array
     from bunch import Bunch as struct, float_array
     from printv import printv
     printv('Gathering epidemiology results...', 3, verbose)
