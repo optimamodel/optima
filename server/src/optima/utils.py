@@ -59,7 +59,7 @@ def project_exists_db(name):
   from api import db
   from dbmodels import ProjectDb
   cu = current_user
-  return ProjectDb.query.filter_by(user_id=cu.id, name=name).count()
+  return ProjectDb.query.filter_by(user_id=cu.id, name=name).count()>0
 
 def project_exists(name, folder = PROJECTDIR):
   return project_exists_db(name)
