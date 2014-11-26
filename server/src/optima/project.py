@@ -1,17 +1,11 @@
 import json
-import fnmatch
-from flask import Flask, Blueprint, url_for, helpers, request, jsonify, session, redirect
-import shutil
-from werkzeug import secure_filename
+from flask import Blueprint, url_for, helpers, request, jsonify, redirect
+from werkzeug.utils import secure_filename
 import os
-import sys
 import traceback
-from sim.dataio import loaddata, savedata,upload_dir_user, DATADIR, PROJECTDIR, TEMPLATEDIR
+from sim.dataio import upload_dir_user, DATADIR, TEMPLATEDIR
 from sim.updatedata import updatedata
-from sim.loadspreadsheet import loadspreadsheet
 from sim.makeproject import makeproject
-from sim.optimize import optimize
-from optima.data import data
 from utils import allowed_file, project_exists, project_file_exists, delete_project_file, delete_spreadsheet
 from utils import check_project_name, load_model, save_model
 from flask.ext.login import login_required, current_user
@@ -99,18 +93,20 @@ def createProject(project_name):
             proj.econ_datastart = econ_datastart
             proj.econ_dataend = econ_dataend    
             proj.programs = programs 
-            proj.populations = populations  
+            proj.populations = populations
+            print('Updating existing project %s' % proj.name)
         else:
             # create new project
             proj = ProjectDb(name, cu.id, datastart, dataend, econ_datastart, econ_dataend, programs, populations)
-        
-        # Save to db
+            print('Creating new project: %s' % proj.name)
 
     #    makeproject_args = dict(makeproject_args.items() + data.items())
     print(makeproject_args)
 
     D = makeproject(**makeproject_args) # makeproject is supposed to return the name of the existing file...
     proj.model = D.toDict()
+
+    # Save to db
     db.session.add(proj)
     db.session.commit()
     new_project_template = D.G.workbookname
