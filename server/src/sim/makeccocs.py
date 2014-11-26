@@ -14,7 +14,7 @@ from bunch import Bunch as struct, float_array
 from dataio import loaddata
 
 ## Set defaults for testing
-default_progname = 'FSW'
+default_progname = u'FSW'
 default_ccparams = [0.9, 0.2, 800000.0, 7e6]
 default_coparams = []
 default_makeplot = 1
@@ -317,7 +317,8 @@ def makecco(datain, progname = default_progname, effectname = default_effectname
         D = datain
     
     ## Check that the selected program is in the program list 
-    if progname not in D.programs.keys():
+    if unicode(progname) not in D.programs.keys():
+        print("progname: %s programs: %s" % (unicode(progname), D.programs.keys()))
         raise Exception('Please select one of the following programs %s' % D.programs.keys())
     ## Check that the selected program is in the program list 
     if effectname not in D.programs[progname]:
