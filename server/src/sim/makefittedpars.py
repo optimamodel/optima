@@ -2,7 +2,7 @@ def makefittedpars(G, opt, verbose=2):
     """
     Prepares model parameters to run the simulation.
     
-    Version: 2014nov25 by cliffk
+    Version: 2014nov26 by cliffk
     """
     
     from printv import printv
