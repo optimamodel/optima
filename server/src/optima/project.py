@@ -144,13 +144,52 @@ def openProject(project_name):
         return redirect(url_for('site'))
 
 """
-Returns the current project name.
+TODO: Remove this method as it serves little purpose. Returns the current project name.
 """
 @project.route('/name')
 @login_required
 @check_project_name
 def getProjectInfo():
     return jsonify({"project": request.project_name})
+
+"""
+Returns information on the passed project.
+"""
+@project.route('/info')
+@login_required
+#@check_project_name
+def getProjectInformation():
+    from api import db
+    from dbmodels import ProjectDb
+    
+    # get current user 
+    cu = current_user
+    proj = None
+    
+    # Default Response
+    response = { "status": "NOK" }
+    
+    if cu.is_anonymous() == False:
+        
+        # See if there is matching project
+        proj = None
+        try:
+            proj = ProjectDb.query.filter_by(user_id=cu.id, name='Example').first()
+        except:
+            pass
+            
+        # update existing 
+        if proj is not None:
+            response['status'] = "OK"
+            response['name'] = proj.name
+            response['dataStart'] = proj.datastart
+            response['dataEnd'] = proj.dataend
+            response['projectionStartYear'] = proj.econ_datastart
+            response['projectionEndYear'] = proj.econ_dataend
+            response['programs'] = proj.programs
+            response['populations'] = proj.populations
+            
+    return jsonify( response )
 
 """
 Returns the list of existing projects from db.
