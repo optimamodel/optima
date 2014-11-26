@@ -44,7 +44,7 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
     
     ## Set initial epidemic conditions 
     people[0, :, 0]  = M.popsize[:,0] * (1-M.hivprev) # Set initial susceptible population
-    people[1:, :, 0] = M.popsize[:,0] * M.hivprev * F.init # Set initial infected population -- # TODO: equilibrate to determine F.init
+    people[1:, :, 0] = M.popsize[:,0] * M.hivprev * array(F.init) # Set initial infected population -- # TODO: equilibrate to determine F.init
     
     ## Convert a health state structure to an array
     def h2a(parstruct):
@@ -110,6 +110,7 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
     Mtx2 = M.tx2
     failfirst = M.const.fail.first
     failsecond = M.const.fail.second
+    Fforce = array(F.force)
     
     # Loop over time
     for t in range(npts): # Skip the last timestep for people since we don't need to know what happens after that
@@ -188,7 +189,7 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
         ## Set up
     
         # New infections -- through pre-calculated force of infection
-        newinfections = forceinfvec * F['force'] * people[0,:,t] # Will be useful to define this way when calculating 'cost per new infection'      
+        newinfections = forceinfvec * Fforce * people[0,:,t] # Will be useful to define this way when calculating 'cost per new infection'      
     
         # Initalise / reset arrays
         dU = []; dD = []; dT1 = []; dF = []; dT2 = [];  # Reset differences
