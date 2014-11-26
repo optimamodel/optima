@@ -15,6 +15,8 @@ from optima.data import data
 from utils import allowed_file, project_exists, project_file_exists, delete_project_file, delete_spreadsheet
 from utils import check_project_name, load_model, save_model
 from flask.ext.login import login_required, current_user
+from dbconn import db
+from dbmodels import ProjectDb
 
 """ route prefix: /api/project """
 project = Blueprint('project',  __name__, static_folder = '../static')
@@ -76,9 +78,6 @@ def createProject(project_name):
         populations = makeproject_args['pops'] = data['populations']
     else:
         populations = {}
-    
-    from api import db
-    from dbmodels import ProjectDb
     
     print("User based processing")
     
@@ -159,8 +158,6 @@ Returns information on the passed project.
 @login_required
 @check_project_name
 def getProjectInformation():
-    from api import db
-    from dbmodels import ProjectDb
     
     # get current user 
     cu = current_user
@@ -205,8 +202,6 @@ def getProjectList():
     projects_data = []
     # Get current user
     if current_user.is_anonymous() == False:
-        from api import db
-        from dbmodels import ProjectDb
 
         # Get projects for current user
         projects = ProjectDb.query.filter_by(user_id=current_user.id)
@@ -241,9 +236,6 @@ def deleteProject(project_name):
         cu = current_user
         if cu.is_anonymous() == False:
         
-            from api import db
-            from dbmodels import ProjectDb
-
             # Get project row for current user with project name
             db.session.query(ProjectDb).filter_by(user_id= cu.id,name=project_name).delete()
 
