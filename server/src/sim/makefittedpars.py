@@ -2,7 +2,7 @@ def makefittedpars(G, opt, verbose=2):
     """
     Prepares model parameters to run the simulation.
     
-    Version: 2014nov23 by cliffk
+    Version: 2014nov25 by cliffk
     """
     
     from printv import printv
@@ -14,11 +14,11 @@ def makefittedpars(G, opt, verbose=2):
     F = [struct() for s in range(opt.nsims)]
     for s in range(opt.nsims):
         F[s].__doc__ = 'Fitted parameters for simulation %i: initial prevalence, force-of-infection, diagnoses, treatment' % s
-        F[s].init = perturb(G.npops)
-        F[s].force = perturb(G.npops)
-        F[s].dx  = array([perturb(), perturb(), (G.datastart+G.dataend)/2, 1])
-        F[s].tx1 = array([perturb(), perturb(), (G.datastart+G.dataend)/2, 1])
-        F[s].tx2 = array([perturb(), perturb(), (G.datastart+G.dataend)/2, 1])
+        F[s].init = perturb(G.npops).tolist()
+        F[s].force = perturb(G.npops).tolist()
+        F[s].dx  = array([perturb(), perturb(), (G.datastart+G.dataend)/2, 1]).tolist()
+        F[s].tx1 = array([perturb(), perturb(), (G.datastart+G.dataend)/2, 1]).tolist()
+        F[s].tx2 = array([perturb(), perturb(), (G.datastart+G.dataend)/2, 1]).tolist()
     
     return F
 
