@@ -10,18 +10,18 @@ define([
       return $resource('/api/project/:path',
         { path: '@path' },
         {
-          getCurrent: {
-            method: 'GET',
-            isArray: false,
-            params: {
-              path: 'name'
-            }
-          },
           list: {
             method: 'GET',
             isArray: false,
             params: {
               path: 'list'
+            }
+          },
+          info: {
+            method: 'GET',
+            isArray: false,
+            params: {
+              path: 'info'
             }
           }
         }

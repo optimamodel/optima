@@ -11,7 +11,7 @@ define ['angular-mocks', 'Source/modules/home/home-ctrl'], ->
       module 'app.home'
 
       inject ($rootScope, $controller) ->
-        scope = $rootScope.$new();
+        scope = $rootScope.$new()
         subject = $controller 'HomeController', { $scope: scope }
 
     describe 'check if controller is on it\'s place', ->
