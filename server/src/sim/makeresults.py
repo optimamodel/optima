@@ -1,28 +1,25 @@
-def makeresults(allsims, D, quantiles=None, verbose=2):
+def makeresults(D, allsims=None, quantiles=None, verbose=2):
     """
     Generate all outputs required for the model:
         Prevalence
         Incidence
         DALYs
         Deaths
-        Number of people on treatment
         Number of diagnoses
+        Number of people on first-line treatment
+        Number of people on second-line treatment
     
     For each, calculate for both overall and per population.
 
-    Version: 2014nov23
+    Version: 2014nov24
     """
     
-    
-    ##########################################################################
-    ## Preliminaries
-    ##########################################################################
-    
-    from matplotlib.pylab import array, concatenate
+    from numpy import array, concatenate
     from bunch import Bunch as struct
     from printv import printv
     from quantile import quantile
     printv('Calculating results...', 1, verbose)
+    if allsims==None: allsims = [D.S] # If not supplied, using sims structure already in D
     
     R = struct()
     R.__doc__ = 'Output structure containing all worthwhile results from the model'
