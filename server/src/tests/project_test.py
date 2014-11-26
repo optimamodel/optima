@@ -40,5 +40,17 @@ class ProjectTestCase(OptimaTestCase):
         self.assertEqual(project_data['name'], 'test')
         self.assertEqual(project_data['status'], 'OK')
 
+    def test_retrieve_project_list(self):
+        # create project
+        project = ProjectDb('test2', 1, '2000', '2010', '2010', '2020', {}, {})
+        db.session.add(project)
+        db.session.commit()
+
+        response = self.client.get('/api/project/list')
+        self.assertEqual(response.status_code, 200)
+        projects_data = json.loads(response.data)
+        self.assertEqual(projects_data['projects'][0]['name'], 'test2')
+        self.assertEqual(projects_data['projects'][0]['status'], 'OK')
+
 if __name__ == '__main__':
     unittest.main()
