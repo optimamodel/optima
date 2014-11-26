@@ -1,6 +1,12 @@
 """
 Profile model.py -- see https://zapier.com/engineering/profiling-python-boss/
 
+Requires line_profiler, available from
+https://pypi.python.org/pypi/line_profiler/
+
+or
+sudo pip install line_profiler
+
 Version: 2014nov26 by cliffk
 """
 
