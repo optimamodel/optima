@@ -50,13 +50,21 @@ def doAutoCalibration():
 
     file_name = helpers.safe_join(PROJECTDIR, project_name+'.prj')
     print("project file_name: %s" % file_name)
-    fits = autofit(file_name, data)
-    # autofit is not implemented yet, so just run the simulation #TODO #FIXME
     try:
         D = load_model(project_name)
-        D = runsimulation(**args) 
-        D = epiresults(D)
+        args = {}
+        startyear = data.get("startyear")
+        if startyear:
+            args["startyear"] = int(startyear)
+        endyear = data.get("endyear")
+        if endyear:
+            args["endyear"] = int(endyear)
+        timelimit = data.get("timelimit")
+        if timelimit:
+            args["timelimit"] = int(timelimit)
+        D = autofit(D, **args)
         D_dict = D.toDict()
+        save_model(project_name, D_dict)
     except Exception, err:
         var = traceback.format_exc()
         return jsonify({"status":"NOK", "exception":var})
@@ -186,12 +194,13 @@ def doRunSimulation():
         args["endyear"] = int(endyear)
     try:
         D = runsimulation(**args) 
-        D = epiresults(D)
+        print("D.plot.E: %s" % D.plot.E)
         D_dict = D.toDict()
+        save_model(request.project_name, D_dict)
     except Exception, err:
         var = traceback.format_exc()
         return jsonify({"status":"NOK", "exception":var})
-    return jsonify(D_dict.get('O',{}))
+    return jsonify(D_dict.get('plot',{}).get('E',{}))
 #    options = {
 #        'cache_timeout': model.get_send_file_max_age(example_excel_file_name),
 #        'conditional': True,
@@ -213,6 +222,7 @@ def doCostCoverage():
     args = pick_params(["progname", "ccparams", "coparams"], data, args)
     try:
         args['ccparams'] = [0.9, 0.2, 800000.0, 7e6]
+        args['coparams'] = []
         plotdata, plotdata_cc, plotdata_co = makecco(**args)
     except Exception, err:
         var = traceback.format_exc()

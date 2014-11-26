@@ -6,7 +6,7 @@ def setoptions(opt=None, **kwargs):
     """
     
     from bunch import Bunch as struct
-    from matplotlib.pylab import arange
+    from numpy import arange
     
     # If no options structure is fed in, 
     if opt==None: 
@@ -16,6 +16,8 @@ def setoptions(opt=None, **kwargs):
         opt.dt = 0.1 # Timestep
         opt.nsims = 5 # Number of simulations to store for purposes of uncertainty
         opt.quantiles = [0.5, 0.25, 0.75] # Quantiles to return
+        opt.growth = 0.03 # Default population growth rate
+        opt.disc = 0.05 # Economic discounting rate
     
     for key, value in kwargs.iteritems():
         if key in ['startyear', 'endyear', 'dt', 'nsims', 'quantiles']:

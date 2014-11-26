@@ -1,98 +1,68 @@
-def gatherplotdata(D, verbose=2):
-    """
-    Generate all outputs required for the model:
-        Prevalence
-        Incidence
-        DALYs
-        Deaths
-    
-    For each, calculate for both overall and per population.
+epititles = {'prev':'Prevalence', 'inci':'New infections', 'daly':'DALYs', 'death':'Deaths', 'dx':'Diagnoses', 'tx1':'First-line treatment', 'tx2':'Second-line treatment'}
+epiylabels = {'prev':'Prevalence (%)', 'inci':'New HIV infections per year', 'daly':'DALYs per year', 'death':'HIV-related deaths per year', 'dx':'HIV diagnoses per year', 'tx1':'People on 1st-line treatment', 'tx2':'People on 2nd-line treatment'}
 
-    Version: 2014nov22
-    """
-    
-    
-    ##########################################################################
-    ## Preliminaries
-    ##########################################################################
-    
-    from matplotlib.pylab import zeros, nan, size, asarray
+def gatherepidata(D, R, verbose=2):
+    """ Gather standard epidemiology results into a form suitable for plotting. """
+    from numpy import zeros, nan, size, array, asarray
     from bunch import Bunch as struct, float_array
-    from vectocolor import vectocolor
     from printv import printv
-    printv('Calculating epidemiology results...', 1, verbose)
+    printv('Gathering epidemiology results...', 3, verbose)
     
-    D.O = struct()
-    D.O.__doc__ = 'Output structure containing everything that might need to be plotted'
-    D.O.tvec = D.R.tvec # Copy time vector
-    D.O.poplabels = D.G.meta.pops.long
-    D.O.popcolors = vectocolor(D.G.npops)
-    D.O.colorm = (0,0.3,1) # Model color
-    D.O.colord = (0,0,0) # Data color
-    D.O.xdata = D.data.epiyears
-    ndatayears = len(D.O.xdata)
+    E = struct()
+    E.__doc__ = 'Output structure containing everything that might need to be plotted'
+    E.tvec = R.tvec.tolist() # Copy time vector
+    print("E.tvec: %s %s" % (E.tvec, type(E.tvec)))
+    E.poplabels = D.G.meta.pops.short
+    E.colorm = (0,0.3,1) # Model color
+    E.colord = (0,0,0) # Data color
+    E.legend = ('Model', 'Data')
+    E.xdata = D.data.epiyears
+    ndatayears = len(E.xdata)
     
     for epi in ['prev', 'inci', 'daly', 'death', 'dx', 'tx1', 'tx2']:
-        D.O[epi] = struct()
-        D.O[epi].pops = []
-        D.O[epi].tot = struct()
+        percent = 100 if epi=='prev' else 1 # Whether to multiple results by 100
+        
+        E[epi] = struct()
+        E[epi].pops = [struct() for p in range(D.G.npops)]
+        E[epi].tot = struct()
         for p in range(D.G.npops):
-            D.O[epi].pops.append(struct())
-            D.O[epi].pops[p].best = D.R[epi].pops[0][p,:]
-            D.O[epi].pops[p].low = D.R[epi].pops[1][p,:]
-            D.O[epi].pops[p].high = D.R[epi].pops[2][p,:]
-        D.O[epi].tot.best = D.R[epi].tot[0]
-        D.O[epi].tot.low = D.R[epi].tot[1]
-        D.O[epi].tot.high = D.R[epi].tot[2]
-        D.O[epi].xlabel = 'Years'
+            E[epi].pops[p].best = (R[epi].pops[0][p,:]*percent).tolist()
+            E[epi].pops[p].low = (R[epi].pops[1][p,:]*percent).tolist()
+            E[epi].pops[p].high = (R[epi].pops[2][p,:]*percent).tolist()
+            E[epi].pops[p].title = epititles[epi] + ' - ' + D.G.meta.pops.short[p]
+            E[epi].pops[p].ylabel = epiylabels[epi]
+        E[epi].tot.best = (R[epi].tot[0]*percent).tolist()
+        E[epi].tot.low = (R[epi].tot[1]*percent).tolist()
+        E[epi].tot.high = (R[epi].tot[2]*percent).tolist()
+        E[epi].tot.title = epititles[epi] + ' - Overall'
+        E[epi].tot.ylabel = epiylabels[epi]
+        E[epi].xlabel = 'Years'
         
         if epi=='prev':
-            printv('Gathering prevalence...', 3, verbose)
-            epidata = asarray(D.data.key.hivprev[0]) # TODO: include uncertainties
-            D.O.prev.ydata = zeros((D.G.npops,ndatayears))
-            D.O.prev.ylabel = 'Prevalence (%)'
-
+            epidata = array(D.data.key.hivprev[0]) # TODO: include uncertainties
+            E.prev.ydata = zeros((D.G.npops,ndatayears)).tolist()
         if epi=='inci':
-            printv('Calculating incidence...', 3, verbose)
             epidata = D.data.opt.numinfect[0]
-            D.O.inci.ydata = zeros(ndatayears)
-            D.O.inci.ylabel = 'New HIV infections per year'
-
+            E.inci.ydata = zeros(ndatayears).tolist()
         if epi=='death':
-            printv('Calculating deaths...', 3, verbose)
             epidata = D.data.opt.death[0]
-            D.O.death.ydata = zeros(ndatayears)
-            D.O.death.ylabel = 'HIV-related deaths per year'
-
+            E.death.ydata = zeros(ndatayears).tolist()
         if epi=='daly':
-            printv('Calculating DALYs...', 3, verbose)
             epidata = nan+zeros(ndatayears) # No data
-            D.O.daly.ydata = zeros(ndatayears)
-            D.O.daly.ylabel = 'Disability-adjusted life years per year'
-            
+            E.daly.ydata = zeros(ndatayears).tolist()
         if epi=='dx':
-            printv('Calculating diagnoses...', 3, verbose)
             epidata = D.data.opt.numdiag[0]
-            D.O.dx.ydata = zeros(ndatayears)
-            D.O.dx.ylabel = 'New HIV diagnoses per year'
-        
+            E.dx.ydata = zeros(ndatayears).tolist()
         if epi=='tx1':
-            printv('Calculating first-line treatment...', 3, verbose)
             epidata = D.data.txrx.numfirstline[0]
-            D.O.tx1.ydata = zeros(ndatayears)
-            D.O.tx1.ylabel = 'Number of people on first-line treatment'
-        
+            E.tx1.ydata = zeros(ndatayears).tolist()
         if epi=='tx2':
-            printv('Calculating second-line treatment...', 3, verbose)
             epidata = D.data.txrx.numsecondline[0]
-            D.O.tx2.ydata = zeros(ndatayears)
-            D.O.tx2.ylabel = 'Number of people on second-line treatment'
+            E.tx2.ydata = zeros(ndatayears).tolist()
 
-        ##########################################################################
-        ## Finish processing data
-        ##########################################################################
+
         if size(epidata[0])==1: # TODO: make this less shitty, easier way of checking what shape the data is I'm sure
-            D.O[epi].ydata[:] = float_array(epidata)
+            E[epi].ydata = (array(epidata)*percent).tolist()
         elif size(epidata)==D.G.npops:
             for p in range(D.G.npops):
                 thispopdata = epidata[p]
@@ -100,11 +70,73 @@ def gatherplotdata(D, verbose=2):
                     thispopdata = nan+zeros(ndatayears) # If it's an assumption, just set with nans
                 elif len(thispopdata) != ndatayears:
                     raise Exception('Expect data length of 1 or %i, actually %i' % (ndatayears, len(thispopdata)))
-                D.O[epi].ydata[p,:] = float_array(thispopdata)
+                E[epi].ydata[p] = (asarray(thispopdata)*percent).tolist() # Stupid, but make sure it's an array, then make sure it's a list
         else:
             raise Exception("Can't figure out size of epidata; doesn't seem to be a vector or a matrix")
 
-   
+    printv('...done gathering epidemiology results.', 4, verbose)
+    return E
+
+
+
+
+def gathermultidata(D, Rarr, verbose=2):
+    """ Gather multi-simulation results (scenarios and optimizations) into a form suitable for plotting. """
+    from bunch import Bunch as struct
+    from printv import printv
+    printv('Gathering multi-simulation results...', 3, verbose)
     
-    printv('...done running epidemiology results.', 2, verbose)
-    return D
+    
+    M = struct()
+    M.__doc__ = 'Output structure containing everything that might need to be plotted'
+    M.nsims = len(Rarr) # Number of simulations
+    M.tvec = Rarr[0].R.tvec # Copy time vector
+    M.poplabels = D.G.meta.pops.long
+    
+    for epi in ['prev', 'inci', 'daly', 'death', 'dx', 'tx1', 'tx2']:
+        percent = 100 if epi=='prev' else 1 # Whether to multiple results by 100
+        M[epi] = struct()
+        M[epi].pops = [struct() for p in range(D.G.npops)]
+        for p in range(D.G.npops):
+            M[epi].pops[p].data = []
+            M[epi].pops[p].legend = []
+            M[epi].pops[p].title = epititles[epi] + ' - ' + D.G.meta.pops.short[p]
+            M[epi].pops[p].ylabel = epiylabels[epi]
+            for sim in range(M.nsims):
+                thisdata = (Rarr[sim].R[epi].pops[0][p,:]*percent).tolist()
+                M[epi].pops[p].data.append(thisdata)
+                M[epi].pops[p].legend.append(Rarr[sim].label)
+        M[epi].tot = struct()
+        M[epi].tot.data = []
+        M[epi].tot.legend = []
+        M[epi].tot.title = epititles[epi] + ' - Overall'
+        M[epi].tot.ylabel = epiylabels[epi]
+        for sim in range(M.nsims):
+            thisdata =(Rarr[sim].R[epi].tot[0]*percent).tolist()
+            M[epi].tot.data.append(thisdata)
+            M[epi].tot.legend.append(Rarr[sim].label) # Add legends
+        M[epi].xlabel = 'Years'
+        
+    printv('...done gathering multi-simulation results.', 4, verbose)
+    return M
+
+
+def gatheroptimdata(D, A, verbose=2):
+    """ Return the data for plotting the two pie charts -- current allocation and optimal. """
+    from bunch import Bunch as struct
+    from printv import printv
+    printv('Gathering optimization results...', 3, verbose)
+    
+    O = struct()
+    O.legend = D.G.meta.progs.short
+    
+    O.pie1 = struct()
+    O.pie1.name = 'Original'
+    O.pie1.val = A[0].alloc.tolist()
+    
+    O.pie2 = struct()
+    O.pie2.name = 'Optimal'
+    O.pie2.val = A[1].alloc.tolist()
+    
+    printv('...done gathering optimization results.', 4, verbose)
+    return O

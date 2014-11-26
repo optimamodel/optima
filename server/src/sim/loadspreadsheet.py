@@ -13,7 +13,7 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
     ###########################################################################
     
     from printv import printv
-    from matplotlib.pylab import nan, array # For reading in empty values
+    from numpy import nan, array # For reading in empty values
     from xlrd import open_workbook # For opening Excel spreadsheets
     from bunch import Bunch as struct # Replicate Matlab-like structure behavior
     printv('Loading data from %s...' % filename, 1, verbose)

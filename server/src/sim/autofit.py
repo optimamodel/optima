@@ -1,36 +1,40 @@
-"""
-MANUALFIT
-Automatic calibration
-Version: 2014oct28
-
-"""
-
-def autofit(projectfilename='example.prj', paramtable = {}):
-    # Get input data from the editable table in the form of [parameter, value], e.g.
-    
-    # The project data file name needs to be 
-    from matplotlib.pylab import rand, r_, exp # KLUDGY
-    from bunch import Bunch as struct # Replicate Matlab-like structure behavior
-    
-    # Generate data for scatter and line plots
-    nplots = 4
-    beginyear = 2000
-    endyear = 2015
-    plotdata = []
-    for p in range(nplots):
-        plotdata.append(struct())
-        plotdata[p].xmodeldata = r_[beginyear:endyear+1] # Model output
-        plotdata[p].ymodeldata = exp(-rand(len(plotdata[p].xmodeldata)))
-        plotdata[p].xexpdata = [2000, 2005, 2008] # Experimental data
-        plotdata[p].yexpdata = [0.3, 0.4, 0.6]
-        plotdata[p].xlabel = 'Year'
-        plotdata[p].ylabel = 'Prevalence'
+def autofit(D, timelimit=60, startyear=2000, endyear=2015, verbose=2):
+    """
+    Automatic metaparameter fitting code:
+        D is the project data structure
+        timelimit is the maximum time limit for fitting in seconds
+        startyear is the year to begin running the model
+        endyear is the year to stop running the model
+        verbose determines how much information to print.
         
-#        # e.g. 
-#        from matplotlib.pylab import plot, hold, scatter, subplot
-#        subplot(3,2,p)
-#        plot(plotdata[p].xmodeldata, plotdata[p].ymodeldata)
-#        hold(True)
-#        scatter(plotdata[p].xexpdata, plotdata[p].yexpdata);
+    Version: 2014nov24 by cliffk
+    """
     
-    return plotdata
+    from model import model
+    from time import time
+    from printv import printv
+    printv('Running automatic calibration...', 1, verbose)
+    
+    # TODO -- actually implement :)
+    tstart = time()
+    elapsed = 0
+    iteration = 0
+    while elapsed<timelimit:
+        iteration += 1
+        elapsed = time() - tstart
+        D.S = model(D.G, D.M, D.F[0], D.opt, verbose=verbose)
+        printv('Iteration: %i | Elapsed: %f s |  Limit: %f s' % (iteration, elapsed, timelimit), 2, verbose)
+        D.S.mismatch = -1 # Mismatch for this simulation
+    
+    allsims = [D.S]
+    
+    # Calculate results
+    from makeresults import makeresults
+    D.R = makeresults(D, allsims, D.opt.quantiles, verbose=verbose)
+
+    # Gather plot data
+    from gatherplotdata import gatherepidata
+    D.plot.E = gatherepidata(D, D.R, verbose=verbose)
+    
+    printv('...done with automatic calibration.', 2, verbose)
+    return D
