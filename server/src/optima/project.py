@@ -143,42 +143,41 @@ def openProject(project_name):
         return redirect(url_for('site'))
 
 
-"""
-Returns information on the passed project.
-"""
 @project.route('/info')
 @login_required
 @check_project_name
 def getProjectInformation():
-    
-    # get current user 
-    cu = current_user
-    proj = None
-    
-    # Default Response
-    response = { "status": "NOK" }
-    
-    if cu.is_anonymous() == False:
-        
-        # See if there is matching project
-        proj = None
-        try:
-            proj = ProjectDb.query.filter_by(user_id=cu.id, name=request.project_name).first()
-        except:
-            pass
-            
-        # update existing 
-        if proj is not None:
-            response['status'] = "OK"
-            response['name'] = proj.name
-            response['dataStart'] = proj.datastart
-            response['dataEnd'] = proj.dataend
-            response['projectionStartYear'] = proj.econ_datastart
-            response['projectionEndYear'] = proj.econ_dataend
-            response['programs'] = proj.programs
-            response['populations'] = proj.populations
+    """
+    Returns information of the requested project.
 
-    return jsonify( response )
+    Returns:
+        A jsonified project dictionary accessible to the current user.
+        In case of an anonymous user an object with status "NOK" is returned.
+    """
+
+    # default response
+    response_data = { "status": "NOK" }
+
+    if current_user.is_anonymous() == False:
+
+        # see if there is matching project
+        project = ProjectDb.query.filter_by(user_id=current_user.id,
+            name=request.project_name).first()
+
+        # update response
+        if project is not None:
+            response_data = {
+                'status': "OK",
+                'name': project.name,
+                'dataStart': project.datastart,
+                'dataEnd': project.dataend,
+                'projectionStartYear': project.econ_datastart,
+                'projectionEndYear': project.econ_dataend,
+                'programs': project.programs,
+                'populations': project.populations
+            }
+
+    return jsonify(response_data)
 
 @project.route('/list')
 @login_required
