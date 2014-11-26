@@ -1,7 +1,7 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
-  module.controller('ProjectCreateController', function ($scope, $state, $modal,
+  module.controller('ProjectCreateController', function ($scope, $state, $modal, $timeout,
     activeProject, DEFAULT_PROGRAMS, DEFAULT_POPULATIONS) {
 
     $scope.projectParams = {
@@ -178,7 +178,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       // update active project
       activeProject.setValue($scope.projectParams.name);
 
-      $state.go('home');
+      // Hack to wait for the project to be created.
+      // There is not easy way to intercept the completion of the form submission...
+      $timeout(function () { $state.go('home'); }, 3000);
 
       return true;
     };
