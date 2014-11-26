@@ -2,9 +2,8 @@ define(['./module', 'underscore'], function (module, _) {
   'use strict';
 
   module.controller('ProjectOpenController', function ($scope, $http, activeProject, localStorage, projects) {
-    $scope.projects = _(projects.projects).map(function (fileName) {
-      return fileName.split('.')[0];
-    });
+
+    $scope.projects = projects.projects;
 
     $scope.open = function (name) {
       $http.get('/api/project/open/' + name)
@@ -17,7 +16,7 @@ define(['./module', 'underscore'], function (module, _) {
         });
     };
 
-    $scope.delete = function (name) {
+    $scope.delete = function (name, index) {
       $http.delete('/api/project/delete/' + name)
         .success(function (response) {
           if (response && response.status === 'NOK') {
@@ -25,14 +24,14 @@ define(['./module', 'underscore'], function (module, _) {
             return;
           }
 
-          $scope.projects.splice($scope.projects.indexOf(name), 1);
+          $scope.projects.splice(index, 1);
 
           if (activeProject.name === name) {
             activeProject.setValue('');
           }
         })
         .error(function () {
-          alert('Could not remove the project')
+          alert('Could not remove the project');
         });
     };
   });

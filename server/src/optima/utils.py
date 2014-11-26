@@ -4,6 +4,8 @@ from flask import helpers, session
 from flask.ext.login import current_user
 from functools import wraps
 from flask import request, jsonify
+from dbconn import db
+from dbmodels import ProjectDb
 
 ALLOWED_EXTENSIONS=set(['txt','xlsx','xls'])
 
@@ -54,8 +56,6 @@ def project_file_exists(name, folder = PROJECTDIR):
   return os.path.exists(project_file)
 
 def project_exists_db(name):
-  from api import db
-  from dbmodels import ProjectDb
   cu = current_user
   return ProjectDb.query.filter_by(user_id=cu.id, name=name).count()>0
 
@@ -102,8 +102,6 @@ def load_model(name, as_bunch = True):
   print("load_model:%s" % name)
   model = None
   try:
-    from api import db
-    from dbmodels import ProjectDb
     cu = current_user
     proj = ProjectDb.query.filter_by(user_id=cu.id, name=name).first()
     model = proj.model
@@ -123,8 +121,7 @@ def save_model_file(name, model, folder = PROJECTDIR):
 
 def save_model_db(name, model):
   print("save_model_db %s" % name)
-  from api import db
-  from dbmodels import ProjectDb
+
   from sim.bunch import Bunch
   cu = current_user
   proj = ProjectDb.query.filter_by(user_id=cu.id, name=name).first()
