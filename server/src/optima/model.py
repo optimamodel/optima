@@ -6,8 +6,8 @@ from sim.manualfit import manualfit
 from sim.autofit import autofit
 from sim.bunch import bunchify
 from sim.runsimulation import runsimulation
-from sim.makeccocs import makecco
-from utils import load_model, save_model, project_exists, pick_params, check_project_name
+from sim.makeccocs import makecco, plotallcurves
+from utils import load_model, save_model, project_exists, pick_params, check_project_name, for_fe
 from flask.ext.login import login_required
 
 """ route prefix: /api/model """
@@ -210,11 +210,14 @@ Calls makecco with parameters supplied from frontend
 def doCostCoverage():
     data = json.loads(request.data)
     args = {}
-    args['D'] = load_model(request.project_name)
+    args['datain'] = load_model(request.project_name)
     args = pick_params(["progname", "ccparams", "coparams"], data, args)
     try:
-        plotdata, plotdata_cc, plotdata_co = makecco(**args)
+        args['ccparams'] = [0.9, 0.2, 800000.0, 7e6]
+        args['coparams'] = []
+        plotdata, plotdata_co, plotdata_cc = plotallcurves(**args)
     except Exception, err:
         var = traceback.format_exc()
         return jsonify({"status":"NOK", "exception":var})
-    return jsonify({"status":"OK", "plotdata": plotdata, "plotdata_cc": plotdata_cc, "plotdata_co": plotdata_co})
+    return jsonify({"status":"OK", "plotdata": for_fe(plotdata), \
+        "plotdata_cc": for_fe(plotdata_cc), "plotdata_co": for_fe(plotdata_co)})
