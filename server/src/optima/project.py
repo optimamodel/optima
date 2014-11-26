@@ -1,6 +1,6 @@
 import json
 from flask import Blueprint, url_for, helpers, request, jsonify, redirect
-from werkzeug import secure_filename
+from werkzeug.utils import secure_filename
 import os
 import traceback
 from sim.dataio import upload_dir_user, DATADIR, TEMPLATEDIR
