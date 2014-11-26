@@ -194,12 +194,13 @@ def doRunSimulation():
         args["endyear"] = int(endyear)
     try:
         D = runsimulation(**args) 
+        print("D.plot.E: %s" % D.plot.E)
         D_dict = D.toDict()
         save_model(request.project_name, D_dict)
     except Exception, err:
         var = traceback.format_exc()
         return jsonify({"status":"NOK", "exception":var})
-    return jsonify(D_dict.get('O',{}))
+    return jsonify(D_dict.get('plot',{}).get('E',{}))
 #    options = {
 #        'cache_timeout': model.get_send_file_max_age(example_excel_file_name),
 #        'conditional': True,

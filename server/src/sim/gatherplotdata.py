@@ -10,7 +10,8 @@ def gatherepidata(D, R, verbose=2):
     
     E = struct()
     E.__doc__ = 'Output structure containing everything that might need to be plotted'
-    E.tvec = R.tvec # Copy time vector
+    E.tvec = R.tvec.tolist() # Copy time vector
+    print("E.tvec: %s %s" % (E.tvec, type(E.tvec)))
     E.poplabels = D.G.meta.pops.short
     E.colorm = (0,0.3,1) # Model color
     E.colord = (0,0,0) # Data color
