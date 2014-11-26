@@ -134,7 +134,9 @@ Returns the parameters of the given model in the given group.
 def getModelParameters(group):
     print("getModelParameters: %s" % group)
     D_dict = load_model(request.project_name, as_bunch = False)
-    return jsonify(D_dict.get(group,{}))
+    the_group = D_dict.get(group, {})
+    print("the_group: %s" % the_group)
+    return json.dumps(the_group)
 
 
 """
@@ -196,6 +198,7 @@ def doRunSimulation():
         D = runsimulation(**args) 
         print("D.plot.E: %s" % D.plot.E)
         D_dict = D.toDict()
+        print ("D-dict F: %s" % D_dict['F'])
         save_model(request.project_name, D_dict)
     except Exception, err:
         var = traceback.format_exc()
