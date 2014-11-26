@@ -186,7 +186,6 @@ def doRunSimulation():
         args["endyear"] = int(endyear)
     try:
         D = runsimulation(**args) 
-        print("D.plot.E: %s" % D.plot.E)
         D_dict = D.toDict()
         print ("D-dict F: %s" % D_dict['F'])
         save_model(request.project_name, D_dict)
