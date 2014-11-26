@@ -12,7 +12,7 @@ from sim.loadspreadsheet import loadspreadsheet
 from sim.makeproject import makeproject
 from sim.optimize import optimize
 from optima.data import data
-from utils import allowed_file, project_file_exists, project_exists, delete_project_file, delete_spreadsheet
+from utils import allowed_file, project_exists, project_file_exists, delete_project_file, delete_spreadsheet
 from utils import check_project_name, load_model, save_model
 from flask.ext.login import login_required, current_user
 
