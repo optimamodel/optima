@@ -15,6 +15,8 @@ from optima.data import data
 from utils import allowed_file, project_exists, project_file_exists, delete_project_file, delete_spreadsheet
 from utils import check_project_name, load_model, save_model
 from flask.ext.login import login_required, current_user
+from dbconn import db
+from dbmodels import ProjectDb
 
 """ route prefix: /api/project """
 project = Blueprint('project',  __name__, static_folder = '../static')
@@ -76,9 +78,6 @@ def createProject(project_name):
         populations = makeproject_args['pops'] = data['populations']
     else:
         populations = {}
-    
-    from api import db
-    from dbmodels import ProjectDb
     
     print("User based processing")
     
@@ -143,35 +142,74 @@ def openProject(project_name):
     else:
         return redirect(url_for('site'))
 
-"""
-Returns the current project name.
-"""
-@project.route('/name')
+
+@project.route('/info')
 @login_required
 @check_project_name
-def getProjectInfo():
-    return jsonify({"project": request.project_name})
+def getProjectInformation():
+    """
+    Returns information of the requested project.
 
-"""
-Returns the list of existing projects from db.
-"""
+    Returns:
+        A jsonified project dictionary accessible to the current user.
+        In case of an anonymous user an object with status "NOK" is returned.
+    """
+
+    # default response
+    response_data = { "status": "NOK" }
+
+    if current_user.is_anonymous() == False:
+
+        # see if there is matching project
+        project = ProjectDb.query.filter_by(user_id=current_user.id,
+            name=request.project_name).first()
+
+        # update response
+        if project is not None:
+            response_data = {
+                'status': "OK",
+                'name': project.name,
+                'dataStart': project.datastart,
+                'dataEnd': project.dataend,
+                'projectionStartYear': project.econ_datastart,
+                'projectionEndYear': project.econ_dataend,
+                'programs': project.programs,
+                'populations': project.populations
+            }
+
+    return jsonify(response_data)
+
 @project.route('/list')
 @login_required
 def getProjectList():
-    projects = []
-    
-    # Get current user 
-    cu = current_user
-    if cu.is_anonymous() == False:
-        from api import db
-        from dbmodels import ProjectDb
-        
+    """
+    Returns the list of existing projects from db.
+
+    Returns:
+        A jsonified list of project dictionaries if the user is logged in.
+        In case of an anonymous user an empty list will be returned.
+
+    """
+    projects_data = []
+    # Get current user
+    if current_user.is_anonymous() == False:
+
         # Get projects for current user
-        projList = ProjectDb.query.filter_by(user_id=cu.id)
-        for project in projList:
-             projects.append(project.name)
-   
-    return jsonify({"projects":projects})
+        projects = ProjectDb.query.filter_by(user_id=current_user.id)
+        for project in projects:
+            project_data = {
+                'status': "OK",
+                'name': project.name,
+                'dataStart': project.datastart,
+                'dataEnd': project.dataend,
+                'projectionStartYear': project.econ_datastart,
+                'projectionEndYear': project.econ_dataend,
+                'programs': project.programs,
+                'populations': project.populations
+            }
+            projects_data.append(project_data)
+
+    return jsonify({"projects": projects_data})
 
 """
 Deletes the given project (and eventually, corresponding excel files)
@@ -189,9 +227,6 @@ def deleteProject(project_name):
         cu = current_user
         if cu.is_anonymous() == False:
         
-            from api import db
-            from dbmodels import ProjectDb
-
             # Get project row for current user with project name
             db.session.query(ProjectDb).filter_by(user_id= cu.id,name=project_name).delete()
 
