@@ -143,14 +143,6 @@ def openProject(project_name):
     else:
         return redirect(url_for('site'))
 
-"""
-TODO: Remove this method as it serves little purpose. Returns the current project name.
-"""
-@project.route('/name')
-@login_required
-@check_project_name
-def getProjectInfo():
-    return jsonify({"project": request.project_name})
 
 """
 Returns information on the passed project.

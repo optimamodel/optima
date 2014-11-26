@@ -15,7 +15,16 @@ define([
       .state('home', {
         url: '/',
         templateUrl: '/js/modules/home/home.html',
-        controller: 'HomeController'
+        controller: 'HomeController',
+        resolve: {
+          project: function (Project, activeProject) {
+            if (activeProject.isSet()) {
+              return Project.info().$promise;
+            } else {
+              return undefined;
+            }
+          }
+        }
       });
   });
 
