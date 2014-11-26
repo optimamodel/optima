@@ -2,7 +2,7 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
     """
     This function runs the model.
     
-    Version: 2014nov25 by cliffk
+    Version: 2014nov26 by cliffk
     """
 
     ###############################################################################
@@ -13,6 +13,7 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
     from numpy import array, zeros, exp, maximum # For creating arrays
     from bunch import Bunch as struct # Replicate Matlab-like structure behavior
     from printv import printv
+    from math import pow as mpow
     printv('Running model...', 1, verbose)
     
     ## Initialize basic quantities
@@ -155,8 +156,8 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
                         numactsF = totalacts[act][popF,popM,t]; # Number of acts per person per year (receptive partner)
                         condomprob = (condom[act][popM,t] + condom[act][popF,t]) / 2 # Reconcile condom probability
                         condomeff = 1 - condomprob*effcondom # Effect of condom use
-                        forceinfM = 1 - (1-transM*circeff*stieffM) ** (dt*numactsM*condomeff*effhivprev[popF]) # The chance of "female" infecting "male" -- # TODO: Implement PrEP etc here
-                        forceinfF = 1 - (1-transF*circeff*stieffF) ** (dt*numactsF*condomeff*effhivprev[popM]) # The chance of "male" infecting "female"
+                        forceinfM = 1 - mpow((1-transM*circeff*stieffM), (dt*numactsM*condomeff*effhivprev[popF])) # The chance of "female" infecting "male" -- # TODO: Implement PrEP etc here
+                        forceinfF = 1 - mpow((1-transF*circeff*stieffF), (dt*numactsF*condomeff*effhivprev[popM])) # The chance of "male" infecting "female"
                         forceinfvec[popM] = 1 - (1-forceinfvec[popM]) * (1-forceinfM) # Calculate the new "male" forceinf, ensuring that it never gets above 1
                         forceinfvec[popF] = 1 - (1-forceinfvec[popF]) * (1-forceinfF) # Calculate the new "female" forceinf, ensuring that it never gets above 1
                         if not(all(forceinfvec>=0)): raise Exception('Sexual force-of-infection is invalid')
@@ -171,8 +172,8 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
                 if pshipsinj[pop1,pop2]>0: # Ignore if this isn't a valid injecting partnership
                     numacts1 = sharing[t] * totalacts['inj'][pop1,pop2,t] / 2 # Number of acts per person per year -- /2 since otherwise double-count
                     numacts2 = sharing[t] * totalacts['inj'][pop2,pop1,t] / 2 # Number of acts per person per year
-                    forceinf1 = 1 - (1-transinj) ** (dt*numacts1*effhivprev[pop2]) # The chance of "2" infecting "1"
-                    forceinf2 = 1 - (1-transinj) ** (dt*numacts2*effhivprev[pop1]) # The chance of "1" infecting "2"
+                    forceinf1 = 1 - mpow((1-transinj), (dt*numacts1*effhivprev[pop2])) # The chance of "2" infecting "1"
+                    forceinf2 = 1 - mpow((1-transinj), (dt*numacts2*effhivprev[pop1])) # The chance of "1" infecting "2"
                     forceinfvec[pop1] = 1 - (1-forceinfvec[pop1]) * (1-forceinf1) # Calculate the new "male" forceinf, ensuring that it never gets above 1
                     forceinfvec[pop2] = 1 - (1-forceinfvec[pop2]) * (1-forceinf2) # Calculate the new "male" forceinf, ensuring that it never gets above 1
                     if not(all(forceinfvec>=0)): raise Exception('Injecting force-of-infection is invalid')
