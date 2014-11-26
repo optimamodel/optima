@@ -1,10 +1,10 @@
-def loadspreadsheet(filename='example.xlsx',verbose=2):
+def loadworkbook(filename='example.xlsx',verbose=2):
     """
-    Loads the spreadsheet (i.e. reads its contents into the data structure).
+    Loads the workbook (i.e. reads its contents into the data structure).
     This data structure is used in the next step to update the corresponding model.
-    The spreadsheet is assumed to be in the format specified in example.xlsx.
+    The workbook is assumed to be in the format specified in example.xlsx.
     
-    Version: 2014nov22
+    Version: 2014nov26
     """
     
 
@@ -14,13 +14,13 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
     
     from printv import printv
     from numpy import nan, array # For reading in empty values
-    from xlrd import open_workbook # For opening Excel spreadsheets
+    from xlrd import open_workbook # For opening Excel workbooks
     from bunch import Bunch as struct # Replicate Matlab-like structure behavior
     printv('Loading data from %s...' % filename, 1, verbose)
     
     
     ###########################################################################
-    ## Define the spreadsheet and parameter names
+    ## Define the workbook and parameter names
     ###########################################################################
     
     # Metadata -- population and program names -- array sizes are (# populations) and (# programs)
@@ -82,21 +82,21 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
     
     ## Basic setup
     data = struct() # Create structure for holding data
-    data.__doc__ = 'Raw data as loaded from the spreadsheet, including both epidemiological and behavioral data, plus economics and velociraptors.'
+    data.__doc__ = 'Raw data as loaded from the workbook, including both epidemiological and behavioral data, plus economics and velociraptors.'
     programs = struct() # Create structure for holding program data
     programs.__doc__ = 'Parameters that define the HIV programs -- cost-coverage and coverage-outcome curves.'
-    spreadsheet = open_workbook(filename) # Open spreadsheet
+    workbook = open_workbook(filename) # Open workbook
     
     
     ## Loop over each group of sheets
     for groupname in sheetstructure.keys(): # Loop over each type of data, but treat constants differently
         sheetgroup = sheetstructure[groupname]
-        for sheet in sheetgroup: # Loop over each spreadsheet for that data -- just one for constants
-            sheetname = sheet[0] # Name of the spreadsheet
+        for sheet in sheetgroup: # Loop over each workbook for that data -- just one for constants
+            sheetname = sheet[0] # Name of the workbook
             name = sheet[1] # Pull out the name of this field, e.g. 'epi'
             subparlist = sheet[2] # List of subparameters
             data[name] = struct() # Create structure for holding data, e.g. data.epi
-            sheetdata = spreadsheet.sheet_by_name(sheetname) # Load this spreadsheet
+            sheetdata = workbook.sheet_by_name(sheetname) # Load this workbook
             parcount = -1 # Initialize the parameter count
             printv('  Loading "%s"...' % sheetname, 2, verbose)
             
@@ -135,7 +135,7 @@ def loadspreadsheet(filename='example.xlsx',verbose=2):
             ##################################################################
             
             
-            # Loop over each row in the spreadsheet
+            # Loop over each row in the workbook
             for row in range(sheetdata.nrows): 
                 paramcategory = sheetdata.cell_value(row,0) # See what's in the first column for this row
                 

@@ -1,17 +1,26 @@
+"""
+GATHERPLOTDATA
+
+This file gathers all data that could be used for plotting and packs it into a
+nice little convenient structure :)
+
+Version: 2014nov26 by cliffk
+"""
+
+# Define labels
 epititles = {'prev':'Prevalence', 'inci':'New infections', 'daly':'DALYs', 'death':'Deaths', 'dx':'Diagnoses', 'tx1':'First-line treatment', 'tx2':'Second-line treatment'}
 epiylabels = {'prev':'Prevalence (%)', 'inci':'New HIV infections per year', 'daly':'DALYs per year', 'death':'HIV-related deaths per year', 'dx':'HIV diagnoses per year', 'tx1':'People on 1st-line treatment', 'tx2':'People on 2nd-line treatment'}
 
 def gatherepidata(D, R, verbose=2):
     """ Gather standard epidemiology results into a form suitable for plotting. """
     from numpy import zeros, nan, size, array, asarray
-    from bunch import Bunch as struct, float_array
+    from bunch import Bunch as struct
     from printv import printv
     printv('Gathering epidemiology results...', 3, verbose)
     
     E = struct()
     E.__doc__ = 'Output structure containing everything that might need to be plotted'
     E.tvec = R.tvec.tolist() # Copy time vector
-    print("E.tvec: %s %s" % (E.tvec, type(E.tvec)))
     E.poplabels = D.G.meta.pops.short
     E.colorm = (0,0.3,1) # Model color
     E.colord = (0,0,0) # Data color
@@ -39,7 +48,7 @@ def gatherepidata(D, R, verbose=2):
         E[epi].xlabel = 'Years'
         
         if epi=='prev':
-            epidata = array(D.data.key.hivprev[0]) # TODO: include uncertainties
+            epidata = D.data.key.hivprev[0] # TODO: include uncertainties
             E.prev.ydata = zeros((D.G.npops,ndatayears)).tolist()
         if epi=='inci':
             epidata = D.data.opt.numinfect[0]

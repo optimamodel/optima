@@ -14,7 +14,7 @@ This function does everything. The basic procedure is as follows:
 9. optimize -- run an optimization
 11. viewoptimization -- view an optimization
 
-Version: 2014nov25 by cliffk
+Version: 2014nov26 by cliffk
 """
 
 
@@ -38,7 +38,7 @@ print('\n\n\n1. Making project...')
 from makeproject import makeproject
 D = makeproject(projectname='example', pops=['']*6, progs = ['']*7, datastart=2000, dataend=2015, verbose=verbose)
 
-print('\n\n\n2. Uploading spreadsheet...')
+print('\n\n\n2. Updating data...')
 from updatedata import updatedata
 D = updatedata(D, verbose=verbose)
 
