@@ -16,7 +16,7 @@ define(['./module', 'underscore'], function (module, _) {
         });
     };
 
-    $scope.delete = function (name) {
+    $scope.delete = function (name, index) {
       $http.delete('/api/project/delete/' + name)
         .success(function (response) {
           if (response && response.status === 'NOK') {
@@ -24,7 +24,7 @@ define(['./module', 'underscore'], function (module, _) {
             return;
           }
 
-          $scope.projects.splice($scope.projects.indexOf(name), 1);
+          $scope.projects.splice(index, 1);
 
           if (activeProject.name === name) {
             activeProject.setValue('');
