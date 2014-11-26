@@ -8,3 +8,9 @@ server/p-env
 server/build
 \~\$*
 *.prj
+.elasticbeanstalk/
+
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml

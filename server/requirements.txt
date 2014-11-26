@@ -8,6 +8,7 @@ SQLAlchemy==0.9.8
 Tempita==0.5.2
 Werkzeug==0.9.6
 XlsxWriter==0.6.1
+boto==2.34.0
 decorator==3.4.0
 itsdangerous==0.24
 matplotlib==1.4.2
