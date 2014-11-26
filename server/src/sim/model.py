@@ -364,10 +364,10 @@ def equilibrate(G, M, Finit):
     
     # Can calculate equilibrium for each population separately
     for p in range(npops):
-        uninfected = M['popsize'][p,0] * (1-hivprev) # Set initial susceptible population -- easy peasy!
-        infected = M['popsize'][p,0] * hivprev * Finit # Set initial infected population
+        uninfected = M['popsize'][p,0] * (1-hivprev[p]) # Set initial susceptible population -- easy peasy!
+        infected = M['popsize'][p,0] * hivprev[p] * Finit[p] # Set initial infected population
         initpeople[0, p] = uninfected
-        initpeople[1, p] = 
+        initpeople[1, p] = infected
         
         assumedforceinf = hivprev*prevtoforceinf # To calculate ratio of people in the initial category, need to estimate the force-of-infection
         
