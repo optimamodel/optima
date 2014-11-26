@@ -277,7 +277,7 @@ class TitledRange:
                 formats.write_rowcol_name(self.sheet, self.first_row+1, self.data_range.last_col+2, 'Assumption')
             if self.content.has_programs():
                 for p in range(4):
-                    formats.write_rowcol_name(self.sheet, self.first_row+1, self.data_range.last_col+ 5 + p*6, 'Program %s' % p)
+                    formats.write_rowcol_name(self.sheet, self.first_row+1, self.data_range.last_col+ 5 + p*6, 'Program %s' % (p+1))
                     formats.write_rowcol_name(self.sheet, self.first_row+1, self.data_range.last_col+ 5 + p*6 + 1, 'Min')
                     formats.write_rowcol_name(self.sheet, self.first_row+1, self.data_range.last_col+ 5 + p*6 + 2, 'Max')
                     formats.write_rowcol_name(self.sheet, self.first_row+1, self.data_range.last_col+ 5 + p*6 + 3, 'Min')
