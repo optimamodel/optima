@@ -5,17 +5,19 @@ def makedatapars(D, verbose=2):
     These data are then used to update the corresponding model (project).
     This method should be called before any simulation can run.
     
-    Version: 2014nov05 by cliffk
+    Version: 2014nov25 by cliffk
     """
     
     ###############################################################################
     ## Preliminaries
     ###############################################################################
 
+    
     from printv import printv
     from bunch import Bunch as struct # Replicate Matlab-like structure behavior
-    from matplotlib.pylab import array, isnan, zeros, shape, mean
+    from numpy import array, isnan, zeros, shape, mean
     printv('Converting data to parameters...', 1, verbose)
+    
     
     def sanitize(arraywithnans):
         """ Sanitize input to remove NaNs. Warning, does not work on multidimensional data!! """
@@ -27,9 +29,10 @@ def makedatapars(D, verbose=2):
 
         return sanitized
         
+    
     def data2par(dataarray):
         """ Take an array of data and turn it into default parameters -- here, just take the means """
-        nrows = shape(dataarray)[0] # See how many rows need to be filled (either npops or 1)
+        nrows = shape(dataarray)[0] # See how many rows need to be filled (either npops, nprogs, or 1)
         output = struct() # Create structure
         output.t = 1 # Set default time pameter -- constant (1) by default
         output.y = [D.G.datastart, D.G.dataend] # Set default control years -- start and end of the data
@@ -38,6 +41,17 @@ def makedatapars(D, verbose=2):
             output.p[r] = mean(sanitize(dataarray[r])) # Calculate mean for each population
         
         return output
+
+    def dataindex(dataarray, index):
+        """ Take an array of data return either the first or last (...or some other) non-NaN entry """
+        nrows = shape(dataarray)[0] # See how many rows need to be filled (either npops, nprogs, or 1)
+        output = zeros(nrows) # Create structure
+        for r in xrange(nrows): 
+            output[r] = sanitize(dataarray[r])[index] # Return the specified index -- usually either the first [0] or last [-1]
+        
+        return output
+    
+    
     
     
     ###############################################################################
@@ -48,11 +62,9 @@ def makedatapars(D, verbose=2):
     D.P.__doc__ = 'Parameters that have been directly derived from the data, which are then used to create the model parameters'
     
     ## Key parameters
-    #
-    # TODO: hivprev shouldn't vary with time... it's just an initial condition
     for parname in D.data.key.keys():
         printv('Converting data parameter %s...' % parname, 2, verbose)
-        D.P[parname] = data2par(D.data.key[parname][0]) # Population size and prevalence -- # TODO: don't take average for this, and use uncertainties!
+        D.P[parname] = dataindex(D.data.key[parname][0], 0) # Population size and prevalence -- # TODO: don't take average for this, and use uncertainties!
     
     ## Loop over parameters that can be converted automatically
     for parclass in ['epi', 'txrx', 'sex', 'inj']:
@@ -77,6 +89,11 @@ def makedatapars(D, verbose=2):
                     printv('Converting data parameter %s...' % parname, 4, verbose)
                     D.P[uberclass][parclass][parname] = D.data[uberclass][parclass][parname][0] # Taking best value only, hence the 0
     
+    ## Program cost data
+    D.A = [struct()] # Initialize allocations list
+    D.A[0].alloc = dataindex(D.data.costcov.cost, -1) # Pull out last allocation for each program
+    
+    
     ## TODO: disutility, economic data etc.
             
             
@@ -89,7 +106,7 @@ def makedatapars(D, verbose=2):
     D.G.nstates = 1+D.G.ncd4*5 # Five are undiagnosed, diagnosed, 1st line, failure, 2nd line, plus susceptible
     
     # Define CD4 states
-    from matplotlib.pylab import arange
+    from numpy import arange
     D.G.sus  = arange(0,1)
     D.G.undx = arange(0*D.G.ncd4+1, 1*D.G.ncd4+1)
     D.G.dx   = arange(1*D.G.ncd4+1, 2*D.G.ncd4+1)
@@ -109,7 +126,7 @@ def makedatapars(D, verbose=2):
         D.G.pwid += array(D.data.pships.inj).sum(axis=ax) # Find injecting acts
     D.G.pwid = D.G.pwid>0 # Convert to Boolean array
 
+
     printv('...done converting data to parameters.', 2, verbose)
     
     return D
-

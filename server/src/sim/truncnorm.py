@@ -36,7 +36,7 @@ def truncnorm(a, b, loc=0, scale=1, size=1):
     
     Version: 2014nov19
     """
-    from matplotlib.pylab import zeros, normal, nan, isnan
+    from numpy import zeros, normal, nan, isnan
     output = zeros(size)+nan
     
     s=0

@@ -34,7 +34,9 @@ VERSION = tuple(map(int, __version__.split('.')))
 
 __all__ = ('Bunch', 'bunchify','unbunchify','to_array')
 
-from matplotlib.pylab import ndarray, isnan, asarray # CK: replaced dependence on NumPy with Matplotlib
+from numpy import ndarray, isnan, asarray, dtype, array_equal, nan
+
+NP_ARRAY_KEYS = set(["np_array", "np_dtype"])
 
 def float_array(data):
     return asarray(data, float)
@@ -226,7 +228,29 @@ class Bunch(dict):
         """
         return bunchify(d)
 
+    def __eq__(self,other):
+        '''Recursively check if two Bunch objects contain identical data'''
+        if not isinstance(other,self.__class__):
+            raise TypeError
 
+        if isinstance(self,Bunch):
+            # Check the fields are the same
+            if not self.viewkeys() == other.viewkeys():
+                # viewkeys() is a dictionary view object so the ordering of the keys doesn't affect the result
+                return False
+            for s in self.keys():
+                if isinstance(self[s],ndarray):
+                    if not array_equal(self[s],other[s]):
+                        return false
+                elif self[s] != other[s]:
+                    return False
+        else:
+            if self != other:
+                return False
+        return True
+
+    def __ne__(self, other):
+            return not self.__eq__(other)
 
 # While we could convert abstract types like Mapping or Iterable, I think
 # bunchify is more likely to "do what you mean" if it is conservative about
@@ -255,9 +279,15 @@ def bunchify(x):
         nb. As dicts are not hashable, they cannot be nested in sets/frozensets.
     """
     if isinstance(x, dict):
-        return Bunch( (k, bunchify(v)) for k,v in x.iteritems() )
+        dk = x.keys()
+        if len(dk) == 2 and set(dk) == NP_ARRAY_KEYS:
+            return asarray(bunchify(x['np_array']), dtype(x['np_dtype']))
+        else:
+            return Bunch( (k, bunchify(v)) for k,v in x.iteritems() )
     elif isinstance(x, (list, tuple)):
         return type(x)( bunchify(v) for v in x )
+    elif x is None:
+        return nan
     else:
         return x
 
@@ -284,7 +314,7 @@ def unbunchify(x):
     elif isinstance(x, (list, tuple)):
         return type(x)( unbunchify(v) for v in x )
     elif isinstance(x, ndarray):
-        return [unbunchify(v) for v in x.tolist()]
+        return {"np_array":[unbunchify(v) for v in x.tolist()], "np_dtype":x.dtype.name}
     elif isinstance(x, float) and isnan(x):
         return None
     else:
