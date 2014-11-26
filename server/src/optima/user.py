@@ -9,9 +9,8 @@ User Module
 3. Logout.
 
 """
-from flask import Flask, request, jsonify, g, session, flash, \
-     redirect, url_for, abort, Blueprint
-from flask.ext.login import LoginManager, login_user, current_user, logout_user, AnonymousUserMixin
+from flask import request, jsonify, g, session, flash, abort, Blueprint
+from flask.ext.login import LoginManager, login_user, current_user, logout_user
 from dbconn import db
 from dbmodels import UserDb
 
@@ -26,8 +25,8 @@ login_manager = LoginManager()
 
 @user.record
 def record_params(setup_state):
-  app = setup_state.app
-  login_manager.init_app(app)
+    app = setup_state.app
+    login_manager.init_app(app)
 
 @user.before_request
 def before_request():
@@ -45,23 +44,22 @@ def create_user():
     password = hashlib.sha224( request.json['password'] ).hexdigest()
 
     if email is not None and name is not None and password is not None:
-        
         # Get user for this username (if exists)
         try:
             no_of_users = UserDb.query.filter_by( email=email ).count()
         except:
             no_of_users = 0
-        
+
         if no_of_users == 0:
-            
+
             # Save to db
             u = UserDb(name, email, password)
             db.session.add( u )
             db.session.commit()
-            
+
             # Login this user
             login_user(u)
-            
+
             # Return user info
             return jsonify({'email': u.email, 'name': u.name })
 
@@ -73,17 +71,17 @@ def login():
     print("/user/login %s" % request.get_json(force=True))
     # Make sure user is not logged in already.
     cu = current_user
-    
+
     if cu.is_anonymous():
-        
+
         # Make sure user is valid.
         username = request.json['email']
-        
+
         if username is not None:
 
             # Get hashsed password
             password = hashlib.sha224( request.json['password'] ).hexdigest()
-            
+
             # Get user for this username
             try:
                 u = UserDb.query.filter_by( email=username ).first()
@@ -95,22 +93,21 @@ def login():
 
                 # Login the user
                 login_user(u)
-                
+
                 # Return user info
                 return jsonify({'email': u.email, 'name': u.name })
-                
-        
+
         # If we come here, login is not successful    
         abort(401)
-                                         
+
     # User already loggedin
     return jsonify({'email': cu.email, 'name': cu.name })
 
 @user.route('/current', methods=['GET'])
 def current_user_api():
     cu = current_user
-    if cu.is_anonymous() == False:
-        return jsonify({ 'email': cu.email, 'name': cu.name })  
+    if not cu.is_anonymous():
+        return jsonify({ 'email': cu.email, 'name': cu.name })
 
     abort(401)
 
@@ -124,14 +121,12 @@ def logout():
 #For Login Manager
 @login_manager.user_loader
 def load_user(userid):
-    u = None;    
     try:
         u = UserDb.query.filter_by(id=userid).first()
     except:
-        u = None;
-        
+        u = None
     return u
-    
+
 @login_manager.unauthorized_handler
 def unauthorized_handler():
     abort(401)
