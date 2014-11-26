@@ -3,7 +3,8 @@ import json
 import traceback
 from sim.optimize import optimize
 from sim.bunch import unbunchify
-from utils import load_model, project_exists, check_project_name
+from sim.scenarios import runscenarios
+from utils import load_model, save_model, project_exists, check_project_name
 from flask.ext.login import login_required
 
 """ route prefix: /api/analysis """
@@ -14,6 +15,40 @@ analysis.config = {}
 def record_params(setup_state):
   app = setup_state.app
   analysis.config = dict([(key,value) for (key,value) in app.config.iteritems()])
+
+"""
+Gets a list of scenarios defined by the user, produces graphs out of them and sends back
+"""
+@analysis.route('/scenarios/run', methods=['POST'])
+@login_required
+@check_project_name
+def runScenarios():
+    data = json.loads(request.data)
+    print("/api/analysis/run %s" % data)
+    # get project name
+    project_name = request.project_name
+    if not project_exists(project_name):
+        reply['reason'] = 'Project %s does not exist' % project_name
+
+    #expects json: {"scenarios":[scenariolist]} and gets project_name from session
+    args = {}
+    scenarios = data.get("scenarios")
+    if scenarios:
+        args["scenarios"] = bunchify(scenarios)
+    dosave = data.get("dosave")
+    try:
+        D = load_model(project_name)
+        args['D'] = D
+        D = runscenarios(**args) 
+        D_dict = D.toDict()
+        if dosave:
+            print("model: %s" % project_name)
+            save_model(project_name, D_dict)
+    except Exception, err:
+        var = traceback.format_exc()
+        return jsonify({"status":"NOK", "exception":var})
+    return jsonify(D_dict.get('plot',{}).get('E',{}))
+
 
 """
 Defines optimisation objectives from the data collected on the frontend.

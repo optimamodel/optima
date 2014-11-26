@@ -74,9 +74,7 @@ def doManualCalibration():
     # get project name
     project_name = request.project_name
     if not project_exists(project_name):
-        reply['reason'] = 'File for project %s does not exist' % project_name
-    file_name = helpers.safe_join(PROJECTDIR, project_name+'.prj')
-    print("project file_name: %s" % file_name)
+        reply['reason'] = 'Project %s does not exist' % project_name
 
     #expects json: {"startyear":year,"endyear":year} and gets project_name from session
     args = {}
