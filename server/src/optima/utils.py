@@ -1,13 +1,13 @@
 import os
 from sim.dataio import DATADIR, PROJECTDIR, TEMPLATEDIR, loaddata, savedata, upload_dir_user
-from flask import helpers, session
+from flask import helpers
 from flask.ext.login import current_user
 from functools import wraps
 from flask import request, jsonify
 from dbconn import db
 from dbmodels import ProjectDb
 
-ALLOWED_EXTENSIONS=set(['txt','xlsx','xls'])
+ALLOWED_EXTENSIONS = {'txt', 'xlsx', 'xls'}
 
 def check_project_name(api_call):
   @wraps(api_call)
@@ -34,7 +34,6 @@ def allowed_file(filename):
     filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
 def loaddir(app):
-  loaddir = ''
   loaddir = app.config['UPLOAD_FOLDER']
   print("loaddir = %s" % loaddir)
   if not loaddir:
