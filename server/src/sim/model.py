@@ -42,10 +42,8 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
     S.death    = zeros((npops, npts)) # Number of deaths per timestep
     effhivprev = zeros((npops, 1))    # HIV effective prevalence (prevalence times infectiousness)
 
-    
     ## Set initial epidemic conditions 
-    people[0, :, 0]  = M.popsize[:,0] * (1-M.hivprev) # Set initial susceptible population
-    people[1:, :, 0] = M.popsize[:,0] * M.hivprev * array(F.init) # Set initial infected population -- # TODO: equilibrate to determine F.init
+    people[:,:,0] = equilibrate(people[:,:,0], M, array(F.init)) # Run equilibration
     
     ## Convert a health state structure to an array
     def h2a(parstruct):
@@ -336,3 +334,9 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
 
     printv('  ...done running model.', 2, verbose)
     return S
+
+
+def equilibrate(initpeople, M, Finit):
+    initpeople[0, :] = M.popsize[:,0] * (1-M.hivprev) # Set initial susceptible population
+    initpeople[1, :] = M.popsize[:,0] * M.hivprev * Finit # Set initial infected population
+    return initpeople
