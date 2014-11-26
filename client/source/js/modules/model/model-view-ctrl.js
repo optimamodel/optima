@@ -93,7 +93,10 @@ define(['./module', 'angular'], function (module, angular) {
   };
 
     $scope.doneEditingParameter = function () {
-      console.log("I'm editing callback. Do what you have to do with me :(");
+      Model.saveCalibrateManual({
+        F: prepareF($scope.parameters.f),
+        dosave: false
+      }, updateGraphs);
     };
 
     /*
