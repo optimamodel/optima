@@ -16,7 +16,7 @@ from sim.bunch import unbunchify, bunchify, Bunch as struct
 from sim.runsimulation import runsimulation
 from sim.optimize import optimize
 from sim.epiresults import epiresults
-from sim.makeccocs import makecco
+from sim.makeccocs import makecco, plotallcurves
 from utils import loaddir, load_model, save_model, project_exists, pick_params, for_fe, check_project_name
 from flask.ext.login import login_required
 
@@ -223,7 +223,7 @@ def doCostCoverage():
     try:
         args['ccparams'] = [0.9, 0.2, 800000.0, 7e6]
         args['coparams'] = []
-        plotdata, plotdata_cc, plotdata_co = makecco(**args)
+        plotdata, plotdata_cc, plotdata_co = plotallcurves(**args)
     except Exception, err:
         var = traceback.format_exc()
         return jsonify({"status":"NOK", "exception":var})
