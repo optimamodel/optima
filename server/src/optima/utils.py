@@ -1,15 +1,13 @@
 import os
 from sim.dataio import DATADIR, PROJECTDIR, TEMPLATEDIR, loaddata, savedata, upload_dir_user
-from flask import helpers, session
-import numpy as np
-from sim.bunch import Bunch as struct
+from flask import helpers
 from flask.ext.login import current_user
 from functools import wraps
 from flask import request, jsonify
 from dbconn import db
 from dbmodels import ProjectDb
 
-ALLOWED_EXTENSIONS=set(['txt','xlsx','xls'])
+ALLOWED_EXTENSIONS = {'txt', 'xlsx', 'xls'}
 
 def check_project_name(api_call):
   @wraps(api_call)
@@ -36,7 +34,6 @@ def allowed_file(filename):
     filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
 def loaddir(app):
-  loaddir = ''
   loaddir = app.config['UPLOAD_FOLDER']
   print("loaddir = %s" % loaddir)
   if not loaddir:
@@ -145,20 +142,3 @@ def pick_params(params, data, args = {}):
     if the_value:
         args[param] = the_value
   return args
-
-"""
-   makes an object frontend-friendly :)
-"""
-def for_fe(item):
-  if isinstance(item, list):
-    return [for_fe(v) for v in item]
-  if isinstance(item, np.ndarray):
-    return [for_fe(v) for v in item.tolist()]
-  elif isinstance(item, struct):
-    return item.toDict()
-  elif isinstance(item, dict):
-    return dict( (k, for_fe(v)) for k,v in item.iteritems() )
-  elif isinstance(item, float) and np.isnan(item):
-    return None
-  else:
-    return item

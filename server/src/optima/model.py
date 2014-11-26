@@ -1,23 +1,13 @@
-import os
-import shutil
-from flask import Flask, Blueprint, helpers, request, jsonify, session, redirect
-from werkzeug import secure_filename
-from generators.line import generatedata
+from flask import Blueprint, helpers, request, jsonify
 import json
 import traceback
-import sys
-from sim.dataio import loaddata, savedata, DATADIR, PROJECTDIR
-from sim.updatedata import updatedata
-from sim.loadspreadsheet import loadspreadsheet
-from sim.makeproject import makeproject
+from sim.dataio import PROJECTDIR
 from sim.manualfit import manualfit
 from sim.autofit import autofit
-from sim.bunch import unbunchify, bunchify, Bunch as struct
+from sim.bunch import bunchify
 from sim.runsimulation import runsimulation
-from sim.optimize import optimize
-from sim.epiresults import epiresults
-from sim.makeccocs import makecco, plotallcurves
-from utils import loaddir, load_model, save_model, project_exists, pick_params, for_fe, check_project_name
+from sim.makeccocs import makecco
+from utils import load_model, save_model, project_exists, pick_params, check_project_name
 from flask.ext.login import login_required
 
 """ route prefix: /api/model """
