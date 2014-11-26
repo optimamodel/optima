@@ -188,29 +188,42 @@ def getProjectInformation():
             response['projectionEndYear'] = proj.econ_dataend
             response['programs'] = proj.programs
             response['populations'] = proj.populations
-            
+
     return jsonify( response )
 
-"""
-Returns the list of existing projects from db.
-"""
 @project.route('/list')
 @login_required
 def getProjectList():
-    projects = []
-    
-    # Get current user 
-    cu = current_user
-    if cu.is_anonymous() == False:
+    """
+    Returns the list of existing projects from db.
+
+    Returns:
+        A jsonified list of project dictionaries if the user is logged in.
+        In case of an anonymous user an empty list will be returned.
+
+    """
+    projects_data = []
+    # Get current user
+    if current_user.is_anonymous() == False:
         from api import db
         from dbmodels import ProjectDb
-        
+
         # Get projects for current user
-        projList = ProjectDb.query.filter_by(user_id=cu.id)
-        for project in projList:
-             projects.append(project.name)
-   
-    return jsonify({"projects":projects})
+        projects = ProjectDb.query.filter_by(user_id=current_user.id)
+        for project in projects:
+            project_data = {
+                'status': "OK",
+                'name': project.name,
+                'dataStart': project.datastart,
+                'dataEnd': project.dataend,
+                'projectionStartYear': project.econ_datastart,
+                'projectionEndYear': project.econ_dataend,
+                'programs': project.programs,
+                'populations': project.populations
+            }
+            projects_data.append(project_data)
+
+    return jsonify({"projects": projects_data})
 
 """
 Deletes the given project (and eventually, corresponding excel files)
