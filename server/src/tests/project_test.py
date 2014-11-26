@@ -3,7 +3,6 @@
 from optima_test_base import OptimaTestCase
 import unittest
 import json
-from api import app, db, init_db
 
 class ProjectTestCase(OptimaTestCase):
     """
