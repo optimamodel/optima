@@ -43,7 +43,7 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
     effhivprev = zeros((npops, 1))    # HIV effective prevalence (prevalence times infectiousness)
 
     ## Set initial epidemic conditions 
-    people[:,:,0] = equilibrate(people[:,:,0], M, array(F.init)) # Run equilibration
+    people[:,:,0] = equilibrate(G, M, array(F.init)) # Run equilibration
     
     ## Convert a health state structure to an array
     def h2a(parstruct):
@@ -336,7 +336,40 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
     return S
 
 
-def equilibrate(initpeople, M, Finit):
-    initpeople[0, :] = M.popsize[:,0] * (1-M.hivprev) # Set initial susceptible population
-    initpeople[1, :] = M.popsize[:,0] * M.hivprev * Finit # Set initial infected population
+
+
+def equilibrate(G, M, Finit):
+    """
+    Calculate the quilibrium point by estimating the ratio of input and output 
+    rates for each of the health states.
+    
+    Usage:
+        G = general parameters
+        M = model parameters
+        Finit = fitted parameters for initial prevalence
+        initpeople = nstates x npops array
+    
+    Version: 2014nov26
+    """
+    from numpy import zeros
+    
+    # Set parameters
+    prevtoforceinf = 0.1 # Assume force-of-infection is proportional to prevalence -- 0.1 means 10% of people get infected every year
+    
+    # Shorten key variables
+    hivprev = M.hivprev
+    npops = G.npops
+    nstates = G.nstates
+    initpeople = zeros((nstates,npops))
+    
+    # Can calculate equilibrium for each population separately
+    for p in range(npops):
+        uninfected = M['popsize'][p,0] * (1-hivprev) # Set initial susceptible population -- easy peasy!
+        infected = M['popsize'][p,0] * hivprev * Finit # Set initial infected population
+        initpeople[0, p] = uninfected
+        initpeople[1, p] = 
+        
+        assumedforceinf = hivprev*prevtoforceinf # To calculate ratio of people in the initial category, need to estimate the force-of-infection
+        
+    
     return initpeople
