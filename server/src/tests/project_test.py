@@ -4,6 +4,7 @@ from optima_test_base import OptimaTestCase
 import unittest
 import json
 from optima.dbmodels import ProjectDb
+from optima.dbconn import db
 
 class ProjectTestCase(OptimaTestCase):
     """
@@ -25,6 +26,19 @@ class ProjectTestCase(OptimaTestCase):
         response = self.client.get('/api/project/info', headers=headers)
         self.assertEqual(response.status_code, 500)
         self.assertEqual(json.loads(response.data), { "status": "NOK" })
+
+    def test_retrieve_project_info(self):
+        # create project
+        project = ProjectDb('test', 1, '2000', '2010', '2010', '2020', {}, {})
+        db.session.add(project)
+        db.session.commit()
+
+        headers = [('project', 'test')]
+        response = self.client.get('/api/project/info', headers=headers)
+        self.assertEqual(response.status_code, 200)
+        project_data = json.loads(response.data)
+        self.assertEqual(project_data['name'], 'test')
+        self.assertEqual(project_data['status'], 'OK')
 
 if __name__ == '__main__':
     unittest.main()
