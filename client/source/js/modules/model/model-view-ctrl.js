@@ -140,7 +140,7 @@ define(['./module', 'angular'], function (module, angular) {
               title: 'Showing ' + type.name + ' for population "' + $scope.parameters.meta.pops.long[populationIndex] + '"'
             };
 
-            graph.data.line = _(population).map(function (value, i) {
+            graph.data.line = _(population.best).map(function (value, i) {
               //      x                 y
               return [response.tvec[i], value];
             });
