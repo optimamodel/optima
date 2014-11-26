@@ -1,33 +1,10 @@
-def makespreadsheet(name, pops, progs, datastart=2000, dataend=2015, econ_datastart=2015, econ_dataend=2030, verbose=2):
-    """
-    MAKESPREADSHEET
-    
-    Generate the Optima spreadsheet
-    
-    Version: 2014nov19
-    """
-    
-    from printv import printv
-    from dataio import templatepath
-    from makeworkbook import OptimaWorkbook
-
-    printv("""Generating spreadsheet with parameters:
-             name = %s, pops = %s, progs = %s, datastart = %s, dataend = %s, 
-             econ_datastart = %s, econ_dataend = %s""" % (name, pops, progs, datastart, dataend, econ_datastart, econ_dataend), 1, verbose)
-    path = templatepath(name)
-    book = OptimaWorkbook(name, pops, progs, datastart, dataend, econ_datastart, econ_dataend)
-    book.create(path)
-    
-    printv('  ...done making spreadsheet %s.' % path, 2, verbose)
-    return path
-
 def makeproject(projectname='example', pops = ['']*6, progs = ['']*5, datastart=2000, dataend=2015, \
     econ_datastart=2015, econ_dataend=2030, verbose=2, savetofile = True):
     """
-    Initializes the empty project. Only the "Global" parameters are added on this step.
-    The rest of the parameters is calculated after the model is updated with the data from the spreadsheet.
+    Initializes the empty project. Only the "Global" and "Fitted" parameters are added on this step.
+    The rest of the parameters are calculated after the model is updated with the data from the workbook.
     
-    Version: 2014nov24 by cliffk
+    Version: 2014nov26 by cliffk
     """
     
     from dataio import savedata, projectpath
@@ -45,7 +22,8 @@ def makeproject(projectname='example', pops = ['']*6, progs = ['']*5, datastart=
     from setoptions import setoptions
     D.opt = setoptions()
     
-    D.G = struct() # "G" for "general parameters"
+    # Set up "G" -- general parameters structure
+    D.G = struct()
     D.G.__doc__ = 'General parameters for the model, including the number of population groups, project name, etc.'
     D.G.projectname = projectname  
     D.G.projectfilename = projectpath(projectname+'.prj')
@@ -55,14 +33,67 @@ def makeproject(projectname='example', pops = ['']*6, progs = ['']*5, datastart=
     D.G.datastart = datastart
     D.G.dataend = dataend
     
+    # Set up "F" -- fitted parameters structure
+    D.F = makefittedpars(D.G, D.opt, verbose=verbose)
+    
     if savetofile: #False if we are using database
         savedata(D.G.projectfilename, D, verbose=verbose) # Create project -- #TODO: check if an existing project exists and don't overwrite it
     
     # Make an Excel template and then prompt the user to save it
-    if projectname == 'example': # Don't make a new spreadsheet, but just use the existing one, if the project name is "example"
-        print('WARNING, Project name set to "example", not creating a new spreadsheet!')
-    else: # Make a new spreadsheet
-        makespreadsheet(D.G.workbookname, pops, progs, datastart, dataend, econ_datastart, econ_dataend, verbose=verbose)
+    if projectname == 'example': # Don't make a new workbook, but just use the existing one, if the project name is "example"
+        print('WARNING, Project name set to "example", not creating a new workbook!')
+    else: # Make a new workbook
+        makeworkbook(D.G.workbookname, pops, progs, datastart, dataend, econ_datastart, econ_dataend, verbose=verbose)
     
     printv('  ...done making project.', 2, verbose)
     return D
+
+
+def makefittedpars(G, opt, verbose=2):
+    """ Prepares fitted parameters for the simulation. """
+    
+    from printv import printv
+    from numpy import array
+    from bunch import Bunch as struct # Replicate Matlab-like structure behavior
+    printv('Initializing fitted parameters...', 1, verbose)
+    
+    # Initialize fitted parameters
+    F = [struct() for s in range(opt.nsims)]
+    for s in range(opt.nsims):
+        F[s].__doc__ = 'Fitted parameters for simulation %i: initial prevalence, force-of-infection, diagnoses, treatment' % s
+        F[s].init = perturb(G.npops)
+        F[s].force = perturb(G.npops)
+        F[s].dx  = array([perturb(), perturb(), (G.datastart+G.dataend)/2, 1]).tolist()
+        F[s].tx1 = array([perturb(), perturb(), (G.datastart+G.dataend)/2, 1]).tolist()
+        F[s].tx2 = array([perturb(), perturb(), (G.datastart+G.dataend)/2, 1]).tolist()
+    
+    return F
+
+
+
+def perturb(n=1, span=0.5):
+    """ Define an array of numbers uniformly perturbed with a mean of 1. n = number of points; span = width of distribution on either side of 1."""
+    from numpy.random import rand
+    output = 1 + 2*span*(rand(n)-0.5)
+    if n==1: output = output[0] # If scalar, return scalar rather than array
+    else: output = output.tolist() # Otherwise, convert to a list
+    return output
+
+
+
+
+def makeworkbook(name, pops, progs, datastart=2000, dataend=2015, econ_datastart=2015, econ_dataend=2030, verbose=2):
+    """ Generate the Optima workbook -- the hard work is done by makeworkbook.py """
+    from printv import printv
+    from dataio import templatepath
+    from makeworkbook import OptimaWorkbook
+
+    printv("""Generating workbook with parameters:
+             name = %s, pops = %s, progs = %s, datastart = %s, dataend = %s, 
+             econ_datastart = %s, econ_dataend = %s""" % (name, pops, progs, datastart, dataend, econ_datastart, econ_dataend), 1, verbose)
+    path = templatepath(name)
+    book = OptimaWorkbook(name, pops, progs, datastart, dataend, econ_datastart, econ_dataend)
+    book.create(path)
+    
+    printv('  ...done making workbook %s.' % path, 2, verbose)
+    return path

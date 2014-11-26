@@ -12,7 +12,7 @@ def manualfit(D, F, startyear=2000, endyear=2015, verbose=2):
         D = manualfit(D, F) # Rerun manualfit
         D = manualfit(D, F, dosave=True) # If the result is good, save
         
-    Version: 2014nov24
+    Version: 2014nov26 by cliffk
     """
     
     from printv import printv
@@ -21,8 +21,8 @@ def manualfit(D, F, startyear=2000, endyear=2015, verbose=2):
     # Run model
     from model import model
     allsims = []
-    D.F = F
-    D.S = model(D.G, D.M, D.F, D.opt, verbose=verbose)
+    D.F = [F]
+    D.S = model(D.G, D.M, D.F[0], D.opt, verbose=verbose)
     allsims.append(D.S)
     
     # Calculate results

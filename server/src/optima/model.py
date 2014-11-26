@@ -110,7 +110,7 @@ def doManualCalibration():
     except Exception, err:
         var = traceback.format_exc()
         return jsonify({"status":"NOK", "exception":var})
-    return jsonify(D_dict.get('O',{}))
+    return jsonify(D_dict.get('plot',{}).get('E',{}))
 
 
 """

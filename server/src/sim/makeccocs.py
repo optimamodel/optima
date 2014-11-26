@@ -1,7 +1,7 @@
 """
 Creates and updates cost-coverage curves and coverage-outcome curves
     
-Version: 2014nov19
+Version: 2014nov16 by cliffk
 """
 ###############################################################################
 ## Set up
@@ -16,7 +16,7 @@ from bunch import Bunch as struct, float_array
 ###############################################################################
 ## Make cost coverage curve
 # Inputs: 
-#    D is the data structure generated from reading in the spreadsheet
+#    D is the data structure generated from reading in the workbook
 #    progname is the program
 #    ccparams is the parameter structure for the cost-coverage curves, obtained from the GUI
 #        ccparams(0) = the saturation value
@@ -80,7 +80,7 @@ def makecc(D, progname, ccparams, makeplot = 1):
 ###############################################################################
 ## Make coverage outcome curve
 # Inputs: 
-#    D is the data structure generated from reading in the spreadsheet
+#    D is the data structure generated from reading in the workbook
 #    progname is the program
 #    (optional) coparams is the parameter structure for the coverage-outcome curves, obtained from the GUI
 #        coparams(0) = the lower bound for the outcome when coverage = 0
@@ -105,7 +105,7 @@ def makeco(D, progname, effectname, coparams=[], makeplot = 1):
         outcome = D.data[effectname[0][0]][effectname[0][1]][popnumber]
         coverage = D.data.costcov.cov[prognumber] # get program coverage data
 
-        ## Get inputs from either GUI or spreadsheet
+        ## Get inputs from either GUI or workbook
         if coparams: ## TODO: would be better to use a dictionary structure, so that the order doesn't have to be fixed
             zeromin = coparams[0] # Assumptions of behaviour at zero coverage (lower bound)
             zeromax = coparams[1] # Assumptions of behaviour at zero coverage (upper bound)
@@ -223,7 +223,7 @@ def makecco(D, progname = 'MSM', ccparams = default_ccparams, coparams=default_c
         else:
             popnumber = D.data.meta.pops.short.index(popname[0]) 
 
-            ## Get inputs from either GUI or spreadsheet
+            ## Get inputs from either GUI or workbook
             if coparams: ## TODO: would it be better to use a dictionary structure, so that the order doesn't have to be fixed?
                 zeromin = coparams[0] # Assumptions of behaviour at zero coverage (lower bound)
                 zeromax = coparams[1] # Assumptions of behaviour at zero coverage (upper bound)
