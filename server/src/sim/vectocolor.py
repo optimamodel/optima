@@ -23,10 +23,10 @@ Version: 2014nov05 by cliffk
 """
 
 def vectocolor(vector,cmap=None):
-   from pylab import array, zeros
+   from numpy import array, zeros
 
    if cmap==None:
-      from pylab import cm
+      from matplotlib import cm
       cmap=cm.jet # TODO: use more awesome colormap
       
    if type(vector)==int:
