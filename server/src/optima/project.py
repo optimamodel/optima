@@ -114,7 +114,7 @@ def createProject(project_name):
     proj.model = D.toDict()
     db.session.add(proj)
     db.session.commit()
-    new_project_template = D.spreadsheetname
+    new_project_template = D.G.workbookname
 
     print("new_project_template: %s" % new_project_template)
     (dirname, basename) = (upload_dir_user(TEMPLATEDIR), new_project_template)

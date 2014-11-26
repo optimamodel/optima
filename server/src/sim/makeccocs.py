@@ -8,7 +8,8 @@ Version: 2014nov19
 ###############################################################################
 
 import math
-from matplotlib.pylab import linspace, exp, isnan, asarray, zeros, figure, plot, hold, xlabel, ylabel, title
+from matplotlib.pylab import figure, plot, hold, xlabel, ylabel, title
+from numpy import linspace, exp, isnan, zeros, asarray
 from truncnorm import truncnorm
 from bunch import Bunch as struct, float_array
 from dataio import loaddata
@@ -78,7 +79,7 @@ def makecc(datain, progname = default_progname, ccparams = default_ccparams, mak
 
         # Create logistic relationship 
         xvalscc = linspace(0,xupperlim,1000) # take 1000 points between 0 and user-specified max
-        yvalscc = 2*saturation / (1 + np.exp(-growthrate*xvalscc)) - saturation # calculate logistic function
+        yvalscc = 2*saturation / (1 + exp(-growthrate*xvalscc)) - saturation # calculate logistic function
 
     # ... for unit cost programs...
     else:
@@ -96,11 +97,11 @@ def makecc(datain, progname = default_progname, ccparams = default_ccparams, mak
     # Get scatter data
     if (len(coverage) == 1 and len(totalcost) > 1): 
         totalcost = float_array(totalcost)
-        totalcost = totalcost[~np.isnan(totalcost)]
+        totalcost = totalcost[~isnan(totalcost)]
         totalcost = totalcost[-1]
     elif (len(totalcost) == 1 and len(coverage) > 1):
         coverage = float_array(coverage)
-        coverage = coverage[~np.isnan(coverage)]
+        coverage = coverage[~isnan(coverage)]
         coverage = coverage[-1]
         
 
@@ -135,6 +136,7 @@ def makecosampleparams(coparams):
     muz, stdevz = (coparams[0]+coparams[1])/2, (coparams[1]-coparams[0])/4 # Mean and standard deviation calcs
     muf, stdevf = (coparams[2]+coparams[3])/2, (coparams[3]-coparams[2])/4 # Mean and standard deviation calcs
     
+    print ("coparams: %s muz: %s stdevz: %s muf: %s stdevf: %s" % (coparams, muz, stdevz, muf, stdevf))
     return muz, stdevz, muf, stdevf
 
  
@@ -203,12 +205,12 @@ def makeco(datain, progname = default_progname, effectname = default_effectname,
         coverage = D.data.costcov.cov[prognumber] # get program coverage data
 
         if (len(coverage) == 1 and len(outcome) > 1): 
-            outcome = np.asarray(outcome)
-            outcome = outcome[~np.isnan(outcome)]
+            outcome = asarray(outcome)
+            outcome = outcome[~isnan(outcome)]
             outcome = outcome[-1]
         elif (len(outcome) == 1 and len(coverage) > 1):
-            coverage = np.asarray(coverage)
-            coverage = coverage[~np.isnan(coverage)]
+            coverage = asarray(coverage)
+            coverage = coverage[~isnan(coverage)]
             coverage = coverage[-1]
 
         ## Get inputs from either GUI or spreadsheet
@@ -288,7 +290,7 @@ def ccoeqn(x, p):
     '''
     Equation defining cco curves.
     '''
-    y = (p[3]-p[2]) * ( 2*p[0] / (1 + np.exp(-p[1]*x)) - p[0]) + p[2]
+    y = (p[3]-p[2]) * ( 2*p[0] / (1 + exp(-p[1]*x)) - p[0]) + p[2]
     return y
 
 ###############################################################################
@@ -335,7 +337,7 @@ def makecco(datain, progname = default_progname, effectname = default_effectname
         return [], [], []
     else:          
         popnumber = D.data.meta.pops.short.index(popname[0]) 
-
+        print("coparams in makecco: %s" % coparams)
         ## Get inputs from either GUI... 
         if coparams: # TODO: would it be better to use a dictionary structure, so that the order doesn't have to be fixed?
             zeromin = coparams[0] # Assumptions of behaviour at zero coverage (lower bound)
@@ -366,7 +368,7 @@ def makecco(datain, progname = default_progname, effectname = default_effectname
         plotdata_co, storeparams_co = makeco(D, progname, effectname, coparams, makeplot)
 
         # Create x dataset and initialise y dataset
-        xvalscco = np.linspace(0,xupperlim,1000)
+        xvalscco = linspace(0,xupperlim,1000)
         yvalscco = zeros((1000, len(fullsample)))
         
         # Create line set
