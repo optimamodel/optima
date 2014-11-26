@@ -1,7 +1,7 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     'use strict';
 
-    module.controller('AnalysisScenariosController', function ($scope, $modal) {
+    module.controller('AnalysisScenariosController', function ($scope, $http, $modal) {
 
         $scope.projectParams = {
             name: ''
@@ -10,6 +10,22 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         $scope.scenarios = [
             { name: 'Conditions remain according to model calibration', active: true }
         ];
+
+
+        $scope.runScenariosOptions = {};
+
+        var updateGraphs = function (data) {
+ //         $scope.graphs = prepareGraphs(data);
+ //         $scope.parameters.cache.response = data;
+ //         TODO!!!
+            console.log(data);
+        };
+
+
+        $scope.runScenarios = function () {
+          $http.post('/api/analysis/scenarios/run', $scope.runScenariosOptions)
+            .success(updateGraphs);
+        };
 
 
         $scope.openAddScenarioModal = function ($event) {
