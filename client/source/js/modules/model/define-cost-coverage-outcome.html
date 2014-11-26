@@ -30,7 +30,13 @@
   </div>
 
   <div ng-if="apiData">
+    <h1>Plotdata_cc</h1>
     <div class="chart-container">
+      <div line-scatter-chart data="graphs.plotdata_cc.data" options="graphs.plotdata_cc.options" save-graph-as></div>
+    </div>
+
+    <h1>Plotdata</h1>
+    <div class="chart-container" ng-repeat="graph in graphs.plotdata">
       <div line-scatter-chart data="graph.data" options="graph.options" save-graph-as></div>
     </div>
   </div>
