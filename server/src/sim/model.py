@@ -1,4 +1,4 @@
-def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rates etc.
+def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates etc.
     """
     This function runs the model.
     
@@ -18,8 +18,8 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
     
     ## Initialize basic quantities
     S       = struct()     # Sim output structure
-    S.tvec  = options.tvec # Append time vector
-    dt      = options.dt   # Shorten dt
+    S.tvec  = opt.tvec # Append time vector
+    dt      = opt.dt   # Shorten dt
     npts    = len(S.tvec)  # Number of time points
     npops   = G.npops      # Shorten number of pops
     ncd4    = G.ncd4       # Shorten number of CD4 states
@@ -120,7 +120,7 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
         ## Calculate "effective" HIV prevalence -- taking diagnosis and treatment into account
         for pop in range(npops): # Loop over each population group
             allpeople[pop,t] = sum(people[:,pop,t]) # All people in this population group at this time point
-            if not(allpeople[pop,t]>0): raise Exception('No people in population %i at timestep %i (time %0.1f)' % (pop, t, S.tvec[t]))
+            if not(allpeople[pop,t]>0): raise Exception('No people in population %i at timestep %i (time %0.1f)' % (pop, t, S['tvec'][t]))
             effundx = sum(cd4trans * people[undx,pop,t]); # Effective number of infecious undiagnosed people
             effdx   = sum(dxfactor * (people[dx,pop,t]+people[fail,pop,t])) # ...and diagnosed/failed
             efftx   = sum(txfactor * (people[tx1,pop,t]+people[tx2,pop,t])) # ...and treated

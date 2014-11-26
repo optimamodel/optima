@@ -2,30 +2,18 @@ def runsimulation(D, startyear=2000, endyear=2030, verbose=2):
     """
     Calculate initial model estimates.
     
-    Version: 2014nov24 by cliffk
+    Version: 2014nov26 by cliffk
     """
 
     from printv import printv
     printv('Running simulation...', 1, verbose)
     dosave = False # Flag for whether or not to save
     
-    # Update options structure
-    if 'opt' not in D.keys():
-        dosave = True
-        from setoptions import setoptions
-        D.opt = setoptions(opt=D.opt, startyear=startyear, endyear=endyear)
-    
     # Convert data parameters to model parameters
     if 'M' not in D.keys():
         dosave = True
         from makemodelpars import makemodelpars
         D.M = makemodelpars(D.P, D.opt, verbose=verbose)
-    
-    # Create fitted parameters
-    if 'F' not in D.keys():
-        dosave = True
-        from makefittedpars import makefittedpars
-        D.F = makefittedpars(D.G, D.opt, verbose=verbose)
     
     # Run model
     from model import model
