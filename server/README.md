@@ -92,3 +92,33 @@ These APIs allow front-end to get current user or login a user.
   `{
 	status: "OK"
    }`
+
+Project API
+------------
+
+These APIs allow front-end to work with projects.
+
+* `/api/project/info`
+
+  Returns `401 Unauthorized` if user is not logged in. Otherwise this JSON:
+
+  `{
+	status: "OK",
+	name: "Example",
+	dataStart: 2000,
+	dataEnd: 2015,
+	projectionStartYear: 2010,
+	projectionEndYear: 2030,
+	programs: 
+	    [{"saturating": true, "short_name": "Condoms", "internal_name": "COND", "name": "Condom promotion and distribution"},
+		 ...
+		],
+	populations:
+		[{"name": "Female sex workers", "short_name": "FSW", "sexworker": true, "hetero": true, "injects": false, "client": false, "female": true, "homo": false, "internal_name": "FSW", "male": false}, 
+		 {"name": "Clients of sex workers", "short_name": "Clients", "sexworker": false, "hetero": true, "injects": false, "client": true, "female": false, "homo": false, "internal_name": "CSW", "male": true}, 
+		 {"name": "Men who have sex with men", "short_name": "MSM", "sexworker": false, "hetero": false, "injects": false, "client": false, "female": false, "homo": true, "internal_name": "MSM", "male": true},
+		 ...
+		]
+   }`
+   
+   

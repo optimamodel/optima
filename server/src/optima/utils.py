@@ -4,6 +4,8 @@ from flask import helpers, session
 from flask.ext.login import current_user
 from functools import wraps
 from flask import request, jsonify
+from dbconn import db
+from dbmodels import ProjectDb
 
 ALLOWED_EXTENSIONS=set(['txt','xlsx','xls'])
 
@@ -54,8 +56,6 @@ def project_file_exists(name, folder = PROJECTDIR):
   return os.path.exists(project_file)
 
 def project_exists_db(name):
-  from api import db
-  from dbmodels import ProjectDb
   cu = current_user
   return ProjectDb.query.filter_by(user_id=cu.id, name=name).count()>0
 
@@ -102,8 +102,6 @@ def load_model(name, as_bunch = True):
   print("load_model:%s" % name)
   model = None
   try:
-    from api import db
-    from dbmodels import ProjectDb
     cu = current_user
     proj = ProjectDb.query.filter_by(user_id=cu.id, name=name).first()
     model = proj.model
@@ -123,8 +121,7 @@ def save_model_file(name, model, folder = PROJECTDIR):
 
 def save_model_db(name, model):
   print("save_model_db %s" % name)
-  from api import db
-  from dbmodels import ProjectDb
+
   from sim.bunch import Bunch
   cu = current_user
   proj = ProjectDb.query.filter_by(user_id=cu.id, name=name).first()
@@ -146,18 +143,3 @@ def pick_params(params, data, args = {}):
     if the_value:
         args[param] = the_value
   return args
-
-def for_fe(item): #only for json
-  if isinstance(item, list):
-    return [for_fe(v) for v in item]
-  if isinstance(item, np.ndarray):
-    return [for_fe(v) for v in item.tolist()]
-  elif isinstance(item, struct):
-    return item.toDict()
-  elif isinstance(item, dict):
-    
-    return dict( (k, for_fe(v)) for k,v in item.iteritems() )
-  elif isinstance(item, float) and np.isnan(item):
-    return None
-  else:
-    return item
