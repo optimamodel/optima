@@ -1,14 +1,9 @@
-import os
-import shutil
-from flask import Flask, Blueprint, helpers, request, jsonify, session, redirect
-from werkzeug import secure_filename
-from generators.line import generatedata
+from flask import Blueprint, request, jsonify
 import json
 import traceback
-import sys
-from sim.dataio import loaddata, savedata, DATADIR, PROJECTDIR
 from sim.optimize import optimize
-from utils import loaddir, load_model, project_exists, check_project_name
+from sim.bunch import unbunchify
+from utils import load_model, project_exists, check_project_name
 from flask.ext.login import login_required
 
 """ route prefix: /api/analysis """
