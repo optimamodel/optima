@@ -157,7 +157,7 @@ Returns information on the passed project.
 """
 @project.route('/info')
 @login_required
-#@check_project_name
+@check_project_name
 def getProjectInformation():
     from api import db
     from dbmodels import ProjectDb
@@ -174,7 +174,7 @@ def getProjectInformation():
         # See if there is matching project
         proj = None
         try:
-            proj = ProjectDb.query.filter_by(user_id=cu.id, name='Example').first()
+            proj = ProjectDb.query.filter_by(user_id=cu.id, name=request.project_name).first()
         except:
             pass
             
