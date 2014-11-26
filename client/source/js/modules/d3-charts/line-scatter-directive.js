@@ -21,17 +21,29 @@ define(['./module'], function (module) {
         var svg = d3Charts.createSvg(element[0], dimensions, scope.options.margin);
 
         // Define svg groups
-        var chartGroup = svg.append("g").attr("class", "chart_group");
-        var axesGroup = svg.append("g").attr("class", "axes_group");
+        var chartGroup = svg.append('g').attr('class', 'chart_group');
+        var axesGroup = svg.append('g').attr('class', 'axes_group');
 
-        var lineChartInstance = new d3Charts.LineChart(chartGroup, '', chartSize, 100);
+        // initialize graphs instances
         var scatterChartInstance = new d3Charts.ScatterChart(chartGroup, '', chartSize, 100);
 
-        var d = scope.data;
-        var lineData = d.line;
+        var scatter = scope.data.scatter;
 
-        var calculatedLineScales = lineChartInstance.scales(lineData);
-        scatterChartInstance.scales(lineData);
+        var lineChartInstances = [];
+        var calculatedLineScales;
+
+        _(scope.data.lines).each(function (line, index) {
+          var lineChart = new d3Charts.LineChart(chartGroup, index, chartSize, 100);
+          lineChartInstances.push(lineChart);
+
+          if (index === 0) {
+            calculatedLineScales = lineChart.scales(line);
+          } else {
+            lineChart.scales(line);
+          }
+        });
+
+        scatterChartInstance.scales(scope.data.lines[0]);
 
         d3Charts.drawAxes(
           calculatedLineScales,
@@ -39,8 +51,12 @@ define(['./module'], function (module) {
           axesGroup,
           chartSize
         );
-        lineChartInstance.draw(lineData);
-        scatterChartInstance.draw(d['scatter-error']);
+
+        _(lineChartInstances).each(function (lineChart, index) {
+            lineChart.draw(scope.data.lines[index]);
+        });
+
+        scatterChartInstance.draw(scatter);
       }
     };
   });
