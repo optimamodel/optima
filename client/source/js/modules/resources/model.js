@@ -28,7 +28,7 @@ define([
           },
           getParametersF: {
             method: 'GET',
-            isArray: false,
+            isArray: true,
             params: {
               path: 'parameters',
               suffix: 'F'

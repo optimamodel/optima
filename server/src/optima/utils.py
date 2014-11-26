@@ -146,3 +146,18 @@ def pick_params(params, data, args = {}):
     if the_value:
         args[param] = the_value
   return args
+
+def for_fe(item): #only for json
+  if isinstance(item, list):
+    return [for_fe(v) for v in item]
+  if isinstance(item, np.ndarray):
+    return [for_fe(v) for v in item.tolist()]
+  elif isinstance(item, struct):
+    return item.toDict()
+  elif isinstance(item, dict):
+    
+    return dict( (k, for_fe(v)) for k,v in item.iteritems() )
+  elif isinstance(item, float) and np.isnan(item):
+    return None
+  else:
+    return item

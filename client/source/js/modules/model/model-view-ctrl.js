@@ -3,6 +3,26 @@ define(['./module', 'angular'], function (module, angular) {
 
   module.controller('ModelViewController', function ($scope, $http, Model, f, meta) {
 
+    var convertNumpyArray = function(item) {
+        if (item.np_array === undefined) {
+          parseFloat(item);
+        } else {
+          parseFloat(item.np_array[0]);
+        }
+      };
+
+    var prepareF = function (f) {
+      var F = angular.copy(f);
+
+      F.dx = _(F.dx.np_array).map(convertNumpyArray);
+      F.force = _(F.force.np_array).map(parseFloat);
+      F.init = _(F.init.np_array).map(parseFloat);
+      F.tx1 = _(F.tx1.np_array).map(convertNumpyArray);
+      F.tx2 = _(F.tx2.np_array).map(convertNumpyArray);
+      console.log("F", F);
+      return F;
+    };
+
     $scope.parameters = {
       types: {
         force: 'Force-of-infection for ',
@@ -27,9 +47,9 @@ define(['./module', 'angular'], function (module, angular) {
         ]
       },
       meta: meta,
-      f: f,
+      f: prepareF(f[0]),
       cache: {
-        f: angular.copy(f),
+        f: angular.copy(prepareF(f[0])),
         response: null
       }
     };
@@ -167,18 +187,6 @@ define(['./module', 'angular'], function (module, angular) {
       });
 
       return graphs;
-    };
-
-    var prepareF = function (f) {
-      var F = angular.copy(f);
-
-      F.dx = _(F.dx).map(parseFloat);
-      F.force = _(F.force).map(parseFloat);
-      F.init = _(F.init).map(parseFloat);
-      F.tx1 = _(F.tx1).map(parseFloat);
-      F.tx2 = _(F.tx2).map(parseFloat);
-
-      return F;
     };
 
     var updateGraphs = function (data) {
