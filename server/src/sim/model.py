@@ -1,8 +1,8 @@
-def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rates etc.
+def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates etc.
     """
     This function runs the model.
     
-    Version: 2014nov25 by cliffk
+    Version: 2014nov26 by cliffk
     """
 
     ###############################################################################
@@ -13,12 +13,13 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
     from numpy import array, zeros, exp, maximum # For creating arrays
     from bunch import Bunch as struct # Replicate Matlab-like structure behavior
     from printv import printv
+    from math import pow as mpow
     printv('Running model...', 1, verbose)
     
     ## Initialize basic quantities
     S       = struct()     # Sim output structure
-    S.tvec  = options.tvec # Append time vector
-    dt      = options.dt   # Shorten dt
+    S.tvec  = opt.tvec # Append time vector
+    dt      = opt.dt   # Shorten dt
     npts    = len(S.tvec)  # Number of time points
     npops   = G.npops      # Shorten number of pops
     ncd4    = G.ncd4       # Shorten number of CD4 states
@@ -44,7 +45,7 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
     
     ## Set initial epidemic conditions 
     people[0, :, 0]  = M.popsize[:,0] * (1-M.hivprev) # Set initial susceptible population
-    people[1:, :, 0] = M.popsize[:,0] * M.hivprev * F.init # Set initial infected population -- # TODO: equilibrate to determine F.init
+    people[1:, :, 0] = M.popsize[:,0] * M.hivprev * array(F.init) # Set initial infected population -- # TODO: equilibrate to determine F.init
     
     ## Convert a health state structure to an array
     def h2a(parstruct):
@@ -110,6 +111,7 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
     Mtx2 = M.tx2
     failfirst = M.const.fail.first
     failsecond = M.const.fail.second
+    Fforce = array(F.force)
     
     # Loop over time
     for t in range(npts): # Skip the last timestep for people since we don't need to know what happens after that
@@ -118,7 +120,7 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
         ## Calculate "effective" HIV prevalence -- taking diagnosis and treatment into account
         for pop in range(npops): # Loop over each population group
             allpeople[pop,t] = sum(people[:,pop,t]) # All people in this population group at this time point
-            if not(allpeople[pop,t]>0): raise Exception('No people in population %i at timestep %i (time %0.1f)' % (pop, t, S.tvec[t]))
+            if not(allpeople[pop,t]>0): raise Exception('No people in population %i at timestep %i (time %0.1f)' % (pop, t, S['tvec'][t]))
             effundx = sum(cd4trans * people[undx,pop,t]); # Effective number of infecious undiagnosed people
             effdx   = sum(dxfactor * (people[dx,pop,t]+people[fail,pop,t])) # ...and diagnosed/failed
             efftx   = sum(txfactor * (people[tx1,pop,t]+people[tx2,pop,t])) # ...and treated
@@ -154,8 +156,8 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
                         numactsF = totalacts[act][popF,popM,t]; # Number of acts per person per year (receptive partner)
                         condomprob = (condom[act][popM,t] + condom[act][popF,t]) / 2 # Reconcile condom probability
                         condomeff = 1 - condomprob*effcondom # Effect of condom use
-                        forceinfM = 1 - (1-transM*circeff*stieffM) ** (dt*numactsM*condomeff*effhivprev[popF]) # The chance of "female" infecting "male" -- # TODO: Implement PrEP etc here
-                        forceinfF = 1 - (1-transF*circeff*stieffF) ** (dt*numactsF*condomeff*effhivprev[popM]) # The chance of "male" infecting "female"
+                        forceinfM = 1 - mpow((1-transM*circeff*stieffM), (dt*numactsM*condomeff*effhivprev[popF])) # The chance of "female" infecting "male" -- # TODO: Implement PrEP etc here
+                        forceinfF = 1 - mpow((1-transF*circeff*stieffF), (dt*numactsF*condomeff*effhivprev[popM])) # The chance of "male" infecting "female"
                         forceinfvec[popM] = 1 - (1-forceinfvec[popM]) * (1-forceinfM) # Calculate the new "male" forceinf, ensuring that it never gets above 1
                         forceinfvec[popF] = 1 - (1-forceinfvec[popF]) * (1-forceinfF) # Calculate the new "female" forceinf, ensuring that it never gets above 1
                         if not(all(forceinfvec>=0)): raise Exception('Sexual force-of-infection is invalid')
@@ -170,8 +172,8 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
                 if pshipsinj[pop1,pop2]>0: # Ignore if this isn't a valid injecting partnership
                     numacts1 = sharing[t] * totalacts['inj'][pop1,pop2,t] / 2 # Number of acts per person per year -- /2 since otherwise double-count
                     numacts2 = sharing[t] * totalacts['inj'][pop2,pop1,t] / 2 # Number of acts per person per year
-                    forceinf1 = 1 - (1-transinj) ** (dt*numacts1*effhivprev[pop2]) # The chance of "2" infecting "1"
-                    forceinf2 = 1 - (1-transinj) ** (dt*numacts2*effhivprev[pop1]) # The chance of "1" infecting "2"
+                    forceinf1 = 1 - mpow((1-transinj), (dt*numacts1*effhivprev[pop2])) # The chance of "2" infecting "1"
+                    forceinf2 = 1 - mpow((1-transinj), (dt*numacts2*effhivprev[pop1])) # The chance of "1" infecting "2"
                     forceinfvec[pop1] = 1 - (1-forceinfvec[pop1]) * (1-forceinf1) # Calculate the new "male" forceinf, ensuring that it never gets above 1
                     forceinfvec[pop2] = 1 - (1-forceinfvec[pop2]) * (1-forceinf2) # Calculate the new "male" forceinf, ensuring that it never gets above 1
                     if not(all(forceinfvec>=0)): raise Exception('Injecting force-of-infection is invalid')
@@ -188,7 +190,7 @@ def model(G, M, F, options, verbose=2): # extraoutput is to calculate death rate
         ## Set up
     
         # New infections -- through pre-calculated force of infection
-        newinfections = forceinfvec * F['force'] * people[0,:,t] # Will be useful to define this way when calculating 'cost per new infection'      
+        newinfections = forceinfvec * Fforce * people[0,:,t] # Will be useful to define this way when calculating 'cost per new infection'      
     
         # Initalise / reset arrays
         dU = []; dD = []; dT1 = []; dF = []; dT2 = [];  # Reset differences

@@ -1,6 +1,7 @@
 #!/bin/env python
 # -*- coding: utf-8 -*-
-from api import app, db, init_db
+from api import app, init_db
+from optima.dbconn import db
 import unittest
 
 class OptimaTestCase(unittest.TestCase):
@@ -23,7 +24,7 @@ class OptimaTestCase(unittest.TestCase):
                 response = self.test_client.get('/api/path')
                 self.assertEqual(response.status_code, 200)
 
-    
+
     """
 
     def create_user(self):

@@ -1,7 +1,7 @@
 """
 Creates and updates cost-coverage curves and coverage-outcome curves
     
-Version: 2014nov19
+Version: 2014nov16 by cliffk
 """
 ###############################################################################
 ## Set up
@@ -25,7 +25,6 @@ default_effectname = [['sex', 'condomcas'], [u'MSM'], [[0.3, 0.5], [0.7, 0.9]]]
 
 ###############################################################################
 ## Make cost coverage curve
-
 #    Input types:
 #    1. datain: EITHER a bunch (if project data already loaded) OR a string specifying the project name (which will then be load a bunch)
 #    2. progname: string. Needs to be one of the keys of D.programs

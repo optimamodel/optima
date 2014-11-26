@@ -1,5 +1,5 @@
-from api import db
 from sqlalchemy.dialects.postgresql import JSON
+from dbconn import db
 
 class UserDb(db.Model):
     __tablename__ = 'users'

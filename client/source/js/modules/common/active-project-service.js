@@ -14,6 +14,9 @@ define([
           project.name = name;
           $http.defaults.headers.common.project = name;
           localStorage.project = name;
+        },
+        isSet: function() {
+          return (project.name !== null && project.name !== undefined);
         }
       };
 

@@ -3,6 +3,19 @@ define(['./module', 'angular'], function (module, angular) {
 
   module.controller('ModelViewController', function ($scope, $http, Model, f, meta) {
 
+    var prepareF = function (f) {
+      var F = angular.copy(f);
+
+      F.dx = _(F.dx).map(parseFloat);
+      F.force = _(F.force).map(parseFloat);
+      F.init = _(F.init).map(parseFloat);
+      F.tx1 = _(F.tx1).map(parseFloat);
+      F.tx2 = _(F.tx2).map(parseFloat);
+      return F;
+    };
+
+    var transformedF = prepareF(f[0]);
+
     $scope.parameters = {
       types: {
         force: 'Force-of-infection for ',
@@ -27,9 +40,9 @@ define(['./module', 'angular'], function (module, angular) {
         ]
       },
       meta: meta,
-      f: f,
+      f: transformedF,
       cache: {
-        f: angular.copy(f),
+        f: angular.copy(transformedF),
         response: null
       }
     };
@@ -80,7 +93,10 @@ define(['./module', 'angular'], function (module, angular) {
   };
 
     $scope.doneEditingParameter = function () {
-      console.log("I'm editing callback. Do what you have to do with me :(");
+      Model.saveCalibrateManual({
+        F: prepareF($scope.parameters.f),
+        dosave: false
+      }, updateGraphs);
     };
 
     /*
@@ -167,18 +183,6 @@ define(['./module', 'angular'], function (module, angular) {
       });
 
       return graphs;
-    };
-
-    var prepareF = function (f) {
-      var F = angular.copy(f);
-
-      F.dx = _(F.dx).map(parseFloat);
-      F.force = _(F.force).map(parseFloat);
-      F.init = _(F.init).map(parseFloat);
-      F.tx1 = _(F.tx1).map(parseFloat);
-      F.tx2 = _(F.tx2).map(parseFloat);
-
-      return F;
     };
 
     var updateGraphs = function (data) {

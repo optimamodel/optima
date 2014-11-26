@@ -5,18 +5,42 @@
     <table class="table table-bordered table-hover table-striped" style="width: auto">
       <thead>
       <th>Name</th>
+      <th>Populations</th>
+      <th>Programs</th>
+      <th>Data Start</th>
+      <th>Data End</th>
+      <th>Projection Start</th>
+      <th>Projection End</th>
       <th colspan="2">Actions</th>
       </thead>
       <tbody>
       <tr ng-repeat="project in projects track by $index">
         <td>
-          {{ project }}
+          {{ project.name }}
         </td>
         <td>
-          <button class="btn __white" ng-click="open(project)">open</button>
+          {{ project.populations.length }}
         </td>
         <td>
-          <button class="btn __red" ng-click="delete(project)">remove</button>
+          {{ project.programs.length }}
+        </td>
+        <td>
+          {{ project.dataStart }}
+        </td>
+        <td>
+          {{ project.dataEnd }}
+        </td>
+        <td>
+          {{ project.projectionStartYear }}
+        </td>
+        <td>
+          {{ project.projectionEndYear }}
+        </td>
+        <td>
+          <button class="btn __white" ng-click="open(project.name)">open</button>
+        </td>
+        <td>
+          <button class="btn __red" ng-click="delete(project.name, $index)">remove</button>
         </td>
       </tr>
       </tbody>
