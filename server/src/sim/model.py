@@ -1,20 +1,20 @@
+ ## Imports
+from numpy import array, zeros, exp, maximum # For creating arrays
+from bunch import Bunch as struct # Replicate Matlab-like structure behavior
+from printv import printv
+from math import pow as mpow
+
 def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates etc.
     """
     This function runs the model.
     
     Version: 2014nov26 by cliffk
     """
+    printv('Running model...', 1, verbose)
 
     ###############################################################################
     ## Setup
     ###############################################################################
-
-    ## Imports
-    from numpy import array, zeros, exp, maximum # For creating arrays
-    from bunch import Bunch as struct # Replicate Matlab-like structure behavior
-    from printv import printv
-    from math import pow as mpow
-    printv('Running model...', 1, verbose)
     
     ## Initialize basic quantities
     S       = struct()     # Sim output structure
@@ -45,30 +45,10 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
     ## Set initial epidemic conditions 
     people[:,:,0] = equilibrate(G, M, array(F.init)) # Run equilibration
     
-    ## Convert a health state structure to an array
-    def h2a(parstruct):
-        healthstates = ['acute','gt500','gt350','gt200','aids'] # TODO, don't redefine these or hard-code them
-        outarray = []
-        for state in healthstates:
-            try: 
-                outarray.append(parstruct[state])
-            except: 
-                printv('State %s not found' % state, 10, verbose)
-        return array(outarray)
-    
     ## Calculate other things outside the loop
     cd4trans = h2a(M.const.cd4trans) # Convert a dictionary to an array
     dxfactor = M.const.eff.dx * cd4trans # Include diagnosis efficacy
     txfactor = M.const.eff.tx * dxfactor # And treatment efficacy
-    
-    ## Calculate fitted time series from fitted parameters
-    def fit2time(pars, tvec):
-        A = pars[0]
-        B = pars[1]
-        C = pars[2]
-        D = pars[3]
-        timeseries = (B-A)/(1+exp(-(tvec-C)/D))+A;
-        return timeseries
     
     ## Metaparameters to get nice dx and tx fits
     dxtime  = fit2time(F.dx,  S.tvec)
@@ -338,6 +318,38 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
 
 
 
+
+
+###############################################################################
+## Helper functions
+###############################################################################
+
+
+
+def h2a(parstruct, verbose=2):
+    """ Convert a health state structure to an array """
+    healthstates = ['acute','gt500','gt350','gt200','aids'] # TODO, don't redefine these or hard-code them
+    outarray = []
+    for state in healthstates:
+        try: 
+            outarray.append(parstruct[state])
+        except: 
+            printv('State %s not found' % state, 10, verbose)
+    return array(outarray)
+
+
+
+def fit2time(pars, tvec):
+    """ Calculate fitted time series from fitted parameters """
+    A = pars[0]
+    B = pars[1]
+    C = pars[2]
+    D = pars[3]
+    timeseries = (B-A)/(1+exp(-(tvec-C)/D))+A;
+    return timeseries
+
+
+
 def equilibrate(G, M, Finit):
     """
     Calculate the quilibrium point by estimating the ratio of input and output 
@@ -351,32 +363,56 @@ def equilibrate(G, M, Finit):
     
     Version: 2014nov26
     """
-    from numpy import zeros
+    from numpy import zeros, hstack, inf
     
     # Set parameters
     prevtoforceinf = 0.1 # Assume force-of-infection is proportional to prevalence -- 0.1 means that if prevalence is 10%, annual force-of-infection is 1%
-    treatmentdur = 10 # Average duration of treatment in years
+    efftreatmentrate = 0.1 # Inverse of average duration of treatment in years...I think
+    failratio = 0.3 # Put fewer people than expected on failure because ART is relatively new...or something
     
     # Shorten key variables
     hivprev = M.hivprev
-    npops = G.npops
-    nstates = G.nstates
-    initpeople = zeros((nstates,npops))
+    initpeople = zeros((G['nstates'],G['npops']))
     
     # Can calculate equilibrium for each population separately
-    for p in range(npops):
+    for p in range(G['npops']):
         # Set up basic calculations
         uninfected = M['popsize'][p,0] * (1-hivprev[p]) # Set initial susceptible population -- easy peasy!
         allinfected = M['popsize'][:,0] * hivprev[:] * Finit[:] # Set initial infected population
         popinfected = allinfected[p]
+        
+        # Treatment & treatment failure
         fractotal =  popinfected / sum(allinfected) # Fractional total of infected people in this population
-        ontreat1 = M['tx1'][0] * fractotal
-        ontreat2 = M['tx2'][0] * fractotal
+        treatment1 = M['tx1'][0] * fractotal # Number of people on 1st-line treatment
+        treatment2 = M['tx2'][0] * fractotal # Number of people on 2nd-line treatment
+        treatfail = treatment1 * M['const']['fail']['first'] * efftreatmentrate * failratio # Number of people with treatment failure -- # TODO: check
         
-        initpeople[0, p] = uninfected
-        initpeople[1, p] = popinfected
+        # Diagnosed & undiagnosed
+        nevertreated = popinfected - treatment1 - treatment2 - treatfail
+        assumedforceinf = hivprev[p]*prevtoforceinf # To calculate ratio of people in the initial category, need to estimate the force-of-infection
+        undxdxrates = assumedforceinf + M['hivtest'][p,0] # Ratio of undiagnosed to diagnosed
+        undiagnosed = nevertreated * assumedforceinf / undxdxrates     
+        diagnosed = nevertreated * M['hivtest'][p,0] / undxdxrates
         
+        # Set rates within
+        progratios = hstack([h2a(M['const']['prog']), M['const']['death']['aids']]) # For last rate, use AIDS death as dominant rate
+        progratios = (1/progratios)  / sum(1/progratios) # Normalize
+        recovratios = hstack([inf, h2a(M['const']['recov']), efftreatmentrate]) # Not sure if this is right...inf since no progression to acute, treatmentrate since main entry here # TODO check
+        recovratios = (1/recovratios)  / sum(1/recovratios) # Normalize
         
-        assumedforceinf = hivprev*prevtoforceinf # To calculate ratio of people in the initial category, need to estimate the force-of-infection
+        # Final calculations
+        undiagnosed *= progratios
+        diagnosed *= progratios
+        treatment1 *= recovratios
+        treatfail *= progratios
+        treatment2 *= recovratios
+        
+        # Populated equilibrated array
+        initpeople[G['sus'], p] = uninfected
+        initpeople[G['undx'], p] = undiagnosed
+        initpeople[G['dx'], p] = diagnosed
+        initpeople[G['tx1'], p] = treatment1
+        initpeople[G['fail'], p] = treatfail
+        initpeople[G['tx2'], p] = treatment2
         
     return initpeople
