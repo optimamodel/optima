@@ -25,17 +25,12 @@ def runscenarios(D, scenariolist=None, verbose=2):
     # Convert the list of scenarios to the actual parameters to use in the model
     scenariopars = makescenarios(D, scenariolist, verbose=verbose)
     
-    M = []
-    for scen in range(nscenarios):
-        M.append(deepcopy(D.M)) # Make a copy of the model parameters
-        M[scen].update(scenariopars[scen].M) # Update with selected scenario model parameters
-    
     # Run scenarios
     D.scens = [struct() for s in range(nscenarios)]
     for scen in range(nscenarios):
         D.scens[scen].scenario = deepcopy(scenariolist[scen]) # Copy scenario data
         D.scens[scen].label = scenariolist[scen].name # Copy name
-        D.scens[scen].M = scenariopars[scen].M
+        D.scens[scen].M = deepcopy(scenariopars[scen].M)
         D.scens[scen].S = model(D.G, D.scens[scen].M, D.F[0], D.opt, verbose=verbose)
         printv('Scenario: %i/%i' % (scen+1, nscenarios), 2, verbose)
     
@@ -56,7 +51,6 @@ def runscenarios(D, scenariolist=None, verbose=2):
 
 def makescenarios(D, scenariolist, verbose=2):
     """ Convert a list of scenario parameters into a list of changes to model parameters """
-    
     nscenarios = len(scenariolist)
     scenariopars = [struct() for s in range(nscenarios)]
     for scen in range(nscenarios):
@@ -71,13 +65,13 @@ def makescenarios(D, scenariolist, verbose=2):
             finalindex = find(D.opt.tvec, thesepars.endyear)
             initialvalue = newdata[initialindex] if thesepars.startval == -1 else thesepars.startval 
             finalvalue = newdata[finalindex] if thesepars.endval == -1 else thesepars.endval
-            npts = finalindex-initialindex+1
+            npts = finalindex-initialindex
             newvalues = linspace(initialvalue, finalvalue, npts)
-            newdata[initialindex:finalindex+1] = newvalues
+            newdata[initialindex:finalindex] = newvalues
+            newdata[finalindex:] = newvalues[-1] # Fill in the rest of the array with the last value
             if ndim(data)>1: data[thesepars.pops] = newdata # If it's multidimensional, only reset this one population
             else: data = newdata # Otherwise, reset the whole thing
             setnested(scenariopars[scen].M, thesepars.names, data)
-
                 
     return scenariopars
 
@@ -93,36 +87,36 @@ def defaultscenarios(D, verbose=2):
     scenariolist[0].name = 'Current conditions'
     scenariolist[0].pars = [] # No changes
     
-    scenariolist[1].name = '100% condom use in KAPs'
+    scenariolist[1].name = '99% condom use in KAPs'
     scenariolist[1].pars = [struct() for s in range(4)]
     # MSM regular condom use
     scenariolist[1].pars[0].names = ['condom','reg']
     scenariolist[1].pars[0].pops = 0
-    scenariolist[1].pars[0].startyear = 2010
+    scenariolist[1].pars[0].startyear = 2000
     scenariolist[1].pars[0].endyear = 2015
-    scenariolist[1].pars[0].startval = -1
-    scenariolist[1].pars[0].endval = 1
+    scenariolist[1].pars[0].startval = 0.99
+    scenariolist[1].pars[0].endval = 0.99
     # MSM casual condom use
     scenariolist[1].pars[1].names = ['condom','cas']
     scenariolist[1].pars[1].pops = 0
-    scenariolist[1].pars[1].startyear = 2010
+    scenariolist[1].pars[1].startyear = 2000
     scenariolist[1].pars[1].endyear = 2015
-    scenariolist[1].pars[1].startval = -1
-    scenariolist[1].pars[1].endval = 1
+    scenariolist[1].pars[1].startval = 0.99
+    scenariolist[1].pars[1].endval = 0.99
     # FSW commercial condom use
     scenariolist[1].pars[2].names = ['condom','com']
     scenariolist[1].pars[2].pops = 1
-    scenariolist[1].pars[2].startyear = 2010
+    scenariolist[1].pars[2].startyear = 2000
     scenariolist[1].pars[2].endyear = 2015
-    scenariolist[1].pars[2].startval = -1
-    scenariolist[1].pars[2].endval = 1
+    scenariolist[1].pars[2].startval = 0.99
+    scenariolist[1].pars[2].endval = 0.99
     # Client commercial condom use
     scenariolist[1].pars[3].names = ['condom','com']
     scenariolist[1].pars[3].pops = 5
-    scenariolist[1].pars[3].startyear = 2010
+    scenariolist[1].pars[3].startyear = 2000
     scenariolist[1].pars[3].endyear = 2015
-    scenariolist[1].pars[3].startval = -1
-    scenariolist[1].pars[3].endval = 1
+    scenariolist[1].pars[3].startval = 0.99
+    scenariolist[1].pars[3].endval = 0.99
     
     return scenariolist
 
