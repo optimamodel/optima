@@ -313,6 +313,7 @@ def makecco(D=None, progname = default_progname, effectname = default_effectname
         raise Exception('Please select one of the following programs %s' % D.programs.keys())
     # Check that the selected program is in the program list 
     if effectname not in D.programs[progname]:
+        print("Effect %s not in programs %s" % (effectname, D.programs[progname]))
         raise Exception('Please select one of the following effects %s' % D.programs[progname])
 
     # Extract info from data structure
@@ -454,17 +455,18 @@ def plotallcurves(D=None, progname=default_progname, ccparams=default_ccparams, 
 
     ## Initialise storage of outputs   
     plotdata_co = {}
-    plotdata = {}         
+    plotdata = {}    
+    effectnames = {}     
 
     # Loop over behavioural effects
     for effectname in D.programs[progname]:
 
-#        popname = effectname[1]
+        #popname = effectname[1]
 
         # Only going to make cost-outcome curves for non-saturating programs (#TODO check this is ok)
         if not D.data.meta.progs.saturating[prognumber]:
             if len(effectname) == 3: # There's no existing info here, append
-               effectname.append(storeparams_cc)
+                effectname.append(storeparams_cc)
             else:
                 effectname[3] = storeparams_cc # There is existing info here, overwrite
 
@@ -472,6 +474,7 @@ def plotallcurves(D=None, progname=default_progname, ccparams=default_ccparams, 
 
             # Store outputs
             effectnumber = D.programs[progname].index(effectname)    
+            effectnames[effectnumber] = effectname
             plotdata[effectnumber], plotdata_co[effectnumber], storeparams = makecco(D=D, progname=progname, effectname=effectname, ccparams=ccparams, coparams=coparams, makeplot=makeplot, verbose=verbose)
 
             ## Store outputs
@@ -482,7 +485,7 @@ def plotallcurves(D=None, progname=default_progname, ccparams=default_ccparams, 
             D.programs[progname][effectnumber] = effectname
             
 
-    return plotdata, plotdata_co, plotdata_cc, D
+    return plotdata, plotdata_co, plotdata_cc, effectnames, D
       
 ## Example of use
 #plotdata_cco, plotdata_co, plotdata_cc, D = plotallcurves(D)
