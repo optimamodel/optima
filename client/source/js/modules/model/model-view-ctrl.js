@@ -65,7 +65,7 @@ define(['./module', 'angular'], function (module, angular) {
 
     // to store years from UI
     $scope.simulationOptions = {};
-	$scope.graphs = [];
+    $scope.graphs = [];
 
     var linescatteroptions = {
       height: 250,
@@ -205,49 +205,49 @@ define(['./module', 'angular'], function (module, angular) {
       $http.post('/api/model/view', $scope.simulationOptions)
         .success(updateGraphs);
     };
-	
+
 	var timer;
     $scope.startAutoCalibration = function () {
       $http.post('/api/model/calibrate/auto', $scope.simulationOptions)
         .success(updateGraphs);
-	
-	  // Keep polling for updated values after every 5 seconds till we get an error.
-	  // Error indicates that the model is not calibrating anymore.
-	  timer = $interval( function() {
-        $http.get('/api/model/working')
+
+      // Keep polling for updated values after every 5 seconds till we get an error.
+      // Error indicates that the model is not calibrating anymore.
+      timer = $interval(function() {
+      $http.get('/api/model/working')
         .success(function(data, status, headers, config) {
           if (data.status !== undefined && data.status == 'OK') {
             if ( angular.isDefined( timer ) ) {
                 $interval.cancel(timer);
                 timer = undefined;
-            }            
+            }
           }
         })
-		    .error( function(data, status, headers, config) {
-			  if ( angular.isDefined( timer ) ) {
-			  	$interval.cancel(timer);
-			  	timer = undefined;
-			  }
-		  });
-	  }, 5000, 0, false );
+        .error(function(data, status, headers, config) {
+          if (angular.isDefined( timer )) {
+              $interval.cancel(timer);
+              timer = undefined;
+          }
+        });
+      }, 5000, 0, false );
     };
-	
+
     $scope.stopAutoCalibration = function () {
       $http.get('/api/model/calibrate/stop')
-        .success(function( data ) { 
-		  // Cancel timer
-		  if ( angular.isDefined( timer ) ) {
-		  	$interval.cancel(timer);
-		  	timer = undefined;
-		  }
-		});
+        .success(function(data) {
+          // Cancel timer
+          if ( angular.isDefined( timer ) ) {
+            $interval.cancel(timer);
+            timer = undefined;
+          }
+        });
     };
-	
+
     $scope.saveCalibration = function () {
       $http.post('/api/model/calibrate/save')
         .success(updateGraphs);
     };
-	
+
     $scope.revertCalibration = function () {
       $http.post('/api/model/calibrate/revert')
         .success(updateGraphs);
