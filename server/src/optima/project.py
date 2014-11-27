@@ -93,18 +93,20 @@ def createProject(project_name):
             proj.econ_datastart = econ_datastart
             proj.econ_dataend = econ_dataend    
             proj.programs = programs 
-            proj.populations = populations  
+            proj.populations = populations
+            print('Updating existing project %s' % proj.name)
         else:
             # create new project
             proj = ProjectDb(name, cu.id, datastart, dataend, econ_datastart, econ_dataend, programs, populations)
-        
-        # Save to db
+            print('Creating new project: %s' % proj.name)
 
     #    makeproject_args = dict(makeproject_args.items() + data.items())
     print(makeproject_args)
 
     D = makeproject(**makeproject_args) # makeproject is supposed to return the name of the existing file...
     proj.model = D.toDict()
+
+    # Save to db
     db.session.add(proj)
     db.session.commit()
     new_project_template = D.G.workbookname

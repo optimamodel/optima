@@ -3,10 +3,13 @@ define(['./module', 'd3', 'd3-box'], function (module, d3) {
 
   module.service('d3Charts', function () {
 
-    function LineChart(chart, suffix, chartSize, transitionTimeout) {
+    // available colors, see .line in _chart.scss
+    var colors = [ '__orange', '__light-orange', '__violet', '__green', '__light-green', '__red', '__gray' ];
+
+    function LineChart(chart, lineIndex, chartSize, transitionTimeout) {
       var xScale, yScale;
 
-      var className = 'line_chart_path' + suffix;
+      var uniqClassName = 'line' + lineIndex;
 
       this.scales = function (dataset) {
         var xExtent = d3.extent(dataset, function (d) {
@@ -34,7 +37,7 @@ define(['./module', 'd3', 'd3-box'], function (module, d3) {
 
       function enter(dataset) {
         //draws path
-        if (chart.select('path.' + className).empty()) {
+        if (chart.select('path.' + uniqClassName).empty()) {
           var line = d3.svg.line()
             .interpolate('basis')
             .x(function (d) {
@@ -46,7 +49,7 @@ define(['./module', 'd3', 'd3-box'], function (module, d3) {
 
           chart.append('path')
             .attr('d', line(dataset))
-            .attr('class', className)
+            .attr('class', 'line ' + colors[lineIndex] + ' ' + uniqClassName)
             .attr('opacity', 0)
             .transition()
             .duration(transitionTimeout)
@@ -55,30 +58,6 @@ define(['./module', 'd3', 'd3-box'], function (module, d3) {
       }
 
       function transition(dataset) {
-        //update circles
-        chart.selectAll('circle.line_chart_circle')
-          .data(dataset)
-          .transition()
-          .duration(transitionTimeout)
-          .each('start', function () {
-            d3.select(this)
-              .attr('class', 'line_chart_circle_transition')
-              .attr('r', 6);
-          })
-          .attr('cx', function (d) {
-            return xScale(d[0]);
-          })
-          .attr('cy', function (d) {
-            return yScale(d[1]);
-          })
-          .each('end', function () {
-            d3.select(this)
-              .transition()
-              .duration(1000)
-              .attr('class', className)
-              .attr('r', 4);
-          });
-
         //update path
         var line = d3.svg.line()
           .x(function (d) {
@@ -87,24 +66,15 @@ define(['./module', 'd3', 'd3-box'], function (module, d3) {
           .y(function (d) {
             return yScale(d[1]);
           });
-        chart.select('path.' + className)
+        chart.select('path.' + uniqClassName)
           .transition()
           .duration(transitionTimeout)
           .attr('d', line(dataset));
       }
 
       function exit(dataset) {
-        //removes circles
-        chart.selectAll('circle.line_chart_circle')
-          .data(dataset)
-          .exit()
-          .transition()
-          .duration(transitionTimeout)
-          .attr('r', 0)
-          .remove();
-
         //removes path
-        chart.select('path.' + className)
+        chart.select('path.' + uniqClassName)
           .data(dataset)
           .exit()
           .transition()
