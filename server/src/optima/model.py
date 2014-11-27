@@ -242,6 +242,7 @@ def doCostCoverageEffect():
             args['coparams'] = []
         if not args.get('effectname'):
             args['effectname'] = default_effectname
+        args['effectname'] = args['effectname'][:3]
         plotdata, plotdata_co, storeparams = makecco(**args)
     except Exception, err:
         var = traceback.format_exc()
