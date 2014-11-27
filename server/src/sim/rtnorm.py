@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 This is a python implementation of the fast algorithm developed by
 Vincent Mazet and Nicolas Chopin (see
@@ -13,11 +12,11 @@ Version: 2014nov26 by Cliff Kerr (removed SciPy dependency)
 
 def erf(arr):
    """ Replicating SciPy erf function using math erf function to remove SciPy dependency """
-   from numpy import zeros, nditer, shape, zeros
-   import math
-   output = array(arr)
-   for x in nditer(output, op_flags=['readwrite']):
-      x = erf(x)
+   from numpy import nditer # Loop over N-dimensional arrays
+   import math # For erf function in math
+   output = array(arr) # Copy input array
+   for x in nditer(output, op_flags=['readwrite']): # Loop over each element
+      x = math.erf(x) # Calculate the erf for this value
    return output
 
 
@@ -25,7 +24,7 @@ from numpy.random import uniform as rand, normal as randn, randint as randi
 from numpy import sqrt, pi, exp, log, floor, array
 
 def rtnorm(a, b, mu=0., sigma=1., size=1, probabilities=False):
-    r"""
+    """
     Pseudorandom numbers from a truncated Gaussian distribution.
  
     X = rtnorm(a, b) returns a pseudorandom variable generated from a normal
@@ -43,7 +42,7 @@ def rtnorm(a, b, mu=0., sigma=1., size=1, probabilities=False):
     N. Chopin, "Fast simulation of truncated Gaussian distributions", Stat
     Comput (2011) 21:275-288
  
-    Copyright (C) 2012 Vincent Mazet (LSIIT, CNRS/Université de Strasbourg),
+    Copyright (C) 2012 Vincent Mazet (LSIIT, CNRS/Universite de Strasbourg),
     Version 2012-07-04, vincent.mazet@unistra.fr
 
     08/12/2013:
@@ -68,8 +67,8 @@ def rtnorm(a, b, mu=0., sigma=1., size=1, probabilities=False):
     GNU General Public License for more details. You should have received a
     copy of the GNU General Public License along with this program; if not,
     see http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt.
-    
     """
+    
     # Ensure these are floats for proper division values later on.
     mu = float(mu)
     sigma = float(sigma)
