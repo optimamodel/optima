@@ -7,7 +7,7 @@ from sim.autofit import autofit
 from sim.bunch import bunchify
 from sim.runsimulation import runsimulation
 from sim.makeccocs import makecco, plotallcurves
-from utils import load_model, save_model, save_working_model, save_working_model_as_default, revert_working_model_to_default, project_exists, pick_params, check_project_name, for_fe, set_working_model_calibration
+from utils import load_model, save_model, save_working_model, save_working_model_as_default, revert_working_model_to_default, project_exists, pick_params, check_project_name, for_fe, set_working_model_calibration, is_model_calibrating
 from flask.ext.login import login_required
 
 """ route prefix: /api/model """
@@ -54,12 +54,11 @@ def doAutoCalibration():
             timelimit = int(timelimit) / 5
             args["timelimit"] = 5
         
-        # We are going to start calibrating
-        set_working_model_calibration(project_name, True)
-        
         # Do calculations 5 seconds at a time and then save them
         # to db.
         for i in range(0, timelimit):
+            # We are still calibrating
+            set_working_model_calibration(project_name, True)
             D = autofit(D, **args)
             D_dict = D.toDict()
             save_working_model(project_name, D_dict)
@@ -169,10 +168,14 @@ Returns the working model of project.
 @login_required
 @check_project_name
 def getWorkingModel():
-    D = load_model(request.project_name, working_model = True)
-    D_dict = D.toDict()
-    return jsonify(D_dict.get('plot',{}).get('E',{}))
-
+    # Make sure model is calibrating
+    if is_model_calibrating(request.project_name):
+        D = load_model(request.project_name, working_model = True)
+        D_dict = D.toDict()
+        result = jsonify(D_dict.get('plot',{}).get('E',{}))
+    else:
+        result = {status: "NOK"}
+    return result
 
 """
 Returns the parameters of the given model.
@@ -184,7 +187,6 @@ def getModel():
     D = load_model(request.project_name)
     result = D.toDict()
     return jsonify(result)
-
 
 """
 Returns the parameters of the given model in the given group.
