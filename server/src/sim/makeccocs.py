@@ -15,7 +15,7 @@ from bunch import Bunch as struct, float_array
 from dataio import loaddata
 
 ## Set defaults for testing
-default_progname = u'FSW'
+default_progname = u'NSP'
 default_ccparams = [0.9, 0.2, 800000.0, 7e6]
 default_coparams = []
 default_makeplot = 1
@@ -36,7 +36,7 @@ default_effectname = [['sex', 'condomcas'], [u'MSM'], [[0.3, 0.5], [0.7, 0.9]]]
 #            ccparams(3) = desired upper x limit
 
 #    Output types:
-#    1. plotdata
+#    1. plotdata, storeparams
 
 ###############################################################################
 def makecc(datain, progname = default_progname, ccparams = default_ccparams, makeplot = default_makeplot):
@@ -198,10 +198,14 @@ def makeco(datain, progname = default_progname, effectname = default_effectname,
     popname = effectname[1]
         
     ## Only going to make cost-outcome curves if a program affects a SPECIFIC population -- otherwise will just make cost-coverage curves
-    if popname[0] not in D.data.meta.pops.code:
+    if not D.data.meta.progs.saturating[prognumber]:
+#    if popname[0] not in D.data.meta.pops.code:
         return [], D
     else:
-        popnumber = D.data.meta.pops.code.index(popname[0]) 
+        if popname[0] in D.data.meta.pops.code:
+            popnumber = D.data.meta.pops.code.index(popname[0])
+        else: 
+            popnumber = 0
         
         # Get data for scatter plots
         outcome = D.data[effectname[0][0]][effectname[0][1]][popnumber]
@@ -335,11 +339,15 @@ def makecco(datain, progname = default_progname, effectname = default_effectname
     # Get population info
     popname = effectname[1]
     
-    # Only going to make cost-outcome curves if a program affects a specific population -- otherwise will just make cost-coverage curves
-    if popname[0] not in D.data.meta.pops.short:
+    # Only going to make cost-outcome curves if a program affects a SPECIFIC population -- otherwise will just make cost-coverage curves
+    if not D.data.meta.progs.saturating[prognumber]:
         return [], [], []
-    else:          
-        popnumber = D.data.meta.pops.short.index(popname[0]) 
+    else:
+        if popname[0] in D.data.meta.pops.code:
+            popnumber = D.data.meta.pops.code.index(popname[0])
+        else: 
+            popnumber = 0
+        
         print("coparams in makecco: %s" % coparams)
         # Get inputs from either GUI... 
         if coparams: # TODO: would it be better to use a dictionary structure, so that the order doesn't have to be fixed?
@@ -465,6 +473,9 @@ def plotallcurves(datain, progname=default_progname, ccparams=default_ccparams, 
     if progname not in D.programs.keys():
         raise Exception('Please select one of the following programs %s' % D.programs.keys())
 
+    # Extract info from data structure
+    prognumber = D.data.meta.progs.code.index(progname) # get program number
+
     ## Initialise storage of outputs   
     plotdata_co = {}
     plotdata = {}         
@@ -472,28 +483,32 @@ def plotallcurves(datain, progname=default_progname, ccparams=default_ccparams, 
     # Loop over behavioural effects
     for effectname in D.programs[progname]:
 
-        popname = effectname[1]
-    
-        if popname[0] in D.data.meta.pops.short:
+#        popname = effectname[1]
 
-            popnumber = D.data.meta.pops.short.index(popname[0]) 
+        # Only going to make cost-outcome curves for non-saturating programs (#TODO check this is ok)
+        if not D.data.meta.progs.saturating[prognumber]:
+            if len(effectname) == 3: # There's no existing info here, append
+               effectname.append(storeparams_cc)
+            else:
+                effectname[3] = storeparams_cc # There is existing info here, overwrite
+
+#            if len(D.programs[progname][-1]) == 3:
+ #               D.programs[progname].append(storeparams_cc)
+  #          else:
+   #             D.programs[progname][-1] = storeparams_cc
+        else:
+
+            # Store outputs
             effectnumber = D.programs[progname].index(effectname)    
+            plotdata[effectnumber], plotdata_co[effectnumber], storeparams = makecco(D, progname, effectname, ccparams, coparams, makeplot)
 
             ## Store outputs
-            plotdata[effectnumber], plotdata_co[effectnumber], storeparams = makecco(D, progname, effectname, ccparams, coparams, makeplot)
             if len(effectname) == 3: # There's no existing info here, append
                effectname.append(storeparams)
             else:
                 effectname[3] = storeparams # There is existing info here, overwrite
             D.programs[progname][effectnumber] = effectname
             
-        else:
-            if len(D.programs[progname][-1]) == 3:
-                D.programs[progname].append(storeparams_cc)
-            else:
-                D.programs[progname][-1] = storeparams_cc
-
-            return plotdata, plotdata_co, plotdata_cc, D
 
     return plotdata, plotdata_co, plotdata_cc, D
       
