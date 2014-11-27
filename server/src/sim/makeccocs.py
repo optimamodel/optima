@@ -11,7 +11,7 @@ import math
 from matplotlib.pylab import figure, plot, hold, xlabel, ylabel, title
 from numpy import linspace, exp, isnan, zeros, asarray
 from truncnorm import truncnorm
-from bunch import Bunch as struct, float_array
+from bunch import Bunch as float_array
 from dataio import loaddata
 
 ## Set defaults for testing
@@ -471,8 +471,6 @@ def plotallcurves(datain, progname=default_progname, ccparams=default_ccparams, 
         popname = effectname[1]
     
         if popname[0] in D.data.meta.pops.short:
-
-            popnumber = D.data.meta.pops.short.index(popname[0]) 
 
             ## Store outputs
             effectnumber = D.programs[progname].index(effectname)    
