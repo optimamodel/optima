@@ -196,7 +196,7 @@ def revert_working_model_to_default(name, as_bunch = True):
   return model
 
 def set_working_model_calibration(name, is_calibrating):
-  print("revert_working_model_to_default %s" % name)
+  print("set_working_model_calibration %s" % name)
 
   from sim.bunch import Bunch
   cu = current_user
@@ -209,6 +209,19 @@ def set_working_model_calibration(name, is_calibrating):
       db.session.add(proj.working_project[0])
       db.session.commit()
 
+def is_model_calibrating(name):
+  print("is_model_calibration %s" % name)
+
+  from sim.bunch import Bunch
+  cu = current_user
+  proj = ProjectDb.query.filter_by(user_id=cu.id, name=name).first()
+  model = proj.model
+  
+  # Make sure there is a working project
+  result = False
+  if proj.working_project.count() != 0:
+      result = proj.working_project[0].is_calibrating
+  return result
 
 def save_model(name, model):
   try:

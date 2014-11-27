@@ -206,16 +206,20 @@ define(['./module', 'angular'], function (module, angular) {
         .success(updateGraphs);
     };
 	
+	var timer;
     $scope.startAutoCalibration = function () {
       $http.post('/api/model/calibrate/auto', $scope.simulationOptions)
         .success(updateGraphs);
 	
-	  // Keep polling for updated values after every 5 seconds till time runs out.
-	  $interval( function() {
-		console.log("inside")
+	  // Keep polling for updated values after every 5 seconds till we get an error.
+	  // Error indicates that the model is not calibrating anymore.
+	  timer = $interval( function() {
         $http.get('/api/model/working')
-          .success(updateGraphs);
-	  }, 5000, ( $scope.simulationOptions.timelimit + 60 ) / 5, false );
+          .success(updateGraphs)
+		  .error( function(data, status, headers, config) {
+			  $interval.cancel(timer);
+		  });
+	  }, 5000, 0, false );
     };
 	
     $scope.saveCalibration = function () {
