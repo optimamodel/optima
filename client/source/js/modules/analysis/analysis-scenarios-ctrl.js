@@ -51,6 +51,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           scatter: []
         };
 
+        var cashedData;
+
         /*
         * Returns an array containing arrays with [x, y] for d3 line data.
         */
@@ -65,15 +67,13 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             return graphs;
           }
 
-          // types = getActiveOptions();
-          var types = $scope.types;
           var graphs = [];
 
-          _(types).each(function (type) {
+          _($scope.types).each(function (type) {
 
             var data = response[type.id];
 
-            // if (type.total) {
+            if (type.total) {
               var graph = {
                 options: angular.copy(linesGraphOptions),
                 data: angular.copy(linesGraphData),
@@ -90,11 +90,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
               graphs.push(graph);
 
-            // }
+            }
 
-            // if (type.byPopulation) {
+            if (type.byPopulation) {
               _(data.pops).each(function (population, populationIndex) {
-                console.log(response);
                 var graph = {
                   options: angular.copy(linesGraphOptions),
                   data: angular.copy(linesGraphData),
@@ -111,7 +110,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
                 graphs.push(graph);
               });
-            // }
+            }
           });
 
           $scope.graphs = graphs;
@@ -120,7 +119,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
         $scope.runScenarios = function () {
           $http.post('/api/analysis/scenarios/run', $scope.runScenariosOptions)
-            .success(updateGraphs);
+            .success(function(data) {
+              cashedData = data;
+              updateGraphs(cashedData);
+            });
         };
 
 
@@ -172,9 +174,14 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             return _(collection).chain()
                 .where({ active: true })
                 .map(function (item) {
-                    return _(item).omit(['active', '$$hashKey'])
+                    return _(item).omit(['active', '$$hashKey']);
                 })
                 .value();
+        };
+
+        $scope.onGraphTypeChange = function (type) {
+          type.active = type.total || type.byPopulation;
+          updateGraphs(cashedData);
         };
 
     });
