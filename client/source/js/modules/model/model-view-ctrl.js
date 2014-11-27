@@ -217,9 +217,23 @@ define(['./module', 'angular'], function (module, angular) {
         $http.get('/api/model/working')
           .success(updateGraphs)
 		  .error( function(data, status, headers, config) {
-			  $interval.cancel(timer);
+			  if ( angular.isDefined( timer ) ) {
+			  	$interval.cancel(timer);
+			  	timer = undefined;
+			  }
 		  });
 	  }, 5000, 0, false );
+    };
+	
+    $scope.stopAutoCalibration = function () {
+      $http.get('/api/model/calibrate/stop')
+        .success(function( data ) { 
+		  // Cancel timer
+		  if ( angular.isDefined( timer ) ) {
+		  	$interval.cancel(timer);
+		  	timer = undefined;
+		  }
+		});
     };
 	
     $scope.saveCalibration = function () {
