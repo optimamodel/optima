@@ -5,7 +5,7 @@ from flask.ext.login import current_user
 from functools import wraps
 from flask import request, jsonify
 from dbconn import db
-from dbmodels import ProjectDb
+from dbmodels import ProjectDb, WorkingProjectDb
 
 ALLOWED_EXTENSIONS = {'txt', 'xlsx', 'xls'}
 
@@ -104,10 +104,10 @@ def load_model(name, as_bunch = True, working_model = False):
     cu = current_user
     proj = ProjectDb.query.filter_by(user_id=cu.id, name=name).first()
     
-    if working_model == False:
+    if proj.working_project.count() == 0 or working_model == False:
         model = proj.model
     else:
-        model = proj.working_model
+        model = proj.working_project[0].model
     
   except:
     pass
@@ -143,8 +143,15 @@ def save_working_model(name, model):
   proj = ProjectDb.query.filter_by(user_id=cu.id, name=name).first()
   if isinstance(model, Bunch):
     model = model.toDict()
-  proj.working_model = model
-  db.session.add(proj)
+
+  # If we do not have an instance for working project, make it now
+  if proj.working_project.count() == 0:
+      working_project = WorkingProjectDb(proj.id, model=model, is_calibrating=True)
+  else:
+      proj.working_project[0].model = model
+      working_project = proj.working_project[0]
+  
+  db.session.add(working_project)
   db.session.commit()
 
 def save_working_model_as_default(name, as_bunch = True):
@@ -153,10 +160,16 @@ def save_working_model_as_default(name, as_bunch = True):
   from sim.bunch import Bunch
   cu = current_user
   proj = ProjectDb.query.filter_by(user_id=cu.id, name=name).first()
-  proj.model = proj.working_model
-  model = proj.model
-  db.session.add(proj)
-  db.session.commit()
+  
+  # Default value for model
+  model = {}
+  
+  # Make sure there is a working project
+  if proj.working_project.count() != 0:
+      proj.model = proj.working_project[0].model
+      model = proj.model
+      db.session.add(proj)
+      db.session.commit()
   
   from sim.bunch import Bunch
   if as_bunch:
@@ -169,10 +182,13 @@ def revert_working_model_to_default(name, as_bunch = True):
   from sim.bunch import Bunch
   cu = current_user
   proj = ProjectDb.query.filter_by(user_id=cu.id, name=name).first()
-  proj.working_model = proj.model
   model = proj.model
-  db.session.add(proj)
-  db.session.commit()
+  
+  # Make sure there is a working project
+  if proj.working_project.count() != 0:
+      proj.working_project[0].is_calibrating = False
+      db.session.add(proj.working_project[0])
+      db.session.commit()
   
   from sim.bunch import Bunch
   if as_bunch:
