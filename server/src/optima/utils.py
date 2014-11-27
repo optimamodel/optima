@@ -97,13 +97,18 @@ def load_model_file(name, folder = PROJECTDIR, as_bunch = True):
   data = loaddata(project_file)
   return data
 
-def load_model(name, as_bunch = True):
+def load_model(name, as_bunch = True, working_model = False):
   print("load_model:%s" % name)
   model = None
   try:
     cu = current_user
     proj = ProjectDb.query.filter_by(user_id=cu.id, name=name).first()
-    model = proj.model
+    
+    if working_model == False:
+        model = proj.model
+    else:
+        model = proj.working_model
+    
   except:
     pass
   if model is None or len(model.keys())==0:

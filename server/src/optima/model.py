@@ -157,6 +157,18 @@ def doManualCalibration():
 
 
 """
+Returns the working model of project.
+"""
+@model.route('/working')
+@login_required
+@check_project_name
+def getWorkingModel():
+    D = load_model(request.project_name, working_model = True)
+    D_dict = D.toDict()
+    return jsonify(D_dict.get('plot',{}).get('E',{}))
+
+
+"""
 Returns the parameters of the given model.
 """
 @model.route('/parameters')
