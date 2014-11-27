@@ -1,3 +1,4 @@
+## Imports
 from bunch import Bunch as struct
 from copy import deepcopy
 
@@ -29,10 +30,10 @@ def runscenarios(D, scenariolist=None, verbose=2):
         M.append(deepcopy(D.M)) # Make a copy of the model parameters
         M[scen].update(scenariopars[scen].M) # Update with selected scenario model parameters
     
-    # Run scenarios # TODO -- actually implement :)
-    print('!!! TODO !!!')
+    # Run scenarios
     D.scens = [struct() for s in range(nscenarios)]
     for scen in range(nscenarios):
+        D.scens[scen].scenario = deepcopy(scenariolist[scen]) # Copy scenario data
         D.scens[scen].label = scenariolist[scen].name # Copy name
         D.scens[scen].M = scenariopars[scen].M
         D.scens[scen].S = model(D.G, D.scens[scen].M, D.F[scen], D.opt, verbose=verbose) # TODO don't change F
@@ -56,13 +57,12 @@ def runscenarios(D, scenariolist=None, verbose=2):
 def makescenarios(D, scenariolist, verbose=2):
     """ Convert a list of scenario parameters into a list of changes to model parameters """
 #    from numpy import find, linspace
+ # TODO -- actually implement :)
     
     nscenarios = len(scenariolist)
     scenariopars = [struct() for s in range(nscenarios)]
     
-    # From http://stackoverflow.com/questions/14692690/access-python-nested-dictionary-items-via-a-list-of-keys
-    def getnested(nesteddict, maplist): return reduce(lambda d, k: d[k], maplist, nesteddict)
-    def setnested(nesteddict, maplist, value): getnested(nesteddict, maplist[:-1])[maplist[-1]] = value
+
     
     for scen in range(nscenarios):
         scenariopars[scen].name = scenariolist[scen].name
@@ -96,32 +96,58 @@ def defaultscenarios(D, verbose=2):
     scenariolist[1].name = '100% condom use in KAPs'
     scenariolist[1].pars = [struct() for s in range(4)]
     # MSM regular condom use
-    scenariolist[1].pars[0].keys = ['condom','reg']
-    scenariolist[1].pars[0].pop = 0
+    scenariolist[1].pars[0].names = ['condom','reg']
+    scenariolist[1].pars[0].pops = 0
     scenariolist[1].pars[0].startyear = 2010
     scenariolist[1].pars[0].endyear = 2015
     scenariolist[1].pars[0].startval = -1
     scenariolist[1].pars[0].endval = 1
     # MSM casual condom use
-    scenariolist[1].pars[1].keys = ['condom','cas']
-    scenariolist[1].pars[1].pop = 0
+    scenariolist[1].pars[1].names = ['condom','cas']
+    scenariolist[1].pars[1].pops = 0
     scenariolist[1].pars[1].startyear = 2010
     scenariolist[1].pars[1].endyear = 2015
     scenariolist[1].pars[1].startval = -1
     scenariolist[1].pars[1].endval = 1
     # FSW commercial condom use
-    scenariolist[1].pars[2].keys = ['condom','com']
-    scenariolist[1].pars[2].pop = 1
+    scenariolist[1].pars[2].names = ['condom','com']
+    scenariolist[1].pars[2].pops = 1
     scenariolist[1].pars[2].startyear = 2010
     scenariolist[1].pars[2].endyear = 2015
     scenariolist[1].pars[2].startval = -1
     scenariolist[1].pars[2].endval = 1
     # Client commercial condom use
-    scenariolist[1].pars[2].keys = ['condom','com']
-    scenariolist[1].pars[2].pop = 5
+    scenariolist[1].pars[2].names = ['condom','com']
+    scenariolist[1].pars[2].pops = 5
     scenariolist[1].pars[2].startyear = 2010
     scenariolist[1].pars[2].endyear = 2015
     scenariolist[1].pars[2].startval = -1
     scenariolist[1].pars[2].endval = 1
     
     return scenariolist
+
+
+
+def getparvalues(D, scenariopars):
+    """
+    Return the default parameter values from D.M for a given scenario If a scenariolist
+    is defined as above, then call this function using e.g.
+    
+    defaultvals = getparvalues(D, scenariolist[1].pars[2])
+    
+    Version: 2014nov27 by cliffk
+    """
+    from numpy import ndim, nonzero # Normal people call nonzero "find"
+    eps = 1e-6 # For floats vs. ints
+    original = getnested(D.M, scenariopars.names)
+    if ndim(original)>1: original = original[scenariopars.pops] # If it's more than one dimension, use population data too
+    initialindex = nonzero(abs(D.opt.tvec - scenariopars.startyear)<eps)
+    finalindex = nonzero(abs(D.opt.tvec - scenariopars.startyear)<eps)
+    startval = original[initialindex]
+    endval = original[finalindex]
+    return [startval, endval]
+
+
+## Parse nested dictionaries -- from http://stackoverflow.com/questions/14692690/access-python-nested-dictionary-items-via-a-list-of-keys
+def getnested(nesteddict, maplist): return reduce(lambda d, k: d[k], maplist, nesteddict)
+def setnested(nesteddict, maplist, value): getnested(nesteddict, maplist[:-1])[maplist[-1]] = value
