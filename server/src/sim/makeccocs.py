@@ -454,7 +454,6 @@ def plotallcurves(D=None, progname=default_progname, ccparams=default_ccparams, 
             ## Store outputs
             effectnumber = D.programs[progname].index(effectname)    
             plotdata[effectnumber], plotdata_co[effectnumber], storeparams = makecco(D=D, progname=progname, effectname=effectname, ccparams=ccparams, coparams=coparams, makeplot=makeplot, verbose=verbose)
-#            C[effectname[0][1]] = [popname[0], storeparams]
 
     return plotdata, plotdata_co, plotdata_cc
       
