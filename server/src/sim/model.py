@@ -113,6 +113,16 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
     failsecond = M.const.fail.second
     Fforce = array(F.force)
     
+    # Initialize the list of sex acts so it doesn't have to happen in the time loop
+    sexactslist = []
+    for popM in range(npops):
+        sexactslist.append([])
+        for popF in range(npops):
+            sexactslist[popM].append([])
+            for act in ['reg','cas','com']:
+                if pships[act][popM,popF]>0: # Ignore if this isn't a valid partnership for this sexual act type
+                    sexactslist[popM][popF].append(act)
+    
     # Loop over time
     for t in range(npts): # Skip the last timestep for people since we don't need to know what happens after that
         printv('Timestep %i of %i' % (t+1, npts), 5, verbose)
@@ -150,17 +160,16 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
                 stieffF = 1 + effsti[popF,t] # Female STI prevalence effect
                 
                 # Iterate through the sexual act types
-                for act in ['reg','cas','com']:
-                    if pships[act][popM,popF]>0: # Ignore if this isn't a valid partnership for this sexual act type
-                        numactsM = totalacts[act][popM,popF,t]; # Number of acts per person per year (insertive partner)
-                        numactsF = totalacts[act][popF,popM,t]; # Number of acts per person per year (receptive partner)
-                        condomprob = (condom[act][popM,t] + condom[act][popF,t]) / 2 # Reconcile condom probability
-                        condomeff = 1 - condomprob*effcondom # Effect of condom use
-                        forceinfM = 1 - mpow((1-transM*circeff*stieffM), (dt*numactsM*condomeff*effhivprev[popF])) # The chance of "female" infecting "male" -- # TODO: Implement PrEP etc here
-                        forceinfF = 1 - mpow((1-transF*circeff*stieffF), (dt*numactsF*condomeff*effhivprev[popM])) # The chance of "male" infecting "female"
-                        forceinfvec[popM] = 1 - (1-forceinfvec[popM]) * (1-forceinfM) # Calculate the new "male" forceinf, ensuring that it never gets above 1
-                        forceinfvec[popF] = 1 - (1-forceinfvec[popF]) * (1-forceinfF) # Calculate the new "female" forceinf, ensuring that it never gets above 1
-                        if not(all(forceinfvec>=0)): raise Exception('Sexual force-of-infection is invalid')
+                for act in sexactslist[popM][popF]: # Ignore if this isn't a valid partnership for this sexual act type
+                    numactsM = totalacts[act][popM,popF,t]; # Number of acts per person per year (insertive partner)
+                    numactsF = totalacts[act][popF,popM,t]; # Number of acts per person per year (receptive partner)
+                    condomprob = (condom[act][popM,t] + condom[act][popF,t]) / 2 # Reconcile condom probability
+                    condomeff = 1 - condomprob*effcondom # Effect of condom use
+                    forceinfM = 1 - mpow((1-transM*circeff*stieffM), (dt*numactsM*condomeff*effhivprev[popF])) # The chance of "female" infecting "male" -- # TODO: Implement PrEP etc here
+                    forceinfF = 1 - mpow((1-transF*circeff*stieffF), (dt*numactsF*condomeff*effhivprev[popM])) # The chance of "male" infecting "female"
+                    forceinfvec[popM] = 1 - (1-forceinfvec[popM]) * (1-forceinfM) # Calculate the new "male" forceinf, ensuring that it never gets above 1
+                    forceinfvec[popF] = 1 - (1-forceinfvec[popF]) * (1-forceinfF) # Calculate the new "female" forceinf, ensuring that it never gets above 1
+                    if not(all(forceinfvec>=0)): raise Exception('Sexual force-of-infection is invalid')
         
         ## Injecting partnerships -- # TODO make more efficient
         
