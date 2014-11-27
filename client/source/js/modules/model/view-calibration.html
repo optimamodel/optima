@@ -157,7 +157,7 @@
           <div class="section cf">
             <h1>Results</h1>
 
-            <div class="3" ng-repeat="type in types">
+            <div class="3" ng-repeat="type in types" style="padding-bottom: 20px">
               <b>{{ type.name }}</b>
               <div>
                 <label class="checkbox-inline">
@@ -178,7 +178,7 @@
           <div class="section elastic" ng-repeat="graph in graphs">
             <div class="elastic_col __shrink" style="width: 430px">
               <div class="chart-container">
-                <div line-scatter-chart data="graph.data" options="graph.options" save-graph-as></div>
+                <div line-scatter-area-chart data="graph.data" options="graph.options" save-graph-as></div>
               </div>
             </div>
             <div class="elastic_col">
