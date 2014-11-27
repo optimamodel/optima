@@ -213,9 +213,14 @@ def doCostCoverage():
     args['D'] = load_model(request.project_name)
     args = pick_params(["progname", "ccparams", "coparams"], data, args)
     try:
-        args['ccparams'] = [0.9, 0.2, 800000.0, 7e6]
-        args['coparams'] = []
-        plotdata, plotdata_co, plotdata_cc, effectnames = plotallcurves(**args)
+        if not args.get('ccparams'):
+            args['ccparams'] = [0.9, 0.2, 800000.0, 7e6]
+        if not args.get('coparams'):
+            args['coparams'] = []
+        plotdata, plotdata_co, plotdata_cc, effectnames, D = plotallcurves(**args)
+        if args.get('dosave'):
+            D_dict = D.toDict()
+            save_model(request.project_name, D_dict)
     except Exception, err:
         var = traceback.format_exc()
         return jsonify({"status":"NOK", "exception":var})
