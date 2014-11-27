@@ -18,7 +18,7 @@ from printv import printv
 default_progname = u'FSW'
 default_ccparams = [0.9, 0.2, 800000.0, 7e6]
 default_coparams = []
-default_makeplot = 1
+default_makeplot = 0
 #default_datain = D # use 'example' or programs
 default_effectname = [['sex', 'condomcas'], [u'MSM'], [[0.3, 0.5], [0.7, 0.9]]]
 
@@ -434,7 +434,7 @@ def makecco(D=None, progname = default_progname, effectname = default_effectname
 def plotallcurves(D=None, progname=default_progname, ccparams=default_ccparams, coparams=default_coparams, makeplot=default_makeplot, verbose=2):
     
      # Get the cost-coverage and coverage-outcome relationships            
-    plotdata_cc, storeparams_cc = makecc(D, progname, ccparams, makeplot=1, verbose=verbose)
+    plotdata_cc, storeparams_cc = makecc(D=D, progname=progname, ccparams=ccparams, makeplot=makeplot, verbose=verbose)
 
    ## Check that the selected program is in the program list 
     if progname not in D.programs.keys():
@@ -453,7 +453,7 @@ def plotallcurves(D=None, progname=default_progname, ccparams=default_ccparams, 
 
             ## Store outputs
             effectnumber = D.programs[progname].index(effectname)    
-            plotdata[effectnumber], plotdata_co[effectnumber], storeparams = makecco(D, progname, effectname, ccparams, coparams, makeplot, verbose=verbose)
+            plotdata[effectnumber], plotdata_co[effectnumber], storeparams = makecco(D=D, progname=progname, effectname=effectname, ccparams=ccparams, coparams=coparams, makeplot=makeplot, verbose=verbose)
 #            C[effectname[0][1]] = [popname[0], storeparams]
 
     return plotdata, plotdata_co, plotdata_cc
