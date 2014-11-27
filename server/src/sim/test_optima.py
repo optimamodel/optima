@@ -32,4 +32,8 @@ print('\n\n\n4. Viewing results...')
 from viewresults import viewepiresults
 viewepiresults(D.plot.E, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'death':[0,1], 'dx':[0,1], 'tx1':[0,1], 'tx2':[0,1]}, startyear=2000, endyear=2015, onefig=True, verbose=verbose, show_wait=show_wait)
 
+from scenarios import getparvalues, defaultscenarios
+scenariolist = defaultscenarios(D, verbose=2)
+defaultvals = getparvalues(D, scenariolist[1].pars[2])
+
 print('\n\n\nDONE.')
