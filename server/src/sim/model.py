@@ -356,6 +356,7 @@ def equilibrate(G, M, Finit):
     # Set parameters
     prevtoforceinf = 0.1 # Assume force-of-infection is proportional to prevalence -- 0.1 means that if prevalence is 10%, annual force-of-infection is 1%
     treatmentdur = 10 # Average duration of treatment in years
+    failratio = 0.3 # Put fewer people than expected on failure because ART is relatively new
     
     # Shorten key variables
     hivprev = M.hivprev
@@ -370,8 +371,9 @@ def equilibrate(G, M, Finit):
         allinfected = M['popsize'][:,0] * hivprev[:] * Finit[:] # Set initial infected population
         popinfected = allinfected[p]
         fractotal =  popinfected / sum(allinfected) # Fractional total of infected people in this population
-        ontreat1 = M['tx1'][0] * fractotal
-        ontreat2 = M['tx2'][0] * fractotal
+        ontreat1 = M['tx1'][0] * fractotal # Number of people on 1st-line treatment
+        ontreat2 = M['tx2'][0] * fractotal # Number of people on 2nd-line treatment
+        treatfail = ontreat1 * M['const']['fail'] / treatmentdur * failratio # Number of people with treatment failure -- # TODO: check
         
         initpeople[0, p] = uninfected
         initpeople[1, p] = popinfected
