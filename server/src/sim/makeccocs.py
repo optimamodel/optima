@@ -100,6 +100,8 @@ def makecc(D=None, progname = default_progname, ccparams = default_ccparams, mak
 
     # Plot (to check it's working; delete once plotting enabled in GUI)
     if makeplot:
+        if verbose==4:
+           print("plotting cc for program %s" % progname)   
         figure()
         hold(True)
         plot(xvalscc, yvalscc, 'k-', lw = 2)
@@ -166,7 +168,7 @@ def makesamples(muz, stdevz, muf, stdevf, samplesize=40):
 #    1. plotdata
 #    2. D
 ###############################################################################
-def makeco(D, progname = default_progname, effectname = default_effectname, coparams=default_coparams, makeplot = default_makeplot, verbose=2):
+def makeco(D, progname=default_progname, effectname=default_effectname, coparams=default_coparams, makeplot=default_makeplot, verbose=2):
     
     ## Check that the selected program is in the program list 
     if progname not in D.programs.keys():
@@ -180,9 +182,11 @@ def makeco(D, progname = default_progname, effectname = default_effectname, copa
     
     ## Get population info
     popname = effectname[1]
-        
+
     ## Only going to make cost-outcome curves if a program affects a SPECIFIC population -- otherwise will just make cost-coverage curves
     if popname[0] not in D.data.meta.pops.code:
+        if verbose==4:
+            print("makeco:popname %s not in scope %s" % (popname, D.data.meta.pops.code))
         return [], D
     else:
         popnumber = D.data.meta.pops.code.index(popname[0]) 
@@ -245,6 +249,8 @@ def makeco(D, progname = default_progname, effectname = default_effectname, copa
 
         ## Plot results (probably delete once in GUI)                            
         if makeplot:
+            if verbose==4:
+               print("plotting co for program %s effect %s" % (progname, effectname))   
             figure()
             hold(True)
             plot(xvalsco, linspace(muz,muf,D.opt.nsims), color = 'b', lw = 2)
@@ -346,7 +352,9 @@ def makecco(D=None, progname = default_progname, effectname = default_effectname
         storeparams = [muz, stdevz, muf, stdevf, saturation, growthrate]
 
         # Get the coverage-outcome relationships            
-        plotdata_co, storeparams_co = makeco(D, progname, effectname, coparams, makeplot)
+        if verbose==4:
+            print("making co for program %s effect %s" % (progname, effectname))   
+        plotdata_co, storeparams_co = makeco(D, progname, effectname, coparams, makeplot=makeplot, verbose=verbose)
 
         # Create x dataset and initialise y dataset
         xvalscco = linspace(0,xupperlim,D.opt.nsims)
@@ -384,6 +392,8 @@ def makecco(D=None, progname = default_progname, effectname = default_effectname
 
         ## Plot results (probably delete once in GUI)                            
         if makeplot:
+            if verbose==4:
+               print("plotting cc for program %s effect %s" % (progname, effectname))   
             figure()
             hold(True)
 
@@ -433,7 +443,9 @@ def makecco(D=None, progname = default_progname, effectname = default_effectname
 ###############################################################################
 def plotallcurves(D=None, progname=default_progname, ccparams=default_ccparams, coparams=default_coparams, makeplot=default_makeplot, verbose=2):
     
-     # Get the cost-coverage and coverage-outcome relationships            
+     # Get the cost-coverage and coverage-outcome relationships     
+    if verbose==4:
+        print("making cc for program %s" % progname)   
     plotdata_cc, storeparams_cc = makecc(D=D, progname=progname, ccparams=ccparams, makeplot=makeplot, verbose=verbose)
 
    ## Check that the selected program is in the program list 
@@ -452,6 +464,8 @@ def plotallcurves(D=None, progname=default_progname, ccparams=default_ccparams, 
         if popname[0] in D.data.meta.pops.short:
 
             ## Store outputs
+            if verbose==4:
+                print("making cco for program %s effect %s" % (progname, effectname))   
             effectnumber = D.programs[progname].index(effectname)    
             plotdata[effectnumber], plotdata_co[effectnumber], storeparams = makecco(D=D, progname=progname, effectname=effectname, ccparams=ccparams, coparams=coparams, makeplot=makeplot, verbose=verbose)
 
