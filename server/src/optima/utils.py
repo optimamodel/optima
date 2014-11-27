@@ -154,7 +154,7 @@ def save_working_model(name, model):
   db.session.add(working_project)
   db.session.commit()
 
-def save_working_model_as_default(name, as_bunch = True):
+def save_working_model_as_default(name):
   print("save_working_model_as_default %s" % name)
 
   from sim.bunch import Bunch
@@ -171,12 +171,9 @@ def save_working_model_as_default(name, as_bunch = True):
       db.session.add(proj)
       db.session.commit()
   
-  from sim.bunch import Bunch
-  if as_bunch:
-    model = Bunch.fromDict(model)
   return model
 
-def revert_working_model_to_default(name, as_bunch = True):
+def revert_working_model_to_default(name):
   print("revert_working_model_to_default %s" % name)
 
   from sim.bunch import Bunch
@@ -190,9 +187,6 @@ def revert_working_model_to_default(name, as_bunch = True):
       db.session.add(proj.working_project[0])
       db.session.commit()
   
-  from sim.bunch import Bunch
-  if as_bunch:
-    model = Bunch.fromDict(model)
   return model
 
 def set_working_model_calibration(name, is_calibrating):
