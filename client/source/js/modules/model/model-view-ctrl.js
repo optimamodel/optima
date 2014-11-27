@@ -49,9 +49,12 @@ define(['./module', 'angular'], function (module, angular) {
 
     $scope.types = [
       { id: 'prev', name: 'Prevalence', active: true, byPopulation: true, total: false },
-      { id: 'daly', name: 'DALYs per year', active: false, byPopulation: false, total: false },
-      { id: 'death', name: 'HIV-related deaths per year', active: false, byPopulation: false, total: false },
-      { id: 'inci', name: 'New HIV infections per year', active: false, byPopulation: false, total: false }
+      { id: 'daly', name: 'DALYs', active: false, byPopulation: false, total: false },
+      { id: 'death', name: 'Deaths', active: false, byPopulation: false, total: false },
+      { id: 'inci', name: 'New infections', active: false, byPopulation: false, total: false },
+      { id: 'dx', name: 'Diagnoses', active: false, byPopulation: false, total: false },
+      { id: 'tx1', name: 'First-line treatment', active: false, byPopulation: false, total: false },
+      { id: 'tx2', name: 'Second-line treatment', active: false, byPopulation: false, total: false }
     ];
 
     var getActiveOptions = function () {
