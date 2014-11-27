@@ -90,6 +90,9 @@ def makecc(datain, progname = default_progname, ccparams = default_ccparams, mak
             if not isnan(unitcost[i]):
                 slope = unitcost[i] # this updates so the slope is the most recent unit cost
 
+        # Store parameters for access later
+        storeparams = [slope]
+
         ## Create linear relationship
         xvalscc = linspace(0,7e6,1000) # take 1000 points between 0 and some arbitrary max
         yvalscc = xvalscc*slope # calculate linear function
@@ -312,33 +315,33 @@ def ccoeqn(x, p):
 ###############################################################################
 def makecco(datain, progname = default_progname, effectname = default_effectname, ccparams=default_ccparams, coparams=default_coparams, makeplot=default_makeplot):
 
-    ## Load data structure if it hasn't been passed as an argument... 
+    # Load data structure if it hasn't been passed as an argument... 
     if isinstance(datain, str):
         D = loaddata(datain+'.prj')
     else:
         D = datain
     
-    ## Check that the selected program is in the program list 
+    # Check that the selected program is in the program list 
     if unicode(progname) not in D.programs.keys():
         print("progname: %s programs: %s" % (unicode(progname), D.programs.keys()))
         raise Exception('Please select one of the following programs %s' % D.programs.keys())
-    ## Check that the selected program is in the program list 
+    # Check that the selected program is in the program list 
     if effectname not in D.programs[progname]:
         raise Exception('Please select one of the following effects %s' % D.programs[progname])
 
-    ## Extract info from data structure
+    # Extract info from data structure
     prognumber = D.data.meta.progs.code.index(progname) # get program number
 
-    ## Get population info
+    # Get population info
     popname = effectname[1]
     
-    ## Only going to make cost-outcome curves if a program affects a specific population -- otherwise will just make cost-coverage curves
+    # Only going to make cost-outcome curves if a program affects a specific population -- otherwise will just make cost-coverage curves
     if popname[0] not in D.data.meta.pops.short:
         return [], [], []
     else:          
         popnumber = D.data.meta.pops.short.index(popname[0]) 
         print("coparams in makecco: %s" % coparams)
-        ## Get inputs from either GUI... 
+        # Get inputs from either GUI... 
         if coparams: # TODO: would it be better to use a dictionary structure, so that the order doesn't have to be fixed?
             zeromin = coparams[0] # Assumptions of behaviour at zero coverage (lower bound)
             zeromax = coparams[1] # Assumptions of behaviour at zero coverage (upper bound)
@@ -474,14 +477,26 @@ def plotallcurves(datain, progname=default_progname, ccparams=default_ccparams, 
         if popname[0] in D.data.meta.pops.short:
 
             popnumber = D.data.meta.pops.short.index(popname[0]) 
+            effectnumber = D.programs[progname].index(effectname)    
 
             ## Store outputs
-            effectnumber = D.programs[progname].index(effectname)    
             plotdata[effectnumber], plotdata_co[effectnumber], storeparams = makecco(D, progname, effectname, ccparams, coparams, makeplot)
-#            C[effectname[0][1]] = [popname[0], storeparams]
+            if len(effectname) == 3: # There's no existing info here, append
+               effectname.append(storeparams)
+            else:
+                effectname[3] = storeparams # There is existing info here, overwrite
+            D.programs[progname][effectnumber] = effectname
+            
+        else:
+            if len(D.programs[progname][-1]) == 3:
+                D.programs[progname].append(storeparams_cc)
+            else:
+                D.programs[progname][-1] = storeparams_cc
 
-    return plotdata, plotdata_co, plotdata_cc
+            return plotdata, plotdata_co, plotdata_cc, D
+
+    return plotdata, plotdata_co, plotdata_cc, D
       
 ## Example of use
-#plotdata_cco, plotdata_co, plotdata_cc, C = plotallcurves()
+#plotdata_cco, plotdata_co, plotdata_cc, D = plotallcurves(D)
 #plotdata, plotdata_co, storeparams = makecco(D, progname=default_progname, effectname = default_effectname, ccparams = default_ccparams, coparams = default_coparams, makeplot=1)
