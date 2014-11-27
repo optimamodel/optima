@@ -104,8 +104,29 @@ define(['./module', 'angular'], function (module, angular) {
     };
 
     /*
-     * Methods
+     * Returns an array containing arrays with [x, y] for d3 line data.
      */
+    var generateLineData = function(xData, yData) {
+      return _(yData).map(function (value, i) {
+        return [xData[i], value];
+      });
+    };
+
+    /*
+    * Returns an array containing arrays with [x, y] for d3 scatter data.
+    *
+    * Empty entries are filtered out.
+    */
+    var generateScatterData = function(xData, yData) {
+      return _(yData).chain()
+        .map(function (value, i) {
+          return [xData[i], value];
+        })
+        .filter(function (value) {
+          return !!value[1];
+        })
+        .value();
+    };
 
     var prepareGraphs = function (response) {
       var graphs = [], types;
@@ -119,7 +140,6 @@ define(['./module', 'angular'], function (module, angular) {
       _(types).each(function (type) {
 
         var data = response[type.id];
-        var scatterDataAvailable = data.pops.length === data.ydata.length;
 
         if (type.total) {
           var graph = {
@@ -129,34 +149,17 @@ define(['./module', 'angular'], function (module, angular) {
             title: 'Showing total data for "' + type.name + '"'
           };
 
-          graph.data.line = _(data.tot.best).map(function (value, i) {
-            //      x                 y
-            return [response.tvec[i], value];
-          });
-
-          graph.data.area.lineHigh = _(data.tot.high).map(function (value, i) {
-            //      x                 y
-            return [response.tvec[i], value];
-          });
-
-          graph.data.area.lineLow = _(data.tot.low).map(function (value, i) {
-            //      x                 y
-            return [response.tvec[i], value];
-          });
+          graph.data.line = generateLineData(response.tvec, data.tot.best);
+          graph.data.area.lineHigh = generateLineData(response.tvec, data.tot.high);
+          graph.data.area.lineLow = generateLineData(response.tvec, data.tot.low);
 
           graph.options.xAxis.axisLabel = data.xlabel;
           graph.options.yAxis.axisLabel = data.ylabel;
 
-          if (data.ydata.length === 1) {
-            graph.data.scatter = _(data.ydata).chain()
-            .map(function (value, i) {
-              //      x                 y
-              return [response.xdata[i], value];
-            })
-            .filter(function (value) {
-              return !!value[1];
-            })
-            .value();
+          // seems like ydata can either be an array of arrays for the
+          // populations or a single array when it's used in overall
+          if (!(data.ydata[0] instanceof Array)) {
+            graph.data.scatter = generateScatterData(response.xdata, data.ydata);
           }
 
           graphs.push(graph);
@@ -171,34 +174,17 @@ define(['./module', 'angular'], function (module, angular) {
               title: 'Showing ' + type.name + ' for population "' + $scope.parameters.meta.pops.long[populationIndex] + '"'
             };
 
-            graph.data.line = _(population.best).map(function (value, i) {
-              //      x                 y
-              return [response.tvec[i], value];
-            });
-
-            graph.data.area.lineHigh = _(population.high).map(function (value, i) {
-              //      x                 y
-              return [response.tvec[i], value];
-            });
-
-            graph.data.area.lineLow = _(population.low).map(function (value, i) {
-              //      x                 y
-              return [response.tvec[i], value];
-            });
+            graph.data.line = generateLineData(response.tvec, population.best);
+            graph.data.area.lineHigh = generateLineData(response.tvec, population.high);
+            graph.data.area.lineLow = generateLineData(response.tvec, population.low);
 
             graph.options.xAxis.axisLabel = data.xlabel;
             graph.options.yAxis.axisLabel = data.ylabel;
 
-            if (scatterDataAvailable) {
-              graph.data.scatter = _(data.ydata[populationIndex]).chain()
-                .map(function (value, i) {
-                  //      x                 y
-                  return [response.xdata[i], value];
-                })
-                .filter(function (value) {
-                  return !!value[1];
-                })
-                .value();
+            // seems like ydata can either be an array of arrays for the
+            // populations or a single array when it's used in overall
+            if (data.ydata[0] instanceof Array) {
+              graph.data.scatter = generateScatterData(response.xdata, data.ydata[populationIndex]);
             }
 
             graphs.push(graph);
