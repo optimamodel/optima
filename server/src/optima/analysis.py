@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, helpers
 import json
 import traceback
 from sim.optimize import optimize
@@ -11,10 +11,27 @@ from flask.ext.login import login_required
 analysis = Blueprint('analysis',  __name__, static_folder = '../static')
 analysis.config = {}
 
+scenario_params_file_name = "scenario_params.csv"
+
+
 @analysis.record
 def record_params(setup_state):
   app = setup_state.app
   analysis.config = dict([(key,value) for (key,value) in app.config.iteritems()])
+
+
+@analysis.route('/scenarios/params')
+@login_required
+def get_scenario_params():
+    scenario_params_file_path = helpers.safe_join(analysis.static_folder, scenario_params_file_name)
+    f = open(scenario_params_file_path, "rU")
+    if not f:
+        reply['reason'] = 'Scenario params file %s does not exist' % scenario_params_file_path
+        return reply
+    lines = [l.strip() for l in f.readlines()][1:]
+    split_lines = [l.split(';') for l in lines]
+    scenario_params = [{'keys':r[0].replace('[:]','').split('.')[1:],'name':r[2]} for r in split_lines]
+    return json.dumps({"params":scenario_params})
 
 """
 Gets a list of scenarios defined by the user, produces graphs out of them and sends back
@@ -29,6 +46,7 @@ def runScenarios():
     project_name = request.project_name
     if not project_exists(project_name):
         reply['reason'] = 'Project %s does not exist' % project_name
+        return reply
 
     #expects json: {"scenarios":[scenariolist]} and gets project_name from session
     args = {}
