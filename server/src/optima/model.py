@@ -7,7 +7,7 @@ from sim.autofit import autofit
 from sim.bunch import bunchify
 from sim.runsimulation import runsimulation
 from sim.makeccocs import makecco, plotallcurves
-from utils import load_model, save_model, project_exists, pick_params, check_project_name, for_fe
+from utils import load_model, save_model, save_working_model, project_exists, pick_params, check_project_name, for_fe
 from flask.ext.login import login_required
 
 """ route prefix: /api/model """
@@ -51,14 +51,20 @@ def doAutoCalibration():
             args["endyear"] = int(endyear)
         timelimit = data.get("timelimit")
         if timelimit:
-            args["timelimit"] = int(timelimit)
-        D = autofit(D, **args)
-        D_dict = D.toDict()
-        save_model(project_name, D_dict)
+            timelimit = int(timelimit) / 5
+            args["timelimit"] = 5
+        
+        # Do calculations 5 seconds at a time and then save them
+        # to db.
+        for i in range(0, timelimit):
+            D = autofit(D, **args)
+            D_dict = D.toDict()
+            save_working_model(project_name, D_dict)
+            
     except Exception, err:
         var = traceback.format_exc()
         return jsonify({"status":"NOK", "exception":var})
-    return jsonify(D_dict.get('O',{}))
+    return jsonify(D_dict.get('plot',{}).get('E',{}))
 
 
 """ 
