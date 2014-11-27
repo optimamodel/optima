@@ -24,16 +24,15 @@ define(['./module'], function (module) {
         var chartGroup = svg.append('g').attr('class', 'chart_group');
         var axesGroup = svg.append('g').attr('class', 'axes_group');
 
-        // initialize graphs instances
-        var scatterChartInstance = new d3Charts.ScatterChart(chartGroup, '', chartSize, 100);
-
-        var scatter = scope.data.scatter;
+        var scatterDataExists = (scope.data.scatter && scope.data.scatter.length > 0);
 
         var lineChartInstances = [];
         var graphsScales = [];
         var yMax = 0;
         var xMax = 0;
+        var scatterChartInstance;
 
+        // initialize lineChart for each line and update the scales
         _(scope.data.lines).each(function (line, index) {
           var lineChart = new d3Charts.LineChart(chartGroup, index, chartSize, 100);
           lineChartInstances.push(lineChart);
@@ -43,10 +42,14 @@ define(['./module'], function (module) {
           xMax = Math.max(xMax, scales.x.domain()[1]);
         });
 
-        var scatterScale = scatterChartInstance.scales(scope.data.scatter);
-        graphsScales.push(scatterScale);
-        yMax = Math.max(yMax, scatterScale.y.domain()[1]);
-        xMax = Math.max(xMax, scatterScale.x.domain()[1]);
+        // initialize scatterChart
+        if (scatterDataExists) {
+          scatterChartInstance = new d3Charts.ScatterChart(chartGroup, '', chartSize, 100);
+          var scatterScale = scatterChartInstance.scales(scope.data.scatter);
+          graphsScales.push(scatterScale);
+          yMax = Math.max(yMax, scatterScale.y.domain()[1]);
+          xMax = Math.max(xMax, scatterScale.x.domain()[1]);
+        }
 
         // normalizing all graphs scales to include maximum possible x and y
         _(graphsScales).each(function (scale) {
@@ -61,11 +64,13 @@ define(['./module'], function (module) {
           chartSize
         );
 
+        // draw available charts
         _(lineChartInstances).each(function (lineChart, index) {
             lineChart.draw(scope.data.lines[index]);
         });
-
-        scatterChartInstance.draw(scatter);
+        if (scatterDataExists) {
+          scatterChartInstance.draw(scope.data.scatter);
+        }
       }
     };
   });
