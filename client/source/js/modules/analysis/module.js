@@ -24,6 +24,9 @@ define([
                 resolve: {
                   meta: function (Model) {
                     return Model.getParametersDataMeta().$promise;
+                  },
+                  scenarioParams: function($http) {
+                    return $http.get('/api/analysis/scenarios/params');
                   }
                 }
             })

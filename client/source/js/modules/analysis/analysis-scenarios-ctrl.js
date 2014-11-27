@@ -1,9 +1,11 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     'use strict';
 
-    module.controller('AnalysisScenariosController', function ($scope, $http, $modal, meta) {
+    module.controller('AnalysisScenariosController', function ($scope, $http, $modal, meta, scenarioParams) {
 
         var linesGraphOptions, linesGraphData, responseData;
+
+        console.log('params', scenarioParams.data.params);
 
         // initialize all necessary data for this controller
         var initialize = function() {
