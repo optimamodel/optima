@@ -200,6 +200,64 @@ define(['./module', 'underscore'], function (module, _) {
       });
     };
 
+    $scope.saveModel = function () {
+      $http.post('/api/model/costcoverage', {
+        progname: $scope.activeProgram.acronym,
+        ccparams: [
+          $scope.saturationCoverageLevel,
+          $scope.fundingNeededPercent,
+          $scope.fundingNeededMinValue,
+          $scope.fundingNeededMaxValue
+        ],
+        coparams: [
+          $scope.behaviorWithoutMin,
+          $scope.behaviorWithoutMax,
+          $scope.behaviorWithMin,
+          $scope.behaviorWithMax
+        ],
+        doSave: true
+      }).success(function (response) {
+        if (response.status === 'OK') {
+          $scope.apiData = response;
+
+          setUpCOParamsFromEffects(response.effectnames);
+
+          _(['plotdata', 'plotdata_cc', 'plotdata_co']).each(function (prop) {
+            prepareGraphsOfType(response[prop], prop);
+          });
+        }
+      });
+    };
+
+    $scope.revertModel = function () {
+      $http.post('/api/model/costcoverage', {
+        progname: $scope.activeProgram.acronym,
+        ccparams: [
+          $scope.saturationCoverageLevel,
+          $scope.fundingNeededPercent,
+          $scope.fundingNeededMinValue,
+          $scope.fundingNeededMaxValue
+        ],
+        coparams: [
+          $scope.behaviorWithoutMin,
+          $scope.behaviorWithoutMax,
+          $scope.behaviorWithMin,
+          $scope.behaviorWithMax
+        ],
+        doRevert: true
+      }).success(function (response) {
+        if (response.status === 'OK') {
+          $scope.apiData = response;
+
+          setUpCOParamsFromEffects(response.effectnames);
+
+          _(['plotdata', 'plotdata_cc', 'plotdata_co']).each(function (prop) {
+            prepareGraphsOfType(response[prop], prop);
+          });
+        }
+      });
+    };
+
     /**
      * POST /api/model/costcoverage/effect
      *   {
