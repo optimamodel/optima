@@ -1,7 +1,7 @@
 define(['./module', 'angular'], function (module, angular) {
   'use strict';
 
-  module.controller('ModelViewController', function ($scope, $http, Model, f, meta) {
+  module.controller('ModelViewController', function ($scope, $http, $interval, Model, f, meta) {
 
     var prepareF = function (f) {
       var F = angular.copy(f);
@@ -198,6 +198,13 @@ define(['./module', 'angular'], function (module, angular) {
     $scope.startAutoCalibration = function () {
       $http.post('/api/model/calibrate/auto', $scope.simulationOptions)
         .success(updateGraphs);
+	
+	  // Keep polling for updated values after every 5 seconds till time runs out.
+	  $interval( function() {
+		console.log("inside")
+        $http.get('/api/model/working')
+          .success(updateGraphs);
+	  }, 5000, ( $scope.simulationOptions.timelimit + 60 ) / 5, false );
     };
 	
     $scope.saveCalibration = function () {
