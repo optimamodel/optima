@@ -213,7 +213,7 @@ def doCostCoverage():
     try:
         args['ccparams'] = [0.9, 0.2, 800000.0, 7e6]
         args['coparams'] = []
-        plotdata, plotdata_co, plotdata_cc = plotallcurves(**args)
+        plotdata, plotdata_co, plotdata_cc, D = plotallcurves(**args)
     except Exception, err:
         var = traceback.format_exc()
         return jsonify({"status":"NOK", "exception":var})
