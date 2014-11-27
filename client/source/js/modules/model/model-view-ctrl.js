@@ -62,7 +62,7 @@ define(['./module', 'angular'], function (module, angular) {
 
     // to store years from UI
     $scope.simulationOptions = {};
-    $scope.graphs = [];
+	$scope.graphs = [];
 
     var linescatteroptions = {
       height: 250,
@@ -192,6 +192,11 @@ define(['./module', 'angular'], function (module, angular) {
 
     $scope.simulate = function () {
       $http.post('/api/model/view', $scope.simulationOptions)
+        .success(updateGraphs);
+    };
+	
+    $scope.startAutoCalibration = function () {
+      $http.post('/api/model/calibrate/auto', $scope.simulationOptions)
         .success(updateGraphs);
     };
 
