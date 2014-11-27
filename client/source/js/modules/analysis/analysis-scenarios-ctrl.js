@@ -61,6 +61,30 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           });
         };
 
+        /*
+        * Returns an graph based on the provided yData.
+        *
+        * yData should be an array where each entry contains an array of all
+        * y-values from one line.
+        */
+        var generateGraph = function(type, yData, xData, title) {
+          var graph = {
+            options: angular.copy(linesGraphOptions),
+            data: angular.copy(linesGraphData),
+            type: type,
+            title: title
+          };
+
+          _(yData).each(function(lineData) {
+            graph.data.lines.push(generateLineData(xData, lineData));
+          });
+
+          return graph;
+        };
+
+        /*
+         * Regenerate graphs based on the response and type settings in the UI.
+         */
         var updateGraphs = function (response) {
           if (!response) {
             return graphs;
@@ -72,41 +96,22 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
             var data = response[type.id];
 
+            // generate graphs showing the overall data for this type
             if (type.total) {
-              var graph = {
-                options: angular.copy(linesGraphOptions),
-                data: angular.copy(linesGraphData),
-                type: type,
-                title: 'Showing total data for "' + type.name + '"'
-              };
-
-              _(data.tot.data).each(function(lineData) {
-                graph.data.lines.push(generateLineData(response.tvec.np_array, lineData));
-              });
-
+              var title = 'Showing total data for "' + type.name + '"';
+              var graph = generateGraph(type, data.tot.data, response.tvec.np_array, title);
               graph.options.xAxis.axisLabel = data.xlabel;
               graph.options.yAxis.axisLabel = data.ylabel;
-
               graphs.push(graph);
-
             }
 
+            // generate graphs for this type for each population
             if (type.byPopulation) {
               _(data.pops).each(function (population, populationIndex) {
-                var graph = {
-                  options: angular.copy(linesGraphOptions),
-                  data: angular.copy(linesGraphData),
-                  type: type,
-                  title: 'Showing ' + type.name + ' for population "' + meta.pops.long[populationIndex] + '"'
-                };
-
-                _(population.data).each(function(lineData) {
-                  graph.data.lines.push(generateLineData(response.tvec.np_array, lineData));
-                });
-
+                var title = 'Showing ' + type.name + ' for population "' + meta.pops.long[populationIndex] + '"';
+                var graph = generateGraph(type, population.data, response.tvec.np_array, title);
                 graph.options.xAxis.axisLabel = data.xlabel;
                 graph.options.yAxis.axisLabel = data.ylabel;
-
                 graphs.push(graph);
               });
             }
