@@ -35,7 +35,10 @@ def runscenarios(D, scenariolist=None, verbose=2):
     for scen in range(nscenarios):
         D.scens[scen].label = scenariolist[scen].name # Copy name
         D.scens[scen].M = scenariopars[scen].M
-        D.scens[scen].S = model(D.G, D.scens[scen].M, D.F[scen], D.opt, verbose=verbose) # TODO don't change F
+        F = D.F[0]
+        if len(D.F)>scen:
+            F = D.F[scen]
+        D.scens[scen].S = model(D.G, D.scens[scen].M, F, D.opt, verbose=verbose) # TODO don't change F
         printv('Scenario: %i/%i' % (scen+1, nscenarios), 2, verbose)
     
     # Calculate results
