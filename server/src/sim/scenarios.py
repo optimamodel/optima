@@ -36,7 +36,7 @@ def runscenarios(D, scenariolist=None, verbose=2):
         D.scens[scen].label = scenariolist[scen].name # Copy name
         D.scens[scen].M = scenariopars[scen].M
         D.scens[scen].S = model(D.G, D.scens[scen].M, D.F[scen], D.opt, verbose=verbose) # TODO don't change F
-        printv('Scenario: %i/%i' % (scen, nscenarios), 2, verbose)
+        printv('Scenario: %i/%i' % (scen+1, nscenarios), 2, verbose)
     
     # Calculate results
     from makeresults import makeresults
