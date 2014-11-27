@@ -199,6 +199,16 @@ define(['./module', 'angular'], function (module, angular) {
       $http.post('/api/model/calibrate/auto', $scope.simulationOptions)
         .success(updateGraphs);
     };
+	
+    $scope.saveCalibration = function () {
+      $http.post('/api/model/calibrate/save')
+        .success(updateGraphs);
+    };
+	
+    $scope.revertCalibration = function () {
+      $http.post('/api/model/calibrate/revert')
+        .success(updateGraphs);
+    };
 
     $scope.previewManualCalibration = function () {
       Model.saveCalibrateManual({ F: prepareF($scope.parameters.f) }, updateGraphs);

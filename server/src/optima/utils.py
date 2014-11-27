@@ -142,6 +142,22 @@ def save_working_model(name, model):
   db.session.add(proj)
   db.session.commit()
 
+def save_working_model_as_default(name, as_bunch = True):
+  print("save_working_model_as_default %s" % name)
+
+  from sim.bunch import Bunch
+  cu = current_user
+  proj = ProjectDb.query.filter_by(user_id=cu.id, name=name).first()
+  proj.model = proj.working_model
+  model = proj.model
+  db.session.add(proj)
+  db.session.commit()
+  
+  from sim.bunch import Bunch
+  if as_bunch:
+    model = Bunch.fromDict(model)
+  return model
+
 def save_model(name, model):
   try:
     save_model_db(name, model)

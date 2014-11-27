@@ -7,7 +7,7 @@ from sim.autofit import autofit
 from sim.bunch import bunchify
 from sim.runsimulation import runsimulation
 from sim.makeccocs import makecco, plotallcurves
-from utils import load_model, save_model, save_working_model, project_exists, pick_params, check_project_name, for_fe
+from utils import load_model, save_model, save_working_model, save_working_model_as_default, project_exists, pick_params, check_project_name, for_fe
 from flask.ext.login import login_required
 
 """ route prefix: /api/model """
@@ -21,7 +21,7 @@ def record_params(setup_state):
 
 
 """ 
-Uses provided parameters to manually calibrate the model (update it with these data) 
+Uses provided parameters to auto calibrate the model (update it with these data) 
 TODO: do it with the project which is currently in scope
 """
 @model.route('/calibrate/auto', methods=['POST'])
@@ -60,6 +60,30 @@ def doAutoCalibration():
             D = autofit(D, **args)
             D_dict = D.toDict()
             save_working_model(project_name, D_dict)
+            
+    except Exception, err:
+        var = traceback.format_exc()
+        return jsonify({"status":"NOK", "exception":var})
+    return jsonify(D_dict.get('plot',{}).get('E',{}))
+
+""" 
+Saves working model as the default model
+"""
+@model.route('/calibrate/save', methods=['POST'])
+@login_required
+@check_project_name
+def saveCalibrationModel():
+    reply = {'status':'NOK'}
+
+    # get project name 
+    project_name = request.project_name
+    if not project_exists(project_name):
+        reply['reason'] = 'File for project %s does not exist' % project_name
+        return jsonify(reply)
+
+    try:
+        D = save_working_model_as_default(project_name)
+        D_dict = D.toDict()
             
     except Exception, err:
         var = traceback.format_exc()
