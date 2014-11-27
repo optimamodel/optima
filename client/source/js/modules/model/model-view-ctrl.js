@@ -215,8 +215,15 @@ define(['./module', 'angular'], function (module, angular) {
 	  // Error indicates that the model is not calibrating anymore.
 	  timer = $interval( function() {
         $http.get('/api/model/working')
-          .success(updateGraphs)
-		  .error( function(data, status, headers, config) {
+        .success(function(data, status, headers, config) {
+          if (data.status !== undefined && data.status == 'OK') {
+            if ( angular.isDefined( timer ) ) {
+                $interval.cancel(timer);
+                timer = undefined;
+            }            
+          }
+        })
+		    .error( function(data, status, headers, config) {
 			  if ( angular.isDefined( timer ) ) {
 			  	$interval.cancel(timer);
 			  	timer = undefined;

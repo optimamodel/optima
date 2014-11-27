@@ -93,8 +93,7 @@ def saveCalibrationModel():
         return jsonify(reply)
 
     try:
-        D = save_working_model_as_default(project_name)
-        D_dict = D.toDict()
+        D_dict = save_working_model_as_default(project_name)
             
     except Exception, err:
         var = traceback.format_exc()
@@ -117,8 +116,7 @@ def revertCalibrationModel():
         return jsonify(reply)
 
     try:
-        D = revert_working_model_to_default(project_name)
-        D_dict = D.toDict()
+        D_dict = revert_working_model_to_default(project_name)
             
     except Exception, err:
         var = traceback.format_exc()
@@ -190,7 +188,7 @@ def getWorkingModel():
         D_dict = D.toDict()
         result = jsonify(D_dict.get('plot',{}).get('E',{}))
     else:
-        result = {status: "NOK"}
+        result = {'status': "OK"}
     return result
 
 """
