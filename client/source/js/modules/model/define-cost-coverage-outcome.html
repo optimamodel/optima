@@ -35,7 +35,9 @@
 
     <div class="section">
       <h1>{{ activeProgram.name }}</h1>
-      <div line-scatter-chart data="graphs.plotdata_cc.data" options="graphs.plotdata_cc.options"></div>
+      <div class="chart-container" style="width: 470px">
+        <div line-scatter-chart data="graphs.plotdata_cc.data" options="graphs.plotdata_cc.options"></div>
+      </div>
     </div>
 
     <div class="section" ng-repeat="graph in graphs.plotdata">
