@@ -40,7 +40,8 @@ class ProjectDb(db.Model):
     programs = db.Column(JSON)
     populations = db.Column(JSON)
     model = db.Column(JSON)
-    working_model = db.Column(JSON)
+    working_project = db.relationship('WorkingProjectDb', backref='projects',
+                                lazy='dynamic')
 
     def __init__(self, name, user_id, datastart, dataend, econ_datastart, \
         econ_dataend, programs, populations, model = {}):
@@ -53,3 +54,15 @@ class ProjectDb(db.Model):
         self.programs = programs    
         self.populations = populations
         self.model = model
+
+class WorkingProjectDb(db.Model):
+    __tablename__ = 'working_projects'
+    id = db.Column(db.Integer, primary_key=True)
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id'))
+    model = db.Column(JSON)
+    is_calibrating = db.Column(db.Boolean, unique=False, default=False)
+    
+    def __init__(self, project_id, is_calibrating=False, model = {}):
+        self.project_id = project_id
+        self.model = model
+        self.is_calibrating = is_calibrating
