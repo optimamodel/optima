@@ -88,9 +88,10 @@ define(['./module', 'angular'], function (module, angular) {
     };
 
     var linescatterdata = {
-      lines: [],
-      scatter: []
-  };
+      line: [],
+      scatter: [],
+      area: {}
+    };
 
     $scope.doneEditingParameter = function () {
       Model.saveCalibrateManual({
@@ -113,6 +114,7 @@ define(['./module', 'angular'], function (module, angular) {
       types = getActiveOptions();
 
       _(types).each(function (type) {
+
         var data = response[type.id];
         var scatterDataAvailable = data.pops.length === data.ydata.length;
 
@@ -124,10 +126,20 @@ define(['./module', 'angular'], function (module, angular) {
             title: 'Showing total data for "' + type.name + '"'
           };
 
-          graph.data.lines.push(_(data.tot).map(function (value, i) {
+          graph.data.line = _(data.tot.best).map(function (value, i) {
             //      x                 y
             return [response.tvec[i], value];
-          }));
+          });
+
+          graph.data.area.lineHigh = _(data.tot.high).map(function (value, i) {
+            //      x                 y
+            return [response.tvec[i], value];
+          });
+
+          graph.data.area.lineLow = _(data.tot.low).map(function (value, i) {
+            //      x                 y
+            return [response.tvec[i], value];
+          });
 
           graph.options.xAxis.axisLabel = data.xlabel;
           graph.options.yAxis.axisLabel = data.ylabel;
@@ -156,10 +168,20 @@ define(['./module', 'angular'], function (module, angular) {
               title: 'Showing ' + type.name + ' for population "' + $scope.parameters.meta.pops.long[populationIndex] + '"'
             };
 
-            graph.data.lines.push(_(population.best).map(function (value, i) {
+            graph.data.line = _(population.best).map(function (value, i) {
               //      x                 y
               return [response.tvec[i], value];
-            }));
+            });
+
+            graph.data.area.lineHigh = _(population.high).map(function (value, i) {
+              //      x                 y
+              return [response.tvec[i], value];
+            });
+
+            graph.data.area.lineLow = _(population.low).map(function (value, i) {
+              //      x                 y
+              return [response.tvec[i], value];
+            });
 
             graph.options.xAxis.axisLabel = data.xlabel;
             graph.options.yAxis.axisLabel = data.ylabel;
