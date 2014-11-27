@@ -1,6 +1,8 @@
-""" Simple tests...and perplexing """
+""" Test makeccocs code and bring up graphs using default values """
 
 verbose = 4
+
+## Initialize simulation
 
 print('\n\n\n1. Making project...')
 from makeproject import makeproject
@@ -15,6 +17,11 @@ from runsimulation import runsimulation
 D = runsimulation(D, startyear=2000, endyear=2015, verbose=verbose)
 
 
+# Actually run makeccocs
 from makeccocs import plotallcurves
-#out = plotallcurves(D, makeplot=False, verbose=verbose)
-out = plotallcurves(D=D, coparams=[], ccparams=[0.9, 0.2, 800000.0, 7000000.0], progname='SBCC', makeplot = False)
+try:
+    out = plotallcurves(D=D, coparams=[], ccparams=[0.9, 0.2, 800000.0, 7000000.0], progname='SBCC', makeplot = True)
+    from matplotlib.pylab import show
+    show()
+except:
+    out = plotallcurves(D=D, coparams=[], ccparams=[0.9, 0.2, 800000.0, 7000000.0], progname='SBCC', makeplot = False)
