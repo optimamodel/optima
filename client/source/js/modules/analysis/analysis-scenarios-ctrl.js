@@ -1,7 +1,7 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     'use strict';
 
-    module.controller('AnalysisScenariosController', function ($scope, $http, $modal) {
+    module.controller('AnalysisScenariosController', function ($scope, $http, $modal, meta) {
 
         $scope.projectParams = {
             name: ''
@@ -90,6 +90,27 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
               graphs.push(graph);
 
+            // }
+
+            // if (type.byPopulation) {
+              _(data.pops).each(function (population, populationIndex) {
+                console.log(response);
+                var graph = {
+                  options: angular.copy(linesGraphOptions),
+                  data: angular.copy(linesGraphData),
+                  type: type,
+                  title: 'Showing ' + type.name + ' for population "' + meta.pops.long[populationIndex] + '"'
+                };
+
+                _(population.data).each(function(lineData) {
+                  graph.data.lines.push(generateLineData(response.tvec.np_array, lineData));
+                });
+
+                graph.options.xAxis.axisLabel = data.xlabel;
+                graph.options.yAxis.axisLabel = data.ylabel;
+
+                graphs.push(graph);
+              });
             // }
           });
 
