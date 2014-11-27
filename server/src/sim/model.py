@@ -354,7 +354,8 @@ def equilibrate(G, M, Finit):
     from numpy import zeros
     
     # Set parameters
-    prevtoforceinf = 0.1 # Assume force-of-infection is proportional to prevalence -- 0.1 means 10% of people get infected every year
+    prevtoforceinf = 0.1 # Assume force-of-infection is proportional to prevalence -- 0.1 means that if prevalence is 10%, annual force-of-infection is 1%
+    treatmentdur = 10 # Average duration of treatment in years
     
     # Shorten key variables
     hivprev = M.hivprev

@@ -210,7 +210,7 @@ Calls makecco with parameters supplied from frontend
 def doCostCoverage():
     data = json.loads(request.data)
     args = {}
-    args['datain'] = load_model(request.project_name)
+    args['D'] = load_model(request.project_name)
     args = pick_params(["progname", "ccparams", "coparams"], data, args)
     try:
         args['ccparams'] = [0.9, 0.2, 800000.0, 7e6]
