@@ -34,7 +34,8 @@ define(['./module'], function (module) {
 
         // initialize lineChart for each line and update the scales
         _(scope.data.lines).each(function (line, index) {
-          var lineChart = new d3Charts.LineChart(chartGroup, index, chartSize, 100);
+          var lineColor = scope.options.linesStyle && scope.options.linesStyle[index];
+          var lineChart = new d3Charts.LineChart(chartGroup, index, chartSize, 100, lineColor);
           lineChartInstances.push(lineChart);
           var scales = lineChart.scales(line);
           graphsScales.push(scales);

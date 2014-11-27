@@ -82,7 +82,8 @@ define(['./module', 'underscore'], function (module, _) {
             right: 5,
             bottom: 40,
             left: 60
-          }
+          },
+          linesStyle: ['__blue', '__black __dashed', '__black __dashed']
         }, graphData.xlabel, graphData.ylabel),
         data: {
           lines: [],
