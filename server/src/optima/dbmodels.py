@@ -40,6 +40,7 @@ class ProjectDb(db.Model):
     programs = db.Column(JSON)
     populations = db.Column(JSON)
     model = db.Column(JSON)
+    working_model = db.Column(JSON)
 
     def __init__(self, name, user_id, datastart, dataend, econ_datastart, \
         econ_dataend, programs, populations, model = {}):
