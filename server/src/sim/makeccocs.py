@@ -454,7 +454,8 @@ def plotallcurves(D=None, progname=default_progname, ccparams=default_ccparams, 
 
     ## Initialise storage of outputs   
     plotdata_co = {}
-    plotdata = {}         
+    plotdata = {}    
+    effectnames = {}     
 
     # Loop over behavioural effects
     for effectname in D.programs[progname]:
@@ -466,10 +467,11 @@ def plotallcurves(D=None, progname=default_progname, ccparams=default_ccparams, 
             ## Store outputs
             if verbose==4:
                 print("making cco for program %s effect %s" % (progname, effectname))   
-            effectnumber = D.programs[progname].index(effectname)    
+            effectnumber = D.programs[progname].index(effectname)
+            effectnames[effectnumber] = effectname # so that the frontend knew for which effects there are plots 
             plotdata[effectnumber], plotdata_co[effectnumber], storeparams = makecco(D=D, progname=progname, effectname=effectname, ccparams=ccparams, coparams=coparams, makeplot=makeplot, verbose=verbose)
 
-    return plotdata, plotdata_co, plotdata_cc
+    return plotdata, plotdata_co, plotdata_cc, effectnames
       
 ## Example of use
 #plotdata_cco, plotdata_co, plotdata_cc, C = plotallcurves()
