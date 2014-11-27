@@ -64,7 +64,7 @@ def viewepiresults(E, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'de
                     xlim(xmin=startyear, xmax=endyear)
                     ylim(ymin=0)
 
-        if show_wait: show()
+    if show_wait: show()
 
 
 
@@ -129,7 +129,7 @@ def viewmodels(M, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'death'
                     xlim(xmin=startyear, xmax=endyear)
                     ylim(ymin=0)
 
-        if show_wait: show()
+    if show_wait: show()
 
 
 

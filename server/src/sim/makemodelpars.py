@@ -82,10 +82,8 @@ def makemodelpars(P, opt, verbose=2):
     ## Testing parameters -- most are data
     M.hivtest = dpar2mpar(P.testrate) # HIV testing rates
     M.aidstest = dpar2mpar(P.aidstestrate) # AIDS testing rates
-    blank = struct()
-    blank.p = [0] # WARNING # TODO KLUDGY
-    M.tx1 = dpar2mpar(blank)
-    M.tx2 = dpar2mpar(blank)
+    M.tx1 = dpar2mpar(P.numfirstline) # Number of people on first-line treatment
+    M.tx2 = dpar2mpar(P.numsecondline) # Number of people on second-line treatment
     
     ## Sexual behavior parameters -- all are parameters so can loop over all
     M.circum  = dpar2mpar(P.circum) # Circumcision
@@ -109,7 +107,7 @@ def makemodelpars(P, opt, verbose=2):
     for key in P.pships.keys(): M.pships[key] = array(P.pships[key])
     for key in P.transit.keys(): M.transit[key] = array(P.transit[key])
     
-    ## Constants...can be used directly -- # TODO should this be copy?
+    ## Constants...can be used directly
     M.const = P.const
     
     M.totalacts = struct()
