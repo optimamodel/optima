@@ -1,13 +1,7 @@
-import os
-import shutil
-from flask import Flask, helpers, request, jsonify, session, redirect, abort
+from flask import Flask, redirect
 from flask.ext.sqlalchemy import SQLAlchemy
-from werkzeug import secure_filename
-from generators.line import generatedata
 import json
-import traceback
-import sys
-from sim.dataio import loaddata, savedata, DATADIR
+from sim.dataio import DATADIR
 import optima.dbconn
 
 app = Flask(__name__)
@@ -19,19 +13,11 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql+psycopg2://optima:optima@loc
 
 optima.dbconn.db = SQLAlchemy(app)
 
-from sim.updatedata import updatedata
-from sim.loadspreadsheet import loadspreadsheet
-from sim.makeproject import makeproject
-from sim.manualfit import manualfit
-from sim.bunch import unbunchify
-from sim.runsimulation import runsimulation
-from sim.optimize import optimize
 from optima.analysis import analysis
 from optima.data import data
 from optima.model import model
 from optima.user import user
 from optima.project import project
-from optima.utils import allowed_file
 
 app.secret_key = 'F12Zr47j\3yX R~X@H!jmM]Lwf/,?KT'
 
@@ -75,4 +61,4 @@ def init_db():
 
 if __name__ == '__main__':
     init_db()
-    app.run(debug=True)
+    app.run(threaded=True, debug=True)

@@ -88,8 +88,8 @@ define(['./module', 'angular'], function (module, angular) {
     };
 
     var linescatterdata = {
-      line: [],
-      'scatter-error': []
+      lines: [],
+      scatter: []
   };
 
     $scope.doneEditingParameter = function () {
@@ -124,16 +124,16 @@ define(['./module', 'angular'], function (module, angular) {
             title: 'Showing total data for "' + type.name + '"'
           };
 
-          graph.data.line = _(data.tot).map(function (value, i) {
+          graph.data.lines.push(_(data.tot).map(function (value, i) {
             //      x                 y
             return [response.tvec[i], value];
-          });
+          }));
 
           graph.options.xAxis.axisLabel = data.xlabel;
           graph.options.yAxis.axisLabel = data.ylabel;
 
           if (data.ydata.length === 1) {
-            graph.data['scatter-error'] = _(data.ydata).chain()
+            graph.data.scatter = _(data.ydata).chain()
             .map(function (value, i) {
               //      x                 y
               return [response.xdata[i], value];
@@ -156,16 +156,16 @@ define(['./module', 'angular'], function (module, angular) {
               title: 'Showing ' + type.name + ' for population "' + $scope.parameters.meta.pops.long[populationIndex] + '"'
             };
 
-            graph.data.line = _(population.best).map(function (value, i) {
+            graph.data.lines.push(_(population.best).map(function (value, i) {
               //      x                 y
               return [response.tvec[i], value];
-            });
+            }));
 
             graph.options.xAxis.axisLabel = data.xlabel;
             graph.options.yAxis.axisLabel = data.ylabel;
 
             if (scatterDataAvailable) {
-              graph.data['scatter-error'] = _(data.ydata[populationIndex]).chain()
+              graph.data.scatter = _(data.ydata[populationIndex]).chain()
                 .map(function (value, i) {
                   //      x                 y
                   return [response.xdata[i], value];
