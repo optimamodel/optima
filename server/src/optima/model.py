@@ -7,7 +7,7 @@ from sim.autofit import autofit
 from sim.bunch import bunchify
 from sim.runsimulation import runsimulation
 from sim.makeccocs import makecco, plotallcurves
-from utils import load_model, save_model, save_working_model, save_working_model_as_default, revert_working_model_to_default, project_exists, pick_params, check_project_name, for_fe
+from utils import load_model, save_model, save_working_model, save_working_model_as_default, revert_working_model_to_default, project_exists, pick_params, check_project_name, for_fe, set_working_model_calibration
 from flask.ext.login import login_required
 
 """ route prefix: /api/model """
@@ -54,6 +54,9 @@ def doAutoCalibration():
             timelimit = int(timelimit) / 5
             args["timelimit"] = 5
         
+        # We are going to start calibrating
+        set_working_model_calibration(project_name, True)
+        
         # Do calculations 5 seconds at a time and then save them
         # to db.
         for i in range(0, timelimit):
@@ -62,8 +65,11 @@ def doAutoCalibration():
             save_working_model(project_name, D_dict)
             
     except Exception, err:
+        set_working_model_calibration(project_name, False)
         var = traceback.format_exc()
         return jsonify({"status":"NOK", "exception":var})
+        
+    set_working_model_calibration(project_name, False)
     return jsonify(D_dict.get('plot',{}).get('E',{}))
 
 """ 
