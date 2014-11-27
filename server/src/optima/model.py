@@ -213,8 +213,10 @@ def doCostCoverage():
     args['D'] = load_model(request.project_name)
     args = pick_params(["progname", "ccparams", "coparams"], data, args)
     try:
-        args['ccparams'] = [0.9, 0.2, 800000.0, 7e6]
-        args['coparams'] = []
+        if not args.get('ccparams'):
+            args['ccparams'] = [0.9, 0.2, 800000.0, 7e6]
+        if not args.get('coparams'):
+            args['coparams'] = []
         plotdata, plotdata_co, plotdata_cc, effectnames = plotallcurves(**args)
     except Exception, err:
         var = traceback.format_exc()
