@@ -16,10 +16,5 @@ D = runsimulation(D, startyear=2000, endyear=2015, verbose=verbose)
 
 
 from makeccocs import plotallcurves
-out = plotallcurves(D, makeplot=False, verbose=verbose)
 #out = plotallcurves(D, makeplot=False, verbose=verbose)
-
-#out2 = plotallcurves(['', '', 'ccparams', 'progname']
-#coparams=[], D=D
-#[0.9, 0.2, 800000.0, 7000000.0]
-#SBCC
+out = plotallcurves(D=D, coparams=[], ccparams=[0.9, 0.2, 800000.0, 7000000.0], progname='SBCC', makeplot = True)
