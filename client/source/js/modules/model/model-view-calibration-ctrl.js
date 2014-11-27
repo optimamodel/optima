@@ -32,8 +32,8 @@ define(['./module', 'underscore'], function (module, _) {
 
     var getLineScatterOptions = function (options, xLabel, yLabel) {
       var defaults = {
-        height: 400,
-        width: 800,
+        height: 300,
+        width: 450,
         margin: {
           top: 20,
           right: 20,
