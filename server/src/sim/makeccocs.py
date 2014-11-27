@@ -313,6 +313,7 @@ def makecco(D=None, progname = default_progname, effectname = default_effectname
         raise Exception('Please select one of the following programs %s' % D.programs.keys())
     # Check that the selected program is in the program list 
     if effectname not in D.programs[progname]:
+        print("Effect %s not in programs %s" % (effectname, D.programs[progname]))
         raise Exception('Please select one of the following effects %s' % D.programs[progname])
 
     # Extract info from data structure
@@ -473,6 +474,7 @@ def plotallcurves(D=None, progname=default_progname, ccparams=default_ccparams, 
 
             # Store outputs
             effectnumber = D.programs[progname].index(effectname)    
+            effectnames[effectnumber] = effectname
             plotdata[effectnumber], plotdata_co[effectnumber], storeparams = makecco(D=D, progname=progname, effectname=effectname, ccparams=ccparams, coparams=coparams, makeplot=makeplot, verbose=verbose)
 
             ## Store outputs
