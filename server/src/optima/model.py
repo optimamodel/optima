@@ -54,14 +54,20 @@ def doAutoCalibration():
             timelimit = int(timelimit) / 5
             args["timelimit"] = 5
         
+        # We are going to start calibration
+        set_working_model_calibration(project_name, True)
+        
         # Do calculations 5 seconds at a time and then save them
         # to db.
         for i in range(0, timelimit):
-            # We are still calibrating
-            set_working_model_calibration(project_name, True)
-            D = autofit(D, **args)
-            D_dict = D.toDict()
-            save_working_model(project_name, D_dict)
+            
+            # Make sure we are still calibrating
+            if is_model_calibrating(request.project_name):
+                D = autofit(D, **args)
+                D_dict = D.toDict()
+                save_working_model(project_name, D_dict)
+            else:
+                break
             
     except Exception, err:
         set_working_model_calibration(project_name, False)
@@ -160,6 +166,16 @@ def doManualCalibration():
         return jsonify({"status":"NOK", "exception":var})
     return jsonify(D_dict.get('plot',{}).get('E',{}))
 
+"""
+Stops calibration
+"""
+@model.route('/calibrate/stop')
+@login_required
+@check_project_name
+def stopCalibration():
+    set_working_model_calibration(request.project_name, False)
+    result = {"status": "OK"}
+    return jsonify(result)
 
 """
 Returns the working model of project.
