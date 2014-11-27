@@ -49,9 +49,12 @@ define(['./module', 'angular'], function (module, angular) {
 
     $scope.types = [
       { id: 'prev', name: 'Prevalence', active: true, byPopulation: true, total: false },
-      { id: 'daly', name: 'DALYs per year', active: false, byPopulation: false, total: false },
-      { id: 'death', name: 'HIV-related deaths per year', active: false, byPopulation: false, total: false },
-      { id: 'inci', name: 'New HIV infections per year', active: false, byPopulation: false, total: false }
+      { id: 'daly', name: 'DALYs', active: false, byPopulation: false, total: false },
+      { id: 'death', name: 'Deaths', active: false, byPopulation: false, total: false },
+      { id: 'inci', name: 'New infections', active: false, byPopulation: false, total: false },
+      { id: 'dx', name: 'Diagnoses', active: false, byPopulation: false, total: false },
+      { id: 'tx1', name: 'First-line treatment', active: false, byPopulation: false, total: false },
+      { id: 'tx2', name: 'Second-line treatment', active: false, byPopulation: false, total: false }
     ];
 
     var getActiveOptions = function () {
@@ -88,9 +91,10 @@ define(['./module', 'angular'], function (module, angular) {
     };
 
     var linescatterdata = {
-      lines: [],
-      scatter: []
-  };
+      line: [],
+      scatter: [],
+      area: {}
+    };
 
     $scope.doneEditingParameter = function () {
       Model.saveCalibrateManual({
@@ -100,8 +104,29 @@ define(['./module', 'angular'], function (module, angular) {
     };
 
     /*
-     * Methods
+     * Returns an array containing arrays with [x, y] for d3 line data.
      */
+    var generateLineData = function(xData, yData) {
+      return _(yData).map(function (value, i) {
+        return [xData[i], value];
+      });
+    };
+
+    /*
+    * Returns an array containing arrays with [x, y] for d3 scatter data.
+    *
+    * Empty entries are filtered out.
+    */
+    var generateScatterData = function(xData, yData) {
+      return _(yData).chain()
+        .map(function (value, i) {
+          return [xData[i], value];
+        })
+        .filter(function (value) {
+          return !!value[1];
+        })
+        .value();
+    };
 
     var prepareGraphs = function (response) {
       var graphs = [], types;
@@ -113,8 +138,8 @@ define(['./module', 'angular'], function (module, angular) {
       types = getActiveOptions();
 
       _(types).each(function (type) {
+
         var data = response[type.id];
-        var scatterDataAvailable = data.pops.length === data.ydata.length;
 
         if (type.total) {
           var graph = {
@@ -124,24 +149,17 @@ define(['./module', 'angular'], function (module, angular) {
             title: 'Showing total data for "' + type.name + '"'
           };
 
-          graph.data.lines.push(_(data.tot).map(function (value, i) {
-            //      x                 y
-            return [response.tvec[i], value];
-          }));
+          graph.data.line = generateLineData(response.tvec, data.tot.best);
+          graph.data.area.lineHigh = generateLineData(response.tvec, data.tot.high);
+          graph.data.area.lineLow = generateLineData(response.tvec, data.tot.low);
 
           graph.options.xAxis.axisLabel = data.xlabel;
           graph.options.yAxis.axisLabel = data.ylabel;
 
-          if (data.ydata.length === 1) {
-            graph.data.scatter = _(data.ydata).chain()
-            .map(function (value, i) {
-              //      x                 y
-              return [response.xdata[i], value];
-            })
-            .filter(function (value) {
-              return !!value[1];
-            })
-            .value();
+          // seems like ydata can either be an array of arrays for the
+          // populations or a single array when it's used in overall
+          if (!(data.ydata[0] instanceof Array)) {
+            graph.data.scatter = generateScatterData(response.xdata, data.ydata);
           }
 
           graphs.push(graph);
@@ -156,24 +174,17 @@ define(['./module', 'angular'], function (module, angular) {
               title: 'Showing ' + type.name + ' for population "' + $scope.parameters.meta.pops.long[populationIndex] + '"'
             };
 
-            graph.data.lines.push(_(population.best).map(function (value, i) {
-              //      x                 y
-              return [response.tvec[i], value];
-            }));
+            graph.data.line = generateLineData(response.tvec, population.best);
+            graph.data.area.lineHigh = generateLineData(response.tvec, population.high);
+            graph.data.area.lineLow = generateLineData(response.tvec, population.low);
 
             graph.options.xAxis.axisLabel = data.xlabel;
             graph.options.yAxis.axisLabel = data.ylabel;
 
-            if (scatterDataAvailable) {
-              graph.data.scatter = _(data.ydata[populationIndex]).chain()
-                .map(function (value, i) {
-                  //      x                 y
-                  return [response.xdata[i], value];
-                })
-                .filter(function (value) {
-                  return !!value[1];
-                })
-                .value();
+            // seems like ydata can either be an array of arrays for the
+            // populations or a single array when it's used in overall
+            if (data.ydata[0] instanceof Array) {
+              graph.data.scatter = generateScatterData(response.xdata, data.ydata[populationIndex]);
             }
 
             graphs.push(graph);
