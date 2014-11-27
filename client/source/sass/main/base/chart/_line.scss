@@ -4,6 +4,10 @@
   stroke: #000;
   stroke-width: 2px;
 
+  &.__black {
+    stroke: rgb(0, 0, 0);
+  }
+
   &.__orange {
     stroke: rgb(255, 127, 14);
   }
@@ -14,6 +18,10 @@
 
   &.__violet {
     stroke: rgb(119, 119, 255);
+  }
+
+  &.__blue {
+    stroke: rgb(0, 36, 255);
   }
 
   &.__green {
@@ -30,6 +38,10 @@
 
   &.__gray {
     stroke: rgb(174, 199, 232);
+  }
+
+  &.__dashed {
+    stroke-dasharray: 10, 5;
   }
 }
 
