@@ -7,7 +7,7 @@ from sim.autofit import autofit
 from sim.bunch import bunchify
 from sim.runsimulation import runsimulation
 from sim.makeccocs import makecco, plotallcurves
-from utils import load_model, save_model, save_working_model, save_working_model_as_default, project_exists, pick_params, check_project_name, for_fe
+from utils import load_model, save_model, save_working_model, save_working_model_as_default, revert_working_model_to_default, project_exists, pick_params, check_project_name, for_fe
 from flask.ext.login import login_required
 
 """ route prefix: /api/model """
@@ -90,6 +90,29 @@ def saveCalibrationModel():
         return jsonify({"status":"NOK", "exception":var})
     return jsonify(D_dict.get('plot',{}).get('E',{}))
 
+""" 
+Revert working model to the default model
+"""
+@model.route('/calibrate/revert', methods=['POST'])
+@login_required
+@check_project_name
+def revertCalibrationModel():
+    reply = {'status':'NOK'}
+
+    # get project name 
+    project_name = request.project_name
+    if not project_exists(project_name):
+        reply['reason'] = 'File for project %s does not exist' % project_name
+        return jsonify(reply)
+
+    try:
+        D = revert_working_model_to_default(project_name)
+        D_dict = D.toDict()
+            
+    except Exception, err:
+        var = traceback.format_exc()
+        return jsonify({"status":"NOK", "exception":var})
+    return jsonify(D_dict.get('plot',{}).get('E',{}))
 
 """ 
 Uses provided parameters to manually calibrate the model (update it with these data) 
