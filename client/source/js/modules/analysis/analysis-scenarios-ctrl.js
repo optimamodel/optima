@@ -13,12 +13,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
         $scope.types = [
           { id: 'prev', name: 'Prevalence', active: true, byPopulation: true, total: false },
-          // { id: 'daly', name: 'DALYs', active: false, byPopulation: false, total: false },
-          // { id: 'death', name: 'Deaths', active: false, byPopulation: false, total: false },
-          // { id: 'inci', name: 'New infections', active: false, byPopulation: false, total: false },
-          // { id: 'dx', name: 'Diagnoses', active: false, byPopulation: false, total: false },
-          // { id: 'tx1', name: 'First-line treatment', active: false, byPopulation: false, total: false },
-          // { id: 'tx2', name: 'Second-line treatment', active: false, byPopulation: false, total: false }
+          { id: 'daly', name: 'DALYs', active: false, byPopulation: false, total: false },
+          { id: 'death', name: 'Deaths', active: false, byPopulation: false, total: false },
+          { id: 'inci', name: 'New infections', active: false, byPopulation: false, total: false },
+          { id: 'dx', name: 'Diagnoses', active: false, byPopulation: false, total: false },
+          { id: 'tx1', name: 'First-line treatment', active: false, byPopulation: false, total: false },
+          { id: 'tx2', name: 'Second-line treatment', active: false, byPopulation: false, total: false }
         ];
 
         $scope.runScenariosOptions = {};
@@ -61,8 +61,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         };
 
         var updateGraphs = function (response) {
-          console.log(response);
-
           if (!response) {
             return graphs;
           }
@@ -83,20 +81,14 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
                 title: 'Showing total data for "' + type.name + '"'
               };
 
-              // TODO fix lines
-              graph.data.lines.push(generateLineData(response.tvec.np_array, data.tot.data[0]));
-              graph.data.lines.push(generateLineData(response.tvec.np_array, data.tot.data[1]));
+              _(data.tot.data).each(function(lineData) {
+                graph.data.lines.push(generateLineData(response.tvec.np_array, lineData));
+              });
 
               graph.options.xAxis.axisLabel = data.xlabel;
               graph.options.yAxis.axisLabel = data.ylabel;
 
-              graph.data.scatter = [
-              [2010, 0.2],
-              [2011, 0.21]
-              ];
-
               graphs.push(graph);
-
 
             // }
           });
