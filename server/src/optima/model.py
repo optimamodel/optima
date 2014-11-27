@@ -6,7 +6,7 @@ from sim.manualfit import manualfit
 from sim.autofit import autofit
 from sim.bunch import bunchify
 from sim.runsimulation import runsimulation
-from sim.makeccocs import makecco, plotallcurves
+from sim.makeccocs import makecco, plotallcurves, default_effectname
 from utils import load_model, save_model, project_exists, pick_params, check_project_name, for_fe
 from flask.ext.login import login_required
 
@@ -74,9 +74,7 @@ def doManualCalibration():
     # get project name
     project_name = request.project_name
     if not project_exists(project_name):
-        reply['reason'] = 'File for project %s does not exist' % project_name
-    file_name = helpers.safe_join(PROJECTDIR, project_name+'.prj')
-    print("project file_name: %s" % file_name)
+        reply['reason'] = 'Project %s does not exist' % project_name
 
     #expects json: {"startyear":year,"endyear":year} and gets project_name from session
     args = {}
@@ -213,11 +211,39 @@ def doCostCoverage():
     args['D'] = load_model(request.project_name)
     args = pick_params(["progname", "ccparams", "coparams"], data, args)
     try:
-        args['ccparams'] = [0.9, 0.2, 800000.0, 7e6]
-        args['coparams'] = []
-        plotdata, plotdata_co, plotdata_cc, D = plotallcurves(**args)
+        if not args.get('ccparams'):
+            args['ccparams'] = [0.9, 0.2, 800000.0, 7e6]
+        if not args.get('coparams'):
+            args['coparams'] = []
+        plotdata, plotdata_co, plotdata_cc, effectnames, D = plotallcurves(**args)
+        if args.get('dosave'):
+            D_dict = D.toDict()
+            save_model(request.project_name, D_dict)
     except Exception, err:
         var = traceback.format_exc()
         return jsonify({"status":"NOK", "exception":var})
     return jsonify({"status":"OK", "plotdata": for_fe(plotdata), \
-        "plotdata_cc": for_fe(plotdata_cc), "plotdata_co": for_fe(plotdata_co)})
+        "plotdata_co": for_fe(plotdata_co), "plotdata_cc": for_fe(plotdata_cc), "effectnames": for_fe(effectnames)})
+
+@model.route('/costcoverage/effect', methods=['POST'])
+@login_required
+@check_project_name
+def doCostCoverageEffect():
+    data = json.loads(request.data)
+    args = {}
+    args['D'] = load_model(request.project_name)
+    args = pick_params(["progname", "effectname", "ccparams", "coparams"], data, args)
+    try:
+        if not args.get('ccparams'):
+            args['ccparams'] = [0.9, 0.2, 800000.0, 7e6]
+        if not args.get('coparams'):
+            args['coparams'] = []
+        if not args.get('effectname'):
+            args['effectname'] = default_effectname
+        args['effectname'] = args['effectname'][:3]
+        plotdata, plotdata_co, storeparams = makecco(**args)
+    except Exception, err:
+        var = traceback.format_exc()
+        return jsonify({"status":"NOK", "exception":var})
+    return jsonify({"status":"OK", "plotdata": for_fe(plotdata), \
+        "plotdata_co": for_fe(plotdata_co), "effectname": args['effectname']})

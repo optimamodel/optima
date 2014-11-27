@@ -71,8 +71,9 @@ define([
 
             return $q.reject(response);
           } else {
-            if (response.data.message) {
-              alert(response.data.message);
+            var message = response.data.message || response.data.exception;
+            if (message) {
+              alert(message);
             }
 
             return $q.reject(response);
