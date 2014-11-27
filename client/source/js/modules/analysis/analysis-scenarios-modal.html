@@ -24,26 +24,28 @@
             </div>
         </div>
 
-        <div class="section grid">
-            <div class="6">
-                <b>Start year of scenario</b>
-                <input class="txbox" type="number" min="1900" placeholder="e.g. 2000" ng-model="scenario.startyear">
-            </div>
-            <div class="6">
-                <b>Final year of scenario (optional)</b>
-                <input class="txbox" type="number" min="1900" placeholder="e.g. 2020" ng-model="scenario.endyear">
-            </div>
-        </div>
+        <div ng-repeat="parsEntry in scenario.pars">
+          <div class="section grid">
+              <div class="6">
+                  <b>Start year of scenario</b>
+                  <input class="txbox" type="number" min="1900" placeholder="e.g. 2000" ng-model="parsEntry.startyear">
+              </div>
+              <div class="6">
+                  <b>Final year of scenario (optional)</b>
+                  <input class="txbox" type="number" min="1900" placeholder="e.g. 2020" ng-model="parsEntry.endyear">
+              </div>
+          </div>
 
-        <div class="section grid">
-            <div class="6">
-                <b>Value at start of scenario</b>
-                <input class="txbox" type="number" placeholder="e.g. 0.55" ng-model="scenario.startval">
-            </div>
-            <div class="6">
-                <b>Value at end of scenario</b>
-                <input class="txbox" type="number" placeholder="e.g. 0.95" ng-model="scenario.endval">
-            </div>
+          <div class="section grid">
+              <div class="6">
+                  <b>Value at start of scenario</b>
+                  <input class="txbox" type="number" placeholder="e.g. 0.55" ng-model="parsEntry.startval">
+              </div>
+              <div class="6">
+                  <b>Value at end of scenario</b>
+                  <input class="txbox" type="number" placeholder="e.g. 0.95" ng-model="parsEntry.endval">
+              </div>
+          </div>
         </div>
 
         <div class="section text-center">

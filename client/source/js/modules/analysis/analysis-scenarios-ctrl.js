@@ -8,8 +8,19 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         // initialize all necessary data for this controller
         var initialize = function() {
           $scope.scenarios = [
-            { name: 'Conditions remain according to model calibration', active: true }
+            {'name':'Current conditions', 'pars':[]},
+            {"name": '100% condom use in KAPs', 'pars': [
+              {'keys':['condom','reg'], 'pop':0, 'startyear':2010,'endyear':2015,'startval':-1,'endval':1},
+              {'keys':['condom','cas'], 'pop':0, 'startyear':2010,'endyear':2015,'startval':-1,'endval':1},
+              {'keys':['condom','com'], 'pop':1, 'startyear':2010,'endyear':2015,'startval':-1,'endval':1},
+              {'keys':['condom','com'], 'pop':5, 'startyear':2010,'endyear':2015,'startval':-1,'endval':1}
+            ]}
           ];
+
+          $scope.runScenariosOptions = {
+            scenarios: $scope.scenarios,
+            dosave: false
+          };
 
           $scope.types = [
             { id: 'prev', name: 'Prevalence', active: true, byPopulation: true, total: false },
@@ -21,7 +32,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             { id: 'tx2', name: 'Second-line treatment', active: false, byPopulation: false, total: false }
           ];
 
-          $scope.runScenariosOptions = {};
 
           linesGraphOptions = {
             height: 250,
