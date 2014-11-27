@@ -105,7 +105,7 @@
             <div class="section grid">
                 <div class="6" ng-repeat="graph in graphs">
                     <div class="chart-container">
-                        <nvd3 data="graph.data" options="graph.options"></nvd3>
+                        <div line-scatter-chart data="graph.data" options="graph.options" save-graph-as></div>
                     </div>
                 </div>
             </div>

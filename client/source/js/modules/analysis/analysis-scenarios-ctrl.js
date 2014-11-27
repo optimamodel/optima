@@ -11,14 +11,97 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             { name: 'Conditions remain according to model calibration', active: true }
         ];
 
+        $scope.types = [
+          { id: 'prev', name: 'Prevalence', active: true, byPopulation: true, total: false },
+          // { id: 'daly', name: 'DALYs', active: false, byPopulation: false, total: false },
+          // { id: 'death', name: 'Deaths', active: false, byPopulation: false, total: false },
+          // { id: 'inci', name: 'New infections', active: false, byPopulation: false, total: false },
+          // { id: 'dx', name: 'Diagnoses', active: false, byPopulation: false, total: false },
+          // { id: 'tx1', name: 'First-line treatment', active: false, byPopulation: false, total: false },
+          // { id: 'tx2', name: 'Second-line treatment', active: false, byPopulation: false, total: false }
+        ];
 
         $scope.runScenariosOptions = {};
 
-        var updateGraphs = function (data) {
- //         $scope.graphs = prepareGraphs(data);
- //         $scope.parameters.cache.response = data;
- //         TODO!!!
-            console.log(data);
+        var linesGraphOptions = {
+          height: 250,
+          width: 400,
+          margin: {
+            top: 20,
+            right: 20,
+            bottom: 60,
+            left: 100
+          },
+          xAxis: {
+            axisLabel: 'Year',
+            tickFormat: function (d) {
+              return d3.format('d')(d);
+            }
+          },
+          yAxis: {
+            axisLabel: 'lala',
+            tickFormat: function (d) {
+              return d3.format(',.2f')(d);
+            }
+          }
+        };
+
+        var linesGraphData = {
+          lines: [],
+          scatter: []
+        };
+
+        /*
+        * Returns an array containing arrays with [x, y] for d3 line data.
+        */
+        var generateLineData = function(xData, yData) {
+          return _(yData).map(function (value, i) {
+            return [xData[i], value];
+          });
+        };
+
+        var updateGraphs = function (response) {
+          console.log(response);
+
+          if (!response) {
+            return graphs;
+          }
+
+          // types = getActiveOptions();
+          var types = $scope.types;
+          var graphs = [];
+
+          _(types).each(function (type) {
+
+            var data = response[type.id];
+
+            // if (type.total) {
+              var graph = {
+                options: angular.copy(linesGraphOptions),
+                data: angular.copy(linesGraphData),
+                type: type,
+                title: 'Showing total data for "' + type.name + '"'
+              };
+
+              // TODO fix lines
+              graph.data.lines.push(generateLineData(response.tvec.np_array, data.tot.data[0]));
+              graph.data.lines.push(generateLineData(response.tvec.np_array, data.tot.data[1]));
+
+              graph.options.xAxis.axisLabel = data.xlabel;
+              graph.options.yAxis.axisLabel = data.ylabel;
+
+              graph.data.scatter = [
+              [2010, 0.2],
+              [2011, 0.21]
+              ];
+
+              graphs.push(graph);
+
+
+            // }
+          });
+
+          $scope.graphs = graphs;
         };
 
 
