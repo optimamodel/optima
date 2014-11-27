@@ -105,8 +105,8 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
     recov = h2a(M.const.recov) # Recovery rates
     hivtest = M.hivtest
     aidstest = M.aidstest
-    Mtx1 = M.tx1 # tx1 already used for index of people on treatment
-    Mtx2 = M.tx2
+    Mtx1 = 0*M.tx1 # tx1 already used for index of people on treatment
+    Mtx2 = 0*M.tx2
     failfirst = M.const.fail.first
     failsecond = M.const.fail.second
     Fforce = array(F.force)
@@ -365,12 +365,18 @@ def equilibrate(G, M, Finit):
     
     # Can calculate equilibrium for each population separately
     for p in range(npops):
+        # Set up basic calculations
         uninfected = M['popsize'][p,0] * (1-hivprev[p]) # Set initial susceptible population -- easy peasy!
-        infected = M['popsize'][p,0] * hivprev[p] * Finit[p] # Set initial infected population
+        allinfected = M['popsize'][:,0] * hivprev[:] * Finit[:] # Set initial infected population
+        popinfected = allinfected[p]
+        fractotal =  popinfected / sum(allinfected) # Fractional total of infected people in this population
+        ontreat1 = M['tx1'][0] * fractotal
+        ontreat2 = M['tx2'][0] * fractotal
+        
         initpeople[0, p] = uninfected
-        initpeople[1, p] = infected
+        initpeople[1, p] = popinfected
+        
         
         assumedforceinf = hivprev*prevtoforceinf # To calculate ratio of people in the initial category, need to estimate the force-of-infection
         
-    
     return initpeople
