@@ -30,16 +30,19 @@ define(['./module'], function (module) {
         var graphsScales = [];
         var yMax = 0;
         var xMax = 0;
+        var xMin = Number.POSITIVE_INFINITY;
         var scatterChartInstance;
 
         // initialize lineChart for each line and update the scales
         _(scope.data.lines).each(function (line, index) {
-          var lineChart = new d3Charts.LineChart(chartGroup, index, chartSize, 100);
+          var lineColor = scope.options.linesStyle && scope.options.linesStyle[index];
+          var lineChart = new d3Charts.LineChart(chartGroup, index, chartSize, 100, lineColor);
           lineChartInstances.push(lineChart);
           var scales = lineChart.scales(line);
           graphsScales.push(scales);
           yMax = Math.max(yMax, scales.y.domain()[1]);
           xMax = Math.max(xMax, scales.x.domain()[1]);
+          xMin = Math.min(xMin, scales.x.domain()[0]);
         });
 
         // initialize scatterChart
@@ -49,12 +52,13 @@ define(['./module'], function (module) {
           graphsScales.push(scatterScale);
           yMax = Math.max(yMax, scatterScale.y.domain()[1]);
           xMax = Math.max(xMax, scatterScale.x.domain()[1]);
+          xMin = Math.min(xMin, scatterScale.x.domain()[0]);
         }
 
         // normalizing all graphs scales to include maximum possible x and y
         _(graphsScales).each(function (scale) {
           scale.y.domain([0, yMax]);
-          scale.x.domain([0, xMax]);
+          scale.x.domain([xMin, xMax]);
         });
 
         d3Charts.drawAxes(
