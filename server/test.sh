@@ -15,4 +15,6 @@ then
   pip install -r ./requirements.txt
 fi
 
+mkdir -p /tmp/uploads
+cp src/sim/example.xlsx /tmp/uploads
 nosetests

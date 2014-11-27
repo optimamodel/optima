@@ -1,6 +1,19 @@
 """ Simple tests...and perplexing """
 
-verbose = 4
+import argparse
+parser = argparse.ArgumentParser(description = "OPTIMA test makeccocs")
+parser.add_argument("-w","--wait", help="wait for user input after showing graphs", action="store_true")
+parser.add_argument("-p","--plot", help="plot graphs", action="store_true")
+parser.add_argument("-v", "--verbose", type=int, default=4, help="increase output verbosity")
+
+args = parser.parse_args()
+
+verbose = args.verbose # 4
+makeplot = args.plot
+show_wait = args.wait
+
+if show_wait:
+    makeplot = True
 
 print('\n\n\n1. Making project...')
 from makeproject import makeproject
@@ -17,4 +30,4 @@ D = runsimulation(D, startyear=2000, endyear=2015, verbose=verbose)
 
 from makeccocs import plotallcurves
 #out = plotallcurves(D, makeplot=False, verbose=verbose)
-out = plotallcurves(D=D, coparams=[], ccparams=[0.9, 0.2, 800000.0, 7000000.0], progname='SBCC', makeplot = False)
+out = plotallcurves(D=D, coparams=[], ccparams=[0.9, 0.2, 800000.0, 7000000.0], progname='SBCC', makeplot=makeplot, verbose=verbose, show_wait=show_wait)
