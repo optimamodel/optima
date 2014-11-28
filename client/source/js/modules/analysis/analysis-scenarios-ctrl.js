@@ -15,8 +15,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           });
 
           $scope.scenarios = [
-            {'name':'Current conditions', 'pars':[]},
-            {"name": '100% condom use in KAPs', 'pars': [
+            {active: true, name: '100% condom use in KAPs', pars: [
               { names: ['condom','reg'], pops: 0, startyear: 2010, endyear: 2015, startval: -1, endval: 1},
               { names: ['condom','cas'], pops: 0, startyear: 2010, endyear: 2015, startval: -1, endval: 1},
               { names: ['condom','com'], pops: 1, startyear: 2010, endyear: 2015, startval: -1, endval: 1},
@@ -25,7 +24,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           ];
 
           $scope.runScenariosOptions = {
-            scenarios: $scope.scenarios,
             dosave: false
           };
 
@@ -70,8 +68,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         };
 
         /*
-        * Returns an array containing arrays with [x, y] for d3 line data.
-        */
+         * Returns an array containing arrays with [x, y] for d3 line data.
+         */
         var generateLineData = function(xData, yData) {
           return _(yData).map(function (value, i) {
             return [xData[i], value];
@@ -79,11 +77,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         };
 
         /*
-        * Returns an graph based on the provided yData.
-        *
-        * yData should be an array where each entry contains an array of all
-        * y-values from one line.
-        */
+         * Returns an graph based on the provided yData.
+         *
+         * yData should be an array where each entry contains an array of all
+         * y-values from one line.
+         */
         var generateGraph = function(type, yData, xData, title) {
           var graph = {
             options: angular.copy(linesGraphOptions),
@@ -137,8 +135,22 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           $scope.graphs = graphs;
         };
 
+        /*
+         * Returns a collection of entries where all non-active antries are filtered
+         * out and the active attribute is removed from each of these entries.
+         */
+        var toCleanArray = function (collection) {
+          return _(collection).chain()
+          .where({ active: true })
+          .map(function (item) {
+            return _(item).omit(['active', '$$hashKey']);
+          })
+          .value();
+        };
+
 
         $scope.runScenarios = function () {
+          $scope.runScenariosOptions.scenarios = toCleanArray($scope.scenarios);
           $http.post('/api/analysis/scenarios/run', $scope.runScenariosOptions)
             .success(function(data) {
               responseData = data;
