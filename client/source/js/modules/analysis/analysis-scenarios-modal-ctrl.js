@@ -15,6 +15,11 @@ define(['./module'], function (module) {
       $modalInstance.close($scope.scenario);
     };
 
+    $scope.addParameter = function() {
+      var entry = {'keys':['condom','reg'], 'pop':0, 'startyear':2010,'endyear':2015,'startval':-1,'endval':1};
+      scenario.pars.push(entry);
+    };
+
   });
 
 });
