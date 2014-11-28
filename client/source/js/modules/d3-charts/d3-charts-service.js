@@ -6,10 +6,11 @@ define(['./module', 'd3', 'd3-box'], function (module, d3) {
     // available colors, see .line in _chart.scss
     var colors = [ '__orange', '__light-orange', '__violet', '__green', '__light-green', '__red', '__gray' ];
 
-    function LineChart(chart, lineIndex, chartSize, transitionTimeout) {
+    function LineChart(chart, lineIndex, chartSize, transitionTimeout, customColor) {
       var xScale, yScale;
 
       var uniqClassName = 'line' + lineIndex;
+      var lineColor = customColor || colors[lineIndex];
 
       this.scales = function (dataset) {
         var xExtent = d3.extent(dataset, function (d) {
@@ -49,7 +50,7 @@ define(['./module', 'd3', 'd3-box'], function (module, d3) {
 
           chart.append('path')
             .attr('d', line(dataset))
-            .attr('class', 'line ' + colors[lineIndex] + ' ' + uniqClassName)
+            .attr('class', 'line ' + lineColor + ' ' + uniqClassName)
             .attr('opacity', 0)
             .transition()
             .duration(transitionTimeout)
