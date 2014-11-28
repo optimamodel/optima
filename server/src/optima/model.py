@@ -7,9 +7,10 @@ from sim.autofit import autofit
 from sim.bunch import bunchify
 from sim.runsimulation import runsimulation
 from sim.makeccocs import makecco, plotallcurves
-from utils import save_working_model_as_default, revert_working_model_to_default, set_working_model_calibration, is_model_calibrating
+from utils import save_working_model, save_working_model_as_default, revert_working_model_to_default, set_working_model_calibration, is_model_calibrating
 from utils import load_model, save_model, project_exists, pick_params, check_project_name, for_fe
 from flask.ext.login import login_required
+import time
 
 """ route prefix: /api/model """
 model = Blueprint('model',  __name__, static_folder = '../static')
@@ -35,12 +36,10 @@ def doAutoCalibration():
 
     # get project name 
     project_name = request.project_name
+    D = None
     if not project_exists(project_name):
         reply['reason'] = 'File for project %s does not exist' % project_name
         return jsonify(reply)
-
-    file_name = helpers.safe_join(PROJECTDIR, project_name+'.prj')
-    print("project file_name: %s" % file_name)
     try:
         D = load_model(project_name)
         args = {}
@@ -54,21 +53,24 @@ def doAutoCalibration():
         if timelimit:
             timelimit = int(timelimit) / 5
             args["timelimit"] = 5
-        
-        # We are going to start calibration
-        set_working_model_calibration(project_name, True)
-        
-        # Do calculations 5 seconds at a time and then save them
-        # to db.
-        for i in range(0, timelimit):
+        if is_model_calibrating(request.project_name):
+            return jsonify({"status":"NOK", "reason":"calibration already going"})
+        else:
+            # We are going to start calibration
+            set_working_model_calibration(project_name, True)
             
-            # Make sure we are still calibrating
-            if is_model_calibrating(request.project_name):
-                D = autofit(D, **args)
-                D_dict = D.toDict()
-                save_working_model(project_name, D_dict)
-            else:
-                break
+            # Do calculations 5 seconds at a time and then save them
+            # to db.
+            for i in range(0, timelimit):
+                
+                # Make sure we are still calibrating
+                if is_model_calibrating(request.project_name):
+                    D = autofit(D, **args)
+                    D_dict = D.toDict()
+                    save_working_model(project_name, D_dict)
+                    time.sleep(1)
+                else:
+                    break
             
     except Exception, err:
         set_working_model_calibration(project_name, False)
@@ -181,13 +183,15 @@ Returns the working model of project.
 @login_required
 @check_project_name
 def getWorkingModel():
+    print("/api/model/working %s" % request.project_name)
     # Make sure model is calibrating
     if is_model_calibrating(request.project_name):
         D = load_model(request.project_name, working_model = True)
         D_dict = D.toDict()
         result = jsonify(D_dict.get('plot',{}).get('E',{}))
     else:
-        result = {'status': "OK"}
+        print("no longer calibrating")
+        result = jsonify({'status': "OK"})
     return result
 
 """
