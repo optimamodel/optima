@@ -6,19 +6,102 @@ from sim.manualfit import manualfit
 from sim.autofit import autofit
 from sim.bunch import bunchify
 from sim.runsimulation import runsimulation
-from sim.makeccocs import makecco, plotallcurves
-from utils import load_model, save_model, save_working_model, save_working_model_as_default, revert_working_model_to_default, project_exists, pick_params, check_project_name, for_fe, set_working_model_calibration, is_model_calibrating
-from flask.ext.login import login_required
+from utils import load_model, save_model, save_working_model, save_working_model_as_default 
+from utils import revert_working_model_to_default, project_exists, pick_params, check_project_name, for_fe
+from utils import set_working_model_calibration, is_model_calibrating
+from flask.ext.login import login_required, current_user
+from signal import *
+import threading
+import atexit
+import time
+import sys
 
 """ route prefix: /api/model """
 model = Blueprint('model',  __name__, static_folder = '../static')
 model.config = {}
+
+POOL_TIME = 5 #Seconds
+
+# variables that are accessible from anywhere
+sentinel = {
+    'exit':False,
+    'projects':{}
+}
+
+class CalculatingThread(threading.Thread):
+    def __init__(self, sentinel, limit, user, project_name):
+        super(CalculatingThread, self).__init__()
+        self.limit = limit
+        self.sentinel = sentinel
+        self.user_name = user.name
+        self.user_id = user.id
+        self.project_name = project_name
+        if not self.project_name in self.sentinel:
+            self.sentinel[project_name] = {}
+        self.sentinel[project_name]['stopping'] = False
+        self.sentinel[project_name]['running'] = True
+        print("starting thread for user: %s" % self.user_name)
+
+    def run(self):
+        #just a demo that it can 
+        from utils import load_model_user, save_model_user
+        for i in range(self.limit):
+            if self.sentinel and self.sentinel[self.project_name] \
+            and not self.sentinel['exit'] and not self.sentinel[self.project_name]['stopping']:
+                print("i=%s" %i)
+                print("user: %s" % self.user_name)
+                D = load_model_user(self.project_name, self.user_id)
+                args = {'timelimit':5, 'startyear':2000,'endyear':2015}
+                D = autofit(D, **args)
+                D_dict = D.toDict()
+                save_model_user(self.project_name, self.user_id, D)
+                time.sleep(1)
+            else:
+                print("stopping requested")
+                sys.exit()
+        self.sentinel[self.project_name]['running']=False
+        print("thread stopped")
+        sys.exit()
+
+
+def interrupt(*args):
+    print("stopping all threads")
+    sentinel['exit'] = True
+    sys.exit()
+
+@model.route('/thread/cancel')
+@login_required
+@check_project_name
+def doInterrupt():
+    print("stopping thread")
+    if request.project_name in sentinel:
+        sentinel[request.project_name]['stopping'] = True
+    return json.dumps({"status":"OK", "result": "thread for user %s project %s stopped" % (current_user.name, request.project_name)})
+
+@model.route('/thread/start/<limit>')
+@login_required
+@check_project_name
+def doStuffStart(limit):
+    # Do initialisation stuff here
+    # Create your thread
+    msg = ""
+    if not request.project_name in sentinel \
+    or not sentinel[request.project_name]['running']:
+        msg = "starting thread for user %s project %s" % (current_user.name, request.project_name)
+        CalculatingThread(sentinel, int(limit), current_user, request.project_name).start()
+    else:
+        msg = "thread for user %s project %s has already started" % (current_user.name, request.project_name)
+        print(msg)
+    return json.dumps({"status":"OK", "result": msg})
+
 
 @model.record
 def record_params(setup_state):
   app = setup_state.app
   model.config = dict([(key,value) for (key,value) in app.config.iteritems()])
 
+for sig in (SIGABRT, SIGILL, SIGINT, SIGSEGV, SIGTERM):
+    signal(sig, interrupt)
 
 """ 
 Uses provided parameters to auto calibrate the model (update it with these data) 
@@ -53,21 +136,23 @@ def doAutoCalibration():
         if timelimit:
             timelimit = int(timelimit) / 5
             args["timelimit"] = 5
-        
+        if is_model_calibrating(project_name):
+            return jsonify({'status':'NOK','reason':'calibration already started'})
+        else:
         # We are going to start calibration
-        set_working_model_calibration(project_name, True)
-        
-        # Do calculations 5 seconds at a time and then save them
-        # to db.
-        for i in range(0, timelimit):
+            set_working_model_calibration(project_name, True)
             
-            # Make sure we are still calibrating
-            if is_model_calibrating(request.project_name):
-                D = autofit(D, **args)
-                D_dict = D.toDict()
-                save_working_model(project_name, D_dict)
-            else:
-                break
+            # Do calculations 5 seconds at a time and then save them
+            # to db.
+            for i in range(0, timelimit):
+                
+                # Make sure we are still calibrating
+                if is_model_calibrating(request.project_name):
+                    D = autofit(D, **args)
+                    D_dict = D.toDict()
+                    save_working_model(project_name, D_dict)
+                else:
+                    break
             
     except Exception, err:
         set_working_model_calibration(project_name, False)
@@ -136,9 +221,7 @@ def doManualCalibration():
     # get project name
     project_name = request.project_name
     if not project_exists(project_name):
-        reply['reason'] = 'File for project %s does not exist' % project_name
-    file_name = helpers.safe_join(PROJECTDIR, project_name+'.prj')
-    print("project file_name: %s" % file_name)
+        reply['reason'] = 'Project %s does not exist' % project_name
 
     #expects json: {"startyear":year,"endyear":year} and gets project_name from session
     args = {}
@@ -300,11 +383,39 @@ def doCostCoverage():
     args['D'] = load_model(request.project_name)
     args = pick_params(["progname", "ccparams", "coparams"], data, args)
     try:
-        args['ccparams'] = [0.9, 0.2, 800000.0, 7e6]
-        args['coparams'] = []
-        plotdata, plotdata_co, plotdata_cc, D = plotallcurves(**args)
+        if not args.get('ccparams'):
+            args['ccparams'] = [0.9, 0.2, 800000.0, 7e6]
+        if not args.get('coparams'):
+            args['coparams'] = []
+        plotdata, plotdata_co, plotdata_cc, effectnames, D = plotallcurves(**args)
+        if args.get('dosave'):
+            D_dict = D.toDict()
+            save_model(request.project_name, D_dict)
     except Exception, err:
         var = traceback.format_exc()
         return jsonify({"status":"NOK", "exception":var})
     return jsonify({"status":"OK", "plotdata": for_fe(plotdata), \
-        "plotdata_cc": for_fe(plotdata_cc), "plotdata_co": for_fe(plotdata_co)})
+        "plotdata_co": for_fe(plotdata_co), "plotdata_cc": for_fe(plotdata_cc), "effectnames": for_fe(effectnames)})
+
+@model.route('/costcoverage/effect', methods=['POST'])
+@login_required
+@check_project_name
+def doCostCoverageEffect():
+    data = json.loads(request.data)
+    args = {}
+    args['D'] = load_model(request.project_name)
+    args = pick_params(["progname", "effectname", "ccparams", "coparams"], data, args)
+    try:
+        if not args.get('ccparams'):
+            args['ccparams'] = [0.9, 0.2, 800000.0, 7e6]
+        if not args.get('coparams'):
+            args['coparams'] = []
+        if not args.get('effectname'):
+            args['effectname'] = default_effectname
+        args['effectname'] = args['effectname'][:3]
+        plotdata, plotdata_co, storeparams = makecco(**args)
+    except Exception, err:
+        var = traceback.format_exc()
+        return jsonify({"status":"NOK", "exception":var})
+    return jsonify({"status":"OK", "plotdata": for_fe(plotdata), \
+        "plotdata_co": for_fe(plotdata_co), "effectname": args['effectname']})

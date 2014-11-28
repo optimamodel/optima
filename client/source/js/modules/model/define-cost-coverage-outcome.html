@@ -27,18 +27,58 @@
 
   <div class="section">
     <button class="btn" ng-click="generateCurves()">Generate curves</button>
+    <button class="btn" ng-click="saveModel()">Save Model</button>
+    <button class="btn" ng-click="revertModel()">Revert Model</button>
   </div>
 
-  <div ng-if="apiData">
-    <h1>Plotdata_cc</h1>
-    <div class="chart-container">
-      <div line-scatter-chart data="graphs.plotdata_cc.data" options="graphs.plotdata_cc.options" save-graph-as></div>
+  <div class="section" ng-if="apiData">
+
+    <div class="section">
+      <h1>{{ activeProgram.name }}</h1>
+      <div class="chart-container" style="width: 470px">
+        <div line-scatter-chart data="graphs.plotdata_cc.data" options="graphs.plotdata_cc.options"></div>
+      </div>
     </div>
 
-    <h1>Plotdata</h1>
-    <div class="chart-container" ng-repeat="graph in graphs.plotdata">
-      <div line-scatter-chart data="graph.data" options="graph.options" save-graph-as></div>
+    <div class="section" ng-repeat="graph in graphs.plotdata">
+
+      <h2 class="section">{{ apiData.effectnames[$index][0].join(' ') }}</h2>
+
+      <div class="section elastic">
+        <div class="elastic_col __shrink" style="width: 320px">
+          <div class="chart-container" ng-init="coGraph = graphs.plotdata_co[$index]">
+            <div line-scatter-chart data="coGraph.data" options="coGraph.options"></div>
+          </div>
+        </div>
+
+        <div class="elastic_col" style="width: 340px">
+          <div class="chart-container">
+            <div line-scatter-chart data="graph.data" options="graph.options"></div>
+          </div>
+        </div>
+
+        <div class="elastic_col">
+          <h3>Options to adjust curves:</h3>
+          <p>
+            1. Behavior without this program ranges between
+            <input class="txbox __inline __s" ng-model="coParams[$index][0]">
+            and
+            <input class="txbox __inline __s" ng-model="coParams[$index][1]">
+          </p>
+          <p>
+            2. Behavior under full coverage of this program ranges between
+            <input class="txbox __inline __s" ng-model="coParams[$index][2]">
+            and
+            <input class="txbox __inline __s" ng-model="coParams[$index][3]">
+          </p>
+          <p>
+            <button type="button" class="btn" ng-click="updateCurve($index)">Redraw</button>
+          </p>
+        </div>
+      </div>
+
     </div>
+
   </div>
 
 </div>
