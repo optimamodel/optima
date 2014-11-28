@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 import json
 import traceback
+from optima.async_calculate import CalculatingThread
 from sim.manualfit import manualfit
 from sim.autofit import autofit
 from sim.bunch import bunchify
@@ -9,54 +10,19 @@ from sim.makeccocs import makecco, plotallcurves, default_effectname
 from utils import load_model, save_model, save_working_model, save_working_model_as_default, revert_working_model_to_default, project_exists, pick_params, check_project_name, for_fe, set_working_model_calibration, is_model_calibrating
 from flask.ext.login import login_required, current_user
 from signal import *
-import threading
 import time
 import sys
+from dbconn import db
 
 """ route prefix: /api/model """
 model = Blueprint('model',  __name__, static_folder = '../static')
 model.config = {}
-
-POOL_TIME = 5 #Seconds
 
 # variables that are accessible from anywhere
 sentinel = {
     'exit': False, # This will stop all threads
     'projects': {} # This set will an item per projects name with the sentinel boolean
 }
-
-class CalculatingThread(threading.Thread):
-    def __init__(self, sentinel, limit, user, project_name):
-        super(CalculatingThread, self).__init__()
-        self.limit = limit
-        self.sentinel = sentinel
-        self.user_name = user.name
-        self.user_id = user.id
-        self.project_name = project_name
-        if not self.project_name in self.sentinel['projects']:
-            self.sentinel['projects'][project_name] = {}
-        self.sentinel['projects'][project_name] = True
-        print("starting thread for user: %s" % self.user_name)
-
-    def run(self):
-        #just a demo that it can 
-        from utils import load_model_user, save_model_user
-        D = load_model_user(self.project_name, self.user_id)
-
-        for i in range(self.limit):
-            if not self.sentinel['exit'] and self.sentinel['projects'][self.project_name]:
-                print("i=%s" %i)
-                print("user: %s" % self.user_name)
-                args = {'timelimit':5, 'startyear':2000,'endyear':2015}
-                D = autofit(D, **args)
-                save_model_user(self.project_name, self.user_id, D)
-                time.sleep(1)
-            else:
-                print("stopping requested")
-                sys.exit()
-        print("thread stopped")
-        self.sentinel['projects'][self.project_name] = False
-        sys.exit()
 
 
 def interrupt(*args):
@@ -66,7 +32,7 @@ def interrupt(*args):
 
 for sig in (SIGABRT, SIGILL, SIGINT, SIGSEGV, SIGTERM):
     signal(sig, interrupt)
-    
+
 
 @model.route('/thread/cancel')
 @login_required
@@ -87,7 +53,7 @@ def doStuffStart(limit):
     if not request.project_name in sentinel['projects'] \
     or not sentinel['projects'][request.project_name]:
         msg = "starting thread for user %s project %s" % (current_user.name, request.project_name)
-        CalculatingThread(sentinel, int(limit), current_user, request.project_name).start()
+        CalculatingThread(db.engine, sentinel, int(limit), current_user, request.project_name).start()
     else:
         msg = "thread for user %s project %s has already started" % (current_user.name, request.project_name)
         print(msg)
