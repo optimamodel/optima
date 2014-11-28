@@ -64,7 +64,7 @@ define(['./module', 'angular'], function (module, angular) {
     $scope.enableManualCalibration = false;
 
     // to store years from UI
-    $scope.simulationOptions = {};
+    $scope.simulationOptions = {'timelimit':60};
     $scope.graphs = [];
 
     var linescatteroptions = {
@@ -221,6 +221,8 @@ define(['./module', 'angular'], function (module, angular) {
                 $interval.cancel(timer);
                 timer = undefined;
             }
+          } else {
+            updateGraphs(data);
           }
         })
         .error(function(data, status, headers, config) {
