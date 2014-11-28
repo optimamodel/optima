@@ -1,21 +1,23 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     'use strict';
 
-    module.controller('AnalysisScenariosController', function ($scope, $http, $modal, meta, scenarioParams) {
+    module.controller('AnalysisScenariosController', function ($scope, $http, $modal, meta, scenarioParamsResponse) {
 
-        var linesGraphOptions, linesGraphData, responseData;
-
-        console.log('params', scenarioParams.data.params);
+        var linesGraphOptions, linesGraphData, responseData, availableScenarioParams;
 
         // initialize all necessary data for this controller
         var initialize = function() {
+
+          availableScenarioParams = scenarioParamsResponse.data.params;
+          console.log(availableScenarioParams);
+
           $scope.scenarios = [
             {'name':'Current conditions', 'pars':[]},
             {"name": '100% condom use in KAPs', 'pars': [
-              {'keys':['condom','reg'], 'pop':0, 'startyear':2010,'endyear':2015,'startval':-1,'endval':1},
-              {'keys':['condom','cas'], 'pop':0, 'startyear':2010,'endyear':2015,'startval':-1,'endval':1},
-              {'keys':['condom','com'], 'pop':1, 'startyear':2010,'endyear':2015,'startval':-1,'endval':1},
-              {'keys':['condom','com'], 'pop':5, 'startyear':2010,'endyear':2015,'startval':-1,'endval':1}
+              { keys: ['condom','reg'], pop: 0, startyear: 2010, endyear: 2015, startval: -1, endval: 1},
+              { keys: ['condom','cas'], pop: 0, startyear: 2010, endyear: 2015, startval: -1, endval: 1},
+              { keys: ['condom','com'], pop: 1, startyear: 2010, endyear: 2015, startval: -1, endval: 1},
+              { keys: ['condom','com'], pop: 5, startyear: 2010, endyear: 2015, startval: -1, endval: 1}
             ]}
           ];
 
@@ -152,9 +154,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
                 controller: 'AnalysisScenariosModalController',
                 resolve: {
                     scenario: function () {
-                        return {
-                            sex: 'male'
-                        };
+                        return {};
+                    },
+                    availableScenarioParams: function() {
+                      return availableScenarioParams;
                     }
                 }
             }).result.then(
@@ -174,7 +177,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
                 controller: 'AnalysisScenariosModalController',
                 resolve: {
                     scenario: function () {
-                        return scenario;
+                      return scenario;
+                    },
+                    availableScenarioParams: function() {
+                      return availableScenarioParams;
                     }
                 }
             }).result.then(

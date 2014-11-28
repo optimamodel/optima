@@ -13,7 +13,11 @@
 
         <div ng-repeat="parsEntry in scenario.pars">
 
-          {{ parsEntry.keys }}
+          <div class="section grid">
+            <div class="++1 10 1++">
+              <select class="txbox" ng-model="parsEntry.keys" ng-options="param.keys as param.name for param in availableScenarioParams"></select>
+            </div>
+          </div>
 
           <div class="section grid">
             <div class="++2 3">
@@ -25,24 +29,24 @@
           </div>
 
           <div class="section grid">
-              <div class="6">
-                  <span>Start year of scenario</span>
-                  <input class="txbox" type="number" min="1900" placeholder="e.g. 2000" ng-model="parsEntry.startyear">
+              <div class="++1 5">
+                <span>Start year of scenario</span>
+                <input class="txbox" type="number" min="1900" placeholder="e.g. 2000" ng-model="parsEntry.startyear">
               </div>
-              <div class="6">
-                  <span>Final year of scenario (optional)</span>
-                  <input class="txbox" type="number" min="1900" placeholder="e.g. 2020" ng-model="parsEntry.endyear">
+              <div class="5 1++">
+                <span>Final year of scenario (optional)</span>
+                <input class="txbox" type="number" min="1900" placeholder="e.g. 2020" ng-model="parsEntry.endyear">
               </div>
           </div>
 
           <div class="section grid">
-              <div class="6">
-                  <span>Value at start of scenario</span>
-                  <input class="txbox" type="number" placeholder="e.g. 0.55" ng-model="parsEntry.startval">
+            <div class="++1 5">
+              <span>Value at start of scenario</span>
+                <input class="txbox" type="number" placeholder="e.g. 0.55" ng-model="parsEntry.startval">
               </div>
-              <div class="6">
-                  <span>Value at end of scenario</span>
-                  <input class="txbox" type="number" placeholder="e.g. 0.95" ng-model="parsEntry.endval">
+              <div class="5 1++">
+                <span>Value at end of scenario</span>
+                <input class="txbox" type="number" placeholder="e.g. 0.95" ng-model="parsEntry.endval">
               </div>
           </div>
 
