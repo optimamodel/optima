@@ -76,7 +76,8 @@ class CalculatingThread(threading.Thread):
                 self.session.query(ProjectDb).update({"id": proj.id, "model": model})
             else:
                 if proj.working_project is None:
-                    self.session.query(WorkingProjectDb).insert({"id": proj.id, "model": model, "is_calibrating": True})
+                    self.session.add(WorkingProjectDb(project_id=proj.id, model = model, is_calibrating = True))
+    #                self.session.execute(WorkingProjectDb.insert(),[{"id": proj.id, "model": model, "is_calibrating": True}])
                 else:
                     self.session.query(WorkingProjectDb).update({"id": proj.id, "model": model, "is_calibrating": True})
             self.session.commit()
