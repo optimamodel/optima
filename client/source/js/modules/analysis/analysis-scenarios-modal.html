@@ -19,7 +19,7 @@
                 Parameters
               </div>
               <div class="++1 10 1++">
-                <select class="txbox" ng-model="parsEntry.keys" ng-options="param.keys as param.name for param in availableScenarioParams"></select>
+                <select class="txbox" ng-model="parsEntry.names" ng-options="param.names as param.name for param in availableScenarioParams"></select>
               </div>
             </div>
 
@@ -28,7 +28,7 @@
                 Population
               </div>
               <div class="++1 10 1++">
-                <select class="txbox" ng-model="parsEntry.pop" ng-options="populationNames.indexOf(name) as name for name in populationNames"></select>
+                <select class="txbox" ng-model="parsEntry.pops" ng-options="populationNames.indexOf(name) as name for name in populationNames"></select>
               </div>
             </div>
 
