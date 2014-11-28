@@ -107,12 +107,12 @@ def load_model_user(name, user_id, as_bunch = True, working_model = True):
   if proj is None:
     print("no project found: %s" % name)
   else:
-    if proj.working_project.count() == 0 or working_model == False:
+    if proj.working_project is None or working_model == False:
       print("no working model")
       model = proj.model
     else:
       print("getting working model")
-      model = proj.working_project[0].model
+      model = proj.working_project.model
     if as_bunch:
       model = Bunch.fromDict(model)
   return model
@@ -132,15 +132,15 @@ def save_model_user(name, user_id, model, working_model = True):
       proj.model = model
       db.session.add(proj)
     else:
-      if proj.working_project.count() == 0:
+      if proj.working_project is None:
         working_project = WorkingProjectDb(proj.id, model=model, is_calibrating=True)
       else:
-        proj.working_project[0].model = model
-        working_project = proj.working_project[0]
+        proj.working_project.model = model
+        working_project = proj.working_project
       db.session.add(working_project)
     db.session.commit()
   else:
-    print("no such model: user %s project %s" % (user, project))
+    print("no such model: user %s project %s" % (user_id, name))
 
 
 def load_model(name, as_bunch = True, working_model = False):
