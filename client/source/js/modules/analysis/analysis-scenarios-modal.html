@@ -11,41 +11,42 @@
             </div>
         </div>
 
-        <div class="section grid">
+        <div ng-repeat="parsEntry in scenario.pars">
+
+          {{ parsEntry.keys }}
+
+          <div class="section grid">
             <div class="++2 3">
-                Parameter to modify
+              Population
             </div>
             <div class="5 2++">
-                <select class="txbox" ng-model="scenario.sex">
-                    <option value="male">FSW commercial condom use</option>
-                    <option value="female">Needle-syringe receptive sharing rate</option>
-                    <option value="other">Number of people on first-line ART</option>
-                </select>
+              <input class="txbox" type="number" min="0" placeholder="e.g. 1" ng-model="parsEntry.pop">
             </div>
-        </div>
+          </div>
 
-        <div ng-repeat="parsEntry in scenario.pars">
           <div class="section grid">
               <div class="6">
-                  <b>Start year of scenario</b>
+                  <span>Start year of scenario</span>
                   <input class="txbox" type="number" min="1900" placeholder="e.g. 2000" ng-model="parsEntry.startyear">
               </div>
               <div class="6">
-                  <b>Final year of scenario (optional)</b>
+                  <span>Final year of scenario (optional)</span>
                   <input class="txbox" type="number" min="1900" placeholder="e.g. 2020" ng-model="parsEntry.endyear">
               </div>
           </div>
 
           <div class="section grid">
               <div class="6">
-                  <b>Value at start of scenario</b>
+                  <span>Value at start of scenario</span>
                   <input class="txbox" type="number" placeholder="e.g. 0.55" ng-model="parsEntry.startval">
               </div>
               <div class="6">
-                  <b>Value at end of scenario</b>
+                  <span>Value at end of scenario</span>
                   <input class="txbox" type="number" placeholder="e.g. 0.95" ng-model="parsEntry.endval">
               </div>
           </div>
+
+          <hr>
         </div>
 
         <div class="section text-center">
