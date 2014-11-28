@@ -24,11 +24,11 @@
             </div>
 
             <div class="section grid">
-              <div class="++2 3">
-                Population (TODO allow to select population by name by using a select)
+              <div class="++1 10 1++">
+                Population
               </div>
-              <div class="5 2++">
-                <input class="txbox" type="number" min="0" placeholder="e.g. 1" ng-model="parsEntry.pop">
+              <div class="++1 10 1++">
+                <select class="txbox" ng-model="parsEntry.pop" ng-options="populationNames.indexOf(name) as name for name in populationNames"></select>
               </div>
             </div>
 
@@ -38,7 +38,7 @@
                   <input class="txbox" type="number" min="1900" placeholder="e.g. 2000" ng-model="parsEntry.startyear">
                 </div>
                 <div class="5 1++">
-                  <span>Final year of scenario (optional)</span>
+                  <span>Final year of scenario <span style="font-size: 10px">(optional)</span></span>
                   <input class="txbox" type="number" min="1900" placeholder="e.g. 2020" ng-model="parsEntry.endyear">
                 </div>
             </div>

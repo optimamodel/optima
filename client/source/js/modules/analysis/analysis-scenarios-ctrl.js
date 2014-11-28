@@ -157,6 +157,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
                     },
                     availableScenarioParams: function() {
                       return availableScenarioParams;
+                    },
+                    populationNames: function() {
+                      return meta.pops.long;
                     }
                 }
             }).result.then(
@@ -180,6 +183,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
                     },
                     availableScenarioParams: function() {
                       return availableScenarioParams;
+                    },
+                    populationNames: function() {
+                      return meta.pops.long;
                     }
                 }
             }).result.then(
