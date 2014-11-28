@@ -6,9 +6,11 @@ from sim.manualfit import manualfit
 from sim.autofit import autofit
 from sim.bunch import bunchify
 from sim.runsimulation import runsimulation
-from sim.makeccocs import makecco, plotallcurves, default_effectname
+from sim.makeccocs import makecco, plotallcurves
+from utils import save_working_model, save_working_model_as_default, revert_working_model_to_default, set_working_model_calibration, is_model_calibrating
 from utils import load_model, save_model, project_exists, pick_params, check_project_name, for_fe
 from flask.ext.login import login_required
+import time
 
 """ route prefix: /api/model """
 model = Blueprint('model',  __name__, static_folder = '../static')
@@ -21,7 +23,7 @@ def record_params(setup_state):
 
 
 """ 
-Uses provided parameters to manually calibrate the model (update it with these data) 
+Uses provided parameters to auto calibrate the model (update it with these data) 
 TODO: do it with the project which is currently in scope
 """
 @model.route('/calibrate/auto', methods=['POST'])
@@ -34,12 +36,10 @@ def doAutoCalibration():
 
     # get project name 
     project_name = request.project_name
+    D = None
     if not project_exists(project_name):
         reply['reason'] = 'File for project %s does not exist' % project_name
         return jsonify(reply)
-
-    file_name = helpers.safe_join(PROJECTDIR, project_name+'.prj')
-    print("project file_name: %s" % file_name)
     try:
         D = load_model(project_name)
         args = {}
@@ -51,15 +51,80 @@ def doAutoCalibration():
             args["endyear"] = int(endyear)
         timelimit = data.get("timelimit")
         if timelimit:
-            args["timelimit"] = int(timelimit)
-        D = autofit(D, **args)
-        D_dict = D.toDict()
-        save_model(project_name, D_dict)
+            timelimit = int(timelimit) / 5
+            args["timelimit"] = 5
+        if is_model_calibrating(request.project_name):
+            return jsonify({"status":"NOK", "reason":"calibration already going"})
+        else:
+            # We are going to start calibration
+            set_working_model_calibration(project_name, True)
+            
+            # Do calculations 5 seconds at a time and then save them
+            # to db.
+            for i in range(0, timelimit):
+                
+                # Make sure we are still calibrating
+                if is_model_calibrating(request.project_name):
+                    D = autofit(D, **args)
+                    D_dict = D.toDict()
+                    save_working_model(project_name, D_dict)
+                    time.sleep(1)
+                else:
+                    break
+            
+    except Exception, err:
+        set_working_model_calibration(project_name, False)
+        var = traceback.format_exc()
+        return jsonify({"status":"NOK", "exception":var})
+        
+    set_working_model_calibration(project_name, False)
+    return jsonify(D_dict.get('plot',{}).get('E',{}))
+
+""" 
+Saves working model as the default model
+"""
+@model.route('/calibrate/save', methods=['POST'])
+@login_required
+@check_project_name
+def saveCalibrationModel():
+    reply = {'status':'NOK'}
+
+    # get project name 
+    project_name = request.project_name
+    if not project_exists(project_name):
+        reply['reason'] = 'File for project %s does not exist' % project_name
+        return jsonify(reply)
+
+    try:
+        D_dict = save_working_model_as_default(project_name)
+            
     except Exception, err:
         var = traceback.format_exc()
         return jsonify({"status":"NOK", "exception":var})
-    return jsonify(D_dict.get('O',{}))
+    return jsonify(D_dict.get('plot',{}).get('E',{}))
 
+""" 
+Revert working model to the default model
+"""
+@model.route('/calibrate/revert', methods=['POST'])
+@login_required
+@check_project_name
+def revertCalibrationModel():
+    reply = {'status':'NOK'}
+
+    # get project name 
+    project_name = request.project_name
+    if not project_exists(project_name):
+        reply['reason'] = 'File for project %s does not exist' % project_name
+        return jsonify(reply)
+
+    try:
+        D_dict = revert_working_model_to_default(project_name)
+            
+    except Exception, err:
+        var = traceback.format_exc()
+        return jsonify({"status":"NOK", "exception":var})
+    return jsonify(D_dict.get('plot',{}).get('E',{}))
 
 """ 
 Uses provided parameters to manually calibrate the model (update it with these data) 
@@ -100,6 +165,34 @@ def doManualCalibration():
         return jsonify({"status":"NOK", "exception":var})
     return jsonify(D_dict.get('plot',{}).get('E',{}))
 
+"""
+Stops calibration
+"""
+@model.route('/calibrate/stop')
+@login_required
+@check_project_name
+def stopCalibration():
+    set_working_model_calibration(request.project_name, False)
+    result = {"status": "OK"}
+    return jsonify(result)
+
+"""
+Returns the working model of project.
+"""
+@model.route('/working')
+@login_required
+@check_project_name
+def getWorkingModel():
+    print("/api/model/working %s" % request.project_name)
+    # Make sure model is calibrating
+    if is_model_calibrating(request.project_name):
+        D = load_model(request.project_name, working_model = True)
+        D_dict = D.toDict()
+        result = jsonify(D_dict.get('plot',{}).get('E',{}))
+    else:
+        print("no longer calibrating")
+        result = jsonify({'status': "OK"})
+    return result
 
 """
 Returns the parameters of the given model.
@@ -111,7 +204,6 @@ def getModel():
     D = load_model(request.project_name)
     result = D.toDict()
     return jsonify(result)
-
 
 """
 Returns the parameters of the given model in the given group.
