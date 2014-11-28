@@ -3,14 +3,12 @@ import json
 import traceback
 from optima.async_calculate import CalculatingThread
 from sim.manualfit import manualfit
-from sim.autofit import autofit
 from sim.bunch import bunchify
 from sim.runsimulation import runsimulation
 from sim.makeccocs import makecco, plotallcurves, default_effectname
-from utils import load_model, save_model, save_working_model, save_working_model_as_default, revert_working_model_to_default, project_exists, pick_params, check_project_name, for_fe, set_working_model_calibration, is_model_calibrating
+from utils import load_model, save_model, save_working_model_as_default, revert_working_model_to_default, project_exists, pick_params, check_project_name, for_fe
 from flask.ext.login import login_required, current_user
 from signal import *
-import time
 import sys
 from dbconn import db
 
@@ -18,12 +16,18 @@ from dbconn import db
 model = Blueprint('model',  __name__, static_folder = '../static')
 model.config = {}
 
-# variables that are accessible from anywhere
-sentinel = {
-    'exit': False, # This will stop all threads
-    'projects': {} # This set will an item per projects name with the sentinel boolean
-}
 
+@model.record
+def record_params(setup_state):
+    app = setup_state.app
+    model.config = dict([(key,value) for (key,value) in app.config.iteritems()])
+
+
+# Sentinel object used for async calculation
+sentinel = {
+    'exit': False,  # This will stop all threads
+    'projects': {}  # This will contain an entry per user project indicating if the calculating thread is running
+}
 
 def interrupt(*args):
     print("stopping all threads")
@@ -34,39 +38,7 @@ for sig in (SIGABRT, SIGILL, SIGINT, SIGSEGV, SIGTERM):
     signal(sig, interrupt)
 
 
-@model.route('/thread/cancel')
-@login_required
-@check_project_name
-def doInterrupt():
-    print("stopping thread")
-    if request.project_name in sentinel['projects']:
-        sentinel['projects'][request.project_name] = False
-    return json.dumps({"status":"OK", "result": "thread for user %s project %s stopped" % (current_user.name, request.project_name)})
-
-@model.route('/thread/start/<limit>')
-@login_required
-@check_project_name
-def doStuffStart(limit):
-    # Do initialisation stuff here
-    # Create your thread
-    msg = ""
-    if not request.project_name in sentinel['projects'] \
-    or not sentinel['projects'][request.project_name]:
-        msg = "starting thread for user %s project %s" % (current_user.name, request.project_name)
-        CalculatingThread(db.engine, sentinel, int(limit), current_user, request.project_name).start()
-    else:
-        msg = "thread for user %s project %s has already started" % (current_user.name, request.project_name)
-        print(msg)
-    return json.dumps({"status":"OK", "result": msg})
-
-
-@model.record
-def record_params(setup_state):
-  app = setup_state.app
-  model.config = dict([(key,value) for (key,value) in app.config.iteritems()])
-
-
-""" 
+"""
 Uses provided parameters to auto calibrate the model (update it with these data) 
 TODO: do it with the project which is currently in scope
 """
@@ -78,53 +50,70 @@ def doAutoCalibration():
     print('data: %s' % request.data)
     data = json.loads(request.data)
 
-    # get project name 
-    project_name = request.project_name
-    D = None
-    if not project_exists(project_name):
-        reply['reason'] = 'File for project %s does not exist' % project_name
+    prj_name = request.project_name
+    if not project_exists(prj_name):
+        reply['reason'] = 'File for project %s does not exist' % prj_name
         return jsonify(reply)
     try:
-        D = load_model(project_name)
-        args = {}
-        startyear = data.get("startyear")
-        if startyear:
-            args["startyear"] = int(startyear)
-        endyear = data.get("endyear")
-        if endyear:
-            args["endyear"] = int(endyear)
-        timelimit = data.get("timelimit")
-        if timelimit:
-            timelimit = int(timelimit) / 5
-            args["timelimit"] = 5
-        if is_model_calibrating(request.project_name):
-            return jsonify({"status":"NOK", "reason":"calibration already going"})
+        if not prj_name in sentinel['projects'] or not sentinel['projects'][prj_name]:
+            args = {}
+            startyear = data.get("startyear")
+            if startyear:
+                args["startyear"] = int(startyear)
+            endyear = data.get("endyear")
+            if endyear:
+                args["endyear"] = int(endyear)
+            timelimit = data.get("timelimit")
+            if timelimit:
+                args["timelimit"] = int(timelimit)
+
+            CalculatingThread(db.engine, sentinel, current_user, prj_name, args).start()
+            msg = "Starting thread for user %s project %s" % (current_user.name, prj_name)
+            return json.dumps({"status":"OK", "result": msg})
         else:
-            # We are going to start calibration
-            set_working_model_calibration(project_name, True)
-            
-            # Do calculations 5 seconds at a time and then save them
-            # to db.
-            for i in range(0, timelimit):
-                
-                # Make sure we are still calibrating
-                if is_model_calibrating(request.project_name):
-                    D = autofit(D, **args)
-                    D_dict = D.toDict()
-                    save_working_model(project_name, D_dict)
-                    time.sleep(1)
-                else:
-                    break
-            
+            print('sentinel object: %s' % sentinel)
+            msg = "Thread for user %s project %s has already started" % (current_user.name, prj_name)
+            return json.dumps({"status":"NOK", "result": msg})
     except Exception, err:
-        set_working_model_calibration(project_name, False)
         var = traceback.format_exc()
         return jsonify({"status":"NOK", "exception":var})
-        
-    set_working_model_calibration(project_name, False)
-    return jsonify(D_dict.get('plot',{}).get('E',{}))
 
-""" 
+"""
+Stops calibration
+"""
+@model.route('/calibrate/stop')
+@login_required
+@check_project_name
+def stopCalibration():
+    prj_name = request.project_name
+    if prj_name in sentinel['projects']:
+        sentinel['projects'][prj_name] = False
+    return json.dumps({"status":"OK", "result": "thread for user %s project %s stopped" % (current_user.name, prj_name)})
+
+"""
+Returns the working model of project.
+"""
+@model.route('/working')
+@login_required
+@check_project_name
+def getWorkingModel():
+    # Make sure model is calibrating
+    try:
+        prj_name = request.project_name
+        D = load_model(prj_name, working_model = True)
+        D_dict = D.toDict()
+        result = {'graph': D_dict.get('plot',{}).get('E',{})}
+        if prj_name in sentinel['projects'] and sentinel['projects'][prj_name]:
+            result['status'] = 'Running'
+        else:
+            print("no longer calibrating")
+            result['status'] = 'Done'
+        return jsonify(result)
+    except Exception, err:
+        var = traceback.format_exc()
+        return jsonify({"status":"NOK", "exception":var})
+
+"""
 Saves working model as the default model
 """
 @model.route('/calibrate/save', methods=['POST'])
@@ -141,13 +130,13 @@ def saveCalibrationModel():
 
     try:
         D_dict = save_working_model_as_default(project_name)
-            
+        return jsonify(D_dict.get('plot',{}).get('E',{}))
     except Exception, err:
         var = traceback.format_exc()
         return jsonify({"status":"NOK", "exception":var})
-    return jsonify(D_dict.get('plot',{}).get('E',{}))
 
-""" 
+
+"""
 Revert working model to the default model
 """
 @model.route('/calibrate/revert', methods=['POST'])
@@ -161,16 +150,14 @@ def revertCalibrationModel():
     if not project_exists(project_name):
         reply['reason'] = 'File for project %s does not exist' % project_name
         return jsonify(reply)
-
     try:
         D_dict = revert_working_model_to_default(project_name)
-            
+        return jsonify(D_dict.get('plot',{}).get('E',{}))
     except Exception, err:
         var = traceback.format_exc()
         return jsonify({"status":"NOK", "exception":var})
-    return jsonify(D_dict.get('plot',{}).get('E',{}))
 
-""" 
+"""
 Uses provided parameters to manually calibrate the model (update it with these data) 
 TODO: do it with the project which is currently in scope
 """
@@ -199,7 +186,7 @@ def doManualCalibration():
         args['D'] = D
         F = bunchify(data.get("F",{}))
         args['F'] = F
-        D = manualfit(**args) 
+        D = manualfit(**args)
         D_dict = D.toDict()
         if dosave:
             print("model: %s" % project_name)
@@ -208,34 +195,6 @@ def doManualCalibration():
         var = traceback.format_exc()
         return jsonify({"status":"NOK", "exception":var})
     return jsonify(D_dict.get('plot',{}).get('E',{}))
-
-"""
-Stops calibration
-"""
-@model.route('/calibrate/stop')
-@login_required
-@check_project_name
-def stopCalibration():
-    set_working_model_calibration(request.project_name, False)
-    result = {"status": "OK"}
-    return jsonify(result)
-
-"""
-Returns the working model of project.
-"""
-@model.route('/working')
-@login_required
-@check_project_name
-def getWorkingModel():
-    # Make sure model is calibrating
-    if is_model_calibrating(request.project_name):
-        D = load_model(request.project_name, working_model = True)
-        D_dict = D.toDict()
-        result = jsonify(D_dict.get('plot',{}).get('E',{}))
-    else:
-        print("no longer calibrating")
-        result = jsonify({'status': "OK"})
-    return result
 
 """
 Returns the parameters of the given model.
@@ -293,7 +252,7 @@ def setModelParameters(group):
         save_model(project_name, D_dict)
     except Exception, err:
         var = traceback.format_exc()
-        return jsonify({"status":"NOK", "exception":var})        
+        return jsonify({"status":"NOK", "exception":var})
     print "D as dict: %s" % D_dict
     return jsonify({"status":"OK", "project":project_name, "group":group})
 
@@ -318,7 +277,7 @@ def doRunSimulation():
     if endyear:
         args["endyear"] = int(endyear)
     try:
-        D = runsimulation(**args) 
+        D = runsimulation(**args)
         D_dict = D.toDict()
         print ("D-dict F: %s" % D_dict['F'])
         save_model(request.project_name, D_dict)
@@ -326,12 +285,6 @@ def doRunSimulation():
         var = traceback.format_exc()
         return jsonify({"status":"NOK", "exception":var})
     return jsonify(D_dict.get('plot',{}).get('E',{}))
-#    options = {
-#        'cache_timeout': model.get_send_file_max_age(example_excel_file_name),
-#        'conditional': True,
-#        'attachment_filename': downloadName
-#    }
-#    return helpers.send_file(data_file_path, **options)
 
 
 """
