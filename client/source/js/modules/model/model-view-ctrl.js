@@ -146,7 +146,7 @@ define(['./module', 'angular'], function (module, angular) {
             options: angular.copy(linescatteroptions),
             data: angular.copy(linescatterdata),
             type: type,
-            title: 'Showing total data for "' + type.name + '"'
+            title: type.name + ' - Overall'
           };
 
           graph.data.line = generateLineData(response.tvec, data.tot.best);
@@ -171,7 +171,7 @@ define(['./module', 'angular'], function (module, angular) {
               options: angular.copy(linescatteroptions),
               data: angular.copy(linescatterdata),
               type: type,
-              title: 'Showing ' + type.name + ' for population "' + $scope.parameters.meta.pops.long[populationIndex] + '"'
+              title: type.name + ' - ' + $scope.parameters.meta.pops.short[populationIndex]
             };
 
             graph.data.line = generateLineData(response.tvec, population.best);
