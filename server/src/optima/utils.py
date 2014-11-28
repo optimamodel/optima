@@ -104,10 +104,10 @@ def load_model(name, as_bunch = True, working_model = False):
         cu = current_user
         proj = ProjectDb.query.filter_by(user_id=cu.id, name=name).first()
         
-        if proj.working_project.count() == 0 or working_model == False:
+        if proj.working_project is None or working_model == False:
             model = proj.model
         else:
-            model = proj.working_project[0].model
+            model = proj.working_project.model
     
     except:
         pass
