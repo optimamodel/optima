@@ -206,7 +206,7 @@ define(['./module', 'angular'], function (module, angular) {
         .success(updateGraphs);
     };
 
-	var timer;
+    var timer;
     $scope.startAutoCalibration = function () {
       $http.post('/api/model/calibrate/auto', $scope.simulationOptions)
         .success(updateGraphs);
