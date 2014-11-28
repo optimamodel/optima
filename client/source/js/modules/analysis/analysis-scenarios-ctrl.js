@@ -146,27 +146,32 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             });
         };
 
+        // Helper function to open a population modal
+        var openScenarioModal = function(scenario) {
+          return $modal.open({
+            templateUrl: 'js/modules/analysis/analysis-scenarios-modal.html',
+            controller: 'AnalysisScenariosModalController',
+            resolve: {
+              scenario: function () {
+                return scenario;
+              },
+              availableScenarioParams: function() {
+                return availableScenarioParams;
+              },
+              populationNames: function() {
+                return meta.pops.long;
+              }
+            }
+          });
+        };
 
         $scope.openAddScenarioModal = function ($event) {
             if ($event) {
                 $event.preventDefault();
             }
 
-            return $modal.open({
-                templateUrl: 'js/modules/analysis/analysis-scenarios-modal.html',
-                controller: 'AnalysisScenariosModalController',
-                resolve: {
-                    scenario: function () {
-                        return {};
-                    },
-                    availableScenarioParams: function() {
-                      return availableScenarioParams;
-                    },
-                    populationNames: function() {
-                      return meta.pops.long;
-                    }
-                }
-            }).result.then(
+            var scenario = {};
+            return openScenarioModal(scenario).result.then(
                 function (newscenario) {
                     newscenario.active = true;
                     $scope.scenarios.push(newscenario);
@@ -178,21 +183,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
                 $event.preventDefault();
             }
 
-            return $modal.open({
-                templateUrl: 'js/modules/analysis/analysis-scenarios-modal.html',
-                controller: 'AnalysisScenariosModalController',
-                resolve: {
-                    scenario: function () {
-                      return scenario;
-                    },
-                    availableScenarioParams: function() {
-                      return availableScenarioParams;
-                    },
-                    populationNames: function() {
-                      return meta.pops.long;
-                    }
-                }
-            }).result.then(
+            return openScenarioModal(scenario).result.then(
                 function (newscenario) {
                     scenario.active = true;
                     _(scenario).extend(newscenario);
