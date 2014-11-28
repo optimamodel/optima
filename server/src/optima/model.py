@@ -24,8 +24,8 @@ POOL_TIME = 5 #Seconds
 
 # variables that are accessible from anywhere
 sentinel = {
-    'exit':False,
-    'projects':{}
+    'exit': False, # This will stop all threads
+    'projects': {} # This set will an item per projects name with the sentinel boolean
 }
 
 class CalculatingThread(threading.Thread):
@@ -36,10 +36,9 @@ class CalculatingThread(threading.Thread):
         self.user_name = user.name
         self.user_id = user.id
         self.project_name = project_name
-        if not self.project_name in self.sentinel:
-            self.sentinel[project_name] = {}
-        self.sentinel[project_name]['stopping'] = False
-        self.sentinel[project_name]['running'] = True
+        if not self.project_name in self.sentinel['projects']:
+            self.sentinel['projects'][project_name] = {}
+        self.sentinel['projects'][project_name] = True
         print("starting thread for user: %s" % self.user_name)
 
     def run(self):
@@ -48,20 +47,18 @@ class CalculatingThread(threading.Thread):
         D = load_model_user(self.project_name, self.user_id)
 
         for i in range(self.limit):
-            if self.sentinel and self.sentinel[self.project_name] \
-            and not self.sentinel['exit'] and not self.sentinel[self.project_name]['stopping']:
+            if not self.sentinel['exit'] and self.sentinel['projects'][self.project_name]:
                 print("i=%s" %i)
                 print("user: %s" % self.user_name)
                 args = {'timelimit':5, 'startyear':2000,'endyear':2015}
                 D = autofit(D, **args)
-                D_dict = D.toDict()
                 save_model_user(self.project_name, self.user_id, D)
                 time.sleep(1)
             else:
                 print("stopping requested")
                 sys.exit()
-        self.sentinel[self.project_name]['running']=False
         print("thread stopped")
+        self.sentinel['projects'][self.project_name] = False
         sys.exit()
 
 
@@ -75,8 +72,8 @@ def interrupt(*args):
 @check_project_name
 def doInterrupt():
     print("stopping thread")
-    if request.project_name in sentinel:
-        sentinel[request.project_name]['stopping'] = True
+    if request.project_name in sentinel['projects']:
+        sentinel['projects'][request.project_name] = False
     return json.dumps({"status":"OK", "result": "thread for user %s project %s stopped" % (current_user.name, request.project_name)})
 
 @model.route('/thread/start/<limit>')
@@ -86,8 +83,8 @@ def doStuffStart(limit):
     # Do initialisation stuff here
     # Create your thread
     msg = ""
-    if not request.project_name in sentinel \
-    or not sentinel[request.project_name]['running']:
+    if not request.project_name in sentinel['projects'] \
+    or not sentinel['projects'][request.project_name]:
         msg = "starting thread for user %s project %s" % (current_user.name, request.project_name)
         CalculatingThread(sentinel, int(limit), current_user, request.project_name).start()
     else:
