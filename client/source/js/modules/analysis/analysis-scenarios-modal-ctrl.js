@@ -1,11 +1,13 @@
 define(['./module'], function (module) {
   'use strict';
 
-  module.controller('AnalysisScenariosModalController', function ($scope, $modalInstance, scenario) {
+  module.controller('AnalysisScenariosModalController', function ($scope, $modalInstance, scenario, availableScenarioParams) {
 
-    $scope.isNew = !scenario.name;
-
-    $scope.scenario = scenario;
+    var initialize = function() {
+      $scope.isNew = !scenario.name;
+      $scope.scenario = scenario;
+      $scope.availableScenarioParams = availableScenarioParams;
+    };
 
     $scope.submit = function (form) {
       if (form.$invalid) {
@@ -16,9 +18,11 @@ define(['./module'], function (module) {
     };
 
     $scope.addParameter = function() {
-      var entry = {'keys':['condom','reg'], 'pop':0, 'startyear':2010,'endyear':2015,'startval':-1,'endval':1};
+      var entry = {keys:['condom','reg'], 'pop':0, 'startyear':2010,'endyear':2015,'startval':-1,'endval':1};
       scenario.pars.push(entry);
     };
+
+    initialize();
 
   });
 
