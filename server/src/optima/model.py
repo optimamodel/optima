@@ -5,9 +5,9 @@ from sim.manualfit import manualfit
 from sim.autofit import autofit
 from sim.bunch import bunchify
 from sim.runsimulation import runsimulation
-from sim.makeccocs import makecco, plotallcurves
+from sim.makeccocs import makecco, plotallcurves, default_effectname
 from utils import load_model, save_model, save_working_model, save_working_model_as_default, revert_working_model_to_default, project_exists, pick_params, check_project_name, for_fe, set_working_model_calibration, is_model_calibrating
-from flask.ext.login import login_required
+from flask.ext.login import login_required, current_user
 from signal import *
 import threading
 import time
