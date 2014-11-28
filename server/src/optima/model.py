@@ -1,18 +1,15 @@
-from flask import Blueprint, helpers, request, jsonify
+from flask import Blueprint, request, jsonify
 import json
 import traceback
-from sim.dataio import PROJECTDIR
 from sim.manualfit import manualfit
 from sim.autofit import autofit
 from sim.bunch import bunchify
 from sim.runsimulation import runsimulation
-from utils import load_model, save_model, save_working_model, save_working_model_as_default 
-from utils import revert_working_model_to_default, project_exists, pick_params, check_project_name, for_fe
-from utils import set_working_model_calibration, is_model_calibrating
-from flask.ext.login import login_required, current_user
+from sim.makeccocs import makecco, plotallcurves
+from utils import load_model, save_model, save_working_model, save_working_model_as_default, revert_working_model_to_default, project_exists, pick_params, check_project_name, for_fe, set_working_model_calibration, is_model_calibrating
+from flask.ext.login import login_required
 from signal import *
 import threading
-import atexit
 import time
 import sys
 
@@ -67,6 +64,10 @@ def interrupt(*args):
     sentinel['exit'] = True
     sys.exit()
 
+for sig in (SIGABRT, SIGILL, SIGINT, SIGSEGV, SIGTERM):
+    signal(sig, interrupt)
+    
+
 @model.route('/thread/cancel')
 @login_required
 @check_project_name
@@ -98,8 +99,6 @@ def record_params(setup_state):
   app = setup_state.app
   model.config = dict([(key,value) for (key,value) in app.config.iteritems()])
 
-for sig in (SIGABRT, SIGILL, SIGINT, SIGSEGV, SIGTERM):
-    signal(sig, interrupt)
 
 """ 
 Uses provided parameters to auto calibrate the model (update it with these data) 
@@ -115,12 +114,10 @@ def doAutoCalibration():
 
     # get project name 
     project_name = request.project_name
+    D = None
     if not project_exists(project_name):
         reply['reason'] = 'File for project %s does not exist' % project_name
         return jsonify(reply)
-
-    file_name = helpers.safe_join(PROJECTDIR, project_name+'.prj')
-    print("project file_name: %s" % file_name)
     try:
         D = load_model(project_name)
         args = {}
@@ -134,10 +131,10 @@ def doAutoCalibration():
         if timelimit:
             timelimit = int(timelimit) / 5
             args["timelimit"] = 5
-        if is_model_calibrating(project_name):
-            return jsonify({'status':'NOK','reason':'calibration already started'})
+        if is_model_calibrating(request.project_name):
+            return jsonify({"status":"NOK", "reason":"calibration already going"})
         else:
-        # We are going to start calibration
+            # We are going to start calibration
             set_working_model_calibration(project_name, True)
             
             # Do calculations 5 seconds at a time and then save them
@@ -149,6 +146,7 @@ def doAutoCalibration():
                     D = autofit(D, **args)
                     D_dict = D.toDict()
                     save_working_model(project_name, D_dict)
+                    time.sleep(1)
                 else:
                     break
             
@@ -269,7 +267,8 @@ def getWorkingModel():
         D_dict = D.toDict()
         result = jsonify(D_dict.get('plot',{}).get('E',{}))
     else:
-        result = {'status': "OK"}
+        print("no longer calibrating")
+        result = jsonify({'status': "OK"})
     return result
 
 """
