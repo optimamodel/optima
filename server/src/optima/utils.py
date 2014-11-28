@@ -119,7 +119,6 @@ def load_model(name, as_bunch = True, working_model = False):
             from sim.bunch import Bunch
             print("convert model %s to Bunch" % name)
             model = Bunch.fromDict(model)
-    print("model:%s" % model)
     return model
 
 def save_model_file(name, model, folder = PROJECTDIR):
