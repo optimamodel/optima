@@ -45,12 +45,13 @@ class CalculatingThread(threading.Thread):
     def run(self):
         #just a demo that it can 
         from utils import load_model_user, save_model_user
+        D = load_model_user(self.project_name, self.user_id)
+
         for i in range(self.limit):
             if self.sentinel and self.sentinel[self.project_name] \
             and not self.sentinel['exit'] and not self.sentinel[self.project_name]['stopping']:
                 print("i=%s" %i)
                 print("user: %s" % self.user_name)
-                D = load_model_user(self.project_name, self.user_id)
                 args = {'timelimit':5, 'startyear':2000,'endyear':2015}
                 D = autofit(D, **args)
                 D_dict = D.toDict()
