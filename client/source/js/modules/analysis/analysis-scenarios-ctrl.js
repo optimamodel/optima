@@ -9,7 +9,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         var initialize = function() {
 
           availableScenarioParams = scenarioParamsResponse.data.params;
-          console.log(availableScenarioParams);
 
           $scope.scenarios = [
             {'name':'Current conditions', 'pars':[]},

@@ -5,8 +5,22 @@ define(['./module'], function (module) {
 
     var initialize = function() {
       $scope.isNew = !scenario.name;
+
+      // make sure the keys are the same objects as in the list for the select
+      // to show the initial entries
+      _(scenario.pars).each(function(entry) {
+        // entry.keys = availableScenarioParams[0].keys;
+        entry.keys = findScenarioParam(availableScenarioParams, entry.keys);
+      });
       $scope.scenario = scenario;
+
+      console.log(findScenarioParam(availableScenarioParams, $scope.scenario.keys));
       $scope.availableScenarioParams = availableScenarioParams;
+    };
+
+    var findScenarioParam = function(params, keys) {
+      // TODO compare two arrays for equality
+      return false;
     };
 
     $scope.submit = function (form) {
