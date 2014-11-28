@@ -97,6 +97,52 @@ def load_model_file(name, folder = PROJECTDIR, as_bunch = True):
   data = loaddata(project_file)
   return data
 
+def load_model_user(name, user_id, as_bunch = True, working_model = True):
+  from dbconn import db
+  from dbmodels import ProjectDb, WorkingProjectDb
+  from sim.bunch import Bunch
+  print("load_model_user:%s %s" % (name, user_id))
+  proj = ProjectDb.query.filter_by(user_id=user_id, name=name).first()
+  model = None
+  if proj is None:
+    print("no project found: %s" % name)
+  else:
+    if proj.working_project.count() == 0 or working_model == False:
+      print("no working model")
+      model = proj.model
+    else:
+      print("getting working model")
+      model = proj.working_project[0].model
+    if as_bunch:
+      model = Bunch.fromDict(model)
+  return model
+
+
+def save_model_user(name, user_id, model, working_model = True):
+  from dbconn import db
+  from dbmodels import ProjectDb, WorkingProjectDb
+  print("save_model_user:%s %s" % (name, user_id))
+  from sim.bunch import Bunch
+  cu = current_user
+  proj = ProjectDb.query.filter_by(user_id=user_id, name=name).first()
+  if isinstance(model, Bunch):
+    model = model.toDict()
+  if proj is not None:
+    if not working_model:
+      proj.model = model
+      db.session.add(proj)
+    else:
+      if proj.working_project.count() == 0:
+        working_project = WorkingProjectDb(proj.id, model=model, is_calibrating=True)
+      else:
+        proj.working_project[0].model = model
+        working_project = proj.working_project[0]
+      db.session.add(working_project)
+    db.session.commit()
+  else:
+    print("no such model: user %s project %s" % (user, project))
+
+
 def load_model(name, as_bunch = True, working_model = False):
   print("load_model:%s" % name)
   model = None
