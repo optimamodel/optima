@@ -7,13 +7,13 @@ define(['./module'], function (module) {
     var initialize = function() {
       $scope.isNew = !scenario.name;
 
-      // make sure the keys are exactly the objects as in the list for the
+      // make sure the names are exactly the objects as in the list for the
       // select to show the initial entries (angular compares with ===)
       _(scenario.pars).each(function(entry) {
-        entry.keys = findScenarioParam(availableScenarioParams, entry.keys).keys;
+        entry.names = findScenarioParam(availableScenarioParams, entry.names).names;
       });
-      $scope.scenario = scenario;
 
+      $scope.scenario = scenario;
       $scope.availableScenarioParams = availableScenarioParams;
       $scope.populationNames = populationNames;
     };
@@ -28,11 +28,11 @@ define(['./module'], function (module) {
     };
 
     /*
-     * Finds a scenario paramter based on the keys
+     * Finds a scenario paramter based on the names
      */
-    var findScenarioParam = function(parameters, keys) {
+    var findScenarioParam = function(parameters, names) {
       return _(parameters).find(function(parameterEntry) {
-        return areEqualArrays(parameterEntry.keys, keys);
+        return areEqualArrays(parameterEntry.names, names);
       });
     };
 
@@ -45,7 +45,11 @@ define(['./module'], function (module) {
     };
 
     $scope.addParameter = function() {
-      var entry = {keys: availableScenarioParams[0].keys, 'pop': 0, 'startyear':2010,'endyear':2015,'startval':-1,'endval':1};
+      var entry = {
+        names: availableScenarioParams[0].names, pops: 0,
+        startyear: 2010, endyear: 2015, startval: -1, endval: 1
+      };
+      scenario.pars = scenario.pars || [];
       scenario.pars.push(entry);
     };
 

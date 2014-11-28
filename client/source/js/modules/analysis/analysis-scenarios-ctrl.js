@@ -8,15 +8,19 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         // initialize all necessary data for this controller
         var initialize = function() {
 
-          availableScenarioParams = scenarioParamsResponse.data.params;
+          // transform scenarioParams to use attribute `names` instead of `keys`
+          // it is the same for the data we have to send to run scenarios
+          availableScenarioParams = _(scenarioParamsResponse.data.params).map(function(parameters) {
+            return { name: parameters.name, names: parameters.keys };
+          });
 
           $scope.scenarios = [
             {'name':'Current conditions', 'pars':[]},
             {"name": '100% condom use in KAPs', 'pars': [
-              { keys: ['condom','reg'], pop: 0, startyear: 2010, endyear: 2015, startval: -1, endval: 1},
-              { keys: ['condom','cas'], pop: 0, startyear: 2010, endyear: 2015, startval: -1, endval: 1},
-              { keys: ['condom','com'], pop: 1, startyear: 2010, endyear: 2015, startval: -1, endval: 1},
-              { keys: ['condom','com'], pop: 5, startyear: 2010, endyear: 2015, startval: -1, endval: 1}
+              { names: ['condom','reg'], pops: 0, startyear: 2010, endyear: 2015, startval: -1, endval: 1},
+              { names: ['condom','cas'], pops: 0, startyear: 2010, endyear: 2015, startval: -1, endval: 1},
+              { names: ['condom','com'], pops: 1, startyear: 2010, endyear: 2015, startval: -1, endval: 1},
+              { names: ['condom','com'], pops: 5, startyear: 2010, endyear: 2015, startval: -1, endval: 1}
             ]}
           ];
 
