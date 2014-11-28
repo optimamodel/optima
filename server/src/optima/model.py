@@ -100,8 +100,7 @@ def getWorkingModel():
     # Make sure model is calibrating
     try:
         prj_name = request.project_name
-        D = load_model(prj_name, working_model = True)
-        D_dict = D.toDict()
+        D_dict = load_model(prj_name, working_model = True, as_bunch = False)
         result = {'graph': D_dict.get('plot',{}).get('E',{})}
         if prj_name in sentinel['projects'] and sentinel['projects'][prj_name]:
             result['status'] = 'Running'

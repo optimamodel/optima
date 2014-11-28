@@ -100,25 +100,26 @@ def load_model_file(name, folder = PROJECTDIR, as_bunch = True):
 def load_model(name, as_bunch = True, working_model = False):
     print("load_model:%s" % name)
     model = None
-    try:
-        cu = current_user
-        proj = ProjectDb.query.filter_by(user_id=cu.id, name=name).first()
-        
+    cu = current_user
+    print("getting project %s for user %s" % (name, cu.id))
+    proj = ProjectDb.query.filter_by(user_id=cu.id, name=name).first()
+    if proj is not None:
         if proj.working_project is None or working_model == False:
+            print("project %s is not being calculated" % name)
             model = proj.model
         else:
+            print("project %s is being calculated" % name)
             model = proj.working_project.model
-    
-    except:
-        pass
-    if model is None or len(model.keys())==0:
-        print("model %s is None" % name)
-        return load_model_file(name, as_bunch = as_bunch)
+        if model is None or len(model.keys())==0:
+            print("model %s is None" % name)
+            return load_model_file(name, as_bunch = as_bunch)
+        else:
+            if as_bunch:
+                from sim.bunch import Bunch
+                print("convert model %s to Bunch" % name)
+                model = Bunch.fromDict(model)
     else:
-        if as_bunch:
-            from sim.bunch import Bunch
-            print("convert model %s to Bunch" % name)
-            model = Bunch.fromDict(model)
+        print("no such project found: %s for user %s %s" % (name, cu.id, cu.name))
     return model
 
 def save_model_file(name, model, folder = PROJECTDIR):
