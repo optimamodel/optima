@@ -24,14 +24,22 @@
                 </tr>
                 </tbody>
                 <tfoot>
-                <tr>
-                    <td>
-                        <button role="button" class="btn" ng-click="runScenarios()">Run scenarios</button>
+                  <tr>
+                    <td colspan="5" class="text-right">
+                      <button role="button" class="btn" ng-click="openAddScenarioModal($event)">Add a scenario</button>
                     </td>
-                    <td colspan="4" class="text-right">
-                        <button role="button" class="btn" ng-click="openAddScenarioModal($event)">Add a scenario</button>
+                  </tr>
+                  <tr>
+                    <td colspan="5">
+                        <div style="float: right">
+                          <button role="button" class="btn" ng-click="runScenarios()">Run scenarios</button>
+                        </div>
+                        <label>
+                          <input type="checkbox" ng-model="availableScenarioParams.dosave" style="margin-top: 8px">
+                          Save Scenarios
+                        </label>
                     </td>
-                </tr>
+                  </tr>
                 </tfoot>
             </table>
         </div>
