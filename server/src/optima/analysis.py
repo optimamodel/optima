@@ -3,6 +3,7 @@ import json
 import traceback
 from sim.optimize import optimize
 from sim.bunch import unbunchify
+from sim.bunch import bunchify
 from sim.scenarios import runscenarios
 from utils import load_model, save_model, project_exists, check_project_name
 from flask.ext.login import login_required
@@ -52,7 +53,7 @@ def runScenarios():
     args = {}
     scenarios = data.get("scenarios")
     if scenarios:
-        args["scenarios"] = bunchify(scenarios)
+        args["scenariolist"] = bunchify(scenarios)
     dosave = data.get("dosave")
     try:
         D = load_model(project_name)
