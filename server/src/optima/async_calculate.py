@@ -12,14 +12,11 @@ class CalculatingThread(threading.Thread):
     def __init__(self, engine, sentinel, user, project_name, args):
         super(CalculatingThread, self).__init__()
 
-        session_factory = sessionmaker(bind=engine)
-        Session = scoped_session(session_factory)
-        self.session = Session()
-
         self.args = args
         self.user_name = user.name
         self.user_id = user.id
         self.project_name = project_name
+        self.engine = engine
 
         self.sentinel = sentinel
         if not self.project_name in self.sentinel['projects']:
@@ -68,18 +65,22 @@ class CalculatingThread(threading.Thread):
 
     def save_model_user(self, name, user_id, model, working_model=True):
         print("save_model_user:%s %s" % (name, user_id))
-        proj = ProjectDb.query.filter_by(user_id=user_id, name=name).first()
+        db_session = scoped_session(sessionmaker(self.engine))
+
+        proj = db_session.query(ProjectDb).filter_by(user_id=user_id, name=name).first()
         if isinstance(model, Bunch):
             model = model.toDict()
         if proj is not None:
             if not working_model:
-                self.session.query(ProjectDb).update({"id": proj.id, "model": model})
+                db_session.query(ProjectDb).update({"id": proj.id, "model": model})
             else:
                 if proj.working_project is None:
-                    self.session.add(WorkingProjectDb(project_id=proj.id, model = model, is_calibrating = True))
-    #                self.session.execute(WorkingProjectDb.insert(),[{"id": proj.id, "model": model, "is_calibrating": True}])
+                    db_session.add(WorkingProjectDb(project_id=proj.id, model = model, is_calibrating = True))
                 else:
-                    self.session.query(WorkingProjectDb).update({"id": proj.id, "model": model, "is_calibrating": True})
-            self.session.commit()
+                    print("updating working_model with F: %s" % model['F'])
+                    proj.working_project.model = model
+                    db_session.add(proj.working_project)
+            db_session.commit()
         else:
             print("no such model: user %s project %s" % (user_id, name))
+        db_session.remove()

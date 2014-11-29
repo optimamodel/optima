@@ -136,12 +136,10 @@ define(['./module', 'angular'], function (module, angular) {
       }
 
       types = getActiveOptions();
-      console.log("types",types)
 
       _(types).each(function (type) {
 
         var data = response[type.id];
-        console.log("type",type,"data",data);
 
         if (type.total) {
           var graph = {
@@ -224,7 +222,6 @@ define(['./module', 'angular'], function (module, angular) {
         .success(function(data, status, headers, config) {
           console.log(data.status);
           if (data.status == 'Done') {
-            console.log(autoCalibrationTimer);
             stopTimer();
           } else {
             updateGraphs(data.graph);
