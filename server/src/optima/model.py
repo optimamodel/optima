@@ -46,6 +46,7 @@ TODO: do it with the project which is currently in scope
 @login_required
 @check_project_name
 def doAutoCalibration():
+    from sim.autofit import autofit
     reply = {'status':'NOK'}
     print('data: %s' % request.data)
     data = json.loads(request.data)
@@ -63,11 +64,10 @@ def doAutoCalibration():
             endyear = data.get("endyear")
             if endyear:
                 args["endyear"] = int(endyear)
-            timelimit = data.get("timelimit")
-            if timelimit:
-                args["timelimit"] = int(timelimit)
+            timelimit = int(data.get("timelimit")) # for the thread
+            args["timelimit"] = 10 # for the autocalibrate function
 
-            CalculatingThread(db.engine, sentinel, current_user, prj_name, args).start()
+            CalculatingThread(db.engine, sentinel, current_user, prj_name, timelimit, autofit, args).start()
             msg = "Starting thread for user %s project %s" % (current_user.name, prj_name)
             return json.dumps({"status":"OK", "result": msg})
         else:

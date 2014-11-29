@@ -2,14 +2,24 @@ import threading
 import sys
 import time
 
-from sim.autofit import autofit
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sim.bunch import Bunch
 from dbmodels import ProjectDb, WorkingProjectDb
 
 
+"""
+Asynchronous thread to run potentially long calculations for the given project.
+Parameters:
+engine: DB engine to connect to
+sentinel: reference to sentinel (structure used to watch over threads)
+user: current user (new thread does not have the context)
+project_name: current project name
+timelimit: time limit for this thread to run
+func: func which has to be called to perform calculations (receiving D as first argument)
+args: additional arguments for this function
+"""
 class CalculatingThread(threading.Thread):
-    def __init__(self, engine, sentinel, user, project_name, args):
+    def __init__(self, engine, sentinel, user, project_name, timelimit, func, args):
         super(CalculatingThread, self).__init__()
 
         self.args = args
@@ -17,18 +27,18 @@ class CalculatingThread(threading.Thread):
         self.user_id = user.id
         self.project_name = project_name
         self.engine = engine
+        self.func = func
         self.args = args
-        self.timelimit = self.args['timelimit']
-        self.args['timelimit'] = 10
+        self.timelimit = int(timelimit) # to be sure
 
         self.sentinel = sentinel
         if not self.project_name in self.sentinel['projects']:
             self.sentinel['projects'][project_name] = {}
         self.sentinel['projects'][project_name] = True
-        print("starting thread for user: %s" % self.user_name)
+        print("starting calculating thread for user: %s project %s for %s seconds" % (self.user_name, self.project_name, self.timelimit))
 
     def run(self):
-        D = self.load_model_user(self.project_name, self.user_id)
+        D = self.load_model_user(self.project_name, self.user_id, working_model = False) #we start from the current model
 
         iterations = 1
         delta_time = 0
@@ -36,15 +46,15 @@ class CalculatingThread(threading.Thread):
         while delta_time < self.timelimit:
             if not self.sentinel['exit'] and self.sentinel['projects'][self.project_name]:
                 print("Iteration %d for user: %s, args: %s" % (iterations, self.user_name, self.args))
-                D = autofit(D, **self.args)
+                D = self.func(D, **self.args)
                 self.save_model_user(self.project_name, self.user_id, D)
                 time.sleep(1)
                 delta_time = int(time.time() - start)
             else:
-                print("stopping requested")
+                print("thread for project %s requested to stop" % self.project_name)
                 sys.exit()
             iterations += 1
-        print("thread stopped")
+        print("thread for project %s stopped" % self.project_name)
         self.sentinel['projects'][self.project_name] = False
         sys.exit()
 
