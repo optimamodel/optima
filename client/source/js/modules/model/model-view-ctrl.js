@@ -220,7 +220,6 @@ define(['./module', 'angular'], function (module, angular) {
     function checkWorkingAutoCalibration() {
       $http.get('/api/model/working')
         .success(function(data, status, headers, config) {
-          console.log(data.status);
           if (data.status == 'Done') {
             stopTimer();
           } else {
