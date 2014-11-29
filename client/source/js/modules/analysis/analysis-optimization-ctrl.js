@@ -170,7 +170,7 @@ define([
 
         // Keep polling for data
         timer = $interval(function() {
-          $http.get('/api/model/working')
+          $http.get('/api/analysis/optimization/working')
           .success(function(data, status, headers, config) {
             if (data.status !== undefined && data.status == 'OK') {
               if ( angular.isDefined( timer ) ) {
