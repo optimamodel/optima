@@ -51,13 +51,13 @@ def startOptimization():
         if constraints:
             args['constraints'] = bunchify( constraints )
 
-        #timelimit = data.get("timelimit")
-        timelimit = 60
+        timelimit = data.get("timelimit")
         if timelimit:
             timelimit = int(timelimit) / 5
             args["timelimit"] = 5
+            
         if is_model_calibrating(request.project_name):
-            return jsonify({"status":"NOK", "reason":"calibration already going"})
+            return jsonify({"status":"NOK", "reason":"optimization already going"})
         else:
             # We are going to start calibration
             set_working_model_calibration(project_name, True)

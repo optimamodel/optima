@@ -10,6 +10,9 @@ define([
       // Set defaults
       $scope.params = {}
 
+      // Default time limit is 10 seconds
+      $scope.params.timelimit = 60;
+
       // Objectives
       $scope.params.objectives = {}
       $scope.params.objectives.what = 'outcome';
