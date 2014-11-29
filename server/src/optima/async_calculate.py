@@ -17,6 +17,9 @@ class CalculatingThread(threading.Thread):
         self.user_id = user.id
         self.project_name = project_name
         self.engine = engine
+        self.args = args
+        self.timelimit = self.args['timelimit']
+        self.args['timelimit'] = 10
 
         self.sentinel = sentinel
         if not self.project_name in self.sentinel['projects']:
@@ -30,11 +33,10 @@ class CalculatingThread(threading.Thread):
         iterations = 1
         delta_time = 0
         start = time.time()
-        while delta_time < self.args['timelimit']:
+        while delta_time < self.timelimit:
             if not self.sentinel['exit'] and self.sentinel['projects'][self.project_name]:
                 print("Iteration %d for user: %s, args: %s" % (iterations, self.user_name, self.args))
-                autofitargs = {'timelimit': 10, 'startyear': self.args['startyear'], 'endyear': self.args['endyear']}
-                D = autofit(D, **autofitargs)
+                D = autofit(D, **self.args)
                 self.save_model_user(self.project_name, self.user_id, D)
                 time.sleep(1)
                 delta_time = int(time.time() - start)
@@ -77,7 +79,6 @@ class CalculatingThread(threading.Thread):
                 if proj.working_project is None:
                     db_session.add(WorkingProjectDb(project_id=proj.id, model = model, is_calibrating = True))
                 else:
-                    print("updating working_model with F: %s" % model['F'])
                     proj.working_project.model = model
                     db_session.add(proj.working_project)
             db_session.commit()
