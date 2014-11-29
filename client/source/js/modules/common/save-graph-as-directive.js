@@ -7,11 +7,9 @@ define(['angular', 'saveAs'], function (angular, saveAs) {
         restrict: 'A',
         link: function (scope, elem, attrs) {
           var html = '<div class="chart-buttons btn-group">' +
-            '<button class="btn svg">Save as SVG</button>' +
-            '<button class="btn pdf">Save as PDF</button>' +
-            '<button class="btn png">Save as PNG</button>' +
+            '<button class="btn figure">Export figure</button>' +
+            '<button class="btn pdf">Export table</button>' + // Not sure why "btn pdf" works but "btn table" doesn't
             '<div id="svgdataurl" style="display: none"></div>' +
-            '<div id="pngdataurl" style="display: none"></div>' +
             '</div>';
 
           var buttons = angular.element(html);
@@ -19,18 +17,18 @@ define(['angular', 'saveAs'], function (angular, saveAs) {
           elem.after(buttons);
 
           buttons
-            .on('click', '.svg', function (e) {
+            .on('click', '.figure', function (e) {
               e.preventDefault();
 
-              var xml = elem.find('svg').html();
+              var xml = elem.find('figure').html();
 
               xml = '<svg xmlns="http://www.w3.org/2000/svg" version="1.1">' + xml + '</svg>';
 
               saveAs(new Blob([xml], { type: 'image/svg' }), 'graph.svg');
             })
-            .on('click', '.pdf, .png', function (e) {
+            .on('click', '.table', function (e) {
               e.preventDefault();
-              alert('Thanks for clicking, but this feature is currently under development');
+              alert('This feature is currently under development');
             });
         }
       };

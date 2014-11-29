@@ -4,7 +4,7 @@ def loadworkbook(filename='example.xlsx',verbose=2):
     This data structure is used in the next step to update the corresponding model.
     The workbook is assumed to be in the format specified in example.xlsx.
     
-    Version: 2014nov26
+    Version: 2014nov29
     """
     
 
@@ -16,6 +16,7 @@ def loadworkbook(filename='example.xlsx',verbose=2):
     from numpy import nan, array # For reading in empty values
     from xlrd import open_workbook # For opening Excel workbooks
     from bunch import Bunch as struct # Replicate Matlab-like structure behavior
+    from time import strftime # For determining when a spreadsheet was last uploaded
     printv('Loading data from %s...' % filename, 1, verbose)
     
     
@@ -83,6 +84,7 @@ def loadworkbook(filename='example.xlsx',verbose=2):
     ## Basic setup
     data = struct() # Create structure for holding data
     data.__doc__ = 'Raw data as loaded from the workbook, including both epidemiological and behavioral data, plus economics and velociraptors.'
+    data.__date__ = strftime("%Y-%m-%d %H:%M:%S")
     programs = struct() # Create structure for holding program data
     programs.__doc__ = 'Parameters that define the HIV programs -- cost-coverage and coverage-outcome curves.'
     workbook = open_workbook(filename) # Open workbook
