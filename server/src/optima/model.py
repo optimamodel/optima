@@ -35,12 +35,12 @@ def doAutoCalibration():
     print('data: %s' % request.data)
     data = json.loads(request.data)
 
-    prj_name = request.project_name
-    if not project_exists(prj_name):
+    project_name = request.project_name
+    if not project_exists(project_name):
         reply['reason'] = 'File for project %s does not exist' % prj_name
         return jsonify(reply)
     try:
-        if not prj_name in sentinel['projects'] or not sentinel['projects'][prj_name]:
+        if not project_name in sentinel['projects'] or not sentinel['projects'][project_name]:
             args = {}
             startyear = data.get("startyear")
             if startyear:
@@ -51,13 +51,15 @@ def doAutoCalibration():
             timelimit = int(data.get("timelimit")) # for the thread
             args["timelimit"] = 10 # for the autocalibrate function
 
-            CalculatingThread(db.engine, sentinel, current_user, prj_name, timelimit, autofit, args).start()
-            msg = "Starting thread for user %s project %s" % (current_user.name, prj_name)
-            return json.dumps({"status":"OK", "result": msg})
+            CalculatingThread(db.engine, sentinel, current_user, project_name, timelimit, autofit, args).start()
+            msg = "Starting thread for user %s project %s" % (current_user.name, project_name)
+            return json.dumps({"status":"OK", "result": msg, "join":True})
         else:
+            current_calculation = sentinel['projects'][project_name]
             print('sentinel object: %s' % sentinel)
-            msg = "Thread for user %s project %s has already started" % (current_user.name, prj_name)
-            return json.dumps({"status":"NOK", "result": msg})
+            msg = "Thread for user %s project %s (%s) has already started" % (current_user.name, project_name, current_calculation)
+            can_join = current_calculation==autofit.__name__
+            return json.dumps({"status":"OK", "result": msg, "join":can_join})
     except Exception, err:
         var = traceback.format_exc()
         return jsonify({"status":"NOK", "exception":var})

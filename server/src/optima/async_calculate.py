@@ -7,7 +7,6 @@ from sqlalchemy.orm import sessionmaker, scoped_session
 from sim.bunch import Bunch
 from dbmodels import ProjectDb, WorkingProjectDb
 
-
 # Sentinel object used for async calculation
 sentinel = {
     'exit': False,  # This will stop all threads
@@ -50,7 +49,7 @@ class CalculatingThread(threading.Thread):
         self.sentinel = sentinel
         if not self.project_name in self.sentinel['projects']:
             self.sentinel['projects'][project_name] = {}
-        self.sentinel['projects'][project_name] = True
+        self.sentinel['projects'][project_name] = func.__name__
         print("starting calculating thread for user: %s project %s for %s seconds" % (self.user_name, self.project_name, self.timelimit))
 
     def run(self):

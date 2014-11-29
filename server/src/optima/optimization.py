@@ -56,12 +56,13 @@ def startOptimization():
             CalculatingThread(db.engine, sentinel, current_user, project_name, timelimit, optimize, args).start()
             msg = "Starting optimization thread for user %s project %s" % (current_user.name, project_name)
             print(msg)
-            return json.dumps({"status":"OK", "result": msg})
+            return json.dumps({"status":"OK", "result": msg, "join":True})
         else:
+            current_calculation = sentinel['projects'][project_name]
             print('sentinel object: %s' % sentinel)
-            msg = "Calculating Thread for user %s project %s has already started" % (current_user.name, project_name)
-            print(msg)
-            return json.dumps({"status":"NOK", "result": msg})            
+            msg = "Thread for user %s project %s (%s) has already started" % (current_user.name, project_name, current_calculation)
+            can_join = current_calculation==optimize.__name__
+            return json.dumps({"status":"OK", "result": msg, "join":can_join})
     except Exception, err:
         var = traceback.format_exc()
         return jsonify({"status":"NOK", "exception":var})

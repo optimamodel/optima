@@ -210,11 +210,15 @@ define(['./module', 'angular'], function (module, angular) {
 	  var autoCalibrationTimer;
     $scope.startAutoCalibration = function () {
       $http.post('/api/model/calibrate/auto', $scope.simulationOptions)
-        .success(updateGraphs);
-
+        .success(function(data, status, headers, config) {
+          if (data.status == "OK" && data.join) {
       // Keep polling for updated values after every 5 seconds till we get an error.
       // Error indicates that the model is not calibrating anymore.
-      autoCalibrationTimer = $interval(checkWorkingAutoCalibration, 5000, 0, false);
+            autoCalibrationTimer = $interval(checkWorkingAutoCalibration, 5000, 0, false);
+          } else {
+            console.log("Cannot poll for optimization now");
+          }
+        });
     };
 
     function checkWorkingAutoCalibration() {
@@ -258,7 +262,7 @@ define(['./module', 'angular'], function (module, angular) {
 
     $scope.revertCalibration = function () {
       $http.post('/api/model/calibrate/revert')
-        .success({ console.log("OK");});
+        .success(function(){ console.log("OK");});
     };
 
     $scope.previewManualCalibration = function () {
