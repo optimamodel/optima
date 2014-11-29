@@ -42,14 +42,6 @@ print('\n\n\n2. Updating data...')
 from updatedata import updatedata
 D = updatedata(D, verbose=verbose)
 
-print('\n\n\n3. Making cost-coverage-outcome curves...')
-from makeccocs import makeallccocs
-D = makeallccocs(D, verbose=verbose)
-
-print('\n\n\n4. Reconciling parameters with current budget...')
-from getcurrentbudget import getcurrentbudget
-D = getcurrentbudget(D) # TODO Add verbose
-
 print('\n\n\n5. Running simulation...')
 from runsimulation import runsimulation
 D = runsimulation(D, startyear=2000, endyear=2015, verbose=verbose)
