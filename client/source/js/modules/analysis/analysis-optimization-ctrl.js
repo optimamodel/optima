@@ -3,7 +3,9 @@ define([
 ], function (module) {
   'use strict';
 
-  module.controller('AnalysisOptimizationController', function ($scope, $http, $interval) {
+  module.controller('AnalysisOptimizationController', function ($scope, $http, $interval, meta) {
+
+      $scope.meta = meta;
 
       // Set defaults
       $scope.params = {}
@@ -27,6 +29,15 @@ define([
       $scope.params.objectives.money.objectives.mtctbreast.use = false;
       $scope.params.objectives.money.objectives.mtctnonbreast = {}
       $scope.params.objectives.money.objectives.mtctnonbreast.use = false;
+
+      // Default program weightings
+      $scope.params.objectives.money.costs = {}
+      $scope.programs = meta.progs.long;
+      $scope.programCodes = meta.progs.code;
+
+      for ( var i = 0; i < meta.progs.code.length; i++ ) {
+        $scope.params.objectives.money.costs[meta.progs.code[i]] = 100;
+      }
 
       $scope.pieoptions = {
           chart: {

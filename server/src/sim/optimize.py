@@ -22,9 +22,9 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2):
     if not isinstance(objectives, struct): objectives = defaultobjectives(D, verbose=verbose)
     if constraints==None: constraints = defaultconstraints(D, verbose=verbose)
 
-    objectives.money.costs = struct()
-    for prog in D.programs.keys():
-        objectives.money.costs[prog] = 1 # By default, use a weighting of 1
+    # Convert weighting from percentage to number
+    for prog in objectives.money.costs.keys():
+        objectives.money.costs[prog] = objectives.money.costs[prog] / 100.0
 
     # Run optimization # TODO -- actually implement :)
     print('!!! TODO !!!')
@@ -94,7 +94,7 @@ def defaultobjectives(D, verbose=2):
     
     ob.money.costs = struct()
     for prog in D.programs.keys():
-        ob.money.costs[prog] = 1 # By default, use a weighting of 1
+        ob.money.costs[prog] = 100 # By default, use a weighting of 100%
         
     return ob
 

@@ -30,7 +30,12 @@ define([
             .state('analysis.optimization', {
                 url: '/optimization',
                 templateUrl: 'js/modules/analysis/optimization.html' ,
-                controller: 'AnalysisOptimizationController'
+                controller: 'AnalysisOptimizationController',
+                resolve: {
+                  meta: function (Model) {
+                    return Model.getParametersDataMeta().$promise;
+                  }
+                }
             });
     });
 
