@@ -12,10 +12,14 @@ print('WELCOME TO OPTIMA')
 ## Set parameters
 projectname = 'example'
 verbose = 4
+nsims = 1
+
 
 print('\n\n\n1. Making project...')
 from makeproject import makeproject
 D = makeproject(projectname=projectname, pops=['']*6, progs = ['']*7, datastart=2000, dataend=2015, verbose=verbose)
+D.opt.nsims = nsims # Reset options
+D.F = D.F[0:nsims] # Reset the number of sims
 
 
 print('\n\n\n2. Updating data...')

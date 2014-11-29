@@ -22,7 +22,6 @@ def runsimulation(D, startyear=2000, endyear=2030, verbose=2):
         from makemodelpars import makemodelpars
         D.M = makemodelpars(D.P, D.opt, verbose=verbose)
     
-
     # Run model
     from model import model
     allsims = []

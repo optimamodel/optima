@@ -56,6 +56,7 @@ def updateP(D, Plist):
     from copy import deepcopy
     from makemodelpars import makemodelpars
     from nested import getnested, setnested, iternested
+    from numpy import array
 
     
     oldP = deepcopy(D.P)
@@ -67,8 +68,9 @@ def updateP(D, Plist):
     
     # Update M
     for twig in iternested(D.M):
-        if not(all(getnested(oldM,twig) == getnested(newM,twig))): # Don't replace everything in M, only things that have just changed, since D.M might've been modified elsewhere
+        if not(array(getnested(oldM,twig) == getnested(newM,twig)).all()): # Don't replace everything in M, only things that have just changed, since D.M might've been modified elsewhere
             setnested(D.M, twig, getnested(newM,twig))
+
     
     return D
 
