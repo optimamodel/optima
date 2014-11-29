@@ -1,7 +1,8 @@
 define([
   './module',
-  'angular'
-], function (module, angular) {
+  'angular',
+  'd3'
+], function (module, angular, d3) {
   'use strict';
 
   module.controller('AnalysisOptimizationController', function ($scope, $http, $interval, meta, CONFIG) {
@@ -110,11 +111,17 @@ define([
           useInteractiveGuideline: true,
           dispatch: {},
           xAxis: {
-            axisLabel: 'Time (ms)'
+            axisLabel: 'Year',
+            tickFormat: function (d) {
+              return d3.format('d')(d);
+            }
           },
           yAxis: {
-            axisLabel: 'Voltage (v)',
-            axisLabelDistance: 30
+            axisLabel: 'Value',
+            axisLabelDistance: 30,
+            tickFormat: function (d) {
+              return d3.format(',.2f')(d);
+            }
           },
           transitionDuration: 250
         },
