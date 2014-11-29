@@ -9,8 +9,19 @@ define([
 
       // Set defaults
       $scope.params = {}
+
+      // Objectives
       $scope.params.objectives = {}
       $scope.params.objectives.what = 'outcome';
+
+      // Outcome objectives defaults
+      $scope.params.objectives.outcome = {}
+      $scope.params.objectives.outcome.inci = false;
+      $scope.params.objectives.outcome.daly = false;
+      $scope.params.objectives.outcome.death = false;
+      $scope.params.objectives.outcome.cost = false;
+
+      // Money objectives defaults
       $scope.params.objectives.money = {}
       $scope.params.objectives.money.objectives = {}
       $scope.params.objectives.money.objectives.dalys = {}
@@ -37,6 +48,25 @@ define([
 
       for ( var i = 0; i < meta.progs.code.length; i++ ) {
         $scope.params.objectives.money.costs[meta.progs.code[i]] = 100;
+      }
+
+      // Constraints Defaults
+      $scope.params.constraints = {}
+      $scope.params.constraints.txelig = 1;
+      $scope.params.constraints.dontstopart = true;
+
+      $scope.params.constraints.decrease = {}
+      $scope.params.constraints.coverage = {}
+
+      for ( var i = 0; i < meta.progs.code.length; i++ ) {
+        $scope.params.constraints.decrease[meta.progs.code[i]] = {}
+        $scope.params.constraints.decrease[meta.progs.code[i]].use = false;
+        $scope.params.constraints.decrease[meta.progs.code[i]].by = 100;
+
+        $scope.params.constraints.coverage[meta.progs.code[i]] = {}
+        $scope.params.constraints.coverage[meta.progs.code[i]].use = false;
+        $scope.params.constraints.coverage[meta.progs.code[i]].level = 0;
+        $scope.params.constraints.coverage[meta.progs.code[i]].year = 2030;
       }
 
       $scope.pieoptions = {
