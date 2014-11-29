@@ -1,4 +1,15 @@
-def manualfit(D, F, startyear=2000, endyear=2015, verbose=2):
+def updateP(D, newP)
+    from makemodelpars import makemodelpars
+    from copy import deepcopy
+    
+    origM = deepcopy(D.M)
+    newM = makemodelpars(newP, D.opt, withwhat='c', verbose=2)
+    
+    return D
+
+
+
+def manualfit(D, F, newP=[], newM=[], startyear=2000, endyear=2015, verbose=2):
     """
     Manual metaparameter fitting code.
     
@@ -16,7 +27,23 @@ def manualfit(D, F, startyear=2000, endyear=2015, verbose=2):
     """
     
     from printv import printv
+    from nested import setnested
     printv('Running manual calibration...', 1, verbose)
+    
+    # Update P, if provided
+    D = updateP(D, newP)
+    for par in range(len(newP)):
+        try:
+            setnested(D.P, newP[par].names, newP[par].data)
+        except:
+            print('WARNING, problem setting %s for P' % newP[par].names)
+    
+    # Update M, if provided
+    for par in range(len(newM)):
+        try:
+            setnested(D.M, newM[par].names, newM[par].data)
+        except:
+            print('WARNING, problem setting %s for M' % newM[par].names)
 
     # Run model
     from model import model

@@ -2,6 +2,7 @@
 from bunch import Bunch as struct
 from copy import deepcopy
 from numpy import linspace, ndim
+from nested import getnested, setnested
 
 def runscenarios(D, scenariolist=None, verbose=2):
     """
@@ -54,26 +55,21 @@ def makescenarios(D, scenariolist, verbose=2):
     nscenarios = len(scenariolist)
     scenariopars = [struct() for s in range(nscenarios)]
     for scen in range(nscenarios):
-        if verbose>2:print("scen: %s" % scen)
         scenariopars[scen].name = scenariolist[scen].name
         scenariopars[scen].M = deepcopy(D.M) # Copy the whole thing...too hard to generate nested dictionaries on the fly
         for par in range(len(scenariolist[scen].pars)):
             thesepars = scenariolist[scen].pars[par] # Shorten name
-            if verbose>2:print("par: %s thesepars %s" % (par, thesepars))
             data = getnested(scenariopars[scen].M, thesepars.names)
-            if verbose>2:print ("data: %s dim: %s" % (data, ndim(data)))
             if ndim(data)>1: newdata = data[thesepars.pops] # If it's more than one dimension, use population data too
             else: newdata = data # If it's not, just use the whole thing
             initialindex = find(D.opt.tvec, thesepars.startyear)
             finalindex = find(D.opt.tvec, thesepars.endyear)
-            if verbose>2:print("initialindex: %s finalindex: %s newdata:%s" % (initialindex, finalindex, newdata))
-            if ndim(newdata)>1: #TODO cliff fix better?
-                initialvalue = newdata[initialindex] if thesepars.startval == -1 else thesepars.startval 
-                finalvalue = newdata[finalindex] if thesepars.endval == -1 else thesepars.endval
-                npts = finalindex-initialindex
-                newvalues = linspace(initialvalue, finalvalue, npts)
-                newdata[initialindex:finalindex] = newvalues
-                newdata[finalindex:] = newvalues[-1] # Fill in the rest of the array with the last value
+            initialvalue = newdata[initialindex] if thesepars.startval == -1 else thesepars.startval 
+            finalvalue = newdata[finalindex] if thesepars.endval == -1 else thesepars.endval
+            npts = finalindex-initialindex
+            newvalues = linspace(initialvalue, finalvalue, npts)
+            newdata[initialindex:finalindex] = newvalues
+            newdata[finalindex:] = newvalues[-1] # Fill in the rest of the array with the last value
             if ndim(data)>1: data[thesepars.pops] = newdata # If it's multidimensional, only reset this one population
             else: data = newdata # Otherwise, reset the whole thing
             setnested(scenariopars[scen].M, thesepars.names, data)
@@ -167,8 +163,3 @@ def find(val1, val2=None, eps=1e-6):
     if ndim(val1)==1: # Uni-dimensional
         output = output[0] # Return an array rather than a tuple of arrays if one-dimensional
     return output
-
-
-## Parse nested dictionaries -- from http://stackoverflow.com/questions/14692690/access-python-nested-dictionary-items-via-a-list-of-keys
-def getnested(nesteddict, maplist): return reduce(lambda d, k: d[k], maplist, nesteddict)
-def setnested(nesteddict, maplist, value): getnested(nesteddict, maplist[:-1])[maplist[-1]] = value

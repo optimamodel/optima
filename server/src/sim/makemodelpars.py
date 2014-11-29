@@ -2,33 +2,8 @@ from printv import printv
 from numpy import zeros, array, exp
 from bunch import Bunch as struct # Replicate Matlab-like structure behavior
 import math
-## WARNING need to introduce time!
-
 eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
 
-def reconcileacts(symmetricmatrix,popsize,popacts):
-
-    # Make sure the dimensions all agree
-    npop=len(popsize); # Number of populations
-    
-    for pop1 in range(npop):
-        symmetricmatrix[pop1,:]=symmetricmatrix[pop1,:]*popsize[pop1];
-    
-    # Divide by the sum of the column to normalize the probability, then
-    # multiply by the number of acts and population size to get total number of
-    # acts
-    for pop1 in range(npop):
-        symmetricmatrix[:,pop1]=popsize[pop1]*popacts[pop1]*symmetricmatrix[:,pop1] / float(eps+sum(symmetricmatrix[:,pop1]))
-    
-    # Reconcile different estimates of number of acts, which must balance
-    pshipacts=zeros((npop,npop));
-    for pop1 in range(npop):
-        for pop2 in range(npop):
-            balanced = (symmetricmatrix[pop1,pop2] * popsize[pop1] + symmetricmatrix[pop2,pop1] * popsize[pop2])/(popsize[pop1]+popsize[pop2]); # here are two estimates for each interaction; reconcile them here
-            pshipacts[pop2,pop1] = balanced/popsize[pop2]; # Divide by population size to get per-person estimate
-            pshipacts[pop1,pop2] = balanced/popsize[pop1]; # ...and for the other population
-
-    return pshipacts
 
 def makemodelpars(P, opt, withwhat='c', verbose=2):
     """
@@ -155,3 +130,29 @@ def makemodelpars(P, opt, withwhat='c', verbose=2):
 
     printv('...done making model parameters.', 2, verbose)
     return M
+
+
+
+def reconcileacts(symmetricmatrix,popsize,popacts):
+
+    # Make sure the dimensions all agree
+    npop=len(popsize); # Number of populations
+    
+    for pop1 in range(npop):
+        symmetricmatrix[pop1,:]=symmetricmatrix[pop1,:]*popsize[pop1];
+    
+    # Divide by the sum of the column to normalize the probability, then
+    # multiply by the number of acts and population size to get total number of
+    # acts
+    for pop1 in range(npop):
+        symmetricmatrix[:,pop1]=popsize[pop1]*popacts[pop1]*symmetricmatrix[:,pop1] / float(eps+sum(symmetricmatrix[:,pop1]))
+    
+    # Reconcile different estimates of number of acts, which must balance
+    pshipacts=zeros((npop,npop));
+    for pop1 in range(npop):
+        for pop2 in range(npop):
+            balanced = (symmetricmatrix[pop1,pop2] * popsize[pop1] + symmetricmatrix[pop2,pop1] * popsize[pop2])/(popsize[pop1]+popsize[pop2]); # here are two estimates for each interaction; reconcile them here
+            pshipacts[pop2,pop1] = balanced/popsize[pop2]; # Divide by population size to get per-person estimate
+            pshipacts[pop1,pop2] = balanced/popsize[pop1]; # ...and for the other population
+
+    return pshipacts
