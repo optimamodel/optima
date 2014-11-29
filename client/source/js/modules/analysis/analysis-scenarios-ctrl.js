@@ -123,7 +123,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             // generate graphs for this type for each population
             if (type.byPopulation) {
               _(data.pops).each(function (population, populationIndex) {
-                var title = type.name + ' - ' + $scope.parameters.meta.pops.short[populationIndex];
+                var title = type.name + ' - ' + meta.pops.short[populationIndex];
                 var graph = generateGraph(type, population.data, response.tvec.np_array, title);
                 graph.options.xAxis.axisLabel = data.xlabel;
                 graph.options.yAxis.axisLabel = data.ylabel;
