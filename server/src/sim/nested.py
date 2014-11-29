@@ -11,8 +11,8 @@ Four little functions to get and set data from nested dictionaries. The first tw
 "makenested" will recursively generate a dictionary with the given list of keys:
     makenested(foo, ['a','b'])
 
-"gettwigs" will return a list of all the twigs in the current dictionary:
-    twigs = gettwigs(foo)
+"iternested" will return a list of all the twigs in the current dictionary:
+    twigs = iternested(foo)
 
 Example 1:
     from nested import makenested, getnested, setnested
@@ -27,16 +27,15 @@ Example 1:
     print foo['yerevan']  # {'parcels': 'were tasty'}
 
 Example 2:
-    from nested import makenested, gettwigs, setnested
+    from nested import makenested, iternested, setnested
     foo = {}
     makenested(foo, ['a','x'])
     makenested(foo, ['a','y'])
     makenested(foo, ['a','z'])
     makenested(foo, ['b','a','x'])
     makenested(foo, ['b','a','y'])
-    alltwigs = gettwigs(foo)
     count = 0
-    for twig in alltwigs:
+    for twig in iternested(foo):
         count += 1
         setnested(foo, twig, count)   # {'a': {'y': 1, 'x': 2, 'z': 3}, 'b': {'a': {'y': 4, 'x': 5}}}
 
@@ -76,7 +75,7 @@ def makenested(nesteddict, keylist):
 
 
 
-def gettwigs(nesteddict):
+def iternested(nesteddict):
     """ Loop over all twigs of a nested dict -- spent a long time thining how to make this more elegant and couldn't :("""
     output = []
     
@@ -103,7 +102,7 @@ def gettwigs(nesteddict):
                     for k5 in trykeys(dict4):
                         l5 = True
                         output.append([k1, k2, k3, k4, k5])
-                        print('WARNING, reached maximum level of nested dictionary recursion (5)')
+                        print('WARNING, reached maximum level of nested dictionary recursion (5), sorry this code sucks so much')
                     if not(l5): output.append([k1, k2, k3, k4])
                 if not(l4): output.append([k1, k2, k3])
             if not(l3): output.append([k1, k2])

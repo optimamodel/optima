@@ -1,15 +1,8 @@
-def updateP(D, newP)
-    from makemodelpars import makemodelpars
-    from copy import deepcopy
-    
-    origM = deepcopy(D.M)
-    newM = makemodelpars(newP, D.opt, withwhat='c', verbose=2)
-    
-    return D
+## Imports used in multiple functions
+from nested import getnested, setnested, iternested
 
 
-
-def manualfit(D, F, newP=[], newM=[], startyear=2000, endyear=2015, verbose=2):
+def manualfit(D, F, Plist=[], Mlist=[], startyear=2000, endyear=2015, verbose=2):
     """
     Manual metaparameter fitting code.
     
@@ -23,27 +16,14 @@ def manualfit(D, F, newP=[], newM=[], startyear=2000, endyear=2015, verbose=2):
         D = manualfit(D, F) # Rerun manualfit
         D = manualfit(D, F, dosave=True) # If the result is good, save
         
-    Version: 2014nov26 by cliffk
+    Version: 2014nov29 by cliffk
     """
-    
     from printv import printv
-    from nested import setnested
     printv('Running manual calibration...', 1, verbose)
     
-    # Update P, if provided
-    D = updateP(D, newP)
-    for par in range(len(newP)):
-        try:
-            setnested(D.P, newP[par].names, newP[par].data)
-        except:
-            print('WARNING, problem setting %s for P' % newP[par].names)
-    
-    # Update M, if provided
-    for par in range(len(newM)):
-        try:
-            setnested(D.M, newM[par].names, newM[par].data)
-        except:
-            print('WARNING, problem setting %s for M' % newM[par].names)
+    # Update P and M, if provided
+    D = updateP(D, Plist)
+    D = updateM(D, Mlist)
 
     # Run model
     from model import model
@@ -61,4 +41,39 @@ def manualfit(D, F, newP=[], newM=[], startyear=2000, endyear=2015, verbose=2):
     D.plot.E = gatherepidata(D, D.R, verbose=verbose)
     
     printv('...done with manual calibration.', 2, verbose)
+    return D
+
+
+
+
+def updateP(D, Plist):
+    """ 
+    Update certain fields of D.P and D.M only. Plist is a list of parameter names
+    and values matching the structure of D.P.
+    
+    Version: 2014nov29 by cliffk
+    """
+    from copy import deepcopy
+    from makemodelpars import makemodelpars
+    
+    oldP = deepcopy(D.P)
+    for twig in iternested(D.P):
+        setnested(D.P, Plist[twig].name, Plist[twig].data)
+    
+    oldM = makemodelpars(oldP, D.opt, withwhat='c', verbose=2)
+    newM = makemodelpars(D.P, D.opt, withwhat='c', verbose=2)
+    
+    # Update M
+    for twig in iternested(D.M):
+        if not(all(getnested(oldM,twig) == getnested(newM,twig))): # Don't replace everything in M, only things that have just changed
+            setnested(D.M, twig, getnested(newM,twig))
+    
+    return D
+
+
+
+
+def updateM(D, Mlist):
+    """ Update certain fields of D.M -- way easier than updating D.P :) """
+    for twig in iternested(D.M): setnested(D.M, Mlist[twig].name, Mlist[twig].data)
     return D
