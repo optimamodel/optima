@@ -24,7 +24,7 @@ from flask.ext.login import login_required, current_user
 optimization = Blueprint('optimization',  __name__, static_folder = '../static')
 
 def get_optimization_results(D_dict):
-    return {'graph': D_dict.get('plot',{}).get('E',{}), 'pie':D_dict.get('A',{})}
+    return {'graph': D_dict.get('plot',{}).get('OM',{}), 'pie':D_dict.get('plot',{}).get('OA',{})}
 
 """ 
 Start optimization 
