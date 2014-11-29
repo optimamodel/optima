@@ -65,7 +65,7 @@ def iternested(nesteddict,previous = []):
 	output = []
 	for k in nesteddict.items():
 		if isinstance(k[1],dict):
-			output += iternested2(k[1],previous+[k[0]]) # Need to add these at the first level
+			output += iternested(k[1],previous+[k[0]]) # Need to add these at the first level
 		else:
 			output.append(previous+[k[0]])
 	return output
