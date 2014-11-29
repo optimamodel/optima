@@ -62,3 +62,5 @@ def init_db():
 if __name__ == '__main__':
     init_db()
     app.run(threaded=True, debug=True)
+else:
+    init_db()
