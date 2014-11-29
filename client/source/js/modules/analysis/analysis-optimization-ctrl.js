@@ -173,11 +173,15 @@ define([
 
     $scope.startOptimization = function () {
       $http.post('/api/analysis/optimization/start', $scope.params)
-        .success(updateGraphs);
-
+        .success(function(data, status, headers, config) {
+          if (data.status == "OK" && data.join) {
       // Keep polling for updated values after every 5 seconds till we get an error.
       // Error indicates that the model is not calibrating anymore.
-      optimizationTimer = $interval(checkWorkingOptimization, 5000, 0, false);
+            optimizationTimer = $interval(checkWorkingOptimization, 5000, 0, false);
+          } else {
+            console.log("Cannot poll for optimization now");
+          }
+        });
     };
 
     function checkWorkingOptimization() {
