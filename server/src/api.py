@@ -3,6 +3,7 @@ from flask.ext.sqlalchemy import SQLAlchemy
 import json
 from sim.dataio import DATADIR
 import optima.dbconn
+import os
 
 app = Flask(__name__)
 
@@ -10,6 +11,9 @@ UPLOAD_FOLDER = DATADIR #'/tmp/uploads' #todo configure
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql+psycopg2://optima:optima@localhost:5432/optima'
+if os.environ.get('OPTIMA_TEST_CFG'):
+    app.config.from_envvar('OPTIMA_TEST_CFG')
+
 
 optima.dbconn.db = SQLAlchemy(app)
 
@@ -62,3 +66,5 @@ def init_db():
 if __name__ == '__main__':
     init_db()
     app.run(threaded=True, debug=True)
+else:
+    init_db()

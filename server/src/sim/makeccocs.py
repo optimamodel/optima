@@ -87,7 +87,7 @@ def makecc(D=None, progname = default_progname, ccparams = default_ccparams, mak
         storeparams = [slope]
 
         ## Create linear relationship
-        xvalscc = linspace(0,7e6,D.opt.nsims) # take D.opt.nsims points between 0 and some arbitrary max
+        xvalscc = linspace(ccparams[3],D.opt.nsims) # take D.opt.nsims points between 0 and some arbitrary max
         yvalscc = xvalscc*slope # calculate linear function
 
     # Get scatter data
