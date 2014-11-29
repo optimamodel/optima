@@ -1,7 +1,7 @@
 define(['./module', 'angular'], function (module, angular) {
   'use strict';
 
-  module.controller('ModelViewController', function ($scope, $http, $interval, Model, f, meta) {
+  module.controller('ModelViewController', function ($scope, $http, $interval, Model, f, meta, CONFIG) {
 
     var prepareF = function (f) {
       var F = angular.copy(f);
@@ -47,15 +47,7 @@ define(['./module', 'angular'], function (module, angular) {
       }
     };
 
-    $scope.types = [
-      { id: 'prev', name: 'Prevalence', active: true, byPopulation: true, total: false },
-      { id: 'daly', name: 'DALYs', active: false, byPopulation: false, total: false },
-      { id: 'death', name: 'Deaths', active: false, byPopulation: false, total: false },
-      { id: 'inci', name: 'New infections', active: false, byPopulation: false, total: false },
-      { id: 'dx', name: 'Diagnoses', active: false, byPopulation: false, total: false },
-      { id: 'tx1', name: 'First-line treatment', active: false, byPopulation: false, total: false },
-      { id: 'tx2', name: 'Second-line treatment', active: false, byPopulation: false, total: false }
-    ];
+    $scope.types = angular.copy(CONFIG.GRAPH_TYPES);
 
     var getActiveOptions = function () {
       return _($scope.types).where({ active: true });
@@ -210,11 +202,15 @@ define(['./module', 'angular'], function (module, angular) {
 	  var autoCalibrationTimer;
     $scope.startAutoCalibration = function () {
       $http.post('/api/model/calibrate/auto', $scope.simulationOptions)
-        .success(updateGraphs);
-
+        .success(function(data, status, headers, config) {
+          if (data.status == "OK" && data.join) {
       // Keep polling for updated values after every 5 seconds till we get an error.
       // Error indicates that the model is not calibrating anymore.
-      autoCalibrationTimer = $interval(checkWorkingAutoCalibration, 5000, 0, false);
+            autoCalibrationTimer = $interval(checkWorkingAutoCalibration, 5000, 0, false);
+          } else {
+            console.log("Cannot poll for optimization now");
+          }
+        });
     };
 
     function checkWorkingAutoCalibration() {
@@ -258,7 +254,7 @@ define(['./module', 'angular'], function (module, angular) {
 
     $scope.revertCalibration = function () {
       $http.post('/api/model/calibrate/revert')
-        .success(updateGraphs);
+        .success(function(){ console.log("OK");});
     };
 
     $scope.previewManualCalibration = function () {

@@ -19,9 +19,24 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2):
     printv('Running optimization...', 1, verbose)
     
     # Make sure objectives and constraints exist
-    if objectives==None: objectives = defaultobjectives(D, verbose=verbose)
-    if constraints==None: constraints = defaultconstraints(D, verbose=verbose)
-    
+    if not isinstance(objectives, struct): objectives = defaultobjectives(D, verbose=verbose)
+    if not isinstance(constraints, struct): constraints = defaultconstraints(D, verbose=verbose)
+
+    # Convert weightings from percentage to number
+    if objectives.outcome.inci: objectives.outcome.inciweight = float( objectives.outcome.inciweight ) / 100.0
+    if objectives.outcome.daly: objectives.outcome.dalyweight = float( objectives.outcome.dalyweight ) / 100.0
+    if objectives.outcome.death: objectives.outcome.deathweight = float( objectives.outcome.deathweight ) / 100.0
+    if objectives.outcome.cost: objectives.outcome.costweight = float( objectives.outcome.costweight ) / 100.0
+
+    for ob in objectives.money.objectives.keys():
+        if objectives.money.objectives[ob].use: objectives.money.objectives[ob].by = float(objectives.money.objectives[ob].by) / 100.0
+
+    for prog in objectives.money.costs.keys():
+        objectives.money.costs[prog] = float(objectives.money.costs[prog]) / 100.0
+
+    for prog in constraints.decrease.keys():
+        if constraints.decrease[prog].use: constraints.decrease[prog].by = float(constraints.decrease[prog].by) / 100.0
+
     # Run optimization # TODO -- actually implement :)
     print('!!! TODO !!!')
     tstart = time()
@@ -35,7 +50,7 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2):
         iteration += 1
         elapsed = time() - tstart
         for alloc in range(len(D.A)):
-            D.A[alloc].S = model(D.G, D.M, D.F[alloc], D.opt, verbose=verbose) # At the moment, D.F is changing -- but need allocation to change
+            D.A[alloc].S = model(D.G, D.M, D.F[0], D.opt, verbose=verbose) # At the moment, D.F is changing -- but need allocation to change
             D.A[alloc].mismatches = -1
         printv('Iteration: %i | Elapsed: %f s |  Limit: %f s' % (iteration, elapsed, timelimit), 2, verbose)
     
@@ -71,26 +86,26 @@ def defaultobjectives(D, verbose=2):
     ob.outcome = struct()
     ob.outcome.fixed = 1e6 # "With a fixed amount of money available"
     ob.outcome.inci = True # "Minimize cumulative HIV incidence"
-    ob.outcome.inciweight = 1 # "Incidence weighting"
+    ob.outcome.inciweight = 100 # "Incidence weighting"
     ob.outcome.daly = False # "Minimize cumulative DALYs"
-    ob.outcome.dalyweight = 1 # "DALY weighting"
+    ob.outcome.dalyweight = 100 # "DALY weighting"
     ob.outcome.death = False # "Minimize cumulative HIV-related deaths"
-    ob.outcome.deathweight = 1 # "Death weighting"
+    ob.outcome.deathweight = 100 # "Death weighting"
     ob.outcome.cost = False # "Minimize cumulative DALYs"
-    ob.outcome.costweight = 1 # "Cost weighting"
+    ob.outcome.costweight = 100 # "Cost weighting"
     
     ob.money = struct()
     ob.money.objectives = struct()
     for objective in ['inci', 'incisex', 'inciinj', 'mtct', 'mtctbreast', 'mtctnonbreast', 'deaths', 'dalys']:
         ob.money.objectives[objective] = struct()
         ob.money.objectives[objective].use = False # TIck box: by default don't use
-        ob.money.objectives[objective].by = 0.5 # "By" text entry box: 0.5 = 50% reduction
+        ob.money.objectives[objective].by = 50 # "By" text entry box: 0.5 = 50% reduction
         ob.money.objectives[objective].to = 0 # "To" text entry box: don't use if set to 0
     ob.money.objectives.inci.use = True # Set incidence to be on by default
     
     ob.money.costs = struct()
     for prog in D.programs.keys():
-        ob.money.costs[prog] = 1 # By default, use a weighting of 1
+        ob.money.costs[prog] = 100 # By default, use a weighting of 100%
         
     return ob
 
@@ -111,7 +126,7 @@ def defaultconstraints(D, verbose=2):
     for prog in D.programs.keys(): # Loop over all defined programs
         con.decrease[prog] = struct()
         con.decrease[prog].use = False # Tick box: by default don't use
-        con.decrease[prog].by = 0.5 # Text entry box: 0.5 = 50% per year
+        con.decrease[prog].by = 50 # Text entry box: 0.5 = 50% per year
     
     con.coverage = struct()
     for prog in D.programs.keys(): # Loop over all defined programs
