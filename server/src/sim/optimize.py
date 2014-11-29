@@ -22,15 +22,6 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2):
     if not isinstance(objectives, struct): objectives = defaultobjectives(D, verbose=verbose)
     if constraints==None: constraints = defaultconstraints(D, verbose=verbose)
 
-    objectives.money = struct()
-    objectives.money.objectives = struct()
-    for objective in ['inci', 'incisex', 'inciinj', 'mtct', 'mtctbreast', 'mtctnonbreast', 'deaths', 'dalys']:
-        objectives.money.objectives[objective] = struct()
-        objectives.money.objectives[objective].use = False # TIck box: by default don't use
-        objectives.money.objectives[objective].by = 0.5 # "By" text entry box: 0.5 = 50% reduction
-        objectives.money.objectives[objective].to = 0 # "To" text entry box: don't use if set to 0
-    objectives.money.objectives.inci.use = True # Set incidence to be on by default
-
     objectives.money.costs = struct()
     for prog in D.programs.keys():
         objectives.money.costs[prog] = 1 # By default, use a weighting of 1
