@@ -17,7 +17,7 @@ if os.environ.get('OPTIMA_TEST_CFG'):
 
 optima.dbconn.db = SQLAlchemy(app)
 
-from optima.analysis import analysis
+from optima.scenarios import scenarios
 from optima.data import data
 from optima.model import model
 from optima.user import user
@@ -30,7 +30,7 @@ app.register_blueprint(data, url_prefix = '/api/data')
 app.register_blueprint(user, url_prefix = '/api/user')
 app.register_blueprint(project, url_prefix = '/api/project')
 app.register_blueprint(model, url_prefix = '/api/model')
-app.register_blueprint(analysis, url_prefix = '/api/analysis/scenarios')
+app.register_blueprint(scenarios, url_prefix = '/api/analysis/scenarios')
 app.register_blueprint(optimization, url_prefix = '/api/analysis/optimization')
 
 # Execute this method after every request.

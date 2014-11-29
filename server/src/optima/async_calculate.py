@@ -1,10 +1,26 @@
 import threading
 import sys
 import time
+from signal import *
 
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sim.bunch import Bunch
 from dbmodels import ProjectDb, WorkingProjectDb
+
+
+# Sentinel object used for async calculation
+sentinel = {
+    'exit': False,  # This will stop all threads
+    'projects': {}  # This will contain an entry per user project indicating if the calculating thread is running
+}
+
+def interrupt(*args):
+    print("stopping all threads")
+    sentinel['exit'] = True
+    sys.exit()
+
+for sig in (SIGABRT, SIGILL, SIGINT, SIGSEGV, SIGTERM):
+    signal(sig, interrupt)
 
 
 """
