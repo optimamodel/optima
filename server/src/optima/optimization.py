@@ -12,15 +12,19 @@ Optimization Module
 from flask import request, jsonify, Blueprint
 from flask.ext.login import login_required
 from dbconn import db
-from optima.model import sentinel
+from async_calculate import CalculatingThread, sentinel
 from utils import check_project_name, project_exists, pick_params, load_model, save_working_model
 from sim.optimize import optimize
 from sim.bunch import bunchify
 import json
 import traceback
+from flask.ext.login import login_required, current_user
 
 # route prefix: /api/analysis/optimization
 optimization = Blueprint('optimization',  __name__, static_folder = '../static')
+
+def get_optimization_results(D_dict):
+    return {'graph': D_dict.get('plot',{}).get('E',{}), 'pie':D_dict.get('A',{})}
 
 """ 
 Start optimization 
@@ -29,7 +33,6 @@ Start optimization
 @login_required
 @check_project_name
 def startOptimization():
-    reply = {'status':'NOK'}
     data = json.loads(request.data)
     
     # get project name 
@@ -39,68 +42,106 @@ def startOptimization():
         reply['reason'] = 'File for project %s does not exist' % project_name
         return jsonify(reply)
     try:
-        D = load_model(project_name)
-
-        # Prepare arguments
-        args = {}
-
-        objectives = data.get('objectives')
-        if objectives:
-            args['objectives'] = bunchify( objectives )
-
-        constraints = data.get('constraints')
-        if constraints:
-            args['constraints'] = bunchify( constraints )
-
-        timelimit = data.get("timelimit")
-        if timelimit:
-            timelimit = int(timelimit) / 5
-            args["timelimit"] = 5
-            
-        #if is_model_calibrating(request.project_name):
-        #    return jsonify({"status":"NOK", "reason":"optimization already going"})
-        #else:
-        # We are going to start calibration
-        # set_working_model_calibration(project_name, True)
-            
-        # Do calculations 5 seconds at a time and then save them
-        # to db.
-        for i in range(0, timelimit):
-                
-            # Make sure we are still calibrating
-            #if is_model_calibrating(request.project_name):
-            D = optimize(D, **args)
-            D_dict = D.toDict()
-            save_working_model(project_name, D_dict)
-            #else:
-            #    break
-            
+        if not project_name in sentinel['projects'] or not sentinel['projects'][project_name]:
+            # Prepare arguments
+            args = {}
+            objectives = data.get('objectives')
+            if objectives:
+                args['objectives'] = bunchify( objectives )
+            constraints = data.get('constraints')
+            if constraints:
+                args['constraints'] = bunchify( constraints )
+            timelimit = int(data.get("timelimit")) # for the thread
+            args["timelimit"] = 10 # for the autocalibrate function
+            CalculatingThread(db.engine, sentinel, current_user, project_name, timelimit, optimize, args).start()
+            msg = "Starting optimization thread for user %s project %s" % (current_user.name, project_name)
+            print(msg)
+            return json.dumps({"status":"OK", "result": msg})
+        else:
+            print('sentinel object: %s' % sentinel)
+            msg = "Calculating Thread for user %s project %s has already started" % (current_user.name, project_name)
+            print(msg)
+            return json.dumps({"status":"NOK", "result": msg})            
     except Exception, err:
-        #set_working_model_calibration(project_name, False)
         var = traceback.format_exc()
         return jsonify({"status":"NOK", "exception":var})
-        
-    #set_working_model_calibration(project_name, False)
-    return jsonify(D_dict.get('A',{}))
 
+"""
+Stops calibration
+"""
+@optimization.route('/stop')
+@login_required
+@check_project_name
+def stopCalibration():
+    prj_name = request.project_name
+    if prj_name in sentinel['projects']:
+        sentinel['projects'][prj_name] = False
+    return json.dumps({"status":"OK", "result": "thread for user %s project %s stopped" % (current_user.name, prj_name)})
+
+        
 """
 Returns the working model for optimization.
 """
 @optimization.route('/working')
 @login_required
 @check_project_name
-def getWorkingOptimization():
+def getWorkingModel():
+    reply = {'status':'NOK'}
     # Get optimization working data
     try:
         prj_name = request.project_name
         D_dict = load_model(prj_name, working_model = True, as_bunch = False)
-        result = {'graph': D_dict.get('A',{})}
+        result = get_optimization_results(D_dict)
         if prj_name in sentinel['projects'] and sentinel['projects'][prj_name]:
             result['status'] = 'Running'
         else:
-            print("no longer calibrating")
+            print("no longer optimizing")
             result['status'] = 'Done'
         return jsonify(result)
     except Exception, err:
-        var = traceback.format_exc()
-        return jsonify({"status":"NOK", "exception":var})
+        reply['exception'] = traceback.format_exc()
+        return jsonify(reply)
+
+"""
+Saves working model as the default model
+"""
+@optimization.route('/save', methods=['POST'])
+@login_required
+@check_project_name
+def saveModel():
+    reply = {'status':'NOK'}
+
+    # get project name 
+    project_name = request.project_name
+    if not project_exists(project_name):
+        reply['reason'] = 'File for project %s does not exist' % project_name
+        return jsonify(reply)
+
+    try:
+        D_dict = save_working_model_as_default(project_name)
+        return jsonify(get_optimization_results(D_dict))
+    except Exception, err:
+        reply['exception'] = traceback.format_exc()
+        return jsonify(reply)
+
+
+"""
+Revert working model to the default model
+"""
+@optimization.route('/revert', methods=['POST'])
+@login_required
+@check_project_name
+def revertCalibrationModel():
+    reply = {'status':'NOK'}
+
+    # get project name 
+    project_name = request.project_name
+    if not project_exists(project_name):
+        reply['reason'] = 'File for project %s does not exist' % project_name
+        return jsonify(reply)
+    try:
+        D_dict = revert_working_model_to_default(project_name)
+        return jsonify({"status":"OK"})
+    except Exception, err:
+        reply['exception'] = traceback.format_exc()
+        return jsonify(reply)

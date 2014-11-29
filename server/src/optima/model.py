@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 import json
 import traceback
-from optima.async_calculate import CalculatingThread
+from async_calculate import CalculatingThread, sentinel
 from sim.manualfit import manualfit
 from sim.bunch import bunchify
 from sim.runsimulation import runsimulation
@@ -21,22 +21,6 @@ model.config = {}
 def record_params(setup_state):
     app = setup_state.app
     model.config = dict([(key,value) for (key,value) in app.config.iteritems()])
-
-
-# Sentinel object used for async calculation
-sentinel = {
-    'exit': False,  # This will stop all threads
-    'projects': {}  # This will contain an entry per user project indicating if the calculating thread is running
-}
-
-def interrupt(*args):
-    print("stopping all threads")
-    sentinel['exit'] = True
-    sys.exit()
-
-for sig in (SIGABRT, SIGILL, SIGINT, SIGSEGV, SIGTERM):
-    signal(sig, interrupt)
-
 
 """
 Uses provided parameters to auto calibrate the model (update it with these data) 

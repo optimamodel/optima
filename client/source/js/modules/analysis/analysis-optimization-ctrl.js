@@ -8,44 +8,44 @@ define([
       $scope.meta = meta;
 
       // Set defaults
-      $scope.params = {}
+      $scope.params = {};
 
       // Default time limit is 10 seconds
       $scope.params.timelimit = 60;
 
       // Objectives
-      $scope.params.objectives = {}
+      $scope.params.objectives = {};
       $scope.params.objectives.what = 'outcome';
 
       // Outcome objectives defaults
-      $scope.params.objectives.outcome = {}
+      $scope.params.objectives.outcome = {};
       $scope.params.objectives.outcome.inci = false;
       $scope.params.objectives.outcome.daly = false;
       $scope.params.objectives.outcome.death = false;
       $scope.params.objectives.outcome.cost = false;
 
       // Money objectives defaults
-      $scope.params.objectives.money = {}
-      $scope.params.objectives.money.objectives = {}
-      $scope.params.objectives.money.objectives.dalys = {}
+      $scope.params.objectives.money = {};
+      $scope.params.objectives.money.objectives = {};
+      $scope.params.objectives.money.objectives.dalys = {};
       $scope.params.objectives.money.objectives.dalys.use = false;
-      $scope.params.objectives.money.objectives.deaths = {}
+      $scope.params.objectives.money.objectives.deaths = {};
       $scope.params.objectives.money.objectives.deaths.use = false;
-      $scope.params.objectives.money.objectives.inci = {}
+      $scope.params.objectives.money.objectives.inci = {};
       $scope.params.objectives.money.objectives.inci.use = false;
-      $scope.params.objectives.money.objectives.inciinj = {}
+      $scope.params.objectives.money.objectives.inciinj = {};
       $scope.params.objectives.money.objectives.inciinj.use = false;
-      $scope.params.objectives.money.objectives.incisex = {}
+      $scope.params.objectives.money.objectives.incisex = {};
       $scope.params.objectives.money.objectives.incisex.use = false;
-      $scope.params.objectives.money.objectives.mtct = {}
+      $scope.params.objectives.money.objectives.mtct = {};
       $scope.params.objectives.money.objectives.mtct.use = false;
-      $scope.params.objectives.money.objectives.mtctbreast = {}
+      $scope.params.objectives.money.objectives.mtctbreast = {};
       $scope.params.objectives.money.objectives.mtctbreast.use = false;
-      $scope.params.objectives.money.objectives.mtctnonbreast = {}
+      $scope.params.objectives.money.objectives.mtctnonbreast = {};
       $scope.params.objectives.money.objectives.mtctnonbreast.use = false;
 
       // Default program weightings
-      $scope.params.objectives.money.costs = {}
+      $scope.params.objectives.money.costs = {};
       $scope.programs = meta.progs.long;
       $scope.programCodes = meta.progs.code;
 
@@ -54,7 +54,7 @@ define([
       }
 
       // Constraints Defaults
-      $scope.params.constraints = {}
+      $scope.params.constraints = {};
       $scope.params.constraints.txelig = 1;
       $scope.params.constraints.dontstopart = true;
 
@@ -62,11 +62,11 @@ define([
       $scope.params.constraints.coverage = {}
 
       for ( var i = 0; i < meta.progs.code.length; i++ ) {
-        $scope.params.constraints.decrease[meta.progs.code[i]] = {}
+        $scope.params.constraints.decrease[meta.progs.code[i]] = {};
         $scope.params.constraints.decrease[meta.progs.code[i]].use = false;
         $scope.params.constraints.decrease[meta.progs.code[i]].by = 100;
 
-        $scope.params.constraints.coverage[meta.progs.code[i]] = {}
+        $scope.params.constraints.coverage[meta.progs.code[i]] = {};
         $scope.params.constraints.coverage[meta.progs.code[i]].use = false;
         $scope.params.constraints.coverage[meta.progs.code[i]].level = 0;
         $scope.params.constraints.coverage[meta.progs.code[i]].year = 2030;
@@ -162,56 +162,67 @@ define([
           }
       ];
 
-      var timer;
-      $scope.startOptimization = function () {
-        $http.post('/api/analysis/optimization/start', $scope.params)
-        .success(function (response) {
+
+    var updateGraphs = function (data) {
+//      $scope.graphs = prepareGraphs(data);
+//      $scope.parameters.cache.response = data;
+      console.log(data); // TODO
+    };
+
+    var optimizationTimer;
+
+    $scope.startOptimization = function () {
+      $http.post('/api/analysis/optimization/start', $scope.params)
+        .success(updateGraphs);
+
+      // Keep polling for updated values after every 5 seconds till we get an error.
+      // Error indicates that the model is not calibrating anymore.
+      optimizationTimer = $interval(checkWorkingOptimization, 5000, 0, false);
+    };
+
+    function checkWorkingOptimization() {
+      $http.get('/api/analysis/optimization/working')
+        .success(function(data, status, headers, config) {
+          if (data.status == 'Done') {
+            stopTimer();
+          } else {
+            updateGraphs(data.graph);
+          }
         })
-
-        // Keep polling for data
-        timer = $interval(function() {
-          $http.get('/api/analysis/optimization/working')
-          .success(function(data, status, headers, config) {
-            if (data.status !== undefined && data.status == 'OK') {
-              if ( angular.isDefined( timer ) ) {
-                $interval.cancel(timer);
-                timer = undefined;
-              }
-            } else {
-              //updateGraphs(data);
-            }
-          })
-          .error(function(data, status, headers, config) {
-            if (angular.isDefined( timer )) {
-              $interval.cancel(timer);
-              timer = undefined;
-            }
-          });
-        }, 5000, 0, false );
-      };
-
-      $scope.stopOptimization = function () {
-        $http.get('/api/model/calibrate/stop')
-        .success(function(data) {
-
-        // Cancel timer
-        if ( angular.isDefined( timer ) ) {
-          $interval.cancel(timer);
-          timer = undefined;
-        }
-      });
-
-      $scope.saveOptimization = function () {
-        $http.post('/api/model/calibrate/save')
-        .success(function(data) {
+        .error(function(data, status, headers, config) {
+          stopTimer();
         });
-      };
+    }
 
-      $scope.revertOptimization = function () {
-        $http.post('/api/model/calibrate/revert')
+    $scope.stopOptimization = function () {
+      $http.get('/api/analysis/optimization/stop')
         .success(function(data) {
+          // Cancel timer
+          stopTimer();
         });
-      };
+    };
+
+    function stopTimer() {
+      if ( angular.isDefined( optimizationTimer ) ) {
+        console.log("stopping timer");
+        $interval.cancel(optimizationTimer);
+        optimizationTimer = undefined;
+      }
+    }
+
+    $scope.$on('$destroy', function() {
+      // Make sure that the interval is destroyed too
+      stopTimer();
+    });
+
+    $scope.saveOptimization = function () {
+      $http.post('/api/model/optimization/save')
+        .success(updateGraphs);
+    };
+
+    $scope.revertOptimization = function () {
+      $http.post('/api/model/optimization/revert')
+        .success(function(){ console.log("OK");});
     };
   });
 });

@@ -258,7 +258,7 @@ define(['./module', 'angular'], function (module, angular) {
 
     $scope.revertCalibration = function () {
       $http.post('/api/model/calibrate/revert')
-        .success(updateGraphs);
+        .success({ console.log("OK");});
     };
 
     $scope.previewManualCalibration = function () {
