@@ -1,15 +1,31 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     'use strict';
 
-    module.controller('AnalysisScenariosController', function ($scope, $http, $modal, meta) {
+    module.controller('AnalysisScenariosController', function ($scope, $http, $modal, meta, scenarioParamsResponse) {
 
-        var linesGraphOptions, linesGraphData, responseData;
+        var linesGraphOptions, linesGraphData, responseData, availableScenarioParams;
 
         // initialize all necessary data for this controller
         var initialize = function() {
+
+          // transform scenarioParams to use attribute `names` instead of `keys`
+          // it is the same for the data we have to send to run scenarios
+          availableScenarioParams = _(scenarioParamsResponse.data.params).map(function(parameters) {
+            return { name: parameters.name, names: parameters.keys };
+          });
+
           $scope.scenarios = [
-            { name: 'Conditions remain according to model calibration', active: true }
+            {active: true, name: '100% condom use in KAPs', pars: [
+              { names: ['condom','reg'], pops: 0, startyear: 2010, endyear: 2015, startval: -1, endval: 1},
+              { names: ['condom','cas'], pops: 0, startyear: 2010, endyear: 2015, startval: -1, endval: 1},
+              { names: ['condom','com'], pops: 1, startyear: 2010, endyear: 2015, startval: -1, endval: 1},
+              { names: ['condom','com'], pops: 5, startyear: 2010, endyear: 2015, startval: -1, endval: 1}
+            ]}
           ];
+
+          $scope.runScenariosOptions = {
+            dosave: false
+          };
 
           $scope.types = [
             { id: 'prev', name: 'Prevalence', active: true, byPopulation: true, total: false },
@@ -21,7 +37,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             { id: 'tx2', name: 'Second-line treatment', active: false, byPopulation: false, total: false }
           ];
 
-          $scope.runScenariosOptions = {};
 
           linesGraphOptions = {
             height: 250,
@@ -53,8 +68,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         };
 
         /*
-        * Returns an array containing arrays with [x, y] for d3 line data.
-        */
+         * Returns an array containing arrays with [x, y] for d3 line data.
+         */
         var generateLineData = function(xData, yData) {
           return _(yData).map(function (value, i) {
             return [xData[i], value];
@@ -62,11 +77,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         };
 
         /*
-        * Returns an graph based on the provided yData.
-        *
-        * yData should be an array where each entry contains an array of all
-        * y-values from one line.
-        */
+         * Returns an graph based on the provided yData.
+         *
+         * yData should be an array where each entry contains an array of all
+         * y-values from one line.
+         */
         var generateGraph = function(type, yData, xData, title) {
           var graph = {
             options: angular.copy(linesGraphOptions),
@@ -98,7 +113,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
             // generate graphs showing the overall data for this type
             if (type.total) {
-              var title = 'Showing total data for "' + type.name + '"';
+              var title = type.name + '- Overall';
               var graph = generateGraph(type, data.tot.data, response.tvec.np_array, title);
               graph.options.xAxis.axisLabel = data.xlabel;
               graph.options.yAxis.axisLabel = data.ylabel;
@@ -108,7 +123,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             // generate graphs for this type for each population
             if (type.byPopulation) {
               _(data.pops).each(function (population, populationIndex) {
-                var title = 'Showing ' + type.name + ' for population "' + meta.pops.long[populationIndex] + '"';
+                var title = type.name + ' - ' + meta.pops.short[populationIndex];
                 var graph = generateGraph(type, population.data, response.tvec.np_array, title);
                 graph.options.xAxis.axisLabel = data.xlabel;
                 graph.options.yAxis.axisLabel = data.ylabel;
@@ -120,8 +135,22 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           $scope.graphs = graphs;
         };
 
+        /*
+         * Returns a collection of entries where all non-active antries are filtered
+         * out and the active attribute is removed from each of these entries.
+         */
+        var toCleanArray = function (collection) {
+          return _(collection).chain()
+          .where({ active: true })
+          .map(function (item) {
+            return _(item).omit(['active', '$$hashKey']);
+          })
+          .value();
+        };
+
 
         $scope.runScenarios = function () {
+          $scope.runScenariosOptions.scenarios = toCleanArray($scope.scenarios);
           $http.post('/api/analysis/scenarios/run', $scope.runScenariosOptions)
             .success(function(data) {
               responseData = data;
@@ -129,25 +158,35 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             });
         };
 
+        // Helper function to open a population modal
+        var openScenarioModal = function(scenario) {
+          return $modal.open({
+            templateUrl: 'js/modules/analysis/analysis-scenarios-modal.html',
+            controller: 'AnalysisScenariosModalController',
+            resolve: {
+              scenario: function () {
+                return scenario;
+              },
+              availableScenarioParams: function() {
+                return availableScenarioParams;
+              },
+              populationNames: function() {
+                return meta.pops.long;
+              }
+            }
+          });
+        };
 
         $scope.openAddScenarioModal = function ($event) {
             if ($event) {
                 $event.preventDefault();
             }
 
-            return $modal.open({
-                templateUrl: 'js/modules/analysis/analysis-scenarios-modal.html',
-                controller: 'AnalysisScenariosModalController',
-                resolve: {
-                    scenario: function () {
-                        return {
-                            sex: 'male'
-                        };
-                    }
-                }
-            }).result.then(
+            var scenario = {};
+            return openScenarioModal(scenario).result.then(
                 function (newscenario) {
                     newscenario.active = true;
+                    newscenario.pars = newscenario.pars || [];
                     $scope.scenarios.push(newscenario);
                 });
         };
@@ -157,15 +196,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
                 $event.preventDefault();
             }
 
-            return $modal.open({
-                templateUrl: 'js/modules/analysis/analysis-scenarios-modal.html',
-                controller: 'AnalysisScenariosModalController',
-                resolve: {
-                    scenario: function () {
-                        return scenario;
-                    }
-                }
-            }).result.then(
+            return openScenarioModal(scenario).result.then(
                 function (newscenario) {
                     scenario.active = true;
                     _(scenario).extend(newscenario);
