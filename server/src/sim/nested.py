@@ -109,3 +109,48 @@ def iternested(nesteddict):
         if not(l2): output.append([k1])
     
     return output
+
+def makenested2(nesteddict, keylist,item=None):
+    """ Insert item into nested dictionary, creating keys if required """
+    currentlevel = nesteddict
+    for i,key in enumerate(keylist[:-1]):
+    	if not(key in currentlevel):
+    		currentlevel[key] = {}
+    	currentlevel = currentlevel[key]
+    currentlevel[keylist[-1]] = item
+
+    
+
+def iternested2(nesteddict,previous = []):
+	output = []
+	for k in nesteddict.items():
+		if isinstance(k[1],dict):
+			output += iternested2(k[1],previous+[k[0]]) # Need to add these at the first level
+		else:
+			output.append(previous+[k[0]])
+	return output
+
+
+
+
+foo = {}
+makenested(foo, ['a','x'])
+makenested(foo, ['a','y'])
+makenested(foo, ['a','z'])
+makenested(foo, ['b','a','x'])
+makenested(foo, ['b','a','y'])
+foo['c'] = 1
+
+foo2 = {}
+makenested2(foo2, ['a','x'])
+makenested2(foo2, ['a','y'])
+makenested2(foo2, ['a','z'])
+makenested2(foo2, ['b','a','x'])
+makenested2(foo2, ['b','a','y'])
+foo2['c'] = 1
+
+print foo == foo2
+print(foo2)
+
+print(iternested(foo))
+print iternested2(foo)
