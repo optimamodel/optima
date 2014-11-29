@@ -228,32 +228,26 @@
     </label>
 
     <div class="cf margin-top-s">
-        <div class="float-left">Calculate costs based on:</div>
+        <h2>Cost assumptions</h2>
         <div class="float-left margin-left-xs">
-            <div class="radio-block">
-                <label>
-                    <input type="radio" name="costsCalculationCriteria" ng-model="params.minimize.calculateCostsOn" value="historical">
-                    Historical data on program cost and outcomes
-                </label>
-            </div>
-
-            <div class="radio-block">
-                <label>
-                    <input type="radio" name="costsCalculationCriteria" ng-model="params.minimize.calculateCostsOn" value="assumptions">
-                    Assumptions about technical efficiency gains {% by program}
-                </label>
-            </div>
-
-            <div class="radio-block">
-                <label>
-                    <input type="radio" name="costsCalculationCriteria" ng-model="params.minimize.calculateCostsOn" value="other">
-                    Other unit costs of programs
-                </label>
-            </div>
+            <table class="table table-bordered table-hover table-striped" style="width: auto">
+                <thead>
+                    <th>Program name</th>
+                    <th>Program efficiency relative to current</th>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="p in programs">
+                        <td>
+                            {{ p }}
+                        </td>
+                        <td>
+                            {{ params.objectives.money.costs[programCodes[$index]] }}%
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </div>
-
-
 </div>
 
 </div>
