@@ -24,7 +24,7 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2):
 
     # Convert weighting from percentage to number
     for prog in objectives.money.costs.keys():
-        objectives.money.costs[prog] = objectives.money.costs[prog] / 100.0
+        objectives.money.costs[prog] = float(objectives.money.costs[prog]) / 100.0
 
     # Run optimization # TODO -- actually implement :)
     print('!!! TODO !!!')
