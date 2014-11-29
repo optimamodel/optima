@@ -56,23 +56,23 @@ def startOptimization():
             timelimit = int(timelimit) / 5
             args["timelimit"] = 5
             
-        if is_model_calibrating(request.project_name):
-            return jsonify({"status":"NOK", "reason":"optimization already going"})
-        else:
-            # We are going to start calibration
-            # set_working_model_calibration(project_name, True)
+        #if is_model_calibrating(request.project_name):
+        #    return jsonify({"status":"NOK", "reason":"optimization already going"})
+        #else:
+        # We are going to start calibration
+        # set_working_model_calibration(project_name, True)
             
-            # Do calculations 5 seconds at a time and then save them
-            # to db.
-            for i in range(0, timelimit):
+        # Do calculations 5 seconds at a time and then save them
+        # to db.
+        for i in range(0, timelimit):
                 
-                # Make sure we are still calibrating
-                #if is_model_calibrating(request.project_name):
-                    D = optimize(D, **args)
-                    D_dict = D.toDict()
-                    save_working_model(project_name, D_dict)
-                #else:
-                #    break
+            # Make sure we are still calibrating
+            #if is_model_calibrating(request.project_name):
+            D = optimize(D, **args)
+            D_dict = D.toDict()
+            save_working_model(project_name, D_dict)
+            #else:
+            #    break
             
     except Exception, err:
         #set_working_model_calibration(project_name, False)
