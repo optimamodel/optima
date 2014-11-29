@@ -1,11 +1,16 @@
 define([
-  './module'
-], function (module) {
+  './module',
+  'angular'
+], function (module, angular) {
   'use strict';
 
-  module.controller('AnalysisOptimizationController', function ($scope, $http, $interval, meta) {
+  module.controller('AnalysisOptimizationController', function ($scope, $http, $interval, meta, CONFIG) {
 
       $scope.meta = meta;
+      $scope.types = angular.copy(CONFIG.GRAPH_TYPES);
+
+      // cache placeholder
+      var cachedResponse = null;
 
       // Set defaults
       $scope.params = {};
@@ -58,8 +63,8 @@ define([
       $scope.params.constraints.txelig = 1;
       $scope.params.constraints.dontstopart = true;
 
-      $scope.params.constraints.decrease = {}
-      $scope.params.constraints.coverage = {}
+      $scope.params.constraints.decrease = {};
+      $scope.params.constraints.coverage = {};
 
       for ( var i = 0; i < meta.progs.code.length; i++ ) {
         $scope.params.constraints.decrease[meta.progs.code[i]] = {};
@@ -92,82 +97,161 @@ define([
           }
       };
 
-      $scope.piedata1 = [
-          {
-              key: "Behavior change and communication",
-              y: 34
+      $scope.lineoptions = {
+        chart: {
+          type: 'lineChart',
+          height: 200,
+          margin: {
+            top: 20,
+            right: 20,
+            bottom: 40,
+            left: 55
           },
-          {
-              key: "Female sex workers",
-              y: 6
+          useInteractiveGuideline: true,
+          dispatch: {},
+          xAxis: {
+            axisLabel: 'Time (ms)'
           },
-          {
-              key: "Men who have sex with men",
-              y: 1
+          yAxis: {
+            axisLabel: 'Voltage (v)',
+            axisLabelDistance: 30
           },
-          {
-              key: "People who inject drugs",
-              y: 10
-          },
-          {
-              key: "Sexually transmitted infections",
-              y: 2
-          },
-          {
-              key: "HIV counselling and testing",
-              y: 6
-          },
-          {
-              key: "Antiretroviral therapy",
-              y: 44
-          },
-          {
-              key: "Prevention of mother-to-child transmission",
-              y: 6
-          }
-      ];
+          transitionDuration: 250
+        },
+        title: {
+          enable: true,
+          text: 'Title for Line Chart'
+        }
+      };
 
-      $scope.piedata2 = [
-          {
-              key: "Behavior change and communication",
-              y: 4
-          },
-          {
-              key: "Female sex workers",
-              y: 6
-          },
-          {
-              key: "Men who have sex with men",
-              y: 1
-          },
-          {
-              key: "People who inject drugs",
-              y: 20
-          },
-          {
-              key: "Sexually transmitted infections",
-              y: 2
-          },
-          {
-              key: "HIV counselling and testing",
-              y: 6
-          },
-          {
-              key: "Antiretroviral therapy",
-              y: 54
-          },
-          {
-              key: "Prevention of mother-to-child transmission",
-              y: 6
-          }
-      ];
-
-
-    var updateGraphs = function (data) {
-//      $scope.graphs = prepareGraphs(data);
-//      $scope.parameters.cache.response = data;
-      console.log(data); // TODO
+    var linedataTpl = {
+      "values": [
+        // {"x": 0, "y": 0, "series": 0},
+      ],
+      "key": "Sine Wave",
+      "color": "#ff7f0e",
+      "seriesIndex": 0
     };
+
+    var getActiveOptions = function () {
+      return _($scope.types).where({ active: true });
+    };
+
+    /*
+     * Returns an array containing arrays with [x, y] for d3 line data.
+     */
+    var generateLineData = function(xData, yData, series) {
+      return _(yData).map(function (value, i) {
+        return { x: xData[i], y: value, series: series };
+      });
+    };
+
+    var prepareLineCharts = function (response) {
+      var graphs = [], types;
+
+      if (!response) {
+        return graphs;
+      }
+
+      types = getActiveOptions();
+
+      _(types).each(function (type) {
+
+        var data = response[type.id];
+
+        if (type.total) {
+          var graph = {
+            options: angular.copy($scope.lineoptions),
+            data: [],
+            type: type,
+            title: type.name + ' - Overall'
+          };
+
+          graph.data.push({
+            "values": generateLineData(response.tvec, data.tot.data[0], 0),
+            "key": "1",
+            "color": "#0000FF",
+            "seriesIndex": 0
+          });
+
+          graph.data.push({
+            "values": generateLineData(response.tvec, data.tot.data[1], 1),
+            "key": "2",
+            "color": "#000000",
+            "seriesIndex": 1
+          });
+
+
+          graph.options.chart.xAxis.axisLabel = data.xlabel;
+          graph.options.chart.yAxis.axisLabel = data.tot.ylabel;
+          graph.options.title.text = data.tot.title;
+
+          graphs.push(graph);
+        }
+
+        // TODO: we're checking data because it could undefined ...
+        if (type.byPopulation && data) {
+          _(data.pops).each(function (population, populationIndex) {
+            var graph = {
+              options: angular.copy($scope.lineoptions),
+              data: [],
+              type: type
+            };
+
+            graph.data.push({
+              "values": generateLineData(response.tvec, population.data[0], 0),
+              "key": "2",
+              "color": "#000000",
+              "seriesIndex": 0
+            });
+
+            graph.data.push({
+              "values": generateLineData(response.tvec, population.data[1], 1),
+              "key": "2",
+              "color": "#0000FF",
+              "seriesIndex": 1
+            });
+
+            graph.options.chart.xAxis.axisLabel = data.xlabel;
+            graph.options.chart.yAxis.axisLabel = population.ylabel;
+            graph.options.title.text = population.title;
+
+            graphs.push(graph);
+          });
+        }
+
+      });
+
+      return graphs;
+    };
+
+    // updates pies charts data
+    var preparePieCharts = function (data) {
+
+      $scope.piedata1 = _(data.pie1.val).map(function (value, index) {
+        return { y: value, key: data.legend[index] };
+      });
+
+      $scope.piedata2 = _(data.pie2.val).map(function (value, index) {
+        return { y: value, key: data.legend[index] };
+      });
+    };
+
+    // makes line graphs to recalculate and redraw
+    var updateLineGraphs = function (data) {
+      $scope.lines = prepareLineCharts(data);
+    };
+
+    // makes all graphs to recalculate and redraw
+    var updateGraphs = function (data) {
+      cachedResponse = data;
+      console.log(data);
+      updateLineGraphs(data.graph);
+      preparePieCharts(data.pie);
+    };
+
+
+
 
     var optimizationTimer;
 
@@ -190,7 +274,7 @@ define([
           if (data.status == 'Done') {
             stopTimer();
           } else {
-            updateGraphs(data.graph);
+            updateGraphs(data);
           }
         })
         .error(function(data, status, headers, config) {
@@ -208,7 +292,6 @@ define([
 
     function stopTimer() {
       if ( angular.isDefined( optimizationTimer ) ) {
-        console.log("stopping timer");
         $interval.cancel(optimizationTimer);
         optimizationTimer = undefined;
       }
@@ -228,5 +311,14 @@ define([
       $http.post('/api/model/optimization/revert')
         .success(function(){ console.log("OK");});
     };
+
+    $scope.onGraphTypeChange = function (type) {
+      type.active = type.total || type.byPopulation;
+
+      if (!cachedResponse || !cachedResponse.graph) return;
+
+      updateLineGraphs(cachedResponse.graph);
+    };
+
   });
 });

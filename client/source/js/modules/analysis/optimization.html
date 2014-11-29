@@ -11,7 +11,7 @@
 <hr class="__dashed"/>
 
 
-<!-- Tabs 1 -->
+<!-- Tab 1 -->
 <div ng-show="activeTab === 1">
 
 <div class="cf">
@@ -253,7 +253,7 @@
 
 </div>
 
-<!-- Tabs 2 -->
+<!-- Tab 2 -->
 <div ng-show="activeTab === 2">
 
 
@@ -422,13 +422,7 @@
 
 </div>
 
-
-
-
-
-
-
-<!-- Tabs 2 -->
+<!-- Tab 3 -->
 <div ng-if="activeTab === 3">
 
     <div class="well section">
@@ -454,11 +448,11 @@
                     </div>
 
                     <div class="elastic_col __shrink">
-                        <button class="btn" style="background: #008800;" ng-click="startOptimization()">Start optimization</button>
+                        <button class="btn __green" ng-click="startOptimization()">Start optimization</button>
                     </div>
 
                     <div class="elastic_col __shrink">
-                        <button class="btn" style="background: #ff0000;" ng-click="stopOptimization()">Stop optimization</button>
+                        <button class="btn __red" ng-click="stopOptimization()">Stop optimization</button>
                     </div>
                     <div class="elastic_col __shrink">
                         <button class="btn">Save optimization</button>
@@ -472,18 +466,13 @@
         </div>
     </div>
 
-
-
-
-
-
     <div class="well section">
         <div class="grid">
-            <div class="section cf">
+            <div class="section">
                 <h1>Allocations</h1>
 
                 <div class="grid">
-                    <div class="6">
+                    <div class="6" ng-if="piedata1">
                         <h2>Original allocation</h2>
                         <button class="btn" onclick="openFileOption1();return;">Export figure</button>
                         <button class="btn" onclick="openFileOption1();return;">Export table</button>
@@ -491,7 +480,7 @@
                             <nvd3 data="piedata1" options="pieoptions"></nvd3>
                         </div>
                     </div>
-                    <div class="6">
+                    <div class="6" ng-if="piedata2">
                         <h2>Optimal allocation</h2>
                         <button class="btn" onclick="openFileOption1();return;">Export figure</button>
                         <button class="btn" onclick="openFileOption1();return;">Export table</button>
@@ -500,72 +489,40 @@
                         </div>
                     </div>
                 </div>
-
-
-                <h1>Other indicators</h1>
-
-                <div class="3">
-                    <b>Prevalence</b>
-                    <div><label class="checkbox-inline">
-                        <input type="checkbox" ng-model="prevoverall">
-                        Overall
-                    </label>
-                    </div>
-                    <div><label class="checkbox-inline">
-                        <input type="checkbox" ng-model="prevbypop">
-                        Per population
-                    </label>
-                    </div>
-                </div>
-
-
-                <div class="3">
-                    <b>New infections</b>
-                    <div><label class="checkbox-inline">
-                        <input type="checkbox" ng-model="newinfoverall">
-                        Overall
-                    </label>
-                    </div>
-                    <div><label class="checkbox-inline">
-                        <input type="checkbox" ng-model="newinfbypop">
-                        Per population
-                    </label>
-                    </div>
-                </div>
-
-                <div class="3">
-                    <b>HIV-related deaths</b>
-                    <div><label class="checkbox-inline">
-                        <input type="checkbox" ng-model="deathoverall">
-                        Overall
-                    </label>
-                    </div>
-                    <div><label class="checkbox-inline">
-                        <input type="checkbox" ng-model="deathbypop">
-                        Per population
-                    </label>
-                    </div>
-                </div>
-
-                <div class="3">
-                    <b>Disablity-adjusted life years</b>
-                    <div><label class="checkbox-inline">
-                        <input type="checkbox" ng-model="dalyoverall">
-                        Overall
-                    </label>
-                    </div>
-                    <div><label class="checkbox-inline">
-                        <input type="checkbox" ng-model="dalybypop">
-                        Per population
-                    </label>
-                    </div>
-                </div>
             </div>
 
-            <div class="section grid">
-                <div class="6" ng-repeat="graph in graphs">
-                    <div class="chart-container">
-                        <nvd3 data="graph.data" options="graph.options"></nvd3>
+            <div class="well section">
+                <div class="grid">
+                    <div class="section cf">
+                        <h1>Results</h1>
+
+                        <div class="3" ng-repeat="type in types" style="padding-bottom: 20px">
+                            <b>{{ type.name }}</b>
+                            <div>
+                                <label class="checkbox-inline">
+                                    <input type="checkbox" ng-model="type.total" ng-change="onGraphTypeChange(type)">
+                                    Overall
+                                </label>
+                            </div>
+                            <div>
+                                <label class="checkbox-inline">
+                                    <input type="checkbox" ng-model="type.byPopulation" ng-change="onGraphTypeChange(type)">
+                                    Per population
+                                </label>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="section elastic" ng-repeat="graph in lines">
+                        <div class="elastic_col __shrink" style="width: 430px">
+                            <div class="chart-container">
+                                <nvd3 data="graph.data" options="graph.options" save-graph-as></nvd3>
+                            </div>
+                        </div>
+                        <div class="elastic_col">
+                            <h3>{{ graph.title }}</h3>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -576,10 +533,4 @@
 
 </div>
 
-
-
-
-
-
-<hr class="__dashed"/>
 </div>

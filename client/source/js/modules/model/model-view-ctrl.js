@@ -1,7 +1,7 @@
 define(['./module', 'angular'], function (module, angular) {
   'use strict';
 
-  module.controller('ModelViewController', function ($scope, $http, $interval, Model, f, meta) {
+  module.controller('ModelViewController', function ($scope, $http, $interval, Model, f, meta, CONFIG) {
 
     var prepareF = function (f) {
       var F = angular.copy(f);
@@ -47,15 +47,7 @@ define(['./module', 'angular'], function (module, angular) {
       }
     };
 
-    $scope.types = [
-      { id: 'prev', name: 'Prevalence', active: true, byPopulation: true, total: false },
-      { id: 'daly', name: 'DALYs', active: false, byPopulation: false, total: false },
-      { id: 'death', name: 'Deaths', active: false, byPopulation: false, total: false },
-      { id: 'inci', name: 'New infections', active: false, byPopulation: false, total: false },
-      { id: 'dx', name: 'Diagnoses', active: false, byPopulation: false, total: false },
-      { id: 'tx1', name: 'First-line treatment', active: false, byPopulation: false, total: false },
-      { id: 'tx2', name: 'Second-line treatment', active: false, byPopulation: false, total: false }
-    ];
+    $scope.types = angular.copy(CONFIG.GRAPH_TYPES);
 
     var getActiveOptions = function () {
       return _($scope.types).where({ active: true });
