@@ -186,6 +186,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             return openScenarioModal(scenario).result.then(
                 function (newscenario) {
                     newscenario.active = true;
+                    newscenario.pars = newscenario.pars || [];
                     $scope.scenarios.push(newscenario);
                 });
         };
