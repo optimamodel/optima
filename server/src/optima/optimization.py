@@ -12,6 +12,7 @@ Optimization Module
 from flask import request, jsonify, Blueprint
 from flask.ext.login import login_required
 from dbconn import db
+from optima.model import sentinel
 from utils import check_project_name, project_exists, pick_params, load_model, save_working_model
 from sim.optimize import optimize
 from sim.bunch import bunchify
@@ -80,4 +81,26 @@ def startOptimization():
         return jsonify({"status":"NOK", "exception":var})
         
     #set_working_model_calibration(project_name, False)
-    return jsonify(D_dict.get('plot',{}).get('E',{}))
+    return jsonify(D_dict.get('A',{}))
+
+"""
+Returns the working model for optimization.
+"""
+@optimization.route('/working')
+@login_required
+@check_project_name
+def getWorkingOptimization():
+    # Get optimization working data
+    try:
+        prj_name = request.project_name
+        D_dict = load_model(prj_name, working_model = True, as_bunch = False)
+        result = {'graph': D_dict.get('A',{})}
+        if prj_name in sentinel['projects'] and sentinel['projects'][prj_name]:
+            result['status'] = 'Running'
+        else:
+            print("no longer calibrating")
+            result['status'] = 'Done'
+        return jsonify(result)
+    except Exception, err:
+        var = traceback.format_exc()
+        return jsonify({"status":"NOK", "exception":var})
