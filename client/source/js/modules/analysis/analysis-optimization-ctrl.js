@@ -3,9 +3,11 @@ define([
 ], function (module) {
   'use strict';
 
-  module.controller('AnalysisOptimizationController', function ($scope) {
-
-      $scope.minimizationType = 'outcomes';
+  module.controller('AnalysisOptimizationController', function ($scope, $http, $interval) {
+      
+      $scope.params = {}
+      $scope.params.objectives = {}
+      $scope.params.objectives.what = 'outcome';
 
       $scope.pieoptions = {
           chart: {
@@ -97,8 +99,56 @@ define([
           }
       ];
 
+      var timer;
+      $scope.startOptimization = function () {
+        $http.post('/api/optimization/start', $scope.params)
+        .success(function (response) {
+        })
 
+        // Keep polling for data
+        timer = $interval(function() {
+          $http.get('/api/model/working')
+          .success(function(data, status, headers, config) {
+            if (data.status !== undefined && data.status == 'OK') {
+              if ( angular.isDefined( timer ) ) {
+                $interval.cancel(timer);
+                timer = undefined;
+              }
+            } else {
+              //updateGraphs(data);
+            }
+          })
+          .error(function(data, status, headers, config) {
+            if (angular.isDefined( timer )) {
+              $interval.cancel(timer);
+              timer = undefined;
+            }
+          });
+        }, 5000, 0, false );
+      };
 
+      $scope.stopOptimization = function () {
+        $http.get('/api/model/calibrate/stop')
+        .success(function(data) {
 
+        // Cancel timer
+        if ( angular.isDefined( timer ) ) {
+          $interval.cancel(timer);
+          timer = undefined;
+        }
+      });
+
+      $scope.saveOptimization = function () {
+        $http.post('/api/model/calibrate/save')
+        .success(function(data) {
+        });
+      };
+
+      $scope.revertOptimization = function () {
+        $http.post('/api/model/calibrate/revert')
+        .success(function(data) {
+        });
+      };
+    };
   });
 });
