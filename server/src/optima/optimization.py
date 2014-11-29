@@ -47,6 +47,10 @@ def startOptimization():
         if objectives:
             args['objectives'] = bunchify( objectives )
 
+        constraints = data.get('constraints')
+        if constraints:
+            args['constraints'] = bunchify( constraints )
+
         #timelimit = data.get("timelimit")
         timelimit = 60
         if timelimit:
