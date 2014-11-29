@@ -99,7 +99,7 @@ def gathermultidata(D, Rarr, verbose=2):
     M = struct()
     M.__doc__ = 'Output structure containing everything that might need to be plotted'
     M.nsims = len(Rarr) # Number of simulations
-    M.tvec = Rarr[0].R.tvec # Copy time vector
+    M.tvec = Rarr[0].R.tvec.tolist() # Copy time vector
     M.poplabels = D.G.meta.pops.long
     
     for epi in ['prev', 'inci', 'daly', 'death', 'dx', 'tx1', 'tx2']:
