@@ -17,12 +17,12 @@
 <div class="cf">
     <h2>Basic options</h2>
     <div class="float-left margin-left-s">
-        Year to begin optimization from: <input class="txbox __inline __s" value="2013" ng-model="params.ob.year.start">
+        Year to begin optimization from: <input class="txbox __inline __s" value="2013" ng-model="params.objectives.year.start">
         <div class="margin-top-xxs">
-            Number of years to optimize funding for: <input class="txbox __inline __s" value="10" ng-model="params.ob.year.numyears">
+            Number of years to optimize funding for: <input class="txbox __inline __s" value="10" ng-model="params.objectives.year.numyears">
         </div>
         <div class="margin-top-xxs">
-            Year to project outcomes to: <input class="txbox __inline __s" value="2030" ng-model="params.ob.year.until">
+            Year to project outcomes to: <input class="txbox __inline __s" value="2030" ng-model="params.objectives.year.until">
         </div>
     </div>
 </div>
@@ -33,11 +33,11 @@
     <h2>Optimization type</h2>
     <div class="float-left margin-left-s">
         <label class="checkbox-inline">
-            <input type="radio" name="minimizationType" ng-model="params.ob.what" value="outcome">
+            <input type="radio" name="minimizationType" ng-model="params.objectives.what" value="outcome">
             Minimize outcomes
         </label>
         <label class="checkbox-inline">
-            <input type="radio" name="minimizationType" ng-model="params.ob.what" value="money">
+            <input type="radio" name="minimizationType" ng-model="params.objectives.what" value="money">
             Minimize money
         </label>
     </div>
@@ -47,72 +47,72 @@
 <hr>
 
 
-<div class="section" ng-if="params.ob.what == 'outcome'">
+<div class="section" ng-if="params.objectives.what == 'outcome'">
 
     <p>
         With a fixed amount of money available:
-        <input class="txbox __inline __s" type="text" ng-model="params.ob.outcome.fixed">
+        <input class="txbox __inline __s" type="text" ng-model="params.objectives.outcome.fixed">
         , what is the optimal allocation of this funding to:
     </p>
 
     <div class="checkbox-block">
         <label>
-            <input type="checkbox"  ng-model="params.ob.outcome.inci">
+            <input type="checkbox"  ng-model="params.objectives.outcome.inci">
             Minimize cumulative HIV incidence
         </label>
     </div>
 
     <div class="checkbox-block">
         <label>
-            <input type="checkbox" ng-model="params.ob.outcome.daly">
+            <input type="checkbox" ng-model="params.objectives.outcome.daly">
             Minimize cumulative DALYs
         </label>
     </div>
 
     <div class="checkbox-block">
         <label>
-            <input type="checkbox" ng-model="params.ob.outcome.death">
+            <input type="checkbox" ng-model="params.objectives.outcome.death">
             Minimize cumulative HIV-related deaths
         </label>
     </div>
 	
     <div class="checkbox-block">
         <label>
-            <input type="checkbox" ng-model="params.ob.outcome.cost">
+            <input type="checkbox" ng-model="params.objectives.outcome.cost">
             Minimize total HIV-related costs
         </label>
     </div>
 
     <br>
 
-    <div ng-show="params.ob.outcome.inci">
+    <div ng-show="params.objectives.outcome.inci">
         <div style="margin-left: 24px">
-            Incidence weighting  =  <input class="txbox __inline __s" value="1" ng-model="params.ob.outcome.inciweight">
+            Incidence weighting  =  <input class="txbox __inline __s" value="1" ng-model="params.objectives.outcome.inciweight">
         </div>
     </div>
 
-    <div ng-show="params.ob.outcome.daly">
+    <div ng-show="params.objectives.outcome.daly">
         <div style="margin-left: 50px">
-            DALY weighting  =  <input class="txbox __inline __s" value="1" ng-model="params.ob.outcome.dalyweight">
+            DALY weighting  =  <input class="txbox __inline __s" value="1" ng-model="params.objectives.outcome.dalyweight">
         </div>
     </div>
 
-    <div ng-show="params.ob.outcome.death">
+    <div ng-show="params.objectives.outcome.death">
         <div style="margin-left: 45px">
-            Death weighting  =  <input class="txbox __inline __s" value="1" ng-model="params.ob.outcome.deathweight">
+            Death weighting  =  <input class="txbox __inline __s" value="1" ng-model="params.objectives.outcome.deathweight">
         </div>
     </div>
 	
-    <div ng-show="params.ob.outcome.cost">
+    <div ng-show="params.objectives.outcome.cost">
         <div style="margin-left: 45px">
-            Costs weighting  =  <input class="txbox __inline __s" value="1" ng-model="params.ob.outcome.costweight">
+            Costs weighting  =  <input class="txbox __inline __s" value="1" ng-model="params.objectives.outcome.costweight">
         </div>
     </div>
 
 </div>
 
 
-<div class="section" ng-if="params.ob.what == 'money'">
+<div class="section" ng-if="params.objectives.what == 'money'">
     What is the minimum amount of money required to achieve the following objectives:
 
     <!-- Reduce the incidence of HIV -->
@@ -534,7 +534,7 @@
                     </div>
 
                     <div class="elastic_col __shrink">
-                        <button class="btn" style="background: #ff0000;">Stop optimization</button>
+                        <button class="btn" style="background: #ff0000;" ng-click="stopOptimization()">Stop optimization</button>
                     </div>
                     <div class="elastic_col __shrink">
                         <button class="btn">Save optimization</button>

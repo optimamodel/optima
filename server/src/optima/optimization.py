@@ -12,7 +12,7 @@ Optimization Module
 from flask import request, jsonify, Blueprint
 from flask.ext.login import login_required
 from dbconn import db
-from utils import check_project_name, project_exists, pick_params, is_model_calibrating, set_working_model_calibration, load_model
+from utils import check_project_name, project_exists, pick_params, is_model_calibrating, set_working_model_calibration, load_model, save_working_model
 from sim.optimize import optimize
 from sim.bunch import bunchify
 import json
@@ -31,10 +31,6 @@ def startOptimization():
     reply = {'status':'NOK'}
     data = json.loads(request.data)
     
-    # Prepare arguments
-    args = {}
-    args['objectives'] = bunchify( data['objectives'] )
-    
     # get project name 
     project_name = request.project_name
     D = None
@@ -43,7 +39,14 @@ def startOptimization():
         return jsonify(reply)
     try:
         D = load_model(project_name)
-        
+
+        # Prepare arguments
+        args = {}
+
+        objectives = data.get('objectives')
+        if objectives:
+            args['objectives'] = bunchify( objectives )
+
         #timelimit = data.get("timelimit")
         timelimit = 60
         if timelimit:
@@ -64,7 +67,6 @@ def startOptimization():
                     D = optimize(D, **args)
                     D_dict = D.toDict()
                     save_working_model(project_name, D_dict)
-                    time.sleep(1)
                 else:
                     break
             
