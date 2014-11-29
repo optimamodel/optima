@@ -1,6 +1,7 @@
 from printv import printv
 from numpy import zeros, array, exp
 from bunch import Bunch as struct # Replicate Matlab-like structure behavior
+import math
 ## WARNING need to introduce time!
 
 eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
@@ -29,7 +30,7 @@ def reconcileacts(symmetricmatrix,popsize,popacts):
 
     return pshipacts
 
-def makemodelpars(P, opt, verbose=2):
+def makemodelpars(P, opt, withwhat='c', verbose=2):
     """
     Prepares model parameters to run the simulation.
     
@@ -45,17 +46,28 @@ def makemodelpars(P, opt, verbose=2):
     
     
     
-    def dpar2mpar(datapar):
-        """ Take data parameters and turn them into model parameters """
-        npops = len(datapar.p)
+    def dpar2mpar(datapar, withwhat):
+        """
+        Take parameters and turn them into model parameters
+        Set withwhat = p if you want to use the epi data for the parameters
+        Set withwhat = c if you want to use the ccoc data for the parameters
+        """
+        
+        npops = len(datapar[withwhat])
         
         if npops>1:
             output = zeros((npops,npts))
             for pop in range(npops):
-                output[pop,:] = datapar.p[pop] # TODO: use time!
+                if math.isnan(datapar[withwhat][pop]): # we are trying to calculate a cost relationhip but there isn't one
+                    output[pop,:] = datapar.p[pop] # TODO: use time!
+                else:
+                    output[pop,:] = datapar[withwhat][pop] # TODO: use time!
         else:
             output = zeros(npts)
-            output[:] = datapar.p[0] # TODO: use time!
+            if math.isnan(datapar[withwhat][0]): # we are trying to calculate a cost relationhip but there isn't one
+                output[:] = datapar.p[0] # TODO: use time!
+            else:
+                output[:] = datapar[withwhat][0] # TODO: use time!
         
         return output
     
@@ -74,32 +86,32 @@ def makemodelpars(P, opt, verbose=2):
     ## Epidemilogy parameters -- most are data
     M.popsize = grow(P.popsize, opt.growth) # Population size
     M.hivprev = P.hivprev # Initial HIV prevalence
-    M.stiprevulc = dpar2mpar(P.stiprevulc) # STI prevalence
-    M.stiprevdis = dpar2mpar(P.stiprevdis) # STI prevalence
-    M.death = dpar2mpar(P.death) # Death rates
+    M.stiprevulc = dpar2mpar(P.stiprevulc, withwhat) # STI prevalence
+    M.stiprevdis = dpar2mpar(P.stiprevdis, withwhat) # STI prevalence
+    M.death = dpar2mpar(P.death, withwhat) # Death rates
     ## TB prevalence @@@
     
     ## Testing parameters -- most are data
-    M.hivtest = dpar2mpar(P.testrate) # HIV testing rates
-    M.aidstest = dpar2mpar(P.aidstestrate) # AIDS testing rates
-    M.tx1 = dpar2mpar(P.numfirstline) # Number of people on first-line treatment
-    M.tx2 = dpar2mpar(P.numsecondline) # Number of people on second-line treatment
+    M.hivtest = dpar2mpar(P.testrate, withwhat) # HIV testing rates
+    M.aidstest = dpar2mpar(P.aidstestrate, withwhat) # AIDS testing rates
+    M.tx1 = dpar2mpar(P.numfirstline, withwhat) # Number of people on first-line treatment
+    M.tx2 = dpar2mpar(P.numsecondline, withwhat) # Number of people on second-line treatment
     
     ## Sexual behavior parameters -- all are parameters so can loop over all
-    M.circum  = dpar2mpar(P.circum) # Circumcision
+    M.circum  = dpar2mpar(P.circum, withwhat) # Circumcision
     M.numacts = struct()
     M.condom  = struct()
-    M.numacts.reg = dpar2mpar(P.numactsreg) # ...
-    M.numacts.cas = dpar2mpar(P.numactscas) # ...
-    M.numacts.com = dpar2mpar(P.numactscom) # ...
-    M.numacts.inj = dpar2mpar(P.numinject) # ..
-    M.condom.reg  = dpar2mpar(P.condomreg) # ...
-    M.condom.cas  = dpar2mpar(P.condomcas) # ...
-    M.condom.com  = dpar2mpar(P.condomcom) # ...
+    M.numacts.reg = dpar2mpar(P.numactsreg, withwhat) # ...
+    M.numacts.cas = dpar2mpar(P.numactscas, withwhat) # ...
+    M.numacts.com = dpar2mpar(P.numactscom, withwhat) # ...
+    M.numacts.inj = dpar2mpar(P.numinject, withwhat) # ..
+    M.condom.reg  = dpar2mpar(P.condomreg, withwhat) # ...
+    M.condom.cas  = dpar2mpar(P.condomcas, withwhat) # ...
+    M.condom.com  = dpar2mpar(P.condomcom, withwhat) # ...
     
     ## Drug behavior parameters
-    M.numost = dpar2mpar(P.numost)
-    M.sharing = dpar2mpar(P.sharing)
+    M.numost = dpar2mpar(P.numost, withwhat)
+    M.sharing = dpar2mpar(P.sharing, withwhat)
     
     ## Matrices can be used almost directly
     M.pships = struct()
