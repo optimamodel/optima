@@ -7,10 +7,8 @@
       <th>Name</th>
       <th>Populations</th>
       <th>Programs</th>
-      <th>Data Start</th>
-      <th>Data End</th>
-      <th>Projection Start</th>
-      <th>Projection End</th>
+      <th>Data start year</th>
+      <th>Data end year</th>
       <th colspan="2">Actions</th>
       </thead>
       <tbody>
@@ -31,16 +29,10 @@
           {{ project.dataEnd }}
         </td>
         <td>
-          {{ project.projectionStartYear }}
+          <button class="btn __white" ng-click="open(project.name)">Open</button>
         </td>
         <td>
-          {{ project.projectionEndYear }}
-        </td>
-        <td>
-          <button class="btn __white" ng-click="open(project.name)">open</button>
-        </td>
-        <td>
-          <button class="btn __red" ng-click="delete(project.name, $index)">remove</button>
+          <button class="btn __red" ng-click="delete(project.name, $index)">Remove</button>
         </td>
       </tr>
       </tbody>

@@ -9,12 +9,20 @@ def runsimulation(D, startyear=2000, endyear=2030, verbose=2):
     printv('Running simulation...', 1, verbose)
     dosave = False # Flag for whether or not to save
     
+    print('WARNING should add conditionals here')
+    from makeccocs import makeallccocs
+    D = makeallccocs(D, verbose=verbose)
+    
+    from getcurrentbudget import getcurrentbudget
+    D = getcurrentbudget(D) # TODO Add verbose
+    
     # Convert data parameters to model parameters
     if 'M' not in D.keys():
         dosave = True
         from makemodelpars import makemodelpars
         D.M = makemodelpars(D.P, D.opt, verbose=verbose)
     
+
     # Run model
     from model import model
     allsims = []
