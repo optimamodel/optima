@@ -12,7 +12,7 @@ Optimization Module
 from flask import request, jsonify, Blueprint
 from flask.ext.login import login_required
 from dbconn import db
-from utils import check_project_name, project_exists, pick_params, is_model_calibrating, set_working_model_calibration, load_model, save_working_model
+from utils import check_project_name, project_exists, pick_params, load_model, save_working_model
 from sim.optimize import optimize
 from sim.bunch import bunchify
 import json
@@ -60,24 +60,24 @@ def startOptimization():
             return jsonify({"status":"NOK", "reason":"optimization already going"})
         else:
             # We are going to start calibration
-            set_working_model_calibration(project_name, True)
+            # set_working_model_calibration(project_name, True)
             
             # Do calculations 5 seconds at a time and then save them
             # to db.
             for i in range(0, timelimit):
                 
                 # Make sure we are still calibrating
-                if is_model_calibrating(request.project_name):
+                #if is_model_calibrating(request.project_name):
                     D = optimize(D, **args)
                     D_dict = D.toDict()
                     save_working_model(project_name, D_dict)
-                else:
-                    break
+                #else:
+                #    break
             
     except Exception, err:
-        set_working_model_calibration(project_name, False)
+        #set_working_model_calibration(project_name, False)
         var = traceback.format_exc()
         return jsonify({"status":"NOK", "exception":var})
         
-    set_working_model_calibration(project_name, False)
+    #set_working_model_calibration(project_name, False)
     return jsonify(D_dict.get('plot',{}).get('E',{}))
