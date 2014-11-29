@@ -8,7 +8,7 @@ from sim.scenarios import runscenarios
 from utils import load_model, save_model, project_exists, check_project_name
 from flask.ext.login import login_required
 
-""" route prefix: /api/analysis """
+""" route prefix: /api/analysis/scenarios """
 analysis = Blueprint('analysis',  __name__, static_folder = '../static')
 analysis.config = {}
 
@@ -21,7 +21,7 @@ def record_params(setup_state):
   analysis.config = dict([(key,value) for (key,value) in app.config.iteritems()])
 
 
-@analysis.route('/scenarios/params')
+@analysis.route('/params')
 @login_required
 def get_scenario_params():
     scenario_params_file_path = helpers.safe_join(analysis.static_folder, scenario_params_file_name)
@@ -37,7 +37,7 @@ def get_scenario_params():
 """
 Gets a list of scenarios defined by the user, produces graphs out of them and sends back
 """
-@analysis.route('/scenarios/run', methods=['POST'])
+@analysis.route('/run', methods=['POST'])
 @login_required
 @check_project_name
 def runScenarios():

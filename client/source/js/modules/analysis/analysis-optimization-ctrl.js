@@ -164,7 +164,7 @@ define([
 
       var timer;
       $scope.startOptimization = function () {
-        $http.post('/api/optimization/start', $scope.params)
+        $http.post('/api/analysis/optimization/start', $scope.params)
         .success(function (response) {
         })
 

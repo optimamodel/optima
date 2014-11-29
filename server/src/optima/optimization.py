@@ -18,7 +18,7 @@ from sim.bunch import bunchify
 import json
 import traceback
 
-# route prefix: /api/optimization
+# route prefix: /api/analysis/optimization
 optimization = Blueprint('optimization',  __name__, static_folder = '../static')
 
 """ 
