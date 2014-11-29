@@ -118,129 +118,113 @@
     <!-- Reduce the incidence of HIV -->
     <div class="checkbox-block margin-top-xs">
         <label>
-            <input type="checkbox" ng-model="params.minimize.annualHivIncidence.reduce">
+            <input type="checkbox" ng-model="params.objectives.money.objectives.inci.use">
             Reduce the annual incidence of HIV
         </label>
     </div>
     <label class="radio-inline margin-left-s">
-        <input type="radio" style="height: 22px;" name="reduce1" ng-model="params.minimize.annualHivIncidence.strategy" value="by">
-        by <input class="txbox __inline __s" ng-model="params.minimize.annualHivIncidence.value">
+        by <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.inci.by">
     </label>
     <label class="radio-inline">
-        <input type="radio" style="height: 22px;" name="reduce1" ng-model="params.minimize.annualHivIncidence.strategy" value="to">
-        to < <input class="txbox __inline __s" ng-model="params.minimize.annualHivIncidence.value">
+        to < <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.inci.to">
     </label>
 
     <!-- Reduce the incidence of sexually transmitted HIV -->
     <div class="checkbox-block margin-top-xs">
         <label>
-            <input type="checkbox" ng-model="params.minimize.annualSexTransmittedHivIncidence.reduce">
+            <input type="checkbox" ng-model="params.objectives.money.objectives.incisex.use">
             Reduce the annual incidence of sexually transmitted HIV
         </label>
     </div>
     <label class="radio-inline margin-left-s">
-        <input type="radio" style="height: 22px;" name="reduce2" ng-model="params.minimize.annualSexTransmittedHivIncidence.strategy" value="by">
-        by <input class="txbox __inline __s" ng-model="params.minimize.annualSexTransmittedHivIncidence.value">
+        by <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.incisex.by">
     </label>
     <label class="radio-inline">
-        <input type="radio" style="height: 22px;" name="reduce2" ng-model="params.minimize.annualSexTransmittedHivIncidence.strategy" value="to">
-        to < <input class="txbox __inline __s" ng-model="params.minimize.annualSexTransmittedHivIncidence.value">
+        to < <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.incisex.to">
     </label>
 
     <!-- Reduce the incidence of injecting-related HIV -->
     <div class="checkbox-block margin-top-xs">
         <label>
-            <input type="checkbox" ng-model="params.minimize.annualInjectingHivIncidence.reduce">
+            <input type="checkbox" ng-model="params.objectives.money.objectives.incinj.use">
             Reduce the annual incidence of injecting-related HIV
         </label>
     </div>
     <label class="radio-inline margin-left-s">
-        <input type="radio" style="height: 22px;" name="reduce3" ng-model="params.minimize.annualInjectingHivIncidence.strategy" value="by">
-        by <input class="txbox __inline __s" ng-model="params.minimize.annualInjectingHivIncidence.value">
+        by <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.inciinj.by">
     </label>
     <label class="radio-inline">
-        <input type="radio" style="height: 22px;" name="reduce3" ng-model="params.minimize.annualInjectingHivIncidence.strategy" value="to">
-        to < <input class="txbox __inline __s" ng-model="params.minimize.annualInjectingHivIncidence.value">
+        to < <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.inciinj.to">
     </label>
 
     <!-- Reduce MTCT of HIV -->
     <div class="checkbox-block margin-top-xs">
         <label>
-            <input type="checkbox" ng-model="params.minimize.annualMotherChildHivIncidence.reduce">
+            <input type="checkbox" ng-model="params.objectives.money.objectives.mtct.use">
             Reduce annual mother-to-child transmission of HIV
         </label>
     </div>
     <label class="radio-inline margin-left-s">
-        <input type="radio" style="height: 22px;" name="reduce4" ng-model="params.minimize.annualMotherChildHivIncidence.strategy" value="by">
-        by <input class="txbox __inline __s" ng-model="params.minimize.annualMotherChildHivIncidence.value">
+        by <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.mtct.by">
     </label>
     <label class="radio-inline">
-        <input type="radio" style="height: 22px;" name="reduce4" ng-model="params.minimize.annualMotherChildHivIncidence.strategy" value="to">
-        to < <input class="txbox __inline __s" ng-model="params.minimize.annualMotherChildHivIncidence.value">
+        to < <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.mtct.to">
     </label>
 
     <!-- Reduce MTCT of HIV among breastfeeding mother -->
     <div class="checkbox-block margin-top-xs">
         <label>
-            <input type="checkbox" ng-model="params.minimize.annualMotherChildBreastfeedingHivIncidence.reduce">
+            <input type="checkbox" ng-model="params.objectives.money.objectives.mtctbreast.use">
             Reduce annual mother-to-child transmission of HIV among breastfeeding mothers
         </label>
     </div>
     <label class="radio-inline margin-left-s">
-        <input type="radio" style="height: 22px;" name="reduce5" ng-model="params.minimize.annualMotherChildBreastfeedingHivIncidence.strategy" value="by">
-        by <input class="txbox __inline __s" ng-model="params.minimize.annualMotherChildBreastfeedingHivIncidence.value">
+        by <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.mtctbreast.by">
     </label>
     <label class="radio-inline">
-        <input type="radio" style="height: 22px;" name="reduce5" ng-model="params.minimize.annualMotherChildBreastfeedingHivIncidence.strategy" value="to">
-        to < <input class="txbox __inline __s" ng-model="params.minimize.annualMotherChildBreastfeedingHivIncidence.value">
+        to < <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.mtctbreast.to">
     </label>
 
     <!-- Reduce MTCT of HIV among non-breastfeeding mother -->
     <div class="checkbox-block margin-top-xs">
         <label>
-            <input type="checkbox" ng-model="params.minimize.annualMotherChildNonBreastfeedingHivIncidence.reduce">
+            <input type="checkbox" ng-model="params.objectives.money.objectives.mtctnonbreast.use">
             Reduce annual mother-to-child transmission of HIV among non-breastfeeding mothers
         </label>
     </div>
     <label class="radio-inline margin-left-s">
-        <input type="radio" style="height: 22px;" name="reduce6" ng-model="params.minimize.annualMotherChildNonBreastfeedingHivIncidence.strategy" value="by">
-        by <input class="txbox __inline __s" ng-model="params.minimize.annualMotherChildNonBreastfeedingHivIncidence.value">
+        by <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.mtctnonbreast.by">
     </label>
     <label class="radio-inline">
-        <input type="radio" style="height: 22px;" name="reduce6" ng-model="params.minimize.annualMotherChildNonBreastfeedingHivIncidence.strategy" value="to">
-        to < <input class="txbox __inline __s" ng-model="params.minimize.annualMotherChildNonBreastfeedingHivIncidence.value">
+        to < <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.mtctnonbreast.to">
     </label>
 
     <!-- Reduce HIV-related deaths -->
     <div class="checkbox-block margin-top-xs">
         <label>
-            <input type="checkbox" ng-model="params.minimize.annualAidsDeaths.reduce">
+            <input type="checkbox" ng-model="params.objectives.money.objectives.deaths.use">
             Reduce annual AIDS-related deaths
         </label>
     </div>
     <label class="radio-inline margin-left-s">
-        <input type="radio" style="height: 22px;" name="reduce7" ng-model="params.minimize.annualAidsDeaths.strategy" value="by">
-        by <input class="txbox __inline __s" ng-model="params.minimize.annualAidsDeaths.value">
+        by <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.deaths.by">
     </label>
     <label class="radio-inline">
-        <input type="radio" style="height: 22px;" name="reduce7" ng-model="params.minimize.annualAidsDeaths.strategy" value="to">
-        to < <input class="txbox __inline __s" ng-model="params.minimize.annualAidsDeaths.value">
+        to < <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.deaths.to">
     </label>
 
     <!-- Reduce DALYs -->
     <div class="checkbox-block margin-top-xs">
         <label>
-            <input type="checkbox" ng-model="params.minimize.annualDalys.reduce">
+            <input type="checkbox" ng-model="params.objectives.money.objectives.dalys.use">
             Reduce annual DALYs
         </label>
     </div>
     <label class="radio-inline margin-left-s">
-        <input type="radio" style="height: 22px;" name="reduce8" ng-model="params.minimize.annualDalys.strategy" value="by">
-        by <input class="txbox __inline __s" ng-model="params.minimize.annualDalys.value">
+        by <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.dalys.by">
     </label>
     <label class="radio-inline">
-        <input type="radio" style="height: 22px;" name="reduce8" ng-model="params.minimize.annualDalys.strategy" value="to">
-        to < <input class="txbox __inline __s" ng-model="params.minimize.annualDalys.value">
+        to < <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.dalys.to">
     </label>
 
     <div class="cf margin-top-s">
