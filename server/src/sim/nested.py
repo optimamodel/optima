@@ -8,7 +8,7 @@ Four little functions to get and set data from nested dictionaries. The first tw
 "setnested" will set the value for the given list of keys:
     setnested(foo, ['a','b'], 3)
 
-"makenested" will recursively generate a dictionary with the given list of keys:
+"makenested" will recursively update a dictionary with the given list of keys:
     makenested(foo, ['a','b'])
 
 "iternested" will return a list of all the twigs in the current dictionary:

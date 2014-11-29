@@ -1,8 +1,4 @@
-## Imports used in multiple functions
-from nested import getnested, setnested, iternested
-
-
-def manualfit(D, F, Plist=[], Mlist=[], startyear=2000, endyear=2015, verbose=2):
+def manualfit(D, F={}, Plist=[], Mlist=[], startyear=2000, endyear=2015, verbose=2):
     """
     Manual metaparameter fitting code.
     
@@ -24,11 +20,15 @@ def manualfit(D, F, Plist=[], Mlist=[], startyear=2000, endyear=2015, verbose=2)
     # Update P and M, if provided
     D = updateP(D, Plist)
     D = updateM(D, Mlist)
+    if len(F):
+        if type(F)==dict: D.F = [F] # Put F in a list if it's a dict
+        elif type(F)==list: D.F = F # Take F directly if it's a list (unlikely)
+        else: raise Exception('Input argument F is neither a dictionary nor a list, you have just made a horrible, horrible mistake')
 
     # Run model
     from model import model
     allsims = []
-    D.F = [F]
+    
     D.S = model(D.G, D.M, D.F[0], D.opt, verbose=verbose)
     allsims.append(D.S)
     
@@ -55,9 +55,11 @@ def updateP(D, Plist):
     """
     from copy import deepcopy
     from makemodelpars import makemodelpars
+    from nested import getnested, setnested, iternested
+
     
     oldP = deepcopy(D.P)
-    for twig in iternested(D.P):
+    for twig in range(len(Plist)):
         setnested(D.P, Plist[twig].name, Plist[twig].data)
     
     oldM = makemodelpars(oldP, D.opt, withwhat='c', verbose=2)
@@ -65,7 +67,7 @@ def updateP(D, Plist):
     
     # Update M
     for twig in iternested(D.M):
-        if not(all(getnested(oldM,twig) == getnested(newM,twig))): # Don't replace everything in M, only things that have just changed
+        if not(all(getnested(oldM,twig) == getnested(newM,twig))): # Don't replace everything in M, only things that have just changed, since D.M might've been modified elsewhere
             setnested(D.M, twig, getnested(newM,twig))
     
     return D
@@ -75,5 +77,7 @@ def updateP(D, Plist):
 
 def updateM(D, Mlist):
     """ Update certain fields of D.M -- way easier than updating D.P :) """
-    for twig in iternested(D.M): setnested(D.M, Mlist[twig].name, Mlist[twig].data)
+    from nested import setnested
+    for twig in range(len(Mlist)):
+        setnested(D.M, Mlist[twig].name, Mlist[twig].data)
     return D
