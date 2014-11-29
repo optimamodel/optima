@@ -13,7 +13,7 @@ def check_project_name(api_call):
     @wraps(api_call)
     def _check_project_name(*args, **kwargs):
         reply = {"status":"NOK"}
-        print(request.headers)
+        # print(request.headers)
         try:
             project_name = request.headers['project']
         except:
@@ -100,25 +100,26 @@ def load_model_file(name, folder = PROJECTDIR, as_bunch = True):
 def load_model(name, as_bunch = True, working_model = False):
     print("load_model:%s" % name)
     model = None
-    try:
-        cu = current_user
-        proj = ProjectDb.query.filter_by(user_id=cu.id, name=name).first()
-        
+    cu = current_user
+    print("getting project %s for user %s" % (name, cu.id))
+    proj = ProjectDb.query.filter_by(user_id=cu.id, name=name).first()
+    if proj is not None:
         if proj.working_project is None or working_model == False:
+            print("project %s is not being calculated" % name)
             model = proj.model
         else:
+            print("project %s is being calculated" % name)
             model = proj.working_project.model
-    
-    except:
-        pass
-    if model is None or len(model.keys())==0:
-        print("model %s is None" % name)
-        return load_model_file(name, as_bunch = as_bunch)
+        if model is None or len(model.keys())==0:
+            print("model %s is None" % name)
+            return load_model_file(name, as_bunch = as_bunch)
+        else:
+            if as_bunch:
+                from sim.bunch import Bunch
+                print("convert model %s to Bunch" % name)
+                model = Bunch.fromDict(model)
     else:
-        if as_bunch:
-            from sim.bunch import Bunch
-            print("convert model %s to Bunch" % name)
-            model = Bunch.fromDict(model)
+        print("no such project found: %s for user %s %s" % (name, cu.id, cu.name))
     return model
 
 def save_model_file(name, model, folder = PROJECTDIR):
@@ -189,35 +190,6 @@ def revert_working_model_to_default(name):
         db.session.commit()
 
     return model
-
-def set_working_model_calibration(name, is_calibrating):
-    print("set_working_model_calibration %s:%s" % (name, is_calibrating))
-
-    from sim.bunch import Bunch
-    cu = current_user
-    proj = ProjectDb.query.filter_by(user_id=cu.id, name=name).first()
-    model = proj.model
-
-    # Make sure there is a working project
-    if proj.working_project  is None:
-        proj.working_project = WorkingProjectDb(proj.id)
-    proj.working_project.is_calibrating = is_calibrating
-    db.session.add(proj.working_project)
-    db.session.commit()
-
-def is_model_calibrating(name):
-    print("is_model_calibration %s" % name)
-
-    from sim.bunch import Bunch
-    cu = current_user
-    proj = ProjectDb.query.filter_by(user_id=cu.id, name=name).first()
-    model = proj.model
-
-    # Make sure there is a working project
-    result = False
-    if proj.working_project is not None:
-        result = proj.working_project.is_calibrating
-    return result
 
 def save_model(name, model):
   try:
