@@ -52,10 +52,8 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
     dxfactor = M.const.eff.dx * cd4trans # Include diagnosis efficacy
     txfactor = M.const.eff.tx * dxfactor # And treatment efficacy
     
-    ## Metaparameters to get nice dx and tx fits
+    ## Metaparameters to get nice diagnosis fits
     dxtime  = fit2time(F.dx,  S.tvec)
-    tx1time = fit2time(F.tx1, S.tvec)
-    tx2time = fit2time(F.tx2, S.tvec)
     
     ###############################################################################
     ## Run the model -- numerically integrate over time
@@ -222,7 +220,7 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
         
     
         ## Diagnosed
-        newtreat1tot = Mtx1[t]*tx1time[t] - people[tx1,:,t].sum() # Calculate difference between current people on treatment and people needed
+        newtreat1tot = Mtx1[t] - people[tx1,:,t].sum() # Calculate difference between current people on treatment and people needed
         currentdiagnosed = people[dx,:,t] # Find how many people are diagnosed
         for cd4 in range(ncd4):
             if cd4>0: 
@@ -268,7 +266,7 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
 
     
         ## Treatment failure
-        newtreat2tot = Mtx2[t]*tx2time[t] - people[tx2,:,t].sum() # Calculate difference between current people on treatment and people needed
+        newtreat2tot = Mtx2[t] - people[tx2,:,t].sum() # Calculate difference between current people on treatment and people needed
         currentfailed = people[fail,:,t] # Find how many people are diagnosed
         for cd4 in range(ncd4):
             if cd4>0:

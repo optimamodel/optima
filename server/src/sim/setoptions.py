@@ -19,13 +19,10 @@ def setoptions(opt=None, **kwargs):
         opt.growth = 0.03 # Default population growth rate
         opt.disc = 0.05 # Economic discounting rate
     
+    # Replace any keys that exist
     for key, value in kwargs.iteritems():
-        if key in ['startyear', 'endyear', 'dt', 'nsims', 'quantiles']:
+        if key in opt.keys():
             opt[key] = value # Update value
-        elif key=='opt':
-            pass # Don't do anything with this
-        else:
-            print('WARNING, option %s not recognized' % key)
     
     opt.tvec = arange(opt.startyear, opt.endyear+opt.dt, opt.dt) # Recalculate time vector
     opt.npts = len(opt.tvec) # Number of time points
