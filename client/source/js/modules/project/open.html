@@ -9,7 +9,7 @@
       <th>Programs</th>
       <th>Data start year</th>
       <th>Data end year</th>
-      <th colspan="2">Actions</th>
+      <th colspan="3">Actions</th>
       </thead>
       <tbody>
       <tr ng-repeat="project in projects track by $index">
@@ -33,6 +33,9 @@
         </td>
         <td>
           <button class="btn __red" ng-click="remove($event, project.name, $index)">Remove</button>
+        </td>
+        <td>
+          <button class="btn __blue" ng-click="workbook(project.name)">Get Workbook</button>
         </td>
       </tr>
       </tbody>
