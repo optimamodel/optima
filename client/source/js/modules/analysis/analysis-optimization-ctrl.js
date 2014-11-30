@@ -251,10 +251,12 @@ define([
 
     // makes all graphs to recalculate and redraw
     var updateGraphs = function (data) {
-      cachedResponse = data;
-      console.log(data);
-      updateLineGraphs(data.graph);
-      preparePieCharts(data.pie);
+      if (data.graph !== undefined && data.pie !== undefined) {
+        cachedResponse = data;  
+        console.log(data);
+        updateLineGraphs(data.graph);
+        preparePieCharts(data.pie);
+      }
     };
 
 
