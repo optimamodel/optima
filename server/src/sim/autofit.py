@@ -9,7 +9,7 @@ def autofit(D, timelimit=60, startyear=2000, endyear=2015, verbose=2):
         
     Version: 2014nov30 by cliffk
     """
-    from numpy import mean
+    from numpy import mean, array
     from model import model
     from printv import printv
     from ballsd import ballsd
@@ -22,14 +22,16 @@ def autofit(D, timelimit=60, startyear=2000, endyear=2015, verbose=2):
     def errorcalc(Flist):
         """ Calculate the error between the model and the data """
         
-        F = list2dict(Flist)
+        printv(Flist, 4, verbose)
+        
+        F = list2dict(D.F[0], Flist)
         S = model(D.G, D.M, F, D.opt, verbose=verbose)
         
         # Pull out diagnoses data
         dx = [struct()]
         dx[0].data = struct()
         dx[0].model = struct()
-        dx[0].data.x, dx[0].data.y = extractdata(D.G.datayears, D.data.opt.numdiag)
+        dx[0].data.x, dx[0].data.y = extractdata(D.G.datayears, D.data.opt.numdiag[0])
         dx[0].model.x = D.opt.tvec
         dx[0].model.y = S.dx.sum(axis=0)
         
@@ -38,9 +40,9 @@ def autofit(D, timelimit=60, startyear=2000, endyear=2015, verbose=2):
         for p in range(D.G.npops): 
             prev[p].data = struct()
             prev[p].model = struct()
-            prev[p].data.x, prev[p].data.x = extractdata(D.G.datayears, D.data.key.hivprev[0][p]) # The first 0 is for "best"
+            prev[p].data.x, prev[p].data.y = extractdata(D.G.datayears, D.data.key.hivprev[0][p]) # The first 0 is for "best"
             prev[p].model.x = D.opt.tvec
-            prev[p].model.y = S.people[1:,:,:].sum(axis=0) / S.people[:,:,:].sum(axis=0) # This is prevalence
+            prev[p].model.y = S.people[1:,p,:].sum(axis=0) / S.people[:,p,:].sum(axis=0) # This is prevalence
         
         mismatch = 0
         for base in [dx, prev]:
@@ -48,17 +50,18 @@ def autofit(D, timelimit=60, startyear=2000, endyear=2015, verbose=2):
                 for y,year in enumerate(base[ind].data.x):
                     modelind = findinds(D.opt.tvec, year)
                     mismatch += abs(base[ind].model.y[modelind] - base[ind].data.y[y]) / mean(base[ind].data.y+eps)
+
         
         return mismatch
 
     # Convert F to a flast list for the optimization algorithm
-    Forig = dict2list(D.F[0])
+    Forig = array(dict2list(D.F[0]))
     
     # Run the optimization algorithm
-    Fnew, fval, exitflag, output = ballsd(errorcalc, Forig, timelimit=timelimit)
+    Fnew, fval, exitflag, output = ballsd(errorcalc, Forig, xmin=0*Forig, timelimit=timelimit, verbose=verbose)
     
     # Update the model
-    D.F[0] = list2dict(D.F, Fnew)
+    D.F[0] = list2dict(D.F[0], Fnew)
     D.S = model(D.G, D.M, D.F[0], D.opt, verbose=verbose)
     allsims = [D.S]
     
@@ -81,7 +84,7 @@ def dict2list(Fdict):
     be sure the keys are in the right order.
     """
     Flist = []
-    for key in ['init','force','dx','tx1','tx2']:
+    for key in ['init','force','dx']:
         this = Fdict[key]
         for i in range(len(this)):
             Flist.append(Fdict[key][i])
@@ -95,16 +98,18 @@ def list2dict(Forig, Flist):
     """
     from copy import deepcopy
     Fdict = deepcopy(Forig)
-    for key in ['init','force','dx','tx1','tx2']:
+    Flist = Flist.tolist()
+    for key in ['init','force','dx']:
         for i in range(len(Fdict[key])):
             Fdict[key][i] = Flist.pop(0)
     return Fdict
 
 
 
+
 def extractdata(xdata, ydata):
     """ Return the x and y data values for non-nan y data """
-    from numpy import isnan
-    nonnanx = xdata[~isnan(ydata)]
-    nonnany = ydata[~isnan(ydata)]
+    from numpy import isnan, array
+    nonnanx = array(xdata)[~isnan(array(ydata))]
+    nonnany = array(ydata)[~isnan(array(ydata))]
     return nonnanx, nonnany
