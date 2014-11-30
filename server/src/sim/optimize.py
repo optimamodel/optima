@@ -1,7 +1,7 @@
 from printv import printv
 from bunch import Bunch as struct
 
-def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2):
+def optimize(D, objectives=None, constraints=None, startyear=2000, endyear=2030, timelimit=60, verbose=2):
     """
     Allocation optimization code:
         D is the project data structure
@@ -10,13 +10,20 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2):
         timelimit is the maximum time in seconds to run optimization for
         verbose determines how much information to print.
         
-    Version: 2014nov24 by cliffk
+    Version: 2014nov30 by cliffk
     """
     
-    from time import time
     from model import model
     from copy import deepcopy
+    from ballsd import ballsd
+    from getcurrentbudget import getcurrentbudget
+    from makemodelpars import makemodelpars
+    from numpy import array
     printv('Running optimization...', 1, verbose)
+    
+    # Set options to update year range
+    from setoptions import setoptions
+    D.opt = setoptions(D.opt, startyear=startyear, endyear=endyear)
     
     # Make sure objectives and constraints exist
     if not isinstance(objectives, struct): objectives = defaultobjectives(D, verbose=verbose)
@@ -38,21 +45,40 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2):
         if constraints.decrease[prog].use: constraints.decrease[prog].by = float(constraints.decrease[prog].by) / 100.0
 
     # Run optimization # TODO -- actually implement :)
-    print('!!! TODO !!!')
-    tstart = time()
-    elapsed = 0
-    iteration = 0
     nallocs = 1 # WARNING, will want to do this better
     for alloc in range(nallocs): D.A.append(deepcopy(D.A[0])) # Just copy for now
     D.A[0].label = 'Original'
     D.A[1].label = 'Optimal'
-    while elapsed<timelimit:
-        iteration += 1
-        elapsed = time() - tstart
-        for alloc in range(len(D.A)):
-            D.A[alloc].S = model(D.G, D.M, D.F[0], D.opt, verbose=verbose) # At the moment, D.F is changing -- but need allocation to change
-            D.A[alloc].mismatches = -1
-        printv('Iteration: %i | Elapsed: %f s |  Limit: %f s' % (iteration, elapsed, timelimit), 2, verbose)
+    origalloc = array(D.A[0].alloc)
+    
+    
+    def objectivecalc(alloc):
+        """ Calculate the objective function """
+        
+        printv(alloc, 4, verbose)
+        
+        alloc /= sum(alloc)/sum(origalloc)
+        
+        newD = deepcopy(D)
+        newD = getcurrentbudget(newD, alloc)
+        newD.M = makemodelpars(newD.P, newD.opt, withwhat='c', verbose=2)
+        S = model(newD.G, newD.M, newD.F[0], newD.opt, verbose=verbose)
+        
+        objective = S.inci.sum() # TEMP
+        
+        return objective
+        
+        
+        
+    # Run the optimization algorithm
+    
+    optalloc, fval, exitflag, output = ballsd(objectivecalc, origalloc, xmin=0*origalloc, timelimit=timelimit, verbose=verbose)
+    
+    # Update the model
+    for i,alloc in enumerate([origalloc,optalloc]):
+        D = getcurrentbudget(D, alloc)
+        D.M = makemodelpars(D.P, D.opt, withwhat='c', verbose=2)
+        D.A[i].S = model(D.G, D.M, D.F[0], D.opt, verbose=verbose)
     
     # Calculate results
     from makeresults import makeresults

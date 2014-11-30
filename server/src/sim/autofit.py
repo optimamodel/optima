@@ -18,6 +18,10 @@ def autofit(D, timelimit=60, startyear=2000, endyear=2015, verbose=2):
     eps = 0.01 # Don't use too small of an epsilon to avoid divide-by-almost zero errors -- this corresponds to 1% which is OK as an absolute error for prevalence
     printv('Running automatic calibration...', 1, verbose)
     
+    # Set options to update year range
+    from setoptions import setoptions
+    D.opt = setoptions(D.opt, startyear=startyear, endyear=endyear)
+    
     
     def errorcalc(Flist):
         """ Calculate the error between the model and the data """
@@ -50,9 +54,7 @@ def autofit(D, timelimit=60, startyear=2000, endyear=2015, verbose=2):
                 for y,year in enumerate(base[ind].data.x):
                     modelind = findinds(D.opt.tvec, year)
                     mismatch += abs(base[ind].model.y[modelind] - base[ind].data.y[y]) / mean(base[ind].data.y+eps)
-                        
 
-        
         return mismatch
 
     # Convert F to a flast list for the optimization algorithm

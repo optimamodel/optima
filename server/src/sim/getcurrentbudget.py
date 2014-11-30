@@ -1,9 +1,9 @@
-def getcurrentbudget(D):
+def getcurrentbudget(D, alloc=None):
     """
-    Purpose: get the current budget and the corresponding parameters
-    Inputs: D
+    Purpose: get the parameters corresponding to a given allocation. If no allocation is specified, this function also estimates the current budget
+    Inputs: D, alloc (optional)
     Returns: D
-    Version: 2014nov29
+    Version: 2014nov30
     """
     from makeccocs import ccoeqn, makesamples
     import numpy as np
@@ -16,8 +16,9 @@ def getcurrentbudget(D):
                 D.P[param].c[D.P[param].c>=0] = float('nan')
 
 
-    # Initialise currentbudget
-    currentbudget = []
+    # Initialise currentbudget if needed
+    if alloc==None:
+        currentbudget = []
 
     # Loop over programs
     for progname in D.data.meta.progs.code:
@@ -33,10 +34,13 @@ def getcurrentbudget(D):
             
             # Do this if it's a saturating program
             if D.data.meta.progs.saturating[prognumber]:
-                totalcost = D.data.costcov.cost[prognumber]
-                totalcost = np.asarray(totalcost)
-                totalcost = totalcost[~np.isnan(totalcost)]
-                totalcost = totalcost[-1]
+                if not(alloc==None):
+                    totalcost = alloc[prognumber]
+                else:
+                    totalcost = D.data.costcov.cost[prognumber]
+                    totalcost = np.asarray(totalcost)
+                    totalcost = totalcost[~np.isnan(totalcost)]
+                    totalcost = totalcost[-1]
 
                 # Get population info
                 popname = effectname[1]
@@ -68,8 +72,9 @@ def getcurrentbudget(D):
 
                 D.P[effectname[0][1]].c[0] = D.programs[progname][effectnumber][-1][0]
 
-        currentbudget.append(totalcost)
-        D.data.meta.progs.currentbudget = currentbudget
+        if alloc==None:
+            currentbudget.append(totalcost)
+            D.data.meta.progs.currentbudget = currentbudget
 
     return D
 
