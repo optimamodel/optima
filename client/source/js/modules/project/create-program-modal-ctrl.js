@@ -18,10 +18,10 @@ define(['./module'], function (module) {
       }
     };
 
-    $scope.programSpec = function (p) {
+    $scope.paramSpec = function (p) {
       var name = p.name;
-      if (p.value.progs.length > 0) {
-        name += ': ' + p.value.progs.join(' ');
+      if (p.value.pops.length > 0) {
+        name += ': ' + p.value.pops.join(' ');
       }
       return name;
     };
