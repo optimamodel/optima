@@ -3,7 +3,7 @@ from bunch import Bunch as struct
 from copy import deepcopy
 from numpy import linspace, ndim
 from nested import getnested, setnested
-from findinds import findinds
+from utils import findinds
 
 def runscenarios(D, scenariolist=None, verbose=2):
     """
