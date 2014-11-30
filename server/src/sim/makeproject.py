@@ -1,5 +1,5 @@
 def makeproject(projectname='example', pops = ['']*6, progs = ['']*5, datastart=2000, dataend=2015, \
-    econ_datastart=2015, econ_dataend=2030, verbose=2, savetofile = True):
+    econ_datastart=2000, econ_dataend=2030, nsims=5, verbose=2, savetofile = True):
     """
     Initializes the empty project. Only the "Global" and "Fitted" parameters are added on this step.
     The rest of the parameters are calculated after the model is updated with the data from the workbook.
@@ -10,6 +10,7 @@ def makeproject(projectname='example', pops = ['']*6, progs = ['']*5, datastart=
     from dataio import savedata, projectpath
     from bunch import Bunch as struct
     from printv import printv
+    from numpy import arange
 
     printv('Making project...', 1, verbose)
 
@@ -20,7 +21,7 @@ def makeproject(projectname='example', pops = ['']*6, progs = ['']*5, datastart=
     
     # Initialize options
     from setoptions import setoptions
-    D.opt = setoptions()
+    D.opt = setoptions(startyear=datastart, endyear=dataend, nsims=nsims)
     
     # Set up "G" -- general parameters structure
     D.G = struct()
@@ -32,6 +33,7 @@ def makeproject(projectname='example', pops = ['']*6, progs = ['']*5, datastart=
     D.G.nprogs = len(progs)
     D.G.datastart = datastart
     D.G.dataend = dataend
+    D.G.datayears = arange(D.G.datastart, D.G.dataend+1)
     
     # Set up "F" -- fitted parameters structure
     D.F = makefittedpars(D.G, D.opt, verbose=verbose)
@@ -65,8 +67,6 @@ def makefittedpars(G, opt, verbose=2):
         F[s].init  = perturb(G.npops,span)
         F[s].force = perturb(G.npops,span)
         F[s].dx  = array([perturb(1,span), perturb(1,span), (G.datastart+G.dataend)/2, 1]).tolist()
-        F[s].tx1 = array([perturb(1,span), perturb(1,span), (G.datastart+G.dataend)/2, 1]).tolist()
-        F[s].tx2 = array([perturb(1,span), perturb(1,span), (G.datastart+G.dataend)/2, 1]).tolist()
     
     return F
 
