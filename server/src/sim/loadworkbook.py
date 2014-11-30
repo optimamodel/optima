@@ -197,8 +197,8 @@ def loadworkbook(filename='example.xlsx',verbose=2):
                                 data[name][thispar].male.append(thesedata[3])
                                 data[name][thispar].female.append(thesedata[4])
                                 data[name][thispar].injects.append(thesedata[5])
-                                data[name][thispar].hetero.append(thesedata[6])
-                                data[name][thispar].homo.append(thesedata[7])
+                                data[name][thispar].sexmen.append(thesedata[6])
+                                data[name][thispar].sexwomen.append(thesedata[7])
                                 data[name][thispar].sexworker.append(thesedata[8])
                                 data[name][thispar].client.append(thesedata[9])
                             if thispar=='progs':

@@ -62,8 +62,8 @@ def makescenarios(D, scenariolist, verbose=2):
             data = getnested(scenariopars[scen].M, thesepars.names)
             if ndim(data)>1: newdata = data[thesepars.pops] # If it's more than one dimension, use population data too
             else: newdata = data # If it's not, just use the whole thing
-            initialindex = find(D.opt.tvec, thesepars.startyear)
-            finalindex = find(D.opt.tvec, thesepars.endyear)
+            initialindex = findinds(D.opt.tvec, thesepars.startyear)
+            finalindex = findinds(D.opt.tvec, thesepars.endyear)
             initialvalue = newdata[initialindex] if thesepars.startval == -1 else thesepars.startval 
             finalvalue = newdata[finalindex] if thesepars.endval == -1 else thesepars.endval
             npts = finalindex-initialindex
@@ -147,14 +147,14 @@ def getparvalues(D, scenariopars):
     from numpy import ndim
     original = getnested(D.M, scenariopars.names)
     if ndim(original)>1: original = original[scenariopars.pops] # If it's more than one dimension, use population data too
-    initialindex = find(D.opt.tvec, scenariopars.startyear)
-    finalindex = find(D.opt.tvec, scenariopars.endyear)
+    initialindex = findinds(D.opt.tvec, scenariopars.startyear)
+    finalindex = findinds(D.opt.tvec, scenariopars.endyear)
     startval = original[initialindex]
     endval = original[finalindex]
     return [startval, endval]
 
 
-def find(val1, val2=None, eps=1e-6):
+def findinds(val1, val2=None, eps=1e-6):
     """
     Little function to find matches even if two things aren't eactly equal (eg. 
     due to floats vs. ints). If one argument, find nonzero values. With two arguments,
