@@ -38,6 +38,20 @@
       </div>
     </div>
 
+    <div class="section grid" ng-if="program.parameters">
+      <div class="++2 3">
+        Programs
+      </div>
+      <div class="5 2++">
+        <div ng-repeat="p in program.parameters">
+          <label>
+            <input type="checkbox" ng-model="p.active">
+            {{programSpec(p)}}
+          </label>
+        </div>
+      </div>
+    </div>
+
     <div class="section text-center">
       <button type="button" class="btn __white" ng-click="$dismiss('Closed')">Dismiss</button>
       <button type="submit" class="btn">Save</button>
