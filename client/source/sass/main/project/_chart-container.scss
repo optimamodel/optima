@@ -3,6 +3,13 @@
   position: relative;
   border: 1px dashed #999;
   margin: 5px 0;
+
+  &.__small {
+    float: left;
+    width: 430px;
+    margin: 10px;
+    padding: 60px 10px 10px;
+  }
 }
 
 .chart-buttons {

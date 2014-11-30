@@ -180,14 +180,11 @@
 
           </div>
 
-          <div class="section" ng-repeat="graph in graphs">
-            <div style="width: 746px">
-              <div class="chart-container">
-                <h3 class="text-center">{{ graph.title }}</h3>
-                <div line-scatter-area-chart data="graph.data" options="graph.options" save-graph-as></div>
-              </div>
+          <div>
+            <div class="chart-container __small" ng-repeat="graph in graphs">
+              <h3 class="text-center">{{ graph.title }}</h3>
+              <div line-scatter-area-chart data="graph.data" options="graph.options" save-graph-as></div>
             </div>
-
           </div>
         </div>
     </div>

@@ -60,13 +60,13 @@ define(['./module', 'angular'], function (module, angular) {
     $scope.graphs = [];
 
     var linescatteroptions = {
-      height: 400,
-      width: 700,
+      height: 250,
+      width: 400,
       margin: {
         top: 20,
-        right: 20,
-        bottom: 60,
-        left: 100
+        right: 10,
+        bottom: 40,
+        left: 60
       },
       xAxis: {
         axisLabel: 'Year',
