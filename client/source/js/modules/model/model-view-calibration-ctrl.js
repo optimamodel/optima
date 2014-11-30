@@ -5,7 +5,6 @@ define(['./module', 'underscore'], function (module, _) {
 
     var plotTypes;
 
-
     var initialize =function () {
       $scope.meta = meta;
 
@@ -177,7 +176,7 @@ define(['./module', 'underscore'], function (module, _) {
       });
     };
 
-    /*
+    /**
      * Returns the current parameterised plot model.
      */
     var getPlotModel = function() {
@@ -198,9 +197,9 @@ define(['./module', 'underscore'], function (module, _) {
       };
     };
 
-    /*
-    * Retrieve and update graphs based on the provided plot models.
-    */
+    /**
+     * Retrieve and update graphs based on the provided plot models.
+     */
     var retrieveAndUpdateGraphs = function (model) {
       $http.post('/api/model/costcoverage', model).success(function (response) {
         if (response.status === 'OK') {
@@ -215,7 +214,7 @@ define(['./module', 'underscore'], function (module, _) {
       });
     };
 
-    /*
+    /**
      * Retrieve and update graphs based on the current plot models.
      */
     $scope.generateCurves = function () {
@@ -223,22 +222,22 @@ define(['./module', 'underscore'], function (module, _) {
       retrieveAndUpdateGraphs(model);
     };
 
-    /*
-    * Retrieve and update graphs based on the current plot models.
-    *
-    * The plot model gets saved in the backend.
-    */
+    /**
+     * Retrieve and update graphs based on the current plot models.
+     *
+     * The plot model gets saved in the backend.
+     */
     $scope.saveModel = function () {
       var model = getPlotModel(model);
       model.doSave = true;
       retrieveAndUpdateGraphs(model);
     };
 
-    /*
-    * Retrieve and update graphs based on the current plot models.
-    *
-    * The plot model gets reverted in the backend.
-    */
+    /**
+     * Retrieve and update graphs based on the current plot models.
+     *
+     * The plot model gets reverted in the backend.
+     */
     $scope.revertModel = function () {
       var model = getPlotModel(model);
       model.doRevert = true;
