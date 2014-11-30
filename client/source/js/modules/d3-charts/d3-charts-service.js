@@ -276,9 +276,9 @@ define(['./module', 'd3', 'd3-box'], function (module, d3) {
           .append('text')
           .text(yLabel)
           .attr('text-anchor', 'middle')
-          .attr('transform', 'rotate (-270, 0, 0)')
-          .attr('x', chartSize.height / 2)
-          .attr('y', options.margin.left - 3)
+          .attr('transform', 'rotate (-90, 0, 0)')
+          .attr('x', -chartSize.height / 2)
+          .attr('y', -options.margin.left + 17)
           .attr('id', 'yLabel');
       } else {
         document.getElementById('xLabel').textContent = xLabel;

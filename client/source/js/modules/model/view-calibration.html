@@ -137,37 +137,32 @@
 
     <div class="well section">
         <div class="grid">
-            <div class="section cf">
-                <h1>Results</h1>
+          <div class="section cf">
+              <h1>Results</h1>
 
-                <div class="3" ng-repeat="type in types" style="padding-bottom: 20px">
-                    <b>{{ type.name }}</b>
-                    <div>
-                        <label class="checkbox-inline">
-                            <input type="checkbox" ng-model="type.total" ng-change="onGraphTypeChange(type)">
-                            Overall
-                        </label>
-                    </div>
-                    <div>
-                        <label class="checkbox-inline">
-                            <input type="checkbox" ng-model="type.byPopulation" ng-change="onGraphTypeChange(type)">
-                            Per population
-                        </label>
-                    </div>
-                </div>
+              <div class="3" ng-repeat="type in types" style="padding-bottom: 20px">
+                  <b>{{ type.name }}</b>
+                  <div>
+                      <label class="checkbox-inline">
+                          <input type="checkbox" ng-model="type.total" ng-change="onGraphTypeChange(type)">
+                          Overall
+                      </label>
+                  </div>
+                  <div>
+                      <label class="checkbox-inline">
+                          <input type="checkbox" ng-model="type.byPopulation" ng-change="onGraphTypeChange(type)">
+                          Per population
+                      </label>
+                  </div>
+              </div>
+          </div>
 
+          <div>
+            <div class="chart-container __small" ng-repeat="graph in graphs">
+              <h3 class="text-center">{{ graph.title }}</h3>
+              <div line-scatter-area-chart data="graph.data" options="graph.options" save-graph-as></div>
             </div>
-
-            <div class="section elastic" ng-repeat="graph in graphs">
-                <div class="elastic_col __shrink" style="width: 430px">
-                    <div class="chart-container">
-                        <div line-scatter-area-chart data="graph.data" options="graph.options" save-graph-as></div>
-                    </div>
-                </div>
-                <div class="elastic_col">
-                    <h3>{{ graph.title }}</h3>
-                </div>
-            </div>
+          </div>
         </div>
     </div>
 

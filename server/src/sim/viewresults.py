@@ -87,6 +87,7 @@ def viewmodels(M, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'death'
     from matplotlib.pylab import figure, plot, hold, xlabel, ylabel, xlim, ylim, legend, title, ceil, sqrt, subplot, show
     
     npops = len(M.prev.pops) # Calculate number of populations
+
     
     if onefig:
         figh = figure(figsize=(24,16), facecolor='w')

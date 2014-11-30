@@ -3,7 +3,7 @@ TEST_AUTOFIT
 
 This function tests that automatic fitting is working.
 
-Version: 2014nov27 by cliffk
+Version: 2014nov30 by cliffk
 """
 
 
@@ -12,7 +12,7 @@ print('WELCOME TO OPTIMA')
 ## Set parameters
 projectname = 'example'
 verbose = 4
-timelimit = 60
+timelimit = 10 #otherwise it's too long for the build server
 
 print('\n\n\n1. Making project...')
 from makeproject import makeproject
@@ -31,7 +31,7 @@ whichgraphs = {'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'death':[0,1], 'dx':[0,
 from viewresults import viewepiresults
 viewepiresults(D.plot.E, whichgraphs=whichgraphs, startyear=2000, endyear=2015, onefig=True, verbose=verbose)
 
-print('\n\n\n5. Running scenarios...')
+print('\n\n\n5. Running automatic fitting...')
 from autofit import autofit
 autofit(D, timelimit=timelimit, startyear=2000, endyear=2010, verbose=verbose)
 
