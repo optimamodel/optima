@@ -49,6 +49,10 @@
     @extend .txbox.__inline.__m;
     display: inline;
 
+    &.__l {
+      width: 80px
+    }
+
     &.__m {
       width: 60px
     }
