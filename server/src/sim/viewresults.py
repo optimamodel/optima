@@ -10,14 +10,14 @@ def viewepiresults(E, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'de
     npops = len(E.prev.pops) # Calculate number of populations
     
     if onefig:
-        figh = figure(figsize=(24,16))
+        figh = figure(figsize=(24,16), facecolor='w')
         figh.subplots_adjust(left=0.04) # Less space on left
         figh.subplots_adjust(right=0.99) # Less space on right
         figh.subplots_adjust(top=0.98) # Less space on bottom
         figh.subplots_adjust(bottom=0.04) # Less space on bottom
         figh.subplots_adjust(wspace=0.5) # More space between
         figh.subplots_adjust(hspace=0.5) # More space between
-        nplots = sum([whichgraphs[key][i]*[npops,1][i] for i in range(2) for key in whichgraphs.keys()])
+        nplots = sum([whichgraphs[key][i]*[npops,1][i] for i in range(2) for key in whichgraphs.keys()]) + onefig
         xyplots = ceil(sqrt(nplots))
     
     count = 0
@@ -31,7 +31,7 @@ def viewepiresults(E, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'de
                             count += 1
                             subplot(xyplots, xyplots, count)
                         else:
-                            figure()
+                            figure(facecolor='w')
                         hold(True)
                         fill_between(E.tvec, E[graph].pops[p].low, E[graph].pops[p].high, alpha=0.2, edgecolor='none')
                         plot(E.tvec, E[graph].pops[p].best, c=E.colorm, linewidth=linewidth)
@@ -39,7 +39,7 @@ def viewepiresults(E, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'de
                             scatter(E.xdata, E[graph].ydata[p], c=E.colord)
                         
                         title(E[graph].pops[p].title)
-                        legend(('Model','Data'))
+                        if not(onefig): legend(('Model','Data'))
                         xlabel(E[graph].xlabel)
                         ylabel(E[graph].pops[p].ylabel)
                         xlim(xmin=startyear, xmax=endyear)
@@ -50,7 +50,7 @@ def viewepiresults(E, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'de
                         count += 1
                         subplot(xyplots, xyplots, count)
                     else:
-                        figure()
+                        figure(facecolor='w')
                     hold(True)
                     fill_between(E.tvec, E[graph].tot.low, E[graph].tot.high, alpha=0.2, edgecolor='none')
                     plot(E.tvec, E[graph].tot.best, c=E.colorm, linewidth=linewidth)
@@ -58,12 +58,21 @@ def viewepiresults(E, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'de
                         scatter(E.xdata, E[graph].ydata, c=E.colord)
                     
                     title(E[graph].tot.title)
-                    legend(('Model','Data'))
+                    if not(onefig): legend(('Model','Data'))
                     xlabel(E[graph].xlabel)
                     ylabel(E[graph].tot.ylabel)
                     xlim(xmin=startyear, xmax=endyear)
                     ylim(ymin=0)
-
+    
+    if onefig:
+        subplot(xyplots, xyplots, count+1)
+        plot(1, 1, c=E.colorm, linewidth=linewidth, label='Model')
+        fill_between([1,2], [1,1], [2,2], alpha=0.2, edgecolor='none', label='Uncertainty')
+        scatter(0, 0, c=E.colord, label='Data')
+        xlim((0,1))
+        ylim((0,1))
+        legend()
+        
     if show_wait: show()
 
 
@@ -80,7 +89,7 @@ def viewmodels(M, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'death'
     npops = len(M.prev.pops) # Calculate number of populations
     
     if onefig:
-        figh = figure(figsize=(24,16))
+        figh = figure(figsize=(24,16), facecolor='w')
         figh.subplots_adjust(left=0.04) # Less space on left
         figh.subplots_adjust(right=0.99) # Less space on right
         figh.subplots_adjust(top=0.98) # Less space on bottom
@@ -100,7 +109,7 @@ def viewmodels(M, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'death'
                             count += 1
                             subplot(xyplots, xyplots, count)
                         else:
-                            figure()
+                            figure(facecolor='w')
                         hold(True)
                         for sim in range(M.nsims):
                             plot(M.tvec, M[graph].pops[p].data[sim], linewidth=linewidth)
@@ -117,7 +126,7 @@ def viewmodels(M, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'death'
                         count += 1
                         subplot(xyplots, xyplots, count)
                     else:
-                        figure()
+                        figure(facecolor='w')
                     hold(True)
                     for sim in range(M.nsims):
                         plot(M.tvec, M[graph].tot.data[sim], linewidth=linewidth)
@@ -142,7 +151,7 @@ def viewallocpies(plotdata, show_wait=False):
     """ Little function to plot optimization pies """
     from matplotlib.pylab import figure, pie, legend, title, subplot, show
     
-    figure(figsize=(12,4))
+    figure(figsize=(12,4), facecolor='w')
     
     subplot(1,3,1)
     pie(plotdata.pie1.val)

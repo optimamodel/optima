@@ -16,18 +16,11 @@ def makedatapars(D, verbose=2):
     from printv import printv
     from bunch import Bunch as struct # Replicate Matlab-like structure behavior
     from numpy import array, isnan, zeros, shape, mean, arange
+    from utils import sanitize
     printv('Converting data to parameters...', 1, verbose)
     
     
-    def sanitize(arraywithnans):
-        """ Sanitize input to remove NaNs. Warning, does not work on multidimensional data!! """
-        arraywithnans = array(arraywithnans) # Make sure it's an array
-        sanitized = arraywithnans[~isnan(arraywithnans)]
-        if len(sanitized)==0:
-                sanitized = 0
-                print('                WARNING, no data entered for this parameter, assuming 0')
-
-        return sanitized
+    
         
     
     def data2par(dataarray, usetime=False):
