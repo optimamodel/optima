@@ -180,15 +180,16 @@
 
           </div>
 
-          <div class="section elastic" ng-repeat="graph in graphs">
-            <div class="elastic_col __shrink" style="width: 430px">
+          <div class="section" ng-repeat="graph in graphs">
+            <div>
+              <h3>{{ graph.title }}</h3>
+            </div>
+            <div style="width: 746px">
               <div class="chart-container">
                 <div line-scatter-area-chart data="graph.data" options="graph.options" save-graph-as></div>
               </div>
             </div>
-            <div class="elastic_col">
-              <h3>{{ graph.title }}</h3>
-            </div>
+
           </div>
         </div>
     </div>
