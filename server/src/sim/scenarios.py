@@ -83,7 +83,7 @@ def defaultscenarios(D, verbose=2):
     """ Define a list of default scenarios """
     
     # Start at the very beginning, a very good place to start :)
-    scenariolist = [struct() for s in range(2)]
+    scenariolist = [struct() for s in range(3)]
     
     scenariolist[0].name = 'Current conditions'
     scenariolist[0].pars = [] # No changes
@@ -118,6 +118,15 @@ def defaultscenarios(D, verbose=2):
     scenariolist[1].pars[3].endyear = 2015
     scenariolist[1].pars[3].startval = 0.99
     scenariolist[1].pars[3].endval = 0.99
+    
+    scenariolist[2].name = 'No needle sharing'
+    scenariolist[2].pars = [struct()]
+    scenariolist[2].pars[0].names = ['sharing']
+    scenariolist[2].pars[0].pops = 2
+    scenariolist[2].pars[0].startyear = 2000
+    scenariolist[2].pars[0].endyear = 2015
+    scenariolist[2].pars[0].startval = 0.0
+    scenariolist[2].pars[0].endval = 0.0
     
     return scenariolist
 
