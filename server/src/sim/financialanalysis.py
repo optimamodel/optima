@@ -137,4 +137,5 @@ def financialanalysis(D, sim = D, yscale = 'abs'):
     # Get financial commitments
     return sim, plotdata
     
-sim, plotdata = financialanalysis(D, sim = D, yscale = 'abs')
+#example
+#sim, plotdata = financialanalysis(D, sim = D, yscale = 'abs')
