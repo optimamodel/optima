@@ -1,8 +1,7 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
-  module.controller('ProjectCreateController', function ($scope, $state, $modal, $timeout,
-    activeProject, DEFAULT_PROGRAMS, DEFAULT_POPULATIONS) {
+  module.controller('ProjectCreateController', function ($scope, $state, $modal, $timeout, activeProject, DEFAULT_PROGRAMS, DEFAULT_POPULATIONS) {
 
     $scope.projectParams = {
       name: ''
@@ -12,7 +11,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.programs = DEFAULT_PROGRAMS;
 
     // Helper function to open a population modal
-    var openPopulationModal = function(population) {
+    var openPopulationModal = function (population) {
       return $modal.open({
         templateUrl: 'js/modules/project/create-population-modal.html',
         controller: 'ProjectCreatePopulationModalController',
@@ -25,11 +24,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     /*
-    * Creates a new population and opens a modal for editing.
-    *
-    * The entry is only pushed to the list of populations if editing in the modal
-    * ended with a successful save.
-    */
+     * Creates a new population and opens a modal for editing.
+     *
+     * The entry is only pushed to the list of populations if editing in the modal
+     * ended with a successful save.
+     */
     $scope.openAddPopulationModal = function ($event) {
       if ($event) {
         $event.preventDefault();
@@ -44,8 +43,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     /*
-    * Opens a modal for editing an existing population.
-    */
+     * Opens a modal for editing an existing population.
+     */
     $scope.openEditPopulationModal = function ($event, population) {
       if ($event) {
         $event.preventDefault();
@@ -59,11 +58,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     /*
-    * Makes a copy of an existing population and opens a modal for editing.
-    *
-    * The entry is only pushed to the list of populations if editing in the
-    * modal ended with a successful save.
-    */
+     * Makes a copy of an existing population and opens a modal for editing.
+     *
+     * The entry is only pushed to the list of populations if editing in the
+     * modal ended with a successful save.
+     */
     $scope.copyPopulationAndOpenModal = function ($event, existingPopulation) {
       if ($event) {
         $event.preventDefault();
@@ -78,7 +77,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     // Helper function to open a program modal
-    var openProgramModal = function(program) {
+    var openProgramModal = function (program) {
       return $modal.open({
         templateUrl: 'js/modules/project/create-program-modal.html',
         controller: 'ProjectCreateProgramModalController',
@@ -91,11 +90,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     /*
-    * Creates a new program and opens a modal for editing.
-    *
-    * The entry is only pushed to the list of programs if editing in the modal
-    * ended with a successful save.
-    */
+     * Creates a new program and opens a modal for editing.
+     *
+     * The entry is only pushed to the list of programs if editing in the modal
+     * ended with a successful save.
+     */
     $scope.openAddProgramModal = function ($event) {
       if ($event) {
         $event.preventDefault();
@@ -110,8 +109,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     /*
-    * Opens a modal for editing an existing program.
-    */
+     * Opens a modal for editing an existing program.
+     */
     $scope.openEditProgramModal = function ($event, program) {
       if ($event) {
         $event.preventDefault();
@@ -151,7 +150,17 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       return _(collection).chain()
         .where({ active: true })
         .map(function (item) {
-          return _(item).omit(['active', '$$hashKey']);
+          var cl = _(item).omit(['active', '$$hashKey']);
+          if (cl.parameters) {
+            cl.parameters = _(cl.parameters).chain()
+              .where({ active: true })
+              .map(function (param) {
+                return _(param).omit(['active', '$$hashKey'])
+              })
+              .value();
+            if (cl.parameters == 0) delete cl.parameters;
+          }
+          return cl;
         })
         .value();
     };
@@ -180,7 +189,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       // Hack to wait for the project to be created.
       // There is not easy way to intercept the completion of the form submission...
-      $timeout(function () { $state.go('home'); }, 3000);
+      $timeout(function () {
+        $state.go('home');
+      }, 3000);
 
       return true;
     };
