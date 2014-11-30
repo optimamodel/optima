@@ -19,7 +19,8 @@ define(['./module', 'underscore'], function (module, _) {
 
       $scope.coParams = [];
 
-      $scope.apiData = null;
+      $scope.effectNames = null;
+      $scope.hasCostCoverResponse = false;
 
       // model parameters
       $scope.saturationCoverageLevel = 0.9;
@@ -174,8 +175,8 @@ define(['./module', 'underscore'], function (module, _) {
       }
     };
 
-    var setUpCOParamsFromEffects = function (effectnames) {
-      $scope.coParams = _(effectnames).map(function (effect) {
+    var setUpCOParamsFromEffects = function (effectNames) {
+      $scope.coParams = _(effectNames).map(function (effect) {
         return [
           effect[2][0][0],
           effect[2][0][1],
@@ -212,9 +213,10 @@ define(['./module', 'underscore'], function (module, _) {
     var retrieveAndUpdateGraphs = function (model) {
       $http.post('/api/model/costcoverage', model).success(function (response) {
         if (response.status === 'OK') {
-          $scope.apiData = response;
-
+          $scope.effectNames = response.effectnames;
           setUpCOParamsFromEffects(response.effectnames);
+          $scope.hasCostCoverResponse = true;
+
 
           resetGraphs();
           _(plotTypes).each(function (plotType) {
@@ -222,6 +224,13 @@ define(['./module', 'underscore'], function (module, _) {
           });
         }
       });
+    };
+
+    /**
+      * Returns a joined string of the provided effectNames.
+      */
+    $scope.beautifulEffectNames = function(effectNames) {
+      return effectNames[0].join(', ');
     };
 
     /**
@@ -273,7 +282,7 @@ define(['./module', 'underscore'], function (module, _) {
           $scope.fundingNeededMaxValue
         ]).map(parseFloat),
         coparams: _($scope.coParams[graphIndex]).map(parseFloat),
-        effectname: $scope.apiData.effectnames[graphIndex]
+        effectname: $scope.effectNames[graphIndex]
       }).success(function (response) {
         $scope.graphs.plotdata[graphIndex] = setUpPlotdataGraph(response.plotdata);
         $scope.graphs.plotdata_co[graphIndex] = setUpPlotdataGraph(response.plotdata_co);
