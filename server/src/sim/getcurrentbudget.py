@@ -3,7 +3,7 @@ def getcurrentbudget(D, alloc=None):
     Purpose: get the parameters corresponding to a given allocation. If no allocation is specified, this function also estimates the current budget
     Inputs: D, alloc (optional)
     Returns: D
-    Version: 2014nov29
+    Version: 2014nov30
     """
     from makeccocs import ccoeqn, makesamples
     import numpy as np
@@ -17,7 +17,7 @@ def getcurrentbudget(D, alloc=None):
 
 
     # Initialise currentbudget if needed
-    if not alloc:
+    if alloc==None:
         currentbudget = []
 
     # Loop over programs
@@ -34,7 +34,7 @@ def getcurrentbudget(D, alloc=None):
             
             # Do this if it's a saturating program
             if D.data.meta.progs.saturating[prognumber]:
-                if alloc:
+                if not(alloc==None):
                     totalcost = alloc[prognumber]
                 else:
                     totalcost = D.data.costcov.cost[prognumber]
@@ -72,7 +72,7 @@ def getcurrentbudget(D, alloc=None):
 
                 D.P[effectname[0][1]].c[0] = D.programs[progname][effectnumber][-1][0]
 
-        if not alloc:
+        if alloc==None:
             currentbudget.append(totalcost)
             D.data.meta.progs.currentbudget = currentbudget
 
