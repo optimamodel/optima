@@ -59,63 +59,225 @@ define(['./module'], function (module) {
   var DEFAULT_PROGRAMS = [
     {
       active: false, internal_name: "COND", short_name: "Condoms",
-      name: "Condom promotion and distribution", saturating: true
+      name: "Condom promotion and distribution", saturating: true,
+      parameters: [
+        {
+          active: true,
+          name: 'Condom usage probability, regular partnerships',
+          value: { 'signature': ['condom', 'reg'], 'pops': [] }
+        },
+        {
+          active: true,
+          name: ' Condom usage probability, casual partnerships',
+          value: { 'signature': ['condom', 'cas'], 'pops': [] }
+        }
+      ]
     },
     {
       active: false, internal_name: "SBCC", short_name: "SBCC",
-      name: "Social and behavior change communication", saturating: true
+      name: "Social and behavior change communication", saturating: true,
+      parameters: [
+        {
+          active: true,
+          name: 'Condom usage probability, regular partnerships',
+          value: { 'signature': ['condom', 'reg'], 'pops': [] }
+        },
+        {
+          active: true,
+          name: ' Condom usage probability, casual partnerships',
+          value: { 'signature': ['condom', 'cas'], 'pops': [] }
+        }
+      ]
     },
     {
       active: false, internal_name: "STI", short_name: "STI",
-      name: "Diagnosis and treatment of sexually transmitted infections", saturating: true
+      name: "Diagnosis and treatment of sexually transmitted infections", saturating: true,
+      parameters: [
+        {
+          active: true,
+          name: 'Discharging STI prevalence',
+          value: {'signature': ['stiprevdis'], 'pops': []}
+        },
+        {
+          active: true,
+          name: 'Ulcerative STI prevalence',
+          value: {'signature': ['stiprevulc'], 'pops': []}
+        }
+      ]
     },
     {
       active: false, internal_name: "VMMC", short_name: "VMMC",
-      name: "Voluntary medical male circumcision", saturating: false
+      name: "Voluntary medical male circumcision", saturating: false,
+      parameters: [
+        {
+          active: true,
+          name: 'Number of circumcisions performed per year',
+          value: {'signature': ['numcircum'], 'pops': []}
+        }
+      ]
     },
     {
       active: false, internal_name: "CT", short_name: "Cash transfers",
-      name: "Cash transfers for HIV risk reduction", saturating: true
+      name: "Cash transfers for HIV risk reduction", saturating: true,
+      parameters: [
+        {
+          active: true,
+          name: 'Number of acts per person per year, regular',
+          value: {'signature': ['numacts', 'reg'], 'pops': []}
+        },
+        {
+          active: true,
+          name: 'Number of acts per person per year, casual',
+          value: {'signature': ['numacts', 'cas'], 'pops': []}
+        }
+      ]
     },
     {
       active: false, internal_name: "FSWP", short_name: "FSW programs",
-      name: "Programs for female sex workers and clients", saturating: true
+      name: "Programs for female sex workers and clients", saturating: true,
+      parameters: [
+        {
+          active: true,
+          name: 'Condom usage probability, commercial partnerships',
+          value: { 'signature': ['condom', 'com'], 'pops': ['FSW'] }
+        },
+        {
+          active: true,
+          name: 'Condom usage probability, commercial partnerships',
+          value: { 'signature': ['condom', 'com'], 'pops': ['CSW'] }
+        },
+        {
+          active: true,
+          name: 'HIV testing rates',
+          value: { 'signature': ['hivtest'], 'pops': ['FSW'] }
+        }
+      ]
     },
     {
       active: false, internal_name: "MSMP", short_name: "MSM programs",
-      name: "Programs for men who have sex with men", saturating: true
+      name: "Programs for men who have sex with men", saturating: true,
+      parameters: [
+        {
+          active: true,
+          name: 'Condom usage probability, regular partnerships',
+          value: {'signature': ['condom', 'reg'], 'pops': ['MSM']}
+        },
+        {
+          active: true,
+          name: 'Condom usage probability, casual partnerships',
+          value: {'signature': ['condom', 'cas'], 'pops': ['MSM']}
+        }
+      ]
     },
     {
       active: false, internal_name: "PWIDP", short_name: "PWID programs",
-      name: "Programs for people who inject drugs", saturating: true
+      name: "Programs for people who inject drugs", saturating: true,
+      parameters: [
+        {
+          active: true,
+          name: 'HIV testing rates',
+          value: {'signature': ['hivtest'], pops: ['PWID']}
+        },
+        {
+          active: true,
+          name: 'Condom usage probability, regular partnerships',
+          value: {'signature': ['condom', 'reg'], pops: ['PWID']}
+        },
+        {
+          active: true,
+          name: 'Condom usage probability, casual partnerships',
+          value: {'signature': ['condom', 'cas'], pops: ['PWID']}
+        }
+      ]
+
     },
     {
       active: false, internal_name: "OST", short_name: "OST",
-      name: "Opiate substitution therapy", saturating: false
+      name: "Opiate substitution therapy", saturating: false,
+      parameters: [
+        {
+          active: true,
+          name: 'Number of people on OST',
+          value: {'signature': ['numost'], 'pops': []}
+        }
+      ]
+
     },
     {
       active: false, internal_name: "NSP", short_name: "NSP",
-      name: "Needle-syringe program", saturating: true
+      name: "Needle-syringe program", saturating: true,
+      parameters: [
+        {
+          active: true,
+          name: 'Needle-syringe sharing rate',
+          value: {'signature': ['sharing'], 'pops': []}
+        }
+      ]
+
     },
     {
       active: false, internal_name: "PREP", short_name: "PrEP",
-      name: "Pre-exposure prophylaxis/microbicides", saturating: true
+      name: "Pre-exposure prophylaxis/microbicides", saturating: true,
+      parameters: [
+        {
+          active: true,
+          name: 'PrEP prevalence',
+          value: {'signature': ['prep'], 'pops': []}
+        }
+      ]
+
     },
     {
       active: false, internal_name: "PEP", short_name: "PEP",
-      name: "Post-exposure prophylaxis", saturating: true
+      name: "Post-exposure prophylaxis", saturating: true,
+      parameters: [
+        {
+          active: true,
+          name: 'PEP prevalence',
+          value: {'signature': ['pep'], 'pops': []}
+        }
+      ]
+
     },
     {
       active: false, internal_name: "HTC", short_name: "HTC",
-      name: "HIV testing and counseling", saturating: true
+      name: "HIV testing and counseling", saturating: true,
+      parameters: [
+        {
+          active: true,
+          name: 'HIV testing rates',
+          value: {'signature': ['hivtest'], 'pops': []}
+        }
+      ]
+
     },
     {
       active: false, internal_name: "ART", short_name: "ART",
-      name: "Antiretroviral therapy", saturating: false
+      name: "Antiretroviral therapy", saturating: false,
+      parameters: [
+        {
+          active: true,
+          name: 'Number of people on 1st-line treatment',
+          value: {'signature': ['tx1'], 'pops': []}
+        },
+        {
+          active: true,
+          name: 'Number of people on 2nd-line treatment',
+          value: {'signature': ['tx2'], 'pops': []}
+        }
+      ]
+
     },
     {
       active: false, internal_name: "PMTCT", short_name: "PMTCT",
-      name: "Prevention of mother-to-child transmission", saturating: false
+      name: "Prevention of mother-to-child transmission", saturating: false,
+      parameters: [
+        {
+          active: true,
+          name: 'Number of women on PMTCT',
+          value: {'signature': ['numpmtct'], 'pops': []}
+        }
+      ]
     },
     {
       active: false, internal_name: "CARE", short_name: "Other care",
