@@ -3,7 +3,7 @@ def getcurrentbudget(D):
     Purpose: get the current budget and the corresponding parameters
     Inputs: D
     Returns: D
-    Version: 2014nov28
+    Version: 2014nov29
     """
     from makeccocs import ccoeqn, makesamples
     import numpy as np
@@ -12,8 +12,9 @@ def getcurrentbudget(D):
     for param in D.P.keys():
         if isinstance(D.P[param], dict):
             if 'p' in D.P[param].keys():
-                D.P[param].c = D.P[param].p.copy()
+                D.P[param].c = np.zeros(np.size(np.array(D.P[param].p),0))
                 D.P[param].c[D.P[param].c>=0] = float('nan')
+
 
     # Initialise currentbudget
     currentbudget = []

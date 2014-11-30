@@ -155,9 +155,9 @@ def loadworkbook(filename='example.xlsx',verbose=2):
                         if thispar=='pops':
                             data[name][thispar].male = [] # Store whether or not this population is male
                             data[name][thispar].female = [] # Store whether or not this population is female
+                            data[name][thispar].injects = [] # Store whether or not this population injects drugs
                             data[name][thispar].hetero = [] # Store whether or not this population is heterosexual
                             data[name][thispar].homo = [] # Store whether or not this population is homosexual 
-                            data[name][thispar].injects = [] # Store whether or not this population injects drugs
                             data[name][thispar].sexworker = [] # Store whether or not this population is a sex worker
                             data[name][thispar].client = [] # Store whether or not this population is a client of sex workers
                         if thispar=='progs':
@@ -196,9 +196,9 @@ def loadworkbook(filename='example.xlsx',verbose=2):
                             if thispar=='pops':
                                 data[name][thispar].male.append(thesedata[3])
                                 data[name][thispar].female.append(thesedata[4])
-                                data[name][thispar].hetero.append(thesedata[5])
-                                data[name][thispar].homo.append(thesedata[6])
-                                data[name][thispar].injects.append(thesedata[7])
+                                data[name][thispar].injects.append(thesedata[5])
+                                data[name][thispar].hetero.append(thesedata[6])
+                                data[name][thispar].homo.append(thesedata[7])
                                 data[name][thispar].sexworker.append(thesedata[8])
                                 data[name][thispar].client.append(thesedata[9])
                             if thispar=='progs':
