@@ -12,6 +12,7 @@ print('WELCOME TO OPTIMA')
 ## Set parameters
 projectname = 'example'
 verbose = 4
+timelimit = 60
 
 print('\n\n\n1. Making project...')
 from makeproject import makeproject
@@ -32,7 +33,7 @@ viewepiresults(D.plot.E, whichgraphs=whichgraphs, startyear=2000, endyear=2015, 
 
 print('\n\n\n5. Running scenarios...')
 from autofit import autofit
-autofit(D, timelimit=60, startyear=2000, endyear=2015, verbose=verbose)
+autofit(D, timelimit=timelimit, startyear=2000, endyear=2010, verbose=verbose)
 
 print('\n\n\n6. Viewing scenarios...')
 viewepiresults(D.plot.E, whichgraphs=whichgraphs, startyear=2000, endyear=2015, onefig=True, verbose=verbose)
