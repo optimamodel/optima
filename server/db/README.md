@@ -3,6 +3,16 @@ This is a database migration repository.
 More information at
 http://code.google.com/p/sqlalchemy-migrate/
 
+Setup Database
+------------
+
+For the development environment setup Optima needs to use a Postgres database created using:
+
+- name: `optima`
+- host: `localhost`
+- port: `5432`
+- username: `optima`
+- password: `optima`
 
 Setup Migrations
 ------------

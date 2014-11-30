@@ -96,3 +96,13 @@ directory and run:
 Check `p.conf` and `p-compiled.conf` for Protractor settings.
 
 Checkout [Protractor docs](https://github.com/angular/protractor/blob/master/docs/) for more information.
+
+
+User login
+-------------
+
+In order to use the application you need to login a registered user. In order to register a new user visit the endpoint: 
+
+`http://optima.dev/#/register` 
+
+and you'll be able to add yours
