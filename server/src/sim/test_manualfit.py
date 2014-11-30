@@ -39,14 +39,24 @@ viewepiresults(D.plot.E, whichgraphs=whichgraphs, startyear=2000, endyear=2015, 
 
 
 print('\n\n\n4. Setting up manual fitting...')
-from numpy import array
+from numpy import array, zeros
 
-F = D.F[0]
-F.force = array(F.force) * 0.0
-
+F = []
 Plist = []
-
 Mlist = []
+
+## Change F
+#F = D.F[0]
+#F.force = array(F.force) * 0.5
+#
+## Some changes to improve MSM fitting
+#Plist = [{'name':['const','trans','mmi'], 'data':5e-4}, \
+#         {'name':['const','trans','mmr'], 'data':1e-3}]
+
+# Artifical change just to demonstrate changing M
+tmp = zeros((D.G.npops, len(D.opt.tvec)))
+for p in range(D.G.npops): tmp[p,:] = 200+(D.opt.tvec-2000)*200
+Mlist = [{'name':['numacts','com'], 'data':tmp}]
 
 
 print('\n\n\n5. Running manual fitting...')
