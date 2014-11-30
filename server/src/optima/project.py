@@ -5,12 +5,13 @@ import os
 import traceback
 from sim.dataio import upload_dir_user, DATADIR, TEMPLATEDIR
 from sim.updatedata import updatedata
-from sim.makeproject import makeproject
+from sim.makeproject import makeproject, makeworkbook
 from utils import allowed_file, project_exists, project_file_exists, delete_project_file, delete_spreadsheet
-from utils import check_project_name, load_model, save_model
+from utils import check_project_name, load_model, save_model, report_exception
 from flask.ext.login import login_required, current_user
 from dbconn import db
 from dbmodels import ProjectDb
+from utils import BAD_REPLY
 
 """ route prefix: /api/project """
 project = Blueprint('project',  __name__, static_folder = '../static')
@@ -42,7 +43,6 @@ def createProject(project_name):
 #    data = dict([(x,int(y)) for (x,y) in data.items()])
     print(data)
     makeproject_args = {"projectname":project_name, "savetofile":False}
-    name = project_name
     if data.get('datastart'):
         datastart  = makeproject_args['datastart'] = int(data['datastart'])
     else:
@@ -82,7 +82,7 @@ def createProject(project_name):
         
         # See if there is matching project
         try:
-            proj = ProjectDb.query.filter_by(user_id=cu.id, name=name).first()
+            proj = ProjectDb.query.filter_by(user_id=cu.id, name=project_name).first()
         except:
             proj = None
         
@@ -97,7 +97,7 @@ def createProject(project_name):
             print('Updating existing project %s' % proj.name)
         else:
             # create new project
-            proj = ProjectDb(name, cu.id, datastart, dataend, econ_datastart, econ_dataend, programs, populations)
+            proj = ProjectDb(project_name, cu.id, datastart, dataend, econ_datastart, econ_dataend, programs, populations)
             print('Creating new project: %s' % proj.name)
 
     #    makeproject_args = dict(makeproject_args.items() + data.items())
@@ -138,6 +138,32 @@ def openProject(project_name):
     else:
         return redirect(url_for('site'))
 
+"""
+Generates workbook for the project with the given name.
+"""
+@project.route('/workbook/<project_name>')
+@login_required
+@report_exception()
+#expects project name (project should already exist)
+#if project exists, regenerates workbook for it
+#if project does not exist, returns an error.
+def giveWorkbook(project_name):
+    reply = BAD_REPLY
+    proj_exists = False
+    cu = current_user
+    print("giveWorkbook(%s %s)" % (cu.id, project_name))
+    proj = ProjectDb.query.filter_by(user_id=cu.id, name=project_name).first()
+    if proj is None:
+        reply['reason']='Project %s does not exist.' % project_name
+        return jsonify(reply)
+    else:
+        D = proj.model
+        wb_name = D['G']['workbookname']
+        makeworkbook(wb_name, proj.populations, proj.programs, int(proj.datastart), int(proj.dataend), \
+            int(proj.econ_datastart), int(proj.econ_dataend))
+        print("project %s template: %s" % (proj.name, wb_name))
+        (dirname, basename) = (upload_dir_user(TEMPLATEDIR), wb_name)
+        return helpers.send_from_directory(dirname, basename)
 
 @project.route('/info')
 @login_required
@@ -212,30 +238,25 @@ Deletes the given project (and eventually, corresponding excel files)
 """
 @project.route('/delete/<project_name>', methods=['DELETE'])
 @login_required
+@report_exception()
 def deleteProject(project_name):
     print("deleteProject %s" % project_name)
-    try:
-        delete_project_file(project_name)
-        print("project file %s deleted" % project_name)
-        delete_spreadsheet(project_name)
-        print("spreadsheets for %s deleted" % project_name)
-        # Get current user 
-        cu = current_user
-        if cu.is_anonymous() == False:
-        
-            # Get project row for current user with project name
-            db.session.query(ProjectDb).filter_by(user_id= cu.id,name=project_name).delete()
+    delete_project_file(project_name)
+    print("project file %s deleted" % project_name)
+    delete_spreadsheet(project_name)
+    print("spreadsheets for %s deleted" % project_name)
+    # Get current user 
+    cu = current_user
+    if cu.is_anonymous() == False:
+    
+        # Get project row for current user with project name
+        db.session.query(ProjectDb).filter_by(user_id= cu.id,name=project_name).delete()
 
-            # delete project row
+        # delete project row
 #            db.session.delete(project)
-            db.session.commit()
+        db.session.commit()
 
-        return jsonify({'status':'OK','reason':'Project %s deleted.' % project_name})
-    except Exception, err:
-        var = traceback.format_exc()
-        reply = {'status':'NOK', 'reason':'Project %s did not exist.' % project_name}
-        reply['exception'] = var
-        return jsonify(reply)
+    return jsonify({'status':'OK','reason':'Project %s deleted.' % project_name})
 
 """
 Download example Excel file.
