@@ -4,7 +4,7 @@
     <div class="6">
       <label>
         Select a program: <br>
-        <select class="txbox" ng-options="p as p.name for p in programs" ng-model="activeProgram"></select>
+        <select class="txbox" ng-options="p as p.name for p in programs" ng-model="selectedProgram"></select>
       </label>
     </div>
   </div>
@@ -17,11 +17,12 @@
     <p>
       2. The estimated amount of funding needed to get
       <input type="number" class="txbox __inline __s" ng-model="fundingNeededPercent"> %
-      <br>
-      minimum coverage for this program is
-      <input type="number" class="txbox __inline __m" ng-model="fundingNeededMinValue">
+    </p>
+    <p>
+      3. Minimum coverage for this program is
+      <input type="number" class="txbox __inline __l" ng-model="fundingNeededMinValue">
       maximum is
-      <input type="number" class="txbox __inline __m" ng-model="fundingNeededMaxValue">
+      <input type="number" class="txbox __inline __l" ng-model="fundingNeededMaxValue">
     </p>
   </div>
 
@@ -31,29 +32,29 @@
     <button class="btn" ng-click="revertModel()">Revert Model</button>
   </div>
 
-  <div class="section" ng-if="apiData">
+  <div class="section" ng-if="hasCostCoverResponse">
 
     <div class="section">
-      <h1>{{ activeProgram.name }}</h1>
+      <h1>{{ displayedProgram.name }}</h1>
       <div class="chart-container" style="width: 470px">
-        <div line-scatter-chart data="graphs.plotdata_cc.data" options="graphs.plotdata_cc.options"></div>
+        <div line-scatter-chart data="graphs.plotdata_cc.data" options="graphs.plotdata_cc.options" save-graph-as></div>
       </div>
     </div>
 
     <div class="section" ng-repeat="graph in graphs.plotdata">
 
-      <h2 class="section">{{ apiData.effectnames[$index][0].join(' ') }}</h2>
+      <h2 class="section">{{ beautifulEffectNames(effectNames[$index]) }}</h2>
 
       <div class="section elastic">
         <div class="elastic_col __shrink" style="width: 320px">
           <div class="chart-container" ng-init="coGraph = graphs.plotdata_co[$index]">
-            <div line-scatter-chart data="coGraph.data" options="coGraph.options"></div>
+            <div line-scatter-chart data="coGraph.data" options="coGraph.options" save-graph-as></div>
           </div>
         </div>
 
         <div class="elastic_col" style="width: 340px">
           <div class="chart-container">
-            <div line-scatter-chart data="graph.data" options="graph.options"></div>
+            <div line-scatter-chart data="graph.data" options="graph.options" save-graph-as></div>
           </div>
         </div>
 

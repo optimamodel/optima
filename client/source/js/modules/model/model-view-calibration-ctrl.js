@@ -3,32 +3,48 @@ define(['./module', 'underscore'], function (module, _) {
 
   module.controller('ModelViewCalibrationController', function ($scope, $http, meta) {
 
-    /* Initialization
-     ================ */
-    $scope.meta = meta;
+    var plotTypes;
 
-    $scope.programs = _(meta.progs.long).map(function (name, index) {
-      return {
-        name: name,
-        acronym: meta.progs.code[index]
+    var initialize =function () {
+      $scope.meta = meta;
+
+      $scope.programs = _(meta.progs.long).map(function (name, index) {
+        return {
+          name: name,
+          acronym: meta.progs.code[index]
+        };
+      });
+
+      $scope.selectedProgram = $scope.programs[0];
+      $scope.displayedProgram = null;
+
+      $scope.coParams = [];
+
+      $scope.effectNames = null;
+      $scope.hasCostCoverResponse = false;
+
+      // model parameters
+      $scope.saturationCoverageLevel = 0.9;
+      $scope.fundingNeededPercent = 0.2;
+      $scope.fundingNeededMinValue = 800000;
+      $scope.fundingNeededMaxValue = 7000000;
+      $scope.behaviorWithoutMin = 0.3;
+      $scope.behaviorWithoutMax = 0.5;
+      $scope.behaviorWithMin = 0.7;
+      $scope.behaviorWithMax = 0.9;
+
+      plotTypes = ['plotdata', 'plotdata_cc', 'plotdata_co'];
+
+      resetGraphs();
+    };
+
+    var resetGraphs= function () {
+      $scope.graphs = {
+        plotdata: [],
+        plotdata_cc: [],
+        plotdata_co: []
       };
-    });
-
-    $scope.activeProgram = $scope.programs[0];
-
-    $scope.coParams = [];
-
-    $scope.apiData = null;
-
-    // model parameters
-    $scope.saturationCoverageLevel = 0.9;
-    $scope.fundingNeededPercent = 0.2;
-    $scope.fundingNeededMinValue = 800000;
-    $scope.fundingNeededMaxValue = 7000000;
-    $scope.behaviorWithoutMin = 0.3;
-    $scope.behaviorWithoutMax = 0.5;
-    $scope.behaviorWithMin = 0.7;
-    $scope.behaviorWithMax = 0.9;
+    };
 
     var getLineScatterOptions = function (options, xLabel, yLabel) {
       var defaults = {
@@ -57,12 +73,6 @@ define(['./module', 'underscore'], function (module, _) {
       return _(angular.copy(defaults)).extend(options);
     };
 
-    $scope.graphs = {
-      plotdata: [],
-      plotdata_cc: [],
-      plotdata_co: []
-    };
-
     /* Methods
      ========= */
 
@@ -78,7 +88,7 @@ define(['./module', 'underscore'], function (module, _) {
           width: 300,
           height: 200,
           margin: {
-            top: 10,
+            top: 20,
             right: 5,
             bottom: 40,
             left: 60
@@ -120,6 +130,36 @@ define(['./module', 'underscore'], function (module, _) {
       return graph;
     };
 
+
+    /**
+     * Generates ready to plot graph for a cost coverage.
+     */
+    var prepareCostCoverageGraph = function (data) {
+      var graph = {
+        options: getLineScatterOptions({}, data.xlabel, data.ylabel),
+        data: {
+          // there is a single line for that type
+          lines: [[]],
+          scatter: []
+        }
+      };
+
+      _(data.xlinedata).each(function (x, index) {
+        var y = data.ylinedata;
+        graph.data.lines[0].push([x, y[index]]);
+      });
+
+      _(data.xscatterdata).each(function (x, index) {
+        var y = data.yscatterdata;
+
+        if (y[index]) {
+          graph.data.scatter.push([x, y[index]]);
+        }
+      });
+
+      return graph;
+    };
+
     /**
      * Receives graphs data with plot type to calculate,
      * calculates all graphs of given type and writes them to $scope.graphs[type]
@@ -127,33 +167,8 @@ define(['./module', 'underscore'], function (module, _) {
      * @param type - string
      */
     var prepareGraphsOfType = function (data, type) {
-      var graph;
-
       if (type === 'plotdata_cc') {
-        graph = {
-          options: getLineScatterOptions({}, data.xlabel, data.ylabel),
-          data: {
-            // there is a single line for that type
-            lines: [[]],
-            scatter: []
-          }
-        };
-
-        _(data.xlinedata).each(function (x, index) {
-          var y = data.ylinedata;
-          graph.data.lines[0].push([x, y[index]]);
-        });
-
-        _(data.xscatterdata).each(function (x, index) {
-          var y = data.yscatterdata;
-
-          if (y[index]) {
-            graph.data.scatter.push([x, y[index]]);
-          }
-        });
-
-        $scope.graphs[type] = graph;
-
+        $scope.graphs[type] = prepareCostCoverageGraph(data);
       } else if (type === 'plotdata' || type === 'plotdata_co') {
         _(data).each(function (graphData) {
           $scope.graphs[type].push(setUpPlotdataGraph(graphData));
@@ -161,8 +176,8 @@ define(['./module', 'underscore'], function (module, _) {
       }
     };
 
-    var setUpCOParamsFromEffects = function (effectnames) {
-      $scope.coParams = _(effectnames).map(function (effect) {
+    var setUpCOParamsFromEffects = function (effectNames) {
+      $scope.coParams = _(effectNames).map(function (effect) {
         return [
           effect[2][0][0],
           effect[2][0][1],
@@ -172,9 +187,12 @@ define(['./module', 'underscore'], function (module, _) {
       });
     };
 
-    $scope.generateCurves = function () {
-      $http.post('/api/model/costcoverage', {
-        progname: $scope.activeProgram.acronym,
+    /**
+     * Returns the current parameterised plot model.
+     */
+    var getPlotModel = function() {
+      return {
+        progname: $scope.selectedProgram.acronym,
         ccparams: [
           $scope.saturationCoverageLevel,
           $scope.fundingNeededPercent,
@@ -187,75 +205,64 @@ define(['./module', 'underscore'], function (module, _) {
           $scope.behaviorWithMin,
           $scope.behaviorWithMax
         ]
-      }).success(function (response) {
+      };
+    };
+
+    /**
+     * Retrieve and update graphs based on the provided plot models.
+     */
+    var retrieveAndUpdateGraphs = function (model) {
+      $http.post('/api/model/costcoverage', model).success(function (response) {
         if (response.status === 'OK') {
-          $scope.apiData = response;
-
+          $scope.displayedProgram = angular.copy($scope.selectedProgram);
+          $scope.effectNames = response.effectnames;
           setUpCOParamsFromEffects(response.effectnames);
+          $scope.hasCostCoverResponse = true;
 
-          _(['plotdata', 'plotdata_cc', 'plotdata_co']).each(function (prop) {
-            prepareGraphsOfType(response[prop], prop);
+
+          resetGraphs();
+          _(plotTypes).each(function (plotType) {
+            prepareGraphsOfType(response[plotType], plotType);
           });
         }
       });
     };
 
+    /**
+      * Returns a joined string of the provided effectNames.
+      */
+    $scope.beautifulEffectNames = function(effectNames) {
+      return effectNames[0].join(', ');
+    };
+
+    /**
+     * Retrieve and update graphs based on the current plot models.
+     */
+    $scope.generateCurves = function () {
+      var model = getPlotModel();
+      retrieveAndUpdateGraphs(model);
+    };
+
+    /**
+     * Retrieve and update graphs based on the current plot models.
+     *
+     * The plot model gets saved in the backend.
+     */
     $scope.saveModel = function () {
-      $http.post('/api/model/costcoverage', {
-        progname: $scope.activeProgram.acronym,
-        ccparams: [
-          $scope.saturationCoverageLevel,
-          $scope.fundingNeededPercent,
-          $scope.fundingNeededMinValue,
-          $scope.fundingNeededMaxValue
-        ],
-        coparams: [
-          $scope.behaviorWithoutMin,
-          $scope.behaviorWithoutMax,
-          $scope.behaviorWithMin,
-          $scope.behaviorWithMax
-        ],
-        doSave: true
-      }).success(function (response) {
-        if (response.status === 'OK') {
-          $scope.apiData = response;
-
-          setUpCOParamsFromEffects(response.effectnames);
-
-          _(['plotdata', 'plotdata_cc', 'plotdata_co']).each(function (prop) {
-            prepareGraphsOfType(response[prop], prop);
-          });
-        }
-      });
+      var model = getPlotModel(model);
+      model.doSave = true;
+      retrieveAndUpdateGraphs(model);
     };
 
+    /**
+     * Retrieve and update graphs based on the current plot models.
+     *
+     * The plot model gets reverted in the backend.
+     */
     $scope.revertModel = function () {
-      $http.post('/api/model/costcoverage', {
-        progname: $scope.activeProgram.acronym,
-        ccparams: [
-          $scope.saturationCoverageLevel,
-          $scope.fundingNeededPercent,
-          $scope.fundingNeededMinValue,
-          $scope.fundingNeededMaxValue
-        ],
-        coparams: [
-          $scope.behaviorWithoutMin,
-          $scope.behaviorWithoutMax,
-          $scope.behaviorWithMin,
-          $scope.behaviorWithMax
-        ],
-        doRevert: true
-      }).success(function (response) {
-        if (response.status === 'OK') {
-          $scope.apiData = response;
-
-          setUpCOParamsFromEffects(response.effectnames);
-
-          _(['plotdata', 'plotdata_cc', 'plotdata_co']).each(function (prop) {
-            prepareGraphsOfType(response[prop], prop);
-          });
-        }
-      });
+      var model = getPlotModel(model);
+      model.doRevert = true;
+      retrieveAndUpdateGraphs(model);
     };
 
     /**
@@ -269,7 +276,7 @@ define(['./module', 'underscore'], function (module, _) {
      */
     $scope.updateCurve = function (graphIndex) {
       $http.post('/api/model/costcoverage/effect', {
-        progname: $scope.activeProgram.acronym,
+        progname: $scope.displayedProgram.acronym,
         ccparams: _([
           $scope.saturationCoverageLevel,
           $scope.fundingNeededPercent,
@@ -277,12 +284,14 @@ define(['./module', 'underscore'], function (module, _) {
           $scope.fundingNeededMaxValue
         ]).map(parseFloat),
         coparams: _($scope.coParams[graphIndex]).map(parseFloat),
-        effectname: $scope.apiData.effectnames[graphIndex]
+        effectname: $scope.effectNames[graphIndex]
       }).success(function (response) {
         $scope.graphs.plotdata[graphIndex] = setUpPlotdataGraph(response.plotdata);
         $scope.graphs.plotdata_co[graphIndex] = setUpPlotdataGraph(response.plotdata_co);
       });
     };
+
+    initialize();
 
   });
 });
