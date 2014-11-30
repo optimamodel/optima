@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 import json
 import traceback
-from optima.async_calculate import CalculatingThread
+from async_calculate import CalculatingThread, sentinel
 from sim.manualfit import manualfit
 from sim.bunch import bunchify
 from sim.runsimulation import runsimulation
@@ -22,22 +22,6 @@ def record_params(setup_state):
     app = setup_state.app
     model.config = dict([(key,value) for (key,value) in app.config.iteritems()])
 
-
-# Sentinel object used for async calculation
-sentinel = {
-    'exit': False,  # This will stop all threads
-    'projects': {}  # This will contain an entry per user project indicating if the calculating thread is running
-}
-
-def interrupt(*args):
-    print("stopping all threads")
-    sentinel['exit'] = True
-    sys.exit()
-
-for sig in (SIGABRT, SIGILL, SIGINT, SIGSEGV, SIGTERM):
-    signal(sig, interrupt)
-
-
 """
 Uses provided parameters to auto calibrate the model (update it with these data) 
 TODO: do it with the project which is currently in scope
@@ -51,12 +35,12 @@ def doAutoCalibration():
     print('data: %s' % request.data)
     data = json.loads(request.data)
 
-    prj_name = request.project_name
-    if not project_exists(prj_name):
+    project_name = request.project_name
+    if not project_exists(project_name):
         reply['reason'] = 'File for project %s does not exist' % prj_name
         return jsonify(reply)
     try:
-        if not prj_name in sentinel['projects'] or not sentinel['projects'][prj_name]:
+        if not project_name in sentinel['projects'] or not sentinel['projects'][project_name]:
             args = {}
             startyear = data.get("startyear")
             if startyear:
@@ -67,13 +51,15 @@ def doAutoCalibration():
             timelimit = int(data.get("timelimit")) # for the thread
             args["timelimit"] = 10 # for the autocalibrate function
 
-            CalculatingThread(db.engine, sentinel, current_user, prj_name, timelimit, autofit, args).start()
-            msg = "Starting thread for user %s project %s" % (current_user.name, prj_name)
-            return json.dumps({"status":"OK", "result": msg})
+            CalculatingThread(db.engine, sentinel, current_user, project_name, timelimit, autofit, args).start()
+            msg = "Starting thread for user %s project %s" % (current_user.name, project_name)
+            return json.dumps({"status":"OK", "result": msg, "join":True})
         else:
+            current_calculation = sentinel['projects'][project_name]
             print('sentinel object: %s' % sentinel)
-            msg = "Thread for user %s project %s has already started" % (current_user.name, prj_name)
-            return json.dumps({"status":"NOK", "result": msg})
+            msg = "Thread for user %s project %s (%s) has already started" % (current_user.name, project_name, current_calculation)
+            can_join = current_calculation==autofit.__name__
+            return json.dumps({"status":"OK", "result": msg, "join":can_join})
     except Exception, err:
         var = traceback.format_exc()
         return jsonify({"status":"NOK", "exception":var})
@@ -97,12 +83,14 @@ Returns the working model of project.
 @login_required
 @check_project_name
 def getWorkingModel():
+    from sim.autofit import autofit
+
     # Make sure model is calibrating
     try:
         prj_name = request.project_name
         D_dict = load_model(prj_name, working_model = True, as_bunch = False)
         result = {'graph': D_dict.get('plot',{}).get('E',{})}
-        if prj_name in sentinel['projects'] and sentinel['projects'][prj_name]:
+        if prj_name in sentinel['projects'] and sentinel['projects'][prj_name]==autofit.__name__:
             result['status'] = 'Running'
         else:
             print("no longer calibrating")
