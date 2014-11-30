@@ -4,7 +4,7 @@ TEST_OPTIMA
 While optima.py is a demonstration of everything Optima can do, this is used to
 test specific features.
 
-Version: 2014nov27 by cliffk
+Version: 2014nov30 by cliffk
 """
 
 
@@ -14,10 +14,13 @@ print('WELCOME TO OPTIMA')
 projectname = 'example'
 verbose = 4
 show_wait = False
+nsims = 10
 
 print('\n\n\n1. Making project...')
-from makeproject import makeproject
+from makeproject import makeproject, makefittedpars
 D = makeproject(projectname=projectname, pops=['']*6, progs = ['']*7, datastart=2000, dataend=2015, verbose=verbose)
+D.opt.nsims = nsims # Reset options
+D.F = makefittedpars(D.G, D.opt, verbose=verbose) # Reset the number of sims
 
 print('\n\n\n2. Updating data...')
 from updatedata import updatedata
