@@ -28,7 +28,7 @@ def autofit(D, timelimit=60, startyear=2000, endyear=2015, verbose=2):
     Forig = dict2list(D.F[0])
     
     # Run the optimization algorithm
-    Fnew, fval, exitflag, output = ballsd(errorcalc, Forig)    
+    Fnew, fval, exitflag, output = ballsd(errorcalc, Forig, timelimit=timelimit)
     
     # Update the model
     D.F[0] = list2dict(D.F, Fnew)
