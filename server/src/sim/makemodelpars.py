@@ -5,7 +5,7 @@ import math
 eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
 
 
-def makemodelpars(P, opt, withwhat='c', verbose=2):
+def makemodelpars(P, opt, withwhat='p', verbose=2):
     """
     Prepares model parameters to run the simulation.
     
@@ -27,22 +27,34 @@ def makemodelpars(P, opt, withwhat='c', verbose=2):
         Set withwhat = p if you want to use the epi data for the parameters
         Set withwhat = c if you want to use the ccoc data for the parameters
         """
+        from numpy import interp, isnan
         
         npops = len(datapar[withwhat])
         
         if npops>1:
             output = zeros((npops,npts))
             for pop in range(npops):
-                if math.isnan(datapar[withwhat][pop]): # we are trying to calculate a cost relationhip but there isn't one
-                    output[pop,:] = datapar.p[pop] # TODO: use time!
-                else:
-                    output[pop,:] = datapar[withwhat][pop] # TODO: use time!
+                if withwhat=='c' and ~isnan(datapar['c'][pop]): # Use cost relationship
+                    output[pop,:] = datapar['c'][pop] # TODO: use time!
+                else: # Use parameter
+                    if 't' in datapar.keys(): # It's a time parameter
+                        output[pop,:] = interp(tvec, datapar.t[pop], datapar.p[pop]) # Use interpolation
+                    else:
+                        output[pop,:] = datapar.p[pop]
+                
         else:
             output = zeros(npts)
-            if math.isnan(datapar[withwhat][0]): # we are trying to calculate a cost relationhip but there isn't one
-                output[:] = datapar.p[0] # TODO: use time!
-            else:
-                output[:] = datapar[withwhat][0] # TODO: use time!
+            try:
+                if withwhat=='c' and ~isnan(datapar['c'][0]): # Use cost relationship
+                    output[:] = datapar['c'][0] # TODO: use time!
+                else: # Use parameter
+                    if 't' in datapar.keys(): # It's a time parameter
+                        output[:] = interp(tvec, datapar.t[0], datapar.p[0]) # Use interpolation
+                    else:
+                        output[:] = datapar.p[0]
+            except:
+                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+
         
         return output
     

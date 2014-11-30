@@ -21,9 +21,8 @@ def manualfit(D, F={}, Plist=[], Mlist=[], startyear=2000, endyear=2015, verbose
     D = updateP(D, Plist)
     D = updateM(D, Mlist)
     if len(F):
-        if type(F)==dict: D.F = [F] # Put F in a list if it's a dict
-        elif type(F)==list: D.F = F # Take F directly if it's a list (unlikely)
-        else: raise Exception('Input argument F is neither a dictionary nor a list, you have just made a horrible, horrible mistake')
+        if type(F)==list: D.F = F # Take F directly if it's a list (unlikely)
+        else: D.F = [F] # Assume it's a dict or a bunch
 
     # Run model
     from model import model
