@@ -45,7 +45,7 @@ define(['./module', 'angular'], function (module, angular) {
     $scope.simulationOptions = {'timelimit':60};
     $scope.graphs = [];
 
-    var linescatteroptions = {
+    var lineScatterOptions = {
       height: 200,
       width: 320,
       margin: {
@@ -68,7 +68,7 @@ define(['./module', 'angular'], function (module, angular) {
       }
     };
 
-    var linescatterdata = {
+    var lineScatterData = {
       line: [],
       scatter: [],
       area: {}
@@ -121,8 +121,8 @@ define(['./module', 'angular'], function (module, angular) {
 
         if (type.total) {
           var graph = {
-            options: angular.copy(linescatteroptions),
-            data: angular.copy(linescatterdata),
+            options: angular.copy(lineScatterOptions),
+            data: angular.copy(lineScatterData),
             type: type,
             title: data.tot.title
           };
@@ -147,8 +147,8 @@ define(['./module', 'angular'], function (module, angular) {
         if (type.byPopulation && data) {
           _(data.pops).each(function (population, populationIndex) {
             var graph = {
-              options: angular.copy(linescatteroptions),
-              data: angular.copy(linescatterdata),
+              options: angular.copy(lineScatterOptions),
+              data: angular.copy(lineScatterData),
               type: type,
               title: population.title
             };
