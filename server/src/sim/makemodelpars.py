@@ -1,36 +1,10 @@
 from printv import printv
 from numpy import zeros, array, exp
 from bunch import Bunch as struct # Replicate Matlab-like structure behavior
-import math
-## WARNING need to introduce time!
-
 eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
 
-def reconcileacts(symmetricmatrix,popsize,popacts):
 
-    # Make sure the dimensions all agree
-    npop=len(popsize); # Number of populations
-    
-    for pop1 in range(npop):
-        symmetricmatrix[pop1,:]=symmetricmatrix[pop1,:]*popsize[pop1];
-    
-    # Divide by the sum of the column to normalize the probability, then
-    # multiply by the number of acts and population size to get total number of
-    # acts
-    for pop1 in range(npop):
-        symmetricmatrix[:,pop1]=popsize[pop1]*popacts[pop1]*symmetricmatrix[:,pop1] / float(eps+sum(symmetricmatrix[:,pop1]))
-    
-    # Reconcile different estimates of number of acts, which must balance
-    pshipacts=zeros((npop,npop));
-    for pop1 in range(npop):
-        for pop2 in range(npop):
-            balanced = (symmetricmatrix[pop1,pop2] * popsize[pop1] + symmetricmatrix[pop2,pop1] * popsize[pop2])/(popsize[pop1]+popsize[pop2]); # here are two estimates for each interaction; reconcile them here
-            pshipacts[pop2,pop1] = balanced/popsize[pop2]; # Divide by population size to get per-person estimate
-            pshipacts[pop1,pop2] = balanced/popsize[pop1]; # ...and for the other population
-
-    return pshipacts
-
-def makemodelpars(P, opt, withwhat='c', verbose=2):
+def makemodelpars(P, opt, withwhat='p', verbose=2):
     """
     Prepares model parameters to run the simulation.
     
@@ -52,22 +26,34 @@ def makemodelpars(P, opt, withwhat='c', verbose=2):
         Set withwhat = p if you want to use the epi data for the parameters
         Set withwhat = c if you want to use the ccoc data for the parameters
         """
+        from numpy import interp, isnan
         
         npops = len(datapar[withwhat])
         
         if npops>1:
             output = zeros((npops,npts))
             for pop in range(npops):
-                if math.isnan(datapar[withwhat][pop]): # we are trying to calculate a cost relationhip but there isn't one
-                    output[pop,:] = datapar.p[pop] # TODO: use time!
-                else:
-                    output[pop,:] = datapar[withwhat][pop] # TODO: use time!
+                if withwhat=='c' and ~isnan(datapar['c'][pop]): # Use cost relationship
+                    output[pop,:] = datapar['c'][pop] # TODO: use time!
+                else: # Use parameter
+                    if 't' in datapar.keys(): # It's a time parameter
+                        output[pop,:] = interp(tvec, datapar.t[pop], datapar.p[pop]) # Use interpolation
+                    else:
+                        output[pop,:] = datapar.p[pop]
+                
         else:
             output = zeros(npts)
-            if math.isnan(datapar[withwhat][0]): # we are trying to calculate a cost relationhip but there isn't one
-                output[:] = datapar.p[0] # TODO: use time!
-            else:
-                output[:] = datapar[withwhat][0] # TODO: use time!
+            try:
+                if withwhat=='c' and ~isnan(datapar['c'][0]): # Use cost relationship
+                    output[:] = datapar['c'][0] # TODO: use time!
+                else: # Use parameter
+                    if 't' in datapar.keys(): # It's a time parameter
+                        output[:] = interp(tvec, datapar.t[0], datapar.p[0]) # Use interpolation
+                    else:
+                        output[:] = datapar.p[0]
+            except:
+                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+
         
         return output
     
@@ -122,32 +108,8 @@ def makemodelpars(P, opt, withwhat='c', verbose=2):
     ## Constants...can be used directly
     M.const = P.const
     
-    M.totalacts = struct()
-    M.totalacts.__doc__ = 'Balanced numbers of acts'
-
-    popsize = M.popsize
-
-    for act in P.pships.keys():
-
-        npops = len(M.popsize[:,0])
-
-        npop=len(popsize); # Number of populations
-    
-        # Moved here from reconcileacts()
-        # WARNING, NOT SURE ABOUT THIS
-        # Make matrix symmetric
-        mixmatrix = array(P.pships[act])
-        symmetricmatrix=zeros((npop,npop));
-        for pop1 in range(npop):
-            for pop2 in range(npop):
-                symmetricmatrix[pop1,pop2] = symmetricmatrix[pop1,pop2] + (mixmatrix[pop1,pop2] + mixmatrix[pop2,pop1]) / float(eps+((mixmatrix[pop1,pop2]>0)+(mixmatrix[pop2,pop1]>0)))
-
-        a = zeros((npops,npops,npts))
-        numacts = M.numacts[act]
-        for t in range(npts):
-            a[:,:,t] = reconcileacts(symmetricmatrix.copy(), popsize[:,t], numacts[:,t]) # Note use of copy()
-
-        M.totalacts[act] = a
+    ## Calculate total acts
+    M.totalacts = totalacts(P, M, npts)
     
     # Apply interventions?
     
@@ -155,3 +117,53 @@ def makemodelpars(P, opt, withwhat='c', verbose=2):
 
     printv('...done making model parameters.', 2, verbose)
     return M
+
+def totalacts(P, M, npts):
+    totalacts = struct()
+    totalacts.__doc__ = 'Balanced numbers of acts'
+    
+    popsize = M.popsize
+    pships = P.pships
+
+    for act in pships.keys():
+        npops = len(M.popsize[:,0])
+        npop=len(popsize); # Number of populations
+        mixmatrix = array(pships[act])
+        symmetricmatrix=zeros((npop,npop));
+        for pop1 in range(npop):
+            for pop2 in range(npop):
+                symmetricmatrix[pop1,pop2] = symmetricmatrix[pop1,pop2] + (mixmatrix[pop1,pop2] + mixmatrix[pop2,pop1]) / float(eps+((mixmatrix[pop1,pop2]>0)+(mixmatrix[pop2,pop1]>0)))
+
+        a = zeros((npops,npops,npts))
+        numacts = M['numacts'][act]
+        for t in range(npts):
+            a[:,:,t] = reconcileacts(symmetricmatrix.copy(), popsize[:,t], numacts[:,t]) # Note use of copy()
+
+        totalacts[act] = a
+    
+    return totalacts
+
+
+def reconcileacts(symmetricmatrix,popsize,popacts):
+
+    # Make sure the dimensions all agree
+    npop=len(popsize); # Number of populations
+    
+    for pop1 in range(npop):
+        symmetricmatrix[pop1,:]=symmetricmatrix[pop1,:]*popsize[pop1];
+    
+    # Divide by the sum of the column to normalize the probability, then
+    # multiply by the number of acts and population size to get total number of
+    # acts
+    for pop1 in range(npop):
+        symmetricmatrix[:,pop1]=popsize[pop1]*popacts[pop1]*symmetricmatrix[:,pop1] / float(eps+sum(symmetricmatrix[:,pop1]))
+    
+    # Reconcile different estimates of number of acts, which must balance
+    pshipacts=zeros((npop,npop));
+    for pop1 in range(npop):
+        for pop2 in range(npop):
+            balanced = (symmetricmatrix[pop1,pop2] * popsize[pop1] + symmetricmatrix[pop2,pop1] * popsize[pop2])/(popsize[pop1]+popsize[pop2]); # here are two estimates for each interaction; reconcile them here
+            pshipacts[pop2,pop1] = balanced/popsize[pop2]; # Divide by population size to get per-person estimate
+            pshipacts[pop1,pop2] = balanced/popsize[pop1]; # ...and for the other population
+
+    return pshipacts
