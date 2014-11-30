@@ -1,5 +1,5 @@
  ## Imports
-from numpy import array, zeros, exp, maximum # For creating arrays
+from numpy import array, zeros, exp, maximum, minimum # For creating arrays
 from bunch import Bunch as struct # Replicate Matlab-like structure behavior
 from printv import printv
 from math import pow as mpow
@@ -15,6 +15,8 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
     ###############################################################################
     ## Setup
     ###############################################################################
+    
+    eps = 1e-3 # Define another small number to avoid divide-by-zero errors
     
     ## Initialize basic quantities
     S       = struct()     # Sim output structure
@@ -85,8 +87,8 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
     recov = h2a(M.const.recov) # Recovery rates
     hivtest = M.hivtest
     aidstest = M.aidstest
-    Mtx1 = 0*M.tx1 # tx1 already used for index of people on treatment
-    Mtx2 = 0*M.tx2
+    Mtx1 = M.tx1 # tx1 already used for index of people on treatment
+    Mtx2 = M.tx2
     failfirst = M.const.fail.first
     failsecond = M.const.fail.second
     Fforce = array(F.force)
@@ -102,6 +104,7 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
                     sexactslist[popM][popF].append(act)
     
     # Loop over time
+
     for t in range(npts): # Skip the last timestep for people since we don't need to know what happens after that
         printv('Timestep %i of %i' % (t+1, npts), 5, verbose)
         
@@ -142,7 +145,7 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
                     numactsM = totalacts[act][popM,popF,t]; # Number of acts per person per year (insertive partner)
                     numactsF = totalacts[act][popF,popM,t]; # Number of acts per person per year (receptive partner)
                     condomprob = (condom[act][popM,t] + condom[act][popF,t]) / 2 # Reconcile condom probability
-                    condomeff = 1 - condomprob*effcondom # Effect of condom use
+                    condomeff = 1 - condomprob*(1 - effcondom) # Effect of condom use
                     forceinfM = 1 - mpow((1-transM*circeff*stieffM), (dt*numactsM*condomeff*effhivprev[popF])) # The chance of "female" infecting "male" -- # TODO: Implement PrEP etc here
                     forceinfF = 1 - mpow((1-transF*circeff*stieffF), (dt*numactsF*condomeff*effhivprev[popM])) # The chance of "male" infecting "female"
                     forceinfvec[popM] = 1 - (1-forceinfvec[popM]) * (1-forceinfM) # Calculate the new "male" forceinf, ensuring that it never gets above 1
@@ -210,12 +213,17 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
             hivdeaths         = dt*people[undx[cd4],:,t]*death[cd4]
             otherdeaths       = dt*people[undx[cd4],:,t]*background
             dU.append(progin - progout - newdiagnoses[cd4] - hivdeaths - otherdeaths) # Add in new infections after loop
+            if ((dU[cd4]+people[undx[cd4],:,t])<0).any():
+                dU[cd4] = maximum(dU[cd4], -people[undx[cd4],:,t]) # Ensure it doesn't go below 0 -- # TODO kludgy
+                printv('Prevented negative people in undiagnosed at timestep %i' % t, 10, verbose)
             S['dx'][:,t]    += newdiagnoses[cd4]/dt # Save annual diagnoses 
             S['death'][:,t] += hivdeaths[cd4]/dt    # Save annual HIV deaths 
         dU[0] = dU[0] + newinfections # Now add newly infected people
         
     
         ## Diagnosed
+        newtreat1tot = Mtx1[t]*tx1time[t] - people[tx1,:,t].sum() # Calculate difference between current people on treatment and people needed
+        currentdiagnosed = people[dx,:,t] # Find how many people are diagnosed
         for cd4 in range(ncd4):
             if cd4>0: 
                 progin = dt*prog[cd4-1]*people[dx[cd4-1],:,t]
@@ -225,10 +233,16 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
                 progout = dt*prog[cd4]*people[dx[cd4],:,t]
             else: 
                 progout = 0 # Cannot progress out of AIDS stage
-            newtreat1[cd4] = dt*people[dx[cd4],:,t]*Mtx1[t]*tx1time[t] # TODO - shouldn't M.tx1 be broken down by CD4???
+            newtreat1[cd4] = newtreat1tot * currentdiagnosed[cd4,:] / (eps+currentdiagnosed.sum()) # Pull out evenly among diagnosed -- WARNING # TODO implement CD4 cutoffs
             hivdeaths      = dt*people[dx[cd4],:,t]*death[cd4]
             otherdeaths    = dt*people[dx[cd4],:,t]*background
-            dD.append(progin - progout + newdiagnoses[cd4] - newtreat1[cd4] - hivdeaths - otherdeaths)
+            inflows = progin + newdiagnoses[cd4]
+            outflows = progout + hivdeaths + otherdeaths
+            newtreat1[cd4] = maximum(0, minimum(newtreat1[cd4], currentdiagnosed[cd4,:]+inflows-outflows)) # Make sure it doesn't go negative
+            dD.append(inflows - outflows - newtreat1[cd4])
+            if ((dD[cd4]+people[dx[cd4],:,t])<0).any():
+                dD[cd4] = maximum(dD[cd4], -people[dx[cd4],:,t]) # Ensure it doesn't go below 0 -- # TODO kludgy
+                printv('Prevented negative people in diagnosed at timestep %i' % t, 10, verbose)
             S['newtx1'][:,t] += newtreat1[cd4]/dt # Save annual treatment initiation
             S['death'][:,t]  += hivdeaths[cd4]/dt # Save annual HIV deaths 
         
@@ -247,10 +261,15 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
             hivdeaths     = dt*people[tx1[cd4],:,t]*death[cd4]
             otherdeaths   = dt*people[tx1[cd4],:,t]*background
             dT1.append(recovin - recovout + newtreat1[cd4] - newfail1[cd4] - hivdeaths - otherdeaths)
+            if ((dT1[cd4]+people[tx1[cd4],:,t])<0).any():
+                dT1[cd4] = maximum(dT1[cd4], -people[tx1[cd4],:,t]) # Ensure it doesn't go below 0 -- # TODO kludgy
+                printv('Prevented negative people in treatment 1 at timestep %i' % t, 10, verbose)
             S['death'][:,t] += hivdeaths[cd4]/dt # Save annual HIV deaths 
 
     
         ## Treatment failure
+        newtreat2tot = Mtx2[t]*tx2time[t] - people[tx2,:,t].sum() # Calculate difference between current people on treatment and people needed
+        currentfailed = people[fail,:,t] # Find how many people are diagnosed
         for cd4 in range(ncd4):
             if cd4>0:
                 progin = dt*prog[cd4-1]*people[fail[cd4-1],:,t] 
@@ -260,11 +279,18 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
                 progout = dt*prog[cd4]*people[fail[cd4],:,t] 
             else: 
                 progout = 0 # Cannot progress out of AIDS stage
-            newtreat2[cd4] = dt*people[fail[cd4],:,t]*Mtx2[t]*tx2time[t]
+            newtreat2[cd4] = newtreat2tot * currentfailed[cd4,:] / (eps+currentfailed.sum()) # Pull out evenly among diagnosed
             newfail2[cd4]  = dt*people[tx2[cd4] ,:,t]*failsecond # Newly failed from ART2
             hivdeaths      = dt*people[fail[cd4],:,t]*death[cd4]
             otherdeaths    = dt*people[fail[cd4],:,t]*background
-            dF.append(progin - progout + newfail1[cd4] + newfail2[cd4] - newtreat2[cd4] - hivdeaths - otherdeaths)
+            inflows = progin + newfail1[cd4] + newfail2[cd4]
+            outflows = progout + hivdeaths + otherdeaths
+            
+            newtreat2[cd4] = maximum(0, minimum(newtreat2[cd4], currentfailed[cd4,:]+inflows-outflows)) # Make sure it doesn't go negative
+            dF.append(inflows - outflows - newtreat2[cd4])
+            if ((dF[cd4]+people[fail[cd4],:,t])<0).any():
+                dF[cd4] = maximum(dF[cd4], -people[fail[cd4],:,t]) # Ensure it doesn't go below 0 -- # TODO kludgy
+                printv('Prevented negative people in failure at timestep %i' % t, 10, verbose)
             S['newtx2'][:,t] += newtreat2[cd4]/dt # Save annual treatment initiation
             S['death'][:,t]  += hivdeaths[cd4]/dt # Save annual HIV deaths
             
@@ -282,6 +308,9 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
             hivdeaths   = dt*people[tx2[cd4],:,t]*death[cd4]
             otherdeaths = dt*people[tx2[cd4],:,t]*background
             dT2.append(recovin - recovout + newtreat2[cd4] - newfail2[cd4] - hivdeaths - otherdeaths)
+            if ((dT2[cd4]+people[tx2[cd4],:,t])<0).any():
+                dT2[cd4] = maximum(dT2[cd4], -people[tx2[cd4],:,t]) # Ensure it doesn't go below 0 -- # TODO kludgy
+                printv('Prevented negative people in treatment 2 people at timestep %i' % t, 10, verbose)
             S['death'][:,t] += hivdeaths[cd4]/dt # Save annual deaths data
 
 
@@ -307,7 +336,9 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
                 else: # People are leaving: they leave from each health state equally
                     people[:,pop,t+1] *= M.popsize[pop,t]/sum(people[:,pop,t]);
             if not((people[:,:,t+1]>=0).all()):
-                raise Exception('Non-positive people found') # If not every element is a real number >0, throw an error
+                print('Non-positive people found') # If not every element is a real number >0, throw an error
+                import pdb; pdb.set_trace()
+                
     
     # Append final people array to sim output
     S['people'] = people

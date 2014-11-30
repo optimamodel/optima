@@ -4,55 +4,55 @@ define(['./module'], function (module) {
   var DEFAULT_POPULATIONS = [
     {
       active: false, internal_name: "FSW", short_name: "FSW", name: "Female sex workers",
-      hetero: true, homo: false, injects: false, sexworker: true, client: false, female: true, male: false
+      sexmen: true, sexwomen: false, injects: false, sexworker: true, client: false, female: true, male: false
     },
     {
       active: false, internal_name: "CSW", short_name: "Clients", name: "Clients of sex workers",
-      hetero: true, homo: false, injects: false, sexworker: false, client: true, female: false, male: true
+      sexmen: false, sexwomen: true, injects: false, sexworker: false, client: true, female: false, male: true
     },
     {
       active: false, internal_name: "MSM", short_name: "MSM", name: "Men who have sex with men",
-      hetero: false, homo: true, injects: false, sexworker: false, client: false, female: false, male: true
+      sexmen: true, sexwomen: false, injects: false, sexworker: false, client: false, female: false, male: true
     },
     {
       active: false, internal_name: "TI", short_name: "Transgender", name: "Transgender individuals",
-      hetero: false, homo: true, injects: false, sexworker: false, client: false, female: false, male: false
+      sexmen: true, sexwomen: false, injects: false, sexworker: false, client: false, female: false, male: false
     },
     {
       active: false, internal_name: "PWID", short_name: "PWID", name: "People who inject drugs",
-      hetero: true, homo: false, injects: true, sexworker: false, client: false, female: false, male: false
+      sexmen: true, sexwomen: false, injects: true, sexworker: false, client: false, female: false, male: false
     },
     {
-      active: false, internal_name: "MWID", short_name: "Male PWID", name: "Males who inject drugs",
-      hetero: true, homo: false, injects: true, sexworker: false, client: false, female: false, male: true
+      active: false, internal_name: "MWID", short_name: "MWID", name: "Males who inject drugs",
+      sexmen: true, sexwomen: false, injects: true, sexworker: false, client: false, female: false, male: true
     },
     {
-      active: false, internal_name: "FWID", short_name: "Female PWID", name: "Females who inject drugs",
-      hetero: true, homo: false, injects: true, sexworker: false, client: false, female: true, male: false
+      active: false, internal_name: "FWID", short_name: "FWID", name: "Females who inject drugs",
+      sexmen: false, sexwomen: true, injects: true, sexworker: false, client: false, female: true, male: false
     },
     {
       active: false, internal_name: "CHILD", short_name: "Children", name: "Children (2-15)",
-      hetero: false, homo: false, injects: false, sexworker: false, client: false, female: false, male: false
+      sexmen: false, sexwomen: false, injects: false, sexworker: false, client: false, female: false, male: false
     },
     {
       active: false, internal_name: "INF", short_name: "Infants", name: "Infants (0-2)",
-      hetero: false, homo: false, injects: false, sexworker: false, client: false, female: false, male: false
+      sexmen: false, sexwomen: false, injects: false, sexworker: false, client: false, female: false, male: false
     },
     {
       active: false, internal_name: "OM15_49", short_name: "Males 15-49", name: "Other males (15-49)",
-      hetero: true, homo: false, injects: false, sexworker: false, client: false, female: false, male: true
+      sexmen: false, sexwomen: true, injects: false, sexworker: false, client: false, female: false, male: true
     },
     {
       active: false, internal_name: "OF15_49", short_name: "Females 15-49", name: "Other females (15-49)",
-      hetero: true, homo: false, injects: false, sexworker: false, client: false, female: true, male: false
+      sexmen: true, sexwomen: false, injects: false, sexworker: false, client: false, female: true, male: false
     },
     {
       active: false, internal_name: "OM", short_name: "Other males", name: "Other males [enter age]",
-      hetero: true, homo: false, injects: false, sexworker: false, client: false, female: false, male: true
+      sexmen: false, sexwomen: true, injects: false, sexworker: false, client: false, female: false, male: true
     },
     {
       active: false, internal_name: "OF", short_name: "Other females", name: "Other females [enter age]",
-      hetero: true, homo: false, injects: false, sexworker: false, client: false, female: true, male: false
+      sexmen: true, sexwomen: false, injects: false, sexworker: false, client: false, female: true, male: false
     }
   ];
 

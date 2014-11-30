@@ -2,12 +2,10 @@
 def ballsd(function, x, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, \
     pinitial = None, sinitial = None, xmin = None, xmax = None, MaxRangeIter = 1000, \
     MaxFunEvals = None, MaxIter = 1e4, TolFun = 1e-6, TolX = None, StallIterLimit = 100, \
-    fulloutput = False, maxarraysize = 1e6):
+    fulloutput = False, maxarraysize = 1e6, timelimit = 3600):
     """
-    BALLSD
-    
-    Optimization using the Bayesian adaptive locally linear stochastic
-    descent algorithm.
+    Optimization using the Bayesian adaptive locally linear stochastic descent 
+    algorithm.
     
     X, FVAL, EXITFLAG, OUTPUT = ballsd(FUN,X0) starts at X0 and attempts to find a 
     local minimizer X of the function FUN. FUN accepts input X and returns a scalar 
@@ -20,6 +18,7 @@ def ballsd(function, x, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, 
                      1 -- Improvement in objective function below minimum threshold.
                      2 -- Step size below threshold.
                      3 -- Maximum number of iterations to calculate new parameter when out of range reached
+                     4 -- Time limit exceeded
                     -1 -- Algorithm terminated for other reasons.
           OUTPUT -- An object with the following attributes:
             iterations -- Number of iterations
@@ -31,36 +30,37 @@ def ballsd(function, x, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, 
     ballsd() has the following options that can be set using keyword arguments. Their
     names and default values are as follows:
     
-           stepsize {0.1} -- Initial step size as a fraction of each parameter
-               sinc {2} -- Step size learning rate (increase)
-               sdec {2} -- Step size learning rate (decrease)
-               pinc {2} -- Parameter selection learning rate (increase)
-               pdec {2} -- Parameter selection learning rate (decrease)
-           pinitial {ones(2*size(X0))} -- Set initial parameter selection probabilities
-           sinitial {[]} -- Set initial step sizes; if empty, calculated from stepsize instead
-           xmin {[]} -- Max value allowed for each parameter  
-           xmax {[]} -- Min value allowed for each parameter 
-           MaxRangeIter {1000} -- Maximum number of iterations to calculate new parameter when out of range
-        MaxFunEvals {1000*size(X0)} -- Maximum number of function evaluations
-            MaxIter {1e4} -- Maximum number of iterations (1 iteration = 1 function evaluation)
-             TolFun {1e-6} -- Minimum change in objective function
-               TolX {1e-6*size(x)} -- Minimum change in parameters
-     StallIterLimit {100} -- Number of iterations over which to calculate TolFun
-     maxarraysize {1e6} -- Limit on MaxIter and StallIterLimit to ensure arrays don't get too big
-    
+                   stepsize {0.1} -- Initial step size as a fraction of each parameter
+                         sinc {2} -- Step size learning rate (increase)
+                         sdec {2} -- Step size learning rate (decrease)
+                         pinc {2} -- Parameter selection learning rate (increase)
+                         pdec {2} -- Parameter selection learning rate (decrease)
+      pinitial {ones(2*size(X0))} -- Set initial parameter selection probabilities
+                    sinitial {[]} -- Set initial step sizes; if empty, calculated from stepsize instead
+                        xmin {[]} -- Max value allowed for each parameter  
+                        xmax {[]} -- Min value allowed for each parameter 
+              MaxRangeIter {1000} -- Maximum number of iterations to calculate new parameter when out of range
+      MaxFunEvals {1000*size(X0)} -- Maximum number of function evaluations
+                    MaxIter {1e4} -- Maximum number of iterations (1 iteration = 1 function evaluation)
+                    TolFun {1e-6} -- Minimum change in objective function
+              TolX {1e-6*size(x)} -- Minimum change in parameters
+             StallIterLimit {100} -- Number of iterations over which to calculate TolFun
+               maxarraysize {1e6} -- Limit on MaxIter and StallIterLimit to ensure arrays don't get too big
+                 timelimit {3600} -- Maximum time allowed, in seconds
+  
     
     Example:
-        
         from ballsd import ballsd
         from pylab import norm
         x, fval, exitflag, output = ballsd(norm, [1, 2, 3])
     
     
-    Version: 2014aug05 by Cliff Kerr (cliff@thekerrlab.com)
+    Version: 2014nov30 by Cliff Kerr (cliff@thekerrlab.com)
     """
     
     from pylab import array, shape, reshape, ones, zeros, size, rand, mean, cumsum, find, mod, hstack, floor
     from copy import deepcopy # For arrays, even y = x[:] doesn't copy properly
+    from time import time
     
     def sanitize(userinput):
         """
@@ -95,6 +95,7 @@ def ballsd(function, x, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, 
         fulloutputx = zeros((MaxIter,nparams)) # Store all parameters
     
     ## Loop
+    start = time()
     while 1:
         
         # Calculate next step
@@ -160,6 +161,9 @@ def ballsd(function, x, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, 
             break
         if count2 > MaxRangeIter: 
             exitflag = 3
+            break
+        if (time()-start)>timelimit:
+            exitflag = 4
             break
     
     # Create additional output
