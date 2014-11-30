@@ -37,8 +37,8 @@ def ballsd(function, x, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, 
                          pdec {2} -- Parameter selection learning rate (decrease)
       pinitial {ones(2*size(X0))} -- Set initial parameter selection probabilities
                     sinitial {[]} -- Set initial step sizes; if empty, calculated from stepsize instead
-                        xmin {[]} -- Max value allowed for each parameter  
-                        xmax {[]} -- Min value allowed for each parameter 
+                        xmin {[]} -- Min value allowed for each parameter  
+                        xmax {[]} -- Max value allowed for each parameter 
               MaxRangeIter {1000} -- Maximum number of iterations to calculate new parameter when out of range
       MaxFunEvals {1000*size(X0)} -- Maximum number of function evaluations
                     MaxIter {1e4} -- Maximum number of iterations (1 iteration = 1 function evaluation)
