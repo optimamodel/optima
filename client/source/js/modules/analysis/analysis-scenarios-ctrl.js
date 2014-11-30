@@ -39,13 +39,13 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
 
           linesGraphOptions = {
-            height: 250,
-            width: 400,
+            height: 200,
+            width: 320,
             margin: {
               top: 20,
-              right: 20,
-              bottom: 60,
-              left: 100
+              right: 10,
+              bottom: 45,
+              left: 70
             },
             xAxis: {
               axisLabel: 'Year',
@@ -113,20 +113,21 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
             // generate graphs showing the overall data for this type
             if (type.total) {
-              var title = type.name + '- Overall';
+              var title = data.tot.title;
               var graph = generateGraph(type, data.tot.data, response.tvec, title);
               graph.options.xAxis.axisLabel = data.xlabel;
-              graph.options.yAxis.axisLabel = data.ylabel;
+              graph.options.yAxis.axisLabel = data.tot.ylabel;
               graphs.push(graph);
             }
 
             // generate graphs for this type for each population
             if (type.byPopulation) {
               _(data.pops).each(function (population, populationIndex) {
-                var title = type.name + ' - ' + meta.pops.short[populationIndex];
+
+                var title = population.title;
                 var graph = generateGraph(type, population.data, response.tvec, title);
                 graph.options.xAxis.axisLabel = data.xlabel;
-                graph.options.yAxis.axisLabel = data.ylabel;
+                graph.options.yAxis.axisLabel = population.ylabel;
                 graphs.push(graph);
               });
             }
