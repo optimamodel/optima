@@ -2,7 +2,7 @@
 def ballsd(function, x, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, \
     pinitial = None, sinitial = None, xmin = None, xmax = None, MaxRangeIter = 1000, \
     MaxFunEvals = None, MaxIter = 1e4, TolFun = 1e-6, TolX = None, StallIterLimit = 100, \
-    fulloutput = False, maxarraysize = 1e6, timelimit = 3600):
+    fulloutput = False, maxarraysize = 1e6, timelimit = 3600, verbose = 0):
     """
     Optimization using the Bayesian adaptive locally linear stochastic descent 
     algorithm.
@@ -37,8 +37,8 @@ def ballsd(function, x, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, 
                          pdec {2} -- Parameter selection learning rate (decrease)
       pinitial {ones(2*size(X0))} -- Set initial parameter selection probabilities
                     sinitial {[]} -- Set initial step sizes; if empty, calculated from stepsize instead
-                        xmin {[]} -- Max value allowed for each parameter  
-                        xmax {[]} -- Min value allowed for each parameter 
+                        xmin {[]} -- Min value allowed for each parameter  
+                        xmax {[]} -- Max value allowed for each parameter 
               MaxRangeIter {1000} -- Maximum number of iterations to calculate new parameter when out of range
       MaxFunEvals {1000*size(X0)} -- Maximum number of function evaluations
                     MaxIter {1e4} -- Maximum number of iterations (1 iteration = 1 function evaluation)
@@ -47,6 +47,7 @@ def ballsd(function, x, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, 
              StallIterLimit {100} -- Number of iterations over which to calculate TolFun
                maxarraysize {1e6} -- Limit on MaxIter and StallIterLimit to ensure arrays don't get too big
                  timelimit {3600} -- Maximum time allowed, in seconds
+                      verbose {0} -- How much information to print during the run
   
     
     Example:
@@ -97,6 +98,7 @@ def ballsd(function, x, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, 
     ## Loop
     start = time()
     while 1:
+        if verbose>0: print('Iteration %i; elapsed time %0.1f s' % (count+1, time()-start))
         
         # Calculate next step
         count += 1 # On each iteration there are two function evaluations

@@ -9,8 +9,6 @@ define(['./module', 'angular'], function (module, angular) {
       F.dx = _(F.dx).map(parseFloat);
       F.force = _(F.force).map(parseFloat);
       F.init = _(F.init).map(parseFloat);
-      F.tx1 = _(F.tx1).map(parseFloat);
-      F.tx2 = _(F.tx2).map(parseFloat);
       return F;
     };
 
@@ -25,18 +23,6 @@ define(['./module', 'angular'], function (module, angular) {
           'Testing rate final value',
           'Testing rate midpoint',
           'Testing rate slope'
-        ],
-        tx1: [
-          'First-line ART initial value',
-          'First-line ART final value',
-          'First-line ART midpoint',
-          'First-line ART slope'
-        ],
-        tx2: [
-          'Second-line ART initial value',
-          'Second-line ART final value',
-          'Second-line ART midpoint',
-          'Second-line ART slope'
         ]
       },
       meta: meta,
