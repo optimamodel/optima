@@ -3,7 +3,7 @@ TEST_OPTIMIZATION
 
 This function tests that the optimization is working.
 
-Version: 2014nov27 by cliffk
+Version: 2014nov30 by cliffk
 """
 
 
@@ -12,6 +12,7 @@ print('WELCOME TO OPTIMA')
 ## Set parameters
 projectname = 'example'
 verbose = 4
+timelimit = 60
 
 print('\n\n\n1. Making project...')
 from makeproject import makeproject
@@ -26,11 +27,12 @@ from runsimulation import runsimulation
 D = runsimulation(D, startyear=2000, endyear=2015, verbose=verbose)
 
 print('\n\n\n4. Running optimization...')
-from scenarios import runscenarios
-D = runscenarios(D, scenariolist=None, verbose=2)
+from optimize import optimize
+optimize(D, timelimit=timelimit, startyear=2000, endyear=2010, verbose=verbose)
 
 print('\n\n\n5. Viewing optimization...')
-from viewresults import viewmodels
-viewmodels(D.plot.scens)
+from viewresults import viewmodels, viewallocpies
+viewmodels(D.plot.OM)
+viewallocpies(D.plot.OA)
 
 print('\n\n\nDONE.')
