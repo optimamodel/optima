@@ -176,8 +176,10 @@ define(['./module', 'angular'], function (module, angular) {
     };
 
     var updateGraphs = function (data) {
-      $scope.graphs = prepareGraphs(data);
-      $scope.parameters.cache.response = data;
+      if (data!== undefined) {
+        $scope.graphs = prepareGraphs(data);
+        $scope.parameters.cache.response = data;
+      }
     };
 
     $scope.simulate = function () {
