@@ -1,10 +1,16 @@
 ---
-- hosts: optima
+- hosts: optima-staging
 
   vars:
     # prudentia_dir -> is passed in the cmd line
     - root_dir: ..
     - version: develop
+
+    - db_host: localhost
+    - db_user: optima
+    - db_password: optima
+    - db_name: optima
+    - db_url: "postgresql://{{db_user}}:{{db_password}}@{{db_host}}:5432/{{db_name}}"
 
   vars_files:
     - "{{prudentia_dir}}/vars/global.yml"
@@ -16,4 +22,8 @@
 
     - include: "{{root_dir}}/components/common.yml"
 
+    - include: "{{root_dir}}/components/db.yml"
+
     - include: "{{root_dir}}/components/client.yml"
+
+    - include: "{{root_dir}}/components/api.yml"

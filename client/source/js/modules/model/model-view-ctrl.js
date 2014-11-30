@@ -1,119 +1,269 @@
 define(['./module', 'angular'], function (module, angular) {
-    'use strict';
+  'use strict';
 
-    module.controller('ModelViewController', function ($scope, $http, dataMocks) {
+  module.controller('ModelViewController', function ($scope, $http, $interval, Model, f, meta, CONFIG) {
 
-      $scope.simulationOptions = {};
+    var prepareF = function (f) {
+      var F = angular.copy(f);
 
-      $scope.simulate = function () {
-        //var generatedDataSet = dataMocks.lineWith({num: $scope.numberOfPoints});
-        //$scope.linescatterdata = [generatedDataSet];
+      F.dx = _(F.dx).map(parseFloat);
+      F.force = _(F.force).map(parseFloat);
+      F.init = _(F.init).map(parseFloat);
+      return F;
+    };
 
-          $http.post('/api/model/view', $scope.simulationOptions)
-            .success(function (data) {
-                console.log(data);
-            })
-      };
+    var transformedF = prepareF(f[0]);
 
-      $scope.openFileOption1 = function () {
-        angular.element('#file01').click();
-      };
+    $scope.parameters = {
+      types: {
+        force: 'Force-of-infection for ',
+        init: 'Initial prevalence for ',
+        dx: [
+          'Testing rate initial value',
+          'Testing rate final value',
+          'Testing rate midpoint',
+          'Testing rate slope'
+        ]
+      },
+      meta: meta,
+      f: transformedF,
+      cache: {
+        f: angular.copy(transformedF),
+        response: null
+      }
+    };
 
-        $scope.scatteroptions = { /* CK: need axis labels to align better, and need right number! */
-            chart: {
-                type: 'scatterChart',
-                height: 250,
-                margin: {
-                    top: 20,
-                    right: 20,
-                    bottom: 100,
-                    left: 40
-                },
-                x: function (d) {
-                    return d[0];
-                },
-                y: function (d) {
-                    return d[1];
-                },
-                sizeRange: [100,100],
-                clipEdge: true,
-                transitionDuration: 500,
-                useInteractiveGuideline: true,
-                xAxis: {
-                    showMaxMin: false,
-                    ticks: 9,
-                    rotateLabels: -90,
-                    tickFormat: function (d) {
-                        return ['Parameter 0', 'Parameter 1', 'Parameter 2', 'Parameter 3', 'Parameter 4', 'Parameter 5', 'Parameter 6', 'Parameter 7', 'Parameter 8', 'Parameter 9'][d];
-                    }
-                },
-                yAxis: {
-                    tickFormat: function (d) {
-                        return d3.format(',.2f')(d);
-                    }
-                }
+    $scope.types = angular.copy(CONFIG.GRAPH_TYPES);
+
+    var getActiveOptions = function () {
+      return _($scope.types).where({ active: true });
+    };
+
+    $scope.enableManualCalibration = false;
+
+    // to store years from UI
+    $scope.simulationOptions = {'timelimit':60};
+    $scope.graphs = [];
+
+    var lineScatterOptions = {
+      height: 200,
+      width: 320,
+      margin: {
+        top: 20,
+        right: 10,
+        bottom: 45,
+        left: 70
+      },
+      xAxis: {
+        axisLabel: 'Year',
+        tickFormat: function (d) {
+          return d3.format('d')(d);
+        }
+      },
+      yAxis: {
+        axisLabel: 'Prevalence (%)',
+        tickFormat: function (d) {
+          return d3.format(',.2f')(d);
+        }
+      }
+    };
+
+    var lineScatterData = {
+      line: [],
+      scatter: [],
+      area: {}
+    };
+
+    $scope.doneEditingParameter = function () {
+      Model.saveCalibrateManual({
+        F: prepareF($scope.parameters.f),
+        dosave: false
+      }, updateGraphs);
+    };
+
+    /*
+     * Returns an array containing arrays with [x, y] for d3 line data.
+     */
+    var generateLineData = function(xData, yData) {
+      return _(yData).map(function (value, i) {
+        return [xData[i], value];
+      });
+    };
+
+    /*
+    * Returns an array containing arrays with [x, y] for d3 scatter data.
+    *
+    * Empty entries are filtered out.
+    */
+    var generateScatterData = function(xData, yData) {
+      return _(yData).chain()
+        .map(function (value, i) {
+          return [xData[i], value];
+        })
+        .filter(function (value) {
+          return !!value[1];
+        })
+        .value();
+    };
+
+    var prepareGraphs = function (response) {
+      var graphs = [], types;
+
+      if (!response) {
+        return graphs;
+      }
+
+      types = getActiveOptions();
+
+      _(types).each(function (type) {
+
+        var data = response[type.id];
+
+        if (type.total) {
+          var graph = {
+            options: angular.copy(lineScatterOptions),
+            data: angular.copy(lineScatterData),
+            type: type,
+            title: data.tot.title
+          };
+
+          graph.data.line = generateLineData(response.tvec, data.tot.best);
+          graph.data.area.lineHigh = generateLineData(response.tvec, data.tot.high);
+          graph.data.area.lineLow = generateLineData(response.tvec, data.tot.low);
+
+          graph.options.xAxis.axisLabel = data.xlabel;
+          graph.options.yAxis.axisLabel = data.tot.ylabel;
+
+          // seems like ydata can either be an array of arrays for the
+          // populations or a single array when it's used in overall
+          if (!(data.ydata[0] instanceof Array)) {
+            graph.data.scatter = generateScatterData(response.xdata, data.ydata);
+          }
+
+          graphs.push(graph);
+        }
+
+        // TODO: we're checking data because it could undefined ...
+        if (type.byPopulation && data) {
+          _(data.pops).each(function (population, populationIndex) {
+            var graph = {
+              options: angular.copy(lineScatterOptions),
+              data: angular.copy(lineScatterData),
+              type: type,
+              title: population.title
+            };
+
+            graph.data.line = generateLineData(response.tvec, population.best);
+            graph.data.area.lineHigh = generateLineData(response.tvec, population.high);
+            graph.data.area.lineLow = generateLineData(response.tvec, population.low);
+
+            graph.options.xAxis.axisLabel = data.xlabel;
+            graph.options.yAxis.axisLabel = population.ylabel;
+
+            // seems like ydata can either be an array of arrays for the
+            // populations or a single array when it's used in overall
+            if (data.ydata[0] instanceof Array) {
+              graph.data.scatter = generateScatterData(response.xdata, data.ydata[populationIndex]);
             }
-        };
 
-        $scope.scatterdata = [
-            {
-                "key": "Model",
-                "values": [
-                    [1, 0.200],
-                    [2, 1.199],
-                    [3, 2.198],
-                    [4, 3.198],
-                    [5, 0.198],
-                    [6, 4.198],
-                    [7, 3.198],
-                    [8, 2.595],
-                    [9, 1.195]
-                ]
-            },
+            graphs.push(graph);
+          });
+        }
 
-            {
-                "key": "Data",
-                "values": [
-                    [1, 0.200],
-                    [2, 1.599],
-                    [3, 2.298],
-                    [4, 3.798],
-                    [5, 0.898],
-                    [6, 4.298],
-                    [7, 3.598],
-                    [8, 2.295],
-                    [9, 1.895]
-                ]
-            }
+      });
 
-        ];
+      return graphs;
+    };
 
+    var updateGraphs = function (data) {
+      if (data!== undefined) {
+        $scope.graphs = prepareGraphs(data);
+        $scope.parameters.cache.response = data;
+      }
+    };
 
-        $scope.linescatteroptions = {
-            chart: {
-                type: 'scatterPlusLineChart',
-                height: 250,
-                margin: {
-                    top: 20,
-                    right: 20,
-                    bottom: 60,
-                    left: 50
-                },
-                useInteractiveGuideline: true,
-                sizeRange: [100,100],
-                xAxis: {
-                    axisLabel: 'Year'
-                },
-                yAxis: {
-                    axisLabel: 'Prevalence (%)',
-                    tickFormat: function (d) {
-                        return d3.format(',.2f')(d);
-                    },
-                    axisLabelDistance: 35
-                }
-            }
-        };
+    $scope.simulate = function () {
+      $http.post('/api/model/view', $scope.simulationOptions)
+        .success(updateGraphs);
+    };
 
-        $scope.linescatterdata = [];
+	  var autoCalibrationTimer;
+    $scope.startAutoCalibration = function () {
+      $http.post('/api/model/calibrate/auto', $scope.simulationOptions)
+        .success(function(data, status, headers, config) {
+          if (data.status == "OK" && data.join) {
+      // Keep polling for updated values after every 5 seconds till we get an error.
+      // Error indicates that the model is not calibrating anymore.
+            autoCalibrationTimer = $interval(checkWorkingAutoCalibration, 5000, 0, false);
+          } else {
+            console.log("Cannot poll for optimization now");
+          }
+        });
+    };
+
+    function checkWorkingAutoCalibration() {
+      $http.get('/api/model/working')
+        .success(function(data, status, headers, config) {
+          if (data.status == 'Done') {
+            stopTimer();
+          } else {
+            updateGraphs(data.graph);
+          }
+        })
+        .error(function(data, status, headers, config) {
+          stopTimer();
+        });
+    }
+
+    $scope.stopAutoCalibration = function () {
+      $http.get('/api/model/calibrate/stop')
+        .success(function(data) {
+          // Cancel timer
+          stopTimer();
+        });
+    };
+
+    function stopTimer() {
+      if ( angular.isDefined( autoCalibrationTimer ) ) {
+        $interval.cancel(autoCalibrationTimer);
+        autoCalibrationTimer = undefined;
+      }
+    }
+
+    $scope.$on('$destroy', function() {
+      // Make sure that the interval is destroyed too
+      stopTimer();
     });
+
+    $scope.saveCalibration = function () {
+      $http.post('/api/model/calibrate/save')
+        .success(updateGraphs);
+    };
+
+    $scope.revertCalibration = function () {
+      $http.post('/api/model/calibrate/revert')
+        .success(function(){ console.log("OK");});
+    };
+
+    $scope.previewManualCalibration = function () {
+      Model.saveCalibrateManual({ F: prepareF($scope.parameters.f) }, updateGraphs);
+    };
+
+    $scope.saveManualCalibration = function () {
+      Model.saveCalibrateManual({
+        F: prepareF($scope.parameters.f),
+        dosave: true
+      }, updateGraphs);
+    };
+
+    $scope.revertManualCalibration = function () {
+      angular.extend($scope.parameters.f, $scope.parameters.cache.f);
+    };
+
+    $scope.onGraphTypeChange = function (type) {
+      type.active = type.total || type.byPopulation;
+      updateGraphs($scope.parameters.cache.response);
+    };
+
+  });
 });

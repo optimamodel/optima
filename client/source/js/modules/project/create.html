@@ -1,48 +1,51 @@
 <div class="rich">
 
-  <form id="createForm" name="CreateProjectForm" action="{{ formAction }}" method="post" ng-submit="prepareCreateForm()" novalidate="novalidate">
-    <p>
-      <b>Instructions</b><br>
-      1. Enter the name of the project and the numbers of population groups and HIV programs.<br>
-      2. Click “Save project &amp; generate Optima template”.<br>
-      3. This will generate a blank Excel spreadsheet. Use Excel to enter data into this spreadsheet.<br>
-      4. When complete, return to Optima, click “Upload Optima spreadsheet”, and select this spreadsheet.
-    </p>
+  <form id="createForm" name="CreateProjectForm" action="" method="post" ng-submit="prepareCreateForm()" novalidate="novalidate">
 
     <div class="section grid">
       <div class="6">
-        <input class="txbox" type="text" placeholder="Project name" ng-model="projectParams.name" required>
+          <h1>Project details</h1>
+
+         <b>Project name</b>
+        <input class="txbox" type="text" placeholder="e.g. Example" ng-model="projectParams.name" required>
       </div>
     </div>
 
     <div class="section grid">
       <div class="3">
-        <input class="txbox" type="number" min="1900" placeholder="Epidemic data start year" ng-model="projectParams.datastart" required>
+          <b>Epidemic data start year</b>
+        <input class="txbox" type="number" min="1900" placeholder="e.g. 2000" ng-model="projectParams.datastart" required>
       </div>
       <div class="3">
-        <input class="txbox" type="number" min="1900" placeholder="Epidemic data end year" ng-model="projectParams.dataend" required>
+          <b>Epidemic data end year</b>
+        <input class="txbox" type="number" min="1900" placeholder="e.g. 2015" ng-model="projectParams.dataend" required>
       </div>
     </div>
 
     <div class="section grid">
       <div class="3">
-        <input class="txbox" type="number" min="1900" placeholder="Economic projection start year" ng-model="projectParams.econ_datastart" required>
+          <b>Economic projection start year</b>
+        <input class="txbox" type="number" min="1900" placeholder="e.g. 2010" ng-model="projectParams.econ_datastart" required>
       </div>
       <div class="3">
-        <input class="txbox" type="number" min="1900" placeholder="Economic projection end year" ng-model="projectParams.econ_dataend" required>
+          <b>Economic projection end year</b>
+        <input class="txbox" type="number" min="1900" placeholder="e.g. 2030" ng-model="projectParams.econ_dataend" required>
       </div>
     </div>
 
     <div class="section grid">
       <div class="6">
-        <p><b>Available populations:</b></p>
+          <br>
+        <h1>Manage populations</h1>
 
         <table class="section table table-bordered">
           <thead>
           <tr>
             <td><b>Active</b></td>
             <td><b>Name</b></td>
-            <td><b>Acronym</b></td>
+            <td><b>Short Name</b></td>
+            <td><b>Internal Name</b></td>
+            <td>&nbsp;</td>
             <td>&nbsp;</td>
           </tr>
           </thead>
@@ -52,44 +55,80 @@
               <input type="checkbox" ng-model="row.active">
             </td>
             <td style="width: 300px">{{ row.name }}</td>
-            <td style="width: 150px">{{ row.acronym }}</td>
+            <td style="width: 150px">{{ row.short_name }}</td>
+            <td style="width: 150px">{{ row.internal_name }}</td>
             <td>
               <button role="button" class="btn" ng-click="openEditPopulationModal($event, row)">Edit</button>
+            </td>
+            <td>
+              <button role="button" class="btn" ng-click="copyPopulationAndOpenModal($event, row)">Copy</button>
             </td>
           </tr>
           </tbody>
           <tfoot>
           <tr>
-            <td colspan="4" class="text-right">
-              <button role="button" class="btn" ng-click="openAddPopulationModal($event)">Add population</button>
+            <td colspan="6" class="text-right">
+              <button role="button" class="btn" ng-click="openAddPopulationModal($event)">Add a population</button>
             </td>
           </tr>
           </tfoot>
         </table>
       </div>
+    </div>
 
+    <div class="section grid">
       <div class="6">
-        <p><b>Available programs:</b></p>
+          <br>
+        <h1>Manage programs</h1>
 
-        <ul class="list __unstyled">
-          <li ng-repeat="item in programs">
-            <label>
-              <input type="checkbox" ng-model="item.active">
-              {{ item.name }}
-            </label>
-          </li>
-          <li>
-            <input class="txbox __inline" ng-model="newProgram" placeholder="Other (type name here)" style="width: 200px">
-            <button class="btn" type="button" ng-click="addProgram($event)">Add</button>
-          </li>
-        </ul>
+        <table class="section table table-bordered">
+          <thead>
+          <tr>
+            <td><b>Active</b></td>
+            <td><b>Name</b></td>
+            <td><b>Short Name</b></td>
+            <td><b>Internal Name</b></td>
+            <td><b>Saturating</b></td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+          </tr>
+          </thead>
+          <tbody>
+          <tr ng-show="programs.length" ng-repeat="program in programs">
+            <td class="text-center" style="width: 50px">
+              <input type="checkbox" ng-model="program.active">
+            </td>
+            <td style="width: 300px">{{ program.name }}</td>
+            <td style="width: 150px">{{ program.short_name }}</td>
+            <td style="width: 150px">{{ program.internal_name }}</td>
+            <td style="width: 150px"><input type="checkbox" ng-model="program.saturating" disabled/></td>
+            <td>
+              <button role="button" class="btn" ng-click="openEditProgramModal($event, program)">Edit</button>
+            </td>
+            <td>
+              <button role="button" class="btn" ng-click="copyProgram($event, program)">Copy</button>
+            </td>
+          </tr>
+          <tr ng-show="!programs.length">
+            <td class="text-center" colspan="7">No programs set yet</td>
+          </tr>
+          </tbody>
+          <tfoot>
+          <tr>
+            <td colspan="7" class="text-right">
+              <button role="button" class="btn" ng-click="openAddProgramModal($event)">Add a program</button>
+            </td>
+          </tr>
+          </tfoot>
+        </table>
+
       </div>
     </div>
 
     <div class="section text-center">
-      <button class="btn" type="submit">Create project &amp; Optima template</button>
+      <button class="btn" type="submit" style="background: #008800;"><b>Create project &amp; Optima template</b></button>
     </div>
 
-    <input type="hidden" name="params" value="{{ formParams }}">
+    <input type="hidden" id="params" name="params" value="{{ formParams }}">
   </form>
 </div>

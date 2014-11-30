@@ -4,38 +4,78 @@ define(['./module'], function (module) {
   module.directive('lineScatterChart', function (d3Charts) {
     return {
       scope: {
-        data: '='
+        data: '=',
+        options: '='
       },
       link: function (scope, element) {
-        var dimensions = { width: 1000, height: 300 };
-        var margins = { top: 10, right: 10, bottom: 35, left: 60 };
-        var chartSize = {
-          width: dimensions.width - margins.left - margins.right,
-          height: dimensions.height - margins.top - margins.bottom
+        var dimensions = {
+          height: scope.options.height,
+          width: scope.options.width
         };
 
-        var svg = d3Charts.createSvg(element[0], dimensions, margins);
+        var chartSize = {
+          width: scope.options.width - scope.options.margin.left - scope.options.margin.right,
+          height: scope.options.height - scope.options.margin.top - scope.options.margin.bottom
+        };
+
+        var svg = d3Charts.createSvg(element[0], dimensions, scope.options.margin);
 
         // Define svg groups
-        var chartGroup = svg.append("g").attr("class", "chart_group");
-        var axesGroup = svg.append("g").attr("class", "axes_group");
+        var chartGroup = svg.append('g').attr('class', 'chart_group');
+        var axesGroup = svg.append('g').attr('class', 'axes_group');
 
-        var lineChartInstance = new d3Charts.LineChart(chartGroup, '', chartSize, 100);
-        var scatterChartInstance = new d3Charts.ScatterChart(chartGroup, '', chartSize, 100);
+        var scatterDataExists = (scope.data.scatter && scope.data.scatter.length > 0);
 
-        scope.data.$promise.then(function(d){
-          var scatterErrorData = d['scatter-error'];
-          var lineData = d.line;
+        var lineChartInstances = [];
+        var graphsScales = [];
+        var yMax = 0;
+        var xMax = 0;
+        var xMin = Number.POSITIVE_INFINITY;
+        var scatterChartInstance;
 
-          var calculatedLineScales = lineChartInstance.scales(lineData);
-          scatterChartInstance.scales(lineData);
-
-          d3Charts.drawAxes(calculatedLineScales, { x: 'Label X', y: 'Label Y' }, axesGroup, chartSize, margins);
-          lineChartInstance.draw(lineData);
-          scatterChartInstance.draw(scatterErrorData);
+        // initialize lineChart for each line and update the scales
+        _(scope.data.lines).each(function (line, index) {
+          var lineColor = scope.options.linesStyle && scope.options.linesStyle[index];
+          var lineChart = new d3Charts.LineChart(chartGroup, index, chartSize, 100, lineColor);
+          lineChartInstances.push(lineChart);
+          var scales = lineChart.scales(line);
+          graphsScales.push(scales);
+          yMax = Math.max(yMax, scales.y.domain()[1]);
+          xMax = Math.max(xMax, scales.x.domain()[1]);
+          xMin = Math.min(xMin, scales.x.domain()[0]);
         });
 
+        // initialize scatterChart
+        if (scatterDataExists) {
+          scatterChartInstance = new d3Charts.ScatterChart(chartGroup, '', chartSize, 100);
+          var scatterScale = scatterChartInstance.scales(scope.data.scatter);
+          graphsScales.push(scatterScale);
+          yMax = Math.max(yMax, scatterScale.y.domain()[1]);
+          xMax = Math.max(xMax, scatterScale.x.domain()[1]);
+          xMin = Math.min(xMin, scatterScale.x.domain()[0]);
+        }
+
+        // normalizing all graphs scales to include maximum possible x and y
+        _(graphsScales).each(function (scale) {
+          scale.y.domain([0, yMax]);
+          scale.x.domain([xMin, xMax]);
+        });
+
+        d3Charts.drawAxes(
+          graphsScales[0],
+          scope.options,
+          axesGroup,
+          chartSize
+        );
+
+        // draw available charts
+        _(lineChartInstances).each(function (lineChart, index) {
+            lineChart.draw(scope.data.lines[index]);
+        });
+        if (scatterDataExists) {
+          scatterChartInstance.draw(scope.data.scatter);
+        }
       }
-    }
+    };
   });
 });

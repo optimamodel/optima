@@ -1,0 +1,84 @@
+<div class="rich">
+
+    <div class="section grid">
+        <div class="6">
+            <h1>Manage scenarios</h1>
+
+            <table class="section table table-bordered">
+                <thead>
+                <tr>
+                    <td><b>Active</b></td>
+                    <td><b>Name</b></td>
+                    <td>&nbsp;</td>
+                </tr>
+                </thead>
+                <tbody>
+                <tr ng-repeat="row in scenarios">
+                    <td class="text-center" style="width: 50px">
+                        <input type="checkbox" ng-model="row.active">
+                    </td>
+                    <td style="width: 300px">{{ row.name }}</td>
+                    <td>
+                        <button role="button" class="btn" ng-click="openEditScenarioModal($event, row)">Edit</button>
+                    </td>
+                </tr>
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td colspan="5" class="text-right">
+                      <button role="button" class="btn" ng-click="openAddScenarioModal($event)">Add a scenario</button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td colspan="5">
+                        <div style="float: right">
+                          <button role="button" class="btn" ng-click="runScenarios()">Run scenarios</button>
+                        </div>
+                        <label>
+                          <input type="checkbox" ng-model="availableScenarioParams.dosave" style="margin-top: 8px">
+                          Save Scenarios
+                        </label>
+                    </td>
+                  </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+
+    <div class="well section">
+        <div class="grid">
+            <div class="section cf">
+              <h1>Results</h1>
+
+              <div class="3" ng-repeat="type in types" style="padding-bottom: 20px">
+                <b>{{ type.name }}</b>
+                <div>
+                  <label class="checkbox-inline">
+                    <input type="checkbox" ng-model="type.total" ng-change="onGraphTypeChange(type)">
+                    Overall
+                  </label>
+                </div>
+                <div>
+                  <label class="checkbox-inline">
+                    <input type="checkbox" ng-model="type.byPopulation" ng-change="onGraphTypeChange(type)">
+                    Per population
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div class="chart-container __small" ng-repeat="graph in graphs">
+                <h3 class="text-center">{{ graph.title }}</h3>
+                <div line-scatter-chart data="graph.data" options="graph.options" save-graph-as></div>
+              </div>
+            </div>
+
+        </div>
+    </div>
+
+
+
+<input type="hidden" name="params" value="{{ formParams }}">
+</div>

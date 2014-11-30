@@ -1,36 +1,24 @@
-"""
-UPDATEDATA
-Upload Optima spreadsheet
-Version: 2014oct29
-"""
-import os
-
-def updatedata(projectname='example', loaddir = '', verbose=2):
-    
+def updatedata(D, verbose=2, savetofile = True):
     """
-    Load the Excel spreadsheet (for the given project), assuming it's in the standard uploads directory
+    Load the Excel workbook (for the given project), assuming it's in the standard uploads directory
     loads the data for the given project,
     updates the model based on the speardsheet contents
+    
+    Version: 2014nov24 by cliffk
     """
-    if verbose>=1: print('Updating data... %s' % projectname)
     
-    projectfilename = projectname+'.prj'
-    spreadsheetname = projectname+'.xlsx'
-
-    if loaddir:
-        projectfilename = os.path.join(loaddir, projectfilename)
-        spreadsheetname = os.path.join(loaddir, spreadsheetname)
-    
-    from loadspreadsheet import loadspreadsheet
+    from loadworkbook import loadworkbook
     from makedatapars import makedatapars
-    from dataio import loaddata, savedata
+    from dataio import savedata, fullpath
+    from printv import printv
+    printv('Updating data...', 1, verbose)
     
-    D = loaddata(projectfilename, verbose=verbose) # Load existing file
-    D.data, D.programs = loadspreadsheet(spreadsheetname, verbose=verbose)
+    datapath = fullpath(D.G.workbookname)
+    D.data, D.programs = loadworkbook(datapath, verbose=verbose)
     D = makedatapars(D, verbose=verbose) # Update parameters
+    if savetofile:
+        savedata(D.G.projectfilename, D, verbose=verbose) # Update the data file
     
-    savedata(projectfilename, D, verbose=verbose) # Update the data file
-    
-    if verbose>=2: print('  ...done updating data: %s.' % projectfilename)
+    printv('...done updating data.', 2, verbose)
 
-    return projectfilename
+    return D

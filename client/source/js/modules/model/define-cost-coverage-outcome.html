@@ -1,45 +1,85 @@
 <div class="page rich">
 
-  <div class="page_subheader section grid">
-    <div class="2">
-      <input class="txbox" type="text" placeholder="Start year" required ng-model="simulationOptions.startyear">
-    </div>
-    <div class="2">
-      <input class="txbox" type="text" placeholder="End year" required ng-model="simulationOptions.endyear">
-    </div>
-    <div class="4">
-      <button class="btn" ng-click="simulate()">Run simulation</button>
+  <div class="section grid">
+    <div class="6">
+      <label>
+        Select a program: <br>
+        <select class="txbox" ng-options="p as p.name for p in programs" ng-model="selectedProgram"></select>
+      </label>
     </div>
   </div>
 
-  <h1>Prevalences</h1>
+  <div class="section">
+    <p>
+      1. Specify the saturation coverage level:
+      <input type="number" class="txbox __inline __s" ng-model="saturationCoverageLevel">
+    </p>
+    <p>
+      2. The estimated amount of funding needed to get
+      <input type="number" class="txbox __inline __s" ng-model="fundingNeededPercent"> %
+    </p>
+    <p>
+      3. Minimum coverage for this program is
+      <input type="number" class="txbox __inline __l" ng-model="fundingNeededMinValue">
+      maximum is
+      <input type="number" class="txbox __inline __l" ng-model="fundingNeededMaxValue">
+    </p>
+  </div>
 
-  <div class="well">
-    <div class="grid">
-      <div class="section cf">
-        <div class="6">
-          <div class="chart-container">
-            <nvd3 data="linescatterdata" options="linescatteroptions"></nvd3>
-          </div>
-        </div>
-        <div class="6">
-          <div class="chart-container">
-            <nvd3 data="linescatterdata" options="linescatteroptions"></nvd3>
-          </div>
-        </div>
-      </div>
-      <div class="section cf">
-        <div class="6">
-          <div class="chart-container">
-            <nvd3 data="linescatterdata" options="linescatteroptions"></nvd3>
-          </div>
-        </div>
-        <div class="6">
-          <div class="chart-container">
-            <nvd3 data="linescatterdata" options="linescatteroptions"></nvd3>
-          </div>
-        </div>
+  <div class="section">
+    <button class="btn" ng-click="generateCurves()">Generate curves</button>
+    <button class="btn" ng-click="saveModel()">Save Model</button>
+    <button class="btn" ng-click="revertModel()">Revert Model</button>
+  </div>
+
+  <div class="section" ng-if="hasCostCoverResponse">
+
+    <div class="section">
+      <h1>{{ displayedProgram.name }}</h1>
+      <div class="chart-container" style="width: 470px">
+        <div line-scatter-chart data="graphs.plotdata_cc.data" options="graphs.plotdata_cc.options" save-graph-as></div>
       </div>
     </div>
+
+    <div class="section" ng-repeat="graph in graphs.plotdata">
+
+      <h2 class="section">{{ beautifulEffectNames(effectNames[$index]) }}</h2>
+
+      <div class="section elastic">
+        <div class="elastic_col __shrink" style="width: 320px">
+          <div class="chart-container" ng-init="coGraph = graphs.plotdata_co[$index]">
+            <div line-scatter-chart data="coGraph.data" options="coGraph.options" save-graph-as></div>
+          </div>
+        </div>
+
+        <div class="elastic_col" style="width: 340px">
+          <div class="chart-container">
+            <div line-scatter-chart data="graph.data" options="graph.options" save-graph-as></div>
+          </div>
+        </div>
+
+        <div class="elastic_col">
+          <h3>Options to adjust curves:</h3>
+          <p>
+            1. Behavior without this program ranges between
+            <input type="number" class="txbox __inline __s" ng-model="coParams[$index][0]">
+            and
+            <input type="number" class="txbox __inline __s" ng-model="coParams[$index][1]">
+          </p>
+          <p>
+            2. Behavior under full coverage of this program ranges between
+            <input type="number" class="txbox __inline __s" ng-model="coParams[$index][2]">
+            and
+            <input type="number" class="txbox __inline __s" ng-model="coParams[$index][3]">
+          </p>
+          <p>
+            <button type="button" class="btn" ng-click="updateCurve($index)">Redraw</button>
+          </p>
+        </div>
+      </div>
+
+    </div>
+
   </div>
+
 </div>

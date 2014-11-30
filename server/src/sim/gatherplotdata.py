@@ -1,0 +1,151 @@
+"""
+GATHERPLOTDATA
+
+This file gathers all data that could be used for plotting and packs it into a
+nice little convenient structure :)
+
+Version: 2014nov26 by cliffk
+"""
+
+# Define labels
+epititles = {'prev':'Prevalence', 'inci':'New infections', 'daly':'DALYs', 'death':'Deaths', 'dx':'Diagnoses', 'tx1':'First-line treatment', 'tx2':'Second-line treatment'}
+epiylabels = {'prev':'Prevalence (%)', 'inci':'New HIV infections per year', 'daly':'DALYs per year', 'death':'HIV-related deaths per year', 'dx':'HIV diagnoses per year', 'tx1':'People on 1st-line treatment', 'tx2':'People on 2nd-line treatment'}
+
+def gatherepidata(D, R, verbose=2):
+    """ Gather standard epidemiology results into a form suitable for plotting. """
+    from numpy import zeros, nan, size, array, asarray
+    from bunch import Bunch as struct
+    from printv import printv
+    printv('Gathering epidemiology results...', 3, verbose)
+    
+    E = struct()
+    E.__doc__ = 'Output structure containing everything that might need to be plotted'
+    E.tvec = R.tvec.tolist() # Copy time vector
+    E.poplabels = D.G.meta.pops.short
+    E.colorm = (0,0.3,1) # Model color
+    E.colord = (0,0,0) # Data color
+    E.legend = ('Model', 'Data')
+    E.xdata = D.data.epiyears
+    ndatayears = len(E.xdata)
+    
+    for epi in ['prev', 'inci', 'daly', 'death', 'dx', 'tx1', 'tx2']:
+        percent = 100 if epi=='prev' else 1 # Whether to multiple results by 100
+        
+        E[epi] = struct()
+        E[epi].pops = [struct() for p in range(D.G.npops)]
+        E[epi].tot = struct()
+        for p in range(D.G.npops):
+            E[epi].pops[p].best = (R[epi].pops[0][p,:]*percent).tolist()
+            E[epi].pops[p].low = (R[epi].pops[1][p,:]*percent).tolist()
+            E[epi].pops[p].high = (R[epi].pops[2][p,:]*percent).tolist()
+            E[epi].pops[p].title = epititles[epi] + ' - ' + D.G.meta.pops.short[p]
+            E[epi].pops[p].ylabel = epiylabels[epi]
+        E[epi].tot.best = (R[epi].tot[0]*percent).tolist()
+        E[epi].tot.low = (R[epi].tot[1]*percent).tolist()
+        E[epi].tot.high = (R[epi].tot[2]*percent).tolist()
+        E[epi].tot.title = epititles[epi] + ' - Overall'
+        E[epi].tot.ylabel = epiylabels[epi]
+        E[epi].xlabel = 'Years'
+        
+        if epi=='prev':
+            epidata = D.data.key.hivprev[0] # TODO: include uncertainties
+            E.prev.ydata = zeros((D.G.npops,ndatayears)).tolist()
+        if epi=='inci':
+            epidata = D.data.opt.numinfect[0]
+            E.inci.ydata = zeros(ndatayears).tolist()
+        if epi=='death':
+            epidata = D.data.opt.death[0]
+            E.death.ydata = zeros(ndatayears).tolist()
+        if epi=='daly':
+            epidata = nan+zeros(ndatayears) # No data
+            E.daly.ydata = zeros(ndatayears).tolist()
+        if epi=='dx':
+            epidata = D.data.opt.numdiag[0]
+            E.dx.ydata = zeros(ndatayears).tolist()
+        if epi=='tx1':
+            epidata = D.data.txrx.numfirstline[0]
+            E.tx1.ydata = zeros(ndatayears).tolist()
+        if epi=='tx2':
+            epidata = D.data.txrx.numsecondline[0]
+            E.tx2.ydata = zeros(ndatayears).tolist()
+
+
+        if size(epidata[0])==1: # TODO: make this less shitty, easier way of checking what shape the data is I'm sure
+            E[epi].ydata = (array(epidata)*percent).tolist()
+        elif size(epidata)==D.G.npops:
+            for p in range(D.G.npops):
+                thispopdata = epidata[p]
+                if len(thispopdata) == 1: 
+                    thispopdata = nan+zeros(ndatayears) # If it's an assumption, just set with nans
+                elif len(thispopdata) != ndatayears:
+                    raise Exception('Expect data length of 1 or %i, actually %i' % (ndatayears, len(thispopdata)))
+                E[epi].ydata[p] = (asarray(thispopdata)*percent).tolist() # Stupid, but make sure it's an array, then make sure it's a list
+        else:
+            raise Exception("Can't figure out size of epidata; doesn't seem to be a vector or a matrix")
+
+    printv('...done gathering epidemiology results.', 4, verbose)
+    return E
+
+
+
+
+def gathermultidata(D, Rarr, verbose=2):
+    """ Gather multi-simulation results (scenarios and optimizations) into a form suitable for plotting. """
+    from bunch import Bunch as struct
+    from printv import printv
+    printv('Gathering multi-simulation results...', 3, verbose)
+    
+    
+    M = struct()
+    M.__doc__ = 'Output structure containing everything that might need to be plotted'
+    M.nsims = len(Rarr) # Number of simulations
+    M.tvec = Rarr[0].R.tvec.tolist() # Copy time vector
+    M.poplabels = D.G.meta.pops.long
+    
+    for epi in ['prev', 'inci', 'daly', 'death', 'dx', 'tx1', 'tx2']:
+        percent = 100 if epi=='prev' else 1 # Whether to multiple results by 100
+        M[epi] = struct()
+        M[epi].pops = [struct() for p in range(D.G.npops)]
+        for p in range(D.G.npops):
+            M[epi].pops[p].data = []
+            M[epi].pops[p].legend = []
+            M[epi].pops[p].title = epititles[epi] + ' - ' + D.G.meta.pops.short[p]
+            M[epi].pops[p].ylabel = epiylabels[epi]
+            for sim in range(M.nsims):
+                thisdata = (Rarr[sim].R[epi].pops[0][p,:]*percent).tolist()
+                M[epi].pops[p].data.append(thisdata)
+                M[epi].pops[p].legend.append(Rarr[sim].label)
+        M[epi].tot = struct()
+        M[epi].tot.data = []
+        M[epi].tot.legend = []
+        M[epi].tot.title = epititles[epi] + ' - Overall'
+        M[epi].tot.ylabel = epiylabels[epi]
+        for sim in range(M.nsims):
+            thisdata =(Rarr[sim].R[epi].tot[0]*percent).tolist()
+            M[epi].tot.data.append(thisdata)
+            M[epi].tot.legend.append(Rarr[sim].label) # Add legends
+        M[epi].xlabel = 'Years'
+        
+    printv('...done gathering multi-simulation results.', 4, verbose)
+    return M
+
+
+def gatheroptimdata(D, A, verbose=2):
+    """ Return the data for plotting the two pie charts -- current allocation and optimal. """
+    from bunch import Bunch as struct
+    from printv import printv
+    printv('Gathering optimization results...', 3, verbose)
+    
+    O = struct()
+    O.legend = D.G.meta.progs.short
+    
+    O.pie1 = struct()
+    O.pie1.name = 'Original'
+    O.pie1.val = A[0].alloc.tolist()
+    
+    O.pie2 = struct()
+    O.pie2.name = 'Optimal'
+    O.pie2.val = A[1].alloc.tolist()
+    
+    printv('...done gathering optimization results.', 4, verbose)
+    return O

@@ -1,0 +1,536 @@
+<div class="page">
+
+<div class="elastic">
+    <div class="elastic_col __va-middle btn-group" ng-init="activeTab = 1">
+        <button class="btn __white" ng-class="{ __active: activeTab === 1 }" ng-click="activeTab = 1">Define objectives</button>
+        <button class="btn __white" ng-class="{ __active: activeTab === 2 }" ng-click="activeTab = 2">Define constraints</button>
+        <button class="btn __white" ng-class="{ __active: activeTab === 3 }" ng-click="activeTab = 3">View results</button>
+    </div>
+</div>
+
+<hr class="__dashed"/>
+
+
+<!-- Tab 1 -->
+<div ng-show="activeTab === 1">
+
+<div class="cf">
+    <h2>Basic options</h2>
+    <div class="float-left margin-left-s">
+        Year to begin optimization from: <input class="txbox __inline __s" value="2013" ng-model="params.objectives.year.start">
+        <div class="margin-top-xxs">
+            Number of years to optimize funding for: <input class="txbox __inline __s" value="10" ng-model="params.objectives.year.numyears">
+        </div>
+        <div class="margin-top-xxs">
+            Year to project outcomes to: <input class="txbox __inline __s" value="2030" ng-model="params.objectives.year.until">
+        </div>
+    </div>
+</div>
+
+<hr>
+
+<div class="section grid">
+    <h2>Optimization type</h2>
+    <div class="float-left margin-left-s">
+        <label class="checkbox-inline">
+            <input type="radio" name="minimizationType" ng-model="params.objectives.what" value="outcome">
+            Minimize outcomes
+        </label>
+        <label class="checkbox-inline">
+            <input type="radio" name="minimizationType" ng-model="params.objectives.what" value="money">
+            Minimize money
+        </label>
+    </div>
+</div>
+
+
+<hr>
+
+
+<div class="section" ng-if="params.objectives.what == 'outcome'">
+
+    <p>
+        With a fixed amount of money available:
+        <input class="txbox __inline __s" type="text" ng-model="params.objectives.outcome.fixed">
+        , what is the optimal allocation of this funding to:
+    </p>
+
+    <div class="checkbox-block">
+        <label>
+            <input type="checkbox"  ng-model="params.objectives.outcome.inci">
+            Minimize cumulative HIV incidence
+        </label>
+    </div>
+
+    <div class="checkbox-block">
+        <label>
+            <input type="checkbox" ng-model="params.objectives.outcome.daly">
+            Minimize cumulative DALYs
+        </label>
+    </div>
+
+    <div class="checkbox-block">
+        <label>
+            <input type="checkbox" ng-model="params.objectives.outcome.death">
+            Minimize cumulative HIV-related deaths
+        </label>
+    </div>
+	
+    <div class="checkbox-block">
+        <label>
+            <input type="checkbox" ng-model="params.objectives.outcome.cost">
+            Minimize total HIV-related costs
+        </label>
+    </div>
+
+    <br>
+
+    <div ng-show="params.objectives.outcome.inci">
+        <div style="margin-left: 24px">
+            Incidence weighting  =  <input class="txbox __inline __s" value="1" ng-model="params.objectives.outcome.inciweight">%
+        </div>
+    </div>
+
+    <div ng-show="params.objectives.outcome.daly">
+        <div style="margin-left: 50px">
+            DALY weighting  =  <input class="txbox __inline __s" value="1" ng-model="params.objectives.outcome.dalyweight">%
+        </div>
+    </div>
+
+    <div ng-show="params.objectives.outcome.death">
+        <div style="margin-left: 45px">
+            Death weighting  =  <input class="txbox __inline __s" value="1" ng-model="params.objectives.outcome.deathweight">%
+        </div>
+    </div>
+	
+    <div ng-show="params.objectives.outcome.cost">
+        <div style="margin-left: 45px">
+            Costs weighting  =  <input class="txbox __inline __s" value="1" ng-model="params.objectives.outcome.costweight">%
+        </div>
+    </div>
+
+</div>
+
+
+<div class="section" ng-if="params.objectives.what == 'money'">
+    What is the minimum amount of money required to achieve the following objectives:
+
+    <!-- Reduce the incidence of HIV -->
+    <div class="checkbox-block margin-top-xs">
+        <label>
+            <input type="checkbox" ng-model="params.objectives.money.objectives.inci.use">
+            Reduce the annual incidence of HIV
+        </label>
+    </div>
+    <label class="radio-inline margin-left-s">
+        by <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.inci.by">
+    </label>
+    <label class="radio-inline">
+        to < <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.inci.to">
+    </label>
+
+    <!-- Reduce the incidence of sexually transmitted HIV -->
+    <div class="checkbox-block margin-top-xs">
+        <label>
+            <input type="checkbox" ng-model="params.objectives.money.objectives.incisex.use">
+            Reduce the annual incidence of sexually transmitted HIV
+        </label>
+    </div>
+    <label class="radio-inline margin-left-s">
+        by <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.incisex.by">
+    </label>
+    <label class="radio-inline">
+        to < <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.incisex.to">
+    </label>
+
+    <!-- Reduce the incidence of injecting-related HIV -->
+    <div class="checkbox-block margin-top-xs">
+        <label>
+            <input type="checkbox" ng-model="params.objectives.money.objectives.incinj.use">
+            Reduce the annual incidence of injecting-related HIV
+        </label>
+    </div>
+    <label class="radio-inline margin-left-s">
+        by <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.inciinj.by">
+    </label>
+    <label class="radio-inline">
+        to < <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.inciinj.to">
+    </label>
+
+    <!-- Reduce MTCT of HIV -->
+    <div class="checkbox-block margin-top-xs">
+        <label>
+            <input type="checkbox" ng-model="params.objectives.money.objectives.mtct.use">
+            Reduce annual mother-to-child transmission of HIV
+        </label>
+    </div>
+    <label class="radio-inline margin-left-s">
+        by <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.mtct.by">
+    </label>
+    <label class="radio-inline">
+        to < <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.mtct.to">
+    </label>
+
+    <!-- Reduce MTCT of HIV among breastfeeding mother -->
+    <div class="checkbox-block margin-top-xs">
+        <label>
+            <input type="checkbox" ng-model="params.objectives.money.objectives.mtctbreast.use">
+            Reduce annual mother-to-child transmission of HIV among breastfeeding mothers
+        </label>
+    </div>
+    <label class="radio-inline margin-left-s">
+        by <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.mtctbreast.by">
+    </label>
+    <label class="radio-inline">
+        to < <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.mtctbreast.to">
+    </label>
+
+    <!-- Reduce MTCT of HIV among non-breastfeeding mother -->
+    <div class="checkbox-block margin-top-xs">
+        <label>
+            <input type="checkbox" ng-model="params.objectives.money.objectives.mtctnonbreast.use">
+            Reduce annual mother-to-child transmission of HIV among non-breastfeeding mothers
+        </label>
+    </div>
+    <label class="radio-inline margin-left-s">
+        by <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.mtctnonbreast.by">
+    </label>
+    <label class="radio-inline">
+        to < <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.mtctnonbreast.to">
+    </label>
+
+    <!-- Reduce HIV-related deaths -->
+    <div class="checkbox-block margin-top-xs">
+        <label>
+            <input type="checkbox" ng-model="params.objectives.money.objectives.deaths.use">
+            Reduce annual AIDS-related deaths
+        </label>
+    </div>
+    <label class="radio-inline margin-left-s">
+        by <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.deaths.by">
+    </label>
+    <label class="radio-inline">
+        to < <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.deaths.to">
+    </label>
+
+    <!-- Reduce DALYs -->
+    <div class="checkbox-block margin-top-xs">
+        <label>
+            <input type="checkbox" ng-model="params.objectives.money.objectives.dalys.use">
+            Reduce annual DALYs
+        </label>
+    </div>
+    <label class="radio-inline margin-left-s">
+        by <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.dalys.by">
+    </label>
+    <label class="radio-inline">
+        to < <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.dalys.to">
+    </label>
+
+    <div class="cf margin-top-s">
+        <h2>Cost assumptions</h2>
+        <div class="float-left margin-left-xs">
+            <table class="table table-bordered table-hover table-striped" style="width: auto">
+                <thead>
+                    <th>Program name</th>
+                    <th>Program efficiency relative to current</th>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="p in programs">
+                        <td>
+                            {{ p }}
+                        </td>
+                        <td>
+                            <input class="txbox __inline __s" ng-model="params.objectives.money.costs[programCodes[$index]]">
+                            %
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+</div>
+
+<!-- Tab 2 -->
+<div ng-show="activeTab === 2">
+
+
+
+<h3>Define constraints</h3>
+
+<hr/>
+
+<div class="elastic">
+    <div class="elastic_col __shrink __va-middle">
+        <p>Treatment eligibility:</p>
+    </div>
+    <div class="elastic_col __va-middle">
+        <label>
+            <input type="radio" name="eligibility" ng-model="params.constraints.txelig" value="1">
+            All people living with HIV
+        </label><br>
+        <label>
+            <input type="radio" name="eligibility" ng-model="params.constraints.txelig" value="2">
+            All people living with HIV with CD4 count < 500
+        </label><br>
+        <label>
+            <input type="radio" name="eligibility" ng-model="params.constraints.txelig" value="3">
+            All people living with HIV with CD4 count < 350
+        </label><br>
+        <label>
+            <input type="radio" name="eligibility" ng-model="params.constraints.txelig" value="4">
+            All people diagnosed with HIV
+        </label><br>
+        <label>
+            <input type="radio" name="eligibility" ng-model="params.constraints.txelig" value="5">
+            All people diagnosed with HIV with CD4 count < 500
+        </label><br>
+        <label>
+            <input type="radio" name="eligibility" ng-model="params.constraints.txelig" value="6">
+            All people diagnosed with HIV with CD4 count < 350
+        </label>
+    </div>
+</div>
+
+<hr class="__dashed" />
+
+<div class="checkbox-block">
+    <label>
+        <input type="checkbox" ng-model="params.constraints.dontstopart">
+        No one who initiates treatment is to stop receiving ART
+    </label>
+</div>
+
+<hr/>
+
+<h2>Funding levels not to decrease...</h2>
+<div>
+    <table class="table table-bordered table-hover table-striped" style="width: auto">
+        <thead>
+            <th>Enable</th>
+            <th>Program name</th>
+            <th>By</th>
+        </thead>
+        <tbody>
+            <tr ng-repeat="p in programs">
+                <td>
+                    <input type="checkbox" ng-model="params.constraints.decrease[programCodes[$index]].use">
+                </td>
+                <td>
+                    {{ p }}
+                </td>
+                <td>
+                    <input class="txbox __inline __s" ng-change="params.constraints.decrease[programCodes[$index]].use=true" ng-model="params.constraints.decrease[programCodes[$index]].by">%
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<hr class="__dashed"/>
+
+<div class="checkbox-block">
+    <label>
+        <input type="checkbox" ng-model="showAdvanced">
+        Advanced settings<span ng-show="showAdvanced">:</span>
+    </label>
+</div>
+
+<div style="margin-left: 15px;" ng-show="showAdvanced">
+
+    <div class="checkbox-block">
+        <label>
+            <input type="checkbox" style="height: 22px;">
+            Treatment must reach at least
+            <input class="txbox __inline __s" type="number">
+            % of tratment-eligible PLHIV by year
+            <input class="txbox __inline __s" type="number">
+        </label>
+    </div>
+
+    <div class="checkbox-block">
+        <label>
+            <input type="checkbox" style="height: 22px;">
+            Prevention of mother-to-child transmission must reach at least
+            <input class="txbox __inline __s" type="number">
+            % by year
+            <input class="txbox __inline __s" type="number">
+        </label>
+    </div>
+
+    <div class="checkbox-block">
+        <label>
+            <input type="checkbox" style="height: 22px;">
+            Medical male circumcision must reach at least
+            <input class="txbox __inline __s" type="number">
+            % by year
+            <input class="txbox __inline __s" type="number">
+        </label>
+    </div>
+
+    <div class="checkbox-block">
+        <label>
+            <input type="checkbox" style="height: 22px;">
+            Prevention programs for sex workers must reach at least
+            <input class="txbox __inline __s" type="number">
+            % by year
+            <input class="txbox __inline __s" type="number">
+        </label>
+    </div>
+
+    <div class="checkbox-block">
+        <label>
+            <input type="checkbox" style="height: 22px;">
+            Opiate substitution therapy among people who inject drugs must reach at least
+            <input class="txbox __inline __s" type="number">
+            % by year
+            <input class="txbox __inline __s" type="number">
+        </label>
+    </div>
+
+    <div class="checkbox-block">
+        <label>
+            <input type="checkbox" style="height: 22px;">
+            Prevention programs for men who have sex with men must reach at least
+            <input class="txbox __inline __s" type="number">
+            % by year
+            <input class="txbox __inline __s" type="number">
+        </label>
+    </div>
+
+    <div class="checkbox-block">
+        <label>
+            <input type="checkbox" style="height: 22px;">
+            Harm reduction programs for people who inject drugs must reach at least
+            <input class="txbox __inline __s" type="number">
+            % by year
+            <input class="txbox __inline __s" type="number">
+        </label>
+    </div>
+
+    <div class="checkbox-block">
+        <label>
+            <input type="checkbox" style="height: 22px;">
+            At least <input class="txbox __inline __s" type="number">% of the population of PLHIV are to be diagnosed by year
+            <input class="txbox __inline __s" type="number">
+        </label>
+    </div>
+
+</div>
+
+</div>
+
+<!-- Tab 3 -->
+<div ng-if="activeTab === 3">
+
+    <div class="well section">
+        <div class="grid">
+            <h2>Optimization</h2>
+
+            <div class="elastic_col __va-middle text-right">
+                <div class="elastic __fluid float-right">
+
+                    <div class="elastic_col __shrink">
+                        <label>
+                            Maximum time limit:
+                            <select class="txbox __inline" style="width: 120px" ng-model="params.timelimit">
+                                <option value="10">10 seconds</option>
+                                <option value="30">30 seconds</option>
+                                <option value="60">1 minute</option>
+                                <option value="300">5 minutes</option>
+                                <option value="600">10 minutes</option>
+                                <option value="1800">30 minutes</option>
+                                <option value="3600">1 hour</option>
+                            </select>
+                        </label>
+                    </div>
+
+                    <div class="elastic_col __shrink">
+                        <button class="btn __green" ng-click="startOptimization()">Start optimization</button>
+                    </div>
+
+                    <div class="elastic_col __shrink">
+                        <button class="btn __red" ng-click="stopOptimization()">Stop optimization</button>
+                    </div>
+                    <div class="elastic_col __shrink">
+                        <button class="btn">Save optimization</button>
+                    </div>
+                    <div class="elastic_col __shrink">
+                        <button class="btn">Revert</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="well section">
+        <div class="grid">
+            <div class="section">
+                <h1>Allocations</h1>
+
+                <div class="grid">
+                    <div class="6" ng-if="piedata1">
+                        <h2>Original allocation</h2>
+                        <button class="btn" onclick="openFileOption1();return;">Export figure</button>
+                        <button class="btn" onclick="openFileOption1();return;">Export table</button>
+                        <div class="chart-container">
+                            <nvd3 data="piedata1" options="pieoptions"></nvd3>
+                        </div>
+                    </div>
+                    <div class="6" ng-if="piedata2">
+                        <h2>Optimal allocation</h2>
+                        <button class="btn" onclick="openFileOption1();return;">Export figure</button>
+                        <button class="btn" onclick="openFileOption1();return;">Export table</button>
+                        <div class="chart-container">
+                            <nvd3 data="piedata2" options="pieoptions"></nvd3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="well section">
+                <div class="grid">
+                    <div class="section cf">
+                        <h1>Results</h1>
+
+                        <div class="3" ng-repeat="type in types" style="padding-bottom: 20px">
+                            <b>{{ type.name }}</b>
+                            <div>
+                                <label class="checkbox-inline">
+                                    <input type="checkbox" ng-model="type.total" ng-change="onGraphTypeChange(type)">
+                                    Overall
+                                </label>
+                            </div>
+                            <div>
+                                <label class="checkbox-inline">
+                                    <input type="checkbox" ng-model="type.byPopulation" ng-change="onGraphTypeChange(type)">
+                                    Per population
+                                </label>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="section elastic" ng-repeat="graph in lines">
+                        <div class="elastic_col __shrink" style="width: 430px">
+                            <div class="chart-container">
+                                <nvd3 data="graph.data" options="graph.options" save-graph-as></nvd3>
+                            </div>
+                        </div>
+                        <div class="elastic_col">
+                            <h3>{{ graph.title }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+
+</div>
+
+</div>

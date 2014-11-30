@@ -8,6 +8,11 @@
     with_items:
       - libfreetype6-dev
       - pkg-config
+      - libblas-dev
+      - liblapack-dev
+      - gfortran
+      - libpq-dev
+    tags: api
 
   - name: API | Install python dependencies
     pip: requirements={{install_dir_api}}/requirements.txt state=present
@@ -16,10 +21,28 @@
       - api
       - update
 
+  - name: API | Copy API configuration
+    template: src={{root_dir}}/components/templates/api-config.py.j2 dest={{install_dir_api}}/src/config.py backup=yes
+    tags:
+      - api
+      - update
+
   - name: API | Install gunicorn
     pip: name=gunicorn state=present
     sudo: yes
     tags: api
+
+#  - name: API | Setup migrations in the database if needed
+#    shell: if ! psql -U optima -h {{db_host}} -c '\d+' | grep migrate_version >/dev/null ; then migrate version_control {{db_url}} {{install_dir}}/server/db/ ; fi
+#    environment:
+#      PGPASSWORD: "{{ db_password }}"
+#    tags: api
+#
+#  - name: API | Upgrade database
+#    command: migrate upgrade {{db_url}} {{install_dir}}/server/db/
+#    tags:
+#      - api
+#      - update
 
   - name: API | Copy upstart script
     template: src={{root_dir}}/components/templates/upstart.conf.j2 dest=/etc/init/optima-api.conf backup=yes

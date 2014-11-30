@@ -1,36 +1,51 @@
-def runsimulation(projectdatafile='example.prj', startyear=2000, endyear=2030, verbose=2):
+def runsimulation(D, startyear=2000, endyear=2030, verbose=2):
     """
-    RUNSIMULATION
-    View data and model estimates
-    Version: 2014oct29
-    need to change UI
+    Calculate initial model estimates.
+    
+    Version: 2014nov26 by cliffk
     """
 
-    if verbose>=1: 
-        data = (projectdatafile, startyear, endyear)
-        print('Running simulation (projectdatafile = %s, startyear = %s, endyear = %s)...' % data)
+    from printv import printv
+    printv('Running simulation...', 1, verbose)
+    dosave = False # Flag for whether or not to save
     
-    # Load data
-    from dataio import loaddata, savedata, normalize_file
-    projectdatafile = normalize_file(projectdatafile)
-    D = loaddata(projectdatafile, verbose=verbose)
-    print("D = %s" % D)
+    # Set options to update year range
+    from setoptions import setoptions
+    D.opt = setoptions(D.opt, startyear=startyear, endyear=endyear)
     
-    # Create options structure
-    from bunch import Bunch as struct
-    from matplotlib.pylab import arange
-    options = struct()
-    options.startyear = startyear
-    options.endyear = endyear
-    options.dt = 0.1
-    options.tvec = arange(options.startyear, options.endyear, options.dt) # Time vector
+    print('WARNING should add conditionals here')
+    from makeccocs import makeallccocs
+    D = makeallccocs(D, verbose=verbose)
     
-    from makemodelpars import makemodelpars
-    D.M = makemodelpars(D.P, options, verbose=verbose)
+    from getcurrentbudget import getcurrentbudget
+    D = getcurrentbudget(D) # TODO Add verbose
     
+    # Convert data parameters to model parameters
+    if 'M' not in D.keys():
+        dosave = True
+        from makemodelpars import makemodelpars
+        D.M = makemodelpars(D.P, D.opt, verbose=verbose)
+    
+    # Run model
     from model import model
-    D.sim = model(D.G, D.M, options, verbose=verbose)
+    allsims = []
+    for s in range(len(D.F)): # TODO -- parallelize
+        S = model(D.G, D.M, D.F[s], D.opt, verbose=verbose)
+        allsims.append(S)
+    D.S = allsims[0] # Save one full sim structure for troubleshooting and funsies
     
-    savedata(projectdatafile, D, verbose=verbose)
-    # todo generate graphs?..
-    if verbose>=2: print('  ...done running simulation for project %s.' % projectdatafile)
+    # Calculate results
+    from makeresults import makeresults
+    D.R = makeresults(D, allsims, D.opt.quantiles, verbose=verbose)
+    
+    # Gather plot data
+    from gatherplotdata import gatherepidata
+    D.plot.E = gatherepidata(D, D.R, verbose=verbose)
+    
+    # Save output
+    if dosave:
+        from dataio import savedata
+        savedata(D.G.projectfilename, D, verbose=verbose)
+    
+    printv('...done running simulation for project %s.' % D.G.projectfilename, 2, verbose)
+    return D

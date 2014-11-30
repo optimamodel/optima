@@ -1,0 +1,130 @@
+Installation
+------------
+
+This component requires ([pip](http://pip.readthedocs.org/en/latest/installing.html)), [PostgreSQL](http://www.postgresql.org/download/) and [VirtualEnv](http://virtualenv.readthedocs.org/en/latest/).
+
+Install virtual env:
+ 
+`$ pip install virtualenv`
+
+
+Copy the example config and configure it accordingly:
+ 
+`$ cp src/config.example.py src/config.py`
+
+
+Run the server:
+ 
+`$ ./run.sh`
+
+
+Database migrations
+___________________
+
+  See db/README
+
+Tests
+------------
+
+Run the testsuite from your server directory:
+
+    ./test.sh
+
+In order to run a single test file and activate logging you can use:
+
+    nosetests --nocapture src/tests/analysis_test.py
+
+Make sure you have user "test" with the password "test" and database "optima_test" in order to run the tests using database.
+
+User API
+------------
+
+These APIs allow front-end to get current user or login a user.
+
+* `/api/user/current`
+
+  Returns `401 Unauthorized` if user is not logged in. Otherwise this JSON:
+
+  `{
+	email: "iwein@startersquad.com"
+	name: "Iwein Fuld"
+   }`
+
+* `/api/user/create`
+
+  Following data is posted when creating a new user:
+
+  `{
+	email: "iwein@startersquad.com"
+	name: "Iwein Fuld"
+	password: 'whatever'
+   }`
+
+  On success, user is sent back this JSON:
+
+  `{
+     "email": "iwein@startersquad.com",
+     "name": "Iwein Fuld"
+   }`
+
+   On name already used, user is sent back this JSON:
+
+   `{
+ 	 status: "Username in use"
+    }`
+
+* `/api/user/login`
+
+  Following data is posted when doing login:
+
+  `
+	email: "iwein@startersquad.com"
+	password: "whatever"
+   `
+
+  On successful login, user is sent back this JSON:
+
+  `{
+	email: "iwein@startersquad.com"
+	name: "Iwein Fuld"
+   }`
+
+  On login error, a 401 Unauthorized response is returned.
+
+* `/api/user/logout`
+
+  User is logged out. Following JSON is returned:
+
+  `{
+	status: "OK"
+   }`
+
+Project API
+------------
+
+These APIs allow front-end to work with projects.
+
+* `/api/project/info`
+
+  Returns `401 Unauthorized` if user is not logged in. Otherwise this JSON:
+
+  `{
+	status: "OK",
+	name: "Example",
+	dataStart: 2000,
+	dataEnd: 2015,
+	projectionStartYear: 2010,
+	projectionEndYear: 2030,
+	programs: 
+	    [{"saturating": true, "short_name": "Condoms", "internal_name": "COND", "name": "Condom promotion and distribution"},
+		 ...
+		],
+	populations:
+		[{"name": "Female sex workers", "short_name": "FSW", "sexworker": true, "hetero": true, "injects": false, "client": false, "female": true, "homo": false, "internal_name": "FSW", "male": false}, 
+		 {"name": "Clients of sex workers", "short_name": "Clients", "sexworker": false, "hetero": true, "injects": false, "client": true, "female": false, "homo": false, "internal_name": "CSW", "male": true}, 
+		 {"name": "Men who have sex with men", "short_name": "MSM", "sexworker": false, "hetero": false, "injects": false, "client": false, "female": false, "homo": true, "internal_name": "MSM", "male": true},
+		 ...
+		]
+   }`
+   
+   

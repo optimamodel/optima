@@ -1,64 +1,17 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
-  module.controller('ProjectCreateController', function ($scope, $modal) {
+  module.controller('ProjectCreateController', function ($scope, $state, $modal, $timeout, activeProject, DEFAULT_PROGRAMS, DEFAULT_POPULATIONS) {
 
     $scope.projectParams = {
       name: ''
     };
 
-    $scope.populations = [
-      { name: 'Female sex workers', acronym: 'FSW', active: false },
-      { name: 'Clients of sex workers', acronym: 'CSW', active: false },
-      { name: 'Men who have sex with men', acronym: 'MSM', active: false },
-      { name: 'Males who inject drugs', acronym: 'MID', active: false },
-      { name: 'Females who inject drugs', acronym: 'FID', active: false },
-      { name: 'Transgender individuals', acronym: 'TI', active: false },
-      { name: 'Children (2-15)', acronym: 'C215', active: false },
-      { name: 'Infants (0-2)', acronym: 'I02', active: false },
-      { name: 'Other males [open text box to enter age range]', acronym: 'OM', active: false },
-      { name: 'Other females [open text box to enter age range]', acronym: 'OF', active: false }
-    ];
+    $scope.populations = DEFAULT_POPULATIONS;
+    $scope.programs = DEFAULT_PROGRAMS;
 
-    $scope.programs = [
-      {name: 'HIV testing & counseling', acronym: 'FSW', active: false},
-      {name: 'Female sex workers', acronym: 'FSW', active: false},
-      {name: 'Men who have sex with men', acronym: 'FSW', active: false},
-      {name: 'Antiretroviral therapy', acronym: 'FSW', active: false},
-      {name: 'Prevention of mother-to-child transmission', acronym: 'FSW', active: false},
-      {name: 'Behavior change & communication', acronym: 'FSW', active: false},
-      {name: 'Needle-syringe program', acronym: 'FSW', active: false},
-      {name: 'Opiate substitution therapy', acronym: 'FSW', active: false},
-      {name: 'Cash transfers', acronym: 'FSW', active: false}
-    ];
-
-    $scope.openAddPopulationModal = function ($event) {
-      if ($event) {
-        $event.preventDefault();
-      }
-
-      return $modal.open({
-        templateUrl: 'js/modules/project/create-population-modal.html',
-        controller: 'ProjectCreatePopulationModalController',
-        resolve: {
-          population: function () {
-            return {
-              sex: 'male'
-            };
-          }
-        }
-      }).result.then(
-        function (newPopulation) {
-          newPopulation.active = true;
-          $scope.populations.push(newPopulation);
-        });
-    };
-
-    $scope.openEditPopulationModal = function ($event, population) {
-      if ($event) {
-        $event.preventDefault();
-      }
-
+    // Helper function to open a population modal
+    var openPopulationModal = function (population) {
       return $modal.open({
         templateUrl: 'js/modules/project/create-population-modal.html',
         controller: 'ProjectCreatePopulationModalController',
@@ -67,37 +20,147 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             return population;
           }
         }
-      }).result.then(
-        function (newPopulation) {
-          population.active = true;
-          _(population).extend(newPopulation);
-        });
-    };
-
-    var addItemTo = function (collection, itemName) {
-      collection.push({
-        name: itemName,
-        active: true
       });
     };
 
-    $scope.addPopulation = function ($event) {
-      $event.preventDefault();
-      addItemTo($scope.populations, $scope.newPopulation);
-      $scope.newPopulation = '';
+    /*
+     * Creates a new population and opens a modal for editing.
+     *
+     * The entry is only pushed to the list of populations if editing in the modal
+     * ended with a successful save.
+     */
+    $scope.openAddPopulationModal = function ($event) {
+      if ($event) {
+        $event.preventDefault();
+      }
+      var population = {};
+
+      return openPopulationModal(population).result.then(
+        function (newPopulation) {
+          $scope.populations.push(newPopulation);
+        }
+      );
     };
 
-    $scope.addProgram = function ($event) {
-      $event.preventDefault();
-      addItemTo($scope.programs, $scope.newProgram);
-      $scope.newProgram = '';
+    /*
+     * Opens a modal for editing an existing population.
+     */
+    $scope.openEditPopulationModal = function ($event, population) {
+      if ($event) {
+        $event.preventDefault();
+      }
+
+      return openPopulationModal(population).result.then(
+        function (newPopulation) {
+          _(population).extend(newPopulation);
+        }
+      );
     };
 
-    var toNamesArray = function (collection) {
+    /*
+     * Makes a copy of an existing population and opens a modal for editing.
+     *
+     * The entry is only pushed to the list of populations if editing in the
+     * modal ended with a successful save.
+     */
+    $scope.copyPopulationAndOpenModal = function ($event, existingPopulation) {
+      if ($event) {
+        $event.preventDefault();
+      }
+      var population = angular.copy(existingPopulation);
+
+      return openPopulationModal(population).result.then(
+        function (newPopulation) {
+          $scope.populations.push(newPopulation);
+        }
+      );
+    };
+
+    // Helper function to open a program modal
+    var openProgramModal = function (program) {
+      return $modal.open({
+        templateUrl: 'js/modules/project/create-program-modal.html',
+        controller: 'ProjectCreateProgramModalController',
+        resolve: {
+          program: function () {
+            return program;
+          }
+        }
+      });
+    };
+
+    /*
+     * Creates a new program and opens a modal for editing.
+     *
+     * The entry is only pushed to the list of programs if editing in the modal
+     * ended with a successful save.
+     */
+    $scope.openAddProgramModal = function ($event) {
+      if ($event) {
+        $event.preventDefault();
+      }
+      var program = {};
+
+      return openProgramModal(program).result.then(
+        function (newProgram) {
+          $scope.programs.push(newProgram);
+        }
+      );
+    };
+
+    /*
+     * Opens a modal for editing an existing program.
+     */
+    $scope.openEditProgramModal = function ($event, program) {
+      if ($event) {
+        $event.preventDefault();
+      }
+
+      return openProgramModal(program).result.then(
+        function (newProgram) {
+          _(program).extend(newProgram);
+        }
+      );
+    };
+
+    /*
+     * Makes a copy of an existing program and opens a modal for editing.
+     *
+     * The entry is only pushed to the list of programs if editing in the modal
+     * ended with a successful save.
+     */
+    $scope.copyProgram = function ($event, existingProgram) {
+      if ($event) {
+        $event.preventDefault();
+      }
+      var program = angular.copy(existingProgram);
+
+      return openProgramModal(program).result.then(
+        function (newProgram) {
+          $scope.programs.push(newProgram);
+        }
+      );
+    };
+
+    /*
+     * Returns a collection of entries where all non-active antries are filtered
+     * out and the active attribute is removed from each of these entries.
+     */
+    var toCleanArray = function (collection) {
       return _(collection).chain()
         .where({ active: true })
         .map(function (item) {
-          return _(item).omit(['active', '$$hashKey'])
+          var cl = _(item).omit(['active', '$$hashKey']);
+          if (cl.parameters) {
+            cl.parameters = _(cl.parameters).chain()
+              .where({ active: true })
+              .map(function (param) {
+                return _(param).omit(['active', '$$hashKey'])
+              })
+              .value();
+            if (cl.parameters == 0) delete cl.parameters;
+          }
+          return cl;
         })
         .value();
     };
@@ -109,15 +172,26 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       }
 
       var params = _($scope.projectParams).omit('name');
-      params.programs = toNamesArray($scope.programs);
-      params.populations = toNamesArray($scope.populations);
+      params.programs = toCleanArray($scope.programs);
+      params.populations = toCleanArray($scope.populations);
 
       $scope.formAction = '/api/project/create/' + $scope.projectParams.name;
       $scope.formParams = JSON.stringify(params);
 
       // according to documentation it should have been working without this line, but no cigar
       // https://docs.angularjs.org/api/ng/directive/ngSubmit
+      document.getElementById('createForm').action = $scope.formAction;
+      document.getElementById('params').value = $scope.formParams;
       document.getElementById('createForm').submit();
+
+      // update active project
+      activeProject.setValue($scope.projectParams.name);
+
+      // Hack to wait for the project to be created.
+      // There is not easy way to intercept the completion of the form submission...
+      $timeout(function () {
+        $state.go('home');
+      }, 3000);
 
       return true;
     };

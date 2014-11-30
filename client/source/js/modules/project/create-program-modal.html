@@ -1,0 +1,60 @@
+<div>
+  <div class="modal-header">{{ isNew ? 'Create' : 'Edit'}} a program</div>
+
+  <form class="modal-body" name="PopulationForm" novalidate="novalidate" ng-submit="submit(PopulationForm)">
+    <div class="section grid">
+      <div class="++2 3">
+        Name
+      </div>
+      <div class="5 2++">
+        <input class="txbox __block" ng-model="program.name" required autofocus>
+      </div>
+    </div>
+
+    <div class="section grid">
+      <div class="++2 3">
+        Short Name
+      </div>
+      <div class="5 2++">
+        <input class="txbox __block" ng-model="program.short_name" required>
+      </div>
+    </div>
+
+    <div class="section grid">
+      <div class="++2 3">
+        Internal Name
+      </div>
+      <div class="5 2++">
+        <input class="txbox __block" ng-model="program.internal_name" required>
+      </div>
+    </div>
+
+    <div class="section grid">
+      <div class="++5 5 2++">
+        <label>
+          <input type="checkbox" ng-model="program.saturating">
+          Saturating
+        </label>
+      </div>
+    </div>
+
+    <div class="section grid" ng-if="program.parameters">
+      <div class="++2 3">
+        Parameters
+      </div>
+      <div class="5 2++">
+        <div ng-repeat="p in program.parameters">
+          <label>
+            <input type="checkbox" ng-model="p.active">
+            {{paramSpec(p)}}
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="section text-center">
+      <button type="button" class="btn __white" ng-click="$dismiss('Closed')">Dismiss</button>
+      <button type="submit" class="btn">Save</button>
+    </div>
+  </form>
+</div>

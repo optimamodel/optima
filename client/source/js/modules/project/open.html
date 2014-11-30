@@ -1,17 +1,50 @@
 <div class="rich">
   <div class="section" ng-show="projects.length">
-    <h3>Open project:</h3>
+    <h3>Available projects:</h3>
 
-    <ul>
-      <li ng-repeat="project in projects track by $index">
-        <a ng-click="open(project)" href="#">{{ project }}</a>
-      </li>
-    </ul>
+    <table class="table table-bordered table-hover table-striped" style="width: auto">
+      <thead>
+      <th>Name</th>
+      <th>Populations</th>
+      <th>Programs</th>
+      <th>Data start year</th>
+      <th>Data end year</th>
+      <th colspan="3">Actions</th>
+      </thead>
+      <tbody>
+      <tr ng-repeat="project in projects track by $index">
+        <td>
+          {{ project.name }}
+        </td>
+        <td>
+          {{ project.populations.length }}
+        </td>
+        <td>
+          {{ project.programs.length }}
+        </td>
+        <td>
+          {{ project.dataStart }}
+        </td>
+        <td>
+          {{ project.dataEnd }}
+        </td>
+        <td>
+          <button class="btn __white" ng-click="open(project.name)">Open</button>
+        </td>
+        <td>
+          <button class="btn __red" ng-click="remove($event, project.name, $index)">Remove</button>
+        </td>
+        <td>
+          <button class="btn __blue" ng-click="workbook(project.name)">Get Workbook</button>
+        </td>
+      </tr>
+      </tbody>
+    </table>
   </div>
 
   <div ng-hide="projects.length">
     <h3>No projects found</h3>
 
-    There are no projects found. Please <a ui-sref="project.create">create a project</a> first.
+    There are no projects found. Please <a ui-sref="project.create({})">create a project</a> first.
   </div>
 </div>

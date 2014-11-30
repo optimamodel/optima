@@ -1,5 +1,11 @@
 .layout {
+  $footer-height: 65px;
+  $header-height: 113px;
+
   height: 100%;
+  padding-bottom: $footer-height;
+  padding-top: $header-height;
+  margin-top: -$header-height;
 
   &_aside {
     border-right: 1px solid $borders-color;
@@ -8,5 +14,9 @@
 
   &_cnt {
     padding: 22px 30px;
+  }
+
+  &_footer {
+    margin-top: -$footer-height;
   }
 }
