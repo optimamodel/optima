@@ -305,9 +305,10 @@ def doCostCoverage():
 @check_project_name
 def doCostCoverageEffect():
     data = json.loads(request.data)
+    print("/costcoverage/effect(%s)" % data)
     args = {}
-    args['D'] = load_model(request.project_name)
     args = pick_params(["progname", "effectname", "ccparams", "coparams"], data, args)
+    args['D'] = load_model(request.project_name)
     try:
         if not args.get('ccparams'):
             args['ccparams'] = [0.9, 0.2, 800000.0, 7e6]
@@ -315,7 +316,6 @@ def doCostCoverageEffect():
             args['coparams'] = []
         if not args.get('effectname'):
             args['effectname'] = default_effectname
-        args['effectname'] = args['effectname'][:3]
         plotdata, plotdata_co, storeparams = makecco(**args)
     except Exception, err:
         var = traceback.format_exc()
