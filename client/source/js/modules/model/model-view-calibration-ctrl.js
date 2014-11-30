@@ -15,7 +15,8 @@ define(['./module', 'underscore'], function (module, _) {
         };
       });
 
-      $scope.activeProgram = $scope.programs[0];
+      $scope.selectedProgram = $scope.programs[0];
+      $scope.displayedProgram = null;
 
       $scope.coParams = [];
 
@@ -191,7 +192,7 @@ define(['./module', 'underscore'], function (module, _) {
      */
     var getPlotModel = function() {
       return {
-        progname: $scope.activeProgram.acronym,
+        progname: $scope.selectedProgram.acronym,
         ccparams: [
           $scope.saturationCoverageLevel,
           $scope.fundingNeededPercent,
@@ -213,6 +214,7 @@ define(['./module', 'underscore'], function (module, _) {
     var retrieveAndUpdateGraphs = function (model) {
       $http.post('/api/model/costcoverage', model).success(function (response) {
         if (response.status === 'OK') {
+          $scope.displayedProgram = angular.copy($scope.selectedProgram);
           $scope.effectNames = response.effectnames;
           setUpCOParamsFromEffects(response.effectnames);
           $scope.hasCostCoverResponse = true;
@@ -274,7 +276,7 @@ define(['./module', 'underscore'], function (module, _) {
      */
     $scope.updateCurve = function (graphIndex) {
       $http.post('/api/model/costcoverage/effect', {
-        progname: $scope.activeProgram.acronym,
+        progname: $scope.displayedProgram.acronym,
         ccparams: _([
           $scope.saturationCoverageLevel,
           $scope.fundingNeededPercent,

@@ -4,7 +4,7 @@
     <div class="6">
       <label>
         Select a program: <br>
-        <select class="txbox" ng-options="p as p.name for p in programs" ng-model="activeProgram"></select>
+        <select class="txbox" ng-options="p as p.name for p in programs" ng-model="selectedProgram"></select>
       </label>
     </div>
   </div>
@@ -35,7 +35,7 @@
   <div class="section" ng-if="hasCostCoverResponse">
 
     <div class="section">
-      <h1>{{ activeProgram.name }}</h1>
+      <h1>{{ displayedProgram.name }}</h1>
       <div class="chart-container" style="width: 470px">
         <div line-scatter-chart data="graphs.plotdata_cc.data" options="graphs.plotdata_cc.options"></div>
       </div>
