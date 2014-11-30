@@ -10,6 +10,7 @@ def makeproject(projectname='example', pops = ['']*6, progs = ['']*5, datastart=
     from dataio import savedata, projectpath
     from bunch import Bunch as struct
     from printv import printv
+    from numpy import arange
 
     printv('Making project...', 1, verbose)
 
@@ -32,6 +33,7 @@ def makeproject(projectname='example', pops = ['']*6, progs = ['']*5, datastart=
     D.G.nprogs = len(progs)
     D.G.datastart = datastart
     D.G.dataend = dataend
+    D.G.datayears = arange(D.G.datastart, D.G.dataend+1)
     
     # Set up "F" -- fitted parameters structure
     D.F = makefittedpars(D.G, D.opt, verbose=verbose)

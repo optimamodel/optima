@@ -9,20 +9,45 @@ def autofit(D, timelimit=60, startyear=2000, endyear=2015, verbose=2):
         
     Version: 2014nov30 by cliffk
     """
-    
+    from numpy import mean
     from model import model
     from printv import printv
     from ballsd import ballsd
+    from bunch import Bunch as struct
+    from utils import findinds
+    eps = 0.01 # Don't use too small of an epsilon to avoid divide-by-almost zero errors -- this corresponds to 1% which is OK as an absolute error for prevalence
     printv('Running automatic calibration...', 1, verbose)
     
     
-    def errorcalc(F):
+    def errorcalc(Flist):
         """ Calculate the error between the model and the data """
+        
+        F = list2dict(Flist)
         S = model(D.G, D.M, F, D.opt, verbose=verbose)
         
+        # Pull out diagnoses data
+        dx = [struct()]
+        dx[0].data = struct()
+        dx[0].model = struct()
+        dx[0].data.x, dx[0].data.y = extractdata(D.G.datayears, D.data.opt.numdiag)
+        dx[0].model.x = D.opt.tvec
+        dx[0].model.y = S.dx.sum(axis=0)
         
+        # Prevalence data
+        prev = [struct() for p in range(D.G.npops)]
+        for p in range(D.G.npops): 
+            prev[p].data = struct()
+            prev[p].model = struct()
+            prev[p].data.x, prev[p].data.x = extractdata(D.G.datayears, D.data.key.hivprev[0][p]) # The first 0 is for "best"
+            prev[p].model.x = D.opt.tvec
+            prev[p].model.y = S.people[1:,:,:].sum(axis=0) / S.people[:,:,:].sum(axis=0) # This is prevalence
         
-        foo = S.sum()
+        mismatch = 0
+        for base in [dx, prev]:
+            for ind in range(len(base)):
+                for y,year in enumerate(base[ind].data.x):
+                    modelind = findinds(D.opt.tvec, year)
+                    mismatch += abs(base[ind].model.y[modelind] - base[ind].data.y[y]) / mean(base[ind].data.y+eps)
         
         return mismatch
 
@@ -56,11 +81,13 @@ def dict2list(Fdict):
     be sure the keys are in the right order.
     """
     Flist = []
-    for key in ['init','force','dx']:
+    for key in ['init','force','dx','tx1','tx2']:
         this = Fdict[key]
         for i in range(len(this)):
             Flist.append(Fdict[key][i])
     return Flist
+
+
 
 def list2dict(Forig, Flist):
     """
@@ -68,7 +95,16 @@ def list2dict(Forig, Flist):
     """
     from copy import deepcopy
     Fdict = deepcopy(Forig)
-    for key in ['init','force','dx']:
+    for key in ['init','force','dx','tx1','tx2']:
         for i in range(len(Fdict[key])):
             Fdict[key][i] = Flist.pop(0)
     return Fdict
+
+
+
+def extractdata(xdata, ydata):
+    """ Return the x and y data values for non-nan y data """
+    from numpy import isnan
+    nonnanx = xdata[~isnan(ydata)]
+    nonnany = ydata[~isnan(ydata)]
+    return nonnanx, nonnany
