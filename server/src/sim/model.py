@@ -52,10 +52,8 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
     dxfactor = M.const.eff.dx * cd4trans # Include diagnosis efficacy
     txfactor = M.const.eff.tx * dxfactor # And treatment efficacy
     
-    ## Metaparameters to get nice dx and tx fits
+    ## Metaparameters to get nice diagnosis fits
     dxtime  = fit2time(F.dx,  S.tvec)
-    tx1time = fit2time(F.tx1, S.tvec)
-    tx2time = fit2time(F.tx2, S.tvec)
     
     ###############################################################################
     ## Run the model -- numerically integrate over time
@@ -73,9 +71,9 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
     mfi = M.const.trans.mfi
     mmr = M.const.trans.mmr
     mfr = M.const.trans.mfr
-    effcirc = M.const.eff.circ*M.circum
+    effcirc = (1-M.const.eff.circ)*M.circum
     effsti = M.const.eff.sti * (M.stiprevulc + M.stiprevdis)
-    effcondom = M.const.eff.condom
+    effcondom = 1-M.const.eff.condom
     transinj = M.const.trans.inj
     pshipsinj = M.pships.inj
     pships = M.pships
@@ -145,7 +143,7 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
                     numactsM = totalacts[act][popM,popF,t]; # Number of acts per person per year (insertive partner)
                     numactsF = totalacts[act][popF,popM,t]; # Number of acts per person per year (receptive partner)
                     condomprob = (condom[act][popM,t] + condom[act][popF,t]) / 2 # Reconcile condom probability
-                    condomeff = 1 - condomprob*(1 - effcondom) # Effect of condom use
+                    condomeff = 1 - condomprob*effcondom # Effect of condom use
                     forceinfM = 1 - mpow((1-transM*circeff*stieffM), (dt*numactsM*condomeff*effhivprev[popF])) # The chance of "female" infecting "male" -- # TODO: Implement PrEP etc here
                     forceinfF = 1 - mpow((1-transF*circeff*stieffF), (dt*numactsF*condomeff*effhivprev[popM])) # The chance of "male" infecting "female"
                     forceinfvec[popM] = 1 - (1-forceinfvec[popM]) * (1-forceinfM) # Calculate the new "male" forceinf, ensuring that it never gets above 1
@@ -222,7 +220,7 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
         
     
         ## Diagnosed
-        newtreat1tot = Mtx1[t]*tx1time[t] - people[tx1,:,t].sum() # Calculate difference between current people on treatment and people needed
+        newtreat1tot = Mtx1[t] - people[tx1,:,t].sum() # Calculate difference between current people on treatment and people needed
         currentdiagnosed = people[dx,:,t] # Find how many people are diagnosed
         for cd4 in range(ncd4):
             if cd4>0: 
@@ -268,7 +266,7 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
 
     
         ## Treatment failure
-        newtreat2tot = Mtx2[t]*tx2time[t] - people[tx2,:,t].sum() # Calculate difference between current people on treatment and people needed
+        newtreat2tot = Mtx2[t] - people[tx2,:,t].sum() # Calculate difference between current people on treatment and people needed
         currentfailed = people[fail,:,t] # Find how many people are diagnosed
         for cd4 in range(ncd4):
             if cd4>0:
