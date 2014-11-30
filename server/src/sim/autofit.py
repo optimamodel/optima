@@ -20,6 +20,8 @@ def autofit(D, timelimit=60, startyear=2000, endyear=2015, verbose=2):
         """ Calculate the error between the model and the data """
         S = model(D.G, D.M, F, D.opt, verbose=verbose)
         
+        
+        
         foo = S.sum()
         
         return mismatch
