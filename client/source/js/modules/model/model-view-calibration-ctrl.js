@@ -128,6 +128,36 @@ define(['./module', 'underscore'], function (module, _) {
       return graph;
     };
 
+
+    /**
+     * Generates ready to plot graph for a cost coverage.
+     */
+    var prepareCostCoverageGraph = function (data) {
+      var graph = {
+        options: getLineScatterOptions({}, data.xlabel, data.ylabel),
+        data: {
+          // there is a single line for that type
+          lines: [[]],
+          scatter: []
+        }
+      };
+
+      _(data.xlinedata).each(function (x, index) {
+        var y = data.ylinedata;
+        graph.data.lines[0].push([x, y[index]]);
+      });
+
+      _(data.xscatterdata).each(function (x, index) {
+        var y = data.yscatterdata;
+
+        if (y[index]) {
+          graph.data.scatter.push([x, y[index]]);
+        }
+      });
+
+      return graph;
+    };
+
     /**
      * Receives graphs data with plot type to calculate,
      * calculates all graphs of given type and writes them to $scope.graphs[type]
@@ -135,33 +165,8 @@ define(['./module', 'underscore'], function (module, _) {
      * @param type - string
      */
     var prepareGraphsOfType = function (data, type) {
-      var graph;
-
       if (type === 'plotdata_cc') {
-        graph = {
-          options: getLineScatterOptions({}, data.xlabel, data.ylabel),
-          data: {
-            // there is a single line for that type
-            lines: [[]],
-            scatter: []
-          }
-        };
-
-        _(data.xlinedata).each(function (x, index) {
-          var y = data.ylinedata;
-          graph.data.lines[0].push([x, y[index]]);
-        });
-
-        _(data.xscatterdata).each(function (x, index) {
-          var y = data.yscatterdata;
-
-          if (y[index]) {
-            graph.data.scatter.push([x, y[index]]);
-          }
-        });
-
-        $scope.graphs[type] = graph;
-
+        $scope.graphs[type] = prepareCostCoverageGraph(data);
       } else if (type === 'plotdata' || type === 'plotdata_co') {
         _(data).each(function (graphData) {
           $scope.graphs[type].push(setUpPlotdataGraph(graphData));
