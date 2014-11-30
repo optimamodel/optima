@@ -46,8 +46,8 @@ define(['./module', 'angular'], function (module, angular) {
     $scope.graphs = [];
 
     var linescatteroptions = {
-      height: 250,
-      width: 400,
+      height: 200,
+      width: 320,
       margin: {
         top: 20,
         right: 10,
