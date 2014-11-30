@@ -12,16 +12,16 @@
   <div class="section">
     <p>
       1. Specify the saturation coverage level:
-      <input class="txbox __inline __s" ng-model="saturationCoverageLevel">
+      <input type="number" class="txbox __inline __s" ng-model="saturationCoverageLevel">
     </p>
     <p>
       2. The estimated amount of funding needed to get
-      <input class="txbox __inline __s" ng-model="fundingNeededPercent"> %
+      <input type="number" class="txbox __inline __s" ng-model="fundingNeededPercent"> %
       <br>
       minimum coverage for this program is
-      <input class="txbox __inline __m" ng-model="fundingNeededMinValue">
+      <input type="number" class="txbox __inline __m" ng-model="fundingNeededMinValue">
       maximum is
-      <input class="txbox __inline __m" ng-model="fundingNeededMaxValue">
+      <input type="number" class="txbox __inline __m" ng-model="fundingNeededMaxValue">
     </p>
   </div>
 
@@ -61,15 +61,15 @@
           <h3>Options to adjust curves:</h3>
           <p>
             1. Behavior without this program ranges between
-            <input class="txbox __inline __s" ng-model="coParams[$index][0]">
+            <input type="number" class="txbox __inline __s" ng-model="coParams[$index][0]">
             and
-            <input class="txbox __inline __s" ng-model="coParams[$index][1]">
+            <input type="number" class="txbox __inline __s" ng-model="coParams[$index][1]">
           </p>
           <p>
             2. Behavior under full coverage of this program ranges between
-            <input class="txbox __inline __s" ng-model="coParams[$index][2]">
+            <input type="number" class="txbox __inline __s" ng-model="coParams[$index][2]">
             and
-            <input class="txbox __inline __s" ng-model="coParams[$index][3]">
+            <input type="number" class="txbox __inline __s" ng-model="coParams[$index][3]">
           </p>
           <p>
             <button type="button" class="btn" ng-click="updateCurve($index)">Redraw</button>
