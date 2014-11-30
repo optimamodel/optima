@@ -38,8 +38,8 @@ def manualfit(D, F={}, Plist=[], Mlist=[], startyear=2000, endyear=2015, verbose
     D.R = makeresults(D, allsims, D.opt.quantiles, verbose=verbose)
 
     # Gather plot data
-    from gatherplotdata import gatherepidata
-    D.plot.E = gatherepidata(D, D.R, verbose=verbose)
+    from gatherplotdata import gatheruncerdata
+    D.plot.E = gatheruncerdata(D, D.R, verbose=verbose)
     
     printv('...done with manual calibration.', 2, verbose)
     return D

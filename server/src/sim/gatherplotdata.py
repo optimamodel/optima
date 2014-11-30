@@ -97,9 +97,9 @@ def gatheruncerdata(D, R, verbose=2):
             uncer[key][ac].best = R[key][ac][0].tolist()
             uncer[key][ac].low = R[key][ac][1].tolist()
             uncer[key][ac].high = R[key][ac][2].tolist()
-            uncer[key][ac].title = R['cost'][origkey]['title']
-            uncer[key][ac].xlabel = R['cost'][origkey]['xlabel']
-            uncer[key][ac].ylabel = R['cost'][origkey]['ylabel']
+            uncer[key][ac].title = R['costshared'][origkey]['title']
+            uncer[key][ac].xlabel = R['costshared'][origkey]['xlabel']
+            uncer[key][ac].ylabel = R['costshared'][origkey]['ylabel']
             uncer[key][ac].legend = ['Model']
     
     
