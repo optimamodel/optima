@@ -53,7 +53,8 @@ def autofit(D, timelimit=60, startyear=2000, endyear=2015, verbose=2):
             for ind in range(len(base)):
                 for y,year in enumerate(base[ind].data.x):
                     modelind = findinds(D.opt.tvec, year)
-                    mismatch += abs(base[ind].model.y[modelind] - base[ind].data.y[y]) / mean(base[ind].data.y+eps)
+                    if len(modelind)>0: # TODO Cliff check
+                        mismatch += abs(base[ind].model.y[modelind] - base[ind].data.y[y]) / mean(base[ind].data.y+eps)
 
         return mismatch
 
