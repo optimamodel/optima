@@ -28,33 +28,37 @@ def makeresults(D, allsims=None, quantiles=None, verbose=2):
     if quantiles==None: quantiles = D.opt.quantiles # If no quantiles are specified, just use the default ones
     allpeople = array([allsims[s].people for s in range(nsims)]) # WARNING, might use stupid amounts of memory
     
-    for epi in ['prev', 'inci', 'daly', 'death', 'tx1', 'tx2', 'dx']:
-        R[epi] = struct()
-        R[epi].pops = []
-        R[epi].tot = []
+    for data in ['prev', 'inci', 'daly', 'death', 'tx1', 'tx2', 'dx', 'costcur', 'costfut']:
+        R[data] = struct()
+        if data[0:4] != 'cost':
+            R[data].pops = []
+            R[data].tot = []
+        else:
+            R[data].ann = []
+            R[data].cum = []
         
         
-        if epi=='prev':
+        if data=='prev':
             printv('Calculating prevalence...', 3, verbose)
             R.prev.pops = quantile(allpeople[:,1:,:,:].sum(axis=1) / allpeople[:,:,:,:].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
             R.prev.tot = quantile(allpeople[:,1:,:,:].sum(axis=(1,2)) / allpeople[:,:,:,:].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
             
         
-        if epi=='inci':
+        if data=='inci':
             printv('Calculating incidence...', 3, verbose)
             allinci = array([allsims[s].inci for s in range(nsims)])
             R.inci.pops = quantile(allinci, quantiles=quantiles)
             R.inci.tot = quantile(allinci.sum(axis=1), quantiles=quantiles) # Axis 1 is populations
         
         
-        if epi=='death':
+        if data=='death':
             printv('Calculating deaths...', 3, verbose)
             alldeaths = array([allsims[s].death for s in range(nsims)])
             R.death.pops = quantile(alldeaths, quantiles=quantiles)
             R.death.tot = quantile(alldeaths.sum(axis=1), quantiles=quantiles) # Axis 1 is populations
 
 
-        if epi=='daly':
+        if data=='daly':
             printv('Calculating DALYs...', 3, verbose)
             disutils = [D.P.cost.disutil[key] for key in ['acute', 'gt500', 'gt350', 'gt200', 'aids']]
             tmpdalypops = allpeople[:,concatenate([D.G.tx1, D.G.tx2]),:,:].sum(axis=1) * D.P.cost.disutil.tx
@@ -67,23 +71,41 @@ def makeresults(D, allsims=None, quantiles=None, verbose=2):
             R.daly.tot = quantile(tmpdalytot, quantiles=quantiles)
             
         
-        if epi=='dx':
+        if data=='dx':
             printv('Calculating diagnoses...', 3, verbose)
             alldx = array([allsims[s].dx for s in range(nsims)])
             R.dx.pops = quantile(alldx, quantiles=quantiles)
             R.dx.tot = quantile(alldx.sum(axis=1), quantiles=quantiles) # Axis 1 is populations
             
         
-        if epi=='tx1':
+        if data=='tx1':
             printv('Calculating number of people on first-line treatment...', 3, verbose)
             R.tx1.pops = quantile(allpeople[:,D.G.tx1,:,:].sum(axis=1), quantiles=quantiles) # Sum over health states
             R.tx1.tot = quantile(allpeople[:,D.G.tx1,:,:].sum(axis=(1,2)), quantiles=quantiles) # Sum over health states and populations
             
         
-        if epi=='tx2':
+        if data=='tx2':
             printv('Calculating number of people on second-line treatment...', 3, verbose)
             R.tx2.pops = quantile(allpeople[:,D.G.tx2,:,:].sum(axis=1), quantiles=quantiles) # Sum over health states
             R.tx2.tot = quantile(allpeople[:,D.G.tx2,:,:].sum(axis=(1,2)), quantiles=quantiles) # Sum over health states and populations
+        
+        
+        if data[0:4]=='cost':
+            printv('Calculating costs...', 3, verbose)
+            from financialanalysis import financialanalysis
+            allcosts = []
+            for s in range(nsims):
+                thesecosts = financialanalysis(D, allsims[s], yscale = 'abs', makeplot = False)
+                allcosts.append(thesecosts)
+            
+            if data=='costcur':
+                R.costcur.ann = quantile(array([allcosts[s]['annualhivcosts']['ylinedata'] for s in range(nsims)]), quantiles=quantiles)
+                R.costcur.cum = quantile(array([allcosts[s]['cumulhivcosts']['ylinedata'] for s in range(nsims)]), quantiles=quantiles)
+            if data=='costfut':
+                R.costfut.ann = quantile(array([allcosts[s]['annualhivcostsfuture']['ylinedata'] for s in range(nsims)]), quantiles=quantiles)
+                R.costfut.cum = quantile(array([allcosts[s]['cumulhivcostsfuture']['ylinedata'] for s in range(nsims)]), quantiles=quantiles)
+            
+            R.costshared = thesecosts # TODO think of how to do this better
             
 
     printv('...done calculating results.', 2, verbose)
