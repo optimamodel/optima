@@ -32,6 +32,16 @@ define(['./module', 'underscore'], function (module, _) {
       $scope.behaviorWithMax = 0.9;
 
       plotTypes = ['plotdata', 'plotdata_cc', 'plotdata_co'];
+
+      resetGraphs();
+    };
+
+    var resetGraphs= function () {
+      $scope.graphs = {
+        plotdata: [],
+        plotdata_cc: [],
+        plotdata_co: []
+      };
     };
 
     var getLineScatterOptions = function (options, xLabel, yLabel) {
@@ -59,12 +69,6 @@ define(['./module', 'underscore'], function (module, _) {
       };
 
       return _(angular.copy(defaults)).extend(options);
-    };
-
-    $scope.graphs = {
-      plotdata: [],
-      plotdata_cc: [],
-      plotdata_co: []
     };
 
     /* Methods
@@ -207,8 +211,9 @@ define(['./module', 'underscore'], function (module, _) {
 
           setUpCOParamsFromEffects(response.effectnames);
 
-          _(plotTypes).each(function (prop) {
-            prepareGraphsOfType(response[prop], prop);
+          resetGraphs();
+          _(plotTypes).each(function (plotType) {
+            prepareGraphsOfType(response[plotType], plotType);
           });
         }
       });
