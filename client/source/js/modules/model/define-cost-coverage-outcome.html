@@ -48,13 +48,13 @@
       <div class="section elastic">
         <div class="elastic_col __shrink" style="width: 320px">
           <div class="chart-container" ng-init="coGraph = graphs.plotdata_co[$index]">
-            <div line-scatter-chart data="coGraph.data" options="coGraph.options"></div>
+            <div line-scatter-chart data="coGraph.data" options="coGraph.options" save-graph-as></div>
           </div>
         </div>
 
         <div class="elastic_col" style="width: 340px">
           <div class="chart-container">
-            <div line-scatter-chart data="graph.data" options="graph.options"></div>
+            <div line-scatter-chart data="graph.data" options="graph.options" save-graph-as></div>
           </div>
         </div>
 
