@@ -24,6 +24,17 @@ define(['./module', 'underscore'], function (module, _) {
     };
 
     /**
+     * Regenerates workbook for the given project `name`
+     * Alerts the user if it cannot do it.
+     *
+     */
+    $scope.workbook = function (name) {
+      // read that this is the universal method which should work everywhere in
+      // http://stackoverflow.com/questions/24080018/download-file-from-a-webapi-method-using-angularjs
+      window.open('/api/project/workbook/' + name, '_blank', '');  
+    };
+
+    /**
      * Removes the project
      *
      * If the removed project is the active one it will reset it alerts the user
