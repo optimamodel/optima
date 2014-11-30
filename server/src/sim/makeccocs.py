@@ -176,7 +176,10 @@ def makeco(D, progname=default_progname, effectname=default_effectname, coparams
     if progname not in D.programs.keys():
         raise Exception('Please select one of the following programs %s' % D.programs.keys())
     ## Check that the selected program is in the program list 
-    if effectname not in D.programs[progname]:
+    short_effectname = effectname[:2] # only matching by effect "signature"
+    short_effectlist = [e[:2] for e in D.programs[progname]]
+    if short_effectname not in short_effectlist:
+        print "makeco short_effectname: %s short_effectlist: %s" % (short_effectname, short_effectlist)
         raise Exception('Please select one of the following effects %s' % D.programs[progname])
 
     ## Extract info from data structure
@@ -312,8 +315,10 @@ def makecco(D=None, progname = default_progname, effectname = default_effectname
         printv("progname: %s programs: %s" % (unicode(progname), D.programs.keys()), 5, verbose)
         raise Exception('Please select one of the following programs %s' % D.programs.keys())
     # Check that the selected program is in the program list 
-    if effectname not in D.programs[progname]:
-        print("Effect %s not in programs %s" % (effectname, D.programs[progname]))
+    short_effectname = effectname[:2] # only matching by effect "signature"
+    short_effectlist = [e[:2] for e in D.programs[progname]]
+    if short_effectname not in short_effectlist:
+        print "makecco short_effectname: %s short_effectlist: %s" % (short_effectname, short_effectlist)
         raise Exception('Please select one of the following effects %s' % D.programs[progname])
 
     # Extract info from data structure
