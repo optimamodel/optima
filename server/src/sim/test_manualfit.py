@@ -11,7 +11,7 @@ print('WELCOME TO OPTIMA')
 
 ## Set parameters
 projectname = 'example'
-verbose = 4
+verbose = 10
 nsims = 1
 
 
@@ -42,7 +42,7 @@ print('\n\n\n4. Setting up manual fitting...')
 from numpy import array
 
 F = D.F[0]
-F.force = array(F.force) * 0.1
+F.force = array(F.force) * 0.0
 
 Plist = []
 

@@ -238,7 +238,7 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
             otherdeaths    = dt*people[dx[cd4],:,t]*background
             inflows = progin + newdiagnoses[cd4]
             outflows = progout + hivdeaths + otherdeaths
-            newtreat1[cd4] = minimum(newtreat1[cd4], currentdiagnosed[cd4,:]+inflows-outflows) # Make sure it doesn't go negative
+            newtreat1[cd4] = maximum(0, minimum(newtreat1[cd4], currentdiagnosed[cd4,:]+inflows-outflows)) # Make sure it doesn't go negative
             dD.append(inflows + outflows - newtreat1[cd4])
             if ((dD[cd4]+people[dx[cd4],:,t])<0).any():
                 dD[cd4] = maximum(dD[cd4], -people[dx[cd4],:,t]) # Ensure it doesn't go below 0 -- # TODO kludgy
@@ -285,7 +285,7 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
             otherdeaths    = dt*people[fail[cd4],:,t]*background
             inflows = progin + newfail1[cd4] + newfail2[cd4]
             outflows = progout + hivdeaths + otherdeaths
-            newtreat2[cd4] = minimum(newtreat2[cd4], currentfailed[cd4,:]+inflows-outflows) # Make sure it doesn't go negative
+            newtreat2[cd4] = maximum(0, minimum(newtreat2[cd4], currentfailed[cd4,:]+inflows-outflows)) # Make sure it doesn't go negative
             dF.append(inflows - outflows - newtreat2[cd4])
             if ((dF[cd4]+people[fail[cd4],:,t])<0).any():
                 dF[cd4] = maximum(dF[cd4], -people[fail[cd4],:,t]) # Ensure it doesn't go below 0 -- # TODO kludgy
@@ -329,6 +329,7 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
                 change[tx2[cd4],:]  = dT2[cd4]
             people[:,:,t+1] = people[:,:,t] + change # Update people array
             newpeople = M.popsize[:,t+1]-people[:,:,t+1].sum(axis=0) # Number of people to add according to M.popsize (can be negative)
+            import pdb; pdb.set_trace()
             for pop in range(npops): # Loop over each population, since some might grow and others might shrink
                 if newpeople[pop]>=0: # People are entering: they enter the susceptible population
                     people[0,pop,t+1] += newpeople[pop]
