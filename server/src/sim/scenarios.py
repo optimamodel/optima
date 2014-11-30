@@ -2,6 +2,7 @@
 from bunch import Bunch as struct
 from copy import deepcopy
 from numpy import linspace, ndim
+from nested import getnested, setnested
 
 def runscenarios(D, scenariolist=None, verbose=2):
     """
@@ -54,26 +55,21 @@ def makescenarios(D, scenariolist, verbose=2):
     nscenarios = len(scenariolist)
     scenariopars = [struct() for s in range(nscenarios)]
     for scen in range(nscenarios):
-        if verbose>2:print("scen: %s" % scen)
         scenariopars[scen].name = scenariolist[scen].name
         scenariopars[scen].M = deepcopy(D.M) # Copy the whole thing...too hard to generate nested dictionaries on the fly
         for par in range(len(scenariolist[scen].pars)):
             thesepars = scenariolist[scen].pars[par] # Shorten name
-            if verbose>2:print("par: %s thesepars %s" % (par, thesepars))
             data = getnested(scenariopars[scen].M, thesepars.names)
-            if verbose>2:print ("data: %s dim: %s" % (data, ndim(data)))
             if ndim(data)>1: newdata = data[thesepars.pops] # If it's more than one dimension, use population data too
             else: newdata = data # If it's not, just use the whole thing
-            initialindex = find(D.opt.tvec, thesepars.startyear)
-            finalindex = find(D.opt.tvec, thesepars.endyear)
-            if verbose>2:print("initialindex: %s finalindex: %s newdata:%s" % (initialindex, finalindex, newdata))
-            if ndim(newdata)>1: #TODO cliff fix better?
-                initialvalue = newdata[initialindex] if thesepars.startval == -1 else thesepars.startval 
-                finalvalue = newdata[finalindex] if thesepars.endval == -1 else thesepars.endval
-                npts = finalindex-initialindex
-                newvalues = linspace(initialvalue, finalvalue, npts)
-                newdata[initialindex:finalindex] = newvalues
-                newdata[finalindex:] = newvalues[-1] # Fill in the rest of the array with the last value
+            initialindex = findinds(D.opt.tvec, thesepars.startyear)
+            finalindex = findinds(D.opt.tvec, thesepars.endyear)
+            initialvalue = newdata[initialindex] if thesepars.startval == -1 else thesepars.startval 
+            finalvalue = newdata[finalindex] if thesepars.endval == -1 else thesepars.endval
+            npts = finalindex-initialindex
+            newvalues = linspace(initialvalue, finalvalue, npts)
+            newdata[initialindex:finalindex] = newvalues
+            newdata[finalindex:] = newvalues[-1] # Fill in the rest of the array with the last value
             if ndim(data)>1: data[thesepars.pops] = newdata # If it's multidimensional, only reset this one population
             else: data = newdata # Otherwise, reset the whole thing
             setnested(scenariopars[scen].M, thesepars.names, data)
@@ -87,41 +83,53 @@ def defaultscenarios(D, verbose=2):
     """ Define a list of default scenarios """
     
     # Start at the very beginning, a very good place to start :)
-    scenariolist = [struct() for s in range(2)]
+    scenariolist = [struct() for s in range(3)]
     
+    ## Current conditions
     scenariolist[0].name = 'Current conditions'
     scenariolist[0].pars = [] # No changes
     
+    ## Condom use
     scenariolist[1].name = '99% condom use in KAPs'
     scenariolist[1].pars = [struct() for s in range(4)]
     # MSM regular condom use
     scenariolist[1].pars[0].names = ['condom','reg']
     scenariolist[1].pars[0].pops = 0
-    scenariolist[1].pars[0].startyear = 2000
+    scenariolist[1].pars[0].startyear = 2005
     scenariolist[1].pars[0].endyear = 2015
     scenariolist[1].pars[0].startval = 0.99
     scenariolist[1].pars[0].endval = 0.99
     # MSM casual condom use
     scenariolist[1].pars[1].names = ['condom','cas']
     scenariolist[1].pars[1].pops = 0
-    scenariolist[1].pars[1].startyear = 2000
+    scenariolist[1].pars[1].startyear = 2005
     scenariolist[1].pars[1].endyear = 2015
     scenariolist[1].pars[1].startval = 0.99
     scenariolist[1].pars[1].endval = 0.99
     # FSW commercial condom use
     scenariolist[1].pars[2].names = ['condom','com']
     scenariolist[1].pars[2].pops = 1
-    scenariolist[1].pars[2].startyear = 2000
+    scenariolist[1].pars[2].startyear = 2005
     scenariolist[1].pars[2].endyear = 2015
     scenariolist[1].pars[2].startval = 0.99
     scenariolist[1].pars[2].endval = 0.99
     # Client commercial condom use
     scenariolist[1].pars[3].names = ['condom','com']
     scenariolist[1].pars[3].pops = 5
-    scenariolist[1].pars[3].startyear = 2000
+    scenariolist[1].pars[3].startyear = 2005
     scenariolist[1].pars[3].endyear = 2015
     scenariolist[1].pars[3].startval = 0.99
     scenariolist[1].pars[3].endval = 0.99
+    
+    ## Needle sharing
+    scenariolist[2].name = 'No needle sharing'
+    scenariolist[2].pars = [struct()]
+    scenariolist[2].pars[0].names = ['sharing']
+    scenariolist[2].pars[0].pops = 2
+    scenariolist[2].pars[0].startyear = 2002
+    scenariolist[2].pars[0].endyear = 2015
+    scenariolist[2].pars[0].startval = 0.0
+    scenariolist[2].pars[0].endval = 0.0
     
     return scenariolist
 
@@ -129,7 +137,7 @@ def defaultscenarios(D, verbose=2):
 
 def getparvalues(D, scenariopars):
     """
-    Return the default parameter values from D.M for a given scenario If a scenariolist
+    Return the default parameter values from D.M for a given scenario. If a scenariolist
     is defined as above, then call this function using e.g.
     
     defaultvals = getparvalues(D, scenariolist[1].pars[2])
@@ -139,14 +147,14 @@ def getparvalues(D, scenariopars):
     from numpy import ndim
     original = getnested(D.M, scenariopars.names)
     if ndim(original)>1: original = original[scenariopars.pops] # If it's more than one dimension, use population data too
-    initialindex = find(D.opt.tvec, scenariopars.startyear)
-    finalindex = find(D.opt.tvec, scenariopars.endyear)
+    initialindex = findinds(D.opt.tvec, scenariopars.startyear)
+    finalindex = findinds(D.opt.tvec, scenariopars.endyear)
     startval = original[initialindex]
     endval = original[finalindex]
     return [startval, endval]
 
 
-def find(val1, val2=None, eps=1e-6):
+def findinds(val1, val2=None, eps=1e-6):
     """
     Little function to find matches even if two things aren't eactly equal (eg. 
     due to floats vs. ints). If one argument, find nonzero values. With two arguments,
@@ -167,8 +175,3 @@ def find(val1, val2=None, eps=1e-6):
     if ndim(val1)==1: # Uni-dimensional
         output = output[0] # Return an array rather than a tuple of arrays if one-dimensional
     return output
-
-
-## Parse nested dictionaries -- from http://stackoverflow.com/questions/14692690/access-python-nested-dictionary-items-via-a-list-of-keys
-def getnested(nesteddict, maplist): return reduce(lambda d, k: d[k], maplist, nesteddict)
-def setnested(nesteddict, maplist, value): getnested(nesteddict, maplist[:-1])[maplist[-1]] = value

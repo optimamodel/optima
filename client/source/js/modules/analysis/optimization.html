@@ -316,13 +316,13 @@
         <tbody>
             <tr ng-repeat="p in programs">
                 <td>
-                    <input type="checkbox" ng-model="params.constraints.decrease[programCodes[$index]].by">
+                    <input type="checkbox" ng-model="params.constraints.decrease[programCodes[$index]].use">
                 </td>
                 <td>
                     {{ p }}
                 </td>
                 <td>
-                    <input class="txbox __inline __s" ng-model="params.constraints.decrease[programCodes[$index]].by">%
+                    <input class="txbox __inline __s" ng-change="params.constraints.decrease[programCodes[$index]].use=true" ng-model="params.constraints.decrease[programCodes[$index]].by">%
                 </td>
             </tr>
         </tbody>

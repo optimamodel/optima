@@ -1,7 +1,8 @@
 define([
   './module',
-  'angular'
-], function (module, angular) {
+  'angular',
+  'd3'
+], function (module, angular, d3) {
   'use strict';
 
   module.controller('AnalysisOptimizationController', function ($scope, $http, $interval, meta, CONFIG) {
@@ -110,11 +111,17 @@ define([
           useInteractiveGuideline: true,
           dispatch: {},
           xAxis: {
-            axisLabel: 'Time (ms)'
+            axisLabel: 'Year',
+            tickFormat: function (d) {
+              return d3.format('d')(d);
+            }
           },
           yAxis: {
-            axisLabel: 'Voltage (v)',
-            axisLabelDistance: 30
+            axisLabel: 'Value',
+            axisLabelDistance: 30,
+            tickFormat: function (d) {
+              return d3.format(',.2f')(d);
+            }
           },
           transitionDuration: 250
         },
@@ -244,10 +251,12 @@ define([
 
     // makes all graphs to recalculate and redraw
     var updateGraphs = function (data) {
-      cachedResponse = data;
-      console.log(data);
-      updateLineGraphs(data.graph);
-      preparePieCharts(data.pie);
+      if (data.graph !== undefined && data.pie !== undefined) {
+        cachedResponse = data;  
+        console.log(data);
+        updateLineGraphs(data.graph);
+        preparePieCharts(data.pie);
+      }
     };
 
 

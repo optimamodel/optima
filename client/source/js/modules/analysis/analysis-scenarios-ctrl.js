@@ -114,7 +114,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             // generate graphs showing the overall data for this type
             if (type.total) {
               var title = type.name + '- Overall';
-              var graph = generateGraph(type, data.tot.data, response.tvec.np_array, title);
+              var graph = generateGraph(type, data.tot.data, response.tvec, title);
               graph.options.xAxis.axisLabel = data.xlabel;
               graph.options.yAxis.axisLabel = data.ylabel;
               graphs.push(graph);
@@ -124,7 +124,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             if (type.byPopulation) {
               _(data.pops).each(function (population, populationIndex) {
                 var title = type.name + ' - ' + meta.pops.short[populationIndex];
-                var graph = generateGraph(type, population.data, response.tvec.np_array, title);
+                var graph = generateGraph(type, population.data, response.tvec, title);
                 graph.options.xAxis.axisLabel = data.xlabel;
                 graph.options.yAxis.axisLabel = data.ylabel;
                 graphs.push(graph);

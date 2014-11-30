@@ -87,13 +87,15 @@ Returns the working model for optimization.
 @login_required
 @check_project_name
 def getWorkingModel():
+    from sim.optimize import optimize
+
     reply = {'status':'NOK'}
     # Get optimization working data
     try:
         prj_name = request.project_name
         D_dict = load_model(prj_name, working_model = True, as_bunch = False)
         result = get_optimization_results(D_dict)
-        if prj_name in sentinel['projects'] and sentinel['projects'][prj_name]:
+        if prj_name in sentinel['projects'] and sentinel['projects'][prj_name]==optimize.__name__:
             result['status'] = 'Running'
         else:
             print("no longer optimizing")
