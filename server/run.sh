@@ -1,5 +1,9 @@
 #!/bin/bash
 
+if [ ! -f "src/config.py" ]; then
+  cp src/config.example.py src/config.py
+fi
+
 if [ ! -d "./p-env/" ]; then
     virtualenv p-env
 fi
