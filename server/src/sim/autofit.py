@@ -22,7 +22,7 @@ def autofit(D, timelimit=60, startyear=2000, endyear=2015, verbose=2):
         
         foo = S.sum()
         
-        return foo
+        return mismatch
 
     # Convert F to a flast list for the optimization algorithm
     Forig = dict2list(D.F)

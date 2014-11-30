@@ -137,7 +137,7 @@ def defaultscenarios(D, verbose=2):
 
 def getparvalues(D, scenariopars):
     """
-    Return the default parameter values from D.M for a given scenario If a scenariolist
+    Return the default parameter values from D.M for a given scenario. If a scenariolist
     is defined as above, then call this function using e.g.
     
     defaultvals = getparvalues(D, scenariolist[1].pars[2])
