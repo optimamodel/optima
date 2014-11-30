@@ -234,7 +234,7 @@ define([
 
     // updates pies charts data
     var preparePieCharts = function (data) {
-
+      if (data.pie1 === undefined || data.pie2 === undefined) return;
       $scope.piedata1 = _(data.pie1.val).map(function (value, index) {
         return { y: value, key: data.legend[index] };
       });

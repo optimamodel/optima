@@ -200,8 +200,8 @@ def save_model(name, model):
 def pick_params(params, data, args = {}):
     for param in params:
         the_value = data.get(param)
-    if the_value:
-        args[param] = the_value
+        if the_value:
+            args[param] = the_value
     return args
 
 def for_fe(item): #only for json
