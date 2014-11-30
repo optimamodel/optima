@@ -15,11 +15,13 @@ def manualfit(D, F={}, Plist=[], Mlist=[], startyear=2000, endyear=2015, verbose
     Version: 2014nov29 by cliffk
     """
     from printv import printv
+    from makemodelpars import totalacts
     printv('Running manual calibration...', 1, verbose)
     
     # Update P and M, if provided
     D = updateP(D, Plist)
     D = updateM(D, Mlist)
+    D.M.totalacts = totalacts(D.P, D.M, D.opt.npts)
     if len(F):
         if type(F)==list: D.F = F # Take F directly if it's a list (unlikely)
         else: D.F = [F] # Assume it's a dict or a bunch

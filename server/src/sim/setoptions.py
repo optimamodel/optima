@@ -28,5 +28,6 @@ def setoptions(opt=None, **kwargs):
             print('WARNING, option %s not recognized' % key)
     
     opt.tvec = arange(opt.startyear, opt.endyear+opt.dt, opt.dt) # Recalculate time vector
+    opt.npts = len(opt.tvec) # Number of time points
     
     return opt
