@@ -268,7 +268,7 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
 
     
         ## Treatment failure
-        newtreat2tot = Mtx2[t]*tx2time[t] - people[fail,:,t].sum() # Calculate difference between current people on treatment and people needed
+        newtreat2tot = Mtx2[t]*tx2time[t] - people[tx2,:,t].sum() # Calculate difference between current people on treatment and people needed
         currentfailed = people[fail,:,t] # Find how many people are diagnosed
         for cd4 in range(ncd4):
             if cd4>0:
@@ -285,6 +285,7 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
             otherdeaths    = dt*people[fail[cd4],:,t]*background
             inflows = progin + newfail1[cd4] + newfail2[cd4]
             outflows = progout + hivdeaths + otherdeaths
+            
             newtreat2[cd4] = maximum(0, minimum(newtreat2[cd4], currentfailed[cd4,:]+inflows-outflows)) # Make sure it doesn't go negative
             dF.append(inflows - outflows - newtreat2[cd4])
             if ((dF[cd4]+people[fail[cd4],:,t])<0).any():

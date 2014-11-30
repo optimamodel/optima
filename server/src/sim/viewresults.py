@@ -57,7 +57,7 @@ def viewepiresults(E, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'de
                     if ndim(E[graph].ydata)==1:
                         scatter(E.xdata, E[graph].ydata, c=E.colord)
                     
-                    title('Overall')
+                    title(E[graph].tot.title)
                     legend(('Model','Data'))
                     xlabel(E[graph].xlabel)
                     ylabel(E[graph].tot.ylabel)
