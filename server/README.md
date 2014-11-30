@@ -1,16 +1,22 @@
 Installation
 ------------
 
-  This component requires ([pip](http://pip.readthedocs.org/en/latest/installing.html)), [PostgreSQL](http://www.postgresql.org/download/) and [VirtualEnv](http://virtualenv.readthedocs.org/en/latest/).
+This component requires ([pip](http://pip.readthedocs.org/en/latest/installing.html)), [PostgreSQL](http://www.postgresql.org/download/) and [VirtualEnv](http://virtualenv.readthedocs.org/en/latest/).
 
-    # Install virtual env
-    pip install virtualenv
+Install virtual env:
+ 
+`$ pip install virtualenv`
 
-    # Configure database parameters in `src\api.py` file
-    app.config['DATABASE_URI'] = 'postgresql+psycopg2://optima:optima@localhost:5432/optima'
 
-    # Run the server
-    ./run.sh
+Copy the example config and configure it accordingly:
+ 
+`$ cp src/config.example.py src/config.py`
+
+
+Run the server:
+ 
+`$ ./run.sh`
+
 
 Database migrations
 ___________________
