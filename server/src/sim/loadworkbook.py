@@ -156,8 +156,8 @@ def loadworkbook(filename='example.xlsx',verbose=2):
                             data[name][thispar].male = [] # Store whether or not this population is male
                             data[name][thispar].female = [] # Store whether or not this population is female
                             data[name][thispar].injects = [] # Store whether or not this population injects drugs
-                            data[name][thispar].hetero = [] # Store whether or not this population is heterosexual
-                            data[name][thispar].homo = [] # Store whether or not this population is homosexual 
+                            data[name][thispar].sexmen = [] # Store whether or not this population has sex with men
+                            data[name][thispar].sexwomen = [] # Store whether or not this population has sex with women
                             data[name][thispar].sexworker = [] # Store whether or not this population is a sex worker
                             data[name][thispar].client = [] # Store whether or not this population is a client of sex workers
                         if thispar=='progs':
