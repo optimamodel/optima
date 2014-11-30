@@ -1,7 +1,6 @@
 from printv import printv
 from numpy import zeros, array, exp
 from bunch import Bunch as struct # Replicate Matlab-like structure behavior
-import math
 eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
 
 
@@ -109,32 +108,8 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
     ## Constants...can be used directly
     M.const = P.const
     
-    M.totalacts = struct()
-    M.totalacts.__doc__ = 'Balanced numbers of acts'
-
-    popsize = M.popsize
-
-    for act in P.pships.keys():
-
-        npops = len(M.popsize[:,0])
-
-        npop=len(popsize); # Number of populations
-    
-        # Moved here from reconcileacts()
-        # WARNING, NOT SURE ABOUT THIS
-        # Make matrix symmetric
-        mixmatrix = array(P.pships[act])
-        symmetricmatrix=zeros((npop,npop));
-        for pop1 in range(npop):
-            for pop2 in range(npop):
-                symmetricmatrix[pop1,pop2] = symmetricmatrix[pop1,pop2] + (mixmatrix[pop1,pop2] + mixmatrix[pop2,pop1]) / float(eps+((mixmatrix[pop1,pop2]>0)+(mixmatrix[pop2,pop1]>0)))
-
-        a = zeros((npops,npops,npts))
-        numacts = M.numacts[act]
-        for t in range(npts):
-            a[:,:,t] = reconcileacts(symmetricmatrix.copy(), popsize[:,t], numacts[:,t]) # Note use of copy()
-
-        M.totalacts[act] = a
+    ## Calculate total acts
+    M.totalacts = totalacts(P, M, npts)
     
     # Apply interventions?
     
@@ -143,6 +118,30 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
     printv('...done making model parameters.', 2, verbose)
     return M
 
+def totalacts(P, M, npts):
+    totalacts = struct()
+    totalacts.__doc__ = 'Balanced numbers of acts'
+    
+    popsize = M.popsize
+    pships = P.pships
+
+    for act in pships.keys():
+        npops = len(M.popsize[:,0])
+        npop=len(popsize); # Number of populations
+        mixmatrix = array(pships[act])
+        symmetricmatrix=zeros((npop,npop));
+        for pop1 in range(npop):
+            for pop2 in range(npop):
+                symmetricmatrix[pop1,pop2] = symmetricmatrix[pop1,pop2] + (mixmatrix[pop1,pop2] + mixmatrix[pop2,pop1]) / float(eps+((mixmatrix[pop1,pop2]>0)+(mixmatrix[pop2,pop1]>0)))
+
+        a = zeros((npops,npops,npts))
+        numacts = M['numacts'][act]
+        for t in range(npts):
+            a[:,:,t] = reconcileacts(symmetricmatrix.copy(), popsize[:,t], numacts[:,t]) # Note use of copy()
+
+        totalacts[act] = a
+    
+    return totalacts
 
 
 def reconcileacts(symmetricmatrix,popsize,popacts):
