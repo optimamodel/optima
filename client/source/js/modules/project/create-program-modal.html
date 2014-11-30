@@ -40,13 +40,13 @@
 
     <div class="section grid" ng-if="program.parameters">
       <div class="++2 3">
-        Programs
+        Parameters
       </div>
       <div class="5 2++">
         <div ng-repeat="p in program.parameters">
           <label>
             <input type="checkbox" ng-model="p.active">
-            {{programSpec(p)}}
+            {{paramSpec(p)}}
           </label>
         </div>
       </div>
