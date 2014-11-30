@@ -138,7 +138,7 @@ define(['./module', 'angular'], function (module, angular) {
             options: angular.copy(linescatteroptions),
             data: angular.copy(linescatterdata),
             type: type,
-            title: type.name + ' - Overall'
+            title: data.tot.title
           };
 
           graph.data.line = generateLineData(response.tvec, data.tot.best);
@@ -146,7 +146,7 @@ define(['./module', 'angular'], function (module, angular) {
           graph.data.area.lineLow = generateLineData(response.tvec, data.tot.low);
 
           graph.options.xAxis.axisLabel = data.xlabel;
-          graph.options.yAxis.axisLabel = data.ylabel;
+          graph.options.yAxis.axisLabel = data.tot.ylabel;
 
           // seems like ydata can either be an array of arrays for the
           // populations or a single array when it's used in overall
@@ -164,7 +164,7 @@ define(['./module', 'angular'], function (module, angular) {
               options: angular.copy(linescatteroptions),
               data: angular.copy(linescatterdata),
               type: type,
-              title: type.name + ' - ' + $scope.parameters.meta.pops.short[populationIndex]
+              title: population.title
             };
 
             graph.data.line = generateLineData(response.tvec, population.best);
@@ -172,7 +172,7 @@ define(['./module', 'angular'], function (module, angular) {
             graph.data.area.lineLow = generateLineData(response.tvec, population.low);
 
             graph.options.xAxis.axisLabel = data.xlabel;
-            graph.options.yAxis.axisLabel = data.ylabel;
+            graph.options.yAxis.axisLabel = population.ylabel;
 
             // seems like ydata can either be an array of arrays for the
             // populations or a single array when it's used in overall
@@ -225,7 +225,7 @@ define(['./module', 'angular'], function (module, angular) {
           }
         })
         .error(function(data, status, headers, config) {
-          stopTimer()
+          stopTimer();
         });
     }
 
