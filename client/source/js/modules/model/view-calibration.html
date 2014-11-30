@@ -181,11 +181,9 @@
           </div>
 
           <div class="section" ng-repeat="graph in graphs">
-            <div>
-              <h3>{{ graph.title }}</h3>
-            </div>
             <div style="width: 746px">
               <div class="chart-container">
+                <h3 class="text-center">{{ graph.title }}</h3>
                 <div line-scatter-area-chart data="graph.data" options="graph.options" save-graph-as></div>
               </div>
             </div>
