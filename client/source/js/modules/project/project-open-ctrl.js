@@ -7,8 +7,11 @@ define(['./module', 'underscore'], function (module, _) {
 
     $scope.projects = projects.projects;
 
-    // Opens an existing project using `name` 
-    // Alerts the user if it cannot do it
+    /**
+     * Opens an existing project using `name`
+     *
+     * Alerts the user if it cannot do it.
+     */
     $scope.open = function (name) {
       $http.get('/api/project/open/' + name)
         .success(function (response) {
@@ -20,10 +23,13 @@ define(['./module', 'underscore'], function (module, _) {
         });
     };
 
-    // Removes the project
-    // If the removed project is the active one it will reset it
-    // Alerts the user in case of failure
-    $scope.removeNoQuestionsAsked = function (name, index) {
+    /**
+     * Removes the project
+     *
+     * If the removed project is the active one it will reset it alerts the user
+     * in case of failure.
+     */
+    var removeNoQuestionsAsked = function (name, index) {
       $http.delete('/api/project/delete/' + name)
         .success(function (response) {
           if (response && response.status === 'NOK') {
@@ -42,12 +48,14 @@ define(['./module', 'underscore'], function (module, _) {
         });
     };
 
-    // Opens a dialog to ask the user for confirmation to remove the project
-    // Removes the project if the user confirms
+    /**
+     * Opens a dialog to ask the user for confirmation to remove the project and
+     * removes the project if the user confirms.
+     */
     $scope.remove = function ($event, name, index) {
-      if ($event) { $event.preventDefault() }
+      if ($event) { $event.preventDefault(); }
       if(confirm('Are you sure you want to permanently remove project "' + name + '"?')) {
-        $scope.removeNoQuestionsAsked(name, index);
+        removeNoQuestionsAsked(name, index);
       }
     };
   });
