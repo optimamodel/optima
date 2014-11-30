@@ -8,8 +8,8 @@ def setoptions(opt=None, **kwargs):
     from bunch import Bunch as struct
     from numpy import arange
     
-    # If no options structure is fed in, 
-    if opt==None: 
+    # If no options structure is fed in
+    if not(isinstance(opt,dict)): 
         opt = struct() # If existing options structure isn't provided, create it
         opt.startyear = 2000 # First year of simulation to run
         opt.endyear = 2030 # Final year of simulation to run
