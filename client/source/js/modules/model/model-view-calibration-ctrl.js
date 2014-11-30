@@ -78,7 +78,7 @@ define(['./module', 'underscore'], function (module, _) {
           width: 300,
           height: 200,
           margin: {
-            top: 10,
+            top: 20,
             right: 5,
             bottom: 40,
             left: 60
