@@ -9,6 +9,10 @@ def runsimulation(D, startyear=2000, endyear=2030, verbose=2):
     printv('Running simulation...', 1, verbose)
     dosave = False # Flag for whether or not to save
     
+    # Set options to update year range
+    from setoptions import setoptions
+    D.opt = setoptions(D.opt, startyear=startyear, endyear=endyear)
+    
     print('WARNING should add conditionals here')
     from makeccocs import makeallccocs
     D = makeallccocs(D, verbose=verbose)
@@ -22,7 +26,6 @@ def runsimulation(D, startyear=2000, endyear=2030, verbose=2):
         from makemodelpars import makemodelpars
         D.M = makemodelpars(D.P, D.opt, verbose=verbose)
     
-
     # Run model
     from model import model
     allsims = []

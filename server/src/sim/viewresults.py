@@ -1,4 +1,4 @@
-def viewepiresults(E, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'death':[0,1], 'dx':[0,1], 'tx1':[0,1], 'tx2':[0,1]}, startyear=2000, endyear=2015, onefig=True, verbose=2, show_wait=False):
+def viewepiresults(E, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'death':[0,1], 'dx':[0,1], 'tx1':[0,1], 'tx2':[0,1]}, startyear=2000, endyear=2015, onefig=True, verbose=2, show_wait=False, linewidth=2):
     """
     Generate all outputs required for the model, including prevalence, incidence,
     deaths, etc.
@@ -34,7 +34,7 @@ def viewepiresults(E, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'de
                             figure()
                         hold(True)
                         fill_between(E.tvec, E[graph].pops[p].low, E[graph].pops[p].high, alpha=0.2, edgecolor='none')
-                        plot(E.tvec, E[graph].pops[p].best, c=E.colorm)
+                        plot(E.tvec, E[graph].pops[p].best, c=E.colorm, linewidth=linewidth)
                         if ndim(E[graph].ydata)==2:
                             scatter(E.xdata, E[graph].ydata[p], c=E.colord)
                         
@@ -53,11 +53,11 @@ def viewepiresults(E, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'de
                         figure()
                     hold(True)
                     fill_between(E.tvec, E[graph].tot.low, E[graph].tot.high, alpha=0.2, edgecolor='none')
-                    plot(E.tvec, E[graph].tot.best, c=E.colorm)
+                    plot(E.tvec, E[graph].tot.best, c=E.colorm, linewidth=linewidth)
                     if ndim(E[graph].ydata)==1:
                         scatter(E.xdata, E[graph].ydata, c=E.colord)
                     
-                    title('Overall')
+                    title(E[graph].tot.title)
                     legend(('Model','Data'))
                     xlabel(E[graph].xlabel)
                     ylabel(E[graph].tot.ylabel)
@@ -68,7 +68,7 @@ def viewepiresults(E, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'de
 
 
 
-def viewmodels(M, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'death':[0,1], 'dx':[0,1], 'tx1':[0,1], 'tx2':[0,1]}, startyear=2000, endyear=2015, onefig=True, verbose=2, show_wait=False):
+def viewmodels(M, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'death':[0,1], 'dx':[0,1], 'tx1':[0,1], 'tx2':[0,1]}, startyear=2000, endyear=2015, onefig=True, verbose=2, show_wait=False, linewidth=2):
     """
     Generate all outputs required for the model, including prevalence, incidence,
     deaths, etc.
@@ -87,7 +87,7 @@ def viewmodels(M, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'death'
         figh.subplots_adjust(bottom=0.04) # Less space on bottom
         figh.subplots_adjust(wspace=0.5) # More space between
         figh.subplots_adjust(hspace=0.5) # More space between
-        nplots = sum([whichgraphs[key][i]*[npops,1][i] for i in range(2) for key in whichgraphs.keys()])
+        nplots = sum([whichgraphs[key][i]*[npops,1][i] for i in range(2) for key in whichgraphs.keys()]) + onefig
         xyplots = ceil(sqrt(nplots))
     
     count = 0
@@ -103,10 +103,10 @@ def viewmodels(M, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'death'
                             figure()
                         hold(True)
                         for sim in range(M.nsims):
-                            plot(M.tvec, M[graph].pops[p].data[sim])
+                            plot(M.tvec, M[graph].pops[p].data[sim], linewidth=linewidth)
                         
                         title(M[graph].pops[p].title)
-                        legend(M[graph].pops[p].legend)
+                        if not(onefig): legend(M[graph].pops[p].legend)
                         xlabel(M[graph].xlabel)
                         ylabel(M[graph].pops[p].ylabel)
                         xlim(xmin=startyear, xmax=endyear)
@@ -120,14 +120,19 @@ def viewmodels(M, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'death'
                         figure()
                     hold(True)
                     for sim in range(M.nsims):
-                        plot(M.tvec, M[graph].tot.data[sim])
+                        plot(M.tvec, M[graph].tot.data[sim], linewidth=linewidth)
                     
                     title(M[graph].tot.title)
-                    legend(M[graph].tot.legend)
+                    if not(onefig): legend(M[graph].tot.legend)
                     xlabel(M[graph].xlabel)
                     ylabel(M[graph].tot.ylabel)
                     xlim(xmin=startyear, xmax=endyear)
                     ylim(ymin=0)
+    
+    if onefig:
+        subplot(xyplots, xyplots, count+1)
+        for sim in range(M.nsims): plot(0, 0, linewidth=linewidth)
+        legend(M[graph].tot.legend)
 
     if show_wait: show()
 

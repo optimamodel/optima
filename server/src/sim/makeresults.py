@@ -49,7 +49,7 @@ def makeresults(D, allsims=None, quantiles=None, verbose=2):
         
         if epi=='death':
             printv('Calculating deaths...', 3, verbose)
-            alldeaths = array([allsims[s].inci for s in range(nsims)])
+            alldeaths = array([allsims[s].death for s in range(nsims)])
             R.death.pops = quantile(alldeaths, quantiles=quantiles)
             R.death.tot = quantile(alldeaths.sum(axis=1), quantiles=quantiles) # Axis 1 is populations
 

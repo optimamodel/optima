@@ -5,11 +5,11 @@ import xlsxwriter
 
 populations = [ \
     {'internal_name':'MSM', 'short_name':'MSM','name':'Men who have sex with men', \
-    'male': True, 'female': False, 'injects':False, 'hetero':False, 'homo':True, 'sexworker':False, 'client':False}, \
+    'male': True, 'female': False, 'injects':False, 'sexmen':False, 'sexwomen':True, 'sexworker':False, 'client':False}, \
     {'internal_name':'FSW', 'short_name':'FSW','name':'Female sex workers', \
-    'male': False, 'female': True, 'injects':False, 'hetero':True, 'homo':False, 'sexworker':True, 'client':False}, \
+    'male': False, 'female': True, 'injects':False, 'sexmen':True, 'sexwomen':False, 'sexworker':True, 'client':False}, \
     {'internal_name':'MWID', 'short_name':'Male PWID','name':'Men who have sex with men', \
-    'male': True, 'female': False, 'injects':True, 'hetero':True, 'homo':False, 'sexworker':False, 'client':False}]
+    'male': True, 'female': False, 'injects':True, 'sexmen':True, 'sexwomen':False, 'sexworker':False, 'client':False}]
 programs = [{'name':'Needle-syringe programs', 'internal_name':'NSP', 'short_name': 'NSP', 'saturating': True}, \
     {'name':'Opiate substition therapy', 'internal_name':'OST', 'short_name': 'OST', 'saturating': False}, \
     {'name':'Programs for men who have sex with men', 'internal_name':'MSM', 'short_name': 'MSM programs', 'saturating': True}]

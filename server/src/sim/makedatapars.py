@@ -15,7 +15,7 @@ def makedatapars(D, verbose=2):
     
     from printv import printv
     from bunch import Bunch as struct # Replicate Matlab-like structure behavior
-    from numpy import array, isnan, zeros, shape, mean
+    from numpy import array, isnan, zeros, shape, mean, arange
     printv('Converting data to parameters...', 1, verbose)
     
     
@@ -30,15 +30,20 @@ def makedatapars(D, verbose=2):
         return sanitized
         
     
-    def data2par(dataarray):
+    def data2par(dataarray, usetime=False):
         """ Take an array of data and turn it into default parameters -- here, just take the means """
         nrows = shape(dataarray)[0] # See how many rows need to be filled (either npops, nprogs, or 1)
         output = struct() # Create structure
-        output.t = 1 # Set default time pameter -- constant (1) by default
-        output.y = [D.G.datastart, D.G.dataend] # Set default control years -- start and end of the data
-        output.p = zeros(nrows) # Initialize array for holding population parameters
-        for r in xrange(nrows): 
-            output.p[r] = mean(sanitize(dataarray[r])) # Calculate mean for each population
+        output.p = [0]*nrows # Initialize array for holding population parameters
+        if usetime:
+            output.t = [0]*nrows # Initialize array for holding time parameters
+            for r in xrange(nrows): 
+                output.p[r] = sanitize(dataarray[r]) # Store each extant value
+                output.t[r] = arange(D.G.datastart, D.G.dataend+1)[~isnan(dataarray[r])] # Store each year
+
+        else:
+            for r in xrange(nrows): 
+                output.p[r] = mean(sanitize(dataarray[r])) # Calculate mean for each population
         
         return output
 
@@ -64,14 +69,17 @@ def makedatapars(D, verbose=2):
     ## Key parameters
     for parname in D.data.key.keys():
         printv('Converting data parameter %s...' % parname, 2, verbose)
-        D.P[parname] = dataindex(D.data.key[parname][0], 0) # Population size and prevalence -- # TODO: don't take average for this, and use uncertainties!
+        D.P[parname] = dataindex(D.data.key[parname][0], 0) # Population size and prevalence -- # TODO: use uncertainties!
     
     ## Loop over parameters that can be converted automatically
     for parclass in ['epi', 'txrx', 'sex', 'inj']:
         printv('Converting data parameter %s...' % parclass, 3, verbose)
         for parname in D.data[parclass].keys():
             printv('Converting data parameter %s...' % parname, 4, verbose)
-            D.P[parname] = data2par(D.data[parclass][parname])
+            if parname in ['numfirstline','numsecondline']:
+                D.P[parname] = data2par(D.data[parclass][parname], usetime=True)
+            else:
+                D.P[parname] = data2par(D.data[parclass][parname])
     
     ## Matrices can be used directly
     for parclass in ['pships', 'transit']:
