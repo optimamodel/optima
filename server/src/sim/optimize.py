@@ -16,6 +16,8 @@ def optimize(D, objectives=None, constraints=None, startyear=2000, endyear=2030,
     from model import model
     from copy import deepcopy
     from ballsd import ballsd
+    from getcurrentbudget import getcurrentbudget
+    from makemodelpars import makemodelpars
     printv('Running optimization...', 1, verbose)
     
     # Set options to update year range
@@ -26,6 +28,7 @@ def optimize(D, objectives=None, constraints=None, startyear=2000, endyear=2030,
     if not isinstance(objectives, struct): objectives = defaultobjectives(D, verbose=verbose)
     if not isinstance(constraints, struct): constraints = defaultconstraints(D, verbose=verbose)
 
+    print('HIIIIIIIIIIIIII')
     # Convert weightings from percentage to number
     if objectives.outcome.inci: objectives.outcome.inciweight = float( objectives.outcome.inciweight ) / 100.0
     if objectives.outcome.daly: objectives.outcome.dalyweight = float( objectives.outcome.dalyweight ) / 100.0
@@ -40,6 +43,8 @@ def optimize(D, objectives=None, constraints=None, startyear=2000, endyear=2030,
 
     for prog in constraints.decrease.keys():
         if constraints.decrease[prog].use: constraints.decrease[prog].by = float(constraints.decrease[prog].by) / 100.0
+    
+    print('BIIIIIIIIIIIIII')
 
     # Run optimization # TODO -- actually implement :)
     nallocs = 1 # WARNING, will want to do this better
@@ -53,7 +58,9 @@ def optimize(D, objectives=None, constraints=None, startyear=2000, endyear=2030,
         
         printv(alloc, 4, verbose)
         
-        S = model(D.G, D.M, D.F[0], D.opt, verbose=verbose)
+        newD = getcurrentbudget(D, alloc)
+        newD.M = makemodelpars(newD.P, newD.opt, withwhat='c', verbose=2)
+        S = model(newD.G, newD.M, newD.F[0], newD.opt, verbose=verbose)
         
         objective = S.inci.sum() # TEMP
         
