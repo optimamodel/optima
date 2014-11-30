@@ -6,13 +6,16 @@ from functools import wraps
 from flask import request, jsonify
 from dbconn import db
 from dbmodels import ProjectDb, WorkingProjectDb
+import traceback
 
 ALLOWED_EXTENSIONS = {'txt', 'xlsx', 'xls'}
+
+BAD_REPLY = {"status":"NOK"}
 
 def check_project_name(api_call):
     @wraps(api_call)
     def _check_project_name(*args, **kwargs):
-        reply = {"status":"NOK"}
+        reply = BAD_REPLY
         # print(request.headers)
         try:
             project_name = request.headers['project']
@@ -26,6 +29,22 @@ def check_project_name(api_call):
             request.project_name = project_name
             return api_call(*args, **kwargs)
     return _check_project_name
+
+def report_exception(reason = None):
+    def _report_exception(api_call):
+        @wraps(api_call)
+        def __report_exception(*args, **kwargs):
+            try:
+                return api_call(*args, **kwargs)
+            except Exception, err:
+                var = traceback.format_exc()
+                reply = BAD_REPLY
+                reply['exception'] = var
+                if reason:
+                    reply['reason'] = reason
+                return jsonify(reply)
+        return __report_exception
+    return _report_exception
 
 
 """ Finds out if this file is allowed to be uploaded """
