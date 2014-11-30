@@ -50,6 +50,7 @@ def autofit(D, timelimit=60, startyear=2000, endyear=2015, verbose=2):
                 for y,year in enumerate(base[ind].data.x):
                     modelind = findinds(D.opt.tvec, year)
                     mismatch += abs(base[ind].model.y[modelind] - base[ind].data.y[y]) / mean(base[ind].data.y+eps)
+                        
 
         
         return mismatch
@@ -58,7 +59,7 @@ def autofit(D, timelimit=60, startyear=2000, endyear=2015, verbose=2):
     Forig = array(dict2list(D.F[0]))
     
     # Run the optimization algorithm
-    Fnew, fval, exitflag, output = ballsd(errorcalc, Forig, xmin=0*Forig, timelimit=timelimit, verbose=verbose)
+    Fnew, fval, exitflag, output = ballsd(errorcalc, Forig, xmin=0*Forig, xmax=100*Forig, timelimit=timelimit, verbose=verbose)
     
     # Update the model
     D.F[0] = list2dict(D.F[0], Fnew)
