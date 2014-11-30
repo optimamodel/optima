@@ -45,14 +45,14 @@ define(['./module', 'angular'], function (module, angular) {
     $scope.simulationOptions = {'timelimit':60};
     $scope.graphs = [];
 
-    var linescatteroptions = {
-      height: 250,
-      width: 400,
+    var lineScatterOptions = {
+      height: 200,
+      width: 320,
       margin: {
         top: 20,
-        right: 20,
-        bottom: 60,
-        left: 100
+        right: 10,
+        bottom: 45,
+        left: 70
       },
       xAxis: {
         axisLabel: 'Year',
@@ -68,7 +68,7 @@ define(['./module', 'angular'], function (module, angular) {
       }
     };
 
-    var linescatterdata = {
+    var lineScatterData = {
       line: [],
       scatter: [],
       area: {}
@@ -121,10 +121,10 @@ define(['./module', 'angular'], function (module, angular) {
 
         if (type.total) {
           var graph = {
-            options: angular.copy(linescatteroptions),
-            data: angular.copy(linescatterdata),
+            options: angular.copy(lineScatterOptions),
+            data: angular.copy(lineScatterData),
             type: type,
-            title: type.name + ' - Overall'
+            title: data.tot.title
           };
 
           graph.data.line = generateLineData(response.tvec, data.tot.best);
@@ -132,7 +132,7 @@ define(['./module', 'angular'], function (module, angular) {
           graph.data.area.lineLow = generateLineData(response.tvec, data.tot.low);
 
           graph.options.xAxis.axisLabel = data.xlabel;
-          graph.options.yAxis.axisLabel = data.ylabel;
+          graph.options.yAxis.axisLabel = data.tot.ylabel;
 
           // seems like ydata can either be an array of arrays for the
           // populations or a single array when it's used in overall
@@ -147,10 +147,10 @@ define(['./module', 'angular'], function (module, angular) {
         if (type.byPopulation && data) {
           _(data.pops).each(function (population, populationIndex) {
             var graph = {
-              options: angular.copy(linescatteroptions),
-              data: angular.copy(linescatterdata),
+              options: angular.copy(lineScatterOptions),
+              data: angular.copy(lineScatterData),
               type: type,
-              title: type.name + ' - ' + $scope.parameters.meta.pops.short[populationIndex]
+              title: population.title
             };
 
             graph.data.line = generateLineData(response.tvec, population.best);
@@ -158,7 +158,7 @@ define(['./module', 'angular'], function (module, angular) {
             graph.data.area.lineLow = generateLineData(response.tvec, population.low);
 
             graph.options.xAxis.axisLabel = data.xlabel;
-            graph.options.yAxis.axisLabel = data.ylabel;
+            graph.options.yAxis.axisLabel = population.ylabel;
 
             // seems like ydata can either be an array of arrays for the
             // populations or a single array when it's used in overall
@@ -211,7 +211,7 @@ define(['./module', 'angular'], function (module, angular) {
           }
         })
         .error(function(data, status, headers, config) {
-          stopTimer()
+          stopTimer();
         });
     }
 

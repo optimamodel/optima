@@ -40,11 +40,14 @@ default_effectname = [['sex', 'condomcas'], [u'MSM'], [[0.3, 0.5], [0.7, 0.9]]]
 ###############################################################################
 def makecc(D=None, progname = default_progname, ccparams = default_ccparams, makeplot = default_makeplot, verbose=2):
     
+    if verbose>=2:
+        print('makecc %s %s' % (progname, ccparams))
     ## Check that the selected program is in the program list 
     if progname not in D.programs.keys():
         raise Exception('Please select one of the following programs %s' % D.programs.keys())
 
     ## Extract info from data structure
+
     prognumber = D.data.meta.progs.code.index(progname) # get program number
     coverage = D.data.costcov.cov[prognumber] # get program coverage levels
     
@@ -71,7 +74,7 @@ def makecc(D=None, progname = default_progname, ccparams = default_ccparams, mak
         storeparams = [saturation, growthrate]
 
         # Create logistic relationship 
-        xvalscc = linspace(0,xupperlim,D.opt.nsims) # take D.opt.nsims points between 0 and user-specified max
+        xvalscc = linspace(0,xupperlim,1000) # take 1000 points between 0 and user-specified max
         yvalscc = 2*saturation / (1 + exp(-growthrate*xvalscc)) - saturation # calculate logistic function
 
     # ... for unit cost programs...
@@ -87,7 +90,7 @@ def makecc(D=None, progname = default_progname, ccparams = default_ccparams, mak
         storeparams = [slope]
 
         ## Create linear relationship
-        xvalscc = linspace(ccparams[3],D.opt.nsims) # take D.opt.nsims points between 0 and some arbitrary max
+        xvalscc = linspace(0,ccparams[3],1000) # take 1000 points between 0 and some arbitrary max
         yvalscc = xvalscc*slope # calculate linear function
 
     # Get scatter data
@@ -236,14 +239,14 @@ def makeco(D, progname=default_progname, effectname=default_effectname, coparams
         storeparams = [muz, stdevz, muf, stdevf]
         
         ## General set of coverage-outcome relationships
-        xvalsco = linspace(0,1,D.opt.nsims) # take D.opt.nsims points along the unit interval
-        yvalsco = zeros((D.opt.nsims,len(fullsample)))
+        xvalsco = linspace(0,1,1000) # take 1000 points along the unit interval
+        yvalsco = zeros((1000,len(fullsample)))
         for i in range(len(fullsample)):
-            yvalsco[:,i] = linspace(zerosample[i],fullsample[i],D.opt.nsims) # Generate D.opt.nsims straight lines
+            yvalsco[:,i] = linspace(zerosample[i],fullsample[i],1000) # Generate D.opt.nsims straight lines
             
         ## Upper and lower bounds of line set
-        ymin, ymax = zeros(D.opt.nsims), zeros(D.opt.nsims)
-        for i in range(D.opt.nsims):
+        ymin, ymax = zeros(1000), zeros(1000)
+        for i in range(1000):
             ymax[i] = max(yvalsco[i,:])
             ymin[i] = min(yvalsco[i,:])
             
@@ -258,7 +261,7 @@ def makeco(D, progname=default_progname, effectname=default_effectname, coparams
         if makeplot:
             figure()
             hold(True)
-            plot(xvalsco, linspace(muz,muf,D.opt.nsims), color = 'b', lw = 2)
+            plot(xvalsco, linspace(muz,muf,1000), color = 'b', lw = 2)
             plot(xvalsco, ymax, 'k--', lw = 2)
             plot(xvalsco, ymin, 'k--', lw = 2)
             plot(coverage, outcome, 'ro')
@@ -269,8 +272,8 @@ def makeco(D, progname=default_progname, effectname=default_effectname, coparams
         # Create and populate output structure with plotting data
         plotdata = {}
         plotdata['xlinedata'] = xvalsco # X data for all line plots
-        plotdata['ylinedata'] = [linspace(muz,muf,D.opt.nsims), ymax, ymin] # ALL Y data (for three lines)
-        plotdata['ylinedata1'] = linspace(muz,muf,D.opt.nsims) # Y data for first line on plot
+        plotdata['ylinedata'] = [linspace(muz,muf,1000), ymax, ymin] # ALL Y data (for three lines)
+        plotdata['ylinedata1'] = linspace(muz,muf,1000) # Y data for first line on plot
         plotdata['ylinedata2'] = ymax  # Y data for second line on plot
         plotdata['ylinedata3'] = ymin  # Y data for third line on plot
         plotdata['xscatterdata'] = coverage # X scatter data
@@ -367,8 +370,8 @@ def makecco(D=None, progname = default_progname, effectname = default_effectname
         plotdata_co, storeparams_co = makeco(D, progname, effectname, coparams, makeplot=makeplot, verbose=verbose)
 
         # Create x dataset and initialise y dataset
-        xvalscco = linspace(0,xupperlim,D.opt.nsims)
-        yvalscco = zeros((D.opt.nsims, len(fullsample)))
+        xvalscco = linspace(0,xupperlim,1000)
+        yvalscco = zeros((1000, len(fullsample)))
         
         # Create line set
         for i in range(len(fullsample)):
@@ -378,8 +381,8 @@ def makecco(D=None, progname = default_progname, effectname = default_effectname
         mediancco = ccoeqn(xvalscco, [saturation, growthrate, muz, muf])# Generate median cost-outcome curve
         
         ## Create upper and lower bounds of line set
-        ymin, ymax = zeros(D.opt.nsims), zeros(D.opt.nsims)
-        for i in range(D.opt.nsims):
+        ymin, ymax = zeros(1000), zeros(1000)
+        for i in range(1000):
             ymax[i] = max(yvalscco[i,:])
             ymin[i] = min(yvalscco[i,:])
                 
