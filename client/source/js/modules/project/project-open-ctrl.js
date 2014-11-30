@@ -46,7 +46,7 @@ define(['./module', 'underscore'], function (module, _) {
     // Removes the project if the user confirms
     $scope.remove = function ($event, name, index) {
       if ($event) { $event.preventDefault() }
-      if(confirm('Removing projects cannot be undone. Do you confirm that you want to remove the project "' + name + '"?')) {
+      if(confirm('Are you sure you want to permanently remove project "' + name + '"?')) {
         $scope.removeNoQuestionsAsked(name, index);
       }
     };
