@@ -25,7 +25,7 @@ def autofit(D, timelimit=60, startyear=2000, endyear=2015, verbose=2):
         return mismatch
 
     # Convert F to a flast list for the optimization algorithm
-    Forig = dict2list(D.F)
+    Forig = dict2list(D.F[0])
     
     # Run the optimization algorithm
     Fnew, fval, exitflag, output = ballsd(errorcalc, Forig)    
