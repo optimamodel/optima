@@ -65,8 +65,8 @@ define(['./module', 'angular'], function (module, angular) {
       margin: {
         top: 20,
         right: 10,
-        bottom: 40,
-        left: 60
+        bottom: 45,
+        left: 70
       },
       xAxis: {
         axisLabel: 'Year',
