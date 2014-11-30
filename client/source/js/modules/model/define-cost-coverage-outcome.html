@@ -32,7 +32,7 @@
     <button class="btn" ng-click="revertModel()">Revert Model</button>
   </div>
 
-  <div class="section" ng-if="apiData">
+  <div class="section" ng-if="hasCostCoverResponse">
 
     <div class="section">
       <h1>{{ activeProgram.name }}</h1>
@@ -43,7 +43,7 @@
 
     <div class="section" ng-repeat="graph in graphs.plotdata">
 
-      <h2 class="section">{{ apiData.effectnames[$index][0].join(' ') }}</h2>
+      <h2 class="section">{{ beautifulEffectNames(effectNames[$index]) }}</h2>
 
       <div class="section elastic">
         <div class="elastic_col __shrink" style="width: 320px">
