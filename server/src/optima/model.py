@@ -290,6 +290,8 @@ def doCostCoverage():
             args['ccparams'] = [0.9, 0.2, 800000.0, 7e6]
         if not args.get('coparams'):
             args['coparams'] = []
+        args['ccparams'] = [float(param) for param in args['ccparams']]
+        args['coparams'] = [float(param) for param in args['coparams']]
         plotdata, plotdata_co, plotdata_cc, effectnames, D = plotallcurves(**args)
         if args.get('dosave'):
             D_dict = D.toDict()
@@ -316,6 +318,7 @@ def doCostCoverageEffect():
             args['coparams'] = []
         if not args.get('effectname'):
             args['effectname'] = default_effectname
+        args['coparams'] = [float(param) for param in args['coparams']]
         plotdata, plotdata_co, storeparams = makecco(**args)
     except Exception, err:
         var = traceback.format_exc()

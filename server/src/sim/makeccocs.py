@@ -40,11 +40,14 @@ default_effectname = [['sex', 'condomcas'], [u'MSM'], [[0.3, 0.5], [0.7, 0.9]]]
 ###############################################################################
 def makecc(D=None, progname = default_progname, ccparams = default_ccparams, makeplot = default_makeplot, verbose=2):
     
+    if verbose>=2:
+        print('makecc %s %s' % (progname, ccparams))
     ## Check that the selected program is in the program list 
     if progname not in D.programs.keys():
         raise Exception('Please select one of the following programs %s' % D.programs.keys())
 
     ## Extract info from data structure
+
     prognumber = D.data.meta.progs.code.index(progname) # get program number
     coverage = D.data.costcov.cov[prognumber] # get program coverage levels
     

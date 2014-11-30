@@ -6,7 +6,7 @@ Created on Sat Nov 29 17:40:34 2014
 import numpy as np
 from matplotlib.pylab import figure, plot, hold, xlabel, ylabel, title
 
-def financialanalysis(D, sim = D, yscale = 'abs'):
+def financialanalysis(D, sim = D, yscale = 'abs', makeplot = True):
     '''
     Full description to come
     Arguments: 
@@ -135,13 +135,16 @@ def financialanalysis(D, sim = D, yscale = 'abs'):
     plotdata['cumulhivcostsfuture']['xlabel'] = 'Year'
     plotdata['cumulhivcostsfuture']['ylabel'] = 'USD'
 
-    figure()
-    hold(True)
-    plot(plotdata['cumulhivcosts']['xlinedata'], plotdata['cumulhivcosts']['ylinedata'], lw = 2)
-    title(plotdata['cumulhivcosts']['title'])
-    xlabel('Year')
-    ylabel('USD')
+    if makeplot:
+        figure()
+        hold(True)
+        plot(plotdata['cumulhivcosts']['xlinedata'], plotdata['cumulhivcosts']['ylinedata'], lw = 2)
+        title(plotdata['cumulhivcosts']['title'])
+        xlabel('Year')
+        ylabel('USD')
 
     # Get financial commitments
     return sim, plotdata
     
+#example
+#sim, plotdata = financialanalysis(D, sim = D, yscale = 'abs')

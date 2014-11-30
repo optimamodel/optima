@@ -32,7 +32,7 @@
           <button class="btn __white" ng-click="open(project.name)">Open</button>
         </td>
         <td>
-          <button class="btn __red" ng-click="delete(project.name, $index)">Remove</button>
+          <button class="btn __red" ng-click="remove($event, project.name, $index)">Remove</button>
         </td>
       </tr>
       </tbody>
@@ -42,6 +42,6 @@
   <div ng-hide="projects.length">
     <h3>No projects found</h3>
 
-    There are no projects found. Please <a ui-sref="project.create">create a project</a> first.
+    There are no projects found. Please <a ui-sref="project.create({})">create a project</a> first.
   </div>
 </div>
