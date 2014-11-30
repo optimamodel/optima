@@ -96,12 +96,12 @@ def make_years_range(name, params, data_start, data_end):
 
 """ 
 every populations item is a dictionary is expected to have the following fields:
-internal_name, short_name, name, male, female, injects, hetero, homo, sexworker, client
+internal_name, short_name, name, male, female, injects, sexmen, sexwomen, sexworker, client
 (3x str, 7x bool)
 """
 def make_populations_range(name, items):
-    column_names = ['Internal name','Short name','Long name','Male','Female','Injects','Heterosexual', \
-    'Homosexual','Sex worker','Client']
+    column_names = ['Internal name','Short name','Long name','Male','Female','Injects','Sex with men', \
+    'Sex with women','Sex worker','Client']
     row_names = range(1, len(items)+1)
     coded_params = []
     for item in items:
@@ -112,8 +112,8 @@ def make_populations_range(name, items):
             male = item.get('male', False)
             female = item.get('female', False)
             injects = item.get('injects',False)
-            hetero = item.get('hetero',False)
-            homo = item.get('homo',False)
+            sexmen = item.get('sexmen',False) # WARNING need to update
+            sexwomen = item.get('sexwomen',False)
             sexworker = item.get('injects',False)
             client = item.get('injects',False)      
         else: # backward compatibility :) might raise exception which is ok
@@ -123,11 +123,11 @@ def make_populations_range(name, items):
             male = False
             female = False
             injects = False
-            hetero = False
-            homo = False
+            sexmen = False
+            sexwomen = False
             sexworker = False
             client = False      
-        coded_params.append([internal_name, short_name, item_name, male, female, injects, hetero, homo, sexworker, client])
+        coded_params.append([internal_name, short_name, item_name, male, female, injects, sexmen, sexwomen, sexworker, client])
     return OptimaContent(name, row_names, column_names, coded_params)
 
 """ 
