@@ -200,7 +200,7 @@ def loadworkbook(filename='example.xlsx',verbose=2):
                                 data[name][thispar].sexworker.append(thesedata[7])
                                 data[name][thispar].client.append(thesedata[8])
                             if thispar=='progs':
-                                data[name][thispar].saturating.append(thesedata[3])
+                                data[name][thispar].saturating.append(thesedata[2])
                                 
                         # It's cost-coverage data, save the cost and coverage values separately
                         if groupname=='cocodata':
