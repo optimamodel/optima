@@ -74,8 +74,8 @@ def autofit(D, timelimit=60, startyear=2000, endyear=2015, verbose=2):
     D.R = makeresults(D, allsims, D.opt.quantiles, verbose=verbose)
 
     # Gather plot data
-    from gatherplotdata import gatherepidata
-    D.plot.E = gatherepidata(D, D.R, verbose=verbose)
+    from gatherplotdata import gatheruncerdata
+    D.plot.E = gatheruncerdata(D, D.R, verbose=verbose)
     
     printv('...done with automatic calibration.', 2, verbose)
     return D
