@@ -10,7 +10,7 @@ def optimize(D, objectives=None, constraints=None, startyear=2000, endyear=2030,
         timelimit is the maximum time in seconds to run optimization for
         verbose determines how much information to print.
         
-    Version: 2014nov30 by cliffk
+    Version: 2014dec01 by cliffk
     """
     
     from model import model
@@ -49,7 +49,7 @@ def optimize(D, objectives=None, constraints=None, startyear=2000, endyear=2030,
     for alloc in range(nallocs): D.A.append(deepcopy(D.A[0])) # Just copy for now
     D.A[0].label = 'Original'
     D.A[1].label = 'Optimal'
-    origalloc = array(D.A[0].alloc)
+    origalloc = array(D.A[0].alloc) # TODO -- WARNING at this point these entries are WRONG, they are a mix of unit costs and total costs
     
     
     def objectivecalc(alloc):
@@ -79,7 +79,11 @@ def optimize(D, objectives=None, constraints=None, startyear=2000, endyear=2030,
         D = getcurrentbudget(D, alloc)
         D.M = makemodelpars(D.P, D.opt, withwhat='c', verbose=2)
         D.A[i].S = model(D.G, D.M, D.F[0], D.opt, verbose=verbose)
+        
+        # Now that it's run, store total program costs
         D.a[i].alloc = alloc
+        for prog in range(D.G.progs):
+            
     
     # Calculate results
     from makeresults import makeresults
