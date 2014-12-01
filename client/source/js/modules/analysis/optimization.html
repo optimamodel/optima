@@ -329,102 +329,39 @@
     </table>
 </div>
 
-<hr class="__dashed"/>
+<hr/>
 
-<div class="checkbox-block">
-    <label>
-        <input type="checkbox" ng-model="showAdvanced">
-        Advanced settings<span ng-show="showAdvanced">:</span>
-    </label>
+<h2>Advanced settings</h2>
+<div>
+    <table class="table table-bordered table-hover table-striped" style="width: auto">
+        <thead>
+            <th>Enable</th>
+            <th>Program name</th>
+            <th>Level</th>
+            <th>Year</th>
+        </thead>
+        <tbody>
+            <tr ng-repeat="p in programs">
+                <td>
+                    <input type="checkbox" ng-model="params.constraints.coverage[programCodes[$index]].use">
+                </td>
+                <td>
+                    {{ p }}
+                </td>
+                <td>
+                    <input class="txbox __inline __s" ng-change="params.constraints.coverage[programCodes[$index]].use=true" ng-model="params.constraints.coverage[programCodes[$index]].level">
+                </td>
+                <td>
+                    <input class="txbox __inline __s" ng-change="params.constraints.coverage[programCodes[$index]].use=true" ng-model="params.constraints.coverage[programCodes[$index]].year">
+                </td>
+            </tr>
+        </tbody>
+    </table>
 </div>
-
-<div style="margin-left: 15px;" ng-show="showAdvanced">
-
-    <div class="checkbox-block">
-        <label>
-            <input type="checkbox" style="height: 22px;">
-            Treatment must reach at least
-            <input class="txbox __inline __s" type="number">
-            % of tratment-eligible PLHIV by year
-            <input class="txbox __inline __s" type="number">
-        </label>
-    </div>
-
-    <div class="checkbox-block">
-        <label>
-            <input type="checkbox" style="height: 22px;">
-            Prevention of mother-to-child transmission must reach at least
-            <input class="txbox __inline __s" type="number">
-            % by year
-            <input class="txbox __inline __s" type="number">
-        </label>
-    </div>
-
-    <div class="checkbox-block">
-        <label>
-            <input type="checkbox" style="height: 22px;">
-            Medical male circumcision must reach at least
-            <input class="txbox __inline __s" type="number">
-            % by year
-            <input class="txbox __inline __s" type="number">
-        </label>
-    </div>
-
-    <div class="checkbox-block">
-        <label>
-            <input type="checkbox" style="height: 22px;">
-            Prevention programs for sex workers must reach at least
-            <input class="txbox __inline __s" type="number">
-            % by year
-            <input class="txbox __inline __s" type="number">
-        </label>
-    </div>
-
-    <div class="checkbox-block">
-        <label>
-            <input type="checkbox" style="height: 22px;">
-            Opiate substitution therapy among people who inject drugs must reach at least
-            <input class="txbox __inline __s" type="number">
-            % by year
-            <input class="txbox __inline __s" type="number">
-        </label>
-    </div>
-
-    <div class="checkbox-block">
-        <label>
-            <input type="checkbox" style="height: 22px;">
-            Prevention programs for men who have sex with men must reach at least
-            <input class="txbox __inline __s" type="number">
-            % by year
-            <input class="txbox __inline __s" type="number">
-        </label>
-    </div>
-
-    <div class="checkbox-block">
-        <label>
-            <input type="checkbox" style="height: 22px;">
-            Harm reduction programs for people who inject drugs must reach at least
-            <input class="txbox __inline __s" type="number">
-            % by year
-            <input class="txbox __inline __s" type="number">
-        </label>
-    </div>
-
-    <div class="checkbox-block">
-        <label>
-            <input type="checkbox" style="height: 22px;">
-            At least <input class="txbox __inline __s" type="number">% of the population of PLHIV are to be diagnosed by year
-            <input class="txbox __inline __s" type="number">
-        </label>
-    </div>
-
-</div>
-
 </div>
 
 <!-- Tab 3 -->
 <div ng-if="activeTab === 3">
-
     <div class="well section">
         <div class="grid">
             <h2>Optimization</h2>
