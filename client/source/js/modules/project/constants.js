@@ -63,12 +63,10 @@ define(['./module'], function (module) {
       parameters: [
         {
           active: true,
-          name: 'Condom usage probability, regular partnerships',
           value: { 'signature': ['condom', 'reg'], 'pops': [] }
         },
         {
           active: true,
-          name: ' Condom usage probability, casual partnerships',
           value: { 'signature': ['condom', 'cas'], 'pops': [] }
         }
       ]
@@ -79,12 +77,10 @@ define(['./module'], function (module) {
       parameters: [
         {
           active: true,
-          name: 'Condom usage probability, regular partnerships',
           value: { 'signature': ['condom', 'reg'], 'pops': [] }
         },
         {
           active: true,
-          name: ' Condom usage probability, casual partnerships',
           value: { 'signature': ['condom', 'cas'], 'pops': [] }
         }
       ]
@@ -95,12 +91,10 @@ define(['./module'], function (module) {
       parameters: [
         {
           active: true,
-          name: 'Discharging STI prevalence',
           value: {'signature': ['stiprevdis'], 'pops': []}
         },
         {
           active: true,
-          name: 'Ulcerative STI prevalence',
           value: {'signature': ['stiprevulc'], 'pops': []}
         }
       ]
@@ -111,7 +105,6 @@ define(['./module'], function (module) {
       parameters: [
         {
           active: true,
-          name: 'Number of circumcisions performed per year',
           value: {'signature': ['numcircum'], 'pops': []}
         }
       ]
@@ -122,12 +115,10 @@ define(['./module'], function (module) {
       parameters: [
         {
           active: true,
-          name: 'Number of acts per person per year, regular',
           value: {'signature': ['numacts', 'reg'], 'pops': []}
         },
         {
           active: true,
-          name: 'Number of acts per person per year, casual',
           value: {'signature': ['numacts', 'cas'], 'pops': []}
         }
       ]
@@ -138,17 +129,14 @@ define(['./module'], function (module) {
       parameters: [
         {
           active: true,
-          name: 'Condom usage probability, commercial partnerships',
           value: { 'signature': ['condom', 'com'], 'pops': ['FSW'] }
         },
         {
           active: true,
-          name: 'Condom usage probability, commercial partnerships',
           value: { 'signature': ['condom', 'com'], 'pops': ['CSW'] }
         },
         {
           active: true,
-          name: 'HIV testing rates',
           value: { 'signature': ['hivtest'], 'pops': ['FSW'] }
         }
       ]
@@ -159,12 +147,10 @@ define(['./module'], function (module) {
       parameters: [
         {
           active: true,
-          name: 'Condom usage probability, regular partnerships',
           value: {'signature': ['condom', 'reg'], 'pops': ['MSM']}
         },
         {
           active: true,
-          name: 'Condom usage probability, casual partnerships',
           value: {'signature': ['condom', 'cas'], 'pops': ['MSM']}
         }
       ]
@@ -175,17 +161,14 @@ define(['./module'], function (module) {
       parameters: [
         {
           active: true,
-          name: 'HIV testing rates',
           value: {'signature': ['hivtest'], pops: ['PWID']}
         },
         {
           active: true,
-          name: 'Condom usage probability, regular partnerships',
           value: {'signature': ['condom', 'reg'], pops: ['PWID']}
         },
         {
           active: true,
-          name: 'Condom usage probability, casual partnerships',
           value: {'signature': ['condom', 'cas'], pops: ['PWID']}
         }
       ]
@@ -197,7 +180,6 @@ define(['./module'], function (module) {
       parameters: [
         {
           active: true,
-          name: 'Number of people on OST',
           value: {'signature': ['numost'], 'pops': []}
         }
       ]
@@ -209,7 +191,6 @@ define(['./module'], function (module) {
       parameters: [
         {
           active: true,
-          name: 'Needle-syringe sharing rate',
           value: {'signature': ['sharing'], 'pops': []}
         }
       ]
@@ -221,7 +202,6 @@ define(['./module'], function (module) {
       parameters: [
         {
           active: true,
-          name: 'PrEP prevalence',
           value: {'signature': ['prep'], 'pops': []}
         }
       ]
@@ -233,7 +213,6 @@ define(['./module'], function (module) {
       parameters: [
         {
           active: true,
-          name: 'PEP prevalence',
           value: {'signature': ['pep'], 'pops': []}
         }
       ]
@@ -245,7 +224,6 @@ define(['./module'], function (module) {
       parameters: [
         {
           active: true,
-          name: 'HIV testing rates',
           value: {'signature': ['hivtest'], 'pops': []}
         }
       ]
@@ -257,12 +235,10 @@ define(['./module'], function (module) {
       parameters: [
         {
           active: true,
-          name: 'Number of people on 1st-line treatment',
           value: {'signature': ['tx1'], 'pops': []}
         },
         {
           active: true,
-          name: 'Number of people on 2nd-line treatment',
           value: {'signature': ['tx2'], 'pops': []}
         }
       ]
@@ -274,7 +250,6 @@ define(['./module'], function (module) {
       parameters: [
         {
           active: true,
-          name: 'Number of women on PMTCT',
           value: {'signature': ['numpmtct'], 'pops': []}
         }
       ]
