@@ -96,18 +96,17 @@ def make_years_range(name, params, data_start, data_end):
 
 """ 
 every populations item is a dictionary is expected to have the following fields:
-internal_name, short_name, name, male, female, injects, sexmen, sexwomen, sexworker, client
+short_name, name, male, female, injects, sexmen, sexwomen, sexworker, client
 (3x str, 7x bool)
 """
 def make_populations_range(name, items):
-    column_names = ['Internal name','Short name','Long name','Male','Female','Injects','Sex with men', \
+    column_names = ['Short name','Long name','Male','Female','Injects','Sex with men', \
     'Sex with women','Sex worker','Client']
     row_names = range(1, len(items)+1)
     coded_params = []
     for item in items:
         if type(item) is dict:
             item_name = item['name']
-            internal_name = item.get('internal_name', abbreviate(item_name))
             short_name = item.get('short_name', abbreviate(item_name))
             male = item.get('male', False)
             female = item.get('female', False)
@@ -118,8 +117,7 @@ def make_populations_range(name, items):
             client = item.get('injects',False)      
         else: # backward compatibility :) might raise exception which is ok
             item_name = item
-            internal_name = abbreviate(item_name)
-            short_name = internal_name
+            short_name = abbreviate(item_name)
             male = False
             female = False
             injects = False
@@ -127,30 +125,28 @@ def make_populations_range(name, items):
             sexwomen = False
             sexworker = False
             client = False      
-        coded_params.append([internal_name, short_name, item_name, male, female, injects, sexmen, sexwomen, sexworker, client])
+        coded_params.append([short_name, item_name, male, female, injects, sexmen, sexwomen, sexworker, client])
     return OptimaContent(name, row_names, column_names, coded_params)
 
 """ 
 every programs item is a dictionary is expected to have the following fields:
-internal_name, short_name, name, saturating
+short_name, name, saturating
 (3x str, 1x bool)
 """
 def make_programs_range(name, items):
-    column_names = ['Internal name','Short name','Long name','Saturating']
+    column_names = ['Short name','Long name','Saturating']
     row_names = range(1, len(items)+1)
     coded_params = []
     for item in items:
         if type(item) is dict:
             item_name = item['name']
-            internal_name = item.get('internal_name', abbreviate(item_name))
             short_name = item.get('short_name', abbreviate(item_name))
             saturating = item.get('saturating', False)
         else: # backward compatibility :) might raise exception which is ok
             item_name = item
-            internal_name = abbreviate(item_name)
-            short_name = internal_name
+            short_name = abbreviate(item_name)
             saturating = False      
-        coded_params.append([internal_name, short_name, item_name, saturating])
+        coded_params.append([short_name, item_name, saturating])
     return OptimaContent(name, row_names, column_names, coded_params)
 
 def make_constant_range(name, row_names, best_data):

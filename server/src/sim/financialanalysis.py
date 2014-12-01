@@ -30,7 +30,7 @@ def financialanalysis(D, sim = D, yscale = 'abs', makeplot = True):
 
     # Get most recent ART unit costs
     progname = 'ART'
-    prognumber = D.data.meta.progs.code.index(progname)
+    prognumber = D.data.meta.progs.short.index(progname)
     artunitcost = D.data.costcov.cost[prognumber]
     artunitcost = np.asarray(artunitcost)
     artunitcost = artunitcost[~np.isnan(artunitcost)]
