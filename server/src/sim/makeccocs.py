@@ -20,7 +20,7 @@ default_ccparams = [0.9, 0.2, 800000.0, 7e6]
 default_coparams = []
 default_makeplot = 0
 #default_datain = D # use 'example' or programs
-default_effectname = [['sex', 'condomcas'], [u'MSM'], [[0.3, 0.5], [0.7, 0.9]]]
+default_effectname = [['sex', 'condomcas'], [u'MSM programs'], [[0.3, 0.5], [0.7, 0.9]]]
 
 
 ###############################################################################
