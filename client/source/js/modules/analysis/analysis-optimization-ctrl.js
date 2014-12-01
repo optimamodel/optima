@@ -53,10 +53,10 @@ define([
       // Default program weightings
       $scope.params.objectives.money.costs = {};
       $scope.programs = meta.progs.long;
-      $scope.programCodes = meta.progs.code;
+      $scope.programCodes = meta.progs.short;
 
-      for ( var i = 0; i < meta.progs.code.length; i++ ) {
-        $scope.params.objectives.money.costs[meta.progs.code[i]] = 100;
+      for ( var i = 0; i < meta.progs.short.length; i++ ) {
+        $scope.params.objectives.money.costs[meta.progs.short[i]] = 100;
       }
 
       // Constraints Defaults
@@ -67,15 +67,15 @@ define([
       $scope.params.constraints.decrease = {};
       $scope.params.constraints.coverage = {};
 
-      for ( var i = 0; i < meta.progs.code.length; i++ ) {
-        $scope.params.constraints.decrease[meta.progs.code[i]] = {};
-        $scope.params.constraints.decrease[meta.progs.code[i]].use = false;
-        $scope.params.constraints.decrease[meta.progs.code[i]].by = 100;
+      for ( var i = 0; i < meta.progs.short.length; i++ ) {
+        $scope.params.constraints.decrease[meta.progs.short[i]] = {};
+        $scope.params.constraints.decrease[meta.progs.short[i]].use = false;
+        $scope.params.constraints.decrease[meta.progs.short[i]].by = 100;
 
-        $scope.params.constraints.coverage[meta.progs.code[i]] = {};
-        $scope.params.constraints.coverage[meta.progs.code[i]].use = false;
-        $scope.params.constraints.coverage[meta.progs.code[i]].level = 0;
-        $scope.params.constraints.coverage[meta.progs.code[i]].year = 2030;
+        $scope.params.constraints.coverage[meta.progs.short[i]] = {};
+        $scope.params.constraints.coverage[meta.progs.short[i]].use = false;
+        $scope.params.constraints.coverage[meta.progs.short[i]].level = 0;
+        $scope.params.constraints.coverage[meta.progs.short[i]].year = 2030;
       }
 
       $scope.pieoptions = {
