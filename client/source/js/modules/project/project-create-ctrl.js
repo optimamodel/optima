@@ -1,7 +1,8 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
-  module.controller('ProjectCreateController', function ($scope, $state, $modal, $timeout, activeProject, DEFAULT_PROGRAMS, DEFAULT_POPULATIONS) {
+  module.controller('ProjectCreateController', function ($scope, $state, $modal,
+    $timeout, activeProject, DEFAULT_PROGRAMS, DEFAULT_POPULATIONS, parametersResponse) {
 
     $scope.projectParams = {
       name: ''
@@ -9,6 +10,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     $scope.populations = DEFAULT_POPULATIONS;
     $scope.programs = DEFAULT_PROGRAMS;
+
+    var availableParameters = parametersResponse.data.params;
 
     // Helper function to open a population modal
     var openPopulationModal = function (population) {
@@ -84,6 +87,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         resolve: {
           program: function () {
             return program;
+          },
+          availableParameters: function () {
+            return availableParameters;
+          },
+          populations: function () {
+            return $scope.populations;
           }
         }
       });
@@ -143,6 +152,15 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     /*
+    * Returns true of the two provided arrays are identic
+    */
+    var areEqualArrays = function(arrayOne, arrayTwo) {
+      return _(arrayOne).every(function(element, index) {
+        return element === arrayTwo[index];
+      });
+    };
+
+    /*
      * Returns a collection of entries where all non-active antries are filtered
      * out and the active attribute is removed from each of these entries.
      */
@@ -155,25 +173,47 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             cl.parameters = _(cl.parameters).chain()
               .where({ active: true })
               .map(function (param) {
-                return _(param).omit(['active', '$$hashKey'])
+                return _(param).omit(['active', '$$hashKey']);
               })
               .value();
-            if (cl.parameters == 0) delete cl.parameters;
+            if (cl.parameters === 0) delete cl.parameters;
           }
           return cl;
         })
         .value();
     };
 
+    /*
+     * Returns the provide programs with every "ALL_POPULATIONS" entry replaced
+     * by the selected populations.
+     *
+     * Example: ['ALL_POPULATIONS'] -> ["FSW","CSW","MSM","PWID","CHILD","INF"]
+     */
+    var insertSelectedPopulations = function (programs, selectedPopulations) {
+      var internalPopulationNames = _(selectedPopulations).pluck('internal_name');
+      return _(programs).map(function(program) {
+        program.parameters = _(program.parameters).map(function(entry) {
+          if (entry.value.pops[0] === "ALL_POPULATIONS") {
+            entry.value.pops = internalPopulationNames;
+          }
+          return entry;
+        });
+        return program;
+      });
+    };
+
     $scope.prepareCreateForm = function () {
+
       if ($scope.CreateProjectForm.$invalid) {
         alert('Please fill in all the required project fields');
         return false;
       }
 
+      var selectedPrograms = toCleanArray($scope.programs);
+      var selectedPopulations = toCleanArray($scope.populations);
       var params = _($scope.projectParams).omit('name');
-      params.programs = toCleanArray($scope.programs);
-      params.populations = toCleanArray($scope.populations);
+      params.populations = selectedPopulations;
+      params.programs = insertSelectedPopulations(selectedPrograms, selectedPopulations);
 
       $scope.formAction = '/api/project/create/' + $scope.projectParams.name;
       $scope.formParams = JSON.stringify(params);

@@ -39,8 +39,8 @@ def runsimulation(D, startyear=2000, endyear=2030, verbose=2):
     D.R = makeresults(D, allsims, D.opt.quantiles, verbose=verbose)
     
     # Gather plot data
-    from gatherplotdata import gatherepidata
-    D.plot.E = gatherepidata(D, D.R, verbose=verbose)
+    from gatherplotdata import gatheruncerdata
+    D.plot.E = gatheruncerdata(D, D.R, verbose=verbose)
     
     # Save output
     if dosave:
