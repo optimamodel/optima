@@ -315,6 +315,10 @@ define(['./module'], function (module) {
     {
       active: false, short_name: "INFR",
       name: "Health infrastructure", saturating: false
+    },
+    {
+      active: false, short_name: "Other",
+      name: "Other costs", saturating: false
     }
   ];
 
