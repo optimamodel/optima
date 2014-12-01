@@ -314,7 +314,7 @@ class TitledRange:
         #done! return the new current_row plus spacing
         return current_row + TitledRange.ROW_INTERVAL # for spacing
 
-    def param_refs(self, column_number = 1):
+    def param_refs(self, column_number = 0):
         return self.data_range.param_refs(self.sheet.get_name(), column_number)
 
 class OptimaWorkbook:
@@ -349,7 +349,6 @@ class OptimaWorkbook:
         self.prog_range = None
         self.pop_range = None
         self.ref_pop_range = None
-        self.ref_pop_range_internal = None
         self.ref_prog_range = None
 
         self.npops = len(pops)
@@ -423,11 +422,10 @@ class OptimaWorkbook:
         pp_sheet = self.sheets['pp']
         pp_sheet.protect()
         pp_sheet.set_column(2,2,15)
-        pp_sheet.set_column(3,3,15)
-        pp_sheet.set_column(4,4,40)
+        pp_sheet.set_column(3,3,40)
+        pp_sheet.set_column(6,6,12)
         pp_sheet.set_column(7,7,12)
         pp_sheet.set_column(8,8,12)
-        pp_sheet.set_column(9,9,12)
         current_row = 0
 
         pop_content = make_populations_range('Populations', self.pops)
@@ -439,7 +437,6 @@ class OptimaWorkbook:
         current_row = self.prog_range.emit(self.formats, 'left')
 
         self.ref_pop_range = self.pop_range.param_refs()
-        self.ref_pop_range_internal = self.pop_range.param_refs(0)
 
         self.ref_prog_range = self.prog_range.param_refs()
 
@@ -527,8 +524,10 @@ class OptimaWorkbook:
         names = ['Interactions between regular partners', 'Interactions between casual partners', \
         'Interactions between commercial partners', 'Interactions between people who inject drugs']
 
+        for ind in xrange(len(self.pops)):
+            self.current_sheet.set_column(2+ind,2+ind,12)
         for name in names:
-            current_row = self.emit_matrix_block(name, current_row, self.ref_pop_range, self.ref_pop_range_internal)
+            current_row = self.emit_matrix_block(name, current_row, self.ref_pop_range, self.ref_pop_range)
 
     def generate_trans(self):
         self.current_sheet = self.sheets['trans']
@@ -537,8 +536,10 @@ class OptimaWorkbook:
         names = ['Age-related population transitions (average number of years before movement)', \
         'Risk-related population transitions (average number of years before movement)']
 
+        for ind in xrange(len(self.pops)):
+            self.current_sheet.set_column(2+ind,2+ind,12)
         for name in names:
-            current_row = self.emit_matrix_block(name, current_row, self.ref_pop_range, self.ref_pop_range_internal)
+            current_row = self.emit_matrix_block(name, current_row, self.ref_pop_range, self.ref_pop_range)
 
     def generate_constants(self):
         self.current_sheet = self.sheets['constants']
