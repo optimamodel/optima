@@ -83,6 +83,11 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
     M.tx1 = dpar2mpar(P.numfirstline, withwhat) # Number of people on first-line treatment
     M.tx2 = dpar2mpar(P.numsecondline, withwhat) # Number of people on second-line treatment
     
+    ## MTCT parameters
+    M.numpmtct = dpar2mpar(P.numpmtct, withwhat)
+    M.birth    = dpar2mpar(P.birth, withwhat)
+    M.breast   = dpar2mpar(P.breast, withwhat)    
+    
     ## Sexual behavior parameters -- all are parameters so can loop over all
     M.circum  = dpar2mpar(P.circum, withwhat) # Circumcision
     M.numacts = struct()
