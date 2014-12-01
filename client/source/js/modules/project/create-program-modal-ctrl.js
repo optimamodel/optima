@@ -8,22 +8,26 @@ define(['./module'], function (module) {
     var initialize = function () {
       $scope.isNew = !program.name;
 
+      $scope.availableParameters = angular.copy(availableParameters);
+      $scope.populations = _(populations).map(function(population) {
+        return {label: population.name, value: [population.internal_name]};
+      });
+      $scope.populations.unshift({label: 'All Populations', value: ['ALL_POPULATIONS']});
+
+
       // make sure the names are exactly the objects as in the list for the
       // select to show the initial entries (angular compares with ===)
       _(program.parameters).each(function(entry) {
-        entry.value.signature = findParameters(availableParameters, entry.value.signature).keys;
+        entry.value.signature = findParameters($scope.availableParameters, entry.value.signature).keys;
 
-        var foundPopulation = findPopulation(populations, entry.value.pops);
+        var foundPopulation = findPopulation($scope.populations, entry.value.pops);
         if (foundPopulation) {
-          entry.value.pops = foundPopulation.internal_name;
+          entry.value.pops = foundPopulation.value;
         }
       });
 
       $scope.program = program;
       $scope.program.active = true;
-
-      $scope.availableParameters = availableParameters;
-      $scope.populations = populations;
     };
 
     /*
@@ -45,11 +49,11 @@ define(['./module'], function (module) {
     };
 
     /*
-    * Finds a population entry based on the internal_name
+    * Finds a population entry based on the value
     */
-    var findPopulation = function(populations, internalName) {
+    var findPopulation = function(populations, value) {
       return _(populations).find(function(population) {
-        return areEqualArrays([population.internal_name], internalName);
+        return areEqualArrays(population.value, value);
       });
     };
 
