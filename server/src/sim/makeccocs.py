@@ -285,7 +285,7 @@ def makeco(D, progname=default_progname, effectname=default_effectname, coparams
         return plotdata, storeparams
 
 ###############################################################################
-# Create cco equation
+# Create cco and cc equations
 ###############################################################################
 def ccoeqn(x, p):
     '''
@@ -294,6 +294,14 @@ def ccoeqn(x, p):
     y = (p[3]-p[2]) * ( 2*p[0] / (1 + exp(-p[1]*x)) - p[0]) + p[2]
     return y
 
+def cceqn(x, p):
+    '''
+    Equation defining cc curves.
+    X is total cost, p is unit cost. Returns y which is coverage
+    '''
+    y = float(x)/p
+    return y
+    
 ###############################################################################
 ## Make single cost outcome curve
 # Inputs: 
