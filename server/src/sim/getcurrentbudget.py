@@ -21,10 +21,10 @@ def getcurrentbudget(D, alloc=None):
         currentbudget = []
 
     # Loop over programs
-    for progname in D.data.meta.progs.code:
+    for progname in D.data.meta.progs.short:
         
         # Get program index 
-        prognumber = D.data.meta.progs.code.index(progname) # get program number
+        prognumber = D.data.meta.progs.short.index(progname) # get program number
 
         # Loop over effects
         for effectname in D.programs[progname]:

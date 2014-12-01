@@ -20,7 +20,7 @@ default_ccparams = [0.9, 0.2, 800000.0, 7e6]
 default_coparams = []
 default_makeplot = 0
 #default_datain = D # use 'example' or programs
-default_effectname = [['sex', 'condomcas'], [u'MSM'], [[0.3, 0.5], [0.7, 0.9]]]
+default_effectname = [['sex', 'condomcas'], [u'MSM programs'], [[0.3, 0.5], [0.7, 0.9]]]
 
 
 ###############################################################################
@@ -48,7 +48,7 @@ def makecc(D=None, progname = default_progname, ccparams = default_ccparams, mak
 
     ## Extract info from data structure
 
-    prognumber = D.data.meta.progs.code.index(progname) # get program number
+    prognumber = D.data.meta.progs.short.index(progname) # get program number
     coverage = D.data.costcov.cov[prognumber] # get program coverage levels
     
     # For saturating programs... 
@@ -186,18 +186,18 @@ def makeco(D, progname=default_progname, effectname=default_effectname, coparams
         raise Exception('Please select one of the following effects %s' % D.programs[progname])
 
     ## Extract info from data structure
-    prognumber = D.data.meta.progs.code.index(progname) # get program number
+    prognumber = D.data.meta.progs.short.index(progname) # get program number
     
     ## Get population info
     popname = effectname[1]
 
     ## Only going to make cost-outcome curves if a program affects a SPECIFIC population -- otherwise will just make cost-coverage curves
     if not D.data.meta.progs.saturating[prognumber]:
-#    if popname[0] not in D.data.meta.pops.code:
+#    if popname[0] not in D.data.meta.pops.short:
         return [], D
     else:
-        if popname[0] in D.data.meta.pops.code:
-            popnumber = D.data.meta.pops.code.index(popname[0])
+        if popname[0] in D.data.meta.pops.short:
+            popnumber = D.data.meta.pops.short.index(popname[0])
         else: 
             popnumber = 0
         
@@ -325,7 +325,7 @@ def makecco(D=None, progname = default_progname, effectname = default_effectname
         raise Exception('Please select one of the following effects %s' % D.programs[progname])
 
     # Extract info from data structure
-    prognumber = D.data.meta.progs.code.index(progname) # get program number
+    prognumber = D.data.meta.progs.short.index(progname) # get program number
 
     # Get population info
     popname = effectname[1]
@@ -334,8 +334,8 @@ def makecco(D=None, progname = default_progname, effectname = default_effectname
     if not D.data.meta.progs.saturating[prognumber]:
         return [], [], []
     else:
-        if popname[0] in D.data.meta.pops.code:
-            popnumber = D.data.meta.pops.code.index(popname[0])
+        if popname[0] in D.data.meta.pops.short:
+            popnumber = D.data.meta.pops.short.index(popname[0])
         else: 
             popnumber = 0
         
@@ -459,7 +459,7 @@ def plotallcurves(D=None, progname=default_progname, ccparams=default_ccparams, 
         raise Exception('Please select one of the following programs %s' % D.programs.keys())
 
     # Extract info from data structure
-    prognumber = D.data.meta.progs.code.index(progname) # get program number
+    prognumber = D.data.meta.progs.short.index(progname) # get program number
 
     ## Initialise storage of outputs   
     plotdata_co = {}
@@ -495,10 +495,8 @@ def plotallcurves(D=None, progname=default_progname, ccparams=default_ccparams, 
 
     return plotdata, plotdata_co, plotdata_cc, effectnames, D
       
-## Example of use
 
 def makeallccocs(D=None, verbose=2):
     for progname in D.programs.keys():
         plotdata_cco, plotdata_co, plotdata_cc, effectnames, D = plotallcurves(D, unicode(progname))
     return D
-
