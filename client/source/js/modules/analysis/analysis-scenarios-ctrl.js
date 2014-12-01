@@ -3,7 +3,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     module.controller('AnalysisScenariosController', function ($scope, $http, $modal, meta, scenarioParamsResponse) {
 
-        var linesGraphOptions, linesGraphData, responseData, availableScenarioParams;
+        var linesGraphOptions, linesStyle, linesGraphData, responseData, availableScenarioParams;
 
         // initialize all necessary data for this controller
         var initialize = function() {
@@ -20,6 +20,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               { names: ['condom','cas'], pops: 0, startyear: 2010, endyear: 2015, startval: -1, endval: 1},
               { names: ['condom','com'], pops: 1, startyear: 2010, endyear: 2015, startval: -1, endval: 1},
               { names: ['condom','com'], pops: 5, startyear: 2010, endyear: 2015, startval: -1, endval: 1}
+            ]},
+            {active: true, name: '100% condom us2 in KAPs', pars: [
+              { names: ['condom','reg'], pops: 0, startyear: 2010, endyear: 2015, startval: -1, endval: 1},
+              { names: ['condom','cas'], pops: 0, startyear: 2010, endyear: 2015, startval: -1, endval: 1},
+              { names: ['condom','com'], pops: 2, startyear: 2010, endyear: 2015, startval: -1, endval: 1},
+              { names: ['condom','com'], pops: 4, startyear: 2010, endyear: 2015, startval: -1, endval: 1}
             ]}
           ];
 
@@ -37,6 +43,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             { id: 'tx2', name: 'Second-line treatment', active: false, byPopulation: false, total: false }
           ];
 
+          $scope.lineStyles = ['__blue', '__green', '__red', '__orange',
+            '__violet', '__black', '__light-orange', '__light-green'];
 
           linesGraphOptions = {
             height: 200,
@@ -47,6 +55,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               bottom: 45,
               left: 70
             },
+            linesStyle: $scope.lineStyles,
             xAxis: {
               axisLabel: 'Year',
               tickFormat: function (d) {
@@ -90,6 +99,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             title: title
           };
 
+          console.log(yData.length);
           _(yData).each(function(lineData) {
             graph.data.lines.push(generateLineData(xData, lineData));
           });
@@ -117,6 +127,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               var graph = generateGraph(type, data.tot.data, response.tvec, title);
               graph.options.xAxis.axisLabel = data.xlabel;
               graph.options.yAxis.axisLabel = data.tot.ylabel;
+              graph.legend = data.legend;
               graphs.push(graph);
             }
 
@@ -128,6 +139,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
                 var graph = generateGraph(type, population.data, response.tvec, title);
                 graph.options.xAxis.axisLabel = data.xlabel;
                 graph.options.yAxis.axisLabel = population.ylabel;
+                graph.legend = population.legend;
+                graph.legend[0] = "oasdasd qweqwe asdasdsad";
+
                 graphs.push(graph);
               });
             }
