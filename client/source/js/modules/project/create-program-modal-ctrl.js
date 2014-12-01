@@ -54,7 +54,7 @@ define(['./module'], function (module) {
     };
 
     $scope.addParameter = function() {
-      var entry = {};
+      var entry = {value: {signature: [], pops: []}};
       $scope.program.parameters = $scope.program.parameters || [];
       $scope.program.parameters.push(entry);
     };
