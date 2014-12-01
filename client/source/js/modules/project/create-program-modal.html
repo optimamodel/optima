@@ -38,19 +38,34 @@
       </div>
     </div>
 
-    <div class="section grid" ng-if="program.parameters">
-      <div class="++2 3">
-        Parameters
-      </div>
-      <div class="5 2++">
-        <div ng-repeat="p in program.parameters">
-          <label>
-            <input type="checkbox" ng-model="p.active">
-            {{paramSpec(p)}}
-          </label>
+    <div ng-repeat="entry in program.parameters">
+
+      <div class="section well" style="margin-bottom: 10px">
+        <div class="section grid">
+          <div class="++1 10 1++">
+            Parameters
+          </div>
+          <div class="++1 10 1++">
+            <select class="txbox" ng-model="entry.value" ng-options="param.keys as param.name for param in availableParameters"></select>
+          </div>
+        </div>
+
+        <div class="section grid">
+          <div class="++1 10 1++">
+            Population
+          </div>
+          <div class="++1 10 1++">
+            <select class="txbox" ng-model="entry.pops" ng-options="population.internal_name as population.name for population in populations"></select>
+          </div>
         </div>
       </div>
+
     </div>
+
+    <div class="section text-center">
+      <button type="button" class="btn" ng-click="addParameter()">Add Parameter</button>
+    </div>
+
 
     <div class="section text-center">
       <button type="button" class="btn __white" ng-click="$dismiss('Closed')">Dismiss</button>

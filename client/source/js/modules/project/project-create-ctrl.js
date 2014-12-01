@@ -1,7 +1,8 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
-  module.controller('ProjectCreateController', function ($scope, $state, $modal, $timeout, activeProject, DEFAULT_PROGRAMS, DEFAULT_POPULATIONS) {
+  module.controller('ProjectCreateController', function ($scope, $state, $modal,
+    $timeout, activeProject, DEFAULT_PROGRAMS, DEFAULT_POPULATIONS, parametersResponse) {
 
     $scope.projectParams = {
       name: ''
@@ -9,6 +10,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     $scope.populations = DEFAULT_POPULATIONS;
     $scope.programs = DEFAULT_PROGRAMS;
+
+    var availableParameters = parametersResponse.data.params;
 
     // Helper function to open a population modal
     var openPopulationModal = function (population) {
@@ -84,6 +87,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         resolve: {
           program: function () {
             return program;
+          },
+          availableParameters: function () {
+            return availableParameters;
+          },
+          populations: function () {
+            return $scope.populations;
           }
         }
       });
@@ -155,10 +164,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             cl.parameters = _(cl.parameters).chain()
               .where({ active: true })
               .map(function (param) {
-                return _(param).omit(['active', '$$hashKey'])
+                return _(param).omit(['active', '$$hashKey']);
               })
               .value();
-            if (cl.parameters == 0) delete cl.parameters;
+            if (cl.parameters === 0) delete cl.parameters;
           }
           return cl;
         })
