@@ -20,12 +20,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               { names: ['condom','cas'], pops: 0, startyear: 2010, endyear: 2015, startval: -1, endval: 1},
               { names: ['condom','com'], pops: 1, startyear: 2010, endyear: 2015, startval: -1, endval: 1},
               { names: ['condom','com'], pops: 5, startyear: 2010, endyear: 2015, startval: -1, endval: 1}
-            ]},
-            {active: true, name: '100% condom us2 in KAPs', pars: [
-              { names: ['condom','reg'], pops: 0, startyear: 2010, endyear: 2015, startval: -1, endval: 1},
-              { names: ['condom','cas'], pops: 0, startyear: 2010, endyear: 2015, startval: -1, endval: 1},
-              { names: ['condom','com'], pops: 2, startyear: 2010, endyear: 2015, startval: -1, endval: 1},
-              { names: ['condom','com'], pops: 4, startyear: 2010, endyear: 2015, startval: -1, endval: 1}
             ]}
           ];
 
