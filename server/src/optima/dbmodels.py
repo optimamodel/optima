@@ -35,7 +35,6 @@ class ProjectDb(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     datastart = db.Column(db.String(20))
     dataend = db.Column(db.String(20))
-    econ_datastart = db.Column(db.String(20))
     econ_dataend = db.Column(db.String(20))
     programs = db.Column(JSON)
     populations = db.Column(JSON)
@@ -43,13 +42,13 @@ class ProjectDb(db.Model):
     working_project = db.relationship('WorkingProjectDb', backref='projects',
                                 uselist=False)
 
-    def __init__(self, name, user_id, datastart, dataend, econ_datastart, \
+    def __init__(self, name, user_id, datastart, dataend, \
         econ_dataend, programs, populations, model = {}):
         self.name = name
         self.user_id = user_id
         self.datastart = datastart
         self.dataend = dataend
-        self.econ_datastart = econ_datastart
+        self.econ_datastart = datastart
         self.econ_dataend = econ_dataend
         self.programs = programs    
         self.populations = populations
