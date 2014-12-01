@@ -42,8 +42,6 @@ class TestOptimaWorkbook(unittest.TestCase):
         content = make_populations_range('Populations', populations)
         content_range = TitledRange(test_sheet, 0, content)
         ref_content = make_ref_years_range('Coverage', content_range, 2000, 2015)
-        #by default reference names are taken from the 2nd column
-        self.assertEqual(ref_content.row_names, ["='Test Sheet'!$D$3", "='Test Sheet'!$D$4", "='Test Sheet'!$D$5"])
 
 if __name__ == '__main__':
     unittest.main()
