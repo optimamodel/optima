@@ -8,7 +8,7 @@ define(['angular', 'saveAs'], function (angular, saveAs) {
         link: function (scope, elem, attrs) {
           var html = '<div class="chart-buttons btn-group">' +
             '<button class="btn figure">Export figure</button>' +
-            '<button class="btn pdf">Export table</button>' + // Not sure why "btn pdf" works but "btn table" doesn't
+            '<button class="btn pdf">Export data</button>' + // Not sure why "btn pdf" works but "btn table" doesn't
             '<div id="svgdataurl" style="display: none"></div>' +
             '</div>';
 

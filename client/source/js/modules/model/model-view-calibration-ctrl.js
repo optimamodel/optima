@@ -11,7 +11,7 @@ define(['./module', 'underscore'], function (module, _) {
       $scope.programs = _(meta.progs.long).map(function (name, index) {
         return {
           name: name,
-          acronym: meta.progs.code[index]
+          acronym: meta.progs.short[index]
         };
       });
 
