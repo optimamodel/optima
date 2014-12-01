@@ -40,7 +40,18 @@
 
     <div ng-repeat="entry in program.parameters">
 
+
       <div class="section well" style="margin-bottom: 10px">
+
+        <div class="section grid">
+          <div class="++1 10 1++">
+            <label>
+              <input type="checkbox" ng-model="entry.active">
+              Active
+            </label>
+          </div>
+        </div>
+
         <div class="section grid">
           <div class="++1 10 1++">
             Parameters
