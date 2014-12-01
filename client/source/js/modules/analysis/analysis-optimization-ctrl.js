@@ -75,7 +75,7 @@ define([
         $scope.params.constraints.coverage[meta.progs.code[i]] = {};
         $scope.params.constraints.coverage[meta.progs.code[i]].use = false;
         $scope.params.constraints.coverage[meta.progs.code[i]].level = 0;
-        $scope.params.constraints.coverage[meta.progs.code[i]].year = 2030;
+        $scope.params.constraints.coverage[meta.progs.code[i]].year = '';
       }
 
       $scope.pieoptions = {
