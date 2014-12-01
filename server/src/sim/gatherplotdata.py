@@ -159,12 +159,12 @@ def gathermultidata(D, Rarr, verbose=2):
             multi[key][ac].data = []
             multi[key][ac].legend = []
             for sim in range(multi.nsims):
-                thisdata = Rarr[sim][key][ac][0].tolist()
+                thisdata = Rarr[sim].R[key][ac][0].tolist()
                 multi[key][ac].data.append(thisdata)
                 multi[key][ac].legend.append(Rarr[sim].label) # Add legends
-                multi[key][ac].title  = Rarr[sim]['cost'][origkey]['title']
-                multi[key][ac].xlabel = Rarr[sim]['cost'][origkey]['xlabel']
-                multi[key][ac].ylabel = Rarr[sim]['cost'][origkey]['ylabel']
+                multi[key][ac].title  = Rarr[sim].R['costshared'][origkey]['title']
+                multi[key][ac].xlabel = Rarr[sim].R['costshared'][origkey]['xlabel']
+                multi[key][ac].ylabel = Rarr[sim].R['costshared'][origkey]['ylabel']
         
     printv('...done gathering multi-simulation results.', 4, verbose)
     return multi
