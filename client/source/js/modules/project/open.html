@@ -38,6 +38,7 @@
             {{ project.data_upload_time*1000 | date:'yyyy-MM-dd HH:mm:ss'}}
         </td>
         <td ng-if="project.data_upload_time == 0">-</td>
+        <td>
           <button class="btn __white" ng-click="open(project.name)">Open</button>
         </td>
         <td>
