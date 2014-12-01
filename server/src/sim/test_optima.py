@@ -14,7 +14,7 @@ print('WELCOME TO OPTIMA')
 projectname = 'example'
 verbose = 4
 show_wait = False
-nsims = 10
+nsims = 5
 
 print('\n\n\n1. Making project...')
 from makeproject import makeproject, makefittedpars

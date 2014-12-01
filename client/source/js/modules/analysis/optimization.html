@@ -51,7 +51,7 @@
 
     <p>
         With a fixed amount of money available:
-        <input class="txbox __inline __s" type="text" ng-model="params.objectives.outcome.fixed">
+        <input class="txbox __inline __l" type="text" ng-model="params.objectives.outcome.fixed">
         , what is the optimal allocation of this funding to:
     </p>
 
@@ -305,7 +305,7 @@
 
 <hr/>
 
-<h2>Funding levels not to decrease...</h2>
+<h2>Funding levels not to decrease each year by more than...</h2>
 <div>
     <table class="table table-bordered table-hover table-striped" style="width: auto">
         <thead>
@@ -349,10 +349,10 @@
                     {{ p }}
                 </td>
                 <td>
-                    <input class="txbox __inline __s" ng-change="params.constraints.coverage[programCodes[$index]].use=true" ng-model="params.constraints.coverage[programCodes[$index]].level">
+                    <input class="txbox __inline __s" type="number" ng-change="params.constraints.coverage[programCodes[$index]].use=true" ng-model="params.constraints.coverage[programCodes[$index]].level">
                 </td>
                 <td>
-                    <input class="txbox __inline __s" ng-change="params.constraints.coverage[programCodes[$index]].use=true" ng-model="params.constraints.coverage[programCodes[$index]].year">
+                    <input class="txbox __inline __s" type="number" ng-change="params.constraints.coverage[programCodes[$index]].use=true" ng-model="params.constraints.coverage[programCodes[$index]].year">
                 </td>
             </tr>
         </tbody>
@@ -412,7 +412,7 @@
                     <div class="6" ng-if="piedata1">
                         <h2>Original allocation</h2>
                         <button class="btn" onclick="openFileOption1();return;">Export figure</button>
-                        <button class="btn" onclick="openFileOption1();return;">Export table</button>
+                        <button class="btn" onclick="openFileOption1();return;">Export data</button>
                         <div class="chart-container">
                             <nvd3 data="piedata1" options="pieoptions"></nvd3>
                         </div>
@@ -420,7 +420,7 @@
                     <div class="6" ng-if="piedata2">
                         <h2>Optimal allocation</h2>
                         <button class="btn" onclick="openFileOption1();return;">Export figure</button>
-                        <button class="btn" onclick="openFileOption1();return;">Export table</button>
+                        <button class="btn" onclick="openFileOption1();return;">Export data</button>
                         <div class="chart-container">
                             <nvd3 data="piedata2" options="pieoptions"></nvd3>
                         </div>
