@@ -79,6 +79,7 @@ def optimize(D, objectives=None, constraints=None, startyear=2000, endyear=2030,
         D = getcurrentbudget(D, alloc)
         D.M = makemodelpars(D.P, D.opt, withwhat='c', verbose=2)
         D.A[i].S = model(D.G, D.M, D.F[0], D.opt, verbose=verbose)
+        D.a[i].alloc = alloc
     
     # Calculate results
     from makeresults import makeresults
