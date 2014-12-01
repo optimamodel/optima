@@ -20,12 +20,12 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
     
     ## Initialize basic quantities
     S       = struct()     # Sim output structure
-    S.tvec  = opt.tvec # Append time vector
-    dt      = opt.dt   # Shorten dt
+    S.tvec  = opt.tvec     # Append time vector
+    dt      = opt.dt       # Shorten dt
     npts    = len(S.tvec)  # Number of time points
     npops   = G.npops      # Shorten number of pops
     ncd4    = G.ncd4       # Shorten number of CD4 states
-    nstates = G.nstates   # Shorten number of health states
+    nstates = G.nstates    # Shorten number of health states
     
     ## Initialize arrays
     people     = zeros((nstates, npops, npts)) # Matrix to hold everything
@@ -35,9 +35,8 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
     S.inci     = zeros((npops, npts)) # Total incidence
     S.prev     = zeros((npops, npts)) # Prevalence by population
     S.allprev  = zeros((1, npts))     # Overall prevalence
-    S.mtctbr   = zeros((1, npts))     # Breastfeeding MTCT
-    S.mtctnobr = zeros((1, npts))     # Non-breastfeeding MTCT
-    S.allmtct  = zeros((1, npts))     # Total MTCT
+    S.births   = zeros((1, npts))     # Number of births
+    S.mtct     = zeros((1, npts))     # Number of mother-to-child transmissions
     S.dx       = zeros((npops, npts)) # Number diagnosed per timestep
     S.newtx1   = zeros((npops, npts)) # Number initiating ART1 per timestep
     S.newtx2   = zeros((npops, npts)) # Number initiating ART2 per timestep
@@ -55,41 +54,47 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
     ## Metaparameters to get nice diagnosis fits
     dxtime  = fit2time(F.dx,  S.tvec)
     
-    ###############################################################################
-    ## Run the model -- numerically integrate over time
-    ###############################################################################
-    
     # Shorten variables and remove dict calls to make things faster
-    sus = G.sus
+    sus  = G.sus
     undx = G.undx
-    dx = G.dx
-    tx1 = G.tx1
+    dx   = G.dx
+    tx1  = G.tx1
     fail = G.fail
-    tx2 = G.tx2
+    tx2  = G.tx2
     male = G.male
-    mmi = M.const.trans.mmi
-    mfi = M.const.trans.mfi
-    mmr = M.const.trans.mmr
-    mfr = M.const.trans.mfr
-    effcirc = (1-M.const.eff.circ)*M.circum
-    effsti = M.const.eff.sti * (M.stiprevulc + M.stiprevdis)
+    mmi  = M.const.trans.mmi # Male -> male insertive
+    mfi  = M.const.trans.mfi # Male -> female insertive
+    mmr  = M.const.trans.mmr # Male -> male receptive
+    mfr  = M.const.trans.mfr # Male -> female receptive
+    mtcb = M.const.trans.mtctbreast   # MTCT with breastfeeding
+    mtcn = M.const.trans.mtctnobreast # MTCT no breastfeeding
+    effcirc   = (1-M.const.eff.circ)*M.circum # TODO -- AS: can we do it like this??? Circumcision can coverage can change over time!
+    effsti    = M.const.eff.sti * (M.stiprevulc + M.stiprevdis) # TODO -- AS: don't like the way STI prevalence can be > 100%
     effcondom = 1-M.const.eff.condom
-    transinj = M.const.trans.inj
+    effpmtct  = M.const.eff.pmtct
+    transinj  = M.const.trans.inj
     pshipsinj = M.pships.inj
-    pships = M.pships
+    pships    = M.pships
     totalacts = M.totalacts
-    condom = M.condom
-    sharing = M.sharing
-    prog  = h2a(M.const.prog)  # Disease progression rates
-    death = h2a(M.const.death) # HIV death rates
-    recov = h2a(M.const.recov) # Recovery rates
-    hivtest = M.hivtest
-    aidstest = M.aidstest
-    Mtx1 = M.tx1 # tx1 already used for index of people on treatment
-    Mtx2 = M.tx2
-    failfirst = M.const.fail.first
+    condom    = M.condom
+    sharing   = M.sharing
+    numpmtct  = M.numpmtct
+#    numost    = M.numost
+#    numart    = M.numart
+    prog      = h2a(M.const.prog)  # Disease progression rates
+    recov     = h2a(M.const.recov) # Recovery rates
+    death     = h2a(M.const.death) # HIV death rates
+#    deathtb   = M.const.death.tb    # Death rate with TB coinfection
+    deathtx   = M.const.death.treat # Death rate whilst on treatment
+#    sym       = M.transit.sym
+    asym      = M.transit.asym
+    hivtest   = M.hivtest
+    aidstest  = M.aidstest
+    Mtx1      = M.tx1 # tx1 already used for index of people on treatment
+    Mtx2      = M.tx2
+    failfirst  = M.const.fail.first
     failsecond = M.const.fail.second
-    Fforce = array(F.force)
+    Fforce    = array(F.force)
     
     # Initialize the list of sex acts so it doesn't have to happen in the time loop
     sexactslist = []
@@ -101,8 +106,11 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
                 if pships[act][popM,popF]>0: # Ignore if this isn't a valid partnership for this sexual act type
                     sexactslist[popM][popF].append(act)
     
-    # Loop over time
+    ###############################################################################
+    ## Run the model -- numerically integrate over time
+    ###############################################################################
 
+    # Loop over time
     for t in range(npts): # Skip the last timestep for people since we don't need to know what happens after that
         printv('Timestep %i of %i' % (t+1, npts), 5, verbose)
         
@@ -115,6 +123,10 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
             efftx   = sum(txfactor * (people[tx1,pop,t]+people[tx2,pop,t])) # ...and treated
             effhivprev[pop] = (effundx+effdx+efftx) / allpeople[pop,t]; # Calculate HIV "prevalence", scaled for infectiousness based on CD4 count; assume that treatment failure infectiousness is same as corresponding CD4 count
             if not(effhivprev[pop]>=0): raise Exception('HIV prevalence invalid in population %s! (=%f)' % (pop, effhivprev[pop]))
+        
+        # Also calculate effective MTCT transmissibility
+        effmtct  = mtcb*M.breast[t] + mtcn*(1-M.breast[t]) # Effective MTCT transmission
+        pmtcteff = effmtct*effpmtct # Effective MTCT transmission whilst on PMTCT
         
         ###############################################################################
         ## Calculate force-of-infection (forceinf)
@@ -150,7 +162,7 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
                     forceinfvec[popF] = 1 - (1-forceinfvec[popF]) * (1-forceinfF) # Calculate the new "female" forceinf, ensuring that it never gets above 1
                     if not(all(forceinfvec>=0)): raise Exception('Sexual force-of-infection is invalid')
         
-        ## Injecting partnerships -- # TODO make more efficient
+        ## Injecting partnerships
         
         # Transmission effects
 #        metheff = 1 - M.const.eff.meth*M.ost[t] # TODO: methadone should be subtracted from population size
@@ -166,10 +178,23 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
                     forceinfvec[pop2] = 1 - (1-forceinfvec[pop2]) * (1-forceinf2) # Calculate the new "male" forceinf, ensuring that it never gets above 1
                     if not(all(forceinfvec>=0)): raise Exception('Injecting force-of-infection is invalid')
         
+        ###############################################################################
+        ## Calculate mother-to-child-transmission
+        ###############################################################################
         
-        
-        
-        
+        # We have two ways to calculate number of births...
+        if (asym<0).any(): # Method 1 -- children are being modelled directly
+            print('working on it...') # Use negative entries in transitions matrix
+        else: # Method 2 -- children are not being modelled directly
+            birthrate = M.birth[:,t] # Use birthrate parameter from input spreadsheet
+        S.births[t]  = sum(birthrate * allpeople[:,t])
+        mtcttx       = sum(birthrate * sum(people[tx1,:,t] +people[tx2,:,t]))  * pmtcteff # MTCT from those on treatment (not eligible for PMTCT)
+        mtctundx     = sum(birthrate * sum(people[undx,:,t]+people[fail,:,t])) * effmtct  # MTCT from those undiagnosed or failed (also not eligible)
+        birthselig   = sum(birthrate * sum(people[dx,:,t]))   # Births to diagnosed mothers eligible for PMTCT
+        receivepmtct = min(numpmtct[t], birthselig)           # Births protected by PMTCT -- constrained by number eligible 
+        mtctdx       = (birthselig - receivepmtct) * effmtct  # MTCT from those diagnosed not receiving PMTCT
+        mtctpmtct    = receivepmtct * pmtcteff                # MTCT from those receiving PMTCT
+        S.mtct[t]    = mtctundx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components 
         
         ###############################################################################
         ## The ODEs
@@ -256,7 +281,7 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
             else: 
                 recovout = 0 # Cannot recover out of gt500 stage (or acute stage)
             newfail1[cd4] = dt*people[tx1[cd4],:,t]*failfirst 
-            hivdeaths     = dt*people[tx1[cd4],:,t]*death[cd4]
+            hivdeaths     = dt*people[tx1[cd4],:,t]*min(death[cd4],deathtx) # Use death by CD4 state if lower than death on treatment
             otherdeaths   = dt*people[tx1[cd4],:,t]*background
             dT1.append(recovin - recovout + newtreat1[cd4] - newfail1[cd4] - hivdeaths - otherdeaths)
             if ((dT1[cd4]+people[tx1[cd4],:,t])<0).any():
@@ -303,7 +328,7 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
                 recovout = dt*recov[cd4-2]*people[tx2[cd4],:,t]
             else: 
                 recovout = 0 # Cannot recover out of gt500 stage (or acute stage)
-            hivdeaths   = dt*people[tx2[cd4],:,t]*death[cd4]
+            hivdeaths   = dt*people[tx2[cd4],:,t]*min(death[cd4],deathtx) # Use death by CD4 state if lower than death on treatment
             otherdeaths = dt*people[tx2[cd4],:,t]*background
             dT2.append(recovin - recovout + newtreat2[cd4] - newfail2[cd4] - hivdeaths - otherdeaths)
             if ((dT2[cd4]+people[tx2[cd4],:,t])<0).any():
@@ -345,15 +370,9 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
     return S
 
 
-
-
-
-
 ###############################################################################
 ## Helper functions
 ###############################################################################
-
-
 
 def h2a(parstruct, verbose=2):
     """ Convert a health state structure to an array """
@@ -366,8 +385,6 @@ def h2a(parstruct, verbose=2):
             printv('State %s not found' % state, 10, verbose)
     return array(outarray)
 
-
-
 def fit2time(pars, tvec):
     """ Calculate fitted time series from fitted parameters """
     A = pars[0]
@@ -376,9 +393,7 @@ def fit2time(pars, tvec):
     D = pars[3]
     timeseries = (B-A)/(1+exp(-(tvec-C)/D))+A;
     return timeseries
-
-
-
+    
 def equilibrate(G, M, Finit):
     """
     Calculate the quilibrium point by estimating the ratio of input and output 
