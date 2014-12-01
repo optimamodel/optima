@@ -94,6 +94,7 @@ def makedatapars(D, verbose=2):
     D.A = [struct()] # Initialize allocations list
     D.A[0].alloc = zeros(D.G.nprogs)
     for prog in range(D.G.nprogs):
+        print(prog)
         if D.data.meta.progs.saturating[prog]:
             totalcost = D.data.costcov.cost[prog]
             totalcost = array(totalcost)
@@ -107,9 +108,7 @@ def makedatapars(D, verbose=2):
             unitcost, cov = unitcost[-1], cov[-1]
             totalcost = unitcost*cov
             D.A[0].alloc[prog] = totalcost
-        
-    D.A[0].alloc = dataindex(D.data.costcov.cost, -1) # Pull out last allocation for each program
-    
+            
     
     ## TODO: disutility, economic data etc.
             
