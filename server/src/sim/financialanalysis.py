@@ -45,12 +45,16 @@ def financialanalysis(D, S = None, yscale = 'abs', makeplot = False):
     gt200 = np.sum(np.sum(S.people[16:20,:,:], axis = 0), axis = 0)
     aids = np.sum(np.sum(S.people[21:25,:,:], axis = 0), axis = 0)
 
+    if len(acute)<npts1: npts1 = len(acute) #TODO CLIFF FIX IT PROPERLY
+
     # Calculate number added at each time period to each disease stage
     newacute = [j-i for i, j in zip(acute[:-1], acute[1:])]
     newgt500 = [j-i for i, j in zip(gt500[:-1], gt500[1:])]
     newgt350 = [j-i for i, j in zip(gt350[:-1], gt350[1:])]
     newgt200 = [j-i for i, j in zip(gt200[:-1], gt200[1:])]
     newaids = [j-i for i, j in zip(aids[:-1], aids[1:])]
+
+    if len(newacute)<npts2: npts2 = len(newacute) #TODO CLIFF FIX IT PROPERLY
 
     # Calculate annual non-treatment costs for all PLHIV
     acutetotalcost = [D.data.cost.social.acute[0]*acute[j] for j in range(npts1)]
