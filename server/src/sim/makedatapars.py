@@ -107,7 +107,6 @@ def makedatapars(D, verbose=2):
     D.G.nstates = 1+D.G.ncd4*5 # Five are undiagnosed, diagnosed, 1st line, failure, 2nd line, plus susceptible
     
     # Define CD4 states
-    from numpy import arange
     D.G.sus  = arange(0,1)
     D.G.undx = arange(0*D.G.ncd4+1, 1*D.G.ncd4+1)
     D.G.dx   = arange(1*D.G.ncd4+1, 2*D.G.ncd4+1)
