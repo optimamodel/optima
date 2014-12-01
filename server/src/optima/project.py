@@ -10,7 +10,7 @@ from utils import allowed_file, project_exists, project_file_exists, delete_proj
 from utils import check_project_name, load_model, save_model, report_exception
 from flask.ext.login import login_required, current_user
 from dbconn import db
-from dbmodels import ProjectDb
+from dbmodels import ProjectDb, WorkingProjectDb
 from utils import BAD_REPLY
 
 """ route prefix: /api/project """
@@ -243,7 +243,12 @@ def deleteProject(project_name):
     if cu.is_anonymous() == False:
     
         # Get project row for current user with project name
-        db.session.query(ProjectDb).filter_by(user_id= cu.id,name=project_name).delete()
+        proj = db.session.query(ProjectDb).filter_by(user_id= cu.id,name=project_name).first()
+
+        if proj is not None:
+            id = proj.id
+            db.session.query(WorkingProjectDb).filter_by(id=id).delete()
+            db.session.query(ProjectDb).filter_by(id=id).delete()
 
         # delete project row
 #            db.session.delete(project)
