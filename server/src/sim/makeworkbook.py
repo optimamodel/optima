@@ -475,7 +475,7 @@ class OptimaWorkbook:
         current_row = 0
 
         for name in ['Number of HIV tests per year', 'Number of diagnoses per year', 'Modeled estimate of new infections per year', \
-        'Modeled estimate of HIV prevalence', 'Number of AIDS-related deaths', 'Number of people initiating ART each year']:
+        'Modeled estimate of total number of people living with HIV', 'Estimated number of AIDS-related deaths per year', 'Number of people initiating ART each year']:
             current_row = self.emit_years_block(name, current_row, ['Total'], row_format = OptimaFormats.NUMBER, assumption = True)
 
     def generate_txrx(self):
