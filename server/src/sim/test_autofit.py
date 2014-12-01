@@ -3,7 +3,7 @@ TEST_AUTOFIT
 
 This function tests that automatic fitting is working.
 
-Version: 2014nov30 by cliffk
+Version: 2014dec01 by cliffk
 """
 
 
@@ -26,14 +26,14 @@ print('\n\n\n3. Running simulation...')
 from runsimulation import runsimulation
 D = runsimulation(D, startyear=2000, endyear=2015, verbose=verbose)
 
-print('\n\n\n4. Viewing scenarios...')
+print('\n\n\n4. Viewing results...')
 whichgraphs = {'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'death':[0,1], 'dx':[0,1], 'tx1':[0,1], 'tx2':[0,1]}
 from viewresults import viewepiresults
 viewepiresults(D.plot.E, whichgraphs=whichgraphs, startyear=2000, endyear=2015, onefig=True, verbose=verbose)
 
 print('\n\n\n5. Running automatic fitting...')
 from autofit import autofit
-autofit(D, timelimit=timelimit, startyear=2000, endyear=2010, verbose=verbose)
+autofit(D, timelimit=timelimit, startyear=2000, endyear=2015, verbose=verbose)
 
 print('\n\n\n6. Viewing scenarios...')
 viewepiresults(D.plot.E, whichgraphs=whichgraphs, startyear=2000, endyear=2015, onefig=True, verbose=verbose)
