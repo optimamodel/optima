@@ -8,6 +8,17 @@ define(['./module'], function (module) {
     var initialize = function () {
       $scope.isNew = !program.name;
 
+      // make sure the names are exactly the objects as in the list for the
+      // select to show the initial entries (angular compares with ===)
+      _(program.parameters).each(function(entry) {
+        entry.value.signature = findParameters(availableParameters, entry.value.signature).keys;
+
+        var foundPopulation = findPopulation(populations, entry.value.pops);
+        if (foundPopulation) {
+          entry.value.pops = foundPopulation.internal_name;
+        }
+      });
+
       $scope.program = program;
       $scope.program.active = true;
 
@@ -25,11 +36,20 @@ define(['./module'], function (module) {
     };
 
     /*
-    * Finds a scenario paramter based on the names
+    * Finds a paramter entry based on the keys
     */
     var findParameters = function(parameters, keys) {
       return _(parameters).find(function(parameterEntry) {
         return areEqualArrays(parameterEntry.keys, keys);
+      });
+    };
+
+    /*
+    * Finds a population entry based on the internal_name
+    */
+    var findPopulation = function(populations, internalName) {
+      return _(populations).find(function(population) {
+        return areEqualArrays([population.internal_name], internalName);
       });
     };
 

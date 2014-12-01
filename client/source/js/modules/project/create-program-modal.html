@@ -46,7 +46,7 @@
             Parameters
           </div>
           <div class="++1 10 1++">
-            <select class="txbox" ng-model="entry.value" ng-options="param.keys as param.name for param in availableParameters"></select>
+            <select class="txbox" ng-model="entry.value.signature" ng-options="param.keys as param.name for param in availableParameters"></select>
           </div>
         </div>
 
@@ -55,7 +55,7 @@
             Population
           </div>
           <div class="++1 10 1++">
-            <select class="txbox" ng-model="entry.pops" ng-options="population.internal_name as population.name for population in populations"></select>
+            <select class="txbox" ng-model="entry.value.pops" ng-options="population.internal_name as population.name for population in populations"></select>
           </div>
         </div>
       </div>
