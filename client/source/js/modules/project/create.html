@@ -13,24 +13,17 @@
 
     <div class="section grid">
       <div class="3">
-          <b>Epidemic data start year</b>
+          <b>First year for data entry</b>
         <input class="txbox" type="number" min="1900" placeholder="e.g. 2000" ng-model="projectParams.datastart" required>
       </div>
       <div class="3">
-          <b>Epidemic data end year</b>
-        <input class="txbox" type="number" min="1900" placeholder="e.g. 2015" ng-model="projectParams.dataend" required>
+          <b>Final year for data entry</b>
+          <input class="txbox" type="number" min="1900" placeholder="e.g. 2015" ng-model="projectParams.dataend" required>
       </div>
-    </div>
-
-    <div class="section grid">
-      <div class="3">
-          <b>Economic projection start year</b>
-        <input class="txbox" type="number" min="1900" placeholder="e.g. 2010" ng-model="projectParams.econ_datastart" required>
-      </div>
-      <div class="3">
-          <b>Economic projection end year</b>
-        <input class="txbox" type="number" min="1900" placeholder="e.g. 2030" ng-model="projectParams.econ_dataend" required>
-      </div>
+        <div class="3">
+            <b>Final year for macroeconomic projections</b>
+            <input class="txbox" type="number" min="1900" placeholder="e.g. 2030" ng-model="projectParams.econ_dataend" required>
+        </div>
     </div>
 
     <div class="section grid">
