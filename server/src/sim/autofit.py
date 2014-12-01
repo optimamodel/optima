@@ -64,8 +64,8 @@ def autofit(D, timelimit=60, startyear=2000, endyear=2015, verbose=2):
     # Run the optimization algorithm
     Fnew, fval, exitflag, output = ballsd(errorcalc, Forig, xmin=0*Forig, xmax=100*Forig, timelimit=timelimit, verbose=verbose)
     
-    # Update the model
-    D.F[0] = list2dict(D.F[0], Fnew)
+    # Update the model, replacing F
+    D.F = [list2dict(D.F[0], Fnew)]
     D.S = model(D.G, D.M, D.F[0], D.opt, verbose=verbose)
     allsims = [D.S]
     
