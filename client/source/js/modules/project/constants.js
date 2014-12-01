@@ -63,11 +63,11 @@ define(['./module'], function (module) {
       parameters: [
         {
           active: true,
-          value: { 'signature': ['condom', 'reg'], 'pops': [] }
+          value: { 'signature': ['condom', 'reg'], 'pops': ['ALL_POPULATIONS'] }
         },
         {
           active: true,
-          value: { 'signature': ['condom', 'cas'], 'pops': [] }
+          value: { 'signature': ['condom', 'cas'], 'pops': ['ALL_POPULATIONS'] }
         }
       ]
     },
@@ -77,11 +77,11 @@ define(['./module'], function (module) {
       parameters: [
         {
           active: true,
-          value: { 'signature': ['condom', 'reg'], 'pops': [] }
+          value: { 'signature': ['condom', 'reg'], 'pops': ['ALL_POPULATIONS'] }
         },
         {
           active: true,
-          value: { 'signature': ['condom', 'cas'], 'pops': [] }
+          value: { 'signature': ['condom', 'cas'], 'pops': ['ALL_POPULATIONS'] }
         }
       ]
     },
@@ -91,11 +91,11 @@ define(['./module'], function (module) {
       parameters: [
         {
           active: true,
-          value: {'signature': ['stiprevdis'], 'pops': []}
+          value: {'signature': ['stiprevdis'], 'pops': ['ALL_POPULATIONS']}
         },
         {
           active: true,
-          value: {'signature': ['stiprevulc'], 'pops': []}
+          value: {'signature': ['stiprevulc'], 'pops': ['ALL_POPULATIONS']}
         }
       ]
     },
@@ -105,7 +105,7 @@ define(['./module'], function (module) {
       parameters: [
         {
           active: true,
-          value: {'signature': ['numcircum'], 'pops': []}
+          value: {'signature': ['numcircum'], 'pops': ['ALL_POPULATIONS']}
         }
       ]
     },
@@ -115,11 +115,11 @@ define(['./module'], function (module) {
       parameters: [
         {
           active: true,
-          value: {'signature': ['numacts', 'reg'], 'pops': []}
+          value: {'signature': ['numacts', 'reg'], 'pops': ['ALL_POPULATIONS']}
         },
         {
           active: true,
-          value: {'signature': ['numacts', 'cas'], 'pops': []}
+          value: {'signature': ['numacts', 'cas'], 'pops': ['ALL_POPULATIONS']}
         }
       ]
     },
@@ -180,7 +180,7 @@ define(['./module'], function (module) {
       parameters: [
         {
           active: true,
-          value: {'signature': ['numost'], 'pops': []}
+          value: {'signature': ['numost'], 'pops': ['ALL_POPULATIONS']}
         }
       ]
 
@@ -191,7 +191,7 @@ define(['./module'], function (module) {
       parameters: [
         {
           active: true,
-          value: {'signature': ['sharing'], 'pops': []}
+          value: {'signature': ['sharing'], 'pops': ['ALL_POPULATIONS']}
         }
       ]
 
@@ -202,7 +202,7 @@ define(['./module'], function (module) {
       parameters: [
         {
           active: true,
-          value: {'signature': ['prep'], 'pops': []}
+          value: {'signature': ['prep'], 'pops': ['ALL_POPULATIONS']}
         }
       ]
 
@@ -213,7 +213,7 @@ define(['./module'], function (module) {
       parameters: [
         {
           active: true,
-          value: {'signature': ['pep'], 'pops': []}
+          value: {'signature': ['pep'], 'pops': ['ALL_POPULATIONS']}
         }
       ]
 
@@ -224,7 +224,7 @@ define(['./module'], function (module) {
       parameters: [
         {
           active: true,
-          value: {'signature': ['hivtest'], 'pops': []}
+          value: {'signature': ['hivtest'], 'pops': ['ALL_POPULATIONS']}
         }
       ]
 
@@ -235,11 +235,11 @@ define(['./module'], function (module) {
       parameters: [
         {
           active: true,
-          value: {'signature': ['tx1'], 'pops': []}
+          value: {'signature': ['tx1'], 'pops': ['ALL_POPULATIONS']}
         },
         {
           active: true,
-          value: {'signature': ['tx2'], 'pops': []}
+          value: {'signature': ['tx2'], 'pops': ['ALL_POPULATIONS']}
         }
       ]
 
@@ -250,7 +250,7 @@ define(['./module'], function (module) {
       parameters: [
         {
           active: true,
-          value: {'signature': ['numpmtct'], 'pops': []}
+          value: {'signature': ['numpmtct'], 'pops': ['ALL_POPULATIONS']}
         }
       ]
     },
