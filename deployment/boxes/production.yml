@@ -1,13 +1,14 @@
 ---
-- hosts: optima
+- hosts: optima-prod
 
   vars:
     # prudentia_dir -> is passed in the cmd line
     - root_dir: ..
-    - version: develop
-    - db_host: localhost
-    - db_user: optima
-    - db_password: optima
+    - version: master
+
+    - db_host: optima-prod.cvx5aaojfjbz.ap-southeast-2.rds.amazonaws.com
+    - db_user: app
+    - db_password: RMJa8d1E
     - db_name: optima
     - db_url: "postgresql://{{db_user}}:{{db_password}}@{{db_host}}:5432/{{db_name}}"
 
@@ -20,8 +21,6 @@
 
 
     - include: "{{root_dir}}/components/common.yml"
-
-    - include: "{{root_dir}}/components/db.yml"
 
     - include: "{{root_dir}}/components/client.yml"
 

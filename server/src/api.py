@@ -7,10 +7,8 @@ import os
 
 app = Flask(__name__)
 
-UPLOAD_FOLDER = DATADIR #'/tmp/uploads' #todo configure
-
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql+psycopg2://optima:optima@localhost:5432/optima'
+app.config.from_object('config')
+app.config['UPLOAD_FOLDER'] = DATADIR
 if os.environ.get('OPTIMA_TEST_CFG'):
     app.config.from_envvar('OPTIMA_TEST_CFG')
 
