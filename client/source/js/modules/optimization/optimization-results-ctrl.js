@@ -41,7 +41,7 @@ define(['./module'], function (module) {
               y: 20
           },
           {
-              key: "Sexually transmitted infections",
+              key: "Sexually transmissible infections",
               y: 2
           },
           {

@@ -91,7 +91,7 @@ define(['./module'], function (module) {
     },
     {
       active: false, short_name: "STI",
-      name: "Diagnosis and treatment of sexually transmitted infections", saturating: true,
+      name: "Diagnosis and treatment of sexually transmissible infections", saturating: true,
       parameters: [
         {
           active: true,
