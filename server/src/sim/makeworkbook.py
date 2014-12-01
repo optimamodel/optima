@@ -96,18 +96,17 @@ def make_years_range(name, params, data_start, data_end):
 
 """ 
 every populations item is a dictionary is expected to have the following fields:
-internal_name, short_name, name, male, female, injects, sexmen, sexwomen, sexworker, client
+short_name, name, male, female, injects, sexmen, sexwomen, sexworker, client
 (3x str, 7x bool)
 """
 def make_populations_range(name, items):
-    column_names = ['Internal name','Short name','Long name','Male','Female','Injects','Sex with men', \
+    column_names = ['Short name','Long name','Male','Female','Injects','Sex with men', \
     'Sex with women','Sex worker','Client']
     row_names = range(1, len(items)+1)
     coded_params = []
     for item in items:
         if type(item) is dict:
             item_name = item['name']
-            internal_name = item.get('internal_name', abbreviate(item_name))
             short_name = item.get('short_name', abbreviate(item_name))
             male = item.get('male', False)
             female = item.get('female', False)
@@ -118,8 +117,7 @@ def make_populations_range(name, items):
             client = item.get('injects',False)      
         else: # backward compatibility :) might raise exception which is ok
             item_name = item
-            internal_name = abbreviate(item_name)
-            short_name = internal_name
+            short_name = abbreviate(item_name)
             male = False
             female = False
             injects = False
@@ -127,30 +125,28 @@ def make_populations_range(name, items):
             sexwomen = False
             sexworker = False
             client = False      
-        coded_params.append([internal_name, short_name, item_name, male, female, injects, sexmen, sexwomen, sexworker, client])
+        coded_params.append([short_name, item_name, male, female, injects, sexmen, sexwomen, sexworker, client])
     return OptimaContent(name, row_names, column_names, coded_params)
 
 """ 
 every programs item is a dictionary is expected to have the following fields:
-internal_name, short_name, name, saturating
+short_name, name, saturating
 (3x str, 1x bool)
 """
 def make_programs_range(name, items):
-    column_names = ['Internal name','Short name','Long name','Saturating']
+    column_names = ['Short name','Long name','Saturating']
     row_names = range(1, len(items)+1)
     coded_params = []
     for item in items:
         if type(item) is dict:
             item_name = item['name']
-            internal_name = item.get('internal_name', abbreviate(item_name))
             short_name = item.get('short_name', abbreviate(item_name))
             saturating = item.get('saturating', False)
         else: # backward compatibility :) might raise exception which is ok
             item_name = item
-            internal_name = abbreviate(item_name)
-            short_name = internal_name
+            short_name = abbreviate(item_name)
             saturating = False      
-        coded_params.append([internal_name, short_name, item_name, saturating])
+        coded_params.append([short_name, item_name, saturating])
     return OptimaContent(name, row_names, column_names, coded_params)
 
 def make_constant_range(name, row_names, best_data):
@@ -318,7 +314,7 @@ class TitledRange:
         #done! return the new current_row plus spacing
         return current_row + TitledRange.ROW_INTERVAL # for spacing
 
-    def param_refs(self, column_number = 1):
+    def param_refs(self, column_number = 0):
         return self.data_range.param_refs(self.sheet.get_name(), column_number)
 
 class OptimaWorkbook:
@@ -353,7 +349,6 @@ class OptimaWorkbook:
         self.prog_range = None
         self.pop_range = None
         self.ref_pop_range = None
-        self.ref_pop_range_internal = None
         self.ref_prog_range = None
 
         self.npops = len(pops)
@@ -427,11 +422,10 @@ class OptimaWorkbook:
         pp_sheet = self.sheets['pp']
         pp_sheet.protect()
         pp_sheet.set_column(2,2,15)
-        pp_sheet.set_column(3,3,15)
-        pp_sheet.set_column(4,4,40)
+        pp_sheet.set_column(3,3,40)
+        pp_sheet.set_column(6,6,12)
         pp_sheet.set_column(7,7,12)
         pp_sheet.set_column(8,8,12)
-        pp_sheet.set_column(9,9,12)
         current_row = 0
 
         pop_content = make_populations_range('Populations', self.pops)
@@ -443,7 +437,6 @@ class OptimaWorkbook:
         current_row = self.prog_range.emit(self.formats, 'left')
 
         self.ref_pop_range = self.pop_range.param_refs()
-        self.ref_pop_range_internal = self.pop_range.param_refs(0)
 
         self.ref_prog_range = self.prog_range.param_refs()
 
@@ -479,7 +472,7 @@ class OptimaWorkbook:
         current_row = 0
 
         for name in ['Number of HIV tests per year', 'Number of diagnoses per year', 'Modeled estimate of new infections per year', \
-        'Modeled estimate of HIV prevalence', 'Number of AIDS-related deaths', 'Number of people initiating ART each year']:
+        'Modeled estimate of total number of people living with HIV', 'Estimated number of AIDS-related deaths per year', 'Number of people initiating ART each year']:
             current_row = self.emit_years_block(name, current_row, ['Total'], row_format = OptimaFormats.NUMBER, assumption = True)
 
     def generate_txrx(self):
@@ -531,8 +524,10 @@ class OptimaWorkbook:
         names = ['Interactions between regular partners', 'Interactions between casual partners', \
         'Interactions between commercial partners', 'Interactions between people who inject drugs']
 
+        for ind in xrange(len(self.pops)):
+            self.current_sheet.set_column(2+ind,2+ind,12)
         for name in names:
-            current_row = self.emit_matrix_block(name, current_row, self.ref_pop_range, self.ref_pop_range_internal)
+            current_row = self.emit_matrix_block(name, current_row, self.ref_pop_range, self.ref_pop_range)
 
     def generate_trans(self):
         self.current_sheet = self.sheets['trans']
@@ -541,8 +536,10 @@ class OptimaWorkbook:
         names = ['Age-related population transitions (average number of years before movement)', \
         'Risk-related population transitions (average number of years before movement)']
 
+        for ind in xrange(len(self.pops)):
+            self.current_sheet.set_column(2+ind,2+ind,12)
         for name in names:
-            current_row = self.emit_matrix_block(name, current_row, self.ref_pop_range, self.ref_pop_range_internal)
+            current_row = self.emit_matrix_block(name, current_row, self.ref_pop_range, self.ref_pop_range)
 
     def generate_constants(self):
         self.current_sheet = self.sheets['constants']

@@ -13,22 +13,18 @@
 
     <div class="section grid">
       <div class="3">
-          <b>Epidemic data start year</b>
+          <b>First year for data entry</b>
         <input class="txbox" type="number" min="1900" placeholder="e.g. 2000" ng-model="projectParams.datastart" required>
       </div>
       <div class="3">
-          <b>Epidemic data end year</b>
+          <b>Final year for data entry</b>
         <input class="txbox" type="number" min="1900" placeholder="e.g. 2015" ng-model="projectParams.dataend" required>
       </div>
     </div>
 
     <div class="section grid">
       <div class="3">
-          <b>Economic projection start year</b>
-        <input class="txbox" type="number" min="1900" placeholder="e.g. 2010" ng-model="projectParams.econ_datastart" required>
-      </div>
-      <div class="3">
-          <b>Economic projection end year</b>
+          <b>Final year for macroeconomic projection data</b>
         <input class="txbox" type="number" min="1900" placeholder="e.g. 2030" ng-model="projectParams.econ_dataend" required>
       </div>
     </div>
@@ -44,7 +40,6 @@
             <td><b>Active</b></td>
             <td><b>Name</b></td>
             <td><b>Short Name</b></td>
-            <td><b>Internal Name</b></td>
             <td>&nbsp;</td>
             <td>&nbsp;</td>
           </tr>
@@ -56,7 +51,6 @@
             </td>
             <td style="width: 300px">{{ row.name }}</td>
             <td style="width: 150px">{{ row.short_name }}</td>
-            <td style="width: 150px">{{ row.internal_name }}</td>
             <td>
               <button role="button" class="btn" ng-click="openEditPopulationModal($event, row)">Edit</button>
             </td>
@@ -87,7 +81,6 @@
             <td><b>Active</b></td>
             <td><b>Name</b></td>
             <td><b>Short Name</b></td>
-            <td><b>Internal Name</b></td>
             <td>&nbsp;</td>
             <td>&nbsp;</td>
           </tr>
@@ -99,7 +92,6 @@
             </td>
             <td style="width: 300px">{{ program.name }}</td>
             <td style="width: 150px">{{ program.short_name }}</td>
-            <td style="width: 150px">{{ program.internal_name }}</td>
             <td>
               <button role="button" class="btn" ng-click="openEditProgramModal($event, program)">Edit</button>
             </td>

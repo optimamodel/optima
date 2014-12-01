@@ -10,7 +10,7 @@ from utils import allowed_file, project_exists, project_file_exists, delete_proj
 from utils import check_project_name, load_model, save_model, report_exception
 from flask.ext.login import login_required, current_user
 from dbconn import db
-from dbmodels import ProjectDb
+from dbmodels import ProjectDb, WorkingProjectDb
 from utils import BAD_REPLY
 
 """ route prefix: /api/project """
@@ -53,11 +53,6 @@ def createProject(project_name):
     else:
         dataend = ''
 
-    if data.get('econ_datastart'):
-        econ_datastart = makeproject_args['econ_datastart'] = int(data['econ_datastart'])
-    else:
-        econ_datastart = ''
-
     if data.get('econ_dataend'):
         econ_dataend = makeproject_args['econ_dataend'] = int(data['econ_dataend'])
     else:
@@ -90,14 +85,13 @@ def createProject(project_name):
         if proj is not None:
             proj.datastart = datastart
             proj.dataend = dataend
-            proj.econ_datastart = econ_datastart
-            proj.econ_dataend = econ_dataend    
+            proj.econ_dataend = econ_dataend
             proj.programs = programs 
             proj.populations = populations
             print('Updating existing project %s' % proj.name)
         else:
             # create new project
-            proj = ProjectDb(project_name, cu.id, datastart, dataend, econ_datastart, econ_dataend, programs, populations)
+            proj = ProjectDb(project_name, cu.id, datastart, dataend, econ_dataend, programs, populations)
             print('Creating new project: %s' % proj.name)
 
     #    makeproject_args = dict(makeproject_args.items() + data.items())
@@ -159,8 +153,7 @@ def giveWorkbook(project_name):
     else:
         D = proj.model
         wb_name = D['G']['workbookname']
-        makeworkbook(wb_name, proj.populations, proj.programs, int(proj.datastart), int(proj.dataend), \
-            int(proj.econ_datastart), int(proj.econ_dataend))
+        makeworkbook(wb_name, proj.populations, proj.programs, int(proj.datastart), int(proj.dataend), int(proj.econ_dataend))
         print("project %s template: %s" % (proj.name, wb_name))
         (dirname, basename) = (upload_dir_user(TEMPLATEDIR), wb_name)
         return helpers.send_from_directory(dirname, basename)
@@ -193,7 +186,7 @@ def getProjectInformation():
                 'name': project.name,
                 'dataStart': project.datastart,
                 'dataEnd': project.dataend,
-                'projectionStartYear': project.econ_datastart,
+                'projectionStartYear': project.datastart,
                 'projectionEndYear': project.econ_dataend,
                 'programs': project.programs,
                 'populations': project.populations
@@ -224,7 +217,7 @@ def getProjectList():
                 'name': project.name,
                 'dataStart': project.datastart,
                 'dataEnd': project.dataend,
-                'projectionStartYear': project.econ_datastart,
+                'projectionStartYear': project.datastart,
                 'projectionEndYear': project.econ_dataend,
                 'programs': project.programs,
                 'populations': project.populations
@@ -250,7 +243,12 @@ def deleteProject(project_name):
     if cu.is_anonymous() == False:
     
         # Get project row for current user with project name
-        db.session.query(ProjectDb).filter_by(user_id= cu.id,name=project_name).delete()
+        proj = db.session.query(ProjectDb).filter_by(user_id= cu.id,name=project_name).first()
+
+        if proj is not None:
+            id = proj.id
+            db.session.query(WorkingProjectDb).filter_by(id=id).delete()
+            db.session.query(ProjectDb).filter_by(id=id).delete()
 
         # delete project row
 #            db.session.delete(project)
