@@ -12,6 +12,7 @@ from flask.ext.login import login_required, current_user
 from dbconn import db
 from dbmodels import ProjectDb
 from utils import BAD_REPLY
+import time,datetime
 
 """ route prefix: /api/project """
 project = Blueprint('project',  __name__, static_folder = '../static')
@@ -97,7 +98,9 @@ def createProject(project_name):
             print('Updating existing project %s' % proj.name)
         else:
             # create new project
-            proj = ProjectDb(project_name, cu.id, datastart, dataend, econ_datastart, econ_dataend, programs, populations)
+            print(time.time())
+            proj = ProjectDb(project_name, cu.id, datastart, dataend, econ_datastart, econ_dataend, programs, populations, {}, int( time.time() ))
+            
             print('Creating new project: %s' % proj.name)
 
     #    makeproject_args = dict(makeproject_args.items() + data.items())
@@ -196,7 +199,9 @@ def getProjectInformation():
                 'projectionStartYear': project.econ_datastart,
                 'projectionEndYear': project.econ_dataend,
                 'programs': project.programs,
-                'populations': project.populations
+                'populations': project.populations,
+                'creation_time': project.creation_time, 
+                'data_upload_time':project.data_upload_time
             }
 
     return jsonify(response_data)
@@ -227,7 +232,9 @@ def getProjectList():
                 'projectionStartYear': project.econ_datastart,
                 'projectionEndYear': project.econ_dataend,
                 'programs': project.programs,
-                'populations': project.populations
+                'populations': project.populations,
+                'creation_time': project.creation_time,
+                'data_upload_time': project.data_upload_time
             }
             projects_data.append(project_data)
 
@@ -316,8 +323,27 @@ def uploadExcel():
     except Exception, err:
         var = traceback.format_exc()
         reply['exception'] = var
-        return json.dumps(reply)      
+        return json.dumps(reply) 
 
+    # get current user 
+    cu = current_user
+    
+    if cu.is_anonymous() == False:
+ 
+        # See if there is matching project
+        try:
+            proj = ProjectDb.query.filter_by(user_id=cu.id, name=project_name).first()
+        except:
+            proj = None
+            
+        # save data upload timestamp
+        if proj is not None:
+            proj.data_upload_time = int( time.time() )     
+            
+            # Save to db
+            db.session.add(proj)
+            db.session.commit()
+            
     reply['status'] = 'OK'
     reply['result'] = 'Project %s is updated' % project_name
     return json.dumps(reply)
