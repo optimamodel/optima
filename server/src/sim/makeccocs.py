@@ -495,10 +495,8 @@ def plotallcurves(D=None, progname=default_progname, ccparams=default_ccparams, 
 
     return plotdata, plotdata_co, plotdata_cc, effectnames, D
       
-## Example of use
 
 def makeallccocs(D=None, verbose=2):
     for progname in D.programs.keys():
         plotdata_cco, plotdata_co, plotdata_cc, effectnames, D = plotallcurves(D, unicode(progname))
     return D
-
