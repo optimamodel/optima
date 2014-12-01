@@ -191,18 +191,6 @@ def getProjectInformation():
 
         # update response
         if project is not None:
-            
-            # create datetime from timestamp
-            if project.creation_time > 0 :
-                creation_time = datetime.datetime.fromtimestamp(project.creation_time).strftime('%Y-%m-%d %H:%M:%S')
-            else: 
-                creation_time = '-'
-            
-            if project.data_upload_time > 0:
-                data_upload_time = datetime.datetime.fromtimestamp(project.data_upload_time).strftime('%Y-%m-%d %H:%M:%S')
-            else:
-                data_upload_time = '-'
-
             response_data = {
                 'status': "OK",
                 'name': project.name,
@@ -212,8 +200,8 @@ def getProjectInformation():
                 'projectionEndYear': project.econ_dataend,
                 'programs': project.programs,
                 'populations': project.populations,
-                'creation_time': creation_time, 
-                'data_upload_time':data_upload_time  
+                'creation_time': project.creation_time, 
+                'data_upload_time':project.data_upload_time
             }
 
     return jsonify(response_data)
@@ -236,18 +224,6 @@ def getProjectList():
         # Get projects for current user
         projects = ProjectDb.query.filter_by(user_id=current_user.id)
         for project in projects:
-
-            # create datetime from timestamp
-            if project.creation_time > 0 :
-                creation_time = datetime.datetime.fromtimestamp(project.creation_time).strftime('%Y-%m-%d %H:%M:%S')
-            else: 
-                creation_time = '-'
-            
-            if project.data_upload_time > 0:
-                data_upload_time = datetime.datetime.fromtimestamp(project.data_upload_time).strftime('%Y-%m-%d %H:%M:%S')
-            else:
-                data_upload_time = '-'
-
             project_data = {
                 'status': "OK",
                 'name': project.name,
@@ -257,8 +233,8 @@ def getProjectList():
                 'projectionEndYear': project.econ_dataend,
                 'programs': project.programs,
                 'populations': project.populations,
-                'creation_time': creation_time,
-                'data_upload_time':data_upload_time
+                'creation_time': project.creation_time,
+                'data_upload_time': project.data_upload_time
             }
             projects_data.append(project_data)
 

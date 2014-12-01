@@ -30,13 +30,14 @@
         <td>
           {{ project.dataEnd }}
         </td>
-        <td>
-            {{ project.creation_time }}
-          </td>
-          <td>
-            {{ project.data_upload_time }}
-          </td>
-        <td>
+        <td ng-if="project.creation_time > 0">
+            {{ project.creation_time*1000 | date:'yyyy-MM-dd HH:mm:ss'}}
+        </td>
+        <td ng-if="project.creation_time == 0">-</td>
+        <td ng-if="project.data_upload_time > 0">
+            {{ project.data_upload_time*1000 | date:'yyyy-MM-dd HH:mm:ss'}}
+        </td>
+        <td ng-if="project.data_upload_time == 0">-</td>
           <button class="btn __white" ng-click="open(project.name)">Open</button>
         </td>
         <td>
