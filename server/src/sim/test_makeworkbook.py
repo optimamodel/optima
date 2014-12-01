@@ -1,18 +1,18 @@
 import os
 import unittest
-from makeworkbook import OptimaWorkbook, SheetRange, TitledRange, make_programs_range, make_populations_range, make_ref_years_range
+from makeworkbook import OptimaWorkbook, SheetRange, TitledRange, make_populations_range, make_ref_years_range
 import xlsxwriter
 
 populations = [ \
-    {'internal_name':'MSM', 'short_name':'MSM','name':'Men who have sex with men', \
+    {'short_name':'MSM','name':'Men who have sex with men', \
     'male': True, 'female': False, 'injects':False, 'sexmen':False, 'sexwomen':True, 'sexworker':False, 'client':False}, \
-    {'internal_name':'FSW', 'short_name':'FSW','name':'Female sex workers', \
+    {'short_name':'FSW','name':'Female sex workers', \
     'male': False, 'female': True, 'injects':False, 'sexmen':True, 'sexwomen':False, 'sexworker':True, 'client':False}, \
-    {'internal_name':'MWID', 'short_name':'Male PWID','name':'Men who have sex with men', \
+    {'short_name':'Male PWID','name':'Men who have sex with men', \
     'male': True, 'female': False, 'injects':True, 'sexmen':True, 'sexwomen':False, 'sexworker':False, 'client':False}]
-programs = [{'name':'Needle-syringe programs', 'internal_name':'NSP', 'short_name': 'NSP', 'saturating': True}, \
-    {'name':'Opiate substition therapy', 'internal_name':'OST', 'short_name': 'OST', 'saturating': False}, \
-    {'name':'Programs for men who have sex with men', 'internal_name':'MSM', 'short_name': 'MSM programs', 'saturating': True}]
+programs = [{'name':'Needle-syringe programs', 'short_name': 'NSP', 'saturating': True}, \
+    {'name':'Opiate substition therapy', 'short_name': 'OST', 'saturating': False}, \
+    {'name':'Programs for men who have sex with men', 'short_name': 'MSM programs', 'saturating': True}]
 
 class TestOptimaWorkbook(unittest.TestCase):
 
@@ -42,7 +42,6 @@ class TestOptimaWorkbook(unittest.TestCase):
         content = make_populations_range('Populations', populations)
         content_range = TitledRange(test_sheet, 0, content)
         ref_content = make_ref_years_range('Coverage', content_range, 2000, 2015)
-        names = ref_content.row_names
         #by default reference names are taken from the 2nd column
         self.assertEqual(ref_content.row_names, ["='Test Sheet'!$D$3", "='Test Sheet'!$D$4", "='Test Sheet'!$D$5"])
 
