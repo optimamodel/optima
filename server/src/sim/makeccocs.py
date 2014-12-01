@@ -13,6 +13,7 @@ from numpy import linspace, exp, isnan, zeros, asarray
 from rtnorm import rtnorm
 from bunch import float_array
 from printv import printv
+from parameters import parameters, parameter_name
 
 ## Set defaults for testing
 default_progname = u'NSP'
@@ -258,6 +259,8 @@ def makeco(D, progname=default_progname, effectname=default_effectname, coparams
  #       D.programs[progname][effectnumber] = effectname
 
         ## Plot results (probably delete once in GUI)                            
+        parameters_map = parameters()
+        plot_title = parameter_name(parameters_map,effectname[0][1])+ ' - ' + effectname[1][0]
         if makeplot:
             figure()
             hold(True)
@@ -265,7 +268,7 @@ def makeco(D, progname=default_progname, effectname=default_effectname, coparams
             plot(xvalsco, ymax, 'k--', lw = 2)
             plot(xvalsco, ymin, 'k--', lw = 2)
             plot(coverage, outcome, 'ro')
-            title(effectname[0][1]+ ' ' + effectname[1][0])
+            title(plot_title)
             xlabel('proportion covered')
             ylabel('outcome')
     
@@ -278,7 +281,7 @@ def makeco(D, progname=default_progname, effectname=default_effectname, coparams
         plotdata['ylinedata3'] = ymin  # Y data for third line on plot
         plotdata['xscatterdata'] = coverage # X scatter data
         plotdata['yscatterdata'] = outcome # Y scatter data
-        plotdata['title'] = effectname[0][1]+ ' ' + effectname[1][0]
+        plotdata['title'] = plot_title
         plotdata['xlabel'] = 'Proportion covered'
         plotdata['ylabel'] = 'Outcome'
     
@@ -401,6 +404,8 @@ def makecco(D=None, progname = default_progname, effectname = default_effectname
             totalcost = totalcost[-1]
 
         ## Plot results (probably delete once in GUI)                            
+        parameters_map = parameters()
+        plot_title = parameter_name(parameters_map,effectname[0][1])+ ' - ' + effectname[1][0]
         if makeplot:
             figure()
             hold(True)
@@ -411,11 +416,12 @@ def makecco(D=None, progname = default_progname, effectname = default_effectname
             plot(xvalscco, ymin, 'k--', lw = 2)
             plot(totalcost, outcome, 'ro')
                 
-            title(effectname[0][1]+ ' ' + effectname[1][0])
+            title(plot_title)
             xlabel('USD')
             ylabel('outcome')
 
         # Create and populate output structure with plotting data
+        parameters_map = parameters()
         plotdata = {}
         plotdata['xlinedata'] = xvalscco # X data for all line plots
         plotdata['ylinedata'] = [mediancco,ymax,ymin] # Y data for second line plot
@@ -424,7 +430,7 @@ def makecco(D=None, progname = default_progname, effectname = default_effectname
         plotdata['ylinedata3'] = ymin  # Y data for fourth line plot
         plotdata['xscatterdata'] = totalcost
         plotdata['yscatterdata'] = outcome
-        plotdata['title'] = effectname[0][1]+ ' ' + effectname[1][0]
+        plotdata['title'] = plot_title
         plotdata['xlabel'] = 'USD'
         plotdata['ylabel'] = 'Outcome'
     
