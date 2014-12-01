@@ -11,7 +11,7 @@ define(['./module', 'underscore'], function (module, _) {
       $scope.programs = _(meta.progs.long).map(function (name, index) {
         return {
           name: name,
-          acronym: meta.progs.code[index]
+          acronym: meta.progs.short[index]
         };
       });
 
@@ -25,9 +25,9 @@ define(['./module', 'underscore'], function (module, _) {
 
       // model parameters
       $scope.saturationCoverageLevel = 0.9;
-      $scope.fundingNeededPercent = 0.2;
-      $scope.fundingNeededMinValue = 800000;
-      $scope.fundingNeededMaxValue = 7000000;
+      $scope.knownCoverageLevel = 0.2;
+      $scope.knownFundingValue = 800000;
+      $scope.xAxisMaximum = 7000000;
       $scope.behaviorWithoutMin = 0.3;
       $scope.behaviorWithoutMax = 0.5;
       $scope.behaviorWithMin = 0.7;
@@ -195,9 +195,9 @@ define(['./module', 'underscore'], function (module, _) {
         progname: $scope.selectedProgram.acronym,
         ccparams: [
           $scope.saturationCoverageLevel,
-          $scope.fundingNeededPercent,
-          $scope.fundingNeededMinValue,
-          $scope.fundingNeededMaxValue
+          $scope.knownCoverageLevel,
+          $scope.knownFundingValue,
+          $scope.xAxisMaximum
         ],
         coparams: [
           $scope.behaviorWithoutMin,
@@ -279,9 +279,9 @@ define(['./module', 'underscore'], function (module, _) {
         progname: $scope.displayedProgram.acronym,
         ccparams: _([
           $scope.saturationCoverageLevel,
-          $scope.fundingNeededPercent,
-          $scope.fundingNeededMinValue,
-          $scope.fundingNeededMaxValue
+          $scope.knownCoverageLevel,
+          $scope.knownFundingValue,
+          $scope.xAxisMaximum
         ]).map(parseFloat),
         coparams: _($scope.coParams[graphIndex]).map(parseFloat),
         effectname: $scope.effectNames[graphIndex]

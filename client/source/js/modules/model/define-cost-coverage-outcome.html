@@ -16,18 +16,18 @@
     </p>
     <p>
       2. The estimated amount of funding needed to get
-      <input type="number" class="txbox __inline __s" ng-model="fundingNeededPercent"> %
+      <input type="number" class="txbox __inline __s" ng-model="knownCoverageLevel"> %
+      coverage for this program is
+      <input type="number" class="txbox __inline __l" ng-model="knownFundingValue">
     </p>
     <p>
-      3. Minimum coverage for this program is
-      <input type="number" class="txbox __inline __l" ng-model="fundingNeededMinValue">
-      maximum is
-      <input type="number" class="txbox __inline __l" ng-model="fundingNeededMaxValue">
+      3. Specify the upper limit on the x axis (for plotting)
+      <input type="number" class="txbox __inline __l" ng-model="xAxisMaximum">
     </p>
   </div>
 
   <div class="section">
-    <button class="btn" ng-click="generateCurves()">Generate curves</button>
+    <button class="btn" ng-click="generateCurves()">Draw</button>
     <button class="btn" ng-click="saveModel()">Save Model</button>
     <button class="btn" ng-click="revertModel()">Revert Model</button>
   </div>
@@ -61,13 +61,13 @@
         <div class="elastic_col">
           <h3>Options to adjust curves:</h3>
           <p>
-            1. Behavior without this program ranges between
+            1. Behavior/outcome without this program ranges between
             <input type="number" class="txbox __inline __s" ng-model="coParams[$index][0]">
             and
             <input type="number" class="txbox __inline __s" ng-model="coParams[$index][1]">
           </p>
           <p>
-            2. Behavior under full coverage of this program ranges between
+            2. Behavior/outcome under full coverage of this program ranges between
             <input type="number" class="txbox __inline __s" ng-model="coParams[$index][2]">
             and
             <input type="number" class="txbox __inline __s" ng-model="coParams[$index][3]">
