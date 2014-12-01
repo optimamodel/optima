@@ -64,12 +64,16 @@ def getcurrentbudget(D, alloc=None):
 
             # ... or do this if it's not a saturating program
             else:
-                unitcost, cov = D.data.costcov.cost[prognumber], D.data.costcov.cov[prognumber] 
-                unitcost, cov = np.asarray(unitcost), np.asarray(cov)
-                unitcost, cov = unitcost[~np.isnan(unitcost)], cov[~np.isnan(cov)]
-                unitcost, cov = unitcost[-1], cov[-1]
-                totalcost = unitcost*cov
-
+                if not(alloc==None):
+                    totalcost = alloc[prognumber]
+                else:
+                    unitcost, cov = D.data.costcov.cost[prognumber], D.data.costcov.cov[prognumber] 
+                    unitcost, cov = np.asarray(unitcost), np.asarray(cov)
+                    unitcost, cov = unitcost[~np.isnan(unitcost)], cov[~np.isnan(cov)]
+                    unitcost, cov = unitcost[-1], cov[-1]
+                    totalcost = unitcost*cov
+                
+                print('This isn\'t right, it doesn\'t use the total cost')
                 D.P[effectname[0][1]].c[0] = D.programs[progname][effectnumber][-1][0]
 
         if alloc==None:
