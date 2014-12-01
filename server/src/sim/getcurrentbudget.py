@@ -5,7 +5,7 @@ def getcurrentbudget(D, alloc=None):
     Returns: D
     Version: 2014nov30
     """
-    from makeccocs import ccoeqn, makesamples
+    from makeccocs import ccoeqn, cceqn, makesamples
     import numpy as np
     
     # Initialise parameter structure (same as D.P). #TODO make this less ugly
@@ -34,13 +34,18 @@ def getcurrentbudget(D, alloc=None):
             
             # Do this if it's a saturating program
             if D.data.meta.progs.saturating[prognumber]:
+
+                # If an allocation has been passed in, we don't need to figure out the program budget
                 if not(alloc==None):
                     totalcost = alloc[prognumber]
+
+                # If an allocation has been passed in, we don't need to figure out the program budget
                 else:
                     totalcost = D.data.costcov.cost[prognumber]
                     totalcost = np.asarray(totalcost)
                     totalcost = totalcost[~np.isnan(totalcost)]
                     totalcost = totalcost[-1]
+
 
                 # Get population info
                 popname = effectname[1]
@@ -55,7 +60,7 @@ def getcurrentbudget(D, alloc=None):
                 # Temporary work around for sharing rates # TODO, FIX THIS ASAP, IT'S AWFUL
                 if effectname[0][1] == 'sharing':
                     popnumber = 0 
-                    
+                      
                 # Unpack
                 muz, stdevz, muf, stdevf, saturation, growthrate = effectname[3][0], effectname[3][1], effectname[3][2], effectname[3][3], effectname[3][4], effectname[3][5]
                 zerosample, fullsample = makesamples(muz, stdevz, muf, stdevf, samplesize=1)
@@ -64,17 +69,21 @@ def getcurrentbudget(D, alloc=None):
 
             # ... or do this if it's not a saturating program
             else:
+
+                # If an allocation has been passed in, we don't need to figure out the program budget
                 if not(alloc==None):
                     totalcost = alloc[prognumber]
+
+                # ... or else we do
                 else:
                     unitcost, cov = D.data.costcov.cost[prognumber], D.data.costcov.cov[prognumber] 
                     unitcost, cov = np.asarray(unitcost), np.asarray(cov)
                     unitcost, cov = unitcost[~np.isnan(unitcost)], cov[~np.isnan(cov)]
                     unitcost, cov = unitcost[-1], cov[-1]
                     totalcost = unitcost*cov
-                
-                print('This isn\'t right, it doesn\'t use the total cost')
-                D.P[effectname[0][1]].c[0] = D.programs[progname][effectnumber][-1][0]
+
+                y = cceqn(totalcost, D.programs[progname][effectnumber][-1][0])
+                D.P[effectname[0][1]].c[0] = y
 
         if alloc==None:
             currentbudget.append(totalcost)
@@ -82,4 +91,4 @@ def getcurrentbudget(D, alloc=None):
 
     return D
 
-
+D = getcurrentbudget(D, alloc=None)
