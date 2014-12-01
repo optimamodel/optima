@@ -187,14 +187,14 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
             print('working on it...') # Use negative entries in transitions matrix
         else: # Method 2 -- children are not being modelled directly
             birthrate = M.birth[:,t] # Use birthrate parameter from input spreadsheet
-        S.births[t]  = sum(birthrate * allpeople[:,t])
+        S['births'][0,t] = sum(birthrate * allpeople[:,t])
         mtcttx       = sum(birthrate * sum(people[tx1,:,t] +people[tx2,:,t]))  * pmtcteff # MTCT from those on treatment (not eligible for PMTCT)
         mtctundx     = sum(birthrate * sum(people[undx,:,t]+people[fail,:,t])) * effmtct  # MTCT from those undiagnosed or failed (also not eligible)
         birthselig   = sum(birthrate * sum(people[dx,:,t]))   # Births to diagnosed mothers eligible for PMTCT
         receivepmtct = min(numpmtct[t], birthselig)           # Births protected by PMTCT -- constrained by number eligible 
         mtctdx       = (birthselig - receivepmtct) * effmtct  # MTCT from those diagnosed not receiving PMTCT
         mtctpmtct    = receivepmtct * pmtcteff                # MTCT from those receiving PMTCT
-        S.mtct[t]    = mtctundx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components 
+        S['mtct'][0,t] = mtctundx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components 
         
         ###############################################################################
         ## The ODEs
@@ -219,7 +219,6 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
         dS = -newinfections # Change in number of susceptibles -- death rate already taken into account in pm.totalpop and dt
         S['inci'][:,t] = newinfections  # Store new infections
 
-
         ## Undiagnosed
         for cd4 in range(ncd4):
             if cd4>0: 
@@ -243,7 +242,6 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
             S['death'][:,t] += hivdeaths[cd4]/dt    # Save annual HIV deaths 
         dU[0] = dU[0] + newinfections # Now add newly infected people
         
-    
         ## Diagnosed
         newtreat1tot = Mtx1[t] - people[tx1,:,t].sum() # Calculate difference between current people on treatment and people needed
         currentdiagnosed = people[dx,:,t] # Find how many people are diagnosed
@@ -269,7 +267,6 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
             S['newtx1'][:,t] += newtreat1[cd4]/dt # Save annual treatment initiation
             S['death'][:,t]  += hivdeaths[cd4]/dt # Save annual HIV deaths 
         
-    
         ## 1st-line treatment
         for cd4 in range(ncd4):
             if (cd4>0 and cd4<ncd4-1): # CD4>0 stops people from moving back into acute
@@ -289,7 +286,6 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
                 printv('Prevented negative people in treatment 1 at timestep %i' % t, 10, verbose)
             S['death'][:,t] += hivdeaths[cd4]/dt # Save annual HIV deaths 
 
-    
         ## Treatment failure
         newtreat2tot = Mtx2[t] - people[tx2,:,t].sum() # Calculate difference between current people on treatment and people needed
         currentfailed = people[fail,:,t] # Find how many people are diagnosed
@@ -317,7 +313,6 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
             S['newtx2'][:,t] += newtreat2[cd4]/dt # Save annual treatment initiation
             S['death'][:,t]  += hivdeaths[cd4]/dt # Save annual HIV deaths
             
-
         ## 2nd-line treatment
         for cd4 in range(ncd4):
             if (cd4>0 and cd4<ncd4-1): # CD4>0 stops people from moving back into acute
@@ -333,9 +328,8 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
             dT2.append(recovin - recovout + newtreat2[cd4] - newfail2[cd4] - hivdeaths - otherdeaths)
             if ((dT2[cd4]+people[tx2[cd4],:,t])<0).any():
                 dT2[cd4] = maximum(dT2[cd4], -people[tx2[cd4],:,t]) # Ensure it doesn't go below 0 -- # TODO kludgy
-                printv('Prevented negative people in treatment 2 people at timestep %i' % t, 10, verbose)
+                printv('Prevented negative people in treatment 2 at timestep %i' % t, 10, verbose)
             S['death'][:,t] += hivdeaths[cd4]/dt # Save annual deaths data
-
 
         ###############################################################################
         ## Update next time point and check for errors
@@ -362,7 +356,6 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
                 print('Non-positive people found') # If not every element is a real number >0, throw an error
                 import pdb; pdb.set_trace()
                 
-    
     # Append final people array to sim output
     S['people'] = people
 
