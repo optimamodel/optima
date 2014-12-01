@@ -278,7 +278,7 @@ def makeco(D, progname=default_progname, effectname=default_effectname, coparams
         plotdata['ylinedata3'] = ymin  # Y data for third line on plot
         plotdata['xscatterdata'] = coverage # X scatter data
         plotdata['yscatterdata'] = outcome # Y scatter data
-        plotdata['title'] = effectname[0][1]+ ' ' + effectname[1][0]
+        plotdata['title'] = effectname_long + ' ' + effectname[1][0]
         plotdata['xlabel'] = 'Proportion covered'
         plotdata['ylabel'] = 'Outcome'
     
@@ -424,7 +424,7 @@ def makecco(D=None, progname = default_progname, effectname = default_effectname
         plotdata['ylinedata3'] = ymin  # Y data for fourth line plot
         plotdata['xscatterdata'] = totalcost
         plotdata['yscatterdata'] = outcome
-        plotdata['title'] = effectname[0][1]+ ' ' + effectname[1][0]
+        plotdata['title'] = effectname_long + ' ' + effectname[1][0]
         plotdata['xlabel'] = 'USD'
         plotdata['ylabel'] = 'Outcome'
     
