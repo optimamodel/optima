@@ -16,13 +16,13 @@
     </p>
     <p>
       2. The estimated amount of funding needed to get
-      <input type="number" class="txbox __inline __s" ng-model="fundingNeededPercent"> %
+      <input type="number" class="txbox __inline __s" ng-model="knownCoverageLevel"> %
+      coverage for this program is
+      <input type="number" class="txbox __inline __l" ng-model="knownFundingValue">
     </p>
     <p>
-      3. Minimum coverage for this program is
-      <input type="number" class="txbox __inline __l" ng-model="fundingNeededMinValue">
-      maximum is
-      <input type="number" class="txbox __inline __l" ng-model="fundingNeededMaxValue">
+      3. Specify the upper limit on the x axis (for plotting)
+      <input type="number" class="txbox __inline __l" ng-model="xAxisMaximum">
     </p>
   </div>
 
