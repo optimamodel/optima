@@ -15,7 +15,7 @@ define(['./module', 'underscore'], function (module, _) {
       "Female sex workers",
       "Men who have sex with men",
       "Injecting drug users",
-      "Sexually transmitted infections",
+      "Sexually transmissible infections",
       "HIV counselling and testing",
       "Antiretroviral therapy",
       "Prevention of mother-to-child transmission"
