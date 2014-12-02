@@ -14,7 +14,7 @@ class UserDb(db.Model):
         self.name = name
         self.email = email
         self.password = password
-    
+
     def get_id(self):
         return self.id
 
@@ -23,7 +23,7 @@ class UserDb(db.Model):
 
     def is_anonymous(self):
         return False
-    
+
     def is_authenticated(self):
         return True
 
@@ -50,7 +50,7 @@ class ProjectDb(db.Model):
         self.dataend = dataend
         self.econ_datastart = datastart
         self.econ_dataend = econ_dataend
-        self.programs = programs    
+        self.programs = programs
         self.populations = populations
         self.model = model
 
@@ -59,7 +59,7 @@ class WorkingProjectDb(db.Model):
     id = db.Column(db.Integer,db.ForeignKey('projects.id'), primary_key=True )
     is_calibrating = db.Column(db.Boolean, unique=False, default=False)
     model = db.Column(JSON)
-    
+
     def __init__(self, project_id, is_calibrating=False, model = {}):
         self.id = project_id
         self.model = model
