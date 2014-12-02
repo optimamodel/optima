@@ -61,7 +61,7 @@ def makescenarios(D, scenariolist, verbose=2):
         for par in range(len(scenariolist[scen].pars)):
             thesepars = scenariolist[scen].pars[par] # Shorten name
             data = getnested(scenariopars[scen].M, thesepars.names)
-            if ndim(data)>1: newdata = data[thesepars.pops] # If it's more than one dimension, use population data too
+            if ndim(data)>1 and thesepars.pops < len(data): newdata = data[thesepars.pops] # If it's more than one dimension, use population data too
             else: newdata = data # If it's not, just use the whole thing
             initialindex = findinds(D.opt.tvec, thesepars.startyear)
             finalindex = findinds(D.opt.tvec, thesepars.endyear)
@@ -71,7 +71,7 @@ def makescenarios(D, scenariolist, verbose=2):
             newvalues = linspace(initialvalue, finalvalue, npts)
             newdata[initialindex:finalindex] = newvalues
             newdata[finalindex:] = newvalues[-1] # Fill in the rest of the array with the last value
-            if ndim(data)>1: data[thesepars.pops] = newdata # If it's multidimensional, only reset this one population
+            if ndim(data)>1 and thesepars.pops < len(data): data[thesepars.pops] = newdata # If it's multidimensional, only reset this one population
             else: data = newdata # Otherwise, reset the whole thing
             setnested(scenariopars[scen].M, thesepars.names, data)
                 
