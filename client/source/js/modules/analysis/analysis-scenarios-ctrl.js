@@ -57,10 +57,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               }
             },
             yAxis: {
-              axisLabel: '',
-              tickFormat: function (d) {
-                return d3.format(',.2f')(d);
-              }
+              axisLabel: ''
             }
           };
 
