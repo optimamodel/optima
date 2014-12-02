@@ -63,9 +63,15 @@ def getcurrentbudget(D, alloc=None):
                       
                 # Unpack
                 muz, stdevz, muf, stdevf, saturation, growthrate = effectname[3][0], effectname[3][1], effectname[3][2], effectname[3][3], effectname[3][4], effectname[3][5]
-                zerosample, fullsample = makesamples(muz, stdevz, muf, stdevf, samplesize=1)
-                y = -1 # TODO WARNING KLUDGY PUKE
-                while not(y>=0): y = ccoeqn(totalcost, [saturation, growthrate, zerosample, fullsample])
+                zerosample = -1
+                count = 0
+                while not(zerosample>=0): 
+                    count += 1                    
+                    zerosample, fullsample = makesamples(muz, stdevz, muf, stdevf, samplesize=1)
+                    if count>10:
+                        print('WTF, count over 10')
+                        import pdb; pdb.set_trace()
+                y = ccoeqn(totalcost, [saturation, growthrate, zerosample, fullsample])
                 D.P[effectname[0][1]].c[popnumber] = y
                     
                     
@@ -86,7 +92,13 @@ def getcurrentbudget(D, alloc=None):
                     totalcost = unitcost*cov
                 
                 y = -1 # TODO WARNING KLUDGY PUKE
-                while not(y>=0): y = cceqn(totalcost, D.programs[progname][effectnumber][-1][0])
+                count = 0
+                while not(y>=0): 
+                    count += 1
+                    y = cceqn(totalcost, D.programs[progname][effectnumber][-1][0])
+                    if count>10:
+                        print('WTF, count over 10')
+                        import pdb; pdb.set_trace()
                 D.P[effectname[0][1]].c[0] = y
 
 
