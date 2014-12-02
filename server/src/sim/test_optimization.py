@@ -11,7 +11,7 @@ print('WELCOME TO OPTIMA')
 
 ## Set parameters
 projectname = 'example'
-verbose = 4
+verbose = 5
 timelimit = 60
 
 print('\n\n\n1. Making project...')

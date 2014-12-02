@@ -54,18 +54,12 @@ def optimize(D, objectives=None, constraints=None, startyear=2000, endyear=2030,
     
     def objectivecalc(alloc):
         """ Calculate the objective function """
-        
-        printv(alloc, 4, verbose)
-        
         alloc /= sum(alloc)/sum(origalloc)
-        
         newD = deepcopy(D)
         newD = getcurrentbudget(newD, alloc)
         newD.M = makemodelpars(newD.P, newD.opt, withwhat='c', verbose=2)
         S = model(newD.G, newD.M, newD.F[0], newD.opt, verbose=verbose)
-        
         objective = S.inci.sum() # TEMP
-        
         return objective
         
         
