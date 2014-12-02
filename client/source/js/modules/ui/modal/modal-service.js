@@ -30,18 +30,18 @@ define([
             }]
           }).result.then(onAccepted, onRejected);
         },
-        
+
         /**
          * Displays the given message and uses the title in the modal header
          */
-        inform: function (message, title) {
+        inform: function (onAccepted, message, title) {
           $modal.open({
-            templateUrl: 'js/modules/ui/modal/modal-message.html',
+            templateUrl: 'js/modules/ui/modal/modal-inform.html',
             controller: ['$scope', function ($scope) {
-              $scope.message = message;
-              $scope.title = title ? title : 'Attention...';
+              $scope.message = message || 'Be informed';
+              $scope.title = title || 'Attention...';
             }]
-          });
+          }).then(onAccepted);
         },
 
         /**
