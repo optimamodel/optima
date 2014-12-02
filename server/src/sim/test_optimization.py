@@ -31,8 +31,8 @@ from optimize import optimize
 optimize(D, timelimit=timelimit, startyear=2000, endyear=2020, verbose=verbose)
 
 print('\n\n\n5. Viewing optimization...')
-from viewresults import viewmodels, viewallocpies
-viewmodels(D.plot.OM)
+from viewresults import viewmultiresults, viewallocpies
+viewmultiresults(D.plot.OM)
 viewallocpies(D.plot.OA)
 
 print('\n\n\nDONE.')
