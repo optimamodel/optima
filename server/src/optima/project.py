@@ -12,7 +12,7 @@ from flask.ext.login import login_required, current_user
 from dbconn import db
 from dbmodels import ProjectDb
 from utils import BAD_REPLY
-import time,datetime
+from datetime import datetime
 
 """ route prefix: /api/project """
 project = Blueprint('project',  __name__, static_folder = '../static')
@@ -98,8 +98,7 @@ def createProject(project_name):
             print('Updating existing project %s' % proj.name)
         else:
             # create new project
-            print(time.time())
-            proj = ProjectDb(project_name, cu.id, datastart, dataend, econ_datastart, econ_dataend, programs, populations, {}, int( time.time() ))
+            proj = ProjectDb(project_name, cu.id, datastart, dataend, econ_datastart, econ_dataend, programs, populations, {}, datetime.utcnow())
             
             print('Creating new project: %s' % proj.name)
 
@@ -191,6 +190,13 @@ def getProjectInformation():
 
         # update response
         if project is not None:
+
+            creation_time = project.creation_time
+            data_upload_time = project.data_upload_time
+
+            if creation_time is not None: creation_time = (creation_time - datetime(1970, 1, 1)).total_seconds()
+            if data_upload_time is not None: data_upload_time = (data_upload_time - datetime(1970, 1, 1)).total_seconds()
+
             response_data = {
                 'status': "OK",
                 'name': project.name,
@@ -200,8 +206,8 @@ def getProjectInformation():
                 'projectionEndYear': project.econ_dataend,
                 'programs': project.programs,
                 'populations': project.populations,
-                'creation_time': project.creation_time, 
-                'data_upload_time':project.data_upload_time
+                'creation_time': creation_time,
+                'data_upload_time': data_upload_time
             }
 
     return jsonify(response_data)
@@ -224,6 +230,13 @@ def getProjectList():
         # Get projects for current user
         projects = ProjectDb.query.filter_by(user_id=current_user.id)
         for project in projects:
+
+            creation_time = project.creation_time
+            data_upload_time = project.data_upload_time
+
+            if creation_time is not None: creation_time = (creation_time - datetime(1970, 1, 1)).total_seconds()
+            if data_upload_time is not None: data_upload_time = (data_upload_time - datetime(1970, 1, 1)).total_seconds()
+
             project_data = {
                 'status': "OK",
                 'name': project.name,
@@ -233,8 +246,8 @@ def getProjectList():
                 'projectionEndYear': project.econ_dataend,
                 'programs': project.programs,
                 'populations': project.populations,
-                'creation_time': project.creation_time,
-                'data_upload_time': project.data_upload_time
+                'creation_time': creation_time,
+                'data_upload_time': data_upload_time
             }
             projects_data.append(project_data)
 
@@ -338,7 +351,7 @@ def uploadExcel():
             
         # save data upload timestamp
         if proj is not None:
-            proj.data_upload_time = int( time.time() )     
+            proj.data_upload_time = datetime.utcnow()
             
             # Save to db
             db.session.add(proj)

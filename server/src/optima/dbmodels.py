@@ -42,11 +42,11 @@ class ProjectDb(db.Model):
     model = db.Column(JSON)
     working_project = db.relationship('WorkingProjectDb', backref='projects',
                                 uselist=False)
-    creation_time = db.Column(db.Integer)
-    data_upload_time = db.Column(db.Integer)
+    creation_time = db.Column(db.DateTime)
+    data_upload_time = db.Column(db.DateTime)
 
     def __init__(self, name, user_id, datastart, dataend, econ_datastart, \
-        econ_dataend, programs, populations, model = {}, creation_time = 0, data_upload_time = 0):
+        econ_dataend, programs, populations, model = {}, creation_time = None, data_upload_time = None):
         self.name = name
         self.user_id = user_id
         self.datastart = datastart

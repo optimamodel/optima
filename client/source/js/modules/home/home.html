@@ -39,14 +39,12 @@
           <td>
             {{ project.dataEnd }}
           </td>
-          <td ng-if="project.creation_time > 0">
-            {{ project.creation_time*1000 | date:'yyyy-MM-dd HH:mm:ss'}}
+          <td>
+            <span ng-if="project.creation_time > 0">{{ project.creation_time*1000 | date:'yyyy-MM-dd HH:mm:ss'}}</span>
           </td>
-          <td ng-if="project.creation_time == 0">-</td>
-          <td ng-if="project.data_upload_time > 0">
-            {{ project.data_upload_time*1000 | date:'yyyy-MM-dd HH:mm:ss'}}
+          <td>
+            <span ng-if="project.data_upload_time > 0">{{ project.data_upload_time*1000 | date:'yyyy-MM-dd HH:mm:ss'}}</span>
           </td>
-          <td ng-if="project.data_upload_time == 0">-</td>
         </tr>
       </tbody>
     </table>
