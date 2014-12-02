@@ -233,6 +233,10 @@ define(['./module', 'underscore'], function (module, _) {
     $scope.generateCurves = function () {
       var model = getPlotModel();
       retrieveAndUpdateGraphs(model);
+
+      $scope.uploadDefault = function () {
+        var model = getPlotModel();
+        retrieveAndUpdateGraphs(model);
     };
 
     /**
