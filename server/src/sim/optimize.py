@@ -21,10 +21,6 @@ def optimize(D, objectives=None, constraints=None, startyear=2000, endyear=2030,
     from numpy import array
     printv('Running optimization...', 1, verbose)
     
-    # TODO WARNING KLUDGY -- should have option for pseudorandom or not
-    from numpy.random import seed
-    seed(1)
-    
     # Set options to update year range
     from setoptions import setoptions
     D.opt = setoptions(D.opt, startyear=startyear, endyear=endyear)
@@ -53,8 +49,12 @@ def optimize(D, objectives=None, constraints=None, startyear=2000, endyear=2030,
     for alloc in range(nallocs): D.A.append(deepcopy(D.A[0])) # Just copy for now
     D.A[0].label = 'Original'
     D.A[1].label = 'Optimal'
-    origalloc = array(D.A[0].alloc) # TODO -- WARNING at this point these entries are WRONG, they are a mix of unit costs and total costs
+    origalloc = deepcopy(array(D.A[0].alloc))
     
+    # WARNING TODO KLUDGY -- randomize the thing
+#    from numpy.random import random as rand
+    from numpy.random import seed
+    seed(1)
     
     def objectivecalc(alloc):
         """ Calculate the objective function """
@@ -70,7 +70,7 @@ def optimize(D, objectives=None, constraints=None, startyear=2000, endyear=2030,
         
     # Run the optimization algorithm
     
-    optalloc, fval, exitflag, output = ballsd(objectivecalc, origalloc, xmin=0*origalloc, timelimit=timelimit, verbose=verbose)
+    optalloc, fval, exitflag, output = ballsd(objectivecalc, origalloc, xmin=0*origalloc, timelimit=timelimit)
     
     # Update the model
     for i,alloc in enumerate([origalloc,optalloc]):
