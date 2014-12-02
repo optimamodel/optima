@@ -3,25 +3,25 @@
 
   <form class="modal-body" name="PopulationForm" novalidate="novalidate" ng-submit="submit(PopulationForm)">
     <div class="section grid">
-      <div class="++2 3">
+      <div class="++1 2">
         Name
       </div>
-      <div class="5 2++">
+      <div class="8 1++">
         <input class="txbox __block" ng-model="program.name" required autofocus>
       </div>
     </div>
 
     <div class="section grid">
-      <div class="++2 3">
+      <div class="++1" style="padding-left: 6px">
         Short Name
       </div>
-      <div class="5 2++">
+      <div class="5 3++">
         <input class="txbox __block" ng-model="program.short_name" required>
       </div>
     </div>
 
     <div class="section grid">
-      <div class="++5 5 2++">
+      <div class="++3 8">
         <label>
           <input type="checkbox" ng-model="program.saturating">
             Program specified in terms of unit or marginal cost instead of total cost
