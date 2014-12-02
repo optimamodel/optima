@@ -3,7 +3,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     module.controller('AnalysisScenariosController', function ($scope, $http, $modal, meta, scenarioParamsResponse) {
 
-        var linesGraphOptions, linesGraphData, responseData, availableScenarioParams;
+        var linesGraphOptions, linesStyle, linesGraphData, responseData, availableScenarioParams;
 
         // initialize all necessary data for this controller
         var initialize = function() {
@@ -37,6 +37,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             { id: 'tx2', name: 'Second-line treatment', active: false, byPopulation: false, total: false }
           ];
 
+          $scope.lineStyles = ['__blue', '__green', '__red', '__orange',
+            '__violet', '__black', '__light-orange', '__light-green'];
 
           linesGraphOptions = {
             height: 200,
@@ -47,6 +49,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               bottom: 45,
               left: 70
             },
+            linesStyle: $scope.lineStyles,
             xAxis: {
               axisLabel: 'Year',
               tickFormat: function (d) {
@@ -90,6 +93,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             title: title
           };
 
+          console.log(yData.length);
           _(yData).each(function(lineData) {
             graph.data.lines.push(generateLineData(xData, lineData));
           });
@@ -117,6 +121,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               var graph = generateGraph(type, data.tot.data, response.tvec, title);
               graph.options.xAxis.axisLabel = data.xlabel;
               graph.options.yAxis.axisLabel = data.tot.ylabel;
+              graph.legend = data.legend;
               graphs.push(graph);
             }
 
@@ -128,6 +133,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
                 var graph = generateGraph(type, population.data, response.tvec, title);
                 graph.options.xAxis.axisLabel = data.xlabel;
                 graph.options.yAxis.axisLabel = population.ylabel;
+                graph.legend = population.legend;
+
                 graphs.push(graph);
               });
             }
