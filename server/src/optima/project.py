@@ -24,6 +24,17 @@ def record_params(setup_state):
   project.config = dict([(key,value) for (key,value) in app.config.iteritems()])
 
 """
+Gives back project params
+"""
+@project.route('/params')
+@login_required
+def get_project_params():
+    from sim.parameters import parameters
+    project_params = [p for p in parameters() if p['modifiable']]
+    return json.dumps({"params":project_params})
+
+
+"""
 Creates the project with the given name and provided parameters.
 Result: on the backend, new project is stored,
 spreadsheet with specified name and parameters given back to the user.
