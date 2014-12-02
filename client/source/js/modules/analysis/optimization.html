@@ -15,14 +15,55 @@
 <div ng-show="activeTab === 1">
 
 <div class="cf">
-    <h2>Basic options</h2>
+    <h2>Time horizons and assumptions</h2>
     <div class="float-left margin-left-s">
-        Year to begin optimization from: <input class="txbox __inline __s" value="2013" ng-model="params.objectives.year.start">
-        <div class="margin-top-xxs">
-            Number of years to optimize funding for: <input class="txbox __inline __s" value="10" ng-model="params.objectives.year.numyears">
+        Analyses will consider program optimizations over the period
+        <input class="txbox __inline __l" value="2015" placeholder="e.g. 2015" ng-model="params.objectives.year.start">
+        to
+        <input class="txbox __inline __l" value="2020" placeholder="e.g. 2020" ng-model="params.objectives.year.end">
+        in order to achieve the objectives by
+        <input class="txbox __inline __l" value="2030" placeholder="e.g. 2030" ng-model="params.objectives.year.until">
+        , with the following context between the end of the optimized program period and the end of the analysis period:</p>
+        <div>
+            <label>
+                <input type="checkbox"  ng-model="params.objectives.year.artcontinue">
+                ART programs will continue:
+            </label>
+            <div class="elastic_col __va-middle" style="padding:0px 0px 0px 20px;">
+                <label>
+                    <input type="radio" name="artcontinue" ng-model="params.objectives.artcontinue" value="1">
+                    No one who initiates treatment is to stop receiving ART, except by natural attrition
+                </label><br>
+                <label>
+                    <input type="radio" name="artcontinue" ng-model="params.objectives.artcontinue" value="2">
+                    Number of people on ART stays the same
+                </label><br>
+                <label>
+                    <input type="radio" name="artcontinue" ng-model="params.objectives.artcontinue" value="3">
+                    Percentage coverage of ART stays the same
+                </label><br>
+                <label>
+                    <input type="radio" name="artcontinue" ng-model="params.objectives.artcontinue" value="4">
+                    ART coverage will scale up, reaching <input class="txbox __inline __s" value="90" placeholder="e.g. 90" ng-model="params.objectives.year.universalcov">% coverage of treatment-eligible people by <input class="txbox __inline __l" value="2025" placeholder="e.g. 2025" ng-model="params.objectives.year.universal"> and then be maintained
+                </label>
+            </div>
         </div>
-        <div class="margin-top-xxs">
-            Year to project outcomes to: <input class="txbox __inline __s" value="2030" ng-model="params.objectives.year.until">
+        <br>
+        <div>
+            <label>
+                <input type="checkbox"  ng-model="params.objectives.year.otherprograms">
+                All other behavioral and contextual parameters:
+            </label>
+            <div class="elastic_col __va-middle" style="padding:0px 0px 0px 0px;">
+                <label class="checkbox-inline">
+                    <input type="radio" name="otherprograms" ng-model="params.objectives.otherprograms" value="revert">
+                    revert to the levels prior to the program period
+                </label><br>
+                <label class="checkbox-inline">
+                    <input type="radio" name="otherprograms" ng-model="params.objectives.otherprograms" value="remain">
+                    remain at levels at the end of the program period
+                </label>
+            </div>
         </div>
     </div>
 </div>
@@ -40,6 +81,10 @@
             <input type="radio" name="minimizationType" ng-model="params.objectives.what" value="money">
             Minimize money
         </label>
+        <label class="checkbox-inline" style="padding:0px 0px 0px 40px;">
+            <input type="checkbox"  ng-model="params.objectives.timevarying">
+            Allow time-varying optimization
+        </label>
     </div>
 </div>
 
@@ -49,37 +94,59 @@
 
 <div class="section" ng-if="params.objectives.what == 'outcome'">
 
-    <p>
-        With a fixed amount of money available:
-        <input class="txbox __inline __l" type="text" ng-model="params.objectives.outcome.fixed">
-        , what is the optimal allocation of this funding to:
-    </p>
+    <h2>Funding assumptions</h2>
+
+    <div class="float-left margin-left-s">
+        <label class="checkbox-inline">
+            <input type="radio" name="fundingAssumptions" ng-model="params.objectives.funding" value="constant">
+            Optimize a fixed budget <input class="txbox __inline __l" type="text" ng-model="params.objectives.outcome.fixed"> for each year in the program period
+        </label><br><br>
+        <label style="padding:0px 0px 0px 20px;">
+            <input type="radio" name="fundingAssumptions" ng-model="params.objectives.funding" value="variable">
+            Optimize a variable budget for each year in the program period:<br>
+            <div style="padding:0px 0px 0px 50px;">
+                2015: <input class="txbox __inline __l" type="text" ng-model="params.objectives.outcome.fixed"><br>
+                2016: <input class="txbox __inline __l" type="text" ng-model="params.objectives.outcome.fixed"><br>
+                2017: <input class="txbox __inline __l" type="text" ng-model="params.objectives.outcome.fixed"><br>
+                2018: <input class="txbox __inline __l" type="text" ng-model="params.objectives.outcome.fixed"><br>
+                2019: <input class="txbox __inline __l" type="text" ng-model="params.objectives.outcome.fixed"><br>
+                2020: <input class="txbox __inline __l" type="text" ng-model="params.objectives.outcome.fixed"><br>
+            </div>
+        </label><br><br>
+    </div>
+</div>
+<div class="section" ng-if="params.objectives.what == 'outcome'">
+    <br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+    <div>
+        <hr>
+        <h2>Objective(s) to minimize</h2>
+    </div>
 
     <div class="checkbox-block">
         <label>
             <input type="checkbox"  ng-model="params.objectives.outcome.inci">
-            Minimize cumulative HIV incidence
+            Cumulative HIV incidence
         </label>
     </div>
 
     <div class="checkbox-block">
         <label>
             <input type="checkbox" ng-model="params.objectives.outcome.daly">
-            Minimize cumulative DALYs
+            Cumulative DALYs
         </label>
     </div>
 
     <div class="checkbox-block">
         <label>
             <input type="checkbox" ng-model="params.objectives.outcome.death">
-            Minimize cumulative HIV-related deaths
+            Cumulative HIV-related deaths
         </label>
     </div>
-	
+
     <div class="checkbox-block">
         <label>
             <input type="checkbox" ng-model="params.objectives.outcome.cost">
-            Minimize total HIV-related costs
+            Total HIV-related costs
         </label>
     </div>
 
@@ -98,11 +165,11 @@
     </div>
 
     <div ng-show="params.objectives.outcome.death">
-        <div style="margin-left: 45px">
-            Death weighting  =  <input class="txbox __inline __s" value="1" ng-model="params.objectives.outcome.deathweight">%
+        <div style="margin-left: 35px">
+            Deaths weighting  =  <input class="txbox __inline __s" value="1" ng-model="params.objectives.outcome.deathweight">%
         </div>
     </div>
-	
+
     <div ng-show="params.objectives.outcome.cost">
         <div style="margin-left: 45px">
             Costs weighting  =  <input class="txbox __inline __s" value="1" ng-model="params.objectives.outcome.costweight">%
@@ -232,19 +299,19 @@
         <div class="float-left margin-left-xs">
             <table class="table table-bordered table-hover table-striped" style="width: auto">
                 <thead>
-                    <th>Program name</th>
-                    <th>Program efficiency relative to current</th>
+                <th>Program name</th>
+                <th>Program efficiency relative to current</th>
                 </thead>
                 <tbody>
-                    <tr ng-repeat="p in programs">
-                        <td>
-                            {{ p }}
-                        </td>
-                        <td>
-                            <input class="txbox __inline __s" ng-model="params.objectives.money.costs[programCodes[$index]]">
-                            %
-                        </td>
-                    </tr>
+                <tr ng-repeat="p in programs">
+                    <td>
+                        {{ p }}
+                    </td>
+                    <td>
+                        <input class="txbox __inline __s" ng-model="params.objectives.money.costs[programCodes[$index]]">
+                        %
+                    </td>
+                </tr>
                 </tbody>
             </table>
         </div>
@@ -258,62 +325,61 @@
 
 
 
-<h3>Define constraints</h3>
 
-<hr/>
 
-<div class="elastic">
-    <div class="elastic_col __shrink __va-middle">
-        <p>Treatment eligibility:</p>
+    <hr/>
+
+    <div class="elastic">
+        <div><h2>Treatment eligibility</h2></div>
+        <div>
+            <label>
+                <input type="radio" name="eligibility" ng-model="params.constraints.txelig" value="1">
+                All people living with HIV
+            </label><br>
+            <label>
+                <input type="radio" name="eligibility" ng-model="params.constraints.txelig" value="2">
+                All people living with HIV with CD4 count < 500
+            </label><br>
+            <label>
+                <input type="radio" name="eligibility" ng-model="params.constraints.txelig" value="3">
+                All people living with HIV with CD4 count < 350
+            </label><br>
+            <label>
+                <input type="radio" name="eligibility" ng-model="params.constraints.txelig" value="4">
+                All people diagnosed with HIV
+            </label><br>
+            <label>
+                <input type="radio" name="eligibility" ng-model="params.constraints.txelig" value="5">
+                All people diagnosed with HIV with CD4 count < 500
+            </label><br>
+            <label>
+                <input type="radio" name="eligibility" ng-model="params.constraints.txelig" value="6">
+                All people diagnosed with HIV with CD4 count < 350
+            </label>
+        </div>
     </div>
-    <div class="elastic_col __va-middle">
+
+    <hr class="__dashed" />
+
+    <div class="checkbox-block">
         <label>
-            <input type="radio" name="eligibility" ng-model="params.constraints.txelig" value="1">
-            All people living with HIV
-        </label><br>
-        <label>
-            <input type="radio" name="eligibility" ng-model="params.constraints.txelig" value="2">
-            All people living with HIV with CD4 count < 500
-        </label><br>
-        <label>
-            <input type="radio" name="eligibility" ng-model="params.constraints.txelig" value="3">
-            All people living with HIV with CD4 count < 350
-        </label><br>
-        <label>
-            <input type="radio" name="eligibility" ng-model="params.constraints.txelig" value="4">
-            All people diagnosed with HIV
-        </label><br>
-        <label>
-            <input type="radio" name="eligibility" ng-model="params.constraints.txelig" value="5">
-            All people diagnosed with HIV with CD4 count < 500
-        </label><br>
-        <label>
-            <input type="radio" name="eligibility" ng-model="params.constraints.txelig" value="6">
-            All people diagnosed with HIV with CD4 count < 350
+            <input type="checkbox" ng-model="params.constraints.dontstopart">
+            No one who initiates treatment is to stop receiving ART
         </label>
     </div>
-</div>
 
-<hr class="__dashed" />
+    <hr/>
 
-<div class="checkbox-block">
-    <label>
-        <input type="checkbox" ng-model="params.constraints.dontstopart">
-        No one who initiates treatment is to stop receiving ART
-    </label>
-</div>
-
-<hr/>
-
-<h2>Funding levels not to decrease each year by more than...</h2>
-<div>
-    <table class="table table-bordered table-hover table-striped" style="width: auto">
-        <thead>
+    <h2>Maximum changes in funding per year</h2>
+    <div>
+        <table class="table table-bordered table-hover table-striped" style="width: auto">
+            <thead>
             <th>Enable</th>
             <th>Program name</th>
-            <th>By</th>
-        </thead>
-        <tbody>
+            <th>Not less than</th>
+            <th>Not more than</th>
+            </thead>
+            <tbody>
             <tr ng-repeat="p in programs">
                 <td>
                     <input type="checkbox" ng-model="params.constraints.decrease[programCodes[$index]].use">
@@ -324,23 +390,54 @@
                 <td>
                     <input class="txbox __inline __s" ng-change="params.constraints.decrease[programCodes[$index]].use=true" ng-model="params.constraints.decrease[programCodes[$index]].by">%
                 </td>
+                <td>
+                    <input class="txbox __inline __s" ng-change="params.constraints.increase[programCodes[$index]].use=true" ng-model="params.constraints.decrease[programCodes[$index]].by">%
+                </td>
             </tr>
-        </tbody>
-    </table>
-</div>
+            </tbody>
+        </table>
+    </div>
 
-<hr/>
-
-<h2>Advanced settings</h2>
-<div>
-    <table class="table table-bordered table-hover table-striped" style="width: auto">
-        <thead>
+    <h2>Maximum changes in funding over the program period</h2>
+    <div>
+        <table class="table table-bordered table-hover table-striped" style="width: auto">
+            <thead>
             <th>Enable</th>
             <th>Program name</th>
-            <th>Level</th>
-            <th>Year</th>
-        </thead>
-        <tbody>
+            <th>Not less than</th>
+            <th>Not more than</th>
+            </thead>
+            <tbody>
+            <tr ng-repeat="p in programs">
+                <td>
+                    <input type="checkbox" ng-model="params.constraints.decrease[programCodes[$index]].use">
+                </td>
+                <td>
+                    {{ p }}
+                </td>
+                <td>
+                    <input class="txbox __inline __s" ng-change="params.constraints.decrease[programCodes[$index]].use=true" ng-model="params.constraints.decrease[programCodes[$index]].by">%
+                </td>
+                <td>
+                    <input class="txbox __inline __s" ng-change="params.constraints.increase[programCodes[$index]].use=true" ng-model="params.constraints.decrease[programCodes[$index]].by">%
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <hr/>
+
+    <h2>Coverage levels</h2>
+    <div>
+        <table class="table table-bordered table-hover table-striped" style="width: auto">
+            <thead>
+            <th>Enable</th>
+            <th>Program name</th>
+            <th>By year...</th>
+            <th>coverage must reach at least</th>
+            </thead>
+            <tbody>
             <tr ng-repeat="p in programs">
                 <td>
                     <input type="checkbox" ng-model="params.constraints.coverage[programCodes[$index]].use">
@@ -349,15 +446,15 @@
                     {{ p }}
                 </td>
                 <td>
-                    <input class="txbox __inline __s" type="number" ng-change="params.constraints.coverage[programCodes[$index]].use=true" ng-model="params.constraints.coverage[programCodes[$index]].level">
-                </td>
-                <td>
                     <input class="txbox __inline __s" type="number" ng-change="params.constraints.coverage[programCodes[$index]].use=true" ng-model="params.constraints.coverage[programCodes[$index]].year">
                 </td>
+                <td>
+                    <input class="txbox __inline __s" type="number" ng-change="params.constraints.coverage[programCodes[$index]].use=true" ng-model="params.constraints.coverage[programCodes[$index]].level">
+                </td>
             </tr>
-        </tbody>
-    </table>
-</div>
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <!-- Tab 3 -->
