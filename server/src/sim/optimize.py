@@ -46,12 +46,14 @@ def optimize(D, objectives=None, constraints=None, startyear=2000, endyear=2030,
 
     # Run optimization # TODO -- actually implement :)
     nallocs = 3 # WARNING, will want to do this better
+    D.A = deepcopy([D.A[0]])
     for alloc in range(nallocs): D.A.append(deepcopy(D.A[0])) # Just copy for now
     D.A[0].label = 'Original'
     D.A[1].label = 'Optimal'
     D.A[2].label = 'No spending'
     D.A[3].label = 'Double current spending'
     origalloc = deepcopy(array(D.A[1].alloc))
+    D.A = D.A[:4]
     
 
     
