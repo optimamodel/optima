@@ -1,3 +1,7 @@
+/**
+ * AnalysisScenariosModalController is the scenario editor.
+ * It sets title and adds and removes parameters of the model (scenario to be analized).
+ */
 define(['./module'], function (module) {
   'use strict';
 
@@ -42,6 +46,13 @@ define(['./module'], function (module) {
       }
 
       $modalInstance.close($scope.scenario);
+    };
+
+    /**
+     * Removes the parameter at the given index (without asking for confirmation).
+     */
+    $scope.removeParameter = function ($index) {
+      scenario.pars.splice($index,1);
     };
 
     $scope.addParameter = function() {

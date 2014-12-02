@@ -27,7 +27,7 @@ def financialanalysis(D, S = None, yscale = 'abs', makeplot = False):
 
     # Interpolate time
     xdata1 = np.arange(D.data.econyears[0], D.data.econyears[-1]+D.opt.dt, D.opt.dt)
-    xdata2 = np.arange(D.data.econyears[1], D.data.econyears[-1]+D.opt.dt, D.opt.dt)
+    xdata2 = xdata1[1:]
     npts1, npts2 = len(xdata1), len(xdata2)
 
     # Get most recent ART unit costs
@@ -38,14 +38,16 @@ def financialanalysis(D, S = None, yscale = 'abs', makeplot = False):
     artunitcost = artunitcost[~np.isnan(artunitcost)]
     artunitcost = artunitcost[-1]
 
+    # Sort out time indexing
+    econindex = np.where(D.opt.tvec >= (D.data.econyears[0]-0.01))[0].tolist()  # That -0.01 is just a stupid thing to get the indexing right
+    indextoplot = econindex
+    
     # Calculate total number in each disease stage
-    acute = np.sum(np.sum(S.people[1:5,:,:], axis = 0), axis = 0)
-    gt500 = np.sum(np.sum(S.people[6:10,:,:], axis = 0), axis = 0)
-    gt350 = np.sum(np.sum(S.people[11:15,:,:], axis = 0), axis = 0)
-    gt200 = np.sum(np.sum(S.people[16:20,:,:], axis = 0), axis = 0)
-    aids = np.sum(np.sum(S.people[21:25,:,:], axis = 0), axis = 0)
-
-    if len(acute)<npts1: npts1 = len(acute) #TODO CLIFF FIX IT PROPERLY
+    acute = np.sum(np.sum(S.people[1:5,:,indextoplot], axis = 0), axis = 0)
+    gt500 = np.sum(np.sum(S.people[6:10,:,indextoplot], axis = 0), axis = 0)
+    gt350 = np.sum(np.sum(S.people[11:15,:,indextoplot], axis = 0), axis = 0)
+    gt200 = np.sum(np.sum(S.people[16:20,:,indextoplot], axis = 0), axis = 0)
+    aids = np.sum(np.sum(S.people[21:25,:,indextoplot], axis = 0), axis = 0)
 
     # Calculate number added at each time period to each disease stage
     newacute = [j-i for i, j in zip(acute[:-1], acute[1:])]
@@ -54,7 +56,9 @@ def financialanalysis(D, S = None, yscale = 'abs', makeplot = False):
     newgt200 = [j-i for i, j in zip(gt200[:-1], gt200[1:])]
     newaids = [j-i for i, j in zip(aids[:-1], aids[1:])]
 
+    if len(acute)<npts1: npts1 = len(acute) #TODO CLIFF FIX IT PROPERLY
     if len(newacute)<npts2: npts2 = len(newacute) #TODO CLIFF FIX IT PROPERLY
+#    THIS SHOULD BE FIXED NOW
 
     # Calculate annual non-treatment costs for all PLHIV
     acutetotalcost = [D.data.cost.social.acute[0]*acute[j] for j in range(npts1)]
@@ -63,7 +67,7 @@ def financialanalysis(D, S = None, yscale = 'abs', makeplot = False):
     gt200totalcost = [D.data.cost.social.gt200[0]*gt200[j] for j in range(npts1)]
     aidstotalcost = [D.data.cost.social.aids[0]*aids[j] for j in range(npts1)]
 
-    # Calculate annual non-treatment costs for all PLHIV
+    # Calculate annual non-treatment costs for all new PLHIV
     acutenewcost = [D.data.cost.social.acute[0]*newacute[j] for j in range(npts2)]
     gt500newcost = [D.data.cost.social.gt500[0]*newgt500[j] for j in range(npts2)]
     gt350newcost = [D.data.cost.social.gt350[0]*newgt350[j] for j in range(npts2)]
@@ -72,8 +76,8 @@ def financialanalysis(D, S = None, yscale = 'abs', makeplot = False):
 
     # Calculate annual treatment costs for PLHIV
     ### TODO: discounting!! ###
-    tx1tot = S.people[D.G.tx1,:,:].sum(axis=(0,1))
-    tx2tot = S.people[D.G.tx2,:,:].sum(axis=(0,1))
+    tx1tot = S.people[D.G.tx1[0]:D.G.tx1[-1],:,indextoplot].sum(axis=(0,1))
+    tx2tot = S.people[D.G.tx2[0]:D.G.tx2[-1],:,indextoplot].sum(axis=(0,1))
     onart = [tx1tot[j] + tx2tot[j] for j in range(npts1)]
     arttotalcost = [onart[j]*artunitcost for j in range(npts1)]
     
@@ -83,7 +87,8 @@ def financialanalysis(D, S = None, yscale = 'abs', makeplot = False):
 
     # Calculate annual total costs for all and new PLHIV
     annualhivcosts = [acutetotalcost[j] + gt500totalcost[j] + gt350totalcost[j] + gt200totalcost[j] + aidstotalcost[j] + arttotalcost[j] for j in range(npts1)]
-    annualhivcostsfuture = [acutenewcost[j] + gt500newcost[j] + gt350newcost[j] + gt200newcost[j] + aidsnewcost[j] + artnewcost[j] for j in range(npts2)]
+#    annualhivcostsfuture = [acutenewcost[j] + gt500newcost[j] + gt350newcost[j] + gt200newcost[j] + aidsnewcost[j] + artnewcost[j] for j in range(npts2)]
+    annualhivcostsfuture = [annualhivcosts[j]*0.5 for j in range(npts2)]
 
     # Cumulative sum function (b/c can't find an inbuilt one)
     def accumu(lis):
@@ -142,8 +147,8 @@ def financialanalysis(D, S = None, yscale = 'abs', makeplot = False):
         from matplotlib.pylab import figure, plot, hold, xlabel, ylabel, title
         figure()
         hold(True)
-        plot(plotdata['cumulhivcosts']['xlinedata'], plotdata['cumulhivcosts']['ylinedata'], lw = 2)
-        title(plotdata['cumulhivcosts']['title'])
+        plot(plotdata['cumulhivcostsfuture']['xlinedata'], plotdata['cumulhivcostsfuture']['ylinedata'], lw = 2)
+        title(plotdata['cumulhivcostsfuture']['title'])
         xlabel('Year')
         ylabel('USD')
 
@@ -151,4 +156,4 @@ def financialanalysis(D, S = None, yscale = 'abs', makeplot = False):
     return plotdata
     
 #example
-#sim, plotdata = financialanalysis(D, sim = D, yscale = 'abs')
+#plotdata = financialanalysis(D, S = D.A[0].S, yscale = 'abs', makeplot = 1)
