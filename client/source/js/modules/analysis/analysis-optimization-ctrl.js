@@ -122,15 +122,6 @@ define([
       }
     };
 
-    var linedataTpl = {
-      "values": [
-        // {"x": 0, "y": 0, "series": 0},
-      ],
-      "key": "Sine Wave",
-      "color": "#ff7f0e",
-      "seriesIndex": 0
-    };
-
     var getActiveTypes = function () {
       return _($scope.types).where({ active: true });
     };
