@@ -66,7 +66,10 @@ def viewuncerresults(E, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], '
                     else:
                         figure(facecolor='w')
                     hold(True)
-                    fill_between(xdata, E[graph][subkey].low, E[graph][subkey].high, alpha=0.2, edgecolor='none')
+                    try:
+                        fill_between(xdata, E[graph][subkey].low, E[graph][subkey].high, alpha=0.2, edgecolor='none')
+                    except:
+                        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                     plot(xdata, E[graph][subkey].best, c=E.colorm, linewidth=linewidth)
                     if epigraph:
                         if ndim(E[graph].ydata)==1:
