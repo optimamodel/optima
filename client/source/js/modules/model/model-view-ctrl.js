@@ -106,6 +106,27 @@ define(['./module', 'angular'], function (module, angular) {
         .value();
     };
 
+    /*
+    * Returns an graph based on the provided yData.
+    *
+    * yData should be an array where each entry contains an array of all
+    * y-values from one line.
+    */
+    var generateGraph = function(type, yData, xData, title) {
+      var graph = {
+        options: angular.copy(lineScatterOptions),
+        data: angular.copy(lineScatterData),
+        type: type,
+        title: title
+      };
+
+      // _(yData).each(function(lineData) {
+      //   graph.data.lines.push(generateLineData(xData, lineData));
+      // });
+
+      return graph;
+    };
+
     var prepareGraphs = function (response) {
       var graphs = [], types;
 
@@ -120,12 +141,8 @@ define(['./module', 'angular'], function (module, angular) {
         var data = response[type.id];
 
         if (type.total) {
-          var graph = {
-            options: angular.copy(lineScatterOptions),
-            data: angular.copy(lineScatterData),
-            type: type,
-            title: data.tot.title
-          };
+
+          var graph = generateGraph(type, null, null, data.tot.title);
 
           graph.data.line = generateLineData(response.tvec, data.tot.best);
           graph.data.area.lineHigh = generateLineData(response.tvec, data.tot.high);
@@ -146,12 +163,8 @@ define(['./module', 'angular'], function (module, angular) {
         // TODO: we're checking data because it could undefined ...
         if (type.byPopulation && data) {
           _(data.pops).each(function (population, populationIndex) {
-            var graph = {
-              options: angular.copy(lineScatterOptions),
-              data: angular.copy(lineScatterData),
-              type: type,
-              title: population.title
-            };
+
+            var graph = generateGraph(type, null, null, population.title);
 
             graph.data.line = generateLineData(response.tvec, population.best);
             graph.data.area.lineHigh = generateLineData(response.tvec, population.high);
