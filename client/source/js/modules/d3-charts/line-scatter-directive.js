@@ -33,6 +33,7 @@ define(['./module'], function (module) {
       var graphsScales = [];
       var yMax = 0;
       var xMax = 0;
+      var yMin = Number.POSITIVE_INFINITY;
       var xMin = Number.POSITIVE_INFINITY;
       var scatterChartInstance;
 
@@ -45,6 +46,7 @@ define(['./module'], function (module) {
         graphsScales.push(scales);
         yMax = Math.max(yMax, scales.y.domain()[1]);
         xMax = Math.max(xMax, scales.x.domain()[1]);
+        yMin = Math.min(yMin, scales.y.domain()[0]);
         xMin = Math.min(xMin, scales.x.domain()[0]);
       });
 
@@ -55,6 +57,7 @@ define(['./module'], function (module) {
         graphsScales.push(scatterScale);
         yMax = Math.max(yMax, scatterScale.y.domain()[1]);
         xMax = Math.max(xMax, scatterScale.x.domain()[1]);
+        yMin = Math.min(yMin, scatterScale.y.domain()[0]);
         xMin = Math.min(xMin, scatterScale.x.domain()[0]);
       }
 
@@ -63,6 +66,11 @@ define(['./module'], function (module) {
         scale.y.domain([0, yMax]);
         scale.x.domain([xMin, xMax]);
       });
+
+      options.yAxis.tickFormat = function (d) {
+        var format = d3Charts.calculateTickFormat(yMin, yMax);
+        return d3.format(format)(d);
+      };
 
       d3Charts.drawAxes(
         graphsScales[0],

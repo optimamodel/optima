@@ -47,6 +47,15 @@ define(['./module'], function (module) {
         areaChartInstance.scales(areaLineHighData);
         scatterChartInstance.scales(areaLineHighData);
 
+        // TODO fix the scales & yMax. Right now this is not entirely correct as
+        // it doesn't cover the case of having a scatter point above the high line.
+        var yMax = Math.max(0, calculatedLineScales.y.domain()[1]);
+
+        scope.options.yAxis.tickFormat = function (d) {
+          var format = d3Charts.calculateTickFormat(0, yMax);
+          return d3.format(format)(d);
+        };
+
         d3Charts.drawAxes(
           calculatedLineScales,
           scope.options,

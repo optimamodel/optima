@@ -61,10 +61,7 @@ define(['./module', 'angular'], function (module, angular) {
         }
       },
       yAxis: {
-        axisLabel: 'Prevalence (%)',
-        tickFormat: function (d) {
-          return d3.format(',.2f')(d);
-        }
+        axisLabel: 'Prevalence (%)'
       }
     };
 
