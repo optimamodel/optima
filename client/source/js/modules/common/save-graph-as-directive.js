@@ -2,14 +2,13 @@ define(['angular', 'saveAs'], function (angular, saveAs) {
   'use strict';
 
   return angular.module('app.save-graph-as', [])
-    .directive('saveGraphAs', function () {
+    .directive('saveGraphAs', function ($http) {
       return {
         restrict: 'A',
         link: function (scope, elem, attrs) {
           var html = '<div class="chart-buttons btn-group">' +
             '<button class="btn figure">Export figure</button>' +
-            '<button class="btn pdf">Export data</button>' + // Not sure why "btn pdf" works but "btn table" doesn't
-            '<div id="svgdataurl" style="display: none"></div>' +
+            '<button class="btn data">Export data</button>' +
             '</div>';
 
           var buttons = angular.element(html);
@@ -26,9 +25,20 @@ define(['angular', 'saveAs'], function (angular, saveAs) {
 
               saveAs(new Blob([xml], { type: 'image/svg' }), 'graph.svg');
             })
-            .on('click', '.table', function (e) {
+            .on('click', '.data', function (e) {
               e.preventDefault();
-              alert('This feature is currently under development');
+              var data = {
+                name: 'table name',
+                columns: [
+                  { data: [1, 2, 3], title: 'x axis' },
+                  { data: [1, 2, 3], title: 'y axis' }
+                ]
+              };
+              $http.post('/api/project/export', data)
+                .success(function (response) {
+                  saveAs(new Blob([response], { type: 'application/vnd.ms-excel' }), 'data.xlsx');
+                })
+                .error(function () {});
             });
         }
       };
