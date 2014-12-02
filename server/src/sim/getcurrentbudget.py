@@ -63,8 +63,8 @@ def getcurrentbudget(D, alloc=None):
                       
                 # Unpack
                 muz, stdevz, muf, stdevf, saturation, growthrate = effectname[3][0], effectname[3][1], effectname[3][2], effectname[3][3], effectname[3][4], effectname[3][5]
-                zerosample, fullsample = makesamples(muz, stdevz, muf, stdevf, samplesize=1)
-                y = ccoeqn(totalcost, [saturation, growthrate, zerosample, fullsample])
+#                zerosample, fullsample = makesamples(muz, stdevz, muf, stdevf, samplesize=1)
+                y = ccoeqn(totalcost, [saturation, growthrate, muz, muf])
                 D.P[effectname[0][1]].c[popnumber] = y
 
             # ... or do this if it's not a saturating program
