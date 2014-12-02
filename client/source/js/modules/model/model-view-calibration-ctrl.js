@@ -237,6 +237,10 @@ define(['./module', 'underscore'], function (module, _) {
       retrieveAndUpdateGraphs(model);
     };
 
+    $scope.uploadDefault = function () {
+      alert('Upload default cost-coverage-outcome curves will be available in a future version of Optima.');
+    };
+
     /**
      * Retrieve and update graphs based on the current plot models.
      *
