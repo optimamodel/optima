@@ -41,9 +41,6 @@ def financialanalysis(D, S = None, yscale = 'abs', makeplot = False):
     # Sort out time indexing
     econindex = np.where(D.opt.tvec >= (D.data.econyears[0]-0.01))[0].tolist()  # That -0.01 is just a stupid thing to get the indexing right
     indextoplot = econindex
-#    if len(acute)<npts1: npts1 = len(acute) #TODO CLIFF FIX IT PROPERLY
-#    if len(newacute)<npts2: npts2 = len(newacute) #TODO CLIFF FIX IT PROPERLY
-#    THIS SHOULD BE FIXED NOW
     
     # Calculate total number in each disease stage
     acute = np.sum(np.sum(S.people[1:5,:,indextoplot], axis = 0), axis = 0)
@@ -58,6 +55,10 @@ def financialanalysis(D, S = None, yscale = 'abs', makeplot = False):
     newgt350 = [j-i for i, j in zip(gt350[:-1], gt350[1:])]
     newgt200 = [j-i for i, j in zip(gt200[:-1], gt200[1:])]
     newaids = [j-i for i, j in zip(aids[:-1], aids[1:])]
+
+    if len(acute)<npts1: npts1 = len(acute) #TODO CLIFF FIX IT PROPERLY
+    if len(newacute)<npts2: npts2 = len(newacute) #TODO CLIFF FIX IT PROPERLY
+#    THIS SHOULD BE FIXED NOW
 
     # Calculate annual non-treatment costs for all PLHIV
     acutetotalcost = [D.data.cost.social.acute[0]*acute[j] for j in range(npts1)]
