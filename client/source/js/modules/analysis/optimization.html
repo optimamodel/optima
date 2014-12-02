@@ -548,17 +548,6 @@
 
                     </div>
 
-                    <div class="section elastic" ng-repeat="graph in lines">
-                        <div class="elastic_col __shrink" style="width: 430px">
-                            <div class="chart-container">
-                                <nvd3 data="graph.data" options="graph.options" save-graph-as></nvd3>
-                            </div>
-                        </div>
-                        <div class="elastic_col">
-                            <h3>{{ graph.title }}</h3>
-                        </div>
-                    </div>
-
                     <div>
                       <div class="chart-container __small" ng-repeat="graph in optimisationGraphs">
                         <h3 class="text-center">{{ graph.title }}</h3>
