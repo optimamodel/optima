@@ -305,7 +305,7 @@ define([
       _(['costcur', 'costfut']).each(function(timeCategory) {
         _(['ann', 'cum']).each(function(costCategory) {
           var data = graphData[timeCategory][costCategory];
-          var graph = generateGraph(data.data, graphData.tvec, data.title);
+          var graph = generateGraph(data.data, data.xdata, data.title);
 
           graph.options.xAxis.axisLabel = data.xlabel;
           graph.options.yAxis.axisLabel = data.ylabel;
