@@ -70,10 +70,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      */
     $scope.remove = function ($event, name, index) {
       if ($event) { $event.preventDefault(); }
-      $modal.open({
-        templateUrl: 'js/modules/common/confirm-modal.html',
-        controllerAs: 'ConfirmModalController',
-        model: {
+      var theModal = $modal.open({
+        templateUrl: 'js/modules/confirm-modal/confirm-modal.html',
+        controller: 'ConfirmModalController',
+      });
+
+      theModal.model = {
           title: 'Remove project',
           message: 'Are you sure you want to permanently remove project "' + name + '"?',
           confirmText: 'Yes, remove this project',
@@ -84,8 +86,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           onCancel: function (){
             console.log('onCancel');
             return false}
-        }
-      });
+        };
     };
   });
 
