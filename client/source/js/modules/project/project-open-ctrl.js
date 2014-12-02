@@ -1,9 +1,9 @@
 // ProjectOpenController deals with loading and removing projects
 
-define(['./module', 'underscore'], function (module, _) {
+define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
-  module.controller('ProjectOpenController', function ($scope, $http, activeProject, localStorage, projects) {
+  module.controller('ProjectOpenController', function ($scope, $http, activeProject, localStorage, projects, $modal) {
 
     $scope.projects = _.map(projects.projects, function(project){
       project.creation_time = Date.parse(project.creation_time);
@@ -64,14 +64,28 @@ define(['./module', 'underscore'], function (module, _) {
     };
 
     /**
-     * Opens a dialog to ask the user for confirmation to remove the project and
-     * removes the project if the user confirms.
+     * Opens a modal window to ask the user for confirmation to remove the project and
+     * removes the project if the user confirms. 
+     * Closes it without further action otherwise.
      */
     $scope.remove = function ($event, name, index) {
       if ($event) { $event.preventDefault(); }
-      if(confirm('Are you sure you want to permanently remove project "' + name + '"?')) {
-        removeNoQuestionsAsked(name, index);
-      }
+      $modal.open({
+        templateUrl: 'js/modules/common/confirm-modal.html',
+        controllerAs: 'ConfirmModalController',
+        model: {
+          title: 'Remove project',
+          message: 'Are you sure you want to permanently remove project "' + name + '"?',
+          confirmText: 'Yes, remove this project',
+          cancelText: 'No',
+          onConfirm: function (){
+            console.log('onConfirm');
+            removeNoQuestionsAsked(name, index)},
+          onCancel: function (){
+            console.log('onCancel');
+            return false}
+        }
+      });
     };
   });
 
