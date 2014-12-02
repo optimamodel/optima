@@ -12,9 +12,6 @@ from flask.ext.login import login_required
 scenarios = Blueprint('scenarios',  __name__, static_folder = '../static')
 scenarios.config = {}
 
-scenario_params_file_name = "scenario_params.csv"
-
-
 @scenarios.record
 def record_params(setup_state):
   app = setup_state.app
