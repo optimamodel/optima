@@ -51,9 +51,12 @@ define(['./module'], function (module) {
         // it doesn't cover the case of having a scatter point above the high line.
         var yMax = Math.max(0, calculatedLineScales.y.domain()[1]);
 
-        scope.options.yAxis.tickFormat = function (d) {
+        scope.options.yAxis.tickFormat = function (tickValue) {
           var format = d3Charts.calculateTickFormat(0, yMax);
-          return d3.format(format)(d);
+          var formattedValue = d3.format(format)(tickValue);
+          // Cliff requested to lower case the unit suffixed values.
+          // e.g. 100M -> 100m
+          return formattedValue.toLowerCase();
         };
 
         d3Charts.drawAxes(

@@ -67,9 +67,12 @@ define(['./module'], function (module) {
         scale.x.domain([xMin, xMax]);
       });
 
-      options.yAxis.tickFormat = function (d) {
+      options.yAxis.tickFormat = function (tickValue) {
         var format = d3Charts.calculateTickFormat(yMin, yMax);
-        return d3.format(format)(d);
+        var formattedValue = d3.format(format)(tickValue);
+        // Cliff requested to lower case the unit suffixed values.
+        // e.g. 100M -> 100m
+        return formattedValue.toLowerCase();
       };
 
       d3Charts.drawAxes(
