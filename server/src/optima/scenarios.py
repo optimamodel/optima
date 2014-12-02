@@ -58,7 +58,7 @@ def runScenarios():
     try:
         D = load_model(project_name)
         args['D'] = D
-        D = runscenarios(**args) 
+        D = runscenarios(**args)
         D_dict = D.toDict()
         if dosave:
             print("model: %s" % project_name)
