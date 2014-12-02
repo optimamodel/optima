@@ -55,14 +55,6 @@ define(['./module'], function (module) {
       scenario.pars.splice($index,1);
     };
 
-    var startValue = function (parameterNames) {
-      return findScenarioParams(availableScenarioParams, parameterNames).values[0];
-    };
-
-    var endValue = function (parameterNames) {
-      return findScenarioParams(availableScenarioParams, parameterNames).values[1];
-    };
-
     /**
      * Add a new parameter to the currently open scenario.
      */
