@@ -140,7 +140,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           _(['costcur', 'costfut']).each(function(timeCategory) {
             _(['ann', 'cum']).each(function(costCategory) {
               var data = response[timeCategory][costCategory];
-              var graph = generateGraph(data.data, response.tvec, data.title);
+              var graph = generateGraph(data.data, data.xdata, data.title);
 
               graph.options.xAxis.axisLabel = data.xlabel;
               graph.options.yAxis.axisLabel = data.ylabel;

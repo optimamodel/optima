@@ -190,7 +190,8 @@ define(['./module', 'angular'], function (module, angular) {
             var yData = {
               best: data.best, high: data.high, low: data.low
             };
-            var graph = generateGraph(yData, data.xdata.np_array, data.title);
+
+            var graph = generateGraph(yData, data.xdata, data.title);
 
             graph.options.xAxis.axisLabel = data.xlabel;
             graph.options.yAxis.axisLabel = data.ylabel;
