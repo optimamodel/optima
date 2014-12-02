@@ -24,12 +24,42 @@
       3. Specify the upper limit of the horizontal axis (for plotting):
       <input type="number" class="txbox __inline __l" ng-model="xAxisMaximum">
     </p>
+    <p>
+      4. Select units for displaying cost data:
+    <div class="elastic_col __va-middle" style="padding:0px 0px 0px 20px;">
+      <label>
+        <input type="radio" name="displaycost" ng-model="displaycost" value="1">
+        Absolute cost
+      </label><br>
+      <label>
+        <input type="radio" name="displaycost" ng-model="displaycost" value="2">
+        Cost in units of gross domestic product  in year <input class="txbox __inline __l" value="2014" placeholder="e.g. 2014" ng-model="display.year">
+      </label><br>
+      <label>
+        <input type="radio" name="displaycost" ng-model="displaycost" value="3">
+        Cost in units of government revenue in year <input class="txbox __inline __l" value="2014" placeholder="e.g. 2014" ng-model="display.year">
+      </label><br>
+      <label>
+        <input type="radio" name="displaycost" ng-model="displaycost" value="4">
+        Cost in units of total health expenditure in year <input class="txbox __inline __l" value="2014" placeholder="e.g. 2014" ng-model="display.year">
+      </label><br>
+      <label>
+        <input type="radio" name="displaycost" ng-model="displaycost" value="5">
+        Cost in units of domestic health spending in year <input class="txbox __inline __l" value="2014" placeholder="e.g. 2014" ng-model="display.year">
+      </label><br>
+      <label>
+        <input type="radio" name="displaycost" ng-model="displaycost" value="6">
+        Cost in units of government expenditure in year <input class="txbox __inline __l" value="2014" placeholder="e.g. 2014" ng-model="display.year">
+      </label>
+    </div>
+    </p>
   </div>
 
   <div class="section">
     <button class="btn" ng-click="generateCurves()">Draw</button>
     <button class="btn" ng-click="saveModel()">Save Model</button>
-    <button class="btn" ng-click="revertModel()">Revert Model</button>
+    <button class="btn" ng-click="revertModel()">Revert Model</button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    <button class="btn" ng-click="uploadDefault()">Upload default cost-coverage-outcome curves</button>
   </div>
 
   <div class="section" ng-if="hasCostCoverResponse">
