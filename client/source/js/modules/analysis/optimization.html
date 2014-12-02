@@ -75,7 +75,7 @@
             Minimize cumulative HIV-related deaths
         </label>
     </div>
-	
+
     <div class="checkbox-block">
         <label>
             <input type="checkbox" ng-model="params.objectives.outcome.cost">
@@ -102,7 +102,7 @@
             Death weighting  =  <input class="txbox __inline __s" value="1" ng-model="params.objectives.outcome.deathweight">%
         </div>
     </div>
-	
+
     <div ng-show="params.objectives.outcome.cost">
         <div style="margin-left: 45px">
             Costs weighting  =  <input class="txbox __inline __s" value="1" ng-model="params.objectives.outcome.costweight">%
@@ -460,6 +460,19 @@
                         <div class="elastic_col">
                             <h3>{{ graph.title }}</h3>
                         </div>
+                    </div>
+
+                    <div>
+                      <div class="chart-container __small" ng-repeat="graph in costGraphs">
+                        <h3 class="text-center">{{ graph.title }}</h3>
+                        <div class="legend">
+                          <div class="legend-entry" ng-repeat="description in graph.legend">
+                            <span class="line-color-indicator line {{ lineStyles[$index] }}">•</span>
+                            {{ description }}
+                          </div>
+                        </div>
+                        <div line-scatter-chart data="graph.data" options="graph.options" save-graph-as></div>
+                      </div>
                     </div>
                 </div>
             </div>
