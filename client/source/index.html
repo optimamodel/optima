@@ -37,17 +37,35 @@
         .ng-hide-add-active, .ng-hide-remove {
             display: block !important;
         }
+
+        .modal {
+            overflow-y: auto;
+        }
+
+        .modal-open {
+            overflow: initial !important;
+        }
     </style>
 </head>
 <body ng-controller="MainCtrl">
 
 <div class="actionbar">
-    <div class="elastic __fluid">
-        <div class="elastic_col __va-middle">
+    <div class="elastic header">
+        <div ng-cloak ng-if="userLogged()" class="header_left">
+            Logged in as: <b>{{ user.name }}</b>
+            <div ng-show="activeProject.name">
+                Project: <b>{{ activeProject.name }}</b>
+            </div>
+        </div>
+        <div ng-cloak ng-if="userLogged()" class="header_right">
+            <button class="btn" ng-click="logout()">Log out</button>
+        </div>
+        <div class="header_center">
             <i class="header_logo logo"></i>
         </div>
     </div>
 </div>
+
 
 <div class="actionbar" ng-cloak>
     <div class="elastic __fluid">
@@ -63,11 +81,9 @@
         <div class="elastic_col __va-middle">
             <a class="btn" href="http://optimamodel.com" target="_blank">Website</a>
         </div>
-        <div class="elastic_col __va-middle" ng-if="userLogged()">
-            <button class="btn" ng-click="logout()">Log out</button>
-        </div>
     </div>
 </div>
+
 
 <div class="elastic layout">
     <div class="elastic_col layout_aside" style="width: 265px" ng-if="userLogged()">
@@ -80,24 +96,7 @@
 </div>
 
 <div class="actionbar layout_footer" ng-cloak>
-    <div class="elastic __fluid" ng-if="userLogged()">
-        <div class="elastic_col __va-middle" ng-show="activeProject.name">
-            Project: <b>{{ activeProject.name }}</b>
-        </div>
-        <div class="elastic_col __va-middle">
-            Logged in as: <b>{{ user.name }}</b>
-        </div>
-        <div class="elastic_col __va-middle">
-            <i class="ic __kirby-logo"></i>
-        </div>
-        <div class="elastic_col __va-middle">
-            <i class="ic __unsw-logo"></i>
-        </div>
-        <div class="elastic_col __va-middle">
-            <i class="ic __world-bank-logo"></i>
-        </div>
-    </div>
-    <div class="elastic __fluid" ng-if="!userLogged()">
+    <div class="elastic __fluid">
         <div class="elastic_col __va-middle">
             <i class="ic __kirby-logo"></i>
         </div>

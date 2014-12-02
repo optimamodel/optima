@@ -9,6 +9,8 @@
       <th>Programs</th>
       <th>Data start year</th>
       <th>Data end year</th>
+      <th>Created on</th>
+      <th>Data Uploaded on</th>
       <th colspan="3">Actions</th>
       </thead>
       <tbody>
@@ -29,13 +31,19 @@
           {{ project.dataEnd }}
         </td>
         <td>
+            {{ project.creation_time| date:'yyyy-MM-dd HH:mm:ss'}}
+        </td>
+        <td>
+            {{ project.data_upload_time | date:'yyyy-MM-dd HH:mm:ss'}}
+        </td>
+        <td>
           <button class="btn __white" ng-click="open(project.name)">Open</button>
         </td>
         <td>
           <button class="btn __red" ng-click="remove($event, project.name, $index)">Remove</button>
         </td>
         <td>
-          <button class="btn __blue" ng-click="workbook(project.name)">Get Workbook</button>
+          <button class="btn __blue" ng-click="workbook(project.name)">Get workbook</button>
         </td>
       </tr>
       </tbody>

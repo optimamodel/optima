@@ -5,15 +5,15 @@ from sim.optimize import optimize
 from sim.bunch import unbunchify
 from sim.bunch import bunchify
 from sim.scenarios import runscenarios
-from utils import load_model, save_model, project_exists, check_project_name
-from flask.ext.login import login_required
+from utils import load_model, save_model, project_exists, check_project_name, report_exception
+from flask.ext.login import login_required, current_user
+from dbconn import db
+from dbmodels import ProjectDb, WorkingProjectDb
+
 
 """ route prefix: /api/analysis/scenarios """
 scenarios = Blueprint('scenarios',  __name__, static_folder = '../static')
 scenarios.config = {}
-
-scenario_params_file_name = "scenario_params.csv"
-
 
 @scenarios.record
 def record_params(setup_state):
@@ -23,16 +23,32 @@ def record_params(setup_state):
 
 @scenarios.route('/params')
 @login_required
+@check_project_name
+@report_exception()
 def get_scenario_params():
-    scenario_params_file_path = helpers.safe_join(scenarios.static_folder, scenario_params_file_name)
-    f = open(scenario_params_file_path, "rU")
-    if not f:
-        reply['reason'] = 'Scenario params file %s does not exist' % scenario_params_file_path
-        return reply
-    lines = [l.strip() for l in f.readlines()][1:]
-    split_lines = [l.split(';') for l in lines]
-    scenario_params = [{'keys':r[0].replace('[:]','').split('.')[1:],'name':r[2]} for r in split_lines]
-    return json.dumps({"params":scenario_params})
+    from sim.parameters import parameters
+    from sim.scenarios import getparvalues
+    scenario_params = parameters()
+    real_params = []
+    user_id = current_user.id
+    proj = ProjectDb.query.filter_by(user_id=user_id, name=request.project_name).first()
+    D = bunchify(proj.model)
+    db.session.close()
+    pops_short = [item['short_name'] for item in proj.populations]
+
+    for param in scenario_params:
+        if not param['modifiable']: continue
+        item = bunchify({'names':param['keys'], 'pops':0, 'startyear':proj.datastart, 'endyear':proj.dataend})
+        val_pair = None
+        try:
+            val_pair = getparvalues(D, item)
+            param['values'] = val_pair
+            real_params.append(param)
+        except:
+            continue
+
+    print ("real_params:%s" % real_params)
+    return json.dumps({"params":real_params})
 
 """
 Gets a list of scenarios defined by the user, produces graphs out of them and sends back
@@ -58,7 +74,7 @@ def runScenarios():
     try:
         D = load_model(project_name)
         args['D'] = D
-        D = runscenarios(**args) 
+        D = runscenarios(**args)
         D_dict = D.toDict()
         if dosave:
             print("model: %s" % project_name)

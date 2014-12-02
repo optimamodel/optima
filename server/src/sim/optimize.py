@@ -10,7 +10,7 @@ def optimize(D, objectives=None, constraints=None, startyear=2000, endyear=2030,
         timelimit is the maximum time in seconds to run optimization for
         verbose determines how much information to print.
         
-    Version: 2014nov30 by cliffk
+    Version: 2014dec01 by cliffk
     """
     
     from model import model
@@ -45,40 +45,40 @@ def optimize(D, objectives=None, constraints=None, startyear=2000, endyear=2030,
         if constraints.decrease[prog].use: constraints.decrease[prog].by = float(constraints.decrease[prog].by) / 100.0
 
     # Run optimization # TODO -- actually implement :)
-    nallocs = 1 # WARNING, will want to do this better
+    nallocs = 3 # WARNING, will want to do this better
+    D.A = deepcopy([D.A[0]])
     for alloc in range(nallocs): D.A.append(deepcopy(D.A[0])) # Just copy for now
     D.A[0].label = 'Original'
     D.A[1].label = 'Optimal'
-    origalloc = array(D.A[0].alloc)
+    D.A[2].label = 'No spending'
+    D.A[3].label = 'Double current spending'
+    origalloc = deepcopy(array(D.A[1].alloc))
+    D.A = D.A[:4]
     
+
     
     def objectivecalc(alloc):
         """ Calculate the objective function """
-        
-        printv(alloc, 4, verbose)
-        
         alloc /= sum(alloc)/sum(origalloc)
-        
         newD = deepcopy(D)
         newD = getcurrentbudget(newD, alloc)
-        newD.M = makemodelpars(newD.P, newD.opt, withwhat='c', verbose=2)
-        S = model(newD.G, newD.M, newD.F[0], newD.opt, verbose=verbose)
-        
-        objective = S.inci.sum() # TEMP
+        newD.M = makemodelpars(newD.P, newD.opt, withwhat='c', verbose=0)
+        S = model(newD.G, newD.M, newD.F[0], newD.opt, verbose=0)
+        objective = S.death.sum() # TEMP
         
         return objective
         
         
         
     # Run the optimization algorithm
-    
-    optalloc, fval, exitflag, output = ballsd(objectivecalc, origalloc, xmin=0*origalloc, timelimit=timelimit, verbose=verbose)
+    optalloc, fval, exitflag, output = ballsd(objectivecalc, origalloc, xmin=0*array(origalloc), timelimit=timelimit)
     
     # Update the model
-    for i,alloc in enumerate([origalloc,optalloc]):
+    for i,alloc in enumerate([origalloc,optalloc,0.01*origalloc,2*origalloc]):
         D = getcurrentbudget(D, alloc)
         D.M = makemodelpars(D.P, D.opt, withwhat='c', verbose=2)
         D.A[i].S = model(D.G, D.M, D.F[0], D.opt, verbose=verbose)
+        D.A[i].alloc = alloc # Now that it's run, store total program costs
     
     # Calculate results
     from makeresults import makeresults

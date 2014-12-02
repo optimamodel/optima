@@ -17,14 +17,5 @@ class AnalysisTestCase(OptimaTestCase):
         print "response data: %s" % response.data
         self.assertEqual(response.status_code, 401)
 
-    def test_scenario_params(self):
-        response = self.create_user()
-        response = self.login()
-        response = self.client.get('/api/analysis/scenarios/params', follow_redirects=True)
-        self.assertEqual(response.status_code, 200)
-        params = json.loads(response.data)['params']
-        self.assertTrue(len(params)>0)
-        self.assertTrue(set(params[0].keys())==set(["keys", "name"]))
-
 if __name__ == '__main__':
     unittest.main()

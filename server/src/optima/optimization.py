@@ -13,7 +13,7 @@ from flask import request, jsonify, Blueprint
 from flask.ext.login import login_required
 from dbconn import db
 from async_calculate import CalculatingThread, sentinel
-from utils import check_project_name, project_exists, pick_params, load_model, save_working_model
+from utils import check_project_name, project_exists, pick_params, load_model, save_working_model, report_exception
 from sim.optimize import optimize
 from sim.bunch import bunchify
 import json
@@ -26,16 +26,16 @@ optimization = Blueprint('optimization',  __name__, static_folder = '../static')
 def get_optimization_results(D_dict):
     return {'graph': D_dict.get('plot',{}).get('OM',{}), 'pie':D_dict.get('plot',{}).get('OA',{})}
 
-""" 
-Start optimization 
+"""
+Start optimization
 """
 @optimization.route('/start', methods=['POST'])
 @login_required
 @check_project_name
 def startOptimization():
     data = json.loads(request.data)
-    
-    # get project name 
+
+    # get project name
     project_name = request.project_name
     D = None
     if not project_exists(project_name):
@@ -79,31 +79,31 @@ def stopCalibration():
         sentinel['projects'][prj_name] = False
     return json.dumps({"status":"OK", "result": "thread for user %s project %s stopped" % (current_user.name, prj_name)})
 
-        
+
 """
 Returns the working model for optimization.
 """
 @optimization.route('/working')
 @login_required
 @check_project_name
+@report_exception()
 def getWorkingModel():
+    from utils import BAD_REPLY
     from sim.optimize import optimize
 
-    reply = {'status':'NOK'}
+    reply = BAD_REPLY
+    D_dict = {}
     # Get optimization working data
-    try:
-        prj_name = request.project_name
+    prj_name = request.project_name
+    if prj_name in sentinel['projects'] and sentinel['projects'][prj_name]==optimize.__name__:
         D_dict = load_model(prj_name, working_model = True, as_bunch = False)
-        result = get_optimization_results(D_dict)
-        if prj_name in sentinel['projects'] and sentinel['projects'][prj_name]==optimize.__name__:
-            result['status'] = 'Running'
-        else:
-            print("no longer optimizing")
-            result['status'] = 'Done'
-        return jsonify(result)
-    except Exception, err:
-        reply['exception'] = traceback.format_exc()
-        return jsonify(reply)
+        status = 'Running'
+    else:
+        print("no longer optimizing")
+        status = 'Done'
+    result = get_optimization_results(D_dict)
+    result['status'] = status
+    return jsonify(result)
 
 """
 Saves working model as the default model
@@ -114,7 +114,7 @@ Saves working model as the default model
 def saveModel():
     reply = {'status':'NOK'}
 
-    # get project name 
+    # get project name
     project_name = request.project_name
     if not project_exists(project_name):
         reply['reason'] = 'File for project %s does not exist' % project_name
@@ -137,7 +137,7 @@ Revert working model to the default model
 def revertCalibrationModel():
     reply = {'status':'NOK'}
 
-    # get project name 
+    # get project name
     project_name = request.project_name
     if not project_exists(project_name):
         reply['reason'] = 'File for project %s does not exist' % project_name

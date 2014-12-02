@@ -3,25 +3,36 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     module.controller('AnalysisScenariosController', function ($scope, $http, $modal, meta, scenarioParamsResponse) {
 
-        var linesGraphOptions, linesGraphData, responseData, availableScenarioParams;
+        var linesGraphOptions, linesStyle, linesGraphData, responseData, availableScenarioParams;
 
         // initialize all necessary data for this controller
         var initialize = function() {
 
+          // add All option in population list  
+          meta.pops.long.push("All");
+
           // transform scenarioParams to use attribute `names` instead of `keys`
           // it is the same for the data we have to send to run scenarios
           availableScenarioParams = _(scenarioParamsResponse.data.params).map(function(parameters) {
-            return { name: parameters.name, names: parameters.keys };
+            return { name: parameters.name, names: parameters.keys, values: parameters.values};
           });
 
           $scope.scenarios = [
-            {active: true, name: '100% condom use in KAPs', pars: [
-              { names: ['condom','reg'], pops: 0, startyear: 2010, endyear: 2015, startval: -1, endval: 1},
-              { names: ['condom','cas'], pops: 0, startyear: 2010, endyear: 2015, startval: -1, endval: 1},
-              { names: ['condom','com'], pops: 1, startyear: 2010, endyear: 2015, startval: -1, endval: 1},
-              { names: ['condom','com'], pops: 5, startyear: 2010, endyear: 2015, startval: -1, endval: 1}
-            ]}
+            {active: true, name: '100% condom use in KAPs', pars: []}
           ];
+
+          // setup default parameters for default scenario by taking the first 3
+          // available parameters
+          if (availableScenarioParams.length > 3) {
+            _.each(_.range(3), function(index) {
+              $scope.scenarios[0].pars.push({
+                names: availableScenarioParams[index].names, pops: 0,
+                startyear: 2005, endyear: 2015,
+                startval: angular.copy(availableScenarioParams[index].values[0]),
+                endval: angular.copy(availableScenarioParams[index].values[1])
+              });
+            });
+          }
 
           $scope.runScenariosOptions = {
             dosave: false
@@ -37,6 +48,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             { id: 'tx2', name: 'Second-line treatment', active: false, byPopulation: false, total: false }
           ];
 
+          $scope.lineStyles = ['__blue', '__green', '__red', '__orange',
+            '__violet', '__black', '__light-orange', '__light-green'];
 
           linesGraphOptions = {
             height: 200,
@@ -47,6 +60,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               bottom: 45,
               left: 70
             },
+            linesStyle: $scope.lineStyles,
             xAxis: {
               axisLabel: 'Year',
               tickFormat: function (d) {
@@ -54,10 +68,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               }
             },
             yAxis: {
-              axisLabel: '',
-              tickFormat: function (d) {
-                return d3.format(',.2f')(d);
-              }
+              axisLabel: ''
             }
           };
 
@@ -82,11 +93,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
          * yData should be an array where each entry contains an array of all
          * y-values from one line.
          */
-        var generateGraph = function(type, yData, xData, title) {
+        var generateGraph = function(yData, xData, title) {
           var graph = {
             options: angular.copy(linesGraphOptions),
             data: angular.copy(linesGraphData),
-            type: type,
             title: title
           };
 
@@ -114,9 +124,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             // generate graphs showing the overall data for this type
             if (type.total) {
               var title = data.tot.title;
-              var graph = generateGraph(type, data.tot.data, response.tvec, title);
+              var graph = generateGraph(data.tot.data, response.tvec, title);
               graph.options.xAxis.axisLabel = data.xlabel;
               graph.options.yAxis.axisLabel = data.tot.ylabel;
+              graph.legend = data.legend;
               graphs.push(graph);
             }
 
@@ -125,12 +136,26 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               _(data.pops).each(function (population, populationIndex) {
 
                 var title = population.title;
-                var graph = generateGraph(type, population.data, response.tvec, title);
+                var graph = generateGraph(population.data, response.tvec, title);
                 graph.options.xAxis.axisLabel = data.xlabel;
                 graph.options.yAxis.axisLabel = population.ylabel;
+                graph.legend = population.legend;
                 graphs.push(graph);
               });
             }
+          });
+
+          _(['costcur', 'costfut']).each(function(timeCategory) {
+            _(['ann', 'cum']).each(function(costCategory) {
+              var data = response[timeCategory][costCategory];
+              var graph = generateGraph(data.data, data.xdata, data.title);
+
+              graph.options.xAxis.axisLabel = data.xlabel;
+              graph.options.yAxis.axisLabel = data.ylabel;
+              graph.options.linesStyle = ['__black', '__black', '__black'];
+
+              graphs.push(graph);
+            });
           });
 
           $scope.graphs = graphs;
