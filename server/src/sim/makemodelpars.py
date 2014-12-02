@@ -26,7 +26,8 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
         Set withwhat = p if you want to use the epi data for the parameters
         Set withwhat = c if you want to use the ccoc data for the parameters
         """
-        from numpy import interp, isnan
+        from numpy import isnan
+        from utils import smoothinterp
         
         npops = len(datapar[withwhat])
         
@@ -37,7 +38,7 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
                     output[pop,:] = datapar['c'][pop] # TODO: use time!
                 else: # Use parameter
                     if 't' in datapar.keys(): # It's a time parameter
-                        output[pop,:] = interp(tvec, datapar.t[pop], datapar.p[pop]) # Use interpolation
+                        output[pop,:] = smoothinterp(tvec, datapar.t[pop], datapar.p[pop]) # Use interpolation
                     else:
                         output[pop,:] = datapar.p[pop]
                 
@@ -48,7 +49,7 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
                     output[:] = datapar['c'][0] # TODO: use time!
                 else: # Use parameter
                     if 't' in datapar.keys(): # It's a time parameter
-                        output[:] = interp(tvec, datapar.t[0], datapar.p[0]) # Use interpolation
+                        output[:] = smoothinterp(tvec, datapar.t[0], datapar.p[0]) # Use interpolation
                     else:
                         output[:] = datapar.p[0]
             except:
