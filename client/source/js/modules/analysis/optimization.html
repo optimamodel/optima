@@ -32,7 +32,7 @@
             <div class="elastic_col __va-middle" style="padding:0px 0px 0px 20px;">
                 <label>
                     <input type="radio" name="artcontinue" ng-model="params.objectives.artcontinue" value="1">
-                    No one who initiates treatment is to stop receiving ART
+                    No one who initiates treatment is to stop receiving ART, except by natural attrition
                 </label><br>
                 <label>
                     <input type="radio" name="artcontinue" ng-model="params.objectives.artcontinue" value="2">
@@ -45,10 +45,6 @@
                 <label>
                     <input type="radio" name="artcontinue" ng-model="params.objectives.artcontinue" value="4">
                     ART coverage will scale up, reaching <input class="txbox __inline __s" value="90" placeholder="e.g. 90" ng-model="params.objectives.year.universalcov">% coverage of treatment-eligible people by <input class="txbox __inline __l" value="2025" placeholder="e.g. 2025" ng-model="params.objectives.year.universal"> and then be maintained
-                </label><br>
-                <label>
-                    <input type="radio" name="artcontinue" ng-model="params.objectives.artcontinue" value="5">
-                    No one who initiates treatment is to stop receiving ART, except by natural attrition
                 </label>
             </div>
         </div>
@@ -103,12 +99,12 @@
     <div class="float-left margin-left-s">
         <label class="checkbox-inline">
             <input type="radio" name="fundingAssumptions" ng-model="params.objectives.funding" value="constant">
-            Optimize a fixed budget for every year the program period:
+            Optimize a fixed budget for each year in the program period:
             <input class="txbox __inline __l" type="text" ng-model="params.objectives.outcome.fixed">
         </label><br><br>
         <label style="padding:0px 0px 0px 20px;">
             <input type="radio" name="fundingAssumptions" ng-model="params.objectives.funding" value="variable">
-            Optimize a variable budget for each year of the program period:<br>
+            Optimize a variable budget for each year in the program period:<br>
             <div style="padding:0px 0px 0px 50px;">
                 2015: <input class="txbox __inline __l" type="text" ng-model="params.objectives.outcome.fixed"><br>
                 2016: <input class="txbox __inline __l" type="text" ng-model="params.objectives.outcome.fixed"><br>
