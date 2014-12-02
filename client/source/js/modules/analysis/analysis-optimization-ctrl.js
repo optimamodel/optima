@@ -131,6 +131,30 @@ define([
         }
       };
 
+    var linesGraphOptions = {
+      height: 200,
+      width: 320,
+      margin: {
+        top: 20,
+        right: 10,
+        bottom: 45,
+        left: 70
+      },
+      linesStyle: $scope.lineStyles,
+      xAxis: {
+        axisLabel: 'Year',
+        tickFormat: function (d) {
+          return d3.format('d')(d);
+        }
+      },
+      yAxis: {
+        axisLabel: '',
+        tickFormat: function (d) {
+          return d3.format(',.2f')(d);
+        }
+      }
+    };
+
     var linedataTpl = {
       "values": [
         // {"x": 0, "y": 0, "series": 0},
@@ -144,13 +168,44 @@ define([
       return _($scope.types).where({ active: true });
     };
 
-    /*
-     * Returns an array containing arrays with [x, y] for d3 line data.
-     */
-    var generateLineData = function(xData, yData, series) {
+    var generateLineDataNvd3 = function(xData, yData, series) {
       return _(yData).map(function (value, i) {
         return { x: xData[i], y: value, series: series };
       });
+    };
+
+    /*
+    * Returns an array containing arrays with [x, y] for d3 line data.
+    */
+    var generateLineData = function(xData, yData) {
+      return _(yData).map(function (value, i) {
+        return [xData[i], value];
+      });
+    };
+
+    /*
+    * Returns an graph based on the provided yData.
+    *
+    * yData should be an array where each entry contains an array of all
+    * y-values from one line.
+    */
+    var generateGraph = function(yData, xData, title) {
+      var linesGraphData = {
+        lines: [],
+        scatter: []
+      };
+
+      var graph = {
+        options: angular.copy(linesGraphOptions),
+        data: angular.copy(linesGraphData),
+        title: title
+      };
+
+      _(yData).each(function(lineData) {
+        graph.data.lines.push(generateLineData(xData, lineData));
+      });
+
+      return graph;
     };
 
     var prepareLineCharts = function (response) {
@@ -175,14 +230,14 @@ define([
           };
 
           graph.data.push({
-            "values": generateLineData(response.tvec, data.tot.data[0], 0),
+            "values": generateLineDataNvd3(response.tvec, data.tot.data[0], 0),
             "key": "1",
             "color": "#0000FF",
             "seriesIndex": 0
           });
 
           graph.data.push({
-            "values": generateLineData(response.tvec, data.tot.data[1], 1),
+            "values": generateLineDataNvd3(response.tvec, data.tot.data[1], 1),
             "key": "2",
             "color": "#000000",
             "seriesIndex": 1
@@ -206,14 +261,14 @@ define([
             };
 
             graph.data.push({
-              "values": generateLineData(response.tvec, population.data[0], 0),
+              "values": generateLineDataNvd3(response.tvec, population.data[0], 0),
               "key": "2",
               "color": "#000000",
               "seriesIndex": 0
             });
 
             graph.data.push({
-              "values": generateLineData(response.tvec, population.data[1], 1),
+              "values": generateLineDataNvd3(response.tvec, population.data[1], 1),
               "key": "2",
               "color": "#0000FF",
               "seriesIndex": 1
@@ -244,16 +299,39 @@ define([
       });
     };
 
+    var prepareCostGraphs = function(graphData) {
+      var graphs = [];
+
+      _(['costcur', 'costfut']).each(function(timeCategory) {
+        if (graphData[timeCategory]!== undefined) {
+          _(['ann', 'cum']).each(function(costCategory) {
+            if (graphData[timeCategory][costCategory]!== undefined) {
+              var data = graphData[timeCategory][costCategory];
+              var graph = generateGraph(data.data, data.xdata, data.title);
+
+              graph.options.xAxis.axisLabel = data.xlabel;
+              graph.options.yAxis.axisLabel = data.ylabel;
+              graph.options.linesStyle = ['__black', '__black', '__black',
+                '__black', '__black', '__black'];
+
+              graphs.push(graph);
+            }
+          });
+        }
+      });
+      return graphs;
+    };
+
     // makes line graphs to recalculate and redraw
     var updateLineGraphs = function (data) {
       $scope.lines = prepareLineCharts(data);
+      $scope.costGraphs = prepareCostGraphs(data);
     };
 
     // makes all graphs to recalculate and redraw
     var updateGraphs = function (data) {
       if (data.graph !== undefined && data.pie !== undefined) {
-        cachedResponse = data;  
-        console.log(data);
+        cachedResponse = data;
         updateLineGraphs(data.graph);
         preparePieCharts(data.pie);
       }

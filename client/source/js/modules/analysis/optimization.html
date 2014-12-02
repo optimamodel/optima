@@ -558,6 +558,19 @@
                             <h3>{{ graph.title }}</h3>
                         </div>
                     </div>
+
+                    <div>
+                      <div class="chart-container __small" ng-repeat="graph in costGraphs">
+                        <h3 class="text-center">{{ graph.title }}</h3>
+                        <div class="legend">
+                          <div class="legend-entry" ng-repeat="description in graph.legend">
+                            <span class="line-color-indicator line {{ lineStyles[$index] }}">•</span>
+                            {{ description }}
+                          </div>
+                        </div>
+                        <div line-scatter-chart data="graph.data" options="graph.options" save-graph-as></div>
+                      </div>
+                    </div>
                 </div>
             </div>
 
