@@ -92,8 +92,22 @@ def makedatapars(D, verbose=2):
     
     ## Program cost data
     D.A = [struct()] # Initialize allocations list
-    D.A[0].alloc = dataindex(D.data.costcov.cost, -1) # Pull out last allocation for each program
-    
+    D.A[0].alloc = zeros(D.G.nprogs)
+    for prog in range(D.G.nprogs):
+        if D.data.meta.progs.saturating[prog]:
+            totalcost = D.data.costcov.cost[prog]
+            totalcost = array(totalcost)
+            totalcost = totalcost[~isnan(totalcost)]
+            totalcost = totalcost[-1]
+            D.A[0].alloc[prog] = totalcost
+        else:
+            unitcost, cov = D.data.costcov.cost[prog], D.data.costcov.cov[prog] 
+            unitcost, cov = array(unitcost), array(cov)
+            unitcost, cov = unitcost[~isnan(unitcost)], cov[~isnan(cov)]
+            unitcost, cov = unitcost[-1], cov[-1]
+            totalcost = unitcost*cov
+            D.A[0].alloc[prog] = totalcost
+            
     
     ## TODO: disutility, economic data etc.
             
@@ -107,7 +121,6 @@ def makedatapars(D, verbose=2):
     D.G.nstates = 1+D.G.ncd4*5 # Five are undiagnosed, diagnosed, 1st line, failure, 2nd line, plus susceptible
     
     # Define CD4 states
-    from numpy import arange
     D.G.sus  = arange(0,1)
     D.G.undx = arange(0*D.G.ncd4+1, 1*D.G.ncd4+1)
     D.G.dx   = arange(1*D.G.ncd4+1, 2*D.G.ncd4+1)

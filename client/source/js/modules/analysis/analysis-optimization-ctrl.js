@@ -186,28 +186,30 @@ define([
       _(types).each(function (type) {
 
         var data = response[type.id];
+        if (data!== undefined) {
 
-        // generate graphs showing the overall data for this type
-        if (type.total) {
-          var title = data.tot.title;
-          var graph = generateGraph(data.tot.data, response.tvec, title);
-          graph.options.xAxis.axisLabel = data.xlabel;
-          graph.options.yAxis.axisLabel = data.tot.ylabel;
-          graph.legend = data.legend;
-          graphs.push(graph);
-        }
-
-        // generate graphs for this type for each population
-        if (type.byPopulation) {
-          _(data.pops).each(function (population, populationIndex) {
-
-            var title = population.title;
-            var graph = generateGraph(population.data, response.tvec, title);
+          // generate graphs showing the overall data for this type
+          if (type.total) {
+            var title = data.tot.title;
+            var graph = generateGraph(data.tot.data, response.tvec, title);
             graph.options.xAxis.axisLabel = data.xlabel;
-            graph.options.yAxis.axisLabel = population.ylabel;
-            graph.legend = population.legend;
+            graph.options.yAxis.axisLabel = data.tot.ylabel;
+            graph.legend = data.legend;
             graphs.push(graph);
-          });
+          }
+
+          // generate graphs for this type for each population
+          if (type.byPopulation) {
+            _(data.pops).each(function (population, populationIndex) {
+
+              var title = population.title;
+              var graph = generateGraph(population.data, response.tvec, title);
+              graph.options.xAxis.axisLabel = data.xlabel;
+              graph.options.yAxis.axisLabel = population.ylabel;
+              graph.legend = population.legend;
+              graphs.push(graph);
+            });
+          }
         }
       });
 

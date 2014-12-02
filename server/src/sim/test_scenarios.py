@@ -23,14 +23,14 @@ D = updatedata(D, verbose=verbose)
 
 print('\n\n\n3. Running simulation...')
 from runsimulation import runsimulation
-D = runsimulation(D, startyear=2000, endyear=2015, verbose=verbose)
+D = runsimulation(D, startyear=2000, endyear=2030, verbose=verbose)
 
 print('\n\n\n4. Running scenarios...')
 from scenarios import runscenarios
 D = runscenarios(D, scenariolist=None, verbose=2)
 
 print('\n\n\n5. Viewing scenarios...')
-from viewresults import viewmodels
-viewmodels(D.plot.scens)
+from viewresults import viewmultiresults
+viewmultiresults(D.plot.scens)
 
 print('\n\n\nDONE.')

@@ -1,8 +1,7 @@
-
 def ballsd(function, x, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, \
     pinitial = None, sinitial = None, xmin = None, xmax = None, MaxRangeIter = 1000, \
     MaxFunEvals = None, MaxIter = 1e4, TolFun = 1e-6, TolX = None, StallIterLimit = 100, \
-    fulloutput = False, maxarraysize = 1e6, timelimit = 3600, verbose = 0):
+    fulloutput = False, maxarraysize = 1e6, timelimit = 3600, verbose = 2):
     """
     Optimization using the Bayesian adaptive locally linear stochastic descent 
     algorithm.
@@ -98,7 +97,7 @@ def ballsd(function, x, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, 
     ## Loop
     start = time()
     while 1:
-        if verbose>0: print('Iteration %i; elapsed time %0.1f s' % (count+1, time()-start))
+        if verbose>=1: print('Iteration %i; elapsed %0.1f s; objective: %0.3e' % (count+1, time()-start, fval))
         
         # Calculate next step
         count += 1 # On each iteration there are two function evaluations
@@ -139,9 +138,12 @@ def ballsd(function, x, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, 
             s[choice] = s[choice]*sinc # Increase size of step for next time
             x = xnew # Reset current parameters
             fval = fvalnew # Reset current error
+            if verbose>5: flag = 'SUCCESS'
         elif fvalnew >= fval: # New parameter set is the same or worse than the previous one
             p[choice] = p[choice]/pdec # Increase probability of picking this parameter again
             s[choice] = s[choice]/sdec # Increase size of step for next time
+            if verbose>5: flag = 'FAILURE'
+        if verbose>5: print(' '*90 + flag + ' on step %i (orig:%0.1f new:%0.1f diff:%0.1f ratio:%0.3f)' % (count, fval, fvalnew, fvalnew-fval, fvalnew/fval) )
 
         # Optionally store output information
         if fulloutput: # Include additional output structure
