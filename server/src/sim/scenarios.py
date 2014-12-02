@@ -150,6 +150,6 @@ def getparvalues(D, scenariopars):
     if ndim(original)>1: original = original[scenariopars.pops] # If it's more than one dimension, use population data too
     initialindex = findinds(D.opt.tvec, scenariopars.startyear)
     finalindex = findinds(D.opt.tvec, scenariopars.endyear)
-    startval = original[initialindex]
-    endval = original[finalindex]
+    startval = original[initialindex].tolist()[0]
+    endval = original[finalindex].tolist()[0]
     return [startval, endval]
