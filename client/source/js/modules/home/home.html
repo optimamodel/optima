@@ -19,6 +19,8 @@
         <th>Programs</th>
         <th>Data start year</th>
         <th>Data end year</th>
+        <th>Created on</th>
+        <th>Data Uploaded on</th>
       </thead>
       <tbody>
         <tr>
@@ -36,6 +38,12 @@
           </td>
           <td>
             {{ project.dataEnd }}
+          </td>
+          <td>
+            {{ project.creation_time | date:'yyyy-MM-dd HH:mm:ss'}}
+          </td>
+          <td>
+            {{ project.data_upload_time | date:'yyyy-MM-dd HH:mm:ss'}}
           </td>
         </tr>
       </tbody>
