@@ -32,16 +32,17 @@ define([
         },
 
         /**
-         * Displays the given message and uses the title in the modal header
+         * Displays the given message and the 
          */
-        inform: function (onAccepted, message, title) {
+        inform: function (onAccepted, acceptButton, message, title) {
           $modal.open({
             templateUrl: 'js/modules/ui/modal/modal-inform.html',
             controller: ['$scope', function ($scope) {
               $scope.message = message || 'Be informed';
               $scope.title = title || 'Attention...';
+              $scope.acceptButton = acceptButton || 'Okay';
             }]
-          }).then(onAccepted);
+          }).result.finally(onAccepted);
         },
 
         /**
