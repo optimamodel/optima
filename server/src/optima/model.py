@@ -23,7 +23,7 @@ def record_params(setup_state):
     model.config = dict([(key,value) for (key,value) in app.config.iteritems()])
 
 """
-Uses provided parameters to auto calibrate the model (update it with these data) 
+Uses provided parameters to auto calibrate the model (update it with these data)
 TODO: do it with the project which is currently in scope
 """
 @model.route('/calibrate/auto', methods=['POST'])
@@ -109,7 +109,7 @@ Saves working model as the default model
 def saveCalibrationModel():
     reply = {'status':'NOK'}
 
-    # get project name 
+    # get project name
     project_name = request.project_name
     if not project_exists(project_name):
         reply['reason'] = 'File for project %s does not exist' % project_name
@@ -132,7 +132,7 @@ Revert working model to the default model
 def revertCalibrationModel():
     reply = {'status':'NOK'}
 
-    # get project name 
+    # get project name
     project_name = request.project_name
     if not project_exists(project_name):
         reply['reason'] = 'File for project %s does not exist' % project_name
@@ -145,7 +145,7 @@ def revertCalibrationModel():
         return jsonify({"status":"NOK", "exception":var})
 
 """
-Uses provided parameters to manually calibrate the model (update it with these data) 
+Uses provided parameters to manually calibrate the model (update it with these data)
 TODO: do it with the project which is currently in scope
 """
 @model.route('/calibrate/manual', methods=['POST'])
@@ -245,7 +245,7 @@ def setModelParameters(group):
 
 
 """
-Starts simulation for the given project and given date range. 
+Starts simulation for the given project and given date range.
 Returns back the file with the simulation data. (?) #FIXME find out how to use it
 """
 @model.route('/view', methods=['POST'])

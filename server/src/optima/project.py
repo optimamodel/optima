@@ -12,6 +12,7 @@ from flask.ext.login import login_required, current_user
 from dbconn import db
 from dbmodels import ProjectDb, WorkingProjectDb
 from utils import BAD_REPLY
+import time,datetime
 
 """ route prefix: /api/project """
 project = Blueprint('project',  __name__, static_folder = '../static')
@@ -24,7 +25,7 @@ def record_params(setup_state):
 
 """
 Creates the project with the given name and provided parameters.
-Result: on the backend, new project is stored, 
+Result: on the backend, new project is stored,
 spreadsheet with specified name and parameters given back to the user.
 """
 @project.route('/create/<project_name>', methods=['POST'])
@@ -67,26 +68,26 @@ def createProject(project_name):
         populations = makeproject_args['pops'] = data['populations']
     else:
         populations = {}
-    
+
     print("User based processing")
-    
-    # get current user 
+
+    # get current user
     cu = current_user
     proj = None
     if cu.is_anonymous() == False:
-        
+
         # See if there is matching project
         try:
             proj = ProjectDb.query.filter_by(user_id=cu.id, name=project_name).first()
         except:
             proj = None
-        
-        # update existing 
+
+        # update existing
         if proj is not None:
             proj.datastart = datastart
             proj.dataend = dataend
             proj.econ_dataend = econ_dataend
-            proj.programs = programs 
+            proj.programs = programs
             proj.populations = populations
             print('Updating existing project %s' % proj.name)
         else:
@@ -115,10 +116,10 @@ If the project exists, should put it in session and return to the user.
 """
 @project.route('/open/<project_name>')
 @login_required
-# expects project name, 
+# expects project name,
 # todo: only if it can be found
 def openProject(project_name):
-    
+
     proj_exists = False
     try: #first check DB
         proj_exists = project_exists(project_name)
@@ -153,7 +154,7 @@ def giveWorkbook(project_name):
     else:
         D = proj.model
         wb_name = D['G']['workbookname']
-        makeworkbook(wb_name, proj.populations, proj.programs, int(proj.datastart), int(proj.dataend), int(proj.econ_dataend))
+        makeworkbook(wb_name, proj.populations, proj.programs, proj.datastart, proj.dataend, proj.econ_dataend)
         print("project %s template: %s" % (proj.name, wb_name))
         (dirname, basename) = (upload_dir_user(TEMPLATEDIR), wb_name)
         return helpers.send_from_directory(dirname, basename)
@@ -189,7 +190,9 @@ def getProjectInformation():
                 'projectionStartYear': project.datastart,
                 'projectionEndYear': project.econ_dataend,
                 'programs': project.programs,
-                'populations': project.populations
+                'populations': project.populations,
+                'creation_time': project.creation_time, 
+                'data_upload_time':project.data_upload_time
             }
 
     return jsonify(response_data)
@@ -220,7 +223,9 @@ def getProjectList():
                 'projectionStartYear': project.datastart,
                 'projectionEndYear': project.econ_dataend,
                 'programs': project.programs,
-                'populations': project.populations
+                'populations': project.populations,
+                'creation_time': project.creation_time,
+                'data_upload_time': project.data_upload_time
             }
             projects_data.append(project_data)
 
@@ -238,10 +243,10 @@ def deleteProject(project_name):
     print("project file %s deleted" % project_name)
     delete_spreadsheet(project_name)
     print("spreadsheets for %s deleted" % project_name)
-    # Get current user 
+    # Get current user
     cu = current_user
     if cu.is_anonymous() == False:
-    
+
         # Get project row for current user with project name
         proj = db.session.query(ProjectDb).filter_by(user_id= cu.id,name=project_name).first()
 
@@ -285,7 +290,7 @@ def uploadExcel():
 
     reply = {'status':'NOK'}
     file = request.files['file']
-  
+
     # getting current user path
     loaddir =  upload_dir_user(DATADIR)
     print("loaddir = %s" % loaddir)
@@ -314,8 +319,27 @@ def uploadExcel():
     except Exception, err:
         var = traceback.format_exc()
         reply['exception'] = var
-        return json.dumps(reply)      
+        return json.dumps(reply) 
 
+    # get current user 
+    cu = current_user
+    
+    if cu.is_anonymous() == False:
+ 
+        # See if there is matching project
+        try:
+            proj = ProjectDb.query.filter_by(user_id=cu.id, name=project_name).first()
+        except:
+            proj = None
+            
+        # save data upload timestamp
+        if proj is not None:
+            proj.data_upload_time = int( time.time() )     
+            
+            # Save to db
+            db.session.add(proj)
+            db.session.commit()
+            
     reply['status'] = 'OK'
     reply['result'] = 'Project %s is updated' % project_name
     return json.dumps(reply)
