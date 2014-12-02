@@ -320,7 +320,7 @@ define([
 
       if (!cachedResponse || !cachedResponse.graph) return;
 
-      updateLineGraphs(cachedResponse.graph);
+      $scope.optimisationGraphs = prepareOptimisationGraphs(cachedResponse.graph);
     };
 
   });
