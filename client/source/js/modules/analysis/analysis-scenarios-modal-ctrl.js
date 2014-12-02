@@ -63,6 +63,9 @@ define(['./module'], function (module) {
       return findScenarioParams(availableScenarioParams, parameterNames).values[1];
     };
 
+    /**
+     * Add a new parameter to the currently open scenario.
+     */
     $scope.addParameter = function() {
       var entry = {
         names: availableScenarioParams[0].names, pops: 0,
@@ -74,6 +77,11 @@ define(['./module'], function (module) {
       scenario.pars.push(entry);
     };
 
+    /**
+     * Update the start & end value to the default settings.
+     *
+     * This is useful when switching between parameters entries.
+     */
     $scope.resetStartAndEndValue = function(paramsEntry) {
       var defaultParams = findScenarioParams(availableScenarioParams, paramsEntry.names);
       paramsEntry.startval = angular.copy(defaultParams.values[0]);
