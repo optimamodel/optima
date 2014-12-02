@@ -3,7 +3,7 @@ define(['./module', 'underscore'], function (module, _) {
 
   module.controller('ModelViewCalibrationController', function ($scope, $http, meta) {
 
-    var plotTypes;
+    var plotTypes, effectNames;
 
     var initialize =function () {
       $scope.meta = meta;
@@ -20,7 +20,6 @@ define(['./module', 'underscore'], function (module, _) {
 
       $scope.coParams = [];
 
-      $scope.effectNames = null;
       $scope.hasCostCoverResponse = false;
 
       // model parameters
@@ -83,6 +82,7 @@ define(['./module', 'underscore'], function (module, _) {
      * @returns {{options, data: {lines: Array, scatter: Array}}}
      */
     var setUpPlotdataGraph = function (graphData) {
+
       var graph = {
         options: getLineScatterOptions({
           width: 300,
@@ -98,7 +98,8 @@ define(['./module', 'underscore'], function (module, _) {
         data: {
           lines: [],
           scatter: []
-        }
+        },
+        title: graphData.title
       };
 
       // quit if data is empty - empty graph placeholder will be displayed
@@ -214,8 +215,9 @@ define(['./module', 'underscore'], function (module, _) {
     var retrieveAndUpdateGraphs = function (model) {
       $http.post('/api/model/costcoverage', model).success(function (response) {
         if (response.status === 'OK') {
+
           $scope.displayedProgram = angular.copy($scope.selectedProgram);
-          $scope.effectNames = response.effectnames;
+          effectNames = response.effectnames;
           setUpCOParamsFromEffects(response.effectnames);
           $scope.hasCostCoverResponse = true;
 
@@ -226,13 +228,6 @@ define(['./module', 'underscore'], function (module, _) {
           });
         }
       });
-    };
-
-    /**
-      * Returns a joined string of the provided effectNames.
-      */
-    $scope.beautifulEffectNames = function(effectNames) {
-      return effectNames[0].join(', ');
     };
 
     /**
@@ -284,7 +279,7 @@ define(['./module', 'underscore'], function (module, _) {
           $scope.xAxisMaximum
         ]).map(parseFloat),
         coparams: _($scope.coParams[graphIndex]).map(parseFloat),
-        effectname: $scope.effectNames[graphIndex]
+        effectname: effectNames[graphIndex]
       }).success(function (response) {
         $scope.graphs.plotdata[graphIndex] = setUpPlotdataGraph(response.plotdata);
         $scope.graphs.plotdata_co[graphIndex] = setUpPlotdataGraph(response.plotdata_co);
