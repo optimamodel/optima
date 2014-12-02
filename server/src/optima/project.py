@@ -47,17 +47,17 @@ def createProject(project_name):
     if data.get('datastart'):
         datastart  = makeproject_args['datastart'] = int(data['datastart'])
     else:
-        datastart = ''
+        datastart = None
 
     if data.get('dataend'):
         dataend = makeproject_args['dataend'] = int(data['dataend'])
     else:
-        dataend = ''
+        dataend = None
 
     if data.get('econ_dataend'):
         econ_dataend = makeproject_args['econ_dataend'] = int(data['econ_dataend'])
     else:
-       econ_dataend  = ''
+       econ_dataend  = None
 
     if data.get('programs'):
         programs = makeproject_args['progs'] = data['programs']
