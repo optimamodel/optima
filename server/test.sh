@@ -17,4 +17,4 @@ fi
 
 mkdir -p /tmp/uploads
 cp src/sim/example.xlsx /tmp/uploads
-NOSE_NOCAPTURE=1 OPTIMA_TEST_CFG="${PWD}/test.cfg" nosetests
+NOSE_NOCAPTURE=1 OPTIMA_TEST_CFG="${PWD}/test.cfg" nosetests $@

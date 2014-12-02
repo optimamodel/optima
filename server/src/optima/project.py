@@ -285,6 +285,8 @@ Precondition: model should exist.
 @login_required
 @check_project_name
 def uploadExcel():
+    from datetime import datetime
+    import dateutil.tz
     project_name = request.project_name
     print("project name: %s" % project_name)
 
@@ -334,7 +336,7 @@ def uploadExcel():
             
         # save data upload timestamp
         if proj is not None:
-            proj.data_upload_time = int( time.time() )     
+            proj.data_upload_time = datetime.now(dateutil.tz.tzutc())    
             
             # Save to db
             db.session.add(proj)

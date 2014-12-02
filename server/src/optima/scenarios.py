@@ -12,9 +12,6 @@ from flask.ext.login import login_required
 scenarios = Blueprint('scenarios',  __name__, static_folder = '../static')
 scenarios.config = {}
 
-scenario_params_file_name = "scenario_params.csv"
-
-
 @scenarios.record
 def record_params(setup_state):
   app = setup_state.app
@@ -24,14 +21,8 @@ def record_params(setup_state):
 @scenarios.route('/params')
 @login_required
 def get_scenario_params():
-    scenario_params_file_path = helpers.safe_join(scenarios.static_folder, scenario_params_file_name)
-    f = open(scenario_params_file_path, "rU")
-    if not f:
-        reply['reason'] = 'Scenario params file %s does not exist' % scenario_params_file_path
-        return reply
-    lines = [l.strip() for l in f.readlines()][1:]
-    split_lines = [l.split(';') for l in lines]
-    scenario_params = [{'keys':r[0].replace('[:]','').split('.')[1:],'name':r[2]} for r in split_lines]
+    from sim.parameters import parameters
+    scenario_params = parameters()
     return json.dumps({"params":scenario_params})
 
 """

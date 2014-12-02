@@ -18,6 +18,7 @@ class AnalysisTestCase(OptimaTestCase):
         self.assertEqual(response.status_code, 401)
 
     def test_scenario_params(self):
+        from sim.parameters import parameter_name, parameters
         response = self.create_user()
         response = self.login()
         response = self.client.get('/api/analysis/scenarios/params', follow_redirects=True)
@@ -25,6 +26,8 @@ class AnalysisTestCase(OptimaTestCase):
         params = json.loads(response.data)['params']
         self.assertTrue(len(params)>0)
         self.assertTrue(set(params[0].keys())==set(["keys", "name"]))
+        all_parameters = parameters()
+        self.assertTrue(parameter_name(all_parameters, ['condom','reg']) == 'Condom usage probability, regular partnerships')
 
 if __name__ == '__main__':
     unittest.main()
