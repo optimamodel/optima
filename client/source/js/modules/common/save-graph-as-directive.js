@@ -32,7 +32,7 @@ define(['angular', 'saveAs'], function (angular, saveAs, modalService) {
               var message = 'This feature is currently under development. We are working hard in make it happen for you!';
               modalService.inform(
                 function (){ null }, 
-                'Okay'
+                'Okay',
                 message, 
                 'Thanks for your interest!'
               );
