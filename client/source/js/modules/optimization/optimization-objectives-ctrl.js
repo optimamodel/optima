@@ -13,7 +13,7 @@ define(['./module'], function (module) {
       $http.post('/api/analysis/optimisation/define/' + type, $scope.params[type])
         .success(function (response) {
           console.log('post to /api/analysis/optimisation/define is done!', response);
-        })
+        });
     };
   });
 
