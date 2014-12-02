@@ -97,7 +97,7 @@ def gatheruncerdata(D, R, verbose=2):
             uncer[key][ac].best = R[key][ac][0].tolist()
             uncer[key][ac].low = R[key][ac][1].tolist()
             uncer[key][ac].high = R[key][ac][2].tolist()
-            uncer[key][ac].xdata = R['costshared'][origkey]['xlinedata']
+            uncer[key][ac].xdata = R['costshared'][origkey]['xlinedata'].tolist()
             uncer[key][ac].title = R['costshared'][origkey]['title']
             uncer[key][ac].xlabel = R['costshared'][origkey]['xlabel']
             uncer[key][ac].ylabel = R['costshared'][origkey]['ylabel']
@@ -163,6 +163,7 @@ def gathermultidata(D, Rarr, verbose=2):
                 thisdata = Rarr[sim].R[key][ac][0].tolist()
                 multi[key][ac].data.append(thisdata)
                 multi[key][ac].legend.append(Rarr[sim].label) # Add legends
+                multi[key][ac].xdata  = Rarr[sim].R['costshared'][origkey]['xlinedata'].tolist()
                 multi[key][ac].title  = Rarr[sim].R['costshared'][origkey]['title']
                 multi[key][ac].xlabel = Rarr[sim].R['costshared'][origkey]['xlabel']
                 multi[key][ac].ylabel = Rarr[sim].R['costshared'][origkey]['ylabel']
