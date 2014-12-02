@@ -1,8 +1,8 @@
-def viewuncerresults(E, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'death':[0,1], 'dx':[0,1], 'tx1':[0,1], 'tx2':[0,1]}, startyear=2000, endyear=2030, onefig=True, verbose=2, show_wait=False, linewidth=2):
+def viewuncerresults(E, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'death':[0,1], 'dx':[0,1], 'tx1':[0,1], 'tx2':[0,1], 'costcur':[1,1], 'costfut':[1,1]}, startyear=2000, endyear=2030, onefig=True, verbose=2, show_wait=False, linewidth=2):
     """
     Generate all outputs required for the model, including prevalence, incidence,
     deaths, etc.
-    Version: 2014nov23
+    Version: 2014de02
     """
     
     from matplotlib.pylab import figure, plot, hold, scatter, xlabel, ylabel, xlim, ylim, legend, title, ndim, ceil, sqrt, subplot, show, fill_between
@@ -17,19 +17,27 @@ def viewuncerresults(E, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], '
         figh.subplots_adjust(bottom=0.04) # Less space on bottom
         figh.subplots_adjust(wspace=0.5) # More space between
         figh.subplots_adjust(hspace=0.5) # More space between
-        nplots = sum([whichgraphs[key][i]*[npops,1][i] for i in range(2) for key in whichgraphs.keys()]) + onefig
-        xyplots = ceil(sqrt(nplots))
+        nplots = onefig
+        for graph in whichgraphs.keys():
+            for i in range(len(whichgraphs[graph])):
+                if graph[0:4] != 'cost': nplots += whichgraphs[graph][i]*[npops,1][i]
+                else: nplots += whichgraphs[graph][i]
+        nxplots = ceil(sqrt(nplots))
+        nyplots = nxplots
+        while nxplots*nyplots>nplots: nyplots -= 1
+        if nxplots*nyplots<nplots: nyplots += 1
     
     count = 0
     for graph in whichgraphs.keys(): # Loop over each type of data, e.g. prevalence
+        epigraph = (graph[0:4] != 'cost') # Flag for whether or not it's an epi graph vs. a cost graph
         for popstot in range(2): # Loop over population or total graphs
             if whichgraphs[graph][popstot]:
                 
-                if popstot==0: # Population graphs
+                if popstot==0 and epigraph: # Population graphs for epi data
                     for p in range(npops):
                         if onefig:
                             count += 1
-                            subplot(xyplots, xyplots, count)
+                            subplot(nxplots, nyplots, count)
                         else:
                             figure(facecolor='w')
                         hold(True)
@@ -45,27 +53,33 @@ def viewuncerresults(E, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], '
                         xlim(xmin=startyear, xmax=endyear)
                         ylim(ymin=0)
                 
-                if popstot==1: # Total graphs
+                else: # Total epi graphs and cost graphs
+                    if epigraph:
+                        subkey = 'tot'
+                        xdata = E.tvec
+                    else:
+                        subkey = ['ann','cum'][popstot] # SUPER CONFUSING
+                        xdata = E[graph][subkey].xdata
                     if onefig:
                         count += 1
-                        subplot(xyplots, xyplots, count)
+                        subplot(nxplots, nyplots, count)
                     else:
                         figure(facecolor='w')
                     hold(True)
-                    fill_between(E.tvec, E[graph].tot.low, E[graph].tot.high, alpha=0.2, edgecolor='none')
-                    plot(E.tvec, E[graph].tot.best, c=E.colorm, linewidth=linewidth)
-                    if ndim(E[graph].ydata)==1:
-                        scatter(E.xdata, E[graph].ydata, c=E.colord)
+                    fill_between(xdata, E[graph][subkey].low, E[graph][subkey].high, alpha=0.2, edgecolor='none')
+                    plot(xdata, E[graph][subkey].best, c=E.colorm, linewidth=linewidth)
+                    if epigraph:
+                        if ndim(E[graph].ydata)==1:
+                            scatter(E.xdata, E[graph].ydata, c=E.colord)
                     
-                    title(E[graph].tot.title)
-                    if not(onefig): legend(('Model','Data'))
-                    xlabel(E[graph].xlabel)
-                    ylabel(E[graph].tot.ylabel)
-                    xlim(xmin=startyear, xmax=endyear)
+                    title(E[graph][subkey].title)
+                    if epigraph: xlabel(E[graph].xlabel)
+                    else: xlabel(E[graph][subkey].xlabel)
+                    ylabel(E[graph][subkey].ylabel)
                     ylim(ymin=0)
     
     if onefig:
-        subplot(xyplots, xyplots, count+1)
+        subplot(nxplots, nyplots, count+1)
         plot(1, 1, c=E.colorm, linewidth=linewidth, label='Model')
         fill_between([1,2], [1,1], [2,2], alpha=0.2, edgecolor='none', label='Uncertainty')
         scatter(0, 0, c=E.colord, label='Data')
@@ -77,11 +91,11 @@ def viewuncerresults(E, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], '
 
 
 
-def viewmultiresults(M, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'death':[0,1], 'dx':[0,1], 'tx1':[0,1], 'tx2':[0,1]}, startyear=2000, endyear=2030, onefig=True, verbose=2, show_wait=False, linewidth=2):
+def viewmultiresults(M, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'death':[0,1], 'dx':[0,1], 'tx1':[0,1], 'tx2':[0,1], 'costcur':[1,1], 'costfut':[1,1]}, startyear=2000, endyear=2030, onefig=True, verbose=2, show_wait=False, linewidth=2):
     """
     Generate all outputs required for the model, including prevalence, incidence,
     deaths, etc.
-    Version: 2014nov23
+    Version: 2014dec02
     """
     
     from matplotlib.pylab import figure, plot, hold, xlabel, ylabel, xlim, ylim, legend, title, ceil, sqrt, subplot, show
@@ -97,18 +111,26 @@ def viewmultiresults(M, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], '
         figh.subplots_adjust(bottom=0.04) # Less space on bottom
         figh.subplots_adjust(wspace=0.5) # More space between
         figh.subplots_adjust(hspace=0.5) # More space between
-        nplots = sum([whichgraphs[key][i]*[npops,1][i] for i in range(2) for key in whichgraphs.keys()]) + onefig
-        xyplots = ceil(sqrt(nplots))
+        nplots = onefig
+        for graph in whichgraphs.keys():
+            for i in range(len(whichgraphs[graph])):
+                if graph[0:4] != 'cost': nplots += whichgraphs[graph][i]*[npops,1][i]
+                else: nplots += whichgraphs[graph][i]
+        nxplots = ceil(sqrt(nplots))
+        nyplots = nxplots
+        while nxplots*nyplots>nplots: nyplots -= 1
+        if nxplots*nyplots<nplots: nyplots += 1
     
     count = 0
     for graph in whichgraphs.keys(): # Loop over each type of data, e.g. prevalence
+        epigraph = (graph[0:4] != 'cost') # Flag for whether or not it's an epi graph vs. a cost graph
         for popstot in range(2): # Loop over population or total graphs
             if whichgraphs[graph][popstot]:
-                if popstot==0: # Population graphs
+                if popstot==0 and epigraph: # Population graphs for epi data
                     for p in range(npops):
                         if onefig:
                             count += 1
-                            subplot(xyplots, xyplots, count)
+                            subplot(nxplots, nyplots, count)
                         else:
                             figure(facecolor='w')
                         hold(True)
@@ -122,25 +144,32 @@ def viewmultiresults(M, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], '
                         xlim(xmin=startyear, xmax=endyear)
                         ylim(ymin=0)
                 
-                if popstot==1: # Total graphs
+                else: # Total epi graphs and cost graphs
+                    if epigraph:
+                        subkey = 'tot'
+                        xdata = M.tvec
+                    else:
+                        subkey = ['ann','cum'][popstot] # SUPER CONFUSING
+                        xdata = M[graph][subkey].xdata
+                    
                     if onefig:
                         count += 1
-                        subplot(xyplots, xyplots, count)
+                        subplot(nxplots, nyplots, count)
                     else:
                         figure(facecolor='w')
                     hold(True)
-                    for sim in range(M.nsims):
-                        plot(M.tvec, M[graph].tot.data[sim], linewidth=linewidth)
                     
-                    title(M[graph].tot.title)
-                    if not(onefig): legend(M[graph].tot.legend)
-                    xlabel(M[graph].xlabel)
-                    ylabel(M[graph].tot.ylabel)
-                    xlim(xmin=startyear, xmax=endyear)
+                    for sim in range(M.nsims):
+                        plot(xdata, M[graph][subkey].data[sim], linewidth=linewidth)
+                    
+                    title(M[graph][subkey].title)
+                    if epigraph: xlabel(M[graph].xlabel)
+                    else: xlabel(M[graph][subkey].xlabel)
+                    ylabel(M[graph][subkey].ylabel)
                     ylim(ymin=0)
     
     if onefig:
-        subplot(xyplots, xyplots, count+1)
+        subplot(nxplots, nyplots, count+1)
         for sim in range(M.nsims): plot(0, 0, linewidth=linewidth)
         legend(M[graph].tot.legend)
 
