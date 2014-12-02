@@ -85,15 +85,13 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
          * yData should be an array where each entry contains an array of all
          * y-values from one line.
          */
-        var generateGraph = function(type, yData, xData, title) {
+        var generateGraph = function(yData, xData, title) {
           var graph = {
             options: angular.copy(linesGraphOptions),
             data: angular.copy(linesGraphData),
-            type: type,
             title: title
           };
 
-          console.log(yData.length);
           _(yData).each(function(lineData) {
             graph.data.lines.push(generateLineData(xData, lineData));
           });
@@ -118,7 +116,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             // generate graphs showing the overall data for this type
             if (type.total) {
               var title = data.tot.title;
-              var graph = generateGraph(type, data.tot.data, response.tvec, title);
+              var graph = generateGraph(data.tot.data, response.tvec, title);
               graph.options.xAxis.axisLabel = data.xlabel;
               graph.options.yAxis.axisLabel = data.tot.ylabel;
               graph.legend = data.legend;
@@ -130,13 +128,26 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               _(data.pops).each(function (population, populationIndex) {
 
                 var title = population.title;
-                var graph = generateGraph(type, population.data, response.tvec, title);
+                var graph = generateGraph(population.data, response.tvec, title);
                 graph.options.xAxis.axisLabel = data.xlabel;
                 graph.options.yAxis.axisLabel = population.ylabel;
                 graph.legend = population.legend;
                 graphs.push(graph);
               });
             }
+          });
+
+          _(['costcur', 'costfut']).each(function(timeCategory) {
+            _(['ann', 'cum']).each(function(costCategory) {
+              var data = response[timeCategory][costCategory];
+              var graph = generateGraph(data.data, data.xdata, data.title);
+
+              graph.options.xAxis.axisLabel = data.xlabel;
+              graph.options.yAxis.axisLabel = data.ylabel;
+              graph.options.linesStyle = ['__black', '__black', '__black'];
+
+              graphs.push(graph);
+            });
           });
 
           $scope.graphs = graphs;
