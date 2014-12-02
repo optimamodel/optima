@@ -3,7 +3,7 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
-  module.controller('ProjectOpenController', function ($scope, $http, activeProject, localStorage, projects, $modal) {
+  module.controller('ProjectOpenController', function ($scope, $http, activeProject, localStorage, projects, modalService) {
 
     $scope.projects = _.map(projects.projects, function(project){
       project.creation_time = Date.parse(project.creation_time);
@@ -70,23 +70,26 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      */
     $scope.remove = function ($event, name, index) {
       if ($event) { $event.preventDefault(); }
-      var theModal = $modal.open({
-        templateUrl: 'js/modules/confirm-modal/confirm-modal.html',
-        controller: 'ConfirmModalController',
-      });
+      modalService.confirm(
+        function (){console.log('onAccepted');}, 
+        function (){console.log('onCancel');}, 
+        'I can haz the modal', 
+        'Oh hai!'
+      );
 
-      theModal.model = {
-          title: 'Remove project',
-          message: 'Are you sure you want to permanently remove project "' + name + '"?',
-          confirmText: 'Yes, remove this project',
-          cancelText: 'No',
-          onConfirm: function (){
-            console.log('onConfirm');
-            removeNoQuestionsAsked(name, index)},
-          onCancel: function (){
-            console.log('onCancel');
-            return false}
-        };
+
+      // theModal.model = {
+      //     title: 'Remove project',
+      //     message: ,
+      //     confirmText: 'Yes, remove this project',
+      //     cancelText: 'No',
+      //     onAccepted: function (){
+      //       console.log('onConfirm');
+      //       removeNoQuestionsAsked(name, index)},
+      //     onRejected: function (){
+      //       console.log('onCancel');
+      //       return false}
+      //   };
     };
   });
 
