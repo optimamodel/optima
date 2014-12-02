@@ -72,7 +72,7 @@ def optimize(D, objectives=None, constraints=None, startyear=2000, endyear=2030,
     optalloc, fval, exitflag, output = ballsd(objectivecalc, origalloc, xmin=0*array(origalloc), timelimit=timelimit)
     
     # Update the model
-    for i,alloc in enumerate([origalloc,optalloc,0.01*origalloc,1*origalloc]):
+    for i,alloc in enumerate([origalloc,optalloc,0.01*origalloc,10*origalloc]):
         D = getcurrentbudget(D, alloc)
         D.M = makemodelpars(D.P, D.opt, withwhat='c', verbose=2)
         D.A[i].S = model(D.G, D.M, D.F[0], D.opt, verbose=verbose)
