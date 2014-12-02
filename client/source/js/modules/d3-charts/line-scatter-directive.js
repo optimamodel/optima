@@ -64,7 +64,7 @@ define(['./module'], function (module) {
       // normalizing all graphs scales to include maximum possible x and y
       _(graphsScales).each(function (scale) {
         scale.y.domain([0, yMax]);
-        scale.x.domain([xMin, xMax]);
+        scale.x.domain([Math.floor(xMin), Math.ceil(xMax)]);
       });
 
       options.yAxis.tickFormat = function (tickValue) {
