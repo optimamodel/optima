@@ -33,6 +33,7 @@ def findinds(val1, val2=None, eps=1e-6):
     return output
 
 
+
 def smoothinterp(newx, origx, origy, smoothness=10):
     """
     Smoothly interpolate over values and keep end points. Same format as numpy.interp.
@@ -47,7 +48,7 @@ def smoothinterp(newx, origx, origy, smoothness=10):
         hold(True)
         scatter(origx,origy)
     
-    Version: 2014dec01
+    Version: 2014dec01 by cliffk
     """
     from numpy import interp, convolve, linspace, concatenate, ones, exp
     kernel = exp(-linspace(-2,2,2*smoothness+1)**2)
@@ -56,3 +57,34 @@ def smoothinterp(newx, origx, origy, smoothness=10):
     newy = concatenate([newy[0]*ones(smoothness), newy, newy[-1]*ones(smoothness)])
     newy = convolve(newy, kernel, 'valid') # Smooth it out a bit
     return newy
+    
+
+
+def printarr(arr, arrformat='%0.2f  '):
+    """ 
+    Print a numpy array nicely.
+    
+    Example:
+        from utils import printarr
+        from numpy import rand
+        printarr(rand(3,7,4))
+    
+    Version: 2014dec01 by cliffk
+    """
+    from numpy import ndim
+    if ndim(arr)==1:
+        string = ''
+        for i in range(len(arr)):
+            string += arrformat % arr[i]
+        print(string)
+    elif ndim(arr)==2:
+        for i in range(len(arr)):
+            printarr(arr[i], arrformat)
+    elif ndim(arr)==3:
+        for i in range(len(arr)):
+            print('='*len(arr[i][0])*len(arrformat % 1))
+            for j in range(len(arr[i])):
+                printarr(arr[i][j], arrformat)
+    else:
+        print(arr) # Give up
+    return None
