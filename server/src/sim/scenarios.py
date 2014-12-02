@@ -73,12 +73,12 @@ def makescenarios(D, scenariolist, verbose=2):
             initialindex = findinds(D.opt.tvec, thesepars.startyear)
             finalindex = findinds(D.opt.tvec, thesepars.endyear)
             if thesepars.startval == -1:
-                if ndim(data)==1: initialvalue = newdata[initialindex]
+                if ndim(newdata)==1: initialvalue = newdata[initialindex]
                 else: initialvalue = newdata[:,initialindex].mean(axis=0) # Get the mean if multiple populations
             else:
                 initialvalue = thesepars.startval
             if thesepars.endval == -1:
-                if ndim(data)==1: finalvalue = newdata[finalindex]
+                if ndim(newdata)==1: finalvalue = newdata[finalindex]
                 else: finalvalue = newdata[:,finalindex].mean() # Get the mean if multiple populations
             else:
                 finalvalue = thesepars.endval 
