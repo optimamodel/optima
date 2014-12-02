@@ -18,21 +18,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           });
 
           $scope.scenarios = [
-            {active: true, name: '100% condom use in KAPs', pars: []}
+            {active: true, name: 'Conditions remain according to model calibration', pars: []}
           ];
-
-          // setup default parameters for default scenario by taking the first 3
-          // available parameters
-          if (availableScenarioParams.length > 3) {
-            _.each(_.range(3), function(index) {
-              $scope.scenarios[0].pars.push({
-                names: availableScenarioParams[index].names, pops: 0,
-                startyear: 2005, endyear: 2015,
-                startval: angular.copy(availableScenarioParams[index].values[0]),
-                endval: angular.copy(availableScenarioParams[index].values[1])
-              });
-            });
-          }
 
           $scope.runScenariosOptions = {
             dosave: false
@@ -40,12 +27,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
           $scope.types = [
             { id: 'prev', name: 'Prevalence', active: true, byPopulation: true, total: false },
-            { id: 'daly', name: 'DALYs', active: false, byPopulation: false, total: false },
-            { id: 'death', name: 'Deaths', active: false, byPopulation: false, total: false },
-            { id: 'inci', name: 'New infections', active: false, byPopulation: false, total: false },
-            { id: 'dx', name: 'Diagnoses', active: false, byPopulation: false, total: false },
-            { id: 'tx1', name: 'First-line treatment', active: false, byPopulation: false, total: false },
-            { id: 'tx2', name: 'Second-line treatment', active: false, byPopulation: false, total: false }
+            { id: 'daly', name: 'DALYs', active: false, byPopulation: false, total: true },
+            { id: 'death', name: 'Deaths', active: false, byPopulation: false, total: true },
+            { id: 'inci', name: 'New infections', active: false, byPopulation: false, total: true },
+            { id: 'dx', name: 'Diagnoses', active: false, byPopulation: false, total: true },
+            { id: 'tx1', name: 'First-line treatment', active: false, byPopulation: false, total: true },
+            { id: 'tx2', name: 'Second-line treatment', active: false, byPopulation: false, total: true }
           ];
 
           $scope.lineStyles = ['__blue', '__green', '__red', '__orange',
