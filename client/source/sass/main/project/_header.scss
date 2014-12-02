@@ -1,0 +1,17 @@
+.header {
+
+  &_right {
+    float: right;
+    text-align: right;
+    width: 200px;
+  }
+
+  &_left {
+    float: left;
+    width: 200px;
+  }
+
+  &_center {
+    text-align: center;
+  }
+}
