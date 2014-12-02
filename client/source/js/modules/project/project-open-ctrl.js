@@ -70,26 +70,15 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      */
     $scope.remove = function ($event, name, index) {
       if ($event) { $event.preventDefault(); }
+      var message = 'Are you sure you want to permanently remove project "' + name + '"?';
       modalService.confirm(
-        function (){console.log('onAccepted');}, 
-        function (){console.log('onCancel');}, 
-        'I can haz the modal', 
-        'Oh hai!'
+        function (){ removeNoQuestionsAsked(name, index); }, 
+        function (){ null }, 
+        'Yes, remove this project',
+        'No',
+        message, 
+        'Remove project'
       );
-
-
-      // theModal.model = {
-      //     title: 'Remove project',
-      //     message: ,
-      //     confirmText: 'Yes, remove this project',
-      //     cancelText: 'No',
-      //     onAccepted: function (){
-      //       console.log('onConfirm');
-      //       removeNoQuestionsAsked(name, index)},
-      //     onRejected: function (){
-      //       console.log('onCancel');
-      //       return false}
-      //   };
     };
   });
 
