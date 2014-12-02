@@ -1,12 +1,13 @@
 /**
- * ConfirmModalController has the view and behavior of generic confirm/cancel type of dialog.s
+ * ConfirmModalController has the model and behavior of a generic confirm/cancel type of dialog.s
+ * It evaluates the custom callback regarding to user's choice.
  */
 
 define(['./module'], function (module) {
   'use strict';
 
   module.controller('ConfirmModalController', function ($scope, $modalInstance, $event) {
-
+    debugger
     var initialize = function() {
       console.log('ConfirmModalController.initialize()');
     };
@@ -19,7 +20,7 @@ define(['./module'], function (module) {
       if ($event) { $event.preventDefault(); }
       // $modalInstance.close();
       $dismiss('Closed');
-      return $scope.model.onConfirm();
+      return $modalInstance.model.onConfirm();
     };
 
     /*
@@ -30,7 +31,7 @@ define(['./module'], function (module) {
       if ($event) { $event.preventDefault(); }
       $dismiss('Closed');
       // $modalInstance.close();
-      return $scope.model.onCancel();
+      return $modalInstance.model.onCancel();
     };
 
     initialize();
