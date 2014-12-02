@@ -67,6 +67,12 @@ define(['./module'], function (module) {
       if (form.$invalid) {
         alert('Please fill in the form correctly');
       } else {
+
+        // filter out empty parameters
+        $scope.program.parameters = _($scope.program.parameters).filter(function (item) {
+          return item.value.signature.length && item.value.pops.length;
+        });
+
         $modalInstance.close($scope.program);
       }
     };
