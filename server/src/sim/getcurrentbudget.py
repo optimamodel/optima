@@ -5,7 +5,7 @@ def getcurrentbudget(D, alloc=None):
     Returns: D
     Version: 2014nov30
     """
-    from makeccocs import ccoeqn, cceqn, makesamples
+    from makeccocs import ccoeqn, cceqn
     import numpy as np
     
     # Initialise parameter structure (same as D.P). #TODO make this less ugly
@@ -17,7 +17,8 @@ def getcurrentbudget(D, alloc=None):
 
 
     # Initialise currentbudget if needed
-    if alloc==None:
+    allocprovided = not(isinstance(alloc,type(None)))
+    if not(allocprovided):
         currentbudget = []
 
     # Loop over programs
@@ -36,7 +37,7 @@ def getcurrentbudget(D, alloc=None):
             if D.data.meta.progs.saturating[prognumber]:
 
                 # If an allocation has been passed in, we don't need to figure out the program budget
-                if not(alloc==None):
+                if allocprovided:
                     totalcost = alloc[prognumber]
 
                 # If an allocation has been passed in, we don't need to figure out the program budget
@@ -71,7 +72,7 @@ def getcurrentbudget(D, alloc=None):
             else:
 
                 # If an allocation has been passed in, we don't need to figure out the program budget
-                if not(alloc==None):
+                if allocprovided:
                     totalcost = alloc[prognumber]
 
                 # ... or else we do
@@ -85,7 +86,7 @@ def getcurrentbudget(D, alloc=None):
                 y = cceqn(totalcost, D.programs[progname][effectnumber][-1][0])
                 D.P[effectname[0][1]].c[0] = y
 
-        if alloc==None:
+        if not(allocprovided):
             currentbudget.append(totalcost)
             D.data.meta.progs.currentbudget = currentbudget
 

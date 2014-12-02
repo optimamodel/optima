@@ -1,8 +1,7 @@
-
 def ballsd(function, x, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, \
     pinitial = None, sinitial = None, xmin = None, xmax = None, MaxRangeIter = 1000, \
     MaxFunEvals = None, MaxIter = 1e4, TolFun = 1e-6, TolX = None, StallIterLimit = 100, \
-    fulloutput = False, maxarraysize = 1e6, timelimit = 3600, verbose = 10):
+    fulloutput = False, maxarraysize = 1e6, timelimit = 3600, verbose = 2):
     """
     Optimization using the Bayesian adaptive locally linear stochastic descent 
     algorithm.
@@ -96,23 +95,9 @@ def ballsd(function, x, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, 
         fulloutputx = zeros((MaxIter,nparams)) # Store all parameters
     
     ## Loop
-    xorig = deepcopy(x); # Store the original value
     start = time()
     while 1:
         if verbose>=1: print('Iteration %i; elapsed %0.1f s; objective: %0.3e' % (count+1, time()-start, fval))
-        if verbose>=5: 
-            try:
-                from utils import printarr
-                arrformat = '%10.2f  '
-                print('Parameter vector:')
-                printarr(x, arrformat)
-                printarr(x/xorig, arrformat)
-                print('Probabilities:')
-                printarr(p, arrformat)
-                print('Step sizes:')
-                printarr(s, arrformat)
-            except:
-                pass
         
         # Calculate next step
         count += 1 # On each iteration there are two function evaluations
