@@ -6,6 +6,8 @@ define(['./module'], function (module) {
     // initialize data for the template
     var initialize= function() {
       $scope.project = project;
+      $scope.project.creation_time = Date.parse($scope.project.creation_time);
+      $scope.project.data_upload_time = Date.parse($scope.project.data_upload_time);
     };
 
     initialize();
