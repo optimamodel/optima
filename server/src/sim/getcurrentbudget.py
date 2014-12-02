@@ -90,5 +90,3 @@ def getcurrentbudget(D, alloc=None):
             D.data.meta.progs.currentbudget = currentbudget
 
     return D
-
-D = getcurrentbudget(D, alloc=None)
