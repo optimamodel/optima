@@ -86,16 +86,19 @@ Returns the working model of project.
 @report_exception()
 def getWorkingModel():
     from sim.autofit import autofit
+    from utils import BAD_REPLY
 
+    reply = BAD_REPLY
+    D_dict = {}
     # Make sure model is calibrating
     prj_name = request.project_name
     if prj_name in sentinel['projects'] and sentinel['projects'][prj_name]==autofit.__name__:
         D_dict = load_model(prj_name, working_model = True, as_bunch = False)
-        result = {'graph': D_dict.get('plot',{}).get('E',{})}
-        result['status'] = 'Running'
+        status = 'Running'
     else:
-        print("no longer calibrating")
-        result['status'] = 'Done'
+        status = 'Done'
+    result = {'graph': D_dict.get('plot',{}).get('E',{})}
+    result['status'] = status
     return jsonify(result)
 
 """

@@ -92,15 +92,17 @@ def getWorkingModel():
     from sim.optimize import optimize
 
     reply = BAD_REPLY
+    D_dict = {}
     # Get optimization working data
     prj_name = request.project_name
     if prj_name in sentinel['projects'] and sentinel['projects'][prj_name]==optimize.__name__:
         D_dict = load_model(prj_name, working_model = True, as_bunch = False)
-        result = get_optimization_results(D_dict)
-        result['status'] = 'Running'
+        status = 'Running'
     else:
         print("no longer optimizing")
-        result['status'] = 'Done'
+        status = 'Done'
+    result = get_optimization_results(D_dict)
+    result['status'] = status
     return jsonify(result)
 
 """
