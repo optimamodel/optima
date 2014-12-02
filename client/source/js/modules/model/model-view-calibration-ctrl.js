@@ -270,7 +270,6 @@ define(['./module', 'underscore'], function (module, _) {
      *   }
      */
     $scope.updateCurve = function (graphIndex) {
-      debugger
       $http.post('/api/model/costcoverage/effect', {
         progname: $scope.displayedProgram.acronym,
         ccparams: _([
