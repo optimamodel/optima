@@ -45,10 +45,12 @@ def optimize(D, objectives=None, constraints=None, startyear=2000, endyear=2030,
         if constraints.decrease[prog].use: constraints.decrease[prog].by = float(constraints.decrease[prog].by) / 100.0
 
     # Run optimization # TODO -- actually implement :)
-    nallocs = 1 # WARNING, will want to do this better
+    nallocs = 3 # WARNING, will want to do this better
     for alloc in range(nallocs): D.A.append(deepcopy(D.A[0])) # Just copy for now
     D.A[0].label = 'Original'
     D.A[1].label = 'Optimal'
+    D.A[2].label = '1% budget'
+    D.A[3].label = '100x budget'
     origalloc = deepcopy(array(D.A[1].alloc))
     
 
@@ -72,7 +74,7 @@ def optimize(D, objectives=None, constraints=None, startyear=2000, endyear=2030,
     optalloc, fval, exitflag, output = ballsd(objectivecalc, origalloc, xmin=0*array(origalloc), timelimit=timelimit)
     
     # Update the model
-    for i,alloc in enumerate([origalloc,optalloc]):
+    for i,alloc in enumerate([origalloc,optalloc,0.01*origalloc,100*origalloc]):
         D = getcurrentbudget(D, alloc)
         D.M = makemodelpars(D.P, D.opt, withwhat='c', verbose=2)
         D.A[i].S = model(D.G, D.M, D.F[0], D.opt, verbose=verbose)
