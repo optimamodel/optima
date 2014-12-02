@@ -2,6 +2,7 @@ define([
   'angular',
   './button-choicebox/index',
   './menu/index',
+  './modal/modal-service',
   '../common/active-project-service',
   '../user-manager/index'
 ], function (angular) {
@@ -10,6 +11,7 @@ define([
   return angular.module('app.ui', [
     'app.active-project',
     'app.ui.button-choicebox',
+    'app.ui.modal',
     'app.ui.menu'
   ])
 
