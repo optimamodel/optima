@@ -43,7 +43,7 @@
 
 <div class="actionbar">
     <div class="elastic __fluid" style="width:76.5%;">
-        <div ng-if="userLogged()" style="float:left; width:40%;">
+        <div ng-cloak ng-if="userLogged()" style="float:left; width:40%;">
             <div class="elastic_col __va-middle">
                 Logged in as: <b>{{ user.name }}</b>
             </div>
