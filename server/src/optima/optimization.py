@@ -26,16 +26,16 @@ optimization = Blueprint('optimization',  __name__, static_folder = '../static')
 def get_optimization_results(D_dict):
     return {'graph': D_dict.get('plot',{}).get('OM',{}), 'pie':D_dict.get('plot',{}).get('OA',{})}
 
-""" 
-Start optimization 
+"""
+Start optimization
 """
 @optimization.route('/start', methods=['POST'])
 @login_required
 @check_project_name
 def startOptimization():
     data = json.loads(request.data)
-    
-    # get project name 
+
+    # get project name
     project_name = request.project_name
     D = None
     if not project_exists(project_name):
@@ -79,7 +79,7 @@ def stopCalibration():
         sentinel['projects'][prj_name] = False
     return json.dumps({"status":"OK", "result": "thread for user %s project %s stopped" % (current_user.name, prj_name)})
 
-        
+
 """
 Returns the working model for optimization.
 """
@@ -114,7 +114,7 @@ Saves working model as the default model
 def saveModel():
     reply = {'status':'NOK'}
 
-    # get project name 
+    # get project name
     project_name = request.project_name
     if not project_exists(project_name):
         reply['reason'] = 'File for project %s does not exist' % project_name
@@ -137,7 +137,7 @@ Revert working model to the default model
 def revertCalibrationModel():
     reply = {'status':'NOK'}
 
-    # get project name 
+    # get project name
     project_name = request.project_name
     if not project_exists(project_name):
         reply['reason'] = 'File for project %s does not exist' % project_name
