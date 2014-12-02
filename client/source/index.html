@@ -46,14 +46,33 @@
             overflow: initial !important;
         }
 
+        .top-bar-container {
+           overflow: hidden;
+        }
+
+        .top-right-container {
+            float: right;
+            width: 200px;
+            text-align: right;
+        }
+
+        .top-left-container {
+            float: left;
+            width: 200px;
+        }
+
+        .top-middle-container {
+            margin: 0 200px;
+            text-align: center;
+        }
 
     </style>
 </head>
 <body ng-controller="MainCtrl">
 
 <div class="actionbar">
-    <div class="elastic __fluid" style="width:76.5%;">
-        <div ng-cloak ng-if="userLogged()" style="float:left; width:40%;">
+    <div class="elastic top-bar-container">
+        <div ng-cloak ng-if="userLogged()" class="top-left-container">
             <div class="elastic_col __va-middle">
                 Logged in as: <b>{{ user.name }}</b>
             </div>
@@ -61,10 +80,10 @@
                 Project: <b>{{ activeProject.name }}</b>
             </div>
         </div>
-        <div class="elastic_col __va-middle" style="float:left; width:20%; text-align:center;">
+        <div class="elastic_col __va-middle top-middle-container">
             <i class="header_logo logo"></i>
         </div>
-        <div ng-if="userLogged()" style="float:right; text-align:right;">
+        <div ng-if="userLogged()" class="top-right-container">
             <button class="btn" ng-click="logout()">Log out</button>
         </div>
     </div>
