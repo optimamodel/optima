@@ -40,7 +40,7 @@ define(['./module', 'underscore'], function (module, _) {
     var resetGraphs= function () {
       $scope.graphs = {
         plotdata: [],
-        plotdata_cc: [],
+        plotdata_cc: {},
         plotdata_co: []
       };
     };

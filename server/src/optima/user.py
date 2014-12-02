@@ -97,7 +97,7 @@ def login():
                 # Return user info
                 return jsonify({'email': u.email, 'name': u.name })
 
-        # If we come here, login is not successful    
+        # If we come here, login is not successful
         abort(401)
 
     # User already loggedin

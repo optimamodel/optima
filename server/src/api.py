@@ -41,12 +41,12 @@ def check_response_for_errors(response):
         responseJS = json.loads( response.get_data() )
     except :
         pass
-    
+
     # Make sure the response status was OK. Response body is javascript that is successfully
     # parsed. And status in JSON is NOK implying there was an error.
     if response.status_code == 200 and responseJS is not None and 'status' in responseJS and responseJS['status'] == "NOK":
         response.status_code = 500
-    
+
     return response
 
 
