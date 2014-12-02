@@ -120,9 +120,9 @@ define(['./module', 'angular'], function (module, angular) {
         title: title
       };
 
-      // _(yData).each(function(lineData) {
-      //   graph.data.lines.push(generateLineData(xData, lineData));
-      // });
+      graph.data.line = generateLineData(xData, yData.best);
+      graph.data.area.lineHigh = generateLineData(xData, yData.high);
+      graph.data.area.lineLow = generateLineData(xData, yData.low);
 
       return graph;
     };
@@ -142,11 +142,10 @@ define(['./module', 'angular'], function (module, angular) {
 
         if (type.total) {
 
-          var graph = generateGraph(type, null, null, data.tot.title);
-
-          graph.data.line = generateLineData(response.tvec, data.tot.best);
-          graph.data.area.lineHigh = generateLineData(response.tvec, data.tot.high);
-          graph.data.area.lineLow = generateLineData(response.tvec, data.tot.low);
+          var yData = {
+            best: data.tot.best, high: data.tot.high, low: data.tot.low,
+          };
+          var graph = generateGraph(type, yData, response.tvec, data.tot.title);
 
           graph.options.xAxis.axisLabel = data.xlabel;
           graph.options.yAxis.axisLabel = data.tot.ylabel;
@@ -164,11 +163,10 @@ define(['./module', 'angular'], function (module, angular) {
         if (type.byPopulation && data) {
           _(data.pops).each(function (population, populationIndex) {
 
-            var graph = generateGraph(type, null, null, population.title);
-
-            graph.data.line = generateLineData(response.tvec, population.best);
-            graph.data.area.lineHigh = generateLineData(response.tvec, population.high);
-            graph.data.area.lineLow = generateLineData(response.tvec, population.low);
+            var yData = {
+              best: population.best, high: population.high, low: population.low
+            };
+            var graph = generateGraph(type, yData, response.tvec, population.title);
 
             graph.options.xAxis.axisLabel = data.xlabel;
             graph.options.yAxis.axisLabel = population.ylabel;
