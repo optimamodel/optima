@@ -5,7 +5,11 @@ define(['./module', 'underscore'], function (module, _) {
 
   module.controller('ProjectOpenController', function ($scope, $http, activeProject, localStorage, projects) {
 
-    $scope.projects = projects.projects;
+    $scope.projects = _.map(projects.projects, function(project){
+      project.creation_time = Date.parse(project.creation_time);
+      project.data_upload_time = Date.parse(project.data_upload_time);
+      return project;
+    });
 
     /**
      * Opens an existing project using `name`

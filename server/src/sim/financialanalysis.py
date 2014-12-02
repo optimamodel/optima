@@ -4,9 +4,8 @@ Created on Sat Nov 29 17:40:34 2014
 @author: robynstuart
 """
 import numpy as np
-from matplotlib.pylab import figure, plot, hold, xlabel, ylabel, title
 
-def financialanalysis(D, sim = D, yscale = 'abs', makeplot = True):
+def financialanalysis(D, S = None, yscale = 'abs', makeplot = False):
     '''
     Full description to come
     Arguments: 
@@ -14,6 +13,9 @@ def financialanalysis(D, sim = D, yscale = 'abs', makeplot = True):
         2. simulation to plot results of. For example, could be D, D.A[0], etc
         3. yscale chosen from ['abs', 'gdp', 'revenue', 'totalhealth', domestichealth', 'govtexpend']
     '''
+    
+    # If not supplied as input, copy from D
+    if not(isinstance(S,dict)): S = D.S
     
     # Interpolate macroeconomic indicators 
     if not yscale == 'abs':
@@ -30,21 +32,20 @@ def financialanalysis(D, sim = D, yscale = 'abs', makeplot = True):
 
     # Get most recent ART unit costs
     progname = 'ART'
-    prognumber = D.data.meta.progs.code.index(progname)
+    prognumber = D.data.meta.progs.short.index(progname)
     artunitcost = D.data.costcov.cost[prognumber]
     artunitcost = np.asarray(artunitcost)
     artunitcost = artunitcost[~np.isnan(artunitcost)]
     artunitcost = artunitcost[-1]
 
     # Calculate total number in each disease stage
-    acute = np.sum(np.sum(sim.S.people[1:5,:,:], axis = 0), axis = 0)
-    gt500 = np.sum(np.sum(sim.S.people[6:10,:,:], axis = 0), axis = 0)
-    gt350 = np.sum(np.sum(sim.S.people[11:15,:,:], axis = 0), axis = 0)
-    gt200 = np.sum(np.sum(sim.S.people[16:20,:,:], axis = 0), axis = 0)
-    aids = np.sum(np.sum(sim.S.people[21:25,:,:], axis = 0), axis = 0)
+    acute = np.sum(np.sum(S.people[1:5,:,:], axis = 0), axis = 0)
+    gt500 = np.sum(np.sum(S.people[6:10,:,:], axis = 0), axis = 0)
+    gt350 = np.sum(np.sum(S.people[11:15,:,:], axis = 0), axis = 0)
+    gt200 = np.sum(np.sum(S.people[16:20,:,:], axis = 0), axis = 0)
+    aids = np.sum(np.sum(S.people[21:25,:,:], axis = 0), axis = 0)
 
-    # Calculate number of new infections... 
-    inf = np.sum(sim.S.people[1,:,:], axis = 0)
+    if len(acute)<npts1: npts1 = len(acute) #TODO CLIFF FIX IT PROPERLY
 
     # Calculate number added at each time period to each disease stage
     newacute = [j-i for i, j in zip(acute[:-1], acute[1:])]
@@ -52,6 +53,8 @@ def financialanalysis(D, sim = D, yscale = 'abs', makeplot = True):
     newgt350 = [j-i for i, j in zip(gt350[:-1], gt350[1:])]
     newgt200 = [j-i for i, j in zip(gt200[:-1], gt200[1:])]
     newaids = [j-i for i, j in zip(aids[:-1], aids[1:])]
+
+    if len(newacute)<npts2: npts2 = len(newacute) #TODO CLIFF FIX IT PROPERLY
 
     # Calculate annual non-treatment costs for all PLHIV
     acutetotalcost = [D.data.cost.social.acute[0]*acute[j] for j in range(npts1)]
@@ -69,7 +72,9 @@ def financialanalysis(D, sim = D, yscale = 'abs', makeplot = True):
 
     # Calculate annual treatment costs for PLHIV
     ### TODO: discounting!! ###
-    onart = [sim.R.tx1.tot[0][j] + sim.R.tx2.tot[0][j] for j in range(npts1)]
+    tx1tot = S.people[D.G.tx1,:,:].sum(axis=(0,1))
+    tx2tot = S.people[D.G.tx2,:,:].sum(axis=(0,1))
+    onart = [tx1tot[j] + tx2tot[j] for j in range(npts1)]
     arttotalcost = [onart[j]*artunitcost for j in range(npts1)]
     
     # Calculate annual treatment costs for new PLHIV
@@ -111,7 +116,6 @@ def financialanalysis(D, sim = D, yscale = 'abs', makeplot = True):
     plotdata['annualhivcosts']['title'] = 'Annual healthcare costs over time'
     plotdata['annualhivcosts']['xlabel'] = 'Year'
     plotdata['annualhivcosts']['ylabel'] = 'USD'
-    sim.R.annualhivcosts = annualhivcosts
     
     plotdata['cumulhivcosts'] = {}
     plotdata['cumulhivcosts']['xlinedata'] = xdata1
@@ -119,7 +123,6 @@ def financialanalysis(D, sim = D, yscale = 'abs', makeplot = True):
     plotdata['cumulhivcosts']['title'] = 'Cumulative healthcare costs over time'
     plotdata['cumulhivcosts']['xlabel'] = 'Year'
     plotdata['cumulhivcosts']['ylabel'] = 'USD'
-    sim.R.cumulhivcosts = cumulhivcosts
 
     plotdata['annualhivcostsfuture'] = {}
     plotdata['annualhivcostsfuture']['xlinedata'] = xdata2
@@ -136,6 +139,7 @@ def financialanalysis(D, sim = D, yscale = 'abs', makeplot = True):
     plotdata['cumulhivcostsfuture']['ylabel'] = 'USD'
 
     if makeplot:
+        from matplotlib.pylab import figure, plot, hold, xlabel, ylabel, title
         figure()
         hold(True)
         plot(plotdata['cumulhivcosts']['xlinedata'], plotdata['cumulhivcosts']['ylinedata'], lw = 2)
@@ -144,7 +148,7 @@ def financialanalysis(D, sim = D, yscale = 'abs', makeplot = True):
         ylabel('USD')
 
     # Get financial commitments
-    return sim, plotdata
+    return plotdata
     
 #example
 #sim, plotdata = financialanalysis(D, sim = D, yscale = 'abs')
