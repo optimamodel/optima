@@ -185,6 +185,6 @@ def getparvalues(D, scenariopars):
             original = original[:,:].mean(axis=0) # If multiple populations, take the mean along first axis
     initialindex = findinds(D.opt.tvec, scenariopars.startyear)
     finalindex = findinds(D.opt.tvec, scenariopars.endyear)
-    startval = original[initialindex]
-    endval = original[finalindex]
+    startval = original[initialindex].tolist()[0]
+    endval = original[finalindex].tolist()[0]
     return [startval, endval]
