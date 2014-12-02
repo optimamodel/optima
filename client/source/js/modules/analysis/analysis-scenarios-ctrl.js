@@ -15,13 +15,21 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           });
 
           $scope.scenarios = [
-            {active: true, name: '100% condom use in KAPs', pars: [
-              { names: ['condom','reg'], pops: 0, startyear: 2010, endyear: 2015, startval: -1, endval: 1},
-              { names: ['condom','cas'], pops: 0, startyear: 2010, endyear: 2015, startval: -1, endval: 1},
-              { names: ['condom','com'], pops: 1, startyear: 2010, endyear: 2015, startval: -1, endval: 1},
-              { names: ['condom','com'], pops: 5, startyear: 2010, endyear: 2015, startval: -1, endval: 1}
-            ]}
+            {active: true, name: '100% condom use in KAPs', pars: []}
           ];
+
+          // setup default parameters for default scenario by taking the first 3
+          // available parameters
+          if (availableScenarioParams.length > 3) {
+            _.each(_.range(3), function(index) {
+              $scope.scenarios[0].pars.push({
+                names: availableScenarioParams[index].names, pops: 0,
+                startyear: 2005, endyear: 2015,
+                startval: angular.copy(availableScenarioParams[index].values[0]),
+                endval: angular.copy(availableScenarioParams[index].values[1])
+              });
+            });
+          }
 
           $scope.runScenariosOptions = {
             dosave: false
