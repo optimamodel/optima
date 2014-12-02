@@ -96,9 +96,23 @@ def ballsd(function, x, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, 
         fulloutputx = zeros((MaxIter,nparams)) # Store all parameters
     
     ## Loop
+    xorig = deepcopy(x); # Store the original value
     start = time()
     while 1:
-        if verbose>0: print('Iteration %i; elapsed time %0.1f s' % (count+1, time()-start))
+        if verbose>=1: print('Iteration %i; elapsed %0.1f s; objective: %0.3e' % (count+1, time()-start, fval))
+        if verbose>=5: 
+            try:
+                from utils import printarr
+                arrformat = '%10.2f  '
+                print('Parameter vector:')
+                printarr(x, arrformat)
+                printarr(x/xorig, arrformat)
+                print('Probabilities:')
+                printarr(p, arrformat)
+                print('Step sizes:')
+                printarr(s, arrformat)
+            except:
+                pass
         
         # Calculate next step
         count += 1 # On each iteration there are two function evaluations
@@ -139,9 +153,11 @@ def ballsd(function, x, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, 
             s[choice] = s[choice]*sinc # Increase size of step for next time
             x = xnew # Reset current parameters
             fval = fvalnew # Reset current error
+            if verbose>5: print('   Success on step %i' % count)
         elif fvalnew >= fval: # New parameter set is the same or worse than the previous one
             p[choice] = p[choice]/pdec # Increase probability of picking this parameter again
             s[choice] = s[choice]/sdec # Increase size of step for next time
+            if verbose>5: print('   Failure on step %i' % count)
 
         # Optionally store output information
         if fulloutput: # Include additional output structure

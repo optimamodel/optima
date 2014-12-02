@@ -112,7 +112,7 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
 
     # Loop over time
     for t in range(npts): # Skip the last timestep for people since we don't need to know what happens after that
-        printv('Timestep %i of %i' % (t+1, npts), 5, verbose)
+        printv('Timestep %i of %i' % (t+1, npts), 8, verbose)
         
         ## Calculate "effective" HIV prevalence -- taking diagnosis and treatment into account
         for pop in range(npops): # Loop over each population group
