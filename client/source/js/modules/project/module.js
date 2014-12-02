@@ -21,7 +21,12 @@ define([
         .state('project.create', {
           url: '/create',
           templateUrl: 'js/modules/project/create.html',
-          controller: 'ProjectCreateController'
+          controller: 'ProjectCreateController',
+          resolve: {
+            parametersResponse: function($http) {
+              return $http.get('/api/analysis/scenarios/params');
+            }
+          }
         })
         .state('project.open', {
           url: '/open',

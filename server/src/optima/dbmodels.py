@@ -28,30 +28,33 @@ class UserDb(db.Model):
         return True
 
 
+from datetime import datetime
+from sqlalchemy import text
+
 class ProjectDb(db.Model):
     __tablename__ = 'projects'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(60))
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    datastart = db.Column(db.String(20))
-    dataend = db.Column(db.String(20))
-    econ_datastart = db.Column(db.String(20))
-    econ_dataend = db.Column(db.String(20))
+    datastart = db.Column(db.Integer)
+    dataend = db.Column(db.Integer)
+    econ_dataend = db.Column(db.Integer)
     programs = db.Column(JSON)
     populations = db.Column(JSON)
-    model = db.Column(JSON)
+    model = db.Column(JSON, server_default=text("'{}'"))
     working_project = db.relationship('WorkingProjectDb', backref='projects',
                                 uselist=False)
-    creation_time = db.Column(db.Integer)
-    data_upload_time = db.Column(db.Integer)
+    creation_time = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
+    data_upload_time = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
 
-    def __init__(self, name, user_id, datastart, dataend, econ_datastart, \
-        econ_dataend, programs, populations, model = {}, creation_time = 0, data_upload_time = 0):
+    def __init__(self, name, user_id, datastart, dataend, \
+        econ_dataend, programs, populations, model = {}, creation_time = None, data_upload_time = None):
+        the_now = datetime.utcnow()
         self.name = name
         self.user_id = user_id
         self.datastart = datastart
         self.dataend = dataend
-        self.econ_datastart = econ_datastart
+        self.econ_datastart = datastart
         self.econ_dataend = econ_dataend
         self.programs = programs    
         self.populations = populations
