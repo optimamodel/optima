@@ -11,7 +11,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           // transform scenarioParams to use attribute `names` instead of `keys`
           // it is the same for the data we have to send to run scenarios
           availableScenarioParams = _(scenarioParamsResponse.data.params).map(function(parameters) {
-            return { name: parameters.name, names: parameters.keys };
+            return { name: parameters.name, names: parameters.keys, values: parameters.values};
           });
 
           $scope.scenarios = [
