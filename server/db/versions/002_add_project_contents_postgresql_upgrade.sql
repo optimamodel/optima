@@ -7,5 +7,5 @@ UPDATE projects SET creation_time=now() WHERE creation_time IS NULL;
 UPDATE projects SET data_upload_time=now() WHERE data_upload_time IS NULL;
 ALTER TABLE projects ALTER COLUMN datastart TYPE integer USING datastart::Integer;
 ALTER TABLE projects ALTER COLUMN dataend TYPE integer USING dataend::Integer;
-ALTER TABLE projects ALTER COLUMN econ_datastart TYPE integer USING econ_datastart::Integer;
+ALTER TABLE projects DROP COLUMN IF EXISTS econ_datastart;
 ALTER TABLE projects ALTER COLUMN econ_dataend TYPE integer USING econ_dataend::Integer;
