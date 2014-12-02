@@ -15,7 +15,7 @@ define([
     'app.ui.menu'
   ])
 
-    .controller('MainCtrl', function ($scope, $upload, activeProject, UserManager) {
+    .controller('MainCtrl', function ($scope, $upload, activeProject, UserManager, modalService) {
 
       $scope.user = UserManager.data;
       $scope.userLogged = function () {
@@ -103,7 +103,14 @@ define([
           if (data.status === 'NOK') {
             alert("Something went wrong during an upload.\nSee the error:\n" + data.reason);
           } else if (data.status === 'OK') {
-            alert(data.file + " was successfully uploaded.\n" + data.result);
+
+              var message = data.file + " was successfully uploaded.\n" + data.result;
+              modalService.inform(
+                function (){ console.log('informed!') }, 
+                'Okay',
+                message, 
+                'Upload completed'
+              );
           } else {
             alert('Sorry, but server feels bad now. Please, give it some time to recover')
           }
