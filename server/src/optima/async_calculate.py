@@ -67,11 +67,11 @@ class CalculatingThread(threading.Thread):
                 delta_time = int(time.time() - start)
             else:
                 print("thread for project %s requested to stop" % self.project_name)
-                sys.exit()
+                break
             iterations += 1
         print("thread for project %s stopped" % self.project_name)
-        self.sentinel['projects'][self.project_name] = False
-        sys.exit()
+        if self.sentinel['projects'][self.project_name]==self.func.__name__:
+            self.sentinel['projects'][self.project_name] = False
 
     def load_model_user(self, name, user_id, as_bunch=True, working_model=True):
         print("load_model_user:%s %s" % (name, user_id))
