@@ -1,0 +1,21 @@
+<div>
+    <div class="modal-header">{{ model.title }}</div>
+
+  <form class="modal-body" name="scenarioForm" novalidate="novalidate" ng-submit="submit(scenarioForm)">
+    
+      <form 
+        class="modal-body" 
+        name="confirmModal" 
+        novalidate="novalidate" 
+        ng-submit="confirm($event)">
+
+        <div class="section grid">
+            <div>{{ model.message }}</div>                
+        </div>
+
+          <div class="section text-center">
+            <button type="button" class="btn __white" ng-click="cancel($event)">{{ model.cancelButton }}</button>
+            <button type="submit" class="btn">{{ model.confirmButton }}</button>
+          </div>
+      </form>
+</div>
