@@ -13,7 +13,7 @@ from flask import request, jsonify, Blueprint
 from flask.ext.login import login_required
 from dbconn import db
 from async_calculate import CalculatingThread, sentinel
-from utils import check_project_name, project_exists, pick_params, load_model, save_working_model
+from utils import check_project_name, project_exists, pick_params, load_model, save_working_model, report_exception
 from sim.optimize import optimize
 from sim.bunch import bunchify
 import json
@@ -86,24 +86,22 @@ Returns the working model for optimization.
 @optimization.route('/working')
 @login_required
 @check_project_name
+@report_exception()
 def getWorkingModel():
+    from utils import BAD_REPLY
     from sim.optimize import optimize
 
-    reply = {'status':'NOK'}
+    reply = BAD_REPLY
     # Get optimization working data
-    try:
-        prj_name = request.project_name
+    prj_name = request.project_name
+    if prj_name in sentinel['projects'] and sentinel['projects'][prj_name]==optimize.__name__:
         D_dict = load_model(prj_name, working_model = True, as_bunch = False)
         result = get_optimization_results(D_dict)
-        if prj_name in sentinel['projects'] and sentinel['projects'][prj_name]==optimize.__name__:
-            result['status'] = 'Running'
-        else:
-            print("no longer optimizing")
-            result['status'] = 'Done'
-        return jsonify(result)
-    except Exception, err:
-        reply['exception'] = traceback.format_exc()
-        return jsonify(reply)
+        result['status'] = 'Running'
+    else:
+        print("no longer optimizing")
+        result['status'] = 'Done'
+    return jsonify(result)
 
 """
 Saves working model as the default model
