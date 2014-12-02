@@ -63,10 +63,6 @@ def ballsd(function, x, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, 
     from copy import deepcopy # For arrays, even y = x[:] doesn't copy properly
     from time import time
     
-    # TODO WARNING KLUDGY -- should have option for pseudorandom or not
-    from numpy.random import seed
-    seed(0)
-    
     def sanitize(userinput):
         """
         Make sure inputs have the right shape and data type.

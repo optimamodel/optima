@@ -51,14 +51,11 @@ def optimize(D, objectives=None, constraints=None, startyear=2000, endyear=2030,
     D.A[1].label = 'Optimal'
     origalloc = deepcopy(array(D.A[0].alloc))
     
-    # WARNING TODO KLUDGY -- randomize the thing
-#    from numpy.random import random as rand
-    from numpy.random import seed
-    seed(1)
+
     
     def objectivecalc(alloc):
         """ Calculate the objective function """
-        alloc /= sum(alloc)/sum(origalloc)
+#        alloc /= sum(alloc)/sum(origalloc)
         newD = deepcopy(D)
         newD = getcurrentbudget(newD, alloc)
         newD.M = makemodelpars(newD.P, newD.opt, withwhat='c', verbose=2)
@@ -70,7 +67,7 @@ def optimize(D, objectives=None, constraints=None, startyear=2000, endyear=2030,
         
     # Run the optimization algorithm
     
-    optalloc, fval, exitflag, output = ballsd(objectivecalc, origalloc, xmin=0*origalloc, timelimit=timelimit)
+    optalloc, fval, exitflag, output = ballsd(objectivecalc, origalloc, xmin=0*array(origalloc), timelimit=timelimit)
     
     # Update the model
     for i,alloc in enumerate([origalloc,optalloc]):
