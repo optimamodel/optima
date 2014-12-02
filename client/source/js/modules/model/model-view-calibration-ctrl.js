@@ -58,7 +58,9 @@ define(['./module', 'underscore'], function (module, _) {
         xAxis: {
           axisLabel: xLabel || 'X',
           tickFormat: function (d) {
-            return d3.format('s')(d);
+            // Cliff requested to lower case the unit suffixed values.
+            // e.g. 100M -> 100m
+            return d3.format('s')(d).toLowerCase();
           }
         },
         yAxis: {

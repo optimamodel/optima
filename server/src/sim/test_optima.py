@@ -4,7 +4,7 @@ TEST_OPTIMA
 While optima.py is a demonstration of everything Optima can do, this is used to
 test specific features.
 
-Version: 2014nov30 by cliffk
+Version: 2014dec02 by cliffk
 """
 
 
@@ -28,10 +28,10 @@ D = updatedata(D, verbose=verbose)
 
 print('\n\n\n3. Running simulation...')
 from runsimulation import runsimulation
-D = runsimulation(D, startyear=2000, endyear=2015, verbose=verbose)
+D = runsimulation(D, startyear=2000, endyear=2030, verbose=verbose)
 
 print('\n\n\n4. Viewing results...')
-from viewresults import viewepiresults
-viewepiresults(D.plot.E, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'death':[0,1], 'dx':[0,1], 'tx1':[0,1], 'tx2':[0,1]}, startyear=2000, endyear=2015, onefig=True, verbose=verbose, show_wait=show_wait)
+from viewresults import viewuncerresults
+viewuncerresults(D.plot.E, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'death':[0,1], 'dx':[0,1], 'tx1':[0,1], 'tx2':[0,1], 'costcur':[1,1], 'costfut':[1,1]}, startyear=2000, endyear=2015, onefig=True, verbose=verbose, show_wait=show_wait)
 
 print('\n\n\nDONE.')

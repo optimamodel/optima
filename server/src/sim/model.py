@@ -112,7 +112,7 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
 
     # Loop over time
     for t in range(npts): # Skip the last timestep for people since we don't need to know what happens after that
-        printv('Timestep %i of %i' % (t+1, npts), 5, verbose)
+        printv('Timestep %i of %i' % (t+1, npts), 8, verbose)
         
         ## Calculate "effective" HIV prevalence -- taking diagnosis and treatment into account
         for pop in range(npops): # Loop over each population group
@@ -122,7 +122,9 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
             effdx   = sum(dxfactor * (people[dx,pop,t]+people[fail,pop,t])) # ...and diagnosed/failed
             efftx   = sum(txfactor * (people[tx1,pop,t]+people[tx2,pop,t])) # ...and treated
             effhivprev[pop] = (effundx+effdx+efftx) / allpeople[pop,t]; # Calculate HIV "prevalence", scaled for infectiousness based on CD4 count; assume that treatment failure infectiousness is same as corresponding CD4 count
-            if not(effhivprev[pop]>=0): raise Exception('HIV prevalence invalid in population %s! (=%f)' % (pop, effhivprev[pop]))
+            if not(effhivprev[pop]>=0): 
+                import pdb; pdb.set_trace()
+                raise Exception('HIV prevalence invalid in population %s! (=%f)' % (pop, effhivprev[pop]))
         
         # Also calculate effective MTCT transmissibility
         effmtct  = mtcb*M.breast[t] + mtcn*(1-M.breast[t]) # Effective MTCT transmission
@@ -363,6 +365,11 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
     return S
 
 
+
+
+
+
+
 ###############################################################################
 ## Helper functions
 ###############################################################################
@@ -423,9 +430,15 @@ def equilibrate(G, M, Finit):
         treatment1 = M['tx1'][0] * fractotal # Number of people on 1st-line treatment
         treatment2 = M['tx2'][0] * fractotal # Number of people on 2nd-line treatment
         treatfail = treatment1 * M['const']['fail']['first'] * efftreatmentrate * failratio # Number of people with treatment failure -- # TODO: check
+        totaltreat = treatment1 + treatment2 + treatfail
+        if totaltreat > popinfected: # More people on treatment than ever infected, uh oh!
+            treatment1 *= popinfected/totaltreat
+            treatment2 *= popinfected/totaltreat
+            treatfail *= popinfected/totaltreat
+            totaltreat = popinfected
         
         # Diagnosed & undiagnosed
-        nevertreated = popinfected - treatment1 - treatment2 - treatfail
+        nevertreated = popinfected - totaltreat
         assumedforceinf = hivprev[p]*prevtoforceinf # To calculate ratio of people in the initial category, need to estimate the force-of-infection
         undxdxrates = assumedforceinf + M['hivtest'][p,0] # Ratio of undiagnosed to diagnosed
         undiagnosed = nevertreated * assumedforceinf / undxdxrates     
@@ -451,5 +464,9 @@ def equilibrate(G, M, Finit):
         initpeople[G['tx1'], p] = treatment1
         initpeople[G['fail'], p] = treatfail
         initpeople[G['tx2'], p] = treatment2
+    
+        if not((initpeople>=0).all()):
+                    print('Non-positive people found') # If not every element is a real number >0, throw an error
+                    import pdb; pdb.set_trace()
         
     return initpeople
