@@ -37,6 +37,7 @@ def get_scenario_params():
     pops_short = [item['short_name'] for item in proj.populations]
 
     for param in scenario_params:
+        if not param['modifiable']: continue
         item = bunchify({'names':param['keys'], 'pops':0, 'startyear':proj.datastart, 'endyear':proj.dataend})
         val_pair = None
         try:
