@@ -25,6 +25,7 @@ define([
   './modules/project/index',
   './modules/user-manager/index',
   './modules/results/index',
+  './modules/ui/modal/modal-service',
   './modules/ui/index'
 ], function (angular) {
   'use strict';
@@ -52,6 +53,7 @@ define([
     'app.results',
     'app.save-graph-as',
     'app.ui',
+    'app.ui.modal',
     'app.user-manager',
     'nvd3',
     'ui.bootstrap',
