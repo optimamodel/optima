@@ -59,37 +59,9 @@ def loaddir(app):
         loaddir = DATADIR
     return loaddir
 
-def project_path(name, folder = PROJECTDIR):
-    print("project_path %s" % name)
-    project_file = name
-    user_dir = upload_dir_user(folder)
-    print("user_dir:%s" % user_dir)
-    if not project_file.startswith(user_dir):
-        project_file = helpers.safe_join(user_dir, name+'.prj')
-    print("project name: %s -> %s" % (name, project_file))
-    return project_file
-
-def project_file_exists(name, folder = PROJECTDIR):
-    project_file = project_path(name, folder)
-    return os.path.exists(project_file)
-
-def project_exists_db(name):
+def project_exists(name):
     cu = current_user
     return ProjectDb.query.filter_by(user_id=cu.id, name=name).count()>0
-
-def project_exists(name, folder = PROJECTDIR):
-    return project_exists_db(name)
-
-def delete_project_file(name, folder = PROJECTDIR):
-    print("delete_project_file %s" % name)
-    try:
-        the_project_path = project_path(name, folder)
-        print("the_project_path(%s) = %s" % (name, the_project_path))
-        if os.path.exists(the_project_path):
-            os.remove(the_project_path)
-        return True
-    except:
-        return False
 
 def save_data_spreadsheet(name, folder=DATADIR):
     spreadsheet_file = name
@@ -107,15 +79,9 @@ def delete_spreadsheet(name):
             os.remove(spreadsheet_file)
 
 """
-  loads the project with the given name from the given folder
+  loads the project with the given name
   returns the model (D).
 """
-def load_model_file(name, folder = PROJECTDIR, as_bunch = True):
-    print("load_model %s %s" % (name, folder))
-    project_file = project_path(name, folder)
-    data = loaddata(project_file)
-    return data
-
 def load_model(name, as_bunch = True, working_model = False):
     print("load_model:%s" % name)
     model = None
@@ -124,14 +90,13 @@ def load_model(name, as_bunch = True, working_model = False):
     proj = ProjectDb.query.filter_by(user_id=cu.id, name=name).first()
     if proj is not None:
         if proj.working_project is None or working_model == False:
-            print("project %s is not being calculated" % name)
+            print("project %s has working model" % name)
             model = proj.model
         else:
-            print("project %s is being calculated" % name)
+            print("project %s does not have working model" % name)
             model = proj.working_project.model
         if model is None or len(model.keys())==0:
             print("model %s is None" % name)
-            return load_model_file(name, as_bunch = as_bunch)
         else:
             if as_bunch:
                 from sim.bunch import Bunch
@@ -139,11 +104,8 @@ def load_model(name, as_bunch = True, working_model = False):
                 model = Bunch.fromDict(model)
     else:
         print("no such project found: %s for user %s %s" % (name, cu.id, cu.name))
+    db.session.close() #very important!
     return model
-
-def save_model_file(name, model, folder = PROJECTDIR):
-    project_file = project_path(name, folder)
-    return savedata(project_file, model)
 
 def save_model_db(name, model):
     print("save_model_db %s" % name)
@@ -191,6 +153,8 @@ def save_working_model_as_default(name):
         model = proj.model
         db.session.add(proj)
         db.session.commit()
+    else:
+        db.session.close()
 
     return model
 
