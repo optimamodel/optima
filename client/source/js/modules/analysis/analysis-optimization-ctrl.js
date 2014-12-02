@@ -303,17 +303,21 @@ define([
       var graphs = [];
 
       _(['costcur', 'costfut']).each(function(timeCategory) {
-        _(['ann', 'cum']).each(function(costCategory) {
-          var data = graphData[timeCategory][costCategory];
-          var graph = generateGraph(data.data, data.xdata, data.title);
+        if (graphData[timeCategory]!== undefined) {
+          _(['ann', 'cum']).each(function(costCategory) {
+            if (graphData[timeCategory][costCategory]!== undefined) {
+              var data = graphData[timeCategory][costCategory];
+              var graph = generateGraph(data.data, data.xdata, data.title);
 
-          graph.options.xAxis.axisLabel = data.xlabel;
-          graph.options.yAxis.axisLabel = data.ylabel;
-          graph.options.linesStyle = ['__black', '__black', '__black',
-            '__black', '__black', '__black'];
+              graph.options.xAxis.axisLabel = data.xlabel;
+              graph.options.yAxis.axisLabel = data.ylabel;
+              graph.options.linesStyle = ['__black', '__black', '__black',
+                '__black', '__black', '__black'];
 
-          graphs.push(graph);
-        });
+              graphs.push(graph);
+            }
+          });
+        }
       });
       return graphs;
     };
