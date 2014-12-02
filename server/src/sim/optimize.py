@@ -21,6 +21,10 @@ def optimize(D, objectives=None, constraints=None, startyear=2000, endyear=2030,
     from numpy import array
     printv('Running optimization...', 1, verbose)
     
+    # TODO WARNING KLUDGY -- should have option for pseudorandom or not
+    from numpy.random import seed
+    seed(1)
+    
     # Set options to update year range
     from setoptions import setoptions
     D.opt = setoptions(D.opt, startyear=startyear, endyear=endyear)
