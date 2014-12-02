@@ -49,19 +49,19 @@ def optimize(D, objectives=None, constraints=None, startyear=2000, endyear=2030,
     for alloc in range(nallocs): D.A.append(deepcopy(D.A[0])) # Just copy for now
     D.A[0].label = 'Original'
     D.A[1].label = 'Optimal'
-    D.A[2].label = '1% budget'
-    D.A[3].label = '100x budget'
+    D.A[2].label = 'No spending'
+    D.A[3].label = 'Saturation spending'
     origalloc = deepcopy(array(D.A[1].alloc))
     
 
     
     def objectivecalc(alloc):
         """ Calculate the objective function """
-#        alloc /= sum(alloc)/sum(origalloc)
+        alloc /= sum(alloc)/sum(origalloc)
         newD = deepcopy(D)
         newD = getcurrentbudget(newD, alloc)
-        newD.M = makemodelpars(newD.P, newD.opt, withwhat='c', verbose=2)
-        S = model(newD.G, newD.M, newD.F[0], newD.opt, verbose=verbose)
+        newD.M = makemodelpars(newD.P, newD.opt, withwhat='c', verbose=0)
+        S = model(newD.G, newD.M, newD.F[0], newD.opt, verbose=0)
         objective = S.death.sum() # TEMP
         
         return objective
@@ -69,12 +69,10 @@ def optimize(D, objectives=None, constraints=None, startyear=2000, endyear=2030,
         
         
     # Run the optimization algorithm
-    tmpalloc = origalloc
-    tmpalloc *= 1e-2
     optalloc, fval, exitflag, output = ballsd(objectivecalc, origalloc, xmin=0*array(origalloc), timelimit=timelimit)
     
     # Update the model
-    for i,alloc in enumerate([origalloc,optalloc,0.01*origalloc,100*origalloc]):
+    for i,alloc in enumerate([origalloc,optalloc,0.01*origalloc,1*origalloc]):
         D = getcurrentbudget(D, alloc)
         D.M = makemodelpars(D.P, D.opt, withwhat='c', verbose=2)
         D.A[i].S = model(D.G, D.M, D.F[0], D.opt, verbose=verbose)

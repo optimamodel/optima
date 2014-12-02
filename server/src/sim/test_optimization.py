@@ -12,7 +12,7 @@ print('WELCOME TO OPTIMA')
 ## Set parameters
 projectname = 'example'
 verbose = 5
-timelimit = 60
+timelimit = 30
 
 print('\n\n\n1. Making project...')
 from makeproject import makeproject

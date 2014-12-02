@@ -430,9 +430,15 @@ def equilibrate(G, M, Finit):
         treatment1 = M['tx1'][0] * fractotal # Number of people on 1st-line treatment
         treatment2 = M['tx2'][0] * fractotal # Number of people on 2nd-line treatment
         treatfail = treatment1 * M['const']['fail']['first'] * efftreatmentrate * failratio # Number of people with treatment failure -- # TODO: check
+        totaltreat = treatment1 + treatment2 + treatfail
+        if totaltreat > popinfected: # More people on treatment than ever infected, uh oh!
+            treatment1 *= popinfected/totaltreat
+            treatment2 *= popinfected/totaltreat
+            treatfail *= popinfected/totaltreat
+            totaltreat = popinfected
         
         # Diagnosed & undiagnosed
-        nevertreated = popinfected - treatment1 - treatment2 - treatfail
+        nevertreated = popinfected - totaltreat
         assumedforceinf = hivprev[p]*prevtoforceinf # To calculate ratio of people in the initial category, need to estimate the force-of-infection
         undxdxrates = assumedforceinf + M['hivtest'][p,0] # Ratio of undiagnosed to diagnosed
         undiagnosed = nevertreated * assumedforceinf / undxdxrates     
