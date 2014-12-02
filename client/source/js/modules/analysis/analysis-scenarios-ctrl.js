@@ -93,7 +93,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             title: title
           };
 
-          console.log(yData.length);
           _(yData).each(function(lineData) {
             graph.data.lines.push(generateLineData(xData, lineData));
           });
