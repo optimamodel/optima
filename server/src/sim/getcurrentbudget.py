@@ -66,6 +66,9 @@ def getcurrentbudget(D, alloc=None):
                 zerosample, fullsample = makesamples(muz, stdevz, muf, stdevf, samplesize=1)
                 y = ccoeqn(totalcost, [saturation, growthrate, zerosample, fullsample])
                 D.P[effectname[0][1]].c[popnumber] = y
+                if not(y>=0):
+                    import pdb; pdb.set_trace()
+                    
 
             # ... or do this if it's not a saturating program
             else:
@@ -84,6 +87,9 @@ def getcurrentbudget(D, alloc=None):
 
                 y = cceqn(totalcost, D.programs[progname][effectnumber][-1][0])
                 D.P[effectname[0][1]].c[0] = y
+                if not(y>=0):
+                    import pdb; pdb.set_trace()
+
 
         if alloc==None:
             currentbudget.append(totalcost)

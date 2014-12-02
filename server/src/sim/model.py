@@ -122,7 +122,9 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
             effdx   = sum(dxfactor * (people[dx,pop,t]+people[fail,pop,t])) # ...and diagnosed/failed
             efftx   = sum(txfactor * (people[tx1,pop,t]+people[tx2,pop,t])) # ...and treated
             effhivprev[pop] = (effundx+effdx+efftx) / allpeople[pop,t]; # Calculate HIV "prevalence", scaled for infectiousness based on CD4 count; assume that treatment failure infectiousness is same as corresponding CD4 count
-            if not(effhivprev[pop]>=0): raise Exception('HIV prevalence invalid in population %s! (=%f)' % (pop, effhivprev[pop]))
+            if not(effhivprev[pop]>=0): 
+                import pdb; pdb.set_trace()
+                raise Exception('HIV prevalence invalid in population %s! (=%f)' % (pop, effhivprev[pop]))
         
         # Also calculate effective MTCT transmissibility
         effmtct  = mtcb*M.breast[t] + mtcn*(1-M.breast[t]) # Effective MTCT transmission
@@ -363,6 +365,11 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
     return S
 
 
+
+
+
+
+
 ###############################################################################
 ## Helper functions
 ###############################################################################
@@ -451,5 +458,9 @@ def equilibrate(G, M, Finit):
         initpeople[G['tx1'], p] = treatment1
         initpeople[G['fail'], p] = treatfail
         initpeople[G['tx2'], p] = treatment2
+    
+        if not((initpeople>=0).all()):
+                    print('Non-positive people found') # If not every element is a real number >0, throw an error
+                    import pdb; pdb.set_trace()
         
     return initpeople

@@ -49,7 +49,7 @@ def optimize(D, objectives=None, constraints=None, startyear=2000, endyear=2030,
     for alloc in range(nallocs): D.A.append(deepcopy(D.A[0])) # Just copy for now
     D.A[0].label = 'Original'
     D.A[1].label = 'Optimal'
-    origalloc = deepcopy(array(D.A[0].alloc))
+    origalloc = deepcopy(array(D.A[1].alloc))
     
 
     
@@ -60,13 +60,15 @@ def optimize(D, objectives=None, constraints=None, startyear=2000, endyear=2030,
         newD = getcurrentbudget(newD, alloc)
         newD.M = makemodelpars(newD.P, newD.opt, withwhat='c', verbose=2)
         S = model(newD.G, newD.M, newD.F[0], newD.opt, verbose=verbose)
-        objective = S.inci.sum() # TEMP
+        objective = S.death.sum() # TEMP
+        
         return objective
         
         
         
     # Run the optimization algorithm
-    
+    tmpalloc = origalloc
+    tmpalloc *= 1e-2
     optalloc, fval, exitflag, output = ballsd(objectivecalc, origalloc, xmin=0*array(origalloc), timelimit=timelimit)
     
     # Update the model
