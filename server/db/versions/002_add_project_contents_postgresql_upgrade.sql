@@ -1,2 +1,11 @@
-ALTER TABLE projects ADD COLUMN creation_time Integer;
-ALTER TABLE projects ADD COLUMN data_upload_time Integer;
+ALTER TABLE projects ADD COLUMN creation_time timestamp with time zone;
+ALTER TABLE projects ADD COLUMN data_upload_time timestamp with time zone;
+ALTER TABLE projects ALTER COLUMN creation_time set default now();
+ALTER TABLE projects ALTER COLUMN data_upload_time set default now();
+ALTER TABLE projects ALTER COLUMN model set default '{}'::json;
+UPDATE projects SET creation_time=now() WHERE creation_time IS NULL;
+UPDATE projects SET data_upload_time=now() WHERE data_upload_time IS NULL;
+ALTER TABLE projects ALTER COLUMN datastart TYPE integer USING datastart::Integer;
+ALTER TABLE projects ALTER COLUMN dataend TYPE integer USING dataend::Integer;
+ALTER TABLE projects ALTER COLUMN econ_datastart TYPE integer USING econ_datastart::Integer;
+ALTER TABLE projects ALTER COLUMN econ_dataend TYPE integer USING econ_dataend::Integer;
