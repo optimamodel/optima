@@ -18,8 +18,8 @@ def findinds(val1, val2=None, eps=1e-6):
     else returns an array.
     
     Examples:
-        find(rand(10)<0.5) # e.g. array([2, 4, 5, 9])
-        find([2,3,6,3], 6) # e.g. array([2])
+        findinds(rand(10)<0.5) # e.g. array([2, 4, 5, 9])
+        findinds([2,3,6,3], 6) # e.g. array([2])
     
     Version: 2014nov27 by cliffk
     """
@@ -31,3 +31,28 @@ def findinds(val1, val2=None, eps=1e-6):
     if ndim(val1)==1: # Uni-dimensional
         output = output[0] # Return an array rather than a tuple of arrays if one-dimensional
     return output
+
+
+def smoothinterp(newx, origx, origy, smoothness=10):
+    """
+    Smoothly interpolate over values and keep end points. Same format as numpy.interp.
+    
+    Example:
+        from utils import smoothinterp
+        origy = array([0,0.1,0.3,0.8,0.7,0.9,0.95,1])
+        origx = linspace(0,1,len(origy))
+        newx = linspace(0,1,5*len(origy))
+        newy = smoothinterp(newx, origx, origy, smoothness=5)
+        plot(newx,newy)
+        hold(True)
+        scatter(origx,origy)
+    
+    Version: 2014dec01
+    """
+    from numpy import interp, convolve, linspace, concatenate, ones, exp
+    kernel = exp(-linspace(-2,2,2*smoothness+1)**2)
+    kernel /= kernel.sum()
+    newy = interp(newx, origx, origy) # Use interpolation
+    newy = concatenate([newy[0]*ones(smoothness), newy, newy[-1]*ones(smoothness)])
+    newy = convolve(newy, kernel, 'valid') # Smooth it out a bit
+    return newy
