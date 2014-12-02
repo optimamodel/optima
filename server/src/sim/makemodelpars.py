@@ -79,8 +79,8 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
     ## TB prevalence @@@
     
     ## Testing parameters -- most are data
-    M.hivtest = dpar2mpar(P.testrate, withwhat) # HIV testing rates
-    M.aidstest = dpar2mpar(P.aidstestrate, withwhat) # AIDS testing rates
+    M.hivtest = dpar2mpar(P.hivtest, withwhat) # HIV testing rates
+    M.aidstest = dpar2mpar(P.aidstest, withwhat) # AIDS testing rates
     M.tx1 = dpar2mpar(P.numfirstline, withwhat) # Number of people on first-line treatment
     M.tx2 = dpar2mpar(P.numsecondline, withwhat) # Number of people on second-line treatment
     

@@ -332,14 +332,14 @@ class OptimaWorkbook:
     ('discosts', 'Disutilities & costs'), \
     ('macroecon', 'Macroeconomics')])
 
-    def __init__(self, name, pops, progs, data_start = 2000, data_end = 2015, econ_data_start = 2015, \
+    def __init__(self, name, pops, progs, data_start = 2000, data_end = 2015, \
         econ_data_end = 2030, verbose = 2):
         self.name = name
         self.pops = pops
         self.progs = progs
         self.data_start = data_start
         self.data_end = data_end
-        self.econ_data_start = econ_data_start
+        self.econ_data_start = data_start
         self.econ_data_end = econ_data_end
         self.verbose = verbose
         self.book = None

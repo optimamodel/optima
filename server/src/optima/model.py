@@ -7,6 +7,7 @@ from sim.bunch import bunchify
 from sim.runsimulation import runsimulation
 from sim.makeccocs import makecco, plotallcurves, default_effectname
 from utils import load_model, save_model, save_working_model_as_default, revert_working_model_to_default, project_exists, pick_params, check_project_name, for_fe
+from utils import report_exception
 from flask.ext.login import login_required, current_user
 from signal import *
 import sys
@@ -23,7 +24,7 @@ def record_params(setup_state):
     model.config = dict([(key,value) for (key,value) in app.config.iteritems()])
 
 """
-Uses provided parameters to auto calibrate the model (update it with these data) 
+Uses provided parameters to auto calibrate the model (update it with these data)
 TODO: do it with the project which is currently in scope
 """
 @model.route('/calibrate/auto', methods=['POST'])
@@ -82,23 +83,23 @@ Returns the working model of project.
 @model.route('/working')
 @login_required
 @check_project_name
+@report_exception()
 def getWorkingModel():
     from sim.autofit import autofit
+    from utils import BAD_REPLY
 
+    reply = BAD_REPLY
+    D_dict = {}
     # Make sure model is calibrating
-    try:
-        prj_name = request.project_name
+    prj_name = request.project_name
+    if prj_name in sentinel['projects'] and sentinel['projects'][prj_name]==autofit.__name__:
         D_dict = load_model(prj_name, working_model = True, as_bunch = False)
-        result = {'graph': D_dict.get('plot',{}).get('E',{})}
-        if prj_name in sentinel['projects'] and sentinel['projects'][prj_name]==autofit.__name__:
-            result['status'] = 'Running'
-        else:
-            print("no longer calibrating")
-            result['status'] = 'Done'
-        return jsonify(result)
-    except Exception, err:
-        var = traceback.format_exc()
-        return jsonify({"status":"NOK", "exception":var})
+        status = 'Running'
+    else:
+        status = 'Done'
+    result = {'graph': D_dict.get('plot',{}).get('E',{})}
+    result['status'] = status
+    return jsonify(result)
 
 """
 Saves working model as the default model
@@ -109,7 +110,7 @@ Saves working model as the default model
 def saveCalibrationModel():
     reply = {'status':'NOK'}
 
-    # get project name 
+    # get project name
     project_name = request.project_name
     if not project_exists(project_name):
         reply['reason'] = 'File for project %s does not exist' % project_name
@@ -132,7 +133,7 @@ Revert working model to the default model
 def revertCalibrationModel():
     reply = {'status':'NOK'}
 
-    # get project name 
+    # get project name
     project_name = request.project_name
     if not project_exists(project_name):
         reply['reason'] = 'File for project %s does not exist' % project_name
@@ -145,7 +146,7 @@ def revertCalibrationModel():
         return jsonify({"status":"NOK", "exception":var})
 
 """
-Uses provided parameters to manually calibrate the model (update it with these data) 
+Uses provided parameters to manually calibrate the model (update it with these data)
 TODO: do it with the project which is currently in scope
 """
 @model.route('/calibrate/manual', methods=['POST'])
@@ -245,7 +246,7 @@ def setModelParameters(group):
 
 
 """
-Starts simulation for the given project and given date range. 
+Starts simulation for the given project and given date range.
 Returns back the file with the simulation data. (?) #FIXME find out how to use it
 """
 @model.route('/view', methods=['POST'])

@@ -134,7 +134,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
                 graph.options.xAxis.axisLabel = data.xlabel;
                 graph.options.yAxis.axisLabel = population.ylabel;
                 graph.legend = population.legend;
-
                 graphs.push(graph);
               });
             }
