@@ -98,39 +98,6 @@ define([
           }
       };
 
-      $scope.lineoptions = {
-        chart: {
-          type: 'lineChart',
-          height: 200,
-          margin: {
-            top: 20,
-            right: 20,
-            bottom: 40,
-            left: 55
-          },
-          useInteractiveGuideline: true,
-          dispatch: {},
-          xAxis: {
-            axisLabel: 'Year',
-            tickFormat: function (d) {
-              return d3.format('d')(d);
-            }
-          },
-          yAxis: {
-            axisLabel: 'Value',
-            axisLabelDistance: 30,
-            tickFormat: function (d) {
-              return d3.format(',.2f')(d);
-            }
-          },
-          transitionDuration: 250
-        },
-        title: {
-          enable: true,
-          text: 'Title for Line Chart'
-        }
-      };
-
     $scope.lineStyles = ['__blue', '__green', '__red', '__orange',
       '__violet', '__black', '__light-orange', '__light-green'];
 
@@ -168,12 +135,6 @@ define([
       return _($scope.types).where({ active: true });
     };
 
-    var generateLineDataNvd3 = function(xData, yData, series) {
-      return _(yData).map(function (value, i) {
-        return { x: xData[i], y: value, series: series };
-      });
-    };
-
     /*
     * Returns an array containing arrays with [x, y] for d3 line data.
     */
@@ -206,85 +167,6 @@ define([
       });
 
       return graph;
-    };
-
-    var prepareLineCharts = function (response) {
-      var graphs = [], types;
-
-      if (!response) {
-        return graphs;
-      }
-
-      types = getActiveTypes();
-
-      _(types).each(function (type) {
-
-        var data = response[type.id];
-
-        if (type.total) {
-          var graph = {
-            options: angular.copy($scope.lineoptions),
-            data: [],
-            type: type,
-            title: type.name + ' - Overall'
-          };
-
-          graph.data.push({
-            "values": generateLineDataNvd3(response.tvec, data.tot.data[0], 0),
-            "key": "1",
-            "color": "#0000FF",
-            "seriesIndex": 0
-          });
-
-          graph.data.push({
-            "values": generateLineDataNvd3(response.tvec, data.tot.data[1], 1),
-            "key": "2",
-            "color": "#000000",
-            "seriesIndex": 1
-          });
-
-
-          graph.options.chart.xAxis.axisLabel = data.xlabel;
-          graph.options.chart.yAxis.axisLabel = data.tot.ylabel;
-          graph.options.title.text = data.tot.title;
-
-          graphs.push(graph);
-        }
-
-        // TODO: we're checking data because it could undefined ...
-        if (type.byPopulation && data) {
-          _(data.pops).each(function (population, populationIndex) {
-            var graph = {
-              options: angular.copy($scope.lineoptions),
-              data: [],
-              type: type
-            };
-
-            graph.data.push({
-              "values": generateLineDataNvd3(response.tvec, population.data[0], 0),
-              "key": "2",
-              "color": "#000000",
-              "seriesIndex": 0
-            });
-
-            graph.data.push({
-              "values": generateLineDataNvd3(response.tvec, population.data[1], 1),
-              "key": "2",
-              "color": "#0000FF",
-              "seriesIndex": 1
-            });
-
-            graph.options.chart.xAxis.axisLabel = data.xlabel;
-            graph.options.chart.yAxis.axisLabel = population.ylabel;
-            graph.options.title.text = population.title;
-
-            graphs.push(graph);
-          });
-        }
-
-      });
-
-      return graphs;
     };
 
     // updates pies charts data
@@ -364,18 +246,12 @@ define([
       return graphs;
     };
 
-    // makes line graphs to recalculate and redraw
-    var updateLineGraphs = function (data) {
-      $scope.lines = prepareLineCharts(data);
-      $scope.optimisationGraphs = prepareOptimisationGraphs(data);
-      $scope.costGraphs = prepareCostGraphs(data);
-    };
-
     // makes all graphs to recalculate and redraw
     var updateGraphs = function (data) {
       if (data.graph !== undefined && data.pie !== undefined) {
         cachedResponse = data;
-        updateLineGraphs(data.graph);
+        $scope.optimisationGraphs = prepareOptimisationGraphs(data.graph);
+        $scope.costGraphs = prepareCostGraphs(data.graph);
         preparePieCharts(data.pie);
       }
     };
