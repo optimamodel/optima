@@ -1,5 +1,12 @@
-def makeproject(projectname='example', pops = ['']*6, progs = ['']*5, datastart=2000, dataend=2015, \
-    econ_dataend=2030, nsims=5, verbose=2, savetofile = True):
+default_pops = ['']*6
+default_progs = ['']*7
+default_datastart = 2000
+default_dataend = 2015
+default_econ_dataend = 2030
+default_nsims = 5
+
+def makeproject(projectname='example', pops = default_pops, progs = default_progs, datastart=default_datastart, \
+    dataend=default_dataend, econ_dataend=default_econ_dataend, nsims=default_nsims, verbose=2, savetofile = True):
     """
     Initializes the empty project. Only the "Global" and "Fitted" parameters are added on this step.
     The rest of the parameters are calculated after the model is updated with the data from the workbook.
@@ -83,7 +90,7 @@ def perturb(n=1, span=0.5):
 
 
 
-def makeworkbook(name, pops, progs, datastart=2000, dataend=2015, econ_dataend=2030, verbose=2):
+def makeworkbook(name, pops, progs, datastart=default_datastart, dataend=default_dataend, econ_dataend=default_econ_dataend, verbose=2):
     """ Generate the Optima workbook -- the hard work is done by makeworkbook.py """
     from printv import printv
     from dataio import templatepath
