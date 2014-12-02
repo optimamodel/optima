@@ -8,6 +8,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         // initialize all necessary data for this controller
         var initialize = function() {
 
+          // add All option in population list  
+          meta.pops.long.push("All");
+
           // transform scenarioParams to use attribute `names` instead of `keys`
           // it is the same for the data we have to send to run scenarios
           availableScenarioParams = _(scenarioParamsResponse.data.params).map(function(parameters) {
