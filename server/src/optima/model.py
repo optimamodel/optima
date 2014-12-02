@@ -7,6 +7,7 @@ from sim.bunch import bunchify
 from sim.runsimulation import runsimulation
 from sim.makeccocs import makecco, plotallcurves, default_effectname
 from utils import load_model, save_model, save_working_model_as_default, revert_working_model_to_default, project_exists, pick_params, check_project_name, for_fe
+from utils import report_exception
 from flask.ext.login import login_required, current_user
 from signal import *
 import sys
@@ -82,23 +83,20 @@ Returns the working model of project.
 @model.route('/working')
 @login_required
 @check_project_name
+@report_exception()
 def getWorkingModel():
     from sim.autofit import autofit
 
     # Make sure model is calibrating
-    try:
-        prj_name = request.project_name
+    prj_name = request.project_name
+    if prj_name in sentinel['projects'] and sentinel['projects'][prj_name]==autofit.__name__:
         D_dict = load_model(prj_name, working_model = True, as_bunch = False)
         result = {'graph': D_dict.get('plot',{}).get('E',{})}
-        if prj_name in sentinel['projects'] and sentinel['projects'][prj_name]==autofit.__name__:
-            result['status'] = 'Running'
-        else:
-            print("no longer calibrating")
-            result['status'] = 'Done'
-        return jsonify(result)
-    except Exception, err:
-        var = traceback.format_exc()
-        return jsonify({"status":"NOK", "exception":var})
+        result['status'] = 'Running'
+    else:
+        print("no longer calibrating")
+        result['status'] = 'Done'
+    return jsonify(result)
 
 """
 Saves working model as the default model
