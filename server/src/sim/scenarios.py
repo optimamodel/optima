@@ -13,7 +13,7 @@ def runscenarios(D, scenariolist=None, verbose=2):
     ugly since some of it is duplicated between getparvalues() (not used here, but
     used for the GUI) and makescenarios().
         
-    Version: 2014nov27 by cliffk
+    Version: 2014dec02 by cliffk
     """
     
     from model import model
@@ -64,10 +64,8 @@ def makescenarios(D, scenariolist, verbose=2):
             if ndim(data)>1:
                 if thesepars.pops < len(data):
                     newdata = data[thesepars.pops] # If it's more than one dimension, use population data too
-                elif thesepars.pops == len(data):
-                    newdata = data[:] # Get all populations
                 else:
-                    raise Exception('Scenario population %i not understood for %i population groups' % (thesepars.pops, len(data)))
+                    newdata = data[:] # Get all populations
             else:
                 newdata = data # If it's not, just use the whole thing
             
@@ -176,7 +174,7 @@ def getparvalues(D, scenariopars):
     
     defaultvals = getparvalues(D, scenariolist[1].pars[2])
     
-    Version: 2014nov27 by cliffk
+    Version: 2014dec02 by cliffk
     """
     from numpy import ndim
     original = getnested(D.M, scenariopars.names)
