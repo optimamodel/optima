@@ -10,7 +10,6 @@ define(['./module'], function (module) {
 
     var initialize = function() {
       $scope.isNew = !scenario.name;
-
       // make sure the names are exactly the objects as in the list for the
       // select to show the initial entries (angular compares with ===)
       _(scenario.pars).each(function(entry) {
