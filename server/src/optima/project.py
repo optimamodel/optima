@@ -250,14 +250,16 @@ saves data as Excel file
 def exportGraph():
     from sim.makeworkbook import OptimaGraphTable
     data = json.loads(request.data)
+    print("/api/project/export %s" % data)
     name = data['name']
+    filename = name+'.xlsx'
     columns = data['columns']
-    path = fullpath(name+'.xlsx')
+    path = fullpath(filename)
     table = OptimaGraphTable(name, columns)
     table.create(path)
     print("exported table: %s to %s" % (name, path))
     (dirname, basename) = os.path.split(path)
-    return helpers.send_from_directory(dirname, basename)
+    return helpers.send_file(path, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 
 
 """
