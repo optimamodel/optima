@@ -1,4 +1,4 @@
-define(['angular', 'saveAs'], function (angular, saveAs) {
+define(['angular', 'saveAs'], function (angular, saveAs, modalService) {
   'use strict';
 
   return angular.module('app.save-graph-as', [])
@@ -28,7 +28,14 @@ define(['angular', 'saveAs'], function (angular, saveAs) {
             })
             .on('click', '.table', function (e) {
               e.preventDefault();
-              alert('This feature is currently under development');
+
+              var message = 'This feature is currently under development. We are working hard in make it happen for you!';
+              modalService.inform(
+                function (){ null }, 
+                'Okay',
+                message, 
+                'Thanks for your interest!'
+              );
             });
         }
       };

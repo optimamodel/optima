@@ -1,0 +1,14 @@
+<form name="prompt" ng-submit="cb(prompt.promptInput.$viewValue)" >
+  <div class="modal-header">
+    <button type="button" class="close" ng-click="$dismiss('cancel')">&times;</button>
+    <h4 class="modal-title">{{ title }}?</h4>
+  </div>
+  <div class="modal-body">
+      <label for="prompt-input" class="required">{{ label }}</label>
+      <input id="prompt-input" name="promptInput" ng-model="enteredValue" required focus>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-default" ng-click="$dismiss('cancel')">{{rejectButton}}</button>
+    <button type="submit" class="btn btn-primary" ng-disabled="prompt.$invalid">{{acceptButton}}</button>
+  </div>
+</form>
