@@ -209,7 +209,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         };
 
         $scope.onGraphTypeChange = function (type) {
-          type.active = type.total || type.byPopulation;
           updateGraphs(responseData);
         };
 
