@@ -1,14 +1,14 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     'use strict';
 
-    module.controller('AnalysisScenariosController', function ($scope, $http, $modal, meta, scenarioParamsResponse) {
+    module.controller('AnalysisScenariosController', function ($scope, $http, $modal, meta, scenarioParamsResponse, CONFIG) {
 
         var linesGraphOptions, linesStyle, linesGraphData, responseData, availableScenarioParams;
 
         // initialize all necessary data for this controller
         var initialize = function() {
 
-          // add All option in population list  
+          // add All option in population list
           meta.pops.long.push("All");
 
           // transform scenarioParams to use attribute `names` instead of `keys`
@@ -25,15 +25,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             dosave: false
           };
 
-          $scope.types = [
-            { id: 'prev', name: 'Prevalence', active: true, byPopulation: true, total: false },
-            { id: 'daly', name: 'DALYs', active: false, byPopulation: false, total: true },
-            { id: 'death', name: 'Deaths', active: false, byPopulation: false, total: true },
-            { id: 'inci', name: 'New infections', active: false, byPopulation: false, total: true },
-            { id: 'dx', name: 'Diagnoses', active: false, byPopulation: false, total: true },
-            { id: 'tx1', name: 'First-line treatment', active: false, byPopulation: false, total: true },
-            { id: 'tx2', name: 'Second-line treatment', active: false, byPopulation: false, total: true }
-          ];
+          $scope.types = angular.copy(CONFIG.GRAPH_TYPES);
 
           $scope.lineStyles = ['__blue', '__green', '__red', '__orange',
             '__violet', '__black', '__light-orange', '__light-green'];
