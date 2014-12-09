@@ -57,7 +57,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           };
         };
 
-        /*
+        /**
          * Returns an array containing arrays with [x, y] for d3 line data.
          */
         var generateLineData = function(xData, yData) {
@@ -66,7 +66,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           });
         };
 
-        /*
+        /**
          * Returns an graph based on the provided yData.
          *
          * yData should be an array where each entry contains an array of all
@@ -86,7 +86,20 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           return graph;
         };
 
-        /*
+        /**
+         * Returns a financial graph.
+         */
+        var generateFinancialGraph = function(data) {
+          var graph = generateGraph(data.data, data.xdata, data.title);
+
+          graph.options.xAxis.axisLabel = data.xlabel;
+          graph.options.yAxis.axisLabel = data.ylabel;
+          graph.options.linesStyle = ['__black', '__black', '__black',
+            '__black', '__black', '__black', '__black', '__black'];
+          return graph;
+        };
+
+        /**
          * Regenerate graphs based on the response and type settings in the UI.
          */
         var updateGraphs = function (response) {
@@ -124,23 +137,26 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             }
           });
 
-          _(['costcur', 'costfut']).each(function(timeCategory) {
-            _(['ann', 'cum']).each(function(costCategory) {
-              var data = response[timeCategory][costCategory];
-              var graph = generateGraph(data.data, data.xdata, data.title);
+          _($scope.types.financial).each(function (type) {
+            // costcur = cost for current people living with HIV
+            // costfut = cost for future people living with HIV
+            // ann = annual costs
+            // cum = cumulative costs
+            if (type.annual) {
+              var annualData = response[type.id].ann;
+              graphs.push(generateFinancialGraph(annualData));
+            }
 
-              graph.options.xAxis.axisLabel = data.xlabel;
-              graph.options.yAxis.axisLabel = data.ylabel;
-              graph.options.linesStyle = ['__black', '__black', '__black'];
-
-              graphs.push(graph);
-            });
+            if (type.cumulative) {
+              var cumulativeData = response[type.id].cum;
+              graphs.push(generateFinancialGraph(cumulativeData));
+            }
           });
 
           $scope.graphs = graphs;
         };
 
-        /*
+        /**
          * Returns a collection of entries where all non-active antries are filtered
          * out and the active attribute is removed from each of these entries.
          */
