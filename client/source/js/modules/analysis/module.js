@@ -2,13 +2,15 @@ define([
     'angular',
     'ui.router',
     '../../config',
-    '../resources/model'
+    '../resources/model',
+    '../ui/type-selector/index'
 ], function (angular) {
     'use strict';
 
     return angular.module('app.analysis', [
         'app.constants',
         'app.resources.model',
+        'app.ui.type-selector',
         'ui.router'
     ]).config(function ($stateProvider) {
         $stateProvider

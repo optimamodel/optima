@@ -1,0 +1,19 @@
+<div class="section cf">
+  <h1>Results</h1>
+
+  <div class="3" ng-repeat="type in types" style="padding-bottom: 20px">
+    <b>{{ type.name }}</b>
+    <div>
+      <label class="checkbox-inline">
+        <input type="checkbox" ng-model="type.total" ng-change="onGraphTypeChange(type)">
+        Overall
+      </label>
+    </div>
+    <div>
+      <label class="checkbox-inline">
+        <input type="checkbox" ng-model="type.byPopulation" ng-change="onGraphTypeChange(type)">
+        Per population
+      </label>
+    </div>
+  </div>
+</div>

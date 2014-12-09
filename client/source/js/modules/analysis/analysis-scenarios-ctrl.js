@@ -208,9 +208,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
                 });
         };
 
-        $scope.onGraphTypeChange = function (type) {
+        // The graphs are shown/hidden after updating the graph type checkboxes.
+        $scope.$watch('types', function () {
           updateGraphs(responseData);
-        };
+        }, true);
 
         initialize();
 
