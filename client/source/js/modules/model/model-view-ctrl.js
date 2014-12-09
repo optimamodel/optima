@@ -120,8 +120,8 @@ define(['./module', 'angular'], function (module, angular) {
     };
 
     /**
-    * Returns a financial graph.
-    */
+     * Returns a financial graph.
+     */
     var generateFinancialGraph = function(data) {
       var yData = {
         best: data.best, high: data.high, low: data.low
@@ -189,7 +189,6 @@ define(['./module', 'angular'], function (module, angular) {
       });
 
       _($scope.types.financial).each(function (type) {
-
         // costcur = cost for current people living with HIV
         // costfut = cost for future people living with HIV
         // ann = annual costs
