@@ -35,10 +35,6 @@ define(['./module', 'angular'], function (module, angular) {
 
     $scope.types = angular.copy(CONFIG.GRAPH_TYPES);
 
-    var getActiveTypes = function () {
-      return _($scope.types).where({ active: true });
-    };
-
     $scope.enableManualCalibration = false;
 
     // to store years from UI
@@ -124,15 +120,13 @@ define(['./module', 'angular'], function (module, angular) {
     };
 
     var prepareGraphs = function (response) {
-      var graphs = [], types;
+      var graphs = [];
 
       if (!response) {
         return graphs;
       }
 
-      types = getActiveTypes();
-
-      _(types).each(function (type) {
+      _($scope.types).each(function (type) {
 
         var data = response[type.id];
 
@@ -176,25 +170,25 @@ define(['./module', 'angular'], function (module, angular) {
             graphs.push(graph);
           });
         }
+      });
 
-        // costcur = cost for current people living with HIV
-        // costfut = cost for future people living with HIV
-        // ann = annual costs
-        // cum = cumulative costs
-        _(['costcur', 'costfut']).each(function(timeCategory) {
-          _(['ann', 'cum']).each(function(costCategory) {
-            var data = response[timeCategory][costCategory];
-            var yData = {
-              best: data.best, high: data.high, low: data.low
-            };
+      // costcur = cost for current people living with HIV
+      // costfut = cost for future people living with HIV
+      // ann = annual costs
+      // cum = cumulative costs
+      _(['costcur', 'costfut']).each(function(timeCategory) {
+        _(['ann', 'cum']).each(function(costCategory) {
+          var data = response[timeCategory][costCategory];
+          var yData = {
+            best: data.best, high: data.high, low: data.low
+          };
 
-            var graph = generateGraph(yData, data.xdata, data.title);
+          var graph = generateGraph(yData, data.xdata, data.title);
 
-            graph.options.xAxis.axisLabel = data.xlabel;
-            graph.options.yAxis.axisLabel = data.ylabel;
+          graph.options.xAxis.axisLabel = data.xlabel;
+          graph.options.yAxis.axisLabel = data.ylabel;
 
-            graphs.push(graph);
-          });
+          graphs.push(graph);
         });
       });
 
@@ -287,7 +281,6 @@ define(['./module', 'angular'], function (module, angular) {
     };
 
     $scope.onGraphTypeChange = function (type) {
-      type.active = type.total || type.byPopulation;
       updateGraphs($scope.parameters.cache.response);
     };
 

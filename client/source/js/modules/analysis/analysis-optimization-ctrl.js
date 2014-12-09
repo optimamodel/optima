@@ -122,10 +122,6 @@ define([
       }
     };
 
-    var getActiveTypes = function () {
-      return _($scope.types).where({ active: true });
-    };
-
     /*
     * Returns an array containing arrays with [x, y] for d3 line data.
     */
@@ -182,8 +178,7 @@ define([
         return graphs;
       }
 
-      var types = getActiveTypes();
-      _(types).each(function (type) {
+      _($scope.types).each(function (type) {
 
         var data = response[type.id];
         if (data!== undefined) {
@@ -309,8 +304,6 @@ define([
     };
 
     $scope.onGraphTypeChange = function (type) {
-      type.active = type.total || type.byPopulation;
-
       if (!cachedResponse || !cachedResponse.graph) return;
 
       $scope.optimisationGraphs = prepareOptimisationGraphs(cachedResponse.graph);
