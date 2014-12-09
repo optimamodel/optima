@@ -280,9 +280,10 @@ define(['./module', 'angular'], function (module, angular) {
       angular.extend($scope.parameters.f, $scope.parameters.cache.f);
     };
 
-    $scope.onGraphTypeChange = function (type) {
+    // The graphs are shown/hidden after updating the graph type checkboxes.
+    $scope.$watch('types', function () {
       updateGraphs($scope.parameters.cache.response);
-    };
+    }, true);
 
   });
 });

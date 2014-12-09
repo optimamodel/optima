@@ -303,11 +303,12 @@ define([
         .success(function(){ console.log("OK");});
     };
 
-    $scope.onGraphTypeChange = function (type) {
+    // The graphs are shown/hidden after updating the graph type checkboxes.
+    $scope.$watch('types', function () {
       if (!cachedResponse || !cachedResponse.graph) return;
 
       $scope.optimisationGraphs = prepareOptimisationGraphs(cachedResponse.graph);
-    };
+    }, true);
 
   });
 });
