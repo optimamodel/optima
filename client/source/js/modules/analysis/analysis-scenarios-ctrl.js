@@ -96,7 +96,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
           var graphs = [];
 
-          _($scope.types).each(function (type) {
+          _($scope.types.population).each(function (type) {
 
             var data = response[type.id];
 

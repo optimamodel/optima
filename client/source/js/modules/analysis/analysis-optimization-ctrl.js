@@ -178,7 +178,7 @@ define([
         return graphs;
       }
 
-      _($scope.types).each(function (type) {
+      _($scope.types.population).each(function (type) {
 
         var data = response[type.id];
         if (data!== undefined) {
@@ -211,7 +211,7 @@ define([
       return graphs;
     };
 
-    var prepareCostGraphs = function(graphData) {
+    var prepareFinancialGraphs = function(graphData) {
       var graphs = [];
 
       _(['costcur', 'costfut']).each(function(timeCategory) {
@@ -239,7 +239,7 @@ define([
       if (data.graph !== undefined && data.pie !== undefined) {
         cachedResponse = data;
         $scope.optimisationGraphs = prepareOptimisationGraphs(data.graph);
-        $scope.costGraphs = prepareCostGraphs(data.graph);
+        $scope.financialGraphs = prepareFinancialGraphs(data.graph);
         preparePieCharts(data.pie);
       }
     };
@@ -308,6 +308,7 @@ define([
       if (!cachedResponse || !cachedResponse.graph) return;
 
       $scope.optimisationGraphs = prepareOptimisationGraphs(cachedResponse.graph);
+      $scope.financialGraphs = prepareFinancialGraphs(data.graph);
     }, true);
 
   });
