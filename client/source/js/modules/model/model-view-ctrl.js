@@ -35,7 +35,7 @@ define(['./module', 'angular'], function (module, angular) {
 
     $scope.types = angular.copy(CONFIG.GRAPH_TYPES);
 
-    var getActiveOptions = function () {
+    var getActiveTypes = function () {
       return _($scope.types).where({ active: true });
     };
 
@@ -130,7 +130,7 @@ define(['./module', 'angular'], function (module, angular) {
         return graphs;
       }
 
-      types = getActiveOptions();
+      types = getActiveTypes();
 
       _(types).each(function (type) {
 
