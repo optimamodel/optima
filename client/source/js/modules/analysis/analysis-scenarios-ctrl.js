@@ -1,14 +1,14 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     'use strict';
 
-    module.controller('AnalysisScenariosController', function ($scope, $http, $modal, meta, scenarioParamsResponse) {
+    module.controller('AnalysisScenariosController', function ($scope, $http, $modal, meta, scenarioParamsResponse, CONFIG) {
 
         var linesGraphOptions, linesStyle, linesGraphData, responseData, availableScenarioParams;
 
         // initialize all necessary data for this controller
         var initialize = function() {
 
-          // add All option in population list  
+          // add All option in population list
           meta.pops.long.push("All");
 
           // transform scenarioParams to use attribute `names` instead of `keys`
@@ -25,15 +25,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             dosave: false
           };
 
-          $scope.types = [
-            { id: 'prev', name: 'Prevalence', active: true, byPopulation: true, total: false },
-            { id: 'daly', name: 'DALYs', active: false, byPopulation: false, total: true },
-            { id: 'death', name: 'Deaths', active: false, byPopulation: false, total: true },
-            { id: 'inci', name: 'New infections', active: false, byPopulation: false, total: true },
-            { id: 'dx', name: 'Diagnoses', active: false, byPopulation: false, total: true },
-            { id: 'tx1', name: 'First-line treatment', active: false, byPopulation: false, total: true },
-            { id: 'tx2', name: 'Second-line treatment', active: false, byPopulation: false, total: true }
-          ];
+          $scope.types = angular.copy(CONFIG.GRAPH_TYPES);
 
           $scope.lineStyles = ['__blue', '__green', '__red', '__orange',
             '__violet', '__black', '__light-orange', '__light-green'];
@@ -65,7 +57,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           };
         };
 
-        /*
+        /**
          * Returns an array containing arrays with [x, y] for d3 line data.
          */
         var generateLineData = function(xData, yData) {
@@ -74,7 +66,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           });
         };
 
-        /*
+        /**
          * Returns an graph based on the provided yData.
          *
          * yData should be an array where each entry contains an array of all
@@ -94,7 +86,20 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           return graph;
         };
 
-        /*
+        /**
+         * Returns a financial graph.
+         */
+        var generateFinancialGraph = function(data) {
+          var graph = generateGraph(data.data, data.xdata, data.title);
+
+          graph.options.xAxis.axisLabel = data.xlabel;
+          graph.options.yAxis.axisLabel = data.ylabel;
+          graph.options.linesStyle = ['__black', '__black', '__black',
+            '__black', '__black', '__black', '__black', '__black'];
+          return graph;
+        };
+
+        /**
          * Regenerate graphs based on the response and type settings in the UI.
          */
         var updateGraphs = function (response) {
@@ -104,7 +109,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
           var graphs = [];
 
-          _($scope.types).each(function (type) {
+          _($scope.types.population).each(function (type) {
 
             var data = response[type.id];
 
@@ -132,23 +137,26 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             }
           });
 
-          _(['costcur', 'costfut']).each(function(timeCategory) {
-            _(['ann', 'cum']).each(function(costCategory) {
-              var data = response[timeCategory][costCategory];
-              var graph = generateGraph(data.data, data.xdata, data.title);
+          _($scope.types.financial).each(function (type) {
+            // costcur = cost for current people living with HIV
+            // costfut = cost for future people living with HIV
+            // ann = annual costs
+            // cum = cumulative costs
+            if (type.annual) {
+              var annualData = response[type.id].ann;
+              graphs.push(generateFinancialGraph(annualData));
+            }
 
-              graph.options.xAxis.axisLabel = data.xlabel;
-              graph.options.yAxis.axisLabel = data.ylabel;
-              graph.options.linesStyle = ['__black', '__black', '__black'];
-
-              graphs.push(graph);
-            });
+            if (type.cumulative) {
+              var cumulativeData = response[type.id].cum;
+              graphs.push(generateFinancialGraph(cumulativeData));
+            }
           });
 
           $scope.graphs = graphs;
         };
 
-        /*
+        /**
          * Returns a collection of entries where all non-active antries are filtered
          * out and the active attribute is removed from each of these entries.
          */
@@ -216,10 +224,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
                 });
         };
 
-        $scope.onGraphTypeChange = function (type) {
-          type.active = type.total || type.byPopulation;
+        // The graphs are shown/hidden after updating the graph type checkboxes.
+        $scope.$watch('types', function () {
           updateGraphs(responseData);
-        };
+        }, true);
 
         initialize();
 
