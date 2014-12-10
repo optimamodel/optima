@@ -1,4 +1,4 @@
-define(['./module'], function (module) {
+define(['./module', './scale-helpers'], function (module, scaleHelpers) {
   'use strict';
 
   module.directive('lineScatterAreaChart', function (d3Charts) {
@@ -51,12 +51,9 @@ define(['./module'], function (module) {
         // it doesn't cover the case of having a scatter point above the high line.
         var yMax = Math.max(0, calculatedLineScales.y.domain()[1]);
 
-        scope.options.yAxis.tickFormat = function (tickValue) {
-          var format = d3Charts.calculateTickFormat(0, yMax);
-          var formattedValue = d3.format(format)(tickValue);
-          // Cliff requested to lower case the unit suffixed values.
-          // e.g. 100M -> 100m
-          return formattedValue.toLowerCase();
+        scope.options.yAxis.tickFormat = function (value) {
+          var format = scaleHelpers.evaluateTickFormat(0, yMax);
+          return scaleHelpers.customTickFormat(value, format);
         };
 
         d3Charts.drawAxes(
