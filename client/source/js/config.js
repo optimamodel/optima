@@ -16,8 +16,8 @@ define(['angular'], function (angular) {
           { id: 'tx2', name: 'Second-line treatment', byPopulation: false, total: true }
         ],
         financial: [
-          { id: 'costcur', name: 'Over Time', annual: true, cumulative: true },
-          { id: 'costfut', name: 'Future', annual: true, cumulative: true },
+          { id: 'costcur', name: 'Costs over time', annual: true, cumulative: true },
+          { id: 'costfut', name: 'Costs for post-2015 infections', annual: true, cumulative: true },
         ]
       }
     });
