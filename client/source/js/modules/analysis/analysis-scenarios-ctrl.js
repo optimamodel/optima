@@ -119,7 +119,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               var graph = generateGraph(data.tot.data, response.tvec, title);
               graph.options.xAxis.axisLabel = data.xlabel;
               graph.options.yAxis.axisLabel = data.tot.ylabel;
-              graph.legend = data.legend;
+              graph.legend = data.tot.legend;
               graphs.push(graph);
             }
 
