@@ -1,4 +1,4 @@
-define(['./module'], function (module) {
+define(['./module', './scale-helpers'], function (module, scaleHelpers) {
   'use strict';
 
   module.directive('lineScatterChart', function (d3Charts) {
@@ -67,12 +67,9 @@ define(['./module'], function (module) {
         scale.x.domain([Math.floor(xMin), Math.ceil(xMax)]);
       });
 
-      options.yAxis.tickFormat = function (tickValue) {
-        var format = d3Charts.calculateTickFormat(yMin, yMax);
-        var formattedValue = d3.format(format)(tickValue);
-        // Cliff requested to lower case the unit suffixed values.
-        // e.g. 100M -> 100m
-        return formattedValue.toLowerCase();
+      options.yAxis.tickFormat = function (value) {
+        var format = scaleHelpers.evaluateTickFormat(yMin, yMax);
+        return scaleHelpers.customTickFormat(value, format);
       };
 
       d3Charts.drawAxes(

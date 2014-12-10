@@ -304,34 +304,12 @@ define(['./module', 'd3', 'd3-box'], function (module, d3) {
         .attr("transform", "translate(" + margins.left + "," + margins.top + ")");
     }
 
-    /*
-     * Returns an appropriate tick format depending on the range of the values.
-     *
-     * For a range smaller than 1 a precesion of 2 decimal points is chosen.
-     * For a range smaller than 10 a precesion of 1 decimal points is chosen.
-     * For a range between 10 & 100,000 a precesion of 0 decimal points is chosen.
-     * For a range larger than 100,000 the numbers are unit suffixed.
-     */
-    function calculateTickFormat(min, max) {
-      var range = max - min;
-      if (range < 1) {
-        return ',.2f';
-      } else if (range < 10) {
-        return ',.1f';
-      } else if (range > 100000) {
-        return 's';
-      } else {
-        return ',.0f';
-      }
-    }
-
     return {
       createSvg: createSvg,
       drawAxes: drawAxes,
       AreaChart: AreaChart,
       LineChart: LineChart,
-      ScatterChart: ScatterChart,
-      calculateTickFormat: calculateTickFormat
+      ScatterChart: ScatterChart
     };
   });
 });
