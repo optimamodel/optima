@@ -70,7 +70,6 @@ define(['./module'], function (module) {
         areaChartInstance.draw(areaData);
         lineChartInstance.draw(lineData);
         scatterChartInstance.draw(scatterData);
-
       }
     };
   });
