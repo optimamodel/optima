@@ -69,6 +69,13 @@ define(['d3'], function (d3) {
     }
   };
 
+  /**
+   * Returns a formated value based on the provided format.
+   *
+   * The format should be determined by using evaluateTickFormat, but can be any
+   * specified by d3. In addition the format value 'custom' can be used for the
+   * customized formatting using K for 10e3, m for 10e6 and bn for 10e9.
+   */
   var customTickFormat = function (value, format) {
     if (format == 'custom') {
       return customFormat(value);
