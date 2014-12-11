@@ -21,12 +21,13 @@ define(['angular', 'underscore', 'saveAs'], function (angular, _, saveAs) {
               columns: []
             };
             _.each(data.lines, function(line,i){
-              var column_x = {};
               var points = line;
-              var x, y = null;
-              column_x['title']=i+"_x"; // starting simple, later we'll see how to get proper names here
-              column_x['data'] = _.map(points,function(point,j){ return point[0] }); //ideally, we need x only once for the graph
-              exportable.columns.push(column_x);
+              if (i==0) { // only for the first column
+                var column_x = {};
+                column_x['title']="x"; // starting simple, later we'll see how to get proper names here
+                column_x['data'] = _.map(points,function(point,j){ return point[0] }); //ideally, we need x only once for the graph
+                exportable.columns.push(column_x);
+              }
               var column_y = {};
               column_y['title']=i+"_y";
               column_y['data'] =_.map(points,function(point,j){ return point[1] });
@@ -61,7 +62,7 @@ define(['angular', 'underscore', 'saveAs'], function (angular, _, saveAs) {
                   headers: {'Content-type': 'application/json'},
                   responseType:'arraybuffer'})
               .success(function (response, status, headers, config) {
-                console.log(status, headers, config);
+//                console.log(status, headers, config);
                 var blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
                 saveAs(blob, 'my_table.xlsx');
               })
