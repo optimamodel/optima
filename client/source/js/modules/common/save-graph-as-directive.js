@@ -12,11 +12,11 @@ define(['angular', 'saveAs'], function (angular, saveAs) {
             '</div>';
 
           scope.lineAndAreaExport = function (data){
-            inform('to be implemented');            
+            alert('to be implemented');            
           };
 
           scope.linesExport = function (data){
-            inform('to be implemented');            
+            debugger           
           };
 
           /**
@@ -28,7 +28,7 @@ define(['angular', 'saveAs'], function (angular, saveAs) {
             if(Object.keys(dataOrUndefined) == ["line", "scatter", "area"]) { return scope.lineAndAreaExport(dataOrUndefined) }
             if(Object.keys(dataOrUndefined) == ["lines", "scatter"]) { return scope.linesExport(dataOrUndefined) }
 
-            inform('Sorry, we cannot export data from this source');
+            alert('Sorry, we cannot export data from this source');
           };
 
           /**
