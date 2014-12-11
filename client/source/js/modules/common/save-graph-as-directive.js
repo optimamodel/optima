@@ -16,25 +16,40 @@ define(['angular', 'underscore', 'saveAs'], function (angular, _, saveAs) {
           };
 
           scope.linesExport = function (graph){
+            var low, line, high;
             var exportable = {
               name: graph.title,
               columns: []
             };
 
-            _.each(graph.data.lines, function(line,i){
-              var points = line;
-              if (i==0) { // The points of the X axis are only sent once so we treat it differently
-                var column_x = {};
-                column_x['title'] = graph.options.xAxis.axisLabel;
-                column_x['data'] = _.map(points,function(point,j){ return point[0] }); // collects all the x values of the points
-                exportable.columns.push(column_x);
-              }
+            low = graph.data.lines[2];
+            line = graph.data.lines[0];
+            high = graph.data.lines[1];
 
-              var column_y = {};
-              column_y['title']=i+"_y";
-              column_y['data'] =_.map(points,function(point,j){ return point[1] }); // collects all the y values of the points
-              exportable.columns.push(column_y);
-              });      
+            // The X of the points are only sent in one column and we collect them from any of the lines
+            var xOfPoints = {};
+            xOfPoints['title'] = graph.options.xAxis.axisLabel;
+            xOfPoints['data'] = _.map(line,function(point,j){ return point[0] });
+            exportable.columns.push(xOfPoints);
+
+            // Collecting the Y of the points for the line
+            var yOfLinePoints = {};
+            yOfLinePoints['title'] = 'line';
+            yOfLinePoints['data'] = _.map(line,function(point,j){ return point[1] });
+            exportable.columns.push(yOfLinePoints);
+
+            // Collecting the Y of the points for the lower boundary
+            var yOfLowPoints = {};
+            yOfLowPoints['title']='low';
+            yOfLowPoints['data'] =_.map(low,function(point,j){ return point[1] }); // collects all the y values of the points
+            exportable.columns.push(yOfLowPoints);
+
+            // Collecting the Y of the points for the higher boundary
+            var yOfHighPoints = {};
+            yOfHighPoints['title']='high';
+            yOfHighPoints['data'] =_.map(high,function(point,j){ return point[1] }); // collects all the y values of the points
+            exportable.columns.push(yOfHighPoints);
+
             return exportable;
           };
 
@@ -64,9 +79,8 @@ define(['angular', 'underscore', 'saveAs'], function (angular, _, saveAs) {
                   headers: {'Content-type': 'application/json'},
                   responseType:'arraybuffer'})
               .success(function (response, status, headers, config) {
-//                console.log(status, headers, config);
                 var blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-                saveAs(blob, 'my_table.xlsx');
+                saveAs(blob, (graphOrUndefined.title+'.xlsx'));
               })
               .error(function () {});
           };
@@ -86,15 +100,6 @@ define(['angular', 'underscore', 'saveAs'], function (angular, _, saveAs) {
             .on('click', '.data', function (e) {
               e.preventDefault();
               scope.exportFrom(scope.graph);
-              
-              // var data = {
-              //   name: 'my_table',
-              //   columns: [
-              //     { data: [1, 2, 3], title: 'x axis' },
-              //     { data: [1, 2, 3], title: 'y axis' }
-              //   ]
-              // };
-
             });
         }
       };
