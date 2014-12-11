@@ -1,4 +1,4 @@
-define(['angular', 'saveAs'], function (angular, saveAs) {
+define(['angular', 'underscore', 'saveAs'], function (angular, _, saveAs) {
   'use strict';
 
   return angular.module('app.save-graph-as', [])
@@ -16,7 +16,20 @@ define(['angular', 'saveAs'], function (angular, saveAs) {
           };
 
           scope.linesExport = function (data){
-            debugger           
+            var exportable = {
+              name: 'exported',
+              columns: []
+            };
+            _.each(data.lines, function(line,i){
+              var column = {};
+              var points = line;
+              var x, y = null;
+              column[i]=i; // starting simple, later we'll see how to get proper names here
+              column.x =_.map(points,function(point,j){ return point[0] });
+              column.y =_.map(points,function(point,j){ return point[1] });
+              exportable.columns.push(column);
+              });      
+            return exportable;
           };
 
           /**
@@ -24,10 +37,10 @@ define(['angular', 'saveAs'], function (angular, saveAs) {
            */
           scope.getExportableFrom = function (dataOrUndefined){
             if(!dataOrUndefined) { return null }
+            if(_.isEqual(Object.keys(dataOrUndefined),["line", "scatter", "area"])) { return scope.lineAndAreaExport(dataOrUndefined) }
+            if(_.isEqual(Object.keys(dataOrUndefined),["lines", "scatter"])) { return scope.linesExport(dataOrUndefined) }
 
-            if(Object.keys(dataOrUndefined) == ["line", "scatter", "area"]) { return scope.lineAndAreaExport(dataOrUndefined) }
-            if(Object.keys(dataOrUndefined) == ["lines", "scatter"]) { return scope.linesExport(dataOrUndefined) }
-
+            // to-do: this should be updated after the PR to use the modalService
             alert('Sorry, we cannot export data from this source');
           };
 
@@ -38,17 +51,18 @@ define(['angular', 'saveAs'], function (angular, saveAs) {
             if(!graphOrUndefined) { return alert('Sorry, this graph cannot be exported')}
             var exportable = this.getExportableFrom(graphOrUndefined.data);
             if(exportable == null) { return alert('Sorry, this graph cannot be exported')}
-                 debugger       
-            // $http({url:'/api/project/export', 
-            //       method:'POST', data:data, 
-            //       headers: {'Content-type': 'application/json'},
-            //       responseType:'arraybuffer'})
-            //   .success(function (response, status, headers, config) {
-            //     console.log(status, headers, config);
-            //     var blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-            //     saveAs(blob, 'my_table.xlsx');
-            //   })
-            //   .error(function () {});
+      
+            $http({url:'/api/project/export', 
+                  method:'POST', 
+                  data: exportable, 
+                  headers: {'Content-type': 'application/json'},
+                  responseType:'arraybuffer'})
+              .success(function (response, status, headers, config) {
+                console.log(status, headers, config);
+                var blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                saveAs(blob, 'my_table.xlsx');
+              })
+              .error(function () {});
           };
 
           var buttons = angular.element(html);
