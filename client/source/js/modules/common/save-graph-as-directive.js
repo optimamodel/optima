@@ -11,16 +11,16 @@ define(['angular', 'underscore', 'saveAs'], function (angular, _, saveAs) {
             '<button class="btn data">Export data</button>' +
             '</div>';
 
-          scope.lineAndAreaExport = function (data){
+          scope.lineAndAreaExport = function (graph){
             console.log('to be implemented');     
           };
 
-          scope.linesExport = function (data){
+          scope.linesExport = function (graph){
             var exportable = {
               name: 'exported',
               columns: []
             };
-            _.each(data.lines, function(line,i){
+            _.each(graph.data.lines, function(line,i){
               var points = line;
               if (i==0) { // only for the first column
                 var column_x = {};
@@ -39,10 +39,10 @@ define(['angular', 'underscore', 'saveAs'], function (angular, _, saveAs) {
           /**
            * Returns the normalized data ready for export
            */
-          scope.getExportableFrom = function (dataOrUndefined){
-            if(!dataOrUndefined) { return null }
-            if(_.isEqual(Object.keys(dataOrUndefined),["line", "scatter", "area"])) { return scope.lineAndAreaExport(dataOrUndefined) }
-            if(_.isEqual(Object.keys(dataOrUndefined),["lines", "scatter"])) { return scope.linesExport(dataOrUndefined) }
+          scope.getExportableFrom = function (graph){
+            if(!graph.data) { return null }
+            if(_.isEqual(Object.keys(graph.data),["line", "scatter", "area"])) { return scope.lineAndAreaExport(graph) }
+            if(_.isEqual(Object.keys(graph.data),["lines", "scatter"])) { return scope.linesExport(graph) }
 
             // to-do: this should be updated after the PR to use the modalService
             alert('Sorry, we cannot export data from this source');
@@ -53,7 +53,7 @@ define(['angular', 'underscore', 'saveAs'], function (angular, _, saveAs) {
            */
           scope.exportFrom = function (graphOrUndefined){
             if(!graphOrUndefined) { return alert('Sorry, this graph cannot be exported')}
-            var exportable = this.getExportableFrom(graphOrUndefined.data);
+            var exportable = this.getExportableFrom(graphOrUndefined);
             if(exportable == null) { return alert('Sorry, this graph cannot be exported')}
       
             $http({url:'/api/project/export', 
