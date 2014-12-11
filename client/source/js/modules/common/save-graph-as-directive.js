@@ -17,20 +17,22 @@ define(['angular', 'underscore', 'saveAs'], function (angular, _, saveAs) {
 
           scope.linesExport = function (graph){
             var exportable = {
-              name: 'exported',
+              name: graph.title,
               columns: []
             };
+
             _.each(graph.data.lines, function(line,i){
               var points = line;
-              if (i==0) { // only for the first column
+              if (i==0) { // The points of the X axis are only sent once so we treat it differently
                 var column_x = {};
-                column_x['title']="x"; // starting simple, later we'll see how to get proper names here
-                column_x['data'] = _.map(points,function(point,j){ return point[0] }); //ideally, we need x only once for the graph
+                column_x['title'] = graph.options.xAxis.axisLabel;
+                column_x['data'] = _.map(points,function(point,j){ return point[0] }); // collects all the x values of the points
                 exportable.columns.push(column_x);
               }
+
               var column_y = {};
               column_y['title']=i+"_y";
-              column_y['data'] =_.map(points,function(point,j){ return point[1] });
+              column_y['data'] =_.map(points,function(point,j){ return point[1] }); // collects all the y values of the points
               exportable.columns.push(column_y);
               });      
             return exportable;
