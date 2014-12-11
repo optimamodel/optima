@@ -11,20 +11,24 @@ define(['angular', 'saveAs'], function (angular, saveAs) {
             '<button class="btn data">Export data</button>' +
             '</div>';
 
+          scope.lineAndAreaExport = function (data){
+            inform('to be implemented');            
+          };
+
+          scope.linesExport = function (data){
+            inform('to be implemented');            
+          };
+
           /**
            * Returns the normalized data ready for export
            */
           scope.getExportableFrom = function (dataOrUndefined){
             if(!dataOrUndefined) { return null }
-            var exportable = {
-              name: 'theExportableName',
-              columns: {
-                xdata: [],
-                ydata: []
-              }
 
-            };
-            debugger
+            if(Object.keys(dataOrUndefined) == ["line", "scatter", "area"]) { return scope.lineAndAreaExport(dataOrUndefined) }
+            if(Object.keys(dataOrUndefined) == ["lines", "scatter"]) { return scope.linesExport(dataOrUndefined) }
+
+            inform('Sorry, we cannot export data from this source');
           };
 
           /**
