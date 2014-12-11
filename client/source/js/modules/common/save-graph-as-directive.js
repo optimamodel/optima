@@ -12,7 +12,7 @@ define(['angular', 'underscore', 'saveAs'], function (angular, _, saveAs) {
             '</div>';
 
           scope.lineAndAreaExport = function (data){
-            alert('to be implemented');            
+            console.log('to be implemented');     
           };
 
           scope.linesExport = function (data){
@@ -21,13 +21,16 @@ define(['angular', 'underscore', 'saveAs'], function (angular, _, saveAs) {
               columns: []
             };
             _.each(data.lines, function(line,i){
-              var column = {};
+              var column_x = {};
               var points = line;
               var x, y = null;
-              column[i]=i; // starting simple, later we'll see how to get proper names here
-              column.x =_.map(points,function(point,j){ return point[0] });
-              column.y =_.map(points,function(point,j){ return point[1] });
-              exportable.columns.push(column);
+              column_x['title']=i+"_x"; // starting simple, later we'll see how to get proper names here
+              column_x['data'] = _.map(points,function(point,j){ return point[0] }); //ideally, we need x only once for the graph
+              exportable.columns.push(column_x);
+              var column_y = {};
+              column_y['title']=i+"_y";
+              column_y['data'] =_.map(points,function(point,j){ return point[1] });
+              exportable.columns.push(column_y);
               });      
             return exportable;
           };
