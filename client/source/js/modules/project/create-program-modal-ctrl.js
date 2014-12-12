@@ -12,7 +12,7 @@ define(['./module'], function (module) {
       $scope.populations = _(populations).map(function(population) {
         return {label: population.name, value: [population.internal_name]};
       });
-      $scope.populations.unshift({label: 'All Populations', value: ['ALL_POPULATIONS']});
+      $scope.populations.unshift({label: 'All populations', value: ['ALL_POPULATIONS']});
 
 
       // make sure the names are exactly the objects as in the list for the

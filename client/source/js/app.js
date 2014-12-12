@@ -6,7 +6,6 @@ define([
   'ui.bootstrap',
   'ui.router',
   './config',
-  './modules/about/index',
   './modules/contact/index',
   './modules/auth/index',
   './modules/analysis/index',
@@ -16,7 +15,6 @@ define([
   './modules/common/save-graph-as-directive',
   './modules/d3-charts/index',
   './modules/graphs/index',
-  './modules/help/index',
   './modules/home/index',
   './modules/import-export/index',
   './modules/model/index',
@@ -31,7 +29,6 @@ define([
   return angular.module('app', [
     'angularFileUpload',
     'angular-loading-bar',
-    'app.about',
     'app.contact',
     'app.auth',
     'app.active-project',
@@ -40,7 +37,6 @@ define([
     'app.constants',
     'app.d3-charts',
     'app.graphs',
-    'app.help',
     'app.home',
     'app.import-export',
     'app.local-storage',
@@ -101,7 +97,7 @@ define([
       }
 
       var isStatePublic = function (stateName) {
-        var publicStates = ['about', 'contact', 'help', 'login', 'register'];
+        var publicStates = ['contact', 'login', 'register'];
 
         return publicStates.indexOf(stateName) !== -1;
       };
