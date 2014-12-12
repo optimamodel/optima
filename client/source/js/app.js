@@ -15,7 +15,6 @@ define([
   './modules/common/save-graph-as-directive',
   './modules/d3-charts/index',
   './modules/graphs/index',
-  './modules/help/index',
   './modules/home/index',
   './modules/import-export/index',
   './modules/model/index',
@@ -38,7 +37,6 @@ define([
     'app.constants',
     'app.d3-charts',
     'app.graphs',
-    'app.help',
     'app.home',
     'app.import-export',
     'app.local-storage',
@@ -99,7 +97,7 @@ define([
       }
 
       var isStatePublic = function (stateName) {
-        var publicStates = ['contact', 'help', 'login', 'register'];
+        var publicStates = ['contact', 'login', 'register'];
 
         return publicStates.indexOf(stateName) !== -1;
       };
