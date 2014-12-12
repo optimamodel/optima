@@ -38,7 +38,7 @@ define([
                 }
               },
               {
-                title: 'Open existing project',
+                title: 'Open/manage projects',
                 state: {
                   name: 'project.open'
                 }
