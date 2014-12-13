@@ -1,3 +1,8 @@
+/**
+ * activeProject is a factory that can set what's the project that should be currently in use by the UI
+ * and tell you if there is any.
+ */
+
 define([
   'angular',
   '../common/local-storage-service'
@@ -7,7 +12,7 @@ define([
   return angular.module('app.active-project', [
     'app.local-storage'
   ])
-    .factory('activeProject', function ($http, localStorage) {
+    .factory('activeProject', function ($http, localStorage, User) {
 
       var project = {
         setValue: function (name) {
@@ -16,6 +21,7 @@ define([
           localStorage.project = name;
         },
         isSet: function() {
+          debugger
           return (project.name !== null && project.name !== undefined);
         }
       };
