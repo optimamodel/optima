@@ -7,12 +7,15 @@ define([
 
   return angular.module('app.user-manager', ['app.resources.user'])
 
-    .service('UserManager', function ($window, User) {
+    .service('UserManager', function ($window, User, localStorage) {
       var user_manager = {
         isLoggedIn: false,
         isAdmin: false,
         clean: function () {
           user_manager.isLoggedIn = false;
+debugger
+          // Reset state about the active project
+          localStorage.removeItem('project');
 
           // Safely clean User object
           _(_(user_manager.data).keys()).each(function (key) {

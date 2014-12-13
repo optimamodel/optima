@@ -87,11 +87,11 @@ define([
     })
 
     .run(function ($rootScope, $state, UserManager, localStorage, activeProject) {
+debugger
       if (window.user) {
         UserManager.set(window.user);
         delete window.user;
       }
-
       if (localStorage.project) {
         activeProject.setValue(localStorage.project);
       }
