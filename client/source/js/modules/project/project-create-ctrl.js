@@ -2,7 +2,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ProjectCreateController', function ($scope, $state, $modal,
-    $timeout, activeProject, DEFAULT_PROGRAMS, DEFAULT_POPULATIONS, parametersResponse) {
+    $timeout, activeProject, DEFAULT_PROGRAMS, DEFAULT_POPULATIONS, parametersResponse, UserManager) {
 
     $scope.projectParams = {
       name: ''
@@ -225,6 +225,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       document.getElementById('createForm').submit();
 
       // update active project
+      debugger
       activeProject.setValue($scope.projectParams.name);
 
       // Hack to wait for the project to be created.
