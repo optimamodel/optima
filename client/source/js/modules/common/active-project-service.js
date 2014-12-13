@@ -17,8 +17,7 @@ define([
       function ($http, localStorage) {
         var project = {
           setValue: function (name) {  // deprecated method 
-            debugger
-            console.warn('activeProject.setValue is deprecated. Use setProjectFor(projectName, user) instead.');
+            console.warn('activeProject.setValue is deprecated and next version will remove it. Use setProjectFor(projectName, user) instead. Tip: use debugger after this console.warn if you want catch callers / diagnose.');
             project.name = name;
             $http.defaults.headers.common.project = name;
             localStorage.project = name;
@@ -45,12 +44,11 @@ define([
           },
           ifActiveResetFor: function (projectName, user) {
             // If projectName is active, reset it for the given user.
-            if (activeProject.name === projectName) {
-              activeProject.setActiveProjectFor('', user);};
+            if (project.name === projectName) {
+              project.resetFor(user);};
           },
           resetFor: function (user) { 
             // Resets the projectName as the active project for the given user.
-            debugger
             delete project.name;
             localStorage.removeItem(project.getProjectKeyFor(user));
           },  
