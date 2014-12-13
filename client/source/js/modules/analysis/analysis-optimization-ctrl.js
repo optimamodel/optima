@@ -65,6 +65,7 @@ define([
       $scope.params.constraints.dontstopart = true;
 
       $scope.params.constraints.decrease = {};
+      $scope.params.constraints.increase = {};
       $scope.params.constraints.coverage = {};
 
       // Initialize program constraints models
@@ -72,6 +73,10 @@ define([
         $scope.params.constraints.decrease[meta.progs.short[i]] = {};
         $scope.params.constraints.decrease[meta.progs.short[i]].use = false;
         $scope.params.constraints.decrease[meta.progs.short[i]].by = 100;
+
+        $scope.params.constraints.increase[meta.progs.short[i]] = {};
+        $scope.params.constraints.increase[meta.progs.short[i]].use = false;
+        $scope.params.constraints.increase[meta.progs.short[i]].by = 100;
 
         $scope.params.constraints.coverage[meta.progs.short[i]] = {};
         $scope.params.constraints.coverage[meta.progs.short[i]].use = false;
