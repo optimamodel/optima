@@ -225,8 +225,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       document.getElementById('createForm').submit();
 
       // update active project
-      debugger
-      activeProject.setValue($scope.projectParams.name);
+      activeProject.setActiveProjectFor($scope.projectParams.name, UserManager.data);
 
       // Hack to wait for the project to be created.
       // There is not easy way to intercept the completion of the form submission...

@@ -3,7 +3,7 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
-  module.controller('ProjectOpenController', function ($scope, $http, activeProject, projects, modalService) {
+  module.controller('ProjectOpenController', function ($scope, $http, activeProject, projects, modalService, UserManager) {
 
     $scope.projects = _.map(projects.projects, function(project){
       project.creation_time = Date.parse(project.creation_time);
@@ -23,7 +23,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             alert(response.reason);
             return;
           }
-          activeProject.setValue(name);
+          activeProject.setActiveProjectFor(name, UserManager.data);
         });
     };
 
@@ -54,9 +54,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
           $scope.projects.splice(index, 1);
 
-          if (activeProject.name === name) {
-            activeProject.setValue('');
-          }
+          activeProject.ifActiveResetFor(name, UserManager.data);
         })
         .error(function () {
           alert('Could not remove the project');
