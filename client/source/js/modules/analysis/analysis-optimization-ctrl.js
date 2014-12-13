@@ -67,7 +67,8 @@ define([
       $scope.params.constraints.decrease = {};
       $scope.params.constraints.coverage = {};
 
-      for ( var j = 0; j < meta.progs.short.length; j++ ) {
+      // Initialize program constraints models
+      for ( var i = 0; i < meta.progs.short.length; i++ ) {
         $scope.params.constraints.decrease[meta.progs.short[i]] = {};
         $scope.params.constraints.decrease[meta.progs.short[i]].use = false;
         $scope.params.constraints.decrease[meta.progs.short[i]].by = 100;
