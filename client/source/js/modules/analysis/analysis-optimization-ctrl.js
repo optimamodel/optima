@@ -69,7 +69,7 @@ define([
       $scope.params.constraints.coverage = {};
 
       // Initialize program constraints models
-      for ( var i = 0; i < meta.progs.short.length; i++ ) {
+      for ( var j = 0; j < meta.progs.short.length; j++ ) {
         $scope.params.constraints.decrease[meta.progs.short[i]] = {};
         $scope.params.constraints.decrease[meta.progs.short[i]].use = false;
         $scope.params.constraints.decrease[meta.progs.short[i]].by = 100;
@@ -83,26 +83,6 @@ define([
         $scope.params.constraints.coverage[meta.progs.short[i]].level = 0;
         $scope.params.constraints.coverage[meta.progs.short[i]].year = undefined;
       }
-
-      $scope.pieoptions = {
-          chart: {
-              type: 'pieChart',
-              height: 350,
-              x: function(d){return d.key;},
-              y: function(d){return d.y;},
-              showLabels: false,
-              transitionDuration: 500,
-              labelThreshold: 0.01,
-              legend: {
-                  margin: {
-                      top: 5,
-                      right: 35,
-                      bottom: 5,
-                      left: 0
-                  }
-              }
-          }
-      };
 
     $scope.lineStyles = ['__blue', '__green', '__red', '__orange',
       '__violet', '__black', '__light-orange', '__light-green'];
@@ -163,15 +143,23 @@ define([
     };
 
     // updates pies charts data
-    var preparePieCharts = function (data) {
+    /**
+     *
+     */
+    var prepareRadarChart = function (data) {
+
       if (data.pie1 === undefined || data.pie2 === undefined) return;
-      $scope.piedata1 = _(data.pie1.val).map(function (value, index) {
-        return { y: value, key: data.legend[index] };
+
+      var graphData = [{axes: []}, {axes: []}];
+
+      graphData[0].axes = _(data.pie1.val).map(function (value, index) {
+        return { value: value, axis: data.legend[index] };
       });
 
-      $scope.piedata2 = _(data.pie2.val).map(function (value, index) {
-        return { y: value, key: data.legend[index] };
+      graphData[1].axes = _(data.pie2.val).map(function (value, index) {
+        return { value: value, axis: data.legend[index] };
       });
+      $scope.radarData = graphData;
     };
 
     /**
@@ -259,7 +247,7 @@ define([
         cachedResponse = data;
         $scope.optimisationGraphs = prepareOptimisationGraphs(data.graph);
         $scope.financialGraphs = prepareFinancialGraphs(data.graph);
-        preparePieCharts(data.pie);
+        prepareRadarChart(data.pie);
       }
     };
 

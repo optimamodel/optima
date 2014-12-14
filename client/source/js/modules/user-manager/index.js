@@ -7,7 +7,7 @@ define([
 
   return angular.module('app.user-manager', ['app.resources.user'])
 
-    .service('UserManager', function ($window, User) {
+    .service('UserManager', function ($window, User, localStorage) {
       var user_manager = {
         isLoggedIn: false,
         isAdmin: false,
@@ -26,8 +26,8 @@ define([
         },
         logout: function () {
           User.logout(function () {
+            angular.module('app').logout();
             user_manager.clean();
-            $window.location = '/#/login';
           });
         }
       };
