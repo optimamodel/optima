@@ -65,12 +65,18 @@ define([
       $scope.params.constraints.dontstopart = true;
 
       $scope.params.constraints.decrease = {};
+      $scope.params.constraints.increase = {};
       $scope.params.constraints.coverage = {};
 
+      // Initialize program constraints models
       for ( var i = 0; i < meta.progs.short.length; i++ ) {
         $scope.params.constraints.decrease[meta.progs.short[i]] = {};
         $scope.params.constraints.decrease[meta.progs.short[i]].use = false;
         $scope.params.constraints.decrease[meta.progs.short[i]].by = 100;
+
+        $scope.params.constraints.increase[meta.progs.short[i]] = {};
+        $scope.params.constraints.increase[meta.progs.short[i]].use = false;
+        $scope.params.constraints.increase[meta.progs.short[i]].by = 100;
 
         $scope.params.constraints.coverage[meta.progs.short[i]] = {};
         $scope.params.constraints.coverage[meta.progs.short[i]].use = false;
@@ -98,38 +104,8 @@ define([
           }
       };
 
-      $scope.lineoptions = {
-        chart: {
-          type: 'lineChart',
-          height: 200,
-          margin: {
-            top: 20,
-            right: 20,
-            bottom: 40,
-            left: 55
-          },
-          useInteractiveGuideline: true,
-          dispatch: {},
-          xAxis: {
-            axisLabel: 'Year',
-            tickFormat: function (d) {
-              return d3.format('d')(d);
-            }
-          },
-          yAxis: {
-            axisLabel: 'Value',
-            axisLabelDistance: 30,
-            tickFormat: function (d) {
-              return d3.format(',.2f')(d);
-            }
-          },
-          transitionDuration: 250
-        },
-        title: {
-          enable: true,
-          text: 'Title for Line Chart'
-        }
-      };
+    $scope.lineStyles = ['__blue', '__green', '__red', '__orange',
+      '__violet', '__black', '__light-orange', '__light-green'];
 
     var linesGraphOptions = {
       height: 200,
@@ -148,30 +124,8 @@ define([
         }
       },
       yAxis: {
-        axisLabel: '',
-        tickFormat: function (d) {
-          return d3.format(',.2f')(d);
-        }
+        axisLabel: ''
       }
-    };
-
-    var linedataTpl = {
-      "values": [
-        // {"x": 0, "y": 0, "series": 0},
-      ],
-      "key": "Sine Wave",
-      "color": "#ff7f0e",
-      "seriesIndex": 0
-    };
-
-    var getActiveOptions = function () {
-      return _($scope.types).where({ active: true });
-    };
-
-    var generateLineDataNvd3 = function(xData, yData, series) {
-      return _(yData).map(function (value, i) {
-        return { x: xData[i], y: value, series: series };
-      });
     };
 
     /*
@@ -208,85 +162,6 @@ define([
       return graph;
     };
 
-    var prepareLineCharts = function (response) {
-      var graphs = [], types;
-
-      if (!response) {
-        return graphs;
-      }
-
-      types = getActiveOptions();
-
-      _(types).each(function (type) {
-
-        var data = response[type.id];
-
-        if (type.total) {
-          var graph = {
-            options: angular.copy($scope.lineoptions),
-            data: [],
-            type: type,
-            title: type.name + ' - Overall'
-          };
-
-          graph.data.push({
-            "values": generateLineDataNvd3(response.tvec, data.tot.data[0], 0),
-            "key": "1",
-            "color": "#0000FF",
-            "seriesIndex": 0
-          });
-
-          graph.data.push({
-            "values": generateLineDataNvd3(response.tvec, data.tot.data[1], 1),
-            "key": "2",
-            "color": "#000000",
-            "seriesIndex": 1
-          });
-
-
-          graph.options.chart.xAxis.axisLabel = data.xlabel;
-          graph.options.chart.yAxis.axisLabel = data.tot.ylabel;
-          graph.options.title.text = data.tot.title;
-
-          graphs.push(graph);
-        }
-
-        // TODO: we're checking data because it could undefined ...
-        if (type.byPopulation && data) {
-          _(data.pops).each(function (population, populationIndex) {
-            var graph = {
-              options: angular.copy($scope.lineoptions),
-              data: [],
-              type: type
-            };
-
-            graph.data.push({
-              "values": generateLineDataNvd3(response.tvec, population.data[0], 0),
-              "key": "2",
-              "color": "#000000",
-              "seriesIndex": 0
-            });
-
-            graph.data.push({
-              "values": generateLineDataNvd3(response.tvec, population.data[1], 1),
-              "key": "2",
-              "color": "#0000FF",
-              "seriesIndex": 1
-            });
-
-            graph.options.chart.xAxis.axisLabel = data.xlabel;
-            graph.options.chart.yAxis.axisLabel = population.ylabel;
-            graph.options.title.text = population.title;
-
-            graphs.push(graph);
-          });
-        }
-
-      });
-
-      return graphs;
-    };
-
     // updates pies charts data
     var preparePieCharts = function (data) {
       if (data.pie1 === undefined || data.pie2 === undefined) return;
@@ -299,46 +174,94 @@ define([
       });
     };
 
-    var prepareCostGraphs = function(graphData) {
+    /**
+     * Regenerate graphs based on the response and type settings in the UI.
+     */
+    var prepareOptimisationGraphs = function (response) {
       var graphs = [];
 
-      _(['costcur', 'costfut']).each(function(timeCategory) {
-        if (graphData[timeCategory]!== undefined) {
-          _(['ann', 'cum']).each(function(costCategory) {
-            if (graphData[timeCategory][costCategory]!== undefined) {
-              var data = graphData[timeCategory][costCategory];
-              var graph = generateGraph(data.data, data.xdata, data.title);
+      if (!response) {
+        return graphs;
+      }
 
+      _($scope.types.population).each(function (type) {
+
+        var data = response[type.id];
+        if (data !== undefined) {
+
+          // generate graphs showing the overall data for this type
+          if (type.total) {
+            var title = data.tot.title;
+            var graph = generateGraph(data.tot.data, response.tvec, title);
+            graph.options.xAxis.axisLabel = data.xlabel;
+            graph.options.yAxis.axisLabel = data.tot.ylabel;
+            graph.legend = data.tot.legend;
+            graphs.push(graph);
+          }
+
+          // generate graphs for this type for each population
+          if (type.byPopulation) {
+            _(data.pops).each(function (population, populationIndex) {
+
+              var title = population.title;
+              var graph = generateGraph(population.data, response.tvec, title);
               graph.options.xAxis.axisLabel = data.xlabel;
-              graph.options.yAxis.axisLabel = data.ylabel;
-              graph.options.linesStyle = ['__black', '__black', '__black',
-                '__black', '__black', '__black'];
-
+              graph.options.yAxis.axisLabel = population.ylabel;
+              graph.legend = population.legend;
               graphs.push(graph);
-            }
-          });
+            });
+          }
         }
       });
+
       return graphs;
     };
 
-    // makes line graphs to recalculate and redraw
-    var updateLineGraphs = function (data) {
-      $scope.lines = prepareLineCharts(data);
-      $scope.costGraphs = prepareCostGraphs(data);
+    /**
+     * Returns a financial graph.
+     */
+    var generateFinancialGraph = function(data) {
+      var graph = generateGraph(data.data, data.xdata, data.title);
+
+      graph.options.xAxis.axisLabel = data.xlabel;
+      graph.options.yAxis.axisLabel = data.ylabel;
+      graph.options.linesStyle = ['__black', '__black', '__black',
+        '__black', '__black', '__black', '__black', '__black'];
+      return graph;
+    };
+
+    var prepareFinancialGraphs = function(graphData) {
+      var graphs = [];
+
+      _($scope.types.financial).each(function (type) {
+        // costcur = cost for current people living with HIV
+        // costfut = cost for future people living with HIV
+        // ann = annual costs
+        // cum = cumulative costs
+        if (graphData[type.id] !== undefined) {
+          if (type.annual && graphData[type.id].ann) {
+            var annualData = graphData[type.id].ann;
+            graphs.push(generateFinancialGraph(annualData));
+          }
+
+          if (type.cumulative && graphData[type.id].cum) {
+            var cumulativeData = graphData[type.id].cum;
+            graphs.push(generateFinancialGraph(cumulativeData));
+          }
+        }
+      });
+      return graphs;
     };
 
     // makes all graphs to recalculate and redraw
     var updateGraphs = function (data) {
       if (data.graph !== undefined && data.pie !== undefined) {
         cachedResponse = data;
-        updateLineGraphs(data.graph);
+        $scope.optimisationGraphs = prepareOptimisationGraphs(data.graph);
+        $scope.financialGraphs = prepareFinancialGraphs(data.graph);
         preparePieCharts(data.pie);
       }
     };
-
-
-
 
     var optimizationTimer;
 
@@ -399,13 +322,13 @@ define([
         .success(function(){ console.log("OK");});
     };
 
-    $scope.onGraphTypeChange = function (type) {
-      type.active = type.total || type.byPopulation;
-
+    // The graphs are shown/hidden after updating the graph type checkboxes.
+    $scope.$watch('types', function () {
       if (!cachedResponse || !cachedResponse.graph) return;
 
-      updateLineGraphs(cachedResponse.graph);
-    };
+      $scope.optimisationGraphs = prepareOptimisationGraphs(cachedResponse.graph);
+      $scope.financialGraphs = prepareFinancialGraphs(cachedResponse.graph);
+    }, true);
 
   });
 });

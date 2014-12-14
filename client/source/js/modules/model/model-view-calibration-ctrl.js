@@ -1,7 +1,7 @@
 define(['./module', 'underscore'], function (module, _) {
   'use strict';
 
-  module.controller('ModelViewCalibrationController', function ($scope, $http, meta) {
+  module.controller('ModelViewCalibrationController', function ($scope, $http, meta, modalService) {
 
     var plotTypes, effectNames;
 
@@ -23,8 +23,8 @@ define(['./module', 'underscore'], function (module, _) {
       $scope.hasCostCoverResponse = false;
 
       // model parameters
-      $scope.saturationCoverageLevel = 0.9;
-      $scope.knownCoverageLevel = 0.2;
+      $scope.saturationCoverageLevel = 90;
+      $scope.knownCoverageLevel = 20;
       $scope.knownFundingValue = 800000;
       $scope.xAxisMaximum = 7000000;
       $scope.behaviorWithoutMin = 0.3;
@@ -58,14 +58,13 @@ define(['./module', 'underscore'], function (module, _) {
         xAxis: {
           axisLabel: xLabel || 'X',
           tickFormat: function (d) {
-            return d3.format('s')(d);
+            // Cliff requested to lower case the unit suffixed values.
+            // e.g. 100M -> 100m
+            return d3.format('s')(d).toLowerCase();
           }
         },
         yAxis: {
-          axisLabel: yLabel || 'Y',
-          tickFormat: function (d) {
-            return d3.format(',.2f')(d);
-          }
+          axisLabel: yLabel || 'Y'
         }
       };
 
@@ -131,7 +130,6 @@ define(['./module', 'underscore'], function (module, _) {
       return graph;
     };
 
-
     /**
      * Generates ready to plot graph for a cost coverage.
      */
@@ -188,18 +186,26 @@ define(['./module', 'underscore'], function (module, _) {
       });
     };
 
+    var convertFromPercent = function (value) {
+      return value / 100;
+    };
+
+    var costCoverageParams = function () {
+      return [
+        convertFromPercent($scope.saturationCoverageLevel),
+        convertFromPercent($scope.knownCoverageLevel),
+        $scope.knownFundingValue,
+        $scope.xAxisMaximum
+      ];
+    };
+
     /**
      * Returns the current parameterised plot model.
      */
     var getPlotModel = function() {
       return {
         progname: $scope.selectedProgram.acronym,
-        ccparams: [
-          $scope.saturationCoverageLevel,
-          $scope.knownCoverageLevel,
-          $scope.knownFundingValue,
-          $scope.xAxisMaximum
-        ],
+        ccparams: costCoverageParams(),
         coparams: [
           $scope.behaviorWithoutMin,
           $scope.behaviorWithoutMax,
@@ -238,6 +244,16 @@ define(['./module', 'underscore'], function (module, _) {
       retrieveAndUpdateGraphs(model);
     };
 
+    $scope.uploadDefault = function () {
+      var message = 'Upload default cost-coverage-outcome curves will be available in a future version of Optima. We are working hard in make it happen for you!';
+      modalService.inform(
+        function (){ null }, 
+        'Okay',
+        message, 
+        'Thanks for your interest!'
+      );      
+    };
+
     /**
      * Retrieve and update graphs based on the current plot models.
      *
@@ -270,15 +286,9 @@ define(['./module', 'underscore'], function (module, _) {
      *   }
      */
     $scope.updateCurve = function (graphIndex) {
-      debugger
       $http.post('/api/model/costcoverage/effect', {
         progname: $scope.displayedProgram.acronym,
-        ccparams: _([
-          $scope.saturationCoverageLevel,
-          $scope.knownCoverageLevel,
-          $scope.knownFundingValue,
-          $scope.xAxisMaximum
-        ]).map(parseFloat),
+        ccparams: _(costCoverageParams()).map(parseFloat),
         coparams: _($scope.coParams[graphIndex]).map(parseFloat),
         effectname: effectNames[graphIndex]
       }).success(function (response) {

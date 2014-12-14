@@ -6,7 +6,6 @@ define([
   'ui.bootstrap',
   'ui.router',
   './config',
-  './modules/about/index',
   './modules/contact/index',
   './modules/auth/index',
   './modules/analysis/index',
@@ -16,15 +15,13 @@ define([
   './modules/common/save-graph-as-directive',
   './modules/d3-charts/index',
   './modules/graphs/index',
-  './modules/help/index',
   './modules/home/index',
   './modules/import-export/index',
   './modules/model/index',
-  './modules/optimization/index',
-  './modules/playground/index',
   './modules/project/index',
   './modules/user-manager/index',
   './modules/results/index',
+  './modules/ui/modal/modal-service',
   './modules/ui/index'
 ], function (angular) {
   'use strict';
@@ -32,7 +29,6 @@ define([
   return angular.module('app', [
     'angularFileUpload',
     'angular-loading-bar',
-    'app.about',
     'app.contact',
     'app.auth',
     'app.active-project',
@@ -41,17 +37,15 @@ define([
     'app.constants',
     'app.d3-charts',
     'app.graphs',
-    'app.help',
     'app.home',
     'app.import-export',
     'app.local-storage',
     'app.model',
-    'app.optimization',
-    'app.playground',
     'app.project',
     'app.results',
     'app.save-graph-as',
     'app.ui',
+    'app.ui.modal',
     'app.user-manager',
     'nvd3',
     'ui.bootstrap',
@@ -98,12 +92,15 @@ define([
         delete window.user;
       }
 
-      if (localStorage.project) {
-        activeProject.setValue(localStorage.project);
-      }
+      angular.module('app').logout = function () {
+        window.location = '/#/login';
+      };
+
+      // Set the active project if any
+      activeProject.loadProjectFor(UserManager.data);
 
       var isStatePublic = function (stateName) {
-        var publicStates = ['about', 'contact', 'help', 'login', 'register'];
+        var publicStates = ['contact', 'login', 'register'];
 
         return publicStates.indexOf(stateName) !== -1;
       };

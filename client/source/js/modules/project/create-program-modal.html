@@ -13,7 +13,7 @@
 
     <div class="section grid">
       <div class="++1" style="padding-left: 6px">
-        Short Name
+        Short name
       </div>
       <div class="5 3++">
         <input class="txbox __block" ng-model="program.short_name" required>
@@ -27,6 +27,12 @@
             Program specified in terms of unit or marginal cost instead of total cost
         </label>
       </div>
+    </div>
+
+    <div class="section grid">
+      <h3>
+        Parameters in model influenced by this program
+      </h3>
     </div>
 
     <div ng-repeat="entry in program.parameters">
@@ -65,7 +71,7 @@
     </div>
 
     <div class="section text-center">
-      <button type="button" class="btn" ng-click="addParameter()">Add Parameter</button>
+      <button type="button" class="btn" ng-click="addParameter()">Add parameter</button>
     </div>
 
 
