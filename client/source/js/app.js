@@ -1,7 +1,6 @@
 define([
   'angular',
   'angular-loading-bar',
-  'angular-nvd3',
   'ng-file-upload',
   'ui.bootstrap',
   'ui.router',
@@ -20,7 +19,6 @@ define([
   './modules/model/index',
   './modules/project/index',
   './modules/user-manager/index',
-  './modules/results/index',
   './modules/ui/modal/modal-service',
   './modules/ui/index'
 ], function (angular) {
@@ -42,12 +40,10 @@ define([
     'app.local-storage',
     'app.model',
     'app.project',
-    'app.results',
     'app.save-graph-as',
     'app.ui',
     'app.ui.modal',
     'app.user-manager',
-    'nvd3',
     'ui.bootstrap',
     'ui.router'
   ])
