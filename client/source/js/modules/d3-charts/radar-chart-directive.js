@@ -12,14 +12,14 @@ define(['./module', 'radar-chart-d3'], function (module, lala) {
       }
 
       var dimensions = {
-        height: 550,
-        width: 500
+        height: 450,
+        width: 400
       };
 
       var margin = {
-        top: 30,
+        top: 0,
         right: 0,
-        bottom: 10,
+        bottom: 0,
         left: 0
       };
 
