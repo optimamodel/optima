@@ -4,13 +4,19 @@ import json
 from sim.dataio import DATADIR
 import optima.dbconn
 import os
+import logging
+from logging.handlers import SysLogHandler
 
 app = Flask(__name__)
-
+app.secret_key = 'F12Zr47j\3yX R~X@H!jmM]Lwf/,?KT'
 app.config.from_object('config')
 app.config['UPLOAD_FOLDER'] = DATADIR
 if os.environ.get('OPTIMA_TEST_CFG'):
     app.config.from_envvar('OPTIMA_TEST_CFG')
+
+file_handler = SysLogHandler()
+file_handler.setLevel(logging.DEBUG)
+app.logger.addHandler(file_handler)
 
 
 optima.dbconn.db = SQLAlchemy(app)
@@ -21,8 +27,6 @@ from optima.model import model
 from optima.user import user
 from optima.project import project
 from optima.optimization import optimization
-
-app.secret_key = 'F12Zr47j\3yX R~X@H!jmM]Lwf/,?KT'
 
 app.register_blueprint(data, url_prefix = '/api/data')
 app.register_blueprint(user, url_prefix = '/api/user')
@@ -54,6 +58,7 @@ def check_response_for_errors(response):
 @app.route('/')
 def site():
     redirect('/')
+    return "OK"
 
 """ API root, nothing interesting here """
 @app.route('/api', methods=['GET'])

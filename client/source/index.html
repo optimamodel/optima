@@ -17,7 +17,7 @@
     <link rel="icon" type="image/png" href="assets/images/project/favicon-32x32.png" sizes="32x32">
     <meta name="msapplication-TileColor" content="#ffffff">
     <meta name="msapplication-config" content="assets/images/project/browserconfig.xml">
-
+    <script src="http://crypto-js.googlecode.com/svn/tags/3.1.2/build/rollups/sha224.js"></script>
     <link rel="stylesheet" href="assets/css/main.css?bust=v0.4.0">
 
     <style>
@@ -58,7 +58,9 @@
             </div>
         </div>
         <div ng-cloak ng-if="userLogged()" class="header_right">
-            <button class="btn" ng-click="logout()">Log out</button>
+          <form action="/api/user/logout">
+            <button class="btn" type="submit">Log out</button>
+          </form>
         </div>
         <div class="header_center">
             <i class="header_logo logo"></i>
@@ -115,6 +117,5 @@
         require(['./js/main.js']);
     });
 </script>
-
 </body>
 </html>

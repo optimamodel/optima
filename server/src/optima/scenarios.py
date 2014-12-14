@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, helpers
+from flask import Blueprint, request, jsonify, helpers, current_app
 import json
 import traceback
 from sim.optimize import optimize
@@ -47,7 +47,7 @@ def get_scenario_params():
         except:
             continue
 
-    print ("real_params:%s" % real_params)
+    current_app.logger.debug("real_params:%s" % real_params)
     return json.dumps({"params":real_params})
 
 """
@@ -58,7 +58,7 @@ Gets a list of scenarios defined by the user, produces graphs out of them and se
 @check_project_name
 def runScenarios():
     data = json.loads(request.data)
-    print("/api/analysis/scenarios/run %s" % data)
+    current_app.logger.debug("/api/analysis/scenarios/run %s" % data)
     # get project name
     project_name = request.project_name
     if not project_exists(project_name):
@@ -77,7 +77,7 @@ def runScenarios():
         D = runscenarios(**args)
         D_dict = D.toDict()
         if dosave:
-            print("model: %s" % project_name)
+            current_app.logger.debug("model: %s" % project_name)
             save_model(project_name, D_dict)
     except Exception, err:
         var = traceback.format_exc()

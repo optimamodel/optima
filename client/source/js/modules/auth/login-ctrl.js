@@ -13,13 +13,14 @@ define(['./module'], function (module) {
       }
 
       $scope.error = '';
+      var hashed_password = CryptoJS.SHA224($scope.password).toString();
 
       User.login({
         email: $scope.email,
-        password: $scope.password
+        password: hashed_password
       },
         // success
-        function (user) {
+        function (response) {
           $window.location = '/';
         },
         // error
