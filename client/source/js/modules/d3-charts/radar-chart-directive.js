@@ -1,4 +1,4 @@
-define(['./module', 'radar-chart-d3'], function (module, lala) {
+define(['./module', 'radar-chart-d3'], function (module) {
   'use strict';
 
   module.directive('radarChart', function (d3Charts) {
