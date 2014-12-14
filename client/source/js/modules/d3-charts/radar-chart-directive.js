@@ -11,21 +11,21 @@ define(['./module', 'radar-chart-d3'], function (module) {
         rootElement.find("svg").remove();
       }
 
-      var dimensions = {
-        height: 450,
+      var chartSize = {
+        height: 400,
         width: 400
       };
 
       var margin = {
-        top: 0,
-        right: 0,
+        top: 10,
+        right: 20,
         bottom: 0,
-        left: 0
+        left: 20
       };
 
-      var chartSize = {
-        width: dimensions.width - margin.left - margin.right,
-        height: dimensions.height - margin.top - margin.bottom
+      var dimensions = {
+        width: chartSize.width + margin.left + margin.right,
+        height: chartSize.height + margin.top + margin.bottom
       };
 
       svg = d3Charts.createSvg(rootElement[0], dimensions, margin);
@@ -33,7 +33,7 @@ define(['./module', 'radar-chart-d3'], function (module) {
       chart.config({
         w: chartSize.width,
         h: chartSize.height,
-        radius: 2,
+        radius: 3,
         color: d3.scale.ordinal().range(['#0024ff', '#2ca02c'])
       });
       svg.append('g').classed('focus', 1).datum(data).call(chart);
