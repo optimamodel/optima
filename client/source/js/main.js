@@ -24,7 +24,7 @@ define([
         };
 
         User.getCurrent(function (user) {
-          window.user = user;
+          window.user = user;  // no-no flag, we should be using the UserManager here, not a global
         }).$promise.then(bootstrap, bootstrap);
 
       }]);
