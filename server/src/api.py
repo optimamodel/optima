@@ -8,18 +8,16 @@ import logging
 from logging.handlers import SysLogHandler
 
 app = Flask(__name__)
+
 app.secret_key = 'F12Zr47j\3yX R~X@H!jmM]Lwf/,?KT'
+
 app.config.from_object('config')
 app.config['UPLOAD_FOLDER'] = DATADIR
 if os.environ.get('OPTIMA_TEST_CFG'):
     app.config.from_envvar('OPTIMA_TEST_CFG')
 
-file_handler = SysLogHandler()
-file_handler.setLevel(logging.DEBUG)
-app.logger.addHandler(file_handler)
-
-
 optima.dbconn.db = SQLAlchemy(app)
+
 
 from optima.scenarios import scenarios
 from optima.data import data
@@ -65,11 +63,17 @@ def site():
 def root():
     return 'Optima API v.1.0.0'
 
-def init_db():
+def init_db():   
     optima.dbconn.db.create_all()
 
+def init_logger():
+    app.logger.addHandler(logging.StreamHandler())
+    app.logger.setLevel(logging.DEBUG)
+
 if __name__ == '__main__':
+    init_logger()
     init_db()
     app.run(threaded=True, debug=True)
 else:
+    init_logger()
     init_db()
