@@ -92,9 +92,12 @@ define([
         delete window.user;
       }
 
-      if (localStorage.project) {
-        activeProject.setValue(localStorage.project);
-      }
+      angular.module('app').logout = function () {
+        window.location = '/#/login';
+      };
+
+      // Set the active project if any
+      activeProject.loadProjectFor(UserManager.data);
 
       var isStatePublic = function (stateName) {
         var publicStates = ['contact', 'login', 'register'];

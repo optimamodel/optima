@@ -1,3 +1,7 @@
+/**
+ * app.home defines the module and controller for the home URI of the app
+ * Makes the app to work either on a project that might be set or a defalut welcome view.
+ */
 define([
   'angular',
   'ui.router',
