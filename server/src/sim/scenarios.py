@@ -13,7 +13,7 @@ def runscenarios(D, scenariolist=None, verbose=2):
     ugly since some of it is duplicated between getparvalues() (not used here, but
     used for the GUI) and makescenarios().
         
-    Version: 2014nov27 by cliffk
+    Version: 2014dec02 by cliffk
     """
     
     from model import model
@@ -61,18 +61,49 @@ def makescenarios(D, scenariolist, verbose=2):
         for par in range(len(scenariolist[scen].pars)):
             thesepars = scenariolist[scen].pars[par] # Shorten name
             data = getnested(scenariopars[scen].M, thesepars.names)
-            if ndim(data)>1: newdata = data[thesepars.pops] # If it's more than one dimension, use population data too
-            else: newdata = data # If it's not, just use the whole thing
+            if ndim(data)>1:
+                if thesepars.pops < len(data):
+                    newdata = data[thesepars.pops] # If it's more than one dimension, use population data too
+                else:
+                    newdata = data[:] # Get all populations
+            else:
+                newdata = data # If it's not, just use the whole thing
+            
+            # Get current values
             initialindex = findinds(D.opt.tvec, thesepars.startyear)
             finalindex = findinds(D.opt.tvec, thesepars.endyear)
-            initialvalue = newdata[initialindex] if thesepars.startval == -1 else thesepars.startval 
-            finalvalue = newdata[finalindex] if thesepars.endval == -1 else thesepars.endval
+            if thesepars.startval == -1:
+                if ndim(newdata)==1: initialvalue = newdata[initialindex]
+                else: initialvalue = newdata[:,initialindex].mean(axis=0) # Get the mean if multiple populations
+            else:
+                initialvalue = thesepars.startval
+            if thesepars.endval == -1:
+                if ndim(newdata)==1: finalvalue = newdata[finalindex]
+                else: finalvalue = newdata[:,finalindex].mean() # Get the mean if multiple populations
+            else:
+                finalvalue = thesepars.endval 
+            
+            # Set new values
             npts = finalindex-initialindex
             newvalues = linspace(initialvalue, finalvalue, npts)
-            newdata[initialindex:finalindex] = newvalues
-            newdata[finalindex:] = newvalues[-1] # Fill in the rest of the array with the last value
-            if ndim(data)>1: data[thesepars.pops] = newdata # If it's multidimensional, only reset this one population
-            else: data = newdata # Otherwise, reset the whole thing
+            if ndim(newdata)==1:
+                newdata[initialindex:finalindex] = newvalues
+                newdata[finalindex:] = newvalues[-1] # Fill in the rest of the array with the last value
+                if ndim(data)==1:
+                    data = newdata
+                else:
+                    data[thesepars.pops] = newdata
+            else:
+                for p in range(len(newdata)):
+                    newdata[p,initialindex:finalindex] = newvalues
+                    newdata[p,finalindex:] = newvalues[-1] # Fill in the rest of the array with the last value
+            
+            # Update data
+            if ndim(data)>1 and ndim(newdata)==1:
+                data[thesepars.pops] = newdata # Data is multiple populations, but we're only resetting one
+            else:
+                data = newdata # In all other cases, reset the whole thing (if both are 1D, or if both are 2D
+
             setnested(scenariopars[scen].M, thesepars.names, data)
                 
     return scenariopars
@@ -126,7 +157,7 @@ def defaultscenarios(D, verbose=2):
     scenariolist[2].name = 'No needle sharing'
     scenariolist[2].pars = [struct()]
     scenariolist[2].pars[0].names = ['sharing']
-    scenariolist[2].pars[0].pops = 2
+    scenariolist[2].pars[0].pops = 7
     scenariolist[2].pars[0].startyear = 2002
     scenariolist[2].pars[0].endyear = 2015
     scenariolist[2].pars[0].startval = 0.0
@@ -143,13 +174,17 @@ def getparvalues(D, scenariopars):
     
     defaultvals = getparvalues(D, scenariolist[1].pars[2])
     
-    Version: 2014nov27 by cliffk
+    Version: 2014dec02 by cliffk
     """
     from numpy import ndim
     original = getnested(D.M, scenariopars.names)
-    if ndim(original)>1: original = original[scenariopars.pops] # If it's more than one dimension, use population data too
+    if ndim(original)>1:
+        if scenariopars.pops<len(original):
+            original = original[scenariopars.pops] # If it's a valid population, just use it
+        else:
+            original = original[:,:].mean(axis=0) # If multiple populations, take the mean along first axis
     initialindex = findinds(D.opt.tvec, scenariopars.startyear)
     finalindex = findinds(D.opt.tvec, scenariopars.endyear)
-    startval = original[initialindex]
-    endval = original[finalindex]
+    startval = original[initialindex].tolist()[0]
+    endval = original[finalindex].tolist()[0]
     return [startval, endval]

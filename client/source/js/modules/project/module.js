@@ -1,3 +1,8 @@
+/**
+ * ProjectOpenController can set a project as active 
+ * and allows to remove and create new projects.
+ */
+
 define([
   'angular',
   'ui.router',
@@ -24,7 +29,7 @@ define([
           controller: 'ProjectCreateController',
           resolve: {
             parametersResponse: function($http) {
-              return $http.get('/api/analysis/scenarios/params');
+              return $http.get('/api/project/params');
             }
           }
         })
@@ -39,5 +44,4 @@ define([
           }
         });
     });
-
 });

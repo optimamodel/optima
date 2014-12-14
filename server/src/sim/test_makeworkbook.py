@@ -1,6 +1,6 @@
 import os
 import unittest
-from makeworkbook import OptimaWorkbook, SheetRange, TitledRange, make_populations_range, make_ref_years_range
+from makeworkbook import OptimaWorkbook, SheetRange, TitledRange, make_populations_range, make_ref_years_range, OptimaGraphTable
 import xlsxwriter
 
 populations = [ \
@@ -42,6 +42,18 @@ class TestOptimaWorkbook(unittest.TestCase):
         content = make_populations_range('Populations', populations)
         content_range = TitledRange(test_sheet, 0, content)
         ref_content = make_ref_years_range('Coverage', content_range, 2000, 2015)
+
+class TestOptimaGraphTable(unittest.TestCase):
+
+    def test_create_table(self):
+        table = OptimaGraphTable('Beautiful graph', [{'title':'one', 'data':[1,2,3]}, \
+            {'title':'two', 'data':[2,3,5]},{'title':'three', 'data':["a","b","c"]}])
+        path = '/tmp/test_graph.xlsx'
+        if os.path.exists(path):
+          os.remove(path)
+        table.create(path)
+        self.assertTrue(os.path.exists(path))
+
 
 if __name__ == '__main__':
     unittest.main()

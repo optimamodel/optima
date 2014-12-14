@@ -32,7 +32,7 @@
             <div class="elastic_col __va-middle" style="padding:0px 0px 0px 20px;">
                 <label>
                     <input type="radio" name="artcontinue" ng-model="params.objectives.artcontinue" value="1">
-                    No one who initiates treatment is to stop receiving ART, except by natural attrition
+                  During the program period, no one who initiates treatment is to stop ART, except by natural attrition
                 </label><br>
                 <label>
                     <input type="radio" name="artcontinue" ng-model="params.objectives.artcontinue" value="2">
@@ -70,7 +70,7 @@
 
 <hr>
 
-<div class="section grid">
+<div class="section">
     <h2>Optimization type</h2>
     <div class="float-left margin-left-s">
         <label class="checkbox-inline">
@@ -89,7 +89,7 @@
 </div>
 
 
-<hr>
+<hr style="clear: both; padding-top: 10px">
 
 
 <div class="section" ng-if="params.objectives.what == 'outcome'">
@@ -388,10 +388,10 @@
                     {{ p }}
                 </td>
                 <td>
-                    <input class="txbox __inline __s" ng-change="params.constraints.decrease[programCodes[$index]].use=true" ng-model="params.constraints.decrease[programCodes[$index]].by">%
+                    <input class="txbox __inline __s" type="number" ng-change="params.constraints.decrease[programCodes[$index]].use=true" ng-model="params.constraints.decrease[programCodes[$index]].by">%
                 </td>
                 <td>
-                    <input class="txbox __inline __s" ng-change="params.constraints.increase[programCodes[$index]].use=true" ng-model="params.constraints.decrease[programCodes[$index]].by">%
+                    <input class="txbox __inline __s" type="number" ng-change="params.constraints.increase[programCodes[$index]].use=true" ng-model="params.constraints.increase[programCodes[$index]].by">%
                 </td>
             </tr>
             </tbody>
@@ -416,10 +416,10 @@
                     {{ p }}
                 </td>
                 <td>
-                    <input class="txbox __inline __s" ng-change="params.constraints.decrease[programCodes[$index]].use=true" ng-model="params.constraints.decrease[programCodes[$index]].by">%
+                    <input class="txbox __inline __s" type="number" ng-change="params.constraints.decrease[programCodes[$index]].use=true" ng-model="params.constraints.decrease[programCodes[$index]].by">%
                 </td>
                 <td>
-                    <input class="txbox __inline __s" ng-change="params.constraints.increase[programCodes[$index]].use=true" ng-model="params.constraints.decrease[programCodes[$index]].by">%
+                    <input class="txbox __inline __s" type="number" ng-change="params.constraints.increase[programCodes[$index]].use=true" ng-model="params.constraints.increase[programCodes[$index]].by">%
                 </td>
             </tr>
             </tbody>
@@ -508,18 +508,14 @@
                 <div class="grid">
                     <div class="6" ng-if="piedata1">
                         <h2>Original allocation</h2>
-                        <button class="btn" onclick="openFileOption1();return;">Export figure</button>
-                        <button class="btn" onclick="openFileOption1();return;">Export data</button>
                         <div class="chart-container">
-                            <nvd3 data="piedata1" options="pieoptions"></nvd3>
+                            <nvd3 data="piedata1" options="pieoptions" save-graph-as></nvd3>
                         </div>
                     </div>
                     <div class="6" ng-if="piedata2">
                         <h2>Optimal allocation</h2>
-                        <button class="btn" onclick="openFileOption1();return;">Export figure</button>
-                        <button class="btn" onclick="openFileOption1();return;">Export data</button>
                         <div class="chart-container">
-                            <nvd3 data="piedata2" options="pieoptions"></nvd3>
+                            <nvd3 data="piedata2" options="pieoptions" save-graph-as></nvd3>
                         </div>
                     </div>
                 </div>
@@ -527,40 +523,23 @@
 
             <div class="well section">
                 <div class="grid">
-                    <div class="section cf">
-                        <h1>Results</h1>
+                    <type-selector types="types"></type-selector>
 
-                        <div class="3" ng-repeat="type in types" style="padding-bottom: 20px">
-                            <b>{{ type.name }}</b>
-                            <div>
-                                <label class="checkbox-inline">
-                                    <input type="checkbox" ng-model="type.total" ng-change="onGraphTypeChange(type)">
-                                    Overall
-                                </label>
-                            </div>
-                            <div>
-                                <label class="checkbox-inline">
-                                    <input type="checkbox" ng-model="type.byPopulation" ng-change="onGraphTypeChange(type)">
-                                    Per population
-                                </label>
-                            </div>
+                    <div>
+                      <div class="chart-container __small" ng-repeat="graph in optimisationGraphs">
+                        <h3 class="text-center">{{ graph.title }}</h3>
+                        <div class="legend">
+                          <div class="legend-entry" ng-repeat="description in graph.legend">
+                            <span class="line-color-indicator line {{ lineStyles[$index] }}">•</span>
+                            {{ description }}
+                          </div>
                         </div>
-
-                    </div>
-
-                    <div class="section elastic" ng-repeat="graph in lines">
-                        <div class="elastic_col __shrink" style="width: 430px">
-                            <div class="chart-container">
-                                <nvd3 data="graph.data" options="graph.options" save-graph-as></nvd3>
-                            </div>
-                        </div>
-                        <div class="elastic_col">
-                            <h3>{{ graph.title }}</h3>
-                        </div>
+                        <div line-scatter-chart data="graph.data" options="graph.options" save-graph-as></div>
+                      </div>
                     </div>
 
                     <div>
-                      <div class="chart-container __small" ng-repeat="graph in costGraphs">
+                      <div class="chart-container __small" ng-repeat="graph in financialGraphs">
                         <h3 class="text-center">{{ graph.title }}</h3>
                         <div class="legend">
                           <div class="legend-entry" ng-repeat="description in graph.legend">

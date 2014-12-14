@@ -5,8 +5,11 @@ from sim.optimize import optimize
 from sim.bunch import unbunchify
 from sim.bunch import bunchify
 from sim.scenarios import runscenarios
-from utils import load_model, save_model, project_exists, check_project_name
-from flask.ext.login import login_required
+from utils import load_model, save_model, project_exists, check_project_name, report_exception
+from flask.ext.login import login_required, current_user
+from dbconn import db
+from dbmodels import ProjectDb, WorkingProjectDb
+
 
 """ route prefix: /api/analysis/scenarios """
 scenarios = Blueprint('scenarios',  __name__, static_folder = '../static')
@@ -20,10 +23,32 @@ def record_params(setup_state):
 
 @scenarios.route('/params')
 @login_required
+@check_project_name
+@report_exception()
 def get_scenario_params():
     from sim.parameters import parameters
+    from sim.scenarios import getparvalues
     scenario_params = parameters()
-    return json.dumps({"params":scenario_params})
+    real_params = []
+    user_id = current_user.id
+    proj = ProjectDb.query.filter_by(user_id=user_id, name=request.project_name).first()
+    D = bunchify(proj.model)
+    db.session.close()
+    pops_short = [item['short_name'] for item in proj.populations]
+
+    for param in scenario_params:
+        if not param['modifiable']: continue
+        item = bunchify({'names':param['keys'], 'pops':0, 'startyear':proj.datastart, 'endyear':proj.dataend})
+        val_pair = None
+        try:
+            val_pair = getparvalues(D, item)
+            param['values'] = val_pair
+            real_params.append(param)
+        except:
+            continue
+
+    print ("real_params:%s" % real_params)
+    return json.dumps({"params":real_params})
 
 """
 Gets a list of scenarios defined by the user, produces graphs out of them and sends back

@@ -1,1 +1,0 @@
-define(['./playground-ctrl'], function () {});

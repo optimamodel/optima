@@ -1,4 +1,4 @@
-define(['./module'], function (module) {
+define(['./module', './scale-helpers'], function (module, scaleHelpers) {
   'use strict';
 
   module.directive('lineScatterChart', function (d3Charts) {
@@ -33,6 +33,7 @@ define(['./module'], function (module) {
       var graphsScales = [];
       var yMax = 0;
       var xMax = 0;
+      var yMin = Number.POSITIVE_INFINITY;
       var xMin = Number.POSITIVE_INFINITY;
       var scatterChartInstance;
 
@@ -45,6 +46,7 @@ define(['./module'], function (module) {
         graphsScales.push(scales);
         yMax = Math.max(yMax, scales.y.domain()[1]);
         xMax = Math.max(xMax, scales.x.domain()[1]);
+        yMin = Math.min(yMin, scales.y.domain()[0]);
         xMin = Math.min(xMin, scales.x.domain()[0]);
       });
 
@@ -55,14 +57,20 @@ define(['./module'], function (module) {
         graphsScales.push(scatterScale);
         yMax = Math.max(yMax, scatterScale.y.domain()[1]);
         xMax = Math.max(xMax, scatterScale.x.domain()[1]);
+        yMin = Math.min(yMin, scatterScale.y.domain()[0]);
         xMin = Math.min(xMin, scatterScale.x.domain()[0]);
       }
 
       // normalizing all graphs scales to include maximum possible x and y
       _(graphsScales).each(function (scale) {
         scale.y.domain([0, yMax]);
-        scale.x.domain([xMin, xMax]);
+        scale.x.domain([Math.floor(xMin), Math.ceil(xMax)]);
       });
+
+      options.yAxis.tickFormat = function (value) {
+        var format = scaleHelpers.evaluateTickFormat(yMin, yMax);
+        return scaleHelpers.customTickFormat(value, format);
+      };
 
       d3Charts.drawAxes(
         graphsScales[0],
