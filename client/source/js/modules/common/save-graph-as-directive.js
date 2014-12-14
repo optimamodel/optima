@@ -75,28 +75,24 @@ define(['angular', 'underscore', 'saveAs'], function (angular, _, saveAs) {
           };
 
           scope.linesExport = function (graph){
-            var low, line, high;
             var exportable = {
               name: graph.title,
               columns: []
             };
 
             var lineTitles = graph.legend? graph.legend : ["line", "high", "low"];
-            line = graph.data.lines[0];
-            high = graph.data.lines[1];
-            low = graph.data.lines[2];
 
             // The X of the points are only sent in one column and we collect them from any of the lines
             var xOfPoints = {};
             xOfPoints['title'] = graph.options.xAxis.axisLabel;
-            xOfPoints['data'] = _.map(line,function(point,j){ return point[0] });
+            xOfPoints['data'] = _.map(graph.data.lines[0],function(point,j){ return point[0] });
             exportable.columns.push(xOfPoints);
 
             _(graph.data.lines).each(function(lineData, index) {
               // Collecting the Y of the points for the line
               var yOfLinePoints = {};
               yOfLinePoints['title'] = lineTitles[index];
-              yOfLinePoints['data'] = _.map(line,function(point,j){ return point[1] });
+              yOfLinePoints['data'] = _.map(lineData,function(point,j){ return point[1] });
               exportable.columns.push(yOfLinePoints);
             });
 
@@ -153,7 +149,10 @@ define(['angular', 'underscore', 'saveAs'], function (angular, _, saveAs) {
             })
             .on('click', '.data', function (e) {
               e.preventDefault();
-              scope.exportFrom(scope.graph);
+              //a big ugly hack to distinguish between cost and covariance graphs.
+              //they are both in the same ng-repeat scope :-(
+              var target = attrs['variant']=='coGraph'? scope.coGraph: scope.graph; 
+              scope.exportFrom(target);
             });
         }
       };
