@@ -21,7 +21,6 @@ define([
       $scope.userLogged = function () {
         return UserManager.isLoggedIn;
       };
-      $scope.logout = UserManager.logout;
 
       $scope.activeProject = activeProject;
 
@@ -106,9 +105,9 @@ define([
 
               var message = data.file + " was successfully uploaded.\n" + data.result;
               modalService.inform(
-                function (){ console.log('informed!') }, 
+                function (){ console.log('informed!') },
                 'Okay',
-                message, 
+                message,
                 'Upload completed'
               );
           } else {
