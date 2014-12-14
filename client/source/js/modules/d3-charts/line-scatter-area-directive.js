@@ -67,7 +67,6 @@ define(['./module', './scale-helpers'], function (module, scaleHelpers) {
         areaChartInstance.draw(areaData);
         lineChartInstance.draw(lineData);
         scatterChartInstance.draw(scatterData);
-
       }
     };
   });
