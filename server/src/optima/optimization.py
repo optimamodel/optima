@@ -9,7 +9,7 @@ Optimization Module
 3. Save current optimization model
 4. Revert to the last saved model
 """
-from flask import request, jsonify, Blueprint
+from flask import request, jsonify, Blueprint, current_app
 from flask.ext.login import login_required
 from dbconn import db
 from async_calculate import CalculatingThread, sentinel
@@ -55,11 +55,11 @@ def startOptimization():
             args["timelimit"] = 10 # for the autocalibrate function
             CalculatingThread(db.engine, sentinel, current_user, project_name, timelimit, optimize, args).start()
             msg = "Starting optimization thread for user %s project %s" % (current_user.name, project_name)
-            print(msg)
+            current_app.logger.debug(msg)
             return json.dumps({"status":"OK", "result": msg, "join":True})
         else:
             current_calculation = sentinel['projects'][project_name]
-            print('sentinel object: %s' % sentinel)
+            current_app.logger.debug('sentinel object: %s' % sentinel)
             msg = "Thread for user %s project %s (%s) has already started" % (current_user.name, project_name, current_calculation)
             can_join = current_calculation==optimize.__name__
             return json.dumps({"status":"OK", "result": msg, "join":can_join})
@@ -99,7 +99,7 @@ def getWorkingModel():
         D_dict = load_model(prj_name, working_model = True, as_bunch = False)
         status = 'Running'
     else:
-        print("no longer optimizing")
+        current_app.logger.debug("no longer optimizing")
         status = 'Done'
     result = get_optimization_results(D_dict)
     result['status'] = status

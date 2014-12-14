@@ -1,6 +1,6 @@
 import os
 from sim.dataio import DATADIR, PROJECTDIR, TEMPLATEDIR, loaddata, savedata, upload_dir_user
-from flask import helpers
+from flask import helpers, current_app
 from flask.ext.login import current_user
 from functools import wraps
 from flask import request, jsonify
@@ -16,7 +16,6 @@ def check_project_name(api_call):
     @wraps(api_call)
     def _check_project_name(*args, **kwargs):
         reply = BAD_REPLY
-        # print(request.headers)
         try:
             project_name = request.headers['project']
         except:
@@ -54,7 +53,6 @@ def allowed_file(filename):
 
 def loaddir(app):
     loaddir = app.config['UPLOAD_FOLDER']
-    print("loaddir = %s" % loaddir)
     if not loaddir:
         loaddir = DATADIR
     return loaddir
@@ -83,32 +81,31 @@ def delete_spreadsheet(name):
   returns the model (D).
 """
 def load_model(name, as_bunch = True, working_model = False):
-    print("load_model:%s" % name)
+    current_app.logger.debug("load_model:%s" % name)
     model = None
     cu = current_user
-    print("getting project %s for user %s" % (name, cu.id))
+    current_app.logger.debug("getting project %s for user %s" % (name, cu.id))
     proj = ProjectDb.query.filter_by(user_id=cu.id, name=name).first()
     if proj is not None:
         if proj.working_project is None or working_model == False:
-            print("project %s does not have working model" % name)
+            current_app.logger.debug("project %s does not have working model" % name)
             model = proj.model
         else:
-            print("project %s has working model" % name)
+            current_app.logger.debug("project %s has working model" % name)
             model = proj.working_project.model
         if model is None or len(model.keys())==0:
-            print("model %s is None" % name)
+            current_app.logger.debug("model %s is None" % name)
         else:
             if as_bunch:
                 from sim.bunch import Bunch
-                print("convert model %s to Bunch" % name)
                 model = Bunch.fromDict(model)
     else:
-        print("no such project found: %s for user %s %s" % (name, cu.id, cu.name))
+        current_app.logger.warning("no such project found: %s for user %s %s" % (name, cu.id, cu.name))
     db.session.close() #very important!
     return model
 
 def save_model_db(name, model):
-    print("save_model_db %s" % name)
+    current_app.logger.debug("save_model_db %s" % name)
 
     from sim.bunch import Bunch
     cu = current_user
@@ -138,7 +135,7 @@ def save_working_model(name, model):
     db.session.commit()
 
 def save_working_model_as_default(name):
-    print("save_working_model_as_default %s" % name)
+    current_app.logger.debug("save_working_model_as_default %s" % name)
 
     from sim.bunch import Bunch
     cu = current_user
@@ -159,7 +156,7 @@ def save_working_model_as_default(name):
     return model
 
 def revert_working_model_to_default(name):
-    print("revert_working_model_to_default %s" % name)
+    current_app.logger.debug("revert_working_model_to_default %s" % name)
 
     from sim.bunch import Bunch
     cu = current_user
