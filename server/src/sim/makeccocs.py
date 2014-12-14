@@ -14,6 +14,7 @@ from rtnorm import rtnorm
 from bunch import float_array
 from printv import printv
 #from scipy.stats import truncnorm
+from parameters import parameters, parameter_name
 
 ## Set defaults for testing
 default_progname = u'NSP'
@@ -261,7 +262,10 @@ def makeco(D, progname=default_progname, effectname=default_effectname, coparams
  #           effectname[3] = [zerosample, fullsample] # There is existing info here, overwrite
  #       D.programs[progname][effectnumber] = effectname
 
-        ## Plot results (probably delete once in GUI)                            
+        ## Plot results (probably delete once in GUI)  
+        parameters_map = parameters()
+        plot_title = parameter_name(parameters_map,effectname[0][1])+ ' - ' + effectname[1][0]
+                          
         if makeplot:
             figure()
             hold(True)
@@ -269,7 +273,7 @@ def makeco(D, progname=default_progname, effectname=default_effectname, coparams
             plot(xvalsco, ymax, 'k--', lw = 2)
             plot(xvalsco, ymin, 'k--', lw = 2)
             plot(coverage, outcome, 'ro')
-            title(effectname[0][1]+ ' ' + effectname[1][0])
+            title(plot_title)
             xlabel('proportion covered')
             ylabel('outcome')
     
@@ -282,7 +286,7 @@ def makeco(D, progname=default_progname, effectname=default_effectname, coparams
         plotdata['ylinedata3'] = ymin  # Y data for third line on plot
         plotdata['xscatterdata'] = coverage # X scatter data
         plotdata['yscatterdata'] = outcome # Y scatter data
-        plotdata['title'] = effectname[0][1]+ ' ' + effectname[1][0]
+        plotdata['title'] = plot_title
         plotdata['xlabel'] = 'Proportion covered'
         plotdata['ylabel'] = 'Outcome'
     
@@ -341,7 +345,9 @@ def makecco(D=None, progname = default_progname, effectname = default_effectname
 
     # Get population info
     popname = effectname[1]
-    
+
+    parameters_map = parameters()
+
     # Only going to make cost-outcome curves if a program affects a SPECIFIC population -- otherwise will just make cost-coverage curves
     if not D.data.meta.progs.saturating[prognumber]:
         return [], [], []
@@ -412,6 +418,7 @@ def makecco(D=None, progname = default_progname, effectname = default_effectname
             totalcost = totalcost[~isnan(totalcost)]
             totalcost = totalcost[-1]
 
+        plot_title = parameter_name(parameters_map,effectname[0][1])+ ' - ' + effectname[1][0]
         ## Plot results (probably delete once in GUI)                            
         if makeplot:
             figure()
@@ -423,7 +430,7 @@ def makecco(D=None, progname = default_progname, effectname = default_effectname
             plot(xvalscco, ymin, 'k--', lw = 2)
             plot(totalcost, outcome, 'ro')
                 
-            title(effectname[0][1]+ ' ' + effectname[1][0])
+            title(plot_title)
             xlabel('USD')
             ylabel('outcome')
 
@@ -436,7 +443,7 @@ def makecco(D=None, progname = default_progname, effectname = default_effectname
         plotdata['ylinedata3'] = ymin  # Y data for fourth line plot
         plotdata['xscatterdata'] = totalcost
         plotdata['yscatterdata'] = outcome
-        plotdata['title'] = effectname[0][1]+ ' ' + effectname[1][0]
+        plotdata['title'] = plot_title
         plotdata['xlabel'] = 'USD'
         plotdata['ylabel'] = 'Outcome'
     

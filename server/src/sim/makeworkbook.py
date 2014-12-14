@@ -640,19 +640,19 @@ class OptimaGraphTable:
             print("Creating graph table %s" % self.name)
         self.book = xlsxwriter.Workbook(path)
         self.formats = OptimaFormats(self.book)
-        self.sheet = self.book.add_worksheet(self.name)
+        self.sheet = self.book.add_worksheet("GRAPH DATA")
         titles = [c['title'] for c in self.columns]
         max_row = max([len(c['data']) for c in self.columns])
-        
+        self.formats.write_block_name(self.sheet, self.name, 0)
         for i,title in enumerate(titles):
-            self.formats.write_rowcol_name(self.sheet, 0, i, title)
-        row = 0
+            self.formats.write_rowcol_name(self.sheet, 1, i, title)
+        row =0
         while row<=max_row:
             for i,col in enumerate(self.columns):
                 if row<len(col['data']):
                     data = col['data'][row]
                 else:
                     data = None
-                self.formats.write_unlocked(self.sheet, row+1, i, data)
+                self.formats.write_unlocked(self.sheet, row+2, i, data)
             row+=1
         self.book.close()

@@ -5,14 +5,20 @@ define(['angular'], function (angular) {
   'use strict';
   return angular.module('app.constants', [])
     .constant('CONFIG', {
-      GRAPH_TYPES: [
-        { id: 'prev', name: 'Prevalence', active: true, byPopulation: true, total: false },
-        { id: 'daly', name: 'DALYs', active: false, byPopulation: false, total: false },
-        { id: 'death', name: 'Deaths', active: false, byPopulation: false, total: false },
-        { id: 'inci', name: 'New infections', active: false, byPopulation: false, total: false },
-        { id: 'dx', name: 'Diagnoses', active: false, byPopulation: false, total: false },
-        { id: 'tx1', name: 'First-line treatment', active: false, byPopulation: false, total: false },
-        { id: 'tx2', name: 'Second-line treatment', active: false, byPopulation: false, total: false }
-      ]
+      GRAPH_TYPES: {
+        population: [
+          { id: 'prev', name: 'Prevalence', byPopulation: true, total: false },
+          { id: 'daly', name: 'DALYs', byPopulation: false, total: true },
+          { id: 'death', name: 'Deaths', byPopulation: false, total: true },
+          { id: 'inci', name: 'New infections', byPopulation: false, total: true },
+          { id: 'dx', name: 'Diagnoses', byPopulation: false, total: true },
+          { id: 'tx1', name: 'First-line treatment', byPopulation: false, total: true },
+          { id: 'tx2', name: 'Second-line treatment', byPopulation: false, total: true }
+        ],
+        financial: [
+          { id: 'costcur', name: 'Costs over time', annual: true, cumulative: true },
+          { id: 'costfut', name: 'Costs for post-2015 infections', annual: true, cumulative: true },
+        ]
+      }
     });
 });

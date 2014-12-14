@@ -1,12 +1,14 @@
 define([
   'angular',
   'ui.router',
-  '../resources/model'
+  '../resources/model',
+  '../ui/type-selector/index'
 ], function (angular) {
   'use strict';
 
   return angular.module('app.model', [
     'app.resources.model',
+    'app.ui.type-selector',
     'ui.router'
   ])
     .config(function ($stateProvider) {
