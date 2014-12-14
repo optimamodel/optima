@@ -35,10 +35,6 @@ define(['./module', 'angular'], function (module, angular) {
 
     $scope.types = angular.copy(CONFIG.GRAPH_TYPES);
 
-    var getActiveOptions = function () {
-      return _($scope.types).where({ active: true });
-    };
-
     $scope.enableManualCalibration = false;
 
     // to store years from UI
@@ -78,7 +74,7 @@ define(['./module', 'angular'], function (module, angular) {
       }, updateGraphs);
     };
 
-    /*
+    /**
      * Returns an array containing arrays with [x, y] for d3 line data.
      */
     var generateLineData = function(xData, yData) {
@@ -87,11 +83,11 @@ define(['./module', 'angular'], function (module, angular) {
       });
     };
 
-    /*
-    * Returns an array containing arrays with [x, y] for d3 scatter data.
-    *
-    * Empty entries are filtered out.
-    */
+    /**
+     * Returns an array containing arrays with [x, y] for d3 scatter data.
+     *
+     * Empty entries are filtered out.
+     */
     var generateScatterData = function(xData, yData) {
       return _(yData).chain()
         .map(function (value, i) {
@@ -103,12 +99,12 @@ define(['./module', 'angular'], function (module, angular) {
         .value();
     };
 
-    /*
-    * Returns an graph based on the provided yData.
-    *
-    * yData should be an array where each entry contains an array of all
-    * y-values from one line.
-    */
+    /**
+     * Returns a graph based on the provided yData.
+     *
+     * yData should be an array where each entry contains an array of all
+     * y-values from one line.
+     */
     var generateGraph = function(yData, xData, title) {
       var graph = {
         options: angular.copy(lineScatterOptions),
@@ -123,16 +119,30 @@ define(['./module', 'angular'], function (module, angular) {
       return graph;
     };
 
+    /**
+     * Returns a financial graph.
+     */
+    var generateFinancialGraph = function(data) {
+      var yData = {
+        best: data.best, high: data.high, low: data.low
+      };
+
+      var graph = generateGraph(yData, data.xdata, data.title);
+
+      graph.options.xAxis.axisLabel = data.xlabel;
+      graph.options.yAxis.axisLabel = data.ylabel;
+
+      return graph;
+    };
+
     var prepareGraphs = function (response) {
-      var graphs = [], types;
+      var graphs = [];
 
       if (!response) {
         return graphs;
       }
 
-      types = getActiveOptions();
-
-      _(types).each(function (type) {
+      _($scope.types.population).each(function (type) {
 
         var data = response[type.id];
 
@@ -176,26 +186,22 @@ define(['./module', 'angular'], function (module, angular) {
             graphs.push(graph);
           });
         }
+      });
 
+      _($scope.types.financial).each(function (type) {
         // costcur = cost for current people living with HIV
         // costfut = cost for future people living with HIV
         // ann = annual costs
         // cum = cumulative costs
-        _(['costcur', 'costfut']).each(function(timeCategory) {
-          _(['ann', 'cum']).each(function(costCategory) {
-            var data = response[timeCategory][costCategory];
-            var yData = {
-              best: data.best, high: data.high, low: data.low
-            };
+        if (type.annual) {
+          var annualData = response[type.id].ann;
+          graphs.push(generateFinancialGraph(annualData));
+        }
 
-            var graph = generateGraph(yData, data.xdata, data.title);
-
-            graph.options.xAxis.axisLabel = data.xlabel;
-            graph.options.yAxis.axisLabel = data.ylabel;
-
-            graphs.push(graph);
-          });
-        });
+        if (type.cumulative) {
+          var cumulativeData = response[type.id].cum;
+          graphs.push(generateFinancialGraph(cumulativeData));
+        }
       });
 
       return graphs;
@@ -286,10 +292,10 @@ define(['./module', 'angular'], function (module, angular) {
       angular.extend($scope.parameters.f, $scope.parameters.cache.f);
     };
 
-    $scope.onGraphTypeChange = function (type) {
-      type.active = type.total || type.byPopulation;
+    // The graphs are shown/hidden after updating the graph type checkboxes.
+    $scope.$watch('types', function () {
       updateGraphs($scope.parameters.cache.response);
-    };
+    }, true);
 
   });
 });

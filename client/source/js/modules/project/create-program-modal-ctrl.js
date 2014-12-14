@@ -12,7 +12,7 @@ define(['./module'], function (module) {
       $scope.populations = _(populations).map(function(population) {
         return {label: population.name, value: [population.internal_name]};
       });
-      $scope.populations.unshift({label: 'All Populations', value: ['ALL_POPULATIONS']});
+      $scope.populations.unshift({label: 'All populations', value: ['ALL_POPULATIONS']});
 
 
       // make sure the names are exactly the objects as in the list for the
@@ -67,6 +67,12 @@ define(['./module'], function (module) {
       if (form.$invalid) {
         alert('Please fill in the form correctly');
       } else {
+
+        // filter out empty parameters
+        $scope.program.parameters = _($scope.program.parameters).filter(function (item) {
+          return item.value.signature.length && item.value.pops.length;
+        });
+
         $modalInstance.close($scope.program);
       }
     };

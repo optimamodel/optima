@@ -90,10 +90,10 @@ def load_model(name, as_bunch = True, working_model = False):
     proj = ProjectDb.query.filter_by(user_id=cu.id, name=name).first()
     if proj is not None:
         if proj.working_project is None or working_model == False:
-            print("project %s has working model" % name)
+            print("project %s does not have working model" % name)
             model = proj.model
         else:
-            print("project %s does not have working model" % name)
+            print("project %s has working model" % name)
             model = proj.working_project.model
         if model is None or len(model.keys())==0:
             print("model %s is None" % name)
