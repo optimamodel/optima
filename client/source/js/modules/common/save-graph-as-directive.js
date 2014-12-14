@@ -111,17 +111,21 @@ define(['angular', 'underscore', 'saveAs'], function (angular, _, saveAs) {
             if(_.isEqual(Object.keys(graph.data),["line", "scatter", "area"])) { return scope.lineAndAreaExport(graph) }
             if(_.isEqual(Object.keys(graph.data),["lines", "scatter"])) { return scope.linesExport(graph) }
 
-            // to-do: this should be updated after the PR to use the modalService
-            alert('Sorry, we cannot export data from this source');
+            return null;
           };
+
+          scope.saySorry = function() {
+            // to-do: this should be updated after the PR to use the modalService
+            return alert('Sorry, this graph cannot be exported');
+          }
 
           /**
            * Exports the data of the graph in the format returned by the API
            */
           scope.exportFrom = function (graphOrUndefined){
-            if(!graphOrUndefined) { return alert('Sorry, this graph cannot be exported')}
+            if(!graphOrUndefined) { return scope.saySorry();}
             var exportable = this.getExportableFrom(graphOrUndefined);
-            if(exportable == null) { return alert('Sorry, this graph cannot be exported')}
+            if(exportable == null) { return scope.saySorry();}
       
             $http({url:'/api/project/export', 
                   method:'POST', 
