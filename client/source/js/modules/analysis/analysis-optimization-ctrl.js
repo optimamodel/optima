@@ -322,6 +322,10 @@ define([
         .success(function(){ console.log("OK");});
     };
 
+    $scope.sayNotImplemented = function() {
+      alert('This functionality is not yet implemented');
+    };
+
     // The graphs are shown/hidden after updating the graph type checkboxes.
     $scope.$watch('types', function () {
       if (!cachedResponse || !cachedResponse.graph) return;

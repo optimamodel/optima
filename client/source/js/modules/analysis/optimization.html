@@ -508,16 +508,16 @@
                 <div class="grid">
                     <div class="6" ng-if="piedata1">
                         <h2>Original allocation</h2>
-                        <button class="btn" onclick="openFileOption1();return;">Export figure</button>
-                        <button class="btn" onclick="openFileOption1();return;">Export data</button>
+                        <button class="btn" ng-click="sayNotImplemented()">Export figure</button>
+                        <button class="btn" ng-click="sayNotImplemented()">Export data</button>
                         <div class="chart-container">
                             <nvd3 data="piedata1" options="pieoptions"></nvd3>
                         </div>
                     </div>
                     <div class="6" ng-if="piedata2">
                         <h2>Optimal allocation</h2>
-                        <button class="btn" onclick="openFileOption1();return;">Export figure</button>
-                        <button class="btn" onclick="openFileOption1();return;">Export data</button>
+                        <button class="btn" ng-click="sayNotImplemented()">Export figure</button>
+                        <button class="btn" ng-click="sayNotImplemented()">Export data</button>
                         <div class="chart-container">
                             <nvd3 data="piedata2" options="pieoptions"></nvd3>
                         </div>

@@ -11,8 +11,67 @@ define(['angular', 'underscore', 'saveAs'], function (angular, _, saveAs) {
             '<button class="btn data">Export data</button>' +
             '</div>';
 
+          /**
+           * Converts array of graph points to dictionary.
+           */
+          var graphToDictionary = function(graphPoints){
+            var graphDict = {};
+            _(graphPoints).each(function(point){
+              graphDict[point[0]] = point[1];
+            });
+            return graphDict;
+          };
+
+          /**
+           * Fills array according to reference dictionary keys, 
+           * Copies values from source dictionary if key found there, otherwise creates empty entries
+           */
+          var fillFromDictionary = function(reference, source){
+            var result = [];
+            _(reference).each(function(key){
+              var nextEntry = (key in source)? source[key] : ''; // source[key] || '' would not catch '0' entries
+              result.push(nextEntry);
+            });
+            return result;
+          };
+
           scope.lineAndAreaExport = function (graph){
-            console.log('to be implemented');     
+            if (!graph.data || !graph.options) return null;
+
+            var exportable = {
+              name: graph.title,
+              columns: []
+            };
+
+            var scatter = graphToDictionary(graph.data.scatter);
+            var line = graphToDictionary(graph.data.line);
+
+            var xOfPoints = {}; // merge xPoints with scatter x points
+            xOfPoints['title'] = graph.options.xAxis.axisLabel;
+            xOfPoints['data'] = [];
+            xOfPoints['data'].push.apply(xOfPoints['data'], Object.keys(line));
+            xOfPoints['data'].push.apply(xOfPoints['data'], Object.keys(scatter));
+            xOfPoints['data'].sort();
+            exportable.columns.push(xOfPoints);
+
+            var yOfPoints = {};
+            yOfPoints['title'] = 'line'; // in theory, yAxis should be overall y title (todo for later, backend should support that)
+            yOfPoints['data'] = fillFromDictionary(xOfPoints['data'], line);
+            exportable.columns.push(yOfPoints);
+
+            _(graph.data.area).each(function(lineData, lineTitle) {
+              var nextLine = graphToDictionary(lineData);
+              var yOfPoints = {};
+              yOfPoints['title'] = lineTitle;
+              yOfPoints['data'] = fillFromDictionary(xOfPoints['data'], nextLine);
+              exportable.columns.push(yOfPoints);
+            });
+
+            var scatterPoints = {};
+            scatterPoints['title'] = "scatter";
+            scatterPoints['data'] = fillFromDictionary(xOfPoints['data'], scatter);
+            exportable.columns.push(scatterPoints);
+            return exportable;
           };
 
           scope.linesExport = function (graph){
@@ -22,9 +81,10 @@ define(['angular', 'underscore', 'saveAs'], function (angular, _, saveAs) {
               columns: []
             };
 
-            low = graph.data.lines[2];
+            var lineTitles = graph.legend? graph.legend : ["line", "high", "low"];
             line = graph.data.lines[0];
             high = graph.data.lines[1];
+            low = graph.data.lines[2];
 
             // The X of the points are only sent in one column and we collect them from any of the lines
             var xOfPoints = {};
@@ -32,23 +92,13 @@ define(['angular', 'underscore', 'saveAs'], function (angular, _, saveAs) {
             xOfPoints['data'] = _.map(line,function(point,j){ return point[0] });
             exportable.columns.push(xOfPoints);
 
-            // Collecting the Y of the points for the line
-            var yOfLinePoints = {};
-            yOfLinePoints['title'] = 'line';
-            yOfLinePoints['data'] = _.map(line,function(point,j){ return point[1] });
-            exportable.columns.push(yOfLinePoints);
-
-            // Collecting the Y of the points for the lower boundary
-            var yOfLowPoints = {};
-            yOfLowPoints['title']='low';
-            yOfLowPoints['data'] =_.map(low,function(point,j){ return point[1] }); // collects all the y values of the points
-            exportable.columns.push(yOfLowPoints);
-
-            // Collecting the Y of the points for the higher boundary
-            var yOfHighPoints = {};
-            yOfHighPoints['title']='high';
-            yOfHighPoints['data'] =_.map(high,function(point,j){ return point[1] }); // collects all the y values of the points
-            exportable.columns.push(yOfHighPoints);
+            _(graph.data.lines).each(function(lineData, index) {
+              // Collecting the Y of the points for the line
+              var yOfLinePoints = {};
+              yOfLinePoints['title'] = lineTitles[index];
+              yOfLinePoints['data'] = _.map(line,function(point,j){ return point[1] });
+              exportable.columns.push(yOfLinePoints);
+            });
 
             return exportable;
           };
