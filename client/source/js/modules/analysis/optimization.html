@@ -503,19 +503,22 @@
     <div class="well section">
         <div class="grid">
             <div class="section">
-                <h1>Allocations</h1>
+                <h1>Allocation</h1>
 
                 <div class="grid">
-                    <div class="6" ng-if="piedata1">
-                        <h2>Original allocation</h2>
+                    <div class="7" ng-if="radarData">
                         <div class="chart-container">
-                            <nvd3 data="piedata1" options="pieoptions" save-graph-as></nvd3>
-                        </div>
-                    </div>
-                    <div class="6" ng-if="piedata2">
-                        <h2>Optimal allocation</h2>
-                        <div class="chart-container">
-                            <nvd3 data="piedata2" options="pieoptions" save-graph-as></nvd3>
+                          <div class="legend" style="margin-top: 10px">
+                            <div class="legend-entry">
+                              <span class="line-color-indicator line __blue">•</span>
+                              Original Allocation
+                            </div>
+                            <div class="legend-entry">
+                              <span class="line-color-indicator line __green">•</span>
+                              Optimal Allocation
+                            </div>
+                          </div>
+                          <div radar-chart data="radarData" save-graph-as></div>
                         </div>
                     </div>
                 </div>
