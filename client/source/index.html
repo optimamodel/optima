@@ -58,7 +58,9 @@
             </div>
         </div>
         <div ng-cloak ng-if="userLogged()" class="header_right">
-            <button class="btn" ng-click="logout()">Log out</button>
+          <form action="/api/user/logout">
+            <button class="btn" type="submit">Log out</button>
+          </form>
         </div>
         <div class="header_center">
             <i class="header_logo logo"></i>

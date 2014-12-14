@@ -30,13 +30,6 @@ define([
             params: {
               path: 'login'
             }
-          },
-          logout: {
-            method: 'GET',
-            isArray: false,
-            params: {
-              path: 'logout'
-            }
           }
         }
       );
