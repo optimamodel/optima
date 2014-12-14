@@ -1,5 +1,5 @@
 import json
-from flask import Blueprint, url_for, helpers, request, jsonify, redirect
+from flask import Blueprint, url_for, helpers, request, jsonify, redirect, current_app
 from werkzeug.utils import secure_filename
 import os
 import traceback
@@ -49,11 +49,10 @@ def createProject(project_name):
 
     #session.clear() # had to commit this line to check user session
 
-    print("createProject %s" % project_name)
+    current_app.logger.debug("createProject %s" % project_name)
     data = request.form
     if data:
         data = json.loads(data['params'])
-    print(data)
 
     makeproject_args = {"projectname":project_name, "savetofile":False}
     makeproject_args['datastart'] = data.get('datastart', default_datastart)
@@ -61,7 +60,7 @@ def createProject(project_name):
     makeproject_args['econ_dataend'] = data.get('econ_dataend', default_econ_dataend)
     makeproject_args['progs'] = data.get('programs', default_progs)
     makeproject_args['pops'] = data.get('populations', default_pops)
-    print("createProject(%s)" % makeproject_args)
+    current_app.logger.debug("createProject(%s)" % makeproject_args)
 
     # get current user
     user_id = current_user.id
@@ -76,12 +75,12 @@ def createProject(project_name):
         proj.econ_dataend = makeproject_args['econ_dataend']
         proj.programs = makeproject_args['progs']
         proj.populations = makeproject_args['pops']
-        print('Updating existing project %s' % proj.name)
+        current_app.logger.debug('Updating existing project %s' % proj.name)
     else:
         # create new project
         proj = ProjectDb(project_name, user_id, makeproject_args['datastart'], makeproject_args['dataend'], \
             makeproject_args['econ_dataend'], makeproject_args['progs'], makeproject_args['pops'])
-        print('Creating new project: %s' % proj.name)
+        current_app.logger.debug('Creating new project: %s' % proj.name)
 
     D = makeproject(**makeproject_args) # makeproject is supposed to return the name of the existing file...
     proj.model = D.toDict()
@@ -108,7 +107,7 @@ def openProject(project_name):
     proj_exists = False
     try: #first check DB
         proj_exists = project_exists(project_name)
-        print("proj_exists: %s" % proj_exists)
+        current_app.logger.debug("proj_exists: %s" % proj_exists)
     except:
         proj_exists = False
     if not proj_exists:
@@ -129,7 +128,7 @@ def giveWorkbook(project_name):
     reply = BAD_REPLY
     proj_exists = False
     cu = current_user
-    print("giveWorkbook(%s %s)" % (cu.id, project_name))
+    current_app.logger.debug("giveWorkbook(%s %s)" % (cu.id, project_name))
     proj = ProjectDb.query.filter_by(user_id=cu.id, name=project_name).first()
     db.session.close()
     if proj is None:
@@ -139,7 +138,7 @@ def giveWorkbook(project_name):
         D = proj.model
         wb_name = D['G']['workbookname']
         makeworkbook(wb_name, proj.populations, proj.programs, proj.datastart, proj.dataend, proj.econ_dataend)
-        print("project %s template: %s" % (proj.name, wb_name))
+        current_app.logger.debug("project %s template: %s" % (proj.name, wb_name))
         (dirname, basename) = (upload_dir_user(TEMPLATEDIR), wb_name)
         return helpers.send_from_directory(dirname, basename)
 
@@ -223,9 +222,9 @@ Deletes the given project (and eventually, corresponding excel files)
 @login_required
 @report_exception()
 def deleteProject(project_name):
-    print("deleteProject %s" % project_name)
+    current_app.logger.debug("deleteProject %s" % project_name)
     delete_spreadsheet(project_name)
-    print("spreadsheets for %s deleted" % project_name)
+    current_app.logger.debug("spreadsheets for %s deleted" % project_name)
     # Get current user
     user_id = current_user.id
     # Get project row for current user with project name
@@ -289,14 +288,13 @@ def uploadExcel():
     import dateutil.tz
     project_name = request.project_name
     user_id = current_user.id
-    print("uploadExcel(project name: %s user:%s)" % (project_name, user_id))
+    current_app.logger.debug("uploadExcel(project name: %s user:%s)" % (project_name, user_id))
 
     reply = {'status':'NOK'}
     file = request.files['file']
 
     # getting current user path
     loaddir =  upload_dir_user(DATADIR)
-    print("loaddir = %s" % loaddir)
     if not loaddir:
         loaddir = DATADIR
     if not file:

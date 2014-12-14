@@ -88,10 +88,6 @@ define([
         delete window.user;
       }
 
-      angular.module('app').logout = function () {
-        window.location = '/#/login';
-      };
-
       // Set the active project if any
       activeProject.loadProjectFor(UserManager.data);
 
