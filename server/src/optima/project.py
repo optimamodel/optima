@@ -3,7 +3,7 @@ from flask import Blueprint, url_for, helpers, request, jsonify, redirect
 from werkzeug.utils import secure_filename
 import os
 import traceback
-from sim.dataio import upload_dir_user, DATADIR, TEMPLATEDIR
+from sim.dataio import upload_dir_user, DATADIR, TEMPLATEDIR, fullpath
 from sim.updatedata import updatedata
 from sim.makeproject import makeproject, makeworkbook
 from utils import allowed_file, project_exists, delete_spreadsheet
@@ -239,6 +239,26 @@ def deleteProject(project_name):
     db.session.commit()
 
     return jsonify({'status':'OK','reason':'Project %s deleted.' % project_name})
+
+
+"""
+saves data as Excel file 
+"""
+@project.route('/export', methods=['POST'])
+@login_required
+@report_exception()
+def exportGraph():
+    from sim.makeworkbook import OptimaGraphTable
+    data = json.loads(request.data)
+    name = data['name']
+    filename = name+'.xlsx'
+    columns = data['columns']
+    path = fullpath(filename)
+    table = OptimaGraphTable(name, columns)
+    table.create(path)
+    (dirname, basename) = os.path.split(path)
+    return helpers.send_file(path, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
 
 """
 Download example Excel file.
