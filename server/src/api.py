@@ -4,6 +4,7 @@ import json
 from sim.dataio import DATADIR
 import optima.dbconn
 import os
+import sys
 import logging
 from logging.handlers import SysLogHandler
 
@@ -63,11 +64,11 @@ def site():
 def root():
     return 'Optima API v.1.0.0'
 
-def init_db():   
+def init_db():
     optima.dbconn.db.create_all()
 
 def init_logger():
-    app.logger.addHandler(logging.StreamHandler())
+    app.logger.addHandler(logging.StreamHandler(sys.stdout))
     app.logger.setLevel(logging.DEBUG)
 
 if __name__ == '__main__':
