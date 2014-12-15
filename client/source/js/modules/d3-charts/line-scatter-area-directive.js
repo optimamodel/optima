@@ -42,14 +42,36 @@ define(['./module', './scale-helpers'], function (module, scaleHelpers) {
           };
         });
 
-        // normalizing all graphs scales to include maximum possible x and y
-        var calculatedLineScales = lineChartInstance.scales(areaLineHighData);
-        areaChartInstance.scales(areaLineHighData);
-        scatterChartInstance.scales(areaLineHighData);
+        var scatterDataExists = (scatterData && scatterData.length > 0);
+        var graphsScales = [];
 
-        // TODO fix the scales & yMax. Right now this is not entirely correct as
-        // it doesn't cover the case of having a scatter point above the high line.
-        var yMax = Math.max(0, calculatedLineScales.y.domain()[1]);
+        // normalizing all graphs scales to include maximum possible x and y
+        var lineScale = lineChartInstance.scales(lineData);
+        graphsScales.push(lineScale);
+        var areaScale = areaChartInstance.scales(areaLineHighData);
+        graphsScales.push(areaScale);
+        if (scatterDataExists) {
+          var scatterScale = scatterChartInstance.scales(scatterData);
+          graphsScales.push(scatterScale);
+        }
+
+        // determine boundaries for the combined graphs
+        var yMax = 0;
+        var xMax = 0;
+        var yMin = Number.POSITIVE_INFINITY;
+        var xMin = Number.POSITIVE_INFINITY;
+        _(graphsScales).each(function (scale) {
+          yMax = Math.max(yMax, scale.y.domain()[1]);
+          xMax = Math.max(xMax, scale.x.domain()[1]);
+          yMin = Math.min(yMin, scale.y.domain()[0]);
+          xMin = Math.min(xMin, scale.x.domain()[0]);
+        });
+
+        // normalize graph scales to include min and max of the combined graphs
+        _(graphsScales).each(function (scale) {
+          scale.y.domain([0, yMax]);
+          scale.x.domain([Math.floor(xMin), Math.ceil(xMax)]);
+        });
 
         scope.options.yAxis.tickFormat = function (value) {
           var format = scaleHelpers.evaluateTickFormat(0, yMax);
@@ -57,7 +79,7 @@ define(['./module', './scale-helpers'], function (module, scaleHelpers) {
         };
 
         d3Charts.drawAxes(
-          calculatedLineScales,
+          graphsScales[0],
           scope.options,
           axesGroup,
           chartSize
@@ -66,7 +88,9 @@ define(['./module', './scale-helpers'], function (module, scaleHelpers) {
         // draw graphs
         areaChartInstance.draw(areaData);
         lineChartInstance.draw(lineData);
-        scatterChartInstance.draw(scatterData);
+        if (scatterDataExists) {
+          scatterChartInstance.draw(scatterData);
+        }
       }
     };
   });
