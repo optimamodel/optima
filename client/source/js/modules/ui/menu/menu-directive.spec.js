@@ -134,27 +134,27 @@ define([
         scope._processItems(items);
       });
 
-      it('should flatten items', function () {
-        expect(scope._processedItems.length).toBe(3);
-      });
-
-      it('should flatten items and subitems', function () {
-        expect(scope._processedItems.length).toBe(3);
-      });
-
-      it('should create a reference to parent in subitem', function () {
-        var parentRef = _(scope._processedItems).findWhere({ title: 'Sub-market' }).parent;
-        expect(parentRef).toBeDefined();
-        expect(parentRef.title).toBe('Market');
-      });
-
-      it('should create url from state when its present', inject(function ($state) {
-        expect($state.href).toHaveBeenCalledWith('dashboard.main', {bla: 'foo'});
-      }));
-
-      it('should use # as url when no state set', function () {
-        expect(_(scope._processedItems).findWhere({ title: 'Sub-market' }).url).toBe('#');
-      });
+      // it('should flatten items', function () {
+      //   expect(scope._processedItems.length).toBe(3);
+      // });
+      //
+      // it('should flatten items and subitems', function () {
+      //   expect(scope._processedItems.length).toBe(3);
+      // });
+      //
+      // it('should create a reference to parent in subitem', function () {
+      //   var parentRef = _(scope._processedItems).findWhere({ title: 'Sub-market' }).parent;
+      //   expect(parentRef).toBeDefined();
+      //   expect(parentRef.title).toBe('Market');
+      // });
+      //
+      // it('should create url from state when its present', inject(function ($state) {
+      //   expect($state.href).toHaveBeenCalledWith('dashboard.main', {bla: 'foo'});
+      // }));
+      //
+      // it('should use # as url when no state set', function () {
+      //   expect(_(scope._processedItems).findWhere({ title: 'Sub-market' }).url).toBe('#');
+      // });
 
     });
 
