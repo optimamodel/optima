@@ -76,7 +76,7 @@ class CalculatingThread(threading.Thread):
     def load_model_user(self, name, user_id, as_bunch=True, working_model=True):
         print("load_model_user:%s %s" % (name, user_id))
         db_session = scoped_session(sessionmaker(self.engine))
-        proj = db_session.query(ProjectDb).query.filter_by(user_id=user_id, name=name).first()
+        proj = db_session.query(ProjectDb).filter_by(user_id=user_id, name=name).first()
         model = None
         if proj is None:
             print("no project found: %s" % name)
