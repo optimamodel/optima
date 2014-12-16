@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 import json
 import traceback
-from async_calculate import CalculatingThread, sentinel
+from async_calculate import CalculatingThread, sentinel, start_or_report_calculation, cancel_calculation, check_calculation
 from sim.manualfit import manualfit
 from sim.bunch import bunchify
 from sim.runsimulation import runsimulation
@@ -42,7 +42,8 @@ def doAutoCalibration():
         reply['reason'] = 'File for project %s does not exist' % prj_name
         return jsonify(reply)
     try:
-        if not project_name in sentinel['projects'] or not sentinel['projects'][project_name]:
+        can_start, can_join, current_calculation = start_or_report_calculation(project_name, autofit)
+        if can_start:
             args = {}
             startyear = data.get("startyear")
             if startyear:
@@ -53,15 +54,11 @@ def doAutoCalibration():
             timelimit = int(data.get("timelimit")) # for the thread
             args["timelimit"] = 10 # for the autocalibrate function
 
-            sentinel['projects'][project_name] = autofit.__name__
-            CalculatingThread(db.engine, sentinel, current_user, project_name, timelimit, autofit, args).start()
+            CalculatingThread(db.engine, current_user, project_name, timelimit, autofit, args).start()
             msg = "Starting thread for user %s project %s" % (current_user.name, project_name)
             return json.dumps({"status":"OK", "result": msg, "join":True})
         else:
-            current_calculation = sentinel['projects'][project_name]
-            current_app.logger.debug('sentinel object: %s' % sentinel)
             msg = "Thread for user %s project %s (%s) has already started" % (current_user.name, project_name, current_calculation)
-            can_join = current_calculation==autofit.__name__
             return json.dumps({"status":"OK", "result": msg, "join":can_join})
     except Exception, err:
         var = traceback.format_exc()
@@ -75,9 +72,8 @@ Stops calibration
 @check_project_name
 def stopCalibration():
     prj_name = request.project_name
-    if prj_name in sentinel['projects']:
-        sentinel['projects'][prj_name] = False
-    return json.dumps({"status":"OK", "result": "thread for user %s project %s stopped" % (current_user.name, prj_name)})
+    cancel_calculation(prj_name, autofit)
+    return json.dumps({"status":"OK", "result": "autofit calculation for user %s project %s requested to stop" % (current_user.name, prj_name)})
 
 """
 Returns the working model of project.
@@ -94,7 +90,7 @@ def getWorkingModel():
     D_dict = {}
     # Make sure model is calibrating
     prj_name = request.project_name
-    if prj_name in sentinel['projects'] and sentinel['projects'][prj_name]==autofit.__name__:
+    if check_calculation(prj_name, autofit):
         D_dict = load_model(prj_name, working_model = True, as_bunch = False)
         status = 'Running'
     else:

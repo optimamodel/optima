@@ -4,7 +4,7 @@ from optima_test_base import OptimaTestCase
 import unittest
 import json
 from optima.dbmodels import ProjectDb
-from optima.dbconn import db
+from api import db
 
 class ProjectTestCase(OptimaTestCase):
     """

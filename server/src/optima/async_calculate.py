@@ -7,11 +7,37 @@ from sqlalchemy.orm import sessionmaker, scoped_session
 from sim.bunch import Bunch
 from dbmodels import ProjectDb, WorkingProjectDb
 
+lock = threading.Lock()
+
 # Sentinel object used for async calculation
 sentinel = {
     'exit': False,  # This will stop all threads
     'projects': {}  # This will contain an entry per user project indicating if the calculating thread is running
 }
+
+def start_or_report_calculation(project, func):
+    name = func.__name__
+    can_start = False
+    can_join = False
+    with lock:
+        if not project in sentinel['projects']:
+            sentinel['projects'][project] = {}
+        if not sentinel['projects'][project]:
+            sentinel['projects'][project] = name
+            can_start = True
+        else:
+            name = sentinel['projects'][project]
+    can_join = name==func.__name__
+    return can_start, can_join, name
+
+def cancel_calculation(project, func):
+    with lock:
+        if project in sentinel['projects'] and sentinel['projects'][project]==func.__name__: #otherwise there is already other calculation
+            sentinel['projects'][project] = False
+ 
+def check_calculation(project, func):
+    with lock:
+        return project in sentinel['projects'] and sentinel['projects'][project]==func.__name__
 
 def interrupt(*args):
     print("stopping all threads")
@@ -34,7 +60,7 @@ func: func which has to be called to perform calculations (receiving D as first 
 args: additional arguments for this function
 """
 class CalculatingThread(threading.Thread):
-    def __init__(self, engine, sentinel, user, project_name, timelimit, func, args):
+    def __init__(self, engine, user, project_name, timelimit, func, args):
         super(CalculatingThread, self).__init__()
 
         self.args = args
@@ -44,12 +70,8 @@ class CalculatingThread(threading.Thread):
         self.engine = engine
         self.func = func
         self.args = args
+        self.args['verbose']=0
         self.timelimit = int(timelimit) # to be sure
-
-        self.sentinel = sentinel
-        if not self.project_name in self.sentinel['projects']:
-            self.sentinel['projects'][project_name] = {}
-        self.sentinel['projects'][project_name] = func.__name__
         print("starting calculating thread for user: %s project %s for %s seconds" % (self.user_name, self.project_name, self.timelimit))
 
     def run(self):
@@ -59,7 +81,7 @@ class CalculatingThread(threading.Thread):
         delta_time = 0
         start = time.time()
         while delta_time < self.timelimit:
-            if not self.sentinel['exit'] and self.sentinel['projects'][self.project_name]:
+            if check_calculation(self.project_name, self.func):
                 print("Iteration %d for user: %s, args: %s" % (iterations, self.user_name, self.args))
                 D = self.func(D, **self.args)
                 self.save_model_user(self.project_name, self.user_id, D)
@@ -70,8 +92,7 @@ class CalculatingThread(threading.Thread):
                 break
             iterations += 1
         print("thread for project %s stopped" % self.project_name)
-        if self.sentinel['projects'][self.project_name]==self.func.__name__:
-            self.sentinel['projects'][self.project_name] = False
+        cancel_calculation(self.project_name, self.func)
 
     def load_model_user(self, name, user_id, as_bunch=True, working_model=True):
         print("load_model_user:%s %s" % (name, user_id))

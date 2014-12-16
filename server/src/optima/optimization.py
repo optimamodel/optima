@@ -12,7 +12,7 @@ Optimization Module
 from flask import request, jsonify, Blueprint, current_app
 from flask.ext.login import login_required
 from dbconn import db
-from async_calculate import CalculatingThread, sentinel
+from async_calculate import CalculatingThread, sentinel, start_or_report_calculation, cancel_calculation, check_calculation
 from utils import check_project_name, project_exists, pick_params, load_model, save_working_model, report_exception
 from sim.optimize import optimize
 from sim.bunch import bunchify
@@ -34,7 +34,7 @@ Start optimization
 @check_project_name
 def startOptimization():
     data = json.loads(request.data)
-
+    print("optimize: %s" % data)
     # get project name
     project_name = request.project_name
     D = None
@@ -42,7 +42,8 @@ def startOptimization():
         reply['reason'] = 'File for project %s does not exist' % project_name
         return jsonify(reply)
     try:
-        if not project_name in sentinel['projects'] or not sentinel['projects'][project_name]:
+        can_start, can_join, current_calculation = start_or_report_calculation(project_name, optimize)
+        if can_start:
             # Prepare arguments
             args = {}
             objectives = data.get('objectives')
@@ -53,16 +54,12 @@ def startOptimization():
                 args['constraints'] = bunchify( constraints )
             timelimit = int(data.get("timelimit")) # for the thread
             args["timelimit"] = 10 # for the autocalibrate function
-            sentinel['projects'][project_name] = optimize.__name__
-            CalculatingThread(db.engine, sentinel, current_user, project_name, timelimit, optimize, args).start()
+            CalculatingThread(db.engine, current_user, project_name, timelimit, optimize, args).start()
             msg = "Starting optimization thread for user %s project %s" % (current_user.name, project_name)
             current_app.logger.debug(msg)
             return json.dumps({"status":"OK", "result": msg, "join":True})
         else:
-            current_calculation = sentinel['projects'][project_name]
-            current_app.logger.debug('sentinel object: %s' % sentinel)
             msg = "Thread for user %s project %s (%s) has already started" % (current_user.name, project_name, current_calculation)
-            can_join = current_calculation==optimize.__name__
             return json.dumps({"status":"OK", "result": msg, "join":can_join})
     except Exception, err:
         var = traceback.format_exc()
@@ -76,9 +73,8 @@ Stops calibration
 @check_project_name
 def stopCalibration():
     prj_name = request.project_name
-    if prj_name in sentinel['projects']:
-        sentinel['projects'][prj_name] = False
-    return json.dumps({"status":"OK", "result": "thread for user %s project %s stopped" % (current_user.name, prj_name)})
+    cancel_calculation(prj_name, optimize)
+    return json.dumps({"status":"OK", "result": "optimize calculation for user %s project %s requested to stop" % (current_user.name, prj_name)})
 
 
 """
@@ -96,7 +92,7 @@ def getWorkingModel():
     D_dict = {}
     # Get optimization working data
     prj_name = request.project_name
-    if prj_name in sentinel['projects'] and sentinel['projects'][prj_name]==optimize.__name__:
+    if check_calculation(prj_name, optimize):
         D_dict = load_model(prj_name, working_model = True, as_bunch = False)
         status = 'Running'
     else:
