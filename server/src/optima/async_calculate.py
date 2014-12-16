@@ -89,7 +89,7 @@ class CalculatingThread(threading.Thread):
                 model = proj.working_project.model
             if as_bunch:
                 model = Bunch.fromDict(model)
-        db.session.remove()
+        db_session.remove()
         return model
 
     def save_model_user(self, name, user_id, model, working_model=True):
