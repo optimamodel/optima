@@ -24,6 +24,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             return;
           }
           activeProject.setActiveProjectFor(name, UserManager.data);
+          window.location = '/';
         });
     };
 

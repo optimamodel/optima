@@ -10,15 +10,12 @@ from logging.handlers import SysLogHandler
 
 app = Flask(__name__)
 
-app.secret_key = 'F12Zr47j\3yX R~X@H!jmM]Lwf/,?KT'
-
 app.config.from_object('config')
 app.config['UPLOAD_FOLDER'] = DATADIR
 if os.environ.get('OPTIMA_TEST_CFG'):
     app.config.from_envvar('OPTIMA_TEST_CFG')
 
 optima.dbconn.db = SQLAlchemy(app)
-
 
 from optima.scenarios import scenarios
 from optima.data import data

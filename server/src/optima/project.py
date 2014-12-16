@@ -96,7 +96,7 @@ def createProject(project_name):
 
 """
 Opens the project with the given name.
-If the project exists, should put it in session and return to the user.
+If the project exists, notifies the user about success.
 """
 @project.route('/open/<project_name>')
 @login_required
@@ -113,7 +113,7 @@ def openProject(project_name):
     if not proj_exists:
         return jsonify({'status':'NOK','reason':'No such project %s' % project_name})
     else:
-        return redirect(url_for('site'))
+        return jsonify({'status':'OK'})
 
 """
 Generates workbook for the project with the given name.
