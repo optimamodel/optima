@@ -1,7 +1,7 @@
 #!/bin/env python
 # -*- coding: utf-8 -*-
 from api import app, init_db
-from optima.dbconn import db
+from api import db
 import unittest
 import hashlib
 

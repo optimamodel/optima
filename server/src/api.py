@@ -65,7 +65,9 @@ def init_db():
     optima.dbconn.db.create_all()
 
 def init_logger():
-    app.logger.addHandler(logging.StreamHandler(sys.stdout))
+    stream_handler = logging.StreamHandler(sys.stdout)
+    stream_handler.setLevel(logging.DEBUG)
+    app.logger.addHandler(stream_handler)
     app.logger.setLevel(logging.DEBUG)
 
 if __name__ == '__main__':
