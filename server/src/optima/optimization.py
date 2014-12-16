@@ -53,6 +53,7 @@ def startOptimization():
                 args['constraints'] = bunchify( constraints )
             timelimit = int(data.get("timelimit")) # for the thread
             args["timelimit"] = 10 # for the autocalibrate function
+            sentinel['projects'][project_name] = optimize.__name__
             CalculatingThread(db.engine, sentinel, current_user, project_name, timelimit, optimize, args).start()
             msg = "Starting optimization thread for user %s project %s" % (current_user.name, project_name)
             current_app.logger.debug(msg)
