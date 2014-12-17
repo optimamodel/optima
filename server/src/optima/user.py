@@ -163,7 +163,9 @@ def delete():
             from sqlalchemy.orm import load_only
             #delete all corresponding projects and working projects as well
             user_id = user.id
-            project_ids = ProjectDb.query.filter_by(user_id=user_id).options(load_only("id"))
+            projects = ProjectDb.query.filter_by(user_id=user_id).options(load_only("id")).all()
+            project_ids = [project.id for project in projects]
+            current_app.logger.debug("project_ids for user %s:%s" % (user_id, project_ids))
             WorkingProjectDb.query.filter(WorkingProjectDb.id.in_(project_ids)).delete(synchronize_session=False)
             ProjectDb.query.filter_by(user_id=user_id).delete()
             UserDb.query.filter(UserDb.id==user_id).delete()

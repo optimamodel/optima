@@ -46,6 +46,11 @@ class OptimaTestCase(unittest.TestCase):
         db.session.add(project)
         db.session.commit()
 
+    def list_projects(self, user_id):
+        """ Helper method to list projects for the given user id"""
+        projects = ProjectDb.query.filter_by(user_id=user_id).all()
+        return [project for project in projects]
+
     def login(self, email=default_email):
         headers = {'Content-Type' : 'application/json'}
         login_data = '{"email":"%s","password":"%s"}' % (email, self.test_password)
