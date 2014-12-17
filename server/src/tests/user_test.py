@@ -27,5 +27,18 @@ class UserTestCase(OptimaTestCase):
         assert(data["name"]=="test")
 
 
+    def test_list_users(self):
+        response = self.create_user()
+        response = self.client.get('/api/user/list?secret=%s' % self.test_password)
+        assert(response.status_code==200)
+        data = json.loads(response.data)
+        users = data.get('users', None)
+        assert(users is not None)
+        assert(len(users)==1)
+        test_user = users[0]
+        assert(test_user['id']==1)
+        assert(test_user['email']=="test@test.com")
+        assert(test_user['name'] == "test")
+        assert('password' not in test_user)
 if __name__ == '__main__':
     unittest.main()
