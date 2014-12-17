@@ -13,6 +13,7 @@ from flask import current_app
 from signal import *
 import sys
 from dbconn import db
+from sim.autofit import autofit
 
 """ route prefix: /api/model """
 model = Blueprint('model',  __name__, static_folder = '../static')
@@ -32,7 +33,6 @@ TODO: do it with the project which is currently in scope
 @login_required
 @check_project_name
 def doAutoCalibration():
-    from sim.autofit import autofit
     reply = {'status':'NOK'}
     current_app.logger.debug('data: %s' % request.data)
     data = json.loads(request.data)
@@ -42,9 +42,9 @@ def doAutoCalibration():
         reply['reason'] = 'File for project %s does not exist' % prj_name
         return jsonify(reply)
     try:
-        can_start, can_join, current_calculation = start_or_report_calculation(project_name, autofit)
+        can_start, can_join, current_calculation = start_or_report_calculation(current_user.id, project_name, autofit, db.engine)
         if can_start:
-            args = {}
+            args = {'verbose':0}
             startyear = data.get("startyear")
             if startyear:
                 args["startyear"] = int(startyear)
@@ -72,7 +72,7 @@ Stops calibration
 @check_project_name
 def stopCalibration():
     prj_name = request.project_name
-    cancel_calculation(prj_name, autofit)
+    cancel_calculation(current_user.id, prj_name, autofit, db.engine)
     return json.dumps({"status":"OK", "result": "autofit calculation for user %s project %s requested to stop" % (current_user.name, prj_name)})
 
 """
@@ -90,7 +90,7 @@ def getWorkingModel():
     D_dict = {}
     # Make sure model is calibrating
     prj_name = request.project_name
-    if check_calculation(prj_name, autofit):
+    if check_calculation(current_user.id, prj_name, autofit, db.engine):
         D_dict = load_model(prj_name, working_model = True, as_bunch = False)
         status = 'Running'
     else:
