@@ -29,6 +29,7 @@ define([
           {
             title: 'Create/open project',
             id: 'create-load',
+            matchingState: 'project',
             subitems: [
               {
                 title: 'Create new project',
@@ -58,6 +59,7 @@ define([
           {
             title: 'View & calibrate model',
             id: 'create-load',
+            matchingState: 'model',
             subitems: [
               {
                 title: 'View data & model calibration',
@@ -75,6 +77,7 @@ define([
           },
           {
             title: 'Analysis',
+            matchingState: 'analysis',
             subitems: [
               {
                 title: 'Scenario analyses',
