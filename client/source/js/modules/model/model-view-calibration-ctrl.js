@@ -8,13 +8,7 @@ define(['./module', 'underscore'], function (module, _) {
     var initialize =function () {
       $scope.meta = meta;
 
-      $scope.programs = _(meta.progs.long).map(function (name, index) {
-        return {
-          name: name,
-          acronym: meta.progs.short[index]
-        };
-      });
-
+      $scope.initializePrograms();
       $scope.selectedProgram = $scope.programs[0];
       $scope.displayedProgram = null;
 
@@ -35,6 +29,28 @@ define(['./module', 'underscore'], function (module, _) {
       plotTypes = ['plotdata', 'plotdata_cc', 'plotdata_co'];
 
       resetGraphs();
+    };
+
+    /**
+    * Creates the models of the programs for this controller.
+    * If the backend do not present values for the categories, we'll use 'Others' as default.
+    */
+    $scope.initializePrograms = function () {
+      $scope.programs = _(meta.progs.long).map(function (name, index) {
+        var categories;
+        categories = meta.progs.categories;
+        if(!categories) { // create default categories if absent
+          categories = [];
+          _.times(meta.progs.long.length, function (n){
+            categories.push('Others')
+          });}
+          
+        return {
+          name: name,
+          acronym: meta.progs.short[index],
+          category: categories[index]
+        };
+      });
     };
 
     var resetGraphs= function () {

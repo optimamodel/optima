@@ -4,7 +4,10 @@
     <div class="6">
       <label>
         Select a program: <br>
-        <select class="txbox" ng-options="p as p.name for p in programs" ng-model="selectedProgram"></select>
+        <select 
+          class="txbox" 
+          ng-options="p as p.name group by p.category for p in programs" 
+          ng-model="selectedProgram"></select>
       </label>
     </div>
   </div>
