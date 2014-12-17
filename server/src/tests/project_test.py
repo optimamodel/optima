@@ -3,8 +3,6 @@
 from optima_test_base import OptimaTestCase
 import unittest
 import json
-from optima.dbmodels import ProjectDb
-from api import db
 
 class ProjectTestCase(OptimaTestCase):
     """
@@ -28,10 +26,7 @@ class ProjectTestCase(OptimaTestCase):
         self.assertEqual(json.loads(response.data), { "status": "NOK" })
 
     def test_retrieve_project_info(self):
-        # create project
-        project = ProjectDb('test', 1, '2000', '2010', '2020', {}, {})
-        db.session.add(project)
-        db.session.commit()
+        self.create_project('test')
 
         headers = [('project', 'test')]
         response = self.client.get('/api/project/info', headers=headers)
@@ -41,10 +36,7 @@ class ProjectTestCase(OptimaTestCase):
         self.assertEqual(project_data['status'], 'OK')
 
     def test_retrieve_project_list(self):
-        # create project
-        project = ProjectDb('test2', 1, '2000', '2010', '2020', {}, {})
-        db.session.add(project)
-        db.session.commit()
+        self.create_project('test2')
 
         response = self.client.get('/api/project/list')
         self.assertEqual(response.status_code, 200)
