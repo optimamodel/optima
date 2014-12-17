@@ -11,6 +11,9 @@ class UserTestCase(OptimaTestCase):
 
     """
 
+    def list_users(self):
+        return self.client.get('/api/user/list?secret=%s' % self.test_password)
+
     def test_current_no_login(self):
         response = self.client.get('/api/user/current', follow_redirects=True)
         assert(response.status_code==401)
@@ -29,7 +32,7 @@ class UserTestCase(OptimaTestCase):
 
     def test_list_users(self):
         response = self.create_user()
-        response = self.client.get('/api/user/list?secret=%s' % self.test_password)
+        response = self.list_users()
         assert(response.status_code==200)
         data = json.loads(response.data)
         users = data.get('users', None)
@@ -43,22 +46,35 @@ class UserTestCase(OptimaTestCase):
 
     def test_delete_user(self):
         other_email = 'test2@test.com'
+        #create two users
         response = self.create_user()
         response = self.create_user(name='test2', email=other_email)
+        #log in as second user and create a project
         response = self.login(email=other_email)
         response = self.client.post('/api/project/create/test', data = '{}')
         response = self.logout()
+        #list users, verify we have 2
+        response = self.list_users()
+        users = json.loads(response.data).get('users')
+        assert(len(users)==2)
+        #list projects for the second user, verify we have 1
+        projects = self.list_projects(2)
+        assert(len(projects)==1)
+        #delete second user
         response = self.client.delete('/api/user/delete?secret=%s&email=%s' % (self.test_password, other_email))
         assert(response.status_code==200)
         data = json.loads(response.data)
         assert(data.get('deleted') is not None)
         assert(data.get('status')=='OK')
-        response = self.client.get('/api/user/list?secret=%s' % self.test_password)
-        assert(response.status_code==200)
-        data = json.loads(response.data)
-        users = data.get('users', None)
+        #list users again, verify we have 1 and it's the first one
+        response = self.list_users()
+        users = json.loads(response.data).get('users')
         assert(users is not None)
         assert(len(users)==1)
+        assert(users[0]['email']=='test@test.com')
+        #list projects for the second user and verify that they are gone
+        projects = self.list_projects(2)
+        assert(len(projects)==0)
 
 if __name__ == '__main__':
     unittest.main()
