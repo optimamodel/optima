@@ -31,6 +31,7 @@ def record_params(setup_state):
 
 @user.before_request
 def before_request():
+    db.engine.dispose()
     g.user = None
     if 'user_id' in session:
         g.user = UserDb.query.filter_by(id=session['user_id']).first()
