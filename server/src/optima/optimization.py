@@ -9,10 +9,10 @@ Optimization Module
 3. Save current optimization model
 4. Revert to the last saved model
 """
-from flask import request, jsonify, Blueprint
+from flask import request, jsonify, Blueprint, current_app
 from flask.ext.login import login_required
 from dbconn import db
-from async_calculate import CalculatingThread, sentinel
+from async_calculate import CalculatingThread, start_or_report_calculation, cancel_calculation, check_calculation
 from utils import check_project_name, project_exists, pick_params, load_model, save_working_model, report_exception
 from sim.optimize import optimize
 from sim.bunch import bunchify
@@ -34,17 +34,19 @@ Start optimization
 @check_project_name
 def startOptimization():
     data = json.loads(request.data)
-
+    print("optimize: %s" % data)
     # get project name
     project_name = request.project_name
-    D = None
     if not project_exists(project_name):
+        from utils import BAD_REPLY
+        reply = BAD_REPLY
         reply['reason'] = 'File for project %s does not exist' % project_name
         return jsonify(reply)
     try:
-        if not project_name in sentinel['projects'] or not sentinel['projects'][project_name]:
+        can_start, can_join, current_calculation = start_or_report_calculation(current_user.id, project_name, optimize, db.engine)
+        if can_start:
             # Prepare arguments
-            args = {}
+            args = {'verbose':0}
             objectives = data.get('objectives')
             if objectives:
                 args['objectives'] = bunchify( objectives )
@@ -53,15 +55,12 @@ def startOptimization():
                 args['constraints'] = bunchify( constraints )
             timelimit = int(data.get("timelimit")) # for the thread
             args["timelimit"] = 10 # for the autocalibrate function
-            CalculatingThread(db.engine, sentinel, current_user, project_name, timelimit, optimize, args).start()
+            CalculatingThread(db.engine, current_user, project_name, timelimit, optimize, args).start()
             msg = "Starting optimization thread for user %s project %s" % (current_user.name, project_name)
-            print(msg)
+            current_app.logger.debug(msg)
             return json.dumps({"status":"OK", "result": msg, "join":True})
         else:
-            current_calculation = sentinel['projects'][project_name]
-            print('sentinel object: %s' % sentinel)
             msg = "Thread for user %s project %s (%s) has already started" % (current_user.name, project_name, current_calculation)
-            can_join = current_calculation==optimize.__name__
             return json.dumps({"status":"OK", "result": msg, "join":can_join})
     except Exception, err:
         var = traceback.format_exc()
@@ -75,9 +74,8 @@ Stops calibration
 @check_project_name
 def stopCalibration():
     prj_name = request.project_name
-    if prj_name in sentinel['projects']:
-        sentinel['projects'][prj_name] = False
-    return json.dumps({"status":"OK", "result": "thread for user %s project %s stopped" % (current_user.name, prj_name)})
+    cancel_calculation(current_user.id, prj_name, optimize, db.engine)
+    return json.dumps({"status":"OK", "result": "optimize calculation for user %s project %s requested to stop" % (current_user.name, prj_name)})
 
 
 """
@@ -88,18 +86,14 @@ Returns the working model for optimization.
 @check_project_name
 @report_exception()
 def getWorkingModel():
-    from utils import BAD_REPLY
-    from sim.optimize import optimize
-
-    reply = BAD_REPLY
     D_dict = {}
     # Get optimization working data
     prj_name = request.project_name
-    if prj_name in sentinel['projects'] and sentinel['projects'][prj_name]==optimize.__name__:
+    if check_calculation(current_user.id, prj_name, optimize, db.engine):
         D_dict = load_model(prj_name, working_model = True, as_bunch = False)
         status = 'Running'
     else:
-        print("no longer optimizing")
+        current_app.logger.debug("no longer optimizing")
         status = 'Done'
     result = get_optimization_results(D_dict)
     result['status'] = status

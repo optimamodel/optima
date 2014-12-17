@@ -12,12 +12,11 @@ define ['angular-mocks', 'Source/modules/home/home-ctrl'], ->
 
       inject ($rootScope, $controller) ->
         scope = $rootScope.$new()
-        subject = $controller 'HomeController', { $scope: scope }
+        subject = $controller 'HomeController', { $scope: scope, project: null }
 
     describe 'check if controller is on it\'s place', ->
       it 'should have loaded the subject', ->
         expect(subject).toBeDefined()
-
 
     describe 'check if scope is also on it\'s place', ->
       it 'should test scope to be defined', ->

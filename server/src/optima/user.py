@@ -9,10 +9,11 @@ User Module
 3. Logout.
 
 """
-from flask import request, jsonify, g, session, flash, abort, Blueprint
-from flask.ext.login import LoginManager, login_user, current_user, logout_user
+from flask import request, jsonify, g, session, flash, abort, Blueprint, url_for, current_app
+from flask.ext.login import LoginManager, login_user, current_user, logout_user, redirect, login_required
 from dbconn import db
 from dbmodels import UserDb
+import logging
 
 # route prefix: /api/user
 user = Blueprint('user',  __name__, static_folder = '../static')
@@ -30,18 +31,20 @@ def record_params(setup_state):
 
 @user.before_request
 def before_request():
+    db.engine.dispose()
     g.user = None
     if 'user_id' in session:
         g.user = UserDb.query.filter_by(id=session['user_id']).first()
 
 @user.route('/create', methods=['POST'])
 def create_user():
-    print("create request: %s %s" % (request, request.data))
-    print("/user/create %s" % request.get_json(force=True))
+    current_app.logger.info("create request: %s %s" % (request, request.data))
+    current_app.logger.debug("/user/create %s" % request.get_json(force=True))
     # Check if the user already exists
     email = request.json['email']
     name = request.json['name']
-    password = hashlib.sha224( request.json['password'] ).hexdigest()
+#   password is now hashed on the client side using sha224
+    password = request.json['password']
 
     if email is not None and name is not None and password is not None:
         # Get user for this username (if exists)
@@ -68,19 +71,19 @@ def create_user():
 
 @user.route('/login', methods=['POST'])
 def login():
-    print("/user/login %s" % request.get_json(force=True))
+    current_app.logger.debug("/user/login %s" % request.get_json(force=True))
     # Make sure user is not logged in already.
     cu = current_user
 
     if cu.is_anonymous():
-
+        current_app.logger.debug("current user anonymous")
         # Make sure user is valid.
         username = request.json['email']
 
         if username is not None:
 
             # Get hashsed password
-            password = hashlib.sha224( request.json['password'] ).hexdigest()
+            password = request.json['password']
 
             # Get user for this username
             try:
@@ -90,6 +93,7 @@ def login():
 
             # Make sure user is valid and password matches
             if u is not None and u.password == password:
+                print("password:%s" % u.password)
 
                 # Login the user
                 login_user(u)
@@ -99,9 +103,11 @@ def login():
 
         # If we come here, login is not successful
         abort(401)
+    else:
+        current_app.logger.warning("User already logged in:%s %s" % (cu.name, cu.password))
 
-    # User already loggedin
-    return jsonify({'email': cu.email, 'name': cu.name })
+    # User logged in, redirect
+    return redirect(request.args.get("next") or url_for("site"))
 
 @user.route('/current', methods=['GET'])
 def current_user_api():
@@ -112,11 +118,16 @@ def current_user_api():
     abort(401)
 
 @user.route('/logout')
+@login_required
 def logout():
-    session.clear()
+    cu = current_user
+    username = cu.name
+    current_app.logger.debug("logging out user %s" % username)
     logout_user()
+    session.clear()
     flash(u'You have been signed out')
-    return jsonify({'status': 'OK'})
+    current_app.logger.debug("User %s is signed out" % username)
+    return redirect(url_for("site"))
 
 #For Login Manager
 @login_manager.user_loader

@@ -57,8 +57,8 @@
 
   <div class="section">
     <button class="btn" ng-click="generateCurves()">Draw</button>
-    <button class="btn" ng-click="saveModel()">Save Model</button>
-    <button class="btn" ng-click="revertModel()">Revert Model</button>
+    <button class="btn" ng-click="saveModel()">Save model</button>
+    <button class="btn" ng-click="revertModel()">Revert model</button>
     <button class="btn" ng-click="uploadDefault()" style="margin-left: 60px">Upload default cost-coverage-outcome curves</button>
   </div>
 
@@ -66,8 +66,8 @@
 
     <div class="section">
       <h1>{{ displayedProgram.name }}</h1>
-      <div class="chart-container" style="width: 470px">
-        <div line-scatter-chart data="graphs.plotdata_cc.data" options="graphs.plotdata_cc.options" save-graph-as></div>
+      <div class="chart-container" style="width: 470px" ng-init="graph = graphs.plotdata_cc; graph.title = displayedProgram.name">>
+        <div line-scatter-chart data="graph.data" options="graph.options" save-graph-as></div>
       </div>
     </div>
 
@@ -78,7 +78,7 @@
       <div class="section elastic">
         <div class="elastic_col __shrink" style="width: 320px">
           <div class="chart-container" ng-init="coGraph = graphs.plotdata_co[$index]">
-            <div line-scatter-chart data="coGraph.data" options="coGraph.options" save-graph-as></div>
+            <div line-scatter-chart variant="coGraph" data="coGraph.data" options="coGraph.options" save-graph-as></div>
           </div>
         </div>
 

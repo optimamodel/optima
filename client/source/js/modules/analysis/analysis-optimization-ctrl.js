@@ -65,38 +65,24 @@ define([
       $scope.params.constraints.dontstopart = true;
 
       $scope.params.constraints.decrease = {};
+      $scope.params.constraints.increase = {};
       $scope.params.constraints.coverage = {};
 
-      for ( var j = 0; j < meta.progs.short.length; j++ ) {
+      // Initialize program constraints models
+      for ( var i = 0; i < meta.progs.short.length; i++ ) {
         $scope.params.constraints.decrease[meta.progs.short[i]] = {};
         $scope.params.constraints.decrease[meta.progs.short[i]].use = false;
         $scope.params.constraints.decrease[meta.progs.short[i]].by = 100;
+
+        $scope.params.constraints.increase[meta.progs.short[i]] = {};
+        $scope.params.constraints.increase[meta.progs.short[i]].use = false;
+        $scope.params.constraints.increase[meta.progs.short[i]].by = 100;
 
         $scope.params.constraints.coverage[meta.progs.short[i]] = {};
         $scope.params.constraints.coverage[meta.progs.short[i]].use = false;
         $scope.params.constraints.coverage[meta.progs.short[i]].level = 0;
         $scope.params.constraints.coverage[meta.progs.short[i]].year = undefined;
       }
-
-      $scope.pieoptions = {
-          chart: {
-              type: 'pieChart',
-              height: 350,
-              x: function(d){return d.key;},
-              y: function(d){return d.y;},
-              showLabels: false,
-              transitionDuration: 500,
-              labelThreshold: 0.01,
-              legend: {
-                  margin: {
-                      top: 5,
-                      right: 35,
-                      bottom: 5,
-                      left: 0
-                  }
-              }
-          }
-      };
 
     $scope.lineStyles = ['__blue', '__green', '__red', '__orange',
       '__violet', '__black', '__light-orange', '__light-green'];
@@ -120,10 +106,6 @@ define([
       yAxis: {
         axisLabel: ''
       }
-    };
-
-    var getActiveTypes = function () {
-      return _($scope.types).where({ active: true });
     };
 
     /*
@@ -161,20 +143,28 @@ define([
     };
 
     // updates pies charts data
-    var preparePieCharts = function (data) {
+    /**
+     *
+     */
+    var prepareRadarChart = function (data) {
+
       if (data.pie1 === undefined || data.pie2 === undefined) return;
-      $scope.piedata1 = _(data.pie1.val).map(function (value, index) {
-        return { y: value, key: data.legend[index] };
+
+      var graphData = [{axes: []}, {axes: []}];
+
+      graphData[0].axes = _(data.pie1.val).map(function (value, index) {
+        return { value: value, axis: data.legend[index] };
       });
 
-      $scope.piedata2 = _(data.pie2.val).map(function (value, index) {
-        return { y: value, key: data.legend[index] };
+      graphData[1].axes = _(data.pie2.val).map(function (value, index) {
+        return { value: value, axis: data.legend[index] };
       });
+      $scope.radarData = graphData;
     };
 
-    /*
-    * Regenerate graphs based on the response and type settings in the UI.
-    */
+    /**
+     * Regenerate graphs based on the response and type settings in the UI.
+     */
     var prepareOptimisationGraphs = function (response) {
       var graphs = [];
 
@@ -182,11 +172,10 @@ define([
         return graphs;
       }
 
-      var types = getActiveTypes();
-      _(types).each(function (type) {
+      _($scope.types.population).each(function (type) {
 
         var data = response[type.id];
-        if (data!== undefined) {
+        if (data !== undefined) {
 
           // generate graphs showing the overall data for this type
           if (type.total) {
@@ -194,7 +183,7 @@ define([
             var graph = generateGraph(data.tot.data, response.tvec, title);
             graph.options.xAxis.axisLabel = data.xlabel;
             graph.options.yAxis.axisLabel = data.tot.ylabel;
-            graph.legend = data.legend;
+            graph.legend = data.tot.legend;
             graphs.push(graph);
           }
 
@@ -216,24 +205,37 @@ define([
       return graphs;
     };
 
-    var prepareCostGraphs = function(graphData) {
+    /**
+     * Returns a financial graph.
+     */
+    var generateFinancialGraph = function(data) {
+      var graph = generateGraph(data.data, data.xdata, data.title);
+
+      graph.options.xAxis.axisLabel = data.xlabel;
+      graph.options.yAxis.axisLabel = data.ylabel;
+      graph.options.linesStyle = ['__black', '__black', '__black',
+        '__black', '__black', '__black', '__black', '__black'];
+      return graph;
+    };
+
+    var prepareFinancialGraphs = function(graphData) {
       var graphs = [];
 
-      _(['costcur', 'costfut']).each(function(timeCategory) {
-        if (graphData[timeCategory]!== undefined) {
-          _(['ann', 'cum']).each(function(costCategory) {
-            if (graphData[timeCategory][costCategory]!== undefined) {
-              var data = graphData[timeCategory][costCategory];
-              var graph = generateGraph(data.data, data.xdata, data.title);
+      _($scope.types.financial).each(function (type) {
+        // costcur = cost for current people living with HIV
+        // costfut = cost for future people living with HIV
+        // ann = annual costs
+        // cum = cumulative costs
+        if (graphData[type.id] !== undefined) {
+          if (type.annual && graphData[type.id].ann) {
+            var annualData = graphData[type.id].ann;
+            graphs.push(generateFinancialGraph(annualData));
+          }
 
-              graph.options.xAxis.axisLabel = data.xlabel;
-              graph.options.yAxis.axisLabel = data.ylabel;
-              graph.options.linesStyle = ['__black', '__black', '__black',
-                '__black', '__black', '__black'];
-
-              graphs.push(graph);
-            }
-          });
+          if (type.cumulative && graphData[type.id].cum) {
+            var cumulativeData = graphData[type.id].cum;
+            graphs.push(generateFinancialGraph(cumulativeData));
+          }
         }
       });
       return graphs;
@@ -244,8 +246,8 @@ define([
       if (data.graph !== undefined && data.pie !== undefined) {
         cachedResponse = data;
         $scope.optimisationGraphs = prepareOptimisationGraphs(data.graph);
-        $scope.costGraphs = prepareCostGraphs(data.graph);
-        preparePieCharts(data.pie);
+        $scope.financialGraphs = prepareFinancialGraphs(data.graph);
+        prepareRadarChart(data.pie);
       }
     };
 
@@ -308,13 +310,13 @@ define([
         .success(function(){ console.log("OK");});
     };
 
-    $scope.onGraphTypeChange = function (type) {
-      type.active = type.total || type.byPopulation;
-
+    // The graphs are shown/hidden after updating the graph type checkboxes.
+    $scope.$watch('types', function () {
       if (!cachedResponse || !cachedResponse.graph) return;
 
       $scope.optimisationGraphs = prepareOptimisationGraphs(cachedResponse.graph);
-    };
+      $scope.financialGraphs = prepareFinancialGraphs(cachedResponse.graph);
+    }, true);
 
   });
 });

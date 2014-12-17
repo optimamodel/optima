@@ -2,7 +2,9 @@
 # -*- coding: utf-8 -*-
 from api import app, init_db
 from optima.dbconn import db
+from optima.dbmodels import ProjectDb
 import unittest
+import hashlib
 
 class OptimaTestCase(unittest.TestCase):
     """
@@ -29,18 +31,24 @@ class OptimaTestCase(unittest.TestCase):
 
     def create_user(self):
         headers = {'Content-Type' : 'application/json'}
-        create_data = '{"email":"test@test.com","password":"test", "name":"test"}'
+        create_data = '{"email":"test@test.com","password":"%s","name":"test"}' % self.test_password
         print ("create_user data: %s" % create_data)
         response = self.client.post('/api/user/create', data = create_data)
         return response
 
+    def create_project(self, name):
+        """ Helper method to create project and save it to the database """
+        project = ProjectDb(name, 1, '2000', '2010', '2020', {}, {})
+        db.session.add(project)
+        db.session.commit()
+
     def login(self):
         headers = {'Content-Type' : 'application/json'}
-        response =  self.client.post('/api/user/login', data='{"email":"test@test.com","password":"test"}', follow_redirects=True)
-        return response
+        login_data = '{"email":"test@test.com","password":"%s"}' % self.test_password
+        self.client.post('/api/user/login', data=login_data, follow_redirects=True)
 
     def logout(self):
-        return self.client.get('/api/user/logout', follow_redirects=True)
+        self.client.get('/api/user/logout', follow_redirects=True)
 
     def setUp(self):
         app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql+psycopg2://test:test@localhost:5432/optima_test'
@@ -49,8 +57,10 @@ class OptimaTestCase(unittest.TestCase):
         init_db()
         print "db created"
         self.client = app.test_client()
+        self.test_password = hashlib.sha224("test").hexdigest()
 
     def tearDown(self):
+        self.logout()
         db.session.remove()
         db.drop_all()
         db.get_engine(app).dispose()

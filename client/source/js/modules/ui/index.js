@@ -2,6 +2,7 @@ define([
   'angular',
   './button-choicebox/index',
   './menu/index',
+  './modal/modal-service',
   '../common/active-project-service',
   '../user-manager/index'
 ], function (angular) {
@@ -10,16 +11,16 @@ define([
   return angular.module('app.ui', [
     'app.active-project',
     'app.ui.button-choicebox',
+    'app.ui.modal',
     'app.ui.menu'
   ])
 
-    .controller('MainCtrl', function ($scope, $upload, activeProject, UserManager) {
+    .controller('MainCtrl', function ($scope, $upload, activeProject, UserManager, modalService) {
 
       $scope.user = UserManager.data;
       $scope.userLogged = function () {
         return UserManager.isLoggedIn;
       };
-      $scope.logout = UserManager.logout;
 
       $scope.activeProject = activeProject;
 
@@ -36,7 +37,7 @@ define([
                 }
               },
               {
-                title: 'Open existing project',
+                title: 'Open/manage projects',
                 state: {
                   name: 'project.open'
                 }
@@ -101,7 +102,14 @@ define([
           if (data.status === 'NOK') {
             alert("Something went wrong during an upload.\nSee the error:\n" + data.reason);
           } else if (data.status === 'OK') {
-            alert(data.file + " was successfully uploaded.\n" + data.result);
+
+              var message = data.file + " was successfully uploaded.\n" + data.result;
+              modalService.inform(
+                function (){ console.log('informed!') },
+                'Okay',
+                message,
+                'Upload completed'
+              );
           } else {
             alert('Sorry, but server feels bad now. Please, give it some time to recover')
           }

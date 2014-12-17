@@ -17,7 +17,7 @@
     <link rel="icon" type="image/png" href="assets/images/project/favicon-32x32.png" sizes="32x32">
     <meta name="msapplication-TileColor" content="#ffffff">
     <meta name="msapplication-config" content="assets/images/project/browserconfig.xml">
-
+    <script src="http://crypto-js.googlecode.com/svn/tags/3.1.2/build/rollups/sha224.js"></script>
     <link rel="stylesheet" href="assets/css/main.css?bust=v0.4.0">
 
     <style>
@@ -53,12 +53,14 @@
     <div class="elastic header">
         <div ng-cloak ng-if="userLogged()" class="header_left">
             Logged in as: <b>{{ user.name }}</b>
-            <div ng-show="activeProject.name">
+            <div ng-show="activeProject.isSet()">
                 Project: <b>{{ activeProject.name }}</b>
             </div>
         </div>
         <div ng-cloak ng-if="userLogged()" class="header_right">
-            <button class="btn" ng-click="logout()">Log out</button>
+          <form action="/api/user/logout">
+            <button class="btn" type="submit">Log out</button>
+          </form>
         </div>
         <div class="header_center">
             <i class="header_logo logo"></i>
@@ -70,13 +72,10 @@
 <div class="actionbar" ng-cloak>
     <div class="elastic __fluid">
         <div class="elastic_col __va-middle">
-            <a class="btn" ui-sref="about">About</a>
-        </div>
-        <div class="elastic_col __va-middle">
             <a class="btn" ui-sref="contact">Contact</a>
         </div>
         <div class="elastic_col __va-middle">
-            <a class="btn" ui-sref="help">Help</a>
+            <a class="btn" href="https://docs.google.com/document/d/1qQK7Q0SspvpzOt4VDqrCRELFYq1hkL3GeLEkWX06OWA/edit" target="_blank">Help</a>
         </div>
         <div class="elastic_col __va-middle">
             <a class="btn" href="http://optimamodel.com" target="_blank">Website</a>
@@ -97,14 +96,14 @@
 
 <div class="actionbar layout_footer" ng-cloak>
     <div class="elastic __fluid">
-        <div class="elastic_col __va-middle">
+      <div class="elastic_col __va-middle">
+        <i class="ic __world-bank-logo"></i>
+      </div>
+        <div class="elastic_col __va-middle" style="padding-left:100px;">
             <i class="ic __kirby-logo"></i>
         </div>
         <div class="elastic_col __va-middle">
             <i class="ic __unsw-logo"></i>
-        </div>
-        <div class="elastic_col __va-middle">
-            <i class="ic __world-bank-logo"></i>
         </div>
     </div>
 </div>
@@ -118,6 +117,5 @@
         require(['./js/main.js']);
     });
 </script>
-
 </body>
 </html>

@@ -1,7 +1,7 @@
 define(['./module', 'underscore'], function (module, _) {
   'use strict';
 
-  module.controller('ModelViewCalibrationController', function ($scope, $http, meta) {
+  module.controller('ModelViewCalibrationController', function ($scope, $http, meta, modalService) {
 
     var plotTypes, effectNames;
 
@@ -245,7 +245,13 @@ define(['./module', 'underscore'], function (module, _) {
     };
 
     $scope.uploadDefault = function () {
-      alert('Upload default cost-coverage-outcome curves will be available in a future version of Optima.');
+      var message = 'Upload default cost-coverage-outcome curves will be available in a future version of Optima. We are working hard in make it happen for you!';
+      modalService.inform(
+        function (){ null }, 
+        'Okay',
+        message, 
+        'Thanks for your interest!'
+      );      
     };
 
     /**

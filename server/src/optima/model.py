@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 import json
 import traceback
-from async_calculate import CalculatingThread, sentinel
+from async_calculate import CalculatingThread, start_or_report_calculation, cancel_calculation, check_calculation
 from sim.manualfit import manualfit
 from sim.bunch import bunchify
 from sim.runsimulation import runsimulation
@@ -9,9 +9,10 @@ from sim.makeccocs import makecco, plotallcurves, default_effectname
 from utils import load_model, save_model, save_working_model_as_default, revert_working_model_to_default, project_exists, pick_params, check_project_name, for_fe
 from utils import report_exception
 from flask.ext.login import login_required, current_user
+from flask import current_app
 from signal import *
-import sys
 from dbconn import db
+from sim.autofit import autofit
 
 """ route prefix: /api/model """
 model = Blueprint('model',  __name__, static_folder = '../static')
@@ -31,9 +32,8 @@ TODO: do it with the project which is currently in scope
 @login_required
 @check_project_name
 def doAutoCalibration():
-    from sim.autofit import autofit
     reply = {'status':'NOK'}
-    print('data: %s' % request.data)
+    current_app.logger.debug('data: %s' % request.data)
     data = json.loads(request.data)
 
     project_name = request.project_name
@@ -41,8 +41,9 @@ def doAutoCalibration():
         reply['reason'] = 'File for project %s does not exist' % prj_name
         return jsonify(reply)
     try:
-        if not project_name in sentinel['projects'] or not sentinel['projects'][project_name]:
-            args = {}
+        can_start, can_join, current_calculation = start_or_report_calculation(current_user.id, project_name, autofit, db.engine)
+        if can_start:
+            args = {'verbose':0}
             startyear = data.get("startyear")
             if startyear:
                 args["startyear"] = int(startyear)
@@ -52,14 +53,11 @@ def doAutoCalibration():
             timelimit = int(data.get("timelimit")) # for the thread
             args["timelimit"] = 10 # for the autocalibrate function
 
-            CalculatingThread(db.engine, sentinel, current_user, project_name, timelimit, autofit, args).start()
+            CalculatingThread(db.engine, current_user, project_name, timelimit, autofit, args).start()
             msg = "Starting thread for user %s project %s" % (current_user.name, project_name)
             return json.dumps({"status":"OK", "result": msg, "join":True})
         else:
-            current_calculation = sentinel['projects'][project_name]
-            print('sentinel object: %s' % sentinel)
             msg = "Thread for user %s project %s (%s) has already started" % (current_user.name, project_name, current_calculation)
-            can_join = current_calculation==autofit.__name__
             return json.dumps({"status":"OK", "result": msg, "join":can_join})
     except Exception, err:
         var = traceback.format_exc()
@@ -73,9 +71,8 @@ Stops calibration
 @check_project_name
 def stopCalibration():
     prj_name = request.project_name
-    if prj_name in sentinel['projects']:
-        sentinel['projects'][prj_name] = False
-    return json.dumps({"status":"OK", "result": "thread for user %s project %s stopped" % (current_user.name, prj_name)})
+    cancel_calculation(current_user.id, prj_name, autofit, db.engine)
+    return json.dumps({"status":"OK", "result": "autofit calculation for user %s project %s requested to stop" % (current_user.name, prj_name)})
 
 """
 Returns the working model of project.
@@ -85,14 +82,10 @@ Returns the working model of project.
 @check_project_name
 @report_exception()
 def getWorkingModel():
-    from sim.autofit import autofit
-    from utils import BAD_REPLY
-
-    reply = BAD_REPLY
     D_dict = {}
     # Make sure model is calibrating
     prj_name = request.project_name
-    if prj_name in sentinel['projects'] and sentinel['projects'][prj_name]==autofit.__name__:
+    if check_calculation(current_user.id, prj_name, autofit, db.engine):
         D_dict = load_model(prj_name, working_model = True, as_bunch = False)
         status = 'Running'
     else:
@@ -154,7 +147,7 @@ TODO: do it with the project which is currently in scope
 @check_project_name
 def doManualCalibration():
     data = json.loads(request.data)
-    print("/api/model/calibrate/manual %s" % data)
+    current_app.logger.debug("/api/model/calibrate/manual %s" % data)
     # get project name
     project_name = request.project_name
     if not project_exists(project_name):
@@ -177,7 +170,7 @@ def doManualCalibration():
         D = manualfit(**args)
         D_dict = D.toDict()
         if dosave:
-            print("model: %s" % project_name)
+            current_app.logger.debug("model: %s" % project_name)
             save_model(project_name, D_dict)
     except Exception, err:
         var = traceback.format_exc()
@@ -202,10 +195,10 @@ Returns the parameters of the given model in the given group.
 @login_required
 @check_project_name
 def getModelParameters(group):
-    print("getModelParameters: %s" % group)
+    current_app.logger.debug("getModelParameters: %s" % group)
     D_dict = load_model(request.project_name, as_bunch = False)
     the_group = D_dict.get(group, {})
-    print("the_group: %s" % the_group)
+    current_app.logger.debug("the_group: %s" % the_group)
     return json.dumps(the_group)
 
 
@@ -216,11 +209,11 @@ Returns the parameters of the given model in the given group / subgroup/ project
 @login_required
 @check_project_name
 def getModelSubParameters(group, subgroup):
-    print("getModelSubParameters: %s %s" % (group, subgroup))
+    current_app.logger.debug("getModelSubParameters: %s %s" % (group, subgroup))
     D_dict = load_model(request.project_name, as_bunch = False)
     the_group = D_dict.get(group,{})
     the_subgroup = the_group.get(subgroup, {})
-    print "result: %s" % the_subgroup
+    current_app.logger.debug("result: %s" % the_subgroup)
     return jsonify(the_subgroup)
 
 
@@ -232,7 +225,7 @@ Sets the given group parameters for the given model.
 @check_project_name
 def setModelParameters(group):
     data = json.loads(request.data)
-    print("set parameters group: %s for data: %s" % (group, data))
+    current_app.logger.debug("set parameters group: %s for data: %s" % (group, data))
     project_name = request.project_name
     try:
         D_dict = load_model(project_name, as_bunch = False)
@@ -241,7 +234,6 @@ def setModelParameters(group):
     except Exception, err:
         var = traceback.format_exc()
         return jsonify({"status":"NOK", "exception":var})
-    print "D as dict: %s" % D_dict
     return jsonify({"status":"OK", "project":project_name, "group":group})
 
 
@@ -267,7 +259,7 @@ def doRunSimulation():
     try:
         D = runsimulation(**args)
         D_dict = D.toDict()
-        print ("D-dict F: %s" % D_dict['F'])
+        current_app.logger.debug("D-dict F: %s" % D_dict['F'])
         save_model(request.project_name, D_dict)
     except Exception, err:
         var = traceback.format_exc()
@@ -308,7 +300,7 @@ def doCostCoverage():
 @check_project_name
 def doCostCoverageEffect():
     data = json.loads(request.data)
-    print("/costcoverage/effect(%s)" % data)
+    current_app.logger.debug("/costcoverage/effect(%s)" % data)
     args = {}
     args = pick_params(["progname", "effectname", "ccparams", "coparams"], data, args)
     args['D'] = load_model(request.project_name)

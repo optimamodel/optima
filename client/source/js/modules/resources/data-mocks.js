@@ -12,40 +12,6 @@ define([
         return $resource('/api/data/:path/:num',
           {num: '@num'},
           {
-            line: {
-              method: 'GET',
-              isArray: true,
-              params: {
-                path: 'line'
-              }
-            },
-            lineWith: {
-              method: 'GET',
-              params: {
-                path: 'line'
-              }
-            },
-            stackedArea: {
-              method: 'GET',
-              isArray: true,
-              params: {
-                path: 'stacked-area'
-              }
-            },
-            multiBar: {
-              method: 'GET',
-              isArray: true,
-              params: {
-                path: 'multi-bar'
-              }
-            },
-            pie: {
-              method: 'GET',
-              isArray: true,
-              params: {
-                path: 'pie'
-              }
-            },
             lineScatterError: {
               method: 'GET',
               params: {
