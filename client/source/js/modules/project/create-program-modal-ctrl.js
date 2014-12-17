@@ -63,6 +63,13 @@ define(['./module'], function (module) {
       $scope.program.parameters.push(entry);
     };
 
+    /**
+     * Removes the parameter at the given index (without asking for confirmation).
+     */
+    $scope.removeParameter = function ($index) {
+      program.parameters.splice($index,1);
+    };
+
     $scope.submit = function (form) {
       if (form.$invalid) {
         alert('Please fill in the form correctly');
