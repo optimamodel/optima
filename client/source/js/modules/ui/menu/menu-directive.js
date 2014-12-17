@@ -99,10 +99,10 @@ define(['jquery', 'underscore', './module'], function ($, _, module) {
 
               if (item.matchingState) {
                 item.active = (item.matchingState === toState.name.split('.')[0]);
-              } else if (item.url) {
-                item.active = item.url === '#' + $location.url();
               } else if (item.state) {
                 item.active = (item.state.name === toState.name);
+              } else if (item.url) {
+                item.active = item.url === '#' + $location.url();
               } else {
                 item.active = false;
               }

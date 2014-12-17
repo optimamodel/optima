@@ -30,7 +30,7 @@
     </accordion-heading>
 
     <ul>
-      <li data-ng-repeat="sub in item.subitems" ng-class="{ active: sub.active }">
+      <li data-ng-repeat="sub in item.subitems" ng-class="{ '__active': sub.active }">
         <a ng-if="sub.url" class="link __black __complex" ui-sref="{{ sub.url }}">
           <i class="ic" ng-class="{ '__circle-gray': !sub.active, '__donut-blue': sub.active }"></i>
           {{ sub.title }}
