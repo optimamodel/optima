@@ -6,6 +6,7 @@ define(['angular', 'underscore', 'saveAs'], function (angular, _, saveAs) {
       return {
         restrict: 'A',
         link: function (scope, elem, attrs) {
+
           var html = '<div class="chart-buttons btn-group">' +
             '<button class="btn figure">Export figure</button>' +
             '<button class="btn data">Export data</button>' +
@@ -142,9 +143,21 @@ define(['angular', 'underscore', 'saveAs'], function (angular, _, saveAs) {
               e.preventDefault();
 
               var svgContent = elem.parent().find('svg').html();
-              var svgGraph = '<svg xmlns="http://www.w3.org/2000/svg" version="1.1">' + svgContent + '</svg>';
 
-              saveAs(new Blob([svgGraph], { type: 'image/svg' }), 'graph.svg');
+              // in order to have styled graphs the css content used to render
+              // graphs is retrieved & inject it into the svg as style tag
+              var cssContentRequest = $http.get('/assets/css/chart.css');
+              cssContentRequest.success(function(cssContent) {
+                var styles = '<style>' + cssContent + '</style>';
+                var svgGraph = '<svg xmlns="http://www.w3.org/2000/svg" version="1.1">';
+                svgGraph = svgGraph + styles;
+                svgGraph = svgGraph + svgContent;
+                svgGraph = svgGraph + '</svg>';
+
+                saveAs(new Blob([svgGraph], { type: 'image/svg' }), 'graph.svg');
+              }).error(function() {
+                alert("Please releod and try again, something went wrong while generating the graph.");
+              });
             })
             .on('click', '.data', function (e) {
               e.preventDefault();
