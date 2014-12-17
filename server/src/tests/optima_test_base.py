@@ -1,7 +1,8 @@
 #!/bin/env python
 # -*- coding: utf-8 -*-
 from api import app, init_db
-from api import db
+from optima.dbconn import db
+from optima.dbmodels import ProjectDb
 import unittest
 import hashlib
 
@@ -35,6 +36,12 @@ class OptimaTestCase(unittest.TestCase):
         response = self.client.post('/api/user/create', data = create_data)
         return response
 
+    def create_project(self, name):
+        """ Helper method to create project and save it to the database """
+        project = ProjectDb(name, 1, '2000', '2010', '2020', {}, {})
+        db.session.add(project)
+        db.session.commit()
+
     def login(self):
         headers = {'Content-Type' : 'application/json'}
         login_data = '{"email":"test@test.com","password":"%s"}' % self.test_password
@@ -50,7 +57,7 @@ class OptimaTestCase(unittest.TestCase):
         init_db()
         print "db created"
         self.client = app.test_client()
-        self.test_password = hashlib.sha224("test").hexdigest() 
+        self.test_password = hashlib.sha224("test").hexdigest()
 
     def tearDown(self):
         self.logout()
