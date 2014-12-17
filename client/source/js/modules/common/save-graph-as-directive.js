@@ -141,11 +141,10 @@ define(['angular', 'underscore', 'saveAs'], function (angular, _, saveAs) {
             .on('click', '.figure', function (e) {
               e.preventDefault();
 
-              var xml = elem.find('figure').html();
+              var svgContent = elem.parent().find('svg').html();
+              var svgGraph = '<svg xmlns="http://www.w3.org/2000/svg" version="1.1">' + svgContent + '</svg>';
 
-              xml = '<svg xmlns="http://www.w3.org/2000/svg" version="1.1">' + xml + '</svg>';
-
-              saveAs(new Blob([xml], { type: 'image/svg' }), 'graph.svg');
+              saveAs(new Blob([svgGraph], { type: 'image/svg' }), 'graph.svg');
             })
             .on('click', '.data', function (e) {
               e.preventDefault();
