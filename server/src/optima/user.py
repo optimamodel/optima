@@ -133,6 +133,7 @@ def logout():
 #with user hashed password as secret (can be changed later)
 @user.route('/list')
 def list():
+    current_app.logger.debug('/api/user/list %s' % request.args)
     secret = request.args.get('secret','')
     u = UserDb.query.filter_by(password = secret).first()
     if u is None:
@@ -141,7 +142,7 @@ def list():
         result = []
         users = UserDb.query.all()
         for u in users:
-            result.append({'name':u.name})
+            result.append({'id':u.id, 'name':u.name, 'email':u.email})
         return jsonify({'users':result}) 
 
 
