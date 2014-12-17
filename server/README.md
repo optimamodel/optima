@@ -18,6 +18,8 @@ Run the server:
 `$ ./run.sh`
 
 
+ATTENTION: config.example.py (the reference config) can be changed (e.g. new settings added or old settings removed). If you have problems with running Optima locally, look at the reference config file and compare it with your version.
+
 Database migrations
 ___________________
 
@@ -82,22 +84,13 @@ These APIs allow front-end to get current user or login a user.
 	password: "whatever"
    `
 
-  On successful login, user is sent back this JSON:
-
-  `{
-	email: "iwein@startersquad.com"
-	name: "Iwein Fuld"
-   }`
+  On successful login, user is redirected to the home page.
 
   On login error, a 401 Unauthorized response is returned.
 
 * `/api/user/logout`
 
-  User is logged out. Following JSON is returned:
-
-  `{
-	status: "OK"
-   }`
+  User is logged out and redirected back to the login page.
 
 Project API
 ------------
