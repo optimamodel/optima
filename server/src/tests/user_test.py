@@ -40,5 +40,25 @@ class UserTestCase(OptimaTestCase):
         assert(test_user['email']=="test@test.com")
         assert(test_user['name'] == "test")
         assert('password' not in test_user)
+
+    def test_delete_user(self):
+        other_email = 'test2@test.com'
+        response = self.create_user()
+        response = self.create_user(name='test2', email=other_email)
+        response = self.login(email=other_email)
+        response = self.client.post('/api/project/create/test', data = '{}')
+        response = self.logout()
+        response = self.client.delete('/api/user/delete?secret=%s&email=%s' % (self.test_password, other_email))
+        assert(response.status_code==200)
+        data = json.loads(response.data)
+        assert(data.get('deleted') is not None)
+        assert(data.get('status')=='OK')
+        response = self.client.get('/api/user/list?secret=%s' % self.test_password)
+        assert(response.status_code==200)
+        data = json.loads(response.data)
+        users = data.get('users', None)
+        assert(users is not None)
+        assert(len(users)==1)
+
 if __name__ == '__main__':
     unittest.main()
