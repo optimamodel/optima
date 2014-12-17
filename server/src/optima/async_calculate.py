@@ -27,7 +27,8 @@ def start_or_report_calculation(user_id, project, func, engine): #only called fr
             can_join = True
             db_session.commit()
         else:
-            if (not proj.working_project.is_working) and (proj.working_project.work_type is None):
+            # if work_type is None then is_working flag makes no sense
+            if (not proj.working_project.is_working) or (proj.working_project.work_type is None):
                 proj.working_project.work_type = work_type
                 proj.working_project.is_working = True
                 db_session.add(proj.working_project)
