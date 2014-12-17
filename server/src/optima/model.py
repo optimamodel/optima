@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 import json
 import traceback
-from async_calculate import CalculatingThread, sentinel, start_or_report_calculation, cancel_calculation, check_calculation
+from async_calculate import CalculatingThread, start_or_report_calculation, cancel_calculation, check_calculation
 from sim.manualfit import manualfit
 from sim.bunch import bunchify
 from sim.runsimulation import runsimulation
@@ -11,7 +11,6 @@ from utils import report_exception
 from flask.ext.login import login_required, current_user
 from flask import current_app
 from signal import *
-import sys
 from dbconn import db
 from sim.autofit import autofit
 
@@ -83,10 +82,6 @@ Returns the working model of project.
 @check_project_name
 @report_exception()
 def getWorkingModel():
-    from sim.autofit import autofit
-    from utils import BAD_REPLY
-
-    reply = BAD_REPLY
     D_dict = {}
     # Make sure model is calibrating
     prj_name = request.project_name

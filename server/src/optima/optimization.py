@@ -12,7 +12,7 @@ Optimization Module
 from flask import request, jsonify, Blueprint, current_app
 from flask.ext.login import login_required
 from dbconn import db
-from async_calculate import CalculatingThread, sentinel, start_or_report_calculation, cancel_calculation, check_calculation
+from async_calculate import CalculatingThread, start_or_report_calculation, cancel_calculation, check_calculation
 from utils import check_project_name, project_exists, pick_params, load_model, save_working_model, report_exception
 from sim.optimize import optimize
 from sim.bunch import bunchify
@@ -37,8 +37,9 @@ def startOptimization():
     print("optimize: %s" % data)
     # get project name
     project_name = request.project_name
-    D = None
     if not project_exists(project_name):
+        from utils import BAD_REPLY
+        reply = BAD_REPLY
         reply['reason'] = 'File for project %s does not exist' % project_name
         return jsonify(reply)
     try:
@@ -85,10 +86,6 @@ Returns the working model for optimization.
 @check_project_name
 @report_exception()
 def getWorkingModel():
-    from utils import BAD_REPLY
-    from sim.optimize import optimize
-
-    reply = BAD_REPLY
     D_dict = {}
     # Get optimization working data
     prj_name = request.project_name
