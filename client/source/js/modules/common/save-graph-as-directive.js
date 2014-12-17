@@ -23,7 +23,7 @@ define(['angular', 'underscore', 'saveAs'], function (angular, _, saveAs) {
           };
 
           /**
-           * Fills array according to reference dictionary keys, 
+           * Fills array according to reference dictionary keys,
            * Copies values from source dictionary if key found there, otherwise creates empty entries
            */
           var fillFromDictionary = function(reference, source){
@@ -47,29 +47,29 @@ define(['angular', 'underscore', 'saveAs'], function (angular, _, saveAs) {
             var line = graphToDictionary(graph.data.line);
 
             var xOfPoints = {}; // merge xPoints with scatter x points
-            xOfPoints['title'] = graph.options.xAxis.axisLabel;
-            xOfPoints['data'] = [];
-            xOfPoints['data'].push.apply(xOfPoints['data'], Object.keys(line));
-            xOfPoints['data'].push.apply(xOfPoints['data'], Object.keys(scatter));
-            xOfPoints['data'].sort();
+            xOfPoints.title = graph.options.xAxis.axisLabel;
+            xOfPoints.data = [];
+            xOfPoints.data.push.apply(xOfPoints.data, Object.keys(line));
+            xOfPoints.data.push.apply(xOfPoints.data, Object.keys(scatter));
+            xOfPoints.data.sort();
             exportable.columns.push(xOfPoints);
 
             var yOfPoints = {};
-            yOfPoints['title'] = 'line'; // in theory, yAxis should be overall y title (todo for later, backend should support that)
-            yOfPoints['data'] = fillFromDictionary(xOfPoints['data'], line);
+            yOfPoints.title = 'line'; // in theory, yAxis should be overall y title (todo for later, backend should support that)
+            yOfPoints.data = fillFromDictionary(xOfPoints.data, line);
             exportable.columns.push(yOfPoints);
 
             _(graph.data.area).each(function(lineData, lineTitle) {
               var nextLine = graphToDictionary(lineData);
               var yOfPoints = {};
-              yOfPoints['title'] = lineTitle;
-              yOfPoints['data'] = fillFromDictionary(xOfPoints['data'], nextLine);
+              yOfPoints.title = lineTitle;
+              yOfPoints.data = fillFromDictionary(xOfPoints.data, nextLine);
               exportable.columns.push(yOfPoints);
             });
 
             var scatterPoints = {};
-            scatterPoints['title'] = "scatter";
-            scatterPoints['data'] = fillFromDictionary(xOfPoints['data'], scatter);
+            scatterPoints.title = "scatter";
+            scatterPoints.data = fillFromDictionary(xOfPoints.data, scatter);
             exportable.columns.push(scatterPoints);
             return exportable;
           };
@@ -84,15 +84,15 @@ define(['angular', 'underscore', 'saveAs'], function (angular, _, saveAs) {
 
             // The X of the points are only sent in one column and we collect them from any of the lines
             var xOfPoints = {};
-            xOfPoints['title'] = graph.options.xAxis.axisLabel;
-            xOfPoints['data'] = _.map(graph.data.lines[0],function(point,j){ return point[0] });
+            xOfPoints.title = graph.options.xAxis.axisLabel;
+            xOfPoints.data = _.map(graph.data.lines[0],function(point,j){ return point[0]; });
             exportable.columns.push(xOfPoints);
 
             _(graph.data.lines).each(function(lineData, index) {
               // Collecting the Y of the points for the line
               var yOfLinePoints = {};
-              yOfLinePoints['title'] = lineTitles[index];
-              yOfLinePoints['data'] = _.map(lineData,function(point,j){ return point[1] });
+              yOfLinePoints.title = lineTitles[index];
+              yOfLinePoints.data = _.map(lineData,function(point,j){ return point[1]; });
               exportable.columns.push(yOfLinePoints);
             });
 
@@ -103,9 +103,9 @@ define(['angular', 'underscore', 'saveAs'], function (angular, _, saveAs) {
            * Returns the normalized data ready for export
            */
           scope.getExportableFrom = function (graph){
-            if(!graph.data) { return null }
-            if(_.isEqual(Object.keys(graph.data),["line", "scatter", "area"])) { return scope.lineAndAreaExport(graph) }
-            if(_.isEqual(Object.keys(graph.data),["lines", "scatter"])) { return scope.linesExport(graph) }
+            if(!graph.data) { return null; }
+            if(_.isEqual(Object.keys(graph.data),["line", "scatter", "area"])) { return scope.lineAndAreaExport(graph); }
+            if(_.isEqual(Object.keys(graph.data),["lines", "scatter"])) { return scope.linesExport(graph); }
 
             return null;
           };
@@ -113,7 +113,7 @@ define(['angular', 'underscore', 'saveAs'], function (angular, _, saveAs) {
           scope.saySorry = function() {
             // to-do: this should be updated after the PR to use the modalService
             return alert('Sorry, this graph cannot be exported');
-          }
+          };
 
           /**
            * Exports the data of the graph in the format returned by the API
@@ -121,11 +121,11 @@ define(['angular', 'underscore', 'saveAs'], function (angular, _, saveAs) {
           scope.exportFrom = function (graphOrUndefined){
             if(!graphOrUndefined) { return scope.saySorry();}
             var exportable = this.getExportableFrom(graphOrUndefined);
-            if(exportable == null) { return scope.saySorry();}
-      
-            $http({url:'/api/project/export', 
-                  method:'POST', 
-                  data: exportable, 
+            if(exportable === null) { return scope.saySorry(); }
+
+            $http({url:'/api/project/export',
+                  method:'POST',
+                  data: exportable,
                   headers: {'Content-type': 'application/json'},
                   responseType:'arraybuffer'})
               .success(function (response, status, headers, config) {
@@ -151,7 +151,7 @@ define(['angular', 'underscore', 'saveAs'], function (angular, _, saveAs) {
               e.preventDefault();
               //a big ugly hack to distinguish between cost and covariance graphs.
               //they are both in the same ng-repeat scope :-(
-              var target = attrs['variant']=='coGraph'? scope.coGraph: scope.graph; 
+              var target = attrs.variant == 'coGraph'? scope.coGraph: scope.graph;
               scope.exportFrom(target);
             });
         }
