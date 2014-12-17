@@ -129,6 +129,22 @@ def logout():
     current_app.logger.debug("User %s is signed out" % username)
     return redirect(url_for("site"))
 
+#lists all the users. For internal reasons, this is implemented as console-only functionality
+#with user hashed password as secret (can be changed later)
+@user.route('/list')
+def list():
+    secret = request.args.get('secret','')
+    u = UserDb.query.filter_by(password = secret).first()
+    if u is None:
+        abort(401)
+    else:
+        result = []
+        users = UserDb.query.all()
+        for u in users:
+            result.append({'name':u.name})
+        return jsonify({'users':result}) 
+
+
 #For Login Manager
 @login_manager.user_loader
 def load_user(userid):
