@@ -64,10 +64,12 @@ class ProjectDb(db.Model):
 class WorkingProjectDb(db.Model):
     __tablename__ = 'working_projects'
     id = db.Column(db.Integer,db.ForeignKey('projects.id'), primary_key=True )
-    is_calibrating = db.Column(db.Boolean, unique=False, default=False)
+    is_working = db.Column(db.Boolean, unique=False, default=False)
+    work_type = db.Column(db.String(32), default=None)
     model = db.Column(JSON)
 
-    def __init__(self, project_id, is_calibrating=False, model = {}):
+    def __init__(self, project_id, is_working=False, model = {}, work_type = None):
         self.id = project_id
         self.model = model
-        self.is_calibrating = is_calibrating
+        self.is_working = is_working
+        self.work_type = work_type

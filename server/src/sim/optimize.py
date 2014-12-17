@@ -69,7 +69,7 @@ def optimize(D, objectives=None, constraints=None, startyear=2000, endyear=2030,
         
         
     # Run the optimization algorithm
-    optalloc, fval, exitflag, output = ballsd(objectivecalc, origalloc, xmin=0*array(origalloc), timelimit=timelimit)
+    optalloc, fval, exitflag, output = ballsd(objectivecalc, origalloc, xmin=0*array(origalloc), timelimit=timelimit, verbose=verbose)
     
     # Update the model
     for i,alloc in enumerate([origalloc,optalloc]):
