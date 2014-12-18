@@ -187,6 +187,8 @@ def modify(user_id):
         if new_password is not None:
             user.password = new_password
         db.session.add(user)
+        db.session.commit()
+        current_app.logger.info("modified user:%s" % user_id)
         return jsonify({'status':'OK','modified':user_id})
 
 #For Login Manager
