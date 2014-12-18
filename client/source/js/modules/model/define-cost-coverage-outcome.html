@@ -69,7 +69,7 @@
 
     <div class="section">
       <h1>{{ displayedProgram.name }}</h1>
-      <div class="chart-container" style="width: 470px" ng-init="graph = graphs.plotdata_cc; graph.title = displayedProgram.name">>
+      <div class="chart-container" style="width: 470px" ng-init="graph = graphs.plotdata_cc; graph.title = displayedProgram.name">
         <div line-scatter-chart data="graph.data" options="graph.options" save-graph-as></div>
       </div>
     </div>
