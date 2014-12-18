@@ -61,7 +61,7 @@ class UserTestCase(OptimaTestCase):
         projects = self.list_projects(2)
         assert(len(projects)==1)
         #delete second user
-        response = self.client.delete('/api/user/delete?secret=%s&email=%s' % (self.test_password, other_email))
+        response = self.client.delete('/api/user/delete/2?secret=%s' % self.test_password)
         assert(response.status_code==200)
         data = json.loads(response.data)
         assert(data.get('deleted') is not None)
