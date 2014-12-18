@@ -145,30 +145,29 @@ def list():
         return jsonify({'users':result}) 
 
 #deletes the given user
-@user.route('/delete', methods=['DELETE'])
-def delete():
-    current_app.logger.debug('/api/user/delete %s' % request.args)
+@user.route('/delete/<user_id>', methods=['DELETE'])
+def delete(user_id):
+    current_app.logger.debug('/api/user/delete/%s' % user_id)
     secret = request.args.get('secret','')
     u = UserDb.query.filter_by(password = secret).first()
     if u is None:
         abort(401)
     else:
-        user_email = request.args.get('email', '')
-        user = UserDb.query.filter_by(email=user_email).first()
+        user = UserDb.query.get(user_id)
         if not user:
             abort(404)
         else:
+            user_email = user.email
             from dbmodels import ProjectDb, WorkingProjectDb
             from dbconn import db
             from sqlalchemy.orm import load_only
             #delete all corresponding projects and working projects as well
-            user_id = user.id
             projects = ProjectDb.query.filter_by(user_id=user_id).options(load_only("id")).all()
             project_ids = [project.id for project in projects]
             current_app.logger.debug("project_ids for user %s:%s" % (user_id, project_ids))
             WorkingProjectDb.query.filter(WorkingProjectDb.id.in_(project_ids)).delete(synchronize_session=False)
             ProjectDb.query.filter_by(user_id=user_id).delete()
-            UserDb.query.filter(UserDb.id==user_id).delete()
+            db.session.delete(user)
             db.session.commit()
             current_app.logger.info("deleted user:%s %s" % (user_id, user_email))
             return jsonify({'status':'OK','deleted':user_id})
