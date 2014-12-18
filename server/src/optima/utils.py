@@ -3,7 +3,7 @@ from sim.dataio import DATADIR, PROJECTDIR, TEMPLATEDIR, loaddata, savedata, upl
 from flask import helpers, current_app
 from flask.ext.login import current_user
 from functools import wraps
-from flask import request, jsonify
+from flask import request, jsonify, abort
 from dbconn import db
 from dbmodels import ProjectDb, WorkingProjectDb, UserDb
 import traceback
@@ -54,6 +54,7 @@ def verify_request(api_call):
         if u is None:
             abort(401)
         else:
+            current_app.logger.debug("admin_user: %s %s %s" % (u.name, u.password, u.email))
             return api_call(*args, **kwargs)
     return _verify_request
 

@@ -133,6 +133,7 @@ def logout():
 #lists all the users. For internal reasons, this is implemented as console-only functionality
 #with user hashed password as secret (can be changed later)
 @user.route('/list')
+@verify_request
 def list():
     current_app.logger.debug('/api/user/list %s' % request.args)
     result = []
@@ -167,6 +168,7 @@ def delete(user_id):
 
 #modify user by ID (can change email, name and/or password)
 @user.route('/modify/<user_id>', methods=['PUT'])
+@verify_request
 def modify(user_id):
     current_app.logger.debug('/api/user/modify/%s' % user_id)
     user = UserDb.query.get(user_id)
