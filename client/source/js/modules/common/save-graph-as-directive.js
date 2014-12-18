@@ -2,7 +2,7 @@ define(['angular', 'underscore', 'saveAs'], function (angular, _, saveAs) {
   'use strict';
 
   return angular.module('app.save-graph-as', [])
-    .directive('saveGraphAs', function ($http) {
+    .directive('saveGraphAs', function ($http, modalService) {
       return {
         restrict: 'A',
         link: function (scope, elem, attrs) {
@@ -34,6 +34,69 @@ define(['angular', 'underscore', 'saveAs'], function (angular, _, saveAs) {
               result.push(nextEntry);
             });
             return result;
+          };
+
+          var exportGraphAsSVG = function() {
+            var svgContent = elem.parent().find('svg').html();
+
+            // in order to have styled graphs the css content used to render
+            // graphs is retrieved & inject it into the svg as style tag
+            var cssContentRequest = $http.get('/assets/css/chart.css');
+            cssContentRequest.success(function(cssContent) {
+              var styles = '<style>' + cssContent + '</style>';
+              var svgGraph = '<svg xmlns="http://www.w3.org/2000/svg" version="1.1">';
+              svgGraph = svgGraph + styles;
+              svgGraph = svgGraph + svgContent;
+              svgGraph = svgGraph + '</svg>';
+
+              saveAs(new Blob([svgGraph], { type: 'image/svg' }), 'graph.svg');
+            }).error(function() {
+              alert("Please releod and try again, something went wrong while generating the graph.");
+            });
+          };
+
+          var exportGraphAsPNG = function() {
+            var svgElement = elem.parent().find('svg');
+            var svgContent = svgElement.html();
+
+            var scalingFactor = 4.2;
+
+            // in order to have styled graphs the css content used to render
+            // graphs is retrieved & inject it into the svg as style tag
+            var cssContentRequest = $http.get('/assets/css/chart.css');
+            cssContentRequest.success(function(cssContent) {
+              var styles = '<style>' + cssContent + '</style>';
+
+              var viewbox = ' viewbox="0 0 ' + svgElement.width() + ' ' + svgElement.height() + '"';
+              var svgAttributes = ' xmlns="http://www.w3.org/2000/svg"';
+              svgAttributes = svgAttributes + ' width="' + svgElement.width() + '"';
+              svgAttributes = svgAttributes + ' height="' + svgElement.height() + '"';
+              svgAttributes = svgAttributes + viewbox;
+
+              var svgGraph = '<svg' + svgAttributes + '>';
+              svgGraph = svgGraph + styles;
+              svgGraph = svgGraph + svgContent;
+              svgGraph = svgGraph + '</svg>';
+
+              var tmpImage = document.createElement("img");
+              tmpImage.width = svgElement.width() * scalingFactor;
+              tmpImage.height = svgElement.height() * scalingFactor;
+              tmpImage.setAttribute("src", "data:image/svg+xml;base64," + btoa(svgGraph));
+
+              tmpImage.onload = function() {
+                var canvas = document.createElement("canvas");
+                canvas.width = svgElement.width() * scalingFactor;
+                canvas.height = svgElement.height() * scalingFactor;
+                var ctx = canvas.getContext("2d");
+                ctx.drawImage(tmpImage, 0, 0);
+
+                canvas.toBlob(function(blob) {
+                  saveAs(blob, "pretty image.png");
+                });
+              };
+            }).error(function() {
+              alert("Please releod and try again, something went wrong while generating the graph.");
+            });
           };
 
           scope.lineAndAreaExport = function (graph){
@@ -139,28 +202,21 @@ define(['angular', 'underscore', 'saveAs'], function (angular, _, saveAs) {
           var buttons = angular.element(html);
           elem.after(buttons);
           buttons
-            .on('click', '.figure', function (e) {
-              e.preventDefault();
+            .on('click', '.figure', function (event) {
+              event.preventDefault();
 
-              var svgContent = elem.parent().find('svg').html();
-
-              // in order to have styled graphs the css content used to render
-              // graphs is retrieved & inject it into the svg as style tag
-              var cssContentRequest = $http.get('/assets/css/chart.css');
-              cssContentRequest.success(function(cssContent) {
-                var styles = '<style>' + cssContent + '</style>';
-                var svgGraph = '<svg xmlns="http://www.w3.org/2000/svg" version="1.1">';
-                svgGraph = svgGraph + styles;
-                svgGraph = svgGraph + svgContent;
-                svgGraph = svgGraph + '</svg>';
-
-                saveAs(new Blob([svgGraph], { type: 'image/svg' }), 'graph.svg');
-              }).error(function() {
-                alert("Please releod and try again, something went wrong while generating the graph.");
-              });
+              var message = 'Please choose your preferred format';
+              modalService.choice(
+                exportGraphAsSVG,
+                exportGraphAsPNG,
+                'Download as SVG',
+                'Download as PNG',
+                message,
+                'Export figure'
+              );
             })
-            .on('click', '.data', function (e) {
-              e.preventDefault();
+            .on('click', '.data', function (event) {
+              event.preventDefault();
               //a big ugly hack to distinguish between cost and covariance graphs.
               //they are both in the same ng-repeat scope :-(
               var target = attrs.variant == 'coGraph'? scope.coGraph: scope.graph;
