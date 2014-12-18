@@ -81,7 +81,6 @@ define(['./module'], function (module) {
     };
 
     $scope.submit = function (form) {
-      console.log(program);
       if (form.$invalid) {
         alert('Please fill in the form correctly');
       } else {
