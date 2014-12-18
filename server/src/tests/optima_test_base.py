@@ -51,9 +51,10 @@ class OptimaTestCase(unittest.TestCase):
         projects = ProjectDb.query.filter_by(user_id=user_id).all()
         return [project for project in projects]
 
-    def login(self, email=default_email):
+    def login(self, email=default_email, password=None):
+        if not password: password = self.test_password
         headers = {'Content-Type' : 'application/json'}
-        login_data = '{"email":"%s","password":"%s"}' % (email, self.test_password)
+        login_data = '{"email":"%s","password":"%s"}' % (email, password)
         self.client.post('/api/user/login', data=login_data, follow_redirects=True)
 
     def logout(self):
