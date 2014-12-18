@@ -70,6 +70,11 @@ define(['angular', 'underscore', 'saveAs'], function (angular, _, saveAs) {
             return result;
           };
 
+          /**
+           * Initialize a download of the graph as SVG
+           *
+           * In this function the original SVG is enhanced by injecting styling.
+           */
           var exportGraphAsSvg = function() {
             var originalSvg = elem.parent().find('svg');
             var orginalWidth = originalSvg.width();
@@ -113,7 +118,7 @@ define(['angular', 'underscore', 'saveAs'], function (angular, _, saveAs) {
           };
 
           /**
-           * Initializes a download of the current graph as PNG
+           * Initializes a download of the graph as PNG
            *
            * In order to achieve this a new SVG is created including styles.
            * This SVG element is used as data source inside an image which then
