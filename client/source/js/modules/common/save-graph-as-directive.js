@@ -7,10 +7,42 @@ define(['angular', 'underscore', 'saveAs'], function (angular, _, saveAs) {
         restrict: 'A',
         link: function (scope, elem, attrs) {
 
-          var html = '<div class="chart-buttons btn-group">' +
+          /**
+           * Initializes the directive by appending the html and setting up the
+           * event handlers.
+           */
+          var initialize = function() {
+            var template = '<div class="chart-buttons btn-group">' +
             '<button class="btn figure">Export figure</button>' +
             '<button class="btn data">Export data</button>' +
             '</div>';
+
+            var buttons = angular.element(template);
+            // append export buttons
+            elem.after(buttons);
+
+            // setup click handlers for the different actions
+            buttons
+              .on('click', '.figure', function (event) {
+                event.preventDefault();
+
+                modalService.choice(
+                  exportGraphAsSVG, // first button callback
+                  exportGraphAsPNG, // second button callback
+                  'Download as SVG', // first button text
+                  'Download as PNG', // second button text
+                  'Please choose your preferred format', // modal message
+                  'Export figure' // modal title
+                );
+              })
+              .on('click', '.data', function (event) {
+                event.preventDefault();
+                //a big ugly hack to distinguish between cost and covariance graphs.
+                //they are both in the same ng-repeat scope :-(
+                var target = attrs.variant == 'coGraph'? scope.coGraph: scope.graph;
+                scope.exportFrom(target);
+              });
+          };
 
           /**
            * Converts array of graph points to dictionary.
@@ -199,29 +231,7 @@ define(['angular', 'underscore', 'saveAs'], function (angular, _, saveAs) {
               .error(function () {});
           };
 
-          var buttons = angular.element(html);
-          elem.after(buttons);
-          buttons
-            .on('click', '.figure', function (event) {
-              event.preventDefault();
-
-              var message = 'Please choose your preferred format';
-              modalService.choice(
-                exportGraphAsSVG,
-                exportGraphAsPNG,
-                'Download as SVG',
-                'Download as PNG',
-                message,
-                'Export figure'
-              );
-            })
-            .on('click', '.data', function (event) {
-              event.preventDefault();
-              //a big ugly hack to distinguish between cost and covariance graphs.
-              //they are both in the same ng-repeat scope :-(
-              var target = attrs.variant == 'coGraph'? scope.coGraph: scope.graph;
-              scope.exportFrom(target);
-            });
+          initialize();
         }
       };
     });
