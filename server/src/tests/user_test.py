@@ -11,8 +11,18 @@ class UserTestCase(OptimaTestCase):
 
     """
 
+    def create_admin_user(self):
+        import hashlib
+        from optima.dbconn import db
+        from optima.dbmodels import UserDb
+        self.admin_password = hashlib.sha224("admin").hexdigest()
+        """ Helper method to create project and save it to the database """
+        admin = UserDb("admin", "admin@test.com", self.admin_password, True)
+        db.session.add(admin)
+        db.session.commit()
+
     def list_users(self):
-        return self.client.get('/api/user/list?secret=%s' % self.test_password)
+        return self.client.get('/api/user/list?secret=%s' % self.admin_password)
 
     def test_current_no_login(self):
         response = self.client.get('/api/user/current', follow_redirects=True)
@@ -31,21 +41,23 @@ class UserTestCase(OptimaTestCase):
 
 
     def test_list_users(self):
+        self.create_admin_user()
         response = self.create_user()
         response = self.list_users()
         assert(response.status_code==200)
         data = json.loads(response.data)
         users = data.get('users', None)
         assert(users is not None)
-        assert(len(users)==1)
-        test_user = users[0]
-        assert(test_user['id']==1)
+        assert(len(users)==2)
+        test_user = users[1]
+        assert(test_user['id']==2)
         assert(test_user['email']=="test@test.com")
         assert(test_user['name'] == "test")
         assert('password' not in test_user)
 
     def test_delete_user(self):
         other_email = 'test2@test.com'
+        self.create_admin_user()
         #create two users
         response = self.create_user()
         response = self.create_user(name='test2', email=other_email)
@@ -53,41 +65,44 @@ class UserTestCase(OptimaTestCase):
         response = self.login(email=other_email)
         response = self.client.post('/api/project/create/test', data = '{}')
         response = self.logout()
-        #list users, verify we have 2
+        #list users, verify we have 3
         response = self.list_users()
         users = json.loads(response.data).get('users')
-        assert(len(users)==2)
+        assert(len(users)==3)
         #list projects for the second user, verify we have 1
-        projects = self.list_projects(2)
+        projects = self.list_projects(3)
         assert(len(projects)==1)
         #delete second user
-        response = self.client.delete('/api/user/delete/2?secret=%s' % self.test_password)
+        response = self.client.delete('/api/user/delete/3?secret=%s' % self.admin_password)
         assert(response.status_code==200)
         data = json.loads(response.data)
-        assert(data.get('deleted') is not None)
+        assert(data.get('deleted')=='3')
         assert(data.get('status')=='OK')
         #list users again, verify we have 1 and it's the first one
         response = self.list_users()
         users = json.loads(response.data).get('users')
         assert(users is not None)
-        assert(len(users)==1)
-        assert(users[0]['email']=='test@test.com')
+        assert(len(users)==2)
+        emails = set([user['email'] for user in users])
+        print ('emails: %s' % emails)
+        assert('test2@test.com' not in emails)
         #list projects for the second user and verify that they are gone
         projects = self.list_projects(2)
         assert(len(projects)==0)
 
     def test_modify_user(self):
         import hashlib
+        self.create_admin_user()
         response = self.create_user()
         new_password = hashlib.sha224("test1").hexdigest()
         new_email = 'test1@test.com'
-        response = self.client.put('/api/user/modify/1?secret=%s&email=%s&password=%s' \
-            % (self.test_password, new_email, new_password))
+        response = self.client.put('/api/user/modify/2?secret=%s&email=%s&password=%s' \
+            % (self.admin_password, new_email, new_password))
         assert(response.status_code==200)
         data = json.loads(response.data)
         print('modified:%s' % data)
         assert(data.get('status')=='OK')
-        assert(data.get('modified')=='1')
+        assert(data.get('modified')=='2')
         response = self.login(email=new_email, password = new_password)
         response = self.client.post('/api/project/create/test', data = '{}')
         assert(response.status_code==200)

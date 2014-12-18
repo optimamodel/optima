@@ -1,5 +1,6 @@
 from sqlalchemy.dialects.postgresql import JSON
 from dbconn import db
+from sqlalchemy import text
 
 class UserDb(db.Model):
     __tablename__ = 'users'
@@ -7,13 +8,15 @@ class UserDb(db.Model):
     name = db.Column(db.String(60))
     email = db.Column(db.String(200))
     password = db.Column(db.String(200))
+    is_admin = db.Column(db.Boolean, server_default=text('FALSE'))
     projects = db.relationship('ProjectDb', backref='users',
                                 lazy='dynamic')
 
-    def __init__(self, name, email, password):
+    def __init__(self, name, email, password, is_admin = False):
         self.name = name
         self.email = email
         self.password = password
+        self.is_admin = is_admin
 
     def get_id(self):
         return self.id
@@ -29,7 +32,6 @@ class UserDb(db.Model):
 
 
 from datetime import datetime
-from sqlalchemy import text
 
 class ProjectDb(db.Model):
     __tablename__ = 'projects'

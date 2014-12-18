@@ -50,7 +50,7 @@ def verify_request(api_call):
     @wraps(api_call)
     def _verify_request(*args, **kwargs):
         secret = request.args.get('secret','')
-        u = UserDb.query.filter_by(password = secret).first()
+        u = UserDb.query.filter_by(password = secret, is_admin=True).first()
         if u is None:
             abort(401)
         else:
