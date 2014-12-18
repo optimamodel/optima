@@ -88,42 +88,40 @@ define(['angular', 'underscore', 'saveAs'], function (angular, _, saveAs) {
           };
 
           var exportGraphAsPNG = function() {
-            var svgElement = elem.parent().find('svg');
-            var svgContent = svgElement.html();
-
+            var originalSvg = elem.parent().find('svg');
+            var orginalWidth = originalSvgElement.width();
+            var orginalHeight = originalSvgElement.height();
             var scalingFactor = 4.2;
 
             // in order to have styled graphs the css content used to render
             // graphs is retrieved & inject it into the svg as style tag
             var cssContentRequest = $http.get('/assets/css/chart.css');
             cssContentRequest.success(function(cssContent) {
+
+              var xmlns = "http://www.w3.org/2000/svg";
+              var svg = document.createElementNS(xmlns, "svg");
+              svg.setAttributeNS(null, "viewBox", "0 0 " + orginalWidth + " " + orginalHeight);
+              svg.setAttributeNS(null, "width", orginalWidth * scalingFactor);
+              svg.setAttributeNS(null, "height", orginalHeight * scalingFactor);
+
               var styles = '<style>' + cssContent + '</style>';
+              svg.innerHTML = styles + originalSvg.html();
 
-              var viewbox = ' viewbox="0 0 ' + svgElement.width() + ' ' + svgElement.height() + '"';
-              var svgAttributes = ' xmlns="http://www.w3.org/2000/svg"';
-              svgAttributes = svgAttributes + ' width="' + svgElement.width() + '"';
-              svgAttributes = svgAttributes + ' height="' + svgElement.height() + '"';
-              svgAttributes = svgAttributes + viewbox;
-
-              var svgGraph = '<svg' + svgAttributes + '>';
-              svgGraph = svgGraph + styles;
-              svgGraph = svgGraph + svgContent;
-              svgGraph = svgGraph + '</svg>';
-
+              var svgXML = (new XMLSerializer()).serializeToString(svg);
               var tmpImage = document.createElement("img");
-              tmpImage.width = svgElement.width() * scalingFactor;
-              tmpImage.height = svgElement.height() * scalingFactor;
-              tmpImage.setAttribute("src", "data:image/svg+xml;base64," + btoa(svgGraph));
+              tmpImage.width = orginalWidth * scalingFactor;
+              tmpImage.height = orginalHeight * scalingFactor;
+              tmpImage.src = "data:image/svg+xml;charset=utf-8,"+ svgXML;
 
               tmpImage.onload = function() {
                 var canvas = document.createElement("canvas");
-                canvas.width = svgElement.width() * scalingFactor;
-                canvas.height = svgElement.height() * scalingFactor;
+                canvas.width = orginalWidth * scalingFactor;
+                canvas.height = orginalHeight * scalingFactor;
                 var ctx = canvas.getContext("2d");
                 ctx.drawImage(tmpImage, 0, 0);
 
                 canvas.toBlob(function(blob) {
-                  saveAs(blob, "pretty image.png");
+                  saveAs(blob, "graph.png");
                 });
               };
             }).error(function() {
