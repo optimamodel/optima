@@ -14,7 +14,6 @@ define({
     'd3'            : './vendor/d3/d3',
     'd3-box'        : './assets/js/box.d3',
     'saveAs'        : './vendor/FileSaver/FileSaver',
-    'jszip'         : './vendor/js-xlsx/dist/jszip',
     'jquery'        : './vendor/jquery/dist/jquery',
     'ng-file-upload': './vendor/ng-file-upload/angular-file-upload',
     'ng-file-upload-html5-shim': './vendor/ng-file-upload/angular-file-upload-html5-shim',
