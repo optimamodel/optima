@@ -59,6 +59,7 @@ define(['./module'], function (module) {
   var DEFAULT_PROGRAMS = [
     {
       active: false, short_name: "Condoms",
+      category: "Prevention",
       name: "Condom promotion and distribution", saturating: true,
       parameters: [
         {
@@ -73,6 +74,7 @@ define(['./module'], function (module) {
     },
     {
       active: false, short_name: "SBCC",
+      category: "Prevention",
       name: "Social and behavior change communication", saturating: true,
       parameters: [
         {
@@ -87,6 +89,7 @@ define(['./module'], function (module) {
     },
     {
       active: false, short_name: "STI",
+      category: "Prevention",
       name: "Diagnosis and treatment of sexually transmissible infections", saturating: true,
       parameters: [
         {
@@ -101,6 +104,7 @@ define(['./module'], function (module) {
     },
     {
       active: false, short_name: "VMMC",
+      category: "Prevention",
       name: "Voluntary medical male circumcision", saturating: false,
       parameters: [
         {
@@ -111,6 +115,7 @@ define(['./module'], function (module) {
     },
     {
       active: false, short_name: "Cash transfers",
+      category: "Prevention",
       name: "Cash transfers for HIV risk reduction", saturating: true,
       parameters: [
         {
@@ -125,6 +130,7 @@ define(['./module'], function (module) {
     },
     {
       active: false, short_name: "FSW programs",
+      category: "Prevention",
       name: "Programs for female sex workers and clients", saturating: true,
       parameters: [
         {
@@ -143,6 +149,7 @@ define(['./module'], function (module) {
     },
     {
       active: false, short_name: "MSM programs",
+      category: "Prevention",
       name: "Programs for men who have sex with men", saturating: true,
       parameters: [
         {
@@ -157,10 +164,11 @@ define(['./module'], function (module) {
     },
     {
       active: false, short_name: "PWID programs",
+      category: "Prevention",
       name: "Programs for people who inject drugs", saturating: true,
       parameters: [
         {
-          name: 'HIV testing rates',          
+          name: 'HIV testing rates',
           active: true,
           value: {'signature': ['hivtest'], pops: ['PWID']}
         },
@@ -178,6 +186,7 @@ define(['./module'], function (module) {
     },
     {
       active: false, short_name: "OST",
+      category: "Prevention",
       name: "Opiate substitution therapy", saturating: false,
       parameters: [
         {
@@ -189,6 +198,7 @@ define(['./module'], function (module) {
     },
     {
       active: false, short_name: "NSP",
+      category: "Prevention",
       name: "Needle-syringe program", saturating: true,
       parameters: [
         {
@@ -200,6 +210,7 @@ define(['./module'], function (module) {
     },
     {
       active: false, short_name: "PrEP",
+      category: "Prevention",
       name: "Pre-exposure prophylaxis/microbicides", saturating: true,
       parameters: [
         {
@@ -211,6 +222,7 @@ define(['./module'], function (module) {
     },
     {
       active: false, short_name: "PEP",
+      category: "Prevention",
       name: "Post-exposure prophylaxis", saturating: true,
       parameters: [
         {
@@ -222,6 +234,7 @@ define(['./module'], function (module) {
     },
     {
       active: false, short_name: "HTC",
+      category: "Care and treatment",
       name: "HIV testing and counseling", saturating: true,
       parameters: [
         {
@@ -233,6 +246,7 @@ define(['./module'], function (module) {
     },
     {
       active: false, short_name: "ART",
+      category: "Care and treatment",
       name: "Antiretroviral therapy", saturating: false,
       parameters: [
         {
@@ -248,6 +262,7 @@ define(['./module'], function (module) {
     },
     {
       active: false, short_name: "PMTCT",
+      category: "Care and treatment",
       name: "Prevention of mother-to-child transmission", saturating: false,
       parameters: [
         {
@@ -258,38 +273,47 @@ define(['./module'], function (module) {
     },
     {
       active: false, short_name: "Other care",
+      category: "Care and treatment",
       name: "Other HIV care", saturating: false
     },
     {
       active: false, short_name: "OVC",
+      category: "Care and treatment",
       name: "Orphans and vulnerable children", saturating: false
     },
     {
       active: false, short_name: "MGMT",
+      category: "Management and administration",
       name: "Management", saturating: false
     },
     {
       active: false, short_name: "HR",
+      category: "Management and administration",
       name: "HR and training", saturating: false
     },
     {
       active: false, short_name: "ENV",
+      category: "Other",
       name: "Enabling environment", saturating: false
     },
     {
       active: false, short_name: "SP",
+      category: "Other",
       name: "Social protection", saturating: false
     },
     {
       active: false, short_name: "M&E",
+      category: "Management and administration",
       name: "Monitoring, evaluation, surveillance, and research", saturating: false
     },
     {
       active: false, short_name: "INFR",
+      category: "Other",
       name: "Health infrastructure", saturating: false
     },
     {
       active: false, short_name: "Other",
+      category: "Other",
       name: "Other costs", saturating: false
     }
   ];
