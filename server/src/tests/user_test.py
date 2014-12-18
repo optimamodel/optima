@@ -33,7 +33,6 @@ class UserTestCase(OptimaTestCase):
         response = self.create_user()
         response = self.login()
         response = self.client.get('/api/user/current', follow_redirects=True)
-        print("with_login: %s" % response)
         assert(response.status_code==200)
         data = json.loads(response.data)
         assert(data["email"]=="test@test.com")
@@ -84,7 +83,6 @@ class UserTestCase(OptimaTestCase):
         assert(users is not None)
         assert(len(users)==2)
         emails = set([user['email'] for user in users])
-        print ('emails: %s' % emails)
         assert('test2@test.com' not in emails)
         #list projects for the second user and verify that they are gone
         projects = self.list_projects(2)
@@ -100,13 +98,21 @@ class UserTestCase(OptimaTestCase):
             % (self.admin_password, new_email, new_password))
         assert(response.status_code==200)
         data = json.loads(response.data)
-        print('modified:%s' % data)
         assert(data.get('status')=='OK')
         assert(data.get('modified')=='2')
         response = self.login(email=new_email, password = new_password)
         response = self.client.post('/api/project/create/test', data = '{}')
         assert(response.status_code==200)
         response=self.logout()
+
+    def test_modify_user_nonadmin(self):
+        import hashlib
+        response = self.create_user()
+        new_password = hashlib.sha224("test1").hexdigest()
+        new_email = 'test1@test.com'
+        response = self.client.put('/api/user/modify/1?secret=%s&email=%s&password=%s' \
+            % (self.test_password, new_email, new_password))
+        assert(response.status_code==401)
 
 if __name__ == '__main__':
     unittest.main()
