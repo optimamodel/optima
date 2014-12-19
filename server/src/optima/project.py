@@ -1,5 +1,5 @@
 import json
-from flask import Blueprint, url_for, helpers, request, jsonify, redirect, current_app
+from flask import Blueprint, url_for, helpers, request, jsonify, redirect, current_app, Response
 from werkzeug.utils import secure_filename
 import os
 import traceback
@@ -10,7 +10,7 @@ from utils import allowed_file, project_exists, delete_spreadsheet
 from utils import check_project_name, load_model, save_model, report_exception
 from flask.ext.login import login_required, current_user
 from dbconn import db
-from dbmodels import ProjectDb, WorkingProjectDb
+from dbmodels import ProjectDb, WorkingProjectDb, ProjectDataDb
 from utils import BAD_REPLY
 import time,datetime
 
@@ -140,6 +140,16 @@ def giveWorkbook(project_name):
         makeworkbook(wb_name, proj.populations, proj.programs, proj.datastart, proj.dataend, proj.econ_dataend)
         current_app.logger.debug("project %s template: %s" % (proj.name, wb_name))
         (dirname, basename) = (upload_dir_user(TEMPLATEDIR), wb_name)
+        
+        # See if there is matching project data
+        projdata = ProjectDataDb.query.filter_by(id=proj.id).first()
+        
+        if projdata is not None:
+            return Response(projdata.meta,
+                mimetype= 'application/octet-stream',
+                headers={'Content-Disposition':'attachment;filename='+ project_name})
+      
+        # if no project data found    
         return helpers.send_from_directory(dirname, basename)
 
 @project.route('/info')
@@ -316,7 +326,7 @@ def uploadExcel():
     D = updatedata(D, savetofile = False)
 
     save_model(project_name, D)
-
+   
     # See if there is matching project
     proj = ProjectDb.query.filter_by(user_id=user_id, name=project_name).first()
         
@@ -327,6 +337,24 @@ def uploadExcel():
         # Save to db
         db.session.add(proj)
         db.session.commit()
+         
+        # get file data
+        filedata = open(server_filename, 'rb').read()
+
+        # See if there is matching project data
+        projdata = ProjectDataDb.query.filter_by(id=proj.id).first()
+        
+        # update existing
+        if projdata is not None:
+            projdata.meta = filedata
+        else:
+            # create new project data
+            projdata = ProjectDataDb(proj.id, filedata)
+                
+        # Save to db
+        db.session.add(projdata)
+        db.session.commit()
+
     else:
         db.session.close()
             

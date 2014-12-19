@@ -73,3 +73,12 @@ class WorkingProjectDb(db.Model):
         self.model = model
         self.is_working = is_working
         self.work_type = work_type
+
+class ProjectDataDb(db.Model):
+    __tablename__ = 'project_data'
+    id = db.Column(db.Integer,db.ForeignKey('projects.id'), primary_key=True )
+    meta = db.Column(db.LargeBinary)
+    
+    def __init__(self, project_id, meta):
+        self.id = project_id
+        self.meta = meta
