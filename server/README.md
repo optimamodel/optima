@@ -20,6 +20,21 @@ Run the server:
 
 ATTENTION: config.example.py (the reference config) can be changed (e.g. new settings added or old settings removed). If you have problems with running Optima locally, look at the reference config file and compare it with your version.
 
+Database
+________
+
+### Postgres
+
+- Postgres database (http://www.postgresql.org/)
+- setting up create the database and users from the commandline:
+
+    $ createdb optima
+    $ createdb optima_test
+    $ createuser optima -P -s
+    // with password optima
+    $ createuser test -P -s
+    // with password test
+
 Database migrations
 ___________________
 
@@ -119,5 +134,4 @@ These APIs allow front-end to work with projects.
 		 ...
 		]
    }`
-   
    

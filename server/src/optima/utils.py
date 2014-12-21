@@ -3,9 +3,9 @@ from sim.dataio import DATADIR, PROJECTDIR, TEMPLATEDIR, loaddata, savedata, upl
 from flask import helpers, current_app
 from flask.ext.login import current_user
 from functools import wraps
-from flask import request, jsonify
+from flask import request, jsonify, abort
 from dbconn import db
-from dbmodels import ProjectDb, WorkingProjectDb
+from dbmodels import ProjectDb, WorkingProjectDb, UserDb
 import traceback
 
 ALLOWED_EXTENSIONS = {'txt', 'xlsx', 'xls'}
@@ -44,6 +44,19 @@ def report_exception(reason = None):
                 return jsonify(reply)
         return __report_exception
     return _report_exception
+
+#verification by secret (hashed pw)
+def verify_request(api_call):
+    @wraps(api_call)
+    def _verify_request(*args, **kwargs):
+        secret = request.args.get('secret','')
+        u = UserDb.query.filter_by(password = secret, is_admin=True).first()
+        if u is None:
+            abort(401)
+        else:
+            current_app.logger.debug("admin_user: %s %s %s" % (u.name, u.password, u.email))
+            return api_call(*args, **kwargs)
+    return _verify_request
 
 
 """ Finds out if this file is allowed to be uploaded """
