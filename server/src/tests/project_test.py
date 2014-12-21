@@ -46,8 +46,6 @@ class ProjectTestCase(OptimaTestCase):
 
     def test_project_params(self):
         from sim.parameters import parameter_name, parameters
-        response = self.create_user()
-        response = self.login()
         response = self.client.get('/api/project/params')
         print(response)
         self.assertEqual(response.status_code, 200)
@@ -57,6 +55,40 @@ class ProjectTestCase(OptimaTestCase):
         all_parameters = parameters()
         self.assertTrue(parameter_name(all_parameters, ['condom','reg']) == 'Condom usage probability, regular partnerships')
 
+    def test_upload_data(self):
+        from api import app
+        from flask import helpers
+        import re
+        import os
+        import filecmp
+        # create project
+        response = self.client.post('/api/project/create/test', data = '{}')
+        self.assertEqual(response.status_code, 200)
+        # upload data
+        example_excel_file_name = 'example.xlsx'
+        file_path = helpers.safe_join(app.static_folder, example_excel_file_name)
+        example_excel = open(file_path)
+        headers = [('project', 'test')]
+        response = self.client.post('api/project/update', headers=headers, data=dict(file=example_excel))
+        example_excel.close()
+        self.assertEqual(response.status_code, 200)
+        # get data back and save the received file
+        response = self.client.get('/api/project/workbook/test')
+        content_disposition = response.headers.get('Content-Disposition')
+        self.assertTrue(len(content_disposition)>0)
+        file_name_info = re.search('filename=\s*(\S*)', content_disposition)
+        self.assertTrue(len(file_name_info.groups())>0) 
+        file_name = file_name_info.group(1)
+        self.assertEqual(file_name,'test.xlsx')
+        output_path = '/tmp/project_test.xlsx'
+        if os.path.exists(output_path):os.remove(output_path)
+        f = open(output_path, 'wb')
+        f.write(response.data)
+        f.close()
+        # compare with source file
+        result = filecmp.cmp(file_path, output_path)
+        self.assertTrue(result)
+        os.remove(output_path)
 
 if __name__ == '__main__':
     unittest.main()

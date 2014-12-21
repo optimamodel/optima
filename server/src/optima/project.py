@@ -301,11 +301,13 @@ Precondition: model should exist.
 @check_project_name
 @report_exception()
 def uploadExcel():
+    current_app.logger.debug("api/project/update")
     project_name = request.project_name
     user_id = current_user.id
     current_app.logger.debug("uploadExcel(project name: %s user:%s)" % (project_name, user_id))
 
     reply = {'status':'NOK'}
+    print(request.files)
     file = request.files['file']
 
     # getting current user path
