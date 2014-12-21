@@ -46,8 +46,9 @@ class ProjectDb(db.Model):
     model = db.Column(JSON, server_default=text("'{}'"))
     working_project = db.relationship('WorkingProjectDb', backref='projects',
                                 uselist=False)
+    project_data = db.relationship('ProjectDataDb', backref='projects',
+                                uselist=False)
     creation_time = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
-    data_upload_time = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
 
     def __init__(self, name, user_id, datastart, dataend, \
         econ_dataend, programs, populations, model = {}, creation_time = None, data_upload_time = None):
@@ -61,7 +62,6 @@ class ProjectDb(db.Model):
         self.populations = populations
         self.model = model
         self.creation_time = creation_time
-        self.data_upload_time = data_upload_time
 
 class WorkingProjectDb(db.Model):
     __tablename__ = 'working_projects'
@@ -75,3 +75,14 @@ class WorkingProjectDb(db.Model):
         self.model = model
         self.is_working = is_working
         self.work_type = work_type
+
+class ProjectDataDb(db.Model):
+    __tablename__ = 'project_data'
+    id = db.Column(db.Integer,db.ForeignKey('projects.id'), primary_key=True )
+    meta = db.Column(db.LargeBinary)
+    upload_time = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
+    
+    def __init__(self, project_id, meta, upload_time = None):
+        self.id = project_id
+        self.meta = meta
+        self.upload_time = upload_time
