@@ -249,6 +249,8 @@ def deleteProject(project_name):
 
     if proj is not None:
         id = proj.id
+        #delete all relevant entries explicitly
+        db.session.query(ProjectDataDb).filter_by(id=id).delete()
         db.session.query(WorkingProjectDb).filter_by(id=id).delete()
         db.session.query(ProjectDb).filter_by(id=id).delete()
 
