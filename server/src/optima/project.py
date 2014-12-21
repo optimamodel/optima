@@ -13,6 +13,9 @@ from dbconn import db
 from dbmodels import ProjectDb, WorkingProjectDb, ProjectDataDb
 from utils import BAD_REPLY
 import time,datetime
+import dateutil.tz
+from datetime import datetime
+
 
 """ route prefix: /api/project """
 project = Blueprint('project',  __name__, static_folder = '../static')
@@ -134,23 +137,23 @@ def giveWorkbook(project_name):
     if proj is None:
         reply['reason']='Project %s does not exist.' % project_name
         return jsonify(reply)
-    else:
-        D = proj.model
-        wb_name = D['G']['workbookname']
-        makeworkbook(wb_name, proj.populations, proj.programs, proj.datastart, proj.dataend, proj.econ_dataend)
-        current_app.logger.debug("project %s template: %s" % (proj.name, wb_name))
-        (dirname, basename) = (upload_dir_user(TEMPLATEDIR), wb_name)
-        
+    else:        
         # See if there is matching project data
-        projdata = ProjectDataDb.query.filter_by(id=proj.id).first()
+        projdata = ProjectDataDb.query.get(proj.id)
         
-        if projdata is not None:
+        if projdata is not None and len(projdata.meta)>0:
             return Response(projdata.meta,
                 mimetype= 'application/octet-stream',
-                headers={'Content-Disposition':'attachment;filename='+ project_name})
-      
-        # if no project data found    
-        return helpers.send_from_directory(dirname, basename)
+                headers={'Content-Disposition':'attachment;filename='+ project_name+'.xlsx'})
+        else:
+        # if no project data found
+            D = proj.model
+            wb_name = D['G']['workbookname']
+            makeworkbook(wb_name, proj.populations, proj.programs, proj.datastart, proj.dataend, proj.econ_dataend)
+            current_app.logger.debug("project %s template created: %s" % (proj.name, wb_name))
+            (dirname, basename) = (upload_dir_user(TEMPLATEDIR), wb_name)
+            #deliberately don't save the template as uploaded data
+            return helpers.send_from_directory(dirname, basename)
 
 @project.route('/info')
 @login_required
@@ -175,6 +178,8 @@ def getProjectInformation():
 
         # update response
         if project is not None:
+            data_upload_time = project.creation_time
+            if project.project_data: data_upload_time = project.project_data.upload_time
             response_data = {
                 'status': "OK",
                 'name': project.name,
@@ -185,7 +190,7 @@ def getProjectInformation():
                 'programs': project.programs,
                 'populations': project.populations,
                 'creation_time': project.creation_time, 
-                'data_upload_time':project.data_upload_time
+                'data_upload_time': data_upload_time
             }
 
     return jsonify(response_data)
@@ -208,6 +213,8 @@ def getProjectList():
         # Get projects for current user
         projects = ProjectDb.query.filter_by(user_id=current_user.id)
         for project in projects:
+            data_upload_time = project.creation_time
+            if project.project_data: data_upload_time = project.project_data.upload_time
             project_data = {
                 'status': "OK",
                 'name': project.name,
@@ -218,7 +225,7 @@ def getProjectList():
                 'programs': project.programs,
                 'populations': project.populations,
                 'creation_time': project.creation_time,
-                'data_upload_time': project.data_upload_time
+                'data_upload_time': data_upload_time
             }
             projects_data.append(project_data)
         db.session.close()
@@ -294,8 +301,6 @@ Precondition: model should exist.
 @check_project_name
 @report_exception()
 def uploadExcel():
-    from datetime import datetime
-    import dateutil.tz
     project_name = request.project_name
     user_id = current_user.id
     current_app.logger.debug("uploadExcel(project name: %s user:%s)" % (project_name, user_id))
@@ -332,24 +337,20 @@ def uploadExcel():
         
     # save data upload timestamp
     if proj is not None:
-        proj.data_upload_time = datetime.now(dateutil.tz.tzutc())    
-        
-        # Save to db
-        db.session.add(proj)
-        db.session.commit()
-         
+        data_upload_time = datetime.now(dateutil.tz.tzutc())    
+                 
         # get file data
         filedata = open(server_filename, 'rb').read()
 
         # See if there is matching project data
-        projdata = ProjectDataDb.query.filter_by(id=proj.id).first()
+        projdata = ProjectDataDb.query.get(proj.id)
         
         # update existing
         if projdata is not None:
             projdata.meta = filedata
         else:
             # create new project data
-            projdata = ProjectDataDb(proj.id, filedata)
+            projdata = ProjectDataDb(proj.id, filedata, data_upload_time)
                 
         # Save to db
         db.session.add(projdata)
