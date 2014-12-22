@@ -21,6 +21,7 @@
   <accordion-group data-ng-repeat-end=""
        class="accordion_i"
        is-open="item.active"
+      is-disabled="item.disabled"
        data-ng-if="item.subitems"
        ng-class="{ '__active': item.active }"
        secured-by-any="{{ item.permissions }}">
