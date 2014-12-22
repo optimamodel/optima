@@ -15,7 +15,7 @@ define([
     'app.ui.menu'
   ])
 
-    .controller('MainCtrl', function ($scope, $upload, activeProject, UserManager, modalService) {
+    .controller('MainCtrl', function ($scope, $upload, $state, activeProject, UserManager, modalService) {
 
       $scope.user = UserManager.data;
       $scope.userLogged = function () {
@@ -46,12 +46,21 @@ define([
               {
                 title: 'Upload Optima spreadsheet',
                 click: function () {
+                  if (activeProject.isSet()) {
                   angular
                     .element('<input type="file">')
                     .change(function (event) {
                       uploadDataSpreadsheet(event.target.files[0]);
                     })
                     .click();
+                  } else {
+                      modalService.inform(
+                        function (){ },
+                        'Okay',
+                        'Create or open a project first.',
+                        'Cannot proceed'
+                      );
+                  }
                 }
               }
             ]
@@ -63,14 +72,14 @@ define([
             subitems: [
               {
                 title: 'View data & model calibration',
-                state: {
-                  name: 'model.view'
-                }
+                click: function() {
+                  ifActiveProject($state, 'model.view', activeProject);
+                },
               },
               {
                 title: 'Define cost-coverage-outcome assumptions',
-                state: {
-                  name: 'model.define-cost-coverage-outcome'
+                click: function() {
+                  ifActiveProject($state, 'model.define-cost-coverage-outcome', activeProject);
                 }
               }
             ]
@@ -81,20 +90,33 @@ define([
             subitems: [
               {
                 title: 'Scenario analyses',
-                state: {
-                  name: 'analysis.scenarios'
+                click: function() {
+                  ifActiveProject($state, 'analysis.scenarios', activeProject);
                 }
               },
               {
                 title: 'Optimization analyses',
-                state: {
-                  name: 'analysis.optimization'
+                click: function() {
+                  ifActiveProject($state, 'analysis.optimization', activeProject);
                 }
               }
             ]
           }
         ]
       };
+
+      function ifActiveProject(state, name, activeProject) {
+        if(activeProject.isSet()){
+          state.go(name);
+        } else {
+            modalService.inform(
+              function (){ },
+              'Okay',
+              'Create or open a project first.',
+              'Cannot proceed'
+            );
+         }
+      }
 
       // https://github.com/danialfarid/angular-file-upload
       function uploadDataSpreadsheet(file) {
