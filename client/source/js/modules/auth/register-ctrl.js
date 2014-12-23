@@ -24,6 +24,14 @@ define(['./module'], function (module) {
           if (response.status) {
             // error returned
             $scope.error = response.status;
+
+            if ( response.status == "This email is already in use" ) {
+
+              // show css error tick to email field
+              $scope.RegisterForm.email.$invalid = true;
+              $scope.RegisterForm.email.$valid = false;
+              $scope.$broadcast('form-input-check-validity');
+            }
           } else if (response.email) {
             // success
             $window.location = '/';
