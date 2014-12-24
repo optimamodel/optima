@@ -289,6 +289,8 @@ def cceqn(x, p):
 ###############################################################################
 def makecco(D=None, progname = default_progname, effectname = default_effectname, ccparams=default_ccparams, coparams=default_coparams, makeplot=default_makeplot, verbose=2,nxpts = 1000):
     
+    printv("makecco(%s, %s, %s, %s, %s, %s, %s)" % (progname, effectname, ccparams, coparams, makeplot, verbose, nxpts), 2, verbose)
+
     # Check that the selected program is in the program list 
     if unicode(progname) not in D.programs.keys():
         printv("progname: %s programs: %s" % (unicode(progname), D.programs.keys()), 5, verbose)
@@ -475,4 +477,4 @@ def makesamples(coparams, muz, stdevz, muf, stdevf, samplesize=1000):
     return zerosample, fullsample
 
 
-plotallcurves(D, progname=default_progname, ccparams=default_ccparams, coparams=default_coparams, makeplot=default_makeplot, verbose=2)
+# plotallcurves(D, progname=default_progname, ccparams=default_ccparams, coparams=default_coparams, makeplot=default_makeplot, verbose=2)
