@@ -9,13 +9,13 @@ User Module
 3. Logout.
 
 """
-from flask import request, jsonify, g, session, flash, abort, Blueprint, url_for, current_app
+from flask import request, jsonify, g, session, flash, abort, Blueprint, url_for, current_app, make_response
 from flask.ext.login import LoginManager, login_user, current_user, logout_user, redirect, login_required
 from dbconn import db
 from dbmodels import UserDb
 from utils import verify_request
-from const import const
 import logging
+import json
 
 
 # route prefix: /api/user
@@ -42,22 +42,21 @@ def before_request():
 @user.route('/create', methods=['POST'])
 def create_user():
     current_app.logger.info("create request: %s %s" % (request, request.data))
-    current_app.logger.debug("/user/create %s" % request.get_json(force=True))
+    data = request.get_json(force=True)
+    current_app.logger.debug("/user/create %s" % data)
     # Check if the user already exists
-    email = request.json['email']
-    name = request.json['name']
+    email = data.get('email')
+    name = data.get('name')
 #   password is now hashed on the client side using sha224
-    password = request.json['password']
+    password = data.get('password')
 
     if email is not None and name is not None and password is not None:
         # Get user for this username (if exists)
-        try:
-            no_of_users = UserDb.query.filter_by( email=email ).count()
-        except:
-            no_of_users = 0
+        no_of_users = UserDb.query.filter_by( email=email ).count()
 
-        if no_of_users == 0:
-
+        if no_of_users>0:
+            return make_response(json.dumps({'status': 'NOK', 'reason':'This email is already in use'}), 409) #409 - Conflict
+        else:
             # Save to db
             u = UserDb(name, email, password)
             db.session.add( u )
@@ -68,9 +67,8 @@ def create_user():
 
             # Return user info
             return jsonify({'email': u.email, 'name': u.name })
-
-    # We are here implies username is already taken
-    return jsonify({'status': 'This email is already in use', 'statusCode': const['EMAIL_ALREADY_EXISTS']})
+    else:
+        return make_response(json.dumps({'status': 'NOK', 'reason':'Not all parameters are set'}), 400) #400 - Bad Request
 
 @user.route('/login', methods=['POST'])
 def login():
