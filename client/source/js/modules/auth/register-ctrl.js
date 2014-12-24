@@ -37,7 +37,7 @@ define(['./module'], function (module) {
               $scope.$broadcast('form-input-check-validity');
               break;
             case 400:
-            break;
+              break;
             default:
               $scope.error = 'Server feels bad. Please try again in a bit';
           }
