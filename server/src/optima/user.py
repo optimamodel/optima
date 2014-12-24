@@ -14,7 +14,9 @@ from flask.ext.login import LoginManager, login_user, current_user, logout_user,
 from dbconn import db
 from dbmodels import UserDb
 from utils import verify_request
+from const import const
 import logging
+
 
 # route prefix: /api/user
 user = Blueprint('user',  __name__, static_folder = '../static')
@@ -68,7 +70,7 @@ def create_user():
             return jsonify({'email': u.email, 'name': u.name })
 
     # We are here implies username is already taken
-    return jsonify({'status': 'This email is already in use'})
+    return jsonify({'status': 'This email is already in use', 'statusCode': const['EMAIL_ALREADY_EXISTS']})
 
 @user.route('/login', methods=['POST'])
 def login():
