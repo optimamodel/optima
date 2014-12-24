@@ -24,8 +24,9 @@ define(['./module'], function (module) {
           if (response.status) {
             // error returned
             $scope.error = response.status;
-
-            if ( response.status == "This email is already in use" ) {
+            
+            // -1 is the case of EMAIL_ALREADY_EXISTS in server/const
+            if ( response.statusCode == -1 ) {
 
               // show css error tick to email field
               $scope.RegisterForm.email.$invalid = true;
