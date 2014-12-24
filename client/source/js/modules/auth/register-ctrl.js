@@ -21,26 +21,26 @@ define(['./module'], function (module) {
       },
         // success
         function (response) {
-          if (response.status) {
-            // error returned
-            $scope.error = response.status;
-            
-            // -1 is the case of EMAIL_ALREADY_EXISTS in server/const
-            if ( response.statusCode == -1 ) {
-
-              // show css error tick to email field
-              $scope.RegisterForm.email.$invalid = true;
-              $scope.RegisterForm.email.$valid = false;
-              $scope.$broadcast('form-input-check-validity');
-            }
-          } else if (response.email) {
+          if (response.email) {
             // success
             $window.location = '/';
           }
         },
         // error
-        function () {
-          $scope.error = 'Server feels bad. Please try again in a bit';
+        function (error) {
+          $scope.error = error.data.reason;
+          switch(error.status){
+            case 409: // conflict: will be sent if the email already exists
+              // show css error tick to email field
+              $scope.RegisterForm.email.$invalid = true;
+              $scope.RegisterForm.email.$valid = false;
+              $scope.$broadcast('form-input-check-validity');
+              break;
+            case 400:
+            break;
+            default:
+              $scope.error = 'Server feels bad. Please try again in a bit';
+          }
         }
       );
     };
