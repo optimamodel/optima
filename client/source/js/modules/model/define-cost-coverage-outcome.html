@@ -92,15 +92,15 @@
           <h3>Options to adjust curves:</h3>
           <p>
             1. Behavior/outcome without this program ranges between
-            <input type="number" class="txbox __inline __s" ng-model="coParams[$index][0]">
+            <input type="number" step="0.01" class="txbox __inline" ng-model="coParams[$index][0]">
             and
-            <input type="number" class="txbox __inline __s" ng-model="coParams[$index][1]">
+            <input type="number" step="0.01" class="txbox __inline" ng-model="coParams[$index][1]">
           </p>
           <p>
             2. Behavior/outcome under full coverage of this program ranges between
-            <input type="number" class="txbox __inline __s" ng-model="coParams[$index][2]">
+            <input type="number" step="0.01" class="txbox __inline" ng-model="coParams[$index][2]">
             and
-            <input type="number" class="txbox __inline __s" ng-model="coParams[$index][3]">
+            <input type="number" step="0.01" class="txbox __inline" ng-model="coParams[$index][3]">
           </p>
           <p>
             <button type="button" class="btn" ng-click="updateCurve($index)">Redraw</button>
