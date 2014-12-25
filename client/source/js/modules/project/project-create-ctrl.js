@@ -190,11 +190,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      * Example: ['ALL_POPULATIONS'] -> ["FSW","CSW","MSM","PWID","CHILD","INF"]
      */
     var insertSelectedPopulations = function (programs, selectedPopulations) {
-      var internalPopulationNames = _(selectedPopulations).pluck('internal_name');
+      var shortPopulationNames = _(selectedPopulations).pluck('short_name');
       return _(programs).map(function(program) {
         program.parameters = _(program.parameters).map(function(entry) {
           if (entry.value.pops[0] === "ALL_POPULATIONS") {
-            entry.value.pops = internalPopulationNames;
+            entry.value.pops = shortPopulationNames;
           }
           return entry;
         });
