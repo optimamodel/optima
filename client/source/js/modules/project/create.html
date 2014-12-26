@@ -86,26 +86,36 @@
           </tr>
           </thead>
           <tbody>
-          <tr ng-show="programs.length" ng-repeat="program in programs">
-            <td class="text-center" style="width: 50px">
-              <input type="checkbox" ng-model="program.active">
-            </td>
-            <td style="width: 300px">{{ program.name }}</td>
-            <td style="width: 150px">{{ program.short_name }}</td>
-            <td>
-              <button role="button" class="btn" ng-click="openEditProgramModal($event, program)">Edit</button>
-            </td>
-            <td>
-              <button role="button" class="btn" ng-click="copyProgram($event, program)">Copy</button>
-            </td>
-          </tr>
-          <tr ng-show="!programs.length">
-            <td class="text-center" colspan="7">No programs set yet</td>
-          </tr>
+            <tr ng-repeat="category in categories">
+              <td colspan="5">
+              <table class="section table table-bordered">
+              <tr>
+                <td colspan="5"><b>{{category.category}}</b></td>
+              </tr>
+              <tr ng-show="programs.length" ng-repeat="program in programs" ng-if="program.category==category.category">
+                {{ program| json}}
+                <td class="text-center" style="width: 50px">
+                  <input type="checkbox" ng-model="program.active">
+                </td>
+                <td style="width: 300px">{{ program.name }}</td>
+                <td style="width: 150px">{{ program.short_name }}</td>
+                <td>
+                  <button role="button" class="btn" ng-click="openEditProgramModal($event, program)">Edit</button>
+                </td>
+                <td>
+                  <button role="button" class="btn" ng-click="copyProgram($event, program)">Copy</button>
+                </td>
+              </tr>
+              <tr ng-show="!programs.length">
+                <td class="text-center" colspan="5">No programs set yet</td>
+              </tr>
+              </table>
+              </td>
+            </tr>
           </tbody>
           <tfoot>
           <tr>
-            <td colspan="7" class="text-right">
+            <td colspan="5" class="text-right">
               <button role="button" class="btn" ng-click="openAddProgramModal($event)">Add a program</button>
             </td>
           </tr>

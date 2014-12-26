@@ -14,6 +14,7 @@ define(['./module'], function (module) {
       });
       $scope.populations.unshift({label: 'All populations', value: ['ALL_POPULATIONS']});
 
+      $scope.initializeAllCategories();
 
       // make sure the names are exactly the objects as in the list for the
       // select to show the initial entries (angular compares with ===)
@@ -57,7 +58,16 @@ define(['./module'], function (module) {
       });
     };
 
-    $scope.addParameter = function() {
+    $scope.initializeAllCategories = function () {
+      $scope.allCategories = [
+        'Prevention',
+        'Care and treatment',
+        'Management and administration',
+        'Other'
+      ];
+    };
+
+    $scope.addParameter = function () {
       var entry = {value: {signature: [], pops: []}};
       $scope.program.parameters = $scope.program.parameters || [];
       $scope.program.parameters.push(entry);

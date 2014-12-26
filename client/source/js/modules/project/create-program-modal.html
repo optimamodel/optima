@@ -30,6 +30,18 @@
     </div>
 
     <div class="section grid">
+      <div class="++1 2" style="padding-left: 6px">
+        Category
+      </div>
+      <div class="5 1++">
+        <select 
+          class="txbox" 
+          ng-model="program.category" 
+          ng-options="category for category in allCategories"></select>
+      </div>
+    </div>
+
+    <div class="section grid">
       <h3>
         Parameters in model influenced by this program
       </h3>
