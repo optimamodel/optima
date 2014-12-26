@@ -137,7 +137,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             }
           });
 
-          console.log($scope.types.financial);
           _($scope.types.financial).each(function (type) {
             // costcur = cost for current people living with HIV
             // costfut = cost for future people living with HIV
