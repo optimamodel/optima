@@ -29,9 +29,13 @@ class OptimaTestCase(unittest.TestCase):
 
     """
 
-    def create_user(self):
+    default_name = 'test'
+    default_email = 'test@test.com'
+
+
+    def create_user(self, name = default_name, email = default_email):
         headers = {'Content-Type' : 'application/json'}
-        create_data = '{"email":"test@test.com","password":"%s","name":"test"}' % self.test_password
+        create_data = '{"email":"%s","password":"%s","name":"%s"}' % (email, self.test_password, name)
         print ("create_user data: %s" % create_data)
         response = self.client.post('/api/user/create', data = create_data)
         return response
@@ -42,22 +46,28 @@ class OptimaTestCase(unittest.TestCase):
         db.session.add(project)
         db.session.commit()
 
-    def login(self):
+    def list_projects(self, user_id):
+        """ Helper method to list projects for the given user id"""
+        projects = ProjectDb.query.filter_by(user_id=user_id).all()
+        return [project for project in projects]
+
+    def login(self, email=default_email, password=None):
+        if not password: password = self.test_password
         headers = {'Content-Type' : 'application/json'}
-        login_data = '{"email":"test@test.com","password":"%s"}' % self.test_password
+        login_data = '{"email":"%s","password":"%s"}' % (email, password)
         self.client.post('/api/user/login', data=login_data, follow_redirects=True)
 
     def logout(self):
         self.client.get('/api/user/logout', follow_redirects=True)
 
     def setUp(self):
+        self.test_password = hashlib.sha224("test").hexdigest()
         app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql+psycopg2://test:test@localhost:5432/optima_test'
         app.config['TESTING'] = True
         print "app created %s" % app
         init_db()
         print "db created"
         self.client = app.test_client()
-        self.test_password = hashlib.sha224("test").hexdigest()
 
     def tearDown(self):
         self.logout()

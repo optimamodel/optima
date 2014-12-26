@@ -12,13 +12,9 @@ define([
   // using the `run` function on the top-level module
   angular.injector([
     'ng',
-    'app.active-project',
     'app.resources.user'
   ])
-    .invoke([
-      'activeProject', 'User',
-      function (activeProject, User) {
-
+    .invoke(['User', function (User) {
         var bootstrap = function () {
           angular.bootstrap(document, ['app']);
         };
