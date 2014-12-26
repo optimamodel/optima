@@ -2,16 +2,17 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ProjectCreateController', function ($scope, $state, $modal,
-    $timeout, activeProject, DEFAULT_PROGRAMS, DEFAULT_POPULATIONS, parametersResponse, UserManager) {
+    $timeout, activeProject, parametersResponse, defaultsResponse, UserManager) {
 
     $scope.projectParams = {
       name: ''
     };
 
-    $scope.populations = DEFAULT_POPULATIONS;
-    $scope.programs = DEFAULT_PROGRAMS;
-
     var availableParameters = parametersResponse.data.params;
+    var availableDefaults = defaultsResponse.data;
+
+    $scope.populations = availableDefaults.populations;
+    $scope.programs = availableDefaults.programs;
 
     // Helper function to open a population modal
     var openPopulationModal = function (population) {
@@ -190,11 +191,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      * Example: ['ALL_POPULATIONS'] -> ["FSW","CSW","MSM","PWID","CHILD","INF"]
      */
     var insertSelectedPopulations = function (programs, selectedPopulations) {
-      var internalPopulationNames = _(selectedPopulations).pluck('internal_name');
+      var shortPopulationNames = _(selectedPopulations).pluck('short_name');
       return _(programs).map(function(program) {
         program.parameters = _(program.parameters).map(function(entry) {
           if (entry.value.pops[0] === "ALL_POPULATIONS") {
-            entry.value.pops = internalPopulationNames;
+            entry.value.pops = shortPopulationNames;
           }
           return entry;
         });

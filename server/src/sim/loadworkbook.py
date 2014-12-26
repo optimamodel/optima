@@ -259,4 +259,5 @@ def loadworkbook(filename='example.xlsx',verbose=2):
                             data[name][thispar][subpar] = thesedata # Store data
     
     printv('...done loading data.', 2, verbose)
+    print('programs:%s' % programs)
     return data, programs
