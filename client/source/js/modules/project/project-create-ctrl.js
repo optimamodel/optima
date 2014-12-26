@@ -2,16 +2,17 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ProjectCreateController', function ($scope, $state, $modal,
-    $timeout, activeProject, DEFAULT_PROGRAMS, DEFAULT_POPULATIONS, parametersResponse, UserManager) {
+    $timeout, activeProject, parametersResponse, defaultsResponse, UserManager) {
 
     $scope.projectParams = {
       name: ''
     };
 
-    $scope.populations = DEFAULT_POPULATIONS;
-    $scope.programs = DEFAULT_PROGRAMS;
-
     var availableParameters = parametersResponse.data.params;
+    var availableDefaults = defaultsResponse.data;
+
+    $scope.populations = availableDefaults.populations;
+    $scope.programs = availableDefaults.programs;
 
     // Helper function to open a population modal
     var openPopulationModal = function (population) {
