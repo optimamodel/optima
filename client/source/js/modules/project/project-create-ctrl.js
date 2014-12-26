@@ -32,7 +32,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      * Filters programs by category
      */
     $scope.filterPrograms = function(category) {
-      console.log("category in filterPrograms:", category);
       return _($scope.programs).filter(function (item) {
           return item.category==category.category;
         });
