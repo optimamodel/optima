@@ -44,16 +44,23 @@ Gives back default populations and programs
 def get_predefined():
     from sim.programs import programs
     from sim.populations import populations
+    from sim.program_categories import program_categories
     programs = programs()
     populations = populations()
+    program_categories = program_categories()
+    category_per_program = {}
+    for category in program_categories:
+        for p in category['programs']:
+            category_per_program[p['short_name']] = category['category'] 
     for p in populations: p['active']= False
     for p in programs:
         p['active'] = False
+        p['category'] = category_per_program[p['short_name']]
         new_params = [dict([('value', param),('active',True)]) for param in p['parameters']]
         for np in new_params:
             if len(np['value']['pops'][0])==0: np['value']['pops']=['ALL_POPULATIONS']
         if new_params: p['parameters'] = new_params
-    return json.dumps({"programs":programs, "populations": populations})
+    return json.dumps({"programs":programs, "populations": populations, "categories":program_categories})
 
 """
 Creates the project with the given name and provided parameters.

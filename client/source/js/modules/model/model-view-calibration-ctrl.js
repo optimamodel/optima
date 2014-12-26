@@ -60,7 +60,7 @@ define(['./module', 'underscore'], function (module, _) {
        * fix/306-2-fix-plotting-of-default-ccocs
        * Default null value for selectedProgram
        */
-      $scope.programs.unshift({name:'-- No program selected --',acronym:null});      
+      $scope.programs.unshift({name:'-- No program selected --',category:null, acronym:null});
     };
 
     var resetGraphs= function () {
