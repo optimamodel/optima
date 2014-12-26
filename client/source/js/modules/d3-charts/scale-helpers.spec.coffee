@@ -23,3 +23,14 @@ define ['Source/modules/d3-charts/scale-helpers'], (scaleHelpers) ->
         expect(scaleHelpers.evaluateTickFormat(0, 100001)).toBe('custom')
         expect(scaleHelpers.evaluateTickFormat(1000, 200000)).toBe('custom')
         expect(scaleHelpers.evaluateTickFormat(-1, -200000)).toBe('custom')
+
+    describe 'customTickFormat', ->
+
+      it 'should format a number by d3\'s internal formatting function', ->
+        expect(scaleHelpers.customTickFormat(100, ',.2f')).toBe('100.00')
+        expect(scaleHelpers.customTickFormat(2.654, ',.1f')).toBe('2.7')
+
+      it 'should format a number by the custom optima formatting', ->
+        expect(scaleHelpers.customTickFormat(200000, 'custom')).toBe('200K')
+        expect(scaleHelpers.customTickFormat(300000000, 'custom')).toBe('300m')
+        expect(scaleHelpers.customTickFormat(400000000000, 'custom')).toBe('400bn')
