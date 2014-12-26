@@ -3,7 +3,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     module.controller('AnalysisScenariosController', function ($scope, $http, $modal, meta, scenarioParamsResponse, CONFIG) {
 
-        var linesGraphOptions, linesStyle, linesGraphData, responseData, availableScenarioParams;
+        var linesGraphOptions, linesGraphData, responseData, availableScenarioParams;
 
         // initialize all necessary data for this controller
         var initialize = function() {
@@ -89,13 +89,13 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         /**
          * Returns a financial graph.
          */
-        var generateFinancialGraph = function(data) {
+        var generateFinancialGraph = function (data) {
           var graph = generateGraph(data.data, data.xdata, data.title);
 
           graph.options.xAxis.axisLabel = data.xlabel;
           graph.options.yAxis.axisLabel = data.ylabel;
-          graph.options.linesStyle = ['__black', '__black', '__black',
-            '__black', '__black', '__black', '__black', '__black'];
+          graph.options.linesStyle = $scope.lineStyles;
+          graph.legend = data.legend;
           return graph;
         };
 
@@ -137,6 +137,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             }
           });
 
+          console.log($scope.types.financial);
           _($scope.types.financial).each(function (type) {
             // costcur = cost for current people living with HIV
             // costfut = cost for future people living with HIV
