@@ -25,35 +25,6 @@
         3. Specify the upper limit of the horizontal axis (for plotting):
         <input type="number" class="txbox __inline __l" placeholder="e.g.{{defaultXAxisMaximum}}"  ng-model="xAxisMaximum">
       </p>
-      <p>
-        4. Select units for displaying cost data:
-      <div class="elastic_col __va-middle" style="padding:0px 0px 0px 20px;">
-        <label>
-          <input type="radio" name="displaycost" ng-model="displaycost" value="1">
-          Absolute cost
-        </label><br>
-        <label>
-          <input type="radio" name="displaycost" ng-model="displaycost" value="2">
-          Cost in units of gross domestic product  in year <input class="txbox __inline __l" value="2014" placeholder="e.g. 2014" ng-model="display.year">
-        </label><br>
-        <label>
-          <input type="radio" name="displaycost" ng-model="displaycost" value="3">
-          Cost in units of government revenue in year <input class="txbox __inline __l" value="2014" placeholder="e.g. 2014" ng-model="display.year">
-        </label><br>
-        <label>
-          <input type="radio" name="displaycost" ng-model="displaycost" value="4">
-          Cost in units of total health expenditure in year <input class="txbox __inline __l" value="2014" placeholder="e.g. 2014" ng-model="display.year">
-        </label><br>
-        <label>
-          <input type="radio" name="displaycost" ng-model="displaycost" value="5">
-          Cost in units of domestic health spending in year <input class="txbox __inline __l" value="2014" placeholder="e.g. 2014" ng-model="display.year">
-        </label><br>
-        <label>
-          <input type="radio" name="displaycost" ng-model="displaycost" value="6">
-          Cost in units of government expenditure in year <input class="txbox __inline __l" value="2014" placeholder="e.g. 2014" ng-model="display.year">
-        </label>
-      </div>
-      </p>
     </div>
 
     <div class="section">
@@ -64,11 +35,41 @@
     </div>
 
     <div class="section" ng-if="hasCostCoverResponse">
-
-      <div class="section">
-        <h1>{{ displayedProgram.name }}</h1>
-        <div class="chart-container" style="width: 470px" ng-init="graph = graphs.plotdata_cc; graph.title = displayedProgram.name">
-          <div line-scatter-chart data="graph.data" options="graph.options" save-graph-as></div>
+      <h1>{{ displayedProgram.name }}</h1>
+      <div class="section elastic">
+        <div class="elastic_col __shrink" style="width: 470px">
+          <div class="chart-container" ng-init="graph = graphs.plotdata_cc; graph.title = displayedProgram.name">
+            <div line-scatter-chart data="graph.data" options="graph.options" save-graph-as></div>
+          </div>
+        </div>
+        <div class="elastic_col">
+          <h3> Select units for displaying cost data:</h3>
+          <p>
+          <label>
+            <input type="radio" name="displaycost" ng-model="displaycost" value="1">
+            Absolute cost
+          </label><br>
+          <label>
+            <input type="radio" name="displaycost" ng-model="displaycost" value="2">
+            Cost in units of gross domestic product  in year <input class="txbox __inline __l" value="2014" placeholder="e.g. 2014" ng-model="display.year">
+          </label><br>
+          <label>
+            <input type="radio" name="displaycost" ng-model="displaycost" value="3">
+            Cost in units of government revenue in year <input class="txbox __inline __l" value="2014" placeholder="e.g. 2014" ng-model="display.year">
+          </label><br>
+          <label>
+            <input type="radio" name="displaycost" ng-model="displaycost" value="4">
+            Cost in units of total health expenditure in year <input class="txbox __inline __l" value="2014" placeholder="e.g. 2014" ng-model="display.year">
+          </label><br>
+          <label>
+            <input type="radio" name="displaycost" ng-model="displaycost" value="5">
+            Cost in units of domestic health spending in year <input class="txbox __inline __l" value="2014" placeholder="e.g. 2014" ng-model="display.year">
+          </label><br>
+          <label>
+            <input type="radio" name="displaycost" ng-model="displaycost" value="6">
+            Cost in units of government expenditure in year <input class="txbox __inline __l" value="2014" placeholder="e.g. 2014" ng-model="display.year">
+          </label>
+          </p>
         </div>
       </div>
 
