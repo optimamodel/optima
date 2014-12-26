@@ -64,12 +64,16 @@ M.transit.asym[:,:];Matrix of population transitions without replacement (e.g. a
 M.transit.sym[:,:];Matrix of population transitions with replacement (e.g. KAPs);0;0;Not modifiable;;
 M.tx1;Number of people on 1st-line treatment;0;1;='Testing & Treatment'!W20;;
 M.tx2;Number of people on 2nd-line treatment;0;1;='Testing & Treatment'!W26;;
-"""
+""" 
+
+def maybe_bool(p):
+    if p in ['0','1']: p = bool(int(p))
+    return p
 
 def parameters():
     lines = [l.strip() for l in ALL_PARAMETERS_SOURCE.split('\n')][2:-1]
     split_lines = [l.split(';') for l in lines]
-    return [{'keys':r[0].replace('[:]','').split('.')[1:],'name':r[1], 'modifiable':bool(int(r[3]))} for r in split_lines]
+    return [{'keys':r[0].replace('[:]','').replace('[:,:]','').split('.')[1:],'name':r[1], 'modifiable':maybe_bool(r[3])} for r in split_lines]
 
 def parameter_name(params, key):
     if not type(key)==list: key=[key]

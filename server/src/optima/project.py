@@ -36,6 +36,24 @@ def get_project_params():
     project_params = [p for p in parameters() if p['modifiable']]
     return json.dumps({"params":project_params})
 
+"""
+Gives back default populations and programs
+"""
+@project.route('/predefined')
+@login_required
+def get_predefined():
+    from sim.programs import programs
+    from sim.populations import populations
+    programs = programs()
+    populations = populations()
+    for p in populations: p['active']= False
+    for p in programs:
+        p['active'] = False
+        new_params = [dict([('value', param),('active',True)]) for param in p['parameters']]
+        for np in new_params:
+            if len(np['value']['pops'][0])==0: np['value']['pops']=['ALL_POPULATIONS']
+        if new_params: p['parameters'] = new_params
+    return json.dumps({"programs":programs, "populations": populations})
 
 """
 Creates the project with the given name and provided parameters.
