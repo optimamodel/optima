@@ -45,11 +45,13 @@ define([
           ifActiveResetFor: function (projectName, user) {
             // If projectName is active, reset it for the given user.
             if (project.name === projectName) {
-              project.resetFor(user);};
+              project.resetFor(user);
+            }
           },
           resetFor: function (user) { 
             // Resets the projectName as the active project for the given user.
             delete project.name;
+            delete $http.defaults.headers.common.project;
             localStorage.removeItem(project.getProjectKeyFor(user));
           },  
           isSet: function() {

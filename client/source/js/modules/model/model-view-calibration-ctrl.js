@@ -17,10 +17,15 @@ define(['./module', 'underscore'], function (module, _) {
       $scope.hasCostCoverResponse = false;
 
       // model parameters
-      $scope.saturationCoverageLevel = 90;
-      $scope.knownCoverageLevel = 20;
-      $scope.knownFundingValue = 800000;
-      $scope.xAxisMaximum = 7000000;
+
+      /** Dec 24 2014
+       * fix/306-2-fix-plotting-of-default-ccocs
+       * removed hardcoded params
+       */
+      $scope.defaultSaturationCoverageLevel = 90;
+      $scope.defaultKnownCoverageLevel = 20;
+      $scope.defaultKnownFundingValue = 800000;
+      $scope.defaultXAxisMaximum = 7000000;
       $scope.behaviorWithoutMin = 0.3;
       $scope.behaviorWithoutMax = 0.5;
       $scope.behaviorWithMin = 0.7;
@@ -51,6 +56,11 @@ define(['./module', 'underscore'], function (module, _) {
           category: categories[index]
         };
       });
+      /** Dec 26 2014
+       * fix/306-2-fix-plotting-of-default-ccocs
+       * Default null value for selectedProgram
+       */
+       $scope.programs.unshift({name:'-- No program selected --',category:null, acronym:null});
     };
 
     var resetGraphs= function () {
@@ -235,6 +245,25 @@ define(['./module', 'underscore'], function (module, _) {
      * Retrieve and update graphs based on the provided plot models.
      */
     var retrieveAndUpdateGraphs = function (model) {
+      // validation on Cost-coverage curve plotting options
+      if ( !model.ccparams[0] || !model.ccparams[1] || !model.ccparams[2] || !model.ccparams[3] ){
+        var message = 'Cost-coverage curve plotting options cannot be empty!';
+        modalService.inform(
+          function (){ null }, 
+          'Okay',
+          message, 
+          'Error!'
+        ); 
+        return;
+      }
+      
+      /**
+       * stop further execution and return in case of null selectedProgram
+       */
+      if ( $scope.selectedProgram.acronym === null ) {
+        return;
+      }
+
       $http.post('/api/model/costcoverage', model).success(function (response) {
         if (response.status === 'OK') {
 
