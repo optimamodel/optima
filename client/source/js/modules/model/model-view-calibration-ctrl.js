@@ -15,6 +15,12 @@ define(['./module', 'underscore'], function (module, _) {
         };
       });
 
+      /** Dec 26 2014
+       * fix/306-2-fix-plotting-of-default-ccocs
+       * Default null value for selectedProgram
+       */
+      $scope.programs.unshift({name:'-- No program selected --',acronym:null});
+
       $scope.selectedProgram = $scope.programs[0];
       $scope.displayedProgram = null;
 
@@ -233,6 +239,13 @@ define(['./module', 'underscore'], function (module, _) {
           message, 
           'Error!'
         ); 
+        return;
+      }
+      
+      /**
+       * stop further execution and return in case of null selectedProgram
+       */
+      if ( $scope.selectedProgram.acronym === null ) {
         return;
       }
 
