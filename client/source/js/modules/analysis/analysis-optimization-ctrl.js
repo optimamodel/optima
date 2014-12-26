@@ -90,12 +90,7 @@ define([
     var linesGraphOptions = {
       height: 200,
       width: 320,
-      margin: {
-        top: 20,
-        right: 10,
-        bottom: 45,
-        left: 70
-      },
+      margin: CONFIG.GRAPH_MARGINS,
       linesStyle: $scope.lineStyles,
       xAxis: {
         axisLabel: 'Year',

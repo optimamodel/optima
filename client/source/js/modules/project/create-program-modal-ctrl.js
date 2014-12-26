@@ -10,7 +10,7 @@ define(['./module'], function (module) {
 
       $scope.availableParameters = angular.copy(availableParameters);
       $scope.populations = _(populations).map(function(population) {
-        return {label: population.name, value: [population.internal_name]};
+        return {label: population.name, value: [population.short_name]};
       });
       $scope.populations.unshift({label: 'All populations', value: ['ALL_POPULATIONS']});
 
