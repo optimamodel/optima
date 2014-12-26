@@ -14,6 +14,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     console.log(availableDefaults);
     $scope.populations = availableDefaults.populations;
     $scope.programs = availableDefaults.programs;
+    $scope.categories = availableDefaults.categories;
 
     // Helper function to open a population modal
     var openPopulationModal = function (population) {
@@ -26,6 +27,16 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           }
         }
       });
+    };
+
+    /*
+     * Filters programs by category
+     */
+    $scope.filterPrograms = function(category) {
+      console.log("category in filterPrograms:", category);
+      return _($scope.programs).filter(function (item) {
+          return item.category==category.category;
+        });
     };
 
     /*
