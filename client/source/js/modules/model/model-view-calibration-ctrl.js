@@ -34,10 +34,10 @@ define(['./module', 'underscore'], function (module, _) {
        * fix/306-2-fix-plotting-of-default-ccocs
        * removed hardcoded params
        */
-      // $scope.saturationCoverageLevel = 90;
-      // $scope.knownCoverageLevel = 20;
-      // $scope.knownFundingValue = 800000;
-      // $scope.xAxisMaximum = 7000000;
+      $scope.defaultSaturationCoverageLevel = 90;
+      $scope.defaultKnownCoverageLevel = 20;
+      $scope.defaultKnownFundingValue = 800000;
+      $scope.defaultXAxisMaximum = 7000000;
       $scope.behaviorWithoutMin = 0.3;
       $scope.behaviorWithoutMax = 0.5;
       $scope.behaviorWithMin = 0.7;
