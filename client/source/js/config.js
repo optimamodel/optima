@@ -5,6 +5,12 @@ define(['angular'], function (angular) {
   'use strict';
   return angular.module('app.constants', [])
     .constant('CONFIG', {
+      GRAPH_MARGINS: {
+        top: 20,
+        right: 20,
+        bottom: 45,
+        left: 70
+      },
       GRAPH_TYPES: {
         population: [
           { id: 'prev', name: 'Prevalence', byPopulation: true, total: false },
