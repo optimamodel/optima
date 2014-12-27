@@ -40,7 +40,7 @@ define(['./module', './scale-helpers'], function (module, scaleHelpers) {
       // initialize lineChart for each line and update the scales
       _(data.lines).each(function (line, index) {
         var lineColor = options.linesStyle && options.linesStyle[index];
-        var lineChart = new d3Charts.LineChart(chartGroup, index, chartSize, 100, lineColor);
+        var lineChart = new d3Charts.LineChart(chartGroup, index, chartSize, lineColor);
         lineChartInstances.push(lineChart);
         var scales = lineChart.scales(line);
         graphsScales.push(scales);
@@ -52,7 +52,7 @@ define(['./module', './scale-helpers'], function (module, scaleHelpers) {
 
       // initialize scatterChart
       if (scatterDataExists) {
-        scatterChartInstance = new d3Charts.ScatterChart(chartGroup, '', chartSize, 100);
+        scatterChartInstance = new d3Charts.ScatterChart(chartGroup, '', chartSize);
         var scatterScale = scatterChartInstance.scales(data.scatter);
         graphsScales.push(scatterScale);
         yMax = Math.max(yMax, scatterScale.y.domain()[1]);

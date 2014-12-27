@@ -25,9 +25,9 @@ define(['./module', './scale-helpers'], function (module, scaleHelpers) {
         var axesGroup = svg.append("g").attr("class", "axes_group");
 
         // initialize chart instances
-        var lineChartInstance = new d3Charts.LineChart(chartGroup, '', chartSize, 100);
-        var areaChartInstance = new d3Charts.AreaChart(chartGroup, '', chartSize, 100);
-        var scatterChartInstance = new d3Charts.ScatterChart(chartGroup, '', chartSize, 100);
+        var lineChartInstance = new d3Charts.LineChart(chartGroup, '', chartSize);
+        var areaChartInstance = new d3Charts.AreaChart(chartGroup, '', chartSize);
+        var scatterChartInstance = new d3Charts.ScatterChart(chartGroup, '', chartSize);
 
         // fetch & generate data for the graphs
         var lineData = scope.data.line;
