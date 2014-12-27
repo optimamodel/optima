@@ -14,7 +14,7 @@ from rtnorm import rtnorm
 from bunch import float_array
 from printv import printv
 #from scipy.stats import truncnorm
-from parameters import parameters, parameter_name
+from parameters import parameters, input_parameter_name
 
 ## Set defaults for testing
 default_progname = 'MSM programs'
@@ -224,7 +224,7 @@ def makeco(D, progname=default_progname, effectname=default_effectname, coparams
             
         # Plot results (probably delete once in GUI)  
         parameters_map = parameters()
-        plot_title = parameter_name(parameters_map,effectname[0][1])+ ' - ' + effectname[1][0]
+        plot_title = input_parameter_name(parameters_map,effectname[0][1])+ ' - ' + effectname[1][0]
                           
         if makeplot:
             figure()
@@ -370,7 +370,7 @@ def makecco(D=None, progname = default_progname, effectname = default_effectname
             totalcost = totalcost[~isnan(totalcost)]
             totalcost = totalcost[-1]
 
-        plot_title = parameter_name(parameters_map,effectname[0][1])+ ' - ' + effectname[1][0]
+        plot_title = input_parameter_name(parameters_map,effectname[0][1])+ ' - ' + effectname[1][0]
 
         # Create and populate output structure with plotting data
         plotdata = {}
