@@ -5,7 +5,7 @@ from async_calculate import CalculatingThread, start_or_report_calculation, canc
 from sim.manualfit import manualfit
 from sim.bunch import bunchify
 from sim.runsimulation import runsimulation
-from sim.makeccocs import makecco, plotallcurves, default_effectname
+from sim.makeccocs import makecco, plotallcurves, default_effectname, default_ccparams, default_coparams
 from utils import load_model, save_model, save_working_model_as_default, revert_working_model_to_default, project_exists, pick_params, check_project_name, for_fe
 from utils import report_exception
 from flask.ext.login import login_required, current_user
@@ -280,11 +280,12 @@ def doCostCoverage():
     args = pick_params(["progname", "ccparams", "coparams"], data, args)
     try:
         if not args.get('ccparams'):
-            args['ccparams'] = [0.9, 0.2, 800000.0, 7e6]
+            args['ccparams'] = default_ccparams
         if not args.get('coparams'):
-            args['coparams'] = []
+            args['coparams'] = default_coparams
         args['ccparams'] = [float(param) for param in args['ccparams']]
         args['coparams'] = [float(param) for param in args['coparams']]
+        args['makeplot'] = 0 # don't do plotting in SIM
         plotdata, plotdata_co, plotdata_cc, effectnames, D = plotallcurves(**args)
         if args.get('dosave'):
             D_dict = D.toDict()
@@ -306,12 +307,14 @@ def doCostCoverageEffect():
     args['D'] = load_model(request.project_name)
     try:
         if not args.get('ccparams'):
-            args['ccparams'] = [0.9, 0.2, 800000.0, 7e6]
+            args['ccparams'] = default_ccparams
         if not args.get('coparams'):
-            args['coparams'] = []
+            args['coparams'] = default_coparams
         if not args.get('effectname'):
             args['effectname'] = default_effectname
+        args['ccparams'] = [float(param) for param in args['ccparams']]
         args['coparams'] = [float(param) for param in args['coparams']]
+        args['makeplot'] = 0 # don't do plotting in SIM
         plotdata, plotdata_co, storeparams = makecco(**args)
     except Exception, err:
         var = traceback.format_exc()

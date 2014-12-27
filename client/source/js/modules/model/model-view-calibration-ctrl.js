@@ -8,13 +8,7 @@ define(['./module', 'underscore'], function (module, _) {
     var initialize =function () {
       $scope.meta = meta;
 
-      $scope.programs = _(meta.progs.long).map(function (name, index) {
-        return {
-          name: name,
-          acronym: meta.progs.short[index]
-        };
-      });
-
+      $scope.initializePrograms();
       $scope.selectedProgram = $scope.programs[0];
       $scope.displayedProgram = null;
 
@@ -23,10 +17,15 @@ define(['./module', 'underscore'], function (module, _) {
       $scope.hasCostCoverResponse = false;
 
       // model parameters
-      $scope.saturationCoverageLevel = 90;
-      $scope.knownCoverageLevel = 20;
-      $scope.knownFundingValue = 800000;
-      $scope.xAxisMaximum = 7000000;
+
+      /** Dec 24 2014
+       * fix/306-2-fix-plotting-of-default-ccocs
+       * removed hardcoded params
+       */
+      $scope.defaultSaturationCoverageLevel = 90;
+      $scope.defaultKnownCoverageLevel = 20;
+      $scope.defaultKnownFundingValue = 800000;
+      $scope.defaultXAxisMaximum = 7000000;
       $scope.behaviorWithoutMin = 0.3;
       $scope.behaviorWithoutMax = 0.5;
       $scope.behaviorWithMin = 0.7;
@@ -35,6 +34,33 @@ define(['./module', 'underscore'], function (module, _) {
       plotTypes = ['plotdata', 'plotdata_cc', 'plotdata_co'];
 
       resetGraphs();
+    };
+
+    /**
+    * Creates the models of the programs for this controller.
+    * If the backend do not present values for the categories, we'll use 'Others' as default.
+    */
+    $scope.initializePrograms = function () {
+      $scope.programs = _(meta.progs.long).map(function (name, index) {
+        var categories;
+        categories = meta.progs.categories;
+        if(!categories) { // create default categories if absent
+          categories = [];
+          _.times(meta.progs.long.length, function (n){
+            categories.push('Others')
+          });}
+          
+        return {
+          name: name,
+          acronym: meta.progs.short[index],
+          category: categories[index]
+        };
+      });
+      /** Dec 26 2014
+       * fix/306-2-fix-plotting-of-default-ccocs
+       * Default null value for selectedProgram
+       */
+      $scope.programs.unshift({name:'-- No program selected --',category:null, acronym:null});
     };
 
     var resetGraphs= function () {
@@ -219,6 +245,25 @@ define(['./module', 'underscore'], function (module, _) {
      * Retrieve and update graphs based on the provided plot models.
      */
     var retrieveAndUpdateGraphs = function (model) {
+      // validation on Cost-coverage curve plotting options
+      if ( !model.ccparams[0] || !model.ccparams[1] || !model.ccparams[2] || !model.ccparams[3] ){
+        var message = 'Cost-coverage curve plotting options cannot be empty!';
+        modalService.inform(
+          function (){ null }, 
+          'Okay',
+          message, 
+          'Error!'
+        ); 
+        return;
+      }
+      
+      /**
+       * stop further execution and return in case of null selectedProgram
+       */
+      if ( $scope.selectedProgram.acronym === null ) {
+        return;
+      }
+
       $http.post('/api/model/costcoverage', model).success(function (response) {
         if (response.status === 'OK') {
 

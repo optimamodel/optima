@@ -3,7 +3,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     module.controller('AnalysisScenariosController', function ($scope, $http, $modal, meta, scenarioParamsResponse, CONFIG) {
 
-        var linesGraphOptions, linesStyle, linesGraphData, responseData, availableScenarioParams;
+        var linesGraphOptions, linesGraphData, responseData, availableScenarioParams;
 
         // initialize all necessary data for this controller
         var initialize = function() {
@@ -33,12 +33,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           linesGraphOptions = {
             height: 200,
             width: 320,
-            margin: {
-              top: 20,
-              right: 10,
-              bottom: 45,
-              left: 70
-            },
+            margin: CONFIG.GRAPH_MARGINS,
             linesStyle: $scope.lineStyles,
             xAxis: {
               axisLabel: 'Year',
@@ -89,13 +84,13 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         /**
          * Returns a financial graph.
          */
-        var generateFinancialGraph = function(data) {
+        var generateFinancialGraph = function (data) {
           var graph = generateGraph(data.data, data.xdata, data.title);
 
           graph.options.xAxis.axisLabel = data.xlabel;
           graph.options.yAxis.axisLabel = data.ylabel;
-          graph.options.linesStyle = ['__black', '__black', '__black',
-            '__black', '__black', '__black', '__black', '__black'];
+          graph.options.linesStyle = $scope.lineStyles;
+          graph.legend = data.legend;
           return graph;
         };
 
