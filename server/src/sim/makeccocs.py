@@ -20,7 +20,8 @@ from parameters import parameters, input_parameter_name
 default_progname = 'MSM programs'
 default_startup = 0 # select0 for programs with no startup costs or 1 for programs with startup costs
 default_ccparams = [0.9, 0.2, 800000.0, 7e6]
-default_coparams = [[0.3, 0.5], [0.7, 0.9]]
+default_coparams = []
+default_init_coparams = [[0.3, 0.5], [0.7, 0.9]]
 default_makeplot = 1
 #default_datain = D # use 'example' or programs
 default_effectname = [['sex', 'condomcas'], [u'MSM programs'], [[0.3, 0.5], [0.7, 0.9]]]

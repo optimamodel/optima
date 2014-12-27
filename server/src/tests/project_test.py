@@ -51,7 +51,8 @@ class ProjectTestCase(OptimaTestCase):
         self.assertEqual(response.status_code, 200)
         params = json.loads(response.data)['params']
         self.assertTrue(len(params)>0)
-        self.assertTrue(set(params[0].keys())==set(["keys", "name", "modifiable"]))
+        self.assertTrue(set(params[0].keys())== \
+            set(["keys", "name", "modifiable", "calibration", "dim", "input_key", "page"]))
         self.assertTrue(parameter_name(['condom','reg']) == 'Condom usage probability, regular partnerships')
 
     def test_upload_data(self):
