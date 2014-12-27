@@ -1,5 +1,8 @@
 .scatter_chart_circle {
-  stroke: #333;
-  stroke-width: 0.5px;
   fill: #666;
+  transition: fill 0.3s linear;
+
+  &:hover {
+    fill: #ff7e87;
+  }
 }
