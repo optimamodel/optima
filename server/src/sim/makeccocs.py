@@ -223,8 +223,7 @@ def makeco(D, progname=default_progname, effectname=default_effectname, coparams
         ymin, ymax = linspace(coparams[0],coparams[2],nxpts), linspace(coparams[1],coparams[3],nxpts)
             
         # Plot results (probably delete once in GUI)  
-        parameters_map = parameters()
-        plot_title = input_parameter_name(parameters_map,effectname[0][1])+ ' - ' + effectname[1][0]
+        plot_title = input_parameter_name(effectname[0][1])+ ' - ' + effectname[1][0]
                           
         if makeplot:
             figure()
@@ -307,7 +306,6 @@ def makecco(D=None, progname = default_progname, effectname = default_effectname
 
     # Get population info
     popname = effectname[1]
-    parameters_map = parameters()
 
     # Only going to make cost-outcome curves if a program affects a SPECIFIC population -- otherwise will just make cost-coverage curves
     if not D.data.meta.progs.saturating[prognumber]:
@@ -370,7 +368,7 @@ def makecco(D=None, progname = default_progname, effectname = default_effectname
             totalcost = totalcost[~isnan(totalcost)]
             totalcost = totalcost[-1]
 
-        plot_title = input_parameter_name(parameters_map,effectname[0][1])+ ' - ' + effectname[1][0]
+        plot_title = input_parameter_name(effectname[0][1])+ ' - ' + effectname[1][0]
 
         # Create and populate output structure with plotting data
         plotdata = {}

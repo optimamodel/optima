@@ -45,15 +45,14 @@ class ProjectTestCase(OptimaTestCase):
         self.assertEqual(projects_data['projects'][0]['status'], 'OK')
 
     def test_project_params(self):
-        from sim.parameters import parameter_name, parameters
+        from sim.parameters import parameter_name
         response = self.client.get('/api/project/params')
         print(response)
         self.assertEqual(response.status_code, 200)
         params = json.loads(response.data)['params']
         self.assertTrue(len(params)>0)
         self.assertTrue(set(params[0].keys())==set(["keys", "name", "modifiable"]))
-        all_parameters = parameters()
-        self.assertTrue(parameter_name(all_parameters, ['condom','reg']) == 'Condom usage probability, regular partnerships')
+        self.assertTrue(parameter_name(['condom','reg']) == 'Condom usage probability, regular partnerships')
 
     def test_upload_data(self):
         from api import app

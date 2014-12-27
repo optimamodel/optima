@@ -83,7 +83,7 @@ def parameters():
     for line in split_lines:
         entry = dict([(fields[key], maybe_bool(line[key]) ) for key in fields])
         param, pops = re.match('M\.([^[]+)(?:\[(.+?)\])?',line[model_key_field]).groups()
-        entry['keys']=param
+        entry['keys']=param.split('.')
         entry['dim'] = dims[pops]
         page, input_key = re.match('([^.]+?)\.(.+)', line[input_key_field]).groups()
         entry['page'] = page
@@ -91,17 +91,27 @@ def parameters():
         result.append(entry)
     return result
 
-def input_parameter_name(params, input_key):
-    entry = [param for param in params if param['input_key']==input_key]
+parameter_list = parameters()
+
+def input_parameter(input_key):
+    entry = [param for param in parameter_list if param['input_key']==input_key]
+    if entry:
+        return entry[0]
+    else:
+        return None
+
+def input_parameter_name(input_key):
+    param = input_parameter(input_key)
+    if param:
+        return param['name']
+    else:
+        return None
+
+def parameter_name(key): #params is the output of parameters() method
+    if not type(key)==list: key=[key]
+    entry = [param for param in parameter_list if ''.join(param['keys'])==''.join(key)]
     if entry:
         return entry[0]['name']
     else:
         return None
 
-def parameter_name(params, key):
-    if not type(key)==list: key=[key]
-    entry = [param for param in params if ''.join(param['keys'])==''.join(key)]
-    if entry:
-        return entry[0]['name']
-    else:
-        return None
