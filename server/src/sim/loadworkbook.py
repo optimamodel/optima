@@ -1,4 +1,4 @@
-def loadworkbook(filename='example.xlsx',verbose=2):
+def loadworkbook(filename='example.xlsx', verbose=2):
     """
     Loads the workbook (i.e. reads its contents into the data structure).
     This data structure is used in the next step to update the corresponding model.
@@ -18,8 +18,10 @@ def loadworkbook(filename='example.xlsx',verbose=2):
     from bunch import Bunch as struct # Replicate Matlab-like structure behavior
     from time import strftime # For determining when a spreadsheet was last uploaded
     printv('Loading data from %s...' % filename, 1, verbose)
-    
-    
+    from programs import programs_for_input_key
+    from makeccocs import default_coparams
+
+        
     ###########################################################################
     ## Define the workbook and parameter names
     ###########################################################################
@@ -80,7 +82,7 @@ def loadworkbook(filename='example.xlsx',verbose=2):
     ## Load data sheets
     ###########################################################################
     
-    
+
     ## Basic setup
     data = struct() # Create structure for holding data
     data.__doc__ = 'Raw data as loaded from the workbook, including both epidemiological and behavioral data, plus economics and velociraptors.'
@@ -89,11 +91,16 @@ def loadworkbook(filename='example.xlsx',verbose=2):
     programs.__doc__ = 'Parameters that define the HIV programs -- cost-coverage and coverage-outcome curves.'
     workbook = open_workbook(filename) # Open workbook
     
+    sheetstructure_keys = sheetstructure.keys()
+    metadata_index = sheetstructure_keys.index('metadata')
+    #ensure that metadata is parsed first
+    sheetstructure_keys = ['metadata']+ sheetstructure_keys[:metadata_index]+sheetstructure_keys[metadata_index+1:]
     
     ## Loop over each group of sheets
-    for groupname in sheetstructure.keys(): # Loop over each type of data, but treat constants differently
+    for groupname in sheetstructure_keys: # Loop over each type of data, but treat constants differently
         sheetgroup = sheetstructure[groupname]
         for sheet in sheetgroup: # Loop over each workbook for that data -- just one for constants
+            lastdatacol = None
             sheetname = sheet[0] # Name of the workbook
             name = sheet[1] # Pull out the name of this field, e.g. 'epi'
             subparlist = sheet[2] # List of subparameters
@@ -123,11 +130,12 @@ def loadworkbook(filename='example.xlsx',verbose=2):
                         break # Quit
                     elif thiscell != '': # Nope, more years, keep going
                         data.econyears.append(float(thiscell)) # Add this year
-                
-            assumptioncol = lastdatacol + 1 # The "OR" space is in between
-            ncolsperprog = 5 # Number of columns necessary for defining a single program; name, zero-spend-min, zero-spend-max, full-spend-min, full-spend-max
-            nprogblocks = 4 # Number of program blocks
-            programcols = assumptioncol + 3 + array([array(range(ncolsperprog))+(1+ncolsperprog)*i for i in range(nprogblocks)]) # Calculate which columns the program data is stored in
+            
+            if lastdatacol:    
+                assumptioncol = lastdatacol + 1 # The "OR" space is in between
+                ncolsperprog = 5 # Number of columns necessary for defining a single program; name, zero-spend-min, zero-spend-max, full-spend-min, full-spend-max
+                nprogblocks = 4 # Number of program blocks
+                programcols = assumptioncol + 3 + array([array(range(ncolsperprog))+(1+ncolsperprog)*i for i in range(nprogblocks)]) # Calculate which columns the program data is stored in
             
             
             
@@ -190,6 +198,7 @@ def loadworkbook(filename='example.xlsx',verbose=2):
                         if groupname=='metadata': 
                             thesedata = sheetdata.row_values(row, start_colx=2, end_colx=11) # Data starts in 3rd column, finishes in 11th column
                             data[name][thispar].short.append(thesedata[0])
+
                             data[name][thispar].long.append(thesedata[1])
                             if thispar=='pops':
                                 data[name][thispar].male.append(thesedata[2])
@@ -201,6 +210,7 @@ def loadworkbook(filename='example.xlsx',verbose=2):
                                 data[name][thispar].client.append(thesedata[8])
                             if thispar=='progs':
                                 data[name][thispar].saturating.append(thesedata[2])
+                                if not thesedata[0] in programs: programs[thesedata[0]] = []
                                 
                         # It's cost-coverage data, save the cost and coverage values separately
                         if groupname=='cocodata':
@@ -233,17 +243,10 @@ def loadworkbook(filename='example.xlsx',verbose=2):
                             assumptiondata = sheetdata.cell_value(row, assumptioncol)
                             if assumptiondata != '': thesedata = [assumptiondata] # Replace the (presumably blank) data if a non-blank assumption has been entered
                             data[name][thispar].append(thesedata) # Store data
-                            
-                            # Load program data -- only exists for time data
-                            if sheetdata.ncols>=programcols[-1][-1]: # Don't try to read more data than exist
-                                for progblock in range(len(programcols)): # Loop over each program block
-                                    programname = str(sheetdata.cell_value(row, programcols[progblock][0])) # Convert to plain string since otherwise can't be used as a dict key
-                                    if programname != '': # Not blank: a program exists!
-                                        if not(programs.has_key(programname)): programs[programname] = [] # Create new list if none exists
-                                        zerocov = sheetdata.row_values(row, start_colx=programcols[progblock][1], end_colx=programcols[progblock][2]+1) # Get outcome data
-                                        fullcov = sheetdata.row_values(row, start_colx=programcols[progblock][3], end_colx=programcols[progblock][4]+1) # Get outcome data
-                                        programs[programname].append([[name,thispar], [subparam], [zerocov, fullcov]]) # Append to program # TODO -- not sure if subparam is useful here, an index would probably be more useful
-                        
+
+                            for programname in programs_for_input_key(thispar):
+                                if programname in programs:
+                                    programs[programname].append([[name, thispar], [subparam], default_coparams])                        
                         
                         # It's a matrix, append the data                                     
                         elif groupname=='matrices':
@@ -259,4 +262,5 @@ def loadworkbook(filename='example.xlsx',verbose=2):
                             data[name][thispar][subpar] = thesedata # Store data
     
     printv('...done loading data.', 2, verbose)
+    print("programs: %s" % programs)
     return data, programs
