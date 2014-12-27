@@ -239,6 +239,109 @@ define(['./module', 'd3'], function (module, d3) {
         .attr('transform', 'rotate (-90, 0, 0)')
         .attr('x', -chartSize.height / 2)
         .attr('y', -options.margin.left + 17);
+
+      if (options.hasTitle) {
+        axesGroup.append('text')
+          .attr('class', 'graph-title')
+          .text(options.title)
+          .attr('y', - (options.margin.top - 20));
+
+        // wrap text nodes to fit width
+        enableTextWrap(axesGroup.select('.graph-title'), options.width - options.margin.left - options.margin.right);
+      }
+
+      if (options.hasLegend) {
+        var graphLegend = axesGroup.append('g')
+          .attr('class', 'graph-legend');
+
+        options.legend.forEach(function (legendItem, index) {
+          var item = graphLegend.append('g')
+            .attr('class', 'graph-legend_i');
+
+          var y = - (options.margin.top - 50 - index * 15);
+
+          item.append('text')
+            .attr('class', 'graph-legend_text')
+            .attr('y', y)
+            .text(legendItem.title);
+
+          item.append('circle')
+            .attr('class', 'graph-legend_dot line ' + (legendItem.color || colors[index]))
+            .attr('r', 4)
+            .attr('cy', y - 4)
+            .attr('cx', -10);
+
+          // wrap text nodes to fit width
+          enableTextWrap(axesGroup.select('.graph-legend_text'), options.width - options.margin.left - options.margin.right - 10);
+        });
+      }
+    }
+
+    function enableTextWrap (text, width) {
+      text.each(function() {
+        var text = d3.select(this),
+          words = text.text().split(/\s+/).reverse(),
+          word,
+          line = [],
+          lineNumber = 0,
+          lineHeight = 1.1, // ems
+          y = text.attr('y'),
+          dy = parseFloat(text.attr('dy')) || 0,
+          tspan = text.text(null).append('tspan')
+            .attr('x', 0)
+            .attr('y', y)
+            .attr('dy', dy + 'em');
+        while (word = words.pop()) {
+          line.push(word);
+          tspan.text(line.join(' '));
+          if (tspan.node().getComputedTextLength() > width) {
+            line.pop();
+            tspan.text(line.join(' '));
+            line = [word];
+            tspan = text.append('tspan')
+              .attr('x', 0)
+              .attr('y', y)
+              .attr('dy', ++lineNumber * lineHeight + dy + 'em')
+              .text(word);
+          }
+        }
+      });
+    }
+
+    function adaptOptions (options) {
+      options.hasTitle = !!options.title;
+      options.hasLegend = !!options.legend;
+
+      var offset = 0;
+      if (options.hasTitle) {
+        offset += 30;
+      }
+
+      if (options.hasLegend) {
+        offset += 50;
+      }
+
+      options.margin.top += offset;
+      options.height += offset;
+
+      // if there are custom colors - attach colors to legend
+      if (options.legend) {
+        var hasCustomColors = options.linesStyle;
+
+        options.legend = _(options.legend).map(function (title, index) {
+          var item = {
+            title: title
+          };
+
+          if (hasCustomColors) {
+            item.color = options.linesStyle[index];
+          }
+
+          return item;
+        });
+      }
+
+      return options;
     }
 
     function createSvg(element, dimensions, margins) {
@@ -251,8 +354,10 @@ define(['./module', 'd3'], function (module, d3) {
     }
 
     return {
+      adaptOptions: adaptOptions,
       createSvg: createSvg,
       drawAxes: drawAxes,
+      enableTextWrap: enableTextWrap,
       AreaChart: AreaChart,
       LineChart: LineChart,
       ScatterChart: ScatterChart

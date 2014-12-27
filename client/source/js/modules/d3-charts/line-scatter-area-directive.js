@@ -8,6 +8,8 @@ define(['./module', './scale-helpers'], function (module, scaleHelpers) {
         options: '='
       },
       link: function (scope, element) {
+        scope.options = d3Charts.adaptOptions(scope.options);
+
         var dimensions = {
           height: scope.options.height,
           width: scope.options.width

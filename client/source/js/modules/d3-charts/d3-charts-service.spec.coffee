@@ -32,3 +32,52 @@ define ['angular-mocks', 'Source/modules/d3-charts/d3-charts-service',
         $svg = createSvg()
         $g = $svg.find('g')
         expect($g.attr('transform')).toBe('translate(20,10)')
+
+    describe 'adaptOptions()', ->
+
+      describe 'if graph title and legend is set', ->
+        options = null
+
+        beforeEach ->
+          options = {
+            title: 'Foo',
+            legend: ['Foo'],
+            height: 100,
+            margin: {
+              top: 10
+            }
+          }
+
+        it 'should set hasTitle boolean', ->
+          options = d3ChartsService.adaptOptions(options)
+          expect(options.hasTitle).toBe(true)
+
+        it 'should set hasLegend boolean', ->
+          options = d3ChartsService.adaptOptions(options)
+          expect(options.hasLegend).toBe(true)
+
+        it 'should increase margin-top', ->
+          options = d3ChartsService.adaptOptions(options)
+          expect(options.margin.top).toBe(90)
+
+        it 'should increase height', ->
+          options = d3ChartsService.adaptOptions(options)
+          expect(options.height).toBe(180)
+
+      describe 'legend transformation', ->
+
+        it 'should translate legend from array of strings to array of objects', ->
+          options = d3ChartsService.adaptOptions({
+            legend: ['foo', 'bar']
+            margin: { top: 10 }
+          })
+          expect(options.legend[1].title).toBe('bar')
+
+        it 'should attach color if customColor option provided', ->
+          options = d3ChartsService.adaptOptions({
+            legend: ['foo', 'bar']
+            margin: { top: 10 }
+            linesStyle: ['a', 'b', 'c', 'd']
+          })
+          expect(options.legend[0].color).toBe('a')
+          expect(options.legend[1].color).toBe('b')
