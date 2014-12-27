@@ -1,10 +1,12 @@
-define(['./module', './scale-helpers'], function (module, scaleHelpers) {
+define(['./module', './scale-helpers', 'angular'], function (module, scaleHelpers, angular) {
   'use strict';
 
   module.directive('lineScatterChart', function (d3Charts) {
     var svg;
 
     var drawGraph = function (data, options, rootElement) {
+      options = d3Charts.adaptOptions(options);
+
       // to prevent creating multiple graphs we want to remove the existing svg
       // element before drawing a new one.
       if (svg) {
@@ -96,14 +98,14 @@ define(['./module', './scale-helpers'], function (module, scaleHelpers) {
       link: function (scope, element) {
 
         scope.$watch('data', function() {
-          drawGraph(scope.data, scope.options, element);
+          drawGraph(scope.data, angular.copy(scope.options), element);
         });
 
         scope.$watch('options', function() {
-          drawGraph(scope.data, scope.options, element);
+          drawGraph(scope.data, angular.copy(scope.options), element);
         });
 
-        drawGraph(scope.data, scope.options, element);
+        drawGraph(scope.data, angular.copy(scope.options), element);
       }
     };
   });
