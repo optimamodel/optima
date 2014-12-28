@@ -63,6 +63,7 @@ define(['./module', 'underscore'], function (module, _) {
       $scope.programs.unshift({name:'-- No program selected --',category:null, acronym:null});
     };
 
+
     var resetGraphs= function () {
       $scope.graphs = {
         plotdata: [],
@@ -281,6 +282,10 @@ define(['./module', 'underscore'], function (module, _) {
       });
     };
 
+    $scope.changeProgram = function() {
+      $scope.hasCostCoverResponse = false;
+    }
+
     /**
      * Retrieve and update graphs based on the current plot models.
      */
@@ -307,6 +312,8 @@ define(['./module', 'underscore'], function (module, _) {
     $scope.saveModel = function () {
       var model = getPlotModel(model);
       model.doSave = true;
+      model.all_coparams = $scope.coParams;
+      model.all_effects = effectNames;
       retrieveAndUpdateGraphs(model);
     };
 
