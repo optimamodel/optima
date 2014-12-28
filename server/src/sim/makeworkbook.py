@@ -417,7 +417,7 @@ class OptimaWorkbook:
         self.current_sheet.protect()
         current_row = 0
 
-        current_row = self.emit_years_block('Cost & coverage', current_row, self.ref_prog_range, row_formats = [OptimaFormats.PERCENTAGE,OptimaFormats.NUMBER], assumption = True, row_levels = row_levels)
+        current_row = self.emit_years_block('Cost & coverage', current_row, self.ref_prog_range, row_formats = [OptimaFormats.DECIMAL_PERCENTAGE,OptimaFormats.SCIENTIFIC], assumption = True, row_levels = row_levels)
 
     def generate_demo(self):
         row_levels = ['high', 'best', 'low']
@@ -426,7 +426,7 @@ class OptimaWorkbook:
         current_row = 0
 
         current_row = self.emit_ref_years_block('Population size', current_row, self.pop_range, row_format = OptimaFormats.SCIENTIFIC, assumption = True, row_levels = row_levels)
-        current_row = self.emit_ref_years_block('HIV prevalence', current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True, row_levels = row_levels)
+        current_row = self.emit_ref_years_block('HIV prevalence', current_row, self.pop_range, row_format = OptimaFormats.DECIMAL_PERCENTAGE, assumption = True, row_levels = row_levels)
 
     def generate_epi(self):
         self.current_sheet = self.sheets['epi']
@@ -435,7 +435,7 @@ class OptimaWorkbook:
 
         for name in ['Percentage of people who die from non-HIV-related causes per year', \
         'Prevalence of any ulcerative STIs', 'Prevalence of any discharging STIs', 'Tuberculosis prevalence']:
-            current_row = self.emit_ref_years_block(name, current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
+            current_row = self.emit_ref_years_block(name, current_row, self.pop_range, row_format = OptimaFormats.DECIMAL_PERCENTAGE, assumption = True)
 
     def generate_opid(self):
         self.current_sheet = self.sheets['opid']
@@ -573,7 +573,8 @@ class OptimaWorkbook:
         econ_years_range = years_range(self.econ_data_start, self.econ_data_end)
 
         for name in names:
-            current_row = self.emit_content_block(name, current_row, ['Total'], econ_years_range, assumption = True)
+            current_row = self.emit_content_block(name, current_row, ['Total'], econ_years_range, assumption = True, \
+                row_format = OptimaFormats.SCIENTIFIC)
 
     def create(self, path):
         if self.verbose >=1: 
