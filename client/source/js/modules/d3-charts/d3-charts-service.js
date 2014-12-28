@@ -230,7 +230,7 @@ define(['./module', 'd3'], function (module, d3) {
         .append('text')
         .text(xLabel)
         .attr('x', chartSize.width / 2)
-        .attr('y', options.margin.bottom - 3);
+        .attr('y', 35);
 
       axesGroup.select('.y.axis')
         .append('text')
@@ -239,28 +239,39 @@ define(['./module', 'd3'], function (module, d3) {
         .attr('transform', 'rotate (-90, 0, 0)')
         .attr('x', -chartSize.height / 2)
         .attr('y', -options.margin.left + 17);
+    }
+
+    function drawTitleAndLegend (svg, options, headerGroup) {
+      var titleOffsetTop = 20;
 
       if (options.hasTitle) {
-        axesGroup.append('text')
+        headerGroup.append('text')
           .attr('class', 'graph-title')
           .text(options.title)
-          .attr('y', - (options.margin.top - 20));
+          .attr('y', - (options.margin.top - titleOffsetTop));
 
         // wrap text nodes to fit width
-        enableTextWrap(axesGroup.select('.graph-title'), options.width - options.margin.left - options.margin.right);
+        enableTextWrap(headerGroup.select('.graph-title'), options.width - options.margin.left - options.margin.right);
       }
 
-      if (options.hasLegend) {
-        var graphLegend = axesGroup.append('g')
-          .attr('class', 'graph-legend');
+      var legendHeight = 0,
+        legendLines = 0,
+        legendLineHeight = 15,
+        legendWidth = options.width - options.margin.left - options.margin.right - 10,
+        legendOffsetTop = 15;
 
-        options.legend.forEach(function (legendItem, index) {
+      if (options.hasLegend) {
+        var graphLegend = headerGroup.append('g')
+          .attr('class', 'graph-legend')
+          .attr('transform', 'translate(0,' + (options.height - options.margin.bottom + legendOffsetTop) + ')');
+
+        options.legend.forEach(function (legendItem) {
           var item = graphLegend.append('g')
             .attr('class', 'graph-legend_i');
 
-          var y = - (options.margin.top - 50 - index * 15);
+          var y = legendLines * legendLineHeight;
 
-          item.append('text')
+          var text = item.append('text')
             .attr('class', 'graph-legend_text')
             .attr('y', y)
             .text(legendItem.title);
@@ -272,57 +283,66 @@ define(['./module', 'd3'], function (module, d3) {
             .attr('cx', -10);
 
           // wrap text nodes to fit width
-          enableTextWrap(axesGroup.select('.graph-legend_text'), options.width - options.margin.left - options.margin.right - 10);
+          legendLines += enableTextWrap(text, legendWidth);
         });
+
+        legendHeight = legendOffsetTop + legendLines * legendLineHeight;
       }
+
+      setSvgHeightAndPadding(svg,
+        options.height + legendHeight,
+        [options.margin.top, options.margin.right, options.margin.bottom, options.margin.left]
+      );
     }
 
+    /**
+     * Enables SVG text wrapping
+     * http://bl.ocks.org/mbostock/7555321
+     *
+     * @param text SVG text element
+     * @param width to wrap to
+     *
+     * @return number of lines created
+     */
     function enableTextWrap (text, width) {
-      text.each(function() {
-        var text = d3.select(this),
-          words = text.text().split(/\s+/).reverse(),
-          word,
-          line = [],
-          lineNumber = 0,
-          lineHeight = 1.1, // ems
-          y = text.attr('y'),
-          dy = parseFloat(text.attr('dy')) || 0,
-          tspan = text.text(null).append('tspan')
+      var words = text.text().split(/\s+/).reverse(),
+        word,
+        line = [],
+        lineNumber = 0,
+        lineHeight = 1.1, // ems
+        y = text.attr('y'),
+        dy = parseFloat(text.attr('dy')) || 0,
+        tspan = text.text(null).append('tspan')
+          .attr('x', 0)
+          .attr('y', y)
+          .attr('dy', dy + 'em');
+      while (word = words.pop()) {
+        line.push(word);
+        tspan.text(line.join(' '));
+        if (tspan.node().getComputedTextLength() > width) {
+          line.pop();
+          tspan.text(line.join(' '));
+          line = [word];
+          tspan = text.append('tspan')
             .attr('x', 0)
             .attr('y', y)
-            .attr('dy', dy + 'em');
-        while (word = words.pop()) {
-          line.push(word);
-          tspan.text(line.join(' '));
-          if (tspan.node().getComputedTextLength() > width) {
-            line.pop();
-            tspan.text(line.join(' '));
-            line = [word];
-            tspan = text.append('tspan')
-              .attr('x', 0)
-              .attr('y', y)
-              .attr('dy', ++lineNumber * lineHeight + dy + 'em')
-              .text(word);
-          }
+            .attr('dy', ++lineNumber * lineHeight + dy + 'em')
+            .text(word);
         }
-      });
+      }
+      return lineNumber + 1;
     }
 
     function adaptOptions (options) {
       options.hasTitle = !!options.title;
       options.hasLegend = !!options.legend;
 
-      var offset = 0;
+      var titleOffset = 0;
       if (options.hasTitle) {
-        offset += 30;
+        titleOffset += 30;
       }
-
-      if (options.hasLegend) {
-        offset += 50;
-      }
-
-      options.margin.top += offset;
-      options.height += offset;
+      options.margin.top += titleOffset;
+      options.height += titleOffset;
 
       // if there are custom colors - attach colors to legend
       if (options.legend) {
@@ -345,19 +365,31 @@ define(['./module', 'd3'], function (module, d3) {
     }
 
     function createSvg(element, dimensions, margins) {
-      return d3.select(element)
+      var svg = d3.select(element)
         .append('svg')
-        .attr('width', dimensions.width)
-        .attr('height', dimensions.height)
-        .append('g')
-        .attr('transform', 'translate(' + margins.left + ',' + margins.top + ')');
+        .attr('width', dimensions.width);
+
+      setSvgHeightAndPadding(svg, dimensions.height, [margins.top, margins.right, margins.bottom, margins.left]);
+      return svg;
+    }
+
+    /**
+     * @param svg
+     * @param height
+     * @param padding - array of padding values [top, right, bottom, left]
+     */
+    function setSvgHeightAndPadding (svg, height, padding) {
+      svg.attr('height', height)
+        .attr('style', 'padding:' + padding.join('px ') + 'px');
     }
 
     return {
       adaptOptions: adaptOptions,
       createSvg: createSvg,
       drawAxes: drawAxes,
+      drawTitleAndLegend: drawTitleAndLegend,
       enableTextWrap: enableTextWrap,
+      setSvgHeightAndPadding: setSvgHeightAndPadding,
       AreaChart: AreaChart,
       LineChart: LineChart,
       ScatterChart: ScatterChart

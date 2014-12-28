@@ -25,6 +25,7 @@ define(['./module', './scale-helpers'], function (module, scaleHelpers) {
         // Define svg groups
         var chartGroup = svg.append("g").attr("class", "chart_group");
         var axesGroup = svg.append("g").attr("class", "axes_group");
+        var headerGroup = svg.append('g').attr('class', 'header_group');
 
         // initialize chart instances
         var lineChartInstance = new d3Charts.LineChart(chartGroup, '', chartSize);
@@ -86,6 +87,8 @@ define(['./module', './scale-helpers'], function (module, scaleHelpers) {
           axesGroup,
           chartSize
         );
+
+        d3Charts.drawTitleAndLegend(svg, scope.options, headerGroup);
 
         // draw graphs
         areaChartInstance.draw(areaData);

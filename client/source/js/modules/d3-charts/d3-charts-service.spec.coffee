@@ -15,7 +15,7 @@ define ['angular-mocks', 'Source/modules/d3-charts/d3-charts-service',
       createSvg = ->
         wrapper = document.createElement "div"
         dimensions = {width: 100, height: 120}
-        margins = {left: 20, top: 10}
+        margins = {left: 20, top: 10, right: 10, bottom: 5}
         d3ChartsService.createSvg wrapper, dimensions, margins
         $(wrapper).find('svg')
 
@@ -30,8 +30,7 @@ define ['angular-mocks', 'Source/modules/d3-charts/d3-charts-service',
 
       it 'should create an svg element with the provided margin', ->
         $svg = createSvg()
-        $g = $svg.find('g')
-        expect($g.attr('transform')).toBe('translate(20,10)')
+        expect($svg.attr('style')).toBe('padding:10px 10px 5px 20px')
 
     describe 'adaptOptions()', ->
 
@@ -58,11 +57,11 @@ define ['angular-mocks', 'Source/modules/d3-charts/d3-charts-service',
 
         it 'should increase margin-top', ->
           options = d3ChartsService.adaptOptions(options)
-          expect(options.margin.top).toBe(90)
+          expect(options.margin.top).toBe(40)
 
         it 'should increase height', ->
           options = d3ChartsService.adaptOptions(options)
-          expect(options.height).toBe(180)
+          expect(options.height).toBe(130)
 
       describe 'legend transformation', ->
 
