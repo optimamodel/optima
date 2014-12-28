@@ -90,7 +90,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
          * Returns a financial graph.
          */
         var generateFinancialGraph = function (data) {
-          var graph = generateGraph(data.data, data.xdata, data.title, data.legend);
+          var graph = generateGraph(data.data, data.xdata, data.title, data.legend, data.xlabel, data.ylabel);
           graph.options.linesStyle = $scope.lineStyles;
           return graph;
         };

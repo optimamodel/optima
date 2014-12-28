@@ -23,6 +23,7 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
       // Define svg groups
       var chartGroup = svg.append('g').attr('class', 'chart_group');
       var axesGroup = svg.append('g').attr('class', 'axes_group');
+      var headerGroup = svg.append('g').attr('class', 'header_group');
 
       var chartSize = {
         width: options.width - options.margin.left - options.margin.right,
@@ -80,6 +81,8 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
         axesGroup,
         chartSize
       );
+
+      d3Charts.drawTitleAndLegend(svg, options, headerGroup);
 
       // draw available charts
       _(lineChartInstances).each(function (lineChart, index) {
