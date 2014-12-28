@@ -1,4 +1,4 @@
-define(['./module', 'd3', 'd3-box'], function (module, d3) {
+define(['./module', 'd3'], function (module, d3) {
   'use strict';
 
   module.service('d3Charts', function () {
