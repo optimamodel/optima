@@ -11,6 +11,7 @@ define({
     'async'         : './vendor/requirejs-plugins/src/async',
     'canvg'         : './vendor/canvg/dist/canvg.bundle',
     'canvas2blob'   : './vendor/canvas-toBlob.js/canvas-toBlob',
+    'crypto'        : './assets/js/sha224',
     'd3'            : './vendor/d3/d3',
     'saveAs'        : './vendor/FileSaver/FileSaver',
     'jquery'        : './vendor/jquery/dist/jquery',
