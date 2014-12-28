@@ -276,8 +276,9 @@ Calls makecco with parameters supplied from frontend
 def doCostCoverage():
     data = json.loads(request.data)
     args = {}
-    args['D'] = load_model(request.project_name)
+    D = load_model(request.project_name)
     args = pick_params(["progname", "ccparams", "coparams"], data, args)
+    do_save = data.get('doSave')
     try:
         if not args.get('ccparams'):
             args['ccparams'] = default_ccparams
@@ -285,9 +286,22 @@ def doCostCoverage():
             args['coparams'] = default_coparams
         args['ccparams'] = [float(param) for param in args['ccparams']]
         args['coparams'] = [float(param) for param in args['coparams']]
+        args['coparams'] = default_coparams # otherwise the effect changes will be overwritten
+
         args['makeplot'] = 0 # don't do plotting in SIM
+        if do_save:
+            progname = args['progname']
+            effects = data.get('all_effects')
+            new_coparams = data.get('all_coparams')
+            new_effects = []
+            for i in xrange(len(effects)):
+                effect = effects[str(i)]
+                effect[2] = [[new_coparams[i][0], new_coparams[i][1]], [new_coparams[i][2], new_coparams[i][3]]]
+                new_effects.append(effect)
+            D.programs[progname] = new_effects
+        args['D'] = D
         plotdata, plotdata_co, plotdata_cc, effectnames, D = plotallcurves(**args)
-        if args.get('dosave'):
+        if do_save:
             D_dict = D.toDict()
             save_model(request.project_name, D_dict)
     except Exception, err:
