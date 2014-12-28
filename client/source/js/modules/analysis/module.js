@@ -29,6 +29,9 @@ define([
                   },
                   scenarioParamsResponse: function($http) {
                     return $http.get('/api/analysis/scenarios/params');
+                  },
+                  scenariosResponse: function($http) {
+                    return $http.get('/api/analysis/scenarios/list');
                   }
                 }
             })
