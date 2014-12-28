@@ -7,6 +7,7 @@
         <select 
           class="txbox" 
           ng-options="p as p.name group by p.category for p in programs" 
+          ng-change="changeProgram()"
           ng-model="selectedProgram"></select>
       </label>
       
