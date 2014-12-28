@@ -118,7 +118,7 @@ def createProject(project_name):
     db.session.commit()
     new_project_template = D.G.workbookname
 
-    print("new_project_template: %s" % new_project_template)
+    current_app.logger.debug("new_project_template: %s" % new_project_template)
     (dirname, basename) = (upload_dir_user(TEMPLATEDIR), new_project_template)
     return helpers.send_from_directory(dirname, basename)
 

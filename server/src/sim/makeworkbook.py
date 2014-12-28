@@ -37,7 +37,6 @@ class OptimaContent:
         self.column_names = column_names
         self.data = data
         self.assumption = False
-        self.programs = False
         self.row_levels = None
         self.row_format = OptimaFormats.GENERAL
         self.row_formats = None
@@ -53,12 +52,6 @@ class OptimaContent:
 
     def has_assumption(self):
         return self.assumption
-
-    def add_programs(self):
-        self.programs = True
-
-    def has_programs(self):
-        return self.programs
 
     def set_row_levels(self, row_levels): # right now assume the row levels are hard coded, as it is only needed once
         self.row_levels = row_levels
@@ -261,23 +254,12 @@ class TitledRange:
     def emit(self, formats, rc_title_align = 'right'): #only important for row/col titles
         #top-top headers
         formats.write_block_name(self.sheet, self.content.name, self.first_row)
-        if self.content.has_programs():
-            for p in range(4):
-                formats.write_rowcol_name(self.sheet, self.first_row, self.data_range.last_col + 5 + p*6 + 1, 'Zero coverage')
-                formats.write_rowcol_name(self.sheet, self.first_row, self.data_range.last_col + 5 + p*6 + 3, 'Full coverage')
 
         #headers
         for i, name in enumerate(self.content.column_names):
             formats.write_rowcol_name(self.sheet, self.first_row+1, self.data_range.first_col+i,name, rc_title_align)
             if self.content.has_assumption():
                 formats.write_rowcol_name(self.sheet, self.first_row+1, self.data_range.last_col+2, 'Assumption')
-            if self.content.has_programs():
-                for p in range(4):
-                    formats.write_rowcol_name(self.sheet, self.first_row+1, self.data_range.last_col+ 5 + p*6, 'Program %s' % (p+1))
-                    formats.write_rowcol_name(self.sheet, self.first_row+1, self.data_range.last_col+ 5 + p*6 + 1, 'Min')
-                    formats.write_rowcol_name(self.sheet, self.first_row+1, self.data_range.last_col+ 5 + p*6 + 2, 'Max')
-                    formats.write_rowcol_name(self.sheet, self.first_row+1, self.data_range.last_col+ 5 + p*6 + 3, 'Min')
-                    formats.write_rowcol_name(self.sheet, self.first_row+1, self.data_range.last_col+ 5 + p*6 + 4, 'Max')
 
 
         current_row = self.data_range.first_row
@@ -303,11 +285,6 @@ class TitledRange:
                 formats.write_option(self.sheet, current_row, self.data_range.last_col+1)
                 formats.write_empty_unlocked(self.sheet, current_row, self.data_range.last_col+2, \
                 row_format)
-            #emit programs
-            if self.content.has_programs(): 
-                for p in range(4):
-                   for num in range(5):
-                    formats.write_empty_unlocked(self.sheet, current_row, self.data_range.last_col + 5 + p*6 + num, OptimaFormats.PERCENTAGE)
             current_row+=1
             if num_levels > 1 and ((i+1) % num_levels)==0: # shift between the blocks
                 current_row +=1
@@ -355,13 +332,11 @@ class OptimaWorkbook:
         self.nprogs = len(progs)
 
     def emit_content_block(self, name, current_row, row_names, column_names, data = None, \
-        row_format = OptimaFormats.GENERAL, assumption = False, programs = False, row_levels = None):
+        row_format = OptimaFormats.GENERAL, assumption = False, row_levels = None):
         content = OptimaContent(name, row_names, column_names, data)
         content.set_row_format(row_format)
         if assumption:
             content.add_assumption()
-        if programs:
-            content.add_programs()
         if row_levels is not None:
             content.set_row_levels(row_levels)
         the_range = TitledRange(self.current_sheet, current_row, content)
@@ -386,13 +361,11 @@ class OptimaWorkbook:
 
 
     def emit_years_block(self, name, current_row, row_names, row_format = OptimaFormats.GENERAL, \
-        assumption = False, programs = False, row_levels = None, row_formats = None):
+        assumption = False, row_levels = None, row_formats = None):
         content = make_years_range(name, row_names, self.data_start, self.data_end)
         content.set_row_format(row_format)
         if assumption:
             content.add_assumption()
-        if programs:
-            content.add_programs()
         if row_levels is not None:
             content.set_row_levels(row_levels)
         if row_formats is not None:
@@ -403,13 +376,11 @@ class OptimaWorkbook:
 
 
     def emit_ref_years_block(self, name, current_row, ref_range, row_format = OptimaFormats.GENERAL, \
-        assumption = None, programs = False, row_levels = None, row_formats = None):
+        assumption = None, row_levels = None, row_formats = None):
         content = make_ref_years_range(name, ref_range, self.data_start, self.data_end)
         content.set_row_format(row_format)
         if assumption:
             content.add_assumption()
-        if programs:
-            content.add_programs()
         if row_levels is not None:
             content.set_row_levels(row_levels)
         if row_formats is not None:
@@ -446,7 +417,7 @@ class OptimaWorkbook:
         self.current_sheet.protect()
         current_row = 0
 
-        current_row = self.emit_years_block('Cost & coverage', current_row, self.ref_prog_range, row_formats = [OptimaFormats.PERCENTAGE,OptimaFormats.NUMBER], assumption = True, row_levels = row_levels)
+        current_row = self.emit_years_block('Cost & coverage', current_row, self.ref_prog_range, row_formats = [OptimaFormats.DECIMAL_PERCENTAGE,OptimaFormats.SCIENTIFIC], assumption = True, row_levels = row_levels)
 
     def generate_demo(self):
         row_levels = ['high', 'best', 'low']
@@ -455,7 +426,7 @@ class OptimaWorkbook:
         current_row = 0
 
         current_row = self.emit_ref_years_block('Population size', current_row, self.pop_range, row_format = OptimaFormats.SCIENTIFIC, assumption = True, row_levels = row_levels)
-        current_row = self.emit_ref_years_block('HIV prevalence', current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True, row_levels = row_levels)
+        current_row = self.emit_ref_years_block('HIV prevalence', current_row, self.pop_range, row_format = OptimaFormats.DECIMAL_PERCENTAGE, assumption = True, row_levels = row_levels)
 
     def generate_epi(self):
         self.current_sheet = self.sheets['epi']
@@ -464,7 +435,7 @@ class OptimaWorkbook:
 
         for name in ['Percentage of people who die from non-HIV-related causes per year', \
         'Prevalence of any ulcerative STIs', 'Prevalence of any discharging STIs', 'Tuberculosis prevalence']:
-            current_row = self.emit_ref_years_block(name, current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True, programs = True)
+            current_row = self.emit_ref_years_block(name, current_row, self.pop_range, row_format = OptimaFormats.DECIMAL_PERCENTAGE, assumption = True)
 
     def generate_opid(self):
         self.current_sheet = self.sheets['opid']
@@ -480,15 +451,15 @@ class OptimaWorkbook:
         self.current_sheet.protect()
         current_row = 0
 
-        current_row = self.emit_ref_years_block('Percentage of population tested for HIV in the last 12 months', current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True, programs = True)
-        current_row = self.emit_years_block('Probability of a person with CD4 <200 being tested per year', current_row, ['Average'], row_format = OptimaFormats.GENERAL, assumption = True, programs = True)
-        current_row = self.emit_years_block('Number of people on first-line treatment', current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption = True, programs = True)
-        current_row = self.emit_years_block('Number of people on second-line treatment', current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption = True, programs = True)
-        current_row = self.emit_ref_years_block('Percentage of people covered by pre-exposure prophylaxis', current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True, programs = True)
-        current_row = self.emit_ref_years_block('Percentage of people covered by post-exposure prophylaxis', current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True, programs = True)
-        current_row = self.emit_years_block('Number of women on PMTCT (Option B/B+)', current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption = True, programs = True)
-        current_row = self.emit_ref_years_block('Birth rate (births/woman/year)', current_row, self.pop_range, row_format = OptimaFormats.NUMBER, assumption = True, programs = True)
-        current_row = self.emit_years_block('Percentage of HIV-positive women who breastfeed', current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption = True, programs = True)
+        current_row = self.emit_ref_years_block('Percentage of population tested for HIV in the last 12 months', current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_years_block('Probability of a person with CD4 <200 being tested per year', current_row, ['Average'], row_format = OptimaFormats.GENERAL, assumption = True)
+        current_row = self.emit_years_block('Number of people on first-line treatment', current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption = True)
+        current_row = self.emit_years_block('Number of people on second-line treatment', current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption = True)
+        current_row = self.emit_ref_years_block('Percentage of people covered by pre-exposure prophylaxis', current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_ref_years_block('Percentage of people covered by post-exposure prophylaxis', current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_years_block('Number of women on PMTCT (Option B/B+)', current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption = True)
+        current_row = self.emit_ref_years_block('Birth rate (births/woman/year)', current_row, self.pop_range, row_format = OptimaFormats.NUMBER, assumption = True)
+        current_row = self.emit_years_block('Percentage of HIV-positive women who breastfeed', current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption = True)
 
     def generate_sex(self):
         self.current_sheet = self.sheets['sex']
@@ -504,7 +475,7 @@ class OptimaWorkbook:
         ('Number of voluntary medical male circumcisions performed', OptimaFormats.GENERAL)]
 
         for (name, row_format) in names_formats:
-            current_row = self.emit_ref_years_block(name, current_row, self.pop_range, row_format = row_format, assumption = True, programs = True)
+            current_row = self.emit_ref_years_block(name, current_row, self.pop_range, row_format = row_format, assumption = True)
 
     def generate_drug(self):
         self.current_sheet = self.sheets['drug']
@@ -515,7 +486,7 @@ class OptimaWorkbook:
         ('Number of people who inject drugs who are on opiate substitution therapy', OptimaFormats.GENERAL, ['Average'])]
 
         for (name, row_format, row_range) in names_formats_ranges:
-            current_row = self.emit_years_block(name, current_row, row_range, row_format = row_format, assumption = True, programs = True)
+            current_row = self.emit_years_block(name, current_row, row_range, row_format = row_format, assumption = True)
 
     def generate_partner(self):
         self.current_sheet = self.sheets['partner']
@@ -602,7 +573,8 @@ class OptimaWorkbook:
         econ_years_range = years_range(self.econ_data_start, self.econ_data_end)
 
         for name in names:
-            current_row = self.emit_content_block(name, current_row, ['Total'], econ_years_range, assumption = True)
+            current_row = self.emit_content_block(name, current_row, ['Total'], econ_years_range, assumption = True, \
+                row_format = OptimaFormats.SCIENTIFIC)
 
     def create(self, path):
         if self.verbose >=1: 

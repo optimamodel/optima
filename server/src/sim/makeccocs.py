@@ -14,13 +14,14 @@ from rtnorm import rtnorm
 from bunch import float_array
 from printv import printv
 #from scipy.stats import truncnorm
-from parameters import parameters, parameter_name
+from parameters import parameters, input_parameter_name
 
 ## Set defaults for testing
 default_progname = 'MSM programs'
 default_startup = 0 # select0 for programs with no startup costs or 1 for programs with startup costs
 default_ccparams = [0.9, 0.2, 800000.0, 7e6]
 default_coparams = []
+default_init_coparams = [[0.3, 0.5], [0.7, 0.9]]
 default_makeplot = 1
 #default_datain = D # use 'example' or programs
 default_effectname = [['sex', 'condomcas'], [u'MSM programs'], [[0.3, 0.5], [0.7, 0.9]]]
@@ -186,7 +187,7 @@ def makeco(D, progname=default_progname, effectname=default_effectname, coparams
             coverage = coverage[-1]
 
         # Get inputs from either GUI or spreadsheet
-        if coparams: ## TODO: would be better to use a dictionary, so that the order doesn't have to be fixed
+        if coparams and len(coparams)>=3: ## TODO: would be better to use a dictionary, so that the order doesn't have to be fixed
             zeromin = coparams[0] # Assumptions of behaviour at zero coverage (lower bound)
             zeromax = coparams[1] # Assumptions of behaviour at zero coverage (upper bound)
             fullmin = coparams[2] # Assumptions of behaviour at maximal coverage (lower bound)
@@ -223,8 +224,7 @@ def makeco(D, progname=default_progname, effectname=default_effectname, coparams
         ymin, ymax = linspace(coparams[0],coparams[2],nxpts), linspace(coparams[1],coparams[3],nxpts)
             
         # Plot results (probably delete once in GUI)  
-        parameters_map = parameters()
-        plot_title = parameter_name(parameters_map,effectname[0][1])+ ' - ' + effectname[1][0]
+        plot_title = input_parameter_name(effectname[0][1])+ ' - ' + effectname[1][0]
                           
         if makeplot:
             figure()
@@ -307,7 +307,6 @@ def makecco(D=None, progname = default_progname, effectname = default_effectname
 
     # Get population info
     popname = effectname[1]
-    parameters_map = parameters()
 
     # Only going to make cost-outcome curves if a program affects a SPECIFIC population -- otherwise will just make cost-coverage curves
     if not D.data.meta.progs.saturating[prognumber]:
@@ -320,7 +319,7 @@ def makecco(D=None, progname = default_progname, effectname = default_effectname
         
         printv("coparams in makecco: %s" % coparams, 5, verbose)
         # Get inputs from either GUI... 
-        if coparams: # TODO: would it be better to use a dictionary structure, so that the order doesn't have to be fixed?
+        if coparams and len(coparams)>=3: # TODO: would it be better to use a dictionary structure, so that the order doesn't have to be fixed?
             zeromin = coparams[0] # Assumptions of behaviour at zero coverage (lower bound)
             zeromax = coparams[1] # Assumptions of behaviour at zero coverage (upper bound)
             fullmin = coparams[2] # Assumptions of behaviour at maximal coverage (lower bound)
@@ -370,7 +369,7 @@ def makecco(D=None, progname = default_progname, effectname = default_effectname
             totalcost = totalcost[~isnan(totalcost)]
             totalcost = totalcost[-1]
 
-        plot_title = parameter_name(parameters_map,effectname[0][1])+ ' - ' + effectname[1][0]
+        plot_title = input_parameter_name(effectname[0][1])+ ' - ' + effectname[1][0]
 
         # Create and populate output structure with plotting data
         plotdata = {}
