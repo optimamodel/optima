@@ -105,6 +105,10 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
     M.numost = dpar2mpar(P.numost, withwhat)
     M.sharing = dpar2mpar(P.sharing, withwhat)
     
+    ## Other intervention parameters (proportion of the populations, not absolute numbers)
+    M.prep = dpar2mpar(P.prep, withwhat)
+    M.pep  = dpar2mpar(P.pep, withwhat)
+    
     ## Matrices can be used almost directly
     M.pships = struct()
     M.transit = struct()
