@@ -16,7 +16,7 @@ def runsimulation(D, startyear=2000, endyear=2030, verbose=2):
     print('WARNING should add conditionals here')
     from makeccocs import makeallccocs
     D = makeallccocs(D, verbose=verbose)
-    
+
     from getcurrentbudget import getcurrentbudget
     D = getcurrentbudget(D) # TODO Add verbose
     

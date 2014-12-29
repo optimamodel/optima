@@ -14,10 +14,12 @@ define(['./module'], function (module) {
 
       $scope.error = false;
 
+      var hashed_password = CryptoJS.SHA224($scope.password).toString();
+
       User.create({
         name: $scope.fullName,
         email: $scope.email,
-        password: $scope.password
+        password: hashed_password
       },
         // success
         function (response) {
