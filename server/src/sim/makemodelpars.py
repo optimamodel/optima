@@ -17,6 +17,7 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
     M.__doc__ = 'Model parameters to be used directly in the model, calculated from data parameters P.'
     tvec = opt.tvec # Shorten time vector
     npts = len(tvec) # Number of time points # TODO probably shouldn't be repeated from model.m
+    M.tvec = tvec # Append time vector
     
     
     
