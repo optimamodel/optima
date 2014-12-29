@@ -1,7 +1,7 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     'use strict';
 
-    module.controller('AnalysisScenariosController', function ($scope, $http, $modal, meta, scenarioParamsResponse, scenariosResponse, CONFIG) {
+    module.controller('AnalysisScenariosController', function ($scope, $http, $modal, meta, info, scenarioParamsResponse, scenariosResponse, CONFIG) {
 
         var linesGraphOptions, linesGraphData, responseData, availableScenarioParams, availableScenarios;
 
@@ -9,29 +9,32 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         var initialize = function() {
           $scope.validate = false;
           $scope.show_message = false;
-          
-          // check if project is calibrated
-          checkProjectStatus();
-
-          // add All option in population list
-          meta.pops.long.push("All");
-
-          // transform scenarioParams to use attribute `names` instead of `keys`
-          // it is the same for the data we have to send to run scenarios
-          availableScenarioParams = _(scenarioParamsResponse.data.params).map(function(parameters) {
-            return { name: parameters.name, names: parameters.keys, values: parameters.values};
-          });
-
-          availableScenarios = scenariosResponse.data.scenarios;
-
-          $scope.scenarios = _(availableScenarios).map(function(scenario) {
-            scenario.active = true;
-            return scenario;
-          });
+          $scope.scenarios = [];
 
           $scope.runScenariosOptions = {
             dosave: false
           };
+
+          // check if project is calibrated
+          checkProjectInfo(info);
+
+          if($scope.validate) {
+            // add All option in population list
+            meta.pops.long.push("All");
+
+            // transform scenarioParams to use attribute `names` instead of `keys`
+            // it is the same for the data we have to send to run scenarios
+            availableScenarioParams = _(scenarioParamsResponse.data.params).map(function(parameters) {
+              return { name: parameters.name, names: parameters.keys, values: parameters.values};
+            });
+
+            availableScenarios = scenariosResponse.data.scenarios;
+
+            $scope.scenarios = _(availableScenarios).map(function(scenario) {
+              scenario.active = true;
+              return scenario;
+            });
+          }
 
           $scope.types = angular.copy(CONFIG.GRAPH_TYPES);
 
@@ -60,22 +63,13 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           };
         };
 
-        var checkProjectStatus = function () {
-          
-          $http.get('/api/model/status')
-            .success(function(data) {
-              if ( data.status == "OK" ) {
-                var isCalibrated = data.is_calibrated;
-                if ( isCalibrated ) {
-                  $scope.validate = true;
-                  $scope.show_message = false;
-                } else {
-                  $scope.show_message = true;
-                  $scope.validate = false;
-                }
-              }
-              
-            });
+        var checkProjectInfo = function (info) {
+          if (!info) return;
+          var data = info.data;
+          if ( data.status == "OK" ) {
+            $scope.validate = data.is_calibrated;
+            $scope.show_message = !$scope.validate;
+          }
         };
 
         /**

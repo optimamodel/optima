@@ -335,33 +335,3 @@ def doCostCoverageEffect():
         return jsonify({"status":"NOK", "exception":var})
     return jsonify({"status":"OK", "plotdata": for_fe(plotdata), \
         "plotdata_co": for_fe(plotdata_co), "effectname": args['effectname']})
-
-
-"""
-Check Project Status 
-"""
-@model.route('/status')
-@login_required
-@check_project_name
-def checkStatus():
-
-    project_name = request.project_name
-    if not project_exists(project_name):
-        reply['reason'] = 'Project %s does not exist' % project_name
-    
-    is_calibrated = True
-    has_data = True
-
-    #expects json: {"startyear":year,"endyear":year} and gets project_name from session
-    try:
-        D = load_model(project_name)
-        D_Dict = D.toDict()
-
-        if D_Dict.get('plot').get('E') is None:
-            is_calibrated = False
-            
-
-    except Exception, err:
-        var = traceback.format_exc()
-        return jsonify({"status":"NOK", "exception":var})
-    return jsonify({"status":"OK","is_calibrated":is_calibrated,'has_data':has_data})
