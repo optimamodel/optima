@@ -1,4 +1,4 @@
-define(['./module'], function (module) {
+define(['./module', 'crypto'], function (module) {
   'use strict';
 
   return module.controller('LoginController', function ($scope, $window, User) {
