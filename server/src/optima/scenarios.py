@@ -51,6 +51,30 @@ def get_scenario_params():
     return json.dumps({"params":real_params})
 
 """
+Returns a list of scenarios defined by the user, or the default scenario list
+"""
+@scenarios.route('/list')
+@login_required
+@check_project_name
+@report_exception()
+def list():
+    from sim.scenarios import defaultscenarios
+    current_app.logger.debug("/api/analysis/scenarios/list")
+    # get project name
+    project_name = request.project_name
+    if not project_exists(project_name):
+        reply['reason'] = 'Project %s does not exist' % project_name
+        return reply
+    D = load_model(project_name)
+    if not 'scens' in D:
+        scenarios = defaultscenarios(D)
+    else:
+        scenarios = [item.scenario for item in D.scens]
+    scenarios = unbunchify(scenarios)
+    return json.dumps({'scenarios':scenarios})
+
+
+"""
 Gets a list of scenarios defined by the user, produces graphs out of them and sends back
 """
 @scenarios.route('/run', methods=['POST'])
