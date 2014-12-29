@@ -1,9 +1,9 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     'use strict';
 
-    module.controller('AnalysisScenariosController', function ($scope, $http, $modal, meta, scenarioParamsResponse, CONFIG) {
+    module.controller('AnalysisScenariosController', function ($scope, $http, $modal, meta, scenarioParamsResponse, scenariosResponse, CONFIG) {
 
-        var linesGraphOptions, linesGraphData, responseData, availableScenarioParams;
+        var linesGraphOptions, linesGraphData, responseData, availableScenarioParams, availableScenarios;
 
         // initialize all necessary data for this controller
         var initialize = function() {
@@ -17,9 +17,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             return { name: parameters.name, names: parameters.keys, values: parameters.values};
           });
 
-          $scope.scenarios = [
-            {active: true, name: 'Conditions remain according to model calibration', pars: []}
-          ];
+          availableScenarios = scenariosResponse.data.scenarios;
+
+          $scope.scenarios = _(availableScenarios).map(function(scenario) {
+            scenario.active = true;
+            return scenario;
+          });
 
           $scope.runScenariosOptions = {
             dosave: false
