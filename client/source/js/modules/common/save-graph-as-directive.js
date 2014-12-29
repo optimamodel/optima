@@ -1,4 +1,4 @@
-define(['angular', 'underscore', 'saveAs'], function (angular, _, saveAs) {
+define(['angular', 'jquery', 'underscore', 'saveAs'], function (angular, $, _, saveAs) {
   'use strict';
 
   return angular.module('app.save-graph-as', [])
@@ -128,8 +128,9 @@ define(['angular', 'underscore', 'saveAs'], function (angular, _, saveAs) {
            */
           var exportGraphAsPng = function() {
             var originalSvg = elem.parent().find('svg');
-            var orginalWidth = originalSvg.width();
-            var orginalHeight = originalSvg.height();
+            var orginalWidth = $(originalSvg).outerWidth();
+            var orginalHeight = $(originalSvg).outerHeight();
+            var originalStyle = originalSvg.attr('style');
             var scalingFactor = 4.2;
 
             // in order to have styled graphs the css content used to render
@@ -138,7 +139,7 @@ define(['angular', 'underscore', 'saveAs'], function (angular, _, saveAs) {
             cssContentRequest.success(function(cssContent) {
 
               // create svg element
-              var svg = createSvg(orginalWidth, orginalHeight, scalingFactor);
+              var svg = createSvg(orginalWidth, orginalHeight, scalingFactor, originalStyle);
 
               // add styles and content to the svg
               var styles = '<style>' + cssContent + '</style>';
