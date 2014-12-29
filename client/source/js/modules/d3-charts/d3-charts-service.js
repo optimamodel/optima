@@ -6,7 +6,7 @@ define(['./module', 'd3'], function (module, d3) {
     // available colors, see .line in _chart.scss
     var colors = [ '__orange', '__light-orange', '__violet', '__green', '__light-green', '__red', '__gray' ];
 
-    function LineChart(chart, lineIndex, chartSize, transitionTimeout, customColor) {
+    function LineChart(chart, lineIndex, chartSize, customColor) {
       var xScale, yScale;
 
       var uniqClassName = 'line' + lineIndex;
@@ -50,11 +50,7 @@ define(['./module', 'd3'], function (module, d3) {
 
           chart.append('path')
             .attr('d', line(dataset))
-            .attr('class', 'line ' + lineColor + ' ' + uniqClassName)
-            .attr('opacity', 0)
-            .transition()
-            .duration(transitionTimeout)
-            .attr('opacity', 1);
+            .attr('class', 'line ' + lineColor + ' ' + uniqClassName);
         }
       }
 
@@ -68,8 +64,6 @@ define(['./module', 'd3'], function (module, d3) {
             return yScale(d[1]);
           });
         chart.select('path.' + uniqClassName)
-          .transition()
-          .duration(transitionTimeout)
           .attr('d', line(dataset));
       }
 
@@ -78,14 +72,11 @@ define(['./module', 'd3'], function (module, d3) {
         chart.select('path.' + uniqClassName)
           .data(dataset)
           .exit()
-          .transition()
-          .duration(transitionTimeout)
-          .attr('opacity', 0)
           .remove();
       }
     }
 
-    function AreaChart(chart, suffix, chart_size, transitionTimeout) {
+    function AreaChart(chart, suffix, chart_size) {
       var xScale, yScale;
 
       var className = 'area_chart_path' + suffix;
@@ -137,14 +128,11 @@ define(['./module', 'd3'], function (module, d3) {
         chart.select('path.' + className)
           .data(dataset)
           .exit()
-          .transition()
-          .duration(transitionTimeout)
-          .attr('opacity', 0)
           .remove();
       }
     }
 
-    function ScatterChart(chart, suffix, chartSize, transitionTimeout) {
+    function ScatterChart(chart, suffix, chartSize) {
       var xScale, yScale,
         className = 'scatter_chart_circle' + suffix;
 
@@ -186,43 +174,20 @@ define(['./module', 'd3'], function (module, d3) {
           .attr('cy', function (d) {
             return yScale(d[1]);
           })
-          .attr('r', 0)
           .attr('class', className)
-          .on('mouseover', function (d) {
-            var point = d3.select(this);
-            point.transition().attr('r', 6);
-          })
-          .on('mouseout', function () {
-            d3.select(this).transition().attr('r', 4);
-          })
-          .transition()
-          .duration(transitionTimeout)
           .attr('r', 4);
       }
 
       function transition(dataset) {
         chart.selectAll('circle.' + className)
           .data(dataset)
-          .transition()
-          .duration(transitionTimeout)
-          .each('start', function () {
-            d3.select(this)
-              .attr('class', className + '_transition')
-              .attr('r', 6);
-          })
           .attr('cx', function (d) {
             return xScale(d[0]);
           })
           .attr('cy', function (d) {
             return yScale(d[1]);
           })
-          .each('end', function () {
-            d3.select(this)
-              .transition()
-              .duration(1000)
-              .attr('class', className)
-              .attr('r', 4);
-          });
+          .attr('r', 4);
       }
 
       function exit(dataset) {
@@ -230,9 +195,6 @@ define(['./module', 'd3'], function (module, d3) {
         chart.selectAll('circle.' + className)
           .data(dataset)
           .exit()
-          .transition()
-          .duration(transitionTimeout)
-          .attr('r', 0)
           .remove();
       }
     }
@@ -248,65 +210,196 @@ define(['./module', 'd3'], function (module, d3) {
         .scale(scales.x)
         .tickFormat(options.xAxis.tickFormat)
         .orient('bottom')
-        .ticks(Math.floor(chartSize.width / 50));
+        .ticks(Math.floor(chartSize.width / 50)); // one tick per 50 pixels
 
       var yAxis = d3.svg.axis()
         .scale(scales.y)
         .tickFormat(options.yAxis.tickFormat)
         .orient('left');
 
-      if (axesGroup.select('.x.axis').empty()) {
-        axesGroup.append('g')
-          .attr('class', 'x axis')
-          .attr('transform', 'translate(0,' + chartSize.height + ')')
-          .call(xAxis);
+      axesGroup.append('g')
+        .attr('class', 'x axis')
+        .attr('transform', 'translate(0,' + chartSize.height + ')')
+        .call(xAxis);
 
-        axesGroup.append('g')
-          .attr('class', 'y axis')
-          .call(yAxis);
+      axesGroup.append('g')
+        .attr('class', 'y axis')
+        .call(yAxis);
 
-        axesGroup.select('.x.axis')
-          .append('text')
-          .text(xLabel)
-          .attr('x', chartSize.width / 2)
-          .attr('y', options.margin.bottom - 3)
-          .attr('id', 'xLabel');
+      axesGroup.select('.x.axis')
+        .append('text')
+        .text(xLabel)
+        .attr('x', chartSize.width / 2)
+        .attr('y', 35);
 
-        axesGroup.select('.y.axis')
-          .append('text')
-          .text(yLabel)
-          .attr('text-anchor', 'middle')
-          .attr('transform', 'rotate (-90, 0, 0)')
-          .attr('x', -chartSize.height / 2)
-          .attr('y', -options.margin.left + 17)
-          .attr('id', 'yLabel');
-      } else {
-        document.getElementById('xLabel').textContent = xLabel;
-        axesGroup.select('.x.axis')
-          .transition()
-          .duration(transitionTimeout)
-          .call(xAxis);
+      axesGroup.select('.y.axis')
+        .append('text')
+        .text(yLabel)
+        .attr('text-anchor', 'middle')
+        .attr('transform', 'rotate (-90, 0, 0)')
+        .attr('x', -chartSize.height / 2)
+        .attr('y', -options.margin.left + 17);
+    }
 
-        document.getElementById('yLabel').textContent = yLabel;
-        axesGroup.select('.y.axis')
-          .transition()
-          .duration(transitionTimeout)
-          .call(yAxis);
+    function drawTitleAndLegend (svg, options, headerGroup) {
+      var titleOffsetTop = 20;
+
+      if (options.hasTitle) {
+        var titleWidth = options.width - options.margin.left - options.margin.right;
+
+        headerGroup.append('text')
+          .attr('class', 'graph-title')
+          .text(options.title)
+          .attr('y', - (options.margin.top - titleOffsetTop));
+
+        // wrap text nodes to fit width
+        enableTextWrap(headerGroup.select('.graph-title'), titleWidth);
       }
+
+      var legendHeight = 0,
+        legendLines = 0,
+        legendLineHeight = 15,
+        legendWidth = options.width - options.margin.left - options.margin.right - 10,
+        legendOffsetTop = 15;
+
+      if (options.hasLegend) {
+        var graphLegend = headerGroup.append('g')
+          .attr('class', 'graph-legend')
+          .attr('transform', 'translate(0,' + (options.height - options.margin.bottom + legendOffsetTop) + ')');
+
+        options.legend.forEach(function (legendItem) {
+          var item = graphLegend.append('g')
+            .attr('class', 'graph-legend_i');
+
+          var y = legendLines * legendLineHeight;
+
+          var text = item.append('text')
+            .attr('class', 'graph-legend_text')
+            .attr('y', y)
+            .text(legendItem.title);
+
+          item.append('circle')
+            .attr('class', 'graph-legend_dot line ' + (legendItem.color || colors[index]))
+            .attr('r', 4)
+            .attr('cy', y - 4)
+            .attr('cx', -10);
+
+          // wrap text nodes to fit width
+          legendLines += enableTextWrap(text, legendWidth);
+        });
+
+        legendHeight = legendOffsetTop + legendLines * legendLineHeight;
+      }
+
+      // update svg height and padding to make sure that legend is visible
+      setSvgHeightAndPadding(svg,
+        options.height + legendHeight,
+        [options.margin.top, options.margin.right, options.margin.bottom, options.margin.left]
+      );
+    }
+
+    /**
+     * Enables SVG text wrapping
+     * http://bl.ocks.org/mbostock/7555321
+     *
+     * @param text SVG text element
+     * @param width to wrap to
+     *
+     * @return number of lines created
+     */
+    function enableTextWrap (text, width) {
+      var words = text.text().split(/\s+/).reverse(),
+        word,
+        line = [],
+        lineNumber = 0,
+        lineHeight = 1.1, // ems
+        y = text.attr('y'),
+        dy = parseFloat(text.attr('dy')) || 0,
+        tspan = text.text(null).append('tspan')
+          .attr('x', 0)
+          .attr('y', y)
+          .attr('dy', dy + 'em');
+      while (word = words.pop()) {
+        line.push(word);
+        tspan.text(line.join(' '));
+        if (tspan.node().getComputedTextLength() > width) {
+          line.pop();
+          tspan.text(line.join(' '));
+          line = [word];
+          tspan = text.append('tspan')
+            .attr('x', 0)
+            .attr('y', y)
+            .attr('dy', ++lineNumber * lineHeight + dy + 'em')
+            .text(word);
+        }
+      }
+      return lineNumber + 1;
+    }
+
+    /**
+     * If there is a title for graph it'll increase graph height,
+     * if there is a legend provided it'll map legend labels array into an object - with title and color
+     *
+     * @param options
+     * @returns {*}
+     */
+    function adaptOptions (options) {
+      options.hasTitle = !!options.title;
+      options.hasLegend = !!options.legend;
+
+      var titleOffset = 0;
+      if (options.hasTitle) {
+        titleOffset += 30;
+      }
+      options.margin.top += titleOffset;
+      options.height += titleOffset;
+
+      // if there are custom colors - attach colors to legend
+      if (options.legend) {
+        var hasCustomColors = options.linesStyle;
+
+        options.legend = _(options.legend).map(function (title, index) {
+          var item = {
+            title: title
+          };
+
+          if (hasCustomColors) {
+            item.color = options.linesStyle[index];
+          }
+
+          return item;
+        });
+      }
+
+      return options;
     }
 
     function createSvg(element, dimensions, margins) {
-      return d3.select(element)
-        .append("svg")
-        .attr("width", dimensions.width)
-        .attr("height", dimensions.height)
-        .append("g")
-        .attr("transform", "translate(" + margins.left + "," + margins.top + ")");
+      var svg = d3.select(element)
+        .append('svg')
+        .attr('width', dimensions.width);
+
+      setSvgHeightAndPadding(svg, dimensions.height, [margins.top, margins.right, margins.bottom, margins.left]);
+      return svg;
+    }
+
+    /**
+     * @param svg
+     * @param height
+     * @param padding - array of padding values [top, right, bottom, left]
+     */
+    function setSvgHeightAndPadding (svg, height, padding) {
+      svg.attr('height', height)
+        .attr('style', 'padding:' + padding.join('px ') + 'px');
     }
 
     return {
+      adaptOptions: adaptOptions,
       createSvg: createSvg,
       drawAxes: drawAxes,
+      drawTitleAndLegend: drawTitleAndLegend,
+      enableTextWrap: enableTextWrap,
+      setSvgHeightAndPadding: setSvgHeightAndPadding,
       AreaChart: AreaChart,
       LineChart: LineChart,
       ScatterChart: ScatterChart
