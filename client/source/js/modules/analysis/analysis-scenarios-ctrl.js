@@ -7,6 +7,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
         // initialize all necessary data for this controller
         var initialize = function() {
+          $scope.validate = false;
+          $scope.show_message = false;
+          
+          // check if project is calibrated
+          checkProjectStatus();
 
           // add All option in population list
           meta.pops.long.push("All");
@@ -55,6 +60,24 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             lines: [],
             scatter: []
           };
+        };
+
+        var checkProjectStatus = function () {
+          
+          $http.get('/api/model/status')
+            .success(function(data) {
+              if ( data.status == "OK" ) {
+                var isCalibrated = data.is_calibrated;
+                if ( isCalibrated ) {
+                  $scope.validate = true;
+                  $scope.show_message = false;
+                } else {
+                  $scope.show_message = true;
+                  $scope.validate = false;
+                }
+              }
+              
+            });
         };
 
         /**
