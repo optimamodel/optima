@@ -1,10 +1,12 @@
-define(['./module', './scale-helpers'], function (module, scaleHelpers) {
+define(['./module', './scale-helpers', 'angular'], function (module, scaleHelpers, angular) {
   'use strict';
 
   module.directive('lineScatterChart', function (d3Charts) {
     var svg;
 
     var drawGraph = function (data, options, rootElement) {
+      options = d3Charts.adaptOptions(options);
+
       // to prevent creating multiple graphs we want to remove the existing svg
       // element before drawing a new one.
       if (svg) {
@@ -21,6 +23,7 @@ define(['./module', './scale-helpers'], function (module, scaleHelpers) {
       // Define svg groups
       var chartGroup = svg.append('g').attr('class', 'chart_group');
       var axesGroup = svg.append('g').attr('class', 'axes_group');
+      var headerGroup = svg.append('g').attr('class', 'header_group');
 
       var chartSize = {
         width: options.width - options.margin.left - options.margin.right,
@@ -40,7 +43,7 @@ define(['./module', './scale-helpers'], function (module, scaleHelpers) {
       // initialize lineChart for each line and update the scales
       _(data.lines).each(function (line, index) {
         var lineColor = options.linesStyle && options.linesStyle[index];
-        var lineChart = new d3Charts.LineChart(chartGroup, index, chartSize, 100, lineColor);
+        var lineChart = new d3Charts.LineChart(chartGroup, index, chartSize, lineColor);
         lineChartInstances.push(lineChart);
         var scales = lineChart.scales(line);
         graphsScales.push(scales);
@@ -52,7 +55,7 @@ define(['./module', './scale-helpers'], function (module, scaleHelpers) {
 
       // initialize scatterChart
       if (scatterDataExists) {
-        scatterChartInstance = new d3Charts.ScatterChart(chartGroup, '', chartSize, 100);
+        scatterChartInstance = new d3Charts.ScatterChart(chartGroup, '', chartSize);
         var scatterScale = scatterChartInstance.scales(data.scatter);
         graphsScales.push(scatterScale);
         yMax = Math.max(yMax, scatterScale.y.domain()[1]);
@@ -79,6 +82,8 @@ define(['./module', './scale-helpers'], function (module, scaleHelpers) {
         chartSize
       );
 
+      d3Charts.drawTitleAndLegend(svg, options, headerGroup);
+
       // draw available charts
       _(lineChartInstances).each(function (lineChart, index) {
         lineChart.draw(data.lines[index]);
@@ -96,14 +101,14 @@ define(['./module', './scale-helpers'], function (module, scaleHelpers) {
       link: function (scope, element) {
 
         scope.$watch('data', function() {
-          drawGraph(scope.data, scope.options, element);
+          drawGraph(scope.data, angular.copy(scope.options), element);
         });
 
         scope.$watch('options', function() {
-          drawGraph(scope.data, scope.options, element);
+          drawGraph(scope.data, angular.copy(scope.options), element);
         });
 
-        drawGraph(scope.data, scope.options, element);
+        drawGraph(scope.data, angular.copy(scope.options), element);
       }
     };
   });

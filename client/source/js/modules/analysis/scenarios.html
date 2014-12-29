@@ -47,7 +47,7 @@
                           <button role="button" class="btn" ng-click="runScenarios()">Run scenarios</button>
                         </div>
                         <label>
-                          <input type="checkbox" ng-model="availableScenarioParams.dosave" style="margin-top: 8px">
+                          <input type="checkbox" ng-model="runScenariosOptions.dosave" style="margin-top: 8px">
                           Save scenarios
                         </label>
                     </td>
@@ -64,13 +64,6 @@
 
             <div>
               <div class="chart-container __small" ng-repeat="graph in graphs">
-                <h3 class="text-center">{{ graph.title }}</h3>
-                <div class="legend">
-                  <div class="legend-entry" ng-repeat="description in graph.legend">
-                    <span class="line-color-indicator line {{ lineStyles[$index] }}">•</span>
-                    {{ description }}
-                  </div>
-                </div>
                 <div line-scatter-chart data="graph.data" options="graph.options" save-graph-as></div>
               </div>
             </div>

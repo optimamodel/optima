@@ -1,9 +1,9 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     'use strict';
 
-    module.controller('AnalysisScenariosController', function ($scope, $http, $modal, meta, scenarioParamsResponse, CONFIG) {
+    module.controller('AnalysisScenariosController', function ($scope, $http, $modal, meta, scenarioParamsResponse, scenariosResponse, CONFIG) {
 
-        var linesGraphOptions, linesStyle, linesGraphData, responseData, availableScenarioParams;
+        var linesGraphOptions, linesGraphData, responseData, availableScenarioParams, availableScenarios;
 
         // initialize all necessary data for this controller
         var initialize = function() {
@@ -22,9 +22,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             return { name: parameters.name, names: parameters.keys, values: parameters.values};
           });
 
-          $scope.scenarios = [
-            {active: true, name: 'Conditions remain according to model calibration', pars: []}
-          ];
+          availableScenarios = scenariosResponse.data.scenarios;
+
+          $scope.scenarios = _(availableScenarios).map(function(scenario) {
+            scenario.active = true;
+            return scenario;
+          });
 
           $scope.runScenariosOptions = {
             dosave: false
@@ -38,12 +41,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           linesGraphOptions = {
             height: 200,
             width: 320,
-            margin: {
-              top: 20,
-              right: 10,
-              bottom: 45,
-              left: 70
-            },
+            margin: CONFIG.GRAPH_MARGINS,
             linesStyle: $scope.lineStyles,
             xAxis: {
               axisLabel: 'Year',
@@ -95,12 +93,17 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
          * yData should be an array where each entry contains an array of all
          * y-values from one line.
          */
-        var generateGraph = function(yData, xData, title) {
+        var generateGraph = function(yData, xData, title, legend, xLabel,  yLabel) {
           var graph = {
             options: angular.copy(linesGraphOptions),
             data: angular.copy(linesGraphData),
             title: title
           };
+
+          graph.options.xAxis.axisLabel = xLabel;
+          graph.options.yAxis.axisLabel = yLabel;
+          graph.options.legend = legend;
+          graph.options.title = title;
 
           _(yData).each(function(lineData) {
             graph.data.lines.push(generateLineData(xData, lineData));
@@ -112,13 +115,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         /**
          * Returns a financial graph.
          */
-        var generateFinancialGraph = function(data) {
-          var graph = generateGraph(data.data, data.xdata, data.title);
-
-          graph.options.xAxis.axisLabel = data.xlabel;
-          graph.options.yAxis.axisLabel = data.ylabel;
-          graph.options.linesStyle = ['__black', '__black', '__black',
-            '__black', '__black', '__black', '__black', '__black'];
+        var generateFinancialGraph = function (data) {
+          var graph = generateGraph(data.data, data.xdata, data.title, data.legend, data.xlabel, data.ylabel);
+          graph.options.linesStyle = $scope.lineStyles;
           return graph;
         };
 
@@ -139,10 +138,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             // generate graphs showing the overall data for this type
             if (type.total) {
               var title = data.tot.title;
-              var graph = generateGraph(data.tot.data, response.tvec, title);
-              graph.options.xAxis.axisLabel = data.xlabel;
-              graph.options.yAxis.axisLabel = data.tot.ylabel;
-              graph.legend = data.tot.legend;
+              var graph = generateGraph(data.tot.data, response.tvec, title, data.tot.legend, data.xlabel, data.tot.ylabel);
               graphs.push(graph);
             }
 
@@ -151,10 +147,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               _(data.pops).each(function (population, populationIndex) {
 
                 var title = population.title;
-                var graph = generateGraph(population.data, response.tvec, title);
-                graph.options.xAxis.axisLabel = data.xlabel;
-                graph.options.yAxis.axisLabel = population.ylabel;
-                graph.legend = population.legend;
+                var graph = generateGraph(population.data, response.tvec, title, population.legend, data.xlabel, population.ylabel);
                 graphs.push(graph);
               });
             }

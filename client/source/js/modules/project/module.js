@@ -30,6 +30,9 @@ define([
           resolve: {
             parametersResponse: function($http) {
               return $http.get('/api/project/params');
+            },
+            defaultsResponse: function($http) {
+              return $http.get('/api/project/predefined')
             }
           }
         })

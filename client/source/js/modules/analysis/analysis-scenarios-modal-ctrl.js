@@ -42,9 +42,9 @@ define(['./module'], function (module) {
     $scope.submit = function (form) {
       if (form.$invalid) {
         alert('Your valiant attempts to fill in the form correctly have failed. Please try again');
+      } else {
+        $modalInstance.close($scope.scenario);
       }
-
-      $modalInstance.close($scope.scenario);
     };
 
     /**

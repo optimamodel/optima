@@ -90,12 +90,7 @@ define([
     var linesGraphOptions = {
       height: 200,
       width: 320,
-      margin: {
-        top: 20,
-        right: 10,
-        bottom: 45,
-        left: 70
-      },
+      margin: CONFIG.GRAPH_MARGINS,
       linesStyle: $scope.lineStyles,
       xAxis: {
         axisLabel: 'Year',
@@ -123,7 +118,7 @@ define([
     * yData should be an array where each entry contains an array of all
     * y-values from one line.
     */
-    var generateGraph = function(yData, xData, title) {
+    var generateGraph = function(yData, xData, title, legend, xLabel, yLabel) {
       var linesGraphData = {
         lines: [],
         scatter: []
@@ -131,9 +126,14 @@ define([
 
       var graph = {
         options: angular.copy(linesGraphOptions),
-        data: angular.copy(linesGraphData),
-        title: title
+        data: angular.copy(linesGraphData)
       };
+
+      graph.options.title = title;
+      graph.options.legend = legend;
+
+      graph.options.xAxis.axisLabel = xLabel;
+      graph.options.yAxis.axisLabel = yLabel;
 
       _(yData).each(function(lineData) {
         graph.data.lines.push(generateLineData(xData, lineData));
@@ -179,23 +179,22 @@ define([
 
           // generate graphs showing the overall data for this type
           if (type.total) {
-            var title = data.tot.title;
-            var graph = generateGraph(data.tot.data, response.tvec, title);
-            graph.options.xAxis.axisLabel = data.xlabel;
-            graph.options.yAxis.axisLabel = data.tot.ylabel;
-            graph.legend = data.tot.legend;
+            var graph = generateGraph(
+              data.tot.data, response.tvec,
+              data.tot.title, data.tot.legend,
+              data.xlabel, data.tot.ylabel
+            );
             graphs.push(graph);
           }
 
           // generate graphs for this type for each population
           if (type.byPopulation) {
-            _(data.pops).each(function (population, populationIndex) {
-
-              var title = population.title;
-              var graph = generateGraph(population.data, response.tvec, title);
-              graph.options.xAxis.axisLabel = data.xlabel;
-              graph.options.yAxis.axisLabel = population.ylabel;
-              graph.legend = population.legend;
+            _(data.pops).each(function (population) {
+              var graph = generateGraph(
+                population.data, response.tvec,
+                population.title, population.legend,
+                data.xlabel, population.ylabel
+              );
               graphs.push(graph);
             });
           }
@@ -209,12 +208,7 @@ define([
      * Returns a financial graph.
      */
     var generateFinancialGraph = function(data) {
-      var graph = generateGraph(data.data, data.xdata, data.title);
-
-      graph.options.xAxis.axisLabel = data.xlabel;
-      graph.options.yAxis.axisLabel = data.ylabel;
-      graph.options.linesStyle = ['__black', '__black', '__black',
-        '__black', '__black', '__black', '__black', '__black'];
+      var graph = generateGraph(data.data, data.xdata, data.title, data.legend, data.xlabel, data.ylabel);
       return graph;
     };
 
