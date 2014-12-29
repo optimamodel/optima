@@ -13,12 +13,12 @@ def runsimulation(D, startyear=2000, endyear=2030, verbose=2):
     from setoptions import setoptions
     D.opt = setoptions(D.opt, startyear=startyear, endyear=endyear)
     
-#    print('WARNING should add conditionals here')
-#    from makeccocs import makeallccocs
-#    D = makeallccocs(D, verbose=verbose)
-#    
-#    from getcurrentbudget import getcurrentbudget
-#    D = getcurrentbudget(D) # TODO Add verbose
+    print('WARNING should add conditionals here')
+    from makeccocs import makeallccocs
+    D = makeallccocs(D, verbose=verbose)
+    
+    from getcurrentbudget import getcurrentbudget
+    D = getcurrentbudget(D) # TODO Add verbose
     
     # Convert data parameters to model parameters
     if 'M' not in D.keys():
