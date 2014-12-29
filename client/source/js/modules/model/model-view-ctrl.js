@@ -42,14 +42,10 @@ define(['./module', 'angular'], function (module, angular) {
     $scope.graphs = [];
 
     var lineScatterOptions = {
+      title: 'Title',
       height: 200,
       width: 320,
-      margin: {
-        top: 20,
-        right: 10,
-        bottom: 45,
-        left: 70
-      },
+      margin: CONFIG.GRAPH_MARGINS,
       xAxis: {
         axisLabel: 'Year',
         tickFormat: function (d) {
@@ -111,6 +107,8 @@ define(['./module', 'angular'], function (module, angular) {
         data: angular.copy(lineScatterData),
         title: title
       };
+
+      graph.options.title = title;
 
       graph.data.line = generateLineData(xData, yData.best);
       graph.data.area.lineHigh = generateLineData(xData, yData.high);

@@ -1,4 +1,4 @@
-define(['angular', 'underscore', 'saveAs'], function (angular, _, saveAs) {
+define(['angular', 'jquery', 'underscore', 'saveAs'], function (angular, $, _, saveAs) {
   'use strict';
 
   return angular.module('app.save-graph-as', [])
@@ -79,6 +79,7 @@ define(['angular', 'underscore', 'saveAs'], function (angular, _, saveAs) {
             var originalSvg = elem.parent().find('svg');
             var orginalWidth = originalSvg.width();
             var orginalHeight = originalSvg.height();
+            var originalStyle = originalSvg.attr('style');
             var scalingFactor = 1;
 
             // in order to have styled graphs the css content used to render
@@ -87,7 +88,7 @@ define(['angular', 'underscore', 'saveAs'], function (angular, _, saveAs) {
             cssContentRequest.success(function(cssContent) {
 
               // create svg element
-              var svg = createSvg(orginalWidth, orginalHeight, scalingFactor);
+              var svg = createSvg(orginalWidth, orginalHeight, scalingFactor, originalStyle);
 
               // add styles and content to the svg
               var styles = '<style>' + cssContent + '</style>';
@@ -97,7 +98,7 @@ define(['angular', 'underscore', 'saveAs'], function (angular, _, saveAs) {
               var svgXML = (new XMLSerializer()).serializeToString(svg);
               saveAs(new Blob([svgXML], { type: 'image/svg' }), 'graph.svg');
             }).error(function() {
-              alert("Please releod and try again, something went wrong while generating the graph.");
+              alert("Please reload and try again, something went wrong while generating the graph.");
             });
           };
 
@@ -106,7 +107,7 @@ define(['angular', 'underscore', 'saveAs'], function (angular, _, saveAs) {
            *
            * With the scalingFactor argument a SVG image can be blown up.
            */
-          var createSvg = function(viewBoxWidth, viewBoxheight, scalingFactor) {
+          var createSvg = function(viewBoxWidth, viewBoxheight, scalingFactor, originalStyle) {
             var xmlns = "http://www.w3.org/2000/svg";
             var svg = document.createElementNS(xmlns, "svg");
             var viewBox = "0 0 " + viewBoxWidth + " " + viewBoxheight;
@@ -114,6 +115,7 @@ define(['angular', 'underscore', 'saveAs'], function (angular, _, saveAs) {
             svg.setAttributeNS(null, "width", viewBoxWidth * scalingFactor);
             svg.setAttributeNS(null, "height", viewBoxheight * scalingFactor);
             svg.setAttributeNS(null, "version", "1.1");
+            svg.setAttributeNS(null, "style", originalStyle);
             return svg;
           };
 
@@ -126,8 +128,9 @@ define(['angular', 'underscore', 'saveAs'], function (angular, _, saveAs) {
            */
           var exportGraphAsPng = function() {
             var originalSvg = elem.parent().find('svg');
-            var orginalWidth = originalSvg.width();
-            var orginalHeight = originalSvg.height();
+            var orginalWidth = $(originalSvg).outerWidth();
+            var orginalHeight = $(originalSvg).outerHeight();
+            var originalStyle = originalSvg.attr('style');
             var scalingFactor = 4.2;
 
             // in order to have styled graphs the css content used to render
@@ -136,7 +139,7 @@ define(['angular', 'underscore', 'saveAs'], function (angular, _, saveAs) {
             cssContentRequest.success(function(cssContent) {
 
               // create svg element
-              var svg = createSvg(orginalWidth, orginalHeight, scalingFactor);
+              var svg = createSvg(orginalWidth, orginalHeight, scalingFactor, originalStyle);
 
               // add styles and content to the svg
               var styles = '<style>' + cssContent + '</style>';
