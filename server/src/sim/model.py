@@ -83,11 +83,14 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
     numpmtct  = M.numpmtct
 #    numost    = M.numost
 #    numart    = M.numart
-    prog      = h2a(M.const.prog)  # Disease progression rates
-    recov     = h2a(M.const.recov) # Recovery rates
-    death     = h2a(M.const.death) # HIV death rates
-#    deathtb   = M.const.death.tb    # Death rate with TB coinfection
+    prog      = h2a(M.const.prog)   # Disease progression rates
+    recov     = h2a(M.const.recov)  # Recovery rates
+    death     = h2a(M.const.death)  # HIV death rates
     deathtx   = M.const.death.treat # Death rate whilst on treatment
+
+    M.tbprev = M.tbprev + 1  
+    
+    efftb     = M.const.death.tb * M.tbprev # Increase in death due to TB coinfection
 #    sym       = M.transit.sym
     asym      = M.transit.asym
     hivtest   = M.hivtest
@@ -240,9 +243,10 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
             else: 
                 progout = 0  # Cannot progress out of AIDS stage
                 testingrate[cd4] = maximum(hivtest[:,t], aidstest[t]) # Testing rate in the AIDS stage (if larger!)
-            newdiagnoses[cd4] = dt*people[undx[cd4],:,t]*testingrate[cd4]*dxtime[t]
-            hivdeaths         = dt*people[undx[cd4],:,t]*death[cd4]
-            otherdeaths       = dt*people[undx[cd4],:,t]*background
+            newdiagnoses[cd4] = dt * people[undx[cd4],:,t] * testingrate[cd4] * dxtime[t]
+            hivtbdeath  = minimum((1 + efftb[:,t]) * death[cd4], 1)
+            hivdeaths   = dt * people[undx[cd4],:,t] * hivtbdeath
+            otherdeaths = dt * people[undx[cd4],:,t] * background
             dU.append(progin - progout - newdiagnoses[cd4] - hivdeaths - otherdeaths) # Add in new infections after loop
             if ((dU[cd4]+people[undx[cd4],:,t])<0).any():
                 dU[cd4] = maximum(dU[cd4], -people[undx[cd4],:,t]) # Ensure it doesn't go below 0 -- # TODO kludgy
@@ -264,8 +268,9 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
             else: 
                 progout = 0 # Cannot progress out of AIDS stage
             newtreat1[cd4] = newtreat1tot * currentdiagnosed[cd4,:] / (eps+currentdiagnosed.sum()) # Pull out evenly among diagnosed -- WARNING # TODO implement CD4 cutoffs
-            hivdeaths      = dt*people[dx[cd4],:,t]*death[cd4]
-            otherdeaths    = dt*people[dx[cd4],:,t]*background
+            hivtbdeath  = minimum((1 + efftb[:,t]) * death[cd4], 1)
+            hivdeaths   = dt * people[undx[cd4],:,t] * hivtbdeath
+            otherdeaths = dt * people[undx[cd4],:,t] * background
             inflows = progin + newdiagnoses[cd4]
             outflows = progout + hivdeaths + otherdeaths
             newtreat1[cd4] = maximum(0, minimum(newtreat1[cd4], currentdiagnosed[cd4,:]+inflows-outflows)) # Make sure it doesn't go negative
@@ -286,9 +291,11 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
                 recovout = dt*recov[cd4-2]*people[tx1[cd4],:,t]
             else: 
                 recovout = 0 # Cannot recover out of gt500 stage (or acute stage)
-            newfail1[cd4] = dt*people[tx1[cd4],:,t]*failfirst 
-            hivdeaths     = dt*people[tx1[cd4],:,t]*min(death[cd4],deathtx) # Use death by CD4 state if lower than death on treatment
-            otherdeaths   = dt*people[tx1[cd4],:,t]*background
+            newfail1[cd4] = dt * people[tx1[cd4],:,t] * failfirst
+            hivtbdeath  = minimum((1 + efftb[:,t]) * death[cd4], 1)
+            tbtxdeath   = minimum((1 + efftb[:,t]) * deathtx, 1)
+            hivdeaths   = dt * people[tx1[cd4],:,t] * minimum(hivtbdeath, tbtxdeath) # Use death by CD4 state if lower than death on treatment
+            otherdeaths = dt * people[tx1[cd4],:,t] * background
             dT1.append(recovin - recovout + newtreat1[cd4] - newfail1[cd4] - hivdeaths - otherdeaths)
             if ((dT1[cd4]+people[tx1[cd4],:,t])<0).any():
                 dT1[cd4] = maximum(dT1[cd4], -people[tx1[cd4],:,t]) # Ensure it doesn't go below 0 -- # TODO kludgy
@@ -308,9 +315,10 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
             else: 
                 progout = 0 # Cannot progress out of AIDS stage
             newtreat2[cd4] = newtreat2tot * currentfailed[cd4,:] / (eps+currentfailed.sum()) # Pull out evenly among diagnosed
-            newfail2[cd4]  = dt*people[tx2[cd4] ,:,t]*failsecond # Newly failed from ART2
-            hivdeaths      = dt*people[fail[cd4],:,t]*death[cd4]
-            otherdeaths    = dt*people[fail[cd4],:,t]*background
+            newfail2[cd4]  = dt * people[tx2[cd4] ,:,t] * failsecond # Newly failed from ART2
+            hivtbdeath  = minimum((1 + efftb[:,t]) * death[cd4], 1)
+            hivdeaths   = dt * people[fail[cd4],:,t] * hivtbdeath
+            otherdeaths = dt * people[fail[cd4],:,t] * background
             inflows = progin + newfail1[cd4] + newfail2[cd4]
             outflows = progout + hivdeaths + otherdeaths
             
@@ -332,8 +340,10 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
                 recovout = dt*recov[cd4-2]*people[tx2[cd4],:,t]
             else: 
                 recovout = 0 # Cannot recover out of gt500 stage (or acute stage)
-            hivdeaths   = dt*people[tx2[cd4],:,t]*min(death[cd4],deathtx) # Use death by CD4 state if lower than death on treatment
-            otherdeaths = dt*people[tx2[cd4],:,t]*background
+            hivtbdeath  = minimum((1 + efftb[:,t]) * death[cd4], 1)
+            tbtxdeath   = minimum((1 + efftb[:,t]) * deathtx, 1)
+            hivdeaths   = dt * people[tx2[cd4],:,t] * minimum(hivtbdeath, tbtxdeath) # Use death by CD4 state if lower than death on treatment
+            otherdeaths = dt * people[tx2[cd4],:,t] * background
             dT2.append(recovin - recovout + newtreat2[cd4] - newfail2[cd4] - hivdeaths - otherdeaths)
             if ((dT2[cd4]+people[tx2[cd4],:,t])<0).any():
                 dT2[cd4] = maximum(dT2[cd4], -people[tx2[cd4],:,t]) # Ensure it doesn't go below 0 -- # TODO kludgy

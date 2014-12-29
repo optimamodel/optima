@@ -75,8 +75,8 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
     M.hivprev = P.hivprev # Initial HIV prevalence
     M.stiprevulc = dpar2mpar(P.stiprevulc, withwhat) # STI prevalence
     M.stiprevdis = dpar2mpar(P.stiprevdis, withwhat) # STI prevalence
-    M.death = dpar2mpar(P.death, withwhat) # Death rates
-    ## TB prevalence @@@
+    M.death  = dpar2mpar(P.death, withwhat)  # Death rates
+    M.tbprev = dpar2mpar(P.tbprev, withwhat) # TB prevalence
     
     ## Testing parameters -- most are data
     M.hivtest = dpar2mpar(P.hivtest, withwhat) # HIV testing rates
