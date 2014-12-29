@@ -24,13 +24,16 @@ define([
                 templateUrl: 'js/modules/analysis/scenarios.html' ,
                 controller: 'AnalysisScenariosController',
                 resolve: {
+                  info: function($http) {
+                    return $http.get('/api/project/info');
+                  },
                   meta: function (Model) {
                     return Model.getParametersDataMeta().$promise;
                   },
-                  scenarioParamsResponse: function($http) {
+                  scenarioParamsResponse: function($http, info) {
                     return $http.get('/api/analysis/scenarios/params');
                   },
-                  scenariosResponse: function($http) {
+                  scenariosResponse: function($http, info) {
                     return $http.get('/api/analysis/scenarios/list');
                   }
                 }

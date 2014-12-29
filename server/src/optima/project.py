@@ -185,7 +185,7 @@ def giveWorkbook(project_name):
 @check_project_name
 def getProjectInformation():
     """
-    Returns information of the requested project.
+    Returns information of the requested project. (Including status of the model)
 
     Returns:
         A jsonified project dictionary accessible to the current user.
@@ -205,6 +205,11 @@ def getProjectInformation():
         if project is not None:
             data_upload_time = project.creation_time
             if project.project_data: data_upload_time = project.project_data.upload_time
+            has_data = False
+            is_calibrated = False
+            if project.model is not None:
+                has_data = 'data' in project.model and 'programs' in project.model
+                is_calibrated = 'plot' in project.model and 'E' in project.model['plot']
             response_data = {
                 'status': "OK",
                 'name': project.name,
@@ -215,7 +220,9 @@ def getProjectInformation():
                 'programs': project.programs,
                 'populations': project.populations,
                 'creation_time': project.creation_time, 
-                'data_upload_time': data_upload_time
+                'data_upload_time': data_upload_time, 
+                'has_data': has_data,
+                'is_calibrated': is_calibrated
             }
 
     return jsonify(response_data)
