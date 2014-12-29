@@ -18,15 +18,23 @@ class AnalysisTestCase(OptimaTestCase):
         self.assertEqual(response.status_code, 401)
 
     def test_list_scenarios(self):
+        from sim.scenarios import defaultscenarios
+        from sim.bunch import unbunchify
         response = self.create_user()
         response = self.login()
         self.create_project('test')
-
+        projects = self.list_projects(1)
+        D = projects[0].model
         headers = [('project', 'test')]
         response = self.client.get('/api/analysis/scenarios/list', headers=headers)
-        print("response:%s" % response.data)
-        self.assertTrue(True)
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
 
+        self.assertTrue('scenarios' in data)
+        scenarios = data.get('scenarios')
+        self.assertTrue(scenarios is not None)
+        default_scenarios = unbunchify(defaultscenarios(D))
+        self.assertEqual(scenarios, default_scenarios)
 
 if __name__ == '__main__':
     unittest.main()
