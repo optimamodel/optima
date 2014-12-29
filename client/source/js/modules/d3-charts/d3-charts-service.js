@@ -245,13 +245,15 @@ define(['./module', 'd3'], function (module, d3) {
       var titleOffsetTop = 20;
 
       if (options.hasTitle) {
+        var titleWidth = options.width - options.margin.left - options.margin.right;
+
         headerGroup.append('text')
           .attr('class', 'graph-title')
           .text(options.title)
           .attr('y', - (options.margin.top - titleOffsetTop));
 
         // wrap text nodes to fit width
-        enableTextWrap(headerGroup.select('.graph-title'), options.width - options.margin.left - options.margin.right);
+        enableTextWrap(headerGroup.select('.graph-title'), titleWidth);
       }
 
       var legendHeight = 0,
@@ -289,6 +291,7 @@ define(['./module', 'd3'], function (module, d3) {
         legendHeight = legendOffsetTop + legendLines * legendLineHeight;
       }
 
+      // update svg height and padding to make sure that legend is visible
       setSvgHeightAndPadding(svg,
         options.height + legendHeight,
         [options.margin.top, options.margin.right, options.margin.bottom, options.margin.left]
@@ -333,6 +336,13 @@ define(['./module', 'd3'], function (module, d3) {
       return lineNumber + 1;
     }
 
+    /**
+     * If there is a title for graph it'll increase graph height,
+     * if there is a legend provided it'll map legend labels array into an object - with title and color
+     *
+     * @param options
+     * @returns {*}
+     */
     function adaptOptions (options) {
       options.hasTitle = !!options.title;
       options.hasLegend = !!options.legend;
