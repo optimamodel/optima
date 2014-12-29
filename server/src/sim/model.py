@@ -152,10 +152,10 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
                 # Transmission effects
                 circeffM = 1 - effcirc[popM,t] # Effect of circumcision for insertive male -- # TODO: check this is capturing what we want, i.e shouldn't it only be for susceptibles?
                 circeffF = 1                   # Trivial circumcision effect for female or receptive male
-                prepeffM = 1 + effprep[popM,t] # Male PrEP effect
-                prepeffF = 1 + effprep[popF,t] # Female PrEP effect
-                pepeffM  = 1 + effpep[popM,t]  # Male PEP effect
-                pepeffF  = 1 + effpep[popF,t]  # Female PEP effect
+                prepeffM = 1 - effprep[popM,t] # Male PrEP effect
+                prepeffF = 1 - effprep[popF,t] # Female PrEP effect
+                pepeffM  = 1 - effpep[popM,t]  # Male PEP effect
+                pepeffF  = 1 - effpep[popF,t]  # Female PEP effect
                 stieffM  = 1 + effsti[popM,t]  # Male STI prevalence effect
                 stieffF  = 1 + effsti[popF,t]  # Female STI prevalence effect
                 
@@ -165,8 +165,8 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
                     numactsF = totalacts[act][popF,popM,t]; # Number of acts per person per year (receptive partner)
                     condomprob = (condom[act][popM,t] + condom[act][popF,t]) / 2 # Reconcile condom probability
                     condomeff = 1 - condomprob*effcondom # Effect of condom use
-                    forceinfM = 1 - mpow((1-transM*circeffM*stieffM), (dt*numactsM*condomeff*effhivprev[popF])) # The chance of "female" infecting "male" -- # TODO: Implement PrEP etc here
-                    forceinfF = 1 - mpow((1-transF*circeffF*stieffF), (dt*numactsF*condomeff*effhivprev[popM])) # The chance of "male" infecting "female"
+                    forceinfM = 1 - mpow((1-transM*circeffM*prepeffM*pepeffM*stieffM), (dt*numactsM*condomeff*effhivprev[popF])) # The chance of "female" infecting "male"
+                    forceinfF = 1 - mpow((1-transF*circeffF*prepeffF*pepeffF*stieffF), (dt*numactsF*condomeff*effhivprev[popM])) # The chance of "male" infecting "female"
                     forceinfvec[popM] = 1 - (1-forceinfvec[popM]) * (1-forceinfM) # Calculate the new "male" forceinf, ensuring that it never gets above 1
                     forceinfvec[popF] = 1 - (1-forceinfvec[popF]) * (1-forceinfF) # Calculate the new "female" forceinf, ensuring that it never gets above 1
                     if not(all(forceinfvec>=0)): raise Exception('Sexual force-of-infection is invalid')
