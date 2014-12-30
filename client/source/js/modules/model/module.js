@@ -8,6 +8,7 @@ define([
 
   return angular.module('app.model', [
     'app.resources.model',
+    'app.resources.project',
     'app.ui.type-selector',
     'ui.router'
   ])
@@ -23,9 +24,9 @@ define([
           templateUrl: 'js/modules/model/view-calibration.html',
           controller: 'ModelViewController',
           resolve: {
-            //data: function (Model) {
-            //  return Model.getParametersData();
-            //},
+            info: function(Project) {
+              return Project.info().$promise;
+            },
             f: function (Model) {
               return Model.getParametersF().$promise;
             },

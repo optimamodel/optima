@@ -18,14 +18,15 @@
         <div class="section grid">
 
             <label class="checkbox-inline">
-                <input type="checkbox" ng-model="enableAutomaticCalibration">
+                <input type="checkbox" ng-disabled="!canDoFitting" ng-model="enableAutomaticCalibration">
                 Automatic calibration
             </label>
 
             <label class="checkbox-inline">
-                <input type="checkbox" ng-model="enableManualCalibration">
+                <input type="checkbox" ng-disabled="!canDoFitting" ng-model="enableManualCalibration">
                 Manual calibration
             </label>
+            <span ng-show="!canDoFitting" class="error-hint">Run "View Simulation" in order to enable data calibration</span>
         </div>
 
     </div>
