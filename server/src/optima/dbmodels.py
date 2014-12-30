@@ -63,6 +63,25 @@ class ProjectDb(db.Model):
         self.model = model
         self.creation_time = creation_time
 
+    def has_data(self):
+        result = False
+        if self.model is not None:
+            result = 'data' in self.model and 'programs' in self.model
+        return result
+
+    def is_calibrated(self):
+        result = False
+        if self.model is not None:
+            result = 'M' in self.model and 'plot' in self.model and 'E' in self.model['plot']
+        return result
+
+    def data_upload_time(self):
+        data_upload_time = self.creation_time
+        if self.project_data: 
+            data_upload_time = self.project_data.upload_time
+        return data_upload_time
+
+
 class WorkingProjectDb(db.Model):
     __tablename__ = 'working_projects'
     id = db.Column(db.Integer,db.ForeignKey('projects.id'), primary_key=True )

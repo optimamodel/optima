@@ -203,13 +203,6 @@ def getProjectInformation():
 
         # update response
         if project is not None:
-            data_upload_time = project.creation_time
-            if project.project_data: data_upload_time = project.project_data.upload_time
-            has_data = False
-            is_calibrated = False
-            if project.model is not None:
-                has_data = 'data' in project.model and 'programs' in project.model
-                is_calibrated = 'plot' in project.model and 'E' in project.model['plot']
             response_data = {
                 'status': "OK",
                 'name': project.name,
@@ -220,9 +213,9 @@ def getProjectInformation():
                 'programs': project.programs,
                 'populations': project.populations,
                 'creation_time': project.creation_time, 
-                'data_upload_time': data_upload_time, 
-                'has_data': has_data,
-                'is_calibrated': is_calibrated
+                'data_upload_time': project.data_upload_time(), 
+                'has_data': project.has_data(),
+                'is_calibrated': project.is_calibrated()
             }
 
     return jsonify(response_data)
