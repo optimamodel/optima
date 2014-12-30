@@ -4,6 +4,7 @@ Created on Sat Nov 29 17:40:34 2014
 @author: robynstuart
 """
 import numpy as np
+import copy
 from bunch import Bunch as struct # Replicate Matlab-like structure behavior
 from matplotlib.pylab import figure, plot, hold
 from setoptions import setoptions
@@ -226,28 +227,35 @@ def financialanalysis(D, postyear = 2015.0, S = None, yscale = 'abs', makeplot =
 ##############################################
 def snipM(M, thisindex = range(150,301)):
     '''
-    Cut M to cover a spceified time index
+    Cut M to cover a specified time index
     '''
+    
+    M0 = copy.copy(M)
+    M0.condom = copy.copy(M.condom)
+    M0.numacts = copy.copy(M.numacts)
+    M0.totalacts = copy.copy(M.totalacts)
+    
     # Loop over parameters in M and snip the time varying ones....
-    for param in M.keys():
+    for param in M0.keys():
         if param in ['transit','pships', 'const', 'hivprev']:
             continue
         elif param in ['condom', 'numacts']:
-            M[param] = M[param].cas[:, thisindex]
-            M[param] = M[param].reg[:, thisindex]
-            M[param] = M[param].com[:, thisindex]
+            M0[param].cas = M0[param].cas[:, thisindex]
+            M0[param].reg = M0[param].reg[:, thisindex]
+            M0[param].com = M0[param].com[:, thisindex]
             if param in ['numacts']:
-                M[param] = M[param].inj[:, thisindex]
+                M0[param].inj = M0[param].inj[:, thisindex]
         elif param in ['totalacts']:
-            M[param] = M[param].cas[:, :, thisindex]
-            M[param] = M[param].reg[:, :, thisindex]
-            M[param] = M[param].com[:, :, thisindex]
-            M[param] = M[param].inj[:, :, thisindex]
-        else: 
-            M[param] = M[param][:, thisindex]
+            M0[param].cas = M0[param].cas[:, :, thisindex]
+            M0[param].reg = M0[param].reg[:, :, thisindex]
+            M0[param].com = M0[param].com[:, :, thisindex]
+            M0[param].inj = M0[param].inj[:, :, thisindex]
+        elif param in ['aidstest', 'sharing', 'numpmtct', 'breast', 'tx1', 'tx2', 'numost']:
+            M0[param] = M0[param][thisindex]
+        else:
+            M0[param] = M0[param][:, thisindex]
 
-    return M
-
+    return M0
 
 #example
-plotdata = financialanalysis(D, postyear = 2015.0, S = None, yscale = 'abs', makeplot = 1)
+#plotdata = financialanalysis(D, postyear = 2015.0, S = None, yscale = 'abs', makeplot = 1)
