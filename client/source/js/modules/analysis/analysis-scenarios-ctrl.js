@@ -1,32 +1,40 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     'use strict';
 
-    module.controller('AnalysisScenariosController', function ($scope, $http, $modal, meta, scenarioParamsResponse, scenariosResponse, CONFIG) {
+    module.controller('AnalysisScenariosController', function ($scope, $http, $modal, $window, meta, info, scenarioParamsResponse, scenariosResponse, CONFIG) {
 
         var linesGraphOptions, linesGraphData, responseData, availableScenarioParams, availableScenarios;
 
         // initialize all necessary data for this controller
         var initialize = function() {
-
-          // add All option in population list
-          meta.pops.long.push("All");
-
-          // transform scenarioParams to use attribute `names` instead of `keys`
-          // it is the same for the data we have to send to run scenarios
-          availableScenarioParams = _(scenarioParamsResponse.data.params).map(function(parameters) {
-            return { name: parameters.name, names: parameters.keys, values: parameters.values};
-          });
-
-          availableScenarios = scenariosResponse.data.scenarios;
-
-          $scope.scenarios = _(availableScenarios).map(function(scenario) {
-            scenario.active = true;
-            return scenario;
-          });
+          $scope.validate = false;
+          $scope.show_message = false;
+          $scope.scenarios = [];
 
           $scope.runScenariosOptions = {
             dosave: false
           };
+
+          // check if project is calibrated
+          checkProjectInfo(info);
+
+          if($scope.validate) {
+            // add All option in population list
+            meta.pops.long.push("All");
+
+            // transform scenarioParams to use attribute `names` instead of `keys`
+            // it is the same for the data we have to send to run scenarios
+            availableScenarioParams = _(scenarioParamsResponse.data.params).map(function(parameters) {
+              return { name: parameters.name, names: parameters.keys, values: parameters.values};
+            });
+
+            availableScenarios = scenariosResponse.data.scenarios;
+
+            $scope.scenarios = _(availableScenarios).map(function(scenario) {
+              scenario.active = true;
+              return scenario;
+            });
+          }
 
           $scope.types = angular.copy(CONFIG.GRAPH_TYPES);
 
@@ -53,6 +61,15 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             lines: [],
             scatter: []
           };
+        };
+
+        var checkProjectInfo = function (info) {
+          if (!info) return;
+          var data = info.data;
+          if ( data.status == "OK" ) {
+            $scope.validate = data.is_calibrated;
+            $scope.show_message = !$scope.validate;
+          }
         };
 
         /**
@@ -215,6 +232,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
                     scenario.active = true;
                     _(scenario).extend(newscenario);
                 });
+        };
+
+        $scope.doCalibrate = function() {
+          $window.location.href = '#/model/view';
         };
 
         // The graphs are shown/hidden after updating the graph type checkboxes.
