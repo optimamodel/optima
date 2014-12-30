@@ -1,7 +1,7 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     'use strict';
 
-    module.controller('AnalysisScenariosController', function ($scope, $http, $modal, meta, info, scenarioParamsResponse, scenariosResponse, CONFIG) {
+    module.controller('AnalysisScenariosController', function ($scope, $http, $modal, $window, meta, info, scenarioParamsResponse, scenariosResponse, CONFIG) {
 
         var linesGraphOptions, linesGraphData, responseData, availableScenarioParams, availableScenarios;
 
@@ -232,6 +232,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
                     scenario.active = true;
                     _(scenario).extend(newscenario);
                 });
+        };
+
+        $scope.doCalibrate = function() {
+          $window.location.href = '#/model/view';
         };
 
         // The graphs are shown/hidden after updating the graph type checkboxes.
