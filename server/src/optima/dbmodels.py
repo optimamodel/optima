@@ -69,10 +69,10 @@ class ProjectDb(db.Model):
             result = 'data' in self.model and 'programs' in self.model
         return result
 
-    def is_calibrated(self):
+    def has_model_parameters(self):
         result = False
         if self.model is not None:
-            result = 'M' in self.model and 'plot' in self.model and 'E' in self.model['plot']
+            result = 'M' in self.model
         return result
 
     def data_upload_time(self):
@@ -80,6 +80,13 @@ class ProjectDb(db.Model):
         if self.project_data: 
             data_upload_time = self.project_data.upload_time
         return data_upload_time
+
+    def can_calibrate(self):
+        return self.has_model_parameters()
+
+    def can_scenarios(self):
+        return self.has_model_parameters()
+
 
 
 class WorkingProjectDb(db.Model):

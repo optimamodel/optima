@@ -215,7 +215,8 @@ def getProjectInformation():
                 'creation_time': project.creation_time, 
                 'data_upload_time': project.data_upload_time(), 
                 'has_data': project.has_data(),
-                'is_calibrated': project.is_calibrated()
+                'can_calibrate': project.can_calibrate(),
+                'can_scenarios': project.can_scenarios(),
             }
 
     return jsonify(response_data)
