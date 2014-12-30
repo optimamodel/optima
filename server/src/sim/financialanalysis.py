@@ -6,7 +6,6 @@ Created on Sat Nov 29 17:40:34 2014
 import numpy as np
 import copy
 from bunch import Bunch as struct # Replicate Matlab-like structure behavior
-from matplotlib.pylab import figure, plot, hold, xlabel, ylabel, title
 from setoptions import setoptions
 
 def financialanalysis(D, postyear = 2015, S = None, yscale = 'abs', makeplot = False):
@@ -165,6 +164,8 @@ def financialanalysis(D, postyear = 2015, S = None, yscale = 'abs', makeplot = F
     plotdata['cumulhivcostsfuture']['ylabel'] = 'USD'
 
     if makeplot:
+        from matplotlib.pylab import figure, plot, hold, xlabel, ylabel, title #we don't need it for the whole module in web context
+
         figure()
         hold(True)
         plot(acutecostbase, lw = 2, c = 'b')

@@ -450,9 +450,9 @@ def plotallcurves(D=None, progname=default_progname, ccparams=default_ccparams, 
 ###############################################################################
 ## Make all curves for all programs
 ###############################################################################
-def makeallccocs(D=None, verbose=2):
+def makeallccocs(D=None, verbose=2, makeplot = default_makeplot):
     for progname in D.programs.keys():
-        plotdata_cco, plotdata_co, plotdata_cc, effectnames, D = plotallcurves(D, unicode(progname))
+        plotdata_cco, plotdata_co, plotdata_cc, effectnames, D = plotallcurves(D, unicode(progname), makeplot = makeplot)
     return D
 
 ###############################################################################
