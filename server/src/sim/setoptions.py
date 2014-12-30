@@ -11,10 +11,10 @@ def setoptions(opt=None, **kwargs):
     # If no options structure is fed in
     if not(isinstance(opt,dict)): 
         opt = struct() # If existing options structure isn't provided, create it
-        opt.startyear = 2000 # First year of simulation to run
-        opt.endyear = 2030 # Final year of simulation to run
+        opt.startyear = kwargs.get('startyear',2000) # First year of simulation to run
+        opt.endyear = kwargs.get('endyear',2030) # Final year of simulation to run
         opt.dt = 0.1 # Timestep
-        opt.nsims = 5 # Number of simulations to store for purposes of uncertainty
+        opt.nsims = kwargs.get('nsims',5) # Number of simulations to store for purposes of uncertainty
         opt.quantiles = [0.5, 0.25, 0.75] # Quantiles to return
         opt.growth = 0.03 # Default population growth rate
         opt.disc = 0.05 # Economic discounting rate

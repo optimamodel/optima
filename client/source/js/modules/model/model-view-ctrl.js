@@ -1,7 +1,7 @@
 define(['./module', 'angular'], function (module, angular) {
   'use strict';
 
-  module.controller('ModelViewController', function ($scope, $http, $interval, Model, f, meta, CONFIG) {
+  module.controller('ModelViewController', function ($scope, $http, $interval, Model, f, G, meta, CONFIG) {
 
     var prepareF = function (f) {
       var F = angular.copy(f);
@@ -33,6 +33,7 @@ define(['./module', 'angular'], function (module, angular) {
       }
     };
 
+    $scope.G = G;
     $scope.types = angular.copy(CONFIG.GRAPH_TYPES);
 
     $scope.enableManualCalibration = false;
@@ -294,6 +295,10 @@ define(['./module', 'angular'], function (module, angular) {
     $scope.$watch('types', function () {
       updateGraphs($scope.parameters.cache.response);
     }, true);
+
+    $scope.reportDataEndError = function() {
+      return "End year must be more than "+ $scope.G.dataend + ".";
+    }
 
   });
 });

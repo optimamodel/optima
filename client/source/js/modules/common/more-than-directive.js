@@ -15,10 +15,10 @@ define(['angular'], function (module) {
           moreThan: '=',
         },
         link: function(scope, element, attrs, ctrl) {
-
           var updateValidity = function (highValue, lowValue) {
             var isValid = highValue > lowValue;
-            ctrl.$setValidity('moreThan', isValid);
+            var canBeEmpty = !element.required && (highValue===undefined || highValue=='');
+            ctrl.$setValidity('moreThan', isValid || canBeEmpty);
           };
 
           var validator = function (value) {
