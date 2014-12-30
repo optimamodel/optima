@@ -95,7 +95,7 @@ def makeresults(D, allsims=None, quantiles=None, verbose=2):
             from financialanalysis import financialanalysis
             allcosts = []
             for s in range(nsims):
-                thesecosts = financialanalysis(D, allsims[s], yscale = 'abs', makeplot = False)
+                thesecosts = financialanalysis(D, postyear = D.data.epiyears[-1], S = allsims[s], yscale = 'abs', makeplot = False)
                 allcosts.append(thesecosts)
             
             if data=='costcur':

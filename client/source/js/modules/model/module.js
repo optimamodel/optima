@@ -29,6 +29,9 @@ define([
             f: function (Model) {
               return Model.getParametersF().$promise;
             },
+            G: function (Model) {
+              return Model.getParametersG().$promise;
+            },
             meta: function (Model) {
               return Model.getParametersDataMeta().$promise;
             }
