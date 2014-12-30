@@ -256,6 +256,7 @@ def doRunSimulation():
     endyear = data.get("endyear")
     if endyear:
         args["endyear"] = int(endyear)
+    args["makeplot"] = 0
     try:
         D = runsimulation(**args)
         D_dict = D.toDict()

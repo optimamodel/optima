@@ -2,15 +2,18 @@
 
     <div class="page_subheader">
         <div class="section grid">
-            <div class="2">
-                <input class="txbox" type="text" placeholder="Start year" required ng-model="simulationOptions.startyear">
-            </div>
-            <div class="2">
-                <input class="txbox" type="text" placeholder="End year" required ng-model="simulationOptions.endyear">
-            </div>
-            <div class="2">
-                <button class="btn" ng-click="simulate()">View simulation</button>
-            </div>
+            <form name="CalibrationForm" ng-submit="simulate()">
+                <div class="2">
+                    <input class="txbox" type="number" placeholder="Start year" ng-model="simulationOptions.startyear">
+                </div>
+                <div class="2">
+                    <input class="txbox" type="number" name="endYear" placeholder="End year" ng-model="simulationOptions.endyear" more-than="G.dataend">
+                    <span ng-show="CalibrationForm.endYear.$error.moreThan" class="error-hint">{{reportDataEndError()}}</span>
+                </div>
+                <div class="2">
+                    <button class="btn" ng-click="simulate()" ng-disabled="CalibrationForm.$invalid">View simulation</button>
+                </div>
+            </form>
         </div>
         <div class="section grid">
 
