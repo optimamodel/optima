@@ -6,10 +6,10 @@ Created on Sat Nov 29 17:40:34 2014
 import numpy as np
 import copy
 from bunch import Bunch as struct # Replicate Matlab-like structure behavior
-from matplotlib.pylab import figure, plot, hold
+from matplotlib.pylab import figure, plot, hold, xlabel, ylabel, title
 from setoptions import setoptions
 
-def financialanalysis(D, postyear = 2015.0, S = None, yscale = 'abs', makeplot = False):
+def financialanalysis(D, postyear = 2015, S = None, yscale = 'abs', makeplot = False):
     '''
     Plot financial commitment graphs
     Note, yscale will be chosen from ['abs', 'avg', 'avgppp']
@@ -27,21 +27,21 @@ def financialanalysis(D, postyear = 2015.0, S = None, yscale = 'abs', makeplot =
         ydenom = [ydenom[j] for j in range(len(ydenom))]
 
     # Get future time index
-    opt = setoptions(startyear=postyear, endyear=D.data.econyears[-1], nsims=1)
+    opt = setoptions(startyear=postyear, endyear=D.opt.endyear, nsims=1)
     futureindex = np.where(D.opt.tvec - opt.tvec[0]>-0.01)[0]
 
     # Get indices for the different disease states # TODO these should be defined globally somewhere... 
-    acute, gt500, gt350, gt200, aids = (1,6,11,16,21), (2,7,12,17,22), (3,8,13,18,23), (4,9,14,19,24), (5,10,15,20,25)
+    acute, gt500, gt350, gt200, aids = [1,6,11,16,21], [2,7,12,17,22], [3,8,13,18,23], [4,9,14,19,24], [5,10,15,20,25]
 
     # Set force of infection to zero... 
     zeroF = struct()
-    zeroF.init = D.R.prev.pops[0,:,futureindex[0]]
+    zeroF.init = S.prev[:,futureindex[0]]
     zeroF.dx = D.F[0].dx
     zeroF.force = D.G.npops*[0.0]
-    initstate = D.S.people[:,:,futureindex[0]]
+    initstate = S.people[:,:,futureindex[0]]
     
     # Extract the number of PLHIV under the baseline sim
-    peoplebase = D.S.people[:,:,:]
+    peoplebase = S.people[:,:,:]
 
     # Calculate total number in each disease stage under baseline sim
     acuteplhivbase = np.sum(peoplebase[acute,:,:], axis = (0,1))
@@ -53,17 +53,17 @@ def financialanalysis(D, postyear = 2015.0, S = None, yscale = 'abs', makeplot =
     # Run a simulation with the force of infection set to zero from postyear... 
     from model import model
     M0 = snipM(D.M, futureindex.tolist())
-    D.S0 = model(D.G, M0, zeroF, opt, initstate)
+    S0 = model(D.G, M0, zeroF, opt, initstate)
 
     # Extract the number of PLHIV under the zero transmission sim
-    peoplezero = D.S0.people[:,:,:]
+    peoplezero = S0.people[:,:,:]
     peoplezero = np.concatenate((peoplebase[:,:,0:futureindex[0]], peoplezero), axis=2)
 
     # Calculate total number in each disease stage under the zero transmission sim
     acuteplhivzero = np.sum(peoplezero[acute,:,:], axis = (0,1))
     gt500plhivzero = np.sum(peoplezero[gt500,:,:], axis = (0,1))
     gt350plhivzero = np.sum(peoplezero[gt350,:,:], axis = (0,1))
-    gt200plhivzero = np.sum(peoplezero[gt200,:,:], axis = (0,1))
+    gt200plhivzero = np.sum(peoplezero[gt200,:,:], axis = (0,1)) 
     aidsplhivzero = np.sum(peoplezero[aids,:,:], axis = (0,1))
 
     # Interpolate time for plotting
@@ -165,7 +165,6 @@ def financialanalysis(D, postyear = 2015.0, S = None, yscale = 'abs', makeplot =
     plotdata['cumulhivcostsfuture']['ylabel'] = 'USD'
 
     if makeplot:
-        from matplotlib.pylab import figure, plot, hold, xlabel, ylabel, title
         figure()
         hold(True)
         plot(acutecostbase, lw = 2, c = 'b')
@@ -258,4 +257,4 @@ def snipM(M, thisindex = range(150,301)):
     return M0
 
 #example
-#plotdata = financialanalysis(D, postyear = 2015.0, S = None, yscale = 'abs', makeplot = 1)
+#plotdata = financialanalysis(D, postyear = 2015.0, S = D.A[1].S, yscale = 'abs', makeplot = 1)
