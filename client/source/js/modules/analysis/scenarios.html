@@ -3,10 +3,10 @@
     <div class="section grid" ng-show="!validate">
         <div class="9">
             <h1 ng-show="!show_message">Validating...</h1>
-            <h1 ng-show="show_message">Model is not calibrated</h1>
+            <h1 ng-show="show_message">Model is not ready</h1>
             <div ng-show="show_message">
-                <p>This model needs to be calibrated before scenarios can be executed.</p>
-                <button role="button" class="btn" ng-click="doCalibrate()">Calibrate Model</button> 
+                <p>This model is not yet ready to execute scenarios.</p>
+                <button role="button" class="btn" ng-click="gotoViewCalibrate()">View & calibrate model</button> 
             </div>
         </div>
         

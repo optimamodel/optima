@@ -42,7 +42,7 @@ define(['./module', 'angular'], function (module, angular) {
     $scope.simulationOptions = {'timelimit':60};
     $scope.graphs = [];
     $scope.projectInfo = info;
-    $scope.canDoFitting = $scope.projectInfo['is_calibrated'];
+    $scope.canDoFitting = $scope.projectInfo.can_calibrate;
 
     var lineScatterOptions = {
       title: 'Title',
