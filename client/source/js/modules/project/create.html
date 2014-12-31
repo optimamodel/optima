@@ -51,17 +51,17 @@
             <td style="width: 300px">{{ row.name }}</td>
             <td style="width: 150px">{{ row.short_name }}</td>
             <td>
-              <button role="button" class="btn" ng-click="openEditPopulationModal($event, row)">Edit</button>
+              <a class="btn" href="#" ng-click="openEditPopulationModal($event, row)">Edit</a>
             </td>
             <td>
-              <button role="button" class="btn" ng-click="copyPopulationAndOpenModal($event, row)">Copy</button>
+              <a class="btn" href="#" ng-click="copyPopulationAndOpenModal($event, row)">Copy</a>
             </td>
           </tr>
           </tbody>
           <tfoot>
           <tr>
             <td colspan="6" class="text-right">
-              <button role="button" class="btn" ng-click="openAddPopulationModal($event)">Add a population</button>
+              <a class="btn" href="#" ng-click="openAddPopulationModal($event)">Add a population</a>
             </td>
           </tr>
           </tfoot>
@@ -98,10 +98,10 @@
                 <td style="width: 300px">{{ program.name }}</td>
                 <td style="width: 150px">{{ program.short_name }}</td>
                 <td>
-                  <button role="button" class="btn" ng-click="openEditProgramModal($event, program)">Edit</button>
+                  <a class="btn" href="#" ng-click="openEditProgramModal($event, program)">Edit</a>
                 </td>
                 <td>
-                  <button role="button" class="btn" ng-click="copyProgram($event, program)">Copy</button>
+                  <a class="btn" href="#" ng-click="copyProgram($event, program)">Copy</a>
                 </td>
               </tr>
               <tr ng-show="!programs.length">
@@ -114,7 +114,7 @@
           <tfoot>
           <tr>
             <td colspan="5" class="text-right">
-              <button role="button" class="btn" ng-click="openAddProgramModal($event)">Add a program</button>
+              <a class="btn" href="#" ng-click="openAddProgramModal($event)">Add a program</a>
             </td>
           </tr>
           </tfoot>
