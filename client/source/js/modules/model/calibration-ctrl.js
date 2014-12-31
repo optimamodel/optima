@@ -1,7 +1,7 @@
 define(['./module', 'angular'], function (module, angular) {
   'use strict';
 
-  module.controller('ModelViewController', function ($scope, $http, $interval, Model, f, G, meta, info, CONFIG) {
+  module.controller('ModelCalibrationController', function ($scope, $http, $interval, Model, f, G, meta, info, CONFIG) {
 
     var prepareF = function (f) {
       var F = angular.copy(f);
