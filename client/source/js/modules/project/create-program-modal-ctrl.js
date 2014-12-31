@@ -1,12 +1,14 @@
-define(['./module'], function (module) {
+define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
-  module.controller('ProjectCreateProgramModalController', function ($scope,
-    $modalInstance, program, availableParameters, populations) {
+  module.controller('ProjectCreateProgramModalController', function ($scope, $modalInstance, program, availableParameters, populations) {
+
+    // in order to not perform changes directly on the final value here is created a copy
+    var programCopy = angular.copy(program);
 
     // Initializes relevant attributes
     var initialize = function () {
-      $scope.isNew = !program.name;
+      $scope.isNew = !programCopy.name;
 
       $scope.availableParameters = angular.copy(availableParameters);
       $scope.populations = _(populations).map(function(population) {
@@ -18,7 +20,7 @@ define(['./module'], function (module) {
 
       // make sure the names are exactly the objects as in the list for the
       // select to show the initial entries (angular compares with ===)
-      _(program.parameters).each(function(entry) {
+      _(programCopy.parameters).each(function(entry) {
         entry.value.signature = findParameters($scope.availableParameters, entry.value.signature).keys;
 
         var foundPopulation = findPopulation($scope.populations, entry.value.pops);
@@ -27,7 +29,7 @@ define(['./module'], function (module) {
         }
       });
 
-      $scope.program = program;
+      $scope.program = programCopy;
       $scope.program.active = true;
     };
 
@@ -77,7 +79,7 @@ define(['./module'], function (module) {
      * Removes the parameter at the given index (without asking for confirmation).
      */
     $scope.removeParameter = function ($index) {
-      program.parameters.splice($index,1);
+      programCopy.parameters.splice($index,1);
     };
 
     $scope.submit = function (form) {
