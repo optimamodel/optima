@@ -508,17 +508,7 @@
                 <div class="grid">
                     <div class="7" ng-if="radarData">
                         <div class="chart-container">
-                          <div class="legend" style="margin-top: 10px">
-                            <div class="legend-entry">
-                              <span class="line-color-indicator line __blue">•</span>
-                              Original Allocation
-                            </div>
-                            <div class="legend-entry">
-                              <span class="line-color-indicator line __green">•</span>
-                              Optimal Allocation
-                            </div>
-                          </div>
-                          <div radar-chart data="radarData" save-graph-as></div>
+                          <div radar-chart data="radarData" options="radarOptions" save-graph-as></div>
                         </div>
                     </div>
                 </div>
