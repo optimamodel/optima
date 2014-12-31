@@ -1,7 +1,7 @@
 define(['./module', 'angular'], function (module, angular) {
   'use strict';
 
-  module.controller('ModelViewController', function ($scope, $http, $interval, Model, f, G, meta, CONFIG) {
+  module.controller('ModelViewController', function ($scope, $http, $interval, Model, f, G, meta, info, CONFIG) {
 
     var prepareF = function (f) {
       var F = angular.copy(f);
@@ -41,6 +41,8 @@ define(['./module', 'angular'], function (module, angular) {
     // to store years from UI
     $scope.simulationOptions = {'timelimit':60};
     $scope.graphs = [];
+    $scope.projectInfo = info;
+    $scope.canDoFitting = $scope.projectInfo.can_calibrate;
 
     var lineScatterOptions = {
       title: 'Title',
@@ -207,9 +209,10 @@ define(['./module', 'angular'], function (module, angular) {
     };
 
     var updateGraphs = function (data) {
-      if (data!== undefined) {
+      if (data!== undefined && data!==null) {
         $scope.graphs = prepareGraphs(data);
         $scope.parameters.cache.response = data;
+        $scope.canDoFitting = true;
       }
     };
 
@@ -298,7 +301,7 @@ define(['./module', 'angular'], function (module, angular) {
 
     $scope.reportDataEndError = function() {
       return "End year must be more than "+ $scope.G.dataend + ".";
-    }
+    };
 
   });
 });
