@@ -192,7 +192,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         // Helper function to open a population modal
         var openScenarioModal = function(scenario) {
           return $modal.open({
-            templateUrl: 'js/modules/analysis/analysis-scenarios-modal.html',
+            templateUrl: 'js/modules/analysis/scenarios-modal.html',
             controller: 'AnalysisScenariosModalController',
             resolve: {
               scenario: function () {
