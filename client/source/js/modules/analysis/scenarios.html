@@ -6,10 +6,10 @@
             <h1 ng-show="show_message">Model is not ready</h1>
             <div ng-show="show_message">
                 <p>This model is not yet ready to execute scenarios.</p>
-                <button role="button" class="btn" ng-click="gotoViewCalibrate()">View & calibrate model</button> 
+                <button type="button" class="btn" ng-click="gotoViewCalibrate()">View & calibrate model</button>
             </div>
         </div>
-        
+
     </div>
 
     <div class="section grid" ng-show="validate">
@@ -31,20 +31,20 @@
                     </td>
                     <td>{{ row.name }}</td>
                     <td style="text-align: right; width: 10%">
-                        <button role="button" class="btn" ng-click="openEditScenarioModal($event, row)">Edit</button>
+                        <button type="button" class="btn" ng-click="openEditScenarioModal($event, row)">Edit</button>
                     </td>
                 </tr>
                 </tbody>
                 <tfoot>
                   <tr>
                     <td colspan="5" class="text-right">
-                      <button role="button" class="btn" ng-click="openAddScenarioModal($event)">Add a scenario</button>
+                      <button type="button" class="btn" ng-click="openAddScenarioModal($event)">Add a scenario</button>
                     </td>
                   </tr>
                   <tr>
                     <td colspan="5">
                         <div style="float: right">
-                          <button role="button" class="btn" ng-click="runScenarios()">Run scenarios</button>
+                          <button type="button" class="btn" ng-click="runScenarios()">Run scenarios</button>
                         </div>
                         <label>
                           <input type="checkbox" ng-model="runScenariosOptions.dosave" style="margin-top: 8px">

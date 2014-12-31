@@ -21,8 +21,8 @@ define([
         })
         .state('model.view', {
           url: '/view',
-          templateUrl: 'js/modules/model/view-calibration.html',
-          controller: 'ModelViewController',
+          templateUrl: 'js/modules/model/calibration.html',
+          controller: 'ModelCalibrationController',
           resolve: {
             info: function(Project) {
               return Project.info().$promise;
@@ -41,7 +41,7 @@ define([
         .state('model.define-cost-coverage-outcome', {
           url: '/define-cost-coverage-outcome',
           controller: 'ModelViewCalibrationController',
-          templateUrl: 'js/modules/model/define-cost-coverage-outcome.html',
+          templateUrl: 'js/modules/model/cost-coverage.html',
           resolve: {
             meta: function (Model) {
               return Model.getParametersDataMeta().$promise;
