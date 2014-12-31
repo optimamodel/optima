@@ -1,14 +1,13 @@
-define(['./module'], function (module) {
+define(['./module', 'angular'], function (module, angular) {
   'use strict';
 
   module.controller('ProjectCreatePopulationModalController', function ($scope, $modalInstance, population) {
 
     // Initializes relevant attributes
-    var initialize = function() {
-      $scope.isNew = !population.name;
-      $scope.population = population;
-      $scope.population.active = true;
-    };
+    $scope.isNew = !population.name;
+    // in order to not perform changes directly on the final value here is created a copy
+    $scope.population = angular.copy(population);
+    $scope.population.active = true;
 
     $scope.submit = function (form) {
       if ($scope.population.male && $scope.population.female) {
@@ -19,8 +18,6 @@ define(['./module'], function (module) {
         $modalInstance.close($scope.population);
       }
     };
-
-    initialize();
 
   });
 
