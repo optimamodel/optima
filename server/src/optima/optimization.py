@@ -138,7 +138,7 @@ def revertCalibrationModel():
         reply['reason'] = 'File for project %s does not exist' % project_name
         return jsonify(reply)
     try:
-        D_dict = revert_working_model_to_default(project_name)
+        revert_working_model_to_default(project_name)
         return jsonify({"status":"OK"})
     except Exception, err:
         reply['exception'] = traceback.format_exc()
