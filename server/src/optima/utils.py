@@ -114,14 +114,14 @@ def model_as_bunch(model):
 def load_model(name, as_bunch = True, working_model = False):
     current_app.logger.debug("load_model:%s" % name)
     model = None
-    proj = load_project(name)
-    if proj is not None:
-        if proj.working_project is None or working_model == False:
+    project = load_project(name)
+    if project is not None:
+        if project.working_project is None or working_model == False:
             current_app.logger.debug("project %s does not have working model" % name)
-            model = proj.model
+            model = project.model
         else:
             current_app.logger.debug("project %s has working model" % name)
-            model = proj.working_project.model
+            model = project.working_project.model
         if model is None or len(model.keys())==0:
             current_app.logger.debug("model %s is None" % name)
         else:

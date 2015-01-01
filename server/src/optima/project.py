@@ -156,7 +156,7 @@ def giveWorkbook(project_name):
     cu = current_user
     current_app.logger.debug("giveWorkbook(%s %s)" % (cu.id, project_name))
     project = load_project(project_name)
-    if proj is None:
+    if project is None:
         reply['reason']='Project %s does not exist.' % project_name
         return jsonify(reply)
     else:        
@@ -267,7 +267,7 @@ def deleteProject(project_name):
     # Get project row for current user with project name
     project = db.session.query(ProjectDb).filter_by(user_id= user_id,name=project_name).first()
 
-    if proj is not None:
+    if project is not None:
         id = project.id
         #delete all relevant entries explicitly
         db.session.query(ProjectDataDb).filter_by(id=id).delete()
