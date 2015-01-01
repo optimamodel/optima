@@ -1,55 +1,62 @@
-define(['./module', 'radar-chart-d3'], function (module) {
+define(['./module', 'angular', 'radar-chart-d3'], function (module, angular) {
   'use strict';
 
   module.directive('radarChart', function (d3Charts) {
     var svg;
 
-    var drawGraph = function (data, rootElement) {
+    var prepareOptions = function (providedOptions) {
+      var options = angular.copy(providedOptions);
+      options.height = 400;
+      options.width = 400;
+      options.margin = {
+        top: 10,
+        right: 20,
+        bottom: 0,
+        left: 20
+      };
+      return d3Charts.adaptOptions(options);
+    };
+
+    var drawGraph = function (data, providedOptions, rootElement) {
+      var options = prepareOptions(providedOptions);
+
       // to prevent creating multiple graphs we want to remove the existing svg
       // element before drawing a new one.
       if (svg) {
         rootElement.find("svg").remove();
       }
 
-      var chartSize = {
-        height: 400,
-        width: 400
-      };
-
-      var margin = {
-        top: 10,
-        right: 20,
-        bottom: 0,
-        left: 20
-      };
-
       var dimensions = {
-        width: chartSize.width + margin.left + margin.right,
-        height: chartSize.height + margin.top + margin.bottom
+        width: options.width + options.margin.left + options.margin.right,
+        height: options.height + options.margin.top + options.margin.bottom
       };
 
-      svg = d3Charts.createSvg(rootElement[0], dimensions, margin);
+      svg = d3Charts.createSvg(rootElement[0], dimensions, options.margin);
       var chart = RadarChart.chart();
       chart.config({
-        w: chartSize.width,
-        h: chartSize.height,
+        w: options.width,
+        h: options.height,
         radius: 3,
         color: d3.scale.ordinal().range(['#0024ff', '#2ca02c'])
       });
       svg.append('g').classed('focus', 1).datum(data).call(chart);
+
+      var headerGroup = svg.append('g').attr('class', 'header_group');
+      d3Charts.drawTitleAndLegend(svg, options, headerGroup);
     };
 
     return {
       scope: {
-        data: '='
+        data: '=',
+        options: '='
       },
       link: function (scope, element) {
 
         scope.$watch('data', function() {
-          drawGraph(scope.data, element);
+          drawGraph(scope.data, scope.options, element);
         });
 
-        drawGraph(scope.data, element);
+        drawGraph(scope.data, scope.options, element);
       }
     };
   });

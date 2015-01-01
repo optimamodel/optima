@@ -84,14 +84,14 @@ define([
         $scope.params.constraints.coverage[meta.progs.short[i]].year = undefined;
       }
 
-    $scope.lineStyles = ['__blue', '__green', '__red', '__orange',
-      '__violet', '__black', '__light-orange', '__light-green'];
+    var linesStyle = ['__blue', '__green', '__red', '__orange', '__violet',
+      '__black', '__light-orange', '__light-green'];
 
     var linesGraphOptions = {
       height: 200,
       width: 320,
       margin: CONFIG.GRAPH_MARGINS,
-      linesStyle: $scope.lineStyles,
+      linesStyle: linesStyle,
       xAxis: {
         axisLabel: 'Year',
         tickFormat: function (d) {
@@ -152,14 +152,23 @@ define([
 
       var graphData = [{axes: []}, {axes: []}];
 
+      var options = {
+        legend: [],
+        linesStyle: linesStyle
+      };
+
       graphData[0].axes = _(data.pie1.val).map(function (value, index) {
         return { value: value, axis: data.legend[index] };
       });
+      options.legend.push(data.pie1.name);
 
       graphData[1].axes = _(data.pie2.val).map(function (value, index) {
         return { value: value, axis: data.legend[index] };
       });
+      options.legend.push(data.pie2.name);
+
       $scope.radarData = graphData;
+      $scope.radarOptions = options;
     };
 
     /**
