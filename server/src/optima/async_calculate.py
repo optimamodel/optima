@@ -19,7 +19,6 @@ def start_or_report_calculation(user_id, project, func, engine): #only called fr
 
     db_session = scoped_session(sessionmaker(engine))
     project = db_session.query(ProjectDb).filter_by(user_id=user_id, name=project).first()
-    model = None
     if project is not None:
         if project.working_project is None:
             db_session.add(WorkingProjectDb(project_id=project.id, model = project.model, is_working = True, work_type = work_type))
@@ -40,7 +39,7 @@ def start_or_report_calculation(user_id, project, func, engine): #only called fr
                 work_type = project.working_project.work_type
     else:
         print("No such project %s, cannot start calculation" % project)
-    db_session.close()    
+    db_session.close()
     return can_start, can_join, work_type
 
 def cancel_calculation(user_id, project, func, engine):
@@ -52,7 +51,7 @@ def cancel_calculation(user_id, project, func, engine):
         db_session.add(project.working_project)
         db_session.commit()
     db_session.close()
- 
+
 def check_calculation(user_id, project, func, engine):
     is_working = not sentinel['exit']
     db_session = scoped_session(sessionmaker(engine))
