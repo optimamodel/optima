@@ -58,16 +58,20 @@
                             <button class="btn" style="background: #008800;" ng-click="startAutoCalibration()">Start calibration</button>
                         </div>
                         <div class="elastic_col __shrink">
-                            <button class="btn" style="background: #ff0000;" ng-click="stopAutoCalibration()">Stop calibration</button>
+                            <button class="btn" style="background: #ff0000;" ng-click="stopAutoCalibration()" ng-disabled="!calibrationStatus">Stop calibration</button>
                         </div>
                         <div class="elastic_col __shrink">
-                            <button class="btn" ng-click="saveCalibration()">Save calibration</button>
+                            <button class="btn" ng-click="saveCalibration()" ng-disabled="calibrationStatus">Save calibration</button>
                         </div>
                         <div class="elastic_col __shrink">
-                            <button class="btn" ng-click="revertCalibration()">Revert</button>
+                            <button class="btn" ng-click="revertCalibration()" ng-disabled="calibrationStatus">Revert</button>
                         </div>
                     </div>
                 </div>
+                <div class="elastic_col" ng-show="calibrationStatus">
+                    {{reportCalibrationStatus()}}
+                </div>
+
 
             </div>
         </div>
