@@ -2,7 +2,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ProjectCreateController', function ($scope, $state, $modal,
-    $timeout, activeProject, parametersResponse, defaultsResponse, UserManager) {
+    $timeout, activeProject, parametersResponse, defaultsResponse, project, UserManager, modalService) {
 
     $scope.projectParams = {
       name: ''
@@ -10,6 +10,66 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     var availableParameters = parametersResponse.data.params;
     var availableDefaults = defaultsResponse.data;
+    
+    if ( $state.current.name == "project.edit" ) {
+      
+      // set project post mode to edit
+      // $scope.is_edit = "true";
+      document.getElementById('is_edit').value = "true";
+      document.getElementById('old_project_name').value = project.name;
+
+      if (activeProject.isSet()) {
+        $scope.projectParams = project;
+
+        $scope.projectParams.datastart = $scope.projectParams.dataStart;
+        $scope.projectParams.dataend = $scope.projectParams.dataEnd;
+        $scope.projectParams.econ_dataend = $scope.projectParams.projectionEndYear;
+      }
+      
+      /**
+       * Cannot use array.concat for following reasons
+       * 1. The structure of both objects are different 
+       * availableDefaults.populations has two additional properties $$hashKey and active,
+       * that are missing in project.populations
+       * 2. We need to mark objects in project.populations as active in availableDefaults.populations
+       */
+      // availableDefaults.populations = availableDefaults.populations.concat(project.populations);
+      for ( var i in project.populations ) {
+        var result = availableDefaults.populations.filter(function( obj ) {
+          if ( obj.short_name == project.populations[i].short_name ) {
+            // obj is a reference of objects in availableDefaults.populations
+            obj.active = true;
+            return true;
+          }
+        });
+
+        if (result.length == 0) {
+          project.populations[i].active = true;
+          availableDefaults.populations.push( project.populations[i] );
+        }
+      }
+      
+      for ( var i in project.programs ) {
+        var result = availableDefaults.programs.filter(function( obj ) {
+          if ( obj.short_name == project.programs[i].short_name ) {
+            // obj is a reference of objects in availableDefaults.populations
+            obj.active = true;
+            return true;
+          }
+        });
+
+        if (result.length == 0) {
+          project.programs[i].active = true;
+          availableDefaults.programs.push( project.programs[i] );
+        }
+      }
+        // change submit button name
+        $scope.submit = "Save project & Optima template";
+    } else {
+        // change submit button name
+        $scope.submit = "Create project & Optima template";
+    }
+    
 
     $scope.populations = availableDefaults.populations;
     $scope.programs = availableDefaults.programs;
@@ -222,13 +282,40 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       var selectedPrograms = toCleanArray($scope.programs);
       var selectedPopulations = toCleanArray($scope.populations);
+      
+      if ( $state.current.name == "project.edit" ) {
+        project.populations.forEach(function(obj){ 
+          delete obj.active;
+          delete obj.$$hashKey;
+        });
+        project.programs.forEach(function(obj){ 
+          delete obj.active;
+          delete obj.$$hashKey;
+        });
+        
+        if ( !angular.equals( selectedPopulations,project.populations ) || !angular.equals( selectedPrograms,project.programs ) ) {
+          var message = 'You have made changes in populations and/or programs, you are required to reupload data file';
+          modalService.inform(
+            function (){ null }, 
+            'Okay',
+            message, 
+            'Alert!'
+          );
+        }
+      }
+      
+
       var params = _($scope.projectParams).omit('name');
       params.populations = selectedPopulations;
       params.programs = insertSelectedPopulations(selectedPrograms, selectedPopulations);
 
       $scope.formAction = '/api/project/create/' + $scope.projectParams.name;
       $scope.formParams = JSON.stringify(params);
-
+      
+      
+      if ( $state.current.name == "project.edit" ) {
+        activeProject.setActiveProjectFor(project.name, UserManager.data);
+      }
       // according to documentation it should have been working without this line, but no cigar
       // https://docs.angularjs.org/api/ng/directive/ngSubmit
       document.getElementById('createForm').action = $scope.formAction;

@@ -124,9 +124,11 @@
     </div>
 
     <div class="section text-center">
-      <button class="btn" type="submit" style="background: #008800;"><b>Create project &amp; Optima template</b></button>
+      <button class="btn" type="submit" style="background: #008800;"><b>{{ submit }}</b></button>
     </div>
 
     <input type="hidden" id="params" name="params" value="{{ formParams }}">
+    <input type="hidden" ng-model="is_edit" id="is_edit" name="is_edit" value="false" />
+    <input type="hidden" ng-model="old_project_name" id="old_project_name" name="old_project_name" />
   </form>
 </div>

@@ -29,6 +29,23 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     /**
+     * Opens to edit an existing project using `name` in /project/create screen
+     * 
+     * Alerts the user if it cannot do it.
+     */
+    $scope.edit = function (name) {
+      $http.get('/api/project/open/' + name)
+        .success(function (response) {
+          if (response && response.status === 'NOK') {
+            alert(response.reason);
+            return;
+          }
+          activeProject.setActiveProjectFor(name, UserManager.data);
+          window.location = '/#/project/edit';
+        });
+    };
+
+    /**
      * Regenerates workbook for the given project `name`
      * Alerts the user if it cannot do it.
      *
