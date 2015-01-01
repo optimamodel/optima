@@ -9,7 +9,14 @@ define([
 
       $scope.meta = meta;
       $scope.types = angular.copy(CONFIG.GRAPH_TYPES);
-      $scope.optimizationStatus = false;
+
+      var statusEnum = {
+        NOT_RUNNING: { text: "", isActive: false },
+        RUNNING: { text: "Optimization is running", isActive: true },
+        REQUESTED_TO_STOP : { text:"Optimization is requested to stop", isActive: true }
+      };
+
+      $scope.optimizationStatus = statusEnum.NOT_RUNNING;
 
       // cache placeholder
       var cachedResponse = null;
@@ -255,7 +262,7 @@ define([
       // Keep polling for updated values after every 5 seconds till we get an error.
       // Error indicates that the model is not calibrating anymore.
             optimizationTimer = $interval(checkWorkingOptimization, 5000, 0, false);
-            $scope.optimizationStatus = 'running';
+            $scope.optimizationStatus = statusEnum.RUNNING;
           } else {
             console.log("Cannot poll for optimization now");
           }
@@ -281,7 +288,7 @@ define([
         .success(function(data) {
           // Do not cancel timer yet, if the optimization is running
           if ($scope.optimizationStatus) {
-            $scope.optimizationStatus = 'requested to stop';
+            $scope.optimizationStatus = statusEnum.REQUESTED_TO_STOP;
           }
         });
     };
@@ -290,7 +297,7 @@ define([
       if ( angular.isDefined( optimizationTimer ) ) {
         $interval.cancel(optimizationTimer);
         optimizationTimer = undefined;
-        $scope.optimizationStatus = false;
+        $scope.optimizationStatus = statusEnum.NOT_RUNNING;
       }
     }
 
@@ -308,14 +315,6 @@ define([
       $http.post('/api/analysis/optimization/revert')
         .success(function(){ console.log("OK");});
     };
-
-    $scope.reportOptimizationStatus = function () {
-      if ($scope.optimizationStatus) {
-        return 'Optimization is ' + $scope.optimizationStatus;
-      } else {
-        return '';
-      }
-    }
 
     // The graphs are shown/hidden after updating the graph type checkboxes.
     $scope.$watch('types', function () {
