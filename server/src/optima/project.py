@@ -78,11 +78,9 @@ def createProject(project_name):
     #session.clear() # had to commit this line to check user session
     current_app.logger.debug("createProject %s" % project_name)
     data = request.form
-    print request.headers
-    return ""
+    
     # to keep track of old project name in case of edit and change in project name
     project_new_name = None
-
     # check if current request is edit request
     is_edit = True if 'true' in data['is_edit'] else False
 
@@ -90,7 +88,7 @@ def createProject(project_name):
         # in case of edit check if project name has been changed
         project_new_name = project_name
         if project_name != data['old_project_name']:
-            # reset project name to old project name to keep old functionality
+            # reset project name to old project name to keep old functionality and fetch proj
             project_name = data['old_project_name']
 
     if data:

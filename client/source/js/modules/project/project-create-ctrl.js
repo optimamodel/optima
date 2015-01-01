@@ -304,7 +304,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         }
       }
       
-
       var params = _($scope.projectParams).omit('name');
       params.populations = selectedPopulations;
       params.programs = insertSelectedPopulations(selectedPrograms, selectedPopulations);
@@ -312,10 +311,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.formAction = '/api/project/create/' + $scope.projectParams.name;
       $scope.formParams = JSON.stringify(params);
       
-      
-      if ( $state.current.name == "project.edit" ) {
-        activeProject.setActiveProjectFor(project.name, UserManager.data);
-      }
       // according to documentation it should have been working without this line, but no cigar
       // https://docs.angularjs.org/api/ng/directive/ngSubmit
       document.getElementById('createForm').action = $scope.formAction;
