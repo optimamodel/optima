@@ -100,7 +100,7 @@ def createProject(project_name):
         project.econ_dataend = makeproject_args['econ_dataend']
         project.programs = makeproject_args['progs']
         project.populations = makeproject_args['pops']
-        current_app.logger.debug('Updating existing project %s' % proj.name)
+        current_app.logger.debug('Updating existing project %s' % project.name)
     else:
         user_id = current_user.id
         # create new project
@@ -265,10 +265,10 @@ def deleteProject(project_name):
     # Get current user
     user_id = current_user.id
     # Get project row for current user with project name
-    proj = db.session.query(ProjectDb).filter_by(user_id= user_id,name=project_name).first()
+    project = db.session.query(ProjectDb).filter_by(user_id= user_id,name=project_name).first()
 
     if proj is not None:
-        id = proj.id
+        id = project.id
         #delete all relevant entries explicitly
         db.session.query(ProjectDataDb).filter_by(id=id).delete()
         db.session.query(WorkingProjectDb).filter_by(id=id).delete()
@@ -366,14 +366,14 @@ def uploadExcel():
         # get file data
         filedata = open(server_filename, 'rb').read()
         # See if there is matching project data
-        projdata = ProjectDataDb.query.get(proj.id)
+        projdata = ProjectDataDb.query.get(project.id)
         
         # update existing
         if projdata is not None:
             projdata.meta = filedata
         else:
             # create new project data
-            projdata = ProjectDataDb(proj.id, filedata, data_upload_time)
+            projdata = ProjectDataDb(project.id, filedata, data_upload_time)
                 
         # Save to db
         db.session.add(projdata)
