@@ -79,17 +79,24 @@ def createProject(project_name):
     current_app.logger.debug("createProject %s" % project_name)
     data = request.form
     
+    # get current user
+    user_id = current_user.id
+
     # to keep track of old project name in case of edit and change in project name
     project_new_name = None
     # check if current request is edit request
-    is_edit = True if 'true' in data['is_edit'] else False
-
+    is_edit = True if 'true' == data['is_edit'] else False
+    
     if is_edit:
         # in case of edit check if project name has been changed
         project_new_name = project_name
         if project_name != data['old_project_name']:
             # reset project name to old project name to keep old functionality and fetch proj
             project_name = data['old_project_name']
+            # check if project with new name doesn't alreay exist
+            checkProject = ProjectDb.query.filter_by(user_id=user_id, name=project_new_name).first()
+            if checkProject is not None:
+                return "{'status':'NOK', 'reason':'Another project with name %s already exists'}" % project_new_name
 
     if data:
         data = json.loads(data['params'])
@@ -106,8 +113,6 @@ def createProject(project_name):
     makeproject_args['pops'] = data.get('populations', default_pops)
     current_app.logger.debug("createProject(%s)" % makeproject_args)
 
-    # get current user
-    user_id = current_user.id
     proj = None
     # See if there is matching project
     proj = ProjectDb.query.filter_by(user_id=user_id, name=project_name).first()
