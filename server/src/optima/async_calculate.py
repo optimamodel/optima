@@ -77,18 +77,21 @@ for sig in (SIGABRT, SIGILL, SIGINT, SIGSEGV, SIGTERM):
     signal(sig, interrupt)
 
 
-"""
-Asynchronous thread to run potentially long calculations for the given project.
-Parameters:
-engine: DB engine to connect to
-sentinel: reference to sentinel (structure used to watch over threads)
-user: current user (new thread does not have the context)
-project_name: current project name
-timelimit: time limit for this thread to run
-func: func which has to be called to perform calculations (receiving D as first argument)
-args: additional arguments for this function
-"""
 class CalculatingThread(threading.Thread):
+    """
+    Asynchronous thread to run potentially long calculations for the given project.
+
+    Parameters:
+    engine: DB engine to connect to
+    sentinel: reference to sentinel (structure used to watch over threads)
+    user: current user (new thread does not have the context)
+    project_name: current project name
+    timelimit: time limit for this thread to run
+    func: func which has to be called to perform calculations (receiving D as first argument)
+    args: additional arguments for this function
+
+    """
+
     def __init__(self, engine, user, project_name, timelimit, func, args):
         super(CalculatingThread, self).__init__()
 
