@@ -10,6 +10,14 @@ define([
       $scope.meta = meta;
       $scope.types = angular.copy(CONFIG.GRAPH_TYPES);
 
+      var statusEnum = {
+        NOT_RUNNING: { text: "", isActive: false },
+        RUNNING: { text: "Optimization is running", isActive: true },
+        REQUESTED_TO_STOP : { text:"Optimization is requested to stop", isActive: true }
+      };
+
+      $scope.optimizationStatus = statusEnum.NOT_RUNNING;
+
       // cache placeholder
       var cachedResponse = null;
 
@@ -263,6 +271,7 @@ define([
       // Keep polling for updated values after every 5 seconds till we get an error.
       // Error indicates that the model is not calibrating anymore.
             optimizationTimer = $interval(checkWorkingOptimization, 5000, 0, false);
+            $scope.optimizationStatus = statusEnum.RUNNING;
           } else {
             console.log("Cannot poll for optimization now");
           }
@@ -286,8 +295,10 @@ define([
     $scope.stopOptimization = function () {
       $http.get('/api/analysis/optimization/stop')
         .success(function(data) {
-          // Cancel timer
-          stopTimer();
+          // Do not cancel timer yet, if the optimization is running
+          if ($scope.optimizationStatus) {
+            $scope.optimizationStatus = statusEnum.REQUESTED_TO_STOP;
+          }
         });
     };
 
@@ -295,6 +306,7 @@ define([
       if ( angular.isDefined( optimizationTimer ) ) {
         $interval.cancel(optimizationTimer);
         optimizationTimer = undefined;
+        $scope.optimizationStatus = statusEnum.NOT_RUNNING;
       }
     }
 
@@ -304,12 +316,12 @@ define([
     });
 
     $scope.saveOptimization = function () {
-      $http.post('/api/model/optimization/save')
+      $http.post('/api/analysis/optimization/save')
         .success(updateGraphs);
     };
 
     $scope.revertOptimization = function () {
-      $http.post('/api/model/optimization/revert')
+      $http.post('/api/analysis/optimization/revert')
         .success(function(){ console.log("OK");});
     };
 

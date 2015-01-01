@@ -6,8 +6,8 @@ import traceback
 from sim.dataio import upload_dir_user, DATADIR, TEMPLATEDIR, fullpath
 from sim.updatedata import updatedata
 from sim.makeproject import makeproject, makeworkbook
-from utils import allowed_file, project_exists, delete_spreadsheet
-from utils import check_project_name, load_model, save_model, report_exception
+from utils import allowed_file, project_exists, delete_spreadsheet, load_project
+from utils import check_project_name, load_model, save_model, report_exception, model_as_bunch, model_as_dict
 from flask.ext.login import login_required, current_user
 from dbconn import db
 from dbmodels import ProjectDb, WorkingProjectDb, ProjectDataDb
@@ -90,31 +90,29 @@ def createProject(project_name):
     makeproject_args['pops'] = data.get('populations', default_pops)
     current_app.logger.debug("createProject(%s)" % makeproject_args)
 
-    # get current user
-    user_id = current_user.id
-    proj = None
     # See if there is matching project
-    proj = ProjectDb.query.filter_by(user_id=user_id, name=project_name).first()
+    project = load_project(project_name)
 
     # update existing
-    if proj is not None:
-        proj.datastart = makeproject_args['datastart']
-        proj.dataend = makeproject_args['dataend']
-        proj.econ_dataend = makeproject_args['econ_dataend']
-        proj.programs = makeproject_args['progs']
-        proj.populations = makeproject_args['pops']
-        current_app.logger.debug('Updating existing project %s' % proj.name)
+    if project is not None:
+        project.datastart = makeproject_args['datastart']
+        project.dataend = makeproject_args['dataend']
+        project.econ_dataend = makeproject_args['econ_dataend']
+        project.programs = makeproject_args['progs']
+        project.populations = makeproject_args['pops']
+        current_app.logger.debug('Updating existing project %s' % project.name)
     else:
+        user_id = current_user.id
         # create new project
-        proj = ProjectDb(project_name, user_id, makeproject_args['datastart'], makeproject_args['dataend'], \
+        project = ProjectDb(project_name, user_id, makeproject_args['datastart'], makeproject_args['dataend'], \
             makeproject_args['econ_dataend'], makeproject_args['progs'], makeproject_args['pops'])
-        current_app.logger.debug('Creating new project: %s' % proj.name)
+        current_app.logger.debug('Creating new project: %s' % project.name)
 
     D = makeproject(**makeproject_args) # makeproject is supposed to return the name of the existing file...
-    proj.model = D.toDict()
+    project.model = D.toDict()
 
     # Save to db
-    db.session.add(proj)
+    db.session.add(project)
     db.session.commit()
     new_project_template = D.G.workbookname
 
@@ -157,14 +155,13 @@ def giveWorkbook(project_name):
     proj_exists = False
     cu = current_user
     current_app.logger.debug("giveWorkbook(%s %s)" % (cu.id, project_name))
-    proj = ProjectDb.query.filter_by(user_id=cu.id, name=project_name).first()
-    db.session.close()
-    if proj is None:
+    project = load_project(project_name)
+    if project is None:
         reply['reason']='Project %s does not exist.' % project_name
         return jsonify(reply)
     else:        
         # See if there is matching project data
-        projdata = ProjectDataDb.query.get(proj.id)
+        projdata = ProjectDataDb.query.get(project.id)
         
         if projdata is not None and len(projdata.meta)>0:
             return Response(projdata.meta,
@@ -172,10 +169,11 @@ def giveWorkbook(project_name):
                 headers={'Content-Disposition':'attachment;filename='+ project_name+'.xlsx'})
         else:
         # if no project data found
-            D = proj.model
+            D = project.model
             wb_name = D['G']['workbookname']
-            makeworkbook(wb_name, proj.populations, proj.programs, proj.datastart, proj.dataend, proj.econ_dataend)
-            current_app.logger.debug("project %s template created: %s" % (proj.name, wb_name))
+            makeworkbook(wb_name, project.populations, project.programs, \
+                project.datastart, project.dataend, project.econ_dataend)
+            current_app.logger.debug("project %s template created: %s" % (project.name, wb_name))
             (dirname, basename) = (upload_dir_user(TEMPLATEDIR), wb_name)
             #deliberately don't save the template as uploaded data
             return helpers.send_from_directory(dirname, basename)
@@ -195,29 +193,26 @@ def getProjectInformation():
     # default response
     response_data = { "status": "NOK" }
 
-    if current_user.is_anonymous() == False:
+    # see if there is matching project
+    project = load_project(request.project_name)
 
-        # see if there is matching project
-        project = ProjectDb.query.filter_by(user_id=current_user.id,
-            name=request.project_name).first()
-
-        # update response
-        if project is not None:
-            response_data = {
-                'status': "OK",
-                'name': project.name,
-                'dataStart': project.datastart,
-                'dataEnd': project.dataend,
-                'projectionStartYear': project.datastart,
-                'projectionEndYear': project.econ_dataend,
-                'programs': project.programs,
-                'populations': project.populations,
-                'creation_time': project.creation_time, 
-                'data_upload_time': project.data_upload_time(), 
-                'has_data': project.has_data(),
-                'can_calibrate': project.can_calibrate(),
-                'can_scenarios': project.can_scenarios(),
-            }
+    # update response
+    if project is not None:
+        response_data = {
+            'status': "OK",
+            'name': project.name,
+            'dataStart': project.datastart,
+            'dataEnd': project.dataend,
+            'projectionStartYear': project.datastart,
+            'projectionEndYear': project.econ_dataend,
+            'programs': project.programs,
+            'populations': project.populations,
+            'creation_time': project.creation_time, 
+            'data_upload_time': project.data_upload_time(), 
+            'has_data': project.has_data(),
+            'can_calibrate': project.can_calibrate(),
+            'can_scenarios': project.can_scenarios(),
+        }
 
     return jsonify(response_data)
 
@@ -254,7 +249,6 @@ def getProjectList():
                 'data_upload_time': data_upload_time
             }
             projects_data.append(project_data)
-        db.session.close()
 
     return jsonify({"projects": projects_data})
 
@@ -271,10 +265,10 @@ def deleteProject(project_name):
     # Get current user
     user_id = current_user.id
     # Get project row for current user with project name
-    proj = db.session.query(ProjectDb).filter_by(user_id= user_id,name=project_name).first()
+    project = db.session.query(ProjectDb).filter_by(user_id= user_id,name=project_name).first()
 
-    if proj is not None:
-        id = proj.id
+    if project is not None:
+        id = project.id
         #delete all relevant entries explicitly
         db.session.query(ProjectDataDb).filter_by(id=id).delete()
         db.session.query(WorkingProjectDb).filter_by(id=id).delete()
@@ -357,37 +351,33 @@ def uploadExcel():
     server_filename = os.path.join(loaddir, filename)
     file.save(server_filename)
 
-    D = load_model(project_name)
-    D = updatedata(D, savetofile = False)
-
-    save_model(project_name, D)
-   
     # See if there is matching project
-    proj = ProjectDb.query.filter_by(user_id=user_id, name=project_name).first()
-        
-    # save data upload timestamp
-    if proj is not None:
-        data_upload_time = datetime.now(dateutil.tz.tzutc())    
-                 
+    project = load_project(project_name)
+    if project is not None:
+        # update and save model
+        D = model_as_bunch(project.model)
+        D = updatedata(D, savetofile = False)
+        model = model_as_dict(D)
+        project.model = model
+        db.session.add(project)
+
+        # save data upload timestamp
+        data_upload_time = datetime.now(dateutil.tz.tzutc())                     
         # get file data
         filedata = open(server_filename, 'rb').read()
-
         # See if there is matching project data
-        projdata = ProjectDataDb.query.get(proj.id)
+        projdata = ProjectDataDb.query.get(project.id)
         
         # update existing
         if projdata is not None:
             projdata.meta = filedata
         else:
             # create new project data
-            projdata = ProjectDataDb(proj.id, filedata, data_upload_time)
+            projdata = ProjectDataDb(project.id, filedata, data_upload_time)
                 
         # Save to db
         db.session.add(projdata)
         db.session.commit()
-
-    else:
-        db.session.close()
             
     reply['status'] = 'OK'
     reply['result'] = 'Project %s is updated' % project_name

@@ -5,7 +5,7 @@ from sim.optimize import optimize
 from sim.bunch import unbunchify
 from sim.bunch import bunchify
 from sim.scenarios import runscenarios
-from utils import load_model, save_model, project_exists, check_project_name, report_exception
+from utils import load_model, save_model, project_exists, check_project_name, report_exception, load_project
 from flask.ext.login import login_required, current_user
 from dbconn import db
 from dbmodels import ProjectDb, WorkingProjectDb
@@ -30,15 +30,13 @@ def get_scenario_params():
     from sim.scenarios import getparvalues
     scenario_params = parameters()
     real_params = []
-    user_id = current_user.id
-    proj = ProjectDb.query.filter_by(user_id=user_id, name=request.project_name).first()
-    D = bunchify(proj.model)
-    db.session.close()
-    pops_short = [item['short_name'] for item in proj.populations]
+    project = load_project(request.project_name)
+    D = bunchify(project.model)
+    pops_short = [item['short_name'] for item in project.populations]
 
     for param in scenario_params:
         if not param['modifiable']: continue
-        item = bunchify({'names':param['keys'], 'pops':0, 'startyear':proj.datastart, 'endyear':proj.dataend})
+        item = bunchify({'names':param['keys'], 'pops':0, 'startyear':project.datastart, 'endyear':project.dataend})
         val_pair = None
         try:
             val_pair = getparvalues(D, item)
