@@ -76,13 +76,31 @@ def createProject(project_name):
     from sim.makeproject import default_datastart, default_dataend, default_econ_dataend, default_pops, default_progs
 
     #session.clear() # had to commit this line to check user session
-
     current_app.logger.debug("createProject %s" % project_name)
     data = request.form
+    print request.headers
+    return ""
+    # to keep track of old project name in case of edit and change in project name
+    project_new_name = None
+
+    # check if current request is edit request
+    is_edit = True if 'true' in data['is_edit'] else False
+
+    if is_edit:
+        # in case of edit check if project name has been changed
+        project_new_name = project_name
+        if project_name != data['old_project_name']:
+            # reset project name to old project name to keep old functionality
+            project_name = data['old_project_name']
+
     if data:
         data = json.loads(data['params'])
 
-    makeproject_args = {"projectname":project_name, "savetofile":False}
+    if is_edit:
+        makeproject_args = {"projectname":project_new_name, "savetofile":False}
+    else:
+        makeproject_args = {"projectname":project_name, "savetofile":False}
+
     makeproject_args['datastart'] = data.get('datastart', default_datastart)
     makeproject_args['dataend'] = data.get('dataend', default_dataend)
     makeproject_args['econ_dataend'] = data.get('econ_dataend', default_econ_dataend)
@@ -98,6 +116,10 @@ def createProject(project_name):
 
     # update existing
     if proj is not None:
+        # set new project name if not none
+        if project_new_name is not None:
+            proj.name = project_new_name
+
         proj.datastart = makeproject_args['datastart']
         proj.dataend = makeproject_args['dataend']
         proj.econ_dataend = makeproject_args['econ_dataend']

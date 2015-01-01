@@ -33,6 +33,29 @@ define([
             },
             defaultsResponse: function($http) {
               return $http.get('/api/project/predefined')
+            },
+            project: function() {
+              return undefined;
+            }
+          }
+        })
+        .state('project.edit', {
+          url: '/edit',
+          templateUrl: 'js/modules/project/create.html',
+          controller: 'ProjectCreateController',
+          resolve: {
+            parametersResponse: function($http) {
+              return $http.get('/api/project/params');
+            },
+            defaultsResponse: function($http) {
+              return $http.get('/api/project/predefined')
+            },
+            project: function (Project, activeProject) {
+              if (activeProject.isSet()) {
+                return Project.info().$promise;
+              } else {
+                return undefined;
+              }
             }
           }
         })
