@@ -1,4 +1,5 @@
-define(['angular', 'jquery', 'underscore', 'saveAs'], function (angular, $, _, saveAs) {
+define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
+  function (angular, $, _, saveAs, svgToPng) {
   'use strict';
 
   return angular.module('app.save-graph-as', [])
@@ -88,7 +89,7 @@ define(['angular', 'jquery', 'underscore', 'saveAs'], function (angular, $, _, s
             cssContentRequest.success(function(cssContent) {
 
               // create svg element
-              var svg = createSvg(orginalWidth, orginalHeight, scalingFactor, originalStyle);
+              var svg = svgToPng.createSvg(orginalWidth, orginalHeight, scalingFactor, originalStyle);
 
               // add styles and content to the svg
               var styles = '<style>' + cssContent + '</style>';
@@ -100,23 +101,6 @@ define(['angular', 'jquery', 'underscore', 'saveAs'], function (angular, $, _, s
             }).error(function() {
               alert("Please reload and try again, something went wrong while generating the graph.");
             });
-          };
-
-          /**
-           * Create SVG element
-           *
-           * With the scalingFactor argument a SVG image can be blown up.
-           */
-          var createSvg = function(viewBoxWidth, viewBoxheight, scalingFactor, originalStyle) {
-            var xmlns = "http://www.w3.org/2000/svg";
-            var svg = document.createElementNS(xmlns, "svg");
-            var viewBox = "0 0 " + viewBoxWidth + " " + viewBoxheight;
-            svg.setAttributeNS(null, "viewBox", viewBox);
-            svg.setAttributeNS(null, "width", viewBoxWidth * scalingFactor);
-            svg.setAttributeNS(null, "height", viewBoxheight * scalingFactor);
-            svg.setAttributeNS(null, "version", "1.1");
-            svg.setAttributeNS(null, "style", originalStyle);
-            return svg;
           };
 
           /**
@@ -138,8 +122,12 @@ define(['angular', 'jquery', 'underscore', 'saveAs'], function (angular, $, _, s
             var cssContentRequest = $http.get(chartCssUrl);
             cssContentRequest.success(function(cssContent) {
 
+              // make sure we scale the padding and append it to the original styling
+              // info: later declarations overwrite previous ones
+              var style = originalStyle + '; ' + svgToPng.scalePaddingStyle(originalSvg, scalingFactor);
+
               // create svg element
-              var svg = createSvg(orginalWidth, orginalHeight, scalingFactor, originalStyle);
+              var svg = svgToPng.createSvg(orginalWidth, orginalHeight, scalingFactor, style);
 
               // add styles and content to the svg
               var styles = '<style>' + cssContent + '</style>';

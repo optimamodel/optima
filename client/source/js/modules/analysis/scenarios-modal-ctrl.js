@@ -2,21 +2,21 @@
  * AnalysisScenariosModalController is the scenario editor.
  * It sets title and adds and removes parameters of the model (scenario to be analized).
  */
-define(['./module'], function (module) {
+define(['./module', 'angular'], function (module, angular) {
   'use strict';
 
   module.controller('AnalysisScenariosModalController', function ($scope,
     $modalInstance, scenario, availableScenarioParams, populationNames) {
 
     var initialize = function() {
-      $scope.isNew = !scenario.name;
+      $scope.scenario = angular.copy(scenario);
+      $scope.isNew = !$scope.scenario.name;
       // make sure the names are exactly the objects as in the list for the
       // select to show the initial entries (angular compares with ===)
-      _(scenario.pars).each(function(entry) {
+      _($scope.scenario.pars).each(function(entry) {
         entry.names = findScenarioParams(availableScenarioParams, entry.names).names;
       });
 
-      $scope.scenario = scenario;
       $scope.availableScenarioParams = availableScenarioParams;
       $scope.populationNames = populationNames;
     };
@@ -51,7 +51,7 @@ define(['./module'], function (module) {
      * Removes the parameter at the given index (without asking for confirmation).
      */
     $scope.removeParameter = function ($index) {
-      scenario.pars.splice($index,1);
+      $scope.scenario.pars.splice($index,1);
     };
 
     /**
@@ -64,8 +64,8 @@ define(['./module'], function (module) {
         startval: angular.copy(availableScenarioParams[0].values[0]),
         endval: angular.copy(availableScenarioParams[0].values[0])
       };
-      scenario.pars = scenario.pars || [];
-      scenario.pars.push(entry);
+      $scope.scenario.pars = $scope.scenario.pars || [];
+      $scope.scenario.pars.push(entry);
     };
 
     /**
