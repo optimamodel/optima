@@ -13,7 +13,8 @@ from flask import request, jsonify, Blueprint, current_app
 from flask.ext.login import login_required
 from dbconn import db
 from async_calculate import CalculatingThread, start_or_report_calculation, cancel_calculation, check_calculation
-from utils import check_project_name, project_exists, pick_params, load_model, save_working_model, report_exception
+from utils import check_project_name, project_exists, pick_params, load_model, save_working_model, \
+revert_working_model_to_default, save_working_model_as_default, report_exception
 from sim.optimize import optimize
 from sim.bunch import bunchify
 import json

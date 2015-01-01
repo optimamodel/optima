@@ -33,7 +33,6 @@ def get_scenario_params():
     user_id = current_user.id
     proj = ProjectDb.query.filter_by(user_id=user_id, name=request.project_name).first()
     D = bunchify(proj.model)
-    db.session.close()
     pops_short = [item['short_name'] for item in proj.populations]
 
     for param in scenario_params:
