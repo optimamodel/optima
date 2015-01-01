@@ -17,12 +17,16 @@ programs = [{'name':'Needle-syringe programs', 'short_name': 'NSP', 'saturating'
 class TestOptimaWorkbook(unittest.TestCase):
 
     def test_create_workboook_with_defaults(self):
+        import xlrd
         book = OptimaWorkbook('test_example', populations, programs)
         path = '/tmp/test_example.xlsx'
         if os.path.exists(path):
           os.remove(path)
         book.create(path)
         self.assertTrue(os.path.exists('/tmp/test_example.xlsx'))
+        workbook = xlrd.open_workbook(path)
+        for name, value in book.sheet_names.iteritems():
+            self.assertTrue(workbook.sheet_by_name(value) is not None)
 
     def test_range_references(self):
         range = SheetRange(0,0,5,5)
