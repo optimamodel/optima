@@ -14,7 +14,7 @@ from signal import *
 from dbconn import db
 from sim.autofit import autofit
 
-""" route prefix: /api/model """
+# route prefix: /api/model
 model = Blueprint('model',  __name__, static_folder = '../static')
 model.config = {}
 
@@ -24,14 +24,17 @@ def record_params(setup_state):
     app = setup_state.app
     model.config = dict([(key,value) for (key,value) in app.config.iteritems()])
 
-"""
-Uses provided parameters to auto calibrate the model (update it with these data)
-TODO: do it with the project which is currently in scope
-"""
+
 @model.route('/calibrate/auto', methods=['POST'])
 @login_required
 @check_project_name
 def doAutoCalibration():
+    """
+    Uses provided parameters to auto calibrate the model (update it with these data)
+
+    TODO: do it with the project which is currently in scope
+
+    """
     reply = {'status':'NOK'}
     current_app.logger.debug('data: %s' % request.data)
     data = json.loads(request.data)
@@ -63,25 +66,21 @@ def doAutoCalibration():
         var = traceback.format_exc()
         return jsonify({"status":"NOK", "exception":var})
 
-"""
-Stops calibration
-"""
 @model.route('/calibrate/stop')
 @login_required
 @check_project_name
 def stopCalibration():
+    """ Stops calibration """
     prj_name = request.project_name
     cancel_calculation(current_user.id, prj_name, autofit, db.engine)
     return json.dumps({"status":"OK", "result": "autofit calculation for user %s project %s requested to stop" % (current_user.name, prj_name)})
 
-"""
-Returns the working model of project.
-"""
 @model.route('/working')
 @login_required
 @check_project_name
 @report_exception()
 def getWorkingModel():
+    """ Returns the working model of project. """
     D_dict = {}
     # Make sure model is calibrating
     prj_name = request.project_name
@@ -94,13 +93,11 @@ def getWorkingModel():
     result['status'] = status
     return jsonify(result)
 
-"""
-Saves working model as the default model
-"""
 @model.route('/calibrate/save', methods=['POST'])
 @login_required
 @check_project_name
 def saveCalibrationModel():
+    """ Saves working model as the default model """
     reply = {'status':'NOK'}
 
     # get project name
@@ -117,13 +114,11 @@ def saveCalibrationModel():
         return jsonify({"status":"NOK", "exception":var})
 
 
-"""
-Revert working model to the default model
-"""
 @model.route('/calibrate/revert', methods=['POST'])
 @login_required
 @check_project_name
 def revertCalibrationModel():
+    """ Revert working model to the default model """
     reply = {'status':'NOK'}
 
     # get project name
@@ -138,14 +133,16 @@ def revertCalibrationModel():
         var = traceback.format_exc()
         return jsonify({"status":"NOK", "exception":var})
 
-"""
-Uses provided parameters to manually calibrate the model (update it with these data)
-TODO: do it with the project which is currently in scope
-"""
 @model.route('/calibrate/manual', methods=['POST'])
 @login_required
 @check_project_name
 def doManualCalibration():
+    """
+    Uses provided parameters to manually calibrate the model (update it with these data)
+
+    TODO: do it with the project which is currently in scope
+
+    """
     data = json.loads(request.data)
     current_app.logger.debug("/api/model/calibrate/manual %s" % data)
     # get project name
@@ -177,37 +174,30 @@ def doManualCalibration():
         return jsonify({"status":"NOK", "exception":var})
     return jsonify(D_dict.get('plot',{}).get('E',{}))
 
-"""
-Returns the parameters of the given model.
-"""
 @model.route('/parameters')
 @login_required
 @check_project_name
 def getModel():
+    """ Returns the parameters of the given model. """
     D = load_model(request.project_name, as_bunch = False)
     return jsonify(result)
 
-"""
-Returns the parameters of the given model in the given group.
-"""
 @model.route('/parameters/<group>')
 @login_required
 @check_project_name
 def getModelParameters(group):
+    """ Returns the parameters of the given model in the given group."""
     current_app.logger.debug("getModelParameters: %s" % group)
     D_dict = load_model(request.project_name, as_bunch = False)
     the_group = D_dict.get(group, {})
     current_app.logger.debug("the_group: %s" % the_group)
     return json.dumps(the_group)
 
-
-"""
-Returns the parameters of the given model in the given group / subgroup/ project.
-"""
 @model.route('/parameters/<group>/<subgroup>')
 @login_required
 @check_project_name
 def getModelSubParameters(group, subgroup):
+    """ Returns the parameters of the given model in the given group / subgroup/ project. """
     current_app.logger.debug("getModelSubParameters: %s %s" % (group, subgroup))
     D_dict = load_model(request.project_name, as_bunch = False)
     the_group = D_dict.get(group,{})
@@ -215,14 +205,11 @@ def getModelSubParameters(group, subgroup):
     current_app.logger.debug("result: %s" % the_subgroup)
     return jsonify(the_subgroup)
 
-
-"""
-Sets the given group parameters for the given model.
-"""
 @model.route('/parameters/<group>', methods=['POST'])
 @login_required
 @check_project_name
 def setModelParameters(group):
+    """ Sets the given group parameters for the given model. """
     data = json.loads(request.data)
     current_app.logger.debug("set parameters group: %s for data: %s" % (group, data))
     project_name = request.project_name
@@ -235,15 +222,17 @@ def setModelParameters(group):
         return jsonify({"status":"NOK", "exception":var})
     return jsonify({"status":"OK", "project":project_name, "group":group})
 
-
-"""
-Starts simulation for the given project and given date range.
-Returns back the file with the simulation data. (?) #FIXME find out how to use it
-"""
 @model.route('/view', methods=['POST'])
 @login_required
 @check_project_name
 def doRunSimulation():
+    """
+    Starts simulation for the given project and given date range.
+
+    Returns back the file with the simulation data.
+    (?) #FIXME find out how to use it
+
+    """
     data = json.loads(request.data)
 
     #expects json: {"startyear":year,"endyear":year} and gets project_name from session
@@ -266,14 +255,11 @@ def doRunSimulation():
         return jsonify({"status":"NOK", "exception":var})
     return jsonify(D_dict.get('plot',{}).get('E',{}))
 
-
-"""
-Calls makecco with parameters supplied from frontend
-"""
 @model.route('/costcoverage', methods=['POST'])
 @login_required
 @check_project_name
 def doCostCoverage():
+    """ Calls makecco with parameters supplied from frontend """
     data = json.loads(request.data)
     args = {}
     D = load_model(request.project_name)
