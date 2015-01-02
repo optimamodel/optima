@@ -18,9 +18,9 @@
     <h2>Time horizons and assumptions</h2>
     <div class="float-left margin-left-s">
         Analyses will consider program optimizations over the period
-        <input class="txbox __inline __l" value="2015" placeholder="e.g. 2015" ng-model="params.objectives.year.start">
+        <input class="txbox __inline __l" value="2015" placeholder="e.g. 2015" ng-model="params.objectives.year.start" ng-keyup="checkStartEndYear()">
         to
-        <input class="txbox __inline __l" value="2020" placeholder="e.g. 2020" ng-model="params.objectives.year.end">
+        <input class="txbox __inline __l" value="2020" placeholder="e.g. 2020" ng-model="params.objectives.year.end" ng-keyup="checkStartEndYear()">
         in order to achieve the objectives by
         <input class="txbox __inline __l" value="2030" placeholder="e.g. 2030" ng-model="params.objectives.year.until">
         , with the following context between the end of the optimized program period and the end of the analysis period:</p>
@@ -102,17 +102,24 @@
             Optimize a fixed budget <input class="txbox __inline __l" type="text" ng-model="params.objectives.outcome.fixed"> for each year in the program period
         </label><br><br>
         <label style="padding:0px 0px 0px 20px;">
-            <input type="radio" name="fundingAssumptions" ng-model="params.objectives.funding" value="variable">
+            <input type="radio" name="fundingAssumptions" ng-model="params.objectives.funding" value="variable" ng-change="checkStartEndYear()">
             Optimize a variable budget for each year in the program period:<br>
+            <span ng-show="yearError" class="error-hint">Please specify program optimizations period above</span>
+            <br />
             <div style="padding:0px 0px 0px 50px;">
-                2015: <input class="txbox __inline __l" type="text" ng-model="params.objectives.outcome.fixed"><br>
-                2016: <input class="txbox __inline __l" type="text" ng-model="params.objectives.outcome.fixed"><br>
-                2017: <input class="txbox __inline __l" type="text" ng-model="params.objectives.outcome.fixed"><br>
-                2018: <input class="txbox __inline __l" type="text" ng-model="params.objectives.outcome.fixed"><br>
-                2019: <input class="txbox __inline __l" type="text" ng-model="params.objectives.outcome.fixed"><br>
-                2020: <input class="txbox __inline __l" type="text" ng-model="params.objectives.outcome.fixed"><br>
+                <div ng-repeat="yCols in yearCols" style="padding:0 0 10px 0;">
+                    <span ng-repeat="yloop in yearLoop.slice(yCols.start,yCols.end)">
+                        {{ yloop.year }}:
+                        <input class="txbox __inline __l" type="text" ng-model="params.objectives.outcome.fixed"> &nbsp;
+                    </span>
+                </div>
+                <div style="clear:both;"></div>
+
             </div>
+
         </label><br><br>
+        <div style="clear:both;"></div>
+
     </div>
 </div>
 <div class="section" ng-if="params.objectives.what == 'outcome'">

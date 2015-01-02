@@ -5,7 +5,7 @@ define([
 ], function (module, angular, d3) {
   'use strict';
 
-  module.controller('AnalysisOptimizationController', function ($scope, $http, $interval, meta, CONFIG) {
+  module.controller('AnalysisOptimizationController', function ($scope, $http, $interval, $compile, $sce, meta, CONFIG) {
 
       $scope.meta = meta;
       $scope.types = angular.copy(CONFIG.GRAPH_TYPES);
@@ -332,6 +332,53 @@ define([
       $scope.optimisationGraphs = prepareOptimisationGraphs(cachedResponse.graph);
       $scope.financialGraphs = prepareFinancialGraphs(cachedResponse.graph);
     }, true);
+
+    $scope.yearLoop = [];
+    $scope.yearCols = [];
+
+    $scope.checkStartEndYear = function () {
+      if ( !$scope.params.objectives.funding ) {
+        return;
+      }
+      
+      $scope.yearError = false;
+      $scope.yearLoop = [];
+      $scope.yearCols = [];
+      if ( !$scope.params.objectives.year ){
+        showYearError();
+        return;
+      }
+      var start = parseInt($scope.params.objectives.year.start);
+      var end = parseInt($scope.params.objectives.year.end);
+      
+      if ( isNaN(start) ||  isNaN(end) ) {
+        showYearError();
+        return;
+      }
+
+      if ( end <= start ) {
+        showYearError();
+        return;
+      }
+
+      var yearLoop = "";
+      for ( var i = start; i <= end; i++ ) {
+        $scope.yearLoop.push({year:i});
+      }
+
+      var cols = 5;
+      var rows = Math.ceil($scope.yearLoop.length / cols);
+      for( var i = 0; i < rows; i++ ) {
+        $scope.yearCols.push({start:i*cols,end:(i*cols)+cols});
+      }
+    };
+
+    $scope.yearError = false;
+    var showYearError = function() {
+      $scope.yearError = true;
+      $scope.yearLoop = [];
+      $scope.yearCols = [];
+    };
 
   });
 });
