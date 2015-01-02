@@ -292,18 +292,28 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           delete obj.active;
           delete obj.$$hashKey;
         });
-        
+
         if ( !angular.equals( selectedPopulations,project.populations ) || !angular.equals( selectedPrograms,project.programs ) ) {
-          var message = 'You have made changes in populations and/or programs, you are required to reupload data file';
-          modalService.inform(
+          var message = 'You have made changes to populations and programs. All existing data will be lost. Would you like to continue?';
+          modalService.confirm(
+            function (){ continueSubmitForm( selectedPrograms, selectedPopulations ) }, 
             function (){ null }, 
-            'Okay',
+            'Yes, save this project',
+            'No',
             message, 
-            'Alert!'
+            'Save Project!'
           );
+        } else {
+          continueSubmitForm( selectedPrograms, selectedPopulations );
         }
+      } else {
+        continueSubmitForm( selectedPrograms, selectedPopulations );
       }
-      
+    };
+
+    // handle another function to continue to submit form
+    // since the confirm modal is async and doesn't wait for user's response 
+    var continueSubmitForm = function( selectedPrograms, selectedPopulations ) {
       var params = _($scope.projectParams).omit('name');
       params.populations = selectedPopulations;
       params.programs = insertSelectedPopulations(selectedPrograms, selectedPopulations);
@@ -327,7 +337,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       }, 3000);
 
       return true;
-    };
+    }
 
   });
 
