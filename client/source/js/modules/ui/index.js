@@ -51,7 +51,6 @@ define([
                     .element('<input type="file">')
                     .change(function (event) {
                       uploadDataSpreadsheet(event.target.files[0]);
-                      $window.location.reload();
                     })
                     .click();
                   } else {
