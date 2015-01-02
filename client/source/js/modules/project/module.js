@@ -34,7 +34,7 @@ define([
             defaultsResponse: function($http) {
               return $http.get('/api/project/predefined')
             },
-            project: function() {
+            info: function() {
               return undefined;
             }
           }
@@ -50,7 +50,7 @@ define([
             defaultsResponse: function($http) {
               return $http.get('/api/project/predefined')
             },
-            project: function (Project, activeProject) {
+            info: function (Project, activeProject) {
               if (activeProject.isSet()) {
                 return Project.info().$promise;
               } else {
