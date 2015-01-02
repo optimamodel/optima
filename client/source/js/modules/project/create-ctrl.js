@@ -7,8 +7,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.projectParams = {
       name: ''
     };
-    console.log("project", info);
-
+    $scope.editParams = {
+      is_edit: false
+    };
     $scope.project_info = info;
 
     var availableParameters = parametersResponse.data.params;
@@ -23,7 +24,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       // change submit button name
       $scope.submit = "Save project & Optima template";
 
-      $scope.is_edit = true;
+      $scope.editParams.is_edit = true;
+      $scope.editParams.can_update = true;
       $scope.old_project_name =  $scope.project_info.name;
 
       if (activeProject.isSet()) {
@@ -44,18 +46,13 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         var source = _.findWhere($scope.project_info.programs, {short_name:program.short_name});
         if (source) {
           program.active = true;
-          console.log("program", program);
-          console.log("source", source);
           _(program).extend(angular.copy(source));
           _(program.parameters).each(function(parameter){
             parameter.active = true;
           });
-          console.log("program", program);
         }
       });
     }
-
-    console.log($scope.programs);
 
 
     // Helper function to open a population modal
@@ -263,40 +260,36 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         return false;
       }
 
-      console.log($scope.programs, $scope.project_info.programs);
-      console.log($scope.populations, $scope.project_info.populations);
       var selectedPrograms = toCleanArray($scope.programs);
       var selectedPopulations = toCleanArray($scope.populations);
-      console.log(selectedPrograms, $scope.project_info.programs);
-      console.log(selectedPopulations, $scope.project_info.populations);
       
-      if ( $state.current.name == "project.edit" ) {
-
- //       var oldSelectedPrograms = toCleanArray(project.programs);
- //       var oldSelectedPopulations = toCleanArray(project.populations);
- //       console.log(selectedPrograms, oldSelectedPrograms);
- //       console.log(selectedPopulations, oldSelectedPopulations);
-/*        project.populations.forEach(function(obj){ 
-          delete obj.active;
-          delete obj.$$hashKey;
-        });
-        project.programs.forEach(function(obj){ 
-          delete obj.active;
-          delete obj.$$hashKey;
-        });*/
-        
-        if ( !angular.equals( selectedPopulations,$scope.project_info.populations ) || !angular.equals( selectedPrograms,$scope.project_info.programs ) ) {
+      if ( $state.current.name == "project.edit" ) {        
+        if ( !angular.equals( selectedPopulations,$scope.project_info.populations ) 
+          || !angular.equals( selectedPrograms,$scope.project_info.programs ) ) {
+          $scope.editParams.can_update = $scope.editParams.can_update && selectedPopulations.length == $scope.project_info.populations.length;
+          $scope.editParams.can_update = $scope.editParams.can_update && selectedPrograms.length == $scope.project_info.programs.length;
           var message = 'You have made changes to populations and programs. All existing data will be lost. Would you like to continue?';
+          if ($scope.editParams.can_update) {
+            message = 'You have changed some program or population parameters. Your original data can be reapplied, but you will have to redo the calibration and analysis. Would you like to continue?';
+          }
           modalService.confirm(
             function (){ continueSubmitForm( selectedPrograms, selectedPopulations ) }, 
             function (){ null }, 
             'Yes, save this project',
             'No',
             message, 
-            'Save Project!'
+            'Save Project?'
           );
         } else {
-          continueSubmitForm( selectedPrograms, selectedPopulations );
+          var message = 'No parameters have been changed. Do you intend to reload the original data and start from scratch?';
+          modalService.confirm(
+            function (){ continueSubmitForm( selectedPrograms, selectedPopulations ) }, 
+            function (){ null }, 
+            'Yes, reload this project',
+            'No',
+            message, 
+            'Reload project?'
+          ); 
         }
       } else {
         continueSubmitForm( selectedPrograms, selectedPopulations );
@@ -317,7 +310,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       // https://docs.angularjs.org/api/ng/directive/ngSubmit
       document.getElementById('createForm').action = $scope.formAction;
       document.getElementById('params').value = $scope.formParams;
-      document.getElementById('is_edit').value = $scope.is_edit;
+      document.getElementById('edit_params').value = JSON.stringify($scope.editParams);
       document.getElementById('createForm').submit();
 
       // update active project

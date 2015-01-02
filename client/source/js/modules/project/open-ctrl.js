@@ -70,7 +70,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             return;
           }
 
-          $scope.projects.splice(index, 1);
+          $scope.projects = _($scope.projects).filter(function (item) {
+            return item.name!=name;
+          });
 
           activeProject.ifActiveResetFor(name, UserManager.data);
         })
