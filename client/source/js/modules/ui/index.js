@@ -118,6 +118,12 @@ define([
          }
       }
 
+      // http://stackoverflow.com/a/9407953/829533
+      // service to call uploadDataSpreadsheet from calibration-ctrl.js
+      $scope.$on('uploadDataSpreadsheet', function(event, args) {
+        uploadDataSpreadsheet(args.file);
+      });
+      
       // https://github.com/danialfarid/angular-file-upload
       function uploadDataSpreadsheet(file) {
         $scope.upload = $upload.upload({
@@ -130,7 +136,10 @@ define([
 
               var message = data.file + " was successfully uploaded.\n" + data.result;
               modalService.inform(
-                function (){ console.log('informed!') },
+                function (){ 
+                  // reload the page after upload.
+                  window.location.reload();
+                },
                 'Okay',
                 message,
                 'Upload completed'
