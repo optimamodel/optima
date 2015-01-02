@@ -1,7 +1,7 @@
 define(['./module', 'angular'], function (module, angular) {
   'use strict';
 
-  module.controller('ModelViewController', function ($scope, $http, $interval, Model, f, meta, CONFIG) {
+  module.controller('ModelViewController', function ($scope, $http, $interval, Model, info, f, meta, CONFIG) {
 
     var prepareF = function (f) {
       var F = angular.copy(f);
@@ -11,6 +11,15 @@ define(['./module', 'angular'], function (module, angular) {
       F.init = _(F.init).map(parseFloat);
       return F;
     };
+    
+    // initialize all necessary data for this controller
+    var initialize = function() {
+      $scope.validate = false;
+      $scope.show_message = false;
+
+      // check if project is calibrated
+      checkProjectInfo(info);
+    }
 
     var transformedF = prepareF(f[0]);
 
@@ -294,6 +303,17 @@ define(['./module', 'angular'], function (module, angular) {
     $scope.$watch('types', function () {
       updateGraphs($scope.parameters.cache.response);
     }, true);
+
+    var checkProjectInfo = function (info) {
+      if (!info) return;
+      var data = info.data;
+      if ( data.status == "OK" ) {
+        $scope.validate = data.has_data;
+        $scope.show_message = !$scope.validate;
+      }
+    };
+
+    initialize();
 
   });
 });

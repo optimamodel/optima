@@ -26,6 +26,9 @@ define([
             //data: function (Model) {
             //  return Model.getParametersData();
             //},
+            info: function($http) {
+              return $http.get('/api/project/info');
+            },
             f: function (Model) {
               return Model.getParametersF().$promise;
             },
