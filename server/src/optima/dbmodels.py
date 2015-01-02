@@ -63,6 +63,32 @@ class ProjectDb(db.Model):
         self.model = model
         self.creation_time = creation_time
 
+    def has_data(self):
+        result = False
+        if self.model is not None:
+            result = 'data' in self.model and 'programs' in self.model
+        return result
+
+    def has_model_parameters(self):
+        result = False
+        if self.model is not None:
+            result = 'M' in self.model
+        return result
+
+    def data_upload_time(self):
+        data_upload_time = self.creation_time
+        if self.project_data: 
+            data_upload_time = self.project_data.upload_time
+        return data_upload_time
+
+    def can_calibrate(self):
+        return self.has_model_parameters()
+
+    def can_scenarios(self):
+        return self.has_model_parameters()
+
+
+
 class WorkingProjectDb(db.Model):
     __tablename__ = 'working_projects'
     id = db.Column(db.Integer,db.ForeignKey('projects.id'), primary_key=True )

@@ -1,7 +1,7 @@
 define(['./module', 'angular'], function (module, angular) {
   'use strict';
 
-  module.controller('ModelViewController', function ($scope, $http, $interval, Model, info, f, meta, CONFIG) {
+  module.controller('ModelCalibrationController', function ($scope, $http, $interval, Model, f, G, meta, info, CONFIG) {
 
     var prepareF = function (f) {
       var F = angular.copy(f);
@@ -42,13 +42,17 @@ define(['./module', 'angular'], function (module, angular) {
       }
     };
 
+    $scope.G = G;
     $scope.types = angular.copy(CONFIG.GRAPH_TYPES);
+    $scope.calibrationStatus = false;
 
     $scope.enableManualCalibration = false;
 
     // to store years from UI
     $scope.simulationOptions = {'timelimit':60};
     $scope.graphs = [];
+    $scope.projectInfo = info;
+    $scope.canDoFitting = $scope.projectInfo.can_calibrate;
 
     var lineScatterOptions = {
       title: 'Title',
@@ -215,9 +219,10 @@ define(['./module', 'angular'], function (module, angular) {
     };
 
     var updateGraphs = function (data) {
-      if (data!== undefined) {
+      if (data!== undefined && data!==null) {
         $scope.graphs = prepareGraphs(data);
         $scope.parameters.cache.response = data;
+        $scope.canDoFitting = true;
       }
     };
 
@@ -234,6 +239,7 @@ define(['./module', 'angular'], function (module, angular) {
       // Keep polling for updated values after every 5 seconds till we get an error.
       // Error indicates that the model is not calibrating anymore.
             autoCalibrationTimer = $interval(checkWorkingAutoCalibration, 5000, 0, false);
+            $scope.calibrationStatus = 'running';
           } else {
             console.log("Cannot poll for optimization now");
           }
@@ -257,8 +263,10 @@ define(['./module', 'angular'], function (module, angular) {
     $scope.stopAutoCalibration = function () {
       $http.get('/api/model/calibrate/stop')
         .success(function(data) {
-          // Cancel timer
-          stopTimer();
+          // Do not cancel timer yet
+          if($scope.calibrationStatus) { // do nothing if there was no calibration
+            $scope.calibrationStatus = 'requested to stop';
+          }
         });
     };
 
@@ -266,6 +274,7 @@ define(['./module', 'angular'], function (module, angular) {
       if ( angular.isDefined( autoCalibrationTimer ) ) {
         $interval.cancel(autoCalibrationTimer);
         autoCalibrationTimer = undefined;
+        $scope.calibrationStatus = false;
       }
     }
 
@@ -299,21 +308,32 @@ define(['./module', 'angular'], function (module, angular) {
       angular.extend($scope.parameters.f, $scope.parameters.cache.f);
     };
 
+    $scope.reportCalibrationStatus = function () {
+      if ($scope.calibrationStatus) {
+        return 'Calibration is ' + $scope.calibrationStatus;
+      } else {
+        return '';
+      }
+    }    
+
     // The graphs are shown/hidden after updating the graph type checkboxes.
     $scope.$watch('types', function () {
       updateGraphs($scope.parameters.cache.response);
     }, true);
 
     var checkProjectInfo = function (info) {
-      if (!info) return;
-      var data = info.data;
-      if ( data.status == "OK" ) {
-        $scope.validate = data.has_data;
+      if (!info) return;console.log(info);
+      if ( info.status == "OK" ) {
+        $scope.validate = info.can_calibrate;
         $scope.show_message = !$scope.validate;
       }
     };
 
     initialize();
+
+    $scope.reportDataEndError = function() {
+      return "End year must be more than "+ $scope.G.dataend + ".";
+    };
 
   });
 });

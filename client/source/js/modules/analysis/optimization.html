@@ -486,15 +486,19 @@
                     </div>
 
                     <div class="elastic_col __shrink">
-                        <button class="btn __red" ng-click="stopOptimization()">Stop optimization</button>
+                        <button class="btn __red" ng-click="stopOptimization()" ng-disabled="!optimizationStatus.isActive">Stop optimization</button>
                     </div>
                     <div class="elastic_col __shrink">
-                        <button class="btn">Save optimization</button>
+                        <button class="btn" ng-click="saveOptimization()" ng-disabled="optimizationStatus.isActive">Save optimization</button>
                     </div>
                     <div class="elastic_col __shrink">
-                        <button class="btn">Revert</button>
+                        <button class="btn" ng-click="revertOptimization()" ng-disabled="optimizationStatus.isActive">Revert</button>
                     </div>
                 </div>
+            </div>
+
+            <div class="info-hint" ng-show="optimizationStatus.isActive">
+                {{ optimizationStatus.text }}
             </div>
 
         </div>
@@ -508,17 +512,7 @@
                 <div class="grid">
                     <div class="7" ng-if="radarData">
                         <div class="chart-container">
-                          <div class="legend" style="margin-top: 10px">
-                            <div class="legend-entry">
-                              <span class="line-color-indicator line __blue">•</span>
-                              Original Allocation
-                            </div>
-                            <div class="legend-entry">
-                              <span class="line-color-indicator line __green">•</span>
-                              Optimal Allocation
-                            </div>
-                          </div>
-                          <div radar-chart data="radarData" save-graph-as></div>
+                          <div radar-chart data="radarData" options="radarOptions" save-graph-as></div>
                         </div>
                     </div>
                 </div>
