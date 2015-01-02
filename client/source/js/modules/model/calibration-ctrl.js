@@ -12,15 +12,6 @@ define(['./module', 'angular'], function (module, angular) {
       return F;
     };
     
-    // initialize all necessary data for this controller
-    var initialize = function() {
-      $scope.validate = false;
-      $scope.show_message = false;
-
-      // check if project is calibrated
-      checkProjectInfo(info);
-    }
-
     var transformedF = prepareF(f[0]);
 
     $scope.parameters = {
@@ -53,6 +44,7 @@ define(['./module', 'angular'], function (module, angular) {
     $scope.graphs = [];
     $scope.projectInfo = info;
     $scope.canDoFitting = $scope.projectInfo.can_calibrate;
+    $scope.needData = !$scope.projectInfo.has_data;
 
     var lineScatterOptions = {
       title: 'Title',
@@ -320,16 +312,6 @@ define(['./module', 'angular'], function (module, angular) {
     $scope.$watch('types', function () {
       updateGraphs($scope.parameters.cache.response);
     }, true);
-
-    var checkProjectInfo = function (info) {
-      if (!info) return;
-      if ( info.status == "OK" ) {
-        $scope.validate = info.has_data;
-        $scope.show_message = !$scope.validate;
-      }
-    };
-
-    initialize();
 
     $scope.reportDataEndError = function() {
       return "End year must be more than "+ $scope.G.dataend + ".";

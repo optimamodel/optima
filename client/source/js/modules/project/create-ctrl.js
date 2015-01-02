@@ -2,78 +2,61 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ProjectCreateController', function ($scope, $state, $modal,
-    $timeout, activeProject, parametersResponse, defaultsResponse, project, UserManager, modalService) {
+    $timeout, activeProject, parametersResponse, defaultsResponse, info, UserManager, modalService) {
 
     $scope.projectParams = {
       name: ''
     };
+    console.log("project", info);
+
+    $scope.project_info = info;
 
     var availableParameters = parametersResponse.data.params;
     var availableDefaults = defaultsResponse.data;
-    
-    if ( $state.current.name == "project.edit" ) {
-      
-      // set project post mode to edit
-      // $scope.is_edit = "true";
-      $scope.is_edit = "true";
-      $scope.old_project_name =  project.name;
-
-      if (activeProject.isSet()) {
-        $scope.projectParams = project;
-
-        $scope.projectParams.datastart = $scope.projectParams.dataStart;
-        $scope.projectParams.dataend = $scope.projectParams.dataEnd;
-        $scope.projectParams.econ_dataend = $scope.projectParams.projectionEndYear;
-      }
-      
-      /**
-       * Cannot use array.concat for following reasons
-       * 1. The structure of both objects are different 
-       * availableDefaults.populations has two additional properties $$hashKey and active,
-       * that are missing in project.populations
-       * 2. We need to mark objects in project.populations as active in availableDefaults.populations
-       */
-      // availableDefaults.populations = availableDefaults.populations.concat(project.populations);
-      for ( var i in project.populations ) {
-        var result = availableDefaults.populations.filter(function( obj ) {
-          if ( obj.short_name == project.populations[i].short_name ) {
-            // obj is a reference of objects in availableDefaults.populations
-            obj.active = true;
-            return true;
-          }
-        });
-
-        if (result.length == 0) {
-          project.populations[i].active = true;
-          availableDefaults.populations.push( project.populations[i] );
-        }
-      }
-      
-      for ( var i in project.programs ) {
-        var result = availableDefaults.programs.filter(function( obj ) {
-          if ( obj.short_name == project.programs[i].short_name ) {
-            // obj is a reference of objects in availableDefaults.populations
-            obj.active = true;
-            return true;
-          }
-        });
-
-        if (result.length == 0) {
-          project.programs[i].active = true;
-          availableDefaults.programs.push( project.programs[i] );
-        }
-      }
-        // change submit button name
-        $scope.submit = "Save project & Optima template";
-    } else {
-        // change submit button name
-        $scope.submit = "Create project & Optima template";
-    }
-    
-
+        
+    $scope.submit = "Create project & Optima template";
     $scope.populations = availableDefaults.populations;
     $scope.programs = availableDefaults.programs;
     $scope.categories = availableDefaults.categories;
+
+    if ( $state.current.name == "project.edit" ) {
+      // change submit button name
+      $scope.submit = "Save project & Optima template";
+
+      $scope.is_edit = true;
+      $scope.old_project_name =  $scope.project_info.name;
+
+      if (activeProject.isSet()) {
+        $scope.projectParams.name = $scope.old_project_name;
+
+        $scope.projectParams.datastart = $scope.project_info.dataStart;
+        $scope.projectParams.dataend = $scope.project_info.dataEnd;
+        $scope.projectParams.econ_dataend = $scope.project_info.projectionEndYear;
+      }
+      _($scope.populations).each(function(population){
+        var source = _.findWhere($scope.project_info.populations, {short_name:population.short_name});
+        if (source) {
+          population.active = true;
+          _.extend(population, source);
+        }
+      });
+      _($scope.programs).each(function(program){
+        var source = _.findWhere($scope.project_info.programs, {short_name:program.short_name});
+        if (source) {
+          program.active = true;
+          console.log("program", program);
+          console.log("source", source);
+          _(program).extend(angular.copy(source));
+          _(program.parameters).each(function(parameter){
+            parameter.active = true;
+          });
+          console.log("program", program);
+        }
+      });
+    }
+
+    console.log($scope.programs);
+
 
     // Helper function to open a population modal
     var openPopulationModal = function (population) {
@@ -280,21 +263,29 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         return false;
       }
 
+      console.log($scope.programs, $scope.project_info.programs);
+      console.log($scope.populations, $scope.project_info.populations);
       var selectedPrograms = toCleanArray($scope.programs);
       var selectedPopulations = toCleanArray($scope.populations);
+      console.log(selectedPrograms, $scope.project_info.programs);
+      console.log(selectedPopulations, $scope.project_info.populations);
       
       if ( $state.current.name == "project.edit" ) {
 
-        project.populations.forEach(function(obj){ 
+ //       var oldSelectedPrograms = toCleanArray(project.programs);
+ //       var oldSelectedPopulations = toCleanArray(project.populations);
+ //       console.log(selectedPrograms, oldSelectedPrograms);
+ //       console.log(selectedPopulations, oldSelectedPopulations);
+/*        project.populations.forEach(function(obj){ 
           delete obj.active;
           delete obj.$$hashKey;
         });
         project.programs.forEach(function(obj){ 
           delete obj.active;
           delete obj.$$hashKey;
-        });
+        });*/
         
-        if ( !angular.equals( selectedPopulations,project.populations ) || !angular.equals( selectedPrograms,project.programs ) ) {
+        if ( !angular.equals( selectedPopulations,$scope.project_info.populations ) || !angular.equals( selectedPrograms,$scope.project_info.programs ) ) {
           var message = 'You have made changes to populations and programs. All existing data will be lost. Would you like to continue?';
           modalService.confirm(
             function (){ continueSubmitForm( selectedPrograms, selectedPopulations ) }, 
@@ -326,6 +317,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       // https://docs.angularjs.org/api/ng/directive/ngSubmit
       document.getElementById('createForm').action = $scope.formAction;
       document.getElementById('params').value = $scope.formParams;
+      document.getElementById('is_edit').value = $scope.is_edit;
       document.getElementById('createForm').submit();
 
       // update active project

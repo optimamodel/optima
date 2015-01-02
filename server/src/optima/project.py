@@ -82,30 +82,14 @@ def createProject(project_name):
     # get current user
     user_id = current_user.id
 
-    # to keep track of old project name in case of edit and change in project name
-    project_new_name = None
     # check if current request is edit request
-    is_edit = True if 'true' == data['is_edit'] else False
+    is_edit = data.get('is_edit')
+    print("is_edit:%s" % is_edit)
     
-    if is_edit:
-        # in case of edit check if project name has been changed
-        project_new_name = project_name
-        if project_name != data['old_project_name']:
-            # reset project name to old project name to keep old functionality and fetch proj
-            project_name = data['old_project_name']
-            # check if project with new name doesn't alreay exist
-            checkProject = ProjectDb.query.filter_by(user_id=user_id, name=project_new_name).first()
-            if checkProject is not None:
-                return "{'status':'NOK', 'reason':'Another project with name %s already exists'}" % project_new_name
-
     if data:
         data = json.loads(data['params'])
 
-    if is_edit:
-        makeproject_args = {"projectname":project_new_name, "savetofile":False}
-    else:
-        makeproject_args = {"projectname":project_name, "savetofile":False}
-
+    makeproject_args = {"projectname":project_name, "savetofile":False}
     makeproject_args['datastart'] = data.get('datastart', default_datastart)
     makeproject_args['dataend'] = data.get('dataend', default_dataend)
     makeproject_args['econ_dataend'] = data.get('econ_dataend', default_econ_dataend)
@@ -119,8 +103,6 @@ def createProject(project_name):
     # update existing
     if project is not None:
         # set new project name if not none
-        if project_new_name is not None:
-            project.name = project_new_name
 
         project.datastart = makeproject_args['datastart']
         project.dataend = makeproject_args['dataend']
@@ -137,6 +119,20 @@ def createProject(project_name):
 
     D = makeproject(**makeproject_args) # makeproject is supposed to return the name of the existing file...
     project.model = D.toDict()
+    if is_edit and project.project_data is not None and project.project_data.meta is not None:
+        # try to reload the data
+        loaddir =  upload_dir_user(DATADIR)
+        if not loaddir:
+            loaddir = DATADIR
+        filename = project_name + '.xlsx'
+        server_filename = os.path.join(loaddir, filename)
+        filedata = open(server_filename, 'wb')
+        filedata.write(project.project_data.meta)
+        filedata.close()
+        D = model_as_bunch(project.model)
+        D = updatedata(D, savetofile = False)
+        model = model_as_dict(D)
+        project.model = model
 
     # Save to db
     db.session.add(project)
@@ -240,7 +236,6 @@ def getProjectInformation():
             'can_calibrate': project.can_calibrate(),
             'can_scenarios': project.can_scenarios(),
         }
-
     return jsonify(response_data)
 
 @project.route('/list')

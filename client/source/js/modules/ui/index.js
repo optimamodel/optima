@@ -15,7 +15,7 @@ define([
     'app.ui.menu'
   ])
 
-    .controller('MainCtrl', function ($scope, $upload, $state, activeProject, UserManager, modalService) {
+    .controller('MainCtrl', function ($window, $scope, $upload, $state, activeProject, UserManager, modalService) {
 
       $scope.user = UserManager.data;
       $scope.userLogged = function () {
@@ -51,6 +51,7 @@ define([
                     .element('<input type="file">')
                     .change(function (event) {
                       uploadDataSpreadsheet(event.target.files[0]);
+                      $window.location.reload();
                     })
                     .click();
                   } else {
