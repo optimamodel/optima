@@ -322,9 +322,9 @@ define(['./module', 'angular'], function (module, angular) {
     }, true);
 
     var checkProjectInfo = function (info) {
-      if (!info) return;console.log(info);
+      if (!info) return;
       if ( info.status == "OK" ) {
-        $scope.validate = info.can_calibrate;
+        $scope.validate = info.has_data;
         $scope.show_message = !$scope.validate;
       }
     };
@@ -334,6 +334,16 @@ define(['./module', 'angular'], function (module, angular) {
     $scope.reportDataEndError = function() {
       return "End year must be more than "+ $scope.G.dataend + ".";
     };
+
+    $scope.uploadDataSpreadsheet = function () {
+      angular
+        .element('<input type="file">')
+        .change(function (event) {
+          // function uploadDataSpreadsheet defined in ui/index.js
+          $scope.$emit('uploadDataSpreadsheet', {'file':event.target.files[0]});
+        })
+        .click();
+    }
 
   });
 });
