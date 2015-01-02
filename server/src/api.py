@@ -61,6 +61,10 @@ def site():
 def root():
     return 'Optima API v.1.0.0'
 
+@app.teardown_appcontext
+def shutdown_session(exception=None):
+    optima.dbconn.db.session.remove()
+
 def init_db():
     optima.dbconn.db.create_all()
 

@@ -10,10 +10,10 @@ Optimization Module
 4. Revert to the last saved model
 """
 from flask import request, jsonify, Blueprint, current_app
-from flask.ext.login import login_required
 from dbconn import db
 from async_calculate import CalculatingThread, start_or_report_calculation, cancel_calculation, check_calculation
-from utils import check_project_name, project_exists, pick_params, load_model, save_working_model, report_exception
+from utils import check_project_name, project_exists, load_model, \
+revert_working_model_to_default, save_working_model_as_default, report_exception
 from sim.optimize import optimize
 from sim.bunch import bunchify
 import json
@@ -137,7 +137,7 @@ def revertCalibrationModel():
         reply['reason'] = 'File for project %s does not exist' % project_name
         return jsonify(reply)
     try:
-        D_dict = revert_working_model_to_default(project_name)
+        revert_working_model_to_default(project_name)
         return jsonify({"status":"OK"})
     except Exception, err:
         reply['exception'] = traceback.format_exc()

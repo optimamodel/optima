@@ -1,4 +1,4 @@
-define(['./module', 'd3'], function (module, d3) {
+define(['./module', 'd3', 'underscore'], function (module, d3, _) {
   'use strict';
 
   module.service('d3Charts', function () {
@@ -267,7 +267,7 @@ define(['./module', 'd3'], function (module, d3) {
           .attr('class', 'graph-legend')
           .attr('transform', 'translate(0,' + (options.height - options.margin.bottom + legendOffsetTop) + ')');
 
-        options.legend.forEach(function (legendItem) {
+        _(options.legend).each(function (legendItem, index) {
           var item = graphLegend.append('g')
             .attr('class', 'graph-legend_i');
 
