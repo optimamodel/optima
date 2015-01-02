@@ -78,16 +78,17 @@ def createProject(project_name):
     #session.clear() # had to commit this line to check user session
     current_app.logger.debug("createProject %s" % project_name)
     data = request.form
-    
+
     # get current user
     user_id = current_user.id
-
-    # check if current request is edit request
-    is_edit = data.get('is_edit')
-    print("is_edit:%s" % is_edit)
     
     if data:
+        edit_params = json.loads(data['edit_params'])
         data = json.loads(data['params'])
+
+    # check if current request is edit request
+    is_edit = edit_params.get('is_edit')
+    can_update = edit_params.get('can_update')
 
     makeproject_args = {"projectname":project_name, "savetofile":False}
     makeproject_args['datastart'] = data.get('datastart', default_datastart)
@@ -119,20 +120,24 @@ def createProject(project_name):
 
     D = makeproject(**makeproject_args) # makeproject is supposed to return the name of the existing file...
     project.model = D.toDict()
-    if is_edit and project.project_data is not None and project.project_data.meta is not None:
-        # try to reload the data
-        loaddir =  upload_dir_user(DATADIR)
-        if not loaddir:
-            loaddir = DATADIR
-        filename = project_name + '.xlsx'
-        server_filename = os.path.join(loaddir, filename)
-        filedata = open(server_filename, 'wb')
-        filedata.write(project.project_data.meta)
-        filedata.close()
-        D = model_as_bunch(project.model)
-        D = updatedata(D, savetofile = False)
-        model = model_as_dict(D)
-        project.model = model
+    if is_edit:
+        db.session.query(WorkingProjectDb).filter_by(id=project.id).delete()
+        if can_update and project.project_data is not None and project.project_data.meta is not None:
+            # try to reload the data
+            loaddir =  upload_dir_user(DATADIR)
+            if not loaddir:
+                loaddir = DATADIR
+            filename = project_name + '.xlsx'
+            server_filename = os.path.join(loaddir, filename)
+            filedata = open(server_filename, 'wb')
+            filedata.write(project.project_data.meta)
+            filedata.close()
+            D = model_as_bunch(project.model)
+            D = updatedata(D, savetofile = False)
+            model = model_as_dict(D)
+            project.model = model
+        else:
+            db.session.query(ProjectDataDb).filter_by(id=project.id).delete()
 
     # Save to db
     db.session.add(project)
@@ -351,7 +356,6 @@ def uploadExcel():
     current_app.logger.debug("uploadExcel(project name: %s user:%s)" % (project_name, user_id))
 
     reply = {'status':'NOK'}
-    print(request.files)
     file = request.files['file']
 
     # getting current user path

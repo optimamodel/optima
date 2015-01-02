@@ -7,25 +7,25 @@
           <h1>Project details</h1>
 
          <b>Project name</b>
-        <input class="txbox" type="text" placeholder="e.g. Example" ng-model="projectParams.name" disabled="is_edit" required>
+        <input class="txbox" type="text" placeholder="e.g. Example" ng-model="projectParams.name" disabled="editParams.is_edit" required>
       </div>
     </div>
 
     <div class="section grid">
       <div class="3">
           <b>First year for data entry</b>
-        <input class="txbox" type="number" min="1900" placeholder="e.g. 2000" ng-model="projectParams.datastart" disabled="is_edit" required>
+        <input class="txbox" type="number" min="1900" placeholder="e.g. 2000" ng-model="projectParams.datastart" disabled="editParams.is_edit" required>
       </div>
       <div class="3">
           <b>Final year for data entry</b>
-        <input class="txbox" type="number" min="1900" placeholder="e.g. 2015" ng-model="projectParams.dataend" disabled="is_edit" required>
+        <input class="txbox" type="number" min="1900" placeholder="e.g. 2015" ng-model="projectParams.dataend" disabled="editParams.is_edit" required>
       </div>
     </div>
 
     <div class="section grid">
       <div class="3">
           <b>Final year for macroeconomic projection data</b>
-        <input class="txbox" type="number" min="1900" placeholder="e.g. 2030" ng-model="projectParams.econ_dataend" disabled="is_edit" required>
+        <input class="txbox" type="number" min="1900" placeholder="e.g. 2030" ng-model="projectParams.econ_dataend" disabled="editParams.is_edit" required>
       </div>
     </div>
 
@@ -128,6 +128,6 @@
     </div>
 
     <input type="hidden" id="params" name="params" value="{{ formParams }}">
-    <input type="hidden" ng-model="is_edit" id="is_edit" name="is_edit"/>
+    <input type="hidden" id="edit_params" name="edit_params" value = "{{ editParams }}">
   </form>
 </div>
