@@ -54,7 +54,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       });
     }
 
-
     // Helper function to open a population modal
     var openPopulationModal = function (population) {
       return $modal.open({
