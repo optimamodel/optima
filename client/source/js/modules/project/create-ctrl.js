@@ -15,8 +15,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       
       // set project post mode to edit
       // $scope.is_edit = "true";
-      document.getElementById('is_edit').value = "true";
-      document.getElementById('old_project_name').value = project.name;
+      $scope.is_edit = "true";
+      $scope.old_project_name =  project.name;
 
       if (activeProject.isSet()) {
         $scope.projectParams = project;
@@ -284,6 +284,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       var selectedPopulations = toCleanArray($scope.populations);
       
       if ( $state.current.name == "project.edit" ) {
+
         project.populations.forEach(function(obj){ 
           delete obj.active;
           delete obj.$$hashKey;
@@ -292,7 +293,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           delete obj.active;
           delete obj.$$hashKey;
         });
-
+        
         if ( !angular.equals( selectedPopulations,project.populations ) || !angular.equals( selectedPrograms,project.programs ) ) {
           var message = 'You have made changes to populations and programs. All existing data will be lost. Would you like to continue?';
           modalService.confirm(
