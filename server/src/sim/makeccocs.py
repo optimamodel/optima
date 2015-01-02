@@ -8,7 +8,7 @@ Version: 2014nov26 by cliffk
 ###############################################################################
 
 from math import log
-from matplotlib.pylab import figure, plot, hold, xlabel, ylabel, title
+from matplotlib.pylab import figure, plot, hold, xlabel, ylabel, title, scatter
 from numpy import linspace, exp, isnan, zeros, asarray
 from rtnorm import rtnorm
 from bunch import float_array
@@ -17,42 +17,130 @@ from printv import printv
 from parameters import parameters, input_parameter_name
 
 ## Set defaults for testing
-default_progname = 'MSM programs'
-default_startup = 0 # select0 for programs with no startup costs or 1 for programs with startup costs
+default_progname = 'OST'
+default_numbercov = [0, 0, 1, 0, 0, 1, 1] # should equal 1 if coverage is specified as a number rather than as a percentage. This will be replaced by D.data.meta.progs.numbercov
+default_startup = 0 # select 0 for programs with no startup costs or 1 for programs with startup costs
 default_ccparams = [0.9, 0.2, 800000.0, 7e6]
 default_coparams = []
 default_init_coparams = [[0.3, 0.5], [0.7, 0.9]]
 default_makeplot = 1
-#default_datain = D # use 'example' or programs
 default_effectname = [['sex', 'condomcas'], [u'MSM programs'], [[0.3, 0.5], [0.7, 0.9]]]
+
+
+###############################################################################
+## Show cost-coverage data
+###############################################################################
+def showdata(D=None, progname=default_progname, numbercov=default_numbercov, makeplot=default_makeplot):
+    '''
+    Extract and display cost/coverage scatter data
+    '''
+    
+    # Check that the selected program is in the program list 
+    if progname not in D.programs.keys():
+        raise Exception('Please select one of the following programs %s' % D.programs.keys())
+    
+    # Extract basic info from data structure
+    prognumber = D.data.meta.progs.short.index(progname) # get program index number
+    ndatayears = len(D.data.epiyears)
+
+    # Figure out the size of the total population from data
+    totalpopdata = [0.0]*ndatayears
+    for j in range(len(D.data.key.popsize[0])):
+        if len(D.data.key.popsize[0][j])==1: # If an assumption has been used, keep this constant over time
+            totalpopdata = [sum(x) for x in zip(totalpopdata, D.data.key.popsize[0][j]*ndatayears)]
+        else:
+            totalpopdata = [sum(x) for x in zip(totalpopdata, D.data.key.popsize[0][j])]
+
+    # Figure out the size of the total population from model
+    totalpopmodel = D.S.people[:,:,:].sum(axis=(0,1))
+
+    # Figure out the targeted population(s) 
+    targetpops = []
+    for effect in D.programs[progname]:
+        targetpops.append(effect[1][0])
+    targetpops = set(targetpops)
+
+    # Figure out the total size of the targeted population(s)
+    targetpopdata = [0.0]*ndatayears
+    targetpopmodel = [0.0]*ndatayears    
+    for thispop in targetpops: # Loop through populations
+        if thispop in D.data.meta.pops.short: # Program affects a particular population
+            thispopnumber = D.data.meta.pops.short.index(thispop)
+            if len(D.data.key.popsize[0][thispopnumber])==1: # If an assumption has been used, keep this constant over time
+                targetpopdata = [sum(x) for x in zip(targetpopdata, D.data.key.popsize[0][thispopnumber]*ndatayears)]
+            else:
+                targetpopdata = [sum(x) for x in zip(targetpopdata, D.data.key.popsize[0][thispopnumber])]
+            targetpopmodel = [sum(x) for x in zip(targetpopmodel, D.S.people[:,thispopnumber,:].sum(axis=0))]
+        else: # Program affects all populations in model
+            targetpopdata = totalpopdata
+            targetpopmodel = totalpopmodel
+            continue
+
+    # How has coverage been specified, as a number or a percentage?
+    if numbercov[prognumber]:
+        coveragenumber = D.data.costcov.cov[prognumber] 
+        if len(coveragenumber)==1: # If an assumption has been used, keep this constant over time
+            coveragenumber = coveragenumber*ndatayears
+        coverage = coveragenumber # this is unnecessary atm but might be useful later to set it up this way
+        coveragepercent = [(coveragenumber[j]/targetpopdata[j])*100 for j in range(ndatayears)] # get program coverage
+    else:
+        coveragepercent = D.data.costcov.cov[prognumber] 
+        if len(coveragepercent)==1: # If an assumption has been used, keep this constant over time
+            coveragepercent = coveragepercent*ndatayears
+        coverage = coveragepercent # this is unnecessary now but might be useful later to set it up this way
+        coveragenumber = [coveragepercent[j] * targetpopdata[j] for j in range(ndatayears)] # get program coverage 
+
+    # If the cost data has been entered as total cost, we can just use this directly (NB, this is indicated via the code 'saturating', #TODO change this)
+    if D.data.meta.progs.saturating[prognumber]:
+        totalcost = D.data.costcov.cost[prognumber]
+        if len(totalcost)==1: # If an assumption has been used, keep this constant over time
+            totalcost = totalcost*ndatayears
+
+    # If the cost data is specified as an average (unit) cost, we need to get the number of people covered to calculate the total cost
+    else:
+        unitcost = D.data.costcov.cost[prognumber]
+        if len(unitcost)==1: # If an assumption has been used, keep this constant over time
+            unitcost = unitcost*ndatayears
+        totalcost = [unitcost[j]*coveragenumber[j] for j in range(ndatayears)]
+        
+    # Store plot data
+    scatterplotdata = {}
+    scatterplotdata['xdata'] = totalcost
+    scatterplotdata['ydata'] = coverage
+    scatterplotdata['title'] = progname
+    scatterplotdata['xlabel'] = 'USD'
+    if numbercov[prognumber]:
+        scatterplotdata['ylabel'] = 'Number covered'
+    else: 
+        scatterplotdata['ylabel'] = 'Percentage covered'
+    
+    # Plot (to check it's working; delete once plotting enabled in GUI)
+    if makeplot:
+        figure()
+        hold(True)
+        scatter(scatterplotdata['xdata'], scatterplotdata['ydata'])
+        title(scatterplotdata['title'])
+        xlabel(scatterplotdata['xlabel'])
+        ylabel(scatterplotdata['ylabel'])
+    
+    return scatterplotdata
 
 ###############################################################################
 ## Make cost coverage curve
-#    Input types:
-#    1. datain: EITHER a bunch (if project data already loaded) OR a string specifying the project name (which will then be load a bunch)
-#    2. progname: string. Needs to be one of the keys of D.programs
-#    3. ccparams: list. Contains parameters for the cost-coverage curves, obtained from the GUI
-#            ccparams(0) = the saturation value
-#            ccparams(1) = the 'known' coverage level
-#            ccparams(2) = the 'known' funding requirements to achieve ccparams(2)
-#            ccparams(3) = desired upper x limit
-
-#    Output types:
-#    1. plotdata, storeparams
-
 ###############################################################################
-def makecc(D=None, progname = default_progname, startup = default_startup, ccparams = default_ccparams, makeplot = default_makeplot, verbose=2, nxpts = 1000):
+def makecc(D=None, progname=default_progname, startup=default_startup, numbercov=default_numbercov, ccparams=default_ccparams, makeplot=default_makeplot, verbose=2, nxpts = 1000):
     
     if verbose>=2:
         print('makecc %s %s' % (progname, ccparams))
-    ## Check that the selected program is in the program list 
+
+    # Check that the selected program is in the program list 
     if progname not in D.programs.keys():
         raise Exception('Please select one of the following programs %s' % D.programs.keys())
 
-    ## Extract info from data structure
+    # Extract info from data structure
     prognumber = D.data.meta.progs.short.index(progname) # get program number
     coverage = D.data.costcov.cov[prognumber] # get program coverage levels
-    
+        
     # For saturating programs... 
     if D.data.meta.progs.saturating[prognumber]:
         totalcost = D.data.costcov.cost[prognumber]
@@ -475,5 +563,5 @@ def makesamples(coparams, muz, stdevz, muf, stdevf, samplesize=1000):
         
     return zerosample, fullsample
 
-
+#plotdata = showdata(D, progname=default_progname, numbercov=default_numbercov, makeplot=default_makeplot)
 # plotallcurves(D, progname=default_progname, ccparams=default_ccparams, coparams=default_coparams, makeplot=default_makeplot, verbose=2)

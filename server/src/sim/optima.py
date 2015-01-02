@@ -44,7 +44,7 @@ D = updatedata(D, verbose=verbose)
 
 print('\n\n\n5. Running simulation...')
 from runsimulation import runsimulation
-D = runsimulation(D, startyear=2000, endyear=2015, verbose=verbose)
+D = runsimulation(D, startyear=2000, endyear=2030, verbose=verbose)
 
 print('\n\n\n6. Viewing results...')
 from viewresults import viewuncerresults
@@ -52,7 +52,7 @@ viewuncerresults(D.plot.E, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1]
 
 print('\n\n\n7. Automatic calibration...')
 from autofit import autofit
-D = autofit(D, timelimit=timelimit, startyear=2000, endyear=2015, verbose=verbose)
+D = autofit(D, timelimit=timelimit, startyear=2000, endyear=2030, verbose=verbose)
 
 print('\n\n\n8. Viewing results again...')
 viewuncerresults(D.plot.E)
