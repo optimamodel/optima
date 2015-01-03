@@ -11,7 +11,7 @@ define(['./module', 'angular'], function (module, angular) {
       F.init = _(F.init).map(parseFloat);
       return F;
     };
-    
+
     var transformedF = prepareF(f[0]);
 
     $scope.parameters = {
@@ -306,7 +306,7 @@ define(['./module', 'angular'], function (module, angular) {
       } else {
         return '';
       }
-    }    
+    };
 
     // The graphs are shown/hidden after updating the graph type checkboxes.
     $scope.$watch('types', function () {
@@ -316,16 +316,6 @@ define(['./module', 'angular'], function (module, angular) {
     $scope.reportDataEndError = function() {
       return "End year must be more than "+ $scope.G.dataend + ".";
     };
-
-    $scope.uploadDataSpreadsheet = function () {
-      angular
-        .element('<input type="file">')
-        .change(function (event) {
-          // function uploadDataSpreadsheet defined in ui/index.js
-          $scope.$emit('uploadDataSpreadsheet', {'file':event.target.files[0]});
-        })
-        .click();
-    }
 
   });
 });
