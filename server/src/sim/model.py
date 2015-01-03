@@ -4,7 +4,7 @@ from bunch import Bunch as struct # Replicate Matlab-like structure behavior
 from printv import printv
 from math import pow as mpow
 
-def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates etc.
+def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculate death rates etc.
     """
     This function runs the model.
     
@@ -44,7 +44,12 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
     effhivprev = zeros((npops, 1))    # HIV effective prevalence (prevalence times infectiousness)
 
     ## Set initial epidemic conditions 
-    people[:,:,0] = equilibrate(G, M, array(F.init)) # Run equilibration
+    ## Set initial epidemic conditions
+    turnofftrans = not(isinstance(initstate, type(None))) # Has the initial state been provided?
+    if not(turnofftrans):
+        people[:,:,0] = equilibrate(G, M, array(F.init)) # No it hasn't, so run equilibration
+    else:
+        people[:,:,0] = initstate # Yes it has, so use it.
     
     ## Calculate other things outside the loop
     cd4trans = h2a(M.const.cd4trans) # Convert a dictionary to an array

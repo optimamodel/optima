@@ -40,7 +40,10 @@
           <button class="btn __white" ng-click="open(project.name)">Open project</button>
         </td>
         <td>
-          <button class="btn __red" ng-click="remove($event, project.name, $index)">Delete project</button>
+          <button class="btn __green" ng-click="edit(project.name)">Edit</button>
+        </td>
+        <td>
+		  <button class="btn __red" ng-click="remove($event, project.name, $index)">Delete project</button>
         </td>
         <td>
           <button class="btn __blue" ng-click="workbook(project.name)">Open data entry spreadsheet</button>

@@ -29,6 +29,23 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     /**
+     * Opens to edit an existing project using `name` in /project/create screen
+     *
+     * Alerts the user if it cannot do it.
+     */
+    $scope.edit = function (name) {
+      $http.get('/api/project/open/' + name)
+        .success(function (response) {
+          if (response && response.status === 'NOK') {
+            alert(response.reason);
+            return;
+          }
+          activeProject.setActiveProjectFor(name, UserManager.data);
+          window.location = '/#/project/edit';
+        });
+    };
+
+    /**
      * Regenerates workbook for the given project `name`
      * Alerts the user if it cannot do it.
      *
@@ -36,7 +53,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.workbook = function (name) {
       // read that this is the universal method which should work everywhere in
       // http://stackoverflow.com/questions/24080018/download-file-from-a-webapi-method-using-angularjs
-      window.open('/api/project/workbook/' + name, '_blank', '');  
+      window.open('/api/project/workbook/' + name, '_blank', '');
     };
 
     /**
@@ -53,7 +70,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             return;
           }
 
-          $scope.projects.splice(index, 1);
+          $scope.projects = _($scope.projects).filter(function (item) {
+            return item.name != name;
+          });
 
           activeProject.ifActiveResetFor(name, UserManager.data);
         })
@@ -64,18 +83,18 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     /**
      * Opens a modal window to ask the user for confirmation to remove the project and
-     * removes the project if the user confirms. 
+     * removes the project if the user confirms.
      * Closes it without further action otherwise.
      */
     $scope.remove = function ($event, name, index) {
       if ($event) { $event.preventDefault(); }
       var message = 'Are you sure you want to permanently remove project "' + name + '"?';
       modalService.confirm(
-        function (){ removeNoQuestionsAsked(name, index); }, 
-        function (){ null }, 
+        function (){ removeNoQuestionsAsked(name, index); },
+        function (){},
         'Yes, remove this project',
         'No',
-        message, 
+        message,
         'Remove project'
       );
     };

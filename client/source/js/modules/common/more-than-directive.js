@@ -1,24 +1,24 @@
-define(['angular'], function (module) {
+define(['angular'], function (angular) {
   'use strict';
 
   return angular.module('app.more-than', [])
-    /**
-     * Adds a more than validator to the parsers of an input element.
-     *
-     * The input element is only valid if the actual value is larger
-     * than the provided value through the directive.
-     */
+  /**
+   * Adds a more than validator to the parsers of an input element.
+   *
+   * The input element is only valid if the actual value is larger
+   * than the provided value through the directive.
+   */
     .directive('moreThan', [function () {
       return {
         require: 'ngModel',
         scope: {
-          moreThan: '=',
+          moreThan: '='
         },
-        link: function(scope, element, attrs, ctrl) {
-
+        link: function (scope, element, attrs, ctrl) {
           var updateValidity = function (highValue, lowValue) {
             var isValid = highValue > lowValue;
-            ctrl.$setValidity('moreThan', isValid);
+            var canBeEmpty = !element.required && (highValue === undefined || highValue == '');
+            ctrl.$setValidity('moreThan', isValid || canBeEmpty);
           };
 
           var validator = function (value) {
@@ -31,7 +31,7 @@ define(['angular'], function (module) {
           ctrl.$formatters.unshift(validator);
 
           // updated validity also when the value to compare changes
-          scope.$watch('moreThan', function(moreThanValue) {
+          scope.$watch('moreThan', function (moreThanValue) {
             updateValidity(ctrl.$modelValue, moreThanValue);
           });
         }

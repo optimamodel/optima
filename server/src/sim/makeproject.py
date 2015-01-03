@@ -41,6 +41,7 @@ def makeproject(projectname='example', pops = default_pops, progs = default_prog
     D.G.datastart = datastart
     D.G.dataend = dataend
     D.G.datayears = arange(D.G.datastart, D.G.dataend+1)
+    # Q:should econ_dataend also be saved somewhere?
     
     # Set up "F" -- fitted parameters structure
     D.F = makefittedpars(D.G, D.opt, verbose=verbose)

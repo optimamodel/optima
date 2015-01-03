@@ -67,7 +67,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           if (!info) return;
           var data = info.data;
           if ( data.status == "OK" ) {
-            $scope.validate = data.is_calibrated;
+            $scope.validate = data.can_scenarios;
             $scope.show_message = !$scope.validate;
           }
         };
@@ -192,7 +192,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         // Helper function to open a population modal
         var openScenarioModal = function(scenario) {
           return $modal.open({
-            templateUrl: 'js/modules/analysis/analysis-scenarios-modal.html',
+            templateUrl: 'js/modules/analysis/scenarios-modal.html',
             controller: 'AnalysisScenariosModalController',
             resolve: {
               scenario: function () {
@@ -234,7 +234,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
                 });
         };
 
-        $scope.doCalibrate = function() {
+        $scope.gotoViewCalibrate = function() {
           $window.location.href = '#/model/view';
         };
 
