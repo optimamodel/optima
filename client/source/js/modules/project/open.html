@@ -11,7 +11,7 @@
       <th>Data end year</th>
       <th>Created on</th>
       <th>Data Uploaded on</th>
-      <th colspan="3">Actions</th>
+      <th colspan="4">Actions</th>
       </thead>
       <tbody>
       <tr ng-repeat="project in projects | orderBy: 'name'">
@@ -38,6 +38,9 @@
         </td>
         <td>
           <button class="btn __white" ng-click="open(project.name)">Open</button>
+        </td>
+        <td>
+          <button class="btn __green" ng-click="edit(project.name)">Edit</button>
         </td>
         <td>
           <button class="btn __red" ng-click="remove($event, project.name, $index)">Remove</button>

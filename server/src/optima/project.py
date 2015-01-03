@@ -51,7 +51,7 @@ def get_predefined():
     category_per_program = {}
     for category in program_categories:
         for p in category['programs']:
-            category_per_program[p['short_name']] = category['category'] 
+            category_per_program[p['short_name']] = category['category']
     for p in populations: p['active']= False
     for p in programs:
         p['active'] = False
@@ -76,11 +76,19 @@ def createProject(project_name):
     from sim.makeproject import default_datastart, default_dataend, default_econ_dataend, default_pops, default_progs
 
     #session.clear() # had to commit this line to check user session
-
     current_app.logger.debug("createProject %s" % project_name)
     data = request.form
+
+    # get current user
+    user_id = current_user.id
+
     if data:
+        edit_params = json.loads(data['edit_params'])
         data = json.loads(data['params'])
+
+    # check if current request is edit request
+    is_edit = edit_params.get('isEdit')
+    can_update = edit_params.get('canUpdate')
 
     makeproject_args = {"projectname":project_name, "savetofile":False}
     makeproject_args['datastart'] = data.get('datastart', default_datastart)
@@ -95,6 +103,8 @@ def createProject(project_name):
 
     # update existing
     if project is not None:
+        # set new project name if not none
+
         project.datastart = makeproject_args['datastart']
         project.dataend = makeproject_args['dataend']
         project.econ_dataend = makeproject_args['econ_dataend']
@@ -110,6 +120,24 @@ def createProject(project_name):
 
     D = makeproject(**makeproject_args) # makeproject is supposed to return the name of the existing file...
     project.model = D.toDict()
+    if is_edit:
+        db.session.query(WorkingProjectDb).filter_by(id=project.id).delete()
+        if can_update and project.project_data is not None and project.project_data.meta is not None:
+            # try to reload the data
+            loaddir =  upload_dir_user(DATADIR)
+            if not loaddir:
+                loaddir = DATADIR
+            filename = project_name + '.xlsx'
+            server_filename = os.path.join(loaddir, filename)
+            filedata = open(server_filename, 'wb')
+            filedata.write(project.project_data.meta)
+            filedata.close()
+            D = model_as_bunch(project.model)
+            D = updatedata(D, savetofile = False)
+            model = model_as_dict(D)
+            project.model = model
+        else:
+            db.session.query(ProjectDataDb).filter_by(id=project.id).delete()
 
     # Save to db
     db.session.add(project)
@@ -159,10 +187,10 @@ def giveWorkbook(project_name):
     if project is None:
         reply['reason']='Project %s does not exist.' % project_name
         return jsonify(reply)
-    else:        
+    else:
         # See if there is matching project data
         projdata = ProjectDataDb.query.get(project.id)
-        
+
         if projdata is not None and len(projdata.meta)>0:
             return Response(projdata.meta,
                 mimetype= 'application/octet-stream',
@@ -207,13 +235,12 @@ def getProjectInformation():
             'projectionEndYear': project.econ_dataend,
             'programs': project.programs,
             'populations': project.populations,
-            'creation_time': project.creation_time, 
-            'data_upload_time': project.data_upload_time(), 
+            'creation_time': project.creation_time,
+            'data_upload_time': project.data_upload_time(),
             'has_data': project.has_data(),
             'can_calibrate': project.can_calibrate(),
             'can_scenarios': project.can_scenarios(),
         }
-
     return jsonify(response_data)
 
 @project.route('/list')
@@ -280,7 +307,7 @@ def deleteProject(project_name):
 
 
 """
-saves data as Excel file 
+saves data as Excel file
 """
 @project.route('/export', methods=['POST'])
 @login_required
@@ -329,7 +356,6 @@ def uploadExcel():
     current_app.logger.debug("uploadExcel(project name: %s user:%s)" % (project_name, user_id))
 
     reply = {'status':'NOK'}
-    print(request.files)
     file = request.files['file']
 
     # getting current user path
@@ -362,23 +388,23 @@ def uploadExcel():
         db.session.add(project)
 
         # save data upload timestamp
-        data_upload_time = datetime.now(dateutil.tz.tzutc())                     
+        data_upload_time = datetime.now(dateutil.tz.tzutc())
         # get file data
         filedata = open(server_filename, 'rb').read()
         # See if there is matching project data
         projdata = ProjectDataDb.query.get(project.id)
-        
+
         # update existing
         if projdata is not None:
             projdata.meta = filedata
         else:
             # create new project data
             projdata = ProjectDataDb(project.id, filedata, data_upload_time)
-                
+
         # Save to db
         db.session.add(projdata)
         db.session.commit()
-            
+
     reply['status'] = 'OK'
     reply['result'] = 'Project %s is updated' % project_name
     return json.dumps(reply)

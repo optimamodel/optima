@@ -44,6 +44,7 @@ define(['./module', 'angular'], function (module, angular) {
     $scope.graphs = [];
     $scope.projectInfo = info;
     $scope.canDoFitting = $scope.projectInfo.can_calibrate;
+    $scope.needData = !$scope.projectInfo.has_data;
 
     var lineScatterOptions = {
       title: 'Title',
@@ -305,7 +306,7 @@ define(['./module', 'angular'], function (module, angular) {
       } else {
         return '';
       }
-    }    
+    };
 
     // The graphs are shown/hidden after updating the graph type checkboxes.
     $scope.$watch('types', function () {
