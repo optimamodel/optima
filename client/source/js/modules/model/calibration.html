@@ -3,13 +3,13 @@
     <div class="page_subheader">
         <div class="section grid">
             <form name="CalibrationForm" ng-submit="simulate()">
+                <p ng-show="needData" class="error-hint">Please upload Optima spreadsheet first.</p>
                 <div class="2">
                     <input class="txbox" type="number" placeholder="Start year" ng-model="simulationOptions.startyear">
                 </div>
                 <div class="2">
                     <input class="txbox" type="number" name="endYear" placeholder="End year" ng-model="simulationOptions.endyear" more-than="G.dataend">
                     <span ng-show="CalibrationForm.endYear.$error.moreThan" class="error-hint">{{reportDataEndError()}}</span>
-                    <span ng-show="needData" class="error-hint">Please upload Optima spreadsheet first.</span>
                 </div>
                 <div class="2">
                     <button class="btn" ng-click="simulate()" ng-disabled="needData || CalibrationForm.$invalid">View simulation</button>
@@ -27,7 +27,7 @@
                 <input type="checkbox" ng-disabled="!canDoFitting" ng-model="enableManualCalibration">
                 Manual calibration
             </label>
-            <span ng-show="!canDoFitting" class="error-hint">Run "View Simulation" in order to enable data calibration</span>
+            <span ng-show="!canDoFitting" class="info-hint">Run "View Simulation" in order to enable data calibration</span>
         </div>
 
     </div>
