@@ -184,8 +184,7 @@ Returns the parameters of the given model.
 @login_required
 @check_project_name
 def getModel():
-    D = load_model(request.project_name)
-    result = D.toDict()
+    D = load_model(request.project_name, as_bunch = False)
     return jsonify(result)
 
 """
@@ -256,6 +255,7 @@ def doRunSimulation():
     endyear = data.get("endyear")
     if endyear:
         args["endyear"] = int(endyear)
+    args["makeplot"] = 0
     try:
         D = runsimulation(**args)
         D_dict = D.toDict()

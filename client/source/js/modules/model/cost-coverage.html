@@ -4,13 +4,13 @@
     <div class="6">
       <label>
         Select a program: <br>
-        <select 
-          class="txbox" 
-          ng-options="p as p.name group by p.category for p in programs" 
+        <select
+          class="txbox"
+          ng-options="p as p.name group by p.category for p in programs"
           ng-change="changeProgram()"
           ng-model="selectedProgram"></select>
       </label>
-      
+
     </div>
   </div>
   <div class="section" ng-hide="selectedProgram.acronym==null">
@@ -55,23 +55,11 @@
           </label><br>
           <label>
             <input type="radio" name="displaycost" ng-model="displaycost" value="2">
-            Cost in units of gross domestic product  in year <input class="txbox __inline __l" value="2014" placeholder="e.g. 2014" ng-model="display.year">
+            Cost per person in targeted population
           </label><br>
           <label>
             <input type="radio" name="displaycost" ng-model="displaycost" value="3">
-            Cost in units of government revenue in year <input class="txbox __inline __l" value="2014" placeholder="e.g. 2014" ng-model="display.year">
-          </label><br>
-          <label>
-            <input type="radio" name="displaycost" ng-model="displaycost" value="4">
-            Cost in units of total health expenditure in year <input class="txbox __inline __l" value="2014" placeholder="e.g. 2014" ng-model="display.year">
-          </label><br>
-          <label>
-            <input type="radio" name="displaycost" ng-model="displaycost" value="5">
-            Cost in units of domestic health spending in year <input class="txbox __inline __l" value="2014" placeholder="e.g. 2014" ng-model="display.year">
-          </label><br>
-          <label>
-            <input type="radio" name="displaycost" ng-model="displaycost" value="6">
-            Cost in units of government expenditure in year <input class="txbox __inline __l" value="2014" placeholder="e.g. 2014" ng-model="display.year">
+            Cost per targeted person in units of  GDP per capita using PPP exchange rates in year <input class="txbox __inline __l" value="2014" placeholder="e.g. 2014" ng-model="display.year">
           </label>
           </p>
         </div>

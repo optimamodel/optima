@@ -1,31 +1,31 @@
 <div class="rich">
 
-  <form id="createForm" name="CreateProjectForm" action="" method="post" ng-submit="prepareCreateForm()" novalidate="novalidate">
+  <form id="createForm" name="CreateOrEditProjectForm" action="" method="post" ng-submit="prepareCreateOrEditForm()" novalidate="novalidate">
 
     <div class="section grid">
       <div class="6">
           <h1>Project details</h1>
 
          <b>Project name</b>
-        <input class="txbox" type="text" placeholder="e.g. Example" ng-model="projectParams.name" required>
+        <input class="txbox" type="text" placeholder="e.g. Example" ng-model="projectParams.name" ng-disabled="editParams.isEdit" required>
       </div>
     </div>
 
     <div class="section grid">
       <div class="3">
           <b>First year for data entry</b>
-        <input class="txbox" type="number" min="1900" placeholder="e.g. 2000" ng-model="projectParams.datastart" required>
+        <input class="txbox" type="number" min="1900" placeholder="e.g. 2000" ng-model="projectParams.datastart" ng-disabled="editParams.isEdit" required>
       </div>
       <div class="3">
           <b>Final year for data entry</b>
-        <input class="txbox" type="number" min="1900" placeholder="e.g. 2015" ng-model="projectParams.dataend" required>
+        <input class="txbox" type="number" min="1900" placeholder="e.g. 2015" ng-model="projectParams.dataend" ng-disabled="editParams.isEdit" required>
       </div>
     </div>
 
     <div class="section grid">
       <div class="3">
           <b>Final year for macroeconomic projection data</b>
-        <input class="txbox" type="number" min="1900" placeholder="e.g. 2030" ng-model="projectParams.econ_dataend" required>
+        <input class="txbox" type="number" min="1900" placeholder="e.g. 2030" ng-model="projectParams.econ_dataend" ng-disabled="editParams.isEdit" required>
       </div>
     </div>
 
@@ -51,17 +51,21 @@
             <td style="width: 300px">{{ row.name }}</td>
             <td style="width: 150px">{{ row.short_name }}</td>
             <td>
-              <button role="button" class="btn" ng-click="openEditPopulationModal($event, row)">Edit</button>
+              <button type="button" class="btn" ng-click="openEditPopulationModal($event, row)">Edit</button>
             </td>
             <td>
+<<<<<<< HEAD:client/source/js/modules/project/create.html
               <button role="button" class="btn" ng-click="copyPopulationAndOpenModal($event, row)">Create duplicate & edit</button>
+=======
+              <button type="button" class="btn" ng-click="copyPopulationAndOpenModal($event, row)">Copy</button>
+>>>>>>> develop:client/source/js/modules/project/create-or-edit.html
             </td>
           </tr>
           </tbody>
           <tfoot>
           <tr>
             <td colspan="6" class="text-right">
-              <button role="button" class="btn" ng-click="openAddPopulationModal($event)">Add a population</button>
+              <button type="button" class="btn" ng-click="openAddPopulationModal($event)">Add a population</button>
             </td>
           </tr>
           </tfoot>
@@ -98,10 +102,14 @@
                 <td style="width: 300px">{{ program.name }}</td>
                 <td style="width: 150px">{{ program.short_name }}</td>
                 <td>
-                  <button role="button" class="btn" ng-click="openEditProgramModal($event, program)">Edit</button>
+                  <button type="button" class="btn" ng-click="openEditProgramModal($event, program)">Edit</button>
                 </td>
                 <td>
+<<<<<<< HEAD:client/source/js/modules/project/create.html
                   <button role="button" class="btn" ng-click="copyProgram($event, program)">Create duplicate & edit</button>
+=======
+                  <button type="button" class="btn" ng-click="copyProgram($event, program)">Copy</button>
+>>>>>>> develop:client/source/js/modules/project/create-or-edit.html
                 </td>
               </tr>
               <tr ng-show="!programs.length">
@@ -114,7 +122,7 @@
           <tfoot>
           <tr>
             <td colspan="5" class="text-right">
-              <button role="button" class="btn" ng-click="openAddProgramModal($event)">Add a program</button>
+              <button type="button" class="btn" ng-click="openAddProgramModal($event)">Add a program</button>
             </td>
           </tr>
           </tfoot>
@@ -124,9 +132,10 @@
     </div>
 
     <div class="section text-center">
-      <button class="btn" type="submit" style="background: #008800;"><b>Create project &amp; Optima template</b></button>
+      <button class="btn" type="submit" style="background: #008800;"><b>{{ submit }}</b></button>
     </div>
 
     <input type="hidden" id="params" name="params" value="{{ formParams }}">
+    <input type="hidden" id="edit_params" name="edit_params" value = "{{ editParams }}">
   </form>
 </div>

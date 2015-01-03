@@ -1,6 +1,6 @@
 define([
   './create-population-modal-ctrl',
   './create-program-modal-ctrl',
-  './project-create-ctrl',
-  './project-open-ctrl'
+  './create-or-edit-ctrl',
+  './open-ctrl'
 ], function () {});
