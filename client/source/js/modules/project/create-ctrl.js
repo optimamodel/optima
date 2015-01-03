@@ -272,8 +272,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             message = 'You have changed some program or population parameters. Your original data can be reapplied, but you will have to redo the calibration and analysis. Would you like to continue?';
           }
           modalService.confirm(
-            function (){ continueSubmitForm( selectedPrograms, selectedPopulations ) },
-            function (){ null },
+            function (){ continueSubmitForm( selectedPrograms, selectedPopulations ); },
+            function (){},
             'Yes, save this project',
             'No',
             message,
@@ -282,8 +282,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         } else {
           var message = 'No parameters have been changed. Do you intend to reload the original data and start from scratch?';
           modalService.confirm(
-            function (){ continueSubmitForm( selectedPrograms, selectedPopulations ) },
-            function (){ null },
+            function (){ continueSubmitForm( selectedPrograms, selectedPopulations ); },
+            function (){},
             'Yes, reload this project',
             'No',
             message,
