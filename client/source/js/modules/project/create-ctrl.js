@@ -36,14 +36,14 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         $scope.projectParams.econ_dataend = $scope.projectInfo.projectionEndYear;
       }
       _($scope.populations).each(function(population){
-        var source = _.findWhere($scope.projectInfo.populations, {short_name:population.short_name});
+        var source = _.findWhere($scope.projectInfo.populations, { short_name: population.short_name });
         if (source) {
           population.active = true;
           _.extend(population, source);
         }
       });
       _($scope.programs).each(function(program){
-        var source = _.findWhere($scope.projectInfo.programs, {short_name:program.short_name});
+        var source = _.findWhere($scope.projectInfo.programs, { short_name: program.short_name });
         if (source) {
           program.active = true;
           _(program).extend(angular.copy(source));
