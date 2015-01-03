@@ -10,11 +10,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.editParams = {
       is_edit: false
     };
-    $scope.project_info = info;
+    $scope.projectInfo = info;
 
     var availableParameters = parametersResponse.data.params;
     var availableDefaults = defaultsResponse.data;
-        
+
     $scope.submit = "Create project & Optima template";
     $scope.populations = availableDefaults.populations;
     $scope.programs = availableDefaults.programs;
@@ -26,24 +26,24 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       $scope.editParams.is_edit = true;
       $scope.editParams.can_update = true;
-      $scope.old_project_name =  $scope.project_info.name;
+      $scope.old_project_name =  $scope.projectInfo.name;
 
       if (activeProject.isSet()) {
         $scope.projectParams.name = $scope.old_project_name;
 
-        $scope.projectParams.datastart = $scope.project_info.dataStart;
-        $scope.projectParams.dataend = $scope.project_info.dataEnd;
-        $scope.projectParams.econ_dataend = $scope.project_info.projectionEndYear;
+        $scope.projectParams.datastart = $scope.projectInfo.dataStart;
+        $scope.projectParams.dataend = $scope.projectInfo.dataEnd;
+        $scope.projectParams.econ_dataend = $scope.projectInfo.projectionEndYear;
       }
       _($scope.populations).each(function(population){
-        var source = _.findWhere($scope.project_info.populations, {short_name:population.short_name});
+        var source = _.findWhere($scope.projectInfo.populations, {short_name:population.short_name});
         if (source) {
           population.active = true;
           _.extend(population, source);
         }
       });
       _($scope.programs).each(function(program){
-        var source = _.findWhere($scope.project_info.programs, {short_name:program.short_name});
+        var source = _.findWhere($scope.projectInfo.programs, {short_name:program.short_name});
         if (source) {
           program.active = true;
           _(program).extend(angular.copy(source));
@@ -261,12 +261,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       var selectedPrograms = toCleanArray($scope.programs);
       var selectedPopulations = toCleanArray($scope.populations);
-      
-      if ( $state.current.name == "project.edit" ) {        
-        if ( !angular.equals( selectedPopulations,$scope.project_info.populations ) 
-          || !angular.equals( selectedPrograms,$scope.project_info.programs ) ) {
-          $scope.editParams.can_update = $scope.editParams.can_update && selectedPopulations.length == $scope.project_info.populations.length;
-          $scope.editParams.can_update = $scope.editParams.can_update && selectedPrograms.length == $scope.project_info.programs.length;
+
+      if ( $state.current.name == "project.edit" ) {
+        if ( !angular.equals( selectedPopulations,$scope.projectInfo.populations )
+          || !angular.equals( selectedPrograms,$scope.projectInfo.programs ) ) {
+          $scope.editParams.can_update = $scope.editParams.can_update && selectedPopulations.length == $scope.projectInfo.populations.length;
+          $scope.editParams.can_update = $scope.editParams.can_update && selectedPrograms.length == $scope.projectInfo.programs.length;
           var message = 'You have made changes to populations and programs. All existing data will be lost. Would you like to continue?';
           if ($scope.editParams.can_update) {
             message = 'You have changed some program or population parameters. Your original data can be reapplied, but you will have to redo the calibration and analysis. Would you like to continue?';
