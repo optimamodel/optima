@@ -26,10 +26,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       $scope.editParams.is_edit = true;
       $scope.editParams.can_update = true;
-      $scope.old_project_name =  $scope.projectInfo.name;
+      $scope.oldProjectName =  $scope.projectInfo.name;
 
       if (activeProject.isSet()) {
-        $scope.projectParams.name = $scope.old_project_name;
+        $scope.projectParams.name = $scope.oldProjectName;
 
         $scope.projectParams.datastart = $scope.projectInfo.dataStart;
         $scope.projectParams.dataend = $scope.projectInfo.dataEnd;
