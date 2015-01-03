@@ -272,23 +272,23 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             message = 'You have changed some program or population parameters. Your original data can be reapplied, but you will have to redo the calibration and analysis. Would you like to continue?';
           }
           modalService.confirm(
-            function (){ continueSubmitForm( selectedPrograms, selectedPopulations ) }, 
-            function (){ null }, 
+            function (){ continueSubmitForm( selectedPrograms, selectedPopulations ) },
+            function (){ null },
             'Yes, save this project',
             'No',
-            message, 
+            message,
             'Save Project?'
           );
         } else {
           var message = 'No parameters have been changed. Do you intend to reload the original data and start from scratch?';
           modalService.confirm(
-            function (){ continueSubmitForm( selectedPrograms, selectedPopulations ) }, 
-            function (){ null }, 
+            function (){ continueSubmitForm( selectedPrograms, selectedPopulations ) },
+            function (){ null },
             'Yes, reload this project',
             'No',
-            message, 
+            message,
             'Reload project?'
-          ); 
+          );
         }
       } else {
         continueSubmitForm( selectedPrograms, selectedPopulations );
@@ -296,7 +296,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     // handle another function to continue to submit form
-    // since the confirm modal is async and doesn't wait for user's response 
+    // since the confirm modal is async and doesn't wait for user's response
     var continueSubmitForm = function( selectedPrograms, selectedPopulations ) {
       var params = _($scope.projectParams).omit('name');
       params.populations = selectedPopulations;
@@ -304,7 +304,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       $scope.formAction = '/api/project/create/' + $scope.projectParams.name;
       $scope.formParams = JSON.stringify(params);
-      
+
       // according to documentation it should have been working without this line, but no cigar
       // https://docs.angularjs.org/api/ng/directive/ngSubmit
       document.getElementById('createForm').action = $scope.formAction;
