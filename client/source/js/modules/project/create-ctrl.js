@@ -263,8 +263,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       var selectedPopulations = toCleanArray($scope.populations);
 
       if ( $state.current.name == "project.edit" ) {
-        if ( !angular.equals( selectedPopulations,$scope.projectInfo.populations )
-          || !angular.equals( selectedPrograms,$scope.projectInfo.programs ) ) {
+        if ( !angular.equals( selectedPopulations,$scope.projectInfo.populations ) ||
+             !angular.equals( selectedPrograms,$scope.projectInfo.programs ) ) {
           $scope.editParams.can_update = $scope.editParams.can_update && selectedPopulations.length == $scope.projectInfo.populations.length;
           $scope.editParams.can_update = $scope.editParams.can_update && selectedPrograms.length == $scope.projectInfo.programs.length;
           var message = 'You have made changes to populations and programs. All existing data will be lost. Would you like to continue?';
