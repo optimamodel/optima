@@ -143,7 +143,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             return availableParameters;
           },
           populations: function () {
-            return $scope.populations;
+            var activePopulations = toCleanArray($scope.populations);
+            return activePopulations;
           }
         }
       });
@@ -234,6 +235,31 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         .value();
     };
 
+    /**
+     * Returns a list of error messages for invalid programs.
+     *
+     * A program is not valid if it contains a parameter with a population not
+     * contained in the available populations
+     */
+    var findInvalidProgramParameters = function(selectedPopulations, selectedPrograms) {
+      var avialablePopulationOptions = _(selectedPopulations).pluck('short_name');
+      avialablePopulationOptions.push('ALL_POPULATIONS');
+
+      var parameterErrors = [];
+
+      _(selectedPrograms).each(function(program) {
+        _(program.parameters).each(function(parameter) {
+          if (!_(avialablePopulationOptions).contains(parameter.value.pops[0])) {
+            parameterErrors.push("Program \"" + program.name + "\" contains a parameter with a population not selected for this Project.");
+          }
+        });
+      });
+
+      return _(parameterErrors).uniq().map(function(message) {
+        return {message: message};
+      });
+    };
+
     /*
      * Returns the provide programs with every "ALL_POPULATIONS" entry replaced
      * by the selected populations.
@@ -256,12 +282,18 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.prepareCreateOrEditForm = function () {
 
       if ($scope.CreateOrEditProjectForm.$invalid) {
-        alert('Please fill in all the required project fields');
+        modalService.informError([{message: 'Please fill in all the required project fields'}]);
         return false;
       }
 
       var selectedPrograms = toCleanArray($scope.programs);
       var selectedPopulations = toCleanArray($scope.populations);
+      var parameterErrors = findInvalidProgramParameters(selectedPopulations, selectedPrograms);
+
+      if (!_(parameterErrors).isEmpty()) {
+        modalService.informError(parameterErrors);
+        return false;
+      }
 
       if ( $state.current.name == "project.edit" ) {
         if ( !angular.equals( selectedPopulations,$scope.projectInfo.populations ) ||
