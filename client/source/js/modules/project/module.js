@@ -1,5 +1,5 @@
 /**
- * ProjectOpenController can set a project as active 
+ * ProjectOpenController can set a project as active
  * and allows to remove and create new projects.
  */
 
@@ -25,8 +25,8 @@ define([
         })
         .state('project.create', {
           url: '/create',
-          templateUrl: 'js/modules/project/create.html',
-          controller: 'ProjectCreateController',
+          templateUrl: 'js/modules/project/create-or-edit.html',
+          controller: 'ProjectCreateOrEditController',
           resolve: {
             parametersResponse: function($http) {
               return $http.get('/api/project/params');
@@ -41,8 +41,8 @@ define([
         })
         .state('project.edit', {
           url: '/edit',
-          templateUrl: 'js/modules/project/create.html',
-          controller: 'ProjectCreateController',
+          templateUrl: 'js/modules/project/create-or-edit.html',
+          controller: 'ProjectCreateOrEditController',
           resolve: {
             parametersResponse: function($http) {
               return $http.get('/api/project/params');

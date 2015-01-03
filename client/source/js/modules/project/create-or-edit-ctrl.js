@@ -1,7 +1,7 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
-  module.controller('ProjectCreateController', function ($scope, $state, $modal,
+  module.controller('ProjectCreateOrEditController', function ($scope, $state, $modal,
     $timeout, activeProject, parametersResponse, defaultsResponse, info,
     UserManager, modalService) {
 
@@ -253,9 +253,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       });
     };
 
-    $scope.prepareCreateForm = function () {
+    $scope.prepareCreateOrEditForm = function () {
 
-      if ($scope.CreateProjectForm.$invalid) {
+      if ($scope.CreateOrEditProjectForm.$invalid) {
         alert('Please fill in all the required project fields');
         return false;
       }
