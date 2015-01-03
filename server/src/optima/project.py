@@ -51,7 +51,7 @@ def get_predefined():
     category_per_program = {}
     for category in program_categories:
         for p in category['programs']:
-            category_per_program[p['short_name']] = category['category'] 
+            category_per_program[p['short_name']] = category['category']
     for p in populations: p['active']= False
     for p in programs:
         p['active'] = False
@@ -81,14 +81,14 @@ def createProject(project_name):
 
     # get current user
     user_id = current_user.id
-    
+
     if data:
         edit_params = json.loads(data['edit_params'])
         data = json.loads(data['params'])
 
     # check if current request is edit request
-    is_edit = edit_params.get('is_edit')
-    can_update = edit_params.get('can_update')
+    is_edit = edit_params.get('isEdit')
+    can_update = edit_params.get('canUpdate')
 
     makeproject_args = {"projectname":project_name, "savetofile":False}
     makeproject_args['datastart'] = data.get('datastart', default_datastart)
@@ -187,10 +187,10 @@ def giveWorkbook(project_name):
     if project is None:
         reply['reason']='Project %s does not exist.' % project_name
         return jsonify(reply)
-    else:        
+    else:
         # See if there is matching project data
         projdata = ProjectDataDb.query.get(project.id)
-        
+
         if projdata is not None and len(projdata.meta)>0:
             return Response(projdata.meta,
                 mimetype= 'application/octet-stream',
@@ -235,8 +235,8 @@ def getProjectInformation():
             'projectionEndYear': project.econ_dataend,
             'programs': project.programs,
             'populations': project.populations,
-            'creation_time': project.creation_time, 
-            'data_upload_time': project.data_upload_time(), 
+            'creation_time': project.creation_time,
+            'data_upload_time': project.data_upload_time(),
             'has_data': project.has_data(),
             'can_calibrate': project.can_calibrate(),
             'can_scenarios': project.can_scenarios(),
@@ -307,7 +307,7 @@ def deleteProject(project_name):
 
 
 """
-saves data as Excel file 
+saves data as Excel file
 """
 @project.route('/export', methods=['POST'])
 @login_required
@@ -388,23 +388,23 @@ def uploadExcel():
         db.session.add(project)
 
         # save data upload timestamp
-        data_upload_time = datetime.now(dateutil.tz.tzutc())                     
+        data_upload_time = datetime.now(dateutil.tz.tzutc())
         # get file data
         filedata = open(server_filename, 'rb').read()
         # See if there is matching project data
         projdata = ProjectDataDb.query.get(project.id)
-        
+
         # update existing
         if projdata is not None:
             projdata.meta = filedata
         else:
             # create new project data
             projdata = ProjectDataDb(project.id, filedata, data_upload_time)
-                
+
         # Save to db
         db.session.add(projdata)
         db.session.commit()
-            
+
     reply['status'] = 'OK'
     reply['result'] = 'Project %s is updated' % project_name
     return json.dumps(reply)
