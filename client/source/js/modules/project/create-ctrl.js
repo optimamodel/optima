@@ -2,13 +2,14 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ProjectCreateController', function ($scope, $state, $modal,
-    $timeout, activeProject, parametersResponse, defaultsResponse, info, UserManager, modalService) {
+    $timeout, activeProject, parametersResponse, defaultsResponse, info,
+    UserManager, modalService) {
 
     $scope.projectParams = {
       name: ''
     };
     $scope.editParams = {
-      is_edit: false
+      isEdit: false
     };
     $scope.projectInfo = info;
 
@@ -24,8 +25,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       // change submit button name
       $scope.submit = "Save project & Optima template";
 
-      $scope.editParams.is_edit = true;
-      $scope.editParams.can_update = true;
+      $scope.editParams.isEdit = true;
+      $scope.editParams.canUpdate = true;
       $scope.oldProjectName =  $scope.projectInfo.name;
 
       if (activeProject.isSet()) {
@@ -265,10 +266,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       if ( $state.current.name == "project.edit" ) {
         if ( !angular.equals( selectedPopulations,$scope.projectInfo.populations ) ||
              !angular.equals( selectedPrograms,$scope.projectInfo.programs ) ) {
-          $scope.editParams.can_update = $scope.editParams.can_update && selectedPopulations.length == $scope.projectInfo.populations.length;
-          $scope.editParams.can_update = $scope.editParams.can_update && selectedPrograms.length == $scope.projectInfo.programs.length;
+          $scope.editParams.canUpdate = $scope.editParams.canUpdate && selectedPopulations.length == $scope.projectInfo.populations.length;
+          $scope.editParams.canUpdate = $scope.editParams.canUpdate && selectedPrograms.length == $scope.projectInfo.programs.length;
           var message = 'You have made changes to populations and programs. All existing data will be lost. Would you like to continue?';
-          if ($scope.editParams.can_update) {
+          if ($scope.editParams.canUpdate) {
             message = 'You have changed some program or population parameters. Your original data can be reapplied, but you will have to redo the calibration and analysis. Would you like to continue?';
           }
           modalService.confirm(
