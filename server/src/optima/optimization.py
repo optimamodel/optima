@@ -26,13 +26,11 @@ optimization = Blueprint('optimization',  __name__, static_folder = '../static')
 def get_optimization_results(D_dict):
     return {'graph': D_dict.get('plot',{}).get('OM',{}), 'pie':D_dict.get('plot',{}).get('OA',{})}
 
-"""
-Start optimization
-"""
 @optimization.route('/start', methods=['POST'])
 @login_required
 @check_project_name
 def startOptimization():
+    """ Start optimization """
     data = json.loads(request.data)
     print("optimize: %s" % data)
     # get project name
@@ -66,26 +64,21 @@ def startOptimization():
         var = traceback.format_exc()
         return jsonify({"status":"NOK", "exception":var})
 
-"""
-Stops calibration
-"""
 @optimization.route('/stop')
 @login_required
 @check_project_name
 def stopCalibration():
+    """ Stops calibration """
     prj_name = request.project_name
     cancel_calculation(current_user.id, prj_name, optimize, db.engine)
     return json.dumps({"status":"OK", "result": "optimize calculation for user %s project %s requested to stop" % (current_user.name, prj_name)})
 
-
-"""
-Returns the working model for optimization.
-"""
 @optimization.route('/working')
 @login_required
 @check_project_name
 @report_exception()
 def getWorkingModel():
+    """ Returns the working model for optimization. """
     D_dict = {}
     # Get optimization working data
     prj_name = request.project_name
@@ -99,13 +92,11 @@ def getWorkingModel():
     result['status'] = status
     return jsonify(result)
 
-"""
-Saves working model as the default model
-"""
 @optimization.route('/save', methods=['POST'])
 @login_required
 @check_project_name
 def saveModel():
+    """ Saves working model as the default model """
     reply = {'status':'NOK'}
 
     # get project name
@@ -121,14 +112,11 @@ def saveModel():
         reply['exception'] = traceback.format_exc()
         return jsonify(reply)
 
-
-"""
-Revert working model to the default model
-"""
 @optimization.route('/revert', methods=['POST'])
 @login_required
 @check_project_name
 def revertCalibrationModel():
+    """ Revert working model to the default model """
     reply = {'status':'NOK'}
 
     # get project name

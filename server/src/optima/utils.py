@@ -1,5 +1,5 @@
 import os
-from sim.dataio import DATADIR, PROJECTDIR, TEMPLATEDIR, loaddata, savedata, upload_dir_user
+from sim.dataio import DATADIR, TEMPLATEDIR, upload_dir_user
 from flask import helpers, current_app
 from flask.ext.login import current_user
 from functools import wraps
