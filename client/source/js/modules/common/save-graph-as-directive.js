@@ -161,7 +161,7 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
             if (!graph.data || !graph.options) return null;
 
             var exportable = {
-              name: graph.title,
+              name: graph.options.title,
               columns: []
             };
 
@@ -198,7 +198,7 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
 
           scope.linesExport = function (graph){
             var exportable = {
-              name: graph.title,
+              name: graph.options.title,
               columns: []
             };
 
@@ -252,7 +252,7 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
                   responseType:'arraybuffer'})
               .success(function (response, status, headers, config) {
                 var blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-                saveAs(blob, (graphOrUndefined.title+'.xlsx'));
+                saveAs(blob, (graphOrUndefined.options.title+'.xlsx'));
               })
               .error(function () {});
           };
