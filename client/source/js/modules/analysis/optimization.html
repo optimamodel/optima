@@ -99,7 +99,7 @@
     <div class="float-left margin-left-s">
         <label class="checkbox-inline">
             <input type="radio" name="fundingAssumptions" ng-model="params.objectives.funding" value="constant">
-            Optimize a fixed budget <input class="txbox __inline __l" type="text" ng-model="params.objectives.outcome.fixed"> for each year in the program period
+            Optimize a fixed budget of total amount <input class="txbox __inline __l" type="text" ng-model="params.objectives.outcome.fixed"> for each year in the program period
         </label><br><br>
         <label style="padding:0px 0px 0px 20px;">
             <input type="radio" name="fundingAssumptions" ng-model="params.objectives.funding" value="variable">
@@ -343,18 +343,6 @@
             <label>
                 <input type="radio" name="eligibility" ng-model="params.constraints.txelig" value="3">
                 All people living with HIV with CD4 count < 350
-            </label><br>
-            <label>
-                <input type="radio" name="eligibility" ng-model="params.constraints.txelig" value="4">
-                All people diagnosed with HIV
-            </label><br>
-            <label>
-                <input type="radio" name="eligibility" ng-model="params.constraints.txelig" value="5">
-                All people diagnosed with HIV with CD4 count < 500
-            </label><br>
-            <label>
-                <input type="radio" name="eligibility" ng-model="params.constraints.txelig" value="6">
-                All people diagnosed with HIV with CD4 count < 350
             </label>
         </div>
     </div>
