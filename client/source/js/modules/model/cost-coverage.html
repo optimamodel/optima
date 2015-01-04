@@ -40,11 +40,9 @@
 
     <div class="section" ng-if="hasCostCoverResponse">
       <h1>{{ displayedProgram.name }}</h1>
-      <div class="section elastic" style="width: 800px">
-        <div class="elastic_col __shrink" style="width: 470px">
-          <div class="chart-container" ng-init="graph = graphs.plotdata_cc; graph.title = displayedProgram.name">
-            <div line-scatter-chart data="graph.data" options="graph.options" save-graph-as></div>
-          </div>
+      <div class="section elastic" style="width: 470px">
+        <div class="chart-container" ng-init="graph = graphs.plotdata_cc; graph.title = displayedProgram.name">
+          <div line-scatter-chart data="graph.data" options="graph.options" save-graph-as></div>
         </div>
       </div>
 
