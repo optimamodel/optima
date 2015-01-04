@@ -40,28 +40,11 @@
 
     <div class="section" ng-if="hasCostCoverResponse">
       <h1>{{ displayedProgram.name }}</h1>
-      <div class="section elastic">
+      <div class="section elastic" style="width: 800px">
         <div class="elastic_col __shrink" style="width: 470px">
           <div class="chart-container" ng-init="graph = graphs.plotdata_cc; graph.title = displayedProgram.name">
             <div line-scatter-chart data="graph.data" options="graph.options" save-graph-as></div>
           </div>
-        </div>
-        <div class="elastic_col">
-          <h3> Select units for displaying cost data:</h3>
-          <p>
-          <label>
-            <input type="radio" name="displaycost" ng-model="displaycost" value="1">
-            Absolute cost
-          </label><br>
-          <label>
-            <input type="radio" name="displaycost" ng-model="displaycost" value="2">
-            Cost per person in targeted population
-          </label><br>
-          <label>
-            <input type="radio" name="displaycost" ng-model="displaycost" value="3">
-            Cost per targeted person in units of  GDP per capita using PPP exchange rates in year <input class="txbox __inline __l" value="2014" placeholder="e.g. 2014" ng-model="display.year">
-          </label>
-          </p>
         </div>
       </div>
 
