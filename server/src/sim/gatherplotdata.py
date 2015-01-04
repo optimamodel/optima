@@ -9,7 +9,7 @@ Version: 2014nov26 by cliffk
 
 # Define labels
 epititles = {'prev':'Prevalence', 'inci':'New infections', 'daly':'DALYs', 'death':'Deaths', 'dx':'Diagnoses', 'tx1':'First-line treatment', 'tx2':'Second-line treatment'}
-epiylabels = {'prev':'Prevalence (%)', 'inci':'New HIV infections per year', 'daly':'DALYs per year', 'death':'AIDS-related deaths per year', 'dx':'HIV diagnoses per year', 'tx1':'People on 1st-line treatment', 'tx2':'People on 2nd-line treatment'}
+epiylabels = {'prev':'HIV prevalence (%)', 'inci':'New HIV infections per year', 'daly':'HIV-related DALYs per year', 'death':'AIDS-related deaths per year', 'dx':'New HIV diagnoses per year', 'tx1':'People on 1st-line treatment', 'tx2':'People on 2nd-line treatment'}
 
 def gatheruncerdata(D, R, verbose=2):
     """ Gather standard results into a form suitable for plotting with uncertainties. """
