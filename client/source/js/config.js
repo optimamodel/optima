@@ -13,11 +13,11 @@ define(['angular'], function (angular) {
       },
       GRAPH_TYPES: {
         population: [
-          { id: 'prev', name: 'Prevalence', byPopulation: true, total: false },
-          { id: 'daly', name: 'DALYs', byPopulation: false, total: true },
-          { id: 'death', name: 'Deaths', byPopulation: false, total: true },
-          { id: 'inci', name: 'New infections', byPopulation: false, total: true },
-          { id: 'dx', name: 'Diagnoses', byPopulation: false, total: true },
+          { id: 'prev', name: 'HIV prevalence', byPopulation: true, total: false },
+          { id: 'daly', name: 'HIV-related DALYs', byPopulation: false, total: true },
+          { id: 'death', name: 'AIDS-related deaths', byPopulation: false, total: true },
+          { id: 'inci', name: 'New HIV infections', byPopulation: false, total: true },
+          { id: 'dx', name: 'HIV diagnoses', byPopulation: false, total: true },
           { id: 'tx1', name: 'First-line treatment', byPopulation: false, total: true },
           { id: 'tx2', name: 'Second-line treatment', byPopulation: false, total: true }
         ],
