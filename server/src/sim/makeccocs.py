@@ -17,7 +17,7 @@ from printv import printv
 from parameters import parameters, input_parameter_name
 
 ## Set defaults for testing
-default_progname = 'MSM programs'
+default_progname = 'FSW programs'
 default_startup = 0 # select0 for programs with no startup costs or 1 for programs with startup costs
 default_ccparams = [0.9, 0.2, 800000.0, 7e6]
 default_coparams = []
@@ -52,49 +52,30 @@ def makecc(D=None, progname = default_progname, startup = default_startup, ccpar
     ## Extract info from data structure
     prognumber = D.data.meta.progs.short.index(progname) # get program number
     coverage = D.data.costcov.cov[prognumber] # get program coverage levels
-    
-    # For saturating programs... 
-    if D.data.meta.progs.saturating[prognumber]:
-        totalcost = D.data.costcov.cost[prognumber]
+    totalcost = D.data.costcov.cost[prognumber] # get total cost
         
-        ## Check inputs from GUI 
-        if (ccparams[0] <= 0 or ccparams[0] > 1):
-            raise Exception('Please enter a value between 0 and 1 for the saturation coverage level')
-        if (ccparams[1] < 0 or ccparams[1] > 1):
-            raise Exception('Please enter a value between 0 and 1 for the coverage level in Question 2')
-        if (ccparams[1] == 0 or ccparams[2] == 0):
-            raise Exception('Please enter non-zero values for the cost and coverage level estimates in Question 2')
-        if ccparams[2] < 0:
+    ## Check inputs from GUI 
+    if (ccparams[0] <= 0 or ccparams[0] > 1):
+        raise Exception('Please enter a value between 0 and 1 for the saturation coverage level')
+    if (ccparams[1] < 0 or ccparams[1] > 1):
+        raise Exception('Please enter a value between 0 and 1 for the coverage level in Question 2')
+    if (ccparams[1] == 0 or ccparams[2] == 0):
+        raise Exception('Please enter non-zero values for the cost and coverage level estimates in Question 2')
+    if ccparams[2] < 0:
             raise Exception('Negative funding levels are not permitted, please revise')
 
-        # Convert inputs from GUI into parameters needed for curves
-        saturation = ccparams[0]
-        growthrate = (-1/ccparams[2])*log((2*ccparams[0])/(ccparams[1]+ccparams[0]) - 1)
-        xupperlim = ccparams[3] 
+    # Convert inputs from GUI into parameters needed for curves
+    saturation = ccparams[0]
+    growthrate = (-1/ccparams[2])*log((2*ccparams[0])/(ccparams[1]+ccparams[0]) - 1)
+    xupperlim = ccparams[3] 
 
-        # Store parameters for access later
-        storeparams = [saturation, growthrate]
+    # Store parameters for access later
+    storeparams = [saturation, growthrate]
 
-        # Create logistic relationship 
-        xvalscc = linspace(0,xupperlim,nxpts) # take nxpts points between 0 and user-specified max
-        yvalscc = 2*saturation / (1 + exp(-growthrate*xvalscc)) - saturation # calculate logistic function
-
-    # ... for unit cost programs...
-    else:
-        unitcost = D.data.costcov.cost[prognumber]
-        totalcost = []
-        for i in range(len(unitcost)):
-            totalcost.append(unitcost[i]*coverage[i])
-            if not isnan(unitcost[i]):
-                slope = unitcost[i] # this updates so the slope is the most recent unit cost
-
-        # Store parameters for access later
-        storeparams = [slope]
-
-        ## Create linear relationship
-        xvalscc = linspace(0,ccparams[3],nxpts) # take nxpts points between 0 and some arbitrary max
-        yvalscc = xvalscc*slope # calculate linear function
-
+    # Create logistic relationship 
+    xvalscc = linspace(0,xupperlim,nxpts) # take nxpts points between 0 and user-specified max
+    yvalscc = 2*saturation / (1 + exp(-growthrate*xvalscc)) - saturation # calculate logistic function
+    
     # Get scatter data
     if (len(coverage) == 1 and len(totalcost) > 1): 
         totalcost = float_array(totalcost)
@@ -147,31 +128,29 @@ def makecc(D=None, progname = default_progname, startup = default_startup, ccpar
 ###############################################################################
 def makeco(D, progname=default_progname, effectname=default_effectname, coparams=default_coparams, makeplot=default_makeplot, verbose=2,nxpts = 1000):
     
-    ## Check that the selected program is in the program list 
+    # Check that the selected program is in the program list 
     if progname not in D.programs.keys():
         raise Exception('Please select one of the following programs %s' % D.programs.keys())
-    ## Check that the selected program is in the program list 
+
+    # Check that the selected program is in the program list 
     short_effectname = effectname[:2] # only matching by effect "signature"
     short_effectlist = [e[:2] for e in D.programs[progname]]
     if short_effectname not in short_effectlist:
         print "makeco short_effectname: %s short_effectlist: %s" % (short_effectname, short_effectlist)
         raise Exception('Please select one of the following effects %s' % D.programs[progname])
 
-    ## Extract info from data structure
+    # Extract info from data structure
     prognumber = D.data.meta.progs.short.index(progname) # get program number
     
-    ## Get population info
+    # Get population info
     popname = effectname[1]
 
-    ## Only going to make cost-outcome curves if a program affects a SPECIFIC population -- otherwise will just make cost-coverage curves
-    if not D.data.meta.progs.saturating[prognumber]:
-#    if popname[0] not in D.data.meta.pops.short:
+    # Only going to make cost-outcome curves if a program affects a SPECIFIC population -- otherwise will just make cost-coverage curves
+#    if not D.data.meta.progs.saturating[prognumber]:
+    if popname[0] not in D.data.meta.pops.short:
         return [], D
     else:
-        if popname[0] in D.data.meta.pops.short:
-            popnumber = D.data.meta.pops.short.index(popname[0])
-        else: 
-            popnumber = 0
+        popnumber = D.data.meta.pops.short.index(popname[0])
         
         # Get data for scatter plots
         outcome = D.data[effectname[0][0]][effectname[0][1]][popnumber]
@@ -186,7 +165,7 @@ def makeco(D, progname=default_progname, effectname=default_effectname, coparams
             coverage = coverage[~isnan(coverage)]
             coverage = coverage[-1]
 
-        # Get inputs from either GUI or spreadsheet
+        # Get inputs from GUI (#TODO simplify?)
         if coparams and len(coparams)>=3: ## TODO: would be better to use a dictionary, so that the order doesn't have to be fixed
             zeromin = coparams[0] # Assumptions of behaviour at zero coverage (lower bound)
             zeromax = coparams[1] # Assumptions of behaviour at zero coverage (upper bound)
@@ -212,18 +191,9 @@ def makeco(D, progname=default_progname, effectname=default_effectname, coparams
         
         # General set of coverage-outcome relationships
         xvalsco = linspace(0,1,nxpts) # take nxpts points along the unit interval
-#        yvalsco = zeros((nxpts,len(fullsample)))
-#        for i in range(len(fullsample)):
-#            yvalsco[:,i] = linspace(zerosample[i],fullsample[i],nxpts) # Generate D.opt.nsims straight lines
-            
-        # Upper and lower bounds of line set
-#        ymin, ymax = zeros(nxpts), zeros(nxpts)
-#        for i in range(nxpts):
-#            ymax[i] = max(yvalsco[i,:])
-#            ymin[i] = min(yvalsco[i,:])
         ymin, ymax = linspace(coparams[0],coparams[2],nxpts), linspace(coparams[1],coparams[3],nxpts)
             
-        # Plot results (probably delete once in GUI)  
+        # Plot results 
         plot_title = input_parameter_name(effectname[0][1])+ ' - ' + effectname[1][0]
                           
         if makeplot:
@@ -309,13 +279,11 @@ def makecco(D=None, progname = default_progname, effectname = default_effectname
     popname = effectname[1]
 
     # Only going to make cost-outcome curves if a program affects a SPECIFIC population -- otherwise will just make cost-coverage curves
-    if not D.data.meta.progs.saturating[prognumber]:
+#    if not D.data.meta.progs.saturating[prognumber]:
+    if not popname[0] in D.data.meta.pops.short:
         return [], [], []
     else:
-        if popname[0] in D.data.meta.pops.short:
-            popnumber = D.data.meta.pops.short.index(popname[0])
-        else: 
-            popnumber = 0
+        popnumber = D.data.meta.pops.short.index(popname[0])
         
         printv("coparams in makecco: %s" % coparams, 5, verbose)
         # Get inputs from either GUI... 
@@ -324,7 +292,7 @@ def makecco(D=None, progname = default_progname, effectname = default_effectname
             zeromax = coparams[1] # Assumptions of behaviour at zero coverage (upper bound)
             fullmin = coparams[2] # Assumptions of behaviour at maximal coverage (lower bound)
             fullmax = coparams[3] # Assumptions of behaviour at maximal coverage (upper bound)
-        # ... or spreadsheet
+        # ... or access previously stored ones
         else: 
             zeromin = effectname[2][0][0] # Assumptions of behaviour at zero coverage (lower bound)
             zeromax = effectname[2][0][1] # Assumptions of behaviour at zero coverage (upper bound)
@@ -413,9 +381,6 @@ def plotallcurves(D=None, progname=default_progname, ccparams=default_ccparams, 
     if progname not in D.programs.keys():
         raise Exception('Please select one of the following programs %s' % D.programs.keys())
 
-    # Extract info from data structure
-    prognumber = D.data.meta.progs.short.index(progname) # get program number
-
     ## Initialise storage of outputs   
     plotdata_co = {}
     plotdata = {}    
@@ -424,14 +389,18 @@ def plotallcurves(D=None, progname=default_progname, ccparams=default_ccparams, 
     # Loop over behavioural effects
     for effectname in D.programs[progname]:
 
-        # Only going to make cost-outcome curves for non-saturating programs (#TODO check this is ok)
-        if not D.data.meta.progs.saturating[prognumber]:
+        # Get population info
+        popname = effectname[1]
+
+#        if not D.data.meta.progs.saturating[prognumber]:
+        # Only going to make cost-outcome curves for programs that affect a specific population (#TODO check this is ok)
+        if not popname[0] in D.data.meta.pops.short:
             if len(effectname) == 3: # There's no existing info here, append
                 effectname.append(storeparams_cc)
             else:
                 effectname[3] = storeparams_cc # There is existing info here, overwrite
-
         else:
+
             # Store outputs
             effectnumber = D.programs[progname].index(effectname)    
             effectnames[effectnumber] = effectname
@@ -476,4 +445,4 @@ def makesamples(coparams, muz, stdevz, muf, stdevf, samplesize=1000):
     return zerosample, fullsample
 
 
-# plotallcurves(D, progname=default_progname, ccparams=default_ccparams, coparams=default_coparams, makeplot=default_makeplot, verbose=2)
+#plotdata, plotdata_co, plotdata_cc, effectnames, D = plotallcurves(D, progname=default_progname, ccparams=default_ccparams, coparams=default_coparams, makeplot=default_makeplot, verbose=2)
