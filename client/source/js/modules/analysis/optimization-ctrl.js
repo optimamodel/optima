@@ -92,6 +92,9 @@ define([
         $scope.params.constraints.coverage[meta.progs.short[i]].year = undefined;
       }
 
+    $scope.radarChartName = 'Allocation'
+    $scope.radarAxesName =  'Programs'
+
     var linesStyle = ['__blue', '__green', '__red', '__orange', '__violet',
       '__black', '__light-orange', '__light-green'];
 

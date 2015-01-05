@@ -48,7 +48,7 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
                     data: scope.radarData,
                     options: scope.radarOptions
                   };
-                  target.options.title = "Radar Chart";
+                  target.options.title = scope.radarChartName;
 
                 } else if (attrs.variant == 'coGraph') {
                   target = scope.coGraph;
@@ -239,47 +239,24 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
            * for Radar Chart
            */
           scope.axesExport = function (graph){
+            //x and y are not needed to be exported - they are just internal values to draw radar chart properly
+            console.log(graph);
             var exportable = {
-              name: "Radar Chart",
+              name: scope.radarChartName,
               columns: []
             };
 
-            var lineTitles = ["axis", "value", "x", "y", "value", "x", "y"];
+            var axisData = {}
+            axisData.title = scope.radarAxesName;
+            axisData.data = _.map(graph.data[0].axes, function(axis, j) { return axis.axis; });
+            exportable.columns.push(axisData);
 
-            // objects to host each column data
-            var axisData = [];
-            var value1Data = [];
-            var x1Data = [];
-            var y1Data = [];
-            var value2Data = [];
-            var x2Data = [];
-            var y2Data = [];
-
-            // traverse graph.data.0.axes to get 
-            // axis, value1 x1 and y1
-            _(graph.data[0].axes).each(function (axis,index) {
-              axisData.push(axis.axis);
-              value1Data.push(axis.value);
-              x1Data.push(axis.x);
-              y1Data.push(axis.y);
+            _(graph.data).each(function(radarData, index) {
+              var valueData = {};
+              valueData.title = graph.options.legend[index];
+              valueData.data = _.map(graph.data[index].axes, function(axis,j) { return axis.value; });
+              exportable.columns.push(valueData);
             });
-            // traverse graph.data.1.axes to get 
-            // value2 x2 and y2
-            _(graph.data[1].axes).each(function (axis,index) {
-              value2Data.push(axis.value);
-              x2Data.push(axis.x);
-              y2Data.push(axis.y);
-            });
-
-            var axisPoints = {title:"Axis", data: axisData};
-            var values1 = {title:"Value", data: value1Data};
-            var x1 = {title:"X", data: x1Data};
-            var y1 = {title:"Y", data: y1Data};
-            var values2 = {title:"Value", data: value2Data};
-            var x2 = {title:"X", data: x2Data};
-            var y2 = {title:"Y", data: y2Data};
-            
-            exportable.columns.push(axisPoints, values1, x1, y1, values2, x2, y2);
 
             return exportable;
           };
