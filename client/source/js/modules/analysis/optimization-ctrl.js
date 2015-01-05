@@ -5,7 +5,7 @@ define([
 ], function (module, angular, d3) {
   'use strict';
 
-  module.controller('AnalysisOptimizationController', function ($scope, $http, $interval, $compile, $sce, meta, CONFIG) {
+  module.controller('AnalysisOptimizationController', function ($scope, $http, $interval, meta, CONFIG) {
 
       $scope.meta = meta;
       $scope.types = angular.copy(CONFIG.GRAPH_TYPES);
