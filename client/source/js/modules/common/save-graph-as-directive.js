@@ -48,8 +48,8 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
                     data: scope.radarData,
                     options: scope.radarOptions
                   };
-                  target.data.title: "Radar Chart";
-                  
+                  target.options.title = "Radar Chart";
+
                 } else if (attrs.variant == 'coGraph') {
                   target = scope.coGraph;
                 } else {
