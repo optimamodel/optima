@@ -361,7 +361,6 @@ define([
         return;
       }
 
-      var yearLoop = "";
       for ( var i = start; i <= end; i++ ) {
         $scope.yearLoop.push({year:i});
       }
