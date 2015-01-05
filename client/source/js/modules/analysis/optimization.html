@@ -99,7 +99,7 @@
     <div class="float-left margin-left-s">
         <label class="checkbox-inline">
             <input type="radio" name="fundingAssumptions" ng-model="params.objectives.funding" value="constant">
-            Optimize a fixed budget <input class="txbox __inline __l" type="text" ng-model="params.objectives.outcome.fixed"> for each year in the program period
+            Optimize a fixed budget of total amount <input class="txbox __inline __l" type="text" ng-model="params.objectives.outcome.fixed"> for each year in the program period
         </label><br><br>
         <label style="padding:0px 0px 0px 20px;">
             <input type="radio" name="fundingAssumptions" ng-model="params.objectives.funding" value="variable" ng-change="checkStartEndYear()">
@@ -132,21 +132,21 @@
     <div class="checkbox-block">
         <label>
             <input type="checkbox"  ng-model="params.objectives.outcome.inci">
-            Cumulative HIV incidence
+            Cumulative new HIV infections
         </label>
     </div>
 
     <div class="checkbox-block">
         <label>
             <input type="checkbox" ng-model="params.objectives.outcome.daly">
-            Cumulative DALYs
+            Cumulative HIV-related DALYs
         </label>
     </div>
 
     <div class="checkbox-block">
         <label>
             <input type="checkbox" ng-model="params.objectives.outcome.death">
-            Cumulative HIV-related deaths
+            Cumulative AIDS-related deaths
         </label>
     </div>
 
@@ -161,13 +161,13 @@
 
     <div ng-show="params.objectives.outcome.inci">
         <div style="margin-left: 24px">
-            Incidence weighting  =  <input class="txbox __inline __s" value="1" ng-model="params.objectives.outcome.inciweight">%
+            New infections weighting  =  <input class="txbox __inline __s" value="1" ng-model="params.objectives.outcome.inciweight">%
         </div>
     </div>
 
     <div ng-show="params.objectives.outcome.daly">
         <div style="margin-left: 50px">
-            DALY weighting  =  <input class="txbox __inline __s" value="1" ng-model="params.objectives.outcome.dalyweight">%
+            DALYs weighting  =  <input class="txbox __inline __s" value="1" ng-model="params.objectives.outcome.dalyweight">%
         </div>
     </div>
 
@@ -291,7 +291,7 @@
     <div class="checkbox-block margin-top-xs">
         <label>
             <input type="checkbox" ng-model="params.objectives.money.objectives.dalys.use">
-            Reduce annual DALYs
+            Reduce annual HIV-related DALYs
         </label>
     </div>
     <label class="radio-inline margin-left-s">
@@ -330,13 +330,14 @@
 <!-- Tab 2 -->
 <div ng-show="activeTab === 2">
 
-
-
-
-
+    <hr/>
+        <div>
+            <p class="warning-hint">Warning: Constraints reduce the effectiveness of the optimization analysis. Use as few constraints as possible.</p>
+        </div>
     <hr/>
 
     <div class="elastic">
+
         <div><h2>Treatment eligibility</h2></div>
         <div>
             <label>
@@ -350,18 +351,6 @@
             <label>
                 <input type="radio" name="eligibility" ng-model="params.constraints.txelig" value="3">
                 All people living with HIV with CD4 count < 350
-            </label><br>
-            <label>
-                <input type="radio" name="eligibility" ng-model="params.constraints.txelig" value="4">
-                All people diagnosed with HIV
-            </label><br>
-            <label>
-                <input type="radio" name="eligibility" ng-model="params.constraints.txelig" value="5">
-                All people diagnosed with HIV with CD4 count < 500
-            </label><br>
-            <label>
-                <input type="radio" name="eligibility" ng-model="params.constraints.txelig" value="6">
-                All people diagnosed with HIV with CD4 count < 350
             </label>
         </div>
     </div>

@@ -32,7 +32,6 @@ def get_scenario_params():
     real_params = []
     project = load_project(request.project_name)
     D = bunchify(project.model)
-    pops_short = [item['short_name'] for item in project.populations]
 
     for param in scenario_params:
         if not param['modifiable']: continue
@@ -55,7 +54,7 @@ Returns a list of scenarios defined by the user, or the default scenario list
 @login_required
 @check_project_name
 @report_exception()
-def list():
+def list_scenarios():
     from sim.scenarios import defaultscenarios
     current_app.logger.debug("/api/analysis/scenarios/list")
     # get project name
