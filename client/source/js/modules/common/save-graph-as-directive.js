@@ -42,7 +42,19 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
                 event.preventDefault();
                 //a big ugly hack to distinguish between cost and covariance graphs.
                 //they are both in the same ng-repeat scope :-(
-                var target = attrs.variant == 'coGraph'? scope.coGraph: scope.graph;
+                var target = {};
+                if ( attrs.data == "radarData" ) {
+                  target = {
+                    data:scope.radarData,
+                    options:scope.radarOptions
+                  }
+                  target.options.title = "Radar Chart";
+                } else if (attrs.variant == 'coGraph') {
+                  target = scope.coGraph;
+                } else {
+                  target= scope.graph;
+                }
+
                 scope.exportFrom(target);
               });
           };
@@ -221,6 +233,46 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
             return exportable;
           };
 
+          scope.axesExport = function (graph){
+            var exportable = {
+              name: "Radar Chart",
+              columns: []
+            };
+
+            var lineTitles = [graph.legend? graph.legend : ["axis", "value", "x", "y", "value", "x", "y"]];
+
+            var axisData = [];
+            var value1Data = [];
+            var x1Data = [];
+            var y1Data = [];
+            var value2Data = [];
+            var x2Data = [];
+            var y2Data = [];
+            _(graph.data[0].axes).each(function (axis,index) {
+              axisData.push(axis.axis);
+              value1Data.push(axis.value);
+              x1Data.push(axis.x);
+              y1Data.push(axis.y);
+            });
+            _(graph.data[1].axes).each(function (axis,index) {
+              value2Data.push(axis.value);
+              x2Data.push(axis.x);
+              y2Data.push(axis.y);
+            });
+
+            var axisPoints = {title:"Axis", data: axisData};
+            var values1 = {title:"Value", data: value1Data};
+            var x1 = {title:"X", data: x1Data};
+            var y1 = {title:"Y", data: y1Data};
+            var values2 = {title:"Value", data: value2Data};
+            var x2 = {title:"X", data: x2Data};
+            var y2 = {title:"Y", data: y2Data};
+            
+            exportable.columns.push(axisPoints, values1, x1, y1, values2, x2, y2);
+
+            return exportable;
+          };
+
           /**
            * Returns the normalized data ready for export
            */
@@ -228,6 +280,7 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
             if(!graph.data) { return null; }
             if(_.isEqual(Object.keys(graph.data),["line", "scatter", "area"])) { return scope.lineAndAreaExport(graph); }
             if(_.isEqual(Object.keys(graph.data),["lines", "scatter"])) { return scope.linesExport(graph); }
+            if(_.isEqual(graph.data[0] && Object.keys(graph.data[0]),["axes"])) { return scope.axesExport(graph); }
 
             return null;
           };
