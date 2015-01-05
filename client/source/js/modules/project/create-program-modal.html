@@ -1,5 +1,5 @@
 <div>
-  <div class="modal-header">{{ isNew ? 'Create' : 'Edit'}} a program</div>
+  <div class="modal-header">{{ isNew ? 'Create' : 'Edit'}} program</div>
 
   <form class="modal-body" name="PopulationForm" novalidate="novalidate" ng-submit="submit(PopulationForm)">
     <div class="section grid">
@@ -17,15 +17,6 @@
       </div>
       <div class="5 4++">
         <input class="txbox __block" ng-model="program.short_name" required>
-      </div>
-    </div>
-
-    <div class="section grid">
-      <div class="++3 8">
-        <label>
-          <input type="checkbox" ng-model="program.saturating">
-            Program specified in terms of unit or marginal cost instead of total cost
-        </label>
       </div>
     </div>
 
