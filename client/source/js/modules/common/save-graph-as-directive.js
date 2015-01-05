@@ -215,7 +215,7 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
               columns: []
             };
 
-            var lineTitles = graph.legend? graph.legend : ["line", "high", "low"];
+            var lineTitles = graph.options.legend? graph.options.legend : ["line", "high", "low"];
 
             // The X of the points are only sent in one column and we collect them from any of the lines
             var xOfPoints = {};
