@@ -32,9 +32,12 @@ def getcurrentbudget(D, alloc=None):
 
             # Get effect index 
             effectnumber = D.programs[progname].index(effectname)    
+
+            # Get population info
+            popname = effectname[1]
             
             # Do this if it's a saturating program
-            if D.data.meta.progs.saturating[prognumber]:
+            if popname[0] in D.data.meta.pops.short:
 
                 # If an allocation has been passed in, we don't need to figure out the program budget
                 if allocprovided:
@@ -48,15 +51,7 @@ def getcurrentbudget(D, alloc=None):
                     totalcost = totalcost[-1]
 
 
-                # Get population info
-                popname = effectname[1]
-    
-                # Is it a population-disaggregated parameter... ?
-                if popname[0] in D.data.meta.pops.short:
-                    popnumber = D.data.meta.pops.short.index(popname[0]) 
-                # ... or not ?
-                else:
-                    popnumber = 0 
+                popnumber = D.data.meta.pops.short.index(popname[0]) 
 
                 # Temporary work around for sharing rates # TODO, FIX THIS ASAP, IT'S AWFUL
                 if effectname[0][1] == 'sharing':
