@@ -337,10 +337,11 @@ define([
     $scope.yearCols = [];
 
     $scope.checkStartEndYear = function () {
-      if ( !$scope.params.objectives.funding ) {
+      if ( !$scope.params.objectives.funding || $scope.params.objectives.funding !== 'variable') {
         return;
       }
       
+      $scope.params.objectives.outcome.variable = {}
       $scope.yearError = false;
       $scope.yearLoop = [];
       $scope.yearCols = [];
@@ -351,25 +352,22 @@ define([
       var start = parseInt($scope.params.objectives.year.start);
       var end = parseInt($scope.params.objectives.year.end);
       
-      if ( isNaN(start) ||  isNaN(end) ) {
-        showYearError();
-        return;
-      }
-
-      if ( end <= start ) {
+      if ( isNaN(start) ||  isNaN(end) || end <= start) {
         showYearError();
         return;
       }
 
       for ( var i = start; i <= end; i++ ) {
         $scope.yearLoop.push({year:i});
+        $scope.params.objectives.outcome.variable[i] = undefined;
       }
+  
+       var cols = 5;
+       var rows = Math.ceil($scope.yearLoop.length / cols);
+       for( var i = 0; i < rows; i++ ) {
+         $scope.yearCols.push({start:i*cols,end:(i*cols)+cols});
+       }
 
-      var cols = 5;
-      var rows = Math.ceil($scope.yearLoop.length / cols);
-      for( var i = 0; i < rows; i++ ) {
-        $scope.yearCols.push({start:i*cols,end:(i*cols)+cols});
-      }
     };
 
     $scope.yearError = false;
