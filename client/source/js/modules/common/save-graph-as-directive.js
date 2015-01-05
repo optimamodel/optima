@@ -45,10 +45,11 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
                 var target = {};
                 if ( attrs.data == "radarData" ) {
                   target = {
-                    data:scope.radarData,
-                    options:scope.radarOptions
-                  }
-                  target.options.title = "Radar Chart";
+                    data: scope.radarData,
+                    options: scope.radarOptions
+                  };
+                  target.data.title: "Radar Chart";
+                  
                 } else if (attrs.variant == 'coGraph') {
                   target = scope.coGraph;
                 } else {
@@ -233,14 +234,19 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
             return exportable;
           };
 
+          /**
+           * Returns the normalized data ready for export 
+           * for Radar Chart
+           */
           scope.axesExport = function (graph){
             var exportable = {
               name: "Radar Chart",
               columns: []
             };
 
-            var lineTitles = [graph.legend? graph.legend : ["axis", "value", "x", "y", "value", "x", "y"]];
+            var lineTitles = ["axis", "value", "x", "y", "value", "x", "y"];
 
+            // objects to host each column data
             var axisData = [];
             var value1Data = [];
             var x1Data = [];
@@ -248,12 +254,17 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
             var value2Data = [];
             var x2Data = [];
             var y2Data = [];
+
+            // traverse graph.data.0.axes to get 
+            // axis, value1 x1 and y1
             _(graph.data[0].axes).each(function (axis,index) {
               axisData.push(axis.axis);
               value1Data.push(axis.value);
               x1Data.push(axis.x);
               y1Data.push(axis.y);
             });
+            // traverse graph.data.1.axes to get 
+            // value2 x2 and y2
             _(graph.data[1].axes).each(function (axis,index) {
               value2Data.push(axis.value);
               x2Data.push(axis.x);
