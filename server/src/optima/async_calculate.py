@@ -18,50 +18,49 @@ def start_or_report_calculation(user_id, project, func, engine): #only called fr
     can_join = False
 
     db_session = scoped_session(sessionmaker(engine))
-    proj = db_session.query(ProjectDb).filter_by(user_id=user_id, name=project).first()
-    model = None
-    if proj is not None:
-        if proj.working_project is None:
-            db_session.add(WorkingProjectDb(project_id=proj.id, model = proj.model, is_working = True, work_type = work_type))
+    project = db_session.query(ProjectDb).filter_by(user_id=user_id, name=project).first()
+    if project is not None:
+        if project.working_project is None:
+            db_session.add(WorkingProjectDb(project_id=project.id, model = project.model, is_working = True, work_type = work_type))
             can_start = True
             can_join = True
             db_session.commit()
         else:
             # if work_type is None then is_working flag makes no sense
-            if (not proj.working_project.is_working) or (proj.working_project.work_type is None):
-                proj.working_project.work_type = work_type
-                proj.working_project.is_working = True
-                db_session.add(proj.working_project)
+            if (not project.working_project.is_working) or (project.working_project.work_type is None):
+                project.working_project.work_type = work_type
+                project.working_project.is_working = True
+                db_session.add(project.working_project)
                 db_session.commit()
                 can_start = True
                 can_join = True
             else:
-                can_join = work_type == proj.working_project.work_type
-                work_type = proj.working_project.work_type
+                can_join = work_type == project.working_project.work_type
+                work_type = project.working_project.work_type
     else:
         print("No such project %s, cannot start calculation" % project)
-    db_session.close()    
+    db_session.close()
     return can_start, can_join, work_type
 
 def cancel_calculation(user_id, project, func, engine):
     db_session = scoped_session(sessionmaker(engine))
-    proj = db_session.query(ProjectDb).filter_by(user_id=user_id, name=project).first()
-    if proj is not None and proj.working_project is not None:
-        proj.working_project.is_working = False
-        proj.working_project.work_type = None
-        db_session.add(proj.working_project)
+    project = db_session.query(ProjectDb).filter_by(user_id=user_id, name=project).first()
+    if project is not None and project.working_project is not None:
+        project.working_project.is_working = False
+        project.working_project.work_type = None
+        db_session.add(project.working_project)
         db_session.commit()
     db_session.close()
- 
+
 def check_calculation(user_id, project, func, engine):
     is_working = not sentinel['exit']
     db_session = scoped_session(sessionmaker(engine))
     if is_working:
-        proj = db_session.query(ProjectDb).filter_by(user_id=user_id, name=project).first()
-        is_working = proj is not None \
-        and proj.working_project is not None \
-        and proj.working_project.is_working \
-        and proj.working_project.work_type == func.__name__
+        project = db_session.query(ProjectDb).filter_by(user_id=user_id, name=project).first()
+        is_working = project is not None \
+        and project.working_project is not None \
+        and project.working_project.is_working \
+        and project.working_project.work_type == func.__name__
     else:
         db_session.query(WorkingProjectDb).update({'is_working':False,'work_type':None})
         db_session.commit()
@@ -78,18 +77,21 @@ for sig in (SIGABRT, SIGILL, SIGINT, SIGSEGV, SIGTERM):
     signal(sig, interrupt)
 
 
-"""
-Asynchronous thread to run potentially long calculations for the given project.
-Parameters:
-engine: DB engine to connect to
-sentinel: reference to sentinel (structure used to watch over threads)
-user: current user (new thread does not have the context)
-project_name: current project name
-timelimit: time limit for this thread to run
-func: func which has to be called to perform calculations (receiving D as first argument)
-args: additional arguments for this function
-"""
 class CalculatingThread(threading.Thread):
+    """
+    Asynchronous thread to run potentially long calculations for the given project.
+
+    Parameters:
+    engine: DB engine to connect to
+    sentinel: reference to sentinel (structure used to watch over threads)
+    user: current user (new thread does not have the context)
+    project_name: current project name
+    timelimit: time limit for this thread to run
+    func: func which has to be called to perform calculations (receiving D as first argument)
+    args: additional arguments for this function
+
+    """
+
     def __init__(self, engine, user, project_name, timelimit, func, args):
         super(CalculatingThread, self).__init__()
 
@@ -124,15 +126,15 @@ class CalculatingThread(threading.Thread):
 
     def load_model_user(self, name, user_id, as_bunch=True, working_model=True):
         db_session = scoped_session(sessionmaker(self.engine))
-        proj = db_session.query(ProjectDb).filter_by(user_id=user_id, name=name).first()
+        project = db_session.query(ProjectDb).filter_by(user_id=user_id, name=name).first()
         model = None
-        if proj is not None:
-            if proj.working_project is None or not working_model:
+        if project is not None:
+            if project.working_project is None or not working_model:
                 print("no working model")
-                model = proj.model
+                model = project.model
             else:
                 print("getting working model")
-                model = proj.working_project.model
+                model = project.working_project.model
             if as_bunch:
                 model = Bunch.fromDict(model)
         db_session.close()
@@ -142,19 +144,19 @@ class CalculatingThread(threading.Thread):
         print("save_model_user:%s %s" % (name, user_id))
         db_session = scoped_session(sessionmaker(self.engine))
 
-        proj = db_session.query(ProjectDb).filter_by(user_id=user_id, name=name).first()
+        project = db_session.query(ProjectDb).filter_by(user_id=user_id, name=name).first()
         if isinstance(model, Bunch):
             model = model.toDict()
-        if proj is not None:
+        if project is not None:
             if not working_model:
-                proj.model = model
-                db_session.add(proj)
+                project.model = model
+                db_session.add(project)
             else:
-                if proj.working_project is None:
-                    db_session.add(WorkingProjectDb(project_id=proj.id, model = model, is_working = True, work_type = self.func.__name__))
+                if project.working_project is None:
+                    db_session.add(WorkingProjectDb(project_id=project.id, model = model, is_working = True, work_type = self.func.__name__))
                 else:
-                    proj.working_project.model = model
-                    db_session.add(proj.working_project)
+                    project.working_project.model = model
+                    db_session.add(project.working_project)
             db_session.commit()
         else:
             print("no such model: user %s project %s" % (user_id, name))

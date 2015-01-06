@@ -15,7 +15,7 @@ define([
     'app.ui.menu'
   ])
 
-    .controller('MainCtrl', function ($scope, $upload, $state, activeProject, UserManager, modalService) {
+    .controller('MainCtrl', function ($window, $scope, $upload, $state, activeProject, UserManager, modalService) {
 
       $scope.user = UserManager.data;
       $scope.userLogged = function () {
@@ -130,7 +130,10 @@ define([
 
               var message = data.file + " was successfully uploaded.\n" + data.result;
               modalService.inform(
-                function (){ console.log('informed!') },
+                function (){
+                  // reload the page after upload.
+                  window.location.reload();
+                },
                 'Okay',
                 message,
                 'Upload completed'

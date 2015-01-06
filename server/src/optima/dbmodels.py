@@ -31,8 +31,6 @@ class UserDb(db.Model):
         return True
 
 
-from datetime import datetime
-
 class ProjectDb(db.Model):
     __tablename__ = 'projects'
     id = db.Column(db.Integer, primary_key=True)
@@ -51,8 +49,7 @@ class ProjectDb(db.Model):
     creation_time = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
 
     def __init__(self, name, user_id, datastart, dataend, \
-        econ_dataend, programs, populations, model = {}, creation_time = None, data_upload_time = None):
-        the_now = datetime.utcnow()
+        econ_dataend, programs, populations, model = None, creation_time = None):
         self.name = name
         self.user_id = user_id
         self.datastart = datastart
@@ -60,7 +57,7 @@ class ProjectDb(db.Model):
         self.econ_dataend = econ_dataend
         self.programs = programs
         self.populations = populations
-        self.model = model
+        self.model = model if model else {}
         self.creation_time = creation_time
 
     def has_data(self):
@@ -77,7 +74,7 @@ class ProjectDb(db.Model):
 
     def data_upload_time(self):
         data_upload_time = self.creation_time
-        if self.project_data: 
+        if self.project_data:
             data_upload_time = self.project_data.upload_time
         return data_upload_time
 
@@ -96,9 +93,9 @@ class WorkingProjectDb(db.Model):
     work_type = db.Column(db.String(32), default=None)
     model = db.Column(JSON)
 
-    def __init__(self, project_id, is_working=False, model = {}, work_type = None):
+    def __init__(self, project_id, is_working=False, model = None, work_type = None):
         self.id = project_id
-        self.model = model
+        self.model = model if model else {}
         self.is_working = is_working
         self.work_type = work_type
 
@@ -107,7 +104,7 @@ class ProjectDataDb(db.Model):
     id = db.Column(db.Integer,db.ForeignKey('projects.id'), primary_key=True )
     meta = db.Column(db.LargeBinary)
     upload_time = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
-    
+
     def __init__(self, project_id, meta, upload_time = None):
         self.id = project_id
         self.meta = meta
