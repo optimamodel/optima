@@ -9,7 +9,7 @@ Version: 2014nov26 by cliffk
 
 from math import log
 from matplotlib.pylab import figure, plot, hold, xlabel, ylabel, title
-from numpy import linspace, exp, isnan, zeros, asarray
+from numpy import linspace, exp, isnan, zeros, asarray, multiply
 from rtnorm import rtnorm
 from bunch import float_array
 from printv import printv
@@ -17,14 +17,14 @@ from printv import printv
 from parameters import parameters, input_parameter_name
 
 ## Set defaults for testing
-default_progname = 'FSW programs'
+default_progname = 'ART'
 default_startup = 0 # select0 for programs with no startup costs or 1 for programs with startup costs
 default_ccparams = [0.9, 0.2, 800000.0, 7e6]
 default_coparams = []
 default_init_coparams = [[0.3, 0.5], [0.7, 0.9]]
 default_makeplot = 1
-#default_datain = D # use 'example' or programs
 default_effectname = [['sex', 'condomcas'], [u'MSM programs'], [[0.3, 0.5], [0.7, 0.9]]]
+default_artelig = range(6,25)
 
 ###############################################################################
 ## Make cost coverage curve
@@ -41,20 +41,81 @@ default_effectname = [['sex', 'condomcas'], [u'MSM programs'], [[0.3, 0.5], [0.7
 #    1. plotdata, storeparams
 
 ###############################################################################
-def makecc(D=None, progname = default_progname, startup = default_startup, ccparams = default_ccparams, makeplot = default_makeplot, verbose=2, nxpts = 1000):
+def makecc(D=None, progname=default_progname, startup=default_startup, ccparams=default_ccparams, artelig=default_artelig, makeplot=default_makeplot, verbose=2, nxpts = 1000):
     
     if verbose>=2:
         print('makecc %s %s' % (progname, ccparams))
-    ## Check that the selected program is in the program list 
+    # Check that the selected program is in the program list 
     if progname not in D.programs.keys():
         raise Exception('Please select one of the following programs %s' % D.programs.keys())
 
-    ## Extract info from data structure
+    # Extract basic info from data structure
     prognumber = D.data.meta.progs.short.index(progname) # get program number
+    ndatayears = len(D.data.epiyears) # get number of data years
+
+    # Sort out time vector and indexing
+    simtvec = D.S.tvec # Extract the time vector from the sim
+    nsimpts = len(simtvec) # Number of sim points
+    simindex = range(nsimpts) # Get the index corresponding to the sim time vector
+
+    # Extract cost and coverage
     coverage = D.data.costcov.cov[prognumber] # get program coverage levels
     totalcost = D.data.costcov.cost[prognumber] # get total cost
-        
-    ## Check inputs from GUI 
+    
+    # Figure out the targeted population(s) 
+    targetpops = []
+    for effect in D.programs[progname]:
+        targetpops.append(effect[1][0])
+    targetpops = set(targetpops)
+
+    # Figure out the total model-estimated size of the targeted population(s)
+    targetpopmodel = [0.0]*nsimpts
+
+    for thispop in targetpops: # Loop through populations
+    
+        # Does the program affects particular population(s) from the model?
+        if thispop in D.data.meta.pops.short: 
+            thispopnumber = D.data.meta.pops.short.index(thispop)
+            targetpopmodel = [sum(x) for x in zip(targetpopmodel, D.S.people[:,thispopnumber,:].sum(axis=0))]
+
+        # Define special populations for ART, PMTCT, OST, NSP, VMMC...  # TODO this seems stupidly specific
+        elif progname=='ART':
+            targetpopmodel = D.S.people[artelig,:,:].sum(axis=(0,1))
+            continue
+        elif progname =='PMTCT':
+            targetpopmodel = multiply(D.M.birth[:,simindex], D.S.people[artelig,:,:].sum(axis=0)).sum(axis=0)
+            continue
+        elif progname in ['OST','NSP']:
+            injectindices = [i for i, x in enumerate(D.data.meta.pops.injects) if x == 1]
+            targetpopmodel = D.S.people[:,injectindices,:].sum(axis = 0)
+            continue
+        elif progname =='VMMC':
+            print('working on it...')
+            continue
+        # Program affects all populations in model
+        else: 
+            targetpopmodel = D.S.people[:,:,:].sum(axis=(0,1))
+            continue
+
+    # We only want the model-estimated size of the targeted population(s) for actual years, not the interpolated years
+    yearindices = range(0, len(D.S.tvec), int(1/D.opt.dt))
+    targetpop = targetpopmodel[yearindices]
+
+    # Check if coverage was entered as a number, and if so convert it to a %
+    if any(j < 1 for j in coverage):
+        coveragepercent = D.data.costcov.cov[prognumber] 
+        if len(coveragepercent)==1: # If an assumption has been used, keep this constant over time
+            coveragepercent = coveragepercent*ndatayears
+        coverage = coveragepercent # this is unnecessary now but might be useful later to set it up this way
+        coveragenumber = [coveragepercent[j] * targetpop[j] for j in range(ndatayears)] # get program coverage 
+    else:
+        coveragenumber = D.data.costcov.cov[prognumber] 
+        if len(coveragenumber)==1: # If an assumption has been used, keep this constant over time
+            coveragenumber = coveragenumber*ndatayears
+        coverage = coveragenumber # this is unnecessary atm but might be useful later to set it up this way
+        coveragepercent = [(coveragenumber[j]/targetpop[j])*100 for j in range(ndatayears)] # get program coverage
+    
+    # Check inputs from GUI 
     if (ccparams[0] <= 0 or ccparams[0] > 1):
         raise Exception('Please enter a value between 0 and 1 for the saturation coverage level')
     if (ccparams[1] < 0 or ccparams[1] > 1):
@@ -445,4 +506,4 @@ def makesamples(coparams, muz, stdevz, muf, stdevf, samplesize=1000):
     return zerosample, fullsample
 
 
-#plotdata, plotdata_co, plotdata_cc, effectnames, D = plotallcurves(D, progname=default_progname, ccparams=default_ccparams, coparams=default_coparams, makeplot=default_makeplot, verbose=2)
+plotdata, plotdata_co, plotdata_cc, effectnames, D = plotallcurves(D, progname=default_progname, ccparams=default_ccparams, coparams=default_coparams, makeplot=default_makeplot, verbose=2)
