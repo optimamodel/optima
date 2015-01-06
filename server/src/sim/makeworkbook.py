@@ -628,3 +628,36 @@ class OptimaGraphTable:
                 self.formats.write_unlocked(self.sheet, row+2, i, data)
             row+=1
         self.book.close()
+
+class OptimaMultiSheetGraphTable:
+    def __init__ (self, name, sheets, verbose = 2):
+        self.name = name
+        self.verbose = verbose
+        self.sheets = sheets
+
+    def create(self, path):
+
+        if self.verbose >=1:
+            print("Creating multi sheet graph table %s" % self.name)
+        self.book = xlsxwriter.Workbook(path)
+        self.formats = OptimaFormats(self.book)
+        
+        for s in self.sheets:
+            name = str(s["name"])[:30]
+            sheet = self.book.add_worksheet(name)
+            
+            titles = [c['title'] for c in s["columns"]]
+            max_row = max([len(c['data']) for c in s["columns"]])
+            self.formats.write_block_name(sheet, self.name, 0)
+            for i,title in enumerate(titles):
+                self.formats.write_rowcol_name(sheet, 1, i, title)
+            row =0
+            while row<=max_row:
+                for i,col in enumerate(s["columns"]):
+                    if row<len(col['data']):
+                        data = col['data'][row]
+                    else:
+                        data = None
+                    self.formats.write_unlocked(sheet, row+2, i, data)
+                row+=1
+        self.book.close()

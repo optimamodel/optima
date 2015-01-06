@@ -51,31 +51,32 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
            * Export all graphs/charts data,
            */
           scope.exportAll = function () {
-
+            var graphs = [];
             if ( scope.optimisationGraphs ) {
               // loop through all optimisationGraphs
               _(scope.optimisationGraphs).each(function (graph, index) {
-                scope.exportFrom(graph);
+                graphs.push(graph);
               });
             }
 
             if ( scope.financialGraphs ) {
               // loop through all financialGraphs
               _(scope.financialGraphs).each(function (graph, index) {
-                scope.exportFrom(graph);
+                graphs.push(graph);
               });
             }
 
             // export radarChart
             if ( scope.radarChart ) {
-              graph = {
+              var graph = {
                 data: scope.radarChart.radarData,
                 options: scope.radarChart.radarOptions
               };
               graph.options.title = "Radar Chart";
-              scope.exportFrom(graph);
+              graphs.push(graph);
             }
 
+            scope.exportMultiSheetFrom(graphs);
           };
 
           /**
@@ -263,9 +264,12 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
             return null;
           };
 
-          scope.saySorry = function() {
+          scope.saySorry = function(msg) {
             // to-do: this should be updated after the PR to use the modalService
-            return alert('Sorry, this graph cannot be exported');
+            if ( undefined !== msg )
+              return alert(msg)
+            else
+              return alert('Sorry, this graph cannot be exported');
           };
 
           /**
@@ -284,6 +288,35 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
               .success(function (response, status, headers, config) {
                 var blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
                 saveAs(blob, (graphOrUndefined.options.title+'.xlsx'));
+              })
+              .error(function () {});
+          };
+
+          /**
+           * Exports the data of the graph in the format returned by the API
+           */
+          scope.exportMultiSheetFrom = function (graphs){
+            if(graphs.length == 0) { return scope.saySorry("Sorry, no graphs found");}
+            
+            var exportables = [];
+            var showAlert = false;
+            _(graphs).each(function (graph, index) {
+              var exportable = scope.getExportableFrom(graph)
+              if ( exportable )
+                exportables.push(exportable);
+              else
+                showAlert = true;
+            });
+            if(showAlert) { return scope.saySorry("Sorry, some graphs cannot be exported"); }
+
+            $http({url:'/api/project/exportall',
+                  method:'POST',
+                  data: exportables,
+                  headers: {'Content-type': 'application/json'},
+                  responseType:'arraybuffer'})
+              .success(function (response, status, headers, config) {
+                var blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                saveAs(blob, ('Optimization analyses.xlsx'));
               })
               .error(function () {});
           };
