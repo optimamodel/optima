@@ -11,7 +11,7 @@ def makeresults(D, allsims=None, quantiles=None, verbose=2):
     
     For each, calculate for both overall and per population.
 
-    Version: 2014nov24
+    Version: 2015jan06
     """
     
     from numpy import array, concatenate
@@ -28,7 +28,7 @@ def makeresults(D, allsims=None, quantiles=None, verbose=2):
     if quantiles==None: quantiles = D.opt.quantiles # If no quantiles are specified, just use the default ones
     allpeople = array([allsims[s].people for s in range(nsims)]) # WARNING, might use stupid amounts of memory
     
-    for data in ['prev', 'inci', 'daly', 'death', 'tx1', 'tx2', 'dx', 'costcur', 'costfut']:
+    for data in ['prev', 'plhiv', 'inci', 'daly', 'death', 'tx1', 'tx2', 'dx', 'costcur', 'costfut']:
         R[data] = struct()
         if data[0:4] != 'cost':
             R[data].pops = []
@@ -42,6 +42,12 @@ def makeresults(D, allsims=None, quantiles=None, verbose=2):
             printv('Calculating prevalence...', 3, verbose)
             R.prev.pops = quantile(allpeople[:,1:,:,:].sum(axis=1) / allpeople[:,:,:,:].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
             R.prev.tot = quantile(allpeople[:,1:,:,:].sum(axis=(1,2)) / allpeople[:,:,:,:].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
+            
+        
+        if data=='plhiv':
+            printv('Calculating PLHIV...', 3, verbose)
+            R.prev.pops = quantile(allpeople[:,1:,:,:].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
+            R.prev.tot = quantile(allpeople[:,1:,:,:].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
             
         
         if data=='inci':
