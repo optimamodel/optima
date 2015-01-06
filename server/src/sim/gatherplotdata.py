@@ -4,12 +4,12 @@ GATHERPLOTDATA
 This file gathers all data that could be used for plotting and packs it into a
 nice little convenient structure :)
 
-Version: 2014nov26 by cliffk
+Version: 2015jan06 by cliffk
 """
 
 # Define labels
-epititles = {'prev':'Prevalence', 'inci':'New infections', 'daly':'DALYs', 'death':'Deaths', 'dx':'Diagnoses', 'tx1':'First-line treatment', 'tx2':'Second-line treatment'}
-epiylabels = {'prev':'HIV prevalence (%)', 'inci':'New HIV infections per year', 'daly':'HIV-related DALYs per year', 'death':'AIDS-related deaths per year', 'dx':'New HIV diagnoses per year', 'tx1':'People on 1st-line treatment', 'tx2':'People on 2nd-line treatment'}
+epititles = {'prev':'Prevalence', 'plhiv':'PLHIV', 'inci':'New infections', 'daly':'DALYs', 'death':'Deaths', 'dx':'Diagnoses', 'tx1':'First-line treatment', 'tx2':'Second-line treatment'}
+epiylabels = {'prev':'HIV prevalence (%)', 'plhiv':'Number of PLHIV', 'inci':'New HIV infections per year', 'daly':'HIV-related DALYs per year', 'death':'AIDS-related deaths per year', 'dx':'New HIV diagnoses per year', 'tx1':'People on 1st-line treatment', 'tx2':'People on 2nd-line treatment'}
 
 def gatheruncerdata(D, R, verbose=2):
     """ Gather standard results into a form suitable for plotting with uncertainties. """
@@ -28,18 +28,27 @@ def gatheruncerdata(D, R, verbose=2):
     uncer.xdata = D.data.epiyears
     ndatayears = len(uncer.xdata)
     
-    for key in ['prev', 'inci', 'daly', 'death', 'dx', 'tx1', 'tx2']:
+    for key in ['prev', 'plhiv', 'inci', 'daly', 'death', 'dx', 'tx1', 'tx2']:
         percent = 100 if key=='prev' else 1 # Whether to multiple results by 100
         
         uncer[key] = struct()
         uncer[key].pops = [struct() for p in range(D.G.npops)]
         uncer[key].tot = struct()
+        if key!='prev': # For stacked area plots -- an option for everything except prevalence
+            uncer[key].popstacked = struct()
+            uncer[key].popstacked.pops = []
+            uncer[key].popstacked.legend = []
+            uncer[key].popstacked.title = epititles[key]
+            uncer[key].popstacked.ylabel = epiylabels[key]
         for p in range(D.G.npops):
             uncer[key].pops[p].best = (R[key].pops[0][p,:]*percent).tolist()
             uncer[key].pops[p].low = (R[key].pops[1][p,:]*percent).tolist()
             uncer[key].pops[p].high = (R[key].pops[2][p,:]*percent).tolist()
             uncer[key].pops[p].title = epititles[key] + ' - ' + D.G.meta.pops.short[p]
             uncer[key].pops[p].ylabel = epiylabels[key]
+            if key!='prev':
+                uncer[key].popstacked.pops.append(uncer[key].pops[p].best)
+                uncer[key].popstacked.legend.append(D.G.meta.pops.short[p])
         uncer[key].tot.best = (R[key].tot[0]*percent).tolist()
         uncer[key].tot.low = (R[key].tot[1]*percent).tolist()
         uncer[key].tot.high = (R[key].tot[2]*percent).tolist()
@@ -50,6 +59,9 @@ def gatheruncerdata(D, R, verbose=2):
         if key=='prev':
             epidata = D.data.key.hivprev[0] # TODO: include uncertainties
             uncer.prev.ydata = zeros((D.G.npops,ndatayears)).tolist()
+        if key=='plhiv':
+            epidata = nan+zeros(ndatayears) # No data
+            uncer.daly.ydata = zeros(ndatayears).tolist()
         if key=='inci':
             epidata = D.data.opt.numinfect[0]
             uncer.inci.ydata = zeros(ndatayears).tolist()
@@ -123,7 +135,7 @@ def gathermultidata(D, Rarr, verbose=2):
     multi.tvec = Rarr[0].R.tvec.tolist() # Copy time vector
     multi.poplabels = D.G.meta.pops.long
     
-    for key in ['prev', 'inci', 'daly', 'death', 'dx', 'tx1', 'tx2']:
+    for key in ['prev', 'plhiv', 'inci', 'daly', 'death', 'dx', 'tx1', 'tx2']:
         percent = 100 if key=='prev' else 1 # Whether to multiple results by 100
         multi[key] = struct()
         multi[key].pops = [struct() for p in range(D.G.npops)]
