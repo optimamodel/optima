@@ -42,7 +42,20 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
                 event.preventDefault();
                 //a big ugly hack to distinguish between cost and covariance graphs.
                 //they are both in the same ng-repeat scope :-(
-                var target = attrs.variant == 'coGraph'? scope.coGraph: scope.graph;
+                var target = {};
+                if ( attrs.data == "radarData" ) {
+                  target = {
+                    data: scope.radarData,
+                    options: scope.radarOptions
+                  };
+                  target.options.title = scope.radarChartName;
+
+                } else if (attrs.variant == 'coGraph') {
+                  target = scope.coGraph;
+                } else {
+                  target= scope.graph;
+                }
+
                 scope.exportFrom(target);
               });
           };
@@ -161,7 +174,7 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
             if (!graph.data || !graph.options) return null;
 
             var exportable = {
-              name: graph.options.title,
+              name: graph.options.title || graph.title,
               columns: []
             };
 
@@ -198,11 +211,11 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
 
           scope.linesExport = function (graph){
             var exportable = {
-              name: graph.options.title,
+              name: graph.options.title || graph.title,
               columns: []
             };
 
-            var lineTitles = graph.legend? graph.legend : ["line", "high", "low"];
+            var lineTitles = graph.options.legend? graph.options.legend : ["line", "high", "low"];
 
             // The X of the points are only sent in one column and we collect them from any of the lines
             var xOfPoints = {};
@@ -222,12 +235,39 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
           };
 
           /**
+           * Returns the normalized data ready for export 
+           * for Radar Chart
+           */
+          scope.axesExport = function (graph){
+            //x and y are not needed to be exported - they are just internal values to draw radar chart properly
+            var exportable = {
+              name: scope.radarChartName,
+              columns: []
+            };
+
+            var axisData = {}
+            axisData.title = scope.radarAxesName;
+            axisData.data = _.map(graph.data[0].axes, function(axis, j) { return axis.axis; });
+            exportable.columns.push(axisData);
+
+            _(graph.data).each(function(radarData, index) {
+              var valueData = {};
+              valueData.title = graph.options.legend[index];
+              valueData.data = _.map(graph.data[index].axes, function(axis,j) { return axis.value; });
+              exportable.columns.push(valueData);
+            });
+
+            return exportable;
+          };
+
+          /**
            * Returns the normalized data ready for export
            */
           scope.getExportableFrom = function (graph){
             if(!graph.data) { return null; }
             if(_.isEqual(Object.keys(graph.data),["line", "scatter", "area"])) { return scope.lineAndAreaExport(graph); }
             if(_.isEqual(Object.keys(graph.data),["lines", "scatter"])) { return scope.linesExport(graph); }
+            if(_.isEqual(graph.data[0] && Object.keys(graph.data[0]),["axes"])) { return scope.axesExport(graph); }
 
             return null;
           };
@@ -244,7 +284,7 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
             if(!graphOrUndefined) { return scope.saySorry();}
             var exportable = this.getExportableFrom(graphOrUndefined);
             if(exportable === null) { return scope.saySorry(); }
-
+            var title = graphOrUndefined.options.title || graphOrUndefined.title;
             $http({url:'/api/project/export',
                   method:'POST',
                   data: exportable,
@@ -252,7 +292,7 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
                   responseType:'arraybuffer'})
               .success(function (response, status, headers, config) {
                 var blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-                saveAs(blob, (graphOrUndefined.options.title+'.xlsx'));
+                saveAs(blob, (title+'.xlsx'));
               })
               .error(function () {});
           };
