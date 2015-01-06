@@ -174,7 +174,7 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
             if (!graph.data || !graph.options) return null;
 
             var exportable = {
-              name: graph.options.title,
+              name: graph.options.title || graph.title,
               columns: []
             };
 
@@ -211,7 +211,7 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
 
           scope.linesExport = function (graph){
             var exportable = {
-              name: graph.options.title,
+              name: graph.options.title || graph.title,
               columns: []
             };
 
@@ -240,7 +240,6 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
            */
           scope.axesExport = function (graph){
             //x and y are not needed to be exported - they are just internal values to draw radar chart properly
-            console.log(graph);
             var exportable = {
               name: scope.radarChartName,
               columns: []
@@ -285,7 +284,7 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
             if(!graphOrUndefined) { return scope.saySorry();}
             var exportable = this.getExportableFrom(graphOrUndefined);
             if(exportable === null) { return scope.saySorry(); }
-
+            var title = graphOrUndefined.options.title || graphOrUndefined.title;
             $http({url:'/api/project/export',
                   method:'POST',
                   data: exportable,
@@ -293,7 +292,7 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
                   responseType:'arraybuffer'})
               .success(function (response, status, headers, config) {
                 var blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-                saveAs(blob, (graphOrUndefined.options.title+'.xlsx'));
+                saveAs(blob, (title+'.xlsx'));
               })
               .error(function () {});
           };
