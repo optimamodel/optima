@@ -35,6 +35,7 @@ define(['./module', 'angular'], function (module, angular) {
 
     $scope.G = G;
     $scope.types = angular.copy(CONFIG.GRAPH_TYPES);
+    $scope.calibrationStatus = false;
 
     $scope.enableManualCalibration = false;
 
@@ -43,6 +44,7 @@ define(['./module', 'angular'], function (module, angular) {
     $scope.graphs = [];
     $scope.projectInfo = info;
     $scope.canDoFitting = $scope.projectInfo.can_calibrate;
+    $scope.needData = !$scope.projectInfo.has_data;
 
     var lineScatterOptions = {
       title: 'Title',
@@ -229,6 +231,7 @@ define(['./module', 'angular'], function (module, angular) {
       // Keep polling for updated values after every 5 seconds till we get an error.
       // Error indicates that the model is not calibrating anymore.
             autoCalibrationTimer = $interval(checkWorkingAutoCalibration, 5000, 0, false);
+            $scope.calibrationStatus = 'running';
           } else {
             console.log("Cannot poll for optimization now");
           }
@@ -252,8 +255,10 @@ define(['./module', 'angular'], function (module, angular) {
     $scope.stopAutoCalibration = function () {
       $http.get('/api/model/calibrate/stop')
         .success(function(data) {
-          // Cancel timer
-          stopTimer();
+          // Do not cancel timer yet
+          if($scope.calibrationStatus) { // do nothing if there was no calibration
+            $scope.calibrationStatus = 'requested to stop';
+          }
         });
     };
 
@@ -261,6 +266,7 @@ define(['./module', 'angular'], function (module, angular) {
       if ( angular.isDefined( autoCalibrationTimer ) ) {
         $interval.cancel(autoCalibrationTimer);
         autoCalibrationTimer = undefined;
+        $scope.calibrationStatus = false;
       }
     }
 
@@ -292,6 +298,14 @@ define(['./module', 'angular'], function (module, angular) {
 
     $scope.revertManualCalibration = function () {
       angular.extend($scope.parameters.f, $scope.parameters.cache.f);
+    };
+
+    $scope.reportCalibrationStatus = function () {
+      if ($scope.calibrationStatus) {
+        return 'Calibration is ' + $scope.calibrationStatus;
+      } else {
+        return '';
+      }
     };
 
     // The graphs are shown/hidden after updating the graph type checkboxes.

@@ -10,6 +10,14 @@ define([
       $scope.meta = meta;
       $scope.types = angular.copy(CONFIG.GRAPH_TYPES);
 
+      var statusEnum = {
+        NOT_RUNNING: { text: "", isActive: false },
+        RUNNING: { text: "Optimization is running", isActive: true },
+        REQUESTED_TO_STOP : { text:"Optimization is requested to stop", isActive: true }
+      };
+
+      $scope.optimizationStatus = statusEnum.NOT_RUNNING;
+
       // cache placeholder
       var cachedResponse = null;
 
@@ -83,6 +91,9 @@ define([
         $scope.params.constraints.coverage[meta.progs.short[i]].level = 0;
         $scope.params.constraints.coverage[meta.progs.short[i]].year = undefined;
       }
+
+    $scope.radarChartName = 'Allocation'
+    $scope.radarAxesName =  'Programs'
 
     var linesStyle = ['__blue', '__green', '__red', '__orange', '__violet',
       '__black', '__light-orange', '__light-green'];
@@ -263,6 +274,7 @@ define([
       // Keep polling for updated values after every 5 seconds till we get an error.
       // Error indicates that the model is not calibrating anymore.
             optimizationTimer = $interval(checkWorkingOptimization, 5000, 0, false);
+            $scope.optimizationStatus = statusEnum.RUNNING;
           } else {
             console.log("Cannot poll for optimization now");
           }
@@ -286,8 +298,10 @@ define([
     $scope.stopOptimization = function () {
       $http.get('/api/analysis/optimization/stop')
         .success(function(data) {
-          // Cancel timer
-          stopTimer();
+          // Do not cancel timer yet, if the optimization is running
+          if ($scope.optimizationStatus) {
+            $scope.optimizationStatus = statusEnum.REQUESTED_TO_STOP;
+          }
         });
     };
 
@@ -295,6 +309,7 @@ define([
       if ( angular.isDefined( optimizationTimer ) ) {
         $interval.cancel(optimizationTimer);
         optimizationTimer = undefined;
+        $scope.optimizationStatus = statusEnum.NOT_RUNNING;
       }
     }
 
@@ -304,12 +319,12 @@ define([
     });
 
     $scope.saveOptimization = function () {
-      $http.post('/api/model/optimization/save')
+      $http.post('/api/analysis/optimization/save')
         .success(updateGraphs);
     };
 
     $scope.revertOptimization = function () {
-      $http.post('/api/model/optimization/revert')
+      $http.post('/api/analysis/optimization/revert')
         .success(function(){ console.log("OK");});
     };
 
@@ -320,6 +335,50 @@ define([
       $scope.optimisationGraphs = prepareOptimisationGraphs(cachedResponse.graph);
       $scope.financialGraphs = prepareFinancialGraphs(cachedResponse.graph);
     }, true);
+
+    $scope.yearLoop = [];
+    $scope.yearCols = [];
+
+    $scope.checkStartEndYear = function () {
+      if ( !$scope.params.objectives.funding || $scope.params.objectives.funding !== 'variable') {
+        return;
+      }
+      
+      $scope.params.objectives.outcome.variable = {}
+      $scope.yearError = false;
+      $scope.yearLoop = [];
+      $scope.yearCols = [];
+      if ( !$scope.params.objectives.year ){
+        showYearError();
+        return;
+      }
+      var start = parseInt($scope.params.objectives.year.start);
+      var end = parseInt($scope.params.objectives.year.end);
+      
+      if ( isNaN(start) ||  isNaN(end) || end <= start) {
+        showYearError();
+        return;
+      }
+
+      for ( var i = start; i <= end; i++ ) {
+        $scope.yearLoop.push({year:i});
+        $scope.params.objectives.outcome.variable[i] = undefined;
+      }
+  
+       var cols = 5;
+       var rows = Math.ceil($scope.yearLoop.length / cols);
+       for( var i = 0; i < rows; i++ ) {
+         $scope.yearCols.push({start:i*cols,end:(i*cols)+cols});
+       }
+
+    };
+
+    $scope.yearError = false;
+    var showYearError = function() {
+      $scope.yearError = true;
+      $scope.yearLoop = [];
+      $scope.yearCols = [];
+    };
 
   });
 });

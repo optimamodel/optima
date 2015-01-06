@@ -21,9 +21,6 @@ import json
 # route prefix: /api/user
 user = Blueprint('user',  __name__, static_folder = '../static')
 
-# System Imports
-import hashlib
-
 # Login Manager
 login_manager = LoginManager()
 
@@ -134,13 +131,13 @@ def logout():
 #with user hashed password as secret (can be changed later)
 @user.route('/list')
 @verify_request
-def list():
+def list_users():
     current_app.logger.debug('/api/user/list %s' % request.args)
     result = []
     users = UserDb.query.all()
     for u in users:
         result.append({'id':u.id, 'name':u.name, 'email':u.email})
-    return jsonify({'users':result}) 
+    return jsonify({'users':result})
 
 #deletes the given user by ID
 @user.route('/delete/<user_id>', methods=['DELETE'])
@@ -153,7 +150,6 @@ def delete(user_id):
     else:
         user_email = user.email
         from dbmodels import ProjectDb, WorkingProjectDb
-        from dbconn import db
         from sqlalchemy.orm import load_only
         #delete all corresponding projects and working projects as well
         projects = ProjectDb.query.filter_by(user_id=user_id).options(load_only("id")).all()
@@ -175,9 +171,8 @@ def modify(user_id):
     if not user:
         abort(404)
     else:
-        from dbconn import db
         new_email = request.args.get('email')
-        if new_email is not None: 
+        if new_email is not None:
             user.email = new_email
         new_name = request.args.get('name')
         if new_name is not None:

@@ -3,6 +3,7 @@
     <div class="page_subheader">
         <div class="section grid">
             <form name="CalibrationForm" ng-submit="simulate()">
+                <p ng-show="needData" class="error-hint">Please upload Optima spreadsheet first.</p>
                 <div class="2">
                     <input class="txbox" type="number" placeholder="Start year" ng-model="simulationOptions.startyear">
                 </div>
@@ -11,7 +12,7 @@
                     <span ng-show="CalibrationForm.endYear.$error.moreThan" class="error-hint">{{reportDataEndError()}}</span>
                 </div>
                 <div class="2">
-                    <button class="btn" ng-click="simulate()" ng-disabled="CalibrationForm.$invalid">View simulation</button>
+                    <button class="btn" ng-click="simulate()" ng-disabled="needData || CalibrationForm.$invalid">View simulation</button>
                 </div>
             </form>
         </div>
@@ -26,7 +27,7 @@
                 <input type="checkbox" ng-disabled="!canDoFitting" ng-model="enableManualCalibration">
                 Manual calibration
             </label>
-            <span ng-show="!canDoFitting" class="error-hint">Run "View Simulation" in order to enable data calibration</span>
+            <span ng-show="!canDoFitting" class="info-hint">Run "View Simulation" in order to enable data calibration</span>
         </div>
 
     </div>
@@ -58,16 +59,20 @@
                             <button class="btn" style="background: #008800;" ng-click="startAutoCalibration()">Start calibration</button>
                         </div>
                         <div class="elastic_col __shrink">
-                            <button class="btn" style="background: #ff0000;" ng-click="stopAutoCalibration()">Stop calibration</button>
+                            <button class="btn" style="background: #ff0000;" ng-click="stopAutoCalibration()" ng-disabled="!calibrationStatus">Stop calibration</button>
                         </div>
                         <div class="elastic_col __shrink">
-                            <button class="btn" ng-click="saveCalibration()">Save calibration</button>
+                            <button class="btn" ng-click="saveCalibration()" ng-disabled="calibrationStatus">Save calibration</button>
                         </div>
                         <div class="elastic_col __shrink">
-                            <button class="btn" ng-click="revertCalibration()">Revert</button>
+                            <button class="btn" ng-click="revertCalibration()" ng-disabled="calibrationStatus">Revert</button>
                         </div>
                     </div>
                 </div>
+                <div class="elastic_col" ng-show="calibrationStatus">
+                    {{reportCalibrationStatus()}}
+                </div>
+
 
             </div>
         </div>

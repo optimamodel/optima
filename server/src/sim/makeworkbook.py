@@ -424,7 +424,7 @@ class OptimaWorkbook:
     def generate_epi(self):
         current_row = 0
 
-        for name in ['Percentage of people who die from non-HIV-related causes per year', \
+        for name in ['Percentage of people who die from non-AIDS-related causes per year', \
         'Prevalence of any ulcerative STIs', 'Prevalence of any discharging STIs', 'Tuberculosis prevalence']:
             current_row = self.emit_ref_years_block(name, current_row, self.pop_range, row_format = OptimaFormats.DECIMAL_PERCENTAGE, assumption = True)
 
@@ -439,11 +439,11 @@ class OptimaWorkbook:
         current_row = 0
 
         current_row = self.emit_ref_years_block('Percentage of population tested for HIV in the last 12 months', current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
-        current_row = self.emit_years_block('Probability of a person with CD4 <200 being tested per year', current_row, ['Average'], row_format = OptimaFormats.GENERAL, assumption = True)
+        current_row = self.emit_years_block('Probability of a person with AIDS symptoms being tested per year', current_row, ['Average'], row_format = OptimaFormats.GENERAL, assumption = True)
         current_row = self.emit_years_block('Number of people on first-line treatment', current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption = True)
         current_row = self.emit_years_block('Number of people on second-line treatment', current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption = True)
-        current_row = self.emit_ref_years_block('Percentage of people covered by pre-exposure prophylaxis', current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
-        current_row = self.emit_ref_years_block('Percentage of people covered by post-exposure prophylaxis', current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_ref_years_block('Percentage of at-risk acts covered by pre-exposure prophylaxis', current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_ref_years_block('Percentage of at-risk acts covered by post-exposure prophylaxis', current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
         current_row = self.emit_years_block('Number of women on PMTCT (Option B/B+)', current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption = True)
         current_row = self.emit_ref_years_block('Birth rate (births/woman/year)', current_row, self.pop_range, row_format = OptimaFormats.NUMBER, assumption = True)
         current_row = self.emit_years_block('Percentage of HIV-positive women who breastfeed', current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption = True)
@@ -528,7 +528,7 @@ class OptimaWorkbook:
         names_rows_data_format = [('Disutility weights', \
         ['Untreated HIV, acute','Untreated HIV, CD4(>500)','Untreated HIV, CD4(350-500)','Untreated HIV, CD4(200-350)', \
         'Untreated HIV, CD4(<200)','Treated HIV'], [0.05, 0.10, 0.15, 0.22, 0.55, 0.05], OptimaFormats.NUMBER), \
-        ('HIV-related health care costs (excluding treatment)', \
+        ('Health care costs per PLHIV who is not diagnosed/not on ART', \
         ['Acute infection','CD4(>500)','CD4(350-500)','CD4(200-350)','CD4(<200)'], [0, 0, 1000, 5000, 50000], OptimaFormats.GENERAL), \
         ('Social mitigation costs', \
         ['Acute infection', 'CD4(>500)', 'CD4(350-500)', 'CD4(200-350)', 'CD4(<200)'], [0, 0, 0, 1000, 8000], OptimaFormats.GENERAL)]
