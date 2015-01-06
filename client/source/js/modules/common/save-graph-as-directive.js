@@ -48,6 +48,37 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
           };
 
           /**
+           * Export all graphs/charts data,
+           */
+          scope.exportAll = function () {
+
+            if ( scope.optimisationGraphs ) {
+              // loop through all optimisationGraphs
+              _(scope.optimisationGraphs).each(function (graph, index) {
+                scope.exportFrom(graph);
+              });
+            }
+
+            if ( scope.financialGraphs ) {
+              // loop through all financialGraphs
+              _(scope.financialGraphs).each(function (graph, index) {
+                scope.exportFrom(graph);
+              });
+            }
+
+            // export radarChart
+            if ( scope.radarChart ) {
+              graph = {
+                data: scope.radarChart.radarData,
+                options: scope.radarChart.radarOptions
+              };
+              graph.options.title = "Radar Chart";
+              scope.exportFrom(graph);
+            }
+
+          };
+
+          /**
            * Converts array of graph points to dictionary.
            */
           var graphToDictionary = function(graphPoints){
@@ -257,7 +288,10 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
               .error(function () {});
           };
 
-          initialize();
+          // dont display template (buttons) in case of export-all
+          if ( attrs.saveGraphAs != "export-all" ) {
+            initialize();
+          }
         }
       };
     });
