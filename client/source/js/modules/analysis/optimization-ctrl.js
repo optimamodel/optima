@@ -258,7 +258,7 @@ define([
         cachedResponse = data;
         $scope.optimisationGraphs = prepareOptimisationGraphs(data.graph);
         $scope.financialGraphs = prepareFinancialGraphs(data.graph);
-        prepareRadarChart(data.pie);
+        $scope.radarChart = prepareRadarChart(data.pie);
       }
     };
 
