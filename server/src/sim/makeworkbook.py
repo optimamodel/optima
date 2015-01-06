@@ -515,7 +515,7 @@ class OptimaWorkbook:
         [0, 0.0005, 0.0010, 0.01, 0.49, 0.04, 0.02], OptimaFormats.DECIMAL_PERCENTAGE), \
         ('Relative transmissibility', \
         ['Condom','Circumcision','Diagnosis behavior change','STI cofactor increase','Opiate substitution therapy',\
-        'PMTCT','ARV Treatment', 'Pre-exposure prophylaxis', 'Post-exposure prophylaxis'], \
+        'PMTCT','Antiretroviral therapy', 'Pre-exposure prophylaxis', 'Post-exposure prophylaxis'], \
         [0.05, 0.30, 0.65, 3.50, 0.05, 0.05, 0.30, 0.5, 0.5], OptimaFormats.PERCENTAGE)]
 
         for (name, row_names, data, format) in names_rows_data_format:
