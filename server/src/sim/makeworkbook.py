@@ -637,8 +637,6 @@ class OptimaMultiSheetGraphTable:
 
     def create(self, path):
 
-        if self.verbose >=1:
-            print("Creating multi sheet graph table %s" % self.name)
         self.book = xlsxwriter.Workbook(path)
         self.formats = OptimaFormats(self.book)
         
