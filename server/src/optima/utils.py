@@ -74,10 +74,17 @@ def project_exists(name):
     cu = current_user
     return ProjectDb.query.filter_by(user_id=cu.id, name=name).count()>0
 
-def load_project(name):
+def load_project(name, all_data = False):
+    from sqlalchemy.orm import undefer, defaultload
     cu = current_user
     current_app.logger.debug("getting project %s for user %s" % (name, cu.id))
-    project = ProjectDb.query.filter_by(user_id=cu.id, name=name).first()
+    query = ProjectDb.query.filter_by(user_id=cu.id, name=name)
+    if all_data:
+        query = query.options( \
+            undefer('model'), \
+            defaultload(ProjectDb.working_project).undefer('model'), \
+            defaultload(ProjectDb.project_data).undefer('meta'))
+    project = query.first()
     if project is None:
         current_app.logger.warning("no such project found: %s for user %s %s" % (name, cu.id, cu.name))
     return project
