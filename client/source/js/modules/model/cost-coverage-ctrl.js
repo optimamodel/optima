@@ -195,6 +195,8 @@ define(['./module', 'underscore'], function (module, _) {
     var prepareGraphsOfType = function (data, type) {
       if (type === 'plotdata_cc') {
         $scope.graphs[type] = prepareCostCoverageGraph(data);
+        $scope.ccGraph =  $scope.graphs[type];
+        $scope.ccGraph.title = $scope.displayedProgram.name;
       } else if (type === 'plotdata' || type === 'plotdata_co') {
         _(data).each(function (graphData) {
           $scope.graphs[type].push(setUpPlotdataGraph(graphData));

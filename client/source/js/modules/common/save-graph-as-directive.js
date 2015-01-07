@@ -52,6 +52,8 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
 
                 } else if (attrs.variant == 'coGraph') {
                   target = scope.coGraph;
+                } else if (attrs.variant == 'ccGraph') {
+                  target = scope.ccGraph;
                 } else {
                   target= scope.graph;
                 }
