@@ -189,14 +189,17 @@ define(['./module', 'underscore'], function (module, _) {
     };
 
     /**
-     * Receives graphs data with plot type to calculate,
-     * calculates all graphs of given type and writes them to $scope.graphs[type]
+     * Receives graphs data with plot type to calculate, calculates all graphs
+     * of given type and writes them to $scope.graphs[type] except for the
+     * cost coverage graph which will be written to $scope.ccGraph
+     *
      * @param data - usually api request with graphs data
      * @param type - string
      */
     var prepareGraphsOfType = function (data, type) {
       if (type === 'plotdata_cc') {
-        $scope.graphs[type] = prepareCostCoverageGraph(data);
+        $scope.ccGraph = prepareCostCoverageGraph(data);
+        $scope.ccGraph.title = $scope.displayedProgram.name;
       } else if (type === 'plotdata' || type === 'plotdata_co') {
         _(data).each(function (graphData) {
           $scope.graphs[type].push(setUpPlotdataGraph(graphData));
