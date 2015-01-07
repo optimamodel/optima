@@ -1,27 +1,29 @@
 define(['./module', 'underscore'], function (module, _) {
   'use strict';
 
-  module.controller('ModelViewCalibrationController', function ($scope, $http, meta, modalService) {
+  module.controller('ModelViewCalibrationController', function ($scope, $http, meta, info, modalService) {
 
     var plotTypes, effectNames;
 
     var initialize =function () {
       $scope.meta = meta;
 
-      $scope.initializePrograms();
-      $scope.selectedProgram = $scope.programs[0];
-      $scope.displayedProgram = null;
+      // show message "calibrate the model" and disable the form elements
+      $scope.projectInfo = info;
+      $scope.needData = !$scope.projectInfo.has_data;
+      
+      if ( !$scope.needData ) {
+        $scope.initializePrograms();
+        $scope.selectedProgram = $scope.programs[0];
+        $scope.displayedProgram = null;
 
-      $scope.coParams = [];
+        $scope.coParams = [];
 
-      $scope.hasCostCoverResponse = false;
+        $scope.hasCostCoverResponse = false;
 
+      }
+      
       // model parameters
-
-      /** Dec 24 2014
-       * fix/306-2-fix-plotting-of-default-ccocs
-       * removed hardcoded params
-       */
       $scope.defaultSaturationCoverageLevel = 90;
       $scope.defaultKnownCoverageLevel = 20;
       $scope.defaultKnownFundingValue = 800000;
