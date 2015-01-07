@@ -612,13 +612,19 @@ class OptimaGraphTable:
         self.book = xlsxwriter.Workbook(path)
         self.formats = OptimaFormats(self.book)
         
+        use_sheet_name = False
+        if (len(self.sheets) > 1):
+            use_sheet_name = True
         for s in self.sheets:
             name = str(s["name"])[:30]
             sheet = self.book.add_worksheet(name)
             
             titles = [c['title'] for c in s["columns"]]
             max_row = max([len(c['data']) for c in s["columns"]])
-            self.formats.write_block_name(sheet, self.name, 0)
+            if (use_sheet_name):
+                self.formats.write_block_name(sheet, s["name"], 0) #sheet name
+            else:
+                self.formats.write_block_name(sheet, self.name, 0) # spreadsheet name
             for i,title in enumerate(titles):
                 self.formats.write_rowcol_name(sheet, 1, i, title)
             row =0
