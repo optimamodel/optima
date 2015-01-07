@@ -336,16 +336,10 @@ def exportAllGraphs():
     data = json.loads(request.data)
     project_name = request.headers['Project']
     
-    sheets = []
-    for d in data:
-        sheets.append({
-            "name":d["name"],
-            "columns":d["columns"]
-        })
     name = project_name + " Optimization analyses"
     filename = name+'.xlsx'
     path = fullpath(filename)
-    table = OptimaMultiSheetGraphTable(name, sheets)
+    table = OptimaMultiSheetGraphTable(name, data) # data => sheets
     table.create(path)
     (dirname, basename) = os.path.split(path)
     return helpers.send_file(path, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
