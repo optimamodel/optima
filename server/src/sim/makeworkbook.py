@@ -608,6 +608,8 @@ class OptimaGraphTable:
         self.sheets = sheets
 
     def create(self, path):
+        if self.verbose >=1:
+            print("Creating graph table %s" % self.name)
 
         self.book = xlsxwriter.Workbook(path)
         self.formats = OptimaFormats(self.book)
