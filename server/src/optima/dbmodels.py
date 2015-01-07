@@ -1,6 +1,7 @@
 from sqlalchemy.dialects.postgresql import JSON
 from dbconn import db
 from sqlalchemy import text
+from sqlalchemy.orm import deferred
 
 class UserDb(db.Model):
     __tablename__ = 'users'
@@ -41,7 +42,7 @@ class ProjectDb(db.Model):
     econ_dataend = db.Column(db.Integer)
     programs = db.Column(JSON)
     populations = db.Column(JSON)
-    model = db.Column(JSON, server_default=text("'{}'"))
+    model = deferred(db.Column(JSON, server_default=text("'{}'")))
     working_project = db.relationship('WorkingProjectDb', backref='projects',
                                 uselist=False)
     project_data = db.relationship('ProjectDataDb', backref='projects',
@@ -91,7 +92,7 @@ class WorkingProjectDb(db.Model):
     id = db.Column(db.Integer,db.ForeignKey('projects.id'), primary_key=True )
     is_working = db.Column(db.Boolean, unique=False, default=False)
     work_type = db.Column(db.String(32), default=None)
-    model = db.Column(JSON)
+    model = deferred(db.Column(JSON))
 
     def __init__(self, project_id, is_working=False, model = None, work_type = None):
         self.id = project_id
@@ -102,7 +103,7 @@ class WorkingProjectDb(db.Model):
 class ProjectDataDb(db.Model):
     __tablename__ = 'project_data'
     id = db.Column(db.Integer,db.ForeignKey('projects.id'), primary_key=True )
-    meta = db.Column(db.LargeBinary)
+    meta = deferred(db.Column(db.LargeBinary))
     upload_time = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
 
     def __init__(self, project_id, meta, upload_time = None):
