@@ -3,12 +3,12 @@
   &_right {
     float: right;
     text-align: right;
-    width: 200px;
+    margin-left: 20px;
   }
 
   &_left {
     float: left;
-    width: 200px;
+    width: 350px; // To match 4 buttons with 20 pixel widths between them = 344 pixels
   }
 
   &_center {

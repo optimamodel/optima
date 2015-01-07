@@ -32,6 +32,10 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
 
       var scatterDataExists = (data.scatter && data.scatter.length > 0);
 
+      var hasValidMin = function(domain) {
+        return (domain[0]!==null && !isNaN(domain[0]));
+      };
+
       var lineChartInstances = [];
       var graphsScales = [];
       var yMax = 0;
@@ -47,10 +51,12 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
         lineChartInstances.push(lineChart);
         var scales = lineChart.scales(line);
         graphsScales.push(scales);
-        yMax = Math.max(yMax, scales.y.domain()[1]);
-        xMax = Math.max(xMax, scales.x.domain()[1]);
-        yMin = Math.min(yMin, scales.y.domain()[0]);
-        xMin = Math.min(xMin, scales.x.domain()[0]);
+        var x_domain = scales.x.domain();
+        var y_domain = scales.y.domain();
+        yMax = Math.max(yMax, y_domain[1]);
+        xMax = Math.max(xMax, x_domain[1]);
+        if(hasValidMin(y_domain)) {yMin = Math.min(yMin, y_domain[0])};
+        if(hasValidMin(x_domain)) {xMin = Math.min(xMin, x_domain[0])};
       });
 
       // initialize scatterChart
@@ -58,10 +64,13 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
         scatterChartInstance = new d3Charts.ScatterChart(chartGroup, '', chartSize);
         var scatterScale = scatterChartInstance.scales(data.scatter);
         graphsScales.push(scatterScale);
-        yMax = Math.max(yMax, scatterScale.y.domain()[1]);
-        xMax = Math.max(xMax, scatterScale.x.domain()[1]);
-        yMin = Math.min(yMin, scatterScale.y.domain()[0]);
-        xMin = Math.min(xMin, scatterScale.x.domain()[0]);
+        var x_domain = scatterScale.x.domain();
+        var y_domain = scatterScale.y.domain();
+
+        yMax = Math.max(yMax, y_domain[1]);
+        xMax = Math.max(xMax, x_domain[1]);
+        if(hasValidMin(y_domain)) {yMin = Math.min(yMin, y_domain[0])};
+        if(hasValidMin(x_domain)) {xMin = Math.min(xMin, x_domain[0])};
       }
 
       // normalizing all graphs scales to include maximum possible x and y

@@ -19,7 +19,6 @@ def start_or_report_calculation(user_id, project, func, engine): #only called fr
 
     db_session = scoped_session(sessionmaker(engine))
     project = db_session.query(ProjectDb).filter_by(user_id=user_id, name=project).first()
-    model = None
     if project is not None:
         if project.working_project is None:
             db_session.add(WorkingProjectDb(project_id=project.id, model = project.model, is_working = True, work_type = work_type))
@@ -40,7 +39,7 @@ def start_or_report_calculation(user_id, project, func, engine): #only called fr
                 work_type = project.working_project.work_type
     else:
         print("No such project %s, cannot start calculation" % project)
-    db_session.close()    
+    db_session.close()
     return can_start, can_join, work_type
 
 def cancel_calculation(user_id, project, func, engine):
@@ -52,7 +51,7 @@ def cancel_calculation(user_id, project, func, engine):
         db_session.add(project.working_project)
         db_session.commit()
     db_session.close()
- 
+
 def check_calculation(user_id, project, func, engine):
     is_working = not sentinel['exit']
     db_session = scoped_session(sessionmaker(engine))
@@ -78,18 +77,21 @@ for sig in (SIGABRT, SIGILL, SIGINT, SIGSEGV, SIGTERM):
     signal(sig, interrupt)
 
 
-"""
-Asynchronous thread to run potentially long calculations for the given project.
-Parameters:
-engine: DB engine to connect to
-sentinel: reference to sentinel (structure used to watch over threads)
-user: current user (new thread does not have the context)
-project_name: current project name
-timelimit: time limit for this thread to run
-func: func which has to be called to perform calculations (receiving D as first argument)
-args: additional arguments for this function
-"""
 class CalculatingThread(threading.Thread):
+    """
+    Asynchronous thread to run potentially long calculations for the given project.
+
+    Parameters:
+    engine: DB engine to connect to
+    sentinel: reference to sentinel (structure used to watch over threads)
+    user: current user (new thread does not have the context)
+    project_name: current project name
+    timelimit: time limit for this thread to run
+    func: func which has to be called to perform calculations (receiving D as first argument)
+    args: additional arguments for this function
+
+    """
+
     def __init__(self, engine, user, project_name, timelimit, func, args):
         super(CalculatingThread, self).__init__()
 

@@ -37,7 +37,7 @@ def runsimulation(D, startyear=2000, endyear=2030, verbose=2, makeplot = 1):
     # Calculate results
     from makeresults import makeresults
     D.R = makeresults(D, allsims, D.opt.quantiles, verbose=verbose)
-    
+
     # Gather plot data
     from gatherplotdata import gatheruncerdata
     D.plot.E = gatheruncerdata(D, D.R, verbose=verbose)
