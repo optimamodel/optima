@@ -97,7 +97,7 @@ class CalculatingThread(threading.Thread):
         self.func = func
         self.args = args
         self.timelimit = int(timelimit) # to be sure
-        self.db_session = scoped_session(sessionmaker(engine))
+        self.db_session = scoped_session(sessionmaker(engine)) #creating scoped_session, eventually bound to engine
         print("starting calculating thread for user: %s project %s for %s seconds" % (self.user_name, self.project_name, self.timelimit))
 
     def run(self):
@@ -118,8 +118,9 @@ class CalculatingThread(threading.Thread):
             iterations += 1
         print("thread for project %s stopped" % self.project_name)
         cancel_calculation(self.user_id, self.project_name, self.func, self.db_session)
-        if self.db_session and self.db_session.bind:
-            self.db_session.bind.dispose() # black magic to actually close the connection. meh. let it be till the next enlightenment.
+        self.db_session.connection().close() # this line might be redundant (not 100% sure - not clearly described)
+        self.db_session.remove()
+        self.db_session.bind.dispose() # black magic to actually close the connection by forcing the engine to dispose of garbage (I assume)
 
     def load_model_user(self, db_session, name, user_id, as_bunch=True, working_model=True):
         project = db_session.query(ProjectDb).filter_by(user_id=user_id, name=name).first()
