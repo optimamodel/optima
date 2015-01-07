@@ -612,6 +612,9 @@ class OptimaGraphTable:
         self.book = xlsxwriter.Workbook(path)
         self.formats = OptimaFormats(self.book)
         
+        # To maintain same old behaviour for previous functionality of single sheet
+        # This code will use to either add sheet name: in case of multi sheets,
+        # Or spreadsheet name: in case of single sheet as data Heading
         use_sheet_name = False
         if (len(self.sheets) > 1):
             use_sheet_name = True
