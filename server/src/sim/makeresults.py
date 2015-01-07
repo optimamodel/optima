@@ -46,8 +46,8 @@ def makeresults(D, allsims=None, quantiles=None, verbose=2):
         
         if data=='plhiv':
             printv('Calculating PLHIV...', 3, verbose)
-            R.prev.pops = quantile(allpeople[:,1:,:,:].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
-            R.prev.tot = quantile(allpeople[:,1:,:,:].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
+            R.plhiv.pops = quantile(allpeople[:,1:,:,:].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
+            R.plhiv.tot = quantile(allpeople[:,1:,:,:].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
             
         
         if data=='inci':

@@ -28,7 +28,7 @@ def gatheruncerdata(D, R, verbose=2):
     uncer.xdata = D.data.epiyears
     ndatayears = len(uncer.xdata)
     
-    for key in ['prev', 'plhiv', 'inci', 'daly', 'death', 'dx', 'tx1', 'tx2']:
+    for key in epititles.keys():
         percent = 100 if key=='prev' else 1 # Whether to multiple results by 100
         
         uncer[key] = struct()
@@ -61,7 +61,7 @@ def gatheruncerdata(D, R, verbose=2):
             uncer.prev.ydata = zeros((D.G.npops,ndatayears)).tolist()
         if key=='plhiv':
             epidata = nan+zeros(ndatayears) # No data
-            uncer.daly.ydata = zeros(ndatayears).tolist()
+            uncer.plhiv.ydata = zeros(ndatayears).tolist()
         if key=='inci':
             epidata = D.data.opt.numinfect[0]
             uncer.inci.ydata = zeros(ndatayears).tolist()
@@ -135,7 +135,7 @@ def gathermultidata(D, Rarr, verbose=2):
     multi.tvec = Rarr[0].R.tvec.tolist() # Copy time vector
     multi.poplabels = D.G.meta.pops.long
     
-    for key in ['prev', 'plhiv', 'inci', 'daly', 'death', 'dx', 'tx1', 'tx2']:
+    for key in epititles.keys():
         percent = 100 if key=='prev' else 1 # Whether to multiple results by 100
         multi[key] = struct()
         multi[key].pops = [struct() for p in range(D.G.npops)]
