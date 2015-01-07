@@ -270,8 +270,8 @@ def getProjectList():
                 'dataEnd': project.dataend,
                 'projectionStartYear': project.datastart,
                 'projectionEndYear': project.econ_dataend,
-                'programs': project.programs,
-                'populations': project.populations,
+                'programs': len(project.programs),
+                'populations': len(project.populations),
                 'creation_time': project.creation_time,
                 'data_upload_time': data_upload_time
             }
