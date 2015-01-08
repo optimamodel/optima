@@ -5,7 +5,7 @@ define([
 ], function (module, angular, d3) {
   'use strict';
 
-  module.controller('AnalysisOptimizationController', function ($scope, $http, $interval, meta, CONFIG) {
+  module.controller('AnalysisOptimizationController', function ($scope, $http, $interval, meta, CONFIG,modalService) {
 
       $scope.meta = meta;
       $scope.types = angular.copy(CONFIG.GRAPH_TYPES);
@@ -267,19 +267,25 @@ define([
 
     var optimizationTimer;
 
-    $scope.startOptimization = function () {
-      $http.post('/api/analysis/optimization/start', $scope.params)
-        .success(function(data, status, headers, config) {
-          if (data.status == "OK" && data.join) {
-      // Keep polling for updated values after every 5 seconds till we get an error.
-      // Error indicates that the model is not calibrating anymore.
-            optimizationTimer = $interval(checkWorkingOptimization, 5000, 0, false);
-            $scope.optimizationStatus = statusEnum.RUNNING;
-          } else {
-            console.log("Cannot poll for optimization now");
+      $scope.startOptimization = function () {
+          if($scope.yearError === true) {
+              $scope.activeTab = 1;
+              modalService.inform(undefined,'OK',$scope.yearErrorText);
           }
-        });
-    };
+          else{
+              $http.post('/api/analysis/optimization/start', $scope.params)
+                  .success(function (data, status, headers, config) {
+                      if (data.status == "OK" && data.join) {
+                          // Keep polling for updated values after every 5 seconds till we get an error.
+                          // Error indicates that the model is not calibrating anymore.
+                          optimizationTimer = $interval(checkWorkingOptimization, 5000, 0, false);
+                          $scope.optimizationStatus = statusEnum.RUNNING;
+                      } else {
+                          console.log("Cannot poll for optimization now");
+                      }
+                  });
+          }
+      };
 
     function checkWorkingOptimization() {
       $http.get('/api/analysis/optimization/working')
@@ -343,9 +349,10 @@ define([
       if ( !$scope.params.objectives.funding || $scope.params.objectives.funding !== 'variable') {
         return;
       }
-      
-      $scope.params.objectives.outcome.variable = {}
+
+      $scope.params.objectives.outcome.variable = {};
       $scope.yearError = false;
+      $scope.yearErrorText = "Please specify program optimizations period above.";
       $scope.yearLoop = [];
       $scope.yearCols = [];
       if ( !$scope.params.objectives.year ){
@@ -354,7 +361,7 @@ define([
       }
       var start = parseInt($scope.params.objectives.year.start);
       var end = parseInt($scope.params.objectives.year.end);
-      
+
       if ( isNaN(start) ||  isNaN(end) || end <= start) {
         showYearError();
         return;
@@ -364,7 +371,7 @@ define([
         $scope.yearLoop.push({year:i});
         $scope.params.objectives.outcome.variable[i] = undefined;
       }
-  
+
        var cols = 5;
        var rows = Math.ceil($scope.yearLoop.length / cols);
        for( var i = 0; i < rows; i++ ) {

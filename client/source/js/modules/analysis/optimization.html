@@ -104,7 +104,7 @@
             <label style="padding:0px 0px 0px 20px;">
                 <input type="radio" name="fundingAssumptions" ng-model="params.objectives.funding" value="variable" ng-change="checkStartEndYear()"/>
                 Optimize a variable budget for each year in the program period:<br/>
-                <span ng-show="yearError" class="error-hint">Please specify program optimizations period above</span>
+                <span ng-show="yearError" class="error-hint">{{yearErrorText}}</span>
                 <br/>
                 <div style="padding:0px 0px 0px 50px;">
                     <div ng-repeat="yCols in yearCols" style="padding:0 0 10px 0;">
