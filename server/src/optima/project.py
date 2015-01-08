@@ -320,13 +320,14 @@ def copyProject(project_name):
     if project is None:
         reply['reason'] = 'Project %s does not exist.' % project_name
         return reply
+    project_data_exists = project.project_data #force loading it
     db.session.expunge(project)
     make_transient(project)
     project.id = None
     project.name = new_project_name
     db.session.add(project)
     db.session.flush() #this updates the project ID to the new value
-    if project.project_data:
+    if project_data_exists:
         db.session.expunge(project.project_data) # it should have worked without that black magic. but it didn't.
         make_transient(project.project_data)
         db.session.add(project.project_data)
