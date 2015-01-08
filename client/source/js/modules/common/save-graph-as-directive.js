@@ -90,8 +90,9 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
               }
             }
 
-            // Calibration
-            if ( controller == 'ModelCalibration' ) {
+            // Calibration 
+            // Analysis Scenarios
+            if ( controller == 'ModelCalibration' || controller == 'AnalysisScenarios' ) {
               if ( scope.graphs ) {
                 graphs = scope.graphs;
               }
@@ -107,8 +108,7 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
                 });
               }
             }
-            console.log(graphs);
-
+            
             scope.exportMultiSheetFrom(graphs);
           };
 
