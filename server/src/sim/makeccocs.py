@@ -25,6 +25,7 @@ default_init_coparams = [[0.3, 0.5], [0.7, 0.9]]
 default_makeplot = 1
 default_effectname = [['sex', 'condomcas'], [u'MSM programs'], [[0.3, 0.5], [0.7, 0.9]]]
 default_artelig = range(6,26)
+coverage_params = ['numost','numpmtct','numfirstline','numsecondline']
 
 def makecc(D=None, progname=default_progname, startup=default_startup, ccparams=default_ccparams, artelig=default_artelig, makeplot=default_makeplot, verbose=2, nxpts = 1000):
     '''Make cost coverage curve.
@@ -152,7 +153,7 @@ def makeco(D, progname=default_progname, effectname=default_effectname, coparams
     parname = effectname[0][1]
 
     # Only going to make cost-outcome curves for programs where the affected parameter is not coverage
-    if parname in ['numost','numpmtct','numfirstline','numsecondline']:
+    if parname in coverage_params:
         return [], D
     else:
         if popname[0] in D.data.meta.pops.short:
@@ -294,7 +295,7 @@ def makecco(D=None, progname=default_progname, effectname=default_effectname, cc
     parname = effectname[0][1]
 
     # Only going to make cost-outcome curves for programs where the affected parameter is not coverage
-    if parname in ['numost','numpmtct','numfirstline','numsecondline']:
+    if parname in coverage_params:
         return [], [], []
     else:
         if popname[0] in D.data.meta.pops.short:
@@ -405,30 +406,26 @@ def plotallcurves(D=None, progname=default_progname, ccparams=default_ccparams, 
     effectnames = {}     
 
     # Loop over behavioural effects
-    for effectname in D.programs[progname]:
+    for effectnumber, effectname in enumerate(D.programs[progname]):
+
+        #default storeparams
+        storeparams = storeparams_cc
 
         # Get parameter info
         parname = effectname[0][1]
 
         # Only going to make cost-outcome curves for programs where the affected parameter is not coverage
-        if parname in ['numost','numpmtct']:
-            if len(effectname) == 3: # There's no existing info here, append
-                effectname.append(storeparams_cc)
-            else:
-                effectname[3] = storeparams_cc # There is existing info here, overwrite
-        else:
+        if parname not in coverage_params:
             # Store outputs
-            effectnumber = D.programs[progname].index(effectname)    
             effectnames[effectnumber] = effectname
             plotdata[effectnumber], plotdata_co[effectnumber], storeparams = makecco(D=D, progname=progname, effectname=effectname, ccparams=ccparams, coparams=coparams, makeplot=makeplot, verbose=verbose)
 
-            # Store outputs
-            if len(effectname) == 3: # There's no existing info here, append
-                effectname.append(storeparams)
-            else:
-                effectname[3] = storeparams # There is existing info here, overwrite
-            D.programs[progname][effectnumber] = effectname
-            
+        # Store outputs
+        if len(effectname) == 3: # There's no existing info here, append
+            effectname.append(storeparams)
+        else:
+            effectname[3] = storeparams # There is existing info here, overwrite
+        #no need to assign effectname back to D.programs[progname][effectnumber] - they are equal by reference (AN)
 
     return plotdata, plotdata_co, plotdata_cc, effectnames, D      
 
@@ -491,6 +488,10 @@ def getcoverage(D=None, params=[], artelig=default_artelig, progname=default_pro
     yearindices = range(0, len(D.S.tvec), int(1/D.opt.dt))
     targetpop = targetpopmodel[yearindices]
 
+    storeparams = []
+    coverage = None
+    coveragelabel = ''
+
     # Check if coverage was entered as a number, and if so convert it to a %. 
     if any(j < 1 for j in D.data.costcov.cov[prognumber]):
         coveragepercent = D.data.costcov.cov[prognumber] 
@@ -504,7 +505,6 @@ def getcoverage(D=None, params=[], artelig=default_artelig, progname=default_pro
             saturation = params[0]
             growthrate = (-1/params[2])*log((2*params[0])/(params[1]+params[0]) - 1)        
             storeparams = [saturation, growthrate]
-            return coverage, coveragelabel, storeparams
     else:
         coveragenumber = D.data.costcov.cov[prognumber] 
         if len(coveragenumber)==1: # If an assumption has been used, keep this constant over time
@@ -517,9 +517,8 @@ def getcoverage(D=None, params=[], artelig=default_artelig, progname=default_pro
             saturation = params[0]*targetpop[-1]
             growthrate = (-1/params[2])*log((2*params[0]*targetpop[-1])/(params[1]*targetpop[-1]+params[0]*targetpop[-1]) - 1)
             storeparams = [saturation, growthrate]
-            return coverage, coveragelabel, storeparams
                 
-    return coverage, coveragelabel, []
+    return coverage, coveragelabel, storeparams
 
 def makecosampleparams(coparams, verbose=2):
     
