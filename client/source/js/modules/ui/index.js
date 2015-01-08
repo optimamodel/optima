@@ -152,7 +152,7 @@ define([
                 'Upload completed'
               );
           } else {
-            alert('Sorry, but server feels bad now. Please, give it some time to recover')
+            alert('Sorry, but server feels bad now. Please, give it some time to recover');
           }
 
         });
