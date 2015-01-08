@@ -26,22 +26,22 @@ def record_params(setup_state):
   app = setup_state.app
   project.config = dict([(key,value) for (key,value) in app.config.iteritems()])
 
-"""
-Gives back project params
-"""
 @project.route('/params')
 @login_required
 def get_project_params():
+    """
+    Gives back project params
+    """
     from sim.parameters import parameters
     project_params = [p for p in parameters() if p['modifiable']]
     return json.dumps({"params":project_params})
 
-"""
-Gives back default populations and programs
-"""
 @project.route('/predefined')
 @login_required
 def get_predefined():
+    """
+    Gives back default populations and programs
+    """
     from sim.programs import programs
     from sim.populations import populations
     from sim.program_categories import program_categories
@@ -62,20 +62,19 @@ def get_predefined():
         if new_params: p['parameters'] = new_params
     return json.dumps({"programs":programs, "populations": populations, "categories":program_categories})
 
-"""
-Creates the project with the given name and provided parameters.
-Result: on the backend, new project is stored,
-spreadsheet with specified name and parameters given back to the user.
-"""
 @project.route('/create/<project_name>', methods=['POST'])
 @login_required
 @report_exception()
-# expects json with the following arguments (see example):
-# {"npops":6,"nprogs":8, "datastart":2000, "dataend":2015}
 def createProject(project_name):
+    """
+    Creates the project with the given name and provided parameters.
+    Result: on the backend, new project is stored,
+    spreadsheet with specified name and parameters given back to the user.
+    expects json with the following arguments (see example):
+    {"npops":6,"nprogs":8, "datastart":2000, "dataend":2015}
+    """
     from sim.makeproject import default_datastart, default_dataend, default_econ_dataend, default_pops, default_progs
 
-    #session.clear() # had to commit this line to check user session
     current_app.logger.debug("createProject %s" % project_name)
     data = request.form
 
@@ -148,16 +147,15 @@ def createProject(project_name):
     (dirname, basename) = (upload_dir_user(TEMPLATEDIR), new_project_template)
     return helpers.send_from_directory(dirname, basename)
 
-"""
-Opens the project with the given name.
-If the project exists, notifies the user about success.
-"""
 @project.route('/open/<project_name>')
 @login_required
-# expects project name,
-# todo: only if it can be found
 def openProject(project_name):
-
+    """
+    Opens the project with the given name.
+    If the project exists, notifies the user about success.
+    expects project name,
+    todo: only if it can be found
+    """
     proj_exists = False
     try: #first check DB
         proj_exists = project_exists(project_name)
@@ -169,16 +167,16 @@ def openProject(project_name):
     else:
         return jsonify({'status':'OK'})
 
-"""
-Generates workbook for the project with the given name.
-"""
 @project.route('/workbook/<project_name>')
 @login_required
 @report_exception()
-#expects project name (project should already exist)
-#if project exists, regenerates workbook for it
-#if project does not exist, returns an error.
 def giveWorkbook(project_name):
+    """
+    Generates workbook for the project with the given name.
+    expects project name (project should already exist)
+    if project exists, regenerates workbook for it
+    if project does not exist, returns an error.
+    """
     reply = BAD_REPLY
     proj_exists = False
     cu = current_user
@@ -279,20 +277,18 @@ def getProjectList():
 
     return jsonify({"projects": projects_data})
 
-"""
-Deletes the given project (and eventually, corresponding excel files)
-"""
 @project.route('/delete/<project_name>', methods=['DELETE'])
 @login_required
 @report_exception()
 def deleteProject(project_name):
+    """
+    Deletes the given project (and eventually, corresponding excel files)
+    """
     current_app.logger.debug("deleteProject %s" % project_name)
     delete_spreadsheet(project_name)
     current_app.logger.debug("spreadsheets for %s deleted" % project_name)
-    # Get current user
-    user_id = current_user.id
     # Get project row for current user with project name
-    project = db.session.query(ProjectDb).filter_by(user_id= user_id,name=project_name).first()
+    project = load_project(project_name)
 
     if project is not None:
         id = project.id
@@ -305,14 +301,47 @@ def deleteProject(project_name):
 
     return jsonify({'status':'OK','reason':'Project %s deleted.' % project_name})
 
+@project.route('/copy/<project_name>', methods=['POST'])
+@login_required
+@report_exception()
+def copyProject(project_name):
+    """
+    Copies the given project to a different name
+    usage: /api/project/copy/<project_name>?to=<new_project_name>
+    """
+    from sqlalchemy.orm.session import make_transient, make_transient_to_detached
+    reply = BAD_REPLY
+    new_project_name = request.args.get('to')
+    if not new_project_name:
+        reply['reason'] = 'New project name is not given'
+        return reply
+    # Get project row for current user with project name
+    project = load_project(project_name, all_data = True)
+    if project is None:
+        reply['reason'] = 'Project %s does not exist.' % project_name
+        return reply
+    project_data_exists = project.project_data #force loading it
+    db.session.expunge(project)
+    make_transient(project)
+    project.id = None
+    project.name = new_project_name
+    db.session.add(project)
+    db.session.flush() #this updates the project ID to the new value
+    if project_data_exists:
+        db.session.expunge(project.project_data) # it should have worked without that black magic. but it didn't.
+        make_transient(project.project_data)
+        db.session.add(project.project_data)
+    db.session.commit()
+    # let's not copy working project, it should be either saved or discarded
+    return jsonify({'status':'OK','project':project_name, 'copied_to':new_project_name})
 
-"""
-saves data as Excel file
-"""
 @project.route('/export', methods=['POST'])
 @login_required
 @report_exception()
 def exportGraph():
+    """
+    saves data as Excel file
+    """
     from sim.makeworkbook import OptimaGraphTable
     data = json.loads(request.data)
 
@@ -365,11 +394,16 @@ def downloadExcel(downloadName):
 Uploads Excel file, uses it to update the corresponding model.
 Precondition: model should exist.
 """
+
 @project.route('/update', methods=['POST'])
 @login_required
 @check_project_name
 @report_exception()
 def uploadExcel():
+    """
+    Uploads Excel file, uses it to update the corresponding model.
+    Precondition: model should exist.
+    """
     current_app.logger.debug("api/project/update")
     project_name = request.project_name
     user_id = current_user.id

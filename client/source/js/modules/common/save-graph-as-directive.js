@@ -346,8 +346,11 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
                   headers: {'Content-type': 'application/json'},
                   responseType:'arraybuffer'})
               .success(function (response, status, headers, config) {
-                var blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-                saveAs(blob, (title+'.xlsx'));
+                  var blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                  // The saveAs function must be wrapped in a setTimeout with 0 ms because Angular has a problem with fileSaver.js on FF 34.0 and the download doesn't start
+                  setTimeout(function() {
+                    saveAs(blob, (title+'.xlsx'));
+                  }, 0);
               })
               .error(function () {});
           };

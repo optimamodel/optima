@@ -41,7 +41,7 @@ def startOptimization():
         reply['reason'] = 'File for project %s does not exist' % project_name
         return jsonify(reply)
     try:
-        can_start, can_join, current_calculation = start_or_report_calculation(current_user.id, project_name, optimize, db.engine)
+        can_start, can_join, current_calculation = start_or_report_calculation(current_user.id, project_name, optimize, db.session)
         if can_start:
             # Prepare arguments
             args = {'verbose':0}
@@ -70,7 +70,7 @@ def startOptimization():
 def stopCalibration():
     """ Stops calibration """
     prj_name = request.project_name
-    cancel_calculation(current_user.id, prj_name, optimize, db.engine)
+    cancel_calculation(current_user.id, prj_name, optimize, db.session)
     return json.dumps({"status":"OK", "result": "optimize calculation for user %s project %s requested to stop" % (current_user.name, prj_name)})
 
 @optimization.route('/working')
@@ -82,7 +82,7 @@ def getWorkingModel():
     D_dict = {}
     # Get optimization working data
     prj_name = request.project_name
-    if check_calculation(current_user.id, prj_name, optimize, db.engine):
+    if check_calculation(current_user.id, prj_name, optimize, db.session):
         D_dict = load_model(prj_name, working_model = True, as_bunch = False)
         status = 'Running'
     else:

@@ -69,6 +69,8 @@ define([
             controller: ['$scope', function ($scope) {
               $scope.title = title;
               $scope.label = label;
+              $scope.acceptButton = 'Yes';
+              $scope.rejectButton = 'No';
 
               $scope.cb = function(enteredValue) {
                 cb(enteredValue);
