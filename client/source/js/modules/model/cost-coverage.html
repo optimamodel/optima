@@ -2,13 +2,15 @@
 
   <div class="section grid">
     <div class="6">
+      <p ng-show="needData" class="error-hint">Please upload Optima spreadsheet first.</p>
       <label>
         Select a program: <br>
         <select
           class="txbox"
           ng-options="p as p.name group by p.category for p in programs"
           ng-change="changeProgram()"
-          ng-model="selectedProgram"></select>
+          ng-model="selectedProgram"
+          ng-disabled="needData"></select>
       </label>
 
     </div>
@@ -41,8 +43,8 @@
     <div class="section" ng-if="hasCostCoverResponse">
       <h1>{{ displayedProgram.name }}</h1>
       <div class="section elastic" style="width: 470px">
-        <div class="chart-container" ng-init="graph = graphs.plotdata_cc; graph.title = displayedProgram.name">
-          <div line-scatter-chart data="graph.data" options="graph.options" save-graph-as></div>
+        <div class="chart-container">
+          <div line-scatter-chart variant="ccGraph" data="ccGraph.data" options="ccGraph.options" save-graph-as></div>
         </div>
       </div>
 

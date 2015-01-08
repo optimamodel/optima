@@ -1,27 +1,29 @@
 define(['./module', 'underscore'], function (module, _) {
   'use strict';
 
-  module.controller('ModelViewCalibrationController', function ($scope, $http, meta, modalService) {
+  module.controller('ModelViewCalibrationController', function ($scope, $http, meta, info, modalService) {
 
     var plotTypes, effectNames;
 
     var initialize =function () {
       $scope.meta = meta;
 
-      $scope.initializePrograms();
-      $scope.selectedProgram = $scope.programs[0];
-      $scope.displayedProgram = null;
+      // show message "calibrate the model" and disable the form elements
+      $scope.projectInfo = info;
+      $scope.needData = !$scope.projectInfo.has_data;
+      
+      if ( !$scope.needData ) {
+        $scope.initializePrograms();
+        $scope.selectedProgram = $scope.programs[0];
+        $scope.displayedProgram = null;
 
-      $scope.coParams = [];
+        $scope.coParams = [];
 
-      $scope.hasCostCoverResponse = false;
+        $scope.hasCostCoverResponse = false;
 
+      }
+      
       // model parameters
-
-      /** Dec 24 2014
-       * fix/306-2-fix-plotting-of-default-ccocs
-       * removed hardcoded params
-       */
       $scope.defaultSaturationCoverageLevel = 90;
       $scope.defaultKnownCoverageLevel = 20;
       $scope.defaultKnownFundingValue = 800000;
@@ -187,14 +189,17 @@ define(['./module', 'underscore'], function (module, _) {
     };
 
     /**
-     * Receives graphs data with plot type to calculate,
-     * calculates all graphs of given type and writes them to $scope.graphs[type]
+     * Receives graphs data with plot type to calculate, calculates all graphs
+     * of given type and writes them to $scope.graphs[type] except for the
+     * cost coverage graph which will be written to $scope.ccGraph
+     *
      * @param data - usually api request with graphs data
      * @param type - string
      */
     var prepareGraphsOfType = function (data, type) {
       if (type === 'plotdata_cc') {
-        $scope.graphs[type] = prepareCostCoverageGraph(data);
+        $scope.ccGraph = prepareCostCoverageGraph(data);
+        $scope.ccGraph.title = $scope.displayedProgram.name;
       } else if (type === 'plotdata' || type === 'plotdata_co') {
         _(data).each(function (graphData) {
           $scope.graphs[type].push(setUpPlotdataGraph(graphData));
