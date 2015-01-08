@@ -38,14 +38,21 @@ define ['angular-mocks', 'Source/modules/analysis/optimization-ctrl'], ->
           modalService: {}
         }
 
-    describe 'yearIsRequired()', ->
+    describe 'yearsAreRequired()', ->
 
       it 'should be false if funding is not defined', ->
-        expect(scope.yearIsRequired()).toBeFalsy()
+        expect(scope.yearsAreRequired()).toBeFalsy()
 
       it 'should be true if funding is set to variable', ->
         scope.params.objectives.funding = 'variable'
-        expect(scope.yearIsRequired()).toBeTruthy()
+        expect(scope.yearsAreRequired()).toBeTruthy()
+
+      it 'should be true if only start or end is provided', ->
+        scope.params.objectives.funding = 'variable'
+        scope.params.objectives.year = { start: 2015 }
+        expect(scope.yearsAreRequired()).toBeTruthy()
+        scope.params.objectives.year = { end: 2015 }
+        expect(scope.yearsAreRequired()).toBeTruthy()
 
     describe 'updateYearRange()', ->
 

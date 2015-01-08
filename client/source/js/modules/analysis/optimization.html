@@ -18,9 +18,9 @@
         <h2>Time horizons and assumptions</h2>
         <div class="float-left margin-left-s">
             Analyses will consider program optimizations over the period
-            <input class="txbox __inline __l" value="2015" type="number" placeholder="e.g. 2015" ng-model="params.objectives.year.start" ng-keyup="updateYearRange()" ng-required="yearIsRequired()">
+            <input class="txbox __inline __l" value="2015" type="number" placeholder="e.g. 2015" ng-model="params.objectives.year.start" ng-keyup="updateYearRange()" ng-required="yearsAreRequired()">
             to
-            <input class="txbox __inline __l" value="2020" type="number" placeholder="e.g. 2020" ng-model="params.objectives.year.end" ng-keyup="updateYearRange()" ng-required="yearIsRequired()">
+            <input class="txbox __inline __l" value="2020" type="number" placeholder="e.g. 2020" ng-model="params.objectives.year.end" ng-keyup="updateYearRange()" ng-required="yearsAreRequired()">
             in order to achieve the objectives by
             <input class="txbox __inline __l" value="2030" type="number" placeholder="e.g. 2030" ng-model="params.objectives.year.until">
             , with the following context between the end of the optimized program period and the end of the analysis period:</p>
@@ -104,7 +104,7 @@
             <label style="padding:0px 0px 0px 20px;">
                 <input type="radio" name="fundingAssumptions" ng-model="params.objectives.funding" value="variable" ng-change="updateYearRange()"/>
                 Optimize a variable budget for each year in the program period:<br/>
-                <span ng-show="yearIsRequired()" class="error-hint">Please specify program optimizations period above.</span>
+                <span ng-show="yearsAreRequired()" class="error-hint">Please specify program optimizations period above.</span>
                 <br/>
                 <div style="padding:0px 0px 0px 50px;">
                     <div ng-repeat="yCols in yearCols" style="padding:0 0 10px 0;">

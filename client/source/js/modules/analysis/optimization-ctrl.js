@@ -341,16 +341,24 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     $scope.yearLoop = [];
     $scope.yearCols = [];
 
-    $scope.yearIsRequired = function () {
+    /**
+     * Returns true if the start & end year are required.
+     */
+    $scope.yearsAreRequired = function () {
       if (!$scope.params.objectives.funding || $scope.params.objectives.funding !== 'variable') {
         return false;
       }
-      if (!$scope.params.objectives.year){
+      if (!$scope.params.objectives.year ||
+          !$scope.params.objectives.year.start ||
+          !$scope.params.objectives.year.end){
         return true;
       }
       return false;
     };
 
+    /**
+     * Update the variables depending on the range in years.
+     */
     $scope.updateYearRange = function () {
 
       // only for variable funding the year range is relevant to produce the loop & col
