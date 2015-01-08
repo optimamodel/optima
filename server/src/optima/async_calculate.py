@@ -4,6 +4,7 @@ import time
 from signal import *
 
 from sqlalchemy.orm import sessionmaker, scoped_session
+from sqlalchemy import create_engine
 from sim.bunch import Bunch
 from dbmodels import ProjectDb, WorkingProjectDb
 
@@ -12,12 +13,11 @@ sentinel = {
     'exit': False  # This will stop all threads
 }
 
-def start_or_report_calculation(user_id, project, func, engine): #only called from the application
+def start_or_report_calculation(user_id, project, func, db_session): #only called from the application
     work_type = func.__name__
     can_start = False
     can_join = False
 
-    db_session = scoped_session(sessionmaker(engine))
     project = db_session.query(ProjectDb).filter_by(user_id=user_id, name=project).first()
     if project is not None:
         if project.working_project is None:
@@ -39,22 +39,18 @@ def start_or_report_calculation(user_id, project, func, engine): #only called fr
                 work_type = project.working_project.work_type
     else:
         print("No such project %s, cannot start calculation" % project)
-    db_session.close()
     return can_start, can_join, work_type
 
-def cancel_calculation(user_id, project, func, engine):
-    db_session = scoped_session(sessionmaker(engine))
+def cancel_calculation(user_id, project, func, db_session):
     project = db_session.query(ProjectDb).filter_by(user_id=user_id, name=project).first()
     if project is not None and project.working_project is not None:
         project.working_project.is_working = False
         project.working_project.work_type = None
         db_session.add(project.working_project)
         db_session.commit()
-    db_session.close()
 
-def check_calculation(user_id, project, func, engine):
+def check_calculation(user_id, project, func, db_session):
     is_working = not sentinel['exit']
-    db_session = scoped_session(sessionmaker(engine))
     if is_working:
         project = db_session.query(ProjectDb).filter_by(user_id=user_id, name=project).first()
         is_working = project is not None \
@@ -64,7 +60,6 @@ def check_calculation(user_id, project, func, engine):
     else:
         db_session.query(WorkingProjectDb).update({'is_working':False,'work_type':None})
         db_session.commit()
-    db_session.close()
     return is_working
 
 def interrupt(*args):
@@ -99,22 +94,22 @@ class CalculatingThread(threading.Thread):
         self.user_name = user.name
         self.user_id = user.id
         self.project_name = project_name
-        self.engine = engine
         self.func = func
         self.args = args
         self.timelimit = int(timelimit) # to be sure
+        self.db_session = scoped_session(sessionmaker(engine)) #creating scoped_session, eventually bound to engine
         print("starting calculating thread for user: %s project %s for %s seconds" % (self.user_name, self.project_name, self.timelimit))
 
     def run(self):
-        D = self.load_model_user(self.project_name, self.user_id, working_model = False) #we start from the current model
+        D = self.load_model_user(self.db_session, self.project_name, self.user_id, working_model = False) #we start from the current model
         iterations = 1
         delta_time = 0
         start = time.time()
         while delta_time < self.timelimit:
-            if check_calculation(self.user_id, self.project_name, self.func, self.engine):
+            if check_calculation(self.user_id, self.project_name, self.func, self.db_session):
                 print("Iteration %d for user: %s, args: %s" % (iterations, self.user_name, self.args))
                 D = self.func(D, **self.args)
-                self.save_model_user(self.project_name, self.user_id, D)
+                self.save_model_user(self.db_session, self.project_name, self.user_id, D)
                 time.sleep(1)
                 delta_time = int(time.time() - start)
             else:
@@ -122,10 +117,12 @@ class CalculatingThread(threading.Thread):
                 break
             iterations += 1
         print("thread for project %s stopped" % self.project_name)
-        cancel_calculation(self.user_id, self.project_name, self.func, self.engine)
+        cancel_calculation(self.user_id, self.project_name, self.func, self.db_session)
+        self.db_session.connection().close() # this line might be redundant (not 100% sure - not clearly described)
+        self.db_session.remove()
+        self.db_session.bind.dispose() # black magic to actually close the connection by forcing the engine to dispose of garbage (I assume)
 
-    def load_model_user(self, name, user_id, as_bunch=True, working_model=True):
-        db_session = scoped_session(sessionmaker(self.engine))
+    def load_model_user(self, db_session, name, user_id, as_bunch=True, working_model=True):
         project = db_session.query(ProjectDb).filter_by(user_id=user_id, name=name).first()
         model = None
         if project is not None:
@@ -137,12 +134,10 @@ class CalculatingThread(threading.Thread):
                 model = project.working_project.model
             if as_bunch:
                 model = Bunch.fromDict(model)
-        db_session.close()
         return model
 
-    def save_model_user(self, name, user_id, model, working_model=True):
+    def save_model_user(self, db_session, name, user_id, model, working_model=True):
         print("save_model_user:%s %s" % (name, user_id))
-        db_session = scoped_session(sessionmaker(self.engine))
 
         project = db_session.query(ProjectDb).filter_by(user_id=user_id, name=name).first()
         if isinstance(model, Bunch):
@@ -160,4 +155,3 @@ class CalculatingThread(threading.Thread):
             db_session.commit()
         else:
             print("no such model: user %s project %s" % (user_id, name))
-        db_session.close()
