@@ -97,6 +97,18 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
               }
             }
 
+            // Cost Coverage
+            if ( controller == 'ModelViewCalibration' ) {
+              if ( scope.graphs ) {
+                _(scope.graphs).each(function (graph,index) {
+                  _(graph).each(function (g,index) {
+                    graphs.push(g);
+                  });
+                });
+              }
+            }
+            console.log(graphs);
+
             scope.exportMultiSheetFrom(graphs);
           };
 
