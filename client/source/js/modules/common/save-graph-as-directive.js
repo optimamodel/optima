@@ -52,28 +52,34 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
            */
           scope.exportAll = function () {
             var graphs = [];
-            if ( scope.optimisationGraphs ) {
-              // loop through all optimisationGraphs
-              _(scope.optimisationGraphs).each(function (graph, index) {
+            var controller = scope.exportGraphs.controller;
+            
+            // Optimization
+            if ( controller == 'AnalysisOptimization' ) {
+              if ( scope.optimisationGraphs ) {
+                graphs = scope.optimisationGraphs;
+              }
+
+              if ( scope.financialGraphs ) {
+                graphs = scope.financialGraphs
+              }
+
+              if ( scope.radarChart ) {
+                // export radarChart
+                var graph = {
+                  data: scope.radarChart.radarData,
+                  options: scope.radarChart.radarOptions
+                };
+                graph.options.title = "Radar Chart";
                 graphs.push(graph);
-              });
+              }
             }
 
-            if ( scope.financialGraphs ) {
-              // loop through all financialGraphs
-              _(scope.financialGraphs).each(function (graph, index) {
-                graphs.push(graph);
-              });
-            }
-
-            // export radarChart
-            if ( scope.radarChart ) {
-              var graph = {
-                data: scope.radarChart.radarData,
-                options: scope.radarChart.radarOptions
-              };
-              graph.options.title = "Radar Chart";
-              graphs.push(graph);
+            // Calibration
+            if ( controller == 'ModelCalibration' ) {
+              if ( scope.graphs ) {
+                graphs = scope.graphs;
+              }
             }
 
             scope.exportMultiSheetFrom(graphs);
@@ -316,7 +322,7 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
                   responseType:'arraybuffer'})
               .success(function (response, status, headers, config) {
                 var blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-                saveAs(blob, ('Optimization analyses.xlsx'));
+                saveAs(blob, (scope.exportGraphs.name + '.xlsx'));
               })
               .error(function () {});
           };

@@ -10,6 +10,12 @@ define([
       $scope.meta = meta;
       $scope.types = angular.copy(CONFIG.GRAPH_TYPES);
 
+      // use for export all data
+      $scope.exportGraphs = {
+        'name':'Optimization analyses',
+        'controller':'AnalysisOptimization'
+      };
+
       var statusEnum = {
         NOT_RUNNING: { text: "", isActive: false },
         RUNNING: { text: "Optimization is running", isActive: true },
