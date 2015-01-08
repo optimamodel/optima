@@ -43,6 +43,9 @@ define([
           controller: 'ModelViewCalibrationController',
           templateUrl: 'js/modules/model/cost-coverage.html',
           resolve: {
+            info: function(Project) {
+              return Project.info().$promise;
+            },
             meta: function (Model) {
               return Model.getParametersDataMeta().$promise;
             }
