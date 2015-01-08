@@ -337,7 +337,7 @@ def exportAllGraphs():
     
     data = json.loads(request.data)
     project_name = request.headers['Project']
-    name = project_name + " Optimization analyses"
+    name = project_name
     filename = name+'.xlsx'
     path = fullpath(filename)
     table = OptimaGraphTable(data) # data => sheets
