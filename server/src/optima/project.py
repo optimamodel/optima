@@ -318,7 +318,6 @@ def exportGraph():
     name = data['name']
     filename = name+'.xlsx'
     sheet = [{
-        "name":"GRAPH DATA",
         "columns":data['columns']
     }]
     path = fullpath(filename)
