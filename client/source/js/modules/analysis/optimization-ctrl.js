@@ -2,7 +2,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
   'use strict';
 
   module.controller('AnalysisOptimizationController', function ($scope, $http,
-    $interval, meta, CONFIG,modalService) {
+    $interval, meta, CONFIG, modalService) {
 
       $scope.meta = meta;
       $scope.types = angular.copy(CONFIG.GRAPH_TYPES);
@@ -352,6 +352,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     };
 
     $scope.updateYearRange = function () {
+
       // only for variable funding the year range is relevant to produce the loop & col
       if ( !$scope.params.objectives.funding || $scope.params.objectives.funding !== 'variable') {
         return;
@@ -364,7 +365,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
 
       // parse years
       if ($scope.params.objectives.year === undefined) {
-        return false;
+        return;
       }
       var start = parseInt($scope.params.objectives.year.start);
       var end = parseInt($scope.params.objectives.year.end);
