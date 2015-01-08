@@ -602,37 +602,28 @@ class OptimaWorkbook:
         self.book.close()
 
 class OptimaGraphTable:
-    def __init__ (self, name, sheets, verbose = 2):
-        self.name = name
+    def __init__ (self, sheets, verbose = 2):
         self.verbose = verbose
         self.sheets = sheets
 
     def create(self, path):
         if self.verbose >=1:
-            print("Creating graph table %s" % self.name)
+            print("Creating graph table %s" % path)
 
         self.book = xlsxwriter.Workbook(path)
         self.formats = OptimaFormats(self.book)
         sheet_name = 'GRAPH DATA'
 
-        # To maintain same old behaviour for previous functionality of single sheet
-        # This code will use to either add sheet name: in case of multi sheets,
-        # Or spreadsheet name: in case of single sheet as data Heading
-        use_sheet_name = False
-        if (len(self.sheets) > 1):
-            use_sheet_name = True
         k = 0
         for s in self.sheets:
             k += 1
             name = sheet_name + " " + str(k)
             sheet = self.book.add_worksheet(name)
-            
+
             titles = [c['title'] for c in s["columns"]]
             max_row = max([len(c['data']) for c in s["columns"]])
-            if (use_sheet_name):
-                self.formats.write_block_name(sheet, s["name"], 0) #sheet name
-            else:
-                self.formats.write_block_name(sheet, self.name, 0) # spreadsheet name
+            self.formats.write_block_name(sheet, s["name"], 0) #sheet name
+
             for i,title in enumerate(titles):
                 self.formats.write_rowcol_name(sheet, 1, i, title)
             row =0
