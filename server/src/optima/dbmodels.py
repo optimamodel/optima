@@ -63,7 +63,7 @@ class ProjectDb(db.Model):
 
     def has_data(self):
         result = False
-        if self.model is not None:
+        if self.model is not None and self.project_data is not None:
             result = 'data' in self.model and 'programs' in self.model
         return result
 
