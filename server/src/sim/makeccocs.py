@@ -152,7 +152,7 @@ def makeco(D, progname=default_progname, effectname=default_effectname, coparams
     parname = effectname[0][1]
 
     # Only going to make cost-outcome curves for programs where the affected parameter is not coverage
-    if parname in ['numost','numpmtct']:
+    if parname in ['numost','numpmtct','numfirstline','numsecondline']:
         return [], D
     else:
         if popname[0] in D.data.meta.pops.short:
@@ -294,7 +294,7 @@ def makecco(D=None, progname=default_progname, effectname=default_effectname, cc
     parname = effectname[0][1]
 
     # Only going to make cost-outcome curves for programs where the affected parameter is not coverage
-    if parname in ['numost','numpmtct']:
+    if parname in ['numost','numpmtct','numfirstline','numsecondline']:
         return [], [], []
     else:
         if popname[0] in D.data.meta.pops.short:
@@ -538,6 +538,9 @@ def makesamples(coparams, muz, stdevz, muf, stdevf, samplesize=1000):
         
     return zerosample, fullsample
 
+
+
+# For testing... delete later... should make separate file!
 #plotdata, storeparams = makecc(D, progname=default_progname, startup=default_startup, ccparams=default_ccparams, artelig=default_artelig, makeplot=default_makeplot, verbose=2, nxpts = 1000)
 #plotdata, plotdata_co, plotdata_cc, effectnames, D = plotallcurves(D, progname=default_progname, ccparams=default_ccparams, coparams=default_coparams, makeplot=default_makeplot, verbose=2)
 #D = makeallccocs(D, verbose=2, makeplot=default_makeplot)
