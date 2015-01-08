@@ -29,8 +29,8 @@ default_artelig = range(6,26)
 def makecc(D=None, progname=default_progname, startup=default_startup, ccparams=default_ccparams, artelig=default_artelig, makeplot=default_makeplot, verbose=2, nxpts = 1000):
     '''Make cost coverage curve.
 
-    Input types:
-    datain: EITHER a bunch (if project data already loaded) OR a string specifying the project name (which will then be load a bunch)
+    Input:
+    D: main data structure
     progname: string. Needs to be one of the keys of D.programs
     startup: #TODO (not implemented yet)
     ccparams: list. Contains parameters for the cost-coverage curves, obtained from the GUI
@@ -60,7 +60,7 @@ def makecc(D=None, progname=default_progname, startup=default_startup, ccparams=
     plotdata = {}
 
     # Sort out time vector and indexing
-    simtvec = D.S.tvec # Extract the time vector from the sim
+    simtvec = D.opt.tvec # Extract the time vector from the sim
     nsimpts = len(simtvec) # Number of sim points
     simindex = range(nsimpts) # Get the index corresponding to the sim time vector
 
@@ -100,7 +100,6 @@ def makecc(D=None, progname=default_progname, startup=default_startup, ccparams=
     # We only want the model-estimated size of the targeted population(s) for actual years, not the interpolated years
     yearindices = range(0, len(D.S.tvec), int(1/D.opt.dt))
     targetpop = targetpopmodel[yearindices]
-    print targetpop
 
     # Check inputs from GUI 
     if (ccparams[0] <= 0 or ccparams[0] > 1):
@@ -510,5 +509,5 @@ def makesamples(coparams, muz, stdevz, muf, stdevf, samplesize=1000):
         
     return zerosample, fullsample
 
-plotdata, storeparams = makecc(D, progname=default_progname, startup=default_startup, ccparams=default_ccparams, artelig=default_artelig, makeplot=default_makeplot, verbose=2, nxpts = 1000)
+#plotdata, storeparams = makecc(D, progname=default_progname, startup=default_startup, ccparams=default_ccparams, artelig=default_artelig, makeplot=default_makeplot, verbose=2, nxpts = 1000)
 #plotdata, plotdata_co, plotdata_cc, effectnames, D = plotallcurves(D, progname=default_progname, ccparams=default_ccparams, coparams=default_coparams, makeplot=default_makeplot, verbose=2)
