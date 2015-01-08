@@ -52,6 +52,8 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
 
                 } else if (attrs.variant == 'coGraph') {
                   target = scope.coGraph;
+                } else if (attrs.variant == 'ccGraph') {
+                  target = scope.ccGraph;
                 } else {
                   target= scope.graph;
                 }
@@ -284,7 +286,7 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
             if(!graphOrUndefined) { return scope.saySorry();}
             var exportable = this.getExportableFrom(graphOrUndefined);
             if(exportable === null) { return scope.saySorry(); }
-            var title = graphOrUndefined.options.title || graphOrUndefined.title;
+            var title = graphOrUndefined.options.title || graphOrUndefined.title || "data";
             $http({url:'/api/project/export',
                   method:'POST',
                   data: exportable,
