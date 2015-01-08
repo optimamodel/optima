@@ -61,7 +61,8 @@ define([
                         'Cannot proceed'
                       );
                   }
-                }
+                },
+                showClick:true
               }
             ]
           },
@@ -75,11 +76,17 @@ define([
                 click: function() {
                   ifActiveProject($state, 'model.view', activeProject);
                 },
+                state: {
+                  name: 'model.view'
+                }
               },
               {
                 title: 'Define cost-coverage-outcome assumptions',
                 click: function() {
                   ifActiveProject($state, 'model.define-cost-coverage-outcome', activeProject);
+                },
+                state:{
+                  name: 'model.define-cost-coverage-outcome'
                 }
               }
             ]
@@ -92,12 +99,18 @@ define([
                 title: 'Scenario analyses',
                 click: function() {
                   ifActiveProject($state, 'analysis.scenarios', activeProject);
+                },
+                state:{
+                  name: 'analysis.scenarios'
                 }
               },
               {
                 title: 'Optimization analyses',
                 click: function() {
                   ifActiveProject($state, 'analysis.optimization', activeProject);
+                },
+                state:{
+                  name: 'analysis.optimization'
                 }
               }
             ]
