@@ -5,15 +5,14 @@ def getcurrentbudget(D, alloc=None):
     Returns: D
     Version: 2014nov30
     """
-    from makeccocs import ccoeqn, cceqn
+    from makeccocs import ccoeqn, cceqn, coverage_params
     import numpy as np
     
     # Initialise parameter structure (same as D.P). #TODO make this less ugly
     for param in D.P.keys():
-        if isinstance(D.P[param], dict):
-            if 'p' in D.P[param].keys():
-                D.P[param].c = np.zeros(np.size(np.array(D.P[param].p),0))
-                D.P[param].c[D.P[param].c>=0] = float('nan')
+        if isinstance(D.P[param], dict) and 'p' in D.P[param].keys():
+            D.P[param].c = np.zeros(np.size(np.array(D.P[param].p),0))
+            D.P[param].c[D.P[param].c>=0] = float('nan')
 
     # Initialise currentbudget if needed
     allocprovided = not(isinstance(alloc,type(None)))
@@ -21,11 +20,8 @@ def getcurrentbudget(D, alloc=None):
         currentbudget = []
 
     # Loop over programs
-    for progname in D.data.meta.progs.short:
+    for prognumber, progname in enumerate(D.data.meta.progs.short):
         
-        # Get program index 
-        prognumber = D.data.meta.progs.short.index(progname) # get program number
-
         # If an allocation has been passed in, we don't need to figure out the program budget
         if allocprovided:
             totalcost = alloc[prognumber]
@@ -37,16 +33,15 @@ def getcurrentbudget(D, alloc=None):
             totalcost = totalcost[-1]
 
         # Loop over effects
-        for effectname in D.programs[progname]:
-
-            # Get effect index 
-            effectnumber = D.programs[progname].index(effectname)    
-
+        for effectnumber, effectname in enumerate(D.programs[progname]):
             # Get population info
             popname = effectname[1]
+
+            # Get parameter info
+            parname = effectname[0][1]
             
             # Does this affect a specific population within the model?
-            if popname[0] in D.data.meta.pops.short:
+            if popname[0] in D.data.meta.pops.short and not parname in coverage_params:
 
                 popnumber = D.data.meta.pops.short.index(popname[0]) 
 
