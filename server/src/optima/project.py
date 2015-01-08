@@ -315,13 +315,13 @@ saves data as Excel file
 def exportGraph():
     from sim.makeworkbook import OptimaGraphTable
     data = json.loads(request.data)
-    name = data['name']
-    filename = name+'.xlsx'
+
     sheet = [{
+        "name": data['name'],
         "columns":data['columns']
     }]
-    path = fullpath(filename)
-    table = OptimaGraphTable(name, sheet)
+    path = fullpath(data['name'] + '.xlsx' )
+    table = OptimaGraphTable(sheet)
     table.create(path)
     (dirname, basename) = os.path.split(path)
     return helpers.send_file(path, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
@@ -340,7 +340,7 @@ def exportAllGraphs():
     name = project_name + " Optimization analyses"
     filename = name+'.xlsx'
     path = fullpath(filename)
-    table = OptimaGraphTable(name, data) # data => sheets
+    table = OptimaGraphTable(data) # data => sheets
     table.create(path)
     (dirname, basename) = os.path.split(path)
     return helpers.send_file(path, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')

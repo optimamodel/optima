@@ -51,7 +51,7 @@ class TestOptimaGraphTable(unittest.TestCase):
             "columns":[{'title':'one', 'data':[1,2,3]}, \
             {'title':'two', 'data':[2,3,5]},{'title':'three', 'data':["a","b","c"]}]
         }]
-        table = OptimaGraphTable('Beautiful graph', sheet)
+        table = OptimaGraphTable(sheet)
         path = '/tmp/test_graph.xlsx'
         if os.path.exists(path):
           os.remove(path)
