@@ -98,6 +98,9 @@ define([
         $scope.params.constraints.coverage[meta.progs.short[i]].year = undefined;
       }
 
+    $scope.radarChartName = 'Allocation'
+    $scope.radarAxesName =  'Programs'
+
     var linesStyle = ['__blue', '__green', '__red', '__orange', '__violet',
       '__black', '__light-orange', '__light-green'];
 
@@ -338,6 +341,50 @@ define([
       $scope.optimisationGraphs = prepareOptimisationGraphs(cachedResponse.graph);
       $scope.financialGraphs = prepareFinancialGraphs(cachedResponse.graph);
     }, true);
+
+    $scope.yearLoop = [];
+    $scope.yearCols = [];
+
+    $scope.checkStartEndYear = function () {
+      if ( !$scope.params.objectives.funding || $scope.params.objectives.funding !== 'variable') {
+        return;
+      }
+      
+      $scope.params.objectives.outcome.variable = {}
+      $scope.yearError = false;
+      $scope.yearLoop = [];
+      $scope.yearCols = [];
+      if ( !$scope.params.objectives.year ){
+        showYearError();
+        return;
+      }
+      var start = parseInt($scope.params.objectives.year.start);
+      var end = parseInt($scope.params.objectives.year.end);
+      
+      if ( isNaN(start) ||  isNaN(end) || end <= start) {
+        showYearError();
+        return;
+      }
+
+      for ( var i = start; i <= end; i++ ) {
+        $scope.yearLoop.push({year:i});
+        $scope.params.objectives.outcome.variable[i] = undefined;
+      }
+  
+       var cols = 5;
+       var rows = Math.ceil($scope.yearLoop.length / cols);
+       for( var i = 0; i < rows; i++ ) {
+         $scope.yearCols.push({start:i*cols,end:(i*cols)+cols});
+       }
+
+    };
+
+    $scope.yearError = false;
+    var showYearError = function() {
+      $scope.yearError = true;
+      $scope.yearLoop = [];
+      $scope.yearCols = [];
+    };
 
   });
 });
