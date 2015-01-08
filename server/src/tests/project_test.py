@@ -3,6 +3,8 @@
 from optima_test_base import OptimaTestCase
 import unittest
 import json
+from api import app
+from flask import helpers
 
 class ProjectTestCase(OptimaTestCase):
     """
@@ -56,8 +58,6 @@ class ProjectTestCase(OptimaTestCase):
         self.assertTrue(parameter_name(['condom','reg']) == 'Condom usage probability, regular partnerships')
 
     def test_upload_data(self):
-        from api import app
-        from flask import helpers
         import re
         import os
         import filecmp
@@ -89,6 +89,38 @@ class ProjectTestCase(OptimaTestCase):
         result = filecmp.cmp(file_path, output_path)
         self.assertTrue(result)
         os.remove(output_path)
+
+    def test_copy_project(self):
+        # create project
+        response = self.client.post('/api/project/create/test', data = '{}')
+        self.assertEqual(response.status_code, 200)
+        # upload data so that we can check the existence of data in the copied project
+        example_excel_file_name = 'example.xlsx'
+        file_path = helpers.safe_join(app.static_folder, example_excel_file_name)
+        example_excel = open(file_path)
+        headers = [('project', 'test')]
+        response = self.client.post('api/project/update', headers=headers, data=dict(file=example_excel))
+        example_excel.close()
+        #get the info for the existing project
+        response = self.client.get('/api/project/info', headers=headers)
+        self.assertEqual(response.status_code, 200)
+        old_info=json.loads(response.data)
+        self.assertEqual(old_info['has_data'], True)
+        response = self.client.post('/api/project/copy/test?to=test_copy', headers=headers)
+        self.assertEqual(response.status_code, 200)
+        #open the copy of the project
+        response = self.client.get('/api/project/open/test_copy', headers=headers)
+        self.assertEqual(response.status_code, 200)
+        #get info for the copy of the project
+        headers = [('project', 'test_copy')]
+        response = self.client.get('/api/project/info', headers=headers)
+        self.assertEqual(response.status_code, 200)
+        new_info = json.loads(response.data)
+        self.assertEqual(old_info['has_data'], True)
+        #compare some elements
+        self.assertEqual(old_info['populations'], new_info['populations'])
+        self.assertEqual(old_info['programs'], new_info['programs'])
+
 
 if __name__ == '__main__':
     unittest.main()
