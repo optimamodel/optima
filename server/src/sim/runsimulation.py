@@ -13,13 +13,6 @@ def runsimulation(D, startyear=2000, endyear=2030, verbose=2, makeplot = 1):
     from setoptions import setoptions
     D.opt = setoptions(D.opt, startyear=startyear, endyear=endyear)
     
-    print('WARNING should add conditionals here')
-    from makeccocs import makeallccocs
-    D = makeallccocs(D, verbose=verbose, makeplot = makeplot)
-
-    from getcurrentbudget import getcurrentbudget
-    D = getcurrentbudget(D) # TODO Add verbose
-    
     # Convert data parameters to model parameters
     if 'M' not in D.keys():
         dosave = True
@@ -33,6 +26,13 @@ def runsimulation(D, startyear=2000, endyear=2030, verbose=2, makeplot = 1):
         S = model(D.G, D.M, D.F[s], D.opt, verbose=verbose)
         allsims.append(S)
     D.S = allsims[0] # Save one full sim structure for troubleshooting and funsies
+    
+    print('WARNING should add conditionals here')
+    from makeccocs import makeallccocs
+    D = makeallccocs(D, verbose=verbose, makeplot = makeplot)
+
+    from getcurrentbudget import getcurrentbudget
+    D = getcurrentbudget(D) # TODO Add verbose
     
     # Calculate results
     from makeresults import makeresults
