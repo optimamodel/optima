@@ -28,6 +28,31 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         });
     };
 
+
+    /**
+     * Copy an existing project using `name`
+     *
+     * Prompts for the new project name.
+     */
+    $scope.copy = function(name) {
+      modalService.showPrompt(
+        "Copy project",
+        "New project name",
+        function(newName) {
+          $http.post('/api/project/copy/' + name + '?to=' + newName)
+            .success(function (response) {
+              if (response) {
+                if (response.status === 'NOK') {
+                  alert(response.reason);
+                } else if (response.status === 'OK') {
+                  window.location.reload();
+                }
+              }
+            });
+        }
+      )
+    };
+
     /**
      * Opens to edit an existing project using `name` in /project/create screen
      *

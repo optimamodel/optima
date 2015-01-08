@@ -37,7 +37,7 @@
           {{ sub.title }}
         </a>
 
-        <a ng-if="sub.click" class="link __black __complex" ng-click="sub.click()">
+        <a ng-if="sub.showClick" class="link __black __complex" ng-click="sub.click()">
           <i class="ic" ng-class="{ '__circle-gray': !sub.active, '__donut-blue': sub.active }"></i>
           {{ sub.title }}
         </a>
