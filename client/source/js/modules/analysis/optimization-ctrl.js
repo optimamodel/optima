@@ -374,16 +374,14 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       }
 
       // initialize data
-      for ( var i = start; i <= end; i++ ) {
-        $scope.yearLoop.push({year:i});
-        $scope.params.objectives.outcome.variable[i] = undefined;
-      }
+      var years = _.range(start, end + 1);
+      $scope.yearLoop = _(years).map(function (year) { return { year: year}; });
 
       var cols = 5;
       var rows = Math.ceil($scope.yearLoop.length / cols);
-      for( var i = 0; i < rows; i++ ) {
-        $scope.yearCols.push({start:i*cols,end:(i*cols)+cols});
-      }
+      $scope.yearCols = _(_.range(0, rows)).map(function(col, index) {
+        return {start: index*cols, end: (index*cols)+cols };
+      });
 
     };
 
