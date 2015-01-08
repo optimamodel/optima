@@ -52,6 +52,8 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
 
                 } else if (attrs.variant == 'coGraph') {
                   target = scope.coGraph;
+                } else if (attrs.variant == 'ccGraph') {
+                  target = scope.ccGraph;
                 } else {
                   target= scope.graph;
                 }
@@ -284,15 +286,18 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
             if(!graphOrUndefined) { return scope.saySorry();}
             var exportable = this.getExportableFrom(graphOrUndefined);
             if(exportable === null) { return scope.saySorry(); }
-            var title = graphOrUndefined.options.title || graphOrUndefined.title;
+            var title = graphOrUndefined.options.title || graphOrUndefined.title || "data";
             $http({url:'/api/project/export',
                   method:'POST',
                   data: exportable,
                   headers: {'Content-type': 'application/json'},
                   responseType:'arraybuffer'})
               .success(function (response, status, headers, config) {
-                var blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-                saveAs(blob, (title+'.xlsx'));
+                  var blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                  // The saveAs function must be wrapped in a setTimeout with 0 ms because Angular has a problem with fileSaver.js on FF 34.0 and the download doesn't start
+                  setTimeout(function() {
+                    saveAs(blob, (title+'.xlsx'));
+                  }, 0);
               })
               .error(function () {});
           };
