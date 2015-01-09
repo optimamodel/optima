@@ -20,10 +20,10 @@ from parameters import parameters, input_parameter_name
 default_progname = 'SBCC'
 default_startup = 0 # select 0 for programs with no startup costs or 1 for programs with startup costs
 default_ccparams = [0.9, 0.6, 400000.0, 1e6]
-default_coparams = [0.3, 0.5, 0.7, 0.9]
-#default_init_coparams = [[0.3, 0.5], [0.7, 0.9]]
+default_coparams = []
+default_init_coparams = [] #this is used in loadworkbook
 default_makeplot = 1
-default_effectname = [['sex', 'condomcas'], [u'MSM'], [[0.3, 0.5], [0.7, 0.9]]] # D.programs[default_progname][0] 
+default_effectname = [['sex', 'condomcas'], [u'MSM'], []] # D.programs[default_progname][0] 
 default_artelig = range(6,26)
 coverage_params = ['numost','numpmtct','numfirstline','numsecondline']
 
@@ -176,8 +176,22 @@ def makeco(D, progname=default_progname, effectname=default_effectname, coparams
             coverage = coverage[~isnan(coverage)]
             coverage = coverage[-1]
 
+        # Get inputs from GUI (#TODO simplify?)
+        if coparams and len(coparams)>=3:
+            zeromin = coparams[0] # Assumptions of behaviour at zero coverage (lower bound)
+            zeromax = coparams[1] # Assumptions of behaviour at zero coverage (upper bound)
+            fullmin = coparams[2] # Assumptions of behaviour at maximal coverage (lower bound)
+            fullmax = coparams[3] # Assumptions of behaviour at maximal coverage (upper bound)
+        elif effectname[2] and len(effectname[2])>0:
+            zeromin = effectname[2][0][0] # Assumptions of behaviour at zero coverage (lower bound)
+            zeromax = effectname[2][0][1] # Assumptions of behaviour at zero coverage (upper bound)
+            fullmin = effectname[2][1][0] # Assumptions of behaviour at maximal coverage (lower bound)
+            fullmax = effectname[2][1][1] # Assumptions of behaviour at maximal coverage (upper bound)
+            coparams = [zeromin, zeromax, fullmin, fullmax] # Store for output
+
+        print("coparams", coparams, "effectname", effectname)
         # Get inputs from GUI, if they have been given
-        if coparams:
+        if coparams and len(coparams)>0:
             if not len(coparams)==4:
                 raise Exception('Not all of the coverage-outcome parameters have been specified. Please enter the missing parameters to define the curve.')
 
@@ -278,6 +292,8 @@ def makecco(D=None, progname=default_progname, effectname=default_effectname, cc
     # Check that the selected effect is in the list of effects
     short_effectname = effectname[:2] # only matching by effect "signature"
     short_effectlist = [e[:2] for e in D.programs[progname]]
+    print("short_effectname", short_effectname)
+    print("short_effectlist", short_effectlist)
     if short_effectname not in short_effectlist:
         print "makecco short_effectname: %s short_effectlist: %s" % (short_effectname, short_effectlist)
         raise Exception('Please select one of the following effects %s' % D.programs[progname])
@@ -293,6 +309,7 @@ def makecco(D=None, progname=default_progname, effectname=default_effectname, cc
     # Get population and parameter info
     popname = effectname[1]
     parname = effectname[0][1]
+    print("popname", popname, "parname", parname)
 
     # Only going to make cost-outcome curves for programs where the affected parameter is not coverage
     if parname not in coverage_params:
@@ -319,9 +336,6 @@ def makecco(D=None, progname=default_progname, effectname=default_effectname, cc
             # Generate samples of zero-coverage and full-coverage behaviour
             storeparams = [muz, stdevz, muf, stdevf, saturation, growthrate]
 
-            # Get the coverage-outcome relationships            
-            plotdata_co, storeparams_co = makeco(D, progname, effectname, coparams, makeplot=makeplot, verbose=verbose)
-
             # Create x dataset and initialise y dataset
             xvalscco = linspace(0,xupperlim,nxpts)
         
@@ -336,6 +350,9 @@ def makecco(D=None, progname=default_progname, effectname=default_effectname, cc
             plotdata['ylinedata1'] = mediancco # Y data for second line plot
             plotdata['ylinedata2'] = maxcco  # Y data for third line plot
             plotdata['ylinedata3'] = mincco  # Y data for fourth line plot
+
+        # Get the coverage-outcome relationships
+        plotdata_co, storeparams_co = makeco(D, progname, effectname, coparams, makeplot=makeplot, verbose=verbose)
 
         # Extract scatter data
         totalcost = D.data.costcov.cost[prognumber] # get total cost data
