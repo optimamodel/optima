@@ -44,9 +44,25 @@ define(['jquery', 'underscore', './module'], function ($, _, module) {
       controller: [
         '$scope',
         '$state',
-        function ($scope, $state) {
+        'CONFIG',
+        'graphTypeFactory',
+        function ($scope, $state, CONFIG, graphTypeFactory) {
           // Single-level array of all menu items to easily find matches
           $scope._processedItems = [];
+
+          $scope.types = graphTypeFactory.types;
+
+          /**
+           * Returns true if the type selector should be visible in the menu.
+           */
+          $scope.typeSelectorIsVisible = function () {
+            var viewNames = [
+              'model.view',
+              'analysis.scenarios',
+              'analysis.optimization'
+            ];
+            return _(viewNames).contains($state.current.name);
+          };
 
           $scope._processItems = function (items, parent) {
 
