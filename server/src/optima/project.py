@@ -259,8 +259,6 @@ def getProjectList():
         # Get projects for current user
         projects = ProjectDb.query.filter_by(user_id=current_user.id)
         for project in projects:
-            data_upload_time = project.creation_time
-            if project.project_data: data_upload_time = project.project_data.upload_time
             project_data = {
                 'status': "OK",
                 'name': project.name,
@@ -271,7 +269,7 @@ def getProjectList():
                 'programs': project.programs,
                 'populations': project.populations,
                 'creation_time': project.creation_time,
-                'data_upload_time': data_upload_time
+                'data_upload_time': project.data_upload_time()
             }
             projects_data.append(project_data)
 
