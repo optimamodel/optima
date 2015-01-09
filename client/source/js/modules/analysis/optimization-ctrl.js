@@ -2,10 +2,10 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
   'use strict';
 
   module.controller('AnalysisOptimizationController', function ($scope, $http,
-    $interval, meta, CONFIG, modalService) {
+    $interval, meta, CONFIG, modalService, graphTypeFactory) {
 
       $scope.meta = meta;
-      $scope.types = angular.copy(CONFIG.GRAPH_TYPES);
+      $scope.types = graphTypeFactory.types;
 
       // use for export all data
       $scope.exportGraphs = {

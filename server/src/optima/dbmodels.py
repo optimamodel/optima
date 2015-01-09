@@ -74,10 +74,7 @@ class ProjectDb(db.Model):
         return result
 
     def data_upload_time(self):
-        data_upload_time = self.creation_time
-        if self.project_data:
-            data_upload_time = self.project_data.upload_time
-        return data_upload_time
+        return self.project_data.upload_time if self.project_data else None
 
     def can_calibrate(self):
         return self.has_model_parameters()

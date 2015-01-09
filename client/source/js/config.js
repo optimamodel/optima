@@ -13,17 +13,18 @@ define(['angular'], function (angular) {
       },
       GRAPH_TYPES: {
         population: [
-          { id: 'prev', name: 'HIV prevalence', byPopulation: true, total: false },
-          { id: 'daly', name: 'HIV-related DALYs', byPopulation: false, total: true },
-          { id: 'death', name: 'AIDS-related deaths', byPopulation: false, total: true },
-          { id: 'inci', name: 'New HIV infections', byPopulation: false, total: true },
-          { id: 'dx', name: 'HIV diagnoses', byPopulation: false, total: true },
-          { id: 'tx1', name: 'First-line treatment', byPopulation: false, total: true },
-          { id: 'tx2', name: 'Second-line treatment', byPopulation: false, total: true }
+          { id: 'prev', name: 'HIV prevalence', byPopulation: true, total: false},
+          //{ id: 'plhiv', name:'Number of PLHIV', byPopulation:false, total:true, stacked:false},
+          { id: 'daly', name: 'HIV-related DALYs', byPopulation: false, total: true, stacked:false },
+          { id: 'death', name: 'AIDS-related deaths', byPopulation: false, total: true, stacked:false },
+          { id: 'inci', name: 'New HIV infections', byPopulation: false, total: true, stacked:false },
+          { id: 'dx', name: 'New HIV diagnoses', byPopulation: false, total: true, stacked:false },
+          { id: 'tx1', name: 'People on 1st-line treatment', byPopulation: false, total: true, stacked:false },
+          { id: 'tx2', name: 'People on 2nd-line treatment', byPopulation: false, total: true, stacked:false }
         ],
         financial: [
-          { id: 'costcur', name: 'Costs over time', annual: true, cumulative: true },
-          { id: 'costfut', name: 'Costs for post-2015 infections', annual: true, cumulative: true },
+          { id: 'costcur', name: 'Total HIV-related financial commitments', annual: true, cumulative: true },
+          { id: 'costfut', name: 'Financial commitments for existing PLHIV', annual: true, cumulative: true },
         ]
       }
     });
