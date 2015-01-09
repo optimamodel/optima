@@ -45,12 +45,12 @@ define(['jquery', 'underscore', './module'], function ($, _, module) {
         '$scope',
         '$state',
         'CONFIG',
-        'typeFactory',
-        function ($scope, $state, CONFIG, typeFactory) {
+        'graphTypeFactory',
+        function ($scope, $state, CONFIG, graphTypeFactory) {
           // Single-level array of all menu items to easily find matches
           $scope._processedItems = [];
 
-          $scope.types = typeFactory.types;
+          $scope.types = graphTypeFactory.types;
 
           $scope._processItems = function (items, parent) {
 

@@ -4,7 +4,7 @@ define([
     '../../config',
     '../resources/model',
     '../ui/type-selector/index',
-    '../common/type-factory'
+    '../common/graph-type-factory'
 ], function (angular) {
     'use strict';
 
@@ -13,7 +13,7 @@ define([
         'app.resources.model',
         'app.ui.type-selector',
         'ui.router',
-        'app.common.type'
+        'app.common.graph-type'
     ]).config(function ($stateProvider) {
         $stateProvider
             .state('analysis', {
