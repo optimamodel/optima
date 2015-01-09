@@ -584,6 +584,10 @@ class OptimaGraphTable:
 
             titles = [c['title'] for c in s["columns"]]
             max_row = max([len(c['data']) for c in s["columns"]])
+
+            for i in range(len(s["columns"])):
+                sheet.set_column(i,i,20)
+
             self.formats.write_block_name(sheet, s["name"], 0) #sheet name
 
             for i,title in enumerate(titles):

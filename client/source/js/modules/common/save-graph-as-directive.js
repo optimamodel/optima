@@ -95,10 +95,14 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
 
             // Cost Coverage
             if ( controller == 'ModelViewCalibration' ) {
-              if ( scope.graphs ) {
-                _(scope.graphs).each(function (graph,index) {
-                  _(graph).each(function (g,index) {
-                    graphs.push(g);
+              if (scope.ccGraph) {
+                graphs.push(scope.ccGraph);
+              }
+
+              if ( scope.graphs ) { // in this case, graphs are actually graph sets (one for cost, one for coverage)
+                _(scope.graphs).each(function (graphSet,index) {
+                  _(graphSet).each(function (graph,index) {
+                    graphs.push(graph);
                   });
                 });
               }
