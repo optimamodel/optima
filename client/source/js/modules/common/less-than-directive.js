@@ -17,8 +17,10 @@ define(['angular'], function (module) {
         link: function(scope, element, attrs, ctrl) {
 
           var updateValidity = function (lowValue, highValue) {
+            console.log("lowValue", lowValue, "highValue", highValue);
             var isValid = lowValue < highValue;
-            ctrl.$setValidity('lessThan', isValid);
+            var canBeEmpty = !element.required && (lowValue === undefined || lowValue == '' || lowValue == null);
+            ctrl.$setValidity('lessThan', isValid || canBeEmpty);
           };
 
           var validator = function (value) {
