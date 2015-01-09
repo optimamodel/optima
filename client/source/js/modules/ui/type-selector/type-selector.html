@@ -15,6 +15,12 @@
         Per population
       </label>
     </div>
+    <div ng-if="type.stacked!==undefined">
+      <label class="checkbox-inline">
+        <input type="checkbox" ng-model="type.stacked">
+        Stacked
+      </label>
+    </div>
   </div>
 
   <div class="type-section" ng-repeat="type in types.financial" >
