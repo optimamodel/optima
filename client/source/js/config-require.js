@@ -21,7 +21,8 @@ define({
     'radar-chart-d3' : './vendor/radar-chart-d3/src/radar-chart',
     'ui.router'     : './vendor/angular-ui-router/release/angular-ui-router',
     'ui.bootstrap'  : './vendor/angular-bootstrap/ui-bootstrap-tpls',
-    'underscore'    : './vendor/underscore/underscore'
+    'underscore'    : './vendor/underscore/underscore',
+    'jsPDF'         : './vendor/jsPDF/dist/jspdf.min',
   },
 
   shim: {
