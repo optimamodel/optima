@@ -344,15 +344,56 @@ def exportGraph():
     """
     from sim.makeworkbook import OptimaGraphTable
     data = json.loads(request.data)
-    name = data['name']
-    filename = name+'.xlsx'
-    columns = data['columns']
-    path = fullpath(filename)
-    table = OptimaGraphTable(name, columns)
+
+    sheet = [{
+        "name": data['name'],
+        "columns":data['columns']
+    }]
+    path = fullpath(data['name'] + '.xlsx' )
+    table = OptimaGraphTable(sheet)
     table.create(path)
     (dirname, basename) = os.path.split(path)
     return helpers.send_file(path, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 
+"""
+saves All data as Excel files
+"""
+@project.route('/exportall', methods=['POST'])
+@login_required
+@report_exception()
+def exportAllGraphs():
+    from sim.makeworkbook import OptimaGraphTable
+    
+    data = json.loads(request.data)
+    project_name = request.headers['Project']
+    name = project_name
+    filename = name+'.xlsx'
+    path = fullpath(filename)
+    table = OptimaGraphTable(data) # data => sheets
+    table.create(path)
+    (dirname, basename) = os.path.split(path)
+    return helpers.send_file(path, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
+"""
+Download example Excel file.
+"""
+@project.route('/download/<downloadName>', methods=['GET'])
+@login_required
+def downloadExcel(downloadName):
+    example_excel_file_name = 'example.xlsx'
+
+    file_path = helpers.safe_join(project.static_folder, example_excel_file_name)
+    options = {
+        'cache_timeout': project.get_send_file_max_age(example_excel_file_name),
+        'conditional': True,
+        'attachment_filename': downloadName
+    }
+    return helpers.send_file(file_path, **options)
+
+"""
+Uploads Excel file, uses it to update the corresponding model.
+Precondition: model should exist.
+"""
 
 @project.route('/update', methods=['POST'])
 @login_required
