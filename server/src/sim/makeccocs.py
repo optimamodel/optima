@@ -19,7 +19,7 @@ from parameters import parameters, input_parameter_name
 ## Set defaults for testing
 default_progname = 'SBCC'
 default_startup = 0 # select 0 for programs with no startup costs or 1 for programs with startup costs
-default_ccparams = [0.9, 0.6, 400000.0, 1e6]
+default_ccparams = [] #[0.9, 0.6, 400000.0, 1e6]
 default_coparams = []
 default_init_coparams = [] #this is used in loadworkbook
 default_makeplot = 1
@@ -95,6 +95,16 @@ def makecc(D=None, progname=default_progname, startup=default_startup, ccparams=
         totalcost = float_array(totalcost)
         totalcost = totalcost[~isnan(totalcost)]
         totalcost = totalcost[-1]
+    else:
+        totalcostscatter = []
+        coveragescatter = []
+        for j in range(len(totalcost)):
+            if (~isnan(totalcost[j]) and ~isnan(coverage[j])):
+                totalcostscatter.append(totalcost[j])
+                coveragescatter.append(coverage[j])
+        totalcost = totalcostscatter
+        coverage = coveragescatter
+        
         
     # Populate output structure with scatter data 
     plotdata['xscatterdata'] = totalcost
@@ -175,7 +185,16 @@ def makeco(D, progname=default_progname, effectname=default_effectname, coparams
             coverage = asarray(coverage)
             coverage = coverage[~isnan(coverage)]
             coverage = coverage[-1]
-
+        else:
+            coveragescatter = []
+            outcomescatter = []
+            for j in range(len(coverage)):
+                if (~isnan(coverage[j]) and ~isnan(outcome[j])):
+                    coveragescatter.append(coverage[j])
+                    outcomescatter.append(outcome[j])
+            coverage = coveragescatter
+            outcome = outcomescatter
+            
         # Get inputs from GUI (#TODO simplify?)
         if coparams and len(coparams)>=3:
             zeromin = coparams[0] # Assumptions of behaviour at zero coverage (lower bound)
@@ -367,6 +386,15 @@ def makecco(D=None, progname=default_progname, effectname=default_effectname, cc
             totalcost = float_array(totalcost)
             totalcost = totalcost[~isnan(totalcost)]
             totalcost = totalcost[-1]
+        else:
+            totalcostscatter = []
+            outcomescatter = []
+            for j in range(len(totalcost)):
+                if (~isnan(totalcost[j]) and ~isnan(outcome[j])):
+                    totalcostscatter.append(totalcost[j])
+                    outcomescatter.append(outcome[j])
+            totalcost = totalcostscatter
+            outcome = outcomescatter
 
         # Populate output structure with scatter data 
         plotdata['xscatterdata'] = totalcost # X scatter data
