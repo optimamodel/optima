@@ -202,7 +202,6 @@ define(['./module', 'underscore'], function (module, _) {
         [data.xlowerlim, data.ylowerlim], 
         [data.xupperlim, data.yupperlim]
       ];
-
       return graph;
     };
 
@@ -313,7 +312,6 @@ define(['./module', 'underscore'], function (module, _) {
           effectNames = response.effectnames;
           setUpCOParamsFromEffects(response.effectnames);
           $scope.hasCostCoverResponse = true;
-
 
           resetGraphs();
           _(plotTypes).each(function (plotType) {
