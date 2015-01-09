@@ -1,7 +1,7 @@
 <div class="section cf">
-  <h1>Results</h1>
+  <h3>Results</h3>
 
-  <div ng-repeat="type in types.population">
+  <div class="type-section" ng-repeat="type in types.population">
     <b>{{ type.name }}</b>
     <div>
       <label class="checkbox-inline">
@@ -17,7 +17,7 @@
     </div>
   </div>
 
-  <div ng-repeat="type in types.financial" >
+  <div class="type-section" ng-repeat="type in types.financial" >
     <b>{{ type.name }}</b>
     <div>
       <label class="checkbox-inline">
