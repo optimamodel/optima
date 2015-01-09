@@ -138,22 +138,21 @@ define(['./module', 'underscore'], function (module, _) {
       };
 
       // quit if data is empty - empty graph placeholder will be displayed
-      if (!graphData.ylinedata) {
-        return graph;
-      }
+      if (graphData.ylinedata) {
 
-      var numOfLines = graphData.ylinedata.length;
+        var numOfLines = graphData.ylinedata.length;
 
-      _(graphData.xlinedata).each(function (x, index) {
-        var y = graphData.ylinedata;
-        for (var i = 0; i < numOfLines; i++) {
-          if (!graph.data.lines[i]) {
-            graph.data.lines[i] = [];
+        _(graphData.xlinedata).each(function (x, index) {
+          var y = graphData.ylinedata;
+          for (var i = 0; i < numOfLines; i++) {
+            if (!graph.data.lines[i]) {
+              graph.data.lines[i] = [];
+            }
+
+            graph.data.lines[i].push([x, y[i][index]]);
           }
-
-          graph.data.lines[i].push([x, y[i][index]]);
-        }
-      });
+        });
+      }
 
       _(graphData.xscatterdata).each(function (x, index) {
         var y = graphData.yscatterdata;
