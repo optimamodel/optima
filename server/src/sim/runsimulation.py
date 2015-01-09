@@ -1,24 +1,24 @@
 def runsimulation(D, startyear=2000, endyear=2030, verbose=2, makeplot = 1):
     """
     Calculate initial model estimates.
-    
+
     Version: 2014nov26 by cliffk
     """
 
     from printv import printv
     printv('Running simulation...', 1, verbose)
     dosave = False # Flag for whether or not to save
-    
+
     # Set options to update year range
     from setoptions import setoptions
     D.opt = setoptions(D.opt, startyear=startyear, endyear=endyear)
-    
+
     # Convert data parameters to model parameters
     if 'M' not in D.keys():
         dosave = True
         from makemodelpars import makemodelpars
         D.M = makemodelpars(D.P, D.opt, verbose=verbose)
-    
+
     # Run model
     from model import model
     allsims = []
@@ -26,14 +26,14 @@ def runsimulation(D, startyear=2000, endyear=2030, verbose=2, makeplot = 1):
         S = model(D.G, D.M, D.F[s], D.opt, verbose=verbose)
         allsims.append(S)
     D.S = allsims[0] # Save one full sim structure for troubleshooting and funsies
-    
+
     print('WARNING should add conditionals here')
     from makeccocs import makeallccocs
     D = makeallccocs(D, verbose=verbose, makeplot = makeplot)
 
     from getcurrentbudget import getcurrentbudget
-    D = getcurrentbudget(D) # TODO Add verbose
-    
+    # D = getcurrentbudget(D) # TODO Add verbose
+
     # Calculate results
     from makeresults import makeresults
     D.R = makeresults(D, allsims, D.opt.quantiles, verbose=verbose)
@@ -41,11 +41,11 @@ def runsimulation(D, startyear=2000, endyear=2030, verbose=2, makeplot = 1):
     # Gather plot data
     from gatherplotdata import gatheruncerdata
     D.plot.E = gatheruncerdata(D, D.R, verbose=verbose)
-    
+
     # Save output
     if dosave:
         from dataio import savedata
         savedata(D.G.projectfilename, D, verbose=verbose)
-    
+
     printv('...done running simulation for project %s.' % D.G.projectfilename, 2, verbose)
     return D
