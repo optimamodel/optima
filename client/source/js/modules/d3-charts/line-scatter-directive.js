@@ -63,9 +63,10 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
       }
 
       // initialize scatterChart
-      if (scatterDataExists) {
+      if (scatterDataExists || data.limits) {
         scatterChartInstance = new d3Charts.ScatterChart(chartGroup, '', chartSize);
-        var scatterScale = scatterChartInstance.scales(data.scatter);
+        var scaleSource = data.limits? data.scatter.concat(data.limits): data.scatter;
+        var scatterScale = scatterChartInstance.scales(scaleSource);
         graphsScales.push(scatterScale);
         var x_domain = scatterScale.x.domain();
         var y_domain = scatterScale.y.domain();

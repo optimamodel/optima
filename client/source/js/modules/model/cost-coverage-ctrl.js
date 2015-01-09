@@ -16,7 +16,6 @@ define(['./module', 'underscore'], function (module, _) {
 
       // show message "calibrate the model" and disable the form elements
       $scope.projectInfo = info;
-      console.log("info", info);
       $scope.needData = !$scope.projectInfo.has_data;
       
       if ( !$scope.needData ) {
@@ -162,6 +161,13 @@ define(['./module', 'underscore'], function (module, _) {
         }
       });
 
+      // set up the data limits
+      graph.data.limits = [
+        [graphData.xlowerlim, graphData.ylowerlim], 
+        [graphData.xupperlim, graphData.yupperlim]
+      ];
+
+
       return graph;
     };
 
@@ -190,6 +196,12 @@ define(['./module', 'underscore'], function (module, _) {
           graph.data.scatter.push([x, y[index]]);
         }
       });
+
+      // set up the data limits
+      graph.data.limits = [
+        [data.xlowerlim, data.ylowerlim], 
+        [data.xupperlim, data.yupperlim]
+      ];
 
       return graph;
     };
@@ -252,7 +264,6 @@ define(['./module', 'underscore'], function (module, _) {
      * Returns true if only some of the elements in an array are defined or not null
      */
     var hasSomeElements = function(params) {
-      console.log(params);
       return params.some(function(item){return item;}) && params.some(function(item){return !item;});
     };
 
@@ -260,7 +271,6 @@ define(['./module', 'underscore'], function (module, _) {
      * Returns true if all of the elements in an array are defined or not null
      */
     var hasAllElements = function(params) {
-      console.log(params);
       return params.every(function(item){return item;});
     };
 
@@ -268,7 +278,6 @@ define(['./module', 'underscore'], function (module, _) {
      * Returns true if none of the elements in an array is defined or not null
      */
     var hasNoElements = function(params) {
-      console.log(params);
       return !hasAllElements(params);
     };
 
@@ -276,7 +285,6 @@ define(['./module', 'underscore'], function (module, _) {
      * Retrieve and update graphs based on the provided plot models.
      */
     var retrieveAndUpdateGraphs = function (model) {
-      console.log(model);
       // validation on Cost-coverage curve plotting options
       if ( hasSomeElements(model.ccparams) ){
         var message = 'Cost-coverage curve plotting options should be either empty, or all present!';
@@ -298,7 +306,6 @@ define(['./module', 'underscore'], function (module, _) {
 
       if (hasNoElements(model.ccparams)) delete model.ccparams;
       if (hasNoElements(model.coparams)) delete model.coparams;
-      console.log("model:", model)
       $http.post('/api/model/costcoverage', model).success(function (response) {
         if (response.status === 'OK') {
 
