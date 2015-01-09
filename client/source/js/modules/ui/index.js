@@ -61,8 +61,7 @@ define([
                         'Cannot proceed'
                       );
                   }
-                },
-                showClick:true
+                }
               }
             ]
           },
