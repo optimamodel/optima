@@ -43,12 +43,9 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
                 //a big ugly hack to distinguish between cost and covariance graphs.
                 //they are both in the same ng-repeat scope :-(
                 var target = {};
-                if ( attrs.data == "radarData" ) {
-                  target = {
-                    data: scope.radarData,
-                    options: scope.radarOptions
-                  };
-                  target.options.title = scope.radarChartName;
+                if ( attrs.variant == "radarGraph" ) {
+                  target = scope.radarGraph;
+                  target.options.title = scope.radarGraphName;
 
                 } else if (attrs.variant == 'coGraph') {
                   target = scope.coGraph;
@@ -60,6 +57,57 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
 
                 scope.exportFrom(target);
               });
+          };
+
+          /**
+           * Export all graphs/charts data,
+           */
+          scope.exportAll = function () {
+            var graphs = [];
+            var controller = scope.exportGraphs.controller;
+            
+            // Optimization
+            if ( controller == 'AnalysisOptimization' ) {
+
+              if ( scope.radarGraph ) {
+                // export radarChart
+                var graph = scope.radarGraph;
+                graph.options.title = scope.radarGraphName;
+                graphs.push(graph);
+              }
+
+              if ( scope.optimisationGraphs ) {
+                graphs = graphs.concat(scope.optimisationGraphs);
+              }
+
+              if ( scope.financialGraphs ) {
+                graphs = graphs.concat(scope.financialGraphs);
+              }
+            }
+
+            // Calibration 
+            // Analysis Scenarios
+            if ( controller == 'ModelCalibration' || controller == 'AnalysisScenarios' ) {
+              if ( scope.graphs ) {
+                graphs = scope.graphs;
+              }
+            }
+
+            // Cost Coverage
+            if ( controller == 'ModelViewCalibration' ) {
+              if (scope.ccGraph) {
+                graphs.push(scope.ccGraph);
+              }
+
+              if ( scope.graphs ) { // in this case, graphs are actually graph sets (one for cost, one for coverage)
+                _(scope.graphs).each(function (graphSet,index) {
+                  _(graphSet).each(function (graph,index) {
+                    graphs.push(graph);
+                  });
+                });
+              }
+            }
+            scope.exportMultiSheetFrom(graphs);
           };
 
           /**
@@ -243,7 +291,7 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
           scope.axesExport = function (graph){
             //x and y are not needed to be exported - they are just internal values to draw radar chart properly
             var exportable = {
-              name: scope.radarChartName,
+              name: scope.radarGraphName,
               columns: []
             };
 
@@ -274,9 +322,12 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
             return null;
           };
 
-          scope.saySorry = function() {
+          scope.saySorry = function(msg) {
             // to-do: this should be updated after the PR to use the modalService
-            return alert('Sorry, this graph cannot be exported');
+            if ( undefined !== msg )
+              return alert(msg)
+            else
+              return alert('Sorry, this graph cannot be exported');
           };
 
           /**
@@ -302,7 +353,39 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
               .error(function () {});
           };
 
-          initialize();
+          /**
+           * Exports the data of the graph in the format returned by the API
+           */
+          scope.exportMultiSheetFrom = function (graphs){
+            if(graphs.length == 0) { return scope.saySorry("Sorry, no graphs found");}
+            
+            var exportables = [];
+            var showAlert = false;
+            _(graphs).each(function (graph, index) {
+              var exportable = scope.getExportableFrom(graph)
+              if ( exportable )
+                exportables.push(exportable);
+              else
+                showAlert = true;
+            });
+            if(showAlert) { return scope.saySorry("Sorry, some graphs cannot be exported"); }
+
+            $http({url:'/api/project/exportall',
+                  method:'POST',
+                  data: exportables,
+                  headers: {'Content-type': 'application/json'},
+                  responseType:'arraybuffer'})
+              .success(function (response, status, headers, config) {
+                var blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                saveAs(blob, (scope.exportGraphs.name + '.xlsx'));
+              })
+              .error(function () {});
+          };
+
+          // dont display template (buttons) in case of export-all
+          if ( attrs.saveGraphAs != "export-all" ) {
+            initialize();
+          }
         }
       };
     });

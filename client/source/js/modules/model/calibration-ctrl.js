@@ -3,6 +3,12 @@ define(['./module', 'angular'], function (module, angular) {
 
   module.controller('ModelCalibrationController', function ($scope, $http, $interval, Model, f, G, meta, info, CONFIG) {
 
+    // use for export all data
+    $scope.exportGraphs = {
+      'name':'Model calibration',
+      'controller':'ModelCalibration'
+    };
+
     var prepareF = function (f) {
       var F = angular.copy(f);
 

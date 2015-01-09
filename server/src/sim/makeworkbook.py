@@ -188,7 +188,6 @@ class OptimaFormats:
         sheet.write(row, 0, name, self.formats['bold'])
 
     def write_rowcol_name(self, sheet, row, col, name, align = 'right'):
-        print(sheet, row, col, name, align)
         sheet.write(row, col, name, self.formats['rc_title'][align])
 
     def write_option(self, sheet, row, col, name = 'OR'):
@@ -565,29 +564,41 @@ class OptimaWorkbook:
         self.book.close()
 
 class OptimaGraphTable:
-    def __init__ (self, name, columns, verbose = 2):
-        self.name = name
-        self.columns = columns
+    def __init__ (self, sheets, verbose = 2):
         self.verbose = verbose
+        self.sheets = sheets
 
     def create(self, path):
         if self.verbose >=1:
-            print("Creating graph table %s" % self.name)
+            print("Creating graph table %s" % path)
+
         self.book = xlsxwriter.Workbook(path)
         self.formats = OptimaFormats(self.book)
-        self.sheet = self.book.add_worksheet("GRAPH DATA")
-        titles = [c['title'] for c in self.columns]
-        max_row = max([len(c['data']) for c in self.columns])
-        self.formats.write_block_name(self.sheet, self.name, 0)
-        for i,title in enumerate(titles):
-            self.formats.write_rowcol_name(self.sheet, 1, i, title)
-        row =0
-        while row<=max_row:
-            for i,col in enumerate(self.columns):
-                if row<len(col['data']):
-                    data = col['data'][row]
-                else:
-                    data = None
-                self.formats.write_unlocked(self.sheet, row+2, i, data)
-            row+=1
+        sheet_name = 'GRAPH DATA'
+
+        k = 0
+        for s in self.sheets:
+            k += 1
+            name = sheet_name + " " + str(k)
+            sheet = self.book.add_worksheet(name)
+
+            titles = [c['title'] for c in s["columns"]]
+            max_row = max([len(c['data']) for c in s["columns"]])
+
+            for i in range(len(s["columns"])):
+                sheet.set_column(i,i,20)
+
+            self.formats.write_block_name(sheet, s["name"], 0) #sheet name
+
+            for i,title in enumerate(titles):
+                self.formats.write_rowcol_name(sheet, 1, i, title)
+            row =0
+            while row<=max_row:
+                for i,col in enumerate(s["columns"]):
+                    if row<len(col['data']):
+                        data = col['data'][row]
+                    else:
+                        data = None
+                    self.formats.write_unlocked(sheet, row+2, i, data)
+                row+=1
         self.book.close()
