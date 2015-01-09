@@ -43,12 +43,9 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
                 //a big ugly hack to distinguish between cost and covariance graphs.
                 //they are both in the same ng-repeat scope :-(
                 var target = {};
-                if ( attrs.data == "radarData" ) {
-                  target = {
-                    data: scope.radarData,
-                    options: scope.radarOptions
-                  };
-                  target.options.title = scope.radarChartName;
+                if ( attrs.variant == "radarGraph" ) {
+                  target = scope.radarGraph;
+                  target.options.title = scope.radarGraphName;
 
                 } else if (attrs.variant == 'coGraph') {
                   target = scope.coGraph;
@@ -71,22 +68,20 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
             
             // Optimization
             if ( controller == 'AnalysisOptimization' ) {
+
+              if ( scope.radarGraph ) {
+                // export radarChart
+                var graph = scope.radarGraph;
+                graph.options.title = scope.radarGraphName;
+                graphs.push(graph);
+              }
+
               if ( scope.optimisationGraphs ) {
-                graphs = scope.optimisationGraphs;
+                graphs = graphs.concat(scope.optimisationGraphs);
               }
 
               if ( scope.financialGraphs ) {
-                graphs = scope.financialGraphs
-              }
-
-              if ( scope.radarChart ) {
-                // export radarChart
-                var graph = {
-                  data: scope.radarChart.radarData,
-                  options: scope.radarChart.radarOptions
-                };
-                graph.options.title = "Radar Chart";
-                graphs.push(graph);
+                graphs = graphs.concat(scope.financialGraphs);
               }
             }
 
@@ -108,7 +103,6 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
                 });
               }
             }
-            
             scope.exportMultiSheetFrom(graphs);
           };
 
@@ -293,7 +287,7 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
           scope.axesExport = function (graph){
             //x and y are not needed to be exported - they are just internal values to draw radar chart properly
             var exportable = {
-              name: scope.radarChartName,
+              name: scope.radarGraphName,
               columns: []
             };
 

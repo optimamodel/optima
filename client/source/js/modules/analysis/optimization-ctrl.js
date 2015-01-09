@@ -98,7 +98,7 @@ define([
         $scope.params.constraints.coverage[meta.progs.short[i]].year = undefined;
       }
 
-    $scope.radarChartName = 'Allocation'
+    $scope.radarGraphName = 'Allocation'
     $scope.radarAxesName =  'Programs'
 
     var linesStyle = ['__blue', '__green', '__red', '__orange', '__violet',
@@ -163,7 +163,7 @@ define([
     /**
      *
      */
-    var prepareRadarChart = function (data) {
+    var prepareRadarGraph = function (data) {
 
       if (data.pie1 === undefined || data.pie2 === undefined) return;
 
@@ -184,8 +184,7 @@ define([
       });
       options.legend.push(data.pie2.name);
 
-      $scope.radarData = graphData;
-      $scope.radarOptions = options;
+      return {'data':graphData, 'options':options};
     };
 
     /**
@@ -262,12 +261,18 @@ define([
     };
 
     // makes all graphs to recalculate and redraw
+    function drawGraphs() {
+      if (!cachedResponse || !cachedResponse.graph) return;
+      $scope.optimisationGraphs = prepareOptimisationGraphs(cachedResponse.graph);
+      $scope.financialGraphs = prepareFinancialGraphs(cachedResponse.graph);
+      $scope.radarGraph = prepareRadarGraph(cachedResponse.pie);
+    };
+
+    // makes all graphs to recalculate and redraw
     var updateGraphs = function (data) {
       if (data.graph !== undefined && data.pie !== undefined) {
         cachedResponse = data;
-        $scope.optimisationGraphs = prepareOptimisationGraphs(data.graph);
-        $scope.financialGraphs = prepareFinancialGraphs(data.graph);
-        $scope.radarChart = prepareRadarChart(data.pie);
+        drawGraphs();
       }
     };
 
@@ -335,12 +340,7 @@ define([
     };
 
     // The graphs are shown/hidden after updating the graph type checkboxes.
-    $scope.$watch('types', function () {
-      if (!cachedResponse || !cachedResponse.graph) return;
-
-      $scope.optimisationGraphs = prepareOptimisationGraphs(cachedResponse.graph);
-      $scope.financialGraphs = prepareFinancialGraphs(cachedResponse.graph);
-    }, true);
+    $scope.$watch('types', drawGraphs, true);
 
     $scope.yearLoop = [];
     $scope.yearCols = [];

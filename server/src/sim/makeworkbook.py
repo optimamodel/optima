@@ -188,7 +188,6 @@ class OptimaFormats:
         sheet.write(row, 0, name, self.formats['bold'])
 
     def write_rowcol_name(self, sheet, row, col, name, align = 'right'):
-        print(sheet, row, col, name, align)
         sheet.write(row, col, name, self.formats['rc_title'][align])
 
     def write_option(self, sheet, row, col, name = 'OR'):
