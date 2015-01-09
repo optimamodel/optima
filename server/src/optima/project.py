@@ -224,6 +224,7 @@ def getProjectInformation():
 
     # update response
     if project is not None:
+        data_upload_time = project.project_data.upload_time if project.project_data else None
         response_data = {
             'status': "OK",
             'name': project.name,
@@ -234,7 +235,7 @@ def getProjectInformation():
             'programs': project.programs,
             'populations': project.populations,
             'creation_time': project.creation_time,
-            'data_upload_time': project.data_upload_time(),
+            'data_upload_time': data_upload_time,
             'has_data': project.has_data(),
             'can_calibrate': project.can_calibrate(),
             'can_scenarios': project.can_scenarios(),
@@ -259,8 +260,7 @@ def getProjectList():
         # Get projects for current user
         projects = ProjectDb.query.filter_by(user_id=current_user.id)
         for project in projects:
-            data_upload_time = project.creation_time
-            if project.project_data: data_upload_time = project.project_data.upload_time
+            data_upload_time = project.project_data.upload_time if project.project_data else None
             project_data = {
                 'status': "OK",
                 'name': project.name,
