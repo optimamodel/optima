@@ -376,7 +376,7 @@ def makecco(D=None, progname=default_progname, effectname=default_effectname, cc
                 saturation, growthrate, xupperlim = D.programs[progname][0][3][0], D.programs[progname][0][3][1], D.programs[progname][0][3][2] # Get previously-stored parameters 
             
             # Get inputs from  GUI, if these have been provided
-            if (coparams or len(D.programs[progname][0][3])>3):
+            if (coparams or (len(D.programs[progname][0])>3 and (len(D.programs[progname][0][3])>3))):
 
                 if not coparams:
                     zeromin = effectname[3][3] # Assumptions of behaviour at zero coverage (lower bound)
