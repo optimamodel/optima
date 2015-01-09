@@ -1,5 +1,5 @@
-define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
-  function (angular, $, _, saveAs, svgToPng) {
+define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png','jsPDF'],
+  function (angular, $, _, saveAs, svgToPng, jspdf) {
   'use strict';
 
   return angular.module('app.save-graph-as', [])
@@ -7,7 +7,6 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
       return {
         restrict: 'A',
         link: function (scope, elem, attrs) {
-
           var chartCssUrl = '/assets/css/chart.css';
 
           /**
@@ -63,6 +62,11 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
            * Export all graphs/charts data,
            */
           scope.exportAll = function () {
+            
+            scope.exportMultiSheetFrom(getGraphs());
+          };
+
+          var getGraphs = function () {
             var graphs = [];
             var controller = scope.exportGraphs.controller;
             
@@ -107,7 +111,14 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
                 });
               }
             }
-            scope.exportMultiSheetFrom(graphs);
+            return graphs;
+          };
+
+          /**
+           * Export all graphs/charts figures,
+           */
+          scope.exportAllFigures = function () {
+            exportAllGraphAsPng();
           };
 
           /**
@@ -164,6 +175,115 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
             }).error(function() {
               alert("Please reload and try again, something went wrong while generating the graph.");
             });
+          };
+
+          var exportAllGraphAsPng = function() {
+            
+            var scalingFactor = 1;
+            var blobs = new Array();
+            var totalElements = $(".chart-container").length;
+
+            // in order to have styled graphs the css content used to render
+            // graphs is retrieved & inject it into the svg as style tag
+            var cssContentRequest = $http.get(chartCssUrl);
+            cssContentRequest.success(function(cssContent) {
+                
+                var graphs = getGraphs();
+                
+              _($(".chart-container")).each(function (elem,index) {
+                var originalSvg = $(elem).find('svg');
+                var orginalWidth = $(originalSvg).outerWidth();
+                var orginalHeight = $(originalSvg).outerHeight();
+                var originalStyle = originalSvg.attr('style');
+                var graphTitle = graphs[index].title;
+                if ( scope.exportGraphs.controller == 'AnalysisOptimization' ) graphTitle = graphs[index].options.title;
+
+                // make sure we scale the padding and append it to the original styling
+                // info: later declarations overwrite previous ones
+                var style = originalStyle + '; ' + svgToPng.scalePaddingStyle(originalSvg, scalingFactor);
+
+                // create svg element
+                var svg = svgToPng.createSvg(orginalWidth, orginalHeight, scalingFactor, style);
+
+                // add styles and content to the svg
+                var styles = '<style>' + cssContent + '</style>';
+                svg.innerHTML = styles + originalSvg.html();
+
+                // create img element with the svg as data source
+                var svgXML = (new XMLSerializer()).serializeToString(svg);
+                var tmpImage = document.createElement("img");
+                tmpImage.width = orginalWidth * scalingFactor;
+                tmpImage.height = orginalHeight * scalingFactor;
+                tmpImage.src = "data:image/svg+xml;charset=utf-8,"+ svgXML;
+
+                tmpImage.onload = function() {
+                  
+                  // draw image into canvas in order to convert it to a blob
+                  var canvas = document.createElement("canvas");
+                  canvas.width = orginalWidth * scalingFactor;
+                  canvas.height = orginalHeight * scalingFactor;
+                  var ctx = canvas.getContext("2d");
+                  ctx.drawImage(tmpImage, 0, 0);
+                  
+                  var dataURL = canvas.toDataURL('image/png');
+                  blobs.push({
+                    data:dataURL,
+                    title:graphTitle,
+                    width:tmpImage.width,
+                    height:tmpImage.height
+                  });
+
+                  if ( blobs.length == totalElements ) {
+                    generatePdf(blobs);
+                  }  
+                };
+
+              });
+            }).error(function() {
+              alert("Please releod and try again, something went wrong while generating the graph.");
+            });            
+
+          };
+
+          var generatePdf = function (blobs) {
+            
+            var doc = new jspdf('p', 'pt', 'a4', true);
+
+            var defaultYpad = 40;
+            var yPad = defaultYpad;
+            var xPad = 35;
+
+            var figEachPage = 3;
+            if ( scope.exportGraphs.controller == 'AnalysisScenarios' || 
+              scope.exportGraphs.controller == 'AnalysisOptimization' ) {
+              figEachPage = 2;
+
+            }
+
+            _(blobs).each(function (blob,index) {
+              
+
+              // to handle radar chart
+              if ( scope.exportGraphs.controller == 'AnalysisOptimization' && index == 0 ) {
+              } else {
+                // dont show title for radar chart
+                doc.text(70 + xPad, 15+yPad, blob.title);
+              }
+
+              doc.addImage(blob.data, 'png', xPad, yPad, blob.width, blob.height);
+
+              if ( (index+1)%figEachPage == 0 ) {
+                if ( index+1 < blobs.length )
+                doc.addPage();
+                yPad = defaultYpad;
+              } else {
+                yPad += blob.height + defaultYpad;
+              }
+
+            });
+            doc.save(scope.exportGraphs.name + '.pdf');
+
+            return;
           };
 
           /**
