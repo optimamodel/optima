@@ -46,7 +46,7 @@ def getcurrentbudget(D, alloc=None):
                 popnumber = D.data.meta.pops.short.index(popname[0]) 
 
                 # Unpack
-                muz, stdevz, muf, stdevf, saturation, growthrate = effectname[3][0], effectname[3][1], effectname[3][2], effectname[3][3], effectname[3][4], effectname[3][5]
+                saturation, growthrate, xupperlim, muz, stdevz, muf, stdevf = effectname[3][0], effectname[3][1], effectname[3][2], effectname[3][3], effectname[3][4], effectname[3][5], effectname[3][6]
 #                zerosample, fullsample = makesamples(muz, stdevz, muf, stdevf, samplesize=1)
                 y = ccoeqn(totalcost, [saturation, growthrate, muz, muf])
                 D.P[effectname[0][1]].c[popnumber] = y

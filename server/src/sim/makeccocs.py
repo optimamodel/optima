@@ -17,9 +17,9 @@ from printv import printv
 from parameters import parameters, input_parameter_name
 
 ## Set defaults for testing
-default_progname = 'MSM programs'
+default_progname = 'ART'
 default_startup = 0 # select 0 for programs with no startup costs or 1 for programs with startup costs
-default_ccparams = [] #[0.9, 0.6, 400000.0, 1e6]
+default_ccparams = [0.8, 0.6, 400000.0, 1e6]
 default_coparams = []
 default_init_coparams = [] #this is used in loadworkbook
 default_makeplot = 1
@@ -75,8 +75,19 @@ def makecc(D=None, progname=default_progname, startup=default_startup, ccparams=
         if ccparams[2] < 0:
             raise Exception('Negative funding levels are not permitted, please revise')
 
-        saturation, growthrate = storeparams[0], storeparams[1] # Get parameters for making curve 
-        xupperlim = ccparams[3] # Get paramaters for plotting curve
+        saturation, growthrate, xupperlim = storeparams[0], storeparams[1], storeparams[2] # Get parameters for making curve 
+        
+        # Create curve
+        xvalscc = linspace(0,xupperlim,nxpts) # take nxpts points between 0 and user-specified max
+        yvalscc = 2*saturation / (1 + exp(-growthrate*xvalscc)) - saturation # calculate logistic function
+        
+        # Populate output structure with scatter data 
+        plotdata['xlinedata'] = xvalscc
+        plotdata['ylinedata'] = yvalscc
+
+    elif D.programs[progname][0][3]:
+        saturation, growthrate, xupperlim = D.programs[progname][0][3][0], D.programs[progname][0][3][1], D.programs[progname][0][3][2] # Get previously-stored parameters 
+        storeparams = [saturation, growthrate, xupperlim]
 
         # Create curve
         xvalscc = linspace(0,xupperlim,nxpts) # take nxpts points between 0 and user-specified max
@@ -213,11 +224,11 @@ def makeco(D, progname=default_progname, effectname=default_effectname, coparams
             zeromax = coparams[1] # Assumptions of behaviour at zero coverage (upper bound)
             fullmin = coparams[2] # Assumptions of behaviour at maximal coverage (lower bound)
             fullmax = coparams[3] # Assumptions of behaviour at maximal coverage (upper bound)
-        elif effectname[2] and len(effectname[2])>0:
-            zeromin = effectname[2][0][0] # Assumptions of behaviour at zero coverage (lower bound)
-            zeromax = effectname[2][0][1] # Assumptions of behaviour at zero coverage (upper bound)
-            fullmin = effectname[2][1][0] # Assumptions of behaviour at maximal coverage (lower bound)
-            fullmax = effectname[2][1][1] # Assumptions of behaviour at maximal coverage (upper bound)
+        elif effectname[3] and len(effectname[2])>0:
+            zeromin = effectname[3][3] # Assumptions of behaviour at zero coverage (lower bound)
+            zeromax = effectname[3][4] # Assumptions of behaviour at zero coverage (upper bound)
+            fullmin = effectname[3][5] # Assumptions of behaviour at maximal coverage (lower bound)
+            fullmax = effectname[3][6] # Assumptions of behaviour at maximal coverage (upper bound)
             coparams = [zeromin, zeromax, fullmin, fullmax] # Store for output
 
         print("coparams", coparams, "effectname", effectname)
@@ -352,40 +363,52 @@ def makecco(D=None, progname=default_progname, effectname=default_effectname, cc
             popnumber = 0
         printv("coparams in makecco: %s" % coparams, 5, verbose)
                 
-        # Get inputs from  GUI, if these have been provided
-        if coparams and ccparams:
-            if not len(coparams)==4:
-                raise Exception('Not all of the coverage-outcome parameters have been specified. Please enter the missing parameters to define the curve.')
+        # Get inputs from  GUI or access previously stored ones
+        if (ccparams or D.programs[progname][0][3]):
+            
+            if ccparams:        
+                # Get parameters for cost-coverage curves
+                saturation = ccparams[0]
+                growthrate = (-1/ccparams[2])*log((2*saturation)/(ccparams[1]+saturation) - 1)
+                xupperlim = ccparams[3]
+
+            elif D.programs[progname][0][3]:
+                saturation, growthrate, xupperlim = D.programs[progname][0][3][0], D.programs[progname][0][3][1], D.programs[progname][0][3][2] # Get previously-stored parameters 
+            
+            # Get inputs from  GUI, if these have been provided
+            if (coparams or len(D.programs[progname][0][3])>3):
+
+                if not coparams:
+                    zeromin = effectname[3][3] # Assumptions of behaviour at zero coverage (lower bound)
+                    zeromax = effectname[3][4] # Assumptions of behaviour at zero coverage (upper bound)
+                    fullmin = effectname[3][5] # Assumptions of behaviour at maximal coverage (lower bound)
+                    fullmax = effectname[3][6] # Assumptions of behaviour at maximal coverage (upper bound)
+                    coparams = [zeromin, zeromax, fullmin, fullmax] # Store for output
         
-            # Get parameters for cost-coverage curves
-            saturation = ccparams[0]
-            growthrate = (-1/ccparams[2])*log((2*saturation)/(ccparams[1]+saturation) - 1)
-            xupperlim = ccparams[3]
+                # Generate samples of zero-coverage and full-coverage behaviour
+                muz, stdevz, muf, stdevf = makecosampleparams(coparams, verbose=verbose)
+                zerosample, fullsample = makesamples(coparams, muz, stdevz, muf, stdevf, D.opt.nsims)
 
-            # Generate samples of zero-coverage and full-coverage behaviour
-            muz, stdevz, muf, stdevf = makecosampleparams(coparams, verbose=verbose)
-            zerosample, fullsample = makesamples(coparams, muz, stdevz, muf, stdevf, D.opt.nsims)
+                # Generate samples of zero-coverage and full-coverage behaviour
+                storeparams = [muz, stdevz, muf, stdevf, saturation, growthrate]
 
-            # Generate samples of zero-coverage and full-coverage behaviour
-            storeparams = [muz, stdevz, muf, stdevf, saturation, growthrate]
-
-            # Create x dataset and initialise y dataset
-            xvalscco = linspace(0,xupperlim,nxpts)
+                # Create x dataset and initialise y dataset
+                xvalscco = linspace(0,xupperlim,nxpts)
         
-            # Min, Median and Max lines
-            mediancco = ccoeqn(xvalscco, [saturation, growthrate, muz, muf])# Generate median cost-outcome curve
-            mincco = ccoeqn(xvalscco, [saturation, growthrate, coparams[0], coparams[2]])# Generate min cost-outcome curve
-            maxcco = ccoeqn(xvalscco, [saturation, growthrate, coparams[1], coparams[3]])# Generate max cost-outcome curve
+                # Min, Median and Max lines
+                mediancco = ccoeqn(xvalscco, [saturation, growthrate, muz, muf])# Generate median cost-outcome curve
+                mincco = ccoeqn(xvalscco, [saturation, growthrate, coparams[0], coparams[2]])# Generate min cost-outcome curve
+                maxcco = ccoeqn(xvalscco, [saturation, growthrate, coparams[1], coparams[3]])# Generate max cost-outcome curve
 
-            # Populate output structure with cost-outcome curves for plotting
-            plotdata['xlinedata'] = xvalscco # X data for all line plots
-            plotdata['ylinedata'] = [mediancco,maxcco,mincco] # Y data for second line plot
-            plotdata['ylinedata1'] = mediancco # Y data for second line plot
-            plotdata['ylinedata2'] = maxcco  # Y data for third line plot
-            plotdata['ylinedata3'] = mincco  # Y data for fourth line plot
+                # Populate output structure with cost-outcome curves for plotting
+                plotdata['xlinedata'] = xvalscco # X data for all line plots
+                plotdata['ylinedata'] = [mediancco,maxcco,mincco] # Y data for second line plot
+                plotdata['ylinedata1'] = mediancco # Y data for second line plot
+                plotdata['ylinedata2'] = maxcco  # Y data for third line plot
+                plotdata['ylinedata3'] = mincco  # Y data for fourth line plot
 
-        # Get the coverage-outcome relationships
-        plotdata_co, storeparams_co = makeco(D, progname, effectname, coparams, makeplot=makeplot, verbose=verbose)
+                # Get the coverage-outcome relationships
+                plotdata_co, storeparams_co = makeco(D, progname, effectname, coparams, makeplot=makeplot, verbose=verbose)
 
         # Extract scatter data
         totalcost = D.data.costcov.cost[prognumber] # get total cost data
@@ -463,6 +486,7 @@ def plotallcurves(D=None, progname=default_progname, ccparams=default_ccparams, 
 
         # Default storeparams
         storeparams = storeparams_cc
+        storeparams_co = []
 
         # Get parameter info
         parname = effectname[0][1]
@@ -472,9 +496,10 @@ def plotallcurves(D=None, progname=default_progname, ccparams=default_ccparams, 
 
             # Store outputs
             effectnames[effectnumber] = effectname
-            plotdata[effectnumber], plotdata_co[effectnumber], storeparams = makecco(D=D, progname=progname, effectname=effectname, ccparams=ccparams, coparams=coparams, makeplot=makeplot, verbose=verbose)
+            plotdata[effectnumber], plotdata_co[effectnumber], storeparams_co = makecco(D=D, progname=progname, effectname=effectname, ccparams=ccparams, coparams=coparams, makeplot=makeplot, verbose=verbose)
 
         # Store outputs
+        storeparams.extend(storeparams_co)
         if len(effectname) == 3: # There's no existing info here, append
             effectname.append(storeparams)
         else:
@@ -558,7 +583,7 @@ def getcoverage(D=None, params=[], artelig=default_artelig, progname=default_pro
         if params:
             saturation = params[0]
             growthrate = (-1/params[2])*log((2*params[0])/(params[1]+params[0]) - 1)        
-            storeparams = [saturation, growthrate]
+            storeparams = [saturation, growthrate, params[3]]
     else:
         coveragenumber = D.data.costcov.cov[prognumber] 
         if len(coveragenumber)==1: # If an assumption has been used, keep this constant over time
@@ -570,7 +595,7 @@ def getcoverage(D=None, params=[], artelig=default_artelig, progname=default_pro
         if params:
             saturation = params[0]*targetpop[-1]
             growthrate = (-1/params[2])*log((2*params[0]*targetpop[-1])/(params[1]*targetpop[-1]+params[0]*targetpop[-1]) - 1)
-            storeparams = [saturation, growthrate]
+            storeparams = [saturation, growthrate, params[3]]
                 
     return coverage, coveragelabel, storeparams
 
@@ -601,8 +626,8 @@ def makesamples(coparams, muz, stdevz, muf, stdevf, samplesize=1000):
 
 
 # For testing... delete later... should make separate file!
-#lotdata, storeparams = makecc(D, progname=default_progname, startup=default_startup, ccparams=default_ccparams, artelig=default_artelig, makeplot=default_makeplot, verbose=2, nxpts = 1000)
+#plotdata, storeparams = makecc(D, progname=default_progname, startup=default_startup, ccparams=default_ccparams, artelig=default_artelig, makeplot=default_makeplot, verbose=2, nxpts = 1000)
 #plotdata, storeparams = makeco(D, progname=default_progname, effectname=default_effectname, coparams=default_coparams, makeplot=default_makeplot, verbose=2,nxpts = 1000)
 #plotdata, plotdata_co, storeparams = makecco(D, progname=default_progname, effectname=default_effectname, ccparams=default_ccparams, coparams=default_coparams, makeplot=default_makeplot, verbose=2,nxpts = 1000)
-#plotdata, plotdata_co, plotdata_cc, effectnames, D = plotallcurves(D, progname=default_progname, ccparams=default_ccparams, coparams=default_coparams, makeplot=default_makeplot, verbose=2)
+plotdata, plotdata_co, plotdata_cc, effectnames, D = plotallcurves(D, progname=default_progname, ccparams=default_ccparams, coparams=default_coparams, makeplot=default_makeplot, verbose=2)
 #D = makeallccocs(D, verbose=2, makeplot=default_makeplot)
