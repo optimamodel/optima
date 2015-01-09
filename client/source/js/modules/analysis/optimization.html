@@ -478,13 +478,13 @@
                     </div>
 
                     <div class="elastic_col __shrink">
-                        <button class="btn __red" ng-click="stopOptimization()" ng-disabled="!optimizationStatus.isActive">Stop optimization</button>
+                        <button type="button" class="btn __red" ng-click="stopOptimization()" ng-disabled="!optimizationStatus.isActive">Stop optimization</button>
                     </div>
                     <div class="elastic_col __shrink">
-                        <button class="btn" ng-click="saveOptimization()" ng-disabled="optimizationStatus.isActive">Save optimization</button>
+                        <button type="button" class="btn" ng-click="saveOptimization()" ng-disabled="optimizationStatus.isActive">Save optimization</button>
                     </div>
                     <div class="elastic_col __shrink">
-                        <button class="btn" ng-click="revertOptimization()" ng-disabled="optimizationStatus.isActive">Revert</button>
+                        <button type="button" class="btn" ng-click="revertOptimization()" ng-disabled="optimizationStatus.isActive">Revert</button>
                     </div>
                 </div>
             </div>
@@ -500,7 +500,7 @@
         <div class="grid">
             <div class="section">
                 <h1>{{radarChartName}}</h1>
-                <button ng-if="radarData || optimisationGraphs || financialGraphs" class="btn" ng-click="exportAll()" save-graph-as="export-all">Export All Data</button>
+                <button ng-if="radarData || optimisationGraphs || financialGraphs" class="btn" ng-click="exportAll()" save-graph-as="export-all">Export all data</button>
 
                 <div class="grid">
                     <div class="7" ng-if="radarGraph">
