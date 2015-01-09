@@ -378,7 +378,8 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
                     people[:,pop,t+1] *= M.popsize[pop,t]/sum(people[:,pop,t]);
             if not((people[:,:,t+1]>=0).all()):
                 print('Non-positive people found') # If not every element is a real number >0, throw an error
-                import pdb; pdb.set_trace()
+#                import pdb; pdb.set_trace() not going to fly in web context
+                raise Exception('Non-positive people found: %s %s' % (pop, people))
                 
     # Append final people array to sim output
     S['people'] = people

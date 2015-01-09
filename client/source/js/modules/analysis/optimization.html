@@ -500,11 +500,12 @@
         <div class="grid">
             <div class="section">
                 <h1>{{radarChartName}}</h1>
+                <button ng-if="radarData || optimisationGraphs || financialGraphs" class="btn" ng-click="exportAll()" save-graph-as="export-all">Export All Data</button>
 
                 <div class="grid">
-                    <div class="7" ng-if="radarData">
+                    <div class="7" ng-if="radarGraph">
                         <div class="chart-container">
-                          <div radar-chart data="radarData" options="radarOptions" save-graph-as></div>
+                          <div radar-chart variant="radarGraph" data="radarGraph.data" options="radarGraph.options" save-graph-as></div>
                         </div>
                     </div>
                 </div>

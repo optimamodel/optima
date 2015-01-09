@@ -8,6 +8,12 @@ define(['./module', 'underscore'], function (module, _) {
     var initialize =function () {
       $scope.meta = meta;
 
+      // use for export all data
+      $scope.exportGraphs = {
+        'name':'Cost coverage outcome',
+        'controller':'ModelViewCalibration'
+      };
+
       // show message "calibrate the model" and disable the form elements
       $scope.projectInfo = info;
       $scope.needData = !$scope.projectInfo.has_data;
