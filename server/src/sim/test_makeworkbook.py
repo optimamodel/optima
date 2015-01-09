@@ -50,8 +50,12 @@ class TestOptimaWorkbook(unittest.TestCase):
 class TestOptimaGraphTable(unittest.TestCase):
 
     def test_create_table(self):
-        table = OptimaGraphTable('Beautiful graph', [{'title':'one', 'data':[1,2,3]}, \
-            {'title':'two', 'data':[2,3,5]},{'title':'three', 'data':["a","b","c"]}])
+        sheet = [{
+            "name":"GRAPH DATA",
+            "columns":[{'title':'one', 'data':[1,2,3]}, \
+            {'title':'two', 'data':[2,3,5]},{'title':'three', 'data':["a","b","c"]}]
+        }]
+        table = OptimaGraphTable(sheet)
         path = '/tmp/test_graph.xlsx'
         if os.path.exists(path):
           os.remove(path)
