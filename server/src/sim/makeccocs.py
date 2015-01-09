@@ -8,7 +8,7 @@ Version: 2014nov26 by cliffk
 ###############################################################################
 
 from math import log
-from matplotlib.pylab import figure, plot, hold, xlabel, ylabel, title
+from matplotlib.pylab import figure, plot, hold, xlabel, ylabel, title, xlim, ylim
 from numpy import linspace, exp, isnan, zeros, asarray, multiply
 from rtnorm import rtnorm
 from bunch import float_array
@@ -17,7 +17,7 @@ from printv import printv
 from parameters import parameters, input_parameter_name
 
 ## Set defaults for testing
-default_progname = 'SBCC'
+default_progname = 'MSM programs'
 default_startup = 0 # select 0 for programs with no startup costs or 1 for programs with startup costs
 default_ccparams = [] #[0.9, 0.6, 400000.0, 1e6]
 default_coparams = []
@@ -86,6 +86,10 @@ def makecc(D=None, progname=default_progname, startup=default_startup, ccparams=
         plotdata['xlinedata'] = xvalscc
         plotdata['ylinedata'] = yvalscc
     
+    # Populate output structure with axis limits
+    plotdata['xlowerlim'], plotdata['ylowerlim']  = 0.0, 0.0
+    plotdata['xupperlim'], plotdata['yupperlim']  = max([x if ~isnan(x) else 0.0 for x in totalcost])*1.5, max([x if ~isnan(x) else 0.0 for x in coverage])*1.5
+
     # Check the lengths or coverage and cost are the same.
     if (len(totalcost) == 1 and len(coverage) > 1):
         coverage = float_array(coverage)
@@ -104,8 +108,7 @@ def makecc(D=None, progname=default_progname, startup=default_startup, ccparams=
                 coveragescatter.append(coverage[j])
         totalcost = totalcostscatter
         coverage = coveragescatter
-        
-        
+                
     # Populate output structure with scatter data 
     plotdata['xscatterdata'] = totalcost
     plotdata['yscatterdata'] = coverage
@@ -125,7 +128,9 @@ def makecc(D=None, progname=default_progname, startup=default_startup, ccparams=
         title(plotdata['title'])
         xlabel(plotdata['xlabel'])
         ylabel(plotdata['ylabel'])
-    
+        xlim([plotdata['xlowerlim'],plotdata['xupperlim']])
+        ylim([plotdata['ylowerlim'],plotdata['yupperlim']])
+
     return plotdata, storeparams
 
 ######################################################################
@@ -176,6 +181,13 @@ def makeco(D, progname=default_progname, effectname=default_effectname, coparams
         # Get data for scatter plots
         outcome = D.data[effectname[0][0]][effectname[0][1]][popnumber]
         coverage, coveragelabel, storeccparams = getcoverage(D, params=[], artelig=default_artelig, progname=progname)
+
+        # Populate output structure with axis limits
+        plotdata['xlowerlim'], plotdata['ylowerlim']  = 0.0, 0.0
+        if coveragelabel == 'Proportion covered':
+            plotdata['xupperlim'], plotdata['yupperlim']  = 1.0, 1.0
+        else:
+            plotdata['xupperlim'], plotdata['yupperlim']  = max([j if ~isnan(j) else 0.0 for j in coverage])*1.5, max([j if ~isnan(j) else 0.0 for x in outcome])*1.5
 
         if (len(coverage) == 1 and len(outcome) > 1): 
             outcome = asarray(outcome)
@@ -242,7 +254,7 @@ def makeco(D, progname=default_progname, effectname=default_effectname, coparams
 
         # Populate output structure with labels and titles
         plotdata['title'] = input_parameter_name(effectname[0][1])+ ' - ' + effectname[1][0]
-        plotdata['xlabel'] = 'Proportion covered'
+        plotdata['xlabel'] = coveragelabel
         plotdata['ylabel'] = 'Outcome'
 
         # Plot results                           
@@ -257,6 +269,8 @@ def makeco(D, progname=default_progname, effectname=default_effectname, coparams
             title(plotdata['title'])
             xlabel(plotdata['xlabel'])
             ylabel(plotdata['ylabel'])
+            xlim([plotdata['xlowerlim'],plotdata['xupperlim']])
+            ylim([plotdata['ylowerlim'],plotdata['yupperlim']])
         
     return plotdata, storeparams
 
@@ -377,6 +391,10 @@ def makecco(D=None, progname=default_progname, effectname=default_effectname, cc
         totalcost = D.data.costcov.cost[prognumber] # get total cost data
         outcome = D.data[effectname[0][0]][effectname[0][1]][popnumber]
 
+        # Populate output structure with axis limits
+        plotdata['xlowerlim'], plotdata['ylowerlim']  = 0.0, 0.0
+        plotdata['xupperlim'], plotdata['yupperlim']  = max([j if ~isnan(j) else 0.0 for j in totalcost])*1.5, 1.0
+
         # Get around situations where there's an assumption for coverage but not for behaviour, or vice versa
         if (len(totalcost) == 1 and len(outcome) > 1): 
             outcome = float_array(outcome)
@@ -417,6 +435,8 @@ def makecco(D=None, progname=default_progname, effectname=default_effectname, cc
             title(plotdata['title'])
             xlabel(plotdata['xlabel'])
             ylabel(plotdata['ylabel'] )
+            xlim([plotdata['xlowerlim'],plotdata['xupperlim']])
+            ylim([plotdata['ylowerlim'],plotdata['yupperlim']])
     
     return plotdata, plotdata_co, storeparams
 
@@ -581,7 +601,7 @@ def makesamples(coparams, muz, stdevz, muf, stdevf, samplesize=1000):
 
 
 # For testing... delete later... should make separate file!
-#plotdata, storeparams = makecc(D, progname=default_progname, startup=default_startup, ccparams=default_ccparams, artelig=default_artelig, makeplot=default_makeplot, verbose=2, nxpts = 1000)
+#lotdata, storeparams = makecc(D, progname=default_progname, startup=default_startup, ccparams=default_ccparams, artelig=default_artelig, makeplot=default_makeplot, verbose=2, nxpts = 1000)
 #plotdata, storeparams = makeco(D, progname=default_progname, effectname=default_effectname, coparams=default_coparams, makeplot=default_makeplot, verbose=2,nxpts = 1000)
 #plotdata, plotdata_co, storeparams = makecco(D, progname=default_progname, effectname=default_effectname, ccparams=default_ccparams, coparams=default_coparams, makeplot=default_makeplot, verbose=2,nxpts = 1000)
 #plotdata, plotdata_co, plotdata_cc, effectnames, D = plotallcurves(D, progname=default_progname, ccparams=default_ccparams, coparams=default_coparams, makeplot=default_makeplot, verbose=2)
