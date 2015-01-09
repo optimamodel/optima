@@ -31,6 +31,7 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
       };
 
       var scatterDataExists = (data.scatter && data.scatter.length > 0);
+      var linesDataExists = (data.lines && data.lines.length > 0);
 
       var hasValidMin = function(domain) {
         return (domain[0]!==null && !isNaN(domain[0]));
@@ -45,19 +46,21 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
       var scatterChartInstance;
 
       // initialize lineChart for each line and update the scales
-      _(data.lines).each(function (line, index) {
-        var lineColor = options.linesStyle && options.linesStyle[index];
-        var lineChart = new d3Charts.LineChart(chartGroup, index, chartSize, lineColor);
-        lineChartInstances.push(lineChart);
-        var scales = lineChart.scales(line);
-        graphsScales.push(scales);
-        var x_domain = scales.x.domain();
-        var y_domain = scales.y.domain();
-        yMax = Math.max(yMax, y_domain[1]);
-        xMax = Math.max(xMax, x_domain[1]);
-        if(hasValidMin(y_domain)) {yMin = Math.min(yMin, y_domain[0])};
-        if(hasValidMin(x_domain)) {xMin = Math.min(xMin, x_domain[0])};
-      });
+      if (linesDataExists) {
+        _(data.lines).each(function (line, index) {
+          var lineColor = options.linesStyle && options.linesStyle[index];
+          var lineChart = new d3Charts.LineChart(chartGroup, index, chartSize, lineColor);
+          lineChartInstances.push(lineChart);
+          var scales = lineChart.scales(line);
+          graphsScales.push(scales);
+          var x_domain = scales.x.domain();
+          var y_domain = scales.y.domain();
+          yMax = Math.max(yMax, y_domain[1]);
+          xMax = Math.max(xMax, x_domain[1]);
+          if(hasValidMin(y_domain)) {yMin = Math.min(yMin, y_domain[0])};
+          if(hasValidMin(x_domain)) {xMin = Math.min(xMin, x_domain[0])};
+        });
+      }
 
       // initialize scatterChart
       if (scatterDataExists) {
