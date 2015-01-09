@@ -3,7 +3,8 @@ define([
     'ui.router',
     '../../config',
     '../resources/model',
-    '../ui/type-selector/index'
+    '../ui/type-selector/index',
+    '../common/type-factory'
 ], function (angular) {
     'use strict';
 
@@ -11,7 +12,8 @@ define([
         'app.constants',
         'app.resources.model',
         'app.ui.type-selector',
-        'ui.router'
+        'ui.router',
+        'app.common.type'
     ]).config(function ($stateProvider) {
         $stateProvider
             .state('analysis', {

@@ -1,7 +1,7 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     'use strict';
 
-    module.controller('AnalysisScenariosController', function ($scope, $http, $modal, $window, meta, info, scenarioParamsResponse, scenariosResponse, CONFIG) {
+    module.controller('AnalysisScenariosController', function ($scope, $http, $modal, $window, meta, info, scenarioParamsResponse, scenariosResponse, CONFIG, typeFactory) {
 
         var linesGraphOptions, linesGraphData, responseData, availableScenarioParams, availableScenarios;
 
@@ -42,7 +42,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             });
           }
 
-          $scope.types = angular.copy(CONFIG.GRAPH_TYPES);
+          $scope.types = typeFactory.types;
 
           $scope.lineStyles = ['__blue', '__green', '__red', '__orange',
             '__violet', '__black', '__light-orange', '__light-green'];

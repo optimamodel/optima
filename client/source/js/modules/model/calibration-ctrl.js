@@ -1,7 +1,7 @@
 define(['./module', 'angular'], function (module, angular) {
   'use strict';
 
-  module.controller('ModelCalibrationController', function ($scope, $http, $interval, Model, f, G, meta, info, CONFIG) {
+  module.controller('ModelCalibrationController', function ($scope, $http, $interval, Model, f, G, meta, info, CONFIG, typeFactory) {
 
     // use for export all data
     $scope.exportGraphs = {
@@ -40,7 +40,7 @@ define(['./module', 'angular'], function (module, angular) {
     };
 
     $scope.G = G;
-    $scope.types = angular.copy(CONFIG.GRAPH_TYPES);
+    $scope.types = typeFactory.types;
     $scope.calibrationStatus = false;
 
     $scope.enableManualCalibration = false;
