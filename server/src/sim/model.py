@@ -133,7 +133,7 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
             efftx   = sum(txfactor * (people[tx1,pop,t]+people[tx2,pop,t])) # ...and treated
             effhivprev[pop] = (effundx+effdx+efftx) / allpeople[pop,t]; # Calculate HIV "prevalence", scaled for infectiousness based on CD4 count; assume that treatment failure infectiousness is same as corresponding CD4 count
             if not(effhivprev[pop]>=0): 
-                import pdb; pdb.set_trace()
+#                import pdb; pdb.set_trace()
                 raise Exception('HIV prevalence invalid in population %s! (=%f)' % (pop, effhivprev[pop]))
         
         # Also calculate effective MTCT transmissibility
