@@ -316,7 +316,7 @@ def doCostCoverageEffect():
         args['ccparams'] = [float(param) for param in args['ccparams']]
         args['coparams'] = [float(param) for param in args['coparams']]
         args['makeplot'] = 0 # don't do plotting in SIM
-        plotdata, plotdata_co, storeparams = makecco(**args)
+        plotdata, plotdata_co, storeparams_co = makecco(**args)
     except Exception, err:
         var = traceback.format_exc()
         return jsonify({"status":"NOK", "exception":var})
