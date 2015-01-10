@@ -5,7 +5,7 @@ def getcurrentbudget(D, alloc=None):
     Returns: D
     Version: 2014nov30
     """
-    from makeccocs import ccoeqn, cceqn, coverage_params
+    from makeccocs import ccoeqn, cceqn, coverage_params, default_convertedccparams, default_convertedccoparams
     import numpy as np
     
     # Initialise parameter structure (same as D.P). #TODO make this less ugly
@@ -33,30 +33,40 @@ def getcurrentbudget(D, alloc=None):
             totalcost = totalcost[-1]
 
         # Loop over effects
-        for effectnumber, effectname in enumerate(D.programs[progname]):
+        for effectnumber, effect in enumerate(D.programs[progname]['effects']):
+
             # Get population info
-            popname = effectname[1]
+            popname = effect[1]
 
             # Get parameter info
-            parname = effectname[0][1]
-            # Does this affect a specific population within the model?
-            if popname[0] in D.data.meta.pops.short and not parname in coverage_params:
-                popnumber = D.data.meta.pops.short.index(popname[0]) 
-                if len(effectname)>3 and len(effectname[3])>=7: #happy path if co_params are actually there
+            parname = effect[0][1]
+
+            # Is the affected paramter coverage?
+            if not parname in coverage_params:
+                if popname[0] in D.data.meta.pops.short:
+                    popnumber = D.data.meta.pops.short.index(popname[0]) 
+                else:
+                    popnumber = 0
+
+                if len(effect)>4 and len(effect[4])>=4: #happy path if co_params are actually there
                     # Unpack
-                    saturation, growthrate, xupperlim, muz, stdevz, muf, stdevf = effectname[3][0], effectname[3][1], effectname[3][2], effectname[3][3], effectname[3][4], effectname[3][5], effectname[3][6]
+                    convertedccoparams = effect[4]
                 else: # did not get co_params yet, giving it some defined params TODO @RS @AS do something sensible here:
-                    saturation, growthrate, xupperlim, muz, stdevz, muf, stdevf = effectname[3][0], effectname[3][1], effectname[3][2], 0.3, 0.5, 0.7, 0.9
+                    convertedccoparams = default_convertedccoparams
 
                 #   zerosample, fullsample = makesamples(muz, stdevz, muf, stdevf, samplesize=1)
-                y = ccoeqn(totalcost, [saturation, growthrate, muz, muf])
-                D.P[effectname[0][1]].c[popnumber] = y
+                y = ccoeqn(totalcost, convertedccoparams)
+                D.P[effect[0][1]].c[popnumber] = y
 
 
             # ... or does it affect all parameters?
             else:
-                y = cceqn(totalcost, D.programs[progname][effectnumber][-1][0])
-                D.P[effectname[0][1]].c[0] = y
+                if D.programs[progname]['convertedccparams']:
+                    convertedccparams = D.programs[progname]['convertedccparams'][0:2]
+                else:
+                    convertedccparams = default_convertedccoparams
+                y = cceqn(totalcost, convertedccparams)
+                D.P[effect[0][1]].c[0] = y
 
         if not(allocprovided):
             currentbudget.append(totalcost)

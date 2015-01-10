@@ -8,6 +8,7 @@ def updatedata(D, verbose=2, savetofile = True):
     """
     
     from loadworkbook import loadworkbook
+    from makeccocs import restructureprograms
     from makedatapars import makedatapars
     from dataio import savedata, fullpath
     from printv import printv
@@ -15,6 +16,7 @@ def updatedata(D, verbose=2, savetofile = True):
     
     datapath = fullpath(D.G.workbookname)
     D.data, D.programs = loadworkbook(datapath, verbose=verbose)
+    D.programs = restructureprograms(D.programs)
     D = makedatapars(D, verbose=verbose) # Update parameters
     if savetofile:
         savedata(D.G.projectfilename, D, verbose=verbose) # Update the data file
