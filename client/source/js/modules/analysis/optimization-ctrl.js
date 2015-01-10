@@ -1,14 +1,11 @@
-define([
-  './module',
-  'angular',
-  'd3'
-], function (module, angular, d3) {
+define(['./module', 'angular', 'd3'], function (module, angular, d3) {
   'use strict';
 
-  module.controller('AnalysisOptimizationController', function ($scope, $http, $interval, meta, CONFIG) {
+  module.controller('AnalysisOptimizationController', function ($scope, $http,
+    $interval, meta, CONFIG, modalService, graphTypeFactory) {
 
       $scope.meta = meta;
-      $scope.types = angular.copy(CONFIG.GRAPH_TYPES);
+      $scope.types = graphTypeFactory.types;
 
       // use for export all data
       $scope.exportGraphs = {
@@ -98,8 +95,10 @@ define([
         $scope.params.constraints.coverage[meta.progs.short[i]].year = undefined;
       }
 
-    $scope.radarGraphName = 'Allocation'
-    $scope.radarAxesName =  'Programs'
+    $scope.radarGraphName = 'Allocation';
+    $scope.radarAxesName =  'Programs';
+
+    var optimizationTimer;
 
     var linesStyle = ['__blue', '__green', '__red', '__orange', '__violet',
       '__black', '__light-orange', '__light-green'];
@@ -266,7 +265,7 @@ define([
       $scope.optimisationGraphs = prepareOptimisationGraphs(cachedResponse.graph);
       $scope.financialGraphs = prepareFinancialGraphs(cachedResponse.graph);
       $scope.radarGraph = prepareRadarGraph(cachedResponse.pie);
-    };
+    }
 
     // makes all graphs to recalculate and redraw
     var updateGraphs = function (data) {
@@ -276,20 +275,23 @@ define([
       }
     };
 
-    var optimizationTimer;
-
     $scope.startOptimization = function () {
-      $http.post('/api/analysis/optimization/start', $scope.params)
-        .success(function(data, status, headers, config) {
-          if (data.status == "OK" && data.join) {
-      // Keep polling for updated values after every 5 seconds till we get an error.
-      // Error indicates that the model is not calibrating anymore.
-            optimizationTimer = $interval(checkWorkingOptimization, 5000, 0, false);
-            $scope.optimizationStatus = statusEnum.RUNNING;
-          } else {
-            console.log("Cannot poll for optimization now");
-          }
-        });
+      if($scope.OptimizationForm.$invalid) {
+        $scope.activeTab = 1;
+        modalService.inform(undefined, 'OK', "Please specify program optimizations period.");
+      } else{
+        $http.post('/api/analysis/optimization/start', $scope.params)
+          .success(function (data, status, headers, config) {
+            if (data.status == "OK" && data.join) {
+              // Keep polling for updated values after every 5 seconds till we get an error.
+              // Error indicates that the model is not calibrating anymore.
+              optimizationTimer = $interval(checkWorkingOptimization, 5000, 0, false);
+              $scope.optimizationStatus = statusEnum.RUNNING;
+            } else {
+              console.log("Cannot poll for optimization now");
+            }
+          });
+      }
     };
 
     function checkWorkingOptimization() {
@@ -345,45 +347,56 @@ define([
     $scope.yearLoop = [];
     $scope.yearCols = [];
 
-    $scope.checkStartEndYear = function () {
+    /**
+     * Returns true if the start & end year are required.
+     */
+    $scope.yearsAreRequired = function () {
+      if (!$scope.params.objectives.funding || $scope.params.objectives.funding !== 'variable') {
+        return false;
+      }
+      if (!$scope.params.objectives.year ||
+          !$scope.params.objectives.year.start ||
+          !$scope.params.objectives.year.end){
+        return true;
+      }
+      return false;
+    };
+
+    /**
+     * Update the variables depending on the range in years.
+     */
+    $scope.updateYearRange = function () {
+
+      // only for variable funding the year range is relevant to produce the loop & col
       if ( !$scope.params.objectives.funding || $scope.params.objectives.funding !== 'variable') {
         return;
       }
-      
-      $scope.params.objectives.outcome.variable = {}
-      $scope.yearError = false;
+
+      // reset data
+      $scope.params.objectives.outcome.variable = {};
       $scope.yearLoop = [];
       $scope.yearCols = [];
-      if ( !$scope.params.objectives.year ){
-        showYearError();
+
+      // parse years
+      if ($scope.params.objectives.year === undefined) {
         return;
       }
       var start = parseInt($scope.params.objectives.year.start);
       var end = parseInt($scope.params.objectives.year.end);
-      
       if ( isNaN(start) ||  isNaN(end) || end <= start) {
-        showYearError();
         return;
       }
 
-      for ( var i = start; i <= end; i++ ) {
-        $scope.yearLoop.push({year:i});
-        $scope.params.objectives.outcome.variable[i] = undefined;
-      }
-  
-       var cols = 5;
-       var rows = Math.ceil($scope.yearLoop.length / cols);
-       for( var i = 0; i < rows; i++ ) {
-         $scope.yearCols.push({start:i*cols,end:(i*cols)+cols});
-       }
+      // initialize data
+      var years = _.range(start, end + 1);
+      $scope.yearLoop = _(years).map(function (year) { return { year: year}; });
 
-    };
+      var cols = 5;
+      var rows = Math.ceil($scope.yearLoop.length / cols);
+      $scope.yearCols = _(_.range(0, rows)).map(function(col, index) {
+        return {start: index*cols, end: (index*cols)+cols };
+      });
 
-    $scope.yearError = false;
-    var showYearError = function() {
-      $scope.yearError = true;
-      $scope.yearLoop = [];
-      $scope.yearCols = [];
     };
 
   });

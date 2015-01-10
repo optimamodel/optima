@@ -2,7 +2,8 @@ define([
   'angular',
   'ui.router',
   '../resources/model',
-  '../ui/type-selector/index'
+  '../ui/type-selector/index',
+  '../common/graph-type-factory'
 ], function (angular) {
   'use strict';
 
@@ -10,7 +11,8 @@ define([
     'app.resources.model',
     'app.resources.project',
     'app.ui.type-selector',
-    'ui.router'
+    'ui.router',
+    'app.common.graph-type'
   ])
     .config(function ($stateProvider) {
       $stateProvider
