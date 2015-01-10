@@ -39,17 +39,19 @@ def getcurrentbudget(D, alloc=None):
 
             # Get parameter info
             parname = effectname[0][1]
-            
             # Does this affect a specific population within the model?
             if popname[0] in D.data.meta.pops.short and not parname in coverage_params:
-
                 popnumber = D.data.meta.pops.short.index(popname[0]) 
+                if len(effectname)>3 and len(effectname[3])>=7: #happy path if co_params are actually there
+                    # Unpack
+                    saturation, growthrate, xupperlim, muz, stdevz, muf, stdevf = effectname[3][0], effectname[3][1], effectname[3][2], effectname[3][3], effectname[3][4], effectname[3][5], effectname[3][6]
+                else: # did not get co_params yet, giving it some defined params TODO @RS @AS do something sensible here:
+                    saturation, growthrate, xupperlim, muz, stdevz, muf, stdevf = effectname[3][0], effectname[3][1], effectname[3][2], 0.3, 0.5, 0.7, 0.9
 
-                # Unpack
-                saturation, growthrate, xupperlim, muz, stdevz, muf, stdevf = effectname[3][0], effectname[3][1], effectname[3][2], effectname[3][3], effectname[3][4], effectname[3][5], effectname[3][6]
-#                zerosample, fullsample = makesamples(muz, stdevz, muf, stdevf, samplesize=1)
+                #   zerosample, fullsample = makesamples(muz, stdevz, muf, stdevf, samplesize=1)
                 y = ccoeqn(totalcost, [saturation, growthrate, muz, muf])
                 D.P[effectname[0][1]].c[popnumber] = y
+
 
             # ... or does it affect all parameters?
             else:
