@@ -177,7 +177,6 @@ def makeco(D, progname=default_progname, effect=default_effect, coparams=default
     
     # Initialise output structures
     plotdata = {}
-#    storeparams = []
 
     # Get population and parameter info
     popname = effect[1]
@@ -356,7 +355,6 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
     # Initialise output structures
     plotdata = {}
     plotdata_co = {}
-#    storeparams = []
 
     # Extract info from data structure
     prognumber = D.data.meta.progs.short.index(progname) # get program number
@@ -379,16 +377,13 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
         # Do we have parameters for making curves?
         if (ccparams or D.programs[progname]['ccparams']) and (coparams or (len(effect)>2 and len(effect[2])>3)):
 
-            if not ccparams: # Get ccparams from  GUI and store them... 
-#                D.programs[progname]['ccparams'] = ccparams
-#            else: # ... or access previously stored ones
+            if not ccparams: # Don't have new ccparams, get previously stored ones
                 ccparams = D.programs[progname]['ccparams']
 
             saturation = ccparams[0]
             growthrate = (-1/ccparams[2])*log((2*saturation)/(ccparams[1]+saturation) - 1)
             xupperlim = ccparams[3]
             convertedccoparams = [saturation, growthrate]            
-#            D.programs[progname]['convertedccoparams'] = convertedccoparams
 
             if coparams: # Get coparams from  GUI... 
                 muz, stdevz, muf, stdevf = makecosampleparams(coparams, verbose=verbose)
@@ -411,16 +406,6 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
             else:
                 effect[4] = convertedccoparams
 
-#                zeromin = effect[2][0] # Assumptions of behaviour at zero coverage (lower bound)
-#                zeromax = effect[2][1] # Assumptions of behaviour at zero coverage (upper bound)
-#                fullmin = effect[2][2] # Assumptions of behaviour at maximal coverage (lower bound)
-#                fullmax = effect[2][3] # Assumptions of behaviour at maximal coverage (upper bound)
-#                coparams = [zeromin, zeromax, fullmin, fullmax] # Store for output
-    
-
-#            # Generate samples of zero-coverage and full-coverage behaviour
-#            storeparams = [saturation, growthrate, xupperlim, muz, stdevz, muf, stdevf]
-
             # Create x dataset and initialise y dataset
             xvalscco = linspace(0,xupperlim,nxpts)
     
@@ -439,10 +424,6 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
         # Get the coverage-outcome relationships (this should be kept in the outer level, 
         # unless the intention is do not produce coverage-outcome relationships when ccparams / coparams are not present - AN)
         plotdata_co, effect = makeco(D, progname, effect, coparams, makeplot=makeplot, verbose=verbose)
-
-#        if not storeparams or len(storeparams)==0:
-#            storeparams = [saturation, growthrate, xupperlim]
-#            storeparams.extend(storeparams_co)
 
         # Extract scatter data
         totalcost = D.data.costcov.cost[prognumber] # get total cost data
@@ -518,10 +499,6 @@ def plotallcurves(D=None, progname=default_progname, ccparams=default_ccparams, 
     # Loop over behavioural effects
     for effectnumber, effect in enumerate(D.programs[progname]['effects']):
 
-        # Default storeparams
-#        storeparams = storeparams_cc
-#        storeparams_co = []
-
         # Get parameter info
         parname = effect[0][1]
 
@@ -532,17 +509,6 @@ def plotallcurves(D=None, progname=default_progname, ccparams=default_ccparams, 
             effects[effectnumber] = effect 
             plotdata[effectnumber], plotdata_co[effectnumber], effect = makecco(D=D, progname=progname, effect=effect, ccparams=ccparams, coparams=coparams, makeplot=makeplot, verbose=verbose)
             effects[effectnumber] = effect 
-#       ATTN: right now, makecco returns storeparams, not storeparams_co (and that's how it was)
-#       with empty coparams, len(storeparams)=3, that contradicts the assumptions in getcurrentbudget.py
-#       I put there (in getcurrentbudget) default coparams, for now, just to see if nothing else is broken - AN
-
-        # Store outputs
-#        storeparams.extend(storeparams_co) 
-#        if len(effectname) == 3: # There's no existing info here, append
-#            effectname.append(storeparams)
-#        else:
-#            effectname[3] = storeparams # There is existing info here, overwrite
-        #no need to assign effectname back to D.programs[progname][effectnumber] - they are equal by reference (AN)
 
     return plotdata, plotdata_co, plotdata_cc, effects, D      
 
