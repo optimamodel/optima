@@ -17,7 +17,7 @@ define(['./module', 'underscore'], function (module, _) {
       // show message "calibrate the model" and disable the form elements
       $scope.projectInfo = info;
       $scope.needData = !$scope.projectInfo.has_data;
-      
+
       if ( !$scope.needData ) {
         $scope.initializePrograms();
         $scope.selectedProgram = $scope.programs[0];
@@ -28,7 +28,7 @@ define(['./module', 'underscore'], function (module, _) {
         $scope.hasCostCoverResponse = false;
 
       }
-      
+
       // model parameters
       $scope.defaultSaturationCoverageLevel = 90;
       $scope.defaultKnownCoverageLevel = 20;
@@ -38,6 +38,7 @@ define(['./module', 'underscore'], function (module, _) {
       $scope.behaviorWithoutMax = 0.5;
       $scope.behaviorWithMin = 0.7;
       $scope.behaviorWithMax = 0.9;
+      $scope.curvesInitialized = false;
 
       plotTypes = ['plotdata', 'plotdata_cc', 'plotdata_co'];
 
@@ -57,7 +58,7 @@ define(['./module', 'underscore'], function (module, _) {
           _.times(meta.progs.long.length, function (n){
             categories.push('Others')
           });}
-          
+
         return {
           name: name,
           acronym: meta.progs.short[index],
@@ -261,14 +262,14 @@ define(['./module', 'underscore'], function (module, _) {
       if ( !model.ccparams[0] || !model.ccparams[1] || !model.ccparams[2] || !model.ccparams[3] ){
         var message = 'Cost-coverage curve plotting options cannot be empty!';
         modalService.inform(
-          function (){ null }, 
+          function (){ null },
           'Okay',
-          message, 
+          message,
           'Error!'
-        ); 
+        );
         return;
       }
-      
+
       /**
        * stop further execution and return in case of null selectedProgram
        */
@@ -301,6 +302,7 @@ define(['./module', 'underscore'], function (module, _) {
      * Retrieve and update graphs based on the current plot models.
      */
     $scope.generateCurves = function () {
+      $scope.curvesInitialized = true;
       var model = getPlotModel();
       retrieveAndUpdateGraphs(model);
     };
@@ -308,11 +310,11 @@ define(['./module', 'underscore'], function (module, _) {
     $scope.uploadDefault = function () {
       var message = 'Upload default cost-coverage-outcome curves will be available in a future version of Optima. We are working hard in make it happen for you!';
       modalService.inform(
-        function (){ null }, 
+        function (){ null },
         'Okay',
-        message, 
+        message,
         'Thanks for your interest!'
-      );      
+      );
     };
 
     /**
@@ -359,6 +361,16 @@ define(['./module', 'underscore'], function (module, _) {
         $scope.graphs.plotdata_co[graphIndex] = setUpPlotdataGraph(response.plotdata_co);
       });
     };
+
+    /**
+     * Retrieve and update graphs based on the current plot models only if the graphs are already rendered
+     * by pressing the draw button.
+     */
+    $scope.updateCurves =  _.debounce(function() { // debounce a bit so we don't update immediately
+      if($scope.curvesInitialized === true) {
+       $scope.generateCurves();
+      }
+    }, 500);
 
     initialize();
 
