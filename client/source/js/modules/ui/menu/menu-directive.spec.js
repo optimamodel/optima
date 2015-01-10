@@ -16,6 +16,7 @@ define([
     beforeEach(module(function ($provide) {
       $provide.value('$state', $stateSpy);
       $provide.value('security', {});
+      $provide.value('graphTypeFactory', {});
     }));
 
     beforeEach(inject(function ($rootScope, $compile, $location, $httpBackend) {
