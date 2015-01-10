@@ -122,7 +122,7 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png','jsPDF'],
             var startingY = 35;
             var figureWidth = 525;
             var figureHeight = 400;
-            var paddingBetweenImages = 25;
+            var paddingBetweenImages = 10;
 
             var totalElements = $(".chart-container").length;
 
