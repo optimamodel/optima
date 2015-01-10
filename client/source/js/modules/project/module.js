@@ -7,12 +7,14 @@ define([
   'angular',
   'ui.router',
   '../common/active-project-service',
+  '../common/update-checkbox-on-click-directive',
   '../resources/project'
 ], function (angular) {
   'use strict';
 
   return angular.module('app.project', [
     'app.active-project',
+    'app.common.update-checkbox-on-click',
     'app.resources.project',
     'ui.router'
   ])
