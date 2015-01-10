@@ -64,7 +64,7 @@ def getcurrentbudget(D, alloc=None):
                 if D.programs[progname]['convertedccparams']:
                     convertedccparams = D.programs[progname]['convertedccparams'][0:2]
                 else:
-                    convertedccparams = default_convertedccoparams
+                    convertedccparams = default_convertedccparams
                 y = cceqn(totalcost, convertedccparams)
                 D.P[effect[0][1]].c[0] = y
 
