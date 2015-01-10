@@ -68,7 +68,7 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png','jsPDF'],
           var getGraphs = function () {
             var graphs = [];
             var controller = scope.exportGraphs.controller;
-            
+
             // Optimization
             if ( controller == 'AnalysisOptimization' ) {
 
@@ -88,7 +88,7 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png','jsPDF'],
               }
             }
 
-            // Calibration 
+            // Calibration
             // Analysis Scenarios
             if ( controller == 'ModelCalibration' || controller == 'AnalysisScenarios' ) {
               if ( scope.graphs ) {
@@ -117,68 +117,59 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png','jsPDF'],
            * Export all graphs/charts figures,
            */
           scope.exportAllFigures = function () {
-            var scalingFactor = 1;
-            var blobs = new Array();
+            var figuresPerPage = 2;
+            var startingX = 35;
+            var startingY = 35;
+            var figureWidth = 525;
+            var figureHeight = 400;
+            var paddingBetweenImages = 25;
+
             var totalElements = $(".chart-container").length;
 
-            // In order to have styled graphs the css content used to render
-            // graphs is retrieved & injected into the svg as style tag
-            var cssContentRequest = $http.get(chartCssUrl);
-            cssContentRequest.success(function(cssContent) {
+            // Get details of all graphs.
+            var graphs = getGraphs();
 
-                var graphs = getGraphs();
+            // Start the pdf document
+            var doc = new jspdf('p', 'pt', 'a4', true);
+            var y = startingY;
 
-              _($(".chart-container")).each(function (elem,index) {
-                var originalSvg = $(elem).find('svg');
-                var orginalWidth = $(originalSvg).outerWidth();
-                var orginalHeight = $(originalSvg).outerHeight();
-                var originalStyle = originalSvg.attr('style');
-                var graphTitle = graphs[index].title;
-                if ( scope.exportGraphs.controller == 'AnalysisOptimization' ) graphTitle = graphs[index].options.title;
+            _( $(".chart-container") ).each(function ( el, index ) {
 
-                // make sure we scale the padding and append it to the original styling
-                // info: later declarations overwrite previous ones
-                var style = originalStyle + '; ' + svgToPng.scalePaddingStyle(originalSvg, scalingFactor);
+              // FIXME: This is a hack for the case of cost coverage. We need to add the titles.
+              // All other graph figures have self-contained titles.
+              var graphTitle = '';
+              if ( scope.exportGraphs.controller == 'ModelViewCalibration' &&
+                (index == 0 || index % 2 == 1 )) {
 
-                // create svg element
-                var svg = svgToPng.createSvg(orginalWidth, orginalHeight, scalingFactor, style);
+                if ( index == 0 ) {
+                  graphTitle = graphs[index].title;
+                } else {
+                  console.log((index / 2) + 1);
+                  graphTitle = graphs[Math.ceil(index / 2)].title;
+                }
+              }
 
-                // add styles and content to the svg
-                var styles = '<style>' + cssContent + '</style>';
-                svg.innerHTML = styles + originalSvg.html();
+              // Generate a png of the graph and save it into an array to be used
+              // to generate the pdf.
+              generateGraphAsPng( $(el), function( d ) {
+                // Image title
+                doc.text( startingX + 70, y + 15, graphTitle);
 
-                // create img element with the svg as data source
-                var svgXML = (new XMLSerializer()).serializeToString(svg);
-                var tmpImage = document.createElement("img");
-                tmpImage.width = orginalWidth * scalingFactor;
-                tmpImage.height = orginalHeight * scalingFactor;
-                tmpImage.src = "data:image/svg+xml;charset=utf-8,"+ svgXML;
+                // Add image
+                doc.addImage(d, 'png', startingX, y, figureWidth, figureHeight);
 
-                tmpImage.onload = function() {
-
-                  // draw image into canvas in order to convert it to a blob
-                  var canvas = document.createElement("canvas");
-                  canvas.width = orginalWidth * scalingFactor;
-                  canvas.height = orginalHeight * scalingFactor;
-                  var ctx = canvas.getContext("2d");
-                  ctx.drawImage(tmpImage, 0, 0);
-
-                  var dataURL = canvas.toDataURL('image/png');
-                  blobs.push({
-                    data:dataURL,
-                    title:graphTitle,
-                    width:tmpImage.width,
-                    height:tmpImage.height
-                  });
-
-                  if ( blobs.length == totalElements ) {
-                    generatePdf(blobs);
+                if ( index == totalElements - 1 ) {
+                  doc.save(scope.exportGraphs.name + '.pdf');
+                } else {
+                  // Do we need to go to the next page?
+                  if ( (index + 1) % figuresPerPage == 0 ) {
+                    doc.addPage();
+                    y = startingY;
+                  } else {
+                    y += figureHeight + paddingBetweenImages;
                   }
-                };
-
-              });
-            }).error(function() {
-              alert("Please releod and try again, something went wrong while generating the graph.");
+                }
+              }, 'data-url' );
             });
           };
 
@@ -238,56 +229,15 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png','jsPDF'],
             });
           };
 
-          var generatePdf = function (blobs) {
-            
-            var doc = new jspdf('p', 'pt', 'a4', true);
-
-            var defaultYpad = 40;
-            var yPad = defaultYpad;
-            var xPad = 35;
-
-            var figEachPage = 3;
-            if ( scope.exportGraphs.controller == 'AnalysisScenarios' || 
-              scope.exportGraphs.controller == 'AnalysisOptimization' ) {
-              figEachPage = 2;
-
-            }
-
-            _(blobs).each(function (blob,index) {
-              
-
-              // to handle radar chart
-              if ( scope.exportGraphs.controller == 'AnalysisOptimization' && index == 0 ) {
-              } else {
-                // dont show title for radar chart
-                doc.text(70 + xPad, 15+yPad, blob.title);
-              }
-
-              doc.addImage(blob.data, 'png', xPad, yPad, blob.width, blob.height);
-
-              if ( (index+1)%figEachPage == 0 ) {
-                if ( index+1 < blobs.length )
-                doc.addPage();
-                yPad = defaultYpad;
-              } else {
-                yPad += blob.height + defaultYpad;
-              }
-
-            });
-            doc.save(scope.exportGraphs.name + '.pdf');
-
-            return;
-          };
-
           /**
-           * Initializes a download of the graph as PNG
+           * Get the graph as a PNG.
            *
            * In order to achieve this a new SVG is created including styles.
            * This SVG element is used as data source inside an image which then
            * is used to draw the content on a canvas to save it as PNG.
            */
-          var exportGraphAsPng = function() {
-            var originalSvg = elem.parent().find('svg');
+          var generateGraphAsPng = function( el, cb, type ) {
+            var originalSvg = el.parent().find('svg');
             var orginalWidth = $(originalSvg).outerWidth();
             var orginalHeight = $(originalSvg).outerHeight();
             var originalStyle = originalSvg.attr('style');
@@ -324,13 +274,26 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png','jsPDF'],
                 var ctx = canvas.getContext("2d");
                 ctx.drawImage(tmpImage, 0, 0);
 
-                canvas.toBlob(function(blob) {
-                  saveAs(blob, "graph.png");
-                });
+                // Return the png either as a blob or data url
+                if ( type == 'blob' ) {
+                  canvas.toBlob( cb );
+                } else {
+                  var data = canvas.toDataURL();
+                  cb( data );
+                }
               };
             }).error(function() {
               alert("Please releod and try again, something went wrong while generating the graph.");
             });
+           };
+
+          /**
+           * Initializes a download of the graph as PNG
+           */
+          var exportGraphAsPng = function() {
+            generateGraphAsPng( elem, function(blob) {
+              saveAs(blob, "graph.png");
+            }, 'blob' );
           };
 
           scope.lineAndAreaExport = function (graph){
