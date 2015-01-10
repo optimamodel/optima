@@ -346,8 +346,8 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
     # Check that the selected effect is in the list of effects
     short_effectname = effect[:2] # only matching by effect "signature"
     short_effectlist = [e[:2] for e in D.programs[progname]['effects']]
-    print("short_effectname", short_effectname)
-    print("short_effectlist", short_effectlist)
+    printv("short_effectname", short_effectname, 5, verbose)
+    printv("short_effectlist", short_effectlist, 5, verbose)
     if short_effectname not in short_effectlist:
         print "makecco short_effectname: %s short_effectlist: %s" % (short_effectname, short_effectlist)
         raise Exception('Please select one of the following effects %s' % D.programs[progname])
@@ -362,7 +362,6 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
     # Get population and parameter info
     popname = effect[1]
     parname = effect[0][1]
-    print("popname", popname, "parname", parname)
 
     saturation, growthrate, xupperlim = None, None, None
 

@@ -227,10 +227,10 @@ define(['./module', 'underscore'], function (module, _) {
     var setUpCOParamsFromEffects = function (effectNames) {
       $scope.coParams = _(effectNames).map(function (effect) {
         return [
-          effect[2][0]? effect[2][0] : null,
-          effect[2][1]? effect[2][1] : null,
-          effect[2][2]? effect[2][2] : null,
-          effect[2][3]? effect[2][3] : null
+          (effect[2] && effect[2][0])? effect[2][0] : null,
+          (effect[2] && effect[2][1])? effect[2][1] : null,
+          (effect[2] && effect[2][2])? effect[2][2] : null,
+          (effect[2] && effect[2][3])? effect[2][3] : null
         ];
       });
     };
@@ -305,6 +305,7 @@ define(['./module', 'underscore'], function (module, _) {
 
       if (hasNoElements(model.ccparams)) delete model.ccparams;
       if (hasNoElements(model.coparams)) delete model.coparams;
+
       $http.post('/api/model/costcoverage', model).success(function (response) {
         if (response.status === 'OK') {
 
@@ -375,7 +376,7 @@ define(['./module', 'underscore'], function (module, _) {
      * POST /api/model/costcoverage/effect
      *   {
      *     "progname":<chosen progname>
-     *     "effectname":<effectname for the given row>,
+     *     "effect":<effectname for the given row>,
      *     "ccparams":<ccparams>,
      *     "coparams":<coprams from the corresponding coparams block>
      *   }
@@ -383,7 +384,7 @@ define(['./module', 'underscore'], function (module, _) {
     $scope.updateCurve = function (graphIndex) {
       var model = getPlotModel();
       model.coparams = $scope.coParams[graphIndex];
-      model.effectname =  effectNames[graphIndex];
+      model.effect =  effectNames[graphIndex];
       if ( hasSomeElements(model.coparams) ){
         var message = 'Cost-coverage curve plotting options should be either empty, or all present!';
         modalService.inform(
@@ -401,6 +402,7 @@ define(['./module', 'underscore'], function (module, _) {
       $http.post('/api/model/costcoverage/effect', model).success(function (response) {
         $scope.graphs.plotdata[graphIndex] = setUpPlotdataGraph(response.plotdata);
         $scope.graphs.plotdata_co[graphIndex] = setUpPlotdataGraph(response.plotdata_co);
+        effectNames[graphIndex]=response.effect;
       });
     };
 
