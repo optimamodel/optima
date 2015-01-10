@@ -219,16 +219,16 @@ def makeco(D, progname=default_progname, effectname=default_effectname, coparams
             outcome = outcomescatter
             
         # Get inputs from GUI (#TODO simplify?)
-        if coparams and len(coparams)>=3:
+        if coparams and len(coparams)>3:
             zeromin = coparams[0] # Assumptions of behaviour at zero coverage (lower bound)
             zeromax = coparams[1] # Assumptions of behaviour at zero coverage (upper bound)
             fullmin = coparams[2] # Assumptions of behaviour at maximal coverage (lower bound)
             fullmax = coparams[3] # Assumptions of behaviour at maximal coverage (upper bound)
-        elif effectname[3] and len(effectname[2])>0:
-            zeromin = effectname[3][3] # Assumptions of behaviour at zero coverage (lower bound)
-            zeromax = effectname[3][4] # Assumptions of behaviour at zero coverage (upper bound)
-            fullmin = effectname[3][5] # Assumptions of behaviour at maximal coverage (lower bound)
-            fullmax = effectname[3][6] # Assumptions of behaviour at maximal coverage (upper bound)
+        elif len(effectname)>2 and len(effectname[2])>3:
+            zeromin = effectname[2][0] # Assumptions of behaviour at zero coverage (lower bound)
+            zeromax = effectname[2][1] # Assumptions of behaviour at zero coverage (upper bound)
+            fullmin = effectname[2][2] # Assumptions of behaviour at maximal coverage (lower bound)
+            fullmax = effectname[2][3] # Assumptions of behaviour at maximal coverage (upper bound)
             coparams = [zeromin, zeromax, fullmin, fullmax] # Store for output
 
         print("coparams", coparams, "effectname", effectname)
@@ -364,7 +364,7 @@ def makecco(D=None, progname=default_progname, effectname=default_effectname, cc
         printv("coparams in makecco: %s" % coparams, 5, verbose)
                 
         # Get inputs from  GUI or access previously stored ones
-        if (ccparams or D.programs[progname][0][3]):
+        if ccparams or (len(effectname)>3 and len(effectname[3])>2):
             
             if ccparams:        
                 # Get parameters for cost-coverage curves
@@ -372,17 +372,17 @@ def makecco(D=None, progname=default_progname, effectname=default_effectname, cc
                 growthrate = (-1/ccparams[2])*log((2*saturation)/(ccparams[1]+saturation) - 1)
                 xupperlim = ccparams[3]
 
-            elif D.programs[progname][0][3]:
-                saturation, growthrate, xupperlim = D.programs[progname][0][3][0], D.programs[progname][0][3][1], D.programs[progname][0][3][2] # Get previously-stored parameters 
+            elif len(effectname)>3 and len(effectname[3])>2:
+                saturation, growthrate, xupperlim = effectname[3][0], effectname[3][1], effectname[3][2] # Get previously-stored parameters 
             
             # Get inputs from  GUI, if these have been provided
-            if (coparams or (len(D.programs[progname][0])>3 and (len(D.programs[progname][0][3])>3))):
-
-                if not coparams:
-                    zeromin = effectname[3][3] # Assumptions of behaviour at zero coverage (lower bound)
-                    zeromax = effectname[3][4] # Assumptions of behaviour at zero coverage (upper bound)
-                    fullmin = effectname[3][5] # Assumptions of behaviour at maximal coverage (lower bound)
-                    fullmax = effectname[3][6] # Assumptions of behaviour at maximal coverage (upper bound)
+            if coparams or (len(effectname)>2 and len(effectname[2])>3):
+      
+                if not coparams or len(coparams)==0:
+                    zeromin = effectname[2][0] # Assumptions of behaviour at zero coverage (lower bound)
+                    zeromax = effectname[2][1] # Assumptions of behaviour at zero coverage (upper bound)
+                    fullmin = effectname[2][2] # Assumptions of behaviour at maximal coverage (lower bound)
+                    fullmax = effectname[2][3] # Assumptions of behaviour at maximal coverage (upper bound)
                     coparams = [zeromin, zeromax, fullmin, fullmax] # Store for output
         
                 # Generate samples of zero-coverage and full-coverage behaviour
@@ -407,8 +407,9 @@ def makecco(D=None, progname=default_progname, effectname=default_effectname, cc
                 plotdata['ylinedata2'] = maxcco  # Y data for third line plot
                 plotdata['ylinedata3'] = mincco  # Y data for fourth line plot
 
-                # Get the coverage-outcome relationships
-                plotdata_co, storeparams_co = makeco(D, progname, effectname, coparams, makeplot=makeplot, verbose=verbose)
+        # Get the coverage-outcome relationships (this should be kept in the outer level, 
+        # unless the intention is do not produce coverage-outcome relationships when ccparams / coparams are not present - AN)
+        plotdata_co, storeparams_co = makeco(D, progname, effectname, coparams, makeplot=makeplot, verbose=verbose)
 
         # Extract scatter data
         totalcost = D.data.costcov.cost[prognumber] # get total cost data

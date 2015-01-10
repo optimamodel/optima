@@ -275,14 +275,15 @@ def doCostCoverage():
         args['coparams'] = default_coparams # otherwise the effect changes will be overwritten
 
         args['makeplot'] = 0 # don't do plotting in SIM
-        if do_save:
-            progname = args['progname']
-            effects = data.get('all_effects')
-            new_coparams = data.get('all_coparams')
+        progname = args['progname']
+        effects = data.get('all_effects')
+        new_coparams = data.get('all_coparams')
+        if effects and len(effects):
             new_effects = []
             for i in xrange(len(effects)):
                 effect = effects[str(i)]
-                effect[2] = [[new_coparams[i][0], new_coparams[i][1]], [new_coparams[i][2], new_coparams[i][3]]]
+                if new_coparams[i] and len(new_coparams[i])==4 and all(coparam is not None for coparam in new_coparams[i]):
+                    effect[2] = new_coparams[i][:]
                 new_effects.append(effect)
             D.programs[progname] = new_effects
         args['D'] = D

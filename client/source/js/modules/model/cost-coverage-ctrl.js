@@ -227,10 +227,10 @@ define(['./module', 'underscore'], function (module, _) {
     var setUpCOParamsFromEffects = function (effectNames) {
       $scope.coParams = _(effectNames).map(function (effect) {
         return [
-          effect[2][0]? effect[2][0][0] : null,
-          effect[2][0]? effect[2][0][1] : null,
-          effect[2][1]? effect[2][1][0] : null,
-          effect[2][1]? effect[2][1][1] : null
+          effect[2][0]? effect[2][0] : null,
+          effect[2][1]? effect[2][1] : null,
+          effect[2][2]? effect[2][2] : null,
+          effect[2][3]? effect[2][3] : null
         ];
       });
     };
@@ -277,7 +277,7 @@ define(['./module', 'underscore'], function (module, _) {
      * Returns true if none of the elements in an array is defined or not null
      */
     var hasNoElements = function(params) {
-      return !hasAllElements(params);
+      return !params || !params.length || !hasAllElements(params);
     };
 
     /**
@@ -330,6 +330,10 @@ define(['./module', 'underscore'], function (module, _) {
      */
     $scope.generateCurves = function () {
       var model = getPlotModel();
+      if ($scope.hasCostCoverResponse) {
+        model.all_coparams = $scope.coParams;
+        model.all_effects = effectNames;
+      }
       retrieveAndUpdateGraphs(model);
     };
 
