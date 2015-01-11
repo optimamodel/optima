@@ -278,17 +278,17 @@ define(['./module', 'underscore'], function (module, _) {
       return hasAllElements(params) || hasOnlyInvaldEntries(params);
     };
 
+    /**
+     * Update current program ccparams based on the selected program.
+     *
+     * This function is supposed to be called before Draw / Redraw / Save.
+     */
     var updateCCParams = function(model) {
-      /**
-       * update current program ccparams,if applicable, based on what's selected for the active program.
-       * is supposed to be called before Draw / Redraw / Save
-       */
       if (model.ccparams) {
         $scope.selectedProgram.ccparams = model.ccparams;
         $scope.all_programs[$scope.selectedProgram.acronym].ccparams = model.ccparams;
       }
-    }
-
+    };
 
     /**
      * Retrieve and update graphs based on the provided plot models.
@@ -305,9 +305,7 @@ define(['./module', 'underscore'], function (module, _) {
         return;
       }
 
-      /**
-       * stop further execution and return in case of null selectedProgram
-       */
+      // stop further execution and return in case of null selectedProgram
       if ( $scope.selectedProgram.acronym === null ) {
         return;
       }
@@ -315,9 +313,7 @@ define(['./module', 'underscore'], function (module, _) {
       if (hasOnlyInvaldEntries(model.ccparams)) delete model.ccparams;
       if (hasOnlyInvaldEntries(model.coparams)) delete model.coparams;
 
-      /**
-       * update current program ccparams,if applicable
-       */
+      // update current program ccparams,if applicable
       updateCCParams(model);
 
       $http.post('/api/model/costcoverage', model).success(function (response) {
@@ -424,9 +420,8 @@ define(['./module', 'underscore'], function (module, _) {
 
       if (hasOnlyInvaldEntries(model.ccparams)) delete model.ccparams;
       if (hasOnlyInvaldEntries(model.coparams)) delete model.coparams;
-      /**
-       * update current program ccparams,if applicable
-       */
+
+      // update current program ccparams, if applicable
       updateCCParams(model);
 
       $http.post('/api/model/costcoverage/effect', model).success(function (response) {
