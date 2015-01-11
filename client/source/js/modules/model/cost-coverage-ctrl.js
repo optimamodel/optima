@@ -31,9 +31,9 @@ define(['./module', 'underscore'], function (module, _) {
       
       // model parameters
       $scope.defaultSaturationCoverageLevel = 90;
-      $scope.defaultKnownCoverageLevel = 20;
-      $scope.defaultKnownFundingValue = 800000;
-      $scope.defaultXAxisMaximum = 7000000;
+      $scope.defaultKnownCoverageLevel = 60;
+      $scope.defaultKnownFundingValue = 400000;
+      $scope.defaultXAxisMaximum = 1000000;
       $scope.behaviorWithoutMin = 0.3;
       $scope.behaviorWithoutMax = 0.5;
       $scope.behaviorWithMin = 0.7;
@@ -137,22 +137,21 @@ define(['./module', 'underscore'], function (module, _) {
       };
 
       // quit if data is empty - empty graph placeholder will be displayed
-      if (!graphData.ylinedata) {
-        return graph;
-      }
+      if (graphData.ylinedata) {
 
-      var numOfLines = graphData.ylinedata.length;
+        var numOfLines = graphData.ylinedata.length;
 
-      _(graphData.xlinedata).each(function (x, index) {
-        var y = graphData.ylinedata;
-        for (var i = 0; i < numOfLines; i++) {
-          if (!graph.data.lines[i]) {
-            graph.data.lines[i] = [];
+        _(graphData.xlinedata).each(function (x, index) {
+          var y = graphData.ylinedata;
+          for (var i = 0; i < numOfLines; i++) {
+            if (!graph.data.lines[i]) {
+              graph.data.lines[i] = [];
+            }
+
+            graph.data.lines[i].push([x, y[i][index]]);
           }
-
-          graph.data.lines[i].push([x, y[i][index]]);
-        }
-      });
+        });
+      }
 
       _(graphData.xscatterdata).each(function (x, index) {
         var y = graphData.yscatterdata;
@@ -161,6 +160,13 @@ define(['./module', 'underscore'], function (module, _) {
           graph.data.scatter.push([x, y[index]]);
         }
       });
+
+      // set up the data limits
+      graph.data.limits = [
+        [graphData.xlowerlim, graphData.ylowerlim], 
+        [graphData.xupperlim, graphData.yupperlim]
+      ];
+
 
       return graph;
     };
@@ -191,6 +197,11 @@ define(['./module', 'underscore'], function (module, _) {
         }
       });
 
+      // set up the data limits
+      graph.data.limits = [
+        [data.xlowerlim, data.ylowerlim], 
+        [data.xupperlim, data.yupperlim]
+      ];
       return graph;
     };
 
@@ -216,10 +227,10 @@ define(['./module', 'underscore'], function (module, _) {
     var setUpCOParamsFromEffects = function (effectNames) {
       $scope.coParams = _(effectNames).map(function (effect) {
         return [
-          effect[2][0][0],
-          effect[2][0][1],
-          effect[2][1][0],
-          effect[2][1][1]
+          (effect[2] && effect[2][0])? effect[2][0] : null,
+          (effect[2] && effect[2][1])? effect[2][1] : null,
+          (effect[2] && effect[2][2])? effect[2][2] : null,
+          (effect[2] && effect[2][3])? effect[2][3] : null
         ];
       });
     };
@@ -244,13 +255,29 @@ define(['./module', 'underscore'], function (module, _) {
       return {
         progname: $scope.selectedProgram.acronym,
         ccparams: costCoverageParams(),
-        coparams: [
-          $scope.behaviorWithoutMin,
-          $scope.behaviorWithoutMax,
-          $scope.behaviorWithMin,
-          $scope.behaviorWithMax
-        ]
+        coparams: []
       };
+    };
+
+    /**
+     * Returns true if only some of the elements in an array are defined or not null
+     */
+    var hasSomeElements = function(params) {
+      return params.some(function(item){return item;}) && params.some(function(item){return !item;});
+    };
+
+    /**
+     * Returns true if all of the elements in an array are defined or not null
+     */
+    var hasAllElements = function(params) {
+      return params.every(function(item){return item;});
+    };
+
+    /**
+     * Returns true if none of the elements in an array is defined or not null
+     */
+    var hasNoElements = function(params) {
+      return !params || !params.length || !hasAllElements(params);
     };
 
     /**
@@ -258,8 +285,8 @@ define(['./module', 'underscore'], function (module, _) {
      */
     var retrieveAndUpdateGraphs = function (model) {
       // validation on Cost-coverage curve plotting options
-      if ( !model.ccparams[0] || !model.ccparams[1] || !model.ccparams[2] || !model.ccparams[3] ){
-        var message = 'Cost-coverage curve plotting options cannot be empty!';
+      if ( hasSomeElements(model.ccparams) ){
+        var message = 'Cost-coverage curve plotting options should be either empty, or all present!';
         modalService.inform(
           function (){ null }, 
           'Okay',
@@ -276,6 +303,9 @@ define(['./module', 'underscore'], function (module, _) {
         return;
       }
 
+      if (hasNoElements(model.ccparams)) delete model.ccparams;
+      if (hasNoElements(model.coparams)) delete model.coparams;
+
       $http.post('/api/model/costcoverage', model).success(function (response) {
         if (response.status === 'OK') {
 
@@ -283,7 +313,6 @@ define(['./module', 'underscore'], function (module, _) {
           effectNames = response.effectnames;
           setUpCOParamsFromEffects(response.effectnames);
           $scope.hasCostCoverResponse = true;
-
 
           resetGraphs();
           _(plotTypes).each(function (plotType) {
@@ -302,6 +331,10 @@ define(['./module', 'underscore'], function (module, _) {
      */
     $scope.generateCurves = function () {
       var model = getPlotModel();
+      if ($scope.hasCostCoverResponse) {
+        model.all_coparams = $scope.coParams;
+        model.all_effects = effectNames;
+      }
       retrieveAndUpdateGraphs(model);
     };
 
@@ -343,20 +376,33 @@ define(['./module', 'underscore'], function (module, _) {
      * POST /api/model/costcoverage/effect
      *   {
      *     "progname":<chosen progname>
-     *     "effectname":<effectname for the given row>,
+     *     "effect":<effectname for the given row>,
      *     "ccparams":<ccparams>,
      *     "coparams":<coprams from the corresponding coparams block>
      *   }
      */
     $scope.updateCurve = function (graphIndex) {
-      $http.post('/api/model/costcoverage/effect', {
-        progname: $scope.displayedProgram.acronym,
-        ccparams: _(costCoverageParams()).map(parseFloat),
-        coparams: _($scope.coParams[graphIndex]).map(parseFloat),
-        effectname: effectNames[graphIndex]
-      }).success(function (response) {
+      var model = getPlotModel();
+      model.coparams = $scope.coParams[graphIndex];
+      model.effect =  effectNames[graphIndex];
+      if ( hasSomeElements(model.coparams) ){
+        var message = 'Cost-coverage curve plotting options should be either empty, or all present!';
+        modalService.inform(
+          function (){ null },
+          'Okay',
+          message,
+          'Error!'
+        );
+        return;
+      }
+
+      if (hasNoElements(model.ccparams)) delete model.ccparams;
+      if (hasNoElements(model.coparams)) delete model.coparams;
+
+      $http.post('/api/model/costcoverage/effect', model).success(function (response) {
         $scope.graphs.plotdata[graphIndex] = setUpPlotdataGraph(response.plotdata);
         $scope.graphs.plotdata_co[graphIndex] = setUpPlotdataGraph(response.plotdata_co);
+        effectNames[graphIndex]=response.effect;
       });
     };
 

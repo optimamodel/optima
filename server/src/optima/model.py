@@ -5,7 +5,7 @@ from async_calculate import CalculatingThread, start_or_report_calculation, canc
 from sim.manualfit import manualfit
 from sim.bunch import bunchify
 from sim.runsimulation import runsimulation
-from sim.makeccocs import makecco, plotallcurves, default_effectname, default_ccparams, default_coparams
+from sim.makeccocs import makecco, plotallcurves #, default_effectname, default_ccparams, default_coparams
 from utils import load_model, save_model, save_working_model_as_default, revert_working_model_to_default, project_exists, pick_params, check_project_name, for_fe
 from utils import report_exception
 from flask.ext.login import login_required, current_user
@@ -261,30 +261,30 @@ def doRunSimulation():
 def doCostCoverage():
     """ Calls makecco with parameters supplied from frontend """
     data = json.loads(request.data)
+    current_app.logger.debug("/costcoverage" % data)
     args = {}
     D = load_model(request.project_name)
     args = pick_params(["progname", "ccparams", "coparams"], data, args)
     do_save = data.get('doSave')
     try:
-        if not args.get('ccparams'):
-            args['ccparams'] = default_ccparams
-        if not args.get('coparams'):
-            args['coparams'] = default_coparams
-        args['ccparams'] = [float(param) for param in args['ccparams']]
-        args['coparams'] = [float(param) for param in args['coparams']]
-        args['coparams'] = default_coparams # otherwise the effect changes will be overwritten
+        if args.get('ccparams'):args['ccparams'] = [float(param) for param in args['ccparams']]
+        if args.get('coparams'):del args['coparams'] 
 
         args['makeplot'] = 0 # don't do plotting in SIM
-        if do_save:
-            progname = args['progname']
-            effects = data.get('all_effects')
-            new_coparams = data.get('all_coparams')
+        progname = args['progname']
+        effects = data.get('all_effects')
+        new_coparams = data.get('all_coparams')
+        if effects and len(effects):
             new_effects = []
             for i in xrange(len(effects)):
                 effect = effects[str(i)]
-                effect[2] = [[new_coparams[i][0], new_coparams[i][1]], [new_coparams[i][2], new_coparams[i][3]]]
+                if new_coparams[i] and len(new_coparams[i])==4 and all(coparam is not None for coparam in new_coparams[i]):
+                    if len(effect)<3:
+                        effect.append(new_coparams[i][:])
+                    else:
+                        effect[2] = new_coparams[i][:]
                 new_effects.append(effect)
-            D.programs[progname] = new_effects
+            D.programs[progname]['effects'] = new_effects
         args['D'] = D
         plotdata, plotdata_co, plotdata_cc, effectnames, D = plotallcurves(**args)
         if do_save:
@@ -303,21 +303,17 @@ def doCostCoverageEffect():
     data = json.loads(request.data)
     current_app.logger.debug("/costcoverage/effect(%s)" % data)
     args = {}
-    args = pick_params(["progname", "effectname", "ccparams", "coparams"], data, args)
+    args = pick_params(["progname", "effect", "ccparams", "coparams"], data, args)
     args['D'] = load_model(request.project_name)
     try:
-        if not args.get('ccparams'):
-            args['ccparams'] = default_ccparams
-        if not args.get('coparams'):
-            args['coparams'] = default_coparams
-        if not args.get('effectname'):
-            args['effectname'] = default_effectname
-        args['ccparams'] = [float(param) for param in args['ccparams']]
-        args['coparams'] = [float(param) for param in args['coparams']]
+        if not args.get('effect'):
+            return jsonify({'status':'NOK','reason':'No effect has been specified'})
+        if args.get('ccparams'):args['ccparams'] = [float(param) for param in args['ccparams']]
+        if args.get('coparams'):args['coparams'] = [float(param) for param in args['coparams']]
         args['makeplot'] = 0 # don't do plotting in SIM
-        plotdata, plotdata_co, storeparams = makecco(**args)
+        plotdata, plotdata_co, storeparams_co = makecco(**args)
     except Exception, err:
         var = traceback.format_exc()
         return jsonify({"status":"NOK", "exception":var})
     return jsonify({"status":"OK", "plotdata": for_fe(plotdata), \
-        "plotdata_co": for_fe(plotdata_co), "effectname": args['effectname']})
+        "plotdata_co": for_fe(plotdata_co), "effect": args['effect']})
