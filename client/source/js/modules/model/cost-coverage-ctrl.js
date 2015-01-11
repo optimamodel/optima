@@ -56,7 +56,7 @@ define(['./module', 'underscore'], function (module, _) {
         if(!categories) { // create default categories if absent
           categories = [];
           _.times(meta.progs.long.length, function (n){
-            categories.push('Others')
+            categories.push('Others');
           });}
 
         return {
@@ -290,7 +290,7 @@ define(['./module', 'underscore'], function (module, _) {
       // validation on Cost-coverage curve plotting options
       if ( !$scope.areValidParams(model.ccparams) ){
         modalService.inform(
-          function (){ null },
+          function () {},
           'Okay',
           $scope.optionsErrorMessage,
           'Error!'
@@ -326,7 +326,7 @@ define(['./module', 'underscore'], function (module, _) {
 
     $scope.changeProgram = function() {
       $scope.hasCostCoverResponse = false;
-    }
+    };
 
     /**
      * Retrieve and update graphs based on the current plot models.
@@ -343,7 +343,7 @@ define(['./module', 'underscore'], function (module, _) {
     $scope.uploadDefault = function () {
       var message = 'Upload default cost-coverage-outcome curves will be available in a future version of Optima. We are working hard in make it happen for you!';
       modalService.inform(
-        function (){ null },
+        function () {},
         'Okay',
         message,
         'Thanks for your interest!'
@@ -389,7 +389,7 @@ define(['./module', 'underscore'], function (module, _) {
       model.effect =  effectNames[graphIndex];
       if ( !$scope.areValidParams(model.coparams) ){
         modalService.inform(
-          function (){ null },
+          function () {},
           'Okay',
           $scope.optionsErrorMessage,
           'Error!'
