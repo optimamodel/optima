@@ -325,7 +325,13 @@ define(['./module', 'underscore'], function (module, _) {
     };
 
     $scope.changeProgram = function() {
-      $scope.hasCostCoverResponse = false;
+      if($scope.hasCostCoverResponse === true) {
+        $scope.hasCostCoverResponse = false;
+        $scope.saturationCoverageLevel = '';
+        $scope.knownCoverageLevel = '';
+        $scope.knownFundingValue = '';
+        $scope.xAxisMaximum = '';
+      }
     };
 
     /**
