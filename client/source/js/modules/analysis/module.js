@@ -4,7 +4,8 @@ define([
     '../../config',
     '../resources/model',
     '../ui/type-selector/index',
-    '../common/graph-type-factory'
+    '../common/graph-type-factory',
+    '../common/update-checkbox-on-click-directive'
 ], function (angular) {
     'use strict';
 
@@ -13,7 +14,8 @@ define([
         'app.resources.model',
         'app.ui.type-selector',
         'ui.router',
-        'app.common.graph-type'
+        'app.common.graph-type',
+        'app.common.update-checkbox-on-click'
     ]).config(function ($stateProvider) {
         $stateProvider
             .state('analysis', {
