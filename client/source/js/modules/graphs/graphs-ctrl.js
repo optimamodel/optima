@@ -65,5 +65,21 @@ define([
       $scope.data6 = data;
     });
 
+    // GRAPH 7
+    // =======
+
+    $scope.options7 = {
+      height: 300,
+      width: 900,
+      margin: {
+        top: 20,
+        right: 20,
+        bottom: 60,
+        left: 60
+      }
+    };
+
+    $scope.data7 = {};
+
   });
 });
