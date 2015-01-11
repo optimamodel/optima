@@ -540,7 +540,8 @@ class OptimaWorkbook:
         names = ['Gross domestic product', 'Government revenue', 'Government expenditure', \
         'Total domestic and international health expenditure', 'General government health expenditure', \
         'Domestic HIV spending', 'Global Fund HIV commitments', 'PEPFAR HIV commitments', \
-        'Other international HIV commitments', 'Private HIV spending']
+        'Other international HIV commitments', 'Private HIV spending','Consumer price index', \
+        'Purchasing power parity']
 
         econ_years_range = years_range(self.econ_data_start, self.econ_data_end)
 
