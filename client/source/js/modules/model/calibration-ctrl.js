@@ -239,7 +239,7 @@ define(['./module', 'angular'], function (module, angular) {
             autoCalibrationTimer = $interval(checkWorkingAutoCalibration, 5000, 0, false);
             $scope.calibrationStatus = 'running';
           } else {
-            console.log("Cannot poll for optimization now");
+            console.log("Cannot poll for calibration now");
           }
         });
     };
