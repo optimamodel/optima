@@ -65,7 +65,7 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
           scope.exportAll = function () {
             var graphs = [];
             var controller = scope.exportGraphs.controller;
-            
+
             // Optimization
             if ( controller == 'AnalysisOptimization' ) {
 
@@ -85,7 +85,7 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
               }
             }
 
-            // Calibration 
+            // Calibration
             // Analysis Scenarios
             if ( controller == 'ModelCalibration' || controller == 'AnalysisScenarios' ) {
               if ( scope.graphs ) {
@@ -94,7 +94,7 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
             }
 
             // Cost Coverage
-            if ( controller == 'ModelViewCalibration' ) {
+            if ( controller == 'ModelCostCoverage' ) {
               if (scope.ccGraph) {
                 graphs.push(scope.ccGraph);
               }
@@ -285,7 +285,7 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
           };
 
           /**
-           * Returns the normalized data ready for export 
+           * Returns the normalized data ready for export
            * for Radar Chart
            */
           scope.axesExport = function (graph){
@@ -358,7 +358,7 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png'],
            */
           scope.exportMultiSheetFrom = function (graphs){
             if(graphs.length == 0) { return scope.saySorry("Sorry, no graphs found");}
-            
+
             var exportables = [];
             var showAlert = false;
             _(graphs).each(function (graph, index) {

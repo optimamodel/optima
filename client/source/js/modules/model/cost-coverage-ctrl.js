@@ -1,7 +1,7 @@
 define(['./module', 'underscore'], function (module, _) {
   'use strict';
 
-  module.controller('ModelViewCalibrationController', function ($scope, $http, meta, info, modalService) {
+  module.controller('ModelCostCoverageController', function ($scope, $http, meta, info, modalService) {
 
     var plotTypes, effectNames;
 
@@ -11,13 +11,15 @@ define(['./module', 'underscore'], function (module, _) {
       // use for export all data
       $scope.exportGraphs = {
         'name':'Cost coverage outcome',
-        'controller':'ModelViewCalibration'
+        'controller':'ModelCostCoverage'
       };
 
       // show message "calibrate the model" and disable the form elements
       $scope.projectInfo = info;
       $scope.needData = !$scope.projectInfo.has_data;
-      
+
+      $scope.optionsErrorMessage = 'Cost-coverage curve plotting options should be either empty or all present.';
+
       if ( !$scope.needData ) {
         $scope.initializePrograms();
         $scope.selectedProgram = $scope.programs[0];
@@ -26,9 +28,8 @@ define(['./module', 'underscore'], function (module, _) {
         $scope.coParams = [];
 
         $scope.hasCostCoverResponse = false;
-
       }
-      
+
       // model parameters
       $scope.defaultSaturationCoverageLevel = 90;
       $scope.defaultKnownCoverageLevel = 60;
@@ -55,9 +56,9 @@ define(['./module', 'underscore'], function (module, _) {
         if(!categories) { // create default categories if absent
           categories = [];
           _.times(meta.progs.long.length, function (n){
-            categories.push('Others')
+            categories.push('Others');
           });}
-          
+
         return {
           name: name,
           acronym: meta.progs.short[index],
@@ -163,7 +164,7 @@ define(['./module', 'underscore'], function (module, _) {
 
       // set up the data limits
       graph.data.limits = [
-        [graphData.xlowerlim, graphData.ylowerlim], 
+        [graphData.xlowerlim, graphData.ylowerlim],
         [graphData.xupperlim, graphData.yupperlim]
       ];
 
@@ -199,7 +200,7 @@ define(['./module', 'underscore'], function (module, _) {
 
       // set up the data limits
       graph.data.limits = [
-        [data.xlowerlim, data.ylowerlim], 
+        [data.xlowerlim, data.ylowerlim],
         [data.xupperlim, data.yupperlim]
       ];
       return graph;
@@ -235,14 +236,17 @@ define(['./module', 'underscore'], function (module, _) {
       });
     };
 
-    var convertFromPercent = function (value) {
+    $scope.convertFromPercent = function (value) {
+      if (typeof value !== "number" || isNaN(value)) {
+        return NaN;
+      }
       return value / 100;
     };
 
-    var costCoverageParams = function () {
+    $scope.costCoverageParams = function () {
       return [
-        convertFromPercent($scope.saturationCoverageLevel),
-        convertFromPercent($scope.knownCoverageLevel),
+        $scope.convertFromPercent($scope.saturationCoverageLevel),
+        $scope.convertFromPercent($scope.knownCoverageLevel),
         $scope.knownFundingValue,
         $scope.xAxisMaximum
       ];
@@ -254,30 +258,29 @@ define(['./module', 'underscore'], function (module, _) {
     var getPlotModel = function() {
       return {
         progname: $scope.selectedProgram.acronym,
-        ccparams: costCoverageParams(),
+        ccparams: $scope.costCoverageParams(),
         coparams: []
       };
-    };
-
-    /**
-     * Returns true if only some of the elements in an array are defined or not null
-     */
-    var hasSomeElements = function(params) {
-      return params.some(function(item){return item;}) && params.some(function(item){return !item;});
     };
 
     /**
      * Returns true if all of the elements in an array are defined or not null
      */
     var hasAllElements = function(params) {
-      return params.every(function(item){return item;});
+      return params.every(function(item) { return item; });
     };
 
     /**
-     * Returns true if none of the elements in an array is defined or not null
+     * Returns true if all of the elements in an array not defined, null or NaN
      */
-    var hasNoElements = function(params) {
-      return !params || !params.length || !hasAllElements(params);
+    var hasOnlyInvaldEntries = function(params) {
+      return params.every(function(item) {
+        return item === undefined || item === null || typeof item === "number" && isNaN(item);
+      });
+    };
+
+    $scope.areValidParams = function (params) {
+      return hasAllElements(params) || hasOnlyInvaldEntries(params);
     };
 
     /**
@@ -285,17 +288,16 @@ define(['./module', 'underscore'], function (module, _) {
      */
     var retrieveAndUpdateGraphs = function (model) {
       // validation on Cost-coverage curve plotting options
-      if ( hasSomeElements(model.ccparams) ){
-        var message = 'Cost-coverage curve plotting options should be either empty, or all present!';
+      if ( !$scope.areValidParams(model.ccparams) ){
         modalService.inform(
-          function (){ null }, 
+          function () {},
           'Okay',
-          message, 
+          $scope.optionsErrorMessage,
           'Error!'
-        ); 
+        );
         return;
       }
-      
+
       /**
        * stop further execution and return in case of null selectedProgram
        */
@@ -303,8 +305,8 @@ define(['./module', 'underscore'], function (module, _) {
         return;
       }
 
-      if (hasNoElements(model.ccparams)) delete model.ccparams;
-      if (hasNoElements(model.coparams)) delete model.coparams;
+      if (hasOnlyInvaldEntries(model.ccparams)) delete model.ccparams;
+      if (hasOnlyInvaldEntries(model.coparams)) delete model.coparams;
 
       $http.post('/api/model/costcoverage', model).success(function (response) {
         if (response.status === 'OK') {
@@ -324,7 +326,7 @@ define(['./module', 'underscore'], function (module, _) {
 
     $scope.changeProgram = function() {
       $scope.hasCostCoverResponse = false;
-    }
+    };
 
     /**
      * Retrieve and update graphs based on the current plot models.
@@ -341,11 +343,11 @@ define(['./module', 'underscore'], function (module, _) {
     $scope.uploadDefault = function () {
       var message = 'Upload default cost-coverage-outcome curves will be available in a future version of Optima. We are working hard in make it happen for you!';
       modalService.inform(
-        function (){ null }, 
+        function () {},
         'Okay',
-        message, 
+        message,
         'Thanks for your interest!'
-      );      
+      );
     };
 
     /**
@@ -385,19 +387,18 @@ define(['./module', 'underscore'], function (module, _) {
       var model = getPlotModel();
       model.coparams = $scope.coParams[graphIndex];
       model.effect =  effectNames[graphIndex];
-      if ( hasSomeElements(model.coparams) ){
-        var message = 'Cost-coverage curve plotting options should be either empty, or all present!';
+      if ( !$scope.areValidParams(model.coparams) ){
         modalService.inform(
-          function (){ null },
+          function () {},
           'Okay',
-          message,
+          $scope.optionsErrorMessage,
           'Error!'
         );
         return;
       }
 
-      if (hasNoElements(model.ccparams)) delete model.ccparams;
-      if (hasNoElements(model.coparams)) delete model.coparams;
+      if (hasOnlyInvaldEntries(model.ccparams)) delete model.ccparams;
+      if (hasOnlyInvaldEntries(model.coparams)) delete model.coparams;
 
       $http.post('/api/model/costcoverage/effect', model).success(function (response) {
         $scope.graphs.plotdata[graphIndex] = setUpPlotdataGraph(response.plotdata);
@@ -405,6 +406,17 @@ define(['./module', 'underscore'], function (module, _) {
         effectNames[graphIndex]=response.effect;
       });
     };
+
+    /**
+     * Retrieve and update graphs based on the current plot models only if the graphs are already rendered
+     * by pressing the draw button.
+     */
+    $scope.updateCurves =  _.debounce(function() { // debounce a bit so we don't update immediately
+      if($scope.areValidParams($scope.costCoverageParams()) &&
+         $scope.hasCostCoverResponse === true) {
+       $scope.generateCurves();
+      }
+    }, 500);
 
     initialize();
 
