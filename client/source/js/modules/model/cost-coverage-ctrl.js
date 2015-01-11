@@ -1,7 +1,7 @@
 define(['./module', 'underscore'], function (module, _) {
   'use strict';
 
-  module.controller('ModelCostCoverageController', function ($scope, $http, meta, info, modalService) {
+  module.controller('ModelCostCoverageController', function ($scope, $http, meta, info, modalService, programs) {
 
     var plotTypes, effectNames;
 
@@ -19,6 +19,7 @@ define(['./module', 'underscore'], function (module, _) {
       $scope.needData = !$scope.projectInfo.has_data;
 
       $scope.optionsErrorMessage = 'Cost-coverage curve plotting options should be either empty or all present.';
+      $scope.all_programs = programs;
 
       if ( !$scope.needData ) {
         $scope.initializePrograms();
@@ -50,19 +51,13 @@ define(['./module', 'underscore'], function (module, _) {
     * If the backend do not present values for the categories, we'll use 'Others' as default.
     */
     $scope.initializePrograms = function () {
-      $scope.programs = _(meta.progs.long).map(function (name, index) {
-        var categories;
-        categories = meta.progs.categories;
-        if(!categories) { // create default categories if absent
-          categories = [];
-          _.times(meta.progs.long.length, function (n){
-            categories.push('Others');
-          });}
-
+      $scope.programs =  _(meta.progs.long).map(function (name, index) {
+        var acronym = meta.progs.short[index];
         return {
           name: name,
-          acronym: meta.progs.short[index],
-          category: categories[index]
+          acronym: acronym,
+          category: 'Other', // it will be read from project_info, once it is synced with meta.programs
+          ccparams: $scope.all_programs[acronym].ccparams
         };
       });
       /** Dec 26 2014
@@ -267,7 +262,7 @@ define(['./module', 'underscore'], function (module, _) {
      * Returns true if all of the elements in an array are defined or not null
      */
     var hasAllElements = function(params) {
-      return params.every(function(item) { return item; });
+      return params && params.length && params.every(function(item) { return item; });
     };
 
     /**
@@ -282,6 +277,18 @@ define(['./module', 'underscore'], function (module, _) {
     $scope.areValidParams = function (params) {
       return hasAllElements(params) || hasOnlyInvaldEntries(params);
     };
+
+    var updateCCParams = function(model) {
+      /**
+       * update current program ccparams,if applicable, based on what's selected for the active program.
+       * is supposed to be called before Draw / Redraw / Save
+       */
+      if (model.ccparams) {
+        $scope.selectedProgram.ccparams = model.ccparams;
+        $scope.all_programs[$scope.selectedProgram.acronym].ccparams = model.ccparams;
+      }
+    }
+
 
     /**
      * Retrieve and update graphs based on the provided plot models.
@@ -308,6 +315,11 @@ define(['./module', 'underscore'], function (module, _) {
       if (hasOnlyInvaldEntries(model.ccparams)) delete model.ccparams;
       if (hasOnlyInvaldEntries(model.coparams)) delete model.coparams;
 
+      /**
+       * update current program ccparams,if applicable
+       */
+      updateCCParams(model);
+
       $http.post('/api/model/costcoverage', model).success(function (response) {
         if (response.status === 'OK') {
 
@@ -327,10 +339,17 @@ define(['./module', 'underscore'], function (module, _) {
     $scope.changeProgram = function() {
       if($scope.hasCostCoverResponse === true) {
         $scope.hasCostCoverResponse = false;
-        $scope.saturationCoverageLevel = '';
-        $scope.knownCoverageLevel = '';
-        $scope.knownFundingValue = '';
-        $scope.xAxisMaximum = '';
+      }
+      if (hasAllElements($scope.selectedProgram.ccparams)) {
+        $scope.saturationCoverageLevel = $scope.selectedProgram.ccparams[0]*100;
+        $scope.knownCoverageLevel = $scope.selectedProgram.ccparams[1]*100;
+        $scope.knownFundingValue = $scope.selectedProgram.ccparams[2];
+        $scope.xAxisMaximum = $scope.selectedProgram.ccparams[3];
+      } else {
+        $scope.saturationCoverageLevel = undefined;
+        $scope.knownCoverageLevel = undefined;
+        $scope.knownFundingValue = undefined;
+        $scope.xAxisMaximum = undefined;
       }
     };
 
@@ -405,6 +424,10 @@ define(['./module', 'underscore'], function (module, _) {
 
       if (hasOnlyInvaldEntries(model.ccparams)) delete model.ccparams;
       if (hasOnlyInvaldEntries(model.coparams)) delete model.coparams;
+      /**
+       * update current program ccparams,if applicable
+       */
+      updateCCParams(model);
 
       $http.post('/api/model/costcoverage/effect', model).success(function (response) {
         $scope.graphs.plotdata[graphIndex] = setUpPlotdataGraph(response.plotdata);

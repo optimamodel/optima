@@ -51,6 +51,9 @@ define([
             },
             meta: function (Model) {
               return Model.getParametersDataMeta().$promise;
+            },
+            programs: function(Model) {
+              return Model.getPrograms().$promise;
             }
           }
         });
