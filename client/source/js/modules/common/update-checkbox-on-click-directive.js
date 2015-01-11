@@ -12,12 +12,13 @@ define(['angular', 'jquery'], function (module, $) {
   .directive('updateCheckboxOnClick', [function () {
     return {
       link: function(scope, element, attrs, ctrl) {
-        element.click(event, function() {
+
+        element.on('click', function(event) {
           // only toggle if the cell is clicked, but not the checkbox itselve
           // in order to prevent instanly reverting the action
           if (!$(event.target).is(':checkbox')) {
-            var checkbox = $(event.currentTarget).find('input[type=checkbox]');
-            checkbox.prop("checked", !checkbox.prop("checked"));
+            // manually apply click directly on the checkbox
+            $(event.currentTarget).find('input[type=checkbox]').click();
           }
         });
       }
