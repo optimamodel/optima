@@ -262,7 +262,7 @@ define(['./module', 'underscore'], function (module, _) {
      * Returns true if all of the elements in an array are defined or not null
      */
     var hasAllElements = function(params) {
-      return params && params.length && params.every(function(item) { return item; });
+      return params && params.length && _(params).every(function(item) { return item; });
     };
 
     /**
