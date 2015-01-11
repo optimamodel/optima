@@ -58,6 +58,14 @@ define([
               suffix: 'data',
               postsuffix: 'meta'
             }
+          },
+          getPrograms: {
+            method: 'GET',
+            isArray: false,
+            params: {
+              path: 'parameters',
+              suffix: 'programs'
+            }
           }
         }
       );
