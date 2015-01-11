@@ -266,7 +266,7 @@ define(['./module', 'underscore'], function (module, _) {
     };
 
     /**
-     * Returns true if all of the elements in an array not defined, null or NaN
+     * Returns true if all of the elements in an array are undefined, null or NaN
      */
     var hasOnlyInvaldEntries = function(params) {
       return params.every(function(item) {
@@ -310,8 +310,13 @@ define(['./module', 'underscore'], function (module, _) {
         return;
       }
 
-      if (hasOnlyInvaldEntries(model.ccparams)) delete model.ccparams;
-      if (hasOnlyInvaldEntries(model.coparams)) delete model.coparams;
+      // clean up model by removing unnecessary parameters
+      if (_.isEmpty(model.ccparams) || hasOnlyInvaldEntries(model.ccparams)) {
+        delete model.ccparams;
+      }
+      if (_.isEmpty(model.coparams) || hasOnlyInvaldEntries(model.coparams)) {
+        delete model.coparams;
+      }
 
       // update current program ccparams,if applicable
       updateCCParams(model);
@@ -418,8 +423,13 @@ define(['./module', 'underscore'], function (module, _) {
         return;
       }
 
-      if (hasOnlyInvaldEntries(model.ccparams)) delete model.ccparams;
-      if (hasOnlyInvaldEntries(model.coparams)) delete model.coparams;
+      // clean up model by removing unnecessary parameters
+      if (_.isEmpty(model.ccparams) || hasOnlyInvaldEntries(model.ccparams)) {
+        delete model.ccparams;
+      }
+      if (_.isEmpty(model.coparams) || hasOnlyInvaldEntries(model.coparams)) {
+        delete model.coparams;
+      }
 
       // update current program ccparams, if applicable
       updateCCParams(model);
