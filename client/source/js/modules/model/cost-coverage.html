@@ -31,6 +31,7 @@
         3. Specify the maximum funding (for plotting only):
         <input type="number" class="txbox __inline __xl" placeholder="e.g.{{defaultXAxisMaximum}}"  ng-model="xAxisMaximum" ng-change="updateCurves()">
       </p>
+      <span ng-show="!areValidParams(costCoverageParams()) && hasCostCoverResponse" class="error-hint">{{ optionsErrorMessage }}</span>
     </div>
 
     <div class="section">
