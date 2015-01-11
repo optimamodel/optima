@@ -19,7 +19,7 @@ def loadworkbook(filename='example.xlsx', verbose=2):
     from time import strftime # For determining when a spreadsheet was last uploaded
     printv('Loading data from %s...' % filename, 1, verbose)
     from programs import programs_for_input_key
-    from makeccocs import default_init_coparams
+#    from makeccocs import default_init_coparams
 
         
     ###########################################################################
@@ -246,7 +246,8 @@ def loadworkbook(filename='example.xlsx', verbose=2):
 
                             for programname in programs_for_input_key(thispar):
                                 if programname in programs:
-                                    programs[programname].append([[name, thispar], [subparam], default_init_coparams])                        
+#                                    programs[programname].append([[name, thispar], [subparam], default_init_coparams])                        
+                                    programs[programname].append([[name, thispar], [subparam]])
                         
                         # It's a matrix, append the data                                     
                         elif groupname=='matrices':
