@@ -33,6 +33,7 @@ define ['angular-mocks', 'Source/modules/model/cost-coverage-ctrl'], ->
           meta: meta
           modalService: {}
           info: {}
+          programs: []
         }
 
     describe 'convertFromPercent()', ->
