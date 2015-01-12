@@ -82,15 +82,6 @@ define(['./module', 'angular'], function (module, angular) {
     };
 
     /**
-     * Returns an array containing arrays with [x, y] for d3 line data.
-     */
-    var generateLineData = function(xData, yData) {
-      return _(yData).map(function (value, i) {
-        return [xData[i], value];
-      });
-    };
-
-    /**
      * Returns an array containing arrays with [x, y] for d3 scatter data.
      *
      * Empty entries are filtered out.
@@ -121,9 +112,9 @@ define(['./module', 'angular'], function (module, angular) {
 
       graph.options.title = title;
 
-      graph.data.line = generateLineData(xData, yData.best);
-      graph.data.area.lineHigh = generateLineData(xData, yData.high);
-      graph.data.area.lineLow = generateLineData(xData, yData.low);
+      graph.data.line = _.zip(xData, yData.best);
+      graph.data.area.lineHigh = _.zip(xData, yData.high);
+      graph.data.area.lineLow = _.zip(xData, yData.low);
 
       return graph;
     };
@@ -145,7 +136,7 @@ define(['./module', 'angular'], function (module, angular) {
       graph.options.legend = legend;
 
       graph.data = _(yDataSet).map(function(yData) {
-        return generateLineData(xData, yData);
+        return _.zip(xData, yData);
       });
 
       return graph;
@@ -198,14 +189,14 @@ define(['./module', 'angular'], function (module, angular) {
         }
 
         if (type.stacked) {
-          var graph = generateStackedAreaChart(data.popstacked.pops,
+          var stackedAreaGraph = generateStackedAreaChart(data.popstacked.pops,
             response.tvec, data.popstacked.title, data.popstacked.legend);
 
-          graph.options.xAxis.axisLabel = data.xlabel;
-          graph.options.yAxis.axisLabel = data.popstacked.ylabel;
-          graph.type = 'stackAreaChart';
+          stackedAreaGraph.options.xAxis.axisLabel = data.xlabel;
+          stackedAreaGraph.options.yAxis.axisLabel = data.popstacked.ylabel;
+          stackedAreaGraph.type = 'stackAreaChart';
 
-          graphs.push(graph);
+          graphs.push(stackedAreaGraph);
         }
 
         // TODO: we're checking data because it could undefined ...
