@@ -197,7 +197,6 @@ define(['./module', 'angular'], function (module, angular) {
           stackedAreaChart.options.yAxis.axisLabel = data.popstacked.ylabel;
           stackedAreaChart.type = 'stackedAreaChart';
 
-          console.log(stackedAreaChart);
           charts.push(stackedAreaChart);
         }
 
