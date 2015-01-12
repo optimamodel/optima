@@ -134,7 +134,7 @@ define(['./module', 'angular'], function (module, angular) {
     * yData should be an array where each entry contains an array of all
     * y-values from one line.
     */
-    var generateStackedAreaChart = function(yDataSet, xData, title) {
+    var generateStackedAreaChart = function(yDataSet, xData, title, legend) {
       var graph = {
         options: angular.copy(lineScatterOptions),
         data: angular.copy(lineScatterData),
@@ -142,6 +142,7 @@ define(['./module', 'angular'], function (module, angular) {
       };
 
       graph.options.title = title;
+      graph.options.legend = legend;
 
       graph.data = _(yDataSet).map(function(yData) {
         return generateLineData(xData, yData);
@@ -197,7 +198,8 @@ define(['./module', 'angular'], function (module, angular) {
         }
 
         if (type.stacked) {
-          var graph = generateStackedAreaChart(data.popstacked.pops, response.tvec, data.popstacked.title);
+          var graph = generateStackedAreaChart(data.popstacked.pops,
+            response.tvec, data.popstacked.title, data.popstacked.legend);
 
           graph.options.xAxis.axisLabel = data.xlabel;
           graph.options.yAxis.axisLabel = data.popstacked.ylabel;

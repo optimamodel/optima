@@ -4,6 +4,9 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
   module.directive('stackedAreaChart', function (d3Charts) {
     var svg;
 
+    var colors = [ '__light-blue', '__orange', '__light-orange', '__violet',
+    '__green', '__light-green', '__red', '__gray' ];
+
     var generateBaseLine = function(line) {
       return _(line).map(function(dot) { return [dot[0], 0]; });
     };
@@ -24,7 +27,9 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
     };
 
     var drawGraph = function (data, options, rootElement) {
+      options.linesStyle = colors;
       options = d3Charts.adaptOptions(options);
+      console.log(options);
 
       // to prevent creating multiple graphs we want to remove the existing svg
       // element before drawing a new one.
@@ -48,9 +53,6 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
       var chartGroup = svg.append('g').attr('class', 'chart_group');
       var axesGroup = svg.append('g').attr('class', 'axes_group');
       var headerGroup = svg.append('g').attr('class', 'header_group');
-
-      var colors = [ '__light-blue', '__orange', '__light-orange', '__violet',
-        '__green', '__light-green', '__red', '__gray' ];
 
       var graphsScales = [];
       var stackedData = generateAreas(data);
