@@ -4,19 +4,22 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
   module.directive('stackedAreaChart', function (d3Charts) {
     var svg;
 
-    var sumOfLines = function(lineA, lineB) {
-      return _(lineA).map(function(dotA, index) {
-        return [ dotA[0], dotA[1] + lineB[index][1] ];
-      });
-    };
-
     var generateBaseLine = function(line) {
       return _(line).map(function(dot) { return [dot[0], 0]; });
     };
 
     var generateArea = function(lineA, lineB) {
       return _(lineA).map(function(dotA, index) {
-        return [ dotA[0], dotA[1], lineB[index][1] ];
+        return [ dotA[0], dotA[1], dotA[1] + lineB[index][1] ];
+      });
+    };
+
+    var generateAreas = function(data) {
+      var baseLine = generateBaseLine(data[0]);
+      return _(data).map(function (line) {
+        var area = generateArea(baseLine, line);
+        baseLine = _(area).map(function(dot) { return [dot[0], dot[2]]; });
+        return area;
       });
     };
 
@@ -49,19 +52,13 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
       var colors = [ '__light-blue', '__orange', '__light-orange', '__violet',
         '__green', '__light-green', '__red', '__gray' ];
 
-
-      var baseLine = generateBaseLine(data[0]);
-      var line1 = sumOfLines(baseLine, data[0]);
-      var line2 = sumOfLines(line1, data[1]);
-
-      var stackedData = [];
-      stackedData.push(generateArea(baseLine, line1));
-      stackedData.push(generateArea(line1, line2));
+      var stackedData = generateAreas(data);
+      var highestLine = _.chain(stackedData).last().map(function(dot) { return [dot[0], dot[2]]; }).value();
 
       _(stackedData).each(function (area, index) {
         var areaChart = new d3Charts.AreaChart(chartGroup, chartSize, colors[index]);
 
-        var scale = areaChart.scales(line2);
+        var scale = areaChart.scales(highestLine);
 
         var areaData = area.map(function (dot) {
           return {
