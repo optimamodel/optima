@@ -129,6 +129,28 @@ define(['./module', 'angular'], function (module, angular) {
     };
 
     /**
+    * Returns a graph based on the provided yData.
+    *
+    * yData should be an array where each entry contains an array of all
+    * y-values from one line.
+    */
+    var generateStackedAreaChart = function(yDataSet, xData, title) {
+      var graph = {
+        options: angular.copy(lineScatterOptions),
+        data: angular.copy(lineScatterData),
+        title: title
+      };
+
+      graph.options.title = title;
+
+      graph.data = _(yDataSet).map(function(yData) {
+        return generateLineData(xData, yData);
+      });
+
+      return graph;
+    };
+
+    /**
      * Returns a financial graph.
      */
     var generateFinancialGraph = function(data) {
@@ -170,6 +192,16 @@ define(['./module', 'angular'], function (module, angular) {
           if (!(data.ydata[0] instanceof Array)) {
             graph.data.scatter = generateScatterData(response.xdata, data.ydata);
           }
+
+          graphs.push(graph);
+        }
+
+        if (type.stacked) {
+          var graph = generateStackedAreaChart(data.popstacked.pops, response.tvec, data.popstacked.title);
+
+          graph.options.xAxis.axisLabel = data.xlabel;
+          graph.options.yAxis.axisLabel = data.popstacked.ylabel;
+          graph.type = 'stackAreaChart';
 
           graphs.push(graph);
         }
