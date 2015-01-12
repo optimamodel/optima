@@ -39,8 +39,8 @@
         coverage for this program is:
         <input type="number" class="txbox __inline __xl" placeholder="e.g.{{defaultKnownFundingValue}}"  ng-model="knownFundingValue" ng-change="updateCurves()">
       </p>
-      <p>        
-        3. Specify scale-up parameters:        
+      <p>
+        3. Specify scale-up parameters:
         <input type="number" class="txbox __inline __xl" placeholder="e.g.{{defaultScaleUpParameter}}"  ng-model="scaleUpParameter" ng-change="updateCurves()">
       </p>
       <span ng-show="!areValidParams(costCoverageParams()) && hasCostCoverResponse" class="error-hint">{{ optionsErrorMessage }}</span>
@@ -70,15 +70,16 @@
           </p>
           <p>
           <label>
-            <input type="radio" name="displaycost" ng-model="$parent.displayCost" value="1">
+            <input type="radio" name="displaycost" ng-model="$parent.displayCost" value="1" ng-change="updateCurves()">
             Display program cost data in current prices
           </label><br>
           <label>
-            <input type="radio" name="displaycost" ng-model="$parent.displayCost" value="2">
-            Display program cost data in <input class="txbox __inline __l" value="2014" placeholder="e.g. 2014" ng-model="$parent.displayYear" min="projectInfo.dataStart" max="projectInfo.dataEnd"> prices
+            <input type="radio" name="displaycost" ng-model="$parent.displayCost" value="2" ng-change="updateCurves()">
+            Display program cost data in
+            <input class="txbox __inline __l" placeholder="e.g. 2014" ng-model="$parent.displayYear" min="projectInfo.dataStart" max="projectInfo.dataEnd" ng-change="updateCurves()"> prices
           </label>
           </p>
-          <p ng-show="$parent.displayCost==2 && !$parent.displayYear" class="error-hint">Please specify year for program cost data.</p>
+          <p ng-show="$parent.displayCost == 2 && !$parent.displayYear" class="error-hint">Please specify year for program cost data.</p>
 
         </div>
       </div>
