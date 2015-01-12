@@ -29,7 +29,6 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
     var drawGraph = function (data, options, rootElement) {
       options.linesStyle = colors;
       options = d3Charts.adaptOptions(options);
-      console.log(options);
 
       // to prevent creating multiple graphs we want to remove the existing svg
       // element before drawing a new one.
