@@ -16,12 +16,12 @@ define(['./module', 'underscore'], function (module, _) {
 
       // show message "calibrate the model" and disable the form elements
       $scope.projectInfo = info;
-      $scope.needData = !$scope.projectInfo.has_data;
+      $scope.needScenarios = !$scope.projectInfo.can_scenarios;
 
       $scope.optionsErrorMessage = 'Cost-coverage curve plotting options should be either empty or all present.';
       $scope.all_programs = programs;
 
-      if ( !$scope.needData ) {
+      if ( !$scope.needScenarios ) {
         $scope.initializePrograms();
         $scope.selectedProgram = $scope.programs[0];
         $scope.displayedProgram = null;

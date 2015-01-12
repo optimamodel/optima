@@ -2,7 +2,7 @@
 
   <div class="section grid">
     <div class="6">
-      <p ng-show="needData" class="error-hint">Please upload Optima spreadsheet first.</p>
+      <p ng-show="needScenarios" class="error-hint">Please calibrate the model first.</p>
       <label>
         Select a program: <br>
         <select
@@ -10,7 +10,7 @@
           ng-options="p as p.name group by p.category for p in programs"
           ng-change="changeProgram()"
           ng-model="selectedProgram"
-          ng-disabled="needData"></select>
+          ng-disabled="needScenarios"></select>
       </label>
 
     </div>
