@@ -120,9 +120,9 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png','jsPDF'],
             var figuresPerPage = 2;
             var startingX = 35;
             var startingY = 35;
-            var figureWidth = 525;
-            var figureHeight = 400;
-            var paddingBetweenImages = 10;
+            var figureWidth = 450;
+            var figureHeight = 350;
+            var paddingBetweenImages = 20;
 
             var totalElements = $(".chart-container").length;
 
@@ -131,6 +131,10 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png','jsPDF'],
 
             // Start the pdf document
             var doc = new jspdf('p', 'pt', 'a4', true);
+
+            // Set font
+            doc.setFont( 'helvetica', 'bold' );
+
             var y = startingY;
 
             _( $(".chart-container") ).each(function ( el, index ) {
@@ -151,12 +155,12 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png','jsPDF'],
 
               // Generate a png of the graph and save it into an array to be used
               // to generate the pdf.
-              generateGraphAsPng( $(el), function( d ) {
-                // Image title
-                doc.text( startingX + 70, y + 15, graphTitle);
-
+              generateGraphAsPngOrJpeg( $( el ), function( d ) {
                 // Add image
-                doc.addImage(d, 'png', startingX, y, figureWidth, figureHeight);
+                doc.addImage(d, 'png', startingX, y, figureWidth, figureHeight );
+
+                // Image title
+                doc.text( startingX + 70, y, graphTitle);
 
                 if ( index == totalElements - 1 ) {
                   doc.save(scope.exportGraphs.name + '.pdf');
@@ -236,8 +240,8 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png','jsPDF'],
            * This SVG element is used as data source inside an image which then
            * is used to draw the content on a canvas to save it as PNG.
            */
-          var generateGraphAsPng = function( el, cb, type ) {
-            var originalSvg = el.parent().find('svg');
+          var generateGraphAsPngOrJpeg = function( el, cb, type ) {
+            var originalSvg = el.find('svg');
             var orginalWidth = $(originalSvg).outerWidth();
             var orginalHeight = $(originalSvg).outerHeight();
             var originalStyle = originalSvg.attr('style');
@@ -250,7 +254,7 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png','jsPDF'],
 
               // make sure we scale the padding and append it to the original styling
               // info: later declarations overwrite previous ones
-              var style = originalStyle + '; ' + svgToPng.scalePaddingStyle(originalSvg, scalingFactor);
+              var style = originalStyle + '; background:#fff; ' + svgToPng.scalePaddingStyle(originalSvg, scalingFactor);
 
               // create svg element
               var svg = svgToPng.createSvg(orginalWidth, orginalHeight, scalingFactor, style);
@@ -278,7 +282,7 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png','jsPDF'],
                 if ( type == 'blob' ) {
                   canvas.toBlob( cb );
                 } else {
-                  var data = canvas.toDataURL();
+                  var data = canvas.toDataURL('image/jpeg', 1.0);
                   cb( data );
                 }
               };
@@ -291,7 +295,7 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png','jsPDF'],
            * Initializes a download of the graph as PNG
            */
           var exportGraphAsPng = function() {
-            generateGraphAsPng( elem, function(blob) {
+            generateGraphAsPngOrJpeg( elem.parent(), function(blob) {
               saveAs(blob, "graph.png");
             }, 'blob' );
           };
