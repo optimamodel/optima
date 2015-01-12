@@ -26,7 +26,7 @@
                 </thead>
                 <tbody>
                 <tr ng-repeat="row in scenarios">
-                    <td class="text-center" style="width: 50px">
+                    <td class="text-center" style="width: 50px" update-checkbox-on-click>
                         <input type="checkbox" ng-model="row.active">
                     </td>
                     <td>{{ row.name }}</td>

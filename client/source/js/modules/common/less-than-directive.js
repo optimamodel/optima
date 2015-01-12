@@ -18,7 +18,8 @@ define(['angular'], function (module) {
 
           var updateValidity = function (lowValue, highValue) {
             var isValid = lowValue < highValue;
-            ctrl.$setValidity('lessThan', isValid);
+            var canBeEmpty = !element.required && (lowValue === undefined || lowValue == '' || lowValue == null);
+            ctrl.$setValidity('lessThan', isValid || canBeEmpty);
           };
 
           var validator = function (value) {

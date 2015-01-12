@@ -3,7 +3,8 @@
 // =======
 
 .txbox {
-  @extend .txbox.__m, .txbox.__white;
+  @extend .txbox.__m;
+  @extend .txbox.__white;
   border-style: solid;
   border-width: 1px;
   cursor: text;
@@ -54,7 +55,7 @@
     display: inline;
 
     &.__xl {
-      width: 100px;
+      width: 110px;
     }
 
     &.__l {
@@ -62,7 +63,7 @@
     }
 
     &.__m {
-      width: 60px;
+      width: 65px;
     }
 
     &.__s {
