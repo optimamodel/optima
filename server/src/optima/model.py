@@ -264,7 +264,7 @@ def doCostCoverage():
     current_app.logger.debug("/costcoverage" % data)
     args = {}
     D = load_model(request.project_name)
-    args = pick_params(["progname", "ccparams", "coparams"], data, args)
+    args = pick_params(["progname", "ccparams", "coparams", "ccplot"], data, args)
     do_save = data.get('doSave')
     try:
         if args.get('ccparams'):args['ccparams'] = [float(param) for param in args['ccparams']]
@@ -303,7 +303,7 @@ def doCostCoverageEffect():
     data = json.loads(request.data)
     current_app.logger.debug("/costcoverage/effect(%s)" % data)
     args = {}
-    args = pick_params(["progname", "effect", "ccparams", "coparams"], data, args)
+    args = pick_params(["progname", "effect", "ccparams", "coparams", "ccplot"], data, args)
     args['D'] = load_model(request.project_name)
     try:
         if not args.get('effect'):
