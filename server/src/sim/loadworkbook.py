@@ -43,7 +43,7 @@ def loadworkbook(filename='example.xlsx', verbose=2):
                  ['Testing & treatment', 'txrx',    ['hivtest', 'aidstest', 'numfirstline', 'numsecondline', 'txelig', 'prep', 'numpmtct', 'birth', 'breast']], \
                  ['Sexual behavior',     'sex',     ['numactsreg', 'numactscas', 'numactscom', 'condomreg', 'condomcas', 'condomcom', 'circum', 'numcircum']], \
                  ['Injecting behavior',  'inj',     ['numinject', 'sharing', 'numost']], \
-                 ['Macroeconomics',      'macro',   ['gdp', 'revenue', 'govtexpend', 'totalhealth', 'domestichealth', 'domestichiv', 'globalfund', 'pepfar', 'otherint', 'private']]
+                 ['Macroeconomics & costs',      'macro',   ['gdp', 'revenue', 'govtexpend', 'totalhealth', 'domestichealth', 'domestichiv', 'globalfund', 'pepfar', 'otherint', 'private']]
                 ]
                  
     # Matrix data -- array sizes are population x population
