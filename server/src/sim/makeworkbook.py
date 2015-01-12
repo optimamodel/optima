@@ -21,7 +21,7 @@ def abbreviate(param):
     return short_param.upper()
 
 def years_range(data_start, data_end):
-    return [str(x) for x in range(data_start, data_end+1)]
+    return [x for x in range(data_start, data_end+1)]
 
 #class Assumption: #simulacrum of enums (no such thing in Python 2.7)
 #  PERCENTAGE = 'percentage'
@@ -560,7 +560,6 @@ class OptimaWorkbook:
         for name in self.sheet_names:
             self.sheets[name] = self.book.add_worksheet(self.sheet_names[name])
             self.current_sheet = self.sheets[name]
-            self.current_sheet.protect()
             getattr(self, "generate_%s" % name)() # this calls the corresponding generate function
         self.book.close()
 
