@@ -1,7 +1,7 @@
 define(['./module', './scale-helpers', 'angular'], function (module, scaleHelpers, angular) {
   'use strict';
 
-  module.directive('stackedChart', function (d3Charts) {
+  module.directive('stackedAreaChart', function (d3Charts) {
     var svg;
 
     var drawGraph = function (data, options, rootElement) {
