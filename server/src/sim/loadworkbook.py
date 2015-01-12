@@ -4,7 +4,7 @@ def loadworkbook(filename='example.xlsx', verbose=2):
     This data structure is used in the next step to update the corresponding model.
     The workbook is assumed to be in the format specified in example.xlsx.
     
-    Version: 2014nov29
+    Version: 2015jan13
     """
     
 
@@ -38,9 +38,9 @@ def loadworkbook(filename='example.xlsx', verbose=2):
     
     # Time data -- array sizes are time x population
     timedata = [
-                 ['Other epidemiology',  'epi',     ['death', 'stiprevulc', 'stiprevdis', 'tbprev']], \
+                 ['Other epidemiology',  'epi',     ['death', 'stiprevulc', 'tbprev']], \
                  ['Optional indicators', 'opt',     ['numtest', 'numdiag', 'numinfect', 'prev', 'death', 'newtreat']], \
-                 ['Testing & treatment', 'txrx',    ['hivtest', 'aidstest', 'numfirstline', 'numsecondline', 'prep', 'pep', 'numpmtct', 'birth', 'breast']], \
+                 ['Testing & treatment', 'txrx',    ['hivtest', 'aidstest', 'numfirstline', 'numsecondline', 'txelig', 'prep', 'numpmtct', 'birth', 'breast']], \
                  ['Sexual behavior',     'sex',     ['numactsreg', 'numactscas', 'numactscom', 'condomreg', 'condomcas', 'condomcom', 'circum', 'numcircum']], \
                  ['Injecting behavior',  'inj',     ['numinject', 'sharing', 'numost']], \
                  ['Macroeconomics',      'macro',   ['gdp', 'revenue', 'govtexpend', 'totalhealth', 'domestichealth', 'domestichiv', 'globalfund', 'pepfar', 'otherint', 'private']]
