@@ -167,8 +167,6 @@ def loadworkbook(filename='example.xlsx', verbose=2):
                             data[name][thispar].sexwomen = [] # Store whether or not this population has sex with women
                             data[name][thispar].sexworker = [] # Store whether or not this population is a sex worker
                             data[name][thispar].client = [] # Store whether or not this population is a client of sex workers
-                        if thispar=='progs':
-                            data[name][thispar].saturating = [] # Store whether or not this program is saturating
                     
                     # It's cost-coverage data: store cost and coverage for each program
                     elif groupname=='cocodata': 
@@ -209,7 +207,6 @@ def loadworkbook(filename='example.xlsx', verbose=2):
                                 data[name][thispar].sexworker.append(thesedata[7])
                                 data[name][thispar].client.append(thesedata[8])
                             if thispar=='progs':
-                                data[name][thispar].saturating.append(thesedata[2])
                                 if not thesedata[0] in programs: programs[thesedata[0]] = []
                                 
                         # It's cost-coverage data, save the cost and coverage values separately
