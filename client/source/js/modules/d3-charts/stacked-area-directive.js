@@ -4,6 +4,22 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
   module.directive('stackedAreaChart', function (d3Charts) {
     var svg;
 
+    var sumOfLines = function(lineA, lineB) {
+      return _(lineA).map(function(dotA, index) {
+        return [ dotA[0], dotA[1] + lineB[index][1] ];
+      });
+    };
+
+    var generateBaseLine = function(line) {
+      return _(line).map(function(dot) { return [dot[0], 0]; });
+    };
+
+    var generateArea = function(lineA, lineB) {
+      return _(lineA).map(function(dotA, index) {
+        return [ dotA[0], dotA[1], lineB[index][1] ];
+      });
+    };
+
     var drawGraph = function (data, options, rootElement) {
       options = d3Charts.adaptOptions(options);
 
@@ -34,17 +50,24 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
         '__green', '__light-green', '__red', '__gray' ];
 
 
-      _(data).each(function (area, index) {
-        // if (index === 0) { return false }
+      var baseLine = generateBaseLine(data[0]);
+      var line1 = sumOfLines(baseLine, data[0]);
+      var line2 = sumOfLines(line1, data[1]);
+
+      var stackedData = [];
+      stackedData.push(generateArea(baseLine, line1));
+      stackedData.push(generateArea(line1, line2));
+
+      _(stackedData).each(function (area, index) {
         var areaChart = new d3Charts.AreaChart(chartGroup, chartSize, colors[index]);
 
-        var scale = areaChart.scales(data[0]);
+        var scale = areaChart.scales(line2);
 
-        var areaData = data[index].map(function (dot) {
+        var areaData = area.map(function (dot) {
           return {
             x: dot[0],
             y0: dot[1],
-            y1: 0
+            y1: dot[2]
           };
         });
         areaChart.draw(areaData);
