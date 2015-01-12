@@ -19,18 +19,19 @@
     <div class="section">
       <p>
         1. Specify the saturation coverage level:
-        <input type="number" class="txbox __inline __m" min="0" max="100" placeholder="e.g.{{defaultSaturationCoverageLevel}}" ng-model="saturationCoverageLevel">%
+        <input type="number" class="txbox __inline __m" min="0" max="100" placeholder="e.g.{{defaultSaturationCoverageLevel}}" ng-model="saturationCoverageLevel" ng-change="updateCurves()">%
       </p>
       <p>
         2. The estimated amount of funding needed to get
-        <input type="number" class="txbox __inline __m" min="0" max="100" placeholder="e.g.{{defaultKnownCoverageLevel}}" ng-model="knownCoverageLevel">%
+        <input type="number" class="txbox __inline __m" min="0" max="100" placeholder="e.g.{{defaultKnownCoverageLevel}}" ng-model="knownCoverageLevel" ng-change="updateCurves()">%
         coverage for this program is:
-        <input type="number" class="txbox __inline __xl" placeholder="e.g.{{defaultKnownFundingValue}}"  ng-model="knownFundingValue">
+        <input type="number" class="txbox __inline __xl" placeholder="e.g.{{defaultKnownFundingValue}}"  ng-model="knownFundingValue" ng-change="updateCurves()">
       </p>
       <p>        
         3. Specify scale-up parameters:        
-        <input type="number" class="txbox __inline __xl" placeholder="e.g.{{defaultScaleUpParameter}}"  ng-model="scaleUpParameter">
+        <input type="number" class="txbox __inline __xl" placeholder="e.g.{{defaultScaleUpParameter}}"  ng-model="scaleUpParameter" ng-change="updateCurves()">
       </p>
+      <span ng-show="!areValidParams(costCoverageParams()) && hasCostCoverResponse" class="error-hint">{{ optionsErrorMessage }}</span>
     </div>
 
     <div class="section">
@@ -53,7 +54,7 @@
         <div class="elastic_col">
           <p>
         Specify the maximum funding (for plotting only):
-        <input type="number" class="txbox __inline __xl" placeholder="e.g.{{defaultXAxisMaximum}}"  ng-model="$parent.xAxisMaximum">
+        <input type="number" class="txbox __inline __xl" placeholder="e.g.{{defaultXAxisMaximum}}"  ng-model="$parent.xAxisMaximum" ng-change="updateCurves()">
           </p>
           <p>
           <label>
@@ -65,6 +66,8 @@
             Display program cost data in <input class="txbox __inline __l" value="2014" placeholder="e.g. 2014" ng-model="$parent.displayYear" min="projectInfo.dataStart" max="projectInfo.dataEnd"> prices
           </label>
           </p>
+          <p ng-show="$parent.displayCost==2 && !$parent.displayYear" class="error-hint">Please specify year for program cost data.</p>
+
         </div>
       </div>
 
