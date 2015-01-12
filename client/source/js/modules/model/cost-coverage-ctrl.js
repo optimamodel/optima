@@ -273,9 +273,9 @@ define(['./module', 'underscore'], function (module, _) {
         }
         return [$scope.xAxisMaximum, years];
       } else {
-        return []
+        return [];
       }
-    }
+    };
 
     /**
      * Returns the current parameterised plot model.
