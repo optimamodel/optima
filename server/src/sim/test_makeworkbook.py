@@ -17,12 +17,16 @@ programs = [{'name':'Needle-syringe programs', 'short_name': 'NSP', 'saturating'
 class TestOptimaWorkbook(unittest.TestCase):
 
     def test_create_workboook_with_defaults(self):
+        import xlrd
         book = OptimaWorkbook('test_example', populations, programs)
         path = '/tmp/test_example.xlsx'
         if os.path.exists(path):
           os.remove(path)
         book.create(path)
         self.assertTrue(os.path.exists('/tmp/test_example.xlsx'))
+        workbook = xlrd.open_workbook(path)
+        for name, value in book.sheet_names.iteritems():
+            self.assertTrue(workbook.sheet_by_name(value) is not None)
 
     def test_range_references(self):
         range = SheetRange(0,0,5,5)
@@ -46,8 +50,12 @@ class TestOptimaWorkbook(unittest.TestCase):
 class TestOptimaGraphTable(unittest.TestCase):
 
     def test_create_table(self):
-        table = OptimaGraphTable('Beautiful graph', [{'title':'one', 'data':[1,2,3]}, \
-            {'title':'two', 'data':[2,3,5]},{'title':'three', 'data':["a","b","c"]}])
+        sheet = [{
+            "name":"GRAPH DATA",
+            "columns":[{'title':'one', 'data':[1,2,3]}, \
+            {'title':'two', 'data':[2,3,5]},{'title':'three', 'data':["a","b","c"]}]
+        }]
+        table = OptimaGraphTable(sheet)
         path = '/tmp/test_graph.xlsx'
         if os.path.exists(path):
           os.remove(path)

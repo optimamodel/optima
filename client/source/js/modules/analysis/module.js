@@ -3,7 +3,9 @@ define([
     'ui.router',
     '../../config',
     '../resources/model',
-    '../ui/type-selector/index'
+    '../ui/type-selector/index',
+    '../common/graph-type-factory',
+    '../common/update-checkbox-on-click-directive'
 ], function (angular) {
     'use strict';
 
@@ -11,7 +13,9 @@ define([
         'app.constants',
         'app.resources.model',
         'app.ui.type-selector',
-        'ui.router'
+        'ui.router',
+        'app.common.graph-type',
+        'app.common.update-checkbox-on-click'
     ]).config(function ($stateProvider) {
         $stateProvider
             .state('analysis', {
@@ -24,11 +28,17 @@ define([
                 templateUrl: 'js/modules/analysis/scenarios.html' ,
                 controller: 'AnalysisScenariosController',
                 resolve: {
+                  info: function($http) {
+                    return $http.get('/api/project/info');
+                  },
                   meta: function (Model) {
                     return Model.getParametersDataMeta().$promise;
                   },
-                  scenarioParamsResponse: function($http) {
+                  scenarioParamsResponse: function($http, info) {
                     return $http.get('/api/analysis/scenarios/params');
+                  },
+                  scenariosResponse: function($http, info) {
+                    return $http.get('/api/analysis/scenarios/list');
                   }
                 }
             })

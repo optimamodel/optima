@@ -1,6 +1,18 @@
 <div class="rich">
 
-    <div class="section grid">
+    <div class="section grid" ng-show="!validate">
+        <div class="9">
+            <h1 ng-show="!show_message">Validating...</h1>
+            <h1 ng-show="show_message">Model is not ready</h1>
+            <div ng-show="show_message">
+                <p>This model is not yet ready to execute scenarios.</p>
+                <button type="button" class="btn" ng-click="gotoViewCalibrate()">View &amp; calibrate model</button>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="section grid" ng-show="validate">
         <div class="9">
             <h1>Manage scenarios</h1>
 
@@ -14,28 +26,28 @@
                 </thead>
                 <tbody>
                 <tr ng-repeat="row in scenarios">
-                    <td class="text-center" style="width: 50px">
+                    <td class="text-center" style="width: 50px" update-checkbox-on-click>
                         <input type="checkbox" ng-model="row.active">
                     </td>
                     <td>{{ row.name }}</td>
                     <td style="text-align: right; width: 10%">
-                        <button role="button" class="btn" ng-click="openEditScenarioModal($event, row)">Edit</button>
+                        <button type="button" class="btn" ng-click="openEditScenarioModal($event, row)">Edit</button>
                     </td>
                 </tr>
                 </tbody>
                 <tfoot>
                   <tr>
                     <td colspan="5" class="text-right">
-                      <button role="button" class="btn" ng-click="openAddScenarioModal($event)">Add a scenario</button>
+                      <button type="button" class="btn" ng-click="openAddScenarioModal($event)">Add a scenario</button>
                     </td>
                   </tr>
                   <tr>
                     <td colspan="5">
                         <div style="float: right">
-                          <button role="button" class="btn" ng-click="runScenarios()">Run scenarios</button>
+                          <button type="button" class="btn" ng-click="runScenarios()">Run scenarios</button>
                         </div>
                         <label>
-                          <input type="checkbox" ng-model="availableScenarioParams.dosave" style="margin-top: 8px">
+                          <input type="checkbox" ng-model="runScenariosOptions.dosave" style="margin-top: 8px">
                           Save scenarios
                         </label>
                     </td>
@@ -46,19 +58,11 @@
     </div>
 
 
-    <div class="well section">
+    <div class="well section" ng-show="validate">
         <div class="grid">
-            <type-selector types="types"></type-selector>
-
+            <button ng-if="graphs" class="btn" ng-click="exportAll()" save-graph-as="export-all">Export all data</button>
             <div>
               <div class="chart-container __small" ng-repeat="graph in graphs">
-                <h3 class="text-center">{{ graph.title }}</h3>
-                <div class="legend">
-                  <div class="legend-entry" ng-repeat="description in graph.legend">
-                    <span class="line-color-indicator line {{ lineStyles[$index] }}">•</span>
-                    {{ description }}
-                  </div>
-                </div>
                 <div line-scatter-chart data="graph.data" options="graph.options" save-graph-as></div>
               </div>
             </div>

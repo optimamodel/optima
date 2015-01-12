@@ -1,0 +1,96 @@
+<div class="page rich">
+
+  <div class="section grid">
+    <div class="6">
+      <p ng-show="needData" class="error-hint">Please upload Optima spreadsheet first.</p>
+      <label>
+        Select a program: <br>
+        <select
+          class="txbox"
+          ng-options="p as p.name group by p.category for p in programs"
+          ng-change="changeProgram()"
+          ng-model="selectedProgram"
+          ng-disabled="needData"></select>
+      </label>
+
+    </div>
+  </div>
+  <div class="section" ng-hide="selectedProgram.acronym==null">
+    <div class="section">
+      <p>
+        1. Specify the saturation coverage level:
+        <input type="number" class="txbox __inline __m" min="0" max="100" placeholder="e.g.{{defaultSaturationCoverageLevel}}" ng-model="saturationCoverageLevel" ng-change="updateCurves()">%
+      </p>
+      <p>
+        2. The estimated amount of funding needed to get
+        <input type="number" class="txbox __inline __m" min="0" max="100" placeholder="e.g.{{defaultKnownCoverageLevel}}" ng-model="knownCoverageLevel" ng-change="updateCurves()">%
+        coverage for this program is:
+        <input type="number" class="txbox __inline __xl" placeholder="e.g.{{defaultKnownFundingValue}}"  ng-model="knownFundingValue" ng-change="updateCurves()">
+      </p>
+      <p>
+        3. Specify the maximum funding (for plotting only):
+        <input type="number" class="txbox __inline __xl" placeholder="e.g.{{defaultXAxisMaximum}}"  ng-model="xAxisMaximum" ng-change="updateCurves()">
+      </p>
+      <span ng-show="!areValidParams(costCoverageParams()) && hasCostCoverResponse" class="error-hint">{{ optionsErrorMessage }}</span>
+    </div>
+
+    <div class="section">
+      <button type="button" class="btn" ng-click="generateCurves()">Draw</button>
+      <button type="button" class="btn" ng-click="saveModel()">Save model</button>
+      <button type="button" class="btn" ng-click="revertModel()">Revert model</button>
+      <button type="button" class="btn" ng-click="uploadDefault()" style="margin-left: 60px">Upload default cost-coverage-outcome curves</button>
+    </div>
+
+    <div class="section" ng-if="hasCostCoverResponse">
+      <button ng-if="graphs || ccGraph" class="btn" ng-click="exportAll()" save-graph-as="export-all">Export all data</button>
+
+      <h1>{{ displayedProgram.name }}</h1>
+      <div class="section elastic" style="width: 470px">
+        <div class="chart-container">
+          <div line-scatter-chart variant="ccGraph" data="ccGraph.data" options="ccGraph.options" save-graph-as></div>
+        </div>
+      </div>
+
+      <div class="section" ng-repeat="graph in graphs.plotdata">
+        <h2 class="section">{{ graph.title }}</h2>
+
+        <div class="section elastic">
+          <div class="elastic_col __shrink" style="width: 320px">
+            <div class="chart-container" ng-init="coGraph = graphs.plotdata_co[$index]">
+              <div line-scatter-chart variant="coGraph" data="coGraph.data" options="coGraph.options" save-graph-as></div>
+            </div>
+          </div>
+
+          <div class="elastic_col" style="width: 340px">
+            <div class="chart-container">
+              <div line-scatter-chart data="graph.data" options="graph.options" save-graph-as></div>
+            </div>
+          </div>
+
+          <form class="elastic_col" ng-submit="updateCurve($index)" name="adjustmentForm">
+            <h3>Options to adjust curves:</h3>
+            <p>
+              1. Behavior/outcome without this program ranges between
+              <input type="number" name="withoutProgramRangeStart" step="0.01" class="txbox __inline" ng-model="coParams[$index][0]" less-than="coParams[$index][1]">
+              and
+              <input type="number" name="withoutProgramRangeEnd" step="0.01" class="txbox __inline" ng-model="coParams[$index][1]" more-than="coParams[$index][0]">
+              <span ng-show="adjustmentForm.withoutProgramRangeStart.$error.lessThan || adjustmentForm.withoutProgramRangeEnd.$error.moreThan" class="error-hint">The first parameter must be lower than the second one.</span>
+            </p>
+            <p>
+              2. Behavior/outcome under full coverage of this program ranges between
+              <input type="number" name="fullCoverageRangeStart" step="0.01" class="txbox __inline" ng-model="coParams[$index][2]" less-than="coParams[$index][3]">
+              and
+              <input type="number" name="fullCoverageRangeEnd" step="0.01" class="txbox __inline" ng-model="coParams[$index][3]" more-than="coParams[$index][2]">
+              <span ng-show="adjustmentForm.fullCoverageRangeStart.$error.lessThan || adjustmentForm.fullCoverageRangeEnd.$error.moreThan" class="error-hint">The first parameter must be lower than the second one.</span>
+            </p>
+            <p>
+              <button type="submit" class="btn" ng-disabled="adjustmentForm.$invalid">Redraw</button>
+            </p>
+          </form>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</div>

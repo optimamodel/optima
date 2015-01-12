@@ -1,5 +1,5 @@
 /**
- * ProjectOpenController can set a project as active 
+ * ProjectOpenController can set a project as active
  * and allows to remove and create new projects.
  */
 
@@ -7,12 +7,14 @@ define([
   'angular',
   'ui.router',
   '../common/active-project-service',
+  '../common/update-checkbox-on-click-directive',
   '../resources/project'
 ], function (angular) {
   'use strict';
 
   return angular.module('app.project', [
     'app.active-project',
+    'app.common.update-checkbox-on-click',
     'app.resources.project',
     'ui.router'
   ])
@@ -25,11 +27,37 @@ define([
         })
         .state('project.create', {
           url: '/create',
-          templateUrl: 'js/modules/project/create.html',
-          controller: 'ProjectCreateController',
+          templateUrl: 'js/modules/project/create-or-edit.html',
+          controller: 'ProjectCreateOrEditController',
           resolve: {
             parametersResponse: function($http) {
               return $http.get('/api/project/params');
+            },
+            defaultsResponse: function($http) {
+              return $http.get('/api/project/predefined')
+            },
+            info: function() {
+              return undefined;
+            }
+          }
+        })
+        .state('project.edit', {
+          url: '/edit',
+          templateUrl: 'js/modules/project/create-or-edit.html',
+          controller: 'ProjectCreateOrEditController',
+          resolve: {
+            parametersResponse: function($http) {
+              return $http.get('/api/project/params');
+            },
+            defaultsResponse: function($http) {
+              return $http.get('/api/project/predefined')
+            },
+            info: function (Project, activeProject) {
+              if (activeProject.isSet()) {
+                return Project.info().$promise;
+              } else {
+                return undefined;
+              }
             }
           }
         })

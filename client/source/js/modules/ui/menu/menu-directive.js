@@ -44,9 +44,24 @@ define(['jquery', 'underscore', './module'], function ($, _, module) {
       controller: [
         '$scope',
         '$state',
-        function ($scope, $state) {
+        'graphTypeFactory',
+        function ($scope, $state, graphTypeFactory) {
           // Single-level array of all menu items to easily find matches
           $scope._processedItems = [];
+
+          $scope.types = graphTypeFactory.types;
+
+          /**
+           * Returns true if the type selector should be visible in the menu.
+           */
+          $scope.typeSelectorIsVisible = function () {
+            var viewNames = [
+              'model.view',
+              'analysis.scenarios',
+              'analysis.optimization'
+            ];
+            return _(viewNames).contains($state.current.name);
+          };
 
           $scope._processItems = function (items, parent) {
 
@@ -99,10 +114,10 @@ define(['jquery', 'underscore', './module'], function ($, _, module) {
 
               if (item.matchingState) {
                 item.active = (item.matchingState === toState.name.split('.')[0]);
-              } else if (item.url) {
-                item.active = item.url === '#' + $location.url();
               } else if (item.state) {
                 item.active = (item.state.name === toState.name);
+              } else if (item.url) {
+                item.active = item.url === '#' + $location.url();
               } else {
                 item.active = false;
               }

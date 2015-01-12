@@ -21,6 +21,7 @@
   <accordion-group data-ng-repeat-end=""
        class="accordion_i"
        is-open="item.active"
+      is-disabled="item.disabled"
        data-ng-if="item.subitems"
        ng-class="{ '__active': item.active }"
        secured-by-any="{{ item.permissions }}">
@@ -30,8 +31,8 @@
     </accordion-heading>
 
     <ul>
-      <li data-ng-repeat="sub in item.subitems" ng-class="{ active: sub.active }">
-        <a ng-if="sub.url" class="link __black __complex" ui-sref="{{ sub.url }}">
+      <li data-ng-repeat="sub in item.subitems" ng-class="{ '__active': sub.active }">
+        <a ng-if="sub.url && !sub.click" class="link __black __complex" ui-sref="{{ sub.url }}">
           <i class="ic" ng-class="{ '__circle-gray': !sub.active, '__donut-blue': sub.active }"></i>
           {{ sub.title }}
         </a>
@@ -43,5 +44,7 @@
       </li>
     </ul>
   </accordion-group>
+
+  <type-selector class="type-selector" types="types" ng-if="typeSelectorIsVisible()"></type-selector>
 
 </accordion>

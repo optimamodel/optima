@@ -15,7 +15,7 @@ define([
     'app.ui.menu'
   ])
 
-    .controller('MainCtrl', function ($scope, $upload, activeProject, UserManager, modalService) {
+    .controller('MainCtrl', function ($window, $scope, $upload, $state, activeProject, UserManager, modalService) {
 
       $scope.user = UserManager.data;
       $scope.userLogged = function () {
@@ -29,6 +29,7 @@ define([
           {
             title: 'Create/open project',
             id: 'create-load',
+            matchingState: 'project',
             subitems: [
               {
                 title: 'Create new project',
@@ -45,12 +46,21 @@ define([
               {
                 title: 'Upload Optima spreadsheet',
                 click: function () {
+                  if (activeProject.isSet()) {
                   angular
                     .element('<input type="file">')
                     .change(function (event) {
                       uploadDataSpreadsheet(event.target.files[0]);
                     })
                     .click();
+                  } else {
+                      modalService.inform(
+                        function (){ },
+                        'Okay',
+                        'Create or open a project first.',
+                        'Cannot proceed'
+                      );
+                  }
                 }
               }
             ]
@@ -58,16 +68,23 @@ define([
           {
             title: 'View & calibrate model',
             id: 'create-load',
+            matchingState: 'model',
             subitems: [
               {
                 title: 'View data & model calibration',
+                click: function() {
+                  ifActiveProject($state, 'model.view', activeProject);
+                },
                 state: {
                   name: 'model.view'
                 }
               },
               {
                 title: 'Define cost-coverage-outcome assumptions',
-                state: {
+                click: function() {
+                  ifActiveProject($state, 'model.define-cost-coverage-outcome', activeProject);
+                },
+                state:{
                   name: 'model.define-cost-coverage-outcome'
                 }
               }
@@ -75,16 +92,23 @@ define([
           },
           {
             title: 'Analysis',
+            matchingState: 'analysis',
             subitems: [
               {
                 title: 'Scenario analyses',
-                state: {
+                click: function() {
+                  ifActiveProject($state, 'analysis.scenarios', activeProject);
+                },
+                state:{
                   name: 'analysis.scenarios'
                 }
               },
               {
                 title: 'Optimization analyses',
-                state: {
+                click: function() {
+                  ifActiveProject($state, 'analysis.optimization', activeProject);
+                },
+                state:{
                   name: 'analysis.optimization'
                 }
               }
@@ -92,6 +116,19 @@ define([
           }
         ]
       };
+
+      function ifActiveProject(state, name, activeProject) {
+        if(activeProject.isSet()){
+          state.go(name);
+        } else {
+            modalService.inform(
+              function (){ },
+              'Okay',
+              'Create or open a project first.',
+              'Cannot proceed'
+            );
+         }
+      }
 
       // https://github.com/danialfarid/angular-file-upload
       function uploadDataSpreadsheet(file) {
@@ -105,13 +142,16 @@ define([
 
               var message = data.file + " was successfully uploaded.\n" + data.result;
               modalService.inform(
-                function (){ console.log('informed!') },
+                function (){
+                  // reload the page after upload.
+                  window.location.reload();
+                },
                 'Okay',
                 message,
                 'Upload completed'
               );
           } else {
-            alert('Sorry, but server feels bad now. Please, give it some time to recover')
+            alert('Sorry, but server feels bad now. Please, give it some time to recover');
           }
 
         });

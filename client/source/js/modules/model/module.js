@@ -2,14 +2,18 @@ define([
   'angular',
   'ui.router',
   '../resources/model',
-  '../ui/type-selector/index'
+  '../resources/project',
+  '../ui/type-selector/index',
+  '../common/graph-type-factory'
 ], function (angular) {
   'use strict';
 
   return angular.module('app.model', [
     'app.resources.model',
+    'app.resources.project',
     'app.ui.type-selector',
-    'ui.router'
+    'ui.router',
+    'app.common.graph-type'
   ])
     .config(function ($stateProvider) {
       $stateProvider
@@ -20,14 +24,17 @@ define([
         })
         .state('model.view', {
           url: '/view',
-          templateUrl: 'js/modules/model/view-calibration.html',
-          controller: 'ModelViewController',
+          templateUrl: 'js/modules/model/calibration.html',
+          controller: 'ModelCalibrationController',
           resolve: {
-            //data: function (Model) {
-            //  return Model.getParametersData();
-            //},
+            info: function(Project) {
+              return Project.info().$promise;
+            },
             f: function (Model) {
               return Model.getParametersF().$promise;
+            },
+            G: function (Model) {
+              return Model.getParametersG().$promise;
             },
             meta: function (Model) {
               return Model.getParametersDataMeta().$promise;
@@ -36,11 +43,17 @@ define([
         })
         .state('model.define-cost-coverage-outcome', {
           url: '/define-cost-coverage-outcome',
-          controller: 'ModelViewCalibrationController',
-          templateUrl: 'js/modules/model/define-cost-coverage-outcome.html',
+          controller: 'ModelCostCoverageController',
+          templateUrl: 'js/modules/model/cost-coverage.html',
           resolve: {
+            info: function(Project) {
+              return Project.info().$promise;
+            },
             meta: function (Model) {
               return Model.getParametersDataMeta().$promise;
+            },
+            programs: function(Model) {
+              return Model.getPrograms().$promise;
             }
           }
         });

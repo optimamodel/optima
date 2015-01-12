@@ -1,23 +1,26 @@
-define(['./module'], function (module) {
+define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
-  module.controller('ProjectCreateProgramModalController', function ($scope,
-    $modalInstance, program, availableParameters, populations) {
+  module.controller('ProjectCreateProgramModalController', function ($scope, $modalInstance, program, availableParameters, populations) {
+
+    // in order to not perform changes directly on the final value here is created a copy
+    var programCopy = angular.copy(program);
 
     // Initializes relevant attributes
     var initialize = function () {
-      $scope.isNew = !program.name;
+      $scope.isNew = !programCopy.name;
 
       $scope.availableParameters = angular.copy(availableParameters);
       $scope.populations = _(populations).map(function(population) {
-        return {label: population.name, value: [population.internal_name]};
+        return {label: population.name, value: [population.short_name]};
       });
-      $scope.populations.unshift({label: 'All populations', value: ['ALL_POPULATIONS']});
+      $scope.populations.unshift({label: 'All selected populations', value: ['ALL_POPULATIONS']});
 
+      $scope.initializeAllCategories();
 
       // make sure the names are exactly the objects as in the list for the
       // select to show the initial entries (angular compares with ===)
-      _(program.parameters).each(function(entry) {
+      _(programCopy.parameters).each(function(entry) {
         entry.value.signature = findParameters($scope.availableParameters, entry.value.signature).keys;
 
         var foundPopulation = findPopulation($scope.populations, entry.value.pops);
@@ -26,7 +29,7 @@ define(['./module'], function (module) {
         }
       });
 
-      $scope.program = program;
+      $scope.program = programCopy;
       $scope.program.active = true;
     };
 
@@ -57,10 +60,26 @@ define(['./module'], function (module) {
       });
     };
 
-    $scope.addParameter = function() {
+    $scope.initializeAllCategories = function () {
+      $scope.allCategories = [
+        'Prevention',
+        'Care and treatment',
+        'Management and administration',
+        'Other'
+      ];
+    };
+
+    $scope.addParameter = function () {
       var entry = {value: {signature: [], pops: []}};
       $scope.program.parameters = $scope.program.parameters || [];
       $scope.program.parameters.push(entry);
+    };
+
+    /**
+     * Removes the parameter at the given index (without asking for confirmation).
+     */
+    $scope.removeParameter = function ($index) {
+      programCopy.parameters.splice($index,1);
     };
 
     $scope.submit = function (form) {

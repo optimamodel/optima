@@ -33,7 +33,7 @@ Create Migration Script
 
 When you want to create new migration script, do:
 
-    migrate script_sql postgresql://optima:optima@localhost:5432/optima <migration_name> server/db/
+    migrate script_sql postgresql <migration_name> server/db/
 
 This will create two empty files with names like 00X_<migration_name>_(down|up)grade.sql. These are upgrade and downgrade migration, correspondingly. Edit them accordingly.
 

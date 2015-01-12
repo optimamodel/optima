@@ -4,7 +4,7 @@ from bunch import Bunch as struct # Replicate Matlab-like structure behavior
 from printv import printv
 from math import pow as mpow
 
-def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates etc.
+def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculate death rates etc.
     """
     This function runs the model.
     
@@ -44,7 +44,12 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
     effhivprev = zeros((npops, 1))    # HIV effective prevalence (prevalence times infectiousness)
 
     ## Set initial epidemic conditions 
-    people[:,:,0] = equilibrate(G, M, array(F.init)) # Run equilibration
+    ## Set initial epidemic conditions
+    turnofftrans = not(isinstance(initstate, type(None))) # Has the initial state been provided?
+    if not(turnofftrans):
+        people[:,:,0] = equilibrate(G, M, array(F.init)) # No it hasn't, so run equilibration
+    else:
+        people[:,:,0] = initstate # Yes it has, so use it.
     
     ## Calculate other things outside the loop
     cd4trans = h2a(M.const.cd4trans) # Convert a dictionary to an array
@@ -68,10 +73,12 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
     mfr  = M.const.trans.mfr # Male -> female receptive
     mtcb = M.const.trans.mtctbreast   # MTCT with breastfeeding
     mtcn = M.const.trans.mtctnobreast # MTCT no breastfeeding
-    effcirc   = (1-M.const.eff.circ)*M.circum # TODO -- AS: can we do it like this??? Circumcision can coverage can change over time!
     effsti    = M.const.eff.sti * (M.stiprevulc + M.stiprevdis) # TODO -- AS: don't like the way STI prevalence can be > 100%
-    effcondom = 1-M.const.eff.condom
-    effpmtct  = M.const.eff.pmtct
+    effcirc   = (1 - M.const.eff.circ) * M.circum
+    effprep   = (1 - M.const.eff.prep) * M.prep
+    effpep    = (1 - M.const.eff.pep)  * M.pep    
+    effcondom = 1 - M.const.eff.condom
+    effpmtct  = 1 - M.const.eff.pmtct
     transinj  = M.const.trans.inj
     pshipsinj = M.pships.inj
     pships    = M.pships
@@ -81,11 +88,14 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
     numpmtct  = M.numpmtct
 #    numost    = M.numost
 #    numart    = M.numart
-    prog      = h2a(M.const.prog)  # Disease progression rates
-    recov     = h2a(M.const.recov) # Recovery rates
-    death     = h2a(M.const.death) # HIV death rates
-#    deathtb   = M.const.death.tb    # Death rate with TB coinfection
+    prog      = h2a(M.const.prog)   # Disease progression rates
+    recov     = h2a(M.const.recov)  # Recovery rates
+    death     = h2a(M.const.death)  # HIV death rates
     deathtx   = M.const.death.treat # Death rate whilst on treatment
+
+    M.tbprev = M.tbprev + 1  
+    
+    efftb     = M.const.death.tb * M.tbprev # Increase in death due to TB coinfection
 #    sym       = M.transit.sym
     asym      = M.transit.asym
     hivtest   = M.hivtest
@@ -123,12 +133,12 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
             efftx   = sum(txfactor * (people[tx1,pop,t]+people[tx2,pop,t])) # ...and treated
             effhivprev[pop] = (effundx+effdx+efftx) / allpeople[pop,t]; # Calculate HIV "prevalence", scaled for infectiousness based on CD4 count; assume that treatment failure infectiousness is same as corresponding CD4 count
             if not(effhivprev[pop]>=0): 
-                import pdb; pdb.set_trace()
+#                import pdb; pdb.set_trace()
                 raise Exception('HIV prevalence invalid in population %s! (=%f)' % (pop, effhivprev[pop]))
         
         # Also calculate effective MTCT transmissibility
         effmtct  = mtcb*M.breast[t] + mtcn*(1-M.breast[t]) # Effective MTCT transmission
-        pmtcteff = effmtct*effpmtct # Effective MTCT transmission whilst on PMTCT
+        pmtcteff = (1 - effpmtct) * effmtct # Effective MTCT transmission whilst on PMTCT
         
         ###############################################################################
         ## Calculate force-of-infection (forceinf)
@@ -148,9 +158,14 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
                 transF = mmr if male[popF] else mfr # Receptive transmissibility
 
                 # Transmission effects
-                circeff = 1 - effcirc[popM,t] # Effect of circumcision -- # TODO: check this is capturing what we want, i.e shouldn't it only be for susceptibles?
-                stieffM = 1 + effsti[popM,t]  # Male STI prevalence effect
-                stieffF = 1 + effsti[popF,t] # Female STI prevalence effect
+                circeffM = 1 - effcirc[popM,t] # Effect of circumcision for insertive male -- # TODO: check this is capturing what we want, i.e shouldn't it only be for susceptibles?
+                circeffF = 1                   # Trivial circumcision effect for female or receptive male
+                prepeffM = 1 - effprep[popM,t] # Male PrEP effect
+                prepeffF = 1 - effprep[popF,t] # Female PrEP effect
+                pepeffM  = 1 - effpep[popM,t]  # Male PEP effect
+                pepeffF  = 1 - effpep[popF,t]  # Female PEP effect
+                stieffM  = 1 + effsti[popM,t]  # Male STI prevalence effect
+                stieffF  = 1 + effsti[popF,t]  # Female STI prevalence effect
                 
                 # Iterate through the sexual act types
                 for act in sexactslist[popM][popF]: # Ignore if this isn't a valid partnership for this sexual act type
@@ -158,8 +173,8 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
                     numactsF = totalacts[act][popF,popM,t]; # Number of acts per person per year (receptive partner)
                     condomprob = (condom[act][popM,t] + condom[act][popF,t]) / 2 # Reconcile condom probability
                     condomeff = 1 - condomprob*effcondom # Effect of condom use
-                    forceinfM = 1 - mpow((1-transM*circeff*stieffM), (dt*numactsM*condomeff*effhivprev[popF])) # The chance of "female" infecting "male" -- # TODO: Implement PrEP etc here
-                    forceinfF = 1 - mpow((1-transF*circeff*stieffF), (dt*numactsF*condomeff*effhivprev[popM])) # The chance of "male" infecting "female"
+                    forceinfM = 1 - mpow((1-transM*circeffM*prepeffM*pepeffM*stieffM), (dt*numactsM*condomeff*effhivprev[popF])) # The chance of "female" infecting "male"
+                    forceinfF = 1 - mpow((1-transF*circeffF*prepeffF*pepeffF*stieffF), (dt*numactsF*condomeff*effhivprev[popM])) # The chance of "male" infecting "female"
                     forceinfvec[popM] = 1 - (1-forceinfvec[popM]) * (1-forceinfM) # Calculate the new "male" forceinf, ensuring that it never gets above 1
                     forceinfvec[popF] = 1 - (1-forceinfvec[popF]) * (1-forceinfF) # Calculate the new "female" forceinf, ensuring that it never gets above 1
                     if not(all(forceinfvec>=0)): raise Exception('Sexual force-of-infection is invalid')
@@ -233,9 +248,10 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
             else: 
                 progout = 0  # Cannot progress out of AIDS stage
                 testingrate[cd4] = maximum(hivtest[:,t], aidstest[t]) # Testing rate in the AIDS stage (if larger!)
-            newdiagnoses[cd4] = dt*people[undx[cd4],:,t]*testingrate[cd4]*dxtime[t]
-            hivdeaths         = dt*people[undx[cd4],:,t]*death[cd4]
-            otherdeaths       = dt*people[undx[cd4],:,t]*background
+            newdiagnoses[cd4] = dt * people[undx[cd4],:,t] * testingrate[cd4] * dxtime[t]
+            hivtbdeath  = minimum((1 + efftb[:,t]) * death[cd4], 1)
+            hivdeaths   = dt * people[undx[cd4],:,t] * hivtbdeath
+            otherdeaths = dt * people[undx[cd4],:,t] * background
             dU.append(progin - progout - newdiagnoses[cd4] - hivdeaths - otherdeaths) # Add in new infections after loop
             if ((dU[cd4]+people[undx[cd4],:,t])<0).any():
                 dU[cd4] = maximum(dU[cd4], -people[undx[cd4],:,t]) # Ensure it doesn't go below 0 -- # TODO kludgy
@@ -257,8 +273,9 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
             else: 
                 progout = 0 # Cannot progress out of AIDS stage
             newtreat1[cd4] = newtreat1tot * currentdiagnosed[cd4,:] / (eps+currentdiagnosed.sum()) # Pull out evenly among diagnosed -- WARNING # TODO implement CD4 cutoffs
-            hivdeaths      = dt*people[dx[cd4],:,t]*death[cd4]
-            otherdeaths    = dt*people[dx[cd4],:,t]*background
+            hivtbdeath  = minimum((1 + efftb[:,t]) * death[cd4], 1)
+            hivdeaths   = dt * people[undx[cd4],:,t] * hivtbdeath
+            otherdeaths = dt * people[undx[cd4],:,t] * background
             inflows = progin + newdiagnoses[cd4]
             outflows = progout + hivdeaths + otherdeaths
             newtreat1[cd4] = maximum(0, minimum(newtreat1[cd4], currentdiagnosed[cd4,:]+inflows-outflows)) # Make sure it doesn't go negative
@@ -279,9 +296,11 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
                 recovout = dt*recov[cd4-2]*people[tx1[cd4],:,t]
             else: 
                 recovout = 0 # Cannot recover out of gt500 stage (or acute stage)
-            newfail1[cd4] = dt*people[tx1[cd4],:,t]*failfirst 
-            hivdeaths     = dt*people[tx1[cd4],:,t]*min(death[cd4],deathtx) # Use death by CD4 state if lower than death on treatment
-            otherdeaths   = dt*people[tx1[cd4],:,t]*background
+            newfail1[cd4] = dt * people[tx1[cd4],:,t] * failfirst
+            hivtbdeath  = minimum((1 + efftb[:,t]) * death[cd4], 1)
+            tbtxdeath   = minimum((1 + efftb[:,t]) * deathtx, 1)
+            hivdeaths   = dt * people[tx1[cd4],:,t] * minimum(hivtbdeath, tbtxdeath) # Use death by CD4 state if lower than death on treatment
+            otherdeaths = dt * people[tx1[cd4],:,t] * background
             dT1.append(recovin - recovout + newtreat1[cd4] - newfail1[cd4] - hivdeaths - otherdeaths)
             if ((dT1[cd4]+people[tx1[cd4],:,t])<0).any():
                 dT1[cd4] = maximum(dT1[cd4], -people[tx1[cd4],:,t]) # Ensure it doesn't go below 0 -- # TODO kludgy
@@ -301,9 +320,10 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
             else: 
                 progout = 0 # Cannot progress out of AIDS stage
             newtreat2[cd4] = newtreat2tot * currentfailed[cd4,:] / (eps+currentfailed.sum()) # Pull out evenly among diagnosed
-            newfail2[cd4]  = dt*people[tx2[cd4] ,:,t]*failsecond # Newly failed from ART2
-            hivdeaths      = dt*people[fail[cd4],:,t]*death[cd4]
-            otherdeaths    = dt*people[fail[cd4],:,t]*background
+            newfail2[cd4]  = dt * people[tx2[cd4] ,:,t] * failsecond # Newly failed from ART2
+            hivtbdeath  = minimum((1 + efftb[:,t]) * death[cd4], 1)
+            hivdeaths   = dt * people[fail[cd4],:,t] * hivtbdeath
+            otherdeaths = dt * people[fail[cd4],:,t] * background
             inflows = progin + newfail1[cd4] + newfail2[cd4]
             outflows = progout + hivdeaths + otherdeaths
             
@@ -325,8 +345,10 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
                 recovout = dt*recov[cd4-2]*people[tx2[cd4],:,t]
             else: 
                 recovout = 0 # Cannot recover out of gt500 stage (or acute stage)
-            hivdeaths   = dt*people[tx2[cd4],:,t]*min(death[cd4],deathtx) # Use death by CD4 state if lower than death on treatment
-            otherdeaths = dt*people[tx2[cd4],:,t]*background
+            hivtbdeath  = minimum((1 + efftb[:,t]) * death[cd4], 1)
+            tbtxdeath   = minimum((1 + efftb[:,t]) * deathtx, 1)
+            hivdeaths   = dt * people[tx2[cd4],:,t] * minimum(hivtbdeath, tbtxdeath) # Use death by CD4 state if lower than death on treatment
+            otherdeaths = dt * people[tx2[cd4],:,t] * background
             dT2.append(recovin - recovout + newtreat2[cd4] - newfail2[cd4] - hivdeaths - otherdeaths)
             if ((dT2[cd4]+people[tx2[cd4],:,t])<0).any():
                 dT2[cd4] = maximum(dT2[cd4], -people[tx2[cd4],:,t]) # Ensure it doesn't go below 0 -- # TODO kludgy
@@ -356,7 +378,8 @@ def model(G, M, F, opt, verbose=2): # extraoutput is to calculate death rates et
                     people[:,pop,t+1] *= M.popsize[pop,t]/sum(people[:,pop,t]);
             if not((people[:,:,t+1]>=0).all()):
                 print('Non-positive people found') # If not every element is a real number >0, throw an error
-                import pdb; pdb.set_trace()
+#                import pdb; pdb.set_trace() not going to fly in web context
+                raise Exception('Non-positive people found: %s %s' % (pop, people))
                 
     # Append final people array to sim output
     S['people'] = people

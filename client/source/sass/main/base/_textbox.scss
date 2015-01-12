@@ -3,7 +3,8 @@
 // =======
 
 .txbox {
-  @extend .txbox.__m, .txbox.__white;
+  @extend .txbox.__m;
+  @extend .txbox.__white;
   border-style: solid;
   border-width: 1px;
   cursor: text;
@@ -53,12 +54,16 @@
     @extend .txbox.__inline.__m;
     display: inline;
 
+    &.__xl {
+      width: 110px;
+    }
+
     &.__l {
       width: 85px;
     }
 
     &.__m {
-      width: 60px;
+      width: 65px;
     }
 
     &.__s {

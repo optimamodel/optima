@@ -3,6 +3,8 @@ server {
 
     charset utf-8;
 
+    client_max_body_size 2m;
+
     set $host_path "{{install_dir}}/client";
     root $host_path/build;
 

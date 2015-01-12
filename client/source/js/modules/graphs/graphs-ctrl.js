@@ -2,7 +2,7 @@ define([
   './module'
 ], function (module) {
   'use strict';
-  module.controller('GraphsController', function ($scope, dataMocks) {
+  module.controller('GraphsController', function ($scope, dataMocks, CONFIG) {
 
     // GRAPH 5
     // =======

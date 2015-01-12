@@ -1,0 +1,72 @@
+<div>
+    <div class="modal-header">{{ isNew ? 'Create' : 'Edit'}} a scenario</div>
+
+    <form class="modal-body" name="scenarioForm" novalidate="novalidate" ng-submit="submit(scenarioForm)">
+        <div class="section grid">
+            <div class="++1 1">
+                Name
+            </div>
+            <div class="9 1++">
+                <input class="txbox __block" ng-model="scenario.name" required autofocus>
+            </div>
+        </div>
+
+        <div ng-repeat="paramsEntry in scenario.pars" style="margin: 10px">
+
+          <div class="section well scenario-grids" style="margin-bottom: 10px">
+              <button type="button" title="Remove" ng-click="removeParameter($index)" class="scenario-parameter-close" > x </button>
+            <div class="section grid">
+              <div class="++1 10 1++">
+                Parameters
+              </div>
+              <div class="++1 10 1++">
+                <select class="txbox" ng-model="paramsEntry.names"
+                        ng-change="resetStartAndEndValue(paramsEntry)"
+                        ng-options="param.names as param.name for param in availableScenarioParams"></select>
+              </div>
+            </div>
+
+            <div class="section grid">
+              <div class="++1 10 1++">
+                Population
+              </div>
+              <div class="++1 10 1++">
+                <select class="txbox" ng-model="paramsEntry.pops" ng-options="populationNames.indexOf(name) as name for name in populationNames"></select>
+              </div>
+            </div>
+
+            <div class="section grid">
+                <div class="++1 5">
+                  <span>Start year of scenario</span>
+                  <input class="txbox __year" type="number" min="1900" placeholder="e.g. 2000" ng-model="paramsEntry.startyear">
+                </div>
+                <div class="5 1++">
+                  <span>Final year of scenario <span style="font-size: 10px">(optional)</span></span>
+                  <input class="txbox __year" type="number" min="1900" placeholder="e.g. 2020" ng-model="paramsEntry.endyear">
+                </div>
+            </div>
+
+            <div class="section grid">
+              <div class="++1 5">
+                <span>Value at start of scenario</span>
+                  <input class="txbox" type="number" placeholder="e.g. 0.55" ng-model="paramsEntry.startval">
+                </div>
+                <div class="5 1++">
+                  <span>Value at end of scenario</span>
+                  <input class="txbox" type="number" placeholder="e.g. 0.95" ng-model="paramsEntry.endval">
+                </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="section text-center">
+          <button type="button" class="btn" ng-click="addParameter()">Add parameter</button>
+        </div>
+
+        <div class="section text-center">
+            <button type="button" class="btn __white" ng-click="$dismiss('Closed')">Dismiss</button>
+            <button type="submit" class="btn">Save</button>
+        </div>
+    </form>
+</div>

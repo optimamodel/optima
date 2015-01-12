@@ -5,7 +5,7 @@ from sim.optimize import optimize
 from sim.bunch import unbunchify
 from sim.bunch import bunchify
 from sim.scenarios import runscenarios
-from utils import load_model, save_model, project_exists, check_project_name, report_exception
+from utils import load_model, save_model, project_exists, check_project_name, report_exception, load_project
 from flask.ext.login import login_required, current_user
 from dbconn import db
 from dbmodels import ProjectDb, WorkingProjectDb
@@ -30,15 +30,12 @@ def get_scenario_params():
     from sim.scenarios import getparvalues
     scenario_params = parameters()
     real_params = []
-    user_id = current_user.id
-    proj = ProjectDb.query.filter_by(user_id=user_id, name=request.project_name).first()
-    D = bunchify(proj.model)
-    db.session.close()
-    pops_short = [item['short_name'] for item in proj.populations]
+    project = load_project(request.project_name)
+    D = bunchify(project.model)
 
     for param in scenario_params:
         if not param['modifiable']: continue
-        item = bunchify({'names':param['keys'], 'pops':0, 'startyear':proj.datastart, 'endyear':proj.dataend})
+        item = bunchify({'names':param['keys'], 'pops':0, 'startyear':project.datastart, 'endyear':project.dataend})
         val_pair = None
         try:
             val_pair = getparvalues(D, item)
@@ -49,6 +46,30 @@ def get_scenario_params():
 
     current_app.logger.debug("real_params:%s" % real_params)
     return json.dumps({"params":real_params})
+
+"""
+Returns a list of scenarios defined by the user, or the default scenario list
+"""
+@scenarios.route('/list')
+@login_required
+@check_project_name
+@report_exception()
+def list_scenarios():
+    from sim.scenarios import defaultscenarios
+    current_app.logger.debug("/api/analysis/scenarios/list")
+    # get project name
+    project_name = request.project_name
+    if not project_exists(project_name):
+        reply['reason'] = 'Project %s does not exist' % project_name
+        return reply
+    D = load_model(project_name)
+    if not 'scens' in D:
+        scenarios = defaultscenarios(D)
+    else:
+        scenarios = [item.scenario for item in D.scens]
+    scenarios = unbunchify(scenarios)
+    return json.dumps({'scenarios':scenarios})
+
 
 """
 Gets a list of scenarios defined by the user, produces graphs out of them and sends back

@@ -5,16 +5,14 @@ def getcurrentbudget(D, alloc=None):
     Returns: D
     Version: 2014nov30
     """
-    from makeccocs import ccoeqn, cceqn
+    from makeccocs import ccoeqn, cceqn, coverage_params, default_convertedccparams, default_convertedccoparams
     import numpy as np
     
     # Initialise parameter structure (same as D.P). #TODO make this less ugly
     for param in D.P.keys():
-        if isinstance(D.P[param], dict):
-            if 'p' in D.P[param].keys():
-                D.P[param].c = np.zeros(np.size(np.array(D.P[param].p),0))
-                D.P[param].c[D.P[param].c>=0] = float('nan')
-
+        if isinstance(D.P[param], dict) and 'p' in D.P[param].keys():
+            D.P[param].c = np.zeros(np.size(np.array(D.P[param].p),0))
+            D.P[param].c[D.P[param].c>=0] = float('nan')
 
     # Initialise currentbudget if needed
     allocprovided = not(isinstance(alloc,type(None)))
@@ -22,69 +20,53 @@ def getcurrentbudget(D, alloc=None):
         currentbudget = []
 
     # Loop over programs
-    for progname in D.data.meta.progs.short:
+    for prognumber, progname in enumerate(D.data.meta.progs.short):
         
-        # Get program index 
-        prognumber = D.data.meta.progs.short.index(progname) # get program number
+        # If an allocation has been passed in, we don't need to figure out the program budget
+        if allocprovided:
+            totalcost = alloc[prognumber]
+        else:
+            # Get cost info
+            totalcost = D.data.costcov.cost[prognumber]
+            totalcost = np.asarray(totalcost)
+            totalcost = totalcost[~np.isnan(totalcost)]
+            totalcost = totalcost[-1]
 
         # Loop over effects
-        for effectname in D.programs[progname]:
+        for effectnumber, effect in enumerate(D.programs[progname]['effects']):
 
-            # Get effect index 
-            effectnumber = D.programs[progname].index(effectname)    
-            
-            # Do this if it's a saturating program
-            if D.data.meta.progs.saturating[prognumber]:
+            # Get population info
+            popname = effect[1]
 
-                # If an allocation has been passed in, we don't need to figure out the program budget
-                if allocprovided:
-                    totalcost = alloc[prognumber]
+            # Get parameter info
+            parname = effect[0][1]
 
-                # If an allocation has been passed in, we don't need to figure out the program budget
-                else:
-                    totalcost = D.data.costcov.cost[prognumber]
-                    totalcost = np.asarray(totalcost)
-                    totalcost = totalcost[~np.isnan(totalcost)]
-                    totalcost = totalcost[-1]
-
-
-                # Get population info
-                popname = effectname[1]
-    
-                # Is it a population-disaggregated parameter... ?
+            # Is the affected paramter coverage?
+            if not parname in coverage_params:
                 if popname[0] in D.data.meta.pops.short:
                     popnumber = D.data.meta.pops.short.index(popname[0]) 
-                # ... or not ?
                 else:
-                    popnumber = 0 
+                    popnumber = 0
 
-                # Temporary work around for sharing rates # TODO, FIX THIS ASAP, IT'S AWFUL
-                if effectname[0][1] == 'sharing':
-                    popnumber = 0 
-                      
-                # Unpack
-                muz, stdevz, muf, stdevf, saturation, growthrate = effectname[3][0], effectname[3][1], effectname[3][2], effectname[3][3], effectname[3][4], effectname[3][5]
-#                zerosample, fullsample = makesamples(muz, stdevz, muf, stdevf, samplesize=1)
-                y = ccoeqn(totalcost, [saturation, growthrate, muz, muf])
-                D.P[effectname[0][1]].c[popnumber] = y
+                if len(effect)>4 and len(effect[4])>=4: #happy path if co_params are actually there
+                    # Unpack
+                    convertedccoparams = effect[4]
+                else: # did not get co_params yet, giving it some defined params TODO @RS @AS do something sensible here:
+                    convertedccoparams = default_convertedccoparams
 
-            # ... or do this if it's not a saturating program
+                #   zerosample, fullsample = makesamples(muz, stdevz, muf, stdevf, samplesize=1)
+                y = ccoeqn(totalcost, convertedccoparams)
+                D.P[effect[0][1]].c[popnumber] = y
+
+
+            # ... or does it affect all parameters?
             else:
-
-                # If an allocation has been passed in, we don't need to figure out the program budget
-                if allocprovided:
-                    totalcost = alloc[prognumber]
-
-                # ... or else we do
+                if D.programs[progname]['convertedccparams']:
+                    convertedccparams = D.programs[progname]['convertedccparams'][0:2]
                 else:
-                    unitcost, cov = D.data.costcov.cost[prognumber], D.data.costcov.cov[prognumber] 
-                    unitcost, cov = np.asarray(unitcost), np.asarray(cov)
-                    unitcost, cov = unitcost[~np.isnan(unitcost)], cov[~np.isnan(cov)]
-                    unitcost, cov = unitcost[-1], cov[-1]
-                    totalcost = unitcost*cov
-
-                y = cceqn(totalcost, D.programs[progname][effectnumber][-1][0])
-                D.P[effectname[0][1]].c[0] = y
+                    convertedccparams = default_convertedccparams
+                y = cceqn(totalcost, convertedccparams)
+                D.P[effect[0][1]].c[0] = y
 
         if not(allocprovided):
             currentbudget.append(totalcost)

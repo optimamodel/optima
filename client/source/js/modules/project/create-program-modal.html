@@ -1,5 +1,5 @@
 <div>
-  <div class="modal-header">{{ isNew ? 'Create' : 'Edit'}} a program</div>
+  <div class="modal-header">{{ isNew ? 'Create' : 'Edit'}} program</div>
 
   <form class="modal-body" name="PopulationForm" novalidate="novalidate" ng-submit="submit(PopulationForm)">
     <div class="section grid">
@@ -21,11 +21,14 @@
     </div>
 
     <div class="section grid">
-      <div class="++3 8">
-        <label>
-          <input type="checkbox" ng-model="program.saturating">
-            Program specified in terms of unit or marginal cost instead of total cost
-        </label>
+      <div class="++1 2" style="padding-left: 6px">
+        Category
+      </div>
+      <div class="5 1++">
+        <select
+          class="txbox"
+          ng-model="program.category"
+          ng-options="category for category in allCategories"></select>
       </div>
     </div>
 
@@ -39,6 +42,12 @@
 
 
       <div class="section well" style="margin: 10px 0">
+
+      <button
+              type="button"
+              class="btn __white"
+              style="float: right; text-align: right; margin-top: 10px"
+              ng-click="removeParameter($index)">Remove</button>
 
         <div class="section grid">
           <div class="++1 10 1++">

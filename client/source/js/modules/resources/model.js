@@ -34,6 +34,14 @@ define([
               suffix: 'F'
             }
           },
+          getParametersG: {
+            method: 'GET',
+            isArray: false,
+            params: {
+              path: 'parameters',
+              suffix: 'G'
+            }
+          },
           getParametersData: {
             method: 'GET',
             isArray: false,
@@ -49,6 +57,14 @@ define([
               path: 'parameters',
               suffix: 'data',
               postsuffix: 'meta'
+            }
+          },
+          getPrograms: {
+            method: 'GET',
+            isArray: false,
+            params: {
+              path: 'parameters',
+              suffix: 'programs'
             }
           }
         }

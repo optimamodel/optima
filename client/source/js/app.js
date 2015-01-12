@@ -10,12 +10,13 @@ define([
   './modules/analysis/index',
   './modules/common/active-project-service',
   './modules/common/form-input-validate-directive',
+  './modules/common/less-than-directive',
   './modules/common/local-storage-service',
+  './modules/common/more-than-directive',
   './modules/common/save-graph-as-directive',
   './modules/d3-charts/index',
   './modules/graphs/index',
   './modules/home/index',
-  './modules/import-export/index',
   './modules/model/index',
   './modules/project/index',
   './modules/user-manager/index',
@@ -36,9 +37,10 @@ define([
     'app.d3-charts',
     'app.graphs',
     'app.home',
-    'app.import-export',
+    'app.less-than',
     'app.local-storage',
     'app.model',
+    'app.more-than',
     'app.project',
     'app.save-graph-as',
     'app.ui',
@@ -82,7 +84,17 @@ define([
       $urlRouterProvider.otherwise('/');
     })
 
-    .run(function ($rootScope, $state, UserManager, localStorage, activeProject) {
+    .run(function ($rootScope, $state, UserManager, localStorage, activeProject, modalService) {
+
+      if (navigator.userAgent.indexOf('MSIE') !== -1 || navigator.appVersion.indexOf('Trident/') !== -1) {
+        modalService.inform(
+            function () {
+              window.location.href = 'https://www.google.com/chrome/browser/desktop/';
+            },
+            'Download Google Chrome',
+            'Internet Explorer is not supported. Please use Firefox or Chrome instead.', 'Your browser is not supported!');
+      }
+
       if (window.user) {
         UserManager.set(window.user);
         delete window.user;
