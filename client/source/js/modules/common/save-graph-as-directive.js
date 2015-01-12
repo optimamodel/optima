@@ -97,7 +97,7 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png','jsPDF'],
             }
 
             // Cost Coverage
-            if ( controller == 'ModelViewCalibration' ) {
+            if ( controller == 'ModelCostCoverage' ) {
               if (scope.ccGraph) {
                 graphs.push(scope.ccGraph);
               }
@@ -365,7 +365,7 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png','jsPDF'],
           };
 
           /**
-           * Returns the normalized data ready for export 
+           * Returns the normalized data ready for export
            * for Radar Chart
            */
           scope.axesExport = function (graph){
@@ -438,7 +438,7 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png','jsPDF'],
            */
           scope.exportMultiSheetFrom = function (graphs){
             if(graphs.length == 0) { return scope.saySorry("Sorry, no graphs found");}
-            
+
             var exportables = [];
             var showAlert = false;
             _(graphs).each(function (graph, index) {
