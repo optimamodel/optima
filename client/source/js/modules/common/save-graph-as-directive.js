@@ -117,61 +117,55 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png','jsPDF'],
            * Export all graphs/charts figures,
            */
           scope.exportAllFigures = function () {
-            var figuresPerPage = 2;
-            var startingX = 35;
-            var startingY = 35;
-            var figureWidth = 450;
-            var figureHeight = 350;
-            var paddingBetweenImages = 20;
-
             var totalElements = $(".chart-container").length;
 
             // Get details of all graphs.
             var graphs = getGraphs();
 
             // Start the pdf document
-            var doc = new jspdf('p', 'pt', 'a4', true);
+            var doc = new jspdf('landscape', 'pt', 'a4', true);
 
             // Set font
             doc.setFont( 'helvetica', 'bold' );
-
-            var y = startingY;
+            doc.setFontSize( 16 );
 
             _( $(".chart-container") ).each(function ( el, index ) {
 
               // FIXME: This is a hack for the case of cost coverage. We need to add the titles.
               // All other graph figures have self-contained titles.
               var graphTitle = '';
-              if ( scope.exportGraphs.controller == 'ModelViewCalibration' &&
-                (index == 0 || index % 2 == 1 )) {
-
-                if ( index == 0 ) {
+              if ( scope.exportGraphs.controller == 'ModelCostCoverage') {
+                if ( index === 0 ) {
                   graphTitle = graphs[index].title;
                 } else {
-                  console.log((index / 2) + 1);
                   graphTitle = graphs[Math.ceil(index / 2)].title;
                 }
               }
 
               // Generate a png of the graph and save it into an array to be used
               // to generate the pdf.
-              generateGraphAsPngOrJpeg( $( el ), function( d ) {
+              generateGraphAsPngOrJpeg( $(el), function( data ) {
+                var figureWidth = $(el).find('svg').outerWidth() * 1.4;
+                var figureHeight = $(el).find('svg').outerHeight() * 1.4;
+                var startingX = (842 - figureWidth) / 2;
+                var startingY = (595 - figureHeight) / 2;
+
                 // Add image
-                doc.addImage(d, 'png', startingX, y, figureWidth, figureHeight );
+                doc.addImage(data, 'JPEG', startingX, startingY, figureWidth, figureHeight);
+
+                var centeredText = function(doc, text, y) {
+                  var textWidth = doc.getStringUnitWidth(text) * doc.internal.getFontSize() / doc.internal.scaleFactor;
+                  var textOffset = (d.internal.pageSize.width - textWidth) / 2;
+                  d.text(textOffset, y, text);
+                };
 
                 // Image title
-                doc.text( startingX + 70, y, graphTitle);
+                centeredText(doc, graphTitle, startingY);
 
                 if ( index == totalElements - 1 ) {
                   doc.save(scope.exportGraphs.name + '.pdf');
                 } else {
-                  // Do we need to go to the next page?
-                  if ( (index + 1) % figuresPerPage == 0 ) {
-                    doc.addPage();
-                    y = startingY;
-                  } else {
-                    y += figureHeight + paddingBetweenImages;
-                  }
+                  doc.addPage();
                 }
               }, 'data-url' );
             });
@@ -240,7 +234,7 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png','jsPDF'],
            * This SVG element is used as data source inside an image which then
            * is used to draw the content on a canvas to save it as PNG.
            */
-          var generateGraphAsPngOrJpeg = function( el, cb, type ) {
+          var generateGraphAsPngOrJpeg = function( el, callback, type ) {
             var originalSvg = el.find('svg');
             var orginalWidth = $(originalSvg).outerWidth();
             var orginalHeight = $(originalSvg).outerHeight();
@@ -280,10 +274,10 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png','jsPDF'],
 
                 // Return the png either as a blob or data url
                 if ( type == 'blob' ) {
-                  canvas.toBlob( cb );
+                  canvas.toBlob( callback );
                 } else {
                   var data = canvas.toDataURL('image/jpeg', 1.0);
-                  cb( data );
+                  callback( data );
                 }
               };
             }).error(function() {
@@ -375,7 +369,7 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png','jsPDF'],
               columns: []
             };
 
-            var axisData = {}
+            var axisData = {};
             axisData.title = scope.radarAxesName;
             axisData.data = _.map(graph.data[0].axes, function(axis, j) { return axis.axis; });
             exportable.columns.push(axisData);
