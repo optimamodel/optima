@@ -38,11 +38,18 @@ define(['./module', 'underscore'], function (module, _) {
       $scope.defaultSaturationCoverageLevel = 90;
       $scope.defaultKnownCoverageLevel = 60;
       $scope.defaultKnownFundingValue = 400000;
+      $scope.defaultScaleUpParameter = 1;
       $scope.defaultXAxisMaximum = 1000000;
       $scope.behaviorWithoutMin = 0.3;
       $scope.behaviorWithoutMax = 0.5;
       $scope.behaviorWithMin = 0.7;
       $scope.behaviorWithMax = 0.9;
+      $scope.xAxisMaximum = undefined;
+      $scope.saturationCoverageLevel = undefined;
+      $scope.knownCoverageLevel = undefined;
+      $scope.knownFundingValue = undefined;
+      $scope.scaleUpParameter = undefined;
+      $scope.displayCost = 1;
 
       plotTypes = ['plotdata', 'plotdata_cc', 'plotdata_co'];
 
@@ -67,7 +74,8 @@ define(['./module', 'underscore'], function (module, _) {
           name: name,
           acronym: acronym,
           category: 'Other', // it will be read from project_info, once it is synced with meta.programs
-          ccparams: $scope.all_programs[acronym].ccparams
+          ccparams: $scope.all_programs[acronym].ccparams,
+          ccplot: $scope.all_programs[acronym].ccplot
         };
       });
       /** Dec 26 2014
@@ -253,8 +261,20 @@ define(['./module', 'underscore'], function (module, _) {
         $scope.convertFromPercent($scope.saturationCoverageLevel),
         $scope.convertFromPercent($scope.knownCoverageLevel),
         $scope.knownFundingValue,
-        $scope.xAxisMaximum
+        $scope.scaleUpParameter
       ];
+    };
+
+    var ccPlotParams = function() {
+      if ($scope.xAxisMaximum) {
+        var years = [];
+        if ($scope.displayCost == 2 && $scope.displayYear) {
+          years = [$scope.displayYear];
+        }
+        return [$scope.xAxisMaximum, years];
+      } else {
+        return [];
+      }
     };
 
     /**
@@ -264,7 +284,8 @@ define(['./module', 'underscore'], function (module, _) {
       return {
         progname: $scope.selectedProgram.acronym,
         ccparams: $scope.costCoverageParams(),
-        coparams: []
+        coparams: [],
+        ccplot: ccPlotParams(),
       };
     };
 
@@ -297,6 +318,9 @@ define(['./module', 'underscore'], function (module, _) {
       if (model.ccparams) {
         $scope.selectedProgram.ccparams = model.ccparams;
         $scope.all_programs[$scope.selectedProgram.acronym].ccparams = model.ccparams;
+      }
+      if (model.ccplot) {
+        $scope.selectedProgram.ccplot = model.ccplot;
       }
     };
 
@@ -355,12 +379,26 @@ define(['./module', 'underscore'], function (module, _) {
         $scope.saturationCoverageLevel = $scope.selectedProgram.ccparams[0]*100;
         $scope.knownCoverageLevel = $scope.selectedProgram.ccparams[1]*100;
         $scope.knownFundingValue = $scope.selectedProgram.ccparams[2];
-        $scope.xAxisMaximum = $scope.selectedProgram.ccparams[3];
+        $scope.scaleUpParameter = $scope.selectedProgram.ccparams[3];
       } else {
         $scope.saturationCoverageLevel = undefined;
         $scope.knownCoverageLevel = undefined;
         $scope.knownFundingValue = undefined;
-        $scope.xAxisMaximum = undefined;
+        $scope.scaleUpParameter = undefined;
+      }
+      if ($scope.selectedProgram.ccplot && $scope.selectedProgram.ccplot.length==2) {
+        $scope.xAxisMaximum = $scope.selectedProgram.ccplot[0];
+        var years = $scope.selectedProgram.ccplot[1];
+        if (years.length>0) {
+          $scope.displayYear = years[0];
+          $scope.displayCost = 2;
+        } else {
+          $scope.displayCost = 1;
+          $scope.displayYear = undefined;
+        }
+      } else {
+        $scope.displayCost = 1;
+        $scope.displayYear = undefined;
       }
     };
 
