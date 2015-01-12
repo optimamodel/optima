@@ -1,4 +1,7 @@
-def loadworkbook(filename='example.xlsx', verbose=2):
+if 1:
+    filename='example.xlsx'
+    verbose=2
+#def loadworkbook(filename='example.xlsx', verbose=2):
     """
     Loads the workbook (i.e. reads its contents into the data structure).
     This data structure is used in the next step to update the corresponding model.
@@ -43,7 +46,7 @@ def loadworkbook(filename='example.xlsx', verbose=2):
                  ['Testing & treatment', 'txrx',    ['hivtest', 'aidstest', 'numfirstline', 'numsecondline', 'txelig', 'prep', 'numpmtct', 'birth', 'breast']], \
                  ['Sexual behavior',     'sex',     ['numactsreg', 'numactscas', 'numactscom', 'condomreg', 'condomcas', 'condomcom', 'circum', 'numcircum']], \
                  ['Injecting behavior',  'inj',     ['numinject', 'sharing', 'numost']], \
-                 ['Macroeconomics',      'macro',   ['gdp', 'revenue', 'govtexpend', 'totalhealth', 'domestichealth', 'domestichiv', 'globalfund', 'pepfar', 'otherint', 'private']]
+                 ['Economics and costs', 'econ',    ['cpi', 'ppp', 'gdp', 'revenue', 'govtexpend', 'totalhealth', 'domestichealth', 'domestichiv', 'globalfund', 'pepfar', 'otherint', 'private', 'health', 'social']]
                 ]
                  
     # Matrix data -- array sizes are population x population
@@ -55,15 +58,13 @@ def loadworkbook(filename='example.xlsx', verbose=2):
     # Constants -- array sizes are scalars x uncertainty
     constants = [
                  ['Constants', 'const',              [['trans',    ['mfi', 'mfr', 'mmi', 'mmr', 'inj', 'mtctbreast', 'mtctnobreast']], \
-                                                      ['cd4trans', ['acute', 'gt500', 'gt350', 'gt200', 'aids']], \
-                                                      ['prog',     ['acute', 'gt500', 'gt350', 'gt200']],\
-                                                      ['recov',    ['gt500', 'gt350', 'gt200', 'aids']],\
+                                                      ['cd4trans', ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'aids']], \
+                                                      ['prog',     ['acute', 'gt500', 'gt350', 'gt200', 'gt50']],\
+                                                      ['recov',    ['gt500', 'gt350', 'gt200', 'gt50', 'aids']],\
                                                       ['fail',     ['first', 'second']],\
-                                                      ['death',    ['acute', 'gt500', 'gt350', 'gt200', 'aids', 'treat', 'tb']],\
-                                                      ['eff',      ['condom', 'circ', 'dx', 'sti', 'meth', 'pmtct', 'tx', 'prep', 'pep']]]], \
-                 ['Disutilities & costs', 'cost',    [['disutil',  ['acute', 'gt500', 'gt350', 'gt200', 'aids','tx']], \
-                                                      ['health',   ['acute', 'gt500', 'gt350', 'gt200', 'aids']], \
-                                                      ['social',   ['acute', 'gt500', 'gt350', 'gt200', 'aids']]]]
+                                                      ['death',    ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'aids', 'treat', 'tb']],\
+                                                      ['eff',      ['condom', 'circ', 'dx', 'sti', 'meth', 'pmtct', 'tx', 'prep', 'pep']],\
+                                                      ['disutil',  ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'aids','tx']]]]
                 ]
     
     
@@ -263,4 +264,4 @@ def loadworkbook(filename='example.xlsx', verbose=2):
                             data[name][thispar][subpar] = thesedata # Store data
     
     printv('...done loading data.', 2, verbose)
-    return data, programs
+#    return data, programs
