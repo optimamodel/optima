@@ -2,6 +2,7 @@ define([
   'angular',
   'ui.router',
   '../resources/model',
+  '../resources/project',
   '../ui/type-selector/index',
   '../common/graph-type-factory'
 ], function (angular) {
@@ -42,7 +43,7 @@ define([
         })
         .state('model.define-cost-coverage-outcome', {
           url: '/define-cost-coverage-outcome',
-          controller: 'ModelViewCalibrationController',
+          controller: 'ModelCostCoverageController',
           templateUrl: 'js/modules/model/cost-coverage.html',
           resolve: {
             info: function(Project) {
@@ -50,6 +51,9 @@ define([
             },
             meta: function (Model) {
               return Model.getParametersDataMeta().$promise;
+            },
+            programs: function(Model) {
+              return Model.getPrograms().$promise;
             }
           }
         });
