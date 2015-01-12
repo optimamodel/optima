@@ -76,10 +76,11 @@ define(['./module', 'd3', 'underscore'], function (module, d3, _) {
       }
     }
 
-    function AreaChart(chart, suffix, chart_size) {
+    function AreaChart(chart, chart_size, areaColorClass) {
       var xScale, yScale;
 
-      var className = 'area_chart_path' + suffix;
+      var className = 'area_chart_path';
+      var uniqClassName = _.uniqueId('area_chart_path');
 
       this.scales = function (dataset) {
         var xExtent = d3.extent(dataset, function (d) {
@@ -107,7 +108,7 @@ define(['./module', 'd3', 'underscore'], function (module, d3, _) {
 
       function enter(dataset) {
         //draws path
-        if (chart.select('path.' + className).empty()) {
+        if (chart.select('path.' + uniqClassName).empty()) {
           var area = d3.svg.area()
             .interpolate('basis')
             .x(function(d) { return xScale(d.x); })
@@ -116,7 +117,7 @@ define(['./module', 'd3', 'underscore'], function (module, d3, _) {
 
           chart.append('path')
             .attr('d', area(dataset))
-            .attr('class', className);
+            .attr('class', [className, uniqClassName, areaColorClass].join(' '));
         }
       }
 
@@ -125,7 +126,7 @@ define(['./module', 'd3', 'underscore'], function (module, d3, _) {
 
       function exit(dataset) {
         //removes path
-        chart.select('path.' + className)
+        chart.select('path.' + uniqClassName)
           .data(dataset)
           .exit()
           .remove();
