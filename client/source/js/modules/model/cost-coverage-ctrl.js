@@ -1,7 +1,8 @@
 define(['./module', 'underscore'], function (module, _) {
   'use strict';
 
-  module.controller('ModelCostCoverageController', function ($scope, $http, $window, meta, info, modalService, programs) {
+  module.controller('ModelCostCoverageController', function ($scope, $http,
+    $state, meta, info, modalService, programs) {
 
     var plotTypes, effectNames;
 
@@ -17,7 +18,7 @@ define(['./module', 'underscore'], function (module, _) {
       // show message "calibrate the model" and disable the form elements
       $scope.projectInfo = info;
       $scope.needData = !$scope.projectInfo.has_data;
-      $scope.cannotCalibrate = !$scope.projectInfo.can_calibrate
+      $scope.cannotCalibrate = !$scope.projectInfo.can_calibrate;
       $scope.notReady = $scope.needData || $scope.cannotCalibrate;
 
       $scope.optionsErrorMessage = 'Cost-coverage curve plotting options should be either empty or all present.';
@@ -52,7 +53,7 @@ define(['./module', 'underscore'], function (module, _) {
      * Redirects the user to View & Calibrate screen.
      */
     $scope.gotoViewCalibrate = function() {
-      $window.location.href = '#/model/view';
+      $state.go('model.view');
     };
 
     /**
