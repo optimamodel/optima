@@ -1,8 +1,21 @@
 <div class="page rich">
 
-  <div class="section grid">
+  <div class="section grid" ng-show="notReady">
+      <div class="9">
+          <h1>Model is not ready</h1>
+          <div>
+              <p ng-show="needData" class="error-hint">Please upload Optima spreadsheet first.</p>
+
+              <div ng-show="cannotCalibrate && !needData">
+                <p class="error-hint">This model is not yet ready to define cost-coverage assumptions.</p>
+                <button type="button" class="btn" ng-click="gotoViewCalibrate()">View &amp; calibrate model</button>
+              </div>
+          </div>
+      </div>
+  </div>
+
+  <div class="section grid" ng-hide="notReady">
     <div class="6">
-      <p ng-show="needData" class="error-hint">Please upload Optima spreadsheet first.</p>
       <label>
         Select a program: <br>
         <select
@@ -10,12 +23,11 @@
           ng-options="p as p.name group by p.category for p in programs"
           ng-change="changeProgram()"
           ng-model="selectedProgram"
-          ng-disabled="needData"></select>
+          ng-disabled="notReady"></select>
       </label>
-
     </div>
   </div>
-  <div class="section" ng-hide="selectedProgram.acronym==null">
+  <div class="section" ng-hide="selectedProgram.acronym == null">
     <div class="section">
       <p>
         1. Specify the saturation coverage level:
