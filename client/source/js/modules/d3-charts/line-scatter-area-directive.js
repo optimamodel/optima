@@ -29,7 +29,7 @@ define(['./module', './scale-helpers'], function (module, scaleHelpers) {
 
         // initialize chart instances
         var lineChartInstance = new d3Charts.LineChart(chartGroup, '', chartSize);
-        var areaChartInstance = new d3Charts.AreaChart(chartGroup, '', chartSize);
+        var areaChartInstance = new d3Charts.AreaChart(chartGroup, chartSize, '__light-blue');
         var scatterChartInstance = new d3Charts.ScatterChart(chartGroup, '', chartSize);
 
         // fetch & generate data for the graphs
