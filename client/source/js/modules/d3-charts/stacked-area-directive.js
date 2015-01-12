@@ -52,13 +52,15 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
       var colors = [ '__light-blue', '__orange', '__light-orange', '__violet',
         '__green', '__light-green', '__red', '__gray' ];
 
+      var graphsScales = [];
       var stackedData = generateAreas(data);
       var highestLine = _.chain(stackedData).last().map(function(dot) { return [dot[0], dot[2]]; }).value();
 
       _(stackedData).each(function (area, index) {
         var areaChart = new d3Charts.AreaChart(chartGroup, chartSize, colors[index]);
 
-        var scale = areaChart.scales(highestLine);
+        var areaScale = areaChart.scales(highestLine);
+        graphsScales.push(areaScale);
 
         var areaData = area.map(function (dot) {
           return {
@@ -70,6 +72,19 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
         areaChart.draw(areaData);
       });
 
+      // normalizing all graphs scales to include maximum possible x and y
+      var yMax = _(highestLine).max(function(dot){ return dot[1]; })[1];
+      _(graphsScales).each(function (scale) {
+        scale.y.domain([0, Math.ceil(yMax)]);
+        scale.x.domain([Math.floor(highestLine[0][0]), Math.ceil(_(highestLine).last()[0])]);
+      });
+
+      d3Charts.drawAxes(
+        graphsScales[0],
+        options,
+        axesGroup,
+        chartSize
+      );
 
       d3Charts.drawTitleAndLegend(svg, options, headerGroup);
     };
