@@ -15,6 +15,7 @@ define({
     'd3'            : './vendor/d3/d3',
     'saveAs'        : './vendor/FileSaver/FileSaver',
     'jquery'        : './vendor/jquery/dist/jquery',
+    'jsPDF'         : './vendor/jsPDF/dist/jspdf.min',
     'ng-file-upload': './vendor/ng-file-upload/angular-file-upload',
     'ng-file-upload-html5-shim': './vendor/ng-file-upload/angular-file-upload-html5-shim',
     'angular-resource'    : './vendor/angular-resource/angular-resource',
@@ -22,7 +23,6 @@ define({
     'ui.router'     : './vendor/angular-ui-router/release/angular-ui-router',
     'ui.bootstrap'  : './vendor/angular-bootstrap/ui-bootstrap-tpls',
     'underscore'    : './vendor/underscore/underscore',
-    'jsPDF'         : './vendor/jsPDF/dist/jspdf.min',
   },
 
   shim: {
