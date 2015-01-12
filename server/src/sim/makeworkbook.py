@@ -123,23 +123,21 @@ def make_populations_range(name, items):
 
 """ 
 every programs item is a dictionary is expected to have the following fields:
-short_name, name, saturating
-(3x str, 1x bool)
+short_name, name
+(2x str)
 """
 def make_programs_range(name, items):
-    column_names = ['Short name','Long name','Saturating']
+    column_names = ['Short name','Long name']
     row_names = range(1, len(items)+1)
     coded_params = []
     for item in items:
         if type(item) is dict:
             item_name = item['name']
             short_name = item.get('short_name', abbreviate(item_name))
-            saturating = item.get('saturating', False)
         else: # backward compatibility :) might raise exception which is ok
             item_name = item
             short_name = abbreviate(item_name)
-            saturating = False      
-        coded_params.append([short_name, item_name, saturating])
+        coded_params.append([short_name, item_name])
     return OptimaContent(name, row_names, column_names, coded_params)
 
 def make_constant_range(name, row_names, best_data, low_data, high_data):

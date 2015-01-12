@@ -93,7 +93,7 @@ def makedatapars(D, verbose=2):
     ## Program cost data
     D.A = [struct()] # Initialize allocations list
     D.A[0].alloc = zeros(D.G.nprogs)
-    for prog in range(D.G.nprogs):
+    for prog in range(D.G.nprogs): #TODO CK which one of the branches should be left?
         if D.data.meta.progs.saturating[prog]:
             totalcost = D.data.costcov.cost[prog]
             totalcost = array(totalcost)
