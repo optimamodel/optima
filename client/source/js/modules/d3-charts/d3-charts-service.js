@@ -3,14 +3,17 @@ define(['./module', 'd3', 'underscore'], function (module, d3, _) {
 
   module.service('d3Charts', function () {
 
-    // available colors, see .line in _chart.scss
-    var colors = [ '__orange', '__light-orange', '__violet', '__green', '__light-green', '__red', '__gray' ];
-
-    function LineChart(chart, lineIndex, chartSize, customColor) {
+    /**
+     * Returns a LineChart instance.
+     *
+     * @param {element} chart - element where to append the line.
+     * @param {object} chartSize - example: { width: 200, height: 100 }.
+     * @param {string} colorClass - see available colors in chart/_color.scss.
+     */
+    function LineChart(chart, chartSize, colorClass) {
       var xScale, yScale;
 
-      var uniqClassName = 'line' + lineIndex;
-      var lineColor = customColor || colors[lineIndex];
+      var uniqClassName = _.uniqueId('line_');
 
       this.scales = function (dataset) {
         var xExtent = d3.extent(dataset, function (d) {
@@ -50,7 +53,7 @@ define(['./module', 'd3', 'underscore'], function (module, d3, _) {
 
           chart.append('path')
             .attr('d', line(dataset))
-            .attr('class', 'line ' + lineColor + ' ' + uniqClassName);
+            .attr('class', ['line ', colorClass, uniqClassName].join(' '));
         }
       }
 
@@ -76,7 +79,14 @@ define(['./module', 'd3', 'underscore'], function (module, d3, _) {
       }
     }
 
-    function AreaChart(chart, chart_size, areaColorClass) {
+    /**
+     * Returns a AreaChart instance.
+     *
+     * @param {element} chart - element where to append the line.
+     * @param {object} chartSize - example: { width: 200, height: 100 }.
+     * @param {string} colorClass - see available colors in chart/_color.scss.
+     */
+    function AreaChart(chart, chartSize, colorClass) {
       var xScale, yScale;
 
       var className = 'area_chart_path';
@@ -86,12 +96,12 @@ define(['./module', 'd3', 'underscore'], function (module, d3, _) {
         var xExtent = d3.extent(dataset, function (d) {
           return d[0];
         });
-        xScale = d3.scale.linear().domain(xExtent).range([0, chart_size.width]);
+        xScale = d3.scale.linear().domain(xExtent).range([0, chartSize.width]);
 
         var yMax = d3.max(dataset, function (d) {
           return d[1];
         });
-        yScale = d3.scale.linear().domain([0, yMax]).range([chart_size.height, 0]);
+        yScale = d3.scale.linear().domain([0, yMax]).range([chartSize.height, 0]);
 
         return { x: xScale, y: yScale };
       };
@@ -117,7 +127,7 @@ define(['./module', 'd3', 'underscore'], function (module, d3, _) {
 
           chart.append('path')
             .attr('d', area(dataset))
-            .attr('class', [className, uniqClassName, areaColorClass].join(' '));
+            .attr('class', [className, uniqClassName, colorClass].join(' '));
         }
       }
 
@@ -133,9 +143,15 @@ define(['./module', 'd3', 'underscore'], function (module, d3, _) {
       }
     }
 
-    function ScatterChart(chart, suffix, chartSize) {
+    /**
+     * Returns a ScatterChart instance.
+     *
+     * @param {element} chart - element where to append the line.
+     * @param {object} chartSize - example: { width: 200, height: 100 }.
+     */
+    function ScatterChart(chart, chartSize) {
       var xScale, yScale,
-        className = 'scatter_chart_circle' + suffix;
+        className = 'scatter_chart_circle';
 
       this.scales = function (dataset) {
         var xExtent = d3.extent(dataset, function (d) {
@@ -280,7 +296,7 @@ define(['./module', 'd3', 'underscore'], function (module, d3, _) {
             .text(legendItem.title);
 
           item.append('circle')
-            .attr('class', 'graph-legend_dot line ' + (legendItem.color || colors[index]))
+            .attr('class', 'graph-legend_dot line ' + (legendItem.color))
             .attr('r', 4)
             .attr('cy', y - 4)
             .attr('cx', -10);
