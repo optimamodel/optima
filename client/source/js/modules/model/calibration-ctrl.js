@@ -52,7 +52,7 @@ define(['./module', 'angular'], function (module, angular) {
     $scope.canDoFitting = $scope.projectInfo.can_calibrate;
     $scope.needData = !$scope.projectInfo.has_data;
 
-    var lineScatterOptions = {
+    var defaultChartOptions = {
       title: 'Title',
       height: 200,
       width: 320,
@@ -105,7 +105,7 @@ define(['./module', 'angular'], function (module, angular) {
      */
     var generateAreaChart = function(yData, xData, title) {
       var chart = {
-        options: angular.copy(lineScatterOptions),
+        options: angular.copy(defaultChartOptions),
         data: angular.copy(lineScatterData),
         title: title
       };
@@ -127,7 +127,7 @@ define(['./module', 'angular'], function (module, angular) {
     */
     var generateStackedAreaChart = function(yDataSet, xData, title, legend) {
       var chart = {
-        options: angular.copy(lineScatterOptions),
+        options: angular.copy(defaultChartOptions),
         data: angular.copy(lineScatterData),
         title: title
       };
