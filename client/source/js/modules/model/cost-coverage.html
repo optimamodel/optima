@@ -1,8 +1,21 @@
 <div class="page rich">
 
-  <div class="section grid">
+  <div class="section grid" ng-show="notReady">
+      <div class="9">
+          <h1>Model is not ready</h1>
+          <div>
+              <p ng-show="needData" class="error-hint">Please upload Optima spreadsheet first.</p>
+
+              <div ng-show="cannotCalibrate && !needData">
+                <p class="error-hint">This model is not yet ready to define cost-coverage assumptions.</p>
+                <button type="button" class="btn" ng-click="gotoViewCalibrate()">View &amp; calibrate model</button>
+              </div>
+          </div>
+      </div>
+  </div>
+
+  <div class="section grid" ng-hide="notReady">
     <div class="6">
-      <p ng-show="needData" class="error-hint">Please upload Optima spreadsheet first.</p>
       <label>
         Select a program: <br>
         <select
@@ -10,12 +23,11 @@
           ng-options="p as p.name group by p.category for p in programs"
           ng-change="changeProgram()"
           ng-model="selectedProgram"
-          ng-disabled="needData"></select>
+          ng-disabled="notReady"></select>
       </label>
-
     </div>
   </div>
-  <div class="section" ng-hide="selectedProgram.acronym==null">
+  <div class="section" ng-hide="selectedProgram.acronym == null">
     <div class="section">
       <p>
         1. Specify the saturation coverage level:
@@ -28,8 +40,8 @@
         <input type="number" class="txbox __inline __xl" placeholder="e.g.{{defaultKnownFundingValue}}"  ng-model="knownFundingValue" ng-change="updateCurves()">
       </p>
       <p>
-        3. Specify the maximum funding (for plotting only):
-        <input type="number" class="txbox __inline __xl" placeholder="e.g.{{defaultXAxisMaximum}}"  ng-model="xAxisMaximum" ng-change="updateCurves()">
+        3. Specify scale-up parameters:
+        <input type="number" class="txbox __inline __xl" placeholder="e.g.{{defaultScaleUpParameter}}"  ng-model="scaleUpParameter" ng-change="updateCurves()">
       </p>
       <span ng-show="!areValidParams(costCoverageParams()) && hasCostCoverResponse" class="error-hint">{{ optionsErrorMessage }}</span>
     </div>
@@ -42,12 +54,35 @@
     </div>
 
     <div class="section" ng-if="hasCostCoverResponse">
-      <button ng-if="graphs || ccGraph" class="btn" ng-click="exportAll()" save-graph-as="export-all">Export all data</button>
+      
+      <button ng-if="graphs" class="btn" ng-click="exportAllFigures()" save-graph-as="export-all">Export all figures</button>
+      <button ng-if="graphs || ccGraph" class="btn" ng-click="exportAllData()" save-graph-as="export-all">Export all data</button>
 
       <h1>{{ displayedProgram.name }}</h1>
-      <div class="section elastic" style="width: 470px">
-        <div class="chart-container">
-          <div line-scatter-chart variant="ccGraph" data="ccGraph.data" options="ccGraph.options" save-graph-as></div>
+      <div class="section elastic">
+        <div class="elastic_col __shrink" style="width: 470px">
+          <div class="chart-container">
+            <div line-scatter-chart variant="ccGraph" data="ccGraph.data" options="ccGraph.options" save-graph-as></div>
+          </div>
+        </div>
+        <div class="elastic_col">
+          <p>
+        Specify the maximum funding (for plotting only):
+        <input type="number" class="txbox __inline __xl" placeholder="e.g.{{defaultXAxisMaximum}}"  ng-model="$parent.xAxisMaximum" ng-change="updateCurves()">
+          </p>
+          <p>
+          <label>
+            <input type="radio" name="displaycost" ng-model="$parent.displayCost" value="1" ng-change="updateCurves()">
+            Display program cost data in current prices
+          </label><br>
+          <label>
+            <input type="radio" name="displaycost" ng-model="$parent.displayCost" value="2" ng-change="updateCurves()">
+            Display program cost data in
+            <input class="txbox __inline __l" placeholder="e.g. 2014" ng-model="$parent.displayYear" min="projectInfo.dataStart" max="projectInfo.dataEnd" ng-change="updateCurves()"> prices
+          </label>
+          </p>
+          <p ng-show="$parent.displayCost == 2 && !$parent.displayYear" class="error-hint">Please specify year for program cost data.</p>
+
         </div>
       </div>
 

@@ -15,13 +15,14 @@ define({
     'd3'            : './vendor/d3/d3',
     'saveAs'        : './vendor/FileSaver/FileSaver',
     'jquery'        : './vendor/jquery/dist/jquery',
+    'jsPDF'         : './vendor/jsPDF/dist/jspdf.min',
     'ng-file-upload': './vendor/ng-file-upload/angular-file-upload',
     'ng-file-upload-html5-shim': './vendor/ng-file-upload/angular-file-upload-html5-shim',
     'angular-resource'    : './vendor/angular-resource/angular-resource',
     'radar-chart-d3' : './vendor/radar-chart-d3/src/radar-chart',
     'ui.router'     : './vendor/angular-ui-router/release/angular-ui-router',
     'ui.bootstrap'  : './vendor/angular-bootstrap/ui-bootstrap-tpls',
-    'underscore'    : './vendor/underscore/underscore'
+    'underscore'    : './vendor/underscore/underscore',
   },
 
   shim: {
