@@ -33,11 +33,18 @@ define(['./module', 'underscore'], function (module, _) {
       $scope.defaultSaturationCoverageLevel = 90;
       $scope.defaultKnownCoverageLevel = 60;
       $scope.defaultKnownFundingValue = 400000;
+      $scope.defaultScaleUpParameter = 1;
       $scope.defaultXAxisMaximum = 1000000;
       $scope.behaviorWithoutMin = 0.3;
       $scope.behaviorWithoutMax = 0.5;
       $scope.behaviorWithMin = 0.7;
       $scope.behaviorWithMax = 0.9;
+      $scope.xAxisMaximum = undefined;
+      $scope.saturationCoverageLevel = undefined;
+      $scope.knownCoverageLevel = undefined;
+      $scope.knownFundingValue = undefined;
+      $scope.scaleUpParameter = undefined;
+      $scope.displayCost = 1;
 
       plotTypes = ['plotdata', 'plotdata_cc', 'plotdata_co'];
 
@@ -244,9 +251,22 @@ define(['./module', 'underscore'], function (module, _) {
         convertFromPercent($scope.saturationCoverageLevel),
         convertFromPercent($scope.knownCoverageLevel),
         $scope.knownFundingValue,
-        $scope.xAxisMaximum
+        $scope.scaleUpParameter
       ];
     };
+
+    var ccPlotParams = function() {
+      console.log($scope);
+      if ($scope.xAxisMaximum) {
+        var years = [];
+        if ($scope.displayCost == 2) {
+          years = [$scope.displayYear];
+        }
+        return [$scope.xAxisMaximum, years];
+      } else {
+        return []
+      }
+    }
 
     /**
      * Returns the current parameterised plot model.
@@ -255,7 +275,8 @@ define(['./module', 'underscore'], function (module, _) {
       return {
         progname: $scope.selectedProgram.acronym,
         ccparams: costCoverageParams(),
-        coparams: []
+        coparams: [],
+        ccplot: ccPlotParams(),
       };
     };
 

@@ -89,25 +89,29 @@ def makecc(D=None, progname=default_progname, ccparams=default_ccparams, ccplot=
             raise Exception('Negative funding levels are not permitted, please revise')
 
         # Create curve
-        xvalscc = linspace(0,ccplot[0],nxpts) # take nxpts points between 0 and user-specified max
-        yvalscc = cceqn(xvalscc, convertedccparams)
+        if ccplot:
+            xvalscc = linspace(0,ccplot[0],nxpts) # take nxpts points between 0 and user-specified max
+            yvalscc = cceqn(xvalscc, convertedccparams)
+            # Populate output structure 
+            plotdata['xlinedata'] = xvalscc
+            plotdata['ylinedata'] = yvalscc
 
         # Store parameters and lines
         D.programs[progname]['ccparams'] = ccparams
         D.programs[progname]['ccplot'] = ccplot
         D.programs[progname]['convertedccparams'] = convertedccparams
 
-        # Populate output structure 
-        plotdata['xlinedata'] = xvalscc
-        plotdata['ylinedata'] = yvalscc
     
     # Populate output structure with axis limits
     plotdata['xlowerlim'], plotdata['ylowerlim']  = 0.0, 0.0
-    if ccparams:
+    if ccplot:
         if coveragelabel == 'Proportion covered':
             plotdata['xupperlim'], plotdata['yupperlim']  = ccplot[0], 1
         else:
-            plotdata['xupperlim'], plotdata['yupperlim']  = ccplot[0], max(convertedccparams[0]*1.2,max([x if ~isnan(x) else 0.0 for x in coverage])*1.2)
+            if ccparams:
+                plotdata['xupperlim'], plotdata['yupperlim']  = ccplot[0], max(convertedccparams[0]*1.2,max([x if ~isnan(x) else 0.0 for x in coverage])*1.2)
+            else:
+                plotdata['xupperlim'], plotdata['yupperlim']  = ccplot[0], max([x if ~isnan(x) else 0.0 for x in coverage])*1.2
     else:
         plotdata['xupperlim'], plotdata['yupperlim']  = max([x if ~isnan(x) else 0.0 for x in totalcost])*1.5, max([x if ~isnan(x) else 0.0 for x in coverage])*1.5
 
@@ -522,13 +526,13 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
     return plotdata, plotdata_co, effect
 
 ###############################################################################
-def plotallcurves(D=None, progname=default_progname, ccparams=default_ccparams, coparams=default_coparams, makeplot=default_makeplot, verbose=2):
+def plotallcurves(D=None, progname=default_progname, ccparams=default_ccparams, ccplot=default_ccplot, coparams=default_coparams, makeplot=default_makeplot, verbose=2):
     '''
     Make all cost outcome curves for a given program.
     '''
     
      # Get the cost-coverage and coverage-outcome relationships     
-    plotdata_cc, D = makecc(D=D, progname=progname, ccparams=ccparams, makeplot=makeplot, verbose=verbose)
+    plotdata_cc, D = makecc(D=D, progname=progname, ccplot = ccplot, ccparams=ccparams, makeplot=makeplot, verbose=verbose)
 
    ## Check that the selected program is in the program list 
     if progname not in D.programs.keys():
