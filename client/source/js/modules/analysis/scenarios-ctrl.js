@@ -10,7 +10,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           $scope.validate = false;
           $scope.show_message = false;
           $scope.scenarios = [];
-          
+
           // use for export all data
           $scope.exportGraphs = {
             'name':'Analysis scenarios',
@@ -79,15 +79,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         };
 
         /**
-         * Returns an array containing arrays with [x, y] for d3 line data.
-         */
-        var generateLineData = function(xData, yData) {
-          return _(yData).map(function (value, i) {
-            return [xData[i], value];
-          });
-        };
-
-        /**
          * Returns an graph based on the provided yData.
          *
          * yData should be an array where each entry contains an array of all
@@ -106,7 +97,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           graph.options.title = title;
 
           _(yData).each(function(lineData) {
-            graph.data.lines.push(generateLineData(xData, lineData));
+            graph.data.lines.push(_.zip(xData, lineData));
           });
 
           return graph;
