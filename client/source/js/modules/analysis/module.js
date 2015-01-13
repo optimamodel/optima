@@ -4,13 +4,17 @@ define([
     '../../config',
     '../resources/model',
     '../ui/type-selector/index',
+    '../common/export-all-charts',
+    '../common/export-all-data',
     '../common/graph-type-factory',
-    '../common/update-checkbox-on-click-directive'
+    '../common/update-checkbox-on-click-directive',
 ], function (angular) {
     'use strict';
 
     return angular.module('app.analysis', [
         'app.constants',
+        'app.export-all-charts',
+        'app.export-all-data',
         'app.resources.model',
         'app.ui.type-selector',
         'ui.router',

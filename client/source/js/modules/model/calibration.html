@@ -81,7 +81,7 @@
     <div class="well section __inline calibration-charts" ng-class="{'calibration-charts--full':enableManualCalibration===false}" ng-show="charts.length>0" >
         <div class="grid">
             <export-all-charts export-charts="exportCharts" ng-if="charts"></export-all-charts>
-            <button ng-if="charts" class="btn" ng-click="exportAllData()" save-graph-as="export-all">Export all data</button>
+            <export-all-data export-charts="exportCharts" ng-if="charts"></export-all-data>
             <div>
                 <div class="chart-container __small" ng-repeat="chart in charts">
                     <div ng-if="chart.type == 'lineScatterAreaChart'" line-scatter-area-chart ng-if="chart.type != 'stackAreaChart'" data="chart.data" options="chart.options" save-graph-as></div>

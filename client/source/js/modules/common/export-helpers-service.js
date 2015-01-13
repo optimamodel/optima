@@ -113,9 +113,172 @@ define(['angular', 'jquery', './svg-to-png'], function (angular, $, svgToPng) {
       });
     };
 
+    /**
+     * Converts array of graph points to dictionary.
+     */
+    var graphToDictionary = function(graphPoints){
+      var graphDict = {};
+      _(graphPoints).each(function(point){
+        graphDict[point[0]] = point[1];
+      });
+      return graphDict;
+    };
+
+    /**
+     * Fills array according to reference dictionary keys,
+     * Copies values from source dictionary if key found there, otherwise creates empty entries
+     */
+    var fillFromDictionary = function(reference, source){
+      var result = [];
+      _(reference).each(function(key){
+        var nextEntry = (key in source)? source[key] : ''; // source[key] || '' would not catch '0' entries
+        result.push(nextEntry);
+      });
+      return result;
+    };
+
+    var lineAndAreaExport = function (graph){
+      if (!graph.data || !graph.options) return null;
+
+      var exportable = {
+        name: graph.options.title || graph.title,
+        columns: []
+      };
+
+      var scatter = graphToDictionary(graph.data.scatter);
+      var line = graphToDictionary(graph.data.line);
+
+      var xOfPoints = {}; // merge xPoints with scatter x points
+      xOfPoints.title = graph.options.xAxis.axisLabel;
+      xOfPoints.data = [];
+      xOfPoints.data.push.apply(xOfPoints.data, Object.keys(line));
+      xOfPoints.data.push.apply(xOfPoints.data, Object.keys(scatter));
+      xOfPoints.data.sort();
+      exportable.columns.push(xOfPoints);
+
+      var yOfPoints = {};
+      yOfPoints.title = 'line'; // in theory, yAxis should be overall y title (todo for later, backend should support that)
+      yOfPoints.data = fillFromDictionary(xOfPoints.data, line);
+      exportable.columns.push(yOfPoints);
+
+      _(graph.data.area).each(function(lineData, lineTitle) {
+        var nextLine = graphToDictionary(lineData);
+        var yOfPoints = {};
+        yOfPoints.title = lineTitle;
+        yOfPoints.data = fillFromDictionary(xOfPoints.data, nextLine);
+        exportable.columns.push(yOfPoints);
+      });
+
+      var scatterPoints = {};
+      scatterPoints.title = "scatter";
+      scatterPoints.data = fillFromDictionary(xOfPoints.data, scatter);
+      exportable.columns.push(scatterPoints);
+      return exportable;
+    };
+
+    var linesExport = function (graph){
+      var exportable = {
+        name: graph.options.title || graph.title,
+        columns: []
+      };
+
+      var lineTitles = graph.options.legend? graph.options.legend : ["line", "high", "low"];
+
+      // The X of the points are only sent in one column and we collect them from any of the lines
+      var xOfPoints = {};
+      xOfPoints.title = graph.options.xAxis.axisLabel;
+      xOfPoints.data = _.map(graph.data.lines[0],function(point,j){ return point[0]; });
+      exportable.columns.push(xOfPoints);
+
+      _(graph.data.lines).each(function(lineData, index) {
+        // Collecting the Y of the points for the line
+        var yOfLinePoints = {};
+        yOfLinePoints.title = lineTitles[index];
+        yOfLinePoints.data = _.map(lineData,function(point,j){ return point[1]; });
+        exportable.columns.push(yOfLinePoints);
+      });
+
+      return exportable;
+    };
+
+    var areasExport = function (graph){
+      var exportable = {
+        name: graph.options.title || graph.title,
+        columns: []
+      };
+
+      var areaTitles = graph.options.legend;
+
+      // The X of the points are only sent in one column and we collect them from any of the lines
+      var xOfPoints = {};
+      xOfPoints.title = graph.options.xAxis.axisLabel;
+      xOfPoints.data = _.map(graph.data.areas[0],function(point,j){ return point[0]; });
+      exportable.columns.push(xOfPoints);
+
+      _(graph.data.areas).each(function(areaData, index) {
+        // Collecting the Y of the points for the area
+        var yOfAreaPoints = {};
+        yOfAreaPoints.title = areaTitles[index];
+        yOfAreaPoints.data = _.map(areaData,function(point,j){ return point[1]; });
+        exportable.columns.push(yOfAreaPoints);
+      });
+
+      return exportable;
+    };
+
+    /**
+     * Returns the normalized data ready for export
+     * for Radar Chart
+     */
+    var axesExport = function (graph){
+      //x and y are not needed to be exported - they are just internal values to draw radar chart properly
+      var exportable = {
+        name: graph.radarGraphName,
+        columns: []
+      };
+
+      var axisData = {};
+      axisData.title = graph.radarAxesName;
+      axisData.data = _.map(graph.data[0].axes, function(axis, j) { return axis.axis; });
+      exportable.columns.push(axisData);
+
+      _(graph.data).each(function(radarData, index) {
+        var valueData = {};
+        valueData.title = graph.options.legend[index];
+        valueData.data = _.map(graph.data[index].axes, function(axis,j) { return axis.value; });
+        exportable.columns.push(valueData);
+      });
+
+      return exportable;
+    };
+
+    /**
+     * Returns the normalized data ready for export
+     */
+    var getExportableFrom = function (graph){
+      if(!graph.data) { return null; }
+      if(_.isEqual(Object.keys(graph.data),["line", "scatter", "area"])) { return lineAndAreaExport(graph); }
+      if(_.isEqual(Object.keys(graph.data),["lines", "scatter"])) { return linesExport(graph); }
+      if(_.isEqual(Object.keys(graph.data),["areas"])) { return areasExport(graph); }
+      if(_.isEqual(graph.data[0] && Object.keys(graph.data[0]),["axes"])) { return axesExport(graph); }
+
+      return null;
+    };
+
+    var saySorry = function(msg) {
+      // to-do: this should be updated after the PR to use the modalService
+      if ( undefined !== msg ) {
+        return alert(msg);
+      } else {
+        return alert('Sorry, this graph cannot be exported');
+      }
+    };
+
     return {
       generateGraphAsPngOrJpeg: generateGraphAsPngOrJpeg,
-      getCharts: getCharts
+      getCharts: getCharts,
+      saySorry: saySorry,
+      getExportableFrom: getExportableFrom
     };
   }]);
 });
