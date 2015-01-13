@@ -502,7 +502,7 @@
                 <h1>{{radarChartName}}</h1>
 
                 <export-all-charts export-charts="exportCharts" ng-if="radarData || optimisationGraphs || financialGraphs"></export-all-charts>
-                <button class="btn" ng-click="exportAllData()" save-graph-as="export-all" ng-if="radarData || optimisationGraphs || financialGraphs">Export all data</button>
+                <export-all-data export-charts="exportCharts" ng-if="radarData || optimisationGraphs || financialGraphs"></export-all-data>
 
                 <div class="grid">
                     <div class="7" ng-if="radarGraph">

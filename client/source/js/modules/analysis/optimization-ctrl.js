@@ -95,9 +95,6 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
         $scope.params.constraints.coverage[meta.progs.short[i]].year = undefined;
       }
 
-    $scope.radarGraphName = 'Allocation';
-    $scope.radarAxesName =  'Programs';
-
     var optimizationTimer;
 
     var linesStyle = ['__blue', '__green', '__red', '__orange', '__violet',
@@ -174,7 +171,13 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       });
       options.legend.push(data.pie2.name);
 
-      return {'data':graphData, 'options':options};
+      var graph = {
+        'data': graphData,
+        'options': options,
+        'radarGraphName': 'Allocation',
+        'radarAxesName': 'Programs'
+      };
+      return graph;
     };
 
     /**
