@@ -252,6 +252,31 @@ define(['angular', 'jquery', 'underscore', 'saveAs', 'jsPDF', './svg-to-png', '.
             return exportable;
           };
 
+          scope.areasExport = function (graph){
+            var exportable = {
+              name: graph.options.title || graph.title,
+              columns: []
+            };
+
+            var areaTitles = graph.options.legend;
+
+            // The X of the points are only sent in one column and we collect them from any of the lines
+            var xOfPoints = {};
+            xOfPoints.title = graph.options.xAxis.axisLabel;
+            xOfPoints.data = _.map(graph.data.areas[0],function(point,j){ return point[0]; });
+            exportable.columns.push(xOfPoints);
+
+            _(graph.data.areas).each(function(areaData, index) {
+              // Collecting the Y of the points for the area
+              var yOfAreaPoints = {};
+              yOfAreaPoints.title = areaTitles[index];
+              yOfAreaPoints.data = _.map(areaData,function(point,j){ return point[1]; });
+              exportable.columns.push(yOfAreaPoints);
+            });
+
+            return exportable;
+          };
+
           /**
            * Returns the normalized data ready for export
            * for Radar Chart
@@ -285,6 +310,7 @@ define(['angular', 'jquery', 'underscore', 'saveAs', 'jsPDF', './svg-to-png', '.
             if(!graph.data) { return null; }
             if(_.isEqual(Object.keys(graph.data),["line", "scatter", "area"])) { return scope.lineAndAreaExport(graph); }
             if(_.isEqual(Object.keys(graph.data),["lines", "scatter"])) { return scope.linesExport(graph); }
+            if(_.isEqual(Object.keys(graph.data),["areas"])) { return scope.areasExport(graph); }
             if(_.isEqual(graph.data[0] && Object.keys(graph.data[0]),["axes"])) { return scope.axesExport(graph); }
 
             return null;

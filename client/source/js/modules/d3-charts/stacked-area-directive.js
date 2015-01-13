@@ -54,7 +54,7 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
       var headerGroup = svg.append('g').attr('class', 'header_group');
 
       var graphsScales = [];
-      var stackedData = generateAreas(data);
+      var stackedData = generateAreas(data.areas);
       var highestLine = _.chain(stackedData).last().map(function(dot) { return [dot[0], dot[2]]; }).value();
 
       _(stackedData).each(function (area, index) {

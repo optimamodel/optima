@@ -128,14 +128,14 @@ define(['./module', 'angular'], function (module, angular) {
     var generateStackedAreaChart = function(yDataSet, xData, title, legend) {
       var chart = {
         options: angular.copy(defaultChartOptions),
-        data: angular.copy(lineScatterData),
+        data: { areas: []},
         title: title
       };
 
       chart.options.title = title;
       chart.options.legend = legend;
 
-      chart.data = _(yDataSet).map(function(yData) {
+      chart.data.areas = _(yDataSet).map(function(yData) {
         return _.zip(xData, yData);
       });
 
