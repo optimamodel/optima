@@ -10,9 +10,9 @@ populations = [ \
     'male': False, 'female': True, 'injects':False, 'sexmen':True, 'sexwomen':False, 'sexworker':True, 'client':False}, \
     {'short_name':'Male PWID','name':'Men who have sex with men', \
     'male': True, 'female': False, 'injects':True, 'sexmen':True, 'sexwomen':False, 'sexworker':False, 'client':False}]
-programs = [{'name':'Needle-syringe programs', 'short_name': 'NSP', 'saturating': True}, \
-    {'name':'Opiate substition therapy', 'short_name': 'OST', 'saturating': False}, \
-    {'name':'Programs for men who have sex with men', 'short_name': 'MSM programs', 'saturating': True}]
+programs = [{'name':'Needle-syringe programs', 'short_name': 'NSP'}, \
+    {'name':'Opiate substition therapy', 'short_name': 'OST'}, \
+    {'name':'Programs for men who have sex with men', 'short_name': 'MSM programs'}]
 
 class TestOptimaWorkbook(unittest.TestCase):
 

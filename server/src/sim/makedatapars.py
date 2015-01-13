@@ -58,6 +58,7 @@ def makedatapars(D, verbose=2):
     
     D.P = struct() # Initialize parameters structure
     D.P.__doc__ = 'Parameters that have been directly derived from the data, which are then used to create the model parameters'
+    D.G.meta = D.data.meta # Copy metadata
     
     ## Key parameters
     for parname in D.data.key.keys():
@@ -74,72 +75,55 @@ def makedatapars(D, verbose=2):
             else:
                 D.P[parname] = data2par(D.data[parclass][parname])
     
+    
     ## Matrices can be used directly
     for parclass in ['pships', 'transit']:
         printv('Converting data parameter %s...' % parclass, 3, verbose)
         D.P[parclass] = D.data[parclass]
     
     ## Constants...just take the best value for now -- # TODO: use the uncertainty
-    for uberclass in ['const', 'cost']:
-        D.P[uberclass] = struct()
-        for parclass in D.data[uberclass].keys():
-            printv('Converting data parameter %s...' % parclass, 3, verbose)
-            if type(D.data[uberclass][parclass])==struct: 
-                D.P[uberclass][parclass] = struct()
-                for parname in D.data[uberclass][parclass].keys():
-                    printv('Converting data parameter %s...' % parname, 4, verbose)
-                    D.P[uberclass][parclass][parname] = D.data[uberclass][parclass][parname][0] # Taking best value only, hence the 0
+    D.P.const = struct()
+    for parclass in D.data.const.keys():
+        printv('Converting data parameter %s...' % parclass, 3, verbose)
+        if type(D.data.const[parclass])==struct: 
+            D.P.const[parclass] = struct()
+            for parname in D.data.const[parclass].keys():
+                printv('Converting data parameter %s...' % parname, 4, verbose)
+                D.P.const[parclass][parname] = D.data.const[parclass][parname][0] # Taking best value only, hence the 0
     
     ## Program cost data
     D.A = [struct()] # Initialize allocations list
     D.A[0].alloc = zeros(D.G.nprogs)
     for prog in range(D.G.nprogs):
-        if D.data.meta.progs.saturating[prog]:
-            totalcost = D.data.costcov.cost[prog]
-            totalcost = array(totalcost)
-            totalcost = totalcost[~isnan(totalcost)]
-            totalcost = totalcost[-1]
-            D.A[0].alloc[prog] = totalcost
-        else:
-            unitcost, cov = D.data.costcov.cost[prog], D.data.costcov.cov[prog] 
-            unitcost, cov = array(unitcost), array(cov)
-            unitcost, cov = unitcost[~isnan(unitcost)], cov[~isnan(cov)]
-            unitcost, cov = unitcost[-1], cov[-1]
-            totalcost = unitcost*cov
-            D.A[0].alloc[prog] = totalcost
+        totalcost = D.data.costcov.cost[prog]
+        totalcost = array(totalcost)
+        totalcost = totalcost[~isnan(totalcost)]
+        totalcost = totalcost[-1]
+        D.A[0].alloc[prog] = totalcost
             
     
     ## TODO: disutility, economic data etc.
+    
+    
+    ## Change sizes of circumcision and births
+    def popexpand(origarray, popbool):
+        """ For variables that are only defined for certain populations, expand to the full array. WARNING, doesn't work for time """
+        from copy import deepcopy
+        newarray = deepcopy(origarray)
+        newarray.p = zeros(shape(D.G.meta.pops.male))
+        if 't' in newarray.keys(): raise Exception('Shouldn''t be using time')
+        count = -1
+        for i,tf in enumerate(popbool):
+            if tf:
+                count += 1
+                newarray.p[i] = origarray.p[count]
+        
+        return newarray
+    
+    D.P.birth    = popexpand(D.P.birth,  array(D.G.meta.pops.male)==0)
+    D.P.circum   = popexpand(D.P.circum, array(D.G.meta.pops.male)==1)
             
             
-    
-    ###############################################################################
-    ## Set up general parameters
-    ###############################################################################
-    D.G.meta = D.data.meta # Copy metadata
-    D.G.ncd4 = len(D.data.const.cd4trans) # Get number of CD4 states from the length of a reliable field, like CD4-related transmissibility
-    D.G.nstates = 1+D.G.ncd4*5 # Five are undiagnosed, diagnosed, 1st line, failure, 2nd line, plus susceptible
-    
-    # Define CD4 states
-    D.G.sus  = arange(0,1)
-    D.G.undx = arange(0*D.G.ncd4+1, 1*D.G.ncd4+1)
-    D.G.dx   = arange(1*D.G.ncd4+1, 2*D.G.ncd4+1)
-    D.G.tx1  = arange(2*D.G.ncd4+1, 3*D.G.ncd4+1)
-    D.G.fail = arange(3*D.G.ncd4+1, 4*D.G.ncd4+1)
-    D.G.tx2  = arange(4*D.G.ncd4+1, 5*D.G.ncd4+1)
-    
-    # Define male populations
-    D.G.male = zeros(D.G.npops)
-    for key in ['reg', 'cas', 'com']:
-        D.G.male += array(D.data.pships[key]).sum(axis=1) # Find insertive acts
-    D.G.male = D.G.male>0 # Convert to Boolean array
-    
-    # Define injecting populations
-    D.G.pwid = zeros(D.G.npops)
-    for ax in [0,1]:
-        D.G.pwid += array(D.data.pships.inj).sum(axis=ax) # Find injecting acts
-    D.G.pwid = D.G.pwid>0 # Convert to Boolean array
-
 
     printv('...done converting data to parameters.', 2, verbose)
     
