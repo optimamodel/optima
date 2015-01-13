@@ -1,4 +1,4 @@
-<div class="section cf">
+<div class="section cf" ng-if="typeSelectorIsVisible">
   <h3>Results</h3>
 
   <div class="type-section" ng-repeat="type in types.population">
@@ -15,7 +15,7 @@
         Per population
       </label>
     </div>
-    <div ng-if="type.stacked!==undefined">
+    <div ng-if="type.stacked!==undefined && stackedCheckboxIsVisible === true">
       <label class="checkbox-inline">
         <input type="checkbox" ng-model="type.stacked">
         Stacked
