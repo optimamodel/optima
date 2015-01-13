@@ -155,8 +155,8 @@ define(['angular', 'jquery', 'underscore', 'saveAs', './svg-to-png','jsPDF'],
 
                 var centeredText = function(doc, text, y) {
                   var textWidth = doc.getStringUnitWidth(text) * doc.internal.getFontSize() / doc.internal.scaleFactor;
-                  var textOffset = (d.internal.pageSize.width - textWidth) / 2;
-                  d.text(textOffset, y, text);
+                  var textOffset = (doc.internal.pageSize.width - textWidth) / 2;
+                  doc.text(textOffset, y, text);
                 };
 
                 // Image title
