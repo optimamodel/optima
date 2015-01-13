@@ -554,7 +554,7 @@ def plotallcurves(D=None, progname=default_progname, ccparams=default_ccparams, 
 
             # Store outputs
             effects[effectnumber] = effect 
-            plotdata[effectnumber], plotdata_co[effectnumber], effect = makecco(D=D, progname=progname, effect=effect, ccparams=ccparams, coparams=coparams, makeplot=makeplot, verbose=verbose)
+            plotdata[effectnumber], plotdata_co[effectnumber], effect = makecco(D=D, progname=progname, effect=effect, ccplot=ccplot, ccparams=ccparams, coparams=coparams, makeplot=makeplot, verbose=verbose)
             effects[effectnumber] = effect 
 
     return plotdata, plotdata_co, plotdata_cc, effects, D      
@@ -578,6 +578,7 @@ def getcoverage(D=None, params=[], artelig=default_artelig, progname=default_pro
     # Extract basic info from data structure
     prognumber = D.data.meta.progs.short.index(progname) # get program number
     ndatayears = len(D.data.epiyears) # get number of data years
+    print("ndatayears", ndatayears)
     
     # Sort out time vector and indexing
     simtvec = D.S.tvec # Extract the time vector from the sim
@@ -619,6 +620,7 @@ def getcoverage(D=None, params=[], artelig=default_artelig, progname=default_pro
     # We only want the model-estimated size of the targeted population(s) for actual years, not the interpolated years
     yearindices = range(0, len(D.S.tvec), int(1/D.opt.dt))
     targetpop = targetpopmodel[yearindices]
+    print "targetpop:",targetpop
 
     storeparams = params
     coverage = None
@@ -626,6 +628,7 @@ def getcoverage(D=None, params=[], artelig=default_artelig, progname=default_pro
 
     # Check if coverage was entered as a percentage, and if not convert it to a %. 
     if any(j < 1 for j in D.data.costcov.cov[prognumber]):
+        print("costcov:", prognumber, D.data.costcov.cov[prognumber] )
         coveragepercent = D.data.costcov.cov[prognumber] 
         if len(coveragepercent)==1: # If an assumption has been used, keep this constant over time
             coveragenumber = coveragepercent * targetpop
