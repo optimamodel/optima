@@ -12,7 +12,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           $scope.scenarios = [];
 
           // use for export all data
-          $scope.exportGraphs = {
+          $scope.exportCharts = {
             'name':'Analysis scenarios',
             'controller':'AnalysisScenarios'
           };

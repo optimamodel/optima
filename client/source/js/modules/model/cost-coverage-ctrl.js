@@ -10,9 +10,9 @@ define(['./module', 'underscore'], function (module, _) {
       $scope.meta = meta;
 
       // use for export all data
-      $scope.exportGraphs = {
+      $scope.exportCharts = {
         'name':'Cost coverage outcome',
-        'controller':'ModelCostCoverage'        
+        'controller':'ModelCostCoverage'
       };
 
       // show message "calibrate the model" and disable the form elements

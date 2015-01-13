@@ -54,8 +54,8 @@
     </div>
 
     <div class="section" ng-if="hasCostCoverResponse">
-      
-      <button ng-if="graphs" class="btn" ng-click="exportAllFigures()" save-graph-as="export-all">Export all figures</button>
+
+      <export-all-charts ng-if="graphs" export-charts="exportCharts"></export-all-charts>
       <button ng-if="graphs || ccGraph" class="btn" ng-click="exportAllData()" save-graph-as="export-all">Export all data</button>
 
       <h1>{{ displayedProgram.name }}</h1>
