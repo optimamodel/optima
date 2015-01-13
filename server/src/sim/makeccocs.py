@@ -24,7 +24,7 @@ default_ccplot = [] # [2e6, [0, []]]
 default_coparams = [] # [0.3, 0.5, 0.7, 0.9] 
 default_init_ccparams = []
 default_init_convertedccparams = []
-default_makeplot = 1
+default_makeplot = 0 # CK: Otherwise brings up >100 figures
 default_effect = [['sex', 'condomcas'], [u'MSM']] # D.programs[default_progname]['effects'][0]
 default_artelig = range(6,26)
 coverage_params = ['numost','numpmtct','numfirstline','numsecondline']
@@ -243,8 +243,6 @@ def makeco(D, progname=default_progname, effect=default_effect, coparams=default
             fullmin = effect[2][2] # Assumptions of behaviour at maximal coverage (lower bound)
             fullmax = effect[2][3] # Assumptions of behaviour at maximal coverage (upper bound)
             coparams = [zeromin, zeromax, fullmin, fullmax] # Store for output
-
-        print("coparams", coparams, "effect", effect)
 
         # Get inputs from GUI, if they have been given
         if coparams and len(coparams)>0:
@@ -554,7 +552,7 @@ def plotallcurves(D=None, progname=default_progname, ccparams=default_ccparams, 
 
             # Store outputs
             effects[effectnumber] = effect 
-            plotdata[effectnumber], plotdata_co[effectnumber], effect = makecco(D=D, progname=progname, effect=effect, ccparams=ccparams, coparams=coparams, makeplot=makeplot, verbose=verbose)
+            plotdata[effectnumber], plotdata_co[effectnumber], effect = makecco(D=D, progname=progname, effect=effect, ccplot=ccplot, ccparams=ccparams, coparams=coparams, makeplot=makeplot, verbose=verbose)
             effects[effectnumber] = effect 
 
     return plotdata, plotdata_co, plotdata_cc, effects, D      
@@ -578,6 +576,7 @@ def getcoverage(D=None, params=[], artelig=default_artelig, progname=default_pro
     # Extract basic info from data structure
     prognumber = D.data.meta.progs.short.index(progname) # get program number
     ndatayears = len(D.data.epiyears) # get number of data years
+    print("ndatayears", ndatayears)
     
     # Sort out time vector and indexing
     simtvec = D.S.tvec # Extract the time vector from the sim

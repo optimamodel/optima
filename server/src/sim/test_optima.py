@@ -4,7 +4,7 @@ TEST_OPTIMA
 While optima.py is a demonstration of everything Optima can do, this is used to
 test specific features.
 
-Version: 2014dec02 by cliffk
+Version: 2015jan13 by cliffk
 """
 
 

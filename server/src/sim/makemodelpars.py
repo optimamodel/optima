@@ -74,7 +74,6 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
     M.popsize = grow(P.popsize, opt.growth) # Population size
     M.hivprev = P.hivprev # Initial HIV prevalence
     M.stiprevulc = dpar2mpar(P.stiprevulc, withwhat) # STI prevalence
-    M.stiprevdis = dpar2mpar(P.stiprevdis, withwhat) # STI prevalence
     M.death  = dpar2mpar(P.death, withwhat)  # Death rates
     M.tbprev = dpar2mpar(P.tbprev, withwhat) # TB prevalence
     
@@ -83,7 +82,7 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
     M.aidstest = dpar2mpar(P.aidstest, withwhat) # AIDS testing rates
     M.tx1 = dpar2mpar(P.numfirstline, withwhat) # Number of people on first-line treatment
     M.tx2 = dpar2mpar(P.numsecondline, withwhat) # Number of people on second-line treatment
-    
+
     ## MTCT parameters
     M.numpmtct = dpar2mpar(P.numpmtct, withwhat)
     M.birth    = dpar2mpar(P.birth, withwhat)
@@ -107,7 +106,6 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
     
     ## Other intervention parameters (proportion of the populations, not absolute numbers)
     M.prep = dpar2mpar(P.prep, withwhat)
-    M.pep  = dpar2mpar(P.pep, withwhat)
     
     ## Matrices can be used almost directly
     M.pships = struct()
