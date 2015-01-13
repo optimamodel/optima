@@ -12,7 +12,7 @@ define(['./module', 'underscore'], function (module, _) {
       // use for export all data
       $scope.exportGraphs = {
         'name':'Cost coverage outcome',
-        'controller':'ModelCostCoverage'
+        'controller':'ModelCostCoverage'        
       };
 
       // show message "calibrate the model" and disable the form elements
