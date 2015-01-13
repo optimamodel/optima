@@ -4,11 +4,13 @@ define([
   '../resources/model',
   '../resources/project',
   '../ui/type-selector/index',
+  '../common/export-all-charts',
   '../common/graph-type-factory'
 ], function (angular) {
   'use strict';
 
   return angular.module('app.model', [
+    'app.export-all-charts',
     'app.resources.model',
     'app.resources.project',
     'app.ui.type-selector',

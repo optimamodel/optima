@@ -8,7 +8,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       $scope.types = graphTypeFactory.types;
 
       // use for export all data
-      $scope.exportGraphs = {
+      $scope.exportCharts = {
         'name':'Optimization analyses',
         'controller':'AnalysisOptimization'
       };
