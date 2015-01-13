@@ -589,6 +589,7 @@ def getcoverage(D=None, params=[], artelig=default_artelig, progname=default_pro
     targetpars = []
     popnumbers = []
     for effect in D.programs[progname]['effects']:
+        print(effect)
         targetpops.append(effect[1][0])
         targetpars.append(effect[0][1])
         if effect[1][0] in D.data.meta.pops.short:
@@ -599,6 +600,7 @@ def getcoverage(D=None, params=[], artelig=default_artelig, progname=default_pro
 
     # Figure out the total model-estimated size of the targeted population(s)
     for thispar in targetpars: # Loop through parameters
+        print("thispar", thispar)
         if len(D.P[thispar].p)==D.G.npops: # For parameters whose effect is differentiated by population, we add up the targeted populations
             targetpopmodel = D.S.people[:,popnumbers,:].sum(axis=(0,1))
         elif len(D.P[thispar].p)==1: # For parameters whose effects are not differentiated by population, we make special cases depending on the parameter
