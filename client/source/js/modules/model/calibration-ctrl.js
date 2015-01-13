@@ -230,7 +230,6 @@ define(['./module', 'angular'], function (module, angular) {
     };
 
 	  var autoCalibrationTimer;
-    var intervalTime = 0;
     $scope.startAutoCalibration = function () {
       $http.post('/api/model/calibrate/auto', $scope.simulationOptions,{ignoreLoadingBar:true})
         .success(function(data, status, headers, config) {
@@ -241,8 +240,16 @@ define(['./module', 'angular'], function (module, angular) {
             $scope.calibrationStatus = 'running';
             
             // start cfpLoadingBar loading
-            cfpLoadingBar.start();
-            intervalTime = 0;
+            // calculate the number of ticks in timelimit
+            var val = ($scope.simulationOptions.timelimit * 1000) / 250;
+            // callback function in start to be called in place of _inc()
+            cfpLoadingBar.start(function () {
+              if (cfpLoadingBar.status() >= 1) {
+                return;
+              }
+              var pct = cfpLoadingBar.status() + (0.9/val);
+              cfpLoadingBar.set(pct);
+            });
           } else {
             console.log("Cannot poll for optimization now");
           }
@@ -256,10 +263,7 @@ define(['./module', 'angular'], function (module, angular) {
             stopTimer();
           } else {
             updateGraphs(data.graph);
-            // increase the cfpLoadingBar progress
-            cfpLoadingBar.set(intervalTime/$scope.simulationOptions.timelimit);
-            console.log(intervalTime/$scope.simulationOptions.timelimit,intervalTime,$scope.simulationOptions.timelimit);
-            intervalTime+=5;
+            
           }
         })
         .error(function(data, status, headers, config) {
