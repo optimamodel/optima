@@ -157,6 +157,7 @@ if 1:
                     # It's metadata: pull out each of the pieces
                     if groupname=='metadata': 
                         thispar = subparlist[parcount] # Get the name of this parameter, e.g. 'pop'
+                        print thispar, parcount
                         data[name][thispar] = struct() # Initialize to empty list
                         data[name][thispar].short = [] # Store short population/program names, e.g. "FSW"
                         data[name][thispar].long = [] # Store long population/program names, e.g. "Female sex workers"
