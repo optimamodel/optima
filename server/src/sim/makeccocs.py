@@ -244,8 +244,6 @@ def makeco(D, progname=default_progname, effect=default_effect, coparams=default
             fullmax = effect[2][3] # Assumptions of behaviour at maximal coverage (upper bound)
             coparams = [zeromin, zeromax, fullmin, fullmax] # Store for output
 
-        print("coparams", coparams, "effect", effect)
-
         # Get inputs from GUI, if they have been given
         if coparams and len(coparams)>0:
             if not len(coparams)==4:
@@ -590,7 +588,6 @@ def getcoverage(D=None, params=[], artelig=default_artelig, progname=default_pro
     targetpars = []
     popnumbers = []
     for effect in D.programs[progname]['effects']:
-        print(effect)
         targetpops.append(effect[1][0])
         targetpars.append(effect[0][1])
         if effect[1][0] in D.data.meta.pops.short:
@@ -601,7 +598,6 @@ def getcoverage(D=None, params=[], artelig=default_artelig, progname=default_pro
 
     # Figure out the total model-estimated size of the targeted population(s)
     for thispar in targetpars: # Loop through parameters
-        print("thispar", thispar)
         if len(D.P[thispar].p)==D.G.npops: # For parameters whose effect is differentiated by population, we add up the targeted populations
             targetpopmodel = D.S.people[:,popnumbers,:].sum(axis=(0,1))
         elif len(D.P[thispar].p)==1: # For parameters whose effects are not differentiated by population, we make special cases depending on the parameter
@@ -620,7 +616,6 @@ def getcoverage(D=None, params=[], artelig=default_artelig, progname=default_pro
     # We only want the model-estimated size of the targeted population(s) for actual years, not the interpolated years
     yearindices = range(0, len(D.S.tvec), int(1/D.opt.dt))
     targetpop = targetpopmodel[yearindices]
-    print "targetpop:",targetpop
 
     storeparams = params
     coverage = None
@@ -628,7 +623,6 @@ def getcoverage(D=None, params=[], artelig=default_artelig, progname=default_pro
 
     # Check if coverage was entered as a percentage, and if not convert it to a %. 
     if any(j < 1 for j in D.data.costcov.cov[prognumber]):
-        print("costcov:", prognumber, D.data.costcov.cov[prognumber] )
         coveragepercent = D.data.costcov.cov[prognumber] 
         if len(coveragepercent)==1: # If an assumption has been used, keep this constant over time
             coveragenumber = coveragepercent * targetpop
