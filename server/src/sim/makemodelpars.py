@@ -74,7 +74,6 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
     M.popsize = grow(P.popsize, opt.growth) # Population size
     M.hivprev = P.hivprev # Initial HIV prevalence
     M.stiprevulc = dpar2mpar(P.stiprevulc, withwhat) # STI prevalence
-    M.stiprevdis = dpar2mpar(P.stiprevdis, withwhat) # STI prevalence
     M.death  = dpar2mpar(P.death, withwhat)  # Death rates
     M.tbprev = dpar2mpar(P.tbprev, withwhat) # TB prevalence
     
