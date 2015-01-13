@@ -58,6 +58,7 @@ def makedatapars(D, verbose=2):
     
     D.P = struct() # Initialize parameters structure
     D.P.__doc__ = 'Parameters that have been directly derived from the data, which are then used to create the model parameters'
+    D.G.meta = D.data.meta # Copy metadata
     
     ## Key parameters
     for parname in D.data.key.keys():
@@ -73,6 +74,7 @@ def makedatapars(D, verbose=2):
                 D.P[parname] = data2par(D.data[parclass][parname], usetime=True)
             else:
                 D.P[parname] = data2par(D.data[parclass][parname])
+    
     
     ## Matrices can be used directly
     for parclass in ['pships', 'transit']:
@@ -101,14 +103,27 @@ def makedatapars(D, verbose=2):
             
     
     ## TODO: disutility, economic data etc.
-            
-            
     
-    ###############################################################################
-    ## Set up general parameters
-    ###############################################################################
-    D.G.meta = D.data.meta # Copy metadata
-
+    
+    ## Change sizes of circumcision and births
+    def popexpand(origarray, popbool):
+        """ For variables that are only defined for certain populations, expand to the full array. WARNING, doesn't work for time """
+        from copy import deepcopy
+        newarray = deepcopy(origarray)
+        newarray.p = zeros(shape(D.G.meta.pops.male))
+        if 't' in newarray.keys(): raise Exception('Shouldn''t be using time')
+        count = -1
+        for i,tf in enumerate(popbool):
+            if tf:
+                count += 1
+                newarray.p[i] = origarray.p[count]
+        
+        return newarray
+    
+    D.P.birth    = popexpand(D.P.birth,  array(D.G.meta.pops.male)==0)
+    D.P.circum   = popexpand(D.P.circum, array(D.G.meta.pops.male)==1)
+            
+            
 
     printv('...done converting data to parameters.', 2, verbose)
     
