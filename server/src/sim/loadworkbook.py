@@ -1,7 +1,4 @@
-if 1:
-    filename='example.xlsx'
-    verbose=2
-#def loadworkbook(filename='example.xlsx', verbose=2):
+def loadworkbook(filename='example.xlsx', verbose=2):
     """
     Loads the workbook (i.e. reads its contents into the data structure).
     This data structure is used in the next step to update the corresponding model.
@@ -63,7 +60,7 @@ if 1:
                                                       ['recov',    ['gt500', 'gt350', 'gt200', 'gt50', 'aids']],\
                                                       ['fail',     ['first', 'second']],\
                                                       ['death',    ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'aids', 'treat', 'tb']],\
-                                                      ['eff',      ['condom', 'circ', 'dx', 'sti', 'meth', 'pmtct', 'tx', 'prep', 'pep']],\
+                                                      ['eff',      ['condom', 'circ', 'dx', 'sti', 'ost', 'pmtct', 'tx', 'prep']],\
                                                       ['disutil',  ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'aids','tx']]]]
                 ]
     
@@ -157,7 +154,6 @@ if 1:
                     # It's metadata: pull out each of the pieces
                     if groupname=='metadata': 
                         thispar = subparlist[parcount] # Get the name of this parameter, e.g. 'pop'
-                        print thispar, parcount
                         data[name][thispar] = struct() # Initialize to empty list
                         data[name][thispar].short = [] # Store short population/program names, e.g. "FSW"
                         data[name][thispar].long = [] # Store long population/program names, e.g. "Female sex workers"
@@ -265,4 +261,4 @@ if 1:
                             data[name][thispar][subpar] = thesedata # Store data
     
     printv('...done loading data.', 2, verbose)
-#    return data, programs
+    return data, programs
