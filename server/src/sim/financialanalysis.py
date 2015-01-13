@@ -76,7 +76,6 @@ def financialanalysis(D, postyear = 2015, S = None, yscale = 'abs', makeplot = F
     artunitcost = np.asarray(artunitcost)
     artunitcost = artunitcost[~np.isnan(artunitcost)]
     artunitcost = artunitcost[-1]
-    print "econ-social", D.data.econ.social
     
     #ATTN TODO CK -proper- way to read these data from econ (they used to be constants, not any more)
     econ_keys = ['acute','gt500','gt350', 'gt200', 'gt50','lt50'] # example.xlsx atm!
@@ -241,7 +240,6 @@ def snipM(M, thisindex = range(150,301)):
     
     # Loop over parameters in M and snip the time varying ones....
     for param in M0.keys():
-        print("snipM","param", param)
         if param in ['transit','pships', 'const', 'hivprev']:
             continue
         elif param in ['condom', 'numacts']:
