@@ -6,6 +6,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
 
       $scope.meta = meta;
       $scope.types = graphTypeFactory.types;
+      $scope.needData = $scope.meta.progs === undefined;
 
       // use for export all data
       $scope.exportGraphs = {
@@ -63,38 +64,39 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
 
       // Default program weightings
       $scope.params.objectives.money.costs = {};
-      $scope.programs = meta.progs.long;
-      $scope.programCodes = meta.progs.short;
+      if(meta.progs) {
+        $scope.programs = meta.progs.long;
+        $scope.programCodes = meta.progs.short;
 
-      for ( var i = 0; i < meta.progs.short.length; i++ ) {
-        $scope.params.objectives.money.costs[meta.progs.short[i]] = 100;
+        for ( var i = 0; i < meta.progs.short.length; i++ ) {
+          $scope.params.objectives.money.costs[meta.progs.short[i]] = 100;
+        }
+
+        // Constraints Defaults
+        $scope.params.constraints = {};
+        $scope.params.constraints.txelig = 1;
+        $scope.params.constraints.dontstopart = true;
+
+        $scope.params.constraints.decrease = {};
+        $scope.params.constraints.increase = {};
+        $scope.params.constraints.coverage = {};
+
+        // Initialize program constraints models
+        for ( var i = 0; i < meta.progs.short.length; i++ ) {
+          $scope.params.constraints.decrease[meta.progs.short[i]] = {};
+          $scope.params.constraints.decrease[meta.progs.short[i]].use = false;
+          $scope.params.constraints.decrease[meta.progs.short[i]].by = 100;
+
+          $scope.params.constraints.increase[meta.progs.short[i]] = {};
+          $scope.params.constraints.increase[meta.progs.short[i]].use = false;
+          $scope.params.constraints.increase[meta.progs.short[i]].by = 100;
+
+          $scope.params.constraints.coverage[meta.progs.short[i]] = {};
+          $scope.params.constraints.coverage[meta.progs.short[i]].use = false;
+          $scope.params.constraints.coverage[meta.progs.short[i]].level = 0;
+          $scope.params.constraints.coverage[meta.progs.short[i]].year = undefined;
+        }
       }
-
-      // Constraints Defaults
-      $scope.params.constraints = {};
-      $scope.params.constraints.txelig = 1;
-      $scope.params.constraints.dontstopart = true;
-
-      $scope.params.constraints.decrease = {};
-      $scope.params.constraints.increase = {};
-      $scope.params.constraints.coverage = {};
-
-      // Initialize program constraints models
-      for ( var i = 0; i < meta.progs.short.length; i++ ) {
-        $scope.params.constraints.decrease[meta.progs.short[i]] = {};
-        $scope.params.constraints.decrease[meta.progs.short[i]].use = false;
-        $scope.params.constraints.decrease[meta.progs.short[i]].by = 100;
-
-        $scope.params.constraints.increase[meta.progs.short[i]] = {};
-        $scope.params.constraints.increase[meta.progs.short[i]].use = false;
-        $scope.params.constraints.increase[meta.progs.short[i]].by = 100;
-
-        $scope.params.constraints.coverage[meta.progs.short[i]] = {};
-        $scope.params.constraints.coverage[meta.progs.short[i]].use = false;
-        $scope.params.constraints.coverage[meta.progs.short[i]].level = 0;
-        $scope.params.constraints.coverage[meta.progs.short[i]].year = undefined;
-      }
-
     $scope.radarGraphName = 'Allocation';
     $scope.radarAxesName =  'Programs';
 
