@@ -52,7 +52,7 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
         people[:,:,0] = initstate # Yes it has, so use it.
     
     ## Calculate other things outside the loop
-    cd4trans = h2a(M.const.cd4trans) # Convert a dictionary to an array
+    cd4trans = h2a(G, M.const.cd4trans) # Convert a dictionary to an array
     dxfactor = M.const.eff.dx * cd4trans # Include diagnosis efficacy
     txfactor = M.const.eff.tx * dxfactor # And treatment efficacy
     
@@ -73,10 +73,9 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
     mfr  = M.const.trans.mfr # Male -> female receptive
     mtcb = M.const.trans.mtctbreast   # MTCT with breastfeeding
     mtcn = M.const.trans.mtctnobreast # MTCT no breastfeeding
-    effsti    = M.const.eff.sti * (M.stiprevulc + M.stiprevdis) # TODO -- AS: don't like the way STI prevalence can be > 100%
+    effsti    = M.const.eff.sti * M.stiprevulc # TODO -- AS: don't like the way STI prevalence can be > 100%
     effcirc   = (1 - M.const.eff.circ) * M.circum
     effprep   = (1 - M.const.eff.prep) * M.prep
-    effpep    = (1 - M.const.eff.pep)  * M.pep    
     effcondom = 1 - M.const.eff.condom
     effpmtct  = 1 - M.const.eff.pmtct
     transinj  = M.const.trans.inj
@@ -88,9 +87,9 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
     numpmtct  = M.numpmtct
 #    numost    = M.numost
 #    numart    = M.numart
-    prog      = h2a(M.const.prog)   # Disease progression rates
-    recov     = h2a(M.const.recov)  # Recovery rates
-    death     = h2a(M.const.death)  # HIV death rates
+    prog      = h2a(G, M.const.prog)   # Disease progression rates
+    recov     = h2a(G, M.const.recov)  # Recovery rates
+    death     = h2a(G, M.const.death)  # HIV death rates
     deathtx   = M.const.death.treat # Death rate whilst on treatment
 
     M.tbprev = M.tbprev + 1  
@@ -162,8 +161,6 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
                 circeffF = 1                   # Trivial circumcision effect for female or receptive male
                 prepeffM = 1 - effprep[popM,t] # Male PrEP effect
                 prepeffF = 1 - effprep[popF,t] # Female PrEP effect
-                pepeffM  = 1 - effpep[popM,t]  # Male PEP effect
-                pepeffF  = 1 - effpep[popF,t]  # Female PEP effect
                 stieffM  = 1 + effsti[popM,t]  # Male STI prevalence effect
                 stieffF  = 1 + effsti[popF,t]  # Female STI prevalence effect
                 
@@ -173,8 +170,8 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
                     numactsF = totalacts[act][popF,popM,t]; # Number of acts per person per year (receptive partner)
                     condomprob = (condom[act][popM,t] + condom[act][popF,t]) / 2 # Reconcile condom probability
                     condomeff = 1 - condomprob*effcondom # Effect of condom use
-                    forceinfM = 1 - mpow((1-transM*circeffM*prepeffM*pepeffM*stieffM), (dt*numactsM*condomeff*effhivprev[popF])) # The chance of "female" infecting "male"
-                    forceinfF = 1 - mpow((1-transF*circeffF*prepeffF*pepeffF*stieffF), (dt*numactsF*condomeff*effhivprev[popM])) # The chance of "male" infecting "female"
+                    forceinfM = 1 - mpow((1-transM*circeffM*prepeffM*stieffM), (dt*numactsM*condomeff*effhivprev[popF])) # The chance of "female" infecting "male"
+                    forceinfF = 1 - mpow((1-transF*circeffF*prepeffF*stieffF), (dt*numactsF*condomeff*effhivprev[popM])) # The chance of "male" infecting "female"
                     forceinfvec[popM] = 1 - (1-forceinfvec[popM]) * (1-forceinfM) # Calculate the new "male" forceinf, ensuring that it never gets above 1
                     forceinfvec[popF] = 1 - (1-forceinfvec[popF]) * (1-forceinfF) # Calculate the new "female" forceinf, ensuring that it never gets above 1
                     if not(all(forceinfvec>=0)): raise Exception('Sexual force-of-infection is invalid')
@@ -397,11 +394,10 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
 ## Helper functions
 ###############################################################################
 
-def h2a(parstruct, verbose=2):
+def h2a(G, parstruct, verbose=2):
     """ Convert a health state structure to an array """
-    healthstates = ['acute','gt500','gt350','gt200','aids'] # TODO, don't redefine these or hard-code them
     outarray = []
-    for state in healthstates:
+    for state in G.healthstates:
         try: 
             outarray.append(parstruct[state])
         except: 
@@ -468,9 +464,9 @@ def equilibrate(G, M, Finit):
         diagnosed = nevertreated * M['hivtest'][p,0] / undxdxrates
         
         # Set rates within
-        progratios = hstack([h2a(M['const']['prog']), M['const']['death']['aids']]) # For last rate, use AIDS death as dominant rate
+        progratios = hstack([h2a(G, M['const']['prog']), M['const']['death']['aids']]) # For last rate, use AIDS death as dominant rate
         progratios = (1/progratios)  / sum(1/progratios) # Normalize
-        recovratios = hstack([inf, h2a(M['const']['recov']), efftreatmentrate]) # Not sure if this is right...inf since no progression to acute, treatmentrate since main entry here # TODO check
+        recovratios = hstack([inf, h2a(G, M['const']['recov']), efftreatmentrate]) # Not sure if this is right...inf since no progression to acute, treatmentrate since main entry here # TODO check
         recovratios = (1/recovratios)  / sum(1/recovratios) # Normalize
         
         # Final calculations

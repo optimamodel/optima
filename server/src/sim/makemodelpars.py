@@ -106,7 +106,6 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
     
     ## Other intervention parameters (proportion of the populations, not absolute numbers)
     M.prep = dpar2mpar(P.prep, withwhat)
-    M.pep  = dpar2mpar(P.pep, withwhat)
     
     ## Matrices can be used almost directly
     M.pships = struct()
