@@ -116,18 +116,6 @@ def makedatapars(D, verbose=2):
     ## Set up general parameters
     ###############################################################################
     D.G.meta = D.data.meta # Copy metadata
-    
-    # Define male populations
-    D.G.male = zeros(D.G.npops)
-    for key in ['reg', 'cas', 'com']:
-        D.G.male += array(D.data.pships[key]).sum(axis=1) # Find insertive acts
-    D.G.male = D.G.male>0 # Convert to Boolean array
-    
-    # Define injecting populations
-    D.G.pwid = zeros(D.G.npops)
-    for ax in [0,1]:
-        D.G.pwid += array(D.data.pships.inj).sum(axis=ax) # Find injecting acts
-    D.G.pwid = D.G.pwid>0 # Convert to Boolean array
 
 
     printv('...done converting data to parameters.', 2, verbose)
