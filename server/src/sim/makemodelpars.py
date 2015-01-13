@@ -82,7 +82,7 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
     M.aidstest = dpar2mpar(P.aidstest, withwhat) # AIDS testing rates
     M.tx1 = dpar2mpar(P.numfirstline, withwhat) # Number of people on first-line treatment
     M.tx2 = dpar2mpar(P.numsecondline, withwhat) # Number of people on second-line treatment
-    
+
     ## MTCT parameters
     M.numpmtct = dpar2mpar(P.numpmtct, withwhat)
     M.birth    = dpar2mpar(P.birth, withwhat)

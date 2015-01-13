@@ -66,7 +66,7 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
     tx1  = G.tx1
     fail = G.fail
     tx2  = G.tx2
-    male = G.male
+    male = G.meta.pops.male
     mmi  = M.const.trans.mmi # Male -> male insertive
     mfi  = M.const.trans.mfi # Male -> female insertive
     mmr  = M.const.trans.mmr # Male -> male receptive
