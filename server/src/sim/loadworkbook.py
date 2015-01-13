@@ -204,6 +204,8 @@ def loadworkbook(filename='example.xlsx', verbose=2):
                                 data[name][thispar].sexwomen.append(thesedata[6])
                                 data[name][thispar].sexworker.append(thesedata[7])
                                 data[name][thispar].client.append(thesedata[8])
+                            if thispar=='progs':
+                                if not thesedata[0] in programs: programs[thesedata[0]] = []
                                 
                         # It's cost-coverage data, save the cost and coverage values separately
                         if groupname=='cocodata':
@@ -239,7 +241,6 @@ def loadworkbook(filename='example.xlsx', verbose=2):
 
                             for programname in programs_for_input_key(thispar):
                                 if programname in programs:
-#                                    programs[programname].append([[name, thispar], [subparam], default_init_coparams])                        
                                     programs[programname].append([[name, thispar], [subparam]])
                         
                         # It's a matrix, append the data                                     
