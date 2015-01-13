@@ -109,7 +109,7 @@ def loadworkbook(filename='example.xlsx', verbose=2):
             
             
             ## Calculate columns for which data are entered, and store the year ranges
-            if groupname in ['keydata', 'cocodata', 'timedata']  and name != 'macro': # Need to gather year ranges for epidemic etc. data
+            if groupname in ['keydata', 'cocodata', 'timedata']  and name != 'econ': # Need to gather year ranges for epidemic etc. data
                 data.epiyears = [] # Initialize epidemiology data years
                 for col in range(sheetdata.ncols):
                     thiscell = sheetdata.cell_value(1,col) # 1 is the 2nd row which is where the year data should be
@@ -119,7 +119,7 @@ def loadworkbook(filename='example.xlsx', verbose=2):
                     elif thiscell != '': # Nope, more years, keep going
                         data.epiyears.append(float(thiscell)) # Add this year
             
-            if name == 'macro': # Need to gather year ranges for economic data
+            if name == 'econ': # Need to gather year ranges for economic data
                 data.econyears = [] # Initialize epidemiology data years
                 for col in range(sheetdata.ncols):
                     thiscell = sheetdata.cell_value(1,col) # 1 is the 2nd row which is where the year data should be
