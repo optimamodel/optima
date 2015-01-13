@@ -462,7 +462,7 @@ class OptimaWorkbook:
     def generate_inj(self):
         current_row = 0
         names_formats_ranges = [('Average number of injections per person per year', OptimaFormats.GENERAL, self.ref_pop_range), \
-        ('Average percentage of people who receptively shared a needle/syringe at last injection', OptimaFormats.PERCENTAGE, ['Average']), \
+        ('Average percentage of people who receptively shared a needle/syringe at last injection', OptimaFormats.PERCENTAGE, self.ref_pop_range), \
         ('Number of people who inject drugs who are on opiate substitution therapy', OptimaFormats.GENERAL, ['Average'])]
 
         for (name, row_format, row_range) in names_formats_ranges:
