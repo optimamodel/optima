@@ -11,7 +11,7 @@ define([
           templateUrl: 'js/modules/ui/type-selector/type-selector.html',
           controller: 'TypeSelectorController',
           scope: {
-            types: '=',
+            types: '='
           }
         };
     });
