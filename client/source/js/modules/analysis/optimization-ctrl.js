@@ -275,10 +275,129 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       }
     };
 
+    function validateYears(){
+      return $scope.params.objectives!==undefined &&
+             $scope.params.objectives.year!==undefined &&
+             $scope.params.objectives.year.start!==undefined &&
+             $scope.params.objectives.year.end !==undefined &&
+             ($scope.params.objectives.year.start < $scope.params.objectives.year.end);
+    }
+
+    /**
+     * If the string is undefined return empty, otherwise just return the string
+     * @param str
+     * @returns {string}
+     */
+    function strOrEmpty(str){
+      return _(str).isUndefined() ? '' : str;
+    }
+
+    /**
+     * Join the word with a comma between them, except for the last word
+     * @param arr
+     * @param prop if it's not undefined it will pick that specific property from the object
+     * @param quote should the sentence be quoted or not
+     * @param before add something before each word
+     * @param after add something after each word
+     * @returns {string}
+     */
+    function joinArrayAsSentence(arr, prop, quote, before, after){
+      quote = quote ? '"':'';
+      before = strOrEmpty(before);
+      after = strOrEmpty(after);
+      return quote + _.compact(_(arr).map(function (val) {var p = (prop ? val[prop] : val);return p ? (before + strOrEmpty(p) + after ) : undefined;})).join(", ") + quote;
+    }
+
+    function budgetsAreInvalid() {
+      if($scope.params.objectives.funding === 'variable') {
+        var budgets = _.compact(_($scope.params.objectives.outcome.variable).toArray());
+        if (validateYears()) {
+          var yearRange = $scope.params.objectives.year.end - $scope.params.objectives.year.start;
+          return budgets.length - 1 !== yearRange;
+        }
+      }
+      else if($scope.params.objectives.funding === 'constant'){
+        return !$scope.params.objectives.outcome.fixed;
+      }
+      return false;
+    }
+    $scope.budgetsAreInvalid = budgetsAreInvalid;
+
+    function constructOptimizationMessage() {
+      $scope.optimizationMessage = "";
+      var checkedPrograms = _($scope.objectivesToMinimize).filter(function (a) {
+        return $scope.params.objectives.outcome[a.slug] === true;
+      });
+      var yearsAreValid = validateYears();
+      var showOptimizationMessage = $scope.OptimizationForm.$valid && (checkedPrograms.length > 0 || yearsAreValid);
+
+      if (showOptimizationMessage === true) {
+        $scope.optimizationMessage = "Optimizing ";
+        if (checkedPrograms.length > 0) {
+          $scope.optimizationMessage += joinArrayAsSentence(checkedPrograms, 'name', true);
+        }
+        if (yearsAreValid) {
+          $scope.optimizationMessage += " over years " + $scope.params.objectives.year.start + " to " + $scope.params.objectives.year.end;
+        }
+        if ($scope.params.objectives.funding === 'variable' && !budgetsAreInvalid()) {
+          var yearRange = $scope.params.objectives.year.end - $scope.params.objectives.year.start;
+          var budgets = _.compact(_($scope.params.objectives.outcome.variable).toArray());
+          if (budgets.length - 1 === yearRange) {
+            $scope.optimizationMessage += " with budget level " + joinArrayAsSentence(budgets, undefined, false, "$");
+          }
+        }
+        else if($scope.params.objectives.funding === 'constant') {
+          $scope.optimizationMessage += " with fixed budget of $" + $scope.params.objectives.outcome.fixed + " per year";
+        }
+        $scope.optimizationMessage+=".";
+      }
+    }
+
+    $scope.optimizationMessage = "";
+    $scope.setActiveTab = function(tabNum){
+      if(tabNum === 3){
+        /* Prevent going to third tab if something is invalid in the first tab.
+        *  Cannot just use $scope.OptimizationForm.$invalid for this because the validation of the years and the budgets is done in a different way. */
+        if(validateYears()===false || $scope.OptimizationForm.$invalid){
+          showErrorsInModal();
+          return;
+        }
+        constructOptimizationMessage();
+      }
+      $scope.activeTab = tabNum;
+    };
+
+    $scope.objectivesToMinimize = [
+      {
+        name:"Cumulative new HIV infections",
+        slug:"inci",
+        title: "New infections weighting"
+      },
+      {
+        name:"Cumulative HIV-related DALYs",
+        slug: "daly",
+        title:"DALYs weighting"
+      },
+      {
+        name:" Cumulative AIDS-related deaths",
+        slug:"death",
+        title:"Deaths weighting"
+      },
+      {
+        name:"Total HIV-related costs",
+        slug:"cost",
+        title:"Costs weighting"
+      }
+    ];
+
+    function showErrorsInModal(){
+      modalService.inform(undefined, 'OK', "Please specify program optimizations period" + (budgetsAreInvalid()? ' and enter a budget for each year':'') + ".");
+    }
+
     $scope.startOptimization = function () {
       if($scope.OptimizationForm.$invalid) {
-        $scope.activeTab = 1;
-        modalService.inform(undefined, 'OK', "Please specify program optimizations period.");
+        $scope.setActiveTab(1);
+        showErrorsInModal();
       } else{
         $http.post('/api/analysis/optimization/start', $scope.params)
           .success(function (data, status, headers, config) {
