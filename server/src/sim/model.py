@@ -184,9 +184,8 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
         for pop1 in range(npops):
             for pop2 in range(npops):
                 if pshipsinj[pop1,pop2]>0: # Ignore if this isn't a valid injecting partnership
-                    sharingprob = (sharing[pop1,t] + sharing[pop2,t]) / 2 # Reconcile sharing probability
-                    numacts1 = sharingprob * totalacts['inj'][pop1,pop2,t] / 2 # Number of acts per person per year -- /2 since otherwise double-count
-                    numacts2 = sharingprob * totalacts['inj'][pop2,pop1,t] / 2 # Number of acts per person per year
+                    numacts1 = sharing[t] * totalacts['inj'][pop1,pop2,t] / 2 # Number of acts per person per year -- /2 since otherwise double-count
+                    numacts2 = sharing[t] * totalacts['inj'][pop2,pop1,t] / 2 # Number of acts per person per year
                     forceinf1 = 1 - mpow((1-transinj), (dt*numacts1*effhivprev[pop2])) # The chance of "2" infecting "1"
                     forceinf2 = 1 - mpow((1-transinj), (dt*numacts2*effhivprev[pop1])) # The chance of "1" infecting "2"
                     forceinfvec[pop1] = 1 - (1-forceinfvec[pop1]) * (1-forceinf1) # Calculate the new "male" forceinf, ensuring that it never gets above 1
