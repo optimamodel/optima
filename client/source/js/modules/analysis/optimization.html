@@ -1,505 +1,507 @@
 <div class="page">
+    <p ng-show="needData===true" class="error-hint">Please upload Optima spreadsheet first.</p>
+    <div ng-if="needData===false">
+		<div class="elastic">
+			<div class="elastic_col __va-middle btn-group" ng-init="activeTab = 1">
+				<button class="btn __white" ng-class="{ __active: activeTab === 1 }" ng-click="setActiveTab(1)" ng-click="activeTab = 1">Define objectives</button>
+				<button class="btn __white" ng-class="{ __active: activeTab === 2 }" ng-click="setActiveTab(2)">Define constraints</button>
+				<button class="btn __white" ng-class="{ __active: activeTab === 3 }" ng-click="setActiveTab(3)">View results</button>
+			</div>
+		</div>
 
-<div class="elastic">
-    <div class="elastic_col __va-middle btn-group" ng-init="activeTab = 1">
-        <button class="btn __white" ng-class="{ __active: activeTab === 1 }" ng-click="setActiveTab(1)" ng-click="activeTab = 1">Define objectives</button>
-        <button class="btn __white" ng-class="{ __active: activeTab === 2 }" ng-click="setActiveTab(2)">Define constraints</button>
-        <button class="btn __white" ng-class="{ __active: activeTab === 3 }" ng-click="setActiveTab(3)">View results</button>
-    </div>
-</div>
+		<hr class="__dashed"/>
 
-<hr class="__dashed"/>
+		<form name="OptimizationForm" ng-submit="startOptimization()" novalidate>
+		<!-- Tab 1 -->
+		<div ng-show="activeTab === 1">
 
-<form name="OptimizationForm" ng-submit="startOptimization()" novalidate>
-<!-- Tab 1 -->
-<div ng-show="activeTab === 1">
+			<div class="cf">
+				<h2>Time horizons and assumptions</h2>
+				<div class="float-left margin-left-s">
+					Analyses will consider program optimizations over the period
+					<input class="txbox __inline __l" value="2015" type="number" placeholder="e.g. 2015" ng-model="params.objectives.year.start" ng-keyup="updateYearRange()" ng-required="yearsAreRequired()">
+					to
+					<input class="txbox __inline __l" value="2020" type="number" placeholder="e.g. 2020" ng-model="params.objectives.year.end" ng-keyup="updateYearRange()" ng-required="yearsAreRequired()">
+					in order to achieve the objectives by
+					<input class="txbox __inline __l" value="2030" type="number" placeholder="e.g. 2030" ng-model="params.objectives.year.until">
+					, with the following context between the end of the optimized program period and the end of the analysis period:</p>
+					<div>
+						<label>
+							<input type="checkbox"  ng-model="params.objectives.year.artcontinue">
+							ART programs will continue:
+						</label>
+						<div class="elastic_col __va-middle" style="padding:0px 0px 0px 20px;">
+							<label>
+								<input type="radio" name="artcontinue" ng-model="params.objectives.artcontinue" value="1">
+							  During the program period, no one who initiates treatment is to stop ART, except by natural attrition
+							</label><br>
+							<label>
+								<input type="radio" name="artcontinue" ng-model="params.objectives.artcontinue" value="2">
+								Number of people on ART stays the same
+							</label><br>
+							<label>
+								<input type="radio" name="artcontinue" ng-model="params.objectives.artcontinue" value="3">
+								Percentage coverage of ART stays the same
+							</label><br>
+							<label>
+								<input type="radio" name="artcontinue" ng-model="params.objectives.artcontinue" value="4">
+								ART coverage will scale up, reaching <input class="txbox __inline __s" value="90" placeholder="e.g. 90" ng-model="params.objectives.year.universalcov">% coverage of treatment-eligible people by <input class="txbox __inline __l" value="2025" placeholder="e.g. 2025" ng-model="params.objectives.year.universal"> and then be maintained
+							</label>
+						</div>
+					</div>
+					<br>
+					<div>
+						<label>
+							<input type="checkbox"  ng-model="params.objectives.year.otherprograms">
+							All other behavioral and contextual parameters:
+						</label>
+						<div class="elastic_col __va-middle" style="padding:0px 0px 0px 0px;">
+							<label class="checkbox-inline">
+								<input type="radio" name="otherprograms" ng-model="params.objectives.otherprograms" value="revert">
+								revert to the levels prior to the program period
+							</label><br>
+							<label class="checkbox-inline">
+								<input type="radio" name="otherprograms" ng-model="params.objectives.otherprograms" value="remain">
+								remain at levels at the end of the program period
+							</label>
+						</div>
+					</div>
+				</div>
+			</div>
 
-    <div class="cf">
-        <h2>Time horizons and assumptions</h2>
-        <div class="float-left margin-left-s">
-            Analyses will consider program optimizations over the period
-            <input class="txbox __inline __l" value="2015" type="number" placeholder="e.g. 2015" ng-model="params.objectives.year.start" ng-keyup="updateYearRange()" ng-required="yearsAreRequired()">
-            to
-            <input class="txbox __inline __l" value="2020" type="number" placeholder="e.g. 2020" ng-model="params.objectives.year.end" ng-keyup="updateYearRange()" ng-required="yearsAreRequired()">
-            in order to achieve the objectives by
-            <input class="txbox __inline __l" value="2030" type="number" placeholder="e.g. 2030" ng-model="params.objectives.year.until">
-            , with the following context between the end of the optimized program period and the end of the analysis period:</p>
-            <div>
-                <label>
-                    <input type="checkbox"  ng-model="params.objectives.year.artcontinue">
-                    ART programs will continue:
-                </label>
-                <div class="elastic_col __va-middle" style="padding:0px 0px 0px 20px;">
-                    <label>
-                        <input type="radio" name="artcontinue" ng-model="params.objectives.artcontinue" value="1">
-                      During the program period, no one who initiates treatment is to stop ART, except by natural attrition
-                    </label><br>
-                    <label>
-                        <input type="radio" name="artcontinue" ng-model="params.objectives.artcontinue" value="2">
-                        Number of people on ART stays the same
-                    </label><br>
-                    <label>
-                        <input type="radio" name="artcontinue" ng-model="params.objectives.artcontinue" value="3">
-                        Percentage coverage of ART stays the same
-                    </label><br>
-                    <label>
-                        <input type="radio" name="artcontinue" ng-model="params.objectives.artcontinue" value="4">
-                        ART coverage will scale up, reaching <input class="txbox __inline __s" value="90" placeholder="e.g. 90" ng-model="params.objectives.year.universalcov">% coverage of treatment-eligible people by <input class="txbox __inline __l" value="2025" placeholder="e.g. 2025" ng-model="params.objectives.year.universal"> and then be maintained
-                    </label>
-                </div>
-            </div>
-            <br>
-            <div>
-                <label>
-                    <input type="checkbox"  ng-model="params.objectives.year.otherprograms">
-                    All other behavioral and contextual parameters:
-                </label>
-                <div class="elastic_col __va-middle" style="padding:0px 0px 0px 0px;">
-                    <label class="checkbox-inline">
-                        <input type="radio" name="otherprograms" ng-model="params.objectives.otherprograms" value="revert">
-                        revert to the levels prior to the program period
-                    </label><br>
-                    <label class="checkbox-inline">
-                        <input type="radio" name="otherprograms" ng-model="params.objectives.otherprograms" value="remain">
-                        remain at levels at the end of the program period
-                    </label>
-                </div>
-            </div>
-        </div>
-    </div>
+			<hr/>
 
-    <hr/>
-
-    <div class="section">
-        <h2>Optimization type</h2>
-        <div class="float-left margin-left-s">
-            <label class="checkbox-inline">
-                <input type="radio" name="minimizationType" ng-model="params.objectives.what" value="outcome">
-                Minimize outcomes
-            </label>
-            <label class="checkbox-inline">
-                <input type="radio" name="minimizationType" ng-model="params.objectives.what" value="money">
-                Minimize money
-            </label>
-            <label class="checkbox-inline" style="padding:0px 0px 0px 40px;">
-                <input type="checkbox"  ng-model="params.objectives.timevarying">
-                Allow time-varying optimization
-            </label>
-        </div>
-    </div>
-
-
-    <hr style="clear: both; padding-top: 10px"/>
-
-    <div class="section" ng-if="params.objectives.what == 'outcome'">
-
-        <h2>Funding assumptions</h2>
-
-        <div class="float-left margin-left-s">
-            <label class="checkbox-inline">
-                <input type="radio" name="fundingAssumptions" ng-model="params.objectives.funding" value="constant"/>
-                Optimize a fixed budget of total amount <input class="txbox __inline __l" type="number" ng-required="params.objectives.funding==='constant'" ng-model="params.objectives.outcome.fixed"/> for each year in the program period
-            </label>
-            <br/>
-            <label style="padding:0px 0px 0px 20px;" >
-                <input type="radio" name="fundingAssumptions" ng-model="params.objectives.funding" value="variable" ng-change="updateYearRange()"/>
-                Optimize a variable budget for each year in the program period:<br/>
-                <span ng-show="yearsAreRequired()" class="error-hint">Please specify program optimizations period above.</span>
-                <span ng-show="budgetsAreInvalid() && params.objectives.funding==='variable'" class="error-hint">Please enter a budget for each year.</span>
-                <span ng-show="!params.objectives.outcome.fixed && params.objectives.funding==='constant'" class="error-hint">Please enter a value for the fixed budget.</span>
-                <br/>
-                <div ng-if="params.objectives.funding==='variable'" style="padding:0px 0px 0px 50px;">
-                    <div ng-repeat="yCols in yearCols" style="padding:0 0 10px 0;">
-                        <span ng-repeat="yloop in yearLoop.slice(yCols.start,yCols.end)">
-                            {{ yloop.year }}:
-                            <input class="txbox __inline __l" ng-required="true" type="number" ng-model="params.objectives.outcome.variable[yloop.year]"/> &nbsp;
-                        </span>
-                    </div>
-                    <div style="clear:both;"></div>
-                </div>
-            </label><br/>
-            <div style="clear:both;"></div>
-        </div>
-    </div>
-
-    <hr style="clear: both; padding-top: 10px"/>
-
-    <div class="section" ng-if="params.objectives.what == 'outcome'">
-        <h2>Objective(s) to minimize</h2>
-
-        <div ng-repeat="objective in objectivesToMinimize" class="checkbox-block">
-            <label>
-                <input type="checkbox" ng-model="params.objectives.outcome[objective.slug]">
-                {{objective.name}}
-            </label>
-        </div>
-
-        <br>
-
-        <div ng-repeat="objective in objectivesToMinimize" ng-if="params.objectives.outcome[objective.slug] === true">
-            <div class="objective-checkbox">
-                 <div class="objective-checkbox__title"> {{objective.title}} = </div>
-                 <input class="txbox __inline __s" value="1" ng-model="params.objectives.outcome[objective.slug+'weight']">%
-            </div>
-        </div>
-
-    </div>
+			<div class="section">
+				<h2>Optimization type</h2>
+				<div class="float-left margin-left-s">
+					<label class="checkbox-inline">
+						<input type="radio" name="minimizationType" ng-model="params.objectives.what" value="outcome">
+						Minimize outcomes
+					</label>
+					<label class="checkbox-inline">
+						<input type="radio" name="minimizationType" ng-model="params.objectives.what" value="money">
+						Minimize money
+					</label>
+					<label class="checkbox-inline" style="padding:0px 0px 0px 40px;">
+						<input type="checkbox"  ng-model="params.objectives.timevarying">
+						Allow time-varying optimization
+					</label>
+				</div>
+			</div>
 
 
-    <div class="section" ng-if="params.objectives.what == 'money'">
-        What is the minimum amount of money required to achieve the following objectives:
+			<hr style="clear: both; padding-top: 10px"/>
 
-        <!-- Reduce the incidence of HIV -->
-        <div class="checkbox-block margin-top-xs">
-            <label>
-                <input type="checkbox" ng-model="params.objectives.money.objectives.inci.use">
-                Reduce the annual incidence of HIV
-            </label>
-        </div>
-        <label class="radio-inline margin-left-s">
-            by <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.inci.by">
-        </label>
-        <label class="radio-inline">
-            to < <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.inci.to">
-        </label>
+			<div class="section" ng-if="params.objectives.what == 'outcome'">
 
-        <!-- Reduce the incidence of sexually transmitted HIV -->
-        <div class="checkbox-block margin-top-xs">
-            <label>
-                <input type="checkbox" ng-model="params.objectives.money.objectives.incisex.use">
-                Reduce the annual incidence of sexually transmitted HIV
-            </label>
-        </div>
-        <label class="radio-inline margin-left-s">
-            by <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.incisex.by">
-        </label>
-        <label class="radio-inline">
-            to < <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.incisex.to">
-        </label>
+				<h2>Funding assumptions</h2>
 
-        <!-- Reduce the incidence of injecting-related HIV -->
-        <div class="checkbox-block margin-top-xs">
-            <label>
-                <input type="checkbox" ng-model="params.objectives.money.objectives.incinj.use">
-                Reduce the annual incidence of injecting-related HIV
-            </label>
-        </div>
-        <label class="radio-inline margin-left-s">
-            by <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.inciinj.by">
-        </label>
-        <label class="radio-inline">
-            to < <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.inciinj.to">
-        </label>
+				<div class="float-left margin-left-s">
+					<label class="checkbox-inline">
+						<input type="radio" name="fundingAssumptions" ng-model="params.objectives.funding" value="constant"/>
+						Optimize a fixed budget of total amount <input class="txbox __inline __l" type="number" ng-required="params.objectives.funding==='constant'" ng-model="params.objectives.outcome.fixed"/> for each year in the program period
+					</label>
+					<br/>
+					<label style="padding:0px 0px 0px 20px;" >
+						<input type="radio" name="fundingAssumptions" ng-model="params.objectives.funding" value="variable" ng-change="updateYearRange()"/>
+						Optimize a variable budget for each year in the program period:<br/>
+						<span ng-show="yearsAreRequired()" class="error-hint">Please specify program optimizations period above.</span>
+						<span ng-show="budgetsAreInvalid() && params.objectives.funding==='variable'" class="error-hint">Please enter a budget for each year.</span>
+						<span ng-show="!params.objectives.outcome.fixed && params.objectives.funding==='constant'" class="error-hint">Please enter a value for the fixed budget.</span>
+						<br/>
+						<div ng-if="params.objectives.funding==='variable'" style="padding:0px 0px 0px 50px;">
+							<div ng-repeat="yCols in yearCols" style="padding:0 0 10px 0;">
+								<span ng-repeat="yloop in yearLoop.slice(yCols.start,yCols.end)">
+									{{ yloop.year }}:
+									<input class="txbox __inline __l" ng-required="true" type="number" ng-model="params.objectives.outcome.variable[yloop.year]"/> &nbsp;
+								</span>
+							</div>
+							<div style="clear:both;"></div>
+						</div>
+					</label><br/>
+					<div style="clear:both;"></div>
+				</div>
+			</div>
 
-        <!-- Reduce MTCT of HIV -->
-        <div class="checkbox-block margin-top-xs">
-            <label>
-                <input type="checkbox" ng-model="params.objectives.money.objectives.mtct.use">
-                Reduce annual mother-to-child transmission of HIV
-            </label>
-        </div>
-        <label class="radio-inline margin-left-s">
-            by <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.mtct.by">
-        </label>
-        <label class="radio-inline">
-            to < <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.mtct.to">
-        </label>
+			<hr style="clear: both; padding-top: 10px"/>
 
-        <!-- Reduce MTCT of HIV among breastfeeding mother -->
-        <div class="checkbox-block margin-top-xs">
-            <label>
-                <input type="checkbox" ng-model="params.objectives.money.objectives.mtctbreast.use">
-                Reduce annual mother-to-child transmission of HIV among breastfeeding mothers
-            </label>
-        </div>
-        <label class="radio-inline margin-left-s">
-            by <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.mtctbreast.by">
-        </label>
-        <label class="radio-inline">
-            to < <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.mtctbreast.to">
-        </label>
+			<div class="section" ng-if="params.objectives.what == 'outcome'">
+				<h2>Objective(s) to minimize</h2>
 
-        <!-- Reduce MTCT of HIV among non-breastfeeding mother -->
-        <div class="checkbox-block margin-top-xs">
-            <label>
-                <input type="checkbox" ng-model="params.objectives.money.objectives.mtctnonbreast.use">
-                Reduce annual mother-to-child transmission of HIV among non-breastfeeding mothers
-            </label>
-        </div>
-        <label class="radio-inline margin-left-s">
-            by <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.mtctnonbreast.by">
-        </label>
-        <label class="radio-inline">
-            to < <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.mtctnonbreast.to">
-        </label>
+				<div ng-repeat="objective in objectivesToMinimize" class="checkbox-block">
+					<label>
+						<input type="checkbox" ng-model="params.objectives.outcome[objective.slug]">
+						{{objective.name}}
+					</label>
+				</div>
 
-        <!-- Reduce HIV-related deaths -->
-        <div class="checkbox-block margin-top-xs">
-            <label>
-                <input type="checkbox" ng-model="params.objectives.money.objectives.deaths.use">
-                Reduce annual AIDS-related deaths
-            </label>
-        </div>
-        <label class="radio-inline margin-left-s">
-            by <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.deaths.by">
-        </label>
-        <label class="radio-inline">
-            to < <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.deaths.to">
-        </label>
+				<br>
 
-        <!-- Reduce DALYs -->
-        <div class="checkbox-block margin-top-xs">
-            <label>
-                <input type="checkbox" ng-model="params.objectives.money.objectives.dalys.use">
-                Reduce annual HIV-related DALYs
-            </label>
-        </div>
-        <label class="radio-inline margin-left-s">
-            by <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.dalys.by">
-        </label>
-        <label class="radio-inline">
-            to < <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.dalys.to">
-        </label>
+				<div ng-repeat="objective in objectivesToMinimize" ng-if="params.objectives.outcome[objective.slug] === true">
+					<div class="objective-checkbox">
+						 <div class="objective-checkbox__title"> {{objective.title}} = </div>
+						 <input class="txbox __inline __s" value="1" ng-model="params.objectives.outcome[objective.slug+'weight']">%
+					</div>
+				</div>
 
-        <div class="cf margin-top-s">
-            <h2>Cost assumptions</h2>
-            <div class="float-left margin-left-xs">
-                <table class="table table-bordered table-hover table-striped" style="width: auto">
-                    <thead>
-                    <th>Program name</th>
-                    <th>Program efficiency relative to current</th>
-                    </thead>
-                    <tbody>
-                    <tr ng-repeat="p in programs">
-                        <td>
-                            {{ p }}
-                        </td>
-                        <td>
-                            <input class="txbox __inline __s" ng-model="params.objectives.money.costs[programCodes[$index]]">
-                            %
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-</div>
-
-<!-- Tab 2 -->
-<div ng-show="activeTab === 2">
-
-    <hr/>
-        <div>
-            <p class="warning-hint">Warning: Constraints reduce the effectiveness of the optimization analysis. Use as few constraints as possible.</p>
-        </div>
-    <hr/>
-
-    <div class="elastic">
-
-        <div><h2>Treatment eligibility</h2></div>
-        <div>
-            <label>
-                <input type="radio" name="eligibility" ng-model="params.constraints.txelig" value="1">
-                All people living with HIV
-            </label><br>
-            <label>
-                <input type="radio" name="eligibility" ng-model="params.constraints.txelig" value="2">
-                All people living with HIV with CD4 count < 500
-            </label><br>
-            <label>
-                <input type="radio" name="eligibility" ng-model="params.constraints.txelig" value="3">
-                All people living with HIV with CD4 count < 350
-            </label>
-        </div>
-    </div>
-
-    <hr class="__dashed" />
-
-    <div class="checkbox-block">
-        <label>
-            <input type="checkbox" ng-model="params.constraints.dontstopart">
-            No one who initiates treatment is to stop receiving ART
-        </label>
-    </div>
-
-    <hr/>
-
-    <h2>Maximum changes in funding per year</h2>
-    <div>
-        <table class="table table-bordered table-hover table-striped" style="width: auto">
-            <thead>
-            <th>Enable</th>
-            <th>Program name</th>
-            <th>Not less than</th>
-            <th>Not more than</th>
-            </thead>
-            <tbody>
-            <tr ng-repeat="p in programs">
-                <td>
-                    <input type="checkbox" ng-model="params.constraints.decrease[programCodes[$index]].use">
-                </td>
-                <td>
-                    {{ p }}
-                </td>
-                <td>
-                    <input class="txbox __inline __s" type="number" ng-change="params.constraints.decrease[programCodes[$index]].use=true" ng-model="params.constraints.decrease[programCodes[$index]].by">%
-                </td>
-                <td>
-                    <input class="txbox __inline __s" type="number" ng-change="params.constraints.increase[programCodes[$index]].use=true" ng-model="params.constraints.increase[programCodes[$index]].by">%
-                </td>
-            </tr>
-            </tbody>
-        </table>
-    </div>
-
-    <h2>Maximum changes in funding over the program period</h2>
-    <div>
-        <table class="table table-bordered table-hover table-striped" style="width: auto">
-            <thead>
-            <th>Enable</th>
-            <th>Program name</th>
-            <th>Not less than</th>
-            <th>Not more than</th>
-            </thead>
-            <tbody>
-            <tr ng-repeat="p in programs">
-                <td>
-                    <input type="checkbox" ng-model="params.constraints.decrease[programCodes[$index]].use">
-                </td>
-                <td>
-                    {{ p }}
-                </td>
-                <td>
-                    <input class="txbox __inline __s" type="number" ng-change="params.constraints.decrease[programCodes[$index]].use=true" ng-model="params.constraints.decrease[programCodes[$index]].by">%
-                </td>
-                <td>
-                    <input class="txbox __inline __s" type="number" ng-change="params.constraints.increase[programCodes[$index]].use=true" ng-model="params.constraints.increase[programCodes[$index]].by">%
-                </td>
-            </tr>
-            </tbody>
-        </table>
-    </div>
-
-    <hr/>
-
-    <h2>Coverage levels</h2>
-    <div>
-        <table class="table table-bordered table-hover table-striped" style="width: auto">
-            <thead>
-            <th>Enable</th>
-            <th>Program name</th>
-            <th>By year...</th>
-            <th>coverage must reach at least</th>
-            </thead>
-            <tbody>
-            <tr ng-repeat="p in programs">
-                <td>
-                    <input type="checkbox" ng-model="params.constraints.coverage[programCodes[$index]].use">
-                </td>
-                <td>
-                    {{ p }}
-                </td>
-                <td>
-                    <input class="txbox __inline __s" type="number" ng-change="params.constraints.coverage[programCodes[$index]].use=true" ng-model="params.constraints.coverage[programCodes[$index]].year">
-                </td>
-                <td>
-                    <input class="txbox __inline __s" type="number" ng-change="params.constraints.coverage[programCodes[$index]].use=true" ng-model="params.constraints.coverage[programCodes[$index]].level">
-                </td>
-            </tr>
-            </tbody>
-        </table>
-    </div>
-</div>
-
-<!-- Tab 3 -->
-<div ng-if="activeTab === 3">
-    <div class="well section">
-        <div class="grid">
-            <h2>Optimization</h2>
-            <span> {{optimizationMessage}} </span>
-
-            <div class="elastic_col __va-middle text-right">
-                <div class="elastic __fluid float-right">
-
-                    <div class="elastic_col __shrink">
-                        <label>
-                            Maximum time limit:
-                            <select class="txbox __inline" style="width: 120px" ng-model="params.timelimit">
-                                <option value="10">10 seconds</option>
-                                <option value="30">30 seconds</option>
-                                <option value="60">1 minute</option>
-                                <option value="300">5 minutes</option>
-                                <option value="600">10 minutes</option>
-                                <option value="1800">30 minutes</option>
-                                <option value="3600">1 hour</option>
-                            </select>
-                        </label>
-                    </div>
-
-                    <div class="elastic_col __shrink">
-                        <button type="submit" class="btn __green">Start optimization</button>
-                    </div>
-
-                    <div class="elastic_col __shrink">
-                        <button type="button" class="btn __red" ng-click="stopOptimization()" ng-disabled="!optimizationStatus.isActive">Stop optimization</button>
-                    </div>
-                    <div class="elastic_col __shrink">
-                        <button type="button" class="btn" ng-click="saveOptimization()" ng-disabled="optimizationStatus.isActive">Save optimization</button>
-                    </div>
-                    <div class="elastic_col __shrink">
-                        <button type="button" class="btn" ng-click="revertOptimization()" ng-disabled="optimizationStatus.isActive">Revert</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="info-hint" ng-show="optimizationStatus.isActive">
-                {{ optimizationStatus.text }}
-            </div>
-
-        </div>
-    </div>
-
-    <div class="well section">
-        <div class="grid">
-            <div class="section">
-                <h1>{{radarChartName}}</h1>
-
-                <button class="btn" ng-click="exportAllFigures()" save-graph-as="export-all" ng-if="radarData || optimisationGraphs || financialGraphs">Export all figures</button>
-                <button class="btn" ng-click="exportAllData()" save-graph-as="export-all" ng-if="radarData || optimisationGraphs || financialGraphs">Export all data</button>
-
-                <div class="grid">
-                    <div class="7" ng-if="radarGraph">
-                        <div class="chart-container">
-                          <div radar-chart variant="radarGraph" data="radarGraph.data" options="radarGraph.options" save-graph-as></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="well section">
-                <div class="grid">
-                    <div>
-                      <div class="chart-container __small" ng-repeat="graph in optimisationGraphs">
-                        <div line-scatter-chart data="graph.data" options="graph.options" save-graph-as></div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <div class="chart-container __small" ng-repeat="graph in financialGraphs">
-                        <div line-scatter-chart data="graph.data" options="graph.options" save-graph-as></div>
-                      </div>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-    </div>
+			</div>
 
 
-</div>
+			<div class="section" ng-if="params.objectives.what == 'money'">
+				What is the minimum amount of money required to achieve the following objectives:
 
-</form>
+				<!-- Reduce the incidence of HIV -->
+				<div class="checkbox-block margin-top-xs">
+					<label>
+						<input type="checkbox" ng-model="params.objectives.money.objectives.inci.use">
+						Reduce the annual incidence of HIV
+					</label>
+				</div>
+				<label class="radio-inline margin-left-s">
+					by <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.inci.by">
+				</label>
+				<label class="radio-inline">
+					to < <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.inci.to">
+				</label>
 
+				<!-- Reduce the incidence of sexually transmitted HIV -->
+				<div class="checkbox-block margin-top-xs">
+					<label>
+						<input type="checkbox" ng-model="params.objectives.money.objectives.incisex.use">
+						Reduce the annual incidence of sexually transmitted HIV
+					</label>
+				</div>
+				<label class="radio-inline margin-left-s">
+					by <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.incisex.by">
+				</label>
+				<label class="radio-inline">
+					to < <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.incisex.to">
+				</label>
+
+				<!-- Reduce the incidence of injecting-related HIV -->
+				<div class="checkbox-block margin-top-xs">
+					<label>
+						<input type="checkbox" ng-model="params.objectives.money.objectives.incinj.use">
+						Reduce the annual incidence of injecting-related HIV
+					</label>
+				</div>
+				<label class="radio-inline margin-left-s">
+					by <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.inciinj.by">
+				</label>
+				<label class="radio-inline">
+					to < <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.inciinj.to">
+				</label>
+
+				<!-- Reduce MTCT of HIV -->
+				<div class="checkbox-block margin-top-xs">
+					<label>
+						<input type="checkbox" ng-model="params.objectives.money.objectives.mtct.use">
+						Reduce annual mother-to-child transmission of HIV
+					</label>
+				</div>
+				<label class="radio-inline margin-left-s">
+					by <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.mtct.by">
+				</label>
+				<label class="radio-inline">
+					to < <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.mtct.to">
+				</label>
+
+				<!-- Reduce MTCT of HIV among breastfeeding mother -->
+				<div class="checkbox-block margin-top-xs">
+					<label>
+						<input type="checkbox" ng-model="params.objectives.money.objectives.mtctbreast.use">
+						Reduce annual mother-to-child transmission of HIV among breastfeeding mothers
+					</label>
+				</div>
+				<label class="radio-inline margin-left-s">
+					by <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.mtctbreast.by">
+				</label>
+				<label class="radio-inline">
+					to < <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.mtctbreast.to">
+				</label>
+
+				<!-- Reduce MTCT of HIV among non-breastfeeding mother -->
+				<div class="checkbox-block margin-top-xs">
+					<label>
+						<input type="checkbox" ng-model="params.objectives.money.objectives.mtctnonbreast.use">
+						Reduce annual mother-to-child transmission of HIV among non-breastfeeding mothers
+					</label>
+				</div>
+				<label class="radio-inline margin-left-s">
+					by <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.mtctnonbreast.by">
+				</label>
+				<label class="radio-inline">
+					to < <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.mtctnonbreast.to">
+				</label>
+
+				<!-- Reduce HIV-related deaths -->
+				<div class="checkbox-block margin-top-xs">
+					<label>
+						<input type="checkbox" ng-model="params.objectives.money.objectives.deaths.use">
+						Reduce annual AIDS-related deaths
+					</label>
+				</div>
+				<label class="radio-inline margin-left-s">
+					by <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.deaths.by">
+				</label>
+				<label class="radio-inline">
+					to < <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.deaths.to">
+				</label>
+
+				<!-- Reduce DALYs -->
+				<div class="checkbox-block margin-top-xs">
+					<label>
+						<input type="checkbox" ng-model="params.objectives.money.objectives.dalys.use">
+						Reduce annual HIV-related DALYs
+					</label>
+				</div>
+				<label class="radio-inline margin-left-s">
+					by <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.dalys.by">
+				</label>
+				<label class="radio-inline">
+					to < <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.dalys.to">
+				</label>
+
+				<div class="cf margin-top-s">
+					<h2>Cost assumptions</h2>
+					<div class="float-left margin-left-xs">
+						<table class="table table-bordered table-hover table-striped" style="width: auto">
+							<thead>
+							<th>Program name</th>
+							<th>Program efficiency relative to current</th>
+							</thead>
+							<tbody>
+							<tr ng-repeat="p in programs">
+								<td>
+									{{ p }}
+								</td>
+								<td>
+									<input class="txbox __inline __s" ng-model="params.objectives.money.costs[programCodes[$index]]">
+									%
+								</td>
+							</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+
+		</div>
+
+		<!-- Tab 2 -->
+		<div ng-show="activeTab === 2">
+
+			<hr/>
+				<div>
+					<p class="warning-hint">Warning: Constraints reduce the effectiveness of the optimization analysis. Use as few constraints as possible.</p>
+				</div>
+			<hr/>
+
+			<div class="elastic">
+
+				<div><h2>Treatment eligibility</h2></div>
+				<div>
+					<label>
+						<input type="radio" name="eligibility" ng-model="params.constraints.txelig" value="1">
+						All people living with HIV
+					</label><br>
+					<label>
+						<input type="radio" name="eligibility" ng-model="params.constraints.txelig" value="2">
+						All people living with HIV with CD4 count < 500
+					</label><br>
+					<label>
+						<input type="radio" name="eligibility" ng-model="params.constraints.txelig" value="3">
+						All people living with HIV with CD4 count < 350
+					</label>
+				</div>
+			</div>
+
+			<hr class="__dashed" />
+
+			<div class="checkbox-block">
+				<label>
+					<input type="checkbox" ng-model="params.constraints.dontstopart">
+					No one who initiates treatment is to stop receiving ART
+				</label>
+			</div>
+
+			<hr/>
+
+			<h2>Maximum changes in funding per year</h2>
+			<div>
+				<table class="table table-bordered table-hover table-striped" style="width: auto">
+					<thead>
+					<th>Enable</th>
+					<th>Program name</th>
+					<th>Not less than</th>
+					<th>Not more than</th>
+					</thead>
+					<tbody>
+					<tr ng-repeat="p in programs">
+						<td>
+							<input type="checkbox" ng-model="params.constraints.decrease[programCodes[$index]].use">
+						</td>
+						<td>
+							{{ p }}
+						</td>
+						<td>
+							<input class="txbox __inline __s" type="number" ng-change="params.constraints.decrease[programCodes[$index]].use=true" ng-model="params.constraints.decrease[programCodes[$index]].by">%
+						</td>
+						<td>
+							<input class="txbox __inline __s" type="number" ng-change="params.constraints.increase[programCodes[$index]].use=true" ng-model="params.constraints.increase[programCodes[$index]].by">%
+						</td>
+					</tr>
+					</tbody>
+				</table>
+			</div>
+
+			<h2>Maximum changes in funding over the program period</h2>
+			<div>
+				<table class="table table-bordered table-hover table-striped" style="width: auto">
+					<thead>
+					<th>Enable</th>
+					<th>Program name</th>
+					<th>Not less than</th>
+					<th>Not more than</th>
+					</thead>
+					<tbody>
+					<tr ng-repeat="p in programs">
+						<td>
+							<input type="checkbox" ng-model="params.constraints.decrease[programCodes[$index]].use">
+						</td>
+						<td>
+							{{ p }}
+						</td>
+						<td>
+							<input class="txbox __inline __s" type="number" ng-change="params.constraints.decrease[programCodes[$index]].use=true" ng-model="params.constraints.decrease[programCodes[$index]].by">%
+						</td>
+						<td>
+							<input class="txbox __inline __s" type="number" ng-change="params.constraints.increase[programCodes[$index]].use=true" ng-model="params.constraints.increase[programCodes[$index]].by">%
+						</td>
+					</tr>
+					</tbody>
+				</table>
+			</div>
+
+			<hr/>
+
+			<h2>Coverage levels</h2>
+			<div>
+				<table class="table table-bordered table-hover table-striped" style="width: auto">
+					<thead>
+					<th>Enable</th>
+					<th>Program name</th>
+					<th>By year...</th>
+					<th>coverage must reach at least</th>
+					</thead>
+					<tbody>
+					<tr ng-repeat="p in programs">
+						<td>
+							<input type="checkbox" ng-model="params.constraints.coverage[programCodes[$index]].use">
+						</td>
+						<td>
+							{{ p }}
+						</td>
+						<td>
+							<input class="txbox __inline __s" type="number" ng-change="params.constraints.coverage[programCodes[$index]].use=true" ng-model="params.constraints.coverage[programCodes[$index]].year">
+						</td>
+						<td>
+							<input class="txbox __inline __s" type="number" ng-change="params.constraints.coverage[programCodes[$index]].use=true" ng-model="params.constraints.coverage[programCodes[$index]].level">
+						</td>
+					</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+
+		<!-- Tab 3 -->
+		<div ng-if="activeTab === 3">
+			<div class="well section">
+				<div class="grid">
+					<h2>Optimization</h2>
+					<span> {{optimizationMessage}} </span>
+
+					<div class="elastic_col __va-middle text-right">
+						<div class="elastic __fluid float-right">
+
+							<div class="elastic_col __shrink">
+								<label>
+									Maximum time limit:
+									<select class="txbox __inline" style="width: 120px" ng-model="params.timelimit">
+										<option value="10">10 seconds</option>
+										<option value="30">30 seconds</option>
+										<option value="60">1 minute</option>
+										<option value="300">5 minutes</option>
+										<option value="600">10 minutes</option>
+										<option value="1800">30 minutes</option>
+										<option value="3600">1 hour</option>
+									</select>
+								</label>
+							</div>
+
+							<div class="elastic_col __shrink">
+								<button type="submit" class="btn __green">Start optimization</button>
+							</div>
+
+							<div class="elastic_col __shrink">
+								<button type="button" class="btn __red" ng-click="stopOptimization()" ng-disabled="!optimizationStatus.isActive">Stop optimization</button>
+							</div>
+							<div class="elastic_col __shrink">
+								<button type="button" class="btn" ng-click="saveOptimization()" ng-disabled="optimizationStatus.isActive">Save optimization</button>
+							</div>
+							<div class="elastic_col __shrink">
+								<button type="button" class="btn" ng-click="revertOptimization()" ng-disabled="optimizationStatus.isActive">Revert</button>
+							</div>
+						</div>
+					</div>
+
+					<div class="info-hint" ng-show="optimizationStatus.isActive">
+						{{ optimizationStatus.text }}
+					</div>
+
+				</div>
+			</div>
+
+			<div class="well section">
+				<div class="grid">
+					<div class="section">
+						<h1>{{radarChartName}}</h1>
+
+						<button class="btn" ng-click="exportAllFigures()" save-graph-as="export-all" ng-if="radarData || optimisationGraphs || financialGraphs">Export all figures</button>
+						<button class="btn" ng-click="exportAllData()" save-graph-as="export-all" ng-if="radarData || optimisationGraphs || financialGraphs">Export all data</button>
+
+						<div class="grid">
+							<div class="7" ng-if="radarGraph">
+								<div class="chart-container">
+								  <div radar-chart variant="radarGraph" data="radarGraph.data" options="radarGraph.options" save-graph-as></div>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<div class="well section">
+						<div class="grid">
+							<div>
+							  <div class="chart-container __small" ng-repeat="graph in optimisationGraphs">
+								<div line-scatter-chart data="graph.data" options="graph.options" save-graph-as></div>
+							  </div>
+							</div>
+
+							<div>
+							  <div class="chart-container __small" ng-repeat="graph in financialGraphs">
+								<div line-scatter-chart data="graph.data" options="graph.options" save-graph-as></div>
+							  </div>
+							</div>
+						</div>
+					</div>
+
+				</div>
+			</div>
+
+
+		</div>
+
+		</form>
+
+		</div>
 </div>
