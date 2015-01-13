@@ -41,8 +41,17 @@ def getcurrentbudget(D, alloc=None):
             # Get parameter info
             parname = effect[0][1]
 
-            # Is the affected paramter coverage?
-            if not parname in coverage_params:
+            # Is the affected parameter coverage?
+            if parname in coverage_params:
+                if D.programs[progname]['convertedccparams']:
+                    convertedccparams = D.programs[progname]['convertedccparams']
+                else:
+                    convertedccparams = default_convertedccparams
+                y = cceqn(totalcost, convertedccparams)
+                D.P[effect[0][1]].c[0] = y
+
+            # ... or not?
+            else:
                 if popname[0] in D.data.meta.pops.short:
                     popnumber = D.data.meta.pops.short.index(popname[0]) 
                 else:
@@ -58,15 +67,6 @@ def getcurrentbudget(D, alloc=None):
                 y = ccoeqn(totalcost, convertedccoparams)
                 D.P[effect[0][1]].c[popnumber] = y
 
-
-            # ... or does it affect all parameters?
-            else:
-                if D.programs[progname]['convertedccparams']:
-                    convertedccparams = D.programs[progname]['convertedccparams'][0:2]
-                else:
-                    convertedccparams = default_convertedccparams
-                y = cceqn(totalcost, convertedccparams)
-                D.P[effect[0][1]].c[0] = y
 
         if not(allocprovided):
             currentbudget.append(totalcost)

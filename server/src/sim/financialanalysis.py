@@ -250,7 +250,7 @@ def snipM(M, thisindex = range(150,301)):
             M0[param].reg = M0[param].reg[:, :, thisindex]
             M0[param].com = M0[param].com[:, :, thisindex]
             M0[param].inj = M0[param].inj[:, :, thisindex]
-        elif param in ['aidstest', 'sharing', 'numpmtct', 'breast', 'tx1', 'tx2', 'numost']:
+        elif param in ['aidstest', 'numpmtct', 'breast', 'tx1', 'tx2', 'numost']:
             M0[param] = M0[param][thisindex]
         else:
             M0[param] = M0[param][:, thisindex]
