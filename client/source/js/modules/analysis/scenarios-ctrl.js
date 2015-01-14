@@ -11,12 +11,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           $scope.show_message = false;
           $scope.scenarios = [];
 
-          // use for export all data
-          $scope.exportCharts = {
-            'name':'Analysis scenarios',
-            'controller':'AnalysisScenarios'
-          };
-
           $scope.runScenariosOptions = {
             dosave: false
           };

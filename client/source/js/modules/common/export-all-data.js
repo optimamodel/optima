@@ -7,9 +7,10 @@ function (_) {
     return {
       restrict: 'E',
       scope: {
-        exportCharts: '='
+        charts: '=',
+        name: '@'
       },
-      template: '<button class="btn" ng-click="exportAllData()">Export all data</button>',
+      template: '<button type="button" class="btn" ng-click="exportAllData()">Export all data</button>',
       link: function (scope, elem, attrs) {
 
         /**
@@ -37,7 +38,7 @@ function (_) {
           responseType:'arraybuffer'})
           .success(function (response, status, headers, config) {
             var blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-            saveAs(blob, (scope.exportGraphs.name + '.xlsx'));
+            saveAs(blob, (scope.name + '.xlsx'));
           })
           .error(function () {});
         };
@@ -46,7 +47,7 @@ function (_) {
          * Export all graphs/charts data,
          */
         scope.exportAllData = function () {
-          exportMultiSheetFrom(exportHelpers.getCharts(scope));
+          exportMultiSheetFrom(scope.charts);
         };
       }
     };
