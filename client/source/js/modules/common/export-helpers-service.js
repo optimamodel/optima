@@ -209,6 +209,7 @@ define(['angular', 'jquery', './svg-to-png'], function (angular, $, svgToPng) {
     var getExportableFrom = function (graph){
       if(!graph.data) { return null; }
       if(_.isEqual(Object.keys(graph.data),["line", "scatter", "area"])) { return lineAndAreaExport(graph); }
+      if(_.isEqual(Object.keys(graph.data),["lines", "scatter", "limits"])) { return linesExport(graph); }
       if(_.isEqual(Object.keys(graph.data),["lines", "scatter"])) { return linesExport(graph); }
       if(_.isEqual(Object.keys(graph.data),["areas"])) { return areasExport(graph); }
       if(_.isEqual(graph.data[0] && Object.keys(graph.data[0]),["axes"])) { return axesExport(graph); }
