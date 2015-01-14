@@ -7,7 +7,7 @@ define({
   // Here paths are set relative to `/source/js` folder
   paths: {
     'angular'       : './vendor/angular/angular',
-    'angular-loading-bar'  : './js/modules/angular-loading-bar/build/loading-bar',
+    'angular-loading-bar'  : './js/modules/angular-loading-bar/loading-bar',
     'async'         : './vendor/requirejs-plugins/src/async',
     'canvg'         : './vendor/canvg/dist/canvg.bundle',
     'canvas2blob'   : './vendor/canvas-toBlob.js/canvas-toBlob',
