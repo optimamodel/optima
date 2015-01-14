@@ -244,10 +244,10 @@ define(['./module', 'angular'], function (module, angular) {
             var val = ($scope.simulationOptions.timelimit * 1000) / 250;
             // callback function in start to be called in place of _inc()
             cfpLoadingBar.start(function () {
-              if (cfpLoadingBar.status() >= 0.9) {
+              if (cfpLoadingBar.status() >= 0.95) {
                 return;
               }
-              var pct = cfpLoadingBar.status() + (0.9/val);
+              var pct = cfpLoadingBar.status() + (0.95/val);
               cfpLoadingBar.set(pct);
             });
           } else {
