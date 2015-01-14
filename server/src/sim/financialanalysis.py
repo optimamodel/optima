@@ -76,20 +76,23 @@ def financialanalysis(D, postyear = 2015, S = None, yscale = 'abs', makeplot = F
     artunitcost = np.asarray(artunitcost)
     artunitcost = artunitcost[~np.isnan(artunitcost)]
     artunitcost = artunitcost[-1]
+    
+    #ATTN TODO CK -proper- way to read these data from econ (they used to be constants, not any more)
+    econ_keys = ['acute','gt500','gt350', 'gt200', 'gt50','lt50'] # example.xlsx atm!
 
     # Calculate annual non-treatment costs for all PLHIV under the baseline sim
-    acutecostbase = [D.data.cost.social.acute[0]*acuteplhivbase[j] for j in range(npts)]
-    gt500costbase = [D.data.cost.social.gt500[0]*gt500plhivbase[j] for j in range(npts)]
-    gt350costbase = [D.data.cost.social.gt350[0]*gt350plhivbase[j] for j in range(npts)]
-    gt200costbase = [D.data.cost.social.gt200[0]*gt200plhivbase[j] for j in range(npts)]
-    aidscostbase = [D.data.cost.social.aids[0]*aidsplhivbase[j] for j in range(npts)]
+    acutecostbase = [D.data.econ.social[0][0]*acuteplhivbase[j] for j in range(npts)]
+    gt500costbase = [D.data.econ.social[1][0]*gt500plhivbase[j] for j in range(npts)]
+    gt350costbase = [D.data.econ.social[2][0]*gt350plhivbase[j] for j in range(npts)]
+    gt200costbase = [D.data.econ.social[3][0]*gt200plhivbase[j] for j in range(npts)]
+    aidscostbase = [D.data.econ.social[4][0]*aidsplhivbase[j] for j in range(npts)]
 
     # Calculate annual non-treatment costs for all PLHIV under the zero transmission sim
-    acutecostzero = [D.data.cost.social.acute[0]*acuteplhivzero[j] for j in range(npts)]
-    gt500costzero = [D.data.cost.social.gt500[0]*gt500plhivzero[j] for j in range(npts)]
-    gt350costzero = [D.data.cost.social.gt350[0]*gt350plhivzero[j] for j in range(npts)]
-    gt200costzero = [D.data.cost.social.gt200[0]*gt200plhivzero[j] for j in range(npts)]
-    aidscostzero = [D.data.cost.social.aids[0]*aidsplhivzero[j] for j in range(npts)]
+    acutecostzero = [D.data.econ.social[0][0]*acuteplhivzero[j] for j in range(npts)]
+    gt500costzero = [D.data.econ.social[1][0]*gt500plhivzero[j] for j in range(npts)]
+    gt350costzero = [D.data.econ.social[2][0]*gt350plhivzero[j] for j in range(npts)]
+    gt200costzero = [D.data.econ.social[3][0]*gt200plhivzero[j] for j in range(npts)]
+    aidscostzero = [D.data.econ.social[4][0]*aidsplhivzero[j] for j in range(npts)]
 
     # Calculate annual treatment costs for PLHIV
     ### TODO: discounting!! ###
