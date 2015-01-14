@@ -22,13 +22,13 @@ define(['./module', 'angular'], function (module, angular) {
 
     $scope.parameters = {
       types: {
-        force: 'Force-of-infection for ',
+        force: 'Initial force-of-infection for ',
         init: 'Initial prevalence for ',
         dx: [
-          'Testing rate initial value',
-          'Testing rate final value',
-          'Testing rate midpoint',
-          'Testing rate slope'
+          'Overall population initial relative testing rate',
+          'Overall population final relative testing rate',
+          'Year of mid change in overall population testing rate',
+          'Testing rate slope parameter'
         ]
       },
       meta: meta,
