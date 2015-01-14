@@ -7,7 +7,7 @@ define([
     '../common/export-all-charts',
     '../common/export-all-data',
     '../common/graph-type-factory',
-    '../common/update-checkbox-on-click-directive',
+    '../common/update-checkbox-on-click-directive'
 ], function (angular) {
     'use strict';
 

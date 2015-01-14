@@ -7,16 +7,35 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
     var colors = [ '__light-blue', '__blue', '__violet', '__green', '__light-green',
       '__gray', '__red' ];
 
+    /**
+     * Return a line based on another line where y has the value 0
+     *
+     * @param {array} line - a line with [x, y] values example: [[0, 0], [0, 2]]
+     */
     var generateBaseLine = function(line) {
       return _(line).map(function(dot) { return [dot[0], 0]; });
     };
 
+    /**
+    * Return a area representation based on two lines.
+    *
+    * @param {Array} lineA - a line with [x, y] values example: [[0, 0], [0, 0]]
+    * @param {Array} lineB - a line with [x, y] values example: [[0, 1], [0, 3]]
+    * @returns {Array} line - example: [[0, 0, 1], [0, 0, 3]]
+    */
     var generateArea = function(lineA, lineB) {
       return _(lineA).map(function(dotA, index) {
         return [ dotA[0], dotA[1], dotA[1] + lineB[index][1] ];
       });
     };
 
+    /**
+     * Returns multiple stacked areas based on the two dimensional
+     * representation of an area.
+     *
+     * @param {Array} data - two dimensional repr of an area like [xPos, height]
+     * @returns {Array} - example: [[[0, 0, 1], [0, 0, 3]], [[0, 1, 3], [0, 3, 4]]]
+     */
     var generateAreas = function(data) {
       var baseLine = generateBaseLine(data[0]);
       return _(data).map(function (line) {
@@ -26,6 +45,9 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
       });
     };
 
+    /**
+     * Draw the stacked area chart
+     */
     var drawGraph = function (data, options, rootElement) {
       options.linesStyle = colors;
       options = d3Charts.adaptOptions(options);
@@ -59,7 +81,6 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
 
       _(stackedData).each(function (area, index) {
         var areaChart = new d3Charts.AreaChart(chartGroup, chartSize, colors[index]);
-
         var areaScale = areaChart.scales(highestLine);
         graphsScales.push(areaScale);
 
@@ -74,7 +95,11 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
       });
 
       // normalizing all graphs scales to include maximum possible x and y
+
+      // since the areas are stacked we can use the highest point of the highest
+      // area line to generate the maximum y scale
       var yMax = _(highestLine).max(function(dot){ return dot[1]; })[1];
+
       _(graphsScales).each(function (scale) {
         scale.y.domain([0, Math.ceil(yMax)]);
         scale.x.domain([Math.floor(highestLine[0][0]), Math.ceil(_(highestLine).last()[0])]);
