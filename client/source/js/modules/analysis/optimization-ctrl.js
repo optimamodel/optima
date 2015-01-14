@@ -310,7 +310,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
         title: "New infections weighting"
       },
       {
-        name:"Cumulative HIV-related DALYs",
+        name:"Cumulative DALYs",
         slug: "daly",
         title:"DALYs weighting"
       },
