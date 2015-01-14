@@ -446,17 +446,13 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
         Cannot just use $scope.OptimizationForm.$invalid for this because the validation of the years and the budgets is done in a different way. */
         checkValidation();
         if(errorMessages.length > 0){
-          showErrorsInModal();
+          modalService.informError(errorMessages, 'Cannot view results');
           return;
         }
         constructOptimizationMessage();
       }
       $scope.activeTab = tabNum;
     };
-
-    function showErrorsInModal(){
-        modalService.informError(errorMessages, 'Cannot view results');
-    }
 
     $scope.startOptimization = function () {
       $http.post('/api/analysis/optimization/start', $scope.params)
