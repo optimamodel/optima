@@ -7,11 +7,16 @@ define(['angular', 'jquery', './svg-to-png'], function (angular, $, svgToPng) {
     var chartCssUrl = '/assets/css/chart.css';
 
     /**
-     * Get the graph as a PNG.
+     * Generate an image out of a SVG graph
      *
      * In order to achieve this a new SVG is created including styles.
      * This SVG element is used as data source inside an image which then
      * is used to draw the content on a canvas to save it as PNG.
+     *
+     * @param {element} el - DOM element containing the chart.
+     * @param {function} callback - DOM element containing the chart.
+     * @param {string} [type] - for 'blob' a PNG blob is returned, if undefined
+     *                          a string of JPEG image data is returned
      */
     var generateGraphAsPngOrJpeg = function( el, callback, type ) {
       var originalSvg = el.find('svg');
@@ -88,6 +93,9 @@ define(['angular', 'jquery', './svg-to-png'], function (angular, $, svgToPng) {
       return result;
     };
 
+    /**
+     * Returns the normalized data ready to export for a line/area chart
+     */
     var lineAndAreaExport = function (graph){
       if (!graph.data || !graph.options) return null;
 
@@ -127,6 +135,9 @@ define(['angular', 'jquery', './svg-to-png'], function (angular, $, svgToPng) {
       return exportable;
     };
 
+    /**
+     * Returns the normalized data ready to export for a lines chart
+     */
     var linesExport = function (graph){
       var exportable = {
         name: graph.options.title || graph.title,
@@ -152,6 +163,9 @@ define(['angular', 'jquery', './svg-to-png'], function (angular, $, svgToPng) {
       return exportable;
     };
 
+    /**
+     * Returns the normalized data ready to export for a stacked area chart
+     */
     var areasExport = function (graph){
       var exportable = {
         name: graph.options.title || graph.title,
@@ -178,8 +192,7 @@ define(['angular', 'jquery', './svg-to-png'], function (angular, $, svgToPng) {
     };
 
     /**
-     * Returns the normalized data ready for export
-     * for Radar Chart
+     * Returns the normalized data ready to export for a Radar Chart
      */
     var axesExport = function (graph){
       //x and y are not needed to be exported - they are just internal values to draw radar chart properly
@@ -204,25 +217,32 @@ define(['angular', 'jquery', './svg-to-png'], function (angular, $, svgToPng) {
     };
 
     /**
-     * Returns the normalized data ready for export
+     * Returns the normalized data ready to export from any type of chart.
+     *
+     * @param {object} chart - an object which must contain the chart data.
      */
-    var getExportableFrom = function (graph){
-      if(!graph.data) { return null; }
-      if(_.isEqual(Object.keys(graph.data),["line", "scatter", "area"])) { return lineAndAreaExport(graph); }
-      if(_.isEqual(Object.keys(graph.data),["lines", "scatter", "limits"])) { return linesExport(graph); }
-      if(_.isEqual(Object.keys(graph.data),["lines", "scatter"])) { return linesExport(graph); }
-      if(_.isEqual(Object.keys(graph.data),["areas"])) { return areasExport(graph); }
-      if(_.isEqual(graph.data[0] && Object.keys(graph.data[0]),["axes"])) { return axesExport(graph); }
+    var getExportableFrom = function (chart){
+      if(!chart.data) { return null; }
+      if(_.isEqual(Object.keys(chart.data),["line", "scatter", "area"])) { return lineAndAreaExport(chart); }
+      if(_.isEqual(Object.keys(chart.data),["lines", "scatter", "limits"])) { return linesExport(chart); }
+      if(_.isEqual(Object.keys(chart.data),["lines", "scatter"])) { return linesExport(chart); }
+      if(_.isEqual(Object.keys(chart.data),["areas"])) { return areasExport(chart); }
+      if(_.isEqual(chart.data[0] && Object.keys(chart.data[0]),["axes"])) { return axesExport(chart); }
 
       return null;
     };
 
+    /**
+     * Alerts a message to the user.
+     *
+     * @param {string} msg
+     */
     var saySorry = function(msg) {
       // to-do: this should be updated after the PR to use the modalService
       if ( undefined !== msg ) {
         return alert(msg);
       } else {
-        return alert('Sorry, this graph cannot be exported');
+        return alert('Sorry, this chart cannot be exported');
       }
     };
 

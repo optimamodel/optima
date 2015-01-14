@@ -389,6 +389,9 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
 
     };
 
+    /**
+     * Collects all existing charts in the $scope.chartsForDataExport variable.
+     */
     var updateChartsForDataExport = function() {
       $scope.chartsForDataExport = [];
 

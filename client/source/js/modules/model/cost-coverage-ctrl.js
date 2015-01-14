@@ -485,6 +485,11 @@ define(['./module', 'underscore'], function (module, _) {
       });
     };
 
+    /**
+     * Collects all existing charts in the $scope.chartsForDataExport variable.
+     * In addition all titles are gatherd into titlesForChartsExport. This is
+     * needed since the cost coverage graphs have no title on the graphs.
+     */
     var updateDataForExport = function() {
       $scope.chartsForDataExport = [];
       $scope.titlesForChartsExport = [];
