@@ -103,6 +103,16 @@
                     </tr>
                     </thead>
                     <tbody>
+                    <tr ng-repeat="parameter in parameters.m">
+                        <td>{{parameter.title}}</td>
+                        <td>
+                            <span ng-hide="editing" ng-click="editing = true">{{ parameter.data}}</span>
+              <span ng-show="editing">
+                <input class="txbox __inline" ng-model="parameter.data">
+                <button class="btn" ng-click="editing = false; doneEditingParameter();">Ok</button>
+              </span>
+                        </td>                        
+                    </tr>
                     <!-- Force -->
                     <tr ng-repeat="population in parameters.meta.pops.short track by $index">
                         <td>{{ parameters.types.force }} {{ population }}</td>
@@ -135,16 +145,6 @@
                 <button class="btn" ng-click="editing = false; doneEditingParameter();">Ok</button>
               </span>
                         </td>
-                    </tr>
-                    <tr ng-repeat="parameter in parameters.m">
-                        <td>{{parameter.title}}</td>
-                        <td>
-                            <span ng-hide="editing" ng-click="editing = true">{{ parameter.data}}</span>
-              <span ng-show="editing">
-                <input class="txbox __inline" ng-model="parameter.data">
-                <button class="btn" ng-click="editing = false; doneEditingParameter();">Ok</button>
-              </span>
-                        </td>                        
                     </tr>
                     </tbody>
                 </table>

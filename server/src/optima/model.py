@@ -18,6 +18,30 @@ from sim.autofit import autofit
 model = Blueprint('model',  __name__, static_folder = '../static')
 model.config = {}
 
+def add_calibration_parameters(D_dict, result = None):
+    """
+    picks the parameters for calibration based on D as dictionary and the parameters settings
+    """
+    from sim.parameters import parameters
+    from sim.nested import getnested
+    calibrate_parameters = [p for p in parameters() if 'calibration' in p and p['calibration']]
+    if result is None: result = {}
+    result['F'] = D_dict.get('F', {})
+    M = D_dict.get('M', {})
+    M_out = []
+    if M:
+        for parameter in calibrate_parameters:
+            keys = parameter['keys']
+            entry = {}
+            entry['name'] = keys
+            entry['title'] = parameter['name']
+            entry['data'] = getnested(M, keys, safe = True)
+            M_out.append(entry)
+    result['M']=M_out
+    result['G'] = D_dict.get('G', {})
+    return result
+
+
 
 @model.record
 def record_params(setup_state):
@@ -91,6 +115,7 @@ def getWorkingModel():
         status = 'Done'
     result = {'graph': D_dict.get('plot',{}).get('E',{})}
     result['status'] = status
+    result = add_calibration_parameters(D_dict, result)
     return jsonify(result)
 
 @model.route('/calibrate/save', methods=['POST'])
@@ -108,7 +133,9 @@ def saveCalibrationModel():
 
     try:
         D_dict = save_working_model_as_default(project_name)
-        return jsonify(D_dict.get('plot',{}).get('E',{}))
+        result = {'graph': D_dict.get('plot',{}).get('E',{})}
+        result = add_calibration_parameters(D_dict, result)
+        return jsonify(result)
     except Exception, err:
         var = traceback.format_exc()
         return jsonify({"status":"NOK", "exception":var})
@@ -128,7 +155,9 @@ def revertCalibrationModel():
         return jsonify(reply)
     try:
         D_dict = revert_working_model_to_default(project_name)
-        return jsonify(D_dict.get('plot',{}).get('E',{}))
+        result = {'graph': D_dict.get('plot',{}).get('E',{})}
+        result = add_calibration_parameters(D_dict, result)
+        return jsonify(result)
     except Exception, err:
         var = traceback.format_exc()
         return jsonify({"status":"NOK", "exception":var})
@@ -174,7 +203,9 @@ def doManualCalibration():
     except Exception, err:
         var = traceback.format_exc()
         return jsonify({"status":"NOK", "exception":var})
-    return jsonify(D_dict.get('plot',{}).get('E',{}))
+    result = {'graph': D_dict.get('plot',{}).get('E',{})}
+    result = add_calibration_parameters(D_dict, result)
+    return jsonify(result)
 
 @model.route('/calibrate/parameters')
 @login_required
@@ -187,21 +218,8 @@ def getModelCalibrateParameters():
     calibrate_parameters = [p for p in parameters() if 'calibration' in p and p['calibration']]
     print("calibrate_parameters", calibrate_parameters)
     D = load_model(request.project_name, as_bunch = True)
-    D = updateP(D, [])
     D_dict = D.toDict()
-    F = D_dict.get('F', {})
-    M = D_dict.get('M', {})
-    print("M", M.keys())
-    M_out = []
-    for parameter in calibrate_parameters:
-        keys = parameter['keys']
-        entry = {}
-        entry['name'] = keys
-        entry['title'] = parameter['name']
-        entry['data'] = getnested(M, keys)
-        M_out.append(entry)
-    G = D_dict.get('G', {})
-    result = {'F':F, 'M':M_out, 'G':G}
+    result = add_calibration_parameters(D_dict)
     return jsonify(result)
 
 @model.route('/parameters')
@@ -267,23 +285,31 @@ def doRunSimulation():
 
     #expects json: {"startyear":year,"endyear":year} and gets project_name from session
     args = {}
-    args['D'] = load_model(request.project_name)
-    startyear = data.get("startyear")
-    if startyear:
-        args["startyear"] = int(startyear)
-    endyear = data.get("endyear")
-    if endyear:
-        args["endyear"] = int(endyear)
-    args["makeplot"] = 0
-    try:
-        D = runsimulation(**args)
-        D_dict = D.toDict()
-        current_app.logger.debug("D-dict F: %s" % D_dict['F'])
-        save_model(request.project_name, D_dict)
-    except Exception, err:
-        var = traceback.format_exc()
-        return jsonify({"status":"NOK", "exception":var})
-    return jsonify(D_dict.get('plot',{}).get('E',{}))
+    D = load_model(request.project_name)
+    D_dict = D.toDict()
+    result = {'graph': D_dict.get('plot',{}).get('E',{})}
+    result = add_calibration_parameters(D_dict, result)
+    if not result:
+        try:
+            args['D'] = D
+            startyear = data.get("startyear")
+            if startyear:
+                args["startyear"] = int(startyear)
+            endyear = data.get("endyear")
+            if endyear:
+                args["endyear"] = int(endyear)
+            args["makeplot"] = 0
+            args["dosave"] = False
+            D = runsimulation(**args)
+            D_dict = D.toDict()
+            save_model(request.project_name, D_dict)
+            result = {'graph':D_dict.get('plot',{}).get('E',{})}
+            result = add_calibration_parameters(D_dict, result)
+            return jsonify(result)
+        except Exception, err:
+            var = traceback.format_exc()
+            return jsonify({"status":"NOK", "exception":var})
+    return jsonify(result)
 
 @model.route('/costcoverage', methods=['POST'])
 @login_required
