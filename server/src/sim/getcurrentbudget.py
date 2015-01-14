@@ -5,7 +5,7 @@ def getcurrentbudget(D, alloc=None):
     Returns: D
     Version: 2014nov30
     """
-    from makeccocs import ccoeqn, cceqn, coverage_params, default_convertedccparams, default_convertedccoparams
+    from makeccocs import ccoeqn, cceqn, coverage_params, default_convertedccparams, default_convertedccoparams, default_init_nonhivdalys
     import numpy as np
     
     # Initialise parameter structure (same as D.P). #TODO make this less ugly
@@ -32,6 +32,19 @@ def getcurrentbudget(D, alloc=None):
             totalcost = totalcost[~np.isnan(totalcost)]
             totalcost = totalcost[-1]
 
+        if D.programs[progname]['convertedccparams']:
+            convertedccparams = D.programs[progname]['convertedccparams']
+        else:
+            convertedccparams = default_convertedccparams
+        cov = cceqn(totalcost, convertedccparams)
+
+        if D.programs[progname]['nonhivdalys']:
+            nonhivdalys = D.programs[progname]['nonhivdalys']
+        else:
+            nonhivdalys = default_init_nonhivdalys
+        nonhivdalysaverted = nonhivdalys[0]*cov
+        D.programs[progname]['nonhivdalys'].extend([nonhivdalysaverted])
+
         # Loop over effects
         for effectnumber, effect in enumerate(D.programs[progname]['effects']):
 
@@ -43,12 +56,7 @@ def getcurrentbudget(D, alloc=None):
 
             # Is the affected parameter coverage?
             if parname in coverage_params:
-                if D.programs[progname]['convertedccparams']:
-                    convertedccparams = D.programs[progname]['convertedccparams']
-                else:
-                    convertedccparams = default_convertedccparams
-                y = cceqn(totalcost, convertedccparams)
-                D.P[effect[0][1]].c[0] = y
+                D.P[effect[0][1]].c[0] = cov
 
             # ... or not?
             else:
@@ -60,7 +68,7 @@ def getcurrentbudget(D, alloc=None):
                 if len(effect)>4 and len(effect[4])>=4: #happy path if co_params are actually there
                     # Unpack
                     convertedccoparams = effect[4]
-                else: # did not get co_params yet, giving it some defined params TODO @RS @AS do something sensible here:
+                else: # did not get co_params yet, giving it some defined params 
                     convertedccoparams = default_convertedccoparams
 
                 #   zerosample, fullsample = makesamples(muz, stdevz, muf, stdevf, samplesize=1)
@@ -73,3 +81,6 @@ def getcurrentbudget(D, alloc=None):
             D.data.meta.progs.currentbudget = currentbudget
 
     return D
+    
+    
+#D = getcurrentbudget(D, alloc=None)
