@@ -115,7 +115,7 @@ def defaultscenarios(D, verbose=2):
     """ Define a list of default scenarios -- only "Current conditions" by default """
     
     # Start at the very beginning, a very good place to start :)
-    scenariolist = [struct() for s in range(3)]
+    scenariolist = [struct()]
     
     ## Current conditions
     scenariolist[0].name = 'Current conditions'
