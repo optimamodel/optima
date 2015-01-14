@@ -255,15 +255,6 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       $scope.optimisationGraphs = prepareOptimisationGraphs(cachedResponse.graph);
       $scope.financialGraphs = prepareFinancialGraphs(cachedResponse.graph);
       $scope.radarGraph = prepareRadarGraph(cachedResponse.pie);
-
-      // update chartsForDataExport
-      var charts = [];
-      var chart = $scope.radarGraph;
-      chart.options.title = chart.radarGraphName;
-      charts.push(chart);
-      charts = charts.concat($scope.optimisationGraphs);
-      charts = charts.concat($scope.financialGraphs);
-      $scope.chartsForDataExport = charts;
     }
 
     // makes all graphs to recalculate and redraw
