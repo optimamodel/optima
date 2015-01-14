@@ -231,7 +231,7 @@ define(['./module', 'angular'], function (module, angular) {
 
 	  var autoCalibrationTimer;
     $scope.startAutoCalibration = function () {
-      $http.post('/api/model/calibrate/auto', $scope.simulationOptions,{ignoreLoadingBar:true})
+      $http.post('/api/model/calibrate/auto', $scope.simulationOptions,{ignoreLoadingBar: true})
         .success(function(data, status, headers, config) {
           if (data.status == "OK" && data.join) {
       // Keep polling for updated values after every 5 seconds till we get an error.
@@ -257,7 +257,7 @@ define(['./module', 'angular'], function (module, angular) {
     };
 
     function checkWorkingAutoCalibration() {
-      $http.get('/api/model/working',{ignoreLoadingBar:true})
+      $http.get('/api/model/working',{ignoreLoadingBar: true})
         .success(function(data, status, headers, config) {
           if (data.status == 'Done') {
             stopTimer();
