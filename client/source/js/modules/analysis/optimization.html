@@ -501,8 +501,8 @@
             <div class="section">
                 <h1>{{radarChartName}}</h1>
 
-                <button class="btn" ng-click="exportAllFigures()" save-graph-as="export-all" ng-if="radarData || optimisationGraphs || financialGraphs">Export all figures</button>
-                <button class="btn" ng-click="exportAllData()" save-graph-as="export-all" ng-if="radarData || optimisationGraphs || financialGraphs">Export all data</button>
+                <export-all-charts name="Optimization analyses" ng-if="radarData || optimisationGraphs || financialGraphs"></export-all-charts>
+                <export-all-data charts="chartsForDataExport" name="Optimization analyses" ng-if="radarData || optimisationGraphs || financialGraphs"></export-all-data>
 
                 <div class="grid">
                     <div class="7" ng-if="radarGraph">
@@ -516,14 +516,14 @@
             <div class="well section">
                 <div class="grid">
                     <div>
-                      <div class="chart-container __small" ng-repeat="graph in optimisationGraphs">
-                        <div line-scatter-chart data="graph.data" options="graph.options" save-graph-as></div>
+                      <div class="chart-container __small" ng-repeat="chart in optimisationGraphs">
+                        <div line-scatter-chart data="chart.data" options="chart.options" save-graph-as></div>
                       </div>
                     </div>
 
                     <div>
-                      <div class="chart-container __small" ng-repeat="graph in financialGraphs">
-                        <div line-scatter-chart data="graph.data" options="graph.options" save-graph-as></div>
+                      <div class="chart-container __small" ng-repeat="chart in financialGraphs">
+                        <div line-scatter-chart data="chart.data" options="chart.options" save-graph-as></div>
                       </div>
                     </div>
                 </div>
