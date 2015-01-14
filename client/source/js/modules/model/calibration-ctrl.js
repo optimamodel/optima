@@ -1,7 +1,7 @@
 define(['./module', 'angular'], function (module, angular) {
   'use strict';
 
-  module.controller('ModelCalibrationController', function ($scope, $http, $interval, Model, f, G, meta, info, cfpLoadingBar, CONFIG) {
+  module.controller('ModelCalibrationController', function ($scope, $http, $interval, Model, f, G, meta, info, cfpLoadingBar, CONFIG, graphTypeFactory) {
 
     // use for export all data
     $scope.exportGraphs = {
@@ -40,7 +40,7 @@ define(['./module', 'angular'], function (module, angular) {
     };
 
     $scope.G = G;
-    $scope.types = angular.copy(CONFIG.GRAPH_TYPES);
+    $scope.types = graphTypeFactory.types;
     $scope.calibrationStatus = false;
 
     $scope.enableManualCalibration = false;
@@ -244,14 +244,14 @@ define(['./module', 'angular'], function (module, angular) {
             var val = ($scope.simulationOptions.timelimit * 1000) / 250;
             // callback function in start to be called in place of _inc()
             cfpLoadingBar.start(function () {
-              if (cfpLoadingBar.status() >= 1) {
+              if (cfpLoadingBar.status() >= 0.9) {
                 return;
               }
               var pct = cfpLoadingBar.status() + (0.9/val);
               cfpLoadingBar.set(pct);
             });
           } else {
-            console.log("Cannot poll for optimization now");
+            console.log("Cannot poll for calibration now");
           }
         });
     };
