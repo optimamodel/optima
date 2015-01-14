@@ -4,8 +4,8 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
   module.directive('stackedAreaChart', function (d3Charts) {
     var svg;
 
-    var colors = [ '__light-blue', '__orange', '__light-orange', '__violet',
-    '__green', '__light-green', '__red', '__gray' ];
+    var colors = [ '__light-blue', '__blue', '__violet', '__green', '__light-green',
+      '__gray', '__red' ];
 
     var generateBaseLine = function(line) {
       return _(line).map(function(dot) { return [dot[0], 0]; });
