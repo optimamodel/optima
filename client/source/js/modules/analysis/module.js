@@ -34,8 +34,8 @@ define([
                   meta: function (Model) {
                     return Model.getParametersDataMeta().$promise;
                   },
-                  scenarioParamsResponse: function($http, info) {
-                    return $http.get('/api/analysis/scenarios/params');
+                  scenarioParametersResponse: function($http, info) {
+                    return $http.get('/api/analysis/scenarios/parameters');
                   },
                   scenariosResponse: function($http, info) {
                     return $http.get('/api/analysis/scenarios/list');

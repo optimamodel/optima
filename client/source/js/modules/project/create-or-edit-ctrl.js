@@ -13,7 +13,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
     $scope.projectInfo = info;
 
-    var availableParameters = parametersResponse.data.params;
+    var availableParameters = parametersResponse.data.parameters;
     var availableDefaults = defaultsResponse.data;
 
     $scope.submit = "Create project & Optima template";

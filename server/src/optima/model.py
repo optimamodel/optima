@@ -164,6 +164,8 @@ def doManualCalibration():
         args['D'] = D
         F = bunchify(data.get("F",{}))
         args['F'] = F
+        Mlist = data.get("M",[])
+        args['Mlist'] = Mlist
         D = manualfit(**args)
         D_dict = D.toDict()
         if dosave:
@@ -173,6 +175,34 @@ def doManualCalibration():
         var = traceback.format_exc()
         return jsonify({"status":"NOK", "exception":var})
     return jsonify(D_dict.get('plot',{}).get('E',{}))
+
+@model.route('/calibrate/parameters')
+@login_required
+@check_project_name
+def getModelCalibrateParameters():
+    """ Returns the parameters of the given model. """
+    from sim.parameters import parameters
+    from sim.manualfit import updateP
+    from sim.nested import getnested
+    calibrate_parameters = [p for p in parameters() if 'calibration' in p and p['calibration']]
+    print("calibrate_parameters", calibrate_parameters)
+    D = load_model(request.project_name, as_bunch = True)
+    D = updateP(D, [])
+    D_dict = D.toDict()
+    F = D_dict.get('F', {})
+    M = D_dict.get('M', {})
+    print("M", M.keys())
+    M_out = []
+    for parameter in calibrate_parameters:
+        keys = parameter['keys']
+        entry = {}
+        entry['name'] = keys
+        entry['title'] = parameter['name']
+        entry['data'] = getnested(M, keys)
+        M_out.append(entry)
+    G = D_dict.get('G', {})
+    result = {'F':F, 'M':M_out, 'G':G}
+    return jsonify(result)
 
 @model.route('/parameters')
 @login_required
