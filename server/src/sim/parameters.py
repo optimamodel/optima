@@ -57,7 +57,6 @@ def parameters():
     split_lines = [l.split(';') for l in lines]
     result = []
     for line in split_lines:
-        print line
         entry = {}
         for key in fields:
             item = line[key]
@@ -79,7 +78,6 @@ def parameters():
         entry['page'] = page
         entry['input_keys']=input_keys
         result.append(entry)
-        print entry
     return result
 
 parameter_list = parameters()

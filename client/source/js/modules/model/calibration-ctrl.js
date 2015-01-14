@@ -227,10 +227,19 @@ define(['./module', 'angular'], function (module, angular) {
     };
 
     var updateGraphs = function (data) {
-      if (data!== undefined && data!==null) {
-        $scope.graphs = prepareGraphs(data);
-        $scope.parameters.cache.response = data;
+      if (data!== undefined && data!==null && data.graph !== undefined) {
+        $scope.graphs = prepareGraphs(data.graph);
+        $scope.parameters.cache.response = data.graph;
         $scope.canDoFitting = true;
+        if (data.F){
+          var f = prepareF(data.F[0]);
+          $scope.parameters.f = f;
+          $scope.parameters.cache.f = angular.copy(f);
+        }
+        if (data.M) {
+          $scope.parameters.m = data.M;
+          $scope.parameters.cache.m = angular.copy(data.M);
+        }
       }
     };
 
@@ -260,7 +269,7 @@ define(['./module', 'angular'], function (module, angular) {
           if (data.status == 'Done') {
             stopTimer();
           } else {
-            updateGraphs(data.graph);
+            updateGraphs(data);
           }
         })
         .error(function(data, status, headers, config) {

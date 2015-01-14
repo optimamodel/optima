@@ -28,7 +28,7 @@ def record_params(setup_state):
 
 @project.route('/parameters')
 @login_required
-def get_project_parameters(group):
+def get_project_parameters():
     """
     Gives back project parameters (modifiable)
     """
@@ -68,7 +68,7 @@ def createProject(project_name):
     {"npops":6,"nprogs":8, "datastart":2000, "dataend":2015}
     """
     from sim.makeproject import default_datastart, default_dataend, default_econ_dataend, default_pops, default_progs
-
+    from sim.runsimulation import runsimulation
     current_app.logger.debug("createProject %s" % project_name)
     data = request.form
 
@@ -127,6 +127,7 @@ def createProject(project_name):
             filedata.close()
             D = model_as_bunch(project.model)
             D = updatedata(D, savetofile = False)
+            D = runsimulation(D, makeplot = 0, dosave = False)
             model = model_as_dict(D)
             project.model = model
         else:
@@ -396,6 +397,7 @@ def uploadExcel():
     Uploads Excel file, uses it to update the corresponding model.
     Precondition: model should exist.
     """
+    from sim.runsimulation import runsimulation
     current_app.logger.debug("api/project/update")
     project_name = request.project_name
     user_id = current_user.id
@@ -429,6 +431,7 @@ def uploadExcel():
         # update and save model
         D = model_as_bunch(project.model)
         D = updatedata(D, savetofile = False)
+        D = runsimulation(D, makeplot = 0, dosave = False)
         model = model_as_dict(D)
         project.model = model
         db.session.add(project)
