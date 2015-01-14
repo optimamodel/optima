@@ -19,6 +19,9 @@ def getcurrentbudget(D, alloc=None):
     if not(allocprovided):
         currentbudget = []
 
+    # Initialise currentcoverage and currentnonhivdalys
+    currentcoverage, currentnonhivdalysaverted = np.zeros(D.G.nprogs), 0.0
+
     # Loop over programs
     for prognumber, progname in enumerate(D.data.meta.progs.short):
         
@@ -36,14 +39,13 @@ def getcurrentbudget(D, alloc=None):
             convertedccparams = D.programs[progname]['convertedccparams']
         else:
             convertedccparams = default_convertedccparams
-        cov = cceqn(totalcost, convertedccparams)
+        currentcoverage[prognumber] = cceqn(totalcost, convertedccparams)
 
         if D.programs[progname]['nonhivdalys']:
             nonhivdalys = D.programs[progname]['nonhivdalys']
         else:
             nonhivdalys = default_init_nonhivdalys
-        nonhivdalysaverted = nonhivdalys[0]*cov
-        D.programs[progname]['nonhivdalys'].extend([nonhivdalysaverted])
+        currentnonhivdalysaverted += nonhivdalys[0]*currentcoverage[prognumber]
 
         # Loop over effects
         for effectnumber, effect in enumerate(D.programs[progname]['effects']):
@@ -56,7 +58,7 @@ def getcurrentbudget(D, alloc=None):
 
             # Is the affected parameter coverage?
             if parname in coverage_params:
-                D.P[effect[0][1]].c[0] = cov
+                D.P[effect[0][1]].c[0] = currentcoverage[prognumber]
 
             # ... or not?
             else:
@@ -79,8 +81,7 @@ def getcurrentbudget(D, alloc=None):
         if not(allocprovided):
             currentbudget.append(totalcost)
             D.data.meta.progs.currentbudget = currentbudget
+            
 
-    return D
+    return D, currentcoverage, currentnonhivdalysaverted
     
-    
-#D = getcurrentbudget(D, alloc=None)
