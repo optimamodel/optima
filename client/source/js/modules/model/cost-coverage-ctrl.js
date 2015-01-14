@@ -399,6 +399,7 @@ define(['./module', 'underscore'], function (module, _) {
       } else {
         $scope.displayCost = 1;
         $scope.displayYear = undefined;
+        $scope.xAxisMaximum = undefined;
       }
     };
 
