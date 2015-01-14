@@ -4,14 +4,10 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
   module.controller('AnalysisOptimizationController', function ($scope, $http,
     $interval, meta, CONFIG, modalService, graphTypeFactory) {
 
+      $scope.chartsForDataExport = [];
+
       $scope.meta = meta;
       $scope.types = graphTypeFactory.types;
-
-      // use for export all data
-      $scope.exportCharts = {
-        'name':'Optimization analyses',
-        'controller':'AnalysisOptimization'
-      };
 
       var statusEnum = {
         NOT_RUNNING: { text: "", isActive: false },
@@ -171,13 +167,13 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       });
       options.legend.push(data.pie2.name);
 
-      var graph = {
+      var chart = {
         'data': graphData,
         'options': options,
         'radarGraphName': 'Allocation',
         'radarAxesName': 'Programs'
       };
-      return graph;
+      return chart;
     };
 
     /**
@@ -259,6 +255,15 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       $scope.optimisationGraphs = prepareOptimisationGraphs(cachedResponse.graph);
       $scope.financialGraphs = prepareFinancialGraphs(cachedResponse.graph);
       $scope.radarGraph = prepareRadarGraph(cachedResponse.pie);
+
+      // update chartsForDataExport
+      var charts = [];
+      var chart = $scope.radarGraph;
+      chart.options.title = chart.radarGraphName;
+      charts.push(chart);
+      charts = charts.concat($scope.optimisationGraphs);
+      charts = charts.concat($scope.financialGraphs);
+      $scope.chartsForDataExport = charts;
     }
 
     // makes all graphs to recalculate and redraw
@@ -392,6 +397,29 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       });
 
     };
+
+    var updateChartsForDataExport = function() {
+      $scope.chartsForDataExport = [];
+
+      if ( scope.radarGraph ) {
+        // export radarChart
+        var graph = scope.radarGraph;
+        graph.options.title = scope.radarGraphName;
+        $scope.chartsForDataExport.push(graph);
+      }
+
+      if ( scope.optimisationGraphs ) {
+        $scope.chartsForDataExport = graphs.concat(scope.optimisationGraphs);
+      }
+
+      if ( scope.financialGraphs ) {
+        $scope.chartsForDataExport = graphs.concat(scope.financialGraphs);
+      }
+    };
+
+    $scope.$watch('radarGraph', updateChartsForDataExport, true);
+    $scope.$watch('optimisationGraphs', updateChartsForDataExport, true);
+    $scope.$watch('financialGraphs', updateChartsForDataExport, true);
 
   });
 });

@@ -55,8 +55,8 @@
 
     <div class="section" ng-if="hasCostCoverResponse">
 
-      <export-all-charts ng-if="graphs" export-charts="exportCharts"></export-all-charts>
-      <export-all-data export-charts="exportCharts" ng-if="graphs || ccGraph"></export-all-data>
+      <export-all-charts ng-if="graphs" name="Cost coverage outcome" custom-titles="titlesForChartsExport"></export-all-charts>
+      <export-all-data charts="chartsForDataExport" name="Cost coverage outcome" ng-if="graphs || ccGraph"></export-all-data>
 
       <h1>{{ displayedProgram.name }}</h1>
       <div class="section elastic">

@@ -6,55 +6,6 @@ define(['angular', 'jquery', './svg-to-png'], function (angular, $, svgToPng) {
 
     var chartCssUrl = '/assets/css/chart.css';
 
-    var getCharts = function (scope) {
-      var graphs = [];
-
-      var controller = scope.exportCharts.controller;
-
-      // Optimization
-      if ( controller == 'AnalysisOptimization' ) {
-
-        if ( scope.radarGraph ) {
-          // export radarChart
-          var graph = scope.radarGraph;
-          graph.options.title = scope.radarGraphName;
-          graphs.push(graph);
-        }
-
-        if ( scope.optimisationGraphs ) {
-          graphs = graphs.concat(scope.optimisationGraphs);
-        }
-
-        if ( scope.financialGraphs ) {
-          graphs = graphs.concat(scope.financialGraphs);
-        }
-      }
-
-      // Calibration
-      // Analysis Scenarios
-      if ( controller == 'ModelCalibration' || controller == 'AnalysisScenarios' ) {
-        if ( scope.graphs ) {
-          graphs = scope.graphs;
-        }
-      }
-
-      // Cost Coverage
-      if ( controller == 'ModelCostCoverage' ) {
-        if (scope.ccGraph) {
-          graphs.push(scope.ccGraph);
-        }
-
-        if ( scope.graphs ) { // in this case, graphs are actually graph sets (one for cost, one for coverage)
-          _(scope.graphs).each(function (graphSet,index) {
-            _(graphSet).each(function (graph,index) {
-              graphs.push(graph);
-            });
-          });
-        }
-      }
-      return graphs;
-    };
-
     /**
      * Get the graph as a PNG.
      *
@@ -276,7 +227,6 @@ define(['angular', 'jquery', './svg-to-png'], function (angular, $, svgToPng) {
 
     return {
       generateGraphAsPngOrJpeg: generateGraphAsPngOrJpeg,
-      getCharts: getCharts,
       saySorry: saySorry,
       getExportableFrom: getExportableFrom
     };

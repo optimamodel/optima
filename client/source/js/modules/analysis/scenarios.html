@@ -60,8 +60,8 @@
 
     <div class="well section" ng-show="validate">
         <div class="grid">
-            <export-all-charts ng-if="graphs" export-charts="exportCharts"></export-all-charts>
-            <export-all-data export-charts="exportCharts" ng-if="graphs"></export-all-data>
+            <export-all-charts ng-if="graphs" name="Analysis scenarios"></export-all-charts>
+            <export-all-data name="Analysis scenarios" charts="graphs" ng-if="graphs"></export-all-data>
             <div>
               <div class="chart-container __small" ng-repeat="chart in graphs">
                 <div line-scatter-chart data="chart.data" options="chart.options" save-graph-as></div>

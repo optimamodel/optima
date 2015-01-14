@@ -7,9 +7,10 @@ function (angular, $, _, jspdf) {
     return {
       restrict: 'E',
       scope: {
-        exportCharts: '='
+        name: '@',
+        customTitles: '='
       },
-      template: '<button class="btn" ng-click="exportAllFigures()">Export all figures</button>',
+      template: '<button type="button" class="btn" ng-click="exportAllFigures()">Export all figures</button>',
       link: function (scope, elem, attrs) {
 
         /**
@@ -17,9 +18,6 @@ function (angular, $, _, jspdf) {
         */
         scope.exportAllFigures = function () {
           var totalElements = $(".chart-container").length;
-
-          // Get details of all graphs.
-          var graphs = exportHelpers.getCharts(scope);
 
           // Start the pdf document
           var doc = new jspdf('landscape', 'pt', 'a4', true);
@@ -29,17 +27,6 @@ function (angular, $, _, jspdf) {
           doc.setFontSize( 16 );
 
           _( $(".chart-container") ).each(function ( el, index ) {
-
-            // FIXME: This is a hack for the case of cost coverage. We need to add the titles.
-            // All other graph figures have self-contained titles.
-            var graphTitle = '';
-            if ( scope.exportCharts.controller == 'ModelCostCoverage') {
-              if ( index === 0 ) {
-                graphTitle = graphs[index].title;
-              } else {
-                graphTitle = graphs[Math.ceil(index / 2)].title;
-              }
-            }
 
             // Generate a png of the graph and save it into an array to be used
             // to generate the pdf.
@@ -59,10 +46,12 @@ function (angular, $, _, jspdf) {
               };
 
               // Image title
-              centeredText(doc, graphTitle, startingY);
+              if (scope.customTitles) {
+                centeredText(doc, scope.customTitles[index], startingY);
+              }
 
               if ( index == totalElements - 1 ) {
-                doc.save(scope.exportCharts.name + '.pdf');
+                doc.save(scope.name + '.pdf');
               } else {
                 doc.addPage();
               }
