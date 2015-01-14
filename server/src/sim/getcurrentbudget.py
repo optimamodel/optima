@@ -5,7 +5,7 @@ def getcurrentbudget(D, alloc=None):
     Returns: D
     Version: 2014nov30
     """
-    from makeccocs import ccoeqn, cceqn, coverage_params, default_convertedccparams, default_convertedccoparams, default_init_nonhivdalys
+    from makeccocs import ccoeqn, cceqn, cc2eqn, cco2eqn, coverage_params, default_convertedccparams, default_convertedccoparams, default_init_nonhivdalys
     import numpy as np
     
     # Initialise parameter structure (same as D.P). #TODO make this less ugly
@@ -35,16 +35,21 @@ def getcurrentbudget(D, alloc=None):
             totalcost = totalcost[~np.isnan(totalcost)]
             totalcost = totalcost[-1]
 
+        # Extract the converted cost-coverage parameters... 
         if D.programs[progname]['convertedccparams']:
             convertedccparams = D.programs[progname]['convertedccparams']
+        # ... or if there aren't any, use defaults (for sim only; FE produces warning)
         else:
             convertedccparams = default_convertedccparams
-        currentcoverage[prognumber] = cceqn(totalcost, convertedccparams)
 
-        if D.programs[progname]['nonhivdalys']:
-            nonhivdalys = D.programs[progname]['nonhivdalys']
+        # Get coverage
+        if len(convertedccparams)==2:
+            currentcoverage[prognumber] = cc2eqn(totalcost, convertedccparams)
         else:
-            nonhivdalys = default_init_nonhivdalys
+            currentcoverage[prognumber] = cceqn(totalcost, convertedccparams)
+
+        # Extract and sum the number of non-HIV-related DALYs 
+        nonhivdalys = D.programs[progname]['nonhivdalys']
         currentnonhivdalysaverted += nonhivdalys[0]*currentcoverage[prognumber]
 
         # Loop over effects
@@ -74,7 +79,10 @@ def getcurrentbudget(D, alloc=None):
                     convertedccoparams = default_convertedccoparams
 
                 #   zerosample, fullsample = makesamples(muz, stdevz, muf, stdevf, samplesize=1)
-                y = ccoeqn(totalcost, convertedccoparams)
+                if len(convertedccparams)==2:
+                    y = cco2eqn(totalcost, convertedccoparams)
+                else:
+                    y = ccoeqn(totalcost, convertedccoparams)
                 D.P[effect[0][1]].c[popnumber] = y
 
 
