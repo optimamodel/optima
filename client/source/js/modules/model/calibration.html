@@ -78,13 +78,14 @@
         </div>
     </div>
 
-    <div class="well section __inline calibration-charts" ng-class="{'calibration-charts--full':enableManualCalibration===false}" ng-show="graphs.length>0" >
+    <div class="well section __inline calibration-charts" ng-class="{'calibration-charts--full':enableManualCalibration===false}" ng-show="charts.length>0" >
         <div class="grid">
-            <button ng-if="graphs" class="btn" ng-click="exportAllFigures()" save-graph-as="export-all">Export all figures</button>
-            <button ng-if="graphs" class="btn" ng-click="exportAllData()" save-graph-as="export-all">Export all data</button>
+            <export-all-charts name="Model calibration" ng-if="charts"></export-all-charts>
+            <export-all-data name="Model calibration" charts="charts" ng-if="charts"></export-all-data>
             <div>
-                <div class="chart-container __small" ng-repeat="graph in graphs">
-                    <div line-scatter-area-chart data="graph.data" options="graph.options" save-graph-as></div>
+                <div class="chart-container __small" ng-repeat="chart in charts">
+                    <div ng-if="chart.type == 'lineScatterAreaChart'" line-scatter-area-chart ng-if="chart.type != 'stackAreaChart'" data="chart.data" options="chart.options" save-graph-as></div>
+                    <div ng-if="chart.type == 'stackedAreaChart'" stacked-area-chart data="chart.data" options="chart.options" save-graph-as></div>
                 </div>
             </div>
         </div>

@@ -4,14 +4,10 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
   module.controller('AnalysisOptimizationController', function ($scope, $http,
     $interval, meta, CONFIG, modalService, graphTypeFactory) {
 
+      $scope.chartsForDataExport = [];
+
       $scope.meta = meta;
       $scope.types = graphTypeFactory.types;
-
-      // use for export all data
-      $scope.exportGraphs = {
-        'name':'Optimization analyses',
-        'controller':'AnalysisOptimization'
-      };
 
       var statusEnum = {
         NOT_RUNNING: { text: "", isActive: false },
@@ -95,9 +91,6 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
         $scope.params.constraints.coverage[meta.progs.short[i]].year = undefined;
       }
 
-    $scope.radarGraphName = 'Allocation';
-    $scope.radarAxesName =  'Programs';
-
     var optimizationTimer;
 
     var linesStyle = ['__blue', '__green', '__red', '__orange', '__violet',
@@ -117,15 +110,6 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       yAxis: {
         axisLabel: ''
       }
-    };
-
-    /*
-    * Returns an array containing arrays with [x, y] for d3 line data.
-    */
-    var generateLineData = function(xData, yData) {
-      return _(yData).map(function (value, i) {
-        return [xData[i], value];
-      });
     };
 
     /*
@@ -152,7 +136,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       graph.options.yAxis.axisLabel = yLabel;
 
       _(yData).each(function(lineData) {
-        graph.data.lines.push(generateLineData(xData, lineData));
+        graph.data.lines.push(_.zip(xData, lineData));
       });
 
       return graph;
@@ -183,7 +167,13 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       });
       options.legend.push(data.pie2.name);
 
-      return {'data':graphData, 'options':options};
+      var chart = {
+        'data': graphData,
+        'options': options,
+        'radarGraphName': 'Allocation',
+        'radarAxesName': 'Programs'
+      };
+      return chart;
     };
 
     /**
@@ -398,6 +388,32 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       });
 
     };
+
+    /**
+     * Collects all existing charts in the $scope.chartsForDataExport variable.
+     */
+    var updateChartsForDataExport = function() {
+      $scope.chartsForDataExport = [];
+
+      if ( scope.radarGraph ) {
+        // export radarChart
+        var graph = scope.radarGraph;
+        graph.options.title = scope.radarGraphName;
+        $scope.chartsForDataExport.push(graph);
+      }
+
+      if ( scope.optimisationGraphs ) {
+        $scope.chartsForDataExport = graphs.concat(scope.optimisationGraphs);
+      }
+
+      if ( scope.financialGraphs ) {
+        $scope.chartsForDataExport = graphs.concat(scope.financialGraphs);
+      }
+    };
+
+    $scope.$watch('radarGraph', updateChartsForDataExport, true);
+    $scope.$watch('optimisationGraphs', updateChartsForDataExport, true);
+    $scope.$watch('financialGraphs', updateChartsForDataExport, true);
 
   });
 });

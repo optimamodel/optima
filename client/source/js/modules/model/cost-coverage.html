@@ -54,9 +54,9 @@
     </div>
 
     <div class="section" ng-if="hasCostCoverResponse">
-      
-      <button ng-if="graphs" class="btn" ng-click="exportAllFigures()" save-graph-as="export-all">Export all figures</button>
-      <button ng-if="graphs || ccGraph" class="btn" ng-click="exportAllData()" save-graph-as="export-all">Export all data</button>
+
+      <export-all-charts ng-if="graphs" name="Cost coverage outcome" custom-titles="titlesForChartsExport"></export-all-charts>
+      <export-all-data charts="chartsForDataExport" name="Cost coverage outcome" ng-if="graphs || ccGraph"></export-all-data>
 
       <h1>{{ displayedProgram.name }}</h1>
       <div class="section elastic">
@@ -86,8 +86,8 @@
         </div>
       </div>
 
-      <div class="section" ng-repeat="graph in graphs.plotdata">
-        <h2 class="section">{{ graph.title }}</h2>
+      <div class="section" ng-repeat="chart in graphs.plotdata">
+        <h2 class="section">{{ chart.title }}</h2>
 
         <div class="section elastic">
           <div class="elastic_col __shrink" style="width: 320px">
@@ -98,7 +98,7 @@
 
           <div class="elastic_col" style="width: 340px">
             <div class="chart-container">
-              <div line-scatter-chart data="graph.data" options="graph.options" save-graph-as></div>
+              <div line-scatter-chart data="chart.data" options="chart.options" save-graph-as></div>
             </div>
           </div>
 
