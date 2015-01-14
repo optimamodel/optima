@@ -44,7 +44,7 @@ Version: 2014nov29 by cliffk
 
 def getnested(nesteddict, keylist): 
     """ Get a value from a nested dictionary"""
-    output = reduce(lambda d, k: d[k], keylist, nesteddict)
+    output = reduce(lambda d, k: d.get(k), keylist, nesteddict)
     return output
 
 def setnested(nesteddict, keylist, value): 

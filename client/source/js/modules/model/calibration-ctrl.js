@@ -1,7 +1,7 @@
 define(['./module', 'angular'], function (module, angular) {
   'use strict';
 
-  module.controller('ModelCalibrationController', function ($scope, $http, $interval, Model, f, G, meta, info, CONFIG, graphTypeFactory) {
+  module.controller('ModelCalibrationController', function ($scope, $http, $interval, Model, parameters, meta, info, CONFIG, graphTypeFactory) {
 
     // use for export all data
     $scope.exportGraphs = {
@@ -18,7 +18,14 @@ define(['./module', 'angular'], function (module, angular) {
       return F;
     };
 
-    var transformedF = prepareF(f[0]);
+    var prepareM = function(m) {
+      _(m).each(function (parameter) {
+        parameter.data = parseFloat(parameter.data);
+      });
+      return m;
+    }
+
+    var transformedF = prepareF(parameters.F[0]);
 
     $scope.parameters = {
       types: {
@@ -33,13 +40,15 @@ define(['./module', 'angular'], function (module, angular) {
       },
       meta: meta,
       f: transformedF,
+      m: parameters.M,
       cache: {
         f: angular.copy(transformedF),
+        m: angular.copy(parameters.M),
         response: null
       }
     };
 
-    $scope.G = G;
+    $scope.G = parameters.G;
     $scope.types = graphTypeFactory.types;
     $scope.calibrationStatus = false;
 
@@ -77,6 +86,7 @@ define(['./module', 'angular'], function (module, angular) {
     $scope.doneEditingParameter = function () {
       Model.saveCalibrateManual({
         F: prepareF($scope.parameters.f),
+        M: prepareM($scope.parameters.m),
         dosave: false
       }, updateGraphs);
     };
@@ -292,18 +302,22 @@ define(['./module', 'angular'], function (module, angular) {
     };
 
     $scope.previewManualCalibration = function () {
-      Model.saveCalibrateManual({ F: prepareF($scope.parameters.f) }, updateGraphs);
+      Model.saveCalibrateManual({ 
+        F: prepareF($scope.parameters.f), 
+        M: prepareM($scope.parameters.m) }, updateGraphs);
     };
 
     $scope.saveManualCalibration = function () {
       Model.saveCalibrateManual({
         F: prepareF($scope.parameters.f),
+        M: prepareM($scope.parameters.m),
         dosave: true
       }, updateGraphs);
     };
 
     $scope.revertManualCalibration = function () {
       angular.extend($scope.parameters.f, $scope.parameters.cache.f);
+      angular.extend($scope.parameters.m, $scope.parameters.cache.m);
     };
 
     $scope.reportCalibrationStatus = function () {

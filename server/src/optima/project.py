@@ -26,15 +26,15 @@ def record_params(setup_state):
   app = setup_state.app
   project.config = dict([(key,value) for (key,value) in app.config.iteritems()])
 
-@project.route('/params')
+@project.route('/parameters')
 @login_required
-def get_project_params():
+def get_project_parameters(group):
     """
-    Gives back project params
+    Gives back project parameters (modifiable)
     """
     from sim.parameters import parameters
-    project_params = [p for p in parameters() if p['modifiable']]
-    return json.dumps({"params":project_params})
+    project_parameters = [p for p in parameters() if 'modifiable' in p and p['modifiable']]
+    return json.dumps({"parameters":project_parameters})
 
 @project.route('/predefined')
 @login_required
@@ -50,10 +50,10 @@ def get_predefined():
     for p in populations: p['active']= False
     for p in programs:
         p['active'] = False
-        new_params = [dict([('value', param),('active',True)]) for param in p['parameters']]
-        for np in new_params:
+        new_parameters = [dict([('value', parameter),('active',True)]) for parameter in p['parameters']]
+        for np in new_parameters:
             if len(np['value']['pops'][0])==0: np['value']['pops']=['ALL_POPULATIONS']
-        if new_params: p['parameters'] = new_params
+        if new_parameters: p['parameters'] = new_parameters
     return json.dumps({"programs":programs, "populations": populations, "categories":program_categories})
 
 @project.route('/create/<project_name>', methods=['POST'])

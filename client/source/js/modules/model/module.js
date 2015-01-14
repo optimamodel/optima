@@ -30,11 +30,8 @@ define([
             info: function(Project) {
               return Project.info().$promise;
             },
-            f: function (Model) {
-              return Model.getParametersF().$promise;
-            },
-            G: function (Model) {
-              return Model.getParametersG().$promise;
+            parameters: function (Model) {
+              return Model.getCalibrateParameters().$promise;
             },
             meta: function (Model) {
               return Model.getParametersDataMeta().$promise;

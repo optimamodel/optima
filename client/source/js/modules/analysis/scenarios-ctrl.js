@@ -1,9 +1,9 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     'use strict';
 
-    module.controller('AnalysisScenariosController', function ($scope, $http, $modal, $window, meta, info, scenarioParamsResponse, scenariosResponse, CONFIG, graphTypeFactory) {
+    module.controller('AnalysisScenariosController', function ($scope, $http, $modal, $window, meta, info, scenarioParametersResponse, scenariosResponse, CONFIG, graphTypeFactory) {
 
-        var linesGraphOptions, linesGraphData, responseData, availableScenarioParams, availableScenarios;
+        var linesGraphOptions, linesGraphData, responseData, availableScenarioParameters, availableScenarios;
 
         // initialize all necessary data for this controller
         var initialize = function() {
@@ -28,9 +28,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             // add All option in population list
             meta.pops.long.push("All");
 
-            // transform scenarioParams to use attribute `names` instead of `keys`
+            // transform scenarioParameters to use attribute `names` instead of `keys`
             // it is the same for the data we have to send to run scenarios
-            availableScenarioParams = _(scenarioParamsResponse.data.params).map(function(parameters) {
+            availableScenarioParameters = _(scenarioParametersResponse.data.parameters).map(function(parameters) {
               return { name: parameters.name, names: parameters.keys, values: parameters.values};
             });
 
@@ -204,8 +204,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               scenario: function () {
                 return scenario;
               },
-              availableScenarioParams: function() {
-                return availableScenarioParams;
+              availableScenarioParameters: function() {
+                return availableScenarioParameters;
               },
               populationNames: function() {
                 return meta.pops.long;
