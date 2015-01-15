@@ -323,7 +323,7 @@ def doCostCoverage():
     args = pick_params(["progname", "ccparams", "coparams", "ccplot"], data, args)
     do_save = data.get('doSave')
     try:
-        if args.get('ccparams'):args['ccparams'] = [float(param) for param in args['ccparams']]
+        if args.get('ccparams'):args['ccparams'] = [float(param) if param else None for param in args['ccparams']]
         if args.get('coparams'):del args['coparams'] 
 
         args['makeplot'] = 0 # don't do plotting in SIM
@@ -364,7 +364,7 @@ def doCostCoverageEffect():
     try:
         if not args.get('effect'):
             return jsonify({'status':'NOK','reason':'No effect has been specified'})
-        if args.get('ccparams'):args['ccparams'] = [float(param) for param in args['ccparams']]
+        if args.get('ccparams'):args['ccparams'] = [float(param) if param else None for param in args['ccparams']]
         if args.get('coparams'):args['coparams'] = [float(param) for param in args['coparams']]
         args['makeplot'] = 0 # don't do plotting in SIM
         plotdata, plotdata_co, storeparams_co = makecco(**args)

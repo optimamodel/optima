@@ -5,7 +5,7 @@ def getcurrentbudget(D, alloc=None):
     Returns: D
     Version: 2014nov30
     """
-    from makeccocs import ccoeqn, cceqn, coverage_params, default_convertedccparams, default_convertedccoparams
+    from makeccocs import ccoeqn, cceqn, cc2eqn, cco2eqn, coverage_params, default_convertedccparams, default_convertedccoparams, default_init_nonhivdalys
     import numpy as np
     
     # Initialise parameter structure (same as D.P). #TODO make this less ugly
@@ -18,6 +18,9 @@ def getcurrentbudget(D, alloc=None):
     allocprovided = not(isinstance(alloc,type(None)))
     if not(allocprovided):
         currentbudget = []
+
+    # Initialise currentcoverage and currentnonhivdalys
+    currentcoverage, currentnonhivdalysaverted = np.zeros(D.G.nprogs), 0.0
 
     # Loop over programs
     for prognumber, progname in enumerate(D.data.meta.progs.short):
@@ -32,6 +35,23 @@ def getcurrentbudget(D, alloc=None):
             totalcost = totalcost[~np.isnan(totalcost)]
             totalcost = totalcost[-1]
 
+        # Extract the converted cost-coverage parameters... 
+        if D.programs[progname]['convertedccparams']:
+            convertedccparams = D.programs[progname]['convertedccparams']
+        # ... or if there aren't any, use defaults (for sim only; FE produces warning)
+        else:
+            convertedccparams = default_convertedccparams
+
+        # Get coverage
+        if len(convertedccparams)==2:
+            currentcoverage[prognumber] = cc2eqn(totalcost, convertedccparams)
+        else:
+            currentcoverage[prognumber] = cceqn(totalcost, convertedccparams)
+
+        # Extract and sum the number of non-HIV-related DALYs 
+        nonhivdalys = D.programs[progname]['nonhivdalys']
+        currentnonhivdalysaverted += nonhivdalys[0]*currentcoverage[prognumber]
+
         # Loop over effects
         for effectnumber, effect in enumerate(D.programs[progname]['effects']):
 
@@ -43,12 +63,7 @@ def getcurrentbudget(D, alloc=None):
 
             # Is the affected parameter coverage?
             if parname in coverage_params:
-                if D.programs[progname]['convertedccparams']:
-                    convertedccparams = D.programs[progname]['convertedccparams']
-                else:
-                    convertedccparams = default_convertedccparams
-                y = cceqn(totalcost, convertedccparams)
-                D.P[effect[0][1]].c[0] = y
+                D.P[effect[0][1]].c[0] = currentcoverage[prognumber]
 
             # ... or not?
             else:
@@ -60,16 +75,21 @@ def getcurrentbudget(D, alloc=None):
                 if len(effect)>4 and len(effect[4])>=4: #happy path if co_params are actually there
                     # Unpack
                     convertedccoparams = effect[4]
-                else: # did not get co_params yet, giving it some defined params TODO @RS @AS do something sensible here:
+                else: # did not get co_params yet, giving it some defined params 
                     convertedccoparams = default_convertedccoparams
 
                 #   zerosample, fullsample = makesamples(muz, stdevz, muf, stdevf, samplesize=1)
-                y = ccoeqn(totalcost, convertedccoparams)
+                if len(convertedccparams)==2:
+                    y = cco2eqn(totalcost, convertedccoparams)
+                else:
+                    y = ccoeqn(totalcost, convertedccoparams)
                 D.P[effect[0][1]].c[popnumber] = y
 
 
         if not(allocprovided):
             currentbudget.append(totalcost)
             D.data.meta.progs.currentbudget = currentbudget
+            
 
-    return D
+    return D, currentcoverage, currentnonhivdalysaverted
+    
