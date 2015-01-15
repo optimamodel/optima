@@ -45,6 +45,7 @@ define(['./module', 'angular'], function (module, angular) {
     $scope.projectInfo = info;
     $scope.canDoFitting = $scope.projectInfo.can_calibrate;
     $scope.needData = !$scope.projectInfo.has_data;
+    $scope.hasStackedCharts = false;
 
     var defaultChartOptions = {
       title: 'Title',
@@ -133,6 +134,7 @@ define(['./module', 'angular'], function (module, angular) {
         return _.zip(xData, yData);
       });
 
+      $scope.hasStackedCharts = true;
       return chart;
     };
 
