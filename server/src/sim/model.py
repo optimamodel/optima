@@ -1,5 +1,5 @@
  ## Imports
-from numpy import array, zeros, exp, maximum, minimum # For creating arrays
+from numpy import array, zeros, exp, maximum, minimum, absolute # For creating arrays
 from bunch import Bunch as struct # Replicate Matlab-like structure behavior
 from printv import printv
 from math import pow as mpow
@@ -15,7 +15,7 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
     ###############################################################################
     ## Setup
     ###############################################################################
-    
+
     eps = 1e-3 # Define another small number to avoid divide-by-zero errors
     
     ## Initialize basic quantities
@@ -43,10 +43,9 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
     S.death    = zeros((npops, npts)) # Number of deaths per timestep
     effhivprev = zeros((npops, 1))    # HIV effective prevalence (prevalence times infectiousness)
 
-    ## Set initial epidemic conditions 
     ## Set initial epidemic conditions
-    turnofftrans = not(isinstance(initstate, type(None))) # Has the initial state been provided?
-    if not(turnofftrans):
+    useinitstate = not(isinstance(initstate, type(None))) # Has the initial state been provided?
+    if not(useinitstate):
         people[:,:,0] = equilibrate(G, M, array(F.init)) # No it hasn't, so run equilibration
     else:
         people[:,:,0] = initstate # Yes it has, so use it.
@@ -195,6 +194,14 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
                     forceinfvec[pop1] = 1 - (1-forceinfvec[pop1]) * (1-forceinf1) # Calculate the new "male" forceinf, ensuring that it never gets above 1
                     forceinfvec[pop2] = 1 - (1-forceinfvec[pop2]) * (1-forceinf2) # Calculate the new "male" forceinf, ensuring that it never gets above 1
                     if not(all(forceinfvec>=0)): raise Exception('Injecting force-of-infection is invalid')
+        
+        ###############################################################################
+        ## Turn off transmission (after a certain time - if specified)
+        ###############################################################################
+
+        if S.tvec[t] >= absolute(opt.turnofftrans):
+            if opt.turnofftrans > 0: forceinfvec[range(npops)] = 0
+            if opt.turnofftrans < 0: break
         
         ###############################################################################
         ## Calculate mother-to-child-transmission
