@@ -22,7 +22,6 @@
           class="txbox"
           ng-options="p as p.name group by p.category for p in programs"
           ng-change="changeProgram()"
-          ng-click="generateCurves()"
           ng-model="selectedProgram"
           ng-disabled="notReady"></select>
       </label>
