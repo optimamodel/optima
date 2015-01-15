@@ -43,6 +43,11 @@
         3. Specify scale-up parameters:
         <input type="number" class="txbox __inline __xl" placeholder="e.g.{{defaultScaleUpParameter}}"  ng-model="scaleUpParameter" ng-change="updateCurves()">
       </p>
+      <p>
+        4. Full coverage would avert
+        <input type="number" class="txbox __inline __xl" placeholder="e.g.{{defaultNonHivDalys}}"  ng-model="nonHivDalys" ng-change="updateCurves()">
+        non-HIV-related DALYs per year
+      </p>
       <span ng-show="!areValidParams(costCoverageParams()) && hasCostCoverResponse" class="error-hint">{{ optionsErrorMessage }}</span>
     </div>
 
