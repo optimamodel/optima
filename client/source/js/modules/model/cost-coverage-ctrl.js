@@ -17,7 +17,7 @@ define(['./module', 'underscore'], function (module, _) {
       $scope.cannotCalibrate = !$scope.projectInfo.can_calibrate;
       $scope.notReady = $scope.needData || $scope.cannotCalibrate;
 
-      $scope.optionsErrorMessage = 'Cost-coverage curve plotting options should be either empty or all present.';
+      $scope.optionsErrorMessage = 'To define a cost-coverage curve, values must be provided in the first three text boxes.';
       $scope.all_programs = programs;
 
       if ( !$scope.needData ) {
