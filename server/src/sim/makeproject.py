@@ -41,6 +41,17 @@ def makeproject(projectname='example', pops = default_pops, progs = default_prog
     D.G.datastart = datastart
     D.G.dataend = dataend
     D.G.datayears = arange(D.G.datastart, D.G.dataend+1)
+    
+    # Health states
+    D.G.healthstates = ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'aids']
+    D.G.ncd4 = len(D.G.healthstates)
+    D.G.nstates = 1+D.G.ncd4*5 # Five are undiagnosed, diagnosed, 1st line, failure, 2nd line, plus susceptible
+    D.G.sus  = arange(0,1)
+    D.G.undx = arange(0*D.G.ncd4+1, 1*D.G.ncd4+1)
+    D.G.dx   = arange(1*D.G.ncd4+1, 2*D.G.ncd4+1)
+    D.G.tx1  = arange(2*D.G.ncd4+1, 3*D.G.ncd4+1)
+    D.G.fail = arange(3*D.G.ncd4+1, 4*D.G.ncd4+1)
+    D.G.tx2  = arange(4*D.G.ncd4+1, 5*D.G.ncd4+1)
     # Q:should econ_dataend also be saved somewhere?
     
     # Set up "F" -- fitted parameters structure
