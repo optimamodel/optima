@@ -8,12 +8,8 @@ define(['./module', 'underscore'], function (module, _) {
 
     var initialize =function () {
       $scope.meta = meta;
-
-      // use for export all data
-      $scope.exportGraphs = {
-        'name':'Cost coverage outcome',
-        'controller':'ModelCostCoverage'        
-      };
+      $scope.chartsForDataExport = [];
+      $scope.titlesForChartsExport = [];
 
       // show message "calibrate the model" and disable the form elements
       $scope.projectInfo = info;
@@ -399,6 +395,7 @@ define(['./module', 'underscore'], function (module, _) {
       } else {
         $scope.displayCost = 1;
         $scope.displayYear = undefined;
+        $scope.xAxisMaximum = undefined;
       }
     };
 
@@ -488,6 +485,30 @@ define(['./module', 'underscore'], function (module, _) {
         effectNames[graphIndex]=response.effect;
       });
     };
+
+    /**
+     * Collects all existing charts in the $scope.chartsForDataExport variable.
+     * In addition all titles are gatherd into titlesForChartsExport. This is
+     * needed since the cost coverage graphs have no title on the graphs.
+     */
+    var updateDataForExport = function() {
+      $scope.chartsForDataExport = [];
+      $scope.titlesForChartsExport = [];
+
+      if ( $scope.ccGraph) {
+        $scope.chartsForDataExport.push($scope.ccGraph);
+        $scope.titlesForChartsExport.push($scope.ccGraph.title);
+      }
+
+      var charts = _(_.zip($scope.graphs.plotdata, $scope.graphs.plotdata_co)).flatten();
+      _( charts ).each(function (chart,index) {
+        $scope.chartsForDataExport.push(chart);
+        $scope.titlesForChartsExport.push(chart.title);
+      });
+    };
+
+    $scope.$watch('graphs', updateDataForExport, true);
+    $scope.$watch('ccGraph', updateDataForExport, true);
 
     /**
      * Retrieve and update graphs based on the current plot models only if the graphs are already rendered
