@@ -83,7 +83,7 @@
             <export-all-charts name="Model calibration" ng-if="charts"></export-all-charts>
             <export-all-data name="Model calibration" charts="charts" ng-if="charts"></export-all-data>
             <div>
-                <div class="chart-container __small" ng-repeat="chart in charts">
+                <div class="chart-container __small" ng-style="hasStackedCharts && {'height':'400px'}" ng-repeat="chart in charts">
                     <div ng-if="chart.type == 'lineScatterAreaChart'" line-scatter-area-chart ng-if="chart.type != 'stackAreaChart'" data="chart.data" options="chart.options" save-graph-as></div>
                     <div ng-if="chart.type == 'stackedAreaChart'" stacked-area-chart data="chart.data" options="chart.options" save-graph-as></div>
                 </div>
