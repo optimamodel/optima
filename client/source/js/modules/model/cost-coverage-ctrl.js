@@ -17,7 +17,7 @@ define(['./module', 'underscore'], function (module, _) {
       $scope.cannotCalibrate = !$scope.projectInfo.can_calibrate;
       $scope.notReady = $scope.needData || $scope.cannotCalibrate;
 
-      $scope.optionsErrorMessage = 'Cost-coverage curve plotting options should be either empty or all present.';
+      $scope.optionsErrorMessage = 'To define a cost-coverage curve, values must be provided in the first three text boxes.';
       $scope.all_programs = programs;
 
       if ( !$scope.needData ) {
@@ -94,13 +94,13 @@ define(['./module', 'underscore'], function (module, _) {
 
     var getLineScatterOptions = function (options, xLabel, yLabel) {
       var defaults = {
-        height: 300,
-        width: 450,
+        width: 300,
+        height: 200,
         margin: {
           top: 20,
-          right: 20,
-          bottom: 60,
-          left: 100
+          right: 5,
+          bottom: 40,
+          left: 60
         },
         xAxis: {
           axisLabel: xLabel || 'X'
