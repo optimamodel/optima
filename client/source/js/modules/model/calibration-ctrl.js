@@ -1,7 +1,8 @@
 define(['./module', 'angular'], function (module, angular) {
   'use strict';
 
-  module.controller('ModelCalibrationController', function ($scope, $http, $interval, Model, parameters, meta, info, CONFIG, graphTypeFactory) {
+  module.controller('ModelCalibrationController', function ($scope, $http, $interval,
+    Model, parameters, meta, info, CONFIG, graphTypeFactory, cfpLoadingBar) {
 
     var prepareF = function (f) {
       var F = angular.copy(f);
@@ -17,7 +18,7 @@ define(['./module', 'angular'], function (module, angular) {
         parameter.data = parseFloat(parameter.data);
       });
       return m;
-    }
+    };
 
     var transformedF = prepareF(parameters.F[0]);
 
@@ -272,13 +273,25 @@ define(['./module', 'angular'], function (module, angular) {
 
 	  var autoCalibrationTimer;
     $scope.startAutoCalibration = function () {
-      $http.post('/api/model/calibrate/auto', $scope.simulationOptions)
+      $http.post('/api/model/calibrate/auto', $scope.simulationOptions,{ignoreLoadingBar: true})
         .success(function(data, status, headers, config) {
           if (data.status == "OK" && data.join) {
       // Keep polling for updated values after every 5 seconds till we get an error.
       // Error indicates that the model is not calibrating anymore.
             autoCalibrationTimer = $interval(checkWorkingAutoCalibration, 5000, 0, false);
             $scope.calibrationStatus = 'running';
+
+            // start cfpLoadingBar loading
+            // calculate the number of ticks in timelimit
+            var val = ($scope.simulationOptions.timelimit * 1000) / 250;
+            // callback function in start to be called in place of _inc()
+            cfpLoadingBar.start(function () {
+              if (cfpLoadingBar.status() >= 0.95) {
+                return;
+              }
+              var pct = cfpLoadingBar.status() + (0.95/val);
+              cfpLoadingBar.set(pct);
+            });
           } else {
             console.log("Cannot poll for calibration now");
           }
@@ -286,7 +299,7 @@ define(['./module', 'angular'], function (module, angular) {
     };
 
     function checkWorkingAutoCalibration() {
-      $http.get('/api/model/working')
+      $http.get('/api/model/working',{ignoreLoadingBar: true})
         .success(function(data, status, headers, config) {
           if (data.status == 'Done') {
             stopTimer();
@@ -314,6 +327,7 @@ define(['./module', 'angular'], function (module, angular) {
         $interval.cancel(autoCalibrationTimer);
         autoCalibrationTimer = undefined;
         $scope.calibrationStatus = false;
+        cfpLoadingBar.complete();
       }
     }
 
@@ -333,8 +347,8 @@ define(['./module', 'angular'], function (module, angular) {
     };
 
     $scope.previewManualCalibration = function () {
-      Model.saveCalibrateManual({ 
-        F: prepareF($scope.parameters.f), 
+      Model.saveCalibrateManual({
+        F: prepareF($scope.parameters.f),
         M: prepareM($scope.parameters.m) }, updateCharts);
     };
 
