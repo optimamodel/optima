@@ -25,8 +25,8 @@ default_coparams = [] #[0.3, 0.5, 0.7, 0.9]
 default_init_ccparams = []
 default_init_convertedccparams = []
 default_init_nonhivdalys = [0.0]
-default_makeplot = 0 # CK: Otherwise brings up >100 figures
-default_effect = [['sex', 'condomcas'], [u'MSM']] # D.programs[default_progname]['effects'][0]
+default_makeplot = 1 # CK: Otherwise brings up >100 figures
+default_effect = D.programs[default_progname]['effects'][0] # [['sex', 'condomcas'], [u'MSM']]
 default_artelig = range(6,26)
 coverage_params = ['numost','numpmtct','numfirstline','numsecondline']
 
@@ -75,6 +75,12 @@ def makecc(D=None, progname=default_progname, ccparams=default_ccparams, ccplot=
     # Get coverage (in separate function)
     coverage, coveragelabel, convertedccparams = getcoverage(D, ccparams, artelig=default_artelig, progname=progname)
 
+    # Get upper limit of x axis for plotting
+    if ccplot:
+        xupperlim = ccplot[0]
+    else:
+        xupperlim = max([x if ~isnan(x) else 0.0 for x in totalcost])*1.5
+
     # Are there parameters (either given by the user or previously stored)?
     if (ccparams or D.programs[progname]['ccparams']):
         if not ccparams:
@@ -91,15 +97,15 @@ def makecc(D=None, progname=default_progname, ccparams=default_ccparams, ccplot=
             raise Exception('Negative funding levels are not permitted, please revise')
 
         # Create curve
-        if ccplot:
-            xvalscc = linspace(0,ccplot[0],nxpts) # take nxpts points between 0 and user-specified max
-            if isinstance(ccparams[3], float):
-                yvalscc = cceqn(xvalscc, convertedccparams)
-            else:
-                yvalscc = cc2eqn(xvalscc, convertedccparams)
-            # Populate output structure 
-            plotdata['xlinedata'] = xvalscc
-            plotdata['ylinedata'] = yvalscc
+        xvalscc = linspace(0,xupperlim,nxpts) # take nxpts points between 0 and user-specified max
+        if isinstance(ccparams[3], float):
+            yvalscc = cceqn(xvalscc, convertedccparams)
+        else:
+            yvalscc = cc2eqn(xvalscc, convertedccparams)
+
+        # Populate output structure 
+        plotdata['xlinedata'] = xvalscc
+        plotdata['ylinedata'] = yvalscc
 
         # Store parameters and lines
         D.programs[progname]['ccparams'] = ccparams
@@ -111,16 +117,14 @@ def makecc(D=None, progname=default_progname, ccparams=default_ccparams, ccplot=
 
     # Populate output structure with axis limits
     plotdata['xlowerlim'], plotdata['ylowerlim']  = 0.0, 0.0
-    if ccplot:
-        if coveragelabel == 'Proportion covered':
-            plotdata['xupperlim'], plotdata['yupperlim']  = ccplot[0], 1
-        else:
-            if ccparams:
-                plotdata['xupperlim'], plotdata['yupperlim']  = ccplot[0], max(convertedccparams[0]*1.2,max([x if ~isnan(x) else 0.0 for x in coverage])*1.2)
-            else:
-                plotdata['xupperlim'], plotdata['yupperlim']  = ccplot[0], max([x if ~isnan(x) else 0.0 for x in coverage])*1.2
+    plotdata['xupperlim'] = xupperlim 
+    if coveragelabel == 'Proportion covered':
+        plotdata['yupperlim']  = 1.0
     else:
-        plotdata['xupperlim'], plotdata['yupperlim']  = max([x if ~isnan(x) else 0.0 for x in totalcost])*1.5, max([x if ~isnan(x) else 0.0 for x in coverage])*1.5
+        if ccparams:
+            plotdata['yupperlim']  = max(convertedccparams[0]*1.2,max([x if ~isnan(x) else 0.0 for x in coverage])*1.2)
+        else:
+            plotdata['yupperlim']  = max([x if ~isnan(x) else 0.0 for x in coverage])*1.5
 
     # Check the lengths or coverage and cost are the same.
     if (len(totalcost) == 1 and len(coverage) > 1):
@@ -155,7 +159,7 @@ def makecc(D=None, progname=default_progname, ccparams=default_ccparams, ccplot=
         printv("plotting cc for program %s" % progname, 4, verbose)   
         figure()
         hold(True)
-        if ccparams and ccplot: plot(plotdata['xlinedata'], plotdata['ylinedata'], 'k-', lw = 2)
+        if ccparams: plot(plotdata['xlinedata'], plotdata['ylinedata'], 'k-', lw = 2)
         plot(plotdata['xscatterdata'], plotdata['yscatterdata'], 'ro')
         title(plotdata['title'])
         xlabel(plotdata['xlabel'])
@@ -417,6 +421,19 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
 
     saturation, growthrate, xupperlim = None, None, None
 
+    # Extract scatter data
+    totalcost = D.data.costcov.cost[prognumber] # get total cost data
+
+    # Get upper x limit for plotting
+    if ccplot:
+        xupperlim = max(ccplot[0], max([j if ~isnan(j) else 0.0 for j in totalcost])*1.5)
+    else: 
+        xupperlim = max([j if ~isnan(j) else 0.0 for j in totalcost])*1.5
+
+    # Populate output structure with axis limits
+    plotdata['xlowerlim'], plotdata['ylowerlim']  = 0.0, 0.0
+    plotdata['xupperlim'], plotdata['yupperlim']  = xupperlim, 1.0
+
     # Only going to make cost-outcome curves for programs where the affected parameter is not coverage
     if parname not in coverage_params:
         if popname[0] in D.data.meta.pops.short:
@@ -438,8 +455,6 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
             else:
                 growthrate = (-1/ccparams[2])*log((2*ccparams[0])/(ccparams[1]+ccparams[0]) - 1)        
                 convertedccoparams = [saturation, growthrate]
-
-            xupperlim = ccplot[0]
 
             if coparams: # Get coparams from  GUI... 
                 muz, stdevz, muf, stdevf = makecosampleparams(coparams, verbose=verbose)
@@ -486,16 +501,8 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
         # unless the intention is do not produce coverage-outcome relationships when ccparams / coparams are not present - AN)
         plotdata_co, effect = makeco(D, progname, effect, coparams, makeplot=makeplot, verbose=verbose)
 
-        # Extract scatter data
-        totalcost = D.data.costcov.cost[prognumber] # get total cost data
+        # Extract outcome data
         outcome = D.data[effect[0][0]][effect[0][1]][popnumber]
-
-        # Populate output structure with axis limits
-        plotdata['xlowerlim'], plotdata['ylowerlim']  = 0.0, 0.0
-        if ccplot:
-            plotdata['xupperlim'], plotdata['yupperlim']  = max(ccplot[0], max([j if ~isnan(j) else 0.0 for j in totalcost])*1.5), 1.0
-        else:
-            plotdata['xupperlim'], plotdata['yupperlim']  = max([j if ~isnan(j) else 0.0 for j in totalcost])*1.5, 1.0
 
         # Get around situations where there's an assumption for coverage but not for behaviour, or vice versa
         if (len(totalcost) == 1 and len(outcome) > 1): 
