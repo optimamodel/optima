@@ -35,7 +35,7 @@ define(['./module', 'underscore'], function (module, _) {
       $scope.defaultKnownCoverageLevel = 60;
       $scope.defaultKnownFundingValue = 400000;
       $scope.defaultScaleUpParameter = 1;
-      $scope.defaultNonHivDalys = 1;
+      $scope.defaultNonHivDalys = 0;
       $scope.defaultXAxisMaximum = 1000000;
       $scope.behaviorWithoutMin = 0.3;
       $scope.behaviorWithoutMax = 0.5;
@@ -308,6 +308,10 @@ define(['./module', 'underscore'], function (module, _) {
       return hasAllElements(params) || hasOnlyInvaldEntries(params);
     };
 
+
+    $scope.hasValidCCParams = function() {
+      return !$scope.hasCostCoverResponse || $scope.areValidParams($scope.costCoverageParams().slice(0,3));
+    }
     /**
      * Update current program ccparams based on the selected program.
      *
@@ -328,7 +332,7 @@ define(['./module', 'underscore'], function (module, _) {
      */
     var retrieveAndUpdateGraphs = function (model) {
       // validation on Cost-coverage curve plotting options
-      if ( !$scope.areValidParams(model.ccparams) ){
+      if ( !$scope.areValidParams(model.ccparams.slice(0,3)) ){
         modalService.inform(
           function () {},
           'Okay',
@@ -374,7 +378,7 @@ define(['./module', 'underscore'], function (module, _) {
       if($scope.hasCostCoverResponse === true) {
         $scope.hasCostCoverResponse = false;
       }
-      if (hasAllElements($scope.selectedProgram.ccparams)) {
+      if (hasAllElements($scope.selectedProgram.ccparams.slice(0,3))) {
         $scope.saturationCoverageLevel = $scope.selectedProgram.ccparams[0]*100;
         $scope.knownCoverageLevel = $scope.selectedProgram.ccparams[1]*100;
         $scope.knownFundingValue = $scope.selectedProgram.ccparams[2];
