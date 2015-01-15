@@ -1,5 +1,6 @@
 from printv import printv
 from bunch import Bunch as struct
+from matplotlib.pylab import show, figure, subplot, plot, axis, hold, xlabel, ylabel, title, xlim, ylim, legend
 
 def optimize(D, objectives=None, constraints=None, startyear=2000, endyear=2030, timelimit=60, verbose=2):
     """
@@ -18,7 +19,7 @@ def optimize(D, objectives=None, constraints=None, startyear=2000, endyear=2030,
     from ballsd import ballsd
     from getcurrentbudget import getcurrentbudget
     from makemodelpars import makemodelpars
-    from numpy import array
+    from numpy import array, ones, zeros
     printv('Running optimization...', 1, verbose)
     
     # Set options to update year range
@@ -44,32 +45,78 @@ def optimize(D, objectives=None, constraints=None, startyear=2000, endyear=2030,
     for prog in constraints.decrease.keys():
         if constraints.decrease[prog].use: constraints.decrease[prog].by = float(constraints.decrease[prog].by) / 100.0
 
-    # Run optimization # TODO -- actually implement :)
+
+
+    ## Run optimization # TODO -- actually implement :)
+
+    # Set up original allocations
     nallocs = 1 # WARNING, will want to do this better
-    D.A = deepcopy([D.A[0]])
-    for alloc in range(nallocs): D.A.append(deepcopy(D.A[0])) # Just copy for now
+    D.A = deepcopy([D.A[0]]) # Copy original allocation
+    for alloc in range(nallocs): D.A.append(deepcopy(D.A[0])) # Just copy original allocation for each optimisation for now
     D.A[0].label = 'Original'
     D.A[1].label = 'Optimal'
     origalloc = deepcopy(array(D.A[1].alloc))
-    D.A = D.A[:2] # TODO WARNING KLUDGY
+    D.A = D.A[:2] # TODO WARNING KLUDGY (why is this needed?)
     
-
+    
+    maxiters = 10 # temp - probably
+    global niter
+    niter = 0
+    
+    alliters = zeros((len(origalloc), maxiters+1))
+    allobjs  = zeros(maxiters+1)
     
     def objectivecalc(alloc):
         """ Calculate the objective function """
+        
+        # Normalise spending
         alloc /= sum(alloc)/sum(origalloc)
+
+        # Alter the parameters and run the model
         newD = deepcopy(D)
         newD = getcurrentbudget(newD, alloc)
         newD.M = makemodelpars(newD.P, newD.opt, withwhat='c', verbose=0)
+        newD.opt.turnofftrans = endyear # Turn off transmissions after this year
         S = model(newD.G, newD.M, newD.F[0], newD.opt, verbose=0)
-        objective = S.death.sum() # TEMP
+        
+        # Obtain value of the objective function
+        objective = 0 # Preallocate objective value 
+        if objectives.what == 'outcome':
+            for ob in ['inci', 'death', 'daly', 'cost']:
+                if objectives.outcome[ob]: objective += S[ob].sum() * objectives.outcome[ob + 'weight'] # TODO -- can we do 'daly' and 'cost' like this too??
+        else: print('Work to do here') # 'money'   
+        
+        # Store values for plotting
+        global niter
+        alliters[:, niter] = alloc
+        allobjs[niter] = objective
+        niter += 1        
+        
+        # Plot value of objective function
+        figure(num=100)
+        subplot(1,3,1)
+        plot(range(niter), allobjs[range(niter)])
+        ylim(ymin=75390, ymax=75400)
+        xlim(xmin=0,xmax=maxiters)        
+        
+        # Plot allocations over iterations
+        subplot(1,3,2)
+        xlim(xmin=0,xmax=maxiters)
+        for prog in range(len(origalloc)): plot(range(niter), alliters[prog, range(niter)])
+
+        # Plot legend on the right        
+        subplot(1,3,3)
+        for prog in range(len(origalloc)): plot(0, prog)
+        legend(D.G.meta.progs.short, loc = 'center')
+        axis('off')
+        show()        
         
         return objective
-        
-        
-        
+
+
     # Run the optimization algorithm
-    optalloc, fval, exitflag, output = ballsd(objectivecalc, origalloc, xmin=0*array(origalloc), timelimit=timelimit, verbose=verbose)
+    optalloc, fval, exitflag, output = ballsd(objectivecalc, origalloc, xmin=0*array(origalloc), timelimit=120, verbose=10, StallIterLimit=maxiters-1, sinitial=ones(len(origalloc))*100000) # timelimit=timelimit, verbose=verbose)
+    
     
     # Update the model
     for i,alloc in enumerate([origalloc,optalloc]):
@@ -115,7 +162,7 @@ def defaultobjectives(D, verbose=2):
     ob.outcome.dalyweight = 100 # "DALY weighting"
     ob.outcome.death = False # "Minimize cumulative AIDS-related deaths"
     ob.outcome.deathweight = 100 # "Death weighting"
-    ob.outcome.cost = False # "Minimize cumulative DALYs"
+    ob.outcome.cost = False # "Minimize cumulative costs"
     ob.outcome.costweight = 100 # "Cost weighting"
     
     ob.money = struct()

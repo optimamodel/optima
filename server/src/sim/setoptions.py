@@ -18,6 +18,7 @@ def setoptions(opt=None, **kwargs):
         opt.quantiles = [0.5, 0.25, 0.75] # Quantiles to return
         opt.growth = 0.03 # Default population growth rate
         opt.disc = 0.05 # Economic discounting rate
+        opt.turnofftrans = float("inf") # Turn off transmissions, set to trivial as default - a negative value will break out of the main model loop, whilst a postive value will continue to run the model but not calculate new infections
     
     # Replace any keys that exist
     for key, value in kwargs.iteritems():
