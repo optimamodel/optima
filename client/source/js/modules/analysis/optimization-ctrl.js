@@ -355,7 +355,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     function validateOutcomeWeights(){
       var checkedPrograms = _($scope.objectivesToMinimize).filter(function (a) {
         return $scope.params.objectives.outcome[a.slug] === true &&
-          !($scope.params.objectives.outcome[a.slug+'weight']!==undefined && 
+          !($scope.params.objectives.outcome[a.slug+'weight']!==undefined &&
           $scope.params.objectives.outcome[a.slug+'weight']>0);
       });
       return {
@@ -462,7 +462,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     };
 
     $scope.startOptimization = function () {
-      $http.post('/api/analysis/optimization/start', $scope.params)
+      $http.post('/api/analysis/optimization/start', $scope.params, {ignoreLoadingBar: true})
         .success(function (data, status, headers, config) {
           if (data.status == "OK" && data.join) {
             // Keep polling for updated values after every 5 seconds till we get an error.
@@ -481,6 +481,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
               var pct = cfpLoadingBar.status() + (0.95/val);
               cfpLoadingBar.set(pct);
             });
+
           } else {
             console.log("Cannot poll for optimization now");
           }
