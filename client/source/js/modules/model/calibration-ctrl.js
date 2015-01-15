@@ -1,7 +1,8 @@
 define(['./module', 'angular'], function (module, angular) {
   'use strict';
 
-  module.controller('ModelCalibrationController', function ($scope, $http, $interval, Model, parameters, meta, info, cfpLoadingBar, CONFIG, graphTypeFactory) {
+  module.controller('ModelCalibrationController', function ($scope, $http, $interval,
+    Model, parameters, meta, info, CONFIG, graphTypeFactory, cfpLoadingBar) {
 
     var prepareF = function (f) {
       var F = angular.copy(f);
@@ -17,7 +18,7 @@ define(['./module', 'angular'], function (module, angular) {
         parameter.data = parseFloat(parameter.data);
       });
       return m;
-    }
+    };
 
     var transformedF = prepareF(parameters.F[0]);
 
@@ -279,7 +280,7 @@ define(['./module', 'angular'], function (module, angular) {
       // Error indicates that the model is not calibrating anymore.
             autoCalibrationTimer = $interval(checkWorkingAutoCalibration, 5000, 0, false);
             $scope.calibrationStatus = 'running';
-            
+
             // start cfpLoadingBar loading
             // calculate the number of ticks in timelimit
             var val = ($scope.simulationOptions.timelimit * 1000) / 250;
@@ -346,8 +347,8 @@ define(['./module', 'angular'], function (module, angular) {
     };
 
     $scope.previewManualCalibration = function () {
-      Model.saveCalibrateManual({ 
-        F: prepareF($scope.parameters.f), 
+      Model.saveCalibrateManual({
+        F: prepareF($scope.parameters.f),
         M: prepareM($scope.parameters.m) }, updateCharts);
     };
 
