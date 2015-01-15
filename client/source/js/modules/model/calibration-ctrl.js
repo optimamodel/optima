@@ -1,13 +1,7 @@
 define(['./module', 'angular'], function (module, angular) {
   'use strict';
 
-  module.controller('ModelCalibrationController', function ($scope, $http, $interval, Model, f, G, meta, info, CONFIG, graphTypeFactory) {
-
-    // use for export all data
-    $scope.exportGraphs = {
-      'name':'Model calibration',
-      'controller':'ModelCalibration'
-    };
+  module.controller('ModelCalibrationController', function ($scope, $http, $interval, Model, parameters, meta, info, CONFIG, graphTypeFactory) {
 
     var prepareF = function (f) {
       var F = angular.copy(f);
@@ -18,28 +12,37 @@ define(['./module', 'angular'], function (module, angular) {
       return F;
     };
 
-    var transformedF = prepareF(f[0]);
+    var prepareM = function(m) {
+      _(m).each(function (parameter) {
+        parameter.data = parseFloat(parameter.data);
+      });
+      return m;
+    }
+
+    var transformedF = prepareF(parameters.F[0]);
 
     $scope.parameters = {
       types: {
-        force: 'Force-of-infection for ',
+        force: 'Initial force-of-infection for ',
         init: 'Initial prevalence for ',
         dx: [
-          'Testing rate initial value',
-          'Testing rate final value',
-          'Testing rate midpoint',
-          'Testing rate slope'
+          'Overall population initial relative testing rate',
+          'Overall population final relative testing rate',
+          'Year of mid change in overall population testing rate',
+          'Testing rate slope parameter'
         ]
       },
       meta: meta,
       f: transformedF,
+      m: parameters.M,
       cache: {
         f: angular.copy(transformedF),
+        m: angular.copy(parameters.M),
         response: null
       }
     };
 
-    $scope.G = G;
+    $scope.G = parameters.G;
     $scope.types = graphTypeFactory.types;
     $scope.calibrationStatus = false;
 
@@ -47,12 +50,13 @@ define(['./module', 'angular'], function (module, angular) {
 
     // to store years from UI
     $scope.simulationOptions = {'timelimit':60};
-    $scope.graphs = [];
+    $scope.charts = [];
     $scope.projectInfo = info;
     $scope.canDoFitting = $scope.projectInfo.can_calibrate;
     $scope.needData = !$scope.projectInfo.has_data;
+    $scope.hasStackedCharts = false;
 
-    var lineScatterOptions = {
+    var defaultChartOptions = {
       title: 'Title',
       height: 200,
       width: 320,
@@ -77,17 +81,9 @@ define(['./module', 'angular'], function (module, angular) {
     $scope.doneEditingParameter = function () {
       Model.saveCalibrateManual({
         F: prepareF($scope.parameters.f),
+        M: prepareM($scope.parameters.m),
         dosave: false
-      }, updateGraphs);
-    };
-
-    /**
-     * Returns an array containing arrays with [x, y] for d3 line data.
-     */
-    var generateLineData = function(xData, yData) {
-      return _(yData).map(function (value, i) {
-        return [xData[i], value];
-      });
+      }, updateCharts);
     };
 
     /**
@@ -107,52 +103,75 @@ define(['./module', 'angular'], function (module, angular) {
     };
 
     /**
-     * Returns a graph based on the provided yData.
+     * Returns a chart based on the provided yData.
      *
      * yData should be an array where each entry contains an array of all
      * y-values from one line.
      */
-    var generateGraph = function(yData, xData, title) {
-      var graph = {
-        options: angular.copy(lineScatterOptions),
+    var generateAreaChart = function(yData, xData, title) {
+      var chart = {
+        options: angular.copy(defaultChartOptions),
         data: angular.copy(lineScatterData),
         title: title
       };
 
-      graph.options.title = title;
+      chart.options.title = title;
 
-      graph.data.line = generateLineData(xData, yData.best);
-      graph.data.area.lineHigh = generateLineData(xData, yData.high);
-      graph.data.area.lineLow = generateLineData(xData, yData.low);
+      chart.data.line = _.zip(xData, yData.best);
+      chart.data.area.lineHigh = _.zip(xData, yData.high);
+      chart.data.area.lineLow = _.zip(xData, yData.low);
 
-      return graph;
+      return chart;
     };
 
     /**
-     * Returns a financial graph.
+    * Returns a chart based on the provided yData.
+    *
+    * yData should be an array where each entry contains an array of all
+    * y-values from one line.
+    */
+    var generateStackedAreaChart = function(yDataSet, xData, title, legend) {
+      var chart = {
+        options: angular.copy(defaultChartOptions),
+        data: { areas: []},
+        title: title
+      };
+
+      chart.options.title = title;
+      chart.options.legend = legend;
+
+      chart.data.areas = _(yDataSet).map(function(yData) {
+        return _.zip(xData, yData);
+      });
+
+      $scope.hasStackedCharts = true;
+      return chart;
+    };
+
+    /**
+     * Returns a financial chart.
      */
-    var generateFinancialGraph = function(data) {
+    var generateFinancialChart = function(data) {
       var yData = {
         best: data.best, high: data.high, low: data.low
       };
 
-      var graph = generateGraph(yData, data.xdata, data.title);
+      var chart = generateAreaChart(yData, data.xdata, data.title);
 
-      graph.options.xAxis.axisLabel = data.xlabel;
-      graph.options.yAxis.axisLabel = data.ylabel;
+      chart.options.xAxis.axisLabel = data.xlabel;
+      chart.options.yAxis.axisLabel = data.ylabel;
+      chart.type = 'lineScatterAreaChart';
 
-      return graph;
+      return chart;
     };
 
-    var prepareGraphs = function (response) {
-      var graphs = [];
+    var prepareCharts = function (response) {
+      var charts = [];
 
       if (!response) {
-        return graphs;
+        return charts;
       }
-
       _($scope.types.population).each(function (type) {
-
         var data = response[type.id];
 
         if (type.total) {
@@ -160,18 +179,30 @@ define(['./module', 'angular'], function (module, angular) {
           var yData = {
             best: data.tot.best, high: data.tot.high, low: data.tot.low,
           };
-          var graph = generateGraph(yData, response.tvec, data.tot.title);
+          var chart = generateAreaChart(yData, response.tvec, data.tot.title);
 
-          graph.options.xAxis.axisLabel = data.xlabel;
-          graph.options.yAxis.axisLabel = data.tot.ylabel;
+          chart.options.xAxis.axisLabel = data.xlabel;
+          chart.options.yAxis.axisLabel = data.tot.ylabel;
+          chart.type = 'lineScatterAreaChart';
 
           // seems like ydata can either be an array of arrays for the
           // populations or a single array when it's used in overall
           if (!(data.ydata[0] instanceof Array)) {
-            graph.data.scatter = generateScatterData(response.xdata, data.ydata);
+            chart.data.scatter = generateScatterData(response.xdata, data.ydata);
           }
 
-          graphs.push(graph);
+          charts.push(chart);
+        }
+
+        if (type.stacked) {
+          var stackedAreaChart = generateStackedAreaChart(data.popstacked.pops,
+            response.tvec, data.popstacked.title, data.popstacked.legend);
+
+          stackedAreaChart.options.xAxis.axisLabel = data.xlabel;
+          stackedAreaChart.options.yAxis.axisLabel = data.popstacked.ylabel;
+          stackedAreaChart.type = 'stackedAreaChart';
+
+          charts.push(stackedAreaChart);
         }
 
         // TODO: we're checking data because it could undefined ...
@@ -181,18 +212,19 @@ define(['./module', 'angular'], function (module, angular) {
             var yData = {
               best: population.best, high: population.high, low: population.low
             };
-            var graph = generateGraph(yData, response.tvec, population.title);
+            var chart = generateAreaChart(yData, response.tvec, population.title);
 
-            graph.options.xAxis.axisLabel = data.xlabel;
-            graph.options.yAxis.axisLabel = population.ylabel;
+            chart.options.xAxis.axisLabel = data.xlabel;
+            chart.options.yAxis.axisLabel = population.ylabel;
+            chart.type = 'lineScatterAreaChart';
 
             // seems like ydata can either be an array of arrays for the
             // populations or a single array when it's used in overall
             if (data.ydata[0] instanceof Array) {
-              graph.data.scatter = generateScatterData(response.xdata, data.ydata[populationIndex]);
+              chart.data.scatter = generateScatterData(response.xdata, data.ydata[populationIndex]);
             }
 
-            graphs.push(graph);
+            charts.push(chart);
           });
         }
       });
@@ -204,29 +236,38 @@ define(['./module', 'angular'], function (module, angular) {
         // cum = cumulative costs
         if (type.annual) {
           var annualData = response[type.id].ann;
-          graphs.push(generateFinancialGraph(annualData));
+          charts.push(generateFinancialChart(annualData));
         }
 
         if (type.cumulative) {
           var cumulativeData = response[type.id].cum;
-          graphs.push(generateFinancialGraph(cumulativeData));
+          charts.push(generateFinancialChart(cumulativeData));
         }
       });
 
-      return graphs;
+      return charts;
     };
 
-    var updateGraphs = function (data) {
-      if (data!== undefined && data!==null) {
-        $scope.graphs = prepareGraphs(data);
+    var updateCharts = function (data) {
+      if (data!== undefined && data!==null && data.graph !== undefined) {
+        $scope.charts = prepareCharts(data.graph);
         $scope.parameters.cache.response = data;
         $scope.canDoFitting = true;
+        if (data.F){
+          var f = prepareF(data.F[0]);
+          $scope.parameters.f = f;
+          $scope.parameters.cache.f = angular.copy(f);
+        }
+        if (data.M) {
+          $scope.parameters.m = data.M;
+          $scope.parameters.cache.m = angular.copy(data.M);
+        }
       }
     };
 
     $scope.simulate = function () {
       $http.post('/api/model/view', $scope.simulationOptions)
-        .success(updateGraphs);
+        .success(updateCharts);
     };
 
 	  var autoCalibrationTimer;
@@ -250,7 +291,7 @@ define(['./module', 'angular'], function (module, angular) {
           if (data.status == 'Done') {
             stopTimer();
           } else {
-            updateGraphs(data.graph);
+            updateCharts(data);
           }
         })
         .error(function(data, status, headers, config) {
@@ -283,7 +324,7 @@ define(['./module', 'angular'], function (module, angular) {
 
     $scope.saveCalibration = function () {
       $http.post('/api/model/calibrate/save')
-        .success(updateGraphs);
+        .success(updateCharts);
     };
 
     $scope.revertCalibration = function () {
@@ -292,18 +333,22 @@ define(['./module', 'angular'], function (module, angular) {
     };
 
     $scope.previewManualCalibration = function () {
-      Model.saveCalibrateManual({ F: prepareF($scope.parameters.f) }, updateGraphs);
+      Model.saveCalibrateManual({ 
+        F: prepareF($scope.parameters.f), 
+        M: prepareM($scope.parameters.m) }, updateCharts);
     };
 
     $scope.saveManualCalibration = function () {
       Model.saveCalibrateManual({
         F: prepareF($scope.parameters.f),
+        M: prepareM($scope.parameters.m),
         dosave: true
-      }, updateGraphs);
+      }, updateCharts);
     };
 
     $scope.revertManualCalibration = function () {
       angular.extend($scope.parameters.f, $scope.parameters.cache.f);
+      angular.extend($scope.parameters.m, $scope.parameters.cache.m);
     };
 
     $scope.reportCalibrationStatus = function () {
@@ -314,9 +359,9 @@ define(['./module', 'angular'], function (module, angular) {
       }
     };
 
-    // The graphs are shown/hidden after updating the graph type checkboxes.
+    // The charts are shown/hidden after updating the chart type checkboxes.
     $scope.$watch('types', function () {
-      updateGraphs($scope.parameters.cache.response);
+      updateCharts($scope.parameters.cache.response);
     }, true);
 
     $scope.reportDataEndError = function() {

@@ -141,28 +141,28 @@ def financialanalysis(D, postyear = 2015, S = None, yscale = 'abs', makeplot = F
     plotdata['annualhivcosts'] = {}
     plotdata['annualhivcosts']['xlinedata'] = xdata
     plotdata['annualhivcosts']['ylinedata'] = ydata1
-    plotdata['annualhivcosts']['title'] = 'Annual healthcare costs over time'
+    plotdata['annualhivcosts']['title'] = 'Total HIV-related financial commitments - annual'
     plotdata['annualhivcosts']['xlabel'] = 'Year'
     plotdata['annualhivcosts']['ylabel'] = 'USD'
     
     plotdata['cumulhivcosts'] = {}
     plotdata['cumulhivcosts']['xlinedata'] = xdata
     plotdata['cumulhivcosts']['ylinedata'] = ydata2 
-    plotdata['cumulhivcosts']['title'] = 'Cumulative healthcare costs over time'
+    plotdata['cumulhivcosts']['title'] = 'Total HIV-related financial commitments - cumulative'
     plotdata['cumulhivcosts']['xlabel'] = 'Year'
     plotdata['cumulhivcosts']['ylabel'] = 'USD'
 
     plotdata['annualhivcostsfuture'] = {}
     plotdata['annualhivcostsfuture']['xlinedata'] = xdata
     plotdata['annualhivcostsfuture']['ylinedata'] = ydata3
-    plotdata['annualhivcostsfuture']['title'] = 'Annual healthcare costs for post-2015 infections'
+    plotdata['annualhivcostsfuture']['title'] = 'Financial commitments for existing PLHIV - annual'
     plotdata['annualhivcostsfuture']['xlabel'] = 'Year'
     plotdata['annualhivcostsfuture']['ylabel'] = 'USD'
 
     plotdata['cumulhivcostsfuture'] = {}
     plotdata['cumulhivcostsfuture']['xlinedata'] = xdata
     plotdata['cumulhivcostsfuture']['ylinedata'] = ydata4
-    plotdata['cumulhivcostsfuture']['title'] = 'Cumulative healthcare costs for post-2015 infections'
+    plotdata['cumulhivcostsfuture']['title'] = 'Financial commitments for existing PLHIV - cumulative'
     plotdata['cumulhivcostsfuture']['xlabel'] = 'Year'
     plotdata['cumulhivcostsfuture']['ylabel'] = 'USD'
 
