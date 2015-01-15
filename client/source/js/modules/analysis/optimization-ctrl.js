@@ -2,7 +2,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
   'use strict';
 
   module.controller('AnalysisOptimizationController', function ($scope, $http,
-    $interval, meta, CONFIG, modalService, graphTypeFactory) {
+    $interval, meta, cfpLoadingBar, CONFIG, modalService, graphTypeFactory) {
 
       $scope.chartsForDataExport = [];
 
@@ -355,7 +355,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     function validateOutcomeWeights(){
       var checkedPrograms = _($scope.objectivesToMinimize).filter(function (a) {
         return $scope.params.objectives.outcome[a.slug] === true &&
-          !($scope.params.objectives.outcome[a.slug+'weight']!==undefined && 
+          !($scope.params.objectives.outcome[a.slug+'weight']!==undefined &&
           $scope.params.objectives.outcome[a.slug+'weight']>0);
       });
       return {
@@ -462,13 +462,26 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     };
 
     $scope.startOptimization = function () {
-      $http.post('/api/analysis/optimization/start', $scope.params)
+      $http.post('/api/analysis/optimization/start', $scope.params, {ignoreLoadingBar: true})
         .success(function (data, status, headers, config) {
           if (data.status == "OK" && data.join) {
             // Keep polling for updated values after every 5 seconds till we get an error.
             // Error indicates that the model is not calibrating anymore.
             optimizationTimer = $interval(checkWorkingOptimization, 5000, 0, false);
             $scope.optimizationStatus = statusEnum.RUNNING;
+
+            // start cfpLoadingBar loading
+            // calculate the number of ticks in timelimit
+            var val = ($scope.params.timelimit * 1000) / 250;
+            // callback function in start to be called in place of _inc()
+            cfpLoadingBar.start(function () {
+              if (cfpLoadingBar.status() >= 0.95) {
+                return;
+              }
+              var pct = cfpLoadingBar.status() + (0.95/val);
+              cfpLoadingBar.set(pct);
+            });
+
           } else {
             console.log("Cannot poll for optimization now");
           }
@@ -476,7 +489,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     };
 
     function checkWorkingOptimization() {
-      $http.get('/api/analysis/optimization/working')
+      $http.get('/api/analysis/optimization/working', {ignoreLoadingBar: true})
         .success(function(data, status, headers, config) {
           if (data.status == 'Done') {
             stopTimer();
@@ -513,6 +526,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
         $interval.cancel(optimizationTimer);
         optimizationTimer = undefined;
         $scope.optimizationStatus = statusEnum.NOT_RUNNING;
+        cfpLoadingBar.complete();
       }
     }
 

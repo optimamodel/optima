@@ -61,8 +61,8 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
           var y_domain = scales.y.domain();
           yMax = Math.max(yMax, y_domain[1]);
           xMax = Math.max(xMax, x_domain[1]);
-          if(hasValidMin(y_domain)) {yMin = Math.min(yMin, y_domain[0])};
-          if(hasValidMin(x_domain)) {xMin = Math.min(xMin, x_domain[0])};
+          if(hasValidMin(y_domain)) { yMin = Math.min(yMin, y_domain[0]); }
+          if(hasValidMin(x_domain)) { xMin = Math.min(xMin, x_domain[0]); }
         });
       }
       // initialize scatterChart
@@ -75,9 +75,10 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
         var y_domain = scatterScale.y.domain();
         yMax = Math.max(yMax, y_domain[1]);
         xMax = Math.max(xMax, x_domain[1]);
-        if(hasValidMin(y_domain)) {yMin = Math.min(yMin, y_domain[0])};
-        if(hasValidMin(x_domain)) {xMin = Math.min(xMin, x_domain[0])};
+        if(hasValidMin(y_domain)) { yMin = Math.min(yMin, y_domain[0]); }
+        if(hasValidMin(x_domain)) { xMin = Math.min(xMin, x_domain[0]); }
       }
+
       // normalizing all graphs scales to include maximum possible x and y
       _(graphsScales).each(function (scale) {
         scale.y.domain([0, yMax]);
@@ -86,6 +87,11 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
 
       options.yAxis.tickFormat = function (value) {
         var format = scaleHelpers.evaluateTickFormat(yMin, yMax);
+        return scaleHelpers.customTickFormat(value, format);
+      };
+
+      options.xAxis.tickFormat = function (value) {
+        var format = scaleHelpers.evaluateTickFormat(xMin, xMax);
         return scaleHelpers.customTickFormat(value, format);
       };
 
