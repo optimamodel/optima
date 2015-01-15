@@ -101,12 +101,7 @@ define(['./module', 'underscore'], function (module, _) {
           left: 100
         },
         xAxis: {
-          axisLabel: xLabel || 'X',
-          tickFormat: function (d) {
-            // Cliff requested to lower case the unit suffixed values.
-            // e.g. 100M -> 100m
-            return d3.format('s')(d).toLowerCase();
-          }
+          axisLabel: xLabel || 'X'
         },
         yAxis: {
           axisLabel: yLabel || 'Y'
