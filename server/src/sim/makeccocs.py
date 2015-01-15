@@ -20,7 +20,7 @@ from parameters import parameters, input_parameter_name
 ## Set defaults for testing makeccocs
 default_progname = 'SBCC'
 default_ccparams = [] # [0.9, 0.28, 154000.0, 1.0]
-default_ccplot = [] # [2e6, [0, []]]
+default_ccplot = [2e6, [1, [2013]]]
 default_coparams = [] # [0.3, 0.5, 0.7, 0.9] 
 default_init_ccparams = []
 default_init_convertedccparams = []
