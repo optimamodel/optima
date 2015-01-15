@@ -35,6 +35,7 @@ define(['./module', 'underscore'], function (module, _) {
       $scope.defaultKnownCoverageLevel = 60;
       $scope.defaultKnownFundingValue = 400000;
       $scope.defaultScaleUpParameter = 1;
+      $scope.defaultNonHivDalys = 1;
       $scope.defaultXAxisMaximum = 1000000;
       $scope.behaviorWithoutMin = 0.3;
       $scope.behaviorWithoutMax = 0.5;
@@ -45,6 +46,7 @@ define(['./module', 'underscore'], function (module, _) {
       $scope.knownCoverageLevel = undefined;
       $scope.knownFundingValue = undefined;
       $scope.scaleUpParameter = undefined;
+      $scope.nonHivDalys = undefined;
       $scope.displayCost = 1;
 
       plotTypes = ['plotdata', 'plotdata_cc', 'plotdata_co'];
@@ -257,7 +259,8 @@ define(['./module', 'underscore'], function (module, _) {
         $scope.convertFromPercent($scope.saturationCoverageLevel),
         $scope.convertFromPercent($scope.knownCoverageLevel),
         $scope.knownFundingValue,
-        $scope.scaleUpParameter
+        $scope.scaleUpParameter,
+        $scope.nonHivDalys
       ];
     };
 
@@ -376,11 +379,13 @@ define(['./module', 'underscore'], function (module, _) {
         $scope.knownCoverageLevel = $scope.selectedProgram.ccparams[1]*100;
         $scope.knownFundingValue = $scope.selectedProgram.ccparams[2];
         $scope.scaleUpParameter = $scope.selectedProgram.ccparams[3];
+        $scope.nonHivDalys = $scope.selectedProgram.ccparams[4];
       } else {
         $scope.saturationCoverageLevel = undefined;
         $scope.knownCoverageLevel = undefined;
         $scope.knownFundingValue = undefined;
         $scope.scaleUpParameter = undefined;
+        $scope.nonHivDalys = undefined;
       }
       if ($scope.selectedProgram.ccplot && $scope.selectedProgram.ccplot.length==2) {
         $scope.xAxisMaximum = $scope.selectedProgram.ccplot[0];
