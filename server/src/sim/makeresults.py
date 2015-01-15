@@ -66,7 +66,6 @@ def makeresults(D, allsims=None, quantiles=None, verbose=2):
 
         if data=='daly':
             printv('Calculating DALYs...', 3, verbose)
-            print("healthstates:", D.G.healthstates)
             disutils = [D.P.const.disutil[key] for key in D.G.healthstates]
             tmpdalypops = allpeople[:,concatenate([D.G.tx1, D.G.tx2]),:,:].sum(axis=1) * D.P.const.disutil.tx
             tmpdalytot = allpeople[:,concatenate([D.G.tx1, D.G.tx2]),:,:].sum(axis=(1,2)) * D.P.const.disutil.tx
