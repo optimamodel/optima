@@ -4,6 +4,10 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
   module.directive('lineScatterChart', function (d3Charts) {
     var svg;
 
+    // see available colors in chart/_color.scss.
+    var colors = [ '__orange', '__light-orange', '__violet', '__green',
+      '__light-green', '__red', '__gray' ];
+
     var drawGraph = function (data, options, rootElement) {
       options = d3Charts.adaptOptions(options);
 
@@ -48,8 +52,8 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
       // initialize lineChart for each line and update the scales
       if (linesDataExists) {
         _(data.lines).each(function (line, index) {
-          var lineColor = options.linesStyle && options.linesStyle[index];
-          var lineChart = new d3Charts.LineChart(chartGroup, index, chartSize, lineColor);
+          var lineColor = options.linesStyle && options.linesStyle[index] || colors[index];
+          var lineChart = new d3Charts.LineChart(chartGroup, chartSize, lineColor);
           lineChartInstances.push(lineChart);
           var scales = lineChart.scales(line);
           graphsScales.push(scales);
@@ -63,7 +67,7 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
       }
       // initialize scatterChart
       if (scatterDataExists || data.limits) {
-        scatterChartInstance = new d3Charts.ScatterChart(chartGroup, '', chartSize);
+        scatterChartInstance = new d3Charts.ScatterChart(chartGroup, chartSize);
         var scaleSource = data.limits? data.scatter.concat(data.limits): data.scatter;
         var scatterScale = scatterChartInstance.scales(scaleSource);
         graphsScales.push(scatterScale);

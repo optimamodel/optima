@@ -59,6 +59,14 @@ define([
               postsuffix: 'meta'
             }
           },
+          getCalibrateParameters: {
+            method: 'GET',
+            isArray: false,
+            params: {
+              path: 'calibrate',
+              suffix: 'parameters'
+            }
+          },
           getPrograms: {
             method: 'GET',
             isArray: false,

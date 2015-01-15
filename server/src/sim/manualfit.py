@@ -16,7 +16,7 @@ def manualfit(D, F={}, Plist=[], Mlist=[], startyear=2000, endyear=2015, verbose
     """
     from printv import printv
     from makemodelpars import totalacts
-    printv('Running manual calibration...', 1, verbose)
+    printv('Running manual calibration ...', 1, verbose)
     
     # Update P and M, if provided
     D = updateP(D, Plist)
