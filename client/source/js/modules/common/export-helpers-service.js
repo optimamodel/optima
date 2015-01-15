@@ -1,4 +1,4 @@
-define(['angular', 'jquery', './svg-to-png'], function (angular, $, svgToPng) {
+define(['angular', 'jquery', './svg-to-png', 'underscore'], function (angular, $, svgToPng, _) {
   'use strict';
 
   return angular.module('app.common.export-helpers',[])
@@ -121,10 +121,10 @@ define(['angular', 'jquery', './svg-to-png'], function (angular, $, svgToPng) {
       exportable.columns.push(yOfPoints);
 
       _(graph.data.area).each(function(lineData, lineTitle) {
-        var nextLine = graphToDictionary(lineData);
+        var line = graphToDictionary(lineData);
         var yOfPoints = {};
         yOfPoints.title = lineTitle;
-        yOfPoints.data = fillFromDictionary(xOfPoints.data, nextLine);
+        yOfPoints.data = fillFromDictionary(xOfPoints.data, line);
         exportable.columns.push(yOfPoints);
       });
 
@@ -146,19 +146,32 @@ define(['angular', 'jquery', './svg-to-png'], function (angular, $, svgToPng) {
 
       var lineTitles = graph.options.legend? graph.options.legend : ["line", "high", "low"];
 
-      // The X of the points are only sent in one column and we collect them from any of the lines
+      // Collect and sort all the xPoints from the lines and the scatter data.
+      // It's good enough to use the x data from the first line as all lines
+      // have the same x data.
+      var scatter = graphToDictionary(graph.data.scatter);
+      var firstLine = graphToDictionary(_(graph.data.lines).first());
       var xOfPoints = {};
+      xOfPoints.data = [];
       xOfPoints.title = graph.options.xAxis.axisLabel;
-      xOfPoints.data = _.map(graph.data.lines[0],function(point,j){ return point[0]; });
+      xOfPoints.data.push.apply(xOfPoints.data, Object.keys(firstLine));
+      xOfPoints.data.push.apply(xOfPoints.data, Object.keys(scatter));
+      xOfPoints.data.sort();
       exportable.columns.push(xOfPoints);
 
       _(graph.data.lines).each(function(lineData, index) {
         // Collecting the Y of the points for the line
+        var line = graphToDictionary(lineData);
         var yOfLinePoints = {};
         yOfLinePoints.title = lineTitles[index];
-        yOfLinePoints.data = _.map(lineData,function(point,j){ return point[1]; });
+        yOfLinePoints.data = fillFromDictionary(xOfPoints.data, line);
         exportable.columns.push(yOfLinePoints);
       });
+
+      var scatterPoints = {};
+      scatterPoints.title = "scatter";
+      scatterPoints.data = fillFromDictionary(xOfPoints.data, scatter);
+      exportable.columns.push(scatterPoints);
 
       return exportable;
     };
