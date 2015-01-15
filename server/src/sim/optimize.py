@@ -59,7 +59,7 @@ def optimize(D, objectives=None, constraints=None, startyear=2000, endyear=2030,
         """ Calculate the objective function """
         alloc /= sum(alloc)/sum(origalloc)
         newD = deepcopy(D)
-        newD = getcurrentbudget(newD, alloc)
+        newD, newcov, newnonhivdalysaverted = getcurrentbudget(newD, alloc)
         newD.M = makemodelpars(newD.P, newD.opt, withwhat='c', verbose=0)
         S = model(newD.G, newD.M, newD.F[0], newD.opt, verbose=0)
         objective = S.death.sum() # TEMP
@@ -73,7 +73,7 @@ def optimize(D, objectives=None, constraints=None, startyear=2000, endyear=2030,
     
     # Update the model
     for i,alloc in enumerate([origalloc,optalloc]):
-        D = getcurrentbudget(D, alloc)
+        D, D.A[i].coverage, D.A[i].nonhivdalysaverted = getcurrentbudget(D, alloc)
         D.M = makemodelpars(D.P, D.opt, withwhat='c', verbose=2)
         D.A[i].S = model(D.G, D.M, D.F[0], D.opt, verbose=verbose)
         D.A[i].alloc = alloc # Now that it's run, store total program costs
