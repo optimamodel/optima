@@ -148,7 +148,7 @@ def makecc(D=None, progname=default_progname, ccparams=default_ccparams, ccplot=
         printv("plotting cc for program %s" % progname, 4, verbose)   
         figure()
         hold(True)
-        if ccparams: plot(plotdata['xlinedata'], plotdata['ylinedata'], 'k-', lw = 2)
+        if ccparams and ccplot: plot(plotdata['xlinedata'], plotdata['ylinedata'], 'k-', lw = 2)
         plot(plotdata['xscatterdata'], plotdata['yscatterdata'], 'ro')
         title(plotdata['title'])
         xlabel(plotdata['xlabel'])
