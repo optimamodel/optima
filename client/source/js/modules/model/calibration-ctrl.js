@@ -135,8 +135,6 @@ define(['./module', 'angular'], function (module, angular) {
       });
 
       $scope.hasStackedCharts = true;
-      console.log("!!!");
-
       return chart;
     };
 
