@@ -30,8 +30,8 @@ def runsimulation(D, startyear=2000, endyear=2030, verbose=2, makeplot = 1, dosa
     from makeccocs import makeallccocs
     D = makeallccocs(D, verbose=verbose, makeplot = makeplot)
 
-    from getcurrentbudget import getcurrentbudget
-    D = getcurrentbudget(D) # TODO Add verbose
+#    from getcurrentbudget import getcurrentbudget
+#    D = getcurrentbudget(D) # TODO Add verbose
 
     # Calculate results
     from makeresults import makeresults
