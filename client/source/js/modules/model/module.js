@@ -4,11 +4,15 @@ define([
   '../resources/model',
   '../resources/project',
   '../ui/type-selector/index',
+  '../common/export-all-charts',
+  '../common/export-all-data',
   '../common/graph-type-factory'
 ], function (angular) {
   'use strict';
 
   return angular.module('app.model', [
+    'app.export-all-charts',
+    'app.export-all-data',
     'app.resources.model',
     'app.resources.project',
     'app.ui.type-selector',
@@ -30,11 +34,8 @@ define([
             info: function(Project) {
               return Project.info().$promise;
             },
-            f: function (Model) {
-              return Model.getParametersF().$promise;
-            },
-            G: function (Model) {
-              return Model.getParametersG().$promise;
+            parameters: function (Model) {
+              return Model.getCalibrateParameters().$promise;
             },
             meta: function (Model) {
               return Model.getParametersDataMeta().$promise;

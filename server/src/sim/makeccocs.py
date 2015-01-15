@@ -19,7 +19,7 @@ from parameters import parameters, input_parameter_name
 
 ## Set defaults for testing makeccocs
 default_progname = 'SBCC'
-default_ccparams = [] #[0.9, 0.38, 134000.0, 'nan', 'nan']
+default_ccparams = [] #[0.9, 0.38, 134000.0, None, None]
 default_ccplot = [] #[2e6, [0, []]]
 default_coparams = [] #[0.3, 0.5, 0.7, 0.9] 
 default_init_ccparams = []
@@ -595,7 +595,6 @@ def getcoverage(D=None, params=[], artelig=default_artelig, progname=default_pro
     # Extract basic info from data structure
     prognumber = D.data.meta.progs.short.index(progname) # get program number
     ndatayears = len(D.data.epiyears) # get number of data years
-    print("ndatayears", ndatayears)
     
     # Sort out time vector and indexing
     simtvec = D.S.tvec # Extract the time vector from the sim

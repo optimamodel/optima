@@ -38,8 +38,8 @@ No.;Parameter name;Location;Model variable name;Data variable name;Manual calibr
 13;Per-act transmissibility of male-female receptive intercourse;Manual calibration;M.const.trans.mfr;const.trans.mfr;1;;;;
 14;Per-act transmissibility of male-male insertive intercourse;Manual calibration;M.const.trans.mmi;const.trans.mmi;1;;;;
 15;Per-act transmissibility of male-male receptive intercourse;Manual calibration;M.const.trans.mmr;const.trans.mmr;1;;;;
-16;Initial population size;Manual calibration;M.popsize[:];key.popsize;1;;1;;1
-17;Population growth rate;Manual calibration;M.popgrowth[:];---;1;;;1;1
+16;Initial population size;Manual calibration;M.popsize[:];key.popsize;0;;1;;1
+17;Population growth rate;Manual calibration;M.popgrowth[:];---;0;;;1;1
 """ 
 
 def maybe_bool(p):
@@ -57,7 +57,12 @@ def parameters():
     split_lines = [l.split(';') for l in lines]
     result = []
     for line in split_lines:
-        entry = dict([(fields[key], maybe_bool(line[key]) ) for key in fields])
+        entry = {}
+        for key in fields:
+            item = line[key]
+            if key in (5, 6) and item=='': # boolean parameter or nothing
+                item='0'
+            entry[fields[key]] = maybe_bool(item)
         param, pops = re.match('M\.([^[]+)(?:\[(.+?)\])?',line[model_key_field]).groups()
         entry['keys']=param.split('.')
         entry['dim'] = dims[pops]

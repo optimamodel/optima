@@ -1,21 +1,15 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     'use strict';
 
-    module.controller('AnalysisScenariosController', function ($scope, $http, $modal, $window, meta, info, scenarioParamsResponse, scenariosResponse, CONFIG, graphTypeFactory) {
+    module.controller('AnalysisScenariosController', function ($scope, $http, $modal, $window, meta, info, scenarioParametersResponse, scenariosResponse, CONFIG, graphTypeFactory) {
 
-        var linesGraphOptions, linesGraphData, responseData, availableScenarioParams, availableScenarios;
+        var linesGraphOptions, linesGraphData, responseData, availableScenarioParameters, availableScenarios;
 
         // initialize all necessary data for this controller
         var initialize = function() {
           $scope.validate = false;
           $scope.show_message = false;
           $scope.scenarios = [];
-          
-          // use for export all data
-          $scope.exportGraphs = {
-            'name':'Analysis scenarios',
-            'controller':'AnalysisScenarios'
-          };
 
           $scope.runScenariosOptions = {
             dosave: false
@@ -28,9 +22,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             // add All option in population list
             meta.pops.long.push("All");
 
-            // transform scenarioParams to use attribute `names` instead of `keys`
+            // transform scenarioParameters to use attribute `names` instead of `keys`
             // it is the same for the data we have to send to run scenarios
-            availableScenarioParams = _(scenarioParamsResponse.data.params).map(function(parameters) {
+            availableScenarioParameters = _(scenarioParametersResponse.data.parameters).map(function(parameters) {
               return { name: parameters.name, names: parameters.keys, values: parameters.values};
             });
 
@@ -79,15 +73,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         };
 
         /**
-         * Returns an array containing arrays with [x, y] for d3 line data.
-         */
-        var generateLineData = function(xData, yData) {
-          return _(yData).map(function (value, i) {
-            return [xData[i], value];
-          });
-        };
-
-        /**
          * Returns an graph based on the provided yData.
          *
          * yData should be an array where each entry contains an array of all
@@ -106,7 +91,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           graph.options.title = title;
 
           _(yData).each(function(lineData) {
-            graph.data.lines.push(generateLineData(xData, lineData));
+            graph.data.lines.push(_.zip(xData, lineData));
           });
 
           return graph;
@@ -204,8 +189,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               scenario: function () {
                 return scenario;
               },
-              availableScenarioParams: function() {
-                return availableScenarioParams;
+              availableScenarioParameters: function() {
+                return availableScenarioParameters;
               },
               populationNames: function() {
                 return meta.pops.long;
