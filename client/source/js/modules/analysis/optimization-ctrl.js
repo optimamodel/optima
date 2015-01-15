@@ -4,14 +4,13 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
   module.controller('AnalysisOptimizationController', function ($scope, $http,
     $interval, meta, cfpLoadingBar, CONFIG, modalService, graphTypeFactory) {
 
+      $scope.chartsForDataExport = [];
+
       $scope.meta = meta;
       $scope.types = graphTypeFactory.types;
-
-      // use for export all data
-      $scope.exportGraphs = {
-        'name':'Optimization analyses',
-        'controller':'AnalysisOptimization'
-      };
+      $scope.needData = $scope.meta.progs === undefined;
+      $scope.activeTab = 1;
+      var errorMessages = [];
 
       var statusEnum = {
         NOT_RUNNING: { text: "", isActive: false },
@@ -20,7 +19,6 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       };
 
       $scope.optimizationStatus = statusEnum.NOT_RUNNING;
-
       // cache placeholder
       var cachedResponse = null;
 
@@ -63,41 +61,39 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
 
       // Default program weightings
       $scope.params.objectives.money.costs = {};
-      $scope.programs = meta.progs.long;
-      $scope.programCodes = meta.progs.short;
+      if(meta.progs) {
+        $scope.programs = meta.progs.long;
+        $scope.programCodes = meta.progs.short;
 
-      for ( var i = 0; i < meta.progs.short.length; i++ ) {
-        $scope.params.objectives.money.costs[meta.progs.short[i]] = 100;
+        for ( var i = 0; i < meta.progs.short.length; i++ ) {
+          $scope.params.objectives.money.costs[meta.progs.short[i]] = 100;
+        }
+
+        // Constraints Defaults
+        $scope.params.constraints = {};
+        $scope.params.constraints.txelig = 1;
+        $scope.params.constraints.dontstopart = true;
+
+        $scope.params.constraints.decrease = {};
+        $scope.params.constraints.increase = {};
+        $scope.params.constraints.coverage = {};
+
+        // Initialize program constraints models
+        for ( var i = 0; i < meta.progs.short.length; i++ ) {
+          $scope.params.constraints.decrease[meta.progs.short[i]] = {};
+          $scope.params.constraints.decrease[meta.progs.short[i]].use = false;
+          $scope.params.constraints.decrease[meta.progs.short[i]].by = 100;
+
+          $scope.params.constraints.increase[meta.progs.short[i]] = {};
+          $scope.params.constraints.increase[meta.progs.short[i]].use = false;
+          $scope.params.constraints.increase[meta.progs.short[i]].by = 100;
+
+          $scope.params.constraints.coverage[meta.progs.short[i]] = {};
+          $scope.params.constraints.coverage[meta.progs.short[i]].use = false;
+          $scope.params.constraints.coverage[meta.progs.short[i]].level = 0;
+          $scope.params.constraints.coverage[meta.progs.short[i]].year = undefined;
+        }
       }
-
-      // Constraints Defaults
-      $scope.params.constraints = {};
-      $scope.params.constraints.txelig = 1;
-      $scope.params.constraints.dontstopart = true;
-
-      $scope.params.constraints.decrease = {};
-      $scope.params.constraints.increase = {};
-      $scope.params.constraints.coverage = {};
-
-      // Initialize program constraints models
-      for ( var i = 0; i < meta.progs.short.length; i++ ) {
-        $scope.params.constraints.decrease[meta.progs.short[i]] = {};
-        $scope.params.constraints.decrease[meta.progs.short[i]].use = false;
-        $scope.params.constraints.decrease[meta.progs.short[i]].by = 100;
-
-        $scope.params.constraints.increase[meta.progs.short[i]] = {};
-        $scope.params.constraints.increase[meta.progs.short[i]].use = false;
-        $scope.params.constraints.increase[meta.progs.short[i]].by = 100;
-
-        $scope.params.constraints.coverage[meta.progs.short[i]] = {};
-        $scope.params.constraints.coverage[meta.progs.short[i]].use = false;
-        $scope.params.constraints.coverage[meta.progs.short[i]].level = 0;
-        $scope.params.constraints.coverage[meta.progs.short[i]].year = undefined;
-      }
-
-    $scope.radarGraphName = 'Allocation';
-    $scope.radarAxesName =  'Programs';
-
     var optimizationTimer;
 
     var linesStyle = ['__blue', '__green', '__red', '__orange', '__violet',
@@ -117,15 +113,6 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       yAxis: {
         axisLabel: ''
       }
-    };
-
-    /*
-    * Returns an array containing arrays with [x, y] for d3 line data.
-    */
-    var generateLineData = function(xData, yData) {
-      return _(yData).map(function (value, i) {
-        return [xData[i], value];
-      });
     };
 
     /*
@@ -152,7 +139,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       graph.options.yAxis.axisLabel = yLabel;
 
       _(yData).each(function(lineData) {
-        graph.data.lines.push(generateLineData(xData, lineData));
+        graph.data.lines.push(_.zip(xData, lineData));
       });
 
       return graph;
@@ -183,7 +170,13 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       });
       options.legend.push(data.pie2.name);
 
-      return {'data':graphData, 'options':options};
+      var chart = {
+        'data': graphData,
+        'options': options,
+        'radarGraphName': 'Allocation',
+        'radarAxesName': 'Programs'
+      };
+      return chart;
     };
 
     /**
@@ -275,36 +268,223 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       }
     };
 
-    $scope.startOptimization = function () {
-      if($scope.OptimizationForm.$invalid) {
-        $scope.activeTab = 1;
-        modalService.inform(undefined, 'OK', "Please specify program optimizations period.");
-      } else{
-        $http.post('/api/analysis/optimization/start', $scope.params, {ignoreLoadingBar: true})
-          .success(function (data, status, headers, config) {
-            if (data.status == "OK" && data.join) {
-              // Keep polling for updated values after every 5 seconds till we get an error.
-              // Error indicates that the model is not calibrating anymore.
-              optimizationTimer = $interval(checkWorkingOptimization, 5000, 0, false);
-              $scope.optimizationStatus = statusEnum.RUNNING;
-
-              // start cfpLoadingBar loading
-              // calculate the number of ticks in timelimit
-              var val = ($scope.params.timelimit * 1000) / 250;
-              // callback function in start to be called in place of _inc()
-              cfpLoadingBar.start(function () {
-                if (cfpLoadingBar.status() >= 0.95) {
-                  return;
-                }
-                var pct = cfpLoadingBar.status() + (0.95/val);
-                cfpLoadingBar.set(pct);
-              });
-
-            } else {
-              console.log("Cannot poll for optimization now");
-            }
-          });
+    $scope.validations = {
+      years :{
+        valid: function(){ return validateYears().valid},
+        message: "Please specify program optimizations period."
+      },
+      fixedBudget: {
+        valid: function(){ return $scope.params.objectives.outcome.fixed !== undefined;},
+        message: 'Please enter a value for the fixed budget.',
+        condition: function(){return $scope.params.objectives.funding === 'constant';}
+      },
+      variableBudget: {
+        valid: function(){ return validateVariableBudgets()},
+        message: "Please enter a budget for each year.",
+        condition: function(){return $scope.params.objectives.funding === 'variable';}
+      },
+      budgetType: {
+        valid: function(){return $scope.params.objectives.funding!==undefined;},
+        message: "Please pick at least one budget type."
+      },
+      objectivesToMinimizeCount:{
+        valid:function(){return validateObjectivesToMinimize().valid;},
+        message: "You must pick at least one objective to minimize."
+      },
+      objectivesOutcomeWeights:{
+        valid:function(){return validateOutcomeWeights().valid;},
+        message: "You must specify the weighting parameters for all objectives to minimize."
       }
+    };
+
+    $scope.objectivesToMinimize = [
+      {
+        name:"Cumulative new HIV infections",
+        slug:"inci",
+        title: "New infections weighting"
+      },
+      {
+        name:"Cumulative DALYs",
+        slug: "daly",
+        title:"DALYs weighting"
+      },
+      {
+        name:" Cumulative AIDS-related deaths",
+        slug:"death",
+        title:"Deaths weighting"
+      },
+      {
+        name:"Total HIV-related costs",
+        slug:"cost",
+        title:"Costs weighting"
+      }
+    ];
+
+    /* If some of the budgets are undefined, return false */
+    function validateVariableBudgets() {
+      return _(_($scope.params.objectives.outcome.variable).toArray()).some(function (budget) {return budget === undefined;}) === false;
+    }
+
+    function validateYears(){
+       if($scope.params.objectives.year!==undefined){
+         var start = parseInt($scope.params.objectives.year.start);
+         var end = parseInt($scope.params.objectives.year.end);
+         var until = parseInt($scope.params.objectives.year.until);
+         return {
+          start:start,
+          end: end,
+          until: until,
+          valid: (isNaN(start) ||  isNaN(end) || isNaN(until) || end <= start || until <= start) === false
+        }
+       }
+       return {
+        valid:false
+       }
+    }
+
+    function validateObjectivesToMinimize(){
+      var checkedPrograms = _($scope.objectivesToMinimize).filter(function (a) {
+        return $scope.params.objectives.outcome[a.slug] === true;
+      });
+      return {
+        checkedPrograms : checkedPrograms,
+        valid: checkedPrograms.length > 0
+      }
+    }
+
+    function validateOutcomeWeights(){
+      var checkedPrograms = _($scope.objectivesToMinimize).filter(function (a) {
+        return $scope.params.objectives.outcome[a.slug] === true &&
+          !($scope.params.objectives.outcome[a.slug+'weight']!==undefined && 
+          $scope.params.objectives.outcome[a.slug+'weight']>0);
+      });
+      return {
+        checkedPrograms : checkedPrograms,
+        valid: checkedPrograms.length == 0
+      };
+    }
+
+    function checkValidation(){
+      errorMessages = [];
+      _($scope.validations).each(function(validation){
+        if(validation.valid()!==true && (validation.condition === undefined || validation.condition() === true)){
+          errorMessages.push({message:validation.message});
+        }
+      });
+    }
+
+    $scope.validateYears = validateYears;
+    $scope.validateVariableBudgets = validateVariableBudgets;
+    $scope.validateObjectivesToMinimize = validateObjectivesToMinimize;
+    $scope.validateOutcomeWeights = validateOutcomeWeights;
+
+    /**
+     * Update the variables depending on the range in years.
+     */
+    $scope.updateYearRange = function () {
+      // only for variable funding the year range is relevant to produce the loop & col
+      if ($scope.params.objectives.funding === undefined || $scope.params.objectives.funding !== 'variable') {
+        return;
+      }
+
+      // reset data
+      $scope.params.objectives.outcome.variable = {};
+      $scope.yearLoop = [];
+      $scope.yearCols = [];
+
+      var validatedYears = validateYears();
+      if (validatedYears.valid === false) {
+        return;
+      }
+
+      // initialize data
+      var years = _.range(validatedYears.start, validatedYears.end + 1);
+      $scope.yearLoop = _(years).map(function (year) {
+        return {year: year};
+      });
+
+      var cols = 5;
+      var rows = Math.ceil($scope.yearLoop.length / cols);
+      $scope.yearCols = _(_.range(0, rows)).map(function (col, index) {
+        return {start: index * cols, end: (index * cols) + cols};
+      });
+    };
+
+    /**
+     * If the string is undefined return empty, otherwise just return the string
+     * @param str
+     * @returns {string}
+     */
+    function strOrEmpty(str){
+      return _(str).isUndefined() ? '' : str;
+    }
+
+    /**
+     * Join the word with a comma between them, except for the last word
+     * @param arr
+     * @param prop if it's not undefined it will pick that specific property from the object
+     * @param quote should the sentence be quoted or not
+     * @param before add something before each word
+     * @param after add something after each word
+     * @returns {string}
+     */
+    function joinArrayAsSentence(arr, prop, quote, before, after){
+      quote = quote ? '"':'';
+      before = strOrEmpty(before);
+      after = strOrEmpty(after);
+      return quote + _.compact(_(arr).map(function (val) {var p = (prop ? val[prop] : val);return p ? (before + strOrEmpty(p) + after ) : undefined;})).join(", ") + quote;
+    }
+
+    function constructOptimizationMessage() {
+      $scope.optimizationMessage = _.template("Optimizing <%= checkedPrograms %> over years <%= startYear %> to <%= endYear %> with <%= budgetLevel %>.", {
+        checkedPrograms : joinArrayAsSentence(validateObjectivesToMinimize().checkedPrograms, 'name', true),
+        startYear: $scope.params.objectives.year.start,
+        endYear:$scope.params.objectives.year.end,
+        budgetLevel: $scope.params.objectives.funding === 'variable' ?
+          //get budgets list and join it as a sentence
+          " budget level " + joinArrayAsSentence(_.compact(_($scope.params.objectives.outcome.variable).toArray()), undefined, false, "$") : //variable budgets
+          " fixed budget of $" + $scope.params.objectives.outcome.fixed + " per year" //fixed budgets
+      });
+    }
+
+    $scope.setActiveTab = function(tabNum){
+      if(tabNum === 3){
+      /*Prevent going to third tab if something is invalid in the first tab.
+        Cannot just use $scope.OptimizationForm.$invalid for this because the validation of the years and the budgets is done in a different way. */
+        checkValidation();
+        if(errorMessages.length > 0){
+          modalService.informError(errorMessages, 'Cannot view results');
+          return;
+        }
+        constructOptimizationMessage();
+      }
+      $scope.activeTab = tabNum;
+    };
+
+    $scope.startOptimization = function () {
+      $http.post('/api/analysis/optimization/start', $scope.params)
+        .success(function (data, status, headers, config) {
+          if (data.status == "OK" && data.join) {
+            // Keep polling for updated values after every 5 seconds till we get an error.
+            // Error indicates that the model is not calibrating anymore.
+            optimizationTimer = $interval(checkWorkingOptimization, 5000, 0, false);
+            $scope.optimizationStatus = statusEnum.RUNNING;
+
+            // start cfpLoadingBar loading
+            // calculate the number of ticks in timelimit
+            var val = ($scope.params.timelimit * 1000) / 250;
+            // callback function in start to be called in place of _inc()
+            cfpLoadingBar.start(function () {
+              if (cfpLoadingBar.status() >= 0.95) {
+                return;
+              }
+              var pct = cfpLoadingBar.status() + (0.95/val);
+              cfpLoadingBar.set(pct);
+            });
+          } else {
+            console.log("Cannot poll for optimization now");
+          }
+        });
     };
 
     function checkWorkingOptimization() {
@@ -322,13 +502,22 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     }
 
     $scope.stopOptimization = function () {
-      $http.get('/api/analysis/optimization/stop')
-        .success(function(data) {
-          // Do not cancel timer yet, if the optimization is running
-          if ($scope.optimizationStatus) {
-            $scope.optimizationStatus = statusEnum.REQUESTED_TO_STOP;
-          }
-        });
+      modalService.confirm(
+        function (){
+          $http.get('/api/analysis/optimization/stop')
+          .success(function(data) {
+            // Do not cancel timer yet, if the optimization is running
+            if ($scope.optimizationStatus) {
+              $scope.optimizationStatus = statusEnum.REQUESTED_TO_STOP;
+            }
+          });
+        },
+        function (){},
+        'Yes, Stop Optimization',
+        'No',
+        'Warning, optimization has not converged. Results cannot be used for analysis.',
+        'Warning!'
+      );
     };
 
     function stopTimer() {
@@ -360,6 +549,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
 
     $scope.yearLoop = [];
     $scope.yearCols = [];
+
 
     /**
      * Returns true if the start & end year are required.
@@ -412,6 +602,32 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       });
 
     };
+
+    /**
+     * Collects all existing charts in the $scope.chartsForDataExport variable.
+     */
+    var updateChartsForDataExport = function() {
+      $scope.chartsForDataExport = [];
+
+      if ( $scope.radarGraph ) {
+        // export radarChart
+        var graph = $scope.radarGraph;
+        graph.options.title = $scope.radarGraphName;
+        $scope.chartsForDataExport.push(graph);
+      }
+
+      if ( $scope.optimisationGraphs ) {
+        $scope.chartsForDataExport = $scope.chartsForDataExport.concat($scope.optimisationGraphs);
+      }
+
+      if ( $scope.financialGraphs ) {
+        $scope.chartsForDataExport = $scope.chartsForDataExport.concat($scope.financialGraphs);
+      }
+    };
+
+    $scope.$watch('radarGraph', updateChartsForDataExport, true);
+    $scope.$watch('optimisationGraphs', updateChartsForDataExport, true);
+    $scope.$watch('financialGraphs', updateChartsForDataExport, true);
 
   });
 });
