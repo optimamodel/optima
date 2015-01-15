@@ -4,17 +4,13 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
   module.controller('AnalysisOptimizationController', function ($scope, $http,
     $interval, meta, CONFIG, modalService, graphTypeFactory) {
 
+      $scope.chartsForDataExport = [];
+
       $scope.meta = meta;
       $scope.types = graphTypeFactory.types;
       $scope.needData = $scope.meta.progs === undefined;
       $scope.activeTab = 1;
       var errorMessages = [];
-
-      // use for export all data
-      $scope.exportGraphs = {
-        'name':'Optimization analyses',
-        'controller':'AnalysisOptimization'
-      };
 
       var statusEnum = {
         NOT_RUNNING: { text: "", isActive: false },
@@ -98,9 +94,6 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
           $scope.params.constraints.coverage[meta.progs.short[i]].year = undefined;
         }
       }
-    $scope.radarGraphName = 'Allocation';
-    $scope.radarAxesName =  'Programs';
-
     var optimizationTimer;
 
     var linesStyle = ['__blue', '__green', '__red', '__orange', '__violet',
@@ -120,15 +113,6 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       yAxis: {
         axisLabel: ''
       }
-    };
-
-    /*
-    * Returns an array containing arrays with [x, y] for d3 line data.
-    */
-    var generateLineData = function(xData, yData) {
-      return _(yData).map(function (value, i) {
-        return [xData[i], value];
-      });
     };
 
     /*
@@ -155,7 +139,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       graph.options.yAxis.axisLabel = yLabel;
 
       _(yData).each(function(lineData) {
-        graph.data.lines.push(generateLineData(xData, lineData));
+        graph.data.lines.push(_.zip(xData, lineData));
       });
 
       return graph;
@@ -186,7 +170,13 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       });
       options.legend.push(data.pie2.name);
 
-      return {'data':graphData, 'options':options};
+      var chart = {
+        'data': graphData,
+        'options': options,
+        'radarGraphName': 'Allocation',
+        'radarAxesName': 'Programs'
+      };
+      return chart;
     };
 
     /**
@@ -284,22 +274,26 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
         message: "Please specify program optimizations period."
       },
       fixedBudget: {
-        valid: function(){ return $scope.params.objectives.outcome.fixed !== undefined},
+        valid: function(){ return $scope.params.objectives.outcome.fixed !== undefined;},
         message: 'Please enter a value for the fixed budget.',
         condition: function(){return $scope.params.objectives.funding === 'constant';}
       },
       variableBudget: {
         valid: function(){ return validateVariableBudgets()},
         message: "Please enter a budget for each year.",
-        condition: function(){return $scope.params.objectives.funding === 'variable'}
+        condition: function(){return $scope.params.objectives.funding === 'variable';}
       },
       budgetType: {
-        valid: function(){return $scope.params.objectives.funding!==undefined},
+        valid: function(){return $scope.params.objectives.funding!==undefined;},
         message: "Please pick at least one budget type."
       },
       objectivesToMinimizeCount:{
-        valid:function(){return validateObjectivesToMinimize().valid},
+        valid:function(){return validateObjectivesToMinimize().valid;},
         message: "You must pick at least one objective to minimize."
+      },
+      objectivesOutcomeWeights:{
+        valid:function(){return validateOutcomeWeights().valid;},
+        message: "You must specify the weighting parameters for all objectives to minimize."
       }
     };
 
@@ -358,6 +352,18 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       }
     }
 
+    function validateOutcomeWeights(){
+      var checkedPrograms = _($scope.objectivesToMinimize).filter(function (a) {
+        return $scope.params.objectives.outcome[a.slug] === true &&
+          !($scope.params.objectives.outcome[a.slug+'weight']!==undefined && 
+          $scope.params.objectives.outcome[a.slug+'weight']>0);
+      });
+      return {
+        checkedPrograms : checkedPrograms,
+        valid: checkedPrograms.length == 0
+      };
+    }
+
     function checkValidation(){
       errorMessages = [];
       _($scope.validations).each(function(validation){
@@ -370,6 +376,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     $scope.validateYears = validateYears;
     $scope.validateVariableBudgets = validateVariableBudgets;
     $scope.validateObjectivesToMinimize = validateObjectivesToMinimize;
+    $scope.validateOutcomeWeights = validateOutcomeWeights;
 
     /**
      * Update the variables depending on the range in years.
@@ -520,6 +527,85 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
 
     $scope.yearLoop = [];
     $scope.yearCols = [];
+
+
+    /**
+     * Returns true if the start & end year are required.
+     */
+    $scope.yearsAreRequired = function () {
+      if (!$scope.params.objectives.funding || $scope.params.objectives.funding !== 'variable') {
+        return false;
+      }
+      if (!$scope.params.objectives.year ||
+          !$scope.params.objectives.year.start ||
+          !$scope.params.objectives.year.end){
+        return true;
+      }
+      return false;
+    };
+
+    /**
+     * Update the variables depending on the range in years.
+     */
+    $scope.updateYearRange = function () {
+
+      // only for variable funding the year range is relevant to produce the loop & col
+      if ( !$scope.params.objectives.funding || $scope.params.objectives.funding !== 'variable') {
+        return;
+      }
+
+      // reset data
+      $scope.params.objectives.outcome.variable = {};
+      $scope.yearLoop = [];
+      $scope.yearCols = [];
+
+      // parse years
+      if ($scope.params.objectives.year === undefined) {
+        return;
+      }
+      var start = parseInt($scope.params.objectives.year.start);
+      var end = parseInt($scope.params.objectives.year.end);
+      if ( isNaN(start) ||  isNaN(end) || end <= start) {
+        return;
+      }
+
+      // initialize data
+      var years = _.range(start, end + 1);
+      $scope.yearLoop = _(years).map(function (year) { return { year: year}; });
+
+      var cols = 5;
+      var rows = Math.ceil($scope.yearLoop.length / cols);
+      $scope.yearCols = _(_.range(0, rows)).map(function(col, index) {
+        return {start: index*cols, end: (index*cols)+cols };
+      });
+
+    };
+
+    /**
+     * Collects all existing charts in the $scope.chartsForDataExport variable.
+     */
+    var updateChartsForDataExport = function() {
+      $scope.chartsForDataExport = [];
+
+      if ( $scope.radarGraph ) {
+        // export radarChart
+        var graph = $scope.radarGraph;
+        graph.options.title = $scope.radarGraphName;
+        $scope.chartsForDataExport.push(graph);
+      }
+
+      if ( $scope.optimisationGraphs ) {
+        $scope.chartsForDataExport = $scope.chartsForDataExport.concat($scope.optimisationGraphs);
+      }
+
+      if ( $scope.financialGraphs ) {
+        $scope.chartsForDataExport = $scope.chartsForDataExport.concat($scope.financialGraphs);
+      }
+    };
+
+    $scope.$watch('radarGraph', updateChartsForDataExport, true);
+    $scope.$watch('optimisationGraphs', updateChartsForDataExport, true);
+    $scope.$watch('financialGraphs', updateChartsForDataExport, true);
 
   });
 });
