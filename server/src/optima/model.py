@@ -216,7 +216,6 @@ def getModelCalibrateParameters():
     from sim.manualfit import updateP
     from sim.nested import getnested
     calibrate_parameters = [p for p in parameters() if 'calibration' in p and p['calibration']]
-    print("calibrate_parameters", calibrate_parameters)
     D = load_model(request.project_name, as_bunch = True)
     D_dict = D.toDict()
     result = add_calibration_parameters(D_dict)
