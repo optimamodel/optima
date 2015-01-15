@@ -180,15 +180,22 @@ angular.module('cfp.loadingBar', [])
       var includeSpinner = this.includeSpinner;
       var includeBar = this.includeBar;
       var startSize = this.startSize;
+      /** Code Start
+       * Developer: Khurramali
+       **/
       var timerLengthFn = null;
+      /** Code End **/
 
       /**
        * Inserts the loading bar element into the dom, and sets it to 2%
        */
       function _start(timerLength) {
-        
+        /** Code Start
+         * Developer: Khurramali
+         **/
         if ( undefined !== timerLength )
           timerLengthFn = timerLength;
+        /** Code End **/
 
         if (!$animate) {
           $animate = $injector.get('$animate');
@@ -234,11 +241,15 @@ angular.module('cfp.loadingBar', [])
         // have multiple incs running at the same time.
         $timeout.cancel(incTimeout);
         incTimeout = $timeout(function() {
+          /** Code Start
+           * Developer: Khurramali
+           **/
           if ( null !== timerLengthFn ) {
             timerLengthFn ();
           } else {
             _inc();
           }
+          /** Code End **/
         }, 250);
       }
 
