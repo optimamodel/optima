@@ -490,13 +490,22 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     }
 
     $scope.stopOptimization = function () {
-      $http.get('/api/analysis/optimization/stop')
-        .success(function(data) {
-          // Do not cancel timer yet, if the optimization is running
-          if ($scope.optimizationStatus) {
-            $scope.optimizationStatus = statusEnum.REQUESTED_TO_STOP;
-          }
-        });
+      modalService.confirm(
+        function (){
+          $http.get('/api/analysis/optimization/stop')
+          .success(function(data) {
+            // Do not cancel timer yet, if the optimization is running
+            if ($scope.optimizationStatus) {
+              $scope.optimizationStatus = statusEnum.REQUESTED_TO_STOP;
+            }
+          });
+        },
+        function (){},
+        'Yes, Stop Optimization',
+        'No',
+        'Warning, optimization has not converged. Results cannot be used for analysis.',
+        'Warning!'
+      );
     };
 
     function stopTimer() {
