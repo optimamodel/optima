@@ -240,7 +240,7 @@ def loadworkbook(filename='example.xlsx', verbose=2):
                             data[name][thispar].append(thesedata) # Store data
 
                             for programname, pops in programs_for_input_key(thispar).iteritems():
-                                if programname in programs and pops==[''] or subparam in pops:
+                                if programname in programs and not pops or pops==[''] or subparam in pops:
                                     programs[programname].append([[name, thispar], [subparam]])
                         
                         # It's a matrix, append the data                                     

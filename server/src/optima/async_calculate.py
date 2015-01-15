@@ -5,7 +5,7 @@ from signal import *
 
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy import create_engine
-from sim.bunch import Bunch
+from sim.bunch import Bunch, unbunchify
 from dbmodels import ProjectDb, WorkingProjectDb
 
 # Sentinel object used for async calculation
@@ -95,7 +95,7 @@ class CalculatingThread(threading.Thread):
         self.user_id = user.id
         self.project_name = project_name
         self.func = func
-        self.args = args
+        self.debug_args = unbunchify(args)
         self.timelimit = int(timelimit) # to be sure
         self.db_session = scoped_session(sessionmaker(engine)) #creating scoped_session, eventually bound to engine
         print("starting calculating thread for user: %s project %s for %s seconds" % (self.user_name, self.project_name, self.timelimit))
@@ -107,7 +107,7 @@ class CalculatingThread(threading.Thread):
         start = time.time()
         while delta_time < self.timelimit:
             if check_calculation(self.user_id, self.project_name, self.func, self.db_session):
-                print("Iteration %d for user: %s, args: %s" % (iterations, self.user_name, self.args))
+                print("Iteration %d for user: %s, args: %s" % (iterations, self.user_name, self.debug_args))
                 D = self.func(D, **self.args)
                 self.save_model_user(self.db_session, self.project_name, self.user_id, D)
                 time.sleep(1)
