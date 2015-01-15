@@ -238,7 +238,6 @@ def getModelParameters(group):
     current_app.logger.debug("getModelParameters: %s" % group)
     D_dict = load_model(request.project_name, as_bunch = False)
     the_group = D_dict.get(group, {})
-    current_app.logger.debug("the_group: %s" % the_group)
     return json.dumps(the_group)
 
 @model.route('/parameters/<group>/<subgroup>')
@@ -250,7 +249,6 @@ def getModelSubParameters(group, subgroup):
     D_dict = load_model(request.project_name, as_bunch = False)
     the_group = D_dict.get(group,{})
     the_subgroup = the_group.get(subgroup, {})
-    current_app.logger.debug("result: %s" % the_subgroup)
     return jsonify(the_subgroup)
 
 @model.route('/parameters/<group>', methods=['POST'])
