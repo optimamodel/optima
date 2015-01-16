@@ -305,12 +305,12 @@ define(['./module', 'underscore'], function (module, _) {
       return hasAllElements(params) || hasOnlyInvalidEntries(params);
     };
 
-    var areCcparamsValid = function (params) {
+    var areCCParamsValid = function (params) {
       return $scope.areValidParams(params.slice(0, 3));
     };
 
     $scope.hasValidCCParams = function() {
-      return !$scope.hasCostCoverResponse || areCcparamsValid($scope.costCoverageParams());
+      return !$scope.hasCostCoverResponse || areCCParamsValid($scope.costCoverageParams());
     };
 
     /**
@@ -333,7 +333,7 @@ define(['./module', 'underscore'], function (module, _) {
      */
     var retrieveAndUpdateGraphs = function (model) {
       // validation on Cost-coverage curve plotting options
-      if ( !areCcparamsValid(model.ccparams) ){
+      if (!areCCParamsValid(model.ccparams)){
         modalService.inform(
           function () {},
           'Okay',
@@ -395,8 +395,8 @@ define(['./module', 'underscore'], function (module, _) {
       }
       if ($scope.selectedProgram.ccplot && $scope.selectedProgram.ccplot.length==2) {
         $scope.xAxisMaximum = $scope.selectedProgram.ccplot[0];
-        var years = $scope.selectedProgram.ccplot[1];
-        if (years.length>0) {
+        var years = $scope.selectedProgram.ccplot[1][1];
+        if (years.length > 0) {
           $scope.displayYear = years[0];
           $scope.displayCost = 2;
         } else {
@@ -529,7 +529,7 @@ define(['./module', 'underscore'], function (module, _) {
      * by pressing the draw button.
      */
     $scope.updateCurves =  _.debounce(function() { // debounce a bit so we don't update immediately
-      if(areCcparamsValid($scope.costCoverageParams()) && $scope.hasCostCoverResponse === true) {
+      if($scope.CostCoverageForm.$valid && $scope.hasCostCoverResponse === true) {
        $scope.generateCurves();
       }
     }, 500);

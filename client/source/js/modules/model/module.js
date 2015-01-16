@@ -6,7 +6,10 @@ define([
   '../ui/type-selector/index',
   '../common/export-all-charts',
   '../common/export-all-data',
-  '../common/graph-type-factory'
+  '../common/graph-type-factory',
+  '../validations/error-messages-directive',
+  '../validations/more-than-directive',
+  '../validations/less-than-directive'
 ], function (angular) {
   'use strict';
 
@@ -17,7 +20,10 @@ define([
     'app.resources.project',
     'app.ui.type-selector',
     'ui.router',
-    'app.common.graph-type'
+    'app.common.graph-type',
+    'app.validations.error-messages',
+    'app.validations.more-than',
+    'app.validations.less-than'
   ])
     .config(function ($stateProvider) {
       $stateProvider

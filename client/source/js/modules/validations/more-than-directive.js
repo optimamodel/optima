@@ -1,7 +1,7 @@
 define(['angular'], function (angular) {
   'use strict';
 
-  return angular.module('app.more-than', [])
+  return angular.module('app.validations.more-than', [])
   /**
    * Adds a more than validator to the parsers of an input element.
    *
@@ -17,7 +17,7 @@ define(['angular'], function (angular) {
         link: function (scope, element, attrs, ctrl) {
           var updateValidity = function (highValue, lowValue) {
             var isValid = highValue > lowValue;
-            var canBeEmpty = !element.required && (highValue === undefined || highValue == '' || highValue == null);
+            var canBeEmpty = !element.required && (highValue === undefined || lowValue === undefined || highValue == '' || highValue == null);
             ctrl.$setValidity('moreThan', isValid || canBeEmpty);
           };
 
