@@ -6,7 +6,9 @@ define([
   '../ui/type-selector/index',
   '../common/export-all-charts',
   '../common/export-all-data',
-  '../common/graph-type-factory'
+  '../common/graph-type-factory',
+  '../common/error-messages-directive',
+  '../common/greater-than-directive'
 ], function (angular) {
   'use strict';
 
@@ -17,7 +19,9 @@ define([
     'app.resources.project',
     'app.ui.type-selector',
     'ui.router',
-    'app.common.graph-type'
+    'app.common.graph-type',
+    'app.common.error-messages',
+    'app.common.greater-than'
   ])
     .config(function ($stateProvider) {
       $stateProvider
