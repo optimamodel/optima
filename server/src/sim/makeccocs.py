@@ -25,8 +25,8 @@ default_coparams = [] #[0.3, 0.5, 0.7, 0.9]
 default_init_ccparams = []
 default_init_convertedccparams = []
 default_init_nonhivdalys = [0.0]
-default_makeplot = 1 # CK: Otherwise brings up >100 figures
-default_effect = D.programs[default_progname]['effects'][0] # [['sex', 'condomcas'], [u'MSM']]
+default_makeplot = 0 # CK: Otherwise brings up >100 figures
+default_effect = [['sex', 'condomcas'], [u'MSM']] # D.programs[default_progname]['effects'][0] 
 default_artelig = range(6,26)
 coverage_params = ['numost','numpmtct','numfirstline','numsecondline']
 
