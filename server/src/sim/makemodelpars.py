@@ -91,7 +91,8 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
     M.breast   = dpar2mpar(P.breast, withwhat)    
     
     ## Sexual behavior parameters -- all are parameters so can loop over all
-    M.circum  = dpar2mpar(P.circum, withwhat) # Circumcision
+    M.circum    = dpar2mpar(P.circum,    withwhat) # Circumcision percentage
+    M.numcircum = dpar2mpar(P.numcircum, withwhat) # Circumcision number
     M.numacts = struct()
     M.condom  = struct()
     M.numacts.reg = dpar2mpar(P.numactsreg, withwhat) # ...
