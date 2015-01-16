@@ -91,7 +91,7 @@
               <input class="txbox __inline __l" placeholder="e.g. 2014" ng-model="displayYear" min="projectInfo.dataStart" max="projectInfo.dataEnd" ng-change="updateCurves()"> prices
             </label>
           </p>
-          <p ng-show="$parent.displayCost == 2 && !$parent.displayYear" class="error-hint">Please specify year for program cost data.</p>
+          <p ng-show="displayCost == 2 && !displayYear" class="error-hint">Please specify year for program cost data.</p>
 
           <button type="button" class="btn" ng-click="generateCurves()">Draw</button>
         </div>
