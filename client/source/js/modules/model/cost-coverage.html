@@ -30,7 +30,6 @@
   <div class="section" ng-hide="selectedProgram.acronym == null">
 
     <div class="section">
-      <button type="button" class="btn" ng-click="generateCurves()">Draw</button>
       <button type="button" class="btn" ng-click="saveModel()">Save model</button>
       <button type="button" class="btn" ng-click="revertModel()">Revert model</button>
       <button type="button" class="btn" ng-click="uploadDefault()" style="margin-left: 60px">Upload default cost-coverage-outcome curves</button>
@@ -69,22 +68,18 @@
                 <input type="number" name="scaleUpParameter" min="1" max="10" step="0.1" class="txbox __inline __xl" placeholder="e.g.{{defaultScaleUpParameter}}"  ng-model="scaleUpParameter" ng-change="updateCurves()">
                 <error-messages for="scaleUpParameter" rules="{min:1, max:10}"></error-messages>
               </p>
-              <p>2
-                4. [Optional] Full coverage would avert
+              <p>
+                4.[Optional] Full coverage would avert
                 <input type="number" name="nonHivDalys" min="0" step="1" class="txbox __inline __xl" placeholder="e.g.{{defaultNonHivDalys}}"  ng-model="nonHivDalys" ng-change="updateCurves()">
                 non-HIV-related DALYs per year
                 <error-messages for="nonHivDalys" rules="{min:0}"></error-messages>
               <p>
-                5.[Optional] Specify the maximum funding (for plotting only):
+                5. [Optional] Specify the maximum funding (for plotting only):
                 <input type="number" name="xAxisMaximum" min="1" greater-than="knownFundingValue" class="txbox __inline __xl" placeholder="e.g.{{defaultXAxisMaximum}}"  ng-model="xAxisMaximum" ng-change="updateCurves()">
                 <error-messages for="xAxisMaximum" rules="{min:1, greaterThan:'Known Funding Value'}"></error-messages>
               </p>
             </form>
           </div>
-          <p>
-            5. Specify the maximum funding (for plotting only):
-            <input type="number" class="txbox __inline __xl" placeholder="e.g.{{defaultXAxisMaximum}}"  ng-model="xAxisMaximum" ng-change="updateCurves()">
-          </p>
           <p>
             <label>
               <input type="radio" name="displaycost" ng-model="displayCost" value="1" ng-change="updateCurves()">
