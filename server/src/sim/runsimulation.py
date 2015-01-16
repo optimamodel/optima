@@ -2,7 +2,7 @@ def runsimulation(D, startyear=2000, endyear=2030, verbose=2, makeplot = 1, dosa
     """
     Calculate initial model estimates.
 
-    Version: 2014nov26 by cliffk
+    Version: 2015jan16 by cliffk
     """
 
     from printv import printv
@@ -28,7 +28,7 @@ def runsimulation(D, startyear=2000, endyear=2030, verbose=2, makeplot = 1, dosa
 
     print('WARNING should add conditionals here')
     from makeccocs import makeallccocs
-    D = makeallccocs(D, verbose=verbose, makeplot = makeplot)
+    D = makeallccocs(D, verbose=verbose, makeplot = 0) # Do not plot, ever
 
 #    from getcurrentbudget import getcurrentbudget
 #    D = getcurrentbudget(D) # TODO Add verbose
