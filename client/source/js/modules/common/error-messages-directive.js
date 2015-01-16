@@ -1,4 +1,4 @@
-define(['angular'], function (angular) {
+define(['angular', 'underscore'], function (angular, _) {
   'use strict';
 
   return angular.module('app.common.error-messages', []).directive('errorMessages', function () {
@@ -16,8 +16,8 @@ define(['angular'], function (angular) {
         var errorMessages = {
           'min': 'The minimum value must be <%= min %>',
           'max': 'The maximum value can be <%= max %>',
-          'required': "The field <%= name %> is required",
-          'greaterThan': "The value must be greater than <%= greaterThan %>."
+          'required': 'The field <%= name %> is required',
+          'greaterThan': 'The value must be greater than <%= greaterThan %>.'
         };
         $scope.errorMessages = function () {
           if (form && form[$scope.for].$dirty) {
@@ -25,8 +25,11 @@ define(['angular'], function (angular) {
               if (e) {
                 var template = {};
                 if ($scope.rules[key]) {
-                  /* If the key is 'required', and the rules object contains 'name' property, show the field name in the error message
-                   otherwise just say that the field is required */
+                  /*
+                    If the key is 'required', and the rules object contains 'name' property,
+                    show the field name in the error message
+                    otherwise just say that the field is required
+                  */
                   if ($scope.rules.name && key === 'required') {
                     template.name = $scope.rules.name;
                   }
