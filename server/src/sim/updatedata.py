@@ -8,7 +8,6 @@ def updatedata(D, verbose=2, savetofile = True):
     """
     
     from loadworkbook import loadworkbook
-    from makeccocs import restructureprograms
     from makedatapars import makedatapars
     from dataio import savedata, fullpath
     from printv import printv
@@ -17,6 +16,7 @@ def updatedata(D, verbose=2, savetofile = True):
     datapath = fullpath(D.G.workbookname)
     D.data, D.programs = loadworkbook(datapath, verbose=verbose)
     D.programs = restructureprograms(D.programs)
+    D.data = getrealcosts(D.data)
     D = makedatapars(D, verbose=verbose) # Update parameters
     if savetofile:
         savedata(D.G.projectfilename, D, verbose=verbose) # Update the data file
@@ -25,6 +25,42 @@ def updatedata(D, verbose=2, savetofile = True):
 
     return D
     
+
+def restructureprograms(programs):
+    '''
+    Restructure D.programs for easier use.
+    '''
+
+    ccparams = []
+    convertedccparams = []
+    nonhivdalys = [0.0]
+    keys = ['ccparams','convertedccparams','nonhivdalys','effects']
+    for program in programs.keys():
+        programs[program] = dict(zip(keys,[ccparams, convertedccparams, nonhivdalys, programs[program]]))
+    
+    return programs
+    
+def getrealcosts(data):
+    '''
+    Add inflation-adjsted costs to data structure
+    '''
+
+    from math import isnan
+
+    cost = data.costcov.cost
+    nprogs = len(data.costcov.cost)
+    realcost = [[]]*nprogs
+    cpi = data.econ.cpi[0] # get CPI
+    cpibaseyearindex = data.econyears.index(data.epiyears[-1])
+    for prog in range(nprogs):
+        if len(cost[prog])==1: # If it's an assumption, assume it's already in current prices
+            realcost[prog] = cost[prog]
+        else:
+            realcost[prog] = [cost[prog][j]*(cpi[cpibaseyearindex]/cpi[j]) if ~isnan(cost[prog][j]) else float('nan') for j in range(len(cost[prog]))]
+    
+    data.costcov.realcost = realcost
+    
+    return data
 
 
 

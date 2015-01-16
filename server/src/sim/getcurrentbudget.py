@@ -5,7 +5,7 @@ def getcurrentbudget(D, alloc=None):
     Returns: D
     Version: 2014nov30
     """
-    from makeccocs import ccoeqn, cceqn, cc2eqn, cco2eqn, coverage_params, default_convertedccparams, default_convertedccoparams, default_init_nonhivdalys
+    from makeccocs import ccoeqn, cceqn, cc2eqn, cco2eqn, coverage_params, default_convertedccparams, default_convertedccoparams
     import numpy as np
     
     # Initialise parameter structure (same as D.P). #TODO make this less ugly
