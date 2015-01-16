@@ -98,7 +98,7 @@ define(['./module', 'underscore'], function (module, _) {
         height: 200,
         margin: {
           top: 20,
-          right: 5,
+          right: 15,
           bottom: 40,
           left: 60
         },
@@ -130,7 +130,7 @@ define(['./module', 'underscore'], function (module, _) {
           height: 200,
           margin: {
             top: 20,
-            right: 5,
+            right: 15,
             bottom: 40,
             left: 60
           },
