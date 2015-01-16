@@ -97,6 +97,19 @@ class WorkingProjectDb(db.Model):
         self.is_working = is_working
         self.work_type = work_type
 
+class WorkLogDb(db.Model):
+    __tablename__ = "work_log"
+    work_status = ('started', 'completed', 'cancelled','error')
+    id = db.Column(db.Integer, primary_key=True)
+    work_type = db.Column(db.String(32), default = None)
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id'), index = True)
+    start_time = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
+    stop_time = db.Column(db.DateTime(timezone=True), default = None)
+    status = db.Column(db.Enum(*work_status,name='work_status'), default='started')
+
+    def __init__(self, project_id):
+        self.project_id = project_id
+
 class ProjectDataDb(db.Model):
     __tablename__ = 'project_data'
     id = db.Column(db.Integer,db.ForeignKey('projects.id'), primary_key=True )
