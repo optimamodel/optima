@@ -333,7 +333,7 @@ define(['./module', 'underscore'], function (module, _) {
      */
     var retrieveAndUpdateGraphs = function (model) {
       // validation on Cost-coverage curve plotting options
-      if ( !areCCParamsValid(model.ccparams) || $scope.ccForm.valid){
+      if (!areCCParamsValid(model.ccparams)){
         modalService.inform(
           function () {},
           'Okay',

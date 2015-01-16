@@ -47,7 +47,7 @@
             <div line-scatter-chart variant="ccGraph" data="ccGraph.data" options="ccGraph.options" save-graph-as></div>
           </div>
         </div>
-        <form class="elastic_col" name="ccForm" ng-submit="generateCurves()">
+        <div class="elastic_col">
           <div class="section">
             <form name="CostCoverageForm">
               <p>
@@ -93,8 +93,8 @@
           </p>
           <p ng-show="displayCost == 2 && !displayYear" class="error-hint">Please specify year for program cost data.</p>
 
-          <button type="submit" class="btn">Draw</button>
-        </form>
+          <button type="button" class="btn" ng-click="generateCurves()">Draw</button>
+        </div>
       </div>
 
       <div class="section" ng-if="graphs.plotdata.length" ng-repeat="chart in graphs.plotdata">
