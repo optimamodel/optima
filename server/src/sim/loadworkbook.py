@@ -239,8 +239,8 @@ def loadworkbook(filename='example.xlsx', verbose=2):
                             if assumptiondata != '': thesedata = [assumptiondata] # Replace the (presumably blank) data if a non-blank assumption has been entered
                             data[name][thispar].append(thesedata) # Store data
 
-                            for programname in programs_for_input_key(thispar):
-                                if programname in programs:
+                            for programname, pops in programs_for_input_key(thispar).iteritems():
+                                if programname in programs and not pops or pops==[''] or subparam in pops:
                                     programs[programname].append([[name, thispar], [subparam]])
                         
                         # It's a matrix, append the data                                     
