@@ -263,7 +263,9 @@ define(['./module', 'underscore'], function (module, _) {
       if ($scope.xAxisMaximum) {
         var years = [];
         if ($scope.displayCost == 2 && $scope.displayYear) {
-          years = [$scope.displayYear];
+          years = [1, [parseInt($scope.displayYear, 10)]];
+        } else {
+          years = [0, []];
         }
         return [$scope.xAxisMaximum, years];
       } else {
@@ -279,7 +281,7 @@ define(['./module', 'underscore'], function (module, _) {
         progname: $scope.selectedProgram.acronym,
         ccparams: $scope.costCoverageParams(),
         coparams: [],
-        ccplot: ccPlotParams(),
+        ccplot: ccPlotParams()
       };
     };
 
@@ -293,20 +295,24 @@ define(['./module', 'underscore'], function (module, _) {
     /**
      * Returns true if all of the elements in an array are undefined, null or NaN
      */
-    var hasOnlyInvaldEntries = function(params) {
+    var hasOnlyInvalidEntries = function(params) {
       return params.every(function(item) {
         return item === undefined || item === null || typeof item === "number" && isNaN(item);
       });
     };
 
     $scope.areValidParams = function (params) {
-      return hasAllElements(params) || hasOnlyInvaldEntries(params);
+      return hasAllElements(params) || hasOnlyInvalidEntries(params);
     };
 
+    var areCcparamsValid = function (params) {
+      return $scope.areValidParams(params.slice(0, 3));
+    };
 
     $scope.hasValidCCParams = function() {
-      return !$scope.hasCostCoverResponse || $scope.areValidParams($scope.costCoverageParams().slice(0,3));
-    }
+      return !$scope.hasCostCoverResponse || areCcparamsValid($scope.costCoverageParams());
+    };
+
     /**
      * Update current program ccparams based on the selected program.
      *
@@ -327,7 +333,7 @@ define(['./module', 'underscore'], function (module, _) {
      */
     var retrieveAndUpdateGraphs = function (model) {
       // validation on Cost-coverage curve plotting options
-      if ( !$scope.areValidParams(model.ccparams.slice(0,3)) ){
+      if ( !areCcparamsValid(model.ccparams) ){
         modalService.inform(
           function () {},
           'Okay',
@@ -343,10 +349,11 @@ define(['./module', 'underscore'], function (module, _) {
       }
 
       // clean up model by removing unnecessary parameters
-      if (_.isEmpty(model.ccparams) || hasOnlyInvaldEntries(model.ccparams)) {
+      if (_.isEmpty(model.ccparams) || hasOnlyInvalidEntries(model.ccparams.slice(0,3))) {
         delete model.ccparams;
       }
-      if (_.isEmpty(model.coparams) || hasOnlyInvaldEntries(model.coparams)) {
+
+      if (_.isEmpty(model.coparams) || hasOnlyInvalidEntries(model.coparams)) {
         delete model.coparams;
       }
 
@@ -401,6 +408,8 @@ define(['./module', 'underscore'], function (module, _) {
         $scope.displayYear = undefined;
         $scope.xAxisMaximum = undefined;
       }
+
+      $scope.generateCurves();
     };
 
     /**
@@ -473,10 +482,11 @@ define(['./module', 'underscore'], function (module, _) {
       }
 
       // clean up model by removing unnecessary parameters
-      if (_.isEmpty(model.ccparams) || hasOnlyInvaldEntries(model.ccparams)) {
+      if (_.isEmpty(model.ccparams) || hasOnlyInvalidEntries(model.ccparams)) {
         delete model.ccparams;
       }
-      if (_.isEmpty(model.coparams) || hasOnlyInvaldEntries(model.coparams)) {
+
+      if (_.isEmpty(model.coparams) || hasOnlyInvalidEntries(model.coparams)) {
         delete model.coparams;
       }
 

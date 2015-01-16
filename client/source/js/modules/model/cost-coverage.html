@@ -43,13 +43,12 @@
 
       <h1>{{ displayedProgram.name }}</h1>
       <div class="section elastic">
-        <div class="elastic_col __shrink">
-          <div ng-if="hasCostCoverResponse" class="chart-container">
+        <div class="elastic_col __shrink" ng-if="ccGraph.data">
+          <div class="chart-container">
             <div line-scatter-chart variant="ccGraph" data="ccGraph.data" options="ccGraph.options" save-graph-as></div>
           </div>
         </div>
         <div class="elastic_col">
-
           <div class="section">
             <form name="CostCoverageForm">
               <p>
@@ -83,22 +82,27 @@
             </form>
           </div>
           <p>
+            5. Specify the maximum funding (for plotting only):
+            <input type="number" class="txbox __inline __xl" placeholder="e.g.{{defaultXAxisMaximum}}"  ng-model="xAxisMaximum" ng-change="updateCurves()">
+          </p>
+          <p>
             <label>
-              <input type="radio" name="displaycost" ng-model="$parent.displayCost" value="1" ng-change="updateCurves()">
+              <input type="radio" name="displaycost" ng-model="displayCost" value="1" ng-change="updateCurves()">
               Display program cost data in current prices
             </label><br>
             <label>
-              <input type="radio" name="displaycost" ng-model="$parent.displayCost" value="2" ng-change="updateCurves()">
+              <input type="radio" name="displaycost" ng-model="displayCost" value="2" ng-change="updateCurves()">
               Display program cost data in
-              <input class="txbox __inline __l" placeholder="e.g. 2014" ng-model="$parent.displayYear" min="projectInfo.dataStart" max="projectInfo.dataEnd" ng-change="updateCurves()"> prices
+              <input class="txbox __inline __l" placeholder="e.g. 2014" ng-model="displayYear" min="projectInfo.dataStart" max="projectInfo.dataEnd" ng-change="updateCurves()"> prices
             </label>
           </p>
           <p ng-show="$parent.displayCost == 2 && !$parent.displayYear" class="error-hint">Please specify year for program cost data.</p>
 
+          <button type="button" class="btn" ng-click="generateCurves()">Draw</button>
         </div>
       </div>
 
-      <div class="section" ng-repeat="chart in graphs.plotdata">
+      <div class="section" ng-if="graphs.plotdata.length" ng-repeat="chart in graphs.plotdata">
         <h2 class="section">{{ chart.title }}</h2>
 
         <div class="section elastic">
