@@ -1,17 +1,17 @@
 <div class="page rich">
 
   <div class="section grid" ng-show="notReady">
-      <div class="9">
-          <h1>Model is not ready</h1>
-          <div>
-              <p ng-show="needData" class="error-hint">Please upload Optima spreadsheet first.</p>
+    <div class="9">
+      <h1>Model is not ready</h1>
+      <div>
+        <p ng-show="needData" class="error-hint">Please upload Optima spreadsheet first.</p>
 
-              <div ng-show="cannotCalibrate && !needData">
-                <p class="error-hint">This model is not yet ready to define cost-coverage assumptions.</p>
-                <button type="button" class="btn" ng-click="gotoViewCalibrate()">View &amp; calibrate model</button>
-              </div>
-          </div>
+        <div ng-show="cannotCalibrate && !needData">
+          <p class="error-hint">This model is not yet ready to define cost-coverage assumptions.</p>
+          <button type="button" class="btn" ng-click="gotoViewCalibrate()">View &amp; calibrate model</button>
+        </div>
       </div>
+    </div>
   </div>
 
   <div class="section grid" ng-hide="notReady">
@@ -28,70 +28,70 @@
     </div>
   </div>
   <div class="section" ng-hide="selectedProgram.acronym == null">
-    <div class="section">
-      <p>
-        1. Specify the saturation coverage level:
-        <input type="number" class="txbox __inline __m" min="0" max="100" placeholder="e.g.{{defaultSaturationCoverageLevel}}" ng-model="saturationCoverageLevel" ng-change="updateCurves()">%
-      </p>
-      <p>
-        2. The estimated amount of funding needed to get
-        <input type="number" class="txbox __inline __m" min="0" max="100" placeholder="e.g.{{defaultKnownCoverageLevel}}" ng-model="knownCoverageLevel" ng-change="updateCurves()">%
-        coverage for this program is:
-        <input type="number" class="txbox __inline __xl" placeholder="e.g.{{defaultKnownFundingValue}}"  ng-model="knownFundingValue" ng-change="updateCurves()">
-      </p>
-      <p>
-        3. Specify scale-up parameters:
-        <input type="number" class="txbox __inline __xl" placeholder="e.g.{{defaultScaleUpParameter}}"  ng-model="scaleUpParameter" ng-change="updateCurves()">
-      </p>
-      <p>
-        4. Full coverage would avert
-        <input type="number" class="txbox __inline __xl" placeholder="e.g.{{defaultNonHivDalys}}"  ng-model="nonHivDalys" ng-change="updateCurves()">
-        non-HIV-related DALYs per year
-      </p>
-      <span ng-show="!hasValidCCParams()" class="error-hint">{{ optionsErrorMessage }}</span>
-    </div>
 
     <div class="section">
-      <button type="button" class="btn" ng-click="generateCurves()">Draw</button>
       <button type="button" class="btn" ng-click="saveModel()">Save model</button>
       <button type="button" class="btn" ng-click="revertModel()">Revert model</button>
       <button type="button" class="btn" ng-click="uploadDefault()" style="margin-left: 60px">Upload default cost-coverage-outcome curves</button>
     </div>
 
-    <div class="section" ng-if="hasCostCoverResponse">
+    <div class="section" ng-show="hasCostCoverResponse">
 
       <export-all-charts ng-if="graphs" name="Cost coverage outcome" custom-titles="titlesForChartsExport"></export-all-charts>
       <export-all-data charts="chartsForDataExport" name="Cost coverage outcome" ng-if="graphs || ccGraph"></export-all-data>
 
       <h1>{{ displayedProgram.name }}</h1>
       <div class="section elastic">
-        <div class="elastic_col __shrink" style="width: 470px">
+        <div class="elastic_col __shrink" ng-if="ccGraph.data">
           <div class="chart-container">
             <div line-scatter-chart variant="ccGraph" data="ccGraph.data" options="ccGraph.options" save-graph-as></div>
           </div>
         </div>
         <div class="elastic_col">
+          <div class="section">
+            <p>
+              1. Specify the saturation coverage level:
+              <input type="number" class="txbox __inline __m" min="0" max="100" placeholder="e.g.{{defaultSaturationCoverageLevel}}" ng-model="saturationCoverageLevel" ng-change="updateCurves()">%
+            </p>
+            <p>
+              2. The estimated amount of funding needed to get
+              <input type="number" class="txbox __inline __m" min="0" max="100" placeholder="e.g.{{defaultKnownCoverageLevel}}" ng-model="knownCoverageLevel" ng-change="updateCurves()">%
+              coverage for this program is:
+              <input type="number" class="txbox __inline __xl" placeholder="e.g.{{defaultKnownFundingValue}}"  ng-model="knownFundingValue" ng-change="updateCurves()">
+            </p>
+            <p>
+              3. [Optional] Specify scale-up parameters:
+              <input type="number" class="txbox __inline __xl" placeholder="e.g.{{defaultScaleUpParameter}}"  ng-model="scaleUpParameter" ng-change="updateCurves()">
+            </p>
+            <p>
+              4. [Optional] Full coverage would avert
+              <input type="number" class="txbox __inline __xl" placeholder="e.g.{{defaultNonHivDalys}}"  ng-model="nonHivDalys" ng-change="updateCurves()">
+              non-HIV-related DALYs per year
+            </p>
+            <span ng-show="!hasValidCCParams()" class="error-hint">{{ optionsErrorMessage }}</span>
+          </div>
           <p>
-        Specify the maximum funding (for plotting only):
-        <input type="number" class="txbox __inline __xl" placeholder="e.g.{{defaultXAxisMaximum}}"  ng-model="$parent.xAxisMaximum" ng-change="updateCurves()">
+            5. Specify the maximum funding (for plotting only):
+            <input type="number" class="txbox __inline __xl" placeholder="e.g.{{defaultXAxisMaximum}}"  ng-model="xAxisMaximum" ng-change="updateCurves()">
           </p>
           <p>
-          <label>
-            <input type="radio" name="displaycost" ng-model="$parent.displayCost" value="1" ng-change="updateCurves()">
-            Display program cost data in current prices
-          </label><br>
-          <label>
-            <input type="radio" name="displaycost" ng-model="$parent.displayCost" value="2" ng-change="updateCurves()">
-            Display program cost data in
-            <input class="txbox __inline __l" placeholder="e.g. 2014" ng-model="$parent.displayYear" min="projectInfo.dataStart" max="projectInfo.dataEnd" ng-change="updateCurves()"> prices
-          </label>
+            <label>
+              <input type="radio" name="displaycost" ng-model="displayCost" value="1" ng-change="updateCurves()">
+              Display program cost data in current prices
+            </label><br>
+            <label>
+              <input type="radio" name="displaycost" ng-model="displayCost" value="2" ng-change="updateCurves()">
+              Display program cost data in
+              <input class="txbox __inline __l" placeholder="e.g. 2014" ng-model="displayYear" min="projectInfo.dataStart" max="projectInfo.dataEnd" ng-change="updateCurves()"> prices
+            </label>
           </p>
-          <p ng-show="$parent.displayCost == 2 && !$parent.displayYear" class="error-hint">Please specify year for program cost data.</p>
+          <p ng-show="displayCost == 2 && !displayYear" class="error-hint">Please specify year for program cost data.</p>
 
+          <button type="button" class="btn" ng-click="generateCurves()">Draw</button>
         </div>
       </div>
 
-      <div class="section" ng-repeat="chart in graphs.plotdata">
+      <div class="section" ng-if="graphs.plotdata.length" ng-repeat="chart in graphs.plotdata">
         <h2 class="section">{{ chart.title }}</h2>
 
         <div class="section elastic">
