@@ -10,6 +10,7 @@ define(['./module', 'angular'], function (module, angular) {
       F.dx = _(F.dx).map(parseFloat);
       F.force = _(F.force).map(parseFloat);
       F.init = _(F.init).map(parseFloat);
+      F.popsize = _(F.popsize).map(parseFloat);
       return F;
     };
 
