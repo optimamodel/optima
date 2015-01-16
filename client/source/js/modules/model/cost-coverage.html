@@ -30,7 +30,6 @@
   <div class="section" ng-hide="selectedProgram.acronym == null">
 
     <div class="section">
-      <button type="button" class="btn" ng-click="generateCurves()">Draw</button>
       <button type="button" class="btn" ng-click="saveModel()">Save model</button>
       <button type="button" class="btn" ng-click="revertModel()">Revert model</button>
       <button type="button" class="btn" ng-click="uploadDefault()" style="margin-left: 60px">Upload default cost-coverage-outcome curves</button>
@@ -88,6 +87,7 @@
           </p>
           <p ng-show="$parent.displayCost == 2 && !$parent.displayYear" class="error-hint">Please specify year for program cost data.</p>
 
+          <button type="button" class="btn" ng-click="generateCurves()">Draw</button>
         </div>
       </div>
 

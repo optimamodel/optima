@@ -401,6 +401,8 @@ define(['./module', 'underscore'], function (module, _) {
         $scope.displayYear = undefined;
         $scope.xAxisMaximum = undefined;
       }
+
+      $scope.generateCurves();
     };
 
     /**
