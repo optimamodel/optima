@@ -13,11 +13,12 @@ html {
   background: #FFF;
   font: 13px/1.4 "Open Sans", sans-serif;
   height: 100%;
-  overflow-y: scroll;
+  overflow-y: hidden;
 }
 
 body {
   height: 100%;
+  overflow-y: scroll;
 }
 
 // Remove text-shadow in selection highlight: h5bp.com/i
