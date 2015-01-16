@@ -69,10 +69,12 @@
                         </div>
                     </div>
                 </div>
-                <div class="elastic_col" ng-show="calibrationStatus">
+                <div class="info-hint" ng-show="calibrationStatus">
                     {{reportCalibrationStatus()}}
                 </div>
-
+                <div class="error-hint" ng-show="errorText">
+                    {{errorText}}
+                </div>
 
             </div>
         </div>

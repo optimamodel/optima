@@ -1,7 +1,8 @@
 from flask import Blueprint, request, jsonify
 import json
 import traceback
-from async_calculate import CalculatingThread, start_or_report_calculation, cancel_calculation, check_calculation
+from async_calculate import CalculatingThread, start_or_report_calculation, cancel_calculation
+from async_calculate import check_calculation, check_calculation_status, good_exit_status
 from sim.manualfit import manualfit
 from sim.bunch import bunchify
 from sim.runsimulation import runsimulation
@@ -108,13 +109,21 @@ def getWorkingModel():
     D_dict = {}
     # Make sure model is calibrating
     prj_name = request.project_name
+    error_text = None
     if check_calculation(current_user.id, prj_name, autofit, db.session):
         D_dict = load_model(prj_name, working_model = True, as_bunch = False)
         status = 'Running'
     else:
-        status = 'Done'
+        current_app.logger.debug('No longer calibrating')
+        status, error_text = check_calculation_status(current_user.id, prj_name, autofit, db.session)
+        if status in good_exit_status:
+            status = 'Done'
+        else:
+            status = 'NOK'
     result = {'graph': D_dict.get('plot',{}).get('E',{})}
     result['status'] = status
+    if error_text:
+        result['exception'] = error_text
     result = add_calibration_parameters(D_dict, result)
     return jsonify(result)
 
