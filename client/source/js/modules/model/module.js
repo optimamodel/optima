@@ -7,8 +7,9 @@ define([
   '../common/export-all-charts',
   '../common/export-all-data',
   '../common/graph-type-factory',
-  '../common/error-messages-directive',
-  '../common/greater-than-directive'
+  '../validations/error-messages-directive',
+  '../validations/more-than-directive',
+  '../validations/less-than-directive'
 ], function (angular) {
   'use strict';
 
@@ -20,8 +21,9 @@ define([
     'app.ui.type-selector',
     'ui.router',
     'app.common.graph-type',
-    'app.common.error-messages',
-    'app.common.greater-than'
+    'app.validations.error-messages',
+    'app.validations.more-than',
+    'app.validations.less-than'
   ])
     .config(function ($stateProvider) {
       $stateProvider
