@@ -121,9 +121,9 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
     ## Calculate total acts
     M.totalacts = totalacts(P, M, npts)
     
-    # Apply interventions?
+    ## Parameters for programs/scenarios
+#    M.
     
-    # Sum matrices?
 
     printv('...done making model parameters.', 2, verbose)
     return M

@@ -1,7 +1,7 @@
 """
 Creates and updates cost-coverage curves and coverage-outcome curves
     
-Version: 2014nov26 by cliffk
+Version: 2015jan16 by cliffk
 """
 ###############################################################################
 ## Set up
@@ -15,7 +15,7 @@ from rtnorm import rtnorm
 from bunch import float_array
 from printv import printv
 #from scipy.stats import truncnorm
-from parameters import parameters, input_parameter_name
+from parameters import input_parameter_name
 
 ## Set defaults for testing makeccocs
 default_progname = 'SBCC'
