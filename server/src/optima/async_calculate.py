@@ -41,7 +41,7 @@ def start_or_report_calculation(user_id, project, func, db_session): #only calle
         print("No such project %s, cannot start calculation" % project)
     return can_start, can_join, work_type
 
-def cancel_calculation(user_id, project, func, db_session):
+def cancel_calculation(user_id, project, func, db_session, was_error = False):
     project = db_session.query(ProjectDb).filter_by(user_id=user_id, name=project).first()
     if project is not None and project.working_project is not None:
         project.working_project.is_working = False
@@ -101,15 +101,23 @@ class CalculatingThread(threading.Thread):
         print("starting calculating thread for user: %s project %s for %s seconds" % (self.user_name, self.project_name, self.timelimit))
 
     def run(self):
+        import traceback
         D = self.load_model_user(self.db_session, self.project_name, self.user_id, working_model = False) #we start from the current model
         iterations = 1
         delta_time = 0
         start = time.time()
+        was_error = False
         while delta_time < self.timelimit:
             if check_calculation(self.user_id, self.project_name, self.func, self.db_session):
                 print("Iteration %d for user: %s, args: %s" % (iterations, self.user_name, self.debug_args))
-                D = self.func(D, **self.args)
-                self.save_model_user(self.db_session, self.project_name, self.user_id, D)
+                try:
+                    D = self.func(D, **self.args)
+                    self.save_model_user(self.db_session, self.project_name, self.user_id, D)
+                except Exception, err:
+                    var = traceback.format_exc()
+                    print("ERROR in Iteration %s for user: %s, args: %s calculation: %s\n %s" % (iterations, self.user_name, self.debug_args, self.func.__name__, var))
+                    was_error = True
+                    break
                 time.sleep(1)
                 delta_time = int(time.time() - start)
             else:
@@ -117,7 +125,7 @@ class CalculatingThread(threading.Thread):
                 break
             iterations += 1
         print("thread for project %s stopped" % self.project_name)
-        cancel_calculation(self.user_id, self.project_name, self.func, self.db_session)
+        cancel_calculation(self.user_id, self.project_name, self.func, self.db_session, was_error)
         self.db_session.connection().close() # this line might be redundant (not 100% sure - not clearly described)
         self.db_session.remove()
         self.db_session.bind.dispose() # black magic to actually close the connection by forcing the engine to dispose of garbage (I assume)
