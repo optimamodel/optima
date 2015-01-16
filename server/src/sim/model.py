@@ -44,7 +44,7 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
     effhivprev = zeros((npops, 1))    # HIV effective prevalence (prevalence times infectiousness)
 
     ## Set initial epidemic conditions 
-    if initstate==None: people[:,:,0] = equilibrate(G, M, array(F.init)) # No it hasn't, so run equilibration
+    if initstate is None: people[:,:,0] = equilibrate(G, M, array(F.init)) # No it hasn't, so run equilibration
     else: people[:,:,0] = initstate # Yes it has, so use it.
     
     ## Calculate other things outside the loop
@@ -221,7 +221,8 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
         ## Set up
     
         # New infections -- through pre-calculated force of infection
-        newinfections = forceinfvec * Fforce * people[0,:,t] # Will be useful to define this way when calculating 'cost per new infection'      
+        newinfections = forceinfvec * Fforce * people[0,:,t] # Will be useful to define this way when calculating 'cost per new infection'
+
     
         # Initalise / reset arrays
         dU = []; dD = []; dT1 = []; dF = []; dT2 = [];  # Reset differences
