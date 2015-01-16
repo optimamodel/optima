@@ -47,17 +47,18 @@
             <div line-scatter-chart variant="ccGraph" data="ccGraph.data" options="ccGraph.options" save-graph-as></div>
           </div>
         </div>
-        <div class="elastic_col">
+        <form class="elastic_col" name="ccForm" ng-submit="generateCurves()">
           <div class="section">
             <p>
               1. Specify the saturation coverage level:
-              <input type="number" class="txbox __inline __m" min="0" max="100" placeholder="e.g.{{defaultSaturationCoverageLevel}}" ng-model="saturationCoverageLevel" ng-change="updateCurves()">%
+              <input type="number" name="saturationCoverageLevel" class="txbox __inline __m" min="0" max="100" placeholder="e.g.{{defaultSaturationCoverageLevel}}" ng-model="saturationCoverageLevel" ng-change="updateCurves()" more-than="knownCoverageLevel">%
             </p>
             <p>
               2. The estimated amount of funding needed to get
-              <input type="number" class="txbox __inline __m" min="0" max="100" placeholder="e.g.{{defaultKnownCoverageLevel}}" ng-model="knownCoverageLevel" ng-change="updateCurves()">%
+              <input type="number" name="knownCoverageLevel" class="txbox __inline __m" min="0" max="100" placeholder="e.g.{{defaultKnownCoverageLevel}}" ng-model="knownCoverageLevel" ng-change="updateCurves()" less-than="saturationCoverageLevel">%
               coverage for this program is:
               <input type="number" class="txbox __inline __xl" placeholder="e.g.{{defaultKnownFundingValue}}"  ng-model="knownFundingValue" ng-change="updateCurves()">
+              <span ng-show="ccForm.$error.lessThan || ccForm.$error.moreThan" class="error-hint">Saturation coverage level must be greater than known coverage level.</span>
             </p>
             <p>
               3. [Optional] Specify scale-up parameters:
@@ -87,8 +88,8 @@
           </p>
           <p ng-show="displayCost == 2 && !displayYear" class="error-hint">Please specify year for program cost data.</p>
 
-          <button type="button" class="btn" ng-click="generateCurves()">Draw</button>
-        </div>
+          <button type="submit" class="btn">Draw</button>
+        </form>
       </div>
 
       <div class="section" ng-if="graphs.plotdata.length" ng-repeat="chart in graphs.plotdata">
