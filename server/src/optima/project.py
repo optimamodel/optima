@@ -26,15 +26,15 @@ def record_params(setup_state):
   app = setup_state.app
   project.config = dict([(key,value) for (key,value) in app.config.iteritems()])
 
-@project.route('/params')
+@project.route('/parameters')
 @login_required
-def get_project_params():
+def get_project_parameters():
     """
-    Gives back project params
+    Gives back project parameters (modifiable)
     """
     from sim.parameters import parameters
-    project_params = [p for p in parameters() if p['modifiable']]
-    return json.dumps({"params":project_params})
+    project_parameters = [p for p in parameters() if 'modifiable' in p and p['modifiable']]
+    return json.dumps({"parameters":project_parameters})
 
 @project.route('/predefined')
 @login_required
@@ -42,24 +42,18 @@ def get_predefined():
     """
     Gives back default populations and programs
     """
-    from sim.programs import programs
+    from sim.programs import programs, program_categories
     from sim.populations import populations
-    from sim.program_categories import program_categories
     programs = programs()
     populations = populations()
     program_categories = program_categories()
-    category_per_program = {}
-    for category in program_categories:
-        for p in category['programs']:
-            category_per_program[p['short_name']] = category['category']
     for p in populations: p['active']= False
     for p in programs:
         p['active'] = False
-        p['category'] = category_per_program[p['short_name']]
-        new_params = [dict([('value', param),('active',True)]) for param in p['parameters']]
-        for np in new_params:
+        new_parameters = [dict([('value', parameter),('active',True)]) for parameter in p['parameters']]
+        for np in new_parameters:
             if len(np['value']['pops'][0])==0: np['value']['pops']=['ALL_POPULATIONS']
-        if new_params: p['parameters'] = new_params
+        if new_parameters: p['parameters'] = new_parameters
     return json.dumps({"programs":programs, "populations": populations, "categories":program_categories})
 
 @project.route('/create/<project_name>', methods=['POST'])
@@ -74,7 +68,7 @@ def createProject(project_name):
     {"npops":6,"nprogs":8, "datastart":2000, "dataend":2015}
     """
     from sim.makeproject import default_datastart, default_dataend, default_econ_dataend, default_pops, default_progs
-
+    from sim.runsimulation import runsimulation
     current_app.logger.debug("createProject %s" % project_name)
     data = request.form
 
@@ -133,6 +127,7 @@ def createProject(project_name):
             filedata.close()
             D = model_as_bunch(project.model)
             D = updatedata(D, savetofile = False)
+            D = runsimulation(D, makeplot = 0, dosave = False)
             model = model_as_dict(D)
             project.model = model
         else:
@@ -402,6 +397,7 @@ def uploadExcel():
     Uploads Excel file, uses it to update the corresponding model.
     Precondition: model should exist.
     """
+    from sim.runsimulation import runsimulation
     current_app.logger.debug("api/project/update")
     project_name = request.project_name
     user_id = current_user.id
@@ -435,6 +431,7 @@ def uploadExcel():
         # update and save model
         D = model_as_bunch(project.model)
         D = updatedata(D, savetofile = False)
+        D = runsimulation(D, makeplot = 0, dosave = False)
         model = model_as_dict(D)
         project.model = model
         db.session.add(project)

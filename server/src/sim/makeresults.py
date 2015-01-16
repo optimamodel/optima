@@ -66,16 +66,18 @@ def makeresults(D, allsims=None, quantiles=None, verbose=2):
 
         if data=='daly':
             printv('Calculating DALYs...', 3, verbose)
-            disutils = [D.P.cost.disutil[key] for key in ['acute', 'gt500', 'gt350', 'gt200', 'aids']]
-            tmpdalypops = allpeople[:,concatenate([D.G.tx1, D.G.tx2]),:,:].sum(axis=1) * D.P.cost.disutil.tx
-            tmpdalytot = allpeople[:,concatenate([D.G.tx1, D.G.tx2]),:,:].sum(axis=(1,2)) * D.P.cost.disutil.tx
+            disutils = [D.P.const.disutil[key] for key in D.G.healthstates]
+            tmpdalypops = allpeople[:,concatenate([D.G.tx1, D.G.tx2]),:,:].sum(axis=1) * D.P.const.disutil.tx
+            tmpdalytot = allpeople[:,concatenate([D.G.tx1, D.G.tx2]),:,:].sum(axis=(1,2)) * D.P.const.disutil.tx
             for h in range(len(disutils)): # Loop over health states
                 healthstates = array([D.G.undx[h], D.G.dx[h], D.G.fail[h]])
                 tmpdalypops += allpeople[:,healthstates,:,:].sum(axis=1) * disutils[h]
                 tmpdalytot += allpeople[:,healthstates,:,:].sum(axis=(1,2)) * disutils[h]
             R.daly.pops = quantile(tmpdalypops, quantiles=quantiles)
             R.daly.tot = quantile(tmpdalytot, quantiles=quantiles)
-            
+            totaldalysaverted = 0.0
+            for progname in D.programs.keys():
+                D.programs[progname]['nonhivdalys']
         
         if data=='dx':
             printv('Calculating diagnoses...', 3, verbose)

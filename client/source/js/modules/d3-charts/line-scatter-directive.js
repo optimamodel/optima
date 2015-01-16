@@ -4,6 +4,10 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
   module.directive('lineScatterChart', function (d3Charts) {
     var svg;
 
+    // see available colors in chart/_color.scss.
+    var colors = [ '__orange', '__light-orange', '__violet', '__green',
+      '__light-green', '__red', '__gray' ];
+
     var drawGraph = function (data, options, rootElement) {
       options = d3Charts.adaptOptions(options);
 
@@ -48,8 +52,8 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
       // initialize lineChart for each line and update the scales
       if (linesDataExists) {
         _(data.lines).each(function (line, index) {
-          var lineColor = options.linesStyle && options.linesStyle[index];
-          var lineChart = new d3Charts.LineChart(chartGroup, index, chartSize, lineColor);
+          var lineColor = options.linesStyle && options.linesStyle[index] || colors[index];
+          var lineChart = new d3Charts.LineChart(chartGroup, chartSize, lineColor);
           lineChartInstances.push(lineChart);
           var scales = lineChart.scales(line);
           graphsScales.push(scales);
@@ -57,13 +61,13 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
           var y_domain = scales.y.domain();
           yMax = Math.max(yMax, y_domain[1]);
           xMax = Math.max(xMax, x_domain[1]);
-          if(hasValidMin(y_domain)) {yMin = Math.min(yMin, y_domain[0])};
-          if(hasValidMin(x_domain)) {xMin = Math.min(xMin, x_domain[0])};
+          if(hasValidMin(y_domain)) { yMin = Math.min(yMin, y_domain[0]); }
+          if(hasValidMin(x_domain)) { xMin = Math.min(xMin, x_domain[0]); }
         });
       }
       // initialize scatterChart
       if (scatterDataExists || data.limits) {
-        scatterChartInstance = new d3Charts.ScatterChart(chartGroup, '', chartSize);
+        scatterChartInstance = new d3Charts.ScatterChart(chartGroup, chartSize);
         var scaleSource = data.limits? data.scatter.concat(data.limits): data.scatter;
         var scatterScale = scatterChartInstance.scales(scaleSource);
         graphsScales.push(scatterScale);
@@ -71,9 +75,10 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
         var y_domain = scatterScale.y.domain();
         yMax = Math.max(yMax, y_domain[1]);
         xMax = Math.max(xMax, x_domain[1]);
-        if(hasValidMin(y_domain)) {yMin = Math.min(yMin, y_domain[0])};
-        if(hasValidMin(x_domain)) {xMin = Math.min(xMin, x_domain[0])};
+        if(hasValidMin(y_domain)) { yMin = Math.min(yMin, y_domain[0]); }
+        if(hasValidMin(x_domain)) { xMin = Math.min(xMin, x_domain[0]); }
       }
+
       // normalizing all graphs scales to include maximum possible x and y
       _(graphsScales).each(function (scale) {
         scale.y.domain([0, yMax]);
@@ -82,6 +87,11 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
 
       options.yAxis.tickFormat = function (value) {
         var format = scaleHelpers.evaluateTickFormat(yMin, yMax);
+        return scaleHelpers.customTickFormat(value, format);
+      };
+
+      options.xAxis.tickFormat = function (value) {
+        var format = scaleHelpers.evaluateTickFormat(xMin, xMax);
         return scaleHelpers.customTickFormat(value, format);
       };
 

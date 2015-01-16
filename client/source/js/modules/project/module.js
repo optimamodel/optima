@@ -31,13 +31,16 @@ define([
           controller: 'ProjectCreateOrEditController',
           resolve: {
             parametersResponse: function($http) {
-              return $http.get('/api/project/params');
+              return $http.get('/api/project/parameters');
             },
             defaultsResponse: function($http) {
               return $http.get('/api/project/predefined')
             },
             info: function() {
               return undefined;
+            },
+            projects: function (Project) {
+              return Project.list().$promise;
             }
           }
         })
@@ -47,7 +50,7 @@ define([
           controller: 'ProjectCreateOrEditController',
           resolve: {
             parametersResponse: function($http) {
-              return $http.get('/api/project/params');
+              return $http.get('/api/project/parameters');
             },
             defaultsResponse: function($http) {
               return $http.get('/api/project/predefined')

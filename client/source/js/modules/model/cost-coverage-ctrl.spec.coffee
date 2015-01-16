@@ -22,7 +22,6 @@ define ['angular-mocks', 'Source/modules/model/cost-coverage-ctrl'], ->
           "progs": {
             "currentbudget": [ 154000.00000000003 ],
             "long": [ "Social and behavior change communication" ],
-            "saturating": [ 1 ],
             "short": [ "SBCC" ]
           }
         }

@@ -4,7 +4,7 @@ def loadworkbook(filename='example.xlsx', verbose=2):
     This data structure is used in the next step to update the corresponding model.
     The workbook is assumed to be in the format specified in example.xlsx.
     
-    Version: 2014nov29
+    Version: 2015jan13
     """
     
 
@@ -38,12 +38,12 @@ def loadworkbook(filename='example.xlsx', verbose=2):
     
     # Time data -- array sizes are time x population
     timedata = [
-                 ['Other epidemiology',  'epi',     ['death', 'stiprevulc', 'stiprevdis', 'tbprev']], \
+                 ['Other epidemiology',  'epi',     ['death', 'stiprevulc', 'tbprev']], \
                  ['Optional indicators', 'opt',     ['numtest', 'numdiag', 'numinfect', 'prev', 'death', 'newtreat']], \
-                 ['Testing & treatment', 'txrx',    ['hivtest', 'aidstest', 'numfirstline', 'numsecondline', 'prep', 'pep', 'numpmtct', 'birth', 'breast']], \
+                 ['Testing & treatment', 'txrx',    ['hivtest', 'aidstest', 'numfirstline', 'numsecondline', 'txelig', 'prep', 'numpmtct', 'birth', 'breast']], \
                  ['Sexual behavior',     'sex',     ['numactsreg', 'numactscas', 'numactscom', 'condomreg', 'condomcas', 'condomcom', 'circum', 'numcircum']], \
                  ['Injecting behavior',  'inj',     ['numinject', 'sharing', 'numost']], \
-                 ['Macroeconomics',      'macro',   ['gdp', 'revenue', 'govtexpend', 'totalhealth', 'domestichealth', 'domestichiv', 'globalfund', 'pepfar', 'otherint', 'private']]
+                 ['Economics and costs', 'econ',    ['cpi', 'ppp', 'gdp', 'revenue', 'govtexpend', 'totalhealth', 'domestichealth', 'domestichiv', 'globalfund', 'pepfar', 'otherint', 'private', 'health', 'social']]
                 ]
                  
     # Matrix data -- array sizes are population x population
@@ -55,15 +55,13 @@ def loadworkbook(filename='example.xlsx', verbose=2):
     # Constants -- array sizes are scalars x uncertainty
     constants = [
                  ['Constants', 'const',              [['trans',    ['mfi', 'mfr', 'mmi', 'mmr', 'inj', 'mtctbreast', 'mtctnobreast']], \
-                                                      ['cd4trans', ['acute', 'gt500', 'gt350', 'gt200', 'aids']], \
-                                                      ['prog',     ['acute', 'gt500', 'gt350', 'gt200']],\
-                                                      ['recov',    ['gt500', 'gt350', 'gt200', 'aids']],\
+                                                      ['cd4trans', ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'aids']], \
+                                                      ['prog',     ['acute', 'gt500', 'gt350', 'gt200', 'gt50']],\
+                                                      ['recov',    ['gt500', 'gt350', 'gt200', 'gt50', 'aids']],\
                                                       ['fail',     ['first', 'second']],\
-                                                      ['death',    ['acute', 'gt500', 'gt350', 'gt200', 'aids', 'treat', 'tb']],\
-                                                      ['eff',      ['condom', 'circ', 'dx', 'sti', 'meth', 'pmtct', 'tx', 'prep', 'pep']]]], \
-                 ['Disutilities & costs', 'cost',    [['disutil',  ['acute', 'gt500', 'gt350', 'gt200', 'aids','tx']], \
-                                                      ['health',   ['acute', 'gt500', 'gt350', 'gt200', 'aids']], \
-                                                      ['social',   ['acute', 'gt500', 'gt350', 'gt200', 'aids']]]]
+                                                      ['death',    ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'aids', 'treat', 'tb']],\
+                                                      ['eff',      ['condom', 'circ', 'dx', 'sti', 'ost', 'pmtct', 'tx', 'prep']],\
+                                                      ['disutil',  ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'aids','tx']]]]
                 ]
     
     
@@ -111,7 +109,7 @@ def loadworkbook(filename='example.xlsx', verbose=2):
             
             
             ## Calculate columns for which data are entered, and store the year ranges
-            if groupname in ['keydata', 'cocodata', 'timedata']  and name != 'macro': # Need to gather year ranges for epidemic etc. data
+            if groupname in ['keydata', 'cocodata', 'timedata']  and name != 'econ': # Need to gather year ranges for epidemic etc. data
                 data.epiyears = [] # Initialize epidemiology data years
                 for col in range(sheetdata.ncols):
                     thiscell = sheetdata.cell_value(1,col) # 1 is the 2nd row which is where the year data should be
@@ -121,7 +119,7 @@ def loadworkbook(filename='example.xlsx', verbose=2):
                     elif thiscell != '': # Nope, more years, keep going
                         data.epiyears.append(float(thiscell)) # Add this year
             
-            if name == 'macro': # Need to gather year ranges for economic data
+            if name == 'econ': # Need to gather year ranges for economic data
                 data.econyears = [] # Initialize epidemiology data years
                 for col in range(sheetdata.ncols):
                     thiscell = sheetdata.cell_value(1,col) # 1 is the 2nd row which is where the year data should be
@@ -167,8 +165,6 @@ def loadworkbook(filename='example.xlsx', verbose=2):
                             data[name][thispar].sexwomen = [] # Store whether or not this population has sex with women
                             data[name][thispar].sexworker = [] # Store whether or not this population is a sex worker
                             data[name][thispar].client = [] # Store whether or not this population is a client of sex workers
-                        if thispar=='progs':
-                            data[name][thispar].saturating = [] # Store whether or not this program is saturating
                     
                     # It's cost-coverage data: store cost and coverage for each program
                     elif groupname=='cocodata': 
@@ -209,7 +205,6 @@ def loadworkbook(filename='example.xlsx', verbose=2):
                                 data[name][thispar].sexworker.append(thesedata[7])
                                 data[name][thispar].client.append(thesedata[8])
                             if thispar=='progs':
-                                data[name][thispar].saturating.append(thesedata[2])
                                 if not thesedata[0] in programs: programs[thesedata[0]] = []
                                 
                         # It's cost-coverage data, save the cost and coverage values separately
@@ -244,9 +239,8 @@ def loadworkbook(filename='example.xlsx', verbose=2):
                             if assumptiondata != '': thesedata = [assumptiondata] # Replace the (presumably blank) data if a non-blank assumption has been entered
                             data[name][thispar].append(thesedata) # Store data
 
-                            for programname in programs_for_input_key(thispar):
-                                if programname in programs:
-#                                    programs[programname].append([[name, thispar], [subparam], default_init_coparams])                        
+                            for programname, pops in programs_for_input_key(thispar).iteritems():
+                                if programname in programs and not pops or pops==[''] or subparam in pops:
                                     programs[programname].append([[name, thispar], [subparam]])
                         
                         # It's a matrix, append the data                                     

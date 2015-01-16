@@ -21,31 +21,32 @@ def record_params(setup_state):
   scenarios.config = dict([(key,value) for (key,value) in app.config.iteritems()])
 
 
-@scenarios.route('/params')
+@scenarios.route('/parameters')
 @login_required
 @check_project_name
 @report_exception()
-def get_scenario_params():
+def get_scenario_parameters():
     from sim.parameters import parameters
     from sim.scenarios import getparvalues
     scenario_params = parameters()
-    real_params = []
+    real_parameters = []
     project = load_project(request.project_name)
     D = bunchify(project.model)
 
-    for param in scenario_params:
-        if not param['modifiable']: continue
-        item = bunchify({'names':param['keys'], 'pops':0, 'startyear':project.datastart, 'endyear':project.dataend})
+    for parameter in scenario_params:
+        if not parameter['modifiable']: continue
+        item = bunchify({'names':parameter['keys'], 'pops':0, \
+            'startyear':project.datastart, 'endyear':project.dataend})
         val_pair = None
         try:
             val_pair = getparvalues(D, item)
-            param['values'] = val_pair
-            real_params.append(param)
+            parameter['values'] = val_pair
+            real_parameters.append(parameter)
         except:
             continue
 
-    current_app.logger.debug("real_params:%s" % real_params)
-    return json.dumps({"params":real_params})
+    current_app.logger.debug("real_parameters:%s" % real_parameters)
+    return json.dumps({"parameters":real_parameters})
 
 """
 Returns a list of scenarios defined by the user, or the default scenario list

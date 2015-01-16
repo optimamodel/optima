@@ -10,7 +10,7 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
     
     Version: 2014nov05
     """
-    
+
     printv('Making model parameters...', 1, verbose)
     
     M = struct()
@@ -20,7 +20,7 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
     
     
     
-    def dpar2mpar(datapar, withwhat):
+    def dpar2mpar(datapar, withwhat, default_withwhat='p'):
         """
         Take parameters and turn them into model parameters
         Set withwhat = p if you want to use the epi data for the parameters
@@ -28,14 +28,16 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
         """
         from numpy import isnan
         from utils import smoothinterp
+
+        withwhat = withwhat if withwhat in datapar else default_withwhat #if that is not there, then it has to fail anyway
         
         npops = len(datapar[withwhat])
         
         if npops>1:
             output = zeros((npops,npts))
             for pop in range(npops):
-                if withwhat=='c' and ~isnan(datapar['c'][pop]): # Use cost relationship
-                    output[pop,:] = datapar['c'][pop] # TODO: use time!
+                if withwhat=='c' and ~isnan(datapar[withwhat][pop]): # Use cost relationship
+                    output[pop,:] = datapar[withwhat][pop] # TODO: use time!
                 else: # Use parameter
                     if 't' in datapar.keys(): # It's a time parameter
                         output[pop,:] = smoothinterp(tvec, datapar.t[pop], datapar.p[pop]) # Use interpolation
@@ -45,8 +47,8 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
         else:
             output = zeros(npts)
             try:
-                if withwhat=='c' and ~isnan(datapar['c'][0]): # Use cost relationship
-                    output[:] = datapar['c'][0] # TODO: use time!
+                if withwhat=='c' and ~isnan(datapar[withwhat][0]): # Use cost relationship
+                    output[:] = datapar[withwhat][0] # TODO: use time!
                 else: # Use parameter
                     if 't' in datapar.keys(): # It's a time parameter
                         output[:] = smoothinterp(tvec, datapar.t[0], datapar.p[0]) # Use interpolation
@@ -74,7 +76,6 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
     M.popsize = grow(P.popsize, opt.growth) # Population size
     M.hivprev = P.hivprev # Initial HIV prevalence
     M.stiprevulc = dpar2mpar(P.stiprevulc, withwhat) # STI prevalence
-    M.stiprevdis = dpar2mpar(P.stiprevdis, withwhat) # STI prevalence
     M.death  = dpar2mpar(P.death, withwhat)  # Death rates
     M.tbprev = dpar2mpar(P.tbprev, withwhat) # TB prevalence
     
@@ -83,7 +84,7 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
     M.aidstest = dpar2mpar(P.aidstest, withwhat) # AIDS testing rates
     M.tx1 = dpar2mpar(P.numfirstline, withwhat) # Number of people on first-line treatment
     M.tx2 = dpar2mpar(P.numsecondline, withwhat) # Number of people on second-line treatment
-    
+
     ## MTCT parameters
     M.numpmtct = dpar2mpar(P.numpmtct, withwhat)
     M.birth    = dpar2mpar(P.birth, withwhat)
@@ -107,7 +108,6 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
     
     ## Other intervention parameters (proportion of the populations, not absolute numbers)
     M.prep = dpar2mpar(P.prep, withwhat)
-    M.pep  = dpar2mpar(P.pep, withwhat)
     
     ## Matrices can be used almost directly
     M.pships = struct()

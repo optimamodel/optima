@@ -7,7 +7,7 @@ define({
   // Here paths are set relative to `/source/js` folder
   paths: {
     'angular'       : './vendor/angular/angular',
-    'angular-loading-bar'  : './vendor/angular-loading-bar/build/loading-bar.min',
+    'angular-loading-bar'  : './js/modules/angular-loading-bar/loading-bar',
     'async'         : './vendor/requirejs-plugins/src/async',
     'canvg'         : './vendor/canvg/dist/canvg.bundle',
     'canvas2blob'   : './vendor/canvas-toBlob.js/canvas-toBlob',
@@ -15,13 +15,14 @@ define({
     'd3'            : './vendor/d3/d3',
     'saveAs'        : './vendor/FileSaver/FileSaver',
     'jquery'        : './vendor/jquery/dist/jquery',
+    'jsPDF'         : './vendor/jspdf/dist/jspdf.min',
     'ng-file-upload': './vendor/ng-file-upload/angular-file-upload',
     'ng-file-upload-html5-shim': './vendor/ng-file-upload/angular-file-upload-html5-shim',
     'angular-resource'    : './vendor/angular-resource/angular-resource',
     'radar-chart-d3' : './vendor/radar-chart-d3/src/radar-chart',
     'ui.router'     : './vendor/angular-ui-router/release/angular-ui-router',
     'ui.bootstrap'  : './vendor/angular-bootstrap/ui-bootstrap-tpls',
-    'underscore'    : './vendor/underscore/underscore'
+    'underscore'    : './vendor/underscore/underscore',
   },
 
   shim: {
