@@ -82,8 +82,9 @@ def makefittedpars(G, opt, verbose=2):
     F = [struct() for s in range(opt.nsims)]
     for s in range(opt.nsims):
         span=0 if s==0 else 0.5 # Don't have any variance for first simulation
-        F[s].__doc__ = 'Fitted parameters for simulation %i: initial prevalence, force-of-infection, diagnoses, treatment' % s
+        F[s].__doc__ = 'Fitted parameters for simulation %i: initial prevalence, force-of-infection, population size, diagnoses, treatment' % s
         F[s].init  = perturb(G.npops,span)
+        F[s].popsize = perturb(G.npops,span)
         F[s].force = perturb(G.npops,span)
         F[s].dx  = array([perturb(1,span), perturb(1,span), (G.datastart+G.dataend)/2, 1]).tolist()
     

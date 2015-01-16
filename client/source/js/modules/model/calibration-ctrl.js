@@ -25,6 +25,7 @@ define(['./module', 'angular'], function (module, angular) {
     $scope.parameters = {
       types: {
         force: 'Initial force-of-infection for ',
+        popsize: 'Initial population size for ',
         init: 'Initial prevalence for ',
         dx: [
           'Overall population initial relative testing rate',
