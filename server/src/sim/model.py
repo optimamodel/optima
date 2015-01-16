@@ -1,5 +1,5 @@
  ## Imports
-from numpy import array, zeros, exp, maximum, minimum # For creating arrays
+from numpy import array, zeros, exp, maximum, minimum, nonzero # For creating arrays
 from bunch import Bunch as struct # Replicate Matlab-like structure behavior
 from printv import printv
 from math import pow as mpow
@@ -8,7 +8,7 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
     """
     This function runs the model.
     
-    Version: 2014nov26 by cliffk
+    Version: 2015jan16 by cliffk
     """
     printv('Running model...', 1, verbose)
 
@@ -44,12 +44,8 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
     effhivprev = zeros((npops, 1))    # HIV effective prevalence (prevalence times infectiousness)
 
     ## Set initial epidemic conditions 
-    ## Set initial epidemic conditions
-    turnofftrans = not(isinstance(initstate, type(None))) # Has the initial state been provided?
-    if not(turnofftrans):
-        people[:,:,0] = equilibrate(G, M, array(F.init)) # No it hasn't, so run equilibration
-    else:
-        people[:,:,0] = initstate # Yes it has, so use it.
+    if initstate==None: people[:,:,0] = equilibrate(G, M, array(F.init)) # No it hasn't, so run equilibration
+    else: people[:,:,0] = initstate # Yes it has, so use it.
     
     ## Calculate other things outside the loop
     cd4trans = h2a(G, M.const.cd4trans) # Convert a dictionary to an array
@@ -67,6 +63,8 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
     fail = G.fail
     tx2  = G.tx2
     male = G.meta.pops.male
+    popsize = M.popsize
+    for pop in range(npops): popsize[pop,:] *= F.popsize[pop] # Calculate adjusted population sizes
     mmi  = M.const.trans.mmi # Male -> male insertive
     mfi  = M.const.trans.mfi # Male -> female insertive
     mmr  = M.const.trans.mmr # Male -> male receptive
@@ -78,6 +76,7 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
     effprep   = (1 - M.const.eff.prep) * M.prep
     effcondom = 1 - M.const.eff.condom
     effpmtct  = 1 - M.const.eff.pmtct
+    effost    = 1 - M.const.eff.ost
     transinj  = M.const.trans.inj
     pshipsinj = M.pships.inj
     pships    = M.pships
@@ -85,7 +84,7 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
     condom    = M.condom
     sharing   = M.sharing
     numpmtct  = M.numpmtct
-#    numost    = M.numost
+    ost       = M.numost
 #    numart    = M.numart
     prog      = h2a(G, M.const.prog)   # Disease progression rates
     recov     = h2a(G, M.const.recov)  # Recovery rates
@@ -179,15 +178,20 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
         ## Injecting partnerships
         
         # Transmission effects
-#        metheff = 1 - M.const.eff.meth*M.ost[t] # TODO: methadone should be subtracted from population size
+        if ost[t]<=1: # It's a proportion
+            osteff = 1 - ost[t]*effost
+        else: # It's a number, convert to a proportion using the PWID flag
+            numost = ost[t] # Total number of people on OST
+            numpwid = sum(M.popsize[nonzero(G.meta.pops.injects),t]) # Total number of PWID
+            osteff = 1 - (numost/numpwid)*effost # Proportion of 
         # Iterate through partnership pairs
         for pop1 in range(npops):
             for pop2 in range(npops):
                 if pshipsinj[pop1,pop2]>0: # Ignore if this isn't a valid injecting partnership
                     numacts1 = sharing[t] * totalacts['inj'][pop1,pop2,t] / 2 # Number of acts per person per year -- /2 since otherwise double-count
                     numacts2 = sharing[t] * totalacts['inj'][pop2,pop1,t] / 2 # Number of acts per person per year
-                    forceinf1 = 1 - mpow((1-transinj), (dt*numacts1*effhivprev[pop2])) # The chance of "2" infecting "1"
-                    forceinf2 = 1 - mpow((1-transinj), (dt*numacts2*effhivprev[pop1])) # The chance of "1" infecting "2"
+                    forceinf1 = 1 - mpow((1-transinj), (dt*numacts1*osteff*effhivprev[pop2])) # The chance of "2" infecting "1"
+                    forceinf2 = 1 - mpow((1-transinj), (dt*numacts2*osteff*effhivprev[pop1])) # The chance of "1" infecting "2"
                     forceinfvec[pop1] = 1 - (1-forceinfvec[pop1]) * (1-forceinf1) # Calculate the new "male" forceinf, ensuring that it never gets above 1
                     forceinfvec[pop2] = 1 - (1-forceinfvec[pop2]) * (1-forceinf2) # Calculate the new "male" forceinf, ensuring that it never gets above 1
                     if not(all(forceinfvec>=0)): raise Exception('Injecting force-of-infection is invalid')
@@ -367,12 +371,12 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
                 change[fail[cd4],:] = dF[cd4]
                 change[tx2[cd4],:]  = dT2[cd4]
             people[:,:,t+1] = people[:,:,t] + change # Update people array
-            newpeople = M.popsize[:,t+1]-people[:,:,t+1].sum(axis=0) # Number of people to add according to M.popsize (can be negative)
+            newpeople = popsize[:,t+1]-people[:,:,t+1].sum(axis=0) # Number of people to add according to M.popsize (can be negative)
             for pop in range(npops): # Loop over each population, since some might grow and others might shrink
                 if newpeople[pop]>=0: # People are entering: they enter the susceptible population
                     people[0,pop,t+1] += newpeople[pop]
                 else: # People are leaving: they leave from each health state equally
-                    people[:,pop,t+1] *= M.popsize[pop,t]/sum(people[:,pop,t]);
+                    people[:,pop,t+1] *= popsize[pop,t]/sum(people[:,pop,t]);
             if not((people[:,:,t+1]>=0).all()):
                 print('Non-positive people found') # If not every element is a real number >0, throw an error
 #                import pdb; pdb.set_trace() not going to fly in web context
@@ -440,7 +444,7 @@ def equilibrate(G, M, Finit):
     # Can calculate equilibrium for each population separately
     for p in range(G['npops']):
         # Set up basic calculations
-        uninfected = M['popsize'][p,0] * (1-hivprev[p]) # Set initial susceptible population -- easy peasy!
+        uninfected = M['popsize'][p,0] * (1-hivprev[p]) # Set initial susceptible population -- easy peasy! # TODO -- should this have F.popsize involved?
         allinfected = M['popsize'][:,0] * hivprev[:] * Finit[:] # Set initial infected population
         popinfected = allinfected[p]
         
