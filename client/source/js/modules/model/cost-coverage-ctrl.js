@@ -395,8 +395,8 @@ define(['./module', 'underscore'], function (module, _) {
       }
       if ($scope.selectedProgram.ccplot && $scope.selectedProgram.ccplot.length==2) {
         $scope.xAxisMaximum = $scope.selectedProgram.ccplot[0];
-        var years = $scope.selectedProgram.ccplot[1];
-        if (years.length>0) {
+        var years = $scope.selectedProgram.ccplot[1][1];
+        if (years.length > 0) {
           $scope.displayYear = years[0];
           $scope.displayCost = 2;
         } else {
