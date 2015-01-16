@@ -19,15 +19,15 @@ from parameters import parameters, input_parameter_name
 
 ## Set defaults for testing makeccocs
 default_progname = 'SBCC'
-default_ccparams = [] # [0.9, 0.28, 154000.0, 1.0]
-default_ccplot = [] # [2e6, [0, []]]
-default_coparams = [] # [0.3, 0.5, 0.7, 0.9] 
+default_ccparams = [0.9, 0.28, 154000.0, 1.0] # []
+default_ccplot = [2e6, [0, []]] # []
+default_coparams = [0.3, 0.5, 0.7, 0.9] # []
 default_init_ccparams = []
 default_init_convertedccparams = []
 default_makeplot = 1
 default_effect = [['sex', 'condomcas'], [u'MSM']] # D.programs[default_progname]['effects'][0]
 default_artelig = range(6,26)
-coverage_params = ['numost','numpmtct','numfirstline','numsecondline']
+coverage_params = ['numost', 'numpmtct', 'numfirstline', 'numsecondline']
 
 ## Set defaults for use in getcurrentbudget
 default_convertedccparams = [0.8, 4.86477537263828e-06, 1.0]
@@ -531,10 +531,10 @@ def plotallcurves(D=None, progname=default_progname, ccparams=default_ccparams, 
     Make all cost outcome curves for a given program.
     '''
     
-     # Get the cost-coverage and coverage-outcome relationships     
+    # Get the cost-coverage and coverage-outcome relationships     
     plotdata_cc, D = makecc(D=D, progname=progname, ccplot = ccplot, ccparams=ccparams, makeplot=makeplot, verbose=verbose)
 
-   ## Check that the selected program is in the program list 
+    ## Check that the selected program is in the program list 
     if progname not in D.programs.keys():
         raise Exception('Please select one of the following programs %s' % D.programs.keys())
 
@@ -681,7 +681,7 @@ def restructureprograms(programs):
     '''
     ccparams = default_init_ccparams
     convertedccparams = default_init_convertedccparams
-    keys = ['ccparams','convertedccparams','effects']
+    keys = ['ccparams', 'convertedccparams', 'effects']
     for program in programs.keys():
         programs[program] = dict(zip(keys,[ccparams, convertedccparams, programs[program]]))
     return programs

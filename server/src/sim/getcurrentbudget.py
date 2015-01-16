@@ -62,17 +62,8 @@ def getcurrentbudget(D, alloc=None):
                     # Unpack
                     convertedccoparams = effect[4]
                 else:
-                
-                
-                
-                    # NEED TO GET THIS WORKING BEFORE WE GO ANY FURTHER...
-                
                     # did not get co_params yet, giving it some defined params TODO @RS @AS do something sensible here:
                     convertedccoparams = default_convertedccoparams
-
-
-
-
 
                 #   zerosample, fullsample = makesamples(muz, stdevz, muf, stdevf, samplesize=1)
                 y = ccoeqn(totalcost, convertedccoparams)

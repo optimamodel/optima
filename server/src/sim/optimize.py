@@ -19,7 +19,7 @@ def optimize(D, objectives=None, constraints=None, startyear=2000, endyear=2030,
     from ballsd import ballsd
     from getcurrentbudget import getcurrentbudget
     from makemodelpars import makemodelpars
-    from numpy import array, ones, zeros
+    from numpy import array, ones, zeros, maximum
     printv('Running optimization...', 1, verbose)
     
     # Set options to update year range
@@ -59,7 +59,7 @@ def optimize(D, objectives=None, constraints=None, startyear=2000, endyear=2030,
     D.A = D.A[:2] # TODO WARNING KLUDGY (why is this needed?)
     
     
-    maxiters = 10 # temp - probably
+    maxiters = 50 # temp - probably
     global niter
     niter = 0
     
@@ -69,8 +69,11 @@ def optimize(D, objectives=None, constraints=None, startyear=2000, endyear=2030,
     def objectivecalc(alloc):
         """ Calculate the objective function """
         
-        # Normalise spending
-        alloc /= sum(alloc)/sum(origalloc)
+        # AS: Can ballsd give us negative values? If so, good, as we'll need this for time-varying. However we will need to ensure the actual allocation doesn't go negative at any point. This is easily done:
+        # alloc = maximum(alloc, 0) # TODO: When implementing time-varying optimisation ensure that this only occurs for initial allocation parameters     
+        
+        # Normalise spending (as long as allocation is not fully zero)
+        if sum(alloc) > 0: alloc /= sum(alloc) / sum(origalloc)
 
         # Alter the parameters and run the model
         newD = deepcopy(D)
@@ -96,18 +99,18 @@ def optimize(D, objectives=None, constraints=None, startyear=2000, endyear=2030,
         figure(num=100)
         subplot(1,3,1)
         plot(range(niter), allobjs[range(niter)])
-        ylim(ymin=75390, ymax=75400)
-        xlim(xmin=0,xmax=maxiters)        
+        ylim(ymin=0)
+        xlim(xmin=0, xmax=maxiters)        
         
         # Plot allocations over iterations
         subplot(1,3,2)
-        xlim(xmin=0,xmax=maxiters)
+        xlim(xmin=0, xmax=maxiters)
         for prog in range(len(origalloc)): plot(range(niter), alliters[prog, range(niter)])
 
         # Plot legend on the right        
         subplot(1,3,3)
         for prog in range(len(origalloc)): plot(0, prog)
-        legend(D.G.meta.progs.short, loc = 'center')
+        legend(D.G.meta.progs.short, loc = 'center left')
         axis('off')
         show()        
         
@@ -115,7 +118,7 @@ def optimize(D, objectives=None, constraints=None, startyear=2000, endyear=2030,
 
 
     # Run the optimization algorithm
-    optalloc, fval, exitflag, output = ballsd(objectivecalc, origalloc, xmin=0*array(origalloc), timelimit=120, verbose=10, StallIterLimit=maxiters-1, sinitial=ones(len(origalloc))*100000) # timelimit=timelimit, verbose=verbose)
+    optalloc, fval, exitflag, output = ballsd(objectivecalc, origalloc, xmin=0*array(origalloc), timelimit=120, verbose=10, MaxIter=maxiters-1, sinitial=ones(len(origalloc))*100000) # timelimit=timelimit, verbose=verbose)
     
     
     # Update the model
