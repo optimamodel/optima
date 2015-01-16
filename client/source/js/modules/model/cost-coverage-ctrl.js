@@ -305,12 +305,12 @@ define(['./module', 'underscore'], function (module, _) {
       return hasAllElements(params) || hasOnlyInvalidEntries(params);
     };
 
-    var areCcparamsValid = function (params) {
+    var areCCParamsValid = function (params) {
       return $scope.areValidParams(params.slice(0, 3));
     };
 
     $scope.hasValidCCParams = function() {
-      return !$scope.hasCostCoverResponse || areCcparamsValid($scope.costCoverageParams());
+      return !$scope.hasCostCoverResponse || areCCParamsValid($scope.costCoverageParams());
     };
 
     /**
@@ -333,7 +333,7 @@ define(['./module', 'underscore'], function (module, _) {
      */
     var retrieveAndUpdateGraphs = function (model) {
       // validation on Cost-coverage curve plotting options
-      if ( !areCcparamsValid(model.ccparams) ){
+      if ( !areCCParamsValid(model.ccparams) || $scope.ccForm.valid){
         modalService.inform(
           function () {},
           'Okay',
@@ -529,7 +529,7 @@ define(['./module', 'underscore'], function (module, _) {
      * by pressing the draw button.
      */
     $scope.updateCurves =  _.debounce(function() { // debounce a bit so we don't update immediately
-      if(areCcparamsValid($scope.costCoverageParams()) && $scope.hasCostCoverResponse === true) {
+      if(areCCParamsValid($scope.costCoverageParams()) && $scope.hasCostCoverResponse === true && $scope.ccForm.$valid) {
        $scope.generateCurves();
       }
     }, 500);
