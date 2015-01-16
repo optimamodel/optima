@@ -3,8 +3,15 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
   module.controller('ProjectCreateOrEditController', function ($scope, $state, $modal,
     $timeout, activeProject, parametersResponse, defaultsResponse, info,
-    UserManager, modalService) {
+    UserManager, modalService,projects) {
 
+    $scope.allProjectNames = _(projects.projects).map(function(project){return project.name});
+
+    $scope.projectExists = function(){
+      var exists = _($scope.allProjectNames).contains($scope.projectParams.name);
+      $scope.CreateOrEditProjectForm.ProjectName.$setValidity("projectExists", !exists);
+      return exists;
+    };
     $scope.projectParams = {
       name: ''
     };
@@ -280,7 +287,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.prepareCreateOrEditForm = function () {
-
       if ($scope.CreateOrEditProjectForm.$invalid) {
         modalService.informError([{message: 'Please fill in all the required project fields'}]);
         return false;
