@@ -7,7 +7,8 @@
           <h1>Project details</h1>
 
          <b>Project name</b>
-        <input class="txbox" type="text" placeholder="e.g. Example" ng-model="projectParams.name" ng-disabled="editParams.isEdit" required>
+        <input class="txbox" type="text" name="ProjectName" placeholder="e.g. Example" ng-model="projectParams.name" ng-disabled="editParams.isEdit" required>
+        <div class="error-hint" ng-show="projectExists()"> Project with this name already exists, please choose a different name. </div>
       </div>
     </div>
 
