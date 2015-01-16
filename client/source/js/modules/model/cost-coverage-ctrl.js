@@ -529,7 +529,7 @@ define(['./module', 'underscore'], function (module, _) {
      * by pressing the draw button.
      */
     $scope.updateCurves =  _.debounce(function() { // debounce a bit so we don't update immediately
-      if($scope.CostCoverageForm.$valid) {
+      if($scope.CostCoverageForm.$valid && $scope.hasCostCoverResponse === true) {
        $scope.generateCurves();
       }
     }, 500);
