@@ -30,12 +30,12 @@ def financialanalysis(D, postyear = 2015, S = None, yscale = 'abs', makeplot = F
     futureindex = np.where(D.opt.tvec - opt.tvec[0]>-0.01)[0]
 
     # Get indices for the different disease states # TODO these should be defined globally somewhere... 
-    # CK: yes, just added to D.G -- i.e. D.G.acute
-    acute, gt500, gt350, gt200, aids = [1,6,11,16,21], [2,7,12,17,22], [3,8,13,18,23], [4,9,14,19,24], [5,10,15,20,25]
+    print('Warning, missing CD4>50')
+    acute, gt500, gt350, gt200, aids = D.G.acute, D.G.gt500, D.G.gt350, D.G.gt200, D.G.aids
 
     # Set force of infection to zero... 
     zeroF = deepcopy(D.F[0])
-    zeroF.force *= 0
+    zeroF.force = D.G.npops*[0.] # TODO -- find out why F is turning into a list from an array
     initstate = S.people[:,:,futureindex[0]]
     
     # Extract the number of PLHIV under the baseline sim
