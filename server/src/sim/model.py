@@ -197,7 +197,7 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
                     forceinf2 = 1 - mpow((1-transinj), (dt*numacts2*osteff*effhivprev[pop1])) # The chance of "1" infecting "2"
                     forceinfvec[pop1] = 1 - (1-forceinfvec[pop1]) * (1-forceinf1) # Calculate the new "male" forceinf, ensuring that it never gets above 1
                     forceinfvec[pop2] = 1 - (1-forceinfvec[pop2]) * (1-forceinf2) # Calculate the new "male" forceinf, ensuring that it never gets above 1
-                    if not(all(forceinfvec>=0)): raise Exception('Injecting force-of-infection is invalid')
+                    if not(all(forceinfvec>=0)): raise Exception('Injecting force-of-infection is invalid (transinj=%f, numacts1=%f, numacts2=%f, osteff=%f, effhivprev1=%f, effhivprev2=%f)'% (transinj, numacts1, numacts2, osteff, effhivprev[pop2], effhivprev[pop1]))
         
         ###############################################################################
         ## Calculate mother-to-child-transmission
