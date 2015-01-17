@@ -1,3 +1,4 @@
+CREATE TYPE work_status as ENUM('started', 'completed', 'cancelled', 'error');
 CREATE TABLE work_log (
     id SERIAL PRIMARY KEY,
     work_type character varying(32),
