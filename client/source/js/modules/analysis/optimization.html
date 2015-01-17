@@ -510,9 +510,9 @@
             <div class="info-hint" ng-show="optimizationStatus.isActive">
               {{ optimizationStatus.text }}
             </div>
-            <textarea class="error-hint" ng-show="errorText">
-                {{errorText}}
-            </textarea>
+            <div class="error-hint" ng-show="errorText">
+                <pre>{{errorText}}</pre>
+            </div>
 
           </div>
         </div>
