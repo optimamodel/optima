@@ -65,7 +65,7 @@ define([
           } else {
             var message = response.data.message || response.data.exception;
             if (message) {
-              alert(message);
+              console.log(message);
             }
 
             return $q.reject(response);
