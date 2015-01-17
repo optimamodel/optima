@@ -6,12 +6,16 @@ from signal import *
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy import create_engine
 from sim.bunch import Bunch, unbunchify
-from dbmodels import ProjectDb, WorkingProjectDb
+from dbmodels import ProjectDb, WorkingProjectDb, WorkLogDb
 
 # Sentinel object used for async calculation
 sentinel = {
     'exit': False  # This will stop all threads
 }
+
+# acceptable exit statuses
+good_exit_status = set(['completed', 'cancelled'])
+
 
 def start_or_report_calculation(user_id, project, func, db_session): #only called from the application
     work_type = func.__name__
@@ -20,8 +24,12 @@ def start_or_report_calculation(user_id, project, func, db_session): #only calle
 
     project = db_session.query(ProjectDb).filter_by(user_id=user_id, name=project).first()
     if project is not None:
+        work_log = WorkLogDb(project_id=project.id, work_type = work_type)
+        db_session.add(work_log)
+        db_session.flush()
         if project.working_project is None:
-            db_session.add(WorkingProjectDb(project_id=project.id, model = project.model, is_working = True, work_type = work_type))
+            db_session.add(WorkingProjectDb(project_id=project.id, model = project.model, \
+                is_working = True, work_type = work_type, work_log_id = work_log.id))
             can_start = True
             can_join = True
             db_session.commit()
@@ -30,6 +38,7 @@ def start_or_report_calculation(user_id, project, func, db_session): #only calle
             if (not project.working_project.is_working) or (project.working_project.work_type is None):
                 project.working_project.work_type = work_type
                 project.working_project.is_working = True
+                project.working_project.work_log_id = work_log.id
                 db_session.add(project.working_project)
                 db_session.commit()
                 can_start = True
@@ -41,13 +50,27 @@ def start_or_report_calculation(user_id, project, func, db_session): #only calle
         print("No such project %s, cannot start calculation" % project)
     return can_start, can_join, work_type
 
-def cancel_calculation(user_id, project, func, db_session, was_error = False):
+def finish_calculation(user_id, project, func, db_session, status='completed', error_text=None):
+    import datetime
+    import dateutil.tz
+    from datetime import datetime
     project = db_session.query(ProjectDb).filter_by(user_id=user_id, name=project).first()
-    if project is not None and project.working_project is not None:
+    if project is not None and project.working_project is not None and project.working_project.is_working:
+        if project.working_project.work_log_id is not None:
+            work_log = db_session.query(WorkLogDb).get(project.working_project.work_log_id)
+            work_log.status = status
+            work_log.error = error_text
+            work_log.stop_time = datetime.now(dateutil.tz.tzutc())
+            db_session.add(work_log)
+        else:
+            print("cannot find work_log_id for the project %s" % project.id)
         project.working_project.is_working = False
         project.working_project.work_type = None
         db_session.add(project.working_project)
         db_session.commit()
+
+def cancel_calculation(user_id, project, func, db_session):
+    finish_calculation(user_id, project, func, db_session, status='cancelled')
 
 def check_calculation(user_id, project, func, db_session):
     is_working = not sentinel['exit']
@@ -61,6 +84,19 @@ def check_calculation(user_id, project, func, db_session):
         db_session.query(WorkingProjectDb).update({'is_working':False,'work_type':None})
         db_session.commit()
     return is_working
+
+def check_calculation_status(user_id, project, func, db_session):
+    from sqlalchemy import desc
+    status = 'unknown'
+    error_text = None
+    project = db_session.query(ProjectDb).filter_by(user_id=user_id, name=project).first()
+    if project is not None:
+        work_log = db_session.query(WorkLogDb).filter_by(project_id=project.id, work_type=func.__name__). \
+        order_by(desc(WorkLogDb.start_time)).first()
+        if work_log is not None:
+            status = work_log.status
+            error_text = work_log.error
+    return status, error_text
 
 def interrupt(*args):
     global sentinel
@@ -107,6 +143,8 @@ class CalculatingThread(threading.Thread):
         delta_time = 0
         start = time.time()
         was_error = False
+        error_text = None
+        cancel_status = 'completed'
         while delta_time < self.timelimit:
             if check_calculation(self.user_id, self.project_name, self.func, self.db_session):
                 print("Iteration %d for user: %s, args: %s" % (iterations, self.user_name, self.debug_args))
@@ -117,15 +155,18 @@ class CalculatingThread(threading.Thread):
                     var = traceback.format_exc()
                     print("ERROR in Iteration %s for user: %s, args: %s calculation: %s\n %s" % (iterations, self.user_name, self.debug_args, self.func.__name__, var))
                     was_error = True
+                    error_text = var
+                    cancel_status='error'
                     break
                 time.sleep(1)
                 delta_time = int(time.time() - start)
             else:
                 print("thread for project %s requested to stop" % self.project_name)
+                cancel_status = 'cancelled'
                 break
             iterations += 1
         print("thread for project %s stopped" % self.project_name)
-        cancel_calculation(self.user_id, self.project_name, self.func, self.db_session, was_error)
+        finish_calculation(self.user_id, self.project_name, self.func, self.db_session, cancel_status, error_text)
         self.db_session.connection().close() # this line might be redundant (not 100% sure - not clearly described)
         self.db_session.remove()
         self.db_session.bind.dispose() # black magic to actually close the connection by forcing the engine to dispose of garbage (I assume)
@@ -135,10 +176,8 @@ class CalculatingThread(threading.Thread):
         model = None
         if project is not None:
             if project.working_project is None or not working_model:
-                print("no working model")
                 model = project.model
             else:
-                print("getting working model")
                 model = project.working_project.model
             if as_bunch:
                 model = Bunch.fromDict(model)

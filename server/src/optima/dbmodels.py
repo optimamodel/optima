@@ -90,11 +90,28 @@ class WorkingProjectDb(db.Model):
     is_working = db.Column(db.Boolean, unique=False, default=False)
     work_type = db.Column(db.String(32), default=None)
     model = deferred(db.Column(JSON))
+    work_log_id = db.Column(db.Integer, default = None)
 
-    def __init__(self, project_id, is_working=False, model = None, work_type = None):
+    def __init__(self, project_id, is_working=False, model = None, work_type = None, work_log_id = None):
         self.id = project_id
         self.model = model if model else {}
         self.is_working = is_working
+        self.work_type = work_type
+        self.work_log_id = work_log_id
+
+class WorkLogDb(db.Model):
+    __tablename__ = "work_log"
+    work_status = ('started', 'completed', 'cancelled', 'error')
+    id = db.Column(db.Integer, primary_key=True)
+    work_type = db.Column(db.String(32), default = None)
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id'), index = True)
+    start_time = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
+    stop_time = db.Column(db.DateTime(timezone=True), default = None)
+    status = db.Column(db.Enum(*work_status,name='work_status'), default='started')
+    error = db.Column(db.Text, default = None)
+
+    def __init__(self, project_id, work_type = None):
+        self.project_id = project_id
         self.work_type = work_type
 
 class ProjectDataDb(db.Model):
