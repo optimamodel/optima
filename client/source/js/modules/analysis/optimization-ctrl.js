@@ -469,6 +469,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
             // Error indicates that the model is not calibrating anymore.
             optimizationTimer = $interval(checkWorkingOptimization, 5000, 0, false);
             $scope.optimizationStatus = statusEnum.RUNNING;
+            $scope.errorText = '';
 
             // start cfpLoadingBar loading
             // calculate the number of ticks in timelimit
@@ -498,6 +499,9 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
           }
         })
         .error(function(data, status, headers, config) {
+          if (data && data.exception) {
+            $scope.errorText = data.exception
+          }
           stopTimer();
         });
     }
