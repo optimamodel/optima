@@ -72,7 +72,7 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
     mtcb = M.const.trans.mtctbreast   # MTCT with breastfeeding
     mtcn = M.const.trans.mtctnobreast # MTCT no breastfeeding
     effsti    = M.const.eff.sti * M.stiprevulc # TODO -- AS: don't like the way STI prevalence can be > 100%
-    effcirc   = (1 - M.const.eff.circ) * M.circum
+    effcirc   = 1 - M.const.eff.circ
     effprep   = (1 - M.const.eff.prep) * M.prep
     effcondom = 1 - M.const.eff.condom
     effpmtct  = 1 - M.const.eff.pmtct
@@ -131,12 +131,13 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
             efftx   = sum(txfactor * (people[tx1,pop,t]+people[tx2,pop,t])) # ...and treated
             effhivprev[pop] = (effundx+effdx+efftx) / allpeople[pop,t]; # Calculate HIV "prevalence", scaled for infectiousness based on CD4 count; assume that treatment failure infectiousness is same as corresponding CD4 count
             if not(effhivprev[pop]>=0): 
-#                import pdb; pdb.set_trace()
                 raise Exception('HIV prevalence invalid in population %s! (=%f)' % (pop, effhivprev[pop]))
         
         # Also calculate effective MTCT transmissibility
         effmtct  = mtcb*M.breast[t] + mtcn*(1-M.breast[t]) # Effective MTCT transmission
         pmtcteff = (1 - effpmtct) * effmtct # Effective MTCT transmission whilst on PMTCT
+        
+        
         
         ###############################################################################
         ## Calculate force-of-infection (forceinf)
@@ -146,6 +147,8 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
         forceinfvec = zeros(npops)
         
         ## Sexual partnerships
+        
+        effcirc = effcirc*M.circum
         
         # Iterate through partnership pairs
         for popM in range(npops):
