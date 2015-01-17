@@ -37,6 +37,7 @@ define(['./module', 'underscore'], function (module, _) {
       $scope.defaultScaleUpParameter = 1;
       $scope.defaultNonHivDalys = 0;
       $scope.defaultXAxisMaximum = 1000000;
+      $scope.defaultCostDataYear = $scope.projectInfo.dateStart;
       $scope.behaviorWithoutMin = 0.3;
       $scope.behaviorWithoutMax = 0.5;
       $scope.behaviorWithMin = 0.7;
@@ -260,17 +261,7 @@ define(['./module', 'underscore'], function (module, _) {
     };
 
     var ccPlotParams = function() {
-      if ($scope.xAxisMaximum) {
-        var years = [];
-        if ($scope.displayCost == 2 && $scope.displayYear) {
-          years = [1, [parseInt($scope.displayYear, 10)]];
-        } else {
-          years = [0, []];
-        }
-        return [$scope.xAxisMaximum, years];
-      } else {
-        return [];
-      }
+      return [$scope.xAxisMaximum, $scope.displayYear];
     };
 
     /**

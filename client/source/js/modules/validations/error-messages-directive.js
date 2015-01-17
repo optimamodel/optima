@@ -14,9 +14,9 @@ define(['angular', 'underscore'], function (angular, _) {
       template: '<div ng-if="errorMessages().length>0" class="error-hint"><div ng-repeat="message in errorMessages()">{{message}}</div></div>',
       link: function ($scope, $elem, $attrs, form) {
         var errorMessages = {
-          'min': 'The minimum value must be <%= min %>',
-          'max': 'The maximum value can be <%= max %>',
-          'required': 'The field <%= name %> is required',
+          'min': 'The minimum value must be <%= min %>.',
+          'max': 'The maximum value can be <%= max %>.',
+          'required': 'The field <%= name %> is required.',
           'moreThan': 'The value must be greater than <%= moreThan %>.',
           'lessThan': 'The value must be less than <%= lessThan %>.'
         };
@@ -26,6 +26,7 @@ define(['angular', 'underscore'], function (angular, _) {
               if (e) {
                 var template = {};
                 if ($scope.rules[key]!==undefined) {
+                  var ruleIsString = typeof $scope.rules[key] === 'string';
                   /*
                     If the key is 'required', and the rules object contains 'name' property,
                     show the field name in the error message
@@ -35,10 +36,10 @@ define(['angular', 'underscore'], function (angular, _) {
                     template.name = $scope.rules.name;
                   }
                   else {
-                    template[key] = $scope.rules[key];
+                      template[key] = ruleIsString ? $scope.rules[key] : $scope.rules[key].value;
                   }
                   if(errorMessages[key]!==undefined) {
-                    return _.template(errorMessages[key], template);
+                      return _.template(ruleIsString ? errorMessages[key]:$scope.rules[key].message, template);
                   }
                 }
               }
