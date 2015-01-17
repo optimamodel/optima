@@ -92,11 +92,12 @@ class WorkingProjectDb(db.Model):
     model = deferred(db.Column(JSON))
     work_log_id = db.Column(db.Integer, default = None)
 
-    def __init__(self, project_id, is_working=False, model = None, work_type = None):
+    def __init__(self, project_id, is_working=False, model = None, work_type = None, work_log_id = None):
         self.id = project_id
         self.model = model if model else {}
         self.is_working = is_working
         self.work_type = work_type
+        self.work_log_id = work_log_id
 
 class WorkLogDb(db.Model):
     __tablename__ = "work_log"
