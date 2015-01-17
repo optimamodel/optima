@@ -35,6 +35,7 @@ define ['angular-mocks', 'Source/modules/analysis/optimization-ctrl'], ->
           $scope: scope
           meta: meta
           modalService: {}
+          cfpLoadingBar: {}
         }
 
     describe 'yearsAreRequired()', ->
