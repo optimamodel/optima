@@ -20,11 +20,8 @@ from parameters import input_parameter_name
 ## Set defaults for testing makeccocs
 default_progname = 'SBCC'
 default_ccparams = [] #[0.9, 0.38, 134000.0, None, None]
-default_ccplot = [] #[2e6, [0, []]]
+default_ccplot =  [] #[None, None]
 default_coparams = [] #[0.3, 0.5, 0.7, 0.9] 
-default_init_ccparams = []
-default_init_convertedccparams = []
-default_init_nonhivdalys = [0.0]
 default_makeplot = 0 # CK: Otherwise brings up >100 figures
 default_effect = [['sex', 'condomcas'], [u'MSM']] # D.programs[default_progname]['effects'][0] 
 default_artelig = range(6,26)
@@ -70,13 +67,25 @@ def makecc(D=None, progname=default_progname, ccparams=default_ccparams, ccplot=
 
     # Extract basic info from data structure
     prognumber = D.data.meta.progs.short.index(progname) # get program number    
-    totalcost = D.data.costcov.cost[prognumber] # get total cost
+    totalcost = D.data.costcov.realcost[prognumber] # get total cost
+
+    # Adjust cost data to year specified by user (if given)
+    if ccplot and ccplot[1]:
+        cpi = D.data.econ.cpi[0] # get CPI
+        cpibaseyear = ccplot[1]
+        cpibaseyearindex = D.data.econyears.index(cpibaseyear)
+        if len(totalcost)==1: # If it's an assumption, assume it's already in current prices
+            totalcost = totalcost
+        else:
+            totalcost = [totalcost[j]*(cpi[cpibaseyearindex]/cpi[j]) if ~isnan(totalcost[j]) else float('nan') for j in range(len(totalcost))]
+    else:
+        cpibaseyear = D.data.epiyears[-1]
 
     # Get coverage (in separate function)
     coverage, coveragelabel, convertedccparams = getcoverage(D, ccparams, artelig=default_artelig, progname=progname)
 
     # Get upper limit of x axis for plotting
-    if ccplot:
+    if ccplot and ccplot[0]:
         xupperlim = ccplot[0]
     else:
         xupperlim = max([x if ~isnan(x) else 0.0 for x in totalcost])*1.5
@@ -151,7 +160,7 @@ def makecc(D=None, progname=default_progname, ccparams=default_ccparams, ccplot=
 
     # Populate output structure with labels and titles
     plotdata['title'] = progname
-    plotdata['xlabel'] = 'USD'
+    plotdata['xlabel'] = 'USD'+ ', ' + str(int(cpibaseyear)) + ' prices'
     plotdata['ylabel'] = coveragelabel
     
     # Plot 
@@ -394,7 +403,7 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
     plotdata, plotdata_co, storeparams, 
     '''
     
-    printv("makecco(%s, %s, %s, %s, %s, %s, %s)" % (progname, effect, ccparams, coparams, makeplot, verbose, nxpts), 2, verbose)
+    printv("makecco(%s, %s, %s, %s, %s, %s, %s, %s)" % (progname, effect, ccparams, ccplot, coparams, makeplot, verbose, nxpts), 2, verbose)
 
     # Check that the selected program is in the program list 
     if unicode(progname) not in D.programs.keys():
@@ -421,19 +430,6 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
 
     saturation, growthrate, xupperlim = None, None, None
 
-    # Extract scatter data
-    totalcost = D.data.costcov.cost[prognumber] # get total cost data
-
-    # Get upper x limit for plotting
-    if ccplot:
-        xupperlim = max(ccplot[0], max([j if ~isnan(j) else 0.0 for j in totalcost])*1.5)
-    else: 
-        xupperlim = max([j if ~isnan(j) else 0.0 for j in totalcost])*1.5
-
-    # Populate output structure with axis limits
-    plotdata['xlowerlim'], plotdata['ylowerlim']  = 0.0, 0.0
-    plotdata['xupperlim'], plotdata['yupperlim']  = xupperlim, 1.0
-
     # Only going to make cost-outcome curves for programs where the affected parameter is not coverage
     if parname not in coverage_params:
         if popname[0] in D.data.meta.pops.short:
@@ -441,6 +437,25 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
         else:
             popnumber = 0
         printv("coparams in makecco: %s" % coparams, 5, verbose)
+
+        # Extract cost data and adjust to base year specified by user (if given)
+        totalcost = D.data.costcov.realcost[prognumber] # get total cost data
+        if ccplot and ccplot[1]:
+            cpi = D.data.econ.cpi[0] # get CPI
+            cpibaseyear = ccplot[1]
+            cpibaseyearindex = D.data.econyears.index(cpibaseyear)
+            if len(totalcost)==1: # If it's an assumption, assume it's already in current prices
+                totalcost = totalcost
+            else:
+                totalcost = [totalcost[j]*(cpi[cpibaseyearindex]/cpi[j]) if ~isnan(totalcost[j]) else float('nan') for j in range(len(totalcost))]
+        else:
+            cpibaseyear = D.data.epiyears[-1]
+
+        # Get upper x limit for plotting
+        if ccplot and ccplot[0]:
+            xupperlim = max(ccplot[0], max([j if ~isnan(j) else 0.0 for j in totalcost])*1.5)
+        else: 
+            xupperlim = max([j if ~isnan(j) else 0.0 for j in totalcost])*1.5
 
         # Do we have parameters for making curves?
         if (ccparams or D.programs[progname]['ccparams']) and (coparams or (len(effect)>2 and len(effect[2])>3)):
@@ -501,6 +516,10 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
         # unless the intention is do not produce coverage-outcome relationships when ccparams / coparams are not present - AN)
         plotdata_co, effect = makeco(D, progname, effect, coparams, makeplot=makeplot, verbose=verbose)
 
+        # Populate output structure with axis limits
+        plotdata['xlowerlim'], plotdata['ylowerlim']  = 0.0, 0.0
+        plotdata['xupperlim'], plotdata['yupperlim']  = xupperlim, 1.0
+    
         # Extract outcome data
         outcome = D.data[effect[0][0]][effect[0][1]][popnumber]
 
@@ -529,7 +548,7 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
 
         # Populate output structure with labels and titles
         plotdata['title'] = input_parameter_name(effect[0][1])+ ' - ' + effect[1][0]
-        plotdata['xlabel'] = 'USD'
+        plotdata['xlabel'] = 'USD'+ ', ' + str(int(cpibaseyear)) + ' prices'
         plotdata['ylabel'] = 'Outcome'
         
         # Plot results 
@@ -706,20 +725,6 @@ def makesamples(coparams, muz, stdevz, muf, stdevf, samplesize=1000):
     fullsample = rtnorm((coparams[2] - muf) / stdevf, (coparams[3] - muf) / stdevf, mu=muf, sigma=stdevf, size = samplesize)
         
     return zerosample, fullsample
-
-###############################################################################
-def restructureprograms(programs):
-    '''
-    Restructure D.programs for easier use.
-    '''
-    ccparams = default_init_ccparams
-    convertedccparams = default_init_convertedccparams
-    nonhivdalys = default_init_nonhivdalys
-    keys = ['ccparams','convertedccparams','nonhivdalys','effects']
-    for program in programs.keys():
-        programs[program] = dict(zip(keys,[ccparams, convertedccparams, nonhivdalys, programs[program]]))
-    return programs
-
 
 
 # For testing... delete later... should make separate file!
