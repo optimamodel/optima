@@ -202,7 +202,8 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
         
         # We have two ways to calculate number of births...
         if (asym<0).any(): # Method 1 -- children are being modelled directly
-            print('working on it...') # Use negative entries in transitions matrix
+            print('NB, not implemented') # TODO Use negative entries in transitions matrix
+            birthrate = M.birth[:,t] # Use birthrate parameter from input spreadsheet
         else: # Method 2 -- children are not being modelled directly
             birthrate = M.birth[:,t] # Use birthrate parameter from input spreadsheet
         S['births'][0,t] = sum(birthrate * allpeople[:,t])
