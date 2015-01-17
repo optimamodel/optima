@@ -18,6 +18,7 @@ define(['./module', 'underscore'], function (module, _) {
       $scope.notReady = $scope.needData || $scope.cannotCalibrate;
 
       $scope.optionsErrorMessage = 'To define a cost-coverage curve, values must be provided in the first three text boxes.';
+      $scope.needAllCCParamsMessage = 'First three text boxes must be either all empty, or all have values in them.';
       $scope.all_programs = programs;
 
       if ( !$scope.needData ) {
@@ -48,7 +49,7 @@ define(['./module', 'underscore'], function (module, _) {
       $scope.knownFundingValue = undefined;
       $scope.scaleUpParameter = undefined;
       $scope.nonHivDalys = undefined;
-      $scope.displayCost = 1;
+      $scope.validCCParams = undefined;
 
       plotTypes = ['plotdata', 'plotdata_cc', 'plotdata_co'];
 
@@ -304,6 +305,10 @@ define(['./module', 'underscore'], function (module, _) {
       return !$scope.hasCostCoverResponse || areCCParamsValid($scope.costCoverageParams());
     };
 
+    $scope.hasAllCCParams = function() {
+      return hasAllElements($scope.costCoverageParams().slice(0, 3));
+    }
+
     /**
      * Update current program ccparams based on the selected program.
      *
@@ -325,12 +330,12 @@ define(['./module', 'underscore'], function (module, _) {
     var retrieveAndUpdateGraphs = function (model) {
       // validation on Cost-coverage curve plotting options
       if (!areCCParamsValid(model.ccparams)){
-        modalService.inform(
+ /*       modalService.inform(
           function () {},
           'Okay',
           $scope.optionsErrorMessage,
           'Error!'
-        );
+        );*/
         return;
       }
 
@@ -386,16 +391,8 @@ define(['./module', 'underscore'], function (module, _) {
       }
       if ($scope.selectedProgram.ccplot && $scope.selectedProgram.ccplot.length==2) {
         $scope.xAxisMaximum = $scope.selectedProgram.ccplot[0];
-        var years = $scope.selectedProgram.ccplot[1][1];
-        if (years.length > 0) {
-          $scope.displayYear = years[0];
-          $scope.displayCost = 2;
-        } else {
-          $scope.displayCost = 1;
-          $scope.displayYear = undefined;
-        }
+        $scope.displayYear = $scope.selectedProgram.ccplot[1];
       } else {
-        $scope.displayCost = 1;
         $scope.displayYear = undefined;
         $scope.xAxisMaximum = undefined;
       }
@@ -463,12 +460,12 @@ define(['./module', 'underscore'], function (module, _) {
       model.coparams = $scope.coParams[graphIndex];
       model.effect =  effectNames[graphIndex];
       if ( !$scope.areValidParams(model.coparams) ){
-        modalService.inform(
+  /*      modalService.inform(
           function () {},
           'Okay',
           $scope.optionsErrorMessage,
           'Error!'
-        );
+        );*/
         return;
       }
 

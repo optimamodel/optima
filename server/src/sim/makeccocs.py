@@ -403,7 +403,7 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
     plotdata, plotdata_co, storeparams, 
     '''
     
-    printv("makecco(%s, %s, %s, %s, %s, %s, %s)" % (progname, effect, ccparams, coparams, makeplot, verbose, nxpts), 2, verbose)
+    printv("makecco(%s, %s, %s, %s, %s, %s, %s, %s)" % (progname, effect, ccparams, ccplot, coparams, makeplot, verbose, nxpts), 2, verbose)
 
     # Check that the selected program is in the program list 
     if unicode(progname) not in D.programs.keys():
