@@ -210,7 +210,10 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
         mtcttx       = sum(birthrate * sum(people[tx1,:,t] +people[tx2,:,t]))  * pmtcteff # MTCT from those on treatment (not eligible for PMTCT)
         mtctundx     = sum(birthrate * sum(people[undx,:,t]+people[fail,:,t])) * effmtct  # MTCT from those undiagnosed or failed (also not eligible)
         birthselig   = sum(birthrate * sum(people[dx,:,t]))   # Births to diagnosed mothers eligible for PMTCT
-        receivepmtct = min(numpmtct[t], birthselig)           # Births protected by PMTCT -- constrained by number eligible 
+        if numpmtct[t]>1: # It's greater than 1: assume it's a number
+            receivepmtct = min(numpmtct[t], birthselig)       # Births protected by PMTCT -- constrained by number eligible 
+        else: # It's a proportion
+            receivepmtct = numpmtct[t]*birthselig          # Births protected by PMTCT -- constrained by number eligible 
         mtctdx       = (birthselig - receivepmtct) * effmtct  # MTCT from those diagnosed not receiving PMTCT
         mtctpmtct    = receivepmtct * pmtcteff                # MTCT from those receiving PMTCT
         S['mtct'][0,t] = mtctundx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components 
