@@ -12,6 +12,7 @@ Optimization Module
 from flask import request, jsonify, Blueprint, current_app
 from dbconn import db
 from async_calculate import CalculatingThread, start_or_report_calculation, cancel_calculation, check_calculation
+from async_calculate import check_calculation_status, good_exit_status
 from utils import check_project_name, project_exists, load_model, \
 revert_working_model_to_default, save_working_model_as_default, report_exception
 from sim.optimize import optimize
@@ -82,14 +83,21 @@ def getWorkingModel():
     D_dict = {}
     # Get optimization working data
     prj_name = request.project_name
+    error_text = None
     if check_calculation(current_user.id, prj_name, optimize, db.session):
         D_dict = load_model(prj_name, working_model = True, as_bunch = False)
         status = 'Running'
     else:
         current_app.logger.debug("no longer optimizing")
-        status = 'Done'
+        status, error_text = check_calculation_status(current_user.id, prj_name, optimize, db.session)
+        if status in good_exit_status:
+            status = 'Done'
+        else:
+            status = 'NOK'
     result = get_optimization_results(D_dict)
     result['status'] = status
+    if error_text:
+        result['exception'] = error_text
     return jsonify(result)
 
 @optimization.route('/save', methods=['POST'])

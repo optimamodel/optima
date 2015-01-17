@@ -280,6 +280,7 @@ define(['./module', 'angular'], function (module, angular) {
       // Error indicates that the model is not calibrating anymore.
             autoCalibrationTimer = $interval(checkWorkingAutoCalibration, 5000, 0, false);
             $scope.calibrationStatus = 'running';
+            $scope.errorText = '';
 
             // start cfpLoadingBar loading
             // calculate the number of ticks in timelimit
@@ -308,6 +309,9 @@ define(['./module', 'angular'], function (module, angular) {
           }
         })
         .error(function(data, status, headers, config) {
+          if (data && data.exception) {
+            $scope.errorText = data.exception
+          }
           stopTimer();
         });
     }
