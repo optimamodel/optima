@@ -72,9 +72,9 @@
                 <div class="info-hint" ng-show="calibrationStatus">
                     {{reportCalibrationStatus()}}
                 </div>
-                <textarea class="error-hint" ng-show="errorText">
-                    {{errorText}}
-                </textarea>
+                <div class="error-hint" ng-show="errorText">
+                    <pre>{{errorText}}</pre>
+                </div>
 
             </div>
         </div>
