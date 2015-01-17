@@ -17,7 +17,6 @@ This function does everything. The basic procedure is as follows:
 Version: 2014nov26 by cliffk
 """
 
-
 print('WELCOME TO OPTIMA')
 
 import argparse
