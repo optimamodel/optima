@@ -339,7 +339,7 @@ def cco2eqn(x, p):
     return y
 
 ###############################################################################
-def cceqn(x, p):
+def cceqn(x, p, eps=1e-3):
     '''
     3-parameter equation defining cc curves.
 
@@ -350,7 +350,7 @@ def cceqn(x, p):
 
     Returns y which is coverage.
     '''
-    y = p[0] / (1 + exp((log(p[1])-nplog(x))/p[2]))
+    y = p[0] / (1 + exp((log(p[1])-nplog(x))/max(p[2],eps)))
 
     return y
     
