@@ -183,10 +183,12 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
         # Transmission effects
         if ost[t]<=1: # It's a proportion
             osteff = 1 - ost[t]*effost
+            if osteff<0: raise Exception('Bug in 1 - ost[t]*effost: osteff=%f ost[t]=%f effost=%f' % (osteff, ost[t], effost))
         else: # It's a number, convert to a proportion using the PWID flag
             numost = ost[t] # Total number of people on OST
             numpwid = sum(M.popsize[nonzero(G.meta.pops.injects),t]) # Total number of PWID
-            osteff = 1 - (numost/numpwid)*effost # Proportion of 
+            osteff = 1 - min(1,numost/numpwid)*effost # Proportion of PWID on OST, making sure there aren't more people on OST than PWID
+            if osteff<0: raise Exception('Bug in 1 - min(1,numost/numpwid)*effost: osteff=%f numost=%f numpwid=%f effost=%f' % (osteff, numost, numpwid, effost))
         # Iterate through partnership pairs
         for pop1 in range(npops):
             for pop2 in range(npops):
