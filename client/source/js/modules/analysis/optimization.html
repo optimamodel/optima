@@ -18,11 +18,11 @@
         <h2>Time horizons and assumptions</h2>
         <div class="float-left margin-left-s">
             Analyses will consider program optimizations over the period
-            <input class="txbox __inline __l" value="2015" type="number" placeholder="e.g. 2015" ng-model="params.objectives.year.start" ng-keyup="updateYearRange()" ng-required="yearsAreRequired()">
+            <input class="txbox __inline __l" value="2015" type="number" name="start" max="2050"  placeholder="e.g. 2015" ng-model="params.objectives.year.start" ng-keyup="updateYearRange()" ng-required="yearsAreRequired()" ng-class="__invalid: $invalid">
             to
-            <input class="txbox __inline __l" value="2020" type="number" placeholder="e.g. 2020" ng-model="params.objectives.year.end" ng-keyup="updateYearRange()" ng-required="yearsAreRequired()">
+            <input class="txbox __inline __l" value="2020" type="number" name="start" max="2050" placeholder="e.g. 2020" ng-model="params.objectives.year.end" ng-keyup="updateYearRange()" ng-required="yearsAreRequired()">
             in order to achieve the objectives by
-            <input class="txbox __inline __l" value="2030" type="number" placeholder="e.g. 2030" ng-model="params.objectives.year.until">
+            <input class="txbox __inline __l" value="2030" type="number" max="2050" placeholder="e.g. 2030" ng-model="params.objectives.year.until">
             , with the following context between the end of the optimized program period and the end of the analysis period:</p>
             <div>
                 <label>
@@ -44,7 +44,7 @@
                     </label><br>
                     <label>
                         <input type="radio" name="artcontinue" ng-model="params.objectives.artcontinue" value="4">
-                        ART coverage will scale up, reaching <input class="txbox __inline __s" value="90" placeholder="e.g. 90" ng-model="params.objectives.year.universalcov">% coverage of treatment-eligible people by <input class="txbox __inline __l" value="2025" placeholder="e.g. 2025" ng-model="params.objectives.year.universal"> and then be maintained
+                        ART coverage will scale up, reaching <input class="txbox __inline __s" type="number" min="0" value="90" placeholder="e.g. 90" ng-model="params.objectives.year.universalcov">% coverage of treatment-eligible people by <input class="txbox __inline __l" type="number" value="2025" placeholder="e.g. 2025" max="2050" ng-model="params.objectives.year.universal"> and then be maintained
                     </label>
                 </div>
             </div>
@@ -66,6 +66,12 @@
                 </div>
             </div>
         </div>
+        <span ng-show="OptimizationForm.start.$invalid" class="help-inline">
+        Starting year can be up to 2050</span>
+        <span ng-show="OptimizationForm.end.$invalid" class="help-inline">
+        Ending year can be up to 2050</span>
+        <span ng-show="OptimizationForm.artcontinue.$invalid" class="help-inline">
+        ART year can be up to 2050</span>
     </div>
 
     <hr/>
