@@ -329,13 +329,7 @@ define(['./module', 'underscore'], function (module, _) {
      */
     var retrieveAndUpdateGraphs = function (model) {
       // validation on Cost-coverage curve plotting options
-      if (!areCCParamsValid(model.ccparams)){
- /*       modalService.inform(
-          function () {},
-          'Okay',
-          $scope.optionsErrorMessage,
-          'Error!'
-        );*/
+      if (!areCCParamsValid(model.ccparams)){ 
         return;
       }
 
@@ -460,12 +454,7 @@ define(['./module', 'underscore'], function (module, _) {
       model.coparams = $scope.coParams[graphIndex];
       model.effect =  effectNames[graphIndex];
       if ( !$scope.areValidParams(model.coparams) ){
-  /*      modalService.inform(
-          function () {},
-          'Okay',
-          $scope.optionsErrorMessage,
-          'Error!'
-        );*/
+        // no need to show dialog - we inform the user with hints
         return;
       }
 
