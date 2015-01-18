@@ -293,7 +293,12 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
         
         ## Diagnosed
         if txtotal[t]>0: # Only use if it's defined
-            newtreat1tot = txtotal[t] - people[txind,:,t].sum() # New people on treatment is just the total requested minus total current
+            if txtotal[t]<=1: # It's less than one: interpret it as a proportion
+                currplhiv = people[plhivind,:,t].sum()
+                currtx = people[txind,:,t].sum()
+                newtreat1tot =  txtotal[t] * currplhiv - currtx
+            else: # It's greater than one: it's a number
+                newtreat1tot = txtotal[t] - people[txind,:,t].sum() # New people on treatment is just the total requested minus total current
         else:
             newtreat1tot = Mtx1[t] - people[tx1,:,t].sum() # Calculate difference between current people on treatment and people needed
         currentdiagnosed = people[dx,:,t] # Find how many people are diagnosed
