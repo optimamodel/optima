@@ -146,21 +146,27 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
         # Reset force-of-infection vector for each population group
         forceinfvec = zeros(npops)
         
+
+        
         ## Sexual partnerships
-        
-        effcirc = effcirc*M.circum
-        
-        # Iterate through partnership pairs
+        # Loop over all populations (for males)
         for popM in range(npops):
+            
+            # Circumcision
+            circeffF = 1 # Trivial circumcision effect for female or receptive male
+            if t>0 and M.numcircum[popM,t]>0: # Only use this if it's greater than zero
+                fractioncircumcised = dt*M.numcircum[popM,t]/M.popsize[popM,t] # Fraction of men in this population being circumcised
+                M.circum[popM,t] = min(1, M.circum[popM,t]+fractioncircumcised) # Calculate new fraction circumcised, making sure it never exceeds 1
+            circeffM = 1 - effcirc*M.circum[popM,t]            
+            
+            # Loop over all populations (for females)
             for popF in range(npops):
                 
                 # Transmissibility (depends on receptive population being male or female)
                 transM = mmi if male[popF] else mfi # Insertive transmissibility
                 transF = mmr if male[popF] else mfr # Receptive transmissibility
 
-                # Transmission effects
-                circeffM = 1 - effcirc[popM,t] # Effect of circumcision for insertive male -- # TODO: check this is capturing what we want, i.e shouldn't it only be for susceptibles?
-                circeffF = 1                   # Trivial circumcision effect for female or receptive male
+                # Transmission effects                
                 prepeffM = 1 - effprep[popM,t] # Male PrEP effect
                 prepeffF = 1 - effprep[popF,t] # Female PrEP effect
                 stieffM  = 1 + effsti[popM,t]  # Male STI prevalence effect
