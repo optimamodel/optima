@@ -24,6 +24,17 @@ define(['d3'], function (d3) {
     };
   };
 
+  var flexCeil = function(x) {
+    if (x>=1.0) return Math.ceil(x);
+    var multi=1.0;
+    while (x<1.0){
+      multi/=10;
+      x*=10;
+    }
+    return Math.ceil(x)*multi;
+  };
+
+
   // Orginally taken from d3 and modified to use the requested abbreviations.
   var formatPrefixes = [ "y", "z", "a", "f", "p", "n", "µ", "milli", "", "K",
     "m", "bn", "T", "P", "E", "Z", "Y" ].map(formatPrefix);
@@ -86,6 +97,7 @@ define(['d3'], function (d3) {
 
   return {
     evaluateTickFormat: evaluateTickFormat,
-    customTickFormat: customTickFormat
+    customTickFormat: customTickFormat,
+    flexCeil: flexCeil
   };
 });

@@ -82,7 +82,7 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
       // normalizing all graphs scales to include maximum possible x and y
       _(graphsScales).each(function (scale) {
         scale.y.domain([0, yMax]);
-        scale.x.domain([Math.floor(xMin), Math.ceil(xMax)]);
+        scale.x.domain([Math.floor(xMin), scaleHelpers.flexCeil(xMax)]);
       });
 
       options.yAxis.tickFormat = function (value) {

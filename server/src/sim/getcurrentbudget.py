@@ -71,7 +71,6 @@ def getcurrentbudget(D, alloc=None):
                     popnumber = D.data.meta.pops.short.index(popname[0]) 
                 else:
                     popnumber = 0
-
                 if len(effect)>4 and len(effect[4])>=4: #happy path if co_params are actually there
                     # Unpack
                     convertedccoparams = effect[4]
