@@ -85,7 +85,9 @@ def makecc(D=None, progname=default_progname, ccparams=default_ccparams, ccplot=
 
     # Flag to indicate whether we will adjust by population or not
     popadj = 0
-    if ccplot and len(ccplot)==3: popadj = ccplot[2]        
+    if ccplot and len(ccplot)==3:
+        popadj = ccplot[2]
+        ccplot[0] = None
 
     # Get coverage and target population size (in separate function)       
     coverage, targetpopsize, coveragelabel, convertedccparams, ccplottingparams = getcoverage(D, ccparams, popadj=popadj, artelig=default_artelig, progname=progname)
@@ -479,7 +481,9 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
 
         # Flag to indicate whether we will adjust by population or not
         popadj = 0
-        if ccplot and len(ccplot)==3: popadj = ccplot[2]
+        if ccplot and len(ccplot)==3:
+            popadj = ccplot[2]
+            ccplot[0] = None
 
         # Get target population size (in separate function)       
         coverage, targetpopsize, coveragelabel, convertedccparams, ccplottingparams = getcoverage(D, params=[], popadj=0, artelig=default_artelig, progname=progname)
