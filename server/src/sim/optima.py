@@ -24,7 +24,7 @@ import argparse
 parser = argparse.ArgumentParser(description = "OPTIMA global procedure")
 parser.add_argument("-p", "--projectname", type=str, default="example", help = "source project name")
 parser.add_argument("-v", "--verbose", type=int, default=4, help="increase output verbosity")
-parser.add_argument("-w","--wait", help="wait for user input after showing graphs", action="store_true")
+parser.add_argument("-w", "--wait", help="wait for user input after showing graphs", action="store_true")
 parser.add_argument("-t", "--timelimit", type=int, default=3, help="time limit")
 args = parser.parse_args()
 
@@ -67,7 +67,7 @@ viewmultiresults(D.plot.scens)
 
 print('\n\n\n11. Running optimization...')
 from optimize import optimize
-D = optimize(D, objectives=None, constraints=None, timelimit=timelimit, verbose=2)
+D = optimize(D, objectives=None, constraints=None, budgets=['original', 1.5], optimstartyear=2015, optimendyear=2022, ntimepm=2, timelimit=timelimit, verbose=verbose)
 
 print('\n\n\n12. Viewing optimization...')
 from viewresults import viewallocpies

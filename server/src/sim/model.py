@@ -220,6 +220,13 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
                     if not(all(forceinfvec>=0)): raise Exception('Injecting force-of-infection is invalid (transinj=%f, numacts1=%f, numacts2=%f, osteff=%f, effhivprev1=%f, effhivprev2=%f)'% (transinj, numacts1, numacts2, osteff, effhivprev[pop2], effhivprev[pop1]))
         
         ###############################################################################
+        ## Turn off transmission (after a certain time - if specified)
+        ###############################################################################
+
+        if S.tvec[t] >= absolute(opt.turnofftrans):
+            if opt.turnofftrans > 0: forceinfvec[range(npops)] = 0
+            if opt.turnofftrans < 0: break
+        ###############################################################################
         ## Calculate mother-to-child-transmission
         ###############################################################################
         
