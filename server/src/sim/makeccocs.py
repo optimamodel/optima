@@ -18,10 +18,10 @@ from printv import printv
 from parameters import input_parameter_name
 
 ## Set defaults for testing makeccocs
-default_progname = 'SBCC'
-default_ccparams = []#[0.9, 0.38, 134000.0, None, None]
-default_ccplot =  []#[None, None, 0]
-default_coparams = [] #[0.3, 0.5, 0.7, 0.9] 
+default_progname = 'NSP'
+default_ccparams = []#[0.9, 0.2, 125000.0, None, None]
+default_ccplot = []#[None, None, 0]
+default_coparams = []#[0.3, 0.5, 0.7, 0.9] 
 default_makeplot = 0 # CK: Otherwise brings up >100 figures
 default_effect = [['sex', 'condomcas'], [u'MSM']] # D.programs[default_progname]['effects'][0] 
 default_artelig = range(6,26)
@@ -88,22 +88,21 @@ def makecc(D=None, progname=default_progname, ccparams=default_ccparams, ccplot=
     # Get coverage and target population size (in separate function)       
     coverage, targetpopsize, coveragelabel, convertedccparams, ccplottingparams = getcoverage(D, ccparams, popadj, artelig=default_artelig, progname=progname)
 
-    # Get upper limit of x axis for plotting
-    if ccplot and ccplot[0]:
-        xupperlim = ccplot[0]
-
-    # Check the lengths or coverage and cost are the same.
+    # Check the lengths or coverage and cost are the same and extract the appropriate scatter data
     if (len(totalcost) == 1 and len(coverage) > 1):
         coverage = float_array(coverage)
         coverage = coverage[~isnan(coverage)]
         coverage = coverage[-1]
+        # Adjust cost data by target population size, if requested by user 
+        if (ccplot and len(ccplot)==3 and ccplot[2]):
+            totalcost = totalcost/targetpopsize[-1]
     elif (len(coverage) == 1 and len(totalcost) > 1): 
+        # Adjust cost data by target population size, if requested by user 
+        if (ccplot and len(ccplot)==3 and ccplot[2]):
+            totalcost = totalcost/targetpopsize
         totalcost = float_array(totalcost)
         totalcost = totalcost[~isnan(totalcost)]
         totalcost = totalcost[-1]
-        # Adjust cost data by target population size, if requested by user 
-        if ccplot and len(ccplot)==3:
-            totalcost = totalcost/targetpopsize
     else:
         totalcostscatter = []
         coveragescatter = []
@@ -114,15 +113,17 @@ def makecc(D=None, progname=default_progname, ccparams=default_ccparams, ccplot=
         totalcost = totalcostscatter
         coverage = coveragescatter
         # Adjust cost data by target population size, if requested by user 
-        if ccplot and len(ccplot)==3:
+        if (ccplot and len(ccplot)==3 and ccplot[2]):
             totalcost = [totalcost[j]/targetpopsize[j] for j in range(len(totalcost))]
         
     # Populate output structure with scatter data 
     plotdata['xscatterdata'] = totalcost
     plotdata['yscatterdata'] = coverage
 
-    # Set x upper limit if it hasn't been set already
-    if not (ccplot and ccplot[0]):
+    # Get upper limit of x axis for plotting
+    if ccplot and ccplot[0]:
+        xupperlim = max(max([x if ~isnan(x) else 0.0 for x in totalcost])*1.5, ccplot[0])
+    else:
         xupperlim = max([x if ~isnan(x) else 0.0 for x in totalcost])*1.5
 
     # Are there parameters (either given by the user or previously stored)?
@@ -236,7 +237,7 @@ def makeco(D, progname=default_progname, effect=default_effect, coparams=default
         
         # Get data for scatter plots
         outcome = D.data[effect[0][0]][effect[0][1]][popnumber]
-        coverage, coveragelabel, storeccparams = getcoverage(D, params=[], artelig=default_artelig, progname=progname)
+        coverage, targetpopsize, coveragelabel, convertedccparams, ccplottingparams = getcoverage(D, params=[], popadj=0, artelig=default_artelig, progname=progname)
 
         # Populate output structure with axis limits
         plotdata['xlowerlim'], plotdata['ylowerlim']  = 0.0, 0.0
@@ -463,11 +464,53 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
         else:
             cpibaseyear = D.data.epiyears[-1]
 
-        # Get upper x limit for plotting
+        # Extract outcome data
+        outcome = D.data[effect[0][0]][effect[0][1]][popnumber]
+
+        # Flag to indicate whether we will adjust by population or not
+        popadj = 0
+        if ccplot and len(ccplot)==3: popadj = ccplot[2]
+
+        # Get target population size (in separate function)       
+        coverage, targetpopsize, coveragelabel, convertedccparams, ccplottingparams = getcoverage(D, params=[], popadj=0, artelig=default_artelig, progname=progname)
+
+        # Get around situations where there's an assumption for coverage but not for behaviour, or vice versa
+        if (len(totalcost) == 1 and len(outcome) > 1): 
+            # Adjust cost data by target population size, if requested by user 
+            if (ccplot and len(ccplot)==3 and ccplot[2]):
+                totalcost = totalcost/targetpopsize[-1]
+            outcome = float_array(outcome)
+            outcome = outcome[~isnan(outcome)]
+            outcome = [outcome[-1]]
+        elif (len(outcome) == 1 and len(totalcost) > 1):
+            # Adjust cost data by target population size, if requested by user 
+            if (ccplot and len(ccplot)==3 and ccplot[2]):
+                totalcost = totalcost/targetpopsize[-1]
+            totalcost = float_array(totalcost)
+            totalcost = totalcost[~isnan(totalcost)]
+            totalcost = [totalcost[-1]]
+        else:
+            # Adjust cost data by target population size, if requested by user 
+            if (ccplot and len(ccplot)==3 and ccplot[2]):
+                totalcost = [totalcost[j]/targetpopsize[j] for j in range(len(totalcost))]
+            totalcostscatter = []
+            outcomescatter = []
+            for j in range(len(totalcost)):
+                if (~isnan(totalcost[j]) and ~isnan(outcome[j])):
+                    totalcostscatter.append(totalcost[j])
+                    outcomescatter.append(outcome[j])
+            totalcost = totalcostscatter
+            outcome = outcomescatter
+
+        # Populate output structure with scatter data 
+        plotdata['xscatterdata'] = totalcost # X scatter data
+        plotdata['yscatterdata'] = outcome # Y scatter data
+    
+        # Get upper limit of x axis for plotting
         if ccplot and ccplot[0]:
             xupperlim = max(ccplot[0], max([j if ~isnan(j) else 0.0 for j in totalcost])*1.5)
-        else: 
-            xupperlim = max([j if ~isnan(j) else 0.0 for j in totalcost])*1.5
+        else:
+            xupperlim = max([x if ~isnan(x) else 0.0 for x in totalcost])*1.5
 
         # Do we have parameters for making curves?
         if (ccparams or D.programs[progname]['ccparams']) and (coparams or (len(effect)>2 and len(effect[2])>3)):
@@ -475,13 +518,20 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
             if not ccparams: # Don't have new ccparams, get previously stored ones
                 ccparams = D.programs[progname]['ccparams']
 
+            costparam = ccparams[2]
+            if popadj: costparam = ccparams[2]/targetpopsize[-1]
+
             saturation = ccparams[0]
             if isinstance(ccparams[3], float):
                 growthrate = exp(ccparams[3]*log(ccparams[0]/ccparams[1]-1)+log(ccparams[2]))
+                growthrateplot = exp(ccparams[3]*log(ccparams[0]/ccparams[1]-1)+log(costparam))
                 convertedccoparams = [saturation, growthrate, ccparams[3]]
+                convertedccoplotparams = [saturation, growthrateplot, ccparams[3]]
             else:
                 growthrate = (-1/ccparams[2])*log((2*ccparams[0])/(ccparams[1]+ccparams[0]) - 1)        
+                growthrateplot = (-1/costparam)*log((2*ccparams[0])/(ccparams[1]+ccparams[0]) - 1)        
                 convertedccoparams = [saturation, growthrate]
+                convertedccoplotparams = [saturation, growthrateplot]
 
             if coparams: # Get coparams from  GUI... 
                 muz, stdevz, muf, stdevf = makecosampleparams(coparams, verbose=verbose)
@@ -499,6 +549,7 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
                 convertedcoparams = effect[3]
 
             convertedccoparams.extend([convertedcoparams[0],convertedcoparams[2]])
+            convertedccoplotparams.extend([convertedcoparams[0],convertedcoparams[2]])
             if len(effect) < 5: # There's no existing info here, append
                 effect.append(convertedccoparams)
             else:
@@ -509,13 +560,13 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
     
             # Min, Median and Max lines
             if isinstance(ccparams[3], float):
-                mediancco = ccoeqn(xvalscco, convertedccoparams)# Generate median cost-outcome curve
-                mincco = ccoeqn(xvalscco, [convertedccoparams[0], convertedccoparams[1], convertedccoparams[2], coparams[0], coparams[2]])# Generate min cost-outcome curve
-                maxcco = ccoeqn(xvalscco, [convertedccoparams[0], convertedccoparams[1], convertedccoparams[2], coparams[1], coparams[3]])# Generate max cost-outcome curve
+                mediancco = ccoeqn(xvalscco, convertedccoplotparams)# Generate median cost-outcome curve
+                mincco = ccoeqn(xvalscco, [convertedccoplotparams[0], convertedccoplotparams[1], convertedccoplotparams[2], coparams[0], coparams[2]])# Generate min cost-outcome curve
+                maxcco = ccoeqn(xvalscco, [convertedccoplotparams[0], convertedccoplotparams[1], convertedccoplotparams[2], coparams[1], coparams[3]])# Generate max cost-outcome curve
             else:
-                mediancco = cco2eqn(xvalscco, convertedccoparams)# Generate median cost-outcome curve
-                mincco = cco2eqn(xvalscco, [convertedccoparams[0], convertedccoparams[1], coparams[0], coparams[2]])# Generate min cost-outcome curve
-                maxcco = cco2eqn(xvalscco, [convertedccoparams[0], convertedccoparams[1], coparams[1], coparams[3]])# Generate max cost-outcome curve
+                mediancco = cco2eqn(xvalscco, convertedccoplotparams)# Generate median cost-outcome curve
+                mincco = cco2eqn(xvalscco, [convertedccoplotparams[0], convertedccoplotparams[1], coparams[0], coparams[2]])# Generate min cost-outcome curve
+                maxcco = cco2eqn(xvalscco, [convertedccoplotparams[0], convertedccoplotparams[1], coparams[1], coparams[3]])# Generate max cost-outcome curve
 
             # Populate output structure with cost-outcome curves for plotting
             plotdata['xlinedata'] = xvalscco # X data for all line plots
@@ -532,32 +583,6 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
         plotdata['xlowerlim'], plotdata['ylowerlim']  = 0.0, 0.0
         plotdata['xupperlim'], plotdata['yupperlim']  = xupperlim, 1.0
     
-        # Extract outcome data
-        outcome = D.data[effect[0][0]][effect[0][1]][popnumber]
-
-        # Get around situations where there's an assumption for coverage but not for behaviour, or vice versa
-        if (len(totalcost) == 1 and len(outcome) > 1): 
-            outcome = float_array(outcome)
-            outcome = outcome[~isnan(outcome)]
-            outcome = outcome[-1]
-        elif (len(outcome) == 1 and len(totalcost) > 1):
-            totalcost = float_array(totalcost)
-            totalcost = totalcost[~isnan(totalcost)]
-            totalcost = totalcost[-1]
-        else:
-            totalcostscatter = []
-            outcomescatter = []
-            for j in range(len(totalcost)):
-                if (~isnan(totalcost[j]) and ~isnan(outcome[j])):
-                    totalcostscatter.append(totalcost[j])
-                    outcomescatter.append(outcome[j])
-            totalcost = totalcostscatter
-            outcome = outcomescatter
-
-        # Populate output structure with scatter data 
-        plotdata['xscatterdata'] = totalcost # X scatter data
-        plotdata['yscatterdata'] = outcome # Y scatter data
-
         # Populate output structure with labels and titles
         plotdata['title'] = input_parameter_name(effect[0][1])+ ' - ' + effect[1][0]
         plotdata['xlabel'] = 'USD'+ ', ' + str(int(cpibaseyear)) + ' prices'
