@@ -156,8 +156,8 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
             circeffF = 1 # Trivial circumcision effect for female or receptive male
             if t>0 and M.numcircum[popM,t]>0: # Only use this if it's greater than zero, and not at the first time point
                 fractioncircumcised = dt*M.numcircum[popM,t]/M.popsize[popM,t] # Fraction of men in this population being circumcised
-                M.circum[popM,t] = min(1, M.circum[popM,t-1]+fractioncircumcised) # Calculate new fraction circumcised from previous timestep, making sure it never exceeds 1
-            circeffM = 1 - effcirc*M.circum[popM,t]            
+                M.circum[popM,t:] = min(1, M.circum[popM,t-1]+fractioncircumcised) # Calculate new fraction circumcised from previous timestep, making sure it never exceeds 1
+            circeffM = 1 - effcirc*M.circum[popM,t]
             
             # Loop over all populations (for females)
             for popF in range(npops):
