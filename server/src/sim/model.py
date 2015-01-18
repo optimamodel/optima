@@ -1,5 +1,5 @@
  ## Imports
-from numpy import array, zeros, exp, maximum, minimum, nonzero # For creating arrays
+from numpy import array, arange, zeros, exp, maximum, minimum, nonzero # For creating arrays
 from bunch import Bunch as struct # Replicate Matlab-like structure behavior
 from printv import printv
 from math import pow as mpow
@@ -89,6 +89,7 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
     numpmtct  = M.numpmtct
     ost       = M.numost
     txtotal   = M.txtotal
+    txelig    = M.txelig
     prog      = h2a(G, M.const.prog)   # Disease progression rates
     recov     = h2a(G, M.const.recov)  # Recovery rates
     death     = h2a(G, M.const.death)  # HIV death rates
@@ -142,6 +143,14 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
         effmtct  = mtcb*M.breast[t] + mtcn*(1-M.breast[t]) # Effective MTCT transmission
         pmtcteff = (1 - effpmtct) * effmtct # Effective MTCT transmission whilst on PMTCT
         
+        # Calculate treatment eligibility -- WARNING, hard-coded
+        if txelig[t]>500:   currelig = arange(0,ncd4) # Everyone
+        elif txelig[t]>350: currelig = arange(2,ncd4) # Exclude acute and CD4>500
+        elif txelig[t]>200: currelig = arange(3,ncd4)
+        elif txelig[t]>50:  currelig = arange(4,ncd4)
+        elif txelig[t]>0:   currelig = arange(5,ncd4) # Only people in the last health state
+        else: raise Exception('Treatment eligibility %s at time %s does not seem to be valid' % (txelig[t], t))
+        
         
         
         ###############################################################################
@@ -150,8 +159,6 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
         
         # Reset force-of-infection vector for each population group
         forceinfvec = zeros(npops)
-        
-
         
         ## Sexual partnerships
         # Loop over all populations (for males)
@@ -311,7 +318,8 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
                 progout = dt*prog[cd4]*people[dx[cd4],:,t]
             else: 
                 progout = 0 # Cannot progress out of AIDS stage
-            newtreat1[cd4] = newtreat1tot * currentdiagnosed[cd4,:] / (eps+currentdiagnosed.sum()) # Pull out evenly among diagnosed -- WARNING # TODO implement CD4 cutoffs
+            
+            newtreat1[cd4] = (cd4>=currelig[0]) * newtreat1tot * currentdiagnosed[cd4,:] / (eps+currentdiagnosed[currelig,:].sum()) # Pull out evenly among diagnosed -- WARNING # TODO implement CD4 cutoffs
             hivtbdeath  = minimum((1 + efftb[:,t]) * death[cd4], 1)
             hivdeaths   = dt * people[undx[cd4],:,t] * hivtbdeath
             otherdeaths = dt * people[undx[cd4],:,t] * background

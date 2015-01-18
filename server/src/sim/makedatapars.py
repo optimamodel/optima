@@ -70,7 +70,7 @@ def makedatapars(D, verbose=2):
         printv('Converting data parameter %s...' % parclass, 3, verbose)
         for parname in D.data[parclass].keys():
             printv('Converting data parameter %s...' % parname, 4, verbose)
-            if parname in ['numfirstline','numsecondline']:
+            if parname in ['numfirstline','numsecondline','txelig']:
                 D.P[parname] = data2par(D.data[parclass][parname], usetime=True)
             else:
                 D.P[parname] = data2par(D.data[parclass][parname])
