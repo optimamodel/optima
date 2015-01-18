@@ -102,7 +102,7 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
 
       _(graphsScales).each(function (scale) {
         scale.y.domain([0, Math.ceil(yMax)]);
-        scale.x.domain([Math.floor(highestLine[0][0]), Math.ceil(_(highestLine).last()[0])]);
+        scale.x.domain([Math.floor(highestLine[0][0]), scaleHelpers.flexCeil(_(highestLine).last()[0])]);
       });
 
       d3Charts.drawAxes(

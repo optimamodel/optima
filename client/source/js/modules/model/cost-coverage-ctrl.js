@@ -176,7 +176,6 @@ define(['./module', 'underscore'], function (module, _) {
         [graphData.xupperlim, graphData.yupperlim]
       ];
 
-
       return graph;
     };
 
