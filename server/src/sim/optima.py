@@ -71,7 +71,7 @@ D = runsimulation(D, startyear=2000, endyear=2015, verbose=verbose)
 
 print('\n\n\n11. Running optimization...')
 from optimize import optimize
-D = optimize(D, objectives=None, constraints=None, budgets=['original', 1.5], optimstartyear=2015, optimendyear=2022, timelimit=timelimit, verbose=verbose)
+D = optimize(D, objectives=None, constraints=None, budgets=['original', 1.5], optimstartyear=2015, optimendyear=2022, ntimepm=2, timelimit=timelimit, verbose=verbose)
 
 #print('\n\n\n12. Viewing optimization...')
 #from viewresults import viewallocpies

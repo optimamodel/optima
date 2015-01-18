@@ -1,9 +1,10 @@
+# Imports for all functions
 from printv import printv
 from bunch import Bunch as struct
 from matplotlib.pylab import show, figure, subplot, plot, axis, xlim, ylim, legend
-from numpy import array, ones, zeros, arange, random, absolute
+from numpy import ones, zeros, arange, random, absolute
 
-def optimize(D, objectives=None, constraints=None, budgets=None, optimstartyear=2015, optimendyear=2030, randomize=1, timelimit=60, progressplot=1, verbose=2):
+def optimize(D, objectives=None, constraints=None, budgets=None, optimstartyear=2015, optimendyear=2030, ntimepm=1, randomize=1, timelimit=60, progressplot=1, verbose=2):
     """
     Allocation optimization code:
         D is the project data structure
@@ -23,8 +24,8 @@ def optimize(D, objectives=None, constraints=None, budgets=None, optimstartyear=
     
     # Imports    
     from model import model
-    from copy import deepcopy
     from ballsd import ballsd
+    from copy import deepcopy
     from getcurrentbudget import getcurrentbudget
     from makemodelpars import makemodelpars
     from timevarying import timevarying
@@ -39,10 +40,10 @@ def optimize(D, objectives=None, constraints=None, budgets=None, optimstartyear=
     if not isinstance(budgets, list):       budgets     = defaultbudgets(verbose=verbose)
     
     # Convert weightings from percentage to number
-    if objectives.outcome.inci: objectives.outcome.inciweight = float( objectives.outcome.inciweight ) / 100.0
-    if objectives.outcome.daly: objectives.outcome.dalyweight = float( objectives.outcome.dalyweight ) / 100.0
-    if objectives.outcome.death: objectives.outcome.deathweight = float( objectives.outcome.deathweight ) / 100.0
-    if objectives.outcome.cost: objectives.outcome.costweight = float( objectives.outcome.costweight ) / 100.0
+    if objectives.outcome.inci:  objectives.outcome.inciweight  = float(objectives.outcome.inciweight) / 100.0
+    if objectives.outcome.daly:  objectives.outcome.dalyweight  = float(objectives.outcome.dalyweight) / 100.0
+    if objectives.outcome.death: objectives.outcome.deathweight = float(objectives.outcome.deathweight) / 100.0
+    if objectives.outcome.cost:  objectives.outcome.costweight  = float(objectives.outcome.costweight) / 100.0
 
     # Set up objectives
     for ob in objectives.money.objectives.keys():
@@ -71,14 +72,15 @@ def optimize(D, objectives=None, constraints=None, budgets=None, optimstartyear=
     ## Objective function
     ############################################################################### 
 
-    def objectivecalc(thisalloc):
+    def objectivecalc(optimparams):
         """ Calculate the objective function """
         
-        # AS: Can ballsd give us negative values? If so, good, as we'll need this for time-varying. However we will need to ensure the actual allocation doesn't go negative at any point. This is easily done:
-        # thisalloc = maximum(thisalloc, 0) # TODO: When implementing time-varying optimisation ensure that this only occurs for initial allocation parameters     
+        thisalloc = timevarying(optimparams, ntimepm=ntimepm, nprogs=nprogs, t=D.opt.toptvec, totalspend=totalspend)
+                
         
-        # Normalise spending (as long as allocation is not fully zero)
-        if sum(thisalloc) > 0: thisalloc /= sum(thisalloc) / totalspend
+        # GO FROM HERE... getcurrentbudget now needs to handle allocation arrays as appose to just an allocation vector which remains the same over time        
+
+
 
         # Alter the parameters and run the model
         newD = deepcopy(D)
@@ -115,8 +117,8 @@ def optimize(D, objectives=None, constraints=None, budgets=None, optimstartyear=
             for prog in range(nprogs): plot(range(niter), alliters[prog, range(niter)])
     
             # Plot this allocation over time
-            for prog in range(nprogs): plot(toptvec, thisalloc[prog, :])  
-            plot(toptvec, thisalloc.sum(axis=0), color='k', linewidth=3)
+            for prog in range(nprogs): plot(D.opt.toptvec, thisalloc[prog, :])  
+            plot(D.opt.toptvec, thisalloc.sum(axis=0), color='k', linewidth=3)
             
             ylim(ymin=0, ymax=round(totalspend + 100, -2))
     
