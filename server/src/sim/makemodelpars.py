@@ -1,5 +1,5 @@
 from printv import printv
-from numpy import zeros, array, exp, size
+from numpy import zeros, array, exp, shape
 from bunch import Bunch as struct # Replicate Matlab-like structure behavior
 eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
 
@@ -124,7 +124,8 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
     M.totalacts = totalacts(P, M, npts)
     
     ## Program parameters not related to data
-    M.propaware = zeros(size(M.hivtest)) # Initialize proportion of PLHIV aware of their status
+    M.propaware = zeros(shape(M.hivtest)) # Initialize proportion of PLHIV aware of their status
+    M.numart = zeros(shape(M.tx1)) # Initialize total number of people on treatment
     
 
     printv('...done making model parameters.', 2, verbose)
