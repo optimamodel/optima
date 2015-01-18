@@ -1,7 +1,10 @@
+# Imports for all functions
 from printv import printv
 from bunch import Bunch as struct
+from matplotlib.pylab import show, figure, subplot, plot, axis, xlim, ylim, legend
+from numpy import ones, zeros, arange, random, absolute
 
-def optimize(D, objectives=None, constraints=None, startyear=2000, endyear=2030, timelimit=60, verbose=2):
+def optimize(D, objectives=None, constraints=None, budgets=None, optimstartyear=2015, optimendyear=2030, ntimepm=1, randomize=1, timelimit=60, progressplot=1, verbose=2):
     """
     Allocation optimization code:
         D is the project data structure
@@ -13,63 +16,192 @@ def optimize(D, objectives=None, constraints=None, startyear=2000, endyear=2030,
     Version: 2014dec01 by cliffk
     """
     
+    ###############################################################################
+    ## Setup
+    ###############################################################################    
+    
+    printv('Running optimization...', 1, verbose)
+    
+    # Imports    
     from model import model
     from copy import deepcopy
     from ballsd import ballsd
     from getcurrentbudget import getcurrentbudget
     from makemodelpars import makemodelpars
-    from numpy import array
-    printv('Running optimization...', 1, verbose)
+    from timevarying import timevarying
     
-    # Set options to update year range
+    # Set options to update year range - AS: I've set different variables here, let me know if that's not what was wanted
     from setoptions import setoptions
-    D.opt = setoptions(D.opt, startyear=startyear, endyear=endyear)
+    D.opt = setoptions(D.opt, optimstartyear=optimstartyear, optimendyear=optimendyear)
     
-    # Make sure objectives and constraints exist
-    if not isinstance(objectives, struct): objectives = defaultobjectives(D, verbose=verbose)
+    # Make sure objectives, constraints and budgets exist
+    if not isinstance(objectives, struct):  objectives  = defaultobjectives(D, verbose=verbose)
     if not isinstance(constraints, struct): constraints = defaultconstraints(D, verbose=verbose)
-
+    if not isinstance(budgets, list):       budgets     = defaultbudgets(verbose=verbose)
+    
     # Convert weightings from percentage to number
-    if objectives.outcome.inci: objectives.outcome.inciweight = float( objectives.outcome.inciweight ) / 100.0
-    if objectives.outcome.daly: objectives.outcome.dalyweight = float( objectives.outcome.dalyweight ) / 100.0
-    if objectives.outcome.death: objectives.outcome.deathweight = float( objectives.outcome.deathweight ) / 100.0
-    if objectives.outcome.cost: objectives.outcome.costweight = float( objectives.outcome.costweight ) / 100.0
+    if objectives.outcome.inci:  objectives.outcome.inciweight  = float(objectives.outcome.inciweight) / 100.0
+    if objectives.outcome.daly:  objectives.outcome.dalyweight  = float(objectives.outcome.dalyweight) / 100.0
+    if objectives.outcome.death: objectives.outcome.deathweight = float(objectives.outcome.deathweight) / 100.0
+    if objectives.outcome.cost:  objectives.outcome.costweight  = float(objectives.outcome.costweight) / 100.0
 
+    # Set up objectives
     for ob in objectives.money.objectives.keys():
         if objectives.money.objectives[ob].use: objectives.money.objectives[ob].by = float(objectives.money.objectives[ob].by) / 100.0
 
+    # Set up costs
     for prog in objectives.money.costs.keys():
         objectives.money.costs[prog] = float(objectives.money.costs[prog]) / 100.0
 
+    # Set up constraints
     for prog in constraints.decrease.keys():
         if constraints.decrease[prog].use: constraints.decrease[prog].by = float(constraints.decrease[prog].by) / 100.0
 
-    # Run optimization # TODO -- actually implement :)
-    nallocs = 1 # WARNING, will want to do this better
-    D.A = deepcopy([D.A[0]])
-    for alloc in range(nallocs): D.A.append(deepcopy(D.A[0])) # Just copy for now
-    D.A[0].label = 'Original'
-    D.A[1].label = 'Optimal'
-    origalloc = deepcopy(array(D.A[1].alloc))
-    D.A = D.A[:2] # TODO WARNING KLUDGY
+    # Original spending -- copied from D.A
+    originalspend = deepcopy(D.A[0].alloc)
     
+    # Initialize optimisation results structure
+    D.O = [struct()]
+    D.O[0].__doc__ = 'Optimization results' # AS: Errr... how do you do this here?!? -- CK: You made it a list so need [0]
+    
+    # Number of budgets to optimize
+    nbudgets = len(budgets)
+    nprogs = len(originalspend)
+    
+    ###############################################################################
+    ## Objective function
+    ############################################################################### 
 
-    
-    def objectivecalc(alloc):
+    def objectivecalc(optimparams):
         """ Calculate the objective function """
-        alloc /= sum(alloc)/sum(origalloc)
+        
+        thisalloc = timevarying(optimparams, ntimepm=ntimepm, nprogs=nprogs, t=D.opt.toptvec, totalspend=totalspend)
+                
+        
+        # GO FROM HERE... getcurrentbudget now needs to handle allocation arrays as appose to just an allocation vector which remains the same over time        
+
+
+
+        # Alter the parameters and run the model
         newD = deepcopy(D)
         newD, newcov, newnonhivdalysaverted = getcurrentbudget(newD, alloc)
         newD.M = makemodelpars(newD.P, newD.opt, withwhat='c', verbose=0)
+        newD.opt.turnofftrans = D.opt.optimendyear # Turn off transmissions after this year
         S = model(newD.G, newD.M, newD.F[0], newD.opt, verbose=0)
-        objective = S.death.sum() # TEMP
+        
+        # Obtain value of the objective function
+        objective = 0 # Preallocate objective value 
+        if objectives.what == 'outcome':
+            for ob in ['inci', 'death', 'daly', 'cost']:
+                if objectives.outcome[ob]: objective += S[ob].sum() * objectives.outcome[ob + 'weight'] # TODO -- can we do 'daly' and 'cost' like this too??
+        else: print('Work to do here') # 'money'
+        
+        if progressplot: # Just to test time-varying stuff
+        
+            # Store values for plotting
+            global niter
+            alliters[:, niter] = thisalloc
+            allobjs[niter] = objective
+            niter += 1        
+            
+            # Plot value of objective function
+            figure(num=100)
+            subplot(1,3,1)
+            plot(range(niter), allobjs[range(niter)])
+            ylim(ymin=0)
+            xlim(xmin=0, xmax=maxiters)        
+            
+            # Plot allocations over iterations
+            subplot(1,3,2)
+            xlim(xmin=0, xmax=maxiters)
+            for prog in range(nprogs): plot(range(niter), alliters[prog, range(niter)])
+    
+            # Plot this allocation over time
+            for prog in range(nprogs): plot(D.opt.toptvec, thisalloc[prog, :])  
+            plot(D.opt.toptvec, thisalloc.sum(axis=0), color='k', linewidth=3)
+            
+            ylim(ymin=0, ymax=round(totalspend + 100, -2))
+    
+            # Plot legend on the right        
+            subplot(1,3,3)
+            for prog in range(nprogs): plot(0, prog)
+            legend(D.G.meta.progs.short, loc = 'center left')
+            axis('off')
+            show()        
         
         return objective
         
+    ###############################################################################
+    ## Run optimization # TODO -- actually implement :)
+    ############################################################################### 
+    
+    # Iterate through the budgets
+    for b in range(nbudgets):
         
+        # This budget
+        thisb = budgets[b]
         
-    # Run the optimization algorithm
-    optalloc, fval, exitflag, output = ballsd(objectivecalc, origalloc, xmin=0*array(origalloc), timelimit=timelimit, verbose=verbose)
+        # Extending D.O struct -- AS: I imagine this is awful form, someone feel free to correct me!
+        if b > 0: D.O.append(struct())
+        
+        # Check whether budget is the 'original' (denoted with a string)
+        if isinstance(thisb, basestring):
+            if thisb == 'original':
+
+                # Nothing to do here -- just append original information
+                printv('Original budget -- no optimisation to be done')
+                D.O[b].allocation = originalspend # Copy original spending
+                D.O[b].totalspend = originalspend.sum() # Sum up total spending
+                D.O[b].budget = 1 # Factor of the original budget
+                D.O[b].label = 'Original' # Append original label
+            
+            # Throw an exception is budget is any other string
+            else: raise Exception('Budget not recognised')
+        
+        else: # Budget is a factor of original spending
+        
+            # Calculate total budget based on value of budgets[b]
+            totalspend = originalspend.sum() * thisb
+            D.O[b].totalspend = totalspend
+            
+            # Append budget (as a factor of original) and label
+            D.O[b].budget = thisb
+            D.O[b].label = 'Optimal ' + str(thisb * 100) + '%'
+            
+            ## TODO -- do constraint stuff here -- same as MatLab version, nice and easy.            
+            
+            if randomize: # Randomize the initial allocation prior to optimisation
+            
+                # Create array of random numbers and normalize
+                randvec = random.random(nprogs)
+                randvec = randvec / sum(randvec)
+                
+                # Initial allocation to be optimized
+                thisalloc = randvec * totalspend
+                
+            # If flag is off, randomization is trivial
+            else: thisalloc = originalspend * thisb
+
+            # Quick sanity check for the sum of thisalloc
+            if absolute(sum(thisalloc) - totalspend) > 1:
+                raise Exception('Initial randomization issue')
+    
+            if progressplot: # Set up stuff for plotting if necessary
+                
+                # Number of iterations
+                global niter
+                niter = 0
+                maxiters = 50 # Might not want to do it using maxiters
+                
+                # Preallocate arrays to store optimisation progress
+                alliters = zeros((nprogs, maxiters+1))
+                allobjs  = zeros(maxiters+1)
+    
+            # Run the optimization algorithm
+            optalloc, fval, exitflag, output = ballsd(objectivecalc, thisalloc, xmin=zeros(nprogs), timelimit=120, verbose=10, MaxIter=maxiters-1, sinitial=ones(nprogs)*100000) # timelimit=timelimit, verbose=verbose)
+    
+    
+    #### SORT THIS OUT...    
     
     # Update the model
     for i,alloc in enumerate([origalloc,optalloc]):
@@ -115,7 +247,7 @@ def defaultobjectives(D, verbose=2):
     ob.outcome.dalyweight = 100 # "DALY weighting"
     ob.outcome.death = False # "Minimize cumulative AIDS-related deaths"
     ob.outcome.deathweight = 100 # "Death weighting"
-    ob.outcome.cost = False # "Minimize cumulative DALYs"
+    ob.outcome.cost = False # "Minimize cumulative costs"
     ob.outcome.costweight = 100 # "Cost weighting"
     
     ob.money = struct()
@@ -160,3 +292,21 @@ def defaultconstraints(D, verbose=2):
         con.coverage[prog].year = 2030 # Year to reach coverage level by
         
     return con
+
+    
+def defaultbudgets(verbose=2):
+    """
+    Define default list of budgets for optimisation
+    """
+    
+    printv('Defining default budgets...', 3, verbose=verbose)
+    
+    binc = 0.1 # Default budget increment    
+    
+    # Default budgets are effectively 0:0.1:2, plus the original budget
+    budgets = [1e-10] + arange(binc, 1+binc, binc).tolist() + \
+    ['original'] + arange(1+binc, 2+binc, binc).tolist()
+    
+    return budgets
+    
+    

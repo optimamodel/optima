@@ -5,14 +5,14 @@ def getcurrentbudget(D, alloc=None):
     Returns: D
     Version: 2014nov30
     """
-    from makeccocs import ccoeqn, cceqn, cc2eqn, cco2eqn, coverage_params, default_convertedccparams, default_convertedccoparams
-    import numpy as np
-    
-    # Initialise parameter structure (same as D.P). #TODO make this less ugly
+    from makeccocs import ccoeqn, cceqn, cc2eqn, cco2eqn, coverage_params, default_convertedccparams, default_convertedccoparams  
+    from numpy import empty, asarray, nan, isnan    
+
+    # Initialise parameter structure (same as D.P)
     for param in D.P.keys():
         if isinstance(D.P[param], dict) and 'p' in D.P[param].keys():
-            D.P[param].c = np.zeros(np.size(np.array(D.P[param].p),0))
-            D.P[param].c[D.P[param].c>=0] = float('nan')
+            D.P[param].c = empty(len(D.P[param].p))
+            D.P[param].c.fill(nan)
 
     # Initialise currentbudget if needed
     allocprovided = not(isinstance(alloc,type(None)))
@@ -31,8 +31,8 @@ def getcurrentbudget(D, alloc=None):
         else:
             # Get cost info
             totalcost = D.data.costcov.cost[prognumber]
-            totalcost = np.asarray(totalcost)
-            totalcost = totalcost[~np.isnan(totalcost)]
+            totalcost = asarray(totalcost)
+            totalcost = totalcost[~isnan(totalcost)]
             totalcost = totalcost[-1]
 
         # Extract the converted cost-coverage parameters... 
@@ -75,7 +75,8 @@ def getcurrentbudget(D, alloc=None):
                 if len(effect)>4 and len(effect[4])>=4: #happy path if co_params are actually there
                     # Unpack
                     convertedccoparams = effect[4]
-                else: # did not get co_params yet, giving it some defined params 
+                else:
+                    # did not get co_params yet, giving it some defined params TODO @RS @AS do something sensible here:
                     convertedccoparams = default_convertedccoparams
 
                 #   zerosample, fullsample = makesamples(muz, stdevz, muf, stdevf, samplesize=1)
