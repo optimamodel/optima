@@ -9,6 +9,8 @@ define([
   '../common/graph-type-factory',
   '../validations/error-messages-directive',
   '../validations/error-custom-messages-directive',
+  '../validations/ng-min-directive',
+  '../validations/ng-max-directive',
   '../validations/more-than-directive',
   '../validations/less-than-directive'
 ], function (angular) {
@@ -24,6 +26,8 @@ define([
     'app.common.graph-type',
     'app.validations.error-messages',
     'app.validations.error-custom-messages',
+    'app.validations.ng-min',
+    'app.validations.ng-max',
     'app.validations.more-than',
     'app.validations.less-than'
   ])
@@ -67,5 +71,4 @@ define([
           }
         });
     });
-
 });

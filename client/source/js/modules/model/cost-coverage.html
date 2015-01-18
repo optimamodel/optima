@@ -85,12 +85,22 @@
               </p>
               <p>
                 6. [Optional] Display program cost data in {{projectInfo.dataEnd}}
-                <input type="number" name="displayYear" ng-required="false" ng-min="{{projectInfo.dataStart}}" ng-max="{{projectInfo.dataEnd}}" class="txbox __inline __l" placeholder="e.g.{{projectInfo.dataEnd}}" ng-model="displayYear" ng-change="updateCurves()"> prices
-                <error-custom-messages for="displayYear"
-                                rules="{
-                                  min: 'The year entered cannot be before the project start date ',
-                                  max: 'The year entered cannot be after the project end date'
-                                }">
+                <input 
+                  name="displayYear" 
+                  class="txbox __inline __l" 
+                  placeholder="e.g.{{projectInfo.dataEnd}}" 
+                  type="number" 
+                  ng-required="false" 
+                  ng-min="{{projectInfo.dataStart}}" 
+                  ng-max="{{projectInfo.dataEnd}}" 
+                  ng-model="displayYear" 
+                  ng-change="updateCurves()"> prices
+                <error-custom-messages 
+                  for="displayYear"
+                  rules="{
+                    min: 'The year entered cannot be before the project start date.',
+                    max: 'The year entered cannot be after the project end date.'
+                  }">
                 </error-custom-messages>
               </p>
             </form>
