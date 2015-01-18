@@ -26,7 +26,7 @@ define(['angular', 'underscore'], function (angular, _) {
               if (e) {
                 var template = {};
                 if ($scope.rules[key]!==undefined) {
-                  var ruleIsString = typeof $scope.rules[key] === 'string';
+                  var ruleIsObject = typeof $scope.rules[key] === 'object';
                   /*
                     If the key is 'required', and the rules object contains 'name' property,
                     show the field name in the error message
@@ -36,10 +36,10 @@ define(['angular', 'underscore'], function (angular, _) {
                     template.name = $scope.rules.name;
                   }
                   else {
-                      template[key] = ruleIsString ? $scope.rules[key] : $scope.rules[key].value;
+                      template[key] = ruleIsObject ? $scope.rules[key].value : $scope.rules[key];
                   }
                   if(errorMessages[key]!==undefined) {
-                      return _.template(ruleIsString ? errorMessages[key]:$scope.rules[key].message, template);
+                      return _.template(ruleIsObject ? $scope.rules[key].message : errorMessages[key], template);
                   }
                 }
               }
