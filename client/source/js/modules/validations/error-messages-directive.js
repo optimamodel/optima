@@ -21,33 +21,22 @@ define(['angular', 'underscore'], function (angular, _) {
           'moreThan': 'The value must be greater than <%= moreThan %>.',
           'lessThan': 'The value must be less than <%= lessThan %>.'
         };
+
+        /**
+         * Returns the rendered error messages or an empty array if none is found.
+         */        
         $scope.errorMessages = function () {
           if (form && form[$scope.for].$dirty) {
-            // console.log(_.compact(_(form[$scope.for].$error)));
-            console.log(form[$scope.for].$error);
-            return _.compact(_(form[$scope.for].$error).map(function (e, key) {
-              // debugger
-              console.log(e,key);
-
-              if (e) {
-                var template = {};
-                if ($scope.rules[key]!==undefined) {
-                  var ruleIsString = typeof $scope.rules[key] === 'string';
-                  /*
-                    If the key is 'required', and the rules object contains 'name' property,
-                    show the field name in the error message
-                    otherwise just say that the field is required
-                  */
-                  if (key === 'required' && $scope.rules.name!==undefined) {
-                    template.name = $scope.rules.name;
-                  }
-                  else {
-                      debugger
-                      template[key] = ruleIsString ? $scope.rules[key] : $scope.rules[key].value;
-                  }
-                  if(errorMessages[key]!==undefined) {
-                      return _.template(ruleIsString ? errorMessages[key]:$scope.rules[key].message, template);
-                  }
+            // Collects the templates with the error messages that are actually found as invalid and
+            // rejects (using _.compact) anything that might not be found there.
+            return _.compact(_(form[$scope.for].$error).map(function (isInvalid, errorKey) {
+              if (isInvalid) {
+                if ( _($scope.rules).has(errorKey) && _(errorMessages).has(errorKey)) {
+                  var templateScope = {};
+                  templateScope[errorKey] = $scope.rules[errorKey];
+                  return _.template(
+                            errorMessages[errorKey], 
+                            templateScope);
                 }
               }
             }));
