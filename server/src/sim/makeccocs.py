@@ -615,7 +615,7 @@ def makeallccocs(D=None, verbose=2, makeplot=default_makeplot):
     return D
 
 ###############################################################################
-def getcoverage(D=None, params=[], endyear=None, artelig=default_artelig, progname=default_progname):
+def getcoverage(D=None, params=[], artelig=default_artelig, progname=default_progname):
     '''
     Get coverage levels.
     '''
