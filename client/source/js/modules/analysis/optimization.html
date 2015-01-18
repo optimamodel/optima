@@ -30,18 +30,21 @@
             <input class="txbox __inline __l" value="2015" type="number" placeholder="e.g. 2015"
                    ng-model="params.objectives.year.start" ng-change="updateYearRange()"
                    ng-required="yearsAreRequired()"
-                   min="1" max="2050"
+                   min="1" 
+                   max="2050"
                    name="periodStart">
             to
             <input class="txbox __inline __l" value="2020" type="number" placeholder="e.g. 2020"
                    ng-model="params.objectives.year.end" ng-change="updateYearRange()" 
                    ng-required="yearsAreRequired()"
-                   min="1" max="2050"
+                   min="1" 
+                   max="2050"
                    name="periodEnd">
             in order to achieve the objectives by
             <input class="txbox __inline __l" ng-change="updateYearRange()" value="2030" type="number" placeholder="e.g. 2030"
                    ng-model="params.objectives.year.until"
-                   min="1" max="2050"
+                   min="1" 
+                   max="2050"
                    name="objectivesUntil">
             , with the following context between the end of the optimized program period and the end of the analysis
             period:</p>
