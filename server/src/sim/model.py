@@ -62,6 +62,9 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
     tx1  = G.tx1
     fail = G.fail
     tx2  = G.tx2
+    plhivind = undx+dx+tx1+fail+tx2 # Indices for all PLHIV -- # TODO should these bee in G?
+    dxind = dx+tx1+fail+tx2 # All people who have been diagnosed
+    txind = tx1+fail+tx2 # All people on treatment
     male = G.meta.pops.male
     popsize = M.popsize
     for pop in range(npops): popsize[pop,:] *= F.popsize[pop] # Calculate adjusted population sizes
@@ -85,16 +88,16 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
     sharing   = M.sharing
     numpmtct  = M.numpmtct
     ost       = M.numost
-#    numart    = M.numart
+    numart    = M.numart
     prog      = h2a(G, M.const.prog)   # Disease progression rates
     recov     = h2a(G, M.const.recov)  # Recovery rates
     death     = h2a(G, M.const.death)  # HIV death rates
     deathtx   = M.const.death.treat # Death rate whilst on treatment
 
-    M.tbprev = M.tbprev + 1  
+    tbprev = M.tbprev + 1  
     
-    efftb     = M.const.death.tb * M.tbprev # Increase in death due to TB coinfection
-#    sym       = M.transit.sym
+    efftb     = M.const.death.tb * tbprev # Increase in death due to TB coinfection
+    sym       = M.transit.sym
     asym      = M.transit.asym
     hivtest   = M.hivtest
     aidstest  = M.aidstest
@@ -103,6 +106,8 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
     failfirst  = M.const.fail.first
     failsecond = M.const.fail.second
     Fforce    = array(F.force)
+    
+    propaware = M.propaware
     
     # Initialize the list of sex acts so it doesn't have to happen in the time loop
     sexactslist = []
@@ -219,7 +224,7 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
             birthrate = M['birth'][:,t] # Use birthrate parameter from input spreadsheet
         S['births'][0,t] = sum(birthrate * allpeople[:,t])
         mtcttx       = sum(birthrate * sum(people[tx1,:,t] +people[tx2,:,t]))  * pmtcteff # MTCT from those on treatment (not eligible for PMTCT)
-        mtctundx     = sum(birthrate * sum(people[undx,:,t]+people[fail,:,t])) * effmtct  # MTCT from those undiagnosed or failed (also not eligible)
+        mtctuntx     = sum(birthrate * sum(people[undx,:,t]+people[fail,:,t])) * effmtct  # MTCT from those undiagnosed or failed (also not eligible)
         birthselig   = sum(birthrate * sum(people[dx,:,t]))   # Births to diagnosed mothers eligible for PMTCT
         if numpmtct[t]>1: # It's greater than 1: assume it's a number
             receivepmtct = min(numpmtct[t], birthselig)       # Births protected by PMTCT -- constrained by number eligible 
@@ -227,7 +232,7 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
             receivepmtct = numpmtct[t]*birthselig          # Births protected by PMTCT -- constrained by number eligible 
         mtctdx       = (birthselig - receivepmtct) * effmtct  # MTCT from those diagnosed not receiving PMTCT
         mtctpmtct    = receivepmtct * pmtcteff                # MTCT from those receiving PMTCT
-        S['mtct'][0,t] = mtctundx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components 
+        S['mtct'][0,t] = mtctuntx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components 
         
         ###############################################################################
         ## The ODEs
@@ -254,6 +259,12 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
         S['inci'][:,t] = newinfections  # Store new infections
 
         ## Undiagnosed
+        propdx = None
+        if propaware[:,t].any(): # Only do this if nonzero
+            currplhiv = people[plhivind,:,t].sum(axis=0)
+            currdx = people[dxind,:,t].sum(axis=0)
+            currundx = currplhiv[:] - currdx[:]
+            fractiontodx =  maximum(0, propaware[:,t] * currplhiv[:] - currdx[:] / (currundx[:] + eps)) # Don't allow to go negative
         for cd4 in range(ncd4):
             if cd4>0: 
                 progin = dt*prog[cd4-1]*people[undx[cd4-1],:,t]
@@ -265,7 +276,10 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
             else: 
                 progout = 0  # Cannot progress out of AIDS stage
                 testingrate[cd4] = maximum(hivtest[:,t], aidstest[t]) # Testing rate in the AIDS stage (if larger!)
-            newdiagnoses[cd4] = dt * people[undx[cd4],:,t] * testingrate[cd4] * dxtime[t]
+            if propdx is None: # No proportion diagnosed information, go with testing rate
+                newdiagnoses[cd4] = dt * people[undx[cd4],:,t] * testingrate[cd4] * dxtime[t]
+            else: # It exists, use what's calculated before
+                newdiagnoses[cd4] = fractiontodx * people[undx[cd4],:,t]
             hivtbdeath  = minimum((1 + efftb[:,t]) * death[cd4], 1)
             hivdeaths   = dt * people[undx[cd4],:,t] * hivtbdeath
             otherdeaths = dt * people[undx[cd4],:,t] * background
