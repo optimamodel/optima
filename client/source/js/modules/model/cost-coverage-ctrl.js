@@ -262,7 +262,7 @@ define(['./module', 'underscore'], function (module, _) {
     };
 
     var ccPlotParams = function() {
-      return [$scope.xAxisMaximum, $scope.displayYear];
+      return [$scope.xAxisMaximum, $scope.displayYear, $scope.calculatePerPerson === true];
     };
 
     /**
