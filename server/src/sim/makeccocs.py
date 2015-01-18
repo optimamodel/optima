@@ -19,7 +19,7 @@ from parameters import input_parameter_name
 
 ## Set defaults for testing makeccocs
 default_progname = 'MSM programs'
-default_ccparams = []#[0.9, 0.38, 134000.0, 0.5, None]
+default_ccparams = [] #[0.9, 0.38, 134000.0, 0.9, None]
 default_ccplot =  [] #[None, None]
 default_coparams = []#[0.3, 0.5, 0.7, 0.9] 
 default_makeplot = 0 # CK: Otherwise brings up >100 figures
@@ -95,11 +95,7 @@ def makecc(D=None, progname=default_progname, ccparams=default_ccparams, ccplot=
         if not ccparams:
             ccparams = D.programs[progname]['ccparams']
 
-        # Transformation of 4th parameter
-        adjccparams = ccparams[:]
-        if isinstance(ccparams[3], float): adjccparams = [ccparams[0], ccparams[1], ccparams[2], 1-ccparams[3]]
-
-        coverage, coveragelabel, convertedccparams = getcoverage(D, adjccparams, artelig=default_artelig, progname=progname)        
+        coverage, coveragelabel, convertedccparams = getcoverage(D, ccparams, artelig=default_artelig, progname=progname)        
         
         # Check inputs
         if (ccparams[0] <= 0 or ccparams[0] > 1):
@@ -361,11 +357,11 @@ def cceqn(x, p, eps=1e-3):
     x is total cost, p is a list of parameters (of length 3):
         p[0] = saturation
         p[1] = inflection point
-        p[2] = growth rate... if p[2] = 1 we recover a 2-parameter curve. 
+        p[2] = growth rate... 
 
     Returns y which is coverage.
     '''
-    y = p[0] / (1 + exp((log(p[1])-nplog(x))/max(p[2],eps)))
+    y = p[0] / (1 + exp((log(p[1])-nplog(x))/max(1-p[2],eps)))
 
     return y
     
@@ -377,11 +373,11 @@ def ccoeqn(x, p):
     x is total cost, p is a list of parameters (of length 3):
         p[0] = saturation
         p[1] = inflection point
-        p[2] = growth rate... if p[2] = 1 we recover a 2-parameter curve. 
+        p[2] = growth rate...
 
     Returns y which is coverage.
     '''
-    y = (p[4]-p[3]) * (p[0] / (1 + exp((log(p[1])-nplog(x))/p[2]))) + p[3]
+    y = (p[4]-p[3]) * (p[0] / (1 + exp((log(p[1])-nplog(x))/(1-p[2])))) + p[3]
 
     return y
 
@@ -468,14 +464,11 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
 
             if not ccparams: # Don't have new ccparams, get previously stored ones
                 ccparams = D.programs[progname]['ccparams']
-
-            # Transformation of 4th parameter
-            if isinstance(ccparams[3], float): adjccparam = 1-ccparams[3]
                     
             saturation = ccparams[0]
             if isinstance(ccparams[3], float):
-                growthrate = exp(adjccparam*log(ccparams[0]/ccparams[1]-1)+log(ccparams[2]))
-                convertedccoparams = [saturation, growthrate, adjccparam]
+                growthrate = exp(ccparams[3]*log(ccparams[0]/ccparams[1]-1)+log(ccparams[2]))
+                convertedccoparams = [saturation, growthrate, ccparams[3]]
             else:
                 growthrate = (-1/ccparams[2])*log((2*ccparams[0])/(ccparams[1]+ccparams[0]) - 1)        
                 convertedccoparams = [saturation, growthrate]
