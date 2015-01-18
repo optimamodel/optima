@@ -52,9 +52,6 @@
             <form name="CostCoverageForm" ng-submit="generateCurves()">
               <div class="info-hint" ng-show="!hasAllCCParams()">{{optionsErrorMessage}}</div>
               <div class="error-hint" ng-show="!hasValidCCParams()">{{needAllCCParamsMessage}}</div>
-
-              <!--input type="checkbox" ng-required="true" min="true" max="true" name="validCCParams" ng-bind="hasValidCCParams">
-              <error-messages for="validCCParams" rules="{custom:'{{optionsErrorMessage}}'}"></error-messages-->
               <p>
                 1. Specify the saturation coverage level:
                 <input type="number" ng-required="false" name="saturationCoverageLevel" class="txbox __inline __m" min="1" max="100" step="1" more-than="knownCoverageLevel" placeholder="e.g.{{defaultSaturationCoverageLevel}}" ng-model="saturationCoverageLevel" ng-change="updateCurves()">%
@@ -70,8 +67,8 @@
               </p>
               <p>
                 3. [Optional] Specify scale-up parameters:
-                <input type="number" name="scaleUpParameter" min="1" max="10" step="0.1" class="txbox __inline __xl" placeholder="e.g.{{defaultScaleUpParameter}}"  ng-model="scaleUpParameter" ng-change="updateCurves()">
-                <error-messages for="scaleUpParameter" rules="{min:1, max:10}"></error-messages>
+                <input type="number" name="scaleUpParameter" min="0" max="0.9" step="0.1" class="txbox __inline __xl" placeholder="e.g.{{defaultScaleUpParameter}}"  ng-model="scaleUpParameter" ng-change="updateCurves()">
+                <error-messages for="scaleUpParameter" rules="{min:0, max:0.9}"></error-messages>
               </p>
               <p>
                 4. [Optional] Full coverage would avert
@@ -93,9 +90,12 @@
                                 }">
                 </error-messages>
               </p>
+              <p>
+                7. [Optional] Display program costs in dollar spent per person in the targeted population
+                <input type="checkbox" ng-model="calculatePerPerson" class="__inline" ng-change="updateCurves()"/>
+              </p>
             </form>
           </div>
-          <button type="submit" class="btn" ng-disabled="CostCoverageForm.$invalid || !hasValidCCParams()">Draw</button>
         </div>
       </div>
 
@@ -114,25 +114,21 @@
               <div line-scatter-chart data="chart.data" options="chart.options" save-graph-as></div>
             </div>
           </div>
-
-          <form class="elastic_col" ng-submit="updateCurve($index)" name="adjustmentForm">
+          <form name="AdjustmentForm" class="elastic_col">
             <h3>Options to adjust curves:</h3>
             <p>
               1. Behavior/outcome without this program ranges between
-              <input type="number" name="withoutProgramRangeStart" step="0.01" class="txbox __inline" ng-model="coParams[$index][0]" less-than="coParams[$index][1]">
+              <input type="number" name="withoutProgramRangeStart" step="0.01" ng-required="true" ng-change="updateCurve($index,AdjustmentForm)" class="txbox __inline" ng-model="coParams[$index][0]" less-than="coParams[$index][1]">
               and
-              <input type="number" name="withoutProgramRangeEnd" step="0.01" class="txbox __inline" ng-model="coParams[$index][1]" more-than="coParams[$index][0]">
-              <span ng-show="adjustmentForm.withoutProgramRangeStart.$error.lessThan || adjustmentForm.withoutProgramRangeEnd.$error.moreThan" class="error-hint">The first parameter must be lower than the second one.</span>
+              <input type="number" name="withoutProgramRangeEnd" step="0.01" ng-required="true" ng-change="updateCurve($index,AdjustmentForm)" class="txbox __inline" ng-model="coParams[$index][1]" more-than="coParams[$index][0]">
+              <span ng-show="AdjustmentForm.withoutProgramRangeStart.$error.lessThan || AdjustmentForm.withoutProgramRangeEnd.$error.moreThan" class="error-hint">The first parameter must be lower than the second one.</span>
             </p>
             <p>
               2. Behavior/outcome under full coverage of this program ranges between
-              <input type="number" name="fullCoverageRangeStart" step="0.01" class="txbox __inline" ng-model="coParams[$index][2]" less-than="coParams[$index][3]">
+              <input type="number" name="fullCoverageRangeStart" step="0.01" ng-required="true" ng-change="updateCurve($index,AdjustmentForm)" class="txbox __inline" ng-model="coParams[$index][2]" less-than="coParams[$index][3]">
               and
-              <input type="number" name="fullCoverageRangeEnd" step="0.01" class="txbox __inline" ng-model="coParams[$index][3]" more-than="coParams[$index][2]">
-              <span ng-show="adjustmentForm.fullCoverageRangeStart.$error.lessThan || adjustmentForm.fullCoverageRangeEnd.$error.moreThan" class="error-hint">The first parameter must be lower than the second one.</span>
-            </p>
-            <p>
-              <button type="submit" class="btn" ng-disabled="adjustmentForm.$invalid || CostCoverageForm.$invalid || !hasValidCCParams()">Redraw</button>
+              <input type="number" name="fullCoverageRangeEnd" step="0.01" ng-required="true" ng-change="updateCurve($index,AdjustmentForm)" class="txbox __inline" ng-model="coParams[$index][3]" more-than="coParams[$index][2]">
+              <span ng-show="AdjustmentForm.fullCoverageRangeStart.$error.lessThan || AdjustmentForm.fullCoverageRangeEnd.$error.moreThan" class="error-hint">The first parameter must be lower than the second one.</span>
             </p>
           </form>
         </div>
