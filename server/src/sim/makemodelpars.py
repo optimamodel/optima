@@ -125,7 +125,7 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
     
     ## Program parameters not related to data
     M.propaware = zeros(shape(M.hivtest)) # Initialize proportion of PLHIV aware of their status
-    M.numart = zeros(shape(M.tx1)) # Initialize total number of people on treatment
+    M.txtotal = zeros(shape(M.tx1)) # Initialize total number of people on treatment
     
 
     printv('...done making model parameters.', 2, verbose)

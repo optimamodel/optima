@@ -88,7 +88,7 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
     sharing   = M.sharing
     numpmtct  = M.numpmtct
     ost       = M.numost
-    numart    = M.numart
+    txtotal   = M.txtotal
     prog      = h2a(G, M.const.prog)   # Disease progression rates
     recov     = h2a(G, M.const.recov)  # Recovery rates
     death     = h2a(G, M.const.death)  # HIV death rates
@@ -292,7 +292,10 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
         dU[0] = dU[0] + newinfections # Now add newly infected people
         
         ## Diagnosed
-        newtreat1tot = Mtx1[t] - people[tx1,:,t].sum() # Calculate difference between current people on treatment and people needed
+        if txtotal[t]>0: # Only use if it's defined
+            newtreat1tot = txtotal[t] - people[txind,:,t].sum() # New people on treatment is just the total requested minus total current
+        else:
+            newtreat1tot = Mtx1[t] - people[tx1,:,t].sum() # Calculate difference between current people on treatment and people needed
         currentdiagnosed = people[dx,:,t] # Find how many people are diagnosed
         for cd4 in range(ncd4):
             if cd4>0: 
