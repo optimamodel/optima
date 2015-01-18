@@ -42,9 +42,9 @@ Example 2:
 Version: 2014nov29 by cliffk
 """
 
-def getnested(nesteddict, keylist): 
+def getnested(nesteddict, keylist, safe=False): 
     """ Get a value from a nested dictionary"""
-    output = reduce(lambda d, k: d[k], keylist, nesteddict)
+    output = reduce(lambda d, k: d.get(k) if d else None if safe else d[k], keylist, nesteddict)
     return output
 
 def setnested(nesteddict, keylist, value): 

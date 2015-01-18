@@ -120,8 +120,10 @@ def makedatapars(D, verbose=2):
         
         return newarray
     
-    D.P.birth    = popexpand(D.P.birth,  array(D.G.meta.pops.male)==0)
-    D.P.circum   = popexpand(D.P.circum, array(D.G.meta.pops.male)==1)
+    D.P.birth     = popexpand(D.P.birth,     array(D.G.meta.pops.female)==1)
+    D.P.circum    = popexpand(D.P.circum,    array(D.G.meta.pops.male)==1)
+    D.P.numcircum = popexpand(D.P.numcircum, array(D.G.meta.pops.male)==1)
+    D.P.numcircum.p *= 0 # Reset since prevalence data is required and overwrites data on numbers of circumcisions
             
             
 

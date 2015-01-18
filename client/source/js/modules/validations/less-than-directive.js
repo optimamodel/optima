@@ -1,7 +1,7 @@
 define(['angular'], function (module) {
   'use strict';
 
-  return angular.module('app.less-than', [])
+  return angular.module('app.validations.less-than', [])
     /**
      * Adds a less than validator to an input element.
      *
@@ -12,13 +12,13 @@ define(['angular'], function (module) {
       return {
         require: 'ngModel',
         scope: {
-          lessThan: '=',
+          lessThan: '='
         },
         link: function(scope, element, attrs, ctrl) {
 
           var updateValidity = function (lowValue, highValue) {
             var isValid = lowValue < highValue;
-            var canBeEmpty = !element.required && (lowValue === undefined || lowValue == '' || lowValue == null);
+            var canBeEmpty = !element.required && (lowValue === undefined || highValue === undefined || lowValue == '' || lowValue == null);
             ctrl.$setValidity('lessThan', isValid || canBeEmpty);
           };
 
