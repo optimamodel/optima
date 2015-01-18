@@ -8,6 +8,7 @@ define([
   '../common/export-all-data',
   '../common/graph-type-factory',
   '../validations/error-messages-directive',
+  '../validations/error-custom-messages-directive',
   '../validations/more-than-directive',
   '../validations/less-than-directive'
 ], function (angular) {
@@ -22,6 +23,7 @@ define([
     'ui.router',
     'app.common.graph-type',
     'app.validations.error-messages',
+    'app.validations.error-custom-messages',
     'app.validations.more-than',
     'app.validations.less-than'
   ])

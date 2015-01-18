@@ -16,14 +16,14 @@ define(['angular', 'underscore'], function (angular, _) {
         var errorMessages = {
           'min': 'The minimum value must be <%= min %>.',
           'max': 'The maximum value can be <%= max %>.',
-          // 'number': 'The field must be a number.',
+          'number': 'The field must be a number.',
           'required': 'The field <%= name %> is required.',
           'moreThan': 'The value must be greater than <%= moreThan %>.',
           'lessThan': 'The value must be less than <%= lessThan %>.'
         };
 
         /**
-         * Returns the rendered error messages or an empty array if none is found.
+         * Returns the rendered error messages in invalid state or an empty array if none is found.
          */        
         $scope.errorMessages = function () {
           if (form && form[$scope.for].$dirty) {
