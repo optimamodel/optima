@@ -19,10 +19,10 @@ from parameters import input_parameter_name
 
 ## Set defaults for testing makeccocs
 default_progname = 'MSM programs'
-default_ccparams = [0.9, 0.38, 134000.0, None, None]
-default_ccplot =  [None, None, 1]
+default_ccparams = []#[0.9, 0.38, 134000.0, None, None]
+default_ccplot =  []#[None, None, 1]
 default_coparams = [] #[0.3, 0.5, 0.7, 0.9] 
-default_makeplot = 1 # CK: Otherwise brings up >100 figures
+default_makeplot = 0 # CK: Otherwise brings up >100 figures
 default_effect = [['sex', 'condomcas'], [u'MSM']] # D.programs[default_progname]['effects'][0] 
 default_artelig = range(6,26)
 coverage_params = ['numost','numpmtct','numfirstline','numsecondline']
@@ -752,7 +752,7 @@ def makesamples(coparams, muz, stdevz, muf, stdevf, samplesize=1000):
 
 
 # For testing... delete later... should make separate file!
-plotdata, D = makecc(D, progname=default_progname, ccparams=default_ccparams, ccplot=default_ccplot, artelig=default_artelig, makeplot=default_makeplot, verbose=2, nxpts = 1000)
+#plotdata, D = makecc(D, progname=default_progname, ccparams=default_ccparams, ccplot=default_ccplot, artelig=default_artelig, makeplot=default_makeplot, verbose=2, nxpts = 1000)
 #plotdata, effect = makeco(D, progname=default_progname, effect=default_effect, coparams=default_coparams, makeplot=default_makeplot, verbose=2,nxpts = 1000)
 #plotdata, plotdata_co, effect = makecco(D, progname=default_progname, effect=default_effect, ccparams=default_ccparams, ccplot=default_ccplot, coparams=default_coparams, makeplot=default_makeplot, verbose=2,nxpts = 1000)
 #plotdata, plotdata_co, plotdata_cc, effectnames, D = plotallcurves(D, progname=default_progname, ccparams=default_ccparams, coparams=default_coparams, makeplot=default_makeplot, verbose=2)
