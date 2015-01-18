@@ -223,8 +223,8 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
         ## Turn off transmission (after a certain time - if specified)
         ###############################################################################
 
-        if S.tvec[t] >= absolute(opt.turnofftrans):
-            if opt.turnofftrans > 0: forceinfvec[range(npops)] = 0
+        if S.tvec[t] >= abs(opt.turnofftrans):
+            if opt.turnofftrans > 0: forceinfvec *= 0
             if opt.turnofftrans < 0: break
         ###############################################################################
         ## Calculate mother-to-child-transmission
