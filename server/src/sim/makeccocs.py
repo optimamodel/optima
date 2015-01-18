@@ -18,11 +18,11 @@ from printv import printv
 from parameters import input_parameter_name
 
 ## Set defaults for testing makeccocs
-default_progname = 'OST'
-default_ccparams = [0.6, 0.45, 6694244.0, None, None]
+default_progname = 'FSW programs'
+default_ccparams = []
 default_ccplot =  [] #[None, None]
 default_coparams = []#[0.3, 0.5, 0.7, 0.9] 
-default_makeplot = 1 # CK: Otherwise brings up >100 figures
+default_makeplot = 2 # CK: Otherwise brings up >100 figures
 default_effect = [['sex', 'condomcas'], [u'FSW']] # D.programs[default_progname]['effects'][0] 
 default_artelig = range(6,26)
 coverage_params = ['numost','numpmtct','numfirstline','numsecondline']
