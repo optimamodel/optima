@@ -189,12 +189,12 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
         # Transmission effects
         if ost[t]<=1: # It's a proportion
             osteff = 1 - ost[t]*effost
-            if osteff<0: raise Exception('Bug in 1 - ost[t]*effost: osteff=%f ost[t]=%f effost=%f' % (osteff, ost[t], effost))
+            if osteff<0: raise Exception('Bug in osteff = 1 - ost[t]*effost: osteff=%f ost[t]=%f effost=%f' % (osteff, ost[t], effost))
         else: # It's a number, convert to a proportion using the PWID flag
             numost = ost[t] # Total number of people on OST
             numpwid = sum(M.popsize[nonzero(G.meta.pops.injects),t]) # Total number of PWID
             osteff = 1 - min(1,numost/numpwid)*effost # Proportion of PWID on OST, making sure there aren't more people on OST than PWID
-            if osteff<0: raise Exception('Bug in 1 - min(1,numost/numpwid)*effost: osteff=%f numost=%f numpwid=%f effost=%f' % (osteff, numost, numpwid, effost))
+            if osteff<0: raise Exception('Bug in osteff = 1 - min(1,numost/numpwid)*effost: osteff=%f numost=%f numpwid=%f effost=%f' % (osteff, numost, numpwid, effost))
         # Iterate through partnership pairs
         for pop1 in range(npops):
             for pop2 in range(npops):
@@ -214,9 +214,9 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
         # We have two ways to calculate number of births...
         if (asym<0).any(): # Method 1 -- children are being modelled directly
             print('NB, not implemented') # TODO Use negative entries in transitions matrix
-            birthrate = M.birth[:,t] # Use birthrate parameter from input spreadsheet
+            birthrate = M['birth'][:,t] # Use birthrate parameter from input spreadsheet
         else: # Method 2 -- children are not being modelled directly
-            birthrate = M.birth[:,t] # Use birthrate parameter from input spreadsheet
+            birthrate = M['birth'][:,t] # Use birthrate parameter from input spreadsheet
         S['births'][0,t] = sum(birthrate * allpeople[:,t])
         mtcttx       = sum(birthrate * sum(people[tx1,:,t] +people[tx2,:,t]))  * pmtcteff # MTCT from those on treatment (not eligible for PMTCT)
         mtctundx     = sum(birthrate * sum(people[undx,:,t]+people[fail,:,t])) * effmtct  # MTCT from those undiagnosed or failed (also not eligible)
@@ -394,9 +394,11 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
                 else: # People are leaving: they leave from each health state equally
                     people[:,pop,t+1] *= popsize[pop,t]/sum(people[:,pop,t]);
             if not((people[:,:,t+1]>=0).all()):
-                print('Non-positive people found') # If not every element is a real number >0, throw an error
-#                import pdb; pdb.set_trace() not going to fly in web context
-                raise Exception('Non-positive people found: %s %s' % (pop, people))
+                print('Non-positive people found!!!') # If not every element is a real number >0, throw an error
+                for errstate in range(nstates): # Loop over all heath states
+                    for errpop in range(npops): # Loop over all populations
+                        if not(people[errstate,errpop,t+1]>=0):
+                            raise Exception('Non-positive people found: people[%s, %s, %s] = %s' % (t+1, errpop, errstate, people[errstate,errpop,t+1]))
                 
     # Append final people array to sim output
     S['people'] = people
