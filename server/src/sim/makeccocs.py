@@ -18,11 +18,11 @@ from printv import printv
 from parameters import input_parameter_name
 
 ## Set defaults for testing makeccocs
-default_progname = 'NSP'
-default_ccparams = []#[0.9, 0.2, 125000.0, None, None]
-default_ccplot = []#[None, None, 0]
+default_progname = 'MSM programs'
+default_ccparams = []
+default_ccplot =  [] #[None, None]
 default_coparams = []#[0.3, 0.5, 0.7, 0.9] 
-default_makeplot = 0 # CK: Otherwise brings up >100 figures
+<efault_makeplot = 0 # CK: Otherwise brings up >100 figures
 default_effect = [['sex', 'condomcas'], [u'MSM']] # D.programs[default_progname]['effects'][0] 
 default_artelig = range(6,31)
 coverage_params = ['numost','numpmtct','numfirstline','numsecondline']
@@ -132,8 +132,9 @@ def makecc(D=None, progname=default_progname, ccparams=default_ccparams, ccplot=
     if (ccparams or D.programs[progname]['ccparams']):
         if not ccparams:
             ccparams = D.programs[progname]['ccparams']
-            coverage, targetpopsize, coveragelabel, convertedccparams, ccplottingparams = getcoverage(D, ccparams, popadj=popadj, artelig=default_artelig, progname=progname)
+        coverage, targetpopsize, coveragelabel, convertedccparams, ccplottingparams = getcoverage(D, ccparams, popadj=popadj, artelig=default_artelig, progname=progname)
         
+        # Check inputs
         if (ccparams[0] <= 0 or ccparams[0] > 1):
             raise Exception('Please enter a value between 0 and 1 for the saturation coverage level')
         if (ccparams[1] < 0 or ccparams[1] > 1):
@@ -285,8 +286,8 @@ def makeco(D, progname=default_progname, effect=default_effect, coparams=default
                 raise Exception('Not all of the coverage-outcome parameters have been specified. Please enter the missing parameters to define the curve.')
 
             # Check inputs
-            if any((j<0 or j>1) for j in coparams):
-                raise Exception('Please enter values between 0 and 1 for the ranges of behaviour at zero and full coverage')
+#            if any((j<0 or j>1) for j in coparams):
+#                raise Exception('Please enter values between 0 and 1 for the ranges of behaviour at zero and full coverage')
             
             # Generate sample of zero-coverage behaviour
             muz, stdevz, muf, stdevf = makecosampleparams(coparams, verbose=verbose)
@@ -370,11 +371,11 @@ def cceqn(x, p, eps=1e-3):
     x is total cost, p is a list of parameters (of length 3):
         p[0] = saturation
         p[1] = inflection point
-        p[2] = growth rate... if p[2] = 1 we recover a 2-parameter curve. 
+        p[2] = growth rate... 
 
     Returns y which is coverage.
     '''
-    y = p[0] / (1 + exp((log(p[1])-nplog(x))/max(p[2],eps)))
+    y = p[0] / (1 + exp((log(p[1])-nplog(x))/max(1-p[2],eps)))
 
     return y
     
@@ -386,11 +387,11 @@ def ccoeqn(x, p):
     x is total cost, p is a list of parameters (of length 3):
         p[0] = saturation
         p[1] = inflection point
-        p[2] = growth rate... if p[2] = 1 we recover a 2-parameter curve. 
+        p[2] = growth rate...
 
     Returns y which is coverage.
     '''
-    y = (p[4]-p[3]) * (p[0] / (1 + exp((log(p[1])-nplog(x))/p[2]))) + p[3]
+    y = (p[4]-p[3]) * (p[0] / (1 + exp((log(p[1])-nplog(x))/(1-p[2])))) + p[3]
 
     return y
 
@@ -526,10 +527,8 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
 
             if not ccparams: # Don't have new ccparams, get previously stored ones
                 ccparams = D.programs[progname]['ccparams']
-
             costparam = ccparams[2]
             if popadj: costparam = ccparams[2]/targetpopsize[-1]
-
             saturation = ccparams[0]
             if isinstance(ccparams[3], float):
                 growthrate = exp(ccparams[3]*log(ccparams[0]/ccparams[1]-1)+log(ccparams[2]))
@@ -643,7 +642,7 @@ def plotallcurves(D=None, progname=default_progname, ccparams=default_ccparams, 
 
             # Store outputs
             effects[effectnumber] = effect 
-            plotdata[effectnumber], plotdata_co[effectnumber], effect = makecco(D=D, progname=progname, effect=effect, ccplot=ccplot, ccparams=ccparams, coparams=coparams, makeplot=makeplot, verbose=verbose)
+            plotdata[effectnumber], plotdata_co[effectnumber], effect = makecco(D=D, progname=progname, effect=effect, ccplot=ccplot, ccparams=D.programs[progname]['ccparams'], coparams=coparams, makeplot=makeplot, verbose=verbose)
             effects[effectnumber] = effect 
 
     return plotdata, plotdata_co, plotdata_cc, effects, D      
@@ -704,7 +703,7 @@ def getcoverage(D=None, params=[], popadj=0, artelig=default_artelig, progname=d
                 targetpopmodel = D.S.people[artelig,:,:].sum(axis=(0,1))
                 
     # We only want the model-estimated size of the targeted population(s) for actual years, not the interpolated years
-    yearindices = range(0, len(D.S.tvec), int(1/D.opt.dt))
+    yearindices = range(0, len(D.opt.tvec), int(1/D.opt.dt))
     targetpop = targetpopmodel[yearindices]
 
     # Do population adjustments if required
