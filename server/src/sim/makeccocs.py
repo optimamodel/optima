@@ -18,9 +18,9 @@ from printv import printv
 from parameters import input_parameter_name
 
 ## Set defaults for testing makeccocs
-default_progname = 'MSM programs'
+default_progname = 'SBCC'
 default_ccparams = []#[0.9, 0.38, 134000.0, None, None]
-default_ccplot =  []#[None, None, 1]
+default_ccplot =  []#[None, None, 0]
 default_coparams = [] #[0.3, 0.5, 0.7, 0.9] 
 default_makeplot = 0 # CK: Otherwise brings up >100 figures
 default_effect = [['sex', 'condomcas'], [u'MSM']] # D.programs[default_progname]['effects'][0] 
@@ -83,7 +83,7 @@ def makecc(D=None, progname=default_progname, ccparams=default_ccparams, ccplot=
 
     # Flag to indicate whether we will adjust by population or not
     popadj = 0
-    if ccplot and ccplot[2]: popadj = ccplot[2]        
+    if ccplot and len(ccplot)==3: popadj = ccplot[2]        
 
     # Get coverage and target population size (in separate function)       
     coverage, targetpopsize, coveragelabel, convertedccparams, ccplottingparams = getcoverage(D, ccparams, popadj, artelig=default_artelig, progname=progname)
@@ -102,7 +102,7 @@ def makecc(D=None, progname=default_progname, ccparams=default_ccparams, ccplot=
         totalcost = totalcost[~isnan(totalcost)]
         totalcost = totalcost[-1]
         # Adjust cost data by target population size, if requested by user 
-        if ccplot and ccplot[2]:
+        if ccplot and len(ccplot)==3:
             totalcost = totalcost/targetpopsize
     else:
         totalcostscatter = []
@@ -114,9 +114,13 @@ def makecc(D=None, progname=default_progname, ccparams=default_ccparams, ccplot=
         totalcost = totalcostscatter
         coverage = coveragescatter
         # Adjust cost data by target population size, if requested by user 
-        if ccplot and ccplot[2]:
+        if ccplot and len(ccplot)==3:
             totalcost = [totalcost[j]/targetpopsize[j] for j in range(len(totalcost))]
         
+    # Populate output structure with scatter data 
+    plotdata['xscatterdata'] = totalcost
+    plotdata['yscatterdata'] = coverage
+
     # Set x upper limit if it hasn't been set already
     if not (ccplot and ccplot[0]):
         xupperlim = max([x if ~isnan(x) else 0.0 for x in totalcost])*1.5
@@ -165,10 +169,6 @@ def makecc(D=None, progname=default_progname, ccparams=default_ccparams, ccplot=
             plotdata['yupperlim']  = max(convertedccparams[0]*1.2,max([x if ~isnan(x) else 0.0 for x in coverage])*1.2)
         else:
             plotdata['yupperlim']  = max([x if ~isnan(x) else 0.0 for x in coverage])*1.5
-
-    # Populate output structure with scatter data 
-    plotdata['xscatterdata'] = totalcost
-    plotdata['yscatterdata'] = coverage
 
     # Populate output structure with labels and titles
     plotdata['title'] = progname
@@ -674,8 +674,9 @@ def getcoverage(D=None, params=[], popadj=0, artelig=default_artelig, progname=d
     targetpop = targetpopmodel[yearindices]
 
     # Do population adjustments if required
-    costparam = params[2]
-    if params and popadj: costparam = params[2]/targetpop[-1]
+    if params:
+        costparam = params[2]
+        if popadj: costparam = params[2]/targetpop[-1]
     storeparams = params
     plottingparams = params
     coverage = None
