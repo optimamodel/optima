@@ -35,7 +35,7 @@ define(['./module', 'underscore'], function (module, _) {
       $scope.defaultSaturationCoverageLevel = 90;
       $scope.defaultKnownCoverageLevel = 60;
       $scope.defaultKnownFundingValue = 400000;
-      $scope.defaultScaleUpParameter = 1;
+      $scope.defaultScaleUpParameter = 0.5;
       $scope.defaultNonHivDalys = 0;
       $scope.defaultXAxisMaximum = 1000000;
       $scope.defaultCostDataYear = $scope.projectInfo.dateStart;
@@ -449,33 +449,35 @@ define(['./module', 'underscore'], function (module, _) {
      *     "coparams":<coprams from the corresponding coparams block>
      *   }
      */
-    $scope.updateCurve = function (graphIndex) {
-      var model = getPlotModel();
-      model.coparams = $scope.coParams[graphIndex];
-      model.effect =  effectNames[graphIndex];
-      if ( !$scope.areValidParams(model.coparams) ){
-        // no need to show dialog - we inform the user with hints
-        return;
+    $scope.updateCurve = _.debounce(function (graphIndex, AdjustmentForm) {
+      if(AdjustmentForm.$valid && $scope.CostCoverageForm.$valid && $scope.hasValidCCParams()) {
+        var model = getPlotModel();
+        model.coparams = $scope.coParams[graphIndex];
+        model.effect = effectNames[graphIndex];
+        if (!$scope.areValidParams(model.coparams)) {
+          // no need to show dialog - we inform the user with hints
+          return;
+        }
+
+        // clean up model by removing unnecessary parameters
+        if (_.isEmpty(model.ccparams) || hasOnlyInvalidEntries(model.ccparams)) {
+          delete model.ccparams;
+        }
+
+        if (_.isEmpty(model.coparams) || hasOnlyInvalidEntries(model.coparams)) {
+          delete model.coparams;
+        }
+
+        // update current program ccparams, if applicable
+        updateCCParams(model);
+
+        $http.post('/api/model/costcoverage/effect', model).success(function (response) {
+          $scope.graphs.plotdata[graphIndex] = setUpPlotdataGraph(response.plotdata);
+          $scope.graphs.plotdata_co[graphIndex] = setUpPlotdataGraph(response.plotdata_co);
+          effectNames[graphIndex] = response.effect;
+        });
       }
-
-      // clean up model by removing unnecessary parameters
-      if (_.isEmpty(model.ccparams) || hasOnlyInvalidEntries(model.ccparams)) {
-        delete model.ccparams;
-      }
-
-      if (_.isEmpty(model.coparams) || hasOnlyInvalidEntries(model.coparams)) {
-        delete model.coparams;
-      }
-
-      // update current program ccparams, if applicable
-      updateCCParams(model);
-
-      $http.post('/api/model/costcoverage/effect', model).success(function (response) {
-        $scope.graphs.plotdata[graphIndex] = setUpPlotdataGraph(response.plotdata);
-        $scope.graphs.plotdata_co[graphIndex] = setUpPlotdataGraph(response.plotdata_co);
-        effectNames[graphIndex]=response.effect;
-      });
-    };
+    },500);
 
     /**
      * Collects all existing charts in the $scope.chartsForDataExport variable.
@@ -514,4 +516,6 @@ define(['./module', 'underscore'], function (module, _) {
     initialize();
 
   });
+
+
 });
