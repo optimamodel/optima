@@ -1,10 +1,10 @@
-define ['angular-mocks', 'Source/modules/common/more-than-directive'], ->
-  describe 'lessThan directive in app.more-than', ->
+define ['angular-mocks', 'Source/modules/validations/less-than-directive'], ->
+  describe 'lessThan directive in app.validations.less-than', ->
     element = null
     scope = null
 
     beforeEach ->
-      module 'app.more-than'
+      module 'app.validations.less-than'
 
       inject ($rootScope, $compile) ->
         scope = $rootScope.$new()
@@ -12,7 +12,7 @@ define ['angular-mocks', 'Source/modules/common/more-than-directive'], ->
         scope.highValue = 10
 
         html = '<form name="myForm">'
-        html += '<input type="number" name="myInput" ng-model="highValue" more-than="lowValue">'
+        html += '<input type="number" name="myInput" ng-model="lowValue" less-than="highValue">'
         html += '</form>'
 
         # Compile a piece of HTML containing the directive

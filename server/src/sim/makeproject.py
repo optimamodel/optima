@@ -52,6 +52,7 @@ def makeproject(projectname='example', pops = default_pops, progs = default_prog
     D.G.tx1  = arange(2*D.G.ncd4+1, 3*D.G.ncd4+1)
     D.G.fail = arange(3*D.G.ncd4+1, 4*D.G.ncd4+1)
     D.G.tx2  = arange(4*D.G.ncd4+1, 5*D.G.ncd4+1)
+    for i,h in enumerate(D.G.healthstates): D.G[h] = [D.G[state][i] for state in ['undx', 'dx', 'tx1', 'fail', 'tx2']]
     # Q:should econ_dataend also be saved somewhere?
     
     # Set up "F" -- fitted parameters structure
@@ -82,8 +83,9 @@ def makefittedpars(G, opt, verbose=2):
     F = [struct() for s in range(opt.nsims)]
     for s in range(opt.nsims):
         span=0 if s==0 else 0.5 # Don't have any variance for first simulation
-        F[s].__doc__ = 'Fitted parameters for simulation %i: initial prevalence, force-of-infection, diagnoses, treatment' % s
+        F[s].__doc__ = 'Fitted parameters for simulation %i: initial prevalence, force-of-infection, population size, diagnoses, treatment' % s
         F[s].init  = perturb(G.npops,span)
+        F[s].popsize = perturb(G.npops,span)
         F[s].force = perturb(G.npops,span)
         F[s].dx  = array([perturb(1,span), perturb(1,span), (G.datastart+G.dataend)/2, 1]).tolist()
     

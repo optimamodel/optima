@@ -8,12 +8,8 @@ define(['./module', 'underscore'], function (module, _) {
 
     var initialize =function () {
       $scope.meta = meta;
-
-      // use for export all data
-      $scope.exportGraphs = {
-        'name':'Cost coverage outcome',
-        'controller':'ModelCostCoverage'        
-      };
+      $scope.chartsForDataExport = [];
+      $scope.titlesForChartsExport = [];
 
       // show message "calibrate the model" and disable the form elements
       $scope.projectInfo = info;
@@ -21,7 +17,8 @@ define(['./module', 'underscore'], function (module, _) {
       $scope.cannotCalibrate = !$scope.projectInfo.can_calibrate;
       $scope.notReady = $scope.needData || $scope.cannotCalibrate;
 
-      $scope.optionsErrorMessage = 'Cost-coverage curve plotting options should be either empty or all present.';
+      $scope.optionsErrorMessage = 'To define a cost-coverage curve, values must be provided in the first three text boxes.';
+      $scope.needAllCCParamsMessage = 'First three text boxes must be either all empty, or all have values in them.';
       $scope.all_programs = programs;
 
       if ( !$scope.needData ) {
@@ -39,7 +36,9 @@ define(['./module', 'underscore'], function (module, _) {
       $scope.defaultKnownCoverageLevel = 60;
       $scope.defaultKnownFundingValue = 400000;
       $scope.defaultScaleUpParameter = 1;
+      $scope.defaultNonHivDalys = 0;
       $scope.defaultXAxisMaximum = 1000000;
+      $scope.defaultCostDataYear = $scope.projectInfo.dateStart;
       $scope.behaviorWithoutMin = 0.3;
       $scope.behaviorWithoutMax = 0.5;
       $scope.behaviorWithMin = 0.7;
@@ -49,7 +48,8 @@ define(['./module', 'underscore'], function (module, _) {
       $scope.knownCoverageLevel = undefined;
       $scope.knownFundingValue = undefined;
       $scope.scaleUpParameter = undefined;
-      $scope.displayCost = 1;
+      $scope.nonHivDalys = undefined;
+      $scope.validCCParams = undefined;
 
       plotTypes = ['plotdata', 'plotdata_cc', 'plotdata_co'];
 
@@ -96,21 +96,16 @@ define(['./module', 'underscore'], function (module, _) {
 
     var getLineScatterOptions = function (options, xLabel, yLabel) {
       var defaults = {
-        height: 300,
-        width: 450,
+        width: 300,
+        height: 200,
         margin: {
           top: 20,
-          right: 20,
-          bottom: 60,
-          left: 100
+          right: 15,
+          bottom: 40,
+          left: 60
         },
         xAxis: {
-          axisLabel: xLabel || 'X',
-          tickFormat: function (d) {
-            // Cliff requested to lower case the unit suffixed values.
-            // e.g. 100M -> 100m
-            return d3.format('s')(d).toLowerCase();
-          }
+          axisLabel: xLabel || 'X'
         },
         yAxis: {
           axisLabel: yLabel || 'Y'
@@ -137,7 +132,7 @@ define(['./module', 'underscore'], function (module, _) {
           height: 200,
           margin: {
             top: 20,
-            right: 5,
+            right: 15,
             bottom: 40,
             left: 60
           },
@@ -261,20 +256,13 @@ define(['./module', 'underscore'], function (module, _) {
         $scope.convertFromPercent($scope.saturationCoverageLevel),
         $scope.convertFromPercent($scope.knownCoverageLevel),
         $scope.knownFundingValue,
-        $scope.scaleUpParameter
+        $scope.scaleUpParameter,
+        $scope.nonHivDalys
       ];
     };
 
     var ccPlotParams = function() {
-      if ($scope.xAxisMaximum) {
-        var years = [];
-        if ($scope.displayCost == 2 && $scope.displayYear) {
-          years = [$scope.displayYear];
-        }
-        return [$scope.xAxisMaximum, years];
-      } else {
-        return [];
-      }
+      return [$scope.xAxisMaximum, $scope.displayYear];
     };
 
     /**
@@ -285,7 +273,7 @@ define(['./module', 'underscore'], function (module, _) {
         progname: $scope.selectedProgram.acronym,
         ccparams: $scope.costCoverageParams(),
         coparams: [],
-        ccplot: ccPlotParams(),
+        ccplot: ccPlotParams()
       };
     };
 
@@ -299,15 +287,27 @@ define(['./module', 'underscore'], function (module, _) {
     /**
      * Returns true if all of the elements in an array are undefined, null or NaN
      */
-    var hasOnlyInvaldEntries = function(params) {
+    var hasOnlyInvalidEntries = function(params) {
       return params.every(function(item) {
         return item === undefined || item === null || typeof item === "number" && isNaN(item);
       });
     };
 
     $scope.areValidParams = function (params) {
-      return hasAllElements(params) || hasOnlyInvaldEntries(params);
+      return hasAllElements(params) || hasOnlyInvalidEntries(params);
     };
+
+    var areCCParamsValid = function (params) {
+      return $scope.areValidParams(params.slice(0, 3));
+    };
+
+    $scope.hasValidCCParams = function() {
+      return !$scope.hasCostCoverResponse || areCCParamsValid($scope.costCoverageParams());
+    };
+
+    $scope.hasAllCCParams = function() {
+      return hasAllElements($scope.costCoverageParams().slice(0, 3));
+    }
 
     /**
      * Update current program ccparams based on the selected program.
@@ -329,13 +329,7 @@ define(['./module', 'underscore'], function (module, _) {
      */
     var retrieveAndUpdateGraphs = function (model) {
       // validation on Cost-coverage curve plotting options
-      if ( !$scope.areValidParams(model.ccparams) ){
-        modalService.inform(
-          function () {},
-          'Okay',
-          $scope.optionsErrorMessage,
-          'Error!'
-        );
+      if (!areCCParamsValid(model.ccparams)){ 
         return;
       }
 
@@ -345,10 +339,11 @@ define(['./module', 'underscore'], function (module, _) {
       }
 
       // clean up model by removing unnecessary parameters
-      if (_.isEmpty(model.ccparams) || hasOnlyInvaldEntries(model.ccparams)) {
+      if (_.isEmpty(model.ccparams) || hasOnlyInvalidEntries(model.ccparams.slice(0,3))) {
         delete model.ccparams;
       }
-      if (_.isEmpty(model.coparams) || hasOnlyInvaldEntries(model.coparams)) {
+
+      if (_.isEmpty(model.coparams) || hasOnlyInvalidEntries(model.coparams)) {
         delete model.coparams;
       }
 
@@ -375,31 +370,28 @@ define(['./module', 'underscore'], function (module, _) {
       if($scope.hasCostCoverResponse === true) {
         $scope.hasCostCoverResponse = false;
       }
-      if (hasAllElements($scope.selectedProgram.ccparams)) {
+      if (hasAllElements($scope.selectedProgram.ccparams.slice(0,3))) {
         $scope.saturationCoverageLevel = $scope.selectedProgram.ccparams[0]*100;
         $scope.knownCoverageLevel = $scope.selectedProgram.ccparams[1]*100;
         $scope.knownFundingValue = $scope.selectedProgram.ccparams[2];
         $scope.scaleUpParameter = $scope.selectedProgram.ccparams[3];
+        $scope.nonHivDalys = $scope.selectedProgram.ccparams[4];
       } else {
         $scope.saturationCoverageLevel = undefined;
         $scope.knownCoverageLevel = undefined;
         $scope.knownFundingValue = undefined;
         $scope.scaleUpParameter = undefined;
+        $scope.nonHivDalys = undefined;
       }
       if ($scope.selectedProgram.ccplot && $scope.selectedProgram.ccplot.length==2) {
         $scope.xAxisMaximum = $scope.selectedProgram.ccplot[0];
-        var years = $scope.selectedProgram.ccplot[1];
-        if (years.length>0) {
-          $scope.displayYear = years[0];
-          $scope.displayCost = 2;
-        } else {
-          $scope.displayCost = 1;
-          $scope.displayYear = undefined;
-        }
+        $scope.displayYear = $scope.selectedProgram.ccplot[1];
       } else {
-        $scope.displayCost = 1;
         $scope.displayYear = undefined;
+        $scope.xAxisMaximum = undefined;
       }
+
+      $scope.generateCurves();
     };
 
     /**
@@ -462,20 +454,16 @@ define(['./module', 'underscore'], function (module, _) {
       model.coparams = $scope.coParams[graphIndex];
       model.effect =  effectNames[graphIndex];
       if ( !$scope.areValidParams(model.coparams) ){
-        modalService.inform(
-          function () {},
-          'Okay',
-          $scope.optionsErrorMessage,
-          'Error!'
-        );
+        // no need to show dialog - we inform the user with hints
         return;
       }
 
       // clean up model by removing unnecessary parameters
-      if (_.isEmpty(model.ccparams) || hasOnlyInvaldEntries(model.ccparams)) {
+      if (_.isEmpty(model.ccparams) || hasOnlyInvalidEntries(model.ccparams)) {
         delete model.ccparams;
       }
-      if (_.isEmpty(model.coparams) || hasOnlyInvaldEntries(model.coparams)) {
+
+      if (_.isEmpty(model.coparams) || hasOnlyInvalidEntries(model.coparams)) {
         delete model.coparams;
       }
 
@@ -490,12 +478,35 @@ define(['./module', 'underscore'], function (module, _) {
     };
 
     /**
+     * Collects all existing charts in the $scope.chartsForDataExport variable.
+     * In addition all titles are gatherd into titlesForChartsExport. This is
+     * needed since the cost coverage graphs have no title on the graphs.
+     */
+    var updateDataForExport = function() {
+      $scope.chartsForDataExport = [];
+      $scope.titlesForChartsExport = [];
+
+      if ( $scope.ccGraph) {
+        $scope.chartsForDataExport.push($scope.ccGraph);
+        $scope.titlesForChartsExport.push($scope.ccGraph.title);
+      }
+
+      var charts = _(_.zip($scope.graphs.plotdata, $scope.graphs.plotdata_co)).flatten();
+      _( charts ).each(function (chart,index) {
+        $scope.chartsForDataExport.push(chart);
+        $scope.titlesForChartsExport.push(chart.title);
+      });
+    };
+
+    $scope.$watch('graphs', updateDataForExport, true);
+    $scope.$watch('ccGraph', updateDataForExport, true);
+
+    /**
      * Retrieve and update graphs based on the current plot models only if the graphs are already rendered
      * by pressing the draw button.
      */
     $scope.updateCurves =  _.debounce(function() { // debounce a bit so we don't update immediately
-      if($scope.areValidParams($scope.costCoverageParams()) &&
-         $scope.hasCostCoverResponse === true) {
+      if($scope.CostCoverageForm.$valid && $scope.hasCostCoverResponse === true) {
        $scope.generateCurves();
       }
     }, 500);
