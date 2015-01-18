@@ -24,7 +24,7 @@ default_ccplot = []#[None, None, 0]
 default_coparams = []#[0.3, 0.5, 0.7, 0.9] 
 default_makeplot = 0 # CK: Otherwise brings up >100 figures
 default_effect = [['sex', 'condomcas'], [u'MSM']] # D.programs[default_progname]['effects'][0] 
-default_artelig = range(6,26)
+default_artelig = range(6,31)
 coverage_params = ['numost','numpmtct','numfirstline','numsecondline']
 
 ## Set defaults for use in getcurrentbudget
@@ -46,8 +46,10 @@ def makecc(D=None, progname=default_progname, ccparams=default_ccparams, ccplot=
             ccparams[4] = non-hiv-dalys averted
     ccplot: list. Contains options for plotting the cost-coverage curves, obtained from the GUI. Can be empty.
             ccplot[0] = upper limit for x axis
-            ccplot[1] = [0,[]] if cost data is to be displayed in current prices
-                        [1, [year]] if cost data is to be displayed in [year]'s prices
+            ccplot[1] = None if cost data is to be displayed in current prices
+                        year if cost data is to be displayed in [year]'s prices
+            ccplot[3] = 0 if we are not adjusting by pop size
+                      = 1 if we are
     artelig: list containing the indices for the denominator or ART coverage
 
     Output:
@@ -86,7 +88,7 @@ def makecc(D=None, progname=default_progname, ccparams=default_ccparams, ccplot=
     if ccplot and len(ccplot)==3: popadj = ccplot[2]        
 
     # Get coverage and target population size (in separate function)       
-    coverage, targetpopsize, coveragelabel, convertedccparams, ccplottingparams = getcoverage(D, ccparams, popadj, artelig=default_artelig, progname=progname)
+    coverage, targetpopsize, coveragelabel, convertedccparams, ccplottingparams = getcoverage(D, ccparams, popadj=popadj, artelig=default_artelig, progname=progname)
 
     # Check the lengths or coverage and cost are the same and extract the appropriate scatter data
     if (len(totalcost) == 1 and len(coverage) > 1):
@@ -130,7 +132,7 @@ def makecc(D=None, progname=default_progname, ccparams=default_ccparams, ccplot=
     if (ccparams or D.programs[progname]['ccparams']):
         if not ccparams:
             ccparams = D.programs[progname]['ccparams']
-            coverage, targetpopsize, coveragelabel, convertedccparams, ccplottingparams = getcoverage(D, ccparams, popadj, artelig=default_artelig, progname=progname)
+            coverage, targetpopsize, coveragelabel, convertedccparams, ccplottingparams = getcoverage(D, ccparams, popadj=popadj, artelig=default_artelig, progname=progname)
         
         if (ccparams[0] <= 0 or ccparams[0] > 1):
             raise Exception('Please enter a value between 0 and 1 for the saturation coverage level')
@@ -401,11 +403,18 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
     D: main data structure
     progname: string. Needs to be one of the keys of D.programs
     effectname: list. 
-    ccparams: list. Contains parameters for the cost-coverage curves, obtained from the GUI
-        ccparams(0) = the saturation value
-        ccparams(1) = the 'known' coverage level
-        ccparams(2) = the 'known' funding requirements to achieve ccparams(2)
-        ccparams(3) = desired upper x limit
+    ccparams: list. Contains parameters for the cost-coverage curves, obtained from the GUI. Can be empty.
+            ccparams[0] = the saturation value
+            ccparams[1] = the 'known' coverage level
+            ccparams[2] = the 'known' funding requirements to achieve ccparams(2)
+            ccparams[3] = scale-up rate
+            ccparams[4] = non-hiv-dalys averted
+    ccplot: list. Contains options for plotting the cost-coverage curves, obtained from the GUI. Can be empty.
+            ccplot[0] = upper limit for x axis
+            ccplot[1] = None if cost data is to be displayed in current prices
+                        year if cost data is to be displayed in [year]'s prices
+            ccplot[3] = 0 if we are not adjusting by pop size
+                      = 1 if we are
     coparams: list. Contains parameters for the coverage-outcome curves
         coparams(0) = the lower bound for the outcome when coverage = 0
         coparams(1) = the upper bound for the outcome when coverage = 0
@@ -413,7 +422,7 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
         coparams(3) = the upper bound for the outcome when coverage = 1
 
     Output:
-    plotdata, plotdata_co, storeparams, 
+    plotdata, plotdata_co, effect
     '''
     
     printv("makecco(%s, %s, %s, %s, %s, %s, %s, %s)" % (progname, effect, ccparams, ccplot, coparams, makeplot, verbose, nxpts), 2, verbose)
