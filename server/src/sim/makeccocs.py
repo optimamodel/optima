@@ -18,18 +18,18 @@ from printv import printv
 from parameters import input_parameter_name
 
 ## Set defaults for testing makeccocs
-default_progname = 'MSM programs'
-default_ccparams = [] #[0.9, 0.38, 134000.0, 0.9, None]
+default_progname = 'OST'
+default_ccparams = [0.6, 0.45, 6694244.0, None, None]
 default_ccplot =  [] #[None, None]
 default_coparams = []#[0.3, 0.5, 0.7, 0.9] 
-default_makeplot = 0 # CK: Otherwise brings up >100 figures
+default_makeplot = 1 # CK: Otherwise brings up >100 figures
 default_effect = [['sex', 'condomcas'], [u'FSW']] # D.programs[default_progname]['effects'][0] 
 default_artelig = range(6,26)
 coverage_params = ['numost','numpmtct','numfirstline','numsecondline']
 
 ## Set defaults for use in getcurrentbudget
-default_convertedccparams = [0.8, 4.86477537263828e-06, 1.0]
-default_convertedccoparams = [0.8, 4.86477537263828e-06, 1.0, 0.4, 0.8]
+default_convertedccparams = [0.8, 4.86477537263828e-06]
+default_convertedccoparams = [0.8, 4.86477537263828e-06, 0.4, 0.8]
 
 ######################################################################
 def makecc(D=None, progname=default_progname, ccparams=default_ccparams, ccplot=default_ccplot, artelig=default_artelig, makeplot=default_makeplot, verbose=2, nxpts = 1000):
@@ -615,7 +615,7 @@ def makeallccocs(D=None, verbose=2, makeplot=default_makeplot):
     return D
 
 ###############################################################################
-def getcoverage(D=None, params=[], artelig=default_artelig, progname=default_progname):
+def getcoverage(D=None, params=[], endyear=None, artelig=default_artelig, progname=default_progname):
     '''
     Get coverage levels.
     '''
@@ -660,7 +660,7 @@ def getcoverage(D=None, params=[], artelig=default_artelig, progname=default_pro
                 targetpopmodel = D.S.people[artelig,:,:].sum(axis=(0,1))
                 
     # We only want the model-estimated size of the targeted population(s) for actual years, not the interpolated years
-    yearindices = range(0, len(D.S.tvec), int(1/D.opt.dt))
+    yearindices = range(0, len(D.opt.tvec), int(1/D.opt.dt))
     targetpop = targetpopmodel[yearindices]
 
     storeparams = params
