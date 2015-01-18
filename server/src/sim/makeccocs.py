@@ -77,7 +77,7 @@ def makecc(D=None, progname=default_progname, ccparams=default_ccparams, ccplot=
         cpibaseyear = ccplot[1]
         cpibaseyearindex = D.data.econyears.index(cpibaseyear)
         if len(totalcost)==1: # If it's an assumption, assume it's already in current prices
-            totalcost = totalcost*cpi[cpibaseyearindex]
+            totalcost = [totalcost[0]*cpi[cpibaseyearindex]]
         else:
             totalcost = [totalcost[j]*(cpi[cpibaseyearindex]/cpi[j]) if ~isnan(totalcost[j]) else float('nan') for j in range(len(totalcost))]
     else:

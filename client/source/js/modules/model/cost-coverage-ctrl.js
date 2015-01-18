@@ -262,7 +262,7 @@ define(['./module', 'underscore'], function (module, _) {
     };
 
     var ccPlotParams = function() {
-      return [$scope.xAxisMaximum, $scope.displayYear, $scope.calculatePerPerson === true];
+      return [$scope.xAxisMaximum, $scope.displayYear, $scope.calculatePerPerson];
     };
 
     /**
@@ -383,12 +383,14 @@ define(['./module', 'underscore'], function (module, _) {
         $scope.scaleUpParameter = undefined;
         $scope.nonHivDalys = undefined;
       }
-      if ($scope.selectedProgram.ccplot && $scope.selectedProgram.ccplot.length==2) {
+      if ($scope.selectedProgram.ccplot) {
         $scope.xAxisMaximum = $scope.selectedProgram.ccplot[0];
         $scope.displayYear = $scope.selectedProgram.ccplot[1];
+        $scope.calculatePerPerson = $scope.selectedProgram.ccplot[2];
       } else {
         $scope.displayYear = undefined;
         $scope.xAxisMaximum = undefined;
+        $scope.calculatePerPerson = undefined;
       }
 
       $scope.generateCurves();
