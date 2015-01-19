@@ -152,13 +152,13 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       var graphData = [];
 
       var options = {
-        height: 330,
-        width: 330,
+        height: 350,
+        width: 350,
         margin: {
           top: 20,
-          right: 10,
+          right: 80,
           bottom: 20,
-          left: 10
+          left: 80
         }
       };
 

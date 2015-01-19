@@ -101,8 +101,8 @@ define([
     // =======
 
     $scope.options8 = {
-      height: 900,
-      width: 900,
+      height: 300,
+      width: 300,
       margin: {
         top: 20,
         right: 20,
@@ -114,7 +114,9 @@ define([
     $scope.data8 = [
       {label: '<5', value: 2704659},
       {label: '5-13', value: 4499890},
-      {label: '14-17', value: 4499890}
+      {label: '14-17', value: 4499890},
+      {label: 'Hello my long text A', value: 5},
+      {label: 'Ohhh, another long label', value: 10}
     ];
 
   });
