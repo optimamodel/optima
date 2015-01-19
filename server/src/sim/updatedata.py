@@ -89,7 +89,7 @@ def makefittedpars(D, verbose=2):
         D.F[s].dx  = perturb(4,span)
         for p in range(D.G.npops):
             D.F[s].init[p] *= D.M.hivprev[p]
-            D.F[s].popsize *= D.M.popsize[p][0]
+            D.F[s].popsize[p] *= D.M.popsize[p][0]
         D.F[s].dx[3] *= D.G.datayears.mean()
     
     return D
