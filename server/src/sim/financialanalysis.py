@@ -190,32 +190,32 @@ def financialanalysis(D, postyear=2015, S=None, yscale='abs', makeplot=False):
 
         figure()
         hold(True)
-        plot(acutecostbase, lw = 2, c = 'b')
-        plot(acutecostzero, lw = 2, c = 'r')
+        plot(acuteplhivbase, lw = 2, c = 'b')
+        plot(acuteplhivzero, lw = 2, c = 'r')
         title('Acute costs')
 
         figure()
         hold(True)
-        plot(gt500costbase, lw = 2, c = 'b')
-        plot(gt500costzero, lw = 2, c = 'r')
+        plot(gt500plhivbase, lw = 2, c = 'b')
+        plot(gt500plhivzero, lw = 2, c = 'r')
         title('gt500 costs')
 
         figure()
         hold(True)
-        plot(gt350costbase, lw = 2, c = 'b')
-        plot(gt350costzero, lw = 2, c = 'r')
+        plot(gt350plhivbase, lw = 2, c = 'b')
+        plot(gt350plhivzero, lw = 2, c = 'r')
         title('gt350 costs')
 
         figure()
         hold(True)
-        plot(gt200costbase, lw = 2, c = 'b')
-        plot(gt200costzero, lw = 2, c = 'r')
+        plot(gt200plhivbase, lw = 2, c = 'b')
+        plot(gt200plhivzero, lw = 2, c = 'r')
         title('gt200 costs')
 
         figure()
         hold(True)
-        plot(aidscostbase, lw = 2, c = 'b')
-        plot(aidscostzero, lw = 2, c = 'r')
+        plot(aidsplhivbase, lw = 2, c = 'b')
+        plot(aidsplhivzero, lw = 2, c = 'r')
         title('aids costs')
 
         figure()
@@ -276,4 +276,4 @@ def snipM(M, thisindex = range(150,301)):
     return M0
 
 #example
-#plotdata = financialanalysis(D, postyear = 2015.0, S = D.A[1].S, yscale = 'abs', makeplot = 1)
+plotdata = financialanalysis(D, postyear = 2015.0, S = D.S, yscale = 'abs', makeplot = 1)
