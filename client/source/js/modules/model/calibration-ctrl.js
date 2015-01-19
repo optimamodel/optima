@@ -10,6 +10,7 @@ define(['./module', 'angular'], function (module, angular) {
       F.dx = _(F.dx).map(parseFloat);
       F.force = _(F.force).map(parseFloat);
       F.init = _(F.init).map(parseFloat);
+      F.popsize = _(F.popsize).map(parseFloat);
       return F;
     };
 
@@ -24,7 +25,8 @@ define(['./module', 'angular'], function (module, angular) {
 
     $scope.parameters = {
       types: {
-        force: 'Initial force-of-infection for ',
+        force: 'Relative force-of-infection for ',
+        popsize: 'Initial population size for ',
         init: 'Initial prevalence for ',
         dx: [
           'Overall population initial relative testing rate',
@@ -44,7 +46,15 @@ define(['./module', 'angular'], function (module, angular) {
     };
 
     $scope.G = parameters.G;
+
     $scope.types = graphTypeFactory.types;
+    // reset graph types every time you come to this page
+    angular.extend($scope.types, angular.copy(CONFIG.GRAPH_TYPES));
+    // for calibration the overall charts should not be shown by default
+    _($scope.types.population).each(function(entry) {
+      entry.total = false;
+    });
+
     $scope.calibrationStatus = false;
 
     $scope.enableManualCalibration = false;
@@ -271,7 +281,11 @@ define(['./module', 'angular'], function (module, angular) {
         .success(updateCharts);
     };
 
-	  var autoCalibrationTimer;
+    if($scope.needData === false){
+      $scope.simulate();
+    }
+
+    var autoCalibrationTimer;
     $scope.startAutoCalibration = function () {
       $http.post('/api/model/calibrate/auto', $scope.simulationOptions,{ignoreLoadingBar: true})
         .success(function(data, status, headers, config) {
@@ -280,6 +294,7 @@ define(['./module', 'angular'], function (module, angular) {
       // Error indicates that the model is not calibrating anymore.
             autoCalibrationTimer = $interval(checkWorkingAutoCalibration, 5000, 0, false);
             $scope.calibrationStatus = 'running';
+            $scope.errorText = '';
 
             // start cfpLoadingBar loading
             // calculate the number of ticks in timelimit
@@ -308,6 +323,9 @@ define(['./module', 'angular'], function (module, angular) {
           }
         })
         .error(function(data, status, headers, config) {
+          if (data && data.exception) {
+            $scope.errorText = data.exception
+          }
           stopTimer();
         });
     }

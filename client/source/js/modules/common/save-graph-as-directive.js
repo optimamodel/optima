@@ -42,10 +42,10 @@ define(['angular', 'jquery', 'underscore', 'saveAs', 'jsPDF', './svg-to-png', '.
                 //a big ugly hack to distinguish between cost and covariance graphs.
                 //they are both in the same ng-repeat scope :-(
                 var target = {};
-                if ( attrs.variant == "radarGraph" ) {
-                  target = scope.radarGraph;
-                  target.options.title = scope.radarGraphName;
-
+                if ( attrs.variant == "radarChart" ) {
+                  target = scope.radarChart;
+                } else if (attrs.variant == 'pieChart') {
+                  target = scope.pieChart;
                 } else if (attrs.variant == 'coGraph') {
                   target = scope.coGraph;
                 } else if (attrs.variant == 'ccGraph') {

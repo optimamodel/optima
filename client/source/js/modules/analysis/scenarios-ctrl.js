@@ -37,6 +37,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           }
 
           $scope.types = graphTypeFactory.types;
+          // reset graph types every time you come to this page
+          angular.extend($scope.types, angular.copy(CONFIG.GRAPH_TYPES));
 
           $scope.lineStyles = ['__blue', '__green', '__red', '__orange',
             '__violet', '__black', '__light-orange', '__light-green'];
@@ -170,9 +172,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           .value();
         };
 
-
-        $scope.runScenarios = function () {
+        $scope.runScenarios = function (saveScenario) {
           $scope.runScenariosOptions.scenarios = toCleanArray($scope.scenarios);
+          $scope.runScenariosOptions.dosave = saveScenario === true;
           $http.post('/api/analysis/scenarios/run', $scope.runScenariosOptions)
             .success(function(data) {
               responseData = data;

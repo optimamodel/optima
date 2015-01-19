@@ -23,6 +23,10 @@ define(['./module'], function (module) {
           showPartInViews('stackedCheckbox',[
             'model.view'
           ]);
+
+          showPartInViews('plotUncertainties',[
+            'analysis.optimization'
+          ]);
         });
     }
   ]);

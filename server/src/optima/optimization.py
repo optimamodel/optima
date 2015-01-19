@@ -12,10 +12,11 @@ Optimization Module
 from flask import request, jsonify, Blueprint, current_app
 from dbconn import db
 from async_calculate import CalculatingThread, start_or_report_calculation, cancel_calculation, check_calculation
+from async_calculate import check_calculation_status, good_exit_status
 from utils import check_project_name, project_exists, load_model, \
 revert_working_model_to_default, save_working_model_as_default, report_exception
 from sim.optimize import optimize
-from sim.bunch import bunchify
+from sim.bunch import bunchify, unbunchify
 import json
 import traceback
 from flask.ext.login import login_required, current_user
@@ -25,6 +26,28 @@ optimization = Blueprint('optimization',  __name__, static_folder = '../static')
 
 def get_optimization_results(D_dict):
     return {'graph': D_dict.get('plot',{}).get('OM',{}), 'pie':D_dict.get('plot',{}).get('OA',{})}
+
+@optimization.route('/list')
+@login_required
+@check_project_name
+@report_exception()
+def getOptimizationParameters():
+    """ retrieve list of optimizations defined by the user, with parameters """
+    from sim.optimize import defaultoptimizations
+    current_app.logger.debug("/api/analysis/optimization/list")
+    # get project name
+    project_name = request.project_name
+    if not project_exists(project_name):
+        reply['reason'] = 'Project %s does not exist' % project_name
+        return reply
+    D = load_model(project_name)
+    if not 'optimizations' in D:
+        optimizations = defaultoptimizations(D)
+    else:
+        optimizations = D.optimizations
+    optimizations = unbunchify(optimizations)
+    return json.dumps({'optimizations':optimizations})
+
 
 @optimization.route('/start', methods=['POST'])
 @login_required
@@ -82,14 +105,21 @@ def getWorkingModel():
     D_dict = {}
     # Get optimization working data
     prj_name = request.project_name
+    error_text = None
     if check_calculation(current_user.id, prj_name, optimize, db.session):
         D_dict = load_model(prj_name, working_model = True, as_bunch = False)
         status = 'Running'
     else:
         current_app.logger.debug("no longer optimizing")
-        status = 'Done'
+        status, error_text = check_calculation_status(current_user.id, prj_name, optimize, db.session)
+        if status in good_exit_status:
+            status = 'Done'
+        else:
+            status = 'NOK'
     result = get_optimization_results(D_dict)
     result['status'] = status
+    if error_text:
+        result['exception'] = error_text
     return jsonify(result)
 
 @optimization.route('/save', methods=['POST'])

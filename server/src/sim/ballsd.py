@@ -55,10 +55,12 @@ def ballsd(function, x, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, 
         x, fval, exitflag, output = ballsd(norm, [1, 2, 3])
     
     
-    Version: 2014nov30 by Cliff Kerr (cliff@thekerrlab.com)
+    Version: 2015jan16 by Cliff Kerr (cliff@thekerrlab.com)
     """
     
-    from pylab import array, shape, reshape, ones, zeros, size, rand, mean, cumsum, find, mod, hstack, floor
+    from numpy import array, shape, reshape, ones, zeros, size, mean, cumsum, mod, hstack, floor
+    from numpy.random import random # Was pylab.rand
+    from utils import findinds # Remove dependency on pylab.find
     from copy import deepcopy # For arrays, even y = x[:] doesn't copy properly
     from time import time
     
@@ -74,8 +76,8 @@ def ballsd(function, x, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, 
     ## Handle inputs and set defaults
     nparams = size(x); # Number of parameters
     x, origshape = sanitize(x) # Turn it into a vector but keep the original shape (not necessarily class, though)
-    p,tmp = ones(2*nparams),0 if pinitial == None else sanitize(pinitial)  # Set initial parameter selection probabilities -- uniform by default
-    s,tmp = abs(stepsize*x),0 if sinitial == None else sanitize([abs(i) for i in sinitial]) # Set initial parameter selection probabilities -- uniform by default
+    p,tmp = ones(2*nparams),0 if pinitial is None else sanitize(pinitial)  # Set initial parameter selection probabilities -- uniform by default
+    s,tmp = abs(stepsize*x),0 if sinitial is None else sanitize([abs(i) for i in sinitial]) # Set initial parameter selection probabilities -- uniform by default
     s = hstack((s,s)) # need to duplicate since two for each parameter
     if xmax is not None: xmax,tmp = sanitize(xmax)
     if xmin is not None: xmin,tmp = sanitize(xmin)
@@ -107,7 +109,7 @@ def ballsd(function, x, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, 
         count2 = 0
         while not inrange:
             count2=count2+1
-            choice = find(cumprobs > rand())[0] # Choose a parameter and upper/lower at random
+            choice = findinds(cumprobs > random())[0] # Choose a parameter and upper/lower at random
             par = mod(choice,nparams) # Which parameter was chosen
             pm = floor((choice)/nparams) # Plus or minus
             newval = x[par] + ((-1)**pm)*s[choice] # Calculate the new parameter set
@@ -127,10 +129,13 @@ def ballsd(function, x, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, 
                 p[choice] = p[choice]/pdec # decrease probability of picking this parameter again
                 s[choice] = s[choice]/sdec # decrease size of step for next time
 
-        xnew = deepcopy(x); # Initialize the new parameter set
+        xnew = deepcopy(x) # Initialize the new parameter set
         xnew[par] = newval # Update the new parameter set
         fvalnew = function(xnew) # Calculate the objective function for the new parameter set
-        errorhistory[mod(count,StallIterLimit)] = fval - fvalnew # Keep track of improvements in the error
+        errorhistory[mod(count,StallIterLimit)] = fval - fvalnew # Keep track of improvements in the error  
+        if verbose>5:
+            print('       choice=%s, par=%s, pm=%s, origval=%s, newval=%s, inrange=%s' % (choice, par, pm, x[par], xnew[par], inrange))
+        
 
         # Check if this step was an improvement
         if fvalnew < fval: # New parameter set is better than previous one
@@ -140,10 +145,10 @@ def ballsd(function, x, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, 
             fval = fvalnew # Reset current error
             if verbose>5: flag = 'SUCCESS'
         elif fvalnew >= fval: # New parameter set is the same or worse than the previous one
-            p[choice] = p[choice]/pdec # Increase probability of picking this parameter again
-            s[choice] = s[choice]/sdec # Increase size of step for next time
+            p[choice] = p[choice]/pdec # Decrease probability of picking this parameter again
+            s[choice] = s[choice]/sdec # Decrease size of step for next time
             if verbose>5: flag = 'FAILURE'
-        if verbose>5: print(' '*90 + flag + ' on step %i (orig:%0.1f new:%0.1f diff:%0.1f ratio:%0.3f)' % (count, fval, fvalnew, fvalnew-fval, fvalnew/fval) )
+        if verbose>=5: print(' '*40 + flag + ' on step %i (orig:%0.1f new:%0.1f diff:%0.5f ratio:%0.3f)' % (count, fval, fvalnew, fvalnew-fval, fvalnew/fval) )
 
         # Optionally store output information
         if fulloutput: # Include additional output structure
@@ -169,7 +174,8 @@ def ballsd(function, x, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, 
         if (time()-start)>timelimit:
             exitflag = 4
             break
-    
+
+
     # Create additional output
     class makeoutput:
         iterations = count # Number of iterations
