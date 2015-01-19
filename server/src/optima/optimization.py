@@ -16,7 +16,7 @@ from async_calculate import check_calculation_status, good_exit_status
 from utils import check_project_name, project_exists, load_model, \
 revert_working_model_to_default, save_working_model_as_default, report_exception
 from sim.optimize import optimize
-from sim.bunch import bunchify
+from sim.bunch import bunchify, unbunchify
 import json
 import traceback
 from flask.ext.login import login_required, current_user
@@ -26,6 +26,28 @@ optimization = Blueprint('optimization',  __name__, static_folder = '../static')
 
 def get_optimization_results(D_dict):
     return {'graph': D_dict.get('plot',{}).get('OM',{}), 'pie':D_dict.get('plot',{}).get('OA',{})}
+
+@optimization.route('/list')
+@login_required
+@check_project_name
+@report_exception()
+def getOptimizationParameters():
+    """ retrieve list of optimizations defined by the user, with parameters """
+    from sim.optimize import defaultoptimizations
+    current_app.logger.debug("/api/analysis/optimization/list")
+    # get project name
+    project_name = request.project_name
+    if not project_exists(project_name):
+        reply['reason'] = 'Project %s does not exist' % project_name
+        return reply
+    D = load_model(project_name)
+    if not 'optimizations' in D:
+        optimizations = defaultoptimizations(D)
+    else:
+        optimizations = D.optimizations
+    optimizations = unbunchify(optimizations)
+    return json.dumps({'optimizations':optimizations})
+
 
 @optimization.route('/start', methods=['POST'])
 @login_required
