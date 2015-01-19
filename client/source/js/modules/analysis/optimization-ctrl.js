@@ -8,6 +8,9 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
 
       $scope.meta = meta;
       $scope.types = graphTypeFactory.types;
+      // reset graph types every time you come to this page
+      angular.extend($scope.types, angular.copy(CONFIG.GRAPH_TYPES));
+
       $scope.needData = $scope.meta.progs === undefined;
       $scope.activeTab = 1;
       var errorMessages = [];
