@@ -2,7 +2,7 @@ def setoptions(opt=None, **kwargs):
     """
     Set the options for running the simulation.
     
-    Version: 2014nov23 by cliffk
+    Version: 2015jan19 by cliffk
     """
     
     from bunch import Bunch as struct

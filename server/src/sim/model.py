@@ -20,7 +20,7 @@ def model(G, M, F, opt, initstate=None, verbose=2):
     
     # Initialize basic quantities
     S       = struct()    # Sim output structure
-    S.tvec  = opt.tvec    # Append time vector
+    S.tvec  = M.tvec      # Append time vector
     dt      = opt.dt      # Shorten dt
     npts    = len(S.tvec) # Number of time points
     npops   = G.npops     # Shorten number of pops
@@ -57,8 +57,8 @@ def model(G, M, F, opt, initstate=None, verbose=2):
     dxfactor = M.const.eff.dx * cd4trans # Include diagnosis efficacy
     txfactor = M.const.eff.tx * dxfactor # And treatment efficacy
     
-    # Metaparameters to get nice diagnosis fits
-    dxtime  = fit2time(F.dx,  S.tvec)
+    ## Metaparameters to get nice diagnosis fits
+    dxtime  = fit2time(F.dx,  S.tvec - G.datayears.mean()) # Subtraction to normalize F.dx[2]
     
     ## Shorten variables and remove dict calls to make things faster...
     
@@ -77,7 +77,7 @@ def model(G, M, F, opt, initstate=None, verbose=2):
     
     # Population sizes
     popsize = M.popsize # Population sizes
-    for pop in range(npops): popsize[pop,:] *= F.popsize[pop] # Calculate adjusted population sizes
+    for pop in range(npops): popsize[pop,:] *= F.popsize[pop] / M.popsize[pop][0] # Calculate adjusted population sizes -- WARNING, kind of ugly
     
     # Logical arrays for population types
     male = array(G.meta.pops.male).astype(bool) # Male populations
@@ -178,6 +178,7 @@ def model(G, M, F, opt, initstate=None, verbose=2):
         elif txelig[t]>50:  currelig = arange(4,ncd4)
         elif txelig[t]>0:   currelig = arange(5,ncd4) # Only people in the last health state
         else: raise Exception('Treatment eligibility %s at time %s does not seem to be valid' % (txelig[t], t))
+        
         
         
         ###############################################################################
@@ -560,6 +561,11 @@ def model(G, M, F, opt, initstate=None, verbose=2):
     return S
 
 
+
+
+
+
+
 ###############################################################################
 ## Helper functions
 ###############################################################################
@@ -611,7 +617,7 @@ def equilibrate(G, M, Finit):
     for p in range(G['npops']):
         # Set up basic calculations
         uninfected = M['popsize'][p,0] * (1-hivprev[p]) # Set initial susceptible population -- easy peasy! # TODO -- should this have F.popsize involved?
-        allinfected = M['popsize'][:,0] * hivprev[:] * Finit[:] # Set initial infected population
+        allinfected = M['popsize'][:,0] * Finit[:] # Set initial infected population
         popinfected = allinfected[p]
         
         # Treatment & treatment failure
