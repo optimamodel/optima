@@ -42,7 +42,12 @@ def model(G, M, F, opt, initstate=None, verbose=2):
     S.newtx2   = zeros((npops, npts)) # Number initiating ART2 per timestep
     S.death    = zeros((npops, npts)) # Number of deaths per timestep
     effhivprev = zeros((npops, 1))    # HIV effective prevalence (prevalence times infectiousness)
-
+    
+    # Also initialize circumcision output
+    S.numcircum = zeros((npops, npts)) # Number of people circumcised
+    S.newcircum = zeros((npops, npts)) # Number of people newly circumcised per timestep
+    S.reqcircum = zeros((1, npts))     # Total number of men not circumcised ('req' for 'required')
+    
     # Set initial epidemic conditions 
     if initstate is None: people[:,:,0] = equilibrate(G, M, array(F.init)) # No it hasn't, so run equilibration
     else: people[:,:,0] = initstate # Yes it has, so use it.
@@ -187,6 +192,7 @@ def model(G, M, F, opt, initstate=None, verbose=2):
         elif txelig[t]>0:   currelig = arange(5,ncd4) # Only people in the last health state
         else: raise Exception('Treatment eligibility %s at time %s does not seem to be valid' % (txelig[t], t))
         
+        
         ###############################################################################
         ## Calculate force-of-infection (forceinf)
         ###############################################################################
@@ -255,6 +261,7 @@ def model(G, M, F, opt, initstate=None, verbose=2):
                     forceinfvec[pop2] = 1 - (1-forceinfvec[pop2]) * (1-forceinf2) # Calculate the new "male" forceinf, ensuring that it never gets above 1
                     if not(all(forceinfvec>=0)): raise Exception('Injecting force-of-infection is invalid (transinj=%f, numacts1=%f, numacts2=%f, osteff=%f, effhivprev1=%f, effhivprev2=%f)'% (transinj, numacts1, numacts2, osteff, effhivprev[pop2], effhivprev[pop1]))
         
+        
         ###############################################################################
         ## Turn off transmission (after a certain time - if specified)
         ###############################################################################
@@ -262,7 +269,8 @@ def model(G, M, F, opt, initstate=None, verbose=2):
         if S.tvec[t] >= abs(opt.turnofftrans):
             if opt.turnofftrans > 0: forceinfvec *= 0
             if opt.turnofftrans < 0: break
-                
+               
+               
         ###############################################################################
         ## Calculate mother-to-child-transmission
         ###############################################################################
@@ -284,6 +292,7 @@ def model(G, M, F, opt, initstate=None, verbose=2):
         mtctdx = (birthselig - receivepmtct) * effmtct # MTCT from those diagnosed not receiving PMTCT
         mtctpmtct = receivepmtct * pmtcteff # MTCT from those receiving PMTCT
         S['mtct'][0,t] = mtctuntx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components
+        
         
         ###############################################################################
         ## Population transitions
@@ -308,67 +317,49 @@ def model(G, M, F, opt, initstate=None, verbose=2):
                     elif male[p2] and not male[p1] and transrate > 0: # Sanity check for females moving into male populations   
                         raise Exception('Females are transitioning into a male population!')
                         
-                    # Now, the number of people who are leaving...
+                    # Now actually do it for the people array
                     peoplemoving = people[:, p1, t] * absolute(transrate) * dt
                     if transrate > 0: # Normal situation, e.g. aging - people move from one pop to another
                         people[:, p1, t] -= peoplemoving # Take away from pop1...
                         people[:, p2, t] += peoplemoving # ... then add to pop2
                     else: # Otherwise: it's births
                         print('NB, not implemented') # TODO -- get these births working
+                        
 #                        # The proportion of births infected
 #                        propbirthsinfected = infectedbirths / totalbirths;
 #                        
 #                        # People stay in pop1 with new babies going into either susceptible or CD4>500 in pop2
-#                        people([pg.sus pg.undiag(1)], ind_2, t) = people([pg.sus pg.undiag(1)], ind_2, t) + ...
+#                        people([pg.sus pg.undiag(1)], p2, t) = people([pg.sus pg.undiag(1)], p2, t) + ...
 #                            + sum(peoplemoving) * [1-propbirthsinfected; propbirthsinfected];
                             
-#        ## Symmetric transitions - people swap between two populations
-#        for tr = 1:length(sym_rate)
-#            
-#            # Current transition rate
-#            curr_rate = sym_rate(tr);
-#            
-#            # Name current pop indices
-#            ind_1 = pm.transitions.sym.pop1(tr);
-#            ind_2 = pm.transitions.sym.pop2(tr);
-#            
-#            # Name the pop groups
-#            pop_1 = people(:, ind_1, t);
-#            pop_2 = people(:, ind_2, t);
-#            
-#            # Number circumcised in each group
-#            numcirc_1 = numcirc(ind_1);
-#            numcirc_2 = numcirc(ind_2);
-#            
-#            # Initialise moving circumcised men
-#            circsmoving_1 = 0; circsmoving_2 = 0;
-#            
-#            # How many should leave pop 1
-#            if pg.popismale(ind_1), circsmoving_1 = numcirc_1 * curr_rate * dt; end
-#            
-#            # How many should leave pop 2
-#            if pg.popismale(ind_2), circsmoving_2 = numcirc_2 * curr_rate * dt ...
-#                    * (numcirc_1 / numcirc_2); end
-#            
-#            # Move these circumcised men into the other population
-#            numcirc(ind_1) = numcirc(ind_1) - circsmoving_1 + circsmoving_2;
-#            numcirc(ind_2) = numcirc(ind_2) + circsmoving_1 - circsmoving_2;
-#            
-#            # Number of other people who are moving pop1 -> pop2
-#            peoplemoving_1 = pop_1 * curr_rate * dt;
-#            
-#            # Number of people who moving pop2 -> pop1, correcting for population size
-#            peoplemoving_2 = pop_2 * curr_rate * dt * (sum(pop_1) / sum(pop_2));
-#            
-#            # Add and take away these people from the relevant populations
-#            people(:, ind_1, t) = pop_1 - peoplemoving_1 + peoplemoving_2;
-#            people(:, ind_2, t) = pop_2 + peoplemoving_1 - peoplemoving_2;
-#        end
+        ## Symmetric transitions - people swap between two populations
+        for p1 in range(npops):
+            for p2 in range(npops):
+                transrate = sym[p1, p2] # Current transition rate
+                if transrate > 0: # Is the given rate greater than zero
+                
+                    # Move circumcised men around
+                    circsmoving1 = 0 # Initialise moving circumcised men
+                    circsmoving2 = 0 # Initialise moving circumcised men
+                    if male[p1]: circsmoving1 = numcirc[p1] * transrate * dt # How many should leave pop 1
+                    if male[p2]: circsmoving2 = numcirc[p2] * transrate * dt * (numcirc[p1]/numcirc[p2]) # How many should leave pop 2
+                    numcirc[p1] += -circsmoving1 + circsmoving2 # Move these circumcised men into the other population
+                    numcirc[p2] += circsmoving1 - circsmoving2  # Move these circumcised men into the other population
+                    
+                    # Now actually do it for the people array
+                    peoplemoving1 = people[:, p1, t] * transrate * dt # Number of other people who are moving pop1 -> pop2
+                    peoplemoving2 = people[:, p2, t] * transrate * dt * (sum(people[:, p1, t])/sum(people[:, p2, t])) # Number of people who moving pop2 -> pop1, correcting for population size
+                    people[:, p1, t] += -peoplemoving1 + peoplemoving2 # Add and take away these people from the relevant populations
+                    people[:, p2, t] += peoplemoving1 - peoplemoving2  # Add and take away these people from the relevant populations
+        
         
         ###############################################################################
         ## Update proportion circumcised
         ###############################################################################
-
+        
+        S.numcircum = zeros((npops, npts)) # Number of people circumcised
+        S.newcircum = zeros((npops, npts)) # Number of people newly circumcised per timestep
+        S.reqcircum = zeros((1, npts))     # Total number of men not circumcised ('req' for 'required')
         
         
         ###############################################################################
@@ -528,6 +519,7 @@ def model(G, M, F, opt, initstate=None, verbose=2):
                 dT2[cd4] = maximum(dT2[cd4], -people[tx2[cd4],:,t]) # Ensure it doesn't go below 0 -- # TODO kludgy
                 printv('Prevented negative people in treatment 2 at timestep %i' % t, 10, verbose)
             S['death'][:,t] += hivdeaths[cd4]/dt # Save annual deaths data
+
 
         ###############################################################################
         ## Update next time point and check for errors
