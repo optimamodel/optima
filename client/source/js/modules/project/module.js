@@ -61,6 +61,9 @@ define([
               } else {
                 return undefined;
               }
+            },
+            projects: function (Project) {
+              return Project.list().$promise;
             }
           }
         })

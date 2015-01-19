@@ -445,6 +445,7 @@ def uploadExcel():
         # update existing
         if projdata is not None:
             projdata.meta = filedata
+            projdata.upload_time = data_upload_time
         else:
             # create new project data
             projdata = ProjectDataDb(project.id, filedata, data_upload_time)
