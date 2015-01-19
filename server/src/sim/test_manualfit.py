@@ -16,11 +16,9 @@ nsims = 1
 
 
 print('\n\n\n1. Making project...')
-from makeproject import makeproject, makefittedpars
+from makeproject import makeproject
 D = makeproject(projectname=projectname, pops=['']*6, progs = ['']*7, datastart=2000, dataend=2015, verbose=verbose)
 D.opt.nsims = nsims # Reset options
-D.F = makefittedpars(D.G, D.opt, verbose=verbose) # Reset the number of sims
-
 
 print('\n\n\n2. Updating data...')
 from updatedata import updatedata
@@ -29,7 +27,7 @@ D = updatedata(D, verbose=verbose)
 
 print('\n\n\n3. Running simulation...')
 from runsimulation import runsimulation
-D = runsimulation(D, startyear=2000, endyear=2015, verbose=verbose)
+D = runsimulation(D, startyear=2000, endyear=2030, verbose=verbose)
 
 
 print('\n\n\n4. Viewing results...')
@@ -41,9 +39,6 @@ viewuncerresults(D.plot.E, whichgraphs=whichgraphs, startyear=2000, endyear=2015
 print('\n\n\n4. Setting up manual fitting...')
 from numpy import array, zeros
 
-F = []
-Plist = []
-Mlist = []
 
 # Change F
 F = D.F[0]
@@ -61,7 +56,7 @@ Mlist = [{'name':['numacts','com'], 'data':tmp}]
 
 print('\n\n\n5. Running manual fitting...')
 from manualfit import manualfit
-D = manualfit(D, F=F, Plist=Plist, Mlist=Mlist, startyear=2000, endyear=2015, verbose=2)
+D = manualfit(D, F=F, Plist=Plist, Mlist=Mlist, startyear=2000, endyear=2030, verbose=2)
 
 
 print('\n\n\n6. Viewing results again...')
