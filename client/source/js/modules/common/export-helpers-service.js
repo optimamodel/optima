@@ -210,7 +210,7 @@ define(['angular', 'jquery', './svg-to-png', 'underscore'], function (angular, $
     var axesExport = function (graph){
       //x and y are not needed to be exported - they are just internal values to draw radar chart properly
       var exportable = {
-        name: graph.radarGraphName,
+        name: graph.options.title,
         columns: []
       };
 

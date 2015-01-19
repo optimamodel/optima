@@ -145,38 +145,46 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       return graph;
     };
 
-    // updates pies charts data
     /**
-     *
+     * Returns a prepared graph object for a radar chart.
      */
-    var prepareRadarGraph = function (data) {
-
-      if (data.pie1 === undefined || data.pie2 === undefined) return;
-
-      var graphData = [{axes: []}, {axes: []}];
+    var generateRadarChart = function(data, legend) {
+      var graphData = [{axes: []}];
 
       var options = {
         legend: [],
-        linesStyle: linesStyle
+        linesStyle: linesStyle,
+        title: 'Allocation'
       };
 
-      graphData[0].axes = _(data.pie1.val).map(function (value, index) {
-        return { value: value, axis: data.legend[index] };
+      graphData[0].axes = _(data.val).map(function (value, index) {
+        return { value: value, axis: legend[index] };
       });
-      options.legend.push(data.pie1.name);
+      options.legend.push(data.name);
 
-      graphData[1].axes = _(data.pie2.val).map(function (value, index) {
-        return { value: value, axis: data.legend[index] };
-      });
-      options.legend.push(data.pie2.name);
-
-      var chart = {
+      return {
         'data': graphData,
         'options': options,
-        'radarGraphName': 'Allocation',
         'radarAxesName': 'Programs'
       };
-      return chart;
+    };
+
+    /**
+     * Returns all radar charts.
+     */
+    var prepareRadarCharts = function (data) {
+
+      var charts = [];
+
+      if (data.pie1) {
+        charts.push(generateRadarChart(data.pie1, data.legend));
+      }
+
+      if (data.pie2) {
+        charts.push(generateRadarChart(data.pie2, data.legend));
+      }
+
+      return charts;
     };
 
     /**
@@ -257,7 +265,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       if (!cachedResponse || !cachedResponse.graph) return;
       $scope.optimisationGraphs = prepareOptimisationGraphs(cachedResponse.graph);
       $scope.financialGraphs = prepareFinancialGraphs(cachedResponse.graph);
-      $scope.radarGraph = prepareRadarGraph(cachedResponse.pie);
+      $scope.radarCharts = prepareRadarCharts(cachedResponse.pie);
     }
 
     // makes all graphs to recalculate and redraw
@@ -614,11 +622,8 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     var updateChartsForDataExport = function() {
       $scope.chartsForDataExport = [];
 
-      if ( $scope.radarGraph ) {
-        // export radarChart
-        var graph = $scope.radarGraph;
-        graph.options.title = $scope.radarGraphName;
-        $scope.chartsForDataExport.push(graph);
+      if ( $scope.radarCharts ) {
+        $scope.chartsForDataExport = $scope.chartsForDataExport.concat($scope.radarCharts);
       }
 
       if ( $scope.optimisationGraphs ) {
@@ -630,7 +635,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       }
     };
 
-    $scope.$watch('radarGraph', updateChartsForDataExport, true);
+    $scope.$watch('radarCharts', updateChartsForDataExport, true);
     $scope.$watch('optimisationGraphs', updateChartsForDataExport, true);
     $scope.$watch('financialGraphs', updateChartsForDataExport, true);
 

@@ -520,15 +520,15 @@
         <div class="well section">
           <div class="grid">
             <div class="section">
-                <h1>{{radarChartName}}</h1>
-
                 <export-all-charts name="Optimization analyses" ng-if="radarData || optimisationGraphs || financialGraphs"></export-all-charts>
                 <export-all-data charts="chartsForDataExport" name="Optimization analyses" ng-if="radarData || optimisationGraphs || financialGraphs"></export-all-data>
 
                 <div class="grid">
-                    <div class="7" ng-if="radarGraph">
-                        <div class="chart-container">
-                          <div radar-chart variant="radarGraph" data="radarGraph.data" options="radarGraph.options" save-graph-as></div>
+                    <div class="7" ng-if="radarCharts">
+                        <div ng-repeat="radarChart in radarCharts track by $index">
+                          <div class="chart-container">
+                            <div radar-chart variant="radarChart" data="radarChart.data" options="radarChart.options" save-graph-as></div>
+                          </div>
                         </div>
                     </div>
                 </div>
