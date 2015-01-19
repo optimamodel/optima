@@ -12,6 +12,7 @@ define(['angular'], function (angular) {
         left: 70
       },
       GRAPH_TYPES: {
+        plotUncertainties: false,
         population: [
           { id: 'prev', name: 'HIV prevalence', byPopulation: true, total: false},
           { id: 'plhiv', name:'Number of PLHIV', byPopulation:false, total:true, stacked:false},

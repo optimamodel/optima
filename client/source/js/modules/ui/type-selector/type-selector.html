@@ -1,6 +1,13 @@
 <div class="section cf" ng-if="typeSelectorIsVisible">
   <h3>Results</h3>
 
+  <div ng-if="plotUncertaintiesIsVisible === true">
+    <label class="checkbox-inline">
+      <input type="checkbox" ng-model="types.plotUncertainties">
+      Plot uncertainties
+    </label>
+  </div>
+
   <div class="type-section" ng-repeat="type in types.population">
     <b>{{ type.name }}</b>
     <div>
