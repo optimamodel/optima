@@ -127,7 +127,6 @@ def createProject(project_name):
             filedata.close()
             D = model_as_bunch(project.model)
             D = updatedata(D, savetofile = False)
-            D = runsimulation(D, makeplot = 0, dosave = False)
             model = model_as_dict(D)
             project.model = model
         else:
