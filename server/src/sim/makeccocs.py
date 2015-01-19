@@ -8,7 +8,6 @@ Version: 2015jan16 by cliffk
 ###############################################################################
 
 from math import log
-from matplotlib.pylab import figure, plot, hold, xlabel, ylabel, title, xlim, ylim
 from numpy import linspace, exp, isnan, asarray, multiply, arange
 from numpy import log as nplog
 from rtnorm import rtnorm
@@ -22,7 +21,6 @@ default_progname = 'NSP'
 default_ccparams = []#[0.9, 0.2, 7000000.0, None, None] #
 default_ccplot = []#[None, None, 0]
 default_coparams = []#[0.3, 0.5, 0.7, 0.9] 
-default_makeplot = 0 # CK: Otherwise brings up >100 figures
 default_effect = [['sex', 'condomcas'], [u'MSM']] # D.programs[default_progname]['effects'][0] 
 default_artelig = range(6,31)
 coverage_params = ['numost','numpmtct','numfirstline','numsecondline']
@@ -32,7 +30,7 @@ default_convertedccparams = [0.8, 4.86477537263828e-06]
 default_convertedccoparams = [0.8, 4.86477537263828e-06, 0.4, 0.8, 0]
 
 ######################################################################
-def makecc(D=None, progname=default_progname, ccparams=default_ccparams, ccplot=default_ccplot, artelig=default_artelig, makeplot=default_makeplot, verbose=2, nxpts = 1000):
+def makecc(D=None, progname=default_progname, ccparams=default_ccparams, ccplot=default_ccplot, artelig=default_artelig, verbose=2, nxpts = 1000):
     '''Make cost coverage curve.
 
     Input:
@@ -136,16 +134,6 @@ def makecc(D=None, progname=default_progname, ccparams=default_ccparams, ccplot=
             ccparams = D.programs[progname]['ccparams']
         coverage, targetpopsize, coveragelabel, convertedccparams, ccplottingparams = getcoverage(D, ccparams, popadj=popadj, artelig=default_artelig, progname=progname)
         
-        # Check inputs
-        if (ccparams[0] <= 0 or ccparams[0] > 1):
-            raise Exception('Please enter a value between 0 and 1 for the saturation coverage level')
-        if (ccparams[1] < 0 or ccparams[1] > 1):
-            raise Exception('Please enter a value between 0 and 1 for the coverage level in Question 2')
-        if (ccparams[1] == 0 or ccparams[2] == 0):
-            raise Exception('Please enter non-zero values for the cost and coverage level estimates in Question 2')
-        if ccparams[2] < 0:
-            raise Exception('Negative funding levels are not permitted, please revise')
-
         # Create curve
         xvalscc = linspace(0,xupperlim,nxpts) # take nxpts points between 0 and user-specified max
         if isinstance(ccparams[3], float):
@@ -181,23 +169,10 @@ def makecc(D=None, progname=default_progname, ccparams=default_ccparams, ccplot=
     plotdata['xlabel'] = 'USD'+ ', ' + str(int(cpibaseyear)) + ' prices'
     plotdata['ylabel'] = coveragelabel
     
-    # Plot 
-    if makeplot:
-        printv("plotting cc for program %s" % progname, 4, verbose)   
-        figure()
-        hold(True)
-        if ccparams: plot(plotdata['xlinedata'], plotdata['ylinedata'], 'k-', lw = 2)
-        plot(plotdata['xscatterdata'], plotdata['yscatterdata'], 'ro')
-        title(plotdata['title'])
-        xlabel(plotdata['xlabel'])
-        ylabel(plotdata['ylabel'])
-        xlim([plotdata['xlowerlim'],plotdata['xupperlim']])
-        ylim([plotdata['ylowerlim'],plotdata['yupperlim']])
-
     return plotdata, D
 
 ######################################################################
-def makeco(D, progname=default_progname, effect=default_effect, coparams=default_coparams, makeplot=default_makeplot, verbose=2,nxpts = 1000):
+def makeco(D, progname=default_progname, effect=default_effect, coparams=default_coparams, verbose=2,nxpts = 1000):
     '''
     Make a single coverage outcome curve.
     
@@ -286,10 +261,6 @@ def makeco(D, progname=default_progname, effect=default_effect, coparams=default
         if coparams and len(coparams)>0:
             if not len(coparams)==4:
                 raise Exception('Not all of the coverage-outcome parameters have been specified. Please enter the missing parameters to define the curve.')
-
-            # Check inputs
-#            if any((j<0 or j>1) for j in coparams):
-#                raise Exception('Please enter values between 0 and 1 for the ranges of behaviour at zero and full coverage')
             
             # Generate sample of zero-coverage behaviour
             muz, stdevz, muf, stdevf = makecosampleparams(coparams, verbose=verbose)
@@ -326,21 +297,6 @@ def makeco(D, progname=default_progname, effect=default_effect, coparams=default
         plotdata['title'] = input_parameter_name(effect[0][1])+ ' - ' + effect[1][0]
         plotdata['xlabel'] = coveragelabel
         plotdata['ylabel'] = 'Outcome'
-
-        # Plot results                           
-        if makeplot:
-            figure()
-            hold(True)
-            if coparams:
-                plot(plotdata['xlinedata'], plotdata['ylinedata1'], color = 'b', lw = 2)
-                plot(plotdata['xlinedata'], plotdata['ylinedata2'], 'k--', lw = 2)
-                plot(plotdata['xlinedata'], plotdata['ylinedata3'], 'k--', lw = 2)
-            plot(plotdata['xscatterdata'], plotdata['yscatterdata'], 'ro')
-            title(plotdata['title'])
-            xlabel(plotdata['xlabel'])
-            ylabel(plotdata['ylabel'])
-            xlim([plotdata['xlowerlim'],plotdata['xupperlim']])
-            ylim([plotdata['ylowerlim'],plotdata['yupperlim']])
         
     return plotdata, effect
 
@@ -398,7 +354,7 @@ def ccoeqn(x, p):
     return y
 
 ###############################################################################
-def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=default_ccparams, ccplot=default_ccplot, coparams=default_coparams, makeplot=default_makeplot, verbose=2,nxpts = 1000):
+def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=default_ccparams, ccplot=default_ccplot, coparams=default_coparams, verbose=2,nxpts = 1000):
     '''
     Make a single cost outcome curve.
     
@@ -428,7 +384,7 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
     plotdata, plotdata_co, effect
     '''
     
-    printv("makecco(%s, %s, %s, %s, %s, %s, %s, %s)" % (progname, effect, ccparams, ccplot, coparams, makeplot, verbose, nxpts), 2, verbose)
+    printv("makecco(%s, %s, %s, %s, %s, %s, %s)" % (progname, effect, ccparams, ccplot, coparams, verbose, nxpts), 2, verbose)
 
     # Check that the selected program is in the program list 
     if unicode(progname) not in D.programs.keys():
@@ -589,7 +545,7 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
 
         # Get the coverage-outcome relationships (this should be kept in the outer level, 
         # unless the intention is do not produce coverage-outcome relationships when ccparams / coparams are not present - AN)
-        plotdata_co, effect = makeco(D, progname, effect, coparams, makeplot=makeplot, verbose=verbose)
+        plotdata_co, effect = makeco(D, progname, effect, coparams, verbose=verbose)
 
         # Populate output structure with axis limits
         plotdata['xlowerlim'], plotdata['ylowerlim']  = 0.0, 0.0
@@ -600,31 +556,16 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
         plotdata['xlabel'] = 'USD'+ ', ' + str(int(cpibaseyear)) + ' prices'
         plotdata['ylabel'] = 'Outcome'
         
-        # Plot results 
-        if makeplot:
-            figure()
-            hold(True)
-            if coparams and ccparams:
-                plot(plotdata['xlinedata'], plotdata['ylinedata1'], color = 'b', lw = 2)
-                plot(plotdata['xlinedata'], plotdata['ylinedata2'], 'k--', lw = 2)
-                plot(plotdata['xlinedata'], plotdata['ylinedata3'], 'k--', lw = 2)
-            plot(plotdata['xscatterdata'], plotdata['yscatterdata'], 'ro')                
-            title(plotdata['title'])
-            xlabel(plotdata['xlabel'])
-            ylabel(plotdata['ylabel'] )
-            xlim([plotdata['xlowerlim'],plotdata['xupperlim']])
-            ylim([plotdata['ylowerlim'],plotdata['yupperlim']])
-    
     return plotdata, plotdata_co, effect
 
 ###############################################################################
-def plotallcurves(D=None, progname=default_progname, ccparams=default_ccparams, ccplot=default_ccplot, coparams=default_coparams, makeplot=default_makeplot, verbose=2):
+def plotallcurves(D=None, progname=default_progname, ccparams=default_ccparams, ccplot=default_ccplot, coparams=default_coparams, verbose=2):
     '''
     Make all cost outcome curves for a given program.
     '''
     
      # Get the cost-coverage and coverage-outcome relationships     
-    plotdata_cc, D = makecc(D=D, progname=progname, ccplot=ccplot, ccparams=ccparams, makeplot=makeplot, verbose=verbose)
+    plotdata_cc, D = makecc(D=D, progname=progname, ccplot=ccplot, ccparams=ccparams, verbose=verbose)
 
    ## Check that the selected program is in the program list 
     if progname not in D.programs.keys():
@@ -646,19 +587,19 @@ def plotallcurves(D=None, progname=default_progname, ccparams=default_ccparams, 
 
             # Store outputs
             effects[effectnumber] = effect 
-            plotdata[effectnumber], plotdata_co[effectnumber], effect = makecco(D=D, progname=progname, effect=effect, ccplot=ccplot, ccparams=D.programs[progname]['ccparams'], coparams=coparams, makeplot=makeplot, verbose=verbose)
+            plotdata[effectnumber], plotdata_co[effectnumber], effect = makecco(D=D, progname=progname, effect=effect, ccplot=ccplot, ccparams=D.programs[progname]['ccparams'], coparams=coparams, verbose=verbose)
             effects[effectnumber] = effect 
 
     return plotdata, plotdata_co, plotdata_cc, effects, D      
 
 ###############################################################################
-def makeallccocs(D=None, verbose=2, makeplot=default_makeplot):
+def makeallccocs(D=None, verbose=2):
     '''
     Make all curves for all programs.
     '''
 
     for progname in D.programs.keys():
-        plotdata_cco, plotdata_co, plotdata_cc, effects, D = plotallcurves(D, unicode(progname), makeplot=makeplot)
+        plotdata_cco, plotdata_co, plotdata_cc, effects, D = plotallcurves(D, unicode(progname))
     return D
 
 ###############################################################################
@@ -796,9 +737,3 @@ def makesamples(coparams, muz, stdevz, muf, stdevf, samplesize=1000):
     return zerosample, fullsample
 
 
-# For testing... delete later... should make separate file!
-#plotdata, D = makecc(D, progname=default_progname, ccparams=default_ccparams, ccplot=default_ccplot, artelig=default_artelig, makeplot=default_makeplot, verbose=2, nxpts = 1000)
-#plotdata, effect = makeco(D, progname=default_progname, effect=default_effect, coparams=default_coparams, makeplot=default_makeplot, verbose=2,nxpts = 1000)
-#plotdata, plotdata_co, effect = makecco(D, progname=default_progname, effect=default_effect, ccparams=default_ccparams, ccplot=default_ccplot, coparams=default_coparams, makeplot=default_makeplot, verbose=2,nxpts = 1000)
-#plotdata, plotdata_co, plotdata_cc, effectnames, D = plotallcurves(D, progname=default_progname, ccparams=default_ccparams, coparams=default_coparams, makeplot=default_makeplot, verbose=2)
-#D = makeallccocs(D, verbose=2, makeplot=default_makeplot)
