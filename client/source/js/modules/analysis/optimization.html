@@ -517,7 +517,7 @@
           </div>
         </div>
 
-        <div class="well section">
+        <div class="well section" ng-show="radarData || optimisationGraphs || financialGraphs">
           <div class="grid">
             <div class="section">
                 <export-all-charts name="Optimization analyses" ng-if="radarData || optimisationGraphs || financialGraphs"></export-all-charts>
