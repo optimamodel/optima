@@ -85,7 +85,7 @@ def makecc(D=None, progname=default_progname, ccparams=default_ccparams, ccplot=
 
     # Flag to indicate whether we will adjust by population or not
     popadj = 0
-    if ccplot and len(ccplot)==3:
+    if ccplot and len(ccplot)==3 and ccplot[2]:
         popadj = ccplot[2]
         ccplot[0] = None
 
@@ -481,7 +481,7 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
 
         # Flag to indicate whether we will adjust by population or not
         popadj = 0
-        if ccplot and len(ccplot)==3:
+        if ccplot and len(ccplot)==3 and ccplot[2]:
             popadj = ccplot[2]
             ccplot[0] = None
 
