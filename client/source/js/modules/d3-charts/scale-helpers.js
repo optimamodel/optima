@@ -65,17 +65,21 @@ define(['d3'], function (d3) {
    * For a range smaller than 0.01 a precesion of 3 decimal points is chosen.
    * For a range smaller than 1 a precesion of 2 decimal points is chosen.
    * For a range smaller than 10 a precesion of 1 decimal points is chosen.
-   * For a range between 10 & 100,000 a precesion of 0 decimal points is chosen.
+   * For a range between 10 & 10,000 a precesion of 0 decimal points is chosen.
+   * For a range between 10,000 & 100,000 a precesion of 0 decimal points is
+   * chosen with a comma as thousands separator.
    * For a range larger than 100,000 the numbers are custom suffixed.
    */
   var evaluateTickFormat = function(min, max) {
     var range = Math.abs(max) - Math.abs(min);
     if (range < 0.01) {
-      return ',.3f';
+      return '.3f';
     } else if (range < 1) {
-      return ',.2f';
+      return '.2f';
     } else if (range < 10) {
-      return ',.1f';
+      return '.1f';
+    } else if (range < 10000) {
+      return '.0f';
     } else if (range > 100000) {
       return 'custom';
     } else {
