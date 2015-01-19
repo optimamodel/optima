@@ -16,13 +16,18 @@ define(['./module'], function (module) {
         width: options.width
       };
 
+      var chartSize = {
+        width: options.width - options.margin.left - options.margin.right,
+        height: options.height - options.margin.top - options.margin.bottom
+      };
+
       svg = d3Charts.createSvg(rootElement[0], dimensions, options.margin);
 
       // Define svg groups
       var chartGroup = svg.append('g').attr('class', 'chart_group');
       var headerGroup = svg.append('g').attr('class', 'header_group');
 
-      d3Charts.PieChart(chartGroup, dimensions, data);
+      d3Charts.PieChart(chartGroup, chartSize, data);
     };
 
     return {
