@@ -1,6 +1,7 @@
 define(['angular', 'underscore'], function (angular, _) {
   'use strict';
 
+  /* The 'show-always' attribute tells the directive if it should display the messages before the user started typing in the field */
   return angular.module('app.validations.error-messages', []).directive('errorMessages', function () {
     return {
       restrict: 'EA',
@@ -8,6 +9,7 @@ define(['angular', 'underscore'], function (angular, _) {
       transclude: false,
       scope: {
         for: '@',
+        showAlways:"=",
         rules: "="
       },
       require: '^form',
@@ -21,7 +23,7 @@ define(['angular', 'underscore'], function (angular, _) {
           'lessThan': 'The value must be less than <%= lessThan %>.'
         };
         $scope.errorMessages = function () {
-          if (form && form[$scope.for].$dirty) {
+          if (form && (form[$scope.for].$dirty || $scope.showAlways===true)) {
             return _.compact(_(form[$scope.for].$error).map(function (e, key) {
               if (e) {
                 var template = {};
