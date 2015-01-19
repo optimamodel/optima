@@ -1,4 +1,4 @@
-def manualfit(D, F={}, Plist=[], Mlist=[], startyear=2000, endyear=2015, verbose=2):
+def manualfit(D, F={}, Plist=[], Mlist=[], startyear=2000, endyear=2030, verbose=2):
     """
     Manual metaparameter fitting code.
     
@@ -58,7 +58,6 @@ def updateP(D, Plist):
     from makemodelpars import makemodelpars
     from nested import getnested, setnested, iternested
     from numpy import array
-
     
     oldP = deepcopy(D.P)
     for twig in range(len(Plist)):
