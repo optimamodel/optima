@@ -251,7 +251,6 @@ def snipM(M, thisindex = range(150,301)):
     '''
     Cut M to cover a specified time index
     '''
-    
     M0 = copy.copy(M)
     M0.condom = copy.copy(M.condom)
     M0.numacts = copy.copy(M.numacts)
@@ -262,20 +261,17 @@ def snipM(M, thisindex = range(150,301)):
         if param in ['transit','pships', 'const', 'hivprev']:
             continue
         elif param in ['condom', 'numacts']:
-            M0[param].cas = M0[param].cas[:, thisindex]
-            M0[param].reg = M0[param].reg[:, thisindex]
-            M0[param].com = M0[param].com[:, thisindex]
-            if param in ['numacts']:
-                M0[param].inj = M0[param].inj[:, thisindex]
+            for key in M0[param]:
+                M0[param][key] = M0[param][key][:, thisindex]
         elif param in ['totalacts']:
-            M0[param].cas = M0[param].cas[:, :, thisindex]
-            M0[param].reg = M0[param].reg[:, :, thisindex]
-            M0[param].com = M0[param].com[:, :, thisindex]
-            M0[param].inj = M0[param].inj[:, :, thisindex]
-        elif param in ['aidstest', 'sharing', 'numpmtct', 'breast', 'tx1', 'tx2', 'numost']:
+            for key in M0[param]:
+                M0[param][key] = M0[param][key][:, :, thisindex]
+        elif np.ndim(M0[param])==1:
             M0[param] = M0[param][thisindex]
-        else:
+        elif np.ndim(M0[param])==2:
             M0[param] = M0[param][:, thisindex]
+        else:
+            raise Exception('Parameter type %s doesn''t fit into obvious cases' % param)
 
     return M0
 

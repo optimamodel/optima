@@ -1,5 +1,5 @@
 from printv import printv
-from numpy import zeros, array, exp
+from numpy import zeros, array, exp, shape
 from bunch import Bunch as struct # Replicate Matlab-like structure behavior
 eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
 
@@ -84,6 +84,7 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
     M.aidstest = dpar2mpar(P.aidstest, withwhat) # AIDS testing rates
     M.tx1 = dpar2mpar(P.numfirstline, withwhat) # Number of people on first-line treatment
     M.tx2 = dpar2mpar(P.numsecondline, withwhat) # Number of people on second-line treatment
+    M.txelig = dpar2mpar(P.txelig, withwhat) # Treatment eligibility criterion
 
     ## MTCT parameters
     M.numpmtct = dpar2mpar(P.numpmtct, withwhat)
@@ -93,6 +94,7 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
     ## Sexual behavior parameters -- all are parameters so can loop over all
     M.circum    = dpar2mpar(P.circum,    withwhat) # Circumcision percentage
     M.numcircum = dpar2mpar(P.numcircum, withwhat) # Circumcision number
+    M.numcircum *= 0 # Reset since prevalence data is required and overwrites data on numbers of circumcisions -- # TODO I think this is a bad idea
     M.numacts = struct()
     M.condom  = struct()
     M.numacts.reg = dpar2mpar(P.numactsreg, withwhat) # ...
@@ -122,8 +124,9 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
     ## Calculate total acts
     M.totalacts = totalacts(P, M, npts)
     
-    ## Parameters for programs/scenarios
-#    M.
+    ## Program parameters not related to data
+    M.propaware = zeros(shape(M.hivtest)) # Initialize proportion of PLHIV aware of their status
+    M.txtotal = zeros(shape(M.tx1)) # Initialize total number of people on treatment
     
 
     printv('...done making model parameters.', 2, verbose)

@@ -1,5 +1,5 @@
  ## Imports
-from numpy import array, zeros, exp, maximum, minimum, nonzero # For creating arrays
+from numpy import array, arange, zeros, exp, maximum, minimum, nonzero # For creating arrays
 from bunch import Bunch as struct # Replicate Matlab-like structure behavior
 from printv import printv
 from math import pow as mpow
@@ -62,6 +62,9 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
     tx1  = G.tx1
     fail = G.fail
     tx2  = G.tx2
+    plhivind = undx+dx+tx1+fail+tx2 # Indices for all PLHIV -- # TODO should these bee in G?
+    dxind = dx+tx1+fail+tx2 # All people who have been diagnosed
+    txind = tx1+fail+tx2 # All people on treatment
     male = G.meta.pops.male
     popsize = M.popsize
     for pop in range(npops): popsize[pop,:] *= F.popsize[pop] # Calculate adjusted population sizes
@@ -85,16 +88,17 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
     sharing   = M.sharing
     numpmtct  = M.numpmtct
     ost       = M.numost
-#    numart    = M.numart
+    txtotal   = M.txtotal
+    txelig    = M.txelig
     prog      = h2a(G, M.const.prog)   # Disease progression rates
     recov     = h2a(G, M.const.recov)  # Recovery rates
     death     = h2a(G, M.const.death)  # HIV death rates
     deathtx   = M.const.death.treat # Death rate whilst on treatment
 
-    M.tbprev = M.tbprev + 1  
+    tbprev = M.tbprev + 1  
     
-    efftb     = M.const.death.tb * M.tbprev # Increase in death due to TB coinfection
-#    sym       = M.transit.sym
+    efftb     = M.const.death.tb * tbprev # Increase in death due to TB coinfection
+    sym       = M.transit.sym
     asym      = M.transit.asym
     hivtest   = M.hivtest
     aidstest  = M.aidstest
@@ -103,6 +107,8 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
     failfirst  = M.const.fail.first
     failsecond = M.const.fail.second
     Fforce    = array(F.force)
+    
+    propaware = M.propaware
     
     # Initialize the list of sex acts so it doesn't have to happen in the time loop
     sexactslist = []
@@ -137,6 +143,14 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
         effmtct  = mtcb*M.breast[t] + mtcn*(1-M.breast[t]) # Effective MTCT transmission
         pmtcteff = (1 - effpmtct) * effmtct # Effective MTCT transmission whilst on PMTCT
         
+        # Calculate treatment eligibility -- WARNING, hard-coded
+        if txelig[t]>500:   currelig = arange(0,ncd4) # Everyone
+        elif txelig[t]>350: currelig = arange(2,ncd4) # Exclude acute and CD4>500
+        elif txelig[t]>200: currelig = arange(3,ncd4)
+        elif txelig[t]>50:  currelig = arange(4,ncd4)
+        elif txelig[t]>0:   currelig = arange(5,ncd4) # Only people in the last health state
+        else: raise Exception('Treatment eligibility %s at time %s does not seem to be valid' % (txelig[t], t))
+        
         
         
         ###############################################################################
@@ -147,20 +161,24 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
         forceinfvec = zeros(npops)
         
         ## Sexual partnerships
-        
-        effcirc = effcirc*M.circum
-        
-        # Iterate through partnership pairs
+        # Loop over all populations (for males)
         for popM in range(npops):
+            
+            # Circumcision
+            circeffF = 1 # Trivial circumcision effect for female or receptive male
+            if t>0 and M.numcircum[popM,t]>0: # Only use this if it's greater than zero, and not at the first time point
+                fractioncircumcised = dt*M.numcircum[popM,t]/M.popsize[popM,t] # Fraction of men in this population being circumcised
+                M.circum[popM,t:] = min(1, M.circum[popM,t-1]+fractioncircumcised) # Calculate new fraction circumcised from previous timestep, making sure it never exceeds 1
+            circeffM = 1 - effcirc*M.circum[popM,t]
+            
+            # Loop over all populations (for females)
             for popF in range(npops):
                 
                 # Transmissibility (depends on receptive population being male or female)
                 transM = mmi if male[popF] else mfi # Insertive transmissibility
                 transF = mmr if male[popF] else mfr # Receptive transmissibility
 
-                # Transmission effects
-                circeffM = 1 - effcirc[popM,t] # Effect of circumcision for insertive male -- # TODO: check this is capturing what we want, i.e shouldn't it only be for susceptibles?
-                circeffF = 1                   # Trivial circumcision effect for female or receptive male
+                # Transmission effects                
                 prepeffM = 1 - effprep[popM,t] # Male PrEP effect
                 prepeffF = 1 - effprep[popF,t] # Female PrEP effect
                 stieffM  = 1 + effsti[popM,t]  # Male STI prevalence effect
@@ -183,12 +201,12 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
         # Transmission effects
         if ost[t]<=1: # It's a proportion
             osteff = 1 - ost[t]*effost
-            if osteff<0: raise Exception('Bug in 1 - ost[t]*effost: osteff=%f ost[t]=%f effost=%f' % (osteff, ost[t], effost))
+            if osteff<0: raise Exception('Bug in osteff = 1 - ost[t]*effost: osteff=%f ost[t]=%f effost=%f' % (osteff, ost[t], effost))
         else: # It's a number, convert to a proportion using the PWID flag
             numost = ost[t] # Total number of people on OST
             numpwid = sum(M.popsize[nonzero(G.meta.pops.injects),t]) # Total number of PWID
             osteff = 1 - min(1,numost/numpwid)*effost # Proportion of PWID on OST, making sure there aren't more people on OST than PWID
-            if osteff<0: raise Exception('Bug in 1 - min(1,numost/numpwid)*effost: osteff=%f numost=%f numpwid=%f effost=%f' % (osteff, numost, numpwid, effost))
+            if osteff<0: raise Exception('Bug in osteff = 1 - min(1,numost/numpwid)*effost: osteff=%f numost=%f numpwid=%f effost=%f' % (osteff, numost, numpwid, effost))
         # Iterate through partnership pairs
         for pop1 in range(npops):
             for pop2 in range(npops):
@@ -202,18 +220,25 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
                     if not(all(forceinfvec>=0)): raise Exception('Injecting force-of-infection is invalid (transinj=%f, numacts1=%f, numacts2=%f, osteff=%f, effhivprev1=%f, effhivprev2=%f)'% (transinj, numacts1, numacts2, osteff, effhivprev[pop2], effhivprev[pop1]))
         
         ###############################################################################
+        ## Turn off transmission (after a certain time - if specified)
+        ###############################################################################
+
+        if S.tvec[t] >= abs(opt.turnofftrans):
+            if opt.turnofftrans > 0: forceinfvec *= 0
+            if opt.turnofftrans < 0: break
+        ###############################################################################
         ## Calculate mother-to-child-transmission
         ###############################################################################
         
         # We have two ways to calculate number of births...
         if (asym<0).any(): # Method 1 -- children are being modelled directly
             print('NB, not implemented') # TODO Use negative entries in transitions matrix
-            birthrate = M.birth[:,t] # Use birthrate parameter from input spreadsheet
+            birthrate = M['birth'][:,t] # Use birthrate parameter from input spreadsheet
         else: # Method 2 -- children are not being modelled directly
-            birthrate = M.birth[:,t] # Use birthrate parameter from input spreadsheet
+            birthrate = M['birth'][:,t] # Use birthrate parameter from input spreadsheet
         S['births'][0,t] = sum(birthrate * allpeople[:,t])
         mtcttx       = sum(birthrate * sum(people[tx1,:,t] +people[tx2,:,t]))  * pmtcteff # MTCT from those on treatment (not eligible for PMTCT)
-        mtctundx     = sum(birthrate * sum(people[undx,:,t]+people[fail,:,t])) * effmtct  # MTCT from those undiagnosed or failed (also not eligible)
+        mtctuntx     = sum(birthrate * sum(people[undx,:,t]+people[fail,:,t])) * effmtct  # MTCT from those undiagnosed or failed (also not eligible)
         birthselig   = sum(birthrate * sum(people[dx,:,t]))   # Births to diagnosed mothers eligible for PMTCT
         if numpmtct[t]>1: # It's greater than 1: assume it's a number
             receivepmtct = min(numpmtct[t], birthselig)       # Births protected by PMTCT -- constrained by number eligible 
@@ -221,7 +246,7 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
             receivepmtct = numpmtct[t]*birthselig          # Births protected by PMTCT -- constrained by number eligible 
         mtctdx       = (birthselig - receivepmtct) * effmtct  # MTCT from those diagnosed not receiving PMTCT
         mtctpmtct    = receivepmtct * pmtcteff                # MTCT from those receiving PMTCT
-        S['mtct'][0,t] = mtctundx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components 
+        S['mtct'][0,t] = mtctuntx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components 
         
         ###############################################################################
         ## The ODEs
@@ -248,6 +273,12 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
         S['inci'][:,t] = newinfections  # Store new infections
 
         ## Undiagnosed
+        propdx = None
+        if propaware[:,t].any(): # Only do this if nonzero
+            currplhiv = people[plhivind,:,t].sum(axis=0)
+            currdx = people[dxind,:,t].sum(axis=0)
+            currundx = currplhiv[:] - currdx[:]
+            fractiontodx =  maximum(0, propaware[:,t] * currplhiv[:] - currdx[:] / (currundx[:] + eps)) # Don't allow to go negative
         for cd4 in range(ncd4):
             if cd4>0: 
                 progin = dt*prog[cd4-1]*people[undx[cd4-1],:,t]
@@ -259,7 +290,10 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
             else: 
                 progout = 0  # Cannot progress out of AIDS stage
                 testingrate[cd4] = maximum(hivtest[:,t], aidstest[t]) # Testing rate in the AIDS stage (if larger!)
-            newdiagnoses[cd4] = dt * people[undx[cd4],:,t] * testingrate[cd4] * dxtime[t]
+            if propdx is None: # No proportion diagnosed information, go with testing rate
+                newdiagnoses[cd4] = dt * people[undx[cd4],:,t] * testingrate[cd4] * dxtime[t]
+            else: # It exists, use what's calculated before
+                newdiagnoses[cd4] = fractiontodx * people[undx[cd4],:,t]
             hivtbdeath  = minimum((1 + efftb[:,t]) * death[cd4], 1)
             hivdeaths   = dt * people[undx[cd4],:,t] * hivtbdeath
             otherdeaths = dt * people[undx[cd4],:,t] * background
@@ -272,7 +306,15 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
         dU[0] = dU[0] + newinfections # Now add newly infected people
         
         ## Diagnosed
-        newtreat1tot = Mtx1[t] - people[tx1,:,t].sum() # Calculate difference between current people on treatment and people needed
+        if txtotal[t]>0: # Only use if it's defined
+            if txtotal[t]<=1: # It's less than one: interpret it as a proportion
+                currplhiv = people[plhivind,:,t].sum()
+                currtx = people[txind,:,t].sum()
+                newtreat1tot =  txtotal[t] * currplhiv - currtx
+            else: # It's greater than one: it's a number
+                newtreat1tot = txtotal[t] - people[txind,:,t].sum() # New people on treatment is just the total requested minus total current
+        else:
+            newtreat1tot = Mtx1[t] - people[tx1,:,t].sum() # Calculate difference between current people on treatment and people needed
         currentdiagnosed = people[dx,:,t] # Find how many people are diagnosed
         for cd4 in range(ncd4):
             if cd4>0: 
@@ -283,7 +325,8 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
                 progout = dt*prog[cd4]*people[dx[cd4],:,t]
             else: 
                 progout = 0 # Cannot progress out of AIDS stage
-            newtreat1[cd4] = newtreat1tot * currentdiagnosed[cd4,:] / (eps+currentdiagnosed.sum()) # Pull out evenly among diagnosed -- WARNING # TODO implement CD4 cutoffs
+            
+            newtreat1[cd4] = (cd4>=currelig[0]) * newtreat1tot * currentdiagnosed[cd4,:] / (eps+currentdiagnosed[currelig,:].sum()) # Pull out evenly among diagnosed -- WARNING # TODO implement CD4 cutoffs
             hivtbdeath  = minimum((1 + efftb[:,t]) * death[cd4], 1)
             hivdeaths   = dt * people[undx[cd4],:,t] * hivtbdeath
             otherdeaths = dt * people[undx[cd4],:,t] * background
@@ -387,10 +430,12 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
                     people[0,pop,t+1] += newpeople[pop]
                 else: # People are leaving: they leave from each health state equally
                     people[:,pop,t+1] *= popsize[pop,t]/sum(people[:,pop,t]);
-            if not((people[:,:,t+1]>=0).all()):
-                print('Non-positive people found') # If not every element is a real number >0, throw an error
-#                import pdb; pdb.set_trace() not going to fly in web context
-                raise Exception('Non-positive people found: %s %s' % (pop, people))
+            if not((people[:,:,t+1]>=0).all()): # If not every element is a real number >0, throw an error
+                for errstate in range(nstates): # Loop over all heath states
+                    for errpop in range(npops): # Loop over all populations
+                        if not(people[errstate,errpop,t+1]>=0):
+                            print('WARNING, Non-positive people found: people[%s, %s, %s] = %s' % (t+1, errpop, errstate, people[errstate,errpop,t+1]))
+                            people[errstate,errpop,t+1] = 0 # Reset
                 
     # Append final people array to sim output
     S['people'] = people
@@ -499,7 +544,7 @@ def equilibrate(G, M, Finit):
         initpeople[G['tx2'], p] = treatment2
     
         if not((initpeople>=0).all()):
-                    print('Non-positive people found') # If not every element is a real number >0, throw an error
-                    import pdb; pdb.set_trace()
+            print('Non-positive people found') # If not every element is a real number >0, throw an error
+            import pdb; pdb.set_trace()
         
     return initpeople
