@@ -1,5 +1,10 @@
-.graph-legend_text {
-  font-size: 12px;
-  text-anchor: start;
-  font-family: 'Open Sans', sans-serif;
+.graph-legend {
+  &_text {
+    font-size: 12px;
+    text-anchor: start;
+    font-family: 'Open Sans', sans-serif;
+  }
+  &_dot{
+    fill-opacity:1;
+  }
 }
