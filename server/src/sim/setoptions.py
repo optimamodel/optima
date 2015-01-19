@@ -2,7 +2,7 @@ def setoptions(opt=None, **kwargs):
     """
     Set the options for running the simulation.
     
-    Version: 2014nov23 by cliffk
+    Version: 2015jan19 by cliffk
     """
     
     from bunch import Bunch as struct
@@ -13,8 +13,6 @@ def setoptions(opt=None, **kwargs):
         opt = struct() # If existing options structure isn't provided, create it
         opt.startyear = kwargs.get('startyear', 2000) # First year of simulation to run
         opt.endyear = kwargs.get('endyear', 2030) # Final year of simulation to run
-        opt.optimstartyear = kwargs.get('optimstartyear', 2015) # First year to alter parameters during optimisation
-        opt.optimendyear = kwargs.get('optimendyear', 2030) # Final year to alter parameters during optimisation
         opt.dt = 0.1 # Timestep
         opt.nsims = kwargs.get('nsims', 5) # Number of simulations to store for purposes of uncertainty
         opt.quantiles = [0.5, 0.25, 0.75] # Quantiles to return
@@ -29,8 +27,5 @@ def setoptions(opt=None, **kwargs):
     
     opt.tvec = arange(opt.startyear, opt.endyear+opt.dt, opt.dt) # Recalculate time vector    
     opt.npts = len(opt.tvec) # Number of time points
-    
-    opt.toptvec = arange(opt.optimstartyear, opt.optimendyear+opt.dt, opt.dt) # Also append time vector for optimisation
-    
     
     return opt
