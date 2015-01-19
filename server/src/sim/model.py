@@ -434,8 +434,8 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
                 for errstate in range(nstates): # Loop over all heath states
                     for errpop in range(npops): # Loop over all populations
                         if not(people[errstate,errpop,t+1]>=0):
-                            print('Non-positive people found: people[%s, %s, %s] = %s' % (t+1, errpop, errstate, people[errstate,errpop,t+1]))
-                            raise Exception('Non-positive people')
+                            print('WARNING, Non-positive people found: people[%s, %s, %s] = %s' % (t+1, errpop, errstate, people[errstate,errpop,t+1]))
+                            people[errstate,errpop,t+1] = 0 # Reset
                 
     # Append final people array to sim output
     S['people'] = people
