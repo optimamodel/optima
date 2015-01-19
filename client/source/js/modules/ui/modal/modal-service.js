@@ -63,14 +63,18 @@ define([
         /**
          * This function opens a modal that will ask user to enter a value.
          */
-        showPrompt: function (title, label, cb) {
+        showPrompt: function (title, label, cb, options) {
+          options = options || {};
+
           var modalInstance = $modal.open({
             templateUrl: 'js/modules/ui/modal/modal-prompt.html',
             controller: ['$scope', function ($scope) {
               $scope.title = title;
               $scope.label = label;
-              $scope.acceptButton = 'Yes';
-              $scope.rejectButton = 'No';
+              $scope.acceptButton = options.acceptButton || 'Yes';
+              $scope.rejectButton = options.rejectButton || 'No';
+              $scope.description = options.description || false;
+              $scope.closeReason = options.closeReason || 'close';
 
               $scope.cb = function(enteredValue) {
                 cb(enteredValue);
@@ -78,6 +82,8 @@ define([
               };
             }]
           });
+
+          return modalInstance;
         },
 
 

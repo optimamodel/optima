@@ -100,11 +100,6 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
         }
       }
 
-      if ($scope.optimizations && $scope.optimizations[0]) {
-        _.extend($scope.params.objectives, $scope.optimizations[0].objectives);
-        _.extend($scope.params.constraints, $scope.optimizations[0].constraints);
-      }
-
     var optimizationTimer;
 
     var linesStyle = ['__blue', '__green', '__red', '__orange', '__violet',
@@ -605,8 +600,32 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     });
 
     $scope.saveOptimization = function () {
-      $http.post('/api/analysis/optimization/save')
-        .success(updateGraphs);
+      var title = 'Save optimization';
+
+      var label = 'New optimization name';
+
+      var options = {
+        description: 'If you would you like to save current objectives and constraints as a new optimization,' +
+          ' please type a new optimization name in a field below. Otherwise just press "Cancel"' +
+          ' and existing optimization "' + $scope.activeOptimization.name + '" will be updated.',
+        acceptButton: 'Yes, save as new',
+        rejectButton: 'No, override current',
+        closeReason: 'overrideoptimization'
+      };
+
+      var doSave = function (name) {
+        $http.post('/api/analysis/optimization/save', { name: name })
+          .success(updateGraphs);
+      };
+
+      modalService.showPrompt(title, label,
+        function (newOptimizationName) {
+          doSave(newOptimizationName);
+        }, options).result.then(function (reason) {
+          if (reason === options.closeReason) {
+            doSave($scope.activeOptimization.name);
+          }
+        });
     };
 
     $scope.revertOptimization = function () {
@@ -691,6 +710,27 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
         $scope.chartsForDataExport = $scope.chartsForDataExport.concat($scope.financialGraphs);
       }
     };
+
+    /**
+     * Changes active constrains and objectives to the values in provided optimization
+     * @param optimization {Object}
+     */
+    $scope.applyOptimization = function (optimization) {
+      _.extend($scope.params.objectives, optimization.objectives);
+      _.extend($scope.params.constraints, optimization.constraints);
+    };
+
+    // apply default optimization on page load
+    if ($scope.optimizations && $scope.optimizations[0]) {
+      $scope.activeOptimization = $scope.optimizations[0];
+      $scope.applyOptimization($scope.optimizations[0]);
+    }
+
+    $scope.$watch('activeOptimization', function (newValue) {
+      if (newValue) {
+        $scope.applyOptimization(newValue);
+      }
+    });
 
     $scope.$watch('radarCharts', updateChartsForDataExport, true);
     $scope.$watch('optimisationGraphs', updateChartsForDataExport, true);
