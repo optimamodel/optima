@@ -430,12 +430,12 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
                     people[0,pop,t+1] += newpeople[pop]
                 else: # People are leaving: they leave from each health state equally
                     people[:,pop,t+1] *= popsize[pop,t]/sum(people[:,pop,t]);
-            if not((people[:,:,t+1]>=0).all()):
-                print('Non-positive people found!!!') # If not every element is a real number >0, throw an error
+            if not((people[:,:,t+1]>=0).all()): # If not every element is a real number >0, throw an error
                 for errstate in range(nstates): # Loop over all heath states
                     for errpop in range(npops): # Loop over all populations
                         if not(people[errstate,errpop,t+1]>=0):
-                            raise Exception('Non-positive people found: people[%s, %s, %s] = %s' % (t+1, errpop, errstate, people[errstate,errpop,t+1]))
+                            print('Non-positive people found: people[%s, %s, %s] = %s' % (t+1, errpop, errstate, people[errstate,errpop,t+1]))
+                            raise Exception('Non-positive people')
                 
     # Append final people array to sim output
     S['people'] = people
@@ -544,7 +544,7 @@ def equilibrate(G, M, Finit):
         initpeople[G['tx2'], p] = treatment2
     
         if not((initpeople>=0).all()):
-                    print('Non-positive people found') # If not every element is a real number >0, throw an error
-                    import pdb; pdb.set_trace()
+            print('Non-positive people found') # If not every element is a real number >0, throw an error
+            import pdb; pdb.set_trace()
         
     return initpeople
