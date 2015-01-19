@@ -273,7 +273,11 @@ define(['./module', 'angular'], function (module, angular) {
         .success(updateCharts);
     };
 
-	  var autoCalibrationTimer;
+    if($scope.needData === false){
+      $scope.simulate();
+    }
+
+    var autoCalibrationTimer;
     $scope.startAutoCalibration = function () {
       $http.post('/api/model/calibrate/auto', $scope.simulationOptions,{ignoreLoadingBar: true})
         .success(function(data, status, headers, config) {
