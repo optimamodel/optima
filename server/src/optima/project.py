@@ -434,6 +434,34 @@ def uploadExcel():
         D = runsimulation(D, makeplot = 0, dosave = False)
         model = model_as_dict(D)
         project.model = model
+
+        # Update project.populations and project.programs
+        pops = []
+        progs = []
+
+        D_pops = D['data']['meta']['pops'].toDict()
+        D_progs = D['data']['meta']['progs'].toDict()
+        
+        for i in range(len(D_pops['short'])):
+            pop = {"short_name":D_pops['short'][i],"name":D_pops['long'][i],"sexworker":D_pops['sexworker'][i],"injects":D_pops['injects'][i],"sexmen":D_pops['sexmen'][i],"client":D_pops['client'][i],"female":D_pops['female'][i],"male":D_pops['male'][i],"sexwomen":D_pops['sexwomen'][i]}
+            pops.append(pop)
+
+        for i in range(len(project.populations)):
+            p = [pop for pop in pops if pop['short_name'] == project.populations[i]['short_name']]
+            if (len(p) > 0):
+                project.populations[i] = p[0]
+        
+        from sim.programs import programs
+        programs = programs();
+
+        for i in range(len(D_progs['short'])):
+            p = [prog for prog in project.programs if prog['short_name'] == D_progs['short'][i]]
+            if (len(p) > 0):
+                project.programs[i] = p[0]
+            else:
+                p = [prog for prog in programs if prog['short_name'] == D_progs['short'][i]]
+                project.programs[i] = p[0]
+
         db.session.add(project)
 
         # save data upload timestamp
