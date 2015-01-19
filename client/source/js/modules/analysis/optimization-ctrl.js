@@ -178,7 +178,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       });
 
       return {
-        'data': graphData,
+        'data': {slices: graphData},
         'options': options
       };
     };
@@ -679,6 +679,10 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     var updateChartsForDataExport = function() {
       $scope.chartsForDataExport = [];
 
+      if ( $scope.pieCharts ) {
+        $scope.chartsForDataExport = $scope.chartsForDataExport.concat($scope.pieCharts);
+      }
+
       if ( $scope.radarCharts ) {
         $scope.chartsForDataExport = $scope.chartsForDataExport.concat($scope.radarCharts);
       }
@@ -692,6 +696,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       }
     };
 
+    $scope.$watch('pieCharts', updateChartsForDataExport, true);
     $scope.$watch('radarCharts', updateChartsForDataExport, true);
     $scope.$watch('optimisationGraphs', updateChartsForDataExport, true);
     $scope.$watch('financialGraphs', updateChartsForDataExport, true);
