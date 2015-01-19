@@ -8,6 +8,16 @@ you can think up a better way, which I'm sure you can, let me know :)
 Version: 2015jan19 by cliffk
 """
 
+# Make sure memory is handled OK
+try:
+    import resource, os
+    freemem = 0.95*float(os.popen("free -b").readlines()[1].split()[3]) # Get free memory, set maximum to 95%
+    resource.setrlimit(resource.RLIMIT_AS, (freemem, freemem)) # Limit memory usage
+    print('  Note: RAM limited to %0.2f GB' % (freemem/1e9))
+except:
+    print('Attempt to limit memory failed; no matter.')
+
+
 # Override default exception handling
 import sys
 def info(type, value, tb):
@@ -18,6 +28,7 @@ def info(type, value, tb):
       traceback.print_exception(type, value, tb) # we are NOT in interactive mode, print the exception...
       pdb.pm() # ...then start the debugger in post-mortem mode.
 sys.excepthook = info
+
 
 # Run all tests
 from glob import glob
