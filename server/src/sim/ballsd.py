@@ -133,6 +133,8 @@ def ballsd(function, x, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, 
         xnew[par] = newval # Update the new parameter set
         fvalnew = function(xnew) # Calculate the objective function for the new parameter set
         errorhistory[mod(count,StallIterLimit)] = fval - fvalnew # Keep track of improvements in the error  
+        if verbose>5:
+            print('       choice=%s, par=%s, pm=%s, origval=%s, newval=%s, inrange=%s' % (choice, par, pm, x[par], xnew[par], inrange))
         
 
         # Check if this step was an improvement
@@ -146,7 +148,7 @@ def ballsd(function, x, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, 
             p[choice] = p[choice]/pdec # Decrease probability of picking this parameter again
             s[choice] = s[choice]/sdec # Decrease size of step for next time
             if verbose>5: flag = 'FAILURE'
-        if verbose>5: print(' '*90 + flag + ' on step %i (orig:%0.1f new:%0.1f diff:%0.5f ratio:%0.3f)' % (count, fval, fvalnew, fvalnew-fval, fvalnew/fval) )
+        if verbose>=5: print(' '*40 + flag + ' on step %i (orig:%0.1f new:%0.1f diff:%0.5f ratio:%0.3f)' % (count, fval, fvalnew, fvalnew-fval, fvalnew/fval) )
 
         # Optionally store output information
         if fulloutput: # Include additional output structure
