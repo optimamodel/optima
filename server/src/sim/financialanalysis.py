@@ -7,8 +7,9 @@ import numpy as np
 import copy
 from setoptions import setoptions
 from copy import deepcopy
+from utils import sanitize
 
-def financialanalysis(D, postyear=2015, S=None, yscale='abs', makeplot=False):
+def financialanalysis(D, postyear=2015.0, S=None, yscale='abs', makeplot=False):
     '''
     Plot financial commitment graphs
     Note, yscale will be chosen from ['abs', 'avg', 'avgppp']
@@ -16,10 +17,18 @@ def financialanalysis(D, postyear=2015, S=None, yscale='abs', makeplot=False):
     
     # If not supplied as input, copy from D
     if not(isinstance(S,dict)): S = D.S
-    
+    costs = {}
+    postyear = float(postyear)
+
     # Interpolate macroeconomic indicators 
     neconyrs = len(D.data.econyears)
     nepiyrs = len(D.data.epiyears)
+    
+    for healthno, healthstate in enumerate(D.G.healthstates):
+        socialcosts = np.mean(sanitize(D.data.econ.social[healthno]))
+        othercosts = np.mean(sanitize(D.data.econ.health[healthno]))
+        costs[healthstate] = socialcosts + othercosts
+
     acutecosts, gt500costs, gt350costs, gt200costs, gt50costs, aidscosts = [], [], [], [], [], []
     for i in range(nepiyrs-1):
         acutecosts.extend(np.linspace((D.data.econ.social[0][i]+D.data.econ.health[0][i]),(D.data.econ.social[0][i+1]+D.data.econ.health[0][i+1]),1/D.opt.dt,endpoint=False).tolist())
@@ -37,16 +46,16 @@ def financialanalysis(D, postyear=2015, S=None, yscale='abs', makeplot=False):
     aidscosts.extend([aidscosts[-1]]*((neconyrs-nepiyrs)*10+1))
 
     # Get future time index
-    opt = setoptions(startyear=postyear, endyear=D.opt.endyear, nsims=1)
-    futureindex = np.where(D.opt.tvec - opt.tvec[0]>-0.01)[0]
+    opt = setoptions(startyear=D.opt.startyear, endyear=D.opt.endyear, nsims=1, turnofftrans=postyear)
 
     # Get indices for the different disease states # TODO these should be defined globally somewhere... 
     acute, gt500, gt350, gt200, gt50, aids = D.G.acute, D.G.gt500, D.G.gt350, D.G.gt200, D.G.gt50, D.G.aids
 
     # Set force of infection to zero... 
-    zeroF = deepcopy(D.F[0])
-    zeroF.force = D.G.npops*[0.] # TODO -- find out why F is turning into a list from an array
-    initstate = S.people[:,:,futureindex[0]]
+#    zeroF = deepcopy(D.F[0])
+#    zeroF.force = D.G.npops*[0.] # TODO -- find out why F is turning into a list from an array
+#    initstate = S.people[:,:,futureindex[0]]
+#    initstate = S.people[:,:,150]
     
     # Extract the number of PLHIV under the baseline sim
     peoplebase = S.people[:,:,:]
@@ -61,12 +70,13 @@ def financialanalysis(D, postyear=2015, S=None, yscale='abs', makeplot=False):
     
     # Run a simulation with the force of infection set to zero from postyear... 
     from model import model
-    M0 = snipM(D.M, futureindex.tolist())
-    S0 = model(D.G, M0, zeroF, opt, initstate)
+#    M0 = snipM(D.M, futureindex.tolist())
+#    S0 = model(D.G, M0, zeroF, opt, initstate)
+    S0 = model(D.G, D.M, D.F[0], opt, initstate=None)
 
     # Extract the number of PLHIV under the zero transmission sim
     peoplezero = S0.people[:,:,:]
-    peoplezero = np.concatenate((peoplebase[:,:,0:futureindex[0]], peoplezero), axis=2)
+#    peoplezero = np.concatenate((peoplebase[:,:,0:futureindex[0]], peoplezero), axis=2)
 
     # Calculate total number in each disease stage under the zero transmission sim
     acuteplhivzero = np.sum(peoplezero[acute,:,:], axis = (0,1))
@@ -77,8 +87,8 @@ def financialanalysis(D, postyear=2015, S=None, yscale='abs', makeplot=False):
     aidsplhivzero = np.sum(peoplezero[aids,:,:], axis = (0,1))
 
     # Interpolate time for plotting
-    xdata = D.opt.tvec
-    npts = D.opt.npts
+    xdata = opt.tvec
+    npts = len(xdata)
 
     # Get most recent ART unit costs
     progname = 'ART'
@@ -190,32 +200,32 @@ def financialanalysis(D, postyear=2015, S=None, yscale='abs', makeplot=False):
 
         figure()
         hold(True)
-        plot(acutecostbase, lw = 2, c = 'b')
-        plot(acutecostzero, lw = 2, c = 'r')
+        plot(acuteplhivbase, lw = 2, c = 'b')
+        plot(acuteplhivzero, lw = 2, c = 'r')
         title('Acute costs')
 
         figure()
         hold(True)
-        plot(gt500costbase, lw = 2, c = 'b')
-        plot(gt500costzero, lw = 2, c = 'r')
+        plot(gt500plhivbase, lw = 2, c = 'b')
+        plot(gt500plhivzero, lw = 2, c = 'r')
         title('gt500 costs')
 
         figure()
         hold(True)
-        plot(gt350costbase, lw = 2, c = 'b')
-        plot(gt350costzero, lw = 2, c = 'r')
+        plot(gt350plhivbase, lw = 2, c = 'b')
+        plot(gt350plhivzero, lw = 2, c = 'r')
         title('gt350 costs')
 
         figure()
         hold(True)
-        plot(gt200costbase, lw = 2, c = 'b')
-        plot(gt200costzero, lw = 2, c = 'r')
+        plot(gt200plhivbase, lw = 2, c = 'b')
+        plot(gt200plhivzero, lw = 2, c = 'r')
         title('gt200 costs')
 
         figure()
         hold(True)
-        plot(aidscostbase, lw = 2, c = 'b')
-        plot(aidscostzero, lw = 2, c = 'r')
+        plot(aidsplhivbase, lw = 2, c = 'b')
+        plot(aidsplhivzero, lw = 2, c = 'r')
         title('aids costs')
 
         figure()
@@ -276,4 +286,4 @@ def snipM(M, thisindex = range(150,301)):
     return M0
 
 #example
-#plotdata = financialanalysis(D, postyear = 2015.0, S = D.A[1].S, yscale = 'abs', makeplot = 1)
+#plotdata = financialanalysis(D, postyear = 2015.0, S = D.S, yscale = 'abs', makeplot = 1)
