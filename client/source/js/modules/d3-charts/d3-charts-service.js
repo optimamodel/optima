@@ -11,9 +11,7 @@ define(['./module', 'd3', 'underscore', './scale-helpers'], function (module, d3
      * Data has to be provided in the following format: {label: "xxzy", value: 44}
      */
     function PieChart(chart, chartSize, data) {
-      var width = 960,
-      height = 500,
-      radius = Math.min(width, height) / 2;
+      var radius = Math.min(chartSize.width, chartSize.height) / 2;
 
       var color = d3.scale.ordinal()
         .range(["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"]);
@@ -26,7 +24,7 @@ define(['./module', 'd3', 'underscore', './scale-helpers'], function (module, d3
        .sort(null)
        .value(function(d) { return d.value; });
 
-      chart.attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+      chart.attr("transform", "translate(" + chartSize.width / 2 + "," + chartSize.height / 2 + ")");
 
       var g = chart.selectAll(".arc")
         .data(pie(data))
