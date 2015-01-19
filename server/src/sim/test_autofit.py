@@ -24,16 +24,16 @@ D = updatedata(D, verbose=verbose)
 
 print('\n\n\n3. Running simulation...')
 from runsimulation import runsimulation
-D = runsimulation(D, startyear=2000, endyear=2015, verbose=verbose)
+D = runsimulation(D, startyear=2000, endyear=2030, verbose=verbose)
 
 print('\n\n\n4. Viewing results...')
-whichgraphs = {'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'death':[0,1], 'dx':[0,1], 'tx1':[0,1], 'tx2':[0,1]}
+whichgraphs = {'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 'daly':[0,1], 'death':[0,1], 'dx':[0,1], 'tx1':[0,1], 'tx2':[0,1]}
 from viewresults import viewuncerresults
 viewuncerresults(D.plot.E, whichgraphs=whichgraphs, startyear=2000, endyear=2015, onefig=True, verbose=verbose)
 
 print('\n\n\n5. Running automatic fitting...')
 from autofit import autofit
-autofit(D, timelimit=timelimit, startyear=2000, endyear=2015, verbose=verbose)
+autofit(D, timelimit=timelimit, startyear=2000, endyear=2030, verbose=verbose)
 
 print('\n\n\n6. Viewing scenarios...')
 viewuncerresults(D.plot.E, whichgraphs=whichgraphs, startyear=2000, endyear=2015, onefig=True, verbose=verbose)

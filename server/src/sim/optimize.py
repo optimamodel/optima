@@ -1,7 +1,11 @@
 from printv import printv
 from bunch import Bunch as struct
+from copy import deepcopy
 
-def optimize(D, objectives=None, constraints=None, startyear=2000, endyear=2030, timelimit=60, verbose=2):
+default_startyear = 2000
+default_endyear = 2030
+
+def optimize(D, objectives=None, constraints=None, name="default", timelimit=60, verbose=2):
     """
     Allocation optimization code:
         D is the project data structure
@@ -23,11 +27,23 @@ def optimize(D, objectives=None, constraints=None, startyear=2000, endyear=2030,
     
     # Set options to update year range
     from setoptions import setoptions
+    startyear = objectives.get("year").get("start") or default_startyear
+    endyear = objectives.get("year").get("end") or default_endyear
     D.opt = setoptions(D.opt, startyear=startyear, endyear=endyear)
-    
     # Make sure objectives and constraints exist
     if not isinstance(objectives, struct): objectives = defaultobjectives(D, verbose=verbose)
     if not isinstance(constraints, struct): constraints = defaultconstraints(D, verbose=verbose)
+
+    #save the optimization parameters
+    new_optimization = struct()
+    new_optimization.name = name
+    new_optimization.objectives = objectives
+    new_optimization.constraints = constraints
+
+    D = saveoptimization(D, name, objectives, constraints)
+
+    objectives = deepcopy(objectives)
+    constraints = deepcopy(constraints)
 
     # Convert weightings from percentage to number
     if objectives.outcome.inci: objectives.outcome.inciweight = float( objectives.outcome.inciweight ) / 100.0
@@ -91,6 +107,22 @@ def optimize(D, objectives=None, constraints=None, startyear=2000, endyear=2030,
     printv('...done optimizing programs.', 2, verbose)
     return D
 
+def saveoptimization(D, name, objectives, constraints, verbose=2):
+    #save the optimization parameters
+    new_optimization = struct()
+    new_optimization.name = name
+    new_optimization.objectives = objectives
+    new_optimization.constraints = constraints
+
+    if not "optimizations" in D:
+        D.optimizations = [new_optimization]
+    else:
+        index = [item.name for item in D.optimizations].index(name)
+        if index==-1:
+            D.optimizations.append(new_optimization)
+        else:
+            D.optimizations[index] = deepcopy(new_optimization)
+    return D
 
 
 def defaultobjectives(D, verbose=2):
@@ -104,6 +136,7 @@ def defaultobjectives(D, verbose=2):
     ob.year = struct() # Time periods for objectives
     ob.year.start = 2015 # "Year to begin optimization from"
     ob.year.numyears = 5 # "Number of years to optimize funding for"
+    ob.year.end = 2030 # "Year to end optimization"
     ob.year.until = 2030 # "Year to project outcomes to"
     ob.what = 'outcome' # Alternative is "money"
     
@@ -117,6 +150,7 @@ def defaultobjectives(D, verbose=2):
     ob.outcome.deathweight = 100 # "Death weighting"
     ob.outcome.cost = False # "Minimize cumulative DALYs"
     ob.outcome.costweight = 100 # "Cost weighting"
+    ob.funding = "constant" #that's how it works on FE atm
     
     ob.money = struct()
     ob.money.objectives = struct()
@@ -130,11 +164,8 @@ def defaultobjectives(D, verbose=2):
     ob.money.costs = struct()
     for prog in D.programs.keys():
         ob.money.costs[prog] = 100 # By default, use a weighting of 100%
-        
+    
     return ob
-
-
-
 
 def defaultconstraints(D, verbose=2):
     """
@@ -160,3 +191,18 @@ def defaultconstraints(D, verbose=2):
         con.coverage[prog].year = 2030 # Year to reach coverage level by
         
     return con
+
+
+def defaultoptimizations(D, verbose=2):
+    """ Define a list of default optimizations (one default optimization) """
+    
+    # Start at the very beginning, a very good place to start :)
+    optimizations = [struct()]
+    
+    ## Current conditions
+    optimizations[0].name = 'Default'
+    optimizations[0].constraints = defaultconstraints(D, verbose)
+    optimizations[0].objectives = defaultobjectives(D, verbose)
+    return optimizations
+
+

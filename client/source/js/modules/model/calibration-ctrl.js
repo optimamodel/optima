@@ -25,7 +25,7 @@ define(['./module', 'angular'], function (module, angular) {
 
     $scope.parameters = {
       types: {
-        force: 'Initial force-of-infection for ',
+        force: 'Relative force-of-infection for ',
         popsize: 'Initial population size for ',
         init: 'Initial prevalence for ',
         dx: [
@@ -273,7 +273,11 @@ define(['./module', 'angular'], function (module, angular) {
         .success(updateCharts);
     };
 
-	  var autoCalibrationTimer;
+    if($scope.needData === false){
+      $scope.simulate();
+    }
+
+    var autoCalibrationTimer;
     $scope.startAutoCalibration = function () {
       $http.post('/api/model/calibrate/auto', $scope.simulationOptions,{ignoreLoadingBar: true})
         .success(function(data, status, headers, config) {
