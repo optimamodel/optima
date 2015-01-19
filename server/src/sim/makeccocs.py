@@ -9,7 +9,7 @@ Version: 2015jan16 by cliffk
 
 from math import log
 from matplotlib.pylab import figure, plot, hold, xlabel, ylabel, title, xlim, ylim
-from numpy import linspace, exp, isnan, asarray, multiply
+from numpy import linspace, exp, isnan, asarray, multiply, arange
 from numpy import log as nplog
 from rtnorm import rtnorm
 from bunch import float_array
@@ -18,9 +18,9 @@ from printv import printv
 from parameters import input_parameter_name
 
 ## Set defaults for testing makeccocs
-default_progname = 'NSP'
-default_ccparams = []#[0.9, 0.2, 25000.0, None, None] #
-default_ccplot = []#[None, None, 1]
+default_progname = 'OST'
+default_ccparams = []#[0.9, 0.2, 7000000.0, None, None] #
+default_ccplot = []#[None, None, 0]
 default_coparams = []#[0.3, 0.5, 0.7, 0.9] 
 default_makeplot = 0 # CK: Otherwise brings up >100 figures
 default_effect = [['sex', 'condomcas'], [u'MSM']] # D.programs[default_progname]['effects'][0] 
@@ -672,9 +672,9 @@ def getcoverage(D=None, params=[], popadj=0, artelig=default_artelig, progname=d
     ndatayears = len(D.data.epiyears) # get number of data years
     
     # Sort out time vector and indexing
-    simtvec = D.S.tvec # Extract the time vector from the sim
-    nsimpts = len(simtvec) # Number of sim points
-    simindex = range(nsimpts) # Get the index corresponding to the sim time vector
+    tvec = arange(D.G.datastart, D.G.dataend+D.opt.dt, D.opt.dt) # Extract the time vector from the sim
+    npts = len(tvec) # Number of sim points
+    ind = range(npts) # Get the index corresponding to the sim time vector
 
     # Figure out the targeted population(s) 
     targetpops = []
@@ -700,14 +700,14 @@ def getcoverage(D=None, params=[], popadj=0, artelig=default_artelig, progname=d
                 injectindices = [i for i, x in enumerate(D.data.meta.pops.injects) if x == 1]
                 targetpopmodel = D.S.people[:,injectindices,:].sum(axis = (0,1))
             elif thispar == 'numpmtct': # Target population = HIV+ pregnant women
-                targetpopmodel = multiply(D.M.birth[:,simindex], D.S.people[artelig,:,:].sum(axis=0)).sum(axis=0)
+                targetpopmodel = multiply(D.M.birth[:,ind], D.S.people[artelig,:,:].sum(axis=0)).sum(axis=0)
             elif thispar == 'breast': # Target population = HIV+ breastfeeding women
-                targetpopmodel = multiply(D.M.birth[:,simindex], D.M.breast[simindex], D.S.people[artelig,:,:].sum(axis=0)).sum(axis=0)
+                targetpopmodel = multiply(D.M.birth[:,ind], D.M.breast[simindex], D.S.people[artelig,:,:].sum(axis=0)).sum(axis=0)
             elif thispar in ['numfirstline','numsecondline']: # Target population = diagnosed PLHIV
                 targetpopmodel = D.S.people[artelig,:,:].sum(axis=(0,1))
                 
     # We only want the model-estimated size of the targeted population(s) for actual years, not the interpolated years
-    yearindices = range(0,len(D.data.epiyears)*int(1/D.opt.dt),int(1/D.opt.dt))
+    yearindices = range(0,npts,int(1/D.opt.dt))
     targetpop = targetpopmodel[yearindices]
 
     # Do population adjustments if required
