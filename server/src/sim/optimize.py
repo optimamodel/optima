@@ -4,7 +4,8 @@ from bunch import Bunch as struct
 from matplotlib.pylab import show, figure, subplot, plot, axis, xlim, ylim, legend
 from numpy import ones, zeros, arange, random, absolute
 
-def optimize(D, objectives=None, constraints=None, budgets=None, optimstartyear=2015, optimendyear=2030, ntimepm=1, randomize=1, timelimit=60, progressplot=1, verbose=2):
+def optimize(D, objectives=None, constraints=None, budgets=None, optimstartyear=2015, optimendyear=2030, ntimepm=1, randomize=1, timelimit=60, \
+    progressplot=1, verbose=2):
     """
     Allocation optimization code:
         D is the project data structure
@@ -81,7 +82,8 @@ def optimize(D, objectives=None, constraints=None, budgets=None, optimstartyear=
         # GO FROM HERE... getcurrentbudget now needs to handle allocation arrays as appose to just an allocation vector which remains the same over time        
 
 
-
+        #TODO CK verify that it's OK
+        alloc = None
         # Alter the parameters and run the model
         newD = deepcopy(D)
         newD, newcov, newnonhivdalysaverted = getcurrentbudget(newD, alloc)
@@ -186,13 +188,13 @@ def optimize(D, objectives=None, constraints=None, budgets=None, optimstartyear=
             if absolute(sum(thisalloc) - totalspend) > 1:
                 raise Exception('Initial randomization issue')
     
+            maxiters = 50 # Might not want to do it using maxiters
             if progressplot: # Set up stuff for plotting if necessary
                 
                 # Number of iterations
                 global niter
                 niter = 0
-                maxiters = 50 # Might not want to do it using maxiters
-                
+            
                 # Preallocate arrays to store optimisation progress
                 alliters = zeros((nprogs, maxiters+1))
                 allobjs  = zeros(maxiters+1)

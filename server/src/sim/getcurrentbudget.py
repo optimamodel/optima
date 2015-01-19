@@ -6,7 +6,7 @@ def getcurrentbudget(D, alloc=None):
     Version: 2014nov30
     """
     from makeccocs import ccoeqn, cceqn, cc2eqn, cco2eqn, coverage_params, default_convertedccparams, default_convertedccoparams  
-    from numpy import empty, asarray, nan, isnan    
+    from numpy import empty, asarray, nan, isnan, zeros  
 
     # Initialise parameter structure (same as D.P)
     for param in D.P.keys():
@@ -20,7 +20,7 @@ def getcurrentbudget(D, alloc=None):
         currentbudget = []
 
     # Initialise currentcoverage and currentnonhivdalys
-    currentcoverage, currentnonhivdalysaverted = np.zeros(D.G.nprogs), 0.0
+    currentcoverage, currentnonhivdalysaverted = zeros(D.G.nprogs), 0.0
 
     # Loop over programs
     for prognumber, progname in enumerate(D.data.meta.progs.short):
