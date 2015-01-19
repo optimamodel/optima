@@ -10,7 +10,7 @@ from utils import allowed_file, project_exists, delete_spreadsheet, load_project
 from utils import check_project_name, load_model, save_model, report_exception, model_as_bunch, model_as_dict
 from flask.ext.login import login_required, current_user
 from dbconn import db
-from dbmodels import ProjectDb, WorkingProjectDb, ProjectDataDb
+from dbmodels import ProjectDb, WorkingProjectDb, ProjectDataDb, WorkLogDb
 from utils import BAD_REPLY
 import time,datetime
 import dateutil.tz
@@ -286,6 +286,7 @@ def deleteProject(project_name):
     if project is not None:
         id = project.id
         #delete all relevant entries explicitly
+        db.session.query(WorkLogDb).filter_by(project_id=id).delete()
         db.session.query(ProjectDataDb).filter_by(id=id).delete()
         db.session.query(WorkingProjectDb).filter_by(id=id).delete()
         db.session.query(ProjectDb).filter_by(id=id).delete()

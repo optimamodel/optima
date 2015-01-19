@@ -9,7 +9,7 @@ Version: 2015jan16 by cliffk
 
 from math import log
 from matplotlib.pylab import figure, plot, hold, xlabel, ylabel, title, xlim, ylim
-from numpy import linspace, exp, isnan, asarray, multiply
+from numpy import linspace, exp, isnan, asarray, multiply, arange
 from numpy import log as nplog
 from rtnorm import rtnorm
 from bunch import float_array
@@ -18,9 +18,9 @@ from printv import printv
 from parameters import input_parameter_name
 
 ## Set defaults for testing makeccocs
-default_progname = 'MSM programs'
-default_ccparams = []
-default_ccplot =  [] #[None, None]
+default_progname = 'OST'
+default_ccparams = []#[0.9, 0.2, 7000000.0, None, None] #
+default_ccplot = []#[None, None, 0]
 default_coparams = []#[0.3, 0.5, 0.7, 0.9] 
 default_makeplot = 0 # CK: Otherwise brings up >100 figures
 default_effect = [['sex', 'condomcas'], [u'MSM']] # D.programs[default_progname]['effects'][0] 
@@ -94,12 +94,12 @@ def makecc(D=None, progname=default_progname, ccparams=default_ccparams, ccplot=
 
     # Check the lengths or coverage and cost are the same and extract the appropriate scatter data
     if (len(totalcost) == 1 and len(coverage) > 1):
-        coverage = float_array(coverage)
-        coverage = coverage[~isnan(coverage)]
-        coverage = coverage[-1]
         # Adjust cost data by target population size, if requested by user 
         if (ccplot and len(ccplot)==3 and ccplot[2]):
             totalcost = totalcost/targetpopsize[-1]
+        coverage = float_array(coverage)
+        coverage = coverage[~isnan(coverage)]
+        coverage = coverage[-1]
     elif (len(coverage) == 1 and len(totalcost) > 1): 
         # Adjust cost data by target population size, if requested by user 
         if (ccplot and len(ccplot)==3 and ccplot[2]):
@@ -108,6 +108,9 @@ def makecc(D=None, progname=default_progname, ccparams=default_ccparams, ccplot=
         totalcost = totalcost[~isnan(totalcost)]
         totalcost = totalcost[-1]
     else:
+        # Adjust cost data by target population size, if requested by user 
+        if (ccplot and len(ccplot)==3 and ccplot[2]):
+            totalcost = [totalcost[j]/targetpopsize[j] for j in range(len(totalcost))]
         totalcostscatter = []
         coveragescatter = []
         for j in range(len(totalcost)):
@@ -116,9 +119,6 @@ def makecc(D=None, progname=default_progname, ccparams=default_ccparams, ccplot=
                 coveragescatter.append(coverage[j])
         totalcost = totalcostscatter
         coverage = coveragescatter
-        # Adjust cost data by target population size, if requested by user 
-        if (ccplot and len(ccplot)==3 and ccplot[2]):
-            totalcost = [totalcost[j]/targetpopsize[j] for j in range(len(totalcost))]
         
     # Populate output structure with scatter data 
     plotdata['xscatterdata'] = totalcost
@@ -672,9 +672,9 @@ def getcoverage(D=None, params=[], popadj=0, artelig=default_artelig, progname=d
     ndatayears = len(D.data.epiyears) # get number of data years
     
     # Sort out time vector and indexing
-    simtvec = D.S.tvec # Extract the time vector from the sim
-    nsimpts = len(simtvec) # Number of sim points
-    simindex = range(nsimpts) # Get the index corresponding to the sim time vector
+    tvec = arange(D.G.datastart, D.G.dataend+D.opt.dt, D.opt.dt) # Extract the time vector from the sim
+    npts = len(tvec) # Number of sim points
+    ind = range(npts) # Get the index corresponding to the sim time vector
 
     # Figure out the targeted population(s) 
     targetpops = []
@@ -692,19 +692,19 @@ def getcoverage(D=None, params=[], popadj=0, artelig=default_artelig, progname=d
     # Figure out the total model-estimated size of the targeted population(s)
     for thispar in targetpars: # Loop through parameters
         if len(D.P[thispar].p)==D.G.npops: # For parameters whose effect is differentiated by population, we add up the targeted populations
-            targetpopmodel = D.S.people[:,popnumbers,:].sum(axis=(0,1))
+            targetpopmodel = D.S.people[:,popnumbers,0:npts].sum(axis=(0,1))
         elif len(D.P[thispar].p)==1: # For parameters whose effects are not differentiated by population, we make special cases depending on the parameter
             if thispar == 'aidstest': # Target population = diagnosed PLHIV, AIDS stage
-                targetpopmodel = D.S.people[22:26,:,:].sum(axis=(0,1))
+                targetpopmodel = D.S.people[27:31,:,0:npts].sum(axis=(0,1))
             elif thispar in ['numost','sharing']: # Target population = the sum of all populations that inject
                 injectindices = [i for i, x in enumerate(D.data.meta.pops.injects) if x == 1]
-                targetpopmodel = D.S.people[:,injectindices,:].sum(axis = (0,1))
+                targetpopmodel = D.S.people[:,injectindices,0:npts].sum(axis = (0,1))
             elif thispar == 'numpmtct': # Target population = HIV+ pregnant women
-                targetpopmodel = multiply(D.M.birth[:,simindex], D.S.people[artelig,:,:].sum(axis=0)).sum(axis=0)
+                targetpopmodel = multiply(D.M.birth[:,0:npts], D.S.people[artelig,:,0:npts].sum(axis=0)).sum(axis=0)
             elif thispar == 'breast': # Target population = HIV+ breastfeeding women
-                targetpopmodel = multiply(D.M.birth[:,simindex], D.M.breast[simindex], D.S.people[artelig,:,:].sum(axis=0)).sum(axis=0)
+                targetpopmodel = multiply(D.M.birth[:,0:npts], D.M.breast[0:npts], D.S.people[artelig,:,0:npts].sum(axis=0)).sum(axis=0)
             elif thispar in ['numfirstline','numsecondline']: # Target population = diagnosed PLHIV
-                targetpopmodel = D.S.people[artelig,:,:].sum(axis=(0,1))
+                targetpopmodel = D.S.people[artelig,:,0:npts].sum(axis=(0,1))
             else:
                 print('WARNING, Unrecognized parameter %s' % thispar)
         else:
@@ -713,13 +713,10 @@ def getcoverage(D=None, params=[], popadj=0, artelig=default_artelig, progname=d
         print('WARNING, no target parameters for program %s' % progname)
                 
     # We only want the model-estimated size of the targeted population(s) for actual years, not the interpolated years
-    yearindices = range(0, len(D.opt.tvec), int(1/D.opt.dt))
+    yearindices = range(0,npts,int(1/D.opt.dt))
     targetpop = targetpopmodel[yearindices]
 
     # Do population adjustments if required
-    if params:
-        costparam = params[2]
-        if popadj: costparam = params[2]/targetpop[-1]
     storeparams = params
     plottingparams = params
     coverage = None
@@ -735,10 +732,12 @@ def getcoverage(D=None, params=[], popadj=0, artelig=default_artelig, progname=d
         coverage = coveragepercent # this is unnecessary now but might be useful later to set it up this way
         coveragelabel = 'Proportion covered'
         if params:
+            costparam = params[2]
+            if popadj: costparam = [params[2]/targetpop[j] for j in range(len(coverage)) if ~isnan(coverage[j])][0]
             saturation = params[0]
             if isinstance(params[3], float):
-                growthrate = exp(params[3]*log(params[0]/params[1]-1)+log(params[2]))
-                growthrateplot = exp(params[3]*log(params[0]/params[1]-1)+log(costparam))
+                growthrate = exp((1-params[3])*log(params[0]/params[1]-1)+log(params[2]))
+                growthrateplot = exp((1-params[3])*log(params[0]/params[1]-1)+log(costparam))
                 storeparams = [saturation, growthrate, params[3]]
                 plottingparams = [saturation, growthrateplot, params[3]]
             else:
@@ -756,10 +755,12 @@ def getcoverage(D=None, params=[], popadj=0, artelig=default_artelig, progname=d
         coverage = coveragenumber # this is unnecessary atm but might be useful later to set it up this way
         coveragelabel = 'Number covered'
         if params:
+            costparam = params[2]
+            if popadj: costparam = [params[2]/targetpop[j] for j in range(len(coverage)) if ~isnan(coverage[j])][0]
             saturation = params[0]*targetpop[-1]
             if isinstance(params[3], float):
-                growthrate = exp(params[3]*log(params[0]/params[1]-1)+log(params[2]))
-                growthrateplot = exp(params[3]*log(params[0]/params[1]-1)+log(costparam))
+                growthrate = exp((1-params[3])*log(params[0]/params[1]-1)+log(params[2]))
+                growthrateplot = exp((1-params[3])*log(params[0]/params[1]-1)+log(costparam))
                 storeparams = [saturation, growthrate, params[3]]
                 plottingparams = [saturation, growthrateplot, params[3]]
             else:
