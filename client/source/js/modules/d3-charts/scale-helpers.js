@@ -62,6 +62,7 @@ define(['d3'], function (d3) {
   /**
    * Returns an appropriate tick format depending on the range of the values.
    *
+   * For a range smaller than 0.01 a precesion of 3 decimal points is chosen.
    * For a range smaller than 1 a precesion of 2 decimal points is chosen.
    * For a range smaller than 10 a precesion of 1 decimal points is chosen.
    * For a range between 10 & 100,000 a precesion of 0 decimal points is chosen.
@@ -69,7 +70,9 @@ define(['d3'], function (d3) {
    */
   var evaluateTickFormat = function(min, max) {
     var range = Math.abs(max) - Math.abs(min);
-    if (range < 1) {
+    if (range < 0.01) {
+      return ',.3f';
+    } else if (range < 1) {
       return ',.2f';
     } else if (range < 10) {
       return ',.1f';
