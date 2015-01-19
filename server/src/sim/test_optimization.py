@@ -28,7 +28,7 @@ D = runsimulation(D, startyear=2000, endyear=2030, verbose=verbose)
 
 print('\n\n\n4. Running optimization...')
 from optimize import optimize
-optimize(D, timelimit=timelimit, startyear=2000, endyear=2030, verbose=verbose)
+optimize(D, timelimit=timelimit, optimstartyear=2000, optimendyear=2030, verbose=10)
 
 print('\n\n\n5. Viewing optimization...')
 from viewresults import viewmultiresults, viewallocpies
