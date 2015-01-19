@@ -523,7 +523,7 @@
                 <export-all-charts name="Optimization analyses" ng-if="radarData || optimisationGraphs || financialGraphs"></export-all-charts>
                 <export-all-data charts="chartsForDataExport" name="Optimization analyses" ng-if="radarData || optimisationGraphs || financialGraphs"></export-all-data>
 
-                <div class="well section" ng-if="radarCharts">
+                <div class="well" ng-if="radarCharts" ng-show="types.plotUncertainties">
                   <div class="grid">
                     <div ng-repeat="radarChart in radarCharts track by $index">
                       <div class="chart-container __small">
@@ -533,7 +533,7 @@
                   </div>
                 </div>
 
-                <div class="well section" ng-if="pieCharts">
+                <div class="well" ng-if="pieCharts" ng-hide="types.plotUncertainties">
                   <div class="grid">
                     <div ng-repeat="pieChart in pieCharts track by $index">
                       <div class="chart-container __small">
