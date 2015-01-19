@@ -8,6 +8,12 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
 
       $scope.meta = meta;
       $scope.types = graphTypeFactory.types;
+
+      // for optimization the overall charts should be shown by default
+      _($scope.types.population).each(function(entry) {
+        if (entry.id !== 'prev') { entry.total = true; }
+      });
+
       $scope.needData = $scope.meta.progs === undefined;
       $scope.activeTab = 1;
       var errorMessages = [];

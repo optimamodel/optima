@@ -38,6 +38,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
           $scope.types = graphTypeFactory.types;
 
+          // for scenarios the overall charts should be shown by default
+          _($scope.types.population).each(function(entry) {
+            if (entry.id !== 'prev') { entry.total = true; }
+          });
+
           $scope.lineStyles = ['__blue', '__green', '__red', '__orange',
             '__violet', '__black', '__light-orange', '__light-green'];
 
