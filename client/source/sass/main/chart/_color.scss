@@ -1,5 +1,7 @@
 .line {
 
+  // even while the fill color is defined we don't want to show the fill
+  // for normal lines (for the legend dots we set it to 1)
   fill-opacity:0;
 
   $colorMap: (
