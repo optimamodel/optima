@@ -6,13 +6,13 @@ define(['./module', 'angular', 'radar-chart-d3'], function (module, angular) {
 
     var prepareOptions = function (providedOptions) {
       var options = angular.copy(providedOptions);
-      options.height = 400;
-      options.width = 400;
+      options.height = 320;
+      options.width = 320;
       options.margin = {
         top: 10,
-        right: 20,
+        right: 10,
         bottom: 0,
-        left: 20
+        left: 10
       };
       return d3Charts.adaptOptions(options);
     };

@@ -73,7 +73,7 @@ define(['./module', './scale-helpers'], function (module, scaleHelpers) {
         // normalize graph scales to include min and max of the combined graphs
         _(graphsScales).each(function (scale) {
           scale.y.domain([0, yMax]);
-          scale.x.domain([Math.floor(xMin), Math.ceil(xMax)]);
+          scale.x.domain([Math.floor(xMin), scaleHelpers.flexCeil(xMax)]);
         });
 
         scope.options.yAxis.tickFormat = function (value) {
