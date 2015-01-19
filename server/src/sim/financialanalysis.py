@@ -18,6 +18,7 @@ def financialanalysis(D, postyear=2015.0, S=None, yscale='abs', makeplot=False):
     # If not supplied as input, copy from D
     if not(isinstance(S,dict)): S = D.S
     costs = {}
+    postyear = float(postyear)
 
     # Interpolate macroeconomic indicators 
     neconyrs = len(D.data.econyears)
