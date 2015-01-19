@@ -46,8 +46,10 @@ define(['./module', 'angular'], function (module, angular) {
     };
 
     $scope.G = parameters.G;
-    $scope.types = graphTypeFactory.types;
 
+    $scope.types = graphTypeFactory.types;
+    // reset graph types every time you come to this page
+    angular.extend($scope.types, angular.copy(CONFIG.GRAPH_TYPES));
     // for calibration the overall charts should not be shown by default
     _($scope.types.population).each(function(entry) {
       entry.total = false;
