@@ -14,8 +14,8 @@ define(['angular', 'underscore'], function (angular, _) {
       template: '<div ng-if="errorMessages().length>0" class="error-hint"><div ng-repeat="message in errorMessages()">{{message}}</div></div>',
       link: function ($scope, $elem, $attrs, form) {
         var errorMessages = {
-          'min': 'The minimum value must be <%= min %>.',
-          'max': 'The maximum value can be <%= max %>.',
+          'min': 'The minimum value is <%= min %>.',
+          'max': 'The maximum value is <%= max %>.',
           'number': 'The field must be a number.',
           'required': 'The field <%= name %> is required.',
           'moreThan': 'The value must be greater than <%= moreThan %>.',
