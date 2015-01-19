@@ -146,7 +146,52 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     };
 
     /**
-     * Returns a prepared graph object for a radar chart.
+     * Returns a prepared chart object for a pie chart.
+     */
+    var generatePieChart = function(data, legend) {
+      var graphData = [];
+
+      var options = {
+        height: 900,
+        width: 900,
+        margin: {
+          top: 20,
+          right: 20,
+          bottom: 60,
+          left: 60
+        }
+      };
+
+      graphData = _(data.val).map(function (value, index) {
+        return { value: value, label: legend[index] };
+      });
+
+      return {
+        'data': graphData,
+        'options': options
+      };
+    };
+
+    /**
+     * Returns all pie charts.
+     */
+    var preparePieCharts = function (data) {
+
+      var charts = [];
+
+      if (data.pie1) {
+        charts.push(generatePieChart(data.pie1, data.legend));
+      }
+
+      if (data.pie2) {
+        charts.push(generatePieChart(data.pie2, data.legend));
+      }
+
+      return charts;
+    };
+
+    /**
+     * Returns a prepared chart object for a radar chart.
      */
     var generateRadarChart = function(data, legend) {
       var graphData = [{axes: []}];
@@ -266,6 +311,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       $scope.optimisationGraphs = prepareOptimisationGraphs(cachedResponse.graph);
       $scope.financialGraphs = prepareFinancialGraphs(cachedResponse.graph);
       $scope.radarCharts = prepareRadarCharts(cachedResponse.pie);
+      $scope.pieCharts = preparePieCharts(cachedResponse.pie);
     }
 
     // makes all graphs to recalculate and redraw

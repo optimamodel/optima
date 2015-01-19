@@ -532,6 +532,16 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="grid">
+                  <div class="7" ng-if="pieCharts">
+                    <div ng-repeat="pieChart in pieCharts track by $index">
+                      <div class="chart-container">
+                        <div pie-chart variant="pieChart" data="pieChart.data" options="pieChart.options" save-graph-as></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
