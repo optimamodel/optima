@@ -21,6 +21,10 @@
     color: $color-red;
   }
 
+  input.__invalid:not(:focus) {
+    border-color: rgba(#FF0000, 0.8);
+  }
+
   // Modifiers
   // ---------
 

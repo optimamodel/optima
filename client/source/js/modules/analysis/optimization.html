@@ -29,15 +29,31 @@
             Analyses will consider program optimizations over the period
             <input class="txbox __inline __l" value="2015" type="number" placeholder="e.g. 2015"
                    ng-model="params.objectives.year.start" ng-change="updateYearRange()"
-                   ng-required="yearsAreRequired()">
+                   ng-required="yearsAreRequired()"
+                   min="1950" 
+                   max="2100"
+                   name="periodStart">
             to
             <input class="txbox __inline __l" value="2020" type="number" placeholder="e.g. 2020"
-                   ng-model="params.objectives.year.end" ng-change="updateYearRange()" ng-required="yearsAreRequired()">
+                   ng-model="params.objectives.year.end" ng-change="updateYearRange()" 
+                   ng-required="yearsAreRequired()"
+                   min="1950" 
+                   max="2100"
+                   name="periodEnd">
             in order to achieve the objectives by
             <input class="txbox __inline __l" ng-change="updateYearRange()" value="2030" type="number" placeholder="e.g. 2030"
-                   ng-model="params.objectives.year.until">
+                   ng-model="params.objectives.year.until"
+                   min="1950" 
+                   max="2100"
+                   name="objectivesUntil">
             , with the following context between the end of the optimized program period and the end of the analysis
             period:</p>
+
+            <error-messages for="periodStart" rules="{min:1950, max:2100, required: 'Please provide a value'}"></error-messages>
+            <error-messages for="periodEnd" rules="{min:1950, max:2100, required: 'Please provide a value'}"></error-messages>
+            <error-messages for="objectivesUntil" rules="{min:1950, max:2100}"></error-messages>
+
+
             <div>
               <label>
                 <input type="checkbox" ng-model="params.objectives.year.artcontinue">
@@ -62,9 +78,9 @@
                   ART coverage will scale up, reaching <input class="txbox __inline __s" value="90"
                                                               placeholder="e.g. 90"
                                                               ng-model="params.objectives.year.universalcov">% coverage
-                  of treatment-eligible people by <input class="txbox __inline __l" value="2025" placeholder="e.g. 2025"
-                                                         ng-model="params.objectives.year.universal"> and then be
+                  of treatment-eligible people by <input class="txbox __inline __l" placeholder="e.g. 2025" name="universal" min="1950" max="2100" ng-model="params.objectives.year.universal"> and then be
                   maintained
+                  <error-messages for="universal" rules="{min:1950, max:2100, required: 'Please provide a value'}"></error-messages>
                 </label>
               </div>
             </div>
