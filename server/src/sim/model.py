@@ -53,7 +53,7 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
     txfactor = M.const.eff.tx * dxfactor # And treatment efficacy
     
     ## Metaparameters to get nice diagnosis fits
-    dxtime  = fit2time(F.dx,  S.tvec)
+    dxtime  = fit2time(F.dx,  S.tvec - G.datayears.mean()) # Subtraction to normalize F.dx[2]
     
     # Shorten variables and remove dict calls to make things faster
     sus  = G.sus
@@ -67,7 +67,7 @@ def model(G, M, F, opt, initstate=None, verbose=2): # extraoutput is to calculat
     txind = tx1+fail+tx2 # All people on treatment
     male = G.meta.pops.male
     popsize = M.popsize
-    for pop in range(npops): popsize[pop,:] *= F.popsize[pop] # Calculate adjusted population sizes
+    for pop in range(npops): popsize[pop,:] *= F.popsize[pop] / M.popsize[pop][0] # Calculate adjusted population sizes -- WARNING, kind of ugly
     mmi  = M.const.trans.mmi # Male -> male insertive
     mfi  = M.const.trans.mfi # Male -> female insertive
     mmr  = M.const.trans.mmr # Male -> male receptive
@@ -500,7 +500,7 @@ def equilibrate(G, M, Finit):
     for p in range(G['npops']):
         # Set up basic calculations
         uninfected = M['popsize'][p,0] * (1-hivprev[p]) # Set initial susceptible population -- easy peasy! # TODO -- should this have F.popsize involved?
-        allinfected = M['popsize'][:,0] * hivprev[:] * Finit[:] # Set initial infected population
+        allinfected = M['popsize'][:,0] * Finit[:] # Set initial infected population
         popinfected = allinfected[p]
         
         # Treatment & treatment failure

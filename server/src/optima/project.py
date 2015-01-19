@@ -431,7 +431,6 @@ def uploadExcel():
         # update and save model
         D = model_as_bunch(project.model)
         D = updatedata(D, savetofile = False)
-        D = runsimulation(D, makeplot = 0, dosave = False)
         model = model_as_dict(D)
         project.model = model
         db.session.add(project)
