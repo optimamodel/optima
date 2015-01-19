@@ -11,7 +11,7 @@ print('WELCOME TO OPTIMA')
 
 ## Set parameters
 projectname = 'example'
-verbose = 5
+verbose = 2
 timelimit = 30
 
 print('\n\n\n1. Making project...')
@@ -28,7 +28,7 @@ D = runsimulation(D, startyear=2000, endyear=2030, verbose=verbose)
 
 print('\n\n\n4. Running optimization...')
 from optimize import optimize
-optimize(D, timelimit=timelimit, optimstartyear=2000, optimendyear=2030, verbose=10)
+optimize(D, timelimit=timelimit, startyear=2000, endyear=2030, verbose=10)
 
 print('\n\n\n5. Viewing optimization...')
 from viewresults import viewmultiresults, viewallocpies
