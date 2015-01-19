@@ -167,9 +167,9 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
         width: 350,
         margin: {
           top: 20,
-          right: 80,
+          right: 100,
           bottom: 20,
-          left: 80
+          left: 100
         }
       };
 
