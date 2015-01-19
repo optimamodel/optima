@@ -230,18 +230,38 @@ define(['angular', 'jquery', './svg-to-png', 'underscore'], function (angular, $
     };
 
     /**
+    * Returns the normalized data ready to export for a Radar Chart
+    */
+    var pieExport = function (graph){
+      var exportable = {
+        name: graph.options.title || "Allocation",
+        columns: []
+      };
+
+      _(graph.data.slices).each(function(slice, index) {
+        var valueData = {};
+        valueData.title = slice.label;
+        valueData.data = [slice.value];
+        exportable.columns.push(valueData);
+      });
+
+      return exportable;
+    };
+
+    /**
      * Returns the normalized data ready to export from any type of chart.
      *
      * @param {object} chart - an object which must contain the chart data.
      */
     var getExportableFrom = function (chart){
       if(!chart.data) { return null; }
+
       if(_.isEqual(Object.keys(chart.data),["line", "scatter", "area"])) { return lineAndAreaExport(chart); }
       if(_.isEqual(Object.keys(chart.data),["lines", "scatter", "limits"])) { return linesExport(chart); }
       if(_.isEqual(Object.keys(chart.data),["lines", "scatter"])) { return linesExport(chart); }
       if(_.isEqual(Object.keys(chart.data),["areas"])) { return areasExport(chart); }
+      if(_.isEqual(Object.keys(chart.data),["slices"])) { return pieExport(chart); }
       if(_.isEqual(chart.data[0] && Object.keys(chart.data[0]),["axes"])) { return axesExport(chart); }
-
       return null;
     };
 
