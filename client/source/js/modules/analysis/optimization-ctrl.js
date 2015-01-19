@@ -2,7 +2,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
   'use strict';
 
   module.controller('AnalysisOptimizationController', function ($scope, $http,
-    $interval, meta, cfpLoadingBar, CONFIG, modalService, graphTypeFactory) {
+    $interval, meta, cfpLoadingBar, CONFIG, modalService, graphTypeFactory, optimizations) {
 
       $scope.chartsForDataExport = [];
 
@@ -19,12 +19,17 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       };
 
       $scope.optimizationStatus = statusEnum.NOT_RUNNING;
+
+      $scope.optimizations = undefined;
+
+      if (optimizations && optimizations.data) {
+        $scope.optimizations = optimizations.data.optimizations;
+      }
       // cache placeholder
       var cachedResponse = null;
 
       // Set defaults
       $scope.params = {};
-
       // Default time limit is 10 seconds
       $scope.params.timelimit = 60;
 
@@ -94,6 +99,12 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
           $scope.params.constraints.coverage[meta.progs.short[i]].year = undefined;
         }
       }
+
+      if ($scope.optimizations && $scope.optimizations[0]) {
+        _.extend($scope.params.objectives, $scope.optimizations[0].objectives);
+        _.extend($scope.params.constraints, $scope.optimizations[0].constraints);
+      }
+
     var optimizationTimer;
 
     var linesStyle = ['__blue', '__green', '__red', '__orange', '__violet',

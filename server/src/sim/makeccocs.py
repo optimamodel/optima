@@ -85,7 +85,7 @@ def makecc(D=None, progname=default_progname, ccparams=default_ccparams, ccplot=
 
     # Flag to indicate whether we will adjust by population or not
     popadj = 0
-    if ccplot and len(ccplot)==3:
+    if ccplot and len(ccplot)==3 and ccplot[2]:
         popadj = ccplot[2]
         ccplot[0] = None
 
@@ -481,7 +481,7 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
 
         # Flag to indicate whether we will adjust by population or not
         popadj = 0
-        if ccplot and len(ccplot)==3:
+        if ccplot and len(ccplot)==3 and ccplot[2]:
             popadj = ccplot[2]
             ccplot[0] = None
 
@@ -705,6 +705,12 @@ def getcoverage(D=None, params=[], popadj=0, artelig=default_artelig, progname=d
                 targetpopmodel = multiply(D.M.birth[:,simindex], D.M.breast[simindex], D.S.people[artelig,:,:].sum(axis=0)).sum(axis=0)
             elif thispar in ['numfirstline','numsecondline']: # Target population = diagnosed PLHIV
                 targetpopmodel = D.S.people[artelig,:,:].sum(axis=(0,1))
+            else:
+                print('WARNING, Unrecognized parameter %s' % thispar)
+        else:
+            print('WARNING, Parameter %s of odd length %s' % (thispar, len(D.P[thispar].p)))
+    if len(targetpars)==0:
+        print('WARNING, no target parameters for program %s' % progname)
                 
     # We only want the model-estimated size of the targeted population(s) for actual years, not the interpolated years
     yearindices = range(0, len(D.opt.tvec), int(1/D.opt.dt))

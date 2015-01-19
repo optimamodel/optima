@@ -53,6 +53,9 @@ define([
                 resolve: {
                   meta: function (Model) {
                     return Model.getParametersDataMeta().$promise;
+                  },
+                  optimizations: function($http) {
+                    return $http.get('/api/analysis/optimization/list');
                   }
                 }
             });
