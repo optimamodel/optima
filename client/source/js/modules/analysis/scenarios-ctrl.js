@@ -170,9 +170,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           .value();
         };
 
-
-        $scope.runScenarios = function () {
+        $scope.runScenarios = function (saveScenario) {
           $scope.runScenariosOptions.scenarios = toCleanArray($scope.scenarios);
+          $scope.runScenariosOptions.dosave = saveScenario === true;
           $http.post('/api/analysis/scenarios/run', $scope.runScenariosOptions)
             .success(function(data) {
               responseData = data;
