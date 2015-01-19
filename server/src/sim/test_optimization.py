@@ -3,7 +3,7 @@ TEST_OPTIMIZATION
 
 This function tests that the optimization is working.
 
-Version: 2014dec02 by cliffk
+Version: 2015jan19 by cliffk
 """
 
 
