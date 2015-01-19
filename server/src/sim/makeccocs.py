@@ -18,11 +18,11 @@ from printv import printv
 from parameters import input_parameter_name
 
 ## Set defaults for testing makeccocs
-default_progname = 'OST'
+default_progname = 'NSP'
 default_ccparams = []#[0.9, 0.2, 7000000.0, None, None] #
 default_ccplot = []#[None, None, 0]
 default_coparams = []#[0.3, 0.5, 0.7, 0.9] 
-default_makeplot = 0 # CK: Otherwise brings up >100 figures
+default_makeplot = 1 # CK: Otherwise brings up >100 figures
 default_effect = [['sex', 'condomcas'], [u'MSM']] # D.programs[default_progname]['effects'][0] 
 default_artelig = range(6,31)
 coverage_params = ['numost','numpmtct','numfirstline','numsecondline']
@@ -99,14 +99,14 @@ def makecc(D=None, progname=default_progname, ccparams=default_ccparams, ccplot=
             totalcost = totalcost/targetpopsize[-1]
         coverage = float_array(coverage)
         coverage = coverage[~isnan(coverage)]
-        coverage = coverage[-1]
+        coverage = [coverage[-1]]
     elif (len(coverage) == 1 and len(totalcost) > 1): 
         # Adjust cost data by target population size, if requested by user 
         if (ccplot and len(ccplot)==3 and ccplot[2]):
             totalcost = totalcost/targetpopsize
         totalcost = float_array(totalcost)
         totalcost = totalcost[~isnan(totalcost)]
-        totalcost = totalcost[-1]
+        totalcost = [totalcost[-1]]
     else:
         # Adjust cost data by target population size, if requested by user 
         if (ccplot and len(ccplot)==3 and ccplot[2]):
@@ -254,11 +254,11 @@ def makeco(D, progname=default_progname, effect=default_effect, coparams=default
         if (len(coverage) == 1 and len(outcome) > 1): 
             outcome = asarray(outcome)
             outcome = outcome[~isnan(outcome)]
-            outcome = outcome[-1]
+            outcome = [outcome[-1]]
         elif (len(outcome) == 1 and len(coverage) > 1):
             coverage = asarray(coverage)
             coverage = coverage[~isnan(coverage)]
-            coverage = coverage[-1]
+            coverage = [coverage[-1]]
         else:
             coveragescatter = []
             outcomescatter = []
