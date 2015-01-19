@@ -9,12 +9,21 @@ define(['./module', 'd3', 'underscore', './scale-helpers'], function (module, d3
      * Returns a PieChart instance.
      *
      * Data has to be provided in the following format: {label: "xxzy", value: 44}
+     *
+     * The label implementation is inspired by http://jsfiddle.net/thudfactor/HdwTH/
      */
     function PieChart(chart, chartSize, data) {
       var radius = Math.min(chartSize.width, chartSize.height) / 2;
 
       var color = d3.scale.ordinal()
-        .range(["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"]);
+        .range(['#98DF8A', '#2CA02C', '#9AB3D4', '#7777FF', '#D62728', '#9aceff', '#0024FF']);
+
+      var cDim = {
+          height: chartSize.height,
+          width: chartSize.width,
+          outerRadius: radius,
+          labelRadius: radius
+      };
 
       var arc = d3.svg.arc()
        .outerRadius(radius - 10)
@@ -35,11 +44,127 @@ define(['./module', 'd3', 'underscore', './scale-helpers'], function (module, d3
         .attr("d", arc)
         .style("fill", function(d) { return color(d.data.label); });
 
-      g.append("text")
-        .attr("transform", function(d) { return "translate(" + arc.centroid(d) + ")"; })
-        .attr("dy", ".35em")
-        .style("text-anchor", "middle")
-        .text(function(d) { return d.data.label; });
+      var enteringLabels = chart.selectAll(".label")
+        .data(pie(data))
+        .enter().append("g")
+        .attr("class", "label");
+
+      // draw the dots
+      var labelGroups = enteringLabels.append("g").attr("class", "label");
+      labelGroups.append("circle").attr({
+        x: 0,
+        y: 0,
+        r: 2,
+        fill: "#000",
+        transform: function (d) {
+          return "translate(" + arc.centroid(d) + ")";
+        },
+        'class': "label-circle"
+      });
+
+      // Lines for Label
+      var textLines = labelGroups.append("line").attr({
+        x1: function (d) {
+          return arc.centroid(d)[0];
+        },
+        y1: function (d) {
+          return arc.centroid(d)[1];
+        },
+        x2: function (d) {
+          var centroid = arc.centroid(d);
+          var midAngle = Math.atan2(centroid[1], centroid[0]);
+          var x = Math.cos(midAngle) * cDim.labelRadius;
+          return x;
+        },
+        y2: function (d) {
+          var centroid = arc.centroid(d);
+          var midAngle = Math.atan2(centroid[1], centroid[0]);
+          var y = Math.sin(midAngle) * cDim.labelRadius;
+          return y;
+        },
+        'class': "legend-line"
+      });
+
+      // Text for Labels
+      var textLabels = labelGroups.append("text").attr({
+        x: function (d) {
+          var centroid = arc.centroid(d);
+          var midAngle = Math.atan2(centroid[1], centroid[0]);
+          var x = Math.cos(midAngle) * cDim.labelRadius;
+          var sign = (x > 0) ? 1 : -1;
+          var labelX = x + (5 * sign);
+          return labelX;
+        },
+        y: function (d) {
+          var centroid = arc.centroid(d);
+          var midAngle = Math.atan2(centroid[1], centroid[0]);
+          var y = Math.sin(midAngle) * cDim.labelRadius;
+          return y;
+        },
+        'text-anchor': function (d) {
+          var centroid = arc.centroid(d);
+          var midAngle = Math.atan2(centroid[1], centroid[0]);
+          var x = Math.cos(midAngle) * cDim.labelRadius;
+          return (x > 0) ? "start" : "end";
+        },
+        'class': 'pie-label-text'
+      }).text(function (d) {
+        return d.data.label;
+      });
+
+      var alphaAngle = 3;
+      var spacing = 18;
+
+      // Change label positions to not overlap
+      function relax() {
+        var again = false;
+
+        textLabels.each(function () {
+          var textNode = this;
+          var d3TextNode = d3.select(textNode);
+          var y1 = d3TextNode.attr("y");
+          textLabels.each(function () {
+            var anotherTextNode = this;
+            // textNode & anotherTextNode are the same element and don't collide.
+            if (textNode == anotherTextNode) return;
+
+            var anotherD3TextNode = d3.select(anotherTextNode);
+            // textNode & anotherTextNode are on opposite sides of the chart and
+            // don't collide
+            if (d3TextNode.attr("text-anchor") != anotherD3TextNode.attr("text-anchor")) return;
+
+            // calculate the distance between these elements
+            var y2 = anotherD3TextNode.attr("y");
+            var deltaY = y1 - y2;
+
+            // our spacing is greater than our specified spacing,
+            // so they don't collide.
+            if (Math.abs(deltaY) > spacing) return;
+
+            // if the labels collide, we'll push each
+            // of the two labels up and down a little bit.
+            var again = true;
+            var sign = deltaY > 0 ? 1 : -1;
+            var adjust = sign * alphaAngle;
+            d3TextNode.attr("y",+y1 + adjust);
+            anotherD3TextNode.attr("y",+y2 - adjust);
+          });
+        });
+
+        // Adjust our line leaders here
+        // so that they follow the labels.
+        if(again) {
+          var labelElements = textLabels[0];
+          textLines.attr("y2",function(d,i) {
+            var labelForLine = d3.select(labelElements[i]);
+            return labelForLine.attr("y");
+          });
+          //recursion here - try as long as everything fits
+          relax();
+        }
+      }
+
+      relax();
     }
 
 
