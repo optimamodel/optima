@@ -8,10 +8,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.allProjectNames = _(projects.projects).map(function(project){return project.name});
 
     $scope.projectExists = function(){
-      var exists = _($scope.allProjectNames).contains($scope.projectParams.name);
+      var exists = isEditMode()? false:_($scope.allProjectNames).contains($scope.projectParams.name);
       $scope.CreateOrEditProjectForm.ProjectName.$setValidity("projectExists", !exists);
       return exists;
     };
+
     $scope.projectParams = {
       name: ''
     };
@@ -28,7 +29,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.programs = availableDefaults.programs;
     $scope.categories = availableDefaults.categories;
 
-    if ( $state.current.name == "project.edit" ) {
+    function isEditMode(){
+      return $state.current.name == "project.edit";
+    }
+
+    if (isEditMode()) {
       // change submit button name
       $scope.submit = "Save project & Optima template";
 

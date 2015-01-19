@@ -24,7 +24,7 @@ import argparse
 parser = argparse.ArgumentParser(description = "OPTIMA global procedure")
 parser.add_argument("-p", "--projectname", type=str, default="example", help = "source project name")
 parser.add_argument("-v", "--verbose", type=int, default=4, help="increase output verbosity")
-parser.add_argument("-w","--wait", help="wait for user input after showing graphs", action="store_true")
+parser.add_argument("-w", "--wait", help="wait for user input after showing graphs", action="store_true")
 parser.add_argument("-t", "--timelimit", type=int, default=3, help="time limit")
 args = parser.parse_args()
 
@@ -48,7 +48,7 @@ D = runsimulation(D, startyear=2000, endyear=2015, verbose=verbose)
 
 print('\n\n\n6. Viewing results...')
 from viewresults import viewuncerresults
-viewuncerresults(D.plot.E, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'death':[0,1], 'dx':[0,1], 'tx1':[0,1], 'tx2':[0,1]}, startyear=2000, endyear=2015, onefig=True, verbose=verbose, show_wait=show_wait)
+viewuncerresults(D.plot.E, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 'daly':[0,1], 'death':[0,1], 'dx':[0,1], 'tx1':[0,1], 'tx2':[0,1]}, startyear=2000, endyear=2015, onefig=True, verbose=verbose, show_wait=show_wait)
 
 print('\n\n\n7. Automatic calibration...')
 from autofit import autofit
@@ -67,7 +67,7 @@ viewmultiresults(D.plot.scens)
 
 print('\n\n\n11. Running optimization...')
 from optimize import optimize
-D = optimize(D, objectives=None, constraints=None, timelimit=timelimit, verbose=2)
+D = optimize(D, objectives={"year":{"start":2015, "end":2022}}, constraints=None, budgets=['original', 1.5], ntimepm=2, timelimit=timelimit, verbose=verbose)
 
 print('\n\n\n12. Viewing optimization...')
 from viewresults import viewallocpies
