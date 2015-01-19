@@ -44,6 +44,8 @@ define(['angular', 'jquery', 'underscore', 'saveAs', 'jsPDF', './svg-to-png', '.
                 var target = {};
                 if ( attrs.variant == "radarChart" ) {
                   target = scope.radarChart;
+                } else if (attrs.variant == 'pieChart') {
+                  target = scope.pieChart;
                 } else if (attrs.variant == 'coGraph') {
                   target = scope.coGraph;
                 } else if (attrs.variant == 'ccGraph') {

@@ -178,7 +178,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       });
 
       return {
-        'data': graphData,
+        'data': {slices: graphData},
         'options': options
       };
     };
