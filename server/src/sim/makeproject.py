@@ -55,9 +55,6 @@ def makeproject(projectname='example', pops = default_pops, progs = default_prog
     for i,h in enumerate(D.G.healthstates): D.G[h] = [D.G[state][i] for state in ['undx', 'dx', 'tx1', 'fail', 'tx2']]
     # Q:should econ_dataend also be saved somewhere?
     
-    # Set up "F" -- fitted parameters structure
-    D.F = makefittedpars(D.G, D.opt, verbose=verbose)
-    
     if savetofile: #False if we are using database
         savedata(D.G.projectfilename, D, verbose=verbose) # Create project -- #TODO: check if an existing project exists and don't overwrite it
     
@@ -69,39 +66,6 @@ def makeproject(projectname='example', pops = default_pops, progs = default_prog
     
     printv('  ...done making project.', 2, verbose)
     return D
-
-
-def makefittedpars(G, opt, verbose=2):
-    """ Prepares fitted parameters for the simulation. """
-    
-    from printv import printv
-    from numpy import array
-    from bunch import Bunch as struct # Replicate Matlab-like structure behavior
-    printv('Initializing fitted parameters...', 1, verbose)
-    
-    # Initialize fitted parameters
-    F = [struct() for s in range(opt.nsims)]
-    for s in range(opt.nsims):
-        span=0 if s==0 else 0.5 # Don't have any variance for first simulation
-        F[s].__doc__ = 'Fitted parameters for simulation %i: initial prevalence, force-of-infection, population size, diagnoses, treatment' % s
-        F[s].init  = perturb(G.npops,span)
-        F[s].popsize = perturb(G.npops,span)
-        F[s].force = perturb(G.npops,span)
-        F[s].dx  = array([perturb(1,span), perturb(1,span), (G.datastart+G.dataend)/2, 1]).tolist()
-    
-    return F
-
-
-
-def perturb(n=1, span=0.5):
-    """ Define an array of numbers uniformly perturbed with a mean of 1. n = number of points; span = width of distribution on either side of 1."""
-    from numpy.random import rand
-    output = 1 + 2*span*(rand(n)-0.5)
-    if n==1: output = output[0] # If scalar, return scalar rather than array
-    else: output = output.tolist() # Otherwise, convert to a list
-    return output
-
-
 
 
 def makeworkbook(name, pops, progs, datastart=default_datastart, dataend=default_dataend, econ_dataend=default_econ_dataend, verbose=2):
