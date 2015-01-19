@@ -36,7 +36,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      */
     $scope.copy = function(name) {
       modalService.showPrompt(
-        "Copy project",
+        "Copy project?",
         "New project name",
         function(newName) {
           $http.post('/api/project/copy/' + name + '?to=' + newName)
