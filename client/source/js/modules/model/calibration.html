@@ -5,11 +5,14 @@
       <form name="CalibrationForm" ng-submit="simulate()">
         <p ng-show="needData" class="error-hint">Please upload Optima spreadsheet first.</p>
         <div class="2">
-          <input class="txbox" type="number" placeholder="Start year" ng-model="simulationOptions.startyear">
+          <input class="txbox" name="periodStart" type="number" placeholder="Start year" ng-model="simulationOptions.startyear" min="1950" max="2100">
+          <error-messages for="periodStart" rules="{min:1950, max:2100, required: 'Please provide a value'}"></error-messages>
+
         </div>
         <div class="2">
-          <input class="txbox" type="number" name="endYear" placeholder="End year" ng-model="simulationOptions.endyear" more-than="G.dataend">
-          <span ng-show="CalibrationForm.endYear.$error.moreThan" class="error-hint">{{reportDataEndError()}}</span>
+          <input class="txbox" name="periodEnd" type="number" name="endYear" placeholder="End year" ng-model="simulationOptions.endyear" more-than="G.dataend" min="1950" max="2100">
+          <error-messages for="periodEnd" rules="{min:1950, max:2100, required: 'Please provide a value'}"></error-messages>
+          <!-- <span ng-show="CalibrationForm.endYear.$error.moreThan" class="error-hint">{{reportDataEndError()}}</span> -->
         </div>
         <div class="2">
           <button class="btn" ng-disabled="needData || CalibrationForm.$invalid">View simulation</button>
