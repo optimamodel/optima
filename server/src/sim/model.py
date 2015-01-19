@@ -1,5 +1,5 @@
  ## Imports
-from numpy import array, arange, zeros, exp, maximum, minimum, nonzero, concatenate, absolute
+from numpy import array, arange, zeros, exp, maximum, minimum, nonzero, concatenate, absolute, median
 from bunch import Bunch as struct # Replicate Matlab-like structure behavior
 from printv import printv
 from math import pow as mpow
@@ -112,8 +112,8 @@ def model(G, M, F, opt, initstate=None, verbose=2):
     sharing  = M.sharing   # Sharing injecting equiptment (P)
     numpmtct = M.numpmtct  # PMTCT (N)
     ost      = M.numost    # OST (N)
-    pcircum  = M.circum    # Proportion of men circumcised (N)
-    tocircum = M.numcircum # Number of men TO BE CIRCUMCISED (N) # TODO -- check that I'm understanding this correctly!!
+    propcirc = M.circum    # Proportion of men circumcised (P)
+    tobecirc = M.numcircum # Number of men TO BE CIRCUMCISED (N) # TODO -- check that I'm understanding this correctly!!
     mtx1     = M.tx1       # 1st line treatement (N) -- tx1 already used for index of people on treatment
     mtx2     = M.tx2       # 2nd line treatement (N) -- tx2 already used for index of people on treatment
     txtotal  = M.txtotal   # Total number on treatment -- initialised as zeros (N or P)
@@ -132,9 +132,9 @@ def model(G, M, F, opt, initstate=None, verbose=2):
     failsecond = M.const.fail.second   # 2nd line failure
     
     # Force of infection metaparameter
-    Fforce     = array(F.force)
+    Fforce = array(F.force)
     
-    # ...
+    # Proportion of PLHIV who are aware of their status
     propaware = M.propaware
     
     # Initialize the list of sex acts so it doesn't have to happen in the time loop
@@ -146,22 +146,8 @@ def model(G, M, F, opt, initstate=None, verbose=2):
             for act in ['reg','cas','com']:
                 if pships[act][popM,popF]>0: # Ignore if this isn't a valid partnership for this sexual act type
                     sexactslist[popM][popF].append(act)
-                    
-                    
-                    
-                    
-                    
-    M.numcircum[male, :] = 0.5 * M.popsize[male, :]             
-    
-    sym = sym.astype(float)
-    sym[0, 2] = 0.1      
-                    
-                    
-                    
-                    
-                    
-                    
-    
+
+
     ###############################################################################
     ## Run the model -- numerically integrate over time
     ###############################################################################
@@ -210,8 +196,8 @@ def model(G, M, F, opt, initstate=None, verbose=2):
             circeffF = 1 # Trivial circumcision effect for female or receptive male
 #            if t>0 and M.numcircum[popM,t]>0: # Only use this if it's greater than zero, and not at the first time point
 #                fractioncircumcised = dt*M.numcircum[popM,t]/M.popsize[popM,t] # Fraction of men in this population being circumcised
-#                M.circum[popM,t:] = min(1, tocircum[popM,t-1]+fractioncircumcised) # Calculate new fraction circumcised from previous timestep, making sure it never exceeds 1
-            circeffM = 1 - effcirc*pcircum[popM,t]
+#                M.circum[popM,t:] = min(1, M.circum[popM,t-1]+fractioncircumcised) # Calculate new fraction circumcised from previous timestep, making sure it never exceeds 1
+            circeffM = 1 - effcirc*propcirc[popM,t]
             
             # Loop over all populations (for females)
             for popF in range(npops):
@@ -300,8 +286,8 @@ def model(G, M, F, opt, initstate=None, verbose=2):
         ###############################################################################
         
         # Number of people circumcised - we only care about susceptibles
-        numcirc = people[sus, :, t] * male * (numcircum[:, t] / M.popsize[:, t])
-        numcirc = numcirc[0] # Quick hack -- feel free to correct this
+        numcirc = people[sus, :, t] * male * propcirc[:, t]
+        numcirc = numcirc[0] # Quick hack -- someone please correct this!
         
         ## Asymmetric transitions - people move from one population to another
         for p1 in range(npops):
@@ -358,62 +344,26 @@ def model(G, M, F, opt, initstate=None, verbose=2):
         ###############################################################################
         ## Update proportion circumcised
         ###############################################################################
-        S.newcircum = zeros((npops, npts)) # Number of people newly circumcised per timestep
         
         # Number circumcised this time step after transitions and deaths
         # NOTE: Only background death rate is needed as only considering susceptibles -- circumcision doesn't effect infected men
-        S.numcircum[:, t] = numcirc * (1 - M.death[:, t]) 
+        S.numcircum[:, t] = numcirc * (1 - M.death[:, t]) * dt 
         newsuscmales = people[sus, :, t] * male # Susceptible males after transitions
+        newsuscmales = newsuscmales[0]  # Quick hack -- someone please correct this!
         
         # Determine how many are left uncircumcised (and store in sim)
         reqcirc = newsuscmales - S.numcircum[:, t]
         reqcirc[reqcirc < 0] = 0
-        S.reqcircum[0, t] = reqcirc
+        S.reqcircum[0, t] = sum(reqcirc)
         
-        
-        tocircum
-        
-#        
-#        # Define circumcision rate based on number to be circumcision
-#        # NOTE: This only ever a field if set within alterparams by a logistic curve
-#        if isfield(pm, 'num2circumcise') && ~isnan(pm.num2circumcise(1, t))
-#            
-#            # Calculate how many are due to be circumcised (from logistic curve)
-#            number2circ = pm.num2circumcise(t) * dt;
-#            
-#            # If this is more than the number uncircumcised, redefine to be the max possible
-#            if number2circ > sum(reqcirc), number2circ = sum(reqcirc); end
-#            
-#            # Proportion of all uncircumcised people in each population group
-#            if sum(reqcirc) > 0, prop_require_circ = reqcirc / sum(reqcirc);
-#            elseif sum(reqcirc) == 0, prop_require_circ = reqcirc; end
-#            
-#            # Number to be circumcised in each population group (store in sim)
-#            newcirc = number2circ .* prop_require_circ;
-#            sim.newcircumcision(:, t) = newcirc;
-#            
-#            # Add these people to the circumcised group
-#            sim.numcircumcised(:, t) = sim.numcircumcised(:, t) + newcirc;
-#            
-#            # Perform for all but the last timestep
-#            if t < pg.npts
-#                
-#                # Number of male populations
-#                nmales = sum(malepops);
-#                
-#                # Circumcision coverage for next time step (element of [0, 1])
-#                pm.circumcisionprob(malepops, t+1) = median([zeros(nmales, 1) ones(nmales, 1) ...
-#                    sim.numcircumcised(malepops, t) ./ newsuscmales(malepops)], 2);
-#        
-#        # Store the circumcision prob used for this time step
-#        sim.alteredcircrate(:, t) = pm.circumcisionprob(:, t);
-#        
-#        # Easy index adult male populations
-#        adultmale = and(adultpops, malepops);
-#        
-#        # Number of newly circumcised adults - we use this for Zambia calibration
-#        sim.newadultscircumcised(:, t) = sum(people(pg.sus, adultmale, t) .* ...
-#            sim.alteredcircrate(adultmale, t)');
+        # Perform any new circumcisions if tobecirc is non zero
+        if sum(tobecirc[:, t]) > 0: 
+            S.newcircum[:, t] = minimum(tobecirc[:, t], reqcirc) # Calculate how many are due to be circumcised (upper limit of reqcirc) # TODO -- I don't think dt is needed here. Second opinion please.
+            S.numcircum[:, t] += S.newcircum[:, t] # Add these people to the circumcised group
+            if t < npts: # Perform for all but the last timestep
+                for pop in range(npops): # Loop through the populations
+                    if male[pop]: # Only calculate for males
+                        propcirc[pop, t+1] = median([0, 1, S.numcircum[pop, t] / newsuscmales[pop]]) # Circumcision coverage for next time step (element of [0, 1])
         
         
         ###############################################################################
