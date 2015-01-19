@@ -74,22 +74,17 @@
       <div class="6">
         <h1>Manage programs</h1>
 
-        <table class="section table table-bordered">
-          <thead>
-          <tr>
-            <td><b>Active</b></td>
-            <td><b>Name</b></td>
-            <td><b>Short name</b></td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-          </tr>
-          </thead>
-          <tbody>
-            <tr ng-repeat="category in categories">
-              <td colspan="5">
+        <div class="section" ng-repeat="category in categories">
               <table class="section table table-bordered">
               <tr>
                 <td colspan="5"><b>{{category.category}}</b></td>
+              </tr>
+              <tr>
+                <td><b>Active</b></td>
+                <td><b>Name</b></td>
+                <td><b>Short name</b></td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
               </tr>
               <tr ng-show="programs.length" ng-repeat="program in programs" ng-if="program.category==category.category">
                 {{ program| json}}
@@ -110,17 +105,8 @@
               </tr>
               </table>
               </td>
-            </tr>
-          </tbody>
-          <tfoot>
-          <tr>
-            <td colspan="5" class="text-right">
-              <button type="button" class="btn" ng-click="openAddProgramModal($event)">Add a program</button>
-            </td>
-          </tr>
-          </tfoot>
-        </table>
-
+        </div>
+        <button type="button" class="btn" ng-click="openAddProgramModal($event)">Add a program</button>
       </div>
     </div>
 
