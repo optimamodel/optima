@@ -4,6 +4,11 @@ define ['Source/modules/d3-charts/scale-helpers'], (scaleHelpers) ->
 
     describe 'evaluateTickFormat', ->
 
+      it 'should choose a precesion of 3 decimal points for a range smaller than 0.01', ->
+        expect(scaleHelpers.evaluateTickFormat(0, 0.009)).toBe(',.3f')
+        expect(scaleHelpers.evaluateTickFormat(0.1, 0.1002)).toBe(',.3f')
+        expect(scaleHelpers.evaluateTickFormat(-0.001, -0.002)).toBe(',.3f')
+
       it 'should choose a precesion of 2 decimal points for a range smaller than 1', ->
         expect(scaleHelpers.evaluateTickFormat(0, 0.9)).toBe(',.2f')
         expect(scaleHelpers.evaluateTickFormat(0.1, 0.2)).toBe(',.2f')
