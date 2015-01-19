@@ -517,23 +517,31 @@
           </div>
         </div>
 
-        <div class="well section">
+        <div class="well section" ng-show="radarData || optimisationGraphs || financialGraphs">
           <div class="grid">
             <div class="section">
-                <h1>{{radarChartName}}</h1>
-
                 <export-all-charts name="Optimization analyses" ng-if="radarData || optimisationGraphs || financialGraphs"></export-all-charts>
                 <export-all-data charts="chartsForDataExport" name="Optimization analyses" ng-if="radarData || optimisationGraphs || financialGraphs"></export-all-data>
 
-                <div class="grid">
-                    <div class="7" ng-if="radarGraph">
-                        <div class="chart-container">
-                          <div radar-chart variant="radarGraph" data="radarGraph.data" options="radarGraph.options" save-graph-as></div>
-                        </div>
+                <div class="well" ng-if="radarCharts" ng-show="types.plotUncertainties">
+                  <div class="grid">
+                    <div ng-repeat="radarChart in radarCharts track by $index">
+                      <div class="chart-container __small">
+                        <div radar-chart variant="radarChart" data="radarChart.data" options="radarChart.options" save-graph-as></div>
+                      </div>
                     </div>
+                  </div>
                 </div>
-              </div>
-            </div>
+
+                <div class="well" ng-if="pieCharts" ng-hide="types.plotUncertainties">
+                  <div class="grid">
+                    <div ng-repeat="pieChart in pieCharts track by $index">
+                      <div class="chart-container __small">
+                        <div pie-chart variant="pieChart" data="pieChart.data" options="pieChart.options" save-graph-as></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
             <div class="well section">
                 <div class="grid">
