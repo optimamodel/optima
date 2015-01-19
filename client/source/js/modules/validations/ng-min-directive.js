@@ -5,8 +5,8 @@ define(['angular', 'underscore'], function (angular, _) {
     return {
       restrict: 'A',
       require: 'ngModel',
-      link: function (scope, attr, ctrl) {
-
+      link: function (scope, element, attr, ctrl) {
+        
         scope.initialize = function () {
           scope.$watch(attr.ngMax, function () {
             ctrl.$setViewValue(ctrl.$viewValue);

@@ -5,7 +5,7 @@ define(['angular', 'underscore'], function (angular, _) {
     return {
       restrict: 'A',
       require: 'ngModel',
-      link: function (scope, attr, ctrl) {
+      link: function (scope, element, attr, ctrl) {
 
         scope.initialize = function () {
           scope.$watch(attr.ngMax, function () {
@@ -21,7 +21,6 @@ define(['angular', 'underscore'], function (angular, _) {
          * Otherwise sets validity in false and returns undefined.
          */        
         scope.maxValidator = function (value) {
-          debugger
           var max = scope.$eval(attr.ngMax) || Infinity;
           if (!scope.isValidable(value) && value > max) {
               ctrl.$setValidity('ngMax', false);
