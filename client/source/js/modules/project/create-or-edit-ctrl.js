@@ -8,7 +8,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.allProjectNames = _(projects.projects).map(function(project){return project.name});
 
     $scope.projectExists = function(){
-      var exists = _($scope.allProjectNames).contains($scope.projectParams.name) && isEditMode()===false;
+      var exists = isEditMode()? false:_($scope.allProjectNames).contains($scope.projectParams.name);
       $scope.CreateOrEditProjectForm.ProjectName.$setValidity("projectExists", !exists);
       return exists;
     };
