@@ -25,6 +25,7 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
         Take parameters and turn them into model parameters
         Set withwhat = p if you want to use the epi data for the parameters
         Set withwhat = c if you want to use the ccoc data for the parameters
+        Set withwhat = v if you want to use time-varying ccoc data for the parameters
         """
         from numpy import isnan
         from utils import smoothinterp
@@ -38,6 +39,8 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
             for pop in range(npops):
                 if withwhat=='c' and ~isnan(datapar[withwhat][pop]): # Use cost relationship
                     output[pop,:] = datapar[withwhat][pop] # TODO: use time!
+                elif withwhat=='v' and ~isnan(datapar[withwhat][pop]).all():
+                    output[pop,:] = datapar[withwhat][pop, :]
                 else: # Use parameter
                     if 't' in datapar.keys(): # It's a time parameter
                         output[pop,:] = smoothinterp(M.tvec, datapar.t[pop], datapar.p[pop]) # Use interpolation
@@ -49,6 +52,8 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
             try:
                 if withwhat=='c' and ~isnan(datapar[withwhat][0]): # Use cost relationship
                     output[:] = datapar[withwhat][0] # TODO: use time!
+                elif withwhat=='v' and ~isnan(datapar[withwhat][0]).all():
+                    output[:] = datapar[withwhat]
                 else: # Use parameter
                     if 't' in datapar.keys(): # It's a time parameter
                         output[:] = smoothinterp(M.tvec, datapar.t[0], datapar.p[0]) # Use interpolation
