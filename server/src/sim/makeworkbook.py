@@ -182,10 +182,10 @@ class OptimaFormats:
         self.formats['general'] = self.book.add_format({'locked':0, 'num_format':0x00, \
         'bg_color':OptimaFormats.BG_COLOR,'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
         self.formats['info_header'] = self.book.add_format({'align':'center','valign':'vcenter', \
-            'color':'#C4990C','fg_color':'#0E0466', 'font_size':20, 'bold':True})
-        self.formats['grey'] = self.book.add_format({'fg_color':'#DDDDDD', 'text_wrap':True})
-        self.formats['info_url'] = self.book.add_format({'fg_color':'#DDDDDD', 'text_wrap':True, 'color':'blue'})
-        self.formats['grey_bold'] = self.book.add_format({'fg_color':'#DDDDDD','bold':True})
+            'color':'#D5AA1D','fg_color':'#0E0655', 'font_size':20})
+        self.formats['grey'] = self.book.add_format({'fg_color':'#EEEEEE', 'text_wrap':True})
+        self.formats['info_url'] = self.book.add_format({'fg_color':'#EEEEEE', 'text_wrap':True, 'color':'blue','align':'center'})
+        self.formats['grey_bold'] = self.book.add_format({'fg_color':'#EEEEEE','bold':True})
 
 
     def write_block_name(self, sheet, name, row):
@@ -576,11 +576,11 @@ class OptimaWorkbook:
         current_row = self.formats.write_info_block(self.current_sheet, current_row, text='I. LAYOUT OF THE SPREADSHEET', row_format='grey_bold')
         current_row = self.formats.write_info_block(self.current_sheet, current_row, text='This spreadsheet is divided into 12 sheets. All sheets need to be completed, except where noted below.')
         current_row = self.formats.write_info_block(self.current_sheet, current_row, text='II. HOW TO ENTER DATA', row_format='grey_bold')
-        current_row = self.formats.write_info_block(self.current_sheet, current_row, row_height=60, text='Do not enter anything except cold, hard, actual data! Optima will interpolate between data points, so only enter data in the years that they belong. In addition, please add notes (either as comments for a given cell or in the blank cells to the right of each row) about where the data came from. This is very important! If a given data point is assumed, it is very important that you add a comment, since otherwise you will cause endless grief to the poor schmuck trying to figure out what you did.')
+        current_row = self.formats.write_info_block(self.current_sheet, current_row, row_height=75, text='Do not enter anything except cold, hard, actual data! Optima will interpolate between data points, so only enter data in the years that they belong. In addition, please add notes (either as comments for a given cell or in the blank cells to the right of each row) about where the data came from. This is very important! If a given data point is assumed, it is very important that you add a comment, since otherwise you will cause endless grief to the poor schmuck trying to figure out what you did.')
         current_row = self.formats.write_info_block(self.current_sheet, current_row, 'III. WHAT CAN BE LEFT BLANK', row_format='grey_bold')
         current_row = self.formats.write_info_block(self.current_sheet, current_row, add_line = False, text="It's a bit confusing what can and can't be left blank, but here are a few general principles:")
         current_row = self.formats.write_info_block(self.current_sheet, current_row, add_line = False, text='* Nothing on the "Populations and programs" sheet can be blank.')
-        current_row = self.formats.write_info_block(self.current_sheet, current_row, add_line = False, row_height=60, text='* For each parameter (as in, row in the worksheet), there needs to be at least one data point entered. The only exception to this is the sheet "Optional indicators", which may be left blank. If data are not available for a particular indicator, enter an assumption in the "Assumption" column, with a comment explaining how that value was arrived at.')
+        current_row = self.formats.write_info_block(self.current_sheet, current_row, add_line = False, row_height=57, text='* For each parameter (as in, row in the worksheet), there needs to be at least one data point entered. The only exception to this is the sheet "Optional indicators", which may be left blank. If data are not available for a particular indicator, enter an assumption in the "Assumption" column, with a comment explaining how that value was arrived at.')
         current_row = self.formats.write_info_block(self.current_sheet, current_row, text="* Economic data only need to be entered if you're performing economic analyses.")
         current_row = self.formats.write_info_block(self.current_sheet, current_row, text='If a parameter is left completely blank, it will be assumed to be zero.')
         current_row = self.formats.write_info_block(self.current_sheet, current_row, text='IV. QUESTIONS', row_format='grey_bold')
