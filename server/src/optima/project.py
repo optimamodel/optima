@@ -434,6 +434,11 @@ def uploadExcel():
         model = model_as_dict(D)
         project.model = model
 
+        from sim.programs import programs
+        from sim.populations import populations
+        programs = programs();
+        populations = populations()
+
         # Update project.populations and project.programs
         pops = []
         progs = []
@@ -443,8 +448,9 @@ def uploadExcel():
 
         # get and generate populations from D.data.meta
         for i in range(len(D_pops['short'])):
-            pop = {"short_name":D_pops['short'][i],"name":D_pops['long'][i],"sexworker":D_pops['sexworker'][i],"injects":D_pops['injects'][i],"sexmen":D_pops['sexmen'][i],"client":D_pops['client'][i],"female":D_pops['female'][i],"male":D_pops['male'][i],"sexwomen":D_pops['sexwomen'][i]}
-            pops.append(pop)
+            pop = [pop for pop in populations if pop['short_name'] == D_pops['short'][i]]
+            if (len(pop) > 0):
+                pops.append(pop[0])
 
         for i in range(len(project.populations)):
             # keep the existing project.population when match with D.data.meta
@@ -453,9 +459,6 @@ def uploadExcel():
                 pop = project.populations[i]
             
         project.populations = pops;
-
-        from sim.programs import programs
-        programs = programs();
         
         # get and generate programs from D.data.meta
         for i in range(len(D_progs['short'])):
@@ -468,6 +471,13 @@ def uploadExcel():
             p = [prog for prog in progs if prog['short_name'] == project.programs[i]['short_name']]
             if (len(p) > 0):
                 prog = project.programs[i]
+
+        # prepare programs for parameters
+        for p in progs:
+            new_parameters = [dict([('value', parameter),('active',True)]) for parameter in p['parameters']]
+            for np in new_parameters:
+                if len(np['value']['pops'][0])==0: np['value']['pops']=['ALL_POPULATIONS']
+                if new_parameters: p['parameters'] = new_parameters
 
         project.programs = progs
 
