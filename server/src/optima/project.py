@@ -440,26 +440,37 @@ def uploadExcel():
 
         D_pops = D['data']['meta']['pops'].toDict()
         D_progs = D['data']['meta']['progs'].toDict()
-        
+
+        # get and generate populations from D.data.meta
         for i in range(len(D_pops['short'])):
             pop = {"short_name":D_pops['short'][i],"name":D_pops['long'][i],"sexworker":D_pops['sexworker'][i],"injects":D_pops['injects'][i],"sexmen":D_pops['sexmen'][i],"client":D_pops['client'][i],"female":D_pops['female'][i],"male":D_pops['male'][i],"sexwomen":D_pops['sexwomen'][i]}
             pops.append(pop)
 
         for i in range(len(project.populations)):
+            # keep the existing project.population when match with D.data.meta
             p = [pop for pop in pops if pop['short_name'] == project.populations[i]['short_name']]
             if (len(p) > 0):
-                project.populations[i] = p[0]
+                pop = project.populations[i]
+            print pop
         
+        project.populations = pops;
+
         from sim.programs import programs
         programs = programs();
-
+        
+        # get and generate programs from D.data.meta
         for i in range(len(D_progs['short'])):
-            p = [prog for prog in project.programs if prog['short_name'] == D_progs['short'][i]]
+            prog = [prog for prog in programs if prog['short_name'] == D_progs['short'][i]]
+            if (len(prog) > 0):
+                progs.append(prog[0])
+
+        for i in range(len(project.programs)):
+            # keep the existing project.program when match with D.data.meta
+            p = [prog for prog in progs if prog['short_name'] == project.programs[i]['short_name']]
             if (len(p) > 0):
-                project.programs[i] = p[0]
-            else:
-                p = [prog for prog in programs if prog['short_name'] == D_progs['short'][i]]
-                project.programs[i] = p[0]
+                prog = project.programs[i]
+
+        project.programs = progs
 
         db.session.add(project)
 
