@@ -1,5 +1,5 @@
 from printv import printv
-from numpy import zeros, array, exp
+from numpy import zeros, array, exp, shape
 from bunch import Bunch as struct # Replicate Matlab-like structure behavior
 eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
 
@@ -15,8 +15,8 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
     
     M = struct()
     M.__doc__ = 'Model parameters to be used directly in the model, calculated from data parameters P.'
-    tvec = opt.tvec # Shorten time vector
-    npts = len(tvec) # Number of time points # TODO probably shouldn't be repeated from model.m
+    M.tvec = opt.tvec # Store time vector with the model parameters
+    npts = len(M.tvec) # Number of time points # TODO probably shouldn't be repeated from model.m
     
     
     
@@ -40,7 +40,7 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
                     output[pop,:] = datapar[withwhat][pop] # TODO: use time!
                 else: # Use parameter
                     if 't' in datapar.keys(): # It's a time parameter
-                        output[pop,:] = smoothinterp(tvec, datapar.t[pop], datapar.p[pop]) # Use interpolation
+                        output[pop,:] = smoothinterp(M.tvec, datapar.t[pop], datapar.p[pop]) # Use interpolation
                     else:
                         output[pop,:] = datapar.p[pop]
                 
@@ -51,7 +51,7 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
                     output[:] = datapar[withwhat][0] # TODO: use time!
                 else: # Use parameter
                     if 't' in datapar.keys(): # It's a time parameter
-                        output[:] = smoothinterp(tvec, datapar.t[0], datapar.p[0]) # Use interpolation
+                        output[:] = smoothinterp(M.tvec, datapar.t[0], datapar.p[0]) # Use interpolation
                     else:
                         output[:] = datapar.p[0]
             except:
@@ -66,7 +66,7 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
         npops = len(popsizes)        
         output = zeros((npops,npts))
         for pop in range(npops):
-            output[pop,:] = popsizes[pop]*exp(growth*(tvec-tvec[0])) # Special function for population growth
+            output[pop,:] = popsizes[pop]*exp(growth*(M.tvec-M.tvec[0])) # Special function for population growth
             
         return output
     
@@ -84,6 +84,7 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
     M.aidstest = dpar2mpar(P.aidstest, withwhat) # AIDS testing rates
     M.tx1 = dpar2mpar(P.numfirstline, withwhat) # Number of people on first-line treatment
     M.tx2 = dpar2mpar(P.numsecondline, withwhat) # Number of people on second-line treatment
+    M.txelig = dpar2mpar(P.txelig, withwhat) # Treatment eligibility criterion
 
     ## MTCT parameters
     M.numpmtct = dpar2mpar(P.numpmtct, withwhat)
@@ -93,6 +94,7 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
     ## Sexual behavior parameters -- all are parameters so can loop over all
     M.circum    = dpar2mpar(P.circum,    withwhat) # Circumcision percentage
     M.numcircum = dpar2mpar(P.numcircum, withwhat) # Circumcision number
+    M.numcircum *= 0 # Reset since prevalence data is required and overwrites data on numbers of circumcisions -- # TODO I think this is a bad idea
     M.numacts = struct()
     M.condom  = struct()
     M.numacts.reg = dpar2mpar(P.numactsreg, withwhat) # ...
@@ -122,8 +124,9 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
     ## Calculate total acts
     M.totalacts = totalacts(P, M, npts)
     
-    ## Parameters for programs/scenarios
-#    M.
+    ## Program parameters not related to data
+    M.propaware = zeros(shape(M.hivtest)) # Initialize proportion of PLHIV aware of their status
+    M.txtotal = zeros(shape(M.tx1)) # Initialize total number of people on treatment
     
 
     printv('...done making model parameters.', 2, verbose)
