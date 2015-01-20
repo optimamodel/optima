@@ -107,5 +107,3 @@ def plotallcco(D, ccparams=default_ccparams, ccplot=default_ccplot, coparams=def
         plotprogramcco(D, progname=progname, ccparams=ccparams, ccplot=ccplot, coparams=coparams)
 
 ###############################################################################
-
-plotprogramcco(D, progname=default_progname)
