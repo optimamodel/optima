@@ -13,6 +13,8 @@ def getcurrentbudget(D, alloc=None):
         if isinstance(D.P[param], dict) and 'p' in D.P[param].keys():
             D.P[param].c = empty(len(D.P[param].p))
             D.P[param].c.fill(nan)
+            D.P[param].v = empty((len(D.P[param].p), D.opt.npts))
+            D.P[param].v.fill(nan)
 
     # Initialise currentbudget if needed
     allocprovided = not(isinstance(alloc,type(None)))
@@ -27,7 +29,8 @@ def getcurrentbudget(D, alloc=None):
         
         # If an allocation has been passed in, we don't need to figure out the program budget
         if allocprovided:
-            totalcost = alloc[prognumber]
+            # totalcost = alloc[prognumber]
+            totalcost = alloc[prognumber, :] # Allocation is over time hence a vector rather than constant
         else:
             # Get cost info
             totalcost = D.data.costcov.cost[prognumber]
@@ -41,12 +44,19 @@ def getcurrentbudget(D, alloc=None):
         # ... or if there aren't any, use defaults (for sim only; FE produces warning)
         else:
             convertedccparams = default_convertedccparams
+            
+        
+        
+        ## TODO - I'm not too sure how to do the changing coverage over time. Have a think about it
+        initcost = totalcost if len(totalcost) == 1 else totalcost[0]   
+        
+
 
         # Get coverage
         if len(convertedccparams)==2:
-            currentcoverage[prognumber] = cc2eqn(totalcost, convertedccparams)
+            currentcoverage[prognumber] = cc2eqn(initcost, convertedccparams) # cc2eqn(totalcost, convertedccparams)
         else:
-            currentcoverage[prognumber] = cceqn(totalcost, convertedccparams)
+            currentcoverage[prognumber] = cceqn(initcost, convertedccparams) # cceqn(totalcost, convertedccparams)
 
         # Extract and sum the number of non-HIV-related DALYs 
         nonhivdalys = D.programs[progname]['nonhivdalys']
@@ -80,10 +90,14 @@ def getcurrentbudget(D, alloc=None):
 
                 #   zerosample, fullsample = makesamples(muz, stdevz, muf, stdevf, samplesize=1)
                 if len(convertedccparams)==2:
-                    y = cco2eqn(totalcost, convertedccoparams)
+                    y = cco2eqn(initcost, convertedccoparams) # cco2eqn(totalcost, convertedccoparams)
+                    z = cco2eqn(totalcost, convertedccoparams)
                 else:
-                    y = ccoeqn(totalcost, convertedccoparams)
+                    y = ccoeqn(initcost, convertedccoparams) # cco2eqn(totalcost, convertedccoparams)
+                    z = ccoeqn(totalcost, convertedccoparams)
                 D.P[effect[0][1]].c[popnumber] = y
+                #if 'z' in locals():
+                D.P[effect[0][1]].v[popnumber] = z
 
 
         if not(allocprovided):

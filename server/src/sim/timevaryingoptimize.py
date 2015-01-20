@@ -4,6 +4,9 @@ from bunch import Bunch as struct
 from matplotlib.pylab import show, figure, subplot, plot, axis, xlim, ylim, legend
 from numpy import ones, zeros, arange, random, absolute
 
+default_startyear = 2000
+default_endyear = 2030
+
 def optimize(D, objectives=None, constraints=None, budgets=None, optimstartyear=2015, optimendyear=2030, ntimepm=1, randomize=1, timelimit=60, progressplot=False, verbose=2):
     """
     Allocation optimization code:
