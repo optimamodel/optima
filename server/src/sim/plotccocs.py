@@ -6,10 +6,10 @@ Version: 2015jan19 by robynstuart
 from matplotlib.pylab import figure, plot, hold, xlabel, ylabel, title, xlim, ylim
 from printv import printv
 
-default_progname = 'NSP'
-default_ccparams = []#[0.9, 0.2, 7000000.0, None, None] #
-default_ccplot = []#[None, None, 0]
-default_coparams = []#[0.3, 0.5, 0.7, 0.9] 
+default_progname = 'MSM programs'
+default_ccparams = [1.0, 0.2, 25000.0, None, None] #
+default_ccplot = [1e5, None, 0]
+default_coparams = [0.3, 0.5, 0.7, 0.9] 
 default_effect = [['sex', 'condomcas'], [u'MSM']] # D.programs[default_progname]['effects'][0] 
 default_artelig = range(6,31)
 coverage_params = ['numost','numpmtct','numfirstline','numsecondline']
@@ -107,3 +107,5 @@ def plotallcco(D, ccparams=default_ccparams, ccplot=default_ccplot, coparams=def
         plotprogramcco(D, progname=progname, ccparams=ccparams, ccplot=ccplot, coparams=coparams)
 
 ###############################################################################
+
+plotprogramcco(D, progname=default_progname)
