@@ -59,7 +59,8 @@ def getcurrentbudget(D, alloc=None):
             currentcoverage[prognumber] = cceqn(initcost, convertedccparams) # cceqn(totalcost, convertedccparams)
 
         # Extract and sum the number of non-HIV-related DALYs 
-        nonhivdalys = D.programs[progname]['nonhivdalys']
+        nonhivdalys = D.programs[progname]['nonhivdalys'] 
+        # TODO -- This should be summed over time anyway... so can make currentcoverage a vector!
         currentnonhivdalysaverted += nonhivdalys[0]*currentcoverage[prognumber]
 
         # Loop over effects
