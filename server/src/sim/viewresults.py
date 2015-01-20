@@ -1,11 +1,13 @@
-def viewuncerresults(E, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'death':[0,1], 'dx':[0,1], 'tx1':[0,1], 'tx2':[0,1], 'costcur':[1,1], 'costfut':[1,1]}, startyear=2000, endyear=2030, onefig=True, verbose=2, show_wait=False, linewidth=2):
+def viewuncerresults(E, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 'daly':[0,1], 'death':[0,1], 'dx':[0,1], 'tx1':[0,1], 'tx2':[0,1], 'costcur':[1,1], 'costfut':[1,1]}, startyear=2000, endyear=2030, onefig=True, verbose=2, show_wait=False, linewidth=2):
     """
     Generate all outputs required for the model, including prevalence, incidence,
     deaths, etc.
-    Version: 2014de02
+    Version: 2015jan18
     """
     
     from matplotlib.pylab import figure, plot, hold, scatter, xlabel, ylabel, xlim, ylim, legend, title, ndim, ceil, sqrt, subplot, show, fill_between
+    from printv import printv
+
     
     npops = len(E.prev.pops) # Calculate number of populations
     
@@ -32,6 +34,7 @@ def viewuncerresults(E, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], '
         epigraph = (graph[0:4] != 'cost') # Flag for whether or not it's an epi graph vs. a cost graph
         for popstot in range(2): # Loop over population or total graphs
             if whichgraphs[graph][popstot]:
+                printv('Plotting graph %s...' % graph, 4, verbose)
                 
                 if popstot==0 and epigraph: # Population graphs for epi data
                     for p in range(npops):
@@ -94,7 +97,7 @@ def viewuncerresults(E, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], '
 
 
 
-def viewmultiresults(M, whichgraphs={'prev':[1,1], 'inci':[0,1], 'daly':[0,1], 'death':[0,1], 'dx':[0,1], 'tx1':[0,1], 'tx2':[0,1], 'costcur':[1,1], 'costfut':[1,1]}, startyear=2000, endyear=2030, onefig=True, verbose=2, show_wait=False, linewidth=2):
+def viewmultiresults(M, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 'daly':[0,1], 'death':[0,1], 'dx':[0,1], 'tx1':[0,1], 'tx2':[0,1], 'costcur':[1,1], 'costfut':[1,1]}, startyear=2000, endyear=2030, onefig=True, verbose=2, show_wait=False, linewidth=2):
     """
     Generate all outputs required for the model, including prevalence, incidence,
     deaths, etc.
