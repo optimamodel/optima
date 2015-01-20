@@ -451,8 +451,7 @@ def uploadExcel():
             p = [pop for pop in pops if pop['short_name'] == project.populations[i]['short_name']]
             if (len(p) > 0):
                 pop = project.populations[i]
-            print pop
-        
+            
         project.populations = pops;
 
         from sim.programs import programs
