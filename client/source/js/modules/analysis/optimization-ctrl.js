@@ -619,7 +619,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
         })
           .success(function (data) {
             if (data.optimizations) {
-              $scope.initOptimizations(data.optimizations);
+              $scope.initOptimizations(data.optimizations, name);
             }
           });
       };
@@ -737,15 +737,11 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     $scope.initOptimizations = function(optimizations, name) {
       if (!optimizations) return;
       $scope.optimizations = angular.copy(optimizations);
-      if (typeof(name)==='undefined') {
-        if ($scope.optimizations && $scope.optimizations[0]) {
-          $scope.activeOptimization = $scope.optimizations[0];
-        }
-      } else {
+      if (typeof(name)!=='undefined') {
         $scope.activeOptimization = _.find($scope.optimizations, function(item) { return item.name==name;});
-        if (!$scope.activeOptimization) {
-          $scope.activeOptimization = $scope.optimizations[0];
-        }
+      }
+      if (!$scope.activeOptimization && $scope.optimizations[0]) {
+        $scope.activeOptimization = $scope.optimizations[0];
       }
       $scope.applyOptimization($scope.activeOptimization);
     }
