@@ -176,3 +176,30 @@ def revertCalibrationModel():
     except Exception, err:
         reply['exception'] = traceback.format_exc()
         return jsonify(reply)
+
+@optimization.route('/remove/<name>', methods=['POST'])
+@login_required
+@check_project_name
+def removeOptimizationSet(name):
+    """ Removes given optimization from the optimization set """
+    from sim.optimize import removeoptimization
+    reply = {'status':'NOK'}
+
+    # get project name
+    project_name = request.project_name
+    if not project_exists(project_name):
+        reply['reason'] = 'File for project %s does not exist' % project_name
+        return jsonify(reply)
+    else:
+        D = load_model(project_name, as_bunch = True)
+        D = removeoptimization(name)
+        D_dict = D.toDict()
+        save_model(project_name, D_dict)
+        reply['status']='OK'
+        reply['name'] = 'deleted'
+        reply['optimizations'] = D_dict['optimizations']
+        return jsonify(reply)
+    
+
+
+
