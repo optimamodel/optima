@@ -629,7 +629,6 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
               }
               $scope.applyOptimization($scope.activeOptimization);
             }
-//            updateGraphs(data);
           });
       };
 
@@ -735,6 +734,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
      * @param optimization {Object}
      */
     $scope.applyOptimization = function (optimization) {
+      console.log("applyOptimization", optimization);
       _.extend($scope.params.objectives, optimization.objectives);
       _.extend($scope.params.constraints, optimization.constraints);
       if (optimization.result) {
@@ -749,7 +749,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     }
 
     $scope.$watch('activeOptimization', function (newValue) {
-      console.log("newValue", newValue);
+      console.log("newValue for activeOptimization", newValue);
       if (newValue) {
         $scope.applyOptimization(newValue);
       }

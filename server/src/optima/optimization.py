@@ -151,8 +151,9 @@ def saveModel():
         D_dict = D.toDict()
         save_model(project_name, D_dict)
 
-        result['optimizations'] = D_dict['optimizations']
-        return jsonify(result)
+        reply['status']='OK'
+        reply['optimizations'] = D_dict['optimizations']
+        return jsonify(reply)
     except Exception, err:
         reply['exception'] = traceback.format_exc()
         return jsonify(reply)
