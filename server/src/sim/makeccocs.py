@@ -133,10 +133,8 @@ def makecc(D=None, progname=default_progname, ccparams=default_ccparams, ccplot=
     if coveragelabel == 'Proportion covered':
         plotdata['yupperlim']  = 1.0
     else:
-        if ccparams:
-            plotdata['yupperlim']  = max(yvalscc[-1]*1.5,max([x if ~isnan(x) else 0.0 for x in coverage])*1.5)
-        else:
-            plotdata['yupperlim']  = max([x if ~isnan(x) else 0.0 for x in coverage])*1.5
+        plotdata['yupperlim']  = max([x if ~isnan(x) else 0.0 for x in coverage])*1.5
+        if ccparams: plotdata['yupperlim']  = max(yvalscc[-1]*1.5,plotdata['yupperlim'])
 
     # Populate output structure with labels and titles
     plotdata['title'] = progname
@@ -249,10 +247,6 @@ def makeco(D, progname=default_progname, effect=default_effect, coparams=default
             plotdata['ylinedata1'] = linspace(muz,muf,nxpts) # Y data for first line on plot
             plotdata['ylinedata2'] = ymax  # Y data for second line on plot
             plotdata['ylinedata3'] = ymin  # Y data for third line on plot
-
-        # Populate output structure with scatter data 
-        plotdata['xscatterdata'] = coverage # X scatter data
-        plotdata['yscatterdata'] = outcome # Y scatter data
 
         # Populate output structure with labels and titles
         plotdata['title'] = input_parameter_name(effect[0][1])+ ' - ' + effect[1][0]
