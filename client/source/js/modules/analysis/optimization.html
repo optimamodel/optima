@@ -15,7 +15,15 @@
         </button>
       </div>
       <div class="elastic_col __va-middle">
-        <select class="txbox" ng-model="activeOptimization" data-ng-options="o as o.name for o in optimizations" ng-change="applyOptimization(activeOptimization)"></select>
+        <label for="optimization-selection">Select a saved Optimization:</label>
+        <div class="elastic">
+          <div class="elastic_col">
+            <select name="optimization-selection" class="txbox" ng-model="activeOptimization" data-ng-options="o as o.name for o in optimizations" ng-change="applyOptimization(activeOptimization)"></select>
+          </div>
+          <div class="elastic_col __shrink">
+            <button ng-click="deleteOptimization(activeOptimization)" type="button" class="btn __red" ng-disabled="optimizations.length <= 1">Delete Optimization</button>
+          </div>
+        </div>
       </div>
     </div>
 

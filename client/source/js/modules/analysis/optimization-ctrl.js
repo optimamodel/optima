@@ -614,8 +614,8 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       };
 
       var doSave = function (name, params) {
-        $http.post('/api/analysis/optimization/save', { 
-          name: name, objectives: params.objectives, constraints: params.constraints 
+        $http.post('/api/analysis/optimization/save', {
+          name: name, objectives: params.objectives, constraints: params.constraints
         })
           .success(function (data) {
             if (data.optimizations) {
@@ -631,6 +631,14 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
           if (reason === options.closeReason) {
             doSave($scope.activeOptimization.name, $scope.params);
           }
+        });
+    };
+
+    $scope.deleteOptimization = function (optimization) {
+      $http.post('/api/analysis/optimization/remove/' + optimization.name)
+        .success(function(data){
+          $scope.optimizations = data.optimizations;
+          $scope.activeOptimization = $scope.optimizations[0];
         });
     };
 
@@ -731,6 +739,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       if (optimization.result) {
         updateGraphs(optimization.result);
       }
+      constructOptimizationMessage();
     };
 
     // apply default optimization on page load
@@ -743,14 +752,13 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       if (!$scope.activeOptimization && $scope.optimizations[0]) {
         $scope.activeOptimization = $scope.optimizations[0];
       }
-      $scope.applyOptimization($scope.activeOptimization);
-    }
+    };
 
     $scope.$watch('activeOptimization', function (newValue) {
       if (newValue) {
         $scope.applyOptimization(newValue);
       }
-    });
+    }, true);
 
     // apply existing optimization data, if present
     if (optimizations && optimizations.data) {

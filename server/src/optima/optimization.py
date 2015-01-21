@@ -201,14 +201,10 @@ def removeOptimizationSet(name):
         return jsonify(reply)
     else:
         D = load_model(project_name, as_bunch = True)
-        D = removeoptimization(name)
+        D = removeoptimization(D, name)
         D_dict = D.toDict()
         save_model(project_name, D_dict)
         reply['status']='OK'
         reply['name'] = 'deleted'
         reply['optimizations'] = D_dict['optimizations']
         return jsonify(reply)
-    
-
-
-
