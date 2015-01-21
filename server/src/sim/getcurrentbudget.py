@@ -45,12 +45,10 @@ def getcurrentbudget(D, alloc=None):
         else:
             convertedccparams = default_convertedccparams
             
-        
-        
-        ## TODO - I'm not too sure how to do the changing coverage over time. Have a think about it
-        initcost = totalcost if len(totalcost) == 1 else totalcost[0]   
-        
 
+        ## TODO - NO! Just use total cost as it is (i.e. a vector). It's cool to have coverage change over time too.
+        # => delete the following line and get rid of initcost
+        initcost = totalcost if len(totalcost) == 1 else totalcost[0]   
 
         # Get coverage
         if len(convertedccparams)==2:
@@ -59,8 +57,9 @@ def getcurrentbudget(D, alloc=None):
             currentcoverage[prognumber] = cceqn(initcost, convertedccparams) # cceqn(totalcost, convertedccparams)
 
         # Extract and sum the number of non-HIV-related DALYs 
-        nonhivdalys = D.programs[progname]['nonhivdalys'] 
-        # TODO -- This should be summed over time anyway... so can make currentcoverage a vector!
+        nonhivdalys = D.programs[progname]['nonhivdalys']
+        
+        # TODO -- This should be summed over time anyway... so can make currentcoverage a vector. This was Robyn's intention anyway!
         currentnonhivdalysaverted += nonhivdalys[0]*currentcoverage[prognumber]
 
         # Loop over effects
