@@ -27,7 +27,7 @@ define(['./module'], function (module) {
       var chartGroup = svg.append('g').attr('class', 'chart_group');
       var headerGroup = svg.append('g').attr('class', 'header_group');
 
-      d3Charts.PieChart(chartGroup, chartSize, data);
+      d3Charts.PieChart(chartGroup, chartSize, data.slices);
     };
 
     return {

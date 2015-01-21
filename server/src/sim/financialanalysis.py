@@ -9,7 +9,7 @@ from setoptions import setoptions
 from copy import deepcopy
 from utils import sanitize
 
-def financialanalysis(D, postyear=2015.0, S=None, yscale='abs', makeplot=False):
+def financialanalysis(D, postyear=2015, S=None, yscale='abs', makeplot=False):
     '''
     Plot financial commitment graphs
     Note, yscale will be chosen from ['abs', 'avg', 'avgppp']

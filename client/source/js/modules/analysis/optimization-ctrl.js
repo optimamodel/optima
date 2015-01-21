@@ -8,6 +8,9 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
 
       $scope.meta = meta;
       $scope.types = graphTypeFactory.types;
+      // reset graph types every time you come to this page
+      angular.extend($scope.types, angular.copy(CONFIG.GRAPH_TYPES));
+
       $scope.needData = $scope.meta.progs === undefined;
       $scope.activeTab = 1;
       var errorMessages = [];
@@ -173,7 +176,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       });
 
       return {
-        'data': graphData,
+        'data': {slices: graphData},
         'options': options
       };
     };
@@ -613,17 +616,29 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
         closeReason: 'overrideoptimization'
       };
 
-      var doSave = function (name) {
-        $http.post('/api/analysis/optimization/save', { name: name })
-          .success(updateGraphs);
+      var doSave = function (name, params) {
+        $http.post('/api/analysis/optimization/save', { 
+          name: name, objectives: params.objectives, constraints: params.constraints 
+        })
+          .success(function (data) {
+            if (data.optimizations && data.optimizations[0]) {
+              $scope.optimizations = data.optimizations;
+              $scope.activeOptimization = _.find($scope.optimizations, function(item) { return item.name==name;});
+              if (!$scope.activeOptimization) {
+                $scope.activeOptimization = $scope.optimizations[0];
+              }
+              $scope.applyOptimization($scope.activeOptimization);
+            }
+//            updateGraphs(data);
+          });
       };
 
       modalService.showPrompt(title, label,
         function (newOptimizationName) {
-          doSave(newOptimizationName);
+          doSave(newOptimizationName, $scope.params);
         }, options).result.then(function (reason) {
           if (reason === options.closeReason) {
-            doSave($scope.activeOptimization.name);
+            doSave($scope.activeOptimization.name, $scope.params);
           }
         });
     };
@@ -698,6 +713,10 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     var updateChartsForDataExport = function() {
       $scope.chartsForDataExport = [];
 
+      if ( $scope.pieCharts ) {
+        $scope.chartsForDataExport = $scope.chartsForDataExport.concat($scope.pieCharts);
+      }
+
       if ( $scope.radarCharts ) {
         $scope.chartsForDataExport = $scope.chartsForDataExport.concat($scope.radarCharts);
       }
@@ -718,6 +737,9 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     $scope.applyOptimization = function (optimization) {
       _.extend($scope.params.objectives, optimization.objectives);
       _.extend($scope.params.constraints, optimization.constraints);
+      if (optimization.result) {
+        updateGraphs(optimization.result);
+      }
     };
 
     // apply default optimization on page load
@@ -727,12 +749,13 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     }
 
     $scope.$watch('activeOptimization', function (newValue) {
+      console.log("newValue", newValue);
       if (newValue) {
         $scope.applyOptimization(newValue);
       }
     });
 
-    $scope.$watch('radarCharts', updateChartsForDataExport, true);
+    $scope.$watch('pieCharts', updateChartsForDataExport, true);
     $scope.$watch('optimisationGraphs', updateChartsForDataExport, true);
     $scope.$watch('financialGraphs', updateChartsForDataExport, true);
 
