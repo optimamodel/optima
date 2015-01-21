@@ -25,9 +25,6 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
 
       $scope.optimizations = undefined;
 
-      if (optimizations && optimizations.data) {
-        $scope.optimizations = optimizations.data.optimizations;
-      }
       // cache placeholder
       var cachedResponse = null;
 
@@ -324,7 +321,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     }
 
     // makes all graphs to recalculate and redraw
-    var updateGraphs = function (data) {
+    function updateGraphs(data) {
       if (data.graph !== undefined && data.pie !== undefined) {
         cachedResponse = data;
         drawGraphs();
@@ -621,13 +618,8 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
           name: name, objectives: params.objectives, constraints: params.constraints 
         })
           .success(function (data) {
-            if (data.optimizations && data.optimizations[0]) {
-              $scope.optimizations = data.optimizations;
-              $scope.activeOptimization = _.find($scope.optimizations, function(item) { return item.name==name;});
-              if (!$scope.activeOptimization) {
-                $scope.activeOptimization = $scope.optimizations[0];
-              }
-              $scope.applyOptimization($scope.activeOptimization);
+            if (data.optimizations) {
+              $scope.initOptimizations(data.optimizations);
             }
           });
       };
@@ -733,8 +725,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
      * Changes active constrains and objectives to the values in provided optimization
      * @param optimization {Object}
      */
-    $scope.applyOptimization = function (optimization) {
-      console.log("applyOptimization", optimization);
+    $scope.applyOptimization = function(optimization) {
       _.extend($scope.params.objectives, optimization.objectives);
       _.extend($scope.params.constraints, optimization.constraints);
       if (optimization.result) {
@@ -743,17 +734,32 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     };
 
     // apply default optimization on page load
-    if ($scope.optimizations && $scope.optimizations[0]) {
-      $scope.activeOptimization = $scope.optimizations[0];
-      $scope.applyOptimization($scope.optimizations[0]);
+    $scope.initOptimizations = function(optimizations, name) {
+      if (!optimizations) return;
+      $scope.optimizations = angular.copy(optimizations);
+      if (typeof(name)==='undefined') {
+        if ($scope.optimizations && $scope.optimizations[0]) {
+          $scope.activeOptimization = $scope.optimizations[0];
+        }
+      } else {
+        $scope.activeOptimization = _.find($scope.optimizations, function(item) { return item.name==name;});
+        if (!$scope.activeOptimization) {
+          $scope.activeOptimization = $scope.optimizations[0];
+        }
+      }
+      $scope.applyOptimization($scope.activeOptimization);
     }
 
     $scope.$watch('activeOptimization', function (newValue) {
-      console.log("newValue for activeOptimization", newValue);
       if (newValue) {
         $scope.applyOptimization(newValue);
       }
     });
+
+    // apply existing optimization data, if present
+    if (optimizations && optimizations.data) {
+      $scope.initOptimizations(optimizations.data.optimizations);
+    }
 
     $scope.$watch('pieCharts', updateChartsForDataExport, true);
     $scope.$watch('optimisationGraphs', updateChartsForDataExport, true);

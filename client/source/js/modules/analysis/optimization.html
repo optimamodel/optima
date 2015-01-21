@@ -15,7 +15,7 @@
         </button>
       </div>
       <div class="elastic_col __va-middle">
-        <select class="txbox" ng-model="activeOptimization" ng-options="o as o.name for o in optimizations"></select>
+        <select class="txbox" ng-model="activeOptimization" data-ng-options="o as o.name for o in optimizations" ng-change="applyOptimization(activeOptimization)"></select>
       </div>
     </div>
 
