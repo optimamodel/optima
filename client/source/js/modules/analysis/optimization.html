@@ -30,20 +30,20 @@
             <input class="txbox __inline __l" value="2015" type="number" placeholder="e.g. 2015"
                    ng-model="params.objectives.year.start" ng-change="updateYearRange()"
                    ng-required="yearsAreRequired()"
-                   min="1950" 
+                   min="1950"
                    max="2100"
                    name="periodStart">
             to
             <input class="txbox __inline __l" value="2020" type="number" placeholder="e.g. 2020"
-                   ng-model="params.objectives.year.end" ng-change="updateYearRange()" 
+                   ng-model="params.objectives.year.end" ng-change="updateYearRange()"
                    ng-required="yearsAreRequired()"
-                   min="1950" 
+                   min="1950"
                    max="2100"
                    name="periodEnd">
             in order to achieve the objectives by
             <input class="txbox __inline __l" ng-change="updateYearRange()" value="2030" type="number" placeholder="e.g. 2030"
                    ng-model="params.objectives.year.until"
-                   min="1950" 
+                   min="1950"
                    max="2100"
                    name="objectivesUntil">
             , with the following context between the end of the optimized program period and the end of the analysis
@@ -478,111 +478,90 @@
 
       <!-- Tab 3 -->
       <div ng-if="activeTab === 3">
-        <div class="well section">
+        <div class="section">
+          <h2>Optimization</h2>
+            <span class="info-hint"> {{optimizationMessage}} </span><br/>
+
+          <div class="elastic_col __va-middle text-right">
+            <div class="elastic __fluid float-right">
+
+              <div class="elastic_col __shrink">
+                <label>
+                  Maximum time limit:
+                  <select class="txbox __inline" style="width: 120px" ng-model="params.timelimit">
+                    <option value="10">10 seconds</option>
+                    <option value="30">30 seconds</option>
+                    <option value="60">1 minute</option>
+                    <option value="300">5 minutes</option>
+                    <option value="600">10 minutes</option>
+                    <option value="1800">30 minutes</option>
+                    <option value="3600">1 hour</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="elastic_col __shrink">
+                <button type="submit" class="btn __green">Start optimization</button>
+              </div>
+
+              <div class="elastic_col __shrink">
+                <button type="button" class="btn __red" ng-click="stopOptimization()"
+                        ng-disabled="!optimizationStatus.isActive">Stop optimization
+                </button>
+              </div>
+              <div class="elastic_col __shrink">
+                <button type="button" class="btn" ng-click="saveOptimization()"
+                        ng-disabled="optimizationStatus.isActive || errorText">Save optimization
+                </button>
+              </div>
+              <div class="elastic_col __shrink">
+                <button type="button" class="btn" ng-click="revertOptimization()"
+                        ng-disabled="optimizationStatus.isActive">Revert
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="info-hint" ng-show="optimizationStatus.isActive">
+            {{ optimizationStatus.text }}
+          </div>
+          <div class="error-hint" ng-show="errorText">
+              <pre>{{errorText}}</pre>
+          </div>
+        </div>
+
+        <div class="section" ng-show="radarData || optimisationGraphs || financialGraphs">
           <div class="grid">
-            <h2>Optimization</h2>
-              <span class="info-hint"> {{optimizationMessage}} </span><br/>
+            <div class="9">
+              <export-all-charts name="Optimization analyses" ng-if="radarData || optimisationGraphs || financialGraphs"></export-all-charts>
+              <export-all-data charts="chartsForDataExport" name="Optimization analyses" ng-if="radarData || optimisationGraphs || financialGraphs"></export-all-data>
+            </div>
 
-            <div class="elastic_col __va-middle text-right">
-              <div class="elastic __fluid float-right">
-
-                <div class="elastic_col __shrink">
-                  <label>
-                    Maximum time limit:
-                    <select class="txbox __inline" style="width: 120px" ng-model="params.timelimit">
-                      <option value="10">10 seconds</option>
-                      <option value="30">30 seconds</option>
-                      <option value="60">1 minute</option>
-                      <option value="300">5 minutes</option>
-                      <option value="600">10 minutes</option>
-                      <option value="1800">30 minutes</option>
-                      <option value="3600">1 hour</option>
-                    </select>
-                  </label>
-                </div>
-
-                <div class="elastic_col __shrink">
-                  <button type="submit" class="btn __green">Start optimization</button>
-                </div>
-
-                <div class="elastic_col __shrink">
-                  <button type="button" class="btn __red" ng-click="stopOptimization()"
-                          ng-disabled="!optimizationStatus.isActive">Stop optimization
-                  </button>
-                </div>
-                <div class="elastic_col __shrink">
-                  <button type="button" class="btn" ng-click="saveOptimization()"
-                          ng-disabled="optimizationStatus.isActive || errorText">Save optimization
-                  </button>
-                </div>
-                <div class="elastic_col __shrink">
-                  <button type="button" class="btn" ng-click="revertOptimization()"
-                          ng-disabled="optimizationStatus.isActive">Revert
-                  </button>
+            <div ng-if="radarCharts" ng-show="types.plotUncertainties">
+              <div ng-repeat="radarChart in radarCharts track by $index">
+                <div class="chart-container __small">
+                  <div radar-chart variant="radarChart" data="radarChart.data" options="radarChart.options" save-graph-as></div>
                 </div>
               </div>
             </div>
 
-            <div class="info-hint" ng-show="optimizationStatus.isActive">
-              {{ optimizationStatus.text }}
-            </div>
-            <div class="error-hint" ng-show="errorText">
-                <pre>{{errorText}}</pre>
-            </div>
-
-          </div>
-        </div>
-
-        <div class="well section" ng-show="radarData || optimisationGraphs || financialGraphs">
-          <div class="grid">
-            <div class="section">
-                <export-all-charts name="Optimization analyses" ng-if="radarData || optimisationGraphs || financialGraphs"></export-all-charts>
-                <export-all-data charts="chartsForDataExport" name="Optimization analyses" ng-if="radarData || optimisationGraphs || financialGraphs"></export-all-data>
-
-                <div class="well" ng-if="radarCharts" ng-show="types.plotUncertainties">
-                  <div class="grid">
-                    <div ng-repeat="radarChart in radarCharts track by $index">
-                      <div class="chart-container __small">
-                        <div radar-chart variant="radarChart" data="radarChart.data" options="radarChart.options" save-graph-as></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="well" ng-if="pieCharts" ng-hide="types.plotUncertainties">
-                  <div class="grid">
-                    <div ng-repeat="pieChart in pieCharts track by $index">
-                      <div class="chart-container __small">
-                        <div pie-chart variant="pieChart" data="pieChart.data" options="pieChart.options" save-graph-as></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-            <div class="well section">
-                <div class="grid">
-                    <div>
-                      <div class="chart-container __small" ng-repeat="chart in optimisationGraphs">
-                        <div line-scatter-chart data="chart.data" options="chart.options" save-graph-as></div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <div class="chart-container __small" ng-repeat="chart in financialGraphs">
-                        <div line-scatter-chart data="chart.data" options="chart.options" save-graph-as></div>
-                      </div>
-                    </div>
+            <div ng-if="pieCharts" ng-hide="types.plotUncertainties">
+              <div ng-repeat="pieChart in pieCharts track by $index">
+                <div class="chart-container __small">
+                  <div pie-chart variant="pieChart" data="pieChart.data" options="pieChart.options" save-graph-as></div>
                 </div>
               </div>
             </div>
 
+            <div class="chart-container __small" ng-repeat="chart in optimisationGraphs">
+              <div line-scatter-chart data="chart.data" options="chart.options" save-graph-as></div>
+            </div>
+            <div class="chart-container __small" ng-repeat="chart in financialGraphs">
+              <div line-scatter-chart data="chart.data" options="chart.options" save-graph-as></div>
+            </div>
           </div>
         </div>
-
-
       </div>
-
     </form>
-
   </div>
 </div>
