@@ -55,7 +55,7 @@ def getOptimizationParameters():
 def startOptimization():
     """ Start optimization """
     data = json.loads(request.data)
-    print("optimize: %s" % data)
+    current_app.logger.debug("optimize: %s" % data)
     # get project name
     project_name = request.project_name
     if not project_exists(project_name):
@@ -143,9 +143,18 @@ def saveModel():
         return jsonify(reply)
 
     try:
+        # read the previously saved optmizations
+        D_dict = load_model(project_name, as_bunch = False)
+        optimizations = D_dict.get('optimizations')
+
+        # now, save the working model, read results and save for the optimization with the given name
         D_dict = save_working_model_as_default(project_name)
         result = get_optimization_results(D_dict)
         D = bunchify(D_dict)
+
+        # get the previously stored optimizations
+        if optimizations: D.optimizations = bunchify(optimizations)
+
         #save the optimization parameters
         D = saveoptimization(D, name, objectives, constraints, result)
         D_dict = D.toDict()
