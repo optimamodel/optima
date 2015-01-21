@@ -2,12 +2,10 @@ from printv import printv
 from bunch import Bunch as struct
 from copy import deepcopy
 from matplotlib.pylab import show, figure, subplot, plot, axis, xlim, ylim, legend
-from numpy import array, ones, zeros, concatenate, arange, random, absolute
+from numpy import array, ones, zeros, concatenate
 
 default_startyear = 2000
 default_endyear = 2030
-
-niterations = 0
 
 def optimize(D, objectives=None, constraints=None, name="default", ntimepm=1, timelimit=60, progressplot=False, verbose=2):
     """
@@ -77,7 +75,8 @@ def optimize(D, objectives=None, constraints=None, name="default", ntimepm=1, ti
     nprogs = len(origalloc)    
     
     maxiters = 50
-    # niterations = 0
+    global niter
+    niter = 0
             
     # Preallocate arrays to store optimisation progress
     alliters = zeros((nprogs, maxiters+1))
@@ -94,7 +93,7 @@ def optimize(D, objectives=None, constraints=None, name="default", ntimepm=1, ti
         
         newD = deepcopy(D)
         newD, newcov, newnonhivdalysaverted = getcurrentbudget(newD, thisalloc)
-        newD.M = makemodelpars(newD.P, newD.opt, withwhat='v', verbose=0) ## TODO: Attempting to do stuff using withwhat = 'v'
+        newD.M = makemodelpars(newD.P, newD.opt, withwhat='c', verbose=0)
         S = model(newD.G, newD.M, newD.F[0], newD.opt, verbose=0)
         
         # Obtain value of the objective function
@@ -107,22 +106,22 @@ def optimize(D, objectives=None, constraints=None, name="default", ntimepm=1, ti
         if progressplot: # Just to test time-varying stuff
         
             # Store values for plotting
-#            global niter
-            alliters[:, niterations] = thisalloc
-            allobjs[niterations] = objective
-            niterations += 1        
+            global niter 
+            alliters[:, niter] = thisalloc
+            allobjs[niter] = objective
+            niter += 1        
             
             # Plot value of objective function
             figure(num=100)
             subplot(1,3,1)
-            plot(range(niterations), allobjs[range(niterations)])
+            plot(range(niter), allobjs[range(niter)])
             ylim(ymin=0)
             xlim(xmin=0, xmax=maxiters)        
             
             # Plot allocations over iterations
             subplot(1,3,2)
             xlim(xmin=0, xmax=maxiters)
-            for prog in range(nprogs): plot(range(niterations), alliters[prog, range(niterations)])
+            for prog in range(nprogs): plot(range(niter), alliters[prog, range(niter)])
     
             # Plot this allocation over time
             for prog in range(nprogs): plot(D.opt.toptvec, thisalloc[prog, :])  
@@ -183,7 +182,7 @@ def optimize(D, objectives=None, constraints=None, name="default", ntimepm=1, ti
         # alloc = timevarying(alloc, ntimepm=ntimepm, nprogs=nprogs, t=D.opt.tvec, totalspend=totalspend)            
         
         D, D.A[i].coverage, D.A[i].nonhivdalysaverted = getcurrentbudget(D, alloc)
-        D.M = makemodelpars(D.P, D.opt, withwhat='c', verbose=2) ## TODO withwhat = 'v' ???
+        D.M = makemodelpars(D.P, D.opt, withwhat='c', verbose=2)
         D.A[i].S = model(D.G, D.M, D.F[0], D.opt, verbose=verbose)
         D.A[i].alloc = alloc # Now that it's run, store total program costs
     
