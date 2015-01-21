@@ -31,7 +31,7 @@ D = runsimulation(D, startyear=2000, endyear=2030, verbose=verbose)
 if dotimevarying:
     print('\n\n\n4. Running optimization...')
     from timevaryingoptimize2 import optimize
-    optimize(D, timelimit=timelimit, objectives={"year":{"start":2000,"end":2030}}, ntimepm=1, verbose=10)
+    optimize(D, timelimit=timelimit, objectives={"year":{"start":2000,"end":2030}}, ntimepm=1, progressplot=True, verbose=10)
     
 else:
     print('\n\n\n4. Running optimization...')
