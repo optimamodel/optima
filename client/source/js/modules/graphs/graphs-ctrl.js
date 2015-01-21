@@ -111,13 +111,15 @@ define([
       }
     };
 
-    $scope.data8 = [
-      {label: '<5', value: 2704659},
-      {label: '5-13', value: 4499890},
-      {label: '14-17', value: 4499890},
-      {label: 'Hello my long text A', value: 5},
-      {label: 'Ohhh, another long label', value: 10}
-    ];
+    $scope.data8 = {
+      slices: [
+        {label: '<5', value: 2704659},
+        {label: '5-13', value: 4499890},
+        {label: '14-17', value: 4499890},
+        {label: 'Hello my long text A', value: 5},
+        {label: 'Ohhh, another long label', value: 10}
+      ]
+    };
 
   });
 });

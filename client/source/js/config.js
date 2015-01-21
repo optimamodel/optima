@@ -15,13 +15,13 @@ define(['angular'], function (angular) {
         plotUncertainties: false,
         population: [
           { id: 'prev', name: 'HIV prevalence', byPopulation: true, total: false},
-          { id: 'plhiv', name:'Number of PLHIV', byPopulation:false, total:true, stacked:false},
-          { id: 'daly', name: 'HIV-related DALYs', byPopulation: false, total: true, stacked:false },
-          { id: 'death', name: 'AIDS-related deaths', byPopulation: false, total: true, stacked:false },
-          { id: 'inci', name: 'New HIV infections', byPopulation: false, total: true, stacked:false },
-          { id: 'dx', name: 'New HIV diagnoses', byPopulation: false, total: true, stacked:false },
-          { id: 'tx1', name: 'People on 1st-line treatment', byPopulation: false, total: true, stacked:false },
-          { id: 'tx2', name: 'People on 2nd-line treatment', byPopulation: false, total: true, stacked:false }
+          { id: 'plhiv', name:'Number of PLHIV', byPopulation:false, total:true, stacked: true},
+          { id: 'daly', name: 'HIV-related DALYs', byPopulation: false, total: true, stacked: true },
+          { id: 'death', name: 'AIDS-related deaths', byPopulation: false, total: true, stacked: true },
+          { id: 'inci', name: 'New HIV infections', byPopulation: false, total: true, stacked: true },
+          { id: 'dx', name: 'New HIV diagnoses', byPopulation: false, total: true, stacked: true },
+          { id: 'tx1', name: 'People on 1st-line treatment', byPopulation: false, total: true, stacked: true },
+          { id: 'tx2', name: 'People on 2nd-line treatment', byPopulation: false, total: true, stacked: true }
         ],
         financial: [
           { id: 'costcur', name: 'Total HIV-related financial commitments', annual: true, cumulative: true },

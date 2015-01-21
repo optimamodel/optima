@@ -13,7 +13,7 @@ from flask import request, jsonify, Blueprint, current_app
 from dbconn import db
 from async_calculate import CalculatingThread, start_or_report_calculation, cancel_calculation, check_calculation
 from async_calculate import check_calculation_status, good_exit_status
-from utils import check_project_name, project_exists, load_model, \
+from utils import check_project_name, project_exists, load_model, save_model, \
 revert_working_model_to_default, save_working_model_as_default, report_exception
 from sim.optimize import optimize
 from sim.bunch import bunchify, unbunchify
@@ -126,8 +126,15 @@ def getWorkingModel():
 @login_required
 @check_project_name
 def saveModel():
+    from sim.optimize import saveoptimization
     """ Saves working model as the default model """
     reply = {'status':'NOK'}
+    data = json.loads(request.data)
+    name = data.get('name', 'default')
+    objectives = data.get('objectives')
+    if objectives:objectives = bunchify( objectives )
+    constraints = data.get('constraints')
+    if constraints:constraints = bunchify( constraints )
 
     # get project name
     project_name = request.project_name
@@ -137,7 +144,15 @@ def saveModel():
 
     try:
         D_dict = save_working_model_as_default(project_name)
-        return jsonify(get_optimization_results(D_dict))
+        result = get_optimization_results(D_dict)
+        D = bunchify(D_dict)
+        #save the optimization parameters
+        D = saveoptimization(D, name, objectives, constraints, result)
+        D_dict = D.toDict()
+        save_model(project_name, D_dict)
+
+        result['optimizations'] = D_dict['optimizations']
+        return jsonify(result)
     except Exception, err:
         reply['exception'] = traceback.format_exc()
         return jsonify(reply)
