@@ -68,12 +68,12 @@ define(['./module', 'underscore'], function (module, _) {
     * If the backend do not present values for the categories, we'll use 'Others' as default.
     */
     $scope.initializePrograms = function () {
-      $scope.programs =  _(meta.progs.long).map(function (name, index) {
-        var acronym = meta.progs.short[index];
+      $scope.programs =  _($scope.projectInfo.programs).map(function (item) {
+        var acronym = item.short_name;
         return {
-          name: name,
+          name: item.name,
           acronym: acronym,
-          category: 'Other', // it will be read from project_info, once it is synced with meta.programs
+          category: item.category, 
           ccparams: $scope.all_programs[acronym].ccparams,
           ccplot: $scope.all_programs[acronym].ccplot
         };
