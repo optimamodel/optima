@@ -440,7 +440,7 @@ def uploadExcel():
         # Update project.populations and project.programs
         D_pops_names = set(model['data']['meta']['pops']['short'])
         D_progs_names = set(model['data']['meta']['progs']['short'])
-        old_programs_names = [item['short_name'] for item in project.programs]
+        old_programs_names = [item.get('short_name') if item else '' for item in project.programs]
 
         # get and generate populations from D.data.meta
         pops = [item for item in populations if item['short_name'] in D_pops_names]
