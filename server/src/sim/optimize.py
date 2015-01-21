@@ -116,6 +116,14 @@ def saveoptimization(D, name, objectives, constraints, result = None, verbose=2)
             D.optimizations.append(new_optimization)
     return D
 
+def removeoptimization(D, name):
+    if "optimizations" in D:
+        try:
+            index = [item.name for item in D.optimizations].index(name)
+            D.optimizations.pop(index)
+        except:
+            pass
+    return D
 
 def defaultobjectives(D, verbose=2):
     """
