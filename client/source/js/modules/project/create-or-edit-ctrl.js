@@ -255,7 +255,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      */
     var findInvalidProgramParameters = function(selectedPopulations, selectedPrograms) {
       var avialablePopulationOptions = _(selectedPopulations).pluck('short_name');
-      avialablePopulationOptions.push('ALL_POPULATIONS');
+      avialablePopulationOptions.push('');
 
       var parameterErrors = [];
 
@@ -269,25 +269,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       return _(parameterErrors).uniq().map(function(message) {
         return {message: message};
-      });
-    };
-
-    /*
-     * Returns the provide programs with every "ALL_POPULATIONS" entry replaced
-     * by the selected populations.
-     *
-     * Example: ['ALL_POPULATIONS'] -> ["FSW","CSW","MSM","PWID","CHILD","INF"]
-     */
-    var insertSelectedPopulations = function (programs, selectedPopulations) {
-      var shortPopulationNames = _(selectedPopulations).pluck('short_name');
-      return _(programs).map(function(program) {
-        program.parameters = _(program.parameters).map(function(entry) {
-          if (entry.value.pops[0] === "ALL_POPULATIONS") {
-            entry.value.pops = shortPopulationNames;
-          }
-          return entry;
-        });
-        return program;
       });
     };
 
@@ -344,7 +325,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     var continueSubmitForm = function( selectedPrograms, selectedPopulations ) {
       var params = _($scope.projectParams).omit('name');
       params.populations = selectedPopulations;
-      params.programs = insertSelectedPopulations(selectedPrograms, selectedPopulations);
+      params.programs = selectedPrograms;
 
       $scope.formAction = '/api/project/create/' + $scope.projectParams.name;
       $scope.formParams = JSON.stringify(params);

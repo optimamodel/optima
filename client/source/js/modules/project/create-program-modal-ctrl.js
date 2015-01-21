@@ -14,7 +14,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.populations = _(populations).map(function(population) {
         return {label: population.name, value: [population.short_name]};
       });
-      $scope.populations.unshift({label: 'All selected populations', value: ['ALL_POPULATIONS']});
+      $scope.populations.unshift({label: 'All selected populations', value: ['']});
 
       $scope.initializeAllCategories();
 
