@@ -39,7 +39,6 @@ class ProjectDb(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     datastart = db.Column(db.Integer)
     dataend = db.Column(db.Integer)
-    econ_dataend = db.Column(db.Integer)
     programs = db.Column(JSON)
     populations = db.Column(JSON)
     model = deferred(db.Column(JSON, server_default=text("'{}'")))
@@ -50,12 +49,11 @@ class ProjectDb(db.Model):
     creation_time = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
 
     def __init__(self, name, user_id, datastart, dataend, \
-        econ_dataend, programs, populations, model = None, creation_time = None):
+        programs, populations, model = None, creation_time = None):
         self.name = name
         self.user_id = user_id
         self.datastart = datastart
         self.dataend = dataend
-        self.econ_dataend = econ_dataend
         self.programs = programs
         self.populations = populations
         self.model = model if model else {}
