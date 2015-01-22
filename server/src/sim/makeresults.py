@@ -101,9 +101,10 @@ def makeresults(D, allsims=None, quantiles=None, verbose=2):
         if data[0:4]=='cost':
             printv('Calculating costs...', 3, verbose)
             from financialanalysis import financialanalysis
+            default_costdisplay = {'total': 1, 'gdp': 0, 'revenue': 0, 'govtexpend': 0, 'totalhealth': 0, 'domestichealth': 0}
             allcosts = []
             for s in range(nsims):
-                thesecosts = financialanalysis(D, postyear = D.data.epiyears[-1], S = allsims[s], yscale = 'abs', makeplot = False)
+                thesecosts = financialanalysis(D, postyear = D.data.epiyears[-1], S = allsims[s], costdisplay=default_costdisplay, makeplot = False)
                 allcosts.append(thesecosts)
             
             if data=='costcur':
