@@ -539,10 +539,10 @@ class OptimaWorkbook:
         [0.0036, 0.0036, 0.0058, 0.0088, 0.059, 0.3230, 0.2300, 2.17], [0.0029, 0.0029, 0.0048, 0.0750, 0.0540, 0.2960, 0.1500, 1.27], \
         [0.0044, 0.0044, 0.0071, 0.0101, 0.079, 0.4320, 0.3000, 3.71], OptimaFormats.DECIMAL_PERCENTAGE), \
         ('Relative transmissibility', \
-        ['Condom use','Circumcision','Diagnosis behavior change','Ulcerative STI cofactor increase','Opiate substitution therapy',\
+        ['Condom use','Circumcision','Diagnosis behavior change','Ulcerative STI cofactor increase','Discharging STI cofactor increase','Opiate substitution therapy',\
         'PMTCT','Antiretroviral therapy', 'Pre-exposure prophylaxis'], \
-        [0.05, 0.42, 1.00, 2.65, 0.46, 0.10, 0.30, 0.275], [0.025, 0.33, 0.32, 1.35, 0.32, 0.07, 0.10, 0.20], \
-        [0.20, 0.53, 1.00, 5.19, 0.67, 0.18, 0.50, 0.35], OptimaFormats.PERCENTAGE), \
+        [0.05, 0.42, 1.00, 2.65, 1.00, 0.46, 0.10, 0.30, 0.275], [0.025, 0.33, 0.32, 1.35, 1.00, 0.32, 0.07, 0.10, 0.20], \
+        [0.20, 0.53, 1.00, 5.19, 1.35, 0.67, 0.18, 0.50, 0.35], OptimaFormats.PERCENTAGE), \
         ('Disutility weights', \
         ['Untreated HIV, acute','Untreated HIV, CD4(>500)','Untreated HIV, CD4(350-500)','Untreated HIV, CD4(200-350)', \
         'Untreated HIV, CD4(<200)','Treated HIV'], [0.05, 0.05, 0.10, 0.15, 0.50, 0.05], [None]*6, [None]*6, OptimaFormats.NUMBER)]
