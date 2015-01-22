@@ -74,7 +74,7 @@ def createProject(project_name):
     user_id = current_user.id
     edit_params = None
     if data:
-        edit_params = json.loads(data['edit_params'])
+        if 'edit_params' in data: edit_params = json.loads(data['edit_params'])
         data = json.loads(data['params'])
 
     # check if current request is edit request
