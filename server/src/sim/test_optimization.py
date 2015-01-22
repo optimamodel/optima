@@ -33,7 +33,6 @@ print('\n\n\n4. Running optimization...')
 from optimize import optimize
 optimize(D, objectives={"year":{"start":2000,"end":2030}}, ntimepm=2, timelimit=timelimit, verbose=verbose)
 
-    
 print('\n\n\n5. Viewing optimization...')
 from viewresults import viewmultiresults, viewallocpies
 viewmultiresults(D.plot.OM)

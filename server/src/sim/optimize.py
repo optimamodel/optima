@@ -27,6 +27,10 @@ def optimize(D, objectives=None, constraints=None, name="default", ntimepm=1, ti
     from timevarying import timevarying
     printv('Running optimization...', 1, verbose)
     
+    # Set up parameter vector for time-varying optimisation...
+    stepsize = 100000
+    growsize = 0.01
+    
     # Set options to update year range
     from setoptions import setoptions
     startyear = objectives.get("year").get("start") or default_startyear
@@ -72,23 +76,13 @@ def optimize(D, objectives=None, constraints=None, name="default", ntimepm=1, ti
     origalloc = deepcopy(array(D.A[1].alloc))
     D.A = D.A[:2] # TODO WARNING KLUDGY
 
-    nprogs = len(origalloc)    
-    
-    maxiters = 100
-    global niter
-    niter = 0
-            
-    # Preallocate arrays to store optimisation progress
-    alliters = zeros((nprogs, D.opt.npts, maxiters+1))
-    allobjs  = zeros(maxiters+1)
-    
+    nprogs = len(origalloc)
     totalspend = sum(origalloc) # Temp # TODO -- set this up for variable budgets
     
     def objectivecalc(optimparams):
         """ Calculate the objective function """
 
         thisalloc = timevarying(optimparams, ntimepm=ntimepm, nprogs=nprogs, t=D.opt.tvec, totalspend=totalspend)        
-        
         newD = deepcopy(D)
         newD, newcov, newnonhivdalysaverted = getcurrentbudget(newD, thisalloc)
         newD.M = makemodelpars(newD.P, newD.opt, withwhat='c', verbose=0)
@@ -100,53 +94,8 @@ def optimize(D, objectives=None, constraints=None, name="default", ntimepm=1, ti
             for ob in ['inci', 'death', 'daly', 'cost']:
                 if objectives.outcome[ob]: objective += S[ob].sum() * objectives.outcome[ob + 'weight'] # TODO -- can we do 'daly' and 'cost' like this too??
         else: print('Work to do here') # 'money'
-        
-        if progressplot: # Just to test time-varying stuff
-        
-            # Store values for plotting
-            global niter 
-            alliters[:, :, niter] = thisalloc
-            allobjs[niter] = objective
-            niter += 1        
-            
-            # Plot value of objective function
-            figure(num=100)
-            subplot(1,4,1)
-            plot(range(niter), allobjs[range(niter)])
-            ylim(ymin=0)
-            xlim(xmin=0, xmax=maxiters)        
-            
-            # Plot allocations over iterations
-            subplot(1,4,2)
-            xlim(xmin=0, xmax=maxiters)
-            for prog in range(nprogs): plot(range(niter), alliters[prog, 0, range(niter)])
-    
-            if ntimepm > 1:
-                # Plot this allocation over time
-                subplot(1,4,3)
-                xlim(xmin=D.opt.tvec[0], xmax=D.opt.tvec[-1])
-                for prog in range(nprogs): plot(D.opt.tvec, thisalloc[prog, :])  
-                plot(D.opt.tvec, thisalloc.sum(axis=0), color='k', linewidth=3)
-                ylim(ymin=0, ymax=round(totalspend + 100, -2))
-                
-            legplot = 4 if ntimepm > 1 else 3
-    
-            # Plot legend on the right        
-            subplot(1,4,legplot)
-            for prog in range(nprogs): plot(0, prog)
-            legend(D.G.meta.progs.short, loc = 'center left')
-            axis('off')
-            show()     
             
         return objective
-        
-        
-        
-    ## Set up parameter vector for time-varying optimisation...
-        
-        
-    stepsize = 100000
-    growsize = 0.01
         
     # Initiate probabilities of parameters being selected
     stepsizes = zeros(nprogs * ntimepm)
@@ -174,16 +123,11 @@ def optimize(D, objectives=None, constraints=None, name="default", ntimepm=1, ti
     parammin = concatenate((zeros(nprogs), ones(nprogs)*-1e9))
         
     # Run the optimization algorithm
-    optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, xmin=parammin, \
-    MaxIter=maxiters-1, absinitial=stepsizes, timelimit=timelimit, verbose=verbose,)
+    optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, xmin=parammin, absinitial=stepsizes, timelimit=timelimit, verbose=verbose,)
     
     # Update the model
     for i, params in enumerate([origalloc, optparams]):
-        
-        
-        
         alloc = timevarying(params, ntimepm=len(params)/nprogs, nprogs=nprogs, t=D.opt.tvec, totalspend=totalspend)            
-        
         D, D.A[i].coverage, D.A[i].nonhivdalysaverted = getcurrentbudget(D, alloc)
         D.M = makemodelpars(D.P, D.opt, withwhat='c', verbose=2)
         D.A[i].S = model(D.G, D.M, D.F[0], D.opt, verbose=verbose)
