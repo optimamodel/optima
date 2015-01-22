@@ -441,7 +441,7 @@ class OptimaWorkbook:
         current_row = 0
 
         for name in ['Percentage of people who die from non-HIV-related causes per year', \
-        'Prevalence of any ulcerative STIs', 'Tuberculosis prevalence']:
+        'Prevalence of any ulcerative STIs', 'Prevalence of any discharging STIs', 'Tuberculosis prevalence']:
             current_row = self.emit_ref_years_block(name, current_row, self.pop_range, row_format = OptimaFormats.DECIMAL_PERCENTAGE, assumption = True)
 
     def generate_opt(self):
