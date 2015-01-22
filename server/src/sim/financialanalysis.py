@@ -46,6 +46,7 @@ def financialanalysis(D, postyear=2015, S=None, yscale='abs', makeplot=False):
     aidscosts.extend([aidscosts[-1]]*((neconyrs-nepiyrs)*10+1))
 
     # Get future time index
+    print "D.opt", D.opt
     opt = setoptions(startyear=D.opt.startyear, endyear=D.opt.endyear, nsims=1, turnofftrans=postyear)
 
     # Get indices for the different disease states # TODO these should be defined globally somewhere... 
