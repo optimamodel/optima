@@ -10,8 +10,7 @@ from copy import deepcopy
 from utils import sanitize
 from utils import smoothinterp
 
-default_costdisplay = {'total': 1, 'gdp': 0, 'revenue': 0, 'govtexpend': 0, 'totalhealth': 0, 'domestichealth': 0}
-
+default_costdisplay = 'total' # will come from FE, and be one of ['total','gdp','revenue','govtexpend','totalhealth','domestichealth']
 
 def financialanalysis(D, postyear=2015, S=None, costdisplay=default_costdisplay, makeplot=False):
     '''
@@ -30,8 +29,7 @@ def financialanalysis(D, postyear=2015, S=None, costdisplay=default_costdisplay,
     postyear = float(postyear)
 
     # Get y axis scaling factor
-    for key, val in costdisplay.items():
-        if val: yscalefactor = key if not key=='total' else 0
+    yscalefactor = costdisplay if not costdisplay=='total' else 0
 
     # Set up variables for time indexing
     datatvec = arange(D.G.datastart, D.G.dataend+D.opt.dt, D.opt.dt)
@@ -217,4 +215,4 @@ def snipM(M, thisindex = range(150,301)):
     return M0
 
 #example
-#plotdata = financialanalysis(D, postyear=2015, S=D.S, costdisplay=default_costdisplay, makeplot=1)
+plotdata = financialanalysis(D, postyear=2015, S=D.S, costdisplay=default_costdisplay, makeplot=1)
