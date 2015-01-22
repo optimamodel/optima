@@ -66,7 +66,7 @@ def printarr(arr, arrformat='%0.2f  '):
     
     Example:
         from utils import printarr
-        from numpy import rand
+        from numpy import random
         printarr(rand(3,7,4))
     
     Version: 2014dec01 by cliffk

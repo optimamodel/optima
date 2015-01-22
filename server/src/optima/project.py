@@ -15,7 +15,7 @@ from utils import BAD_REPLY
 import time,datetime
 import dateutil.tz
 from datetime import datetime
-
+from copy import deepcopy
 
 """ route prefix: /api/project """
 project = Blueprint('project',  __name__, static_folder = '../static')
@@ -51,8 +51,6 @@ def get_predefined():
     for p in programs:
         p['active'] = False
         new_parameters = [dict([('value', parameter),('active',True)]) for parameter in p['parameters']]
-        for np in new_parameters:
-            if len(np['value']['pops'][0])==0: np['value']['pops']=['ALL_POPULATIONS']
         if new_parameters: p['parameters'] = new_parameters
     return json.dumps({"programs":programs, "populations": populations, "categories":program_categories})
 
@@ -398,6 +396,8 @@ def uploadExcel():
     Precondition: model should exist.
     """
     from sim.runsimulation import runsimulation
+    from sim.programs import programs
+    from sim.populations import populations
     current_app.logger.debug("api/project/update")
     project_name = request.project_name
     user_id = current_user.id
@@ -427,12 +427,41 @@ def uploadExcel():
 
     # See if there is matching project
     project = load_project(project_name)
+    current_app.logger.debug("project for user %s name %s: %s" % (current_user.id, project_name, project))
     if project is not None:
         # update and save model
         D = model_as_bunch(project.model)
         D = updatedata(D, savetofile = False)
         model = model_as_dict(D)
         project.model = model
+        programs = programs()
+        populations = populations()
+
+        # Update project.populations and project.programs
+        D_pops_names = set(model['data']['meta']['pops']['short'])
+        D_progs_names = set(model['data']['meta']['progs']['short'])
+        old_programs_names = [item.get('short_name') if item else '' for item in project.programs]
+
+        # get and generate populations from D.data.meta
+        pops = [item for item in populations if item['short_name'] in D_pops_names]
+        project.populations = pops
+        
+        # get and generate programs from D.data.meta
+        progs = [item for item in programs if item['short_name'] in D_progs_names]
+
+        # prepare programs for parameters
+        for pindex, program in enumerate(progs):
+            try: #if the program was given in create_project, keep the parameters
+                index = old_programs_names.index(program['short_name'])
+                progs[pindex] = deepcopy(project.programs[index])
+            except: #get the default parameters for that program, for now
+                new_parameters = [{'value': parameter} for parameter in program['parameters']]
+                for parameter in new_parameters:
+                    if parameter['value']['pops']==['']: parameter['value']['pops']=list(D_pops_names)
+                if new_parameters: program['parameters'] = deepcopy(new_parameters)
+
+        project.programs = progs
+
         db.session.add(project)
 
         # save data upload timestamp
