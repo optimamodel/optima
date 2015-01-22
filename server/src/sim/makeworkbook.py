@@ -34,6 +34,7 @@ class OptimaContent:
         self.row_levels = None
         self.row_format = OptimaFormats.GENERAL
         self.row_formats = None
+        self.assumption_properties = {'title':None, 'connector':'OR', 'columns':['Assumption']}
 
     def set_row_format(self, row_format):
         self.row_format = row_format
@@ -46,6 +47,9 @@ class OptimaContent:
 
     def has_assumption(self):
         return self.assumption
+
+    def set_assumption_properties(self, assumption_properties):
+        self.assumption_properties = assumption_properties
 
     def set_row_levels(self, row_levels): # right now assume the row levels are hard coded, as it is only needed once
         self.row_levels = row_levels
@@ -172,6 +176,7 @@ class OptimaFormats:
         self.book = book
         # locked formats
         self.formats['bold'] = self.book.add_format({'bold':1})
+        self.formats['center_bold'] = self.book.add_format({'bold':1, 'align':'center'})
         self.formats['rc_title'] = {}
         self.formats['rc_title']['right'] = self.book.add_format({'bold':1, 'align':'right'})
         self.formats['rc_title']['left'] = self.book.add_format({'bold':1, 'align':'left'})
@@ -202,7 +207,7 @@ class OptimaFormats:
         sheet.write(row, col, name, self.formats['rc_title'][align])
 
     def write_option(self, sheet, row, col, name = 'OR'):
-        sheet.write(row, col, name, self.formats['bold'])
+        sheet.write(row, col, name, self.formats['center_bold'])
 
     #special processing for bool values (to keep the content separate from representation)
     def write_unlocked(self, sheet, row, col, data, row_format = 'unlocked'):
@@ -279,11 +284,15 @@ class TitledRange:
         #top-top headers
         formats.write_block_name(self.sheet, self.content.name, self.first_row)
 
+        if self.content.has_assumption() and  self.first_row==0 and self.content.assumption_properties['title'] is not None:
+            formats.write_rowcol_name(self.sheet, self.first_row, self.data_range.last_col+2, self.content.assumption_properties['title'])
+
         #headers
         for i, name in enumerate(self.content.column_names):
             formats.write_rowcol_name(self.sheet, self.first_row+1, self.data_range.first_col+i,name, rc_title_align)
-            if self.content.has_assumption():
-                formats.write_rowcol_name(self.sheet, self.first_row+1, self.data_range.last_col+2, 'Assumption')
+        if self.content.has_assumption():
+            for index, col_name in enumerate(self.content.assumption_properties['columns']):
+                formats.write_rowcol_name(self.sheet, self.first_row+1, self.data_range.last_col+2+index, col_name)
 
 
         current_row = self.data_range.first_row
@@ -306,9 +315,10 @@ class TitledRange:
                     formats.write_empty_unlocked(self.sheet, current_row, self.data_range.first_col+j, row_format)
             #emit assumption
             if self.content.has_assumption():
-                formats.write_option(self.sheet, current_row, self.data_range.last_col+1)
-                formats.write_empty_unlocked(self.sheet, current_row, self.data_range.last_col+2, \
-                row_format)
+                formats.write_option(self.sheet, current_row, self.data_range.last_col+1, \
+                    name = self.content.assumption_properties['connector'])
+                for index, col_name in enumerate(self.content.assumption_properties['columns']):
+                    formats.write_empty_unlocked(self.sheet, current_row, self.data_range.last_col+2+index, row_format)
             current_row+=1
             if num_levels > 1 and ((i+1) % num_levels)==0: # shift between the blocks
                 current_row +=1
@@ -319,8 +329,7 @@ class TitledRange:
         return self.data_range.param_refs(self.sheet.get_name(), column_number)
 
 class OptimaWorkbook:
-    def __init__(self, name, pops, progs, data_start = 2000, data_end = 2015, \
-        econ_data_end = 2030, verbose = 2):
+    def __init__(self, name, pops, progs, data_start = 2000, data_end = 2015, verbose = 2):
         self.sheet_names = OrderedDict([ \
             ('instr', 'Instructions'), \
             ('meta','Populations & programs'), \
@@ -340,8 +349,6 @@ class OptimaWorkbook:
         self.progs = progs
         self.data_start = data_start
         self.data_end = data_end
-        self.econ_data_start = data_start
-        self.econ_data_end = econ_data_end
         self.verbose = verbose
         self.book = None
         self.sheets = None
@@ -351,16 +358,20 @@ class OptimaWorkbook:
         self.pop_range = None
         self.ref_pop_range = None
         self.ref_prog_range = None
+        self.years_range = years_range(self.data_start, self.data_end)
 
         self.npops = len(pops)
         self.nprogs = len(progs)
 
     def emit_content_block(self, name, current_row, row_names, column_names, data = None, \
-        row_format = OptimaFormats.GENERAL, assumption = False, row_levels = None):
+        row_format = OptimaFormats.GENERAL, assumption = False, row_levels = None, \
+        assumption_properties = None):
         content = OptimaContent(name, row_names, column_names, data)
         content.set_row_format(row_format)
         if assumption:
             content.add_assumption()
+        if assumption_properties:
+            content.set_assumption_properties(assumption_properties)
         if row_levels is not None:
             content.set_row_levels(row_levels)
         the_range = TitledRange(self.current_sheet, current_row, content)
@@ -558,19 +569,19 @@ class OptimaWorkbook:
         'Domestic HIV spending', 'Global Fund HIV commitments', 'PEPFAR HIV commitments', \
         'Other international HIV commitments', 'Private HIV spending']
 
-        econ_years_range = years_range(self.econ_data_start, self.econ_data_end)
+        assumption_properties = {'title':'Growth assumptions', 'connector':'AND', 'columns':['best','low','high']}
 
         for name in names:
-            current_row = self.emit_content_block(name, current_row, ['Total'], econ_years_range, assumption = True, \
-                row_format = OptimaFormats.SCIENTIFIC)
+            current_row = self.emit_content_block(name, current_row, ['Total'], self.years_range, assumption = True, \
+                row_format = OptimaFormats.SCIENTIFIC, assumption_properties = assumption_properties)
 
         names_rows = [('HIV-related health care costs (excluding treatment)', \
         ['Acute infection','CD4(>500)','CD4(350-500)','CD4(200-350)','CD4(50-200)','CD4(<200)']), \
         ('Social mitigation costs', \
         ['Acute infection', 'CD4(>500)', 'CD4(350-500)', 'CD4(200-350)', 'CD4(50-200)','CD4(<200)'])]
         for (name, row_names) in names_rows:
-            current_row = self.emit_content_block(name, current_row, row_names, econ_years_range, assumption = True, \
-                row_format = OptimaFormats.NUMBER)
+            current_row = self.emit_content_block(name, current_row, row_names, self.years_range, assumption = True, \
+                row_format = OptimaFormats.NUMBER, assumption_properties = assumption_properties)
 
     def generate_instr(self):
         current_row = 0
