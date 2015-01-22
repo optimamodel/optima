@@ -130,7 +130,7 @@ def loadworkbook(filename='example.xlsx', verbose=2):
                     elif thiscell != '': # Nope, more years, keep going
                         data.econyears.append(float(thiscell)) # Add this year
             
-            if lastdatacol:    
+            if lastdatacol:  
                 assumptioncol = lastdatacol + 1 # The "OR" space is in between
                 ncolsperprog = 5 # Number of columns necessary for defining a single program; name, zero-spend-min, zero-spend-max, full-spend-min, full-spend-max
                 nprogblocks = 4 # Number of program blocks
@@ -237,7 +237,8 @@ def loadworkbook(filename='example.xlsx', verbose=2):
                             thesedata = sheetdata.row_values(row, start_colx=2, end_colx=lastdatacol) # Data starts in 3rd column
                             thesedata = map(lambda val: nan if val=='' else val, thesedata) # Replace blanks with nan
                             assumptiondata = sheetdata.cell_value(row, assumptioncol)
-                            if assumptiondata != '': thesedata = [assumptiondata] # Replace the (presumably blank) data if a non-blank assumption has been entered
+                            if assumptiondata != '' and name!='econ': thesedata = [assumptiondata] # Replace the (presumably blank) data if a non-blank assumption has been entered
+                            ### TODO CK or RS fix this properly
                             data[name][thispar].append(thesedata) # Store data
 
                             for programname, pops in programs_for_input_key(thispar).iteritems():
