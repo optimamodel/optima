@@ -22,8 +22,15 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       };
 
       $scope.optimizationStatus = statusEnum.NOT_RUNNING;
+      $scope.optimizations = [];
 
-      $scope.optimizations = undefined;
+      // According to angular best-practices we should wrap every object/value
+      // inside a wrapper object. This is due the fact that directives like ng-if
+      // always create a child scope & the reference can get lost.
+      // see https://github.com/angular/angular.js/wiki/Understanding-Scopes
+      $scope.state = {
+        activeOptimizationName: undefined
+      };
 
       // cache placeholder
       var cachedResponse = null;
@@ -607,7 +614,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       var options = {
         description: 'If you would you like to save current objectives and constraints as a new optimization,' +
           ' please type a new optimization name in a field below. Otherwise just press "Cancel"' +
-          ' and existing optimization "' + $scope.activeOptimizationName + '" will be updated.',
+          ' and existing optimization "' + $scope.state.activeOptimizationName + '" will be updated.',
         acceptButton: 'Yes, save as new',
         rejectButton: 'No, override current',
         closeReason: 'overrideoptimization'
@@ -629,7 +636,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
           doSave(newOptimizationName, $scope.params);
         }, options).result.then(function (reason) {
           if (reason === options.closeReason) {
-            doSave($scope.activeOptimizationName, $scope.params);
+            doSave($scope.state.activeOptimizationName, $scope.params);
           }
         });
     };
@@ -760,14 +767,14 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       });
 
       if (nameExists) {
-        $scope.activeOptimizationName = name;
+        $scope.state.activeOptimizationName = name;
       } else if ($scope.optimizations[0]) {
-        $scope.activeOptimizationName = $scope.optimizations[0].name;
+        $scope.state.activeOptimizationName = $scope.optimizations[0].name;
       } else {
-        $scope.activeOptimizationName = undefined;
+        $scope.state.activeOptimizationName = undefined;
       }
 
-      $scope.applyOptimization($scope.activeOptimizationName);
+      $scope.applyOptimization($scope.state.activeOptimizationName);
     };
 
     // apply existing optimization data, if present
