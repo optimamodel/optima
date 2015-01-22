@@ -5,6 +5,7 @@ from optima.dbconn import db
 from optima.dbmodels import ProjectDb
 import unittest
 import hashlib
+import json
 
 class OptimaTestCase(unittest.TestCase):
     """
@@ -32,6 +33,12 @@ class OptimaTestCase(unittest.TestCase):
     default_name = 'test'
     default_email = 'test@test.com'
 
+    default_pops = [{"name": "Female sex workers", "short_name": "FSW", "sexworker": True, "injects": False, "sexmen": True, "client": False, "female": True, "male": False, "sexwomen": False}, \
+        {"name": "Clients of sex workers", "short_name": "Clients", "sexworker": False, "injects": False, "sexmen": False, "client": True, "female": False, "male": True, "sexwomen": True}, \
+        {"name": "Men who have sex with men", "short_name": "MSM", "sexworker": False, "injects": False, "sexmen": True, "client": False, "female": False, "male": True, "sexwomen": False}, \
+        {"name": "Males who inject drugs", "short_name": "Male PWID", "sexworker": False, "injects": True, "sexmen": False, "client": False, "female": False, "male": True, "sexwomen": True}, \
+        {"name": "Other males [enter age]", "short_name": "Other males", "sexworker": False, "injects": False, "sexmen": False, "client": False, "female": False, "male": True, "sexwomen": True}, \
+        {"name": "Other females [enter age]", "short_name": "Other females", "sexworker": False, "injects": False, "sexmen": True, "client": False, "female": True, "male": False, "sexwomen": False}]
 
     def create_user(self, name = default_name, email = default_email):
         headers = {'Content-Type' : 'application/json'}
@@ -42,9 +49,14 @@ class OptimaTestCase(unittest.TestCase):
 
     def create_project(self, name):
         """ Helper method to create project and save it to the database """
-        project = ProjectDb(name, 1, '2000', '2010', '2020', {}, {})
+        project = ProjectDb(name, 1, '2000', '2010', OptimaTestCase.default_pops, {})
         db.session.add(project)
         db.session.commit()
+
+    def api_create_project(self):
+        project_data = {'params':json.dumps({'populations':OptimaTestCase.default_pops})}
+        response = self.client.post('/api/project/create/test', data = project_data)
+        return response
 
     def list_projects(self, user_id):
         """ Helper method to list projects for the given user id"""

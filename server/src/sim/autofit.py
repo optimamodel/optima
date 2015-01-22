@@ -21,7 +21,6 @@ def autofit(D, timelimit=60, startyear=2000, endyear=2015, verbose=2):
     # Set options to update year range
     from setoptions import setoptions
     D.opt = setoptions(D.opt, startyear=startyear, endyear=endyear)
-    print "D.opt", D.opt
     
     def errorcalc(Flist):
         """ Calculate the error between the model and the data """
