@@ -2,7 +2,6 @@ default_pops = ['']*6
 default_progs = ['']*7
 default_datastart = 2000
 default_dataend = 2015
-default_econ_dataend = 2030
 default_nsims = 5
 
 def makeproject(projectname='example', pops = default_pops, progs = default_progs, datastart=default_datastart, \
@@ -28,7 +27,7 @@ def makeproject(projectname='example', pops = default_pops, progs = default_prog
     
     # Initialize options
     from setoptions import setoptions
-    D.opt = setoptions(startyear=datastart, endyear=default_econ_dataend, nsims=nsims)
+    D.opt = setoptions(startyear=datastart, endyear=dataend, nsims=nsims)
     
     # Set up "G" -- general parameters structure
     D.G = struct()
