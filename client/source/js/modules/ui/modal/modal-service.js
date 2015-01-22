@@ -82,10 +82,32 @@ define([
               };
             }]
           });
+        },
+
+        /**
+        * This function opens a modal that will ask user to choose between
+        * the existing optimization & using a new one.
+        */
+        showSaveOptimization: function (existingName, callback) {
+          var modalInstance = $modal.open({
+            templateUrl: 'js/modules/ui/modal/modal-save-optimization.html',
+            controller: ['$scope', function ($scope) {
+              $scope.saveExisting = true;
+              $scope.existingName = existingName;
+
+              $scope.saveOptimization = function(saveExisting, newName) {
+                if (saveExisting) {
+                  callback($scope.existingName);
+                } else {
+                  callback(newName);
+                }
+                modalInstance.close();
+              };
+            }]
+          });
 
           return modalInstance;
         },
-
 
         /**
         * Asks the user to choose between two choices.
