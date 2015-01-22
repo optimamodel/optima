@@ -607,7 +607,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       var options = {
         description: 'If you would you like to save current objectives and constraints as a new optimization,' +
           ' please type a new optimization name in a field below. Otherwise just press "Cancel"' +
-          ' and existing optimization "' + $scope.activeOptimization.name + '" will be updated.',
+          ' and existing optimization "' + $scope.activeOptimizationName + '" will be updated.',
         acceptButton: 'Yes, save as new',
         rejectButton: 'No, override current',
         closeReason: 'overrideoptimization'
@@ -629,16 +629,15 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
           doSave(newOptimizationName, $scope.params);
         }, options).result.then(function (reason) {
           if (reason === options.closeReason) {
-            doSave($scope.activeOptimization.name, $scope.params);
+            doSave($scope.activeOptimizationName, $scope.params);
           }
         });
     };
 
-    $scope.deleteOptimization = function (optimization) {
-      $http.post('/api/analysis/optimization/remove/' + optimization.name)
+    $scope.deleteOptimization = function (optimizationName) {
+      $http.post('/api/analysis/optimization/remove/' + optimizationName)
         .success(function(data){
-          $scope.optimizations = data.optimizations;
-          $scope.activeOptimization = $scope.optimizations[0];
+          $scope.initOptimizations(data.optimizations, undefined);
         });
     };
 
@@ -729,11 +728,19 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       }
     };
 
+    $scope.optimizationByName = function(name) {
+      return _($scope.optimizations).find(function(item) {
+        return item.name == name;
+      });
+    };
+
     /**
      * Changes active constrains and objectives to the values in provided optimization
      * @param optimization {Object}
      */
-    $scope.applyOptimization = function(optimization) {
+    $scope.applyOptimization = function(name) {
+      var optimization = $scope.optimizationByName(name);
+
       _.extend($scope.params.objectives, optimization.objectives);
       _.extend($scope.params.constraints, optimization.constraints);
       if (optimization.result) {
@@ -745,20 +752,23 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     // apply default optimization on page load
     $scope.initOptimizations = function(optimizations, name) {
       if (!optimizations) return;
-      $scope.optimizations = angular.copy(optimizations);
-      if (typeof(name)!=='undefined') {
-        $scope.activeOptimization = _.find($scope.optimizations, function(item) { return item.name==name;});
-      }
-      if (!$scope.activeOptimization && $scope.optimizations[0]) {
-        $scope.activeOptimization = $scope.optimizations[0];
-      }
-    };
 
-    $scope.$watch('activeOptimization', function (newValue) {
-      if (newValue) {
-        $scope.applyOptimization(newValue);
+      $scope.optimizations = angular.copy(optimizations);
+
+      var nameExists = _.some($scope.optimizations, function(item) {
+        return item.name == name;
+      });
+
+      if (nameExists) {
+        $scope.activeOptimizationName = name;
+      } else if ($scope.optimizations[0]) {
+        $scope.activeOptimizationName = $scope.optimizations[0].name;
+      } else {
+        $scope.activeOptimizationName = undefined;
       }
-    }, true);
+
+      $scope.applyOptimization($scope.activeOptimizationName);
+    };
 
     // apply existing optimization data, if present
     if (optimizations && optimizations.data) {
