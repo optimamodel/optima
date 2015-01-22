@@ -23,14 +23,8 @@ def abbreviate(param):
 def years_range(data_start, data_end):
     return [x for x in range(data_start, data_end+1)]
 
-#class Assumption: #simulacrum of enums (no such thing in Python 2.7)
-#  PERCENTAGE = 'percentage'
-#  SCIENTIFIC = 'scientific'
-#  NUMBER = 'number'
-#  GENERAL = 'general'
-
-""" the content of the data ranges (row names, column names, optional data and assumptions) """
 class OptimaContent:
+    """ the content of the data ranges (row names, column names, optional data and assumptions) """
     def __init__(self, name, row_names, column_names, data = None):
         self.name = name
         self.row_names = row_names
@@ -81,18 +75,19 @@ class OptimaContent:
                 return [self.row_format for name in self.row_names for level in self.row_levels]
 
 """ It's not truly pythonic, they cay, to have class methods """
+
 def make_matrix_range(name, params):
     return OptimaContent(name, params, params)
 
 def make_years_range(name, params, data_start, data_end):
     return OptimaContent(name, params, years_range(data_start, data_end))
 
-""" 
-every populations item is a dictionary is expected to have the following fields:
-short_name, name, male, female, injects, sexmen, sexwomen, sexworker, client
-(3x str, 7x bool)
-"""
 def make_populations_range(name, items):
+    """ 
+    every populations item is a dictionary is expected to have the following fields:
+    short_name, name, male, female, injects, sexmen, sexwomen, sexworker, client
+    (3x str, 7x bool)
+    """
     column_names = ['Short name','Long name','Male','Female','Injects','Heterosexual', \
     'Homosexual','Sex worker','Client']
     row_names = range(1, len(items)+1)
@@ -121,12 +116,12 @@ def make_populations_range(name, items):
         coded_params.append([short_name, item_name, male, female, injects, sexmen, sexwomen, sexworker, client])
     return OptimaContent(name, row_names, column_names, coded_params)
 
-""" 
-every programs item is a dictionary is expected to have the following fields:
-short_name, name
-(2x str)
-"""
 def make_programs_range(name, items):
+    """ 
+    every programs item is a dictionary is expected to have the following fields:
+    short_name, name
+    (2x str)
+    """
     column_names = ['Short name','Long name']
     row_names = range(1, len(items)+1)
     coded_params = []
@@ -149,8 +144,20 @@ def make_ref_years_range(name, ref_range, data_start, data_end):
     params = ref_range.param_refs()
     return make_years_range(name, params, data_start, data_end)
 
-""" the formats used in the workbook """
+def filter_by_properties(param_refs, base_params, the_filter):
+    """
+    filter parameter references by properties of the parameters.
+    """
+    result = []
+    filter_set = set(the_filter.iteritems())
+    for (param_ref, param) in zip(param_refs, base_params):
+        if set(param.iteritems()) & filter_set:
+            result.append(param_ref)
+    return result
+
+
 class OptimaFormats:
+    """ the formats used in the workbook """
     BG_COLOR = '#B3DEE5'
     BORDER_COLOR = 'white'
 
@@ -421,8 +428,9 @@ class OptimaWorkbook:
         current_row = self.prog_range.emit(self.formats, rc_title_align = 'left')
 
         self.ref_pop_range = self.pop_range.param_refs()
-
         self.ref_prog_range = self.prog_range.param_refs()
+        self.ref_females_range = filter_by_properties(self.ref_pop_range, self.pops, {'female':True})
+        self.ref_males_range = filter_by_properties(self.ref_pop_range, self.pops, {'male':True})
 
     def generate_costcov(self):
         row_levels = ['Coverage', 'Cost']
@@ -461,7 +469,7 @@ class OptimaWorkbook:
         current_row = self.emit_years_block('Treatment eligibility criterion', current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption = True)
         current_row = self.emit_ref_years_block('Percentage of people covered by pre-exposure prophylaxis', current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
         current_row = self.emit_years_block('Number of women on PMTCT (Option B/B+)', current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption = True)
-        current_row = self.emit_ref_years_block('Birth rate (births per woman per year)', current_row, self.pop_range, row_format = OptimaFormats.NUMBER, assumption = True)
+        current_row = self.emit_years_block('Birth rate (births per woman per year)', current_row, self.ref_females_range, row_format = OptimaFormats.NUMBER, assumption = True)
         current_row = self.emit_years_block('Percentage of HIV-positive women who breastfeed', current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption = True)
 
     def generate_sex(self):
