@@ -158,7 +158,7 @@ def filter_by_properties(param_refs, base_params, the_filter):
 
 class OptimaFormats:
     """ the formats used in the workbook """
-    BG_COLOR = '#B3DEE5'
+    BG_COLOR = '#18C1FF'
     BORDER_COLOR = 'white'
 
     PERCENTAGE = 'percentage'
