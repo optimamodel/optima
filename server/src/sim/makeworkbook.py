@@ -92,8 +92,8 @@ def make_populations_range(name, items):
     short_name, name, male, female, injects, sexmen, sexwomen, sexworker, client
     (3x str, 7x bool)
     """
-    column_names = ['Short name','Long name','Male','Female','Injects','Heterosexual', \
-    'Homosexual','Sex worker','Client']
+    column_names = ['Short name','Long name','Male','Female','Injects','Has sex with women', \
+    'Has sex with men','Sex worker','Client']
     row_names = range(1, len(items)+1)
     coded_params = []
     for item in items:
@@ -426,8 +426,9 @@ class OptimaWorkbook:
         self.current_sheet.set_column(2,2,15)
         self.current_sheet.set_column(3,3,40)
         self.current_sheet.set_column(6,6,12)
-        self.current_sheet.set_column(7,7,12)
-        self.current_sheet.set_column(8,8,12)
+        self.current_sheet.set_column(7,7,16)
+        self.current_sheet.set_column(8,8,16)
+        self.current_sheet.set_column(9,9,12)
         current_row = 0
 
         pop_content = make_populations_range('Populations', self.pops)
