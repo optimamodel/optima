@@ -1,5 +1,6 @@
 <div class="section cf" ng-if="typeSelectorIsVisible">
-  <h3>Results</h3>
+  
+  <h3>Epidemiological Results</h3>
 
   <div ng-if="plotUncertaintiesIsVisible === true">
     <label class="checkbox-inline">
@@ -30,6 +31,14 @@
     </div>
   </div>
 
+  <h3>Financial Commitment Results</h3>
+
+  <h4>Display annual costs as:</h4>
+  <div ng-repeat="financialType in types.financialAnnualCosts">
+    <input type="radio" ng-change="annualCostChange(annualCost)" name="annualCost" ng-model="annualCost" value="{{financialType.id}}"/>
+    <label>{{financialType.name}}</label>
+  </div>
+
   <div class="type-section" ng-repeat="type in types.financial" >
     <b>{{ type.name }}</b>
     <div>
@@ -45,4 +54,5 @@
       </label>
     </div>
   </div>
+
 </div>
