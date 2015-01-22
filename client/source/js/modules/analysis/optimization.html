@@ -495,7 +495,7 @@
 
       <!-- Tab 3 -->
       <div ng-if="activeTab === 3">
-        <div class="section">
+        <div class="section" style="margin-bottom: 45px">
           <h2>Optimization</h2>
             <span class="info-hint"> {{optimizationMessage}} </span><br/>
 
@@ -554,20 +554,24 @@
               <export-all-data charts="chartsForDataExport" name="Optimization analyses" ng-if="radarData || optimisationGraphs || financialGraphs"></export-all-data>
             </div>
 
-            <div ng-if="radarCharts" ng-show="types.plotUncertainties">
-              <div ng-repeat="radarChart in radarCharts track by $index">
-                <div class="chart-container __small">
-                  <div radar-chart variant="radarChart" data="radarChart.data" options="radarChart.options" save-graph-as></div>
-                </div>
-              </div>
-            </div>
+            <div class="grid 11">
 
-            <div ng-if="pieCharts" ng-hide="types.plotUncertainties">
-              <div ng-repeat="pieChart in pieCharts track by $index">
-                <div class="chart-container __small">
-                  <div pie-chart variant="pieChart" data="pieChart.data" options="pieChart.options" save-graph-as></div>
+              <div ng-if="radarCharts" ng-show="types.plotUncertainties">
+                <div ng-repeat="radarChart in radarCharts track by $index">
+                  <div class="chart-container __small">
+                    <div radar-chart variant="radarChart" data="radarChart.data" options="radarChart.options" save-graph-as></div>
+                  </div>
                 </div>
               </div>
+
+              <div ng-if="pieCharts" ng-hide="types.plotUncertainties">
+                <div ng-repeat="pieChart in pieCharts track by $index">
+                  <div class="chart-container __small">
+                    <div pie-chart variant="pieChart" data="pieChart.data" options="pieChart.options" save-graph-as></div>
+                  </div>
+                </div>
+              </div>
+
             </div>
 
             <div class="chart-container __small" ng-repeat="chart in optimisationGraphs">
