@@ -19,15 +19,15 @@
         <div class="elastic">
           <div class="elastic_col">
             <select name="optimization-selection" class="txbox"
-                    ng-model="activeOptimizationName"
-                    ng-change="applyOptimization(activeOptimizationName)">
+                    ng-model="state.activeOptimizationName"
+                    ng-change="applyOptimization(state.activeOptimizationName)">
               <option ng-repeat="org in optimizations"
-                      ng-selected="{{ org.name == activeOptimizationName }}"
+                      ng-selected="{{ org.name == state.activeOptimizationName }}"
                       value="{{ org.name }}">{{ org.name }}</option>
             </select>
           </div>
           <div class="elastic_col __shrink">
-            <button ng-click="deleteOptimization(activeOptimizationName)" type="button" class="btn __red" ng-disabled="optimizations.length <= 1">Delete Optimization</button>
+            <button ng-click="deleteOptimization(state.activeOptimizationName)" type="button" class="btn __red" ng-disabled="optimizations.length <= 1">Delete Optimization</button>
           </div>
         </div>
       </div>
