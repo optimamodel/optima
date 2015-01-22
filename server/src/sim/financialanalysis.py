@@ -215,4 +215,4 @@ def snipM(M, thisindex = range(150,301)):
     return M0
 
 #example
-plotdata = financialanalysis(D, postyear=2015, S=D.S, costdisplay=default_costdisplay, makeplot=1)
+#plotdata = financialanalysis(D, postyear=2015, S=D.S, costdisplay=default_costdisplay, makeplot=1)
