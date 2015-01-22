@@ -607,19 +607,6 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     });
 
     $scope.saveOptimization = function () {
-      var title = 'Save optimization';
-
-      var label = 'New optimization name';
-
-      var options = {
-        description: 'If you would you like to save current objectives and constraints as a new optimization,' +
-          ' please type a new optimization name in a field below. Otherwise just press "Cancel"' +
-          ' and existing optimization "' + $scope.state.activeOptimizationName + '" will be updated.',
-        acceptButton: 'Yes, save as new',
-        rejectButton: 'No, override current',
-        closeReason: 'overrideoptimization'
-      };
-
       var doSave = function (name, params) {
         $http.post('/api/analysis/optimization/save', {
           name: name, objectives: params.objectives, constraints: params.constraints
@@ -631,14 +618,11 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
           });
       };
 
-      modalService.showPrompt(title, label,
-        function (newOptimizationName) {
-          doSave(newOptimizationName, $scope.params);
-        }, options).result.then(function (reason) {
-          if (reason === options.closeReason) {
-            doSave($scope.state.activeOptimizationName, $scope.params);
-          }
-        });
+      modalService.showSaveOptimization($scope.state.activeOptimizationName,
+        function (optimizationName) {
+          doSave(optimizationName, $scope.params);
+        }
+      );
     };
 
     $scope.deleteOptimization = function (optimizationName) {
