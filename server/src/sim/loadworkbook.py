@@ -38,10 +38,10 @@ def loadworkbook(filename='example.xlsx', verbose=2):
     
     # Time data -- array sizes are time x population
     timedata = [
-                 ['Other epidemiology',  'epi',     ['death', 'stiprevulc', 'tbprev']], \
+                 ['Other epidemiology',  'epi',     ['death', 'stiprevulc', 'stiprevdis', 'tbprev']], \
                  ['Optional indicators', 'opt',     ['numtest', 'numdiag', 'numinfect', 'prev', 'death', 'newtreat']], \
                  ['Testing & treatment', 'txrx',    ['hivtest', 'aidstest', 'numfirstline', 'numsecondline', 'txelig', 'prep', 'numpmtct', 'birth', 'breast']], \
-                 ['Sexual behavior',     'sex',     ['numactsreg', 'numactscas', 'numactscom', 'condomreg', 'condomcas', 'condomcom', 'circum', 'numcircum']], \
+                 ['Sexual behavior',     'sex',     ['numactsreg', 'numactscas', 'numactscom', 'condomreg', 'condomcas', 'condomcom', 'circum']], \
                  ['Injecting behavior',  'inj',     ['numinject', 'sharing', 'numost']], \
                  ['Economics and costs', 'econ',    ['cpi', 'ppp', 'gdp', 'revenue', 'govtexpend', 'totalhealth', 'domestichealth', 'domestichiv', 'globalfund', 'pepfar', 'otherint', 'private', 'health', 'social']]
                 ]
@@ -60,11 +60,12 @@ def loadworkbook(filename='example.xlsx', verbose=2):
                                                       ['recov',    ['gt500', 'gt350', 'gt200', 'gt50', 'aids']],\
                                                       ['fail',     ['first', 'second']],\
                                                       ['death',    ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'aids', 'treat', 'tb']],\
-                                                      ['eff',      ['condom', 'circ', 'dx', 'sti', 'ost', 'pmtct', 'tx', 'prep']],\
+                                                      ['eff',      ['condom', 'circ', 'dx', 'sti', 'dis', 'ost', 'pmtct', 'tx', 'prep']],\
                                                       ['disutil',  ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'aids','tx']]]]
                 ]
     
     
+    ## TODO CK: verify the updated parameters for epi, sex and const:eff (I did my best to read your mind :-} )
     ## Ugly, but allow the list of groups to be used as name and also as variables
     sheetstructure = struct()
     sheetstructure.metadata = metadata
