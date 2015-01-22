@@ -304,7 +304,6 @@ def doRunSimulation():
             endyear = data.get("endyear")
             if endyear:
                 args["endyear"] = int(endyear)
-            args["makeplot"] = 0
             args["dosave"] = False
             D = runsimulation(**args)
             D_dict = D.toDict()
@@ -332,7 +331,6 @@ def doCostCoverage():
         if args.get('ccparams'):args['ccparams'] = [float(param) if param else None for param in args['ccparams']]
         if args.get('coparams'):del args['coparams'] 
 
-        args['makeplot'] = 0 # don't do plotting in SIM
         progname = args['progname']
         effects = data.get('all_effects')
         new_coparams = data.get('all_coparams')
@@ -372,7 +370,6 @@ def doCostCoverageEffect():
             return jsonify({'status':'NOK','reason':'No effect has been specified'})
         if args.get('ccparams'):args['ccparams'] = [float(param) if param else None for param in args['ccparams']]
         if args.get('coparams'):args['coparams'] = [float(param) for param in args['coparams']]
-        args['makeplot'] = 0 # don't do plotting in SIM
         plotdata, plotdata_co, storeparams_co = makecco(**args)
     except Exception, err:
         var = traceback.format_exc()
