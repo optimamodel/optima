@@ -22,12 +22,16 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       };
 
       $scope.optimizationStatus = statusEnum.NOT_RUNNING;
+      $scope.optimizations = [];
 
-      $scope.optimizations = undefined;
+      // According to angular best-practices we should wrap every object/value
+      // inside a wrapper object. This is due the fact that directives like ng-if
+      // always create a child scope & the reference can get lost.
+      // see https://github.com/angular/angular.js/wiki/Understanding-Scopes
+      $scope.state = {
+        activeOptimizationName: undefined
+      };
 
-      if (optimizations && optimizations.data) {
-        $scope.optimizations = optimizations.data.optimizations;
-      }
       // cache placeholder
       var cachedResponse = null;
 
@@ -101,11 +105,6 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
           $scope.params.constraints.coverage[meta.progs.short[i]].level = 0;
           $scope.params.constraints.coverage[meta.progs.short[i]].year = undefined;
         }
-      }
-
-      if ($scope.optimizations && $scope.optimizations[0]) {
-        _.extend($scope.params.objectives, $scope.optimizations[0].objectives);
-        _.extend($scope.params.constraints, $scope.optimizations[0].constraints);
       }
 
     var optimizationTimer;
@@ -329,7 +328,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     }
 
     // makes all graphs to recalculate and redraw
-    var updateGraphs = function (data) {
+    function updateGraphs(data) {
       if (data.graph !== undefined && data.pie !== undefined) {
         cachedResponse = data;
         drawGraphs();
@@ -608,8 +607,29 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     });
 
     $scope.saveOptimization = function () {
-      $http.post('/api/analysis/optimization/save')
-        .success(updateGraphs);
+      var doSave = function (name, params) {
+        $http.post('/api/analysis/optimization/save', {
+          name: name, objectives: params.objectives, constraints: params.constraints
+        })
+          .success(function (data) {
+            if (data.optimizations) {
+              $scope.initOptimizations(data.optimizations, name);
+            }
+          });
+      };
+
+      modalService.showSaveOptimization($scope.state.activeOptimizationName,
+        function (optimizationName) {
+          doSave(optimizationName, $scope.params);
+        }
+      );
+    };
+
+    $scope.deleteOptimization = function (optimizationName) {
+      $http.post('/api/analysis/optimization/remove/' + optimizationName)
+        .success(function(data){
+          $scope.initOptimizations(data.optimizations, undefined);
+        });
     };
 
     $scope.revertOptimization = function () {
@@ -699,8 +719,54 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       }
     };
 
+    $scope.optimizationByName = function(name) {
+      return _($scope.optimizations).find(function(item) {
+        return item.name == name;
+      });
+    };
+
+    /**
+     * Changes active constrains and objectives to the values in provided optimization
+     * @param optimization {Object}
+     */
+    $scope.applyOptimization = function(name) {
+      var optimization = $scope.optimizationByName(name);
+
+      _.extend($scope.params.objectives, optimization.objectives);
+      _.extend($scope.params.constraints, optimization.constraints);
+      if (optimization.result) {
+        updateGraphs(optimization.result);
+      }
+      constructOptimizationMessage();
+    };
+
+    // apply default optimization on page load
+    $scope.initOptimizations = function(optimizations, name) {
+      if (!optimizations) return;
+
+      $scope.optimizations = angular.copy(optimizations);
+
+      var nameExists = _.some($scope.optimizations, function(item) {
+        return item.name == name;
+      });
+
+      if (nameExists) {
+        $scope.state.activeOptimizationName = name;
+      } else if ($scope.optimizations[0]) {
+        $scope.state.activeOptimizationName = $scope.optimizations[0].name;
+      } else {
+        $scope.state.activeOptimizationName = undefined;
+      }
+
+      $scope.applyOptimization($scope.state.activeOptimizationName);
+    };
+
+    // apply existing optimization data, if present
+    if (optimizations && optimizations.data) {
+      $scope.initOptimizations(optimizations.data.optimizations);
+    }
+
     $scope.$watch('pieCharts', updateChartsForDataExport, true);
-    $scope.$watch('radarCharts', updateChartsForDataExport, true);
     $scope.$watch('optimisationGraphs', updateChartsForDataExport, true);
     $scope.$watch('financialGraphs', updateChartsForDataExport, true);
 
