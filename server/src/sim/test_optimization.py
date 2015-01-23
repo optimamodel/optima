@@ -3,9 +3,8 @@ TEST_OPTIMIZATION
 
 This function tests that the optimization is working.
 
-Version: 2015jan19 by cliffk
+Version: 2015jan23 by cliffk
 """
-
 
 print('WELCOME TO OPTIMA')
 
@@ -21,10 +20,6 @@ D = makeproject(projectname=projectname, pops=['']*6, progs = ['']*7, datastart=
 print('\n\n\n2. Updating data...')
 from updatedata import updatedata
 D = updatedata(D, verbose=verbose)
-
-print('\n\n\n3. Running simulation...')
-from runsimulation import runsimulation
-D = runsimulation(D, startyear=2000, endyear=2030, verbose=verbose)
 
 print('\n\n\n4. Running optimization...')
 from optimize import optimize

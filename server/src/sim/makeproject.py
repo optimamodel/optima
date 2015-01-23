@@ -2,11 +2,10 @@ default_pops = ['']*6
 default_progs = ['']*7
 default_datastart = 2000
 default_dataend = 2015
-default_econ_dataend = 2030
 default_nsims = 5
 
 def makeproject(projectname='example', pops = default_pops, progs = default_progs, datastart=default_datastart, \
-    dataend=default_dataend, econ_dataend=default_econ_dataend, nsims=default_nsims, verbose=2, savetofile = True):
+    dataend=default_dataend, nsims=default_nsims, verbose=2, savetofile = True):
     """
     Initializes the empty project. Only the "Global" and "Fitted" parameters are added on this step.
     The rest of the parameters are calculated after the model is updated with the data from the workbook.
@@ -28,7 +27,7 @@ def makeproject(projectname='example', pops = default_pops, progs = default_prog
     
     # Initialize options
     from setoptions import setoptions
-    D.opt = setoptions(startyear=datastart, endyear=default_econ_dataend, nsims=nsims)
+    D.opt = setoptions(startyear=datastart, endyear=dataend, nsims=nsims)
     
     # Set up "G" -- general parameters structure
     D.G = struct()
@@ -62,23 +61,23 @@ def makeproject(projectname='example', pops = default_pops, progs = default_prog
     if projectname == 'example': # Don't make a new workbook, but just use the existing one, if the project name is "example"
         print('WARNING, Project name set to "example", not creating a new workbook!')
     else: # Make a new workbook
-        makeworkbook(D.G.workbookname, pops, progs, datastart, dataend, econ_dataend, verbose=verbose)
+        makeworkbook(D.G.workbookname, pops, progs, datastart, dataend, verbose=verbose)
     
     printv('  ...done making project.', 2, verbose)
     return D
 
 
-def makeworkbook(name, pops, progs, datastart=default_datastart, dataend=default_dataend, econ_dataend=default_econ_dataend, verbose=2):
+def makeworkbook(name, pops, progs, datastart=default_datastart, dataend=default_dataend, verbose=2):
     """ Generate the Optima workbook -- the hard work is done by makeworkbook.py """
     from printv import printv
     from dataio import templatepath
     from makeworkbook import OptimaWorkbook
 
     printv("""Generating workbook with parameters:
-             name = %s, pops = %s, progs = %s, datastart = %s, dataend = %s, econ_dataend = %s""" \
-             % (name, pops, progs, datastart, dataend, econ_dataend), 1, verbose)
+             name = %s, pops = %s, progs = %s, datastart = %s, dataend = %s""" \
+             % (name, pops, progs, datastart, dataend), 1, verbose)
     path = templatepath(name)
-    book = OptimaWorkbook(name, pops, progs, datastart, dataend, econ_dataend)
+    book = OptimaWorkbook(name, pops, progs, datastart, dataend)
     book.create(path)
     
     printv('  ...done making workbook %s.' % path, 2, verbose)

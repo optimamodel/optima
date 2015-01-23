@@ -21,7 +21,6 @@ def financialanalysis(D, postyear=2015, S=None, yscale='abs', makeplot=False):
     postyear = float(postyear)
 
     # Interpolate macroeconomic indicators 
-    neconyrs = len(D.data.econyears)
     nepiyrs = len(D.data.epiyears)
     
     for healthno, healthstate in enumerate(D.G.healthstates):
@@ -38,12 +37,12 @@ def financialanalysis(D, postyear=2015, S=None, yscale='abs', makeplot=False):
         gt50costs.extend(np.linspace((D.data.econ.social[4][i]+D.data.econ.health[4][i]),(D.data.econ.social[4][i+1]+D.data.econ.health[4][i+1]),1/D.opt.dt,endpoint=False).tolist())
         aidscosts.extend(np.linspace((D.data.econ.social[5][i]+D.data.econ.health[5][i]),(D.data.econ.social[5][i+1]+D.data.econ.health[5][i+1]),1/D.opt.dt,endpoint=False).tolist())
 
-    acutecosts.extend([acutecosts[-1]]*((neconyrs-nepiyrs)*10+1))
-    gt500costs.extend([gt500costs[-1]]*((neconyrs-nepiyrs)*10+1))
-    gt350costs.extend([gt350costs[-1]]*((neconyrs-nepiyrs)*10+1))
-    gt200costs.extend([gt200costs[-1]]*((neconyrs-nepiyrs)*10+1))
-    gt50costs.extend([gt50costs[-1]]*((neconyrs-nepiyrs)*10+1))
-    aidscosts.extend([aidscosts[-1]]*((neconyrs-nepiyrs)*10+1))
+    acutecosts.extend([acutecosts[-1]]*((D.opt.endyear-nepiyrs)*10+1))
+    gt500costs.extend([gt500costs[-1]]*((D.opt.endyear-nepiyrs)*10+1))
+    gt350costs.extend([gt350costs[-1]]*((D.opt.endyear-nepiyrs)*10+1))
+    gt200costs.extend([gt200costs[-1]]*((D.opt.endyear-nepiyrs)*10+1))
+    gt50costs.extend([gt50costs[-1]]*((D.opt.endyear-nepiyrs)*10+1))
+    aidscosts.extend([aidscosts[-1]]*((D.opt.endyear-nepiyrs)*10+1))
 
     # Get future time index
     opt = setoptions(startyear=D.opt.startyear, endyear=D.opt.endyear, nsims=1, turnofftrans=postyear)
