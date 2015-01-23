@@ -10,7 +10,7 @@ from copy import deepcopy
 from utils import sanitize
 from utils import smoothinterp
 
-default_costdisplay = 'total' # will come from FE, and be one of ['total','gdp','revenue','govtexpend','totalhealth','domestichealth']
+default_costdisplay = 'revenue' # will come from FE, and be one of ['total','gdp','revenue','govtexpend','totalhealth','domestichealth']
 
 def financialanalysis(D, postyear=2015, S=None, costdisplay=default_costdisplay, makeplot=False):
     '''
