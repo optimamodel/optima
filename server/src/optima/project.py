@@ -65,7 +65,7 @@ def createProject(project_name):
     expects json with the following arguments (see example):
     {"npops":6,"nprogs":8, "datastart":2000, "dataend":2015}
     """
-    from sim.makeproject import default_datastart, default_dataend, default_econ_dataend, default_pops, default_progs
+    from sim.makeproject import default_datastart, default_dataend, default_pops, default_progs
     from sim.runsimulation import runsimulation
     current_app.logger.debug("createProject %s" % project_name)
     data = request.form
@@ -74,7 +74,7 @@ def createProject(project_name):
     user_id = current_user.id
     edit_params = None
     if data:
-        edit_params = json.loads(data['edit_params'])
+        if 'edit_params' in data: edit_params = json.loads(data['edit_params'])
         data = json.loads(data['params'])
 
     # check if current request is edit request
@@ -84,7 +84,6 @@ def createProject(project_name):
     makeproject_args = {"projectname":project_name, "savetofile":False}
     makeproject_args['datastart'] = data.get('datastart', default_datastart)
     makeproject_args['dataend'] = data.get('dataend', default_dataend)
-    makeproject_args['econ_dataend'] = data.get('econ_dataend', default_econ_dataend)
     makeproject_args['progs'] = data.get('programs', default_progs)
     makeproject_args['pops'] = data.get('populations', default_pops)
     current_app.logger.debug("createProject(%s)" % makeproject_args)
@@ -98,7 +97,6 @@ def createProject(project_name):
 
         project.datastart = makeproject_args['datastart']
         project.dataend = makeproject_args['dataend']
-        project.econ_dataend = makeproject_args['econ_dataend']
         project.programs = makeproject_args['progs']
         project.populations = makeproject_args['pops']
         current_app.logger.debug('Updating existing project %s' % project.name)
@@ -106,7 +104,7 @@ def createProject(project_name):
         user_id = current_user.id
         # create new project
         project = ProjectDb(project_name, user_id, makeproject_args['datastart'], makeproject_args['dataend'], \
-            makeproject_args['econ_dataend'], makeproject_args['progs'], makeproject_args['pops'])
+            makeproject_args['progs'], makeproject_args['pops'])
         current_app.logger.debug('Creating new project: %s' % project.name)
 
     D = makeproject(**makeproject_args) # makeproject is supposed to return the name of the existing file...
@@ -190,7 +188,7 @@ def giveWorkbook(project_name):
             D = project.model
             wb_name = D['G']['workbookname']
             makeworkbook(wb_name, project.populations, project.programs, \
-                project.datastart, project.dataend, project.econ_dataend)
+                project.datastart, project.dataend)
             current_app.logger.debug("project %s template created: %s" % (project.name, wb_name))
             (dirname, basename) = (upload_dir_user(TEMPLATEDIR), wb_name)
             #deliberately don't save the template as uploaded data
@@ -221,8 +219,6 @@ def getProjectInformation():
             'name': project.name,
             'dataStart': project.datastart,
             'dataEnd': project.dataend,
-            'projectionStartYear': project.datastart,
-            'projectionEndYear': project.econ_dataend,
             'programs': project.programs,
             'populations': project.populations,
             'creation_time': project.creation_time,
@@ -256,8 +252,6 @@ def getProjectList():
                 'name': project.name,
                 'dataStart': project.datastart,
                 'dataEnd': project.dataend,
-                'projectionStartYear': project.datastart,
-                'projectionEndYear': project.econ_dataend,
                 'programs': project.programs,
                 'populations': project.populations,
                 'creation_time': project.creation_time,

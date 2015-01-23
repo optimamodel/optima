@@ -5,7 +5,7 @@ from copy import deepcopy
 default_startyear = 2000
 default_endyear = 2030
 
-def optimize(D, objectives=None, constraints=None, name="default", timelimit=60, verbose=2):
+def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2):
     """
     Allocation optimization code:
         D is the project data structure
@@ -33,14 +33,6 @@ def optimize(D, objectives=None, constraints=None, name="default", timelimit=60,
     # Make sure objectives and constraints exist
     if not isinstance(objectives, struct): objectives = defaultobjectives(D, verbose=verbose)
     if not isinstance(constraints, struct): constraints = defaultconstraints(D, verbose=verbose)
-
-    #save the optimization parameters
-    new_optimization = struct()
-    new_optimization.name = name
-    new_optimization.objectives = objectives
-    new_optimization.constraints = constraints
-
-    D = saveoptimization(D, name, objectives, constraints)
 
     objectives = deepcopy(objectives)
     constraints = deepcopy(constraints)
@@ -81,8 +73,7 @@ def optimize(D, objectives=None, constraints=None, name="default", timelimit=60,
         objective = S.death.sum() # TEMP
         
         return objective
-        
-        
+                
         
     # Run the optimization algorithm
     optalloc, fval, exitflag, output = ballsd(objectivecalc, origalloc, xmin=0*array(origalloc), timelimit=timelimit, verbose=verbose)
@@ -107,23 +98,32 @@ def optimize(D, objectives=None, constraints=None, name="default", timelimit=60,
     printv('...done optimizing programs.', 2, verbose)
     return D
 
-def saveoptimization(D, name, objectives, constraints, verbose=2):
+def saveoptimization(D, name, objectives, constraints, result = None, verbose=2):
     #save the optimization parameters
     new_optimization = struct()
     new_optimization.name = name
     new_optimization.objectives = objectives
     new_optimization.constraints = constraints
+    if result: new_optimization.result = result
 
     if not "optimizations" in D:
         D.optimizations = [new_optimization]
     else:
-        index = [item.name for item in D.optimizations].index(name)
-        if index==-1:
-            D.optimizations.append(new_optimization)
-        else:
+        try:
+            index = [item.name for item in D.optimizations].index(name)
             D.optimizations[index] = deepcopy(new_optimization)
+        except:
+            D.optimizations.append(new_optimization)
     return D
 
+def removeoptimization(D, name):
+    if "optimizations" in D:
+        try:
+            index = [item.name for item in D.optimizations].index(name)
+            D.optimizations.pop(index)
+        except:
+            pass
+    return D
 
 def defaultobjectives(D, verbose=2):
     """
