@@ -113,7 +113,7 @@ def model(G, M, F, opt, initstate=None, verbose=2):
     numpmtct = M.numpmtct  # PMTCT (N)
     ost      = M.numost    # OST (N)
     propcirc = M.circum    # Proportion of men circumcised (P)
-    tobecirc = M.numcircum # Number of men TO BE CIRCUMCISED (N) # TODO -- check that I'm understanding this correctly!!
+#    tobecirc = M.numcircum # Number of men TO BE CIRCUMCISED (N) # TODO -- check that I'm understanding this correctly!!
     mtx1     = M.tx1       # 1st line treatement (N) -- tx1 already used for index of people on treatment
     mtx2     = M.tx2       # 2nd line treatement (N) -- tx2 already used for index of people on treatment
     txtotal  = M.txtotal   # Total number on treatment -- initialised as zeros (N or P)
@@ -358,13 +358,13 @@ def model(G, M, F, opt, initstate=None, verbose=2):
         S.reqcircum[0, t] = sum(reqcirc)
         
         # Perform any new circumcisions if tobecirc is non zero
-        if sum(tobecirc[:, t]) > 0: 
-            S.newcircum[:, t] = minimum(tobecirc[:, t], reqcirc) # Calculate how many are due to be circumcised (upper limit of reqcirc) # TODO -- I don't think dt is needed here. Second opinion please.
-            S.numcircum[:, t] += S.newcircum[:, t] # Add these people to the circumcised group
-            if t < npts: # Perform for all but the last timestep
-                for pop in range(npops): # Loop through the populations
-                    if male[pop]: # Only calculate for males
-                        propcirc[pop, t+1] = median([0, 1, S.numcircum[pop, t] / newsuscmales[pop]]) # Circumcision coverage for next time step (element of [0, 1])
+#        if sum(tobecirc[:, t]) > 0: 
+#            S.newcircum[:, t] = minimum(tobecirc[:, t], reqcirc) # Calculate how many are due to be circumcised (upper limit of reqcirc) # TODO -- I don't think dt is needed here. Second opinion please.
+#            S.numcircum[:, t] += S.newcircum[:, t] # Add these people to the circumcised group
+#            if t < npts: # Perform for all but the last timestep
+#                for pop in range(npops): # Loop through the populations
+#                    if male[pop]: # Only calculate for males
+#                        propcirc[pop, t+1] = median([0, 1, S.numcircum[pop, t] / newsuscmales[pop]]) # Circumcision coverage for next time step (element of [0, 1])
         
         
         ###############################################################################

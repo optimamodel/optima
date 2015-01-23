@@ -46,7 +46,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
         $scope.projectParams.datastart = $scope.projectInfo.dataStart;
         $scope.projectParams.dataend = $scope.projectInfo.dataEnd;
-        $scope.projectParams.econ_dataend = $scope.projectInfo.projectionEndYear;
       }
       _($scope.populations).each(function(population){
         var source = _.findWhere($scope.projectInfo.populations, { short_name: population.short_name });
