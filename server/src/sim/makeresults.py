@@ -28,15 +28,20 @@ def makeresults(D, allsims=None, quantiles=None, verbose=2):
     if quantiles==None: quantiles = D.opt.quantiles # If no quantiles are specified, just use the default ones
     allpeople = array([allsims[s].people for s in range(nsims)]) # WARNING, might use stupid amounts of memory
     
-    for data in ['prev', 'plhiv', 'inci', 'daly', 'death', 'tx1', 'tx2', 'dx', 'costcur', 'costfut']:
+    for data in ['prev', 'plhiv', 'inci', 'daly', 'death', 'tx1', 'tx2', 'dx', 'costann', 'costcum']:
         R[data] = struct()
         if data[0:4] != 'cost':
             R[data].pops = []
             R[data].tot = []
-        else:
-            R[data].ann = []
-            R[data].cum = []
-        
+        elif data = 'costcum':
+            R[data].total = []
+            R[data].existing = []
+            R[data].future = []
+        elif data = 'costann':
+            for yscale in ['total','gdp','revenue','govtexpend','totalhealth','domestichealth']:
+                R[data][yscale].total = []
+                R[data][yscale].existing = []
+                R[data][yscale].future = []        
         
         if data=='prev':
             printv('Calculating prevalence...', 3, verbose)
