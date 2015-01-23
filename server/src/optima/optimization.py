@@ -13,7 +13,7 @@ from flask import request, jsonify, Blueprint, current_app
 from dbconn import db
 from async_calculate import CalculatingThread, start_or_report_calculation, cancel_calculation, check_calculation
 from async_calculate import check_calculation_status, good_exit_status
-from utils import check_project_name, project_exists, load_model, \
+from utils import check_project_name, project_exists, load_model, save_model, \
 revert_working_model_to_default, save_working_model_as_default, report_exception
 from sim.optimize import optimize
 from sim.bunch import bunchify, unbunchify
@@ -55,7 +55,7 @@ def getOptimizationParameters():
 def startOptimization():
     """ Start optimization """
     data = json.loads(request.data)
-    print("optimize: %s" % data)
+    current_app.logger.debug("optimize: %s" % data)
     # get project name
     project_name = request.project_name
     if not project_exists(project_name):
@@ -126,8 +126,15 @@ def getWorkingModel():
 @login_required
 @check_project_name
 def saveModel():
+    from sim.optimize import saveoptimization
     """ Saves working model as the default model """
     reply = {'status':'NOK'}
+    data = json.loads(request.data)
+    name = data.get('name', 'default')
+    objectives = data.get('objectives')
+    if objectives:objectives = bunchify( objectives )
+    constraints = data.get('constraints')
+    if constraints:constraints = bunchify( constraints )
 
     # get project name
     project_name = request.project_name
@@ -136,8 +143,26 @@ def saveModel():
         return jsonify(reply)
 
     try:
+        # read the previously saved optmizations
+        D_dict = load_model(project_name, as_bunch = False)
+        optimizations = D_dict.get('optimizations')
+
+        # now, save the working model, read results and save for the optimization with the given name
         D_dict = save_working_model_as_default(project_name)
-        return jsonify(get_optimization_results(D_dict))
+        result = get_optimization_results(D_dict)
+        D = bunchify(D_dict)
+
+        # get the previously stored optimizations
+        if optimizations: D.optimizations = bunchify(optimizations)
+
+        #save the optimization parameters
+        D = saveoptimization(D, name, objectives, constraints, result)
+        D_dict = D.toDict()
+        save_model(project_name, D_dict)
+
+        reply['status']='OK'
+        reply['optimizations'] = D_dict['optimizations']
+        return jsonify(reply)
     except Exception, err:
         reply['exception'] = traceback.format_exc()
         return jsonify(reply)
@@ -159,4 +184,27 @@ def revertCalibrationModel():
         return jsonify({"status":"OK"})
     except Exception, err:
         reply['exception'] = traceback.format_exc()
+        return jsonify(reply)
+
+@optimization.route('/remove/<name>', methods=['POST'])
+@login_required
+@check_project_name
+def removeOptimizationSet(name):
+    """ Removes given optimization from the optimization set """
+    from sim.optimize import removeoptimization
+    reply = {'status':'NOK'}
+
+    # get project name
+    project_name = request.project_name
+    if not project_exists(project_name):
+        reply['reason'] = 'File for project %s does not exist' % project_name
+        return jsonify(reply)
+    else:
+        D = load_model(project_name, as_bunch = True)
+        D = removeoptimization(D, name)
+        D_dict = D.toDict()
+        save_model(project_name, D_dict)
+        reply['status']='OK'
+        reply['name'] = 'deleted'
+        reply['optimizations'] = D_dict['optimizations']
         return jsonify(reply)
