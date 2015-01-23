@@ -77,7 +77,7 @@ def model(G, M, F, opt, initstate=None, verbose=2):
     
     # Population sizes
     popsize = M.popsize # Population sizes
-    for pop in range(npops): popsize[pop,:] *= F.popsize[pop] / M.popsize[pop][0] # Calculate adjusted population sizes -- WARNING, kind of ugly
+    for pop in range(npops): popsize[pop,:] *= F.popsize[pop]*1.0 / M.popsize[pop][0] # Calculate adjusted population sizes -- WARNING, kind of ugly
     
     # Logical arrays for population types
     male = array(G.meta.pops.male).astype(bool) # Male populations

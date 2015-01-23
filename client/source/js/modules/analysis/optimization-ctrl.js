@@ -176,7 +176,8 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       };
 
       graphData = _(data.val).map(function (value, index) {
-        return { value: value, label: legend[index] };
+        return { value: value[0], label: legend[index] };
+        //TODO @NikGraph @DEvseev - make a stack chart now then pie.val is a combination of arrays (one per population)
       });
 
       return {
