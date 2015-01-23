@@ -65,7 +65,12 @@ def optimize(D, objectives=None, constraints=None, ntimepm=1, timelimit=60, verb
     for alloc in range(nallocs): D.A.append(deepcopy(D.A[0])) # Just copy for now
     D.A[0].label = 'Original'
     D.A[1].label = 'Optimal'
-    origalloc = deepcopy(array(D.A[1].alloc))
+    # preserving the origalloc during the first iteration (because on web, we run this in batches)
+    if 'origalloc' not in D.A[0]:
+        origalloc = deepcopy(array(D.A[0].alloc))
+        D.A[0].origalloc = origalloc
+    else:
+        origalloc = D.A[0].origalloc
     D.A = D.A[:2] # TODO WARNING KLUDGY
 
     nprogs = len(origalloc)
