@@ -92,8 +92,8 @@ def make_populations_range(name, items):
     short_name, name, male, female, injects, sexmen, sexwomen, sexworker, client
     (3x str, 7x bool)
     """
-    column_names = ['Short name','Long name','Male','Female','Injects','Has sex with women', \
-    'Has sex with men','Sex worker','Client']
+    column_names = ['Short name','Long name','Male','Female','Injects','Has sex with men', \
+    'Has sex with women','Sex worker','Client']
     row_names = range(1, len(items)+1)
     coded_params = []
     for item in items:
