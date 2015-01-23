@@ -3,13 +3,12 @@ import unittest
 from makeworkbook import OptimaWorkbook, SheetRange, TitledRange, make_populations_range, make_ref_years_range, OptimaGraphTable
 import xlsxwriter
 
-populations = [ \
-    {'short_name':'MSM','name':'Men who have sex with men', \
-    'male': True, 'female': False, 'injects':False, 'sexmen':False, 'sexwomen':True, 'sexworker':False, 'client':False}, \
-    {'short_name':'FSW','name':'Female sex workers', \
-    'male': False, 'female': True, 'injects':False, 'sexmen':True, 'sexwomen':False, 'sexworker':True, 'client':False}, \
-    {'short_name':'Male PWID','name':'Men who have sex with men', \
-    'male': True, 'female': False, 'injects':True, 'sexmen':True, 'sexwomen':False, 'sexworker':False, 'client':False}]
+populations = [{"name": "Female sex workers", "short_name": "FSW", "sexworker": True, "injects": False, "sexmen": True, "client": False, "female": True, "male": False, "sexwomen": False}, \
+    {"name": "Clients of sex workers", "short_name": "Clients", "sexworker": False, "injects": False, "sexmen": False, "client": True, "female": False, "male": True, "sexwomen": True}, \
+    {"name": "Men who have sex with men", "short_name": "MSM", "sexworker": False, "injects": False, "sexmen": True, "client": False, "female": False, "male": True, "sexwomen": False}, \
+    {"name": "Males who inject drugs", "short_name": "Male PWID", "sexworker": False, "injects": True, "sexmen": False, "client": False, "female": False, "male": True, "sexwomen": True}, \
+    {"name": "Other males [enter age]", "short_name": "Other males", "sexworker": False, "injects": False, "sexmen": False, "client": False, "female": False, "male": True, "sexwomen": True}, \
+    {"name": "Other females [enter age]", "short_name": "Other females", "sexworker": False, "injects": False, "sexmen": True, "client": False, "female": True, "male": False, "sexwomen": False}]
 programs = [{'name':'Needle-syringe programs', 'short_name': 'NSP'}, \
     {'name':'Opiate substition therapy', 'short_name': 'OST'}, \
     {'name':'Programs for men who have sex with men', 'short_name': 'MSM programs'}]
