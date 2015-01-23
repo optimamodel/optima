@@ -714,11 +714,11 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     var updateChartsForDataExport = function() {
       $scope.chartsForDataExport = [];
 
-      if ( $scope.state.pieCharts ) {
+      if ( $scope.state.pieCharts && !$scope.types.plotUncertainties ) {
         $scope.chartsForDataExport = $scope.chartsForDataExport.concat($scope.state.pieCharts);
       }
 
-      if ( $scope.state.radarCharts ) {
+      if ( $scope.state.radarCharts && $scope.types.plotUncertainties ) {
         $scope.chartsForDataExport = $scope.chartsForDataExport.concat($scope.state.radarCharts);
       }
 
