@@ -11,7 +11,9 @@ def getcurrentbudget(D, alloc=None):
     # Initialise parameter structure (same as D.P)
     for param in D.P.keys():
         if isinstance(D.P[param], dict) and 'p' in D.P[param].keys():
-            D.P[param].c = empty(len(D.P[param].p))
+#            D.P[param].c = empty(len(D.P[param].p))
+#            D.P[param].c.fill(nan)
+            D.P[param].c = empty((len(D.P[param].p), D.opt.npts))
             D.P[param].c.fill(nan)
 
     # Initialise currentbudget if needed
@@ -20,14 +22,16 @@ def getcurrentbudget(D, alloc=None):
         currentbudget = []
 
     # Initialise currentcoverage and currentnonhivdalys
-    currentcoverage, currentnonhivdalysaverted = zeros(D.G.nprogs), 0.0
+    currentcoverage = zeros((D.G.nprogs, D.opt.npts))
+    currentnonhivdalysaverted = zeros(D.opt.npts)
 
     # Loop over programs
     for prognumber, progname in enumerate(D.data.meta.progs.short):
         
         # If an allocation has been passed in, we don't need to figure out the program budget
         if allocprovided:
-            totalcost = alloc[prognumber]
+            # totalcost = alloc[prognumber]
+            totalcost = alloc[prognumber, :] # Allocation is over time hence a vector rather than constant
         else:
             # Get cost info
             totalcost = D.data.costcov.cost[prognumber]
@@ -44,13 +48,15 @@ def getcurrentbudget(D, alloc=None):
 
         # Get coverage
         if len(convertedccparams)==2:
-            currentcoverage[prognumber] = cc2eqn(totalcost, convertedccparams)
+            currentcoverage[prognumber, :] = cc2eqn(totalcost, convertedccparams) # cc2eqn(totalcost, convertedccparams)
         else:
-            currentcoverage[prognumber] = cceqn(totalcost, convertedccparams)
+            currentcoverage[prognumber, :] = cceqn(totalcost, convertedccparams) # cceqn(totalcost, convertedccparams)
 
         # Extract and sum the number of non-HIV-related DALYs 
         nonhivdalys = D.programs[progname]['nonhivdalys']
-        currentnonhivdalysaverted += nonhivdalys[0]*currentcoverage[prognumber]
+        
+        # TODO -- This should be summed over time anyway... so can make currentcoverage a vector. This was Robyn's intention anyway!
+        currentnonhivdalysaverted += nonhivdalys[0] * currentcoverage[prognumber, :]
 
         # Loop over effects
         for effectnumber, effect in enumerate(D.programs[progname]['effects']):
@@ -63,7 +69,7 @@ def getcurrentbudget(D, alloc=None):
 
             # Is the affected parameter coverage?
             if parname in coverage_params:
-                D.P[effect[0][1]].c[0] = currentcoverage[prognumber]
+                D.P[effect[0][1]].c[:] = currentcoverage[prognumber]
 
             # ... or not?
             else:
@@ -77,12 +83,17 @@ def getcurrentbudget(D, alloc=None):
                 else:
                     # did not get co_params yet, giving it some defined params TODO @RS @AS do something sensible here:
                     convertedccoparams = default_convertedccoparams
+                    
+#                initcost = totalcost if len(totalcost) == 1 else totalcost[0] # TODO -- SHOULD NOW BE REDUNDANT
 
                 #   zerosample, fullsample = makesamples(muz, stdevz, muf, stdevf, samplesize=1)
                 if len(convertedccparams)==2:
+#                    y = cco2eqn(initcost, convertedccoparams) # cco2eqn(totalcost, convertedccoparams)
                     y = cco2eqn(totalcost, convertedccoparams)
                 else:
+#                    y = ccoeqn(initcost, convertedccoparams) # cco2eqn(totalcost, convertedccoparams)
                     y = ccoeqn(totalcost, convertedccoparams)
+#                D.P[effect[0][1]].c[popnumber] = y # TODO -- SHOULD NOW BE REDUNDANT
                 D.P[effect[0][1]].c[popnumber] = y
 
 
