@@ -6,18 +6,6 @@ This function tests that the optimization is working.
 Version: 2015jan23 by cliffk
 """
 
-# Override default exception handling
-import sys
-def info(type, value, tb):
-   if hasattr(sys, 'ps1') or not sys.stderr.isatty(): # we are in interactive mode or we don't have a tty-like device, so we call the default hook
-      sys.__excepthook__(type, value, tb)
-   else:
-      import traceback, pdb
-      traceback.print_exception(type, value, tb) # we are NOT in interactive mode, print the exception...
-      pdb.pm() # ...then start the debugger in post-mortem mode.
-sys.excepthook = info
-
-
 print('WELCOME TO OPTIMA')
 
 ## Set parameters
