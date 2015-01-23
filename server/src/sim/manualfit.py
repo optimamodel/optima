@@ -1,4 +1,4 @@
-def manualfit(D, F={}, Plist=[], Mlist=[], startyear=2000, endyear=2030, verbose=2):
+def manualfit(D, F={}, Plist=[], Mlist=[], startyear=2000, endyear=2015, verbose=2):
     """
     Manual metaparameter fitting code.
     
