@@ -3,11 +3,10 @@ TEST_OPTIMIZATION
 
 This function tests that the optimization is working.
 
-Version: 2015jan19 by cliffk
+Version: 2015jan23 by cliffk
 """
 
 dotimevarying = True # True False
-
 
 print('WELCOME TO OPTIMA')
 
@@ -27,7 +26,7 @@ D = updatedata(D, verbose=verbose, savetofile=False)
 
 print('\n\n\n3. Running simulation...')
 from runsimulation import runsimulation
-D = runsimulation(D, startyear=2000, endyear=2030, verbose=verbose, dosave=False)
+D = runsimulation(D, startyear=2000, endyear=2015, verbose=verbose, dosave=False)
 
 print('\n\n\n4. Running optimization...')
 from optimize import optimize

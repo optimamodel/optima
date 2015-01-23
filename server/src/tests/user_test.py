@@ -62,7 +62,7 @@ class UserTestCase(OptimaTestCase):
         response = self.create_user(name='test2', email=other_email)
         #log in as second user and create a project
         response = self.login(email=other_email)
-        response = self.client.post('/api/project/create/test', data = '{}')
+        response = self.api_create_project()
         response = self.logout()
         #list users, verify we have 3
         response = self.list_users()
@@ -101,7 +101,7 @@ class UserTestCase(OptimaTestCase):
         assert(data.get('status')=='OK')
         assert(data.get('modified')=='2')
         response = self.login(email=new_email, password = new_password)
-        response = self.client.post('/api/project/create/test', data = '{}')
+        response = self.api_create_project()
         assert(response.status_code==200)
         response=self.logout()
 
