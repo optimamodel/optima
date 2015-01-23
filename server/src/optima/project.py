@@ -195,7 +195,7 @@ def giveWorkbook(project_name):
             (dirname, basename) = (upload_dir_user(TEMPLATEDIR), wb_name)
             #deliberately don't save the template as uploaded data
             return helpers.send_from_directory(dirname, basename)
-
+       
 @project.route('/info')
 @login_required
 @check_project_name
@@ -485,4 +485,76 @@ def uploadExcel():
 
     reply['status'] = 'OK'
     reply['result'] = 'Project %s is updated' % project_name
+    return json.dumps(reply)
+
+@project.route('/downloadproject/<project_name>')
+@login_required
+@report_exception()
+def downloadProject(project_name):
+    """
+    download data for the project with the given name.
+    expects project name (project should already exist)
+    if project exists, regenerates data file for it
+    if project does not exist, returns an error.
+    """
+    reply = BAD_REPLY
+    proj_exists = False
+    cu = current_user
+    current_app.logger.debug("downloadProject(%s %s)" % (cu.id, project_name))
+    project = load_project(project_name)
+    if project is None:
+        reply['reason']='Project %s does not exist.' % project_name
+        return jsonify(reply)
+    else:
+        data = {'model':project.model,'populations':project.populations,'programs':project.programs}
+        return json.dumps(data)
+ 
+@project.route('/uploadproject', methods=['POST'])
+@login_required
+@check_project_name
+@report_exception()
+def uploadProject():
+    """
+    Uploads Data file, uses it to update the project model.
+    Precondition: model should exist.
+    """
+    project_name = request.project_name
+    user_id = current_user.id
+    current_app.logger.debug("uploadProject(project name: %s user:%s)" % (project_name, user_id))
+
+    reply = {'status':'NOK'}
+    file = request.files['file']
+
+    if not file:
+        reply['reason'] = 'No file is submitted!'
+        return json.dumps(reply)
+
+    source_filename = secure_filename(file.filename)
+    if not allowed_file(source_filename):
+        reply['reason'] = 'File type of %s is not accepted!' % source_filename
+        return json.dumps(reply)
+    
+    project = load_project(project_name)
+    if project is None:
+        reply['reason']='Project %s does not exist.' % project_name
+        return jsonify(reply)
+
+    data = file.read()
+    try: #if the program was given in create_project, keep the parameters
+        data = json.loads(data);
+        # project.model = model;
+        
+        project.model = data['model']
+        project.populations = data['populations']
+        project.programs = data['programs']
+
+        db.session.add(project)
+        db.session.commit()
+    except: #get the default parameters for that program, for now
+        return jsonify({'status':'NOK','reason':'Unable to copy uploaded data for project %s' % project_name})
+
+    reply['status'] = 'OK'
+    reply['result'] = 'Project %s is updated' % project_name
+    reply['file'] = source_filename
+
     return json.dumps(reply)
