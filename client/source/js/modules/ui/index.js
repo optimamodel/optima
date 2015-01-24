@@ -68,7 +68,7 @@ define([
                       responseType:'arraybuffer'})
                       .success(function (response, status, headers, config) {
                         var blob = new Blob([response], { type: 'application/json' });
-                        saveAs(blob, (activeProject.name + '.txt'));
+                        saveAs(blob, (activeProject.name + '.json'));
                       })
                       .error(function (response) {});
                   } else {
