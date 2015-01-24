@@ -185,16 +185,20 @@ def viewmultiresults(M, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 
 
 def viewallocpies(plotdata, show_wait=False):
     """ Little function to plot optimization pies """
-    from matplotlib.pylab import figure, pie, legend, title, subplot, show
+    from matplotlib.pylab import figure, legend, title, subplot, show, plot
     
     figure(figsize=(12,4), facecolor='w')
     
     subplot(1,3,1)
-    pie(plotdata.pie1.val)
+#    pie(plotdata.pie1.val)
+    for progs in range(len(plotdata.legend)):
+        plot(plotdata.pie1.val[progs])
     title(plotdata.pie1.name)
-    
+        
     subplot(1,3,2)
-    pie(plotdata.pie2.val)
+#    pie(plotdata.pie2.val)
+    for progs in range(len(plotdata.legend)):
+        plot(plotdata.pie2.val[progs])
     title(plotdata.pie2.name)
     
     legend(plotdata.legend, bbox_to_anchor=(2, 0.8))
