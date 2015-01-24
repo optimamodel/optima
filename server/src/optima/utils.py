@@ -8,7 +8,7 @@ from dbconn import db
 from dbmodels import ProjectDb, WorkingProjectDb, UserDb
 import traceback
 
-ALLOWED_EXTENSIONS = {'txt', 'xlsx', 'xls'}
+ALLOWED_EXTENSIONS = {'txt', 'xlsx', 'xls', 'json'}
 
 BAD_REPLY = {"status":"NOK"}
 
