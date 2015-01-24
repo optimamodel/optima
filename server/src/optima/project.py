@@ -459,33 +459,6 @@ def uploadExcel():
         model = model_as_dict(D)
         project.model = model
         getPopsAndProgsFromModel(project)
-#        programs = programs()
-#        populations = populations()
-
-#       # Update project.populations and project.programs
-#        D_pops_names = set(model['data']['meta']['pops']['short'])
-#        D_progs_names = set(model['data']['meta']['progs']['short'])
-#        old_programs_names = [item.get('short_name') if item else '' for item in project.programs]
-
-#       # get and generate populations from D.data.meta
-#        pops = [item for item in populations if item['short_name'] in D_pops_names]
-#        project.populations = pops
-        
-#        # get and generate programs from D.data.meta
-#        progs = [item for item in programs if item['short_name'] in D_progs_names]
-
-#        # prepare programs for parameters
-#        for pindex, program in enumerate(progs):
-#            try: #if the program was given in create_project, keep the parameters
-#                index = old_programs_names.index(program['short_name'])
-#                progs[pindex] = deepcopy(project.programs[index])
-#            except: #get the default parameters for that program, for now
-#                new_parameters = [{'value': parameter} for parameter in program['parameters']]
-#                for parameter in new_parameters:
-#                    if parameter['value']['pops']==['']: parameter['value']['pops']=list(D_pops_names)
-#                if new_parameters: program['parameters'] = deepcopy(new_parameters)
-#
-#        project.programs = progs
 
         db.session.add(project)
 

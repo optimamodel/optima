@@ -3,6 +3,7 @@ define([
   './button-choicebox/index',
   './menu/index',
   './modal/modal-service',
+  '../common/file-upload-service',
   '../common/active-project-service',
   '../user-manager/index'
 ], function (angular) {
@@ -12,10 +13,11 @@ define([
     'app.active-project',
     'app.ui.button-choicebox',
     'app.ui.modal',
+    'app.common.file-upload',
     'app.ui.menu'
   ])
 
-    .controller('MainCtrl', function ($window, $scope, $upload, $state, activeProject, UserManager, modalService) {
+    .controller('MainCtrl', function ($window, $scope, $upload, $state, activeProject, UserManager, modalService, fileUpload) {
 
       $scope.user = UserManager.data;
       $scope.userLogged = function () {
@@ -50,7 +52,7 @@ define([
                   angular
                     .element('<input type="file">')
                     .change(function (event) {
-                      uploadDataSpreadsheet(event.target.files[0]);
+                      fileUpload.uploadDataSpreadsheet($scope, event.target.files[0]);
                     })
                     .click();
                   } else {
@@ -128,37 +130,6 @@ define([
               'Cannot proceed'
             );
          }
-      }
-
-      // https://github.com/danialfarid/angular-file-upload
-      function uploadDataSpreadsheet(file, url, reload) {
-        if (url === undefined) {
-          url = '/api/project/update';
-        }
-        if (reload === undefined ) {
-          reload = true;
-        }
-        $scope.upload = $upload.upload({
-          url: url,
-          file: file
-        }).success(function (data) {
-          if (data.status === 'NOK') {
-            alert("Something went wrong during an upload.\nSee the error:\n" + data.reason);
-          } else if (data.status === 'OK') {
-              var message = data.file + " was successfully uploaded.\n" + data.result;
-              modalService.inform(
-                function (){
-                  // reload the page after upload.
-                  if (reload) window.location.reload();
-                },
-                'Okay',
-                message,
-                'Upload completed'
-              );
-          } else {
-            alert('Sorry, but server feels bad now. Please, give it some time to recover');
-          }
-        });
       }
 
     });
