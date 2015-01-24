@@ -63,7 +63,7 @@ define([
             method: 'GET',
             isArray: false,
             params: {
-              path: 'parameters',
+              path: 'data',
               suffix: 'programs'
             }
           }
