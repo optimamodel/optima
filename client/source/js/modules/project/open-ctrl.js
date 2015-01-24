@@ -3,7 +3,8 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
-  module.controller('ProjectOpenController', function ($scope, $http, activeProject, projects, modalService, UserManager) {
+  module.controller('ProjectOpenController', 
+    function ($scope, $http, $upload, activeProject, projects, modalService, fileUpload, UserManager) {
 
     $scope.projects = _.map(projects.projects, function(project){
       project.creation_time = Date.parse(project.creation_time);
@@ -80,6 +81,42 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       // http://stackoverflow.com/questions/24080018/download-file-from-a-webapi-method-using-angularjs
       window.open('/api/project/workbook/' + name, '_blank', '');
     };
+
+    /**
+     * Gets the data for the given project `name` as <name>.json  file
+     */
+    $scope.getData = function (name) {
+      $http({url:'/api/project/data/'+ name,
+            method:'GET',
+            headers: {'Content-type': 'application/json'},
+            responseType:'arraybuffer'})
+        .success(function (response, status, headers, config) {
+          var blob = new Blob([response], { type: 'application/json' });
+          saveAs(blob, (name + '.json'));
+        })
+        .error(function (response) {});      
+    };
+
+    $scope.setData = function (name, file) {
+      var message = 'Warning: This will overwrite ALL data in the project ' + name + '. Are you sure you wish to continue?';
+      modalService.confirm(
+        function (){ fileUpload.uploadDataSpreadsheet($scope, file, '/api/project/data/'+name, false); },
+        function (){},
+        'Yes, overwrite data',
+        'No',
+        message,
+        'Upload data'
+      );
+
+    }
+
+    $scope.preSetData = function(name) {
+      angular
+        .element('<input type=\'file\'>')
+        .change(function(event){
+        $scope.setData(name, event.target.files[0]);
+      }).click();
+    }
 
     /**
      * Removes the project
