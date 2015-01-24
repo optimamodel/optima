@@ -123,11 +123,11 @@ def load_model(name, as_bunch = True, working_model = False):
     model = None
     project = load_project(name)
     if project is not None:
-        if project.working_project is None or working_model == False:
-            current_app.logger.debug("project %s does not have working model" % name)
+        if  working_model == False or project.working_project is None:
+            current_app.logger.debug("project %s loading main model" % name)
             model = project.model
         else:
-            current_app.logger.debug("project %s has working model" % name)
+            current_app.logger.debug("project %s loading working model" % name)
             model = project.working_project.model
         if model is None or len(model.keys())==0:
             current_app.logger.debug("model %s is None" % name)

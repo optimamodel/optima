@@ -15,7 +15,7 @@ define([
     'app.ui.menu'
   ])
 
-    .controller('MainCtrl', function ($window, $scope, $upload, $state, $http, activeProject, UserManager, modalService) {
+    .controller('MainCtrl', function ($window, $scope, $upload, $state, activeProject, UserManager, modalService) {
 
       $scope.user = UserManager.data;
       $scope.userLogged = function () {
@@ -50,47 +50,19 @@ define([
                   angular
                     .element('<input type="file">')
                     .change(function (event) {
-                      uploadData(event.target.files[0], '/api/project/update');
+                      uploadDataSpreadsheet(event.target.files[0]);
                     })
                     .click();
                   } else {
-                    showProjectNotActive();
+                      modalService.inform(
+                        function (){ },
+                        'Okay',
+                        'Create or open a project first.',
+                        'Cannot proceed'
+                      );
                   }
                 }
-              },
-              {
-                title: 'Download project',
-                click: function () {
-                  if (activeProject.isSet()) {
-                    $http({url:'/api/project/downloadproject/'+ activeProject.name,
-                      method:'GET',
-                      headers: {'Content-type': 'application/json'},
-                      responseType:'arraybuffer'})
-                      .success(function (response, status, headers, config) {
-                        var blob = new Blob([response], { type: 'application/json' });
-                        saveAs(blob, (activeProject.name + '.json'));
-                      })
-                      .error(function (response) {});
-                  } else {
-                    showProjectNotActive();
-                  }
-                }
-              },
-              {
-                title: 'Upload projects',
-                click: function () {
-                  if (activeProject.isSet()) {
-                  angular
-                    .element('<input type="file">')
-                    .change(function (event) {
-                      uploadData(event.target.files[0], '/api/project/uploadproject');
-                    })
-                    .click();
-                  } else {
-                    showProjectNotActive();
-                  }
-                }
-              },
+              }
             ]
           },
           {
@@ -149,23 +121,19 @@ define([
         if(activeProject.isSet()){
           state.go(name);
         } else {
-            showProjectNotActive();
+            modalService.inform(
+              function (){ },
+              'Okay',
+              'Create or open a project first.',
+              'Cannot proceed'
+            );
          }
       }
 
-      function showProjectNotActive() {
-        modalService.inform(
-          function (){ },
-          'Okay',
-          'Create or open a project first.',
-          'Cannot proceed'
-        );
-      }
-
       // https://github.com/danialfarid/angular-file-upload
-      function uploadData(file, url) {
+      function uploadDataSpreadsheet(file) {
         $scope.upload = $upload.upload({
-          url: url,
+          url: '/api/project/update',
           file: file
         }).success(function (data) {
           if (data.status === 'NOK') {
