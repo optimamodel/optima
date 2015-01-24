@@ -1,5 +1,5 @@
 def ballsd(function, x, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, \
-    pinitial = None, sinitial = None, xmin = None, xmax = None, MaxRangeIter = 1000, \
+    pinitial = None, sinitial = None, absinitial = None, xmin = None, xmax = None, MaxRangeIter = 1000, \
     MaxFunEvals = None, MaxIter = 1e4, TolFun = 1e-6, TolX = None, StallIterLimit = 100, \
     fulloutput = False, maxarraysize = 1e6, timelimit = 3600, verbose = 2):
     """
@@ -77,8 +77,11 @@ def ballsd(function, x, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, 
     nparams = size(x); # Number of parameters
     x, origshape = sanitize(x) # Turn it into a vector but keep the original shape (not necessarily class, though)
     p,tmp = ones(2*nparams),0 if pinitial is None else sanitize(pinitial)  # Set initial parameter selection probabilities -- uniform by default
-    s,tmp = abs(stepsize*x),0 if sinitial is None else sanitize([abs(i) for i in sinitial]) # Set initial parameter selection probabilities -- uniform by default
-    s = hstack((s,s)) # need to duplicate since two for each parameter
+    if absinitial is not None:
+        s1,tmp = sanitize([abs(i) for i in absinitial])
+    else:
+        s1,tmp = abs(stepsize*x),0 if sinitial is None else sanitize([abs(i) for i in sinitial]) # Set initial parameter selection probabilities -- uniform by default
+    s1 = hstack((s1,s1)) # need to duplicate since two for each parameter
     if xmax is not None: xmax,tmp = sanitize(xmax)
     if xmin is not None: xmin,tmp = sanitize(xmin)
     MaxFunEvals = 1000*nparams if MaxFunEvals == None else MaxFunEvals # Maximum number of function evaluations
@@ -87,7 +90,7 @@ def ballsd(function, x, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, 
     MaxIter = min(MaxIter, maxarraysize);
     
     ## Initialization
-    s[s==0] = mean(s[s!=0]) # Replace step sizes of zeros with the mean of non-zero entries
+    s1[s1==0] = mean(s1[s1!=0]) # Replace step sizes of zeros with the mean of non-zero entries
     fval = function(x) # Calculate initial value of the objective function
     count = 0 # Keep track of how many iterations have occurred
     exitflag = -1 # Set default exit flag
@@ -99,7 +102,7 @@ def ballsd(function, x, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, 
     ## Loop
     start = time()
     while 1:
-        if verbose>=1: print('Iteration %i; elapsed %0.1f s; objective: %0.3e' % (count+1, time()-start, fval))
+        if verbose>=1: print('Iteration %i; elapsed %0.1f s1; objective: %0.3e' % (count+1, time()-start, fval))
         
         # Calculate next step
         count += 1 # On each iteration there are two function evaluations
@@ -112,7 +115,7 @@ def ballsd(function, x, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, 
             choice = findinds(cumprobs > random())[0] # Choose a parameter and upper/lower at random
             par = mod(choice,nparams) # Which parameter was chosen
             pm = floor((choice)/nparams) # Plus or minus
-            newval = x[par] + ((-1)**pm)*s[choice] # Calculate the new parameter set
+            newval = x[par] + ((-1)**pm)*s1[choice] # Calculate the new parameter set
             if count2 > MaxRangeIter: # if stuck due to x range limits, exit after 1000 iterations
                 newval = x[par]
                 #exitflag = -1
@@ -127,26 +130,26 @@ def ballsd(function, x, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, 
                 inrange = 1
             else:
                 p[choice] = p[choice]/pdec # decrease probability of picking this parameter again
-                s[choice] = s[choice]/sdec # decrease size of step for next time
+                s1[choice] = s1[choice]/sdec # decrease size of step for next time
 
         xnew = deepcopy(x) # Initialize the new parameter set
         xnew[par] = newval # Update the new parameter set
         fvalnew = function(xnew) # Calculate the objective function for the new parameter set
         errorhistory[mod(count,StallIterLimit)] = fval - fvalnew # Keep track of improvements in the error  
         if verbose>5:
-            print('       choice=%s, par=%s, pm=%s, origval=%s, newval=%s, inrange=%s' % (choice, par, pm, x[par], xnew[par], inrange))
+            print('       choice=%s1, par=%s1, pm=%s1, origval=%s1, newval=%s1, inrange=%s1' % (choice, par, pm, x[par], xnew[par], inrange))
         
 
         # Check if this step was an improvement
         if fvalnew < fval: # New parameter set is better than previous one
             p[choice] = p[choice]*pinc # Increase probability of picking this parameter again
-            s[choice] = s[choice]*sinc # Increase size of step for next time
+            s1[choice] = s1[choice]*sinc # Increase size of step for next time
             x = xnew # Reset current parameters
             fval = fvalnew # Reset current error
             if verbose>5: flag = 'SUCCESS'
         elif fvalnew >= fval: # New parameter set is the same or worse than the previous one
             p[choice] = p[choice]/pdec # Decrease probability of picking this parameter again
-            s[choice] = s[choice]/sdec # Decrease size of step for next time
+            s1[choice] = s1[choice]/sdec # Decrease size of step for next time
             if verbose>5: flag = 'FAILURE'
         if verbose>=5: print(' '*40 + flag + ' on step %i (orig:%0.1f new:%0.1f diff:%0.5f ratio:%0.3f)' % (count, fval, fvalnew, fvalnew-fval, fvalnew/fval) )
 
@@ -162,7 +165,7 @@ def ballsd(function, x, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, 
         if count >= MaxIter: # Stop if the iteration limit is exceeded
             exitflag = 0 
             break 
-        if mean(s) < TolX: # Stop if the step sizes are too small
+        if mean(s1) < TolX: # Stop if the step sizes are too small
             exitflag = 1 
             break
         if (count > StallIterLimit) and (mean(errorhistory) < TolFun): # Stop if improvement is too small
