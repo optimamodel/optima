@@ -29,7 +29,11 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       // always create a child scope & the reference can get lost.
       // see https://github.com/angular/angular.js/wiki/Understanding-Scopes
       $scope.state = {
-        activeOptimizationName: undefined
+        activeOptimizationName: undefined,
+        optimisationGraphs: [],
+        financialGraphs: [],
+        radarCharts: [],
+        pieCharts: []
       };
 
       // cache placeholder
@@ -322,10 +326,10 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     // makes all graphs to recalculate and redraw
     function drawGraphs() {
       if (!cachedResponse || !cachedResponse.graph) return;
-      $scope.optimisationGraphs = prepareOptimisationGraphs(cachedResponse.graph);
-      $scope.financialGraphs = prepareFinancialGraphs(cachedResponse.graph);
-      $scope.radarCharts = prepareRadarCharts(cachedResponse.pie);
-      $scope.pieCharts = preparePieCharts(cachedResponse.pie);
+      $scope.state.optimisationGraphs = prepareOptimisationGraphs(cachedResponse.graph);
+      $scope.state.financialGraphs = prepareFinancialGraphs(cachedResponse.graph);
+      $scope.state.radarCharts = prepareRadarCharts(cachedResponse.pie);
+      $scope.state.pieCharts = preparePieCharts(cachedResponse.pie);
     }
 
     // makes all graphs to recalculate and redraw
@@ -445,6 +449,14 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     $scope.validateVariableBudgets = validateVariableBudgets;
     $scope.validateObjectivesToMinimize = validateObjectivesToMinimize;
     $scope.validateOutcomeWeights = validateOutcomeWeights;
+
+    /**
+     * Returns true if at least one chart is available
+     */
+    $scope.someGraphAvailable = function() {
+      return $scope.state.radarCharts || $scope.state.optimisationGraphs ||
+        $scope.state.financialGraphs || $scope.state.pieCharts;
+    };
 
     /**
      * Update the variables depending on the range in years.
@@ -703,20 +715,20 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     var updateChartsForDataExport = function() {
       $scope.chartsForDataExport = [];
 
-      if ( $scope.pieCharts ) {
-        $scope.chartsForDataExport = $scope.chartsForDataExport.concat($scope.pieCharts);
+      if ( $scope.state.pieCharts && !$scope.types.plotUncertainties ) {
+        $scope.chartsForDataExport = $scope.chartsForDataExport.concat($scope.state.pieCharts);
       }
 
-      if ( $scope.radarCharts ) {
-        $scope.chartsForDataExport = $scope.chartsForDataExport.concat($scope.radarCharts);
+      if ( $scope.state.radarCharts && $scope.types.plotUncertainties ) {
+        $scope.chartsForDataExport = $scope.chartsForDataExport.concat($scope.state.radarCharts);
       }
 
-      if ( $scope.optimisationGraphs ) {
-        $scope.chartsForDataExport = $scope.chartsForDataExport.concat($scope.optimisationGraphs);
+      if ( $scope.state.optimisationGraphs ) {
+        $scope.chartsForDataExport = $scope.chartsForDataExport.concat($scope.state.optimisationGraphs);
       }
 
-      if ( $scope.financialGraphs ) {
-        $scope.chartsForDataExport = $scope.chartsForDataExport.concat($scope.financialGraphs);
+      if ( $scope.state.financialGraphs ) {
+        $scope.chartsForDataExport = $scope.chartsForDataExport.concat($scope.state.financialGraphs);
       }
     };
 
@@ -767,9 +779,9 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       $scope.initOptimizations(optimizations.data.optimizations);
     }
 
-    $scope.$watch('pieCharts', updateChartsForDataExport, true);
-    $scope.$watch('optimisationGraphs', updateChartsForDataExport, true);
-    $scope.$watch('financialGraphs', updateChartsForDataExport, true);
+    $scope.$watch('state.pieCharts', updateChartsForDataExport, true);
+    $scope.$watch('state.optimisationGraphs', updateChartsForDataExport, true);
+    $scope.$watch('state.financialGraphs', updateChartsForDataExport, true);
 
   });
 });
