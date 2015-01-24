@@ -375,7 +375,7 @@ def downloadExcel(downloadName):
     }
     return helpers.send_file(file_path, **options)
 
-def getPopsAndProgsFromModel(model):
+def getPopsAndProgsFromModel(project):
     """
     Initializes "meta data" about populations and programs from model.
     """
@@ -383,6 +383,8 @@ def getPopsAndProgsFromModel(model):
     from sim.populations import populations
     programs = programs()
     populations = populations()
+    model = project.model
+    if not 'data' in model: return
 
     # Update project.populations and project.programs
     D_pops_names = set(model['data']['meta']['pops']['short'])
@@ -406,7 +408,8 @@ def getPopsAndProgsFromModel(model):
                 if parameter['value']['pops']==['']: parameter['value']['pops']=list(D_pops_names)
             if new_parameters: program['parameters'] = deepcopy(new_parameters)
 
-    return (pops, progs)
+    project.populations = pops
+    project.programs = progs
 
 
 @project.route('/update', methods=['POST'])
@@ -454,10 +457,8 @@ def uploadExcel():
         D = model_as_bunch(project.model)
         D = updatedata(D, savetofile = False)
         model = model_as_dict(D)
-        (pops, progs) = getPopsAndProgsFromModel(model)
         project.model = model
-        project.populations = pops
-        project.programs = progs
+        getPopsAndProgsFromModel(project)
 #        programs = programs()
 #        populations = populations()
 
@@ -536,25 +537,24 @@ def getData(project_name):
             loaddir = TEMPLATEDIR
         filename = project_name + '.json'
         server_filename = os.path.join(loaddir, filename)
-        filedata = open(server_filename, 'wb')
-        filedata.write(data)
-        filedata.close()
+        with open(server_filename, 'wb') as filedata:
+            json.dump(data, filedata)
         return helpers.send_from_directory(loaddir, filename)
  
 @project.route('/data/<project_name>', methods=['POST'])
 @login_required
-@report_exception()
+@report_exception('Unable to copy uploaded data')
 def setData(project_name):
     """
     Uploads Data file, uses it to update the project model.
     Precondition: model should exist.
     """
-    project_name = request.project_name
     user_id = current_user.id
     current_app.logger.debug("uploadProject(project name: %s user:%s)" % (project_name, user_id))
 
     reply = {'status':'NOK'}
     file = request.files['file']
+    print("file", file)
 
     if not file:
         reply['reason'] = 'No file is submitted!'
@@ -570,17 +570,12 @@ def setData(project_name):
         reply['reason']='Project %s does not exist.' % project_name
         return jsonify(reply)
 
-    data = file.read()
-    try: #if the program was given in create_project, keep the parameters
-        project.model = json.loads(data)
-        (pops, progs) = getPopsAndProgsFromModel(model)
-        project.populations = pops
-        project.programs = progs
+    data = json.load(file)
+    project.model = data
+    getPopsAndProgsFromModel(project)
 
-        db.session.add(project)
-        db.session.commit()
-    except: #get the default parameters for that program, for now
-        return jsonify({'status':'NOK','reason':'Unable to copy uploaded data for project %s' % project_name})
+    db.session.add(project)
+    db.session.commit()
 
     reply['status'] = 'OK'
     reply['result'] = 'Project %s is updated' % project_name
