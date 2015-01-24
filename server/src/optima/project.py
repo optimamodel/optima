@@ -11,7 +11,7 @@ from utils import check_project_name, load_model, save_model, report_exception, 
 from flask.ext.login import login_required, current_user
 from dbconn import db
 from dbmodels import ProjectDb, WorkingProjectDb, ProjectDataDb, WorkLogDb
-from utils import BAD_REPLY
+from utils import BAD_REPLY, load_model, save_model
 import time,datetime
 import dateutil.tz
 from datetime import datetime
@@ -193,7 +193,7 @@ def giveWorkbook(project_name):
             (dirname, basename) = (upload_dir_user(TEMPLATEDIR), wb_name)
             #deliberately don't save the template as uploaded data
             return helpers.send_from_directory(dirname, basename)
-
+       
 @project.route('/info')
 @login_required
 @check_project_name
@@ -340,13 +340,13 @@ def exportGraph():
     (dirname, basename) = os.path.split(path)
     return helpers.send_file(path, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 
-"""
-saves All data as Excel files
-"""
 @project.route('/exportall', methods=['POST'])
 @login_required
 @report_exception()
 def exportAllGraphs():
+    """
+    saves All data as Excel files
+    """
     from sim.makeworkbook import OptimaGraphTable
     
     data = json.loads(request.data)
@@ -359,12 +359,12 @@ def exportAllGraphs():
     (dirname, basename) = os.path.split(path)
     return helpers.send_file(path, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 
-"""
-Download example Excel file.
-"""
 @project.route('/download/<downloadName>', methods=['GET'])
 @login_required
 def downloadExcel(downloadName):
+    """
+    Download example Excel file.
+    """
     example_excel_file_name = 'example.xlsx'
 
     file_path = helpers.safe_join(project.static_folder, example_excel_file_name)
@@ -375,10 +375,42 @@ def downloadExcel(downloadName):
     }
     return helpers.send_file(file_path, **options)
 
-"""
-Uploads Excel file, uses it to update the corresponding model.
-Precondition: model should exist.
-"""
+def getPopsAndProgsFromModel(project):
+    """
+    Initializes "meta data" about populations and programs from model.
+    """
+    from sim.programs import programs
+    from sim.populations import populations
+    programs = programs()
+    populations = populations()
+    model = project.model
+    if not 'data' in model: return
+
+    # Update project.populations and project.programs
+    D_pops_names = set(model['data']['meta']['pops']['short'])
+    D_progs_names = set(model['data']['meta']['progs']['short'])
+    old_programs_names = [item.get('short_name') if item else '' for item in project.programs]
+
+    # get and generate populations from D.data.meta
+    pops = [item for item in populations if item['short_name'] in D_pops_names]
+    
+    # get and generate programs from D.data.meta
+    progs = [item for item in programs if item['short_name'] in D_progs_names]
+
+    # prepare programs for parameters
+    for pindex, program in enumerate(progs):
+        try: #if the program was given in create_project, keep the parameters
+            index = old_programs_names.index(program['short_name'])
+            progs[pindex] = deepcopy(project.programs[index])
+        except: #get the default parameters for that program, for now
+            new_parameters = [{'value': parameter} for parameter in program['parameters']]
+            for parameter in new_parameters:
+                if parameter['value']['pops']==['']: parameter['value']['pops']=list(D_pops_names)
+            if new_parameters: program['parameters'] = deepcopy(new_parameters)
+
+    project.populations = pops
+    project.programs = progs
+
 
 @project.route('/update', methods=['POST'])
 @login_required
@@ -390,8 +422,6 @@ def uploadExcel():
     Precondition: model should exist.
     """
     from sim.runsimulation import runsimulation
-    from sim.programs import programs
-    from sim.populations import populations
     current_app.logger.debug("api/project/update")
     project_name = request.project_name
     user_id = current_user.id
@@ -428,33 +458,7 @@ def uploadExcel():
         D = updatedata(D, savetofile = False)
         model = model_as_dict(D)
         project.model = model
-        programs = programs()
-        populations = populations()
-
-        # Update project.populations and project.programs
-        D_pops_names = set(model['data']['meta']['pops']['short'])
-        D_progs_names = set(model['data']['meta']['progs']['short'])
-        old_programs_names = [item.get('short_name') if item else '' for item in project.programs]
-
-        # get and generate populations from D.data.meta
-        pops = [item for item in populations if item['short_name'] in D_pops_names]
-        project.populations = pops
-        
-        # get and generate programs from D.data.meta
-        progs = [item for item in programs if item['short_name'] in D_progs_names]
-
-        # prepare programs for parameters
-        for pindex, program in enumerate(progs):
-            try: #if the program was given in create_project, keep the parameters
-                index = old_programs_names.index(program['short_name'])
-                progs[pindex] = deepcopy(project.programs[index])
-            except: #get the default parameters for that program, for now
-                new_parameters = [{'value': parameter} for parameter in program['parameters']]
-                for parameter in new_parameters:
-                    if parameter['value']['pops']==['']: parameter['value']['pops']=list(D_pops_names)
-                if new_parameters: program['parameters'] = deepcopy(new_parameters)
-
-        project.programs = progs
+        getPopsAndProgsFromModel(project)
 
         db.session.add(project)
 
@@ -479,4 +483,74 @@ def uploadExcel():
 
     reply['status'] = 'OK'
     reply['result'] = 'Project %s is updated' % project_name
+    return json.dumps(reply)
+
+@project.route('/data/<project_name>')
+@login_required
+@report_exception()
+def getData(project_name):
+    """
+    download data for the project with the given name.
+    expects project name (project should already exist)
+    if project exists, returns data (aka D) for it
+    if project does not exist, returns an error.
+    """
+    reply = BAD_REPLY
+    proj_exists = False
+    current_app.logger.debug("/api/project/data/%s" % project_name)
+    project = load_project(project_name)
+    if project is None:
+        reply['reason']='Project %s does not exist.' % project_name
+        return jsonify(reply)
+    else:
+        data = project.model
+        # return result as a file
+        loaddir =  upload_dir_user(TEMPLATEDIR)
+        if not loaddir:
+            loaddir = TEMPLATEDIR
+        filename = project_name + '.json'
+        server_filename = os.path.join(loaddir, filename)
+        with open(server_filename, 'wb') as filedata:
+            json.dump(data, filedata)
+        return helpers.send_from_directory(loaddir, filename)
+ 
+@project.route('/data/<project_name>', methods=['POST'])
+@login_required
+@report_exception('Unable to copy uploaded data')
+def setData(project_name):
+    """
+    Uploads Data file, uses it to update the project model.
+    Precondition: model should exist.
+    """
+    user_id = current_user.id
+    current_app.logger.debug("uploadProject(project name: %s user:%s)" % (project_name, user_id))
+
+    reply = {'status':'NOK'}
+    file = request.files['file']
+
+    if not file:
+        reply['reason'] = 'No file is submitted!'
+        return json.dumps(reply)
+
+    source_filename = secure_filename(file.filename)
+    if not allowed_file(source_filename):
+        reply['reason'] = 'File type of %s is not accepted!' % source_filename
+        return json.dumps(reply)
+    
+    project = load_project(project_name)
+    if project is None:
+        reply['reason']='Project %s does not exist.' % project_name
+        return jsonify(reply)
+
+    data = json.load(file)
+    project.model = data
+    getPopsAndProgsFromModel(project)
+
+    db.session.add(project)
+    db.session.commit()
+
+    reply['status'] = 'OK'
+    reply['result'] = 'Project %s is updated' % project_name
+    reply['file'] = source_filename
+
     return json.dumps(reply)
