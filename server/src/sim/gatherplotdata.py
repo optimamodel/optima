@@ -97,23 +97,33 @@ def gatheruncerdata(D, R, verbose=2):
 
     
     # Financial outputs
-    for key in ['costcur', 'costfut']:
+    for key in ['costann', 'costcum']:
         uncer[key] = struct()
-        uncer[key].ann = struct()
-        uncer[key].cum = struct()
-        for ac in ['ann','cum']:
-            if key=='costcur' and ac=='ann': origkey = 'annualhivcosts'
-            if key=='costcur' and ac=='cum': origkey = 'cumulhivcosts'
-            if key=='costfut' and ac=='ann': origkey = 'annualhivcostsfuture'
-            if key=='costfut' and ac=='cum': origkey = 'cumulhivcostsfuture'
-            uncer[key][ac].best = R[key][ac][0].tolist()
-            uncer[key][ac].low = R[key][ac][1].tolist()
-            uncer[key][ac].high = R[key][ac][2].tolist()
-            uncer[key][ac].xdata = R['costshared'][origkey]['xlinedata'].tolist()
-            uncer[key][ac].title = R['costshared'][origkey]['title']
-            uncer[key][ac].xlabel = R['costshared'][origkey]['xlabel']
-            uncer[key][ac].ylabel = R['costshared'][origkey]['ylabel']
-            uncer[key][ac].legend = ['Model']
+        for ac in ['total','future','existing']:
+            uncer[key][ac] = struct()
+            origkey = 'annual' if key=='costann' else 'cumulative'
+            if key=='costcum':
+                uncer[key][ac].best = R[key][ac][0].tolist()
+                uncer[key][ac].low = R[key][ac][1].tolist()
+                uncer[key][ac].high = R[key][ac][2].tolist()
+                uncer[key][ac].xdata = R['costshared'][origkey][ac]['xlinedata'].tolist()
+                uncer[key][ac].title = R['costshared'][origkey][ac]['title']
+                uncer[key][ac].xlabel = R['costshared'][origkey][ac]['xlabel']
+                uncer[key][ac].ylabel = R['costshared'][origkey][ac]['ylabel']
+                uncer[key][ac].legend = ['Model']
+            else:
+                for yscale in ['total','gdp','revenue','govtexpend','totalhealth','domestichealth']:
+                    uncer[key][ac][yscale] = struct()
+                    if 'ylinedata' in R['costshared'][origkey][ac][yscale]:
+                        uncer[key][ac][yscale].best = R[key][ac][yscale][0].tolist()
+                        uncer[key][ac][yscale].low = R[key][ac][yscale][1].tolist()
+                        uncer[key][ac][yscale].high = R[key][ac][yscale][2].tolist()
+                        uncer[key][ac][yscale].xdata = R['costshared'][origkey][ac][yscale]['xlinedata'].tolist()
+                        uncer[key][ac][yscale].title = R['costshared'][origkey][ac][yscale]['title']
+                        uncer[key][ac][yscale].xlabel = R['costshared'][origkey][ac][yscale]['xlabel']
+                        uncer[key][ac][yscale].ylabel = R['costshared'][origkey][ac][yscale]['ylabel']
+                        uncer[key][ac][yscale].legend = ['Model']
+                        
     
     
     printv('...done gathering uncertainty results.', 4, verbose)
