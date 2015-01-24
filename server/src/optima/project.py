@@ -527,7 +527,6 @@ def setData(project_name):
 
     reply = {'status':'NOK'}
     file = request.files['file']
-    print("file", file)
 
     if not file:
         reply['reason'] = 'No file is submitted!'
