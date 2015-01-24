@@ -1,5 +1,5 @@
  ## Imports
-from numpy import array, arange, zeros, exp, maximum, minimum, nonzero, concatenate, absolute, median
+from numpy import array, arange, zeros, exp, maximum, minimum, nonzero, concatenate, hstack, absolute
 from bunch import Bunch as struct # Replicate Matlab-like structure behavior
 from printv import printv
 from math import pow as mpow
@@ -52,8 +52,21 @@ def model(G, M, F, opt, initstate=None, verbose=2):
     if initstate is None: people[:,:,0] = equilibrate(G, M, array(F.init)) # No it hasn't, so run equilibration
     else: people[:,:,0] = initstate # Yes it has, so use it.
     
+    # Biological and failure parameters -- death etc
+    prog       = h2a(G, M.const.prog)  # Disease progression rates
+    recov      = h2a(G, M.const.recov) # Recovery rates
+    death      = h2a(G, M.const.death) # HIV death rates
+    deathtx    = M.const.death.treat   # Death rate whilst on treatment
+    tbprev     = M.tbprev + 1          # TB prevalence
+    efftb      = M.const.death.tb * tbprev # Increase in death due to TB coinfection
+    failfirst  = M.const.fail.first    # 1st line failure
+    failsecond = M.const.fail.second   # 2nd line failure
+    
     # Calculate other things outside the loop
     cd4trans = h2a(G, M.const.cd4trans) # Convert a dictionary to an array
+    healthtime = 1 / hstack([prog, death[-1]]) # Calculate how long is spent in each health state, with death considered the time spent in CD4<50
+    cd4transnorm = sum(cd4trans * healthtime) / sum(healthtime)
+    cd4trans /= cd4transnorm # Normalize CD4 transmission
     dxfactor = M.const.eff.dx * cd4trans # Include diagnosis efficacy
     txfactor = M.const.eff.tx * dxfactor # And treatment efficacy
     
@@ -120,16 +133,6 @@ def model(G, M, F, opt, initstate=None, verbose=2):
     txelig   = M.txelig    # Total eligible for treatment (N)
     hivtest  = M.hivtest   # HIV testing (P)
     aidstest = M.aidstest  # HIV testing in AIDS stage (P)
-    
-    # Biological and failure parameters -- death etc
-    prog       = h2a(G, M.const.prog)  # Disease progression rates
-    recov      = h2a(G, M.const.recov) # Recovery rates
-    death      = h2a(G, M.const.death) # HIV death rates
-    deathtx    = M.const.death.treat   # Death rate whilst on treatment
-    tbprev     = M.tbprev + 1          # TB prevalence
-    efftb      = M.const.death.tb * tbprev # Increase in death due to TB coinfection
-    failfirst  = M.const.fail.first    # 1st line failure
-    failsecond = M.const.fail.second   # 2nd line failure
     
     # Force of infection metaparameter
     Fforce = array(F.force)
