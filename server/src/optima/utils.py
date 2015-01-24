@@ -37,6 +37,7 @@ def report_exception(reason = None):
                 return api_call(*args, **kwargs)
             except Exception, err:
                 var = traceback.format_exc()
+                current_app.logger.error("Exception during request %s: %s" % (request, var))
                 reply = BAD_REPLY
                 reply['exception'] = var
                 if reason:
