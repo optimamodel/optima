@@ -246,8 +246,8 @@ define(['./module', 'angular'], function (module, angular) {
         // costann = annual costs
         // costcum = cumulative costs
         if (type.annual) {
-          var annualData = response.costann[type.id][$scope.types.annualCost]; 
-          if(annualData) charts.push(generateFinancialChart(annualData));
+          var annualData = response.costann[type.id][$scope.types.annualCost];
+          if(annualData && annualData.legend) charts.push(generateFinancialChart(annualData));
         }
 
         if (type.cumulative) {
@@ -261,6 +261,11 @@ define(['./module', 'angular'], function (module, angular) {
 
     var updateCharts = function (data) {
       if (data!== undefined && data!==null && data.graph !== undefined) {
+         _($scope.types.financialAnnualCosts).each(function(entry) {
+          if (!data.graph.costann.existing[entry.id] || !data.graph.costann.existing[entry.id]['legend']) {
+            entry.disabled = true;
+          }
+        });   
         $scope.charts = prepareCharts(data.graph);
         $scope.parameters.cache.response = data;
         $scope.canDoFitting = true;
