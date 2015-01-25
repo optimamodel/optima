@@ -549,12 +549,12 @@
 
         <div class="section" ng-show="someGraphAvailable()">
           <div class="grid">
-            <div class="9">
+            <div class="12">
               <export-all-charts name="Optimization analyses" ng-if="someGraphAvailable()"></export-all-charts>
               <export-all-data charts="chartsForDataExport" name="Optimization analyses" ng-if="someGraphAvailable()"></export-all-data>
             </div>
 
-            <div class="grid 11">
+            <div class="grid 12">
 
               <div ng-if="state.radarCharts && types.plotUncertainties">
                 <div ng-repeat="radarChart in state.radarCharts track by $index">
@@ -573,6 +573,19 @@
               </div>
 
             </div>
+
+            <div class="grid 12">
+
+              <div ng-if="state.stackedBarCharts && types.timeVaryingOptimizations">
+                <div ng-repeat="chart in state.stackedBarCharts track by $index">
+                  <div class="chart-container __large">
+                    <div stacked-bar-chart data="chart.data" options="chart.options" save-graph-as></div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
 
             <div class="chart-container __small" ng-repeat="chart in state.optimisationGraphs">
               <div line-scatter-chart data="chart.data" options="chart.options" save-graph-as></div>
