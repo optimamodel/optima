@@ -176,6 +176,7 @@ define(['./module', 'd3', 'underscore', './scale-helpers'], function (module, d3
      * @param {string} colorClass - see available colors in chart/_color.scss.
      */
     function LineChart(chart, chartSize, colorClass) {
+
       var xScale, yScale;
 
       var uniqClassName = _.uniqueId('line_');

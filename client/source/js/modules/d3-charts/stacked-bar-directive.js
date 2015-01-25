@@ -1,8 +1,11 @@
-define(['./module', './scale-helpers', 'angular', './stacked-bar-chart'], function (module, scaleHelpers, angular, stackedBarChart) {
+define(['./module', './scale-helpers', 'angular', './stacked-bar-chart'], function (module, scaleHelpers, angular, StackedBarChart) {
   'use strict';
 
   module.directive('stackedBarChart', function (d3Charts) {
     var svg;
+
+    var defaultColors = [ '__light-blue', '__blue', '__violet', '__green',
+    '__light-green', '__gray', '__red' ];
 
     /**
      * Draw the stacked bar chart
@@ -33,9 +36,22 @@ define(['./module', './scale-helpers', 'angular', './stacked-bar-chart'], functi
       var axesGroup = svg.append('g').attr('class', 'axes_group');
       var headerGroup = svg.append('g').attr('class', 'header_group');
 
-      stackedBarChart(chartGroup, chartSize, data.bars, options.linesStyle);
-
+      var chart = new StackedBarChart(chartGroup, chartSize, data.bars, options.linesStyle);
+      chart.draw();
       d3Charts.drawTitleAndLegend(svg, options, headerGroup);
+
+      options.yAxis.tickFormat = function (value) {
+        var format = scaleHelpers.evaluateTickFormat(0, chart.yMax());
+        return scaleHelpers.customTickFormat(value, format);
+      };
+
+      d3Charts.drawAxes(
+        chart.scales(),
+        options,
+        axesGroup,
+        chartSize
+      );
+
     };
 
     return {

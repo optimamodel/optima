@@ -139,6 +139,12 @@ define([
         right: 20,
         bottom: 60,
         left: 60
+      },
+      xAxis: {
+        axisLabel: 'Axis X'
+      },
+      yAxis: {
+        axisLabel: 'Axis Y'
       }
     };
 
