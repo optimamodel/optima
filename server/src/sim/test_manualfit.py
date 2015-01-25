@@ -27,7 +27,7 @@ D = updatedata(D, verbose=verbose)
 
 print('\n\n\n3. Running simulation...')
 from runsimulation import runsimulation
-D = runsimulation(D, startyear=2000, endyear=2030, verbose=verbose)
+D = runsimulation(D, startyear=2000, endyear=2015, verbose=verbose)
 
 
 print('\n\n\n4. Viewing results...')
@@ -56,7 +56,7 @@ Mlist = [{'name':['numacts','com'], 'data':tmp}]
 
 print('\n\n\n5. Running manual fitting...')
 from manualfit import manualfit
-D = manualfit(D, F=F, Plist=Plist, Mlist=Mlist, startyear=2000, endyear=2030, verbose=2)
+D = manualfit(D, F=F, Plist=Plist, Mlist=Mlist, startyear=2000, endyear=2015, verbose=2)
 
 
 print('\n\n\n6. Viewing results again...')

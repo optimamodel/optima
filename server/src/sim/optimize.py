@@ -1,11 +1,13 @@
 from printv import printv
 from bunch import Bunch as struct
 from copy import deepcopy
+from matplotlib.pylab import show, figure, subplot, plot, axis, xlim, ylim, legend
+from numpy import array, ones, zeros, concatenate
 
 default_startyear = 2000
 default_endyear = 2030
 
-def optimize(D, objectives=None, constraints=None, name="default", timelimit=60, verbose=2):
+def optimize(D, objectives=None, constraints=None, ntimepm=1, timelimit=60, verbose=2):
     """
     Allocation optimization code:
         D is the project data structure
@@ -17,39 +19,36 @@ def optimize(D, objectives=None, constraints=None, name="default", timelimit=60,
     Version: 2014dec01 by cliffk
     """
     
+    # Imports
     from model import model
-    from copy import deepcopy
     from ballsd import ballsd
     from getcurrentbudget import getcurrentbudget
     from makemodelpars import makemodelpars
-    from numpy import array
+    from timevarying import timevarying
     printv('Running optimization...', 1, verbose)
+    
+    # Set up parameter vector for time-varying optimisation...
+    stepsize = 100000
+    growsize = 0.01
     
     # Set options to update year range
     from setoptions import setoptions
     startyear = objectives.get("year").get("start") or default_startyear
     endyear = objectives.get("year").get("end") or default_endyear
     D.opt = setoptions(D.opt, startyear=startyear, endyear=endyear)
+    
     # Make sure objectives and constraints exist
-    if not isinstance(objectives, struct): objectives = defaultobjectives(D, verbose=verbose)
+    if not isinstance(objectives, struct):  objectives = defaultobjectives(D, verbose=verbose)
     if not isinstance(constraints, struct): constraints = defaultconstraints(D, verbose=verbose)
-
-    #save the optimization parameters
-    new_optimization = struct()
-    new_optimization.name = name
-    new_optimization.objectives = objectives
-    new_optimization.constraints = constraints
-
-    D = saveoptimization(D, name, objectives, constraints)
 
     objectives = deepcopy(objectives)
     constraints = deepcopy(constraints)
 
     # Convert weightings from percentage to number
-    if objectives.outcome.inci: objectives.outcome.inciweight = float( objectives.outcome.inciweight ) / 100.0
-    if objectives.outcome.daly: objectives.outcome.dalyweight = float( objectives.outcome.dalyweight ) / 100.0
-    if objectives.outcome.death: objectives.outcome.deathweight = float( objectives.outcome.deathweight ) / 100.0
-    if objectives.outcome.cost: objectives.outcome.costweight = float( objectives.outcome.costweight ) / 100.0
+    if objectives.outcome.inci:  objectives.outcome.inciweight  = float(objectives.outcome.inciweight) / 100.0
+    if objectives.outcome.daly:  objectives.outcome.dalyweight  = float(objectives.outcome.dalyweight) / 100.0
+    if objectives.outcome.death: objectives.outcome.deathweight = float(objectives.outcome.deathweight) / 100.0
+    if objectives.outcome.cost:  objectives.outcome.costweight  = float(objectives.outcome.costweight) / 100.0
 
     for ob in objectives.money.objectives.keys():
         if objectives.money.objectives[ob].use: objectives.money.objectives[ob].by = float(objectives.money.objectives[ob].by) / 100.0
@@ -66,33 +65,70 @@ def optimize(D, objectives=None, constraints=None, name="default", timelimit=60,
     for alloc in range(nallocs): D.A.append(deepcopy(D.A[0])) # Just copy for now
     D.A[0].label = 'Original'
     D.A[1].label = 'Optimal'
-    origalloc = deepcopy(array(D.A[1].alloc))
+    # preserving the origalloc during the first iteration (because on web, we run this in batches)
+    if 'origalloc' not in D.A[0]:
+        origalloc = deepcopy(array(D.A[0].alloc))
+        D.A[0].origalloc = origalloc
+    else:
+        origalloc = D.A[0].origalloc
     D.A = D.A[:2] # TODO WARNING KLUDGY
-    
 
+    nprogs = len(origalloc)
+    totalspend = sum(origalloc) # Temp # TODO -- set this up for variable budgets
     
-    def objectivecalc(alloc):
+    def objectivecalc(optimparams):
         """ Calculate the objective function """
-        alloc /= sum(alloc)/sum(origalloc)
+
+        thisalloc = timevarying(optimparams, ntimepm=ntimepm, nprogs=nprogs, t=D.opt.tvec, totalspend=totalspend)        
         newD = deepcopy(D)
-        newD, newcov, newnonhivdalysaverted = getcurrentbudget(newD, alloc)
+        newD, newcov, newnonhivdalysaverted = getcurrentbudget(newD, thisalloc)
         newD.M = makemodelpars(newD.P, newD.opt, withwhat='c', verbose=0)
         S = model(newD.G, newD.M, newD.F[0], newD.opt, verbose=0)
-        objective = S.death.sum() # TEMP
         
+        # Obtain value of the objective function
+        objective = 0 # Preallocate objective value 
+        if objectives.what == 'outcome':
+            for ob in ['inci', 'death', 'daly', 'cost']:
+                if objectives.outcome[ob]: objective += S[ob].sum() * objectives.outcome[ob + 'weight'] # TODO -- can we do 'daly' and 'cost' like this too??
+        else: print('Work to do here') # 'money'
+            
         return objective
         
+    # Initiate probabilities of parameters being selected
+    stepsizes = zeros(nprogs * ntimepm)
+    
+    # Easy access initial allocation indices and turn stepsizes into array
+    ai = range(nprogs)
+    gi = range(nprogs,   nprogs*2) if ntimepm >= 2 else []
+    si = range(nprogs*2, nprogs*3) if ntimepm >= 3 else []
+    ii = range(nprogs*3, nprogs*4) if ntimepm >= 4 else []
+    
+    # Turn stepsizes into array
+    stepsizes[ai] = stepsize
+    stepsizes[gi] = growsize if ntimepm > 1 else 0
+    stepsizes[si] = stepsize
+    stepsizes[ii] = growsize # Not sure that growsize is an appropriate starting point
+    
+    # Initial values of time-varying parameters
+    growthrate = zeros(nprogs)   if ntimepm >= 2 else []
+    saturation = origalloc       if ntimepm >= 3 else []
+    inflection = ones(nprogs)*.5 if ntimepm >= 4 else []
+    
+    # Concatonate parameters to be optimised
+    optimparams = concatenate((origalloc, growthrate, saturation, inflection))
         
+    parammin = concatenate((zeros(nprogs), ones(nprogs)*-1e9))
         
     # Run the optimization algorithm
-    optalloc, fval, exitflag, output = ballsd(objectivecalc, origalloc, xmin=0*array(origalloc), timelimit=timelimit, verbose=verbose)
+    optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, xmin=parammin, absinitial=stepsizes, timelimit=timelimit, verbose=verbose,)
     
     # Update the model
-    for i,alloc in enumerate([origalloc,optalloc]):
+    for i, params in enumerate([origalloc, optparams]):
+        alloc = timevarying(params, ntimepm=len(params)/nprogs, nprogs=nprogs, t=D.opt.tvec, totalspend=totalspend)            
         D, D.A[i].coverage, D.A[i].nonhivdalysaverted = getcurrentbudget(D, alloc)
         D.M = makemodelpars(D.P, D.opt, withwhat='c', verbose=2)
         D.A[i].S = model(D.G, D.M, D.F[0], D.opt, verbose=verbose)
-        D.A[i].alloc = alloc # Now that it's run, store total program costs
+        D.A[i].alloc = alloc # This is overwriting a vector with a matrix # TODO -- initiate properly in makedatapars
     
     # Calculate results
     from makeresults import makeresults
@@ -107,23 +143,32 @@ def optimize(D, objectives=None, constraints=None, name="default", timelimit=60,
     printv('...done optimizing programs.', 2, verbose)
     return D
 
-def saveoptimization(D, name, objectives, constraints, verbose=2):
+def saveoptimization(D, name, objectives, constraints, result = None, verbose=2):
     #save the optimization parameters
     new_optimization = struct()
     new_optimization.name = name
     new_optimization.objectives = objectives
     new_optimization.constraints = constraints
+    if result: new_optimization.result = result
 
     if not "optimizations" in D:
         D.optimizations = [new_optimization]
     else:
-        index = [item.name for item in D.optimizations].index(name)
-        if index==-1:
-            D.optimizations.append(new_optimization)
-        else:
+        try:
+            index = [item.name for item in D.optimizations].index(name)
             D.optimizations[index] = deepcopy(new_optimization)
+        except:
+            D.optimizations.append(new_optimization)
     return D
 
+def removeoptimization(D, name):
+    if "optimizations" in D:
+        try:
+            index = [item.name for item in D.optimizations].index(name)
+            D.optimizations.pop(index)
+        except:
+            pass
+    return D
 
 def defaultobjectives(D, verbose=2):
     """

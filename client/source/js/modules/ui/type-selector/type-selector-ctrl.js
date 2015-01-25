@@ -13,10 +13,6 @@ define(['./module'], function (module) {
             $scope[part+"IsVisible"] = _(viewNames).contains($state.current.name);
         }
 
-        $scope.annualCostChange = function(value){
-          console.log('annual cost change changed to ', value);
-        };
-
         $scope.$on('$stateChangeSuccess',function(){
           showPartInViews('typeSelector', [
             'model.view',

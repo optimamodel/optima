@@ -18,7 +18,7 @@ server {
   server_name ~^(?P<subdomain>.+?)?\.?optima\.dev$;
 
   # When we export all graphs, we are posting more data.
-  client_max_body_size 2m;
+  client_max_body_size 3m;
 
   # @FIXME update this path with yours
   set $host_path "{{ABSOLUTE_PATH_TO_PROJECT_SOURCE}}/client";

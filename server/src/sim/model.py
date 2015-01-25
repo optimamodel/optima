@@ -1,5 +1,5 @@
  ## Imports
-from numpy import array, arange, zeros, exp, maximum, minimum, nonzero, concatenate, absolute, median
+from numpy import array, arange, zeros, exp, maximum, minimum, nonzero, concatenate, hstack, absolute
 from bunch import Bunch as struct # Replicate Matlab-like structure behavior
 from printv import printv
 from math import pow as mpow
@@ -52,8 +52,21 @@ def model(G, M, F, opt, initstate=None, verbose=2):
     if initstate is None: people[:,:,0] = equilibrate(G, M, array(F.init)) # No it hasn't, so run equilibration
     else: people[:,:,0] = initstate # Yes it has, so use it.
     
+    # Biological and failure parameters -- death etc
+    prog       = h2a(G, M.const.prog)  # Disease progression rates
+    recov      = h2a(G, M.const.recov) # Recovery rates
+    death      = h2a(G, M.const.death) # HIV death rates
+    deathtx    = M.const.death.treat   # Death rate whilst on treatment
+    tbprev     = M.tbprev + 1          # TB prevalence
+    efftb      = M.const.death.tb * tbprev # Increase in death due to TB coinfection
+    failfirst  = M.const.fail.first    # 1st line failure
+    failsecond = M.const.fail.second   # 2nd line failure
+    
     # Calculate other things outside the loop
     cd4trans = h2a(G, M.const.cd4trans) # Convert a dictionary to an array
+    healthtime = 1 / hstack([prog, death[-1]]) # Calculate how long is spent in each health state, with death considered the time spent in CD4<50
+    cd4transnorm = sum(cd4trans * healthtime) / sum(healthtime)
+    cd4trans /= cd4transnorm # Normalize CD4 transmission
     dxfactor = M.const.eff.dx * cd4trans # Include diagnosis efficacy
     txfactor = M.const.eff.tx * dxfactor # And treatment efficacy
     
@@ -77,7 +90,7 @@ def model(G, M, F, opt, initstate=None, verbose=2):
     
     # Population sizes
     popsize = M.popsize # Population sizes
-    for pop in range(npops): popsize[pop,:] *= F.popsize[pop] / M.popsize[pop][0] # Calculate adjusted population sizes -- WARNING, kind of ugly
+    for pop in range(npops): popsize[pop,:] *= F.popsize[pop]*1.0 / M.popsize[pop][0] # Calculate adjusted population sizes -- WARNING, kind of ugly
     
     # Logical arrays for population types
     male = array(G.meta.pops.male).astype(bool) # Male populations
@@ -113,23 +126,13 @@ def model(G, M, F, opt, initstate=None, verbose=2):
     numpmtct = M.numpmtct  # PMTCT (N)
     ost      = M.numost    # OST (N)
     propcirc = M.circum    # Proportion of men circumcised (P)
-    tobecirc = M.numcircum # Number of men TO BE CIRCUMCISED (N) # TODO -- check that I'm understanding this correctly!!
+#    tobecirc = M.numcircum # Number of men TO BE CIRCUMCISED (N) # TODO -- check that I'm understanding this correctly!!
     mtx1     = M.tx1       # 1st line treatement (N) -- tx1 already used for index of people on treatment
     mtx2     = M.tx2       # 2nd line treatement (N) -- tx2 already used for index of people on treatment
     txtotal  = M.txtotal   # Total number on treatment -- initialised as zeros (N or P)
     txelig   = M.txelig    # Total eligible for treatment (N)
     hivtest  = M.hivtest   # HIV testing (P)
     aidstest = M.aidstest  # HIV testing in AIDS stage (P)
-    
-    # Biological and failure parameters -- death etc
-    prog       = h2a(G, M.const.prog)  # Disease progression rates
-    recov      = h2a(G, M.const.recov) # Recovery rates
-    death      = h2a(G, M.const.death) # HIV death rates
-    deathtx    = M.const.death.treat   # Death rate whilst on treatment
-    tbprev     = M.tbprev + 1          # TB prevalence
-    efftb      = M.const.death.tb * tbprev # Increase in death due to TB coinfection
-    failfirst  = M.const.fail.first    # 1st line failure
-    failsecond = M.const.fail.second   # 2nd line failure
     
     # Force of infection metaparameter
     Fforce = array(F.force)
@@ -358,13 +361,13 @@ def model(G, M, F, opt, initstate=None, verbose=2):
         S.reqcircum[0, t] = sum(reqcirc)
         
         # Perform any new circumcisions if tobecirc is non zero
-        if sum(tobecirc[:, t]) > 0: 
-            S.newcircum[:, t] = minimum(tobecirc[:, t], reqcirc) # Calculate how many are due to be circumcised (upper limit of reqcirc) # TODO -- I don't think dt is needed here. Second opinion please.
-            S.numcircum[:, t] += S.newcircum[:, t] # Add these people to the circumcised group
-            if t < npts: # Perform for all but the last timestep
-                for pop in range(npops): # Loop through the populations
-                    if male[pop]: # Only calculate for males
-                        propcirc[pop, t+1] = median([0, 1, S.numcircum[pop, t] / newsuscmales[pop]]) # Circumcision coverage for next time step (element of [0, 1])
+#        if sum(tobecirc[:, t]) > 0: 
+#            S.newcircum[:, t] = minimum(tobecirc[:, t], reqcirc) # Calculate how many are due to be circumcised (upper limit of reqcirc) # TODO -- I don't think dt is needed here. Second opinion please.
+#            S.numcircum[:, t] += S.newcircum[:, t] # Add these people to the circumcised group
+#            if t < npts: # Perform for all but the last timestep
+#                for pop in range(npops): # Loop through the populations
+#                    if male[pop]: # Only calculate for males
+#                        propcirc[pop, t+1] = median([0, 1, S.numcircum[pop, t] / newsuscmales[pop]]) # Circumcision coverage for next time step (element of [0, 1])
         
         
         ###############################################################################
