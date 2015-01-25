@@ -243,7 +243,7 @@ def getModel():
 @check_project_name
 def getModelGroup(key):
     """ Returns the subset with the given key for the D (model) in the open project."""
-    current_app.logger.debug("getModelGroup: %s" % group)
+    current_app.logger.debug("getModelGroup: %s" % key)
     D_dict = load_model(request.project_name, as_bunch = False)
     the_group = D_dict.get(key, {})
     return json.dumps(the_group)
@@ -329,7 +329,7 @@ def doCostCoverage():
     do_save = data.get('doSave')
     try:
         if args.get('ccparams'):args['ccparams'] = [float(param) if param else None for param in args['ccparams']]
-        if args.get('coparams'):del args['coparams'] 
+        if args.get('coparams'):del args['coparams']
 
         progname = args['progname']
         effects = data.get('all_effects')
