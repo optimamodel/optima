@@ -8,6 +8,7 @@ define(['./module', './scale-helpers', 'angular', './stacked-bar-chart'], functi
      * Draw the stacked bar chart
      */
     var drawGraph = function (data, options, rootElement) {
+      options = d3Charts.adaptOptions(options);
 
       // to prevent creating multiple graphs we want to remove the existing svg
       // element before drawing a new one.
@@ -32,7 +33,9 @@ define(['./module', './scale-helpers', 'angular', './stacked-bar-chart'], functi
       var axesGroup = svg.append('g').attr('class', 'axes_group');
       var headerGroup = svg.append('g').attr('class', 'header_group');
 
-      stackedBarChart(chartGroup, chartSize, data.bars);
+      stackedBarChart(chartGroup, chartSize, data.bars, options.linesStyle);
+
+      d3Charts.drawTitleAndLegend(svg, options, headerGroup);
     };
 
     return {

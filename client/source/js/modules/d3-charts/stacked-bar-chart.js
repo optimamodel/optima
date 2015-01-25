@@ -1,35 +1,53 @@
-define(['d3'], function (d3) {
+define(['d3', 'underscore'], function (d3, _) {
   'use strict';
 
   /**
    * Returns a StackedBarChart instance.
    */
-  var StackedBarChart = function(chart, chartSize, data) {
+  var StackedBarChart = function(chart, chartSize, data, colors) {
+
+    /*
+     * Returns a bar ready to render by the StackedBarChart.
+     *
+     * @param {array} barData - a list of the segement values. example: [22, 33]
+     * @returns {array} - example: [{y0: 0, y1: 22}, {y0: 22, y1: 55}]
+     */
+    var generateBar = function(barData) {
+      var lowerSegmentBoundary = 0;
+      return _(barData).map(function(value) {
+        var segment = { y0: lowerSegmentBoundary, y1: lowerSegmentBoundary + value};
+        lowerSegmentBoundary = lowerSegmentBoundary + value;
+        return segment;
+      });
+    };
 
     var x = d3.scale.ordinal().rangeRoundBands([0, chartSize.width], 0.1);
     var y = d3.scale.linear().rangeRound([chartSize.height, 0]);
 
-    var color = d3.scale.ordinal().range(["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"]);
+    colors = colors || [ '__light-blue', '__blue', '__violet', '__green',
+      '__light-green', '__gray', '__red' ];
 
     var xAxis = d3.svg.axis()
-    .scale(x)
-    .orient("bottom");
+      .scale(x)
+      .orient("bottom");
 
     var yAxis = d3.svg.axis()
-    .scale(y)
-    .orient("left")
-    .tickFormat(d3.format(".2s"));
+      .scale(y)
+      .orient("left")
+      .tickFormat(d3.format(".2s"));
 
-    color.domain(d3.keys(data[0]).filter(function(key) { return key !== "label"; }));
-
-    data.forEach(function(d) {
-      var y0 = 0;
-      d.ages = color.domain().map(function(name) { return {name: name, y0: y0, y1: y0 += +d[name]}; });
-      d.total = d.ages[d.ages.length - 1].y1;
+    var chartData = _(data).map(function(entry) {
+      return {
+        bar: generateBar(entry[1]),
+        x: entry[0]
+      };
     });
 
-    x.domain(data.map(function(d) { return d.label; }));
-    y.domain([0, d3.max(data, function(d) { return d.total; })]);
+    x.domain(chartData.map(function(d) { return d.x; }));
+    y.domain([0, d3.max(chartData, function(d) {
+      // take the largest entry from the bar
+      return d.bar[d.bar.length - 1].y1;
+    })]);
 
     chart.append("g")
       .attr("class", "x axis")
@@ -47,37 +65,20 @@ define(['d3'], function (d3) {
       .text("Population");
 
     var entries = chart.selectAll(".entry")
-      .data(data)
+      .data(chartData)
       .enter().append("g")
       .attr("class", "entry")
-      .attr("transform", function(d) { return "translate(" + x(d.label) + ",0)"; });
+      .attr("transform", function(d) { return "translate(" + x(d.x) + ",0)"; });
 
     entries.selectAll("rect")
-      .data(function(d) { return d.ages; })
+      .data(function(d) { return d.bar; })
       .enter().append("rect")
       .attr("width", x.rangeBand())
       .attr("y", function(d) { return y(d.y1); })
       .attr("height", function(d) { return y(d.y0) - y(d.y1); })
-      .style("fill", function(d) { return color(d.name); });
-
-    var legend = chart.selectAll(".legend")
-      .data(color.domain().slice().reverse())
-      .enter().append("g")
-      .attr("class", "legend")
-      .attr("transform", function(d, i) { return "translate(0," + i * 20 + ")"; });
-
-    legend.append("rect")
-      .attr("x", chartSize.width - 18)
-      .attr("width", 18)
-      .attr("height", 18)
-      .style("fill", color);
-
-    legend.append("text")
-      .attr("x", chartSize.width - 24)
-      .attr("y", 9)
-      .attr("dy", ".35em")
-      .style("text-anchor", "end")
-      .text(function(d) { return d; });
+      .attr("class", function(d, index) {
+        return [colors[index], 'stacked-bar-chart-rect'].join(' ');
+      });
   };
 
   return StackedBarChart;

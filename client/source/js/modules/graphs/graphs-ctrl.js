@@ -126,7 +126,12 @@ define([
     // Stacked bar chart
     // =======
 
+    var linesStyle = [ '__light-blue', '__blue', '__violet', '__green',
+    '__light-green', '__gray', '__red' ];
+
     $scope.options9 = {
+      linesStyle: linesStyle,
+      legend: ['AA', 'BB', 'CC'],
       height: 300,
       width: 300,
       margin: {
@@ -139,12 +144,9 @@ define([
 
     $scope.data9 = {
       bars: [
-        { "5 to 13 Years": "552339", "14 to 17 Years": "259034",
-          "18 to 24 Years": "450818", "label": 2001 },
-        { "5 to 13 Years": "85640", "14 to 17 Years": "42153",
-          "18 to 24 Years": "74257", "label": 2002 },
-        { "5 to 13 Years": "592339", "14 to 17 Years": "559034",
-          "18 to 24 Years": "250818", "label": 2003 },
+       [2001, [552339, 259034, 450818]],
+       [2002, [85640, 42153, 74257]],
+       [2003, [592339, 559034, 250818]]
       ]
     };
 
