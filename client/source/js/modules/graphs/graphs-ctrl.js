@@ -140,11 +140,11 @@ define([
     $scope.data9 = {
       bars: [
         { "5 to 13 Years": "552339", "14 to 17 Years": "259034",
-          "18 to 24 Years": "450818", "State": "AL" },
+          "18 to 24 Years": "450818", "label": 2001 },
         { "5 to 13 Years": "85640", "14 to 17 Years": "42153",
-          "18 to 24 Years": "74257", "State": "AB" },
+          "18 to 24 Years": "74257", "label": 2002 },
         { "5 to 13 Years": "592339", "14 to 17 Years": "559034",
-          "18 to 24 Years": "250818", "State": "AC" },
+          "18 to 24 Years": "250818", "label": 2003 },
       ]
     };
 
