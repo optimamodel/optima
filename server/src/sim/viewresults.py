@@ -97,7 +97,7 @@ def viewuncerresults(E, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 
 
 
 
-def viewmultiresults(M, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 'daly':[0,1], 'death':[0,1], 'dx':[0,1], 'tx1':[0,1], 'tx2':[0,1], 'costcur':[1,1], 'costfut':[1,1]}, startyear=2000, endyear=2030, onefig=True, verbose=2, show_wait=False, linewidth=2):
+def viewmultiresults(M, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 'daly':[0,1], 'death':[0,1], 'dx':[0,1], 'tx1':[0,1], 'tx2':[0,1], 'costcum':[1,1]}, startyear=2000, endyear=2030, onefig=True, verbose=2, show_wait=False, linewidth=2):
     """
     Generate all outputs required for the model, including prevalence, incidence,
     deaths, etc.
@@ -155,7 +155,7 @@ def viewmultiresults(M, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 
                         subkey = 'tot'
                         xdata = M.tvec
                     else:
-                        subkey = ['ann','cum'][popstot] # SUPER CONFUSING
+                        subkey = ['total','existing'][popstot] # SUPER CONFUSING
                         xdata = M[graph][subkey].xdata
                     
                     if onefig:
@@ -177,7 +177,7 @@ def viewmultiresults(M, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 
     if onefig:
         subplot(nxplots, nyplots, count+1)
         for sim in range(M.nsims): plot(0, 0, linewidth=linewidth)
-        legend(M[graph].tot.legend)
+        legend(M[graph].total.legend)
 
     if show_wait: show()
 
