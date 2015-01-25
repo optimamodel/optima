@@ -115,7 +115,14 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           if (!response) {
             return graphs;
           }
-
+          _($scope.types.financialAnnualCosts).each(function(entry) {
+            if (!response.costann.existing[entry.id] 
+            || !response.costann.existing[entry.id]['legend']
+            || !response.costann.existing[entry.id]['legend'].length) {
+              entry.disabled = true;
+            }
+          });   
+          
           var graphs = [];
 
           _($scope.types.population).each(function (type) {
@@ -141,18 +148,18 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           });
 
           _($scope.types.financial).each(function (type) {
-            // costcur = cost for current people living with HIV
-            // costfut = cost for future people living with HIV
-            // ann = annual costs
-            // cum = cumulative costs
+            // existing = cost for current people living with HIV
+            // future = cost for future people living with HIV
+            // costann = annual costs
+            // costcum = cumulative costs
             if (type.annual) {
-              var annualData = response[type.id].ann;
-              graphs.push(generateFinancialGraph(annualData));
+              var annualData = response.costann[type.id][$scope.types.annualCost]; 
+              if(annualData) graphs.push(generateFinancialGraph(annualData));
             }
 
             if (type.cumulative) {
-              var cumulativeData = response[type.id].cum;
-              graphs.push(generateFinancialGraph(cumulativeData));
+              var cumulativeData = response.costcum[type.id];
+              if (cumulativeData) graphs.push(generateFinancialGraph(cumulativeData));
             }
           });
 

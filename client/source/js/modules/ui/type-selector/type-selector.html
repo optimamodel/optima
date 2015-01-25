@@ -35,7 +35,7 @@
 
   <h4>Display annual costs as:</h4>
   <div ng-repeat="financialType in types.financialAnnualCosts">
-    <input type="radio" name="annualCost" ng-model="types.annualCost" value="{{financialType.id}}"/>
+    <input type="radio" name="annualCost" ng-model="types.annualCost" value="{{financialType.id}}" ng-disabled="financialType.disabled"/>
     <label>{{financialType.name}}</label>
   </div>
 

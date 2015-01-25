@@ -305,20 +305,18 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       var graphs = [];
 
       _($scope.types.financial).each(function (type) {
-        // costcur = cost for current people living with HIV
-        // costfut = cost for future people living with HIV
-        // ann = annual costs
-        // cum = cumulative costs
-        if (graphData[type.id] !== undefined) {
-          if (type.annual && graphData[type.id].ann) {
-            var annualData = graphData[type.id].ann;
-            graphs.push(generateFinancialGraph(annualData));
-          }
+        // existing = cost for current people living with HIV
+        // future = cost for future people living with HIV
+        // costann = annual costs
+        // costcum = cumulative costs
+        if (type.annual) {
+          var annualData = graphData.costann[type.id][$scope.types.annualCost]; 
+          if(annualData) graphs.push(generateFinancialGraph(annualData));
+        }
 
-          if (type.cumulative && graphData[type.id].cum) {
-            var cumulativeData = graphData[type.id].cum;
-            graphs.push(generateFinancialGraph(cumulativeData));
-          }
+        if (type.cumulative) {
+          var cumulativeData = graphData.costcum[type.id];
+          if (cumulativeData) graphs.push(generateFinancialGraph(cumulativeData));
         }
       });
       return graphs;
@@ -337,6 +335,13 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     function updateGraphs(data) {
       if (data.graph !== undefined && data.pie !== undefined) {
         cachedResponse = data;
+        _($scope.types.financialAnnualCosts).each(function(entry) {
+          if (!data.graph.costann.existing[entry.id] 
+          || !data.graph.costann.existing[entry.id]['legend']
+          || !data.graph.costann.existing[entry.id]['legend'].length) {
+            entry.disabled = true;
+          }
+        });   
         drawGraphs();
       }
     };
