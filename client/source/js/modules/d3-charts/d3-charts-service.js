@@ -383,7 +383,7 @@ define(['./module', 'd3', 'underscore', './scale-helpers'], function (module, d3
 
     function drawAxes(scales, options, axesGroup, chartSize) {
       if (scales === undefined) return;
-      
+
       var xLabel = options.xAxis.axisLabel;
       var yLabel = options.yAxis.axisLabel;
 

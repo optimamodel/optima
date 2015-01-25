@@ -265,7 +265,7 @@ define(['./module', 'angular'], function (module, angular) {
           if (!data.graph.costann.existing[entry.id] || !data.graph.costann.existing[entry.id]['legend']) {
             entry.disabled = true;
           }
-        });   
+        });
         $scope.charts = prepareCharts(data.graph);
         $scope.parameters.cache.response = data;
         $scope.canDoFitting = true;

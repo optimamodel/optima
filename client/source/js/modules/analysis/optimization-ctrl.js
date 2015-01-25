@@ -310,7 +310,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
         // costann = annual costs
         // costcum = cumulative costs
         if (type.annual) {
-          var annualData = graphData.costann[type.id][$scope.types.annualCost]; 
+          var annualData = graphData.costann[type.id][$scope.types.annualCost];
           if(annualData) graphs.push(generateFinancialGraph(annualData));
         }
 
@@ -336,12 +336,12 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       if (data.graph !== undefined && data.pie !== undefined) {
         cachedResponse = data;
         _($scope.types.financialAnnualCosts).each(function(entry) {
-          if (!data.graph.costann.existing[entry.id] 
+          if (!data.graph.costann.existing[entry.id]
           || !data.graph.costann.existing[entry.id]['legend']
           || !data.graph.costann.existing[entry.id]['legend'].length) {
             entry.disabled = true;
           }
-        });   
+        });
         drawGraphs();
       }
     };
