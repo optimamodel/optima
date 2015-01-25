@@ -179,9 +179,9 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
         }
       };
 
+      //TODO @NikGraph @DEvseev - make a stack chart now then pie.val is a combination of arrays (one per population)
       graphData = _(data.val).map(function (value, index) {
         return { value: value[0], label: legend[index] };
-        //TODO @NikGraph @DEvseev - make a stack chart now then pie.val is a combination of arrays (one per population)
       });
 
       return {
@@ -220,8 +220,9 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
         title: 'Allocation'
       };
 
+      //TODO @NikGraph @DEvseev - make a stack chart now then pie.val is a combination of arrays (one per population)
       graphData[0].axes = _(data.val).map(function (value, index) {
-        return { value: value, axis: legend[index] };
+        return { value: value[0], axis: legend[index] };
       });
       options.legend.push(data.name);
 
