@@ -33,7 +33,8 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
         optimisationGraphs: [],
         financialGraphs: [],
         radarCharts: [],
-        pieCharts: []
+        pieCharts: [],
+        stackedBarCharts: []
       };
 
       // cache placeholder
@@ -251,6 +252,53 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     };
 
     /**
+     * Returns a prepared chart object for a pie chart.
+     */
+    var generateStackedBarChart = function(yData, xData, legend) {
+      var graphData = [];
+
+      var options = {
+        height: 200,
+        width: 320,
+        margin: CONFIG.GRAPH_MARGINS,
+        xAxis: {
+          axisLabel: 'Year'
+        },
+        yAxis: {
+          axisLabel: ''
+        },
+        legend: legend
+      };
+
+      graphData = _(xData).map(function (xValue, index) {
+        var barData = _(yData).map(function(entry) { return entry[index]; });
+        return [xValue, barData];
+      });
+
+      return {
+        'data': {bars: graphData},
+        'options': options
+      };
+    };
+
+    /**
+     * Returns all stacked bar charts.
+     */
+    var prepareStackedBarCharts = function (data, xData) {
+
+      var charts = [];
+
+      if (data.pie1) {
+        charts.push(generateStackedBarChart(data.pie1.val, xData, data.legend));
+      }
+      if (data.pie2) {
+        charts.push(generateStackedBarChart(data.pie2.val, xData, data.legend));
+      }
+
+      return charts;
+    };
+
+    /**
      * Regenerate graphs based on the response and type settings in the UI.
      */
     var prepareOptimisationGraphs = function (response) {
@@ -330,6 +378,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       $scope.state.financialGraphs = prepareFinancialGraphs(cachedResponse.graph);
       $scope.state.radarCharts = prepareRadarCharts(cachedResponse.pie);
       $scope.state.pieCharts = preparePieCharts(cachedResponse.pie);
+      $scope.state.stackedBarCharts = prepareStackedBarCharts(cachedResponse.pie, cachedResponse.graph.tvec);
     }
 
     // makes all graphs to recalculate and redraw

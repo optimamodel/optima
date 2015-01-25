@@ -572,6 +572,14 @@
                 </div>
               </div>
 
+              <div ng-if="state.stackedBarCharts">
+                <div ng-repeat="stackedBarChart in state.stackedBarCharts track by $index">
+                  <div class="chart-container __small">
+                    <div stacked-bar-chart variant="stackedBarChart" data="stackedBarChart.data" options="stackedBarChart.options" save-graph-as></div>
+                  </div>
+                </div>
+              </div>
+
             </div>
 
             <div class="chart-container __small" ng-repeat="chart in state.optimisationGraphs">
