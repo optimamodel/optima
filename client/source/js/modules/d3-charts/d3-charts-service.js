@@ -8,9 +8,11 @@ define(['./module', 'd3', 'underscore', './scale-helpers'], function (module, d3
     /**
      * Returns a PieChart instance.
      *
-     * Data has to be provided in the following format: {label: "xxzy", value: 44}
-     *
      * The label implementation is inspired by http://jsfiddle.net/thudfactor/HdwTH/
+     *
+     * @param {element} chart - element where to append the line.
+     * @param {object} chartSize - example: { width: 200, height: 100 }.
+     * @param {array} data - example: [{label: "Slice Name", value: 44}]
      */
     function PieChart(chart, chartSize, data) {
       var radius = Math.min(chartSize.width, chartSize.height) / 2;
