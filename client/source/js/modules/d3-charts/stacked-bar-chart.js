@@ -20,7 +20,7 @@ define(['d3'], function (d3) {
     .orient("left")
     .tickFormat(d3.format(".2s"));
 
-    color.domain(d3.keys(data[0]).filter(function(key) { return key !== "State"; }));
+    color.domain(d3.keys(data[0]).filter(function(key) { return key !== "label"; }));
 
     data.forEach(function(d) {
       var y0 = 0;
@@ -28,7 +28,7 @@ define(['d3'], function (d3) {
       d.total = d.ages[d.ages.length - 1].y1;
     });
 
-    x.domain(data.map(function(d) { return d.State; }));
+    x.domain(data.map(function(d) { return d.label; }));
     y.domain([0, d3.max(data, function(d) { return d.total; })]);
 
     chart.append("g")
@@ -46,13 +46,13 @@ define(['d3'], function (d3) {
       .style("text-anchor", "end")
       .text("Population");
 
-    var state = chart.selectAll(".state")
+    var entries = chart.selectAll(".entry")
       .data(data)
       .enter().append("g")
-      .attr("class", "g")
-      .attr("transform", function(d) { return "translate(" + x(d.State) + ",0)"; });
+      .attr("class", "entry")
+      .attr("transform", function(d) { return "translate(" + x(d.label) + ",0)"; });
 
-    state.selectAll("rect")
+    entries.selectAll("rect")
       .data(function(d) { return d.ages; })
       .enter().append("rect")
       .attr("width", x.rangeBand())
