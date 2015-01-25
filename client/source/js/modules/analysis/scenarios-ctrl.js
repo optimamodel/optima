@@ -116,13 +116,13 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             return graphs;
           }
           _($scope.types.financialAnnualCosts).each(function(entry) {
-            if (!response.costann.existing[entry.id] 
+            if (!response.costann.existing[entry.id]
             || !response.costann.existing[entry.id]['legend']
             || !response.costann.existing[entry.id]['legend'].length) {
               entry.disabled = true;
             }
-          });   
-          
+          });
+
           var graphs = [];
 
           _($scope.types.population).each(function (type) {
@@ -153,7 +153,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             // costann = annual costs
             // costcum = cumulative costs
             if (type.annual) {
-              var annualData = response.costann[type.id][$scope.types.annualCost]; 
+              var annualData = response.costann[type.id][$scope.types.annualCost];
               if(annualData) graphs.push(generateFinancialGraph(annualData));
             }
 
