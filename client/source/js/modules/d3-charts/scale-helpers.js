@@ -24,14 +24,25 @@ define(['d3'], function (d3) {
     };
   };
 
-  var flexCeil = function(x) {
-    if (x>=1.0) return Math.ceil(x);
+  /**
+   * Returns the provided number rounded up.
+   *
+   * For numbers larger then 1 it simply rounds up to the next integer.
+   * For numbers smaller than 1 it rounds up to the first non zero decimal.
+   *
+   * Example:
+   * 2.4 -> 3
+   * 0.00242 -> 0.003
+   * 0.041 -> 0.05
+   */
+  var flexCeil = function(value) {
+    if (value >= 1.0) return Math.ceil(value);
     var multi=1.0;
-    while (x<1.0){
-      multi/=10;
-      x*=10;
+    while (value < 1.0){
+      multi /= 10;
+      value *= 10;
     }
-    return Math.ceil(x)*multi;
+    return Math.ceil(value)*multi;
   };
 
 
