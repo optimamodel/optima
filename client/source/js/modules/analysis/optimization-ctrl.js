@@ -772,6 +772,10 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
         $scope.chartsForDataExport = $scope.chartsForDataExport.concat($scope.state.radarCharts);
       }
 
+      if ( $scope.state.stackedBarCharts && $scope.types.timeVaryingOptimizations ) {
+        $scope.chartsForDataExport = $scope.chartsForDataExport.concat($scope.state.stackedBarCharts);
+      }
+
       if ( $scope.state.optimisationGraphs ) {
         $scope.chartsForDataExport = $scope.chartsForDataExport.concat($scope.state.optimisationGraphs);
       }
@@ -831,6 +835,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     $scope.$watch('state.pieCharts', updateChartsForDataExport, true);
     $scope.$watch('state.optimisationGraphs', updateChartsForDataExport, true);
     $scope.$watch('state.financialGraphs', updateChartsForDataExport, true);
+    $scope.$watch('state.stackedBarCharts', updateChartsForDataExport, true);
 
   });
 });
