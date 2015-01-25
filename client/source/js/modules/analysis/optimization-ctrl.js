@@ -783,6 +783,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       if ( $scope.state.financialGraphs ) {
         $scope.chartsForDataExport = $scope.chartsForDataExport.concat($scope.state.financialGraphs);
       }
+
     };
 
     $scope.optimizationByName = function(name) {
@@ -836,6 +837,8 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     $scope.$watch('state.optimisationGraphs', updateChartsForDataExport, true);
     $scope.$watch('state.financialGraphs', updateChartsForDataExport, true);
     $scope.$watch('state.stackedBarCharts', updateChartsForDataExport, true);
+    $scope.$watch('types.timeVaryingOptimizations', updateChartsForDataExport, true);
+    $scope.$watch('types.plotUncertainties', updateChartsForDataExport, true);
 
   });
 });
