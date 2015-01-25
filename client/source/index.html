@@ -63,6 +63,9 @@
             <button class="btn" type="submit">Log out</button>
           </form>
         </div>
+        <div ng-cloak ng-if="!userLogged()" class="header_right">
+          <a class="btn" ui-sref="login">Login</a>
+        </div>
         <div class="header_center">
             <i class="header_logo logo"></i>
         </div>

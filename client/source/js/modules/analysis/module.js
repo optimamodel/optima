@@ -36,7 +36,7 @@ define([
                     return $http.get('/api/project/info');
                   },
                   meta: function (Model) {
-                    return Model.getParametersDataMeta().$promise;
+                    return Model.getKeyDataMeta().$promise;
                   },
                   scenarioParametersResponse: function($http, info) {
                     return $http.get('/api/analysis/scenarios/parameters');
@@ -52,7 +52,7 @@ define([
                 controller: 'AnalysisOptimizationController',
                 resolve: {
                   meta: function (Model) {
-                    return Model.getParametersDataMeta().$promise;
+                    return Model.getKeyDataMeta().$promise;
                   },
                   optimizations: function($http) {
                     return $http.get('/api/analysis/optimization/list');

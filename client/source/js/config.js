@@ -24,8 +24,9 @@ define(['angular'], function (angular) {
           { id: 'tx2', name: 'People on 2nd-line treatment', byPopulation: false, total: true, stacked: true }
         ],
         financial: [
-          { id: 'costcur', name: 'Total HIV-related financial commitments', annual: true, cumulative: true  },
-          { id: 'costfut', name: 'Financial commitments for existing PLHIV', annual: true, cumulative: true }
+          { id: 'total', name: 'Total HIV-related financial commitments', annual: true, cumulative: true  },
+          { id: 'existing', name: 'Financial commitments for existing PLHIV', annual: true, cumulative: true },
+          { id: 'future', name: 'Financial commitments for future PLHIV', annual: true, cumulative: true }
         ],
         financialAnnualCosts: [
           {id:'total', name:'total amount'},
@@ -33,8 +34,9 @@ define(['angular'], function (angular) {
           {id:'revenue', name:'proportion of government revenue'},
           {id:'govtexpend', name:'proportion of government expenditure'},
           {id:'totalhealth', name:'proportion of total health expenditure'},
-          {id:'domestichealth', name:'proportion of domestic health expenditure'},
-        ]
+          {id:'domestichealth', name:'proportion of domestic health expenditure'}
+        ],
+        annualCost: 'total'
       }
     });
 });

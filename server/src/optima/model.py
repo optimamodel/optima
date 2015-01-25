@@ -230,40 +230,40 @@ def getModelCalibrateParameters():
     result = add_calibration_parameters(D_dict)
     return jsonify(result)
 
-@model.route('/parameters')
+@model.route('/data')
 @login_required
 @check_project_name
 def getModel():
-    """ Returns the parameters of the given model. """
+    """ Returns the model (aka D or data) for the currently open project. """
     D = load_model(request.project_name, as_bunch = False)
     return jsonify(result)
 
-@model.route('/parameters/<group>')
+@model.route('/data/<key>')
 @login_required
 @check_project_name
-def getModelParameters(group):
-    """ Returns the parameters of the given model in the given group."""
-    current_app.logger.debug("getModelParameters: %s" % group)
+def getModelGroup(key):
+    """ Returns the subset with the given key for the D (model) in the open project."""
+    current_app.logger.debug("getModelGroup: %s" % key)
     D_dict = load_model(request.project_name, as_bunch = False)
-    the_group = D_dict.get(group, {})
+    the_group = D_dict.get(key, {})
     return json.dumps(the_group)
 
-@model.route('/parameters/<group>/<subgroup>')
+@model.route('/data/<key>/<subkey>')
 @login_required
 @check_project_name
-def getModelSubParameters(group, subgroup):
-    """ Returns the parameters of the given model in the given group / subgroup/ project. """
-    current_app.logger.debug("getModelSubParameters: %s %s" % (group, subgroup))
+def getModelSubGroup(key, subkey):
+    """ Returns the subset with the given key and subkey for the D (model) in the open project. """
+    current_app.logger.debug("getModelSubGroup: %s %s" % (key, subkey))
     D_dict = load_model(request.project_name, as_bunch = False)
-    the_group = D_dict.get(group,{})
-    the_subgroup = the_group.get(subgroup, {})
+    the_group = D_dict.get(key,{})
+    the_subgroup = the_group.get(subkey, {})
     return jsonify(the_subgroup)
 
-@model.route('/parameters/<group>', methods=['POST'])
+@model.route('/data/<key>', methods=['POST'])
 @login_required
 @check_project_name
-def setModelParameters(group):
-    """ Sets the given group parameters for the given model. """
+def setModelGroup(key):
+    """ Stores the provided data as a subset with the given key for the D (model) in the open project. """
     data = json.loads(request.data)
     current_app.logger.debug("set parameters group: %s for data: %s" % (group, data))
     project_name = request.project_name
@@ -304,7 +304,6 @@ def doRunSimulation():
             endyear = data.get("endyear")
             if endyear:
                 args["endyear"] = int(endyear)
-            args["makeplot"] = 0
             args["dosave"] = False
             D = runsimulation(**args)
             D_dict = D.toDict()
@@ -330,9 +329,8 @@ def doCostCoverage():
     do_save = data.get('doSave')
     try:
         if args.get('ccparams'):args['ccparams'] = [float(param) if param else None for param in args['ccparams']]
-        if args.get('coparams'):del args['coparams'] 
+        if args.get('coparams'):del args['coparams']
 
-        args['makeplot'] = 0 # don't do plotting in SIM
         progname = args['progname']
         effects = data.get('all_effects')
         new_coparams = data.get('all_coparams')
@@ -372,7 +370,6 @@ def doCostCoverageEffect():
             return jsonify({'status':'NOK','reason':'No effect has been specified'})
         if args.get('ccparams'):args['ccparams'] = [float(param) if param else None for param in args['ccparams']]
         if args.get('coparams'):args['coparams'] = [float(param) for param in args['coparams']]
-        args['makeplot'] = 0 # don't do plotting in SIM
         plotdata, plotdata_co, storeparams_co = makecco(**args)
     except Exception, err:
         var = traceback.format_exc()

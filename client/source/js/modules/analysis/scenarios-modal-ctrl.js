@@ -51,7 +51,7 @@ define(['./module', 'angular'], function (module, angular) {
      * Removes the parameter at the given index (without asking for confirmation).
      */
     $scope.removeParameter = function ($index) {
-      $scope.scenario.parameters.splice($index,1);
+      $scope.scenario.pars.splice($index,1);
     };
 
     /**

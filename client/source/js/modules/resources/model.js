@@ -18,43 +18,35 @@ define([
               suffix: 'manual'
             }
           },
-          getParameters: {
+          getKeyData: {
             method: 'GET',
             isArray: false,
             params: {
-              path: 'parameters',
+              path: 'data',
               suffix: 'data'
             }
           },
-          getParametersF: {
+          getKeyF: {
             method: 'GET',
             isArray: true,
             params: {
-              path: 'parameters',
+              path: 'data',
               suffix: 'F'
             }
           },
-          getParametersG: {
+          getKeyG: {
             method: 'GET',
             isArray: false,
             params: {
-              path: 'parameters',
+              path: 'data',
               suffix: 'G'
             }
           },
-          getParametersData: {
+          getKeyDataMeta: {
             method: 'GET',
             isArray: false,
             params: {
-              path: 'parameters',
-              suffix: 'data'
-            }
-          },
-          getParametersDataMeta: {
-            method: 'GET',
-            isArray: false,
-            params: {
-              path: 'parameters',
+              path: 'data',
               suffix: 'data',
               postsuffix: 'meta'
             }
@@ -71,7 +63,7 @@ define([
             method: 'GET',
             isArray: false,
             params: {
-              path: 'parameters',
+              path: 'data',
               suffix: 'programs'
             }
           }
