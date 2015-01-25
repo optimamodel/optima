@@ -33,6 +33,7 @@ define(['d3', 'underscore', './scale-helpers'], function (d3, _, scaleHelpers) {
    * Without filtering out labels the x-axis labels would overlap.
    */
   var generateAxisScale = function(baseScale, chartData) {
+
     // no need to filter the scale if there is only one entry
     if (chartData.length < 2) { return baseScale; }
 
@@ -54,7 +55,8 @@ define(['d3', 'underscore', './scale-helpers'], function (d3, _, scaleHelpers) {
 
     var xRangeValues = _.chain(baseScale.range())
       .filter(function(x, index) { return index % skipXElements === 0;})
-      .map(function(x) { return Math.ceil(x + barWidth/2); })
+      // 2x 0.5 because we take half of the bar & the padding which is 0.5 of bar
+      .map(function(x) { return Math.ceil(x + barWidth * 0.5 * 0.5); })
       .value();
 
     newScale.range(xRangeValues);
@@ -74,7 +76,7 @@ define(['d3', 'underscore', './scale-helpers'], function (d3, _, scaleHelpers) {
       };
     });
 
-    var x = d3.scale.ordinal().rangeRoundBands([0, chartSize.width]);
+    var x = d3.scale.ordinal().rangeRoundBands([0, chartSize.width], 0.5);
     x.domain(chartData.map(function(d) { return d.x; }));
 
     var y = d3.scale.linear().rangeRound([chartSize.height, 0]);

@@ -260,7 +260,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
 
       var options = {
         height: 200,
-        width: 320,
+        width: 700,
         margin: CONFIG.GRAPH_MARGINS,
         xAxis: {
           axisLabel: 'Year'
