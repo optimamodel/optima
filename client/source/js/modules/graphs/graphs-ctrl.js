@@ -121,5 +121,28 @@ define([
       ]
     };
 
+    // Stacked bar chart
+    // =======
+
+    $scope.options9 = {
+      height: 300,
+      width: 300,
+      margin: {
+        top: 20,
+        right: 20,
+        bottom: 60,
+        left: 60
+      }
+    };
+
+    $scope.data9 = {
+      bars: [
+        { "5 to 13 Years": "552339", "14 to 17 Years": "259034",
+          "18 to 24 Years": "450818", "State": "AL" },
+        { "5 to 13 Years": "85640", "14 to 17 Years": "42153",
+        "18 to 24 Years": "74257", "State": "AB" }
+      ]
+    };
+
   });
 });
