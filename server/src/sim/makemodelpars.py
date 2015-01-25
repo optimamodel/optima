@@ -36,8 +36,8 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
         if npops>1:
             output = zeros((npops,npts))
             for pop in range(npops):
-                if withwhat=='c' and ~isnan(datapar[withwhat][pop]): # Use cost relationship
-                    output[pop,:] = datapar[withwhat][pop] # TODO: use time!
+                if withwhat=='c' and ~isnan(datapar[withwhat][pop]).all(): # Use cost relationship
+                    output[pop, :] = datapar[withwhat][pop, :]
                 else: # Use parameter
                     if 't' in datapar.keys(): # It's a time parameter
                         output[pop,:] = smoothinterp(M.tvec, datapar.t[pop], datapar.p[pop]) # Use interpolation
@@ -47,8 +47,8 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
         else:
             output = zeros(npts)
             try:
-                if withwhat=='c' and ~isnan(datapar[withwhat][0]): # Use cost relationship
-                    output[:] = datapar[withwhat][0] # TODO: use time!
+                if withwhat=='c' and ~isnan(datapar[withwhat][0]).all(): # Use cost relationship
+                    output[:] = datapar[withwhat]
                 else: # Use parameter
                     if 't' in datapar.keys(): # It's a time parameter
                         output[:] = smoothinterp(M.tvec, datapar.t[0], datapar.p[0]) # Use interpolation
@@ -93,8 +93,8 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
     
     ## Sexual behavior parameters -- all are parameters so can loop over all
     M.circum    = dpar2mpar(P.circum,    withwhat) # Circumcision percentage
-    M.numcircum = dpar2mpar(P.numcircum, withwhat) # Circumcision number
-    M.numcircum *= 0 # Reset since prevalence data is required and overwrites data on numbers of circumcisions -- # TODO I think this is a bad idea
+#    M.numcircum = dpar2mpar(P.numcircum, withwhat) # Circumcision number
+#    M.numcircum *= 0 # Reset since prevalence data is required and overwrites data on numbers of circumcisions -- # TODO I think this is a bad idea
     M.numacts = struct()
     M.condom  = struct()
     M.numacts.reg = dpar2mpar(P.numactsreg, withwhat) # ...

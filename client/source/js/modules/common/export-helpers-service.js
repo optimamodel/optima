@@ -234,7 +234,7 @@ define(['angular', 'jquery', './svg-to-png', 'underscore'], function (angular, $
     */
     var pieExport = function (graph){
       var exportable = {
-        name: graph.options.title || "Allocation",
+        name: graph.options.title || graph.title || "Allocation",
         columns: []
       };
 

@@ -18,7 +18,7 @@ class ProjectTestCase(OptimaTestCase):
         response = self.login()
 
     def test_create_project(self):
-        response = self.client.post('/api/project/create/test', data = '{}')
+        response = self.api_create_project()
         self.assertEqual(response.status_code, 200)
 
     def test_retrieve_project_info_fails(self):
@@ -62,7 +62,7 @@ class ProjectTestCase(OptimaTestCase):
         import os
         import filecmp
         # create project
-        response = self.client.post('/api/project/create/test', data = '{}')
+        response = self.api_create_project()
         self.assertEqual(response.status_code, 200)
         # upload data
         example_excel_file_name = 'example.xlsx'
@@ -92,7 +92,7 @@ class ProjectTestCase(OptimaTestCase):
 
     def test_copy_project(self):
         # create project
-        response = self.client.post('/api/project/create/test', data = '{}')
+        response = self.api_create_project()
         self.assertEqual(response.status_code, 200)
         # upload data so that we can check the existence of data in the copied project
         example_excel_file_name = 'example.xlsx'
