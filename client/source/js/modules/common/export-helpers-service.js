@@ -249,6 +249,31 @@ define(['angular', 'jquery', './svg-to-png', 'underscore'], function (angular, $
     };
 
     /**
+    * Returns the normalized data ready to export for a stacked bar charts
+    */
+    var stackedBarsExport = function (chart){
+      var exportable = {
+        name: chart.options.title || chart.title || "Data",
+        columns: []
+      };
+
+      var xData = {};
+      xData.title = chart.options.xAxis.axisLabel;
+      xData.data = _(chart.data.bars).map(function(bar) { return bar[0]; });
+      exportable.columns.push(xData);
+
+      _(chart.options.legend).each(function(title, index) {
+        var yData = {};
+        yData.title = title;
+
+        yData.data = _(chart.data.bars).map(function(bar) { return bar[1][index]; });
+        exportable.columns.push(yData);
+      });
+
+      return exportable;
+    };
+
+    /**
      * Returns the normalized data ready to export from any type of chart.
      *
      * @param {object} chart - an object which must contain the chart data.
@@ -261,6 +286,7 @@ define(['angular', 'jquery', './svg-to-png', 'underscore'], function (angular, $
       if(_.isEqual(Object.keys(chart.data),["lines", "scatter"])) { return linesExport(chart); }
       if(_.isEqual(Object.keys(chart.data),["areas"])) { return areasExport(chart); }
       if(_.isEqual(Object.keys(chart.data),["slices"])) { return pieExport(chart); }
+      if(_.isEqual(Object.keys(chart.data),["bars"])) { return stackedBarsExport(chart); }
       if(_.isEqual(chart.data[0] && Object.keys(chart.data[0]),["axes"])) { return axesExport(chart); }
       return null;
     };

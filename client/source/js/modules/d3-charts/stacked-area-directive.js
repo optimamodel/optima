@@ -99,10 +99,11 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
       // since the areas are stacked we can use the highest point of the highest
       // area line to generate the maximum y scale
       var yMax = _(highestLine).max(function(dot){ return dot[1]; })[1];
+      var xMax = _(highestLine).last()[0];
 
       _(graphsScales).each(function (scale) {
-        scale.y.domain([0, Math.ceil(yMax)]);
-        scale.x.domain([Math.floor(highestLine[0][0]), scaleHelpers.flexCeil(_(highestLine).last()[0])]);
+        scale.y.domain([0, scaleHelpers.flexCeil(yMax)]);
+        scale.x.domain([Math.floor(highestLine[0][0]), scaleHelpers.flexCeil(xMax)]);
       });
 
       d3Charts.drawAxes(
