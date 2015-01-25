@@ -3,8 +3,6 @@ define(['./module', 'd3', 'underscore', './scale-helpers'], function (module, d3
 
   module.service('d3Charts', function () {
 
-
-
     /**
      * Returns a PieChart instance.
      *
