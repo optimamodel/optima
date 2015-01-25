@@ -28,58 +28,56 @@ define(['d3'], function (d3) {
       d.total = d.ages[d.ages.length - 1].y1;
     });
 
-    data.sort(function(a, b) { return b.total - a.total; });
-
     x.domain(data.map(function(d) { return d.State; }));
     y.domain([0, d3.max(data, function(d) { return d.total; })]);
 
     chart.append("g")
-    .attr("class", "x axis")
-    .attr("transform", "translate(0," + chartSize.height + ")")
-    .call(xAxis);
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + chartSize.height + ")")
+      .call(xAxis);
 
     chart.append("g")
-    .attr("class", "y axis")
-    .call(yAxis)
-    .append("text")
-    .attr("transform", "rotate(-90)")
-    .attr("y", 6)
-    .attr("dy", ".71em")
-    .style("text-anchor", "end")
-    .text("Population");
+      .attr("class", "y axis")
+      .call(yAxis)
+      .append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("y", 6)
+      .attr("dy", ".71em")
+      .style("text-anchor", "end")
+      .text("Population");
 
     var state = chart.selectAll(".state")
-    .data(data)
-    .enter().append("g")
-    .attr("class", "g")
-    .attr("transform", function(d) { return "translate(" + x(d.State) + ",0)"; });
+      .data(data)
+      .enter().append("g")
+      .attr("class", "g")
+      .attr("transform", function(d) { return "translate(" + x(d.State) + ",0)"; });
 
     state.selectAll("rect")
-    .data(function(d) { return d.ages; })
-    .enter().append("rect")
-    .attr("width", x.rangeBand())
-    .attr("y", function(d) { return y(d.y1); })
-    .attr("height", function(d) { return y(d.y0) - y(d.y1); })
-    .style("fill", function(d) { return color(d.name); });
+      .data(function(d) { return d.ages; })
+      .enter().append("rect")
+      .attr("width", x.rangeBand())
+      .attr("y", function(d) { return y(d.y1); })
+      .attr("height", function(d) { return y(d.y0) - y(d.y1); })
+      .style("fill", function(d) { return color(d.name); });
 
     var legend = chart.selectAll(".legend")
-    .data(color.domain().slice().reverse())
-    .enter().append("g")
-    .attr("class", "legend")
-    .attr("transform", function(d, i) { return "translate(0," + i * 20 + ")"; });
+      .data(color.domain().slice().reverse())
+      .enter().append("g")
+      .attr("class", "legend")
+      .attr("transform", function(d, i) { return "translate(0," + i * 20 + ")"; });
 
     legend.append("rect")
-    .attr("x", chartSize.width - 18)
-    .attr("width", 18)
-    .attr("height", 18)
-    .style("fill", color);
+      .attr("x", chartSize.width - 18)
+      .attr("width", 18)
+      .attr("height", 18)
+      .style("fill", color);
 
     legend.append("text")
-    .attr("x", chartSize.width - 24)
-    .attr("y", 9)
-    .attr("dy", ".35em")
-    .style("text-anchor", "end")
-    .text(function(d) { return d; });
+      .attr("x", chartSize.width - 24)
+      .attr("y", 9)
+      .attr("dy", ".35em")
+      .style("text-anchor", "end")
+      .text(function(d) { return d; });
   };
 
   return StackedBarChart;
