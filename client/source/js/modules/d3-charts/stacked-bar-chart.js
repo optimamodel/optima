@@ -51,15 +51,21 @@ define(['d3', 'underscore', './scale-helpers'], function (d3, _, scaleHelpers) {
       .filter(function(item, index) { return index % skipXElements === 0;})
       .value();
 
-    newScale.domain(xValues);
-
     var xRangeValues = _.chain(baseScale.range())
       .filter(function(x, index) { return index % skipXElements === 0;})
       // 2x 0.5 because we take half of the bar & the padding which is 0.5 of bar
       .map(function(x) { return Math.ceil(x + barWidth * 0.5 * 0.5); })
       .value();
 
+    // add line start & end to make sure the axis is drawn from beginning to end
+    xValues.unshift('');
+    xRangeValues.unshift(baseScale.rangeExtent()[0]);
+    xValues.push('');
+    xRangeValues.push(baseScale.rangeExtent()[1]);
+
+    newScale.domain(xValues);
     newScale.range(xRangeValues);
+
 
     return newScale;
   };
