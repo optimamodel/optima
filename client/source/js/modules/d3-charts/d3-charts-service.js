@@ -386,6 +386,8 @@ define(['./module', 'd3', 'underscore', './scale-helpers'], function (module, d3
       var xLabel = options.xAxis.axisLabel;
       var yLabel = options.yAxis.axisLabel;
 
+      // ticks & ticksFormat does not have an effect on ordinal scales and is
+      // simply ignored
       var xAxis = d3.svg.axis()
         .scale(scales.x)
         .tickFormat(options.xAxis.tickFormat)

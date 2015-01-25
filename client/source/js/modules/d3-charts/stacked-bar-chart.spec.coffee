@@ -18,7 +18,7 @@ define ['Source/modules/d3-charts/stacked-bar-chart'], (StackedBarChart) ->
         expect(chart).toBeDefined()
         expect(chart.draw).toBeDefined()
         expect(chart.yMax).toBeDefined()
-        expect(chart.scales).toBeDefined()
+        expect(chart.axisScales).toBeDefined()
 
       describe 'yMax', ->
 
@@ -30,7 +30,7 @@ define ['Source/modules/d3-charts/stacked-bar-chart'], (StackedBarChart) ->
           chart = createChart(data)
           expect(chart.yMax()).toBe(13)
 
-      describe 'scales', ->
+      describe 'axisScales', ->
 
         it 'should return an object with x & y functions', ->
           data = [
@@ -38,5 +38,5 @@ define ['Source/modules/d3-charts/stacked-bar-chart'], (StackedBarChart) ->
             [2002, [9, 2]]
           ]
           chart = createChart(data)
-          expect(typeof chart.scales().x).toBe('function')
-          expect(typeof chart.scales().y).toBe('function')
+          expect(typeof chart.axisScales().x).toBe('function')
+          expect(typeof chart.axisScales().y).toBe('function')

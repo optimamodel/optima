@@ -11,6 +11,7 @@ define(['./module', './scale-helpers', 'angular', './stacked-bar-chart'], functi
      * Draw the stacked bar chart
      */
     var drawGraph = function (data, options, rootElement) {
+      options.linesStyle = options.linesStyle || defaultColors;
       options = d3Charts.adaptOptions(options);
 
       // to prevent creating multiple graphs we want to remove the existing svg
@@ -46,7 +47,7 @@ define(['./module', './scale-helpers', 'angular', './stacked-bar-chart'], functi
       };
 
       d3Charts.drawAxes(
-        chart.scales(),
+        chart.axisScales(),
         options,
         axesGroup,
         chartSize

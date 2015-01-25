@@ -16,11 +16,50 @@ define(['d3', 'underscore', './scale-helpers'], function (d3, _, scaleHelpers) {
     });
   };
 
+  /**
+   * Returns the y value of the largest bar.
+   */
   var yMax = function (chartData) {
     return d3.max(chartData, function(d) {
       // take the largest entry from the bar
       return d.bar[d.bar.length - 1].y1;
     });
+  };
+
+  /**
+   * Returns a scale only having entries which have 50px distance to each other.
+   *
+   * This helper function is needed for ordinal scales which are very close.
+   * Without filtering out labels the x-axis labels would overlap.
+   */
+  var generateAxisScale = function(baseScale, chartData) {
+    // no need to filter the scale if there is only one entry
+    if (chartData.length < 2) { return baseScale; }
+
+    var barWidth = baseScale(chartData[1].x) - baseScale(chartData[0].x);
+
+    // we only want to take every x element to have enough space between the ticks
+    // If a bar is one pixel only every 50 tick is shown. If the bars are wider
+    // more ticks can be added by a factor of the barWidth
+    var skipXElements = Math.ceil(50 / barWidth);
+
+    var newScale = d3.scale.ordinal();
+
+    var xValues = _.chain(chartData)
+      .map(function(item) { return scaleHelpers.flexCeil(item.x); })
+      .filter(function(item, index) { return index % skipXElements === 0;})
+      .value();
+
+    newScale.domain(xValues);
+
+    var xRangeValues = _.chain(baseScale.range())
+      .filter(function(x, index) { return index % skipXElements === 0;})
+      .map(function(x) { return Math.ceil(x + barWidth/2); })
+      .value();
+
+    newScale.range(xRangeValues);
+
+    return newScale;
   };
 
   /**
@@ -35,16 +74,18 @@ define(['d3', 'underscore', './scale-helpers'], function (d3, _, scaleHelpers) {
       };
     });
 
-    var x = d3.scale.ordinal().rangeRoundBands([0, chartSize.width], 0.1);
-    var y = d3.scale.linear().rangeRound([chartSize.height, 0]);
+    var x = d3.scale.ordinal().rangeRoundBands([0, chartSize.width]);
     x.domain(chartData.map(function(d) { return d.x; }));
+
+    var y = d3.scale.linear().rangeRound([chartSize.height, 0]);
     y.domain([0, scaleHelpers.flexCeil(yMax(chartData))]);
 
     /**
-     * Returns an object containing x & y functions for scaling.
+     * Returns an object containing x & y functions for scaling the axis.
      */
-    this.scales = function () {
-      return { x: x, y: y };
+    this.axisScales = function () {
+      return { x: generateAxisScale(x, chartData), y: y };
+      // return { x: x, y: y };
     };
 
     /**
