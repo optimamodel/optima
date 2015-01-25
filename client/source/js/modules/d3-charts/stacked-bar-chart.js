@@ -1,4 +1,4 @@
-define(['d3', 'underscore'], function (d3, _) {
+define(['d3', 'underscore', './scale-helpers'], function (d3, _, scaleHelpers) {
   'use strict';
 
   /**
@@ -38,7 +38,7 @@ define(['d3', 'underscore'], function (d3, _) {
     var x = d3.scale.ordinal().rangeRoundBands([0, chartSize.width], 0.1);
     var y = d3.scale.linear().rangeRound([chartSize.height, 0]);
     x.domain(chartData.map(function(d) { return d.x; }));
-    y.domain([0, yMax(chartData)]);
+    y.domain([0, scaleHelpers.flexCeil(yMax(chartData))]);
 
     /**
      * Returns an object containing x & y functions for scaling.
