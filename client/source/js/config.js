@@ -30,12 +30,12 @@ define(['angular'], function (angular) {
           { id: 'future', name: 'Financial commitments for future PLHIV', annual: true, cumulative: true }
         ],
         financialAnnualCosts: [
-          {id:'total', name:'total amount', disabled: false},
-          {id:'gdp', name:'proportion of GDP', disabled: false},
-          {id:'revenue', name:'proportion of government revenue', disabled: false},
-          {id:'govtexpend', name:'proportion of government expenditure', disabled: false},
-          {id:'totalhealth', name:'proportion of total health expenditure', disabled: false},
-          {id:'domestichealth', name:'proportion of domestic health expenditure', disabled:false}
+          {id:'total', name:'Total amount', disabled: false},
+          {id:'gdp', name:'Proportion of GDP', disabled: false},
+          {id:'revenue', name:'Proportion of government revenue', disabled: false},
+          {id:'govtexpend', name:'Proportion of government expenditure', disabled: false},
+          {id:'totalhealth', name:'Proportion of total health expenditure', disabled: false},
+          {id:'domestichealth', name:'Proportion of domestic health expenditure', disabled:false}
         ],
         annualCost: 'total'
       }
