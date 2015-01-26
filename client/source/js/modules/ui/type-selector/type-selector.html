@@ -9,6 +9,14 @@
     </label>
   </div>
 
+  <div ng-if="timeVaryingOptimizationsIsVisible === true">
+    <label class="checkbox-inline">
+      <input type="checkbox" ng-model="types.timeVaryingOptimizations">
+      Time Varying Optimizations
+    </label>
+  </div>
+
+
   <div class="type-section" ng-repeat="type in types.population">
     <b>{{ type.name }}</b>
     <div>

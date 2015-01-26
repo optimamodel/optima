@@ -27,6 +27,10 @@ define(['./module'], function (module) {
           showPartInViews('plotUncertainties',[
             'analysis.optimization'
           ]);
+
+          showPartInViews('timeVaryingOptimizations',[
+            'analysis.optimization'
+          ]);
         });
     }
   ]);
