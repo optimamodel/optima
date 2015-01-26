@@ -3,14 +3,14 @@ define(['./module', 'd3', 'underscore', './scale-helpers'], function (module, d3
 
   module.service('d3Charts', function () {
 
-
-
     /**
      * Returns a PieChart instance.
      *
-     * Data has to be provided in the following format: {label: "xxzy", value: 44}
-     *
      * The label implementation is inspired by http://jsfiddle.net/thudfactor/HdwTH/
+     *
+     * @param {element} chart - element where to append the line.
+     * @param {object} chartSize - example: { width: 200, height: 100 }.
+     * @param {array} data - example: [{label: "Slice Name", value: 44}]
      */
     function PieChart(chart, chartSize, data) {
       var radius = Math.min(chartSize.width, chartSize.height) / 2;
@@ -176,6 +176,7 @@ define(['./module', 'd3', 'underscore', './scale-helpers'], function (module, d3
      * @param {string} colorClass - see available colors in chart/_color.scss.
      */
     function LineChart(chart, chartSize, colorClass) {
+
       var xScale, yScale;
 
       var uniqClassName = _.uniqueId('line_');
@@ -387,9 +388,8 @@ define(['./module', 'd3', 'underscore', './scale-helpers'], function (module, d3
       var xLabel = options.xAxis.axisLabel;
       var yLabel = options.yAxis.axisLabel;
 
-      var domain = scales.x.domain();
-      scales.x.domain([Math.floor(domain[0]), scaleHelpers.flexCeil(domain[1])]);
-
+      // ticks & ticksFormat does not have an effect on ordinal scales and is
+      // simply ignored
       var xAxis = d3.svg.axis()
         .scale(scales.x)
         .tickFormat(options.xAxis.tickFormat)
