@@ -10,19 +10,20 @@ No.;Parameter name;Location;Model variable name;Data variable name;Manual calibr
 7;Circumcision prevalence among males;Programs/scenarios;M.circum[:];sex.circum;;1;1;;
 8;Number of medical male circumcisions performed per year;Programs/scenarios;M.numcircum[:];sex.numcircum;;1;1;;1
 9;Ulcerative STI prevalence;Programs/scenarios;M.stiprevulc[:];epi.stiprevulc;;1;1;;
-10;Proportion of PLHIV aware of their HIV status;Programs/scenarios;M.propaware[:];--;;1;1;1;1
-11;Proportion of people who are tested for HIV each year;Programs/scenarios;M.hivtest[:];txrx.hivtest;;1;1;;
-12;Number of PLHIV on ART;Programs/scenarios;M.txtotal;txrx.numfirstline+txrx.numsecondline;;1;;;1
-13;Proportion of PLHIV on ART;Programs/scenarios;M.propart;--;;1;;1;1
-14;ART eligibility criterion;Programs/scenarios;M.txelig;txrx.txelig;;1;;1;1
-15;Proportion of risk encounters covered by PEP;Programs/scenarios;M.pep[:];txrx.pep;;1;1;;
-16;Number of injections per person per year;Programs/scenarios;M.numacts.inj[:];inj.numinject;;1;1;;1
-17;Proportion of injections using receptively shared needle-syringes;Programs/scenarios;M.sharing[:];inj.sharing;;1;1;;1
-18;Proportion of people on OST;Programs/scenarios;M.propost[:];--;;1;1;1;1
-19;Number of people on OST;Programs/scenarios;M.numost[:];inj.numost;;1;1;;1
-20;Proportion of pregnant women receiving Option B/B+;Programs/scenarios;M.proppmtct;---;;1;;1;1
-21;Number of pregnant women receiving Option B/B+;Programs/scenarios;M.numpmtct;txrx.numpmtct;;1;;;1
-22;Proportion of mothers who breastfeed;Programs/scenarios;M.propbreast;txrx.breast;;1;;1;1
+10;Discharging STI prevalence;Programs/scenarios;M.stiprevdis[:];epi.stiprevdis;;1;1;;
+11;Proportion of PLHIV aware of their HIV status;Programs/scenarios;M.propaware[:];--;;1;1;1;1
+12;Proportion of people who are tested for HIV each year;Programs/scenarios;M.hivtest[:];txrx.hivtest;;1;1;;
+13;Number of PLHIV on ART;Programs/scenarios;M.txtotal;txrx.numfirstline+txrx.numsecondline;;1;;;1
+14;Proportion of PLHIV on ART;Programs/scenarios;M.propart;--;;1;;1;1
+15;ART eligibility criterion;Programs/scenarios;M.txelig;txrx.txelig;;1;;1;1
+16;Proportion of risk encounters covered by PEP;Programs/scenarios;M.pep[:];txrx.pep;;1;1;;
+17;Number of injections per person per year;Programs/scenarios;M.numacts.inj[:];inj.numinject;;1;1;;1
+18;Proportion of injections using receptively shared needle-syringes;Programs/scenarios;M.sharing[:];inj.sharing;;1;1;;1
+19;Proportion of people on OST;Programs/scenarios;M.propost[:];--;;1;1;1;1
+20;Number of people on OST;Programs/scenarios;M.numost[:];inj.numost;;1;1;;1
+21;Proportion of pregnant women receiving Option B/B+;Programs/scenarios;M.proppmtct;---;;1;;1;1
+22;Number of pregnant women receiving Option B/B+;Programs/scenarios;M.numpmtct;txrx.numpmtct;;1;;;1
+23;Proportion of mothers who breastfeed;Programs/scenarios;M.propbreast;txrx.breast;;1;;1;1
 1;HIV-related mortality rate, AIDS stage;Manual calibration;M.const.death.aids;const.death.aids;1;;;;
 2;Per-act efficacy of circumcision;Manual calibration;M.const.eff.circ;const.eff.circ;1;;;;
 3;Per-act efficacy of condoms;Manual calibration;M.const.eff.condom;const.eff.condom;1;;;;
