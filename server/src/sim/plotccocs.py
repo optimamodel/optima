@@ -6,9 +6,9 @@ Version: 2015jan19 by robynstuart
 from matplotlib.pylab import figure, plot, hold, xlabel, ylabel, title, xlim, ylim
 from printv import printv
 
-default_progname = 'MSM programs'
-default_ccparams = [1.0, 0.2, 25000.0, None, None] #
-default_ccplot = [1e5, None, 0]
+default_progname = 'ART'
+default_ccparams = [2.0, 0.2, 2500000.0, None, None] #
+default_ccplot = [1e4, None, 1]
 default_coparams = [0.3, 0.5, 0.7, 0.9] 
 default_effect = [['sex', 'condomcas'], [u'MSM']] # D.programs[default_progname]['effects'][0] 
 default_artelig = range(6,31)
