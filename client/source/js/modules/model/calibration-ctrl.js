@@ -241,18 +241,18 @@ define(['./module', 'angular'], function (module, angular) {
       });
 
       _($scope.types.financial).each(function (type) {
-        // costcur = cost for current people living with HIV
-        // costfut = cost for future people living with HIV
-        // ann = annual costs
-        // cum = cumulative costs
+        // existing = cost for current people living with HIV
+        // future = cost for future people living with HIV
+        // costann = annual costs
+        // costcum = cumulative costs
         if (type.annual) {
-          var annualData = response[type.id].ann;
-          charts.push(generateFinancialChart(annualData));
+          var annualData = response.costann[type.id][$scope.types.annualCost];
+          if(annualData && annualData.legend) charts.push(generateFinancialChart(annualData));
         }
 
         if (type.cumulative) {
-          var cumulativeData = response[type.id].cum;
-          charts.push(generateFinancialChart(cumulativeData));
+          var cumulativeData = response.costcum[type.id];
+          if (cumulativeData) charts.push(generateFinancialChart(cumulativeData));
         }
       });
 
@@ -261,6 +261,8 @@ define(['./module', 'angular'], function (module, angular) {
 
     var updateCharts = function (data) {
       if (data!== undefined && data!==null && data.graph !== undefined) {
+        graphTypeFactory.enableAnnualCostOptions($scope.types, data.graph);
+
         $scope.charts = prepareCharts(data.graph);
         $scope.parameters.cache.response = data;
         $scope.canDoFitting = true;
