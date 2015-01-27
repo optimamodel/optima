@@ -27,7 +27,7 @@ D = updatedata(D, verbose=verbose)
 
 print('\n\n\n3. Running simulation...')
 from runsimulation import runsimulation
-D = runsimulation(D, startyear=2000, endyear=2015, verbose=verbose)
+D = runsimulation(D, verbose=verbose)
 
 # Actually run makeccocs
 from plotccocs import plotallcco

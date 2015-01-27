@@ -25,12 +25,7 @@ from updatedata import updatedata
 D = updatedata(D, verbose=verbose)
 
 
-print('\n\n\n3. Running simulation...')
-from runsimulation import runsimulation
-D = runsimulation(D, startyear=2000, endyear=2015, verbose=verbose)
-
-
-print('\n\n\n4. Viewing results...')
+print('\n\n\n3. Viewing results...')
 whichgraphs = {'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 'daly':[0,1], 'death':[0,1], 'dx':[0,1], 'tx1':[0,1], 'tx2':[0,1]}
 from viewresults import viewuncerresults
 viewuncerresults(D.plot.E, whichgraphs=whichgraphs, startyear=2000, endyear=2015, onefig=True, verbose=verbose)
