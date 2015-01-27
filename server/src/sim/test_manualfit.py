@@ -3,7 +3,7 @@ TEST_MANUALFIT
 
 This function tests that the manual fitting is working.
 
-Version: 2014nov29 by cliffk
+Version: 2015jan27 by cliffk
 """
 
 
@@ -44,7 +44,7 @@ Plist = [{'name':['const','trans','mmi'], 'data':5e-4}, \
          {'name':['const','trans','mmr'], 'data':1e-3}]
 
 # Artifical change just to demonstrate changing M
-tmp = zeros((D.G.npops, len(D.opt.tvec)))
+tmp = zeros((D.G.npops, len(D.opt.partvec)))
 for p in range(D.G.npops): tmp[p,:] = 200+(D.opt.tvec-2000)*50
 Mlist = [{'name':['numacts','com'], 'data':tmp}]
 

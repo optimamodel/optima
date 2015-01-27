@@ -2,6 +2,8 @@
 Created on Sat Nov 29 17:40:34 2014
 
 @author: robynstuart
+
+Version: 2015jan27
 """
 from numpy import linspace, arange, append
 from setoptions import setoptions
@@ -28,8 +30,8 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False):
     # Set up variables for time indexing
     datatvec = arange(D.G.datastart, D.G.dataend+D.opt.dt, D.opt.dt)
     ndatapts = len(datatvec)
-    opttvec = D.opt.tvec
-    noptpts = D.opt.npts
+    simtvec = D.opt.simtvec
+    noptpts = len(simtvec)
 
     # Get most recent ART unit costs
     progname = 'ART'
@@ -100,7 +102,7 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False):
             if plottype=='annual':
                 for yscalefactor in costdisplays:
                     plotdata[plottype][plotsubtype][yscalefactor] = {}
-                    plotdata[plottype][plotsubtype][yscalefactor]['xlinedata'] = opttvec
+                    plotdata[plottype][plotsubtype][yscalefactor]['xlinedata'] = simtvec
                     plotdata[plottype][plotsubtype][yscalefactor]['xlabel'] = 'Year'
                     plotdata[plottype][plotsubtype][yscalefactor]['title'] = 'Annual HIV-related financial commitments - ' + plotsubtype + 'infections'
                     if yscalefactor=='total':                    
@@ -116,7 +118,7 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False):
                         if not plotsubtype=='future': plotdata[plottype][plotsubtype][yscalefactor]['ylinedata'] = [(hivcosts[plotsubtype][j] + artcosts[plotsubtype][j])/yscale[j] for j in range(noptpts)] 
                         plotdata[plottype][plotsubtype][yscalefactor]['ylabel'] = 'Proportion of ' + yscalefactor
             else:
-                plotdata[plottype][plotsubtype]['xlinedata'] = opttvec
+                plotdata[plottype][plotsubtype]['xlinedata'] = simtvec
                 plotdata[plottype][plotsubtype]['xlabel'] = 'Year'
                 plotdata[plottype][plotsubtype]['ylabel'] = 'USD'
                 plotdata[plottype][plotsubtype]['title'] = 'Cumulative HIV-related financial commitments - ' + plotsubtype + 'infections'
