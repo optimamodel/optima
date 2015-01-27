@@ -27,7 +27,7 @@ def setoptions(opt=None, **kwargs):
         if key in opt.keys():
             opt[key] = value # Update value
     
-    opt.partvec = arange(opt.startyear, opt.endyear+opt.dt, opt.dt) # Recalculate time vector
+    opt.partvec = arange(opt.parstartyear, opt.parendyear+opt.dt, opt.dt) # Recalculate time vector
     opt.simtvec = arange(max(opt.parstartyear,opt.simstartyear), min(opt.parendyear,opt.simendyear)+opt.dt, opt.dt) # Recalculate time vector using whatever's smaller, regular years or sim years
     
     return opt
