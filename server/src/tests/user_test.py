@@ -10,7 +10,6 @@ class UserTestCase(OptimaTestCase):
     Test class for the user blueprint covering all /api/user endpoints.
 
     """
-
     def create_admin_user(self):
         from optima.dbconn import db
         from optima.dbmodels import UserDb
@@ -47,6 +46,22 @@ class UserTestCase(OptimaTestCase):
         assert(data["name"]=="admin")
         assert(data["is_admin"]==True)
 
+    def test_list_users_as_admin(self):
+        self.create_admin_user()
+        response = self.create_user()
+        response = self.logout()
+        response = self.login(self.admin_email, self.admin_password)
+        response = self.client.get('/api/user/list')
+        assert(response.status_code==200)
+        data = json.loads(response.data)
+        users = data.get('users', None)
+        assert(users is not None)
+        assert(len(users)==2)
+        test_user = users[1]
+        assert(test_user['id']==2)
+        assert(test_user['email']=="test@test.com")
+        assert(test_user['name'] == "test")
+        assert('password' not in test_user)
 
     def test_list_users(self):
         self.create_admin_user()
@@ -62,6 +77,28 @@ class UserTestCase(OptimaTestCase):
         assert(test_user['email']=="test@test.com")
         assert(test_user['name'] == "test")
         assert('password' not in test_user)
+
+    def test_list_all_projects(self):
+        other_email = 'test2@test.com'
+        self.create_admin_user()
+        #create two users
+        response = self.create_user()
+        response = self.api_create_project()
+        response = self.logout()
+        #log in as second user and create a project
+        response = self.create_user(name='test2', email=other_email)
+        response = self.api_create_project()
+        response = self.logout()
+        response = self.login(self.admin_email, self.admin_password)
+        response = self.client.get('/api/project/list')
+        assert(response.status_code==200)
+        data = json.loads(response.data)
+        projects = data.get('projects')
+        assert(projects is not None)
+        assert(len(projects)==2)
+        assert('user_id' in projects[0] and 'user_id' in projects[1])
+        user_ids = [p['user_id'] for p in projects]
+        assert(set(user_ids)==set([2,3]))
 
     def test_delete_user(self):
         other_email = 'test2@test.com'

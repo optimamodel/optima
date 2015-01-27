@@ -46,18 +46,22 @@ def report_exception(reason = None):
         return __report_exception
     return _report_exception
 
-#verification by secret (hashed pw)
-def verify_request(api_call):
+#verification by secret (hashed pw) or by being a user with admin rights
+def verify_admin_request(api_call):
     @wraps(api_call)
-    def _verify_request(*args, **kwargs):
-        secret = request.args.get('secret','')
-        u = UserDb.query.filter_by(password = secret, is_admin=True).first()
+    def _verify_admin_request(*args, **kwargs):
+        u = None
+        if (not current_user.is_anonymous()) and current_user.is_authenticated() and current_user.is_admin:
+            u = current_user
+        else:
+            secret = request.args.get('secret','')
+            u = UserDb.query.filter_by(password = secret, is_admin=True).first()
         if u is None:
             abort(401)
         else:
             current_app.logger.debug("admin_user: %s %s %s" % (u.name, u.password, u.email))
             return api_call(*args, **kwargs)
-    return _verify_request
+    return _verify_admin_request
 
 
 """ Finds out if this file is allowed to be uploaded """

@@ -244,8 +244,11 @@ def getProjectList():
     # Get current user
     if current_user.is_anonymous() == False:
 
-        # Get projects for current user
-        projects = ProjectDb.query.filter_by(user_id=current_user.id)
+        # Get projects for current user or for all users, if the user is admin
+        if current_user.is_admin:
+            projects = ProjectDb.query.all()
+        else:
+            projects = ProjectDb.query.filter_by(user_id=current_user.id)
         for project in projects:
             project_data = {
                 'status': "OK",
@@ -257,6 +260,7 @@ def getProjectList():
                 'creation_time': project.creation_time,
                 'data_upload_time': project.data_upload_time()
             }
+            if current_user.is_admin: project_data['user_id'] = project.user_id
             projects_data.append(project_data)
 
     return jsonify({"projects": projects_data})
