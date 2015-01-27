@@ -78,7 +78,7 @@ def optimize(D, objectives=None, constraints=None, ntimepm=1, timelimit=60, verb
     def objectivecalc(optimparams):
         """ Calculate the objective function """
 
-        thisalloc = timevarying(optimparams, ntimepm=ntimepm, nprogs=nprogs, tvec=D.opt.simtvec, totalspend=totalspend)        
+        thisalloc = timevarying(optimparams, ntimepm=ntimepm, nprogs=nprogs, tvec=D.opt.partvec, totalspend=totalspend)        
         newD = deepcopy(D)
         newD, newcov, newnonhivdalysaverted = getcurrentbudget(newD, thisalloc)
         newD.M = makemodelpars(newD.P, newD.opt, withwhat='c', verbose=0)
@@ -123,7 +123,7 @@ def optimize(D, objectives=None, constraints=None, ntimepm=1, timelimit=60, verb
     
     # Update the model
     for i, params in enumerate([origalloc, optparams]):
-        alloc = timevarying(params, ntimepm=len(params)/nprogs, nprogs=nprogs, tvec=D.opt.simtvec, totalspend=totalspend)            
+        alloc = timevarying(params, ntimepm=len(params)/nprogs, nprogs=nprogs, tvec=D.opt.partvec, totalspend=totalspend)            
         D, D.A[i].coverage, D.A[i].nonhivdalysaverted = getcurrentbudget(D, alloc)
         D.M = makemodelpars(D.P, D.opt, withwhat='c', verbose=2)
         D.A[i].S = model(D.G, D.M, D.F[0], D.opt, verbose=verbose)
