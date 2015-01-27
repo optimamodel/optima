@@ -28,8 +28,8 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False):
     # Set up variables for time indexing
     datatvec = arange(D.G.datastart, D.G.dataend+D.opt.dt, D.opt.dt)
     ndatapts = len(datatvec)
-    opttvec = D.opt.tvec
-    noptpts = D.opt.npts
+    opttvec = S.tvec
+    noptpts = len(S.tvec)
 
     # Get most recent ART unit costs
     progname = 'ART'
@@ -54,16 +54,18 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False):
         socialcosts = sanitize(D.data.econ.social.past[healthno])
         othercosts = sanitize(D.data.econ.health.past[healthno])
 
+        # Extrapolating
+        for i in range(int(D.S.tvec[-1]-D.G.dataend)):
+            othercosts = append(othercosts,[othercosts[-1]*(1+D.data.econ.health.future[0][0])])
+            socialcosts = append(socialcosts,[socialcosts[-1]*(1+D.data.econ.health.future[0][0])])
+
         # Interpolating
-        newx = linspace(0,1,ndatapts)
+        newx = linspace(0,1,noptpts)
         origx = linspace(0,1,len(socialcosts))
         socialcosts = smoothinterp(newx, origx, socialcosts, smoothness=5)
         origx = linspace(0,1,len(othercosts))
         othercosts = smoothinterp(newx, origx, othercosts, smoothness=5)
 
-        # Extrapolating... holding constant for now. #TODO use growth rates when they have been added to the excel sheet
-        othercosts = append(othercosts,[othercosts[-1]]*(noptpts-ndatapts))
-        socialcosts = append(socialcosts,[socialcosts[-1]]*(noptpts-ndatapts))
         costs = [(socialcosts[j] + othercosts[j]) for j in range(noptpts)]
 
         # Calculate annual non-treatment costs for all PLHIV under the baseline sim and the zero transmission sim
@@ -109,10 +111,10 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False):
                     else:
                         yscale = sanitize(D.data.econ[yscalefactor].past)
                         if isinstance(yscale,int): continue #raise Exception('No data have been provided for this varaible, so we cannot display the costs as a proportion of this')
+                        for i in range(int(D.S.tvec[-1]-D.G.dataend)):
+                            yscale = append(yscale,[yscale[-1]*(1+D.data.econ[yscalefactor].future[0][0])])
                         origx = linspace(0,1,len(yscale))
-                        yscale = smoothinterp(newx, origx, yscale, smoothness=5)
-                        yscale = append(yscale,[yscale[-1]]*(noptpts-ndatapts))
-
+                        yscale = smoothinterp(newx, origx, yscale, smoothness=5)                            
                         if not plotsubtype=='future': plotdata[plottype][plotsubtype][yscalefactor]['ylinedata'] = [(hivcosts[plotsubtype][j] + artcosts[plotsubtype][j])/yscale[j] for j in range(noptpts)] 
                         plotdata[plottype][plotsubtype][yscalefactor]['ylabel'] = 'Proportion of ' + yscalefactor
             else:
