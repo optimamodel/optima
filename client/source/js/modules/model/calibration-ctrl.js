@@ -261,11 +261,8 @@ define(['./module', 'angular'], function (module, angular) {
 
     var updateCharts = function (data) {
       if (data!== undefined && data!==null && data.graph !== undefined) {
-         _($scope.types.financialAnnualCosts).each(function(entry) {
-          if (!data.graph.costann.existing[entry.id] || !data.graph.costann.existing[entry.id]['legend']) {
-            entry.disabled = true;
-          }
-        });
+        graphTypeFactory.enableAnnualCostOptions($scope.types, data.graph);
+
         $scope.charts = prepareCharts(data.graph);
         $scope.parameters.cache.response = data;
         $scope.canDoFitting = true;

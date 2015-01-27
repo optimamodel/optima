@@ -115,13 +115,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           if (!response) {
             return graphs;
           }
-          _($scope.types.financialAnnualCosts).each(function(entry) {
-            if (!response.costann.existing[entry.id]
-            || !response.costann.existing[entry.id]['legend']
-            || !response.costann.existing[entry.id]['legend'].length) {
-              entry.disabled = true;
-            }
-          });
+          graphTypeFactory.enableAnnualCostOptions($scope.types, response);
 
           var graphs = [];
 
