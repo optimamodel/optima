@@ -124,10 +124,10 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False):
                 plotdata[plottype][plotsubtype]['title'] = 'Cumulative HIV-related financial commitments - ' + plotsubtype + ' infections'
                 if not plotsubtype=='future': plotdata[plottype][plotsubtype]['ylinedata'] = list(accumu([hivcosts[plotsubtype][j] + artcosts[plotsubtype][j] for j in range(noptpts)]))
 
-    plotdata['cumulative']['future']['ylinedata'] = [plotdata['cumulative']['total']['ylinedata'][j] - plotdata['cumulative']['existing']['ylinedata'][j] for j in range(noptpts)]
     for yscalefactor in costdisplays:
         if 'ylinedata' in plotdata['annual']['total'][yscalefactor].keys():
-            plotdata['annual']['future'][yscalefactor]['ylinedata'] = [plotdata['annual']['total'][yscalefactor]['ylinedata'][j] - plotdata['annual']['existing'][yscalefactor]['ylinedata'][j] for j in range(noptpts)]
+            plotdata['annual']['future'][yscalefactor]['ylinedata'] = [max(0.0,plotdata['annual']['total'][yscalefactor]['ylinedata'][j] - plotdata['annual']['existing'][yscalefactor]['ylinedata'][j]) for j in range(noptpts)]
+    plotdata['cumulative']['future']['ylinedata'] = list(accumu(plotdata['annual']['future']['total']['ylinedata']))
 
     return plotdata
 
