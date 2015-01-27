@@ -37,7 +37,7 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False):
     artunitcost = sanitize([D.data.costcov.cost[prognumber][j]/D.data.costcov.cov[prognumber][j] for j in range(len(D.data.costcov.cov[prognumber]))])[-1]
 
     # Run a simulation with the force of infection set to zero from postyear... 
-    opt = setoptions(startyear=D.opt.startyear, endyear=D.opt.endyear, nsims=1, turnofftrans=postyear)
+    opt = setoptions(nsims=1, turnofftrans=postyear)
     from model import model
     S0 = model(D.G, D.M, D.F[0], opt, initstate=None)
 

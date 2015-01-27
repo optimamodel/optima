@@ -1,11 +1,10 @@
 from printv import printv
 from bunch import Bunch as struct
 from copy import deepcopy
-from matplotlib.pylab import show, figure, subplot, plot, axis, xlim, ylim, legend
 from numpy import array, ones, zeros, concatenate
 
-default_startyear = 2000
-default_endyear = 2030
+default_simstartyear = 2000
+default_simendyear = 2030
 
 def optimize(D, objectives=None, constraints=None, ntimepm=1, timelimit=60, verbose=2):
     """
@@ -33,9 +32,9 @@ def optimize(D, objectives=None, constraints=None, ntimepm=1, timelimit=60, verb
     
     # Set options to update year range
     from setoptions import setoptions
-    startyear = objectives.get("year").get("start") or default_startyear
-    endyear = objectives.get("year").get("end") or default_endyear
-    D.opt = setoptions(D.opt, startyear=startyear, endyear=endyear)
+    simstartyear = objectives.get("year").get("start") or default_simstartyear
+    simendyear = objectives.get("year").get("end") or default_simendyear
+    D.opt = setoptions(D.opt, simstartyear=simstartyear, simendyear=simendyear)
     
     # Make sure objectives and constraints exist
     if not isinstance(objectives, struct):  objectives = defaultobjectives(D, verbose=verbose)
