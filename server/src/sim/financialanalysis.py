@@ -51,8 +51,8 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False):
     for healthno, healthstate in enumerate(D.G.healthstates):
 
         # Remove NaNs from data
-        socialcosts = sanitize(D.data.econ.social[healthno])
-        othercosts = sanitize(D.data.econ.health[healthno])
+        socialcosts = sanitize(D.data.econ.social.past[healthno])
+        othercosts = sanitize(D.data.econ.health.past[healthno])
 
         # Interpolating
         newx = linspace(0,1,ndatapts)
@@ -107,7 +107,7 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False):
                         if not plotsubtype=='future': plotdata[plottype][plotsubtype][yscalefactor]['ylinedata'] = [(hivcosts[plotsubtype][j] + artcosts[plotsubtype][j]) for j in range(noptpts)]
                         plotdata[plottype][plotsubtype][yscalefactor]['ylabel'] = 'USD'
                     else:
-                        yscale = sanitize(D.data.econ[yscalefactor])
+                        yscale = sanitize(D.data.econ[yscalefactor].past)
                         if isinstance(yscale,int): continue #raise Exception('No data have been provided for this varaible, so we cannot display the costs as a proportion of this')
                         origx = linspace(0,1,len(yscale))
                         yscale = smoothinterp(newx, origx, yscale, smoothness=5)
