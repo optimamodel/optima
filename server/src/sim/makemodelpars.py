@@ -8,14 +8,14 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
     """
     Prepares model parameters to run the simulation.
     
-    Version: 2014nov05
+    Version: 2015jan27
     """
 
     printv('Making model parameters...', 1, verbose)
     
     M = struct()
     M.__doc__ = 'Model parameters to be used directly in the model, calculated from data parameters P.'
-    M.tvec = opt.tvec # Store time vector with the model parameters
+    M.tvec = opt.partvec # Store time vector with the model parameters
     npts = len(M.tvec) # Number of time points # TODO probably shouldn't be repeated from model.m
     
     

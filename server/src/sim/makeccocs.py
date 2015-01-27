@@ -533,59 +533,6 @@ def makeallccocs(D=None, verbose=2):
     return D
 
 ###############################################################################
-def cc2eqn(x, p):
-    '''
-    2-parameter equation defining cc curves.
-    
-    x is total cost, p is a list of parameters (of length 2):
-        p[0] = saturation
-        p[1] = growth rate
-    Returns y which is coverage.
-    '''
-    y =  2*p[0] / (1 + exp(-p[1]*x)) - p[0]
-    return y
-    
-###############################################################################
-def cco2eqn(x, p):
-    '''
-    Equation defining cco curves.
-    '''
-    y = (p[3]-p[2]) * ( 2*p[0] / (1 + exp(-p[1]*x)) - p[0]) + p[2]
-    return y
-
-###############################################################################
-def cceqn(x, p, eps=1e-3):
-    '''
-    3-parameter equation defining cc curves.
-
-    x is total cost, p is a list of parameters (of length 3):
-        p[0] = saturation
-        p[1] = inflection point
-        p[2] = growth rate... 
-
-    Returns y which is coverage.
-    '''
-    y = p[0] / (1 + exp((log(p[1])-nplog(x))/max(1-p[2],eps)))
-
-    return y
-    
-###############################################################################
-def ccoeqn(x, p):
-    '''
-    Equation defining cco curves.
-
-    x is total cost, p is a list of parameters (of length 3):
-        p[0] = saturation
-        p[1] = inflection point
-        p[2] = growth rate...
-
-    Returns y which is coverage.
-    '''
-    y = (p[4]-p[3]) * (p[0] / (1 + exp((log(p[1])-nplog(x))/(1-p[2])))) + p[3]
-
-    return y
-
-###############################################################################
 def getcoverage(D=None, params=[], popadj=0, artelig=default_artelig, progname=default_progname):
     '''
     Get coverage levels.

@@ -314,6 +314,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
 
       _($scope.types.population).each(function (type) {
 
+        if (type === undefined) return;
         var data = response[type.id];
         if (data !== undefined) {
 

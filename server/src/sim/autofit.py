@@ -1,10 +1,10 @@
-def autofit(D, timelimit=60, startyear=2000, endyear=2015, verbose=2):
+def autofit(D, timelimit=60, simstartyear=2000, simendyear=2015, verbose=2):
     """
     Automatic metaparameter fitting code:
         D is the project data structure
         timelimit is the maximum time limit for fitting in seconds
-        startyear is the year to begin running the model
-        endyear is the year to stop running the model
+        simstartyear is the year to begin running the model
+        simendyear is the year to stop running the model
         verbose determines how much information to print.
         
     Version: 2014nov30 by cliffk
@@ -20,7 +20,7 @@ def autofit(D, timelimit=60, startyear=2000, endyear=2015, verbose=2):
     
     # Set options to update year range
     from setoptions import setoptions
-    D.opt = setoptions(D.opt, startyear=startyear, endyear=endyear)
+    D.opt = setoptions(D.opt, simstartyear=simstartyear, simendyear=simendyear)
     
     def errorcalc(Flist):
         """ Calculate the error between the model and the data """
@@ -35,7 +35,7 @@ def autofit(D, timelimit=60, startyear=2000, endyear=2015, verbose=2):
         dx[0].data = struct()
         dx[0].model = struct()
         dx[0].data.x, dx[0].data.y = extractdata(D.G.datayears, D.data.opt.numdiag[0])
-        dx[0].model.x = D.opt.tvec
+        dx[0].model.x = S.tvec
         dx[0].model.y = S.dx.sum(axis=0)
         
         # Prevalence data
@@ -44,14 +44,14 @@ def autofit(D, timelimit=60, startyear=2000, endyear=2015, verbose=2):
             prev[p].data = struct()
             prev[p].model = struct()
             prev[p].data.x, prev[p].data.y = extractdata(D.G.datayears, D.data.key.hivprev[0][p]) # The first 0 is for "best"
-            prev[p].model.x = D.opt.tvec
+            prev[p].model.x = S.tvec
             prev[p].model.y = S.people[1:,p,:].sum(axis=0) / S.people[:,p,:].sum(axis=0) # This is prevalence
         
         mismatch = 0
         for base in [dx, prev]:
             for ind in range(len(base)):
                 for y,year in enumerate(base[ind].data.x):
-                    modelind = findinds(D.opt.tvec, year)
+                    modelind = findinds(S.tvec, year)
                     if len(modelind)>0: # TODO Cliff check
                         mismatch += abs(base[ind].model.y[modelind] - base[ind].data.y[y]) / mean(base[ind].data.y+eps)
 
