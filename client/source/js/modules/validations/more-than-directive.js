@@ -17,7 +17,7 @@ define(['angular'], function (angular) {
         link: function (scope, element, attrs, ctrl) {
           var updateValidity = function (highValue, lowValue) {
             var isValid = highValue > lowValue;
-            var canBeEmpty = !element.required && (highValue === undefined || lowValue === undefined || highValue == '' || highValue == null);
+            var canBeEmpty = !element.required && (highValue === undefined || lowValue === undefined || highValue === '' || highValue === null);
             ctrl.$setValidity('moreThan', isValid || canBeEmpty);
           };
 

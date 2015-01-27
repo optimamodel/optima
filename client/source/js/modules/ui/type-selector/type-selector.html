@@ -1,5 +1,6 @@
 <div class="section cf" ng-if="typeSelectorIsVisible">
-  <h3>Results</h3>
+
+  <h3>Epidemiological results</h3>
 
   <div ng-if="plotUncertaintiesIsVisible === true">
     <label class="checkbox-inline">
@@ -11,7 +12,7 @@
   <div ng-if="timeVaryingOptimizationsIsVisible === true">
     <label class="checkbox-inline">
       <input type="checkbox" ng-model="types.timeVaryingOptimizations">
-      Time Varying Optimizations
+      Time varying optimizations
     </label>
   </div>
 
@@ -38,6 +39,8 @@
     </div>
   </div>
 
+  <h3>Financial commitment results</h3>
+
   <div class="type-section" ng-repeat="type in types.financial" >
     <b>{{ type.name }}</b>
     <div>
@@ -53,4 +56,10 @@
       </label>
     </div>
   </div>
+  <b>Display annual costs as:</b>
+  <div ng-repeat="financialType in types.financialAnnualCosts">
+    <input type="radio" name="annualCost" ng-model="types.annualCost" value="{{financialType.id}}" ng-disabled="financialType.disabled"/>
+    <label>{{financialType.name}}</label>
+  </div>
+
 </div>

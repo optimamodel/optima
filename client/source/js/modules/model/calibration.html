@@ -6,12 +6,12 @@
         <p ng-show="needData" class="error-hint">Please upload Optima spreadsheet first.</p>
         <div class="2">
           <input class="txbox" name="periodStart" type="number" placeholder="Start year" ng-model="simulationOptions.startyear" min="1950" max="2100">
-          <error-messages for="periodStart" rules="{min:1950, max:2100, required: 'Please provide a value'}"></error-messages>
+          <error-messages for="periodStart" rules="{min:1950, max:2100}"></error-messages>
 
         </div>
         <div class="2">
-          <input class="txbox" name="periodEnd" type="number" name="endYear" placeholder="End year" ng-model="simulationOptions.endyear" more-than="G.dataend" min="1950" max="2100">
-          <error-messages for="periodEnd" rules="{min:1950, max:2100, required: 'Please provide a value'}"></error-messages>
+          <input class="txbox" name="periodEnd" type="number" name="endYear" placeholder="End year" ng-model="simulationOptions.endyear" more-than="simulationOptions.startyear" min="1950" max="2100">
+          <error-messages for="periodEnd" rules="{min:1950, max:2100, moreThan: 'start year'}"></error-messages>
         </div>
         <div class="8">
           <button class="btn" ng-disabled="needData || CalibrationForm.$invalid">View simulation</button>
