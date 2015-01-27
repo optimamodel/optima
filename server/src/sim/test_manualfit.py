@@ -45,7 +45,7 @@ Plist = [{'name':['const','trans','mmi'], 'data':5e-4}, \
 
 # Artifical change just to demonstrate changing M
 tmp = zeros((D.G.npops, len(D.opt.partvec)))
-for p in range(D.G.npops): tmp[p,:] = 200+(D.opt.tvec-2000)*50
+for p in range(D.G.npops): tmp[p,:] = 200+(D.opt.partvec-2000)*50
 Mlist = [{'name':['numacts','com'], 'data':tmp}]
 
 
