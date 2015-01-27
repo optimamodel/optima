@@ -1,10 +1,10 @@
-def autofit(D, timelimit=60, startyear=2000, endyear=2015, verbose=2):
+def autofit(D, timelimit=60, simstartyear=2000, simendyear=2015, verbose=2):
     """
     Automatic metaparameter fitting code:
         D is the project data structure
         timelimit is the maximum time limit for fitting in seconds
-        startyear is the year to begin running the model
-        endyear is the year to stop running the model
+        simstartyear is the year to begin running the model
+        simendyear is the year to stop running the model
         verbose determines how much information to print.
         
     Version: 2014nov30 by cliffk
@@ -20,7 +20,7 @@ def autofit(D, timelimit=60, startyear=2000, endyear=2015, verbose=2):
     
     # Set options to update year range
     from setoptions import setoptions
-    D.opt = setoptions(D.opt, startyear=startyear, endyear=endyear)
+    D.opt = setoptions(D.opt, simstartyear=simstartyear, simendyear=simendyear)
     
     def errorcalc(Flist):
         """ Calculate the error between the model and the data """

@@ -1,4 +1,4 @@
-def manualfit(D, F={}, Plist=[], Mlist=[], startyear=2000, endyear=2015, verbose=2):
+def manualfit(D, F={}, Plist=[], Mlist=[], simstartyear=2000, simendyear=2015, verbose=2):
     """
     Manual metaparameter fitting code.
     
@@ -20,7 +20,7 @@ def manualfit(D, F={}, Plist=[], Mlist=[], startyear=2000, endyear=2015, verbose
  
      # Set options to update year range
     from setoptions import setoptions
-    D.opt = setoptions(D.opt, startyear=startyear, endyear=endyear)
+    D.opt = setoptions(D.opt, simstartyear=simstartyear, simendyear=simendyear)
    
     # Update P and M, if provided
     D = updateP(D, Plist)
