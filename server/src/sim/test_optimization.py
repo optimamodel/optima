@@ -3,7 +3,7 @@ TEST_OPTIMIZATION
 
 This function tests that the optimization is working.
 
-Version: 2015jan23 by cliffk
+Version: 2015jan27 by cliffk
 """
 
 dotimevarying = True # True False
@@ -14,7 +14,7 @@ print('WELCOME TO OPTIMA')
 projectname = 'example'
 verbose = 2
 ntimepm = 2 # AS: Just use 1 or 2 parameters... using 3 or 4 can cause problems that I'm yet to investigate
-timelimit = 500
+timelimit = 100
 
 print('\n\n\n1. Making project...')
 from makeproject import makeproject
