@@ -384,16 +384,10 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     function updateGraphs(data) {
       if (data.graph !== undefined && data.pie !== undefined) {
         cachedResponse = data;
-        _($scope.types.financialAnnualCosts).each(function(entry) {
-          if (!data.graph.costann.existing[entry.id]
-          || !data.graph.costann.existing[entry.id]['legend']
-          || !data.graph.costann.existing[entry.id]['legend'].length) {
-            entry.disabled = true;
-          }
-        });
+        graphTypeFactory.enableAnnualCostOptions($scope.types, data.graph);
         drawGraphs();
       }
-    };
+    }
 
     $scope.validations = {
       years :{
