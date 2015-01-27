@@ -57,7 +57,7 @@ def getrealcosts(data):
     cost = data.costcov.cost
     nprogs = len(data.costcov.cost)
     realcost = [[]]*nprogs
-    cpi = data.econ.cpi[0] # get CPI
+    cpi = data.econ.cpi.past[0] # get CPI
     cpibaseyearindex = data.econyears.index(data.epiyears[0])
     for prog in range(nprogs):
         if len(cost[prog])==1: # If it's an assumption, assume it's already in current prices
