@@ -85,7 +85,7 @@ def makeresults(D, allsims=None, quantiles=None, verbose=2):
             R.daly.tot = quantile(tmpdalytot, quantiles=quantiles)
             totaldalysaverted = 0.0
             for progname in D.programs.keys():
-                D.programs[progname]['nonhivdalys']
+                D.programs[progname]['nonhivdalys'] = totaldalysaverted # CK: I think this is correct -- Robyn?
         
         if data=='dx':
             printv('Calculating diagnoses...', 3, verbose)
