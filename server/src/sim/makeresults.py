@@ -83,9 +83,7 @@ def makeresults(D, allsims=None, quantiles=None, verbose=2):
                 tmpdalytot += allpeople[:,healthstates,:,:].sum(axis=(1,2)) * disutils[h]
             R.daly.pops = quantile(tmpdalypops, quantiles=quantiles)
             R.daly.tot = quantile(tmpdalytot, quantiles=quantiles)
-            totaldalysaverted = 0.0
-            for progname in D.programs.keys():
-                D.programs[progname]['nonhivdalys']
+            
         
         if data=='dx':
             printv('Calculating diagnoses...', 3, verbose)

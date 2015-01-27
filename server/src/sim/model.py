@@ -20,7 +20,7 @@ def model(G, M, F, opt, initstate=None, verbose=2):
     
     # Initialize basic quantities
     S       = struct()    # Sim output structure
-    S.tvec  = M.tvec      # Append time vector
+    S.tvec  = M.tvec   # Append time vector
     dt      = opt.dt      # Shorten dt
     npts    = len(S.tvec) # Number of time points
     npops   = G.npops     # Shorten number of pops
