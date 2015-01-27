@@ -73,7 +73,7 @@ define(['./module', 'underscore'], function (module, _) {
         return {
           name: item.name,
           acronym: acronym,
-          category: item.category, 
+          category: item.category,
           ccparams: $scope.all_programs[acronym].ccparams,
           ccplot: $scope.all_programs[acronym].ccplot
         };
@@ -128,21 +128,14 @@ define(['./module', 'underscore'], function (module, _) {
 
       var graph = {
         options: getLineScatterOptions({
-          width: 300,
-          height: 200,
-          margin: {
-            top: 20,
-            right: 15,
-            bottom: 40,
-            left: 60
-          },
-          linesStyle: ['__blue', '__black __dashed', '__black __dashed']
+          linesStyle: ['__blue', '__black __dashed', '__black __dashed'],
+          title: graphData.title,
+          hideTitle: true
         }, graphData.xlabel, graphData.ylabel),
         data: {
           lines: [],
           scatter: []
-        },
-        title: graphData.title
+        }
       };
 
       // quit if data is empty - empty graph placeholder will be displayed
@@ -184,7 +177,7 @@ define(['./module', 'underscore'], function (module, _) {
      */
     var prepareCostCoverageGraph = function (data) {
       var graph = {
-        options: getLineScatterOptions({}, data.xlabel, data.ylabel),
+        options: getLineScatterOptions({ hideTitle: true }, data.xlabel, data.ylabel),
         data: {
           // there is a single line for that type
           lines: [[]],
@@ -224,7 +217,7 @@ define(['./module', 'underscore'], function (module, _) {
     var prepareGraphsOfType = function (data, type) {
       if (type === 'plotdata_cc') {
         $scope.ccGraph = prepareCostCoverageGraph(data);
-        $scope.ccGraph.title = $scope.displayedProgram.name;
+        $scope.ccGraph.options.title = $scope.displayedProgram.name;
       } else if (type === 'plotdata' || type === 'plotdata_co') {
         _(data).each(function (graphData) {
           $scope.graphs[type].push(setUpPlotdataGraph(graphData));
@@ -328,7 +321,7 @@ define(['./module', 'underscore'], function (module, _) {
      */
     var retrieveAndUpdateGraphs = function (model) {
       // validation on Cost-coverage curve plotting options
-      if (!areCCParamsValid(model.ccparams)){ 
+      if (!areCCParamsValid(model.ccparams)){
         return;
       }
 
@@ -491,13 +484,13 @@ define(['./module', 'underscore'], function (module, _) {
 
       if ( $scope.ccGraph) {
         $scope.chartsForDataExport.push($scope.ccGraph);
-        $scope.titlesForChartsExport.push($scope.ccGraph.title);
+        $scope.titlesForChartsExport.push($scope.ccGraph.options.title);
       }
 
       var charts = _(_.zip($scope.graphs.plotdata, $scope.graphs.plotdata_co)).flatten();
       _( charts ).each(function (chart,index) {
         $scope.chartsForDataExport.push(chart);
-        $scope.titlesForChartsExport.push(chart.title);
+        $scope.titlesForChartsExport.push(chart.options.title);
       });
     };
 
