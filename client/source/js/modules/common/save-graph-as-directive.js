@@ -107,7 +107,7 @@ define(['angular', 'jquery', 'underscore', 'saveAs', 'jsPDF', './svg-to-png', '.
             var exportable = exportHelpers.getExportableFrom(graphOrUndefined);
 
             if(exportable === null) { return exportHelpers.saySorry(); }
-            var title = graphOrUndefined.options.title || graphOrUndefined.title || "data";
+            var title = graphOrUndefined.options.title || 'Data';
             $http({url:'/api/project/export',
                   method:'POST',
                   data: exportable,
