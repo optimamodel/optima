@@ -12,12 +12,10 @@ class UserTestCase(OptimaTestCase):
     """
 
     def create_admin_user(self):
-        import hashlib
         from optima.dbconn import db
         from optima.dbmodels import UserDb
-        self.admin_password = hashlib.sha224("admin").hexdigest()
         """ Helper method to create project and save it to the database """
-        admin = UserDb("admin", "admin@test.com", self.admin_password, True)
+        admin = UserDb("admin", self.admin_email, self.admin_password, True)
         db.session.add(admin)
         db.session.commit()
 
@@ -37,6 +35,17 @@ class UserTestCase(OptimaTestCase):
         data = json.loads(response.data)
         assert(data["email"]=="test@test.com")
         assert(data["name"]=="test")
+        assert(data["is_admin"]==False)
+
+    def test_current_admin(self):
+        self.create_admin_user()
+        response = self.login(self.admin_email, self.admin_password)
+        response = self.client.get('/api/user/current', follow_redirects=True)
+        assert(response.status_code==200)
+        data = json.loads(response.data)
+        assert(data["email"]==self.admin_email)
+        assert(data["name"]=="admin")
+        assert(data["is_admin"]==True)
 
 
     def test_list_users(self):
@@ -113,6 +122,12 @@ class UserTestCase(OptimaTestCase):
         response = self.client.put('/api/user/modify/1?secret=%s&email=%s&password=%s' \
             % (self.test_password, new_email, new_password))
         assert(response.status_code==401)
+
+    def setUp(self):
+        import hashlib
+        self.admin_email = "admin@test.com"
+        self.admin_password = hashlib.sha224("admin").hexdigest()        
+        OptimaTestCase.setUp(self)
 
 if __name__ == '__main__':
     unittest.main()

@@ -111,7 +111,7 @@ def login():
 def current_user_api():
     cu = current_user
     if not cu.is_anonymous():
-        return jsonify({ 'email': cu.email, 'name': cu.name })
+        return jsonify({ 'email': cu.email, 'name': cu.name, 'is_admin': cu.is_admin })
     abort(401)
 
 @user.route('/logout')
