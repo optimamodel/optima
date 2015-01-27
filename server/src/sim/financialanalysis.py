@@ -6,7 +6,6 @@ Created on Sat Nov 29 17:40:34 2014
 import numpy as np
 import copy
 from setoptions import setoptions
-from copy import deepcopy
 from utils import sanitize
 
 def financialanalysis(D, postyear=2015, S=None, yscale='abs', makeplot=False):
@@ -24,18 +23,18 @@ def financialanalysis(D, postyear=2015, S=None, yscale='abs', makeplot=False):
     nepiyrs = len(D.data.epiyears)
     
     for healthno, healthstate in enumerate(D.G.healthstates):
-        socialcosts = np.mean(sanitize(D.data.econ.social[healthno]))
-        othercosts = np.mean(sanitize(D.data.econ.health[healthno]))
+        socialcosts = np.mean(sanitize(D.data.econ.social.past[healthno]))
+        othercosts = np.mean(sanitize(D.data.econ.health.past[healthno]))
         costs[healthstate] = socialcosts + othercosts
 
     acutecosts, gt500costs, gt350costs, gt200costs, gt50costs, aidscosts = [], [], [], [], [], []
     for i in range(nepiyrs-1):
-        acutecosts.extend(np.linspace((D.data.econ.social[0][i]+D.data.econ.health[0][i]),(D.data.econ.social[0][i+1]+D.data.econ.health[0][i+1]),1/D.opt.dt,endpoint=False).tolist())
-        gt500costs.extend(np.linspace((D.data.econ.social[1][i]+D.data.econ.health[1][i]),(D.data.econ.social[1][i+1]+D.data.econ.health[1][i+1]),1/D.opt.dt,endpoint=False).tolist())
-        gt350costs.extend(np.linspace((D.data.econ.social[2][i]+D.data.econ.health[2][i]),(D.data.econ.social[2][i+1]+D.data.econ.health[2][i+1]),1/D.opt.dt,endpoint=False).tolist())
-        gt200costs.extend(np.linspace((D.data.econ.social[3][i]+D.data.econ.health[3][i]),(D.data.econ.social[3][i+1]+D.data.econ.health[3][i+1]),1/D.opt.dt,endpoint=False).tolist())
-        gt50costs.extend(np.linspace((D.data.econ.social[4][i]+D.data.econ.health[4][i]),(D.data.econ.social[4][i+1]+D.data.econ.health[4][i+1]),1/D.opt.dt,endpoint=False).tolist())
-        aidscosts.extend(np.linspace((D.data.econ.social[5][i]+D.data.econ.health[5][i]),(D.data.econ.social[5][i+1]+D.data.econ.health[5][i+1]),1/D.opt.dt,endpoint=False).tolist())
+        acutecosts.extend(np.linspace((D.data.econ.social.past[0][i]+D.data.econ.health.past[0][i]),(D.data.econ.social.past[0][i+1]+D.data.econ.health.past[0][i+1]),1/D.opt.dt,endpoint=False).tolist())
+        gt500costs.extend(np.linspace((D.data.econ.social.past[1][i]+D.data.econ.health.past[1][i]),(D.data.econ.social.past[1][i+1]+D.data.econ.health.past[1][i+1]),1/D.opt.dt,endpoint=False).tolist())
+        gt350costs.extend(np.linspace((D.data.econ.social.past[2][i]+D.data.econ.health.past[2][i]),(D.data.econ.social.past[2][i+1]+D.data.econ.health.past[2][i+1]),1/D.opt.dt,endpoint=False).tolist())
+        gt200costs.extend(np.linspace((D.data.econ.social.past[3][i]+D.data.econ.health.past[3][i]),(D.data.econ.social.past[3][i+1]+D.data.econ.health.past[3][i+1]),1/D.opt.dt,endpoint=False).tolist())
+        gt50costs.extend(np.linspace((D.data.econ.social.past[4][i]+D.data.econ.health.past[4][i]),(D.data.econ.social.past[4][i+1]+D.data.econ.health.past[4][i+1]),1/D.opt.dt,endpoint=False).tolist())
+        aidscosts.extend(np.linspace((D.data.econ.social.past[5][i]+D.data.econ.health.past[5][i]),(D.data.econ.social.past[5][i+1]+D.data.econ.health.past[5][i+1]),1/D.opt.dt,endpoint=False).tolist())
 
     acutecosts.extend([acutecosts[-1]]*((D.opt.endyear-nepiyrs)*10+1))
     gt500costs.extend([gt500costs[-1]]*((D.opt.endyear-nepiyrs)*10+1))
