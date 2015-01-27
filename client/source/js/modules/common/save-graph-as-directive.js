@@ -39,22 +39,11 @@ define(['angular', 'jquery', 'underscore', 'saveAs', 'jsPDF', './svg-to-png', '.
               })
               .on('click', '.data', function (event) {
                 event.preventDefault();
-                //a big ugly hack to distinguish between cost and covariance graphs.
-                //they are both in the same ng-repeat scope :-(
-                var target = {};
-                if ( attrs.variant == "radarChart" ) {
-                  target = scope.radarChart;
-                } else if (attrs.variant == 'pieChart') {
-                  target = scope.pieChart;
-                } else if (attrs.variant == 'coGraph') {
-                  target = scope.coGraph;
-                } else if (attrs.variant == 'ccGraph') {
-                  target = scope.ccGraph;
-                } else {
-                  target = scope.chart;
-                }
 
-                scope.exportFrom(target);
+                // find the chart in the scope via the data attribute
+                var chartAccessor = attrs.data.replace(new RegExp('.data$'), '');
+
+                scope.exportFrom(scope[chartAccessor]);
               });
           };
 
