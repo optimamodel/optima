@@ -1,4 +1,4 @@
-def viewuncerresults(E, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 'daly':[0,1], 'death':[0,1], 'dx':[0,1], 'tx1':[0,1], 'tx2':[0,1], 'costcum':[1,1]}, startyear=2000, endyear=2030, onefig=True, verbose=2, show_wait=False, linewidth=2):
+def viewuncerresults(E, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 'daly':[0,1], 'death':[0,1], 'dx':[0,1], 'tx1':[0,1], 'tx2':[0,1], 'costcum':[1,1]}, simstartyear=2000, simendyear=2030, onefig=True, verbose=2, show_wait=False, linewidth=2):
     """
     Generate all outputs required for the model, including prevalence, incidence,
     deaths, etc.
@@ -53,7 +53,7 @@ def viewuncerresults(E, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 
                         if not(onefig): legend(('Model','Data'))
                         xlabel(E[graph].xlabel)
                         ylabel(E[graph].pops[p].ylabel)
-                        xlim(xmin=startyear, xmax=endyear)
+                        xlim(xmin=simstartyear, xmax=simendyear)
                         ylim(ymin=0)
                 
                 else: # Total epi graphs and cost graphs
@@ -97,7 +97,7 @@ def viewuncerresults(E, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 
 
 
 
-def viewmultiresults(M, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 'daly':[0,1], 'death':[0,1], 'dx':[0,1], 'tx1':[0,1], 'tx2':[0,1], 'costcum':[1,1]}, startyear=2000, endyear=2030, onefig=True, verbose=2, show_wait=False, linewidth=2):
+def viewmultiresults(M, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 'daly':[0,1], 'death':[0,1], 'dx':[0,1], 'tx1':[0,1], 'tx2':[0,1], 'costcum':[1,1]}, simstartyear=2000, simendyear=2030, onefig=True, verbose=2, show_wait=False, linewidth=2):
     """
     Generate all outputs required for the model, including prevalence, incidence,
     deaths, etc.
@@ -147,7 +147,7 @@ def viewmultiresults(M, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 
                         if not(onefig): legend(M[graph].pops[p].legend)
                         xlabel(M[graph].xlabel)
                         ylabel(M[graph].pops[p].ylabel)
-                        xlim(xmin=startyear, xmax=endyear)
+                        xlim(xmin=simstartyear, xmax=simendyear)
                         ylim(ymin=0)
                 
                 else: # Total epi graphs and cost graphs
