@@ -13,7 +13,7 @@ def runscenarios(D, scenariolist=None, verbose=2):
     ugly since some of it is duplicated between getparvalues() (not used here, but
     used for the GUI) and makescenarios().
         
-    Version: 2014dec02 by cliffk
+    Version: 2015jan27 by cliffk
     """
     
     from model import model
@@ -70,8 +70,8 @@ def makescenarios(D, scenariolist, verbose=2):
                 newdata = data # If it's not, just use the whole thing
             
             # Get current values
-            initialindex = findinds(D.opt.tvec, thesepars.startyear)
-            finalindex = findinds(D.opt.tvec, thesepars.endyear)
+            initialindex = findinds(D.opt.partvec, thesepars.startyear)
+            finalindex = findinds(D.opt.partvec, thesepars.endyear)
             if thesepars.startval == -1:
                 if ndim(newdata)==1: initialvalue = newdata[initialindex]
                 else: initialvalue = newdata[:,initialindex].mean(axis=0) # Get the mean if multiple populations
@@ -141,8 +141,8 @@ def getparvalues(D, scenariopars):
             original = original[scenariopars.pops] # If it's a valid population, just use it
         else:
             original = original[:,:].mean(axis=0) # If multiple populations, take the mean along first axis
-    initialindex = findinds(D.opt.tvec, scenariopars.startyear)
-    finalindex = findinds(D.opt.tvec, scenariopars.endyear)
+    initialindex = findinds(D.opt.partvec, scenariopars.startyear)
+    finalindex = findinds(D.opt.partvec, scenariopars.endyear)
     startval = original[initialindex].tolist()[0]
     endval = original[finalindex].tolist()[0]
     return [startval, endval]
