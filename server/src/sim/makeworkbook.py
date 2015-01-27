@@ -557,7 +557,7 @@ class OptimaWorkbook:
         [0.20, 0.53, 1.00, 5.19, 1.35, 0.67, 0.18, 0.50, 0.35], OptimaFormats.PERCENTAGE), \
         ('Disutility weights', \
         ['Untreated HIV, acute','Untreated HIV, CD4(>500)','Untreated HIV, CD4(350-500)','Untreated HIV, CD4(200-350)', \
-        'Untreated HIV, CD4(<200)','Untreated HIV, CD4(<50)','Treated HIV'], [0.146, 0.008, 0.020, 0.070, 0.265, 0.547, 0.053], [0.096, 0.005, 0.013, 0.048, 0.114, 0.382, 0.034], [0.205, 0.011, 0.029, 0.094, 0.474, 0.715, 0.079], OptimaFormats.NUMBER)]
+        'Untreated HIV, CD4(50-200)','Untreated HIV, CD4(<50)','Treated HIV'], [0.146, 0.008, 0.020, 0.070, 0.265, 0.547, 0.053], [0.096, 0.005, 0.013, 0.048, 0.114, 0.382, 0.034], [0.205, 0.011, 0.029, 0.094, 0.474, 0.715, 0.079], OptimaFormats.NUMBER)]
 
         for (name, row_names, best, low, high, format) in names_rows_data_format:
             current_row = self.emit_constants_block(name, current_row, row_names, best, low, high, format)
@@ -577,9 +577,9 @@ class OptimaWorkbook:
                 row_format = OptimaFormats.SCIENTIFIC, assumption_properties = assumption_properties)
 
         names_rows = [('HIV-related health care costs (excluding treatment)', \
-        ['Acute infection','CD4(>500)','CD4(350-500)','CD4(200-350)','CD4(50-200)','CD4(<200)']), \
+        ['Acute infection','CD4(>500)','CD4(350-500)','CD4(200-350)','CD4(50-200)','CD4(<50)']), \
         ('Social mitigation costs', \
-        ['Acute infection', 'CD4(>500)', 'CD4(350-500)', 'CD4(200-350)', 'CD4(50-200)','CD4(<200)'])]
+        ['Acute infection', 'CD4(>500)', 'CD4(350-500)', 'CD4(200-350)', 'CD4(50-200)','CD4(<50)'])]
         for (name, row_names) in names_rows:
             current_row = self.emit_content_block(name, current_row, row_names, self.years_range, assumption = True, \
                 row_format = OptimaFormats.NUMBER, assumption_properties = assumption_properties)
