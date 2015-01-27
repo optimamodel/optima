@@ -102,7 +102,7 @@ def ballsd(function, x, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, 
     ## Loop
     start = time()
     while 1:
-        if verbose>=1: print('Iteration %i; elapsed %0.1f s1; objective: %0.3e' % (count+1, time()-start, fval))
+        if verbose>=1: print('Iteration %i; elapsed %0.1f s; objective: %0.3e' % (count+1, time()-start, fval))
         
         # Calculate next step
         count += 1 # On each iteration there are two function evaluations
