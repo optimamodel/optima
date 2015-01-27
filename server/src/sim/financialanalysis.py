@@ -102,7 +102,7 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False):
                     plotdata[plottype][plotsubtype][yscalefactor] = {}
                     plotdata[plottype][plotsubtype][yscalefactor]['xlinedata'] = opttvec
                     plotdata[plottype][plotsubtype][yscalefactor]['xlabel'] = 'Year'
-                    plotdata[plottype][plotsubtype][yscalefactor]['title'] = 'Annual HIV-related financial commitments - ' + plotsubtype + 'infections'
+                    plotdata[plottype][plotsubtype][yscalefactor]['title'] = 'Annual HIV-related financial commitments - ' + plotsubtype + ' infections'
                     if yscalefactor=='total':                    
                         if not plotsubtype=='future': plotdata[plottype][plotsubtype][yscalefactor]['ylinedata'] = [(hivcosts[plotsubtype][j] + artcosts[plotsubtype][j]) for j in range(noptpts)]
                         plotdata[plottype][plotsubtype][yscalefactor]['ylabel'] = 'USD'
@@ -119,7 +119,7 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False):
                 plotdata[plottype][plotsubtype]['xlinedata'] = opttvec
                 plotdata[plottype][plotsubtype]['xlabel'] = 'Year'
                 plotdata[plottype][plotsubtype]['ylabel'] = 'USD'
-                plotdata[plottype][plotsubtype]['title'] = 'Cumulative HIV-related financial commitments - ' + plotsubtype + 'infections'
+                plotdata[plottype][plotsubtype]['title'] = 'Cumulative HIV-related financial commitments - ' + plotsubtype + ' infections'
                 if not plotsubtype=='future': plotdata[plottype][plotsubtype]['ylinedata'] = list(accumu([hivcosts[plotsubtype][j] + artcosts[plotsubtype][j] for j in range(noptpts)]))
 
     plotdata['cumulative']['future']['ylinedata'] = [plotdata['cumulative']['total']['ylinedata'][j] - plotdata['cumulative']['existing']['ylinedata'][j] for j in range(noptpts)]
