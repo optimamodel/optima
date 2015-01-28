@@ -23,7 +23,9 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
       '__color-salmon-2',
       '__color-salmon-3'
     ];
+
     var drawGraph = function (data, options, rootElement) {
+      options.linesStyle = options.linesStyle || colors;
       options = d3Charts.adaptOptions(options);
 
       // to prevent creating multiple graphs we want to remove the existing svg
@@ -67,7 +69,7 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
       // initialize lineChart for each line and update the scales
       if (linesDataExists) {
         _(data.lines).each(function (line, index) {
-          var lineColor = options.linesStyle && options.linesStyle[index] || colors[index];
+          var lineColor = options.linesStyle[index];
           var lineChart = new d3Charts.LineChart(chartGroup, chartSize, lineColor);
           lineChartInstances.push(lineChart);
           var scales = lineChart.scales(line);
