@@ -357,6 +357,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       var graphs = [];
 
       _($scope.types.financial).each(function (type) {
+        if (type === undefined) return;
         // existing = cost for current people living with HIV
         // future = cost for future people living with HIV
         // costann = annual costs
