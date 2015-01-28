@@ -341,7 +341,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             var blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
             saveAs(blob, ($scope.projectParams.name + '.xlsx'));
                   // update active project
-            activeProject.setActiveProjectFor($scope.projectParams.name, UserManager.data);
+            activeProject.setActiveProjectFor($scope.projectParams.name, newProjectId, UserManager.data);
             $state.go('home');
           })
           .error(function () {});

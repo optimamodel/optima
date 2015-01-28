@@ -221,6 +221,7 @@ def getProjectInformation():
     if project is not None:
         response_data = {
             'status': "OK",
+            'id': project.id, 
             'name': project.name,
             'dataStart': project.datastart,
             'dataEnd': project.dataend,
@@ -257,6 +258,7 @@ def getProjectList():
         for project in projects:
             project_data = {
                 'status': "OK",
+                'id': project.id,
                 'name': project.name,
                 'dataStart': project.datastart,
                 'dataEnd': project.dataend,
