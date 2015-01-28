@@ -19,23 +19,19 @@ define([
       scope.upload = $upload.upload({
         url: url,
         file: file
-      }).success(function (data) {
-        if (data.status === 'NOK') {
-          alert("Something went wrong during an upload.\nSee the error:\n" + data.reason);
-        } else if (data.status === 'OK') {
-            var message = data.file + " was successfully uploaded.\n" + data.result;
-            modalService.inform(
-              function (){
-                // reload the page after upload.
-                if (reload) window.location.reload();
-              },
-              'Okay',
-              message,
-              'Upload completed'
-            );
-        } else {
-          alert('Sorry, but server feels bad now. Please, give it some time to recover');
-        }
+      });
+
+      scope.upload.success(function (data) {
+        var message = data.file + " was successfully uploaded.\n" + data.result;
+        modalService.inform(
+          function (){
+            // reload the page after upload.
+            if (reload) window.location.reload();
+          },
+          'Okay',
+          message,
+          'Upload completed'
+        );
       });
     };
     return {
