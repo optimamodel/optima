@@ -3,7 +3,7 @@ function (_) {
   'use strict';
 
   return angular.module('app.export-all-data', ['app.common.export-helpers'])
-  .directive('exportAllData', function ($http, exportHelpers) {
+  .directive('exportAllData', function ($http, exportHelpers, modalService) {
     return {
       restrict: 'E',
       scope: {
@@ -17,7 +17,7 @@ function (_) {
          * Exports the data of the graph in the format returned by the API
          */
         var exportMultiSheetFrom = function (graphs){
-          if(graphs.length === 0) { return exportHelpers.saySorry("Sorry, no graphs found");}
+          if(graphs.length === 0) { modalService.inform(undefined,undefined, "Sorry, no graphs found"); }
 
           var exportables = [];
           var showAlert = false;
@@ -29,7 +29,7 @@ function (_) {
               showAlert = true;
             }
           });
-          if(showAlert) { return exportHelpers.saySorry("Sorry, some graphs cannot be exported"); }
+          if(showAlert) { modalService.inform(undefined,undefined,"Sorry, some graphs cannot be exported"); }
 
           $http({url:'/api/project/exportall',
           method:'POST',

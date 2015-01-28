@@ -103,10 +103,10 @@ define(['angular', 'jquery', 'underscore', 'saveAs', 'jsPDF', './svg-to-png', '.
            * Exports the data of the graph in the format returned by the API
            */
           scope.exportFrom = function (graphOrUndefined){
-            if(!graphOrUndefined) { return exportHelpers.saySorry();}
+            if(!graphOrUndefined) { modalService.inform(undefined,undefined, "Sorry, this chart cannot be exported")}
             var exportable = exportHelpers.getExportableFrom(graphOrUndefined);
 
-            if(exportable === null) { return exportHelpers.saySorry(); }
+            if(exportable === null) { modalService.inform(undefined,undefined, "Sorry, this chart cannot be exported"); }
             var title = graphOrUndefined.options.title || 'Data';
             $http({url:'/api/project/export',
                   method:'POST',
