@@ -1,7 +1,7 @@
 define(['./module', 'angular'], function (module, angular) {
   'use strict';
 
-  module.controller('ProjectCreatePopulationModalController', function ($scope, $modalInstance, population) {
+  module.controller('ProjectCreatePopulationModalController', function ($scope, $modalInstance, population,modalService) {
 
     // Initializes relevant attributes
     $scope.isNew = !population.name;
@@ -11,9 +11,9 @@ define(['./module', 'angular'], function (module, angular) {
 
     $scope.submit = function (form) {
       if ($scope.population.male && $scope.population.female) {
-        alert('Please select either male, female or none of them.');
+        modalService.inform(undefined,undefined, 'Please select either male, female or none of them.');
       } else if (form.$invalid) {
-        alert('Please fill in the form correctly');
+        modalService.inform(undefined,undefined, 'Please fill in the form correctly');
       } else {
         $modalInstance.close($scope.population);
       }
