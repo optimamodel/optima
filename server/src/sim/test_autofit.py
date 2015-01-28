@@ -3,7 +3,7 @@ TEST_AUTOFIT
 
 This function tests that automatic fitting is working.
 
-Version: 2014dec01 by cliffk
+Version: 2015jan27 by cliffk
 """
 
 
