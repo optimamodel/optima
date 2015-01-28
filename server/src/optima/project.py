@@ -1,5 +1,5 @@
 import json
-from flask import Blueprint, url_for, helpers, request, jsonify, redirect, current_app, Response
+from flask import Blueprint, url_for, helpers, request, jsonify, redirect, current_app, Response, flash
 from werkzeug.utils import secure_filename
 import os
 import traceback
@@ -68,14 +68,17 @@ def createProject(project_name):
     from sim.makeproject import default_datastart, default_dataend, default_pops, default_progs
     from sim.runsimulation import runsimulation
     current_app.logger.debug("createProject %s" % project_name)
-    data = request.form
-
+    data = json.loads(request.data)
+    print("create data:", data)
     # get current user
     user_id = current_user.id
     edit_params = None
     if data:
-        if 'edit_params' in data: edit_params = json.loads(data['edit_params'])
-        data = json.loads(data['params'])
+        if 'edit_params' in data: edit_params = data['edit_params']
+        if 'params' in data: 
+            data = data['params']
+        else:
+            data = None
 
     # check if current request is edit request
     is_edit = edit_params and edit_params.get('isEdit')
@@ -135,7 +138,9 @@ def createProject(project_name):
 
     current_app.logger.debug("new_project_template: %s" % new_project_template)
     (dirname, basename) = (upload_dir_user(TEMPLATEDIR), new_project_template)
-    return helpers.send_from_directory(dirname, basename)
+    response = helpers.send_from_directory(dirname, basename)
+    response.headers['X-project-id'] = project.id
+    return response
 
 @project.route('/open/<project_name>')
 @login_required

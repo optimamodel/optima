@@ -2,7 +2,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ProjectCreateOrEditController', function ($scope, $state, $modal,
-    $timeout, activeProject, parametersResponse, defaultsResponse, info,
+    $timeout, $http, activeProject, parametersResponse, defaultsResponse, info,
     UserManager, modalService,projects) {
 
     $scope.allProjectNames = _(projects.projects).map(function(project){return project.name});
@@ -327,24 +327,25 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       params.programs = selectedPrograms;
 
       $scope.formAction = '/api/project/create/' + $scope.projectParams.name;
-      $scope.formParams = JSON.stringify(params);
+      $scope.formParams = params;
 
       // according to documentation it should have been working without this line, but no cigar
       // https://docs.angularjs.org/api/ng/directive/ngSubmit
-      document.getElementById('createForm').action = $scope.formAction;
-      document.getElementById('params').value = $scope.formParams;
-      document.getElementById('edit_params').value = JSON.stringify($scope.editParams);
-      document.getElementById('createForm').submit();
-
-      // update active project
-      activeProject.setActiveProjectFor($scope.projectParams.name, UserManager.data);
-
-      // Hack to wait for the project to be created.
-      // There is not easy way to intercept the completion of the form submission...
-      $timeout(function () {
-        $state.go('home');
-      }, 3000);
-
+      $http({url:$scope.formAction,
+          method:'POST',
+          data: {'params':$scope.formParams, 'editParams':$scope.editParams},
+          headers: {'Content-type': 'application/json'},
+          responseType:'arraybuffer'})
+          .success(function (response, status, headers, config) {
+            var newProjectId = headers()['x-project-id']; //TODO: use this when calling BE
+            var blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            saveAs(blob, ($scope.projectParams.name + '.xlsx'));
+                  // update active project
+            activeProject.setActiveProjectFor($scope.projectParams.name, UserManager.data);
+            $state.go('home');
+          })
+          .error(function () {});
+ 
       return true;
     }
 
