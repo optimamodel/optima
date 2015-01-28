@@ -4,8 +4,32 @@ define(['./module', './scale-helpers', 'angular', './stacked-bar-chart'], functi
   module.directive('stackedBarChart', function (d3Charts) {
     var svg;
 
-    var defaultColors = [ '__light-blue', '__blue', '__violet', '__green',
-    '__light-green', '__gray', '__red' ];
+    var defaultColors = [
+      '__color-blue-1',
+      '__color-blue-2',
+      '__color-blue-3',
+      '__color-grey-1',
+      '__color-grey-2',
+      '__color-grey-3',
+      '__color-purple-1',
+      '__color-purple-2',
+      '__color-purple-3',
+      '__color-brown-1',
+      '__color-brown-2',
+      '__color-brown-3',
+      '__color-green-1',
+      '__color-green-2',
+      '__color-green-3',
+      '__color-deep-blue-1',
+      '__color-deep-blue-2',
+      '__color-deep-blue-3',
+      '__color-yellow-1',
+      '__color-yellow-2',
+      '__color-yellow-3',
+      '__color-salmon-1',
+      '__color-salmon-2',
+      '__color-salmon-3'
+    ];
 
     /**
      * Draw the stacked bar chart
