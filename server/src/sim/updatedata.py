@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 def updatedata(D, verbose=2, savetofile = True):
     """
     Load the Excel workbook (for the given project), assuming it's in the standard uploads directory
@@ -87,12 +89,29 @@ def makefittedpars(D, verbose=2):
         D.F[s].popsize = perturb(D.G.npops,span)
         D.F[s].force = perturb(D.G.npops,span)
         D.F[s].dx  = perturb(4,span)
-        for p in range(D.G.npops):
-            D.F[s].init[p] *= D.M.hivprev[p]
-            D.F[s].popsize[p] *= D.M.popsize[p][0]
-        D.F[s].dx[3] *= D.G.datayears.mean()
+        D.F[s] = unnormalizeF(D.F[s], D) # Un-normalize F
     
     return D
+
+
+def unnormalizeF(normF, D):
+    """ Convert from F values where everything is 1 to F values that can be real-world interpretable. """
+    unnormF = deepcopy(normF)
+    for p in range(D.G.npops):
+        unnormF.init[p] *= D.M.hivprev[p] # Multiply by initial prevalence
+        unnormF.popsize[p] *= D.M.popsize[p][0] # Multiply by initial population size
+    unnormF.dx[3] *= D.G.datayears.mean() # Multiply by mean data year
+    return unnormF
+
+
+def normalizeF(unnormF, D):
+    """ Convert from F values that can be real-world interpretable to F values where everything is 1. """
+    normF = deepcopy(unnormF)
+    for p in range(D.G.npops):
+        normF.init[p] /= D.M.hivprev[p] # Divide by initial prevalence
+        normF.popsize[p] /= D.M.popsize[p][0] # Divide by initial population size
+    normF.dx[3] /= D.G.datayears.mean() # Divide by mean data year
+    return normF
 
 
 
