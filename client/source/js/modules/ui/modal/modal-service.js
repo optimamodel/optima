@@ -33,15 +33,22 @@ define([
         },
 
         /**
-         * Displays the given message and the
+         * Displays the given message
+         *
+         * @param {function} onAccepted - callback for the acceptButton.
+         * @param {string} onAccepted - text for the acceptButton.
+         * @param {string} message - text for the description.
+         * @param {string} title - text for the modal title.
+         * @param {string} [errorText] - optional text for a error message.
          */
-        inform: function (onAccepted, acceptButton, message, title) {
+        inform: function (onAccepted, acceptButton, message, title, errorText) {
           $modal.open({
             templateUrl: 'js/modules/ui/modal/modal-inform.html',
             controller: ['$scope', function ($scope) {
               $scope.message = message || 'Be informed';
               $scope.title = title || 'Attention...';
               $scope.acceptButton = acceptButton || 'Okay';
+              $scope.errorText = errorText;
             }]
           }).result.finally(onAccepted);
         },

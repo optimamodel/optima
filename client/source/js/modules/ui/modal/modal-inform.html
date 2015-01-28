@@ -2,7 +2,10 @@
  {{title}}
 </div>
 <div class="modal-body" style="margin-bottom: 20px">
-  {{ message }}
+  <div>{{ message }}</div>
+  <div class="error-hint" ng-show="errorText">
+    <pre>{{errorText}}</pre>
+  </div>
 </div>
 <div class="modal-footer">
   <button type="submit" class="btn __green" data-ng-click="$dismiss('cancel')">{{acceptButton}}</button>
