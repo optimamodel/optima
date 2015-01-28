@@ -144,13 +144,13 @@ def optimize(D, objectives=None, constraints=None, ntimepm=1, timelimit=60, verb
     printv('...done optimizing programs.', 2, verbose)
     return D
 
-def saveoptimization(D, name, objectives, constraints, result = None, verbose=2):
+def saveoptimization(D, name, objectives, constraints, results = None, verbose=2):
     #save the optimization parameters
     new_optimization = struct()
     new_optimization.name = name
     new_optimization.objectives = objectives
     new_optimization.constraints = constraints
-    if result: new_optimization.result = result
+    if results: new_optimization.results = results
 
     if not "optimizations" in D:
         D.optimizations = [new_optimization]
