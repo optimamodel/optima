@@ -6,7 +6,7 @@ from numpy import array, ones, zeros, concatenate
 default_simstartyear = 2000
 default_simendyear = 2030
 
-def optimize(D, objectives=None, constraints=None, ntimepm=1, timelimit=60, verbose=2):
+def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2):
     """
     Allocation optimization code:
         D is the project data structure
