@@ -34,7 +34,7 @@ define([
               'Upload completed'
             );
         } else {
-          alert('Sorry, but server feels bad now. Please, give it some time to recover');
+          modalService.inform(undefined,undefined,'Sorry, but server feels bad now. Please, give it some time to recover');
         }
       });
     };
