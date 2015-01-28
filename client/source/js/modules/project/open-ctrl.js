@@ -3,7 +3,7 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
-  module.controller('ProjectOpenController', 
+  module.controller('ProjectOpenController',
     function ($scope, $http, $upload, activeProject, projects, modalService, fileUpload, UserManager) {
 
     $scope.projects = _.map(projects.projects, function(project){
@@ -20,10 +20,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.open = function (name) {
       $http.get('/api/project/open/' + name)
         .success(function (response) {
-          if (response && response.status === 'NOK') {
-            alert(response.reason);
-            return;
-          }
           activeProject.setActiveProjectFor(name, UserManager.data);
           window.location = '/';
         });
@@ -42,16 +38,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         function(newName) {
           $http.post('/api/project/copy/' + name + '?to=' + newName)
             .success(function (response) {
-              if (response) {
-                if (response.status === 'NOK') {
-                  alert(response.reason);
-                } else if (response.status === 'OK') {
-                  window.location.reload();
-                }
-              }
+              window.location.reload();
             });
         }
-      )
+      );
     };
 
     /**
@@ -62,10 +52,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.edit = function (name) {
       $http.get('/api/project/open/' + name)
         .success(function (response) {
-          if (response && response.status === 'NOK') {
-            alert(response.reason);
-            return;
-          }
           activeProject.setActiveProjectFor(name, UserManager.data);
           window.location = '/#/project/edit';
         });
@@ -94,7 +80,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           var blob = new Blob([response], { type: 'application/json' });
           saveAs(blob, (name + '.json'));
         })
-        .error(function (response) {});      
+        .error(function (response) {});
     };
 
     $scope.setData = function (name, file) {
@@ -107,8 +93,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         message,
         'Upload data'
       );
-
-    }
+    };
 
     $scope.preSetData = function(name) {
       angular
@@ -116,7 +101,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         .change(function(event){
         $scope.setData(name, event.target.files[0]);
       }).click();
-    }
+    };
 
     /**
      * Removes the project
@@ -127,19 +112,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     var removeNoQuestionsAsked = function (name, index) {
       $http.delete('/api/project/delete/' + name)
         .success(function (response) {
-          if (response && response.status === 'NOK') {
-            alert(response.reason);
-            return;
-          }
-
           $scope.projects = _($scope.projects).filter(function (item) {
             return item.name != name;
           });
 
           activeProject.ifActiveResetFor(name, UserManager.data);
-        })
-        .error(function () {
-          alert('Could not remove the project');
         });
     };
 
