@@ -136,7 +136,7 @@ define(['./module', 'underscore'], function (module, _) {
             bottom: 40,
             left: 60
           },
-          linesStyle: ['__color-blue-3', '__color-black __dashed', '__color-black __dashed']
+          linesStyle: ['__color-blue-4', '__color-black __dashed', '__color-black __dashed']
         }, graphData.xlabel, graphData.ylabel),
         data: {
           lines: [],

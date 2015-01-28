@@ -6,22 +6,22 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
 
     // see available colors in chart/_color.scss.
     var colors = [
-      '__color-blue-2',
-      '__color-blue-3',
-      '__color-grey-2',
-      '__color-grey-3',
-      '__color-purple-2',
-      '__color-purple-3',
-      '__color-brown-2',
-      '__color-brown-3',
-      '__color-green-2',
-      '__color-green-3',
-      '__color-deep-blue-2',
-      '__color-deep-blue-3',
-      '__color-yellow-2',
-      '__color-yellow-3',
-      '__color-salmon-2',
-      '__color-salmon-3'
+      '__color-blue-4',
+      '__color-blue-5',
+      '__color-grey-4',
+      '__color-grey-5',
+      '__color-purple-4',
+      '__color-purple-5',
+      '__color-brown-4',
+      '__color-brown-5',
+      '__color-green-4',
+      '__color-green-5',
+      '__color-deep-blue-4',
+      '__color-deep-blue-5',
+      '__color-yellow-4',
+      '__color-yellow-5',
+      '__color-salmon-4',
+      '__color-salmon-5'
     ];
 
     var drawGraph = function (data, options, rootElement) {
