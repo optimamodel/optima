@@ -3,7 +3,7 @@
 
 .btn {
   @extend .btn.__m;
-  @extend .btn.__grey;
+  @extend .btn.__light-blue;
   border-radius: 2px;
   border-style: solid;
   border-width: 1px;
@@ -66,26 +66,28 @@
     }
   }
 
-  &.__grey {
-    background: #eee;
-    border-color: #ddd;
-    color: #5B5A5A;
+  &.__light-blue {
+    background: #EEF9FF;
+    border-color: #C7DDEA;
+    color: #53646F;
 
     &:hover:not(:disabled) {
-      background: #D0D0D0;
-      border-color: #BCBCBD;
-      color: #444;
+      background: #BEDFF4;
+      border-color: #9DC6DF;
+      color: #3F4D55;
     }
 
     &.__active,
     &:active:not(:disabled) {
-      background: #C8C8C8;
-      border-color: #BCBCBD;
+      background: #AFD8F2;
+      border-color: #9DC6DF;
+      color: #3F4D55;
     }
 
     &.__active,
     &.__active:hover {
-      background: #C8C8C8;
+      background: #AFD8F2;
+      color: #3F4D55;
     }
   }
 
