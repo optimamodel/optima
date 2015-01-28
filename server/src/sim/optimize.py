@@ -1,11 +1,10 @@
 from printv import printv
 from bunch import Bunch as struct
 from copy import deepcopy
-from matplotlib.pylab import show, figure, subplot, plot, axis, xlim, ylim, legend
 from numpy import array, ones, zeros, concatenate
 
-default_startyear = 2000
-default_endyear = 2030
+default_simstartyear = 2000
+default_simendyear = 2030
 
 def optimize(D, objectives=None, constraints=None, ntimepm=1, timelimit=60, verbose=2):
     """
@@ -16,7 +15,7 @@ def optimize(D, objectives=None, constraints=None, ntimepm=1, timelimit=60, verb
         timelimit is the maximum time in seconds to run optimization for
         verbose determines how much information to print.
         
-    Version: 2014dec01 by cliffk
+    Version: 2015jan27 by cliffk
     """
     
     # Imports
@@ -33,9 +32,9 @@ def optimize(D, objectives=None, constraints=None, ntimepm=1, timelimit=60, verb
     
     # Set options to update year range
     from setoptions import setoptions
-    startyear = objectives.get("year").get("start") or default_startyear
-    endyear = objectives.get("year").get("end") or default_endyear
-    D.opt = setoptions(D.opt, startyear=startyear, endyear=endyear)
+    simstartyear = objectives.get("year").get("start") or default_simstartyear
+    simendyear = objectives.get("year").get("end") or default_simendyear
+    D.opt = setoptions(D.opt, simstartyear=simstartyear, simendyear=simendyear)
     
     # Make sure objectives and constraints exist
     if not isinstance(objectives, struct):  objectives = defaultobjectives(D, verbose=verbose)
@@ -79,7 +78,7 @@ def optimize(D, objectives=None, constraints=None, ntimepm=1, timelimit=60, verb
     def objectivecalc(optimparams):
         """ Calculate the objective function """
 
-        thisalloc = timevarying(optimparams, ntimepm=ntimepm, nprogs=nprogs, t=D.opt.tvec, totalspend=totalspend)        
+        thisalloc = timevarying(optimparams, ntimepm=ntimepm, nprogs=nprogs, tvec=D.opt.partvec, totalspend=totalspend)        
         newD = deepcopy(D)
         newD, newcov, newnonhivdalysaverted = getcurrentbudget(newD, thisalloc)
         newD.M = makemodelpars(newD.P, newD.opt, withwhat='c', verbose=0)
@@ -124,7 +123,7 @@ def optimize(D, objectives=None, constraints=None, ntimepm=1, timelimit=60, verb
     
     # Update the model
     for i, params in enumerate([origalloc, optparams]):
-        alloc = timevarying(params, ntimepm=len(params)/nprogs, nprogs=nprogs, t=D.opt.tvec, totalspend=totalspend)            
+        alloc = timevarying(params, ntimepm=len(params)/nprogs, nprogs=nprogs, tvec=D.opt.partvec, totalspend=totalspend)            
         D, D.A[i].coverage, D.A[i].nonhivdalysaverted = getcurrentbudget(D, alloc)
         D.M = makemodelpars(D.P, D.opt, withwhat='c', verbose=2)
         D.A[i].S = model(D.G, D.M, D.F[0], D.opt, verbose=verbose)
