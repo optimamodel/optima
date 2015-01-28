@@ -42,6 +42,8 @@ def optimize(D, objectives=None, constraints=None, ntimepm=1, timelimit=60, verb
 
     objectives = deepcopy(objectives)
     constraints = deepcopy(constraints)
+    
+    ntimepm=2 if objectives.timevarying == True else 1
 
     # Convert weightings from percentage to number
     if objectives.outcome.inci:  objectives.outcome.inciweight  = float(objectives.outcome.inciweight) / 100.0
@@ -179,8 +181,7 @@ def defaultobjectives(D, verbose=2):
     ob = struct() # Dictionary of all objectives
     ob.year = struct() # Time periods for objectives
     ob.year.start = 2015 # "Year to begin optimization from"
-    ob.year.numyears = 5 # "Number of years to optimize funding for"
-    ob.year.end = 2030 # "Year to end optimization"
+    ob.year.end = 2020 # "Year to end optimization"
     ob.year.until = 2030 # "Year to project outcomes to"
     ob.what = 'outcome' # Alternative is "money"
     
@@ -195,6 +196,11 @@ def defaultobjectives(D, verbose=2):
     ob.outcome.cost = False # "Minimize cumulative DALYs"
     ob.outcome.costweight = 100 # "Cost weighting"
     ob.funding = "constant" #that's how it works on FE atm
+    
+    # Other settings
+    ob.timevarying = False # Do not use time-varying parameters
+    ob.artcontinue = 1 # No one currently on ART stops
+    ob.otherprograms = "remain" # Other programs remain constant after optimization ends
     
     ob.money = struct()
     ob.money.objectives = struct()
