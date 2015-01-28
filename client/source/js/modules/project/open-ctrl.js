@@ -139,7 +139,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           activeProject.ifActiveResetFor(name, UserManager.data);
         })
         .error(function () {
-          alert('Could not remove the project');
+          modalService.inform(undefined,undefined,'Could not remove the project');
         });
     };
 

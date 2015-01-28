@@ -2,6 +2,8 @@
 Created on Sat Nov 29 17:40:34 2014
 
 @author: robynstuart
+
+Version: 2015jan27
 """
 from numpy import linspace, arange, append
 from setoptions import setoptions
@@ -28,8 +30,8 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False):
     # Set up variables for time indexing
     datatvec = arange(D.G.datastart, D.G.dataend+D.opt.dt, D.opt.dt)
     ndatapts = len(datatvec)
-    opttvec = D.opt.tvec
-    noptpts = D.opt.npts
+    simtvec = D.opt.simtvec
+    noptpts = len(simtvec)
 
     # Get most recent ART unit costs
     progname = 'ART'
@@ -37,7 +39,7 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False):
     artunitcost = sanitize([D.data.costcov.cost[prognumber][j]/D.data.costcov.cov[prognumber][j] for j in range(len(D.data.costcov.cov[prognumber]))])[-1]
 
     # Run a simulation with the force of infection set to zero from postyear... 
-    opt = setoptions(startyear=D.opt.startyear, endyear=D.opt.endyear, nsims=1, turnofftrans=postyear)
+    opt = setoptions(nsims=1, turnofftrans=postyear)
     from model import model
     S0 = model(D.G, D.M, D.F[0], opt, initstate=None)
 
@@ -51,8 +53,8 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False):
     for healthno, healthstate in enumerate(D.G.healthstates):
 
         # Remove NaNs from data
-        socialcosts = sanitize(D.data.econ.social[healthno])
-        othercosts = sanitize(D.data.econ.health[healthno])
+        socialcosts = sanitize(D.data.econ.social.past[healthno])
+        othercosts = sanitize(D.data.econ.health.past[healthno])
 
         # Interpolating
         newx = linspace(0,1,ndatapts)
@@ -100,14 +102,14 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False):
             if plottype=='annual':
                 for yscalefactor in costdisplays:
                     plotdata[plottype][plotsubtype][yscalefactor] = {}
-                    plotdata[plottype][plotsubtype][yscalefactor]['xlinedata'] = opttvec
+                    plotdata[plottype][plotsubtype][yscalefactor]['xlinedata'] = simtvec
                     plotdata[plottype][plotsubtype][yscalefactor]['xlabel'] = 'Year'
                     plotdata[plottype][plotsubtype][yscalefactor]['title'] = 'Annual HIV-related financial commitments - ' + plotsubtype + 'infections'
                     if yscalefactor=='total':                    
                         if not plotsubtype=='future': plotdata[plottype][plotsubtype][yscalefactor]['ylinedata'] = [(hivcosts[plotsubtype][j] + artcosts[plotsubtype][j]) for j in range(noptpts)]
                         plotdata[plottype][plotsubtype][yscalefactor]['ylabel'] = 'USD'
                     else:
-                        yscale = sanitize(D.data.econ[yscalefactor])
+                        yscale = sanitize(D.data.econ[yscalefactor].past)
                         if isinstance(yscale,int): continue #raise Exception('No data have been provided for this varaible, so we cannot display the costs as a proportion of this')
                         origx = linspace(0,1,len(yscale))
                         yscale = smoothinterp(newx, origx, yscale, smoothness=5)
@@ -116,7 +118,7 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False):
                         if not plotsubtype=='future': plotdata[plottype][plotsubtype][yscalefactor]['ylinedata'] = [(hivcosts[plotsubtype][j] + artcosts[plotsubtype][j])/yscale[j] for j in range(noptpts)] 
                         plotdata[plottype][plotsubtype][yscalefactor]['ylabel'] = 'Proportion of ' + yscalefactor
             else:
-                plotdata[plottype][plotsubtype]['xlinedata'] = opttvec
+                plotdata[plottype][plotsubtype]['xlinedata'] = simtvec
                 plotdata[plottype][plotsubtype]['xlabel'] = 'Year'
                 plotdata[plottype][plotsubtype]['ylabel'] = 'USD'
                 plotdata[plottype][plotsubtype]['title'] = 'Cumulative HIV-related financial commitments - ' + plotsubtype + 'infections'

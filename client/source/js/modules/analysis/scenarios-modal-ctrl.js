@@ -6,7 +6,7 @@ define(['./module', 'angular'], function (module, angular) {
   'use strict';
 
   module.controller('AnalysisScenariosModalController', function ($scope,
-    $modalInstance, scenario, availableScenarioParameters, populationNames) {
+    $modalInstance, scenario, availableScenarioParameters, populationNames, modalService) {
 
     var initialize = function() {
       $scope.scenario = angular.copy(scenario);
@@ -41,7 +41,7 @@ define(['./module', 'angular'], function (module, angular) {
 
     $scope.submit = function (form) {
       if (form.$invalid) {
-        alert('Your valiant attempts to fill in the form correctly have failed. Please try again');
+        modalService.inform(undefined,undefined,'Your valiant attempts to fill in the form correctly have failed. Please try again');
       } else {
         $modalInstance.close($scope.scenario);
       }

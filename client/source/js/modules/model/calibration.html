@@ -4,23 +4,15 @@
     <div class="section grid">
       <form name="CalibrationForm" ng-submit="simulate()">
         <p ng-show="needData" class="error-hint">Please upload Optima spreadsheet first.</p>
-        <div class="2">
-          <input class="txbox" name="periodStart" type="number" placeholder="Start year" ng-model="simulationOptions.startyear" min="1950" max="2100">
-          <error-messages for="periodStart" rules="{min:1950, max:2100}"></error-messages>
-
-        </div>
-        <div class="2">
-          <input class="txbox" name="periodEnd" type="number" name="endYear" placeholder="End year" ng-model="simulationOptions.endyear" more-than="simulationOptions.startyear" min="1950" max="2100">
-          <error-messages for="periodEnd" rules="{min:1950, max:2100, moreThan: 'start year'}"></error-messages>
-        </div>
-        <div class="8">
-          <button class="btn __blue" ng-disabled="needData || CalibrationForm.$invalid">View simulation</button>
-          <a class="btn" href="http://optimamodel.com/files/optima-parameter-priors.pdf" target="_blank">View parameter priors (PDF)</a>
-        </div>
       </form>
     </div>
     <div class="section grid">
       <div class="12">
+
+        <label class="checkbox-inline">
+          <a class="btn" href="http://optimamodel.com/files/optima-parameter-priors.pdf" target="_blank">View parameter priors (PDF)</a>
+        </label>
+
         <label class="checkbox-inline">
           <input type="checkbox" ng-disabled="!canDoFitting" ng-model="enableAutomaticCalibration">
           Automatic calibration
@@ -30,7 +22,7 @@
           <input type="checkbox" ng-disabled="!canDoFitting" ng-model="enableManualCalibration">
           Manual calibration
         </label>
-        <span ng-show="!canDoFitting" class="info-hint">Run "View Simulation" in order to enable data calibration</span>
+
       </div>
     </div>
 

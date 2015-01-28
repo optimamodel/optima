@@ -1,4 +1,4 @@
-def timevarying(allocpm, ntimepm=1, nprogs=None, t=None, totalspend=None):
+def timevarying(allocpm, ntimepm=1, nprogs=None, tvec=None, totalspend=None):
 
     """
     Determines allocation values over time for 2, 3 or 4 parameter time-varying
@@ -25,9 +25,9 @@ def timevarying(allocpm, ntimepm=1, nprogs=None, t=None, totalspend=None):
         raise Exception('Invalid number of parameters to define allocations over time')
 
     # Set t to be between 0 and 1, and get the number of time points
-    npts = len(t)
-    t = asarray(t) - t[0]
-    t = tile(t / float(max(t)), (nprogs, 1))
+    npts = len(tvec)
+    tvec = asarray(tvec) - tvec[0]
+    tvec = tile(tvec / float(max(tvec)), (nprogs, 1))
     
     if ntimepm == 1: # Non-time-varying optimisation
 
@@ -49,7 +49,7 @@ def timevarying(allocpm, ntimepm=1, nprogs=None, t=None, totalspend=None):
         shapepar = transpose(tile(gv, (npts, 1))) # Shape parameters
             
         # Calulate shape and scale up to initial allocation
-        timealloc = exp(power(-t, 2) * shapepar) * intalloc
+        timealloc = exp(power(-tvec, 2) * shapepar) * intalloc
             
         # Ensure that we have no negative entries - we shouldn't here though
         if (timealloc < 0).any(): maximum(timealloc, 0)
@@ -94,7 +94,7 @@ def timevarying(allocpm, ntimepm=1, nprogs=None, t=None, totalspend=None):
             inflection = transpose(tile(iv, (npts, 1)))
             
         # Calulate shape and scale up to initial allocation
-        timealloc = (saturation - intercept) / (1 + exp(power(-growthrate, t - inflection))) + intercept
+        timealloc = (saturation - intercept) / (1 + exp(power(-growthrate, tvec - inflection))) + intercept
 
         # Ensure that we have no negative entries - we shouldn't here though
         if (timealloc < 0).any(): maximum(timealloc, 0)
