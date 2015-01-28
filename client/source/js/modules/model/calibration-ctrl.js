@@ -4,6 +4,10 @@ define(['./module', 'angular'], function (module, angular) {
   module.controller('ModelCalibrationController', function ($scope, $http, $interval,
     Model, parameters, meta, info, CONFIG, graphTypeFactory, cfpLoadingBar) {
 
+    $scope.projectInfo = info;
+    $scope.canDoFitting = $scope.projectInfo.can_calibrate;
+    $scope.needData = !$scope.projectInfo.has_data;
+ 
     var prepareF = function (f) {
       var F = angular.copy(f);
 
@@ -21,7 +25,7 @@ define(['./module', 'angular'], function (module, angular) {
       return m;
     };
 
-    var transformedF = prepareF(parameters.F[0]);
+    var transformedF = $scope.needData? {} : prepareF(parameters.F[0]);
 
     $scope.parameters = {
       types: {
@@ -62,9 +66,6 @@ define(['./module', 'angular'], function (module, angular) {
     // to store years from UI
     $scope.simulationOptions = {'timelimit':60};
     $scope.charts = [];
-    $scope.projectInfo = info;
-    $scope.canDoFitting = $scope.projectInfo.can_calibrate;
-    $scope.needData = !$scope.projectInfo.has_data;
     $scope.hasStackedCharts = false;
 
     var defaultChartOptions = {
@@ -241,18 +242,18 @@ define(['./module', 'angular'], function (module, angular) {
       });
 
       _($scope.types.financial).each(function (type) {
-        // costcur = cost for current people living with HIV
-        // costfut = cost for future people living with HIV
-        // ann = annual costs
-        // cum = cumulative costs
+        // existing = cost for current people living with HIV
+        // future = cost for future people living with HIV
+        // costann = annual costs
+        // costcum = cumulative costs
         if (type.annual) {
-          var annualData = response[type.id].ann;
-          charts.push(generateFinancialChart(annualData));
+          var annualData = response.costann[type.id][$scope.types.annualCost];
+          if(annualData && annualData.legend) charts.push(generateFinancialChart(annualData));
         }
 
         if (type.cumulative) {
-          var cumulativeData = response[type.id].cum;
-          charts.push(generateFinancialChart(cumulativeData));
+          var cumulativeData = response.costcum[type.id];
+          if (cumulativeData) charts.push(generateFinancialChart(cumulativeData));
         }
       });
 
@@ -261,6 +262,8 @@ define(['./module', 'angular'], function (module, angular) {
 
     var updateCharts = function (data) {
       if (data!== undefined && data!==null && data.graph !== undefined) {
+        graphTypeFactory.enableAnnualCostOptions($scope.types, data.graph);
+
         $scope.charts = prepareCharts(data.graph);
         $scope.parameters.cache.response = data;
         $scope.canDoFitting = true;

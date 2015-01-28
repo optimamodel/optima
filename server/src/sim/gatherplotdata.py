@@ -97,23 +97,33 @@ def gatheruncerdata(D, R, verbose=2):
 
     
     # Financial outputs
-    for key in ['costcur', 'costfut']:
+    for key in ['costann', 'costcum']:
         uncer[key] = struct()
-        uncer[key].ann = struct()
-        uncer[key].cum = struct()
-        for ac in ['ann','cum']:
-            if key=='costcur' and ac=='ann': origkey = 'annualhivcosts'
-            if key=='costcur' and ac=='cum': origkey = 'cumulhivcosts'
-            if key=='costfut' and ac=='ann': origkey = 'annualhivcostsfuture'
-            if key=='costfut' and ac=='cum': origkey = 'cumulhivcostsfuture'
-            uncer[key][ac].best = R[key][ac][0].tolist()
-            uncer[key][ac].low = R[key][ac][1].tolist()
-            uncer[key][ac].high = R[key][ac][2].tolist()
-            uncer[key][ac].xdata = R['costshared'][origkey]['xlinedata'].tolist()
-            uncer[key][ac].title = R['costshared'][origkey]['title']
-            uncer[key][ac].xlabel = R['costshared'][origkey]['xlabel']
-            uncer[key][ac].ylabel = R['costshared'][origkey]['ylabel']
-            uncer[key][ac].legend = ['Model']
+        for ac in ['total','future','existing']:
+            uncer[key][ac] = struct()
+            origkey = 'annual' if key=='costann' else 'cumulative'
+            if key=='costcum':
+                uncer[key][ac].best = R[key][ac][0].tolist()
+                uncer[key][ac].low = R[key][ac][1].tolist()
+                uncer[key][ac].high = R[key][ac][2].tolist()
+                uncer[key][ac].xdata = R['costshared'][origkey][ac]['xlinedata'].tolist()
+                uncer[key][ac].title = R['costshared'][origkey][ac]['title']
+                uncer[key][ac].xlabel = R['costshared'][origkey][ac]['xlabel']
+                uncer[key][ac].ylabel = R['costshared'][origkey][ac]['ylabel']
+                uncer[key][ac].legend = ['Model']
+            else:
+                for yscale in ['total','gdp','revenue','govtexpend','totalhealth','domestichealth']:
+                    uncer[key][ac][yscale] = struct()
+                    if 'ylinedata' in R['costshared'][origkey][ac][yscale]:
+                        uncer[key][ac][yscale].best = R[key][ac][yscale][0].tolist()
+                        uncer[key][ac][yscale].low = R[key][ac][yscale][1].tolist()
+                        uncer[key][ac][yscale].high = R[key][ac][yscale][2].tolist()
+                        uncer[key][ac][yscale].xdata = R['costshared'][origkey][ac][yscale]['xlinedata'].tolist()
+                        uncer[key][ac][yscale].title = R['costshared'][origkey][ac][yscale]['title']
+                        uncer[key][ac][yscale].xlabel = R['costshared'][origkey][ac][yscale]['xlabel']
+                        uncer[key][ac][yscale].ylabel = R['costshared'][origkey][ac][yscale]['ylabel']
+                        uncer[key][ac][yscale].legend = ['Model']
+                        
     
     
     printv('...done gathering uncertainty results.', 4, verbose)
@@ -158,27 +168,38 @@ def gathermultidata(D, Rarr, verbose=2):
             thisdata =(Rarr[sim].R[key].tot[0]*percent).tolist()
             multi[key].tot.data.append(thisdata)
             multi[key].tot.legend.append(Rarr[sim].label) # Add legends
-        
     
     # Financial outputs
-    for key in ['costcur', 'costfut']:
+    for key in ['costann', 'costcum']:
         multi[key] = struct()
-        for ac in ['ann','cum']:
-            if key=='costcur' and ac=='ann': origkey = 'annualhivcosts'
-            if key=='costcur' and ac=='cum': origkey = 'cumulhivcosts'
-            if key=='costfut' and ac=='ann': origkey = 'annualhivcostsfuture'
-            if key=='costfut' and ac=='cum': origkey = 'cumulhivcostsfuture'
+        for ac in ['total','future','existing']:
+            origkey = 'annual' if key=='costann' else 'cumulative'
             multi[key][ac] = struct()
-            multi[key][ac].data = []
-            multi[key][ac].legend = []
-            for sim in range(multi.nsims):
-                thisdata = Rarr[sim].R[key][ac][0].tolist()
-                multi[key][ac].data.append(thisdata)
-                multi[key][ac].legend.append(Rarr[sim].label) # Add legends
-                multi[key][ac].xdata  = Rarr[sim].R['costshared'][origkey]['xlinedata'].tolist()
-                multi[key][ac].title  = Rarr[sim].R['costshared'][origkey]['title']
-                multi[key][ac].xlabel = Rarr[sim].R['costshared'][origkey]['xlabel']
-                multi[key][ac].ylabel = Rarr[sim].R['costshared'][origkey]['ylabel']
+            if key=='costcum':
+                multi[key][ac].data = []
+                multi[key][ac].legend = []
+                for sim in range(multi.nsims):
+                    thisdata = Rarr[sim].R[key][ac][0].tolist()
+                    multi[key][ac].data.append(thisdata)
+                    multi[key][ac].legend.append(Rarr[sim].label) # Add legends
+                    multi[key][ac].xdata  = Rarr[sim].R['costshared'][origkey][ac]['xlinedata'].tolist()
+                    multi[key][ac].title  = Rarr[sim].R['costshared'][origkey][ac]['title']
+                    multi[key][ac].xlabel = Rarr[sim].R['costshared'][origkey][ac]['xlabel']
+                    multi[key][ac].ylabel = Rarr[sim].R['costshared'][origkey][ac]['ylabel']
+            else:
+                for yscale in ['total','gdp','revenue','govtexpend','totalhealth','domestichealth']:
+                    multi[key][ac][yscale] = struct()
+                    multi[key][ac][yscale].data = []
+                    multi[key][ac][yscale].legend = []
+                    if 'ylinedata' in Rarr[sim].R['costshared'][origkey][ac][yscale]:
+                        for sim in range(multi.nsims):
+                           thisdata = Rarr[sim].R[key][ac][yscale][0].tolist()
+                           multi[key][ac][yscale].data.append(thisdata)
+                           multi[key][ac][yscale].legend.append(Rarr[sim].label) # Add legends
+                           multi[key][ac][yscale].xdata = Rarr[sim].R['costshared'][origkey][ac][yscale]['xlinedata'].tolist()
+                           multi[key][ac][yscale].title = Rarr[sim].R['costshared'][origkey][ac][yscale]['title']
+                           multi[key][ac][yscale].xlabel = Rarr[sim].R['costshared'][origkey][ac][yscale]['xlabel']
+                           multi[key][ac][yscale].ylabel = Rarr[sim].R['costshared'][origkey][ac][yscale]['ylabel']                
         
     printv('...done gathering multi-simulation results.', 4, verbose)
     return multi

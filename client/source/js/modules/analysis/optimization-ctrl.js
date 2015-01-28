@@ -177,7 +177,8 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
           right: 100,
           bottom: 20,
           left: 100
-        }
+        },
+        title: data.name
       };
 
       //TODO @NikGraph @DEvseev - make a stack chart now then pie.val is a combination of arrays (one per population)
@@ -218,14 +219,13 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       var options = {
         legend: [],
         linesStyle: linesStyle,
-        title: 'Allocation'
+        title: data.name
       };
 
       //TODO @NikGraph @DEvseev - make a stack chart now then pie.val is a combination of arrays (one per population)
       graphData[0].axes = _(data.val).map(function (value, index) {
         return { value: value[0], axis: legend[index] };
       });
-      options.legend.push(data.name);
 
       return {
         'data': graphData,
@@ -255,7 +255,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     /**
      * Returns a prepared chart object for a pie chart.
      */
-    var generateStackedBarChart = function(yData, xData, legend) {
+    var generateStackedBarChart = function(yData, xData, legend, title) {
       var graphData = [];
 
       var options = {
@@ -268,7 +268,8 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
         yAxis: {
           axisLabel: ''
         },
-        legend: legend
+        legend: legend,
+        title: title
       };
 
       graphData = _(xData).map(function (xValue, index) {
@@ -290,10 +291,12 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       var charts = [];
 
       if (data.pie1) {
-        charts.push(generateStackedBarChart(data.pie1.val, xData, data.legend));
+        charts.push(generateStackedBarChart(data.pie1.val, xData, data.legend,
+          data.pie1.name));
       }
       if (data.pie2) {
-        charts.push(generateStackedBarChart(data.pie2.val, xData, data.legend));
+        charts.push(generateStackedBarChart(data.pie2.val, xData, data.legend,
+          data.pie2.name));
       }
 
       return charts;
@@ -311,6 +314,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
 
       _($scope.types.population).each(function (type) {
 
+        if (type === undefined) return;
         var data = response[type.id];
         if (data !== undefined) {
 
@@ -353,20 +357,18 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       var graphs = [];
 
       _($scope.types.financial).each(function (type) {
-        // costcur = cost for current people living with HIV
-        // costfut = cost for future people living with HIV
-        // ann = annual costs
-        // cum = cumulative costs
-        if (graphData[type.id] !== undefined) {
-          if (type.annual && graphData[type.id].ann) {
-            var annualData = graphData[type.id].ann;
-            graphs.push(generateFinancialGraph(annualData));
-          }
+        // existing = cost for current people living with HIV
+        // future = cost for future people living with HIV
+        // costann = annual costs
+        // costcum = cumulative costs
+        if (type.annual) {
+          var annualData = graphData.costann[type.id][$scope.types.annualCost];
+          if(annualData) graphs.push(generateFinancialGraph(annualData));
+        }
 
-          if (type.cumulative && graphData[type.id].cum) {
-            var cumulativeData = graphData[type.id].cum;
-            graphs.push(generateFinancialGraph(cumulativeData));
-          }
+        if (type.cumulative) {
+          var cumulativeData = graphData.costcum[type.id];
+          if (cumulativeData) graphs.push(generateFinancialGraph(cumulativeData));
         }
       });
       return graphs;
@@ -386,9 +388,10 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     function updateGraphs(data) {
       if (data.graph !== undefined && data.pie !== undefined) {
         cachedResponse = data;
+        graphTypeFactory.enableAnnualCostOptions($scope.types, data.graph);
         drawGraphs();
       }
-    };
+    }
 
     $scope.validations = {
       years :{

@@ -457,7 +457,7 @@ define(['./module', 'd3', 'underscore', './scale-helpers'], function (module, d3
     function drawTitleAndLegend (svg, options, headerGroup) {
       var titleOffsetTop = 20;
 
-      if (options.hasTitle) {
+      if (options.hasTitle && !options.hideTitle) {
         var titleWidth = options.width - options.margin.left - options.margin.right;
 
         headerGroup.append('text')
@@ -561,7 +561,7 @@ define(['./module', 'd3', 'underscore', './scale-helpers'], function (module, d3
       options.hasLegend = !!options.legend;
 
       var titleOffset = 0;
-      if (options.hasTitle) {
+      if (options.hasTitle && !options.hideTitle) {
         titleOffset += 30;
       }
       options.margin.top += titleOffset;
