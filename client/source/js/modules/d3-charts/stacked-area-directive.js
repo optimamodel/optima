@@ -5,37 +5,30 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
     var svg;
 
     var colors = [
-      'color-1',
-      'color-2',
-      'color-3',
-
-      'color-10',
-      'color-11',
-      'color-12',
-
-      'color-7',
-      'color-8',
-      'color-9',
-
-      'color-13',
-      'color-14',
-      'color-15',
-
-      'color-4',
-      'color-5',
-      'color-6',
-
-      'color-16',
-      'color-17',
-      'color-18',
-
-      'color-19',
-      'color-20',
-      'color-21',
-
-      'color-22',
-      'color-23',
-      'color-24',
+      '__color-blue-1',
+      '__color-blue-2',
+      '__color-blue-3',
+      '__color-grey-1',
+      '__color-grey-2',
+      '__color-grey-3',
+      '__color-purple-1',
+      '__color-purple-2',
+      '__color-purple-3',
+      '__color-brown-1',
+      '__color-brown-2',
+      '__color-brown-3',
+      '__color-green-1',
+      '__color-green-2',
+      '__color-green-3',
+      '__color-deep-blue-1',
+      '__color-deep-blue-2',
+      '__color-deep-blue-3',
+      '__color-yellow-1',
+      '__color-yellow-2',
+      '__color-yellow-3',
+      '__color-salmon-1',
+      '__color-salmon-2',
+      '__color-salmon-3'
     ];
 
     /**

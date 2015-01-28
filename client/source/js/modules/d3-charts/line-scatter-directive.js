@@ -5,9 +5,24 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
     var svg;
 
     // see available colors in chart/_color.scss.
-    var colors = [ '__orange', '__light-orange', '__violet', '__green',
-      '__light-green', '__red', '__gray' ];
-
+    var colors = [
+      '__color-blue-2',
+      '__color-blue-3',
+      '__color-grey-2',
+      '__color-grey-3',
+      '__color-purple-2',
+      '__color-purple-3',
+      '__color-brown-2',
+      '__color-brown-3',
+      '__color-green-2',
+      '__color-green-3',
+      '__color-deep-blue-2',
+      '__color-deep-blue-3',
+      '__color-yellow-2',
+      '__color-yellow-3',
+      '__color-salmon-2',
+      '__color-salmon-3'
+    ];
     var drawGraph = function (data, options, rootElement) {
       options = d3Charts.adaptOptions(options);
 
