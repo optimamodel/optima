@@ -93,9 +93,11 @@ define(['./module', './scale-helpers'], function (module, scaleHelpers) {
         // draw graphs
         areaChartInstance.draw(areaData);
         lineChartInstance.draw(lineData);
+        
         if (scatterDataExists) {
           scatterChartInstance.draw(scatterData);
         }
+
       }
     };
   });

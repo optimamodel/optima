@@ -217,9 +217,40 @@ define(['./module', 'd3', 'underscore', './scale-helpers'], function (module, d3
               return yScale(d[1]);
             });
 
+
           chart.append('path')
             .attr('d', line(dataset))
             .attr('class', ['line ', colorClass, uniqClassName].join(' '));
+
+          /* Initialize tooltip */
+          var tip = d3.tip().attr('class', 'd3-tip').html(function(d) { 
+            return "Year:  " + parseInt(d[0]) + "<br />" +
+                    "Value: " + numeral(d[1].toFixed(2)).format('0.00a') 
+          });
+          
+          var tooltipData = [];
+          var addedData = [];
+          _(dataset).each(function (d) {
+            if ( !_.contains(addedData,parseInt(d[0])) ) {
+              addedData.push( parseInt(d[0]) );
+              tooltipData.push(d);
+            }
+          });
+
+          // http://bl.ocks.org/d3noob/c37cb8e630aaef7df30d
+          chart.selectAll("dot").data(tooltipData).enter().append("circle")
+            .attr("r", 3)
+            .attr("cx", function(d,i) { return xScale(d[0]); })
+            .attr("cy", function(d,i) { return yScale(d[1]); })
+            .attr('style', 'stroke: #EEE;stroke-width: 0.5px;fill: #666;');
+            // Tooltip stuff after this
+
+          d3.selectAll("circle")
+            .call(tip);
+          d3.selectAll("circle")
+            .on('mouseover', tip.show)
+            .on('mouseout', tip.hide);
+
         }
       }
 
