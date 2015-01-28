@@ -14,7 +14,7 @@
           <error-messages for="periodEnd" rules="{min:1950, max:2100, moreThan: 'start year'}"></error-messages>
         </div>
         <div class="8">
-          <button class="btn" ng-disabled="needData || CalibrationForm.$invalid">View simulation</button>
+          <button class="btn __blue" ng-disabled="needData || CalibrationForm.$invalid">View simulation</button>
           <a class="btn" href="http://optimamodel.com/files/optima-parameter-priors.pdf" target="_blank">View parameter priors (PDF)</a>
         </div>
       </form>
@@ -58,10 +58,10 @@
           </div>
 
           <div class="elastic_col __shrink">
-            <button class="btn" style="background: #008800;" ng-click="startAutoCalibration()">Start calibration</button>
+            <button class="btn __green" ng-click="startAutoCalibration()">Start calibration</button>
           </div>
           <div class="elastic_col __shrink">
-            <button class="btn" style="background: #ff0000;" ng-click="stopAutoCalibration()" ng-disabled="!calibrationStatus">Stop calibration</button>
+            <button class="btn __red" ng-click="stopAutoCalibration()" ng-disabled="!calibrationStatus">Stop calibration</button>
           </div>
           <div class="elastic_col __shrink">
             <button class="btn" ng-click="saveCalibration()" ng-disabled="calibrationStatus || errorText">Save calibration</button>
