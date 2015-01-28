@@ -33,6 +33,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       return $state.current.name == "project.edit";
     }
 
+    function findByName(arr,obj){
+        return _.findWhere(arr, {short_name: obj.short_name});
+    }
+
     if (isEditMode()) {
       // change submit button name
       $scope.submit = "Save project & Optima template";
@@ -43,19 +47,28 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       if (activeProject.isSet()) {
         $scope.projectParams.name = $scope.oldProjectName;
-
         $scope.projectParams.datastart = $scope.projectInfo.dataStart;
         $scope.projectParams.dataend = $scope.projectInfo.dataEnd;
       }
+
+      $scope.programs = $scope.programs.concat(_($scope.projectInfo.programs).filter(function (program) {
+        return !findByName($scope.programs, program);
+      }));
+
+      $scope.populations = $scope.populations.concat(_($scope.projectInfo.populations).filter(function (population) {
+        return !findByName($scope.populations, population);
+      }));
+
       _($scope.populations).each(function(population){
-        var source = _.findWhere($scope.projectInfo.populations, { short_name: population.short_name });
+        var source = findByName($scope.projectInfo.populations, population);
         if (source) {
           population.active = true;
           _.extend(population, source);
         }
       });
+
       _($scope.programs).each(function(program){
-        var source = _.findWhere($scope.projectInfo.programs, { short_name: program.short_name });
+        var source = findByName($scope.projectInfo.programs, program);
         if (source) {
           program.active = true;
           _(program).extend(angular.copy(source));
