@@ -40,7 +40,8 @@ define(['angular', 'jquery', 'underscore', 'saveAs', 'jsPDF', './svg-to-png', '.
               .on('click', '.data', function (event) {
                 event.preventDefault();
 
-                // find the chart in the scope via the data attribute
+                // Get the accessor to the chart object in the scope.
+                // Find it via the data attribute.
                 var chartAccessor = attrs.data.replace(new RegExp('.data$'), '');
 
                 scope.exportFrom(scope[chartAccessor]);
