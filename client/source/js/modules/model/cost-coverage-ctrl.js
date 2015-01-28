@@ -73,7 +73,7 @@ define(['./module', 'underscore'], function (module, _) {
         return {
           name: item.name,
           acronym: acronym,
-          category: item.category, 
+          category: item.category,
           ccparams: $scope.all_programs[acronym].ccparams,
           ccplot: $scope.all_programs[acronym].ccplot
         };
@@ -136,7 +136,7 @@ define(['./module', 'underscore'], function (module, _) {
             bottom: 40,
             left: 60
           },
-          linesStyle: ['__blue', '__black __dashed', '__black __dashed']
+          linesStyle: ['__color-blue-3', '__color-black __dashed', '__color-black __dashed']
         }, graphData.xlabel, graphData.ylabel),
         data: {
           lines: [],
@@ -328,7 +328,7 @@ define(['./module', 'underscore'], function (module, _) {
      */
     var retrieveAndUpdateGraphs = function (model) {
       // validation on Cost-coverage curve plotting options
-      if (!areCCParamsValid(model.ccparams)){ 
+      if (!areCCParamsValid(model.ccparams)){
         return;
       }
 
