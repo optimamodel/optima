@@ -291,23 +291,8 @@ define(['angular', 'jquery', './svg-to-png', 'underscore'], function (angular, $
       return null;
     };
 
-    /**
-     * Alerts a message to the user.
-     *
-     * @param {string} msg
-     */
-    var saySorry = function(msg) {
-      // to-do: this should be updated after the PR to use the modalService
-      if ( undefined !== msg ) {
-        return alert(msg);
-      } else {
-        return alert('Sorry, this chart cannot be exported');
-      }
-    };
-
     return {
       generateGraphAsPngOrJpeg: generateGraphAsPngOrJpeg,
-      saySorry: saySorry,
       getExportableFrom: getExportableFrom
     };
   }]);
