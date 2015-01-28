@@ -214,7 +214,6 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
 
       var options = {
         legend: [],
-        linesStyle: linesStyle,
         title: data.name
       };
 
