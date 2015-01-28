@@ -16,17 +16,17 @@ def check_project_name(api_call):
     @wraps(api_call)
     def _check_project_name(*args, **kwargs):
         reply = BAD_REPLY
+        project_name = None
+        project_id = None
         try:
             project_name = request.headers['project']
+            project_id = request.headers['project-id']
+            request.project_name = project_name
+            request.project_id = project_id
+            return api_call(*args, **kwargs)
         except:
-            project_name = ''
-
-        if project_name == '':
             reply['reason'] = 'No project is open'
             return jsonify(reply)
-        else:
-            request.project_name = project_name
-            return api_call(*args, **kwargs)
     return _check_project_name
 
 def report_exception(reason = None):

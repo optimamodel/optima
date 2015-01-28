@@ -21,7 +21,7 @@ define([
             project.name = projectName;
             project.id   = projectId;
             $http.defaults.headers.common.project = project.name;
-            $http.defaults.headers.common.project_id = project.id;
+            $http.defaults.headers.common['project-id'] = project.id;
             localStorage[project.getProjectKeyFor(user)] = JSON.stringify({'name':project.name,'id':project.id});
           },
           loadProjectFor: function (user) { 
@@ -32,7 +32,7 @@ define([
             project.name = loaded_project['name'];
             project.id = loaded_project['id'];
             $http.defaults.headers.common.project = project.name;
-            $http.defaults.headers.common.project_id = project.id;
+            $http.defaults.headers.common['project-id'] = project.id;
           },
           getProjectKeyFor: function (user) {
             // Answers the key used to locally store this project as active for the given user.
@@ -52,7 +52,7 @@ define([
             delete project.name;
             delete project.id;
             delete $http.defaults.headers.common.project;
-            delete $http.defaults.headers.common.project_id;
+            delete $http.defaults.headers.common['project-id'];
             localStorage.removeItem(project.getProjectKeyFor(user));
           },  
           isSet: function() {
