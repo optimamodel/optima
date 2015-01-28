@@ -128,7 +128,7 @@ define(['./module', 'underscore'], function (module, _) {
 
       var graph = {
         options: getLineScatterOptions({
-          linesStyle: ['__blue', '__black __dashed', '__black __dashed'],
+          linesStyle: ['__color-blue-4', '__color-black __dashed', '__color-black __dashed'],
           title: graphData.title,
           hideTitle: true
         }, graphData.xlabel, graphData.ylabel),

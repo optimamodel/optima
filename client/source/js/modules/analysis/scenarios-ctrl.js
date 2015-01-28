@@ -40,14 +40,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           // reset graph types every time you come to this page
           angular.extend($scope.types, angular.copy(CONFIG.GRAPH_TYPES));
 
-          $scope.lineStyles = ['__blue', '__green', '__red', '__orange',
-            '__violet', '__black', '__light-orange', '__light-green'];
-
           linesGraphOptions = {
             height: 200,
             width: 320,
             margin: CONFIG.GRAPH_MARGINS,
-            linesStyle: $scope.lineStyles,
             xAxis: {
               axisLabel: 'Year',
               tickFormat: function (d) {
@@ -104,7 +100,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
          */
         var generateFinancialGraph = function (data) {
           var graph = generateGraph(data.data, data.xdata, data.title, data.legend, data.xlabel, data.ylabel);
-          graph.options.linesStyle = $scope.lineStyles;
           return graph;
         };
 
