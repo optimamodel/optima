@@ -1,20 +1,36 @@
+$colorMap: (
+  'color-black': #000,
+  'color-blue-1': #CCE6F6,
+  'color-blue-2': #82ACC5,
+  'color-blue-3': #3B6E8C,
+  'color-grey-1': #DEDEDF,
+  'color-grey-2': #ACACAC,
+  'color-grey-3': #727272,
+  'color-purple-1': #E5D4F7,
+  'color-purple-2': #A892C0,
+  'color-purple-3': #66527C,
+  'color-brown-1': #F7E6D4,
+  'color-brown-2': #CAAF94,
+  'color-brown-3': #927F6C,
+  'color-green-1': #DFFADF,
+  'color-green-2': #A9D2AA,
+  'color-green-3': #539E55,
+  'color-deep-blue-1': #D6DFF4,
+  'color-deep-blue-2': #7C98D2,
+  'color-deep-blue-3': #3560B8,
+  'color-yellow-1': #F6EECC,
+  'color-yellow-2': #DAC56A,
+  'color-yellow-3': #AC9639,
+  'color-salmon-1': #EACBBE,
+  'color-salmon-2': #D58B6D,
+  'color-salmon-3': #AC5E3F
+);
+
 .line {
 
   // even while the fill color is defined we don't want to show the fill
   // for normal lines (for the legend dots we set it to 1)
   fill-opacity:0;
-
-  $colorMap: (
-          'light-blue':#9aceff,
-          'orange':rgb(255, 127, 14),
-          'light-orange':rgb(255, 187, 120),
-          'violet':rgb(119, 119, 255),
-          'blue':rgb(0, 36, 255),
-          'green':rgb(44, 160, 44),
-          'light-green':rgb(152, 223, 138),
-          'red':rgb(214, 39, 40),
-          'gray':rgb(154, 179, 212)
-  );
 
   @each $name, $color in $colorMap{
     &.__#{$name}{
@@ -29,20 +45,7 @@
   }
 }
 
-.area_chart_path, .stacked-bar-chart-rect {
-
-  $colorMap: (
-          'light-blue':#9aceff,
-          'black':rgb(0, 0, 0),
-          'orange':rgb(255, 127, 14),
-          'light-orange':rgb(255, 187, 120),
-          'violet':rgb(119, 119, 255),
-          'blue':rgb(0, 36, 255),
-          'green':rgb(44, 160, 44),
-          'light-green':rgb(152, 223, 138),
-          'red':rgb(214, 39, 40),
-          'gray':rgb(154, 179, 212)
-  );
+.area_chart_path, .stacked-bar-chart-rect, .pie-chart-segment {
 
   @each $color, $name in $colorMap{
     &.__#{$color}{
@@ -51,35 +54,3 @@
     }
   }
 }
-
-.color-blue-1 { fill: #CCE6F6 }
-.color-blue-2 { fill: #82ACC5 }
-.color-blue-3 { fill: #3B6E8C }
-
-.color-grey-1 { fill: #DEDEDF }
-.color-grey-2 { fill: #ACACAC }
-.color-grey-3 { fill: #727272 }
-
-.color-purple-1 { fill: #E5D4F7 }
-.color-purple-2 { fill: #A892C0 }
-.color-purple-3 { fill: #66527C }
-
-.color-brown-1 { fill: #F7E6D4 }
-.color-brown-2 { fill: #CAAF94 }
-.color-brown-3 { fill: #927F6C }
-
-.color-green-1 { fill: #DFFADF }
-.color-green-2 { fill: #A9D2AA }
-.color-green-3 { fill: #539E55 }
-
-.color-deep-blue-1 { fill: #D6DFF4 }
-.color-deep-blue-2 { fill: #7C98D2 }
-.color-deep-blue-3 { fill: #3560B8 }
-
-.color-yellow-1 { fill: #F6EECC }
-.color-yellow-2 { fill: #DAC56A }
-.color-yellow-3 { fill: #AC9639 }
-
-.color-salmon-1 { fill: #EACBBE }
-.color-salmon-2 { fill: #D58B6D }
-.color-salmon-3 { fill: #AC5E3F }

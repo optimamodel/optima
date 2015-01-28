@@ -147,11 +147,7 @@ define([
     // Stacked bar chart
     // =======
 
-    var linesStyle = [ '__light-blue', '__blue', '__violet', '__green',
-    '__light-green', '__gray', '__red' ];
-
     $scope.options9 = {
-      linesStyle: linesStyle,
       legend: ['AA', 'BB', 'CC'],
       height: 300,
       width: 300,
