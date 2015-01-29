@@ -159,6 +159,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       return $modal.open({
         templateUrl: 'js/modules/project/create-program-modal.html',
         controller: 'ProjectCreateProgramModalController',
+        size: 'lg',
         resolve: {
           program: function () {
             return program;

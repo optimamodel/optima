@@ -55,7 +55,7 @@ class ProjectTestCase(OptimaTestCase):
         self.assertTrue(len(parameters)>0)
         self.assertTrue(set(parameters[0].keys())== \
             set(["keys", "name", "modifiable", "calibration", "dim", "input_keys", "page"]))
-        self.assertTrue(parameter_name(['condom','reg']) == 'Condom use proportion for regular sexual acts')
+        self.assertTrue(parameter_name(['condom','reg']) == 'Condoms | Proportion of sexual acts in which condoms are used with regular partners')
 
     def test_upload_data(self):
         import re

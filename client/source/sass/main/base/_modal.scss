@@ -81,6 +81,12 @@
   }
 }
 
+.modal-dialog {
+  &.modal-lg {
+    width: 900px;
+  }
+}
+
 @media (min-width: 768px) {
 
   .modal-dialog {
