@@ -133,7 +133,7 @@ define([
             }
           },
           {
-            title: 'Manage projects',
+            title: 'Manage user projects',
             click: function() {
               $state.go('admin.manage-projects');
             },

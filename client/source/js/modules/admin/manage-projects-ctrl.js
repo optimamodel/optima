@@ -61,14 +61,14 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      * removes the project if the user confirms.
      * Closes it without further action otherwise.
      */
-    $scope.remove = function ($event, name, id, index) {
+    $scope.remove = function ($event, user, name, id, index) {
       if ($event) {
         $event.preventDefault();
       }
       var message = 'Are you sure you want to permanently remove project "' + name + '"?';
       modalService.confirm(
         function () {
-          removeNoQuestionsAsked(name, id, index);
+          removeNoQuestionsAsked(user, name, id, index);
         },
         function () {
         },
@@ -100,7 +100,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      * If the removed project is the active one it will reset it alerts the user
      * in case of failure.
      */
-    var removeNoQuestionsAsked = function (name, id, index) {
+    var removeNoQuestionsAsked = function (user, name, id, index) {
       $http.delete('/api/project/delete/' + id)
         .success(function (response) {
           if (response && response.status === 'NOK') {
@@ -108,8 +108,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             return;
           }
 
+          user.projects = _(user.projects).filter(function (item) {
+            return item.id != id;
+          });
           $scope.projects = _($scope.projects).filter(function (item) {
-            return item.name != name;
+            return item.id != id;
           });
 
           activeProject.ifActiveResetFor(name, id, UserManager.data);

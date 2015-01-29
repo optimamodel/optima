@@ -5,10 +5,27 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
     var svg;
 
     // see available colors in chart/_color.scss.
-    var colors = [ '__orange', '__light-orange', '__violet', '__green',
-      '__light-green', '__red', '__gray' ];
+    var colors = [
+      '__color-blue-4',
+      '__color-blue-5',
+      '__color-grey-4',
+      '__color-grey-5',
+      '__color-purple-4',
+      '__color-purple-5',
+      '__color-brown-4',
+      '__color-brown-5',
+      '__color-green-4',
+      '__color-green-5',
+      '__color-deep-blue-4',
+      '__color-deep-blue-5',
+      '__color-yellow-4',
+      '__color-yellow-5',
+      '__color-salmon-4',
+      '__color-salmon-5'
+    ];
 
     var drawGraph = function (data, options, rootElement) {
+      options.linesStyle = options.linesStyle || colors;
       options = d3Charts.adaptOptions(options);
 
       // to prevent creating multiple graphs we want to remove the existing svg
@@ -52,7 +69,7 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
       // initialize lineChart for each line and update the scales
       if (linesDataExists) {
         _(data.lines).each(function (line, index) {
-          var lineColor = options.linesStyle && options.linesStyle[index] || colors[index];
+          var lineColor = options.linesStyle[index];
           var lineChart = new d3Charts.LineChart(chartGroup, chartSize, lineColor);
           lineChartInstances.push(lineChart);
           var scales = lineChart.scales(line);

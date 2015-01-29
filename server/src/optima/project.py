@@ -6,8 +6,9 @@ import traceback
 from sim.dataio import upload_dir_user, DATADIR, TEMPLATEDIR, fullpath
 from sim.updatedata import updatedata
 from sim.makeproject import makeproject, makeworkbook
-from utils import allowed_file, project_exists, delete_spreadsheet, load_project, load_project_by_name
+from utils import allowed_file, project_exists, delete_spreadsheet, load_project
 from utils import check_project_name, load_model, save_model, report_exception, model_as_bunch, model_as_dict
+from utils import verify_admin_request
 from flask.ext.login import login_required, current_user
 from dbconn import db
 from dbmodels import ProjectDb, WorkingProjectDb, ProjectDataDb, WorkLogDb
@@ -67,14 +68,16 @@ def createProject(project_name):
     """
     from sim.makeproject import default_datastart, default_dataend, default_pops, default_progs
     from sim.runsimulation import runsimulation
-    current_app.logger.debug("createProject %s" % project_name)
+    current_app.logger.debug("createProject %s for user %s" % (project_name, current_user.email))
     data = json.loads(request.data)
-    print("create data:", data)
+    current_app.logger.debug("createProject data: %s" % data)
     # get current user
     user_id = current_user.id
     edit_params = None
     if data:
-        if 'edit_params' in data: edit_params = data['edit_params']
+        if 'edit_params' in data: 
+            edit_params = data['edit_params']
+            current_app.logger.debug("project %s is in edit mode" % project_name)
         if 'params' in data: 
             data = data['params']
         else:
@@ -91,22 +94,25 @@ def createProject(project_name):
     makeproject_args['pops'] = data.get('populations', default_pops)
     current_app.logger.debug("createProject(%s)" % makeproject_args)
 
-    # See if there is matching project
-    project = load_project_by_name(project_name)
+    # Check whether we are editing a project
+    project_id = request.headers['project-id']
+    project = load_project(project_id) if project_id else None
 
     # update existing
     if project is not None:
         if not is_edit:
             return jsonify({'status':'NOK','reason':'Project %s already exists' % project_name})  
         else:
+            current_app.logger.debug("Editing project %s by user %s:%s" % (project_name, current_user.id, current_user.email))
             project.datastart = makeproject_args['datastart']
             project.dataend = makeproject_args['dataend']
             project.programs = makeproject_args['progs']
             project.populations = makeproject_args['pops']
             current_app.logger.debug('Updating existing project %s' % project.name)
+            user_id = project.user_id
     else:
-        user_id = current_user.id
         # create new project
+        current_app.logger.debug("Creating new project %s by user %s:%s" % (project_name, user_id, current_user.email))
         project = ProjectDb(project_name, user_id, makeproject_args['datastart'], makeproject_args['dataend'], \
             makeproject_args['progs'], makeproject_args['pops'])
         current_app.logger.debug('Creating new project: %s' % project.name)
@@ -133,6 +139,7 @@ def createProject(project_name):
             db.session.query(ProjectDataDb).filter_by(id=project.id).delete()
 
     # Save to db
+    current_app.logger.debug("About to persist project %s for user %s" % (project.name, project.user_id))
     db.session.add(project)
     db.session.commit()
     new_project_template = D.G.workbookname
@@ -236,6 +243,42 @@ def getProjectInformation():
         }
     return jsonify(response_data)
 
+@project.route('/list/all')
+@login_required
+@verify_admin_request
+def getProjectListAll():
+    """
+    Returns the list of existing projects from db.
+
+    Returns:
+        A jsonified list of project dictionaries if the user is logged in.
+        In case of an anonymous user an empty list will be returned.
+
+    """
+    projects_data = []
+    # Get current user
+    if current_user.is_anonymous() == False:
+
+        # Get projects for all users, if the user is admin
+        projects = ProjectDb.query.all()
+        for project in projects:
+            project_data = {
+                'status': "OK",
+                'id': project.id,
+                'name': project.name,
+                'dataStart': project.datastart,
+                'dataEnd': project.dataend,
+                'programs': project.programs,
+                'populations': project.populations,
+                'creation_time': project.creation_time,
+                'data_upload_time': project.data_upload_time(),
+                'user_id': project.user_id
+            }
+            projects_data.append(project_data)
+
+    return jsonify({"projects": projects_data})
+
+
 @project.route('/list')
 @login_required
 def getProjectList():
@@ -251,11 +294,8 @@ def getProjectList():
     # Get current user
     if current_user.is_anonymous() == False:
 
-        # Get projects for current user or for all users, if the user is admin
-        if current_user.is_admin:
-            projects = ProjectDb.query.all()
-        else:
-            projects = ProjectDb.query.filter_by(user_id=current_user.id)
+        # Get projects for current user
+        projects = ProjectDb.query.filter_by(user_id=current_user.id)
         for project in projects:
             project_data = {
                 'status': "OK",
@@ -268,7 +308,6 @@ def getProjectList():
                 'creation_time': project.creation_time,
                 'data_upload_time': project.data_upload_time()
             }
-            if current_user.is_admin: project_data['user_id'] = project.user_id
             projects_data.append(project_data)
 
     return jsonify({"projects": projects_data})
@@ -281,12 +320,14 @@ def deleteProject(project_id):
     Deletes the given project (and eventually, corresponding excel files)
     """
     current_app.logger.debug("deleteProject %s" % project_id)
-    # Get project row for current user with project name
-    project = load_project(project_id)
+    # only loads the project if current user is either owner or admin
+    project = load_project(project_id) 
     project_name = None
+    user_id = current_user.id
 
     if project is not None:
         id = project.id
+        user_id = project.user_id
         project_name = project.name
         #delete all relevant entries explicitly
         db.session.query(WorkLogDb).filter_by(project_id=id).delete()
@@ -295,7 +336,8 @@ def deleteProject(project_id):
         db.session.query(ProjectDb).filter_by(id=id).delete()
     db.session.commit()
     current_app.logger.debug("project %s is deleted by user %s" % (project_id, current_user.id))
-    delete_spreadsheet(project.name, project.user_id)
+    delete_spreadsheet(project_name)
+    if (user_id!=current_user.id):delete_spreadsheet(project_name, user_id) 
     current_app.logger.debug("spreadsheets for %s deleted" % project_name)
 
     return jsonify({'status':'OK','reason':'Project %s deleted.' % project_name})

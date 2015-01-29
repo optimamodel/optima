@@ -90,7 +90,7 @@ class UserTestCase(OptimaTestCase):
         response = self.api_create_project()
         response = self.logout()
         response = self.login(self.admin_email, self.admin_password)
-        response = self.client.get('/api/project/list')
+        response = self.client.get('/api/project/list/all')
         assert(response.status_code==200)
         data = json.loads(response.data)
         projects = data.get('projects')
@@ -99,6 +99,28 @@ class UserTestCase(OptimaTestCase):
         assert('user_id' in projects[0] and 'user_id' in projects[1])
         user_ids = [p['user_id'] for p in projects]
         assert(set(user_ids)==set([2,3]))
+
+    def test_admin_list_own_projects(self):   
+        other_email = 'test2@test.com'
+        self.create_admin_user()
+        response = self.login(self.admin_email, self.admin_password)
+        response = self.api_create_project()
+        response = self.logout()
+        #log in as another user and create a project
+        response = self.create_user(name='test2', email=other_email)
+        response = self.api_create_project()
+        response = self.logout()
+        #log in as admin
+        response = self.login(self.admin_email, self.admin_password)
+        response = self.client.get('/api/project/list')
+        assert(response.status_code==200)
+        data = json.loads(response.data)
+        # now admin should only see his own project
+        projects = data.get('projects')
+        assert(projects is not None)
+        assert(len(projects)==1)
+        assert('user_id' not in projects[0])
+        assert(projects[0]['id']==1)
 
     def test_delete_user(self):
         other_email = 'test2@test.com'

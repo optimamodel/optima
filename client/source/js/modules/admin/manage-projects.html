@@ -1,8 +1,8 @@
-<div class="page">
-  <h1>Manage projects</h1>
-  <div ng-show="users.length===0"> No other users exist. </div>
-  <div ng-repeat="user in users">
-    <h3> {{user.data.name}} ({{user.data.email}}) </h3>
+<div class="rish">
+  <h3>Manage projects</h3>
+  <div class="section" ng-show="!users.length"> No other users have projects. </div>
+  <div class="section" ng-show="users.length" ng-repeat="user in users">
+    <h4> {{user.data.name}} ({{user.data.email}}) </h4>
     <table class="table table-bordered table-hover table-striped" style="width: auto">
       <thead>
       <th>Name</th>
@@ -44,7 +44,7 @@
           <button class="btn __blue" ng-click="edit(project.name, project.id)">Edit project</button>
         </td>
         <td>
-          <button class="btn __red" ng-click="remove($event, project.name, project.id, $index)">Delete project</button>
+          <button class="btn __red" ng-click="remove($event, user, project.name, project.id, $index)">Delete project</button>
         </td>
         <td>
           <button class="btn __blue" ng-click="getData(project.name, project.id)">Download project</button>
