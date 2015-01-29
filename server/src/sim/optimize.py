@@ -1,7 +1,8 @@
 from printv import printv
 from bunch import Bunch as struct
 from copy import deepcopy
-from numpy import array, ones, zeros, concatenate
+from numpy import array, ones, zeros, concatenate, arange
+from utils import findinds
 
 default_simstartyear = 2000
 default_simendyear = 2030
@@ -85,12 +86,25 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2):
         newD, newcov, newnonhivdalysaverted = getcurrentbudget(newD, thisalloc)
         newD.M = makemodelpars(newD.P, newD.opt, withwhat='c', verbose=0)
         S = model(newD.G, newD.M, newD.F[0], newD.opt, verbose=0)
+        R = makeresults(D, allsims=[S], verbose=0)
         
         # Obtain value of the objective function
         objective = 0 # Preallocate objective value 
+        initialindex = findinds(D.opt.partvec, objectives.year.start)
+        finalindex = findinds(D.opt.partvec, objectives.year.end)
+        indices = arange(initialindex,finalindex)
+        
+        weights = []
+        weightkeys = ['inci', 'death', 'daly', 'cost']
+        for key in weightkeys: weights.append(objectives.outcome[key+'weight'] * objectives.outcome[key] / 100.) # Get weight, and multiply by "True" or "False" and normalize from percentage
+        weights = array(weights) # Convert to array
+        # Year indices to use
+        
+        objective += R.
+        
         if objectives.what == 'outcome':
             for ob in ['inci', 'death', 'daly', 'cost']:
-                if objectives.outcome[ob]: objective += S[ob].sum() * objectives.outcome[ob + 'weight'] # TODO -- can we do 'daly' and 'cost' like this too??
+                if objectives.outcome[ob]: objective += R[ob].sum() * objectives.outcome[ob + 'weight'] # TODO -- can we do 'daly' and 'cost' like this too??
         else: print('Work to do here') # 'money'
             
         return objective
