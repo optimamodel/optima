@@ -41,7 +41,7 @@ def getOptimizationParameters():
     if not project_exists(project_id):
         reply['reason'] = 'Project %s does not exist' % project_id
         return reply
-    D = load_model(project_name)
+    D = load_model(project_id)
     if not 'optimizations' in D:
         optimizations = defaultoptimizations(D)
     else:

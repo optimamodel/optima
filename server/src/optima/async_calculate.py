@@ -116,7 +116,7 @@ class CalculatingThread(threading.Thread):
     engine: DB engine to connect to
     sentinel: reference to sentinel (structure used to watch over threads)
     user: current user (new thread does not have the context)
-    project_name: current project name
+    project_id: current project id
     timelimit: time limit for this thread to run
     func: func which has to be called to perform calculations (receiving D as first argument)
     args: additional arguments for this function
@@ -165,7 +165,7 @@ class CalculatingThread(threading.Thread):
                 cancel_status = 'cancelled'
                 break
             iterations += 1
-        print("thread for project %s stopped" % self.project_name)
+        print("thread for project %s stopped" % self.project_id)
         finish_calculation(self.user_id, self.project_id, self.func, self.db_session, cancel_status, error_text)
         self.db_session.connection().close() # this line might be redundant (not 100% sure - not clearly described)
         self.db_session.remove()

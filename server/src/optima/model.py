@@ -332,7 +332,7 @@ def doCostCoverage():
     data = json.loads(request.data)
     current_app.logger.debug("/costcoverage" % data)
     args = {}
-    D = load_model(request.project_name)
+    D = load_model(request.project_id)
     args = pick_params(["progname", "ccparams", "coparams", "ccplot"], data, args)
     do_save = data.get('doSave')
     try:

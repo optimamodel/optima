@@ -501,7 +501,7 @@ def uploadExcel():
         db.session.commit()
 
     reply['status'] = 'OK'
-    reply['result'] = 'Project %s is updated' % project_id
+    reply['result'] = 'Project %s is updated' % project_name
     return json.dumps(reply)
 
 @project.route('/data/<project_id>')
@@ -563,13 +563,14 @@ def setData(project_id):
 
     data = json.load(file)
     project.model = data
+    project_name = project.name
     getPopsAndProgsFromModel(project)
 
     db.session.add(project)
     db.session.commit()
 
     reply['status'] = 'OK'
-    reply['result'] = 'Project %s is updated' % project_id
+    reply['result'] = 'Project %s is updated' % project_name
     reply['file'] = source_filename
 
     return json.dumps(reply)
