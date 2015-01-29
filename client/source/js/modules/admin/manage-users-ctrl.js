@@ -1,9 +1,7 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
   module.controller('AdminManageUsersController', function ($scope, $http, info, users, UserManager, modalService) {
-    console.log("users", users.data);
     $scope.users = _(users.data.users).filter(function (u) {
-      console.log("UserManager", UserManager);
       return u.email != UserManager.data.email;
     });
 

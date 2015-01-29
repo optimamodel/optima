@@ -95,7 +95,7 @@ def createProject(project_name):
     current_app.logger.debug("createProject(%s)" % makeproject_args)
 
     # Check whether we are editing a project
-    project_id = request.headers['project-id']
+    project_id = request.headers.get('project-id')
     project = load_project(project_id) if project_id else None
 
     # update existing
