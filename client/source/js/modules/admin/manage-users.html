@@ -1,3 +1,15 @@
 <div class="page">
-  Manage users
+  <h1>Manage users</h1>
+  <div>
+    <table class="section table table-bordered">
+      <th> Name </th>
+      <th> E-Mail </th>
+      <th> Actions </th>
+      <tr ng-repeat="user in users">
+        <td>{{user.name}}</td>
+        <td>{{user.email}}</td>
+        <td><button ng-click="deleteUser(user)" type="button" class="btn __red">Delete user</button></td>
+      </tr>
+    </table>
+  </div>
 </div>

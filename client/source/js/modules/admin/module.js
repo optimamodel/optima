@@ -23,6 +23,9 @@ define([
                 resolve: {
                   info: function($http) {
                     return $http.get('/api/project/info');
+                  },
+                  users:function($http){
+                    return $http.get('/api/user/list');
                   }
                 }
             })
