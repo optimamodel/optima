@@ -84,9 +84,9 @@ def getcurrentbudget(D, alloc=None):
                     convertedccoparams = default_convertedccoparams
                     
                 if len(convertedccparams)==2:
-                    y = cco2eqn(totalcost, [convertedccparams[0], convertedccparams[1][1], convertedccparams[2], convertedccparams[3], convertedccparams[4]])
+                    y = cco2eqn(totalcost, [convertedccoparams[0], convertedccoparams[1][1], convertedccoparams[2], convertedccoparams[3]])
                 else:
-                    y = ccoeqn(totalcost, convertedccoparams)
+                    y = ccoeqn(totalcost, [convertedccoparams[0], convertedccoparams[1][1], convertedccoparams[2], convertedccoparams[3], convertedccoparams[4]])
                 D.P[effect[0][1]].c[popnumber] = y
 
 
