@@ -30,10 +30,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.edit = function (name, id) {
       $http.get('/api/project/open/' + id)
         .success(function (response) {
-          if (response && response.status === 'NOK') {
-            modalService.inform(undefined, undefined, response.reason);
-            return;
-          }
           activeProject.setActiveProjectFor(name, id, UserManager.data);
           window.location = '/#/project/edit';
         });
@@ -47,10 +43,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.open = function (name, id) {
       $http.get('/api/project/open/' + id)
         .success(function (response) {
-          if (response && response.status === 'NOK') {
-            modalService.inform(undefined, undefined, response.reason);
-            return;
-          }
           activeProject.setActiveProjectFor(name, id, UserManager.data);
           window.location = '/';
         });
@@ -90,8 +82,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         .success(function (response, status, headers, config) {
           var blob = new Blob([response], { type: 'application/json' });
           saveAs(blob, (name + '.json'));
-        })
-        .error(function (response) {});
+        });
     };
 
     /**
@@ -116,9 +107,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           });
 
           activeProject.ifActiveResetFor(name, id, UserManager.data);
-        })
-        .error(function () {
-          modalService.inform(undefined, undefined, 'Could not remove the project');
         });
     };
   });

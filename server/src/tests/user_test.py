@@ -180,7 +180,7 @@ class UserTestCase(OptimaTestCase):
         new_email = 'test1@test.com'
         response = self.client.put('/api/user/modify/1?secret=%s&email=%s&password=%s' \
             % (self.test_password, new_email, new_password))
-        assert(response.status_code==401)
+        assert(response.status_code==404)
 
     def setUp(self):
         import hashlib

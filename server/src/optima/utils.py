@@ -57,7 +57,7 @@ def verify_admin_request(api_call):
             secret = request.args.get('secret','')
             u = UserDb.query.filter_by(password = secret, is_admin=True).first()
         if u is None:
-            abort(401)
+            abort(404)
         else:
             current_app.logger.debug("admin_user: %s %s %s" % (u.name, u.password, u.email))
             return api_call(*args, **kwargs)

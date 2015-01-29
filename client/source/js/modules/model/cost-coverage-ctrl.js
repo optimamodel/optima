@@ -444,9 +444,6 @@ define(['./module', 'underscore'], function (module, _) {
      *   }
      */
     $scope.updateCurve = _.debounce(function (graphIndex, AdjustmentForm) {
-      console.log("AdjustmentForm.$valid",AdjustmentForm.$valid)
-      console.log("$scope.CostCoverageForm.$valid", $scope.CostCoverageForm.$valid)
-      console.log("$scope.hasValidCCParams()", $scope.hasValidCCParams())
       if(AdjustmentForm.$valid && $scope.CostCoverageForm.$valid && $scope.hasValidCCParams()) {
         var model = getPlotModel();
         model.coparams = $scope.coParams[graphIndex];

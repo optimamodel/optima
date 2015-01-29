@@ -351,14 +351,13 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           headers: {'Content-type': 'application/json'},
           responseType:'arraybuffer'})
           .success(function (response, status, headers, config) {
-            var newProjectId = headers()['x-project-id']; //TODO: use this when calling BE
+            var newProjectId = headers()['x-project-id'];
             var blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
             saveAs(blob, ($scope.projectParams.name + '.xlsx'));
                   // update active project
             activeProject.setActiveProjectFor($scope.projectParams.name, newProjectId, UserManager.data);
             $state.go('home');
-          })
-          .error(function () {});
+          });
  
       return true;
     }
