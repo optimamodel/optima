@@ -238,6 +238,9 @@ def defaultobjectives(D, verbose=2):
     ob.outcome.deathweight = 100 # "Death weighting"
     ob.outcome.costann = False # "Minimize cumulative DALYs"
     ob.outcome.costannweight = 100 # "Cost weighting"
+    ob.outcome.budgetrange.minval = None
+    ob.outcome.budgetrange.maxval = None
+    ob.outcome.budgetrange.step = None
     ob.funding = "constant" #that's how it works on FE atm
     
     # Other settings

@@ -23,14 +23,24 @@ print('\n\n\n2. Updating data...')
 from updatedata import updatedata
 D = updatedata(D, verbose=verbose, savetofile=False)
 
-print('\n\n\n3. Running optimization...')
+print('\n\n\n3. Running constant-budget optimization...')
 from optimize import optimize, defaultobjectives
 objectives = defaultobjectives(D, verbose=verbose)
+#optimize(D, objectives=objectives, timelimit=timelimit, verbose=verbose)
+#
+#print('\n\n\n4. Viewing optimization...')
+#from viewresults import viewmultiresults#, viewallocpies
+#viewmultiresults(D.plot.optim[0].multi)
+
+print('\n\n\n5. Running multiple-budget optimization...')
+objectives.funding = 'range'
+objectives.outcome.budgetrange.minval = 0
+objectives.outcome.budgetrange.maxval = 2
+objectives.outcome.budgetrange.step = 0.2
 optimize(D, objectives=objectives, timelimit=timelimit, verbose=verbose)
 
-print('\n\n\n4. Viewing optimization...')
+print('\n\n\n6. Viewing optimization...')
 from viewresults import viewmultiresults#, viewallocpies
-viewmultiresults(D.plot.optim[0].multi)
-#viewallocpies(D.plot.optim['Default'])
+viewmultiresults(D.plot.optim[1].multi)
 
 print('\n\n\nDONE.')

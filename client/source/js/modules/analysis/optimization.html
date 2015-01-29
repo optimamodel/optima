@@ -183,9 +183,9 @@
               Optimize a range of fixed budgets from amount
               <input class="txbox __inline __l" type="number" ng-required="params.objectives.funding==='range'" name="budgetRangeMin" ng-model="params.objectives.outcome.budgetrange.minval"/>
               to amount
-              <input class="txbox __inline __l" type="number" more-than="params.objectives.outcome.budgetrange.minval" ng-required="params.objectives.funding==='range'" name="budgetRangeMax" ng-model="params.objectives.outcome.maxval"/>
+              <input class="txbox __inline __l" type="number" more-than="params.objectives.outcome.budgetrange.minval" ng-required="params.objectives.funding==='range'" name="budgetRangeMax" ng-model="params.objectives.outcome.budgetrange.maxval"/>
               in increments of
-              <input class="txbox __inline __l" type="number" max="30" ng-required="params.objectives.funding==='range'" name="budgetRangeStep" ng-model="params.objectives.outcome.step"/>
+              <input class="txbox __inline __l" type="number" max="30" ng-required="params.objectives.funding==='range'" name="budgetRangeStep" ng-model="params.objectives.outcome.budgetrange.step"/>
 
               <error-messages for="budgetRangeMin" show-always="true"
                               rules="{required:{message:'The minimum budget is required.'}}"></error-messages>
