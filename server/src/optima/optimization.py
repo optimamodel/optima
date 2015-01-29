@@ -163,7 +163,7 @@ def saveModel():
         #save the optimization parameters
         D = saveoptimization(D, name, objectives, constraints, result)
         D_dict = D.toDict()
-        save_model(project_name, D_dict)
+        save_model(project_id, D_dict)
 
         reply['status']='OK'
         reply['optimizations'] = D_dict['optimizations']
