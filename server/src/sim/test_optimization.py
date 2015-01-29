@@ -28,8 +28,8 @@ objectives = defaultobjectives(D, verbose=verbose)
 optimize(D, objectives=objectives, timelimit=timelimit, verbose=verbose)
 
 print('\n\n\n4. Viewing optimization...')
-from viewresults import viewmultiresults, viewallocpies
-viewmultiresults(D.plot.OM)
-viewallocpies(D.plot.OA)
+from viewresults import viewmultiresults#, viewallocpies
+viewmultiresults(D.plot.optim[0].multi)
+#viewallocpies(D.plot.optim['Default'])
 
 print('\n\n\nDONE.')

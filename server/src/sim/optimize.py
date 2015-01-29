@@ -62,14 +62,17 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
     weights = dict()
     normalizations = dict()
     outcomekeys = ['inci', 'death', 'daly', 'costann']
-    for key in outcomekeys:
-        thisweight = objectives.outcome[key+'weight'] * objectives.outcome[key] / 100.
-        weights.update({key:thisweight}) # Get weight, and multiply by "True" or "False" and normalize from percentage
-        if key!='costann':
-            thisnormalization = origR[key].tot[0][indices].sum()
-        else:
-            thisnormalization = origR[key].total.total[0][indices].sum() # Special case for costann
-        normalizations.update({key:thisnormalization})
+    if sum([objectives.outcome[i] for i in objectives.outcome.keys()])>1: # Only normalize if multiple objectives, since otherwise doesn't make a lot of sense
+        for key in outcomekeys:
+            thisweight = objectives.outcome[key+'weight'] * objectives.outcome[key] / 100.
+            weights.update({key:thisweight}) # Get weight, and multiply by "True" or "False" and normalize from percentage
+            if key!='costann': thisnormalization = origR[key].tot[0][indices].sum()
+            else: thisnormalization = origR[key].total.total[0][indices].sum() # Special case for costann
+            normalizations.update({key:thisnormalization})
+    else:
+        for key in outcomekeys:
+            weights.update({key:1}) # Weight of 1
+            normalizations.update({key:1}) # Normalizatoin of 1
     
     def objectivecalc(optimparams):
         """ Calculate the objective function """
@@ -124,22 +127,32 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
         result.alloc = [] # List of allocations
         
         # Run the optimization algorithm
-        optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, xmin=parammin, absinitial=stepsizes, timelimit=timelimit, verbose=verbose)
+        optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, xmin=parammin, absinitial=stepsizes, timelimit=timelimit, fulloutput=True, verbose=verbose)
         
         # Update the model
         Rarr = []
         allocarr = []
+        labels = ['Original','Optimal']
         for i, params in enumerate([origalloc, optparams]): # CK: this is kind of opaque...
             alloc = timevarying(params, ntimepm=len(params)/nprogs, nprogs=nprogs, tvec=D.opt.partvec, totalspend=totalspend)   
             allocarr.append(alloc)
             D, coverage, nonhivdalysaverted = getcurrentbudget(D, alloc)
             D.M = makemodelpars(D.P, D.opt, withwhat='c', verbose=2)
             S = model(D.G, D.M, D.F[0], D.opt, verbose=verbose)
-            Rarr.append(makeresults(D, S, D.opt.quantiles, verbose=verbose))
+            R = makeresults(D, [S], D.opt.quantiles, verbose=verbose)
+            Rarr.append(struct())
+            Rarr[i].R = deepcopy(R)
+            Rarr[i].label = labels[i]
+        
+        result.fval = output.fval
+        result.Rarr = Rarr
+        result.allocarr = allocarr
     
         # Gather plot data
         from gatherplotdata import gatheroptimdata
-        D.plot.optim[name] = gatheroptimdata(D, result.kind, output.fval, Rarr, allocarr, verbose=verbose)
+        optim = gatheroptimdata(D, result, verbose=verbose)
+        if 'optim' not in D.plot: D.plot.optim = [] # Initialize list if required
+        D.plot.optim.append(optim)
     
     saveoptimization(D, name, objectives, constraints, result, verbose=2)   
     
