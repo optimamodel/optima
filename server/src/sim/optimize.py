@@ -32,11 +32,6 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2):
     stepsize = 100000
     growsize = 0.01
     
-    # Set options to update year range
-    from setoptions import setoptions
-    simstartyear = objectives.get("year").get("start") or default_simstartyear
-    simendyear = objectives.get("year").get("end") or default_simendyear
-    D.opt = setoptions(D.opt, simstartyear=simstartyear, simendyear=simendyear)
     origR = deepcopy(D.R)
     
     # Make sure objectives and constraints exist
