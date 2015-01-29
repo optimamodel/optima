@@ -18,7 +18,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      * Alerts the user if it cannot do it.
      */
     $scope.open = function (name, id) {
-      $http.get('/api/project/open/' + name)
+      $http.get('/api/project/open/' + id)
         .success(function (response) {
           if (response && response.status === 'NOK') {
             alert(response.reason);
@@ -40,7 +40,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         "Copy project?",
         "New project name",
         function(newName) {
-          $http.post('/api/project/copy/' + name + '?to=' + newName)
+          $http.post('/api/project/copy/' + id + '?to=' + newName)
             .success(function (response) {
               if (response) {
                 if (response.status === 'NOK') {
@@ -60,7 +60,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      * Alerts the user if it cannot do it.
      */
     $scope.edit = function (name, id) {
-      $http.get('/api/project/open/' + name)
+      $http.get('/api/project/open/' + id)
         .success(function (response) {
           if (response && response.status === 'NOK') {
             alert(response.reason);
@@ -79,14 +79,14 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.workbook = function (name, id) {
       // read that this is the universal method which should work everywhere in
       // http://stackoverflow.com/questions/24080018/download-file-from-a-webapi-method-using-angularjs
-      window.open('/api/project/workbook/' + name, '_blank', '');
+      window.open('/api/project/workbook/' + id, '_blank', '');
     };
 
     /**
      * Gets the data for the given project `name` as <name>.json  file
      */
     $scope.getData = function (name, id) {
-      $http({url:'/api/project/data/'+ name,
+      $http({url:'/api/project/data/'+ id,
             method:'GET',
             headers: {'Content-type': 'application/json'},
             responseType:'arraybuffer'})
@@ -100,7 +100,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.setData = function (name, id, file) {
       var message = 'Warning: This will overwrite ALL data in the project ' + name + '. Are you sure you wish to continue?';
       modalService.confirm(
-        function (){ fileUpload.uploadDataSpreadsheet($scope, file, '/api/project/data/'+name, false); },
+        function (){ fileUpload.uploadDataSpreadsheet($scope, file, '/api/project/data/'+id, false); },
         function (){},
         'Yes, overwrite data',
         'No',
@@ -125,7 +125,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      * in case of failure.
      */
     var removeNoQuestionsAsked = function (name, id, index) {
-      $http.delete('/api/project/delete/' + name)
+      $http.delete('/api/project/delete/' + id)
         .success(function (response) {
           if (response && response.status === 'NOK') {
             alert(response.reason);

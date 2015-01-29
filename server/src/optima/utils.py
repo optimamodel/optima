@@ -75,15 +75,18 @@ def loaddir(app):
         loaddir = DATADIR
     return loaddir
 
-def project_exists(name):
+def project_exists(id):
     cu = current_user
-    return ProjectDb.query.filter_by(user_id=cu.id, name=name).count()>0
+    if current_user.is_admin:
+        return ProjectDb.query.filter_by(id=id).count()>0
+    else: 
+        return ProjectDb.query.filter_by(id=id, user_id=cu.id).count()>0
 
-def load_project(name, all_data = False):
+def load_project_by_name(name, all_data = False):
     from sqlalchemy.orm import undefer, defaultload
     cu = current_user
-    current_app.logger.debug("getting project %s for user %s" % (name, cu.id))
-    query = ProjectDb.query.filter_by(user_id=cu.id, name=name)
+    current_app.logger.debug("getting project %s by name for user %s" % (id, cu.id))
+    query = ProjectDb.query.filter_by(name=name, user_id=cu.id)
     if all_data:
         query = query.options( \
             undefer('model'), \
@@ -94,16 +97,35 @@ def load_project(name, all_data = False):
         current_app.logger.warning("no such project found: %s for user %s %s" % (name, cu.id, cu.name))
     return project
 
+
+def load_project(id, all_data = False):
+    from sqlalchemy.orm import undefer, defaultload
+    cu = current_user
+    current_app.logger.debug("getting project %s for user %s" % (id, cu.id))
+    if current_user.is_admin:
+        query = ProjectDb.query.filter_by(id=id)
+    else: 
+        query = ProjectDb.query.filter_by(id=id, user_id=cu.id)
+    if all_data:
+        query = query.options( \
+            undefer('model'), \
+            defaultload(ProjectDb.working_project).undefer('model'), \
+            defaultload(ProjectDb.project_data).undefer('meta'))
+    project = query.first()
+    if project is None:
+        current_app.logger.warning("no such project found: %s for user %s %s" % (id, cu.id, cu.name))
+    return project
+
 def save_data_spreadsheet(name, folder=DATADIR):
     spreadsheet_file = name
     user_dir = upload_dir_user(folder)
     if not spreadsheet_file.startswith(user_dir):
         spreadsheet_file = helpers.safe_join(user_dir, name+ '.xlsx')
 
-def delete_spreadsheet(name):
+def delete_spreadsheet(name, user_id = None):
     spreadsheet_file = name
     for parent_dir in [TEMPLATEDIR, DATADIR]:
-        user_dir = upload_dir_user(TEMPLATEDIR)
+        user_dir = upload_dir_user(TEMPLATEDIR, user_id)
         if not spreadsheet_file.startswith(user_dir):
             spreadsheet_file = helpers.safe_join(user_dir, name+ '.xlsx')
         if os.path.exists(spreadsheet_file):
@@ -123,37 +145,28 @@ def model_as_bunch(model):
   loads the project with the given name
   returns the model (D).
 """
-def load_model(name, as_bunch = True, working_model = False):
-    current_app.logger.debug("load_model:%s" % name)
+def load_model(id, as_bunch = True, working_model = False):
+    current_app.logger.debug("load_model:%s" % id)
     model = None
-    project = load_project(name)
+    project = load_project(id)
     if project is not None:
         if  working_model == False or project.working_project is None:
-            current_app.logger.debug("project %s loading main model" % name)
+            current_app.logger.debug("project %s loading main model" % id)
             model = project.model
         else:
-            current_app.logger.debug("project %s loading working model" % name)
+            current_app.logger.debug("project %s loading working model" % id)
             model = project.working_project.model
         if model is None or len(model.keys())==0:
-            current_app.logger.debug("model %s is None" % name)
+            current_app.logger.debug("model %s is None" % id)
         else:
             if as_bunch:
                 model = model_as_bunch(model)
     return model
 
-def save_model_db(name, model):
-    current_app.logger.debug("save_model_db %s" % name)
+def save_working_model(id, model):
 
     model = model_as_dict(model)
-    project = load_project(name)
-    project.model = model #we want it to fail if there is no project...
-    db.session.add(project)
-    db.session.commit()
-
-def save_working_model(name, model):
-
-    model = model_as_dict(model)
-    project = load_project(name)
+    project = load_project(id)
 
     # If we do not have an instance for working project, make it now
     if project.working_project is None:
@@ -165,10 +178,10 @@ def save_working_model(name, model):
     db.session.add(working_project)
     db.session.commit()
 
-def save_working_model_as_default(name):
-    current_app.logger.debug("save_working_model_as_default %s" % name)
+def save_working_model_as_default(id):
+    current_app.logger.debug("save_working_model_as_default %s" % id)
 
-    project = load_project(name)
+    project = load_project(id)
     model = project.model
 
     # Make sure there is a working project
@@ -180,10 +193,10 @@ def save_working_model_as_default(name):
 
     return model
 
-def revert_working_model_to_default(name):
-    current_app.logger.debug("revert_working_model_to_default %s" % name)
+def revert_working_model_to_default(id):
+    current_app.logger.debug("revert_working_model_to_default %s" % id)
 
-    project = load_project(name)
+    project = load_project(id)
     model = project.model
 
     # Make sure there is a working project
@@ -195,11 +208,14 @@ def revert_working_model_to_default(name):
 
     return model
 
-def save_model(name, model):
-  try:
-    save_model_db(name, model)
-  except:
-    save_model_file(name, model)
+def save_model(id, model):
+    current_app.logger.debug("save_model %s" % id)
+
+    model = model_as_dict(model)
+    project = load_project(id)
+    project.model = model #we want it to fail if there is no project...
+    db.session.add(project)
+    db.session.commit()
 
 def pick_params(params, data, args = {}):
     for param in params:
