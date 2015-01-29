@@ -48,9 +48,9 @@ def getcurrentbudget(D, alloc=None):
 
         # Get coverage
         if len(convertedccparams)==2:
-            currentcoverage[prognumber, :] = cc2eqn(totalcost, convertedccparams) # cc2eqn(totalcost, convertedccparams)
+            currentcoverage[prognumber, :] = cc2eqn(totalcost, [convertedccparams[0], convertedccparams[1][1]])
         else:
-            currentcoverage[prognumber, :] = cceqn(totalcost, convertedccparams) # cceqn(totalcost, convertedccparams)
+            currentcoverage[prognumber, :] = cceqn(totalcost, [convertedccparams[0], convertedccparams[1][1], convertedccparams[2]]) 
 
         # Extract and sum the number of non-HIV-related DALYs 
         nonhivdalys = D.programs[progname]['nonhivdalys']
