@@ -10,7 +10,7 @@ def makeproject(projectname='example', pops = default_pops, progs = default_prog
     Initializes the empty project. Only the "Global" and "Fitted" parameters are added on this step.
     The rest of the parameters are calculated after the model is updated with the data from the workbook.
     
-    Version: 2015jan19 by cliffk
+    Version: 2015jan27 by cliffk
     """
     
     from dataio import savedata, projectpath
@@ -27,7 +27,7 @@ def makeproject(projectname='example', pops = default_pops, progs = default_prog
     
     # Initialize options
     from setoptions import setoptions
-    D.opt = setoptions(startyear=datastart, endyear=dataend, nsims=nsims)
+    D.opt = setoptions(nsims=nsims)
     
     # Set up "G" -- general parameters structure
     D.G = struct()

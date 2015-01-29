@@ -39,22 +39,12 @@ define(['angular', 'jquery', 'underscore', 'saveAs', 'jsPDF', './svg-to-png', '.
               })
               .on('click', '.data', function (event) {
                 event.preventDefault();
-                //a big ugly hack to distinguish between cost and covariance graphs.
-                //they are both in the same ng-repeat scope :-(
-                var target = {};
-                if ( attrs.variant == "radarChart" ) {
-                  target = scope.radarChart;
-                } else if (attrs.variant == 'pieChart') {
-                  target = scope.pieChart;
-                } else if (attrs.variant == 'coGraph') {
-                  target = scope.coGraph;
-                } else if (attrs.variant == 'ccGraph') {
-                  target = scope.ccGraph;
-                } else {
-                  target = scope.chart;
-                }
 
-                scope.exportFrom(target);
+                // Get the accessor to the chart object in the scope.
+                // Find it via the data attribute.
+                var chartAccessor = attrs.data.replace(new RegExp('.data$'), '');
+
+                scope.exportFrom(scope[chartAccessor]);
               });
           };
 
@@ -103,11 +93,11 @@ define(['angular', 'jquery', 'underscore', 'saveAs', 'jsPDF', './svg-to-png', '.
            * Exports the data of the graph in the format returned by the API
            */
           scope.exportFrom = function (graphOrUndefined){
-            if(!graphOrUndefined) { return exportHelpers.saySorry();}
+            if(!graphOrUndefined) { modalService.inform(undefined,undefined, "Sorry, this chart cannot be exported")}
             var exportable = exportHelpers.getExportableFrom(graphOrUndefined);
 
-            if(exportable === null) { return exportHelpers.saySorry(); }
-            var title = graphOrUndefined.options.title || graphOrUndefined.title || "data";
+            if(exportable === null) { modalService.inform(undefined,undefined, "Sorry, this chart cannot be exported"); }
+            var title = graphOrUndefined.options.title || 'Data';
             $http({url:'/api/project/export',
                   method:'POST',
                   data: exportable,

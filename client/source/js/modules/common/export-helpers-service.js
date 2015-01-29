@@ -100,7 +100,7 @@ define(['angular', 'jquery', './svg-to-png', 'underscore'], function (angular, $
       if (!graph.data || !graph.options) return null;
 
       var exportable = {
-        name: graph.options.title || graph.title,
+        name: graph.options.title || 'Data',
         columns: []
       };
 
@@ -140,7 +140,7 @@ define(['angular', 'jquery', './svg-to-png', 'underscore'], function (angular, $
      */
     var linesExport = function (graph){
       var exportable = {
-        name: graph.options.title || graph.title,
+        name: graph.options.title || 'Data',
         columns: []
       };
 
@@ -181,7 +181,7 @@ define(['angular', 'jquery', './svg-to-png', 'underscore'], function (angular, $
      */
     var areasExport = function (graph){
       var exportable = {
-        name: graph.options.title || graph.title,
+        name: graph.options.title || 'Data',
         columns: []
       };
 
@@ -210,7 +210,7 @@ define(['angular', 'jquery', './svg-to-png', 'underscore'], function (angular, $
     var axesExport = function (graph){
       //x and y are not needed to be exported - they are just internal values to draw radar chart properly
       var exportable = {
-        name: graph.options.title,
+        name: graph.options.title || 'Data',
         columns: []
       };
 
@@ -234,7 +234,7 @@ define(['angular', 'jquery', './svg-to-png', 'underscore'], function (angular, $
     */
     var pieExport = function (graph){
       var exportable = {
-        name: graph.options.title || graph.title || "Allocation",
+        name: graph.options.title || 'Data',
         columns: []
       };
 
@@ -253,7 +253,7 @@ define(['angular', 'jquery', './svg-to-png', 'underscore'], function (angular, $
     */
     var stackedBarsExport = function (chart){
       var exportable = {
-        name: chart.options.title || chart.title || "Data",
+        name: chart.options.title,
         columns: []
       };
 
@@ -291,23 +291,8 @@ define(['angular', 'jquery', './svg-to-png', 'underscore'], function (angular, $
       return null;
     };
 
-    /**
-     * Alerts a message to the user.
-     *
-     * @param {string} msg
-     */
-    var saySorry = function(msg) {
-      // to-do: this should be updated after the PR to use the modalService
-      if ( undefined !== msg ) {
-        return alert(msg);
-      } else {
-        return alert('Sorry, this chart cannot be exported');
-      }
-    };
-
     return {
       generateGraphAsPngOrJpeg: generateGraphAsPngOrJpeg,
-      saySorry: saySorry,
       getExportableFrom: getExportableFrom
     };
   }]);
