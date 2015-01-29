@@ -1,31 +1,59 @@
+"""
+Allocation optimization code:
+    D is the project data structure
+    objectives is a dictionary defining the objectives of the optimization
+    constraints is a dictionary defining the constraints on the optimization
+    timelimit is the maximum time in seconds to run optimization for
+    verbose determines how much information to print.
+    
+Version: 2015jan29 by cliffk
+"""
+
 from printv import printv
 from bunch import Bunch as struct
 from copy import deepcopy
 from numpy import ones, zeros, concatenate, arange
 from utils import findinds
 from makeresults import makeresults
+from timevarying import timevarying
+from getcurrentbudget import getcurrentbudget
+from model import model
+from makemodelpars import makemodelpars
 
 default_simstartyear = 2000
 default_simendyear = 2030
 
-def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name='Default'):
-    """
-    Allocation optimization code:
-        D is the project data structure
-        objectives is a dictionary defining the objectives of the optimization
-        constraints is a dictionary defining the constraints on the optimization
-        timelimit is the maximum time in seconds to run optimization for
-        verbose determines how much information to print.
+
+
+def objectivecalc(optimparams, options):
+    """ Calculate the objective function """
+
+    thisalloc = timevarying(optimparams, ntimepm=options.ntimepm, nprogs=options.nprogs, tvec=options.D.opt.partvec, totalspend=options.totalspend)        
+    newD = deepcopy(options.D)
+    newD, newcov, newnonhivdalysaverted = getcurrentbudget(newD, thisalloc)
+    newD.M = makemodelpars(newD.P, newD.opt, withwhat='c', verbose=0)
+    S = model(newD.G, newD.M, newD.F[0], newD.opt, verbose=0)
+    R = makeresults(options.D, allsims=[S], verbose=0)
+    
+    objective = 0 # Preallocate objective value 
+    for key in options.outcomekeys:
+        if options.weights[key]>0: # Don't bother unless it's actually used
+            if key!='costann': thisobjective = R[key].tot[0][options.indices].sum()
+            else: thisobjective = R[key].total.total[0][options.indices].sum() # Special case for costann
+            objective += thisobjective * options.weights[key] / float(options.normalizations[key])
         
-    Version: 2015jan28 by cliffk
-    """
+    return objective
+    
+    
+    
+def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name='Default'):
+    """ Perform the actual optimization """
     
     # Imports
-    from model import model
+    
     from ballsd import ballsd
-    from getcurrentbudget import getcurrentbudget
-    from makemodelpars import makemodelpars
-    from timevarying import timevarying
+    
+    
     printv('Running optimization...', 1, verbose)
     
     # Set up parameter vector for time-varying optimisation...
@@ -73,26 +101,6 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
         for key in outcomekeys:
             weights.update({key:1}) # Weight of 1
             normalizations.update({key:1}) # Normalizatoin of 1
-    
-    def objectivecalc(optimparams):
-        """ Calculate the objective function """
-
-        thisalloc = timevarying(optimparams, ntimepm=ntimepm, nprogs=nprogs, tvec=D.opt.partvec, totalspend=totalspend)        
-        newD = deepcopy(D)
-        newD, newcov, newnonhivdalysaverted = getcurrentbudget(newD, thisalloc)
-        newD.M = makemodelpars(newD.P, newD.opt, withwhat='c', verbose=0)
-        S = model(newD.G, newD.M, newD.F[0], newD.opt, verbose=0)
-        R = makeresults(D, allsims=[S], verbose=0)
-        
-        objective = 0 # Preallocate objective value 
-        for key in outcomekeys:
-            if weights[key]>0: # Don't bother unless it's actually used
-                if key!='costann': thisobjective = R[key].tot[0][indices].sum()
-                else: thisobjective = R[key].total.total[0][indices].sum() # Special case for costann
-                objective += thisobjective * weights[key] / float(normalizations[key])
-
-            
-        return objective
         
     # Initiate probabilities of parameters being selected
     stepsizes = zeros(nprogs * ntimepm)
@@ -126,8 +134,14 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
         result.kind = 'constant'
         result.alloc = [] # List of allocations
         
+        options = struct()
+        options.ntimepm = ntimepm # Number of time-varying parameters
+        options.nprogs = nprogs # Number of programs
+        options.D = D # Main data structure
+        options.totalspend = totalspend # 
+        
         # Run the optimization algorithm
-        optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, xmin=parammin, absinitial=stepsizes, timelimit=timelimit, fulloutput=True, verbose=verbose)
+        optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=parammin, absinitial=stepsizes, timelimit=timelimit, fulloutput=True, verbose=verbose)
         
         # Update the model
         Rarr = []
@@ -158,6 +172,16 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
     
     printv('...done optimizing programs.', 2, verbose)
     return D
+
+
+
+
+
+
+
+
+
+
 
 def saveoptimization(D, name, objectives, constraints, result, verbose=2):
     #save the optimization parameters
