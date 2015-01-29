@@ -175,7 +175,7 @@ define(['./module', 'd3', 'underscore', './scale-helpers'], function (module, d3
      * @param {object} chartSize - example: { width: 200, height: 100 }.
      * @param {string} colorClass - see available colors in chart/_color.scss.
      */
-    function LineChart(chart, chartSize, colorClass) {
+    function LineChart(parent, chart, chartSize, colorClass) {
 
       var xScale, yScale;
 
@@ -199,11 +199,27 @@ define(['./module', 'd3', 'underscore', './scale-helpers'], function (module, d3
         exit(dataset);
         transition(dataset);
         enter(dataset);
+        zoom();
       };
 
       this.dispose = function () {
         exit([]);
       };
+
+      function zoom() {
+        /* Initialize Zoom **/
+        parent.call(d3.behavior.zoom().translate([0, 0]).scale(1).scaleExtent([1, 4]).on("zoom", zoomer));
+
+      }
+
+      function zoomer() {
+
+        var g = parent.select('g.parent_group');
+        g.attr("transform", "translate(" + d3.event.translate + ") scale(" + d3.event.scale + ") ");
+        g.select(".state-border").style("stroke-width", 1.5 / d3.event.scale + "px");
+        g.select(".county-border").style("stroke-width", .5 / d3.event.scale + "px");
+
+      }
 
       function enter(dataset) {
         //draws path
