@@ -3,6 +3,7 @@ from bunch import Bunch as struct
 from copy import deepcopy
 from numpy import array, ones, zeros, concatenate, arange
 from utils import findinds
+from makeresults import makeresults
 
 default_simstartyear = 2000
 default_simendyear = 2030
@@ -81,10 +82,12 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2):
     normalizations = dict()
     outcomekeys = ['inci', 'death', 'daly', 'costann']
     for key in outcomekeys:
-        subkey='total' if key=='costann' else 'tot'
         thisweight = objectives.outcome[key+'weight'] * objectives.outcome[key] / 100.
         weights.update({key:thisweight}) # Get weight, and multiply by "True" or "False" and normalize from percentage
-        thisnormalization = origR[key][subkey][0][indices].sum()
+        if key!='costann':
+            thisnormalization = origR[key].tot[0][indices].sum()
+        else:
+            thisnormalization = origR[key].total.total[0][indices].sum() # Special case for costann
         normalizations.update({key:thisnormalization})
     
     def objectivecalc(optimparams):
@@ -99,7 +102,10 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2):
         
         objective = 0 # Preallocate objective value 
         for key in outcomekeys:
-            objective += R[key].tot[0][indices].sum() * thisweight[key] / float(thisnormalization[key])
+            if key!='costann': thisobjective = R[key].tot[0][indices].sum()
+            else: thisobjective = R[key].total.total[0][indices].sum() # Special case for costann
+            objective += thisobjective * weights[key] / float(normalizations[key])
+
             
         return objective
         
@@ -140,7 +146,6 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2):
         D.A[i].alloc = alloc # This is overwriting a vector with a matrix # TODO -- initiate properly in makedatapars
     
     # Calculate results
-    from makeresults import makeresults
     for alloc in range(len(D.A)):
         D.A[alloc].R = makeresults(D, [D.A[alloc].S], D.opt.quantiles, verbose=verbose)
     
