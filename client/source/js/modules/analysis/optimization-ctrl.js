@@ -54,7 +54,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       $scope.params.objectives.outcome.inci = false;
       $scope.params.objectives.outcome.daly = false;
       $scope.params.objectives.outcome.death = false;
-      $scope.params.objectives.outcome.cost = false;
+      $scope.params.objectives.outcome.costann = false;
 
       // Money objectives defaults
       $scope.params.objectives.money = {};

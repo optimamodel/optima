@@ -98,11 +98,11 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2):
         
         weights = dict()
         normalizations = dict()
-        outcomekeys = ['inci', 'death', 'daly', 'cost']
+        outcomekeys = ['inci', 'death', 'daly', 'costann']
         for key in outcomekeys:
             thisweight = objectives.outcome[key+'weight'] * objectives.outcome[key] / 100.
             weights.update({key:thisweight}) # Get weight, and multiply by "True" or "False" and normalize from percentage
-            thisnormalization = 
+            thisnormalization = origR[key].tot
         weights = array(weights) # Convert to array
         
         # Year indices to use
@@ -214,8 +214,8 @@ def defaultobjectives(D, verbose=2):
     ob.outcome.dalyweight = 100 # "DALY weighting"
     ob.outcome.death = False # "Minimize cumulative AIDS-related deaths"
     ob.outcome.deathweight = 100 # "Death weighting"
-    ob.outcome.cost = False # "Minimize cumulative DALYs"
-    ob.outcome.costweight = 100 # "Cost weighting"
+    ob.outcome.costann = False # "Minimize cumulative DALYs"
+    ob.outcome.costannweight = 100 # "Cost weighting"
     ob.funding = "constant" #that's how it works on FE atm
     
     # Other settings
