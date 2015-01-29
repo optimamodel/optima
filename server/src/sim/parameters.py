@@ -19,10 +19,10 @@ No.;Parameter name;Location;Model variable name;Data variable name;Manual calibr
 16;PrEP | Proportion of risk encounters covered by PrEP;Programs/scenarios;M.prep[:];txrx.prep;;1;1
 17;Injecting drug use | Number of injections per person per year;Programs/scenarios;M.numacts.inj[:];inj.numinject;;1;1
 18;Injecting drug use | Proportion of injections using receptively shared needle-syringes;Programs/scenarios;M.sharing[:];inj.sharing;;1;1
-19;Injecting drug use | Proportion of people on OST;Programs/scenarios;M.ost;inj.numost;;1;
-20;Injecting drug use | Number of people on OST;Programs/scenarios;M.ost;inj.numost;;1;
-21;PMTCT | Proportion of pregnant women receiving Option B/B+;Programs/scenarios;M.pmtct;txrx.numpmtct;;1;
-22;PMTCT | Number of pregnant women receiving Option B/B+;Programs/scenarios;M.pmtct;txrx.numpmtct;;1;
+19;Injecting drug use | Proportion of people on OST;Programs/scenarios;M.numost;inj.numost;;1;
+20;Injecting drug use | Number of people on OST;Programs/scenarios;M.numost;inj.numost;;1;
+21;PMTCT | Proportion of pregnant women receiving Option B/B+;Programs/scenarios;M.numpmtct;txrx.numpmtct;;1;
+22;PMTCT | Number of pregnant women receiving Option B/B+;Programs/scenarios;M.numpmtct;txrx.numpmtct;;1;
 23;PMTCT | Proportion of mothers who breastfeed;Programs/scenarios;M.breast;txrx.breast;;1;
 1;Mortality | HIV-related mortality rate (AIDS stage);Manual calibration;M.const.death.aids;const.death.aids;1;;
 2;Efficacy | Per-exposure efficacy of medical male circumcision;Manual calibration;M.const.eff.circ;const.eff.circ;1;;
