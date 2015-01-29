@@ -147,12 +147,14 @@ def delete(user_id):
         abort(404)
     else:
         user_email = user.email
-        from dbmodels import ProjectDb, WorkingProjectDb
+        from dbmodels import ProjectDb, WorkingProjectDb, ProjectDataDb, WorkLogDb
         from sqlalchemy.orm import load_only
         #delete all corresponding projects and working projects as well
         projects = ProjectDb.query.filter_by(user_id=user_id).options(load_only("id")).all()
         project_ids = [project.id for project in projects]
         current_app.logger.debug("project_ids for user %s:%s" % (user_id, project_ids))
+        WorkLogDb.query.filter(WorkLogDb.id.in_(project_ids)).delete(synchronize_session=False)
+        ProjectDataDb.query.filter(ProjectDataDb.id.in_(project_ids)).delete(synchronize_session=False)
         WorkingProjectDb.query.filter(WorkingProjectDb.id.in_(project_ids)).delete(synchronize_session=False)
         ProjectDb.query.filter_by(user_id=user_id).delete()
         db.session.delete(user)
