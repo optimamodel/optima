@@ -138,7 +138,11 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
         options.ntimepm = ntimepm # Number of time-varying parameters
         options.nprogs = nprogs # Number of programs
         options.D = D # Main data structure
-        options.totalspend = totalspend # 
+        options.totalspend = totalspend # Total budget
+        options.outcomekeys = outcomekeys # Names of outcomes, e.g. 'inci'
+        options.weights = weights # Weights for each parameter
+        options.indices = indices # Indices for the outcome to be evaluated over
+        options.normalizations = normalizations # Whether to normalize a parameter
         
         # Run the optimization algorithm
         optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=parammin, absinitial=stepsizes, timelimit=timelimit, fulloutput=True, verbose=verbose)

@@ -3,7 +3,7 @@ TEST_OPTIMIZATION
 
 This function tests that the optimization is working.
 
-Version: 2015jan28 by cliffk
+Version: 2015jan29 by cliffk
 """
 
 print('WELCOME TO OPTIMA')
@@ -17,6 +17,7 @@ timelimit = 50
 print('\n\n\n1. Making project...')
 from makeproject import makeproject
 D = makeproject(projectname=projectname, pops=['']*6, progs = ['']*7, datastart=2000, dataend=2015, verbose=verbose)
+D.opt.nsims = 1 # Reset the number of simulations
 
 print('\n\n\n2. Updating data...')
 from updatedata import updatedata
