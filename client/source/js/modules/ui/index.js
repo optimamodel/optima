@@ -119,6 +119,35 @@ define([
         ]
       };
 
+      var adminMenu = {
+        title: 'Admin',
+        matchingState: 'admin',
+        subitems: [
+          {
+            title: 'Manage users',
+            click: function() {
+              $state.go('admin.manage-users');
+            },
+            state:{
+              name: 'admin.manage-users'
+            }
+          },
+          {
+            title: 'Manage projects',
+            click: function() {
+              $state.go('admin.manage-projects');
+            },
+            state:{
+              name: 'admin.manage-projects'
+            }
+          }
+        ]
+      };
+
+      if(UserManager.isAdmin){
+        $scope.asideMenuSettings.items.unshift(adminMenu);
+      }
+
       function ifActiveProject(state, name, activeProject) {
         if(activeProject.isSet()){
           state.go(name);
