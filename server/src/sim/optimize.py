@@ -36,6 +36,8 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2):
     simstartyear = objectives.get("year").get("start") or default_simstartyear
     simendyear = objectives.get("year").get("end") or default_simendyear
     D.opt = setoptions(D.opt, simstartyear=simstartyear, simendyear=simendyear)
+    origS = deepcopy(D.S)
+    origR = deepcopy(D.R)
     
     # Make sure objectives and constraints exist
     if not isinstance(objectives, struct):  objectives = defaultobjectives(D, verbose=verbose)
@@ -94,13 +96,18 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2):
         finalindex = findinds(D.opt.partvec, objectives.year.end)
         indices = arange(initialindex,finalindex)
         
-        weights = []
-        weightkeys = ['inci', 'death', 'daly', 'cost']
-        for key in weightkeys: weights.append(objectives.outcome[key+'weight'] * objectives.outcome[key] / 100.) # Get weight, and multiply by "True" or "False" and normalize from percentage
+        weights = dict()
+        normalizations = dict()
+        outcomekeys = ['inci', 'death', 'daly', 'cost']
+        for key in outcomekeys:
+            thisweight = objectives.outcome[key+'weight'] * objectives.outcome[key] / 100.
+            weights.update({key:thisweight}) # Get weight, and multiply by "True" or "False" and normalize from percentage
+            thisnormalization = 
         weights = array(weights) # Convert to array
+        
         # Year indices to use
         
-        objective += R.
+#        objective += R.
         
         if objectives.what == 'outcome':
             for ob in ['inci', 'death', 'daly', 'cost']:
