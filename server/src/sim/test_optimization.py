@@ -6,15 +6,13 @@ This function tests that the optimization is working.
 Version: 2015jan28 by cliffk
 """
 
-dotimevarying = True # True False
-
 print('WELCOME TO OPTIMA')
 
 ## Set parameters
 projectname = 'example'
 verbose = 10
 ntimepm = 2 # AS: Just use 1 or 2 parameters... using 3 or 4 can cause problems that I'm yet to investigate
-timelimit = 100
+timelimit = 50
 
 print('\n\n\n1. Making project...')
 from makeproject import makeproject
