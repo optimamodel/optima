@@ -14,7 +14,10 @@ define(['angular', 'jquery', 'underscore', 'saveAs', 'jsPDF', './svg-to-png', '.
            * event handlers.
            */
           var initialize = function() {
-            var template = '<div class="chart-buttons btn-group">' +
+            var template = '<div class="chart-left-buttons btn-group">' +
+              '<button class="btn __green reset">Reset</button>' +
+            '</div>' +
+            '<div class="chart-buttons btn-group">' +
             '<button class="btn figure">Export figure</button>' +
             '<button class="btn data">Export data</button>' +
             '</div>';
@@ -25,6 +28,10 @@ define(['angular', 'jquery', 'underscore', 'saveAs', 'jsPDF', './svg-to-png', '.
 
             // setup click handlers for the different actions
             buttons
+              .on('click', '.reset', function (event) {
+                event.preventDefault();
+                resetGraph();
+              })
               .on('click', '.figure', function (event) {
                 event.preventDefault();
 
@@ -46,6 +53,11 @@ define(['angular', 'jquery', 'underscore', 'saveAs', 'jsPDF', './svg-to-png', '.
 
                 scope.exportFrom(scope[chartAccessor]);
               });
+          };
+
+          var resetGraph = function () {
+            var g = elem.parent().find('g.parent_group');
+            g.attr("transform","translate(0,0) scale(1) ");
           };
 
           /**
