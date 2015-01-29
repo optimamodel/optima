@@ -205,22 +205,60 @@ def gathermultidata(D, Rarr, verbose=2):
     return multi
 
 
-def gatheroptimdata(D, A, verbose=2):
+def gatheroptimdata(D, kind, fval, Rarr, allocarr, verbose=2):
     """ Return the data for plotting the two pie charts -- current allocation and optimal. """
     from bunch import Bunch as struct
     from printv import printv
+    from numpy import arange
     printv('Gathering optimization results...', 3, verbose)
     
-    O = struct()
-    O.legend = D.G.meta.progs.short
-    
-    O.pie1 = struct()
-    O.pie1.name = 'Original'
-    O.pie1.val = A[0].alloc.tolist()
-    
-    O.pie2 = struct()
-    O.pie2.name = 'Optimal'
-    O.pie2.val = A[1].alloc.tolist()
+    optim = struct() # These optimization results
+    optim.kind = kind # Flag for the kind of optimization
+    if kind in ['constant', 'timevarying', 'multiyear']:
+        optim.outcome = struct()
+        optim.outcome.ydata = fval # Vector of outcomes
+        optim.outcome.xdata = arange(fval) # Vector of iterations
+        optim.outcome.ylabel = 'Outcome'
+        optim.outcome.xlabel = 'Iteration'
+        optim.outcome.title = 'Outcome (initial: %s, final: %s)' % (fval[0], fval[-1])
+        optim.multi = gathermultidata(D, Rarr, verbose=2)
+    if kind=='constant':
+        optim.alloc = []
+        titles = ['Original','Optimal']
+        for i in range(2): # Original and optimal
+            optim.alloc.append(struct())
+            optim.alloc[i].piedata = allocarr[i] # A vector of allocations, length nprogs, for pie charts
+            optim.alloc[i].radardata = allocarr[i] # TODO -- Array of allocations with uncertainty, length nprogs x 3
+            optim.alloc[i].title = titles[i] # Titles for pies or radar charts
+            optim.alloc[i].legend = D.data.meta.progs.short # Program names, length nprogs, for pie and radar
+    if kind=='timevarying':
+        optim.alloc # Allocation structure
+        optim.alloc.stackdata # Allocation array, nprogs x npts, for stacked area
+        optim.alloc.xdata # Years
+        optim.alloc.xlabel # 'Year'
+        optim.alloc.ylabel # 'Spend'
+        optim.alloc.legend # Program names, length nprogs
+    if kind=='multiyear':
+        optim.alloc # Allocation structure
+        optim.alloc.bardata # Allocation array, nprogs x nyears, for bar charts
+        optim.alloc.xdata # Years
+        optim.alloc.xlabel # 'Year'
+        optim.alloc.ylabel # 'Spend'
+        optim.alloc.legend # Program names, length nprogs
+    if kind=='multibudgets':
+        optim.alloc # Allocations structure
+        optim.alloc.bardata[:] # An array of allocations, nprogs x nbudgets
+        optim.alloc.xdata[:] # Vector of budgets
+        optim.alloc.xlabels # Budget amounts
+        optim.alloc.ylabel # 'Spend'
+        optim.alloc.title # 'Budget allocations'
+        optim.outcome # Dictionary with names and values
+        optim.outcome.bardata[:]  # Vector of outcomes
+        optim.outcome.xdata[:] # Vector of budgets
+        optim.outcome.xlabels # Budget amounts
+        optim.outcome.ylabel # 'Outcome'
+        optim.outcome.title # 'Outcomes'
+
     
     printv('...done gathering optimization results.', 4, verbose)
-    return O
+    return optim

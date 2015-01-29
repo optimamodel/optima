@@ -8,7 +8,7 @@ from makeresults import makeresults
 default_simstartyear = 2000
 default_simendyear = 2030
 
-def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2):
+def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name='Default'):
     """
     Allocation optimization code:
         D is the project data structure
@@ -111,35 +111,42 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2):
     saturation = origalloc       if ntimepm >= 3 else []
     inflection = ones(nprogs)*.5 if ntimepm >= 4 else []
     
-    # Concatonate parameters to be optimised
+    # Concatenate parameters to be optimised
     optimparams = concatenate((origalloc, growthrate, saturation, inflection))
         
     parammin = concatenate((zeros(nprogs), ones(nprogs)*-1e9))
         
-    # Run the optimization algorithm
-    optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, xmin=parammin, absinitial=stepsizes, timelimit=timelimit, verbose=verbose,)
+    ## Run optimization for a constant budget
+    if objectives.funding == "constant":
+        
+        result = struct()
+        result.kind = 'constant'
+        result.alloc = [] # List of allocations
+        
+        # Run the optimization algorithm
+        optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, xmin=parammin, absinitial=stepsizes, timelimit=timelimit, verbose=verbose)
+        
+        # Update the model
+        Rarr = []
+        allocarr = []
+        for i, params in enumerate([origalloc, optparams]): # CK: this is kind of opaque...
+            alloc = timevarying(params, ntimepm=len(params)/nprogs, nprogs=nprogs, tvec=D.opt.partvec, totalspend=totalspend)   
+            allocarr.append(alloc)
+            D, coverage, nonhivdalysaverted = getcurrentbudget(D, alloc)
+            D.M = makemodelpars(D.P, D.opt, withwhat='c', verbose=2)
+            S = model(D.G, D.M, D.F[0], D.opt, verbose=verbose)
+            Rarr.append(makeresults(D, S, D.opt.quantiles, verbose=verbose))
     
-    # Update the model
-    for i, params in enumerate([origalloc, optparams]):
-        alloc = timevarying(params, ntimepm=len(params)/nprogs, nprogs=nprogs, tvec=D.opt.partvec, totalspend=totalspend)            
-        D, D.A[i].coverage, D.A[i].nonhivdalysaverted = getcurrentbudget(D, alloc)
-        D.M = makemodelpars(D.P, D.opt, withwhat='c', verbose=2)
-        D.A[i].S = model(D.G, D.M, D.F[0], D.opt, verbose=verbose)
-        D.A[i].alloc = alloc # This is overwriting a vector with a matrix # TODO -- initiate properly in makedatapars
+        # Gather plot data
+        from gatherplotdata import gatheroptimdata
+        D.plot.optim[name] = gatheroptimdata(D, result.kind, output.fval, Rarr, allocarr, verbose=verbose)
     
-    # Calculate results
-    for alloc in range(len(D.A)):
-        D.A[alloc].R = makeresults(D, [D.A[alloc].S], D.opt.quantiles, verbose=verbose)
-    
-    # Gather plot data
-    from gatherplotdata import gatheroptimdata, gathermultidata
-    D.plot.OA = gatheroptimdata(D, D.A, verbose=verbose)
-    D.plot.OM = gathermultidata(D, D.A, verbose=verbose)
+    saveoptimization(D, name, objectives, constraints, result, verbose=2)   
     
     printv('...done optimizing programs.', 2, verbose)
     return D
 
-def saveoptimization(D, name, objectives, constraints, result = None, verbose=2):
+def saveoptimization(D, name, objectives, constraints, result, verbose=2):
     #save the optimization parameters
     new_optimization = struct()
     new_optimization.name = name
