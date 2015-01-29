@@ -83,16 +83,10 @@ def getcurrentbudget(D, alloc=None):
                     # did not get co_params yet, giving it some defined params TODO @RS @AS do something sensible here:
                     convertedccoparams = default_convertedccoparams
                     
-#                initcost = totalcost if len(totalcost) == 1 else totalcost[0] # TODO -- SHOULD NOW BE REDUNDANT
-
-                #   zerosample, fullsample = makesamples(muz, stdevz, muf, stdevf, samplesize=1)
                 if len(convertedccparams)==2:
-#                    y = cco2eqn(initcost, convertedccoparams) # cco2eqn(totalcost, convertedccoparams)
-                    y = cco2eqn(totalcost, convertedccoparams)
+                    y = cco2eqn(totalcost, [convertedccparams[0], convertedccparams[1][1], convertedccparams[2], convertedccparams[3], convertedccparams[4]])
                 else:
-#                    y = ccoeqn(initcost, convertedccoparams) # cco2eqn(totalcost, convertedccoparams)
                     y = ccoeqn(totalcost, convertedccoparams)
-#                D.P[effect[0][1]].c[popnumber] = y # TODO -- SHOULD NOW BE REDUNDANT
                 D.P[effect[0][1]].c[popnumber] = y
 
 
