@@ -36,7 +36,6 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2):
     simstartyear = objectives.get("year").get("start") or default_simstartyear
     simendyear = objectives.get("year").get("end") or default_simendyear
     D.opt = setoptions(D.opt, simstartyear=simstartyear, simendyear=simendyear)
-    origS = deepcopy(D.S)
     origR = deepcopy(D.R)
     
     # Make sure objectives and constraints exist
@@ -80,6 +79,19 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2):
     nprogs = len(origalloc)
     totalspend = sum(origalloc) # Temp # TODO -- set this up for variable budgets
     
+    # Define indices, weights, and normalization factors
+    initialindex = findinds(D.opt.partvec, objectives.year.start)
+    finalindex = findinds(D.opt.partvec, objectives.year.end)
+    indices = arange(initialindex,finalindex)
+    weights = dict()
+    normalizations = dict()
+    outcomekeys = ['inci', 'death', 'daly', 'costann']
+    for key in outcomekeys:
+        thisweight = objectives.outcome[key+'weight'] * objectives.outcome[key] / 100.
+        weights.update({key:thisweight}) # Get weight, and multiply by "True" or "False" and normalize from percentage
+        thisnormalization = origR[key].tot[0][indices].sum()
+        normalizations.update({key:thisnormalization})
+    
     def objectivecalc(optimparams):
         """ Calculate the objective function """
 
@@ -90,29 +102,9 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2):
         S = model(newD.G, newD.M, newD.F[0], newD.opt, verbose=0)
         R = makeresults(D, allsims=[S], verbose=0)
         
-        # Obtain value of the objective function
         objective = 0 # Preallocate objective value 
-        initialindex = findinds(D.opt.partvec, objectives.year.start)
-        finalindex = findinds(D.opt.partvec, objectives.year.end)
-        indices = arange(initialindex,finalindex)
-        
-        weights = dict()
-        normalizations = dict()
-        outcomekeys = ['inci', 'death', 'daly', 'costann']
         for key in outcomekeys:
-            thisweight = objectives.outcome[key+'weight'] * objectives.outcome[key] / 100.
-            weights.update({key:thisweight}) # Get weight, and multiply by "True" or "False" and normalize from percentage
-            thisnormalization = origR[key].tot
-        weights = array(weights) # Convert to array
-        
-        # Year indices to use
-        
-#        objective += R.
-        
-        if objectives.what == 'outcome':
-            for ob in ['inci', 'death', 'daly', 'cost']:
-                if objectives.outcome[ob]: objective += R[ob].sum() * objectives.outcome[ob + 'weight'] # TODO -- can we do 'daly' and 'cost' like this too??
-        else: print('Work to do here') # 'money'
+            objective += R[key].tot[0][indices].sum() * thisweight[key] / float(thisnormalization[key])
             
         return objective
         
