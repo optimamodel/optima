@@ -559,7 +559,7 @@
               <div ng-if="state.radarCharts && types.plotUncertainties">
                 <div ng-repeat="radarChart in state.radarCharts track by $index">
                   <div class="chart-container __small">
-                    <div radar-chart variant="radarChart" data="radarChart.data" options="radarChart.options" save-graph-as></div>
+                    <div radar-chart data="radarChart.data" options="radarChart.options" save-graph-as></div>
                   </div>
                 </div>
               </div>
@@ -567,7 +567,7 @@
               <div ng-if="state.pieCharts && !types.plotUncertainties">
                 <div ng-repeat="pieChart in state.pieCharts track by $index">
                   <div class="chart-container __small">
-                    <div pie-chart variant="pieChart" data="pieChart.data" options="pieChart.options" save-graph-as></div>
+                    <div pie-chart data="pieChart.data" options="pieChart.options" save-graph-as></div>
                   </div>
                 </div>
               </div>

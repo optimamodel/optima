@@ -15,8 +15,32 @@ define(['./module', 'd3', 'underscore', './scale-helpers'], function (module, d3
     function PieChart(chart, chartSize, data) {
       var radius = Math.min(chartSize.width, chartSize.height) / 2;
 
-      var color = d3.scale.ordinal()
-        .range(['#98DF8A', '#2CA02C', '#9AB3D4', '#7777FF', '#D62728', '#9aceff', '#0024FF']);
+      var colors = [
+        '__color-blue-1',
+        '__color-blue-2',
+        '__color-blue-3',
+        '__color-grey-1',
+        '__color-grey-2',
+        '__color-grey-3',
+        '__color-purple-1',
+        '__color-purple-2',
+        '__color-purple-3',
+        '__color-brown-1',
+        '__color-brown-2',
+        '__color-brown-3',
+        '__color-green-1',
+        '__color-green-2',
+        '__color-green-3',
+        '__color-deep-blue-1',
+        '__color-deep-blue-2',
+        '__color-deep-blue-3',
+        '__color-yellow-1',
+        '__color-yellow-2',
+        '__color-yellow-3',
+        '__color-salmon-1',
+        '__color-salmon-2',
+        '__color-salmon-3'
+      ];
 
       var cDim = {
           height: chartSize.height,
@@ -42,7 +66,9 @@ define(['./module', 'd3', 'underscore', './scale-helpers'], function (module, d3
 
       g.append("path")
         .attr("d", arc)
-        .style("fill", function(d) { return color(d.data.label); });
+        .attr("class", function(entry, index) {
+          return colors[index % colors.length] + ' pie-chart-segment';
+        });
 
       var enteringLabels = chart.selectAll(".label")
         .data(pie(data))

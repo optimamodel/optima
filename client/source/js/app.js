@@ -57,7 +57,7 @@ define([
   ])
 
     .config(function ($httpProvider) {
-      var logoutUserOn401 = ['$q', function ($q) {
+      var logoutUserOn401 = ['$q', '$injector', function ($q, $injector) {
         var success = function (response) {
           return response;
         };
@@ -69,10 +69,21 @@ define([
 
             return $q.reject(response);
           } else {
-            var message = response.data.message || response.data.exception;
-            if (message) {
-              console.log(message);
+            var message, errorText;
+            if (response.data.message || response.data.exception) {
+              message = "Something went wrong. Please try again or contact the support team.";
+              errorText = response.data.message || response.data.exception;
+            } else {
+              message = 'Sorry, but our servers feel bad right now. Please, give them some time to recover or contact the support team.';
             }
+            var modalService = $injector.get('modalService');
+            modalService.inform(
+              function () {},
+              'Okay',
+              message,
+              'Upload Error',
+              errorText
+            );
 
             return $q.reject(response);
           }

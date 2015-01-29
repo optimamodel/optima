@@ -114,14 +114,10 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
 
     var optimizationTimer;
 
-    var linesStyle = ['__blue', '__green', '__red', '__orange', '__violet',
-      '__black', '__light-orange', '__light-green'];
-
     var linesGraphOptions = {
       height: 200,
       width: 320,
       margin: CONFIG.GRAPH_MARGINS,
-      linesStyle: linesStyle,
       xAxis: {
         axisLabel: 'Year',
         tickFormat: function (d) {
@@ -218,7 +214,6 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
 
       var options = {
         legend: [],
-        linesStyle: linesStyle,
         title: data.name
       };
 
@@ -357,6 +352,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       var graphs = [];
 
       _($scope.types.financial).each(function (type) {
+        if (type === undefined) return;
         // existing = cost for current people living with HIV
         // future = cost for future people living with HIV
         // costann = annual costs
