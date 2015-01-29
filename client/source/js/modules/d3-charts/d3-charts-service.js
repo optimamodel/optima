@@ -240,8 +240,6 @@ define(['./module', 'd3', 'underscore', './scale-helpers'], function (module, d3
       function zoomer() {
         var g = parent.select('g.parent_group');
         g.attr("transform", "translate(" + d3.event.translate + ") scale(" + d3.event.scale + ") ");
-        g.select(".state-border").style("stroke-width", 1.5 / d3.event.scale + "px");
-        g.select(".county-border").style("stroke-width", .5 / d3.event.scale + "px");
       };
 
       function enter(dataset) {
