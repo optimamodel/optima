@@ -71,6 +71,10 @@
     border-color: #C7DDEA;
     color: #53646F;
 
+    &:disabled {
+      color: #708897
+    }
+
     &:hover:not(:disabled) {
       background: #BEDFF4;
       border-color: #9DC6DF;
