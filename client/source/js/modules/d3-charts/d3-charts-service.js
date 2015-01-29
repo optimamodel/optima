@@ -223,11 +223,13 @@ define(['./module', 'd3', 'underscore', './scale-helpers'], function (module, d3
             .attr('class', ['line ', colorClass, uniqClassName].join(' '));
 
           /* Initialize tooltip */
-          var tip = d3.tip().attr('class', 'd3-tip').html(function(d) { 
+          var tip = d3.tip().attr('class', 'd3-tip').html(function(d) {
+            // http://numeraljs.com/
             return "Year:  " + parseInt(d[0]) + "<br />" +
                     "Value: " + numeral(d[1].toFixed(2)).format('0.00a') 
           });
           
+          // keep only one data for each year
           var tooltipData = [];
           var addedData = [];
           _(dataset).each(function (d) {
@@ -238,6 +240,7 @@ define(['./module', 'd3', 'underscore', './scale-helpers'], function (module, d3
           });
 
           // http://bl.ocks.org/d3noob/c37cb8e630aaef7df30d
+          // create circles over line to apply tooltips for each year
           chart.selectAll("dot").data(tooltipData).enter().append("circle")
             .attr("r", 3)
             .attr("cx", function(d,i) { return xScale(d[0]); })
@@ -245,6 +248,7 @@ define(['./module', 'd3', 'underscore', './scale-helpers'], function (module, d3
             .attr('style', 'stroke: #EEE;stroke-width: 0.5px;fill: #666;');
             // Tooltip stuff after this
 
+          // apply tooltip to each circle
           d3.selectAll("circle")
             .call(tip);
           d3.selectAll("circle")
