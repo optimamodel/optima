@@ -165,8 +165,7 @@
             <label style="padding:0px 0px 0px 20px;">
               <input type="radio" name="fundingAssumptions" ng-model="params.objectives.funding" value="variable"
                      ng-change="updateYearRange()"/>
-              Optimize a variable budget for each year in the program period:<br/>
-
+              Optimize a variable budget for each year in the program period:
               <br/>
               <div ng-if="params.objectives.funding==='variable'" style="padding:0px 0px 0px 50px;">
                 <div ng-repeat="yCols in yearCols" style="padding:0 0 10px 0;">
@@ -178,9 +177,29 @@
                 </div>
                 <div style="clear:both;"></div>
               </div>
-            </label><br/>
+            </label>
+            <label class="checkbox-inline">
+              <input type="radio" name="fundingAssumptions" ng-model="params.objectives.funding" value="range"/>
+              Optimize a range of fixed budgets from amount
+              <input class="txbox __inline __l" type="number" ng-required="params.objectives.funding==='range'" name="budgetRangeMin" ng-model="params.objectives.outcome.budgetrange.minval"/>
+              to amount
+              <input class="txbox __inline __l" type="number" more-than="params.objectives.outcome.budgetrange.minval" ng-required="params.objectives.funding==='range'" name="budgetRangeMax" ng-model="params.objectives.outcome.maxval"/>
+              in increments of
+              <input class="txbox __inline __l" type="number" max="30" ng-required="params.objectives.funding==='range'" name="budgetRangeStep" ng-model="params.objectives.outcome.step"/>
 
+              <error-messages for="budgetRangeMin" show-always="true"
+                              rules="{required:{message:'The minimum budget is required.'}}"></error-messages>
+              <error-messages for="budgetRangeMax" show-always="true"
+                              rules="{required:{message:'The maximum budget is required.'},
+                                      moreThan:{message:'The maximum budget must be greater than <%= moreThan %>.', value: params.objectives.outcome.budgetrange.minval}}">
+              </error-messages>
+              <error-messages for="budgetRangeStep" show-always="true"
+                              rules="{required:{message:'The budget step is required.'},
+                                      max:{message:'The maximum number of budgets is 30.'}}">
+              </error-messages>
+            <br/>
             <div style="clear:both;"></div>
+            </label>
           </div>
         </div>
 
