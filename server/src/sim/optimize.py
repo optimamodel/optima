@@ -1,7 +1,7 @@
 from printv import printv
 from bunch import Bunch as struct
 from copy import deepcopy
-from numpy import array, ones, zeros, concatenate, arange
+from numpy import ones, zeros, concatenate, arange
 from utils import findinds
 from makeresults import makeresults
 
@@ -33,43 +33,29 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2):
     growsize = 0.01
     
     origR = deepcopy(D.R)
+    origalloc = D.data.origalloc
     
     # Make sure objectives and constraints exist
-    if not isinstance(objectives, struct):  objectives = defaultobjectives(D, verbose=verbose)
-    if not isinstance(constraints, struct): constraints = defaultconstraints(D, verbose=verbose)
+    if objectives is None: objectives = defaultobjectives(D, verbose=verbose)
+    if constraints is None: constraints = defaultconstraints(D, verbose=verbose)
 
     objectives = deepcopy(objectives)
     constraints = deepcopy(constraints)
-    
     ntimepm=1 + int(objectives.timevarying) # Either 1 or 2
 
-    for ob in objectives.money.objectives.keys():
+    # Do percentage normalizations
+    for ob in objectives.money.objectives.keys(): 
         if objectives.money.objectives[ob].use: objectives.money.objectives[ob].by = float(objectives.money.objectives[ob].by) / 100.0
-
-    for prog in objectives.money.costs.keys():
+    for prog in objectives.money.costs.keys(): 
         objectives.money.costs[prog] = float(objectives.money.costs[prog]) / 100.0
-
-    for prog in constraints.decrease.keys():
+    for prog in constraints.decrease.keys(): 
         if constraints.decrease[prog].use: constraints.decrease[prog].by = float(constraints.decrease[prog].by) / 100.0
 
-    # Run optimization # TODO -- actually implement :)
-    nallocs = 1 # WARNING, will want to do this better
-    D.A = deepcopy([D.A[0]])
-    for alloc in range(nallocs): D.A.append(deepcopy(D.A[0])) # Just copy for now
-    D.A[0].label = 'Original'
-    D.A[1].label = 'Optimal'
-    # preserving the origalloc during the first iteration (because on web, we run this in batches)
-    if 'origalloc' not in D.A[0]:
-        origalloc = deepcopy(array(D.A[0].alloc))
-        D.A[0].origalloc = origalloc
-    else:
-        origalloc = D.A[0].origalloc
-    D.A = D.A[:2] # TODO WARNING KLUDGY
-
-    nprogs = len(origalloc)
-    totalspend = sum(origalloc) # Temp # TODO -- set this up for variable budgets
+    nprogs = len(D.programs)
+    totalspend = objectives.outcome.fixed # For fixed budgets
     
-    # Define indices, weights, and normalization factors
+    
+    ## Define indices, weights, and normalization factors
     initialindex = findinds(D.opt.partvec, objectives.year.start)
     finalindex = findinds(D.opt.partvec, objectives.year.end)
     indices = arange(initialindex,finalindex)
@@ -97,9 +83,10 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2):
         
         objective = 0 # Preallocate objective value 
         for key in outcomekeys:
-            if key!='costann': thisobjective = R[key].tot[0][indices].sum()
-            else: thisobjective = R[key].total.total[0][indices].sum() # Special case for costann
-            objective += thisobjective * weights[key] / float(normalizations[key])
+            if weights[key]>0: # Don't bother unless it's actually used
+                if key!='costann': thisobjective = R[key].tot[0][indices].sum()
+                else: thisobjective = R[key].total.total[0][indices].sum() # Special case for costann
+                objective += thisobjective * weights[key] / float(normalizations[key])
 
             
         return objective

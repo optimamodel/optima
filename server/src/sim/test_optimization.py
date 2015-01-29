@@ -12,7 +12,7 @@ print('WELCOME TO OPTIMA')
 
 ## Set parameters
 projectname = 'example'
-verbose = 2
+verbose = 10
 ntimepm = 2 # AS: Just use 1 or 2 parameters... using 3 or 4 can cause problems that I'm yet to investigate
 timelimit = 100
 
@@ -25,8 +25,9 @@ from updatedata import updatedata
 D = updatedata(D, verbose=verbose, savetofile=False)
 
 print('\n\n\n3. Running optimization...')
-from optimize import optimize
-optimize(D, objectives={"year":{"start":2015,"end":2020,'until':2030}}, timelimit=timelimit, verbose=verbose)
+from optimize import optimize, defaultobjectives
+objectives = defaultobjectives(D, verbose=verbose)
+optimize(D, objectives=objectives, timelimit=timelimit, verbose=verbose)
 
 print('\n\n\n4. Viewing optimization...')
 from viewresults import viewmultiresults, viewallocpies
