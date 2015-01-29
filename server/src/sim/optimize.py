@@ -16,7 +16,7 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2):
         timelimit is the maximum time in seconds to run optimization for
         verbose determines how much information to print.
         
-    Version: 2015jan27 by cliffk
+    Version: 2015jan28 by cliffk
     """
     
     # Imports
@@ -45,13 +45,7 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2):
     objectives = deepcopy(objectives)
     constraints = deepcopy(constraints)
     
-    ntimepm=2 if objectives.timevarying == True else 1
-
-    # Convert weightings from percentage to number
-    if objectives.outcome.inci:  objectives.outcome.inciweight  = float(objectives.outcome.inciweight) / 100.0
-    if objectives.outcome.daly:  objectives.outcome.dalyweight  = float(objectives.outcome.dalyweight) / 100.0
-    if objectives.outcome.death: objectives.outcome.deathweight = float(objectives.outcome.deathweight) / 100.0
-    if objectives.outcome.cost:  objectives.outcome.costweight  = float(objectives.outcome.costweight) / 100.0
+    ntimepm=1 + int(objectives.timevarying) # Either 1 or 2
 
     for ob in objectives.money.objectives.keys():
         if objectives.money.objectives[ob].use: objectives.money.objectives[ob].by = float(objectives.money.objectives[ob].by) / 100.0
@@ -87,9 +81,10 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2):
     normalizations = dict()
     outcomekeys = ['inci', 'death', 'daly', 'costann']
     for key in outcomekeys:
+        subkey='total' if key=='costann' else 'tot'
         thisweight = objectives.outcome[key+'weight'] * objectives.outcome[key] / 100.
         weights.update({key:thisweight}) # Get weight, and multiply by "True" or "False" and normalize from percentage
-        thisnormalization = origR[key].tot[0][indices].sum()
+        thisnormalization = origR[key][subkey][0][indices].sum()
         normalizations.update({key:thisnormalization})
     
     def objectivecalc(optimparams):

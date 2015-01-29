@@ -3,7 +3,7 @@ TEST_OPTIMIZATION
 
 This function tests that the optimization is working.
 
-Version: 2015jan27 by cliffk
+Version: 2015jan28 by cliffk
 """
 
 dotimevarying = True # True False
@@ -26,7 +26,7 @@ D = updatedata(D, verbose=verbose, savetofile=False)
 
 print('\n\n\n3. Running optimization...')
 from optimize import optimize
-optimize(D, objectives={"year":{"start":2000,"end":2030}}, ntimepm=2, timelimit=timelimit, verbose=verbose)
+optimize(D, objectives={"year":{"start":2015,"end":2020,'until':2030}}, timelimit=timelimit, verbose=verbose)
 
 print('\n\n\n4. Viewing optimization...')
 from viewresults import viewmultiresults, viewallocpies

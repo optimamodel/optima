@@ -33,7 +33,11 @@ sys.excepthook = info
 # Run all tests
 from glob import glob
 from time import sleep
-files = glob('test_*.py')
+from sys import argv
+if len(argv)==1:
+    files = glob('test_*.py')
+else:
+    files = argv[1:]
 for thisfile in files:
    if (thisfile != 'test_programs.py') and (thisfile != 'test_makeworkbook.py'):
       print('''
