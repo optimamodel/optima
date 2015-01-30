@@ -100,7 +100,7 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
             normalizations.update({key:thisnormalization})
     else:
         for key in outcomekeys:
-            weights.update({key:1}) # Weight of 1
+            weights.update({key:int(objectives.outcome[key])}) # Weight of 1
             normalizations.update({key:1}) # Normalizatoin of 1
         
     # Initiate probabilities of parameters being selected
