@@ -13,9 +13,10 @@ from flask import request, jsonify, g, session, flash, abort, Blueprint, url_for
 from flask.ext.login import LoginManager, login_user, current_user, logout_user, redirect, login_required
 from dbconn import db
 from dbmodels import UserDb
-from utils import verify_request
+from utils import verify_admin_request
 import logging
 import json
+import traceback
 
 
 # route prefix: /api/user
@@ -74,44 +75,41 @@ def login():
     cu = current_user
 
     if cu.is_anonymous():
-        current_app.logger.debug("current user anonymous")
+        current_app.logger.debug("current user anonymous, proceed with logging in")
         # Make sure user is valid.
         username = request.json['email']
 
         if username is not None:
-
-            # Get hashsed password
-            password = request.json['password']
-
-            # Get user for this username
             try:
+                # Get hashsed password
+                password = request.json['password']
+
+                # Get user for this username
                 u = UserDb.query.filter_by( email=username ).first()
-            except:
-                u = None
 
-            # Make sure user is valid and password matches
-            if u is not None and u.password == password:
-                print("password:%s" % u.password)
+                # Make sure user is valid and password matches
+                if u is not None and u.password == password:
+                    # Login the user
+                    login_user(u)
+                    # Return user info
+                    return jsonify({'email': u.email, 'name': u.name })
 
-                # Login the user
-                login_user(u)
-
-                # Return user info
-                return jsonify({'email': u.email, 'name': u.name })
-
-        # If we come here, login is not successful
+            except Exception, err:
+                var = traceback.format_exc()
+                print("Exception when logging user %s: \n%s" % (username, var))
+        
+        # If we came here, login did not succeed
         abort(401)
     else:
+        # User logged in, redirect
         current_app.logger.warning("User already logged in:%s %s" % (cu.name, cu.password))
-
-    # User logged in, redirect
-    return redirect(request.args.get("next") or url_for("site"))
+        return redirect(request.args.get("next") or url_for("site"))
 
 @user.route('/current', methods=['GET'])
 def current_user_api():
     cu = current_user
     if not cu.is_anonymous():
-        return jsonify({ 'email': cu.email, 'name': cu.name })
+        return jsonify({ 'email': cu.email, 'name': cu.name, 'is_admin': cu.is_admin })
     abort(401)
 
 @user.route('/logout')
@@ -130,7 +128,7 @@ def logout():
 #lists all the users. For internal reasons, this is implemented as console-only functionality
 #with user hashed password as secret (can be changed later)
 @user.route('/list')
-@verify_request
+@verify_admin_request
 def list_users():
     current_app.logger.debug('/api/user/list %s' % request.args)
     result = []
@@ -141,7 +139,7 @@ def list_users():
 
 #deletes the given user by ID
 @user.route('/delete/<user_id>', methods=['DELETE'])
-@verify_request
+@verify_admin_request
 def delete(user_id):
     current_app.logger.debug('/api/user/delete/%s' % user_id)
     user = UserDb.query.get(user_id)
@@ -149,12 +147,14 @@ def delete(user_id):
         abort(404)
     else:
         user_email = user.email
-        from dbmodels import ProjectDb, WorkingProjectDb
+        from dbmodels import ProjectDb, WorkingProjectDb, ProjectDataDb, WorkLogDb
         from sqlalchemy.orm import load_only
         #delete all corresponding projects and working projects as well
         projects = ProjectDb.query.filter_by(user_id=user_id).options(load_only("id")).all()
         project_ids = [project.id for project in projects]
         current_app.logger.debug("project_ids for user %s:%s" % (user_id, project_ids))
+        WorkLogDb.query.filter(WorkLogDb.id.in_(project_ids)).delete(synchronize_session=False)
+        ProjectDataDb.query.filter(ProjectDataDb.id.in_(project_ids)).delete(synchronize_session=False)
         WorkingProjectDb.query.filter(WorkingProjectDb.id.in_(project_ids)).delete(synchronize_session=False)
         ProjectDb.query.filter_by(user_id=user_id).delete()
         db.session.delete(user)
@@ -164,7 +164,7 @@ def delete(user_id):
 
 #modify user by ID (can change email, name and/or password)
 @user.route('/modify/<user_id>', methods=['PUT'])
-@verify_request
+@verify_admin_request
 def modify(user_id):
     current_app.logger.debug('/api/user/modify/%s' % user_id)
     user = UserDb.query.get(user_id)
