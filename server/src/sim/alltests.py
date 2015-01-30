@@ -8,9 +8,6 @@ you can think up a better way, which I'm sure you can, let me know :)
 Version: 2015jan29 by cliffk
 """
 
-from matplotlib.pylab import show, ion
-ion()
-
 # Make sure memory is handled OK
 try:
     import resource, os
@@ -52,4 +49,13 @@ for thisfile in files:
       sleep(1)
       execfile(thisfile)
 
+# Clean up
+try:
+    from dataio import savedata
+    savedata('example.prj',D) # analysis:ignore # To load, use D = loaddata('/tmp/projects/example.prj')
+except:
+    print('Attempt to save data failed.')
+
+from matplotlib.pylab import * # analysis:ignore
+ion()
 show()

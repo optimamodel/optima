@@ -44,7 +44,7 @@ def projectpath(filename):
 
 
 
-def savedata(filename, data, update=True, verbose=2, path=None):
+def savedata(filename, data, update=True, verbose=2):
     """
     Saves the pickled data into the file (either updates it or just overwrites).
     """
