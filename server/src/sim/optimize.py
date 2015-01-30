@@ -12,7 +12,7 @@ Version: 2015jan29 by cliffk
 from printv import printv
 from bunch import Bunch as struct
 from copy import deepcopy
-from numpy import ones, zeros, concatenate, arange, inf
+from numpy import ones, zeros, concatenate, arange, inf, hstack, argmin
 from utils import findinds
 from makeresults import makeresults
 from timevarying import timevarying
@@ -193,15 +193,59 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
         
         
     ###########################################################################
-    ## Constant budget optimization
+    ## Multiple budgets optimization
     ###########################################################################
     if objectives.funding == 'range':
+        
+        ## Define options structure
+        options = struct()
+        options.ntimepm = 1 # Number of time-varying parameters -- always 1 in this case
+        options.nprogs = nprogs # Number of programs
+        options.D = deepcopy(D) # Main data structure
+        options.outcomekeys = outcomekeys # Names of outcomes, e.g. 'inci'
+        options.weights = weights # Weights for each parameter
+        options.indices = indices # Indices for the outcome to be evaluated over
+        options.normalizations = normalizations # Whether to normalize a parameter
+        options.totalspend = totalspend # Total budget
+        
+        ## Run multiple budgets
         budgets = totalspend*arange(objectives.outcome.budgetrange.minval, objectives.outcome.budgetrange.maxval+objectives.outcome.budgetrange.step, objectives.outcome.budgetrange.step)
+        closesttocurrent = argmin(abs(budgets-1)) + 1 # Find the index of the budget closest to current and add 1 since prepend current budget
         nbudgets = len(budgets)
+        budgets = hstack([1,budgets]) # Include current budget
+        allocarr = [origalloc] # Original allocation
+        fvalarr = [objectivecalc(optimparams, options=options)] # Outcome for original allocation
         for b in range(nbudgets):
-            options.totalspend = budgets[b] # Total budget
+            options.totalspend = budgets[b+1] # Total budget, skipping first
             optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=parammin, absinitial=stepsizes, timelimit=timelimit, fulloutput=True, verbose=verbose)
-
+            allocarr.append(optparams)
+            fvalarr.append(fval) # Only need last value
+        
+        # Update the model and store the results
+        result = struct()
+        result.kind = objectives.funding
+        result.budgets = budgets
+        result.budgetlabels = ['Original budget']
+        for b in range(nbudgets): result.budgetlabels.append('%i%% budget' % (budgets[b+1]*100.))
+            
+        result.fval = fvalarr # Append the best value noe
+        result.allocarr = [] # List of allocations
+        result.allocarr.append(quantile([origalloc])) # Kludgy -- run fake quantile on duplicated origalloc just so it matches
+        result.allocarr.append(quantile(allocarr)) # Calculate allocation arrays 
+        labels = ['Original','Optimal']
+        result.Rarr = []
+        for params in [origalloc, allocarr[closesttocurrent]]: # CK: loop over original and (the best) optimal allocations
+            alloc = timevarying(params, ntimepm=len(params)/nprogs, nprogs=nprogs, tvec=D.opt.partvec, totalspend=totalspend)   
+            D, coverage, nonhivdalysaverted = getcurrentbudget(D, alloc)
+            D.M = makemodelpars(D.P, D.opt, withwhat='c', verbose=2)
+            S = model(D.G, D.M, D.F[0], D.opt, verbose=verbose)
+            R = makeresults(D, [S], D.opt.quantiles, verbose=verbose)
+            result.Rarr.append(struct()) # Append a structure
+            result.Rarr[-1].R = deepcopy(R) # Store the R structure (results)
+            result.Rarr[-1].label = labels.pop(0) # Store labels, one at a time        
+        
+        
+ 
 
 
     

@@ -205,8 +205,11 @@ def gathermultidata(D, Rarr, verbose=2):
     return multi
 
 
+
+
+
 def gatheroptimdata(D, result, verbose=2):
-    """ Return the data for plotting the two pie charts -- current allocation and optimal. """
+    """ Return the data for plotting the optimization results. """
     from bunch import Bunch as struct
     from printv import printv
     from numpy import arange
@@ -221,7 +224,7 @@ def gatheroptimdata(D, result, verbose=2):
         optim.outcome.xdata = arange(len(result.fval)) # Vector of iterations
         optim.outcome.ylabel = 'Outcome'
         optim.outcome.xlabel = 'Iteration'
-        optim.outcome.title = 'Outcome (initial: %s, final: %s)' % (result.fval[0], result.fval[-1])
+        optim.outcome.title = 'Outcome (initial: %0.0f, final: %0.0f)' % (result.fval[0], result.fval[-1])
         optim.multi = gathermultidata(D, result.Rarr, verbose=2)
     if optim.kind=='constant':
         optim.alloc = []
@@ -251,15 +254,15 @@ def gatheroptimdata(D, result, verbose=2):
         optim.alloc.legend = D.data.meta.progs.short # Program names, length nprogs
     if optim.kind=='multibudgets':
         optim.alloc = struct() # Allocations structure
-        optim.alloc.bardata = temp((D.G.nprogs, 10)) # An array of allocations, nprogs x nbudgets TEMP
-        optim.alloc.xdata = arange(0,2,0.1) # Vector of budgets TEMP
-        optim.alloc.xlabels = ['Budget %s' % arange(5)[i] for i in range(5)]# Budget amounts TEMP
+        optim.alloc.bardata = result.allocarr # An array of allocations, nprogs x nbudgets
+        optim.alloc.xdata = result.budgets # Vector of budgets
+        optim.alloc.xlabels = result.budgetlabels # Budget labels
         optim.alloc.ylabel = 'Spend'
         optim.alloc.title = 'Budget allocations'
         optim.outcome = struct() # Dictionary with names and values
-        optim.outcome.bardata = result.fval  # Vector of outcomes
-        optim.outcome.xdata = arange(0,2,0.1) # Vector of budgets TEMP
-        optim.outcome.xlabels = ['Budget %s' % arange(5)[i] for i in range(5)]# Budget amounts TEMP
+        optim.outcome.bardata = result.fval  # Vector of outcomes, nbudgets
+        optim.outcome.xdata = result.budgets # Vector of budgets
+        optim.outcome.xlabels = result.budgetlabels # Budget labels
         optim.outcome.ylabel = 'Outcome'
         optim.outcome.title = 'Outcomes'
 
