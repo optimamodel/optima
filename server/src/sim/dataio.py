@@ -94,16 +94,18 @@ def loaddata(filename, verbose=2):
 
 
 
-def upload_dir_user(dirpath):
+def upload_dir_user(dirpath, user_id = None):
     
     try:
         from flask.ext.login import current_user
 
         # get current user 
         if current_user.is_anonymous() == False:
+
+            current_user_id = user_id if user_id else current_user.id
     
             # user_path
-            user_path = os.path.join(dirpath, str(current_user.id))
+            user_path = os.path.join(dirpath, str(current_user_id))
     
             # if dir does not exist
             if not(os.path.exists(dirpath)):

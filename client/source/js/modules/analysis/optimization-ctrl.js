@@ -351,6 +351,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     var prepareFinancialGraphs = function(graphData) {
       var graphs = [];
 
+      if (graphData === undefined) return graphs;
       _($scope.types.financial).each(function (type) {
         if (type === undefined) return;
         // existing = cost for current people living with HIV
@@ -358,12 +359,12 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
         // costann = annual costs
         // costcum = cumulative costs
         if (type.annual) {
-          var annualData = graphData.costann[type.id][$scope.types.annualCost];
+          var annualData = graphData.costann? graphData.costann[type.id][$scope.types.annualCost]:undefined;
           if(annualData) graphs.push(generateFinancialGraph(annualData));
         }
 
         if (type.cumulative) {
-          var cumulativeData = graphData.costcum[type.id];
+          var cumulativeData = graphData.costcum? graphData.costcum[type.id]:undefined;
           if (cumulativeData) graphs.push(generateFinancialGraph(cumulativeData));
         }
       });

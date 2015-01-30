@@ -17,10 +17,14 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      *
      * Alerts the user if it cannot do it.
      */
-    $scope.open = function (name) {
-      $http.get('/api/project/open/' + name)
+    $scope.open = function (name, id) {
+      $http.get('/api/project/open/' + id)
         .success(function (response) {
-          activeProject.setActiveProjectFor(name, UserManager.data);
+          if (response && response.status === 'NOK') {
+            alert(response.reason);
+            return;
+          }
+          activeProject.setActiveProjectFor(name, id, UserManager.data);
           window.location = '/';
         });
     };
@@ -31,12 +35,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      *
      * Prompts for the new project name.
      */
-    $scope.copy = function(name) {
+    $scope.copy = function(name, id) {
       modalService.showPrompt(
         "Copy project?",
         "New project name",
         function(newName) {
-          $http.post('/api/project/copy/' + name + '?to=' + newName)
+          $http.post('/api/project/copy/' + id + '?to=' + newName)
             .success(function (response) {
               window.location.reload();
             });
@@ -49,10 +53,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      *
      * Alerts the user if it cannot do it.
      */
-    $scope.edit = function (name) {
-      $http.get('/api/project/open/' + name)
+    $scope.edit = function (name, id) {
+      $http.get('/api/project/open/' + id)
         .success(function (response) {
-          activeProject.setActiveProjectFor(name, UserManager.data);
+          activeProject.setActiveProjectFor(name, id, UserManager.data);
           window.location = '/#/project/edit';
         });
     };
@@ -62,31 +66,30 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      * Alerts the user if it cannot do it.
      *
      */
-    $scope.workbook = function (name) {
+    $scope.workbook = function (name, id) {
       // read that this is the universal method which should work everywhere in
       // http://stackoverflow.com/questions/24080018/download-file-from-a-webapi-method-using-angularjs
-      window.open('/api/project/workbook/' + name, '_blank', '');
+      window.open('/api/project/workbook/' + id, '_blank', '');
     };
 
     /**
      * Gets the data for the given project `name` as <name>.json  file
      */
-    $scope.getData = function (name) {
-      $http({url:'/api/project/data/'+ name,
+    $scope.getData = function (name, id) {
+      $http({url:'/api/project/data/'+ id,
             method:'GET',
             headers: {'Content-type': 'application/json'},
             responseType:'arraybuffer'})
         .success(function (response, status, headers, config) {
           var blob = new Blob([response], { type: 'application/json' });
           saveAs(blob, (name + '.json'));
-        })
-        .error(function (response) {});
+        });
     };
 
-    $scope.setData = function (name, file) {
+    $scope.setData = function (name, id, file) {
       var message = 'Warning: This will overwrite ALL data in the project ' + name + '. Are you sure you wish to continue?';
       modalService.confirm(
-        function (){ fileUpload.uploadDataSpreadsheet($scope, file, '/api/project/data/'+name, false); },
+        function (){ fileUpload.uploadDataSpreadsheet($scope, file, '/api/project/data/'+id, false); },
         function (){},
         'Yes, overwrite data',
         'No',
@@ -95,11 +98,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       );
     };
 
-    $scope.preSetData = function(name) {
+    $scope.preSetData = function(name, id) {
       angular
         .element('<input type=\'file\'>')
         .change(function(event){
-        $scope.setData(name, event.target.files[0]);
+        $scope.setData(name, id, event.target.files[0]);
       }).click();
     };
 
@@ -109,14 +112,13 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      * If the removed project is the active one it will reset it alerts the user
      * in case of failure.
      */
-    var removeNoQuestionsAsked = function (name, index) {
-      $http.delete('/api/project/delete/' + name)
+    var removeNoQuestionsAsked = function (name, id, index) {
+      $http.delete('/api/project/delete/' + id)
         .success(function (response) {
           $scope.projects = _($scope.projects).filter(function (item) {
             return item.name != name;
           });
-
-          activeProject.ifActiveResetFor(name, UserManager.data);
+          activeProject.ifActiveResetFor(name, id, UserManager.data);
         });
     };
 
@@ -125,11 +127,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      * removes the project if the user confirms.
      * Closes it without further action otherwise.
      */
-    $scope.remove = function ($event, name, index) {
+    $scope.remove = function ($event, name, id, index) {
       if ($event) { $event.preventDefault(); }
       var message = 'Are you sure you want to permanently remove project "' + name + '"?';
       modalService.confirm(
-        function (){ removeNoQuestionsAsked(name, index); },
+        function (){ removeNoQuestionsAsked(name, id, index); },
         function (){},
         'Yes, remove this project',
         'No',

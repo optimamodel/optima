@@ -4,17 +4,17 @@ Installation
 This component requires ([pip](http://pip.readthedocs.org/en/latest/installing.html)), [PostgreSQL](http://www.postgresql.org/download/) and [VirtualEnv](http://virtualenv.readthedocs.org/en/latest/).
 
 Install virtual env:
- 
+
 `$ pip install virtualenv`
 
 
 Copy the example config and configure it accordingly:
- 
+
 `$ cp src/config.example.py src/config.py`
 
 
 Run the server:
- 
+
 `$ ./run.sh`
 
 
@@ -49,7 +49,7 @@ Run the testsuite from your server directory:
 
 In order to run a single test file and activate logging you can use:
 
-    nosetests --nocapture src/tests/analysis_test.py
+    test.sh /src/tests/project_test.py
 
 Make sure you have user "test" with the password "test" and database "optima_test" in order to run the tests using database.
 
@@ -123,15 +123,14 @@ These APIs allow front-end to work with projects.
 	dataEnd: 2015,
 	projectionStartYear: 2010,
 	projectionEndYear: 2030,
-	programs: 
+	programs:
 	    [{"saturating": true, "short_name": "Condoms", "name": "Condom promotion and distribution"},
 		 ...
 		],
 	populations:
-		[{"name": "Female sex workers", "short_name": "FSW", "sexworker": true, "hetero": true, "injects": false, "client": false, "female": true, "homo": false, "male": false}, 
-		 {"name": "Clients of sex workers", "short_name": "Clients", "sexworker": false, "hetero": true, "injects": false, "client": true, "female": false, "homo": false, "male": true}, 
+		[{"name": "Female sex workers", "short_name": "FSW", "sexworker": true, "hetero": true, "injects": false, "client": false, "female": true, "homo": false, "male": false},
+		 {"name": "Clients of sex workers", "short_name": "Clients", "sexworker": false, "hetero": true, "injects": false, "client": true, "female": false, "homo": false, "male": true},
 		 {"name": "Men who have sex with men", "short_name": "MSM", "sexworker": false, "hetero": false, "injects": false, "client": false, "female": false, "homo": true, "male": true},
 		 ...
 		]
    }`
-   

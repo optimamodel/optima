@@ -37,10 +37,11 @@ def getOptimizationParameters():
     current_app.logger.debug("/api/analysis/optimization/list")
     # get project name
     project_name = request.project_name
-    if not project_exists(project_name):
-        reply['reason'] = 'Project %s does not exist' % project_name
+    project_id = request.project_id
+    if not project_exists(project_id):
+        reply['reason'] = 'Project %s does not exist' % project_id
         return reply
-    D = load_model(project_name)
+    D = load_model(project_id)
     if not 'optimizations' in D:
         optimizations = defaultoptimizations(D)
     else:
@@ -57,14 +58,15 @@ def startOptimization():
     data = json.loads(request.data)
     current_app.logger.debug("optimize: %s" % data)
     # get project name
+    project_id = request.project_id
     project_name = request.project_name
-    if not project_exists(project_name):
+    if not project_exists(project_id):
         from utils import BAD_REPLY
         reply = BAD_REPLY
-        reply['reason'] = 'File for project %s does not exist' % project_name
+        reply['reason'] = 'File for project %s does not exist' % project_id
         return jsonify(reply)
     try:
-        can_start, can_join, current_calculation = start_or_report_calculation(current_user.id, project_name, optimize, db.session)
+        can_start, can_join, current_calculation = start_or_report_calculation(current_user.id, project_id, optimize, db.session)
         if can_start:
             # Prepare arguments
             args = {'verbose':0}
@@ -76,12 +78,12 @@ def startOptimization():
                 args['constraints'] = bunchify( constraints )
             timelimit = int(data.get("timelimit")) # for the thread
             args["timelimit"] = 10 # for the autocalibrate function
-            CalculatingThread(db.engine, current_user, project_name, timelimit, optimize, args).start()
-            msg = "Starting optimization thread for user %s project %s" % (current_user.name, project_name)
+            CalculatingThread(db.engine, current_user, project_id, timelimit, optimize, args).start()
+            msg = "Starting optimization thread for user %s project %s:%s" % (current_user.name, project_id, project_name)
             current_app.logger.debug(msg)
             return json.dumps({"status":"OK", "result": msg, "join":True})
         else:
-            msg = "Thread for user %s project %s (%s) has already started" % (current_user.name, project_name, current_calculation)
+            msg = "Thread for user %s project %s:%s (%s) has already started" % (current_user.name, project_id, project_name, current_calculation)
             return json.dumps({"status":"OK", "result": msg, "join":can_join})
     except Exception, err:
         var = traceback.format_exc()
@@ -92,9 +94,11 @@ def startOptimization():
 @check_project_name
 def stopCalibration():
     """ Stops calibration """
-    prj_name = request.project_name
+    project_id = request.project_id
+    project_name = request.project_name
     cancel_calculation(current_user.id, prj_name, optimize, db.session)
-    return json.dumps({"status":"OK", "result": "optimize calculation for user %s project %s requested to stop" % (current_user.name, prj_name)})
+    return json.dumps({"status":"OK", "result": "optimize calculation for user %s project %s:%s requested to stop" \
+        % (current_user.name, project_id, project_name)})
 
 @optimization.route('/working')
 @login_required
@@ -104,14 +108,15 @@ def getWorkingModel():
     """ Returns the working model for optimization. """
     D_dict = {}
     # Get optimization working data
-    prj_name = request.project_name
+    project_id = request.project_id
+    project_name = request.project_name
     error_text = None
-    if check_calculation(current_user.id, prj_name, optimize, db.session):
-        D_dict = load_model(prj_name, working_model = True, as_bunch = False)
+    if check_calculation(current_user.id, project_id, optimize, db.session):
+        D_dict = load_model(project_id, working_model = True, as_bunch = False)
         status = 'Running'
     else:
         current_app.logger.debug("no longer optimizing")
-        status, error_text = check_calculation_status(current_user.id, prj_name, optimize, db.session)
+        status, error_text = check_calculation_status(current_user.id, project_id, optimize, db.session)
         if status in good_exit_status:
             status = 'Done'
         else:
@@ -137,18 +142,18 @@ def saveModel():
     if constraints:constraints = bunchify( constraints )
 
     # get project name
-    project_name = request.project_name
-    if not project_exists(project_name):
-        reply['reason'] = 'File for project %s does not exist' % project_name
+    project_id = request.project_id
+    if not project_exists(project_id):
+        reply['reason'] = 'File for project %s does not exist' % project_id
         return jsonify(reply)
 
     try:
         # read the previously saved optmizations
-        D_dict = load_model(project_name, as_bunch = False)
+        D_dict = load_model(project_id, as_bunch = False)
         optimizations = D_dict.get('optimizations')
 
         # now, save the working model, read results and save for the optimization with the given name
-        D_dict = save_working_model_as_default(project_name)
+        D_dict = save_working_model_as_default(project_id)
         result = get_optimization_results(D_dict)
         D = bunchify(D_dict)
 
@@ -158,7 +163,7 @@ def saveModel():
         #save the optimization parameters
         D = saveoptimization(D, name, objectives, constraints, result)
         D_dict = D.toDict()
-        save_model(project_name, D_dict)
+        save_model(project_id, D_dict)
 
         reply['status']='OK'
         reply['optimizations'] = D_dict['optimizations']
@@ -175,12 +180,12 @@ def revertCalibrationModel():
     reply = {'status':'NOK'}
 
     # get project name
-    project_name = request.project_name
-    if not project_exists(project_name):
-        reply['reason'] = 'File for project %s does not exist' % project_name
+    project_id = request.project_id
+    if not project_exists(project_id):
+        reply['reason'] = 'File for project %s does not exist' % project_id
         return jsonify(reply)
     try:
-        revert_working_model_to_default(project_name)
+        revert_working_model_to_default(project_id)
         return jsonify({"status":"OK"})
     except Exception, err:
         reply['exception'] = traceback.format_exc()
@@ -195,15 +200,15 @@ def removeOptimizationSet(name):
     reply = {'status':'NOK'}
 
     # get project name
-    project_name = request.project_name
-    if not project_exists(project_name):
-        reply['reason'] = 'File for project %s does not exist' % project_name
+    project_id = request.project_id
+    if not project_exists(project_id):
+        reply['reason'] = 'File for project %s does not exist' % project_id
         return jsonify(reply)
     else:
-        D = load_model(project_name, as_bunch = True)
+        D = load_model(project_id, as_bunch = True)
         D = removeoptimization(D, name)
         D_dict = D.toDict()
-        save_model(project_name, D_dict)
+        save_model(project_id, D_dict)
         reply['status']='OK'
         reply['name'] = 'deleted'
         reply['optimizations'] = D_dict['optimizations']

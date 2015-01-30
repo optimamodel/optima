@@ -16,24 +16,23 @@ define([
       '$http', 'localStorage',
       function ($http, localStorage) {
         var project = {
-          setValue: function (name) {  // deprecated method 
-            console.warn('activeProject.setValue is deprecated and next version will remove it. Use setProjectFor(projectName, user) instead. Tip: use debugger after this console.warn if you want catch callers / diagnose.');
-            project.name = name;
-            $http.defaults.headers.common.project = name;
-            localStorage.project = name;
-          },
-          setActiveProjectFor: function (projectName, user) { 
+          setActiveProjectFor: function (projectName, projectId, user) { 
             // Sets the active project to be projectName for the given user.
             project.name = projectName;
+            project.id   = projectId;
             $http.defaults.headers.common.project = project.name;
-            localStorage[project.getProjectKeyFor(user)] = project.name;
+            $http.defaults.headers.common['project-id'] = project.id;
+            localStorage[project.getProjectKeyFor(user)] = JSON.stringify({'name':project.name,'id':project.id});
           },
           loadProjectFor: function (user) { 
             // Load the active project for the given user.
             // Do nothing if no project found for that user.
-            if(!project.hasProjectFor(user)) { return }
-            project.name = project.getProjectFor(user);
+            if(!project.hasProjectFor(user)) { return; }
+            var loaded_project = JSON.parse(project.getProjectFor(user));
+            project.name = loaded_project['name'];
+            project.id = loaded_project['id'];
             $http.defaults.headers.common.project = project.name;
+            $http.defaults.headers.common['project-id'] = project.id;
           },
           getProjectKeyFor: function (user) {
             // Answers the key used to locally store this project as active for the given user.
@@ -42,25 +41,34 @@ define([
           getProjectFor: function (user) {
             return localStorage[project.getProjectKeyFor(user)];
           },
-          ifActiveResetFor: function (projectName, user) {
+          ifActiveResetFor: function (projectName, projectId, user) {
             // If projectName is active, reset it for the given user.
-            if (project.name === projectName) {
+            if (project.id === projectId) {
               project.resetFor(user);
             }
           },
           resetFor: function (user) { 
             // Resets the projectName as the active project for the given user.
             delete project.name;
+            delete project.id;
             delete $http.defaults.headers.common.project;
+            delete $http.defaults.headers.common['project-id'];
             localStorage.removeItem(project.getProjectKeyFor(user));
           },  
           isSet: function() {
-            return (project.name !== null && project.name !== undefined);
+            return (project.name !== null && project.name !== undefined && project.id !== null && project.id !== undefined);
           },
           hasProjectFor: function (user) {
             // Answers true if there is a local project stored for the given user.
             var foundOrNot = project.getProjectFor(user);
-            return foundOrNot !== null && foundOrNot !== undefined;
+            if (foundOrNot !== null && foundOrNot !== undefined) {
+              try {
+                JSON.parse(foundOrNot);
+                return true;
+              } catch (exception) {
+                return false;
+              }
+            }
           }
         };
 
