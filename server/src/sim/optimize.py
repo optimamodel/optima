@@ -412,6 +412,7 @@ def defaultobjectives(D, verbose=2):
     ob.outcome.deathweight = 100 # "Death weighting"
     ob.outcome.costann = False # "Minimize cumulative DALYs"
     ob.outcome.costannweight = 100 # "Cost weighting"
+    ob.outcome.variable = [] # No variable budgets by default
     ob.outcome.budgetrange = struct() # For running multiple budgets
     ob.outcome.budgetrange.minval = None
     ob.outcome.budgetrange.maxval = None
