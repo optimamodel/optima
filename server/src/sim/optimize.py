@@ -12,13 +12,14 @@ Version: 2015jan29 by cliffk
 from printv import printv
 from bunch import Bunch as struct
 from copy import deepcopy
-from numpy import ones, zeros, concatenate, arange
+from numpy import ones, zeros, concatenate, arange, inf
 from utils import findinds
 from makeresults import makeresults
 from timevarying import timevarying
 from getcurrentbudget import getcurrentbudget
 from model import model
 from makemodelpars import makemodelpars
+from quantile import quantile
 
 default_simstartyear = 2000
 default_simendyear = 2030
@@ -90,7 +91,7 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
     weights = dict()
     normalizations = dict()
     outcomekeys = ['inci', 'death', 'daly', 'costann']
-    if sum([objectives.outcome[i] for i in objectives.outcome.keys()])>1: # Only normalize if multiple objectives, since otherwise doesn't make a lot of sense
+    if sum([objectives.outcome[key] for key in outcomekeys])>1: # Only normalize if multiple objectives, since otherwise doesn't make a lot of sense
         for key in outcomekeys:
             thisweight = objectives.outcome[key+'weight'] * objectives.outcome[key] / 100.
             weights.update({key:thisweight}) # Get weight, and multiply by "True" or "False" and normalize from percentage
@@ -127,20 +128,21 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
         
     parammin = concatenate((zeros(nprogs), ones(nprogs)*-1e9))
         
+        
+        
+    
+    
+    
     ###########################################################################
     ## Constant budget optimization
     ###########################################################################
-    if objectives.funding in ['constant']:
+    if objectives.funding == 'constant':
         
-        result = struct()
-        result.kind = objectives.funding
-        result.allocarr = [] # List of allocations
-        
+        ## Define options structure
         options = struct()
         options.ntimepm = ntimepm # Number of time-varying parameters
         options.nprogs = nprogs # Number of programs
-        options.D = D # Main data structure
-        options.D
+        options.D = deepcopy(D) # Main data structure
         options.outcomekeys = outcomekeys # Names of outcomes, e.g. 'inci'
         options.weights = weights # Weights for each parameter
         options.indices = indices # Indices for the outcome to be evaluated over
@@ -151,43 +153,42 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
         ## Run with uncertainties
         allocarr = []
         fvalarr = []
-        for s in range(D.opt.nsims):
+        for s in range(len(D.F)): # Loop over all available meta parameters
+            print('========== Running optimization %s of %s... ==========' % (s+1, len(D.F)))
             options.D.F = [D.F[s]] # Loop over fitted parameters
-            print('WARNING TODO Want to loop over CCOCs too')
+            print('WARNING TODO want to loop over CCOCs too')
             optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=parammin, absinitial=stepsizes, timelimit=timelimit, fulloutput=True, verbose=verbose)
             allocarr.append(optparams)
             fvalarr.append(output.fval)
         
+        ## Find which optimization was best
         bestallocind = -1
         bestallocval = inf
         for s in range(D.opt.nsims):
-            if fvallarr[s][-1]<bestallocval:
-                bestallocval = fvallarr[s][-1]
+            if fvalarr[s][-1]<bestallocval:
+                bestallocval = fvalarr[s][-1]
                 bestallocind = s
         if bestallocind == -1: print('WARNING, best allocation value seems to be infinity!')
-            
-
         
         # Update the model and store the results
-        
-        Rarr = []
-        allocarr = []
+        result = struct()
+        result.kind = objectives.funding
+        result.fval = fvalarr[bestallocind] # Append the best value noe
+        result.allocarr = [] # List of allocations
+        result.allocarr.append(quantile([origalloc])) # Kludgy -- run fake quantile on duplicated origalloc just so it matches
+        result.allocarr.append(quantile(allocarr)) # Calculate allocation arrays 
         labels = ['Original','Optimal']
-        for params in [origalloc, optparams]: # CK: loop over original and optimal allocations
+        result.Rarr = []
+        for params in [origalloc, allocarr[bestallocind]]: # CK: loop over original and (the best) optimal allocations
             alloc = timevarying(params, ntimepm=len(params)/nprogs, nprogs=nprogs, tvec=D.opt.partvec, totalspend=totalspend)   
             D, coverage, nonhivdalysaverted = getcurrentbudget(D, alloc)
             D.M = makemodelpars(D.P, D.opt, withwhat='c', verbose=2)
             S = model(D.G, D.M, D.F[0], D.opt, verbose=verbose)
             R = makeresults(D, [S], D.opt.quantiles, verbose=verbose)
-
-            result.Rarr.append(struct())
-            result.Rarr[-1].R = deepcopy(R)
-            result.Rarr[-1].label = labels[i]
+            result.Rarr.append(struct()) # Append a structure
+            result.Rarr[-1].R = deepcopy(R) # Store the R structure (results)
+            result.Rarr[-1].label = labels.pop[0] # Store labels, one at a time
         
-        result = 
-        result.fval = output.fval
-        result.Rarr = Rarr
-        result.allocarr = allocarr
         
         
         
@@ -276,6 +277,7 @@ def defaultobjectives(D, verbose=2):
     ob.outcome.deathweight = 100 # "Death weighting"
     ob.outcome.costann = False # "Minimize cumulative DALYs"
     ob.outcome.costannweight = 100 # "Cost weighting"
+    ob.outcome.budgetrange = struct() # For running multiple budgets
     ob.outcome.budgetrange.minval = None
     ob.outcome.budgetrange.maxval = None
     ob.outcome.budgetrange.step = None

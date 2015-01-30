@@ -228,8 +228,11 @@ def gatheroptimdata(D, result, verbose=2):
         titles = ['Original','Optimal']
         for i in range(2): # Original and optimal
             optim.alloc.append(struct())
-            optim.alloc[i].piedata = result.allocarr[i] # A vector of allocations, length nprogs, for pie charts
-            optim.alloc[i].radardata = result.allocarr[i] # TODO -- Array of allocations with uncertainty, length nprogs x 3
+            optim.alloc[i].piedata = result.allocarr[i][0].tolist() # A vector of allocations, length nprogs, for pie charts
+            optim.alloc[i].radardata = struct()
+            optim.alloc[i].radardata.best = result.allocarr[i][0].tolist()
+            optim.alloc[i].radardata.low  = result.allocarr[i][1].tolist()
+            optim.alloc[i].radardata.high = result.allocarr[i][2].tolist()
             optim.alloc[i].title = titles[i] # Titles for pies or radar charts
             optim.alloc[i].legend = D.data.meta.progs.short # Program names, length nprogs, for pie and radar
     if optim.kind=='timevarying':

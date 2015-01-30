@@ -5,8 +5,11 @@ skipping the unit tests, but I want some way of running all the
 tests that will drop me into the debugger if it hits a bug. If 
 you can think up a better way, which I'm sure you can, let me know :)
 
-Version: 2015jan19 by cliffk
+Version: 2015jan29 by cliffk
 """
+
+from matplotlib.pylab import show, ion
+ion()
 
 # Make sure memory is handled OK
 try:
@@ -48,3 +51,5 @@ for thisfile in files:
       ''' % thisfile)
       sleep(1)
       execfile(thisfile)
+
+show()
