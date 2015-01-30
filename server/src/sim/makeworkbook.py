@@ -590,7 +590,7 @@ class OptimaWorkbook:
         self.current_sheet.merge_range('A1:A3', 'O P T I M A', self.formats.formats['info_header'])
         current_row = 3
         current_row = self.formats.write_info_line(self.current_sheet, current_row)
-        current_row = self.formats.write_info_block(self.current_sheet, current_row, row_height=50, text='Welcome to the Optima data entry spreadsheet. This is where all data for the model will be entered. At first glance the spreadsheet looks complicated and confusing. Unfortunately, it is. So please ask someone from the Optima development team if you need help, or use the default contact (info@optimamodel.com).')
+        current_row = self.formats.write_info_block(self.current_sheet, current_row, row_height=65, text='Welcome to the Optima data entry spreadsheet. This is where all data for the model will be entered. At first glance the spreadsheet looks complicated and confusing. Unfortunately, it is. So please ask someone from the Optima development team if you need help, or use the default contact (info@optimamodel.com).')
         current_row = self.formats.write_info_block(self.current_sheet, current_row, text='I. LAYOUT OF THE SPREADSHEET', row_format='grey_bold')
         current_row = self.formats.write_info_block(self.current_sheet, current_row, text='This spreadsheet is divided into 12 sheets. All sheets need to be completed, except where noted below.')
         current_row = self.formats.write_info_block(self.current_sheet, current_row, text='II. HOW TO ENTER DATA', row_format='grey_bold')
