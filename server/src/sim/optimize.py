@@ -28,10 +28,12 @@ default_simendyear = 2030
 
 def objectivecalc(optimparams, options):
     """ Calculate the objective function """
-    if options.variable == False:
+    if 'ntimepm' in options.keys():
         thisalloc = timevarying(optimparams, ntimepm=options.ntimepm, nprogs=options.nprogs, tvec=options.D.opt.partvec, totalspend=options.totalspend) 
-    else:
+    elif 'years' in options.keys():
         thisalloc = multiyear(optimparams, years=options.years, totalspend=options.totalspend, nprogs=options.nprogs, tvec=options.D.opt.partvec) 
+    else:
+        raise Exception('Cannot figure out what kind of allocation this is since neither options.ntimepm nor options.years is defined')
     newD = deepcopy(options.D)
     newD, newcov, newnonhivdalysaverted = getcurrentbudget(newD, thisalloc)
     newD.M = makemodelpars(newD.P, newD.opt, withwhat='c', verbose=0)
@@ -126,7 +128,7 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
     inflection = ones(nprogs)*.5 if ntimepm >= 4 else []
     
     # Concatenate parameters to be optimised
-    optimparams = concatenate((origalloc, growthrate, saturation, inflection))
+    optimparams = concatenate((origalloc, growthrate, saturation, inflection)) # WARNING, not used for multi-year optimizations
         
     parammin = concatenate((zeros(nprogs), ones(nprogs)*-1e9))
         
@@ -247,7 +249,7 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
         
         ## Define options structure
         options = struct()
-        options.ntimepm = ntimepm # Number of time-varying parameters
+        options.years = arange # Number of time-varying parameters
         options.nprogs = nprogs # Number of programs
         options.D = deepcopy(D) # Main data structure
         options.outcomekeys = outcomekeys # Names of outcomes, e.g. 'inci'
@@ -255,6 +257,8 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
         options.indices = indices # Indices for the outcome to be evaluated over
         options.normalizations = normalizations # Whether to normalize a parameter
         options.totalspend = totalspend # Total budget
+        
+        multiyear(optimparams, years=options.years, totalspend=options.totalspend, nprogs=options.nprogs, tvec=options.D.opt.partvec) 
         
         
         ## Run time-varying optimization
