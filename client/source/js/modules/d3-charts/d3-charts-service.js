@@ -201,7 +201,7 @@ define(['./module', 'd3', 'underscore', './scale-helpers'], function (module, d3
      * @param {object} chartSize - example: { width: 200, height: 100 }.
      * @param {string} colorClass - see available colors in chart/_color.scss.
      */
-    function LineChart(parent, chart, chartSize, colorClass) {
+    function LineChart(chart, chartSize, colorClass, parent) {
 
       var xScale, yScale;
 
@@ -324,7 +324,7 @@ define(['./module', 'd3', 'underscore', './scale-helpers'], function (module, d3
      * @param {object} chartSize - example: { width: 200, height: 100 }.
      * @param {string} colorClass - see available colors in chart/_color.scss.
      */
-    function AreaChart(chart, chartSize, colorClass) {
+    function AreaChart(chart, chartSize, colorClass, parent) {
       var xScale, yScale;
 
       var className = 'area_chart_path';
@@ -348,10 +348,21 @@ define(['./module', 'd3', 'underscore', './scale-helpers'], function (module, d3
         exit(dataset);
         transition(dataset);
         enter(dataset);
+        zoom();
       };
 
       this.dispose = function () {
         exit([]);
+      };
+
+      function zoom() {
+        /* Initialize Zoom **/
+        parent.call(d3.behavior.zoom().translate([0, 0]).scale(1).scaleExtent([1, 4]).on("zoom", zoomer));
+      };
+
+      function zoomer() {
+        var g = parent.select('g.parent_group');
+        g.attr("transform", "translate(" + d3.event.translate + ") scale(" + d3.event.scale + ") ");
       };
 
       function enter(dataset) {

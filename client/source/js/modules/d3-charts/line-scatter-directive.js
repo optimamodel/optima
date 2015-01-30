@@ -71,7 +71,7 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
       if (linesDataExists) {
         _(data.lines).each(function (line, index) {
           var lineColor = options.linesStyle[index];
-          var lineChart = new d3Charts.LineChart(svg, chartGroup, chartSize, lineColor);
+          var lineChart = new d3Charts.LineChart(chartGroup, chartSize, lineColor, svg);
           lineChartInstances.push(lineChart);
           var scales = lineChart.scales(line);
           graphsScales.push(scales);

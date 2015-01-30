@@ -29,8 +29,8 @@ define(['./module', './scale-helpers'], function (module, scaleHelpers) {
         var headerGroup = parentGroup.append('g').attr('class', 'legend_group');
 
         // initialize chart instances
-        var lineChartInstance = new d3Charts.LineChart(svg, chartGroup, chartSize, '__color-black');
-        var areaChartInstance = new d3Charts.AreaChart(chartGroup, chartSize, '__color-blue-1');
+        var lineChartInstance = new d3Charts.LineChart(chartGroup, chartSize, '__color-black', svg);
+        var areaChartInstance = new d3Charts.AreaChart(chartGroup, chartSize, '__color-blue-1', svg);
         var scatterChartInstance = new d3Charts.ScatterChart(chartGroup, chartSize);
 
         // fetch & generate data for the graphs
