@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python -i
 """
 Run all tests of the sim. Yes Anna, I know this sucks, especially 
 skipping the unit tests, but I want some way of running all the 

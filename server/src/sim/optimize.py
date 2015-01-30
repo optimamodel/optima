@@ -41,7 +41,7 @@ def objectivecalc(optimparams, options):
         if options.weights[key]>0: # Don't bother unless it's actually used
             if key!='costann': thisobjective = R[key].tot[0][options.indices].sum()
             else: thisobjective = R[key].total.total[0][options.indices].sum() # Special case for costann
-            objective += thisobjective * options.weights[key] / float(options.normalizations[key])
+            objective += thisobjective * options.weights[key] / float(options.normalizations[key]) * options.D.opt.dt # Calculate objective
         
     return objective
     
@@ -187,7 +187,7 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
             R = makeresults(D, [S], D.opt.quantiles, verbose=verbose)
             result.Rarr.append(struct()) # Append a structure
             result.Rarr[-1].R = deepcopy(R) # Store the R structure (results)
-            result.Rarr[-1].label = labels.pop[0] # Store labels, one at a time
+            result.Rarr[-1].label = labels.pop(0) # Store labels, one at a time
         
         
         
