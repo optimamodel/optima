@@ -11,7 +11,7 @@ from dbconn import db
 from dbmodels import ProjectDb, WorkingProjectDb
 
 
-""" route prefix: /api/analysis/scenarios """
+# route prefix: /api/analysis/scenarios
 scenarios = Blueprint('scenarios',  __name__, static_folder = '../static')
 scenarios.config = {}
 
@@ -48,14 +48,15 @@ def get_scenario_parameters():
     current_app.logger.debug("real_parameters:%s" % real_parameters)
     return json.dumps({"parameters":real_parameters})
 
-"""
-Returns a list of scenarios defined by the user, or the default scenario list
-"""
 @scenarios.route('/list')
 @login_required
 @check_project_name
 @report_exception()
 def list_scenarios():
+    """
+    Returns a list of scenarios defined by the user, or the default scenario list
+
+    """
     from sim.scenarios import defaultscenarios
     current_app.logger.debug("/api/analysis/scenarios/list")
     # get project name
@@ -72,13 +73,15 @@ def list_scenarios():
     return json.dumps({'scenarios':scenarios})
 
 
-"""
-Gets a list of scenarios defined by the user, produces graphs out of them and sends back
-"""
 @scenarios.route('/run', methods=['POST'])
 @login_required
 @check_project_name
 def runScenarios():
+    """
+    Gets a list of scenarios defined by the user, produces graphs out of them
+    and sends back.
+
+    """
     data = json.loads(request.data)
     current_app.logger.debug("/api/analysis/scenarios/run %s" % data)
     # get project name
