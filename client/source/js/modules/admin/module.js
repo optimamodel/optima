@@ -21,9 +21,6 @@ define([
                 templateUrl: 'js/modules/admin/manage-users.html' ,
                 controller: 'AdminManageUsersController',
                 resolve: {
-                  info: function($http) {
-                    return $http.get('/api/project/info');
-                  },
                   users:function($http){
                     return $http.get('/api/user/list');
                   }
@@ -34,9 +31,6 @@ define([
                 templateUrl: 'js/modules/admin/manage-projects.html' ,
                 controller: 'AdminManageProjectsController',
                 resolve: {
-                  info: function($http) {
-                    return $http.get('/api/project/info');
-                  },
                   projects:function($http){
                     return $http.get('/api/project/list/all');
                   },
