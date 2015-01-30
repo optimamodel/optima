@@ -93,9 +93,6 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
     M.breast   = dpar2mpar(P.breast, withwhat)    
     
     ## Sexual behavior parameters -- all are parameters so can loop over all
-    M.circum    = dpar2mpar(P.circum,    withwhat) # Circumcision percentage
-#    M.numcircum = dpar2mpar(P.numcircum, withwhat) # Circumcision number
-#    M.numcircum *= 0 # Reset since prevalence data is required and overwrites data on numbers of circumcisions -- # TODO I think this is a bad idea
     M.numacts = struct()
     M.condom  = struct()
     M.numacts.reg = dpar2mpar(P.numactsreg, withwhat) # ...
@@ -105,6 +102,10 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
     M.condom.reg  = dpar2mpar(P.condomreg, withwhat) # ...
     M.condom.cas  = dpar2mpar(P.condomcas, withwhat) # ...
     M.condom.com  = dpar2mpar(P.condomcom, withwhat) # ...
+    
+    ## Circumcision parameters
+    M.circum    = dpar2mpar(P.circum, withwhat) # Circumcision percentage
+    M.numcircum = zeros(shape(M.tvec)) # Number to be circumcised -- to be populated by the relevant CCOC at non-zero allocations
     
     ## Drug behavior parameters
     M.numost = dpar2mpar(P.numost, withwhat)
