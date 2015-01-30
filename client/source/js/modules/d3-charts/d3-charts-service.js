@@ -201,7 +201,7 @@ define(['./module', 'd3', 'underscore', './scale-helpers'], function (module, d3
      * @param {object} chartSize - example: { width: 200, height: 100 }.
      * @param {string} colorClass - see available colors in chart/_color.scss.
      */
-    function LineChart(chart, chartSize, colorClass) {
+    function LineChart(parent, chart, chartSize, colorClass) {
 
       var xScale, yScale;
 
@@ -225,10 +225,21 @@ define(['./module', 'd3', 'underscore', './scale-helpers'], function (module, d3
         exit(dataset);
         transition(dataset);
         enter(dataset);
+        zoom();
       };
 
       this.dispose = function () {
         exit([]);
+      };
+
+      function zoom() {
+        /* Initialize Zoom **/
+        parent.call(d3.behavior.zoom().translate([0, 0]).scale(1).scaleExtent([1, 4]).on("zoom", zoomer));
+      };
+
+      function zoomer() {
+        var g = parent.select('g.parent_group');
+        g.attr("transform", "translate(" + d3.event.translate + ") scale(" + d3.event.scale + ") ");
       };
 
       function enter(dataset) {
@@ -243,9 +254,44 @@ define(['./module', 'd3', 'underscore', './scale-helpers'], function (module, d3
               return yScale(d[1]);
             });
 
+
           chart.append('path')
             .attr('d', line(dataset))
             .attr('class', ['line ', colorClass, uniqClassName].join(' '));
+
+          /* Initialize tooltip */
+          var tip = d3.tip().attr('class', 'd3-tip').html(function(d) {
+            // http://numeraljs.com/
+            return "Year:  " + parseInt(d[0]) + "<br />" +
+                    "Value: " + numeral(d[1].toFixed(2)).format('0.00a') 
+          });
+          
+          // keep only one data for each year
+          var tooltipData = [];
+          var addedData = [];
+          _(dataset).each(function (d) {
+            if ( !_.contains(addedData,parseInt(d[0])) ) {
+              addedData.push( parseInt(d[0]) );
+              tooltipData.push(d);
+            }
+          });
+
+          // http://bl.ocks.org/d3noob/c37cb8e630aaef7df30d
+          // create circles over line to apply tooltips for each year
+          chart.selectAll("dot").data(tooltipData).enter().append("circle")
+            .attr("r", 3)
+            .attr("cx", function(d,i) { return xScale(d[0]); })
+            .attr("cy", function(d,i) { return yScale(d[1]); })
+            .attr('style', 'stroke: #EEE;stroke-width: 0.5px;fill: #666;');
+            // Tooltip stuff after this
+
+          // apply tooltip to each circle
+          d3.selectAll("circle")
+            .call(tip);
+          d3.selectAll("circle")
+            .on('mouseover', tip.show)
+            .on('mouseout', tip.hide);
+
         }
       }
 
