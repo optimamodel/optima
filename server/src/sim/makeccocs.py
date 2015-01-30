@@ -26,8 +26,8 @@ default_artelig = range(6,31)
 coverage_params = ['numost','numpmtct','numfirstline','numsecondline']
 
 ## Set defaults for use in getcurrentbudget
-default_convertedccparams = [0.8, 4.86477537263828e-06]
-default_convertedccoparams = [0.8, 4.86477537263828e-06, 0.4, 0.8, 0]
+default_convertedccparams = [0.8, [4.7e-06, 4.9e-06, 5.1e-06]]
+default_convertedccoparams = [0.8, [4.7e-06, 4.9e-06, 5.1e-06], 0.4, 0.8, 0]
 
 ######################################################################
 def makecc(D=None, progname=default_progname, ccparams=default_ccparams, ccplot=default_ccplot, artelig=default_artelig, verbose=2, nxpts = 1000):
