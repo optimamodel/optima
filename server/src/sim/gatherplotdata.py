@@ -259,6 +259,7 @@ def gatheroptimdata(D, result, verbose=2):
         optim.alloc.xlabels = result.budgetlabels # Budget labels
         optim.alloc.ylabel = 'Spend'
         optim.alloc.title = 'Budget allocations'
+        optim.alloc.legend = D.data.meta.progs.short # Program names, length nprogs
         optim.outcome = struct() # Dictionary with names and values
         optim.outcome.bardata = result.fval  # Vector of outcomes, nbudgets
         optim.outcome.xdata = result.budgets # Vector of budgets

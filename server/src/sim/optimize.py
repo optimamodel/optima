@@ -136,7 +136,7 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
     ###########################################################################
     ## Constant budget optimization
     ###########################################################################
-    if objectives.funding == 'constant':
+    if objectives.funding == 'constant' and objectives.timevarying == False:
         
         ## Define options structure
         options = struct()
