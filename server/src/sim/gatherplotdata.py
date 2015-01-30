@@ -219,22 +219,22 @@ def gatheroptimdata(D, result, verbose=2):
     optim = struct() # These optimization results
     optim.kind = result.kind # Flag for the kind of optimization
     if optim.kind in ['constant', 'timevarying', 'multiyear']:
-        optim.outcome = struct()
+        optim.outcome = struct() # Plot how the outcome improved with optimization
         optim.outcome.ydata = result.fval # Vector of outcomes
         optim.outcome.xdata = arange(len(result.fval)) # Vector of iterations
         optim.outcome.ylabel = 'Outcome'
         optim.outcome.xlabel = 'Iteration'
         optim.outcome.title = 'Outcome (initial: %0.0f, final: %0.0f)' % (result.fval[0], result.fval[-1])
-        optim.multi = gathermultidata(D, result.Rarr, verbose=2)
+        optim.multi = gathermultidata(D, result.Rarr, verbose=2) # Calculate data for displaying standard epidemiological results
     if optim.kind=='constant':
         optim.alloc = []
         titles = ['Original','Optimal']
         for i in range(2): # Original and optimal
             optim.alloc.append(struct())
             optim.alloc[i].piedata = result.allocarr[i][0].tolist() # A vector of allocations, length nprogs, for pie charts
-            optim.alloc[i].radardata = struct()
-            optim.alloc[i].radardata.best = result.allocarr[i][0].tolist()
-            optim.alloc[i].radardata.low  = result.allocarr[i][1].tolist()
+            optim.alloc[i].radardata = struct() # Structure for storing radar plot data
+            optim.alloc[i].radardata.best = result.allocarr[i][0].tolist() # 'Best' estimate: the thick line in the radar plot
+            optim.alloc[i].radardata.low  = result.allocarr[i][1].tolist() # 'Low' estimate: the 
             optim.alloc[i].radardata.high = result.allocarr[i][2].tolist()
             optim.alloc[i].title = titles[i] # Titles for pies or radar charts
             optim.alloc[i].legend = D.data.meta.progs.short # Program names, length nprogs, for pie and radar

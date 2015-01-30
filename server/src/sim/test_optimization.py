@@ -8,8 +8,8 @@ Version: 2015jan29 by cliffk
 
 print('WELCOME TO OPTIMA')
 
-testdefault = True
-testmultibudget = False
+testdefault = False
+testmultibudget = True
 
 ## Set parameters
 projectname = 'example'
@@ -33,7 +33,7 @@ if testdefault:
     
     print('\n\n\n4. Viewing optimization...')
     from viewresults import viewmultiresults#, viewallocpies
-    viewmultiresults(D.plot.optim[0].multi)
+    viewmultiresults(D.plot.optim[-1].multi)
 
 if testmultibudget:
     print('\n\n\n5. Running multiple-budget optimization...')
@@ -41,12 +41,12 @@ if testmultibudget:
     objectives = defaultobjectives(D, verbose=verbose)
     objectives.funding = 'range'
     objectives.outcome.budgetrange.minval = 0
-    objectives.outcome.budgetrange.maxval = 2
-    objectives.outcome.budgetrange.step = 0.2
+    objectives.outcome.budgetrange.maxval = 1
+    objectives.outcome.budgetrange.step = 0.5
     optimize(D, objectives=objectives, timelimit=timelimit, verbose=verbose)
     
     print('\n\n\n6. Viewing optimization...')
     from viewresults import viewmultiresults#, viewallocpies
-    viewmultiresults(D.plot.optim[1].multi)
+    viewmultiresults(D.plot.optim[-1].multi)
 
 print('\n\n\nDONE.')

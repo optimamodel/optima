@@ -154,7 +154,7 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
         allocarr = []
         fvalarr = []
         for s in range(len(D.F)): # Loop over all available meta parameters
-            print('========== Running optimization %s of %s... ==========' % (s+1, len(D.F)))
+            print('========== Running uncertainty optimization %s of %s... ==========' % (s+1, len(D.F)))
             options.D.F = [D.F[s]] # Loop over fitted parameters
             print('WARNING TODO want to loop over CCOCs too')
             optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=parammin, absinitial=stepsizes, timelimit=timelimit, fulloutput=True, verbose=verbose)
@@ -216,6 +216,7 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
         allocarr = [origalloc] # Original allocation
         fvalarr = [objectivecalc(optimparams, options=options)] # Outcome for original allocation
         for b in range(nbudgets):
+            print('========== Running budget optimization %s of %s... ==========' % (b+1, nbudgets))
             options.totalspend = budgets[b+1] # Total budget, skipping first
             optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=parammin, absinitial=stepsizes, timelimit=timelimit, fulloutput=True, verbose=verbose)
             allocarr.append(optparams)
@@ -245,16 +246,14 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
             result.Rarr[-1].label = labels.pop(0) # Store labels, one at a time        
         
         
- 
-
-
     
-    # Gather plot data
+    ## Gather plot data
     from gatherplotdata import gatheroptimdata
     optim = gatheroptimdata(D, result, verbose=verbose)
     if 'optim' not in D.plot: D.plot.optim = [] # Initialize list if required
     D.plot.optim.append(optim) # In any case, append
     
+    ## Save optimization to D
     saveoptimization(D, name, objectives, constraints, result, verbose=2)   
     
     printv('...done optimizing programs.', 2, verbose)
