@@ -260,40 +260,37 @@ define(['./module', 'd3', 'underscore', './scale-helpers'], function (module, d3
             .attr('class', ['line ', colorClass, uniqClassName].join(' '));
 
           /* Initialize tooltip */
-          var tip = d3.tip().attr('class', 'd3-tip').html(function(d) {
-            // http://numeraljs.com/
-            return "Year:  " + parseInt(d[0]) + "<br />" +
-                    "Value: " + numeral(d[1].toFixed(2)).format('0.00a') 
-          });
+          var focus = parent.select('g.parent_group').append("g")
+            .attr("class", "focus")
+            .style("display", "none");
           
-          // keep only one data for each year
-          var tooltipData = [];
-          var addedData = [];
-          _(dataset).each(function (d) {
-            if ( !_.contains(addedData,parseInt(d[0])) ) {
-              addedData.push( parseInt(d[0]) );
-              tooltipData.push(d);
-            }
-          });
+          focus.append("circle")
+            .attr("r", 4.5);
 
-          // http://bl.ocks.org/d3noob/c37cb8e630aaef7df30d
-          // create circles over line to apply tooltips for each year
-          chart.selectAll("dot").data(tooltipData).enter().append("circle")
-            .attr("r", 3)
-            .attr("cx", function(d,i) { return xScale(d[0]); })
-            .attr("cy", function(d,i) { return yScale(d[1]); })
-            .attr('style', 'stroke: #EEE;stroke-width: 0.5px;fill: #666;');
-            // Tooltip stuff after this
+          focus.append("text")
+            .attr("x", 9)
+            .attr("dy", ".35em");
 
-          // apply tooltip to each circle
-          d3.selectAll("circle")
-            .call(tip);
-          d3.selectAll("circle")
-            .on('mouseover', tip.show)
-            .on('mouseout', tip.hide);
+          var bisectData = d3.bisector(function(d) { return d[0]; }).left;
 
+          var mousemove = function() {
+            var x0 = xScale.invert(d3.mouse(this)[0]),
+              i = bisectData(dataset, x0, 1),
+              d = dataset[i];
+            focus.attr("transform", "translate(" + xScale(d[0]) + "," + yScale(d[1]) + ")");
+            // focus.select("text").text( numeral(d[1]).format('0.00%') );
+            focus.select("text").text( numeral(d[1]).format('0.00%') );
+          };
+
+          parent.select('g.parent_group').append("rect")
+            .attr("class", "overlay")
+            .attr("width", chartSize.width)
+            .attr("height", chartSize.height)
+            .on("mouseover", function() { focus.style("display", null); })
+            .on("mouseout", function() { focus.style("display", "none"); })
+            .on("mousemove", mousemove);
         }
-      }
+      };
 
       function transition(dataset) {
         //update path
