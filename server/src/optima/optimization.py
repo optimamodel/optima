@@ -25,7 +25,7 @@ from flask.ext.login import login_required, current_user
 optimization = Blueprint('optimization',  __name__, static_folder = '../static')
 
 def get_optimization_results(D_dict):
-    return {'graph': D_dict.get('plot',{}).get('OM',{}), 'pie':D_dict.get('plot',{}).get('OA',{})}
+    return {'plot': D_dict.get('plot',{}).get('optim',{})}
 
 @optimization.route('/list')
 @login_required
@@ -96,7 +96,7 @@ def stopCalibration():
     """ Stops calibration """
     project_id = request.project_id
     project_name = request.project_name
-    cancel_calculation(current_user.id, prj_name, optimize, db.session)
+    cancel_calculation(current_user.id, project_id, optimize, db.session)
     return json.dumps({"status":"OK", "result": "optimize calculation for user %s project %s:%s requested to stop" \
         % (current_user.name, project_id, project_name)})
 

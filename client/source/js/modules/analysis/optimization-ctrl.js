@@ -178,8 +178,8 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       };
 
       //TODO @NikGraph @DEvseev - make a stack chart now then pie.val is a combination of arrays (one per population)
-      graphData = _(data.val).map(function (value, index) {
-        return { value: value[0], label: legend[index] };
+      graphData = _(data).map(function (value, index) {
+        return { value: value, label: legend[index] };
       });
 
       return {
@@ -195,12 +195,12 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
 
       var charts = [];
 
-      if (data.pie1) {
-        charts.push(generatePieChart(data.pie1, data.legend));
+      if (data[0].piedata) {
+        charts.push(generatePieChart(data[0].piedata, data[0].legend));
       }
 
-      if (data.pie2) {
-        charts.push(generatePieChart(data.pie2, data.legend));
+      if (data[1].piedata) {
+        charts.push(generatePieChart(data[1].piedata, data[0].legend)); // not set for data[1]
       }
 
       return charts;
@@ -218,8 +218,8 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       };
 
       //TODO @NikGraph @DEvseev - make a stack chart now then pie.val is a combination of arrays (one per population)
-      graphData[0].axes = _(data.val).map(function (value, index) {
-        return { value: value[0], axis: legend[index] };
+      graphData[0].axes = _(data.best).map(function (value, index) {
+        return { value: value, axis: legend[index] };
       });
 
       return {
@@ -236,12 +236,12 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
 
       var charts = [];
 
-      if (data.pie1) {
-        charts.push(generateRadarChart(data.pie1, data.legend));
+      if (data[0].radardata) {
+        charts.push(generateRadarChart(data[0].radardata, data[0].legend));
       }
 
-      if (data.pie2) {
-        charts.push(generateRadarChart(data.pie2, data.legend));
+      if (data[1].radardata) {
+        charts.push(generateRadarChart(data[1].radardata, data[0].legend)); // not set for data[1]
       }
 
       return charts;
@@ -373,19 +373,25 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
 
     // makes all graphs to recalculate and redraw
     function drawGraphs() {
-      if (!cachedResponse || !cachedResponse.graph) return;
-      $scope.state.optimisationGraphs = prepareOptimisationGraphs(cachedResponse.graph);
-      $scope.state.financialGraphs = prepareFinancialGraphs(cachedResponse.graph);
-      $scope.state.radarCharts = prepareRadarCharts(cachedResponse.pie);
-      $scope.state.pieCharts = preparePieCharts(cachedResponse.pie);
-      $scope.state.stackedBarCharts = prepareStackedBarCharts(cachedResponse.pie, cachedResponse.graph.tvec);
+      if (!cachedResponse || !cachedResponse.plot) return;
+      $scope.state.optimisationGraphs = prepareOptimisationGraphs(cachedResponse.plot[0].multi);
+      $scope.state.financialGraphs = prepareFinancialGraphs(cachedResponse.plot[0].multi);
+      $scope.state.radarCharts = prepareRadarCharts(cachedResponse.plot[0].alloc);
+      $scope.state.pieCharts = preparePieCharts(cachedResponse.plot[0].alloc);
+      $scope.state.stackedBarCharts = prepareStackedBarCharts(cachedResponse.plot[0].alloc, cachedResponse.plot[0].multi.tvec);
     }
 
     // makes all graphs to recalculate and redraw
     function updateGraphs(data) {
-      if (data.graph !== undefined && data.pie !== undefined) {
+      /* new structure keeps everything together:
+       * data.plot[n].alloc => pie & radar (TODO radar to be changed)
+       * data.plot[n].multi => old line-scatterplots
+       * data.plot[n].outcome => new line plots (TODO)
+       * n - sequence number of saved optimization
+       */
+      if (data !== undefined && data.plot !== undefined) {
         cachedResponse = data;
-        graphTypeFactory.enableAnnualCostOptions($scope.types, data.graph);
+        if (data.plot[0]) graphTypeFactory.enableAnnualCostOptions($scope.types, data.plot[0].multi);
         drawGraphs();
       }
     }
