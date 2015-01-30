@@ -240,10 +240,13 @@ def gatheroptimdata(D, result, verbose=2):
             optim.alloc[i].legend = D.data.meta.progs.short # Program names, length nprogs, for pie and radar
     if optim.kind=='timevarying':
         optim.alloc = struct() # Allocation structure
-        optim.alloc.stackdata = temp((D.G.nprogs, len(D.S.tvec))) # Allocation array, nprogs x npts, for stacked area plots TEMP
-        optim.alloc.xdata = D.S.tvec # Years TEMP
+        optim.alloc.stackdata = [] # Empty list
+        for p in range(D.G.nprogs): # Loop over programs
+            optim.alloc.stackdata.append(result.alloc[p]) # Allocation array, nprogs x npts, for stacked area plots
+        optim.alloc.xdata = result.xdata # Years
         optim.alloc.xlabel = 'Year'
         optim.alloc.ylabel = 'Spending'
+        optim.alloc.title = 'Optimal allocation'
         optim.alloc.legend = D.data.meta.progs.short # Program names, length nprogs
     if optim.kind=='multiyear':
         optim.alloc = struct() # Allocation structure
@@ -251,6 +254,7 @@ def gatheroptimdata(D, result, verbose=2):
         optim.alloc.xdata = arange(2015,2020) # Years TEMP
         optim.alloc.xlabel = 'Year'
         optim.alloc.ylabel = 'Spend'
+        optim.alloc.title = 'Optimal allocation'
         optim.alloc.legend = D.data.meta.progs.short # Program names, length nprogs
     if optim.kind=='range':
         optim.alloc = struct() # Allocations structure

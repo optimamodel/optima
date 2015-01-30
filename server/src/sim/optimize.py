@@ -192,6 +192,56 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
         
         
         
+    
+    
+    ###########################################################################
+    ## Time-varying budget optimization
+    ###########################################################################
+    if objectives.funding == 'constant' and objectives.timevarying == True:
+        
+        ## Define options structure
+        options = struct()
+        options.ntimepm = ntimepm # Number of time-varying parameters
+        options.nprogs = nprogs # Number of programs
+        options.D = deepcopy(D) # Main data structure
+        options.outcomekeys = outcomekeys # Names of outcomes, e.g. 'inci'
+        options.weights = weights # Weights for each parameter
+        options.indices = indices # Indices for the outcome to be evaluated over
+        options.normalizations = normalizations # Whether to normalize a parameter
+        options.totalspend = totalspend # Total budget
+        
+        
+        ## Run time-varying optimization
+        print('========== Running time-varying optimization ==========')
+        options.D.F = [D.F[s]] # Loop over fitted parameters
+        print('WARNING TODO want to loop over CCOCs too')
+        optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=parammin, absinitial=stepsizes, timelimit=timelimit, fulloutput=True, verbose=verbose)
+        optparams = optparams / optparams.sum() * options.totalspend # Make sure it's normalized -- WARNING KLUDGY
+        allocarr.append(optparams)
+        
+        # Update the model and store the results
+        result = struct()
+        result.kind = objectives.funding
+        result.fval = output.fval # Append the objective sequence
+        optalloc = timevarying(optparams, ntimepm=len(params)/nprogs, nprogs=nprogs, tvec=D.opt.partvec, totalspend=totalspend) #Regenerate allocation
+        result.Rarr = []
+        for params in [origalloc, optalloc]: # CK: loop over original and (the best) optimal allocations
+            D, coverage, nonhivdalysaverted = getcurrentbudget(D, params)
+            D.M = makemodelpars(D.P, D.opt, withwhat='c', verbose=2)
+            S = model(D.G, D.M, D.F[0], D.opt, verbose=verbose)
+            R = makeresults(D, [S], D.opt.quantiles, verbose=verbose)
+            result.Rarr.append(struct()) # Append a structure
+            result.Rarr[-1].R = deepcopy(R) # Store the R structure (results)
+            result.Rarr[-1].label = labels.pop(0) # Store labels, one at a time
+        result.xdata = S.tvec # Store time data
+        result.alloc = optalloc[:,0:len(S.tvec)] # Store allocation data, and cut to be same length as time data
+        
+    
+    
+    
+        
+        
+        
         
     ###########################################################################
     ## Multiple budgets optimization
