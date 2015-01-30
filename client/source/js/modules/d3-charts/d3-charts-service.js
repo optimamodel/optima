@@ -204,8 +204,11 @@ define(['./module', 'd3', 'underscore', './scale-helpers'], function (module, d3
     function LineChart(chart, chartSize, colorClass, parent) {
 
       var xScale, yScale;
-
       var uniqClassName = _.uniqueId('line_');
+  
+      this.drawToolTip = function () {
+        return true;
+      } ;
 
       this.scales = function (dataset) {
         var xExtent = d3.extent(dataset, function (d) {
@@ -224,7 +227,7 @@ define(['./module', 'd3', 'underscore', './scale-helpers'], function (module, d3
       this.draw = function (dataset) {
         exit(dataset);
         transition(dataset);
-        enter(dataset);
+        enter(dataset, this);
         zoom();
       };
 
@@ -242,7 +245,7 @@ define(['./module', 'd3', 'underscore', './scale-helpers'], function (module, d3
         g.attr("transform", "translate(" + d3.event.translate + ") scale(" + d3.event.scale + ") ");
       };
 
-      function enter(dataset) {
+      function enter(dataset, _lineChart) {
         //draws path
         if (chart.select('path.' + uniqClassName).empty()) {
           var line = d3.svg.line()
@@ -254,41 +257,42 @@ define(['./module', 'd3', 'underscore', './scale-helpers'], function (module, d3
               return yScale(d[1]);
             });
 
-
           chart.append('path')
             .attr('d', line(dataset))
             .attr('class', ['line ', colorClass, uniqClassName].join(' '));
 
-          /* Initialize tooltip */
-          var focus = parent.select('g.parent_group').append("g")
-            .attr("class", "focus")
-            .style("display", "none");
-          
-          focus.append("circle")
-            .attr("r", 4.5);
+          if ( _lineChart.drawToolTip ) {
+            /* Initialize tooltip */
+            var focus = parent.select('g.parent_group').append("g")
+              .attr("class", "focus")
+              .style("display", "none");
+            
+            focus.append("circle")
+              .attr("r", 4.5);
 
-          focus.append("text")
-            .attr("x", 9)
-            .attr("dy", ".35em");
+            focus.append("text")
+              .attr("x", 9)
+              .attr("dy", ".35em");
 
-          var bisectData = d3.bisector(function(d) { return d[0]; }).left;
+            var bisectData = d3.bisector(function(d) { return d[0]; }).left;
 
-          var mousemove = function() {
-            var x0 = xScale.invert(d3.mouse(this)[0]),
-              i = bisectData(dataset, x0, 1),
-              d = dataset[i];
-            focus.attr("transform", "translate(" + xScale(d[0]) + "," + yScale(d[1]) + ")");
-            // focus.select("text").text( numeral(d[1]).format('0.00%') );
-            focus.select("text").text( numeral(d[1]).format('0.00%') );
-          };
+            var mousemove = function() {
+              var x0 = xScale.invert(d3.mouse(this)[0]),
+                i = bisectData(dataset, x0, 1),
+                d = dataset[i];
+              focus.attr("transform", "translate(" + xScale(d[0]) + "," + yScale(d[1]) + ")");
+              focus.select("text").text( numeral(d[1]).format('0.00%') );
+            };
 
-          parent.select('g.parent_group').append("rect")
-            .attr("class", "overlay")
-            .attr("width", chartSize.width)
-            .attr("height", chartSize.height)
-            .on("mouseover", function() { focus.style("display", null); })
-            .on("mouseout", function() { focus.style("display", "none"); })
-            .on("mousemove", mousemove);
+            parent.select('g.parent_group').append("rect")
+              .attr("class", "overlay")
+              .attr("width", chartSize.width)
+              .attr("height", chartSize.height)
+              .on("mouseover", function() { focus.style("display", null); })
+              .on("mouseout", function() { focus.style("display", "none"); })
+              .on("mousemove", mousemove);
+              
+          }
         }
       };
 

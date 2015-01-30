@@ -72,6 +72,9 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
         _(data.lines).each(function (line, index) {
           var lineColor = options.linesStyle[index];
           var lineChart = new d3Charts.LineChart(chartGroup, chartSize, lineColor, svg);
+          if ( lineColor == '__color-black __dashed' ) {
+            lineChart.drawToolTip = false;
+          }
           lineChartInstances.push(lineChart);
           var scales = lineChart.scales(line);
           graphsScales.push(scales);
