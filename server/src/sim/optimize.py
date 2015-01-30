@@ -127,48 +127,73 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
         
     parammin = concatenate((zeros(nprogs), ones(nprogs)*-1e9))
         
-    ## Run optimization for a constant budget
+    ###########################################################################
+    ## Constant budget optimization
+    ###########################################################################
     if objectives.funding in ['constant']:
         
         result = struct()
         result.kind = objectives.funding
-        result.alloc = [] # List of allocations
+        result.allocarr = [] # List of allocations
         
         options = struct()
         options.ntimepm = ntimepm # Number of time-varying parameters
         options.nprogs = nprogs # Number of programs
         options.D = D # Main data structure
+        options.D
         options.outcomekeys = outcomekeys # Names of outcomes, e.g. 'inci'
         options.weights = weights # Weights for each parameter
         options.indices = indices # Indices for the outcome to be evaluated over
         options.normalizations = normalizations # Whether to normalize a parameter
-        
-        ## Constant
         options.totalspend = totalspend # Total budget
-        optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=parammin, absinitial=stepsizes, timelimit=timelimit, fulloutput=True, verbose=verbose)
         
-        # Update the model
+        
+        ## Run with uncertainties
+        allocarr = []
+        fvalarr = []
+        for s in range(D.opt.nsims):
+            options.D.F = [D.F[s]] # Loop over fitted parameters
+            print('WARNING TODO Want to loop over CCOCs too')
+            optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=parammin, absinitial=stepsizes, timelimit=timelimit, fulloutput=True, verbose=verbose)
+            allocarr.append(optparams)
+            fvalarr.append(output.fval)
+        
+        bestallocind = -1
+        bestallocval = inf
+        for s in range(D.opt.nsims):
+            if fvallarr[s][-1]<bestallocval:
+                bestallocval = fvallarr[s][-1]
+                bestallocind = s
+        if bestallocind == -1: print('WARNING, best allocation value seems to be infinity!')
+            
+
+        
+        # Update the model and store the results
+        
         Rarr = []
         allocarr = []
         labels = ['Original','Optimal']
-        for i, params in enumerate([origalloc, optparams]): # CK: this is kind of opaque...
+        for params in [origalloc, optparams]: # CK: loop over original and optimal allocations
             alloc = timevarying(params, ntimepm=len(params)/nprogs, nprogs=nprogs, tvec=D.opt.partvec, totalspend=totalspend)   
-            allocarr.append(alloc)
             D, coverage, nonhivdalysaverted = getcurrentbudget(D, alloc)
             D.M = makemodelpars(D.P, D.opt, withwhat='c', verbose=2)
             S = model(D.G, D.M, D.F[0], D.opt, verbose=verbose)
             R = makeresults(D, [S], D.opt.quantiles, verbose=verbose)
-            Rarr.append(struct())
-            Rarr[i].R = deepcopy(R)
-            Rarr[i].label = labels[i]
+
+            result.Rarr.append(struct())
+            result.Rarr[-1].R = deepcopy(R)
+            result.Rarr[-1].label = labels[i]
         
+        result = 
         result.fval = output.fval
         result.Rarr = Rarr
         result.allocarr = allocarr
         
         
         
-    ## Budget range
+    ###########################################################################
+    ## Constant budget optimization
+    ###########################################################################
     if objectives.funding == 'range':
         budgets = totalspend*arange(objectives.outcome.budgetrange.minval, objectives.outcome.budgetrange.maxval+objectives.outcome.budgetrange.step, objectives.outcome.budgetrange.step)
         nbudgets = len(budgets)
