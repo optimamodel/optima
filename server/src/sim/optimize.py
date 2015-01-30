@@ -165,7 +165,7 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
         ## Find which optimization was best
         bestallocind = -1
         bestallocval = inf
-        for s in range(D.opt.nsims):
+        for s in range(len(fvalarr)):
             if fvalarr[s][-1]<bestallocval:
                 bestallocval = fvalarr[s][-1]
                 bestallocind = s
