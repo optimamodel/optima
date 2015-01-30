@@ -559,7 +559,7 @@
               <div ng-if="state.radarCharts && types.plotUncertainties">
                 <div ng-repeat="radarChart in state.radarCharts track by $index">
                   <div class="chart-container __small">
-                    <div radar-chart data="radarChart.data" options="radarChart.options" save-graph-as></div>
+                    <div radar-chart data="radarChart.data" options="radarChart.options" reset-graph save-graph-as></div>
                   </div>
                 </div>
               </div>
@@ -567,7 +567,7 @@
               <div ng-if="state.pieCharts && !types.plotUncertainties">
                 <div ng-repeat="pieChart in state.pieCharts track by $index">
                   <div class="chart-container __small">
-                    <div pie-chart data="pieChart.data" options="pieChart.options" save-graph-as></div>
+                    <div pie-chart data="pieChart.data" options="pieChart.options" reset-graph save-graph-as></div>
                   </div>
                 </div>
               </div>
@@ -579,7 +579,7 @@
               <div ng-if="state.stackedBarCharts && types.timeVaryingOptimizations">
                 <div ng-repeat="chart in state.stackedBarCharts track by $index">
                   <div class="chart-container __large">
-                    <div stacked-bar-chart data="chart.data" options="chart.options" save-graph-as></div>
+                    <div stacked-bar-chart data="chart.data" options="chart.options" reset-graph save-graph-as></div>
                   </div>
                 </div>
               </div>
@@ -588,10 +588,10 @@
 
 
             <div class="chart-container __small" ng-repeat="chart in state.optimisationGraphs">
-              <div line-scatter-chart data="chart.data" options="chart.options" save-graph-as></div>
+              <div line-scatter-chart data="chart.data" options="chart.options" reset-graph save-graph-as></div>
             </div>
             <div class="chart-container __small" ng-repeat="chart in state.financialGraphs">
-              <div line-scatter-chart data="chart.data" options="chart.options" save-graph-as></div>
+              <div line-scatter-chart data="chart.data" options="chart.options" reset-graph save-graph-as></div>
             </div>
           </div>
         </div>

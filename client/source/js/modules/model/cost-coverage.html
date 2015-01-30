@@ -45,7 +45,7 @@
       <div class="section elastic">
         <div class="elastic_col __shrink" ng-if="ccGraph.data">
           <div class="chart-container">
-            <div line-scatter-chart data="ccGraph.data" options="ccGraph.options" save-graph-as></div>
+            <div line-scatter-chart data="ccGraph.data" options="ccGraph.options" reset-graph save-graph-as></div>
           </div>
         </div>
         <div class="elastic_col">
@@ -116,13 +116,13 @@
         <div class="section elastic">
           <div class="elastic_col __shrink" style="width: 320px">
             <div class="chart-container" ng-init="coGraph = graphs.plotdata_co[$index]">
-              <div line-scatter-chart data="coGraph.data" options="coGraph.options" save-graph-as></div>
+              <div line-scatter-chart data="coGraph.data" options="coGraph.options" reset-graph save-graph-as></div>
             </div>
           </div>
 
           <div class="elastic_col" style="width: 340px">
             <div class="chart-container">
-              <div line-scatter-chart data="chart.data" options="chart.options" save-graph-as></div>
+              <div line-scatter-chart data="chart.data" options="chart.options" reset-graph save-graph-as></div>
             </div>
           </div>
           <form name="AdjustmentForm" class="elastic_col">
