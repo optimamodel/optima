@@ -183,7 +183,6 @@ def model(G, M, F, opt, initstate=None, verbose=2):
         else: raise Exception('Treatment eligibility %s at time %s does not seem to be valid' % (txelig[t], t))
         
         
-        
         ###############################################################################
         ## Calculate force-of-infection (forceinf)
         ###############################################################################
@@ -367,6 +366,7 @@ def model(G, M, F, opt, initstate=None, verbose=2):
         S.reqcircum[0, t] = sum(reqcirc)
         S.newcircum[:, t] = newlycirc
         S.numcircum[:, t] = numcircad + newlycirc
+        
         
         ###############################################################################
         ## The ODEs
