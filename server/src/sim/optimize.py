@@ -128,7 +128,7 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
     parammin = concatenate((zeros(nprogs), ones(nprogs)*-1e9))
         
     ## Run optimization for a constant budget
-    if objectives.funding in ['constant', 'range']:
+    if objectives.funding in ['constant']:
         
         result = struct()
         result.kind = objectives.funding
@@ -142,13 +142,9 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
         options.weights = weights # Weights for each parameter
         options.indices = indices # Indices for the outcome to be evaluated over
         options.normalizations = normalizations # Whether to normalize a parameter
-        if objectives.funding == 'constant':
-            options.totalspend = totalspend # Total budget
-        if objectives.funding == 'range':
-            budgets = totalspend*arange(objectives.outcome.budgetrange.minval, objectives.outcome.budgetrange.maxval+objectives.outcome.budgetrange.step, objectives.outcome.budgetrange.step)
-            options.totalspend = budgets # Total budget
         
-        # Run the optimization algorithm
+        ## Constant
+        options.totalspend = totalspend # Total budget
         optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=parammin, absinitial=stepsizes, timelimit=timelimit, fulloutput=True, verbose=verbose)
         
         # Update the model
@@ -169,12 +165,25 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
         result.fval = output.fval
         result.Rarr = Rarr
         result.allocarr = allocarr
+        
+        
+        
+    ## Budget range
+    if objectives.funding == 'range':
+        budgets = totalspend*arange(objectives.outcome.budgetrange.minval, objectives.outcome.budgetrange.maxval+objectives.outcome.budgetrange.step, objectives.outcome.budgetrange.step)
+        nbudgets = len(budgets)
+        for b in range(nbudgets):
+            options.totalspend = budgets[b] # Total budget
+            optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=parammin, absinitial=stepsizes, timelimit=timelimit, fulloutput=True, verbose=verbose)
+
+
+
     
-        # Gather plot data
-        from gatherplotdata import gatheroptimdata
-        optim = gatheroptimdata(D, result, verbose=verbose)
-        if 'optim' not in D.plot: D.plot.optim = [] # Initialize list if required
-        D.plot.optim.append(optim)
+    # Gather plot data
+    from gatherplotdata import gatheroptimdata
+    optim = gatheroptimdata(D, result, verbose=verbose)
+    if 'optim' not in D.plot: D.plot.optim = [] # Initialize list if required
+    D.plot.optim.append(optim) # In any case, append
     
     saveoptimization(D, name, objectives, constraints, result, verbose=2)   
     
