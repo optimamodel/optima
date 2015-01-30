@@ -15,7 +15,7 @@ from copy import deepcopy
 from numpy import ones, zeros, concatenate, arange, inf, hstack, argmin
 from utils import findinds
 from makeresults import makeresults
-from timevarying import timevarying
+from timevarying import timevarying, multiyear
 from getcurrentbudget import getcurrentbudget
 from model import model
 from makemodelpars import makemodelpars
@@ -28,8 +28,10 @@ default_simendyear = 2030
 
 def objectivecalc(optimparams, options):
     """ Calculate the objective function """
-
-    thisalloc = timevarying(optimparams, ntimepm=options.ntimepm, nprogs=options.nprogs, tvec=options.D.opt.partvec, totalspend=options.totalspend)        
+    if options.variable == False:
+        thisalloc = timevarying(optimparams, ntimepm=options.ntimepm, nprogs=options.nprogs, tvec=options.D.opt.partvec, totalspend=options.totalspend) 
+    else:
+        thisalloc = multiyear(optimparams, years=options.years, totalspend=options.totalspend, nprogs=options.nprogs, tvec=options.D.opt.partvec) 
     newD = deepcopy(options.D)
     newD, newcov, newnonhivdalysaverted = getcurrentbudget(newD, thisalloc)
     newD.M = makemodelpars(newD.P, newD.opt, withwhat='c', verbose=0)
@@ -241,7 +243,7 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
     ###########################################################################
     ## Multiple-year budget optimization
     ###########################################################################
-    if objectives.funding == 'constant' and objectives.timevarying == True:
+    if objectives.funding == 'variable':
         
         ## Define options structure
         options = struct()
@@ -256,7 +258,7 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
         
         
         ## Run time-varying optimization
-        print('========== Running time-varying optimization ==========')
+        print('========== Running multiple-year optimization ==========')
         optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=parammin, absinitial=stepsizes, timelimit=timelimit, fulloutput=True, verbose=verbose)
         optparams = optparams / optparams.sum() * options.totalspend # Make sure it's normalized -- WARNING KLUDGY
         
