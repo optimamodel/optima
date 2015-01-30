@@ -128,21 +128,25 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
     parammin = concatenate((zeros(nprogs), ones(nprogs)*-1e9))
         
     ## Run optimization for a constant budget
-    if objectives.funding == "constant":
+    if objectives.funding in ['constant', 'range']:
         
         result = struct()
-        result.kind = 'constant'
+        result.kind = objectives.funding
         result.alloc = [] # List of allocations
         
         options = struct()
         options.ntimepm = ntimepm # Number of time-varying parameters
         options.nprogs = nprogs # Number of programs
         options.D = D # Main data structure
-        options.totalspend = totalspend # Total budget
         options.outcomekeys = outcomekeys # Names of outcomes, e.g. 'inci'
         options.weights = weights # Weights for each parameter
         options.indices = indices # Indices for the outcome to be evaluated over
         options.normalizations = normalizations # Whether to normalize a parameter
+        if objectives.funding == 'constant':
+            options.totalspend = totalspend # Total budget
+        if objectives.funding == 'range':
+            budgets = totalspend*arange(objectives.outcome.budgetrange.minval, objectives.outcome.budgetrange.maxval+objectives.outcome.budgetrange.step, objectives.outcome.budgetrange.step)
+            options.totalspend = budgets # Total budget
         
         # Run the optimization algorithm
         optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=parammin, absinitial=stepsizes, timelimit=timelimit, fulloutput=True, verbose=verbose)
