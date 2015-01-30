@@ -15,7 +15,7 @@ from copy import deepcopy
 from numpy import ones, zeros, concatenate, arange, inf, hstack, argmin
 from utils import findinds
 from makeresults import makeresults
-from timevarying import timevarying, multiyear
+from timevarying import timevarying
 from getcurrentbudget import getcurrentbudget
 from model import model
 from makemodelpars import makemodelpars
@@ -28,12 +28,8 @@ default_simendyear = 2030
 
 def objectivecalc(optimparams, options):
     """ Calculate the objective function """
-    if 'ntimepm' in options.keys():
-        thisalloc = timevarying(optimparams, ntimepm=options.ntimepm, nprogs=options.nprogs, tvec=options.D.opt.partvec, totalspend=options.totalspend) 
-    elif 'years' in options.keys():
-        thisalloc = multiyear(optimparams, years=options.years, totalspend=options.totalspend, nprogs=options.nprogs, tvec=options.D.opt.partvec) 
-    else:
-        raise Exception('Cannot figure out what kind of allocation this is since neither options.ntimepm nor options.years is defined')
+
+    thisalloc = timevarying(optimparams, ntimepm=options.ntimepm, nprogs=options.nprogs, tvec=options.D.opt.partvec, totalspend=options.totalspend)        
     newD = deepcopy(options.D)
     newD, newcov, newnonhivdalysaverted = getcurrentbudget(newD, thisalloc)
     newD.M = makemodelpars(newD.P, newD.opt, withwhat='c', verbose=0)
@@ -128,7 +124,7 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
     inflection = ones(nprogs)*.5 if ntimepm >= 4 else []
     
     # Concatenate parameters to be optimised
-    optimparams = concatenate((origalloc, growthrate, saturation, inflection)) # WARNING, not used for multi-year optimizations
+    optimparams = concatenate((origalloc, growthrate, saturation, inflection)) # WARNING, not used for multiyears
         
     parammin = concatenate((zeros(nprogs), ones(nprogs)*-1e9))
         
@@ -242,52 +238,6 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
     
     
         
-    ###########################################################################
-    ## Multiple-year budget optimization
-    ###########################################################################
-    if objectives.funding == 'variable':
-        
-        ## Define options structure
-        options = struct()
-        options.years = arange # Number of time-varying parameters
-        options.nprogs = nprogs # Number of programs
-        options.D = deepcopy(D) # Main data structure
-        options.outcomekeys = outcomekeys # Names of outcomes, e.g. 'inci'
-        options.weights = weights # Weights for each parameter
-        options.indices = indices # Indices for the outcome to be evaluated over
-        options.normalizations = normalizations # Whether to normalize a parameter
-        options.totalspend = totalspend # Total budget
-        
-        multiyear(optimparams, years=options.years, totalspend=options.totalspend, nprogs=options.nprogs, tvec=options.D.opt.partvec) 
-        
-        
-        ## Run time-varying optimization
-        print('========== Running multiple-year optimization ==========')
-        optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=parammin, absinitial=stepsizes, timelimit=timelimit, fulloutput=True, verbose=verbose)
-        optparams = optparams / optparams.sum() * options.totalspend # Make sure it's normalized -- WARNING KLUDGY
-        
-        # Update the model and store the results
-        result = struct()
-        result.kind = 'timevarying'
-        result.fval = output.fval # Append the objective sequence
-        result.Rarr = []
-        labels = ['Original','Optimal']
-        for params in [origalloc, optparams]: # CK: loop over original and (the best) optimal allocations
-            alloc = timevarying(params, ntimepm=len(params)/nprogs, nprogs=nprogs, tvec=D.opt.partvec, totalspend=totalspend) #Regenerate allocation
-            D, coverage, nonhivdalysaverted = getcurrentbudget(D, alloc)
-            D.M = makemodelpars(D.P, D.opt, withwhat='c', verbose=2)
-            S = model(D.G, D.M, D.F[0], D.opt, verbose=verbose)
-            R = makeresults(D, [S], D.opt.quantiles, verbose=verbose)
-            result.Rarr.append(struct()) # Append a structure
-            result.Rarr[-1].R = deepcopy(R) # Store the R structure (results)
-            result.Rarr[-1].label = labels.pop(0) # Store labels, one at a time
-        result.xdata = S.tvec # Store time data
-        result.alloc = alloc[:,0:len(S.tvec)] # Store allocation data, and cut to be same length as time data
-        
-    
-    
-    
-    
         
         
         
@@ -418,7 +368,6 @@ def defaultobjectives(D, verbose=2):
     ob.outcome.deathweight = 100 # "Death weighting"
     ob.outcome.costann = False # "Minimize cumulative DALYs"
     ob.outcome.costannweight = 100 # "Cost weighting"
-    ob.outcome.variable = [] # No variable budgets by default
     ob.outcome.budgetrange = struct() # For running multiple budgets
     ob.outcome.budgetrange.minval = None
     ob.outcome.budgetrange.maxval = None
