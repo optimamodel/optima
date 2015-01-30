@@ -14,8 +14,7 @@ define(['angular', 'jquery', 'underscore', 'saveAs', 'jsPDF', './svg-to-png', '.
            * event handlers.
            */
           var initialize = function() {
-            var template = 
-            '<div class="chart-buttons btn-group">' +
+            var template = '<div class="chart-buttons btn-group">' +
             '<button class="btn figure">Export figure</button>' +
             '<button class="btn data">Export data</button>' +
             '</div>';
