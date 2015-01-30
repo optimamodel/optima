@@ -24,10 +24,7 @@ define([
   './modules/user-manager/index',
   './modules/ui/modal/modal-service',
   './modules/ui/index',
-
-  'd3-tip',
   'numeral'
-  
 ], function (angular) {
   'use strict';
 
