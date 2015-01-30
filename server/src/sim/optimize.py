@@ -158,6 +158,7 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
             options.D.F = [D.F[s]] # Loop over fitted parameters
             print('WARNING TODO want to loop over CCOCs too')
             optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=parammin, absinitial=stepsizes, timelimit=timelimit, fulloutput=True, verbose=verbose)
+            optparams = optparams / optparams.sum() * options.totalspend # Make sure it's normalized -- WARNING KLUDGY
             allocarr.append(optparams)
             fvalarr.append(output.fval)
         
@@ -219,6 +220,7 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
             print('========== Running budget optimization %s of %s... ==========' % (b+1, nbudgets))
             options.totalspend = totalspend*budgets[b+1] # Total budget, skipping first
             optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=parammin, absinitial=stepsizes, timelimit=timelimit, fulloutput=True, verbose=verbose)
+            optparams = optparams / optparams.sum() * options.totalspend # Make sure it's normalized -- WARNING KLUDGY
             allocarr.append(optparams)
             fvalarr.append(fval) # Only need last value
         
