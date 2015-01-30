@@ -12,7 +12,7 @@ define(['./module', 'd3', 'underscore', './scale-helpers'], function (module, d3
      * @param {object} chartSize - example: { width: 200, height: 100 }.
      * @param {array} data - example: [{label: "Slice Name", value: 44}]
      */
-    function PieChart(chart, chartSize, data) {
+    function PieChart(chart, chartSize, data, parent) {
       var radius = Math.min(chartSize.width, chartSize.height) / 2;
 
       var colors = [
@@ -69,6 +69,17 @@ define(['./module', 'd3', 'underscore', './scale-helpers'], function (module, d3
         .attr("class", function(entry, index) {
           return colors[index % colors.length] + ' pie-chart-segment';
         });
+
+      /* Zoom */
+      function zoom() {
+        /* Initialize Zoom **/
+        parent.call(d3.behavior.zoom().translate([0, 0]).scale(1).scaleExtent([1, 4]).on("zoom", zoomer));
+      };
+      function zoomer() {
+        var g = parent.select('g.parent_group');
+        g.attr("transform", "translate(" + d3.event.translate + ") scale(" + d3.event.scale + ") ");
+      };
+      zoom();
 
       var enteringLabels = chart.selectAll(".label")
         .data(pie(data))
