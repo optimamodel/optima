@@ -209,7 +209,7 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
         options.totalspend = totalspend # Total budget
         
         ## Run multiple budgets
-        budgets = totalspend*arange(objectives.outcome.budgetrange.minval, objectives.outcome.budgetrange.maxval+objectives.outcome.budgetrange.step, objectives.outcome.budgetrange.step)
+        budgets = arange(objectives.outcome.budgetrange.minval, objectives.outcome.budgetrange.maxval+objectives.outcome.budgetrange.step, objectives.outcome.budgetrange.step)
         closesttocurrent = argmin(abs(budgets-1)) + 1 # Find the index of the budget closest to current and add 1 since prepend current budget
         nbudgets = len(budgets)
         budgets = hstack([1,budgets]) # Include current budget
@@ -217,7 +217,7 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
         fvalarr = [objectivecalc(optimparams, options=options)] # Outcome for original allocation
         for b in range(nbudgets):
             print('========== Running budget optimization %s of %s... ==========' % (b+1, nbudgets))
-            options.totalspend = budgets[b+1] # Total budget, skipping first
+            options.totalspend = totalspend*budgets[b+1] # Total budget, skipping first
             optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=parammin, absinitial=stepsizes, timelimit=timelimit, fulloutput=True, verbose=verbose)
             allocarr.append(optparams)
             fvalarr.append(fval) # Only need last value
@@ -230,9 +230,7 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
         for b in range(nbudgets): result.budgetlabels.append('%i%% budget' % (budgets[b+1]*100.))
             
         result.fval = fvalarr # Append the best value noe
-        result.allocarr = [] # List of allocations
-        result.allocarr.append(quantile([origalloc])) # Kludgy -- run fake quantile on duplicated origalloc just so it matches
-        result.allocarr.append(quantile(allocarr)) # Calculate allocation arrays 
+        result.allocarr = allocarr # List of allocations
         labels = ['Original','Optimal']
         result.Rarr = []
         for params in [origalloc, allocarr[closesttocurrent]]: # CK: loop over original and (the best) optimal allocations

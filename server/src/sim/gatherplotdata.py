@@ -218,6 +218,7 @@ def gatheroptimdata(D, result, verbose=2):
     
     optim = struct() # These optimization results
     optim.kind = result.kind # Flag for the kind of optimization
+    optim.multi = gathermultidata(D, result.Rarr, verbose=2) # Calculate data for displaying standard epidemiological results
     if optim.kind in ['constant', 'timevarying', 'multiyear']:
         optim.outcome = struct() # Plot how the outcome improved with optimization
         optim.outcome.ydata = result.fval # Vector of outcomes
@@ -225,7 +226,6 @@ def gatheroptimdata(D, result, verbose=2):
         optim.outcome.ylabel = 'Outcome'
         optim.outcome.xlabel = 'Iteration'
         optim.outcome.title = 'Outcome (initial: %0.0f, final: %0.0f)' % (result.fval[0], result.fval[-1])
-        optim.multi = gathermultidata(D, result.Rarr, verbose=2) # Calculate data for displaying standard epidemiological results
     if optim.kind=='constant':
         optim.alloc = []
         titles = ['Original','Optimal']
@@ -252,7 +252,7 @@ def gatheroptimdata(D, result, verbose=2):
         optim.alloc.xlabel = 'Year'
         optim.alloc.ylabel = 'Spend'
         optim.alloc.legend = D.data.meta.progs.short # Program names, length nprogs
-    if optim.kind=='multibudgets':
+    if optim.kind=='range':
         optim.alloc = struct() # Allocations structure
         optim.alloc.bardata = result.allocarr # An array of allocations, nprogs x nbudgets
         optim.alloc.xdata = result.budgets # Vector of budgets
