@@ -1,7 +1,7 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
-  module.controller('AdminManageProjectsController', function ($scope, $http, info, projects, users, activeProject, UserManager, modalService) {
+  module.controller('AdminManageProjectsController', function ($scope, $http, projects, users, activeProject, UserManager, modalService) {
     $scope.users = users.data.users;
     $scope.users = _.compact(_.map(_(projects.data.projects).groupBy(function (p) {return p.user_id;}), function (projects, userId) {
       var user = _.findWhere($scope.users, {id: parseInt(userId)});
