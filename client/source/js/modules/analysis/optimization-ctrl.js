@@ -817,7 +817,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
         $scope.chartsForDataExport = $scope.chartsForDataExport.concat($scope.state.radarCharts);
       }
 
-      if ( $scope.state.stackedBarChart && $scope.types.timeVaryingOptimizations ) {
+      if ( $scope.state.stackedBarChart ) {
         $scope.chartsForDataExport.push($scope.state.stackedBarChart);
       }
 
@@ -888,7 +888,6 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     $scope.$watch('state.optimisationGraphs', updateChartsForDataExport, true);
     $scope.$watch('state.financialGraphs', updateChartsForDataExport, true);
     $scope.$watch('state.stackedBarChart', updateChartsForDataExport, true);
-    $scope.$watch('types.timeVaryingOptimizations', updateChartsForDataExport, true);
     $scope.$watch('types.plotUncertainties', updateChartsForDataExport, true);
     $scope.$watch('activeTab', $scope.checkExistingOptimization, true);
 
