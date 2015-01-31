@@ -89,6 +89,7 @@ def check_calculation_status(user_id, project_id, func, db_session):
     from sqlalchemy import desc
     status = 'unknown'
     error_text = None
+    stop_time = None
     project = db_session.query(ProjectDb).filter_by(user_id=user_id, id=project_id).first()
     if project is not None:
         work_log = db_session.query(WorkLogDb).filter_by(project_id=project.id, work_type=func.__name__). \
