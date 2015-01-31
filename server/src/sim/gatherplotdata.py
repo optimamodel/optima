@@ -221,7 +221,7 @@ def gatheroptimdata(D, result, verbose=2):
     if optim.kind in ['constant', 'timevarying', 'multiyear']:
         optim.outcome = struct() # Plot how the outcome improved with optimization
         optim.outcome.ydata = result.fval.tolist() # Vector of outcomes
-        optim.outcome.xdata = arange(len(result.fval.tolist())) # Vector of iterations
+        optim.outcome.xdata = arange(len(result.fval.tolist())).tolist() # Vector of iterations
         optim.outcome.ylabel = 'Outcome'
         optim.outcome.xlabel = 'Iteration'
         optim.outcome.title = 'Outcome (initial: %0.0f, final: %0.0f)' % (result.fval[0], result.fval[-1])
@@ -241,23 +241,25 @@ def gatheroptimdata(D, result, verbose=2):
         optim.alloc = struct() # Allocation structure
         optim.alloc.stackdata = [] # Empty list
         for p in range(D.G.nprogs): # Loop over programs
-            optim.alloc.stackdata.append(result.alloc[p]) # Allocation array, nprogs x npts, for stacked area plots
-        optim.alloc.xdata = result.xdata # Years
+            optim.alloc.stackdata.append(result.alloc[p].tolist()) # Allocation array, nprogs x npts, for stacked area plots
+        optim.alloc.xdata = result.xdata.tolist() # Years
         optim.alloc.xlabel = 'Year'
         optim.alloc.ylabel = 'Spending'
         optim.alloc.title = 'Optimal allocation'
         optim.alloc.legend = D.data.meta.progs.short # Program names, length nprogs
     if optim.kind=='range':
         optim.alloc = struct() # Allocations structure
-        optim.alloc.bardata = result.allocarr # An array of allocations, nprogs x nbudgets
-        optim.alloc.xdata = result.budgets # Vector of budgets
+        optim.alloc.bardata = []
+        for b in range(len(result.allocarr)): # Loop over budgets
+            optim.alloc.bardata.append(result.allocarr[b].tolist()) # A vector of allocations, length nprogs
+        optim.alloc.xdata = result.budgets.tolist() # Vector of budgets
         optim.alloc.xlabels = result.budgetlabels # Budget labels
         optim.alloc.ylabel = 'Spend'
         optim.alloc.title = 'Budget allocations'
         optim.alloc.legend = D.data.meta.progs.short # Program names, length nprogs
         optim.outcome = struct() # Dictionary with names and values
-        optim.outcome.bardata = result.fval  # Vector of outcomes, nbudgets
-        optim.outcome.xdata = result.budgets # Vector of budgets
+        optim.outcome.bardata = result.fval # Vector of outcomes, length nbudgets
+        optim.outcome.xdata = result.budgets.tolist() # Vector of budgets
         optim.outcome.xlabels = result.budgetlabels # Budget labels
         optim.outcome.ylabel = 'Outcome'
         optim.outcome.title = 'Outcomes'
