@@ -232,7 +232,7 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
         result.Rarr = []
         labels = ['Original','Optimal']
         for params in [origalloc, optparams]: # CK: loop over original and (the best) optimal allocations
-            alloc = timevarying(params, ntimepm=len(params)/nprogs, nprogs=nprogs, tvec=D.opt.partvec, totalspend=totalspend) #Regenerate allocation
+            alloc = timevarying(params, ntimepm=ntimepm, nprogs=nprogs, tvec=D.opt.partvec, totalspend=totalspend) #Regenerate allocation
             D, coverage, nonhivdalysaverted = getcurrentbudget(D, alloc)
             D.M = makemodelpars(D.P, D.opt, withwhat='c', verbose=2)
             S = model(D.G, D.M, D.F[0], D.opt, verbose=verbose)
@@ -266,12 +266,21 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
         
         ## Define optimization parameters
         nyears = len(options.years)
-        optimparams = array(origalloc.tolist()*nyears).flatten() # WARNING, not used for multi-year optimizations
+        optimparams = array(origalloc.tolist()*nyears).flatten() # Duplicate parameters
+        parammin = zeros(len(optimparams))
+        stepsizes = stepsize + zeros(len(optimparams))
         
         ## Run time-varying optimization
         print('========== Running multiple-year optimization ==========')
         optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=parammin, absinitial=stepsizes, timelimit=timelimit, fulloutput=True, verbose=verbose)
-        optparams = optparams / optparams.sum() * options.totalspend # Make sure it's normalized -- WARNING KLUDGY
+        
+        # Normalize
+        proginds = arange(nprogs)
+        optparams = array(optparams)
+        for y in range(nyears):
+            theseinds = proginds+y*nprogs
+            optparams[theseinds] *= options.totalspends[y] / float(sum(optparams[theseinds]))
+        optparams = optparams.tolist()
         
         # Update the model and store the results
         result = struct()
@@ -280,7 +289,7 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
         result.Rarr = []
         labels = ['Original','Optimal']
         for params in [origalloc, optparams]: # CK: loop over original and (the best) optimal allocations
-            alloc = timevarying(params, ntimepm=len(params)/nprogs, nprogs=nprogs, tvec=D.opt.partvec, totalspend=totalspend) #Regenerate allocation
+            alloc = multiyear(optimparams, years=options.years, totalspends=options.totalspends, nprogs=options.nprogs, tvec=options.D.opt.partvec) 
             D, coverage, nonhivdalysaverted = getcurrentbudget(D, alloc)
             D.M = makemodelpars(D.P, D.opt, withwhat='c', verbose=2)
             S = model(D.G, D.M, D.F[0], D.opt, verbose=verbose)
