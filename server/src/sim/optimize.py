@@ -20,6 +20,7 @@ from getcurrentbudget import getcurrentbudget
 from model import model
 from makemodelpars import makemodelpars
 from quantile import quantile
+from ballsd import ballsd
 
 default_simstartyear = 2000
 default_simendyear = 2030
@@ -52,13 +53,8 @@ def objectivecalc(optimparams, options):
     
     
     
-def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name='Default'):
+def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name='Default', stoppingfunc = None):
     """ Perform the actual optimization """
-    
-    # Imports
-    
-    from ballsd import ballsd
-    
     
     printv('Running optimization...', 1, verbose)
     
@@ -69,10 +65,11 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
     origR = deepcopy(D.R)
     origalloc = D.data.origalloc
     
-    # Make sure objectives and constraints exist
+    # Make sure objectives and constraints exist, and overwrite using saved ones if available
     if objectives is None: objectives = defaultobjectives(D, verbose=verbose)
     if constraints is None: constraints = defaultconstraints(D, verbose=verbose)
 
+    # Do this so if e.g. /100 won't have problems
     objectives = deepcopy(objectives)
     constraints = deepcopy(constraints)
     ntimepm=1 + int(objectives.timevarying) # Either 1 or 2
@@ -165,7 +162,7 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
             print('========== Running uncertainty optimization %s of %s... ==========' % (s+1, len(D.F)))
             options.D.F = [D.F[s]] # Loop over fitted parameters
             print('WARNING TODO want to loop over CCOCs too')
-            optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=parammin, absinitial=stepsizes, timelimit=timelimit, fulloutput=True, verbose=verbose)
+            optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=parammin, absinitial=stepsizes, timelimit=timelimit, fulloutput=True, stoppingfunc=stoppingfunc, verbose=verbose)
             optparams = optparams / optparams.sum() * options.totalspend # Make sure it's normalized -- WARNING KLUDGY
             allocarr.append(optparams)
             fvalarr.append(output.fval)
@@ -222,7 +219,7 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
         
         ## Run time-varying optimization
         print('========== Running time-varying optimization ==========')
-        optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=parammin, absinitial=stepsizes, timelimit=timelimit, fulloutput=True, verbose=verbose)
+        optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=parammin, absinitial=stepsizes, timelimit=timelimit, fulloutput=True, stoppingfunc=stoppingfunc, verbose=verbose)
         optparams = optparams / optparams.sum() * options.totalspend # Make sure it's normalized -- WARNING KLUDGY
         
         # Update the model and store the results
@@ -272,7 +269,7 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
         
         ## Run time-varying optimization
         print('========== Running multiple-year optimization ==========')
-        optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=parammin, timelimit=timelimit, fulloutput=True, verbose=verbose)
+        optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=parammin, timelimit=timelimit, fulloutput=True, stoppingfunc=stoppingfunc, verbose=verbose)
         
         # Normalize
         proginds = arange(nprogs)
@@ -334,7 +331,7 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
         for b in range(nbudgets):
             print('========== Running budget optimization %s of %s... ==========' % (b+1, nbudgets))
             options.totalspend = totalspend*budgets[b+1] # Total budget, skipping first
-            optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=parammin, absinitial=stepsizes, timelimit=timelimit, fulloutput=True, verbose=verbose)
+            optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=parammin, absinitial=stepsizes, timelimit=timelimit, fulloutput=True, stoppingfunc=stoppingfunc, verbose=verbose)
             optparams = optparams / optparams.sum() * options.totalspend # Make sure it's normalized -- WARNING KLUDGY
             allocarr.append(optparams)
             fvalarr.append(fval) # Only need last value
@@ -369,7 +366,7 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
     D.plot.optim.append(optim) # In any case, append
     
     ## Save optimization to D
-    saveoptimization(D, name, objectives, constraints, result, verbose=2)   
+    saveoptimization(D, name, objectives, constraints, result, verbose=2)
     
     printv('...done optimizing programs.', 2, verbose)
     return D

@@ -1,7 +1,7 @@
 def ballsd(function, x, options = None, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, \
     pinitial = None, sinitial = None, absinitial = None, xmin = None, xmax = None, MaxRangeIter = 1000, \
     MaxFunEvals = None, MaxIter = 1e4, TolFun = 1e-6, TolX = None, StallIterLimit = 100, \
-    fulloutput = False, maxarraysize = 1e6, timelimit = 3600, verbose = 2):
+    fulloutput = False, maxarraysize = 1e6, timelimit = 3600, stoppingfunc = None, verbose = 2):
     """
     Optimization using the Bayesian adaptive locally linear stochastic descent 
     algorithm.
@@ -18,6 +18,7 @@ def ballsd(function, x, options = None, stepsize = 0.1, sinc = 2, sdec = 2, pinc
                      2 -- Step size below threshold.
                      3 -- Maximum number of iterations to calculate new parameter when out of range reached
                      4 -- Time limit exceeded
+                     5 -- Stopping function criteria met
                     -1 -- Algorithm terminated for other reasons.
           OUTPUT -- An object with the following attributes:
             iterations -- Number of iterations
@@ -46,6 +47,7 @@ def ballsd(function, x, options = None, stepsize = 0.1, sinc = 2, sdec = 2, pinc
              StallIterLimit {100} -- Number of iterations over which to calculate TolFun
                maxarraysize {1e6} -- Limit on MaxIter and StallIterLimit to ensure arrays don't get too big
                  timelimit {3600} -- Maximum time allowed, in seconds
+              stoppingfunc {None} -- Function that, if returns True, terminates
                       verbose {0} -- How much information to print during the run
   
     
@@ -152,7 +154,7 @@ def ballsd(function, x, options = None, stepsize = 0.1, sinc = 2, sdec = 2, pinc
             p[choice] = p[choice]/pdec # Decrease probability of picking this parameter again
             s1[choice] = s1[choice]/sdec # Decrease size of step for next time
             if verbose>5: flag = 'FAILURE'
-        if verbose>=5: print(' '*40 + flag + ' on step %i (orig:%0.1f new:%0.1f diff:%0.5f ratio:%0.3f)' % (count, fval, fvalnew, fvalnew-fval, fvalnew/fval) )
+        if verbose>=5: print(' '*60 + flag + ' on step %i (orig:%0.1f new:%0.1f diff:%0.5f ratio:%0.3f)' % (count, fval, fvalnew, fvalnew-fval, fvalnew/fval) )
 
         # Optionally store output information
         if fulloutput: # Include additional output structure
@@ -178,6 +180,10 @@ def ballsd(function, x, options = None, stepsize = 0.1, sinc = 2, sdec = 2, pinc
         if (time()-start)>timelimit:
             exitflag = 4
             break
+        if stoppingfunc is not None:
+            if stoppingfunc():
+                exitflag = 5
+                break
 
 
     # Create additional output
