@@ -272,7 +272,7 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
         
         ## Run time-varying optimization
         print('========== Running multiple-year optimization ==========')
-        optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=parammin, absinitial=stepsizes, timelimit=timelimit, fulloutput=True, verbose=verbose)
+        optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=parammin, timelimit=timelimit, fulloutput=True, verbose=verbose)
         
         # Normalize
         proginds = arange(nprogs)

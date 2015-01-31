@@ -137,9 +137,7 @@ def ballsd(function, x, options = None, stepsize = 0.1, sinc = 2, sdec = 2, pinc
         fvalnew = function(xnew) if options is None else function(xnew, options) # Calculate the objective function for the new parameter set
         errorhistory[mod(count,StallIterLimit)] = fval - fvalnew # Keep track of improvements in the error  
         if verbose>5:
-            print('       choice=%s1, par=%s1, pm=%s1, origval=%s1, newval=%s1, inrange=%s1' % (choice, par, pm, x[par], xnew[par], inrange))
-            if par>100:
-                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+            print('       choice=%s, par=%s, pm=%s, origval=%s, newval=%s, inrange=%s1' % (choice, par, pm, x[par], xnew[par], inrange))
 
         
 

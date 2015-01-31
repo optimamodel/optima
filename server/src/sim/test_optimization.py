@@ -18,7 +18,7 @@ testmultiyear = True
 projectname = 'example'
 verbose = 10
 ntimepm = 2 # AS: Just use 1 or 2 parameters... using 3 or 4 can cause problems that I'm yet to investigate
-timelimit = 30
+timelimit = 60
 
 print('\n\n\n1. Making project...')
 from makeproject import makeproject
