@@ -190,7 +190,7 @@ def ballsd(function, x, options = None, stepsize = 0.1, sinc = 2, sdec = 2, pinc
             exitflag = 3
             if verbose>=5: print('======== Can\'t find parameters within range (%i > %i), terminating ========' % (count2, MaxRangeIter))
             break
-        if (time()-start)>timelimit:
+        if timelimit is not None and (time()-start)>timelimit:
             exitflag = 4
             if verbose>=5: print('======== Time limit reached (%f > %f), terminating ========' % ((time()-start), timelimit))
             break

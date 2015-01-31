@@ -53,7 +53,7 @@ def objectivecalc(optimparams, options):
     
     
     
-def optimize(D, objectives=None, constraints=None, maxiters=1000, verbose=2, name='Default', stoppingfunc = None):
+def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None, verbose=2, name='Default', stoppingfunc = None):
     """ Perform the actual optimization """
     
     printv('Running optimization...', 1, verbose)
@@ -162,7 +162,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, verbose=2, nam
             print('========== Running uncertainty optimization %s of %s... ==========' % (s+1, len(D.F)))
             options.D.F = [D.F[s]] # Loop over fitted parameters
             print('WARNING TODO want to loop over CCOCs too')
-            optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=parammin, absinitial=stepsizes, MaxIter=maxiters, fulloutput=True, stoppingfunc=stoppingfunc, verbose=verbose)
+            optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=parammin, absinitial=stepsizes, MaxIter=maxiters, timelimit=timelimit, fulloutput=True, stoppingfunc=stoppingfunc, verbose=verbose)
             optparams = optparams / optparams.sum() * options.totalspend # Make sure it's normalized -- WARNING KLUDGY
             allocarr.append(optparams)
             fvalarr.append(output.fval)
@@ -219,7 +219,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, verbose=2, nam
         
         ## Run time-varying optimization
         print('========== Running time-varying optimization ==========')
-        optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=parammin, absinitial=stepsizes, MaxIter=maxiters, fulloutput=True, stoppingfunc=stoppingfunc, verbose=verbose)
+        optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=parammin, absinitial=stepsizes, MaxIter=maxiters, timelimit=timelimit, fulloutput=True, stoppingfunc=stoppingfunc, verbose=verbose)
         optparams = optparams / optparams.sum() * options.totalspend # Make sure it's normalized -- WARNING KLUDGY
         
         # Update the model and store the results
@@ -269,7 +269,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, verbose=2, nam
         
         ## Run time-varying optimization
         print('========== Running multiple-year optimization ==========')
-        optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=parammin, MaxIter=maxiters, fulloutput=True, stoppingfunc=stoppingfunc, verbose=verbose)
+        optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=parammin, MaxIter=maxiters, timelimit=timelimit, fulloutput=True, stoppingfunc=stoppingfunc, verbose=verbose)
         
         # Normalize
         proginds = arange(nprogs)
@@ -331,7 +331,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, verbose=2, nam
         for b in range(nbudgets):
             print('========== Running budget optimization %s of %s... ==========' % (b+1, nbudgets))
             options.totalspend = totalspend*budgets[b+1] # Total budget, skipping first
-            optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=parammin, absinitial=stepsizes, MaxIter=maxiters, fulloutput=True, stoppingfunc=stoppingfunc, verbose=verbose)
+            optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=parammin, absinitial=stepsizes, MaxIter=maxiters, timelimit=timelimit, fulloutput=True, stoppingfunc=stoppingfunc, verbose=verbose)
             optparams = optparams / optparams.sum() * options.totalspend # Make sure it's normalized -- WARNING KLUDGY
             allocarr.append(optparams)
             fvalarr.append(fval) # Only need last value
