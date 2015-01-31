@@ -6,7 +6,10 @@
     apt: pkg={{item}} state=present
     sudo: yes
     with_items:
+      - libfreetype6
       - libfreetype6-dev
+      - libfontconfig1
+      - libfontconfig1-dev
       - pkg-config
       - libblas-dev
       - liblapack-dev

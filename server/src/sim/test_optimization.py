@@ -3,18 +3,21 @@ TEST_OPTIMIZATION
 
 This function tests that the optimization is working.
 
-Version: 2015jan27 by cliffk
+Version: 2015jan29 by cliffk
 """
-
-dotimevarying = True # True False
 
 print('WELCOME TO OPTIMA')
 
+testdefault = False
+testmultibudget = True
+testtimevarying = False
+
+
 ## Set parameters
 projectname = 'example'
-verbose = 2
+verbose = 10
 ntimepm = 2 # AS: Just use 1 or 2 parameters... using 3 or 4 can cause problems that I'm yet to investigate
-timelimit = 100
+timelimit = 30
 
 print('\n\n\n1. Making project...')
 from makeproject import makeproject
@@ -24,13 +27,39 @@ print('\n\n\n2. Updating data...')
 from updatedata import updatedata
 D = updatedata(D, verbose=verbose, savetofile=False)
 
-print('\n\n\n3. Running optimization...')
-from optimize import optimize
-optimize(D, objectives={"year":{"start":2000,"end":2030}}, ntimepm=2, timelimit=timelimit, verbose=verbose)
+if testdefault:
+    print('\n\n\n3. Running constant-budget optimization...')
+    from optimize import optimize, defaultobjectives
+    objectives = defaultobjectives(D, verbose=verbose)
+    optimize(D, objectives=objectives, timelimit=timelimit, verbose=verbose)
+    
+    print('\n\n\n4. Viewing optimization...')
+    from viewresults import viewmultiresults#, viewallocpies
+    viewmultiresults(D.plot.optim[-1].multi)
 
-print('\n\n\n4. Viewing optimization...')
-from viewresults import viewmultiresults, viewallocpies
-viewmultiresults(D.plot.OM)
-viewallocpies(D.plot.OA)
+if testmultibudget:
+    print('\n\n\n5. Running multiple-budget optimization...')
+    from optimize import optimize, defaultobjectives
+    objectives = defaultobjectives(D, verbose=verbose)
+    objectives.funding = 'range'
+    objectives.outcome.budgetrange.minval = 0
+    objectives.outcome.budgetrange.maxval = 1
+    objectives.outcome.budgetrange.step = 0.5
+    optimize(D, objectives=objectives, timelimit=timelimit, verbose=verbose)
+    
+    print('\n\n\n6. Viewing optimization...')
+    from viewresults import viewmultiresults#, viewallocpies
+    viewmultiresults(D.plot.optim[-1].multi)
+
+if testtimevarying:
+    print('\n\n\n7. Running constant-budget optimization...')
+    from optimize import optimize, defaultobjectives
+    objectives = defaultobjectives(D, verbose=verbose)
+    objectives.timevarying = True
+    optimize(D, objectives=objectives, timelimit=timelimit, verbose=verbose)
+    
+    print('\n\n\n8. Viewing optimization...')
+    from viewresults import viewmultiresults#, viewallocpies
+    viewmultiresults(D.plot.optim[-1].multi)
 
 print('\n\n\nDONE.')
