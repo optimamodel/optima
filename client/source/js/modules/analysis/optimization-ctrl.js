@@ -289,6 +289,45 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     };
 
     /**
+     * Returns a prepared chart object for a pie chart.
+     */
+    var generateMultipleBudgetsChart = function(yData, xData, legend, title) {
+      var graphData = [];
+
+      var options = {
+        height: 200,
+        width: 700,
+        margin: CONFIG.GRAPH_MARGINS,
+        xAxis: {
+          axisLabel: ''
+        },
+        yAxis: {
+          axisLabel: 'Spent'
+        },
+        legend: legend,
+        title: title
+      };
+
+      graphData = _(xData).map(function (xValue, index) {
+        var barData = _(yData).map(function(entry) { return entry[index]; });
+        return [xValue, barData];
+      });
+
+      return {
+        'data': {bars: graphData},
+        'options': options
+      };
+    };
+
+    /**
+     * Returns a stacked bar chart.
+     */
+    var prepareMultipleBudgetsChart = function (data) {
+      return generateMultipleBudgetsChart(data.bardata, data.xdata, data.legend,
+        data.title);
+      };
+
+    /**
      * Regenerate graphs based on the response and type settings in the UI.
      */
     var prepareOptimisationGraphs = function (response) {
@@ -390,13 +429,21 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
         $scope.state.pieCharts = preparePieCharts(cachedResponse.plot[0].alloc);
         $scope.state.radarCharts = prepareRadarCharts(cachedResponse.plot[0].alloc);
         $scope.state.stackedBarChart = undefined;
-
+        $scope.state.multipleBudgetsChart = undefined;
+        $scope.state.outcomeChart = prepareOutcomeChart(cachedResponse.plot[0].outcome);
       } else {
         $scope.state.pieCharts = [];
         $scope.state.radarCharts = [];
-        $scope.state.stackedBarChart = prepareStackedBarChart(cachedResponse.plot[0].alloc);
+        if (cachedResponse.plot[0].alloc.bardata) {
+          $scope.state.stackedBarChart = undefined;
+          $scope.state.outcomeChart = undefined;
+          $scope.state.multipleBudgetsChart = prepareMultipleBudgetsChart(cachedResponse.plot[0].alloc);
+        } else if (cachedResponse.plot[0].alloc.stackdata) {
+          $scope.state.stackedBarChart = prepareStackedBarChart(cachedResponse.plot[0].alloc);
+          $scope.state.outcomeChart = prepareOutcomeChart(cachedResponse.plot[0].outcome);
+          $scope.state.multipleBudgetsChart = undefined;
+        }
       }
-      $scope.state.outcomeChart = prepareOutcomeChart(cachedResponse.plot[0].outcome);
       $scope.state.optimisationGraphs = prepareOptimisationGraphs(cachedResponse.plot[0].multi);
       $scope.state.financialGraphs = prepareFinancialGraphs(cachedResponse.plot[0].multi);
     }
@@ -825,6 +872,10 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
         $scope.chartsForDataExport.push($scope.state.outcomeChart);
       }
 
+      if ( $scope.state.multipleBudgetsChart ) {
+        $scope.chartsForDataExport.push($scope.state.multipleBudgetsChart);
+      }
+
       if ( $scope.state.optimisationGraphs ) {
         $scope.chartsForDataExport = $scope.chartsForDataExport.concat($scope.state.optimisationGraphs);
       }
@@ -888,6 +939,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     $scope.$watch('state.optimisationGraphs', updateChartsForDataExport, true);
     $scope.$watch('state.financialGraphs', updateChartsForDataExport, true);
     $scope.$watch('state.stackedBarChart', updateChartsForDataExport, true);
+    $scope.$watch('state.multipleBudgetsChart', updateChartsForDataExport, true);
     $scope.$watch('types.plotUncertainties', updateChartsForDataExport, true);
     $scope.$watch('activeTab', $scope.checkExistingOptimization, true);
 
