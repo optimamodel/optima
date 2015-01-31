@@ -284,7 +284,7 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
         
         # Update the model and store the results
         result = struct()
-        result.kind = 'variable'
+        result.kind = 'multiyear'
         result.fval = output.fval # Append the objective sequence
         result.Rarr = []
         labels = ['Original','Optimal']
@@ -543,7 +543,6 @@ def partialupdateM(oldM, newM, indices, setbefore=False, setafter=True):
                 except:
                     print('Could not set indices for parameter M.%s, indices %i-%i' % (key, min(indices), max(indices)))
                     import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-    
     
     output.totalacts = totalacts(output, len(output.tvec)) # Update total acts
     return output
