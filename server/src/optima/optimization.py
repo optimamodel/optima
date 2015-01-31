@@ -113,13 +113,16 @@ def getWorkingModel():
     project_id = request.project_id
     project_name = request.project_name
     error_text = None
+    status = None
     if check_calculation(current_user.id, project_id, optimize, db.session):
         status = 'Running'
     else:
         current_app.logger.debug("optimization for project %s was stopped or cancelled" % project_id)
-        status, error_text, stop_time = check_calculation_status(current_user.id, project_id, optimize, db.session)
+        async_status, error_text, stop_time = check_calculation_status(current_user.id, project_id, optimize, db.session)
         now_time = datetime.datetime.now(dateutil.tz.tzutc()) #time in DB is UTC-aware
-        if status in good_exit_status:
+        if async_status == 'unknown': 
+            status = 'Done'
+        elif async_status in good_exit_status:
             if stop_time and stop_time<now_time: #actually stopped
                 status = 'Done'
                 current_app.logger.debug("optimization thread for project %s actually stopped" % project_id)
