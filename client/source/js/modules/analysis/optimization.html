@@ -583,6 +583,12 @@
                 </div>
               </div>
 
+              <div ng-if="state.multipleBudgetsChart">
+                <div class="chart-container __large">
+                  <div stacked-bar-chart data="state.multipleBudgetsChart.data" options="state.multipleBudgetsChart.options" save-graph-as></div>
+                </div>
+              </div>
+
               <div ng-if="state.outcomeChart" class="chart-container __small">
                 <div line-scatter-chart data="state.outcomeChart.data" options="state.outcomeChart.options" save-graph-as></div>
               </div>
