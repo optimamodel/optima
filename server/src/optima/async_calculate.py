@@ -16,7 +16,6 @@ sentinel = {
 # acceptable exit statuses
 good_exit_status = set(['completed', 'cancelled'])
 
-
 def start_or_report_calculation(user_id, project_id, func, db_session): #only called from the application
     work_type = func.__name__
     can_start = False
@@ -50,17 +49,19 @@ def start_or_report_calculation(user_id, project_id, func, db_session): #only ca
         print("No such project %s, cannot start calculation" % project_id)
     return can_start, can_join, work_type
 
-def finish_calculation(user_id, project_id, func, db_session, status='completed', error_text=None):
+def finish_calculation(user_id, project_id, func, db_session, status='completed', error_text=None, stop_now = False):
     import datetime
     import dateutil.tz
-    from datetime import datetime
     project = db_session.query(ProjectDb).filter_by(user_id=user_id, id=project_id).first()
-    if project is not None and project.working_project is not None and project.working_project.is_working:
+    if project is not None and project.working_project is not None \
+    and (project.working_project.is_working or stop_now):
         if project.working_project.work_log_id is not None:
             work_log = db_session.query(WorkLogDb).get(project.working_project.work_log_id)
             work_log.status = status
             work_log.error = error_text
-            work_log.stop_time = datetime.now(dateutil.tz.tzutc())
+            stop_time = datetime.datetime.now(dateutil.tz.tzutc())
+            if not stop_now: stop_time = stop_time + datetime.timedelta(seconds=180) #hopefully enough time to finish one iteration?
+            work_log.stop_time = stop_time
             db_session.add(work_log)
         else:
             print("cannot find work_log_id for the project %s" % project.id)
@@ -81,8 +82,7 @@ def check_calculation(user_id, project_id, func, db_session):
         and project.working_project.is_working \
         and project.working_project.work_type == func.__name__
     else:
-        db_session.query(WorkingProjectDb).update({'is_working':False,'work_type':None})
-        db_session.commit()
+        finish_calculation(user_id, project_id, func, db_session, 'cancelled','Application Exit', True)
     return is_working
 
 def check_calculation_status(user_id, project_id, func, db_session):
@@ -96,7 +96,8 @@ def check_calculation_status(user_id, project_id, func, db_session):
         if work_log is not None:
             status = work_log.status
             error_text = work_log.error
-    return status, error_text
+            stop_time = work_log.stop_time
+    return status, error_text, stop_time
 
 def interrupt(*args):
     global sentinel
@@ -166,7 +167,7 @@ class CalculatingThread(threading.Thread):
                 break
             iterations += 1
         print("thread for project %s stopped" % self.project_id)
-        finish_calculation(self.user_id, self.project_id, self.func, self.db_session, cancel_status, error_text)
+        finish_calculation(self.user_id, self.project_id, self.func, self.db_session, cancel_status, error_text, True)
         self.db_session.connection().close() # this line might be redundant (not 100% sure - not clearly described)
         self.db_session.remove()
         self.db_session.bind.dispose() # black magic to actually close the connection by forcing the engine to dispose of garbage (I assume)
