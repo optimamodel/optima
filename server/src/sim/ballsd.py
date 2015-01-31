@@ -1,7 +1,7 @@
 def ballsd(function, x, options = None, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, \
     pinitial = None, sinitial = None, absinitial = None, xmin = None, xmax = None, MaxRangeIter = 1000, \
-    MaxFunEvals = None, MaxIter = 1e4, TolFun = 1e-6, TolX = None, StallIterLimit = 100, \
-    fulloutput = False, maxarraysize = 1e6, timelimit = 3600, stoppingfunc = None, verbose = 2):
+    MaxFunEvals = None, MaxIter = 1e3, AbsTolFun = 1e-6, RelTolFun = 5e-3, TolX = None, StallIterLimit = 50, \
+    fulloutput = True, maxarraysize = 1e6, timelimit = 3600, stoppingfunc = None, verbose = 2):
     """
     Optimization using the Bayesian adaptive locally linear stochastic descent 
     algorithm.
@@ -13,19 +13,18 @@ def ballsd(function, x, options = None, stepsize = 0.1, sinc = 2, sdec = 2, pinc
                X -- The parameter set that minimizes the objective function
             FVAL -- The value of the objective function at X
         EXITFLAG -- The exit condition of the algorithm possibilities are:
-                     0 -- Maximum number of function evaluations or iterations reached.
-                     1 -- Improvement in objective function below minimum threshold.
-                     2 -- Step size below threshold.
+                     0 -- Maximum number of function evaluations or iterations reached
+                     1 -- Step size below threshold
+                     2 -- Improvement in objective function below minimum threshold
                      3 -- Maximum number of iterations to calculate new parameter when out of range reached
                      4 -- Time limit exceeded
                      5 -- Stopping function criteria met
-                    -1 -- Algorithm terminated for other reasons.
+                    -1 -- Algorithm terminated for other reasons
           OUTPUT -- An object with the following attributes:
             iterations -- Number of iterations
              funcCount -- Number of function evaluations
                   fval -- Value of objective function at each iteration
                      x -- Vector of parameter values at each iteration
-            fulloutput -- Whether or not to output the parameters and errors at each iteration
     
     ballsd() has the following options that can be set using keyword arguments. Their
     names and default values are as follows:
@@ -41,10 +40,12 @@ def ballsd(function, x, options = None, stepsize = 0.1, sinc = 2, sdec = 2, pinc
                         xmax {[]} -- Max value allowed for each parameter 
               MaxRangeIter {1000} -- Maximum number of iterations to calculate new parameter when out of range
       MaxFunEvals {1000*size(X0)} -- Maximum number of function evaluations
-                    MaxIter {1e4} -- Maximum number of iterations (1 iteration = 1 function evaluation)
-                    TolFun {1e-6} -- Minimum change in objective function
+                    MaxIter {1e3} -- Maximum number of iterations (1 iteration = 1 function evaluation)
+                 AbsTolFun {1e-3} -- Minimum absolute change in objective function
+                 RelTolFun {5e-3} -- Minimum relative change in objective function
               TolX {1e-6*size(x)} -- Minimum change in parameters
-             StallIterLimit {100} -- Number of iterations over which to calculate TolFun
+              StallIterLimit {50} -- Number of iterations over which to calculate TolFun
+                fulloutput {True} -- Whether or not to output the parameters and errors at each iteration
                maxarraysize {1e6} -- Limit on MaxIter and StallIterLimit to ensure arrays don't get too big
                  timelimit {3600} -- Maximum time allowed, in seconds
               stoppingfunc {None} -- Function that, if returns True, terminates
@@ -96,7 +97,8 @@ def ballsd(function, x, options = None, stepsize = 0.1, sinc = 2, sdec = 2, pinc
     fval = function(x) if options is None else function(x,options) # Calculate initial value of the objective function
     count = 0 # Keep track of how many iterations have occurred
     exitflag = -1 # Set default exit flag
-    errorhistory = zeros(StallIterLimit) # Store previous error changes
+    abserrorhistory = zeros(StallIterLimit) # Store previous error changes
+    relerrorhistory = zeros(StallIterLimit) # Store previous error changes
     if fulloutput: # Include additional output structure
         fulloutputfval = zeros(MaxIter) # Store all objective function values
         fulloutputx = zeros((MaxIter,nparams)) # Store all parameters
@@ -137,7 +139,8 @@ def ballsd(function, x, options = None, stepsize = 0.1, sinc = 2, sdec = 2, pinc
         xnew = deepcopy(x) # Initialize the new parameter set
         xnew[par] = newval # Update the new parameter set
         fvalnew = function(xnew) if options is None else function(xnew, options) # Calculate the objective function for the new parameter set
-        errorhistory[mod(count,StallIterLimit)] = fval - fvalnew # Keep track of improvements in the error  
+        abserrorhistory[mod(count,StallIterLimit)] = fval - fvalnew # Keep track of improvements in the error
+        relerrorhistory[mod(count,StallIterLimit)] = fval/float(fvalnew)-1 # Keep track of improvements in the error  
         if verbose>5:
             print('       choice=%s, par=%s, pm=%s, origval=%s, newval=%s, inrange=%s1' % (choice, par, pm, x[par], xnew[par], inrange))
 
@@ -171,7 +174,10 @@ def ballsd(function, x, options = None, stepsize = 0.1, sinc = 2, sdec = 2, pinc
         if mean(s1) < TolX: # Stop if the step sizes are too small
             exitflag = 1 
             break
-        if (count > StallIterLimit) and (mean(errorhistory) < TolFun): # Stop if improvement is too small
+        if (count > StallIterLimit) and (mean(abserrorhistory) < AbsTolFun): # Stop if improvement is too small
+            exitflag = 2 
+            break
+        if (count > StallIterLimit) and (mean(relerrorhistory) < RelTolFun): # Stop if improvement is too small
             exitflag = 2 
             break
         if count2 > MaxRangeIter: 
