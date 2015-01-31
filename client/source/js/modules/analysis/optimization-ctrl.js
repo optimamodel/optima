@@ -821,7 +821,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       }
 
       if ( $scope.state.outcomeChart ) {
-        $scope.chartsForDataExport = $scope.chartsForDataExport.push($scope.state.outcomeChart);
+        $scope.chartsForDataExport.push($scope.state.outcomeChart);
       }
 
       if ( $scope.state.optimisationGraphs ) {
