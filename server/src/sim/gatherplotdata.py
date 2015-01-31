@@ -205,22 +205,62 @@ def gathermultidata(D, Rarr, verbose=2):
     return multi
 
 
-def gatheroptimdata(D, A, verbose=2):
-    """ Return the data for plotting the two pie charts -- current allocation and optimal. """
+
+
+
+def gatheroptimdata(D, result, verbose=2):
+    """ Return the data for plotting the optimization results. """
     from bunch import Bunch as struct
     from printv import printv
+    from numpy import arange
     printv('Gathering optimization results...', 3, verbose)
     
-    O = struct()
-    O.legend = D.G.meta.progs.short
-    
-    O.pie1 = struct()
-    O.pie1.name = 'Original'
-    O.pie1.val = A[0].alloc.tolist()
-    
-    O.pie2 = struct()
-    O.pie2.name = 'Optimal'
-    O.pie2.val = A[1].alloc.tolist()
-    
+    optim = struct() # These optimization results
+    optim.kind = result.kind # Flag for the kind of optimization
+    optim.multi = gathermultidata(D, result.Rarr, verbose=2) # Calculate data for displaying standard epidemiological results
+    if optim.kind in ['constant', 'timevarying', 'multiyear']:
+        optim.outcome = struct() # Plot how the outcome improved with optimization
+        optim.outcome.ydata = result.fval.tolist() # Vector of outcomes
+        optim.outcome.xdata = arange(len(result.fval.tolist())) # Vector of iterations
+        optim.outcome.ylabel = 'Outcome'
+        optim.outcome.xlabel = 'Iteration'
+        optim.outcome.title = 'Outcome (initial: %0.0f, final: %0.0f)' % (result.fval[0], result.fval[-1])
+    if optim.kind=='constant':
+        optim.alloc = []
+        titles = ['Original','Optimal']
+        for i in range(2): # Original and optimal
+            optim.alloc.append(struct())
+            optim.alloc[i].piedata = result.allocarr[i][0].tolist() # A vector of allocations, length nprogs, for pie charts
+            optim.alloc[i].radardata = struct() # Structure for storing radar plot data
+            optim.alloc[i].radardata.best = result.allocarr[i][0].tolist() # 'Best' estimate: the thick line in the radar plot
+            optim.alloc[i].radardata.low  = result.allocarr[i][1].tolist() # 'Low' estimate: the 
+            optim.alloc[i].radardata.high = result.allocarr[i][2].tolist()
+            optim.alloc[i].title = titles[i] # Titles for pies or radar charts
+            optim.alloc[i].legend = D.data.meta.progs.short # Program names, length nprogs, for pie and radar
+    if optim.kind=='timevarying' or optim.kind=='multiyear':
+        optim.alloc = struct() # Allocation structure
+        optim.alloc.stackdata = [] # Empty list
+        for p in range(D.G.nprogs): # Loop over programs
+            optim.alloc.stackdata.append(result.alloc[p]) # Allocation array, nprogs x npts, for stacked area plots
+        optim.alloc.xdata = result.xdata # Years
+        optim.alloc.xlabel = 'Year'
+        optim.alloc.ylabel = 'Spending'
+        optim.alloc.title = 'Optimal allocation'
+        optim.alloc.legend = D.data.meta.progs.short # Program names, length nprogs
+    if optim.kind=='range':
+        optim.alloc = struct() # Allocations structure
+        optim.alloc.bardata = result.allocarr # An array of allocations, nprogs x nbudgets
+        optim.alloc.xdata = result.budgets # Vector of budgets
+        optim.alloc.xlabels = result.budgetlabels # Budget labels
+        optim.alloc.ylabel = 'Spend'
+        optim.alloc.title = 'Budget allocations'
+        optim.alloc.legend = D.data.meta.progs.short # Program names, length nprogs
+        optim.outcome = struct() # Dictionary with names and values
+        optim.outcome.bardata = result.fval  # Vector of outcomes, nbudgets
+        optim.outcome.xdata = result.budgets # Vector of budgets
+        optim.outcome.xlabels = result.budgetlabels # Budget labels
+        optim.outcome.ylabel = 'Outcome'
+        optim.outcome.title = 'Outcomes'
+
     printv('...done gathering optimization results.', 4, verbose)
-    return O
+    return optim

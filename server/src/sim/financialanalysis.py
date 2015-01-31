@@ -30,7 +30,7 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False):
     # Set up variables for time indexing
     datatvec = arange(D.G.datastart, D.G.dataend+D.opt.dt, D.opt.dt)
     ndatapts = len(datatvec)
-    simtvec = D.opt.simtvec
+    simtvec = S.tvec
     noptpts = len(simtvec)
 
     # Get most recent ART unit costs
@@ -128,6 +128,7 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False):
     for yscalefactor in costdisplays:
         if 'ylinedata' in plotdata['annual']['total'][yscalefactor].keys():
             plotdata['annual']['future'][yscalefactor]['ylinedata'] = [plotdata['annual']['total'][yscalefactor]['ylinedata'][j] - plotdata['annual']['existing'][yscalefactor]['ylinedata'][j] for j in range(noptpts)]
+
 
     return plotdata
 

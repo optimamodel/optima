@@ -50,17 +50,18 @@ def start_or_report_calculation(user_id, project_id, func, db_session): #only ca
         print("No such project %s, cannot start calculation" % project_id)
     return can_start, can_join, work_type
 
-def finish_calculation(user_id, project_id, func, db_session, status='completed', error_text=None):
+def finish_calculation(user_id, project_id, func, db_session, status='completed', error_text=None, set_stop_time = False):
     import datetime
     import dateutil.tz
     from datetime import datetime
     project = db_session.query(ProjectDb).filter_by(user_id=user_id, id=project_id).first()
-    if project is not None and project.working_project is not None and project.working_project.is_working:
+    if project is not None and project.working_project is not None \
+    and (project.working_project.is_working or set_stop_time):
         if project.working_project.work_log_id is not None:
             work_log = db_session.query(WorkLogDb).get(project.working_project.work_log_id)
             work_log.status = status
             work_log.error = error_text
-            work_log.stop_time = datetime.now(dateutil.tz.tzutc())
+            if set_stop_time: work_log.stop_time = datetime.now(dateutil.tz.tzutc())
             db_session.add(work_log)
         else:
             print("cannot find work_log_id for the project %s" % project.id)
@@ -96,7 +97,8 @@ def check_calculation_status(user_id, project_id, func, db_session):
         if work_log is not None:
             status = work_log.status
             error_text = work_log.error
-    return status, error_text
+            stop_time = work_log.stop_time
+    return status, error_text, stop_time
 
 def interrupt(*args):
     global sentinel
@@ -166,7 +168,7 @@ class CalculatingThread(threading.Thread):
                 break
             iterations += 1
         print("thread for project %s stopped" % self.project_id)
-        finish_calculation(self.user_id, self.project_id, self.func, self.db_session, cancel_status, error_text)
+        finish_calculation(self.user_id, self.project_id, self.func, self.db_session, cancel_status, error_text, True)
         self.db_session.connection().close() # this line might be redundant (not 100% sure - not clearly described)
         self.db_session.remove()
         self.db_session.bind.dispose() # black magic to actually close the connection by forcing the engine to dispose of garbage (I assume)

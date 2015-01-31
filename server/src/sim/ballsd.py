@@ -1,4 +1,4 @@
-def ballsd(function, x, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, \
+def ballsd(function, x, options = None, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, \
     pinitial = None, sinitial = None, absinitial = None, xmin = None, xmax = None, MaxRangeIter = 1000, \
     MaxFunEvals = None, MaxIter = 1e4, TolFun = 1e-6, TolX = None, StallIterLimit = 100, \
     fulloutput = False, maxarraysize = 1e6, timelimit = 3600, verbose = 2):
@@ -91,7 +91,7 @@ def ballsd(function, x, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, 
     
     ## Initialization
     s1[s1==0] = mean(s1[s1!=0]) # Replace step sizes of zeros with the mean of non-zero entries
-    fval = function(x) # Calculate initial value of the objective function
+    fval = function(x) if options is None else function(x,options) # Calculate initial value of the objective function
     count = 0 # Keep track of how many iterations have occurred
     exitflag = -1 # Set default exit flag
     errorhistory = zeros(StallIterLimit) # Store previous error changes
@@ -134,7 +134,7 @@ def ballsd(function, x, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, 
 
         xnew = deepcopy(x) # Initialize the new parameter set
         xnew[par] = newval # Update the new parameter set
-        fvalnew = function(xnew) # Calculate the objective function for the new parameter set
+        fvalnew = function(xnew) if options is None else function(xnew, options) # Calculate the objective function for the new parameter set
         errorhistory[mod(count,StallIterLimit)] = fval - fvalnew # Keep track of improvements in the error  
         if verbose>5:
             print('       choice=%s1, par=%s1, pm=%s1, origval=%s1, newval=%s1, inrange=%s1' % (choice, par, pm, x[par], xnew[par], inrange))
