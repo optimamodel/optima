@@ -116,7 +116,6 @@ def getWorkingModel():
     error_text = None
     stop_time = None
     if check_calculation(current_user.id, project_id, autofit, db.session):
-        D_dict = load_model(project_id, working_model = True, as_bunch = False)
         status = 'Running'
     else:
         current_app.logger.debug('No longer calibrating')
@@ -125,6 +124,8 @@ def getWorkingModel():
             status = 'Done'
         else:
             status = 'NOK'
+    if status!='NOK': D_dict = load_model(project_id, working_model = True, as_bunch = False)
+
     result = {'graph': D_dict.get('plot',{}).get('E',{})}
     result['status'] = status
     if error_text:
