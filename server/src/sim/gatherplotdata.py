@@ -221,7 +221,7 @@ def gatheroptimdata(D, result, verbose=2):
     if optim.kind in ['constant', 'timevarying', 'multiyear']:
         optim.outcome = struct() # Plot how the outcome improved with optimization
         optim.outcome.ydata = result.fval.tolist() # Vector of outcomes
-        optim.outcome.xdata = arange(len(result.fval.tolist())).tolist() # Vector of iterations
+        optim.outcome.xdata = range(len(result.fval.tolist())) # Vector of iterations
         optim.outcome.ylabel = 'Outcome'
         optim.outcome.xlabel = 'Iteration'
         optim.outcome.title = 'Outcome (initial: %0.0f, final: %0.0f)' % (result.fval[0], result.fval[-1])
