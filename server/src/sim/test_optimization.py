@@ -19,7 +19,7 @@ projectname = 'example'
 verbose = 10
 ntimepm = 2 # AS: Just use 1 or 2 parameters... using 3 or 4 can cause problems that I'm yet to investigate
 maxiters = 1e3
-maxtime = 20
+maxtime = 20 # Don't run forever :)
 
 if maxtime:
     from time import time
