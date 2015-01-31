@@ -124,7 +124,7 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
     M.const = P.const
     
     ## Calculate total acts
-    M.totalacts = totalacts(P, M, npts)
+    M.totalacts = totalacts(M, npts)
     
     ## Program parameters not related to data
     M.propaware = zeros(shape(M.hivtest)) # Initialize proportion of PLHIV aware of their status
@@ -134,17 +134,17 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
     printv('...done making model parameters.', 2, verbose)
     return M
 
-def totalacts(P, M, npts):
+def totalacts(M, npts):
     totalacts = struct()
     totalacts.__doc__ = 'Balanced numbers of acts'
     
     popsize = M.popsize
-    pships = P.pships
+    pships = M.pships
 
     for act in pships.keys():
         npops = len(M.popsize[:,0])
         npop=len(popsize); # Number of populations
-        mixmatrix = array(pships[act])
+        mixmatrix = pships[act]
         symmetricmatrix=zeros((npop,npop));
         for pop1 in range(npop):
             for pop2 in range(npop):
@@ -183,3 +183,5 @@ def reconcileacts(symmetricmatrix,popsize,popacts):
             pshipacts[pop1,pop2] = balanced/popsize[pop1]; # ...and for the other population
 
     return pshipacts
+        
+    

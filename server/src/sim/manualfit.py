@@ -25,7 +25,7 @@ def manualfit(D, F={}, Plist=[], Mlist=[], simstartyear=2000, simendyear=2015, v
     # Update P and M, if provided
     D = updateP(D, Plist)
     D = updateM(D, Mlist)
-    D.M.totalacts = totalacts(D.P, D.M, len(D.opt.partvec))
+    D.M.totalacts = totalacts(D.M, len(D.opt.partvec))
     if len(F):
         if type(F)==list: D.F = F # Take F directly if it's a list (unlikely)
         else: D.F = [F] # Assume it's a dict or a bunch
