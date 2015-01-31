@@ -372,14 +372,36 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       return graphs;
     };
 
+
+    var prepareOutcomeChart = function(data) {
+      if (data === undefined) return undefined;
+
+      var chart = {
+        options: angular.copy(linesGraphOptions),
+        data: {
+          lines: [],
+          scatter: []
+        }
+      };
+      chart.options.height = 320;
+      chart.options.margin.bottom = 165;
+
+      chart.options.title = data.title;
+      chart.options.xAxis.axisLabel = data.xlabel;
+      chart.options.yAxis.axisLabel = data.ylabel;
+      chart.data.lines.push(_.zip(data.xdata, data.ydata));
+      return chart;
+    };
+
     // makes all graphs to recalculate and redraw
     function drawGraphs() {
       if (!cachedResponse || !cachedResponse.plot) return;
+      $scope.state.pieCharts = preparePieCharts(cachedResponse.plot[0].alloc);
+      $scope.state.radarCharts = prepareRadarCharts(cachedResponse.plot[0].alloc);
+      $scope.state.stackedBarCharts = prepareStackedBarCharts(cachedResponse.plot[0].alloc, cachedResponse.plot[0].multi.tvec);
+      $scope.state.outcomeChart = prepareOutcomeChart(cachedResponse.plot[0].outcome);
       $scope.state.optimisationGraphs = prepareOptimisationGraphs(cachedResponse.plot[0].multi);
       $scope.state.financialGraphs = prepareFinancialGraphs(cachedResponse.plot[0].multi);
-      $scope.state.radarCharts = prepareRadarCharts(cachedResponse.plot[0].alloc);
-      $scope.state.pieCharts = preparePieCharts(cachedResponse.plot[0].alloc);
-      $scope.state.stackedBarCharts = prepareStackedBarCharts(cachedResponse.plot[0].alloc, cachedResponse.plot[0].multi.tvec);
     }
 
     // makes all graphs to recalculate and redraw
@@ -387,10 +409,10 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       /* new structure keeps everything together:
        * data.plot[n].alloc => pie & radar (TODO radar to be changed)
        * data.plot[n].multi => old line-scatterplots
-       * data.plot[n].outcome => new line plots (TODO)
+       * data.plot[n].outcome => new line plot
        * n - sequence number of saved optimization
        */
-      if (data !== undefined && data.plot !== undefined) {
+      if (data && data.plot && data.plot.length > 0) {
         cachedResponse = data;
         if (data.plot[0]) graphTypeFactory.enableAnnualCostOptions($scope.types, data.plot[0].multi);
         drawGraphs();
@@ -798,6 +820,10 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
         $scope.chartsForDataExport = $scope.chartsForDataExport.concat($scope.state.stackedBarCharts);
       }
 
+      if ( $scope.state.outcomeChart ) {
+        $scope.chartsForDataExport = $scope.chartsForDataExport.push($scope.state.outcomeChart);
+      }
+
       if ( $scope.state.optimisationGraphs ) {
         $scope.chartsForDataExport = $scope.chartsForDataExport.concat($scope.state.optimisationGraphs);
       }
@@ -856,6 +882,8 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     }
 
     $scope.$watch('state.pieCharts', updateChartsForDataExport, true);
+    $scope.$watch('state.outcomeChart', updateChartsForDataExport, true);
+    $scope.$watch('state.radarCharts', updateChartsForDataExport, true);
     $scope.$watch('state.optimisationGraphs', updateChartsForDataExport, true);
     $scope.$watch('state.financialGraphs', updateChartsForDataExport, true);
     $scope.$watch('state.stackedBarCharts', updateChartsForDataExport, true);
