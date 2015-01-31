@@ -36,7 +36,8 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
         financialGraphs: [],
         radarCharts: [],
         pieCharts: [],
-        stackedBarCharts: []
+        stackedBarChart: undefined,
+        outcomeChart: undefined
       };
 
       // cache placeholder
@@ -280,22 +281,11 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     };
 
     /**
-     * Returns all stacked bar charts.
+     * Returns a stacked bar chart.
      */
-    var prepareStackedBarCharts = function (data, xData) {
-
-      var charts = [];
-
-      if (data.pie1) {
-        charts.push(generateStackedBarChart(data.pie1.val, xData, data.legend,
-          data.pie1.name));
-      }
-      if (data.pie2) {
-        charts.push(generateStackedBarChart(data.pie2.val, xData, data.legend,
-          data.pie2.name));
-      }
-
-      return charts;
+    var prepareStackedBarChart = function (data) {
+      return generateStackedBarChart(data.stackdata, data.xdata, data.legend,
+        data.title);
     };
 
     /**
@@ -396,9 +386,16 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     // makes all graphs to recalculate and redraw
     function drawGraphs() {
       if (!cachedResponse || !cachedResponse.plot) return;
-      $scope.state.pieCharts = preparePieCharts(cachedResponse.plot[0].alloc);
-      $scope.state.radarCharts = prepareRadarCharts(cachedResponse.plot[0].alloc);
-      $scope.state.stackedBarCharts = prepareStackedBarCharts(cachedResponse.plot[0].alloc, cachedResponse.plot[0].multi.tvec);
+      if (cachedResponse.plot[0].alloc instanceof Array) {
+        $scope.state.pieCharts = preparePieCharts(cachedResponse.plot[0].alloc);
+        $scope.state.radarCharts = prepareRadarCharts(cachedResponse.plot[0].alloc);
+        $scope.state.stackedBarChart = undefined;
+
+      } else {
+        $scope.state.pieCharts = [];
+        $scope.state.radarCharts = [];
+        $scope.state.stackedBarChart = prepareStackedBarChart(cachedResponse.plot[0].alloc);
+      }
       $scope.state.outcomeChart = prepareOutcomeChart(cachedResponse.plot[0].outcome);
       $scope.state.optimisationGraphs = prepareOptimisationGraphs(cachedResponse.plot[0].multi);
       $scope.state.financialGraphs = prepareFinancialGraphs(cachedResponse.plot[0].multi);
@@ -533,8 +530,12 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
      * Returns true if at least one chart is available
      */
     $scope.someGraphAvailable = function() {
-      return $scope.state.radarCharts || $scope.state.optimisationGraphs ||
-        $scope.state.financialGraphs || $scope.state.pieCharts;
+      return $scope.state.radarCharts.length > 0 ||
+        $scope.state.optimisationGraphs.length > 0 ||
+        $scope.state.financialGraphs.length > 0 ||
+        $scope.state.pieCharts.length > 0 ||
+        $scope.state.stackedBarChart !== undefined ||
+        $scope.state.outcomeChart !== undefined;
     };
 
     /**
@@ -816,8 +817,8 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
         $scope.chartsForDataExport = $scope.chartsForDataExport.concat($scope.state.radarCharts);
       }
 
-      if ( $scope.state.stackedBarCharts && $scope.types.timeVaryingOptimizations ) {
-        $scope.chartsForDataExport = $scope.chartsForDataExport.concat($scope.state.stackedBarCharts);
+      if ( $scope.state.stackedBarChart && $scope.types.timeVaryingOptimizations ) {
+        $scope.chartsForDataExport.push($scope.state.stackedBarChart);
       }
 
       if ( $scope.state.outcomeChart ) {
@@ -886,7 +887,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     $scope.$watch('state.radarCharts', updateChartsForDataExport, true);
     $scope.$watch('state.optimisationGraphs', updateChartsForDataExport, true);
     $scope.$watch('state.financialGraphs', updateChartsForDataExport, true);
-    $scope.$watch('state.stackedBarCharts', updateChartsForDataExport, true);
+    $scope.$watch('state.stackedBarChart', updateChartsForDataExport, true);
     $scope.$watch('types.timeVaryingOptimizations', updateChartsForDataExport, true);
     $scope.$watch('types.plotUncertainties', updateChartsForDataExport, true);
     $scope.$watch('activeTab', $scope.checkExistingOptimization, true);
