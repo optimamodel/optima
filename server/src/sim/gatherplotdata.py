@@ -250,7 +250,6 @@ def gatheroptimdata(D, result, verbose=2):
     if optim.kind=='range':
         optim.alloc = struct() # Allocations structure
         optim.alloc.bardata = []
-        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         for b in range(len(result.allocarr)): # Loop over budgets
             optim.alloc.bardata.append(result.allocarr[b].tolist()) # A vector of allocations, length nprogs
         optim.alloc.xdata = result.budgets.tolist() # Vector of budgets
