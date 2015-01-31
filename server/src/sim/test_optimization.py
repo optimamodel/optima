@@ -3,22 +3,23 @@ TEST_OPTIMIZATION
 
 This function tests that the optimization is working.
 
-Version: 2015jan30 by cliffk
+Version: 2015jan31 by cliffk
 """
 
 print('WELCOME TO OPTIMA')
 
-testdefault = False
+testconstant = True
 testmultibudget = False
 testtimevarying = False
-testmultiyear = True
+testmultiyear = False
 
 
 ## Set parameters
 projectname = 'example'
 verbose = 10
 ntimepm = 2 # AS: Just use 1 or 2 parameters... using 3 or 4 can cause problems that I'm yet to investigate
-timelimit = 60
+maxiters = 1e3
+stoppingfunc = None
 
 print('\n\n\n1. Making project...')
 from makeproject import makeproject
@@ -29,11 +30,11 @@ from updatedata import updatedata
 D = updatedata(D, verbose=verbose, savetofile=False)
 
 
-if testdefault:
+if testconstant:
     print('\n\n\n3. Running constant-budget optimization...')
     from optimize import optimize, defaultobjectives
     objectives = defaultobjectives(D, verbose=verbose)
-    optimize(D, objectives=objectives, timelimit=timelimit, verbose=verbose)
+    optimize(D, objectives=objectives, maxiters=maxiters, stoppingfunc=stoppingfunc, verbose=verbose)
     
     print('\n\n\n4. Viewing optimization...')
     from viewresults import viewmultiresults
@@ -45,7 +46,7 @@ if testtimevarying:
     from optimize import optimize, defaultobjectives
     objectives = defaultobjectives(D, verbose=verbose)
     objectives.timevarying = True
-    optimize(D, objectives=objectives, timelimit=timelimit, verbose=verbose)
+    optimize(D, objectives=objectives, maxiters=maxiters, stoppingfunc=stoppingfunc, verbose=verbose)
     
     print('\n\n\n6. Viewing optimization...')
     from viewresults import viewmultiresults
@@ -58,7 +59,7 @@ if testmultiyear:
     objectives = defaultobjectives(D, verbose=verbose)
     objectives.funding = 'variable'
     objectives.outcome.variable = [6e6, 5e6, 3e6, 4e6, 3e6, 6e6] # Variable budgets
-    optimize(D, objectives=objectives, timelimit=timelimit, verbose=verbose)
+    optimize(D, objectives=objectives, maxiters=maxiters, stoppingfunc=stoppingfunc, verbose=verbose)
     
     print('\n\n\n8. Viewing optimization...')
     from viewresults import viewmultiresults
@@ -73,7 +74,7 @@ if testmultibudget:
     objectives.outcome.budgetrange.minval = 0
     objectives.outcome.budgetrange.maxval = 1
     objectives.outcome.budgetrange.step = 0.5
-    optimize(D, objectives=objectives, timelimit=timelimit, verbose=verbose)
+    optimize(D, objectives=objectives, maxiters=maxiters, stoppingfunc=stoppingfunc, verbose=verbose)
     
     print('\n\n\n10. Viewing optimization...')
     from viewresults import viewmultiresults
