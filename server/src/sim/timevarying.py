@@ -118,36 +118,30 @@ def timevarying(allocpm, ntimepm=1, nprogs=None, tvec=None, totalspend=None):
 
 
 
-def multiyear(allocpm, years=[], totalspend=[], nprogs=None, tvec=None):
+def multiyear(allocpm, years=[], totalspends=[], nprogs=None, tvec=None):
 
     """
-    Determines allocation values over time for 2, 3 or 4 parameter time-varying
-    optimisation.
-    
-    Inputs:
-        allocpm
-        ntimepm
-        nprogs
-        t
-        totalspend
-        
-    Outputs:
-        allocation
+    Determines allocation values over time for a set budget in each year.
         
     Version: 2015jan30 by cliffk
     """
     
     # Import stuff
-    from numpy import asarray, tile, transpose, exp, power, maximum, absolute, ones
+    from numpy import asarray, tile, transpose, exp, power, maximum, absolute, ones, zeros
     
     # Sanity check for the values of ntimepm, nprogs and len(allocpm)
     if len(allocpm) / len(years) != nprogs:
-        raise Exception('Invalid number of parameters to define allocations over years')
+        raise Exception('Invalid number of parameters to define allocations over years (%i parameters, %i years, %i programs)' % (len(allocpm), len(years), nprogs))
 
     # Set t to be between 0 and 1, and get the number of time points
     npts = len(tvec)
     tvec = asarray(tvec) - tvec[0]
     tvec = tile(tvec / float(max(tvec)), (nprogs, 1))
+    
+    allocation = zeros((nprogs,npts)) # Define allocation
+    for t in range(npts):
+        yearindex = findinds(tvec[t]>=years)
+        print('How does this work with time before the first point?')
     
     if ntimepm == 1: # Non-time-varying optimisation
 

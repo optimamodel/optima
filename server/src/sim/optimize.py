@@ -6,13 +6,13 @@ Allocation optimization code:
     timelimit is the maximum time in seconds to run optimization for
     verbose determines how much information to print.
     
-Version: 2015jan29 by cliffk
+Version: 2015jan30 by cliffk
 """
 
 from printv import printv
 from bunch import Bunch as struct
 from copy import deepcopy
-from numpy import ones, zeros, concatenate, arange, inf, hstack, argmin
+from numpy import ones, zeros, concatenate, arange, inf, hstack, argmin, array
 from utils import findinds
 from makeresults import makeresults
 from timevarying import timevarying, multiyear
@@ -31,20 +31,21 @@ def objectivecalc(optimparams, options):
     if 'ntimepm' in options.keys():
         thisalloc = timevarying(optimparams, ntimepm=options.ntimepm, nprogs=options.nprogs, tvec=options.D.opt.partvec, totalspend=options.totalspend) 
     elif 'years' in options.keys():
-        thisalloc = multiyear(optimparams, years=options.years, totalspend=options.totalspend, nprogs=options.nprogs, tvec=options.D.opt.partvec) 
+        thisalloc = multiyear(optimparams, years=options.years, totalspends=options.totalspends, nprogs=options.nprogs, tvec=options.D.opt.partvec) 
     else:
         raise Exception('Cannot figure out what kind of allocation this is since neither options.ntimepm nor options.years is defined')
     newD = deepcopy(options.D)
     newD, newcov, newnonhivdalysaverted = getcurrentbudget(newD, thisalloc)
-    newD.M = makemodelpars(newD.P, newD.opt, withwhat='c', verbose=0)
+    newM = makemodelpars(newD.P, newD.opt, withwhat='c', verbose=0)
+    newD.M = partialupdateM(options.D, newM, options.parindices)
     S = model(newD.G, newD.M, newD.F[0], newD.opt, verbose=0)
     R = makeresults(options.D, allsims=[S], verbose=0)
     
     objective = 0 # Preallocate objective value 
     for key in options.outcomekeys:
         if options.weights[key]>0: # Don't bother unless it's actually used
-            if key!='costann': thisobjective = R[key].tot[0][options.indices].sum()
-            else: thisobjective = R[key].total.total[0][options.indices].sum() # Special case for costann
+            if key!='costann': thisobjective = R[key].tot[0][options.outindices].sum()
+            else: thisobjective = R[key].total.total[0][options.outindices].sum() # Special case for costann
             objective += thisobjective * options.weights[key] / float(options.normalizations[key]) * options.D.opt.dt # Calculate objective
         
     return objective
@@ -90,8 +91,10 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
     
     ## Define indices, weights, and normalization factors
     initialindex = findinds(D.opt.partvec, objectives.year.start)
-    finalindex = findinds(D.opt.partvec, objectives.year.end)
-    indices = arange(initialindex,finalindex)
+    finalparindex = findinds(D.opt.partvec, objectives.year.end)
+    finaloutindex = findinds(D.opt.partvec, objectives.year.until)
+    parindices = arange(initialindex,finalparindex)
+    outindices = arange(initialindex,finaloutindex)
     weights = dict()
     normalizations = dict()
     outcomekeys = ['inci', 'death', 'daly', 'costann']
@@ -99,8 +102,8 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
         for key in outcomekeys:
             thisweight = objectives.outcome[key+'weight'] * objectives.outcome[key] / 100.
             weights.update({key:thisweight}) # Get weight, and multiply by "True" or "False" and normalize from percentage
-            if key!='costann': thisnormalization = origR[key].tot[0][indices].sum()
-            else: thisnormalization = origR[key].total.total[0][indices].sum() # Special case for costann
+            if key!='costann': thisnormalization = origR[key].tot[0][outindices].sum()
+            else: thisnormalization = origR[key].total.total[0][outindices].sum() # Special case for costann
             normalizations.update({key:thisnormalization})
     else:
         for key in outcomekeys:
@@ -149,7 +152,8 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
         options.D = deepcopy(D) # Main data structure
         options.outcomekeys = outcomekeys # Names of outcomes, e.g. 'inci'
         options.weights = weights # Weights for each parameter
-        options.indices = indices # Indices for the outcome to be evaluated over
+        options.outindices = outindices # Indices for the outcome to be evaluated over
+        options.parindices = parindices # Indices for the parameters to be updated on
         options.normalizations = normalizations # Whether to normalize a parameter
         options.totalspend = totalspend # Total budget
         
@@ -210,7 +214,8 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
         options.D = deepcopy(D) # Main data structure
         options.outcomekeys = outcomekeys # Names of outcomes, e.g. 'inci'
         options.weights = weights # Weights for each parameter
-        options.indices = indices # Indices for the outcome to be evaluated over
+        options.outindices = outindices # Indices for the outcome to be evaluated over
+        options.parindices = parindices # Indices for the parameters to be updated on
         options.normalizations = normalizations # Whether to normalize a parameter
         options.totalspend = totalspend # Total budget
         
@@ -249,17 +254,19 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
         
         ## Define options structure
         options = struct()
-        options.years = arange # Number of time-varying parameters
+        options.years = arange(objectives.year.start,objectives.year.end+1) # Number of time-varying parameters
         options.nprogs = nprogs # Number of programs
         options.D = deepcopy(D) # Main data structure
         options.outcomekeys = outcomekeys # Names of outcomes, e.g. 'inci'
         options.weights = weights # Weights for each parameter
-        options.indices = indices # Indices for the outcome to be evaluated over
+        options.outindices = outindices # Indices for the outcome to be evaluated over
+        options.parindices = parindices # Indices for the parameters to be updated on
         options.normalizations = normalizations # Whether to normalize a parameter
-        options.totalspend = totalspend # Total budget
+        options.totalspends = objectives.outcome.variable # Total budgets
         
-        multiyear(optimparams, years=options.years, totalspend=options.totalspend, nprogs=options.nprogs, tvec=options.D.opt.partvec) 
-        
+        ## Define optimization parameters
+        nyears = len(options.years)
+        optimparams = array(origalloc.tolist()*nyears).flatten() # WARNING, not used for multi-year optimizations
         
         ## Run time-varying optimization
         print('========== Running multiple-year optimization ==========')
@@ -268,7 +275,7 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
         
         # Update the model and store the results
         result = struct()
-        result.kind = 'timevarying'
+        result.kind = 'variable'
         result.fval = output.fval # Append the objective sequence
         result.Rarr = []
         labels = ['Original','Optimal']
@@ -303,7 +310,8 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
         options.D = deepcopy(D) # Main data structure
         options.outcomekeys = outcomekeys # Names of outcomes, e.g. 'inci'
         options.weights = weights # Weights for each parameter
-        options.indices = indices # Indices for the outcome to be evaluated over
+        options.outindices = outindices # Indices for the outcome to be evaluated over
+        options.parindices = parindices # Indices for the parameters to be updated on
         options.normalizations = normalizations # Whether to normalize a parameter
         options.totalspend = totalspend # Total budget
         
@@ -485,3 +493,24 @@ def defaultoptimizations(D, verbose=2):
 
 
 
+
+def partialupdateM(oldM, newM, indices, setbefore=False, setafter=True):
+    """ Update M, but only for certain indices. If setbefore is true, reset all values before indices to new value; similarly for setafter. """
+    output = deepcopy(oldM)
+    for key in output.keys():
+        if hasattr(output[key],'keys'): # It's a dict or a bunch, loop again
+            for key2 in output[key].keys():
+                try:
+                    # HANDLE MULTIDIMENSIONAL
+                    output[key][key2][indices] = newM[key][key2][indices]
+                    if setbefore: output[key][key2][:min(indices)] = newM[key][key2][min(indices)]
+                    if setafter: output[key][key2][max(indices):] = newM[key][key2][max(indices)]
+                except:
+                    print('Could not set indices for parameter M.%s.%s, indices %i-%i of %i' % (key, key2, min(indices), max(indices), ))
+        else:
+            try:
+                output[key][key2][indices] = newM[key][key2][indices]
+                if setbefore: output[key][min(indices)] = newM[key][min(indices)]
+                if setafter: output[key][max(indices):] = newM[key][max(indices)]
+            except:
+                print('Could not set indices for parameter M.%s, indices %i-%i of %i' % (key, min(indices), max(indices)))

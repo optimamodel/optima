@@ -183,3 +183,5 @@ def reconcileacts(symmetricmatrix,popsize,popacts):
             pshipacts[pop1,pop2] = balanced/popsize[pop1]; # ...and for the other population
 
     return pshipacts
+        
+    
