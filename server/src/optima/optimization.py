@@ -133,7 +133,7 @@ def getWorkingModel():
                 current_app.logger.debug("optimization thread for project %s is about to stop" % project_id)
         else:
             status = 'NOK'
-    if status in ('Running', 'Stopping'): D_dict = load_model(project_id, working_model = True, as_bunch = False)
+    if status!='NOK': D_dict = load_model(project_id, working_model = True, as_bunch = False)
     result = get_optimization_results(D_dict)
     result['status'] = status
     if error_text:
