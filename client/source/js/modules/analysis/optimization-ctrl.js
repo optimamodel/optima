@@ -18,7 +18,9 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       var statusEnum = {
         NOT_RUNNING: { text: "", isActive: false },
         RUNNING: { text: "Optimization is running", isActive: true },
-        REQUESTED_TO_STOP : { text:"Optimization is requested to stop", isActive: true }
+        REQUESTED_TO_STOP : { text:"Optimization is requested to stop", isActive: true },
+        STOPPING : { text:"Optimization is stopping", isActive: true },
+        CHECKING: {text:"Checking for existing optimization", isActive: true}
       };
 
       $scope.optimizationStatus = statusEnum.NOT_RUNNING;
@@ -597,32 +599,44 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       $scope.activeTab = tabNum;
     };
 
+    $scope.initTimer = function(status) {
+      if ( !angular.isDefined( optimizationTimer ) ) {
+        // Keep polling for updated values after every 5 seconds till we get an error.
+        // Error indicates that the model is not optimizing anymore.
+        optimizationTimer = $interval(checkWorkingOptimization, 10000, 0, false);
+        $scope.optimizationStatus = status;
+        $scope.errorText = '';
+        // start cfpLoadingBar loading
+        // calculate the number of ticks in timelimit
+        var val = ($scope.params.timelimit * 1000) / 250;
+        // callback function in start to be called in place of _inc()
+        cfpLoadingBar.start(function () {
+          if (cfpLoadingBar.status() >= 0.95) {
+            return;
+          }
+          var pct = cfpLoadingBar.status() + (0.95/val);
+          cfpLoadingBar.set(pct);
+        });
+      }
+    };
+
     $scope.startOptimization = function () {
       $http.post('/api/analysis/optimization/start', $scope.params, {ignoreLoadingBar: true})
         .success(function (data, status, headers, config) {
           if (data.status == "OK" && data.join) {
-            // Keep polling for updated values after every 5 seconds till we get an error.
-            // Error indicates that the model is not calibrating anymore.
-            optimizationTimer = $interval(checkWorkingOptimization, 5000, 0, false);
-            $scope.optimizationStatus = statusEnum.RUNNING;
-            $scope.errorText = '';
-
-            // start cfpLoadingBar loading
-            // calculate the number of ticks in timelimit
-            var val = ($scope.params.timelimit * 1000) / 250;
-            // callback function in start to be called in place of _inc()
-            cfpLoadingBar.start(function () {
-              if (cfpLoadingBar.status() >= 0.95) {
-                return;
-              }
-              var pct = cfpLoadingBar.status() + (0.95/val);
-              cfpLoadingBar.set(pct);
-            });
-
+            $scope.initTimer(statusEnum.RUNNING);
           } else {
             console.log("Cannot poll for optimization now");
           }
         });
+    };
+
+    $scope.checkExistingOptimization = function(newTab, oldTab) {
+      if(newTab !=3) {
+        stopTimer();
+      } else {
+        $scope.initTimer(statusEnum.CHECKING);
+      }
     };
 
     function checkWorkingOptimization() {
@@ -631,6 +645,8 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
           if (data.status == 'Done') {
             stopTimer();
           } else {
+            if (data.status == 'Running') $scope.optimizationStatus = statusEnum.RUNNING;
+            if (data.status == 'Stopping') $scope.optimizationStatus = statusEnum.STOPPING;
             updateGraphs(data);
           }
         })
@@ -846,6 +862,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     $scope.$watch('state.stackedBarCharts', updateChartsForDataExport, true);
     $scope.$watch('types.timeVaryingOptimizations', updateChartsForDataExport, true);
     $scope.$watch('types.plotUncertainties', updateChartsForDataExport, true);
+    $scope.$watch('activeTab', $scope.checkExistingOptimization, true);
 
   });
 });

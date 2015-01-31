@@ -112,15 +112,20 @@ def getWorkingModel():
     project_name = request.project_name
     error_text = None
     if check_calculation(current_user.id, project_id, optimize, db.session):
-        D_dict = load_model(project_id, working_model = True, as_bunch = False)
         status = 'Running'
     else:
-        current_app.logger.debug("no longer optimizing")
-        status, error_text = check_calculation_status(current_user.id, project_id, optimize, db.session)
+        current_app.logger.debug("optimization for project %s was stopped or cancelled" % project_id)
+        status, error_text, stop_time = check_calculation_status(current_user.id, project_id, optimize, db.session)
         if status in good_exit_status:
-            status = 'Done'
+            if stop_time: #actually stopped
+                status = 'Done'
+                current_app.logger.debug("optimization thread for project %s actually stopped" % project_id)
+            else: #not yet stopped
+                status = 'Stopping'
+                current_app.logger.debug("optimization thread for project %s is about to stop" % project_id)
         else:
             status = 'NOK'
+    if status in ('Running', 'Stopping'): D_dict = load_model(project_id, working_model = True, as_bunch = False)
     result = get_optimization_results(D_dict)
     result['status'] = status
     if error_text:
