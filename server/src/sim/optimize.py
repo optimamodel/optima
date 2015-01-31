@@ -341,7 +341,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         result.kind = objectives.funding
         result.budgets = budgets
         result.budgetlabels = ['Original budget']
-        for b in range(nbudgets): result.budgetlabels.append('%i%% budget' % (budgets[b+1]*100.))
+        for b in range(nbudgets): result.budgetlabels.append('%i%% budget' % (budgets[b+1]*100./budgets[0]))
             
         result.fval = fvalarr # Append the best value noe
         result.allocarr = allocarr # List of allocations
