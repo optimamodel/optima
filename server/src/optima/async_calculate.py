@@ -159,17 +159,19 @@ class CalculatingThread(threading.Thread):
     def check_stop_flag(self):
         print "has_stop_flag called"
         if self.iterations>self.max_iterations:
+            print "max number of iterations has passed"
             self.stop_flag = True
         else:
             new_time_checked = time.time()
             if new_time_checked-self.start_time>=self.timelimit:
+                print "max allotted time has passed"
                 self.stop_flag = True
             elif new_time_checked-self.last_time_checked>=self.leap_seconds: 
                 print "calling check calculation..."
                 self.init_db_session()
                 self.stop_flag = not check_calculation(self.user_id, self.project_id, self.func, self.db_session)
                 self.close_db_session()
-                print "check_calculation(%s) called" % self.project_id
+                print "check_calculation(%s) called, stop_flag=%s" % (self.project_id, self.stop_flag)
                 self.last_time_checked = new_time_checked
 
 
