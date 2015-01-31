@@ -55,6 +55,7 @@ def objectivecalc(optimparams, options):
     
 def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None, verbose=2, name='Default', stoppingfunc = None):
     """ Perform the actual optimization """
+    from time import sleep
     
     printv('Running optimization...', 1, verbose)
     
@@ -186,6 +187,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         labels = ['Original','Optimal']
         result.Rarr = []
         for params in [origalloc, allocarr[bestallocind]]: # CK: loop over original and (the best) optimal allocations
+            sleep(0.1)
             alloc = timevarying(params, ntimepm=len(params)/nprogs, nprogs=nprogs, tvec=D.opt.partvec, totalspend=totalspend)   
             D, coverage, nonhivdalysaverted = getcurrentbudget(D, alloc)
             D.M = makemodelpars(D.P, D.opt, withwhat='c', verbose=2)
@@ -229,6 +231,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         result.Rarr = []
         labels = ['Original','Optimal']
         for params in [origalloc, optparams]: # CK: loop over original and (the best) optimal allocations
+            sleep(0.1)
             alloc = timevarying(params, ntimepm=ntimepm, nprogs=nprogs, tvec=D.opt.partvec, totalspend=totalspend) #Regenerate allocation
             D, coverage, nonhivdalysaverted = getcurrentbudget(D, alloc)
             D.M = makemodelpars(D.P, D.opt, withwhat='c', verbose=2)
@@ -286,6 +289,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         result.Rarr = []
         labels = ['Original','Optimal']
         for params in [origalloc, optparams]: # CK: loop over original and (the best) optimal allocations
+            sleep(0.1)
             alloc = multiyear(optimparams, years=options.years, totalspends=options.totalspends, nprogs=options.nprogs, tvec=options.D.opt.partvec) 
             D, coverage, nonhivdalysaverted = getcurrentbudget(D, alloc)
             D.M = makemodelpars(D.P, D.opt, withwhat='c', verbose=2)
@@ -348,6 +352,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         labels = ['Original','Optimal']
         result.Rarr = []
         for params in [origalloc, allocarr[closesttocurrent]]: # CK: loop over original and (the best) optimal allocations
+            sleep(0.1)
             alloc = timevarying(params, ntimepm=len(params)/nprogs, nprogs=nprogs, tvec=D.opt.partvec, totalspend=totalspend)   
             D, coverage, nonhivdalysaverted = getcurrentbudget(D, alloc)
             D.M = makemodelpars(D.P, D.opt, withwhat='c', verbose=2)
@@ -363,7 +368,8 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
     from gatherplotdata import gatheroptimdata
     optim = gatheroptimdata(D, result, verbose=verbose)
     if 'optim' not in D.plot: D.plot.optim = [] # Initialize list if required
-    D.plot.optim.append(optim) # In any case, append
+#    D.plot.optim.append(optim) # In any case, append
+    D.plot.optim=[optim]
     
     ## Save optimization to D
     saveoptimization(D, name, objectives, constraints, result, verbose=2)

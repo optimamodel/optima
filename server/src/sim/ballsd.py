@@ -48,7 +48,7 @@ def ballsd(function, x, options = None, stepsize = 0.1, sinc = 2, sdec = 2, pinc
                 fulloutput {True} -- Whether or not to output the parameters and errors at each iteration
                maxarraysize {1e6} -- Limit on MaxIter and StallIterLimit to ensure arrays don't get too big
                  timelimit {3600} -- Maximum time allowed, in seconds
-              stoppingfunc {None} -- Function that, if returns True, terminates
+              stoppingfunc {None} -- External method that can be used to stop the calculation from the outside.
                       verbose {0} -- How much information to print during the run
   
     
@@ -65,7 +65,7 @@ def ballsd(function, x, options = None, stepsize = 0.1, sinc = 2, sdec = 2, pinc
     from numpy.random import random # Was pylab.rand
     from utils import findinds # Remove dependency on pylab.find
     from copy import deepcopy # For arrays, even y = x[:] doesn't copy properly
-    from time import time
+    from time import time, sleep
     
     def sanitize(userinput):
         """
@@ -106,6 +106,7 @@ def ballsd(function, x, options = None, stepsize = 0.1, sinc = 2, sdec = 2, pinc
     ## Loop
     start = time()
     while 1:
+        sleep(0.1) # no tight loops please
         if verbose>=1: print('Iteration %i; elapsed %0.1f s; objective: %0.3e' % (count+1, time()-start, fval))
         
         # Calculate next step
@@ -194,12 +195,10 @@ def ballsd(function, x, options = None, stepsize = 0.1, sinc = 2, sdec = 2, pinc
             exitflag = 4
             if verbose>=5: print('======== Time limit reached (%f > %f), terminating ========' % ((time()-start), timelimit))
             break
-        if stoppingfunc is not None:
-            if stoppingfunc():
-                exitflag = 5
-                if verbose>=5: print('======== Stopping function called, terminating ========')
-                break
-
+        if stoppingfunc and stoppingfunc():
+            exitflag = 5
+            if verbose>=5: print('======== Stopping function called, terminating ========')
+            break
 
     # Create additional output
     class makeoutput:
