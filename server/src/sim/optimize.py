@@ -37,7 +37,7 @@ def objectivecalc(optimparams, options):
     newD = deepcopy(options.D)
     newD, newcov, newnonhivdalysaverted = getcurrentbudget(newD, thisalloc)
     newM = makemodelpars(newD.P, newD.opt, withwhat='c', verbose=0)
-    newD.M = partialupdateM(options.D, newM, options.parindices)
+    newD.M = partialupdateM(options.D.M, newM, options.parindices)
     S = model(newD.G, newD.M, newD.F[0], newD.opt, verbose=0)
     R = makeresults(options.D, allsims=[S], verbose=0)
     
@@ -504,29 +504,30 @@ def partialupdateM(oldM, newM, indices, setbefore=False, setafter=True):
         if hasattr(output[key],'keys'): # It's a dict or a bunch, loop again
             for key2 in output[key].keys():
                 try:
-                    if ndim(output[key][key2][indices])==1:
+                    if ndim(output[key][key2])==1:
                         output[key][key2][indices] = newM[key][key2][indices]
                         if setbefore: output[key][key2][:min(indices)] = newM[key][key2][min(indices)]
                         if setafter: output[key][key2][max(indices):] = newM[key][key2][max(indices)]
-                    elif ndim(output[key][key2][indices])==2:
+                    elif ndim(output[key][key2])==2:
                         output[key][key2][:,indices] = newM[key][key2][:,indices]
                         if setbefore: output[key][key2][:,:min(indices)] = newM[key][key2][:,min(indices)]
                         if setafter: output[key][key2][:,max(indices):] = newM[key][key2][:,max(indices)]
                     else:
                         raise Exception('%i dimensions for parameter M.%s.%s' % (ndim(output[key][key2][indices]), key, key2))
                 except:
-                    print('Could not set indices for parameter M.%s.%s, indices %i-%i of %i' % (key, key2, min(indices), max(indices), len(output[key][key2])))
+                    print('Could not set indices for parameter M.%s.%s, indices %i-%i' % (key, key2, min(indices), max(indices)))
         else:
             try:
-                if ndim(output[key][indices])==1:
+                if ndim(output[key])==1:
                     output[key][indices] = newM[key][indices]
                     if setbefore: output[key][:min(indices)] = newM[key][min(indices)]
                     if setafter: output[key][max(indices):] = newM[key][max(indices)]
-                elif ndim(output[key][indices])==2:
+                elif ndim(output[key])==2:
                     output[key][:,indices] = newM[key][:,indices]
                     if setbefore: output[key][:,:min(indices)] = newM[key][:,min(indices)]
                     if setafter: output[key][:,max(indices):] = newM[key][:,max(indices)]
                 else:
                     raise Exception('%i dimensions for parameter M.%s' % (ndim(output[key][indices]), key, key2))
             except:
-                print('Could not set indices for parameter M.%s, indices %i-%i of %i' % (key, min(indices), max(indices), len(output[key])))
+                print('Could not set indices for parameter M.%s, indices %i-%i' % (key, min(indices), max(indices)))
+    return output
