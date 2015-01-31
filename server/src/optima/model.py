@@ -80,9 +80,9 @@ def doAutoCalibration():
             if endyear:
                 args["endyear"] = int(endyear)
             timelimit = int(data.get("timelimit")) # for the thread
-            args["timelimit"] = 10 # for the autocalibrate function
+            args["timelimit"] = timelimit # for the autocalibrate function
 
-            CalculatingThread(db.engine, current_user, project_id, timelimit, autofit, args).start()
+            CalculatingThread(db.engine, current_user, project_id, timelimit, 1, autofit, args).start() #run it once
             msg = "Starting thread for user %s project %s:%s" % (current_user.name, project_id, project_name)
             return json.dumps({"status":"OK", "result": msg, "join":True})
         else:
@@ -114,12 +114,13 @@ def getWorkingModel():
     project_id = request.project_id
     project_name = request.project_name
     error_text = None
+    stop_time = None
     if check_calculation(current_user.id, project_id, autofit, db.session):
         D_dict = load_model(project_id, working_model = True, as_bunch = False)
         status = 'Running'
     else:
         current_app.logger.debug('No longer calibrating')
-        status, error_text = check_calculation_status(current_user.id, project_id, autofit, db.session)
+        status, error_text, stop_time = check_calculation_status(current_user.id, project_id, autofit, db.session)
         if status in good_exit_status:
             status = 'Done'
         else:

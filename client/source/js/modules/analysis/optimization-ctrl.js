@@ -45,7 +45,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       // Set defaults
       $scope.params = {};
       // Default time limit is 10 hours
-      $scope.params.timelimit = 36000;
+      $scope.params.timelimit = 3600; // TODO: add testing option
 
       // Objectives
       $scope.params.objectives = {};

@@ -6,20 +6,21 @@ Allocation optimization code:
     timelimit is the maximum time in seconds to run optimization for
     verbose determines how much information to print.
     
-Version: 2015jan29 by cliffk
+Version: 2015jan30 by cliffk
 """
 
 from printv import printv
 from bunch import Bunch as struct
 from copy import deepcopy
-from numpy import ones, zeros, concatenate, arange, inf, hstack, argmin
+from numpy import ones, zeros, concatenate, arange, inf, hstack, argmin, array, ndim
 from utils import findinds
 from makeresults import makeresults
-from timevarying import timevarying
+from timevarying import timevarying, multiyear
 from getcurrentbudget import getcurrentbudget
 from model import model
 from makemodelpars import makemodelpars
 from quantile import quantile
+from ballsd import ballsd
 
 default_simstartyear = 2000
 default_simendyear = 2030
@@ -28,32 +29,33 @@ default_simendyear = 2030
 
 def objectivecalc(optimparams, options):
     """ Calculate the objective function """
-
-    thisalloc = timevarying(optimparams, ntimepm=options.ntimepm, nprogs=options.nprogs, tvec=options.D.opt.partvec, totalspend=options.totalspend)        
+    if 'ntimepm' in options.keys():
+        thisalloc = timevarying(optimparams, ntimepm=options.ntimepm, nprogs=options.nprogs, tvec=options.D.opt.partvec, totalspend=options.totalspend) 
+    elif 'years' in options.keys():
+        thisalloc = multiyear(optimparams, years=options.years, totalspends=options.totalspends, nprogs=options.nprogs, tvec=options.D.opt.partvec) 
+    else:
+        raise Exception('Cannot figure out what kind of allocation this is since neither options.ntimepm nor options.years is defined')
     newD = deepcopy(options.D)
     newD, newcov, newnonhivdalysaverted = getcurrentbudget(newD, thisalloc)
-    newD.M = makemodelpars(newD.P, newD.opt, withwhat='c', verbose=0)
+    newM = makemodelpars(newD.P, newD.opt, withwhat='c', verbose=0)
+    newD.M = partialupdateM(options.D.M, newM, options.parindices)
     S = model(newD.G, newD.M, newD.F[0], newD.opt, verbose=0)
     R = makeresults(options.D, allsims=[S], verbose=0)
     
     objective = 0 # Preallocate objective value 
     for key in options.outcomekeys:
         if options.weights[key]>0: # Don't bother unless it's actually used
-            if key!='costann': thisobjective = R[key].tot[0][options.indices].sum()
-            else: thisobjective = R[key].total.total[0][options.indices].sum() # Special case for costann
+            if key!='costann': thisobjective = R[key].tot[0][options.outindices].sum()
+            else: thisobjective = R[key].total.total[0][options.outindices].sum() # Special case for costann
             objective += thisobjective * options.weights[key] / float(options.normalizations[key]) * options.D.opt.dt # Calculate objective
         
     return objective
     
     
     
-def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name='Default'):
+def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None, verbose=2, name='Default', stoppingfunc = None):
     """ Perform the actual optimization """
-    
-    # Imports
-    
-    from ballsd import ballsd
-    
+    from time import sleep
     
     printv('Running optimization...', 1, verbose)
     
@@ -64,10 +66,11 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
     origR = deepcopy(D.R)
     origalloc = D.data.origalloc
     
-    # Make sure objectives and constraints exist
+    # Make sure objectives and constraints exist, and overwrite using saved ones if available
     if objectives is None: objectives = defaultobjectives(D, verbose=verbose)
     if constraints is None: constraints = defaultconstraints(D, verbose=verbose)
 
+    # Do this so if e.g. /100 won't have problems
     objectives = deepcopy(objectives)
     constraints = deepcopy(constraints)
     ntimepm=1 + int(objectives.timevarying) # Either 1 or 2
@@ -86,8 +89,10 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
     
     ## Define indices, weights, and normalization factors
     initialindex = findinds(D.opt.partvec, objectives.year.start)
-    finalindex = findinds(D.opt.partvec, objectives.year.end)
-    indices = arange(initialindex,finalindex)
+    finalparindex = findinds(D.opt.partvec, objectives.year.end)
+    finaloutindex = findinds(D.opt.partvec, objectives.year.until)
+    parindices = arange(initialindex,finalparindex)
+    outindices = arange(initialindex,finaloutindex)
     weights = dict()
     normalizations = dict()
     outcomekeys = ['inci', 'death', 'daly', 'costann']
@@ -95,8 +100,8 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
         for key in outcomekeys:
             thisweight = objectives.outcome[key+'weight'] * objectives.outcome[key] / 100.
             weights.update({key:thisweight}) # Get weight, and multiply by "True" or "False" and normalize from percentage
-            if key!='costann': thisnormalization = origR[key].tot[0][indices].sum()
-            else: thisnormalization = origR[key].total.total[0][indices].sum() # Special case for costann
+            if key!='costann': thisnormalization = origR[key].tot[0][outindices].sum()
+            else: thisnormalization = origR[key].total.total[0][outindices].sum() # Special case for costann
             normalizations.update({key:thisnormalization})
     else:
         for key in outcomekeys:
@@ -124,7 +129,7 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
     inflection = ones(nprogs)*.5 if ntimepm >= 4 else []
     
     # Concatenate parameters to be optimised
-    optimparams = concatenate((origalloc, growthrate, saturation, inflection))
+    optimparams = concatenate((origalloc, growthrate, saturation, inflection)) # WARNING, not used for multi-year optimizations
         
     parammin = concatenate((zeros(nprogs), ones(nprogs)*-1e9))
         
@@ -145,7 +150,8 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
         options.D = deepcopy(D) # Main data structure
         options.outcomekeys = outcomekeys # Names of outcomes, e.g. 'inci'
         options.weights = weights # Weights for each parameter
-        options.indices = indices # Indices for the outcome to be evaluated over
+        options.outindices = outindices # Indices for the outcome to be evaluated over
+        options.parindices = parindices # Indices for the parameters to be updated on
         options.normalizations = normalizations # Whether to normalize a parameter
         options.totalspend = totalspend # Total budget
         
@@ -157,7 +163,7 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
             print('========== Running uncertainty optimization %s of %s... ==========' % (s+1, len(D.F)))
             options.D.F = [D.F[s]] # Loop over fitted parameters
             print('WARNING TODO want to loop over CCOCs too')
-            optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=parammin, absinitial=stepsizes, timelimit=timelimit, fulloutput=True, verbose=verbose)
+            optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=parammin, absinitial=stepsizes, MaxIter=maxiters, timelimit=timelimit, fulloutput=True, stoppingfunc=stoppingfunc, verbose=verbose)
             optparams = optparams / optparams.sum() * options.totalspend # Make sure it's normalized -- WARNING KLUDGY
             allocarr.append(optparams)
             fvalarr.append(output.fval)
@@ -181,6 +187,7 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
         labels = ['Original','Optimal']
         result.Rarr = []
         for params in [origalloc, allocarr[bestallocind]]: # CK: loop over original and (the best) optimal allocations
+            sleep(0.1)
             alloc = timevarying(params, ntimepm=len(params)/nprogs, nprogs=nprogs, tvec=D.opt.partvec, totalspend=totalspend)   
             D, coverage, nonhivdalysaverted = getcurrentbudget(D, alloc)
             D.M = makemodelpars(D.P, D.opt, withwhat='c', verbose=2)
@@ -206,14 +213,15 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
         options.D = deepcopy(D) # Main data structure
         options.outcomekeys = outcomekeys # Names of outcomes, e.g. 'inci'
         options.weights = weights # Weights for each parameter
-        options.indices = indices # Indices for the outcome to be evaluated over
+        options.outindices = outindices # Indices for the outcome to be evaluated over
+        options.parindices = parindices # Indices for the parameters to be updated on
         options.normalizations = normalizations # Whether to normalize a parameter
         options.totalspend = totalspend # Total budget
         
         
         ## Run time-varying optimization
         print('========== Running time-varying optimization ==========')
-        optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=parammin, absinitial=stepsizes, timelimit=timelimit, fulloutput=True, verbose=verbose)
+        optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=parammin, absinitial=stepsizes, MaxIter=maxiters, timelimit=timelimit, fulloutput=True, stoppingfunc=stoppingfunc, verbose=verbose)
         optparams = optparams / optparams.sum() * options.totalspend # Make sure it's normalized -- WARNING KLUDGY
         
         # Update the model and store the results
@@ -223,7 +231,8 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
         result.Rarr = []
         labels = ['Original','Optimal']
         for params in [origalloc, optparams]: # CK: loop over original and (the best) optimal allocations
-            alloc = timevarying(params, ntimepm=len(params)/nprogs, nprogs=nprogs, tvec=D.opt.partvec, totalspend=totalspend) #Regenerate allocation
+            sleep(0.1)
+            alloc = timevarying(params, ntimepm=ntimepm, nprogs=nprogs, tvec=D.opt.partvec, totalspend=totalspend) #Regenerate allocation
             D, coverage, nonhivdalysaverted = getcurrentbudget(D, alloc)
             D.M = makemodelpars(D.P, D.opt, withwhat='c', verbose=2)
             S = model(D.G, D.M, D.F[0], D.opt, verbose=verbose)
@@ -238,6 +247,64 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
     
     
         
+    ###########################################################################
+    ## Multiple-year budget optimization
+    ###########################################################################
+    if objectives.funding == 'variable':
+        
+        ## Define options structure
+        options = struct()
+        options.years = arange(objectives.year.start,objectives.year.end+1) # Number of time-varying parameters
+        options.nprogs = nprogs # Number of programs
+        options.D = deepcopy(D) # Main data structure
+        options.outcomekeys = outcomekeys # Names of outcomes, e.g. 'inci'
+        options.weights = weights # Weights for each parameter
+        options.outindices = outindices # Indices for the outcome to be evaluated over
+        options.parindices = parindices # Indices for the parameters to be updated on
+        options.normalizations = normalizations # Whether to normalize a parameter
+        options.totalspends = objectives.outcome.variable # Total budgets
+        
+        ## Define optimization parameters
+        nyears = len(options.years)
+        optimparams = array(origalloc.tolist()*nyears).flatten() # Duplicate parameters
+        parammin = zeros(len(optimparams))
+        stepsizes = stepsize + zeros(len(optimparams))
+        
+        ## Run time-varying optimization
+        print('========== Running multiple-year optimization ==========')
+        optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=parammin, MaxIter=maxiters, timelimit=timelimit, fulloutput=True, stoppingfunc=stoppingfunc, verbose=verbose)
+        
+        # Normalize
+        proginds = arange(nprogs)
+        optparams = array(optparams)
+        for y in range(nyears):
+            theseinds = proginds+y*nprogs
+            optparams[theseinds] *= options.totalspends[y] / float(sum(optparams[theseinds]))
+        optparams = optparams.tolist()
+        
+        # Update the model and store the results
+        result = struct()
+        result.kind = 'multiyear'
+        result.fval = output.fval # Append the objective sequence
+        result.Rarr = []
+        labels = ['Original','Optimal']
+        for params in [origalloc, optparams]: # CK: loop over original and (the best) optimal allocations
+            sleep(0.1)
+            alloc = multiyear(optimparams, years=options.years, totalspends=options.totalspends, nprogs=options.nprogs, tvec=options.D.opt.partvec) 
+            D, coverage, nonhivdalysaverted = getcurrentbudget(D, alloc)
+            D.M = makemodelpars(D.P, D.opt, withwhat='c', verbose=2)
+            S = model(D.G, D.M, D.F[0], D.opt, verbose=verbose)
+            R = makeresults(D, [S], D.opt.quantiles, verbose=verbose)
+            result.Rarr.append(struct()) # Append a structure
+            result.Rarr[-1].R = deepcopy(R) # Store the R structure (results)
+            result.Rarr[-1].label = labels.pop(0) # Store labels, one at a time
+        result.xdata = S.tvec # Store time data
+        result.alloc = alloc[:,0:len(S.tvec)] # Store allocation data, and cut to be same length as time data
+        
+    
+    
+    
+    
         
         
         
@@ -253,7 +320,8 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
         options.D = deepcopy(D) # Main data structure
         options.outcomekeys = outcomekeys # Names of outcomes, e.g. 'inci'
         options.weights = weights # Weights for each parameter
-        options.indices = indices # Indices for the outcome to be evaluated over
+        options.outindices = outindices # Indices for the outcome to be evaluated over
+        options.parindices = parindices # Indices for the parameters to be updated on
         options.normalizations = normalizations # Whether to normalize a parameter
         options.totalspend = totalspend # Total budget
         
@@ -267,7 +335,7 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
         for b in range(nbudgets):
             print('========== Running budget optimization %s of %s... ==========' % (b+1, nbudgets))
             options.totalspend = totalspend*budgets[b+1] # Total budget, skipping first
-            optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=parammin, absinitial=stepsizes, timelimit=timelimit, fulloutput=True, verbose=verbose)
+            optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=parammin, absinitial=stepsizes, MaxIter=maxiters, timelimit=timelimit, fulloutput=True, stoppingfunc=stoppingfunc, verbose=verbose)
             optparams = optparams / optparams.sum() * options.totalspend # Make sure it's normalized -- WARNING KLUDGY
             allocarr.append(optparams)
             fvalarr.append(fval) # Only need last value
@@ -277,13 +345,14 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
         result.kind = objectives.funding
         result.budgets = budgets
         result.budgetlabels = ['Original budget']
-        for b in range(nbudgets): result.budgetlabels.append('%i%% budget' % (budgets[b+1]*100.))
+        for b in range(nbudgets): result.budgetlabels.append('%i%% budget' % (budgets[b+1]*100./float(budgets[0])))
             
         result.fval = fvalarr # Append the best value noe
         result.allocarr = allocarr # List of allocations
         labels = ['Original','Optimal']
         result.Rarr = []
         for params in [origalloc, allocarr[closesttocurrent]]: # CK: loop over original and (the best) optimal allocations
+            sleep(0.1)
             alloc = timevarying(params, ntimepm=len(params)/nprogs, nprogs=nprogs, tvec=D.opt.partvec, totalspend=totalspend)   
             D, coverage, nonhivdalysaverted = getcurrentbudget(D, alloc)
             D.M = makemodelpars(D.P, D.opt, withwhat='c', verbose=2)
@@ -299,10 +368,11 @@ def optimize(D, objectives=None, constraints=None, timelimit=60, verbose=2, name
     from gatherplotdata import gatheroptimdata
     optim = gatheroptimdata(D, result, verbose=verbose)
     if 'optim' not in D.plot: D.plot.optim = [] # Initialize list if required
-    D.plot.optim.append(optim) # In any case, append
+#    D.plot.optim.append(optim) # In any case, append
+    D.plot.optim=[optim]
     
     ## Save optimization to D
-    saveoptimization(D, name, objectives, constraints, result, verbose=2)   
+    saveoptimization(D, name, objectives, constraints, result, verbose=2)
     
     printv('...done optimizing programs.', 2, verbose)
     return D
@@ -368,6 +438,7 @@ def defaultobjectives(D, verbose=2):
     ob.outcome.deathweight = 100 # "Death weighting"
     ob.outcome.costann = False # "Minimize cumulative DALYs"
     ob.outcome.costannweight = 100 # "Cost weighting"
+    ob.outcome.variable = [] # No variable budgets by default
     ob.outcome.budgetrange = struct() # For running multiple budgets
     ob.outcome.budgetrange.minval = None
     ob.outcome.budgetrange.maxval = None
@@ -433,3 +504,48 @@ def defaultoptimizations(D, verbose=2):
     return optimizations
 
 
+
+
+def partialupdateM(oldM, newM, indices, setbefore=False, setafter=True):
+    """ 
+    Update M, but only for certain indices. If setbefore is true, reset all values before indices to new value; similarly for setafter. 
+    WARNING: super ugly code!!
+    """
+    from makemodelpars import totalacts
+    output = deepcopy(oldM)
+    for key in output.keys():
+        if key not in ['transit', 'pships', 'const', 'tvec', 'hivprev', 'totalacts']: # Exclude certain keys that won't be updated
+            if hasattr(output[key],'keys'): # It's a dict or a bunch, loop again
+                for key2 in output[key].keys():
+                    try:
+                        if ndim(output[key][key2])==1:
+                            output[key][key2][indices] = newM[key][key2][indices]
+                            if setbefore: output[key][key2][:min(indices)] = newM[key][key2][:min(indices)]
+                            if setafter: output[key][key2][max(indices):] = newM[key][key2][max(indices):]
+                        elif ndim(output[key][key2])==2:
+                            output[key][key2][:,indices] = newM[key][key2][:,indices]
+                            if setbefore: output[key][key2][:,:min(indices)] = newM[key][key2][:,:min(indices)]
+                            if setafter: output[key][key2][:,max(indices):] = newM[key][key2][:,max(indices):]
+                        else:
+                            raise Exception('%i dimensions for parameter M.%s.%s' % (ndim(output[key][key2][indices]), key, key2))
+                    except:
+                        print('Could not set indices for parameter M.%s.%s, indices %i-%i' % (key, key2, min(indices), max(indices)))
+                        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+            else:
+                try:
+                    if ndim(output[key])==1:
+                        output[key][indices] = newM[key][indices]
+                        if setbefore: output[key][:min(indices)] = newM[key][:min(indices)]
+                        if setafter: output[key][max(indices):] = newM[key][max(indices):]
+                    elif ndim(output[key])==2:
+                        output[key][:,indices] = newM[key][:,indices]
+                        if setbefore: output[key][:,:min(indices)] = newM[key][:,:min(indices)]
+                        if setafter: output[key][:,max(indices):] = newM[key][:,max(indices):]
+                    else:
+                        raise Exception('%i dimensions for parameter M.%s' % (ndim(output[key][indices]), key, key2))
+                except:
+                    print('Could not set indices for parameter M.%s, indices %i-%i' % (key, min(indices), max(indices)))
+                    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+    
+    output.totalacts = totalacts(output, len(output.tvec)) # Update total acts
+    return output
