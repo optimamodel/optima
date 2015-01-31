@@ -19,7 +19,22 @@ projectname = 'example'
 verbose = 10
 ntimepm = 2 # AS: Just use 1 or 2 parameters... using 3 or 4 can cause problems that I'm yet to investigate
 maxiters = 1e3
-stoppingfunc = None
+maxtime = 20
+
+if maxtime:
+    from time import time
+    starttime = time()
+    def stoppingfunc():
+        if time()-starttime>maxtime:
+            return True
+        else:
+            return False
+else:
+    stoppingfunc = None
+
+
+
+    
 
 print('\n\n\n1. Making project...')
 from makeproject import makeproject
