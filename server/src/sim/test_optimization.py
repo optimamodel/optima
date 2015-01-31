@@ -9,8 +9,9 @@ Version: 2015jan29 by cliffk
 print('WELCOME TO OPTIMA')
 
 testdefault = False
-testmultibudget = False
-testtimevarying = True
+testmultibudget = True
+testtimevarying = False
+
 
 ## Set parameters
 projectname = 'example'
@@ -51,13 +52,13 @@ if testmultibudget:
     viewmultiresults(D.plot.optim[-1].multi)
 
 if testtimevarying:
-    print('\n\n\n3. Running constant-budget optimization...')
+    print('\n\n\n7. Running constant-budget optimization...')
     from optimize import optimize, defaultobjectives
     objectives = defaultobjectives(D, verbose=verbose)
     objectives.timevarying = True
     optimize(D, objectives=objectives, timelimit=timelimit, verbose=verbose)
     
-    print('\n\n\n4. Viewing optimization...')
+    print('\n\n\n8. Viewing optimization...')
     from viewresults import viewmultiresults#, viewallocpies
     viewmultiresults(D.plot.optim[-1].multi)
 
