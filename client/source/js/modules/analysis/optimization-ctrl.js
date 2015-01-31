@@ -179,7 +179,6 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
         title: data.name
       };
 
-      //TODO @NikGraph @DEvseev - make a stack chart now then pie.val is a combination of arrays (one per population)
       graphData = _(data).map(function (value, index) {
         return { value: value, label: legend[index] };
       });
@@ -465,11 +464,11 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
           end: end,
           until: until,
           valid: (isNaN(start) ||  isNaN(end) || isNaN(until) || end <= start || until <= start) === false
-        }
+        };
        }
        return {
         valid:false
-       }
+      };
     }
 
     function validateObjectivesToMinimize(){
@@ -479,7 +478,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       return {
         checkedPrograms : checkedPrograms,
         valid: checkedPrograms.length > 0
-      }
+      };
     }
 
     function validateOutcomeWeights(){
@@ -490,7 +489,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       });
       return {
         checkedPrograms : checkedPrograms,
-        valid: checkedPrograms.length == 0
+        valid: checkedPrograms.length === 0
       };
     }
 
@@ -652,7 +651,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
         })
         .error(function(data, status, headers, config) {
           if (data && data.exception) {
-            $scope.errorText = data.exception
+            $scope.errorText = data.exception;
           }
           stopTimer();
         });
