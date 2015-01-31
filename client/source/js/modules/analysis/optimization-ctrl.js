@@ -20,7 +20,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
         RUNNING: { text: "Optimization is running", isActive: true },
         REQUESTED_TO_STOP : { text:"Optimization is requested to stop", isActive: true },
         STOPPING : { text:"Optimization is stopping", isActive: true },
-        CHECKING: {text:"Checking for existing optimization", isActive: true}
+        CHECKING: {text:"Checking for existing optimization", isActive: false}
       };
 
       $scope.optimizationStatus = statusEnum.NOT_RUNNING;

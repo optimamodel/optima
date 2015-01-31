@@ -106,6 +106,8 @@ def stopCalibration():
 @report_exception()
 def getWorkingModel():
     """ Returns the working model for optimization. """
+    import datetime
+    import dateutil.tz
     D_dict = {}
     # Get optimization working data
     project_id = request.project_id
@@ -116,8 +118,9 @@ def getWorkingModel():
     else:
         current_app.logger.debug("optimization for project %s was stopped or cancelled" % project_id)
         status, error_text, stop_time = check_calculation_status(current_user.id, project_id, optimize, db.session)
+        now_time = datetime.datetime.now(dateutil.tz.tzutc()) #time in DB is UTC-aware
         if status in good_exit_status:
-            if stop_time: #actually stopped
+            if stop_time and stop_time<now_time: #actually stopped
                 status = 'Done'
                 current_app.logger.debug("optimization thread for project %s actually stopped" % project_id)
             else: #not yet stopped
