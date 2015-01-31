@@ -42,9 +42,12 @@ define(['angular', 'jquery', 'underscore', 'saveAs', 'jsPDF', './svg-to-png', '.
 
                 // Get the accessor to the chart object in the scope.
                 // Find it via the data attribute.
+                // Inspired by http://stackoverflow.com/a/6394168/837709
                 var chartAccessor = attrs.data.replace(new RegExp('.data$'), '');
+                function accessReference(obj, accessor) { return obj[accessor]; }
+                var chart = _.reduce(chartAccessor.split('.'), accessReference, scope);
 
-                scope.exportFrom(scope[chartAccessor]);
+                scope.exportFrom(chart);
               });
           };
 

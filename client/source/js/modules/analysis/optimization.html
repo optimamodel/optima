@@ -577,6 +577,9 @@
                 </div>
               </div>
 
+              <div ng-if="state.outcomeChart" class="chart-container __small">
+                <div line-scatter-chart data="state.outcomeChart.data" options="state.outcomeChart.options" save-graph-as></div>
+              </div>
             </div>
 
             <div class="grid 12">
