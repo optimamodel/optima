@@ -12,7 +12,7 @@ Version: 2015jan30 by cliffk
 from printv import printv
 from bunch import Bunch as struct
 from copy import deepcopy
-from numpy import ones, zeros, concatenate, arange, inf, hstack, argmin, array
+from numpy import ones, zeros, concatenate, arange, inf, hstack, argmin, array, ndim
 from utils import findinds
 from makeresults import makeresults
 from timevarying import timevarying, multiyear
@@ -495,22 +495,38 @@ def defaultoptimizations(D, verbose=2):
 
 
 def partialupdateM(oldM, newM, indices, setbefore=False, setafter=True):
-    """ Update M, but only for certain indices. If setbefore is true, reset all values before indices to new value; similarly for setafter. """
+    """ 
+    Update M, but only for certain indices. If setbefore is true, reset all values before indices to new value; similarly for setafter. 
+    WARNING: super ugly code!!
+    """
     output = deepcopy(oldM)
     for key in output.keys():
         if hasattr(output[key],'keys'): # It's a dict or a bunch, loop again
             for key2 in output[key].keys():
                 try:
-                    # HANDLE MULTIDIMENSIONAL
-                    output[key][key2][indices] = newM[key][key2][indices]
-                    if setbefore: output[key][key2][:min(indices)] = newM[key][key2][min(indices)]
-                    if setafter: output[key][key2][max(indices):] = newM[key][key2][max(indices)]
+                    if ndim(output[key][key2][indices])==1:
+                        output[key][key2][indices] = newM[key][key2][indices]
+                        if setbefore: output[key][key2][:min(indices)] = newM[key][key2][min(indices)]
+                        if setafter: output[key][key2][max(indices):] = newM[key][key2][max(indices)]
+                    elif ndim(output[key][key2][indices])==2:
+                        output[key][key2][:,indices] = newM[key][key2][:,indices]
+                        if setbefore: output[key][key2][:,:min(indices)] = newM[key][key2][:,min(indices)]
+                        if setafter: output[key][key2][:,max(indices):] = newM[key][key2][:,max(indices)]
+                    else:
+                        raise Exception('%i dimensions for parameter M.%s.%s' % (ndim(output[key][key2][indices]), key, key2))
                 except:
-                    print('Could not set indices for parameter M.%s.%s, indices %i-%i of %i' % (key, key2, min(indices), max(indices), ))
+                    print('Could not set indices for parameter M.%s.%s, indices %i-%i of %i' % (key, key2, min(indices), max(indices), len(output[key][key2])))
         else:
             try:
-                output[key][key2][indices] = newM[key][key2][indices]
-                if setbefore: output[key][min(indices)] = newM[key][min(indices)]
-                if setafter: output[key][max(indices):] = newM[key][max(indices)]
+                if ndim(output[key][indices])==1:
+                    output[key][indices] = newM[key][indices]
+                    if setbefore: output[key][:min(indices)] = newM[key][min(indices)]
+                    if setafter: output[key][max(indices):] = newM[key][max(indices)]
+                elif ndim(output[key][indices])==2:
+                    output[key][:,indices] = newM[key][:,indices]
+                    if setbefore: output[key][:,:min(indices)] = newM[key][:,min(indices)]
+                    if setafter: output[key][:,max(indices):] = newM[key][:,max(indices)]
+                else:
+                    raise Exception('%i dimensions for parameter M.%s' % (ndim(output[key][indices]), key, key2))
             except:
-                print('Could not set indices for parameter M.%s, indices %i-%i of %i' % (key, min(indices), max(indices)))
+                print('Could not set indices for parameter M.%s, indices %i-%i of %i' % (key, min(indices), max(indices), len(output[key])))
