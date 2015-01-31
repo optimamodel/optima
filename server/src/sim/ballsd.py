@@ -147,17 +147,18 @@ def ballsd(function, x, options = None, stepsize = 0.1, sinc = 2, sdec = 2, pinc
         
 
         # Check if this step was an improvement
-        if fvalnew < fval: # New parameter set is better than previous one
+        fvalold = fval # Store old fval
+        if fvalnew < fvalold: # New parameter set is better than previous one
             p[choice] = p[choice]*pinc # Increase probability of picking this parameter again
             s1[choice] = s1[choice]*sinc # Increase size of step for next time
             x = xnew # Reset current parameters
             fval = fvalnew # Reset current error
             if verbose>5: flag = 'SUCCESS'
-        elif fvalnew >= fval: # New parameter set is the same or worse than the previous one
+        elif fvalnew >= fvalold: # New parameter set is the same or worse than the previous one
             p[choice] = p[choice]/pdec # Decrease probability of picking this parameter again
             s1[choice] = s1[choice]/sdec # Decrease size of step for next time
             if verbose>5: flag = 'FAILURE'
-        if verbose>=5: print(' '*60 + flag + ' on step %i (orig:%0.1f new:%0.1f diff:%0.5f ratio:%0.3f)' % (count, fval, fvalnew, fvalnew-fval, fvalnew/fval) )
+        if verbose>=5: print(' '*80 + flag + ' on step %i (old:%0.1f new:%0.1f diff:%0.5f ratio:%0.3f)' % (count, fvalold, fvalnew, fvalnew-fvalold, fvalnew/fvalold) )
 
         # Optionally store output information
         if fulloutput: # Include additional output structure
@@ -167,28 +168,36 @@ def ballsd(function, x, options = None, stepsize = 0.1, sinc = 2, sdec = 2, pinc
         # Stopping criteria
         if (count+1) >= MaxFunEvals: # Stop if the function evaluation limit is exceeded
             exitflag = 0 
+            if verbose>=5: print('======== Maximum function evaluations reached, terminating ========')
             break
         if count >= MaxIter: # Stop if the iteration limit is exceeded
             exitflag = 0 
+            if verbose>=5: print('======== Maximum iterations reached, terminating ========')
             break 
         if mean(s1) < TolX: # Stop if the step sizes are too small
             exitflag = 1 
+            if verbose>=5: print('======== Step sizes too small, terminating ========')
             break
         if (count > StallIterLimit) and (mean(abserrorhistory) < AbsTolFun): # Stop if improvement is too small
             exitflag = 2 
+            if verbose>=5: print('======== Absolute improvement too small, terminating ========')
             break
         if (count > StallIterLimit) and (mean(relerrorhistory) < RelTolFun): # Stop if improvement is too small
             exitflag = 2 
+            if verbose>=5: print('======== Relative improvement too small, terminating ========')
             break
         if count2 > MaxRangeIter: 
             exitflag = 3
+            if verbose>=5: print('======== Can\'t find parameters within range, terminating ========')
             break
         if (time()-start)>timelimit:
             exitflag = 4
+            if verbose>=5: print('======== Time limit reached, terminating ========')
             break
         if stoppingfunc is not None:
             if stoppingfunc():
                 exitflag = 5
+                if verbose>=5: print('======== Stopping function called, terminating ========')
                 break
 
 
