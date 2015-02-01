@@ -101,23 +101,33 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
 
         // Initialize program constraints models
         for ( var i = 0; i < meta.progs.short.length; i++ ) {
-          $scope.params.constraints.yeardecrease[i] = {};
+          if (!$scope.params.constraints.yeardecrease[i]) {
+            $scope.params.constraints.yeardecrease[i] = {};
+          }
           $scope.params.constraints.yeardecrease[i].use = false;
           $scope.params.constraints.yeardecrease[i].by = 100;
 
-          $scope.params.constraints.yearincrease[i] = {};
+          if (!$scope.params.constraints.yearincrease[i]) {
+            $scope.params.constraints.yearincrease[i] = {};
+          }
           $scope.params.constraints.yearincrease[i].use = false;
           $scope.params.constraints.yearincrease[i].by = 100;
 
-          $scope.params.constraints.totaldecrease[i] = {};
+          if (!$scope.params.constraints.totaldecrease[i]) {
+            $scope.params.constraints.totaldecrease[i] = {};
+          }
           $scope.params.constraints.totaldecrease[i].use = false;
           $scope.params.constraints.totaldecrease[i].by = 100;
 
-          $scope.params.constraints.totalincrease[i] = {};
+          if (!$scope.params.constraints.totalincrease[i]) {
+            $scope.params.constraints.totalincrease[i] = {};
+          }
           $scope.params.constraints.totalincrease[i].use = false;
           $scope.params.constraints.totalincrease[i].by = 100;
 
-          $scope.params.constraints.coverage[i] = {};
+          if (!$scope.params.constraints.coverage[i]) {
+            $scope.params.constraints.coverage[i] = {};
+          }
           $scope.params.constraints.coverage[i].use = false;
           $scope.params.constraints.coverage[i].level = 0;
           $scope.params.constraints.coverage[i].year = undefined;
