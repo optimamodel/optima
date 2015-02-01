@@ -87,7 +87,9 @@ if testconstraints:
     objectives = defaultobjectives(D, verbose=verbose)
     constraints = defaultconstraints(D, verbose=verbose)
     constraintkeys = ['yeardecrease', 'yearincrease', 'totaldecrease', 'totalincrease']
-    for key in constraintkeys: constraints[key].use = True # Turn on all constraints
+    for key in constraintkeys:
+        for p in range(D.G.nprogs):
+            constraints[key][p].use = True # Turn on all constraints
     optimize(D, objectives=objectives, maxiters=maxiters, stoppingfunc=stoppingfunc, verbose=verbose)
     
 print('\n\n\n8. Viewing optimization...')
