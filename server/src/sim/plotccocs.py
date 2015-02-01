@@ -6,8 +6,8 @@ Version: 2015jan19 by robynstuart
 from matplotlib.pylab import figure, plot, hold, xlabel, ylabel, title, xlim, ylim
 from printv import printv
 
-default_progname = 'MSM programs'
-default_ccparams = [0.9, 0.5, 0.7, 335260.2878916174, None, None] #
+default_progname = 'FSW programs'
+default_ccparams = [0.9, 0.5, 0.6, 400000.0, None, None] #
 default_ccplot = [1e6, None, 0]
 default_coparams = [0.3, 0.5, 0.7, 0.9] 
 default_effect = [['sex', 'condomcas'], [u'MSM']] # D.programs[default_progname]['effects'][0] 

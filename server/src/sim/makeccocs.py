@@ -17,10 +17,10 @@ from printv import printv
 from parameters import input_parameter_name
 
 ## Set defaults for testing makeccocs
-default_progname = 'NSP'
-default_ccparams = [] #[0.9, 0.2, 0.4, 7000000.0, None, None] #
-default_ccplot = []#[None, None, 0]
-default_coparams = []#[0.3, 0.5, 0.7, 0.9] 
+default_progname = 'FSW programs'
+default_ccparams = []#[0.9, 0.5, 0.6, 4000000.0, None, None] #
+default_ccplot = [1000000, None, 0]
+default_coparams = [0.3, 0.5, 0.7, 0.9] 
 default_effect = [['sex', 'condomcas'], [u'MSM']] # D.programs[default_progname]['effects'][0] 
 default_artelig = range(6,31)
 coverage_params = ['numost','numpmtct','numfirstline','numsecondline']
@@ -354,7 +354,7 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
     
         # Get upper limit of x axis for plotting
         xupperlim = max([x if ~isnan(x) else 0.0 for x in totalcost])*1.5
-        if (ccplot and ccplot[0]): xupperlim = max(xupperlim, ccplot[0]/targetpopsize[-1]) if len(totalcost)>1 else max(xupperlim, ccplot[0]/mean(targetpopsize)) if (len(ccplot)==3 and ccplot[2]) else max(xupperlim, ccplot[0])
+        if (ccplot and ccplot[0]): xupperlim = ccplot[0] #max(xupperlim, ccplot[0]/targetpopsize[-1]) if len(totalcost)>1 else max(xupperlim, ccplot[0]/mean(targetpopsize)) if (len(ccplot)==3 and ccplot[2]) else max(xupperlim, ccplot[0])
 
         # Populate output structure with scatter data 
         totalcost, outcome = getscatterdata(totalcost, outcome)
@@ -373,19 +373,19 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
             saturation = ccparams[0]
             if isinstance(ccparams[4], float):
                 growthratel = exp(ccparams[4]*log(ccparams[0]/ccparams[1]-1)+log(ccparams[3]))
-                growthratem = exp(ccparams[4]*log(ccparams[0]/(ccparams[1]+ccparams[2])/2-1)+log(ccparams[3]))
+                growthratem = exp(ccparams[4]*log(ccparams[0]/((ccparams[1]+ccparams[2])/2)-1)+log(ccparams[3]))
                 growthrateu = exp(ccparams[4]*log(ccparams[0]/ccparams[2]-1)+log(ccparams[3]))
                 growthrateplotl = exp(ccparams[4]*log(ccparams[0]/ccparams[1]-1)+log(costparam))
-                growthrateplotm = exp(ccparams[4]*log(ccparams[0]/(ccparams[1]+ccparams[2])/2-1)+log(costparam))
+                growthrateplotm = exp(ccparams[4]*log(ccparams[0]/((ccparams[1]+ccparams[2])/2)-1)+log(costparam))
                 growthrateplotu = exp(ccparams[4]*log(ccparams[0]/ccparams[2]-1)+log(costparam))
                 convertedccoparams = [[saturation, growthratem, ccparams[4]], [saturation, growthratel, ccparams[4]], [saturation, growthrateu, ccparams[4]]]
                 convertedccoplotparams = [[saturation, growthrateplotm, ccparams[4]], [saturation, growthrateplotl, ccparams[4]], [saturation, growthrateplotu, ccparams[4]]]
             else:
                 growthratel = (-1/ccparams[3])*log((2*ccparams[0])/(ccparams[1]+ccparams[0]) - 1)
-                growthratem = (-1/ccparams[3])*log((2*ccparams[0])/((ccparams[1]+ccparams[2])/2+ccparams[0]) - 1)
+                growthratem = (-1/ccparams[3])*log((2*ccparams[0])/(((ccparams[1]+ccparams[2])/2)+ccparams[0]) - 1)
                 growthrateu = (-1/ccparams[3])*log((2*ccparams[0])/(ccparams[2]+ccparams[0]) - 1)
                 growthrateplotl = (-1/costparam)*log((2*ccparams[0])/(ccparams[1]+ccparams[0]) - 1)        
-                growthrateplotm = (-1/costparam)*log((2*ccparams[0])/((ccparams[1]+ccparams[2])/2+ccparams[0]) - 1)        
+                growthrateplotm = (-1/costparam)*log((2*ccparams[0])/(((ccparams[1]+ccparams[2])/2)+ccparams[0]) - 1)        
                 growthrateplotu = (-1/costparam)*log((2*ccparams[0])/(ccparams[2]+ccparams[0]) - 1)        
                 convertedccoparams = [[saturation, growthratem], [saturation, growthratel], [saturation, growthrateu]]
                 convertedccoplotparams = [[saturation, growthrateplotm], [saturation, growthrateplotl], [saturation, growthrateplotu]]
@@ -567,19 +567,19 @@ def getcoverage(D=None, params=[], popadj=0, artelig=default_artelig, progname=d
             saturation = params[0]
             if isinstance(params[4], float):
                 growthratel = exp((1-params[4])*log(params[0]/params[1]-1)+log(params[3]))
-                growthratem = exp((1-params[4])*log(params[0]/(params[1]+params[2])/2-1)+log(params[3]))
+                growthratem = exp((1-params[4])*log(params[0]/((params[1]+params[2])/2)-1)+log(params[3]))
                 growthrateu = exp((1-params[4])*log(params[0]/params[2]-1)+log(params[3]))
                 growthrateplotl = exp((1-params[4])*log(params[0]/params[1]-1)+log(costparam))
-                growthrateplotm = exp((1-params[4])*log(params[0]/(params[1]+params[2])/2-1)+log(costparam))
+                growthrateplotm = exp((1-params[4])*log(params[0]/((params[1]+params[2])/2)-1)+log(costparam))
                 growthrateplotu = exp((1-params[4])*log(params[0]/params[2]-1)+log(costparam))
                 storeparams = [[saturation, growthratem, params[4]], [saturation, growthratel, params[4]], [saturation, growthrateu, params[4]]]
                 plottingparams = [[saturation, growthrateplotm, params[4]], [saturation, growthrateplotl, params[4]], [saturation, growthrateplotu, params[4]]]
             else:
                 growthratel = (-1/params[3])*log((2*params[0])/(params[1]+params[0]) - 1)        
-                growthratem = (-1/params[3])*log((2*params[0])/((params[1]+params[2])/2+params[0]) - 1)        
+                growthratem = (-1/params[3])*log((2*params[0])/(((params[1]+params[2])/2)+params[0]) - 1)        
                 growthrateu = (-1/params[3])*log((2*params[0])/(params[2]+params[0]) - 1)        
                 growthrateplotl = (-1/costparam)*log((2*params[0])/(params[1]+params[0]) - 1)        
-                growthrateplotm = (-1/costparam)*log((2*params[0])/((params[1]+params[2])/2+params[0]) - 1)        
+                growthrateplotm = (-1/costparam)*log((2*params[0])/(((params[1]+params[2])/2)+params[0]) - 1)        
                 growthrateplotu = (-1/costparam)*log((2*params[0])/(params[2]+params[0]) - 1)        
                 storeparams = [[saturation, growthratem], [saturation, growthratel], [saturation, growthrateu]]
                 plottingparams = [[saturation, growthrateplotm], [saturation, growthrateplotl], [saturation, growthrateplotu]]
@@ -599,19 +599,19 @@ def getcoverage(D=None, params=[], popadj=0, artelig=default_artelig, progname=d
             saturation = params[0]*targetpop[-1]
             if isinstance(params[4], float):
                 growthratel = exp((1-params[4])*log(params[0]/params[1]-1)+log(params[3]))
-                growthratem = exp((1-params[4])*log(params[0]/(params[1]+params[2])/2-1)+log(params[3]))
+                growthratem = exp((1-params[4])*log(params[0]/((params[1]+params[2])/2)-1)+log(params[3]))
                 growthrateu = exp((1-params[4])*log(params[0]/params[2]-1)+log(params[3]))
                 growthrateplotl = exp((1-params[4])*log(params[0]/params[1]-1)+log(costparam))
-                growthrateplotm = exp((1-params[4])*log(params[0]/(params[1]+params[2])/2-1)+log(costparam))
+                growthrateplotm = exp((1-params[4])*log(params[0]/((params[1]+params[2])/2)-1)+log(costparam))
                 growthrateplotu = exp((1-params[4])*log(params[0]/params[2]-1)+log(costparam))
                 storeparams = [[saturation, growthratem, params[4]], [saturation, growthratel, params[4]], [saturation, growthrateu, params[4]]]
                 plottingparams = [[saturation, growthrateplotm, params[4]], [saturation, growthrateplotl, params[4]], [saturation, growthrateplotu, params[4]]]
             else:
                 growthratel = (-1/params[3])*log((2*params[0]*targetpop[-1])/(params[1]*targetpop[-1]+params[0]*targetpop[-1]) - 1)
-                growthratem = (-1/params[3])*log((2*params[0]*targetpop[-1])/((params[1]+params[2])/2*targetpop[-1]+params[0]*targetpop[-1]) - 1)
+                growthratem = (-1/params[3])*log((2*params[0]*targetpop[-1])/(((params[1]+params[2])/2)*targetpop[-1]+params[0]*targetpop[-1]) - 1)
                 growthrateu = (-1/params[3])*log((2*params[0]*targetpop[-1])/(params[2]*targetpop[-1]+params[0]*targetpop[-1]) - 1)
                 growthrateplotl = (-1/costparam)*log((2*params[0]*targetpop[-1])/(params[1]*targetpop[-1]+params[0]*targetpop[-1]) - 1)
-                growthrateplotm = (-1/costparam)*log((2*params[0]*targetpop[-1])/((params[1]+params[2])/2*targetpop[-1]+params[0]*targetpop[-1]) - 1)
+                growthrateplotm = (-1/costparam)*log((2*params[0]*targetpop[-1])/(((params[1]+params[2])/2)*targetpop[-1]+params[0]*targetpop[-1]) - 1)
                 growthrateplotu = (-1/costparam)*log((2*params[0]*targetpop[-1])/(params[2]*targetpop[-1]+params[0]*targetpop[-1]) - 1)
                 storeparams = [[saturation, growthratem], [saturation, growthratel], [saturation, growthrateu]]
                 plottingparams = [[saturation, growthrateplotm], [saturation, growthrateplotl], [saturation, growthrateplotu]]
