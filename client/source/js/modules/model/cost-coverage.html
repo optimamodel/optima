@@ -55,15 +55,16 @@
               <div class="error-hint" ng-show="!hasValidCCParams()">{{needAllCCParamsMessage}}</div>
               <p>
                 1. Specify the saturation coverage level:
-                <input type="number" ng-required="false" name="saturationCoverageLevel" class="txbox __inline __m" min="1" max="100" step="1" more-than="knownCoverageLevel" placeholder="e.g.{{defaultSaturationCoverageLevel}}" ng-model="saturationCoverageLevel" ng-change="updateCurves()">%
-                <error-messages for="saturationCoverageLevel" rules="{min:1, max:100, moreThan: 'Known Coverage Level'}"></error-messages>
+                <input type="number" ng-required="false" name="saturationCoverageLevel" class="txbox __inline __m" min="1" max="100" step="1" more-than="knownMaxCoverageLevel" placeholder="e.g.{{defaultSaturationCoverageLevel}}" ng-model="saturationCoverageLevel" ng-change="updateCurves()">%
+                <error-messages for="saturationCoverageLevel" rules="{min:1, max:100, moreThan: 'Known Maximum Coverage Level'}"></error-messages>
               </p>
               <p>
-                2. The estimated amount of funding needed to get
-                <input type="number" name="knownCoverageLevel" class="txbox __inline __m" min="1" max="100" placeholder="e.g.{{defaultKnownCoverageLevel}}" ng-model="knownCoverageLevel" ng-change="updateCurves()">%
+                2. The estimated amount of funding needed to get between
+                <input type="number" name="knownMinCoverageLevel" class="txbox __inline __m" min="1" max="100" placeholder="e.g.{{defaultKnownCoverageLevel-10}}" less-than="knownMaxCoverageLevel" ng-model="knownMinCoverageLevel" ng-change="updateCurves()">% and <input type="number" name="knownMaxCoverageLevel" class="txbox __inline __m" min="1" max="100" placeholder="e.g.{{defaultKnownCoverageLevel}}" ng-model="knownMaxCoverageLevel" ng-change="updateCurves()">%
                 coverage for this program is:
-                <error-messages for="knownCoverageLevel" rules="{min:1, max:100, name:'Known Coverage Level'}"></error-messages>
-                <input type="number" name="knownFundingValue" min="1" step="1000" name="knownFundingValue" class="txbox __inline __xl" placeholder="e.g.{{defaultKnownFundingValue}}"  ng-model="knownFundingValue" ng-change="updateCurves()">
+                <error-messages for="knownMinCoverageLevel" rules="{min:1, max:100, lessThan: 'Known Maximum Coverage Level', name:'Known Minimum Coverage Level'}"></error-messages>
+                <error-messages for="knownMaxCoverageLevel" rules="{min:1, max:100, name:'Known Maximum Coverage Level'}"></error-messages>
+                <input type="number" name="knownFundingValue" min="1" step="1000" name="knownFundingValue" class="txbox __inline __xl" placeholder="e.g.{{defaultKnownFundingValue}}"  ng-model="knownFundingValue" ng-change="updateCurves()"> USD
                 <error-messages for="knownFundingValue" rules="{min:1, name:'Known Funding Value'}"></error-messages>
               </p>
               <p>

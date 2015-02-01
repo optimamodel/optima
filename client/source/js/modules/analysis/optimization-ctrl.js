@@ -80,13 +80,13 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       $scope.params.objectives.money.objectives.mtctnonbreast.use = false;
 
       // Default program weightings
-      $scope.params.objectives.money.costs = {};
+      $scope.params.objectives.money.costs = [];
       if(meta.progs) {
         $scope.programs = meta.progs.long;
         $scope.programCodes = meta.progs.short;
 
         for ( var i = 0; i < meta.progs.short.length; i++ ) {
-          $scope.params.objectives.money.costs[meta.progs.short[i]] = 100;
+          $scope.params.objectives.money.costs[i] = 100;
         }
 
         // Constraints Defaults
@@ -94,24 +94,34 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
         $scope.params.constraints.txelig = 1;
         $scope.params.constraints.dontstopart = true;
 
-        $scope.params.constraints.decrease = {};
-        $scope.params.constraints.increase = {};
-        $scope.params.constraints.coverage = {};
+        $scope.params.constraints.yeardecrease = [];
+        $scope.params.constraints.yearincrease = [];
+        $scope.params.constraints.totaldecrease = [];
+        $scope.params.constraints.totalincrease = [];
+        $scope.params.constraints.coverage = [];
 
         // Initialize program constraints models
         for ( var i = 0; i < meta.progs.short.length; i++ ) {
-          $scope.params.constraints.decrease[meta.progs.short[i]] = {};
-          $scope.params.constraints.decrease[meta.progs.short[i]].use = false;
-          $scope.params.constraints.decrease[meta.progs.short[i]].by = 100;
+          $scope.params.constraints.yeardecrease[i] = {};
+          $scope.params.constraints.yeardecrease[i].use = false;
+          $scope.params.constraints.yeardecrease[i].by = 100;
 
-          $scope.params.constraints.increase[meta.progs.short[i]] = {};
-          $scope.params.constraints.increase[meta.progs.short[i]].use = false;
-          $scope.params.constraints.increase[meta.progs.short[i]].by = 100;
+          $scope.params.constraints.yearincrease[i] = {};
+          $scope.params.constraints.yearincrease[i].use = false;
+          $scope.params.constraints.yearincrease[i].by = 100;
 
-          $scope.params.constraints.coverage[meta.progs.short[i]] = {};
-          $scope.params.constraints.coverage[meta.progs.short[i]].use = false;
-          $scope.params.constraints.coverage[meta.progs.short[i]].level = 0;
-          $scope.params.constraints.coverage[meta.progs.short[i]].year = undefined;
+          $scope.params.constraints.totaldecrease[i] = {};
+          $scope.params.constraints.totaldecrease[i].use = false;
+          $scope.params.constraints.totaldecrease[i].by = 100;
+
+          $scope.params.constraints.totalincrease[i] = {};
+          $scope.params.constraints.totalincrease[i].use = false;
+          $scope.params.constraints.totalincrease[i].by = 100;
+
+          $scope.params.constraints.coverage[i] = {};
+          $scope.params.constraints.coverage[i].use = false;
+          $scope.params.constraints.coverage[i].level = 0;
+          $scope.params.constraints.coverage[i].year = undefined;
         }
       }
 
