@@ -107,7 +107,7 @@ def interrupt(*args):
     sentinel['exit'] = True
     sys.exit()
 
-for sig in (SIGABRT, SIGILL, SIGINT, SIGSEGV, SIGTERM):
+for sig in (SIGABRT, SIGINT, SIGTERM):
     signal(sig, interrupt)
 
 

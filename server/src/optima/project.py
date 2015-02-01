@@ -607,7 +607,7 @@ def getData(project_id):
         loaddir =  upload_dir_user(TEMPLATEDIR)
         if not loaddir:
             loaddir = TEMPLATEDIR
-        filename = project_name + '.json'
+        filename = project.name + '.json'
         server_filename = os.path.join(loaddir, filename)
         with open(server_filename, 'wb') as filedata:
             json.dump(data, filedata)
