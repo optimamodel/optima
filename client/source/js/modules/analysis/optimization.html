@@ -359,7 +359,7 @@
                     {{ p }}
                   </td>
                   <td>
-                    <input class="txbox __inline __s" ng-model="params.objectives.money.costs[programCodes[$index]]">
+                    <input class="txbox __inline __s" ng-model="params.objectives.money.costs[$index]">
                     %
                   </td>
                 </tr>
@@ -424,20 +424,20 @@
             <tbody>
             <tr ng-repeat="p in programs">
               <td>
-                <input type="checkbox" ng-model="params.constraints.yeardecrease[programCodes[$index]].use">
+                <input type="checkbox" ng-model="params.constraints.yeardecrease[$index].use">
               </td>
               <td>
                 {{ p }}
               </td>
               <td>
                 <input class="txbox __inline __s" type="number"
-                       ng-change="params.constraints.yeardecrease[programCodes[$index]].use=true"
-                       ng-model="params.constraints.yeardecrease[programCodes[$index]].by">%
+                       ng-change="params.constraints.yeardecrease[$index].use=true"
+                       ng-model="params.constraints.yeardecrease[$index].by">%
               </td>
               <td>
                 <input class="txbox __inline __s" type="number"
-                       ng-change="params.constraints.yearincrease[programCodes[$index]].use=true"
-                       ng-model="params.constraints.yearincrease[programCodes[$index]].by">%
+                       ng-change="params.constraints.yearincrease[$index].use=true"
+                       ng-model="params.constraints.yearincrease[$index].by">%
               </td>
             </tr>
             </tbody>
@@ -457,20 +457,20 @@
             <tbody>
             <tr ng-repeat="p in programs">
               <td>
-                <input type="checkbox" ng-model="params.constraints.totaldecrease[programCodes[$index]].use">
+                <input type="checkbox" ng-model="params.constraints.totaldecrease[$index].use">
               </td>
               <td>
                 {{ p }}
               </td>
               <td>
                 <input class="txbox __inline __s" type="number"
-                       ng-change="params.constraints.totaldecrease[programCodes[$index]].use=true"
-                       ng-model="params.constraints.totaldecrease[programCodes[$index]].by">%
+                       ng-change="params.constraints.totaldecrease[$index].use=true"
+                       ng-model="params.constraints.totaldecrease[$index].by">%
               </td>
               <td>
                 <input class="txbox __inline __s" type="number"
-                       ng-change="params.constraints.totalincrease[programCodes[$index]].use=true"
-                       ng-model="params.constraints.totalincrease[programCodes[$index]].by">%
+                       ng-change="params.constraints.totalincrease[$index].use=true"
+                       ng-model="params.constraints.totalincrease[$index].by">%
               </td>
             </tr>
             </tbody>
@@ -492,20 +492,20 @@
             <tbody>
             <tr ng-repeat="p in programs">
               <td>
-                <input type="checkbox" ng-model="params.constraints.coverage[programCodes[$index]].use">
+                <input type="checkbox" ng-model="params.constraints.coverage[$index].use">
               </td>
               <td>
                 {{ p }}
               </td>
               <td>
                 <input class="txbox __inline __s" type="number"
-                       ng-change="params.constraints.coverage[programCodes[$index]].use=true"
-                       ng-model="params.constraints.coverage[programCodes[$index]].year">
+                       ng-change="params.constraints.coverage[$index].use=true"
+                       ng-model="params.constraints.coverage[$index].year">
               </td>
               <td>
                 <input class="txbox __inline __s" type="number"
-                       ng-change="params.constraints.coverage[programCodes[$index]].use=true"
-                       ng-model="params.constraints.coverage[programCodes[$index]].level">
+                       ng-change="params.constraints.coverage[$index].use=true"
+                       ng-model="params.constraints.coverage[$index].level">
               </td>
             </tr>
             </tbody>

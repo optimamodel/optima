@@ -41,7 +41,7 @@ def runmodelalloc(D, thisalloc, parindices, randseed, verbose=2):
 def objectivecalc(optimparams, options):
     """ Calculate the objective function """
     if 'ntimepm' in options.keys():
-        thisalloc = timevarying(optimparams, ntimepm=options.ntimepm, nprogs=options.nprogs, tvec=options.D.opt.partvec, totalspend=options.totalspend) 
+        thisalloc = timevarying(optimparams, ntimepm=options.ntimepm, nprogs=options.nprogs, tvec=options.D.opt.partvec, totalspend=options.totalspend, fundingchanges=options.fundingchanges) 
     elif 'years' in options.keys():
         thisalloc = multiyear(optimparams, years=options.years, totalspends=options.totalspends, nprogs=options.nprogs, tvec=options.D.opt.partvec) 
     else:
@@ -81,7 +81,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
     objectives = deepcopy(objectives)
     constraints = deepcopy(constraints)
     ntimepm=1 + int(objectives.timevarying) # Either 1 or 2
-
+    
     # Do percentage normalizations
     for ob in objectives.money.objectives.keys(): 
         if objectives.money.objectives[ob].use: objectives.money.objectives[ob].by = float(objectives.money.objectives[ob].by) / 100.0
@@ -89,10 +89,27 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         objectives.money.costs[prog] = float(objectives.money.costs[prog]) / 100.0
     for prog in constraints.decrease.keys(): 
         if constraints.decrease[prog].use: constraints.decrease[prog].by = float(constraints.decrease[prog].by) / 100.0
+    for prog in constraints.decrease.keys(): 
+        if constraints.decrease[prog].use: constraints.decrease[prog].by = float(constraints.decrease[prog].by) / 100.0
 
     nprogs = len(D.programs)
     totalspend = objectives.outcome.fixed # For fixed budgets
     
+    # Define constraints on funding -- per year and total
+    fundingchanges = struct()
+    keys1 = ['year','total']
+    keys2 = ['dec','inc']
+    lims = {'dec':-1e9, 'inc':1e9}
+    for key1 in keys1:
+        fundingchanges[key1] = struct()
+        for key2 in keys2:
+            fundingchanges[key1][key2] = []
+            for prog in D.programs.keys():
+                fullkey = key1+key2+'rease'
+                this = constraints[fullkey][prog] # Shorten name
+                if this.use: fundingchanges[key1][key2].append(this.by/100. - 1.)
+                else: fundingchanges[key1][key2].append(lims[key2])
+
     
     ## Define indices, weights, and normalization factors
     initialindex = findinds(D.opt.partvec, objectives.year.start)
@@ -161,6 +178,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         options.parindices = parindices # Indices for the parameters to be updated on
         options.normalizations = normalizations # Whether to normalize a parameter
         options.totalspend = totalspend # Total budget
+        options.fundingchanges = fundingchanges # Constraints-based funding changes
         
         
         ## Run with uncertainties
@@ -195,7 +213,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         result.Rarr = []
         for params in [origalloc, allocarr[bestallocind]]: # CK: loop over original and (the best) optimal allocations
             sleep(0.1)
-            alloc = timevarying(params, ntimepm=len(params)/nprogs, nprogs=nprogs, tvec=D.opt.partvec, totalspend=totalspend)   
+            alloc = timevarying(params, ntimepm=len(params)/nprogs, nprogs=nprogs, tvec=D.opt.partvec, totalspend=totalspend, fundingchanges=fundingchanges)   
             R = runmodelalloc(options.D, alloc, options.parindices, options.randseed, verbose=verbose) # Actually run
             result.Rarr.append(struct()) # Append a structure
             result.Rarr[-1].R = deepcopy(R) # Store the R structure (results)
@@ -236,7 +254,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         labels = ['Original','Optimal']
         for params in [origalloc, optparams]: # CK: loop over original and (the best) optimal allocations
             sleep(0.1)
-            alloc = timevarying(params, ntimepm=ntimepm, nprogs=nprogs, tvec=D.opt.partvec, totalspend=totalspend) #Regenerate allocation
+            alloc = timevarying(params, ntimepm=ntimepm, nprogs=nprogs, tvec=D.opt.partvec, totalspend=totalspend, fundingchanges=fundingchanges) #Regenerate allocation
             R = runmodelalloc(options.D, alloc, options.parindices, options.randseed, verbose=verbose) # Actually run
             result.Rarr.append(struct()) # Append a structure
             result.Rarr[-1].R = deepcopy(R) # Store the R structure (results)
@@ -351,7 +369,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         result.Rarr = []
         for params in [origalloc, allocarr[closesttocurrent]]: # CK: loop over original and (the best) optimal allocations
             sleep(0.1)
-            alloc = timevarying(params, ntimepm=len(params)/nprogs, nprogs=nprogs, tvec=D.opt.partvec, totalspend=totalspend)   
+            alloc = timevarying(params, ntimepm=len(params)/nprogs, nprogs=nprogs, tvec=D.opt.partvec, totalspend=totalspend, fundingchanges=fundingchanges)   
             R = runmodelalloc(options.D, alloc, options.parindices, options.randseed, verbose=verbose) # Actually run
             result.Rarr.append(struct()) # Append a structure
             result.Rarr[-1].R = deepcopy(R) # Store the R structure (results)
