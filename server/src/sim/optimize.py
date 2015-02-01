@@ -493,19 +493,19 @@ def defaultconstraints(D, verbose=2):
     for p in range(D.G.nprogs): # Loop over all defined programs
         con.yeardecrease[p] = struct()
         con.yeardecrease[p].use = False # Tick box: by default don't use
-        con.yeardecrease[p].by = 50 # Text entry box: 0.5 = 50% per year
+        con.yeardecrease[p].by = 80 # Text entry box: 0.5 = 50% per year
         con.yearincrease[p] = struct()
         con.yearincrease[p].use = False # Tick box: by default don't use
-        con.yearincrease[p].by = 200 # Text entry box: 0.5 = 50% per year
+        con.yearincrease[p].by = 120 # Text entry box: 0.5 = 50% per year
     con.totaldecrease = struct()
     con.totalincrease = struct()
     for p in range(D.G.nprogs): # Loop over all defined programs
         con.totaldecrease[p] = struct()
         con.totaldecrease[p].use = False # Tick box: by default don't use
-        con.totaldecrease[p].by = 20 # Text entry box: 0.5 = 50% per total
+        con.totaldecrease[p].by = 50 # Text entry box: 0.5 = 50% per total
         con.totalincrease[p] = struct()
         con.totalincrease[p].use = False # Tick box: by default don't use
-        con.totalincrease[p].by = 500 # Text entry box: 0.5 = 50% total
+        con.totalincrease[p].by = 200 # Text entry box: 0.5 = 50% total
     
     con.coverage = struct()
     for p in range(D.G.nprogs): # Loop over all defined programs
