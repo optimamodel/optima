@@ -475,6 +475,9 @@ def defaultconstraints(D, verbose=2):
         con.decrease[prog] = struct()
         con.decrease[prog].use = False # Tick box: by default don't use
         con.decrease[prog].by = 50 # Text entry box: 0.5 = 50% per year
+        con.increase[prog] = struct()
+        con.increase[prog].use = False # Tick box: by default don't use
+        con.increase[prog].by = 50 # Text entry box: 0.5 = 50% per year
     
     con.coverage = struct()
     for prog in D.programs.keys(): # Loop over all defined programs
