@@ -112,13 +112,13 @@ def makecc(D=None, progname=default_progname, ccparams=default_ccparams, ccplot=
         # Create curve
         xvalscc = linspace(0,xupperlim,nxpts) # take nxpts points between 0 and user-specified max
         if isinstance(ccparams[4], float):
-            yvalsccm = cceqn(xvalscc, ccplottingparams[0])
-            yvalsccl = cceqn(xvalscc, ccplottingparams[1])
+            yvalsccl = cceqn(xvalscc, ccplottingparams[0])
+            yvalsccm = cceqn(xvalscc, ccplottingparams[1])
             yvalsccu = cceqn(xvalscc, ccplottingparams[2])
             yvalscc = [yvalsccl, yvalsccm, yvalsccu]
         else:
-            yvalsccm = cc2eqn(xvalscc, ccplottingparams[0])
-            yvalsccl = cc2eqn(xvalscc, ccplottingparams[1])
+            yvalsccl = cc2eqn(xvalscc, ccplottingparams[0])
+            yvalsccm = cc2eqn(xvalscc, ccplottingparams[1])
             yvalsccu = cc2eqn(xvalscc, ccplottingparams[2])
             yvalscc = [yvalsccl, yvalsccm, yvalsccu]
 
