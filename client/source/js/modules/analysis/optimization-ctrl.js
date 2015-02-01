@@ -447,7 +447,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     // makes all graphs to recalculate and redraw
     function updateGraphs(data) {
       /* new structure keeps everything together:
-       * data.plot[n].alloc => pie & radar (TODO radar to be changed)
+       * data.plot[n].alloc => pie & radar
        * data.plot[n].multi => old line-scatterplots
        * data.plot[n].outcome => new line plot
        * n - sequence number of saved optimization
@@ -573,10 +573,10 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
      * Returns true if at least one chart is available
      */
     $scope.someGraphAvailable = function() {
-      return $scope.state.radarCharts.length > 0 ||
-        $scope.state.optimisationGraphs.length > 0 ||
-        $scope.state.financialGraphs.length > 0 ||
-        $scope.state.pieCharts.length > 0 ||
+      return !(_.isEmpty($scope.state.radarCharts)) ||
+        !(_.isEmpty($scope.state.optimisationGraphs)) ||
+        !(_.isEmpty($scope.state.financialGraphs)) ||
+        !(_.isEmpty($scope.state.pieCharts)) ||
         $scope.state.stackedBarChart !== undefined ||
         $scope.state.outcomeChart !== undefined;
     };
