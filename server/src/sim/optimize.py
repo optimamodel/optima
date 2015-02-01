@@ -80,7 +80,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
     # Do this so if e.g. /100 won't have problems
     objectives = deepcopy(objectives)
     constraints = deepcopy(constraints)
-    ntimepm=1 + int(objectives.timevarying) # Either 1 or 2
+    ntimepm=1 + int(objectives.timevarying)*int(objectives.funding=='constant') # Either 1 or 2, but only if funding==constant
 
     nprogs = len(D.programs)
     totalspend = objectives.outcome.fixed # For fixed budgets
