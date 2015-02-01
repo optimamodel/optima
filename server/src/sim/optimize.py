@@ -256,7 +256,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         labels = ['Original','Optimal']
         for params in [origalloc, optparams]: # CK: loop over original and (the best) optimal allocations
             sleep(0.1)
-            alloc = timevarying(params, ntimepm=ntimepm, nprogs=nprogs, tvec=D.opt.partvec, totalspend=totalspend, fundingchanges=fundingchanges) #Regenerate allocation
+            alloc = timevarying(params, ntimepm=len(params)/nprogs, nprogs=nprogs, tvec=D.opt.partvec, totalspend=totalspend, fundingchanges=fundingchanges) #Regenerate allocation
             R = runmodelalloc(options.D, alloc, options.parindices, options.randseed, verbose=verbose) # Actually run
             result.Rarr.append(struct()) # Append a structure
             result.Rarr[-1].R = deepcopy(R) # Store the R structure (results)
