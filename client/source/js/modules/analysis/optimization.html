@@ -137,10 +137,6 @@
               <input type="radio" name="minimizationType" ng-model="params.objectives.what" value="money">
               Minimize money
             </label>
-            <label class="checkbox-inline" style="padding:0px 0px 0px 40px;">
-              <input type="checkbox" ng-model="params.objectives.timevarying">
-              Allow time-varying optimization
-            </label>
           </div>
         </div>
 
@@ -160,6 +156,10 @@
                                                              ng-required="params.objectives.funding==='constant'"
                                                              ng-model="params.objectives.outcome.fixed"/> for each year
               in the program period
+            </label>
+            <label class="checkbox-inline" style="padding:0px 0px 0px 40px;">
+              <input type="checkbox" ng-model="params.objectives.timevarying">
+              Allow time-varying optimization
             </label>
             <br/>
             <label style="padding:0px 0px 0px 20px;">
