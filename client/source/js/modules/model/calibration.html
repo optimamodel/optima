@@ -4,23 +4,15 @@
     <div class="section grid">
       <form name="CalibrationForm" ng-submit="simulate()">
         <p ng-show="needData" class="error-hint">Please upload Optima spreadsheet first.</p>
-        <div class="2">
-          <input class="txbox" name="periodStart" type="number" placeholder="Start year" ng-model="simulationOptions.startyear" min="1950" max="2100">
-          <error-messages for="periodStart" rules="{min:1950, max:2100, required: 'Please provide a value'}"></error-messages>
-
-        </div>
-        <div class="2">
-          <input class="txbox" name="periodEnd" type="number" name="endYear" placeholder="End year" ng-model="simulationOptions.endyear" more-than="G.dataend" min="1950" max="2100">
-          <error-messages for="periodEnd" rules="{min:1950, max:2100, required: 'Please provide a value'}"></error-messages>
-        </div>
-        <div class="8">
-          <button class="btn" ng-disabled="needData || CalibrationForm.$invalid">View simulation</button>
-          <a class="btn" href="http://optimamodel.com/files/optima-parameter-priors.pdf" target="_blank">View parameter priors (PDF)</a>
-        </div>
       </form>
     </div>
     <div class="section grid">
       <div class="12">
+
+        <label class="checkbox-inline">
+          <a class="btn" href="http://optimamodel.com/files/optima-parameter-priors.pdf" target="_blank">View parameter priors (PDF)</a>
+        </label>
+
         <label class="checkbox-inline">
           <input type="checkbox" ng-disabled="!canDoFitting" ng-model="enableAutomaticCalibration">
           Automatic calibration
@@ -30,63 +22,60 @@
           <input type="checkbox" ng-disabled="!canDoFitting" ng-model="enableManualCalibration">
           Manual calibration
         </label>
-        <span ng-show="!canDoFitting" class="info-hint">Run "View Simulation" in order to enable data calibration</span>
+
       </div>
     </div>
 
   </div>
 
   <div class="section" ng-if="enableAutomaticCalibration">
-    <div class="well section">
-      <div class="grid">
-        <h2>Automatic calibration</h2>
+    <div class="section">
+      <h2>Automatic calibration</h2>
 
-        <div class="elastic_col __va-middle text-right">
-          <div class="elastic __fluid float-right">
-            <div class="elastic_col __shrink">
-              <label>
-                Maximum time limit:
-                <select class="txbox __inline" style="width: 120px" ng-model="simulationOptions.timelimit">
-                  <option value="10">10 seconds</option>
-                  <option value="30">30 seconds</option>
-                  <option value="60">1 minute</option>
-                  <option value="300">5 minutes</option>
-                  <option value="600">10 minutes</option>
-                  <option value="1800">30 minutes</option>
-                  <option value="3600">1 hour</option>
-                </select>
-              </label>
-            </div>
+      <div class="elastic_col __va-middle text-right">
+        <div class="elastic __fluid float-right">
+          <div class="elastic_col __shrink">
+            <label>
+              Maximum time limit:
+              <select class="txbox __inline" style="width: 120px" ng-model="simulationOptions.timelimit">
+                <option value="10">10 seconds</option>
+                <option value="30">30 seconds</option>
+                <option value="60">1 minute</option>
+                <option value="300">5 minutes</option>
+                <option value="600">10 minutes</option>
+                <option value="1800">30 minutes</option>
+                <option value="3600">1 hour</option>
+              </select>
+            </label>
+          </div>
 
-            <div class="elastic_col __shrink">
-              <button class="btn" style="background: #008800;" ng-click="startAutoCalibration()">Start calibration</button>
-            </div>
-            <div class="elastic_col __shrink">
-              <button class="btn" style="background: #ff0000;" ng-click="stopAutoCalibration()" ng-disabled="!calibrationStatus">Stop calibration</button>
-            </div>
-            <div class="elastic_col __shrink">
-              <button class="btn" ng-click="saveCalibration()" ng-disabled="calibrationStatus || errorText">Save calibration</button>
-            </div>
-            <div class="elastic_col __shrink">
-              <button class="btn" ng-click="revertCalibration()" ng-disabled="calibrationStatus">Revert</button>
-            </div>
+          <div class="elastic_col __shrink">
+            <button class="btn __green" ng-click="startAutoCalibration()">Start calibration</button>
+          </div>
+          <div class="elastic_col __shrink">
+            <button class="btn __red" ng-click="stopAutoCalibration()" ng-disabled="!calibrationStatus">Stop calibration</button>
+          </div>
+          <div class="elastic_col __shrink">
+            <button class="btn" ng-click="saveCalibration()" ng-disabled="calibrationStatus || errorText">Save calibration</button>
+          </div>
+          <div class="elastic_col __shrink">
+            <button class="btn" ng-click="revertCalibration()" ng-disabled="calibrationStatus">Revert</button>
           </div>
         </div>
-        <div class="info-hint" ng-show="calibrationStatus">
-          {{reportCalibrationStatus()}}
-        </div>
-        <div class="error-hint" ng-show="errorText">
-            <pre>{{errorText}}</pre>
-        </div>
-
+      </div>
+      <div class="info-hint" ng-show="calibrationStatus">
+        {{reportCalibrationStatus()}}
+      </div>
+      <div class="error-hint" ng-show="errorText">
+          <pre>{{errorText}}</pre>
       </div>
     </div>
   </div>
 
-  <div class="well section __inline calibration-charts" ng-class="{'calibration-charts--full':enableManualCalibration===false}" ng-show="charts.length>0" >
+  <div class="section __inline calibration-charts" ng-class="{'calibration-charts--full':enableManualCalibration===false}" ng-show="charts.length>0" >
+    <export-all-charts name="Model calibration" ng-if="charts"></export-all-charts>
+    <export-all-data name="Model calibration" charts="charts" ng-if="charts"></export-all-data>
     <div class="grid">
-      <export-all-charts name="Model calibration" ng-if="charts"></export-all-charts>
-      <export-all-data name="Model calibration" charts="charts" ng-if="charts"></export-all-data>
       <div>
         <div class="chart-container __small" ng-style="hasStackedCharts && {'height':'400px'}" ng-repeat="chart in charts">
           <div ng-if="chart.type == 'lineScatterAreaChart'" line-scatter-area-chart ng-if="chart.type != 'stackAreaChart'" data="chart.data" options="chart.options" save-graph-as></div>
@@ -96,84 +85,79 @@
     </div>
   </div>
 
-  <div class="section __inline manual-calibration" ng-if="enableManualCalibration">
-    <div class="well section">
-      <div class="grid">
+  <div class="__inline manual-calibration" ng-if="enableManualCalibration">
+    <h2>Manual calibration</h2>
+    <table class="section table table-bordered">
+      <thead>
+      <tr>
+        <td><b>Parameter</b></td>
+        <td style="width:35%"><b>Value</b></td>
+      </tr>
+      </thead>
+      <tbody>
+      <tr ng-repeat="parameter in parameters.m">
+        <td>{{parameter.title}}</td>
+        <td>
+          <span ng-hide="editing" ng-click="editing = true">{{ parameter.data}}</span>
+          <span ng-show="editing">
+            <input class="txbox __inline" ng-model="parameter.data">
+            <button class="btn" ng-click="editing = false; doneEditingParameter();">Ok</button>
+          </span>
+        </td>
+      </tr>
+      <!-- Force -->
+      <tr ng-repeat="population in parameters.meta.pops.short track by $index">
+        <td>{{ parameters.types.force }} {{ population }}</td>
+        <td>
+          <span ng-hide="editing" ng-click="editing = true">{{ parameters.f.force[$index] }}</span>
+          <span ng-show="editing">
+            <input class="txbox __inline" ng-model="parameters.f.force[$index]">
+            <button class="btn" ng-click="editing = false; doneEditingParameter();">Ok</button>
+          </span>
+        </td>
+      </tr>
+      <!-- Init -->
+      <tr ng-repeat="population in parameters.meta.pops.short track by $index">
+        <td>{{ parameters.types.init }} {{ population }}</td>
+        <td>
+          <span ng-hide="editing" ng-click="editing = true">{{ parameters.f.init[$index] }}</span>
+          <span ng-show="editing">
+            <input class="txbox __inline" ng-model="parameters.f.init[$index]">
+            <button class="btn" ng-click="editing = false; doneEditingParameter();">Ok</button>
+          </span>
+        </td>
+      </tr>
+      <!-- Popsize -->
+      <tr ng-repeat="population in parameters.meta.pops.short track by $index">
+        <td>{{ parameters.types.popsize }} {{ population }}</td>
+        <td>
+          <span ng-hide="editing" ng-click="editing = true">{{ parameters.f.popsize[$index] }}</span>
+          <span ng-show="editing">
+            <input class="txbox __inline" ng-model="parameters.f.popsize[$index]">
+            <button class="btn" ng-click="editing = false; doneEditingParameter();">Ok</button>
+          </span>
+        </td>
+      </tr>
+      <!-- Testing Rate -->
+      <tr ng-repeat="i in [0, 1, 2, 3] track by $index">
+        <td>{{ parameters.types.dx[i] }}</td>
+        <td>
+          <span ng-hide="editing" ng-click="editing = true">{{ parameters.f.dx[i] }}</span>
+          <span ng-show="editing">
+            <input class="txbox __inline" ng-model="parameters.f.dx[i]">
+            <button class="btn" ng-click="editing = false; doneEditingParameter();">Ok</button>
+          </span>
+        </td>
+      </tr>
+      </tbody>
+    </table>
 
-        <h2>Manual calibration</h2>
-        <table class="section table table-bordered">
-          <thead>
-          <tr>
-            <td><b>Parameter</b></td>
-            <td style="width:35%"><b>Value</b></td>
-          </tr>
-          </thead>
-          <tbody>
-          <tr ng-repeat="parameter in parameters.m">
-            <td>{{parameter.title}}</td>
-            <td>
-              <span ng-hide="editing" ng-click="editing = true">{{ parameter.data}}</span>
-              <span ng-show="editing">
-                <input class="txbox __inline" ng-model="parameter.data">
-                <button class="btn" ng-click="editing = false; doneEditingParameter();">Ok</button>
-              </span>
-            </td>
-          </tr>
-          <!-- Force -->
-          <tr ng-repeat="population in parameters.meta.pops.short track by $index">
-            <td>{{ parameters.types.force }} {{ population }}</td>
-            <td>
-              <span ng-hide="editing" ng-click="editing = true">{{ parameters.f.force[$index] }}</span>
-              <span ng-show="editing">
-                <input class="txbox __inline" ng-model="parameters.f.force[$index]">
-                <button class="btn" ng-click="editing = false; doneEditingParameter();">Ok</button>
-              </span>
-            </td>
-          </tr>
-          <!-- Init -->
-          <tr ng-repeat="population in parameters.meta.pops.short track by $index">
-            <td>{{ parameters.types.init }} {{ population }}</td>
-            <td>
-              <span ng-hide="editing" ng-click="editing = true">{{ parameters.f.init[$index] }}</span>
-              <span ng-show="editing">
-                <input class="txbox __inline" ng-model="parameters.f.init[$index]">
-                <button class="btn" ng-click="editing = false; doneEditingParameter();">Ok</button>
-              </span>
-            </td>
-          </tr>
-          <!-- Popsize -->
-          <tr ng-repeat="population in parameters.meta.pops.short track by $index">
-            <td>{{ parameters.types.popsize }} {{ population }}</td>
-            <td>
-              <span ng-hide="editing" ng-click="editing = true">{{ parameters.f.popsize[$index] }}</span>
-              <span ng-show="editing">
-                <input class="txbox __inline" ng-model="parameters.f.popsize[$index]">
-                <button class="btn" ng-click="editing = false; doneEditingParameter();">Ok</button>
-              </span>
-            </td>
-          </tr>
-          <!-- Testing Rate -->
-          <tr ng-repeat="i in [0, 1, 2, 3] track by $index">
-            <td>{{ parameters.types.dx[i] }}</td>
-            <td>
-              <span ng-hide="editing" ng-click="editing = true">{{ parameters.f.dx[i] }}</span>
-              <span ng-show="editing">
-                <input class="txbox __inline" ng-model="parameters.f.dx[i]">
-                <button class="btn" ng-click="editing = false; doneEditingParameter();">Ok</button>
-              </span>
-            </td>
-          </tr>
-          </tbody>
-        </table>
-
-        <div class="elastic __fluid">
-          <div class="elastic_col">
-            <button class="btn" ng-click="saveManualCalibration()">Save calibration</button>
-          </div>
-          <div class="elastic_col">
-            <button class="btn" ng-click="revertManualCalibration()">Revert</button>
-          </div>
-        </div>
+    <div class="elastic __fluid">
+      <div class="elastic_col">
+        <button class="btn" ng-click="saveManualCalibration()">Save calibration</button>
+      </div>
+      <div class="elastic_col">
+        <button class="btn" ng-click="revertManualCalibration()">Revert</button>
       </div>
     </div>
   </div>

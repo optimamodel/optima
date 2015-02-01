@@ -1,45 +1,44 @@
 ALL_PARAMETERS_SOURCE = \
 """
-No.;Parameter name;Location;Model variable name;Data variable name;Manual calibration?;Programs/scenarios?;By population?;Variable missing?;Need work?
-1;Condom use proportion for commercial sexual acts;Programs/scenarios;M.condom.com[:];sex.condomcom;;1;1;;
-2;Condom use proportion for casual sexual acts;Programs/scenarios;M.condom.cas[:];sex.condomcas;;1;1;;
-3;Condom use proportion for regular sexual acts;Programs/scenarios;M.condom.reg[:];sex.condomreg;;1;1;;
-4;Number of commercial sexual acts per person per year;Programs/scenarios;M.numacts.cas[:];sex.numactscas;;1;1;;
-5;Number of casual sexual acts per person per year;Programs/scenarios;M.numacts.com[:];sex.numactscom;;1;1;;
-6;Number of regular sexual acts per person per year;Programs/scenarios;M.numacts.reg[:];sex.numactsreg;;1;1;;
-7;Circumcision prevalence among males;Programs/scenarios;M.circum[:];sex.circum;;1;1;;
-8;Number of medical male circumcisions performed per year;Programs/scenarios;M.numcircum[:];sex.numcircum;;1;1;;1
-9;Ulcerative STI prevalence;Programs/scenarios;M.stiprevulc[:];epi.stiprevulc;;1;1;;
-10;Proportion of PLHIV aware of their HIV status;Programs/scenarios;M.propaware[:];--;;1;1;1;1
-11;Proportion of people who are tested for HIV each year;Programs/scenarios;M.hivtest[:];txrx.hivtest;;1;1;;
-12;Number of PLHIV on ART;Programs/scenarios;M.txtotal;txrx.numfirstline+txrx.numsecondline;;1;;;1
-13;Proportion of PLHIV on ART;Programs/scenarios;M.propart;--;;1;;1;1
-14;ART eligibility criterion;Programs/scenarios;M.txelig;txrx.txelig;;1;;1;1
-15;Proportion of risk encounters covered by PEP;Programs/scenarios;M.pep[:];txrx.pep;;1;1;;
-16;Number of injections per person per year;Programs/scenarios;M.numacts.inj[:];inj.numinject;;1;1;;1
-17;Proportion of injections using receptively shared needle-syringes;Programs/scenarios;M.sharing[:];inj.sharing;;1;1;;1
-18;Proportion of people on OST;Programs/scenarios;M.propost[:];--;;1;1;1;1
-19;Number of people on OST;Programs/scenarios;M.numost[:];inj.numost;;1;1;;1
-20;Proportion of pregnant women receiving Option B/B+;Programs/scenarios;M.proppmtct;---;;1;;1;1
-21;Number of pregnant women receiving Option B/B+;Programs/scenarios;M.numpmtct;txrx.numpmtct;;1;;;1
-22;Proportion of mothers who breastfeed;Programs/scenarios;M.propbreast;txrx.breast;;1;;1;1
-1;HIV-related mortality rate, AIDS stage;Manual calibration;M.const.death.aids;const.death.aids;1;;;;
-2;Per-act efficacy of circumcision;Manual calibration;M.const.eff.circ;const.eff.circ;1;;;;
-3;Per-act efficacy of condoms;Manual calibration;M.const.eff.condom;const.eff.condom;1;;;;
-4;Diagnosis-related behavior change efficacy;Manual calibration;M.const.eff.dx;const.eff.dx;1;;;;
-5;Sharing rate reduction from OST;Manual calibration;M.const.eff.ost;const.eff.ost;1;;;1;1
-6;Per-birth efficacy of PMTCT;Manual calibration;M.const.eff.pmtct;const.eff.pmtct;1;;;;
-7;Ulcerative STI-related transmission increase;Manual calibration;M.const.eff.sti;const.eff.sti;1;;;;
-8;Treatment-related transmission decrease;Manual calibration;M.const.eff.tx;const.eff.tx;1;;;;
-9;First-line ART failure rate;Manual calibration;M.const.fail.first;const.fail.first;1;;;;
-10;Second-line ART failure rate;Manual calibration;M.const.fail.second;const.fail.second;1;;;;
-11;Per-act transmissibility of injection;Manual calibration;M.const.trans.inj;const.trans.inj;1;;;;
-12;Per-act transmissibility of male-female insertive intercourse;Manual calibration;M.const.trans.mfi;const.trans.mfi;1;;;;
-13;Per-act transmissibility of male-female receptive intercourse;Manual calibration;M.const.trans.mfr;const.trans.mfr;1;;;;
-14;Per-act transmissibility of male-male insertive intercourse;Manual calibration;M.const.trans.mmi;const.trans.mmi;1;;;;
-15;Per-act transmissibility of male-male receptive intercourse;Manual calibration;M.const.trans.mmr;const.trans.mmr;1;;;;
-16;Initial population size;Manual calibration;M.popsize[:];key.popsize;0;;1;;1
-17;Population growth rate;Manual calibration;M.popgrowth[:];---;0;;;1;1
+No.;Parameter name;Location;Model variable name;Data variable name;Manual calibration?;Programs/scenarios?;By population?
+1;Condoms | Proportion of sexual acts in which condoms are used with commercial partners;Programs/scenarios;M.condom.com[:];sex.condomcom;;1;1
+2;Condoms | Proportion of sexual acts in which condoms are used with casual partners;Programs/scenarios;M.condom.cas[:];sex.condomcas;;1;1
+3;Condoms | Proportion of sexual acts in which condoms are used with regular partners;Programs/scenarios;M.condom.reg[:];sex.condomreg;;1;1
+4;Acts | Number of sexual acts per person per year with commercial partners;Programs/scenarios;M.numacts.cas[:];sex.numactscas;;1;1
+5;Acts | Number of sexual acts per person per year with casual partners;Programs/scenarios;M.numacts.com[:];sex.numactscom;;1;1
+6;Acts | Number of sexual acts per person per year with regular partners;Programs/scenarios;M.numacts.reg[:];sex.numactsreg;;1;1
+7;Circumcision | Proportion of males who are circumcised;Programs/scenarios;M.circum[:];sex.circum;;1;1
+8;Circumcision | Number of medical male circumcisions performed per year;Programs/scenarios;M.numcircum[:];sex.numcircum;;1;1
+9;STI | Prevalence of ulcerative STIs;Programs/scenarios;M.stiprevulc[:];epi.stiprevulc;;1;1
+10;STI | Prevalence of discharging STIs;Programs/scenarios;M.stiprevdis[:];epi.stiprevdis;;1;1
+11;Testing | Proportion of PLHIV aware of their HIV status;Programs/scenarios;M.propaware[:];txrx.hivtest;;1;1
+12;Testing | Proportion of people who are tested for HIV each year;Programs/scenarios;M.hivtest[:];txrx.hivtest;;1;1
+13;Treatment | Number of PLHIV on ART;Programs/scenarios;M.txtotal;txrx.numfirstline;;1;
+14;Treatment | Proportion of PLHIV on ART;Programs/scenarios;M.txtotal;txrx.numfirstline;;1;
+15;Treatment | CD4-based ART eligibility criterion;Programs/scenarios;M.txelig;txrx.txelig;;1;
+16;PrEP | Proportion of risk encounters covered by PrEP;Programs/scenarios;M.prep[:];txrx.prep;;1;1
+17;Injecting drug use | Number of injections per person per year;Programs/scenarios;M.numacts.inj[:];inj.numinject;;1;1
+18;Injecting drug use | Proportion of injections using receptively shared needle-syringes;Programs/scenarios;M.sharing[:,:];inj.sharing;;1;1
+19;Injecting drug use | Proportion of people on OST;Programs/scenarios;M.numost;inj.numost;;1;
+20;Injecting drug use | Number of people on OST;Programs/scenarios;M.numost;inj.numost;;1;
+21;PMTCT | Proportion of pregnant women receiving Option B/B+;Programs/scenarios;M.numpmtct;txrx.numpmtct;;1;
+22;PMTCT | Number of pregnant women receiving Option B/B+;Programs/scenarios;M.numpmtct;txrx.numpmtct;;1;
+23;PMTCT | Proportion of mothers who breastfeed;Programs/scenarios;M.breast;txrx.breast;;1;
+1;Mortality | HIV-related mortality rate (AIDS stage);Manual calibration;M.const.death.aids;const.death.aids;1;;
+2;Efficacy | Per-exposure efficacy of medical male circumcision;Manual calibration;M.const.eff.circ;const.eff.circ;1;;
+3;Efficacy | Per-exposure efficacy of condoms;Manual calibration;M.const.eff.condom;const.eff.condom;1;;
+4;Efficacy | Transmission-related behavior change following diagnosis;Manual calibration;M.const.eff.dx;const.eff.dx;1;;
+5;Injecting drug use | Reduction in risk-related injecting frequency for people on OST;Manual calibration;M.const.eff.ost;const.eff.ost;1;;
+6;PMTCT | Relative transmission probability under option B/B+;Manual calibration;M.const.eff.pmtct;const.eff.pmtct;1;;
+7;Transmission | HIV transmission cofactor increase due to ulcerative STIs;Manual calibration;M.const.eff.sti;const.eff.sti;1;;
+8;Transmission | HIV transmission cofactor decrease due to virally suppressive ART;Manual calibration;M.const.eff.tx;const.eff.tx;1;;
+9;Treatment failure | Failure rate per year for first-line ART;Manual calibration;M.const.fail.first;const.fail.first;1;;
+10;Treatment failure | Failure rate per year for subsequent lines of ART;Manual calibration;M.const.fail.second;const.fail.second;1;;
+11;Per-exposure HIV transmission probability for injection with a contaminated needle-syringe;Manual calibration;M.const.trans.inj;const.trans.inj;1;;
+12;Per-exposure HIV transmission probability for penile-vaginal insertive intercourse;Manual calibration;M.const.trans.mfi;const.trans.mfi;1;;
+13;Per-exposure HIV transmission probability for penile-vaginal receptive intercourse;Manual calibration;M.const.trans.mfr;const.trans.mfr;1;;
+14;Per-exposure HIV transmission probability for penile-anal insertive intercourse;Manual calibration;M.const.trans.mmi;const.trans.mmi;1;;
+15;Per-exposure HIV transmission probability for penile-anal receptive intercourse;Manual calibration;M.const.trans.mmr;const.trans.mmr;1;;
 """ 
 
 def maybe_bool(p):

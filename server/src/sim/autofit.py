@@ -1,13 +1,14 @@
-def autofit(D, timelimit=60, startyear=2000, endyear=2030, verbose=2):
+def autofit(D, timelimit=None, maxiters=500, simstartyear=2000, simendyear=2015, verbose=2):
     """
     Automatic metaparameter fitting code:
         D is the project data structure
         timelimit is the maximum time limit for fitting in seconds
-        startyear is the year to begin running the model
-        endyear is the year to stop running the model
+        maxiters is the maximum number of iterations
+        simstartyear is the year to begin running the model
+        simendyear is the year to stop running the model
         verbose determines how much information to print.
         
-    Version: 2014nov30 by cliffk
+    Version: 2015jan31 by cliffk
     """
     from numpy import mean, array
     from model import model
@@ -15,13 +16,13 @@ def autofit(D, timelimit=60, startyear=2000, endyear=2030, verbose=2):
     from ballsd import ballsd
     from bunch import Bunch as struct
     from utils import findinds
+    from updatedata import normalizeF, unnormalizeF
     eps = 0.01 # Don't use too small of an epsilon to avoid divide-by-almost zero errors -- this corresponds to 1% which is OK as an absolute error for prevalence
     printv('Running automatic calibration...', 1, verbose)
     
     # Set options to update year range
     from setoptions import setoptions
-    D.opt = setoptions(D.opt, startyear=startyear, endyear=endyear)
-    
+    D.opt = setoptions(D.opt, simstartyear=simstartyear, simendyear=simendyear)
     
     def errorcalc(Flist):
         """ Calculate the error between the model and the data """
@@ -29,6 +30,7 @@ def autofit(D, timelimit=60, startyear=2000, endyear=2030, verbose=2):
         printv(Flist, 4, verbose)
         
         F = list2dict(D.F[0], Flist)
+        F = unnormalizeF(F, D) # CK: Convert from normalized to unnormalized F (NB, Madhura)
         S = model(D.G, D.M, F, D.opt, verbose=verbose)
         
         # Pull out diagnoses data
@@ -36,7 +38,7 @@ def autofit(D, timelimit=60, startyear=2000, endyear=2030, verbose=2):
         dx[0].data = struct()
         dx[0].model = struct()
         dx[0].data.x, dx[0].data.y = extractdata(D.G.datayears, D.data.opt.numdiag[0])
-        dx[0].model.x = D.opt.tvec
+        dx[0].model.x = S.tvec
         dx[0].model.y = S.dx.sum(axis=0)
         
         # Prevalence data
@@ -45,27 +47,30 @@ def autofit(D, timelimit=60, startyear=2000, endyear=2030, verbose=2):
             prev[p].data = struct()
             prev[p].model = struct()
             prev[p].data.x, prev[p].data.y = extractdata(D.G.datayears, D.data.key.hivprev[0][p]) # The first 0 is for "best"
-            prev[p].model.x = D.opt.tvec
+            prev[p].model.x = S.tvec
             prev[p].model.y = S.people[1:,p,:].sum(axis=0) / S.people[:,p,:].sum(axis=0) # This is prevalence
         
         mismatch = 0
         for base in [dx, prev]:
             for ind in range(len(base)):
                 for y,year in enumerate(base[ind].data.x):
-                    modelind = findinds(D.opt.tvec, year)
+                    modelind = findinds(S.tvec, year)
                     if len(modelind)>0: # TODO Cliff check
                         mismatch += abs(base[ind].model.y[modelind] - base[ind].data.y[y]) / mean(base[ind].data.y+eps)
 
         return mismatch
 
     # Convert F to a flast list for the optimization algorithm
-    Forig = array(dict2list(D.F[0]))
+    Forig = normalizeF(D.F[0], D) # CK: Convert from normalized to unormalized F (NB, Madhura)
+    Forig = array(dict2list(Forig)) # Convert froma  dictionary to a list
     
     # Run the optimization algorithm
-    Fnew, fval, exitflag, output = ballsd(errorcalc, Forig, xmin=0*Forig, xmax=100*Forig, timelimit=timelimit, verbose=verbose)
+    Fnew, fval, exitflag, output = ballsd(errorcalc, Forig, xmin=0*Forig, xmax=100*Forig, timelimit=timelimit, MaxIter=maxiters, verbose=verbose)
     
     # Update the model, replacing F
-    D.F = [list2dict(D.F[0], Fnew)]
+    Fnew = list2dict(D.F[0], Fnew) # Convert from list to dictionary
+    Fnew = unnormalizeF(Fnew, D) # CK: Convert from normalized to unormalized F (NB, Madhura)
+    D.F = [Fnew] # Store dictionary in list
     D.S = model(D.G, D.M, D.F[0], D.opt, verbose=verbose)
     allsims = [D.S]
     

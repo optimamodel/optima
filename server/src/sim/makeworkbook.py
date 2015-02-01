@@ -23,14 +23,8 @@ def abbreviate(param):
 def years_range(data_start, data_end):
     return [x for x in range(data_start, data_end+1)]
 
-#class Assumption: #simulacrum of enums (no such thing in Python 2.7)
-#  PERCENTAGE = 'percentage'
-#  SCIENTIFIC = 'scientific'
-#  NUMBER = 'number'
-#  GENERAL = 'general'
-
-""" the content of the data ranges (row names, column names, optional data and assumptions) """
 class OptimaContent:
+    """ the content of the data ranges (row names, column names, optional data and assumptions) """
     def __init__(self, name, row_names, column_names, data = None):
         self.name = name
         self.row_names = row_names
@@ -40,6 +34,7 @@ class OptimaContent:
         self.row_levels = None
         self.row_format = OptimaFormats.GENERAL
         self.row_formats = None
+        self.assumption_properties = {'title':None, 'connector':'OR', 'columns':['Assumption']}
 
     def set_row_format(self, row_format):
         self.row_format = row_format
@@ -52,6 +47,9 @@ class OptimaContent:
 
     def has_assumption(self):
         return self.assumption
+
+    def set_assumption_properties(self, assumption_properties):
+        self.assumption_properties = assumption_properties
 
     def set_row_levels(self, row_levels): # right now assume the row levels are hard coded, as it is only needed once
         self.row_levels = row_levels
@@ -81,20 +79,21 @@ class OptimaContent:
                 return [self.row_format for name in self.row_names for level in self.row_levels]
 
 """ It's not truly pythonic, they cay, to have class methods """
+
 def make_matrix_range(name, params):
     return OptimaContent(name, params, params)
 
 def make_years_range(name, params, data_start, data_end):
     return OptimaContent(name, params, years_range(data_start, data_end))
 
-""" 
-every populations item is a dictionary is expected to have the following fields:
-short_name, name, male, female, injects, sexmen, sexwomen, sexworker, client
-(3x str, 7x bool)
-"""
 def make_populations_range(name, items):
-    column_names = ['Short name','Long name','Male','Female','Injects','Heterosexual', \
-    'Homosexual','Sex worker','Client']
+    """ 
+    every populations item is a dictionary is expected to have the following fields:
+    short_name, name, male, female, injects, sexmen, sexwomen, sexworker, client
+    (3x str, 7x bool)
+    """
+    column_names = ['Short name','Long name','Male','Female','Injects','Has sex with men', \
+    'Has sex with women','Sex worker','Client']
     row_names = range(1, len(items)+1)
     coded_params = []
     for item in items:
@@ -121,12 +120,12 @@ def make_populations_range(name, items):
         coded_params.append([short_name, item_name, male, female, injects, sexmen, sexwomen, sexworker, client])
     return OptimaContent(name, row_names, column_names, coded_params)
 
-""" 
-every programs item is a dictionary is expected to have the following fields:
-short_name, name
-(2x str)
-"""
 def make_programs_range(name, items):
+    """ 
+    every programs item is a dictionary is expected to have the following fields:
+    short_name, name
+    (2x str)
+    """
     column_names = ['Short name','Long name']
     row_names = range(1, len(items)+1)
     coded_params = []
@@ -149,9 +148,21 @@ def make_ref_years_range(name, ref_range, data_start, data_end):
     params = ref_range.param_refs()
     return make_years_range(name, params, data_start, data_end)
 
-""" the formats used in the workbook """
+def filter_by_properties(param_refs, base_params, the_filter):
+    """
+    filter parameter references by properties of the parameters.
+    """
+    result = []
+    filter_set = set(the_filter.iteritems())
+    for (param_ref, param) in zip(param_refs, base_params):
+        if set(param.iteritems()) & filter_set:
+            result.append(param_ref)
+    return result
+
+
 class OptimaFormats:
-    BG_COLOR = '#B3DEE5'
+    """ the formats used in the workbook """
+    BG_COLOR = '#18C1FF'
     BORDER_COLOR = 'white'
 
     PERCENTAGE = 'percentage'
@@ -165,6 +176,7 @@ class OptimaFormats:
         self.book = book
         # locked formats
         self.formats['bold'] = self.book.add_format({'bold':1})
+        self.formats['center_bold'] = self.book.add_format({'bold':1, 'align':'center'})
         self.formats['rc_title'] = {}
         self.formats['rc_title']['right'] = self.book.add_format({'bold':1, 'align':'right'})
         self.formats['rc_title']['left'] = self.book.add_format({'bold':1, 'align':'left'})
@@ -182,10 +194,10 @@ class OptimaFormats:
         self.formats['general'] = self.book.add_format({'locked':0, 'num_format':0x00, \
         'bg_color':OptimaFormats.BG_COLOR,'border':1, 'border_color':OptimaFormats.BORDER_COLOR})
         self.formats['info_header'] = self.book.add_format({'align':'center','valign':'vcenter', \
-            'color':'#C4990C','fg_color':'#0E0466', 'font_size':20, 'bold':True})
-        self.formats['grey'] = self.book.add_format({'fg_color':'#DDDDDD', 'text_wrap':True})
-        self.formats['info_url'] = self.book.add_format({'fg_color':'#DDDDDD', 'text_wrap':True, 'color':'blue'})
-        self.formats['grey_bold'] = self.book.add_format({'fg_color':'#DDDDDD','bold':True})
+            'color':'#D5AA1D','fg_color':'#0E0655', 'font_size':20})
+        self.formats['grey'] = self.book.add_format({'fg_color':'#EEEEEE', 'text_wrap':True})
+        self.formats['info_url'] = self.book.add_format({'fg_color':'#EEEEEE', 'text_wrap':True, 'color':'blue','align':'center'})
+        self.formats['grey_bold'] = self.book.add_format({'fg_color':'#EEEEEE','bold':True})
 
 
     def write_block_name(self, sheet, name, row):
@@ -195,7 +207,7 @@ class OptimaFormats:
         sheet.write(row, col, name, self.formats['rc_title'][align])
 
     def write_option(self, sheet, row, col, name = 'OR'):
-        sheet.write(row, col, name, self.formats['bold'])
+        sheet.write(row, col, name, self.formats['center_bold'])
 
     #special processing for bool values (to keep the content separate from representation)
     def write_unlocked(self, sheet, row, col, data, row_format = 'unlocked'):
@@ -272,11 +284,15 @@ class TitledRange:
         #top-top headers
         formats.write_block_name(self.sheet, self.content.name, self.first_row)
 
+        if self.content.has_assumption() and  self.first_row==0 and self.content.assumption_properties['title'] is not None:
+            formats.write_rowcol_name(self.sheet, self.first_row, self.data_range.last_col+2, self.content.assumption_properties['title'])
+
         #headers
         for i, name in enumerate(self.content.column_names):
             formats.write_rowcol_name(self.sheet, self.first_row+1, self.data_range.first_col+i,name, rc_title_align)
-            if self.content.has_assumption():
-                formats.write_rowcol_name(self.sheet, self.first_row+1, self.data_range.last_col+2, 'Assumption')
+        if self.content.has_assumption():
+            for index, col_name in enumerate(self.content.assumption_properties['columns']):
+                formats.write_rowcol_name(self.sheet, self.first_row+1, self.data_range.last_col+2+index, col_name)
 
 
         current_row = self.data_range.first_row
@@ -299,9 +315,10 @@ class TitledRange:
                     formats.write_empty_unlocked(self.sheet, current_row, self.data_range.first_col+j, row_format)
             #emit assumption
             if self.content.has_assumption():
-                formats.write_option(self.sheet, current_row, self.data_range.last_col+1)
-                formats.write_empty_unlocked(self.sheet, current_row, self.data_range.last_col+2, \
-                row_format)
+                formats.write_option(self.sheet, current_row, self.data_range.last_col+1, \
+                    name = self.content.assumption_properties['connector'])
+                for index, col_name in enumerate(self.content.assumption_properties['columns']):
+                    formats.write_empty_unlocked(self.sheet, current_row, self.data_range.last_col+2+index, row_format)
             current_row+=1
             if num_levels > 1 and ((i+1) % num_levels)==0: # shift between the blocks
                 current_row +=1
@@ -312,8 +329,7 @@ class TitledRange:
         return self.data_range.param_refs(self.sheet.get_name(), column_number)
 
 class OptimaWorkbook:
-    def __init__(self, name, pops, progs, data_start = 2000, data_end = 2015, \
-        econ_data_end = 2030, verbose = 2):
+    def __init__(self, name, pops, progs, data_start = 2000, data_end = 2015, verbose = 2):
         self.sheet_names = OrderedDict([ \
             ('instr', 'Instructions'), \
             ('meta','Populations & programs'), \
@@ -333,8 +349,6 @@ class OptimaWorkbook:
         self.progs = progs
         self.data_start = data_start
         self.data_end = data_end
-        self.econ_data_start = data_start
-        self.econ_data_end = econ_data_end
         self.verbose = verbose
         self.book = None
         self.sheets = None
@@ -344,16 +358,20 @@ class OptimaWorkbook:
         self.pop_range = None
         self.ref_pop_range = None
         self.ref_prog_range = None
+        self.years_range = years_range(self.data_start, self.data_end)
 
         self.npops = len(pops)
         self.nprogs = len(progs)
 
     def emit_content_block(self, name, current_row, row_names, column_names, data = None, \
-        row_format = OptimaFormats.GENERAL, assumption = False, row_levels = None):
+        row_format = OptimaFormats.GENERAL, assumption = False, row_levels = None, \
+        assumption_properties = None):
         content = OptimaContent(name, row_names, column_names, data)
         content.set_row_format(row_format)
         if assumption:
             content.add_assumption()
+        if assumption_properties:
+            content.set_assumption_properties(assumption_properties)
         if row_levels is not None:
             content.set_row_levels(row_levels)
         the_range = TitledRange(self.current_sheet, current_row, content)
@@ -408,8 +426,9 @@ class OptimaWorkbook:
         self.current_sheet.set_column(2,2,15)
         self.current_sheet.set_column(3,3,40)
         self.current_sheet.set_column(6,6,12)
-        self.current_sheet.set_column(7,7,12)
-        self.current_sheet.set_column(8,8,12)
+        self.current_sheet.set_column(7,7,16)
+        self.current_sheet.set_column(8,8,16)
+        self.current_sheet.set_column(9,9,12)
         current_row = 0
 
         pop_content = make_populations_range('Populations', self.pops)
@@ -421,8 +440,9 @@ class OptimaWorkbook:
         current_row = self.prog_range.emit(self.formats, rc_title_align = 'left')
 
         self.ref_pop_range = self.pop_range.param_refs()
-
         self.ref_prog_range = self.prog_range.param_refs()
+        self.ref_females_range = filter_by_properties(self.ref_pop_range, self.pops, {'female':True})
+        self.ref_males_range = filter_by_properties(self.ref_pop_range, self.pops, {'male':True})
 
     def generate_costcov(self):
         row_levels = ['Coverage', 'Cost']
@@ -441,7 +461,7 @@ class OptimaWorkbook:
         current_row = 0
 
         for name in ['Percentage of people who die from non-HIV-related causes per year', \
-        'Prevalence of any ulcerative STIs', 'Tuberculosis prevalence']:
+        'Prevalence of any ulcerative STIs', 'Prevalence of any discharging STIs', 'Tuberculosis prevalence']:
             current_row = self.emit_ref_years_block(name, current_row, self.pop_range, row_format = OptimaFormats.DECIMAL_PERCENTAGE, assumption = True)
 
     def generate_opt(self):
@@ -460,24 +480,22 @@ class OptimaWorkbook:
         current_row = self.emit_years_block('Number of people on subsequent lines of treatment', current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption = True)
         current_row = self.emit_years_block('Treatment eligibility criterion', current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption = True)
         current_row = self.emit_ref_years_block('Percentage of people covered by pre-exposure prophylaxis', current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
-        current_row = self.emit_ref_years_block('Percentage of people covered by post-exposure prophylaxis', current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
-        current_row = self.emit_years_block('Number of women on PMTCT (Option B/B+)', current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption = True)
-        current_row = self.emit_ref_years_block('Birth rate (births per woman per year)', current_row, self.pop_range, row_format = OptimaFormats.NUMBER, assumption = True)
-        current_row = self.emit_years_block('Percentage of HIV-positive women who breastfeed', current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption = True)
+        current_row = self.emit_years_block('Number (or percentage) of women on PMTCT (Option B/B+)', current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption = True)
+        current_row = self.emit_years_block('Birth rate (births per woman per year)', current_row, self.ref_females_range, row_format = OptimaFormats.NUMBER, assumption = True)
+        current_row = self.emit_years_block('Percentage of HIV-positive women who breastfeed', current_row, ['Total'], row_format = OptimaFormats.PERCENTAGE, assumption = True)
 
     def generate_sex(self):
         current_row = 0
-        names_formats = [('Average number of acts with regular partners per person per year', OptimaFormats.GENERAL), \
-        ('Average number of acts with casual partners per person per year', OptimaFormats.GENERAL), \
-        ('Average number of acts with commercial partners per person per year', OptimaFormats.GENERAL), \
-        ('Percentage of people who used a condom at last act with regular partners', OptimaFormats.PERCENTAGE), \
-        ('Percentage of people who used a condom at last act with casual partners', OptimaFormats.PERCENTAGE), \
-        ('Percentage of people who used a condom at last act with commercial partners', OptimaFormats.PERCENTAGE), \
-        ('Percentage of males who have been circumcised', OptimaFormats.PERCENTAGE), \
-        ('Number of voluntary medical male circumcisions performed', OptimaFormats.GENERAL)]
+        names_formats_ranges = [('Average number of acts with regular partners per person per year', OptimaFormats.GENERAL, self.ref_pop_range), \
+        ('Average number of acts with casual partners per person per year', OptimaFormats.GENERAL, self.ref_pop_range), \
+        ('Average number of acts with commercial partners per person per year', OptimaFormats.GENERAL, self.ref_pop_range), \
+        ('Percentage of people who used a condom at last act with regular partners', OptimaFormats.PERCENTAGE, self.ref_pop_range), \
+        ('Percentage of people who used a condom at last act with casual partners', OptimaFormats.PERCENTAGE, self.ref_pop_range), \
+        ('Percentage of people who used a condom at last act with commercial partners', OptimaFormats.PERCENTAGE, self.ref_pop_range), \
+        ('Percentage of males who have been circumcised', OptimaFormats.PERCENTAGE, self.ref_males_range)]
 
-        for (name, row_format) in names_formats:
-            current_row = self.emit_ref_years_block(name, current_row, self.pop_range, row_format = row_format, assumption = True)
+        for (name, row_format, row_range) in names_formats_ranges:
+            current_row = self.emit_years_block(name, current_row, row_range, row_format = row_format, assumption = True)
 
     def generate_inj(self):
         current_row = 0
@@ -533,13 +551,13 @@ class OptimaWorkbook:
         [0.0036, 0.0036, 0.0058, 0.0088, 0.059, 0.3230, 0.2300, 2.17], [0.0029, 0.0029, 0.0048, 0.0750, 0.0540, 0.2960, 0.1500, 1.27], \
         [0.0044, 0.0044, 0.0071, 0.0101, 0.079, 0.4320, 0.3000, 3.71], OptimaFormats.DECIMAL_PERCENTAGE), \
         ('Relative transmissibility', \
-        ['Condom use','Circumcision','Diagnosis behavior change','Ulcerative STI cofactor increase','Opiate substitution therapy',\
+        ['Condom use','Circumcision','Diagnosis behavior change','Ulcerative STI cofactor increase','Discharging STI cofactor increase','Opiate substitution therapy',\
         'PMTCT','Antiretroviral therapy', 'Pre-exposure prophylaxis'], \
-        [0.05, 0.42, 1.00, 2.65, 0.46, 0.10, 0.30, 0.275], [0.025, 0.33, 0.32, 1.35, 0.32, 0.07, 0.10, 0.20], \
-        [0.20, 0.53, 1.00, 5.19, 0.67, 0.18, 0.50, 0.35], OptimaFormats.PERCENTAGE), \
+        [0.05, 0.42, 1.00, 2.65, 1.00, 0.46, 0.10, 0.30, 0.275], [0.025, 0.33, 0.32, 1.35, 1.00, 0.32, 0.07, 0.10, 0.20], \
+        [0.20, 0.53, 1.00, 5.19, 1.35, 0.67, 0.18, 0.50, 0.35], OptimaFormats.PERCENTAGE), \
         ('Disutility weights', \
         ['Untreated HIV, acute','Untreated HIV, CD4(>500)','Untreated HIV, CD4(350-500)','Untreated HIV, CD4(200-350)', \
-        'Untreated HIV, CD4(<200)','Treated HIV'], [0.05, 0.05, 0.10, 0.15, 0.50, 0.05], [None]*6, [None]*6, OptimaFormats.NUMBER)]
+        'Untreated HIV, CD4(50-200)','Untreated HIV, CD4(<50)','Treated HIV'], [0.146, 0.008, 0.020, 0.070, 0.265, 0.547, 0.053], [0.096, 0.005, 0.013, 0.048, 0.114, 0.382, 0.034], [0.205, 0.011, 0.029, 0.094, 0.474, 0.715, 0.079], OptimaFormats.NUMBER)]
 
         for (name, row_names, best, low, high, format) in names_rows_data_format:
             current_row = self.emit_constants_block(name, current_row, row_names, best, low, high, format)
@@ -552,19 +570,19 @@ class OptimaWorkbook:
         'Domestic HIV spending', 'Global Fund HIV commitments', 'PEPFAR HIV commitments', \
         'Other international HIV commitments', 'Private HIV spending']
 
-        econ_years_range = years_range(self.econ_data_start, self.econ_data_end)
+        assumption_properties = {'title':'Growth assumptions', 'connector':'AND', 'columns':['best','low','high']}
 
         for name in names:
-            current_row = self.emit_content_block(name, current_row, ['Total'], econ_years_range, assumption = True, \
-                row_format = OptimaFormats.SCIENTIFIC)
+            current_row = self.emit_content_block(name, current_row, ['Total'], self.years_range, assumption = True, \
+                row_format = OptimaFormats.SCIENTIFIC, assumption_properties = assumption_properties)
 
         names_rows = [('HIV-related health care costs (excluding treatment)', \
-        ['Acute infection','CD4(>500)','CD4(350-500)','CD4(200-350)','CD4(50-200)','CD4(<200)']), \
+        ['Acute infection','CD4(>500)','CD4(350-500)','CD4(200-350)','CD4(50-200)','CD4(<50)']), \
         ('Social mitigation costs', \
-        ['Acute infection', 'CD4(>500)', 'CD4(350-500)', 'CD4(200-350)', 'CD4(50-200)','CD4(<200)'])]
+        ['Acute infection', 'CD4(>500)', 'CD4(350-500)', 'CD4(200-350)', 'CD4(50-200)','CD4(<50)'])]
         for (name, row_names) in names_rows:
-            current_row = self.emit_content_block(name, current_row, row_names, econ_years_range, assumption = True, \
-                row_format = OptimaFormats.NUMBER)
+            current_row = self.emit_content_block(name, current_row, row_names, self.years_range, assumption = True, \
+                row_format = OptimaFormats.NUMBER, assumption_properties = assumption_properties)
 
     def generate_instr(self):
         current_row = 0
@@ -572,23 +590,20 @@ class OptimaWorkbook:
         self.current_sheet.merge_range('A1:A3', 'O P T I M A', self.formats.formats['info_header'])
         current_row = 3
         current_row = self.formats.write_info_line(self.current_sheet, current_row)
-        current_row = self.formats.write_info_block(self.current_sheet, current_row, row_height=40, text='Welcome to the Optima data entry spreadsheet. This is where all data for the model will be entered. At first glance the spreadsheet looks complicated and confusing. Unfortunately, it is. So please ask me if you need help rather than struggle and suffer in silence!')
+        current_row = self.formats.write_info_block(self.current_sheet, current_row, row_height=65, text='Welcome to the Optima data entry spreadsheet. This is where all data for the model will be entered. At first glance the spreadsheet looks complicated and confusing. Unfortunately, it is. So please ask someone from the Optima development team if you need help, or use the default contact (info@optimamodel.com).')
         current_row = self.formats.write_info_block(self.current_sheet, current_row, text='I. LAYOUT OF THE SPREADSHEET', row_format='grey_bold')
         current_row = self.formats.write_info_block(self.current_sheet, current_row, text='This spreadsheet is divided into 12 sheets. All sheets need to be completed, except where noted below.')
         current_row = self.formats.write_info_block(self.current_sheet, current_row, text='II. HOW TO ENTER DATA', row_format='grey_bold')
-        current_row = self.formats.write_info_block(self.current_sheet, current_row, row_height=60, text='Do not enter anything except cold, hard, actual data! Optima will interpolate between data points, so only enter data in the years that they belong. In addition, please add notes (either as comments for a given cell or in the blank cells to the right of each row) about where the data came from. This is very important! If a given data point is assumed, it is very important that you add a comment, since otherwise you will cause endless grief to the poor schmuck trying to figure out what you did.')
+        current_row = self.formats.write_info_block(self.current_sheet, current_row, row_height=80, text='Do not enter anything except actual data, apart from the small number of instances which allows optional input of output from other models for comparison and verification! Optima will fit to actual data and will interpolate between data points, so only enter data in the years that they belong. In addition, please feel free to add notes (either as comments for a given cell or in the blank cells to the right of each row) about the source of the data.')
         current_row = self.formats.write_info_block(self.current_sheet, current_row, 'III. WHAT CAN BE LEFT BLANK', row_format='grey_bold')
-        current_row = self.formats.write_info_block(self.current_sheet, current_row, add_line = False, text="It's a bit confusing what can and can't be left blank, but here are a few general principles:")
+        current_row = self.formats.write_info_block(self.current_sheet, current_row, add_line = False, text="It can be confusing what can and cannot be left blank, but here are a few general principles:")
         current_row = self.formats.write_info_block(self.current_sheet, current_row, add_line = False, text='* Nothing on the "Populations and programs" sheet can be blank.')
-        current_row = self.formats.write_info_block(self.current_sheet, current_row, add_line = False, row_height=60, text='* For each parameter (as in, row in the worksheet), there needs to be at least one data point entered. The only exception to this is the sheet "Optional indicators", which may be left blank. If data are not available for a particular indicator, enter an assumption in the "Assumption" column, with a comment explaining how that value was arrived at.')
-        current_row = self.formats.write_info_block(self.current_sheet, current_row, text="* Economic data only need to be entered if you're performing economic analyses.")
+        current_row = self.formats.write_info_block(self.current_sheet, current_row, add_line = False, row_height=57, text='* For each parameter (as in, row in the worksheet), there needs to be at least one data point entered. The only exception to this is the sheet "Optional indicators", which may be left blank. If data are not available for a particular indicator, enter an assumption in the "Assumption" column, with a comment explaining how that value was derived.')
+        current_row = self.formats.write_info_block(self.current_sheet, current_row, text="* Economic data only need to be entered if you are performing economic analyses.")
         current_row = self.formats.write_info_block(self.current_sheet, current_row, text='If a parameter is left completely blank, it will be assumed to be zero.')
         current_row = self.formats.write_info_block(self.current_sheet, current_row, text='IV. QUESTIONS', row_format='grey_bold')
         current_row = self.formats.write_info_block(self.current_sheet, current_row, text='If you have any questions, please contact us on')
         current_row = self.formats.write_info_block(self.current_sheet, current_row, text='mailto:info@optimamodel.com', row_format='info_url')
-        current_row = self.formats.write_info_block(self.current_sheet, current_row, text='Thanks!')
-        current_row = self.formats.write_info_block(self.current_sheet, current_row, add_line = False, text='Cliff Kerr')
-        current_row = self.formats.write_info_block(self.current_sheet, current_row, add_line = False, text='December 19th, 2014')
 
     def create(self, path):
         if self.verbose >=1: 

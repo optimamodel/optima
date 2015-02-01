@@ -18,23 +18,34 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       var statusEnum = {
         NOT_RUNNING: { text: "", isActive: false },
         RUNNING: { text: "Optimization is running", isActive: true },
-        REQUESTED_TO_STOP : { text:"Optimization is requested to stop", isActive: true }
+        REQUESTED_TO_STOP : { text:"Optimization is requested to stop", isActive: true },
+        STOPPING : { text:"Optimization is stopping", isActive: true },
+        CHECKING: {text:"Checking for existing optimization", isActive: false}
       };
 
       $scope.optimizationStatus = statusEnum.NOT_RUNNING;
+      $scope.optimizations = [];
 
-      $scope.optimizations = undefined;
+      // According to angular best-practices we should wrap every object/value
+      // inside a wrapper object. This is due the fact that directives like ng-if
+      // always create a child scope & the reference can get lost.
+      // see https://github.com/angular/angular.js/wiki/Understanding-Scopes
+      $scope.state = {
+        activeOptimizationName: undefined,
+        optimisationGraphs: [],
+        financialGraphs: [],
+        radarCharts: [],
+        pieCharts: [],
+        stackedBarCharts: []
+      };
 
-      if (optimizations && optimizations.data) {
-        $scope.optimizations = optimizations.data.optimizations;
-      }
       // cache placeholder
       var cachedResponse = null;
 
       // Set defaults
       $scope.params = {};
-      // Default time limit is 10 seconds
-      $scope.params.timelimit = 60;
+      // Default time limit is 10 hours
+      $scope.params.timelimit = 3600; // TODO: add testing option
 
       // Objectives
       $scope.params.objectives = {};
@@ -45,7 +56,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       $scope.params.objectives.outcome.inci = false;
       $scope.params.objectives.outcome.daly = false;
       $scope.params.objectives.outcome.death = false;
-      $scope.params.objectives.outcome.cost = false;
+      $scope.params.objectives.outcome.costann = false;
 
       // Money objectives defaults
       $scope.params.objectives.money = {};
@@ -103,21 +114,12 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
         }
       }
 
-      if ($scope.optimizations && $scope.optimizations[0]) {
-        _.extend($scope.params.objectives, $scope.optimizations[0].objectives);
-        _.extend($scope.params.constraints, $scope.optimizations[0].constraints);
-      }
-
     var optimizationTimer;
-
-    var linesStyle = ['__blue', '__green', '__red', '__orange', '__violet',
-      '__black', '__light-orange', '__light-green'];
 
     var linesGraphOptions = {
       height: 200,
       width: 320,
       margin: CONFIG.GRAPH_MARGINS,
-      linesStyle: linesStyle,
       xAxis: {
         axisLabel: 'Year',
         tickFormat: function (d) {
@@ -173,10 +175,11 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
           right: 100,
           bottom: 20,
           left: 100
-        }
+        },
+        title: data.name
       };
 
-      graphData = _(data.val).map(function (value, index) {
+      graphData = _(data).map(function (value, index) {
         return { value: value, label: legend[index] };
       });
 
@@ -193,12 +196,12 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
 
       var charts = [];
 
-      if (data.pie1) {
-        charts.push(generatePieChart(data.pie1, data.legend));
+      if (data[0] && data[0].piedata) {
+        charts.push(generatePieChart(data[0].piedata, data[0].legend));
       }
 
-      if (data.pie2) {
-        charts.push(generatePieChart(data.pie2, data.legend));
+      if (data[1] && data[1].piedata) {
+        charts.push(generatePieChart(data[1].piedata, data[0].legend)); // not set for data[1]
       }
 
       return charts;
@@ -212,14 +215,13 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
 
       var options = {
         legend: [],
-        linesStyle: linesStyle,
-        title: 'Allocation'
+        title: data.name
       };
 
-      graphData[0].axes = _(data.val).map(function (value, index) {
+      //TODO @NikGraph @DEvseev - make a stack chart now then pie.val is a combination of arrays (one per population)
+      graphData[0].axes = _(data.best).map(function (value, index) {
         return { value: value, axis: legend[index] };
       });
-      options.legend.push(data.name);
 
       return {
         'data': graphData,
@@ -235,12 +237,53 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
 
       var charts = [];
 
-      if (data.pie1) {
-        charts.push(generateRadarChart(data.pie1, data.legend));
+      if (data[0] && data[0].radardata) {
+        charts.push(generateRadarChart(data[0].radardata, data[0].legend));
       }
 
-      if (data.pie2) {
-        charts.push(generateRadarChart(data.pie2, data.legend));
+      if (data[1] && data[1].radardata) {
+        charts.push(generateRadarChart(data[1].radardata, data[0].legend)); // not set for data[1]
+      }
+
+      return charts;
+    };
+
+    /**
+     * Returns a prepared chart object for a pie chart.
+     */
+    var generateStackedBarChart = function(yData, xData, legend, title) {
+      var graphData = [];
+
+      var options = {
+        height: 200,
+        width: 700,
+        margin: CONFIG.GRAPH_MARGINS,
+        xAxis: {
+          axisLabel: 'Year'
+        },
+        yAxis: {
+          axisLabel: ''
+        },
+        legend: legend,
+        title: title
+      };
+
+      graphData = _.zip(xData, yData);
+      return {
+        'data': {bars: graphData},
+        'options': options
+      };
+    };
+
+    /**
+     * Returns all stacked bar charts.
+     */
+    var prepareStackedBarCharts = function (data) {
+      var charts = [];
+
+      if (data.alloc && data.alloc.bardata) {
+        charts.push(generateStackedBarChart(data.alloc.bardata, data.alloc.xdata, data.alloc.legend,
+          data.alloc.bardata.title));
       }
 
       return charts;
@@ -258,6 +301,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
 
       _($scope.types.population).each(function (type) {
 
+        if (type === undefined) return;
         var data = response[type.id];
         if (data !== undefined) {
 
@@ -299,42 +343,72 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     var prepareFinancialGraphs = function(graphData) {
       var graphs = [];
 
+      if (graphData === undefined) return graphs;
       _($scope.types.financial).each(function (type) {
-        // costcur = cost for current people living with HIV
-        // costfut = cost for future people living with HIV
-        // ann = annual costs
-        // cum = cumulative costs
-        if (graphData[type.id] !== undefined) {
-          if (type.annual && graphData[type.id].ann) {
-            var annualData = graphData[type.id].ann;
-            graphs.push(generateFinancialGraph(annualData));
-          }
+        if (type === undefined) return;
+        // existing = cost for current people living with HIV
+        // future = cost for future people living with HIV
+        // costann = annual costs
+        // costcum = cumulative costs
+        if (type.annual) {
+          var annualData = graphData.costann? graphData.costann[type.id][$scope.types.annualCost]:undefined;
+          if(annualData) graphs.push(generateFinancialGraph(annualData));
+        }
 
-          if (type.cumulative && graphData[type.id].cum) {
-            var cumulativeData = graphData[type.id].cum;
-            graphs.push(generateFinancialGraph(cumulativeData));
-          }
+        if (type.cumulative) {
+          var cumulativeData = graphData.costcum? graphData.costcum[type.id]:undefined;
+          if (cumulativeData) graphs.push(generateFinancialGraph(cumulativeData));
         }
       });
       return graphs;
     };
 
+
+    var prepareOutcomeChart = function(data) {
+      if (data === undefined) return undefined;
+
+      var chart = {
+        options: angular.copy(linesGraphOptions),
+        data: {
+          lines: [],
+          scatter: []
+        }
+      };
+      chart.options.height = 320;
+      chart.options.margin.bottom = 165;
+
+      chart.options.title = data.title;
+      chart.options.xAxis.axisLabel = data.xlabel;
+      chart.options.yAxis.axisLabel = data.ylabel;
+      chart.data.lines.push(_.zip(data.xdata, data.ydata));
+      return chart;
+    };
+
     // makes all graphs to recalculate and redraw
     function drawGraphs() {
-      if (!cachedResponse || !cachedResponse.graph) return;
-      $scope.optimisationGraphs = prepareOptimisationGraphs(cachedResponse.graph);
-      $scope.financialGraphs = prepareFinancialGraphs(cachedResponse.graph);
-      $scope.radarCharts = prepareRadarCharts(cachedResponse.pie);
-      $scope.pieCharts = preparePieCharts(cachedResponse.pie);
+      if (!cachedResponse || !cachedResponse.plot) return;
+      $scope.state.pieCharts = (cachedResponse.plot[0].kind==='constant')? preparePieCharts(cachedResponse.plot[0].alloc):[];
+      $scope.state.radarCharts = (cachedResponse.plot[0].kind==='constant')? prepareRadarCharts(cachedResponse.plot[0].alloc):[];
+      $scope.state.stackedBarCharts = (cachedResponse.plot[0].kind==='range' )? prepareStackedBarCharts(cachedResponse.plot[0]):[];
+      $scope.state.outcomeChart = (cachedResponse.plot[0].kind==='constant')? prepareOutcomeChart(cachedResponse.plot[0].outcome):[];
+      $scope.state.optimisationGraphs = prepareOptimisationGraphs(cachedResponse.plot[0].multi);
+      $scope.state.financialGraphs = prepareFinancialGraphs(cachedResponse.plot[0].multi);
     }
 
     // makes all graphs to recalculate and redraw
-    var updateGraphs = function (data) {
-      if (data.graph !== undefined && data.pie !== undefined) {
+    function updateGraphs(data) {
+      /* new structure keeps everything together:
+       * data.plot[n].alloc => pie & radar (TODO radar to be changed)
+       * data.plot[n].multi => old line-scatterplots
+       * data.plot[n].outcome => new line plot
+       * n - sequence number of saved optimization
+       */
+      if (data && data.plot && data.plot.length > 0) {
         cachedResponse = data;
+        if (data.plot[0]) graphTypeFactory.enableAnnualCostOptions($scope.types, data.plot[0].multi);
         drawGraphs();
       }
-    };
+    }
 
     $scope.validations = {
       years :{
@@ -403,11 +477,11 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
           end: end,
           until: until,
           valid: (isNaN(start) ||  isNaN(end) || isNaN(until) || end <= start || until <= start) === false
-        }
+        };
        }
        return {
         valid:false
-       }
+      };
     }
 
     function validateObjectivesToMinimize(){
@@ -417,7 +491,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       return {
         checkedPrograms : checkedPrograms,
         valid: checkedPrograms.length > 0
-      }
+      };
     }
 
     function validateOutcomeWeights(){
@@ -428,7 +502,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       });
       return {
         checkedPrograms : checkedPrograms,
-        valid: checkedPrograms.length == 0
+        valid: checkedPrograms.length === 0
       };
     }
 
@@ -445,6 +519,15 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     $scope.validateVariableBudgets = validateVariableBudgets;
     $scope.validateObjectivesToMinimize = validateObjectivesToMinimize;
     $scope.validateOutcomeWeights = validateOutcomeWeights;
+
+    /**
+     * Returns true if at least one chart is available
+     */
+    $scope.someGraphAvailable = function() {
+      var result = !(_.isEmpty($scope.state.radarCharts)) || !(_.isEmpty($scope.state.optimisationGraphs)) ||
+        !(_.isEmpty($scope.state.financialGraphs)) || !(_.isEmpty($scope.state.pieCharts)) || !(_.isEmpty($scope.state.stackedBarCharts));
+      return result;
+    };
 
     /**
      * Update the variables depending on the range in years.
@@ -529,32 +612,44 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       $scope.activeTab = tabNum;
     };
 
+    $scope.initTimer = function(status) {
+      if ( !angular.isDefined( optimizationTimer ) ) {
+        // Keep polling for updated values after every 5 seconds till we get an error.
+        // Error indicates that the model is not optimizing anymore.
+        optimizationTimer = $interval(checkWorkingOptimization, 10000, 0, false);
+        $scope.optimizationStatus = status;
+        $scope.errorText = '';
+        // start cfpLoadingBar loading
+        // calculate the number of ticks in timelimit
+        var val = ($scope.params.timelimit * 1000) / 250;
+        // callback function in start to be called in place of _inc()
+        cfpLoadingBar.start(function () {
+          if (cfpLoadingBar.status() >= 0.95) {
+            return;
+          }
+          var pct = cfpLoadingBar.status() + (0.95/val);
+          cfpLoadingBar.set(pct);
+        });
+      }
+    };
+
     $scope.startOptimization = function () {
       $http.post('/api/analysis/optimization/start', $scope.params, {ignoreLoadingBar: true})
         .success(function (data, status, headers, config) {
           if (data.status == "OK" && data.join) {
-            // Keep polling for updated values after every 5 seconds till we get an error.
-            // Error indicates that the model is not calibrating anymore.
-            optimizationTimer = $interval(checkWorkingOptimization, 5000, 0, false);
-            $scope.optimizationStatus = statusEnum.RUNNING;
-            $scope.errorText = '';
-
-            // start cfpLoadingBar loading
-            // calculate the number of ticks in timelimit
-            var val = ($scope.params.timelimit * 1000) / 250;
-            // callback function in start to be called in place of _inc()
-            cfpLoadingBar.start(function () {
-              if (cfpLoadingBar.status() >= 0.95) {
-                return;
-              }
-              var pct = cfpLoadingBar.status() + (0.95/val);
-              cfpLoadingBar.set(pct);
-            });
-
+            $scope.initTimer(statusEnum.RUNNING);
           } else {
             console.log("Cannot poll for optimization now");
           }
         });
+    };
+
+    $scope.checkExistingOptimization = function(newTab, oldTab) {
+      if(newTab !=3) {
+        stopTimer();
+      } else {
+        $scope.initTimer(statusEnum.CHECKING);
+      }
     };
 
     function checkWorkingOptimization() {
@@ -563,12 +658,14 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
           if (data.status == 'Done') {
             stopTimer();
           } else {
-            updateGraphs(data);
+            if (data.status == 'Running') $scope.optimizationStatus = statusEnum.RUNNING;
+            if (data.status == 'Stopping') $scope.optimizationStatus = statusEnum.STOPPING;
           }
+          updateGraphs(data); // otherwise they might never get updated!
         })
         .error(function(data, status, headers, config) {
           if (data && data.exception) {
-            $scope.errorText = data.exception
+            $scope.errorText = data.exception;
           }
           stopTimer();
         });
@@ -608,8 +705,29 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     });
 
     $scope.saveOptimization = function () {
-      $http.post('/api/analysis/optimization/save')
-        .success(updateGraphs);
+      var doSave = function (name, params) {
+        $http.post('/api/analysis/optimization/save', {
+          name: name, objectives: params.objectives, constraints: params.constraints
+        })
+          .success(function (data) {
+            if (data.optimizations) {
+              $scope.initOptimizations(data.optimizations, name);
+            }
+          });
+      };
+
+      modalService.showSaveOptimization($scope.state.activeOptimizationName,
+        function (optimizationName) {
+          doSave(optimizationName, $scope.params);
+        }
+      );
+    };
+
+    $scope.deleteOptimization = function (optimizationName) {
+      $http.post('/api/analysis/optimization/remove/' + optimizationName)
+        .success(function(data){
+          $scope.initOptimizations(data.optimizations, undefined);
+        });
     };
 
     $scope.revertOptimization = function () {
@@ -682,27 +800,88 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     var updateChartsForDataExport = function() {
       $scope.chartsForDataExport = [];
 
-      if ( $scope.pieCharts ) {
-        $scope.chartsForDataExport = $scope.chartsForDataExport.concat($scope.pieCharts);
+      if ( $scope.state.pieCharts && !$scope.types.plotUncertainties ) {
+        $scope.chartsForDataExport = $scope.chartsForDataExport.concat($scope.state.pieCharts);
       }
 
-      if ( $scope.radarCharts ) {
-        $scope.chartsForDataExport = $scope.chartsForDataExport.concat($scope.radarCharts);
+      if ( $scope.state.radarCharts && $scope.types.plotUncertainties ) {
+        $scope.chartsForDataExport = $scope.chartsForDataExport.concat($scope.state.radarCharts);
       }
 
-      if ( $scope.optimisationGraphs ) {
-        $scope.chartsForDataExport = $scope.chartsForDataExport.concat($scope.optimisationGraphs);
+      if ( $scope.state.stackedBarCharts && $scope.types.timeVaryingOptimizations ) {
+        $scope.chartsForDataExport = $scope.chartsForDataExport.concat($scope.state.stackedBarCharts);
       }
 
-      if ( $scope.financialGraphs ) {
-        $scope.chartsForDataExport = $scope.chartsForDataExport.concat($scope.financialGraphs);
+      if ( $scope.state.outcomeChart ) {
+        $scope.chartsForDataExport.push($scope.state.outcomeChart);
       }
+
+      if ( $scope.state.optimisationGraphs ) {
+        $scope.chartsForDataExport = $scope.chartsForDataExport.concat($scope.state.optimisationGraphs);
+      }
+
+      if ( $scope.state.financialGraphs ) {
+        $scope.chartsForDataExport = $scope.chartsForDataExport.concat($scope.state.financialGraphs);
+      }
+
     };
 
-    $scope.$watch('pieCharts', updateChartsForDataExport, true);
-    $scope.$watch('radarCharts', updateChartsForDataExport, true);
-    $scope.$watch('optimisationGraphs', updateChartsForDataExport, true);
-    $scope.$watch('financialGraphs', updateChartsForDataExport, true);
+    $scope.optimizationByName = function(name) {
+      return _($scope.optimizations).find(function(item) {
+        return item.name == name;
+      });
+    };
+
+    /**
+     * Changes active constrains and objectives to the values in provided optimization
+     * @param optimization {Object}
+     */
+    $scope.applyOptimization = function(name) {
+      var optimization = $scope.optimizationByName(name);
+      _.extend($scope.params.objectives, optimization.objectives);
+      _.extend($scope.params.constraints, optimization.constraints);
+      if (optimization.result) {
+        updateGraphs(optimization.result);
+      }
+      constructOptimizationMessage();
+    };
+
+    // apply default optimization on page load
+    $scope.initOptimizations = function(optimizations, name) {
+      if (!optimizations) return;
+
+      $scope.optimizations = angular.copy(optimizations);
+
+      var nameExists = name && _.some(_($scope.optimizations), function(item) {
+        return item.name == name;
+      });
+
+      if (nameExists) {
+        $scope.state.activeOptimizationName = name;
+      } else {
+        $scope.state.activeOptimizationName = undefined;
+        var optimization = _($scope.optimizations).first();
+        if (optimization) {
+          $scope.state.activeOptimizationName = optimization.name;
+        }
+      }
+      $scope.applyOptimization($scope.state.activeOptimizationName);
+    };
+
+    // apply existing optimization data, if present
+    if (optimizations && optimizations.data) {
+      $scope.initOptimizations(optimizations.data.optimizations);
+    }
+
+    $scope.$watch('state.pieCharts', updateChartsForDataExport, true);
+    $scope.$watch('state.outcomeChart', updateChartsForDataExport, true);
+    $scope.$watch('state.radarCharts', updateChartsForDataExport, true);
+    $scope.$watch('state.optimisationGraphs', updateChartsForDataExport, true);
+    $scope.$watch('state.financialGraphs', updateChartsForDataExport, true);
+    $scope.$watch('state.stackedBarCharts', updateChartsForDataExport, true);
+    $scope.$watch('types.timeVaryingOptimizations', updateChartsForDataExport, true);
+    $scope.$watch('types.plotUncertainties', updateChartsForDataExport, true);
+    $scope.$watch('activeTab', $scope.checkExistingOptimization, true);
 
   });
 });

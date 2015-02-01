@@ -100,7 +100,7 @@ define(['angular', 'jquery', './svg-to-png', 'underscore'], function (angular, $
       if (!graph.data || !graph.options) return null;
 
       var exportable = {
-        name: graph.options.title || graph.title,
+        name: graph.options.title || 'Data',
         columns: []
       };
 
@@ -140,7 +140,7 @@ define(['angular', 'jquery', './svg-to-png', 'underscore'], function (angular, $
      */
     var linesExport = function (graph){
       var exportable = {
-        name: graph.options.title || graph.title,
+        name: graph.options.title || 'Data',
         columns: []
       };
 
@@ -181,7 +181,7 @@ define(['angular', 'jquery', './svg-to-png', 'underscore'], function (angular, $
      */
     var areasExport = function (graph){
       var exportable = {
-        name: graph.options.title || graph.title,
+        name: graph.options.title || 'Data',
         columns: []
       };
 
@@ -210,7 +210,7 @@ define(['angular', 'jquery', './svg-to-png', 'underscore'], function (angular, $
     var axesExport = function (graph){
       //x and y are not needed to be exported - they are just internal values to draw radar chart properly
       var exportable = {
-        name: graph.options.title,
+        name: graph.options.title || 'Data',
         columns: []
       };
 
@@ -234,7 +234,7 @@ define(['angular', 'jquery', './svg-to-png', 'underscore'], function (angular, $
     */
     var pieExport = function (graph){
       var exportable = {
-        name: graph.options.title || "Allocation",
+        name: graph.options.title || 'Data',
         columns: []
       };
 
@@ -243,6 +243,31 @@ define(['angular', 'jquery', './svg-to-png', 'underscore'], function (angular, $
         valueData.title = slice.label;
         valueData.data = [slice.value];
         exportable.columns.push(valueData);
+      });
+
+      return exportable;
+    };
+
+    /**
+    * Returns the normalized data ready to export for a stacked bar charts
+    */
+    var stackedBarsExport = function (chart){
+      var exportable = {
+        name: chart.options.title,
+        columns: []
+      };
+
+      var xData = {};
+      xData.title = chart.options.xAxis.axisLabel;
+      xData.data = _(chart.data.bars).map(function(bar) { return bar[0]; });
+      exportable.columns.push(xData);
+
+      _(chart.options.legend).each(function(title, index) {
+        var yData = {};
+        yData.title = title;
+
+        yData.data = _(chart.data.bars).map(function(bar) { return bar[1][index]; });
+        exportable.columns.push(yData);
       });
 
       return exportable;
@@ -261,27 +286,13 @@ define(['angular', 'jquery', './svg-to-png', 'underscore'], function (angular, $
       if(_.isEqual(Object.keys(chart.data),["lines", "scatter"])) { return linesExport(chart); }
       if(_.isEqual(Object.keys(chart.data),["areas"])) { return areasExport(chart); }
       if(_.isEqual(Object.keys(chart.data),["slices"])) { return pieExport(chart); }
+      if(_.isEqual(Object.keys(chart.data),["bars"])) { return stackedBarsExport(chart); }
       if(_.isEqual(chart.data[0] && Object.keys(chart.data[0]),["axes"])) { return axesExport(chart); }
       return null;
     };
 
-    /**
-     * Alerts a message to the user.
-     *
-     * @param {string} msg
-     */
-    var saySorry = function(msg) {
-      // to-do: this should be updated after the PR to use the modalService
-      if ( undefined !== msg ) {
-        return alert(msg);
-      } else {
-        return alert('Sorry, this chart cannot be exported');
-      }
-    };
-
     return {
       generateGraphAsPngOrJpeg: generateGraphAsPngOrJpeg,
-      saySorry: saySorry,
       getExportableFrom: getExportableFrom
     };
   }]);

@@ -32,7 +32,7 @@
     @include link-color($color-blue);
 
     &:hover {
-      @include link-color($color-red);
+      @include link-color(#54C1EA);
     }
   }
 

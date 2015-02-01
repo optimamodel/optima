@@ -4,8 +4,8 @@ def sanitize(arraywithnans):
         arraywithnans = array(arraywithnans) # Make sure it's an array
         sanitized = arraywithnans[~isnan(arraywithnans)]
         if len(sanitized)==0:
-                sanitized = 0
-                print('                WARNING, no data entered for this parameter, assuming 0')
+            sanitized = 0
+            print('                WARNING, no data entered for this parameter, assuming 0')
 
         return sanitized
 
@@ -66,7 +66,7 @@ def printarr(arr, arrformat='%0.2f  '):
     
     Example:
         from utils import printarr
-        from numpy import rand
+        from numpy import random
         printarr(rand(3,7,4))
     
     Version: 2014dec01 by cliffk

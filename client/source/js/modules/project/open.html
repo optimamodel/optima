@@ -9,9 +9,9 @@
       <th>Programs</th>
       <th>Data start year</th>
       <th>Data end year</th>
-      <th>Projected created on</th>
+      <th>Project created on</th>
       <th>Data uploaded on</th>
-      <th colspan="5">Actions</th>
+      <th colspan="7">Actions</th>
       </thead>
       <tbody>
       <tr ng-repeat="project in projects | orderBy: 'name'">
@@ -37,19 +37,25 @@
             {{ project.data_upload_time ? (project.data_upload_time | date:'yyyy-MM-dd HH:mm:ss') : 'No data uploaded'}}
         </td>
         <td>
-          <button class="btn __white" ng-click="open(project.name)">Open</button>
+          <button class="btn __green" ng-click="open(project.name, project.id)">Open project</button>
         </td>
         <td>
-          <button class="btn __white" ng-click="copy(project.name)">Copy</button>
+          <button class="btn" ng-click="copy(project.name, project.id)">Copy project</button>
         </td>
         <td>
-          <button class="btn __green" ng-click="edit(project.name)">Edit</button>
+          <button class="btn" ng-click="edit(project.name, project.id)">Edit project</button>
         </td>
         <td>
-		  <button class="btn __red" ng-click="remove($event, project.name, $index)">Delete</button>
+		      <button class="btn __red" ng-click="remove($event, project.name, project.id, $index)">Delete project</button>
         </td>
         <td>
-          <button class="btn __blue" ng-click="workbook(project.name)">Open data entry spreadsheet</button>
+          <button class="btn" ng-click="getData(project.name, project.id)">Download project</button>
+        </td>
+        <td>
+          <button class="btn" ng-click="preSetData(project.name, project.id)">Upload project</button>
+        </td>
+        <td>
+          <button class="btn" ng-click="workbook(project.name, project.id)">Download data entry spreadsheet</button>
         </td>
       </tr>
       </tbody>

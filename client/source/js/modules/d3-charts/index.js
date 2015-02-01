@@ -4,5 +4,6 @@ define([
   './line-scatter-directive',
   './pie-chart-directive',
   './stacked-area-directive',
+  './stacked-bar-directive',
   './radar-chart-directive'
 ], function () {});

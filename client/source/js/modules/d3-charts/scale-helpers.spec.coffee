@@ -44,3 +44,12 @@ define ['Source/modules/d3-charts/scale-helpers'], (scaleHelpers) ->
         expect(scaleHelpers.customTickFormat(200000, 'custom')).toBe('200K')
         expect(scaleHelpers.customTickFormat(300000000, 'custom')).toBe('300m')
         expect(scaleHelpers.customTickFormat(400000000000, 'custom')).toBe('400bn')
+
+    describe 'flexCeil', ->
+
+      it 'should round up to integer & for smaller than 1 to the first non zero decimal', ->
+        expect(scaleHelpers.flexCeil(100)).toBe(100)
+        expect(scaleHelpers.flexCeil(1.2)).toBe(2)
+        expect(scaleHelpers.flexCeil(0.2)).toBe(0.2)
+        expect(scaleHelpers.flexCeil(0.023)).toBe(0.03)
+        expect(scaleHelpers.flexCeil(0.000654)).toBe(0.0007)

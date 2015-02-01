@@ -40,14 +40,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           // reset graph types every time you come to this page
           angular.extend($scope.types, angular.copy(CONFIG.GRAPH_TYPES));
 
-          $scope.lineStyles = ['__blue', '__green', '__red', '__orange',
-            '__violet', '__black', '__light-orange', '__light-green'];
-
           linesGraphOptions = {
             height: 200,
             width: 320,
             margin: CONFIG.GRAPH_MARGINS,
-            linesStyle: $scope.lineStyles,
             xAxis: {
               axisLabel: 'Year',
               tickFormat: function (d) {
@@ -104,7 +100,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
          */
         var generateFinancialGraph = function (data) {
           var graph = generateGraph(data.data, data.xdata, data.title, data.legend, data.xlabel, data.ylabel);
-          graph.options.linesStyle = $scope.lineStyles;
           return graph;
         };
 
@@ -115,6 +110,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           if (!response) {
             return graphs;
           }
+          graphTypeFactory.enableAnnualCostOptions($scope.types, response);
 
           var graphs = [];
 
@@ -141,18 +137,18 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           });
 
           _($scope.types.financial).each(function (type) {
-            // costcur = cost for current people living with HIV
-            // costfut = cost for future people living with HIV
-            // ann = annual costs
-            // cum = cumulative costs
+            // existing = cost for current people living with HIV
+            // future = cost for future people living with HIV
+            // costann = annual costs
+            // costcum = cumulative costs
             if (type.annual) {
-              var annualData = response[type.id].ann;
-              graphs.push(generateFinancialGraph(annualData));
+              var annualData = response.costann[type.id][$scope.types.annualCost];
+              if(annualData) graphs.push(generateFinancialGraph(annualData));
             }
 
             if (type.cumulative) {
-              var cumulativeData = response[type.id].cum;
-              graphs.push(generateFinancialGraph(cumulativeData));
+              var cumulativeData = response.costcum[type.id];
+              if (cumulativeData) graphs.push(generateFinancialGraph(cumulativeData));
             }
           });
 

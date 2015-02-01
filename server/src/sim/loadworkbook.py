@@ -4,7 +4,7 @@ def loadworkbook(filename='example.xlsx', verbose=2):
     This data structure is used in the next step to update the corresponding model.
     The workbook is assumed to be in the format specified in example.xlsx.
     
-    Version: 2015jan13
+    Version: 2015jan26
     """
     
 
@@ -13,13 +13,12 @@ def loadworkbook(filename='example.xlsx', verbose=2):
     ###########################################################################
     
     from printv import printv
-    from numpy import nan, array # For reading in empty values
+    from numpy import nan # For reading in empty values
     from xlrd import open_workbook # For opening Excel workbooks
     from bunch import Bunch as struct # Replicate Matlab-like structure behavior
     from time import strftime # For determining when a spreadsheet was last uploaded
     printv('Loading data from %s...' % filename, 1, verbose)
     from programs import programs_for_input_key
-#    from makeccocs import default_init_coparams
 
         
     ###########################################################################
@@ -38,13 +37,16 @@ def loadworkbook(filename='example.xlsx', verbose=2):
     
     # Time data -- array sizes are time x population
     timedata = [
-                 ['Other epidemiology',  'epi',     ['death', 'stiprevulc', 'tbprev']], \
+                 ['Other epidemiology',  'epi',     ['death', 'stiprevulc', 'stiprevdis', 'tbprev']], \
                  ['Optional indicators', 'opt',     ['numtest', 'numdiag', 'numinfect', 'prev', 'death', 'newtreat']], \
                  ['Testing & treatment', 'txrx',    ['hivtest', 'aidstest', 'numfirstline', 'numsecondline', 'txelig', 'prep', 'numpmtct', 'birth', 'breast']], \
-                 ['Sexual behavior',     'sex',     ['numactsreg', 'numactscas', 'numactscom', 'condomreg', 'condomcas', 'condomcom', 'circum', 'numcircum']], \
-                 ['Injecting behavior',  'inj',     ['numinject', 'sharing', 'numost']], \
-                 ['Economics and costs', 'econ',    ['cpi', 'ppp', 'gdp', 'revenue', 'govtexpend', 'totalhealth', 'domestichealth', 'domestichiv', 'globalfund', 'pepfar', 'otherint', 'private', 'health', 'social']]
+                 ['Sexual behavior',     'sex',     ['numactsreg', 'numactscas', 'numactscom', 'condomreg', 'condomcas', 'condomcom', 'circum']], \
+                 ['Injecting behavior',  'inj',     ['numinject', 'sharing', 'numost']]
                 ]
+    
+    # Economics data -- like time data but with a different end
+    econdata = [['Economics and costs', 'econ',    ['cpi', 'ppp', 'gdp', 'revenue', 'govtexpend', 'totalhealth', 'domestichealth', 'domestichiv', 'globalfund', 'pepfar', 'otherint', 'private', 'health', 'social']]]
+
                  
     # Matrix data -- array sizes are population x population
     matrices = [
@@ -60,7 +62,7 @@ def loadworkbook(filename='example.xlsx', verbose=2):
                                                       ['recov',    ['gt500', 'gt350', 'gt200', 'gt50', 'aids']],\
                                                       ['fail',     ['first', 'second']],\
                                                       ['death',    ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'aids', 'treat', 'tb']],\
-                                                      ['eff',      ['condom', 'circ', 'dx', 'sti', 'ost', 'pmtct', 'tx', 'prep']],\
+                                                      ['eff',      ['condom', 'circ', 'dx', 'sti', 'dis', 'ost', 'pmtct', 'tx', 'prep']],\
                                                       ['disutil',  ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'aids','tx']]]]
                 ]
     
@@ -71,6 +73,7 @@ def loadworkbook(filename='example.xlsx', verbose=2):
     sheetstructure.cocodata = cocodata
     sheetstructure.keydata = keydata
     sheetstructure.timedata = timedata
+    sheetstructure.econdata = econdata
     sheetstructure.matrices = matrices
     sheetstructure.constants = constants
     
@@ -109,7 +112,7 @@ def loadworkbook(filename='example.xlsx', verbose=2):
             
             
             ## Calculate columns for which data are entered, and store the year ranges
-            if groupname in ['keydata', 'cocodata', 'timedata']  and name != 'econ': # Need to gather year ranges for epidemic etc. data
+            if groupname in ['keydata', 'cocodata', 'timedata']: # Need to gather year ranges for epidemic etc. data
                 data.epiyears = [] # Initialize epidemiology data years
                 for col in range(sheetdata.ncols):
                     thiscell = sheetdata.cell_value(1,col) # 1 is the 2nd row which is where the year data should be
@@ -129,11 +132,8 @@ def loadworkbook(filename='example.xlsx', verbose=2):
                     elif thiscell != '': # Nope, more years, keep going
                         data.econyears.append(float(thiscell)) # Add this year
             
-            if lastdatacol:    
+            if lastdatacol:  
                 assumptioncol = lastdatacol + 1 # The "OR" space is in between
-                ncolsperprog = 5 # Number of columns necessary for defining a single program; name, zero-spend-min, zero-spend-max, full-spend-min, full-spend-max
-                nprogblocks = 4 # Number of program blocks
-                programcols = assumptioncol + 3 + array([array(range(ncolsperprog))+(1+ncolsperprog)*i for i in range(nprogblocks)]) # Calculate which columns the program data is stored in
             
             
             
@@ -170,12 +170,21 @@ def loadworkbook(filename='example.xlsx', verbose=2):
                     elif groupname=='cocodata': 
                         data[name][subparlist[0]] = [] # Initialize coverage to an empty list -- i.e. data.costcov.cov
                         data[name][subparlist[1]] = [] # Initialize cost to an empty list -- i.e. data.costcov.cost
-                        
-                    elif groupname in ['keydata', 'timedata', 'matrices']: # It's basic data or a matrix: create an empty list
-                        thispar = subparlist[parcount] # Get the name of this parameter, e.g. 'popsize'                    
+                    
+                    # It's basic data or a matrix: create an empty list
+                    elif groupname in ['keydata', 'timedata', 'matrices']: 
+                        thispar = subparlist[parcount] # Get the name of this parameter, e.g. 'popsize'
                         data[name][thispar] = [] # Initialize to empty list
-    
-                    elif groupname=='constants': # It's a constant or a cost: create a structure
+                    
+                    # It's economics data
+                    elif groupname in ['econdata']: 
+                        thispar = subparlist[parcount] # Get the name of this parameter, e.g. 'popsize'
+                        data[name][thispar] = struct() # Create a structure since need to store future growth assumptions too
+                        data[name][thispar].past = [] # Initialize past data to empty list
+                        data[name][thispar].future = [] # Initialize future assumptions to empty list
+                    
+                    # It's a constant or a cost: create a structure
+                    elif groupname=='constants': 
                         thispar = subparlist[parcount][0] # Get the name of this parameter, e.g. 'trans'
                         data[name][thispar] = struct() # Need yet another structure if it's a constant!
                     
@@ -189,6 +198,7 @@ def loadworkbook(filename='example.xlsx', verbose=2):
                     
                     if subparam != '': # The subparameter name isn't blank, load something!
                         printv('Parameter: %s' % subparam, 4, verbose)
+                        
                         
                         # It's meta-data, split into pieces
                         if groupname=='metadata': 
@@ -206,6 +216,7 @@ def loadworkbook(filename='example.xlsx', verbose=2):
                                 data[name][thispar].client.append(thesedata[8])
                             if thispar=='progs':
                                 if not thesedata[0] in programs: programs[thesedata[0]] = []
+                                
                                 
                         # It's cost-coverage data, save the cost and coverage values separately
                         if groupname=='cocodata':
@@ -236,18 +247,30 @@ def loadworkbook(filename='example.xlsx', verbose=2):
                             thesedata = sheetdata.row_values(row, start_colx=2, end_colx=lastdatacol) # Data starts in 3rd column
                             thesedata = map(lambda val: nan if val=='' else val, thesedata) # Replace blanks with nan
                             assumptiondata = sheetdata.cell_value(row, assumptioncol)
-                            if assumptiondata != '': thesedata = [assumptiondata] # Replace the (presumably blank) data if a non-blank assumption has been entered
+                            if assumptiondata != '': # There's an assumption entered
+                                thesedata = [assumptiondata] # Replace the (presumably blank) data if a non-blank assumption has been entered
                             data[name][thispar].append(thesedata) # Store data
-
-                            for programname, pops in programs_for_input_key(thispar).iteritems():
+                            
+                            for programname, pops in programs_for_input_key(thispar).iteritems(): # Link with programs...?
                                 if programname in programs and not pops or pops==[''] or subparam in pops:
                                     programs[programname].append([[name, thispar], [subparam]])
+
+
+                        # It's economics data, append the data
+                        if groupname=='econdata': 
+                            thesedata = sheetdata.row_values(row, start_colx=2, end_colx=lastdatacol) # Data starts in 3rd column
+                            thesedata = map(lambda val: nan if val=='' else val, thesedata) # Replace blanks with nan
+                            futuredata = sheetdata.row_values(row, start_colx=assumptioncol, end_colx=assumptioncol+3) # Start from the assumption column and read 3
+                            data[name][thispar].past.append(thesedata) # Store data
+                            data[name][thispar].future.append(futuredata) # Store data
+                        
                         
                         # It's a matrix, append the data                                     
                         elif groupname=='matrices':
                             thesedata = sheetdata.row_values(row, start_colx=2, end_colx=sheetdata.ncols) # Data starts in 3rd column
                             thesedata = map(lambda val: 0 if val=='' else val, thesedata) # Replace blanks with 0
                             data[name][thispar].append(thesedata) # Store data
+                        
                         
                         # It's a constant, create a new dictionary entry
                         elif name=='const' or name=='cost':

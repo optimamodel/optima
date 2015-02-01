@@ -8,6 +8,7 @@ define([
   'ui.router',
   '../common/active-project-service',
   '../common/update-checkbox-on-click-directive',
+  '../common/file-upload-service',
   '../resources/project'
 ], function (angular) {
   'use strict';
@@ -15,6 +16,7 @@ define([
   return angular.module('app.project', [
     'app.active-project',
     'app.common.update-checkbox-on-click',
+    'app.common.file-upload',
     'app.resources.project',
     'ui.router'
   ])

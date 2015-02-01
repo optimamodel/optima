@@ -1,4 +1,4 @@
-def timevarying(allocpm, ntimepm=1, nprogs=None, t=None, totalspend=None):
+def timevarying(allocpm, ntimepm=1, nprogs=None, tvec=None, totalspend=None):
 
     """
     Determines allocation values over time for 2, 3 or 4 parameter time-varying
@@ -25,9 +25,9 @@ def timevarying(allocpm, ntimepm=1, nprogs=None, t=None, totalspend=None):
         raise Exception('Invalid number of parameters to define allocations over time')
 
     # Set t to be between 0 and 1, and get the number of time points
-    npts = len(t)
-    t = asarray(t) - t[0]
-    t = tile(t / float(max(t)), (nprogs, 1))
+    npts = len(tvec)
+    tvec = asarray(tvec) - tvec[0]
+    tvec = tile(tvec / float(max(tvec)), (nprogs, 1))
     
     if ntimepm == 1: # Non-time-varying optimisation
 
@@ -49,7 +49,7 @@ def timevarying(allocpm, ntimepm=1, nprogs=None, t=None, totalspend=None):
         shapepar = transpose(tile(gv, (npts, 1))) # Shape parameters
             
         # Calulate shape and scale up to initial allocation
-        timealloc = exp(power(-t, 2) * shapepar) * intalloc
+        timealloc = exp(power(-tvec, 2) * shapepar) * intalloc
             
         # Ensure that we have no negative entries - we shouldn't here though
         if (timealloc < 0).any(): maximum(timealloc, 0)
@@ -94,7 +94,7 @@ def timevarying(allocpm, ntimepm=1, nprogs=None, t=None, totalspend=None):
             inflection = transpose(tile(iv, (npts, 1)))
             
         # Calulate shape and scale up to initial allocation
-        timealloc = (saturation - intercept) / (1 + exp(power(-growthrate, t - inflection))) + intercept
+        timealloc = (saturation - intercept) / (1 + exp(power(-growthrate, tvec - inflection))) + intercept
 
         # Ensure that we have no negative entries - we shouldn't here though
         if (timealloc < 0).any(): maximum(timealloc, 0)
@@ -114,3 +114,41 @@ def timevarying(allocpm, ntimepm=1, nprogs=None, t=None, totalspend=None):
 
     # Output full allocation over time
     return allocation
+
+
+
+
+def multiyear(allocpm, years=[], totalspends=[], nprogs=None, tvec=None):
+
+    """
+    Determines allocation values over time for a set budget in each year.
+        
+    Version: 2015jan30 by cliffk
+    """
+    
+    # Import stuff
+    from numpy import zeros, arange, array, tile
+    from utils import findinds
+    
+    nyears = len(years)
+    npts = len(tvec)
+    
+    # Sanity check for the values of ntimepm, nprogs and len(allocpm)
+    if len(allocpm) / nyears != nprogs:
+        raise Exception('Invalid number of parameters to define allocations over years (%i parameters, %i years, %i programs)' % (len(allocpm), len(years), nprogs))
+
+    allocation = zeros((nprogs,npts)) # Define allocation
+    proginds = arange(nprogs)
+    yearindex = 0 # Index of year to use
+    
+    # Loop over years, finding indices
+    changes = [0,npts]
+    for y in range(nyears):
+        changes.insert(-1,findinds(tvec>=years[y])[0])
+    
+    for y in range(nyears+1):
+        thisalloc = array(allocpm)[proginds+yearindex*nprogs]
+        thisalloc *= totalspends[max(0,y-1)] / float(sum(thisalloc))
+        allocation[:,changes[y]:changes[y+1]] = tile(thisalloc, (changes[y+1]-changes[y],1)).transpose()  # Assign totals and normalize
+        
+    return allocation # Output full allocation over time

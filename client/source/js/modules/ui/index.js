@@ -3,6 +3,7 @@ define([
   './button-choicebox/index',
   './menu/index',
   './modal/modal-service',
+  '../common/file-upload-service',
   '../common/active-project-service',
   '../user-manager/index'
 ], function (angular) {
@@ -12,10 +13,11 @@ define([
     'app.active-project',
     'app.ui.button-choicebox',
     'app.ui.modal',
+    'app.common.file-upload',
     'app.ui.menu'
   ])
 
-    .controller('MainCtrl', function ($window, $scope, $upload, $state, activeProject, UserManager, modalService) {
+    .controller('MainCtrl', function ($window, $scope, $upload, $state, activeProject, UserManager, modalService, fileUpload) {
 
       $scope.user = UserManager.data;
       $scope.userLogged = function () {
@@ -50,7 +52,7 @@ define([
                   angular
                     .element('<input type="file">')
                     .change(function (event) {
-                      uploadDataSpreadsheet(event.target.files[0]);
+                      fileUpload.uploadDataSpreadsheet($scope, event.target.files[0]);
                     })
                     .click();
                   } else {
@@ -117,6 +119,35 @@ define([
         ]
       };
 
+      var adminMenu = {
+        title: 'Admin',
+        matchingState: 'admin',
+        subitems: [
+          {
+            title: 'Manage users',
+            click: function() {
+              $state.go('admin.manage-users');
+            },
+            state:{
+              name: 'admin.manage-users'
+            }
+          },
+          {
+            title: 'Manage user projects',
+            click: function() {
+              $state.go('admin.manage-projects');
+            },
+            state:{
+              name: 'admin.manage-projects'
+            }
+          }
+        ]
+      };
+
+      if(UserManager.isAdmin){
+        $scope.asideMenuSettings.items.unshift(adminMenu);
+      }
+
       function ifActiveProject(state, name, activeProject) {
         if(activeProject.isSet()){
           state.go(name);
@@ -128,33 +159,6 @@ define([
               'Cannot proceed'
             );
          }
-      }
-
-      // https://github.com/danialfarid/angular-file-upload
-      function uploadDataSpreadsheet(file) {
-        $scope.upload = $upload.upload({
-          url: '/api/project/update',
-          file: file
-        }).success(function (data) {
-          if (data.status === 'NOK') {
-            alert("Something went wrong during an upload.\nSee the error:\n" + data.reason);
-          } else if (data.status === 'OK') {
-
-              var message = data.file + " was successfully uploaded.\n" + data.result;
-              modalService.inform(
-                function (){
-                  // reload the page after upload.
-                  window.location.reload();
-                },
-                'Okay',
-                message,
-                'Upload completed'
-              );
-          } else {
-            alert('Sorry, but server feels bad now. Please, give it some time to recover');
-          }
-
-        });
       }
 
     });

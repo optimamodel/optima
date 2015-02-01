@@ -1,7 +1,7 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
-  module.controller('ProjectCreateProgramModalController', function ($scope, $modalInstance, program, availableParameters, populations) {
+  module.controller('ProjectCreateProgramModalController', function ($scope, $modalInstance, program, availableParameters, populations, modalService) {
 
     // in order to not perform changes directly on the final value here is created a copy
     var programCopy = angular.copy(program);
@@ -14,7 +14,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.populations = _(populations).map(function(population) {
         return {label: population.name, value: [population.short_name]};
       });
-      $scope.populations.unshift({label: 'All selected populations', value: ['ALL_POPULATIONS']});
+      $scope.populations.unshift({label: 'All selected populations', value: ['']});
 
       $scope.initializeAllCategories();
 
@@ -84,9 +84,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     $scope.submit = function (form) {
       if (form.$invalid) {
-        alert('Please fill in the form correctly');
+        modalService.inform(undefined,undefined,'Please fill in the form correctly');
       } else {
-
         // filter out empty parameters
         $scope.program.parameters = _($scope.program.parameters).filter(function (item) {
           return item.value.signature.length && item.value.pops.length;

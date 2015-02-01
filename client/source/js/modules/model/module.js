@@ -50,7 +50,7 @@ define([
               return Model.getCalibrateParameters().$promise;
             },
             meta: function (Model) {
-              return Model.getParametersDataMeta().$promise;
+              return Model.getKeyDataMeta().$promise;
             }
           }
         })
@@ -63,7 +63,7 @@ define([
               return Project.info().$promise;
             },
             meta: function (Model) {
-              return Model.getParametersDataMeta().$promise;
+              return Model.getKeyDataMeta().$promise;
             },
             programs: function(Model) {
               return Model.getPrograms().$promise;

@@ -29,11 +29,12 @@
   </div>
   <div class="section" ng-hide="selectedProgram.acronym == null">
 
-    <div class="section">
+    <div class="section" style="margin-bottom: 45px">
       <button type="button" class="btn" ng-click="saveModel()">Save model</button>
       <button type="button" class="btn" ng-click="revertModel()">Revert model</button>
       <button type="button" class="btn" ng-click="uploadDefault()" style="margin-left: 60px">Upload default cost-coverage-outcome curves</button>
     </div>
+
 
     <div class="section" ng-show="hasCostCoverResponse">
 
@@ -44,7 +45,7 @@
       <div class="section elastic">
         <div class="elastic_col __shrink" ng-if="ccGraph.data">
           <div class="chart-container">
-            <div line-scatter-chart variant="ccGraph" data="ccGraph.data" options="ccGraph.options" save-graph-as></div>
+            <div line-scatter-chart data="ccGraph.data" options="ccGraph.options" save-graph-as></div>
           </div>
         </div>
         <div class="elastic_col">
@@ -81,18 +82,18 @@
                 <error-messages for="xAxisMaximum" rules="{min:1, moreThan:'Known Funding Value'}"></error-messages>
               </p>
               <p>
-                6. [Optional] Display program cost data in {{projectInfo.dataEnd}}
-                <input 
-                  name="displayYear" 
-                  class="txbox __inline __l" 
-                  placeholder="e.g.{{projectInfo.dataEnd}}" 
-                  type="number" 
-                  ng-required="false" 
-                  ng-min="{{projectInfo.dataStart}}" 
-                  ng-max="{{projectInfo.dataEnd}}" 
-                  ng-model="displayYear" 
+                6. [Optional] Display program cost data in
+                <input
+                  name="displayYear"
+                  class="txbox __inline __l"
+                  placeholder="e.g.{{projectInfo.dataEnd}}"
+                  type="number"
+                  ng-required="false"
+                  ng-min="{{projectInfo.dataStart}}"
+                  ng-max="{{projectInfo.dataEnd}}"
+                  ng-model="displayYear"
                   ng-change="updateCurves()"> prices
-                <error-custom-messages 
+                <error-custom-messages
                   for="displayYear"
                   rules="{
                     min: 'The year entered cannot be before the project start date.',
@@ -110,12 +111,12 @@
       </div>
 
       <div class="section" ng-if="graphs.plotdata.length" ng-repeat="chart in graphs.plotdata">
-        <h2 class="section">{{ chart.title }}</h2>
+        <h2 class="section">{{ chart.options.title }}</h2>
 
         <div class="section elastic">
           <div class="elastic_col __shrink" style="width: 320px">
             <div class="chart-container" ng-init="coGraph = graphs.plotdata_co[$index]">
-              <div line-scatter-chart variant="coGraph" data="coGraph.data" options="coGraph.options" save-graph-as></div>
+              <div line-scatter-chart data="coGraph.data" options="coGraph.options" save-graph-as></div>
             </div>
           </div>
 

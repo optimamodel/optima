@@ -27,11 +27,12 @@ D = updatedata(D, verbose=verbose)
 
 print('\n\n\n3. Running simulation...')
 from runsimulation import runsimulation
-D = runsimulation(D, startyear=2000, endyear=2030, verbose=verbose)
+D = runsimulation(D, verbose=verbose)
 
 # Actually run makeccocs
-from makeccocs import plotallcurves
-out = plotallcurves(D=D, coparams=[], ccparams=[0.9, 0.2, 800000.0, None, None], ccplot=[1000000,None], progname='SBCC', makeplot=makeplot, verbose=verbose)
+from plotccocs import plotallcco
+#plotallcco(D=D)
+plotallcco(D=D, coparams=[], ccparams=[0.9, 0.2, 800000.0, None, None], ccplot=[1000000,None,1])
 if show_wait:
     from matplotlib.pylab import show
     show()

@@ -3,20 +3,44 @@ define(['./module', 'd3', 'underscore', './scale-helpers'], function (module, d3
 
   module.service('d3Charts', function () {
 
-
-
     /**
      * Returns a PieChart instance.
      *
-     * Data has to be provided in the following format: {label: "xxzy", value: 44}
-     *
      * The label implementation is inspired by http://jsfiddle.net/thudfactor/HdwTH/
+     *
+     * @param {element} chart - element where to append the line.
+     * @param {object} chartSize - example: { width: 200, height: 100 }.
+     * @param {array} data - example: [{label: "Slice Name", value: 44}]
      */
     function PieChart(chart, chartSize, data) {
       var radius = Math.min(chartSize.width, chartSize.height) / 2;
 
-      var color = d3.scale.ordinal()
-        .range(['#98DF8A', '#2CA02C', '#9AB3D4', '#7777FF', '#D62728', '#9aceff', '#0024FF']);
+      var colors = [
+        '__color-blue-1',
+        '__color-blue-2',
+        '__color-blue-3',
+        '__color-grey-1',
+        '__color-grey-2',
+        '__color-grey-3',
+        '__color-purple-1',
+        '__color-purple-2',
+        '__color-purple-3',
+        '__color-brown-1',
+        '__color-brown-2',
+        '__color-brown-3',
+        '__color-green-1',
+        '__color-green-2',
+        '__color-green-3',
+        '__color-deep-blue-1',
+        '__color-deep-blue-2',
+        '__color-deep-blue-3',
+        '__color-yellow-1',
+        '__color-yellow-2',
+        '__color-yellow-3',
+        '__color-salmon-1',
+        '__color-salmon-2',
+        '__color-salmon-3'
+      ];
 
       var cDim = {
           height: chartSize.height,
@@ -42,7 +66,9 @@ define(['./module', 'd3', 'underscore', './scale-helpers'], function (module, d3
 
       g.append("path")
         .attr("d", arc)
-        .style("fill", function(d) { return color(d.data.label); });
+        .attr("class", function(entry, index) {
+          return colors[index % colors.length] + ' pie-chart-segment';
+        });
 
       var enteringLabels = chart.selectAll(".label")
         .data(pie(data))
@@ -176,6 +202,7 @@ define(['./module', 'd3', 'underscore', './scale-helpers'], function (module, d3
      * @param {string} colorClass - see available colors in chart/_color.scss.
      */
     function LineChart(chart, chartSize, colorClass) {
+
       var xScale, yScale;
 
       var uniqClassName = _.uniqueId('line_');
@@ -385,9 +412,8 @@ define(['./module', 'd3', 'underscore', './scale-helpers'], function (module, d3
       var xLabel = options.xAxis.axisLabel;
       var yLabel = options.yAxis.axisLabel;
 
-      var domain = scales.x.domain();
-      scales.x.domain([Math.floor(domain[0]), scaleHelpers.flexCeil(domain[1])]);
-
+      // ticks & ticksFormat does not have an effect on ordinal scales and is
+      // simply ignored
       var xAxis = d3.svg.axis()
         .scale(scales.x)
         .tickFormat(options.xAxis.tickFormat)
@@ -426,7 +452,7 @@ define(['./module', 'd3', 'underscore', './scale-helpers'], function (module, d3
     function drawTitleAndLegend (svg, options, headerGroup) {
       var titleOffsetTop = 20;
 
-      if (options.hasTitle) {
+      if (options.hasTitle && !options.hideTitle) {
         var titleWidth = options.width - options.margin.left - options.margin.right;
 
         headerGroup.append('text')
@@ -530,7 +556,7 @@ define(['./module', 'd3', 'underscore', './scale-helpers'], function (module, d3
       options.hasLegend = !!options.legend;
 
       var titleOffset = 0;
-      if (options.hasTitle) {
+      if (options.hasTitle && !options.hideTitle) {
         titleOffset += 30;
       }
       options.margin.top += titleOffset;

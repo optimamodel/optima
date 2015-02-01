@@ -50,18 +50,21 @@
             </div>
         </div>
         <div class="header_right">
-          <a class="btn" ui-sref="contact">Contact</a>
+          <a class="btn __blue" ui-sref="contact">Contact</a>
         </div>
         <div class="header_right">
-          <a class="btn" href="https://docs.google.com/document/d/1qQK7Q0SspvpzOt4VDqrCRELFYq1hkL3GeLEkWX06OWA/edit" target="_blank">Help</a>
+          <a class="btn __blue" href="https://docs.google.com/document/d/1qQK7Q0SspvpzOt4VDqrCRELFYq1hkL3GeLEkWX06OWA/edit" target="_blank">Help</a>
         </div>
         <div class="header_right">
-          <a class="btn" href="http://optimamodel.com" target="_blank">Website</a>
+          <a class="btn __blue" href="http://optimamodel.com" target="_blank">Website</a>
         </div>
         <div ng-cloak ng-if="userLogged()" class="header_right">
           <form action="/api/user/logout">
-            <button class="btn" type="submit">Log out</button>
+            <button class="btn __blue" type="submit">Log out</button>
           </form>
+        </div>
+        <div ng-cloak ng-if="!userLogged()" class="header_right">
+          <a class="btn __blue" ui-sref="login">Login</a>
         </div>
         <div class="header_center">
             <i class="header_logo logo"></i>

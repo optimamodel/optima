@@ -1,4 +1,4 @@
-def runsimulation(D, startyear=2000, endyear=2030, verbose=2, makeplot = 1, dosave = True):
+def runsimulation(D, simstartyear=2000, simendyear=2030, verbose=2, makeplot = 0, dosave = True):
     """
     Calculate initial model estimates.
 
@@ -11,7 +11,7 @@ def runsimulation(D, startyear=2000, endyear=2030, verbose=2, makeplot = 1, dosa
 
     # Set options to update year range
     from setoptions import setoptions
-    D.opt = setoptions(D.opt, startyear=startyear, endyear=endyear)
+    D.opt = setoptions(D.opt, simstartyear=simstartyear, simendyear=simendyear)
 
     # Convert data parameters to model parameters
     if 'M' not in D.keys():
@@ -28,10 +28,7 @@ def runsimulation(D, startyear=2000, endyear=2030, verbose=2, makeplot = 1, dosa
 
     print('WARNING should add conditionals here')
     from makeccocs import makeallccocs
-    D = makeallccocs(D, verbose=verbose, makeplot = 0) # Do not plot, ever
-
-#    from getcurrentbudget import getcurrentbudget
-#    D = getcurrentbudget(D) # TODO Add verbose
+    D = makeallccocs(D, verbose=verbose) # Do not plot, ever
 
     # Calculate results
     from makeresults import makeresults

@@ -8,8 +8,10 @@ define([
   './modules/contact/index',
   './modules/auth/index',
   './modules/analysis/index',
+  './modules/admin/index',
   './modules/common/active-project-service',
   './modules/common/form-input-validate-directive',
+  './modules/common/file-upload-service',
   './modules/validations/less-than-directive',
   './modules/common/local-storage-service',
   './modules/validations/more-than-directive',
@@ -32,7 +34,9 @@ define([
     'app.auth',
     'app.active-project',
     'app.analysis',
+    'app.admin',
     'app.common.form-input-validate',
+    'app.common.file-upload',
     'app.constants',
     'app.d3-charts',
     'app.graphs',
@@ -51,7 +55,7 @@ define([
   ])
 
     .config(function ($httpProvider) {
-      var logoutUserOn401 = ['$q', function ($q) {
+      var logoutUserOn401 = ['$q', '$injector', function ($q, $injector) {
         var success = function (response) {
           return response;
         };
@@ -63,10 +67,21 @@ define([
 
             return $q.reject(response);
           } else {
-            var message = response.data.message || response.data.exception;
-            if (message) {
-              console.log(message);
+            var message, errorText;
+            if (response.data.message || response.data.exception) {
+              message = "Something went wrong. Please try again or contact the support team.";
+              errorText = response.data.message || response.data.exception;
+            } else {
+              message = 'Sorry, but our servers feel bad right now. Please, give them some time to recover or contact the support team.';
             }
+            var modalService = $injector.get('modalService');
+            modalService.inform(
+              function () {},
+              'Okay',
+              message,
+              'Upload Error',
+              errorText
+            );
 
             return $q.reject(response);
           }
