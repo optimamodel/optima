@@ -96,7 +96,7 @@ define(['d3', 'underscore', './scale-helpers'], function (d3, _, scaleHelpers) {
       .attr("x", function(d) {
         return rightXScale(d.x0);
       })
-      .attr("width", function(d) { return rightXScale(d.x1); })
+      .attr("width", function(d) { return rightXScale(d.x1) - rightXScale(d.x0); })
       .attr("class", function(d, index) {
         return [colors[index], 'stacked-bar-chart-rect'].join(' ');
       });
@@ -106,7 +106,7 @@ define(['d3', 'underscore', './scale-helpers'], function (d3, _, scaleHelpers) {
       var leftGroup = chart.append('g').attr('class', 'left_group');
       var rightChart = chart.append('g').attr('class', 'right_group')
         .attr("transform", function(d) {
-          return ["translate(", sideWidth + 2,", 0)"].join(' ');
+          return ["translate(", sideWidth,", 0)"].join(' ');
         });
 
       drawLeftBar(leftGroup);
