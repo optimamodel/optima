@@ -22,7 +22,7 @@ def timevarying(allocpm, ntimepm=1, nprogs=None, tvec=None, totalspend=None):
     
     # Sanity check for the values of ntimepm, nprogs and len(allocpm)
     if len(allocpm) / ntimepm != nprogs:
-        raise Exception('Invalid number of parameters to define allocations over time')
+        raise Exception('Invalid number of parameters to define allocations over time (%i parameters, %i time parameters, %i programs)' % (len(allocpm), ntimepm, nprogs))
 
     # Set t to be between 0 and 1, and get the number of time points
     npts = len(tvec)
