@@ -173,5 +173,34 @@ define([
       ]
     };
 
+    // Two sided horizontal bar chart
+    // =======
+
+    $scope.options10 = {
+      legend: ['AA', 'BB', 'CC'],
+      height: 300,
+      width: 300,
+      margin: {
+        top: 20,
+        right: 20,
+        bottom: 60,
+        left: 60
+      },
+      xAxis: {
+        axisLabel: 'Axis X'
+      },
+      yAxis: {
+        axisLabel: 'Axis Y'
+      }
+    };
+
+    $scope.data10 = {
+      bars: [
+        ['Level 1', 12030, [552339, 259034, 450818]],
+        ['Level 2', 8034, [85640, 42153, 74257]],
+        ['Level 3', 2023, [592339, 559034, 250818]]
+      ]
+    };
+
   });
 });
