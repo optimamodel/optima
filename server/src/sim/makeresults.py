@@ -19,7 +19,7 @@ def makeresults(D, allsims=None, quantiles=None, verbose=2):
     from printv import printv
     from quantile import quantile
     printv('Calculating results...', 1, verbose)
-    if allsims==None: allsims = [D.S] # If not supplied, using sims structure already in D
+    if allsims is None: allsims = [D.S] # If not supplied, using sims structure already in D
     
     R = struct()
     R.__doc__ = 'Output structure containing all worthwhile results from the model'

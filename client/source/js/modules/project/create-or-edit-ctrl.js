@@ -2,10 +2,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ProjectCreateOrEditController', function ($scope, $state, $modal,
-    $timeout, activeProject, parametersResponse, defaultsResponse, info,
+    $timeout, $http, activeProject, parametersResponse, defaultsResponse, info,
     UserManager, modalService,projects) {
 
-    $scope.allProjectNames = _(projects.projects).map(function(project){return project.name});
+    $scope.allProjectNames = _(projects.projects).map(function(project){
+      return project.name;
+    });
 
     $scope.projectExists = function(){
       var exists = isEditMode()? false:_($scope.allProjectNames).contains($scope.projectParams.name);
@@ -17,7 +19,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       name: ''
     };
     $scope.editParams = {
-      isEdit: false
+      isEdit: false,
+      canUpdate: true
     };
     $scope.projectInfo = info;
 
@@ -42,10 +45,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.submit = "Save project & Optima template";
 
       $scope.editParams.isEdit = true;
-      $scope.editParams.canUpdate = true;
       $scope.oldProjectName =  $scope.projectInfo.name;
 
       if (activeProject.isSet()) {
+        $scope.projectParams.id = $scope.projectInfo.id;
         $scope.projectParams.name = $scope.oldProjectName;
         $scope.projectParams.datastart = $scope.projectInfo.dataStart;
         $scope.projectParams.dataend = $scope.projectInfo.dataEnd;
@@ -301,11 +304,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       }
 
       if ( $state.current.name == "project.edit" ) {
+        var message;
         if ( !angular.equals( selectedPopulations,$scope.projectInfo.populations ) ||
              !angular.equals( selectedPrograms,$scope.projectInfo.programs ) ) {
-          $scope.editParams.canUpdate = $scope.editParams.canUpdate && selectedPopulations.length == $scope.projectInfo.populations.length;
-          $scope.editParams.canUpdate = $scope.editParams.canUpdate && selectedPrograms.length == $scope.projectInfo.programs.length;
-          var message = 'You have made changes to populations and programs. All existing data will be lost. Would you like to continue?';
+          $scope.editParams.canUpdate = selectedPopulations.length == $scope.projectInfo.populations.length &&
+                                        selectedPrograms.length == $scope.projectInfo.programs.length;
+          message = 'You have made changes to populations and programs. All existing data will be lost. Would you like to continue?';
           if ($scope.editParams.canUpdate) {
             message = 'You have changed some program or population parameters. Your original data can be reapplied, but you will have to redo the calibration and analysis. Would you like to continue?';
           }
@@ -318,7 +322,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             'Save Project?'
           );
         } else {
-          var message = 'No parameters have been changed. Do you intend to reload the original data and start from scratch?';
+          message = 'No parameters have been changed. Do you intend to reload the original data and start from scratch?';
           modalService.confirm(
             function (){ continueSubmitForm( selectedPrograms, selectedPopulations ); },
             function (){},
@@ -336,31 +340,40 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     // handle another function to continue to submit form
     // since the confirm modal is async and doesn't wait for user's response
     var continueSubmitForm = function( selectedPrograms, selectedPopulations ) {
+      var form = {};
+
       var params = _($scope.projectParams).omit('name');
       params.populations = selectedPopulations;
       params.programs = selectedPrograms;
 
-      $scope.formAction = '/api/project/create/' + $scope.projectParams.name;
-      $scope.formParams = JSON.stringify(params);
+      if ($scope.editParams.isEdit) {
+        form.action = '/api/project/update/' + $scope.projectParams.id; // TODO check if id is available
+        form.data = {canUpdate: $scope.editParams.canUpdate, params: params};
+        form.method = 'PUT';
+      } else {
+        form.action = '/api/project/create/' + $scope.projectParams.name;
+        form.data = {params: params};
+        form.method = 'POST';
+      }
 
       // according to documentation it should have been working without this line, but no cigar
       // https://docs.angularjs.org/api/ng/directive/ngSubmit
-      document.getElementById('createForm').action = $scope.formAction;
-      document.getElementById('params').value = $scope.formParams;
-      document.getElementById('edit_params').value = JSON.stringify($scope.editParams);
-      document.getElementById('createForm').submit();
-
-      // update active project
-      activeProject.setActiveProjectFor($scope.projectParams.name, UserManager.data);
-
-      // Hack to wait for the project to be created.
-      // There is not easy way to intercept the completion of the form submission...
-      $timeout(function () {
-        $state.go('home');
-      }, 3000);
+      $http({url: form.action,
+          method: form.method,
+          data: form.data,
+          headers: {'Content-type': 'application/json'},
+          responseType:'arraybuffer'})
+          .success(function (response, status, headers, config) {
+            var newProjectId = headers()['x-project-id'];
+            var blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            saveAs(blob, ($scope.projectParams.name + '.xlsx'));
+                  // update active project
+            activeProject.setActiveProjectFor($scope.projectParams.name, newProjectId, UserManager.data);
+            $state.go('home');
+          });
 
       return true;
-    }
+    };
 
   });
 

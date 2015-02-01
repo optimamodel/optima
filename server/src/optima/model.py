@@ -65,11 +65,12 @@ def doAutoCalibration():
     data = json.loads(request.data)
 
     project_name = request.project_name
-    if not project_exists(project_name):
-        reply['reason'] = 'File for project %s does not exist' % prj_name
+    project_id = request.project_id
+    if not project_exists(project_id):
+        reply['reason'] = 'File for project %s does not exist' % project_id
         return jsonify(reply)
     try:
-        can_start, can_join, current_calculation = start_or_report_calculation(current_user.id, project_name, autofit, db.session)
+        can_start, can_join, current_calculation = start_or_report_calculation(current_user.id, project_id, autofit, db.session)
         if can_start:
             args = {'verbose':0}
             startyear = data.get("startyear")
@@ -79,13 +80,13 @@ def doAutoCalibration():
             if endyear:
                 args["endyear"] = int(endyear)
             timelimit = int(data.get("timelimit")) # for the thread
-            args["timelimit"] = 10 # for the autocalibrate function
+            args["timelimit"] = timelimit # for the autocalibrate function
 
-            CalculatingThread(db.engine, current_user, project_name, timelimit, autofit, args).start()
-            msg = "Starting thread for user %s project %s" % (current_user.name, project_name)
+            CalculatingThread(db.engine, current_user, project_id, timelimit, 1, autofit, args).start() #run it once
+            msg = "Starting thread for user %s project %s:%s" % (current_user.name, project_id, project_name)
             return json.dumps({"status":"OK", "result": msg, "join":True})
         else:
-            msg = "Thread for user %s project %s (%s) has already started" % (current_user.name, project_name, current_calculation)
+            msg = "Thread for user %s project %s:%s (%s) has already started" % (current_user.name, project_id, project_name, current_calculation)
             return json.dumps({"status":"OK", "result": msg, "join":can_join})
     except Exception, err:
         var = traceback.format_exc()
@@ -96,9 +97,11 @@ def doAutoCalibration():
 @check_project_name
 def stopCalibration():
     """ Stops calibration """
-    prj_name = request.project_name
-    cancel_calculation(current_user.id, prj_name, autofit, db.session)
-    return json.dumps({"status":"OK", "result": "autofit calculation for user %s project %s requested to stop" % (current_user.name, prj_name)})
+    project_id = request.project_id
+    project_name = request.project_name
+    cancel_calculation(current_user.id, project_id, autofit, db.session)
+    return json.dumps({"status":"OK", "result": "autofit calculation for user %s project %s:%s requested to stop" % \
+        (current_user.name, project_id, project_name)})
 
 @model.route('/working')
 @login_required
@@ -108,18 +111,21 @@ def getWorkingModel():
     """ Returns the working model of project. """
     D_dict = {}
     # Make sure model is calibrating
-    prj_name = request.project_name
+    project_id = request.project_id
+    project_name = request.project_name
     error_text = None
-    if check_calculation(current_user.id, prj_name, autofit, db.session):
-        D_dict = load_model(prj_name, working_model = True, as_bunch = False)
+    stop_time = None
+    if check_calculation(current_user.id, project_id, autofit, db.session):
         status = 'Running'
     else:
         current_app.logger.debug('No longer calibrating')
-        status, error_text = check_calculation_status(current_user.id, prj_name, autofit, db.session)
+        status, error_text, stop_time = check_calculation_status(current_user.id, project_id, autofit, db.session)
         if status in good_exit_status:
             status = 'Done'
         else:
             status = 'NOK'
+    if status!='NOK': D_dict = load_model(project_id, working_model = True, as_bunch = False)
+
     result = {'graph': D_dict.get('plot',{}).get('E',{})}
     result['status'] = status
     if error_text:
@@ -136,12 +142,13 @@ def saveCalibrationModel():
 
     # get project name
     project_name = request.project_name
-    if not project_exists(project_name):
-        reply['reason'] = 'File for project %s does not exist' % project_name
+    project_id = request.project_id
+    if not project_exists(project_id):
+        reply['reason'] = 'File for project %s does not exist' % project_id
         return jsonify(reply)
 
     try:
-        D_dict = save_working_model_as_default(project_name)
+        D_dict = save_working_model_as_default(project_id)
         result = {'graph': D_dict.get('plot',{}).get('E',{})}
         result = add_calibration_parameters(D_dict, result)
         return jsonify(result)
@@ -159,11 +166,12 @@ def revertCalibrationModel():
 
     # get project name
     project_name = request.project_name
-    if not project_exists(project_name):
-        reply['reason'] = 'File for project %s does not exist' % project_name
+    project_id = request.project_id
+    if not project_exists(project_id):
+        reply['reason'] = 'File for project %s does not exist' % project_id
         return jsonify(reply)
     try:
-        D_dict = revert_working_model_to_default(project_name)
+        D_dict = revert_working_model_to_default(project_id)
         result = {'graph': D_dict.get('plot',{}).get('E',{})}
         result = add_calibration_parameters(D_dict, result)
         return jsonify(result)
@@ -185,8 +193,9 @@ def doManualCalibration():
     current_app.logger.debug("/api/model/calibrate/manual %s" % data)
     # get project name
     project_name = request.project_name
-    if not project_exists(project_name):
-        reply['reason'] = 'Project %s does not exist' % project_name
+    project_id = request.project_id
+    if not project_exists(project_id):
+        reply['reason'] = 'Project %s does not exist' % project_id
 
     #expects json: {"startyear":year,"endyear":year} and gets project_name from session
     args = {}
@@ -198,7 +207,7 @@ def doManualCalibration():
         args["endyear"] = int(endyear)
     dosave = data.get("dosave")
     try:
-        D = load_model(project_name)
+        D = load_model(project_id)
         args['D'] = D
         F = bunchify(data.get("F",{}))
         args['F'] = F
@@ -207,8 +216,8 @@ def doManualCalibration():
         D = manualfit(**args)
         D_dict = D.toDict()
         if dosave:
-            current_app.logger.debug("model: %s" % project_name)
-            save_model(project_name, D_dict)
+            current_app.logger.debug("model: %s" % project_id)
+            save_model(project_id, D_dict)
     except Exception, err:
         var = traceback.format_exc()
         return jsonify({"status":"NOK", "exception":var})
@@ -225,7 +234,7 @@ def getModelCalibrateParameters():
     from sim.manualfit import updateP
     from sim.nested import getnested
     calibrate_parameters = [p for p in parameters() if 'calibration' in p and p['calibration']]
-    D = load_model(request.project_name, as_bunch = True)
+    D = load_model(request.project_id, as_bunch = True)
     D_dict = D.toDict()
     result = add_calibration_parameters(D_dict)
     return jsonify(result)
@@ -235,7 +244,7 @@ def getModelCalibrateParameters():
 @check_project_name
 def getModel():
     """ Returns the model (aka D or data) for the currently open project. """
-    D = load_model(request.project_name, as_bunch = False)
+    D = load_model(request.project_id, as_bunch = False)
     return jsonify(result)
 
 @model.route('/data/<key>')
@@ -244,7 +253,7 @@ def getModel():
 def getModelGroup(key):
     """ Returns the subset with the given key for the D (model) in the open project."""
     current_app.logger.debug("getModelGroup: %s" % key)
-    D_dict = load_model(request.project_name, as_bunch = False)
+    D_dict = load_model(request.project_id, as_bunch = False)
     the_group = D_dict.get(key, {})
     return json.dumps(the_group)
 
@@ -254,7 +263,7 @@ def getModelGroup(key):
 def getModelSubGroup(key, subkey):
     """ Returns the subset with the given key and subkey for the D (model) in the open project. """
     current_app.logger.debug("getModelSubGroup: %s %s" % (key, subkey))
-    D_dict = load_model(request.project_name, as_bunch = False)
+    D_dict = load_model(request.project_id, as_bunch = False)
     the_group = D_dict.get(key,{})
     the_subgroup = the_group.get(subkey, {})
     return jsonify(the_subgroup)
@@ -267,14 +276,15 @@ def setModelGroup(key):
     data = json.loads(request.data)
     current_app.logger.debug("set parameters group: %s for data: %s" % (group, data))
     project_name = request.project_name
+    project_id = request.project_id
     try:
-        D_dict = load_model(project_name, as_bunch = False)
+        D_dict = load_model(project_id, as_bunch = False)
         D_dict[group] = data
-        save_model(project_name, D_dict)
+        save_model(project_id, D_dict)
     except Exception, err:
         var = traceback.format_exc()
         return jsonify({"status":"NOK", "exception":var})
-    return jsonify({"status":"OK", "project":project_name, "group":group})
+    return jsonify({"status":"OK", "project":project_id, "group":group})
 
 @model.route('/view', methods=['POST'])
 @login_required
@@ -291,7 +301,7 @@ def doRunSimulation():
 
     #expects json: {"startyear":year,"endyear":year} and gets project_name from session
     args = {}
-    D = load_model(request.project_name)
+    D = load_model(request.project_id)
     D_dict = D.toDict()
     result = {'graph': D_dict.get('plot',{}).get('E',{})}
     result = add_calibration_parameters(D_dict, result)
@@ -307,7 +317,7 @@ def doRunSimulation():
             args["dosave"] = False
             D = runsimulation(**args)
             D_dict = D.toDict()
-            save_model(request.project_name, D_dict)
+            save_model(request.project_id, D_dict)
             result = {'graph':D_dict.get('plot',{}).get('E',{})}
             result = add_calibration_parameters(D_dict, result)
             return jsonify(result)
@@ -324,7 +334,7 @@ def doCostCoverage():
     data = json.loads(request.data)
     current_app.logger.debug("/costcoverage" % data)
     args = {}
-    D = load_model(request.project_name)
+    D = load_model(request.project_id)
     args = pick_params(["progname", "ccparams", "coparams", "ccplot"], data, args)
     do_save = data.get('doSave')
     try:
@@ -349,7 +359,7 @@ def doCostCoverage():
         plotdata, plotdata_co, plotdata_cc, effectnames, D = plotallcurves(**args)
         if do_save:
             D_dict = D.toDict()
-            save_model(request.project_name, D_dict)
+            save_model(request.project_id, D_dict)
     except Exception, err:
         var = traceback.format_exc()
         return jsonify({"status":"NOK", "exception":var})
@@ -364,7 +374,7 @@ def doCostCoverageEffect():
     current_app.logger.debug("/costcoverage/effect(%s)" % data)
     args = {}
     args = pick_params(["progname", "effect", "ccparams", "coparams", "ccplot"], data, args)
-    args['D'] = load_model(request.project_name)
+    args['D'] = load_model(request.project_id)
     try:
         if not args.get('effect'):
             return jsonify({'status':'NOK','reason':'No effect has been specified'})

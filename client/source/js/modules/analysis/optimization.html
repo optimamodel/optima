@@ -15,7 +15,7 @@
         </button>
       </div>
       <div class="elastic_col __va-middle">
-        <label for="optimization-selection">Select a saved Optimization:</label>
+        <label for="optimization-selection">Select a saved optimization:</label>
         <div class="elastic">
           <div class="elastic_col">
             <select name="optimization-selection" class="txbox"
@@ -165,8 +165,7 @@
             <label style="padding:0px 0px 0px 20px;">
               <input type="radio" name="fundingAssumptions" ng-model="params.objectives.funding" value="variable"
                      ng-change="updateYearRange()"/>
-              Optimize a variable budget for each year in the program period:<br/>
-
+              Optimize a variable budget for each year in the program period:
               <br/>
               <div ng-if="params.objectives.funding==='variable'" style="padding:0px 0px 0px 50px;">
                 <div ng-repeat="yCols in yearCols" style="padding:0 0 10px 0;">
@@ -178,9 +177,30 @@
                 </div>
                 <div style="clear:both;"></div>
               </div>
-            </label><br/>
+            </label>
+            <label class="checkbox-inline">
+              <input type="radio" name="fundingAssumptions" ng-model="params.objectives.funding" value="range"/>
+              Optimize a range of fixed budgets from amount
+              <input class="txbox __inline __l" type="number" ng-required="params.objectives.funding==='range'" name="budgetRangeMin" ng-model="params.objectives.outcome.budgetrange.minval"/>
+              to amount
+              <input class="txbox __inline __l" type="number" more-than="params.objectives.outcome.budgetrange.minval" ng-required="params.objectives.funding==='range'" name="budgetRangeMax" ng-model="params.objectives.outcome.budgetrange.maxval"/>
+              in increments of
+              <input class="txbox __inline __l" type="number" max="{{params.objectives.outcome.budgetrange.maxval-params.objectives.outcome.budgetrange.minval}}" min="{{(params.objectives.outcome.budgetrange.maxval-params.objectives.outcome.budgetrange.minval)/30}}" ng-required="params.objectives.funding==='range'" name="budgetRangeStep" ng-model="params.objectives.outcome.budgetrange.step"/>
 
+              <error-messages for="budgetRangeMin" show-always="true"
+                              rules="{required:{message:'The minimum budget is required.'}}"></error-messages>
+              <error-messages for="budgetRangeMax" show-always="true"
+                              rules="{required:{message:'The maximum budget is required.'},
+                                      moreThan:{message:'The maximum budget must be greater than <%= moreThan %>.', value: params.objectives.outcome.budgetrange.minval}}">
+              </error-messages>
+              <error-messages for="budgetRangeStep" show-always="true"
+                              rules="{required:{message:'The budget step is required.'},
+                                      min:{message:'The maximum number of budgets is 30.'},
+                                      max:{message:'The minimum number of budgets is 1.'}}">
+              </error-messages>
+            <br/>
             <div style="clear:both;"></div>
+            </label>
           </div>
         </div>
 
@@ -503,21 +523,6 @@
             <div class="elastic __fluid float-right">
 
               <div class="elastic_col __shrink">
-                <label>
-                  Maximum time limit:
-                  <select class="txbox __inline" style="width: 120px" ng-model="params.timelimit">
-                    <option value="10">10 seconds</option>
-                    <option value="30">30 seconds</option>
-                    <option value="60">1 minute</option>
-                    <option value="300">5 minutes</option>
-                    <option value="600">10 minutes</option>
-                    <option value="1800">30 minutes</option>
-                    <option value="3600">1 hour</option>
-                  </select>
-                </label>
-              </div>
-
-              <div class="elastic_col __shrink">
                 <button type="submit" class="btn __green">Start optimization</button>
               </div>
 
@@ -539,7 +544,7 @@
             </div>
           </div>
 
-          <div class="info-hint" ng-show="optimizationStatus.isActive">
+          <div class="info-hint" ng-show="optimizationStatus.text">
             {{ optimizationStatus.text }}
           </div>
           <div class="error-hint" ng-show="errorText">
@@ -572,6 +577,9 @@
                 </div>
               </div>
 
+              <div ng-if="state.outcomeChart" class="chart-container __small">
+                <div line-scatter-chart data="state.outcomeChart.data" options="state.outcomeChart.options" save-graph-as></div>
+              </div>
             </div>
 
             <div class="grid 12">
