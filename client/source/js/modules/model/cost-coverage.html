@@ -45,7 +45,7 @@
       <div class="section elastic">
         <div class="elastic_col __shrink" ng-if="ccGraph.data">
           <div class="chart-container">
-            <div line-scatter-chart variant="ccGraph" data="ccGraph.data" options="ccGraph.options" save-graph-as></div>
+            <div line-scatter-chart data="ccGraph.data" options="ccGraph.options" save-graph-as></div>
           </div>
         </div>
         <div class="elastic_col">
@@ -111,12 +111,12 @@
       </div>
 
       <div class="section" ng-if="graphs.plotdata.length" ng-repeat="chart in graphs.plotdata">
-        <h2 class="section">{{ chart.title }}</h2>
+        <h2 class="section">{{ chart.options.title }}</h2>
 
         <div class="section elastic">
           <div class="elastic_col __shrink" style="width: 320px">
             <div class="chart-container" ng-init="coGraph = graphs.plotdata_co[$index]">
-              <div line-scatter-chart variant="coGraph" data="coGraph.data" options="coGraph.options" save-graph-as></div>
+              <div line-scatter-chart data="coGraph.data" options="coGraph.options" save-graph-as></div>
             </div>
           </div>
 

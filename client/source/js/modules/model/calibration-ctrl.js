@@ -4,6 +4,10 @@ define(['./module', 'angular'], function (module, angular) {
   module.controller('ModelCalibrationController', function ($scope, $http, $interval,
     Model, parameters, meta, info, CONFIG, graphTypeFactory, cfpLoadingBar) {
 
+    $scope.projectInfo = info;
+    $scope.canDoFitting = $scope.projectInfo.can_calibrate;
+    $scope.needData = !$scope.projectInfo.has_data;
+ 
     var prepareF = function (f) {
       var F = angular.copy(f);
 
@@ -21,7 +25,7 @@ define(['./module', 'angular'], function (module, angular) {
       return m;
     };
 
-    var transformedF = prepareF(parameters.F[0]);
+    var transformedF = $scope.needData? {} : prepareF(parameters.F[0]);
 
     $scope.parameters = {
       types: {
@@ -62,9 +66,6 @@ define(['./module', 'angular'], function (module, angular) {
     // to store years from UI
     $scope.simulationOptions = {'timelimit':60};
     $scope.charts = [];
-    $scope.projectInfo = info;
-    $scope.canDoFitting = $scope.projectInfo.can_calibrate;
-    $scope.needData = !$scope.projectInfo.has_data;
     $scope.hasStackedCharts = false;
 
     var defaultChartOptions = {
@@ -320,9 +321,8 @@ define(['./module', 'angular'], function (module, angular) {
         .success(function(data, status, headers, config) {
           if (data.status == 'Done') {
             stopTimer();
-          } else {
-            updateCharts(data);
-          }
+          } 
+          updateCharts(data); // now when we might run continuous calibration, this might be the only chance to update the charts.
         })
         .error(function(data, status, headers, config) {
           if (data && data.exception) {

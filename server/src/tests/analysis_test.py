@@ -22,10 +22,10 @@ class AnalysisTestCase(OptimaTestCase):
         from sim.bunch import unbunchify
         response = self.create_user()
         response = self.login()
-        self.create_project('test')
+        project_id = self.create_project('test')
         projects = self.list_projects(1)
         D = projects[0].model
-        headers = [('project', 'test')]
+        headers = [('project', 'test'),('project-id',str(project_id))]
         response = self.client.get('/api/analysis/scenarios/list', headers=headers)
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)

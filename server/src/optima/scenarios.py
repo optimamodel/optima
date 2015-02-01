@@ -11,7 +11,7 @@ from dbconn import db
 from dbmodels import ProjectDb, WorkingProjectDb
 
 
-""" route prefix: /api/analysis/scenarios """
+# route prefix: /api/analysis/scenarios
 scenarios = Blueprint('scenarios',  __name__, static_folder = '../static')
 scenarios.config = {}
 
@@ -30,7 +30,7 @@ def get_scenario_parameters():
     from sim.scenarios import getparvalues
     scenario_params = parameters()
     real_parameters = []
-    project = load_project(request.project_name)
+    project = load_project(request.project_id)
     D = bunchify(project.model)
 
     for parameter in scenario_params:
@@ -48,22 +48,23 @@ def get_scenario_parameters():
     current_app.logger.debug("real_parameters:%s" % real_parameters)
     return json.dumps({"parameters":real_parameters})
 
-"""
-Returns a list of scenarios defined by the user, or the default scenario list
-"""
 @scenarios.route('/list')
 @login_required
 @check_project_name
 @report_exception()
 def list_scenarios():
+    """
+    Returns a list of scenarios defined by the user, or the default scenario list
+
+    """
     from sim.scenarios import defaultscenarios
     current_app.logger.debug("/api/analysis/scenarios/list")
     # get project name
-    project_name = request.project_name
-    if not project_exists(project_name):
-        reply['reason'] = 'Project %s does not exist' % project_name
+    project_id = request.project_id
+    if not project_exists(project_id):
+        reply['reason'] = 'Project %s does not exist' % project_id
         return reply
-    D = load_model(project_name)
+    D = load_model(project_id)
     if not 'scens' in D:
         scenarios = defaultscenarios(D)
     else:
@@ -72,19 +73,21 @@ def list_scenarios():
     return json.dumps({'scenarios':scenarios})
 
 
-"""
-Gets a list of scenarios defined by the user, produces graphs out of them and sends back
-"""
 @scenarios.route('/run', methods=['POST'])
 @login_required
 @check_project_name
 def runScenarios():
+    """
+    Gets a list of scenarios defined by the user, produces graphs out of them
+    and sends back.
+
+    """
     data = json.loads(request.data)
     current_app.logger.debug("/api/analysis/scenarios/run %s" % data)
     # get project name
-    project_name = request.project_name
-    if not project_exists(project_name):
-        reply['reason'] = 'Project %s does not exist' % project_name
+    project_id = request.project_id
+    if not project_exists(project_id):
+        reply['reason'] = 'Project %s does not exist' % project_id
         return reply
 
     #expects json: {"scenarios":[scenariolist]} and gets project_name from session
@@ -94,13 +97,13 @@ def runScenarios():
         args["scenariolist"] = bunchify(scenarios)
     dosave = data.get("dosave")
     try:
-        D = load_model(project_name)
+        D = load_model(project_id)
         args['D'] = D
         D = runscenarios(**args)
         D_dict = D.toDict()
         if dosave:
-            current_app.logger.debug("model: %s" % project_name)
-            save_model(project_name, D_dict)
+            current_app.logger.debug("model: %s" % project_id)
+            save_model(project_id, D_dict)
     except Exception, err:
         var = traceback.format_exc()
         return jsonify({"status":"NOK", "exception":var})

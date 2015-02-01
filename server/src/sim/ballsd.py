@@ -1,7 +1,7 @@
-def ballsd(function, x, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, \
+def ballsd(function, x, options = None, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, \
     pinitial = None, sinitial = None, absinitial = None, xmin = None, xmax = None, MaxRangeIter = 1000, \
-    MaxFunEvals = None, MaxIter = 1e4, TolFun = 1e-6, TolX = None, StallIterLimit = 100, \
-    fulloutput = False, maxarraysize = 1e6, timelimit = 3600, verbose = 2):
+    MaxFunEvals = None, MaxIter = 1e3, AbsTolFun = 1e-6, RelTolFun = 5e-3, TolX = None, StallIterLimit = 20, \
+    fulloutput = True, maxarraysize = 1e6, timelimit = 3600, stoppingfunc = None, verbose = 2):
     """
     Optimization using the Bayesian adaptive locally linear stochastic descent 
     algorithm.
@@ -13,18 +13,18 @@ def ballsd(function, x, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, 
                X -- The parameter set that minimizes the objective function
             FVAL -- The value of the objective function at X
         EXITFLAG -- The exit condition of the algorithm possibilities are:
-                     0 -- Maximum number of function evaluations or iterations reached.
-                     1 -- Improvement in objective function below minimum threshold.
-                     2 -- Step size below threshold.
+                     0 -- Maximum number of function evaluations or iterations reached
+                     1 -- Step size below threshold
+                     2 -- Improvement in objective function below minimum threshold
                      3 -- Maximum number of iterations to calculate new parameter when out of range reached
                      4 -- Time limit exceeded
-                    -1 -- Algorithm terminated for other reasons.
+                     5 -- Stopping function criteria met
+                    -1 -- Algorithm terminated for other reasons
           OUTPUT -- An object with the following attributes:
             iterations -- Number of iterations
              funcCount -- Number of function evaluations
                   fval -- Value of objective function at each iteration
                      x -- Vector of parameter values at each iteration
-            fulloutput -- Whether or not to output the parameters and errors at each iteration
     
     ballsd() has the following options that can be set using keyword arguments. Their
     names and default values are as follows:
@@ -40,12 +40,15 @@ def ballsd(function, x, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, 
                         xmax {[]} -- Max value allowed for each parameter 
               MaxRangeIter {1000} -- Maximum number of iterations to calculate new parameter when out of range
       MaxFunEvals {1000*size(X0)} -- Maximum number of function evaluations
-                    MaxIter {1e4} -- Maximum number of iterations (1 iteration = 1 function evaluation)
-                    TolFun {1e-6} -- Minimum change in objective function
+                    MaxIter {1e3} -- Maximum number of iterations (1 iteration = 1 function evaluation)
+                 AbsTolFun {1e-3} -- Minimum absolute change in objective function
+                 RelTolFun {5e-3} -- Minimum relative change in objective function
               TolX {1e-6*size(x)} -- Minimum change in parameters
-             StallIterLimit {100} -- Number of iterations over which to calculate TolFun
+              StallIterLimit {50} -- Number of iterations over which to calculate TolFun
+                fulloutput {True} -- Whether or not to output the parameters and errors at each iteration
                maxarraysize {1e6} -- Limit on MaxIter and StallIterLimit to ensure arrays don't get too big
                  timelimit {3600} -- Maximum time allowed, in seconds
+              stoppingfunc {None} -- External method that can be used to stop the calculation from the outside.
                       verbose {0} -- How much information to print during the run
   
     
@@ -62,7 +65,7 @@ def ballsd(function, x, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, 
     from numpy.random import random # Was pylab.rand
     from utils import findinds # Remove dependency on pylab.find
     from copy import deepcopy # For arrays, even y = x[:] doesn't copy properly
-    from time import time
+    from time import time, sleep
     
     def sanitize(userinput):
         """
@@ -91,10 +94,11 @@ def ballsd(function, x, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, 
     
     ## Initialization
     s1[s1==0] = mean(s1[s1!=0]) # Replace step sizes of zeros with the mean of non-zero entries
-    fval = function(x) # Calculate initial value of the objective function
+    fval = function(x) if options is None else function(x,options) # Calculate initial value of the objective function
     count = 0 # Keep track of how many iterations have occurred
     exitflag = -1 # Set default exit flag
-    errorhistory = zeros(StallIterLimit) # Store previous error changes
+    abserrorhistory = zeros(StallIterLimit) # Store previous error changes
+    relerrorhistory = zeros(StallIterLimit) # Store previous error changes
     if fulloutput: # Include additional output structure
         fulloutputfval = zeros(MaxIter) # Store all objective function values
         fulloutputx = zeros((MaxIter,nparams)) # Store all parameters
@@ -102,7 +106,8 @@ def ballsd(function, x, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, 
     ## Loop
     start = time()
     while 1:
-        if verbose>=1: print('Iteration %i; elapsed %0.1f s1; objective: %0.3e' % (count+1, time()-start, fval))
+        sleep(0.1) # no tight loops please
+        if verbose>=1: print('Iteration %i; elapsed %0.1f s; objective: %0.3e' % (count+1, time()-start, fval))
         
         # Calculate next step
         count += 1 # On each iteration there are two function evaluations
@@ -134,24 +139,27 @@ def ballsd(function, x, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, 
 
         xnew = deepcopy(x) # Initialize the new parameter set
         xnew[par] = newval # Update the new parameter set
-        fvalnew = function(xnew) # Calculate the objective function for the new parameter set
-        errorhistory[mod(count,StallIterLimit)] = fval - fvalnew # Keep track of improvements in the error  
+        fvalnew = function(xnew) if options is None else function(xnew, options) # Calculate the objective function for the new parameter set
+        abserrorhistory[mod(count,StallIterLimit)] = fval - fvalnew # Keep track of improvements in the error
+        relerrorhistory[mod(count,StallIterLimit)] = fval/float(fvalnew)-1 # Keep track of improvements in the error  
         if verbose>5:
-            print('       choice=%s1, par=%s1, pm=%s1, origval=%s1, newval=%s1, inrange=%s1' % (choice, par, pm, x[par], xnew[par], inrange))
+            print('       choice=%s, par=%s, pm=%s, origval=%s, newval=%s, inrange=%s1' % (choice, par, pm, x[par], xnew[par], inrange))
+
         
 
         # Check if this step was an improvement
-        if fvalnew < fval: # New parameter set is better than previous one
+        fvalold = fval # Store old fval
+        if fvalnew < fvalold: # New parameter set is better than previous one
             p[choice] = p[choice]*pinc # Increase probability of picking this parameter again
             s1[choice] = s1[choice]*sinc # Increase size of step for next time
             x = xnew # Reset current parameters
             fval = fvalnew # Reset current error
             if verbose>5: flag = 'SUCCESS'
-        elif fvalnew >= fval: # New parameter set is the same or worse than the previous one
+        elif fvalnew >= fvalold: # New parameter set is the same or worse than the previous one
             p[choice] = p[choice]/pdec # Decrease probability of picking this parameter again
             s1[choice] = s1[choice]/sdec # Decrease size of step for next time
             if verbose>5: flag = 'FAILURE'
-        if verbose>=5: print(' '*40 + flag + ' on step %i (orig:%0.1f new:%0.1f diff:%0.5f ratio:%0.3f)' % (count, fval, fvalnew, fvalnew-fval, fvalnew/fval) )
+        if verbose>=5: print(' '*80 + flag + ' on step %i (old:%0.1f new:%0.1f diff:%0.5f ratio:%0.3f)' % (count, fvalold, fvalnew, fvalnew-fvalold, fvalnew/fvalold) )
 
         # Optionally store output information
         if fulloutput: # Include additional output structure
@@ -161,23 +169,36 @@ def ballsd(function, x, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, 
         # Stopping criteria
         if (count+1) >= MaxFunEvals: # Stop if the function evaluation limit is exceeded
             exitflag = 0 
+            if verbose>=5: print('======== Maximum function evaluations reached (%i >= %i), terminating ========' % ((count+1), MaxFunEvals))
             break
         if count >= MaxIter: # Stop if the iteration limit is exceeded
             exitflag = 0 
+            if verbose>=5: print('======== Maximum iterations reached (%i >= %i), terminating ========' % (count, MaxIter))
             break 
         if mean(s1) < TolX: # Stop if the step sizes are too small
             exitflag = 1 
+            if verbose>=5: print('======== Step sizes too small (%f < %f), terminating ========' % (mean(s1), TolX))
             break
-        if (count > StallIterLimit) and (mean(errorhistory) < TolFun): # Stop if improvement is too small
+        if (count > StallIterLimit) and (mean(abserrorhistory) < AbsTolFun): # Stop if improvement is too small
             exitflag = 2 
+            if verbose>=5: print('======== Absolute improvement too small (%f < %f), terminating ========' % (mean(abserrorhistory), AbsTolFun))
+            break
+        if (count > StallIterLimit) and (mean(relerrorhistory) < RelTolFun): # Stop if improvement is too small
+            exitflag = 2 
+            if verbose>=5: print('======== Relative improvement too small (%f < %f), terminating ========' % (mean(relerrorhistory), RelTolFun))
             break
         if count2 > MaxRangeIter: 
             exitflag = 3
+            if verbose>=5: print('======== Can\'t find parameters within range (%i > %i), terminating ========' % (count2, MaxRangeIter))
             break
-        if (time()-start)>timelimit:
+        if timelimit is not None and (time()-start)>timelimit:
             exitflag = 4
+            if verbose>=5: print('======== Time limit reached (%f > %f), terminating ========' % ((time()-start), timelimit))
             break
-
+        if stoppingfunc and stoppingfunc():
+            exitflag = 5
+            if verbose>=5: print('======== Stopping function called, terminating ========')
+            break
 
     # Create additional output
     class makeoutput:

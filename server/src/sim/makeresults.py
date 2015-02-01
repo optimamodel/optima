@@ -19,7 +19,7 @@ def makeresults(D, allsims=None, quantiles=None, verbose=2):
     from printv import printv
     from quantile import quantile
     printv('Calculating results...', 1, verbose)
-    if allsims==None: allsims = [D.S] # If not supplied, using sims structure already in D
+    if allsims is None: allsims = [D.S] # If not supplied, using sims structure already in D
     
     R = struct()
     R.__doc__ = 'Output structure containing all worthwhile results from the model'
@@ -83,9 +83,7 @@ def makeresults(D, allsims=None, quantiles=None, verbose=2):
                 tmpdalytot += allpeople[:,healthstates,:,:].sum(axis=(1,2)) * disutils[h]
             R.daly.pops = quantile(tmpdalypops, quantiles=quantiles)
             R.daly.tot = quantile(tmpdalytot, quantiles=quantiles)
-            totaldalysaverted = 0.0
-            for progname in D.programs.keys():
-                D.programs[progname]['nonhivdalys']
+            
         
         if data=='dx':
             printv('Calculating diagnoses...', 3, verbose)

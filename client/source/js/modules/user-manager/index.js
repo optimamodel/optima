@@ -14,10 +14,10 @@ define([
         data: new User(),
         set: function (data) {
           user_manager.isLoggedIn = true;
+          user_manager.isAdmin = data.is_admin;
           angular.extend(user_manager.data, data);
         }
       };
-
       return user_manager;
     });
 });

@@ -10,7 +10,7 @@ def makeproject(projectname='example', pops = default_pops, progs = default_prog
     Initializes the empty project. Only the "Global" and "Fitted" parameters are added on this step.
     The rest of the parameters are calculated after the model is updated with the data from the workbook.
     
-    Version: 2015jan19 by cliffk
+    Version: 2015jan27 by cliffk
     """
     
     from dataio import savedata, projectpath
@@ -27,7 +27,7 @@ def makeproject(projectname='example', pops = default_pops, progs = default_prog
     
     # Initialize options
     from setoptions import setoptions
-    D.opt = setoptions(startyear=datastart, endyear=dataend, nsims=nsims)
+    D.opt = setoptions(nsims=nsims)
     
     # Set up "G" -- general parameters structure
     D.G = struct()
@@ -52,7 +52,6 @@ def makeproject(projectname='example', pops = default_pops, progs = default_prog
     D.G.fail = arange(3*D.G.ncd4+1, 4*D.G.ncd4+1)
     D.G.tx2  = arange(4*D.G.ncd4+1, 5*D.G.ncd4+1)
     for i,h in enumerate(D.G.healthstates): D.G[h] = [D.G[state][i] for state in ['undx', 'dx', 'tx1', 'fail', 'tx2']]
-    # Q:should econ_dataend also be saved somewhere?
     
     if savetofile: #False if we are using database
         savedata(D.G.projectfilename, D, verbose=verbose) # Create project -- #TODO: check if an existing project exists and don't overwrite it
