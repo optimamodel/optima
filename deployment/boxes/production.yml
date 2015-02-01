@@ -8,7 +8,6 @@
 
     - db_host: optima-prod.cvx5aaojfjbz.ap-southeast-2.rds.amazonaws.com
     - db_user: app
-    - db_password: RMJa8d1E
     - db_name: optima
     - db_url: "postgresql://{{db_user}}:{{db_password}}@{{db_host}}:5432/{{db_name}}"
 
