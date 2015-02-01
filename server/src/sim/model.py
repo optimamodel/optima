@@ -421,7 +421,7 @@ def model(G, M, F, opt, initstate=None, verbose=2):
                 dU[cd4] = maximum(dU[cd4], -people[undx[cd4],:,t]) # Ensure it doesn't go below 0 -- # TODO kludgy
                 printv('Prevented negative people in undiagnosed at timestep %i' % t, 10, verbose)
             S['dx'][:,t]    += newdiagnoses[cd4]/dt # Save annual diagnoses 
-            S['death'][:,t] += hivdeaths[cd4]/dt    # Save annual HIV deaths 
+            S['death'][:,t] += hivdeaths/dt    # Save annual HIV deaths 
         dU[0] = dU[0] + newinfections # Now add newly infected people
         
         ## Diagnosed
@@ -456,7 +456,7 @@ def model(G, M, F, opt, initstate=None, verbose=2):
                 dD[cd4] = maximum(dD[cd4], -people[dx[cd4],:,t]) # Ensure it doesn't go below 0 -- # TODO kludgy
                 printv('Prevented negative people in diagnosed at timestep %i' % t, 10, verbose)
             S['newtx1'][:,t] += newtreat1[cd4]/dt # Save annual treatment initiation
-            S['death'][:,t]  += hivdeaths[cd4]/dt # Save annual HIV deaths 
+            S['death'][:,t]  += hivdeaths/dt # Save annual HIV deaths 
         
         ## 1st-line treatment
         for cd4 in range(ncd4):
@@ -477,7 +477,7 @@ def model(G, M, F, opt, initstate=None, verbose=2):
             if ((dT1[cd4]+people[tx1[cd4],:,t])<0).any():
                 dT1[cd4] = maximum(dT1[cd4], -people[tx1[cd4],:,t]) # Ensure it doesn't go below 0 -- # TODO kludgy
                 printv('Prevented negative people in treatment 1 at timestep %i' % t, 10, verbose)
-            S['death'][:,t] += hivdeaths[cd4]/dt # Save annual HIV deaths 
+            S['death'][:,t] += hivdeaths/dt # Save annual HIV deaths 
 
         ## Treatment failure
         newtreat2tot = mtx2[t] - people[tx2,:,t].sum() # Calculate difference between current people on treatment and people needed
@@ -504,7 +504,7 @@ def model(G, M, F, opt, initstate=None, verbose=2):
                 dF[cd4] = maximum(dF[cd4], -people[fail[cd4],:,t]) # Ensure it doesn't go below 0 -- # TODO kludgy
                 printv('Prevented negative people in failure at timestep %i' % t, 10, verbose)
             S['newtx2'][:,t] += newtreat2[cd4]/dt # Save annual treatment initiation
-            S['death'][:,t]  += hivdeaths[cd4]/dt # Save annual HIV deaths
+            S['death'][:,t]  += hivdeaths/dt # Save annual HIV deaths
             
         ## 2nd-line treatment
         for cd4 in range(ncd4):
@@ -524,7 +524,7 @@ def model(G, M, F, opt, initstate=None, verbose=2):
             if ((dT2[cd4]+people[tx2[cd4],:,t])<0).any():
                 dT2[cd4] = maximum(dT2[cd4], -people[tx2[cd4],:,t]) # Ensure it doesn't go below 0 -- # TODO kludgy
                 printv('Prevented negative people in treatment 2 at timestep %i' % t, 10, verbose)
-            S['death'][:,t] += hivdeaths[cd4]/dt # Save annual deaths data
+            S['death'][:,t] += hivdeaths/dt # Save annual deaths data
 
 
         ###############################################################################

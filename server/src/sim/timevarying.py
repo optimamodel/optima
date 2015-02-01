@@ -1,4 +1,4 @@
-def timevarying(allocpm, ntimepm=1, nprogs=None, tvec=None, totalspend=None):
+def timevarying(allocpm, ntimepm=1, nprogs=None, tvec=None, totalspend=None, fundingchanges=None):
 
     """
     Determines allocation values over time for 2, 3 or 4 parameter time-varying
@@ -22,7 +22,7 @@ def timevarying(allocpm, ntimepm=1, nprogs=None, tvec=None, totalspend=None):
     
     # Sanity check for the values of ntimepm, nprogs and len(allocpm)
     if len(allocpm) / ntimepm != nprogs:
-        raise Exception('Invalid number of parameters to define allocations over time')
+        raise Exception('Invalid number of parameters to define allocations over time (%i parameters, %i time parameters, %i programs)' % (len(allocpm), ntimepm, nprogs))
 
     # Set t to be between 0 and 1, and get the number of time points
     npts = len(tvec)
@@ -111,6 +111,56 @@ def timevarying(allocpm, ntimepm=1, nprogs=None, tvec=None, totalspend=None):
        
     # Throw an error if any other inputs are gievn
     else: raise Exception('Algorithm can only handle 2, 3 or 4 parameter time-varying curves')
+    
+    # Use funding limits
+    if fundingchanges is not None:
+        newallocation = allocation # Copy
+        for t in range(1,npts):
+            for p in range(nprogs):
+                if newallocation[p,t]/newallocation[p,t-1]<fundingchanges.total.dec[p]: # Too low: make bigger up to the limit
+                    newallocation[p,t] = newallocation[p,t-1]*fundingchanges.total.dec[p]
+                if newallocation[p,t]/newallocation[p,t-1]>fundingchanges.total.inc[p]: # Too high: make smaller down to the limit
+                    newallocation[p,t] = newallocation[p,t-1]*fundingchanges.total.inc[p]
+            newallocation[:,t] *= sum(allocation[:,t]) / sum(newallocation[:,t]) # Normalize
+    
 
     # Output full allocation over time
     return allocation
+
+
+
+
+def multiyear(allocpm, years=[], totalspends=[], nprogs=None, tvec=None):
+
+    """
+    Determines allocation values over time for a set budget in each year.
+        
+    Version: 2015jan30 by cliffk
+    """
+    
+    # Import stuff
+    from numpy import zeros, arange, array, tile
+    from utils import findinds
+    
+    nyears = len(years)
+    npts = len(tvec)
+    
+    # Sanity check for the values of ntimepm, nprogs and len(allocpm)
+    if len(allocpm) / nyears != nprogs:
+        raise Exception('Invalid number of parameters to define allocations over years (%i parameters, %i years, %i programs)' % (len(allocpm), len(years), nprogs))
+
+    allocation = zeros((nprogs,npts)) # Define allocation
+    proginds = arange(nprogs)
+    yearindex = 0 # Index of year to use
+    
+    # Loop over years, finding indices
+    changes = [0,npts]
+    for y in range(nyears):
+        changes.insert(-1,findinds(tvec>=years[y])[0])
+    
+    for y in range(nyears+1):
+        thisalloc = array(allocpm)[proginds+yearindex*nprogs]
+        thisalloc *= totalspends[max(0,y-1)] / float(sum(thisalloc))
+        allocation[:,changes[y]:changes[y+1]] = tile(thisalloc, (changes[y+1]-changes[y],1)).transpose()  # Assign totals and normalize
+        
+    return allocation # Output full allocation over time

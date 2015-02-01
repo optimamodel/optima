@@ -321,9 +321,8 @@ define(['./module', 'angular'], function (module, angular) {
         .success(function(data, status, headers, config) {
           if (data.status == 'Done') {
             stopTimer();
-          } else {
-            updateCharts(data);
-          }
+          } 
+          updateCharts(data); // now when we might run continuous calibration, this might be the only chance to update the charts.
         })
         .error(function(data, status, headers, config) {
           if (data && data.exception) {

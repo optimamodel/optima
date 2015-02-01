@@ -37,7 +37,8 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
         radarCharts: [],
         pieCharts: [],
         stackedBarChart: undefined,
-        outcomeChart: undefined
+        outcomeChart: undefined,
+        isTestRun: false
       };
 
       // cache placeholder
@@ -45,8 +46,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
 
       // Set defaults
       $scope.params = {};
-      // Default time limit is 10 hours
-      $scope.params.timelimit = 36000;
+      $scope.params.timelimit = 3600;
 
       // Objectives
       $scope.params.objectives = {};
@@ -80,13 +80,13 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       $scope.params.objectives.money.objectives.mtctnonbreast.use = false;
 
       // Default program weightings
-      $scope.params.objectives.money.costs = {};
+      $scope.params.objectives.money.costs = [];
       if(meta.progs) {
         $scope.programs = meta.progs.long;
         $scope.programCodes = meta.progs.short;
 
         for ( var i = 0; i < meta.progs.short.length; i++ ) {
-          $scope.params.objectives.money.costs[meta.progs.short[i]] = 100;
+          $scope.params.objectives.money.costs[i] = 100;
         }
 
         // Constraints Defaults
@@ -94,24 +94,34 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
         $scope.params.constraints.txelig = 1;
         $scope.params.constraints.dontstopart = true;
 
-        $scope.params.constraints.decrease = {};
-        $scope.params.constraints.increase = {};
-        $scope.params.constraints.coverage = {};
+        $scope.params.constraints.yeardecrease = [];
+        $scope.params.constraints.yearincrease = [];
+        $scope.params.constraints.totaldecrease = [];
+        $scope.params.constraints.totalincrease = [];
+        $scope.params.constraints.coverage = [];
 
         // Initialize program constraints models
         for ( var i = 0; i < meta.progs.short.length; i++ ) {
-          $scope.params.constraints.decrease[meta.progs.short[i]] = {};
-          $scope.params.constraints.decrease[meta.progs.short[i]].use = false;
-          $scope.params.constraints.decrease[meta.progs.short[i]].by = 100;
+          $scope.params.constraints.yeardecrease[i] = {};
+          $scope.params.constraints.yeardecrease[i].use = false;
+          $scope.params.constraints.yeardecrease[i].by = 100;
 
-          $scope.params.constraints.increase[meta.progs.short[i]] = {};
-          $scope.params.constraints.increase[meta.progs.short[i]].use = false;
-          $scope.params.constraints.increase[meta.progs.short[i]].by = 100;
+          $scope.params.constraints.yearincrease[i] = {};
+          $scope.params.constraints.yearincrease[i].use = false;
+          $scope.params.constraints.yearincrease[i].by = 100;
 
-          $scope.params.constraints.coverage[meta.progs.short[i]] = {};
-          $scope.params.constraints.coverage[meta.progs.short[i]].use = false;
-          $scope.params.constraints.coverage[meta.progs.short[i]].level = 0;
-          $scope.params.constraints.coverage[meta.progs.short[i]].year = undefined;
+          $scope.params.constraints.totaldecrease[i] = {};
+          $scope.params.constraints.totaldecrease[i].use = false;
+          $scope.params.constraints.totaldecrease[i].by = 100;
+
+          $scope.params.constraints.totalincrease[i] = {};
+          $scope.params.constraints.totalincrease[i].use = false;
+          $scope.params.constraints.totalincrease[i].by = 100;
+
+          $scope.params.constraints.coverage[i] = {};
+          $scope.params.constraints.coverage[i].use = false;
+          $scope.params.constraints.coverage[i].level = 0;
+          $scope.params.constraints.coverage[i].year = undefined;
         }
       }
 
@@ -197,11 +207,11 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
 
       var charts = [];
 
-      if (data[0].piedata) {
+      if (data[0] && data[0].piedata) {
         charts.push(generatePieChart(data[0].piedata, data[0].legend));
       }
 
-      if (data[1].piedata) {
+      if (data[1] && data[1].piedata) {
         charts.push(generatePieChart(data[1].piedata, data[0].legend)); // not set for data[1]
       }
 
@@ -238,11 +248,11 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
 
       var charts = [];
 
-      if (data[0].radardata) {
+      if (data[0] && data[0].radardata) {
         charts.push(generateRadarChart(data[0].radardata, data[0].legend));
       }
 
-      if (data[1].radardata) {
+      if (data[1] && data[1].radardata) {
         charts.push(generateRadarChart(data[1].radardata, data[0].legend)); // not set for data[1]
       }
 
@@ -269,9 +279,10 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
         title: title
       };
 
-      graphData = _(xData).map(function (xValue, index) {
-        var barData = _(yData).map(function(entry) { return entry[index]; });
-        return [xValue, barData];
+
+      graphData = _(xData).map(function(xValue, index) {
+        var yValues = _(yData).map(function(yEntry) { return yEntry[index]; });
+        return [xValue, yValues];
       });
 
       return {
@@ -451,7 +462,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     // makes all graphs to recalculate and redraw
     function updateGraphs(data) {
       /* new structure keeps everything together:
-       * data.plot[n].alloc => pie & radar (TODO radar to be changed)
+       * data.plot[n].alloc => pie & radar
        * data.plot[n].multi => old line-scatterplots
        * data.plot[n].outcome => new line plot
        * n - sequence number of saved optimization
@@ -577,10 +588,10 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
      * Returns true if at least one chart is available
      */
     $scope.someGraphAvailable = function() {
-      return $scope.state.radarCharts.length > 0 ||
-        $scope.state.optimisationGraphs.length > 0 ||
-        $scope.state.financialGraphs.length > 0 ||
-        $scope.state.pieCharts.length > 0 ||
+      return !(_.isEmpty($scope.state.radarCharts)) ||
+        !(_.isEmpty($scope.state.optimisationGraphs)) ||
+        !(_.isEmpty($scope.state.financialGraphs)) ||
+        !(_.isEmpty($scope.state.pieCharts)) ||
         $scope.state.stackedBarChart !== undefined ||
         $scope.state.outcomeChart !== undefined;
     };
@@ -716,8 +727,8 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
           } else {
             if (data.status == 'Running') $scope.optimizationStatus = statusEnum.RUNNING;
             if (data.status == 'Stopping') $scope.optimizationStatus = statusEnum.STOPPING;
-            updateGraphs(data);
           }
+          updateGraphs(data); // otherwise they might never get updated!
         })
         .error(function(data, status, headers, config) {
           if (data && data.exception) {
@@ -898,7 +909,6 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
      */
     $scope.applyOptimization = function(name) {
       var optimization = $scope.optimizationByName(name);
-
       _.extend($scope.params.objectives, optimization.objectives);
       _.extend($scope.params.constraints, optimization.constraints);
       if (optimization.result) {
@@ -913,18 +923,19 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
 
       $scope.optimizations = angular.copy(optimizations);
 
-      var nameExists = _.some($scope.optimizations, function(item) {
+      var nameExists = name && _.some(_($scope.optimizations), function(item) {
         return item.name == name;
       });
 
       if (nameExists) {
         $scope.state.activeOptimizationName = name;
-      } else if ($scope.optimizations[0]) {
-        $scope.state.activeOptimizationName = $scope.optimizations[0].name;
       } else {
         $scope.state.activeOptimizationName = undefined;
+        var optimization = _($scope.optimizations).first();
+        if (optimization) {
+          $scope.state.activeOptimizationName = optimization.name;
+        }
       }
-
       $scope.applyOptimization($scope.state.activeOptimizationName);
     };
 
@@ -932,6 +943,14 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     if (optimizations && optimizations.data) {
       $scope.initOptimizations(optimizations.data.optimizations);
     }
+
+    $scope.updateTimelimit = function () {
+      if ($scope.state.isTestRun) {
+        $scope.params.timelimit = 60;
+      } else {
+        $scope.params.timelimit = 3600;
+      }
+    };
 
     $scope.$watch('state.pieCharts', updateChartsForDataExport, true);
     $scope.$watch('state.outcomeChart', updateChartsForDataExport, true);

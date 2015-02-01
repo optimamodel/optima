@@ -7,8 +7,8 @@ from matplotlib.pylab import figure, plot, hold, xlabel, ylabel, title, xlim, yl
 from printv import printv
 
 default_progname = 'MSM programs'
-default_ccparams = [1.0, 0.2, 25000.0, None, None] #
-default_ccplot = [1e5, None, 0]
+default_ccparams = [0.9, 0.5, 0.6, 400000.0, 0.5, None] #
+default_ccplot = [100, None, 0]
 default_coparams = [0.3, 0.5, 0.7, 0.9] 
 default_effect = [['sex', 'condomcas'], [u'MSM']] # D.programs[default_progname]['effects'][0] 
 default_artelig = range(6,31)
@@ -28,7 +28,9 @@ def plotcc(D, progname=default_progname, ccparams=default_ccparams, ccplot=defau
     figure()
     hold(True)
     if 'xlinedata' in plotdata.keys():
-        plot(plotdata['xlinedata'], plotdata['ylinedata'], 'k-', lw = 2)
+        plot(plotdata['xlinedata'], plotdata['ylinedata'][0], 'k--', lw = 2)
+        plot(plotdata['xlinedata'], plotdata['ylinedata'][1], 'b-', lw = 2)
+        plot(plotdata['xlinedata'], plotdata['ylinedata'][2], 'k--', lw = 2)
     plot(plotdata['xscatterdata'], plotdata['yscatterdata'], 'ro')
     title(plotdata['title'])
     xlabel(plotdata['xlabel'])
@@ -83,7 +85,7 @@ def plotcco(D, progname=default_progname, effect=default_effect, ccparams=defaul
     ylabel(plotdata['ylabel'] )
     xlim([plotdata['xlowerlim'],plotdata['xupperlim']])
     ylim([plotdata['ylowerlim'],plotdata['yupperlim']])
-    
+
 ###############################################################################
 def plotprogramcco(D, progname=default_progname, ccparams=default_ccparams, ccplot=default_ccplot, coparams=default_coparams):
     '''
