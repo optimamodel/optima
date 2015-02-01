@@ -99,13 +99,13 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
                 fullkey = key1+key2+'rease'
                 this = constraints[fullkey][p] # Shorten name
                 if key1=='total':
-                    if this.use: 
+                    if this.use and objectives.funding != 'variable': # Don't constrain variable-year-spend optimizations
                         newlim = this.by/100.*origalloc
                         fundingchanges[key1][key2].append(newlim)
                     else: 
                         fundingchanges[key1][key2].append(abslims[key2])
                 elif key1=='year':
-                    if this.use:
+                    if this.use and objectives.funding != 'variable': # Don't constrain variable-year-spend optimizations
                         newlim = this.by/100.-1 # Relative change in funding
                         fundingchanges[key1][key2].append(newlim)
                     else: 
@@ -284,6 +284,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         options.parindices = parindices # Indices for the parameters to be updated on
         options.normalizations = normalizations # Whether to normalize a parameter
         options.totalspends = objectives.outcome.variable # Total budgets
+        options.fundingchanges = fundingchanges # Constraints-based funding changes
         options.randseed = None
         
         ## Define optimization parameters
