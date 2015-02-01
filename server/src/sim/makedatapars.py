@@ -109,10 +109,11 @@ def makedatapars(D, verbose=2):
         newarray.p = zeros(shape(D.G.meta.pops.male))
         if 't' in newarray.keys(): raise Exception('Shouldn''t be using time')
         count = -1
-        for i,tf in enumerate(popbool):
-            if tf:
-                count += 1
-                newarray.p[i] = origarray.p[count]
+        if popbool.any(): # Don't try anything if no entries
+            for i,tf in enumerate(popbool):
+                if tf:
+                    count += 1
+                    newarray.p[i] = origarray.p[count]
         
         return newarray
     
