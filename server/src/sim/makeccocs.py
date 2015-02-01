@@ -18,7 +18,7 @@ from parameters import input_parameter_name
 
 ## Set defaults for testing makeccocs
 default_progname = 'NSP'
-default_ccparams = [0.9, 0.2, 0.4, 7000000.0, None, None] #
+default_ccparams = [] #[0.9, 0.2, 0.4, 7000000.0, None, None] #
 default_ccplot = []#[None, None, 0]
 default_coparams = []#[0.3, 0.5, 0.7, 0.9] 
 default_effect = [['sex', 'condomcas'], [u'MSM']] # D.programs[default_progname]['effects'][0] 
