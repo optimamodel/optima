@@ -26,6 +26,17 @@ default_simstartyear = 2000
 default_simendyear = 2030
 
 
+def runmodelalloc(D, thisalloc, parindices, randseed, verbose=2):
+    """ Little function to do calculation since it appears so many times """
+    newD = deepcopy(D)
+    newD, newcov, newnonhivdalysaverted = getcurrentbudget(newD, thisalloc, randomize=randseed) # Get cost-outcome curves with uncertainty
+    newM = makemodelpars(newD.P, newD.opt, withwhat='c', verbose=verbose)
+    newD.M = partialupdateM(D.M, newM, parindices)
+    S = model(newD.G, newD.M, newD.F[0], newD.opt, verbose=verbose)
+    R = makeresults(D, allsims=[S], verbose=0)
+    return R
+
+
 
 def objectivecalc(optimparams, options):
     """ Calculate the objective function """
@@ -35,22 +46,17 @@ def objectivecalc(optimparams, options):
         thisalloc = multiyear(optimparams, years=options.years, totalspends=options.totalspends, nprogs=options.nprogs, tvec=options.D.opt.partvec) 
     else:
         raise Exception('Cannot figure out what kind of allocation this is since neither options.ntimepm nor options.years is defined')
-    newD = deepcopy(options.D)
-    newD, newcov, newnonhivdalysaverted = getcurrentbudget(newD, thisalloc, randomize=True) # Get cost-outcome curves with uncertainty
-    newM = makemodelpars(newD.P, newD.opt, withwhat='c', verbose=0)
-    newD.M = partialupdateM(options.D.M, newM, options.parindices)
-
-    S = model(newD.G, newD.M, newD.F[0], newD.opt, verbose=0)
-    R = makeresults(options.D, allsims=[S], verbose=0)
     
-    objective = 0 # Preallocate objective value 
+    R = runmodelalloc(options.D, thisalloc, options.parindices, options.randseed) # Actually run
+    
+    outcome = 0 # Preallocate objective value 
     for key in options.outcomekeys:
         if options.weights[key]>0: # Don't bother unless it's actually used
-            if key!='costann': thisobjective = R[key].tot[0][options.outindices].sum()
-            else: thisobjective = R[key].total.total[0][options.outindices].sum() # Special case for costann
-            objective += thisobjective * options.weights[key] / float(options.normalizations[key]) * options.D.opt.dt # Calculate objective
+            if key!='costann': thisoutcome = R[key].tot[0][options.outindices].sum()
+            else: thisoutcome = R[key].total.total[0][options.outindices].sum() # Special case for costann
+            outcome += thisoutcome * options.weights[key] / float(options.normalizations[key]) * options.D.opt.dt # Calculate objective
         
-    return objective
+    return outcome
     
     
     
@@ -163,7 +169,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         for s in range(len(D.F)): # Loop over all available meta parameters
             print('========== Running uncertainty optimization %s of %s... ==========' % (s+1, len(D.F)))
             options.D.F = [D.F[s]] # Loop over fitted parameters
-            print('WARNING TODO want to loop over CCOCs too')
+            options.randseed = s
             optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=parammin, absinitial=stepsizes, MaxIter=maxiters, timelimit=timelimit, fulloutput=True, stoppingfunc=stoppingfunc, verbose=verbose)
             optparams = optparams / optparams.sum() * options.totalspend # Make sure it's normalized -- WARNING KLUDGY
             allocarr.append(optparams)
@@ -190,10 +196,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         for params in [origalloc, allocarr[bestallocind]]: # CK: loop over original and (the best) optimal allocations
             sleep(0.1)
             alloc = timevarying(params, ntimepm=len(params)/nprogs, nprogs=nprogs, tvec=D.opt.partvec, totalspend=totalspend)   
-            D, coverage, nonhivdalysaverted = getcurrentbudget(D, alloc)
-            D.M = makemodelpars(D.P, D.opt, withwhat='c', verbose=2)
-            S = model(D.G, D.M, D.F[0], D.opt, verbose=verbose)
-            R = makeresults(D, [S], D.opt.quantiles, verbose=verbose)
+            R = runmodelalloc(options.D, alloc, options.parindices, options.randseed, verbose=verbose) # Actually run
             result.Rarr.append(struct()) # Append a structure
             result.Rarr[-1].R = deepcopy(R) # Store the R structure (results)
             result.Rarr[-1].label = labels.pop(0) # Store labels, one at a time
@@ -234,15 +237,12 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         for params in [origalloc, optparams]: # CK: loop over original and (the best) optimal allocations
             sleep(0.1)
             alloc = timevarying(params, ntimepm=ntimepm, nprogs=nprogs, tvec=D.opt.partvec, totalspend=totalspend) #Regenerate allocation
-            D, coverage, nonhivdalysaverted = getcurrentbudget(D, alloc)
-            D.M = makemodelpars(D.P, D.opt, withwhat='c', verbose=2)
-            S = model(D.G, D.M, D.F[0], D.opt, verbose=verbose)
-            R = makeresults(D, [S], D.opt.quantiles, verbose=verbose)
+            R = runmodelalloc(options.D, alloc, options.parindices, options.randseed, verbose=verbose) # Actually run
             result.Rarr.append(struct()) # Append a structure
             result.Rarr[-1].R = deepcopy(R) # Store the R structure (results)
             result.Rarr[-1].label = labels.pop(0) # Store labels, one at a time
-        result.xdata = S.tvec # Store time data
-        result.alloc = alloc[:,0:len(S.tvec)] # Store allocation data, and cut to be same length as time data
+        result.xdata = R.tvec # Store time data
+        result.alloc = alloc[:,0:len(R.tvec)] # Store allocation data, and cut to be same length as time data
         
     
     
@@ -292,15 +292,12 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         for params in [origalloc, optparams]: # CK: loop over original and (the best) optimal allocations
             sleep(0.1)
             alloc = multiyear(optimparams, years=options.years, totalspends=options.totalspends, nprogs=options.nprogs, tvec=options.D.opt.partvec) 
-            D, coverage, nonhivdalysaverted = getcurrentbudget(D, alloc)
-            D.M = makemodelpars(D.P, D.opt, withwhat='c', verbose=2)
-            S = model(D.G, D.M, D.F[0], D.opt, verbose=verbose)
-            R = makeresults(D, [S], D.opt.quantiles, verbose=verbose)
+            R = runmodelalloc(options.D, alloc, options.parindices, options.randseed, verbose=verbose) # Actually run
             result.Rarr.append(struct()) # Append a structure
             result.Rarr[-1].R = deepcopy(R) # Store the R structure (results)
             result.Rarr[-1].label = labels.pop(0) # Store labels, one at a time
-        result.xdata = S.tvec # Store time data
-        result.alloc = alloc[:,0:len(S.tvec)] # Store allocation data, and cut to be same length as time data
+        result.xdata = R.tvec # Store time data
+        result.alloc = alloc[:,0:len(R.tvec)] # Store allocation data, and cut to be same length as time data
         
     
     
@@ -355,10 +352,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         for params in [origalloc, allocarr[closesttocurrent]]: # CK: loop over original and (the best) optimal allocations
             sleep(0.1)
             alloc = timevarying(params, ntimepm=len(params)/nprogs, nprogs=nprogs, tvec=D.opt.partvec, totalspend=totalspend)   
-            D, coverage, nonhivdalysaverted = getcurrentbudget(D, alloc)
-            D.M = makemodelpars(D.P, D.opt, withwhat='c', verbose=2)
-            S = model(D.G, D.M, D.F[0], D.opt, verbose=verbose)
-            R = makeresults(D, [S], D.opt.quantiles, verbose=verbose)
+            R = runmodelalloc(options.D, alloc, options.parindices, options.randseed, verbose=verbose) # Actually run
             result.Rarr.append(struct()) # Append a structure
             result.Rarr[-1].R = deepcopy(R) # Store the R structure (results)
             result.Rarr[-1].label = labels.pop(0) # Store labels, one at a time        
