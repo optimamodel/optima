@@ -1,19 +1,16 @@
-def getcurrentbudget(D, alloc=None):
+def getcurrentbudget(D, alloc=None, randseed=None):
     """
     Purpose: get the parameters corresponding to a given allocation. If no allocation is specified, this function also estimates the current budget
     Inputs: D, alloc (optional)
     Returns: D
     Version: 2014nov30
     """
-    from makeccocs import ccoeqn, cceqn, cc2eqn, cco2eqn, coverage_params, default_convertedccparams, default_convertedccoparams  
-    from numpy import asarray, nan, isnan, zeros  
+    from makeccocs import ccoeqn, cceqn, cc2eqn, cco2eqn, coverage_params, default_convertedccparams, default_convertedccoparams, makesamples
+    from numpy import nan, zeros
+    from utils import sanitize
+    from updatedata import perturb
     
     npts = len(D.opt.partvec) # Number of parameter points
-
-    # Initialise parameter structure (same as D.P)
-    for param in D.P.keys():
-        if isinstance(D.P[param], dict) and 'p' in D.P[param].keys():
-            D.P[param].c = nan+zeros((len(D.P[param].p), npts))
 
     # Initialise currentbudget if needed
     allocprovided = not(isinstance(alloc,type(None)))
@@ -24,77 +21,52 @@ def getcurrentbudget(D, alloc=None):
     currentcoverage = zeros((D.G.nprogs, npts))
     currentnonhivdalysaverted = zeros(npts)
 
+    # Initialise parameter structure (same as D.P)
+    for param in D.P.keys():
+        if isinstance(D.P[param], dict) and 'p' in D.P[param].keys():
+            D.P[param].c = nan+zeros((len(D.P[param].p), npts))
+
     # Loop over programs
     for prognumber, progname in enumerate(D.data.meta.progs.short):
         
-        # If an allocation has been passed in, we don't need to figure out the program budget
-        if allocprovided:
-            # totalcost = alloc[prognumber]
-            totalcost = alloc[prognumber, :] # Allocation is over time hence a vector rather than constant
-        else:
-            # Get cost info
-            totalcost = D.data.costcov.cost[prognumber]
-            totalcost = asarray(totalcost)
-            totalcost = totalcost[~isnan(totalcost)]
-            totalcost = totalcost[-1]
-
-        # Extract the converted cost-coverage parameters... 
-        if D.programs[progname]['convertedccparams']:
-            convertedccparams = D.programs[progname]['convertedccparams']
-        # ... or if there aren't any, use defaults (for sim only; FE produces warning)
-        else:
-            convertedccparams = default_convertedccparams
-
-        # Get coverage
-        if len(convertedccparams)==2:
-            currentcoverage[prognumber, :] = cc2eqn(totalcost, convertedccparams) # cc2eqn(totalcost, convertedccparams)
-        else:
-            currentcoverage[prognumber, :] = cceqn(totalcost, convertedccparams) # cceqn(totalcost, convertedccparams)
+        # Get allocation - either it's been passed in, or we figure it out from the data
+        totalcost = alloc[prognumber, :] if allocprovided else sanitize(D.data.costcov.cost[prognumber]).tolist()
 
         # Extract and sum the number of non-HIV-related DALYs 
         nonhivdalys = D.programs[progname]['nonhivdalys']
-        
+
+        # Extract the converted cost-coverage parameters... or if there aren't any, use defaults (for sim only; FE produces warning)
+        convertedccparams = D.programs[progname]['convertedccparams'] if D.programs[progname]['convertedccparams'] else default_convertedccparams
+        if randseed>=0: convertedccparams[0][1] = perturb(1,(convertedccparams[2][1]-convertedccparams[1][1])/2, randseed=randseed) - 1 + convertedccparams[0][1]
+        currentcoverage[prognumber, :] = cc2eqn(totalcost, convertedccparams[0]) if len(convertedccparams[0])==2 else cceqn(totalcost, convertedccparams[0])
+
         # TODO -- This should be summed over time anyway... so can make currentcoverage a vector. This was Robyn's intention anyway!
-        currentnonhivdalysaverted += nonhivdalys[0] * currentcoverage[prognumber, :]
+        currentnonhivdalysaverted += nonhivdalys[0]*currentcoverage[prognumber, :]
 
         # Loop over effects
         for effectnumber, effect in enumerate(D.programs[progname]['effects']):
 
-            # Get population info
+            # Get population and parameter info
             popname = effect[1]
-
-            # Get parameter info
             parname = effect[0][1]
-
+            
             # Is the affected parameter coverage?
             if parname in coverage_params:
-                D.P[effect[0][1]].c[:] = currentcoverage[prognumber]
-
+                D.P[parname].c[:] = currentcoverage[prognumber]
             # ... or not?
             else:
-                if popname[0] in D.data.meta.pops.short:
-                    popnumber = D.data.meta.pops.short.index(popname[0]) 
-                else:
-                    popnumber = 0
-                if len(effect)>4 and len(effect[4])>=4: #happy path if co_params are actually there
-                    # Unpack
-                    convertedccoparams = effect[4]
-                else:
-                    # did not get co_params yet, giving it some defined params TODO @RS @AS do something sensible here:
-                    convertedccoparams = default_convertedccoparams
+                popnumber = D.data.meta.pops.short.index(popname[0]) if popname[0] in D.data.meta.pops.short else 0
+                 # Use parameters if there, otherwise give it some predefined ones
+                convertedccoparams = effect[4] if len(effect)>4 and len(effect[4])>=4 else default_convertedccoparams
+                if randseed>=0:
+                    try:
+                        convertedccoparams[0][1] = perturb(1,(convertedccoparams[2][1]-convertedccoparams[1][1])/2, randseed=randseed) - 1 + convertedccoparams[0][1]
+                        convertedccoparams[-1], convertedccoparams[-2] = makesamples(effect[2], effect[3][0], effect[3][1], effect[3][2], effect[3][3], samplesize=1, randseed=randseed)
+                    except:
+                        convertedccoparams = default_convertedccoparams
+                        print('WARNING, no parameters entered for progname=%s , effectnumber=%s, popname=%s, parname=%s' % (progname, effectnumber, popname, parname))
                     
-#                initcost = totalcost if len(totalcost) == 1 else totalcost[0] # TODO -- SHOULD NOW BE REDUNDANT
-
-                #   zerosample, fullsample = makesamples(muz, stdevz, muf, stdevf, samplesize=1)
-                if len(convertedccparams)==2:
-#                    y = cco2eqn(initcost, convertedccoparams) # cco2eqn(totalcost, convertedccoparams)
-                    y = cco2eqn(totalcost, convertedccoparams)
-                else:
-#                    y = ccoeqn(initcost, convertedccoparams) # cco2eqn(totalcost, convertedccoparams)
-                    y = ccoeqn(totalcost, convertedccoparams)
-#                D.P[effect[0][1]].c[popnumber] = y # TODO -- SHOULD NOW BE REDUNDANT
-                D.P[effect[0][1]].c[popnumber] = y
-
+                D.P[parname].c[popnumber] = cco2eqn(totalcost, convertedccoparams[0]) if len(convertedccparams[0])==2 else ccoeqn(totalcost, convertedccoparams[0])
 
         if not(allocprovided):
             currentbudget.append(totalcost)

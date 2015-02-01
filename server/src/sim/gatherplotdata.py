@@ -10,6 +10,8 @@ Version: 2015jan06 by cliffk
 # Define labels
 epititles = {'prev':'Prevalence', 'plhiv':'PLHIV', 'inci':'New infections', 'daly':'DALYs', 'death':'Deaths', 'dx':'Diagnoses', 'tx1':'First-line treatment', 'tx2':'Second-line treatment'}
 epiylabels = {'prev':'HIV prevalence (%)', 'plhiv':'Number of PLHIV', 'inci':'New HIV infections per year', 'daly':'HIV-related DALYs per year', 'death':'AIDS-related deaths per year', 'dx':'New HIV diagnoses per year', 'tx1':'People on 1st-line treatment', 'tx2':'People on 2nd-line treatment'}
+costtitles = {'costcum':'Cumulative HIV-related financial commitments'}
+costylabels = {}
 
 def gatheruncerdata(D, R, verbose=2):
     """ Gather standard results into a form suitable for plotting with uncertainties. """
@@ -95,14 +97,38 @@ def gatheruncerdata(D, R, verbose=2):
         else:
             raise Exception("Can't figure out size of epidata; doesn't seem to be a vector or a matrix")
 
+        for p in range(D.G.npops):
+            uncer[key].pops[p].best = (R[key].pops[0][p,:]*percent).tolist()
+            uncer[key].pops[p].low = (R[key].pops[1][p,:]*percent).tolist()
+            uncer[key].pops[p].high = (R[key].pops[2][p,:]*percent).tolist()
+            uncer[key].pops[p].title = epititles[key] + ' - ' + D.G.meta.pops.short[p]
+            uncer[key].pops[p].ylabel = epiylabels[key]
     
     # Financial outputs
     for key in ['costann', 'costcum']:
         uncer[key] = struct()
+        origkey = 'annual' if key=='costann' else 'cumulative'
+        #Set up stacked storage
+        uncer[key].stacked = struct()
+        if key == 'costcum':
+            uncer[key].stacked.costs = []
+            uncer[key].stacked.legend = []
+            uncer[key].stacked.title = 'Cumulative HIV-related financial commitments'
+            uncer[key].stacked.ylabel = R['costshared'][origkey]['total']['ylabel']
+        else:
+            for yscale in ['total','gdp','revenue','govtexpend','totalhealth','domestichealth']:
+                uncer[key].stacked[yscale] = struct()
+                uncer[key].stacked[yscale].costs = []
+                uncer[key].stacked[yscale].legend = []
+                uncer[key].stacked[yscale].title = 'Annual HIV-related financial commitments'
+                if 'ylinedata' in R['costshared'][origkey]['total'][yscale]:
+                    uncer[key].stacked[yscale].ylabel = R['costshared'][origkey]['total'][yscale]['ylabel']
+
+        #Loop through cost types
         for ac in ['total','future','existing']:
             uncer[key][ac] = struct()
-            origkey = 'annual' if key=='costann' else 'cumulative'
             if key=='costcum':
+                # Individual line graphs with uncertainty
                 uncer[key][ac].best = R[key][ac][0].tolist()
                 uncer[key][ac].low = R[key][ac][1].tolist()
                 uncer[key][ac].high = R[key][ac][2].tolist()
@@ -111,10 +137,14 @@ def gatheruncerdata(D, R, verbose=2):
                 uncer[key][ac].xlabel = R['costshared'][origkey][ac]['xlabel']
                 uncer[key][ac].ylabel = R['costshared'][origkey][ac]['ylabel']
                 uncer[key][ac].legend = ['Model']
+                # Stacked graphs
+                uncer[key].stacked.costs.append(uncer[key][ac].best)
+                uncer[key].stacked.legend.append([ac])
             else:
                 for yscale in ['total','gdp','revenue','govtexpend','totalhealth','domestichealth']:
                     uncer[key][ac][yscale] = struct()
                     if 'ylinedata' in R['costshared'][origkey][ac][yscale]:
+                        # Individual line graphs with uncertainty
                         uncer[key][ac][yscale].best = R[key][ac][yscale][0].tolist()
                         uncer[key][ac][yscale].low = R[key][ac][yscale][1].tolist()
                         uncer[key][ac][yscale].high = R[key][ac][yscale][2].tolist()
@@ -123,8 +153,10 @@ def gatheruncerdata(D, R, verbose=2):
                         uncer[key][ac][yscale].xlabel = R['costshared'][origkey][ac][yscale]['xlabel']
                         uncer[key][ac][yscale].ylabel = R['costshared'][origkey][ac][yscale]['ylabel']
                         uncer[key][ac][yscale].legend = ['Model']
-                        
-    
+                        # Stacked graphs
+                        uncer[key].stacked[yscale].costs.append(uncer[key][ac][yscale].best)
+                        uncer[key].stacked[yscale].legend.append([ac])
+                            
     
     printv('...done gathering uncertainty results.', 4, verbose)
     return uncer
