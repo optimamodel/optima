@@ -424,20 +424,20 @@
             <tbody>
             <tr ng-repeat="p in programs">
               <td>
-                <input type="checkbox" ng-model="params.constraints.decrease[programCodes[$index]].use">
+                <input type="checkbox" ng-model="params.constraints.yeardecrease[programCodes[$index]].use">
               </td>
               <td>
                 {{ p }}
               </td>
               <td>
                 <input class="txbox __inline __s" type="number"
-                       ng-change="params.constraints.decrease[programCodes[$index]].use=true"
-                       ng-model="params.constraints.decrease[programCodes[$index]].by">%
+                       ng-change="params.constraints.yeardecrease[programCodes[$index]].use=true"
+                       ng-model="params.constraints.yeardecrease[programCodes[$index]].by">%
               </td>
               <td>
                 <input class="txbox __inline __s" type="number"
-                       ng-change="params.constraints.increase[programCodes[$index]].use=true"
-                       ng-model="params.constraints.increase[programCodes[$index]].by">%
+                       ng-change="params.constraints.yearincrease[programCodes[$index]].use=true"
+                       ng-model="params.constraints.yearincrease[programCodes[$index]].by">%
               </td>
             </tr>
             </tbody>
@@ -457,20 +457,20 @@
             <tbody>
             <tr ng-repeat="p in programs">
               <td>
-                <input type="checkbox" ng-model="params.constraints.decrease[programCodes[$index]].use">
+                <input type="checkbox" ng-model="params.constraints.totaldecrease[programCodes[$index]].use">
               </td>
               <td>
                 {{ p }}
               </td>
               <td>
                 <input class="txbox __inline __s" type="number"
-                       ng-change="params.constraints.decrease[programCodes[$index]].use=true"
-                       ng-model="params.constraints.decrease[programCodes[$index]].by">%
+                       ng-change="params.constraints.totaldecrease[programCodes[$index]].use=true"
+                       ng-model="params.constraints.totaldecrease[programCodes[$index]].by">%
               </td>
               <td>
                 <input class="txbox __inline __s" type="number"
-                       ng-change="params.constraints.increase[programCodes[$index]].use=true"
-                       ng-model="params.constraints.increase[programCodes[$index]].by">%
+                       ng-change="params.constraints.totalincrease[programCodes[$index]].use=true"
+                       ng-model="params.constraints.totalincrease[programCodes[$index]].by">%
               </td>
             </tr>
             </tbody>
