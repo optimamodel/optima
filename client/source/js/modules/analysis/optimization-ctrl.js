@@ -196,11 +196,11 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
 
       var charts = [];
 
-      if (data[0].piedata) {
+      if (data[0] && data[0].piedata) {
         charts.push(generatePieChart(data[0].piedata, data[0].legend));
       }
 
-      if (data[1].piedata) {
+      if (data[1] && data[1].piedata) {
         charts.push(generatePieChart(data[1].piedata, data[0].legend)); // not set for data[1]
       }
 
@@ -237,11 +237,11 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
 
       var charts = [];
 
-      if (data[0].radardata) {
+      if (data[0] && data[0].radardata) {
         charts.push(generateRadarChart(data[0].radardata, data[0].legend));
       }
 
-      if (data[1].radardata) {
+      if (data[1] && data[1].radardata) {
         charts.push(generateRadarChart(data[1].radardata, data[0].legend)); // not set for data[1]
       }
 
@@ -268,11 +268,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
         title: title
       };
 
-      graphData = _(xData).map(function (xValue, index) {
-        var barData = _(yData).map(function(entry) { return entry[index]; });
-        return [xValue, barData];
-      });
-
+      graphData = _.zip(xData, yData);
       return {
         'data': {bars: graphData},
         'options': options
@@ -282,17 +278,12 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     /**
      * Returns all stacked bar charts.
      */
-    var prepareStackedBarCharts = function (data, xData) {
-
+    var prepareStackedBarCharts = function (data) {
       var charts = [];
 
-      if (data.pie1) {
-        charts.push(generateStackedBarChart(data.pie1.val, xData, data.legend,
-          data.pie1.name));
-      }
-      if (data.pie2) {
-        charts.push(generateStackedBarChart(data.pie2.val, xData, data.legend,
-          data.pie2.name));
+      if (data.alloc && data.alloc.bardata) {
+        charts.push(generateStackedBarChart(data.alloc.bardata, data.alloc.xdata, data.alloc.legend,
+          data.alloc.bardata.title));
       }
 
       return charts;
@@ -396,10 +387,10 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     // makes all graphs to recalculate and redraw
     function drawGraphs() {
       if (!cachedResponse || !cachedResponse.plot) return;
-      $scope.state.pieCharts = preparePieCharts(cachedResponse.plot[0].alloc);
-      $scope.state.radarCharts = prepareRadarCharts(cachedResponse.plot[0].alloc);
-      $scope.state.stackedBarCharts = prepareStackedBarCharts(cachedResponse.plot[0].alloc, cachedResponse.plot[0].multi.tvec);
-      $scope.state.outcomeChart = prepareOutcomeChart(cachedResponse.plot[0].outcome);
+      $scope.state.pieCharts = (cachedResponse.plot[0].kind==='constant')? preparePieCharts(cachedResponse.plot[0].alloc):[];
+      $scope.state.radarCharts = (cachedResponse.plot[0].kind==='constant')? prepareRadarCharts(cachedResponse.plot[0].alloc):[];
+      $scope.state.stackedBarCharts = (cachedResponse.plot[0].kind==='range' )? prepareStackedBarCharts(cachedResponse.plot[0]):[];
+      $scope.state.outcomeChart = (cachedResponse.plot[0].kind==='constant')? prepareOutcomeChart(cachedResponse.plot[0].outcome):[];
       $scope.state.optimisationGraphs = prepareOptimisationGraphs(cachedResponse.plot[0].multi);
       $scope.state.financialGraphs = prepareFinancialGraphs(cachedResponse.plot[0].multi);
     }
@@ -533,8 +524,9 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
      * Returns true if at least one chart is available
      */
     $scope.someGraphAvailable = function() {
-      return $scope.state.radarCharts || $scope.state.optimisationGraphs ||
-        $scope.state.financialGraphs || $scope.state.pieCharts;
+      var result = !(_.isEmpty($scope.state.radarCharts)) || !(_.isEmpty($scope.state.optimisationGraphs)) ||
+        !(_.isEmpty($scope.state.financialGraphs)) || !(_.isEmpty($scope.state.pieCharts)) || !(_.isEmpty($scope.state.stackedBarCharts));
+      return result;
     };
 
     /**
@@ -668,8 +660,8 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
           } else {
             if (data.status == 'Running') $scope.optimizationStatus = statusEnum.RUNNING;
             if (data.status == 'Stopping') $scope.optimizationStatus = statusEnum.STOPPING;
-            updateGraphs(data);
           }
+          updateGraphs(data); // otherwise they might never get updated!
         })
         .error(function(data, status, headers, config) {
           if (data && data.exception) {
@@ -846,7 +838,6 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
      */
     $scope.applyOptimization = function(name) {
       var optimization = $scope.optimizationByName(name);
-
       _.extend($scope.params.objectives, optimization.objectives);
       _.extend($scope.params.constraints, optimization.constraints);
       if (optimization.result) {
@@ -861,18 +852,19 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
 
       $scope.optimizations = angular.copy(optimizations);
 
-      var nameExists = _.some($scope.optimizations, function(item) {
+      var nameExists = name && _.some(_($scope.optimizations), function(item) {
         return item.name == name;
       });
 
       if (nameExists) {
         $scope.state.activeOptimizationName = name;
-      } else if ($scope.optimizations[0]) {
-        $scope.state.activeOptimizationName = $scope.optimizations[0].name;
       } else {
         $scope.state.activeOptimizationName = undefined;
+        var optimization = _($scope.optimizations).first();
+        if (optimization) {
+          $scope.state.activeOptimizationName = optimization.name;
+        }
       }
-
       $scope.applyOptimization($scope.state.activeOptimizationName);
     };
 
