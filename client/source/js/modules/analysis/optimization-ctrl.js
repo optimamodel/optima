@@ -36,7 +36,8 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
         financialGraphs: [],
         radarCharts: [],
         pieCharts: [],
-        stackedBarCharts: []
+        stackedBarCharts: [],
+        isTestRun: false
       };
 
       // cache placeholder
@@ -44,8 +45,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
 
       // Set defaults
       $scope.params = {};
-      // Default time limit is 10 hours
-      $scope.params.timelimit = 3600; // TODO: add testing option
+      $scope.params.timelimit = 3600;
 
       // Objectives
       $scope.params.objectives = {};
@@ -634,6 +634,8 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     };
 
     $scope.startOptimization = function () {
+      var params = $scope.params;
+      params.timelimit
       $http.post('/api/analysis/optimization/start', $scope.params, {ignoreLoadingBar: true})
         .success(function (data, status, headers, config) {
           if (data.status == "OK" && data.join) {
@@ -872,6 +874,14 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     if (optimizations && optimizations.data) {
       $scope.initOptimizations(optimizations.data.optimizations);
     }
+
+    $scope.updateTimelimit = function () {
+      if ($scope.state.isTestRun) {
+        $scope.params.timelimit = 60;
+      } else {
+        $scope.params.timelimit = 3600;
+      }
+    };
 
     $scope.$watch('state.pieCharts', updateChartsForDataExport, true);
     $scope.$watch('state.outcomeChart', updateChartsForDataExport, true);
