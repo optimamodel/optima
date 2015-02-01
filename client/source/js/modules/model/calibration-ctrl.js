@@ -1,4 +1,4 @@
-define(['./module', 'angular', 'underscore'], function (module, angular, _) {
+define(['./module', 'angular', 'jquery', 'underscore'], function (module, angular, $, _) {
   'use strict';
 
   module.controller('ModelCalibrationController', function ($scope, $http, $interval,
@@ -311,6 +311,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           $scope.parameters.m = data.M;
           $scope.parameters.cache.m = angular.copy(data.M);
         }
+
+        $scope.updateChartHeights();
       }
     };
 
@@ -433,6 +435,25 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.$watch('types', function () {
       updateCharts($scope.parameters.cache.response);
     }, true);
+
+    $scope.reportDataEndError = function() {
+      return "End year must be more than "+ $scope.G.dataend + ".";
+    };
+
+    // Returns the value of the tallest chart.
+    $scope.getMaxChartHeight = function () {
+      return 500;
+    };
+
+    // Makes all charts to be as tall as the tallest one.
+    $scope.updateChartHeights = function () {
+      var highest = $scope.getMaxChartHeight();
+      console.log('updateChartHeights');
+      console.log($('.chart-container'));
+      $('.chart-container').each(function(i, element){ 
+        console.log(element.height);
+        $(element).height(highest)});
+    };    
 
   });
 });
