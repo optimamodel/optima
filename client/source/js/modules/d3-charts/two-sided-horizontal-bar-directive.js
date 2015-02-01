@@ -62,6 +62,8 @@ define(['./module', './scale-helpers', 'angular', './two-sided-horizontal-bar-ch
 
       var chart = new TwoSidedHorizontalBarChart(chartGroup, chartSize, data.bars, options.linesStyle);
       chart.draw();
+
+      d3Charts.drawTitleAndLegend(svg, options, headerGroup);
     };
 
     return {
