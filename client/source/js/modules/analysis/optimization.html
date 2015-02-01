@@ -544,6 +544,11 @@
             </div>
           </div>
 
+          <label style="padding-left: 35px; margin-top: 5px; display: block">
+            <input type="checkbox" ng-model="state.isTestRun" ng-change="updateTimelimit()">
+            Test run
+          </label>
+
           <div class="info-hint" ng-show="optimizationStatus.text">
             {{ optimizationStatus.text }}
           </div>
