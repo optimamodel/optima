@@ -113,20 +113,34 @@ define(['d3', 'underscore', './scale-helpers'], function (d3, _, scaleHelpers) {
         .attr("y2", chartSize.height);
     };
 
+    var drawTitles = function (axeGroup, rightGroup) {
+      axeGroup.append('text')
+        .text("asdasd")
+        .attr('x', -10)
+        .attr('class', 'graph-title')
+        .attr('style', 'text-anchor: end');
+      rightGroup.append('text')
+        .text("lalal aal")
+        .attr('x', 10)
+        .attr('class', 'graph-title')
+        .attr('style', 'text-anchor: start');
+      };
+
     this.draw = function () {
       var leftGroup = chart.append('g').attr('class', 'left_group');
       var axeGroup = chart.append('g').attr('class', 'axe_group')
         .attr("transform", function(d) {
           return ["translate(", sideWidth,", 0)"].join(' ');
         });
-      var rightChart = chart.append('g').attr('class', 'right_group')
+      var rightGroup = chart.append('g').attr('class', 'right_group')
         .attr("transform", function(d) {
           return ["translate(", sideWidth + axeSpacing,", 0)"].join(' ');
         });
 
       drawLeftBar(leftGroup);
       drawAxe(axeGroup);
-      drawRightBar(rightChart);
+      drawRightBar(rightGroup);
+      drawTitles(axeGroup, rightGroup);
     };
   }
 
