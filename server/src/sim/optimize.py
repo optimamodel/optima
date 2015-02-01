@@ -36,7 +36,7 @@ def objectivecalc(optimparams, options):
     else:
         raise Exception('Cannot figure out what kind of allocation this is since neither options.ntimepm nor options.years is defined')
     newD = deepcopy(options.D)
-    newD, newcov, newnonhivdalysaverted = getcurrentbudget(newD, thisalloc, randomize=False) # Get cost-outcome curves with uncertainty
+    newD, newcov, newnonhivdalysaverted = getcurrentbudget(newD, thisalloc, randomize=True) # Get cost-outcome curves with uncertainty
     newM = makemodelpars(newD.P, newD.opt, withwhat='c', verbose=0)
     newD.M = partialupdateM(options.D.M, newM, options.parindices)
 
