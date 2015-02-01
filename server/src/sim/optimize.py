@@ -81,16 +81,6 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
     objectives = deepcopy(objectives)
     constraints = deepcopy(constraints)
     ntimepm=1 + int(objectives.timevarying) # Either 1 or 2
-    
-    # Do percentage normalizations
-    for ob in objectives.money.objectives.keys(): 
-        if objectives.money.objectives[ob].use: objectives.money.objectives[ob].by = float(objectives.money.objectives[ob].by) / 100.0
-    for prog in objectives.money.costs.keys(): 
-        objectives.money.costs[prog] = float(objectives.money.costs[prog]) / 100.0
-    for prog in constraints.decrease.keys(): 
-        if constraints.decrease[prog].use: constraints.decrease[prog].by = float(constraints.decrease[prog].by) / 100.0
-    for prog in constraints.decrease.keys(): 
-        if constraints.decrease[prog].use: constraints.decrease[prog].by = float(constraints.decrease[prog].by) / 100.0
 
     nprogs = len(D.programs)
     totalspend = objectives.outcome.fixed # For fixed budgets
@@ -99,16 +89,21 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
     fundingchanges = struct()
     keys1 = ['year','total']
     keys2 = ['dec','inc']
-    lims = {'dec':-1e9, 'inc':1e9}
+    abslims = {'dec':0, 'inc':1e9}
+    rellims = {'dec':-1e9, 'inc':1e9}
     for key1 in keys1:
         fundingchanges[key1] = struct()
         for key2 in keys2:
             fundingchanges[key1][key2] = []
-            for prog in D.programs.keys():
+            for p in range(nprogs):
                 fullkey = key1+key2+'rease'
-                this = constraints[fullkey][prog] # Shorten name
-                if this.use: fundingchanges[key1][key2].append(this.by/100. - 1.)
-                else: fundingchanges[key1][key2].append(lims[key2])
+                this = constraints[fullkey][p] # Shorten name
+                if key1=='total':
+                    
+                    if this.use: 
+                        newlim = this.by/100.*origalloc
+                        fundingchanges[key1][key2].append(newlim)
+                    else: fundingchanges[key1][key2].append(abslims[key2])
 
     
     ## Define indices, weights, and normalization factors
@@ -363,7 +358,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         result.budgetlabels = ['Original budget']
         for b in range(nbudgets): result.budgetlabels.append('%i%% budget' % (budgets[b+1]*100./float(budgets[0])))
             
-        result.fval = fvalarr # Append the best value noe
+        result.fval = fvalarr # Append the best value
         result.allocarr = allocarr # List of allocations
         labels = ['Original','Optimal']
         result.Rarr = []
@@ -442,7 +437,7 @@ def defaultobjectives(D, verbose=2):
     ob.what = 'outcome' # Alternative is "money"
     
     ob.outcome = struct()
-    ob.outcome.fixed = 1e6 # "With a fixed amount of money available"
+    ob.outcome.fixed = sum(D.data.origalloc) # "With a fixed amount of money available"
     ob.outcome.inci = True # "Minimize cumulative HIV incidence"
     ob.outcome.inciweight = 100 # "Incidence weighting"
     ob.outcome.daly = False # "Minimize cumulative DALYs"
