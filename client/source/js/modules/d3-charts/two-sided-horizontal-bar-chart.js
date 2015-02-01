@@ -49,7 +49,9 @@ define(['d3', 'underscore', './scale-helpers'], function (d3, _, scaleHelpers) {
       };
     });
 
-    var sideWidth = chartSize.width / 2;
+    var axeSpacing = 4;
+    // take away 4 pixel to have space for the y-axe
+    var sideWidth = (chartSize.width - axeSpacing) / 2;
 
     var y = d3.scale.ordinal().rangeRoundBands([0, chartSize.height], 0.5);
     y.domain(chartData.map(function(d) { return d.y; }));
@@ -102,14 +104,28 @@ define(['d3', 'underscore', './scale-helpers'], function (d3, _, scaleHelpers) {
       });
     };
 
+    var drawAxe = function (axeGroup) {
+      axeGroup.append("line")
+        .style("stroke", "black")
+        .attr("x1", 2)
+        .attr("y1", 0)
+        .attr("x2", 2)
+        .attr("y2", chartSize.height);
+    };
+
     this.draw = function () {
       var leftGroup = chart.append('g').attr('class', 'left_group');
-      var rightChart = chart.append('g').attr('class', 'right_group')
+      var axeGroup = chart.append('g').attr('class', 'axe_group')
         .attr("transform", function(d) {
           return ["translate(", sideWidth,", 0)"].join(' ');
         });
+      var rightChart = chart.append('g').attr('class', 'right_group')
+        .attr("transform", function(d) {
+          return ["translate(", sideWidth + axeSpacing,", 0)"].join(' ');
+        });
 
       drawLeftBar(leftGroup);
+      drawAxe(axeGroup);
       drawRightBar(rightChart);
     };
   }
