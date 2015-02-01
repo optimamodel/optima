@@ -472,9 +472,9 @@ def defaultobjectives(D, verbose=2):
         ob.money.objectives[objective].to = 0 # "To" text entry box: don't use if set to 0
     ob.money.objectives.inci.use = True # Set incidence to be on by default
     
-    ob.money.costs = struct()
-    for prog in D.programs.keys():
-        ob.money.costs[prog] = 100 # By default, use a weighting of 100%
+    ob.money.costs = []
+    for p in range(D.G.nprogs):
+        ob.money.costs.append(100) # By default, use a weighting of 100%
     
     return ob
 
