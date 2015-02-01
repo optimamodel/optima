@@ -29,7 +29,7 @@ default_simendyear = 2030
 def runmodelalloc(D, thisalloc, parindices, randseed, verbose=2):
     """ Little function to do calculation since it appears so many times """
     newD = deepcopy(D)
-    newD, newcov, newnonhivdalysaverted = getcurrentbudget(newD, thisalloc, randomize=randseed) # Get cost-outcome curves with uncertainty
+    newD, newcov, newnonhivdalysaverted = getcurrentbudget(newD, thisalloc, randseed=randseed) # Get cost-outcome curves with uncertainty
     newM = makemodelpars(newD.P, newD.opt, withwhat='c', verbose=verbose)
     newD.M = partialupdateM(D.M, newM, parindices)
     S = model(newD.G, newD.M, newD.F[0], newD.opt, verbose=verbose)
