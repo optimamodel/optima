@@ -239,6 +239,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         options.fundingchanges = fundingchanges # Constraints-based funding changes
         parammin = concatenate((fundingchanges.total.dec, ones(nprogs)*-1e9))  
         parammax = concatenate((fundingchanges.total.inc, ones(nprogs)*1e9))  
+        options.randseed = None
         
         
         
@@ -283,6 +284,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         options.parindices = parindices # Indices for the parameters to be updated on
         options.normalizations = normalizations # Whether to normalize a parameter
         options.totalspends = objectives.outcome.variable # Total budgets
+        options.randseed = None
         
         ## Define optimization parameters
         nyears = len(options.years)
@@ -341,6 +343,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         options.parindices = parindices # Indices for the parameters to be updated on
         options.normalizations = normalizations # Whether to normalize a parameter
         options.totalspend = totalspend # Total budget
+        options.randseed = None
         
         ## Run multiple budgets
         budgets = arange(objectives.outcome.budgetrange.minval, objectives.outcome.budgetrange.maxval+objectives.outcome.budgetrange.step, objectives.outcome.budgetrange.step)
