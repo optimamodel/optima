@@ -488,28 +488,28 @@ def defaultconstraints(D, verbose=2):
     con = struct()
     con.txelig = 4 # 4 = "All people diagnosed with HIV"
     con.dontstopart = True # "No one who initiates treatment is to stop receiving ART"
-    con.yeardecrease = struct()
-    con.yearincrease = struct()
+    con.yeardecrease = []
+    con.yearincrease = []
     for p in range(D.G.nprogs): # Loop over all defined programs
-        con.yeardecrease[p] = struct()
+        con.yeardecrease.append(struct())
         con.yeardecrease[p].use = False # Tick box: by default don't use
         con.yeardecrease[p].by = 80 # Text entry box: 0.5 = 50% per year
-        con.yearincrease[p] = struct()
+        con.yearincrease.append(struct())
         con.yearincrease[p].use = False # Tick box: by default don't use
         con.yearincrease[p].by = 120 # Text entry box: 0.5 = 50% per year
-    con.totaldecrease = struct()
-    con.totalincrease = struct()
+    con.totaldecrease = []
+    con.totalincrease = []
     for p in range(D.G.nprogs): # Loop over all defined programs
-        con.totaldecrease[p] = struct()
+        con.totaldecrease.append(struct())
         con.totaldecrease[p].use = False # Tick box: by default don't use
         con.totaldecrease[p].by = 50 # Text entry box: 0.5 = 50% per total
-        con.totalincrease[p] = struct()
+        con.totalincrease.append(struct())
         con.totalincrease[p].use = False # Tick box: by default don't use
         con.totalincrease[p].by = 200 # Text entry box: 0.5 = 50% total
     
-    con.coverage = struct()
+    con.coverage = []
     for p in range(D.G.nprogs): # Loop over all defined programs
-        con.coverage[p] = struct()
+        con.coverage.append(struct())
         con.coverage[p].use = False # Tick box: by default don't use
         con.coverage[p].level = 0 # First text entry box: default no limit
         con.coverage[p].year = 2030 # Year to reach coverage level by
