@@ -26,7 +26,7 @@
     tags: api
 
   - name: API | Setup migrations in the database if needed
-    shell: if ! psql -U {{db_user}} -h {{db_host}} -c '\d+' | grep migrate_version >/dev/null ; then migrate version_control {{db_url}} {{install_dir}}/server/db/ ; fi
+    shell: if ! psql -U {{db_user}} -h {{db_host}} -d {{db_name}} -c '\d+' | grep migrate_version >/dev/null ; then migrate version_control {{db_url}} {{install_dir}}/server/db/ ; fi
     environment:
       PGPASSWORD: "{{ db_password }}"
     tags: api
