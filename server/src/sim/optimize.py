@@ -80,7 +80,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
     # Do this so if e.g. /100 won't have problems
     objectives = deepcopy(objectives)
     constraints = deepcopy(constraints)
-    ntimepm=1 + int(objectives.timevarying) # Either 1 or 2
+    ntimepm=1 + int(objectives.timevarying)*int(objectives.funding=='constant') # Either 1 or 2, but only if funding==constant
 
     nprogs = len(D.programs)
     totalspend = objectives.outcome.fixed # For fixed budgets
@@ -99,13 +99,13 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
                 fullkey = key1+key2+'rease'
                 this = constraints[fullkey][p] # Shorten name
                 if key1=='total':
-                    if this.use: 
+                    if this.use and objectives.funding != 'variable': # Don't constrain variable-year-spend optimizations
                         newlim = this.by/100.*origalloc
                         fundingchanges[key1][key2].append(newlim)
                     else: 
                         fundingchanges[key1][key2].append(abslims[key2])
                 elif key1=='year':
-                    if this.use:
+                    if this.use and objectives.funding != 'variable': # Don't constrain variable-year-spend optimizations
                         newlim = this.by/100.-1 # Relative change in funding
                         fundingchanges[key1][key2].append(newlim)
                     else: 
@@ -236,8 +236,10 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         options.parindices = parindices # Indices for the parameters to be updated on
         options.normalizations = normalizations # Whether to normalize a parameter
         options.totalspend = totalspend # Total budget
+        options.fundingchanges = fundingchanges # Constraints-based funding changes
         parammin = concatenate((fundingchanges.total.dec, ones(nprogs)*-1e9))  
         parammax = concatenate((fundingchanges.total.inc, ones(nprogs)*1e9))  
+        options.randseed = None
         
         
         
@@ -254,7 +256,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         labels = ['Original','Optimal']
         for params in [origalloc, optparams]: # CK: loop over original and (the best) optimal allocations
             sleep(0.1)
-            alloc = timevarying(params, ntimepm=ntimepm, nprogs=nprogs, tvec=D.opt.partvec, totalspend=totalspend, fundingchanges=fundingchanges) #Regenerate allocation
+            alloc = timevarying(params, ntimepm=len(params)/nprogs, nprogs=nprogs, tvec=D.opt.partvec, totalspend=totalspend, fundingchanges=fundingchanges) #Regenerate allocation
             R = runmodelalloc(options.D, alloc, options.parindices, options.randseed, verbose=verbose) # Actually run
             result.Rarr.append(struct()) # Append a structure
             result.Rarr[-1].R = deepcopy(R) # Store the R structure (results)
@@ -282,6 +284,8 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         options.parindices = parindices # Indices for the parameters to be updated on
         options.normalizations = normalizations # Whether to normalize a parameter
         options.totalspends = objectives.outcome.variable # Total budgets
+        options.fundingchanges = fundingchanges # Constraints-based funding changes
+        options.randseed = None
         
         ## Define optimization parameters
         nyears = len(options.years)
@@ -340,6 +344,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         options.parindices = parindices # Indices for the parameters to be updated on
         options.normalizations = normalizations # Whether to normalize a parameter
         options.totalspend = totalspend # Total budget
+        options.randseed = None
         
         ## Run multiple budgets
         budgets = arange(objectives.outcome.budgetrange.minval, objectives.outcome.budgetrange.maxval+objectives.outcome.budgetrange.step, objectives.outcome.budgetrange.step)
