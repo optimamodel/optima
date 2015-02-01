@@ -279,7 +279,12 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
         title: title
       };
 
-      graphData = _.zip(xData, yData);
+
+      graphData = _(xData).map(function(xValue, index) {
+        var yValues = _(yData).map(function(yEntry) { return yEntry[index]; });
+        return [xValue, yValues];
+      });
+
       return {
         'data': {bars: graphData},
         'options': options
