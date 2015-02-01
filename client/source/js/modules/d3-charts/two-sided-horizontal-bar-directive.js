@@ -57,8 +57,7 @@ define(['./module', './scale-helpers', 'angular', './two-sided-horizontal-bar-ch
 
       // Define svg groups
       var chartGroup = svg.append('g').attr('class', 'chart_group');
-      var axesGroup = svg.append('g').attr('class', 'axes_group');
-      var headerGroup = svg.append('g').attr('class', 'header_group');
+      var headerGroup = svg.append('g').attr('class', 'legend_group');
 
       var chart = new TwoSidedHorizontalBarChart(chartGroup, chartSize, data.bars, options.linesStyle);
       chart.draw();

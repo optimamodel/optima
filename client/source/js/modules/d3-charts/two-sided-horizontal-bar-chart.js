@@ -50,8 +50,9 @@ define(['d3', 'underscore', './scale-helpers'], function (d3, _, scaleHelpers) {
     });
 
     var axeSpacing = 4;
+    var labelSpace = 120;
     // take away 4 pixel to have space for the y-axe
-    var sideWidth = (chartSize.width - axeSpacing) / 2;
+    var sideWidth = (chartSize.width - axeSpacing - labelSpace) / 2;
 
     var y = d3.scale.ordinal().rangeRoundBands([0, chartSize.height], 0.5);
     y.domain(chartData.map(function(d) { return d.y; }));
@@ -126,6 +127,17 @@ define(['d3', 'underscore', './scale-helpers'], function (d3, _, scaleHelpers) {
         .attr('style', 'text-anchor: start');
       };
 
+    var drawLabels = function (labelsGroup) {
+      var entries = labelsGroup.selectAll(".entry")
+      .data(chartData)
+      .enter().append("text")
+      .text(function(d) { return d.y; })
+      .attr('class', 'axis')
+      .attr("transform", function(d) {
+        return ["translate(10,", y(d.y) + y.rangeBand(), ")"].join(' ');
+      });
+    };
+
     this.draw = function () {
       var leftGroup = chart.append('g').attr('class', 'left_group');
       var axeGroup = chart.append('g').attr('class', 'axe_group')
@@ -136,11 +148,17 @@ define(['d3', 'underscore', './scale-helpers'], function (d3, _, scaleHelpers) {
         .attr("transform", function(d) {
           return ["translate(", sideWidth + axeSpacing,", 0)"].join(' ');
         });
+      var labelsGroup = chart.append('g').attr('class', 'labels_group')
+        .attr("transform", function(d) {
+          return ["translate(", sideWidth + axeSpacing + sideWidth,", 0)"].join(' ');
+        });
+
 
       drawLeftBar(leftGroup);
       drawAxe(axeGroup);
       drawRightBar(rightGroup);
       drawTitles(axeGroup, rightGroup);
+      drawLabels(labelsGroup);
     };
   }
 

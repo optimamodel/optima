@@ -179,7 +179,7 @@ define([
     $scope.options10 = {
       legend: ['AA', 'BB', 'CC'],
       height: 300,
-      width: 300,
+      width: 600,
       margin: {
         top: 20,
         right: 20,
