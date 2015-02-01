@@ -6,7 +6,7 @@ Allocation optimization code:
     timelimit is the maximum time in seconds to run optimization for
     verbose determines how much information to print.
     
-Version: 2015jan30 by cliffk
+Version: 2015jan31 by cliffk
 """
 
 from printv import printv
@@ -36,9 +36,10 @@ def objectivecalc(optimparams, options):
     else:
         raise Exception('Cannot figure out what kind of allocation this is since neither options.ntimepm nor options.years is defined')
     newD = deepcopy(options.D)
-    newD, newcov, newnonhivdalysaverted = getcurrentbudget(newD, thisalloc)
+    newD, newcov, newnonhivdalysaverted = getcurrentbudget(newD, thisalloc, randomize=False) # Get cost-outcome curves with uncertainty
     newM = makemodelpars(newD.P, newD.opt, withwhat='c', verbose=0)
     newD.M = partialupdateM(options.D.M, newM, options.parindices)
+
     S = model(newD.G, newD.M, newD.F[0], newD.opt, verbose=0)
     R = makeresults(options.D, allsims=[S], verbose=0)
     
