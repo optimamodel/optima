@@ -236,6 +236,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         options.parindices = parindices # Indices for the parameters to be updated on
         options.normalizations = normalizations # Whether to normalize a parameter
         options.totalspend = totalspend # Total budget
+        options.fundingchanges = fundingchanges # Constraints-based funding changes
         parammin = concatenate((fundingchanges.total.dec, ones(nprogs)*-1e9))  
         parammax = concatenate((fundingchanges.total.inc, ones(nprogs)*1e9))  
         
