@@ -343,6 +343,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         options.outindices = outindices # Indices for the outcome to be evaluated over
         options.parindices = parindices # Indices for the parameters to be updated on
         options.normalizations = normalizations # Whether to normalize a parameter
+        options.fundingchanges = fundingchanges # Constraints-based funding changes
         options.totalspend = totalspend # Total budget
         options.randseed = None
         
