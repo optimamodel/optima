@@ -470,14 +470,24 @@ def defaultconstraints(D, verbose=2):
     con = struct()
     con.txelig = 4 # 4 = "All people diagnosed with HIV"
     con.dontstopart = True # "No one who initiates treatment is to stop receiving ART"
-    con.decrease = struct()
+    con.yeardecrease = struct()
+    con.yearincrease = struct()
     for prog in D.programs.keys(): # Loop over all defined programs
-        con.decrease[prog] = struct()
-        con.decrease[prog].use = False # Tick box: by default don't use
-        con.decrease[prog].by = 50 # Text entry box: 0.5 = 50% per year
-        con.increase[prog] = struct()
-        con.increase[prog].use = False # Tick box: by default don't use
-        con.increase[prog].by = 50 # Text entry box: 0.5 = 50% per year
+        con.yeardecrease[prog] = struct()
+        con.yeardecrease[prog].use = False # Tick box: by default don't use
+        con.yeardecrease[prog].by = 50 # Text entry box: 0.5 = 50% per year
+        con.yearincrease[prog] = struct()
+        con.yearincrease[prog].use = False # Tick box: by default don't use
+        con.yearincrease[prog].by = 200 # Text entry box: 0.5 = 50% per year
+    con.totaldecrease = struct()
+    con.totalincrease = struct()
+    for prog in D.programs.keys(): # Loop over all defined programs
+        con.totaldecrease[prog] = struct()
+        con.totaldecrease[prog].use = False # Tick box: by default don't use
+        con.totaldecrease[prog].by = 20 # Text entry box: 0.5 = 50% per total
+        con.totalincrease[prog] = struct()
+        con.totalincrease[prog].use = False # Tick box: by default don't use
+        con.totalincrease[prog].by = 500 # Text entry box: 0.5 = 50% total
     
     con.coverage = struct()
     for prog in D.programs.keys(): # Loop over all defined programs
