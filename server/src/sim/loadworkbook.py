@@ -19,6 +19,16 @@ def loadworkbook(filename='example.xlsx', verbose=2):
     from time import strftime # For determining when a spreadsheet was last uploaded
     printv('Loading data from %s...' % filename, 1, verbose)
     from programs import programs_for_input_key
+    
+    def forcebool(entry):
+        """ Convert an entry to be Boolean """
+        if entry in [1, 'TRUE', 'true', 'True', 't', 'T']:
+            return 1
+        elif entry in [0, 'FALSE', 'false', 'False', 'f', 'F']:
+            return 0
+        else:
+            raise Exception('Boolean data supposed to be entered, but not understood (%s)' % entry)
+        
 
         
     ###########################################################################
@@ -207,17 +217,17 @@ def loadworkbook(filename='example.xlsx', verbose=2):
 
                             data[name][thispar].long.append(thesedata[1])
                             if thispar=='pops':
-                                data[name][thispar].male.append(thesedata[2])
-                                data[name][thispar].female.append(thesedata[3])
-                                data[name][thispar].injects.append(thesedata[4])
-                                data[name][thispar].sexmen.append(thesedata[5])
-                                data[name][thispar].sexwomen.append(thesedata[6])
-                                data[name][thispar].sexworker.append(thesedata[7])
-                                data[name][thispar].client.append(thesedata[8])
+                                data[name][thispar].male.append(forcebool(thesedata[2]))
+                                data[name][thispar].female.append(forcebool(thesedata[3]))
+                                data[name][thispar].injects.append(forcebool(thesedata[4]))
+                                data[name][thispar].sexmen.append(forcebool(thesedata[5]))
+                                data[name][thispar].sexwomen.append(forcebool(thesedata[6]))
+                                data[name][thispar].sexworker.append(forcebool(thesedata[7]))
+                                data[name][thispar].client.append(forcebool(thesedata[8]))
                             if thispar=='progs':
                                 if not thesedata[0] in programs: programs[thesedata[0]] = []
-                                
-                                
+
+
                         # It's cost-coverage data, save the cost and coverage values separately
                         if groupname=='cocodata':
                             thesedata = sheetdata.row_values(row, start_colx=3, end_colx=lastdatacol) # Data starts in 4th column
