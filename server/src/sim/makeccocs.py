@@ -417,8 +417,8 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
             # Min, Median and Max lines
             if isinstance(ccparams[4], float):
                 mediancco = ccoeqn(xvalscco, convertedccoplotparams[0])# Generate min cost-outcome curve
-                mincco = ccoeqn(xvalscco, [convertedccoplotparams[1][0:3], coparams[0], coparams[2]])# Generate min cost-outcome curve
-                maxcco = ccoeqn(xvalscco, [convertedccoplotparams[2][0:3], coparams[1], coparams[3]])# Generate max cost-outcome curve
+                mincco = ccoeqn(xvalscco, [convertedccoplotparams[1][0], convertedccoplotparams[1][1], convertedccoplotparams[1][2], coparams[0], coparams[2]])# Generate min cost-outcome curve
+                maxcco = ccoeqn(xvalscco, [convertedccoplotparams[2][0], convertedccoplotparams[2][1], convertedccoplotparams[2][2], coparams[1], coparams[3]])# Generate max cost-outcome curve
             else:
                 mediancco = cco2eqn(xvalscco, convertedccoplotparams[0])# Generate min cost-outcome curve
                 mincco = cco2eqn(xvalscco, [convertedccoplotparams[1][0], convertedccoplotparams[1][1], coparams[0], coparams[2]])# Generate min cost-outcome curve
