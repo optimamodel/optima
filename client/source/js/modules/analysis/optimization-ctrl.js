@@ -634,8 +634,6 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     };
 
     $scope.startOptimization = function () {
-      var params = $scope.params;
-      params.timelimit
       $http.post('/api/analysis/optimization/start', $scope.params, {ignoreLoadingBar: true})
         .success(function (data, status, headers, config) {
           if (data.status == "OK" && data.join) {
