@@ -105,8 +105,8 @@ def make_populations_range(name, items):
             injects = item.get('injects',False)
             sexmen = item.get('sexmen',False) # WARNING need to update
             sexwomen = item.get('sexwomen',False)
-            sexworker = item.get('injects',False)
-            client = item.get('injects',False)      
+            sexworker = item.get('sexworker',False)
+            client = item.get('client',False)      
         else: # backward compatibility :) might raise exception which is ok
             item_name = item
             short_name = abbreviate(item_name)
