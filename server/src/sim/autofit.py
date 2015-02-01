@@ -1,13 +1,14 @@
-def autofit(D, timelimit=60, simstartyear=2000, simendyear=2015, verbose=2):
+def autofit(D, timelimit=None, maxiters=500, simstartyear=2000, simendyear=2015, verbose=2):
     """
     Automatic metaparameter fitting code:
         D is the project data structure
         timelimit is the maximum time limit for fitting in seconds
+        maxiters is the maximum number of iterations
         simstartyear is the year to begin running the model
         simendyear is the year to stop running the model
         verbose determines how much information to print.
         
-    Version: 2014nov30 by cliffk
+    Version: 2015jan31 by cliffk
     """
     from numpy import mean, array
     from model import model
@@ -64,7 +65,7 @@ def autofit(D, timelimit=60, simstartyear=2000, simendyear=2015, verbose=2):
     Forig = array(dict2list(Forig)) # Convert froma  dictionary to a list
     
     # Run the optimization algorithm
-    Fnew, fval, exitflag, output = ballsd(errorcalc, Forig, xmin=0*Forig, xmax=100*Forig, timelimit=timelimit, verbose=verbose)
+    Fnew, fval, exitflag, output = ballsd(errorcalc, Forig, xmin=0*Forig, xmax=100*Forig, timelimit=timelimit, MaxIter=maxiters, verbose=verbose)
     
     # Update the model, replacing F
     Fnew = list2dict(D.F[0], Fnew) # Convert from list to dictionary

@@ -77,8 +77,9 @@ def startOptimization():
             if constraints:
                 args['constraints'] = bunchify( constraints )
             timelimit = int(data.get("timelimit")) # for the thread
-            args["timelimit"] = 10 # for the autocalibrate function
-            CalculatingThread(db.engine, current_user, project_id, timelimit, optimize, args).start()
+#            args["maxiters"] = 5 #test
+            numiter = 1 #IMPORTANT: only run it once
+            CalculatingThread(db.engine, current_user, project_id, timelimit, numiter, optimize, args, with_stoppingfunc = True).start()
             msg = "Starting optimization thread for user %s project %s:%s" % (current_user.name, project_id, project_name)
             current_app.logger.debug(msg)
             return json.dumps({"status":"OK", "result": msg, "join":True})
@@ -106,6 +107,7 @@ def stopCalibration():
 @report_exception()
 def getWorkingModel():
     """ Returns the working model for optimization. """
+    from flask import stream_with_context, request, Response
     import datetime
     import dateutil.tz
     D_dict = {}
@@ -131,7 +133,7 @@ def getWorkingModel():
                 current_app.logger.debug("optimization thread for project %s is about to stop" % project_id)
         else:
             status = 'NOK'
-    if status in ('Running', 'Stopping'): D_dict = load_model(project_id, working_model = True, as_bunch = False)
+    if status!='NOK': D_dict = load_model(project_id, working_model = True, as_bunch = False)
     result = get_optimization_results(D_dict)
     result['status'] = status
     if error_text:

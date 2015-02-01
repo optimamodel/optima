@@ -46,7 +46,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       // Set defaults
       $scope.params = {};
       // Default time limit is 10 hours
-      $scope.params.timelimit = 36000;
+      $scope.params.timelimit = 3600; // TODO: add testing option
 
       // Objectives
       $scope.params.objectives = {};
@@ -197,11 +197,11 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
 
       var charts = [];
 
-      if (data[0].piedata) {
+      if (data[0] && data[0].piedata) {
         charts.push(generatePieChart(data[0].piedata, data[0].legend));
       }
 
-      if (data[1].piedata) {
+      if (data[1] && data[1].piedata) {
         charts.push(generatePieChart(data[1].piedata, data[0].legend)); // not set for data[1]
       }
 
@@ -238,11 +238,11 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
 
       var charts = [];
 
-      if (data[0].radardata) {
+      if (data[0] && data[0].radardata) {
         charts.push(generateRadarChart(data[0].radardata, data[0].legend));
       }
 
-      if (data[1].radardata) {
+      if (data[1] && data[1].radardata) {
         charts.push(generateRadarChart(data[1].radardata, data[0].legend)); // not set for data[1]
       }
 
@@ -269,11 +269,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
         title: title
       };
 
-      graphData = _(xData).map(function (xValue, index) {
-        var barData = _(yData).map(function(entry) { return entry[index]; });
-        return [xValue, barData];
-      });
-
+      graphData = _.zip(xData, yData);
       return {
         'data': {bars: graphData},
         'options': options
@@ -669,8 +665,8 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
           } else {
             if (data.status == 'Running') $scope.optimizationStatus = statusEnum.RUNNING;
             if (data.status == 'Stopping') $scope.optimizationStatus = statusEnum.STOPPING;
-            updateGraphs(data);
           }
+          updateGraphs(data); // otherwise they might never get updated!
         })
         .error(function(data, status, headers, config) {
           if (data && data.exception) {
@@ -847,7 +843,6 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
      */
     $scope.applyOptimization = function(name) {
       var optimization = $scope.optimizationByName(name);
-
       _.extend($scope.params.objectives, optimization.objectives);
       _.extend($scope.params.constraints, optimization.constraints);
       if (optimization.result) {
@@ -862,18 +857,19 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
 
       $scope.optimizations = angular.copy(optimizations);
 
-      var nameExists = _.some($scope.optimizations, function(item) {
+      var nameExists = name && _.some(_($scope.optimizations), function(item) {
         return item.name == name;
       });
 
       if (nameExists) {
         $scope.state.activeOptimizationName = name;
-      } else if ($scope.optimizations[0]) {
-        $scope.state.activeOptimizationName = $scope.optimizations[0].name;
       } else {
         $scope.state.activeOptimizationName = undefined;
+        var optimization = _($scope.optimizations).first();
+        if (optimization) {
+          $scope.state.activeOptimizationName = optimization.name;
+        }
       }
-
       $scope.applyOptimization($scope.state.activeOptimizationName);
     };
 
