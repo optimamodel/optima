@@ -1,4 +1,4 @@
-def getcurrentbudget(D, alloc=None, randomize=False):
+def getcurrentbudget(D, alloc=None, randseed=None):
     """
     Purpose: get the parameters corresponding to a given allocation. If no allocation is specified, this function also estimates the current budget
     Inputs: D, alloc (optional)
@@ -37,7 +37,7 @@ def getcurrentbudget(D, alloc=None, randomize=False):
 
         # Extract the converted cost-coverage parameters... or if there aren't any, use defaults (for sim only; FE produces warning)
         convertedccparams = D.programs[progname]['convertedccparams'] if D.programs[progname]['convertedccparams'] else default_convertedccparams
-        if randomize: convertedccparams[0][1] = perturb(1,(convertedccparams[2][1]-convertedccparams[1][1])/2) - 1 + convertedccparams[0][1]
+        if randseed>=0: convertedccparams[0][1] = perturb(1,(convertedccparams[2][1]-convertedccparams[1][1])/2, randseed=randseed) - 1 + convertedccparams[0][1]
         currentcoverage[prognumber, :] = cc2eqn(totalcost, convertedccparams[0]) if len(convertedccparams[0])==2 else cceqn(totalcost, convertedccparams[0])
 
         # TODO -- This should be summed over time anyway... so can make currentcoverage a vector. This was Robyn's intention anyway!
@@ -58,10 +58,10 @@ def getcurrentbudget(D, alloc=None, randomize=False):
                 popnumber = D.data.meta.pops.short.index(popname[0]) if popname[0] in D.data.meta.pops.short else 0
                  # Use parameters if there, otherwise give it some predefined ones
                 convertedccoparams = effect[4] if len(effect)>4 and len(effect[4])>=4 else default_convertedccoparams
-                if randomize:
+                if randseed>=0:
                     try:
-                        convertedccoparams[0][1] = perturb(1,(convertedccoparams[2][1]-convertedccoparams[1][1])/2) - 1 + convertedccoparams[0][1]
-                        convertedccoparams[-1], convertedccoparams[-2] = makesamples(effect[2], effect[3][0], effect[3][1], effect[3][2], effect[3][3], samplesize=1)
+                        convertedccoparams[0][1] = perturb(1,(convertedccoparams[2][1]-convertedccoparams[1][1])/2, randseed=randseed) - 1 + convertedccoparams[0][1]
+                        convertedccoparams[-1], convertedccoparams[-2] = makesamples(effect[2], effect[3][0], effect[3][1], effect[3][2], effect[3][3], samplesize=1, randseed=randseed)
                     except:
                         convertedccoparams = default_convertedccoparams
                         print('WARNING, no parameters entered for progname=%s , effectnumber=%s, popname=%s, parname=%s' % (progname, effectnumber, popname, parname))

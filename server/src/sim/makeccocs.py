@@ -711,10 +711,12 @@ def makecosampleparams(coparams, verbose=2):
     return muz, stdevz, muf, stdevf
 
 ###############################################################################
-def makesamples(coparams, muz, stdevz, muf, stdevf, samplesize=1000):
+def makesamples(coparams, muz, stdevz, muf, stdevf, samplesize=1000, randseed=None):
     '''
     Generate samples of behaviour at zero and full coverage
     '''
+    from numpy import seed # Reset seed optionally
+    if randseed>=0: seed(randseed)
     
     # Generate samples of zero-coverage and full-coverage behaviour
     zerosample = rtnorm(coparams[0], coparams[1], mu=muz, sigma=stdevz, size=samplesize)[0]

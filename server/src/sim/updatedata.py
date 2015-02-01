@@ -115,9 +115,10 @@ def normalizeF(unnormF, D):
 
 
 
-def perturb(n=1, span=0.5):
+def perturb(n=1, span=0.5, randseed=None):
     """ Define an array of numbers uniformly perturbed with a mean of 1. n = number of points; span = width of distribution on either side of 1."""
-    from numpy.random import rand
+    from numpy.random import rand, seed
+    if randseed>=0: seed(randseed) # Optionally reset random seed
     output = 1 + 2*span*(rand(n)-0.5)
     if n==1: output = output[0] # If scalar, return scalar rather than array
     else: output = output.tolist() # Otherwise, convert to a list
