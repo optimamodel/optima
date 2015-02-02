@@ -7,7 +7,8 @@ define(['./module', 'angular', 'jquery', 'underscore'], function (module, angula
     $scope.projectInfo = info;
     $scope.canDoFitting = $scope.projectInfo.can_calibrate;
     $scope.needData = !$scope.projectInfo.has_data;
-
+    $scope.$watch('rendered', function (e){ console.log('rendered!!!!!!!!!')});
+ 
     var prepareF = function (f) {
       var F = angular.copy(f);
 
