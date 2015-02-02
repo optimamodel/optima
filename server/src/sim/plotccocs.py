@@ -9,7 +9,7 @@ from printv import printv
 default_progname = 'MSM programs'
 default_ccparams = [0.9, 0.5, 0.6, 400000.0, 0.5, None] #
 default_ccplot = [None, None, 0]
-default_coparams = [30.0, 50.0, 70.0, 90.0] 
+default_coparams = [.300, .500, .700, .900] 
 default_effect = [['sex', 'condomcas'], [u'MSM']] # D.programs[default_progname]['effects'][0] 
 default_artelig = range(6,31)
 coverage_params = ['numost','numpmtct','numfirstline','numsecondline']
