@@ -17,7 +17,7 @@ define(['d3', 'underscore', './scale-helpers'], function (d3, _, scaleHelpers) {
   };
 
   /**
-   * Returns the x value of the largest bar.
+   * Returns the x value of the largest bar on the right side.
    */
   var rightXMax = function (chartData) {
     return d3.max(chartData, function(d) {
@@ -27,7 +27,7 @@ define(['d3', 'underscore', './scale-helpers'], function (d3, _, scaleHelpers) {
   };
 
   /**
-   * Returns the x value of the largest bar.
+   * Returns the x value of the largest bar on the left side.
    */
   var leftXMax = function (chartData) {
     return d3.max(chartData, function(d) {
@@ -37,8 +37,8 @@ define(['d3', 'underscore', './scale-helpers'], function (d3, _, scaleHelpers) {
   };
 
   /**
-  * Returns a TwoSidedHorizontalBarCHart instance.
-  */
+   * Returns a TwoSidedHorizontalBarCHart instance.
+   */
   function TwoSidedHorizontalBarCHart (chart, chartSize, data, colors,
     leftTitle, rightTitle) {
 
@@ -65,7 +65,7 @@ define(['d3', 'underscore', './scale-helpers'], function (d3, _, scaleHelpers) {
     leftXScale.domain([0, scaleHelpers.flexCeil(leftXMax(chartData))]);
 
     /**
-    * Draw the chart based on the data provided during construction.
+    * Draw the left chart based on the data provided during construction.
     */
     var drawLeftBar = function (chartGroup) {
       var entries = chartGroup.selectAll(".entry")
@@ -84,7 +84,7 @@ define(['d3', 'underscore', './scale-helpers'], function (d3, _, scaleHelpers) {
     };
 
     /**
-     * Draw the chart based on the data provided during construction.
+     * Draw the right chart based on the data provided during construction.
      */
     var drawRightBar = function (chartGroup) {
       var entries = chartGroup.selectAll(".entry")
@@ -106,6 +106,9 @@ define(['d3', 'underscore', './scale-helpers'], function (d3, _, scaleHelpers) {
       });
     };
 
+    /**
+     * Draw the one single axies line between the bars.
+     */
     var drawAxe = function (axeGroup) {
       axeGroup.append("line")
         .style("stroke", "black")
@@ -115,6 +118,9 @@ define(['d3', 'underscore', './scale-helpers'], function (d3, _, scaleHelpers) {
         .attr("y2", chartSize.height);
     };
 
+    /**
+     * Draw titles for the left & right bar charts.
+     */
     var drawTitles = function (axeGroup, rightGroup) {
       axeGroup.append('text')
         .text(leftTitle)
@@ -128,6 +134,9 @@ define(['d3', 'underscore', './scale-helpers'], function (d3, _, scaleHelpers) {
         .attr('style', 'text-anchor: start');
       };
 
+    /**
+     * Draw labels next to the horizontal stacked bar charts on the right side.
+     */
     var drawLabels = function (labelsGroup) {
       var entries = labelsGroup.selectAll(".entry")
       .data(chartData)
@@ -153,7 +162,6 @@ define(['d3', 'underscore', './scale-helpers'], function (d3, _, scaleHelpers) {
         .attr("transform", function(d) {
           return ["translate(", sideWidth + axeSpacing + sideWidth,", 0)"].join(' ');
         });
-
 
       drawLeftBar(leftGroup);
       drawAxe(axeGroup);
