@@ -15,7 +15,7 @@ costylabels = {}
 
 def gatheruncerdata(D, R, verbose=2):
     """ Gather standard results into a form suitable for plotting with uncertainties. """
-    from numpy import zeros, nan, size, array, asarray
+    from numpy import zeros, nan, size, ndim, array, asarray
     from bunch import Bunch as struct
     from printv import printv
     printv('Gathering epidemiology results...', 3, verbose)
@@ -84,7 +84,7 @@ def gatheruncerdata(D, R, verbose=2):
             uncer.tx2.ydata = zeros(ndatayears).tolist()
 
 
-        if size(epidata[0])==1: # TODO: make this less shitty, easier way of checking what shape the data is I'm sure
+        if size(epidata[0])==1 and ndim(epidata)==1: # TODO: make this less shitty, easier way of checking what shape the data is I'm sure
             uncer[key].ydata = (array(epidata)*percent).tolist()
         elif size(epidata)==D.G.npops:
             for p in range(D.G.npops):
