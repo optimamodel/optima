@@ -207,8 +207,8 @@ def makeco(D, progname=default_progname, effect=default_effect, coparams=default
 
         # Populate output structure with scatter data 
         coverage, outcome = getscatterdata(coverage, outcome)
-        plotdata['xscatterdata'] = coverage
-        plotdata['yscatterdata'] = outcome
+        plotdata['xscatterdata'] = [coverage[j]*100.0 for j in range(len(coverage))]
+        plotdata['yscatterdata'] = [outcome[j]*100.0 for j in range(len(outcome))]
            
         # Get inputs from GUI (#TODO simplify?)
         if coparams and len(coparams)>3:
@@ -231,10 +231,9 @@ def makeco(D, progname=default_progname, effect=default_effect, coparams=default
             # Generate and store converted parameters
             muz, stdevz, muf, stdevf = makecosampleparams(coparams, verbose=verbose)
             convertedcoparams = [muz, stdevz, muf, stdevf]
- #            zerosample, fullsample = makesamples(coparams, muz, stdevz, muf, stdevf, D.opt.nsims)
 
             # General set of coverage-outcome relationships
-            xvalsco = linspace(0,1,nxpts) # take nxpts points along the unit interval
+            xvalsco = linspace(0,100,nxpts) # take nxpts points along the unit interval
             ymin, ymax = linspace(coparams[0],coparams[2],nxpts), linspace(coparams[1],coparams[3],nxpts)
             
             # Populate output structure with coverage-outcome curves for plotting
@@ -359,7 +358,7 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
         # Populate output structure with scatter data 
         totalcost, outcome = getscatterdata(totalcost, outcome)
         plotdata['xscatterdata'] = totalcost # X scatter data
-        plotdata['yscatterdata'] = outcome # Y scatter data
+        plotdata['yscatterdata'] = [outcome[j]*100.0 for j in range(len(outcome))] # Y scatter data
     
         # Do we have parameters for making curves?
         if (ccparams or D.programs[progname]['ccparams']) and (coparams or (len(effect)>2 and len(effect[2])>3)):
@@ -393,7 +392,6 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
             if coparams: # Get coparams from  GUI... 
                 muz, stdevz, muf, stdevf = makecosampleparams(coparams, verbose=verbose)
                 convertedcoparams = [muz, stdevz, muf, stdevf]
-#                zerosample, fullsample = makesamples(coparams, muz, stdevz, muf, stdevf, D.opt.nsims)
                 if len(effect) == 2: # There's no existing info here, append
                     effect.append(coparams)
                     effect.append(convertedcoparams)
@@ -437,7 +435,7 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
 
         # Populate output structure with axis limits
         plotdata['xlowerlim'], plotdata['ylowerlim']  = 0.0, 0.0
-        plotdata['xupperlim'], plotdata['yupperlim']  = xupperlim, 1.0
+        plotdata['xupperlim'], plotdata['yupperlim']  = xupperlim, 100.0
     
         # Populate output structure with labels and titles
         plotdata['title'] = input_parameter_name(effect[0][1])+ ' - ' + effect[1][0]

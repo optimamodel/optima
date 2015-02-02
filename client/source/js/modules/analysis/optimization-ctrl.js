@@ -222,15 +222,20 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
      * Returns a prepared chart object for a radar chart.
      */
     var generateRadarChart = function(data, legend) {
-      var graphData = [{axes: []}];
+      var graphData = [{axes: []}, {axes: []}, {axes: []}];
 
       var options = {
         legend: [],
         title: data.name
       };
 
-      //TODO @NikGraph @DEvseev - make a stack chart now then pie.val is a combination of arrays (one per population)
-      graphData[0].axes = _(data.best).map(function (value, index) {
+      graphData[0].axes = _(data.low).map(function (value, index) {
+        return { value: value, axis: legend[index] };
+      });
+      graphData[1].axes = _(data.best).map(function (value, index) {
+        return { value: value, axis: legend[index] };
+      });
+      graphData[2].axes = _(data.high).map(function (value, index) {
         return { value: value, axis: legend[index] };
       });
 
