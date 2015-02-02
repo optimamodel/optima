@@ -247,7 +247,6 @@ define(['./module', 'underscore'], function (module, _) {
           (effect[2] && effect[2][3])? effect[2][3] * 100 : null
         ];
       });
-      console.log('setup', $scope.coParams);
     };
 
     $scope.convertFromPercent = function (value) {
@@ -306,7 +305,6 @@ define(['./module', 'underscore'], function (module, _) {
      * Returns true if all of the elements in an array are undefined, null or NaN
      */
     var hasOnlyInvalidEntries = function(params) {
-      console.log(params);
       return params.every(function(item) {
         return item === undefined || item === null || typeof item === "number" && isNaN(item);
       });
