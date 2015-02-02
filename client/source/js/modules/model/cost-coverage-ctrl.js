@@ -241,10 +241,10 @@ define(['./module', 'underscore'], function (module, _) {
     var setUpCOParamsFromEffects = function (effectNames) {
       $scope.coParams = _(effectNames).map(function (effect) {
         return [
-          (effect[2] && effect[2][0])? effect[2][0] * 100 : null,
-          (effect[2] && effect[2][1])? effect[2][1] * 100 : null,
-          (effect[2] && effect[2][2])? effect[2][2] * 100 : null,
-          (effect[2] && effect[2][3])? effect[2][3] * 100 : null
+          (effect[2] && effect[2][0])? $scope.convertFromPercent(effect[2][0]) : null,
+          (effect[2] && effect[2][1])? $scope.convertFromPercent(effect[2][1]) : null,
+          (effect[2] && effect[2][2])? $scope.convertFromPercent(effect[2][2]) : null,
+          (effect[2] && effect[2][3])? $scope.convertFromPercent(effect[2][3]) : null
         ];
       });
     };
