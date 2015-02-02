@@ -89,16 +89,35 @@ def printarr(arr, arrformat='%0.2f  '):
         print(arr) # Give up
     return None
 
+
 def checkmem(variable):
     """
     Checks how much memory the variable in question uses by dumping it to file.
+    
+    Example:
+        from utils import checkmem
+        checkmem(['spiffy',rand(2483,589)])
     """
     from os import getcwd, remove
     from os.path import getsize
     from cPickle import dump
-    filename = getcwd()+'\checkmem.tmp'
-    wfid = open(filename,'wb')
-    dump(variable, wfid)
+    
+    filename = getcwd()+'/checkmem.tmp'
+    
+    def dumpfile():
+        wfid = open(filename,'wb')
+        dump(variable, wfid)
+        return None
+    
+    dumpfile()
     filesize = getsize(filename)
-#    remove(filename)
+    factor = 1
+    label = 'B'
+    labels = ['KB','MB','GB']
+    for i,f in enumerate([3,6,9]):
+        if filesize>10**f:
+            factor = 10**f
+            label = labels[i]
+    print('Variable is %0.3f %s' % (filename, float(filesize/float(factor)), label))
+    remove(filename)
     return filesize
