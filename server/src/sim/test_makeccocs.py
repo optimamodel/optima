@@ -13,7 +13,7 @@ makeplot = args.plot
 show_wait = args.wait
 
 if show_wait:
-    makeplot = True
+    makeplot = False
 
 ## Initialize simulation
 
