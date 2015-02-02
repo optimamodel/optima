@@ -101,7 +101,17 @@ define(['./module', './scale-helpers', 'angular', 'underscore'], function (modul
 
       var graphsScales = [];
       var stackedData = generateAreas(data.areas);
-      var highestLine = _.chain(stackedData).last().map(function(dot) { return [dot[0], dot[2]]; }).value();
+
+      var highestLineMaxY = 0;
+      var highestLine = _.chain(stackedData).last().map(function(dot) {
+        highestLineMaxY = Math.max(highestLineMaxY, dot[2]);
+        return [dot[0], dot[2]];
+      }).value();
+
+      // will fail now instead of hanging the browser
+      if (highestLineMaxY === 0) {
+        throw new Error('Graph lines should not be all zeros');
+      }
 
       _(stackedData).each(function (area, index) {
         var areaChart = new d3Charts.AreaChart(chartGroup, chartSize, colors[index]);
