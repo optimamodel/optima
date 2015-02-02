@@ -323,8 +323,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       };
 
       graphData = _(xData).map(function (xValue, index) {
-        var rightBarData = _(yData).map(function(entry) { return entry[index]; });
-        return [labels[index], xValue, rightBarData];
+        return [labels[index], xValue, yData[index]];
       });
 
       return {

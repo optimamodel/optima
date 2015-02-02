@@ -72,7 +72,9 @@ define(['d3', 'underscore', './scale-helpers'], function (d3, _, scaleHelpers) {
       .data(chartData)
       .enter().append("rect")
       .attr("height", y.rangeBand())
-      .attr("width", function(d) { return leftXScale(d.leftBar); })
+      .attr("width", function(d) {
+        return leftXScale(d.leftBar);
+      })
       .attr("transform", function(d) {
         return ["translate(", sideWidth - leftXScale(d.leftBar),",", y(d.y), ")"].join(' ');
       })
@@ -97,9 +99,7 @@ define(['d3', 'underscore', './scale-helpers'], function (d3, _, scaleHelpers) {
       .data(function(d) { return d.rightBar; })
       .enter().append("rect")
       .attr("height", y.rangeBand())
-      .attr("x", function(d) {
-        return rightXScale(d.x0);
-      })
+      .attr("x", function(d) { return rightXScale(d.x0); })
       .attr("width", function(d) { return rightXScale(d.x1) - rightXScale(d.x0); })
       .attr("class", function(d, index) {
         return [colors[index], 'stacked-bar-chart-rect'].join(' ');
