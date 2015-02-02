@@ -321,7 +321,6 @@ def doRunSimulation():
         save_model(request.project_id, D_dict)
         result = {'graph':D_dict.get('plot',{}).get('E',{})}
         result = add_calibration_parameters(D_dict, result)
-    print ("result", len(result))
     return send_as_json_file(result)
 
 @model.route('/costcoverage', methods=['POST'])
