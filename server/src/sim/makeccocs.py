@@ -201,7 +201,7 @@ def makeco(D, progname=default_progname, effect=default_effect, coparams=default
         # Populate output structure with axis limits
         plotdata['xlowerlim'], plotdata['ylowerlim']  = 0.0, 0.0
         if coveragelabel == 'Proportion covered':
-            plotdata['xupperlim'], plotdata['yupperlim']  = 1.0, 1.0
+            plotdata['xupperlim'], plotdata['yupperlim']  = 100.0, 100.0
         else:
             plotdata['xupperlim'], plotdata['yupperlim']  = max([j if ~isnan(j) else 0.0 for j in coverage])*1.5, max([j if ~isnan(j) else 0.0 for x in outcome])*1.5
 
