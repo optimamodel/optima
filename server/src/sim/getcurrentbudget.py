@@ -37,7 +37,7 @@ def getcurrentbudget(D, alloc=None, randseed=None):
 
         # Extract the converted cost-coverage parameters... or if there aren't any, use defaults (for sim only; FE produces warning)
         convertedccparams = D.programs[progname]['convertedccparams'] if D.programs[progname]['convertedccparams'] else default_convertedccparams
-        if randseed>=0: convertedccparams[0][1] = (array(perturb(1,(array(convertedccparams[2][1])-array(convertedccparams[1][1]))/2., randseed=randseed)) - 1 + array(convertedccparams[0][1])).tolist()
+        if randseed>=0: convertedccparams[0][1] = array(perturb(1,(array(convertedccparams[2][1])-array(convertedccparams[1][1]))/2., randseed=randseed)) - 1 + array(convertedccparams[0][1])
         currentcoverage[prognumber, :] = cc2eqn(totalcost, convertedccparams[0]) if len(convertedccparams[0])==2 else cceqn(totalcost, convertedccparams[0])
 
         # TODO -- This should be summed over time anyway... so can make currentcoverage a vector. This was Robyn's intention anyway!
