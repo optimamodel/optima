@@ -130,16 +130,24 @@
             <h3>Options to adjust curves:</h3>
             <p>
               1. Behavior/outcome without this program ranges between
-              <input type="number" name="withoutProgramRangeStart" step="0.01" ng-required="true" ng-change="updateCurve($index,AdjustmentForm)" class="txbox __inline" ng-model="coParams[$index][0]" less-than="coParams[$index][1]">%
+              <input type="number" name="withoutProgramRangeStart" min="0" max="100" step="1" ng-required="true" ng-change="updateCurve($index,AdjustmentForm)" class="txbox __inline" ng-model="coParams[$index][0]" less-than="coParams[$index][1]">%
               and
-              <input type="number" name="withoutProgramRangeEnd" step="0.01" ng-required="true" ng-change="updateCurve($index,AdjustmentForm)" class="txbox __inline" ng-model="coParams[$index][1]" more-than="coParams[$index][0]">%
+              <input type="number" name="withoutProgramRangeEnd" min="0" max="100" step="1" ng-required="true" ng-change="updateCurve($index,AdjustmentForm)" class="txbox __inline" ng-model="coParams[$index][1]" more-than="coParams[$index][0]">%
+
+              <error-messages for="withoutProgramRangeStart" rules="{min:0, max:100}"></error-messages>
+              <error-messages for="withoutProgramRangeEnd" rules="{min:0, max:100}"></error-messages>
+
               <span ng-show="AdjustmentForm.withoutProgramRangeStart.$error.lessThan || AdjustmentForm.withoutProgramRangeEnd.$error.moreThan" class="error-hint">The first parameter must be lower than the second one.</span>
             </p>
             <p>
               2. Behavior/outcome under full coverage of this program ranges between
-              <input type="number" name="fullCoverageRangeStart" step="0.01" ng-required="true" ng-change="updateCurve($index,AdjustmentForm)" class="txbox __inline" ng-model="coParams[$index][2]" less-than="coParams[$index][3]">%
+              <input type="number" name="fullCoverageRangeStart" min="0" max="100" step="1" ng-required="true" ng-change="updateCurve($index,AdjustmentForm)" class="txbox __inline" ng-model="coParams[$index][2]" less-than="coParams[$index][3]">%
               and
-              <input type="number" name="fullCoverageRangeEnd" step="0.01" ng-required="true" ng-change="updateCurve($index,AdjustmentForm)" class="txbox __inline" ng-model="coParams[$index][3]" more-than="coParams[$index][2]">%
+              <input type="number" name="fullCoverageRangeEnd" min="0" max="100" step="1" ng-required="true" ng-change="updateCurve($index,AdjustmentForm)" class="txbox __inline" ng-model="coParams[$index][3]" more-than="coParams[$index][2]">%
+
+              <error-messages for="fullCoverageRangeStart" rules="{min:0, max:100}"></error-messages>
+              <error-messages for="fullCoverageRangeEnd" rules="{min:0, max:100}"></error-messages>
+
               <span ng-show="AdjustmentForm.fullCoverageRangeStart.$error.lessThan || AdjustmentForm.fullCoverageRangeEnd.$error.moreThan" class="error-hint">The first parameter must be lower than the second one.</span>
             </p>
           </form>

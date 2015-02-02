@@ -241,12 +241,13 @@ define(['./module', 'underscore'], function (module, _) {
     var setUpCOParamsFromEffects = function (effectNames) {
       $scope.coParams = _(effectNames).map(function (effect) {
         return [
-          (effect[2] && effect[2][0])? effect[2][0] : null,
-          (effect[2] && effect[2][1])? effect[2][1] : null,
-          (effect[2] && effect[2][2])? effect[2][2] : null,
-          (effect[2] && effect[2][3])? effect[2][3] : null
+          (effect[2] && effect[2][0])? effect[2][0] * 100 : null,
+          (effect[2] && effect[2][1])? effect[2][1] * 100 : null,
+          (effect[2] && effect[2][2])? effect[2][2] * 100 : null,
+          (effect[2] && effect[2][3])? effect[2][3] * 100 : null
         ];
       });
+      console.log('setup', $scope.coParams);
     };
 
     $scope.convertFromPercent = function (value) {
@@ -254,6 +255,17 @@ define(['./module', 'underscore'], function (module, _) {
         return NaN;
       }
       return value / 100;
+    };
+
+    $scope.convertedCoParams = function () {
+      return _($scope.coParams).map(function (effect) {
+        return [
+          $scope.convertFromPercent(effect[0]),
+          $scope.convertFromPercent(effect[1]),
+          $scope.convertFromPercent(effect[2]),
+          $scope.convertFromPercent(effect[3])
+        ];
+      });
     };
 
     $scope.costCoverageParams = function () {
@@ -294,6 +306,7 @@ define(['./module', 'underscore'], function (module, _) {
      * Returns true if all of the elements in an array are undefined, null or NaN
      */
     var hasOnlyInvalidEntries = function(params) {
+      console.log(params);
       return params.every(function(item) {
         return item === undefined || item === null || typeof item === "number" && isNaN(item);
       });
@@ -410,7 +423,7 @@ define(['./module', 'underscore'], function (module, _) {
     $scope.generateCurves = function () {
       var model = getPlotModel();
       if ($scope.hasCostCoverResponse) {
-        model.all_coparams = $scope.coParams;
+        model.all_coparams = $scope.convertedCoParams();
         model.all_effects = effectNames;
       }
       retrieveAndUpdateGraphs(model);
@@ -434,7 +447,7 @@ define(['./module', 'underscore'], function (module, _) {
     $scope.saveModel = function () {
       var model = getPlotModel(model);
       model.doSave = true;
-      model.all_coparams = $scope.coParams;
+      model.all_coparams = $scope.convertedCoParams();
       model.all_effects = effectNames;
       retrieveAndUpdateGraphs(model);
     };
@@ -462,7 +475,7 @@ define(['./module', 'underscore'], function (module, _) {
     $scope.updateCurve = _.debounce(function (graphIndex, AdjustmentForm) {
       if(AdjustmentForm.$valid && $scope.CostCoverageForm.$valid && $scope.hasValidCCParams()) {
         var model = getPlotModel();
-        model.coparams = $scope.coParams[graphIndex];
+        model.coparams = $scope.convertedCoParams()[graphIndex];
         model.effect = effectNames[graphIndex];
         if (!$scope.areValidParams(model.coparams)) {
           // no need to show dialog - we inform the user with hints
