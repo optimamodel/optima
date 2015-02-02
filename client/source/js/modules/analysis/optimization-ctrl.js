@@ -302,7 +302,8 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     /**
      * Returns a prepared chart object for a pie chart.
      */
-    var generateMultipleBudgetsChart = function(yData, xData, legend, title) {
+    var generateMultipleBudgetsChart = function(yData, xData, labels, legend,
+        title, leftTitle, rightTitle) {
       var graphData = [];
 
       var options = {
@@ -316,12 +317,14 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
           axisLabel: 'Spent'
         },
         legend: legend,
-        title: title
+        title: title,
+        leftTitle: leftTitle,
+        rightTitle: rightTitle
       };
 
       graphData = _(xData).map(function (xValue, index) {
-        var barData = _(yData).map(function(entry) { return entry[index]; });
-        return [xValue, barData];
+        var rightBarData = _(yData).map(function(entry) { return entry[index]; });
+        return [labels[index], xValue, rightBarData];
       });
 
       return {
@@ -333,9 +336,9 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     /**
      * Returns a stacked bar chart.
      */
-    var prepareMultipleBudgetsChart = function (data) {
-      return generateMultipleBudgetsChart(data.bardata, data.xdata, data.legend,
-        data.title);
+    var prepareMultipleBudgetsChart = function (data, outcomeData) {
+      return generateMultipleBudgetsChart(data.bardata, outcomeData.bardata,
+        data.xlabels, data.legend, data.title, outcomeData.title, data.ylabel);
       };
 
     /**
@@ -448,7 +451,8 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
         if (cachedResponse.plot[0].alloc.bardata) {
           $scope.state.stackedBarChart = undefined;
           $scope.state.outcomeChart = undefined;
-          $scope.state.multipleBudgetsChart = prepareMultipleBudgetsChart(cachedResponse.plot[0].alloc);
+          $scope.state.multipleBudgetsChart = prepareMultipleBudgetsChart(cachedResponse.plot[0].alloc,
+            cachedResponse.plot[0].outcome);
         } else if (cachedResponse.plot[0].alloc.stackdata) {
           $scope.state.stackedBarChart = prepareStackedBarChart(cachedResponse.plot[0].alloc);
           $scope.state.outcomeChart = prepareOutcomeChart(cachedResponse.plot[0].outcome);

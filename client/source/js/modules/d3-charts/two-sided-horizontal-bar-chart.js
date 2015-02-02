@@ -39,7 +39,8 @@ define(['d3', 'underscore', './scale-helpers'], function (d3, _, scaleHelpers) {
   /**
   * Returns a TwoSidedHorizontalBarCHart instance.
   */
-  function TwoSidedHorizontalBarCHart (chart, chartSize, data, colors) {
+  function TwoSidedHorizontalBarCHart (chart, chartSize, data, colors,
+    leftTitle, rightTitle) {
 
     var chartData = _(data).map(function(entry) {
       return {
@@ -116,12 +117,12 @@ define(['d3', 'underscore', './scale-helpers'], function (d3, _, scaleHelpers) {
 
     var drawTitles = function (axeGroup, rightGroup) {
       axeGroup.append('text')
-        .text("asdasd")
+        .text(leftTitle)
         .attr('x', -10)
         .attr('class', 'graph-title')
         .attr('style', 'text-anchor: end');
       rightGroup.append('text')
-        .text("lalal aal")
+        .text(rightTitle)
         .attr('x', 10)
         .attr('class', 'graph-title')
         .attr('style', 'text-anchor: start');

@@ -59,7 +59,8 @@ define(['./module', './scale-helpers', 'angular', './two-sided-horizontal-bar-ch
       var chartGroup = svg.append('g').attr('class', 'chart_group');
       var headerGroup = svg.append('g').attr('class', 'legend_group');
 
-      var chart = new TwoSidedHorizontalBarChart(chartGroup, chartSize, data.bars, options.linesStyle);
+      var chart = new TwoSidedHorizontalBarChart(chartGroup, chartSize,
+        data.bars, options.linesStyle, options.leftTitle, options.rightTitle);
       chart.draw();
 
       d3Charts.drawTitleAndLegend(svg, options, headerGroup);

@@ -186,12 +186,8 @@ define([
         bottom: 60,
         left: 60
       },
-      xAxis: {
-        axisLabel: 'Axis X'
-      },
-      yAxis: {
-        axisLabel: 'Axis Y'
-      }
+      leftTitle: "Left Title",
+      rightTitle: "Right Title"
     };
 
     $scope.data10 = {
