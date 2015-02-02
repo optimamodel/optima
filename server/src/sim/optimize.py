@@ -289,6 +289,8 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         
         options.years = []
         options.totalspends = []
+        yearkeys = objectives.outcome.variable.keys()
+        yearkeys = yearkeys.sort()
         for key in objectives.outcome.variable.keys(): # Stored as a list of years:
             options.years.append(float(key)) # Convert from string to number
             options.totalspends.append(objectives.outcome.variable[key]) # Append this year
