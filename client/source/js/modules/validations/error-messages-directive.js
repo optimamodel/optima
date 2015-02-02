@@ -26,7 +26,7 @@ define(['angular', 'underscore'], function (angular, _) {
 
         /**
          * Returns the rendered error messages in invalid state or an empty array if none is found.
-         */        
+         */
         $scope.errorMessages = function () {
           if (form && (form[$scope.for].$dirty || $scope.showAlways===true)) {
             return _.compact(_(form[$scope.for].$error).map(function (e, key) {
@@ -54,6 +54,6 @@ define(['angular', 'underscore'], function (angular, _) {
           }
         };
       }
-    }
+    };
   });
 });
