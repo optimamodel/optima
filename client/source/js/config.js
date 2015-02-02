@@ -23,10 +23,15 @@ define(['angular'], function (angular) {
           { id: 'tx1', name: 'People on 1st-line treatment', byPopulation: false, total: true, stacked: true },
           { id: 'tx2', name: 'People on 2nd-line treatment', byPopulation: false, total: true, stacked: true }
         ],
+        costs:[
+          {id:"annual", name: "Annual costs"},
+          {id:"cumulative",name: "Cumulative costs"}
+        ],
         financial: [
-          { id: 'total', name: 'Total HIV-related financial commitments', annual: true, cumulative: true  },
-          { id: 'existing', name: 'Financial commitments for existing PLHIV', annual: true, cumulative: true },
-          { id: 'future', name: 'Financial commitments for future PLHIV', annual: true, cumulative: true }
+          { id: 'before', name: 'People affected before 2015'},
+          { id: 'after', name: 'People affected after 2015'},
+          { id: 'totalplhiv', name: 'Total PLHIV'},
+          { id: 'stacked', name: 'Stacked' }
         ],
         financialAnnualCosts: [
           {id:'total', name:'Total amount', disabled: true},

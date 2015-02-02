@@ -33,19 +33,17 @@
 
   <h3>Financial commitment results</h3>
 
-  <div class="type-section" ng-repeat="type in types.financial" >
-    <b>{{ type.name }}</b>
-    <div>
-      <label class="checkbox-inline">
-        <input type="checkbox" ng-model="type.annual">
-        Annual
-      </label>
-    </div>
-    <div>
-      <label class="checkbox-inline">
-        <input type="checkbox" ng-model="type.cumulative">
-        Cumulative
-      </label>
+  <div ng-repeat="cost in types.costs">
+    <b>{{cost.name}}</b>
+    <div ng-repeat="type in types.financial">
+      <div class="type-section" >
+        <div>
+          <label class="checkbox-inline">
+            <input type="checkbox" ng-init="financialResults[cost.id]={}" ng-model="financialResults[cost.id][type.id]">
+            {{type.name}}
+          </label>
+        </div>
+      </div>
     </div>
   </div>
   <b>Display annual costs as:</b>
