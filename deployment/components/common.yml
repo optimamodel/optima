@@ -3,6 +3,22 @@
   - include: "{{prudentia_dir}}/tasks/ssh-key.yml ssh_user={{ansible_user_id}} ssh_group={{ansible_user_id}} ssh_dir=/home/{{ansible_user_id}} files_dir={{root_dir}}/components/files/ssh key_name=id_rsa"
     tags: common
 
+  - name: API | Install Ubuntu packages
+    apt: pkg={{item}} state=present
+    sudo: yes
+    with_items:
+      - libfreetype6
+      - libfreetype6-dev
+      - libfontconfig1
+      - libfontconfig1-dev
+      - pkg-config
+      - libblas-dev
+      - liblapack-dev
+      - gfortran
+      - libpq-dev
+      - libpng12-dev
+    tags: api
+
   - include: "{{prudentia_dir}}/tasks/github.yml ssh_dir=/home/{{ansible_user_id}}"
     tags: common
 

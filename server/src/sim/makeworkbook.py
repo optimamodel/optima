@@ -105,8 +105,8 @@ def make_populations_range(name, items):
             injects = item.get('injects',False)
             sexmen = item.get('sexmen',False) # WARNING need to update
             sexwomen = item.get('sexwomen',False)
-            sexworker = item.get('injects',False)
-            client = item.get('injects',False)      
+            sexworker = item.get('sexworker',False)
+            client = item.get('client',False)      
         else: # backward compatibility :) might raise exception which is ok
             item_name = item
             short_name = abbreviate(item_name)
@@ -590,23 +590,20 @@ class OptimaWorkbook:
         self.current_sheet.merge_range('A1:A3', 'O P T I M A', self.formats.formats['info_header'])
         current_row = 3
         current_row = self.formats.write_info_line(self.current_sheet, current_row)
-        current_row = self.formats.write_info_block(self.current_sheet, current_row, row_height=40, text='Welcome to the Optima data entry spreadsheet. This is where all data for the model will be entered. At first glance the spreadsheet looks complicated and confusing. Unfortunately, it is. So please ask me if you need help rather than struggle and suffer in silence!')
+        current_row = self.formats.write_info_block(self.current_sheet, current_row, row_height=65, text='Welcome to the Optima data entry spreadsheet. This is where all data for the model will be entered. At first glance the spreadsheet looks complicated and confusing. Unfortunately, it is. So please ask someone from the Optima development team if you need help, or use the default contact (info@optimamodel.com).')
         current_row = self.formats.write_info_block(self.current_sheet, current_row, text='I. LAYOUT OF THE SPREADSHEET', row_format='grey_bold')
         current_row = self.formats.write_info_block(self.current_sheet, current_row, text='This spreadsheet is divided into 12 sheets. All sheets need to be completed, except where noted below.')
         current_row = self.formats.write_info_block(self.current_sheet, current_row, text='II. HOW TO ENTER DATA', row_format='grey_bold')
-        current_row = self.formats.write_info_block(self.current_sheet, current_row, row_height=75, text='Do not enter anything except cold, hard, actual data! Optima will interpolate between data points, so only enter data in the years that they belong. In addition, please add notes (either as comments for a given cell or in the blank cells to the right of each row) about where the data came from. This is very important! If a given data point is assumed, it is very important that you add a comment, since otherwise you will cause endless grief to the poor schmuck trying to figure out what you did.')
+        current_row = self.formats.write_info_block(self.current_sheet, current_row, row_height=80, text='Do not enter anything except actual data, apart from the small number of instances which allows optional input of output from other models for comparison and verification! Optima will fit to actual data and will interpolate between data points, so only enter data in the years that they belong. In addition, please feel free to add notes (either as comments for a given cell or in the blank cells to the right of each row) about the source of the data.')
         current_row = self.formats.write_info_block(self.current_sheet, current_row, 'III. WHAT CAN BE LEFT BLANK', row_format='grey_bold')
-        current_row = self.formats.write_info_block(self.current_sheet, current_row, add_line = False, text="It's a bit confusing what can and can't be left blank, but here are a few general principles:")
+        current_row = self.formats.write_info_block(self.current_sheet, current_row, add_line = False, text="It can be confusing what can and cannot be left blank, but here are a few general principles:")
         current_row = self.formats.write_info_block(self.current_sheet, current_row, add_line = False, text='* Nothing on the "Populations and programs" sheet can be blank.')
-        current_row = self.formats.write_info_block(self.current_sheet, current_row, add_line = False, row_height=57, text='* For each parameter (as in, row in the worksheet), there needs to be at least one data point entered. The only exception to this is the sheet "Optional indicators", which may be left blank. If data are not available for a particular indicator, enter an assumption in the "Assumption" column, with a comment explaining how that value was arrived at.')
-        current_row = self.formats.write_info_block(self.current_sheet, current_row, text="* Economic data only need to be entered if you're performing economic analyses.")
+        current_row = self.formats.write_info_block(self.current_sheet, current_row, add_line = False, row_height=57, text='* For each parameter (as in, row in the worksheet), there needs to be at least one data point entered. The only exception to this is the sheet "Optional indicators", which may be left blank. If data are not available for a particular indicator, enter an assumption in the "Assumption" column, with a comment explaining how that value was derived.')
+        current_row = self.formats.write_info_block(self.current_sheet, current_row, text="* Economic data only need to be entered if you are performing economic analyses.")
         current_row = self.formats.write_info_block(self.current_sheet, current_row, text='If a parameter is left completely blank, it will be assumed to be zero.')
         current_row = self.formats.write_info_block(self.current_sheet, current_row, text='IV. QUESTIONS', row_format='grey_bold')
         current_row = self.formats.write_info_block(self.current_sheet, current_row, text='If you have any questions, please contact us on')
         current_row = self.formats.write_info_block(self.current_sheet, current_row, text='mailto:info@optimamodel.com', row_format='info_url')
-        current_row = self.formats.write_info_block(self.current_sheet, current_row, text='Thanks!')
-        current_row = self.formats.write_info_block(self.current_sheet, current_row, add_line = False, text='Cliff Kerr')
-        current_row = self.formats.write_info_block(self.current_sheet, current_row, add_line = False, text='December 19th, 2014')
 
     def create(self, path):
         if self.verbose >=1: 

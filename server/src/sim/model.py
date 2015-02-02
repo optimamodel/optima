@@ -1,5 +1,5 @@
  ## Imports
-from numpy import array, arange, zeros, exp, maximum, minimum, nonzero, concatenate, hstack, absolute
+from numpy import array, arange, zeros, exp, maximum, minimum, nonzero, concatenate, hstack, absolute, median
 from bunch import Bunch as struct # Replicate Matlab-like structure behavior
 from printv import printv
 from math import pow as mpow
@@ -126,7 +126,7 @@ def model(G, M, F, opt, initstate=None, verbose=2):
     numpmtct = M.numpmtct  # PMTCT (N)
     ost      = M.numost    # OST (N)
     propcirc = M.circum    # Proportion of men circumcised (P)
-#    tobecirc = M.numcircum # Number of men TO BE CIRCUMCISED (N) # TODO -- check that I'm understanding this correctly!!
+    tobecirc = M.numcircum # Number of men to be circumcised (N)
     mtx1     = M.tx1       # 1st line treatement (N) -- tx1 already used for index of people on treatment
     mtx2     = M.tx2       # 2nd line treatement (N) -- tx2 already used for index of people on treatment
     txtotal  = M.txtotal   # Total number on treatment -- initialised as zeros (N or P)
@@ -183,7 +183,6 @@ def model(G, M, F, opt, initstate=None, verbose=2):
         else: raise Exception('Treatment eligibility %s at time %s does not seem to be valid' % (txelig[t], t))
         
         
-        
         ###############################################################################
         ## Calculate force-of-infection (forceinf)
         ###############################################################################
@@ -198,9 +197,6 @@ def model(G, M, F, opt, initstate=None, verbose=2):
             
             # Circumcision
             circeffF = 1 # Trivial circumcision effect for female or receptive male
-#            if t>0 and M.numcircum[popM,t]>0: # Only use this if it's greater than zero, and not at the first time point
-#                fractioncircumcised = dt*M.numcircum[popM,t]/M.popsize[popM,t] # Fraction of men in this population being circumcised
-#                M.circum[popM,t:] = min(1, M.circum[popM,t-1]+fractioncircumcised) # Calculate new fraction circumcised from previous timestep, making sure it never exceeds 1
             circeffM = 1 - effcirc*propcirc[popM,t]
             
             # Loop over all populations (for females)
@@ -244,8 +240,8 @@ def model(G, M, F, opt, initstate=None, verbose=2):
         for pop1 in range(npops):
             for pop2 in range(npops):
                 if pshipsinj[pop1,pop2]>0: # Ignore if this isn't a valid injecting partnership
-                    numacts1 = sharing[t] * totalacts['inj'][pop1,pop2,t] / 2 # Number of acts per person per year -- /2 since otherwise double-count
-                    numacts2 = sharing[t] * totalacts['inj'][pop2,pop1,t] / 2 # Number of acts per person per year
+                    numacts1 = sharing[pop1,t] * totalacts['inj'][pop1,pop2,t] / 2 # Number of acts per person per year -- /2 since otherwise double-count
+                    numacts2 = sharing[pop2,t] * totalacts['inj'][pop2,pop1,t] / 2 # Number of acts per person per year
                     forceinf1 = 1 - mpow((1-transinj), (dt*numacts1*osteff*effhivprev[pop2])) # The chance of "2" infecting "1"
                     forceinf2 = 1 - mpow((1-transinj), (dt*numacts2*osteff*effhivprev[pop1])) # The chance of "1" infecting "2"
                     forceinfvec[pop1] = 1 - (1-forceinfvec[pop1]) * (1-forceinf1) # Calculate the new "male" forceinf, ensuring that it never gets above 1
@@ -290,8 +286,7 @@ def model(G, M, F, opt, initstate=None, verbose=2):
         ###############################################################################
         
         # Number of people circumcised - we only care about susceptibles
-        numcirc = people[sus, :, t] * male * propcirc[:, t]
-        numcirc = numcirc[0] # Quick hack -- someone please correct this!
+        numcirc = (people[sus, :, t] * male * propcirc[:, t]).flatten()
         
         ## Asymmetric transitions - people move from one population to another
         for p1 in range(npops):
@@ -351,23 +346,26 @@ def model(G, M, F, opt, initstate=None, verbose=2):
         
         # Number circumcised this time step after transitions and deaths
         # NOTE: Only background death rate is needed as only considering susceptibles -- circumcision doesn't effect infected men
-        S.numcircum[:, t] = numcirc * (1 - M.death[:, t]) * dt 
-        newsuscmales = people[sus, :, t] * male # Susceptible males after transitions
-        newsuscmales = newsuscmales[0]  # Quick hack -- someone please correct this!
+        numcircad   = numcirc * (1 - M.death[:, t]) * dt
+        newsusmales = (people[sus, :, t] * male).flatten() # Susceptible males after transitions
         
-        # Determine how many are left uncircumcised (and store in sim)
-        reqcirc = newsuscmales - S.numcircum[:, t]
-        reqcirc[reqcirc < 0] = 0
-        S.reqcircum[0, t] = sum(reqcirc)
+        # Determine how many are left uncircumcised
+        reqcirc = maximum(newsusmales - numcircad, 0)
         
         # Perform any new circumcisions if tobecirc is non zero
-#        if sum(tobecirc[:, t]) > 0: 
-#            S.newcircum[:, t] = minimum(tobecirc[:, t], reqcirc) # Calculate how many are due to be circumcised (upper limit of reqcirc) # TODO -- I don't think dt is needed here. Second opinion please.
-#            S.numcircum[:, t] += S.newcircum[:, t] # Add these people to the circumcised group
-#            if t < npts: # Perform for all but the last timestep
-#                for pop in range(npops): # Loop through the populations
-#                    if male[pop]: # Only calculate for males
-#                        propcirc[pop, t+1] = median([0, 1, S.numcircum[pop, t] / newsuscmales[pop]]) # Circumcision coverage for next time step (element of [0, 1])
+        if tobecirc[t] > 0:
+            tobecircpop = tobecirc[t] * (reqcirc / sum(reqcirc))
+            newlycirc = minimum(tobecircpop, reqcirc)
+            if t < npts: # Perform for all but the last timestep
+                for pop in range(npops): # Loop through the populations
+                    if male[pop]: # Only calculate for males
+                        propcirc[pop, t+1] = median([0, 1, (numcircad[pop] + newlycirc[pop]) / newsusmales[pop]]) # Circumcision coverage for next time step (element of [0, 1])
+        else:
+            newlycirc = zeros(npops)
+            
+        S.reqcircum[0, t] = sum(reqcirc)
+        S.newcircum[:, t] = newlycirc
+        S.numcircum[:, t] = numcircad + newlycirc
         
         
         ###############################################################################
@@ -423,7 +421,7 @@ def model(G, M, F, opt, initstate=None, verbose=2):
                 dU[cd4] = maximum(dU[cd4], -people[undx[cd4],:,t]) # Ensure it doesn't go below 0 -- # TODO kludgy
                 printv('Prevented negative people in undiagnosed at timestep %i' % t, 10, verbose)
             S['dx'][:,t]    += newdiagnoses[cd4]/dt # Save annual diagnoses 
-            S['death'][:,t] += hivdeaths[cd4]/dt    # Save annual HIV deaths 
+            S['death'][:,t] += hivdeaths/dt    # Save annual HIV deaths 
         dU[0] = dU[0] + newinfections # Now add newly infected people
         
         ## Diagnosed
@@ -458,7 +456,7 @@ def model(G, M, F, opt, initstate=None, verbose=2):
                 dD[cd4] = maximum(dD[cd4], -people[dx[cd4],:,t]) # Ensure it doesn't go below 0 -- # TODO kludgy
                 printv('Prevented negative people in diagnosed at timestep %i' % t, 10, verbose)
             S['newtx1'][:,t] += newtreat1[cd4]/dt # Save annual treatment initiation
-            S['death'][:,t]  += hivdeaths[cd4]/dt # Save annual HIV deaths 
+            S['death'][:,t]  += hivdeaths/dt # Save annual HIV deaths 
         
         ## 1st-line treatment
         for cd4 in range(ncd4):
@@ -479,7 +477,7 @@ def model(G, M, F, opt, initstate=None, verbose=2):
             if ((dT1[cd4]+people[tx1[cd4],:,t])<0).any():
                 dT1[cd4] = maximum(dT1[cd4], -people[tx1[cd4],:,t]) # Ensure it doesn't go below 0 -- # TODO kludgy
                 printv('Prevented negative people in treatment 1 at timestep %i' % t, 10, verbose)
-            S['death'][:,t] += hivdeaths[cd4]/dt # Save annual HIV deaths 
+            S['death'][:,t] += hivdeaths/dt # Save annual HIV deaths 
 
         ## Treatment failure
         newtreat2tot = mtx2[t] - people[tx2,:,t].sum() # Calculate difference between current people on treatment and people needed
@@ -506,7 +504,7 @@ def model(G, M, F, opt, initstate=None, verbose=2):
                 dF[cd4] = maximum(dF[cd4], -people[fail[cd4],:,t]) # Ensure it doesn't go below 0 -- # TODO kludgy
                 printv('Prevented negative people in failure at timestep %i' % t, 10, verbose)
             S['newtx2'][:,t] += newtreat2[cd4]/dt # Save annual treatment initiation
-            S['death'][:,t]  += hivdeaths[cd4]/dt # Save annual HIV deaths
+            S['death'][:,t]  += hivdeaths/dt # Save annual HIV deaths
             
         ## 2nd-line treatment
         for cd4 in range(ncd4):
@@ -526,7 +524,7 @@ def model(G, M, F, opt, initstate=None, verbose=2):
             if ((dT2[cd4]+people[tx2[cd4],:,t])<0).any():
                 dT2[cd4] = maximum(dT2[cd4], -people[tx2[cd4],:,t]) # Ensure it doesn't go below 0 -- # TODO kludgy
                 printv('Prevented negative people in treatment 2 at timestep %i' % t, 10, verbose)
-            S['death'][:,t] += hivdeaths[cd4]/dt # Save annual deaths data
+            S['death'][:,t] += hivdeaths/dt # Save annual deaths data
 
 
         ###############################################################################

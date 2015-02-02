@@ -26,9 +26,9 @@ def runsimulation(D, simstartyear=2000, simendyear=2030, verbose=2, makeplot = 0
         allsims.append(S)
     D.S = allsims[0] # Save one full sim structure for troubleshooting and funsies
 
-    print('WARNING should add conditionals here')
-    from makeccocs import makeallccocs
-    D = makeallccocs(D, verbose=verbose) # Do not plot, ever
+#    print('WARNING should add conditionals here')
+#    from makeccocs import makeallccocs
+#    D = makeallccocs(D, verbose=verbose) # Do not plot, ever
 
     # Calculate results
     from makeresults import makeresults

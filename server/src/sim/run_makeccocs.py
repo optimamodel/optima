@@ -13,7 +13,7 @@ makeplot = args.plot
 show_wait = args.wait
 
 if show_wait:
-    makeplot = True
+    makeplot = False
 
 ## Initialize simulation
 
@@ -32,7 +32,7 @@ D = runsimulation(D, verbose=verbose)
 # Actually run makeccocs
 from plotccocs import plotallcco
 #plotallcco(D=D)
-plotallcco(D=D, coparams=[], ccparams=[0.9, 0.2, 800000.0, None, None], ccplot=[1000000,None,1])
+plotallcco(D=D, coparams=[], ccparams=[0.9, 0.15, 0.25, 800000.0, None, None], ccplot=[1000000,None,1])
 if show_wait:
     from matplotlib.pylab import show
     show()

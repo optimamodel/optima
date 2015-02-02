@@ -19,7 +19,7 @@ def makeresults(D, allsims=None, quantiles=None, verbose=2):
     from printv import printv
     from quantile import quantile
     printv('Calculating results...', 1, verbose)
-    if allsims==None: allsims = [D.S] # If not supplied, using sims structure already in D
+    if allsims is None: allsims = [D.S] # If not supplied, using sims structure already in D
     
     R = struct()
     R.__doc__ = 'Output structure containing all worthwhile results from the model'
@@ -121,7 +121,7 @@ def makeresults(D, allsims=None, quantiles=None, verbose=2):
                     if 'ylinedata' in allcosts[s]['annual']['total'][yscale]:
                         R.costann.total[yscale] = quantile(array([allcosts[s]['annual']['total'][yscale]['ylinedata'] for s in range(nsims)]), quantiles=quantiles)
                         R.costann.existing[yscale]= quantile(array([allcosts[s]['annual']['existing'][yscale]['ylinedata'] for s in range(nsims)]), quantiles=quantiles)
-                        R.costann.future[yscale] = quantile(array([allcosts[s]['annual']['future'][yscale]['ylinedata'] for s in range(nsims)]), quantiles=quantiles)       
+                        R.costann.future[yscale] = quantile(array([allcosts[s]['annual']['future'][yscale]['ylinedata'] for s in range(nsims)]), quantiles=quantiles)
             
             R.costshared = thesecosts # TODO think of how to do this better
             

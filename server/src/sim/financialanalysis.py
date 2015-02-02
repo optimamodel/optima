@@ -30,7 +30,7 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False):
     # Set up variables for time indexing
     datatvec = arange(D.G.datastart, D.G.dataend+D.opt.dt, D.opt.dt)
     ndatapts = len(datatvec)
-    simtvec = D.opt.simtvec
+    simtvec = S.tvec
     noptpts = len(simtvec)
 
     # Get most recent ART unit costs
@@ -56,16 +56,18 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False):
         socialcosts = sanitize(D.data.econ.social.past[healthno])
         othercosts = sanitize(D.data.econ.health.past[healthno])
 
+        # Extrapolating
+        for i in range(int(D.S.tvec[-1]-D.G.dataend)):
+            othercosts = append(othercosts,[othercosts[-1]*(1+D.data.econ.health.future[0][0])])
+            socialcosts = append(socialcosts,[socialcosts[-1]*(1+D.data.econ.health.future[0][0])])
+
         # Interpolating
-        newx = linspace(0,1,ndatapts)
+        newx = linspace(0,1,noptpts)
         origx = linspace(0,1,len(socialcosts))
         socialcosts = smoothinterp(newx, origx, socialcosts, smoothness=5)
         origx = linspace(0,1,len(othercosts))
         othercosts = smoothinterp(newx, origx, othercosts, smoothness=5)
 
-        # Extrapolating... holding constant for now. #TODO use growth rates when they have been added to the excel sheet
-        othercosts = append(othercosts,[othercosts[-1]]*(noptpts-ndatapts))
-        socialcosts = append(socialcosts,[socialcosts[-1]]*(noptpts-ndatapts))
         costs = [(socialcosts[j] + othercosts[j]) for j in range(noptpts)]
 
         # Calculate annual non-treatment costs for all PLHIV under the baseline sim and the zero transmission sim
@@ -104,30 +106,31 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False):
                     plotdata[plottype][plotsubtype][yscalefactor] = {}
                     plotdata[plottype][plotsubtype][yscalefactor]['xlinedata'] = simtvec
                     plotdata[plottype][plotsubtype][yscalefactor]['xlabel'] = 'Year'
-                    plotdata[plottype][plotsubtype][yscalefactor]['title'] = 'Annual HIV-related financial commitments - ' + plotsubtype + 'infections'
+                    plotdata[plottype][plotsubtype][yscalefactor]['title'] = 'Annual HIV-related financial commitments - ' + plotsubtype + ' infections'
                     if yscalefactor=='total':                    
                         if not plotsubtype=='future': plotdata[plottype][plotsubtype][yscalefactor]['ylinedata'] = [(hivcosts[plotsubtype][j] + artcosts[plotsubtype][j]) for j in range(noptpts)]
                         plotdata[plottype][plotsubtype][yscalefactor]['ylabel'] = 'USD'
                     else:
                         yscale = sanitize(D.data.econ[yscalefactor].past)
                         if isinstance(yscale,int): continue #raise Exception('No data have been provided for this varaible, so we cannot display the costs as a proportion of this')
+                        for i in range(int(D.S.tvec[-1]-D.G.dataend)):
+                            yscale = append(yscale,[yscale[-1]*(1+D.data.econ[yscalefactor].future[0][0])])
                         origx = linspace(0,1,len(yscale))
-                        yscale = smoothinterp(newx, origx, yscale, smoothness=5)
-                        yscale = append(yscale,[yscale[-1]]*(noptpts-ndatapts))
-
+                        yscale = smoothinterp(newx, origx, yscale, smoothness=5)                            
                         if not plotsubtype=='future': plotdata[plottype][plotsubtype][yscalefactor]['ylinedata'] = [(hivcosts[plotsubtype][j] + artcosts[plotsubtype][j])/yscale[j] for j in range(noptpts)] 
                         plotdata[plottype][plotsubtype][yscalefactor]['ylabel'] = 'Proportion of ' + yscalefactor
             else:
                 plotdata[plottype][plotsubtype]['xlinedata'] = simtvec
                 plotdata[plottype][plotsubtype]['xlabel'] = 'Year'
                 plotdata[plottype][plotsubtype]['ylabel'] = 'USD'
-                plotdata[plottype][plotsubtype]['title'] = 'Cumulative HIV-related financial commitments - ' + plotsubtype + 'infections'
+                plotdata[plottype][plotsubtype]['title'] = 'Cumulative HIV-related financial commitments - ' + plotsubtype + ' infections'
                 if not plotsubtype=='future': plotdata[plottype][plotsubtype]['ylinedata'] = list(accumu([hivcosts[plotsubtype][j] + artcosts[plotsubtype][j] for j in range(noptpts)]))
 
-    plotdata['cumulative']['future']['ylinedata'] = [plotdata['cumulative']['total']['ylinedata'][j] - plotdata['cumulative']['existing']['ylinedata'][j] for j in range(noptpts)]
     for yscalefactor in costdisplays:
         if 'ylinedata' in plotdata['annual']['total'][yscalefactor].keys():
-            plotdata['annual']['future'][yscalefactor]['ylinedata'] = [plotdata['annual']['total'][yscalefactor]['ylinedata'][j] - plotdata['annual']['existing'][yscalefactor]['ylinedata'][j] for j in range(noptpts)]
+            plotdata['annual']['future'][yscalefactor]['ylinedata'] = [max(0.0,plotdata['annual']['total'][yscalefactor]['ylinedata'][j] - plotdata['annual']['existing'][yscalefactor]['ylinedata'][j]) for j in range(noptpts)]
+    plotdata['cumulative']['future']['ylinedata'] = list(accumu(plotdata['annual']['future']['total']['ylinedata']))
+
 
     return plotdata
 

@@ -92,17 +92,13 @@ def makedatapars(D, verbose=2):
                 D.P.const[parclass][parname] = D.data.const[parclass][parname][0] # Taking best value only, hence the 0
     
     ## Program cost data
-    D.A = [struct()] # Initialize allocations list
-    D.A[0].alloc = zeros(D.G.nprogs)
+    D.data.origalloc = zeros(D.G.nprogs)
     for prog in range(D.G.nprogs):
         totalcost = D.data.costcov.cost[prog]
         totalcost = array(totalcost)
         totalcost = totalcost[~isnan(totalcost)]
         totalcost = totalcost[-1]
-        D.A[0].alloc[prog] = totalcost
-            
-    
-    ## TODO: disutility, economic data etc.
+        D.data.origalloc[prog] = totalcost
     
     
     ## Change sizes of circumcision and births
@@ -113,16 +109,16 @@ def makedatapars(D, verbose=2):
         newarray.p = zeros(shape(D.G.meta.pops.male))
         if 't' in newarray.keys(): raise Exception('Shouldn''t be using time')
         count = -1
-        for i,tf in enumerate(popbool):
-            if tf:
-                count += 1
-                newarray.p[i] = origarray.p[count]
+        if hasattr(popbool,'__iter__'): # May or may not be a list
+            for i,tf in enumerate(popbool):
+                if tf:
+                    count += 1
+                    newarray.p[i] = origarray.p[count]
         
         return newarray
     
     D.P.birth     = popexpand(D.P.birth,     array(D.G.meta.pops.female)==1)
     D.P.circum    = popexpand(D.P.circum,    array(D.G.meta.pops.male)==1)
-#    D.P.numcircum = popexpand(D.P.numcircum, array(D.G.meta.pops.male)==1)
             
             
 

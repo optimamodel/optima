@@ -33,30 +33,15 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
         
         npops = len(datapar[withwhat])
         
-        if npops>1:
-            output = zeros((npops,npts))
-            for pop in range(npops):
-                if withwhat=='c' and ~isnan(datapar[withwhat][pop]).all(): # Use cost relationship
-                    output[pop, :] = datapar[withwhat][pop, :]
-                else: # Use parameter
-                    if 't' in datapar.keys(): # It's a time parameter
-                        output[pop,:] = smoothinterp(M.tvec, datapar.t[pop], datapar.p[pop]) # Use interpolation
-                    else:
-                        output[pop,:] = datapar.p[pop]
-                
-        else:
-            output = zeros(npts)
-            try:
-                if withwhat=='c' and ~isnan(datapar[withwhat][0]).all(): # Use cost relationship
-                    output[:] = datapar[withwhat]
-                else: # Use parameter
-                    if 't' in datapar.keys(): # It's a time parameter
-                        output[:] = smoothinterp(M.tvec, datapar.t[0], datapar.p[0]) # Use interpolation
-                    else:
-                        output[:] = datapar.p[0]
-            except:
-                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-
+        output = zeros((npops,npts))
+        for pop in range(npops):
+            if withwhat=='c' and ~isnan(datapar[withwhat][pop]).all(): # Use cost relationship
+                output[pop, :] = datapar[withwhat][pop, :]
+            else: # Use parameter
+                if 't' in datapar.keys(): # It's a time parameter
+                    output[pop,:] = smoothinterp(M.tvec, datapar.t[pop], datapar.p[pop]) # Use interpolation
+                else:
+                    output[pop,:] = datapar.p[pop]
         
         return output
     
@@ -82,20 +67,17 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
     
     ## Testing parameters -- most are data
     M.hivtest = dpar2mpar(P.hivtest, withwhat) # HIV testing rates
-    M.aidstest = dpar2mpar(P.aidstest, withwhat) # AIDS testing rates
-    M.tx1 = dpar2mpar(P.numfirstline, withwhat) # Number of people on first-line treatment
-    M.tx2 = dpar2mpar(P.numsecondline, withwhat) # Number of people on second-line treatment
-    M.txelig = dpar2mpar(P.txelig, withwhat) # Treatment eligibility criterion
+    M.aidstest = dpar2mpar(P.aidstest, withwhat)[0] # AIDS testing rates
+    M.tx1 = dpar2mpar(P.numfirstline, withwhat)[0] # Number of people on first-line treatment -- 0 since overall not by population
+    M.tx2 = dpar2mpar(P.numsecondline, withwhat)[0] # Number of people on second-line treatment
+    M.txelig = dpar2mpar(P.txelig, withwhat)[0] # Treatment eligibility criterion
 
     ## MTCT parameters
-    M.numpmtct = dpar2mpar(P.numpmtct, withwhat)
+    M.numpmtct = dpar2mpar(P.numpmtct, withwhat)[0]
     M.birth    = dpar2mpar(P.birth, withwhat)
-    M.breast   = dpar2mpar(P.breast, withwhat)    
+    M.breast   = dpar2mpar(P.breast, withwhat)[0]  
     
     ## Sexual behavior parameters -- all are parameters so can loop over all
-    M.circum    = dpar2mpar(P.circum,    withwhat) # Circumcision percentage
-#    M.numcircum = dpar2mpar(P.numcircum, withwhat) # Circumcision number
-#    M.numcircum *= 0 # Reset since prevalence data is required and overwrites data on numbers of circumcisions -- # TODO I think this is a bad idea
     M.numacts = struct()
     M.condom  = struct()
     M.numacts.reg = dpar2mpar(P.numactsreg, withwhat) # ...
@@ -106,8 +88,12 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
     M.condom.cas  = dpar2mpar(P.condomcas, withwhat) # ...
     M.condom.com  = dpar2mpar(P.condomcom, withwhat) # ...
     
+    ## Circumcision parameters
+    M.circum    = dpar2mpar(P.circum, withwhat) # Circumcision percentage
+    M.numcircum = zeros(shape(M.tvec)) # Number to be circumcised -- to be populated by the relevant CCOC at non-zero allocations
+    
     ## Drug behavior parameters
-    M.numost = dpar2mpar(P.numost, withwhat)
+    M.numost = dpar2mpar(P.numost, withwhat)[0]
     M.sharing = dpar2mpar(P.sharing, withwhat)
     
     ## Other intervention parameters (proportion of the populations, not absolute numbers)
@@ -123,7 +109,7 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
     M.const = P.const
     
     ## Calculate total acts
-    M.totalacts = totalacts(P, M, npts)
+    M.totalacts = totalacts(M, npts)
     
     ## Program parameters not related to data
     M.propaware = zeros(shape(M.hivtest)) # Initialize proportion of PLHIV aware of their status
@@ -133,17 +119,17 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
     printv('...done making model parameters.', 2, verbose)
     return M
 
-def totalacts(P, M, npts):
+def totalacts(M, npts):
     totalacts = struct()
     totalacts.__doc__ = 'Balanced numbers of acts'
     
     popsize = M.popsize
-    pships = P.pships
+    pships = M.pships
 
     for act in pships.keys():
         npops = len(M.popsize[:,0])
         npop=len(popsize); # Number of populations
-        mixmatrix = array(pships[act])
+        mixmatrix = pships[act]
         symmetricmatrix=zeros((npop,npop));
         for pop1 in range(npop):
             for pop2 in range(npop):
@@ -182,3 +168,5 @@ def reconcileacts(symmetricmatrix,popsize,popacts):
             pshipacts[pop1,pop2] = balanced/popsize[pop1]; # ...and for the other population
 
     return pshipacts
+        
+    

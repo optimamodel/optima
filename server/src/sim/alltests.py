@@ -1,11 +1,11 @@
-#!/usr/bin/python
+#!/usr/bin/python -i
 """
 Run all tests of the sim. Yes Anna, I know this sucks, especially 
 skipping the unit tests, but I want some way of running all the 
 tests that will drop me into the debugger if it hits a bug. If 
 you can think up a better way, which I'm sure you can, let me know :)
 
-Version: 2015jan19 by cliffk
+Version: 2015jan29 by cliffk
 """
 
 # Make sure memory is handled OK
@@ -33,7 +33,11 @@ sys.excepthook = info
 # Run all tests
 from glob import glob
 from time import sleep
-files = glob('test_*.py')
+from sys import argv
+if len(argv)==1:
+    files = glob('test_*.py')
+else:
+    files = argv[1:]
 for thisfile in files:
    if (thisfile != 'test_programs.py') and (thisfile != 'test_makeworkbook.py'):
       print('''
@@ -44,3 +48,14 @@ for thisfile in files:
       ''' % thisfile)
       sleep(1)
       execfile(thisfile)
+
+# Clean up
+try:
+    from dataio import savedata
+    savedata('example.prj',D) # analysis:ignore # To load, use D = loaddata('/tmp/projects/example.prj')
+except:
+    print('Attempt to save data failed.')
+
+from matplotlib.pylab import * # analysis:ignore
+ion()
+show()

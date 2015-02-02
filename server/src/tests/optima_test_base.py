@@ -51,11 +51,15 @@ class OptimaTestCase(unittest.TestCase):
         """ Helper method to create project and save it to the database """
         project = ProjectDb(name, 1, '2000', '2010', OptimaTestCase.default_pops, {})
         db.session.add(project)
+        db.session.flush()
+        id = project.id
         db.session.commit()
+        return id
 
     def api_create_project(self):
-        project_data = {'params':json.dumps({'populations':OptimaTestCase.default_pops})}
-        response = self.client.post('/api/project/create/test', data = project_data)
+        project_data = json.dumps({'params':{'populations':OptimaTestCase.default_pops}})
+        headers = {'Content-Type' : 'application/json'}
+        response = self.client.post('/api/project/create/test', data = project_data, headers = headers)
         return response
 
     def list_projects(self, user_id):
