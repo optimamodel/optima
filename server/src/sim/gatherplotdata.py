@@ -84,9 +84,9 @@ def gatheruncerdata(D, R, verbose=2):
             uncer.tx2.ydata = zeros(ndatayears).tolist()
 
 
-        if size(epidata[0])==1 and ndim(epidata)==1: # TODO: make this less shitty, easier way of checking what shape the data is I'm sure
+        if size(epidata[0])==1 and ndim(epidata)==1: # It's not by population
             uncer[key].ydata = (array(epidata)*percent).tolist()
-        elif size(epidata)==D.G.npops:
+        elif size(epidata,axis=0)==D.G.npops: # It's by population
             for p in range(D.G.npops):
                 thispopdata = epidata[p]
                 if len(thispopdata) == 1: 
