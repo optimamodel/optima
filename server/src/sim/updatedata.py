@@ -41,7 +41,7 @@ def restructureprograms(programs):
     ccparams = []
     convertedccparams = []
     nonhivdalys = [0.0]
-    keys = ['ccparams','convertedccparams','nonhivdalys','effects']
+    keys = ['ccparams','convertedccparams','nonhivdalys','effects','ccplot']
     for program in programs.keys():
         programs[program] = dict(zip(keys,[ccparams, convertedccparams, nonhivdalys, programs[program]]))
     

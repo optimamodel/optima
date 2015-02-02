@@ -1,8 +1,7 @@
 """
-RuN_OPTIMA
+RUN_OPTIMA
 
-While optima.py is a demonstration of everything Optima can do, this is used to
-test specific features.
+Basic run.
 
 Version: 2015feb01 by cliffk
 """
