@@ -177,12 +177,11 @@ define(['./module', 'underscore'], function (module, _) {
      * Generates ready to plot graph for a cost coverage.
      */
     var prepareCostCoverageGraph = function (data) {
-      console.log("cost-coverage data", data);
       var graph = {
-        options: getLineScatterOptions({ 
+        options: getLineScatterOptions({
           linesStyle: ['__color-blue-4', '__color-black __dashed', '__color-black __dashed'],
-          hideTitle: true 
-        }, 
+          hideTitle: true
+        },
         data.xlabel, data.ylabel),
         data: {
           lines: [],

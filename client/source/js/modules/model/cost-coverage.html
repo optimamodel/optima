@@ -69,8 +69,8 @@
               </p>
               <p>
                 3. [Optional] Specify scale-up parameters:
-                <input type="number" name="scaleUpParameter" min="0" max="0.9" step="0.1" class="txbox __inline __xl" placeholder="e.g.{{defaultScaleUpParameter}}"  ng-model="scaleUpParameter" ng-change="updateCurves()">
-                <error-messages for="scaleUpParameter" rules="{min:0, max:0.9}"></error-messages>
+                <input type="number" name="scaleUpParameter" min="0" max="0.999999999999" class="txbox __inline __xl" placeholder="e.g.{{defaultScaleUpParameter}}"  ng-model="scaleUpParameter" ng-change="updateCurves()">
+                <error-messages for="scaleUpParameter" rules="{min:0, max:0.999999999999}"></error-messages>
               </p>
               <p>
                 4. [Optional] Full coverage would avert
@@ -79,8 +79,8 @@
                 <error-messages for="nonHivDalys" rules="{min:0}"></error-messages>
               <p>
                 5. [Optional] Specify the maximum funding (for plotting only):
-                <input type="number" name="xAxisMaximum" min="1" ng-required="false" more-than="knownFundingValue" class="txbox __inline __xl" placeholder="e.g.{{defaultXAxisMaximum}}"  ng-model="xAxisMaximum" ng-change="updateCurves()">
-                <error-messages for="xAxisMaximum" rules="{min:1, moreThan:'Known Funding Value'}"></error-messages>
+                <input type="number" name="xAxisMaximum" min="1" ng-required="false" class="txbox __inline __xl" placeholder="e.g.{{defaultXAxisMaximum}}"  ng-model="xAxisMaximum" ng-change="updateCurves()">
+                <error-messages for="xAxisMaximum" rules="{min:1}"></error-messages>
               </p>
               <p>
                 6. [Optional] Display program cost data in
@@ -90,15 +90,15 @@
                   placeholder="e.g.{{projectInfo.dataEnd}}"
                   type="number"
                   ng-required="false"
-                  ng-min="{{projectInfo.dataStart}}"
-                  ng-max="{{projectInfo.dataEnd}}"
+                  ng-min="projectInfo.dataStart"
+                  ng-max="projectInfo.dataEnd"
                   ng-model="displayYear"
                   ng-change="updateCurves()"> prices
                 <error-custom-messages
                   for="displayYear"
                   rules="{
-                    min: 'The year entered cannot be before the project start date.',
-                    max: 'The year entered cannot be after the project end date.'
+                    ngMin: 'The year entered cannot be before the project start date.',
+                    ngMax: 'The year entered cannot be after the project end date.'
                   }">
                 </error-custom-messages>
               </p>
@@ -130,16 +130,16 @@
             <h3>Options to adjust curves:</h3>
             <p>
               1. Behavior/outcome without this program ranges between
-              <input type="number" name="withoutProgramRangeStart" step="0.01" ng-required="true" ng-change="updateCurve($index,AdjustmentForm)" class="txbox __inline" ng-model="coParams[$index][0]" less-than="coParams[$index][1]">
+              <input type="number" name="withoutProgramRangeStart" step="0.01" ng-required="true" ng-change="updateCurve($index,AdjustmentForm)" class="txbox __inline" ng-model="coParams[$index][0]" less-than="coParams[$index][1]">%
               and
-              <input type="number" name="withoutProgramRangeEnd" step="0.01" ng-required="true" ng-change="updateCurve($index,AdjustmentForm)" class="txbox __inline" ng-model="coParams[$index][1]" more-than="coParams[$index][0]">
+              <input type="number" name="withoutProgramRangeEnd" step="0.01" ng-required="true" ng-change="updateCurve($index,AdjustmentForm)" class="txbox __inline" ng-model="coParams[$index][1]" more-than="coParams[$index][0]">%
               <span ng-show="AdjustmentForm.withoutProgramRangeStart.$error.lessThan || AdjustmentForm.withoutProgramRangeEnd.$error.moreThan" class="error-hint">The first parameter must be lower than the second one.</span>
             </p>
             <p>
               2. Behavior/outcome under full coverage of this program ranges between
-              <input type="number" name="fullCoverageRangeStart" step="0.01" ng-required="true" ng-change="updateCurve($index,AdjustmentForm)" class="txbox __inline" ng-model="coParams[$index][2]" less-than="coParams[$index][3]">
+              <input type="number" name="fullCoverageRangeStart" step="0.01" ng-required="true" ng-change="updateCurve($index,AdjustmentForm)" class="txbox __inline" ng-model="coParams[$index][2]" less-than="coParams[$index][3]">%
               and
-              <input type="number" name="fullCoverageRangeEnd" step="0.01" ng-required="true" ng-change="updateCurve($index,AdjustmentForm)" class="txbox __inline" ng-model="coParams[$index][3]" more-than="coParams[$index][2]">
+              <input type="number" name="fullCoverageRangeEnd" step="0.01" ng-required="true" ng-change="updateCurve($index,AdjustmentForm)" class="txbox __inline" ng-model="coParams[$index][3]" more-than="coParams[$index][2]">%
               <span ng-show="AdjustmentForm.fullCoverageRangeStart.$error.lessThan || AdjustmentForm.fullCoverageRangeEnd.$error.moreThan" class="error-hint">The first parameter must be lower than the second one.</span>
             </p>
           </form>
