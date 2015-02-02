@@ -41,7 +41,7 @@ def gatheruncerdata(D, R, annual=True, verbose=2):
         indices = range(len(origtvec))
     
     for key in epititles.keys():
-        percent = 100 if key not in ['prev','force'] else 1 # Whether to multiple results by 100
+        percent = 100 if key in ['prev','force'] else 1 # Whether to multiple results by 100
         
         uncer[key] = struct()
         uncer[key].pops = [struct() for p in range(D.G.npops)]
@@ -199,7 +199,7 @@ def gathermultidata(D, Rarr, annual=True, verbose=2):
         indices = range(len(origtvec))
     
     for key in epititles.keys():
-        percent = 100 if key not in ['prev','force'] else 1 # Whether to multiple results by 100
+        percent = 100 if key in ['prev','force'] else 1 # Whether to multiple results by 100
         multi[key] = struct()
         multi[key].pops = [struct() for p in range(D.G.npops)]
         for p in range(D.G.npops):

@@ -18,7 +18,7 @@ def setoptions(opt=None, **kwargs):
         opt.dt = 0.1 # Timestep
         opt.nsims = kwargs.get('nsims', 5) # Number of simulations to store for purposes of uncertainty
         opt.quantiles = [0.5, 0.25, 0.75] # Quantiles to return
-        opt.growth = 0.01 # Default population growth rate
+        opt.growth = 0.0 # Default population growth rate
         opt.disc = 0.05 # Economic discounting rate
         opt.turnofftrans = float(1e9) # Turn off transmissions, set to trivial as default - a negative value will break out of the main model loop, whilst a postive value will continue to run the model but not calculate new infections
     
