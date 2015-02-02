@@ -275,7 +275,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         
         ## Define options structure
         options = struct()
-        options.years = arange(objectives.year.start,objectives.year.end+1) # Number of time-varying parameters
+        
         options.nprogs = nprogs # Number of programs
         options.D = deepcopy(D) # Main data structure
         options.outcomekeys = outcomekeys # Names of outcomes, e.g. 'inci'
@@ -283,9 +283,16 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         options.outindices = outindices # Indices for the outcome to be evaluated over
         options.parindices = parindices # Indices for the parameters to be updated on
         options.normalizations = normalizations # Whether to normalize a parameter
-        options.totalspends = objectives.outcome.variable # Total budgets
+        
         options.randseed = None # Death is enough randomness on its own
         options.fundingchanges = fundingchanges # Constraints-based funding changes
+        
+        options.years = []
+        options.totalspends = []
+        for key in objectives.outcome.variable.keys(): # Stored as a list of years:
+            options.years.append(float(key)) # Convert from string to number
+            options.totalspends.append(objectives.outcome.variable[key]) # Append this year
+        
         
         
         ## Define optimization parameters
