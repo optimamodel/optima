@@ -24,8 +24,11 @@ def check_project_name(api_call):
             request.project_name = project_name
             request.project_id = project_id
             return api_call(*args, **kwargs)
-        except:
+        except Exception, err:
+            var = traceback.format_exc()
+            current_app.logger.error("Exception during request %s: %s" % (request, var))
             reply['reason'] = 'No project is open'
+            reply['exception'] = var
             return jsonify(reply)
     return _check_project_name
 
@@ -74,6 +77,22 @@ def loaddir(app):
     if not loaddir:
         loaddir = DATADIR
     return loaddir
+
+def send_as_json_file(data):
+    import json
+    from flask import Response
+    loaddir =  upload_dir_user(TEMPLATEDIR)
+    if not loaddir:
+        loaddir = TEMPLATEDIR
+    filename = 'data.json'
+    server_filename = os.path.join(loaddir, filename)
+    print "server_filename", server_filename
+    with open(server_filename, 'wb') as filedata:
+        json.dump(data, filedata)
+    response = helpers.send_from_directory(loaddir, filename)
+#    response.headers.add('content-length', str(os.path.getsize(server_filename)))
+    return response
+
 
 def project_exists(id):
     cu = current_user

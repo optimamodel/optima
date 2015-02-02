@@ -1,4 +1,4 @@
-define(['./module', 'angular'], function (module, angular) {
+define(['./module', 'angular', 'jquery'], function (module, angular, $) {
   'use strict';
 
   module.controller('ModelCalibrationController', function ($scope, $http, $interval,
@@ -49,8 +49,6 @@ define(['./module', 'angular'], function (module, angular) {
       }
     };
 
-    $scope.G = parameters.G;
-
     $scope.types = graphTypeFactory.types;
     // reset graph types every time you come to this page
     angular.extend($scope.types, angular.copy(CONFIG.GRAPH_TYPES));
@@ -67,6 +65,7 @@ define(['./module', 'angular'], function (module, angular) {
     $scope.simulationOptions = {'timelimit':60};
     $scope.charts = [];
     $scope.hasStackedCharts = false;
+    $scope.hasCharts = false;
 
     var defaultChartOptions = {
       title: 'Title',
@@ -265,6 +264,7 @@ define(['./module', 'angular'], function (module, angular) {
         graphTypeFactory.enableAnnualCostOptions($scope.types, data.graph);
 
         $scope.charts = prepareCharts(data.graph);
+        $scope.hasCharts = ($scope.charts.length>0);
         $scope.parameters.cache.response = data;
         $scope.canDoFitting = true;
         if (data.F){
@@ -283,6 +283,7 @@ define(['./module', 'angular'], function (module, angular) {
       $http.post('/api/model/view', $scope.simulationOptions)
         .success(updateCharts);
     };
+
 
     if($scope.needData === false){
       $scope.simulate();
@@ -397,10 +398,6 @@ define(['./module', 'angular'], function (module, angular) {
     $scope.$watch('types', function () {
       updateCharts($scope.parameters.cache.response);
     }, true);
-
-    $scope.reportDataEndError = function() {
-      return "End year must be more than "+ $scope.G.dataend + ".";
-    };
 
   });
 });
