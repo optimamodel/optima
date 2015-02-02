@@ -9,9 +9,9 @@ Version: 2015feb01 by cliffk
 print('WELCOME TO OPTIMA')
 
 testconstant = False
-testmultibudget = False
+testmultibudget = True
 testtimevarying = False
-testmultiyear = True
+testmultiyear = False
 testconstraints = False
 
 
