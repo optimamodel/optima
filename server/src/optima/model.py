@@ -10,7 +10,7 @@ from sim.makeccocs import makecco, plotallcurves #, default_effectname, default_
 from utils import load_model, save_model, save_working_model_as_default, revert_working_model_to_default, project_exists, pick_params, check_project_name, for_fe
 from utils import report_exception
 from flask.ext.login import login_required, current_user
-from flask import current_app
+from flask import current_app, make_response
 from signal import *
 from dbconn import db
 from sim.autofit import autofit
@@ -39,7 +39,6 @@ def add_calibration_parameters(D_dict, result = None):
             entry['data'] = getnested(M, keys, safe = True)
             M_out.append(entry)
     result['M']=M_out
-    result['G'] = D_dict.get('G', {})
     return result
 
 
@@ -289,6 +288,7 @@ def setModelGroup(key):
 @model.route('/view', methods=['POST'])
 @login_required
 @check_project_name
+@report_exception()
 def doRunSimulation():
     """
     Starts simulation for the given project and given date range.
@@ -297,7 +297,11 @@ def doRunSimulation():
     (?) #FIXME find out how to use it
 
     """
+    import os
+    from utils import send_as_json_file
+    print("request %s" % request.data)
     data = json.loads(request.data)
+    print ("data", data)
 
     #expects json: {"startyear":year,"endyear":year} and gets project_name from session
     args = {}
@@ -306,25 +310,21 @@ def doRunSimulation():
     result = {'graph': D_dict.get('plot',{}).get('E',{})}
     result = add_calibration_parameters(D_dict, result)
     if not result:
-        try:
-            args['D'] = D
-            startyear = data.get("startyear")
-            if startyear:
-                args["startyear"] = int(startyear)
-            endyear = data.get("endyear")
-            if endyear:
-                args["endyear"] = int(endyear)
-            args["dosave"] = False
-            D = runsimulation(**args)
-            D_dict = D.toDict()
-            save_model(request.project_id, D_dict)
-            result = {'graph':D_dict.get('plot',{}).get('E',{})}
-            result = add_calibration_parameters(D_dict, result)
-            return jsonify(result)
-        except Exception, err:
-            var = traceback.format_exc()
-            return jsonify({"status":"NOK", "exception":var})
-    return jsonify(result)
+        args['D'] = D
+        startyear = data.get("startyear")
+        if startyear:
+            args["startyear"] = int(startyear)
+        endyear = data.get("endyear")
+        if endyear:
+            args["endyear"] = int(endyear)
+        args["dosave"] = False
+        D = runsimulation(**args)
+        D_dict = D.toDict()
+        save_model(request.project_id, D_dict)
+        result = {'graph':D_dict.get('plot',{}).get('E',{})}
+        result = add_calibration_parameters(D_dict, result)
+    print ("result", len(result))
+    return send_as_json_file(result)
 
 @model.route('/costcoverage', methods=['POST'])
 @login_required
