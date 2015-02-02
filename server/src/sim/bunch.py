@@ -83,7 +83,7 @@ class Bunch(dict):
         
         See unbunchify/Bunch.toDict, bunchify/Bunch.fromDict for notes about conversion.
     """
-    
+
     def __contains__(self, k):
         """ >>> b = Bunch(ponies='are pretty!')
             >>> 'ponies' in b

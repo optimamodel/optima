@@ -67,7 +67,7 @@ def ballsd(function, x, options = None, stepsize = 0.1, sinc = 2, sdec = 2, pinc
     from copy import deepcopy # For arrays, even y = x[:] doesn't copy properly
     from time import time, sleep
     
-    def sanitize(userinput):
+    def consistentshape(userinput):
         """
         Make sure inputs have the right shape and data type.
         """
@@ -78,15 +78,15 @@ def ballsd(function, x, options = None, stepsize = 0.1, sinc = 2, sdec = 2, pinc
     
     ## Handle inputs and set defaults
     nparams = size(x); # Number of parameters
-    x, origshape = sanitize(x) # Turn it into a vector but keep the original shape (not necessarily class, though)
-    p,tmp = ones(2*nparams),0 if pinitial is None else sanitize(pinitial)  # Set initial parameter selection probabilities -- uniform by default
+    x, origshape = consistentshape(x) # Turn it into a vector but keep the original shape (not necessarily class, though)
+    p,tmp = ones(2*nparams),0 if pinitial is None else consistentshape(pinitial)  # Set initial parameter selection probabilities -- uniform by default
     if absinitial is not None:
-        s1,tmp = sanitize([abs(i) for i in absinitial])
+        s1,tmp = consistentshape([abs(i) for i in absinitial])
     else:
-        s1,tmp = abs(stepsize*x),0 if sinitial is None else sanitize([abs(i) for i in sinitial]) # Set initial parameter selection probabilities -- uniform by default
+        s1,tmp = abs(stepsize*x),0 if sinitial is None else consistentshape([abs(i) for i in sinitial]) # Set initial parameter selection probabilities -- uniform by default
     s1 = hstack((s1,s1)) # need to duplicate since two for each parameter
-    if xmax is not None: xmax,tmp = sanitize(xmax)
-    if xmin is not None: xmin,tmp = sanitize(xmin)
+    if xmax is not None: xmax,tmp = consistentshape(xmax)
+    if xmin is not None: xmin,tmp = consistentshape(xmin)
     MaxFunEvals = 1000*nparams if MaxFunEvals == None else MaxFunEvals # Maximum number of function evaluations
     TolX = 1e-6*mean(x) if TolX == None else TolX  # Minimum change in parameters
     StallIterLimit = min(StallIterLimit, maxarraysize); # Don't by default let users create arrays larger than this -- slow and pointless
