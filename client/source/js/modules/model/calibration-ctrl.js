@@ -1,4 +1,4 @@
-define(['./module', 'angular', 'jquery'], function (module, angular, $) {
+define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ModelCalibrationController', function ($scope, $http, $interval,
@@ -247,12 +247,16 @@ define(['./module', 'angular', 'jquery'], function (module, angular, $) {
         // costcum = cumulative costs
         if (type.annual) {
           var annualData = response.costann[type.id][$scope.types.annualCost];
-          if(annualData && annualData.legend) charts.push(generateFinancialChart(annualData));
+          if(annualData && annualData.legend) {
+            charts.push(generateFinancialChart(annualData));
+          }
         }
 
         if (type.cumulative) {
           var cumulativeData = response.costcum[type.id];
-          if (cumulativeData) charts.push(generateFinancialChart(cumulativeData));
+          if (cumulativeData) {
+            charts.push(generateFinancialChart(cumulativeData));
+          }
         }
       });
 
