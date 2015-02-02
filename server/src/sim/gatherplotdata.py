@@ -96,6 +96,8 @@ def gatheruncerdata(D, R, annual=True, verbose=2):
 
         if size(epidata[0])==1 and ndim(epidata)==1: # It's not by population
             uncer[key].ydata = (array(epidata)*percent).tolist()
+            if len(uncer[key].ydata) == 1:
+                thispopdata = nan+zeros(ndatayears) # If it's an assumption, just set with nans
         elif size(epidata,axis=0)==D.G.npops: # It's by population
             for p in range(D.G.npops):
                 thispopdata = epidata[p]
