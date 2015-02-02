@@ -79,7 +79,7 @@ def gatheruncerdata(D, R, annual=True, verbose=2):
             uncer.inci.ydata = zeros(ndatayears).tolist()
         if key=='force':
             epidata = nan+zeros(ndatayears) # No data
-            uncer.plhiv.ydata = zeros(ndatayears).tolist()
+            uncer.force.ydata = zeros(ndatayears).tolist()
         if key=='death':
             epidata = D.data.opt.death[0]
             uncer.death.ydata = zeros(ndatayears).tolist()
