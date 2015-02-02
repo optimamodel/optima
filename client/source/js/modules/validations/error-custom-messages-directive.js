@@ -15,16 +15,16 @@ define(['angular', 'underscore'], function (angular, _) {
       link: function ($scope, $elem, $attrs, form) {
         /**
          * Returns the error messages in invalid state or an empty array if none is found.
-         */        
+         */
         $scope.errorMessages = function () {
           if (form && form[$scope.for].$dirty) {
-            return _($scope.rules).select(function (eachRule) { 
+            return _($scope.rules).select(function (eachRule, key) {
               // Has the rule and the rule is denoucing invalid state?
-              return _(form[$scope.for].$error).has(eachRule) && form[$scope.for].$error[eachRule] 
-              });
+              return _(form[$scope.for].$error).has(key) && form[$scope.for].$error[key];
+            });
           }
         };
       }
-    }
+    };
   });
 });

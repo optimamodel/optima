@@ -13,11 +13,12 @@ epiylabels = {'prev':'HIV prevalence (%)', 'plhiv':'Number of PLHIV', 'inci':'Ne
 costtitles = {'costcum':'Cumulative HIV-related financial commitments'}
 costylabels = {}
 
-def gatheruncerdata(D, R, verbose=2):
+def gatheruncerdata(D, R, annual=True, verbose=2):
     """ Gather standard results into a form suitable for plotting with uncertainties. """
-    from numpy import zeros, nan, size, array, asarray
+    from numpy import zeros, nan, size, ndim, array, asarray
     from bunch import Bunch as struct
     from printv import printv
+    from copy import deepcopy
     printv('Gathering epidemiology results...', 3, verbose)
     
     uncer = struct()
@@ -29,6 +30,15 @@ def gatheruncerdata(D, R, verbose=2):
     uncer.legend = ('Model', 'Data')
     uncer.xdata = D.data.epiyears
     ndatayears = len(uncer.xdata)
+    
+    # Downsample to annual
+    if annual:
+        origtvec = deepcopy(uncer.tvec)
+        dt = origtvec[1]-origtvec[0]
+        indices = range(0, len(origtvec), int(round(1/dt)))
+        uncer.tvec = [origtvec[i] for i in indices]
+    else:
+        indices = range(len(origtvec))
     
     for key in epititles.keys():
         percent = 100 if key=='prev' else 1 # Whether to multiple results by 100
@@ -43,17 +53,17 @@ def gatheruncerdata(D, R, verbose=2):
             uncer[key].popstacked.title = epititles[key]
             uncer[key].popstacked.ylabel = epiylabels[key]
         for p in range(D.G.npops):
-            uncer[key].pops[p].best = (R[key].pops[0][p,:]*percent).tolist()
-            uncer[key].pops[p].low = (R[key].pops[1][p,:]*percent).tolist()
-            uncer[key].pops[p].high = (R[key].pops[2][p,:]*percent).tolist()
+            uncer[key].pops[p].best = (R[key].pops[0][p,:]*percent)[indices].tolist()
+            uncer[key].pops[p].low = (R[key].pops[1][p,:]*percent)[indices].tolist()
+            uncer[key].pops[p].high = (R[key].pops[2][p,:]*percent)[indices].tolist()
             uncer[key].pops[p].title = epititles[key] + ' - ' + D.G.meta.pops.short[p]
             uncer[key].pops[p].ylabel = epiylabels[key]
             if key!='prev':
                 uncer[key].popstacked.pops.append(uncer[key].pops[p].best)
                 uncer[key].popstacked.legend.append(D.G.meta.pops.short[p])
-        uncer[key].tot.best = (R[key].tot[0]*percent).tolist()
-        uncer[key].tot.low = (R[key].tot[1]*percent).tolist()
-        uncer[key].tot.high = (R[key].tot[2]*percent).tolist()
+        uncer[key].tot.best = (R[key].tot[0]*percent)[indices].tolist()
+        uncer[key].tot.low = (R[key].tot[1]*percent)[indices].tolist()
+        uncer[key].tot.high = (R[key].tot[2]*percent)[indices].tolist()
         uncer[key].tot.title = epititles[key] + ' - Overall'
         uncer[key].tot.ylabel = epiylabels[key]
         uncer[key].xlabel = 'Years'
@@ -84,9 +94,9 @@ def gatheruncerdata(D, R, verbose=2):
             uncer.tx2.ydata = zeros(ndatayears).tolist()
 
 
-        if size(epidata[0])==1: # TODO: make this less shitty, easier way of checking what shape the data is I'm sure
+        if size(epidata[0])==1 and ndim(epidata)==1: # It's not by population
             uncer[key].ydata = (array(epidata)*percent).tolist()
-        elif size(epidata)==D.G.npops:
+        elif size(epidata,axis=0)==D.G.npops: # It's by population
             for p in range(D.G.npops):
                 thispopdata = epidata[p]
                 if len(thispopdata) == 1: 
@@ -96,13 +106,7 @@ def gatheruncerdata(D, R, verbose=2):
                 uncer[key].ydata[p] = (asarray(thispopdata)*percent).tolist() # Stupid, but make sure it's an array, then make sure it's a list
         else:
             raise Exception("Can't figure out size of epidata; doesn't seem to be a vector or a matrix")
-
-        for p in range(D.G.npops):
-            uncer[key].pops[p].best = (R[key].pops[0][p,:]*percent).tolist()
-            uncer[key].pops[p].low = (R[key].pops[1][p,:]*percent).tolist()
-            uncer[key].pops[p].high = (R[key].pops[2][p,:]*percent).tolist()
-            uncer[key].pops[p].title = epititles[key] + ' - ' + D.G.meta.pops.short[p]
-            uncer[key].pops[p].ylabel = epiylabels[key]
+    
     
     # Financial outputs
     for key in ['costann', 'costcum']:
@@ -129,10 +133,10 @@ def gatheruncerdata(D, R, verbose=2):
             uncer[key][ac] = struct()
             if key=='costcum':
                 # Individual line graphs with uncertainty
-                uncer[key][ac].best = R[key][ac][0].tolist()
-                uncer[key][ac].low = R[key][ac][1].tolist()
-                uncer[key][ac].high = R[key][ac][2].tolist()
-                uncer[key][ac].xdata = R['costshared'][origkey][ac]['xlinedata'].tolist()
+                uncer[key][ac].best = R[key][ac][0][indices].tolist()
+                uncer[key][ac].low = R[key][ac][1][indices].tolist()
+                uncer[key][ac].high = R[key][ac][2][indices].tolist()
+                uncer[key][ac].xdata = R['costshared'][origkey][ac]['xlinedata'][indices].tolist()
                 uncer[key][ac].title = R['costshared'][origkey][ac]['title']
                 uncer[key][ac].xlabel = R['costshared'][origkey][ac]['xlabel']
                 uncer[key][ac].ylabel = R['costshared'][origkey][ac]['ylabel']
@@ -145,10 +149,10 @@ def gatheruncerdata(D, R, verbose=2):
                     uncer[key][ac][yscale] = struct()
                     if 'ylinedata' in R['costshared'][origkey][ac][yscale]:
                         # Individual line graphs with uncertainty
-                        uncer[key][ac][yscale].best = R[key][ac][yscale][0].tolist()
-                        uncer[key][ac][yscale].low = R[key][ac][yscale][1].tolist()
-                        uncer[key][ac][yscale].high = R[key][ac][yscale][2].tolist()
-                        uncer[key][ac][yscale].xdata = R['costshared'][origkey][ac][yscale]['xlinedata'].tolist()
+                        uncer[key][ac][yscale].best = R[key][ac][yscale][0][indices].tolist()
+                        uncer[key][ac][yscale].low = R[key][ac][yscale][1][indices].tolist()
+                        uncer[key][ac][yscale].high = R[key][ac][yscale][2][indices].tolist()
+                        uncer[key][ac][yscale].xdata = R['costshared'][origkey][ac][yscale]['xlinedata'][indices].tolist()
                         uncer[key][ac][yscale].title = R['costshared'][origkey][ac][yscale]['title']
                         uncer[key][ac][yscale].xlabel = R['costshared'][origkey][ac][yscale]['xlabel']
                         uncer[key][ac][yscale].ylabel = R['costshared'][origkey][ac][yscale]['ylabel']
@@ -164,10 +168,11 @@ def gatheruncerdata(D, R, verbose=2):
 
 
 
-def gathermultidata(D, Rarr, verbose=2):
+def gathermultidata(D, Rarr, annual=True, verbose=2):
     """ Gather multi-simulation results (scenarios and optimizations) into a form suitable for plotting. """
     from bunch import Bunch as struct
     from printv import printv
+    from copy import deepcopy
     printv('Gathering multi-simulation results...', 3, verbose)
     
     
@@ -176,6 +181,15 @@ def gathermultidata(D, Rarr, verbose=2):
     multi.nsims = len(Rarr) # Number of simulations
     multi.tvec = Rarr[0].R.tvec.tolist() # Copy time vector
     multi.poplabels = D.G.meta.pops.long
+    
+    # Downsample to annual
+    if annual:
+        origtvec = deepcopy(multi.tvec)
+        dt = origtvec[1]-origtvec[0]
+        indices = range(0, len(origtvec), int(round(1/dt)))
+        multi.tvec = [origtvec[i] for i in indices]
+    else:
+        indices = range(len(origtvec))
     
     for key in epititles.keys():
         percent = 100 if key=='prev' else 1 # Whether to multiple results by 100
@@ -187,7 +201,7 @@ def gathermultidata(D, Rarr, verbose=2):
             multi[key].pops[p].title = epititles[key] + ' - ' + D.G.meta.pops.short[p]
             multi[key].pops[p].ylabel = epiylabels[key]
             for sim in range(multi.nsims):
-                thisdata = (Rarr[sim].R[key].pops[0][p,:]*percent).tolist()
+                thisdata = (Rarr[sim].R[key].pops[0][p,:]*percent)[indices].tolist()
                 multi[key].pops[p].data.append(thisdata)
                 multi[key].pops[p].legend.append(Rarr[sim].label)
         multi[key].tot = struct()
@@ -197,7 +211,7 @@ def gathermultidata(D, Rarr, verbose=2):
         multi[key].tot.ylabel = epiylabels[key]
         multi[key].xlabel = 'Years'
         for sim in range(multi.nsims):
-            thisdata =(Rarr[sim].R[key].tot[0]*percent).tolist()
+            thisdata =(Rarr[sim].R[key].tot[0]*percent)[indices].tolist()
             multi[key].tot.data.append(thisdata)
             multi[key].tot.legend.append(Rarr[sim].label) # Add legends
     
@@ -211,10 +225,10 @@ def gathermultidata(D, Rarr, verbose=2):
                 multi[key][ac].data = []
                 multi[key][ac].legend = []
                 for sim in range(multi.nsims):
-                    thisdata = Rarr[sim].R[key][ac][0].tolist()
+                    thisdata = Rarr[sim].R[key][ac][0][indices].tolist()
                     multi[key][ac].data.append(thisdata)
                     multi[key][ac].legend.append(Rarr[sim].label) # Add legends
-                    multi[key][ac].xdata  = Rarr[sim].R['costshared'][origkey][ac]['xlinedata'].tolist()
+                    multi[key][ac].xdata  = Rarr[sim].R['costshared'][origkey][ac]['xlinedata'][indices].tolist()
                     multi[key][ac].title  = Rarr[sim].R['costshared'][origkey][ac]['title']
                     multi[key][ac].xlabel = Rarr[sim].R['costshared'][origkey][ac]['xlabel']
                     multi[key][ac].ylabel = Rarr[sim].R['costshared'][origkey][ac]['ylabel']
@@ -225,10 +239,10 @@ def gathermultidata(D, Rarr, verbose=2):
                     multi[key][ac][yscale].legend = []
                     if 'ylinedata' in Rarr[sim].R['costshared'][origkey][ac][yscale]:
                         for sim in range(multi.nsims):
-                           thisdata = Rarr[sim].R[key][ac][yscale][0].tolist()
+                           thisdata = Rarr[sim].R[key][ac][yscale][0][indices].tolist()
                            multi[key][ac][yscale].data.append(thisdata)
                            multi[key][ac][yscale].legend.append(Rarr[sim].label) # Add legends
-                           multi[key][ac][yscale].xdata = Rarr[sim].R['costshared'][origkey][ac][yscale]['xlinedata'].tolist()
+                           multi[key][ac][yscale].xdata = Rarr[sim].R['costshared'][origkey][ac][yscale]['xlinedata'][indices].tolist()
                            multi[key][ac][yscale].title = Rarr[sim].R['costshared'][origkey][ac][yscale]['title']
                            multi[key][ac][yscale].xlabel = Rarr[sim].R['costshared'][origkey][ac][yscale]['xlabel']
                            multi[key][ac][yscale].ylabel = Rarr[sim].R['costshared'][origkey][ac][yscale]['ylabel']                

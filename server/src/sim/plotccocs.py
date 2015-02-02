@@ -28,7 +28,9 @@ def plotcc(D, progname=default_progname, ccparams=default_ccparams, ccplot=defau
     figure()
     hold(True)
     if 'xlinedata' in plotdata.keys():
-        plot(plotdata['xlinedata'], plotdata['ylinedata'], 'k-', lw = 2)
+        plot(plotdata['xlinedata'], plotdata['ylinedata'][0], 'k--', lw = 2)
+        plot(plotdata['xlinedata'], plotdata['ylinedata'][1], 'b-', lw = 2)
+        plot(plotdata['xlinedata'], plotdata['ylinedata'][2], 'k--', lw = 2)
     plot(plotdata['xscatterdata'], plotdata['yscatterdata'], 'ro')
     title(plotdata['title'])
     xlabel(plotdata['xlabel'])
@@ -83,7 +85,7 @@ def plotcco(D, progname=default_progname, effect=default_effect, ccparams=defaul
     ylabel(plotdata['ylabel'] )
     xlim([plotdata['xlowerlim'],plotdata['xupperlim']])
     ylim([plotdata['ylowerlim'],plotdata['yupperlim']])
-    
+
 ###############################################################################
 def plotprogramcco(D, progname=default_progname, ccparams=default_ccparams, ccplot=default_ccplot, coparams=default_coparams):
     '''

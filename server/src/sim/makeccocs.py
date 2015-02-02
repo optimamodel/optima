@@ -17,17 +17,17 @@ from printv import printv
 from parameters import input_parameter_name
 
 ## Set defaults for testing makeccocs
-default_progname = 'NSP'
-default_ccparams = []#[0.9, 0.2, 7000000.0, None, None] #
-default_ccplot = []#[None, None, 0]
-default_coparams = []#[0.3, 0.5, 0.7, 0.9] 
+default_progname = 'FSW programs'
+default_ccparams = []#[0.9, 0.5, 0.6, 4000000.0, None, None] #
+default_ccplot = [1000000, None, 0]
+default_coparams = [0.3, 0.5, 0.7, 0.9] 
 default_effect = [['sex', 'condomcas'], [u'MSM']] # D.programs[default_progname]['effects'][0] 
 default_artelig = range(6,31)
 coverage_params = ['numost','numpmtct','numfirstline','numsecondline']
 
-## Set defaults for use in getcurrentbudget
-default_convertedccparams = [0.8, 4.86477537263828e-06]
-default_convertedccoparams = [0.8, 4.86477537263828e-06, 0.4, 0.8, 0]
+## Set defaults for use in getcurrentbudget. The parameters are stored as [median, lower bound, upperbound]
+default_convertedccparams = [[0.8, 4.9e-06], [0.8, 4.7e-06], [0.8, 5.1e-06]]
+default_convertedccoparams = [[0.8, 4.9e-06, 0.4, 0.8, 0], [0.8, 4.7e-06, 5.1e-06, 0.4, 0.8, 0], [0.8, 4.9e-06, 0.4, 0.8, 0]]
 
 ######################################################################
 def makecc(D=None, progname=default_progname, ccparams=default_ccparams, ccplot=default_ccplot, artelig=default_artelig, verbose=2, nxpts = 1000):
@@ -38,10 +38,11 @@ def makecc(D=None, progname=default_progname, ccparams=default_ccparams, ccplot=
     progname: string. Needs to be one of the keys of D.programs
     ccparams: list. Contains parameters for the cost-coverage curves, obtained from the GUI. Can be empty.
             ccparams[0] = the saturation value
-            ccparams[1] = the 'known' coverage level
-            ccparams[2] = the 'known' funding requirements to achieve ccparams(2)
-            ccparams[3] = scale-up rate
-            ccparams[4] = non-hiv-dalys averted
+            ccparams[1] = the lower bound of the 'known' coverage level
+            ccparams[2] = the upper bound of the 'known' coverage level
+            ccparams[3] = the 'known' funding requirements to achieve ccparams(2)
+            ccparams[4] = scale-up rate
+            ccparams[5] = non-hiv-dalys averted
     ccplot: list. Contains options for plotting the cost-coverage curves, obtained from the GUI. Can be empty.
             ccplot[0] = upper limit for x axis
             ccplot[1] = None if cost data is to be displayed in current prices
@@ -111,10 +112,16 @@ def makecc(D=None, progname=default_progname, ccparams=default_ccparams, ccplot=
         
         # Create curve
         xvalscc = linspace(0,xupperlim,nxpts) # take nxpts points between 0 and user-specified max
-        if isinstance(ccparams[3], float):
-            yvalscc = cceqn(xvalscc, ccplottingparams)
+        if isinstance(ccparams[4], float):
+            yvalsccl = cceqn(xvalscc, ccplottingparams[0])
+            yvalsccm = cceqn(xvalscc, ccplottingparams[1])
+            yvalsccu = cceqn(xvalscc, ccplottingparams[2])
+            yvalscc = [yvalsccl, yvalsccm, yvalsccu]
         else:
-            yvalscc = cc2eqn(xvalscc, ccplottingparams)
+            yvalsccl = cc2eqn(xvalscc, ccplottingparams[0])
+            yvalsccm = cc2eqn(xvalscc, ccplottingparams[1])
+            yvalsccu = cc2eqn(xvalscc, ccplottingparams[2])
+            yvalscc = [yvalsccl, yvalsccm, yvalsccu]
 
         # Populate output structure 
         plotdata['xlinedata'] = xvalscc
@@ -124,9 +131,9 @@ def makecc(D=None, progname=default_progname, ccparams=default_ccparams, ccplot=
         D.programs[progname]['ccparams'] = ccparams
         D.programs[progname]['ccplot'] = ccplot
         D.programs[progname]['convertedccparams'] = convertedccparams
-        if not isinstance(ccparams[4], float):
-            ccparams[4] = 0.0
-        D.programs[progname]['nonhivdalys'] = [ccparams[4]]
+        if not isinstance(ccparams[5], float):
+            ccparams[5] = 0.0
+        D.programs[progname]['nonhivdalys'] = [ccparams[5]]
 
     # Populate output structure with axis limits
     plotdata['xlowerlim'], plotdata['ylowerlim']  = 0.0, 0.0
@@ -135,7 +142,7 @@ def makecc(D=None, progname=default_progname, ccparams=default_ccparams, ccplot=
         plotdata['yupperlim']  = 1.0
     else:
         plotdata['yupperlim']  = max([x if ~isnan(x) else 0.0 for x in coverage])*1.5
-        if ccparams: plotdata['yupperlim']  = max(yvalscc[-1]*1.5,plotdata['yupperlim'])
+        if ccparams: plotdata['yupperlim']  = max(yvalscc[2][-1]*1.5,plotdata['yupperlim'])
 
     # Populate output structure with labels and titles
     plotdata['title'] = progname
@@ -154,10 +161,10 @@ def makeco(D, progname=default_progname, effect=default_effect, coparams=default
     progname: string, needs to be one of the keys of D.programs
     effect: list. 
     coparams: list. Contains parameters for the coverage-outcome curves, obtained from the GUI
-        coparams(0) = the lower bound for the outcome when coverage = 0
-        coparams(1) = the upper bound for the outcome when coverage = 0
-        coparams(2) = the lower bound for the outcome when coverage = 1
-        coparams(3) = the upper bound for the outcome when coverage = 1
+        coparams[0] = the lower bound for the outcome when coverage = 0
+        coparams[1] = the upper bound for the outcome when coverage = 0
+        coparams[2] = the lower bound for the outcome when coverage = 1
+        coparams[3] = the upper bound for the outcome when coverage = 1
 
     Output:
     plotdata, storeparams
@@ -195,14 +202,14 @@ def makeco(D, progname=default_progname, effect=default_effect, coparams=default
         # Populate output structure with axis limits
         plotdata['xlowerlim'], plotdata['ylowerlim']  = 0.0, 0.0
         if coveragelabel == 'Proportion covered':
-            plotdata['xupperlim'], plotdata['yupperlim']  = 1.0, 1.0
+            plotdata['xupperlim'], plotdata['yupperlim']  = 100.0, 100.0
         else:
             plotdata['xupperlim'], plotdata['yupperlim']  = max([j if ~isnan(j) else 0.0 for j in coverage])*1.5, max([j if ~isnan(j) else 0.0 for x in outcome])*1.5
 
         # Populate output structure with scatter data 
         coverage, outcome = getscatterdata(coverage, outcome)
-        plotdata['xscatterdata'] = coverage
-        plotdata['yscatterdata'] = outcome
+        plotdata['xscatterdata'] = [coverage[j]*100.0 for j in range(len(coverage))]
+        plotdata['yscatterdata'] = [outcome[j]*100.0 for j in range(len(outcome))]
            
         # Get inputs from GUI (#TODO simplify?)
         if coparams and len(coparams)>3:
@@ -222,23 +229,19 @@ def makeco(D, progname=default_progname, effect=default_effect, coparams=default
             if not len(coparams)==4:
                 raise Exception('Not all of the coverage-outcome parameters have been specified. Please enter the missing parameters to define the curve.')
             
-            # Generate sample of zero-coverage behaviour
+            # Generate and store converted parameters
             muz, stdevz, muf, stdevf = makecosampleparams(coparams, verbose=verbose)
-            zerosample, fullsample = makesamples(coparams, muz, stdevz, muf, stdevf, D.opt.nsims)
-
-            # Store parameters for access later
             convertedcoparams = [muz, stdevz, muf, stdevf]
-        
+
             # General set of coverage-outcome relationships
-            xvalsco = linspace(0,1,nxpts) # take nxpts points along the unit interval
+            xvalsco = linspace(0,100,nxpts) # take nxpts points along the unit interval
             ymin, ymax = linspace(coparams[0],coparams[2],nxpts), linspace(coparams[1],coparams[3],nxpts)
             
             # Populate output structure with coverage-outcome curves for plotting
-            # Store parameters and lines
             if len(effect) == 2: # There's no existing info here, append
                 effect.append(coparams)
                 effect.append(convertedcoparams)
-            else:
+            else: # There is existing info here, overwrite it
                 effect[2] = coparams
                 effect[3] = convertedcoparams
 
@@ -335,7 +338,7 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
             cpibaseyear = D.data.epiyears[-1]
 
         # Extract outcome data
-        outcome = D.data[effect[0][0]][effect[0][1]][popnumber]
+        outcome = D.data[effect[0][0]][parname][popnumber]
 
         # Flag to indicate whether we will adjust by population or not
         popadj = 0
@@ -351,39 +354,45 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
     
         # Get upper limit of x axis for plotting
         xupperlim = max([x if ~isnan(x) else 0.0 for x in totalcost])*1.5
-        if (ccplot and ccplot[0]): xupperlim = max(xupperlim, ccplot[0]/targetpopsize[-1]) if len(totalcost)>1 else max(xupperlim, ccplot[0]/mean(targetpopsize)) if (len(ccplot)==3 and ccplot[2]) else max(xupperlim, ccplot[0])
+        if (ccplot and ccplot[0]): xupperlim = ccplot[0] #max(xupperlim, ccplot[0]/targetpopsize[-1]) if len(totalcost)>1 else max(xupperlim, ccplot[0]/mean(targetpopsize)) if (len(ccplot)==3 and ccplot[2]) else max(xupperlim, ccplot[0])
 
         # Populate output structure with scatter data 
         totalcost, outcome = getscatterdata(totalcost, outcome)
         plotdata['xscatterdata'] = totalcost # X scatter data
-        plotdata['yscatterdata'] = outcome # Y scatter data
+        plotdata['yscatterdata'] = [outcome[j]*100.0 for j in range(len(outcome))] # Y scatter data
     
         # Do we have parameters for making curves?
         if (ccparams or D.programs[progname]['ccparams']) and (coparams or (len(effect)>2 and len(effect[2])>3)):
 
             if not ccparams: # Don't have new ccparams, get previously stored ones
                 ccparams = D.programs[progname]['ccparams']
-            costparam = ccparams[2]
+            costparam = ccparams[3]
             if popadj:
                 costparam = costparam/targetpopsize
                 costparam = mean(costparam) if len(coverage)==1 else [costparam[j] for j in range(len(coverage)) if ~isnan(coverage[j])][0]
             saturation = ccparams[0]
-            if isinstance(ccparams[3], float):
-                growthrate = exp(ccparams[3]*log(ccparams[0]/ccparams[1]-1)+log(ccparams[2]))
-                growthrateplot = exp(ccparams[3]*log(ccparams[0]/ccparams[1]-1)+log(costparam))
-                convertedccoparams = [saturation, growthrate, ccparams[3]]
-                convertedccoplotparams = [saturation, growthrateplot, ccparams[3]]
+            if isinstance(ccparams[4], float):
+                growthratel = exp(ccparams[4]*log(ccparams[0]/ccparams[1]-1)+log(ccparams[3]))
+                growthratem = exp(ccparams[4]*log(ccparams[0]/((ccparams[1]+ccparams[2])/2)-1)+log(ccparams[3]))
+                growthrateu = exp(ccparams[4]*log(ccparams[0]/ccparams[2]-1)+log(ccparams[3]))
+                growthrateplotl = exp(ccparams[4]*log(ccparams[0]/ccparams[1]-1)+log(costparam))
+                growthrateplotm = exp(ccparams[4]*log(ccparams[0]/((ccparams[1]+ccparams[2])/2)-1)+log(costparam))
+                growthrateplotu = exp(ccparams[4]*log(ccparams[0]/ccparams[2]-1)+log(costparam))
+                convertedccoparams = [[saturation, growthratem, ccparams[4]], [saturation, growthratel, ccparams[4]], [saturation, growthrateu, ccparams[4]]]
+                convertedccoplotparams = [[saturation, growthrateplotm, ccparams[4]], [saturation, growthrateplotl, ccparams[4]], [saturation, growthrateplotu, ccparams[4]]]
             else:
-                growthrate = (-1/ccparams[2])*log((2*ccparams[0])/(ccparams[1]+ccparams[0]) - 1)        
-                growthrateplot = (-1/costparam)*log((2*ccparams[0])/(ccparams[1]+ccparams[0]) - 1)        
-                convertedccoparams = [saturation, growthrate]
-                convertedccoplotparams = [saturation, growthrateplot]
+                growthratel = (-1/ccparams[3])*log((2*ccparams[0])/(ccparams[1]+ccparams[0]) - 1)
+                growthratem = (-1/ccparams[3])*log((2*ccparams[0])/(((ccparams[1]+ccparams[2])/2)+ccparams[0]) - 1)
+                growthrateu = (-1/ccparams[3])*log((2*ccparams[0])/(ccparams[2]+ccparams[0]) - 1)
+                growthrateplotl = (-1/costparam)*log((2*ccparams[0])/(ccparams[1]+ccparams[0]) - 1)        
+                growthrateplotm = (-1/costparam)*log((2*ccparams[0])/(((ccparams[1]+ccparams[2])/2)+ccparams[0]) - 1)        
+                growthrateplotu = (-1/costparam)*log((2*ccparams[0])/(ccparams[2]+ccparams[0]) - 1)        
+                convertedccoparams = [[saturation, growthratem], [saturation, growthratel], [saturation, growthrateu]]
+                convertedccoplotparams = [[saturation, growthrateplotm], [saturation, growthrateplotl], [saturation, growthrateplotu]]
 
             if coparams: # Get coparams from  GUI... 
                 muz, stdevz, muf, stdevf = makecosampleparams(coparams, verbose=verbose)
-                zerosample, fullsample = makesamples(coparams, muz, stdevz, muf, stdevf, D.opt.nsims)
                 convertedcoparams = [muz, stdevz, muf, stdevf]
-                # Store parameters for access later
                 if len(effect) == 2: # There's no existing info here, append
                     effect.append(coparams)
                     effect.append(convertedcoparams)
@@ -394,8 +403,8 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
                 coparams = effect[2]
                 convertedcoparams = effect[3]
 
-            convertedccoparams.extend([convertedcoparams[0],convertedcoparams[2]])
-            convertedccoplotparams.extend([convertedcoparams[0],convertedcoparams[2]])
+            for j in range(3): convertedccoparams[j].extend([convertedcoparams[0],convertedcoparams[2]])
+            for j in range(3): convertedccoplotparams[j].extend([convertedcoparams[0],convertedcoparams[2]])
             if len(effect) < 5: # There's no existing info here, append
                 effect.append(convertedccoparams)
             else:
@@ -405,14 +414,14 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
             xvalscco = linspace(0,xupperlim,nxpts)
     
             # Min, Median and Max lines
-            if isinstance(ccparams[3], float):
-                mediancco = ccoeqn(xvalscco, convertedccoplotparams)# Generate median cost-outcome curve
-                mincco = ccoeqn(xvalscco, [convertedccoplotparams[0], convertedccoplotparams[1], convertedccoplotparams[2], coparams[0], coparams[2]])# Generate min cost-outcome curve
-                maxcco = ccoeqn(xvalscco, [convertedccoplotparams[0], convertedccoplotparams[1], convertedccoplotparams[2], coparams[1], coparams[3]])# Generate max cost-outcome curve
+            if isinstance(ccparams[4], float):
+                mediancco = ccoeqn(xvalscco, convertedccoplotparams[0])# Generate min cost-outcome curve
+                mincco = ccoeqn(xvalscco, [convertedccoplotparams[1][0], convertedccoplotparams[1][1], convertedccoplotparams[1][2], coparams[0], coparams[2]])# Generate min cost-outcome curve
+                maxcco = ccoeqn(xvalscco, [convertedccoplotparams[2][0], convertedccoplotparams[2][1], convertedccoplotparams[2][2], coparams[1], coparams[3]])# Generate max cost-outcome curve
             else:
-                mediancco = cco2eqn(xvalscco, convertedccoplotparams)# Generate median cost-outcome curve
-                mincco = cco2eqn(xvalscco, [convertedccoplotparams[0], convertedccoplotparams[1], coparams[0], coparams[2]])# Generate min cost-outcome curve
-                maxcco = cco2eqn(xvalscco, [convertedccoplotparams[0], convertedccoplotparams[1], coparams[1], coparams[3]])# Generate max cost-outcome curve
+                mediancco = cco2eqn(xvalscco, convertedccoplotparams[0])# Generate min cost-outcome curve
+                mincco = cco2eqn(xvalscco, [convertedccoplotparams[1][0], convertedccoplotparams[1][1], coparams[0], coparams[2]])# Generate min cost-outcome curve
+                maxcco = cco2eqn(xvalscco, [convertedccoplotparams[2][0], convertedccoplotparams[2][1], coparams[1], coparams[3]])# Generate max cost-outcome curve
 
             # Populate output structure with cost-outcome curves for plotting
             plotdata['xlinedata'] = xvalscco # X data for all line plots
@@ -427,7 +436,7 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
 
         # Populate output structure with axis limits
         plotdata['xlowerlim'], plotdata['ylowerlim']  = 0.0, 0.0
-        plotdata['xupperlim'], plotdata['yupperlim']  = xupperlim, 1.0
+        plotdata['xupperlim'], plotdata['yupperlim']  = xupperlim, 100.0
     
         # Populate output structure with labels and titles
         plotdata['title'] = input_parameter_name(effect[0][1])+ ' - ' + effect[1][0]
@@ -519,13 +528,10 @@ def getcoverage(D=None, params=[], popadj=0, artelig=default_artelig, progname=d
                 targetpopmodel = D.S.people[:,injectindices,0:npts].sum(axis = (0,1))
             elif thispar == 'numpmtct': # Target population = HIV+ pregnant women
                 targetpopmodel = multiply(D.M.birth[:,0:npts], D.S.people[artelig,:,0:npts].sum(axis=0)).sum(axis=0)
- #               targetpopmodel = D.S.people[:,:,0:npts].sum(axis=(0,1))
             elif thispar == 'breast': # Target population = HIV+ breastfeeding women
                 targetpopmodel = multiply(D.M.birth[:,0:npts], D.M.breast[0:npts], D.S.people[artelig,:,0:npts].sum(axis=0)).sum(axis=0)
- #               targetpopmodel = D.S.people[:,:,0:npts].sum(axis=(0,1))
             elif thispar in ['numfirstline','numsecondline']: # Target population = diagnosed PLHIV
                 targetpopmodel = D.S.people[artelig,:,0:npts].sum(axis=(0,1))
- #               targetpopmodel = D.S.people[:,:,0:npts].sum(axis=(0,1))
             else:
                 print('WARNING, Unrecognized parameter %s' % thispar)
         else:
@@ -553,21 +559,29 @@ def getcoverage(D=None, params=[], popadj=0, artelig=default_artelig, progname=d
         coverage = coveragepercent # this is unnecessary now but might be useful later to set it up this way
         coveragelabel = 'Proportion covered'
         if params:
-            costparam = params[2]
+            costparam = params[3]
             if popadj:
-                costparam = params[2]/targetpop
+                costparam = params[3]/targetpop
                 costparam = mean(costparam) if len(coverage)==1 else [costparam[j] for j in range(len(coverage)) if ~isnan(coverage[j])][0]
             saturation = params[0]
-            if isinstance(params[3], float):
-                growthrate = exp((1-params[3])*log(params[0]/params[1]-1)+log(params[2]))
-                growthrateplot = exp((1-params[3])*log(params[0]/params[1]-1)+log(costparam))
-                storeparams = [saturation, growthrate, params[3]]
-                plottingparams = [saturation, growthrateplot, params[3]]
+            if isinstance(params[4], float):
+                growthratel = exp((1-params[4])*log(params[0]/params[1]-1)+log(params[3]))
+                growthratem = exp((1-params[4])*log(params[0]/((params[1]+params[2])/2)-1)+log(params[3]))
+                growthrateu = exp((1-params[4])*log(params[0]/params[2]-1)+log(params[3]))
+                growthrateplotl = exp((1-params[4])*log(params[0]/params[1]-1)+log(costparam))
+                growthrateplotm = exp((1-params[4])*log(params[0]/((params[1]+params[2])/2)-1)+log(costparam))
+                growthrateplotu = exp((1-params[4])*log(params[0]/params[2]-1)+log(costparam))
+                storeparams = [[saturation, growthratem, params[4]], [saturation, growthratel, params[4]], [saturation, growthrateu, params[4]]]
+                plottingparams = [[saturation, growthrateplotm, params[4]], [saturation, growthrateplotl, params[4]], [saturation, growthrateplotu, params[4]]]
             else:
-                growthrate = (-1/params[2])*log((2*params[0])/(params[1]+params[0]) - 1)        
-                growthrateplot = (-1/costparam)*log((2*params[0])/(params[1]+params[0]) - 1)        
-                storeparams = [saturation, growthrate]
-                plottingparams = [saturation, growthrateplot]       
+                growthratel = (-1/params[3])*log((2*params[0])/(params[1]+params[0]) - 1)        
+                growthratem = (-1/params[3])*log((2*params[0])/(((params[1]+params[2])/2)+params[0]) - 1)        
+                growthrateu = (-1/params[3])*log((2*params[0])/(params[2]+params[0]) - 1)        
+                growthrateplotl = (-1/costparam)*log((2*params[0])/(params[1]+params[0]) - 1)        
+                growthrateplotm = (-1/costparam)*log((2*params[0])/(((params[1]+params[2])/2)+params[0]) - 1)        
+                growthrateplotu = (-1/costparam)*log((2*params[0])/(params[2]+params[0]) - 1)        
+                storeparams = [[saturation, growthratem], [saturation, growthratel], [saturation, growthrateu]]
+                plottingparams = [[saturation, growthrateplotm], [saturation, growthrateplotl], [saturation, growthrateplotu]]
     else:
         coveragenumber = D.data.costcov.cov[prognumber] 
         if len(coveragenumber)==1: # If an assumption has been used, keep this constant over time
@@ -577,21 +591,29 @@ def getcoverage(D=None, params=[], popadj=0, artelig=default_artelig, progname=d
         coverage = coveragenumber # this is unnecessary atm but might be useful later to set it up this way
         coveragelabel = 'Number covered'
         if params:
-            costparam = params[2]
+            costparam = params[3]
             if popadj:
-                costparam = params[2]/targetpop
+                costparam = params[3]/targetpop
                 costparam = mean(costparam) if len(coverage)==1 else [costparam[j] for j in range(len(coverage)) if ~isnan(coverage[j])][0]
             saturation = params[0]*targetpop[-1]
-            if isinstance(params[3], float):
-                growthrate = exp((1-params[3])*log(params[0]/params[1]-1)+log(params[2]))
-                growthrateplot = exp((1-params[3])*log(params[0]/params[1]-1)+log(costparam))
-                storeparams = [saturation, growthrate, params[3]]
-                plottingparams = [saturation, growthrateplot, params[3]]
+            if isinstance(params[4], float):
+                growthratel = exp((1-params[4])*log(params[0]/params[1]-1)+log(params[3]))
+                growthratem = exp((1-params[4])*log(params[0]/((params[1]+params[2])/2)-1)+log(params[3]))
+                growthrateu = exp((1-params[4])*log(params[0]/params[2]-1)+log(params[3]))
+                growthrateplotl = exp((1-params[4])*log(params[0]/params[1]-1)+log(costparam))
+                growthrateplotm = exp((1-params[4])*log(params[0]/((params[1]+params[2])/2)-1)+log(costparam))
+                growthrateplotu = exp((1-params[4])*log(params[0]/params[2]-1)+log(costparam))
+                storeparams = [[saturation, growthratem, params[4]], [saturation, growthratel, params[4]], [saturation, growthrateu, params[4]]]
+                plottingparams = [[saturation, growthrateplotm, params[4]], [saturation, growthrateplotl, params[4]], [saturation, growthrateplotu, params[4]]]
             else:
-                growthrate = (-1/params[2])*log((2*params[0]*targetpop[-1])/(params[1]*targetpop[-1]+params[0]*targetpop[-1]) - 1)
-                growthrateplot = (-1/costparam)*log((2*params[0]*targetpop[-1])/(params[1]*targetpop[-1]+params[0]*targetpop[-1]) - 1)
-                storeparams = [saturation, growthrate]
-                plottingparams = [saturation, growthrateplot]
+                growthratel = (-1/params[3])*log((2*params[0]*targetpop[-1])/(params[1]*targetpop[-1]+params[0]*targetpop[-1]) - 1)
+                growthratem = (-1/params[3])*log((2*params[0]*targetpop[-1])/(((params[1]+params[2])/2)*targetpop[-1]+params[0]*targetpop[-1]) - 1)
+                growthrateu = (-1/params[3])*log((2*params[0]*targetpop[-1])/(params[2]*targetpop[-1]+params[0]*targetpop[-1]) - 1)
+                growthrateplotl = (-1/costparam)*log((2*params[0]*targetpop[-1])/(params[1]*targetpop[-1]+params[0]*targetpop[-1]) - 1)
+                growthrateplotm = (-1/costparam)*log((2*params[0]*targetpop[-1])/(((params[1]+params[2])/2)*targetpop[-1]+params[0]*targetpop[-1]) - 1)
+                growthrateplotu = (-1/costparam)*log((2*params[0]*targetpop[-1])/(params[2]*targetpop[-1]+params[0]*targetpop[-1]) - 1)
+                storeparams = [[saturation, growthratem], [saturation, growthratel], [saturation, growthrateu]]
+                plottingparams = [[saturation, growthrateplotm], [saturation, growthrateplotl], [saturation, growthrateplotu]]
                     
     return coverage, targetpop, coveragelabel, storeparams, plottingparams
 
@@ -623,6 +645,59 @@ def getscatterdata(xdata, ydata):
     return xdatascatter, ydatascatter
         
 ###############################################################################
+def cc2eqn(x, p):
+    '''
+    2-parameter equation defining cc curves.
+    
+    x is total cost, p is a list of parameters (of length 2):
+        p[0] = saturation
+        p[1] = growth rate
+    Returns y which is coverage.
+    '''
+    y =  2*p[0] / (1 + exp(-p[1]*x)) - p[0]
+    return y
+    
+###############################################################################
+def cco2eqn(x, p):
+    '''
+    Equation defining cco curves.
+    '''
+    y = (p[3]-p[2]) * (2*p[0] / (1 + exp(-p[1]*x)) - p[0]) + p[2]
+    return y
+
+###############################################################################
+def cceqn(x, p, eps=1e-3):
+    '''
+    3-parameter equation defining cc curves.
+
+    x is total cost, p is a list of parameters (of length 3):
+        p[0] = saturation
+        p[1] = inflection point
+        p[2] = growth rate... 
+
+    Returns y which is coverage.
+    '''
+    y = p[0] / (1 + exp((log(p[1])-nplog(x))/max(1-p[2],eps)))
+
+    return y
+    
+###############################################################################
+def ccoeqn(x, p):
+    '''
+    Equation defining cco curves.
+
+    x is total cost, p is a list of parameters (of length 3):
+        p[0] = saturation
+        p[1] = inflection point
+        p[2] = growth rate...
+
+    Returns y which is coverage.
+    '''
+    y = (p[4]-p[3]) * (p[0] / (1 + exp((log(p[1])-nplog(x))/(1-p[2])))) + p[3]
+
+    return y
+
+###############################################################################
 def makecosampleparams(coparams, verbose=2):
     '''
     Convert inputs from GUI into parameters needed for defining curves.
@@ -635,14 +710,16 @@ def makecosampleparams(coparams, verbose=2):
     return muz, stdevz, muf, stdevf
 
 ###############################################################################
-def makesamples(coparams, muz, stdevz, muf, stdevf, samplesize=1000):
+def makesamples(coparams, muz, stdevz, muf, stdevf, samplesize=1000, randseed=None):
     '''
     Generate samples of behaviour at zero and full coverage
     '''
+    from numpy import seed # Reset seed optionally
+    if randseed>=0: seed(randseed)
     
     # Generate samples of zero-coverage and full-coverage behaviour
-    zerosample = rtnorm((coparams[0] - muz) / stdevz, (coparams[1] - muz) / stdevz, mu=muz, sigma=stdevz, size = samplesize)
-    fullsample = rtnorm((coparams[2] - muf) / stdevf, (coparams[3] - muf) / stdevf, mu=muf, sigma=stdevf, size = samplesize)
+    zerosample = rtnorm(coparams[0], coparams[1], mu=muz, sigma=stdevz, size=samplesize)[0]
+    fullsample = rtnorm(coparams[2], coparams[3], mu=muf, sigma=stdevf, size=samplesize)[0]
         
     return zerosample, fullsample
 

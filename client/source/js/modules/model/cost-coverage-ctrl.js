@@ -45,7 +45,8 @@ define(['./module', 'underscore'], function (module, _) {
       $scope.behaviorWithMax = 0.9;
       $scope.xAxisMaximum = undefined;
       $scope.saturationCoverageLevel = undefined;
-      $scope.knownCoverageLevel = undefined;
+      $scope.knownMinCoverageLevel = undefined;
+      $scope.knownMaxCoverageLevel = undefined;
       $scope.knownFundingValue = undefined;
       $scope.scaleUpParameter = undefined;
       $scope.nonHivDalys = undefined;
@@ -177,18 +178,30 @@ define(['./module', 'underscore'], function (module, _) {
      */
     var prepareCostCoverageGraph = function (data) {
       var graph = {
-        options: getLineScatterOptions({ hideTitle: true }, data.xlabel, data.ylabel),
+        options: getLineScatterOptions({
+          linesStyle: ['__color-blue-4', '__color-black __dashed', '__color-black __dashed'],
+          hideTitle: true
+        },
+        data.xlabel, data.ylabel),
         data: {
-          // there is a single line for that type
-          lines: [[]],
+          lines: [],
           scatter: []
         }
       };
 
-      _(data.xlinedata).each(function (x, index) {
-        var y = data.ylinedata;
-        graph.data.lines[0].push([x, y[index]]);
-      });
+      if (data.ylinedata) {
+        var numOfLines = data.ylinedata.length;
+        _(data.xlinedata).each(function (x, index) {
+          var y = data.ylinedata;
+          for (var i = 0; i < numOfLines; i++) {
+            if (!graph.data.lines[i]) {
+              graph.data.lines[i] = [];
+            }
+
+            graph.data.lines[i].push([x, y[i][index]]);
+          }
+        });
+      }
 
       _(data.xscatterdata).each(function (x, index) {
         var y = data.yscatterdata;
@@ -228,10 +241,10 @@ define(['./module', 'underscore'], function (module, _) {
     var setUpCOParamsFromEffects = function (effectNames) {
       $scope.coParams = _(effectNames).map(function (effect) {
         return [
-          (effect[2] && effect[2][0])? effect[2][0] : null,
-          (effect[2] && effect[2][1])? effect[2][1] : null,
-          (effect[2] && effect[2][2])? effect[2][2] : null,
-          (effect[2] && effect[2][3])? effect[2][3] : null
+          (effect[2] && effect[2][0])? effect[2][0] * 100 : null,
+          (effect[2] && effect[2][1])? effect[2][1] * 100 : null,
+          (effect[2] && effect[2][2])? effect[2][2] * 100 : null,
+          (effect[2] && effect[2][3])? effect[2][3] * 100 : null
         ];
       });
     };
@@ -243,10 +256,22 @@ define(['./module', 'underscore'], function (module, _) {
       return value / 100;
     };
 
+    $scope.convertedCoParams = function () {
+      return _($scope.coParams).map(function (effect) {
+        return [
+          $scope.convertFromPercent(effect[0]),
+          $scope.convertFromPercent(effect[1]),
+          $scope.convertFromPercent(effect[2]),
+          $scope.convertFromPercent(effect[3])
+        ];
+      });
+    };
+
     $scope.costCoverageParams = function () {
       return [
         $scope.convertFromPercent($scope.saturationCoverageLevel),
-        $scope.convertFromPercent($scope.knownCoverageLevel),
+        $scope.convertFromPercent($scope.knownMinCoverageLevel),
+        $scope.convertFromPercent($scope.knownMaxCoverageLevel),
         $scope.knownFundingValue,
         $scope.scaleUpParameter,
         $scope.nonHivDalys
@@ -290,7 +315,7 @@ define(['./module', 'underscore'], function (module, _) {
     };
 
     var areCCParamsValid = function (params) {
-      return $scope.areValidParams(params.slice(0, 3));
+      return $scope.areValidParams(params.slice(0, 4));
     };
 
     $scope.hasValidCCParams = function() {
@@ -298,7 +323,7 @@ define(['./module', 'underscore'], function (module, _) {
     };
 
     $scope.hasAllCCParams = function() {
-      return hasAllElements($scope.costCoverageParams().slice(0, 3));
+      return hasAllElements($scope.costCoverageParams().slice(0, 4));
     }
 
     /**
@@ -364,13 +389,15 @@ define(['./module', 'underscore'], function (module, _) {
       }
       if (hasAllElements($scope.selectedProgram.ccparams.slice(0,3))) {
         $scope.saturationCoverageLevel = $scope.selectedProgram.ccparams[0]*100;
-        $scope.knownCoverageLevel = $scope.selectedProgram.ccparams[1]*100;
-        $scope.knownFundingValue = $scope.selectedProgram.ccparams[2];
-        $scope.scaleUpParameter = $scope.selectedProgram.ccparams[3];
-        $scope.nonHivDalys = $scope.selectedProgram.ccparams[4];
+        $scope.knownMinCoverageLevel = $scope.selectedProgram.ccparams[1]*100;
+        $scope.knownMaxCoverageLevel = $scope.selectedProgram.ccparams[2]*100;
+        $scope.knownFundingValue = $scope.selectedProgram.ccparams[3];
+        $scope.scaleUpParameter = $scope.selectedProgram.ccparams[4];
+        $scope.nonHivDalys = $scope.selectedProgram.ccparams[5];
       } else {
         $scope.saturationCoverageLevel = undefined;
-        $scope.knownCoverageLevel = undefined;
+        $scope.knownMinCoverageLevel = undefined;
+        $scope.knownMaxCoverageLevel = undefined;
         $scope.knownFundingValue = undefined;
         $scope.scaleUpParameter = undefined;
         $scope.nonHivDalys = undefined;
@@ -394,7 +421,7 @@ define(['./module', 'underscore'], function (module, _) {
     $scope.generateCurves = function () {
       var model = getPlotModel();
       if ($scope.hasCostCoverResponse) {
-        model.all_coparams = $scope.coParams;
+        model.all_coparams = $scope.convertedCoParams();
         model.all_effects = effectNames;
       }
       retrieveAndUpdateGraphs(model);
@@ -418,7 +445,7 @@ define(['./module', 'underscore'], function (module, _) {
     $scope.saveModel = function () {
       var model = getPlotModel(model);
       model.doSave = true;
-      model.all_coparams = $scope.coParams;
+      model.all_coparams = $scope.convertedCoParams();
       model.all_effects = effectNames;
       retrieveAndUpdateGraphs(model);
     };
@@ -446,7 +473,7 @@ define(['./module', 'underscore'], function (module, _) {
     $scope.updateCurve = _.debounce(function (graphIndex, AdjustmentForm) {
       if(AdjustmentForm.$valid && $scope.CostCoverageForm.$valid && $scope.hasValidCCParams()) {
         var model = getPlotModel();
-        model.coparams = $scope.coParams[graphIndex];
+        model.coparams = $scope.convertedCoParams()[graphIndex];
         model.effect = effectNames[graphIndex];
         if (!$scope.areValidParams(model.coparams)) {
           // no need to show dialog - we inform the user with hints
