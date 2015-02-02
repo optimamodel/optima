@@ -62,6 +62,8 @@ def plotco(D, progname=default_progname, effect=default_effect, coparams=default
     xlim([plotdata['xlowerlim'],plotdata['xupperlim']])
     ylim([plotdata['ylowerlim'],plotdata['yupperlim']])
 
+
+plotco(D)
 ###############################################################################
 def plotcco(D, progname=default_progname, effect=default_effect, ccparams=default_ccparams, ccplot=default_ccplot, coparams=default_coparams):
     '''

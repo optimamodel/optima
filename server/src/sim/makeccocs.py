@@ -233,7 +233,7 @@ def makeco(D, progname=default_progname, effect=default_effect, coparams=default
             convertedcoparams = [muz, stdevz, muf, stdevf]
 
             # General set of coverage-outcome relationships
-            xvalsco = linspace(0,1,nxpts) # take nxpts points along the unit interval
+            xvalsco = linspace(0,100,nxpts) # take nxpts points along the unit interval
             ymin, ymax = linspace(coparams[0],coparams[2],nxpts), linspace(coparams[1],coparams[3],nxpts)
             
             # Populate output structure with coverage-outcome curves for plotting
