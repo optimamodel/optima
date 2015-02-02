@@ -9,7 +9,7 @@ from updatedata import updatedata
 from os import path
 
 kind = 'sudan'
-doplot = False
+doplot = True
 
 datadir = '../static/'
 datafile = kind+'example.json'
