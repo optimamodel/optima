@@ -3,7 +3,7 @@ TEST_OPTIMIZATION
 
 This function tests that the optimization is working.
 
-Version: 2015jan31 by cliffk
+Version: 2015feb01 by cliffk
 """
 
 print('WELCOME TO OPTIMA')
@@ -11,8 +11,8 @@ print('WELCOME TO OPTIMA')
 testconstant = False
 testmultibudget = False
 testtimevarying = False
-testmultiyear = False
-testconstraints = True
+testmultiyear = True
+testconstraints = False
 
 
 ## Set parameters

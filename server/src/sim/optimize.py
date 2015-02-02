@@ -284,14 +284,22 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         options.parindices = parindices # Indices for the parameters to be updated on
         options.normalizations = normalizations # Whether to normalize a parameter
         options.totalspends = objectives.outcome.variable # Total budgets
+        options.randseed = None # Death is enough randomness on its own
         options.fundingchanges = fundingchanges # Constraints-based funding changes
-        options.randseed = None
+        
         
         ## Define optimization parameters
         nyears = len(options.years)
         optimparams = array(origalloc.tolist()*nyears).flatten() # Duplicate parameters
         parammin = zeros(len(optimparams))
         stepsizes = stepsize + zeros(len(optimparams))
+        keys1 = ['year','total']
+        keys2 = ['dec','inc']
+        abslims = {'dec':0, 'inc':1e9}
+        rellims = {'dec':-1e9, 'inc':1e9}
+        for key1 in keys1:
+            for key2 in keys2:
+                options.fundingchanges[key1][key2] *= nyears # I know this just points to the list rather than copies, but should be fine. I hope
         
         ## Run time-varying optimization
         print('========== Running multiple-year optimization ==========')
