@@ -1,5 +1,5 @@
 """
-RUN_PWID
+TESTSUDAN
 
 Load a project and test data upload.
 """
@@ -9,8 +9,8 @@ from updatedata import updatedata
 from os import path
 
 datadir = '../static/'
-datafile = 'pwidexample.json'
-spreadsheetfile = 'pwidexample.xlsx'
+datafile = 'sudanexample.json'
+spreadsheetfile = 'sudanexample.xlsx'
 if path.exists(datadir+datafile):
     D = loaddata(datadir+datafile)
     D.G.workbookname = datadir+spreadsheetfile
