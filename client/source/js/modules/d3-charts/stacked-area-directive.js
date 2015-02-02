@@ -1,4 +1,4 @@
-define(['./module', './scale-helpers', 'angular'], function (module, scaleHelpers, angular) {
+define(['./module', './scale-helpers', 'angular', 'underscore'], function (module, scaleHelpers, angular, _) {
   'use strict';
 
   module.directive('stackedAreaChart', function (d3Charts) {
@@ -108,14 +108,14 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
         var areaScale = areaChart.scales(highestLine);
         graphsScales.push(areaScale);
 
-        var areaData = area.map(function (dot) {
-          return {
-            x: dot[0],
-            y0: dot[1],
-            y1: dot[2]
-          };
-        });
-        areaChart.draw(areaData);
+        //var areaData = area.map(function (dot) {
+        //  return {
+        //    x: dot[0],
+        //    y0: dot[1],
+        //    y1: dot[2]
+        //  };
+        //});
+        //areaChart.draw(areaData);
       });
 
       // normalizing all graphs scales to include maximum possible x and y
