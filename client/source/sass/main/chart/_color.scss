@@ -72,7 +72,26 @@ $colorMap: (
   }
 }
 
+circle.radar-chart-serie0, circle.radar-chart-serie1, circle.radar-chart-serie2 {
+  display: none
+}
+
 .radar-chart-serie0 {
-  fill: #CCE6F6 !important;
+  fill: none !important;
+  stroke: black !important;
+  stroke-width: 1px !important;
+  stroke-dasharray: 10,10;
+}
+
+.radar-chart-serie1 {
+  fill: none !important;
   stroke: #037AC0 !important;
+  stroke-width: 1px !important;
+}
+
+.radar-chart-serie2 {
+  fill: none !important;
+  stroke: black !important;
+  stroke-width: 1px !important;
+  stroke-dasharray: 10,10;
 }
