@@ -484,23 +484,33 @@ def getPopsAndProgsFromModel(project):
     model = project.model
     if not 'data' in model: return
 
+    dict_programs = dict([(item['short_name'], item) for item in programs])
+    dict_populations = dict([(item['short_name'], item) for item in populations])
+
     # Update project.populations and project.programs
     D_pops_names = set(model['data']['meta']['pops']['short'])
     D_progs_names = set(model['data']['meta']['progs']['short'])
-    old_programs_names = [item.get('short_name') if item else '' for item in project.programs]
+    old_populations_dict = dict([(item.get('short_name') if item else '', item) for item in project.populations])
+    old_programs_dict = dict([(item.get('short_name') if item else '', item) for item in project.programs])
 
     # get and generate populations from D.data.meta
-    pops = [item for item in populations if item['short_name'] in D_pops_names]
+    pops = []
+    for short_name in D_pops_names:
+        new_item = dict_populations.get(short_name, old_populations_dict[short_name])
+        pops.append(new_item)
 
     # get and generate programs from D.data.meta
-    progs = [item for item in programs if item['short_name'] in D_progs_names]
+    progs = []
+    for short_name in D_progs_names:
+        new_item = dict_programs.get(short_name, old_programs_dict[short_name])
+        progs.append(new_item)
 
     # prepare programs for parameters
     for pindex, program in enumerate(progs):
-        try: #if the program was given in create_project, keep the parameters
-            index = old_programs_names.index(program['short_name'])
-            progs[pindex] = deepcopy(project.programs[index])
-        except: #get the default parameters for that program, for now
+        old_program = old_programs_dict.get(program['short_name'])
+        if old_program: #if the program was given in create_project, keep the parameters
+            progs[pindex] = deepcopy(old_program)
+        else: #get the default parameters for that program, for now
             new_parameters = [{'value': parameter} for parameter in program['parameters']]
             for parameter in new_parameters:
                 if parameter['value']['pops']==['']: parameter['value']['pops']=list(D_pops_names)
