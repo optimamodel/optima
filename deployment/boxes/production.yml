@@ -6,7 +6,7 @@
     - root_dir: ..
     - version: master
 
-    - db_host: optima-prod.cvx5aaojfjbz.ap-southeast-2.rds.amazonaws.com
+    - db_host: optima-prod.c2qj5luaztu6.us-east-1.rds.amazonaws.com
     - db_user: app
     - db_name: optima
     - db_url: "postgresql://{{db_user}}:{{db_password}}@{{db_host}}:5432/{{db_name}}"
