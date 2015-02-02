@@ -8,8 +8,8 @@ Version: 2015jan06 by cliffk
 """
 
 # Define labels
-epititles = {'prev':'Prevalence', 'plhiv':'PLHIV', 'inci':'New infections', 'force':'Incidence', 'daly':'DALYs', 'death':'Deaths', 'dx':'Diagnoses', 'tx1':'First-line treatment', 'tx2':'Second-line treatment'}
-epiylabels = {'prev':'HIV prevalence (%)', 'plhiv':'Number of PLHIV', 'inci':'New HIV infections per year', 'force':'Incidence per 100 person-years', 'daly':'HIV-related DALYs per year', 'death':'AIDS-related deaths per year', 'dx':'New HIV diagnoses per year', 'tx1':'People on 1st-line treatment', 'tx2':'People on 2nd-line treatment'}
+epititles = {'prev':'Prevalence', 'plhiv':'PLHIV', 'inci':'New infections', 'force':'Incidence', 'daly':'DALYs', 'death':'Deaths', 'dx':'Diagnoses', 'tx1':'First-line treatment', 'tx2':'Subsequent lines of treatment'}
+epiylabels = {'prev':'HIV prevalence (%)', 'plhiv':'Number of PLHIV', 'inci':'New HIV infections per year', 'force':'Incidence per 100 person-years', 'daly':'HIV-related DALYs per year', 'death':'HIV/AIDS-related deaths per year', 'dx':'New HIV diagnoses per year', 'tx1':'People on first-line treatment', 'tx2':'People on subsequent lines of treatment'}
 costtitles = {'costcum':'Cumulative HIV-related financial commitments'}
 costylabels = {}
 
