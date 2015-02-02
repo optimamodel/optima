@@ -298,15 +298,12 @@ def doRunSimulation():
 
     """
     import os
-    from utils import send_as_json_file
     data = json.loads(request.data)
 
-    #expects json: {"startyear":year,"endyear":year} and gets project_name from session
     args = {}
     D = load_model(request.project_id)
     D_dict = D.toDict()
     result = {'graph': D_dict.get('plot',{}).get('E',{})}
-    result = add_calibration_parameters(D_dict, result)
     if not result:
         args['D'] = D
         startyear = data.get("startyear")
@@ -320,8 +317,8 @@ def doRunSimulation():
         D_dict = D.toDict()
         save_model(request.project_id, D_dict)
         result = {'graph':D_dict.get('plot',{}).get('E',{})}
-        result = add_calibration_parameters(D_dict, result)
-    return send_as_json_file(result)
+    result = add_calibration_parameters(D_dict, result)
+    return jsonify(result)
 
 @model.route('/costcoverage', methods=['POST'])
 @login_required
