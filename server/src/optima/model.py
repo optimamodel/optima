@@ -299,9 +299,7 @@ def doRunSimulation():
     """
     import os
     from utils import send_as_json_file
-    print("request %s" % request.data)
     data = json.loads(request.data)
-    print ("data", data)
 
     #expects json: {"startyear":year,"endyear":year} and gets project_name from session
     args = {}
