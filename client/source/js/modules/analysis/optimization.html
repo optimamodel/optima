@@ -137,10 +137,6 @@
               <input type="radio" name="minimizationType" ng-model="params.objectives.what" value="money">
               Minimize money
             </label>
-            <label class="checkbox-inline" style="padding:0px 0px 0px 40px;">
-              <input type="checkbox" ng-model="params.objectives.timevarying">
-              Allow time-varying optimization
-            </label>
           </div>
         </div>
 
@@ -160,6 +156,10 @@
                                                              ng-required="params.objectives.funding==='constant'"
                                                              ng-model="params.objectives.outcome.fixed"/> for each year
               in the program period
+            </label>
+            <label class="checkbox-inline" style="padding:0px 0px 0px 40px;">
+              <input type="checkbox" ng-model="params.objectives.timevarying">
+              Allow time-varying optimization
             </label>
             <br/>
             <label style="padding:0px 0px 0px 20px;">
@@ -359,7 +359,7 @@
                     {{ p }}
                   </td>
                   <td>
-                    <input class="txbox __inline __s" ng-model="params.objectives.money.costs[programCodes[$index]]">
+                    <input class="txbox __inline __s" ng-model="params.objectives.money.costs[$index]">
                     %
                   </td>
                 </tr>
@@ -424,20 +424,20 @@
             <tbody>
             <tr ng-repeat="p in programs">
               <td>
-                <input type="checkbox" ng-model="params.constraints.decrease[programCodes[$index]].use">
+                <input type="checkbox" ng-model="params.constraints.yeardecrease[$index].use">
               </td>
               <td>
                 {{ p }}
               </td>
               <td>
                 <input class="txbox __inline __s" type="number"
-                       ng-change="params.constraints.decrease[programCodes[$index]].use=true"
-                       ng-model="params.constraints.decrease[programCodes[$index]].by">%
+                       ng-change="params.constraints.yeardecrease[$index].use=true"
+                       ng-model="params.constraints.yeardecrease[$index].by">%
               </td>
               <td>
                 <input class="txbox __inline __s" type="number"
-                       ng-change="params.constraints.increase[programCodes[$index]].use=true"
-                       ng-model="params.constraints.increase[programCodes[$index]].by">%
+                       ng-change="params.constraints.yearincrease[$index].use=true"
+                       ng-model="params.constraints.yearincrease[$index].by">%
               </td>
             </tr>
             </tbody>
@@ -457,20 +457,20 @@
             <tbody>
             <tr ng-repeat="p in programs">
               <td>
-                <input type="checkbox" ng-model="params.constraints.decrease[programCodes[$index]].use">
+                <input type="checkbox" ng-model="params.constraints.totaldecrease[$index].use">
               </td>
               <td>
                 {{ p }}
               </td>
               <td>
                 <input class="txbox __inline __s" type="number"
-                       ng-change="params.constraints.decrease[programCodes[$index]].use=true"
-                       ng-model="params.constraints.decrease[programCodes[$index]].by">%
+                       ng-change="params.constraints.totaldecrease[$index].use=true"
+                       ng-model="params.constraints.totaldecrease[$index].by">%
               </td>
               <td>
                 <input class="txbox __inline __s" type="number"
-                       ng-change="params.constraints.increase[programCodes[$index]].use=true"
-                       ng-model="params.constraints.increase[programCodes[$index]].by">%
+                       ng-change="params.constraints.totalincrease[$index].use=true"
+                       ng-model="params.constraints.totalincrease[$index].by">%
               </td>
             </tr>
             </tbody>
@@ -492,20 +492,20 @@
             <tbody>
             <tr ng-repeat="p in programs">
               <td>
-                <input type="checkbox" ng-model="params.constraints.coverage[programCodes[$index]].use">
+                <input type="checkbox" ng-model="params.constraints.coverage[$index].use">
               </td>
               <td>
                 {{ p }}
               </td>
               <td>
                 <input class="txbox __inline __s" type="number"
-                       ng-change="params.constraints.coverage[programCodes[$index]].use=true"
-                       ng-model="params.constraints.coverage[programCodes[$index]].year">
+                       ng-change="params.constraints.coverage[$index].use=true"
+                       ng-model="params.constraints.coverage[$index].year">
               </td>
               <td>
                 <input class="txbox __inline __s" type="number"
-                       ng-change="params.constraints.coverage[programCodes[$index]].use=true"
-                       ng-model="params.constraints.coverage[programCodes[$index]].level">
+                       ng-change="params.constraints.coverage[$index].use=true"
+                       ng-model="params.constraints.coverage[$index].level">
               </td>
             </tr>
             </tbody>
@@ -544,6 +544,11 @@
             </div>
           </div>
 
+          <label style="padding-left: 35px; margin-top: 5px; display: block">
+            <input type="checkbox" ng-model="state.isTestRun" ng-change="updateTimelimit()">
+            Test run
+          </label>
+
           <div class="info-hint" ng-show="optimizationStatus.text">
             {{ optimizationStatus.text }}
           </div>
@@ -577,23 +582,22 @@
                 </div>
               </div>
 
+              <div ng-if="state.stackedBarChart">
+                <div class="chart-container __large">
+                  <div stacked-bar-chart data="state.stackedBarChart.data" options="state.stackedBarChart.options" save-graph-as></div>
+                </div>
+              </div>
+
+              <div ng-if="state.multipleBudgetsChart">
+                <div class="chart-container __large">
+                  <div stacked-bar-chart data="state.multipleBudgetsChart.data" options="state.multipleBudgetsChart.options" save-graph-as></div>
+                </div>
+              </div>
+
               <div ng-if="state.outcomeChart" class="chart-container __small">
                 <div line-scatter-chart data="state.outcomeChart.data" options="state.outcomeChart.options" save-graph-as></div>
               </div>
             </div>
-
-            <div class="grid 12">
-
-              <div ng-if="state.stackedBarCharts && types.timeVaryingOptimizations">
-                <div ng-repeat="chart in state.stackedBarCharts track by $index">
-                  <div class="chart-container __large">
-                    <div stacked-bar-chart data="chart.data" options="chart.options" save-graph-as></div>
-                  </div>
-                </div>
-              </div>
-
-            </div>
-
 
             <div class="chart-container __small" ng-repeat="chart in state.optimisationGraphs">
               <div line-scatter-chart data="chart.data" options="chart.options" save-graph-as></div>

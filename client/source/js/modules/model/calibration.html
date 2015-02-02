@@ -2,9 +2,9 @@
 
   <div class="page_subheader">
     <div class="section grid">
-      <form name="CalibrationForm" ng-submit="simulate()">
+      <!--form name="CalibrationForm" ng-submit="simulate()">
         <p ng-show="needData" class="error-hint">Please upload Optima spreadsheet first.</p>
-      </form>
+      </form-->
     </div>
     <div class="section grid">
       <div class="12">
@@ -72,7 +72,7 @@
     </div>
   </div>
 
-  <div class="section __inline calibration-charts" ng-class="{'calibration-charts--full':enableManualCalibration===false}" ng-show="charts.length>0" >
+  <div class="section __inline calibration-charts" ng-class="{'calibration-charts--full':enableManualCalibration===false}" ng-show="hasCharts" >
     <export-all-charts name="Model calibration" ng-if="charts"></export-all-charts>
     <export-all-data name="Model calibration" charts="charts" ng-if="charts"></export-all-data>
     <div class="grid">
