@@ -1,5 +1,5 @@
 """
-TEST_OPTIMA
+RuN_OPTIMA
 
 While optima.py is a demonstration of everything Optima can do, this is used to
 test specific features.
@@ -8,7 +8,7 @@ Version: 2015feb01 by cliffk
 """
 
 
-print('WELCOME TO OPTIMA')
+print('WELCOME TO RUN_OPTIMA')
 
 ## Set parameters
 projectname = 'example'
