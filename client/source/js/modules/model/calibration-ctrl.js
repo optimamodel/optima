@@ -54,6 +54,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     angular.extend($scope.types, angular.copy(CONFIG.GRAPH_TYPES));
     // for calibration the overall charts should not be shown by default
     _($scope.types.population).each(function(entry) {
+      if (!_(['tx1', 'tx2', 'force']).contains(entry.id)) {
+        entry.total = false;
+      }
+    });
+    // for calibration the overall cost charts should not be shown by default
+    _($scope.types.costs).each(function(entry) {
       entry.total = false;
     });
 
