@@ -132,10 +132,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       width: 320,
       margin: CONFIG.GRAPH_MARGINS,
       xAxis: {
-        axisLabel: 'Year',
-        tickFormat: function (d) {
-          return d3.format('d')(d);
-        }
+        axisLabel: 'Year'
       },
       yAxis: {
         axisLabel: ''

@@ -65,7 +65,9 @@ define(['./module', './scale-helpers', 'angular', './stacked-bar-chart'], functi
       chart.draw();
       d3Charts.drawTitleAndLegend(svg, options, headerGroup);
 
+      // since the xAxis is ordinal we don't need a tickformat for it
       options.yAxis.tickFormat = function (value) {
+        // since it's a stacked bar chart yMin will always be 0
         var format = scaleHelpers.evaluateTickFormat(0, chart.yMax());
         return scaleHelpers.customTickFormat(value, format);
       };

@@ -45,10 +45,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             width: 320,
             margin: CONFIG.GRAPH_MARGINS,
             xAxis: {
-              axisLabel: 'Year',
-              tickFormat: function (d) {
-                return d3.format('d')(d);
-              }
+              axisLabel: 'Year'
             },
             yAxis: {
               axisLabel: ''
