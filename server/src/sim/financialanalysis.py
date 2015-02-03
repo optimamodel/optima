@@ -3,9 +3,9 @@ Created on Sat Nov 29 17:40:34 2014
 
 @author: robynstuart
 
-Version: 2015jan27
+Version: 2015feb03
 """
-from numpy import linspace, arange, append
+from numpy import linspace, append
 from setoptions import setoptions
 from utils import sanitize, smoothinterp
 
@@ -28,8 +28,6 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False):
     people, hivcosts, artcosts = {}, {}, {}
 
     # Set up variables for time indexing
-    datatvec = arange(D.G.datastart, D.G.dataend+D.opt.dt, D.opt.dt)
-    ndatapts = len(datatvec)
     simtvec = S.tvec
     noptpts = len(simtvec)
 
@@ -131,6 +129,8 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False):
             plotdata['annual']['future'][yscalefactor]['ylinedata'] = [max(0.0,plotdata['annual']['total'][yscalefactor]['ylinedata'][j] - plotdata['annual']['existing'][yscalefactor]['ylinedata'][j]) for j in range(noptpts)]
     plotdata['cumulative']['future']['ylinedata'] = list(accumu(plotdata['annual']['future']['total']['ylinedata']))
 
+
+#    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
 
     return plotdata
 
