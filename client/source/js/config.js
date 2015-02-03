@@ -21,12 +21,12 @@ define(['angular'], function (angular) {
           { id: 'inci', name: 'New HIV infections', byPopulation: false, total: true, stacked: true },
           { id: 'force', name: 'Incidence per 100 person-years', byPopulation: false, total: true},
           { id: 'dx', name: 'New HIV diagnoses', byPopulation: false, total: true, stacked: true },
-          { id: 'tx1', name: 'People on first-line treatment', byPopulation: false, total: true, stacked: true },
-          { id: 'tx2', name: 'People on subsequent lines of treatment', byPopulation: false, total: true, stacked: true }
+          { id: 'tx1', name: 'People on first-line treatment', byPopulation: false, total: true, stacked: false },
+          { id: 'tx2', name: 'People on subsequent lines of treatment', byPopulation: false, total: true, stacked: false }
         ],
         costs:[
-        {id:"costcum", name: "Cumulative costs", existing: true, future: true, total: false, stacked: true},
-        {id:"costann", name: "Annual costs", existing: true, future: true, total: false, stacked: true}
+          {id:"costcum", name: "Cumulative costs", existing: false, future: false, total: true, stacked: true},
+          {id:"costann", name: "Annual costs", existing: false, future: false, total: true, stacked: true}
         ],
         financialAnnualCosts: [
           {id:'total', name:'Total amount', disabled: true},
