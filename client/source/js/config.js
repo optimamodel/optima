@@ -17,11 +17,12 @@ define(['angular'], function (angular) {
           { id: 'prev', name: 'HIV prevalence', byPopulation: true, total: false},
           { id: 'plhiv', name:'Number of PLHIV', byPopulation:false, total:true, stacked: true},
           { id: 'daly', name: 'HIV-related DALYs', byPopulation: false, total: true, stacked: true },
-          { id: 'death', name: 'AIDS-related deaths', byPopulation: false, total: true, stacked: true },
+          { id: 'death', name: 'HIV/AIDS-related deaths', byPopulation: false, total: true, stacked: true },
           { id: 'inci', name: 'New HIV infections', byPopulation: false, total: true, stacked: true },
+          { id: 'force', name: 'Incidence per 100 person-years', byPopulation: false, total: true},
           { id: 'dx', name: 'New HIV diagnoses', byPopulation: false, total: true, stacked: true },
-          { id: 'tx1', name: 'People on 1st-line treatment', byPopulation: false, total: true, stacked: true },
-          { id: 'tx2', name: 'People on 2nd-line treatment', byPopulation: false, total: true, stacked: true }
+          { id: 'tx1', name: 'People on first-line treatment', byPopulation: false, total: true, stacked: true },
+          { id: 'tx2', name: 'People on subsequent lines of treatment', byPopulation: false, total: true, stacked: true }
         ],
         financial: [
           { id: 'total', name: 'Total HIV-related financial commitments', annual: true, cumulative: true  },
