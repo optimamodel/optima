@@ -1,16 +1,23 @@
 """
 Plots cost-coverage, coverage-outcome and cost-outcome curves
-    
+
 Version: 2015jan19 by robynstuart
 """
 from matplotlib.pylab import figure, plot, hold, xlabel, ylabel, title, xlim, ylim
 from printv import printv
 
+# TODO robyn - which one is the correct one? I had a merge conflict
+# default_progname = 'ART'
+# default_ccparams = [2.0, 0.2, 2500000.0, None, None] #
+# default_ccplot = [1e4, None, 1]
+# default_coparams = [0.3, 0.5, 0.7, 0.9]
+
 default_progname = 'MSM programs'
 default_ccparams = [0.9, 0.5, 0.6, 400000.0, 0.5, None] #
 default_ccplot = [None, None, 0]
-default_coparams = [.300, .500, .700, .900] 
-default_effect = [['sex', 'condomcas'], [u'MSM']] # D.programs[default_progname]['effects'][0] 
+default_coparams = [.300, .500, .700, .900]
+
+default_effect = [['sex', 'condomcas'], [u'MSM']] # D.programs[default_progname]['effects'][0]
 default_artelig = range(6,31)
 coverage_params = ['numost','numpmtct','numfirstline','numsecondline']
 
@@ -19,12 +26,12 @@ def plotcc(D, progname=default_progname, ccparams=default_ccparams, ccplot=defau
     '''
     Plot a single cost-coverage curve
     '''
-    
+
     from makeccocs import makecc
-    
+
     plotdata, D = makecc(D, progname=progname, ccparams=ccparams, ccplot=ccplot, artelig=default_artelig, verbose=2, nxpts = 1000)
 
-    printv("plotting cc for program %s" % progname, 4, 2)   
+    printv("plotting cc for program %s" % progname, 4, 2)
     figure()
     hold(True)
     if 'xlinedata' in plotdata.keys():
@@ -48,7 +55,7 @@ def plotco(D, progname=default_progname, effect=default_effect, coparams=default
 
     plotdata, effect = makeco(D, progname=progname, effect=effect, coparams=coparams, verbose=2,nxpts = 1000)
 
-    # Plot results                           
+    # Plot results
     figure()
     hold(True)
     if 'xlinedata' in plotdata.keys():
@@ -69,17 +76,17 @@ def plotcco(D, progname=default_progname, effect=default_effect, ccparams=defaul
     '''
 
     from makeccocs import makecco
-    
+
     plotdata, plotdata_co, effect = makecco(D, progname=progname, effect=effect, ccparams=ccparams, ccplot=ccplot, coparams=coparams, verbose=2, nxpts=1000)
 
-    # Plot results 
+    # Plot results
     figure()
     hold(True)
     if 'xlinedata' in plotdata.keys():
         plot(plotdata['xlinedata'], plotdata['ylinedata1'], color = 'b', lw = 2)
         plot(plotdata['xlinedata'], plotdata['ylinedata2'], 'k--', lw = 2)
         plot(plotdata['xlinedata'], plotdata['ylinedata3'], 'k--', lw = 2)
-    plot(plotdata['xscatterdata'], plotdata['yscatterdata'], 'ro')                
+    plot(plotdata['xscatterdata'], plotdata['yscatterdata'], 'ro')
     title(plotdata['title'])
     xlabel(plotdata['xlabel'])
     ylabel(plotdata['ylabel'] )
@@ -91,7 +98,7 @@ def plotprogramcco(D, progname=default_progname, ccparams=default_ccparams, ccpl
     '''
     Plot all cost-coverage, coverage-outcome and cost-outcome curves for a single program
     '''
-    
+
     plotcc(D, progname=progname, ccparams=ccparams, ccplot=ccplot)
     for effectnumber, effect in enumerate(D.programs[progname]['effects']):
         parname = effect[0][1]

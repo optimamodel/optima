@@ -76,8 +76,12 @@ define(['./module', './scale-helpers'], function (module, scaleHelpers) {
           scale.x.domain([Math.floor(xMin), scaleHelpers.flexCeil(xMax)]);
         });
 
+        scope.options.xAxis.tickFormat = function (value) {
+          var format = scaleHelpers.evaluateTickFormat(xMin, xMax);
+          return scaleHelpers.customTickFormat(value, format);
+        };
         scope.options.yAxis.tickFormat = function (value) {
-          var format = scaleHelpers.evaluateTickFormat(0, yMax);
+          var format = scaleHelpers.evaluateTickFormat(yMin, yMax);
           return scaleHelpers.customTickFormat(value, format);
         };
 

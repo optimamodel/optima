@@ -16,16 +16,10 @@ define([
         left: 60
       },
       xAxis: {
-        axisLabel: 'Axis X',
-        tickFormat: function (d) {
-          return d3.format('d')(d);
-        }
+        axisLabel: 'Axis X'
       },
       yAxis: {
-        axisLabel: 'Axis Y',
-        tickFormat: function (d) {
-          return d3.format(',.2f')(d);
-        }
+        axisLabel: 'Axis Y'
       }
     };
 
@@ -48,16 +42,10 @@ define([
         left: 60
       },
       xAxis: {
-        axisLabel: 'Axis X',
-        tickFormat: function (d) {
-          return d3.format('d')(d);
-        }
+        axisLabel: 'Axis X'
       },
       yAxis: {
-        axisLabel: 'Axis Y',
-        tickFormat: function (d) {
-          return d3.format(',.2f')(d);
-        }
+        axisLabel: 'Axis Y'
       }
     };
 
@@ -78,16 +66,10 @@ define([
         left: 60
       },
       xAxis: {
-        axisLabel: 'Axis X',
-        tickFormat: function (d) {
-          return d3.format('d')(d);
-        }
+        axisLabel: 'Axis X'
       },
       yAxis: {
-        axisLabel: 'Axis Y',
-        tickFormat: function (d) {
-          return d3.format(',.2f')(d);
-        }
+        axisLabel: 'Axis Y'
       }
     };
 

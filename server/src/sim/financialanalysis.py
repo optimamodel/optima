@@ -141,6 +141,6 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False):
 
 #figure()
 #hold(True)
-#plot(plotdata['annual']['total']['domestichealth']['xlinedata'],plotdata['annual']['total']['domestichealth']['ylinedata'], lw = 2, c = 'b')
-#plot(plotdata['annual']['existing']['domestichealth']['xlinedata'],plotdata['annual']['existing']['domestichealth']['ylinedata'], lw = 2, c = 'r')
-#plot(plotdata['annual']['future']['domestichealth']['xlinedata'],plotdata['annual']['future']['domestichealth']['ylinedata'], lw = 2, c = 'k')
+#plot(plotdata['annual']['total']['gdp']['xlinedata'],plotdata['annual']['total']['gdp']['ylinedata'], lw = 2, c = 'b')
+#plot(plotdata['annual']['existing']['gdp']['xlinedata'],plotdata['annual']['existing']['gdp']['ylinedata'], lw = 2, c = 'r')
+#plot(plotdata['annual']['future']['gdp']['xlinedata'],plotdata['annual']['future']['gdp']['ylinedata'], lw = 2, c = 'k')
