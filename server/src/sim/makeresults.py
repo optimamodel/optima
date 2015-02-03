@@ -29,6 +29,7 @@ def makeresults(D, allsims=None, quantiles=None, verbose=2):
     if quantiles==None: quantiles = D.opt.quantiles # If no quantiles are specified, just use the default ones
     allpeople = deepcopy(array([allsims[s].people for s in range(nsims)])) # WARNING, might use stupid amounts of memory
     
+    thesecosts = None # Initialize
     for data in ['prev', 'plhiv', 'inci', 'force', 'daly', 'death', 'tx1', 'tx2', 'dx', 'costann', 'costcum']:
         R[data] = struct()
         if data[0:4] != 'cost':
@@ -117,7 +118,8 @@ def makeresults(D, allsims=None, quantiles=None, verbose=2):
             from financialanalysis import financialanalysis
             allcosts = []
             for s in range(nsims):
-                thesecosts = financialanalysis(D, postyear = D.data.epiyears[-1], S = allsims[s], makeplot = False)
+                if thesecosts is None:
+                    thesecosts = financialanalysis(D, postyear = D.data.epiyears[-1], S = allsims[s], makeplot = False)
                 allcosts.append(thesecosts)
             
             if data=='costcum':

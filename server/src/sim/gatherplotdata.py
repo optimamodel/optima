@@ -136,45 +136,39 @@ def gatheruncerdata(D, R, annual=True, verbose=2):
                     uncer[key].stacked[yscale].ylabel = R['costshared'][origkey]['total'][yscale]['ylabel']
 
         #Loop through cost types
-        for ac in ['total','future','existing','stacked']:
+        for ac in ['total','future','existing']:
             uncer[key][ac] = struct()
             if key=='costcum':
                 # Individual line graphs with uncertainty
-                if ac != 'stacked':
-                    uncer[key][ac].best = R[key][ac][0][indices].tolist()
-                    uncer[key][ac].low = R[key][ac][1][indices].tolist()
-                    uncer[key][ac].high = R[key][ac][2][indices].tolist()
-                    uncer[key][ac].legend = ['Model']
-                else:
-                    uncer[key].stacked.ydata = []
-                    uncer[key].stacked.legend = []
-                    for ac2 in ['existing','future']:
-                        uncer[key].stacked.ydata.append(uncer[key][ac2].best)
-                        uncer[key].stacked.legend.append([ac2.title()])
-                ac2='total' if ac=='stacked' else ac # Data don't exist for stacked
-                uncer[key][ac].xdata = R['costshared'][origkey][ac2]['xlinedata'][indices].tolist()
-                uncer[key][ac].title = R['costshared'][origkey][ac2]['title']
-                uncer[key][ac].xlabel = R['costshared'][origkey][ac2]['xlabel']
-                uncer[key][ac].ylabel = R['costshared'][origkey][ac2]['ylabel']
+                uncer[key][ac].best = R[key][ac][0][indices].tolist()
+                uncer[key][ac].low = R[key][ac][1][indices].tolist()
+                uncer[key][ac].high = R[key][ac][2][indices].tolist()
+                uncer[key][ac].xdata = R['costshared'][origkey][ac]['xlinedata'][indices].tolist()
+                uncer[key][ac].title = R['costshared'][origkey][ac]['title']
+                uncer[key][ac].xlabel = R['costshared'][origkey][ac]['xlabel']
+                uncer[key][ac].ylabel = R['costshared'][origkey][ac]['ylabel']
+                uncer[key][ac].legend = ['Model']
+                # Stacked graphs
+                if ac != 'total':
+                    uncer[key].stacked.costs.append(uncer[key][ac].best)
+                    uncer[key].stacked.legend.append([ac.title()])
             else:
                 for yscale in ['total','gdp','revenue','govtexpend','totalhealth','domestichealth']:
                     uncer[key][ac][yscale] = struct()
-                    if ac != 'stacked':
+                    if 'ylinedata' in R['costshared'][origkey][ac][yscale]:
+                        # Individual line graphs with uncertainty
                         uncer[key][ac][yscale].best = R[key][ac][yscale][0][indices].tolist()
                         uncer[key][ac][yscale].low = R[key][ac][yscale][1][indices].tolist()
                         uncer[key][ac][yscale].high = R[key][ac][yscale][2][indices].tolist()
+                        uncer[key][ac][yscale].xdata = R['costshared'][origkey][ac][yscale]['xlinedata'][indices].tolist()
+                        uncer[key][ac][yscale].title = R['costshared'][origkey][ac][yscale]['title']
+                        uncer[key][ac][yscale].xlabel = R['costshared'][origkey][ac][yscale]['xlabel']
+                        uncer[key][ac][yscale].ylabel = R['costshared'][origkey][ac][yscale]['ylabel']
                         uncer[key][ac][yscale].legend = ['Model']
-                    else:
-                        uncer[key][ac][yscale].ydata = []
-                        uncer[key][ac][yscale].legend = []
-                        for ac2 in ['existing','future']:
-                            uncer[key].stacked[yscale].ydata.append(uncer[key][ac2].best)
-                            uncer[key].stacked[yscale].legend.append([ac2.title()])
-                    ac2='total' if ac=='stacked' else ac # Data don't exist for stacked
-                    uncer[key][ac][yscale].xdata = R['costshared'][origkey][ac][yscale]['xlinedata'][indices].tolist()
-                    uncer[key][ac][yscale].title = R['costshared'][origkey][ac][yscale]['title']
-                    uncer[key][ac][yscale].xlabel = R['costshared'][origkey][ac][yscale]['xlabel']
-                    uncer[key][ac][yscale].ylabel = R['costshared'][origkey][ac][yscale]['ylabel']
+                        # Stacked graphs
+                        if ac != 'total':
+                            uncer[key].stacked[yscale].costs.append(uncer[key][ac][yscale].best)
+                            uncer[key].stacked[yscale].legend.append([ac.title()])
                             
     
     printv('...done gathering uncertainty results.', 4, verbose)
