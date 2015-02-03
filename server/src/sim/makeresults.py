@@ -18,17 +18,18 @@ def makeresults(D, allsims=None, quantiles=None, verbose=2):
     from bunch import Bunch as struct
     from printv import printv
     from quantile import quantile
+    from copy import deepcopy
     printv('Calculating results...', 1, verbose)
-    if allsims is None: allsims = [D.S] # If not supplied, using sims structure already in D
+    if allsims is None: allsims = deepcopy([D.S]) # If not supplied, using sims structure already in D
     
     R = struct()
     R.__doc__ = 'Output structure containing all worthwhile results from the model'
     R.tvec = allsims[0].tvec # Copy time vector
     nsims = len(allsims) # Number of simulations to average over
     if quantiles==None: quantiles = D.opt.quantiles # If no quantiles are specified, just use the default ones
-    allpeople = array([allsims[s].people for s in range(nsims)]) # WARNING, might use stupid amounts of memory
+    allpeople = deepcopy(array([allsims[s].people for s in range(nsims)])) # WARNING, might use stupid amounts of memory
     
-    for data in ['prev', 'plhiv', 'inci', 'daly', 'death', 'tx1', 'tx2', 'dx', 'costann', 'costcum']:
+    for data in ['prev', 'plhiv', 'inci', 'force', 'daly', 'death', 'tx1', 'tx2', 'dx', 'costann', 'costcum']:
         R[data] = struct()
         if data[0:4] != 'cost':
             R[data].pops = []
@@ -63,6 +64,13 @@ def makeresults(D, allsims=None, quantiles=None, verbose=2):
             allinci = array([allsims[s].inci for s in range(nsims)])
             R.inci.pops = quantile(allinci, quantiles=quantiles)
             R.inci.tot = quantile(allinci.sum(axis=1), quantiles=quantiles) # Axis 1 is populations
+
+
+        if data=='force':
+            printv('Calculating force-of-infection...', 3, verbose)
+            allinci = array([allsims[s].inci for s in range(nsims)])
+            R.force.pops = quantile(allinci / allpeople[:,:,:,:].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
+            R.force.tot = quantile(allinci.sum(axis=1) / allpeople[:,:,:,:].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
         
         
         if data=='death':

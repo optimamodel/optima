@@ -1,4 +1,4 @@
-define(['./module', './scale-helpers', 'angular'], function (module, scaleHelpers, angular) {
+define(['./module', './scale-helpers', 'angular', 'underscore'], function (module, scaleHelpers, angular, _) {
   'use strict';
 
   module.directive('stackedAreaChart', function (d3Charts) {
@@ -101,7 +101,17 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
 
       var graphsScales = [];
       var stackedData = generateAreas(data.areas);
-      var highestLine = _.chain(stackedData).last().map(function(dot) { return [dot[0], dot[2]]; }).value();
+
+      var highestLineMaxY = 0;
+      var highestLine = _.chain(stackedData).last().map(function(dot) {
+        highestLineMaxY = Math.max(highestLineMaxY, dot[2]);
+        return [dot[0], dot[2]];
+      }).value();
+
+      // will fail now instead of hanging the browser
+      if (highestLineMaxY === 0) {
+        throw new Error('Graph lines should not be all zeros');
+      }
 
       _(stackedData).each(function (area, index) {
         var areaChart = new d3Charts.AreaChart(chartGroup, chartSize, colors[index]);
@@ -124,11 +134,22 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
       // area line to generate the maximum y scale
       var yMax = _(highestLine).max(function(dot){ return dot[1]; })[1];
       var xMax = _(highestLine).last()[0];
+      var xMin = highestLine[0][0];
 
       _(graphsScales).each(function (scale) {
         scale.y.domain([0, scaleHelpers.flexCeil(yMax)]);
         scale.x.domain([Math.floor(highestLine[0][0]), scaleHelpers.flexCeil(xMax)]);
       });
+
+      options.xAxis.tickFormat = function (value) {
+        var format = scaleHelpers.evaluateTickFormat(xMin, xMax);
+        return scaleHelpers.customTickFormat(value, format);
+      };
+      options.yAxis.tickFormat = function (value) {
+        // since it's a stacked area chart yMin will always be 0
+        var format = scaleHelpers.evaluateTickFormat(0, yMax);
+        return scaleHelpers.customTickFormat(value, format);
+      };
 
       d3Charts.drawAxes(
         graphsScales[0],

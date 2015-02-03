@@ -1,10 +1,11 @@
 from copy import deepcopy
 
-def updatedata(D, verbose=2, savetofile = True):
+def updatedata(D, verbose=2, savetofile = True, input_programs = None):
     """
     Load the Excel workbook (for the given project), assuming it's in the standard uploads directory
     loads the data for the given project,
     updates the model based on the speardsheet contents
+    programs - set up in GUI, contain information about the (adjusted) programs and parameters for the given project
     
     Version: 2015jan19 by cliffk
     """
@@ -18,9 +19,10 @@ def updatedata(D, verbose=2, savetofile = True):
     printv('Updating data...', 1, verbose)
     
     datapath = fullpath(D.G.workbookname)
-    D.data, D.programs = loadworkbook(datapath, verbose=verbose)
+    D.data, D.programs = loadworkbook(datapath, input_programs, verbose=verbose)
     D.programs = restructureprograms(D.programs)
     D.data = getrealcosts(D.data)
+    
     D = makedatapars(D, verbose=verbose) # Update parameters
     D.M = makemodelpars(D.P, D.opt, verbose=verbose)
     D = makefittedpars(D, verbose=verbose)
@@ -41,10 +43,10 @@ def restructureprograms(programs):
     ccparams = []
     convertedccparams = []
     nonhivdalys = [0.0]
-    keys = ['ccparams','convertedccparams','nonhivdalys','effects']
+    keys = ['ccparams','convertedccparams','nonhivdalys','effects','ccplot']
     for program in programs.keys():
         programs[program] = dict(zip(keys,[ccparams, convertedccparams, nonhivdalys, programs[program]]))
-    
+
     return programs
     
     

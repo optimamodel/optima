@@ -1,11 +1,10 @@
-define(['./module', './scale-helpers', 'angular', './stacked-bar-chart'], function (module, scaleHelpers, angular, StackedBarChart) {
+define(['./module', './scale-helpers', 'angular', './two-sided-horizontal-bar-chart'], function (module, scaleHelpers, angular, TwoSidedHorizontalBarChart) {
   'use strict';
 
-  module.directive('stackedBarChart', function (d3Charts) {
+  module.directive('twoSidedHorizontalBarChart', function (d3Charts) {
     var svg;
 
     var defaultColors = [
-      '__color-blue-1',
       '__color-blue-2',
       '__color-blue-3',
       '__color-grey-1',
@@ -32,8 +31,8 @@ define(['./module', './scale-helpers', 'angular', './stacked-bar-chart'], functi
     ];
 
     /**
-     * Draw the stacked bar chart
-     */
+    * Draw the stacked bar chart
+    */
     var drawGraph = function (data, options, rootElement) {
       options.linesStyle = options.linesStyle || defaultColors;
       options = d3Charts.adaptOptions(options);
@@ -58,27 +57,13 @@ define(['./module', './scale-helpers', 'angular', './stacked-bar-chart'], functi
 
       // Define svg groups
       var chartGroup = svg.append('g').attr('class', 'chart_group');
-      var axesGroup = svg.append('g').attr('class', 'axes_group');
-      var headerGroup = svg.append('g').attr('class', 'header_group');
+      var headerGroup = svg.append('g').attr('class', 'legend_group');
 
-      var chart = new StackedBarChart(chartGroup, chartSize, data.bars, options.linesStyle);
+      var chart = new TwoSidedHorizontalBarChart(chartGroup, chartSize,
+        data.bars, options.linesStyle, options.leftTitle, options.rightTitle);
       chart.draw();
+
       d3Charts.drawTitleAndLegend(svg, options, headerGroup);
-
-      // since the xAxis is ordinal we don't need a tickformat for it
-      options.yAxis.tickFormat = function (value) {
-        // since it's a stacked bar chart yMin will always be 0
-        var format = scaleHelpers.evaluateTickFormat(0, chart.yMax());
-        return scaleHelpers.customTickFormat(value, format);
-      };
-
-      d3Charts.drawAxes(
-        chart.axisScales(),
-        options,
-        axesGroup,
-        chartSize
-      );
-
     };
 
     return {

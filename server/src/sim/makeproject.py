@@ -40,7 +40,9 @@ def makeproject(projectname='example', pops = default_pops, progs = default_prog
     D.G.datastart = datastart
     D.G.dataend = dataend
     D.G.datayears = arange(D.G.datastart, D.G.dataend+1)
-    
+    D.G.inputprograms = progs # remember input programs with their possible deviations from standard parameter set (if entered from GUI). 
+    # Hate duplicating the data, but can't think of a cleaner way of export/import.
+
     # Health states
     D.G.healthstates = ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'aids']
     D.G.ncd4 = len(D.G.healthstates)

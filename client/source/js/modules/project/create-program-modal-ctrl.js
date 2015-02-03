@@ -31,6 +31,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       $scope.program = programCopy;
       $scope.program.active = true;
+      if ($scope.isNew) { $scope.program.category = 'Other'; }
     };
 
     /*
@@ -70,7 +71,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.addParameter = function () {
-      var entry = {value: {signature: [], pops: []}};
+      var entry = {value: {signature: [], pops: []}, active: true};
       $scope.program.parameters = $scope.program.parameters || [];
       $scope.program.parameters.push(entry);
     };

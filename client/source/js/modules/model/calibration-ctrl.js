@@ -1,4 +1,4 @@
-define(['./module', 'angular', 'jquery'], function (module, angular, $) {
+define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ModelCalibrationController', function ($scope, $http, $interval,
@@ -7,7 +7,7 @@ define(['./module', 'angular', 'jquery'], function (module, angular, $) {
     $scope.projectInfo = info;
     $scope.canDoFitting = $scope.projectInfo.can_calibrate;
     $scope.needData = !$scope.projectInfo.has_data;
- 
+
     var prepareF = function (f) {
       var F = angular.copy(f);
 
@@ -54,6 +54,12 @@ define(['./module', 'angular', 'jquery'], function (module, angular, $) {
     angular.extend($scope.types, angular.copy(CONFIG.GRAPH_TYPES));
     // for calibration the overall charts should not be shown by default
     _($scope.types.population).each(function(entry) {
+      if (!_(['tx1', 'tx2', 'force']).contains(entry.id)) {
+        entry.total = false;
+      }
+    });
+    // for calibration the overall cost charts should not be shown by default
+    _($scope.types.costs).each(function(entry) {
       entry.total = false;
     });
 
@@ -73,10 +79,7 @@ define(['./module', 'angular', 'jquery'], function (module, angular, $) {
       width: 320,
       margin: CONFIG.GRAPH_MARGINS,
       xAxis: {
-        axisLabel: 'Year',
-        tickFormat: function (d) {
-          return d3.format('d')(d);
-        }
+        axisLabel: 'Year'
       },
       yAxis: {
         axisLabel: 'Prevalence (%)'
@@ -185,7 +188,7 @@ define(['./module', 'angular', 'jquery'], function (module, angular, $) {
       _($scope.types.population).each(function (type) {
         var data = response[type.id];
 
-        if (type.total) {
+        if (type.total && data) {
 
           var yData = {
             best: data.tot.best, high: data.tot.high, low: data.tot.low,
@@ -203,17 +206,6 @@ define(['./module', 'angular', 'jquery'], function (module, angular, $) {
           }
 
           charts.push(chart);
-        }
-
-        if (type.stacked) {
-          var stackedAreaChart = generateStackedAreaChart(data.popstacked.pops,
-            response.tvec, data.popstacked.title, data.popstacked.legend);
-
-          stackedAreaChart.options.xAxis.axisLabel = data.xlabel;
-          stackedAreaChart.options.yAxis.axisLabel = data.popstacked.ylabel;
-          stackedAreaChart.type = 'stackedAreaChart';
-
-          charts.push(stackedAreaChart);
         }
 
         // TODO: we're checking data because it could undefined ...
@@ -238,23 +230,59 @@ define(['./module', 'angular', 'jquery'], function (module, angular, $) {
             charts.push(chart);
           });
         }
-      });
 
-      _($scope.types.financial).each(function (type) {
-        // existing = cost for current people living with HIV
-        // future = cost for future people living with HIV
-        // costann = annual costs
-        // costcum = cumulative costs
-        if (type.annual) {
-          var annualData = response.costann[type.id][$scope.types.annualCost];
-          if(annualData && annualData.legend) charts.push(generateFinancialChart(annualData));
-        }
+        if (type.stacked) {
+          var stackedAreaChart = generateStackedAreaChart(data.popstacked.pops,
+            response.tvec, data.popstacked.title, data.popstacked.legend);
 
-        if (type.cumulative) {
-          var cumulativeData = response.costcum[type.id];
-          if (cumulativeData) charts.push(generateFinancialChart(cumulativeData));
+          stackedAreaChart.options.xAxis.axisLabel = data.xlabel;
+          stackedAreaChart.options.yAxis.axisLabel = data.popstacked.ylabel;
+          stackedAreaChart.type = 'stackedAreaChart';
+
+          charts.push(stackedAreaChart);
         }
       });
+
+      // annual cost charts
+      _(['existing', 'future', 'total']).each(function(type) {
+        var chartData = response.costann[type][$scope.types.activeAnnualCost];
+        var isActive = $scope.types.costs[0][type];
+        if (chartData && isActive) {
+          charts.push(generateFinancialChart(chartData));
+        }
+      });
+
+      var stackedAnnualData = response.costann.stacked[$scope.types.activeAnnualCost];
+      var stackedAnnualCostIsActive = $scope.types.costs[0].stacked;
+      if (stackedAnnualData && stackedAnnualCostIsActive) {
+        var stackedAreaChart = generateStackedAreaChart(stackedAnnualData.costs,
+          response.tvec, stackedAnnualData.title, stackedAnnualData.legend);
+        stackedAreaChart.options.xAxis.axisLabel = 'Year';
+        stackedAreaChart.options.yAxis.axisLabel = stackedAnnualData.ylabel;
+        stackedAreaChart.type = 'stackedAreaChart';
+        charts.push(stackedAreaChart);
+      }
+
+      // cumulative cost charts
+      _(['existing', 'future', 'total']).each(function(type) {
+        var chartData = response.costcum[type];
+        var isActive = $scope.types.costs[1][type];
+        if (chartData && isActive) {
+          charts.push(generateFinancialChart(chartData));
+        }
+      });
+
+      var stackedCumulativeData = response.costcum.stacked;
+      var stackedCumulativeCostIsActive = $scope.types.costs[1].stacked;
+      if (stackedCumulativeData && stackedCumulativeCostIsActive) {
+        var stackedCumulativeChart = generateStackedAreaChart(
+          stackedCumulativeData.costs, response.tvec,
+          stackedCumulativeData.title, stackedCumulativeData.legend);
+        stackedCumulativeChart.options.xAxis.axisLabel = 'Year';
+        stackedCumulativeChart.options.yAxis.axisLabel = stackedCumulativeData.ylabel;
+        stackedCumulativeChart.type = 'stackedAreaChart';
+        charts.push(stackedCumulativeChart);
+      }
 
       return charts;
     };
@@ -322,12 +350,12 @@ define(['./module', 'angular', 'jquery'], function (module, angular, $) {
         .success(function(data, status, headers, config) {
           if (data.status == 'Done') {
             stopTimer();
-          } 
+          }
           updateCharts(data); // now when we might run continuous calibration, this might be the only chance to update the charts.
         })
         .error(function(data, status, headers, config) {
           if (data && data.exception) {
-            $scope.errorText = data.exception
+            $scope.errorText = data.exception;
           }
           stopTimer();
         });

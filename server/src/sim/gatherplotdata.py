@@ -8,8 +8,8 @@ Version: 2015jan06 by cliffk
 """
 
 # Define labels
-epititles = {'prev':'Prevalence', 'plhiv':'PLHIV', 'inci':'New infections', 'daly':'DALYs', 'death':'Deaths', 'dx':'Diagnoses', 'tx1':'First-line treatment', 'tx2':'Second-line treatment'}
-epiylabels = {'prev':'HIV prevalence (%)', 'plhiv':'Number of PLHIV', 'inci':'New HIV infections per year', 'daly':'HIV-related DALYs per year', 'death':'AIDS-related deaths per year', 'dx':'New HIV diagnoses per year', 'tx1':'People on 1st-line treatment', 'tx2':'People on 2nd-line treatment'}
+epititles = {'prev':'Prevalence', 'plhiv':'PLHIV', 'inci':'New infections', 'force':'Incidence', 'daly':'DALYs', 'death':'Deaths', 'dx':'Diagnoses', 'tx1':'First-line treatment', 'tx2':'Subsequent lines of treatment'}
+epiylabels = {'prev':'HIV prevalence (%)', 'plhiv':'Number of PLHIV', 'inci':'New HIV infections per year', 'force':'Incidence per 100 person-years', 'daly':'HIV-related DALYs per year', 'death':'HIV/AIDS-related deaths per year', 'dx':'New HIV diagnoses per year', 'tx1':'People on first-line treatment', 'tx2':'People on subsequent lines of treatment'}
 costtitles = {'costcum':'Cumulative HIV-related financial commitments'}
 costylabels = {}
 
@@ -41,12 +41,12 @@ def gatheruncerdata(D, R, annual=True, verbose=2):
         indices = range(len(origtvec))
     
     for key in epititles.keys():
-        percent = 100 if key=='prev' else 1 # Whether to multiple results by 100
+        percent = 100 if key in ['prev','force'] else 1 # Whether to multiple results by 100
         
         uncer[key] = struct()
         uncer[key].pops = [struct() for p in range(D.G.npops)]
         uncer[key].tot = struct()
-        if key!='prev': # For stacked area plots -- an option for everything except prevalence
+        if key not in ['prev','force']: # For stacked area plots -- an option for everything except prevalence and force-of-infection
             uncer[key].popstacked = struct()
             uncer[key].popstacked.pops = []
             uncer[key].popstacked.legend = []
@@ -58,7 +58,7 @@ def gatheruncerdata(D, R, annual=True, verbose=2):
             uncer[key].pops[p].high = (R[key].pops[2][p,:]*percent)[indices].tolist()
             uncer[key].pops[p].title = epititles[key] + ' - ' + D.G.meta.pops.short[p]
             uncer[key].pops[p].ylabel = epiylabels[key]
-            if key!='prev':
+            if key not in ['prev','force']:
                 uncer[key].popstacked.pops.append(uncer[key].pops[p].best)
                 uncer[key].popstacked.legend.append(D.G.meta.pops.short[p])
         uncer[key].tot.best = (R[key].tot[0]*percent)[indices].tolist()
@@ -77,6 +77,9 @@ def gatheruncerdata(D, R, annual=True, verbose=2):
         if key=='inci':
             epidata = D.data.opt.numinfect[0]
             uncer.inci.ydata = zeros(ndatayears).tolist()
+        if key=='force':
+            epidata = nan+zeros(ndatayears) # No data
+            uncer.force.ydata = zeros(ndatayears).tolist()
         if key=='death':
             epidata = D.data.opt.death[0]
             uncer.death.ydata = zeros(ndatayears).tolist()
@@ -96,6 +99,10 @@ def gatheruncerdata(D, R, annual=True, verbose=2):
 
         if size(epidata[0])==1 and ndim(epidata)==1: # It's not by population
             uncer[key].ydata = (array(epidata)*percent).tolist()
+            if len(uncer[key].ydata) == 1:
+                uncer[key].ydata = nan+zeros(ndatayears) # If it's an assumption, just set with nans
+            if len(uncer[key].ydata) != ndatayears:
+                raise Exception('Expect data length of 1 or %i, actually %i' % (ndatayears, len(uncer[key].ydata)))
         elif size(epidata,axis=0)==D.G.npops: # It's by population
             for p in range(D.G.npops):
                 thispopdata = epidata[p]
@@ -142,8 +149,9 @@ def gatheruncerdata(D, R, annual=True, verbose=2):
                 uncer[key][ac].ylabel = R['costshared'][origkey][ac]['ylabel']
                 uncer[key][ac].legend = ['Model']
                 # Stacked graphs
-                uncer[key].stacked.costs.append(uncer[key][ac].best)
-                uncer[key].stacked.legend.append([ac])
+                if ac != 'total':
+                    uncer[key].stacked.costs.append(uncer[key][ac].best)
+                    uncer[key].stacked.legend.append([ac])
             else:
                 for yscale in ['total','gdp','revenue','govtexpend','totalhealth','domestichealth']:
                     uncer[key][ac][yscale] = struct()
@@ -158,8 +166,9 @@ def gatheruncerdata(D, R, annual=True, verbose=2):
                         uncer[key][ac][yscale].ylabel = R['costshared'][origkey][ac][yscale]['ylabel']
                         uncer[key][ac][yscale].legend = ['Model']
                         # Stacked graphs
-                        uncer[key].stacked[yscale].costs.append(uncer[key][ac][yscale].best)
-                        uncer[key].stacked[yscale].legend.append([ac])
+                        if ac != 'total':
+                            uncer[key].stacked[yscale].costs.append(uncer[key][ac][yscale].best)
+                            uncer[key].stacked[yscale].legend.append([ac])
                             
     
     printv('...done gathering uncertainty results.', 4, verbose)
@@ -192,7 +201,7 @@ def gathermultidata(D, Rarr, annual=True, verbose=2):
         indices = range(len(origtvec))
     
     for key in epititles.keys():
-        percent = 100 if key=='prev' else 1 # Whether to multiple results by 100
+        percent = 100 if key in ['prev','force'] else 1 # Whether to multiple results by 100
         multi[key] = struct()
         multi[key].pops = [struct() for p in range(D.G.npops)]
         for p in range(D.G.npops):
@@ -258,7 +267,6 @@ def gatheroptimdata(D, result, verbose=2):
     """ Return the data for plotting the optimization results. """
     from bunch import Bunch as struct
     from printv import printv
-    from numpy import arange
     printv('Gathering optimization results...', 3, verbose)
     
     optim = struct() # These optimization results

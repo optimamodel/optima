@@ -17,15 +17,18 @@ show_wait = False
 nsims = 5
 timelimit = 10
 
+spaces = 10
 
+
+print('\n'*spaces)
+print('======================================================================')
+print('                       TESTING BASIC FUNCTIONS')
+print('======================================================================')
 
 print('\n\n\n1. Making project...')
 from makeproject import makeproject
 D = makeproject(projectname=projectname, pops=['']*6, progs = ['']*7, datastart=2000, dataend=2015, verbose=verbose)
 D.opt.nsims = nsims # Reset options
-
-
-
 
 print('\n\n\n2. Updating data...')
 from updatedata import updatedata
@@ -34,12 +37,28 @@ D = updatedata(D, verbose=verbose)
 
 
 
+
+
+
+print('\n'*spaces)
+print('======================================================================')
+print('                       TESTING MAKECCOCS')
+print('======================================================================')
+
 # Actually run makeccocs
 from plotccocs import plotallcco
 #plotallcco(D=D)
 plotallcco(D=D, coparams=[], ccparams=[0.9, 0.15, 0.25, 800000.0, None, None], ccplot=[1000000,None,1])
 
 
+
+
+
+
+print('\n'*spaces)
+print('======================================================================')
+print('                       TESTING MANUAL FITTING')
+print('======================================================================')
 
 
 print('\n\n\n4. Setting up manual fitting...')
@@ -70,12 +89,29 @@ D = manualfit(D, F=F, Plist=Plist, Mlist=Mlist, simstartyear=2000, simendyear=20
 
 
 
+
+
+print('\n'*spaces)
+print('======================================================================')
+print('                       TESTING AUTOMATIC FITTING')
+print('======================================================================')
+
+
 print('\n\n\n4. Running automatic fitting...')
 from autofit import autofit
 autofit(D, timelimit=timelimit, simstartyear=2000, simendyear=2015, verbose=verbose)
 
 
 
+
+
+
+
+
+print('\n'*spaces)
+print('======================================================================')
+print('                       TESTING SCENARIOS')
+print('======================================================================')
 
 
 print('\n\n\n3. Defining scenarios...')
@@ -140,6 +176,17 @@ D = runscenarios(D, scenariolist=scenariolist, verbose=verbose)
 
 
 
+
+
+
+print('\n'*spaces)
+print('======================================================================')
+print('                       TESTING OPTIMIZATION')
+print('======================================================================')
+
+
+
+
 testconstant = False
 testmultibudget = False
 testtimevarying = False
@@ -165,14 +212,6 @@ if maxtime:
 else:
     stoppingfunc = None
     
-
-print('\n\n\n1. Making project...')
-from makeproject import makeproject
-D = makeproject(projectname=projectname, pops=['']*6, progs = ['']*7, datastart=2000, dataend=2015, verbose=verbose)
-
-print('\n\n\n2. Updating data...')
-from updatedata import updatedata
-D = updatedata(D, verbose=verbose, savetofile=False)
 
 
 if testconstant:

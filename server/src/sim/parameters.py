@@ -88,6 +88,9 @@ def input_parameter(input_key):
     else:
         return None
 
+def input_parameters(input_key):
+    return [param for param in parameter_list if input_key in param['input_keys']]
+
 def input_parameter_name(input_key):
     param = input_parameter(input_key)
     if param:

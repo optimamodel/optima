@@ -16,16 +16,10 @@ define([
         left: 60
       },
       xAxis: {
-        axisLabel: 'Axis X',
-        tickFormat: function (d) {
-          return d3.format('d')(d);
-        }
+        axisLabel: 'Axis X'
       },
       yAxis: {
-        axisLabel: 'Axis Y',
-        tickFormat: function (d) {
-          return d3.format(',.2f')(d);
-        }
+        axisLabel: 'Axis Y'
       }
     };
 
@@ -48,16 +42,10 @@ define([
         left: 60
       },
       xAxis: {
-        axisLabel: 'Axis X',
-        tickFormat: function (d) {
-          return d3.format('d')(d);
-        }
+        axisLabel: 'Axis X'
       },
       yAxis: {
-        axisLabel: 'Axis Y',
-        tickFormat: function (d) {
-          return d3.format(',.2f')(d);
-        }
+        axisLabel: 'Axis Y'
       }
     };
 
@@ -78,16 +66,10 @@ define([
         left: 60
       },
       xAxis: {
-        axisLabel: 'Axis X',
-        tickFormat: function (d) {
-          return d3.format('d')(d);
-        }
+        axisLabel: 'Axis X'
       },
       yAxis: {
-        axisLabel: 'Axis Y',
-        tickFormat: function (d) {
-          return d3.format(',.2f')(d);
-        }
+        axisLabel: 'Axis Y'
       }
     };
 
@@ -170,6 +152,31 @@ define([
        [2001, [552339, 259034, 450818]],
        [2002, [85640, 42153, 74257]],
        [2003, [592339, 559034, 250818]]
+      ]
+    };
+
+    // Two sided horizontal bar chart
+    // =======
+
+    $scope.options10 = {
+      legend: ['AA', 'BB', 'CC'],
+      height: 300,
+      width: 600,
+      margin: {
+        top: 20,
+        right: 20,
+        bottom: 60,
+        left: 60
+      },
+      leftTitle: "Left Title",
+      rightTitle: "Right Title"
+    };
+
+    $scope.data10 = {
+      bars: [
+        ['Level 1', 12030, [552339, 259034, 450818]],
+        ['Level 2', 8034, [85640, 42153, 74257]],
+        ['Level 3', 2023, [592339, 559034, 250818]]
       ]
     };
 
