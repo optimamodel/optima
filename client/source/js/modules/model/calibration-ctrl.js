@@ -7,7 +7,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.projectInfo = info;
     $scope.canDoFitting = $scope.projectInfo.can_calibrate;
     $scope.needData = !$scope.projectInfo.has_data;
- 
+
     var prepareF = function (f) {
       var F = angular.copy(f);
 
@@ -205,17 +205,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           charts.push(chart);
         }
 
-        if (type.stacked) {
-          var stackedAreaChart = generateStackedAreaChart(data.popstacked.pops,
-            response.tvec, data.popstacked.title, data.popstacked.legend);
-
-          stackedAreaChart.options.xAxis.axisLabel = data.xlabel;
-          stackedAreaChart.options.yAxis.axisLabel = data.popstacked.ylabel;
-          stackedAreaChart.type = 'stackedAreaChart';
-
-          charts.push(stackedAreaChart);
-        }
-
         // TODO: we're checking data because it could undefined ...
         if (type.byPopulation && data) {
           _(data.pops).each(function (population, populationIndex) {
@@ -237,6 +226,17 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
             charts.push(chart);
           });
+        }
+
+        if (type.stacked) {
+          var stackedAreaChart = generateStackedAreaChart(data.popstacked.pops,
+            response.tvec, data.popstacked.title, data.popstacked.legend);
+
+            stackedAreaChart.options.xAxis.axisLabel = data.xlabel;
+            stackedAreaChart.options.yAxis.axisLabel = data.popstacked.ylabel;
+            stackedAreaChart.type = 'stackedAreaChart';
+
+            charts.push(stackedAreaChart);
         }
       });
 
@@ -326,7 +326,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         .success(function(data, status, headers, config) {
           if (data.status == 'Done') {
             stopTimer();
-          } 
+          }
           updateCharts(data); // now when we might run continuous calibration, this might be the only chance to update the charts.
         })
         .error(function(data, status, headers, config) {
