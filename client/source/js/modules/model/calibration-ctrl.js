@@ -232,33 +232,32 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           var stackedAreaChart = generateStackedAreaChart(data.popstacked.pops,
             response.tvec, data.popstacked.title, data.popstacked.legend);
 
-            stackedAreaChart.options.xAxis.axisLabel = data.xlabel;
-            stackedAreaChart.options.yAxis.axisLabel = data.popstacked.ylabel;
-            stackedAreaChart.type = 'stackedAreaChart';
+          stackedAreaChart.options.xAxis.axisLabel = data.xlabel;
+          stackedAreaChart.options.yAxis.axisLabel = data.popstacked.ylabel;
+          stackedAreaChart.type = 'stackedAreaChart';
 
-            charts.push(stackedAreaChart);
+          charts.push(stackedAreaChart);
         }
       });
 
-      _($scope.types.financial).each(function (type) {
-        // existing = cost for current people living with HIV
-        // future = cost for future people living with HIV
-        // costann = annual costs
-        // costcum = cumulative costs
-        if (type.annual) {
-          var annualData = response.costann[type.id][$scope.types.annualCost];
-          if(annualData && annualData.legend) {
-            charts.push(generateFinancialChart(annualData));
-          }
-        }
-
-        if (type.cumulative) {
-          var cumulativeData = response.costcum[type.id];
-          if (cumulativeData) {
-            charts.push(generateFinancialChart(cumulativeData));
-          }
+      _(['existing', 'future', 'total']).each(function(type) {
+        var chartData = response.costann[type][$scope.types.annualCost];
+        var isActive = $scope.types.costs[0][type];
+        if (chartData && isActive) {
+          charts.push(generateFinancialChart(chartData));
         }
       });
+
+      var chartData = response.costann.stacked[$scope.types.annualCost];
+      var stackedAnnualCostIsActive = $scope.types.costs[0].stacked;
+      if (chartData && stackedAnnualCostIsActive) {
+        var stackedAreaChart = generateStackedAreaChart(chartData.costs, response.tvec,
+          chartData.title, chartData.legend);
+        stackedAreaChart.options.xAxis.axisLabel = 'Year';
+        stackedAreaChart.options.yAxis.axisLabel = chartData.ylabel;
+        stackedAreaChart.type = 'stackedAreaChart';
+        charts.push(stackedAreaChart);
+      }
 
       return charts;
     };

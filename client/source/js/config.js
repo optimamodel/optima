@@ -25,8 +25,8 @@ define(['angular'], function (angular) {
           { id: 'tx2', name: 'People on subsequent lines of treatment', byPopulation: false, total: true, stacked: true }
         ],
         costs:[
-          {id:"annual", name: "Annual costs", before: false, after: false, totalplhiv: false, stacked: false},
-          {id:"cumulative", name: "Cumulative costs", before: false, after: false, totalplhiv: false, stacked: false}
+          {id:"costann", name: "Annual costs", existing: true, future: true, total: true, stacked: true},
+          {id:"costcum", name: "Cumulative costs", existing: true, future: true, total: true, stacked: true}
         ],
         financialAnnualCosts: [
           {id:'total', name:'Total amount', disabled: true},
