@@ -151,7 +151,7 @@ def gatheruncerdata(D, R, annual=True, verbose=2):
                 # Stacked graphs
                 if ac != 'total':
                     uncer[key].stacked.costs.append(uncer[key][ac].best)
-                    uncer[key].stacked.legend.append([ac])
+                    uncer[key].stacked.legend.append([ac.title()])
             else:
                 for yscale in ['total','gdp','revenue','govtexpend','totalhealth','domestichealth']:
                     uncer[key][ac][yscale] = struct()
@@ -168,7 +168,7 @@ def gatheruncerdata(D, R, annual=True, verbose=2):
                         # Stacked graphs
                         if ac != 'total':
                             uncer[key].stacked[yscale].costs.append(uncer[key][ac][yscale].best)
-                            uncer[key].stacked[yscale].legend.append([ac])
+                            uncer[key].stacked[yscale].legend.append([ac.title()])
                             
     
     printv('...done gathering uncertainty results.', 4, verbose)
