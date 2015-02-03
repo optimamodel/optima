@@ -400,22 +400,26 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       var graphs = [];
 
       if (graphData === undefined) return graphs;
-      _($scope.types.financial).each(function (type) {
-        if (type === undefined) return;
-        // existing = cost for current people living with HIV
-        // future = cost for future people living with HIV
-        // costann = annual costs
-        // costcum = cumulative costs
-        if (type.annual) {
-          var annualData = graphData.costann? graphData.costann[type.id][$scope.types.annualCost]:undefined;
-          if(annualData) graphs.push(generateFinancialGraph(annualData));
-        }
 
-        if (type.cumulative) {
-          var cumulativeData = graphData.costcum? graphData.costcum[type.id]:undefined;
-          if (cumulativeData) graphs.push(generateFinancialGraph(cumulativeData));
+      // annual cost charts
+      _(['existing', 'future', 'total']).each(function(type) {
+        var chartData = graphData.costann[type][$scope.types.annualCost];
+        var isActive = $scope.types.costs[0][type];
+        if (chartData && isActive) {
+          graphs.push(generateFinancialGraph(chartData));
         }
       });
+
+
+      // cumulative cost charts
+      _(['existing', 'future', 'total']).each(function(type) {
+        var chartData = graphData.costcum[type];
+        var isActive = $scope.types.costs[1][type];
+        if (chartData && isActive) {
+          graphs.push(generateFinancialGraph(chartData));
+        }
+      });
+
       return graphs;
     };
 
