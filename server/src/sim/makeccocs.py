@@ -96,7 +96,8 @@ def makecc(D=None, progname=default_progname, ccparams=default_ccparams, ccplot=
 
     # Get upper limit of x axis for plotting
     xupperlim = max([x if ~isnan(x) else 0.0 for x in totalcost])*1.5
-    if (ccplot and ccplot[0]): xupperlim = ccplot[0]
+#    if (ccplot and ccplot[0]): xupperlim = max(xupperlim, ccplot[0]) if not (len(ccplot)==3 and ccplot[2]) else max(xupperlim, ccplot[0]/targetpopsize[-1]) if len(totalcost)>1 else max(xupperlim, ccplot[0]/mean(targetpopsize)) 
+    if (ccplot and ccplot[0]): xupperlim = ccplot[0] #if not (len(ccplot)==3 and ccplot[2]) else max(xupperlim, ccplot[0]/targetpopsize[-1]) if len(totalcost)>1 else max(xupperlim, ccplot[0]/mean(targetpopsize)) 
         
     # Populate output structure with scatter data 
     totalcost, coverage = getscatterdata(totalcost, coverage)

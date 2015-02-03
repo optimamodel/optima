@@ -24,10 +24,9 @@ define(['angular'], function (angular) {
           { id: 'tx1', name: 'People on first-line treatment', byPopulation: false, total: true, stacked: true },
           { id: 'tx2', name: 'People on subsequent lines of treatment', byPopulation: false, total: true, stacked: true }
         ],
-        financial: [
-          { id: 'total', name: 'Total HIV-related financial commitments', annual: true, cumulative: true  },
-          { id: 'existing', name: 'Financial commitments for existing PLHIV', annual: true, cumulative: true },
-          { id: 'future', name: 'Financial commitments for future PLHIV', annual: true, cumulative: true }
+        costs:[
+        {id:"costcum", name: "Cumulative costs", existing: true, future: true, total: false, stacked: true},
+        {id:"costann", name: "Annual costs", existing: true, future: true, total: false, stacked: true}
         ],
         financialAnnualCosts: [
           {id:'total', name:'Total amount', disabled: true},
@@ -37,7 +36,7 @@ define(['angular'], function (angular) {
           {id:'totalhealth', name:'Proportion of total health expenditure', disabled: true},
           {id:'domestichealth', name:'Proportion of domestic health expenditure', disabled: true}
         ],
-        annualCost: 'total'
+        activeAnnualCost: 'total'
       }
     });
 });

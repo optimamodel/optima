@@ -12,7 +12,7 @@ define(['./module'], function (module) {
         function showPartInViews(part, viewNames){
             $scope[part+"IsVisible"] = _(viewNames).contains($state.current.name);
         }
-
+        $scope.financialResults = {};
         $scope.$on('$stateChangeSuccess',function(){
           showPartInViews('typeSelector', [
             'model.view',
