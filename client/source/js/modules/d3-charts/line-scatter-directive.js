@@ -54,9 +54,6 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
       var scatterDataExists = (data.scatter && (data.scatter.length > 0));
       // data.lines[0].length >1 to escape explosion here.
       var linesDataExists = (data.lines && data.lines.length > 0 && (data.lines[0].length > 1));
-      if (!linesDataExists) {
-        throw new Error('A line, they say, should have more than one point');
-      }
 
       var hasValidMin = function(domain) {
         return (domain[0]!==null && !isNaN(domain[0]));

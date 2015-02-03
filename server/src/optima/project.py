@@ -170,7 +170,7 @@ def update_project(project_id):
         filedata.write(project.project_data.meta)
         filedata.close()
         D = model_as_bunch(project.model)
-        D = updatedata(D, savetofile = False)
+        D = updatedata(D, project.programs, savetofile = False)
         model = model_as_dict(D)
         project.model = model
     else:
@@ -564,7 +564,7 @@ def uploadExcel():
     if project is not None:
         # update and save model
         D = model_as_bunch(project.model)
-        D = updatedata(D, savetofile = False)
+        D = updatedata(D, project.programs, savetofile = False)
         model = model_as_dict(D)
         project.model = model
         getPopsAndProgsFromModel(project)
