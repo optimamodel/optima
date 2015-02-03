@@ -240,6 +240,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         }
       });
 
+      // annual cost charts
       _(['existing', 'future', 'total']).each(function(type) {
         var chartData = response.costann[type][$scope.types.annualCost];
         var isActive = $scope.types.costs[0][type];
@@ -248,15 +249,36 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         }
       });
 
-      var chartData = response.costann.stacked[$scope.types.annualCost];
+      var stackedAnnualData = response.costann.stacked[$scope.types.annualCost];
       var stackedAnnualCostIsActive = $scope.types.costs[0].stacked;
-      if (chartData && stackedAnnualCostIsActive) {
-        var stackedAreaChart = generateStackedAreaChart(chartData.costs, response.tvec,
-          chartData.title, chartData.legend);
+      if (stackedAnnualData && stackedAnnualCostIsActive) {
+        var stackedAreaChart = generateStackedAreaChart(stackedAnnualData.costs,
+          response.tvec, stackedAnnualData.title, stackedAnnualData.legend);
         stackedAreaChart.options.xAxis.axisLabel = 'Year';
-        stackedAreaChart.options.yAxis.axisLabel = chartData.ylabel;
+        stackedAreaChart.options.yAxis.axisLabel = stackedAnnualData.ylabel;
         stackedAreaChart.type = 'stackedAreaChart';
         charts.push(stackedAreaChart);
+      }
+
+      // cumulative cost charts
+      _(['existing', 'future', 'total']).each(function(type) {
+        var chartData = response.costcum[type];
+        var isActive = $scope.types.costs[1][type];
+        if (chartData && isActive) {
+          charts.push(generateFinancialChart(chartData));
+        }
+      });
+
+      var stackedCumulativeData = response.costcum.stacked;
+      var stackedCumulativeCostIsActive = $scope.types.costs[1].stacked;
+      if (stackedCumulativeData && stackedCumulativeCostIsActive) {
+        var stackedCumulativeChart = generateStackedAreaChart(
+          stackedCumulativeData.costs, response.tvec,
+          stackedCumulativeData.title, stackedCumulativeData.legend);
+        stackedCumulativeChart.options.xAxis.axisLabel = 'Year';
+        stackedCumulativeChart.options.yAxis.axisLabel = stackedCumulativeData.ylabel;
+        stackedCumulativeChart.type = 'stackedAreaChart';
+        charts.push(stackedCumulativeChart);
       }
 
       return charts;
