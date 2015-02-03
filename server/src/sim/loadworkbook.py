@@ -1,4 +1,4 @@
-def loadworkbook(filename='example.xlsx', verbose=2):
+def loadworkbook(filename='example.xlsx', programs = None, verbose=2):
     """
     Loads the workbook (i.e. reads its contents into the data structure).
     This data structure is used in the next step to update the corresponding model.
@@ -261,7 +261,7 @@ def loadworkbook(filename='example.xlsx', verbose=2):
                                 thesedata = [assumptiondata] # Replace the (presumably blank) data if a non-blank assumption has been entered
                             data[name][thispar].append(thesedata) # Store data
                             
-                            for programname, pops in programs_for_input_key(thispar).iteritems(): # Link with programs...?
+                            for programname, pops in programs_for_input_key(thispar, programs).iteritems(): # Link with programs...?
                                 if (programname in programs) and ((not pops or pops==['']) or subparam in pops):
                                     programs[programname].append([[name, thispar], [subparam]])
 

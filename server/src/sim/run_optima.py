@@ -3,11 +3,11 @@ RUN_OPTIMA
 
 Basic run.
 
-Version: 2015jan18 by cliffk
+Version: 2015feb01 by cliffk
 """
 
 
-print('WELCOME TO OPTIMA')
+print('WELCOME TO RUN_OPTIMA')
 
 ## Set parameters
 projectname = 'example'
