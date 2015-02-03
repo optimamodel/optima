@@ -36,7 +36,7 @@ define(['angular'], function (angular) {
           {id:'totalhealth', name:'Proportion of total health expenditure', disabled: true},
           {id:'domestichealth', name:'Proportion of domestic health expenditure', disabled: true}
         ],
-        annualCost: 'total'
+        activeAnnualCost: 'total'
       }
     });
 });

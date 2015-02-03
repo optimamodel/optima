@@ -242,14 +242,14 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       // annual cost charts
       _(['existing', 'future', 'total']).each(function(type) {
-        var chartData = response.costann[type][$scope.types.annualCost];
+        var chartData = response.costann[type][$scope.types.activeAnnualCost];
         var isActive = $scope.types.costs[0][type];
         if (chartData && isActive) {
           charts.push(generateFinancialChart(chartData));
         }
       });
 
-      var stackedAnnualData = response.costann.stacked[$scope.types.annualCost];
+      var stackedAnnualData = response.costann.stacked[$scope.types.activeAnnualCost];
       var stackedAnnualCostIsActive = $scope.types.costs[0].stacked;
       if (stackedAnnualData && stackedAnnualCostIsActive) {
         var stackedAreaChart = generateStackedAreaChart(stackedAnnualData.costs,

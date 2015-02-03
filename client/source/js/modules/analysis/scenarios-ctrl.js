@@ -138,7 +138,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
           // annual cost charts
           _(['existing', 'future', 'total']).each(function(type) {
-            var chartData = response.costann[type][$scope.types.annualCost];
+            var chartData = response.costann[type][$scope.types.activeAnnualCost];
             var isActive = $scope.types.costs[0][type];
             if (chartData && isActive) {
               graphs.push(generateFinancialGraph(chartData));

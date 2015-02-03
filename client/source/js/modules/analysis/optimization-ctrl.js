@@ -403,7 +403,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
 
       // annual cost charts
       _(['existing', 'future', 'total']).each(function(type) {
-        var chartData = graphData.costann[type][$scope.types.annualCost];
+        var chartData = graphData.costann[type][$scope.types.activeAnnualCost];
         var isActive = $scope.types.costs[0][type];
         if (chartData && isActive) {
           graphs.push(generateFinancialGraph(chartData));
