@@ -23,4 +23,4 @@ if path.exists(datadir+datafile):
 if doplot:
     print('Viewing results...')
     from viewresults import viewuncerresults
-    viewuncerresults(D.plot.E, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 'force':[0,1], 'daly':[0,1], 'death':[0,1], 'dx':[0,1], 'tx1':[0,1], 'tx2':[0,1], 'costcum':[1,1]}, simstartyear=2000, simendyear=2015, onefig=True)
+    viewuncerresults(D.plot.E)

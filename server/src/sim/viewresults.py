@@ -1,4 +1,4 @@
-def viewuncerresults(E, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 'daly':[0,1], 'death':[0,1], 'dx':[0,1], 'tx1':[0,1], 'tx2':[0,1], 'costcum':[1,1]}, simstartyear=2000, simendyear=2050, onefig=True, verbose=2, show_wait=False, linewidth=2):
+def viewuncerresults(E, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 'daly':[0,1], 'death':[0,1], 'dx':[0,1], 'tx1':[0,1], 'tx2':[0,1], 'costann':[1,1], 'costcum':[1,1]}, simstartyear=2000, simendyear=2050, onefig=True, verbose=2, show_wait=False, linewidth=2):
     """
     Generate all outputs required for the model, including prevalence, incidence,
     deaths, etc.
@@ -61,8 +61,11 @@ def viewuncerresults(E, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 
                         subkey = 'tot'
                         xdata = E.tvec
                     else:
-                        subkey = ['total','existing'][popstot] # SUPER CONFUSING
-                        xdata = E[graph][subkey].xdata 
+                        subkey = ['existing','future'][popstot] # SUPER CONFUSING
+                        if not(graph=='costann'):
+                            xdata = E[graph][subkey].xdata 
+                        else:
+                            xdata = E[graph][subkey].total.xdata 
                     if onefig:
                         count += 1
                         subplot(nxplots, nyplots, count)
@@ -70,18 +73,33 @@ def viewuncerresults(E, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 
                         figure(facecolor='w')
                     hold(True)
                     try:
-                        fill_between(xdata, E[graph][subkey].low, E[graph][subkey].high, alpha=0.2, edgecolor='none')
+                        if not(graph=='costann'):
+                            fill_between(xdata, E[graph][subkey].low, E[graph][subkey].high, alpha=0.2, edgecolor='none')
+                        else:
+                            fill_between(xdata, E[graph][subkey].total.low, E[graph][subkey].total.high, alpha=0.2, edgecolor='none')
                     except:
                         import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-                    plot(xdata, E[graph][subkey].best, c=E.colorm, linewidth=linewidth)
+                    if not(graph=='costann'):
+                        plot(xdata, E[graph][subkey].best, c=E.colorm, linewidth=linewidth)
+                    else:
+                        plot(xdata, E[graph][subkey].total.best, c=E.colorm, linewidth=linewidth)
                     if epigraph:
                         if ndim(E[graph].ydata)==1:
                             scatter(E.xdata, E[graph].ydata, c=E.colord)
                     
-                    title(E[graph][subkey].title)
+                    if not(graph=='costann'):
+                        title(E[graph][subkey].title)
+                    else:
+                        title(E[graph][subkey].total.title)
                     if epigraph: xlabel(E[graph].xlabel)
-                    else: xlabel(E[graph][subkey].xlabel)
-                    ylabel(E[graph][subkey].ylabel)
+                    else: 
+                        if not(graph=='costann'):
+                            xlabel(E[graph][subkey].xlabel)
+                            ylabel(E[graph][subkey].ylabel)
+                        else:
+                            xlabel(E[graph][subkey].total.xlabel)
+                            ylabel(E[graph][subkey].total.ylabel)
+                    
                     ylim(ymin=0)
     
     if onefig:
@@ -155,7 +173,7 @@ def viewmultiresults(M, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 
                         subkey = 'tot'
                         xdata = M.tvec
                     else:
-                        subkey = ['total','existing'][popstot] # SUPER CONFUSING
+                        subkey = ['existing','future'][popstot] # SUPER CONFUSING
                         xdata = M[graph][subkey].xdata
                     
                     if onefig:

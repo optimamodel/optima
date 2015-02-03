@@ -29,10 +29,6 @@ D = updatedata(D, verbose=verbose)
 
 print('\n\n\n3. Viewing results...')
 from viewresults import viewuncerresults
-viewuncerresults(D.plot.E, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 'force':[0,1], 'daly':[0,1], 'death':[0,1], 'dx':[0,1], 'tx1':[0,1], 'tx2':[0,1], 'costcum':[1,1]}, simstartyear=2000, simendyear=2015, onefig=True, verbose=verbose, show_wait=show_wait)
-
-
-from pylab import plot, transpose
-plot(transpose(D.R.costann.future.total))
+viewuncerresults(D.plot.E)
 
 print('\n\n\nDONE; elapsed: %f s' % (time()-starttime))

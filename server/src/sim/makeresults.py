@@ -118,7 +118,7 @@ def makeresults(D, allsims=None, quantiles=None, verbose=2):
             from financialanalysis import financialanalysis
             allcosts = []
             for s in range(nsims):
-                if thesecosts is None:
+                if thesecosts is None: # WARNING, this doesn't use uncertainty
                     thesecosts = financialanalysis(D, postyear = D.data.epiyears[-1], S = allsims[s], makeplot = False)
                 allcosts.append(thesecosts)
             

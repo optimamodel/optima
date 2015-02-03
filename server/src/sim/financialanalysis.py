@@ -130,18 +130,4 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False):
             plotdata['annual']['future'][yscalefactor]['ylinedata'] = [max(0.0,plotdata['annual']['total'][yscalefactor]['ylinedata'][j] - plotdata['annual']['existing'][yscalefactor]['ylinedata'][j]) for j in range(noptpts)]
     plotdata['cumulative']['future']['ylinedata'] = list(accumu(plotdata['annual']['future']['total']['ylinedata']))
 
-
-#    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-
     return plotdata
-
-
-#example
-#plotdata = financialanalysis(D, postyear=2015, S=D.S, makeplot=1)
-#from matplotlib.pylab import figure, plot, hold, xlabel, ylabel, title #we don't need it for the whole module in web context
-
-#figure()
-#hold(True)
-#plot(plotdata['annual']['total']['gdp']['xlinedata'],plotdata['annual']['total']['gdp']['ylinedata'], lw = 2, c = 'b')
-#plot(plotdata['annual']['existing']['gdp']['xlinedata'],plotdata['annual']['existing']['gdp']['ylinedata'], lw = 2, c = 'r')
-#plot(plotdata['annual']['future']['gdp']['xlinedata'],plotdata['annual']['future']['gdp']['ylinedata'], lw = 2, c = 'k')
