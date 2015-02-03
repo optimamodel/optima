@@ -1,6 +1,6 @@
 from copy import deepcopy
 
-def updatedata(D, verbose=2, savetofile = True, programs = None):
+def updatedata(D, verbose=2, savetofile = True, input_programs = None):
     """
     Load the Excel workbook (for the given project), assuming it's in the standard uploads directory
     loads the data for the given project,
@@ -19,9 +19,10 @@ def updatedata(D, verbose=2, savetofile = True, programs = None):
     printv('Updating data...', 1, verbose)
     
     datapath = fullpath(D.G.workbookname)
-    D.data, D.programs = loadworkbook(datapath, programs, verbose=verbose)
+    D.data, D.programs = loadworkbook(datapath, input_programs, verbose=verbose)
     D.programs = restructureprograms(D.programs)
     D.data = getrealcosts(D.data)
+    
     D = makedatapars(D, verbose=verbose) # Update parameters
     D.M = makemodelpars(D.P, D.opt, verbose=verbose)
     D = makefittedpars(D, verbose=verbose)
@@ -45,7 +46,7 @@ def restructureprograms(programs):
     keys = ['ccparams','convertedccparams','nonhivdalys','effects','ccplot']
     for program in programs.keys():
         programs[program] = dict(zip(keys,[ccparams, convertedccparams, nonhivdalys, programs[program]]))
-    
+
     return programs
     
     

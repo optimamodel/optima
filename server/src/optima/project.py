@@ -170,7 +170,7 @@ def update_project(project_id):
         filedata.write(project.project_data.meta)
         filedata.close()
         D = model_as_bunch(project.model)
-        D = updatedata(D, programs = project.programs, savetofile = False)
+        D = updatedata(D, input_programs = project.programs, savetofile = False)
         model = model_as_dict(D)
         project.model = model
     else:
@@ -502,31 +502,33 @@ def getPopsAndProgsFromModel(project):
     for index, short_name in enumerate(D_pops_names):
         new_item = {}
         new_item['name'] = D_pops['long'][index]
-        new_item['short_name'] =D_pops['short'][index]
+        new_item['short_name'] = short_name
         for prop in ['sexworker','injects','sexmen','client','female','male','sexwomen']:
             new_item[prop] = bool(D_pops[prop][index])
         pops.append(new_item)
 
     # get and generate programs from D.data.meta
     progs = []
-    for index, short_name in enumerate(D_progs_names):
-        new_item = {}
-        new_item['name'] = D_progs['long'][index]
-        new_item['short_name'] =D_progs['short'][index]
-        new_item['parameters'] = []
-#        new_item = old_programs_dict.get(short_name, dict_programs.get(short_name))
-        progs.append(new_item)
+    if model['G'].get('inputprograms'):
+        progs = deepcopy(model['G']['inputprograms']) #if there are already parameters 
+    else:
+        for index, short_name in enumerate(D_progs_names):
+            new_item = {}
+            new_item['name'] = D_progs['long'][index]
+            new_item['short_name'] = short_name
+            new_item['parameters'] = []
+            old_program = old_programs_dict.get(short_name)
+            if old_program: #if the program was given in create_project, keep the parameters
+                new_item['parameters'] = deepcopy(old_program['parameters'])
+            else:
+                standard_program = dict_programs.get(short_name)
+                if standard_program:
+                    new_parameters = [{'value': parameter} for parameter in standard_program['parameters']]
+                    for parameter in new_parameters:
+                        if parameter['value']['pops']==['']: parameter['value']['pops']=list(D_pops_names)
+                    if new_parameters: new_item['parameters'] = deepcopy(new_parameters)
 
-    # prepare programs for parameters
-    for pindex, program in enumerate(progs):
-        old_program = old_programs_dict.get(program['short_name'])
-        if old_program: #if the program was given in create_project, keep the parameters
-            progs[pindex] = deepcopy(old_program)
-        else: #get the default parameters for that program, for now
-            new_parameters = [{'value': parameter} for parameter in program['parameters']]
-            for parameter in new_parameters:
-                if parameter['value']['pops']==['']: parameter['value']['pops']=list(D_pops_names)
-            if new_parameters: program['parameters'] = deepcopy(new_parameters)
+            progs.append(new_item)
 
     project.populations = pops
     project.programs = progs
@@ -579,7 +581,7 @@ def uploadExcel():
     if project is not None:
         # update and save model
         D = model_as_bunch(project.model)
-        D = updatedata(D, programs = project.programs, savetofile = False)
+        D = updatedata(D, input_programs = project.programs, savetofile = False)
         model = model_as_dict(D)
         project.model = model
         getPopsAndProgsFromModel(project)
@@ -628,6 +630,7 @@ def getData(project_id):
         return jsonify(reply)
     else:
         data = project.model
+        data['G']['inputprograms'] = project.programs
         # return result as a file
         loaddir =  upload_dir_user(TEMPLATEDIR)
         if not loaddir:
