@@ -188,7 +188,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       _($scope.types.population).each(function (type) {
         var data = response[type.id];
 
-        if (type.total) {
+        if (type.total && data) {
 
           var yData = {
             best: data.tot.best, high: data.tot.high, low: data.tot.low,
