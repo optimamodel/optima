@@ -476,6 +476,7 @@ def downloadExcel(downloadName):
 def getPopsAndProgsFromModel(project):
     """
     Initializes "meta data" about populations and programs from model.
+    keep_old_parameters (for program parameters) will be True if we import from Excel.
     """
     from sim.programs import programs
     from sim.populations import populations
@@ -488,21 +489,32 @@ def getPopsAndProgsFromModel(project):
     dict_populations = dict([(item['short_name'], item) for item in populations])
 
     # Update project.populations and project.programs
-    D_pops_names = set(model['data']['meta']['pops']['short'])
-    D_progs_names = set(model['data']['meta']['progs']['short'])
+    D_pops = model['data']['meta']['pops']
+    D_progs = model['data']['meta']['progs']
+    D_pops_names = model['data']['meta']['pops']['short']
+    D_progs_names = model['data']['meta']['progs']['short']
     old_populations_dict = dict([(item.get('short_name') if item else '', item) for item in project.populations])
     old_programs_dict = dict([(item.get('short_name') if item else '', item) for item in project.programs])
+    D_progs_with_effects = model['programs']
 
     # get and generate populations from D.data.meta
     pops = []
-    for short_name in D_pops_names:
-        new_item = old_populations_dict.get(short_name, dict_populations.get(short_name))
+    for index, short_name in enumerate(D_pops_names):
+        new_item = {}
+        new_item['name'] = D_pops['long'][index]
+        new_item['short_name'] =D_pops['short'][index]
+        for prop in ['sexworker','injects','sexmen','client','female','male','sexwomen']:
+            new_item[prop] = bool(D_pops[prop][index])
         pops.append(new_item)
 
     # get and generate programs from D.data.meta
     progs = []
-    for short_name in D_progs_names:
-        new_item = old_programs_dict.get(short_name, dict_programs.get(short_name))
+    for index, short_name in enumerate(D_progs_names):
+        new_item = {}
+        new_item['name'] = D_progs['long'][index]
+        new_item['short_name'] =D_progs['short'][index]
+        new_item['parameters'] = []
+#        new_item = old_programs_dict.get(short_name, dict_programs.get(short_name))
         progs.append(new_item)
 
     # prepare programs for parameters
@@ -518,6 +530,9 @@ def getPopsAndProgsFromModel(project):
 
     project.populations = pops
     project.programs = progs
+    years = model['data']['epiyears']
+    project.datastart = int(years[0])
+    project.dataend = int(years[-1])
 
 
 @project.route('/update', methods=['POST'])
