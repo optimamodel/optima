@@ -5,5 +5,6 @@ define([
   './pie-chart-directive',
   './stacked-area-directive',
   './stacked-bar-directive',
-  './radar-chart-directive'
+  './radar-chart-directive',
+  './two-sided-horizontal-bar-directive'
 ], function () {});

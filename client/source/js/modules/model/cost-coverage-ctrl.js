@@ -338,6 +338,7 @@ define(['./module', 'underscore'], function (module, _) {
       }
       if (model.ccplot) {
         $scope.selectedProgram.ccplot = model.ccplot;
+        $scope.all_programs[$scope.selectedProgram.acronym].ccplot = model.ccplot;
       }
     };
 

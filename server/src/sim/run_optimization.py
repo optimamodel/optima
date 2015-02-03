@@ -3,7 +3,7 @@ TEST_OPTIMIZATION
 
 This function tests that the optimization is working.
 
-Version: 2015jan31 by cliffk
+Version: 2015feb01 by cliffk
 """
 
 print('WELCOME TO OPTIMA')
@@ -11,8 +11,8 @@ print('WELCOME TO OPTIMA')
 testconstant = False
 testmultibudget = False
 testtimevarying = False
-testmultiyear = False
-testconstraints = True
+testmultiyear = True
+testconstraints = False
 
 
 ## Set parameters
@@ -66,7 +66,7 @@ if testmultiyear:
     from optimize import optimize, defaultobjectives
     objectives = defaultobjectives(D, verbose=verbose)
     objectives.funding = 'variable'
-    objectives.outcome.variable = [6e6, 5e6, 3e6, 4e6, 3e6, 6e6] # Variable budgets
+    objectives.outcome.variable = {u'2015': 2000000, u'2016': 3000000, u'2017': 4000000, u'2018': 5000000, u'2019': 6000000, u'2020': 7000000} # Variable budgets
     optimize(D, objectives=objectives, maxiters=maxiters, stoppingfunc=stoppingfunc, verbose=verbose)
 
 

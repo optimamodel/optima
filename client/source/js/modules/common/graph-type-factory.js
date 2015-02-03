@@ -1,6 +1,4 @@
-define([
-    'angular'
-], function (angular) {
+define(['angular', 'underscore'], function (angular, _) {
     'use strict';
 
     return angular.module('app.common.graph-type',[])
