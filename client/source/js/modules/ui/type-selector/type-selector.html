@@ -33,24 +33,36 @@
 
   <h3>Financial commitment results</h3>
 
-  <div class="type-section" ng-repeat="type in types.financial" >
-    <b>{{ type.name }}</b>
+  <div ng-repeat="type in types.costs">
+    <b>{{type.name}}</b>
     <div>
       <label class="checkbox-inline">
-        <input type="checkbox" ng-model="type.annual">
-        Annual
+        <input type="checkbox" ng-model="type.existing">
+        People infected before 2015
       </label>
     </div>
     <div>
       <label class="checkbox-inline">
-        <input type="checkbox" ng-model="type.cumulative">
-        Cumulative
+        <input type="checkbox" ng-model="type.future">
+        People infected after 2015
+      </label>
+    </div>
+    <div>
+      <label class="checkbox-inline">
+        <input type="checkbox" ng-model="type.total">
+        Total PLHIV
+      </label>
+    </div>
+    <div ng-if="stackedCheckboxIsVisible === true">
+      <label class="checkbox-inline">
+        <input type="checkbox" ng-model="type.stacked">
+        Stacked
       </label>
     </div>
   </div>
   <b>Display annual costs as:</b>
   <div ng-repeat="financialType in types.financialAnnualCosts">
-    <input type="radio" name="annualCost" ng-model="types.annualCost" value="{{financialType.id}}" ng-disabled="financialType.disabled"/>
+    <input type="radio" name="activeAnnualCost" ng-model="types.activeAnnualCost" value="{{financialType.id}}" ng-disabled="financialType.disabled"/>
     <label>{{financialType.name}}</label>
   </div>
 

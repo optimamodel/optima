@@ -336,6 +336,8 @@ def model(G, M, F, opt, initstate=None, verbose=2):
                     # Now actually do it for the people array
                     peoplemoving1 = people[:, p1, t] * transrate * dt # Number of other people who are moving pop1 -> pop2
                     peoplemoving2 = people[:, p2, t] * transrate * dt * (sum(people[:, p1, t])/sum(people[:, p2, t])) # Number of people who moving pop2 -> pop1, correcting for population size
+                    peoplemoving1 = minimum(peoplemoving1, people[:, p1, t]) # Ensure positive
+                    peoplemoving2 = minimum(peoplemoving2, people[:, p2, t]) # And again
                     people[:, p1, t] += -peoplemoving1 + peoplemoving2 # Add and take away these people from the relevant populations
                     people[:, p2, t] += peoplemoving1 - peoplemoving2  # Add and take away these people from the relevant populations
         
@@ -557,6 +559,8 @@ def model(G, M, F, opt, initstate=None, verbose=2):
                 
     # Append final people array to sim output
     S['people'] = people
+    
+
 
     printv('  ...done running model.', 2, verbose)
     return S
@@ -570,6 +574,7 @@ def model(G, M, F, opt, initstate=None, verbose=2):
 ###############################################################################
 ## Helper functions
 ###############################################################################
+    
 
 def h2a(G, parstruct, verbose=2):
     """ Convert a health state structure to an array """
@@ -662,7 +667,6 @@ def equilibrate(G, M, Finit):
         initpeople[G['tx2'], p] = treatment2
     
         if not((initpeople>=0).all()):
-            print('Non-positive people found') # If not every element is a real number >0, throw an error
-            import pdb; pdb.set_trace()
+            print('Non-positive people found during epidemic initialization!') # If not every element is a real number >0, throw an error
         
     return initpeople

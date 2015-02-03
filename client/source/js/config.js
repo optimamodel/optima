@@ -15,19 +15,18 @@ define(['angular'], function (angular) {
         plotUncertainties: false,
         population: [
           { id: 'prev', name: 'HIV prevalence', byPopulation: true, total: false},
-          { id: 'plhiv', name:'Number of PLHIV', byPopulation:false, total:true, stacked: true},
-          { id: 'daly', name: 'HIV-related DALYs', byPopulation: false, total: true, stacked: true },
-          { id: 'death', name: 'HIV/AIDS-related deaths', byPopulation: false, total: true, stacked: true },
-          { id: 'inci', name: 'New HIV infections', byPopulation: false, total: true, stacked: true },
+          { id: 'plhiv', name:'Number of PLHIV', byPopulation:false, total:false, stacked: true},
+          { id: 'daly', name: 'HIV-related DALYs', byPopulation: false, total: false, stacked: true },
+          { id: 'death', name: 'HIV/AIDS-related deaths', byPopulation: false, total: false, stacked: true },
+          { id: 'inci', name: 'New HIV infections', byPopulation: false, total: false, stacked: true },
           { id: 'force', name: 'Incidence per 100 person-years', byPopulation: false, total: true},
           { id: 'dx', name: 'New HIV diagnoses', byPopulation: false, total: true, stacked: true },
-          { id: 'tx1', name: 'People on first-line treatment', byPopulation: false, total: true, stacked: true },
-          { id: 'tx2', name: 'People on subsequent lines of treatment', byPopulation: false, total: true, stacked: true }
+          { id: 'tx1', name: 'People on first-line treatment', byPopulation: false, total: true, stacked: false },
+          { id: 'tx2', name: 'People on subsequent lines of treatment', byPopulation: false, total: true, stacked: false }
         ],
-        financial: [
-          { id: 'total', name: 'Total HIV-related financial commitments', annual: true, cumulative: true  },
-          { id: 'existing', name: 'Financial commitments for existing PLHIV', annual: true, cumulative: true },
-          { id: 'future', name: 'Financial commitments for future PLHIV', annual: true, cumulative: true }
+        costs:[
+          {id:"costcum", name: "Cumulative costs", existing: false, future: false, total: true, stacked: true},
+          {id:"costann", name: "Annual costs", existing: false, future: false, total: true, stacked: true}
         ],
         financialAnnualCosts: [
           {id:'total', name:'Total amount', disabled: true},
@@ -37,7 +36,7 @@ define(['angular'], function (angular) {
           {id:'totalhealth', name:'Proportion of total health expenditure', disabled: true},
           {id:'domestichealth', name:'Proportion of domestic health expenditure', disabled: true}
         ],
-        annualCost: 'total'
+        activeAnnualCost: 'total'
       }
     });
 });
