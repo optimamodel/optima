@@ -136,19 +136,22 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             }
           });
 
-          _($scope.types.financial).each(function (type) {
-            // existing = cost for current people living with HIV
-            // future = cost for future people living with HIV
-            // costann = annual costs
-            // costcum = cumulative costs
-            if (type.annual) {
-              var annualData = response.costann[type.id][$scope.types.annualCost];
-              if(annualData) graphs.push(generateFinancialGraph(annualData));
+          // annual cost charts
+          _(['existing', 'future', 'total']).each(function(type) {
+            var chartData = response.costann[type][$scope.types.annualCost];
+            var isActive = $scope.types.costs[0][type];
+            if (chartData && isActive) {
+              graphs.push(generateFinancialGraph(chartData));
             }
+          });
 
-            if (type.cumulative) {
-              var cumulativeData = response.costcum[type.id];
-              if (cumulativeData) graphs.push(generateFinancialGraph(cumulativeData));
+
+          // cumulative cost charts
+          _(['existing', 'future', 'total']).each(function(type) {
+            var chartData = response.costcum[type];
+            var isActive = $scope.types.costs[1][type];
+            if (chartData && isActive) {
+              graphs.push(generateFinancialGraph(chartData));
             }
           });
 

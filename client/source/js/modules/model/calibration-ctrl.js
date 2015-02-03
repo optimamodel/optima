@@ -352,7 +352,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         })
         .error(function(data, status, headers, config) {
           if (data && data.exception) {
-            $scope.errorText = data.exception
+            $scope.errorText = data.exception;
           }
           stopTimer();
         });
