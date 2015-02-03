@@ -140,6 +140,11 @@ define(['./module', './scale-helpers', 'angular', 'underscore'], function (modul
         scale.x.domain([Math.floor(highestLine[0][0]), scaleHelpers.flexCeil(xMax)]);
       });
 
+      options.yAxis.tickFormat = function (value) {
+        var format = scaleHelpers.evaluateTickFormat(0, yMax);
+        return scaleHelpers.customTickFormat(value, format);
+      };
+
       d3Charts.drawAxes(
         graphsScales[0],
         options,
