@@ -5,6 +5,7 @@ def updatedata(D, verbose=2, savetofile = True, programs = None):
     Load the Excel workbook (for the given project), assuming it's in the standard uploads directory
     loads the data for the given project,
     updates the model based on the speardsheet contents
+    programs - set up in GUI, contain information about the (adjusted) programs and parameters for the given project
     
     Version: 2015jan19 by cliffk
     """

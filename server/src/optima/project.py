@@ -496,13 +496,13 @@ def getPopsAndProgsFromModel(project):
     # get and generate populations from D.data.meta
     pops = []
     for short_name in D_pops_names:
-        new_item = dict_populations.get(short_name, old_populations_dict[short_name])
+        new_item = old_populations_dict.get(short_name, dict_populations.get(short_name))
         pops.append(new_item)
 
     # get and generate programs from D.data.meta
     progs = []
     for short_name in D_progs_names:
-        new_item = dict_programs.get(short_name, old_programs_dict[short_name])
+        new_item = old_programs_dict.get(short_name, dict_programs.get(short_name))
         progs.append(new_item)
 
     # prepare programs for parameters
