@@ -60,7 +60,7 @@ def doAutoCalibration():
 
     """
     reply = {'status':'NOK'}
-    current_app.logger.debug('data: %s' % request.data)
+    current_app.logger.debug('auto calibration data: %s' % request.data)
     data = json.loads(request.data)
 
     project_name = request.project_name
@@ -71,7 +71,7 @@ def doAutoCalibration():
     try:
         can_start, can_join, current_calculation = start_or_report_calculation(current_user.id, project_id, autofit, db.session)
         if can_start:
-            args = {'verbose':0}
+            args = {'verbose':10}
             startyear = data.get("startyear")
             if startyear:
                 args["startyear"] = int(startyear)
@@ -80,7 +80,6 @@ def doAutoCalibration():
                 args["endyear"] = int(endyear)
             timelimit = int(data.get("timelimit")) # for the thread
             args["timelimit"] = timelimit # for the autocalibrate function
-
             CalculatingThread(db.engine, current_user, project_id, timelimit, 1, autofit, args).start() #run it once
             msg = "Starting thread for user %s project %s:%s" % (current_user.name, project_id, project_name)
             return json.dumps({"status":"OK", "result": msg, "join":True})
