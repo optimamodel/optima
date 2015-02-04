@@ -783,8 +783,8 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     $scope.saveOptimization = function () {
       var params = {
         name: $scope.state.activeOptimizationName,
-        objectives: params.objectives,
-        constraints: params.constraints
+        objectives: $scope.params.objectives,
+        constraints: $scope.params.constraints
       };
       $http.post('/api/analysis/optimization/save', params)
         .success(function (data) {
