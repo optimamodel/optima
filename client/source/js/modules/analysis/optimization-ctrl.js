@@ -781,22 +781,17 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     });
 
     $scope.saveOptimization = function () {
-      var doSave = function (name, params) {
-        $http.post('/api/analysis/optimization/save', {
-          name: name, objectives: params.objectives, constraints: params.constraints
-        })
-          .success(function (data) {
-            if (data.optimizations) {
-              $scope.initOptimizations(data.optimizations, name);
-            }
-          });
+      var params = {
+        name: $scope.state.activeOptimizationName,
+        objectives: params.objectives,
+        constraints: params.constraints
       };
-
-      modalService.showSaveOptimization($scope.state.activeOptimizationName,
-        function (optimizationName) {
-          doSave(optimizationName, $scope.params);
-        }
-      );
+      $http.post('/api/analysis/optimization/save', params)
+        .success(function (data) {
+          if (data.optimizations) {
+            $scope.initOptimizations(data.optimizations, name);
+          }
+        });
     };
 
     $scope.deleteOptimization = function (optimizationName) {
@@ -804,6 +799,18 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
         .success(function(data){
           $scope.initOptimizations(data.optimizations, undefined);
         });
+    };
+
+    $scope.addOptimization = function () {
+      var create = function (name) {
+        $http.post('/api/analysis/optimization/create/', {name: name})
+          .success(function(data) {
+            $scope.optimizations.push(data.optimization);
+            $scope.initOptimizations($scope.optimizations, data.optimization.name);
+          });
+      };
+
+      modalService.addOptimization(function (name) { create(name); }, $scope.optimizations);
     };
 
     $scope.revertOptimization = function () {
@@ -945,6 +952,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
           $scope.state.activeOptimizationName = optimization.name;
         }
       }
+
       $scope.applyOptimization($scope.state.activeOptimizationName);
     };
 

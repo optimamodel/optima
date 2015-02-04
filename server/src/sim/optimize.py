@@ -553,7 +553,20 @@ def defaultoptimizations(D, verbose=2):
     return optimizations
 
 
+def add_optimization(D, name, verbose=2):
+    """ Returns a new optimization entry with default values """
+    new_optimization = defaultoptimizations(D, verbose=verbose)[0]
+    new_optimization.name = name
 
+    if not "optimizations" in D:
+        D.optimizations = [new_optimization]
+    else:
+        optimization_names = [optimization.name for optimization in D.optimizations]
+        if name in optimization_names:
+            return (D, None)
+        D.optimizations.append(new_optimization)
+
+    return (D, new_optimization)
 
 def partialupdateM(oldM, newM, indices, setbefore=False, setafter=True):
     """ 

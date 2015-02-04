@@ -16,6 +16,7 @@ from async_calculate import check_calculation_status, good_exit_status
 from utils import check_project_name, project_exists, load_model, save_model, \
 revert_working_model_to_default, save_working_model_as_default, report_exception
 from sim.optimize import optimize
+from sim.optimize import add_optimization
 from sim.bunch import bunchify, unbunchify
 import json
 import traceback
@@ -225,4 +226,35 @@ def removeOptimizationSet(name):
         reply['status']='OK'
         reply['name'] = 'deleted'
         reply['optimizations'] = D_dict['optimizations']
+        return jsonify(reply)
+
+@optimization.route('/create/', methods=['POST'])
+@login_required
+@check_project_name
+def create_optimization():
+    """ Creates a new optimization from the optimization set """
+
+    reply = {'status':'NOK'}
+    data = json.loads(request.data)
+
+    name = data.get('name')
+    if not name:
+        reply['reason'] = 'Please provided a name'
+        return jsonify(reply)
+
+    # get project name
+    project_id = request.project_id
+    if not project_exists(project_id):
+        reply['reason'] = 'Project %s does not exist' % project_id
+        return jsonify(reply)
+    else:
+        D = load_model(project_id, as_bunch = True)
+        D, optimization = add_optimization(D, name)
+        if not optimization:
+            reply['reason'] = 'The provided optimization name already exists'
+            return jsonify(reply)
+        D_dict = D.toDict()
+        save_model(project_id, D_dict)
+        reply['status']='OK'
+        reply['optimization'] = optimization
         return jsonify(reply)

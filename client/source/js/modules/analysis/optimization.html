@@ -14,9 +14,13 @@
           View results
         </button>
       </div>
+
       <div class="elastic_col __va-middle">
         <label for="optimization-selection">Select a saved optimization:</label>
         <div class="elastic">
+          <div class="elastic_col __shrink">
+            <button ng-click="addOptimization()" type="button" class="btn">New Optimization</button>
+          </div>
           <div class="elastic_col">
             <select name="optimization-selection" class="txbox"
                     ng-model="state.activeOptimizationName"

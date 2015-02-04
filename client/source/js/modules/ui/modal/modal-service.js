@@ -92,23 +92,24 @@ define([
         },
 
         /**
-        * This function opens a modal that will ask user to choose between
-        * the existing optimization & using a new one.
-        */
-        showSaveOptimization: function (existingName, callback) {
+         * This function opens a modal that will ask the user to provide a name
+         * for a new optimization.
+         */
+        addOptimization: function (callback, optimizations) {
           var modalInstance = $modal.open({
-            templateUrl: 'js/modules/ui/modal/modal-save-optimization.html',
+            templateUrl: 'js/modules/ui/modal/modal-add-optimization.html',
             controller: ['$scope', function ($scope) {
-              $scope.saveExisting = true;
-              $scope.existingName = existingName;
-
-              $scope.saveOptimization = function(saveExisting, newName) {
-                if (saveExisting) {
-                  callback($scope.existingName);
-                } else {
-                  callback(newName);
-                }
+              $scope.createOptimization = function (name) {
+                callback(name);
                 modalInstance.close();
+              };
+
+              $scope.isUniqueName = function (name, addOptimizationForm) {
+                var exists = _(optimizations).some(function(item) {
+                  return item.name == name;
+                });
+                addOptimizationForm.organizationName.$setValidity("organizationExists", !exists);
+                return exists;
               };
             }]
           });
