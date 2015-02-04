@@ -22,9 +22,37 @@ if path.exists(datadir+datafile):
 
 
 ### Manually update CCOCs
-D.programs.ART ={'nonhivdalys': [0.0], 'ccparams': [0.99, 0.5, 0.6, 70000000., None, None], 'effects': [[['txrx', 'numfirstline'], [u'Total']]], 'convertedccparams': []}
-D.programs.SBCC={'nonhivdalys': [0.0], 'ccparams': [0.9, 0.1, 0.2, 600000.], 'effects': [[['sex', 'condomreg'], [u'Males 15-49']], [['sex', 'condomreg'], [u'Females 15-49']]], 'convertedccparams': []}
+D.programs.ART ={
+'ccparams': [0.9, 0.1, 0.3, 4000000.0, None, 0.0],
+ 'ccplot': [],
+ 'convertedccparams': [[16461.856864957979, 1.1299628093576427e-07],
+  [16461.856864957979, 5.578588782855242e-08],
+  [16461.856864957979, 1.732867951399863e-07]],
+ 'effects': [[['txrx', 'numfirstline'], [u'Total']]],
+ 'nonhivdalys': [0.0]}
 
+D.programs.SBCC={
+'ccparams': [0.9, 0.1, 0.3, 4000000.0, None, 0.0],
+ 'ccplot': [],
+ 'convertedccparams': [[0.9, 1.1299628093576436e-07],
+  [0.9, 5.578588782855242e-08],
+  [0.9, 1.732867951399863e-07]],
+ 'effects': [
+  [['sex', 'condomreg'],
+   [u'Males 15-49'],
+   [0.3, 0.5, 0.7, 0.9],
+   [0.4, 0.03333333333333333, 0.8, 0.03333333333333335],
+   [[0.9, 1.1299628093576436e-07, 0.4, 0.8],
+    [0.9, 5.578588782855242e-08, 0.4, 0.8],
+    [0.9, 1.732867951399863e-07, 0.4, 0.8]]],
+  [['sex', 'condomreg'],
+   [u'Females 15-49'],
+   [0.3, 0.5, 0.7, 0.9],
+   [0.4, 0.03333333333333333, 0.8, 0.03333333333333335],
+   [[0.9, 1.1299628093576436e-07, 0.4, 0.8],
+    [0.9, 5.578588782855242e-08, 0.4, 0.8],
+    [0.9, 1.732867951399863e-07, 0.4, 0.8]]]],
+ 'nonhivdalys': [0.0]}
 
 
 print('\n\n\n4. Running automatic fitting or optimization...')
