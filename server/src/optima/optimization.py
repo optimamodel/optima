@@ -17,6 +17,7 @@ from utils import check_project_name, project_exists, load_model, save_model, \
 revert_working_model_to_default, save_working_model_as_default, report_exception
 from sim.optimize import optimize
 from sim.optimize import add_optimization
+from sim.optimize import defaultoptimizations
 from sim.bunch import bunchify, unbunchify
 import json
 import traceback
@@ -31,7 +32,6 @@ optimization = Blueprint('optimization',  __name__, static_folder = '../static')
 @report_exception()
 def getOptimizationParameters():
     """ retrieve list of optimizations defined by the user, with parameters """
-    from sim.optimize import defaultoptimizations
     current_app.logger.debug("/api/analysis/optimization/list")
     # get project name
     project_name = request.project_name
