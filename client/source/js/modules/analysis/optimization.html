@@ -2,8 +2,27 @@
   <p ng-show="needData===true" class="error-hint">Please upload Optima spreadsheet first.</p>
 
   <div ng-if="needData===false">
-    <div class="elastic">
-      <div class="elastic_col __va-middle btn-group">
+
+    <div class="grid" style="margin-bottom: 40px">
+      <div class="12">
+        <label for="optimization-selection">Select a saved optimization:</label>
+      </div>
+      <div class="3">
+        <select name="optimization-selection" class="txbox"
+        ng-model="state.activeOptimizationName"
+        ng-change="applyOptimization(state.activeOptimizationName)">
+        <option ng-repeat="org in optimizations"
+        ng-selected="{{ org.name == state.activeOptimizationName }}"
+        value="{{ org.name }}">{{ org.name }}</option>
+      </select>
+      </div>
+      <div class="9">
+        <button ng-click="addOptimization()" type="button" class="btn">New Optimization</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="12 btn-group">
         <button class="btn __white" ng-class="{ __active: activeTab === 1 }" ng-click="setActiveTab(1)">
           Define objectives
         </button>
@@ -13,31 +32,11 @@
         <button class="btn __white" ng-class="{ __active: activeTab === 3 }" ng-click="setActiveTab(3)">
           View results
         </button>
-      </div>
-
-      <div class="elastic_col __va-middle">
-        <label for="optimization-selection">Select a saved optimization:</label>
-        <div class="elastic">
-          <div class="elastic_col __shrink">
-            <button ng-click="addOptimization()" type="button" class="btn">New Optimization</button>
-          </div>
-          <div class="elastic_col">
-            <select name="optimization-selection" class="txbox"
-                    ng-model="state.activeOptimizationName"
-                    ng-change="applyOptimization(state.activeOptimizationName)">
-              <option ng-repeat="org in optimizations"
-                      ng-selected="{{ org.name == state.activeOptimizationName }}"
-                      value="{{ org.name }}">{{ org.name }}</option>
-            </select>
-          </div>
-          <div class="elastic_col __shrink">
-            <button ng-click="deleteOptimization(state.activeOptimizationName)" type="button" class="btn __red" ng-disabled="optimizations.length <= 1">Delete Optimization</button>
-          </div>
-        </div>
+        <button ng-click="deleteOptimization(state.activeOptimizationName)" type="button" class="btn __red" ng-disabled="optimizations.length <= 1" style="margin-left: 10px">Delete Optimization</button>
       </div>
     </div>
 
-    <hr class="__dashed"/>
+    <hr/>
 
     <form name="OptimizationForm" ng-submit="startOptimization()" novalidate>
       <!-- Tab 1 -->
@@ -127,7 +126,7 @@
           </div>
         </div>
 
-        <hr/>
+        <hr class="__dashed"/>
 
         <div class="section">
           <h2>Optimization type</h2>
@@ -144,8 +143,7 @@
           </div>
         </div>
 
-
-        <hr style="clear: both; padding-top: 10px"/>
+        <hr class="__dashed" style="clear: both; padding-top: 10px"/>
 
         <div class="section" ng-if="params.objectives.what == 'outcome'">
 
@@ -208,7 +206,7 @@
           </div>
         </div>
 
-        <hr style="clear: both; padding-top: 10px"/>
+        <hr style="clear: both; padding-top: 10px" class="__dashed"/>
 
         <div class="section" ng-if="params.objectives.what == 'outcome'">
           <h2>Objective(s) to minimize</h2>
@@ -378,12 +376,10 @@
       <!-- Tab 2 -->
       <div ng-show="activeTab === 2">
 
-        <hr/>
         <div>
           <p class="warning-hint">Warning: Constraints reduce the effectiveness of the optimization analysis. Use as few
             constraints as possible.</p>
         </div>
-        <hr/>
 
         <div class="elastic">
 
@@ -413,7 +409,7 @@
           </label>
         </div>
 
-        <hr/>
+        <hr class="__dashed"/>
 
         <h2>Maximum changes in funding per year</h2>
 
@@ -481,7 +477,7 @@
           </table>
         </div>
 
-        <hr/>
+        <hr class="__dashed"/>
 
         <h2>Coverage levels</h2>
 
