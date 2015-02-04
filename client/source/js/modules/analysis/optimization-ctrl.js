@@ -932,7 +932,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
 
       $scope.optimizations = angular.copy(optimizations);
 
-      var nameExists = name && _.some(_($scope.optimizations), function(item) {
+      var nameExists = name && _($scope.optimizations).some(function(item) {
         return item.name == name;
       });
 
