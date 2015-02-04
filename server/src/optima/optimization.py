@@ -25,9 +25,6 @@ from flask.ext.login import login_required, current_user
 # route prefix: /api/analysis/optimization
 optimization = Blueprint('optimization',  __name__, static_folder = '../static')
 
-def get_optimization_results(D_dict):
-    return {'plot': D_dict.get('plot',{}).get('optim',{})}
-
 @optimization.route('/list')
 @login_required
 @check_project_name
@@ -77,6 +74,9 @@ def startOptimization():
             constraints = data.get('constraints')
             if constraints:
                 args['constraints'] = bunchify( constraints )
+            name = data.get('name')
+            if name:
+                args['name'] = name
             timelimit = int(data.get("timelimit")) # for the thread
 #            args["maxiters"] = 5 #test
             numiter = 1 #IMPORTANT: only run it once
@@ -135,7 +135,15 @@ def getWorkingModel():
         else:
             status = 'NOK'
     if status!='NOK': D_dict = load_model(project_id, working_model = True, as_bunch = False)
-    result = get_optimization_results(D_dict)
+
+    result = {}
+
+    D = load_model(project_id)
+    if not 'optimizations' in D:
+        optimizations = defaultoptimizations(D)
+    else:
+        optimizations = D.optimizations
+    result['optimizations'] = unbunchify(optimizations)
     result['status'] = status
     if error_text:
         result['exception'] = error_text
@@ -166,9 +174,13 @@ def saveModel():
         D_dict = load_model(project_id, as_bunch = False)
         optimizations = D_dict.get('optimizations')
 
+        # TODO check for difference in working model & new objectives & results
+        # if different then clean results
+        # if not use the existing results
+
         # now, save the working model, read results and save for the optimization with the given name
         D_dict = save_working_model_as_default(project_id)
-        result = get_optimization_results(D_dict)
+        result = None
         D = bunchify(D_dict)
 
         # get the previously stored optimizations

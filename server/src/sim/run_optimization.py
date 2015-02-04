@@ -91,10 +91,12 @@ if testconstraints:
         for p in range(D.G.nprogs):
             constraints[key][p].use = True # Turn on all constraints
     optimize(D, objectives=objectives, maxiters=maxiters, stoppingfunc=stoppingfunc, verbose=verbose)
-    
+
 print('\n\n\n8. Viewing optimization...')
 from viewresults import viewmultiresults
-viewmultiresults(D.plot.optim[-1].multi)
+viewmultiresults(D.optimizations[-1].result.multi)
+
+
 
 
 

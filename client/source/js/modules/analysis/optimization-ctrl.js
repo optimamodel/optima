@@ -719,7 +719,9 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     };
 
     $scope.startOptimization = function () {
-      $http.post('/api/analysis/optimization/start', $scope.params, {ignoreLoadingBar: true})
+      var params = angular.copy($scope.params);
+      params.name = $scope.state.activeOptimizationName;
+      $http.post('/api/analysis/optimization/start', params, {ignoreLoadingBar: true})
         .success(function (data, status, headers, config) {
           if (data.status == "OK" && data.join) {
             $scope.initTimer(statusEnum.RUNNING);
@@ -746,7 +748,8 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
             if (data.status == 'Running') $scope.optimizationStatus = statusEnum.RUNNING;
             if (data.status == 'Stopping') $scope.optimizationStatus = statusEnum.STOPPING;
           }
-          updateGraphs(data); // otherwise they might never get updated!
+
+          $scope.initOptimizations(data.optimizations, $scope.state.activeOptimizationName);
         })
         .error(function(data, status, headers, config) {
           if (data && data.exception) {

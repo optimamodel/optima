@@ -209,7 +209,7 @@ class CalculatingThread(threading.Thread):
             try:
                 D = self.func(D, **self.args)
                 self.init_db_session()
-                self.save_model_user(self.project_id, self.user_id, D)
+                self.save_model_user(self.project_id, self.user_id, D, working_model=False)
                 self.close_db_session()
             except Exception, err:
                 var = traceback.format_exc()
