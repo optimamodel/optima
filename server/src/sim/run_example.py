@@ -18,12 +18,12 @@ if path.exists(datadir+datafile):
     D = loaddata(datadir+datafile)
     D.G.workbookname = datadir+spreadsheetfile
     D.G.projectfilename = '/tmp/projects/run_example.prj'
-    D = updatedata(D)
+#    D = updatedata(D)
 
 
 ### Manually update CCOCs
-D.programs.ART ={'nonhivdalys': [0.0], 'ccparams': [0.99, 0.5, 0.6, 70000000., None, None], 'effects': [[['txrx', 'numfirstline'], [u'Total']]], 'convertedccparams': []}
-D.programs.SBCC={'nonhivdalys': [0.0], 'ccparams': [0.9, 0.1, 0.2, 600000.], 'effects': [[['sex', 'condomreg'], [u'Males 15-49']], [['sex', 'condomreg'], [u'Females 15-49']]], 'convertedccparams': []}
+#D.programs.ART ={'nonhivdalys': [0.0], 'ccparams': [0.99, 0.5, 0.6, 70000000., None, None], 'effects': [[['txrx', 'numfirstline'], [u'Total']]], 'convertedccparams': []}
+#D.programs.SBCC={'nonhivdalys': [0.0], 'ccparams': [0.9, 0.1, 0.2, 600000.], 'effects': [[['sex', 'condomreg'], [u'Males 15-49']], [['sex', 'condomreg'], [u'Females 15-49']]], 'convertedccparams': []}
 
 
 
