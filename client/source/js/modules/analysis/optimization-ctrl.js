@@ -792,20 +792,6 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       stopTimer();
     });
 
-    $scope.saveOptimization = function () {
-      var params = {
-        name: $scope.state.activeOptimizationName,
-        objectives: $scope.params.objectives,
-        constraints: $scope.params.constraints
-      };
-      $http.post('/api/analysis/optimization/save', params)
-        .success(function (data) {
-          if (data.optimizations) {
-            $scope.initOptimizations(data.optimizations, name);
-          }
-        });
-    };
-
     $scope.deleteOptimization = function (optimizationName) {
       $http.post('/api/analysis/optimization/remove/' + optimizationName)
         .success(function(data){
@@ -823,11 +809,6 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       };
 
       modalService.addOptimization(function (name) { create(name); }, $scope.optimizations);
-    };
-
-    $scope.revertOptimization = function () {
-      $http.post('/api/analysis/optimization/revert')
-        .success(function(){ console.log("OK");});
     };
 
     // The graphs are shown/hidden after updating the graph type checkboxes.
