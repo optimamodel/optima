@@ -16,6 +16,7 @@ define([
   './modules/common/local-storage-service',
   './modules/validations/more-than-directive',
   './modules/common/save-graph-as-directive',
+  './modules/common/reset-graph-directive',
   './modules/d3-charts/index',
   './modules/graphs/index',
   './modules/home/index',
@@ -23,7 +24,8 @@ define([
   './modules/project/index',
   './modules/user-manager/index',
   './modules/ui/modal/modal-service',
-  './modules/ui/index'
+  './modules/ui/index',
+  'numeral'
 ], function (angular) {
   'use strict';
 
@@ -47,6 +49,7 @@ define([
     'app.validations.more-than',
     'app.project',
     'app.save-graph-as',
+    'app.reset-graph',
     'app.ui',
     'app.ui.modal',
     'app.user-manager',

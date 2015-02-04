@@ -21,15 +21,16 @@ define(['./module', './scale-helpers'], function (module, scaleHelpers) {
         };
 
         var svg = d3Charts.createSvg(element[0], dimensions, scope.options.margin);
+        var parentGroup = svg.append("g").attr("class","parent_group");
 
         // Define svg groups
-        var chartGroup = svg.append("g").attr("class", "chart_group");
-        var axesGroup = svg.append("g").attr("class", "axes_group");
-        var headerGroup = svg.append('g').attr('class', 'legend_group');
+        var chartGroup = parentGroup.append("g").attr("class", "chart_group");
+        var axesGroup = parentGroup.append("g").attr("class", "axes_group");
+        var headerGroup = parentGroup.append('g').attr('class', 'legend_group');
 
         // initialize chart instances
-        var lineChartInstance = new d3Charts.LineChart(chartGroup, chartSize, '__color-black');
-        var areaChartInstance = new d3Charts.AreaChart(chartGroup, chartSize, '__color-blue-1');
+        var lineChartInstance = new d3Charts.LineChart(chartGroup, chartSize, '__color-black', svg);
+        var areaChartInstance = new d3Charts.AreaChart(chartGroup, chartSize, '__color-blue-1', svg);
         var scatterChartInstance = new d3Charts.ScatterChart(chartGroup, chartSize);
 
         // fetch & generate data for the graphs
@@ -97,9 +98,11 @@ define(['./module', './scale-helpers'], function (module, scaleHelpers) {
         // draw graphs
         areaChartInstance.draw(areaData);
         lineChartInstance.draw(lineData);
+        
         if (scatterDataExists) {
           scatterChartInstance.draw(scatterData);
         }
+
       }
     };
   });

@@ -88,6 +88,7 @@ define(['./module', './scale-helpers', 'angular', 'underscore'], function (modul
       };
 
       svg = d3Charts.createSvg(rootElement[0], dimensions, options.margin);
+      var parentGroup = svg.append("g").attr("class","parent_group");
 
       var chartSize = {
         width: options.width - options.margin.left - options.margin.right,
@@ -95,9 +96,9 @@ define(['./module', './scale-helpers', 'angular', 'underscore'], function (modul
       };
 
       // Define svg groups
-      var chartGroup = svg.append('g').attr('class', 'chart_group');
-      var axesGroup = svg.append('g').attr('class', 'axes_group');
-      var headerGroup = svg.append('g').attr('class', 'header_group');
+      var chartGroup = parentGroup.append('g').attr('class', 'chart_group');
+      var axesGroup = parentGroup.append('g').attr('class', 'axes_group');
+      var headerGroup = parentGroup.append('g').attr('class', 'header_group');
 
       var graphsScales = [];
       var stackedData = generateAreas(data.areas);
@@ -114,7 +115,7 @@ define(['./module', './scale-helpers', 'angular', 'underscore'], function (modul
       }
 
       _(stackedData).each(function (area, index) {
-        var areaChart = new d3Charts.AreaChart(chartGroup, chartSize, colors[index]);
+        var areaChart = new d3Charts.AreaChart(chartGroup, chartSize, colors[index], svg);
         var areaScale = areaChart.scales(highestLine);
         graphsScales.push(areaScale);
 

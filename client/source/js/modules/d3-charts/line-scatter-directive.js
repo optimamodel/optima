@@ -40,11 +40,12 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
       };
 
       svg = d3Charts.createSvg(rootElement[0], dimensions, options.margin);
+      var parentGroup = svg.append("g").attr("class","parent_group");
 
       // Define svg groups
-      var chartGroup = svg.append('g').attr('class', 'chart_group');
-      var axesGroup = svg.append('g').attr('class', 'axes_group');
-      var headerGroup = svg.append('g').attr('class', 'header_group');
+      var chartGroup = parentGroup.append('g').attr('class', 'chart_group');
+      var axesGroup = parentGroup.append('g').attr('class', 'axes_group');
+      var headerGroup = parentGroup.append('g').attr('class', 'header_group');
 
       var chartSize = {
         width: options.width - options.margin.left - options.margin.right,
@@ -71,7 +72,10 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
       if (linesDataExists) {
         _(data.lines).each(function (line, index) {
           var lineColor = options.linesStyle[index];
-          var lineChart = new d3Charts.LineChart(chartGroup, chartSize, lineColor);
+          var lineChart = new d3Charts.LineChart(chartGroup, chartSize, lineColor, svg);
+          if ( lineColor == '__color-black __dashed' ) {
+            lineChart.drawToolTip = false;
+          }
           lineChartInstances.push(lineChart);
           var scales = lineChart.scales(line);
           graphsScales.push(scales);

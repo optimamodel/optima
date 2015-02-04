@@ -24,12 +24,13 @@ define(['./module'], function (module) {
       };
 
       svg = d3Charts.createSvg(rootElement[0], dimensions, options.margin);
+      var parentGroup = svg.append("g").attr("class","parent_group");
 
       // Define svg groups
-      var chartGroup = svg.append('g').attr('class', 'chart_group');
-      var headerGroup = svg.append('g').attr('class', 'header_group');
+      var chartGroup = parentGroup.append('g').attr('class', 'chart_group');
+      var headerGroup = parentGroup.append('g').attr('class', 'header_group');
 
-      d3Charts.PieChart(chartGroup, chartSize, data.slices);
+      d3Charts.PieChart(chartGroup, chartSize, data.slices, svg);
       d3Charts.drawTitleAndLegend(svg, options, headerGroup);
     };
 

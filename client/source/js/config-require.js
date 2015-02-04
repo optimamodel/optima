@@ -18,6 +18,7 @@ define({
     'jsPDF'         : './vendor/jspdf/dist/jspdf.min',
     'ng-file-upload': './vendor/ng-file-upload/angular-file-upload',
     'ng-file-upload-html5-shim': './vendor/ng-file-upload/angular-file-upload-html5-shim',
+    'numeral'       : './/vendor/numeral/numeral',
     'angular-resource'    : './vendor/angular-resource/angular-resource',
     'radar-chart-d3' : './vendor/radar-chart-d3/src/radar-chart',
     'ui.router'     : './vendor/angular-ui-router/release/angular-ui-router',

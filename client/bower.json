@@ -21,6 +21,7 @@
     "jspdf": "=1.0.272",
     "ng-file-upload": "~1.6.8",
     "normalize-css": "=3.0.1",
+    "numeral": "=1.5.3",
     "requirejs": "=2.1.13",
     "underscore": "=1.6.0",
     "radar-chart-d3": "alangrafu/radar-chart-d3#d5bb94a25c00524647a5d08f3b71806611e6a9d4"
