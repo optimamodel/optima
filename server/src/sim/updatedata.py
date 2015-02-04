@@ -91,28 +91,28 @@ def makefittedpars(D, verbose=2):
         D.F[s].popsize = perturb(D.G.npops,span)
         D.F[s].force = perturb(D.G.npops,span)
         D.F[s].dx  = perturb(4,span)
-        D.F[s] = unnormalizeF(D.F[s], D) # Un-normalize F
+        D.F[s] = unnormalizeF(D.F[s], D.M, D.G, normalizeall=True) # Un-normalize F
     
     return D
 
 
-def unnormalizeF(normF, D):
+def unnormalizeF(normF, M, G, normalizeall=False):
     """ Convert from F values where everything is 1 to F values that can be real-world interpretable. """
     unnormF = deepcopy(normF)
-    for p in range(D.G.npops):
-        unnormF.init[p] *= D.M.hivprev[p] # Multiply by initial prevalence
-        unnormF.popsize[p] *= D.M.popsize[p][0] # Multiply by initial population size
-    unnormF.dx[3] *= D.G.datayears.mean() # Multiply by mean data year
+    for p in range(G.npops):
+        unnormF.init[p] *= M.hivprev[p] # Multiply by initial prevalence
+        if normalizeall: unnormF.popsize[p] *= M.popsize[p][0] # Multiply by initial population size
+    if normalizeall: unnormF.dx[3] *= G.datayears.mean() # Multiply by mean data year
     return unnormF
 
 
-def normalizeF(unnormF, D):
+def normalizeF(unnormF, M, G, normalizeall=False):
     """ Convert from F values that can be real-world interpretable to F values where everything is 1. """
     normF = deepcopy(unnormF)
-    for p in range(D.G.npops):
-        normF.init[p] /= D.M.hivprev[p] # Divide by initial prevalence
-        normF.popsize[p] /= D.M.popsize[p][0] # Divide by initial population size
-    normF.dx[3] /= D.G.datayears.mean() # Divide by mean data year
+    for p in range(G.npops):
+        normF.init[p] /= M.hivprev[p] # Divide by initial prevalence
+        if normalizeall: normF.popsize[p] /= M.popsize[p][0] # Divide by initial population size
+    if normalizeall: normF.dx[3] /= G.datayears.mean() # Divide by mean data year
     return normF
 
 

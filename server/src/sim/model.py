@@ -555,7 +555,7 @@ def model(G, M, F, opt, initstate=None, verbose=2):
         for key in S.keys():
             if S[key].max()>1e12:
                 print('WARNING, values for array %s are too large' % key)
-                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                raise Exception('Values too large')
                 
     # Append final people array to sim output
     S['people'] = people
