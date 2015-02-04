@@ -48,9 +48,6 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       };
       resetCharts();
 
-      // cache placeholder
-      var cachedResponse = null;
-
       // Set defaults
       $scope.params = {};
       $scope.params.timelimit = 3600;
@@ -350,25 +347,25 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       };
 
     /**
-     * Regenerate graphs based on the response and type settings in the UI.
+     * Regenerate graphs based on the results and type settings in the UI.
      */
-    var prepareOptimisationGraphs = function (response) {
+    var prepareOptimisationGraphs = function (results) {
       var graphs = [];
 
-      if (!response) {
+      if (!results) {
         return graphs;
       }
 
       _($scope.types.population).each(function (type) {
 
         if (type === undefined) return;
-        var data = response[type.id];
+        var data = results[type.id];
         if (data !== undefined) {
 
           // generate graphs showing the overall data for this type
           if (type.total) {
             var graph = generateGraph(
-              data.tot.data, response.tvec,
+              data.tot.data, results.tvec,
               data.tot.title, data.tot.legend,
               data.xlabel, data.tot.ylabel
             );
@@ -379,7 +376,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
           if (type.byPopulation) {
             _(data.pops).each(function (population) {
               var graph = generateGraph(
-                population.data, response.tvec,
+                population.data, results.tvec,
                 population.title, population.legend,
                 data.xlabel, population.ylabel
               );
@@ -448,25 +445,35 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       return chart;
     };
 
+    $scope.optimizationByName = function(name) {
+      return _($scope.optimizations).find(function(item) {
+        return item.name == name;
+      });
+    };
+
     // makes all graphs to recalculate and redraw
     function drawGraphs() {
-      if (!cachedResponse || !cachedResponse.plot) return;
+      var optimization = $scope.optimizationByName($scope.state.activeOptimizationName);
+
+      if (!optimization || !optimization.result || !optimization.result.plot) return;
+
+      var data = optimization.result.plot[0];
       resetCharts();
-      if (cachedResponse.plot[0].alloc instanceof Array) {
-        $scope.state.pieCharts = preparePieCharts(cachedResponse.plot[0].alloc);
-        $scope.state.radarCharts = prepareRadarCharts(cachedResponse.plot[0].alloc);
-        $scope.state.outcomeChart = prepareOutcomeChart(cachedResponse.plot[0].outcome);
+      if (data.alloc instanceof Array) {
+        $scope.state.pieCharts = preparePieCharts(data.alloc);
+        $scope.state.radarCharts = prepareRadarCharts(data.alloc);
+        $scope.state.outcomeChart = prepareOutcomeChart(data.outcome);
       } else {
-        if (cachedResponse.plot[0].alloc.bardata) {
-          $scope.state.multipleBudgetsChart = prepareMultipleBudgetsChart(cachedResponse.plot[0].alloc,
-            cachedResponse.plot[0].outcome);
-        } else if (cachedResponse.plot[0].alloc.stackdata) {
-          $scope.state.stackedBarChart = prepareStackedBarChart(cachedResponse.plot[0].alloc);
-          $scope.state.outcomeChart = prepareOutcomeChart(cachedResponse.plot[0].outcome);
+        if (data.alloc.bardata) {
+          $scope.state.multipleBudgetsChart = prepareMultipleBudgetsChart(data.alloc,
+            data.outcome);
+        } else if (data.alloc.stackdata) {
+          $scope.state.stackedBarChart = prepareStackedBarChart(data.alloc);
+          $scope.state.outcomeChart = prepareOutcomeChart(data.outcome);
         }
       }
-      $scope.state.optimisationGraphs = prepareOptimisationGraphs(cachedResponse.plot[0].multi);
-      $scope.state.financialGraphs = prepareFinancialGraphs(cachedResponse.plot[0].multi);
+      $scope.state.optimisationGraphs = prepareOptimisationGraphs(data.multi);
+      $scope.state.financialGraphs = prepareFinancialGraphs(data.multi);
     }
 
     // makes all graphs to recalculate and redraw
@@ -478,8 +485,9 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
        * n - sequence number of saved optimization
        */
       if (data && data.plot && data.plot.length > 0) {
-        cachedResponse = data;
-        if (data.plot[0]) graphTypeFactory.enableAnnualCostOptions($scope.types, data.plot[0].multi);
+        var optimization = $scope.optimizationByName($scope.state.activeOptimizationName);
+        optimization.result = data;
+        graphTypeFactory.enableAnnualCostOptions($scope.types, data.plot[0].multi);
         drawGraphs();
       }
     }
@@ -914,12 +922,6 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
 
     };
 
-    $scope.optimizationByName = function(name) {
-      return _($scope.optimizations).find(function(item) {
-        return item.name == name;
-      });
-    };
-
     /**
      * Changes active constrains and objectives to the values in provided optimization
      * @param optimization {Object}
@@ -931,6 +933,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       if (optimization.result) {
         updateGraphs(optimization.result);
       } else {
+        console.log('reset');
         resetCharts();
         graphTypeFactory.resetAnnualCostOptions($scope.types);
       }
