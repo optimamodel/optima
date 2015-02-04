@@ -57,7 +57,7 @@ def objectivecalc(optimparams, options):
     
     
     
-def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None, verbose=2, name='Default', stoppingfunc = None):
+def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None, verbose=5, name='Default', stoppingfunc = None):
     """ Perform the actual optimization """
     from time import sleep
     
@@ -66,6 +66,8 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
     # Set up parameter vector for time-varying optimisation...
     stepsize = 100000
     growsize = 0.01
+    verbose=5
+    print('TEMP')
     
     origR = deepcopy(D.R)
     origalloc = D.data.origalloc
