@@ -647,7 +647,7 @@ class OptimaGraphTable:
             self.formats.write_block_name(sheet, s["name"], 0) #sheet name
 
             for i,title in enumerate(titles):
-                self.formats.write_rowcol_name(sheet, 1, i, title)
+                self.formats.write_rowcol_name(sheet, 1, i, str(title))
             row =0
             while row<=max_row:
                 for i,col in enumerate(s["columns"]):
