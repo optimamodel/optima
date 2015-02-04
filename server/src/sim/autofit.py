@@ -93,7 +93,7 @@ def dict2list(Fdict):
     be sure the keys are in the right order.
     """
     Flist = []
-    for key in ['init','popsize', 'force','dx']:
+    for key in ['init', 'force']:
         this = Fdict[key]
         for i in range(len(this)):
             Flist.append(Fdict[key][i])
@@ -108,7 +108,7 @@ def list2dict(Forig, Flist):
     from copy import deepcopy
     Fdict = deepcopy(Forig)
     Flist = Flist.tolist()
-    for key in ['init','popsize', 'force','dx']:
+    for key in ['init', 'force']:
         for i in range(len(Fdict[key])):
             Fdict[key][i] = Flist.pop(0)
     return Fdict
