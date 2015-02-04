@@ -158,7 +158,7 @@ class CalculatingThread(threading.Thread):
 
     def check_stop_flag(self):
         print "has_stop_flag called"
-        if self.iterations>self.max_iterations:
+        if self.max_iterations is not None and self.iterations>self.max_iterations:
             print "max number of iterations has passed"
             self.stop_flag = True
         else:

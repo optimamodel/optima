@@ -3,9 +3,9 @@ Created on Sat Nov 29 17:40:34 2014
 
 @author: robynstuart
 
-Version: 2015jan27
+Version: 2015feb03
 """
-from numpy import linspace, arange, append
+from numpy import linspace, append
 from setoptions import setoptions
 from utils import sanitize, smoothinterp
 
@@ -28,8 +28,6 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False):
     people, hivcosts, artcosts = {}, {}, {}
 
     # Set up variables for time indexing
-    datatvec = arange(D.G.datastart, D.G.dataend+D.opt.dt, D.opt.dt)
-    ndatapts = len(datatvec)
     simtvec = S.tvec
     noptpts = len(simtvec)
 
@@ -39,8 +37,9 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False):
     artunitcost = sanitize([D.data.costcov.cost[prognumber][j]/D.data.costcov.cov[prognumber][j] for j in range(len(D.data.costcov.cov[prognumber]))])[-1]
 
     # Run a simulation with the force of infection set to zero from postyear... 
-    opt = setoptions(nsims=1, turnofftrans=postyear)
     from model import model
+    S = model(D.G, D.M, D.F[0], D.opt, initstate=None)
+    opt = setoptions(nsims=1, turnofftrans=postyear)
     S0 = model(D.G, D.M, D.F[0], opt, initstate=None)
 
     # Extract the number of PLHIV under the baseline sim and the zero transmission sim
@@ -131,16 +130,4 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False):
             plotdata['annual']['future'][yscalefactor]['ylinedata'] = [max(0.0,plotdata['annual']['total'][yscalefactor]['ylinedata'][j] - plotdata['annual']['existing'][yscalefactor]['ylinedata'][j]) for j in range(noptpts)]
     plotdata['cumulative']['future']['ylinedata'] = list(accumu(plotdata['annual']['future']['total']['ylinedata']))
 
-
     return plotdata
-
-
-#example
-#plotdata = financialanalysis(D, postyear=2015, S=D.S, makeplot=1)
-#from matplotlib.pylab import figure, plot, hold, xlabel, ylabel, title #we don't need it for the whole module in web context
-
-#figure()
-#hold(True)
-#plot(plotdata['annual']['total']['gdp']['xlinedata'],plotdata['annual']['total']['gdp']['ylinedata'], lw = 2, c = 'b')
-#plot(plotdata['annual']['existing']['gdp']['xlinedata'],plotdata['annual']['existing']['gdp']['ylinedata'], lw = 2, c = 'r')
-#plot(plotdata['annual']['future']['gdp']['xlinedata'],plotdata['annual']['future']['gdp']['ylinedata'], lw = 2, c = 'k')

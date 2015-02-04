@@ -118,6 +118,7 @@ def update_project(project_id):
 
     from sim.makeproject import default_datastart, default_dataend, default_pops, default_progs
     from sim.runsimulation import runsimulation
+    from sim.dataio import projectpath
     current_app.logger.debug("updateProject %s for user %s" % (project_id, current_user.email))
     raw_data = json.loads(request.data)
     # get current user
@@ -170,6 +171,9 @@ def update_project(project_id):
         filedata.write(project.project_data.meta)
         filedata.close()
         D = model_as_bunch(project.model)
+        D.G.projectname = project.name
+        D.G.projectfilename = projectpath(project.name+'.prj')
+        D.G.workbookname = D.G.projectname + '.xlsx'
         D = updatedata(D, input_programs = project.programs, savetofile = False)
         model = model_as_dict(D)
         project.model = model
@@ -547,6 +551,7 @@ def uploadExcel():
     Precondition: model should exist.
     """
     from sim.runsimulation import runsimulation
+    from sim.dataio import projectpath
     current_app.logger.debug("api/project/update")
     project_name = request.project_name
     project_id = request.project_id
@@ -581,6 +586,9 @@ def uploadExcel():
     if project is not None:
         # update and save model
         D = model_as_bunch(project.model)
+        D.G.projectname = project.name
+        D.G.projectfilename = projectpath(project.name+'.prj')
+        D.G.workbookname = D.G.projectname + '.xlsx'
         D = updatedata(D, input_programs = project.programs, savetofile = False)
         model = model_as_dict(D)
         project.model = model
@@ -670,6 +678,9 @@ def setData(project_id):
         return jsonify(reply)
 
     data = json.load(file)
+    data['G']['projectfilename'] = project.model['G']['projectfilename']
+    data['G']['workbookname'] = project.model['G']['workbookname']
+    data['G']['projectname'] = project.model['G']['projectname']
     project.model = data
     project_name = project.name
     getPopsAndProgsFromModel(project)
