@@ -26,20 +26,27 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       $scope.optimizationStatus = statusEnum.NOT_RUNNING;
       $scope.optimizations = [];
 
+      /**
+       * Empty charts
+       */
+      var resetCharts = function () {
+        $scope.state.optimisationGraphs = [];
+        $scope.state.financialGraphs = [];
+        $scope.state.radarCharts = [];
+        $scope.state.pieCharts = [];
+        $scope.state.stackedBarChart = undefined;
+        $scope.state.outcomeChart = undefined;
+      };
+
       // According to angular best-practices we should wrap every object/value
       // inside a wrapper object. This is due the fact that directives like ng-if
       // always create a child scope & the reference can get lost.
       // see https://github.com/angular/angular.js/wiki/Understanding-Scopes
       $scope.state = {
         activeOptimizationName: undefined,
-        optimisationGraphs: [],
-        financialGraphs: [],
-        radarCharts: [],
-        pieCharts: [],
-        stackedBarChart: undefined,
-        outcomeChart: undefined,
         isTestRun: false
       };
+      resetCharts();
 
       // cache placeholder
       var cachedResponse = null;
@@ -145,7 +152,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     * yData should be an array where each entry contains an array of all
     * y-values from one line.
     */
-    var generateGraph = function(yData, xData, title, legend, xLabel, yLabel) {
+    var generateGraph = function (yData, xData, title, legend, xLabel, yLabel) {
       var linesGraphData = {
         lines: [],
         scatter: []
@@ -444,24 +451,18 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     // makes all graphs to recalculate and redraw
     function drawGraphs() {
       if (!cachedResponse || !cachedResponse.plot) return;
+      resetCharts();
       if (cachedResponse.plot[0].alloc instanceof Array) {
         $scope.state.pieCharts = preparePieCharts(cachedResponse.plot[0].alloc);
         $scope.state.radarCharts = prepareRadarCharts(cachedResponse.plot[0].alloc);
-        $scope.state.stackedBarChart = undefined;
-        $scope.state.multipleBudgetsChart = undefined;
         $scope.state.outcomeChart = prepareOutcomeChart(cachedResponse.plot[0].outcome);
       } else {
-        $scope.state.pieCharts = [];
-        $scope.state.radarCharts = [];
         if (cachedResponse.plot[0].alloc.bardata) {
-          $scope.state.stackedBarChart = undefined;
-          $scope.state.outcomeChart = undefined;
           $scope.state.multipleBudgetsChart = prepareMultipleBudgetsChart(cachedResponse.plot[0].alloc,
             cachedResponse.plot[0].outcome);
         } else if (cachedResponse.plot[0].alloc.stackdata) {
           $scope.state.stackedBarChart = prepareStackedBarChart(cachedResponse.plot[0].alloc);
           $scope.state.outcomeChart = prepareOutcomeChart(cachedResponse.plot[0].outcome);
-          $scope.state.multipleBudgetsChart = undefined;
         }
       }
       $scope.state.optimisationGraphs = prepareOptimisationGraphs(cachedResponse.plot[0].multi);
@@ -929,6 +930,9 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       _.extend($scope.params.constraints, optimization.constraints);
       if (optimization.result) {
         updateGraphs(optimization.result);
+      } else {
+        resetCharts();
+        graphTypeFactory.resetAnnualCostOptions($scope.types);
       }
       constructOptimizationMessage();
     };
