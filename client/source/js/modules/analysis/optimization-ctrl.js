@@ -672,14 +672,22 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     }
 
     function constructOptimizationMessage() {
+      var budgetLevel;
+
+      if ($scope.params.objectives.funding === 'variable') {
+        budgetLevel = " budget level " + joinArrayAsSentence(_.compact(_($scope.params.objectives.outcome.variable).toArray()), undefined, false, "$");
+      } else if ($scope.params.objectives.funding === 'constant') {
+        budgetLevel = " fixed budget of $" + $scope.params.objectives.outcome.fixed + " per year";
+      } else if ($scope.params.objectives.funding === 'range') {
+        budgetLevel = " budget range between $" + $scope.params.objectives.outcome.budgetrange.minval;
+        budgetLevel = budgetLevel + " to $" + $scope.params.objectives.outcome.budgetrange.maxval;
+      }
+
       $scope.optimizationMessage = _.template("Optimizing <%= checkedPrograms %> over years <%= startYear %> to <%= endYear %> with <%= budgetLevel %>.", {
         checkedPrograms : joinArrayAsSentence(validateObjectivesToMinimize().checkedPrograms, 'name', true),
         startYear: $scope.params.objectives.year.start,
         endYear:$scope.params.objectives.year.end,
-        budgetLevel: $scope.params.objectives.funding === 'variable' ?
-          //get budgets list and join it as a sentence
-          " budget level " + joinArrayAsSentence(_.compact(_($scope.params.objectives.outcome.variable).toArray()), undefined, false, "$") : //variable budgets
-          " fixed budget of $" + $scope.params.objectives.outcome.fixed + " per year" //fixed budgets
+        budgetLevel: budgetLevel
       });
     }
 
