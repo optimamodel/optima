@@ -4,7 +4,7 @@ GATHERPLOTDATA
 This file gathers all data that could be used for plotting and packs it into a
 nice little convenient structure :)
 
-Version: 2015jan06 by cliffk
+Version: 2015feb04 by cliffk
 """
 
 # Define labels
@@ -13,7 +13,7 @@ epiylabels = {'prev':'HIV prevalence (%)', 'plhiv':'Number of PLHIV', 'inci':'Ne
 costtitles = {'costcum':'Cumulative HIV-related financial commitments'}
 costylabels = {}
 
-def gatheruncerdata(D, R, annual=True, verbose=2):
+def gatheruncerdata(D, R, annual=True, verbose=2, maxyear=2030):
     """ Gather standard results into a form suitable for plotting with uncertainties. """
     from numpy import zeros, nan, size, ndim, array, asarray
     from bunch import Bunch as struct
@@ -32,10 +32,14 @@ def gatheruncerdata(D, R, annual=True, verbose=2):
     ndatayears = len(uncer.xdata)
     
     # Downsample to annual
+    origtvec = deepcopy(uncer.tvec)
     if annual:
-        origtvec = deepcopy(uncer.tvec)
         dt = origtvec[1]-origtvec[0]
-        indices = range(0, len(origtvec), int(round(1/dt)))
+        allindices = range(0, len(origtvec), int(round(1/dt)))
+        indices = []
+        for i in allindices:
+            if origtvec[i]<=maxyear:
+                indices.append(i)
         uncer.tvec = [origtvec[i] for i in indices]
     else:
         indices = range(len(origtvec))
@@ -177,7 +181,7 @@ def gatheruncerdata(D, R, annual=True, verbose=2):
 
 
 
-def gathermultidata(D, Rarr, annual=True, verbose=2):
+def gathermultidata(D, Rarr, annual=True, verbose=2, maxyear=2030):
     """ Gather multi-simulation results (scenarios and optimizations) into a form suitable for plotting. """
     from bunch import Bunch as struct
     from printv import printv
@@ -192,10 +196,15 @@ def gathermultidata(D, Rarr, annual=True, verbose=2):
     multi.poplabels = D.G.meta.pops.long
     
     # Downsample to annual
+    origtvec = deepcopy(multi.tvec)
     if annual:
-        origtvec = deepcopy(multi.tvec)
         dt = origtvec[1]-origtvec[0]
-        indices = range(0, len(origtvec), int(round(1/dt)))
+        allindices = range(0, len(origtvec), int(round(1/dt)))
+        indices = []
+        for i in allindices:
+            if origtvec[i]<=maxyear:
+                indices.append(i)
+        multi.tvec = [origtvec[i] for i in indices]
         multi.tvec = [origtvec[i] for i in indices]
     else:
         indices = range(len(origtvec))

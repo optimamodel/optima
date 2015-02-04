@@ -30,7 +30,9 @@ def viewuncerresults(E, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 
         if nxplots*nyplots<nplots: nyplots += 1
     
     count = 0
-    for graph in whichgraphs.keys(): # Loop over each type of data, e.g. prevalence
+    whichgraphkeys = whichgraphs.keys()
+    whichgraphkeys.sort()
+    for graph in whichgraphkeys: # Loop over each type of data, e.g. prevalence
         epigraph = (graph[0:4] != 'cost') # Flag for whether or not it's an epi graph vs. a cost graph
         for popstot in range(2): # Loop over population or total graphs
             if whichgraphs[graph][popstot]:
@@ -49,7 +51,7 @@ def viewuncerresults(E, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 
                         if ndim(E[graph].ydata)==2:
                             scatter(E.xdata, E[graph].ydata[p], c=E.colord)
                         
-                        title(E[graph].pops[p].title)
+                        title(E[graph].pops[p].title, fontsize=10)
                         if not(onefig): legend(('Model','Data'))
                         xlabel(E[graph].xlabel)
                         ylabel(E[graph].pops[p].ylabel)
@@ -88,9 +90,9 @@ def viewuncerresults(E, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 
                             scatter(E.xdata, E[graph].ydata, c=E.colord)
                     
                     if not(graph=='costann'):
-                        title(E[graph][subkey].title)
+                        title(E[graph][subkey].title, fontsize=10)
                     else:
-                        title(E[graph][subkey].total.title)
+                        title(E[graph][subkey].total.title, fontsize=10)
                     if epigraph: xlabel(E[graph].xlabel)
                     else: 
                         if not(graph=='costann'):
@@ -161,7 +163,7 @@ def viewmultiresults(M, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 
                         for sim in range(M.nsims):
                             plot(M.tvec, M[graph].pops[p].data[sim], linewidth=linewidth)
                         
-                        title(M[graph].pops[p].title)
+                        title(M[graph].pops[p].title, fontsize=10)
                         if not(onefig): legend(M[graph].pops[p].legend)
                         xlabel(M[graph].xlabel)
                         ylabel(M[graph].pops[p].ylabel)
@@ -186,7 +188,7 @@ def viewmultiresults(M, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 
                     for sim in range(M.nsims):
                         plot(xdata, M[graph][subkey].data[sim], linewidth=linewidth)
                     
-                    title(M[graph][subkey].title)
+                    title(M[graph][subkey].title, fontsize=10)
                     if epigraph: xlabel(M[graph].xlabel)
                     else: xlabel(M[graph][subkey].xlabel)
                     ylabel(M[graph][subkey].ylabel)
