@@ -523,7 +523,8 @@
             <div class="elastic __fluid float-right">
 
               <div class="elastic_col __shrink">
-                <button type="submit" class="btn __green">Start optimization</button>
+                <button type="submit" class="btn __green"
+                        ng-disabled="optimizationStatus.checking">Start optimization</button>
               </div>
 
               <div class="elastic_col __shrink">
@@ -533,12 +534,12 @@
               </div>
               <div class="elastic_col __shrink">
                 <button type="button" class="btn" ng-click="saveOptimization()"
-                        ng-disabled="optimizationStatus.isActive || errorText">Save optimization
+                        ng-disabled="optimizationStatus.isActive || optimizationStatus.checking || errorText">Save optimization
                 </button>
               </div>
               <div class="elastic_col __shrink">
                 <button type="button" class="btn" ng-click="revertOptimization()"
-                        ng-disabled="optimizationStatus.isActive">Revert
+                        ng-disabled="optimizationStatus.isActive || optimizationStatus.checking">Revert
                 </button>
               </div>
             </div>

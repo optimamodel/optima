@@ -16,11 +16,11 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       var errorMessages = [];
 
       var statusEnum = {
-        NOT_RUNNING: { text: "", isActive: false },
-        RUNNING: { text: "Optimization is running", isActive: true },
-        REQUESTED_TO_STOP : { text:"Optimization is requested to stop", isActive: true },
-        STOPPING : { text:"Optimization is stopping", isActive: true },
-        CHECKING: {text:"Checking for existing optimization", isActive: false}
+        NOT_RUNNING: { text: "", isActive: false, checking: false },
+        RUNNING: { text: "Optimization is running", isActive: true, checking: false },
+        REQUESTED_TO_STOP : { text:"Optimization is requested to stop", isActive: true, checking: false },
+        STOPPING : { text:"Optimization is stopping", isActive: true, checking: false },
+        CHECKING: {text:"Checking for existing optimization", isActive: false, checking: true}
       };
 
       $scope.optimizationStatus = statusEnum.NOT_RUNNING;
@@ -933,7 +933,6 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       if (optimization.result) {
         updateGraphs(optimization.result);
       } else {
-        console.log('reset');
         resetCharts();
         graphTypeFactory.resetAnnualCostOptions($scope.types);
       }
