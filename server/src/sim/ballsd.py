@@ -179,11 +179,11 @@ def ballsd(function, x, options = None, stepsize = 0.1, sinc = 2, sdec = 2, pinc
             exitflag = 1 
             if verbose>=5: print('======== Step sizes too small (%f < %f), terminating ========' % (mean(s1), TolX))
             break
-        if (count > StallIterLimit) and (mean(abserrorhistory) < AbsTolFun): # Stop if improvement is too small
+        if (count > StallIterLimit) and (abs(mean(abserrorhistory)) < AbsTolFun): # Stop if improvement is too small
             exitflag = 2 
             if verbose>=5: print('======== Absolute improvement too small (%f < %f), terminating ========' % (mean(abserrorhistory), AbsTolFun))
             break
-        if (count > StallIterLimit) and (mean(relerrorhistory) < RelTolFun): # Stop if improvement is too small
+        if (count > StallIterLimit) and (abs(mean(relerrorhistory)) < RelTolFun): # Stop if improvement is too small
             exitflag = 2 
             if verbose>=5: print('======== Relative improvement too small (%f < %f), terminating ========' % (mean(relerrorhistory), RelTolFun))
             break
