@@ -10,7 +10,7 @@
       <div class="3">
         <select name="optimization-selection" class="txbox"
         ng-model="state.activeOptimizationName"
-        ng-change="applyOptimization(state.activeOptimizationName)">
+        ng-change="applyOptimization(state.activeOptimizationName, true)">
         <option ng-repeat="org in optimizations"
         ng-selected="{{ org.name == state.activeOptimizationName }}"
         value="{{ org.name }}">{{ org.name }}</option>

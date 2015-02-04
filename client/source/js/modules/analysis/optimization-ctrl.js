@@ -929,10 +929,12 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
      * Changes active constrains and objectives to the values in provided optimization
      * @param optimization {Object}
      */
-    $scope.applyOptimization = function(name) {
+    $scope.applyOptimization = function(name, overwriteParams) {
       var optimization = $scope.optimizationByName(name);
-      _.extend($scope.params.objectives, optimization.objectives);
-      _.extend($scope.params.constraints, optimization.constraints);
+      if (overwriteParams) {
+        _.extend($scope.params.objectives, optimization.objectives);
+        _.extend($scope.params.constraints, optimization.constraints);
+      }
       if (optimization.result) {
         updateGraphs(optimization.result);
       } else {
@@ -943,7 +945,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     };
 
     // apply default optimization on page load
-    $scope.initOptimizations = function(optimizations, name) {
+    $scope.initOptimizations = function(optimizations, name, overwriteParams) {
       if (!optimizations) return;
 
       $scope.optimizations = angular.copy(optimizations);
@@ -962,12 +964,12 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
         }
       }
 
-      $scope.applyOptimization($scope.state.activeOptimizationName);
+      $scope.applyOptimization($scope.state.activeOptimizationName, overwriteParams);
     };
 
     // apply existing optimization data, if present
     if (optimizations && optimizations.data) {
-      $scope.initOptimizations(optimizations.data.optimizations);
+      $scope.initOptimizations(optimizations.data.optimizations, undefined, true);
     }
 
     $scope.updateTimelimit = function () {
