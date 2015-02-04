@@ -71,7 +71,7 @@ def doAutoCalibration():
     try:
         can_start, can_join, current_calculation = start_or_report_calculation(current_user.id, project_id, autofit, db.session)
         if can_start:
-            args = {'verbose':10}
+            args = {'verbose':5}
             startyear = data.get("startyear")
             if startyear:
                 args["startyear"] = int(startyear)
