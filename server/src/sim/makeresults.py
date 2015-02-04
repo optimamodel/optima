@@ -1,4 +1,4 @@
-def makeresults(D, allsims=None, quantiles=None, verbose=2):
+def makeresults(D, allsims=None, quantiles=None, financial=True, verbose=2):
     """
     Generate all outputs required for the model:
         Prevalence
@@ -30,7 +30,9 @@ def makeresults(D, allsims=None, quantiles=None, verbose=2):
     allpeople = deepcopy(array([allsims[s].people for s in range(nsims)])) # WARNING, might use stupid amounts of memory
     
     thesecosts = None # Initialize
-    for data in ['prev', 'plhiv', 'inci', 'force', 'daly', 'death', 'tx1', 'tx2', 'dx', 'costann', 'costcum']:
+    datatypes = ['prev', 'plhiv', 'inci', 'force', 'daly', 'death', 'tx1', 'tx2', 'dx']
+    if financial: datatypes.extend(['costann', 'costcum']) # Also run financial results, which are computationally expensive
+    for data in datatypes:
         R[data] = struct()
         if data[0:4] != 'cost':
             R[data].pops = []

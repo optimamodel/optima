@@ -23,14 +23,14 @@ from quantile import quantile
 from ballsd import ballsd
 
 
-def runmodelalloc(D, thisalloc, parindices, randseed, verbose=2):
+def runmodelalloc(D, thisalloc, parindices, randseed, financial=True, verbose=2):
     """ Little function to do calculation since it appears so many times """
     newD = deepcopy(D)
     newD, newcov, newnonhivdalysaverted = getcurrentbudget(newD, thisalloc, randseed=randseed) # Get cost-outcome curves with uncertainty
     newM = makemodelpars(newD.P, newD.opt, withwhat='c', verbose=verbose)
     newD.M = partialupdateM(D.M, newM, parindices)
     S = model(newD.G, newD.M, newD.F[0], newD.opt, verbose=verbose)
-    R = makeresults(D, allsims=[S], verbose=0)
+    R = makeresults(D, allsims=[S], financial=financial, verbose=0)
     return R
 
 
@@ -44,7 +44,7 @@ def objectivecalc(optimparams, options):
     else:
         raise Exception('Cannot figure out what kind of allocation this is since neither options.ntimepm nor options.years is defined')
     
-    R = runmodelalloc(options.D, thisalloc, options.parindices, options.randseed) # Actually run
+    R = runmodelalloc(options.D, thisalloc, options.parindices, options.randseed, financial=False) # Actually run
     
     outcome = 0 # Preallocate objective value 
     for key in options.outcomekeys:
