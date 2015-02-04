@@ -172,7 +172,7 @@ def removeOptimizationSet(name):
         reply['optimizations'] = D_dict['optimizations']
         return jsonify(reply)
 
-@optimization.route('/create/', methods=['POST'])
+@optimization.route('/create', methods=['POST'])
 @login_required
 @check_project_name
 def create_optimization():

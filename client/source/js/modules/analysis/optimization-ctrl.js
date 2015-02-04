@@ -809,7 +809,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
 
     $scope.addOptimization = function () {
       var create = function (name) {
-        $http.post('/api/analysis/optimization/create/', {name: name})
+        $http.post('/api/analysis/optimization/create', {name: name})
           .success(function(data) {
             $scope.optimizations.push(data.optimization);
             $scope.initOptimizations($scope.optimizations, data.optimization.name);
