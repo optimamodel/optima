@@ -1,4 +1,4 @@
-def autofit(D, timelimit=None, maxiters=500, simstartyear=2000, simendyear=2015, verbose=2):
+def autofit(D, timelimit=None, maxiters=500, simstartyear=2000, simendyear=2015, verbose=5):
     """
     Automatic metaparameter fitting code:
         D is the project data structure
@@ -16,9 +16,12 @@ def autofit(D, timelimit=None, maxiters=500, simstartyear=2000, simendyear=2015,
     from ballsd import ballsd
     from bunch import Bunch as struct
     from utils import findinds
+    from copy import deepcopy
     from updatedata import normalizeF, unnormalizeF
     eps = 0.01 # Don't use too small of an epsilon to avoid divide-by-almost zero errors -- this corresponds to 1% which is OK as an absolute error for prevalence
     printv('Running automatic calibration...', 1, verbose)
+    origM = deepcopy(D.M)
+    origG = deepcopy(D.G)
     
     # Set options to update year range
     from setoptions import setoptions
@@ -30,7 +33,7 @@ def autofit(D, timelimit=None, maxiters=500, simstartyear=2000, simendyear=2015,
         printv(Flist, 4, verbose)
         
         F = list2dict(D.F[0], Flist)
-        F = unnormalizeF(F, D) # CK: Convert from normalized to unnormalized F (NB, Madhura)
+        F = unnormalizeF(F, origM, origG) # CK: Convert from normalized to unnormalized F (NB, Madhura)
         S = model(D.G, D.M, F, D.opt, verbose=verbose)
         
         # Pull out diagnoses data
@@ -61,7 +64,7 @@ def autofit(D, timelimit=None, maxiters=500, simstartyear=2000, simendyear=2015,
         return mismatch
 
     # Convert F to a flast list for the optimization algorithm
-    Forig = normalizeF(D.F[0], D) # CK: Convert from normalized to unormalized F (NB, Madhura)
+    Forig = normalizeF(D.F[0], origM, origG) # CK: Convert from normalized to unormalized F (NB, Madhura)
     Forig = array(dict2list(Forig)) # Convert froma  dictionary to a list
     
     # Run the optimization algorithm
@@ -69,7 +72,7 @@ def autofit(D, timelimit=None, maxiters=500, simstartyear=2000, simendyear=2015,
     
     # Update the model, replacing F
     Fnew = list2dict(D.F[0], Fnew) # Convert from list to dictionary
-    Fnew = unnormalizeF(Fnew, D) # CK: Convert from normalized to unormalized F (NB, Madhura)
+    Fnew = unnormalizeF(Fnew, origM, origG) # CK: Convert from normalized to unormalized F (NB, Madhura)
     D.F = [Fnew] # Store dictionary in list
     D.S = model(D.G, D.M, D.F[0], D.opt, verbose=verbose)
     allsims = [D.S]
@@ -93,7 +96,7 @@ def dict2list(Fdict):
     be sure the keys are in the right order.
     """
     Flist = []
-    for key in ['init','popsize', 'force','dx']:
+    for key in ['init', 'force']:
         this = Fdict[key]
         for i in range(len(this)):
             Flist.append(Fdict[key][i])
@@ -108,7 +111,7 @@ def list2dict(Forig, Flist):
     from copy import deepcopy
     Fdict = deepcopy(Forig)
     Flist = Flist.tolist()
-    for key in ['init','popsize', 'force','dx']:
+    for key in ['init', 'force']:
         for i in range(len(Fdict[key])):
             Fdict[key][i] = Flist.pop(0)
     return Fdict
