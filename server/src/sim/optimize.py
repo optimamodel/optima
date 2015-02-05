@@ -102,7 +102,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
     constraints = deepcopy(constraints)
     ntimepm=1 + int(objectives.timevarying)*int(objectives.funding=='constant') # Either 1 or 2, but only if funding==constant
 
-    nprogs = len(D.programs)
+    nprogs = len(accordionalloc(origalloc, D, direction='shrink'))
     totalspend = objectives.outcome.fixed # For fixed budgets
     
     # Define constraints on funding -- per year and total
@@ -205,7 +205,9 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
             print('========== Running uncertainty optimization %s of %s... ==========' % (s+1, len(D.F)))
             options.D.F = [D.F[s]] # Loop over fitted parameters
             options.randseed = s
+            optimparams = accordionalloc(optimparams, D, direction='shrink')
             optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=fundingchanges.total.dec, xmax=fundingchanges.total.inc, absinitial=stepsizes, MaxIter=maxiters, timelimit=timelimit, fulloutput=True, stoppingfunc=stoppingfunc, verbose=verbose)
+            optparams = accordionalloc(optparams, D, direction='grow')
             optparams = optparams / optparams.sum() * options.totalspend # Make sure it's normalized -- WARNING KLUDGY
             allocarr.append(optparams)
             fvalarr.append(output.fval)
@@ -265,7 +267,9 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         
         ## Run time-varying optimization
         print('========== Running time-varying optimization ==========')
+        optimparams = accordionalloc(optimparams, D, direction='shrink')
         optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=parammin, xmax=parammax, absinitial=stepsizes, MaxIter=maxiters, timelimit=timelimit, fulloutput=True, stoppingfunc=stoppingfunc, verbose=verbose)
+        optparams = accordionalloc(optparams, D, direction='grow')
         optparams = optparams / optparams.sum() * options.totalspend # Make sure it's normalized -- WARNING KLUDGY
         
         # Update the model and store the results
@@ -332,7 +336,9 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         
         ## Run time-varying optimization
         print('========== Running multiple-year optimization ==========')
+        optimparams = accordionalloc(optimparams, D, direction='shrink')
         optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=fundingchanges.total.dec, xmax=fundingchanges.total.inc, MaxIter=maxiters, timelimit=timelimit, fulloutput=True, stoppingfunc=stoppingfunc, verbose=verbose)
+        optparams = accordionalloc(optparams, D, direction='grow')
         
         # Normalize
         proginds = arange(nprogs)
@@ -394,7 +400,9 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         for b in range(nbudgets):
             print('========== Running budget optimization %s of %s... ==========' % (b+1, nbudgets))
             options.totalspend = totalspend*budgets[b+1] # Total budget, skipping first
+            optimparams = accordionalloc(optimparams, D, direction='shrink')
             optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=fundingchanges.total.dec, xmax=fundingchanges.total.inc, absinitial=stepsizes, MaxIter=maxiters, timelimit=timelimit, fulloutput=True, stoppingfunc=stoppingfunc, verbose=verbose)
+            optparams = accordionalloc(optparams, D, direction='grow')
             optparams = optparams / optparams.sum() * options.totalspend # Make sure it's normalized -- WARNING KLUDGY
             allocarr.append(optparams)
             fvalarr.append(fval) # Only need last value
