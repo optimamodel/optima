@@ -149,6 +149,77 @@ def getWorkingModel():
         result['exception'] = error_text
     return jsonify(result)
 
+
+@optimization.route('/save', methods=['POST'])
+@login_required
+@check_project_name
+def saveModel():
+    from sim.optimize import saveoptimization
+    """ Saves working model as the default model """
+    reply = {'status':'NOK'}
+    data = json.loads(request.data)
+    name = data.get('name', 'default')
+    objectives = data.get('objectives')
+    if objectives:objectives = bunchify( objectives )
+    constraints = data.get('constraints')
+    if constraints:constraints = bunchify( constraints )
+
+    # get project name
+    project_id = request.project_id
+    if not project_exists(project_id):
+        reply['reason'] = 'File for project %s does not exist' % project_id
+        return jsonify(reply)
+
+    try:
+        # read the previously saved optmizations
+        D_dict = load_model(project_id, as_bunch = False)
+        optimizations = D_dict.get('optimizations')
+
+        # TODO check for difference in working model & new objectives & results
+        # if different then clean results
+        # if not use the existing results
+
+        # now, save the working model, read results and save for the optimization with the given name
+        D_dict = save_working_model_as_default(project_id)
+        result = None
+        D = bunchify(D_dict)
+
+        # get the previously stored optimizations
+        if optimizations: D.optimizations = bunchify(optimizations)
+
+        #save the optimization parameters
+        D = saveoptimization(D, name, objectives, constraints, result)
+        D_dict = D.toDict()
+        save_model(project_id, D_dict)
+
+        reply['status']='OK'
+        reply['optimizations'] = D_dict['optimizations']
+        return jsonify(reply)
+    except Exception, err:
+        reply['exception'] = traceback.format_exc()
+        return jsonify(reply)
+
+@optimization.route('/revert', methods=['POST'])
+@login_required
+@check_project_name
+def revertCalibrationModel():
+    """ Revert working model to the default model """
+    reply = {'status':'NOK'}
+
+    # get project name
+    project_id = request.project_id
+    if not project_exists(project_id):
+        reply['reason'] = 'File for project %s does not exist' % project_id
+        return jsonify(reply)
+    try:
+        revert_working_model_to_default(project_id)
+        return jsonify({"status":"OK"})
+    except Exception, err:
+        reply['exception'] = traceback.format_exc()
+        return jsonify(reply)
+
+
+
 @optimization.route('/remove/<name>', methods=['POST'])
 @login_required
 @check_project_name
