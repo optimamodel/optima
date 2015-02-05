@@ -68,8 +68,6 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
     # Set up parameter vector for time-varying optimisation...
     stepsize = 100000
     growsize = 0.01
-    verbose = 5
-    print('TEMP')
 
     origR = deepcopy(D.R)
     origalloc = D.data.origalloc
@@ -97,6 +95,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
     keys2 = ['dec','inc']
     abslims = {'dec':0, 'inc':1e9}
     rellims = {'dec':-1e9, 'inc':1e9}
+    smallchanges = {'dec':1.0, 'inc':1.0} # WARNING BIZARRE
     for key1 in keys1:
         fundingchanges[key1] = struct()
         for key2 in keys2:
@@ -105,8 +104,8 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
                 fullkey = key1+key2+'rease'
                 this = constraints[fullkey][p] # Shorten name
                 if key1=='total':
-                    if 0: #not(opttrue[p]): # Not an optimized parameter
-                        fundingchanges[key1][key2].append(origalloc[p])
+                    if not(opttrue[p]): # Not an optimized parameter
+                        fundingchanges[key1][key2].append(origalloc[p]*smallchanges[key2])
                     elif this.use and objectives.funding != 'variable': # Don't constrain variable-year-spend optimizations
                         newlim = this.by/100.*origalloc[p]
                         fundingchanges[key1][key2].append(newlim)
@@ -118,9 +117,6 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
                         fundingchanges[key1][key2].append(newlim)
                     else: 
                         fundingchanges[key1][key2].append(rellims[key2])
-    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-
-                
     
     ## Define indices, weights, and normalization factors
     initialindex = findinds(D.opt.partvec, objectives.year.start)
