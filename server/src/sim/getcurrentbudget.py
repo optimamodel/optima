@@ -14,8 +14,6 @@ def getcurrentbudget(D, alloc=None, randseed=None):
 
     # Initialise currentbudget if needed
     allocprovided = not(isinstance(alloc,type(None)))
-    if not(allocprovided):
-        currentbudget = []
 
     # Initialise currentcoverage and currentnonhivdalys
     currentcoverage = zeros((D.G.nprogs, npts))
@@ -57,21 +55,20 @@ def getcurrentbudget(D, alloc=None, randseed=None):
             else:
                 popnumber = D.data.meta.pops.short.index(popname[0]) if popname[0] in D.data.meta.pops.short else 0
                  # Use parameters if there, otherwise give it some predefined ones
-                convertedccoparams = effect[4] if len(effect)>4 and len(effect[4])>=4 else default_convertedccoparams
+                try:
+                    convertedccoparams = effect[4]
+                except:
+                    print('Non-randomized convertedccoparams failed')
+                    convertedccoparams = default_convertedccoparams
                 if randseed>=0:
                     try:
-                        convertedccoparams[0][1] = perturb(1,(convertedccoparams[2][1]-convertedccoparams[1][1])/2, randseed=randseed) - 1 + convertedccoparams[0][1]
+                        convertedccoparams[0][1] = array(perturb(1,(convertedccoparams[2][1]-convertedccoparams[1][1])/2, randseed=randseed)) - 1 + convertedccoparams[0][1]
                         convertedccoparams[-1], convertedccoparams[-2] = makesamples(effect[2], effect[3][0], effect[3][1], effect[3][2], effect[3][3], samplesize=1, randseed=randseed)
                     except:
+                        print('Non-randomized convertedccoparams failed')
                         convertedccoparams = default_convertedccoparams
-                        print('WARNING, no parameters entered for progname=%s , effectnumber=%s, popname=%s, parname=%s' % (progname, effectnumber, popname, parname))
                     
-                D.P[parname].c[popnumber] = cco2eqn(totalcost, convertedccoparams[0]) if len(convertedccparams[0])==2 else ccoeqn(totalcost, convertedccoparams[0])
-
-        if not(allocprovided):
-            currentbudget.append(totalcost)
-            D.data.meta.progs.currentbudget = currentbudget
-            
+                D.P[parname].c[popnumber] = cco2eqn(totalcost, convertedccoparams[0]) if len(convertedccparams[0])==2 else ccoeqn(totalcost, convertedccoparams[0])            
 
     return D, currentcoverage, currentnonhivdalysaverted
     
