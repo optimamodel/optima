@@ -22,6 +22,26 @@ from makemodelpars import makemodelpars
 from quantile import quantile
 from ballsd import ballsd
 
+def accordionalloc(origalloc, D, direction=None):
+    """ Shrink or expand the allocation based on non-optimized programs """
+    opttrue = zeros(len(D.data.origalloc))
+    for i in range(len(D.data.origalloc)):
+        if len(D.programs[D.data.meta.progs.short[i]]['effects']): opttrue[i] = 1.0
+    opttrue = opttrue.astype(int).tolist()
+    optindices = [i for i, x in enumerate(opttrue) if x == 1]
+    nonoptindices = [i for i, x in enumerate(opttrue) if x == 0]
+    
+    if direction=='shrink':
+        optalloc = origalloc[optindices]
+        return optalloc
+    elif direction=='expand':
+        fullalloc = zeros(len(D.data.origalloc))
+        fullalloc[nonoptindices] = D.data.origalloc[nonoptindices]
+        fullalloc[optindices] = origalloc
+        return fullalloc
+    else:
+        raise Exception('Direction must be "shrink" or "expand", silly')
+
 
 def runmodelalloc(D, thisalloc, parindices, randseed, financial=True, verbose=2):
     """ Little function to do calculation since it appears so many times """
@@ -73,23 +93,6 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
     origR = deepcopy(D.R)
     origalloc = D.data.origalloc
     
-    opttrue = zeros(len(D.data.origalloc))
-    for i in range(len(D.data.origalloc)):
-        if len(D.programs[D.data.meta.progs.short[i]]['effects']): opttrue[i] = 1.0
-    opttrue = opttrue.astype(int).tolist()
-    optindices = [i for i, x in enumerate(opttrue) if x == 1]
-    nonoptindices = [i for i, x in enumerate(opttrue) if x == 0]
-
-    def getoptimizablalloc(fullalloc):
-        optalloc = D.data.origalloc[optindices]
-        return optalloc
-
-    def getfullalloc(optalloc):
-        fullalloc = zeros(len(D.data.origalloc))
-        fullalloc[nonoptindices] = D.data.origalloc[nonoptindices]
-        fullalloc[optindices] = optalloc        
-        return fullalloc
-        
     # Make sure objectives and constraints exist, and overwrite using saved ones if available
     if objectives is None: objectives = defaultobjectives(D, verbose=verbose)
     if constraints is None: constraints = defaultconstraints(D, verbose=verbose)
