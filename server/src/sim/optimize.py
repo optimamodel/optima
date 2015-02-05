@@ -23,14 +23,15 @@ from quantile import quantile
 from ballsd import ballsd
 
 
-def runmodelalloc(D, thisalloc, parindices, randseed, verbose=2):
+
+def runmodelalloc(D, thisalloc, parindices, randseed, financial=True, verbose=2):
     """ Little function to do calculation since it appears so many times """
     newD = deepcopy(D)
     newD, newcov, newnonhivdalysaverted = getcurrentbudget(newD, thisalloc, randseed=randseed) # Get cost-outcome curves with uncertainty
-    newM = makemodelpars(newD.P, newD.opt, withwhat='c', verbose=verbose)
+    newM = makemodelpars(newD.P, newD.opt, withwhat='c', verbose=0) # Don't print out
     newD.M = partialupdateM(D.M, newM, parindices)
     S = model(newD.G, newD.M, newD.F[0], newD.opt, verbose=verbose)
-    R = makeresults(D, allsims=[S], verbose=0)
+    R = makeresults(D, allsims=[S], financial=financial, verbose=0)
     return R
 
 
@@ -44,7 +45,8 @@ def objectivecalc(optimparams, options):
     else:
         raise Exception('Cannot figure out what kind of allocation this is since neither options.ntimepm nor options.years is defined')
     
-    R = runmodelalloc(options.D, thisalloc, options.parindices, options.randseed) # Actually run
+    financial=True if options.weights['costann'] else False
+    R = runmodelalloc(options.D, thisalloc, options.parindices, options.randseed, financial=financial) # Actually run
     
     outcome = 0 # Preallocate objective value 
     for key in options.outcomekeys:
@@ -57,7 +59,7 @@ def objectivecalc(optimparams, options):
     
     
     
-def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None, verbose=2, name='Default', stoppingfunc = None):
+def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None, verbose=5, name='Default', stoppingfunc = None):
     """ Perform the actual optimization """
     from time import sleep
     
@@ -66,7 +68,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
     # Set up parameter vector for time-varying optimisation...
     stepsize = 100000
     growsize = 0.01
-    
+
     origR = deepcopy(D.R)
     origalloc = D.data.origalloc
     
@@ -79,8 +81,14 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
     constraints = deepcopy(constraints)
     ntimepm=1 + int(objectives.timevarying)*int(objectives.funding=='constant') # Either 1 or 2, but only if funding==constant
 
-    nprogs = len(D.programs)
+    # Handle original allocation
+    nprogs = len(origalloc)
     totalspend = objectives.outcome.fixed # For fixed budgets
+    opttrue = zeros(len(D.data.origalloc))
+    for i in range(len(D.data.origalloc)):
+        if len(D.programs[D.data.meta.progs.short[i]]['effects']): opttrue[i] = 1.0
+    opttrue = opttrue.astype(bool) # Logical values
+    
     
     # Define constraints on funding -- per year and total
     fundingchanges = struct()
@@ -88,6 +96,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
     keys2 = ['dec','inc']
     abslims = {'dec':0, 'inc':1e9}
     rellims = {'dec':-1e9, 'inc':1e9}
+    smallchanges = {'dec':1.0, 'inc':1.0} # WARNING BIZARRE
     for key1 in keys1:
         fundingchanges[key1] = struct()
         for key2 in keys2:
@@ -96,8 +105,10 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
                 fullkey = key1+key2+'rease'
                 this = constraints[fullkey][p] # Shorten name
                 if key1=='total':
-                    if this.use and objectives.funding != 'variable': # Don't constrain variable-year-spend optimizations
-                        newlim = this.by/100.*origalloc
+                    if not(opttrue[p]): # Not an optimized parameter
+                        fundingchanges[key1][key2].append(origalloc[p]*smallchanges[key2])
+                    elif this.use and objectives.funding != 'variable': # Don't constrain variable-year-spend optimizations
+                        newlim = this.by/100.*origalloc[p]
                         fundingchanges[key1][key2].append(newlim)
                     else: 
                         fundingchanges[key1][key2].append(abslims[key2])
@@ -107,7 +118,6 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
                         fundingchanges[key1][key2].append(newlim)
                     else: 
                         fundingchanges[key1][key2].append(rellims[key2])
-                
     
     ## Define indices, weights, and normalization factors
     initialindex = findinds(D.opt.partvec, objectives.year.start)
@@ -183,7 +193,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
             options.D.F = [D.F[s]] # Loop over fitted parameters
             options.randseed = s
             optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=fundingchanges.total.dec, xmax=fundingchanges.total.inc, absinitial=stepsizes, MaxIter=maxiters, timelimit=timelimit, fulloutput=True, stoppingfunc=stoppingfunc, verbose=verbose)
-            optparams = optparams / optparams.sum() * options.totalspend # Make sure it's normalized -- WARNING KLUDGY
+            optparams[opttrue] = optparams[opttrue] / optparams[opttrue].sum() * (options.totalspend - optparams[~opttrue].sum()) # Make sure it's normalized -- WARNING KLUDGY
             allocarr.append(optparams)
             fvalarr.append(output.fval)
         
@@ -243,7 +253,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         ## Run time-varying optimization
         print('========== Running time-varying optimization ==========')
         optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=parammin, xmax=parammax, absinitial=stepsizes, MaxIter=maxiters, timelimit=timelimit, fulloutput=True, stoppingfunc=stoppingfunc, verbose=verbose)
-        optparams = optparams / optparams.sum() * options.totalspend # Make sure it's normalized -- WARNING KLUDGY
+        optparams[opttrue] = optparams[opttrue] / optparams[opttrue].sum() * (options.totalspend - optparams[~opttrue].sum())
         
         # Update the model and store the results
         result = struct()
@@ -372,7 +382,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
             print('========== Running budget optimization %s of %s... ==========' % (b+1, nbudgets))
             options.totalspend = totalspend*budgets[b+1] # Total budget, skipping first
             optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=fundingchanges.total.dec, xmax=fundingchanges.total.inc, absinitial=stepsizes, MaxIter=maxiters, timelimit=timelimit, fulloutput=True, stoppingfunc=stoppingfunc, verbose=verbose)
-            optparams = optparams / optparams.sum() * options.totalspend # Make sure it's normalized -- WARNING KLUDGY
+            optparams[opttrue] = optparams[opttrue] / optparams[opttrue].sum() * (options.totalspend - optparams[~opttrue].sum())
             allocarr.append(optparams)
             fvalarr.append(fval) # Only need last value
 

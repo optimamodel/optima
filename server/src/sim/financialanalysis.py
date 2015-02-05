@@ -8,11 +8,14 @@ Version: 2015feb03
 from numpy import linspace, append
 from setoptions import setoptions
 from utils import sanitize, smoothinterp
+from printv import printv
 
-def financialanalysis(D, postyear=2015, S=None, makeplot=False):
+def financialanalysis(D, postyear=2015, S=None, makeplot=False, verbose=2):
     '''
     Plot financial commitment graphs
     '''
+    
+    printv('Running financial analysis...', 2, verbose)
     
     # Checking inputs... 
     if not(isinstance(S,dict)): S = D.S # If not supplied as input, copy from D
@@ -82,7 +85,7 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False):
     onarttotal = [tx1total[j] + tx2total[j] for j in range(noptpts)]
     artcosts['total'] = [onarttotal[j]*artunitcost for j in range(noptpts)]
     
-    # Calculate annual treatment costs for new PLHIV
+    # Calculate annual treatment costs for existing PLHIV
     tx1existing = people['existing'][D.G.tx1[0]:D.G.fail[-1],:,:].sum(axis=(0,1))
     tx2existing = people['existing'][D.G.tx2[0]:D.G.tx2[-1],:,:].sum(axis=(0,1))
     onartexisting = [tx1existing[j] + tx2existing[j] for j in range(noptpts)]

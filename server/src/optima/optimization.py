@@ -67,7 +67,7 @@ def startOptimization():
         can_start, can_join, current_calculation = start_or_report_calculation(current_user.id, project_id, optimize, db.session)
         if can_start:
             # Prepare arguments
-            args = {'verbose':0}
+            args = {'verbose':2}
             objectives = data.get('objectives')
             if objectives:
                 args['objectives'] = bunchify( objectives )
