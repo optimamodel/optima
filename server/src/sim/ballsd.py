@@ -169,35 +169,35 @@ def ballsd(function, x, options = None, stepsize = 0.1, sinc = 2, sdec = 2, pinc
         # Stopping criteria
         if (count+1) >= MaxFunEvals: # Stop if the function evaluation limit is exceeded
             exitflag = 0 
-            if verbose>=5: print('======== Maximum function evaluations reached (%i >= %i), terminating ========' % ((count+1), MaxFunEvals))
+            if verbose>=2: print('======== Maximum function evaluations reached (%i >= %i), terminating ========' % ((count+1), MaxFunEvals))
             break
         if count >= MaxIter: # Stop if the iteration limit is exceeded
             exitflag = 0 
-            if verbose>=5: print('======== Maximum iterations reached (%i >= %i), terminating ========' % (count, MaxIter))
+            if verbose>=2: print('======== Maximum iterations reached (%i >= %i), terminating ========' % (count, MaxIter))
             break 
         if mean(s1) < TolX: # Stop if the step sizes are too small
             exitflag = 1 
-            if verbose>=5: print('======== Step sizes too small (%f < %f), terminating ========' % (mean(s1), TolX))
+            if verbose>=2: print('======== Step sizes too small (%f < %f), terminating ========' % (mean(s1), TolX))
             break
         if (count > StallIterLimit) and (abs(mean(abserrorhistory)) < AbsTolFun): # Stop if improvement is too small
             exitflag = 2 
-            if verbose>=5: print('======== Absolute improvement too small (%f < %f), terminating ========' % (mean(abserrorhistory), AbsTolFun))
+            if verbose>=2: print('======== Absolute improvement too small (%f < %f), terminating ========' % (mean(abserrorhistory), AbsTolFun))
             break
         if (count > StallIterLimit) and (abs(mean(relerrorhistory)) < RelTolFun): # Stop if improvement is too small
             exitflag = 2 
-            if verbose>=5: print('======== Relative improvement too small (%f < %f), terminating ========' % (mean(relerrorhistory), RelTolFun))
+            if verbose>=2: print('======== Relative improvement too small (%f < %f), terminating ========' % (mean(relerrorhistory), RelTolFun))
             break
         if count2 > MaxRangeIter: 
             exitflag = 3
-            if verbose>=5: print('======== Can\'t find parameters within range (%i > %i), terminating ========' % (count2, MaxRangeIter))
+            if verbose>=2: print('======== Can\'t find parameters within range (%i > %i), terminating ========' % (count2, MaxRangeIter))
             break
         if timelimit is not None and (time()-start)>timelimit:
             exitflag = 4
-            if verbose>=5: print('======== Time limit reached (%f > %f), terminating ========' % ((time()-start), timelimit))
+            if verbose>=2: print('======== Time limit reached (%f > %f), terminating ========' % ((time()-start), timelimit))
             break
         if stoppingfunc and stoppingfunc():
             exitflag = 5
-            if verbose>=5: print('======== Stopping function called, terminating ========')
+            if verbose>=2: print('======== Stopping function called, terminating ========')
             break
 
     # Create additional output
