@@ -157,12 +157,6 @@ def saveModel():
     from sim.optimize import saveoptimization
     """ Saves working model as the default model """
     reply = {'status':'NOK'}
-    data = json.loads(request.data)
-    name = data.get('name', 'default')
-    objectives = data.get('objectives')
-    if objectives:objectives = bunchify( objectives )
-    constraints = data.get('constraints')
-    if constraints:constraints = bunchify( constraints )
 
     # get project name
     project_id = request.project_id
