@@ -807,6 +807,26 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
         });
     };
 
+    $scope.saveOptimization = function () {
+      var params = {
+          name: $scope.state.activeOptimizationName,
+          objectives: $scope.params.objectives,
+          constraints: $scope.params.constraints
+      };
+      $http.post('/api/analysis/optimization/save', params)
+        .success(function (data) {
+          if (data.optimizations) {
+            $scope.initOptimizations(data.optimizations, name);
+          }
+      });
+    };
+
+
+    $scope.revertOptimization = function () {
+      $http.post('/api/analysis/optimization/revert')
+        .success(function(){ console.log("OK");});
+    };
+
     $scope.addOptimization = function () {
       var create = function (name) {
         $http.post('/api/analysis/optimization/create', {name: name})
