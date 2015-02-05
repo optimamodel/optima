@@ -8,14 +8,19 @@ Version: 2015feb03
 from numpy import linspace, append
 from setoptions import setoptions
 from utils import sanitize, smoothinterp
+from printv import printv
 
-def financialanalysis(D, postyear=2015, S=None, makeplot=False):
+def financialanalysis(D, postyear=2015, S=None, makeplot=False, verbose=2):
     '''
     Plot financial commitment graphs
     '''
     
+    printv('Running financial analysis...', 2, verbose)
+    
     # Checking inputs... 
-    if not(isinstance(S,dict)): S = D.S # If not supplied as input, copy from D
+    if not(isinstance(S,dict)): 
+        print('Using default S since no usable S supplied')
+        S = D.S # If not supplied as input, copy from D
     postyear = float(postyear) # Make sure the year for turning off transmission is a float
 
     # Initialise output structure of plot data
@@ -38,7 +43,6 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False):
 
     # Run a simulation with the force of infection set to zero from postyear... 
     from model import model
-    S = model(D.G, D.M, D.F[0], D.opt, initstate=None)
     opt = setoptions(nsims=1, turnofftrans=postyear)
     S0 = model(D.G, D.M, D.F[0], opt, initstate=None)
 
@@ -82,7 +86,7 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False):
     onarttotal = [tx1total[j] + tx2total[j] for j in range(noptpts)]
     artcosts['total'] = [onarttotal[j]*artunitcost for j in range(noptpts)]
     
-    # Calculate annual treatment costs for new PLHIV
+    # Calculate annual treatment costs for existing PLHIV
     tx1existing = people['existing'][D.G.tx1[0]:D.G.fail[-1],:,:].sum(axis=(0,1))
     tx2existing = people['existing'][D.G.tx2[0]:D.G.tx2[-1],:,:].sum(axis=(0,1))
     onartexisting = [tx1existing[j] + tx2existing[j] for j in range(noptpts)]

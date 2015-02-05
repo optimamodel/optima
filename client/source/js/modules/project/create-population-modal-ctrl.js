@@ -10,9 +10,7 @@ define(['./module', 'angular'], function (module, angular) {
     $scope.population.active = true;
 
     $scope.submit = function (form) {
-      if ($scope.population.male && $scope.population.female) {
-        modalService.inform(undefined,undefined, 'Please select either male, female or none of them.');
-      } else if (form.$invalid) {
+      if (form.$invalid) {
         modalService.inform(undefined,undefined, 'Please fill in the form correctly');
       } else {
         $modalInstance.close($scope.population);

@@ -10,7 +10,7 @@ def model(G, M, F, opt, initstate=None, verbose=2):
     
     Version: 2015feb04 by cliffk
     """
-    printv('Running model...', 1, verbose)
+    printv('Running model...', 1, verbose, newline=False)
 
     ###############################################################################
     ## Setup

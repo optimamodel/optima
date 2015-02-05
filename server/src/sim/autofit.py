@@ -54,13 +54,16 @@ def autofit(D, timelimit=None, maxiters=500, simstartyear=2000, simendyear=2015,
             prev[p].model.y = S.people[1:,p,:].sum(axis=0) / S.people[:,p,:].sum(axis=0) # This is prevalence
         
         mismatch = 0
+        allmismatches = []
         for base in [dx, prev]:
             for ind in range(len(base)):
                 for y,year in enumerate(base[ind].data.x):
                     modelind = findinds(S.tvec, year)
                     if len(modelind)>0: # TODO Cliff check
-                        mismatch += abs(base[ind].model.y[modelind] - base[ind].data.y[y]) / mean(base[ind].data.y+eps)
-
+                        thismismatch = abs(base[ind].model.y[modelind] - base[ind].data.y[y]) / mean(base[ind].data.y+eps)
+                        allmismatches.append(thismismatch)
+                        mismatch += thismismatch
+        printv('Current mismatch: %s' % array(thismismatch).flatten(), 5, verbose=verbose)
         return mismatch
 
     # Convert F to a flast list for the optimization algorithm

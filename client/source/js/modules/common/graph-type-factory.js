@@ -17,11 +17,18 @@ define(['angular', 'underscore'], function (angular, _) {
               entry.disabled = false;
             }
           });
-        };
+      };
+
+      var resetAnnualCostOptions = function(types) {
+        return _(types.financialAnnualCosts).each(function(entry) {
+          entry.disabled = true;
+        });
+      };
 
       return {
           types: angular.copy(CONFIG.GRAPH_TYPES),
-          enableAnnualCostOptions: enableAnnualCostOptions
+          enableAnnualCostOptions: enableAnnualCostOptions,
+          resetAnnualCostOptions: resetAnnualCostOptions
       };
     }]);
 });

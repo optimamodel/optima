@@ -349,7 +349,7 @@ def doCostCoverage():
                 new_effects.append(effect)
             D.programs[progname]['effects'] = new_effects
         args['D'] = D
-        plotdata, plotdata_co, plotdata_cc, effectnames, D = plotallcurves(**args)
+        plotdata, plotdata_co, plotdata_cc, effectnames, D = plotallcurves(**args) #effectnames are actually effects
         if do_save:
             D_dict = D.toDict()
             save_model(request.project_id, D_dict)

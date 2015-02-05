@@ -222,9 +222,25 @@ define(['./module', 'd3', 'underscore', './scale-helpers'], function (module, d3
       };
 
       this.draw = function (dataset) {
-        exit(dataset);
-        transition(dataset);
-        enter(dataset);
+        if (dataset.length > 1) {
+          exit(dataset);
+          transition(dataset);
+          enter(dataset);
+        } else if (dataset.length === 1) {
+          // draw a point in case there is only one entry
+          chart.selectAll('circle.' + uniqClassName)
+            .data(dataset)
+            .enter()
+            .append('circle')
+            .attr('cx', function (d) {
+              return xScale(d[0]);
+            })
+            .attr('cy', function (d) {
+              return yScale(d[1]);
+            })
+            .attr('class', ['line ', colorClass, uniqClassName].join(' '))
+            .attr('r', 3);
+        }
       };
 
       this.dispose = function () {

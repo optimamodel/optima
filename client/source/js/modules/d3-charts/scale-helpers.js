@@ -34,8 +34,10 @@ define(['d3'], function (d3) {
    * 2.4 -> 3
    * 0.00242 -> 0.003
    * 0.041 -> 0.05
+   * 0 -> 0
    */
   var flexCeil = function(value) {
+    if (value === 0) return 0;
     if (value >= 1.0) return Math.ceil(value);
     var multi=1.0;
     while (value < 1.0){
