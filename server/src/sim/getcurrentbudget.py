@@ -61,14 +61,14 @@ def getcurrentbudget(D, alloc=None, randseed=None):
                     convertedccoparams = effect[4]
                 except:
                     print('Non-randomized convertedccoparams failed')
-                    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                    convertedccoparams = default_convertedccoparams
                 if randseed>=0:
                     try:
                         convertedccoparams[0][1] = array(perturb(1,(convertedccoparams[2][1]-convertedccoparams[1][1])/2, randseed=randseed)) - 1 + convertedccoparams[0][1]
                         convertedccoparams[-1], convertedccoparams[-2] = makesamples(effect[2], effect[3][0], effect[3][1], effect[3][2], effect[3][3], samplesize=1, randseed=randseed)
                     except:
                         print('Non-randomized convertedccoparams failed')
-                        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                        convertedccoparams = default_convertedccoparams
                     
                 D.P[parname].c[popnumber] = cco2eqn(totalcost, convertedccoparams[0]) if len(convertedccparams[0])==2 else ccoeqn(totalcost, convertedccoparams[0])
 
