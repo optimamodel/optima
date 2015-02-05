@@ -7,12 +7,12 @@ Load a project and test data upload.
 from dataio import loaddata
 from os import path
 
-kind = 'sudan'
+kind = 'concentrated'
 doplot = True
 
 datadir = '../static/'
-datafile = kind+'test2.json'
-spreadsheetfile = kind+'example.xlsx'
+datafile = kind+'.json'
+spreadsheetfile = kind+'.xlsx'
 if path.exists(datadir+datafile):
     D = loaddata(datadir+datafile)
     D.G.workbookname = datadir+spreadsheetfile
@@ -32,10 +32,10 @@ if path.exists(datadir+datafile):
 #
 from optimize import optimize
 D.F = [D.F[0]] # Only run a snigle simulation
-optimize(D, maxiters=10, verbose=5)
+optimize(D, maxiters=60, verbose=5)
 #
 #
 if doplot:
     print('Viewing results...')
-    from viewresults import viewuncerresults
-    viewuncerresults(D.plot.E)
+    from viewresults import viewmultiresults
+    viewmultiresults(D.plot.optim[0].multi)
