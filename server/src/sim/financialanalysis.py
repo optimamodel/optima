@@ -18,7 +18,9 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False, verbose=2):
     printv('Running financial analysis...', 2, verbose)
     
     # Checking inputs... 
-    if not(isinstance(S,dict)): S = D.S # If not supplied as input, copy from D
+    if not(isinstance(S,dict)): 
+        print('Using default S since no usable S supplied')
+        S = D.S # If not supplied as input, copy from D
     postyear = float(postyear) # Make sure the year for turning off transmission is a float
 
     # Initialise output structure of plot data
@@ -41,7 +43,6 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False, verbose=2):
 
     # Run a simulation with the force of infection set to zero from postyear... 
     from model import model
-    S = model(D.G, D.M, D.F[0], D.opt, initstate=None)
     opt = setoptions(nsims=1, turnofftrans=postyear)
     S0 = model(D.G, D.M, D.F[0], opt, initstate=None)
 

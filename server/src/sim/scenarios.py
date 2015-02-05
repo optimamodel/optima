@@ -39,6 +39,7 @@ def runscenarios(D, scenariolist=None, verbose=2):
     # Calculate results
     from makeresults import makeresults
     for scen in range(nscenarios):
+        print('HIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII %s of %s' % (scen, nscenarios))
         D.scens[scen].R = makeresults(D, [D.scens[scen].S], D.opt.quantiles, verbose=verbose)
     
     # Gather plot data
