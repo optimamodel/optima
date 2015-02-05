@@ -52,8 +52,7 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
       };
 
       var scatterDataExists = (data.scatter && (data.scatter.length > 0));
-      // data.lines[0].length >1 to escape explosion here.
-      var linesDataExists = (data.lines && data.lines.length > 0 && (data.lines[0].length > 1));
+      var linesDataExists = (data.lines && data.lines.length > 0);
 
       var hasValidMin = function(domain) {
         return (domain[0]!==null && !isNaN(domain[0]));
@@ -99,7 +98,7 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
        
       // normalizing all graphs scales to include maximum possible x and y
       _(graphsScales).each(function (scale) {
-        scale.y.domain([0, yMax]);
+        scale.y.domain([yMin, yMax]);
         scale.x.domain([Math.floor(xMin), scaleHelpers.flexCeil(xMax)]);
       });
 
