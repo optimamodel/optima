@@ -87,7 +87,8 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
     opttrue = zeros(len(D.data.origalloc))
     for i in range(len(D.data.origalloc)):
         if len(D.programs[D.data.meta.progs.short[i]]['effects']): opttrue[i] = 1.0
-    opttrue = opttrue.astype(int).tolist()
+    opttrue = opttrue.astype(bool) # Logical values
+    
     
     # Define constraints on funding -- per year and total
     fundingchanges = struct()
@@ -192,7 +193,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
             options.D.F = [D.F[s]] # Loop over fitted parameters
             options.randseed = s
             optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=fundingchanges.total.dec, xmax=fundingchanges.total.inc, absinitial=stepsizes, MaxIter=maxiters, timelimit=timelimit, fulloutput=True, stoppingfunc=stoppingfunc, verbose=verbose)
-            optparams = optparams / optparams.sum() * options.totalspend # Make sure it's normalized -- WARNING KLUDGY
+            optparams[opttrue] = optparams[opttrue] / optparams[opttrue].sum() * (options.totalspend - optparams[~opttrue].sum()) # Make sure it's normalized -- WARNING KLUDGY
             allocarr.append(optparams)
             fvalarr.append(output.fval)
         
@@ -252,7 +253,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         ## Run time-varying optimization
         print('========== Running time-varying optimization ==========')
         optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=parammin, xmax=parammax, absinitial=stepsizes, MaxIter=maxiters, timelimit=timelimit, fulloutput=True, stoppingfunc=stoppingfunc, verbose=verbose)
-        optparams = optparams / optparams.sum() * options.totalspend # Make sure it's normalized -- WARNING KLUDGY
+        optparams[opttrue] = optparams[opttrue] / optparams[opttrue].sum() * (options.totalspend - optparams[~opttrue].sum())
         
         # Update the model and store the results
         result = struct()
@@ -381,7 +382,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
             print('========== Running budget optimization %s of %s... ==========' % (b+1, nbudgets))
             options.totalspend = totalspend*budgets[b+1] # Total budget, skipping first
             optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=fundingchanges.total.dec, xmax=fundingchanges.total.inc, absinitial=stepsizes, MaxIter=maxiters, timelimit=timelimit, fulloutput=True, stoppingfunc=stoppingfunc, verbose=verbose)
-            optparams = optparams / optparams.sum() * options.totalspend # Make sure it's normalized -- WARNING KLUDGY
+            optparams[opttrue] = optparams[opttrue] / optparams[opttrue].sum() * (options.totalspend - optparams[~opttrue].sum())
             allocarr.append(optparams)
             fvalarr.append(fval) # Only need last value
         

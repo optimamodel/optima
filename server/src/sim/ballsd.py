@@ -137,6 +137,8 @@ def ballsd(function, x, options = None, stepsize = 0.1, sinc = 2, sdec = 2, pinc
                 p[choice] = p[choice]/pdec # decrease probability of picking this parameter again
                 s1[choice] = s1[choice]/sdec # decrease size of step for next time
 
+        
+        
         xnew = deepcopy(x) # Initialize the new parameter set
         xnew[par] = newval # Update the new parameter set
         fvalnew = function(xnew) if options is None else function(xnew, options) # Calculate the objective function for the new parameter set
@@ -144,8 +146,6 @@ def ballsd(function, x, options = None, stepsize = 0.1, sinc = 2, sdec = 2, pinc
         relerrorhistory[mod(count,StallIterLimit)] = fval/float(fvalnew)-1 # Keep track of improvements in the error  
         if verbose>5:
             print('       choice=%s, par=%s, pm=%s, origval=%s, newval=%s, inrange=%s1' % (choice, par, pm, x[par], xnew[par], inrange))
-
-        
 
         # Check if this step was an improvement
         fvalold = fval # Store old fval
