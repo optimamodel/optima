@@ -44,7 +44,8 @@ def objectivecalc(optimparams, options):
     else:
         raise Exception('Cannot figure out what kind of allocation this is since neither options.ntimepm nor options.years is defined')
     
-    R = runmodelalloc(options.D, thisalloc, options.parindices, options.randseed, financial=False) # Actually run
+    financial=True if options.weights['costann'] else False
+    R = runmodelalloc(options.D, thisalloc, options.parindices, options.randseed, financial=financial) # Actually run
     
     outcome = 0 # Preallocate objective value 
     for key in options.outcomekeys:
@@ -66,9 +67,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
     # Set up parameter vector for time-varying optimisation...
     stepsize = 100000
     growsize = 0.01
-    verbose=5
-    print('TEMP')
-    
+
     origR = deepcopy(D.R)
     origalloc = D.data.origalloc
     

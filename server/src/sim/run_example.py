@@ -66,5 +66,5 @@ optimize(D, maxiters=10)
 
 if doplot:
     print('Viewing results...')
-    from viewresults import viewuncerresults
-    viewuncerresults(D.plot.E)
+    from viewresults import viewmultiresults
+    viewmultiresults(D.plot.optim[0].multi)

@@ -8,11 +8,14 @@ Version: 2015feb03
 from numpy import linspace, append
 from setoptions import setoptions
 from utils import sanitize, smoothinterp
+from printv import printv
 
-def financialanalysis(D, postyear=2015, S=None, makeplot=False):
+def financialanalysis(D, postyear=2015, S=None, makeplot=False, verbose=2):
     '''
     Plot financial commitment graphs
     '''
+    
+    printv('Running financial analysis...', 2, verbose)
     
     # Checking inputs... 
     if not(isinstance(S,dict)): S = D.S # If not supplied as input, copy from D
