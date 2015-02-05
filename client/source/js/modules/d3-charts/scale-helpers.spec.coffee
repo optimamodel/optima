@@ -53,3 +53,4 @@ define ['Source/modules/d3-charts/scale-helpers'], (scaleHelpers) ->
         expect(scaleHelpers.flexCeil(0.2)).toBe(0.2)
         expect(scaleHelpers.flexCeil(0.023)).toBe(0.03)
         expect(scaleHelpers.flexCeil(0.000654)).toBe(0.0007)
+        expect(scaleHelpers.flexCeil(0)).toBe(0)

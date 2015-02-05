@@ -52,8 +52,7 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
       };
 
       var scatterDataExists = (data.scatter && (data.scatter.length > 0));
-      // data.lines[0].length >1 to escape explosion here.
-      var linesDataExists = (data.lines && data.lines.length > 0 && (data.lines[0].length > 1));
+      var linesDataExists = (data.lines && data.lines.length > 0);
 
       var hasValidMin = function(domain) {
         return (domain[0]!==null && !isNaN(domain[0]));
@@ -96,10 +95,17 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
         if(hasValidMin(y_domain)) { yMin = Math.min(yMin, y_domain[0]); }
         if(hasValidMin(x_domain)) { xMin = Math.min(xMin, x_domain[0]); }
       }
-       
+
+      // to make it visually appealing in case there is a point but no line
+      // the data point is centered
+      if (xMin == xMax) {
+        xMin = xMin - 1;
+        xMax = xMax + 1;
+      }
+
       // normalizing all graphs scales to include maximum possible x and y
       _(graphsScales).each(function (scale) {
-        scale.y.domain([0, yMax]);
+        scale.y.domain([yMin, yMax]);
         scale.x.domain([Math.floor(xMin), scaleHelpers.flexCeil(xMax)]);
       });
 
