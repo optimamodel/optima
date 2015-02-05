@@ -17,6 +17,7 @@ def makeproject(projectname='example', pops = default_pops, progs = default_prog
     from bunch import Bunch as struct
     from printv import printv
     from numpy import arange
+    from copy import deepcopy
 
     printv('Making project...', 1, verbose)
 
