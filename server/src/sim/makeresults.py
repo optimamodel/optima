@@ -29,7 +29,6 @@ def makeresults(D, allsims=None, quantiles=None, financial=True, verbose=2):
     if quantiles==None: quantiles = D.opt.quantiles # If no quantiles are specified, just use the default ones
     allpeople = deepcopy(array([allsims[s].people for s in range(nsims)])) # WARNING, might use stupid amounts of memory
     
-    allcosts = [] # Initialize -- WARNING, need to do better
     datatypes = ['prev', 'plhiv', 'inci', 'force', 'daly', 'death', 'tx1', 'tx2', 'dx']
     if financial: datatypes.extend(['costann', 'costcum']) # Also run financial results, which are computationally expensive
     for data in datatypes:
@@ -118,10 +117,10 @@ def makeresults(D, allsims=None, quantiles=None, financial=True, verbose=2):
         if data[0:4]=='cost':
             printv('Calculating costs...', 3, verbose)
             from financialanalysis import financialanalysis
-            if len(allcosts)==0 and financial:
-                for s in range(nsims):
-                    thesecosts = financialanalysis(D, postyear = D.data.epiyears[-1], S = allsims[s], makeplot = False)
-                    allcosts.append(thesecosts)
+            allcosts = [] # Initialize -- WARNING, need to do better
+            for s in range(nsims):
+                thesecosts = financialanalysis(D, postyear = D.data.epiyears[-1], S = allsims[s], makeplot = False)
+                allcosts.append(thesecosts)
             
             if data=='costcum':
                 R.costcum.total = quantile(array([allcosts[s]['cumulative']['total']['ylinedata'] for s in range(nsims)]), quantiles=quantiles) 

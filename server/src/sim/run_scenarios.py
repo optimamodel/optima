@@ -23,7 +23,7 @@ D = updatedata(D, verbose=verbose)
 
 print('\n\n\n3. Defining scenarios...')
 from bunch import Bunch as struct
-scenariolist = [struct() for s in range(3)]
+scenariolist = [struct() for s in range(4)]
 
 ## Current conditions
 scenariolist[0].name = 'Current conditions'
@@ -70,6 +70,16 @@ scenariolist[2].pars[0].startyear = 2002
 scenariolist[2].pars[0].endyear = 2015
 scenariolist[2].pars[0].startval = 0.0
 scenariolist[2].pars[0].endval = 0.0
+
+## Needle sharing
+scenariolist[3].name = 'ART'
+scenariolist[3].pars = [struct()]
+scenariolist[3].pars[0].names = ['txtotal']
+scenariolist[3].pars[0].pops = 7
+scenariolist[3].pars[0].startyear = 2002
+scenariolist[3].pars[0].endyear = 2015
+scenariolist[3].pars[0].startval = 0.2
+scenariolist[3].pars[0].endval = 0.8
 
 
 print('\n\n\n4. Running scenarios...')
