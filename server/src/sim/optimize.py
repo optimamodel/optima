@@ -188,7 +188,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         ## Run with uncertainties
         allocarr = []
         fvalarr = []
-        for s in range(len(D.F)): # Loop over all available meta parameters
+        for s in range(1): # range(len(D.F)): # Loop over all available meta parameters
             print('========== Running uncertainty optimization %s of %s... ==========' % (s+1, len(D.F)))
             options.D.F = [D.F[s]] # Loop over fitted parameters
             options.randseed = s
