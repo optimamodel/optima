@@ -682,6 +682,7 @@ def cceqn(x, p, eps=1e-3):
 
     return y
     
+    
 ###############################################################################
 def ccoeqn(x, p):
     '''
@@ -698,6 +699,7 @@ def ccoeqn(x, p):
 
     return y
 
+
 ###############################################################################
 def makecosampleparams(coparams, verbose=2):
     '''
@@ -710,12 +712,13 @@ def makecosampleparams(coparams, verbose=2):
     printv("coparams: %s muz: %s stdevz: %s muf: %s stdevf: %s" % (coparams, muz, stdevz, muf, stdevf), 5, verbose)
     return muz, stdevz, muf, stdevf
 
+
 ###############################################################################
 def makesamples(coparams, muz, stdevz, muf, stdevf, samplesize=1000, randseed=None):
     '''
     Generate samples of behaviour at zero and full coverage
     '''
-    from numpy import seed # Reset seed optionally
+    from numpy.random import seed # Reset seed optionally
     if randseed>=0: seed(randseed)
     
     # Generate samples of zero-coverage and full-coverage behaviour
