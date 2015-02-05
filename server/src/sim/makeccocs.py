@@ -451,7 +451,7 @@ def plotallcurves(D=None, progname=default_progname, ccparams=default_ccparams, 
     '''
     Make all cost outcome curves for a given program.
     '''
-    
+    from copy import deepcopy
      # Get the cost-coverage and coverage-outcome relationships     
     plotdata_cc, D = makecc(D=D, progname=progname, ccplot=ccplot, ccparams=ccparams, verbose=verbose)
 
@@ -474,9 +474,9 @@ def plotallcurves(D=None, progname=default_progname, ccparams=default_ccparams, 
         if parname not in coverage_params:
 
             # Store outputs
-            effects[effectnumber] = effect 
-            plotdata[effectnumber], plotdata_co[effectnumber], effect = makecco(D=D, progname=progname, effect=effect, ccplot=ccplot, ccparams=D.programs[progname]['ccparams'], coparams=coparams, verbose=verbose)
-            effects[effectnumber] = effect 
+            plotdata[effectnumber], plotdata_co[effectnumber], new_effect = makecco(D=D, progname=progname, effect=effect, ccplot=ccplot, ccparams=D.programs[progname]['ccparams'], coparams=coparams, verbose=verbose)
+            D.programs[progname]['effects'][effectnumber] = deepcopy(new_effect)
+            effects[effectnumber] = deepcopy(new_effect)
 
     return plotdata, plotdata_co, plotdata_cc, effects, D      
 
@@ -715,7 +715,7 @@ def makesamples(coparams, muz, stdevz, muf, stdevf, samplesize=1000, randseed=No
     '''
     Generate samples of behaviour at zero and full coverage
     '''
-    from numpy import seed # Reset seed optionally
+    from numpy.random import seed # Reset seed optionally
     if randseed>=0: seed(randseed)
     
     # Generate samples of zero-coverage and full-coverage behaviour
