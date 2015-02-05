@@ -613,6 +613,8 @@ def uploadExcel():
         D.G.projectname = project.name
         D.G.projectfilename = projectpath(project.name+'.prj')
         D.G.workbookname = D.G.projectname + '.xlsx'
+        D.G.inputprograms = deepcopy(project.programs)
+        D.G.inputpopulations = deepcopy(project.populations)
         D = updatedata(D, input_programs = project.programs, savetofile = False)
         model = model_as_dict(D)
         project.model = model
