@@ -375,38 +375,35 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
             optparams = optparams / optparams.sum() * options.totalspend # Make sure it's normalized -- WARNING KLUDGY
             allocarr.append(optparams)
             fvalarr.append(fval) # Only need last value
-        
+
         # Update the model and store the results
         result = struct()
         result.kind = objectives.funding
         result.budgets = budgets
         result.budgetlabels = ['Original budget']
         for b in range(nbudgets): result.budgetlabels.append('%i%% budget' % (budgets[b+1]*100./float(budgets[0])))
-            
+
         result.fval = fvalarr # Append the best value
         result.allocarr = allocarr # List of allocations
         labels = ['Original','Optimal']
         result.Rarr = []
         for params in [origalloc, allocarr[closesttocurrent]]: # CK: loop over original and (the best) optimal allocations
             sleep(0.1)
-            alloc = timevarying(params, ntimepm=len(params)/nprogs, nprogs=nprogs, tvec=D.opt.partvec, totalspend=totalspend, fundingchanges=fundingchanges)   
+            alloc = timevarying(params, ntimepm=len(params)/nprogs, nprogs=nprogs, tvec=D.opt.partvec, totalspend=totalspend, fundingchanges=fundingchanges)
             R = runmodelalloc(options.D, alloc, options.parindices, options.randseed, verbose=verbose) # Actually run
             result.Rarr.append(struct()) # Append a structure
             result.Rarr[-1].R = deepcopy(R) # Store the R structure (results)
-            result.Rarr[-1].label = labels.pop(0) # Store labels, one at a time        
-        
-        
-    
+            result.Rarr[-1].label = labels.pop(0) # Store labels, one at a time
+
+
     ## Gather plot data
     from gatherplotdata import gatheroptimdata
-    optim = gatheroptimdata(D, result, verbose=verbose)
-    if 'optim' not in D.plot: D.plot.optim = [] # Initialize list if required
-#    D.plot.optim.append(optim) # In any case, append
-    D.plot.optim=[optim]
-    
+    plot_result = gatheroptimdata(D, result, verbose=verbose)
+    result_to_save = {'plot': [plot_result]}
+
     ## Save optimization to D
-    saveoptimization(D, name, objectives, constraints, result, verbose=2)
-    
+    D = saveoptimization(D, name, objectives, constraints, result_to_save, verbose=2)
+
     printv('...done optimizing programs.', 2, verbose)
     return D
 
@@ -550,7 +547,20 @@ def defaultoptimizations(D, verbose=2):
     return optimizations
 
 
+def add_optimization(D, name, verbose=2):
+    """ Returns a new optimization entry with default values """
+    new_optimization = defaultoptimizations(D, verbose=verbose)[0]
+    new_optimization.name = name
 
+    if not "optimizations" in D:
+        D.optimizations = [new_optimization]
+    else:
+        optimization_names = [optimization.name for optimization in D.optimizations]
+        if name in optimization_names:
+            return (D, None)
+        D.optimizations.append(new_optimization)
+
+    return (D, new_optimization)
 
 def partialupdateM(oldM, newM, indices, setbefore=False, setafter=True):
     """ 
