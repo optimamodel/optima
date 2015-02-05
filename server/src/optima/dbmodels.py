@@ -61,7 +61,7 @@ class ProjectDb(db.Model):
 
     def has_data(self):
         result = False
-        if self.model is not None and self.project_data is not None:
+        if self.model is not None: #project can have data even if spreadsheet was not uploaded
             result = 'data' in self.model and 'programs' in self.model
         return result
 

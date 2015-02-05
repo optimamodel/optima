@@ -1,6 +1,6 @@
 from copy import deepcopy
 
-def updatedata(D, verbose=2, savetofile = True, programs = None):
+def updatedata(D, verbose=2, savetofile = True, input_programs = None):
     """
     Load the Excel workbook (for the given project), assuming it's in the standard uploads directory
     loads the data for the given project,
@@ -19,9 +19,10 @@ def updatedata(D, verbose=2, savetofile = True, programs = None):
     printv('Updating data...', 1, verbose)
     
     datapath = fullpath(D.G.workbookname)
-    D.data, D.programs = loadworkbook(datapath, programs, verbose=verbose)
+    D.data, D.programs = loadworkbook(datapath, input_programs, verbose=verbose)
     D.programs = restructureprograms(D.programs)
     D.data = getrealcosts(D.data)
+    
     D = makedatapars(D, verbose=verbose) # Update parameters
     D.M = makemodelpars(D.P, D.opt, verbose=verbose)
     D = makefittedpars(D, verbose=verbose)
@@ -45,7 +46,7 @@ def restructureprograms(programs):
     keys = ['ccparams','convertedccparams','nonhivdalys','effects','ccplot']
     for program in programs.keys():
         programs[program] = dict(zip(keys,[ccparams, convertedccparams, nonhivdalys, programs[program]]))
-    
+
     return programs
     
     
@@ -90,28 +91,28 @@ def makefittedpars(D, verbose=2):
         D.F[s].popsize = perturb(D.G.npops,span)
         D.F[s].force = perturb(D.G.npops,span)
         D.F[s].dx  = perturb(4,span)
-        D.F[s] = unnormalizeF(D.F[s], D) # Un-normalize F
+        D.F[s] = unnormalizeF(D.F[s], D.M, D.G, normalizeall=True) # Un-normalize F
     
     return D
 
 
-def unnormalizeF(normF, D):
+def unnormalizeF(normF, M, G, normalizeall=False):
     """ Convert from F values where everything is 1 to F values that can be real-world interpretable. """
     unnormF = deepcopy(normF)
-    for p in range(D.G.npops):
-        unnormF.init[p] *= D.M.hivprev[p] # Multiply by initial prevalence
-        unnormF.popsize[p] *= D.M.popsize[p][0] # Multiply by initial population size
-    unnormF.dx[3] *= D.G.datayears.mean() # Multiply by mean data year
+    for p in range(G.npops):
+        unnormF.init[p] *= M.hivprev[p] # Multiply by initial prevalence
+        if normalizeall: unnormF.popsize[p] *= M.popsize[p][0] # Multiply by initial population size
+    if normalizeall: unnormF.dx[3] *= G.datayears.mean() # Multiply by mean data year
     return unnormF
 
 
-def normalizeF(unnormF, D):
+def normalizeF(unnormF, M, G, normalizeall=False):
     """ Convert from F values that can be real-world interpretable to F values where everything is 1. """
     normF = deepcopy(unnormF)
-    for p in range(D.G.npops):
-        normF.init[p] /= D.M.hivprev[p] # Divide by initial prevalence
-        normF.popsize[p] /= D.M.popsize[p][0] # Divide by initial population size
-    normF.dx[3] /= D.G.datayears.mean() # Divide by mean data year
+    for p in range(G.npops):
+        normF.init[p] /= M.hivprev[p] # Divide by initial prevalence
+        if normalizeall: normF.popsize[p] /= M.popsize[p][0] # Divide by initial population size
+    if normalizeall: normF.dx[3] /= G.datayears.mean() # Divide by mean data year
     return normF
 
 

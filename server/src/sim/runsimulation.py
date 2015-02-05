@@ -1,4 +1,4 @@
-def runsimulation(D, simstartyear=2000, simendyear=2030, verbose=2, makeplot = 0, dosave = True):
+def runsimulation(D, simstartyear=2000, simendyear=2050, verbose=2, makeplot = 0, dosave = True):
     """
     Calculate initial model estimates.
 

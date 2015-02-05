@@ -1,6 +1,6 @@
 {
   "name": "Optima",
-  "version": "1.9.1",
+  "version": "1.14",
   "main": "source/index.html",
   "ignore": [
     "**/.*",

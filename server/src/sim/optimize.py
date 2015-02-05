@@ -6,7 +6,7 @@ Allocation optimization code:
     timelimit is the maximum time in seconds to run optimization for
     verbose determines how much information to print.
     
-Version: 2015jan31 by cliffk
+Version: 2015feb03 by cliffk
 """
 
 from printv import printv
@@ -21,9 +21,6 @@ from model import model
 from makemodelpars import makemodelpars
 from quantile import quantile
 from ballsd import ballsd
-
-default_simstartyear = 2000
-default_simendyear = 2030
 
 
 def runmodelalloc(D, thisalloc, parindices, randseed, verbose=2):
