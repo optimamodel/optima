@@ -29,7 +29,7 @@ def makeresults(D, allsims=None, quantiles=None, financial=True, verbose=2):
     if quantiles==None: quantiles = D.opt.quantiles # If no quantiles are specified, just use the default ones
     allpeople = deepcopy(array([allsims[s].people for s in range(nsims)])) # WARNING, might use stupid amounts of memory
     
-    thesecosts = None # Initialize
+    thesecosts = None # Initialize -- WARNING, need to do better
     datatypes = ['prev', 'plhiv', 'inci', 'force', 'daly', 'death', 'tx1', 'tx2', 'dx']
     if financial: datatypes.extend(['costann', 'costcum']) # Also run financial results, which are computationally expensive
     for data in datatypes:
