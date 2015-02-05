@@ -171,26 +171,8 @@ def saveModel():
         return jsonify(reply)
 
     try:
-        # read the previously saved optmizations
-        D_dict = load_model(project_id, as_bunch = False)
-        optimizations = D_dict.get('optimizations')
-
-        # TODO check for difference in working model & new objectives & results
-        # if different then clean results
-        # if not use the existing results
-
         # now, save the working model, read results and save for the optimization with the given name
         D_dict = save_working_model_as_default(project_id)
-        result = None
-        D = bunchify(D_dict)
-
-        # get the previously stored optimizations
-        if optimizations: D.optimizations = bunchify(optimizations)
-
-        #save the optimization parameters
-        D = saveoptimization(D, name, objectives, constraints, result)
-        D_dict = D.toDict()
-        save_model(project_id, D_dict)
 
         reply['status']='OK'
         reply['optimizations'] = D_dict['optimizations']
@@ -217,7 +199,6 @@ def revertCalibrationModel():
     except Exception, err:
         reply['exception'] = traceback.format_exc()
         return jsonify(reply)
-
 
 
 @optimization.route('/remove/<name>', methods=['POST'])
