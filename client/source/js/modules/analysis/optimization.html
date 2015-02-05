@@ -532,6 +532,17 @@
                         ng-disabled="!optimizationStatus.isActive">Stop optimization
                 </button>
               </div>
+              <div class="elastic_col __shrink">
+                <button type="button" class="btn" ng-click="saveOptimization()"
+                  ng-disabled="optimizationStatus.isActive || optimizationStatus.checking || errorText">Save optimization
+                </button>
+              </div>
+              <div class="elastic_col __shrink">
+                <button type="button" class="btn" ng-click="revertOptimization()"
+                  ng-disabled="optimizationStatus.isActive || optimizationStatus.checking">Revert
+                </button>
+                </div>
+
             </div>
           </div>
 

@@ -807,6 +807,19 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
         });
     };
 
+    $scope.saveOptimization = function () {
+      $http.post('/api/analysis/optimization/save')
+        .success(function (data) {
+          console.log("Optimizations saved");
+      });
+    };
+
+
+    $scope.revertOptimization = function () {
+      $http.post('/api/analysis/optimization/revert')
+        .success(function(){ console.log("OK");});
+    };
+
     $scope.addOptimization = function () {
       var create = function (name) {
         $http.post('/api/analysis/optimization/create', {name: name})
