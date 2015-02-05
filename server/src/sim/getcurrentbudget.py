@@ -14,8 +14,6 @@ def getcurrentbudget(D, alloc=None, randseed=None):
 
     # Initialise currentbudget if needed
     allocprovided = not(isinstance(alloc,type(None)))
-    if not(allocprovided):
-        currentbudget = []
 
     # Initialise currentcoverage and currentnonhivdalys
     currentcoverage = zeros((D.G.nprogs, npts))
@@ -66,12 +64,7 @@ def getcurrentbudget(D, alloc=None, randseed=None):
                         convertedccoparams = default_convertedccoparams
                         print('WARNING, no parameters entered for progname=%s , effectnumber=%s, popname=%s, parname=%s' % (progname, effectnumber, popname, parname))
                     
-                D.P[parname].c[popnumber] = cco2eqn(totalcost, convertedccoparams[0]) if len(convertedccparams[0])==2 else ccoeqn(totalcost, convertedccoparams[0])
-
-        if not(allocprovided):
-            currentbudget.append(totalcost)
-            D.data.meta.progs.currentbudget = currentbudget
-            
+                D.P[parname].c[popnumber] = cco2eqn(totalcost, convertedccoparams[0]) if len(convertedccparams[0])==2 else ccoeqn(totalcost, convertedccoparams[0])            
 
     return D, currentcoverage, currentnonhivdalysaverted
     
