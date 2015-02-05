@@ -138,12 +138,7 @@ def getWorkingModel():
 
     result = {}
 
-    D = load_model(project_id)
-    if not 'optimizations' in D:
-        optimizations = defaultoptimizations(D)
-    else:
-        optimizations = D.optimizations
-    result['optimizations'] = unbunchify(optimizations)
+    result['optimizations'] = unbunchify(D_dict.get('optimizations'))
     result['status'] = status
     if error_text:
         result['exception'] = error_text
