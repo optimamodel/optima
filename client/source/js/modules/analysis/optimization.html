@@ -551,6 +551,9 @@
             Test run
           </label>
 
+          <div class="error-hint" ng-show="isDirty">
+            Attention: the results of previous optimization run have not been saved yet. If you start new optimization without saving, some of these results might be lost.
+          </div>
           <div class="info-hint" ng-show="optimizationStatus.text">
             {{ optimizationStatus.text }}
           </div>

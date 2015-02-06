@@ -199,7 +199,7 @@ def save_working_model_as_default(id):
 def revert_working_model_to_default(id):
     current_app.logger.debug("revert_working_model_to_default %s" % id)
 
-    project = load_project(id)
+    project = load_project(id, all_data = True)
     model = project.model
 
     # Make sure there is a working project

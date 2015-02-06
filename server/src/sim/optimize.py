@@ -133,6 +133,9 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
     if objectives is None: objectives = defaultobjectives(D, verbose=verbose)
     if constraints is None: constraints = defaultconstraints(D, verbose=verbose)
 
+    if not "optimizations" in D: saveoptimization(D, name, objectives, constraints)
+
+
     # Do this so if e.g. /100 won't have problems
     objectives = deepcopy(objectives)
     constraints = deepcopy(constraints)
@@ -502,12 +505,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
 
 
 
-
-
-
-
-
-def saveoptimization(D, name, objectives, constraints, result, verbose=2):
+def saveoptimization(D, name, objectives, constraints, result = None, verbose=2):
     #save the optimization parameters
     new_optimization = struct()
     new_optimization.name = name
@@ -636,21 +634,6 @@ def defaultoptimizations(D, verbose=2):
     optimizations[0].objectives = defaultobjectives(D, verbose)
     return optimizations
 
-
-def add_optimization(D, name, verbose=2):
-    """ Returns a new optimization entry with default values """
-    new_optimization = defaultoptimizations(D, verbose=verbose)[0]
-    new_optimization.name = name
-
-    if not "optimizations" in D:
-        D.optimizations = [new_optimization]
-    else:
-        optimization_names = [optimization.name for optimization in D.optimizations]
-        if name in optimization_names:
-            return (D, None)
-        D.optimizations.append(new_optimization)
-
-    return (D, new_optimization)
 
 def partialupdateM(oldM, newM, indices, setbefore=False, setafter=True):
     """ 

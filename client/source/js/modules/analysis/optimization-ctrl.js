@@ -25,6 +25,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
 
       $scope.optimizationStatus = statusEnum.NOT_RUNNING;
       $scope.optimizations = [];
+      $scope.isDirty = false;
 
       /**
        * Empty charts
@@ -743,7 +744,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       if(newTab !=3) {
         stopTimer();
       } else {
-        $scope.initTimer(statusEnum.CHECKING);
+        checkWorkingOptimization();
       }
     };
 
@@ -755,8 +756,9 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
           } else {
             if (data.status == 'Running') $scope.optimizationStatus = statusEnum.RUNNING;
             if (data.status == 'Stopping') $scope.optimizationStatus = statusEnum.STOPPING;
+            $scope.initTimer($scope.optimizationStatus);
           }
-
+          $scope.isDirty = data.dirty;
           $scope.initOptimizations(data.optimizations, $scope.state.activeOptimizationName);
         })
         .error(function(data, status, headers, config) {
@@ -810,22 +812,28 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     $scope.saveOptimization = function () {
       $http.post('/api/analysis/optimization/save')
         .success(function (data) {
-          console.log("Optimizations saved");
+          $scope.isDirty = false;
+          $scope.initOptimizations(data.optimizations, $scope.state.activeOptimizationName);
       });
     };
 
 
     $scope.revertOptimization = function () {
       $http.post('/api/analysis/optimization/revert')
-        .success(function(){ console.log("OK");});
+        .success(function (data) {
+          $scope.isDirty = false;
+          $scope.initOptimizations(data.optimizations, $scope.state.activeOptimizationName);
+      });
     };
 
     $scope.addOptimization = function () {
       var create = function (name) {
-        $http.post('/api/analysis/optimization/create', {name: name})
-          .success(function(data) {
-            $scope.optimizations.push(data.optimization);
-            $scope.initOptimizations($scope.optimizations, data.optimization.name);
+        $http.post('/api/analysis/optimization/create', {
+          name: name, 
+          objectives: $scope.params.objectives,
+          constraints: $scope.params.constraints
+        }).success(function(data) {
+            $scope.initOptimizations(data.optimizations, name);
           });
       };
 
