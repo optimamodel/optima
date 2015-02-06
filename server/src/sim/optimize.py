@@ -422,12 +422,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
 
 
 
-
-
-
-
-
-def saveoptimization(D, name, objectives, constraints, result, verbose=2):
+def saveoptimization(D, name, objectives, constraints, result = None, verbose=2):
     #save the optimization parameters
     new_optimization = struct()
     new_optimization.name = name

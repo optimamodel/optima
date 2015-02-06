@@ -9,19 +9,17 @@ Optimization Module
 3. Save current optimization model
 4. Revert to the last saved model
 """
+import json
+import traceback
 from flask import request, jsonify, Blueprint, current_app
+from flask.ext.login import login_required, current_user
 from dbconn import db
 from async_calculate import CalculatingThread, start_or_report_calculation, cancel_calculation, check_calculation
 from async_calculate import check_calculation_status, good_exit_status
-from utils import check_project_name, project_exists, load_model, save_model, \
-revert_working_model_to_default, save_working_model_as_default, report_exception
-from sim.optimize import optimize
-from sim.optimize import add_optimization
-from sim.optimize import defaultoptimizations
+from utils import check_project_name, project_exists, load_model, save_model
+from utils import revert_working_model_to_default, save_working_model_as_default, report_exception
+from sim.optimize import optimize, saveoptimization, defaultoptimizations, defaultobjectives, defaultconstraints
 from sim.bunch import bunchify, unbunchify
-import json
-import traceback
-from flask.ext.login import login_required, current_user
 
 # route prefix: /api/analysis/optimization
 optimization = Blueprint('optimization',  __name__, static_folder = '../static')
@@ -111,12 +109,18 @@ def getWorkingModel():
     from flask import stream_with_context, request, Response
     import datetime
     import dateutil.tz
+    from copy import deepcopy
+
+    result = {}
     D_dict = {}
     # Get optimization working data
     project_id = request.project_id
     project_name = request.project_name
+    D_dict_new = load_model(project_id, working_model = False, as_bunch = False)
+    new_optimizations = unbunchify(D_dict_new.get('optimizations'))
     error_text = None
     status = None
+
     if check_calculation(current_user.id, project_id, optimize, db.session):
         status = 'Running'
     else:
@@ -134,12 +138,25 @@ def getWorkingModel():
                 current_app.logger.debug("optimization thread for project %s is about to stop" % project_id)
         else:
             status = 'NOK'
+
     if status!='NOK': D_dict = load_model(project_id, working_model = True, as_bunch = False)
 
-    result = {}
-
-    result['optimizations'] = unbunchify(D_dict.get('optimizations'))
+    optimizations = unbunchify(D_dict.get('optimizations'))
+    names = [item['name'] for item in optimizations]
+    is_dirty = False
+    for new_index, optimization in enumerate(new_optimizations):
+        try:
+            name = optimization['name']
+            index = names.index(name)
+            if ('result' in optimizations[index]) and (optimization.get('result')!=optimizations[index]['result']):
+                new_optimizations[new_index] = deepcopy(optimizations[index])
+                is_dirty = True
+        except Exception, err:
+            var = traceback.format_exc()
+            current_app.logger.error("Exception during request %s: %s" % (request, var))
+    result['optimizations'] = new_optimizations
     result['status'] = status
+    result['dirty'] = is_dirty
     if error_text:
         result['exception'] = error_text
     return jsonify(result)
@@ -183,8 +200,10 @@ def revertCalibrationModel():
         reply['reason'] = 'File for project %s does not exist' % project_id
         return jsonify(reply)
     try:
-        revert_working_model_to_default(project_id)
-        return jsonify({"status":"OK"})
+        D = revert_working_model_to_default(project_id)
+        reply['status']='OK'
+        reply['optimizations'] = D_dict['optimizations']
+        return jsonify(reply)
     except Exception, err:
         reply['exception'] = traceback.format_exc()
         return jsonify(reply)
@@ -201,7 +220,7 @@ def removeOptimizationSet(name):
     # get project name
     project_id = request.project_id
     if not project_exists(project_id):
-        reply['reason'] = 'File for project %s does not exist' % project_id
+        reply['reason'] = 'Project %s does not exist' % project_id
         return jsonify(reply)
     else:
         D = load_model(project_id, as_bunch = True)
@@ -224,22 +243,31 @@ def create_optimization():
 
     name = data.get('name')
     if not name:
-        reply['reason'] = 'Please provided a name'
+        reply['reason'] = 'Please provide a name for new optimization'
         return jsonify(reply)
 
     # get project name
     project_id = request.project_id
     if not project_exists(project_id):
         reply['reason'] = 'Project %s does not exist' % project_id
-        return jsonify(reply)
     else:
         D = load_model(project_id, as_bunch = True)
-        D, optimization = add_optimization(D, name)
-        if not optimization:
-            reply['reason'] = 'The provided optimization name already exists'
-            return jsonify(reply)
+        objectives = data.get('objectives')
+        if objectives:
+            objectives = bunchify( objectives )
+        else:
+            objectives = defaultobjectives(D)
+        constraints = data.get('constraints')
+        if constraints:
+            constraints = bunchify( constraints )
+        else:
+            constraints = defaultconstraints(D)
+
+        #save new optimization slot
+        D = saveoptimization(D, name, objectives, constraints)
         D_dict = D.toDict()
         save_model(project_id, D_dict)
+        #return all available optimizations back
         reply['status']='OK'
-        reply['optimization'] = optimization
-        return jsonify(reply)
+        reply['optimizations'] = D_dict['optimizations']
+    return jsonify(reply)
