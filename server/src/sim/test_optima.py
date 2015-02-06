@@ -42,21 +42,6 @@ D = updatedata(D, verbose=verbose)
 
 print('\n'*spaces)
 print('======================================================================')
-print('                       TESTING MAKECCOCS')
-print('======================================================================')
-
-# Actually run makeccocs
-from plotccocs import plotallcco
-#plotallcco(D=D)
-plotallcco(D=D, coparams=[], ccparams=[0.9, 0.15, 0.25, 800000.0, None, None], ccplot=[1000000,None,1])
-
-
-
-
-
-
-print('\n'*spaces)
-print('======================================================================')
 print('                       TESTING MANUAL FITTING')
 print('======================================================================')
 
