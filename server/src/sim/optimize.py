@@ -22,7 +22,8 @@ from makemodelpars import makemodelpars
 from quantile import quantile
 from ballsd import ballsd
 
-global tmperrcount, tmperrhist, tmporigplots, tmporigpie, tmpbestdata
+tmporigpie = None
+tmpbestdata = None
 tmperrcount = [0]
 tmperrhist = [None]
 tmporigplots = []
@@ -72,7 +73,6 @@ def objectivecalc(optimparams, options):
             outcome += thisoutcome * options.weights[key] / float(options.normalizations[key]) * options.D.opt.dt # Calculate objective
     
     print('DEBUGGING....................................................................................')
-    global tmperrcount, tmperrhist, tmporigplots, tmporigpie, tmpbestdata
     from matplotlib.pylab import figure, plot, hold, subplot, show, close, pie
     close('all')
     if tmperrcount[-1]==0:
@@ -263,7 +263,6 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         result.Rarr = []
         for i,params in enumerate([origalloc, allocarr[bestallocind]]): # CK: loop over original and (the best) optimal allocations
             if i==1:
-                global tmperrcount, tmperrhist, tmporigplots, tmporigpie, tmpbestdata
                 import traceback; traceback.print_exc(); import pdb; pdb.set_trace() # TEMP
             sleep(0.1)
             alloc = timevarying(params, ntimepm=len(params)/nprogs, nprogs=nprogs, tvec=D.opt.partvec, totalspend=totalspend, fundingchanges=fundingchanges)   
