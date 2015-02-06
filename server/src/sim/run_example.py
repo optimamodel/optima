@@ -7,12 +7,12 @@ Load a project and test data upload.
 from dataio import loaddata
 from os import path
 
-kind = 'sudan'
+kind = 'concentrated'
 doplot = True
 
 datadir = '../static/'
-datafile = kind+'test2.json'
-spreadsheetfile = kind+'example.xlsx'
+datafile = kind+'.json'
+spreadsheetfile = kind+'.xlsx'
 if path.exists(datadir+datafile):
     D = loaddata(datadir+datafile)
     D.G.workbookname = datadir+spreadsheetfile

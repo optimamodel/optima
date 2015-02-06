@@ -6,7 +6,7 @@ Allocation optimization code:
     timelimit is the maximum time in seconds to run optimization for
     verbose determines how much information to print.
     
-Version: 2015feb03 by cliffk
+Version: 2015feb06 by cliffk
 """
 
 from printv import printv
