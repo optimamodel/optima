@@ -32,10 +32,10 @@ if path.exists(datadir+datafile):
 #
 from optimize import optimize
 D.F = [D.F[0]] # Only run a snigle simulation
-optimize(D, maxiters=10, verbose=5)
+optimize(D, maxiters=60, verbose=5)
 #
 #
 if doplot:
     print('Viewing results...')
-    from viewresults import viewuncerresults
-    viewuncerresults(D.plot.E)
+    from viewresults import viewmultiresults
+    viewmultiresults(D.plot.optim[0].multi)

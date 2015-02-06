@@ -409,6 +409,9 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
     ## Gather plot data
     from gatherplotdata import gatheroptimdata
     plot_result = gatheroptimdata(D, result, verbose=verbose)
+    if 'optim' not in D.plot: D.plot.optim = [] # Initialize list if required
+    D.plot.optim.append(plot_result) # In any case, append
+    
     result_to_save = {'plot': [plot_result]}
 
     ## Save optimization to D
