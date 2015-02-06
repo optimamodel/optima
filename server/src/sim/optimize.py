@@ -22,6 +22,11 @@ from makemodelpars import makemodelpars
 from quantile import quantile
 from ballsd import ballsd
 
+global tmperrcount, tmperrhist, tmporigplots, tmporigpie, tmpbestdata
+tmperrcount = [0]
+tmperrhist = [None]
+tmporigplots = []
+
 
 
 def runmodelalloc(D, thisalloc, parindices, randseed, financial=True, verbose=2):
@@ -38,6 +43,14 @@ def runmodelalloc(D, thisalloc, parindices, randseed, financial=True, verbose=2)
 
 def objectivecalc(optimparams, options):
     """ Calculate the objective function """
+    
+    opttrue = zeros(len(options.D.data.origalloc))
+    for i in range(len(options.D.data.origalloc)):
+        if len(options.D.programs[options.D.data.meta.progs.short[i]]['effects']): opttrue[i] = 1.0
+    opttrue = opttrue.astype(bool) # Logical values
+    optimparams[opttrue] = optimparams[opttrue] / optimparams[opttrue].sum() * (options.totalspend - optimparams[~opttrue].sum()) # Make sure it's normalized -- WARNING KLUDGY
+
+
     if 'ntimepm' in options.keys():
         thisalloc = timevarying(optimparams, ntimepm=options.ntimepm, nprogs=options.nprogs, tvec=options.D.opt.partvec, totalspend=options.totalspend, fundingchanges=options.fundingchanges) 
     elif 'years' in options.keys():
@@ -46,15 +59,48 @@ def objectivecalc(optimparams, options):
         raise Exception('Cannot figure out what kind of allocation this is since neither options.ntimepm nor options.years is defined')
     
     financial=True if options.weights['costann'] else False
+
     R = runmodelalloc(options.D, thisalloc, options.parindices, options.randseed, financial=financial) # Actually run
     
+    tmpplotdata = [] # TEMP
     outcome = 0 # Preallocate objective value 
     for key in options.outcomekeys:
         if options.weights[key]>0: # Don't bother unless it's actually used
             if key!='costann': thisoutcome = R[key].tot[0][options.outindices].sum()
             else: thisoutcome = R[key].total.total[0][options.outindices].sum() # Special case for costann
+            tmpplotdata.append(R[key].tot[0][options.outindices]) # TEMP
             outcome += thisoutcome * options.weights[key] / float(options.normalizations[key]) * options.D.opt.dt # Calculate objective
-        
+    
+    print('DEBUGGING....................................................................................')
+    global tmperrcount, tmperrhist, tmporigplots, tmporigpie, tmpbestdata
+    from matplotlib.pylab import figure, plot, hold, subplot, show, close, pie
+    close('all')
+    if tmperrcount[-1]==0:
+        print('Loading original DATA')
+        tmporigplots = deepcopy(tmpplotdata)
+        tmporigpie = deepcopy(optimparams)
+    tmperrcount.append(tmperrcount[-1]+1)
+    tmperrhist.append(outcome)
+    if tmperrcount[-1]>=30:
+        figure()
+        subplot(2,2,1); hold(True)
+        for i in range(len(tmporigplots)):
+            plot(options.D.opt.partvec[options.outindices], tmporigplots[i],c=(0,0,0))
+            plot(options.D.opt.partvec[options.outindices], tmpplotdata[i])
+        subplot(2,2,2)
+        plot(tmperrcount, tmperrhist)
+        subplot(2,2,3)
+        pie(tmporigpie)
+        subplot(2,2,4)
+        pie(optimparams)
+        show()
+    
+    print('SAVING BEST DATA') # TEMP
+    tmpbestdata = struct()
+    tmpbestdata.optimparams = optimparams
+    tmpbestdata.options = options
+
+    
     return outcome
     
     
@@ -215,13 +261,24 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         result.allocarr.append(quantile(allocarr)) # Calculate allocation arrays 
         labels = ['Original','Optimal']
         result.Rarr = []
-        for params in [origalloc, allocarr[bestallocind]]: # CK: loop over original and (the best) optimal allocations
+        for i,params in enumerate([origalloc, allocarr[bestallocind]]): # CK: loop over original and (the best) optimal allocations
+            if i==1:
+                global tmperrcount, tmperrhist, tmporigplots, tmporigpie, tmpbestdata
+                import traceback; traceback.print_exc(); import pdb; pdb.set_trace() # TEMP
             sleep(0.1)
             alloc = timevarying(params, ntimepm=len(params)/nprogs, nprogs=nprogs, tvec=D.opt.partvec, totalspend=totalspend, fundingchanges=fundingchanges)   
             R = runmodelalloc(options.D, alloc, options.parindices, options.randseed, verbose=verbose) # Actually run
             result.Rarr.append(struct()) # Append a structure
             result.Rarr[-1].R = deepcopy(R) # Store the R structure (results)
             result.Rarr[-1].label = labels.pop(0) # Store labels, one at a time
+        
+        
+        
+        
+        
+        
+        
+        
         
         
         
