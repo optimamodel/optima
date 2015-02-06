@@ -76,6 +76,9 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
     if objectives is None: objectives = defaultobjectives(D, verbose=verbose)
     if constraints is None: constraints = defaultconstraints(D, verbose=verbose)
 
+    if not "optimizations" in D: saveoptimization(D, name, objectives, constraints)
+
+
     # Do this so if e.g. /100 won't have problems
     objectives = deepcopy(objectives)
     constraints = deepcopy(constraints)

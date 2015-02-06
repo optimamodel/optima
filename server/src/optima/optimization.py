@@ -118,7 +118,8 @@ def getWorkingModel():
     project_id = request.project_id
     project_name = request.project_name
     D_dict_new = load_model(project_id, working_model = False, as_bunch = False)
-    new_optimizations = unbunchify(D_dict_new.get('optimizations'))
+    D_new = bunchify(D_dict_new)
+    new_optimizations = unbunchify(D_dict_new.get('optimizations')) or defaultoptimizations(D_new)
     error_text = None
     status = None
 
@@ -143,7 +144,8 @@ def getWorkingModel():
     if status!='NOK': D_dict = load_model(project_id, working_model = True, as_bunch = False)
 
     optimizations = unbunchify(D_dict.get('optimizations'))
-    names = [item['name'] for item in optimizations]
+    if optimizations: print optimizations
+    names = [item['name'] for item in optimizations] if optimizations else ['Default']
     is_dirty = False
     for new_index, optimization in enumerate(new_optimizations):
         #trying to update the results in the current model with the available results from the working model
@@ -201,7 +203,8 @@ def revertCalibrationModel():
         reply['reason'] = 'Project %s does not exist' % project_id
     else:
         D_dict = revert_working_model_to_default(project_id)
-        reply['optimizations'] = D_dict['optimizations']
+        D = bunchify(D_dict)
+        reply['optimizations'] = D_dict.get('optimizations') or unbunchify(defaultoptimizations(D))
         reply['status']='OK'
     return jsonify(reply)
 
