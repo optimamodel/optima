@@ -144,21 +144,18 @@ def getWorkingModel():
     if status!='NOK': D_dict = load_model(project_id, working_model = True, as_bunch = False)
 
     optimizations = unbunchify(D_dict.get('optimizations'))
-    if optimizations: print optimizations
     names = [item['name'] for item in optimizations] if optimizations else ['Default']
+    current_app.logger.debug("optimization names: %s" % names)
     is_dirty = False
     for new_index, optimization in enumerate(new_optimizations):
         #trying to update the results in the current model with the available results from the working model
-        try:
-            name = optimization['name']
+        name = optimization['name']
+        if optimizations and name in names:
             index = names.index(name)
             if ('result' in optimizations[index]) and (optimization.get('result')!=optimizations[index]['result']):
                 new_optimizations[new_index] = deepcopy(optimizations[index])
                 #warn that these results are transient
                 is_dirty = True
-        except Exception, err:
-            var = traceback.format_exc()
-            current_app.logger.error("Exception during request %s: %s" % (request, var))
     result['optimizations'] = new_optimizations
     result['status'] = status
     result['dirty'] = is_dirty
