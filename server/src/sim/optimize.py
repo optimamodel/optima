@@ -6,7 +6,7 @@ Allocation optimization code:
     timelimit is the maximum time in seconds to run optimization for
     verbose determines how much information to print.
     
-Version: 2015feb03 by cliffk
+Version: 2015feb06 by cliffk
 """
 
 from printv import printv
@@ -24,8 +24,12 @@ from ballsd import ballsd
 
 
 
-def runmodelalloc(D, thisalloc, parindices, randseed, financial=True, verbose=2):
+def runmodelalloc(D, thisalloc, origalloc, parindices, randseed, financial=True, verbose=2):
     """ Little function to do calculation since it appears so many times """
+#    oldD = deepcopy(D)
+#    oldD, newcov, newnonhivdalysaverted = getcurrentbudget(oldD, origalloc, randseed=randseed) # Get cost-outcome curves with uncertainty
+#    oldM = makemodelpars(oldD.P, oldD.opt, withwhat='c', verbose=0) # Don't print out
+    
     newD = deepcopy(D)
     newD, newcov, newnonhivdalysaverted = getcurrentbudget(newD, thisalloc, randseed=randseed) # Get cost-outcome curves with uncertainty
     newM = makemodelpars(newD.P, newD.opt, withwhat='c', verbose=0) # Don't print out
@@ -38,23 +42,75 @@ def runmodelalloc(D, thisalloc, parindices, randseed, financial=True, verbose=2)
 
 def objectivecalc(optimparams, options):
     """ Calculate the objective function """
+    origparams = options.D.data.origalloc
+    
+    opttrue = zeros(len(options.D.data.origalloc))
+    for i in range(len(options.D.data.origalloc)):
+        if len(options.D.programs[options.D.data.meta.progs.short[i]]['effects']): opttrue[i] = 1.0
+    opttrue = opttrue.astype(bool) # Logical values
+    optimparams[opttrue] = optimparams[opttrue] / optimparams[opttrue].sum() * (options.totalspend - optimparams[~opttrue].sum()) # Make sure it's normalized -- WARNING KLUDGY
+
+
     if 'ntimepm' in options.keys():
         thisalloc = timevarying(optimparams, ntimepm=options.ntimepm, nprogs=options.nprogs, tvec=options.D.opt.partvec, totalspend=options.totalspend, fundingchanges=options.fundingchanges) 
+        origalloc = timevarying(origparams, ntimepm=options.ntimepm, nprogs=options.nprogs, tvec=options.D.opt.partvec, totalspend=options.totalspend, fundingchanges=options.fundingchanges) 
     elif 'years' in options.keys():
         thisalloc = multiyear(optimparams, years=options.years, totalspends=options.totalspends, nprogs=options.nprogs, tvec=options.D.opt.partvec) 
+        origalloc = multiyear(origparams, years=options.years, totalspends=options.totalspends, nprogs=options.nprogs, tvec=options.D.opt.partvec) 
     else:
         raise Exception('Cannot figure out what kind of allocation this is since neither options.ntimepm nor options.years is defined')
     
-    financial=True if options.weights['costann'] else False
-    R = runmodelalloc(options.D, thisalloc, options.parindices, options.randseed, financial=financial) # Actually run
+    financial=True if options.weights['costann'] else True # TEMP
+
+    R = runmodelalloc(options.D, thisalloc, origalloc, options.parindices, options.randseed, financial=financial) # Actually run
     
+    tmpplotdata = [] # TEMP
     outcome = 0 # Preallocate objective value 
     for key in options.outcomekeys:
         if options.weights[key]>0: # Don't bother unless it's actually used
             if key!='costann': thisoutcome = R[key].tot[0][options.outindices].sum()
             else: thisoutcome = R[key].total.total[0][options.outindices].sum() # Special case for costann
+            tmpplotdata.append(R[key].tot[0][options.outindices]) # TEMP
             outcome += thisoutcome * options.weights[key] / float(options.normalizations[key]) * options.D.opt.dt # Calculate objective
-        
+    
+#    print('DEBUGGING....................................................................................')
+#    from matplotlib.pylab import figure, plot, hold, subplot, show, close, pie
+#    close('all')
+#    if options.tmperrcount[-1]==0:
+#        print('Loading original DATA')
+#        tmporigplots = deepcopy(tmpplotdata)
+#        tmporigpie = deepcopy(optimparams)
+#    options.tmperrcount.append(options.tmperrcount[-1]+1)
+#    options.tmperrhist.append(outcome)
+#    if options.tmperrcount[-1]>=30:
+#        figure()
+#        subplot(2,2,1); hold(True)
+#        for i in range(len(tmporigplots)):
+#            plot(options.D.opt.partvec[options.outindices], tmporigplots[i],c=(0,0,0))
+#            plot(options.D.opt.partvec[options.outindices], tmpplotdata[i])
+#        subplot(2,2,2)
+#        plot(options.tmperrcount, options.tmperrhist)
+#        subplot(2,2,3)
+#        pie(tmporigpie)
+#        subplot(2,2,4)
+#        pie(optimparams)
+#        show()
+    
+#    if options.tmperrcount[-1]==0:
+#        print('SAVING ORIGINAL DATA')
+#        print options.tmporigdata[-1].optimparams
+#        options.tmporigdata.append(struct())
+#        options.tmporigdata[-1].optimparams = optimparams
+##        options.tmporigdata[-1].options = options
+#        options.tmporigdata[-1].R = R
+#    print('SAVING BEST DATA') # TEMP
+    options.tmpbestdata.append(struct())
+    options.tmpbestdata[-1].optimparams = optimparams
+#    options.tmpbestdata[-1].options = options
+    options.tmpbestdata[-1].R = R
+#    print options.tmpbestdata[-1].optimparams
+
+    
     return outcome
     
     
@@ -64,6 +120,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
     from time import sleep
     
     printv('Running optimization...', 1, verbose)
+    
     
     # Set up parameter vector for time-varying optimisation...
     stepsize = 100000
@@ -185,6 +242,12 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         options.fundingchanges = fundingchanges # Constraints-based funding changes
         
         
+#        options.tmporigdata = []
+        options.tmpbestdata = []
+#        options.tmperrcount = [0]
+#        options.tmperrhist = [None]
+        
+        
         ## Run with uncertainties
         allocarr = []
         fvalarr = []
@@ -214,14 +277,28 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         result.allocarr.append(quantile([origalloc])) # Kludgy -- run fake quantile on duplicated origalloc just so it matches
         result.allocarr.append(quantile(allocarr)) # Calculate allocation arrays 
         labels = ['Original','Optimal']
-        result.Rarr = []
-        for params in [origalloc, allocarr[bestallocind]]: # CK: loop over original and (the best) optimal allocations
-            sleep(0.1)
-            alloc = timevarying(params, ntimepm=len(params)/nprogs, nprogs=nprogs, tvec=D.opt.partvec, totalspend=totalspend, fundingchanges=fundingchanges)   
-            R = runmodelalloc(options.D, alloc, options.parindices, options.randseed, verbose=verbose) # Actually run
-            result.Rarr.append(struct()) # Append a structure
-            result.Rarr[-1].R = deepcopy(R) # Store the R structure (results)
-            result.Rarr[-1].label = labels.pop(0) # Store labels, one at a time
+        result.Rarr = [struct(), struct()]
+        result.Rarr[0].R = options.tmpbestdata[0].R
+        result.Rarr[1].R = options.tmpbestdata[-1].R
+        result.Rarr[0].label = 'Original'
+        result.Rarr[1].label = 'Optimal'
+#        for i,params in enumerate([options.tmpbest, allocarr[bestallocind]]): # CK: loop over original and (the best) optimal allocations
+#            if i==1:
+#                import traceback; traceback.print_exc(); import pdb; pdb.set_trace() # TEMP
+#            sleep(0.1)
+#            alloc = timevarying(params, ntimepm=len(params)/nprogs, nprogs=nprogs, tvec=D.opt.partvec, totalspend=totalspend, fundingchanges=fundingchanges)   
+#            R = runmodelalloc(options.D, alloc, options.parindices, options.randseed, verbose=verbose) # Actually run
+#            result.Rarr.append(struct()) # Append a structure
+#            result.Rarr[-1].R = deepcopy(R) # Store the R structure (results)
+#            result.Rarr[-1].label = labels.pop(0) # Store labels, one at a time
+        
+        
+        
+        
+        
+        
+        
+        
         
         
         
@@ -409,6 +486,9 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
     ## Gather plot data
     from gatherplotdata import gatheroptimdata
     plot_result = gatheroptimdata(D, result, verbose=verbose)
+    if 'optim' not in D.plot: D.plot.optim = [] # Initialize list if required
+    D.plot.optim.append(plot_result) # In any case, append
+    
     result_to_save = {'plot': [plot_result]}
 
     ## Save optimization to D
