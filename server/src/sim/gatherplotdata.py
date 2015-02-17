@@ -10,7 +10,7 @@ Version: 2015feb04 by cliffk
 # Define labels
 epititles = {'prev':'Prevalence', 'plhiv':'PLHIV', 'inci':'New infections', 'force':'Incidence', 'daly':'DALYs', 'death':'Deaths', 'dx':'Diagnoses', 'tx1':'First-line treatment', 'tx2':'Subsequent lines of treatment'}
 epiylabels = {'prev':'HIV prevalence (%)', 'plhiv':'Number of PLHIV', 'inci':'New HIV infections per year', 'force':'Incidence per 100 person-years', 'daly':'HIV-related DALYs per year', 'death':'HIV/AIDS-related deaths per year', 'dx':'New HIV diagnoses per year', 'tx1':'People on first-line treatment', 'tx2':'People on subsequent lines of treatment'}
-costtitles = {'costcum':'Cumulative HIV-related financial commitments'}
+costtitles = {'costcum':'Cumulative HIV-related financial costs'}
 costylabels = {}
 
 def gatheruncerdata(D, R, annual=True, verbose=2, maxyear=2030):
@@ -128,14 +128,14 @@ def gatheruncerdata(D, R, annual=True, verbose=2, maxyear=2030):
         if key == 'costcum':
             uncer[key].stacked.costs = []
             uncer[key].stacked.legend = []
-            uncer[key].stacked.title = 'Cumulative HIV-related financial commitments'
+            uncer[key].stacked.title = 'Cumulative HIV-related financial costs'
             uncer[key].stacked.ylabel = R['costshared'][origkey]['total']['ylabel']
         else:
             for yscale in ['total','gdp','revenue','govtexpend','totalhealth','domestichealth']:
                 uncer[key].stacked[yscale] = struct()
                 uncer[key].stacked[yscale].costs = []
                 uncer[key].stacked[yscale].legend = []
-                uncer[key].stacked[yscale].title = 'Annual HIV-related financial commitments'
+                uncer[key].stacked[yscale].title = 'Annual HIV-related financial costs'
                 if 'ylinedata' in R['costshared'][origkey]['total'][yscale]:
                     uncer[key].stacked[yscale].ylabel = R['costshared'][origkey]['total'][yscale]['ylabel']
 
