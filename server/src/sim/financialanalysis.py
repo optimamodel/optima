@@ -109,7 +109,7 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False, verbose=2):
                     plotdata[plottype][plotsubtype][yscalefactor] = {}
                     plotdata[plottype][plotsubtype][yscalefactor]['xlinedata'] = simtvec
                     plotdata[plottype][plotsubtype][yscalefactor]['xlabel'] = 'Year'
-                    plotdata[plottype][plotsubtype][yscalefactor]['title'] = 'Annual HIV-related financial commitments - ' + plotsubtype + ' infections'
+                    plotdata[plottype][plotsubtype][yscalefactor]['title'] = 'Annual HIV-related costs - ' + plotsubtype + ' infections'
                     if yscalefactor=='total':                    
                         if not plotsubtype=='future': plotdata[plottype][plotsubtype][yscalefactor]['ylinedata'] = [(hivcosts[plotsubtype][j] + artcosts[plotsubtype][j]) for j in range(noptpts)]
                         plotdata[plottype][plotsubtype][yscalefactor]['ylabel'] = 'USD'
@@ -126,7 +126,7 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False, verbose=2):
                 plotdata[plottype][plotsubtype]['xlinedata'] = simtvec
                 plotdata[plottype][plotsubtype]['xlabel'] = 'Year'
                 plotdata[plottype][plotsubtype]['ylabel'] = 'USD'
-                plotdata[plottype][plotsubtype]['title'] = 'Cumulative HIV-related financial commitments - ' + plotsubtype + ' infections'
+                plotdata[plottype][plotsubtype]['title'] = 'Cumulative HIV-related costs - ' + plotsubtype + ' infections'
                 if not plotsubtype=='future': plotdata[plottype][plotsubtype]['ylinedata'] = list(accumu([hivcosts[plotsubtype][j] + artcosts[plotsubtype][j] for j in range(noptpts)]))
 
     for yscalefactor in costdisplays:
