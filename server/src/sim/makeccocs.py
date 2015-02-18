@@ -68,7 +68,7 @@ def makecc(D=None, progname=default_progname, ccparams=default_ccparams, ccplot=
 
     # Extract basic info from data structure
     prognumber = D.data.meta.progs.short.index(progname) # get program number    
-    totalcost = D.data.costcov.cost[prognumber] # get total cost
+    totalcost = D.data.costcov.realcost[prognumber] # get total cost
 
     # Adjust cost data to year specified by user (if given)
     if ccplot and ccplot[1]:
