@@ -17,10 +17,10 @@ from printv import printv
 from parameters import input_parameter_name
 
 ## Set defaults for testing makeccocs
-default_progname = 'ART'
-default_ccparams = []# [0.9, 0.1, 0.3, 4000000.0, None, None] #
+default_progname = 'MSM programs'
+default_ccparams = [0.9, 0.5, 0.7, 400000.0, None, None] #
 default_ccplot = []#[1000000, None, 0]
-default_coparams = []#[0.3, 0.5, 0.7, 0.9] 
+default_coparams = [0.3, 0.5, 0.7, 0.9] 
 default_effect = [['sex', 'condomcas'], [u'MSM']] # D.programs[default_progname]['effects'][0] 
 default_artelig = range(6,31)
 coverage_params = ['numost','numpmtct','numfirstline','numsecondline']
@@ -204,7 +204,7 @@ def makeco(D, progname=default_progname, effect=default_effect, coparams=default
         if coveragelabel == 'Proportion covered':
             plotdata['xupperlim'], plotdata['yupperlim']  = 1.0, 1.0
         else:
-            plotdata['xupperlim'], plotdata['yupperlim']  = max([j if ~isnan(j) else 0.0 for j in coverage])*1.5, max([j if ~isnan(j) else 0.0 for x in outcome])*1.5
+            plotdata['xupperlim'], plotdata['yupperlim']  = max([j if ~isnan(j) else 0.0 for j in coverage])*1.5, max([j if ~isnan(j) else 0.0 for j in outcome])*1.5
 
         # Populate output structure with scatter data 
         coverage, outcome = getscatterdata(coverage, outcome)
@@ -726,5 +726,4 @@ def makesamples(coparams, muz, stdevz, muf, stdevf, samplesize=1000, randseed=No
     fullsample = rtnorm(coparams[2], coparams[3], mu=muf, sigma=stdevf, size=samplesize)[0]
         
     return zerosample, fullsample
-
 
