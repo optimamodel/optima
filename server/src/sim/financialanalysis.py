@@ -5,12 +5,12 @@ Created on Sat Nov 29 17:40:34 2014
 
 Version: 2015feb03
 """
-from numpy import linspace, append
+from numpy import linspace, append, npv
 from setoptions import setoptions
 from utils import sanitize, smoothinterp
 from printv import printv
 
-def financialanalysis(D, postyear=2015, S=None, makeplot=False, verbose=2):
+def financialanalysis(D, postyear=2015, S=None, makeplot=False, r=.03, yearstoelig=8, yearsunmet=1, years1line=16, years2line=0, verbose=2):
     '''
     Plot financial commitment graphs
     '''
@@ -40,7 +40,7 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False, verbose=2):
     progname = 'ART'
     prognumber = D.data.meta.progs.short.index(progname)
     artunitcost = sanitize([D.data.costcov.cost[prognumber][j]/D.data.costcov.cov[prognumber][j] for j in range(len(D.data.costcov.cov[prognumber]))])[-1]
-
+    
     # Run a simulation with the force of infection set to zero from postyear... 
     from model import model
     opt = setoptions(nsims=1, turnofftrans=postyear)
@@ -99,7 +99,7 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False, verbose=2):
             total += x
             yield total
 
-    # Set y axis scale and set y axis to the right time period
+    # Store cost plot data
     for plottype in ['annual','cumulative']:
         plotdata[plottype] = {}
         for plotsubtype in ['existing','total','future']:
@@ -133,5 +133,25 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False, verbose=2):
         if 'ylinedata' in plotdata['annual']['total'][yscalefactor].keys():
             plotdata['annual']['future'][yscalefactor]['ylinedata'] = [max(0.0,plotdata['annual']['total'][yscalefactor]['ylinedata'][j] - plotdata['annual']['existing'][yscalefactor]['ylinedata'][j]) for j in range(noptpts)]
     plotdata['cumulative']['future']['ylinedata'] = list(accumu(plotdata['annual']['future']['total']['ylinedata']))
+
+    # Calculate net present value of future stream of treatment costs
+    inci = S.inci.sum(axis=0)
+    artflows = [0]*yearstoelig + [0]*yearsunmet + [artunitcost]*years1line + [years2line]*years2line
+    artcommitments = [npv(r, artflows)*inci[j] for j in range(noptpts)]
+    
+    # Store commitment cost data
+    plotdata['commit'] = {}
+    for yscalefactor in costdisplays:
+        plotdata['commit'][yscalefactor] = {}
+        plotdata['commit'][yscalefactor]['xlinedata'] = simtvec
+        plotdata['commit'][yscalefactor]['xlabel'] = 'Year'
+        plotdata['commit'][yscalefactor]['title'] = 'Annual spending commitments from new HIV infections'
+        if isinstance(yscale,int): continue
+        if yscalefactor=='total':                    
+            plotdata['commit'][yscalefactor]['ylinedata'] = artcommitments
+            plotdata['commit'][yscalefactor]['ylabel'] = 'USD'
+        else:
+            plotdata['commit'][yscalefactor]['ylinedata'] = [artcommitments[j]/yscale[j] for j in range(noptpts)]
+            plotdata['commit'][yscalefactor]['ylabel'] = 'Proportion of ' + yscalefactor
 
     return plotdata

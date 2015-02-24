@@ -119,7 +119,7 @@ def gatheruncerdata(D, R, annual=True, verbose=2, maxyear=2030):
             raise Exception("Can't figure out size of epidata; doesn't seem to be a vector or a matrix")
     
     
-    # Financial outputs
+    # Financial cost outputs
     for key in ['costann', 'costcum']:
         uncer[key] = struct()
         origkey = 'annual' if key=='costann' else 'cumulative'
@@ -174,6 +174,20 @@ def gatheruncerdata(D, R, annual=True, verbose=2, maxyear=2030):
                             uncer[key].stacked[yscale].costs.append(uncer[key][ac][yscale].best)
                             uncer[key].stacked[yscale].legend.append([ac.title()])
                             
+    # Financial commitment outputs
+    uncer.commit = struct()
+    for yscale in ['total','gdp','revenue','govtexpend','totalhealth','domestichealth']:
+        uncer.commit[yscale] = struct()
+        if 'ylinedata' in R['costshared']['annual']['total'][yscale]:
+            # Individual line graphs with uncertainty
+            uncer.commit[yscale].best = R.commit[yscale][0][indices].tolist()
+            uncer.commit[yscale].low = R.commit[yscale][1][indices].tolist()
+            uncer.commit[yscale].high = R.commit[yscale][2][indices].tolist()
+            uncer.commit[yscale].xdata = R['costshared']['commit'][yscale]['xlinedata'][indices].tolist()
+            uncer.commit[yscale].title = R['costshared']['commit'][yscale]['title']
+            uncer.commit[yscale].xlabel = R['costshared']['commit'][yscale]['xlabel']
+            uncer.commit[yscale].ylabel = R['costshared']['commit'][yscale]['ylabel']
+            uncer.commit[yscale].legend = ['Model']
     
     printv('...done gathering uncertainty results.', 4, verbose)
     return uncer
@@ -233,7 +247,7 @@ def gathermultidata(D, Rarr, annual=True, verbose=2, maxyear=2030):
             multi[key].tot.data.append(thisdata)
             multi[key].tot.legend.append(Rarr[sim].label) # Add legends
     
-    # Financial outputs
+    # Financial cost outputs
     for key in ['costann', 'costcum']:
         multi[key] = struct()
         for ac in ['total','future','existing']:
@@ -264,6 +278,23 @@ def gathermultidata(D, Rarr, annual=True, verbose=2, maxyear=2030):
                            multi[key][ac][yscale].title = Rarr[sim].R['costshared'][origkey][ac][yscale]['title']
                            multi[key][ac][yscale].xlabel = Rarr[sim].R['costshared'][origkey][ac][yscale]['xlabel']
                            multi[key][ac][yscale].ylabel = Rarr[sim].R['costshared'][origkey][ac][yscale]['ylabel']                
+        
+    # Financial commitment outputs
+    multi.commit = struct()
+    for yscale in ['total','gdp','revenue','govtexpend','totalhealth','domestichealth']:
+        multi.commit[yscale] = struct()
+        multi.commit[yscale].data = []
+        multi.commit[yscale].legend = []
+        if 'ylinedata' in Rarr[sim].R['costshared']['annual']['total'][yscale]:
+            for sim in range(multi.nsims):
+                thisdata = Rarr[sim].R.commit[yscale][0][indices].tolist()
+                multi.commit[yscale].data.append(thisdata)
+                multi.commit[yscale].legend.append(Rarr[sim].label) # Add legends
+                multi.commit[yscale].xdata = Rarr[sim].R['costshared'].commit[yscale]['xlinedata'][indices].tolist()
+                multi.commit[yscale].title = Rarr[sim].R['costshared'].commit[yscale]['title']
+                multi.commit[yscale].xlabel = Rarr[sim].R['costshared'].commit[yscale]['xlabel']
+                multi.commit[yscale].ylabel = Rarr[sim].R['costshared'].commit[yscale]['ylabel']                
+
         
     printv('...done gathering multi-simulation results.', 4, verbose)
     return multi
