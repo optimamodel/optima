@@ -96,7 +96,7 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False, verbose=2):
     def accumu(lis):
         total = 0
         for x in lis:
-            total += x
+            total += x*D.opt.dt
             yield total
 
     # Set y axis scale and set y axis to the right time period
