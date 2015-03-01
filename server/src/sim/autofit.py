@@ -95,7 +95,7 @@ def autofit(D, timelimit=None, maxiters=500, simstartyear=2000, simendyear=2015,
         
         mismatch = 0
         allmismatches = []
-        for base in [death, newtreat, numinfect, dx, prev]:
+        for base in [death, newtreat, numtest, numinfect, dx, prev]:
             for ind in range(len(base)):
                 for y,year in enumerate(base[ind].data.x):
                     modelind = findinds(S.tvec, year)
