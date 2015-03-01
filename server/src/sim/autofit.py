@@ -10,6 +10,7 @@ def autofit(D, timelimit=None, maxiters=500, simstartyear=2000, simendyear=2015,
         
     Version: 2015jan31 by cliffk
     """
+    #import pdb
     from numpy import mean, array
     from model import model
     from printv import printv
@@ -27,6 +28,8 @@ def autofit(D, timelimit=None, maxiters=500, simstartyear=2000, simendyear=2015,
     from setoptions import setoptions
     D.opt = setoptions(D.opt, simstartyear=simstartyear, simendyear=simendyear)
     
+    #pdb.set_trace()    
+    
     def errorcalc(Flist):
         """ Calculate the error between the model and the data """
         
@@ -35,6 +38,43 @@ def autofit(D, timelimit=None, maxiters=500, simstartyear=2000, simendyear=2015,
         F = list2dict(D.F[0], Flist)
         F = unnormalizeF(F, origM, origG) # CK: Convert from normalized to unnormalized F (NB, Madhura)
         S = model(D.G, D.M, F, D.opt, verbose=verbose)
+        
+        #Here below Hugo has added "additional optional indicators" to the calibration: after confirming & correcting
+        #with Cliff (the correspondences between data and model output parameters is not always clear and needs to be 
+        #verified), Hugo will turn this into a loop.
+        # Pull out death data
+        death = [struct()]
+        death[0].data = struct()
+        death[0].model = struct()
+        death[0].data.x, death[0].data.y = extractdata(D.G.datayears, D.data.opt.death[0])
+        death[0].model.x = S.tvec
+        death[0].model.y = S.death.sum(axis=0)        
+        
+        # Pull out "number of people initiating ART treatment" data
+        newtreat = [struct()]
+        newtreat[0].data = struct()
+        newtreat[0].model = struct()
+        newtreat[0].data.x, newtreat[0].data.y = extractdata(D.G.datayears, D.data.opt.newtreat[0])
+        newtreat[0].model.x = S.tvec
+        newtreat[0].model.y = D.S.newtx1.sum(axis=0) + D.S.newtx2.sum(axis=0)
+
+        # Pull out "number of HIV tests" data
+        numtest = [struct()]
+        numtest[0].data = struct()
+        numtest[0].model = struct()
+        numtest[0].data.x, numtest[0].data.y = extractdata(D.G.datayears, D.data.opt.numtest[0])
+        numtest[0].model.x = S.tvec
+        numtest[0].model.y = D.M.hivtest.sum(axis=0)*D.S.people.sum(axis=0).sum(axis=0) #testing rate x population
+        
+
+        # Pull out "number of of new infections" data
+        numinfect = [struct()]
+        numinfect[0].data = struct()
+        numinfect[0].model = struct()
+        numinfect[0].data.x, numinfect[0].data.y = extractdata(D.G.datayears, D.data.opt.numinfect[0])
+        numinfect[0].model.x = S.tvec
+        numinfect[0].model.y = D.S.inci.sum(axis=0)
+        
         
         # Pull out diagnoses data
         dx = [struct()]
@@ -55,7 +95,7 @@ def autofit(D, timelimit=None, maxiters=500, simstartyear=2000, simendyear=2015,
         
         mismatch = 0
         allmismatches = []
-        for base in [dx, prev]:
+        for base in [death, newtreat, numinfect, dx, prev]:
             for ind in range(len(base)):
                 for y,year in enumerate(base[ind].data.x):
                     modelind = findinds(S.tvec, year)
@@ -70,6 +110,7 @@ def autofit(D, timelimit=None, maxiters=500, simstartyear=2000, simendyear=2015,
     Forig = normalizeF(D.F[0], origM, origG) # CK: Convert from normalized to unormalized F (NB, Madhura)
     Forig = array(dict2list(Forig)) # Convert froma  dictionary to a list
     
+    #pdb.settrace()
     # Run the optimization algorithm
     Fnew, fval, exitflag, output = ballsd(errorcalc, Forig, xmin=0*Forig, xmax=100*Forig, timelimit=timelimit, MaxIter=maxiters, verbose=verbose)
     
@@ -120,6 +161,7 @@ def list2dict(Forig, Flist):
     return Fdict
 
 
+#%%
 
 
 def extractdata(xdata, ydata):
