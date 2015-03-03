@@ -6,9 +6,10 @@ define(['angular'], function (angular) {
 	var def = {
 	    restrict : 'A', 
 	    terminal : true,
-	    transclude : true,
+	    transclude : false,
 	    link : function(scope, element, attrs) {
-	        $timeout(scope.$emit('rendered'), 0);
+	    	// triggers the rendered event 
+	        scope.$emit('rendered');
 	    }
 	};
 	return def;

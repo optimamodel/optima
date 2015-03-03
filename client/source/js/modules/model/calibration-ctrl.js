@@ -443,12 +443,16 @@ define(['./module', 'angular', 'jquery', 'underscore'], function (module, angula
 
     // Returns the value of the tallest chart.
     $scope.getMaxChartHeight = function () {
-      return 500;
+      return _.max($('.chart-container'), function (element) {
+          return $(element).height();
+      });
     };
 
     // Makes all charts to be as tall as the tallest one.
     $scope.updateChartHeights = function () {
+      debugger
       var highest = $scope.getMaxChartHeight();
+      console.info($scope.getMaxChartHeight());
       console.log('updateChartHeights');
       console.log($('.chart-container'));
       $('.chart-container').each(function(i, element){ 
