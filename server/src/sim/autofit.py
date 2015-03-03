@@ -39,62 +39,40 @@ def autofit(D, timelimit=None, maxiters=500, simstartyear=2000, simendyear=2015,
         F = unnormalizeF(F, origM, origG) # CK: Convert from normalized to unnormalized F (NB, Madhura)
         S = model(D.G, D.M, F, D.opt, verbose=verbose)
         
-        #Here below Hugo has added "additional optional indicators" to the calibration: after confirming & correcting
-        #with Cliff (the correspondences between data and model output parameters is not always clear and needs to be 
-        #verified), Hugo will turn this into a loop.
-        # Pull out death data
-        death = [struct()]
-        death[0].data = struct()
-        death[0].model = struct()
-        death[0].data.x, death[0].data.y = extractdata(D.G.datayears, D.data.opt.death[0])
-        death[0].model.x = S.tvec
-        death[0].model.y = S.death.sum(axis=0)        
-        
-        # Pull out "number of people initiating ART treatment" data
-        newtreat = [struct()]
-        newtreat[0].data = struct()
-        newtreat[0].model = struct()
-        newtreat[0].data.x, newtreat[0].data.y = extractdata(D.G.datayears, D.data.opt.newtreat[0])
-        newtreat[0].model.x = S.tvec
-        newtreat[0].model.y = D.S.newtx1.sum(axis=0) + D.S.newtx2.sum(axis=0)
-
-        # Pull out "number of HIV tests" data
-        numtest = [struct()]
-        numtest[0].data = struct()
-        numtest[0].model = struct()
-        numtest[0].data.x, numtest[0].data.y = extractdata(D.G.datayears, D.data.opt.numtest[0])
-        numtest[0].model.x = S.tvec
-        numtest[0].model.y = D.M.hivtest.sum(axis=0)*D.S.people.sum(axis=0).sum(axis=0) #testing rate x population
-        
-
-        # Pull out "number of of new infections" data
-        numinfect = [struct()]
-        numinfect[0].data = struct()
-        numinfect[0].model = struct()
-        numinfect[0].data.x, numinfect[0].data.y = extractdata(D.G.datayears, D.data.opt.numinfect[0])
-        numinfect[0].model.x = S.tvec
-        numinfect[0].model.y = D.S.inci.sum(axis=0)
-        
-        
-        # Pull out diagnoses data
-        dx = [struct()]
-        dx[0].data = struct()
-        dx[0].model = struct()
-        dx[0].data.x, dx[0].data.y = extractdata(D.G.datayears, D.data.opt.numdiag[0])
-        dx[0].model.x = S.tvec
-        dx[0].model.y = S.dx.sum(axis=0)
-        
-        # Prevalence data
+        # Pull out Prevalence data
         prev = [struct() for p in range(D.G.npops)]
         for p in range(D.G.npops): 
             prev[p].data = struct()
             prev[p].model = struct()
             prev[p].data.x, prev[p].data.y = extractdata(D.G.datayears, D.data.key.hivprev[0][p]) # The first 0 is for "best"
             prev[p].model.x = S.tvec
-            prev[p].model.y = S.people[1:,p,:].sum(axis=0) / S.people[:,p,:].sum(axis=0) # This is prevalence
-        
+            prev[p].model.y = S.people[1:,p,:].sum(axis=0) / S.people[:,p,:].sum(axis=0) # This is prevalence      
+                                                        
+
+        [death, newtreat, numtest, numinfect, dx] = [[struct()], [struct()], [struct()], [struct()], [struct()]]        
+ 
         mismatch = 0
         allmismatches = []
+        for base in [death, newtreat, numtest, numinfect, dx]:
+            base[0].data = struct()
+            base[0].model = struct()
+            base[0].model.x = S.tvec
+            if base == death:
+                base[0].data.x, base[0].data.y = extractdata(D.G.datayears, D.data.opt.death[0])
+                base[0].model.y = S.death.sum(axis=0)
+            elif base == newtreat:
+                base[0].data.x, base[0].data.y = extractdata(D.G.datayears, D.data.opt.newtreat[0])
+                base[0].model.y = D.S.newtx1.sum(axis=0) + D.S.newtx2.sum(axis=0)
+            elif base == numtest:
+                base[0].data.x, base[0].data.y = extractdata(D.G.datayears, D.data.opt.numtest[0])
+                base[0].model.y = D.M.hivtest.sum(axis=0)*D.S.people.sum(axis=0).sum(axis=0) #testing rate x population
+            elif base == numinfect:
+                base[0].data.x, base[0].data.y = extractdata(D.G.datayears, D.data.opt.numinfect[0])
+                base[0].model.y = D.S.inci.sum(axis=0)
+            elif base == dx:
+                base[0].data.x, base[0].data.y = extractdata(D.G.datayears, D.data.opt.numdiag[0])
+                base[0].model.y = S.dx.sum(axis=0)
+
         for base in [death, newtreat, numtest, numinfect, dx, prev]:
             for ind in range(len(base)):
                 for y,year in enumerate(base[ind].data.x):
