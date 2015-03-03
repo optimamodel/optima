@@ -48,9 +48,14 @@ def autofit(D, timelimit=None, maxiters=500, simstartyear=2000, simendyear=2015,
             prev[p].model.x = S.tvec
             prev[p].model.y = S.people[1:,p,:].sum(axis=0) / S.people[:,p,:].sum(axis=0) # This is prevalence      
                                                         
-
+        #indicators = struct()
+        #indicatorkeys = ['death', 'newtreat', 'numtest','numinfect', 'dx']
+        #datakeys = ['death', 'newtreat', 'numtest','numinfect', 'dx']
+        for key in indicatorkeys:
+            indicators[key] = struct()
         [death, newtreat, numtest, numinfect, dx] = [[struct()], [struct()], [struct()], [struct()], [struct()]]        
- 
+        
+        # Pull out other indicators data
         mismatch = 0
         allmismatches = []
         for base in [death, newtreat, numtest, numinfect, dx]:
@@ -62,13 +67,13 @@ def autofit(D, timelimit=None, maxiters=500, simstartyear=2000, simendyear=2015,
                 base[0].model.y = S.death.sum(axis=0)
             elif base == newtreat:
                 base[0].data.x, base[0].data.y = extractdata(D.G.datayears, D.data.opt.newtreat[0])
-                base[0].model.y = D.S.newtx1.sum(axis=0) + D.S.newtx2.sum(axis=0)
+                base[0].model.y = S.newtx1.sum(axis=0) + S.newtx2.sum(axis=0)
             elif base == numtest:
                 base[0].data.x, base[0].data.y = extractdata(D.G.datayears, D.data.opt.numtest[0])
-                base[0].model.y = D.M.hivtest.sum(axis=0)*D.S.people.sum(axis=0).sum(axis=0) #testing rate x population
+                base[0].model.y = D.M.hivtest.sum(axis=0)*S.people.sum(axis=0).sum(axis=0) #testing rate x population
             elif base == numinfect:
                 base[0].data.x, base[0].data.y = extractdata(D.G.datayears, D.data.opt.numinfect[0])
-                base[0].model.y = D.S.inci.sum(axis=0)
+                base[0].model.y = S.inci.sum(axis=0)
             elif base == dx:
                 base[0].data.x, base[0].data.y = extractdata(D.G.datayears, D.data.opt.numdiag[0])
                 base[0].model.y = S.dx.sum(axis=0)
