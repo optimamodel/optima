@@ -10,6 +10,8 @@ define(['angular'], function (angular) {
 	    link : function(scope, element, attrs) {
 	    	// triggers the rendered event 
 	        scope.$emit('rendered');
+
+	        if (attrs) { console.warn(scope.$eval(attrs.afterRender)) }
 	    }
 	};
 	return def;
