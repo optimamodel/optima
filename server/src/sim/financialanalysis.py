@@ -36,7 +36,7 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False, r=.03, yearstoel
     simtvec = S.tvec
     noptpts = len(simtvec)
 
-    # Get most recent ART unit costs
+    # Get most recent ART unit costs #TODO use a series not a point!
     progname = 'ART'
     prognumber = D.data.meta.progs.short.index(progname)
     artunitcost = sanitize([D.data.costcov.cost[prognumber][j]/D.data.costcov.cov[prognumber][j] for j in range(len(D.data.costcov.cov[prognumber]))])[-1]
@@ -136,7 +136,7 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False, r=.03, yearstoel
 
     # Calculate net present value of future stream of treatment costs
     inci = S.inci.sum(axis=0)
-    artflows = [0]*yearstoelig + [0]*yearsunmet + [artunitcost]*years1line + [years2line]*years2line
+    artflows = [0]*yearstoelig + [0]*yearsunmet + [artunitcost]*years1line + [artunitcost]*years2line
     artcommitments = [npv(r, artflows)*inci[j] for j in range(noptpts)]
     
     # Store commitment cost data
