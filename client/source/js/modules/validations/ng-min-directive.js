@@ -1,7 +1,7 @@
 define(['angular'], function (angular) {
   'use strict';
 
-  return angular.module('app.ng-min', []).directive('ngMin', function () {
+  return angular.module('app.validations.ng-min', []).directive('ngMin', function () {
     return {
       restrict: 'A',
       require: 'ngModel',
