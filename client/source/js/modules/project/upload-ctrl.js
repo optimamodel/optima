@@ -2,13 +2,18 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ProjectUploadController',
-    function ($scope, projects) {
+    function ($scope, projects, modalService) {
 
     // Initialize Params
-    $scope.projectParams = { name: "" };
+    $scope.projectParams = { name: "", file: undefined };
 
     $scope.uploadProject = function() {
-      console.log('upload project');
+      if ($scope.UploadProjectForm.$invalid) {
+        modalService.informError([{message: 'Please fill in all the required project fields.'}]);
+        return false;
+      } else {
+        console.log('upload project');
+      }
     };
 
     $scope.projectExists = function() {

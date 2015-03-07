@@ -3,12 +3,19 @@
   <form id="createForm" name="UploadProjectForm" method="post" ng-submit="uploadProject()" novalidate="novalidate">
 
     <div class="section grid">
-      <div class="6">
-          <h1>Project details</h1>
+      <div class="4 8++">
+        <h1>Project</h1>
 
-         <b>Project name</b>
+        <label><b>Project name</b></label>
         <input class="txbox" type="text" name="ProjectName" placeholder="e.g. Example" ng-model="projectParams.name" required>
         <div class="error-hint" ng-show="projectExists()"> Project with this name already exists, please choose a different name. </div>
+      </div>
+    </div>
+
+    <div class="section grid">
+      <div class="4 8++">
+        <label><b>Project File</b></label>
+        <input type="file" name="ProjectFile" file-required ng-model="projectParams.file">
       </div>
     </div>
 
