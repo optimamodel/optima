@@ -78,6 +78,16 @@ define([
               return Project.list().$promise;
             }
           }
+        })
+        .state('project.upload', {
+          url: '/upload',
+          templateUrl: 'js/modules/project/upload.html',
+          controller: 'ProjectUploadController',
+          resolve: {
+            projects: function (Project) {
+              return Project.list().$promise;
+            }
+          }
         });
     });
 });

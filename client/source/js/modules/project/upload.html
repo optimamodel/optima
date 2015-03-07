@@ -1,0 +1,20 @@
+<div class="rich">
+
+  <form id="createForm" name="UploadProjectForm" method="post" ng-submit="uploadProject()" novalidate="novalidate">
+
+    <div class="section grid">
+      <div class="6">
+          <h1>Project details</h1>
+
+         <b>Project name</b>
+        <input class="txbox" type="text" name="ProjectName" placeholder="e.g. Example" ng-model="projectParams.name" required>
+        <div class="error-hint" ng-show="projectExists()"> Project with this name already exists, please choose a different name. </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <button class="btn __green" type="submit">Upload Project</button>
+    </div>
+
+  </form>
+</div>
