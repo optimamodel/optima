@@ -96,7 +96,7 @@ def getPopsAndProgsFromModel(project, trustInputMetadata):
     # get and generate programs from D.data.meta
     progs = []
     if trustInputMetadata and model['G'].get('inputprograms'):
-        progs = deepcopy(model['G']['inputprograms']) #if there are already parameters 
+        progs = deepcopy(model['G']['inputprograms']) #if there are already parameters
     else:
         # we should try to rebuild the inputprograms
         for index, short_name in enumerate(D_progs_names):
@@ -678,18 +678,17 @@ def getData(project_id):
             json.dump(data, filedata)
         return helpers.send_from_directory(loaddir, filename)
 
-@project.route('/data/<project_id>', methods=['POST'])
+@project.route('/data/<project_name>', methods=['POST'])
 @login_required
 @report_exception('Unable to copy uploaded data')
-def setData(project_id):
+def setData(project_name):
     """
-    Uploads Data file, uses it to update the project model.
-    Precondition: model should exist.
+    Creates a project & uploads data file to update project model.
     """
     user_id = current_user.id
-    current_app.logger.debug("uploadProject(project id: %s user:%s)" % (project_id, user_id))
 
     reply = {'status':'NOK'}
+
     file = request.files['file']
 
     if not file:
@@ -701,17 +700,12 @@ def setData(project_id):
         reply['reason'] = 'File type of %s is not accepted!' % source_filename
         return json.dumps(reply)
 
-    project = load_project(project_id)
-    if project is None:
-        reply['reason']='Project %s does not exist.' % project_id
-        return jsonify(reply)
+    data = json.loads(file.read());
 
-    data = json.load(file)
-    data['G']['projectfilename'] = project.model['G']['projectfilename']
-    data['G']['workbookname'] = project.model['G']['workbookname']
-    data['G']['projectname'] = project.model['G']['projectname']
+    project = ProjectDb(project_name, user_id, data['G']['datastart'], \
+        data['G']['dataend'], \
+        data['G']['inputprograms'], data['G']['inputpopulations'])
     project.model = data
-    project_name = project.name
     getPopsAndProgsFromModel(project, trustInputMetadata = True)
 
     db.session.add(project)

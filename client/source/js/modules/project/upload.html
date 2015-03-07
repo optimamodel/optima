@@ -15,7 +15,7 @@
     <div class="section grid">
       <div class="4 8++">
         <label><b>Project File</b></label>
-        <input type="file" name="ProjectFile" file-required ng-model="projectParams.file">
+        <input type="file" name="ProjectFile" ng-model="dummyFilesModel" file-required ng-file-select="onFileSelect($files)">
       </div>
     </div>
 
