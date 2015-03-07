@@ -96,7 +96,7 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False, r=.03, yearstoel
     def accumu(lis):
         total = 0
         for x in lis:
-            total += x
+            total += x*D.opt.dt
             yield total
 
     # Store cost plot data
