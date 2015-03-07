@@ -17,7 +17,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           return false;
         } else {
           $upload.upload({
-            url: '/api/project/data/' + $scope.projectParams.name,
+            url: '/api/project/data',
+            fields: {name: $scope.projectParams.name},
             file: $scope.projectParams.file
           }).success(function (data, status, headers, config) {
             $state.go('project.open');

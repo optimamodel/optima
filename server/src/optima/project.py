@@ -678,16 +678,21 @@ def getData(project_id):
             json.dump(data, filedata)
         return helpers.send_from_directory(loaddir, filename)
 
-@project.route('/data/<project_name>', methods=['POST'])
+@project.route('/data', methods=['POST'])
 @login_required
 @report_exception('Unable to copy uploaded data')
-def setData(project_name):
+def createProjectAndSetData():
     """
     Creates a project & uploads data file to update project model.
     """
     user_id = current_user.id
 
     reply = {'status':'NOK'}
+
+    project_name = request.values.get('name')
+    if not project_name:
+        reply['reason'] = 'No project name provided'
+        return json.dumps(reply)
 
     file = request.files['file']
 

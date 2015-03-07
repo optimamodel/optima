@@ -19,7 +19,7 @@
     "FileSaver": "#c69c21d488",
     "jquery": "=2.1.1",
     "jspdf": "=1.0.272",
-    "ng-file-upload": "~1.6.8",
+    "ng-file-upload": "=3.1.2",
     "normalize-css": "=3.0.1",
     "requirejs": "=2.1.13",
     "underscore": "=1.6.0",
