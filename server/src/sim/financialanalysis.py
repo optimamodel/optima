@@ -205,7 +205,7 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False, artgrowthrate=.0
 
     return plotdata
 
-# Test code -- #TODO don't commit with this here. And 
+# Test code -- #TODO don't commit with this here. 
 #plotdata = financialanalysis(D)
 #from matplotlib.pylab import figure, plot, hold
 #figure()
