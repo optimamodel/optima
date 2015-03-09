@@ -86,6 +86,26 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         });
     };
 
+    $scope.setData = function (name, id, file) {
+      var message = 'Warning: This will overwrite ALL data in the project ' + name + '. Are you sure you wish to continue?';
+      modalService.confirm(
+        function (){ fileUpload.uploadDataSpreadsheet($scope, file, '/api/project/data/'+id, false); },
+        function (){},
+        'Yes, overwrite data',
+        'No',
+        message,
+        'Upload data'
+      );
+    };
+
+    $scope.preSetData = function(name, id) {
+      angular
+        .element('<input type=\'file\'>')
+        .change(function(event){
+        $scope.setData(name, id, event.target.files[0]);
+      }).click();
+    };
+
     /**
      * Removes the project
      *

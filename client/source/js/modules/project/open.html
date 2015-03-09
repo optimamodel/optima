@@ -11,7 +11,7 @@
       <th>Data end year</th>
       <th>Project created on</th>
       <th>Data uploaded on</th>
-      <th colspan="6">Actions</th>
+      <th colspan="7">Actions</th>
       </thead>
       <tbody>
       <tr ng-repeat="project in projects | orderBy: 'name'">
@@ -50,6 +50,9 @@
         </td>
         <td>
           <button class="btn" ng-click="getData(project.name, project.id)">Download project</button>
+        </td>
+        <td>
+          <button class="btn" ng-click="preSetData(project.name, project.id)">Upload project</button>
         </td>
         <td>
           <button class="btn" ng-click="workbook(project.name, project.id)">Download data entry spreadsheet</button>
