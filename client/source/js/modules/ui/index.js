@@ -66,7 +66,7 @@ define([
                 }
               },
               {
-                title: 'Upload Project',
+                title: 'Upload new project',
                 state: {
                   name: 'project.upload'
                 }
