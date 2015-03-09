@@ -721,3 +721,49 @@ def createProjectAndSetData():
     reply['file'] = source_filename
 
     return json.dumps(reply)
+
+
+@project.route('/data/<project_id>', methods=['POST'])
+@login_required
+@report_exception('Unable to copy uploaded data')
+def setData(project_id):
+    """
+    Uploads Data file, uses it to update the project model.
+    Precondition: model should exist.
+    """
+    user_id = current_user.id
+    current_app.logger.debug("uploadProject(project id: %s user:%s)" % (project_id, user_id))
+
+    reply = {'status':'NOK'}
+    file = request.files['file']
+
+    if not file:
+        reply['reason'] = 'No file is submitted!'
+        return json.dumps(reply)
+
+    source_filename = secure_filename(file.filename)
+    if not allowed_file(source_filename):
+        reply['reason'] = 'File type of %s is not accepted!' % source_filename
+        return json.dumps(reply)
+
+    project = load_project(project_id)
+    if project is None:
+        reply['reason']='Project %s does not exist.' % project_id
+        return jsonify(reply)
+
+    data = json.load(file)
+    data['G']['projectfilename'] = project.model['G']['projectfilename']
+    data['G']['workbookname'] = project.model['G']['workbookname']
+    data['G']['projectname'] = project.model['G']['projectname']
+    project.model = data
+    project_name = project.name
+    getPopsAndProgsFromModel(project, trustInputMetadata = True)
+
+    db.session.add(project)
+    db.session.commit()
+
+    reply['status'] = 'OK'
+    reply['result'] = 'Project %s is updated' % project_name
+    reply['file'] = source_filename
+
+    return json.dumps(reply)
