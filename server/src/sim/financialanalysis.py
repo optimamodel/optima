@@ -12,7 +12,7 @@ from printv import printv
 from datetime import date
 
 
-def financialanalysis(D, postyear=2015, S=None, makeplot=False, artgrowthrate=.03, discountrate=.03, treattime=[8,1,16,3,10], cd4time=[8,8,10,8,2,2], verbose=2):
+def financialanalysis(D, postyear=2015, S=None, makeplot=False, artgrowthrate=.05, discountrate=.03, treattime=[8,1,16,3,10], cd4time=[8,8,10,8,2,2], verbose=2):
     '''
     Plot financial commitment graphs
     '''
@@ -36,7 +36,7 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False, artgrowthrate=.0
     # Inflation adjusting
     cpi = D.data.econ.cpi.past[0] # get CPI
     cpi = expanddata(cpi, len(D.S.tvec)*D.opt.dt, D.data.econ.cpi.future[0][0])
-    cpibaseyearindex = date.today().year
+    cpibaseyearindex = D.data.econyears.index(date.today().year)
 
     # Set up variables for time indexing
     simtvec = S.tvec
@@ -118,8 +118,8 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False, artgrowthrate=.0
                     plotdata[plottype][plotsubtype][yscalefactor]['xlinedata'] = simtvec
                     plotdata[plottype][plotsubtype][yscalefactor]['xlabel'] = 'Year'
                     plotdata[plottype][plotsubtype][yscalefactor]['title'] = 'Annual HIV-related costs - ' + plotsubtype + ' infections'
-                    if yscalefactor=='total':                    
-                        if not plotsubtype=='future': plotdata[plottype][plotsubtype][yscalefactor]['ylinedata'] = [(hivcosts[plotsubtype][j] + artcosts[plotsubtype][j]) for j in range(noptpts)]
+                    if yscalefactor=='total':
+                        if not plotsubtype=='future': plotdata[plottype][plotsubtype][yscalefactor]['ylinedata'] = [(hivcosts[plotsubtype][j] + artcosts[plotsubtype][j])*(cpi[cpibaseyearindex]/cpi[j]) for j in range(noptpts)]
                         plotdata[plottype][plotsubtype][yscalefactor]['ylabel'] = 'USD'
                     else:
                         if isinstance(sanitize(D.data.econ[yscalefactor].past[0]),int): continue #raise Exception('No data have been provided for this varaible, so we cannot display the costs as a proportion of this')
@@ -161,20 +161,11 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False, artgrowthrate=.0
         plotdata['commit'][yscalefactor]['xlinedata'] = simtvec
         plotdata['commit'][yscalefactor]['xlabel'] = 'Year'
         plotdata['commit'][yscalefactor]['title'] = 'Annual spending commitments from new HIV infections'
-        if isinstance(yscale,int): continue
         if yscalefactor=='total':                    
-
-#    for prog in range(nprogs):
-#        if len(cost[prog])==1: # If it's an assumption, assume it's already in current prices
-#            realcost[prog] = cost[prog]
-#        else:
-#            realcost[prog] = [cost[prog][j]*(cpi[cpibaseyearindex]/cpi[j]) if ~isnan(cost[prog][j]) else float('nan') for j in range(len(cost[prog]))]
-#    
-#    data.costcov.realcost = realcost
-
-            plotdata['commit'][yscalefactor]['ylinedata'] = commitments
+            plotdata['commit'][yscalefactor]['ylinedata'] = [commitments[j]*(cpi[cpibaseyearindex]/cpi[j]) for j in range(len(commitments))]
             plotdata['commit'][yscalefactor]['ylabel'] = 'USD'
         else:
+            if isinstance(sanitize(D.data.econ[yscalefactor].past[0]),int): continue
             plotdata['commit'][yscalefactor]['ylinedata'] = [commitments[j]/yscale[j] for j in range(noptpts)]
             plotdata['commit'][yscalefactor]['ylabel'] = 'Proportion of ' + yscalefactor
 
@@ -199,12 +190,12 @@ def expanddata(data, length, growthrate):
 
 
 # Test code -- #TODO don't commit with this here. 
-#plotdata = financialanalysis(D)
-#from matplotlib.pylab import figure, plot, hold
-#figure()
-#hold(True)
-#plot(plotdata['commit']['total']['xlinedata'],plotdata['commit']['total']['ylinedata'])
-#figure()
-#hold(True)
-#plot(plotdata['commit']['total']['xlinedata'],D.S.inci.sum(axis=0))
+plotdata = financialanalysis(D)
+from matplotlib.pylab import figure, plot, hold
+figure()
+hold(True)
+plot(plotdata['commit']['total']['xlinedata'],plotdata['commit']['total']['ylinedata'])
+figure()
+hold(True)
+plot(plotdata['commit']['total']['xlinedata'],D.S.inci.sum(axis=0))
 
