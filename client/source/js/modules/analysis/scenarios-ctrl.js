@@ -152,6 +152,13 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             }
           });
 
+          // commitments
+          var commitChartData = response.commit[$scope.types.activeAnnualCost];
+          var commitIsActive = $scope.types.costs[2].checked;
+          if (commitChartData && commitIsActive) {
+            graphs.push(generateFinancialGraph(commitChartData));
+          }
+
           $scope.graphs = graphs;
         };
 
