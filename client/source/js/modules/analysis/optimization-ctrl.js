@@ -422,6 +422,13 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
         }
       });
 
+      // commitments
+      var commitChartData = graphData.commit[$scope.types.activeAnnualCost];
+      var commitIsActive = $scope.types.costs[2].checked;
+      if (commitChartData && commitIsActive) {
+        graphs.push(generateFinancialGraph(commitChartData));
+      }
+
       return graphs;
     };
 
