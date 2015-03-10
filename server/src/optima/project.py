@@ -96,7 +96,7 @@ def getPopsAndProgsFromModel(project, trustInputMetadata):
     # get and generate programs from D.data.meta
     progs = []
     if trustInputMetadata and model['G'].get('inputprograms'):
-        progs = deepcopy(model['G']['inputprograms']) #if there are already parameters 
+        progs = deepcopy(model['G']['inputprograms']) #if there are already parameters
     else:
         # we should try to rebuild the inputprograms
         for index, short_name in enumerate(D_progs_names):
@@ -677,6 +677,51 @@ def getData(project_id):
         with open(server_filename, 'wb') as filedata:
             json.dump(data, filedata)
         return helpers.send_from_directory(loaddir, filename)
+
+@project.route('/data', methods=['POST'])
+@login_required
+@report_exception('Unable to copy uploaded data')
+def createProjectAndSetData():
+    """
+    Creates a project & uploads data file to update project model.
+    """
+    user_id = current_user.id
+
+    reply = {'status':'NOK'}
+
+    project_name = request.values.get('name')
+    if not project_name:
+        reply['reason'] = 'No project name provided'
+        return json.dumps(reply)
+
+    file = request.files['file']
+
+    if not file:
+        reply['reason'] = 'No file is submitted!'
+        return json.dumps(reply)
+
+    source_filename = secure_filename(file.filename)
+    if not allowed_file(source_filename):
+        reply['reason'] = 'File type of %s is not accepted!' % source_filename
+        return json.dumps(reply)
+
+    data = json.loads(file.read());
+
+    project = ProjectDb(project_name, user_id, data['G']['datastart'], \
+        data['G']['dataend'], \
+        data['G']['inputprograms'], data['G']['inputpopulations'])
+    project.model = data
+    getPopsAndProgsFromModel(project, trustInputMetadata = True)
+
+    db.session.add(project)
+    db.session.commit()
+
+    reply['status'] = 'OK'
+    reply['result'] = 'Project %s is updated' % project_name
+    reply['file'] = source_filename
+
+    return json.dumps(reply)
+
 
 @project.route('/data/<project_id>', methods=['POST'])
 @login_required

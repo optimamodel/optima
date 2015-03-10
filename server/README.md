@@ -28,12 +28,14 @@ ________
 - Postgres database (http://www.postgresql.org/)
 - setting up create the database and users from the commandline:
 
+```
     $ createdb optima
     $ createdb optima_test
     $ createuser optima -P -s
     // with password optima
     $ createuser test -P -s
     // with password test
+```
 
 Database migrations
 ___________________
