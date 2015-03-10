@@ -35,7 +35,7 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False, artgrowthrate=.0
 
     # Inflation adjusting
     cpi = D.data.econ.cpi.past[0] # get CPI
-    cpi = expanddata(cpi, len(D.S.tvec)*D.opt.dt, D.data.econ.cpi.future[0][0])
+    cpi = expanddata(cpi, len(D.S.tvec)*D.opt.dt, D.data.econ.cpi.future[0][0], D.opt.dt)
     cpibaseyearindex = D.data.econyears.index(date.today().year)
 
     # Set up variables for time indexing
@@ -46,7 +46,7 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False, artgrowthrate=.0
     progname = 'ART'
     prognumber = D.data.meta.progs.short.index(progname)
     artunitcost = [D.data.costcov.cost[prognumber][j]/D.data.costcov.cov[prognumber][j] for j in range(len(D.data.costcov.cost[prognumber]))]
-    artunitcost = expanddata(artunitcost, len(D.S.tvec)*D.opt.dt, artgrowthrate)
+    artunitcost = expanddata(artunitcost, len(D.S.tvec)*D.opt.dt, artgrowthrate, D.opt.dt)
 
     # Make an even longer series for calculating the NPV
     longart = artunitcost
@@ -69,8 +69,8 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False, artgrowthrate=.0
     for healthno, healthstate in enumerate(D.G.healthstates):
 
         # Expand
-        socialcosts = expanddata(D.data.econ.social.past[healthno], len(D.S.tvec)*D.opt.dt, D.data.econ.social.future[0][0])
-        othercosts = expanddata(D.data.econ.health.past[healthno], len(D.S.tvec)*D.opt.dt, D.data.econ.health.future[0][0])
+        socialcosts = expanddata(D.data.econ.social.past[healthno], len(D.S.tvec)*D.opt.dt, D.data.econ.social.future[0][0], D.opt.dt)
+        othercosts = expanddata(D.data.econ.health.past[healthno], len(D.S.tvec)*D.opt.dt, D.data.econ.health.future[0][0], D.opt.dt)
                     
         costs = [(socialcosts[j] + othercosts[j]) for j in range(noptpts)]
 
@@ -123,7 +123,7 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False, artgrowthrate=.0
                         plotdata[plottype][plotsubtype][yscalefactor]['ylabel'] = 'USD'
                     else:
                         if isinstance(sanitize(D.data.econ[yscalefactor].past[0]),int): continue #raise Exception('No data have been provided for this varaible, so we cannot display the costs as a proportion of this')
-                        yscale = expanddata(D.data.econ[yscalefactor].past[0], len(D.S.tvec)*D.opt.dt, D.data.econ[yscalefactor].future[0][0])
+                        yscale = expanddata(data=D.data.econ[yscalefactor].past[0], length=len(D.S.tvec)*D.opt.dt, growthrate=D.data.econ[yscalefactor].future[0][0], dt=D.opt.dt)
                         if not plotsubtype=='future': plotdata[plottype][plotsubtype][yscalefactor]['ylinedata'] = [(hivcosts[plotsubtype][j] + artcosts[plotsubtype][j])/yscale[j] for j in range(noptpts)] 
                         plotdata[plottype][plotsubtype][yscalefactor]['ylabel'] = 'Proportion of ' + yscalefactor
             else:
@@ -171,7 +171,7 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False, artgrowthrate=.0
 
     return plotdata
     
-def expanddata(data, length, growthrate):
+def expanddata(data, length, growthrate, dt):
     newdata = zeros(int(length))
     olddata = sanitize(data)
     for i in range(len(data)):
@@ -182,7 +182,7 @@ def expanddata(data, length, growthrate):
         newdata[firstindex-(i+1)] = newdata[firstindex-i]/(1+growthrate)
     for i in range(len(newdata)-lastindex-1):
         newdata[lastindex+i+1] = newdata[lastindex+i]*(1+growthrate)
-    newx = linspace(0,1,int(length/D.opt.dt))
+    newx = linspace(0,1,int(length/dt))
     origx = linspace(0,1,len(newdata))
     newdata = smoothinterp(newx, origx, newdata, smoothness=5)
     

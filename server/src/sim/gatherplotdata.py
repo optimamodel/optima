@@ -290,10 +290,10 @@ def gathermultidata(D, Rarr, annual=True, verbose=2, maxyear=2030):
                 thisdata = Rarr[sim].R.commit[yscale][0][indices].tolist()
                 multi.commit[yscale].data.append(thisdata)
                 multi.commit[yscale].legend.append(Rarr[sim].label) # Add legends
-                multi.commit[yscale].xdata = Rarr[sim].R['costshared'].commit[yscale]['xlinedata'][indices].tolist()
-                multi.commit[yscale].title = Rarr[sim].R['costshared'].commit[yscale]['title']
-                multi.commit[yscale].xlabel = Rarr[sim].R['costshared'].commit[yscale]['xlabel']
-                multi.commit[yscale].ylabel = Rarr[sim].R['costshared'].commit[yscale]['ylabel']                
+                multi.commit[yscale].xdata = Rarr[sim].R['costshared']['commit'][yscale]['xlinedata'][indices].tolist()
+                multi.commit[yscale].title = Rarr[sim].R['costshared']['commit'][yscale]['title']
+                multi.commit[yscale].xlabel = Rarr[sim].R['costshared']['commit'][yscale]['xlabel']
+                multi.commit[yscale].ylabel = Rarr[sim].R['costshared']['commit'][yscale]['ylabel']                
 
         
     printv('...done gathering multi-simulation results.', 4, verbose)
