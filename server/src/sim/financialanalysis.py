@@ -190,12 +190,12 @@ def expanddata(data, length, growthrate):
 
 
 # Test code -- #TODO don't commit with this here. 
-plotdata = financialanalysis(D)
-from matplotlib.pylab import figure, plot, hold
-figure()
-hold(True)
-plot(plotdata['commit']['total']['xlinedata'],plotdata['commit']['total']['ylinedata'])
-figure()
-hold(True)
-plot(plotdata['commit']['total']['xlinedata'],D.S.inci.sum(axis=0))
+#plotdata = financialanalysis(D)
+#from matplotlib.pylab import figure, plot, hold
+#figure()
+#hold(True)
+#plot(plotdata['commit']['total']['xlinedata'],plotdata['commit']['total']['ylinedata'])
+#figure()
+#hold(True)
+#plot(plotdata['commit']['total']['xlinedata'],D.S.inci.sum(axis=0))
 
