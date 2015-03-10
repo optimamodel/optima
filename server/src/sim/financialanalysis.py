@@ -9,6 +9,8 @@ from numpy import linspace, append, npv, zeros, isnan, where
 from setoptions import setoptions
 from utils import sanitize, smoothinterp
 from printv import printv
+from datetime import date
+
 
 def financialanalysis(D, postyear=2015, S=None, makeplot=False, artgrowthrate=.03, discountrate=.03, treattime=[8,1,16,3,10], cd4time=[8,8,10,8,2,2], verbose=2):
     '''
@@ -31,6 +33,11 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False, artgrowthrate=.0
     # Initialise other internal storage structures
     people, hivcosts, artcosts = {}, {}, {}
 
+    # Inflation adjusting
+    cpi = D.data.econ.cpi.past[0] # get CPI
+    cpi = expanddata(cpi, len(D.S.tvec)*D.opt.dt, D.data.econ.cpi.future[0][0])
+    cpibaseyearindex = date.today().year
+
     # Set up variables for time indexing
     simtvec = S.tvec
     noptpts = len(simtvec)
@@ -38,19 +45,8 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False, artgrowthrate=.0
     # Get most recent ART unit costs #TODO use a series not a point!
     progname = 'ART'
     prognumber = D.data.meta.progs.short.index(progname)
-    newart = zeros(int(len(D.S.tvec)*D.opt.dt))
-    for j in range(len(D.data.costcov.cost[prognumber])):
-        if not isnan(D.data.costcov.cost[prognumber][j]/D.data.costcov.cov[prognumber][j]): newart[j] = D.data.costcov.cost[prognumber][j]/D.data.costcov.cov[prognumber][j]
-    oldart = sanitize([D.data.costcov.cost[prognumber][j]/D.data.costcov.cov[prognumber][j] for j in range(len(D.data.costcov.cov[prognumber]))])
-    firstartindex = where(newart==oldart[0])[0][0]
-    lastartindex = where(newart==oldart[-1])[0][0]
-    for i in range(firstartindex):
-        newart[firstartindex-i-1] = newart[firstartindex-i]/(1+artgrowthrate)
-    for i in range(len(newart)-lastartindex-1):
-        newart[lastartindex+i+1] = newart[lastartindex+i]*(1+artgrowthrate)
-    newx = linspace(0,1,noptpts)
-    origx = linspace(0,1,len(newart))
-    artunitcost = smoothinterp(newx, origx, newart, smoothness=5)
+    artunitcost = [D.data.costcov.cost[prognumber][j]/D.data.costcov.cov[prognumber][j] for j in range(len(D.data.costcov.cost[prognumber]))]
+    artunitcost = expanddata(artunitcost, len(D.S.tvec)*D.opt.dt, artgrowthrate)
 
     # Make an even longer series for calculating the NPV
     longart = artunitcost
@@ -72,36 +68,10 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False, artgrowthrate=.0
     # Interpolate costs
     for healthno, healthstate in enumerate(D.G.healthstates):
 
-        # Remove NaNs from data
-        socialcosts = sanitize(D.data.econ.social.past[healthno])
-        othercosts = sanitize(D.data.econ.health.past[healthno])
-        
-        # Extrapolate
-        newsocial, newother = zeros(int(len(D.S.tvec)*D.opt.dt)), zeros(int(len(D.S.tvec)*D.opt.dt))
-        for i in range(len(D.data.econ.social.past[healthno])):
-            if not isnan(D.data.econ.social.past[healthno][i]): newsocial[i] = D.data.econ.social.past[healthno][i]
-            if not isnan(D.data.econ.health.past[healthno][i]): newother[i] = D.data.econ.health.past[healthno][i]
-        lastsocialindex = where(newsocial==socialcosts[-1])[0][0]
-        lastotherindex = where(newother==othercosts[-1])[0][0]
-        firstsocialindex = where(newsocial==socialcosts[0])[0][0]
-        firstotherindex = where(newother==othercosts[0])[0][0]
-
-        for i in range(len(newsocial)-lastsocialindex-1):
-            newsocial[lastsocialindex+i+1] = newsocial[lastsocialindex+i]*(1+D.data.econ.social.future[0][0])
-        for i in range(len(newother)-lastotherindex-1):
-            newother[lastotherindex+i+1] = newother[lastotherindex+i]*(1+D.data.econ.health.future[0][0])
-
-        for i in range(firstsocialindex):
-            newsocial[firstsocialindex-i-1] = newsocial[firstsocialindex-i]/(1+D.data.econ.social.future[0][0])
-        for i in range(firstotherindex):
-            newother[firstotherindex-i-1] = newother[firstotherindex-i]/(1+D.data.econ.health.future[0][0])
-
-        # Interpolating
-        origx = linspace(0,1,len(newsocial))
-        socialcosts = smoothinterp(newx, origx, newsocial, smoothness=5)
-        origx = linspace(0,1,len(newother))
-        othercosts = smoothinterp(newx, origx, newother, smoothness=5)
-            
+        # Expand
+        socialcosts = expanddata(D.data.econ.social.past[healthno], len(D.S.tvec)*D.opt.dt, D.data.econ.social.future[0][0])
+        othercosts = expanddata(D.data.econ.health.past[healthno], len(D.S.tvec)*D.opt.dt, D.data.econ.health.future[0][0])
+                    
         costs = [(socialcosts[j] + othercosts[j]) for j in range(noptpts)]
 
         # Make an even longer series for calculating the NPV
@@ -152,12 +122,8 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False, artgrowthrate=.0
                         if not plotsubtype=='future': plotdata[plottype][plotsubtype][yscalefactor]['ylinedata'] = [(hivcosts[plotsubtype][j] + artcosts[plotsubtype][j]) for j in range(noptpts)]
                         plotdata[plottype][plotsubtype][yscalefactor]['ylabel'] = 'USD'
                     else:
-                        yscale = sanitize(D.data.econ[yscalefactor].past)
-                        if isinstance(yscale,int): continue #raise Exception('No data have been provided for this varaible, so we cannot display the costs as a proportion of this')
-                        for i in range(int(D.S.tvec[-1]-D.G.dataend)):
-                            yscale = append(yscale,[yscale[-1]*(1+D.data.econ[yscalefactor].future[0][0])])
-                        origx = linspace(0,1,len(yscale))
-                        yscale = smoothinterp(newx, origx, yscale, smoothness=5)                            
+                        if isinstance(sanitize(D.data.econ[yscalefactor].past[0]),int): continue #raise Exception('No data have been provided for this varaible, so we cannot display the costs as a proportion of this')
+                        yscale = expanddata(D.data.econ[yscalefactor].past[0], len(D.S.tvec)*D.opt.dt, D.data.econ[yscalefactor].future[0][0])
                         if not plotsubtype=='future': plotdata[plottype][plotsubtype][yscalefactor]['ylinedata'] = [(hivcosts[plotsubtype][j] + artcosts[plotsubtype][j])/yscale[j] for j in range(noptpts)] 
                         plotdata[plottype][plotsubtype][yscalefactor]['ylabel'] = 'Proportion of ' + yscalefactor
             else:
@@ -197,6 +163,15 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False, artgrowthrate=.0
         plotdata['commit'][yscalefactor]['title'] = 'Annual spending commitments from new HIV infections'
         if isinstance(yscale,int): continue
         if yscalefactor=='total':                    
+
+#    for prog in range(nprogs):
+#        if len(cost[prog])==1: # If it's an assumption, assume it's already in current prices
+#            realcost[prog] = cost[prog]
+#        else:
+#            realcost[prog] = [cost[prog][j]*(cpi[cpibaseyearindex]/cpi[j]) if ~isnan(cost[prog][j]) else float('nan') for j in range(len(cost[prog]))]
+#    
+#    data.costcov.realcost = realcost
+
             plotdata['commit'][yscalefactor]['ylinedata'] = commitments
             plotdata['commit'][yscalefactor]['ylabel'] = 'USD'
         else:
@@ -204,6 +179,24 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False, artgrowthrate=.0
             plotdata['commit'][yscalefactor]['ylabel'] = 'Proportion of ' + yscalefactor
 
     return plotdata
+    
+def expanddata(data, length, growthrate):
+    newdata = zeros(int(length))
+    olddata = sanitize(data)
+    for i in range(len(data)):
+        if not isnan(data[i]): newdata[i] = data[i]
+    firstindex = where(newdata==olddata[0])[0][0]
+    lastindex = where(newdata==olddata[-1])[0][0]
+    for i in range(firstindex):
+        newdata[firstindex-(i+1)] = newdata[firstindex-i]/(1+growthrate)
+    for i in range(len(newdata)-lastindex-1):
+        newdata[lastindex+i+1] = newdata[lastindex+i]*(1+growthrate)
+    newx = linspace(0,1,int(length/D.opt.dt))
+    origx = linspace(0,1,len(newdata))
+    newdata = smoothinterp(newx, origx, newdata, smoothness=5)
+    
+    return newdata
+
 
 # Test code -- #TODO don't commit with this here. 
 #plotdata = financialanalysis(D)
@@ -211,4 +204,7 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False, artgrowthrate=.0
 #figure()
 #hold(True)
 #plot(plotdata['commit']['total']['xlinedata'],plotdata['commit']['total']['ylinedata'])
+#figure()
+#hold(True)
+#plot(plotdata['commit']['total']['xlinedata'],D.S.inci.sum(axis=0))
 
