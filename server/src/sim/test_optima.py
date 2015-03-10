@@ -12,7 +12,7 @@ print('WELCOME TO OPTIMA')
 
 ## Set parameters
 projectname = 'example'
-verbose = 4
+verbose = 2
 show_wait = False
 nsims = 5
 timelimit = 10

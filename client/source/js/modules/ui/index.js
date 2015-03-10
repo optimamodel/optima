@@ -64,7 +64,13 @@ define([
                       );
                   }
                 }
-              }
+              },
+              {
+                title: 'Upload new project',
+                state: {
+                  name: 'project.upload'
+                }
+              },
             ]
           },
           {
