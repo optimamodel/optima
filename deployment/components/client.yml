@@ -1,16 +1,4 @@
 ---
-  - include: "{{prudentia_dir}}/tasks/ruby.yml"
-    tags: client
-
-  # we use bash -l because we need to get ruby and gems in PATH
-  - name: Client | Install bundler
-    shell: /bin/bash -lc 'gem install bundler'
-    tags: client
-
-  - name: Client | Install ruby modules
-    shell: chdir={{install_dir_client}} /bin/bash -lc 'bundle install'
-    tags: client
-
   - include: "{{prudentia_dir}}/tasks/nodejs.yml"
     tags: client
 
