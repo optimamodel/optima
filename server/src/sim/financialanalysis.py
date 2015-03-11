@@ -167,6 +167,7 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False, artgrowthrate=.0
             plotdata['commit'][yscalefactor]['ylabel'] = 'USD'
         else:
             if isinstance(sanitize(D.data.econ[yscalefactor].past[0]),int): continue
+            yscale = expanddata(data=D.data.econ[yscalefactor].past[0], length=len(D.S.tvec)*D.opt.dt, growthrate=D.data.econ[yscalefactor].future[0][0], dt=D.opt.dt)
             plotdata['commit'][yscalefactor]['ylinedata'] = [commitments[j]/yscale[j] for j in range(noptpts)]
             plotdata['commit'][yscalefactor]['ylabel'] = 'Proportion of ' + yscalefactor
 
