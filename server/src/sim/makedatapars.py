@@ -97,7 +97,11 @@ def makedatapars(D, verbose=2):
         totalcost = D.data.costcov.cost[prog]
         totalcost = array(totalcost)
         totalcost = totalcost[~isnan(totalcost)]
-        totalcost = totalcost[-1]
+        try:
+            totalcost = totalcost[-1]
+        except:
+            print('WARNING, no cost data entered for %s' % D.data.meta.progs.short[prog])
+            totalcost = 0 # No data entered for this program
         D.data.origalloc[prog] = totalcost
     
     

@@ -299,9 +299,9 @@ def model(G, M, F, opt, initstate=None, verbose=2):
                         numcirc[p1] -= circsmoving
                         numcirc[p2] += circsmoving
                     elif male[p1] and not male[p2] and transrate > 0: # Sanity check for males moving into female populations
-                        raise Exception('Males are transitioning into a female population!')
+                        raise Exception('Males are transitioning into a female population! (%s->%s)' % (G.meta.pops.short[p1], G.meta.pops.short[p2]))
                     elif male[p2] and not male[p1] and transrate > 0: # Sanity check for females moving into male populations   
-                        raise Exception('Females are transitioning into a male population!')
+                        raise Exception('Females are transitioning into a male population! (%s->%s)' % (G.meta.pops.short[p1], G.meta.pops.short[p2]))
                         
                     # Now actually do it for the people array
                     peoplemoving = people[:, p1, t] * absolute(transrate) * dt
@@ -329,7 +329,7 @@ def model(G, M, F, opt, initstate=None, verbose=2):
                     circsmoving1 = 0 # Initialise moving circumcised men
                     circsmoving2 = 0 # Initialise moving circumcised men
                     if male[p1]: circsmoving1 = numcirc[p1] * transrate * dt # How many should leave pop 1
-                    if male[p2]: circsmoving2 = numcirc[p2] * transrate * dt * (numcirc[p1]/numcirc[p2]) # How many should leave pop 2
+                    if male[p2] and numcirc[p2]>0: circsmoving2 = numcirc[p2] * transrate * dt * (numcirc[p1]/numcirc[p2]) # How many should leave pop 2
                     numcirc[p1] += -circsmoving1 + circsmoving2 # Move these circumcised men into the other population
                     numcirc[p2] += circsmoving1 - circsmoving2  # Move these circumcised men into the other population
                     

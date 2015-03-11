@@ -58,12 +58,11 @@ def ballsd(function, x, options = None, stepsize = 0.1, sinc = 2, sdec = 2, pinc
         x, fval, exitflag, output = ballsd(norm, [1, 2, 3])
     
     
-    Version: 2015jan16 by Cliff Kerr (cliff@thekerrlab.com)
+    Version: 2015mar01 by Cliff Kerr (cliff@thekerrlab.com)
     """
     
-    from numpy import array, shape, reshape, ones, zeros, size, mean, cumsum, mod, hstack, floor
+    from numpy import array, shape, reshape, ones, zeros, size, mean, cumsum, mod, hstack, floor, flatnonzero
     from numpy.random import random # Was pylab.rand
-    from utils import findinds # Remove dependency on pylab.find
     from copy import deepcopy # For arrays, even y = x[:] doesn't copy properly
     from time import time, sleep
     
@@ -117,7 +116,7 @@ def ballsd(function, x, options = None, stepsize = 0.1, sinc = 2, sdec = 2, pinc
         count2 = 0
         while not inrange:
             count2=count2+1
-            choice = findinds(cumprobs > random())[0] # Choose a parameter and upper/lower at random
+            choice = flatnonzero(cumprobs > random())[0] # Choose a parameter and upper/lower at random
             par = mod(choice,nparams) # Which parameter was chosen
             pm = floor((choice)/nparams) # Plus or minus
             newval = x[par] + ((-1)**pm)*s1[choice] # Calculate the new parameter set
