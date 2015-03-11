@@ -4,10 +4,12 @@ define(['./module', 'angular', 'jquery', 'underscore'], function (module, angula
   module.controller('ModelCalibrationController', function ($scope, $http, $interval,
     Model, parameters, meta, info, CONFIG, graphTypeFactory, cfpLoadingBar) {
 
-    $scope.projectInfo = info;
-    $scope.canDoFitting = $scope.projectInfo.can_calibrate;
-    $scope.needData = !$scope.projectInfo.has_data;
-    $scope.$on('onAfterRender', function (e){ $scope.onAfterRender() });
+    $scope.initialize = function () {
+      $scope.projectInfo = info;
+      $scope.canDoFitting = $scope.projectInfo.can_calibrate;
+      $scope.needData = !$scope.projectInfo.has_data;
+      $scope.$on('onAfterGraphRender', function (e){ $scope.onAfterGraphRender() });
+    }
  
     var prepareF = function (f) {
       var F = angular.copy(f);
@@ -312,8 +314,6 @@ define(['./module', 'angular', 'jquery', 'underscore'], function (module, angula
           $scope.parameters.m = data.M;
           $scope.parameters.cache.m = angular.copy(data.M);
         }
-
-        $scope.updateChartHeights();
       }
     };
 
@@ -450,19 +450,20 @@ define(['./module', 'angular', 'jquery', 'underscore'], function (module, angula
 
     // Makes all charts to be as tall as the tallest one.
     $scope.updateChartHeights = function () {
-      // var highest = $scope.getMaxChartHeight();
-      // $('.chart-container').each(function(i, element){ 
-      //   console.log('highest: ', highest);
-      //   $(element).height(highest)});
+      var highest = $scope.getMaxChartHeight();
+      $('.chart-container').each(function(i, element){ 
+        console.info('highest: ', highest);
+        $(element).height(highest)});
     };    
 
     // This controller has its view just rendered, react accordingly.
-    $scope.onAfterRender = function () {
-      $scope.updateChartHeights();
-      angular.kk = $scope;
+    $scope.onAfterGraphRender = function () {
+      // $scope.updateChartHeights();
+      // angular.kk = $scope;
       console.warn($scope.getMaxChartHeight());
     };
 
+    $scope.initialize();
 
   });
 });
