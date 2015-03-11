@@ -252,13 +252,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         }
       });
 
-      // commitments
-      var commitChartData = response.commit[$scope.types.activeAnnualCost];
-      var commitIsActive = $scope.types.costs[2].checked;
-      if (commitChartData && commitIsActive) {
-        charts.push(generateFinancialChart(commitChartData));
-      }
-
       var stackedAnnualData = response.costann.stacked[$scope.types.activeAnnualCost];
       var stackedAnnualCostIsActive = $scope.types.costs[0].stacked;
       if (stackedAnnualData && stackedAnnualCostIsActive) {
@@ -289,6 +282,13 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         stackedCumulativeChart.options.yAxis.axisLabel = stackedCumulativeData.ylabel;
         stackedCumulativeChart.type = 'stackedAreaChart';
         charts.push(stackedCumulativeChart);
+      }
+
+      // commitments
+      var commitChartData = response.commit[$scope.types.activeAnnualCost];
+      var commitIsActive = $scope.types.costs[2].checked;
+      if (commitChartData && commitIsActive) {
+        charts.push(generateFinancialChart(commitChartData));
       }
 
       return charts;
