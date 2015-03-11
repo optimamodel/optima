@@ -4,13 +4,11 @@ define(['./module', 'angular', 'jquery', 'underscore'], function (module, angula
   module.controller('ModelCalibrationController', function ($scope, $http, $interval,
     Model, parameters, meta, info, CONFIG, graphTypeFactory, cfpLoadingBar) {
 
-    $scope.initialize = function () {
-      $scope.projectInfo = info;
-      $scope.canDoFitting = $scope.projectInfo.can_calibrate;
-      $scope.needData = !$scope.projectInfo.has_data;
-      $scope.$on('onAfterGraphRender', function (e){ $scope.onAfterGraphRender() });
-      $scope.tallestGraphHeight = 0;
-    }
+    $scope.projectInfo = info;
+    $scope.canDoFitting = $scope.projectInfo.can_calibrate;
+    $scope.needData = !$scope.projectInfo.has_data;
+    $scope.$on('onAfterRender', function (e){ $scope.onAfterGraphRender() });
+    $scope.tallestGraphHeight = 0;
  
     var prepareF = function (f) {
       var F = angular.copy(f);
@@ -459,12 +457,12 @@ define(['./module', 'angular', 'jquery', 'underscore'], function (module, angula
 
     // This controller has its view just rendered, react accordingly.
     $scope.onAfterGraphRender = function () {
-      // $scope.updateChartHeights();
-      // angular.kk = $scope;
-      console.warn($scope.getMaxChartHeight());
+      var maybeTaller = $scope.getMaxChartHeight();
+      if($scope.tallestGraphHeight < maybeTaller) 
+        $scope.tallestGraphHeight = maybeTaller;
+      
+      console.warn($scope.tallestGraphHeight);
     };
-
-    $scope.initialize();
 
   });
 });
