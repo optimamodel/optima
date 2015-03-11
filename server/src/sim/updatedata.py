@@ -67,7 +67,9 @@ def getrealcosts(data):
     # Get CPI, expand to all years
     cpi = data.econ.cpi.past[0] 
     cpi = expanddata(cpi, len(data.epiyears), data.econ.cpi.future[0][0], interp=False, dt=None)
-    cpibaseyearindex = data.econyears.index(date.today().year)
+
+    # Set the CPI base year to the current year or the last year for which data were provided.
+    cpibaseyearindex = data.epiyears.index(min(data.epiyears[-1],date.today().year))
 
     for prog in range(nprogs):
         if len(cost[prog])==1: # If it's an assumption, assume it's already in current prices
