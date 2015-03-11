@@ -9,6 +9,8 @@ define(['./module', 'angular', 'jquery', 'underscore'], function (module, angula
     $scope.needData = !$scope.projectInfo.has_data;
     $scope.$on('onAfterRender', function (e){ $scope.onAfterGraphRender() });
     $scope.tallestGraphHeight = 0;
+    $scope.renderedGraphs = 0; // counts how many Graphs are rendered (see onAfterGraphRender for more on this)
+
     angular.kk = $scope;
 
     var prepareF = function (f) {
@@ -443,26 +445,26 @@ define(['./module', 'angular', 'jquery', 'underscore'], function (module, angula
 
     // Returns the value of the tallest chart.
     $scope.getMaxChartHeight = function () {
-      return _.max(_.map($('.chart-container'), function (element) {
+      return $(_.max($('.chart-container'), function (element) {
           return $(element).height();
-          }), function (eachHeight) { return eachHeight;}) ;
+          })).height();
     };
 
-    // Makes all charts to be as tall as aHeight tells them to be.
+    // Makes all charts to be aHeight pixels tall.
     $scope.updateChartHeightsTo = function (aHeight) {
-      console.warn(aHeight);
-      // $('.chart-container').each(function(i, element){ 
-      //   $(element).height(aHeight)});
+      $('.chart-container').each(function(i, element){ 
+        $(element).height(aHeight)});
     };    
+
+    // If all graphs were rendered, this will set them all with the height value of the tallest of them.
+    $scope.setSameGraphsHeight = function () {    
+      if($scope.renderedGraphs == $('.chart-container').length) $scope.updateChartHeightsTo($scope.getMaxChartHeight());
+    };
 
     // This controller has its view just rendered, react accordingly.
     $scope.onAfterGraphRender = function () {
-      var maybeTaller = $scope.getMaxChartHeight();
-      if($scope.tallestGraphHeight < maybeTaller) {
-        // if it is indeed taller then remember and set
-        $scope.tallestGraphHeight = maybeTaller;
-        $scope.updateChartHeightsTo(maybeTaller);
-      }
+      $scope.renderedGraphs = $scope.renderedGraphs + 1;
+      $scope.setSameGraphsHeight();
     };
   });
 });
