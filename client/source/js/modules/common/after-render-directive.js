@@ -8,10 +8,8 @@ define(['angular'], function (angular) {
 	    terminal : true,
 	    transclude : false,
 	    link : function(scope, element, attrs) {
-	    	// triggers the rendered event 
-	        scope.$emit('rendered');
-
-	        if (attrs) { console.warn(scope.$eval(attrs.afterRender)) }
+	        if (attrs) { scope.$eval(attrs.afterRender) }
+	        scope.$emit('onAfterRender')
 	    }
 	};
 	return def;
