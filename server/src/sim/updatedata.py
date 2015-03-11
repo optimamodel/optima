@@ -64,7 +64,8 @@ def getrealcosts(data):
     nprogs = len(data.costcov.cost)
     realcost = [[]]*nprogs
 
-    cpi = data.econ.cpi.past[0] # get CPI
+    # Get CPI, expand to all years
+    cpi = data.econ.cpi.past[0] 
     cpi = expanddata(cpi, len(data.epiyears), data.econ.cpi.future[0][0], interp=False, dt=None)
     cpibaseyearindex = data.econyears.index(date.today().year)
 
