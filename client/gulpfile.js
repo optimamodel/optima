@@ -15,7 +15,6 @@ var uglify = require('gulp-uglify');
 var webdriver = require('gulp-protractor').webdriver_standalone;
 
 var handleError = function (err) {
-  //console.log(err)
   console.log(err.name, ' in ', err.plugin, ': ', err.message);
   process.exit(1);
 };
