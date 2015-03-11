@@ -9,6 +9,7 @@ define(['./module', 'angular', 'jquery', 'underscore'], function (module, angula
       $scope.canDoFitting = $scope.projectInfo.can_calibrate;
       $scope.needData = !$scope.projectInfo.has_data;
       $scope.$on('onAfterGraphRender', function (e){ $scope.onAfterGraphRender() });
+      $scope.tallestGraphHeight = 0;
     }
  
     var prepareF = function (f) {
