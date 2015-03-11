@@ -13,8 +13,5 @@ fi
 # install npm and bower deps
 npm install
 
-# install ruby dependencies required to compile sass styles
-bundle install
-
 # build -> unit tests
 node_modules/gulp/bin/gulp.js

@@ -6,6 +6,6 @@
 
 @mixin hidpi-inline($image-path) {
   @include image-size($image-path, 2);
-  background-image: inline-asset($image-path);
-  background-size: image-width($image-path) / 2 image-height($image-path) / 2
+  background-image: inline($image-path);
+  background-size: width($image-path, 2) height($image-path, 2)
 }
