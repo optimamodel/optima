@@ -100,8 +100,6 @@ define(['./module', './scale-helpers'], function (module, scaleHelpers) {
         if (scatterDataExists) {
           scatterChartInstance.draw(scatterData);
         }
-
-        scope.$emit('chart-rendered');
       }
     };
   });

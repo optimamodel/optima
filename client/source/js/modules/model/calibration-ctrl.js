@@ -9,7 +9,8 @@ define(['./module', 'angular', 'jquery', 'underscore'], function (module, angula
     $scope.needData = !$scope.projectInfo.has_data;
     $scope.$on('onAfterRender', function (e){ $scope.onAfterGraphRender() });
     $scope.tallestGraphHeight = 0;
- 
+    angular.kk = $scope;
+
     var prepareF = function (f) {
       var F = angular.copy(f);
 
@@ -447,22 +448,21 @@ define(['./module', 'angular', 'jquery', 'underscore'], function (module, angula
           }), function (eachHeight) { return eachHeight;}) ;
     };
 
-    // Makes all charts to be as tall as the tallest one.
-    $scope.updateChartHeights = function () {
-      var highest = $scope.getMaxChartHeight();
-      $('.chart-container').each(function(i, element){ 
-        console.info('highest: ', highest);
-        $(element).height(highest)});
+    // Makes all charts to be as tall as aHeight tells them to be.
+    $scope.updateChartHeightsTo = function (aHeight) {
+      console.warn(aHeight);
+      // $('.chart-container').each(function(i, element){ 
+      //   $(element).height(aHeight)});
     };    
 
     // This controller has its view just rendered, react accordingly.
     $scope.onAfterGraphRender = function () {
       var maybeTaller = $scope.getMaxChartHeight();
-      if($scope.tallestGraphHeight < maybeTaller) 
+      if($scope.tallestGraphHeight < maybeTaller) {
+        // if it is indeed taller then remember and set
         $scope.tallestGraphHeight = maybeTaller;
-      
-      console.warn($scope.tallestGraphHeight);
+        $scope.updateChartHeightsTo(maybeTaller);
+      }
     };
-
   });
 });

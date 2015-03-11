@@ -171,8 +171,6 @@ define(['./module', './scale-helpers', 'angular', 'underscore'], function (modul
         scope.$watchCollection('[data,options]', function() {
           drawGraph(scope.data, angular.copy(scope.options), element);
         });
-
-        scope.$emit('chart-rendered');
       }
     };
   });
