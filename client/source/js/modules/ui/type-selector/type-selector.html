@@ -34,36 +34,52 @@
   <h3>Financial results</h3>
 
   <div ng-repeat="type in types.costs">
-    <b>{{type.name}}</b>
-    <div>
-      <label class="checkbox-inline">
-        <input type="checkbox" ng-model="type.existing">
-        People infected before 2015
-      </label>
+
+    <div ng-if="!type.hasNoIntervals">
+      <b>{{type.name}}</b>
+      <div>
+        <label class="checkbox-inline">
+          <input type="checkbox" ng-model="type.existing">
+          People infected before 2015
+        </label>
+      </div>
+      <div>
+        <label class="checkbox-inline">
+          <input type="checkbox" ng-model="type.future">
+          People infected after 2015
+        </label>
+      </div>
+      <div>
+        <label class="checkbox-inline">
+          <input type="checkbox" ng-model="type.total">
+          Total PLHIV
+        </label>
+      </div>
+      <div ng-if="stackedCheckboxIsVisible === true">
+        <label class="checkbox-inline">
+          <input type="checkbox" ng-model="type.stacked">
+          Stacked
+        </label>
+      </div>
     </div>
-    <div>
-      <label class="checkbox-inline">
-        <input type="checkbox" ng-model="type.future">
-        People infected after 2015
-      </label>
-    </div>
-    <div>
-      <label class="checkbox-inline">
-        <input type="checkbox" ng-model="type.total">
-        Total PLHIV
-      </label>
-    </div>
-    <div ng-if="stackedCheckboxIsVisible === true">
-      <label class="checkbox-inline">
-        <input type="checkbox" ng-model="type.stacked">
-        Stacked
-      </label>
+
+    <div ng-if="type.hasNoIntervals">
+      <b>{{type.name}}</b>
+      <div>
+        <label class="checkbox-inline">
+          <input type="checkbox" ng-model="type.checked">
+          {{type.label}}
+        </label>
+      </div>
     </div>
   </div>
-  <b>Display annual costs as:</b>
+
+  <b>Display annual data as:</b>
   <div ng-repeat="financialType in types.financialAnnualCosts">
-    <input type="radio" name="activeAnnualCost" ng-model="types.activeAnnualCost" value="{{financialType.id}}" ng-disabled="financialType.disabled"/>
-    <label>{{financialType.name}}</label>
+    <label>
+      <input type="radio" name="activeAnnualCost" ng-model="types.activeAnnualCost" value="{{financialType.id}}" ng-disabled="financialType.disabled"/>
+      {{financialType.name}}
+    </label>
   </div>
 
 </div>

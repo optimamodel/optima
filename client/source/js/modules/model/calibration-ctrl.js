@@ -284,6 +284,13 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         charts.push(stackedCumulativeChart);
       }
 
+      // commitments
+      var commitChartData = response.commit[$scope.types.activeAnnualCost];
+      var commitIsActive = $scope.types.costs[2].checked;
+      if (commitChartData && commitIsActive) {
+        charts.push(generateFinancialChart(commitChartData));
+      }
+
       return charts;
     };
 
