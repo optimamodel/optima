@@ -1,1 +1,11 @@
-@import 'mixins/*';
+@import 'mixins/cosmetic';
+@import 'mixins/font-face';
+@import 'mixins/font-height';
+@import 'mixins/hidpi-image';
+@import 'mixins/hidpi-inline';
+@import 'mixins/image-size';
+@import 'mixins/link-color';
+@import 'mixins/position';
+@import 'mixins/reject';
+@import 'mixins/rich-selector';
+@import 'mixins/size';
