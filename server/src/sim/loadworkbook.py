@@ -132,14 +132,14 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=2):
                         data.epiyears.append(float(thiscell)) # Add this year
             
             if name == 'econ': # Need to gather year ranges for economic data
-                data.econyears = [] # Initialize epidemiology data years
+                data.epiyears = [] # Initialize epidemiology data years
                 for col in range(sheetdata.ncols):
                     thiscell = sheetdata.cell_value(1,col) # 1 is the 2nd row which is where the year data should be
-                    if thiscell=='' and len(data.econyears)>0: #  We've gotten to the end
+                    if thiscell=='' and len(data.epiyears)>0: #  We've gotten to the end
                         lastdatacol = col # Store this column number
                         break # Quit
                     elif thiscell != '': # Nope, more years, keep going
-                        data.econyears.append(float(thiscell)) # Add this year
+                        data.epiyears.append(float(thiscell)) # Add this year
             
             if lastdatacol:  
                 assumptioncol = lastdatacol + 1 # The "OR" space is in between

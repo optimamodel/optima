@@ -74,7 +74,7 @@ def makecc(D=None, progname=default_progname, ccparams=default_ccparams, ccplot=
     if ccplot and ccplot[1]:
         cpi = D.data.econ.cpi.past[0] # get CPI
         cpibaseyear = ccplot[1]
-        cpibaseyearindex = D.data.econyears.index(cpibaseyear)
+        cpibaseyearindex = D.data.epiyears.index(cpibaseyear)
         if len(totalcost)==1: # If it's an assumption, assume it's already in current prices
             totalcost = [totalcost[0]*cpi[cpibaseyearindex]]
         else:
@@ -329,7 +329,7 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
         if ccplot and ccplot[1]:
             cpi = D.data.econ.cpi.past[0] # get CPI
             cpibaseyear = ccplot[1]
-            cpibaseyearindex = D.data.econyears.index(cpibaseyear)
+            cpibaseyearindex = D.data.epiyears.index(cpibaseyear)
             if len(totalcost)==1: # If it's an assumption, assume it's already in current prices
                 totalcost = totalcost
             else:
