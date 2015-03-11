@@ -7,7 +7,6 @@ Version: 2015feb03
 """
 from numpy import linspace, append, npv, zeros, isnan, where
 from setoptions import setoptions
-from utils import sanitize, smoothinterp
 from printv import printv
 from datetime import date
 
@@ -16,6 +15,8 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False, artgrowthrate=.0
     '''
     Plot financial commitment graphs
     '''
+    from utils import sanitize
+
     printv('Running financial analysis...', 2, verbose)
     
     # Checking inputs... 
@@ -171,20 +172,26 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False, artgrowthrate=.0
 
     return plotdata
     
-def expanddata(data, length, growthrate, dt):
-    newdata = zeros(int(length))
-    olddata = sanitize(data)
+def expanddata(data, length, growthrate, interp=True, dt):
+    '''
+    Expand missing data set into full data 
+    '''
+    from utils import sanitize, smoothinterp
+    
+    newdata = zeros(int(length)) # make an array of zeros of the desired length
+    olddata = sanitize(data) # remove nans from original data set
     for i in range(len(data)):
-        if not isnan(data[i]): newdata[i] = data[i]
-    firstindex = where(newdata==olddata[0])[0][0]
-    lastindex = where(newdata==olddata[-1])[0][0]
+        if not isnan(data[i]): newdata[i] = data[i] # replace the zeros with numbers where available
+    firstindex = where(newdata==olddata[0])[0][0] # find the first year for which data are available
+    lastindex = where(newdata==olddata[-1])[0][0] # find the last year for which data are available
     for i in range(firstindex):
-        newdata[firstindex-(i+1)] = newdata[firstindex-i]/(1+growthrate)
+        newdata[firstindex-(i+1)] = newdata[firstindex-i]/(1+growthrate) # back-project using growth rates
     for i in range(len(newdata)-lastindex-1):
-        newdata[lastindex+i+1] = newdata[lastindex+i]*(1+growthrate)
-    newx = linspace(0,1,int(length/dt))
-    origx = linspace(0,1,len(newdata))
-    newdata = smoothinterp(newx, origx, newdata, smoothness=5)
+        newdata[lastindex+i+1] = newdata[lastindex+i]*(1+growthrate) # forward-project using growth rates
+    if interp: # if required, interpolate between years
+        newx = linspace(0,1,int(length/dt))
+        origx = linspace(0,1,len(newdata))
+        newdata = smoothinterp(newx, origx, newdata, smoothness=5)
     
     return newdata
 
