@@ -37,7 +37,7 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False, artgrowthrate=.0
     # Inflation adjusting
     cpi = D.data.econ.cpi.past[0] # get CPI
     cpi = expanddata(cpi, len(D.S.tvec)*D.opt.dt, D.data.econ.cpi.future[0][0], interp=True, dt=D.opt.dt)
-    cpibaseyearindex = D.data.econyears.index(date.today().year)
+    cpibaseyearindex = D.data.epiyears.index(date.today().year)
 
     # Set up variables for time indexing
     simtvec = S.tvec
