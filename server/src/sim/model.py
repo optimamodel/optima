@@ -230,8 +230,11 @@ def model(G, M, F, opt, initstate=None, verbose=2):
             if osteff<0: raise Exception('Bug in osteff = 1 - ost[t]*effost: osteff=%f ost[t]=%f effost=%f' % (osteff, ost[t], effost))
         else: # It's a number, convert to a proportion using the PWID flag
             numost = ost[t] # Total number of people on OST
-            numpwid = sum(M.popsize[nonzero(G.meta.pops.injects),t]) # Total number of PWID
-            osteff = 1 - min(1,numost/numpwid)*effost # Proportion of PWID on OST, making sure there aren't more people on OST than PWID
+            numpwid = M.popsize[nonzero(G.meta.pops.injects),t].sum() # Total number of PWID
+            try:
+                osteff = 1 - min(1,numost/numpwid)*effost # Proportion of PWID on OST, making sure there aren't more people on OST than PWID
+            except:
+                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
             if osteff<0: raise Exception('Bug in osteff = 1 - min(1,numost/numpwid)*effost: osteff=%f numost=%f numpwid=%f effost=%f' % (osteff, numost, numpwid, effost))
        
        # Iterate through partnership pairs
