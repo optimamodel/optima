@@ -17,10 +17,10 @@ from printv import printv
 from parameters import input_parameter_name
 
 ## Set defaults for testing makeccocs
-default_progname = 'MSM programs'
-default_ccparams = [0.9, 0.5, 0.7, 400000.0, None, None] #
+default_progname = 'ART'
+default_ccparams = []# [0.9, 0.1, 0.3, 4000000.0, None, None] #
 default_ccplot = []#[1000000, None, 0]
-default_coparams = [0.3, 0.5, 0.7, 0.9] 
+default_coparams = []#[0.3, 0.5, 0.7, 0.9] 
 default_effect = [['sex', 'condomcas'], [u'MSM']] # D.programs[default_progname]['effects'][0] 
 default_artelig = range(6,31)
 coverage_params = ['numost','numpmtct','numfirstline','numsecondline']
@@ -74,7 +74,7 @@ def makecc(D=None, progname=default_progname, ccparams=default_ccparams, ccplot=
     if ccplot and ccplot[1]:
         cpi = D.data.econ.cpi.past[0] # get CPI
         cpibaseyear = ccplot[1]
-        cpibaseyearindex = D.data.econyears.index(cpibaseyear)
+        cpibaseyearindex = D.data.epiyears.index(cpibaseyear)
         if len(totalcost)==1: # If it's an assumption, assume it's already in current prices
             totalcost = [totalcost[0]*cpi[cpibaseyearindex]]
         else:
@@ -330,7 +330,7 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
         if ccplot and ccplot[1]:
             cpi = D.data.econ.cpi.past[0] # get CPI
             cpibaseyear = ccplot[1]
-            cpibaseyearindex = D.data.econyears.index(cpibaseyear)
+            cpibaseyearindex = D.data.epiyears.index(cpibaseyear)
             if len(totalcost)==1: # If it's an assumption, assume it's already in current prices
                 totalcost = totalcost
             else:

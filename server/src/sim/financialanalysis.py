@@ -7,7 +7,6 @@ Version: 2015feb03
 """
 from numpy import linspace, append, npv, zeros, isnan, where
 from setoptions import setoptions
-from utils import sanitize, smoothinterp
 from printv import printv
 from datetime import date
 
@@ -16,6 +15,8 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False, artgrowthrate=.0
     '''
     Plot financial commitment graphs
     '''
+    from utils import sanitize
+
     printv('Running financial analysis...', 2, verbose)
     
     # Checking inputs... 
@@ -35,8 +36,8 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False, artgrowthrate=.0
 
     # Inflation adjusting
     cpi = D.data.econ.cpi.past[0] # get CPI
-    cpi = expanddata(cpi, len(D.S.tvec)*D.opt.dt, D.data.econ.cpi.future[0][0], D.opt.dt)
-    cpibaseyearindex = D.data.econyears.index(date.today().year)
+    cpi = expanddata(cpi, len(D.S.tvec)*D.opt.dt, D.data.econ.cpi.future[0][0], interp=True, dt=D.opt.dt)
+    cpibaseyearindex = D.data.epiyears.index(min(D.data.epiyears[-1],date.today().year))
 
     # Set up variables for time indexing
     simtvec = S.tvec
@@ -46,7 +47,7 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False, artgrowthrate=.0
     progname = 'ART'
     prognumber = D.data.meta.progs.short.index(progname)
     artunitcost = [D.data.costcov.cost[prognumber][j]/D.data.costcov.cov[prognumber][j] for j in range(len(D.data.costcov.cost[prognumber]))]
-    artunitcost = expanddata(artunitcost, len(D.S.tvec)*D.opt.dt, artgrowthrate, D.opt.dt)
+    artunitcost = expanddata(artunitcost, len(D.S.tvec)*D.opt.dt, artgrowthrate, interp=True, dt=D.opt.dt)
 
     # Make an even longer series for calculating the NPV
     longart = artunitcost
@@ -69,8 +70,8 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False, artgrowthrate=.0
     for healthno, healthstate in enumerate(D.G.healthstates):
 
         # Expand
-        socialcosts = expanddata(D.data.econ.social.past[healthno], len(D.S.tvec)*D.opt.dt, D.data.econ.social.future[0][0], D.opt.dt)
-        othercosts = expanddata(D.data.econ.health.past[healthno], len(D.S.tvec)*D.opt.dt, D.data.econ.health.future[0][0], D.opt.dt)
+        socialcosts = expanddata(D.data.econ.social.past[healthno], len(D.S.tvec)*D.opt.dt, D.data.econ.social.future[0][0], interp=True, dt=D.opt.dt)
+        othercosts = expanddata(D.data.econ.health.past[healthno], len(D.S.tvec)*D.opt.dt, D.data.econ.health.future[0][0], interp=True, dt=D.opt.dt)
                     
         costs = [(socialcosts[j] + othercosts[j]) for j in range(noptpts)]
 
@@ -123,7 +124,7 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False, artgrowthrate=.0
                         plotdata[plottype][plotsubtype][yscalefactor]['ylabel'] = 'USD'
                     else:
                         if isinstance(sanitize(D.data.econ[yscalefactor].past[0]),int): continue #raise Exception('No data have been provided for this varaible, so we cannot display the costs as a proportion of this')
-                        yscale = expanddata(data=D.data.econ[yscalefactor].past[0], length=len(D.S.tvec)*D.opt.dt, growthrate=D.data.econ[yscalefactor].future[0][0], dt=D.opt.dt)
+                        yscale = expanddata(data=D.data.econ[yscalefactor].past[0], length=len(D.S.tvec)*D.opt.dt, growthrate=D.data.econ[yscalefactor].future[0][0], interp=True, dt=D.opt.dt)
                         if not plotsubtype=='future': plotdata[plottype][plotsubtype][yscalefactor]['ylinedata'] = [(hivcosts[plotsubtype][j] + artcosts[plotsubtype][j])/yscale[j] for j in range(noptpts)] 
                         plotdata[plottype][plotsubtype][yscalefactor]['ylabel'] = 'Proportion of ' + yscalefactor
             else:
@@ -166,25 +167,32 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False, artgrowthrate=.0
             plotdata['commit'][yscalefactor]['ylabel'] = 'USD'
         else:
             if isinstance(sanitize(D.data.econ[yscalefactor].past[0]),int): continue
+            yscale = expanddata(data=D.data.econ[yscalefactor].past[0], length=len(D.S.tvec)*D.opt.dt, growthrate=D.data.econ[yscalefactor].future[0][0], dt=D.opt.dt)
             plotdata['commit'][yscalefactor]['ylinedata'] = [commitments[j]/yscale[j] for j in range(noptpts)]
             plotdata['commit'][yscalefactor]['ylabel'] = 'Proportion of ' + yscalefactor
 
     return plotdata
     
-def expanddata(data, length, growthrate, dt):
-    newdata = zeros(int(length))
-    olddata = sanitize(data)
+def expanddata(data, length, growthrate, interp=True, dt=None):
+    '''
+    Expand missing data set into full data 
+    '''
+    from utils import sanitize, smoothinterp
+    
+    newdata = zeros(int(length)) # make an array of zeros of the desired length
+    olddata = sanitize(data) # remove nans from original data set
     for i in range(len(data)):
-        if not isnan(data[i]): newdata[i] = data[i]
-    firstindex = where(newdata==olddata[0])[0][0]
-    lastindex = where(newdata==olddata[-1])[0][0]
+        if not isnan(data[i]): newdata[i] = data[i] # replace the zeros with numbers where available
+    firstindex = where(newdata==olddata[0])[0][0] # find the first year for which data are available
+    lastindex = where(newdata==olddata[-1])[0][0] # find the last year for which data are available
     for i in range(firstindex):
-        newdata[firstindex-(i+1)] = newdata[firstindex-i]/(1+growthrate)
+        newdata[firstindex-(i+1)] = newdata[firstindex-i]/(1+growthrate) # back-project using growth rates
     for i in range(len(newdata)-lastindex-1):
-        newdata[lastindex+i+1] = newdata[lastindex+i]*(1+growthrate)
-    newx = linspace(0,1,int(length/dt))
-    origx = linspace(0,1,len(newdata))
-    newdata = smoothinterp(newx, origx, newdata, smoothness=5)
+        newdata[lastindex+i+1] = newdata[lastindex+i]*(1+growthrate) # forward-project using growth rates
+    if interp: # if required, interpolate between years
+        newx = linspace(0,1,int(length/dt))
+        origx = linspace(0,1,len(newdata))
+        newdata = smoothinterp(newx, origx, newdata, smoothness=5)
     
     return newdata
 

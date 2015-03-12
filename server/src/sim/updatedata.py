@@ -59,12 +59,19 @@ def getrealcosts(data):
 
     from math import isnan
     from datetime import date
+    from financialanalysis import expanddata
 
     cost = data.costcov.cost
     nprogs = len(data.costcov.cost)
     realcost = [[]]*nprogs
-    cpi = data.econ.cpi.past[0] # get CPI
-    cpibaseyearindex = data.econyears.index(date.today().year)
+
+    # Get CPI, expand to all years
+    cpi = data.econ.cpi.past[0] 
+    cpi = expanddata(cpi, len(data.epiyears), data.econ.cpi.future[0][0], interp=False, dt=None)
+
+    # Set the CPI base year to the current year or the last year for which data were provided.
+    cpibaseyearindex = data.epiyears.index(min(data.epiyears[-1],date.today().year))
+
     for prog in range(nprogs):
         if len(cost[prog])==1: # If it's an assumption, assume it's already in current prices
             realcost[prog] = cost[prog]
