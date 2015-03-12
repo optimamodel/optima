@@ -91,19 +91,6 @@ def makedatapars(D, verbose=2):
                 printv('Converting data parameter %s...' % parname, 4, verbose)
                 D.P.const[parclass][parname] = D.data.const[parclass][parname][0] # Taking best value only, hence the 0
     
-    ## Program cost data
-    D.data.origalloc = zeros(D.G.nprogs)
-    for prog in range(D.G.nprogs):
-        totalcost = D.data.costcov.cost[prog]
-        totalcost = array(totalcost)
-        totalcost = totalcost[~isnan(totalcost)]
-        try:
-            totalcost = totalcost[-1]
-        except:
-            print('WARNING, no cost data entered for %s' % D.data.meta.progs.short[prog])
-            totalcost = 0 # No data entered for this program
-        D.data.origalloc[prog] = totalcost
-    
     
     ## Change sizes of circumcision and births
     def popexpand(origarray, popbool):

@@ -4,7 +4,7 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=2):
     This data structure is used in the next step to update the corresponding model.
     The workbook is assumed to be in the format specified in example.xlsx.
     
-    Version: 2015jan26
+    Version: 2015mar12
     """
     
     ###########################################################################
@@ -12,7 +12,7 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=2):
     ###########################################################################
     
     from printv import printv
-    from numpy import nan # For reading in empty values
+    from numpy import nan, zeros, isnan, array # For reading in empty values
     from xlrd import open_workbook # For opening Excel workbooks
     from bunch import Bunch as struct # Replicate Matlab-like structure behavior
     from time import strftime # For determining when a spreadsheet was last uploaded
@@ -287,6 +287,23 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=2):
                             thesedata = map(lambda val: nan if val=='' else val, thesedata) # Replace blanks with nan
                             subpar = subparlist[parcount][1].pop(0) # Pop first entry of subparameter list, which is namelist[parcount][1]
                             data[name][thispar][subpar] = thesedata # Store data
+    
+    
+    ## Program cost data
+    nprogs = len(data.costcov.cost)
+    data.origalloc = zeros(nprogs)
+    for prog in range(nprogs):
+        totalcost = data.costcov.cost[prog]
+        totalcost = array(totalcost)
+        totalcost = totalcost[~isnan(totalcost)]
+        try:
+            totalcost = totalcost[-1]
+        except:
+            print('WARNING, no cost data entered for %s' % data.meta.progs.short[prog])
+            totalcost = 0 # No data entered for this program
+        data.origalloc[prog] = totalcost    
+    
+    
     
     printv('...done loading data.', 2, verbose)
     return data, programs
