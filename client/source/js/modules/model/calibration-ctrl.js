@@ -45,10 +45,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       $scope.enableManualCalibration = false;
 
-      $scope.simulationOptions = {'timelimit':60};
+      $scope.simulationOptions = {'timelimit': 60};
       $scope.charts = [];
       $scope.hasStackedCharts = false;
-      $scope.hasCharts = false;
       $scope.parameters = calibration.toScopeParameters(parameters, meta, !$scope.projectInfo.has_data);
       if ($scope.projectInfo.has_data){
         $scope.simulate();
@@ -262,7 +261,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         graphTypeFactory.enableAnnualCostOptions($scope.types, data.graph);
 
         $scope.charts = prepareCharts(data.graph);
-        $scope.hasCharts = ($scope.charts.length>0);
         $scope.parameters.cache.response = data;
         $scope.canDoFitting = true;
         if (data.F){
@@ -363,7 +361,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.previewManualCalibration = function () {
       Model.saveCalibrateManual({
         F: calibration.prepareF($scope.parameters.f),
-        M: calibration.prepareM($scope.parameters.m) }, updateCharts);
+        M: calibration.prepareM($scope.parameters.m)
+      }, updateCharts);
     };
 
     $scope.saveManualCalibration = function () {
