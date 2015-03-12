@@ -1,4 +1,5 @@
 define([
-  './cost-coverage-ctrl',
-  './calibration-ctrl'
+  './calibration-ctrl',
+  './calibration-service',
+  './cost-coverage-ctrl'
 ], function () {});
