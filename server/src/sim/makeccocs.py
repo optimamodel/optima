@@ -322,7 +322,6 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
             popnumber = D.data.meta.pops.short.index(popname[0])
         else:
             popnumber = 0
-            printv('WARNING, population %s not found in %s' % (popname[0], D.data.meta.pops.short), 1, verbose)
         printv("coparams in makecco: %s" % coparams, 5, verbose)
 
         # Extract cost data and adjust to base year specified by user (if given)
