@@ -7,9 +7,9 @@ define(['angular', '../../version', 'ui.router'], function (angular, version) {
         .state('help', {
           url: '/help',
           templateUrl: 'js/modules/help/help.html',
-          controller: ['$scope', function ($scope) {
+          controller: function ($scope) {
             $scope.version = version;
-          }]
+          }
         });
     });
 
