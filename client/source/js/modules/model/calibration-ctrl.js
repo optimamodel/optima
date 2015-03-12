@@ -11,8 +11,6 @@ define(['./module', 'angular', 'jquery', 'underscore'], function (module, angula
     $scope.tallestGraphHeight = 0;
     $scope.renderedGraphs = 0; // counts how many Graphs are rendered (see onAfterGraphRender for more on this)
 
-    angular.kk = $scope;
-
     var prepareF = function (f) {
       var F = angular.copy(f);
 
