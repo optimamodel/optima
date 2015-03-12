@@ -1,3 +1,9 @@
+/**
+* This directive triggers 'onAfterRender' once it's redered.
+* Also can evaluate arbitrary code for people that know what they are doing
+* Do not abuse the expression evaluator by making the view do things the controller should do!
+*/
+
 define(['angular'], function (angular) {
   'use strict';
 

@@ -459,7 +459,9 @@ define(['./module', 'angular', 'jquery', 'underscore'], function (module, angula
       if($scope.renderedGraphs == $('.chart-container').length) $scope.updateChartHeightsTo($scope.getMaxChartHeight());
     };
 
-    // This controller has its view just rendered, react accordingly.
+    /**
+    * This controller has its view just rendered, react accordingly.
+    */
     $scope.onAfterGraphRender = function () {
       $scope.renderedGraphs = $scope.renderedGraphs + 1;
       $scope.setSameGraphsHeight();
