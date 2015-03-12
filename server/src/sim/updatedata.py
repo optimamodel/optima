@@ -1,6 +1,6 @@
 from copy import deepcopy
 
-def updatedata(D, verbose=2, savetofile = True, input_programs = None):
+def updatedata(D, verbose=2, savetofile = True, input_programs = None, rerun = True):
     """
     Load the Excel workbook (for the given project), assuming it's in the standard uploads directory
     loads the data for the given project,
@@ -23,10 +23,11 @@ def updatedata(D, verbose=2, savetofile = True, input_programs = None):
     D.programs = restructureprograms(D.programs)
     D.data = getrealcosts(D.data)
     
-    D = makedatapars(D, verbose=verbose) # Update parameters
-    D.M = makemodelpars(D.P, D.opt, verbose=verbose)
-    D = makefittedpars(D, verbose=verbose)
-    D = runsimulation(D, makeplot = 0, dosave = False)
+    if rerun:
+        D = makedatapars(D, verbose=verbose) # Update parameters
+        D.M = makemodelpars(D.P, D.opt, verbose=verbose)
+        D = makefittedpars(D, verbose=verbose)
+        D = runsimulation(D, makeplot = 0, dosave = False)
     if savetofile:
         savedata(D.G.projectfilename, D, verbose=verbose) # Update the data file
     

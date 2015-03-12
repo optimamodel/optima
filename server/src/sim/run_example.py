@@ -30,9 +30,9 @@ if path.exists(datadir+datafile):
 ##from autofit import autofit
 ##autofit(D, timelimit=30)
 #
-from optimize import optimize
-D.F = [D.F[0]] # Only run a snigle simulation
-optimize(D, maxiters=10, verbose=5)
+#from optimize import optimize
+#D.F = [D.F[0]] # Only run a snigle simulation
+#optimize(D, maxiters=10, verbose=5)
 #
 #
 if doplot:
