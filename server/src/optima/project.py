@@ -705,7 +705,7 @@ def createProjectAndSetData():
         reply['reason'] = 'File type of %s is not accepted!' % source_filename
         return json.dumps(reply)
 
-    data = json.loads(file.read());
+    data = json.load(file)
 
     project = ProjectDb(project_name, user_id, data['G']['datastart'], \
         data['G']['dataend'], \
