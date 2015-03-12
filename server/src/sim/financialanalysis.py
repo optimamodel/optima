@@ -105,39 +105,48 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False, artgrowthrate=.0
     def accumu(lis):
         total = 0
         for x in lis:
-            total += x*D.opt.dt
+            total += x
             yield total
 
     # Store cost plot data
     for plottype in ['annual','cumulative']:
         plotdata[plottype] = {}
-        for plotsubtype in ['existing','total','future']:
-            plotdata[plottype][plotsubtype] = {}
-            if plottype=='annual':
-                for yscalefactor in costdisplays:
-                    plotdata[plottype][plotsubtype][yscalefactor] = {}
-                    plotdata[plottype][plotsubtype][yscalefactor]['xlinedata'] = simtvec
-                    plotdata[plottype][plotsubtype][yscalefactor]['xlabel'] = 'Year'
-                    plotdata[plottype][plotsubtype][yscalefactor]['title'] = 'Annual HIV-related costs - ' + plotsubtype + ' infections'
-                    if yscalefactor=='total':
-                        if not plotsubtype=='future': plotdata[plottype][plotsubtype][yscalefactor]['ylinedata'] = [(hivcosts[plotsubtype][j] + artcosts[plotsubtype][j])*(cpi[cpibaseyearindex]/cpi[j]) for j in range(noptpts)]
-                        plotdata[plottype][plotsubtype][yscalefactor]['ylabel'] = 'USD'
-                    else:
-                        if isinstance(sanitize(D.data.econ[yscalefactor].past[0]),int): continue #raise Exception('No data have been provided for this varaible, so we cannot display the costs as a proportion of this')
-                        yscale = expanddata(data=D.data.econ[yscalefactor].past[0], length=len(D.S.tvec)*D.opt.dt, growthrate=D.data.econ[yscalefactor].future[0][0], interp=True, dt=D.opt.dt)
-                        if not plotsubtype=='future': plotdata[plottype][plotsubtype][yscalefactor]['ylinedata'] = [(hivcosts[plotsubtype][j] + artcosts[plotsubtype][j])/yscale[j] for j in range(noptpts)] 
-                        plotdata[plottype][plotsubtype][yscalefactor]['ylabel'] = 'Proportion of ' + yscalefactor
+
+    plottype='annual'
+    for plotsubtype in ['existing','total','future']:
+        plotdata[plottype][plotsubtype] = {}
+        for yscalefactor in costdisplays:
+            plotdata[plottype][plotsubtype][yscalefactor] = {}
+            plotdata[plottype][plotsubtype][yscalefactor]['xlinedata'] = simtvec
+            plotdata[plottype][plotsubtype][yscalefactor]['xlabel'] = 'Year'
+            plotdata[plottype][plotsubtype][yscalefactor]['title'] = 'Annual HIV-related costs - ' + plotsubtype + ' infections'
+            if yscalefactor=='total':
+                if not plotsubtype=='future': plotdata[plottype][plotsubtype][yscalefactor]['ylinedata'] = [(hivcosts[plotsubtype][j] + artcosts[plotsubtype][j])*(cpi[cpibaseyearindex]/cpi[j]) for j in range(noptpts)]
+                plotdata[plottype][plotsubtype][yscalefactor]['ylabel'] = 'USD'
             else:
-                plotdata[plottype][plotsubtype]['xlinedata'] = simtvec
-                plotdata[plottype][plotsubtype]['xlabel'] = 'Year'
-                plotdata[plottype][plotsubtype]['ylabel'] = 'USD'
-                plotdata[plottype][plotsubtype]['title'] = 'Cumulative HIV-related costs - ' + plotsubtype + ' infections'
-                if not plotsubtype=='future': plotdata[plottype][plotsubtype]['ylinedata'] = list(accumu([hivcosts[plotsubtype][j] + artcosts[plotsubtype][j] for j in range(noptpts)]))
+                if isinstance(sanitize(D.data.econ[yscalefactor].past[0]),int): continue #raise Exception('No data have been provided for this varaible, so we cannot display the costs as a proportion of this')
+                yscale = expanddata(data=D.data.econ[yscalefactor].past[0], length=len(D.S.tvec)*D.opt.dt, growthrate=D.data.econ[yscalefactor].future[0][0], interp=True, dt=D.opt.dt)
+                if not plotsubtype=='future': plotdata[plottype][plotsubtype][yscalefactor]['ylinedata'] = [(hivcosts[plotsubtype][j] + artcosts[plotsubtype][j])/yscale[j] for j in range(noptpts)] 
+                plotdata[plottype][plotsubtype][yscalefactor]['ylabel'] = 'Proportion of ' + yscalefactor
+
+    plottype='cumulative'
+    for plotsubtype in ['existing','total','future']:
+        plotdata[plottype][plotsubtype] = {}
+        plotdata[plottype][plotsubtype]['xlinedata'] = simtvec
+        plotdata[plottype][plotsubtype]['xlabel'] = 'Year'
+        plotdata[plottype][plotsubtype]['ylabel'] = 'USD'
+        plotdata[plottype][plotsubtype]['title'] = 'Cumulative HIV-related costs - ' + plotsubtype + ' infections'
+        if not plotsubtype=='future':
+            x = list(accumu(plotdata['annual'][plotsubtype]['total']['ylinedata'][0::10]))
+            y = expanddata(x[:-1], len(x[:-1]), 0, interp=True, dt=D.opt.dt)
+            plotdata[plottype][plotsubtype]['ylinedata'] = append(y,[x[-1]])
 
     for yscalefactor in costdisplays:
         if 'ylinedata' in plotdata['annual']['total'][yscalefactor].keys():
             plotdata['annual']['future'][yscalefactor]['ylinedata'] = [max(0.0,plotdata['annual']['total'][yscalefactor]['ylinedata'][j] - plotdata['annual']['existing'][yscalefactor]['ylinedata'][j]) for j in range(noptpts)]
-    plotdata['cumulative']['future']['ylinedata'] = list(accumu(plotdata['annual']['future']['total']['ylinedata']))
+    x = list(accumu(plotdata['annual']['future']['total']['ylinedata'][0::10]))
+    y = expanddata(x[:-1], len(x[:-1]), 0, interp=True, dt=D.opt.dt)    
+    plotdata['cumulative']['future']['ylinedata'] = append(y,[x[-1]])
 
     # Calculate net present value of future stream of treatment costs
     inci = S.inci.sum(axis=0)
@@ -202,8 +211,8 @@ def expanddata(data, length, growthrate, interp=True, dt=None):
 #from matplotlib.pylab import figure, plot, hold
 #figure()
 #hold(True)
-#plot(plotdata['commit']['total']['xlinedata'],plotdata['commit']['total']['ylinedata'])
+#plot(plotdata['annual']['total']['total']['xlinedata'],plotdata['annual']['total']['total']['ylinedata'])
 #figure()
 #hold(True)
-#plot(plotdata['commit']['total']['xlinedata'],D.S.inci.sum(axis=0))
+#plot(plotdata['cumulative']['total']['xlinedata'],plotdata['cumulative']['total']['ylinedata'])
 
