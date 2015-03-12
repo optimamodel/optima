@@ -4,6 +4,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   module.controller('ModelCalibrationController', function ($scope, $http, $interval,
     Model, parameters, meta, info, CONFIG, graphTypeFactory, cfpLoadingBar, calibration) {
 
+    var graphData;
+
     var defaultChartOptions = {
       title: 'Title',
       height: 200,
@@ -52,14 +54,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       if ($scope.projectInfo.has_data){
         $scope.simulate();
       }
-    };
-
-    $scope.doneEditingParameter = function () {
-      Model.saveCalibrateManual({
-        F: calibration.prepareF($scope.parameters.f),
-        M: calibration.prepareM($scope.parameters.m),
-        dosave: false
-      }, updateCharts);
     };
 
     /**
@@ -263,6 +257,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         $scope.charts = prepareCharts(data.graph);
         $scope.parameters.cache.response = data;
         $scope.canDoFitting = true;
+
+        // TODO update only f & m parameters
+        // TODO update cache
         if (data.F){
           var f = calibration.prepareF(data.F[0]);
           $scope.parameters.f = f;
@@ -359,18 +356,18 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.previewManualCalibration = function () {
-      Model.saveCalibrateManual({
-        F: calibration.prepareF($scope.parameters.f),
-        M: calibration.prepareM($scope.parameters.m)
-      }, updateCharts);
+      var data = calibration.toRequestParameters($scope.parameters, false);
+      Model.saveCalibrateManual(data, updateCharts);
     };
 
     $scope.saveManualCalibration = function () {
-      Model.saveCalibrateManual({
-        F: calibration.prepareF($scope.parameters.f),
-        M: calibration.prepareM($scope.parameters.m),
-        dosave: true
-      }, updateCharts);
+      var data = calibration.toRequestParameters($scope.parameters, true);
+      Model.saveCalibrateManual(data, updateCharts);
+    };
+
+    $scope.doneEditingParameter = function () {
+      var data = calibration.toRequestParameters($scope.parameters, false);
+      Model.saveCalibrateManual(data, updateCharts);
     };
 
     $scope.revertManualCalibration = function () {
@@ -390,7 +387,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     // The charts are shown/hidden after updating the chart type checkboxes.
     $scope.$watch('types', function () {
-      updateCharts($scope.parameters.cache.response);
+      updateCharts();
     }, true);
 
   });

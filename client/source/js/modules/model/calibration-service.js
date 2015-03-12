@@ -8,6 +8,12 @@ define([
 
   module.factory('calibration', [ function () {
 
+//     F is the 'fitted parameters' and M is the 'model parameters'
+//
+// both are used in the calculations in model.py
+//
+// effectively F are a number of scale factors/normalization factors/fudge factors, and M are time series based on the input data
+
     /*
      * Returns a new f parameter object with string values parsed to decimal numbers.
      */
@@ -34,9 +40,16 @@ define([
     };
 
     /*
-     * Convert the form parameters to provide it for the server.
+     * Returns a new object with the form parameters prepared for a server request.
      */
-    var toRequestParameters = function(parameters) {
+    var toRequestParameters = function(scopeParameters, doSave) {
+      var parameters = {
+        F: prepareF(scopeParameters.f),
+        M: prepareM(scopeParameters.m)
+      };
+      if (doSave) {
+        parameters.doSave = true;
+      }
       return parameters;
     };
 
@@ -45,7 +58,7 @@ define([
      */
     var toScopeParameters = function(parameters, meta, shouldTranformF) {
 
-      var transformedF = shouldTranformF ? {} : prepareF(parameters.F[0]);
+      var fParameters = parameters.F[0] ? prepareF(parameters.F[0]) : {};
 
       return {
         types: {
@@ -60,10 +73,10 @@ define([
           ]
         },
         meta: meta,
-        f: transformedF,
+        f: fParameters,
         m: parameters.M,
         cache: {
-          f: angular.copy(transformedF),
+          f: angular.copy(fParameters),
           m: angular.copy(parameters.M),
           response: null
         }
@@ -73,7 +86,6 @@ define([
     return {
       toRequestParameters: toRequestParameters,
       toScopeParameters: toScopeParameters,
-      prepareM: prepareM,
       prepareF: prepareF
     };
  }]);
