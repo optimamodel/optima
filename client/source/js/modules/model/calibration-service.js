@@ -53,25 +53,13 @@ define([
     /*
      * Convert server parameters for usage in the controller scope.
      */
-    var toScopeParameters = function(parameters, meta, shouldTranformF) {
+    var toScopeParameters = function(parameters) {
 
-      var fParameters = parameters.F[0] ? prepareF(parameters.F[0]) : {};
+      var fParameters = parameters.F[0] ? parameters.F[0] : {};
 
       return {
-        types: {
-          force: 'Relative force-of-infection for ',
-          popsize: 'Initial population size for ',
-          init: 'Initial prevalence for ',
-          dx: [
-            'Overall population initial relative testing rate',
-            'Overall population final relative testing rate',
-            'Year of mid change in overall population testing rate',
-            'Testing rate slope parameter'
-          ]
-        },
-        meta: meta,
-        f: fParameters,
-        m: parameters.M
+        f: angular.copy(fParameters),
+        m: angular.copy(parameters.M)
       };
     };
 

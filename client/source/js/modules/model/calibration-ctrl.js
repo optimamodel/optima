@@ -50,7 +50,22 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.simulationOptions = {'timelimit': 60};
       $scope.charts = [];
       $scope.hasStackedCharts = false;
-      $scope.parameters = calibration.toScopeParameters(parameters, meta, !$scope.projectInfo.has_data);
+      $scope.parameters = {
+        types: {
+          force: 'Relative force-of-infection for ',
+          popsize: 'Initial population size for ',
+          init: 'Initial prevalence for ',
+          dx: [
+            'Overall population initial relative testing rate',
+            'Overall population final relative testing rate',
+            'Year of mid change in overall population testing rate',
+            'Testing rate slope parameter'
+          ]
+        },
+        meta: meta
+      };
+      angular.extend($scope.parameters, calibration.toScopeParameters(parameters));
+
       if ($scope.projectInfo.has_data){
         $scope.simulate();
       }
@@ -254,12 +269,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      * Stores the last saved data for later retrieval & updates the charts with
      * the received data.
      */
-    var storeLastSavedCalibrationAndUpdateCharts = function (data) {
+    var storeSavedCalibrationAndUpdate = function (data) {
       calibration.storeLastSavedResponse(data);
-      updateCharts(data);
+      updateChartsAndParameters(data);
     };
 
-    var updateCharts = function (data) {
+    var updateChartsAndParameters = function (data) {
       if (data!== undefined && data!==null && data.graph !== undefined) {
         calibration.storeLastPreviewResponse(data);
 
@@ -268,18 +283,13 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         $scope.charts = prepareCharts(data.graph);
         $scope.canDoFitting = true;
 
-        if (data.F){
-          $scope.parameters.f = data.F[0];
-        }
-        if (data.M) {
-          $scope.parameters.m = data.M;
-        }
+        angular.extend($scope.parameters, calibration.toScopeParameters(data));
       }
     };
 
     $scope.simulate = function () {
       $http.post('/api/model/view', $scope.simulationOptions)
-        .success(storeLastSavedCalibrationAndUpdateCharts);
+        .success(storeSavedCalibrationAndUpdate);
     };
 
     var autoCalibrationTimer;
@@ -316,7 +326,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           if (data.status == 'Done') {
             stopTimer();
           }
-          updateCharts(data); // now when we might run continuous calibration, this might be the only chance to update the charts.
+          updateChartsAndParameters(data); // now when we might run continuous calibration, this might be the only chance to update the charts.
         })
         .error(function(data, status, headers, config) {
           if (data && data.exception) {
@@ -352,26 +362,26 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     $scope.saveCalibration = function () {
       $http.post('/api/model/calibrate/save')
-        .success(storeLastSavedCalibrationAndUpdateCharts);
+        .success(storeSavedCalibrationAndUpdate);
     };
 
     $scope.revertCalibration = function () {
       $http.post('/api/model/calibrate/revert')
-        .success(storeLastSavedCalibrationAndUpdateCharts);
+        .success(storeSavedCalibrationAndUpdate);
     };
 
     $scope.saveManualCalibration = function () {
       var data = calibration.toRequestParameters($scope.parameters, true);
-      Model.saveCalibrateManual(data, storeLastSavedCalibrationAndUpdateCharts);
+      Model.saveCalibrateManual(data, storeSavedCalibrationAndUpdate);
     };
 
     $scope.doneEditingParameter = function () {
       var data = calibration.toRequestParameters($scope.parameters, false);
-      Model.saveCalibrateManual(data, updateCharts);
+      Model.saveCalibrateManual(data, updateChartsAndParameters);
     };
 
     $scope.revertManualCalibration = function () {
-      updateCharts(calibration.lastSavedResponse());
+      updateChartsAndParameters(calibration.lastSavedResponse());
     };
 
     $scope.reportCalibrationStatus = function () {
@@ -386,7 +396,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     // The charts are shown/hidden after updating the chart type checkboxes.
     $scope.$watch('types', function () {
-      updateCharts(calibration.lastPreviewResponse());
+      updateChartsAndParameters(calibration.lastPreviewResponse());
     }, true);
 
   });
