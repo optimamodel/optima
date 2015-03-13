@@ -9,3 +9,5 @@ errors.log
 nginx.conf
 node_modules
 test-results-*.xml
+
+/source/js/version.js
