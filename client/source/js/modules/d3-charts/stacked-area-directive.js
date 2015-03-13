@@ -1,4 +1,4 @@
-define(['./module', './scale-helpers', 'angular', 'underscore'], function (module, scaleHelpers, angular, _) {
+define(['./module', './scale-helpers', 'angular', 'underscore', 'jquery'], function (module, scaleHelpers, angular, _, $) {
   'use strict';
 
   module.directive('stackedAreaChart', function (d3Charts) {
@@ -159,6 +159,9 @@ define(['./module', './scale-helpers', 'angular', 'underscore'], function (modul
       );
 
       d3Charts.drawTitleAndLegend(svg, options, headerGroup);
+
+      var svgHeight = parseInt($(svg[0][0]).css('height'), 10);
+      rootElement.trigger('draw', [{height: svgHeight}]);
     };
 
     return {
