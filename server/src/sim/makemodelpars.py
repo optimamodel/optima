@@ -42,6 +42,7 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
                     output[pop,:] = smoothinterp(M.tvec, datapar.t[pop], datapar.p[pop]) # Use interpolation
                 else:
                     output[pop,:] = datapar.p[pop]
+                    print('TMP')
         
         return output
     
