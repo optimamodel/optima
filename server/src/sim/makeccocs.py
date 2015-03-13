@@ -359,19 +359,26 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
 
         # Populate output structure with scatter data 
         totalcost, outcome = getscatterdata(totalcost, outcome)
+        
         plottotalcost = deepcopy(totalcost)
         plotoutcome = deepcopy(outcome)
-        plottotalcost.append(D.data.origalloc[prognumber]) # WARNING KLUDGY, force-append last data point
+        currentcost = D.data.origalloc[prognumber]
+        currentoutcome = None
         try:
             timepoint = D.opt.partvec.index(float(min(D.data.epiyears[-1], date.today().year)))
-            currentvalue = D.M[parname][popnumber][timepoint]
-            plotoutcome.append(currentvalue)
-            print('Parameter %s not found, using last data value %f' % (parname, currentvalue))
+            currentoutcome = D.M[parname][popnumber][timepoint]
         except:
-            tmp = float_array(D.data[effect[0][0]][parname][popnumber])
-            lastvalue = tmp[~isnan(tmp)][-1]
-            print('Parameter %s not found, using last data value %f' % (parname, lastvalue))
-            plotoutcome.append(lastvalue)
+            try:
+                tmp = float_array(D.data[effect[0][0]][parname][popnumber])
+                currentoutcome = tmp[~isnan(tmp)][-1]
+                print('Parameter %s not found, using last data value %f' % (parname, currentoutcome))
+            except:
+                print('Parameter %s not found, and could not append a point from data: %s' % (parname, tmp))
+        if currentcost is not None and currentoutcome is not None:
+            plottotalcost.append(currentcost) # WARNING KLUDGY, force-append last data point
+            plotoutcome.append(currentoutcome)
+            
+        
         plotdata['xscatterdata'] = plottotalcost # X scatter data
         plotdata['yscatterdata'] = plotoutcome # Y scatter data
 #        plotdata['yscatterdata'] = [outcome[j]*100.0 for j in range(len(outcome))] # Y scatter data
