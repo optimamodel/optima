@@ -45,7 +45,7 @@ define([
         M: prepareM(scopeParameters.m)
       };
       if (doSave) {
-        parameters.doSave = true;
+        parameters.dosave = true;
       }
       return parameters;
     };
