@@ -21,7 +21,7 @@ def updatedata(D, workbookname=None, verbose=2, savetofile=True, input_programs=
     if workbookname is None:
         workbookname = D.G.workbookname
         
-    datapath = fullpath(D.G.workbookname)
+    datapath = fullpath(workbookname)
     D.data, D.programs = loadworkbook(datapath, input_programs, verbose=verbose)
     D.programs = restructureprograms(D.programs)
     D.data = getrealcosts(D.data)

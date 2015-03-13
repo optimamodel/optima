@@ -12,7 +12,7 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=2):
     ###########################################################################
     
     from printv import printv
-    from numpy import nan, zeros, isnan, array # For reading in empty values
+    from numpy import nan, zeros, isnan, array, logical_or, nonzero # For reading in empty values
     from xlrd import open_workbook # For opening Excel workbooks
     from bunch import Bunch as struct # Replicate Matlab-like structure behavior
     from time import strftime # For determining when a spreadsheet was last uploaded
@@ -253,7 +253,7 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=2):
                                 invalid = logical_or(array(thesedata)>1, array(thesedata)<0)
                                 if any(invalid):
                                     column = nonzero(invalid)[0]
-                                    raise Exception('HIV prevalence is invalid (row=%i, column(s)=%s, value=%i)' % (row, column, thesedata[column])
+                                    raise Exception('Invalid entry in spreadsheet: HIV prevalence (row=%i, column(s)=%s, value=%i)' % (row, column, thesedata[column[0]]))
                             
                         
                         # It's basic data, append the data and check for programs
@@ -268,7 +268,7 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=2):
                                 invalid = logical_or(array(thesedata)>1, array(thesedata)<0)
                                 if any(invalid):
                                     column = nonzero(invalid)[0]
-                                    raise Exception('Value is is invalid for parameter %s (row=%i, column(s)=%s, value=%i)' % (thispar, row, column, thesedata[column])
+                                    raise Exception('Invalid entry in spreadsheet: parameter %s (row=%i, column(s)=%s, value=%i)' % (thispar, row, column, thesedata[column[0]]))
                             
                             for programname, pops in programs_for_input_key(thispar, input_programs).iteritems(): # Link with programs...?
                                 if (programname in programs) and ((not pops or pops==['']) or subparam in pops):
