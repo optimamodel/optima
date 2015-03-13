@@ -36,6 +36,11 @@ def runmodelalloc(D, thisalloc, origalloc, parindices, randseed, financial=True,
     newD.M = partialupdateM(D.M, newM, parindices)
     S = model(newD.G, newD.M, newD.F[0], newD.opt, verbose=verbose)
     R = makeresults(D, allsims=[S], financial=financial, verbose=0)
+    R.debug = struct()
+    R.debug.G = deepcopy(newD.G)
+    R.debug.M = deepcopy(newD.M)
+    R.debug.F = deepcopy(newD.F)
+    R.debug.S = deepcopy(S)
     return R
 
 
@@ -487,13 +492,21 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
             result.Rarr[-1].label = labels.pop(0) # Store labels, one at a time
 
 
+
+
+
+
+
+
+
     ## Gather plot data
     from gatherplotdata import gatheroptimdata
     plot_result = gatheroptimdata(D, result, verbose=verbose)
     if 'optim' not in D.plot: D.plot.optim = [] # Initialize list if required
     D.plot.optim.append(plot_result) # In any case, append
     
-    result_to_save = {'plot': [plot_result]}
+    debug_result = deepcopy(R.debug)
+    result_to_save = {'plot': [plot_result], 'debug': [debug_result]}
 
     ## Save optimization to D
     D = saveoptimization(D, name, objectives, constraints, result_to_save, verbose=2)
