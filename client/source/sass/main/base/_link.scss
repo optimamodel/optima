@@ -1,19 +1,11 @@
-// Link
-// ====
-
-.link {
-  cursor: pointer;
-}
-
-.link {
-  text-decoration: none;
-}
-
-// Modifiers
-// ---------
-
 .link {
   @extend .link.__blue;
+
+  cursor: pointer;
+  text-decoration: none;
+
+  // Modifiers
+  // ---------
 
   // ### Colors
 
