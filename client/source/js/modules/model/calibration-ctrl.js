@@ -4,8 +4,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   module.controller('ModelCalibrationController', function ($scope, $http, $interval,
     Model, parameters, meta, info, CONFIG, graphTypeFactory, cfpLoadingBar, calibration) {
 
-    var graphData;
-
     var defaultChartOptions = {
       title: 'Title',
       height: 200,
@@ -162,7 +160,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         if (type.total && data) {
 
           var yData = {
-            best: data.tot.best, high: data.tot.high, low: data.tot.low,
+            best: data.tot.best,
+            high: data.tot.high,
+            low: data.tot.low
           };
           var chart = generateAreaChart(yData, response.tvec, data.tot.title);
 

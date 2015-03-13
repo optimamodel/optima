@@ -1,9 +1,7 @@
 /**
  *  A service with helper functions for calibration.
  */
-define([
-  './module',
-], function (module) {
+define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.factory('calibration', [ function () {
