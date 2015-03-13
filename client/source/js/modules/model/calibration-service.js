@@ -8,11 +8,8 @@ define([
 
   module.factory('calibration', [ function () {
 
-//     F is the 'fitted parameters' and M is the 'model parameters'
-//
-// both are used in the calculations in model.py
-//
-// effectively F are a number of scale factors/normalization factors/fudge factors, and M are time series based on the input data
+    var lastSavedCalibrationResponse;
+    var lastPreviewCalibrationResponse;
 
     /*
      * Returns a new f parameter object with string values parsed to decimal numbers.
@@ -74,19 +71,33 @@ define([
         },
         meta: meta,
         f: fParameters,
-        m: parameters.M,
-        cache: {
-          f: angular.copy(fParameters),
-          m: angular.copy(parameters.M),
-          response: null
-        }
+        m: parameters.M
       };
+    };
+
+    var storeLastSavedResponse = function (calibrationResponse) {
+      lastSavedCalibrationResponse = calibrationResponse;
+    };
+
+    var storeLastPreviewResponse = function (calibrationResponse) {
+      lastPreviewCalibrationResponse = calibrationResponse;
+    };
+
+    var lastSavedResponse = function () {
+      return angular.copy(lastSavedCalibrationResponse);
+    };
+
+    var lastPreviewResponse = function () {
+      return angular.copy(lastPreviewCalibrationResponse);
     };
 
     return {
       toRequestParameters: toRequestParameters,
       toScopeParameters: toScopeParameters,
-      prepareF: prepareF
+      storeLastSavedResponse: storeLastSavedResponse,
+      storeLastPreviewResponse: storeLastPreviewResponse,
+      lastSavedResponse: lastSavedResponse,
+      lastPreviewResponse: lastPreviewResponse
     };
  }]);
 });

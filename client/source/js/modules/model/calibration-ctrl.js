@@ -250,31 +250,36 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       return charts;
     };
 
+    /**
+     * Stores the last saved data for later retrieval & updates the charts with
+     * the received data.
+     */
+    var storeLastSavedCalibrationAndUpdateCharts = function (data) {
+      calibration.storeLastSavedResponse(data);
+      updateCharts(data);
+    };
+
     var updateCharts = function (data) {
       if (data!== undefined && data!==null && data.graph !== undefined) {
+        calibration.storeLastPreviewResponse(data);
+
         graphTypeFactory.enableAnnualCostOptions($scope.types, data.graph);
 
         $scope.charts = prepareCharts(data.graph);
-        $scope.parameters.cache.response = data;
         $scope.canDoFitting = true;
 
-        // TODO update only f & m parameters
-        // TODO update cache
         if (data.F){
-          var f = calibration.prepareF(data.F[0]);
-          $scope.parameters.f = f;
-          $scope.parameters.cache.f = angular.copy(f);
+          $scope.parameters.f = data.F[0];
         }
         if (data.M) {
           $scope.parameters.m = data.M;
-          $scope.parameters.cache.m = angular.copy(data.M);
         }
       }
     };
 
     $scope.simulate = function () {
       $http.post('/api/model/view', $scope.simulationOptions)
-        .success(updateCharts);
+        .success(storeLastSavedCalibrationAndUpdateCharts);
     };
 
     var autoCalibrationTimer;
@@ -347,22 +352,17 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     $scope.saveCalibration = function () {
       $http.post('/api/model/calibrate/save')
-        .success(updateCharts);
+        .success(storeLastSavedCalibrationAndUpdateCharts);
     };
 
     $scope.revertCalibration = function () {
       $http.post('/api/model/calibrate/revert')
-        .success(function(){ console.log("OK");});
-    };
-
-    $scope.previewManualCalibration = function () {
-      var data = calibration.toRequestParameters($scope.parameters, false);
-      Model.saveCalibrateManual(data, updateCharts);
+        .success(storeLastSavedCalibrationAndUpdateCharts);
     };
 
     $scope.saveManualCalibration = function () {
       var data = calibration.toRequestParameters($scope.parameters, true);
-      Model.saveCalibrateManual(data, updateCharts);
+      Model.saveCalibrateManual(data, storeLastSavedCalibrationAndUpdateCharts);
     };
 
     $scope.doneEditingParameter = function () {
@@ -371,8 +371,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.revertManualCalibration = function () {
-      angular.extend($scope.parameters.f, $scope.parameters.cache.f);
-      angular.extend($scope.parameters.m, $scope.parameters.cache.m);
+      updateCharts(calibration.lastSavedResponse());
     };
 
     $scope.reportCalibrationStatus = function () {
@@ -387,7 +386,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     // The charts are shown/hidden after updating the chart type checkboxes.
     $scope.$watch('types', function () {
-      updateCharts();
+      updateCharts(calibration.lastPreviewResponse());
     }, true);
 
   });
