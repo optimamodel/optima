@@ -14,7 +14,7 @@ define([
     /*
      * Returns a new f parameter object with string values parsed to decimal numbers.
      */
-    var prepareF = function (original_f) {
+    var _prepareF = function (original_f) {
       var f = angular.copy(original_f);
 
       f.dx = _(f.dx).map(parseFloat);
@@ -27,7 +27,7 @@ define([
     /*
      * Returns a new m parameter object with string values parsed to decimal numbers.
      */
-    var prepareM = function(original_m) {
+    var _prepareM = function(original_m) {
       var m = angular.copy(original_m);
 
       _(m).each(function (parameter) {
@@ -41,8 +41,8 @@ define([
      */
     var toRequestParameters = function(scopeParameters, doSave) {
       var parameters = {
-        F: prepareF(scopeParameters.f),
-        M: prepareM(scopeParameters.m)
+        F: _prepareF(scopeParameters.f),
+        M: _prepareM(scopeParameters.m)
       };
       if (doSave) {
         parameters.dosave = true;
