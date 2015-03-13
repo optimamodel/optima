@@ -372,12 +372,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     $scope.saveManualCalibration = function () {
       var data = calibration.toRequestParameters($scope.parameters, true);
-      Model.saveCalibrateManual(data, storeSavedCalibrationAndUpdate);
+      Model.runManualCalibration(data, storeSavedCalibrationAndUpdate);
     };
 
     $scope.doneEditingParameter = function () {
       var data = calibration.toRequestParameters($scope.parameters, false);
-      Model.saveCalibrateManual(data, updateChartsAndParameters);
+      Model.runManualCalibration(data, updateChartsAndParameters);
     };
 
     $scope.revertManualCalibration = function () {
