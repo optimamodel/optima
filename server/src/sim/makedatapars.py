@@ -23,7 +23,7 @@ def makedatapars(D, verbose=2):
     
         
     
-    def data2par(dataarray, usetime=False):
+    def data2par(dataarray, usetime=True):
         """ Take an array of data and turn it into default parameters -- here, just take the means """
         nrows = shape(dataarray)[0] # See how many rows need to be filled (either npops, nprogs, or 1)
         output = struct() # Create structure
@@ -37,6 +37,7 @@ def makedatapars(D, verbose=2):
         else:
             for r in xrange(nrows): 
                 output.p[r] = mean(sanitize(dataarray[r])) # Calculate mean for each population
+                print('TMP')
         
         return output
 
@@ -73,7 +74,7 @@ def makedatapars(D, verbose=2):
             if parname in ['numfirstline','numsecondline','txelig']:
                 D.P[parname] = data2par(D.data[parclass][parname], usetime=True)
             else:
-                D.P[parname] = data2par(D.data[parclass][parname])
+                D.P[parname] = data2par(D.data[parclass][parname], usetime=True) # TMP
     
     
     ## Matrices can be used directly

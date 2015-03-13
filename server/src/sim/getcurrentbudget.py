@@ -67,8 +67,11 @@ def getcurrentbudget(D, alloc=None, randseed=None):
                     except:
                         print('Non-randomized convertedccoparams failed')
                         convertedccoparams = default_convertedccoparams
-                    
+
                 D.P[parname].c[popnumber] = cco2eqn(totalcost, convertedccoparams[0]) if len(convertedccparams[0])==2 else ccoeqn(totalcost, convertedccoparams[0])            
+                #TMP
+#                if parname=='sharing':
+#                    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
 
     return D, currentcoverage, currentnonhivdalysaverted
     
