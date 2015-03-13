@@ -20,7 +20,7 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
     
     
     
-    def dpar2mpar(datapar, withwhat, default_withwhat='p'):
+    def dpar2mpar(datapar, withwhat, default_withwhat='p', smoothness=50):
         """
         Take parameters and turn them into model parameters
         Set withwhat = p if you want to use the epi data for the parameters
@@ -39,7 +39,7 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
                 output[pop, :] = datapar[withwhat][pop, :]
             else: # Use parameter
                 if 't' in datapar.keys(): # It's a time parameter
-                    output[pop,:] = smoothinterp(M.tvec, datapar.t[pop], datapar.p[pop]) # Use interpolation
+                    output[pop,:] = smoothinterp(M.tvec, datapar.t[pop], datapar.p[pop], smoothness=smoothness) # Use interpolation
                 else:
                     output[pop,:] = datapar.p[pop]
                     print('TMP')
