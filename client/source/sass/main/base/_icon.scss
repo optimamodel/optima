@@ -13,10 +13,6 @@
     vertical-align: top;
   }
 
-  &.__inset {
-    margin: -2px 2px -2px -2px;
-  }
-
   @each $icon in (
     'circle-gray',
     'donut-blue',
