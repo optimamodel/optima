@@ -4,7 +4,7 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=2):
     This data structure is used in the next step to update the corresponding model.
     The workbook is assumed to be in the format specified in example.xlsx.
     
-    Version: 2015jan26
+    Version: 2015mar12
     """
     
     ###########################################################################
@@ -12,12 +12,14 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=2):
     ###########################################################################
     
     from printv import printv
-    from numpy import nan # For reading in empty values
+    from numpy import nan, zeros, isnan, array, logical_or, nonzero # For reading in empty values
     from xlrd import open_workbook # For opening Excel workbooks
     from bunch import Bunch as struct # Replicate Matlab-like structure behavior
     from time import strftime # For determining when a spreadsheet was last uploaded
-    printv('Loading data from %s...' % filename, 1, verbose)
+    from datetime import date
     from programs import programs_for_input_key
+    printv('Loading data from %s...' % filename, 1, verbose)
+    
     
     def forcebool(entry):
         """ Convert an entry to be Boolean """
@@ -249,6 +251,11 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=2):
                             blhindices = {'best':0, 'low':1, 'high':2} # Define best-low-high indices
                             blh = sheetdata.cell_value(row, 2) # Read in whether indicator is best, low, or high
                             data[name][thispar][blhindices[blh]].append(thesedata) # Actually append the data
+                            if thispar=='hivprev':
+                                invalid = logical_or(array(thesedata)>1, array(thesedata)<0)
+                                if any(invalid):
+                                    column = nonzero(invalid)[0]
+                                    raise Exception('Invalid entry in spreadsheet: HIV prevalence (row=%i, column(s)=%s, value=%i)' % (row, column, thesedata[column[0]]))
                             
                         
                         # It's basic data, append the data and check for programs
@@ -259,6 +266,11 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=2):
                             if assumptiondata != '': # There's an assumption entered
                                 thesedata = [assumptiondata] # Replace the (presumably blank) data if a non-blank assumption has been entered
                             data[name][thispar].append(thesedata) # Store data
+                            if thispar in ['stiprevulc', 'stiprevdis', 'tbprev', 'hivtest', 'aidstest', 'prep', 'condomreg', 'condomcas', 'condomcom', 'circum',  'sharing']: # All probabilities
+                                invalid = logical_or(array(thesedata)>1, array(thesedata)<0)
+                                if any(invalid):
+                                    column = nonzero(invalid)[0]
+                                    raise Exception('Invalid entry in spreadsheet: parameter %s (row=%i, column(s)=%s, value=%i)' % (thispar, row, column, thesedata[column[0]]))
                             
                             for programname, pops in programs_for_input_key(thispar, input_programs).iteritems(): # Link with programs...?
                                 if (programname in programs) and ((not pops or pops==['']) or subparam in pops):
@@ -287,6 +299,24 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=2):
                             thesedata = map(lambda val: nan if val=='' else val, thesedata) # Replace blanks with nan
                             subpar = subparlist[parcount][1].pop(0) # Pop first entry of subparameter list, which is namelist[parcount][1]
                             data[name][thispar][subpar] = thesedata # Store data
+    
+    
+    ## Program cost data
+    nprogs = len(data.costcov.cost)
+    data.origalloc = zeros(nprogs)
+    indexforcurrentyear = data.epiyears.index(min(data.epiyears[-1], date.today().year))
+    for prog in range(nprogs):
+        totalcost = data.costcov.cost[prog]
+        totalcost = array(totalcost)[:indexforcurrentyear] # Trim years after most recent
+        totalcost = totalcost[~isnan(totalcost)]
+        try:
+            totalcost = totalcost[-1]
+        except:
+            print('WARNING, no cost data entered for %s' % data.meta.progs.short[prog])
+            totalcost = 0 # No data entered for this program
+        data.origalloc[prog] = totalcost    
+    
+    
     
     printv('...done loading data.', 2, verbose)
     return data, programs

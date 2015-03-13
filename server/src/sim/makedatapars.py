@@ -23,7 +23,7 @@ def makedatapars(D, verbose=2):
     
         
     
-    def data2par(dataarray, usetime=False):
+    def data2par(dataarray, usetime=True):
         """ Take an array of data and turn it into default parameters -- here, just take the means """
         nrows = shape(dataarray)[0] # See how many rows need to be filled (either npops, nprogs, or 1)
         output = struct() # Create structure
@@ -31,12 +31,19 @@ def makedatapars(D, verbose=2):
         if usetime:
             output.t = [0]*nrows # Initialize array for holding time parameters
             for r in xrange(nrows): 
-                output.p[r] = sanitize(dataarray[r]) # Store each extant value
-                output.t[r] = arange(D.G.datastart, D.G.dataend+1)[~isnan(dataarray[r])] # Store each year
+                validdata = ~isnan(dataarray[r])
+                if sum(validdata): # There's at least one data point
+                    output.p[r] = sanitize(dataarray[r]) # Store each extant value
+                    output.t[r] = arange(D.G.datastart, D.G.dataend+1)[~isnan(dataarray[r])] # Store each year
+                else: # Blank, assume zero
+                    output.p[r] = array([0])
+                    output.t[r] = array([0])
 
         else:
+            print('TMP6666')
             for r in xrange(nrows): 
                 output.p[r] = mean(sanitize(dataarray[r])) # Calculate mean for each population
+                print('TMP223')
         
         return output
 
@@ -73,7 +80,7 @@ def makedatapars(D, verbose=2):
             if parname in ['numfirstline','numsecondline','txelig']:
                 D.P[parname] = data2par(D.data[parclass][parname], usetime=True)
             else:
-                D.P[parname] = data2par(D.data[parclass][parname])
+                D.P[parname] = data2par(D.data[parclass][parname], usetime=True) # TMP
     
     
     ## Matrices can be used directly
@@ -91,33 +98,30 @@ def makedatapars(D, verbose=2):
                 printv('Converting data parameter %s...' % parname, 4, verbose)
                 D.P.const[parclass][parname] = D.data.const[parclass][parname][0] # Taking best value only, hence the 0
     
-    ## Program cost data
-    D.data.origalloc = zeros(D.G.nprogs)
-    for prog in range(D.G.nprogs):
-        totalcost = D.data.costcov.cost[prog]
-        totalcost = array(totalcost)
-        totalcost = totalcost[~isnan(totalcost)]
-        try:
-            totalcost = totalcost[-1]
-        except:
-            print('WARNING, no cost data entered for %s' % D.data.meta.progs.short[prog])
-            totalcost = 0 # No data entered for this program
-        D.data.origalloc[prog] = totalcost
-    
     
     ## Change sizes of circumcision and births
     def popexpand(origarray, popbool):
         """ For variables that are only defined for certain populations, expand to the full array. WARNING, doesn't work for time """
         from copy import deepcopy
         newarray = deepcopy(origarray)
-        newarray.p = zeros(shape(D.G.meta.pops.male))
-        if 't' in newarray.keys(): raise Exception('Shouldn''t be using time')
-        count = -1
-        if hasattr(popbool,'__iter__'): # May or may not be a list
-            for i,tf in enumerate(popbool):
-                if tf:
-                    count += 1
-                    newarray.p[i] = origarray.p[count]
+        if 't' in newarray.keys(): 
+            newarray.p = [array([0]) for i in range(len(D.G.meta.pops.male))]
+            newarray.t = [array([0]) for i in range(len(D.G.meta.pops.male))]
+            count = -1
+            if hasattr(popbool,'__iter__'): # May or may not be a list
+                for i,tf in enumerate(popbool):
+                    if tf:
+                        count += 1
+                        newarray.p[i] = origarray.p[count]
+                        newarray.t[i] = origarray.t[count]
+        else: 
+            newarray.p = zeros(shape(D.G.meta.pops.male))
+            count = -1
+            if hasattr(popbool,'__iter__'): # May or may not be a list
+                for i,tf in enumerate(popbool):
+                    if tf:
+                        count += 1
+                        newarray.p[i] = origarray.p[count]
         
         return newarray
     

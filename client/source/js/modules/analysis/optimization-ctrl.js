@@ -717,7 +717,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       if ( !angular.isDefined( optimizationTimer ) ) {
         // Keep polling for updated values after every 5 seconds till we get an error.
         // Error indicates that the model is not optimizing anymore.
-        optimizationTimer = $interval(checkWorkingOptimization, 10000, 0, false);
+        optimizationTimer = $interval(checkWorkingOptimization, 30000, 0, false);
         $scope.optimizationStatus = status;
         $scope.errorText = '';
         // start cfpLoadingBar loading

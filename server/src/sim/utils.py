@@ -93,7 +93,7 @@ def printarr(arr, arrformat='%0.2f  '):
     return None
 
 
-def checkmem(origvariable, descend=0):
+def checkmem(origvariable, descend=0, order='n', plot=False):
     """
     Checks how much memory the variable in question uses by dumping it to file.
     
@@ -104,7 +104,7 @@ def checkmem(origvariable, descend=0):
     from os import getcwd, remove
     from os.path import getsize
     from cPickle import dump
-    from numpy import iterable
+    from numpy import iterable, argsort
     
     filename = getcwd()+'/checkmem.tmp'
     
@@ -113,9 +113,13 @@ def checkmem(origvariable, descend=0):
         dump(variable, wfid)
         return None
     
+    printnames = []
+    printbytes = []
+    printsizes = []
     varnames = []
     variables = []
     if descend==False or not(iterable(origvariable)):
+        varnames = ['']
         variables = [origvariable]
     elif descend==1 and iterable(origvariable):
         if hasattr(origvariable,'keys'):
@@ -136,6 +140,22 @@ def checkmem(origvariable, descend=0):
             if filesize>10**f:
                 factor = 10**f
                 label = labels[i]
-        print('Variable %s is %0.3f %s' % (varnames[v], float(filesize/float(factor)), label))
+        printnames.append(varnames[v])
+        printbytes.append(filesize)
+        printsizes.append('%0.3f %s' % (float(filesize/float(factor)), label))
         remove(filename)
+
+    if order=='a' or order=='alpha' or order=='alphabetical':
+        inds = argsort(printnames)
+    else:
+        inds = argsort(printbytes)
+    
+    for v in inds:
+        print('Variable %s is %s' % (printnames[v], printsizes[v]))
+    
+    if plot==True:
+        from matplotlib.pylab import pie, array, axes
+        axes(aspect=1)
+        pie(array(printbytes)[inds], labels=array(printnames)[inds], autopct='%0.2f')
+    
     return None
