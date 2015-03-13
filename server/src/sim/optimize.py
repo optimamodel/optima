@@ -44,6 +44,7 @@ def objectivecalc(optimparams, options):
     """ Calculate the objective function """
     origparams = options.D.data.origalloc
     
+    # Exclude fixed costs from the optimization
     opttrue = zeros(len(options.D.data.origalloc))
     for i in range(len(options.D.data.origalloc)):
         if len(options.D.programs[options.D.data.meta.progs.short[i]]['effects']): opttrue[i] = 1.0
