@@ -16,11 +16,10 @@ define(['angular', 'jquery', 'underscore'], function (angular, $, _) {
      * height to be taken into account.
      */
     .directive('normaliseHeight', function(normalisingHeightStore) {
-      var def = {
+      return {
         restrict : 'A',
         terminal : true,
-        transclude : false,
-        link : function(scope, element, attrs) {
+        link : function(scope, element) {
           normalisingHeightStore.registerElement(element);
 
           scope.$on("$destroy", function() {
@@ -28,7 +27,6 @@ define(['angular', 'jquery', 'underscore'], function (angular, $, _) {
           });
         }
       };
-      return def;
     })
     .factory('normalisingHeightStore', function() {
       var maxHeight = 0;
