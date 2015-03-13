@@ -57,16 +57,18 @@ def getcurrentbudget(D, alloc=None, randseed=None):
                  # Use parameters if there, otherwise give it some predefined ones
                 try:
                     convertedccoparams = effect[4]
+                    if randseed>=0:
+                        try:
+                            convertedccoparams[0][1] = array(perturb(1,(convertedccoparams[2][1]-convertedccoparams[1][1])/2, randseed=randseed)) - 1 + convertedccoparams[0][1]
+                            convertedccoparams[-1], convertedccoparams[-2] = makesamples(effect[2], effect[3][0], effect[3][1], effect[3][2], effect[3][3], samplesize=1, randseed=randseed)
+                        except:
+                            print('Random sampling for CCOCs failed for program %s, makesamples failed with parameters %s and %s' % (progname, effect[2], effect[3]))
+                            convertedccoparams = default_convertedccoparams
                 except:
-                    print('Non-randomized convertedccoparams failed')
+                    print('Calculating parameter from CCOCs failed for program %s; cost-outcome curve does not exist for population %s, parameters %s' % (progname, effect[1], effect[0]))
                     convertedccoparams = default_convertedccoparams
-                if randseed>=0:
-                    try:
-                        convertedccoparams[0][1] = array(perturb(1,(convertedccoparams[2][1]-convertedccoparams[1][1])/2, randseed=randseed)) - 1 + convertedccoparams[0][1]
-                        convertedccoparams[-1], convertedccoparams[-2] = makesamples(effect[2], effect[3][0], effect[3][1], effect[3][2], effect[3][3], samplesize=1, randseed=randseed)
-                    except:
-                        print('Non-randomized convertedccoparams failed')
-                        convertedccoparams = default_convertedccoparams
+
+
 
                 D.P[parname].c[popnumber] = cco2eqn(totalcost, convertedccoparams[0]) if len(convertedccparams[0])==2 else ccoeqn(totalcost, convertedccoparams[0])            
                 #TMP
