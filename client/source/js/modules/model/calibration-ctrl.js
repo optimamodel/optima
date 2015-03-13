@@ -434,8 +434,5 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       updateCharts($scope.parameters.cache.response);
     }, true);
 
-    $scope.reportDataEndError = function() {
-      return "End year must be more than "+ $scope.G.dataend + ".";
-    };
   });
 });
