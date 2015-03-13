@@ -7,9 +7,6 @@ define(['./module', 'angular', 'jquery', 'underscore'], function (module, angula
     $scope.projectInfo = info;
     $scope.canDoFitting = $scope.projectInfo.can_calibrate;
     $scope.needData = !$scope.projectInfo.has_data;
-    $scope.$on('onAfterRender', function (e){ $scope.onAfterGraphRender() });
-    $scope.tallestGraphHeight = 0;
-    $scope.renderedGraphs = 0; // counts how many Graphs are rendered (see onAfterGraphRender for more on this)
 
     var prepareF = function (f) {
       var F = angular.copy(f);
@@ -439,32 +436,6 @@ define(['./module', 'angular', 'jquery', 'underscore'], function (module, angula
 
     $scope.reportDataEndError = function() {
       return "End year must be more than "+ $scope.G.dataend + ".";
-    };
-
-    // Returns the value of the tallest chart.
-    $scope.getMaxChartHeight = function () {
-      return $(_.max($('.chart-container'), function (element) {
-          return $(element).height();
-          })).height();
-    };
-
-    // Makes all charts to be aHeight pixels tall.
-    $scope.updateChartHeightsTo = function (aHeight) {
-      $('.chart-container').each(function(i, element){ 
-        $(element).height(aHeight)});
-    };    
-
-    // If all graphs were rendered, this will set them all with the height value of the tallest of them.
-    $scope.setSameGraphsHeight = function () {    
-      if($scope.renderedGraphs == $('.chart-container').length) $scope.updateChartHeightsTo($scope.getMaxChartHeight());
-    };
-
-    /**
-    * This controller has its view just rendered, react accordingly.
-    */
-    $scope.onAfterGraphRender = function () {
-      $scope.renderedGraphs = $scope.renderedGraphs + 1;
-      $scope.setSameGraphsHeight();
     };
   });
 });
