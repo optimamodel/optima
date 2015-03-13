@@ -15,17 +15,3 @@
     background: inline("base/form/invalid.png") #FFF no-repeat 97% 3px;
   }
 }
-
-//
-// Other validation rules
-
-.txbox {
-
-  &.ng-invalid-less-than:not(:focus) {
-    color: $color-red;
-  }
-
-  &.ng-invalid-more-than:not(:focus) {
-    color: $color-red;
-  }
-}
