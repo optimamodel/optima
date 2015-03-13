@@ -31,8 +31,13 @@ def makedatapars(D, verbose=2):
         if usetime:
             output.t = [0]*nrows # Initialize array for holding time parameters
             for r in xrange(nrows): 
-                output.p[r] = sanitize(dataarray[r]) # Store each extant value
-                output.t[r] = arange(D.G.datastart, D.G.dataend+1)[~isnan(dataarray[r])] # Store each year
+                validdata = ~isnan(dataarray[r])
+                if sum(validdata): # There's at least one data point
+                    output.p[r] = sanitize(dataarray[r]) # Store each extant value
+                    output.t[r] = arange(D.G.datastart, D.G.dataend+1)[~isnan(dataarray[r])] # Store each year
+                else: # Blank, assume zero
+                    output.p[r] = array([0])
+                    output.t[r] = array([0])
 
         else:
             print('TMP6666')
@@ -99,16 +104,24 @@ def makedatapars(D, verbose=2):
         """ For variables that are only defined for certain populations, expand to the full array. WARNING, doesn't work for time """
         from copy import deepcopy
         newarray = deepcopy(origarray)
-        newarray.p = zeros(shape(D.G.meta.pops.male))
         if 't' in newarray.keys(): 
-            print('WARNING, Shouldn''t be using time')
-            newarray.pop('t') # Remove time
-        count = -1
-        if hasattr(popbool,'__iter__'): # May or may not be a list
-            for i,tf in enumerate(popbool):
-                if tf:
-                    count += 1
-                    newarray.p[i] = origarray.p[count]
+            newarray.p = [array([0]) for i in range(len(D.G.meta.pops.male))]
+            newarray.t = [array([0]) for i in range(len(D.G.meta.pops.male))]
+            count = -1
+            if hasattr(popbool,'__iter__'): # May or may not be a list
+                for i,tf in enumerate(popbool):
+                    if tf:
+                        count += 1
+                        newarray.p[i] = origarray.p[count]
+                        newarray.t[i] = origarray.t[count]
+        else: 
+            newarray.p = zeros(shape(D.G.meta.pops.male))
+            count = -1
+            if hasattr(popbool,'__iter__'): # May or may not be a list
+                for i,tf in enumerate(popbool):
+                    if tf:
+                        count += 1
+                        newarray.p[i] = origarray.p[count]
         
         return newarray
     

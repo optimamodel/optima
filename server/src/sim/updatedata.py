@@ -1,6 +1,6 @@
 from copy import deepcopy
 
-def updatedata(D, verbose=2, savetofile = True, input_programs = None, rerun = True):
+def updatedata(D, workbookname=None, verbose=2, savetofile=True, input_programs=None, rerun=True):
     """
     Load the Excel workbook (for the given project), assuming it's in the standard uploads directory
     loads the data for the given project,
@@ -18,6 +18,9 @@ def updatedata(D, verbose=2, savetofile = True, input_programs = None, rerun = T
     from printv import printv
     printv('Updating data...', 1, verbose)
     
+    if workbookname is None:
+        workbookname = D.G.workbookname
+        
     datapath = fullpath(D.G.workbookname)
     D.data, D.programs = loadworkbook(datapath, input_programs, verbose=verbose)
     D.programs = restructureprograms(D.programs)

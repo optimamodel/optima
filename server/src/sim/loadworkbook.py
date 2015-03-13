@@ -249,6 +249,11 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=2):
                             blhindices = {'best':0, 'low':1, 'high':2} # Define best-low-high indices
                             blh = sheetdata.cell_value(row, 2) # Read in whether indicator is best, low, or high
                             data[name][thispar][blhindices[blh]].append(thesedata) # Actually append the data
+                            if thispar=='hivprev':
+                                invalid = logical_or(array(thesedata)>1, array(thesedata)<0)
+                                if any(invalid):
+                                    column = nonzero(invalid)[0]
+                                    raise Exception('HIV prevalence is invalid (row=%i, column(s)=%s, value=%i)' % (row, column, thesedata[column])
                             
                         
                         # It's basic data, append the data and check for programs
@@ -259,6 +264,11 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=2):
                             if assumptiondata != '': # There's an assumption entered
                                 thesedata = [assumptiondata] # Replace the (presumably blank) data if a non-blank assumption has been entered
                             data[name][thispar].append(thesedata) # Store data
+                            if thispar in ['stiprevulc', 'stiprevdis', 'tbprev', 'hivtest', 'aidstest', 'prep', 'condomreg', 'condomcas', 'condomcom', 'circum',  'sharing']: # All probabilities
+                                invalid = logical_or(array(thesedata)>1, array(thesedata)<0)
+                                if any(invalid):
+                                    column = nonzero(invalid)[0]
+                                    raise Exception('Value is is invalid for parameter %s (row=%i, column(s)=%s, value=%i)' % (thispar, row, column, thesedata[column])
                             
                             for programname, pops in programs_for_input_key(thispar, input_programs).iteritems(): # Link with programs...?
                                 if (programname in programs) and ((not pops or pops==['']) or subparam in pops):
