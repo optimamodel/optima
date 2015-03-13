@@ -30,9 +30,5 @@
 
   &_i_inner {
     display: block;
-
-    &.__complex {
-      @extend .link.__expanded;
-    }
   }
 }
