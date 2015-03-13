@@ -1,17 +1,20 @@
-/**
-* This directive triggers 'onAfterRender' once it's redered.
-* Also can evaluate arbitrary code for people that know what they are doing
-* Do not abuse the expression evaluator by making the view do things the controller should do!
-*/
-
-// normalizing-tallest-heigh
-// normalize-height
-
-
 define(['angular', 'jquery', 'underscore'], function (angular, $, _) {
   'use strict';
 
   return angular.module('app.common.normalise-height', [])
+
+    /**
+     * This directive normalises the height to the tallest element having the
+     * `normalise-height` attribute currently available in the DOM.
+     *
+     * In this example both elements will end up with a height of 200px:
+     *  <div style="height: 120px" normalise-height></div>
+     *  <div style="height: 200px" normalise-height></div>
+     *
+     * Important: Any element that re-draws itself & changes the height
+     * during this process must trigger a jQuery `draw` event for the new
+     * height to be taken into account.
+     */
     .directive('normaliseHeight', function(normalisingHeightStore) {
       var def = {
         restrict : 'A',
@@ -59,7 +62,7 @@ define(['angular', 'jquery', 'underscore'], function (angular, $, _) {
        * Registers an element to be taken into account for normalising the
        * height of all these elements.
        *
-       * Important: Any element which re-draws itself & changes the height
+       * Important: Any element that re-draws itself & changes the height
        * during this process must trigger a jQuery `draw` event for the new
        * height to be taken into account.
        */
