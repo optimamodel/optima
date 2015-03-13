@@ -1,22 +1,24 @@
-.scenario-grids{
-  position:relative;
-  .grid{
+.scenario-grids {
+  position: relative;
+
+  .grid {
     margin-top: 0;
     margin-bottom: 5px;
   }
 }
 
-.scenario-parameter-close{
-  color:gray;
-  float:right;
-  font-weight:bold;
-  font-size:14px;
-  outline:0;
-  background:none;
-  border:0;
-  position:absolute;
-  right:15px;
-  &:hover{
+.scenario-parameter-close {
+  color: gray;
+  float: right;
+  font-weight: bold;
+  font-size: 14px;
+  outline: 0;
+  background: none;
+  border: 0;
+  position: absolute;
+  right: 15px;
+
+  &:hover {
     color: #BE2222;
   }
 }
