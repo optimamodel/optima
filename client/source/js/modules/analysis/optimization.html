@@ -234,117 +234,22 @@
         <div class="section" ng-if="params.objectives.what == 'money'">
           What is the minimum amount of money required to achieve the following objectives:
 
-          <!-- Reduce the incidence of HIV -->
-          <div class="checkbox-block margin-top-xs">
-            <label>
-              <input type="checkbox" ng-model="params.objectives.money.objectives.inci.use">
-              Reduce the annual incidence of HIV
+          <div class="margin-top-xs" ng-repeat="item in moneyObjectives">
+            <div class="checkbox-block">
+              <label ng-init="iObjective = params.objectives.money.objectives[item.id]">
+                <input type="checkbox" ng-model="iObjective.use">
+                {{ item.title }}
+              </label>
+            </div>
+            <label class="radio-inline margin-left-s">
+              <input type="radio" name="{{ item.id }}to_or_by" value="1" ng-disabled="!iObjective.use" ng-model="iObjective.to_or_by">
+              by <input class="txbox __inline __s" ng-model="iObjective.by" ng-disabled="!iObjective.use || iObjective.to_or_by != 1">
+            </label>
+            <label class="radio-inline">
+              <input type="radio" name="{{ item.id }}to_or_by" value="0" ng-disabled="!iObjective.use" ng-model="iObjective.to_or_by">
+              to < <input class="txbox __inline __s" ng-model="iObjective.to" ng-disabled="!iObjective.use || iObjective.to_or_by != 0">
             </label>
           </div>
-          <label class="radio-inline margin-left-s">
-            by <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.inci.by">
-          </label>
-          <label class="radio-inline">
-            to < <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.inci.to">
-          </label>
-
-          <!-- Reduce the incidence of sexually transmitted HIV -->
-          <div class="checkbox-block margin-top-xs">
-            <label>
-              <input type="checkbox" ng-model="params.objectives.money.objectives.incisex.use">
-              Reduce the annual incidence of sexually transmitted HIV
-            </label>
-          </div>
-          <label class="radio-inline margin-left-s">
-            by <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.incisex.by">
-          </label>
-          <label class="radio-inline">
-            to < <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.incisex.to">
-          </label>
-
-          <!-- Reduce the incidence of injecting-related HIV -->
-          <div class="checkbox-block margin-top-xs">
-            <label>
-              <input type="checkbox" ng-model="params.objectives.money.objectives.incinj.use">
-              Reduce the annual incidence of injecting-related HIV
-            </label>
-          </div>
-          <label class="radio-inline margin-left-s">
-            by <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.inciinj.by">
-          </label>
-          <label class="radio-inline">
-            to < <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.inciinj.to">
-          </label>
-
-          <!-- Reduce MTCT of HIV -->
-          <div class="checkbox-block margin-top-xs">
-            <label>
-              <input type="checkbox" ng-model="params.objectives.money.objectives.mtct.use">
-              Reduce annual mother-to-child transmission of HIV
-            </label>
-          </div>
-          <label class="radio-inline margin-left-s">
-            by <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.mtct.by">
-          </label>
-          <label class="radio-inline">
-            to < <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.mtct.to">
-          </label>
-
-          <!-- Reduce MTCT of HIV among breastfeeding mother -->
-          <div class="checkbox-block margin-top-xs">
-            <label>
-              <input type="checkbox" ng-model="params.objectives.money.objectives.mtctbreast.use">
-              Reduce annual mother-to-child transmission of HIV among breastfeeding mothers
-            </label>
-          </div>
-          <label class="radio-inline margin-left-s">
-            by <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.mtctbreast.by">
-          </label>
-          <label class="radio-inline">
-            to < <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.mtctbreast.to">
-          </label>
-
-          <!-- Reduce MTCT of HIV among non-breastfeeding mother -->
-          <div class="checkbox-block margin-top-xs">
-            <label>
-              <input type="checkbox" ng-model="params.objectives.money.objectives.mtctnonbreast.use">
-              Reduce annual mother-to-child transmission of HIV among non-breastfeeding mothers
-            </label>
-          </div>
-          <label class="radio-inline margin-left-s">
-            by <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.mtctnonbreast.by">
-          </label>
-          <label class="radio-inline">
-            to < <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.mtctnonbreast.to">
-          </label>
-
-          <!-- Reduce HIV-related deaths -->
-          <div class="checkbox-block margin-top-xs">
-            <label>
-              <input type="checkbox" ng-model="params.objectives.money.objectives.deaths.use">
-              Reduce annual AIDS-related deaths
-            </label>
-          </div>
-          <label class="radio-inline margin-left-s">
-            by <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.deaths.by">
-          </label>
-          <label class="radio-inline">
-            to < <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.deaths.to">
-          </label>
-
-          <!-- Reduce DALYs -->
-          <div class="checkbox-block margin-top-xs">
-            <label>
-              <input type="checkbox" ng-model="params.objectives.money.objectives.dalys.use">
-              Reduce annual HIV-related DALYs
-            </label>
-          </div>
-          <label class="radio-inline margin-left-s">
-            by <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.dalys.by">
-          </label>
-          <label class="radio-inline">
-            to < <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.dalys.to">
-          </label>
 
           <div class="cf margin-top-s">
             <h2>Cost assumptions</h2>
