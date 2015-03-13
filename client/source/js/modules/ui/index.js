@@ -1,6 +1,7 @@
 define([
   'angular',
   './button-choicebox/index',
+  './editable/index',
   './menu/index',
   './modal/modal-service',
   '../common/file-upload-service',
@@ -12,6 +13,7 @@ define([
   return angular.module('app.ui', [
     'app.active-project',
     'app.ui.button-choicebox',
+    'app.ui.editable',
     'app.ui.modal',
     'app.common.file-upload',
     'app.ui.menu'

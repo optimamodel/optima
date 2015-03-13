@@ -72,7 +72,7 @@
     </div>
   </div>
 
-  <div class="section __inline calibration-charts" ng-class="{'calibration-charts--full':enableManualCalibration===false}" ng-show="hasCharts" >
+  <div class="section __inline calibration-charts" ng-class="{'calibration-charts--full':enableManualCalibration===false}" ng-show="charts.length > 0" >
     <export-all-charts name="Model calibration" ng-if="charts"></export-all-charts>
     <export-all-data name="Model calibration" charts="charts" ng-if="charts"></export-all-data>
     <div class="grid">
@@ -98,55 +98,35 @@
       <tr ng-repeat="parameter in parameters.m">
         <td>{{parameter.title}}</td>
         <td>
-          <span ng-hide="editing" ng-click="editing = true">{{ parameter.data}}</span>
-          <span ng-show="editing">
-            <input class="txbox __inline" ng-model="parameter.data">
-            <button class="btn" ng-click="editing = false; doneEditingParameter();">Ok</button>
-          </span>
+          <span editable-input="parameter.data" on-save="doneEditingParameter"></span>
         </td>
       </tr>
       <!-- Force -->
       <tr ng-repeat="population in parameters.meta.pops.short track by $index">
         <td>{{ parameters.types.force }} {{ population }}</td>
         <td>
-          <span ng-hide="editing" ng-click="editing = true">{{ parameters.f.force[$index] }}</span>
-          <span ng-show="editing">
-            <input class="txbox __inline" ng-model="parameters.f.force[$index]">
-            <button class="btn" ng-click="editing = false; doneEditingParameter();">Ok</button>
-          </span>
+          <span editable-input="parameters.f.force[$index]" on-save="doneEditingParameter"></span>
         </td>
       </tr>
       <!-- Init -->
       <tr ng-repeat="population in parameters.meta.pops.short track by $index">
         <td>{{ parameters.types.init }} {{ population }}</td>
         <td>
-          <span ng-hide="editing" ng-click="editing = true">{{ parameters.f.init[$index] }}</span>
-          <span ng-show="editing">
-            <input class="txbox __inline" ng-model="parameters.f.init[$index]">
-            <button class="btn" ng-click="editing = false; doneEditingParameter();">Ok</button>
-          </span>
+          <span editable-input="parameters.f.init[$index]" on-save="doneEditingParameter"></span>
         </td>
       </tr>
       <!-- Popsize -->
       <tr ng-repeat="population in parameters.meta.pops.short track by $index">
         <td>{{ parameters.types.popsize }} {{ population }}</td>
         <td>
-          <span ng-hide="editing" ng-click="editing = true">{{ parameters.f.popsize[$index] }}</span>
-          <span ng-show="editing">
-            <input class="txbox __inline" ng-model="parameters.f.popsize[$index]">
-            <button class="btn" ng-click="editing = false; doneEditingParameter();">Ok</button>
-          </span>
+          <span editable-input="parameters.f.popsize[$index]" on-save="doneEditingParameter"></span>
         </td>
       </tr>
       <!-- Testing Rate -->
       <tr ng-repeat="i in [0, 1, 2, 3] track by $index">
         <td>{{ parameters.types.dx[i] }}</td>
         <td>
-          <span ng-hide="editing" ng-click="editing = true">{{ parameters.f.dx[i] }}</span>
-          <span ng-show="editing">
-            <input class="txbox __inline" ng-model="parameters.f.dx[i]">
-            <button class="btn" ng-click="editing = false; doneEditingParameter();">Ok</button>
-          </span>
+          <span editable-input="parameters.f.dx[i]" on-save="doneEditingParameter"></span>
         </td>
       </tr>
       </tbody>
