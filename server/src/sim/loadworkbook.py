@@ -16,8 +16,10 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=2):
     from xlrd import open_workbook # For opening Excel workbooks
     from bunch import Bunch as struct # Replicate Matlab-like structure behavior
     from time import strftime # For determining when a spreadsheet was last uploaded
-    printv('Loading data from %s...' % filename, 1, verbose)
+    from datetime import date
     from programs import programs_for_input_key
+    printv('Loading data from %s...' % filename, 1, verbose)
+    
     
     def forcebool(entry):
         """ Convert an entry to be Boolean """
@@ -302,9 +304,10 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=2):
     ## Program cost data
     nprogs = len(data.costcov.cost)
     data.origalloc = zeros(nprogs)
+    indexforcurrentyear = data.epiyears.index(min(data.epiyears[-1], date.today().year))
     for prog in range(nprogs):
         totalcost = data.costcov.cost[prog]
-        totalcost = array(totalcost)
+        totalcost = array(totalcost)[:indexforcurrentyear] # Trim years after most recent
         totalcost = totalcost[~isnan(totalcost)]
         try:
             totalcost = totalcost[-1]
