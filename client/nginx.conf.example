@@ -18,7 +18,7 @@ server {
   server_name ~^(?P<subdomain>.+?)?\.?optima\.dev$;
 
   # When we export all graphs, we are posting more data.
-  client_max_body_size 3m;
+  client_max_body_size 0;
 
   # @FIXME update this path with yours
   set $host_path "{{ABSOLUTE_PATH_TO_PROJECT_SOURCE}}/client";
@@ -49,11 +49,27 @@ server {
 
   charset utf-8;
 
-
   # Hide nginx version information.
   server_tokens off;
   proxy_pass_header Server;
 
+  # How long to allow each connection to stay idle; longer values are better
+  # for each individual client, particularly for SSL, but means that worker
+  # connections are tied up longer. (Default: 65)
+  keepalive_timeout 100;
+
+  # Speed up file transfers by using sendfile() to copy directly
+  # between descriptors rather than using read()/write().
+  sendfile        on;
+
+  # Tell Nginx not to send out partial frames; this increases throughput
+  # since TCP frames are filled up before being sent out. (adds TCP_CORK)
+  tcp_nopush      on;
+
+  # Tell Nginx to enable the Nagle buffering algorithm for TCP packets, which
+  # collates several smaller packets together into one larger packet, thus saving
+  # bandwidth at the cost of a nearly imperceptible increase to latency. (removes TCP_NODELAY)
+  tcp_nodelay     off;
 
   # Force the latest IE version
   # Use ChromeFrame if it's installed for a better experience for the poor IE folk
