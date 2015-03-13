@@ -35,9 +35,10 @@ def makedatapars(D, verbose=2):
                 output.t[r] = arange(D.G.datastart, D.G.dataend+1)[~isnan(dataarray[r])] # Store each year
 
         else:
+            print('TMP6666')
             for r in xrange(nrows): 
                 output.p[r] = mean(sanitize(dataarray[r])) # Calculate mean for each population
-                print('TMP')
+                print('TMP223')
         
         return output
 
@@ -99,7 +100,9 @@ def makedatapars(D, verbose=2):
         from copy import deepcopy
         newarray = deepcopy(origarray)
         newarray.p = zeros(shape(D.G.meta.pops.male))
-        if 't' in newarray.keys(): raise Exception('Shouldn''t be using time')
+        if 't' in newarray.keys(): 
+            print('WARNING, Shouldn''t be using time')
+            newarray.pop('t') # Remove time
         count = -1
         if hasattr(popbool,'__iter__'): # May or may not be a list
             for i,tf in enumerate(popbool):
