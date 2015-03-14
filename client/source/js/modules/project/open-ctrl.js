@@ -4,7 +4,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ProjectOpenController',
-    function ($scope, $http, $upload, activeProject, projects, modalService, fileUpload, UserManager) {
+    function ($scope, $http, activeProject, projects, modalService, fileUpload, UserManager) {
 
     $scope.projects = _.map(projects.projects, function(project){
       project.creation_time = Date.parse(project.creation_time);

@@ -19,10 +19,10 @@
     "FileSaver": "#c69c21d488",
     "jquery": "=2.1.1",
     "jspdf": "=1.0.272",
-    "ng-file-upload": "=3.1.2",
+    "ng-file-upload": "=3.2.4",
     "normalize-css": "=3.0.1",
     "requirejs": "=2.1.13",
-    "underscore": "=1.6.0",
+    "underscore": "=1.8.2",
     "radar-chart-d3": "alangrafu/radar-chart-d3#d5bb94a25c00524647a5d08f3b71806611e6a9d4"
   },
   "resolutions": {
