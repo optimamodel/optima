@@ -1,6 +1,7 @@
 define([
   'angular',
   'angular-loading-bar',
+  'angular-messages',
   'ng-file-upload',
   'ui.bootstrap',
   'ui.router',
@@ -56,6 +57,7 @@ define([
     'app.ui',
     'app.ui.modal',
     'app.user-manager',
+    'ngMessages',
     'ui.bootstrap',
     'ui.router'
   ])

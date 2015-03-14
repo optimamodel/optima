@@ -1,7 +1,7 @@
 <div class="page">
-  <p ng-show="needData===true" class="error-hint">Please upload Optima spreadsheet first.</p>
+  <p ng-show="needData" class="error-hint">Please upload Optima spreadsheet first.</p>
 
-  <div ng-if="needData===false">
+  <div ng-if="!needData">
 
     <div class="grid" style="margin-bottom: 40px">
       <div class="12">
@@ -9,12 +9,12 @@
       </div>
       <div class="3">
         <select name="optimization-selection" class="txbox"
-        ng-model="state.activeOptimizationName"
-        ng-change="applyOptimization(state.activeOptimizationName, true)">
-        <option ng-repeat="org in optimizations"
-        ng-selected="{{ org.name == state.activeOptimizationName }}"
-        value="{{ org.name }}">{{ org.name }}</option>
-      </select>
+                ng-model="state.activeOptimizationName"
+                ng-change="applyOptimization(state.activeOptimizationName, true)">
+          <option ng-repeat="org in optimizations"
+                  ng-selected="{{ org.name == state.activeOptimizationName }}"
+                  value="{{ org.name }}">{{ org.name }}</option>
+        </select>
       </div>
       <div class="9">
         <button ng-click="addOptimization()" type="button" class="btn">New Optimization</button>
@@ -47,32 +47,53 @@
           <span ng-show="validateYears().valid===false" class="error-hint"> {{validations.years.message}} </span>
           <div class="float-left margin-left-s">
             Analyses will consider program optimizations over the period
-            <input class="txbox __inline __l" value="2015" type="number" placeholder="e.g. 2015"
-                   ng-model="params.objectives.year.start" ng-change="updateYearRange()"
+            <input type="number" class="txbox __inline __l" value="2015" placeholder="e.g. 2015"
+                   ng-model="params.objectives.year.start"
+                   ng-change="updateYearRange()"
                    ng-required="yearsAreRequired()"
                    min="1950"
                    max="2100"
                    name="periodStart">
             to
-            <input class="txbox __inline __l" value="2020" type="number" placeholder="e.g. 2020"
-                   ng-model="params.objectives.year.end" ng-change="updateYearRange()"
+            <input type="number" class="txbox __inline __l" value="2020" placeholder="e.g. 2020"
+                   ng-model="params.objectives.year.end"
+                   ng-change="updateYearRange()"
                    ng-required="yearsAreRequired()"
                    min="1950"
                    max="2100"
                    name="periodEnd">
             in order to achieve the objectives by
-            <input class="txbox __inline __l" ng-change="updateYearRange()" value="2030" type="number" placeholder="e.g. 2030"
+            <input type="number" class="txbox __inline __l" value="2030" placeholder="e.g. 2030"
                    ng-model="params.objectives.year.until"
+                   ng-change="updateYearRange()"
                    min="1950"
                    max="2100"
                    name="objectivesUntil">
             , with the following context between the end of the optimized program period and the end of the analysis
-            period:</p>
+            period:
 
-            <error-messages for="periodStart" rules="{min:1950, max:2100, required: 'Please provide a value'}"></error-messages>
-            <error-messages for="periodEnd" rules="{min:1950, max:2100, required: 'Please provide a value'}"></error-messages>
-            <error-messages for="objectivesUntil" rules="{min:1950, max:2100}"></error-messages>
+            <div ng-messages="OptimizationForm.periodStart.$error"
+                 ng-show="OptimizationForm.periodStart.$touched && OptimizationForm.periodStart.$invalid">
+              <div class="error-hint" ng-message="required">Please provide a value</div>
+              <div class="error-hint" ng-message="min">The minimum value is 1950</div>
+              <div class="error-hint" ng-message="max">The maximum value is 2100</div>
+              <div class="error-hint" ng-message="number">The value should be a number</div>
+            </div>
 
+            <div ng-messages="OptimizationForm.periodEnd.$error"
+                 ng-show="OptimizationForm.periodEnd.$touched && OptimizationForm.periodEnd.$invalid">
+              <div class="error-hint" ng-message="required">Please provide a value</div>
+              <div class="error-hint" ng-message="min">The minimum value is 1950</div>
+              <div class="error-hint" ng-message="max">The maximum value is 2100</div>
+              <div class="error-hint" ng-message="number">The value should be a number</div>
+            </div>
+
+            <div ng-messages="OptimizationForm.objectivesUntil.$error"
+                 ng-show="OptimizationForm.objectivesUntil.$touched && OptimizationForm.objectivesUntil.$invalid">
+              <div class="error-hint" ng-message="min">The minimum value is 1950</div>
+              <div class="error-hint" ng-message="max">The maximum value is 2100</div>
+              <div class="error-hint" ng-message="number">The value should be a number</div>
+            </div>
 
             <div>
               <label>
@@ -95,12 +116,25 @@
                 </label><br>
                 <label>
                   <input type="radio" name="artcontinue" ng-model="params.objectives.artcontinue" value="4">
-                  ART coverage will scale up, reaching <input class="txbox __inline __s" value="90"
-                                                              placeholder="e.g. 90"
-                                                              ng-model="params.objectives.year.universalcov">% coverage
-                  of treatment-eligible people by <input class="txbox __inline __l" placeholder="e.g. 2025" name="universal" min="1950" max="2100" ng-model="params.objectives.year.universal"> and then be
-                  maintained
-                  <error-messages for="universal" rules="{min:1950, max:2100, required: 'Please provide a value'}"></error-messages>
+                  ART coverage will scale up, reaching
+                  <input type="number" class="txbox __inline __s" value="90"
+                         placeholder="e.g. 90"
+                         ng-model="params.objectives.year.universalcov">%
+                  coverage of treatment-eligible people by
+                  <input type="number" class="txbox __inline __l"
+                         placeholder="e.g. 2025"
+                         name="universal"
+                         min="1950" max="2100"
+                         ng-model="params.objectives.year.universal">
+                  and then be maintained
+
+                  <div ng-messages="OptimizationForm.universal.$error"
+                       ng-show="OptimizationForm.universal.$touched && OptimizationForm.universal.$invalid">
+                    <div class="error-hint" ng-message="required">Please provide a value</div>
+                    <div class="error-hint" ng-message="min">The minimum value is 1950</div>
+                    <div class="error-hint" ng-message="max">The maximum value is 2100</div>
+                    <div class="error-hint" ng-message="number">The value should be a number</div>
+                  </div>
                 </label>
               </div>
             </div>
@@ -154,28 +188,31 @@
           <div class="float-left margin-left-s">
             <label class="checkbox-inline">
               <input type="radio" name="fundingAssumptions" ng-model="params.objectives.funding" value="constant"/>
-              Optimize a fixed budget of total amount <input class="txbox __inline __l" type="number"
-                                                             ng-required="params.objectives.funding==='constant'"
-                                                             ng-model="params.objectives.outcome.fixed"/> for each year
+              Optimize a fixed budget of total amount
+              <input type="number" class="txbox __inline __l"
+                     ng-required="params.objectives.funding==='constant'"
+                     ng-model="params.objectives.outcome.fixed"/> for each year
               in the program period
             </label>
-            <label class="checkbox-inline" style="padding:0px 0px 0px 40px;">
+            <label class="checkbox-inline" style="padding:0 0 0 40px;">
               <input type="checkbox" ng-model="params.objectives.timevarying">
               Allow time-varying optimization
             </label>
             <br/>
-            <label style="padding:0px 0px 0px 20px;">
-              <input type="radio" name="fundingAssumptions" ng-model="params.objectives.funding" value="variable"
+            <label style="padding:0 0 0 20px;">
+              <input type="radio" name="fundingAssumptions" value="variable"
+                     ng-model="params.objectives.funding"
                      ng-change="updateYearRange()"/>
               Optimize a variable budget for each year in the program period:
               <br/>
-              <div ng-if="params.objectives.funding==='variable'" style="padding:0px 0px 0px 50px;">
+              <div ng-if="params.objectives.funding==='variable'" style="padding:0 0 0 50px;">
                 <div ng-repeat="yCols in yearCols" style="padding:0 0 10px 0;">
-								<span ng-repeat="yloop in yearLoop.slice(yCols.start,yCols.end)">
-									{{ yloop.year }}:
-									<input class="txbox __inline __l" ng-required="true" type="number" ng-init="params.objectives.outcome.variable[yloop.year]=undefined"
-                         ng-model="params.objectives.outcome.variable[yloop.year]"/> &nbsp;
-								</span>
+                  <span ng-repeat="yloop in yearLoop.slice(yCols.start,yCols.end)">
+                    {{ yloop.year }}:
+                    <input type="number" class="txbox __inline __l" required
+                           ng-init="params.objectives.outcome.variable[yloop.year]=undefined"
+                           ng-model="params.objectives.outcome.variable[yloop.year]"/> &nbsp;
+                  </span>
                 </div>
                 <div style="clear:both;"></div>
               </div>
@@ -183,24 +220,43 @@
             <label class="checkbox-inline">
               <input type="radio" name="fundingAssumptions" ng-model="params.objectives.funding" value="range"/>
               Optimize a range of fixed budgets from amount
-              <input class="txbox __inline __l" type="number" ng-required="params.objectives.funding==='range'" name="budgetRangeMin" ng-model="params.objectives.outcome.budgetrange.minval"/>
+              <input type="number" class="txbox __inline __l"
+                     name="budgetRangeMin"
+                     ng-required="params.objectives.funding==='range'"
+                     ng-model="params.objectives.outcome.budgetrange.minval"/>
               to amount
-              <input class="txbox __inline __l" type="number" more-than="params.objectives.outcome.budgetrange.minval" ng-required="params.objectives.funding==='range'" name="budgetRangeMax" ng-model="params.objectives.outcome.budgetrange.maxval"/>
+              <input type="number" class="txbox __inline __l"
+                     name="budgetRangeMax"
+                     more-than="params.objectives.outcome.budgetrange.minval"
+                     ng-required="params.objectives.funding==='range'"
+                     ng-model="params.objectives.outcome.budgetrange.maxval"/>
               in increments of
-              <input class="txbox __inline __l" type="number" max="{{params.objectives.outcome.budgetrange.maxval-params.objectives.outcome.budgetrange.minval}}" min="{{(params.objectives.outcome.budgetrange.maxval-params.objectives.outcome.budgetrange.minval)/30}}" ng-required="params.objectives.funding==='range'" name="budgetRangeStep" ng-model="params.objectives.outcome.budgetrange.step"/>
+              <input type="number" class="txbox __inline __l"
+                     name="budgetRangeStep"
+                     min="{{(params.objectives.outcome.budgetrange.maxval-params.objectives.outcome.budgetrange.minval)/30}}"
+                     max="{{params.objectives.outcome.budgetrange.maxval-params.objectives.outcome.budgetrange.minval}}"
+                     ng-required="params.objectives.funding==='range'"
+                     ng-model="params.objectives.outcome.budgetrange.step"/>
 
-              <error-messages for="budgetRangeMin" show-always="true"
-                              rules="{required:{message:'The minimum budget is required.'}}"></error-messages>
-              <error-messages for="budgetRangeMax" show-always="true"
-                              rules="{required:{message:'The maximum budget is required.'},
-                                      moreThan:{message:'The maximum budget must be greater than <%= moreThan %>.', value: params.objectives.outcome.budgetrange.minval}}">
-              </error-messages>
-              <error-messages for="budgetRangeStep" show-always="true"
-                              rules="{required:{message:'The budget step is required.'},
-                                      min:{message:'The maximum number of budgets is 30.'},
-                                      max:{message:'The minimum number of budgets is 1.'}}">
-              </error-messages>
-            <br/>
+              <div ng-messages="OptimizationForm.budgetRangeMin.$error"
+                   ng-show="OptimizationForm.budgetRangeMin.$invalid">
+                <div class="error-hint" ng-message="required">The minimum budget is required</div>
+                <div class="error-hint" ng-message="number">The value should be a number</div>
+              </div>
+              <div ng-messages="OptimizationForm.budgetRangeMax.$error"
+                   ng-show="OptimizationForm.budgetRangeMax.$invalid">
+                <div class="error-hint" ng-message="required">The maximum budget is required</div>
+                <div class="error-hint" ng-message="moreThan">The maximum budget must be greater than {{ params.objectives.outcome.budgetrange.minval }}</div>
+                <div class="error-hint" ng-message="number">The value should be a number</div>
+              </div>
+              <div ng-messages="OptimizationForm.budgetRangeStep.$error"
+                   ng-show="OptimizationForm.budgetRangeStep.$invalid">
+                <div class="error-hint" ng-message="required">The budget step is required</div>
+                <div class="error-hint" ng-message="min">The minimum number of budgets is {{ (params.objectives.outcome.budgetrange.maxval-params.objectives.outcome.budgetrange.minval)/30 | number:0 }}</div>
+                <div class="error-hint" ng-message="max">The maximum number of budgets is {{ params.objectives.outcome.budgetrange.maxval-params.objectives.outcome.budgetrange.minval }}</div>
+                <div class="error-hint" ng-message="number">The value should be a number</div>
+              </div>
+              <br/>
             <div style="clear:both;"></div>
             </label>
           </div>
@@ -224,7 +280,7 @@
           <div ng-repeat="objective in objectivesToMinimize" ng-if="params.objectives.outcome[objective.slug] === true">
             <div class="objective-checkbox">
               <div class="objective-checkbox__title"> {{objective.title}} =</div>
-              <input class="txbox __inline __s" value="1" type="number" ng-model="params.objectives.outcome[objective.slug+'weight']">%
+              <input type="number" class="txbox __inline __s" value="1" ng-model="params.objectives.outcome[objective.slug+'weight']">%
             </div>
           </div>
 
@@ -352,17 +408,16 @@
             <div class="float-left margin-left-xs">
               <table class="table table-bordered table-hover table-striped" style="width: auto">
                 <thead>
-                <th>Program name</th>
-                <th>Program efficiency relative to current</th>
+                <tr>
+                  <th>Program name</th>
+                  <th>Program efficiency relative to current</th>
+                </tr>
                 </thead>
                 <tbody>
                 <tr ng-repeat="p in programs">
+                  <td>{{ p }}</td>
                   <td>
-                    {{ p }}
-                  </td>
-                  <td>
-                    <input class="txbox __inline __s" ng-model="params.objectives.money.costs[$index]">
-                    %
+                    <input type="number" class="txbox __inline __s" ng-model="params.objectives.money.costs[$index]">%
                   </td>
                 </tr>
                 </tbody>
@@ -416,19 +471,19 @@
         <div>
           <table class="table table-bordered table-hover table-striped" style="width: auto">
             <thead>
-            <th>Enable</th>
-            <th>Program name</th>
-            <th>Not less than</th>
-            <th>Not more than</th>
+            <tr>
+              <th>Enable</th>
+              <th>Program name</th>
+              <th>Not less than</th>
+              <th>Not more than</th>
+            </tr>
             </thead>
             <tbody>
             <tr ng-repeat="p in programs">
               <td>
                 <input type="checkbox" ng-model="params.constraints.yeardecrease[$index].use">
               </td>
-              <td>
-                {{ p }}
-              </td>
+              <td>{{ p }}</td>
               <td>
                 <input class="txbox __inline __s" type="number"
                        ng-change="params.constraints.yeardecrease[$index].use=true"
@@ -449,19 +504,19 @@
         <div>
           <table class="table table-bordered table-hover table-striped" style="width: auto">
             <thead>
-            <th>Enable</th>
-            <th>Program name</th>
-            <th>Not less than</th>
-            <th>Not more than</th>
+            <tr>
+              <th>Enable</th>
+              <th>Program name</th>
+              <th>Not less than</th>
+              <th>Not more than</th>
+            </tr>
             </thead>
             <tbody>
             <tr ng-repeat="p in programs">
               <td>
                 <input type="checkbox" ng-model="params.constraints.totaldecrease[$index].use">
               </td>
-              <td>
-                {{ p }}
-              </td>
+              <td>{{ p }}</td>
               <td>
                 <input class="txbox __inline __s" type="number"
                        ng-change="params.constraints.totaldecrease[$index].use=true"
@@ -484,19 +539,19 @@
         <div>
           <table class="table table-bordered table-hover table-striped" style="width: auto">
             <thead>
-            <th>Enable</th>
-            <th>Program name</th>
-            <th>By year...</th>
-            <th>coverage must reach at least</th>
+            <tr>
+              <th>Enable</th>
+              <th>Program name</th>
+              <th>By year...</th>
+              <th>coverage must reach at least</th>
+            </tr>
             </thead>
             <tbody>
             <tr ng-repeat="p in programs">
               <td>
                 <input type="checkbox" ng-model="params.constraints.coverage[$index].use">
               </td>
-              <td>
-                {{ p }}
-              </td>
+              <td>{{ p }}</td>
               <td>
                 <input class="txbox __inline __m" type="number"
                        ng-change="params.constraints.coverage[$index].use=true"

@@ -18,7 +18,7 @@ define(['./module', 'underscore'], function (module, _) {
       $scope.notReady = $scope.needData || $scope.cannotCalibrate;
 
       $scope.optionsErrorMessage = 'To define a cost-coverage curve, values must be provided in the first three text boxes.';
-      $scope.needAllCCParamsMessage = 'First three text boxes must be either all empty, or all have values in them.';
+      $scope.needAllCCParamsMessage = 'First four text boxes must be either all empty, or all have values in them.';
       $scope.all_programs = programs;
 
       if ( !$scope.needData ) {
