@@ -80,7 +80,6 @@
                 <td>&nbsp;</td>
               </tr>
               <tr ng-show="programs.length" ng-repeat="program in programs" ng-if="program.category==category.category">
-                {{ program| json}}
                 <td class="text-center" style="width: 50px" update-checkbox-on-click>
                   <input type="checkbox" ng-model="program.active">
                 </td>

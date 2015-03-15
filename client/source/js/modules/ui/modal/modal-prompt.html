@@ -1,21 +1,21 @@
 <form name="prompt" ng-submit="cb(prompt.promptInput.$viewValue)" >
   <div class="modal-header">
-    <a class="modal-close" data-ng-click="$dismiss('cancel')">&times;</a>
-    <h4 class="modal-title">{{ title }}</h4>
+    <a class="modal-close" ng-click="$dismiss('cancel')">&times;</a>
+    <h4 class="modal-title">{{ ::title }}</h4>
   </div>
   <div class="modal-body grid" style="margin-bottom: 20px">
 
       <div class="++2 8">
-          <p ng-show="description" style="margin-top: 0">{{ description }}</p>
+          <p ng-show="::description" style="margin-top: 0">{{ ::description }}</p>
       </div>
 
       <div class="++3 6">
-        <label for="prompt-input" class="required">{{ label }}</label>
-        <input class="txbox" id="prompt-input" name="promptInput" ng-model="enteredValue" required focus>
+        <label for="prompt-input" class="required">{{ ::label }}</label>
+        <input class="txbox" id="prompt-input" name="promptInput" ng-model="enteredValue" required autofocus>
       </div>
   </div>
   <div class="modal-footer text-center">
-    <button type="button" class="btn __white" ng-click="$close(closeReason)">{{rejectButton}}</button>
-    <button type="submit" class="btn" ng-disabled="prompt.$invalid">{{acceptButton}}</button>
+    <button type="button" class="btn __white" ng-click="$close(closeReason)">{{ ::rejectButton }}</button>
+    <button type="submit" class="btn" ng-disabled="prompt.$invalid">{{ ::acceptButton }}</button>
   </div>
 </form>

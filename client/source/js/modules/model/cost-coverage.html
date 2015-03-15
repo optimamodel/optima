@@ -19,7 +19,7 @@
       <label>
         Select a program: <br>
         <select class="txbox"
-                ng-options="p as p.name group by p.category for p in programs"
+                ng-options="p as p.name group by p.category for p in ::programs"
                 ng-change="changeProgram()"
                 ng-model="selectedProgram"
                 ng-disabled="notReady"></select>
@@ -50,14 +50,14 @@
         <div class="elastic_col">
           <div class="section">
             <form name="CostCoverageForm" ng-submit="generateCurves()">
-              <div class="info-hint" ng-show="!hasAllCCParams()">{{optionsErrorMessage}}</div>
-              <div class="error-hint" ng-show="!hasValidCCParams()">{{needAllCCParamsMessage}}</div>
+              <div class="info-hint" ng-show="!hasAllCCParams()">{{ ::optionsErrorMessage }}</div>
+              <div class="error-hint" ng-show="!hasValidCCParams()">{{ ::needAllCCParamsMessage }}</div>
               <div class="section">
                 1. Specify the saturation coverage level:
                 <input type="number" class="txbox __inline __m"
                        name="saturationCoverageLevel"
                        min="1" max="100" step="1"
-                       placeholder="e.g.{{defaultSaturationCoverageLevel}}"
+                       placeholder="e.g.{{ ::defaultSaturationCoverageLevel }}"
                        ng-model="saturationCoverageLevel"
                        ng-required="!hasValidCCParams()"
                        more-than="knownMaxCoverageLevel"
@@ -85,14 +85,14 @@
                 <input type="number" class="txbox __inline __m"
                        name="knownMaxCoverageLevel"
                        min="1" max="100"
-                       placeholder="e.g.{{defaultKnownCoverageLevel}}"
+                       placeholder="e.g.{{ ::defaultKnownCoverageLevel }}"
                        ng-model="knownMaxCoverageLevel"
                        ng-required="!hasValidCCParams()"
                        ng-change="updateCurves()">%
                 coverage for this program is:
                 <input type="number" class="txbox __inline __xl"
                        name="knownFundingValue"
-                       min="1" step="1000" placeholder="e.g.{{defaultKnownFundingValue}}"
+                       min="1" step="1000" placeholder="e.g.{{ ::defaultKnownFundingValue }}"
                        ng-model="knownFundingValue"
                        ng-required="!hasValidCCParams()"
                        ng-change="updateCurves()"> USD
@@ -126,7 +126,7 @@
                 <input type="number" class="txbox __inline __xl"
                        name="scaleUpParameter"
                        min="0" max="0.999999999999"
-                       placeholder="e.g.{{defaultScaleUpParameter}}"
+                       placeholder="e.g.{{ ::defaultScaleUpParameter }}"
                        ng-model="scaleUpParameter"
                        ng-change="updateCurves()">
                 <div ng-messages="CostCoverageForm.scaleUpParameter.$error"
@@ -140,7 +140,7 @@
                 4. [Optional] Full coverage would avert
                 <input type="number" class="txbox __inline __xl"
                        name="nonHivDalys"
-                       min="0" step="1" placeholder="e.g.{{defaultNonHivDalys}}"
+                       min="0" step="1" placeholder="e.g.{{ ::defaultNonHivDalys }}"
                        ng-model="nonHivDalys"
                        ng-change="updateCurves()">
                 non-HIV-related DALYs per year
@@ -154,7 +154,7 @@
                 5. [Optional] Specify the maximum funding (for plotting only):
                 <input type="number" class="txbox __inline __xl"
                        name="xAxisMaximum"
-                       min="1" placeholder="e.g.{{defaultXAxisMaximum}}"
+                       min="1" placeholder="e.g.{{ ::defaultXAxisMaximum }}"
                        ng-model="xAxisMaximum"
                        ng-change="updateCurves()">
                 <div ng-messages="CostCoverageForm.xAxisMaximum.$error"
@@ -167,16 +167,16 @@
                 6. [Optional] Display program cost data in
                 <input type="number" class="txbox __inline __l"
                        name="displayYear"
-                       placeholder="e.g.{{projectInfo.dataEnd}}"
-                       min="{{projectInfo.dataStart}}"
-                       max="{{projectInfo.dataEnd}}"
+                       placeholder="e.g.{{ ::projectInfo.dataEnd }}"
+                       min="{{ ::projectInfo.dataStart }}"
+                       max="{{ ::projectInfo.dataEnd }}"
                        ng-model="displayYear"
                        ng-change="updateCurves()">
                 prices
                 <div ng-messages="CostCoverageForm.displayYear.$error"
                      ng-show="CostCoverageForm.displayYear.$touched && CostCoverageForm.displayYear.$invalid">
-                  <div class="error-hint" ng-message="min">The year entered cannot be before the project start date, which is {{ projectInfo.dataStart }}</div>
-                  <div class="error-hint" ng-message="max">The year entered cannot be after the project end date, which is {{ projectInfo.dataEnd }}</div>
+                  <div class="error-hint" ng-message="min">The year entered cannot be before the project start date, which is {{ ::projectInfo.dataStart }}</div>
+                  <div class="error-hint" ng-message="max">The year entered cannot be after the project end date, which is {{ ::projectInfo.dataEnd }}</div>
                   <div class="error-hint" ng-message="number">The value should be a number</div>
                 </div>
               </div>

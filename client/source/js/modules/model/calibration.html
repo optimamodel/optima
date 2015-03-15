@@ -96,35 +96,35 @@
       </thead>
       <tbody>
       <tr ng-repeat="parameter in parameters.m">
-        <td>{{parameter.title}}</td>
+        <td>{{ ::parameter.title }}</td>
         <td>
           <span editable-input="parameter.data" on-save="doneEditingParameter"></span>
         </td>
       </tr>
       <!-- Force -->
-      <tr ng-repeat="population in parameters.meta.pops.short track by $index">
-        <td>{{ parameters.types.force }} {{ population }}</td>
+      <tr ng-repeat="population in ::parameters.meta.pops.short track by $index">
+        <td>{{ ::parameters.types.force }} {{ ::population }}</td>
         <td>
           <span editable-input="parameters.f.force[$index]" on-save="doneEditingParameter"></span>
         </td>
       </tr>
       <!-- Init -->
-      <tr ng-repeat="population in parameters.meta.pops.short track by $index">
-        <td>{{ parameters.types.init }} {{ population }}</td>
+      <tr ng-repeat="population in ::parameters.meta.pops.short track by $index">
+        <td>{{ ::parameters.types.init }} {{ ::population }}</td>
         <td>
           <span editable-input="parameters.f.init[$index]" on-save="doneEditingParameter"></span>
         </td>
       </tr>
       <!-- Popsize -->
-      <tr ng-repeat="population in parameters.meta.pops.short track by $index">
-        <td>{{ parameters.types.popsize }} {{ population }}</td>
+      <tr ng-repeat="population in ::parameters.meta.pops.short track by $index">
+        <td>{{ ::parameters.types.popsize }} {{ ::population }}</td>
         <td>
           <span editable-input="parameters.f.popsize[$index]" on-save="doneEditingParameter"></span>
         </td>
       </tr>
       <!-- Testing Rate -->
       <tr ng-repeat="i in [0, 1, 2, 3] track by $index">
-        <td>{{ parameters.types.dx[i] }}</td>
+        <td>{{ ::parameters.types.dx[i] }}</td>
         <td>
           <span editable-input="parameters.f.dx[i]" on-save="doneEditingParameter"></span>
         </td>

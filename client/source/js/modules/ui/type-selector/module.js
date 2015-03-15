@@ -1,9 +1,9 @@
 define([
-  'angular',
-  ], function (ng) {
+  'angular'
+  ], function (angular) {
     'use strict';
 
-    return ng.module('app.ui.type-selector', [])
+    return angular.module('app.ui.type-selector', [])
       .directive('typeSelector', function() {
         return {
           replace: true,

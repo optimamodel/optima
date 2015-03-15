@@ -25,10 +25,9 @@
         Category
       </div>
       <div class="5 1++">
-        <select
-          class="txbox"
-          ng-model="program.category"
-          ng-options="category for category in allCategories"></select>
+        <select class="txbox"
+                ng-model="program.category"
+                ng-options="category for category in allCategories"></select>
       </div>
     </div>
 
@@ -43,8 +42,7 @@
 
       <div class="section well" style="margin: 10px 0">
 
-      <button
-              type="button"
+      <button type="button"
               class="btn __white"
               style="float: right; text-align: right; margin-top: 10px"
               ng-click="removeParameter($index)">Remove</button>
