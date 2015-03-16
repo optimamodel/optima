@@ -17,6 +17,17 @@
     outline: 0;
   }
 
+  // Validation
+  // ----------
+
+  &.ng-invalid-less-than:not(:focus) {
+    color: $color-red;
+  }
+
+  &.ng-invalid-more-than:not(:focus) {
+    color: $color-red;
+  }
+
   &.__invalid:not(:focus) {
     color: $color-red;
   }
