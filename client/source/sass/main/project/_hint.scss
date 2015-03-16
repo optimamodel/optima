@@ -1,0 +1,28 @@
+.error-hint,
+.info-hint,
+.warning-hint {
+  background: #FFF2D6;
+  border-color: #D4F2CF;
+  border-radius: 2px;
+  border-style: solid;
+  border-width: 1px;
+  color: #515151;
+  display: block;
+  font-size: 12px;
+  margin-top: 14px;
+  padding: 5px;
+}
+
+.error-hint {
+  border-color: #FFEFCA;
+  margin-bottom: 5px;
+  margin-top: 4px;
+}
+
+.info-hint {
+  background: #E0F9E1;
+}
+
+.warning-hint {
+  font-weight: $semi-bold;
+}
