@@ -4,34 +4,36 @@
 
     <table class="table table-bordered table-hover table-striped" style="width: auto">
       <thead>
-      <th>Name</th>
-      <th>Populations</th>
-      <th>Programs</th>
-      <th>Data start year</th>
-      <th>Data end year</th>
-      <th>Project created on</th>
-      <th>Data uploaded on</th>
-      <th colspan="7">Actions</th>
+      <tr>
+        <th>Name</th>
+        <th>Populations</th>
+        <th>Programs</th>
+        <th>Data start year</th>
+        <th>Data end year</th>
+        <th>Project created on</th>
+        <th>Data uploaded on</th>
+        <th colspan="7">Actions</th>
+      </tr>
       </thead>
       <tbody>
       <tr ng-repeat="project in projects | orderBy: 'name'">
         <td>
-          {{ project.name }}
+          {{ ::project.name }}
         </td>
         <td>
-          {{ project.populations.length }}
+          {{ ::project.populations.length }}
         </td>
         <td>
-          {{ project.programs.length }}
+          {{ ::project.programs.length }}
         </td>
         <td>
-          {{ project.dataStart }}
+          {{ ::project.dataStart }}
         </td>
         <td>
-          {{ project.dataEnd }}
+          {{ ::project.dataEnd }}
         </td>
         <td>
-            {{ project.creation_time| date:'yyyy-MM-dd HH:mm:ss'}}
+            {{ ::project.creation_time| date:'yyyy-MM-dd HH:mm:ss'}}
         </td>
         <td>
             {{ project.data_upload_time ? (project.data_upload_time | date:'yyyy-MM-dd HH:mm:ss') : 'No data uploaded'}}
@@ -46,7 +48,7 @@
           <button class="btn" ng-click="edit(project.name, project.id)">Edit project</button>
         </td>
         <td>
-		      <button class="btn __red" ng-click="remove($event, project.name, project.id, $index)">Delete project</button>
+          <button class="btn __red" ng-click="remove($event, project.name, project.id, $index)">Delete project</button>
         </td>
         <td>
           <button class="btn" ng-click="getData(project.name, project.id)">Download project</button>

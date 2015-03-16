@@ -1,4 +1,4 @@
-define(['./module', 'angular', 'd3'], function (module, angular, d3) {
+define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('AnalysisOptimizationController', function ($scope, $http,
@@ -679,6 +679,8 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       return quote + _.compact(_(arr).map(function (val) {var p = (prop ? val[prop] : val);return p ? (before + strOrEmpty(p) + after ) : undefined;})).join(", ") + quote;
     }
 
+    var optimizationMessageTemplate = _.template("Optimizing <%= checkedPrograms %> over years <%= startYear %> to <%= endYear %> with <%= budgetLevel %>.");
+
     function constructOptimizationMessage() {
       var budgetLevel;
 
@@ -691,7 +693,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
         budgetLevel = budgetLevel + " to $" + $scope.params.objectives.outcome.budgetrange.maxval;
       }
 
-      $scope.optimizationMessage = _.template("Optimizing <%= checkedPrograms %> over years <%= startYear %> to <%= endYear %> with <%= budgetLevel %>.", {
+      $scope.optimizationMessage = optimizationMessageTemplate({
         checkedPrograms : joinArrayAsSentence(validateObjectivesToMinimize().checkedPrograms, 'name', true),
         startYear: $scope.params.objectives.year.start,
         endYear:$scope.params.objectives.year.end,

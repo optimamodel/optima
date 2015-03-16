@@ -1,45 +1,43 @@
 <accordion class="accordion" close-others="true">
 
   <!-- Link -->
-  <div data-ng-repeat-start="item in settings.items"
-       data-ng-if="!item.subitems"
+  <div ng-repeat-start="item in ::settings.items"
+       ng-if="!item.subitems"
        ng-click="item.click($event)"
        class="accordion_i"
-       ng-class="{ '__active': item.active }"
-       secured-by-any="{{ item.permissions }}">
+       ng-class="{ '__active': item.active }">
     <div class="panel-heading">
       <h4 class="panel-title">
-        <a class="link" ui-sref="{{ item.url }}">
+        <a class="link" ui-sref="{{ ::item.url }}">
           <i class="ic __plus"></i>
-          {{ item.title }}
+          {{ ::item.title }}
         </a>
       </h4>
     </div>
   </div>
 
   <!-- Links group -->
-  <accordion-group data-ng-repeat-end=""
+  <accordion-group ng-repeat-end=""
        class="accordion_i"
        is-open="item.active"
-      is-disabled="item.disabled"
-       data-ng-if="item.subitems"
-       ng-class="{ '__active': item.active }"
-       secured-by-any="{{ item.permissions }}">
-    <accordion-heading secured-by-any="{{ item.permissions }}">
+       is-disabled="item.disabled"
+       ng-if="item.subitems"
+       ng-class="{ '__active': item.active }">
+    <accordion-heading>
       <i class="ic __plus"></i>
-      {{ item.title }}
+      {{ ::item.title }}
     </accordion-heading>
 
     <ul>
-      <li data-ng-repeat="sub in item.subitems" ng-class="{ '__active': sub.active }">
-        <a ng-if="sub.url && !sub.click" class="link __black" ui-sref="{{ sub.url }}">
+      <li ng-repeat="sub in ::item.subitems" ng-class="{ '__active': sub.active }">
+        <a ng-if="sub.url && !sub.click" class="link __black" ui-sref="{{ ::sub.url }}">
           <i class="ic" ng-class="{ '__circle-gray': !sub.active, '__donut-blue': sub.active }"></i>
-          {{ sub.title }}
+          {{ ::sub.title }}
         </a>
 
-        <a ng-if="sub.click" class="link __black" ng-click="sub.click()">
+        <a ng-if="::sub.click" class="link __black" ng-click="sub.click()">
           <i class="ic" ng-class="{ '__circle-gray': !sub.active, '__donut-blue': sub.active }"></i>
-          {{ sub.title }}
+          {{ ::sub.title }}
         </a>
       </li>
     </ul>

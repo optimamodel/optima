@@ -1,11 +1,11 @@
 <div class="modal-header">
-  <a class="modal-close" data-ng-click="$dismiss('cancel')">&times;</a>
-  {{ title }}
+  <a class="modal-close" ng-click="$dismiss('cancel')">&times;</a>
+  {{ ::title }}
 </div>
 <div class="modal-body" style="margin-bottom: 20px">
-  {{ message }}
+  {{ ::message }}
 </div>
 <div class="modal-footer">
-  <button type="button" class="btn __white" data-ng-click="$dismiss('cancel')">{{rejectButton}}</button>
-  <button type="submit" class="btn" data-ng-click="$close(model)" data-ng-disabled="addDialogForm.$invalid">{{acceptButton}}</button>
+  <button type="button" class="btn __white" ng-click="$dismiss('cancel')">{{ ::rejectButton }}</button>
+  <button type="submit" class="btn" ng-click="$close(model)" ng-disabled="addDialogForm.$invalid">{{ ::acceptButton }}</button>
 </div>
