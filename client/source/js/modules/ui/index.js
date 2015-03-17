@@ -19,7 +19,7 @@ define([
     'app.ui.menu'
   ])
 
-    .controller('MainCtrl', function ($window, $scope, $upload, $state, activeProject, UserManager, modalService, fileUpload) {
+    .controller('MainCtrl', function ($scope, $state, activeProject, UserManager, modalService, fileUpload) {
 
       $scope.user = UserManager.data;
       $scope.userLogged = function () {

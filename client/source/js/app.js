@@ -1,6 +1,7 @@
 define([
   'angular',
   'angular-loading-bar',
+  'angular-messages',
   'ng-file-upload',
   'ui.bootstrap',
   'ui.router',
@@ -56,64 +57,51 @@ define([
     'app.ui',
     'app.ui.modal',
     'app.user-manager',
+    'ngMessages',
     'ui.bootstrap',
     'ui.router'
   ])
 
     .config(function ($httpProvider) {
-      var logoutUserOn401 = ['$q', '$injector', function ($q, $injector) {
-        var success = function (response) {
-          return response;
-        };
+      $httpProvider.interceptors.push(function ($q, $injector) {
+        return {
+          responseError: function (rejection) {
+            if (rejection.status === 401 && rejection.config.url !== '/api/users/current') {
+              // Redirect them back to login page
+              location.href = '/#/login';
 
-        var error = function (response) {
-          if (response.status === 401 && response.config.url !== '/api/users/current') {
-            // Redirect them back to login page
-            location.href = '/#/login';
-
-            return $q.reject(response);
-          } else {
-            var message, errorText;
-            if (response.data.message || response.data.exception) {
-              message = "Something went wrong. Please try again or contact the support team.";
-              errorText = response.data.message || response.data.exception;
+              return $q.reject(rejection);
             } else {
-              message = 'Sorry, but our servers feel bad right now. Please, give them some time to recover or contact the support team.';
+              var message, errorText;
+              if (rejection.data.message || rejection.data.exception) {
+                message = 'Something went wrong. Please try again or contact the support team.';
+                errorText = rejection.data.message || rejection.data.exception;
+              } else {
+                message = 'Sorry, but our servers feel bad right now. Please, give them some time to recover or contact the support team.';
+              }
+              var modalService = $injector.get('modalService');
+              modalService.inform(angular.noop, 'Okay', message, 'Upload Error', errorText);
+
+              return $q.reject(rejection);
             }
-            var modalService = $injector.get('modalService');
-            modalService.inform(
-              function () {},
-              'Okay',
-              message,
-              'Upload Error',
-              errorText
-            );
-
-            return $q.reject(response);
           }
-        };
-
-        return function (promise) {
-          return promise.then(success, error);
-        };
-      }];
-
-      $httpProvider.responseInterceptors.push(logoutUserOn401);
+        }
+      });
     })
 
     .config(function ($urlRouterProvider) {
       $urlRouterProvider.otherwise('/');
     })
 
-    .run(function ($rootScope, $state, UserManager, localStorage, activeProject, modalService) {
+    .run(function ($rootScope, $state, UserManager, activeProject, modalService) {
 
       if (navigator.userAgent.indexOf('MSIE') !== -1 || navigator.appVersion.indexOf('Trident/') !== -1) {
         modalService.inform(
-            function () {
-              window.location.href = 'https://www.google.com/chrome/browser/desktop/';
-            },
-            'Download Google Chrome',
-            'Internet Explorer is not supported. Please use Firefox or Chrome instead.', 'Your browser is not supported!');
+          function () {
+            window.location.href = 'https://www.google.com/chrome/browser/desktop/';
+          },
+          'Download Google Chrome',
+          'Internet Explorer is not supported. Please use Firefox or Chrome instead.', 'Your browser is not supported!');
       }
 
       if (window.user) {

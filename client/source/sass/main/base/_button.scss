@@ -39,11 +39,6 @@
     padding: 9px 16px;
   }
 
-  &.__xl {
-    @include font-height(18px, 22px);
-    padding: 12px 24px;
-  }
-
   // ### Colours
 
   &.__white {

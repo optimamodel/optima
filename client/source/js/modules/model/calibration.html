@@ -1,6 +1,6 @@
 <div class="page rich">
 
-  <div class="page_subheader">
+  <div class="page_header">
     <div class="section grid">
       <!--form name="CalibrationForm" ng-submit="simulate()">
         <p ng-show="needData" class="error-hint">Please upload Optima spreadsheet first.</p>
@@ -9,19 +9,23 @@
     <div class="section grid">
       <div class="12">
 
-        <label class="checkbox-inline">
-          <a class="btn" href="http://optimamodel.com/files/optima-parameter-priors.pdf" target="_blank">View parameter priors (PDF)</a>
-        </label>
-
-        <label class="checkbox-inline">
-          <input type="checkbox" ng-disabled="!canDoFitting" ng-model="enableAutomaticCalibration">
-          Automatic calibration
-        </label>
-
-        <label class="checkbox-inline">
-          <input type="checkbox" ng-disabled="!canDoFitting" ng-model="enableManualCalibration">
-          Manual calibration
-        </label>
+        <div class="elastic __fluid">
+          <div class="elastic_col __va-middle">
+            <a class="btn" href="http://optimamodel.com/files/optima-parameter-priors.pdf" target="_blank">View parameter priors (PDF)</a>
+          </div>
+          <div class="elastic_col __va-middle">
+            <label class="checkbox-inline">
+              <input type="checkbox" ng-disabled="!canDoFitting" ng-model="enableAutomaticCalibration">
+              Automatic calibration
+            </label>
+          </div>
+          <div class="elastic_col __va-middle">
+            <label class="checkbox-inline">
+              <input type="checkbox" ng-disabled="!canDoFitting" ng-model="enableManualCalibration">
+              Manual calibration
+            </label>
+          </div>
+        </div>
 
       </div>
     </div>
@@ -96,35 +100,35 @@
       </thead>
       <tbody>
       <tr ng-repeat="parameter in parameters.m">
-        <td>{{parameter.title}}</td>
+        <td>{{ ::parameter.title }}</td>
         <td>
           <span editable-input="parameter.data" on-save="doneEditingParameter"></span>
         </td>
       </tr>
       <!-- Force -->
-      <tr ng-repeat="population in parameters.meta.pops.short track by $index">
-        <td>{{ parameters.types.force }} {{ population }}</td>
+      <tr ng-repeat="population in ::parameters.meta.pops.short track by $index">
+        <td>{{ ::parameters.types.force }} {{ ::population }}</td>
         <td>
           <span editable-input="parameters.f.force[$index]" on-save="doneEditingParameter"></span>
         </td>
       </tr>
       <!-- Init -->
-      <tr ng-repeat="population in parameters.meta.pops.short track by $index">
-        <td>{{ parameters.types.init }} {{ population }}</td>
+      <tr ng-repeat="population in ::parameters.meta.pops.short track by $index">
+        <td>{{ ::parameters.types.init }} {{ ::population }}</td>
         <td>
           <span editable-input="parameters.f.init[$index]" on-save="doneEditingParameter"></span>
         </td>
       </tr>
       <!-- Popsize -->
-      <tr ng-repeat="population in parameters.meta.pops.short track by $index">
-        <td>{{ parameters.types.popsize }} {{ population }}</td>
+      <tr ng-repeat="population in ::parameters.meta.pops.short track by $index">
+        <td>{{ ::parameters.types.popsize }} {{ ::population }}</td>
         <td>
           <span editable-input="parameters.f.popsize[$index]" on-save="doneEditingParameter"></span>
         </td>
       </tr>
       <!-- Testing Rate -->
       <tr ng-repeat="i in [0, 1, 2, 3] track by $index">
-        <td>{{ parameters.types.dx[i] }}</td>
+        <td>{{ ::parameters.types.dx[i] }}</td>
         <td>
           <span editable-input="parameters.f.dx[i]" on-save="doneEditingParameter"></span>
         </td>
