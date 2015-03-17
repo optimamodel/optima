@@ -73,7 +73,7 @@ define([
               return $q.reject(rejection);
             } else {
               var message, errorText;
-              if (rejection.data.message || rejection.data.exception) {
+              if (rejection.data && (rejection.data.message || rejection.data.exception)) {
                 message = 'Something went wrong. Please try again or contact the support team.';
                 errorText = rejection.data.message || rejection.data.exception;
               } else {
