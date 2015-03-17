@@ -586,9 +586,13 @@ def defaultobjectives(D, verbose=2):
     ob.money.objectives = struct()
     for objective in ['inci', 'incisex', 'inciinj', 'mtct', 'mtctbreast', 'mtctnonbreast', 'deaths', 'dalys']:
         ob.money.objectives[objective] = struct()
-        ob.money.objectives[objective].use = False # Checkbox: by default don't use
-        ob.money.objectives[objective].by = 0.5 # "By" text entry box: 0.5 means a 50% reduction
-        ob.money.objectives[objective].to = None # "To" text entry box: An absolute value in USD. Shouldn't be used if set to 0 or None
+        # Checkbox: by default it's False meaning the objective is not applied
+        ob.money.objectives[objective].use = False
+        # "By" text entry box: 0.5 means a 50% reduction. Shouldn't be used if set to None
+        ob.money.objectives[objective].by = 0.5
+        # "To" text entry box: an absolute value e.g. reduce deaths to <500
+        # Shouldn't be used if set to None
+        ob.money.objectives[objective].to = None
     ob.money.objectives.inci.use = True # Set incidence to be on by default
 
     ob.money.costs = []
