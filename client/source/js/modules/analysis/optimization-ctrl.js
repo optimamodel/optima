@@ -672,9 +672,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       return quote + _.compact(_(arr).map(function (val) {var p = (prop ? val[prop] : val);return p ? (before + strOrEmpty(p) + after ) : undefined;})).join(", ") + quote;
     }
 
-    var optimizationMessageTemplate = _.template("Optimizing <%= checkedPrograms %> over years <%= startYear %> to <%= endYear %> with <%= budgetLevel %>.");
-
     function constructOptimizationMessage() {
+      var optimizationMessageTemplate = _.template("Optimizing <%= checkedPrograms %> over years <%= startYear %> to <%= endYear %> with <%= budgetLevel %>.");
       var budgetLevel;
 
       if ($scope.params.objectives.funding === 'variable') {
