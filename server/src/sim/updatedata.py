@@ -26,10 +26,13 @@ def updatedata(D, workbookname=None, verbose=2, savetofile=True, input_programs=
     D.programs = restructureprograms(D.programs)
     D.data = getrealcosts(D.data)
     
-    if rerun:
+    if rerun or 'P' not in D: # Rerun if asked or if it doesn't exist
         D = makedatapars(D, verbose=verbose) # Update parameters
+    if rerun or 'M' not in D: # Rerun if asked, or if it doesn't exist
         D.M = makemodelpars(D.P, D.opt, verbose=verbose)
+    if 'F' not in D: # Only rerun if it doesn't exist
         D = makefittedpars(D, verbose=verbose)
+    if rerun or 'R' not in D: # Rerun if asked, or if no results
         D = runsimulation(D, makeplot = 0, dosave = False)
     if savetofile:
         savedata(D.G.projectfilename, D, verbose=verbose) # Update the data file
