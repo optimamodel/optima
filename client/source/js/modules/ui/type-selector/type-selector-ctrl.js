@@ -20,9 +20,25 @@ define(['./module', 'underscore'], function (module, _) {
           'model.view',
           'analysis.scenarios',
           'analysis.optimization'
-        ]
+        ];
+        var analysisPages = [
+          'analysis.scenarios',
+          'analysis.optimization'
+        ];
         if (_(allPagesWithSelector).contains($state.current.name)) {
           angular.extend($scope.types, angular.copy(CONFIG.GRAPH_TYPES));
+
+          // for pages without stacked charts overall charts are set by default
+          if (_(analysisPages).contains($state.current.name)) {
+            var stackedTypes = ['plhiv', 'daly', 'death', 'inci', 'dx'];
+            $scope.types.population = _($scope.types.population).map(function(type) {
+              if (_(stackedTypes).contains(type.id)) {
+                type.stacked = false;
+                type.total = true;
+              }
+              return type;
+            });
+          }
         }
 
         showPartInViews('typeSelector', allPagesWithSelector);
