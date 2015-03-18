@@ -576,34 +576,39 @@ def defaultobjectives(D, verbose=2):
     ob.outcome.budgetrange.maxval = None
     ob.outcome.budgetrange.step = None
     ob.funding = "constant" #that's how it works on FE atm
-    
+
     # Other settings
     ob.timevarying = False # Do not use time-varying parameters
     ob.artcontinue = 1 # No one currently on ART stops
     ob.otherprograms = "remain" # Other programs remain constant after optimization ends
-    
+
     ob.money = struct()
     ob.money.objectives = struct()
     for objective in ['inci', 'incisex', 'inciinj', 'mtct', 'mtctbreast', 'mtctnonbreast', 'deaths', 'dalys']:
         ob.money.objectives[objective] = struct()
-        ob.money.objectives[objective].use = False # TIck box: by default don't use
-        ob.money.objectives[objective].by = 50 # "By" text entry box: 0.5 = 50% reduction
-        ob.money.objectives[objective].to = 0 # "To" text entry box: don't use if set to 0
+        # Checkbox: by default it's False meaning the objective is not applied
+        ob.money.objectives[objective].use = False
+        # If "By" is not active "To" is used. "By" is active by default. 
+        ob.money.objectives[objective].by_active = True
+        # "By" text entry box: 0.5 means a 50% reduction
+        ob.money.objectives[objective].by = 0.5
+        # "To" text entry box: an absolute value e.g. reduce deaths to <500
+        ob.money.objectives[objective].to = 0
     ob.money.objectives.inci.use = True # Set incidence to be on by default
-    
+
     ob.money.costs = []
     for p in range(D.G.nprogs):
         ob.money.costs.append(100) # By default, use a weighting of 100%
-    
+
     return ob
 
 def defaultconstraints(D, verbose=2):
     """
     Define default constraints for the optimization.
     """
-    
+
     printv('Defining default constraints...', 3, verbose=verbose)
-    
+
     con = struct()
     con.txelig = 4 # 4 = "All people diagnosed with HIV"
     con.dontstopart = True # "No one who initiates treatment is to stop receiving ART"
