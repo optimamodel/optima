@@ -382,7 +382,7 @@ def doCostCoverageEffect():
         "plotdata_co": for_fe(plotdata_co), "effect": args['effect']})
 
 
-@model.route('/reloadSpreadsheet', methods=['GET'])
+@model.route('/reloadSpreadsheet', methods=['POST'])
 @login_required
 @check_project_name
 @report_exception()
@@ -390,6 +390,8 @@ def reloadSpreadsheet():
     """
     Reload the excel spreadsheet and re-run the simulations.
     """
+
+    D = load_model(request.project_id)
     current_app.logger.debug('--------------> reloadSpreadsheet')
     
     # from sim.runsimulation import runsimulation
