@@ -13,7 +13,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       var objectives = angular.copy(scopeParameters.objectives);
 
       objectives.money.objectives = _(objectives.money.objectives).mapObject(function(objective) {
-        objective.by = objective.by / 100.0;
+        objective.by = objective.by / 100;
         return objective;
       });
 
@@ -35,7 +35,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       var objectives = angular.copy(responseObjectives);
 
       objectives.money.objectives = _(objectives.money.objectives).mapObject(function(objective) {
-        objective.by = objective.by * 100;
+        // this is done to achieve a accuracy of decimals
+        objective.by = Math.round(objective.by*10000)/100;
         return objective;
       });
 
