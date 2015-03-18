@@ -298,12 +298,12 @@
               </label>
             </div>
             <label class="radio-inline margin-left-s">
-              <input type="radio" name="{{ item.id }}to_or_by" value="1" ng-disabled="!iObjective.use" ng-model="iObjective.to_or_by">
-              by <input class="txbox __inline __s" ng-model="iObjective.by" ng-disabled="!iObjective.use || iObjective.to_or_by != 1">
+              <input type="radio" name="{{ item.id }}by_active" ng-value="true" ng-disabled="!iObjective.use" ng-model="iObjective.by_active">
+              by <input class="txbox __inline __s" ng-model="iObjective.by" ng-disabled="!iObjective.use">
             </label>
             <label class="radio-inline">
-              <input type="radio" name="{{ item.id }}to_or_by" value="0" ng-disabled="!iObjective.use" ng-model="iObjective.to_or_by">
-              to < <input class="txbox __inline __s" ng-model="iObjective.to" ng-disabled="!iObjective.use || iObjective.to_or_by != 0">
+              <input type="radio" name="{{ item.id }}by_active" ng-value="false" ng-disabled="!iObjective.use" ng-model="iObjective.by_active">
+              to < <input class="txbox __inline __s" ng-model="iObjective.to" ng-disabled="!iObjective.use">
             </label>
           </div>
 

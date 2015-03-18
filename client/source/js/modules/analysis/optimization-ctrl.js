@@ -2,7 +2,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('AnalysisOptimizationController', function ($scope, $http,
-    $interval, meta, cfpLoadingBar, CONFIG, modalService, graphTypeFactory, optimizations) {
+    $interval, meta, cfpLoadingBar, CONFIG, modalService, graphTypeFactory,
+    optimizations, optimizationHelpers) {
 
       $scope.chartsForDataExport = [];
 
@@ -748,8 +749,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.startOptimization = function () {
-      var params = angular.copy($scope.params);
-      params.name = $scope.state.activeOptimizationName;
+      var params = optimizationHelpers.toRequestParameters($scope.params, $scope.state.activeOptimizationName);
       $http.post('/api/analysis/optimization/start', params, {ignoreLoadingBar: true})
         .success(function (data, status, headers, config) {
           if (data.status == "OK" && data.join) {
@@ -848,13 +848,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     $scope.addOptimization = function () {
       var create = function (name) {
-        $http.post('/api/analysis/optimization/create', {
-          name: name,
-          objectives: $scope.params.objectives,
-          constraints: $scope.params.constraints
-        }).success(function(data) {
-            $scope.initOptimizations(data.optimizations, name);
-          });
+        var url = '/api/analysis/optimization/create';
+        var params = optimizationHelpers.toRequestParameters($scope.params, name);
+        $http.post(url, params).success(function(data) {
+          $scope.initOptimizations(data.optimizations, name);
+        });
       };
 
       modalService.addOptimization(function (name) { create(name); }, $scope.optimizations);
@@ -962,7 +960,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.applyOptimization = function(name, overwriteParams) {
       var optimization = $scope.optimizationByName(name);
       if (overwriteParams) {
-        _.extend($scope.params.objectives, optimization.objectives);
+        var objectives = optimizationHelpers.toScopeObjectives(optimization.objectives);
+        _.extend($scope.params.objectives, objectives);
         _.extend($scope.params.constraints, optimization.constraints);
       }
       if (optimization.result) {

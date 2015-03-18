@@ -588,11 +588,12 @@ def defaultobjectives(D, verbose=2):
         ob.money.objectives[objective] = struct()
         # Checkbox: by default it's False meaning the objective is not applied
         ob.money.objectives[objective].use = False
-        # "By" text entry box: 0.5 means a 50% reduction. Shouldn't be used if set to None
+        # If "By" is not active "To" is used. "By" is active by default. 
+        ob.money.objectives[objective].by_active = True
+        # "By" text entry box: 0.5 means a 50% reduction
         ob.money.objectives[objective].by = 0.5
         # "To" text entry box: an absolute value e.g. reduce deaths to <500
-        # Shouldn't be used if set to None
-        ob.money.objectives[objective].to = None
+        ob.money.objectives[objective].to = 0
     ob.money.objectives.inci.use = True # Set incidence to be on by default
 
     ob.money.costs = []
