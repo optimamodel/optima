@@ -14,6 +14,7 @@ from flask import current_app, make_response
 from signal import *
 from dbconn import db
 from sim.autofit import autofit
+from sim.updatedata import updatedata
 
 # route prefix: /api/model
 model = Blueprint('model',  __name__, static_folder = '../static')
@@ -389,7 +390,6 @@ def reloadSpreadsheet():
     """
     Reload the excel spreadsheet and re-run the simulations.
     """
-
     current_app.logger.debug('--------------> reloadSpreadsheet')
     
     # from sim.runsimulation import runsimulation
