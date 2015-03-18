@@ -379,3 +379,30 @@ def doCostCoverageEffect():
         return jsonify({"status":"NOK", "exception":var})
     return jsonify({"status":"OK", "plotdata": for_fe(plotdata), \
         "plotdata_co": for_fe(plotdata_co), "effect": args['effect']})
+
+
+@model.route('/reloadSpreadsheet', methods=['GET'])
+@login_required
+@check_project_name
+@report_exception()
+def reloadSpreadsheet():
+    """
+    Reload the excel spreadsheet and re-run the simulations.
+    """
+
+    current_app.logger.debug('--------------> reloadSpreadsheet')
+    
+    # from sim.runsimulation import runsimulation
+
+    # from sim.runsimulation import runsimulation
+    # from sim.dataio import projectpath
+    # current_app.logger.debug("api/project/update")
+    # project_name = request.project_name
+    # project_id = request.project_id
+    # user_id = current_user.id
+    # current_app.logger.debug("uploadExcel(project id: %s user:%s)" % (project_id, user_id))
+
+    # reply = {'status':'NOK'}
+    # file = request.files['file']
+
+    return jsonify({'status': 'OK'})    

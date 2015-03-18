@@ -70,6 +70,14 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     /**
+     * Makes the backend to reload the spreadsheet.
+     */
+    $scope.reloadSpreadsheet = function () {
+      $http.get('/api/model/reloadSpreadsheet');
+      // sas: to-do: be more defensive and handle response
+    };
+
+    /**
      * Returns an array containing arrays with [x, y] for d3 scatter data.
      *
      * Empty entries are filtered out.
