@@ -38,7 +38,7 @@
 
     <hr/>
 
-    <form name="OptimizationForm" ng-submit="startOptimization()" novalidate>
+    <form name="state.OptimizationForm" ng-submit="startOptimization()" novalidate="novalidate">
       <!-- Tab 1 -->
       <div ng-show="activeTab === 1">
 
@@ -72,24 +72,24 @@
             , with the following context between the end of the optimized program period and the end of the analysis
             period:
 
-            <div ng-messages="OptimizationForm.periodStart.$error"
-                 ng-show="OptimizationForm.periodStart.$touched && OptimizationForm.periodStart.$invalid">
+            <div ng-messages="state.OptimizationForm.periodStart.$error"
+                 ng-show="state.OptimizationForm.periodStart.$touched && state.OptimizationForm.periodStart.$invalid">
               <div class="error-hint" ng-message="required">Please provide a value</div>
               <div class="error-hint" ng-message="min">The minimum value is 1950</div>
               <div class="error-hint" ng-message="max">The maximum value is 2100</div>
               <div class="error-hint" ng-message="number">The value should be a number</div>
             </div>
 
-            <div ng-messages="OptimizationForm.periodEnd.$error"
-                 ng-show="OptimizationForm.periodEnd.$touched && OptimizationForm.periodEnd.$invalid">
+            <div ng-messages="state.OptimizationForm.periodEnd.$error"
+                 ng-show="state.OptimizationForm.periodEnd.$touched && state.OptimizationForm.periodEnd.$invalid">
               <div class="error-hint" ng-message="required">Please provide a value</div>
               <div class="error-hint" ng-message="min">The minimum value is 1950</div>
               <div class="error-hint" ng-message="max">The maximum value is 2100</div>
               <div class="error-hint" ng-message="number">The value should be a number</div>
             </div>
 
-            <div ng-messages="OptimizationForm.objectivesUntil.$error"
-                 ng-show="OptimizationForm.objectivesUntil.$touched && OptimizationForm.objectivesUntil.$invalid">
+            <div ng-messages="state.OptimizationForm.objectivesUntil.$error"
+                 ng-show="state.OptimizationForm.objectivesUntil.$touched && state.OptimizationForm.objectivesUntil.$invalid">
               <div class="error-hint" ng-message="min">The minimum value is 1950</div>
               <div class="error-hint" ng-message="max">The maximum value is 2100</div>
               <div class="error-hint" ng-message="number">The value should be a number</div>
@@ -128,8 +128,8 @@
                          ng-model="params.objectives.year.universal">
                   and then be maintained
 
-                  <div ng-messages="OptimizationForm.universal.$error"
-                       ng-show="OptimizationForm.universal.$touched && OptimizationForm.universal.$invalid">
+                  <div ng-messages="state.OptimizationForm.universal.$error"
+                       ng-show="state.OptimizationForm.universal.$touched && state.OptimizationForm.universal.$invalid">
                     <div class="error-hint" ng-message="required">Please provide a value</div>
                     <div class="error-hint" ng-message="min">The minimum value is 1950</div>
                     <div class="error-hint" ng-message="max">The maximum value is 2100</div>
@@ -238,19 +238,19 @@
                      ng-required="params.objectives.funding==='range'"
                      ng-model="params.objectives.outcome.budgetrange.step"/>
 
-              <div ng-messages="OptimizationForm.budgetRangeMin.$error"
-                   ng-show="OptimizationForm.budgetRangeMin.$invalid">
+              <div ng-messages="state.OptimizationForm.budgetRangeMin.$error"
+                   ng-show="state.OptimizationForm.budgetRangeMin.$invalid">
                 <div class="error-hint" ng-message="required">The minimum budget is required</div>
                 <div class="error-hint" ng-message="number">The value should be a number</div>
               </div>
-              <div ng-messages="OptimizationForm.budgetRangeMax.$error"
-                   ng-show="OptimizationForm.budgetRangeMax.$invalid">
+              <div ng-messages="state.OptimizationForm.budgetRangeMax.$error"
+                   ng-show="state.OptimizationForm.budgetRangeMax.$invalid">
                 <div class="error-hint" ng-message="required">The maximum budget is required</div>
                 <div class="error-hint" ng-message="moreThan">The maximum budget must be greater than {{ params.objectives.outcome.budgetrange.minval }}</div>
                 <div class="error-hint" ng-message="number">The value should be a number</div>
               </div>
-              <div ng-messages="OptimizationForm.budgetRangeStep.$error"
-                   ng-show="OptimizationForm.budgetRangeStep.$invalid">
+              <div ng-messages="state.OptimizationForm.budgetRangeStep.$error"
+                   ng-show="state.OptimizationForm.budgetRangeStep.$invalid">
                 <div class="error-hint" ng-message="required">The budget step is required</div>
                 <div class="error-hint" ng-message="min">The minimum number of budgets is {{ (params.objectives.outcome.budgetrange.maxval-params.objectives.outcome.budgetrange.minval)/30 | number:0 }}</div>
                 <div class="error-hint" ng-message="max">The maximum number of budgets is {{ params.objectives.outcome.budgetrange.maxval-params.objectives.outcome.budgetrange.minval }}</div>
@@ -290,117 +290,85 @@
         <div class="section" ng-if="params.objectives.what == 'money'">
           What is the minimum amount of money required to achieve the following objectives:
 
-          <!-- Reduce the incidence of HIV -->
-          <div class="checkbox-block margin-top-xs">
-            <label>
-              <input type="checkbox" ng-model="params.objectives.money.objectives.inci.use">
-              Reduce the annual incidence of HIV
+          <div class="margin-top-xs" ng-repeat="item in ::moneyObjectives">
+            <div class="checkbox-block">
+              <label ng-init="iObjective = params.objectives.money.objectives[item.id]">
+                <input type="checkbox" ng-model="iObjective.use">
+                {{ ::item.title }}
+              </label>
+            </div>
+            <label class="radio-inline margin-left-s">
+              <input type="radio"
+                     name="{{ ::item.id }}by_active"
+                     ng-value="true"
+                     ng-disabled="!iObjective.use"
+                     ng-model="iObjective.by_active"
+                     required>
+              by
+              <!--
+                Based on use & by_active the input is rendered with different validation
+                requirements to make sure the form can still be $valid without proper values here.
+              -->
+              <input ng-if="iObjective.use && iObjective.by_active"
+                     type="number"
+                     name="moneyObjective{{ ::item.id }}by"
+                     class="txbox __inline __s"
+                     ng-model="iObjective.by"
+                     required
+                     min="0"
+                     max="100">
+              <input ng-if="!iObjective.use || !iObjective.by_active"
+                     type="number"
+                     name="moneyObjective{{ ::item.id }}by"
+                     class="txbox __inline __s"
+                     ng-model="iObjective.by"
+                     disabled>
+              %
             </label>
-          </div>
-          <label class="radio-inline margin-left-s">
-            by <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.inci.by">
-          </label>
-          <label class="radio-inline">
-            to < <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.inci.to">
-          </label>
+            <label class="radio-inline">
+              <input type="radio"
+                     name="{{ ::item.id }}by_active"
+                     ng-value="false"
+                     ng-disabled="!iObjective.use"
+                     ng-model="iObjective.by_active"
+                     required>
+              to <
 
-          <!-- Reduce the incidence of sexually transmitted HIV -->
-          <div class="checkbox-block margin-top-xs">
-            <label>
-              <input type="checkbox" ng-model="params.objectives.money.objectives.incisex.use">
-              Reduce the annual incidence of sexually transmitted HIV
+              <!--
+                Based on use & by_active the input is rendered with different validation
+                requirements to make sure the form can still be $valid without proper values here.
+              -->
+              <input ng-if="iObjective.use && !iObjective.by_active"
+                     type="number"
+                     name="moneyObjective{{ ::item.id }}to"
+                     class="txbox __inline __s"
+                     ng-model="iObjective.to"
+                     required
+                     min="0">
+              <input ng-if="!iObjective.use || iObjective.by_active"
+                     type="number"
+                     name="moneyObjective{{ ::item.id }}to"
+                     class="txbox __inline __s"
+                     ng-model="iObjective.to"
+                     disabled>
             </label>
-          </div>
-          <label class="radio-inline margin-left-s">
-            by <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.incisex.by">
-          </label>
-          <label class="radio-inline">
-            to < <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.incisex.to">
-          </label>
 
-          <!-- Reduce the incidence of injecting-related HIV -->
-          <div class="checkbox-block margin-top-xs">
-            <label>
-              <input type="checkbox" ng-model="params.objectives.money.objectives.incinj.use">
-              Reduce the annual incidence of injecting-related HIV
-            </label>
+            <div ng-messages="state.OptimizationForm.moneyObjective{{ ::item.id }}by.$error"
+                 ng-show="iObjective.use && iObjective.by_active && state.OptimizationForm.moneyObjective{{ ::item.id }}by.$touched && state.OptimizationForm.moneyObjective{{ ::item.id }}by.$invalid"
+                 class="grid">
+              <div class="error-hint 6" ng-message="required">Please provide a value</div>
+              <div class="error-hint 6" ng-message="number">The value should be a number</div>
+              <div class="error-hint 6" ng-message="min">The minimum value is 0</div>
+              <div class="error-hint 6" ng-message="max">The maximum value is 100</div>
+            </div>
+            <div ng-messages="state.OptimizationForm.moneyObjective{{ ::item.id }}to.$error"
+                 ng-show="iObjective.use && !iObjective.by_active && state.OptimizationForm.moneyObjective{{ ::item.id }}to.$touched && state.OptimizationForm.moneyObjective{{ ::item.id }}to.$invalid"
+                 class="grid">
+              <div class="error-hint 6" ng-message="required">Please provide a value</div>
+              <div class="error-hint 6" ng-message="number">The value should be a number</div>
+              <div class="error-hint 6" ng-message="min">The minimum value is 0</div>
+            </div>
           </div>
-          <label class="radio-inline margin-left-s">
-            by <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.inciinj.by">
-          </label>
-          <label class="radio-inline">
-            to < <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.inciinj.to">
-          </label>
-
-          <!-- Reduce MTCT of HIV -->
-          <div class="checkbox-block margin-top-xs">
-            <label>
-              <input type="checkbox" ng-model="params.objectives.money.objectives.mtct.use">
-              Reduce annual mother-to-child transmission of HIV
-            </label>
-          </div>
-          <label class="radio-inline margin-left-s">
-            by <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.mtct.by">
-          </label>
-          <label class="radio-inline">
-            to < <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.mtct.to">
-          </label>
-
-          <!-- Reduce MTCT of HIV among breastfeeding mother -->
-          <div class="checkbox-block margin-top-xs">
-            <label>
-              <input type="checkbox" ng-model="params.objectives.money.objectives.mtctbreast.use">
-              Reduce annual mother-to-child transmission of HIV among breastfeeding mothers
-            </label>
-          </div>
-          <label class="radio-inline margin-left-s">
-            by <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.mtctbreast.by">
-          </label>
-          <label class="radio-inline">
-            to < <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.mtctbreast.to">
-          </label>
-
-          <!-- Reduce MTCT of HIV among non-breastfeeding mother -->
-          <div class="checkbox-block margin-top-xs">
-            <label>
-              <input type="checkbox" ng-model="params.objectives.money.objectives.mtctnonbreast.use">
-              Reduce annual mother-to-child transmission of HIV among non-breastfeeding mothers
-            </label>
-          </div>
-          <label class="radio-inline margin-left-s">
-            by <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.mtctnonbreast.by">
-          </label>
-          <label class="radio-inline">
-            to < <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.mtctnonbreast.to">
-          </label>
-
-          <!-- Reduce HIV-related deaths -->
-          <div class="checkbox-block margin-top-xs">
-            <label>
-              <input type="checkbox" ng-model="params.objectives.money.objectives.deaths.use">
-              Reduce annual AIDS-related deaths
-            </label>
-          </div>
-          <label class="radio-inline margin-left-s">
-            by <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.deaths.by">
-          </label>
-          <label class="radio-inline">
-            to < <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.deaths.to">
-          </label>
-
-          <!-- Reduce DALYs -->
-          <div class="checkbox-block margin-top-xs">
-            <label>
-              <input type="checkbox" ng-model="params.objectives.money.objectives.dalys.use">
-              Reduce annual HIV-related DALYs
-            </label>
-          </div>
-          <label class="radio-inline margin-left-s">
-            by <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.dalys.by">
-          </label>
-          <label class="radio-inline">
-            to < <input class="txbox __inline __s" ng-model="params.objectives.money.objectives.dalys.to">
-          </label>
 
           <div class="cf margin-top-s">
             <h2>Cost assumptions</h2>
