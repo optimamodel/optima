@@ -615,7 +615,15 @@ def uploadExcel():
         D.G.workbookname = D.G.projectname + '.xlsx'
         D.G.inputprograms = deepcopy(project.programs)
         D.G.inputpopulations = deepcopy(project.populations)
-        D = updatedata(D, input_programs = project.programs, savetofile = False)
+
+        # Is this the first time? if so then we have to run simulations
+        try:
+            D.S # the cool kids don't reRun when they already have simulations
+            shouldReRun = False
+        except AttributeError:
+            shouldReRun = True
+
+        D = updatedata(D, input_programs = project.programs, savetofile = False, rerun = shouldReRun)
         model = model_as_dict(D)
         project.model = model
         #update the programs and populations based on the data
