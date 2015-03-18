@@ -354,7 +354,7 @@
             </label>
 
             <div ng-messages="state.OptimizationForm.moneyObjective{{ ::item.id }}by.$error"
-                 ng-show="iObjective.use && iObjective.by_active && state.OptimizationForm.moneyObjective{{ item.id }}by.$touched && state.OptimizationForm.moneyObjective{{ ::item.id }}by.$invalid"
+                 ng-show="iObjective.use && iObjective.by_active && state.OptimizationForm.moneyObjective{{ ::item.id }}by.$touched && state.OptimizationForm.moneyObjective{{ ::item.id }}by.$invalid"
                  class="grid">
               <div class="error-hint 6" ng-message="required">Please provide a value</div>
               <div class="error-hint 6" ng-message="number">The value should be a number</div>
@@ -362,7 +362,7 @@
               <div class="error-hint 6" ng-message="max">The maximum value is 100</div>
             </div>
             <div ng-messages="state.OptimizationForm.moneyObjective{{ ::item.id }}to.$error"
-                 ng-show="iObjective.use && !iObjective.by_active && state.OptimizationForm.moneyObjective{{ ::item.id }}to.$touched && state.OptimizationForm.moneyObjective{{ item.id }}to.$invalid"
+                 ng-show="iObjective.use && !iObjective.by_active && state.OptimizationForm.moneyObjective{{ ::item.id }}to.$touched && state.OptimizationForm.moneyObjective{{ ::item.id }}to.$invalid"
                  class="grid">
               <div class="error-hint 6" ng-message="required">Please provide a value</div>
               <div class="error-hint 6" ng-message="number">The value should be a number</div>
