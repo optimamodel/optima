@@ -1,9 +1,10 @@
 define(['./module', 'underscore'], function (module, _) {
   'use strict';
 
-  module.controller('TypeSelectorController', function ($scope, $state) {
+  module.controller('TypeSelectorController', function ($scope, $state, typeSelector, CONFIG) {
 
       $scope.state = {};
+      $scope.types = typeSelector.types;
 
       /**
        * @description Adds a parameter on scope that will indicate if something should be visible depending on the current state
@@ -15,11 +16,16 @@ define(['./module', 'underscore'], function (module, _) {
       }
 
       $scope.$on('$stateChangeSuccess',function() {
-        showPartInViews('typeSelector', [
+        var allPagesWithSelector = [
           'model.view',
           'analysis.scenarios',
           'analysis.optimization'
-        ]);
+        ]
+        if (_(allPagesWithSelector).contains($state.current.name)) {
+          angular.extend($scope.types, angular.copy(CONFIG.GRAPH_TYPES));
+        }
+
+        showPartInViews('typeSelector', allPagesWithSelector);
 
         showPartInViews('stackedCheckbox',[
           'model.view'

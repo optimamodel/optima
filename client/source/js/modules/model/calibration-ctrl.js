@@ -2,7 +2,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ModelCalibrationController', function ($scope, $http, $interval,
-    Model, parameters, meta, info, CONFIG, graphTypeFactory, cfpLoadingBar, calibration) {
+    Model, parameters, meta, info, CONFIG, typeSelector, cfpLoadingBar, calibration) {
 
     var defaultChartOptions = {
       title: 'Title',
@@ -27,9 +27,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.projectInfo = info;
       $scope.canDoFitting = $scope.projectInfo.can_calibrate;
 
-      $scope.types = graphTypeFactory.types;
-      // reset graph types every time you come to this page
-      angular.extend($scope.types, angular.copy(CONFIG.GRAPH_TYPES));
+      $scope.types = typeSelector.types;
+
       // for calibration the overall charts should not be shown by default
       _($scope.types.population).each(function(entry) {
         if (!_(['tx1', 'tx2', 'force']).contains(entry.id)) {
@@ -278,7 +277,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       if (data!== undefined && data!==null && data.graph !== undefined) {
         calibration.storeLastPreviewResponse(data);
 
-        graphTypeFactory.enableAnnualCostOptions($scope.types, data.graph);
+        typeSelector.enableAnnualCostOptions($scope.types, data.graph);
 
         $scope.charts = prepareCharts(data.graph);
         $scope.canDoFitting = true;

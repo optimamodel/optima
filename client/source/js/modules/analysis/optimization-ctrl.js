@@ -2,14 +2,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('AnalysisOptimizationController', function ($scope, $http,
-    $interval, meta, cfpLoadingBar, CONFIG, modalService, graphTypeFactory, optimizations) {
+    $interval, meta, cfpLoadingBar, CONFIG, modalService, typeSelector, optimizations) {
 
       $scope.chartsForDataExport = [];
 
       $scope.meta = meta;
-      $scope.types = graphTypeFactory.types;
-      // reset graph types every time you come to this page
-      angular.extend($scope.types, angular.copy(CONFIG.GRAPH_TYPES));
+      $scope.types = typeSelector.types;
 
       $scope.needData = $scope.meta.progs === undefined;
       $scope.activeTab = 1;
@@ -495,7 +493,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       if (data && data.plot && data.plot.length > 0) {
         var optimization = $scope.optimizationByName($scope.state.activeOptimizationName);
         optimization.result = data;
-        graphTypeFactory.enableAnnualCostOptions($scope.types, data.plot[0].multi);
+        typeSelector.enableAnnualCostOptions($scope.types, data.plot[0].multi);
         drawGraphs();
       }
     }
@@ -957,7 +955,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         updateGraphs(optimization.result);
       } else {
         resetCharts();
-        graphTypeFactory.resetAnnualCostOptions($scope.types);
+        typeSelector.resetAnnualCostOptions($scope.types);
       }
       constructOptimizationMessage();
     };
