@@ -290,16 +290,16 @@
         <div class="section" ng-if="params.objectives.what == 'money'">
           What is the minimum amount of money required to achieve the following objectives:
 
-          <div class="margin-top-xs" ng-repeat="item in moneyObjectives">
+          <div class="margin-top-xs" ng-repeat="item in ::moneyObjectives">
             <div class="checkbox-block">
               <label ng-init="iObjective = params.objectives.money.objectives[item.id]">
                 <input type="checkbox" ng-model="iObjective.use">
-                {{ item.title }}
+                {{ ::item.title }}
               </label>
             </div>
             <label class="radio-inline margin-left-s">
               <input type="radio"
-                     name="{{ item.id }}by_active"
+                     name="{{ ::item.id }}by_active"
                      ng-value="true"
                      ng-disabled="!iObjective.use"
                      ng-model="iObjective.by_active"
@@ -311,7 +311,7 @@
               -->
               <input ng-if="iObjective.use && iObjective.by_active"
                      type="number"
-                     name="moneyObjective{{ item.id }}by"
+                     name="moneyObjective{{ ::item.id }}by"
                      class="txbox __inline __s"
                      ng-model="iObjective.by"
                      required
@@ -319,7 +319,7 @@
                      max="100">
               <input ng-if="!iObjective.use || !iObjective.by_active"
                      type="number"
-                     name="moneyObjective{{ item.id }}by"
+                     name="moneyObjective{{ ::item.id }}by"
                      class="txbox __inline __s"
                      ng-model="iObjective.by"
                      disabled>
@@ -327,7 +327,7 @@
             </label>
             <label class="radio-inline">
               <input type="radio"
-                     name="{{ item.id }}by_active"
+                     name="{{ ::item.id }}by_active"
                      ng-value="false"
                      ng-disabled="!iObjective.use"
                      ng-model="iObjective.by_active"
@@ -340,29 +340,29 @@
               -->
               <input ng-if="iObjective.use && !iObjective.by_active"
                      type="number"
-                     name="moneyObjective{{ item.id }}to"
+                     name="moneyObjective{{ ::item.id }}to"
                      class="txbox __inline __s"
                      ng-model="iObjective.to"
                      required
                      min="0">
               <input ng-if="!iObjective.use || iObjective.by_active"
                      type="number"
-                     name="moneyObjective{{ item.id }}to"
+                     name="moneyObjective{{ ::item.id }}to"
                      class="txbox __inline __s"
                      ng-model="iObjective.to"
                      disabled>
             </label>
 
-            <div ng-messages="state.OptimizationForm.moneyObjective{{ item.id }}by.$error"
-                 ng-show="iObjective.use && iObjective.by_active && state.OptimizationForm.moneyObjective{{ item.id }}by.$touched && state.OptimizationForm.moneyObjective{{ item.id }}by.$invalid"
+            <div ng-messages="state.OptimizationForm.moneyObjective{{ ::item.id }}by.$error"
+                 ng-show="iObjective.use && iObjective.by_active && state.OptimizationForm.moneyObjective{{ item.id }}by.$touched && state.OptimizationForm.moneyObjective{{ ::item.id }}by.$invalid"
                  class="grid">
               <div class="error-hint 6" ng-message="required">Please provide a value</div>
               <div class="error-hint 6" ng-message="number">The value should be a number</div>
               <div class="error-hint 6" ng-message="min">The minimum value is 0</div>
               <div class="error-hint 6" ng-message="max">The maximum value is 100</div>
             </div>
-            <div ng-messages="state.OptimizationForm.moneyObjective{{ item.id }}to.$error"
-                 ng-show="iObjective.use && !iObjective.by_active && state.OptimizationForm.moneyObjective{{ item.id }}to.$touched && state.OptimizationForm.moneyObjective{{ item.id }}to.$invalid"
+            <div ng-messages="state.OptimizationForm.moneyObjective{{ ::item.id }}to.$error"
+                 ng-show="iObjective.use && !iObjective.by_active && state.OptimizationForm.moneyObjective{{ ::item.id }}to.$touched && state.OptimizationForm.moneyObjective{{ item.id }}to.$invalid"
                  class="grid">
               <div class="error-hint 6" ng-message="required">Please provide a value</div>
               <div class="error-hint 6" ng-message="number">The value should be a number</div>
