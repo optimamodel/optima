@@ -390,22 +390,10 @@ def reloadSpreadsheet(project_id):
     """
     Reload the excel spreadsheet and re-run the simulations.
     """
+    from utils import load_project
 
-    current_app.logger.debug('--------------> reloadSpreadsheet sent project id: %s', project_id)
+    project = load_project(project_id)
     D = load_model(project_id)
-    current_app.logger.debug('--------------> reloadSpreadsheet has a model: %s', D)
-    
-    # from sim.runsimulation import runsimulation
-
-    # from sim.runsimulation import runsimulation
-    # from sim.dataio import projectpath
-    # current_app.logger.debug("api/project/update")
-    # project_name = request.project_name
-    # project_id = request.project_id
-    # user_id = current_user.id
-    # current_app.logger.debug("uploadExcel(project id: %s user:%s)" % (project_id, user_id))
-
-    # reply = {'status':'NOK'}
-    # file = request.files['file']
+    D = updatedata(D, input_programs = project.programs, savetofile = False, rerun = True)
 
     return jsonify({'status': 'OK'})    
