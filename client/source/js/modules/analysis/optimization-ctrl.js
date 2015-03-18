@@ -57,13 +57,13 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       // see https://github.com/angular/angular.js/wiki/Understanding-Scopes
       $scope.state = {
         activeOptimizationName: undefined,
-        isTestRun: false
+        isTestRun: false,
+        timelimit: 3600
       };
       resetCharts();
 
       // Set defaults
       $scope.params = {};
-      $scope.params.timelimit = 3600;
 
       // Objectives
       $scope.params.objectives = {};
@@ -716,10 +716,14 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.setActiveTab = function(tabNum){
       if(tabNum === 3){
       /*Prevent going to third tab if something is invalid in the first tab.
-        Cannot just use $scope.OptimizationForm.$invalid for this because the validation of the years and the budgets is done in a different way. */
+        Cannot just use $scope.state.OptimizationForm.$invalid for this because the validation of the years and the budgets is done in a different way. */
         checkValidation();
         if(errorMessages.length > 0){
           modalService.informError(errorMessages, 'Cannot view results');
+          return;
+        }
+        if ($scope.state.OptimizationForm.$invalid) {
+          modalService.inform(function() {}, 'Ok', 'Please correct all errors on this page before proceeding.', 'Cannot view results');
           return;
         }
         constructOptimizationMessage();
@@ -736,7 +740,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         $scope.errorText = '';
         // start cfpLoadingBar loading
         // calculate the number of ticks in timelimit
-        var val = ($scope.params.timelimit * 1000) / 250;
+        var val = ($scope.state.timelimit * 1000) / 250;
         // callback function in start to be called in place of _inc()
         cfpLoadingBar.start(function () {
           if (cfpLoadingBar.status() >= 0.95) {
@@ -749,7 +753,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.startOptimization = function () {
-      var params = optimizationHelpers.toRequestParameters($scope.params, $scope.state.activeOptimizationName);
+      var params = optimizationHelpers.toRequestParameters($scope.params, $scope.state.activeOptimizationName, $scope.state.timelimit);
       $http.post('/api/analysis/optimization/start', params, {ignoreLoadingBar: true})
         .success(function (data, status, headers, config) {
           if (data.status == "OK" && data.join) {
@@ -1003,9 +1007,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     $scope.updateTimelimit = function () {
       if ($scope.state.isTestRun) {
-        $scope.params.timelimit = 60;
+        $scope.state.timelimit = 60;
       } else {
-        $scope.params.timelimit = 3600;
+        $scope.state.timelimit = 3600;
       }
     };
 

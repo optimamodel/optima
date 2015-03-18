@@ -9,21 +9,36 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     /*
      * Returns a new object with the parameters prepared for a server request.
      */
-    var toRequestParameters = function(parameters, name) {
-      console.log(parameters);
-      return {
+    var toRequestParameters = function(scopeParameters, name, timelimit) {
+      var objectives = angular.copy(scopeParameters.objectives);
+
+      objectives.money.objectives = _(objectives.money.objectives).mapObject(function(objective) {
+        objective.by = objective.by / 100.0;
+        return objective;
+      });
+
+      var parameters = {
         name: name,
-        objectives: angular.copy(parameters.objectives),
-        constraints: angular.copy(parameters.constraints)
+        objectives: objectives,
+        constraints: angular.copy(scopeParameters.constraints)
       };
+      if (timelimit) {
+        parameters.timelimit = timelimit;
+      }
+      return parameters;
     };
 
     /*
-     * Convert server constraint parameters for usage in the controller scope.
+     * Convert server objective parameters for usage in the controller scope.
      */
     var toScopeObjectives = function(responseObjectives) {
-      console.log(responseObjectives);
       var objectives = angular.copy(responseObjectives);
+
+      objectives.money.objectives = _(objectives.money.objectives).mapObject(function(objective) {
+        objective.by = objective.by * 100;
+        return objective;
+      });
+
       return objectives;
     };
 
