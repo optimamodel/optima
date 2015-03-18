@@ -1,61 +1,35 @@
-<div class="section cf" ng-if="typeSelectorIsVisible">
+<div>
+  <!--
+  The most outer div must stay because if you put ng-if on the most outer element
+  it cause issues with the scope. In Angular 1.3 it was not possible to update
+  the scope from the controller.
+  -->
+  <div class="section cf" ng-if="state.typeSelectorIsVisible">
 
-  <h3>Epidemiological results</h3>
+    <h3>Epidemiological results</h3>
 
-  <div ng-if="plotUncertaintiesIsVisible === true">
-    <label class="checkbox-inline">
-      <input type="checkbox" ng-model="types.plotUncertainties">
-      Plot uncertainties
-    </label>
-  </div>
-
-  <div class="type-section" ng-repeat="type in types.population">
-    <b>{{ type.name }}</b>
-    <div>
+    <div ng-if="state.plotUncertaintiesIsVisible === true">
       <label class="checkbox-inline">
-        <input type="checkbox" ng-model="type.total">
-        Overall
+        <input type="checkbox" ng-model="types.plotUncertainties">
+        Plot uncertainties
       </label>
     </div>
-    <div>
-      <label class="checkbox-inline">
-        <input type="checkbox" ng-model="type.byPopulation">
-        Per population
-      </label>
-    </div>
-    <div ng-if="type.stacked!==undefined && stackedCheckboxIsVisible === true">
-      <label class="checkbox-inline">
-        <input type="checkbox" ng-model="type.stacked">
-        Stacked
-      </label>
-    </div>
-  </div>
 
-  <h3>Financial results</h3>
-
-  <div ng-repeat="type in types.costs">
-
-    <div ng-if="!type.hasNoIntervals">
-      <b>{{type.name}}</b>
-      <div>
-        <label class="checkbox-inline">
-          <input type="checkbox" ng-model="type.existing">
-          People infected before 2015
-        </label>
-      </div>
-      <div>
-        <label class="checkbox-inline">
-          <input type="checkbox" ng-model="type.future">
-          People infected after 2015
-        </label>
-      </div>
+    <div class="type-section" ng-repeat="type in types.population">
+      <b>{{ type.name }}</b>
       <div>
         <label class="checkbox-inline">
           <input type="checkbox" ng-model="type.total">
-          Total PLHIV
+          Overall
         </label>
       </div>
-      <div ng-if="stackedCheckboxIsVisible === true">
+      <div>
+        <label class="checkbox-inline">
+          <input type="checkbox" ng-model="type.byPopulation">
+          Per population
+        </label>
+      </div>
+      <div ng-if="type.stacked!==undefined && state.stackedCheckboxIsVisible === true">
         <label class="checkbox-inline">
           <input type="checkbox" ng-model="type.stacked">
           Stacked
@@ -63,23 +37,56 @@
       </div>
     </div>
 
-    <div ng-if="type.hasNoIntervals">
-      <b>{{type.name}}</b>
-      <div>
-        <label class="checkbox-inline">
-          <input type="checkbox" ng-model="type.checked">
-          {{type.label}}
-        </label>
+    <h3>Financial results</h3>
+
+    <div ng-repeat="type in types.costs">
+
+      <div ng-if="!type.hasNoIntervals">
+        <b>{{type.name}}</b>
+        <div>
+          <label class="checkbox-inline">
+            <input type="checkbox" ng-model="type.existing">
+            People infected before 2015
+          </label>
+        </div>
+        <div>
+          <label class="checkbox-inline">
+            <input type="checkbox" ng-model="type.future">
+            People infected after 2015
+          </label>
+        </div>
+        <div>
+          <label class="checkbox-inline">
+            <input type="checkbox" ng-model="type.total">
+            Total PLHIV
+          </label>
+        </div>
+        <div ng-if="state.stackedCheckboxIsVisible === true">
+          <label class="checkbox-inline">
+            <input type="checkbox" ng-model="type.stacked">
+            Stacked
+          </label>
+        </div>
+      </div>
+
+      <div ng-if="type.hasNoIntervals">
+        <b>{{type.name}}</b>
+        <div>
+          <label class="checkbox-inline">
+            <input type="checkbox" ng-model="type.checked">
+            {{type.label}}
+          </label>
+        </div>
       </div>
     </div>
-  </div>
 
-  <b>Display annual data as:</b>
-  <div ng-repeat="financialType in types.financialAnnualCosts">
-    <label>
-      <input type="radio" name="activeAnnualCost" ng-model="types.activeAnnualCost" value="{{financialType.id}}" ng-disabled="financialType.disabled"/>
-      {{financialType.name}}
-    </label>
-  </div>
+    <b>Display annual data as:</b>
+    <div ng-repeat="financialType in types.financialAnnualCosts">
+      <label>
+        <input type="radio" name="activeAnnualCost" ng-model="types.activeAnnualCost" value="{{financialType.id}}" ng-disabled="financialType.disabled"/>
+        {{financialType.name}}
+      </label>
+    </div>
 
+  </div>
 </div>
