@@ -76,27 +76,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.params.objectives.outcome.death = false;
       $scope.params.objectives.outcome.costann = false;
 
-      // Money objectives defaults
-      $scope.params.objectives.money = {};
-      $scope.params.objectives.money.objectives = {};
-      $scope.params.objectives.money.objectives.dalys = {};
-      $scope.params.objectives.money.objectives.dalys.use = false;
-      $scope.params.objectives.money.objectives.deaths = {};
-      $scope.params.objectives.money.objectives.deaths.use = false;
-      $scope.params.objectives.money.objectives.inci = {};
-      $scope.params.objectives.money.objectives.inci.use = false;
-      $scope.params.objectives.money.objectives.inciinj = {};
-      $scope.params.objectives.money.objectives.inciinj.use = false;
-      $scope.params.objectives.money.objectives.incisex = {};
-      $scope.params.objectives.money.objectives.incisex.use = false;
-      $scope.params.objectives.money.objectives.mtct = {};
-      $scope.params.objectives.money.objectives.mtct.use = false;
-      $scope.params.objectives.money.objectives.mtctbreast = {};
-      $scope.params.objectives.money.objectives.mtctbreast.use = false;
-      $scope.params.objectives.money.objectives.mtctnonbreast = {};
-      $scope.params.objectives.money.objectives.mtctnonbreast.use = false;
-
       // Default program weightings
+      $scope.params.objectives.money = {};
       $scope.params.objectives.money.costs = [];
       if(meta.progs) {
         $scope.programs = meta.progs.long;
