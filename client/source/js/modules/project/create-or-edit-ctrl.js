@@ -371,8 +371,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             activeProject.setActiveProjectFor($scope.projectParams.name, newProjectId, UserManager.data);
             $state.go('home');
           });
-
-      return true;
     };
 
   });
