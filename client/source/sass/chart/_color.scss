@@ -77,21 +77,19 @@ circle.radar-chart-serie0, circle.radar-chart-serie1, circle.radar-chart-serie2 
 }
 
 .radar-chart-serie0 {
-  fill: none !important;
-  stroke: black !important;
+  fill: map-get($colorMap, 'color-blue-3') !important;
+  stroke: map-get($colorMap, 'color-blue-3') !important;
   stroke-width: 1px !important;
-  stroke-dasharray: 10,10;
 }
 
 .radar-chart-serie1 {
-  fill: none !important;
-  stroke: #037AC0 !important;
+  fill: map-get($colorMap, 'color-blue-2') !important;
+  stroke: map-get($colorMap, 'color-blue-2') !important;
   stroke-width: 1px !important;
 }
 
 .radar-chart-serie2 {
-  fill: none !important;
-  stroke: black !important;
+  fill: map-get($colorMap, 'color-grey-3') !important;
+  stroke: map-get($colorMap, 'color-grey-3') !important;
   stroke-width: 1px !important;
-  stroke-dasharray: 10,10;
 }

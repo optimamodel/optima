@@ -1,7 +1,7 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     'use strict';
 
-    module.controller('AnalysisScenariosController', function ($scope, $http, $modal, $window, meta, info, scenarioParametersResponse, scenariosResponse, CONFIG, graphTypeFactory) {
+    module.controller('AnalysisScenariosController', function ($scope, $http, $modal, $window, meta, info, scenarioParametersResponse, scenariosResponse, CONFIG, typeSelector) {
 
         var linesGraphOptions, linesGraphData, responseData, availableScenarioParameters, availableScenarios;
 
@@ -36,9 +36,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             });
           }
 
-          $scope.types = graphTypeFactory.types;
-          // reset graph types every time you come to this page
-          angular.extend($scope.types, angular.copy(CONFIG.GRAPH_TYPES));
+          $scope.types = typeSelector.types;
 
           linesGraphOptions = {
             height: 200,
@@ -107,7 +105,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           if (!response) {
             return graphs;
           }
-          graphTypeFactory.enableAnnualCostOptions($scope.types, response);
+          typeSelector.enableAnnualCostOptions($scope.types, response);
 
           var graphs = [];
 

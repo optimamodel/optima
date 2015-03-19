@@ -6,7 +6,6 @@ define([
     '../ui/type-selector/index',
     '../common/export-all-charts',
     '../common/export-all-data',
-    '../common/graph-type-factory',
     '../common/update-checkbox-on-click-directive'
 ], function (angular) {
     'use strict';
@@ -18,7 +17,6 @@ define([
         'app.resources.model',
         'app.ui.type-selector',
         'ui.router',
-        'app.common.graph-type',
         'app.common.update-checkbox-on-click'
     ]).config(function ($stateProvider) {
         $stateProvider

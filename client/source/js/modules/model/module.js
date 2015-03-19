@@ -6,7 +6,6 @@ define([
   '../ui/type-selector/index',
   '../common/export-all-charts',
   '../common/export-all-data',
-  '../common/graph-type-factory',
   '../validations/more-than-directive',
   '../validations/less-than-directive'
 ], function (angular) {
@@ -19,7 +18,6 @@ define([
     'app.resources.project',
     'app.ui.type-selector',
     'ui.router',
-    'app.common.graph-type',
     'app.validations.more-than',
     'app.validations.less-than'
   ])
