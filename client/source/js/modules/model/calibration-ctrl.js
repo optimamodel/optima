@@ -71,10 +71,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     /**
      * Makes the backend to reload the spreadsheet.
+     * Reloads the page after that.
      */
     $scope.reloadSpreadsheet = function () {
-      $http.get('/api/model/reloadSpreadsheet/' + info.id);
-      // sas: to-do: be more defensive and handle response
+      $http.get('/api/model/reloadSpreadsheet/' + info.id)
+        .success(function (response) {
+          window.location.reload();});
     };
 
     /**
