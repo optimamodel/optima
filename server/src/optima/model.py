@@ -14,6 +14,7 @@ from flask import current_app, make_response
 from signal import *
 from dbconn import db
 from sim.autofit import autofit
+from sim.updatedata import updatedata
 
 # route prefix: /api/model
 model = Blueprint('model',  __name__, static_folder = '../static')
@@ -379,3 +380,20 @@ def doCostCoverageEffect():
         return jsonify({"status":"NOK", "exception":var})
     return jsonify({"status":"OK", "plotdata": for_fe(plotdata), \
         "plotdata_co": for_fe(plotdata_co), "effect": args['effect']})
+
+
+@model.route('/reloadSpreadsheet/<project_id>', methods=['GET'])
+@login_required
+@check_project_name
+@report_exception()
+def reloadSpreadsheet(project_id):
+    """
+    Reload the excel spreadsheet and re-run the simulations.
+    """
+    from utils import load_project
+
+    project = load_project(project_id)
+    D = load_model(project_id)
+    D = updatedata(D, input_programs = project.programs, savetofile = False, rerun = True)
+
+    return jsonify({'status': 'OK'})    
