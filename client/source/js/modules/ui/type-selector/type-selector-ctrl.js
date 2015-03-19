@@ -1,21 +1,31 @@
 define(['./module', 'underscore'], function (module, _) {
   'use strict';
 
+  /**
+   * The controller manages the avialable & selected chart types.
+   *
+   * Different type selection sections are shown depending the current page.
+   * This controller manages the types selection made available through the
+   * typeSelector service to use in the page specific controllers.
+   */
   module.controller('TypeSelectorController', function ($scope, $state, typeSelector, CONFIG) {
 
       $scope.state = {};
       $scope.types = typeSelector.types;
 
       /**
-       * @description Adds a parameter on scope that will indicate if something should be visible depending on the current state
-       * @param part name of the parameter that should be set on $scope
-       * @param viewNames names of the views in which this parameter should return true
+       * Adds a parameter on scope that will indicate if this section should be
+       * visible depending on the current state.
+       *
+       * @param {string} section - name of the parameter that should be set on $scope
+       * @param {array} viewNames - names of the views in which this parameter should return true
        */
-      function showPartInViews (part, viewNames) {
-        $scope.state[part+"IsVisible"] = _(viewNames).contains($state.current.name);
+      function updateVisibilityOf (section, viewNames) {
+        $scope.state[section + "IsVisible"] = _(viewNames).contains($state.current.name);
       }
 
-      $scope.$on('$stateChangeSuccess',function() {
+      // reset the types and update the visible sections when a user changes the page
+      $scope.$on('$stateChangeSuccess', function() {
         var allPagesWithSelector = [
           'model.view',
           'analysis.scenarios',
@@ -25,6 +35,8 @@ define(['./module', 'underscore'], function (module, _) {
           'analysis.scenarios',
           'analysis.optimization'
         ];
+
+        // reset the graph types
         if (_(allPagesWithSelector).contains($state.current.name)) {
           angular.extend($scope.types, angular.copy(CONFIG.GRAPH_TYPES));
 
@@ -41,15 +53,10 @@ define(['./module', 'underscore'], function (module, _) {
           }
         }
 
-        showPartInViews('typeSelector', allPagesWithSelector);
-
-        showPartInViews('stackedCheckbox',[
-          'model.view'
-        ]);
-
-        showPartInViews('plotUncertainties',[
-          'analysis.optimization'
-        ]);
+        // update section visibility
+        updateVisibilityOf('typeSelector', allPagesWithSelector);
+        updateVisibilityOf('stackedCheckbox', ['model.view']);
+        updateVisibilityOf('plotUncertainties', ['analysis.optimization']);
       });
     }
   );
