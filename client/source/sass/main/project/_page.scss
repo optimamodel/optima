@@ -2,19 +2,7 @@
 
   &_header {
     @extend %clearfix;
-    border-bottom: 1px solid $borders-color;
-    padding-bottom: 18px;
-  }
-
-  &_subheader {
-    @extend %clearfix;
     padding: 22px 0 45px;
-  }
-
-  &_header, &_subheader {
-    h1, h2, h3, h4, h5, h6 {
-      margin: 0;
-    }
   }
   
   hr {

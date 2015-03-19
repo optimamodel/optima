@@ -1,38 +1,40 @@
 <div class="rish">
   <h3>Manage projects</h3>
   <div class="section" ng-show="!users.length"> No other users have projects. </div>
-  <div class="section" ng-show="users.length" ng-repeat="user in users">
-    <h4> {{user.data.name}} ({{user.data.email}}) </h4>
-    <table class="table table-bordered table-hover table-striped" style="width: auto">
+  <div class="section" ng-show="users.length" ng-repeat="user in ::users">
+    <h4> {{ ::user.data.name }} ({{ ::user.data.email }}) </h4>
+    <table ng-show="user.projects.length" class="table table-bordered table-hover table-striped" style="width: auto">
       <thead>
-      <th>Name</th>
-      <th>Populations</th>
-      <th>Programs</th>
-      <th>Data start year</th>
-      <th>Data end year</th>
-      <th>Project created on</th>
-      <th>Data uploaded on</th>
-      <th colspan="7">Actions</th>
+      <tr>
+        <th>Name</th>
+        <th>Populations</th>
+        <th>Programs</th>
+        <th>Data start year</th>
+        <th>Data end year</th>
+        <th>Project created on</th>
+        <th>Data uploaded on</th>
+        <th colspan="7">Actions</th>
+      </tr>
       </thead>
       <tbody>
       <tr ng-repeat="project in user.projects | orderBy: 'name'">
         <td>
-          {{ project.name }}
+          {{ ::project.name }}
         </td>
         <td>
-          {{ project.populations.length }}
+          {{ ::project.populations.length }}
         </td>
         <td>
-          {{ project.programs.length }}
+          {{ ::project.programs.length }}
         </td>
         <td>
-          {{ project.dataStart }}
+          {{ ::project.dataStart }}
         </td>
         <td>
-          {{ project.dataEnd }}
+          {{ ::project.dataEnd }}
         </td>
         <td>
-          {{ project.creation_time| date:'yyyy-MM-dd HH:mm:ss'}}
+          {{ ::project.creation_time| date:'yyyy-MM-dd HH:mm:ss'}}
         </td>
         <td>
           {{ project.data_upload_time ? (project.data_upload_time | date:'yyyy-MM-dd HH:mm:ss') : 'No data uploaded'}}

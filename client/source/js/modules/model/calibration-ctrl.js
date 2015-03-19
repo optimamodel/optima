@@ -2,76 +2,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ModelCalibrationController', function ($scope, $http, $interval,
-    Model, parameters, meta, info, CONFIG, graphTypeFactory, cfpLoadingBar) {
-
-    $scope.projectInfo = info;
-    $scope.canDoFitting = $scope.projectInfo.can_calibrate;
-    $scope.needData = !$scope.projectInfo.has_data;
-
-    var prepareF = function (f) {
-      var F = angular.copy(f);
-
-      F.dx = _(F.dx).map(parseFloat);
-      F.force = _(F.force).map(parseFloat);
-      F.init = _(F.init).map(parseFloat);
-      F.popsize = _(F.popsize).map(parseFloat);
-      return F;
-    };
-
-    var prepareM = function(m) {
-      _(m).each(function (parameter) {
-        parameter.data = parseFloat(parameter.data);
-      });
-      return m;
-    };
-
-    var transformedF = $scope.needData? {} : prepareF(parameters.F[0]);
-
-    $scope.parameters = {
-      types: {
-        force: 'Relative force-of-infection for ',
-        popsize: 'Initial population size for ',
-        init: 'Initial prevalence for ',
-        dx: [
-          'Overall population initial relative testing rate',
-          'Overall population final relative testing rate',
-          'Year of mid change in overall population testing rate',
-          'Testing rate slope parameter'
-        ]
-      },
-      meta: meta,
-      f: transformedF,
-      m: parameters.M,
-      cache: {
-        f: angular.copy(transformedF),
-        m: angular.copy(parameters.M),
-        response: null
-      }
-    };
-
-    $scope.types = graphTypeFactory.types;
-    // reset graph types every time you come to this page
-    angular.extend($scope.types, angular.copy(CONFIG.GRAPH_TYPES));
-    // for calibration the overall charts should not be shown by default
-    _($scope.types.population).each(function(entry) {
-      if (!_(['tx1', 'tx2', 'force']).contains(entry.id)) {
-        entry.total = false;
-      }
-    });
-    // for calibration the overall cost charts should not be shown by default
-    _($scope.types.costs).each(function(entry) {
-      entry.total = false;
-    });
-
-    $scope.calibrationStatus = false;
-
-    $scope.enableManualCalibration = false;
-
-    // to store years from UI
-    $scope.simulationOptions = {'timelimit':60};
-    $scope.charts = [];
-    $scope.hasStackedCharts = false;
-    $scope.hasCharts = false;
+    Model, parameters, meta, info, CONFIG, graphTypeFactory, cfpLoadingBar, calibration) {
 
     var defaultChartOptions = {
       title: 'Title',
@@ -92,12 +23,60 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       area: {}
     };
 
-    $scope.doneEditingParameter = function () {
-      Model.saveCalibrateManual({
-        F: prepareF($scope.parameters.f),
-        M: prepareM($scope.parameters.m),
-        dosave: false
-      }, updateCharts);
+    var initialize = function() {
+      $scope.projectInfo = info;
+      $scope.canDoFitting = $scope.projectInfo.can_calibrate;
+
+      $scope.types = graphTypeFactory.types;
+      // reset graph types every time you come to this page
+      angular.extend($scope.types, angular.copy(CONFIG.GRAPH_TYPES));
+      // for calibration the overall charts should not be shown by default
+      _($scope.types.population).each(function(entry) {
+        if (!_(['tx1', 'tx2', 'force']).contains(entry.id)) {
+          entry.total = false;
+        }
+      });
+      // for calibration the overall cost charts should not be shown by default
+      _($scope.types.costs).each(function(entry) {
+        entry.total = false;
+      });
+
+      $scope.calibrationStatus = false;
+
+      $scope.enableManualCalibration = false;
+
+      $scope.simulationOptions = {'timelimit': 60};
+      $scope.charts = [];
+      $scope.hasStackedCharts = false;
+      $scope.parameters = {
+        types: {
+          force: 'Relative force-of-infection for ',
+          popsize: 'Initial population size for ',
+          init: 'Initial prevalence for ',
+          dx: [
+            'Overall population initial relative testing rate',
+            'Overall population final relative testing rate',
+            'Year of mid change in overall population testing rate',
+            'Testing rate slope parameter'
+          ]
+        },
+        meta: meta
+      };
+      angular.extend($scope.parameters, calibration.toScopeParameters(parameters));
+
+      if ($scope.projectInfo.has_data){
+        $scope.simulate();
+      }
+    };
+
+    /**
+     * Makes the backend to reload the spreadsheet.
+     * Reloads the page after that.
+     */
+    $scope.reloadSpreadsheet = function () {
+      $http.get('/api/model/reloadSpreadsheet/' + info.id)
+        .success(function (response) {
+          window.location.reload();});
     };
 
     /**
@@ -191,7 +170,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         if (type.total && data) {
 
           var yData = {
-            best: data.tot.best, high: data.tot.high, low: data.tot.low,
+            best: data.tot.best,
+            high: data.tot.high,
+            low: data.tot.low
           };
           var chart = generateAreaChart(yData, response.tvec, data.tot.title);
 
@@ -294,35 +275,32 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       return charts;
     };
 
-    var updateCharts = function (data) {
+    /**
+     * Stores the last saved data for later retrieval & updates the charts with
+     * the received data.
+     */
+    var storeSavedCalibrationAndUpdate = function (data) {
+      calibration.storeLastSavedResponse(data);
+      updateChartsAndParameters(data);
+    };
+
+    var updateChartsAndParameters = function (data) {
       if (data!== undefined && data!==null && data.graph !== undefined) {
+        calibration.storeLastPreviewResponse(data);
+
         graphTypeFactory.enableAnnualCostOptions($scope.types, data.graph);
 
         $scope.charts = prepareCharts(data.graph);
-        $scope.hasCharts = ($scope.charts.length>0);
-        $scope.parameters.cache.response = data;
         $scope.canDoFitting = true;
-        if (data.F){
-          var f = prepareF(data.F[0]);
-          $scope.parameters.f = f;
-          $scope.parameters.cache.f = angular.copy(f);
-        }
-        if (data.M) {
-          $scope.parameters.m = data.M;
-          $scope.parameters.cache.m = angular.copy(data.M);
-        }
+
+        angular.extend($scope.parameters, calibration.toScopeParameters(data));
       }
     };
 
     $scope.simulate = function () {
       $http.post('/api/model/view', $scope.simulationOptions)
-        .success(updateCharts);
+        .success(storeSavedCalibrationAndUpdate);
     };
-
-
-    if($scope.needData === false){
-      $scope.simulate();
-    }
 
     var autoCalibrationTimer;
     $scope.startAutoCalibration = function () {
@@ -358,7 +336,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           if (data.status == 'Done') {
             stopTimer();
           }
-          updateCharts(data); // now when we might run continuous calibration, this might be the only chance to update the charts.
+          updateChartsAndParameters(data); // now when we might run continuous calibration, this might be the only chance to update the charts.
         })
         .error(function(data, status, headers, config) {
           if (data && data.exception) {
@@ -394,31 +372,26 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     $scope.saveCalibration = function () {
       $http.post('/api/model/calibrate/save')
-        .success(updateCharts);
+        .success(storeSavedCalibrationAndUpdate);
     };
 
     $scope.revertCalibration = function () {
       $http.post('/api/model/calibrate/revert')
-        .success(function(){ console.log("OK");});
-    };
-
-    $scope.previewManualCalibration = function () {
-      Model.saveCalibrateManual({
-        F: prepareF($scope.parameters.f),
-        M: prepareM($scope.parameters.m) }, updateCharts);
+        .success(storeSavedCalibrationAndUpdate);
     };
 
     $scope.saveManualCalibration = function () {
-      Model.saveCalibrateManual({
-        F: prepareF($scope.parameters.f),
-        M: prepareM($scope.parameters.m),
-        dosave: true
-      }, updateCharts);
+      var data = calibration.toRequestParameters($scope.parameters, true);
+      Model.runManualCalibration(data, storeSavedCalibrationAndUpdate);
+    };
+
+    $scope.doneEditingParameter = function () {
+      var data = calibration.toRequestParameters($scope.parameters, false);
+      Model.runManualCalibration(data, updateChartsAndParameters);
     };
 
     $scope.revertManualCalibration = function () {
-      angular.extend($scope.parameters.f, $scope.parameters.cache.f);
-      angular.extend($scope.parameters.m, $scope.parameters.cache.m);
+      updateChartsAndParameters(calibration.lastSavedResponse());
     };
 
     $scope.reportCalibrationStatus = function () {
@@ -429,9 +402,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       }
     };
 
+    initialize();
+
     // The charts are shown/hidden after updating the chart type checkboxes.
     $scope.$watch('types', function () {
-      updateCharts($scope.parameters.cache.response);
+      updateChartsAndParameters(calibration.lastPreviewResponse());
     }, true);
 
   });

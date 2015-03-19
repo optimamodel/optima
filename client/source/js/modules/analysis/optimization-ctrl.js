@@ -1,8 +1,9 @@
-define(['./module', 'angular', 'd3'], function (module, angular, d3) {
+define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('AnalysisOptimizationController', function ($scope, $http,
-    $interval, meta, cfpLoadingBar, CONFIG, modalService, graphTypeFactory, optimizations) {
+    $interval, meta, cfpLoadingBar, CONFIG, modalService, graphTypeFactory,
+    optimizations, optimizationHelpers) {
 
       $scope.chartsForDataExport = [];
 
@@ -22,6 +23,17 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
         STOPPING : { text:"Optimization is stopping", isActive: true, checking: false },
         CHECKING: {text:"Checking for existing optimization", isActive: false, checking: true}
       };
+
+      $scope.moneyObjectives = [
+        { id: 'inci', title: 'Reduce the annual incidence of HIV' },
+        { id: 'incisex', title: 'Reduce the annual incidence of sexually transmitted HIV' },
+        { id: 'inciinj', title: 'Reduce the annual incidence of injecting-related HIV' },
+        { id: 'mtct', title: 'Reduce annual mother-to-child transmission of HIV' },
+        { id: 'mtctbreast', title: 'Reduce annual mother-to-child transmission of HIV among breastfeeding mothers' },
+        { id: 'mtctnonbreast', title: 'Reduce annual mother-to-child transmission of HIV among non-breastfeeding mothers' },
+        { id: 'deaths', title: 'Reduce annual AIDS-related deaths' },
+        { id: 'dalys', title: 'Reduce annual HIV-related DALYs' }
+      ];
 
       $scope.optimizationStatus = statusEnum.NOT_RUNNING;
       $scope.optimizations = [];
@@ -45,13 +57,13 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       // see https://github.com/angular/angular.js/wiki/Understanding-Scopes
       $scope.state = {
         activeOptimizationName: undefined,
-        isTestRun: false
+        isTestRun: false,
+        timelimit: 3600
       };
       resetCharts();
 
       // Set defaults
       $scope.params = {};
-      $scope.params.timelimit = 3600;
 
       // Objectives
       $scope.params.objectives = {};
@@ -64,27 +76,8 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       $scope.params.objectives.outcome.death = false;
       $scope.params.objectives.outcome.costann = false;
 
-      // Money objectives defaults
-      $scope.params.objectives.money = {};
-      $scope.params.objectives.money.objectives = {};
-      $scope.params.objectives.money.objectives.dalys = {};
-      $scope.params.objectives.money.objectives.dalys.use = false;
-      $scope.params.objectives.money.objectives.deaths = {};
-      $scope.params.objectives.money.objectives.deaths.use = false;
-      $scope.params.objectives.money.objectives.inci = {};
-      $scope.params.objectives.money.objectives.inci.use = false;
-      $scope.params.objectives.money.objectives.inciinj = {};
-      $scope.params.objectives.money.objectives.inciinj.use = false;
-      $scope.params.objectives.money.objectives.incisex = {};
-      $scope.params.objectives.money.objectives.incisex.use = false;
-      $scope.params.objectives.money.objectives.mtct = {};
-      $scope.params.objectives.money.objectives.mtct.use = false;
-      $scope.params.objectives.money.objectives.mtctbreast = {};
-      $scope.params.objectives.money.objectives.mtctbreast.use = false;
-      $scope.params.objectives.money.objectives.mtctnonbreast = {};
-      $scope.params.objectives.money.objectives.mtctnonbreast.use = false;
-
       // Default program weightings
+      $scope.params.objectives.money = {};
       $scope.params.objectives.money.costs = [];
       if(meta.progs) {
         $scope.programs = meta.progs.long;
@@ -680,6 +673,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     }
 
     function constructOptimizationMessage() {
+      var optimizationMessageTemplate = _.template("Optimizing <%= checkedPrograms %> over years <%= startYear %> to <%= endYear %> with <%= budgetLevel %>.");
       var budgetLevel;
 
       if ($scope.params.objectives.funding === 'variable') {
@@ -691,7 +685,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
         budgetLevel = budgetLevel + " to $" + $scope.params.objectives.outcome.budgetrange.maxval;
       }
 
-      $scope.optimizationMessage = _.template("Optimizing <%= checkedPrograms %> over years <%= startYear %> to <%= endYear %> with <%= budgetLevel %>.", {
+      $scope.optimizationMessage = optimizationMessageTemplate({
         checkedPrograms : joinArrayAsSentence(validateObjectivesToMinimize().checkedPrograms, 'name', true),
         startYear: $scope.params.objectives.year.start,
         endYear:$scope.params.objectives.year.end,
@@ -702,10 +696,14 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     $scope.setActiveTab = function(tabNum){
       if(tabNum === 3){
       /*Prevent going to third tab if something is invalid in the first tab.
-        Cannot just use $scope.OptimizationForm.$invalid for this because the validation of the years and the budgets is done in a different way. */
+        Cannot just use $scope.state.OptimizationForm.$invalid for this because the validation of the years and the budgets is done in a different way. */
         checkValidation();
         if(errorMessages.length > 0){
           modalService.informError(errorMessages, 'Cannot view results');
+          return;
+        }
+        if ($scope.state.OptimizationForm.$invalid) {
+          modalService.inform(function() {}, 'Ok', 'Please correct all errors on this page before proceeding.', 'Cannot view results');
           return;
         }
         constructOptimizationMessage();
@@ -717,12 +715,12 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       if ( !angular.isDefined( optimizationTimer ) ) {
         // Keep polling for updated values after every 5 seconds till we get an error.
         // Error indicates that the model is not optimizing anymore.
-        optimizationTimer = $interval(checkWorkingOptimization, 10000, 0, false);
+        optimizationTimer = $interval(checkWorkingOptimization, 30000, 0, false);
         $scope.optimizationStatus = status;
         $scope.errorText = '';
         // start cfpLoadingBar loading
         // calculate the number of ticks in timelimit
-        var val = ($scope.params.timelimit * 1000) / 250;
+        var val = ($scope.state.timelimit * 1000) / 250;
         // callback function in start to be called in place of _inc()
         cfpLoadingBar.start(function () {
           if (cfpLoadingBar.status() >= 0.95) {
@@ -735,8 +733,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     };
 
     $scope.startOptimization = function () {
-      var params = angular.copy($scope.params);
-      params.name = $scope.state.activeOptimizationName;
+      var params = optimizationHelpers.toRequestParameters($scope.params, $scope.state.activeOptimizationName, $scope.state.timelimit);
       $http.post('/api/analysis/optimization/start', params, {ignoreLoadingBar: true})
         .success(function (data, status, headers, config) {
           if (data.status == "OK" && data.join) {
@@ -835,13 +832,11 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
 
     $scope.addOptimization = function () {
       var create = function (name) {
-        $http.post('/api/analysis/optimization/create', {
-          name: name, 
-          objectives: $scope.params.objectives,
-          constraints: $scope.params.constraints
-        }).success(function(data) {
-            $scope.initOptimizations(data.optimizations, name);
-          });
+        var url = '/api/analysis/optimization/create';
+        var params = optimizationHelpers.toRequestParameters($scope.params, name);
+        $http.post(url, params).success(function(data) {
+          $scope.initOptimizations(data.optimizations, name);
+        });
       };
 
       modalService.addOptimization(function (name) { create(name); }, $scope.optimizations);
@@ -949,7 +944,8 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     $scope.applyOptimization = function(name, overwriteParams) {
       var optimization = $scope.optimizationByName(name);
       if (overwriteParams) {
-        _.extend($scope.params.objectives, optimization.objectives);
+        var objectives = optimizationHelpers.toScopeObjectives(optimization.objectives);
+        _.extend($scope.params.objectives, objectives);
         _.extend($scope.params.constraints, optimization.constraints);
       }
       if (optimization.result) {
@@ -991,9 +987,9 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
 
     $scope.updateTimelimit = function () {
       if ($scope.state.isTestRun) {
-        $scope.params.timelimit = 60;
+        $scope.state.timelimit = 60;
       } else {
-        $scope.params.timelimit = 3600;
+        $scope.state.timelimit = 3600;
       }
     };
 

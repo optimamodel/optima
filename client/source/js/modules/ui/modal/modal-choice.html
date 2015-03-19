@@ -1,15 +1,15 @@
 <div class="modal-header">
   <a class="modal-close" data-ng-click="$dismiss('cancel')">&times;</a>
-  {{ title }}
+  {{ ::title }}
 </div>
 <div class="modal-body" style="margin-bottom: 20px">
-  {{ message }}
+  {{ ::message }}
 </div>
 <div class="modal-footer">
   <button type="button"
           class="btn"
-          ng-click="chooseA()">{{choiceAButton}}</button>
+          ng-click="chooseA()">{{ ::choiceAButton }}</button>
   <button type="submit"
           class="btn"
-          ng-click="chooseB()">{{choiceBButton}}</button>
+          ng-click="chooseB()">{{ ::choiceBButton }}</button>
 </div>

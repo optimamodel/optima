@@ -9,3 +9,4 @@ server/p-env
 server/build
 \~\$*
 *.prj
+*.json

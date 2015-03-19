@@ -11,10 +11,10 @@
 
     & > a {
       @extend .link.__black;
-      @extend .link.__complex;
       cursor: pointer;
       display: block;
       padding: 20px;
+      text-decoration: none;
     }
   }
 

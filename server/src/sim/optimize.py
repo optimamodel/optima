@@ -36,6 +36,11 @@ def runmodelalloc(D, thisalloc, origalloc, parindices, randseed, financial=True,
     newD.M = partialupdateM(D.M, newM, parindices)
     S = model(newD.G, newD.M, newD.F[0], newD.opt, verbose=verbose)
     R = makeresults(D, allsims=[S], financial=financial, verbose=0)
+    R.debug = struct()
+    R.debug.G = deepcopy(newD.G)
+    R.debug.M = deepcopy(newD.M)
+    R.debug.F = deepcopy(newD.F)
+    R.debug.S = deepcopy(S)
     return R
 
 
@@ -44,6 +49,7 @@ def objectivecalc(optimparams, options):
     """ Calculate the objective function """
     origparams = options.D.data.origalloc
     
+    # Exclude fixed costs from the optimization
     opttrue = zeros(len(options.D.data.origalloc))
     for i in range(len(options.D.data.origalloc)):
         if len(options.D.programs[options.D.data.meta.progs.short[i]]['effects']): opttrue[i] = 1.0
@@ -486,13 +492,21 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
             result.Rarr[-1].label = labels.pop(0) # Store labels, one at a time
 
 
+
+
+
+
+
+
+
     ## Gather plot data
     from gatherplotdata import gatheroptimdata
     plot_result = gatheroptimdata(D, result, verbose=verbose)
     if 'optim' not in D.plot: D.plot.optim = [] # Initialize list if required
     D.plot.optim.append(plot_result) # In any case, append
     
-    result_to_save = {'plot': [plot_result]}
+    debug_result = [deepcopy(result.Rarr[0].R.debug), deepcopy(result.Rarr[1].R.debug)]
+    result_to_save = {'plot': [plot_result], 'debug': [debug_result]}
 
     ## Save optimization to D
     D = saveoptimization(D, name, objectives, constraints, result_to_save, verbose=2)
@@ -562,34 +576,39 @@ def defaultobjectives(D, verbose=2):
     ob.outcome.budgetrange.maxval = None
     ob.outcome.budgetrange.step = None
     ob.funding = "constant" #that's how it works on FE atm
-    
+
     # Other settings
     ob.timevarying = False # Do not use time-varying parameters
     ob.artcontinue = 1 # No one currently on ART stops
     ob.otherprograms = "remain" # Other programs remain constant after optimization ends
-    
+
     ob.money = struct()
     ob.money.objectives = struct()
     for objective in ['inci', 'incisex', 'inciinj', 'mtct', 'mtctbreast', 'mtctnonbreast', 'deaths', 'dalys']:
         ob.money.objectives[objective] = struct()
-        ob.money.objectives[objective].use = False # TIck box: by default don't use
-        ob.money.objectives[objective].by = 50 # "By" text entry box: 0.5 = 50% reduction
-        ob.money.objectives[objective].to = 0 # "To" text entry box: don't use if set to 0
+        # Checkbox: by default it's False meaning the objective is not applied
+        ob.money.objectives[objective].use = False
+        # If "By" is not active "To" is used. "By" is active by default. 
+        ob.money.objectives[objective].by_active = True
+        # "By" text entry box: 0.5 means a 50% reduction
+        ob.money.objectives[objective].by = 0.5
+        # "To" text entry box: an absolute value e.g. reduce deaths to <500
+        ob.money.objectives[objective].to = 0
     ob.money.objectives.inci.use = True # Set incidence to be on by default
-    
+
     ob.money.costs = []
     for p in range(D.G.nprogs):
         ob.money.costs.append(100) # By default, use a weighting of 100%
-    
+
     return ob
 
 def defaultconstraints(D, verbose=2):
     """
     Define default constraints for the optimization.
     """
-    
+
     printv('Defining default constraints...', 3, verbose=verbose)
-    
+
     con = struct()
     con.txelig = 4 # 4 = "All people diagnosed with HIV"
     con.dontstopart = True # "No one who initiates treatment is to stop receiving ART"
@@ -659,7 +678,7 @@ def partialupdateM(oldM, newM, indices, setbefore=False, setafter=True):
                             raise Exception('%i dimensions for parameter M.%s.%s' % (ndim(output[key][key2][indices]), key, key2))
                     except:
                         print('Could not set indices for parameter M.%s.%s, indices %i-%i' % (key, key2, min(indices), max(indices)))
-                        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+#                        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
             else:
                 try:
                     if ndim(output[key])==1:
@@ -674,7 +693,7 @@ def partialupdateM(oldM, newM, indices, setbefore=False, setafter=True):
                         raise Exception('%i dimensions for parameter M.%s' % (ndim(output[key][indices]), key, key2))
                 except:
                     print('Could not set indices for parameter M.%s, indices %i-%i' % (key, min(indices), max(indices)))
-                    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+#                    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     
     output.totalacts = totalacts(output, len(output.tvec)) # Update total acts
     return output

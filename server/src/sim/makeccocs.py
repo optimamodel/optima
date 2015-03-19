@@ -13,8 +13,9 @@ from numpy import log as nplog
 from rtnorm import rtnorm
 from bunch import float_array
 from printv import printv
-#from scipy.stats import truncnorm
 from parameters import input_parameter_name
+from copy import deepcopy
+from datetime import date
 
 ## Set defaults for testing makeccocs
 default_progname = 'ART'
@@ -358,8 +359,28 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
 
         # Populate output structure with scatter data 
         totalcost, outcome = getscatterdata(totalcost, outcome)
-        plotdata['xscatterdata'] = totalcost # X scatter data
-        plotdata['yscatterdata'] = outcome # Y scatter data
+        
+        plottotalcost = deepcopy(totalcost)
+        plotoutcome = deepcopy(outcome)
+        currentcost = D.data.origalloc[prognumber]
+        currentoutcome = None
+        try:
+            timepoint = D.opt.partvec.index(float(min(D.data.epiyears[-1], date.today().year)))
+            currentoutcome = D.M[parname][popnumber][timepoint]
+        except:
+            try:
+                tmp = float_array(D.data[effect[0][0]][parname][popnumber])
+                currentoutcome = tmp[~isnan(tmp)][-1]
+                print('Parameter %s not found, using last data value %f' % (parname, currentoutcome))
+            except:
+                print('Parameter %s not found, and could not append a point from data: %s' % (parname, tmp))
+        if currentcost is not None and currentoutcome is not None:
+            plottotalcost.append(currentcost) # WARNING KLUDGY, force-append last data point
+            plotoutcome.append(currentoutcome)
+            
+        
+        plotdata['xscatterdata'] = plottotalcost # X scatter data
+        plotdata['yscatterdata'] = plotoutcome # Y scatter data
 #        plotdata['yscatterdata'] = [outcome[j]*100.0 for j in range(len(outcome))] # Y scatter data
     
         # Do we have parameters for making curves?
