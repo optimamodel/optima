@@ -10,22 +10,16 @@ define(['./module', 'underscore'], function (module, _) {
    */
   module.controller('TypeSelectorController', function ($scope, $state, typeSelector, CONFIG) {
 
-      $scope.state = {};
-      $scope.types = typeSelector.types;
-
-      /**
-       * Adds a parameter on scope that will indicate if this section should be
-       * visible depending on the current state.
-       *
-       * @param {string} section - name of the parameter that should be set on $scope
-       * @param {array} viewNames - names of the views in which this parameter should return true
-       */
-      function updateVisibilityOf (section, viewNames) {
-        $scope.state[section + "IsVisible"] = _(viewNames).contains($state.current.name);
+      function initialize () {
+        $scope.state = {};
+        $scope.types = typeSelector.types;
+        $scope.$on('$stateChangeSuccess', onStateChanged);
       }
 
-      // reset the types and update the visible sections when a user changes the page
-      $scope.$on('$stateChangeSuccess', function() {
+      /**
+       * Reset the types and update the visible sections when a user changes the page.
+       */
+      function onStateChanged () {
         var allPagesWithSelector = [
           'model.view',
           'analysis.scenarios',
@@ -57,7 +51,20 @@ define(['./module', 'underscore'], function (module, _) {
         updateVisibilityOf('typeSelector', allPagesWithSelector);
         updateVisibilityOf('stackedCheckbox', ['model.view']);
         updateVisibilityOf('plotUncertainties', ['analysis.optimization']);
-      });
+      }
+
+      /**
+       * Adds a parameter on scope that will indicate if this section should be
+       * visible depending on the current state.
+       *
+       * @param {string} section - name of the parameter that should be set on $scope
+       * @param {array} viewNames - names of the views in which this parameter should return true
+       */
+      function updateVisibilityOf (section, viewNames) {
+        $scope.state[section + "IsVisible"] = _(viewNames).contains($state.current.name);
+      }
+
+      initialize();
     }
   );
 });
