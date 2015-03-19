@@ -190,14 +190,15 @@ def expanddata(data, length, growthrate, interp=True, dt=None):
     
     newdata = zeros(int(length)) # make an array of zeros of the desired length
     olddata = sanitize(data) # remove nans from original data set
-    for i in range(len(data)):
-        if not isnan(data[i]): newdata[i] = data[i] # replace the zeros with numbers where available
-    firstindex = where(newdata==olddata[0])[0][0] # find the first year for which data are available
-    lastindex = where(newdata==olddata[-1])[0][0] # find the last year for which data are available
-    for i in range(firstindex):
-        newdata[firstindex-(i+1)] = newdata[firstindex-i]/(1+growthrate) # back-project using growth rates
-    for i in range(len(newdata)-lastindex-1):
-        newdata[lastindex+i+1] = newdata[lastindex+i]*(1+growthrate) # forward-project using growth rates
+    if not isinstance(olddata, int): 
+        for i in range(len(data)):
+            if not isnan(data[i]): newdata[i] = data[i] # replace the zeros with numbers where available
+        firstindex = where(newdata==olddata[0])[0][0] # find the first year for which data are available
+        lastindex = where(newdata==olddata[-1])[0][0] # find the last year for which data are available
+        for i in range(firstindex):
+            newdata[firstindex-(i+1)] = newdata[firstindex-i]/(1+growthrate) # back-project using growth rates
+        for i in range(len(newdata)-lastindex-1):
+            newdata[lastindex+i+1] = newdata[lastindex+i]*(1+growthrate) # forward-project using growth rates
     if interp: # if required, interpolate between years
         newx = linspace(0,1,int(length/dt))
         origx = linspace(0,1,len(newdata))
