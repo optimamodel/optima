@@ -180,5 +180,78 @@ define([
       ]
     };
 
+    $scope.radarOptions = {};
+
+    $scope.radarData = [{
+      "axes": [{
+          "value": 54,
+          "axis": "SBCC"
+      }, {
+          "value": 45,
+          "axis": "NSP"
+      }, {
+          "value": 60,
+          "axis": "OST"
+      }, {
+          "value": 29,
+          "axis": "MSM programs"
+      }, {
+          "value": 40,
+          "axis": "FSW programs"
+      }, {
+          "value": 34,
+          "axis": "ART"
+      }, {
+          "value": 51,
+          "axis": "PMTCT"
+      }]
+    }, {
+      "axes": [{
+          "value": 12,
+          "axis": "SBCC"
+      }, {
+          "value": 10,
+          "axis": "NSP"
+      }, {
+          "value": 20,
+          "axis": "OST"
+      }, {
+          "value": 25,
+          "axis": "MSM programs"
+      }, {
+          "value": 15,
+          "axis": "FSW programs"
+      }, {
+          "value": 24,
+          "axis": "ART"
+      }, {
+          "value": 16,
+          "axis": "PMTCT"
+      }]
+    }, {
+      "axes": [{
+          "value": 10,
+          "axis": "SBCC"
+      }, {
+          "value": 5,
+          "axis": "NSP"
+      }, {
+          "value": 10,
+          "axis": "OST"
+      }, {
+          "value": 2,
+          "axis": "MSM programs"
+      }, {
+          "value": 3,
+          "axis": "FSW programs"
+      }, {
+          "value": 5,
+          "axis": "ART"
+      }, {
+          "value": 10,
+          "axis": "PMTCT"
+      }]
+    }];
+
   });
 });

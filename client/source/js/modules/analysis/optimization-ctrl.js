@@ -2,15 +2,13 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('AnalysisOptimizationController', function ($scope, $http,
-    $interval, meta, cfpLoadingBar, CONFIG, modalService, graphTypeFactory,
+    $interval, meta, cfpLoadingBar, CONFIG, modalService, typeSelector,
     optimizations, optimizationHelpers) {
 
       $scope.chartsForDataExport = [];
 
       $scope.meta = meta;
-      $scope.types = graphTypeFactory.types;
-      // reset graph types every time you come to this page
-      angular.extend($scope.types, angular.copy(CONFIG.GRAPH_TYPES));
+      $scope.types = typeSelector.types;
 
       $scope.needData = $scope.meta.progs === undefined;
       $scope.activeTab = 1;
@@ -488,7 +486,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       if (data && data.plot && data.plot.length > 0) {
         var optimization = $scope.optimizationByName($scope.state.activeOptimizationName);
         optimization.result = data;
-        graphTypeFactory.enableAnnualCostOptions($scope.types, data.plot[0].multi);
+        typeSelector.enableAnnualCostOptions($scope.types, data.plot[0].multi);
         drawGraphs();
       }
     }
@@ -673,8 +671,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     }
 
     function constructOptimizationMessage() {
-      var optimizationMessageTemplate = _.template("Optimizing <%= checkedPrograms %> over years <%= startYear %> to <%= endYear %> with <%= budgetLevel %>.");
       var budgetLevel;
+      var checkedPrograms = joinArrayAsSentence(validateObjectivesToMinimize().checkedPrograms, 'name', true);
+      var startYear = $scope.params.objectives.year.start;
+      var endYear = $scope.params.objectives.year.end;
 
       if ($scope.params.objectives.funding === 'variable') {
         budgetLevel = " budget level " + joinArrayAsSentence(_.compact(_($scope.params.objectives.outcome.variable).toArray()), undefined, false, "$");
@@ -685,12 +685,16 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         budgetLevel = budgetLevel + " to $" + $scope.params.objectives.outcome.budgetrange.maxval;
       }
 
-      $scope.optimizationMessage = optimizationMessageTemplate({
-        checkedPrograms : joinArrayAsSentence(validateObjectivesToMinimize().checkedPrograms, 'name', true),
-        startYear: $scope.params.objectives.year.start,
-        endYear:$scope.params.objectives.year.end,
-        budgetLevel: budgetLevel
-      });
+      if ( budgetLevel && checkedPrograms && startYear && endYear ) {
+        $scope.showOptimizationMessage = true;
+
+        $scope.optimizationMessage = {
+          checkedPrograms: checkedPrograms,
+          startYear: startYear,
+          endYear: endYear,
+          budgetLevel: budgetLevel
+        };
+      }
     }
 
     $scope.setActiveTab = function(tabNum){
@@ -952,7 +956,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         updateGraphs(optimization.result);
       } else {
         resetCharts();
-        graphTypeFactory.resetAnnualCostOptions($scope.types);
+        typeSelector.resetAnnualCostOptions($scope.types);
       }
       constructOptimizationMessage();
     };

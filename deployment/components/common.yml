@@ -41,3 +41,11 @@
     tags:
       - common
       - update
+
+  - name: Stop application before deploy starts
+    service: name=optima-api state=stopped
+    when: stop_before_deploy is defined
+    sudo: yes
+    tags:
+      - common
+      - update
