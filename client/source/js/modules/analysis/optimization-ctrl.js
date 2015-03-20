@@ -1,3 +1,8 @@
+/**
+ * This controller is doing way too much and this comment will improve once 
+ * 'someone' reverse engineers this tech debt and care to do the right thing for a change.
+ */
+
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
@@ -5,121 +10,206 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $interval, meta, cfpLoadingBar, CONFIG, modalService, typeSelector,
     optimizations, optimizationHelpers) {
 
-      $scope.chartsForDataExport = [];
+      $scope.initialize = function () {
 
-      $scope.meta = meta;
-      $scope.types = typeSelector.types;
+        $scope.$on('$destroy', function() {
+          // Make sure that the interval is terminated whe this controller is destroyed
+          stopTimer();
+        });
 
-      $scope.needData = $scope.meta.progs === undefined;
-      $scope.activeTab = 1;
-      var errorMessages = [];
+        $scope.$watch('state.pieCharts', updateChartsForDataExport, true);
+        $scope.$watch('state.outcomeChart', updateChartsForDataExport, true);
+        $scope.$watch('state.radarCharts', updateChartsForDataExport, true);
+        $scope.$watch('state.optimisationGraphs', updateChartsForDataExport, true);
+        $scope.$watch('state.financialGraphs', updateChartsForDataExport, true);
+        $scope.$watch('state.stackedBarChart', updateChartsForDataExport, true);
+        $scope.$watch('state.multipleBudgetsChart', updateChartsForDataExport, true);
+        $scope.$watch('types.plotUncertainties', updateChartsForDataExport, true);
+        $scope.$watch('activeTab', $scope.checkExistingOptimization, true);
 
-      var statusEnum = {
-        NOT_RUNNING: { text: "", isActive: false, checking: false },
-        RUNNING: { text: "Optimization is running", isActive: true, checking: false },
-        REQUESTED_TO_STOP : { text:"Optimization is requested to stop", isActive: true, checking: false },
-        STOPPING : { text:"Optimization is stopping", isActive: true, checking: false },
-        CHECKING: {text:"Checking for existing optimization", isActive: false, checking: true}
-      };
+        $scope.chartsForDataExport = [];
+        $scope.meta = meta;
+        $scope.types = typeSelector.types;
+        $scope.needData = $scope.meta.progs === undefined;
+        $scope.activeTab = 1;
 
-      $scope.moneyObjectives = [
-        { id: 'inci', title: 'Reduce the annual incidence of HIV' },
-        { id: 'incisex', title: 'Reduce the annual incidence of sexually transmitted HIV' },
-        { id: 'inciinj', title: 'Reduce the annual incidence of injecting-related HIV' },
-        { id: 'mtct', title: 'Reduce annual mother-to-child transmission of HIV' },
-        { id: 'mtctbreast', title: 'Reduce annual mother-to-child transmission of HIV among breastfeeding mothers' },
-        { id: 'mtctnonbreast', title: 'Reduce annual mother-to-child transmission of HIV among non-breastfeeding mothers' },
-        { id: 'deaths', title: 'Reduce annual AIDS-related deaths' },
-        { id: 'dalys', title: 'Reduce annual HIV-related DALYs' }
-      ];
+        $scope.moneyObjectives = [
+          { id: 'inci', title: 'Reduce the annual incidence of HIV' },
+          { id: 'incisex', title: 'Reduce the annual incidence of sexually transmitted HIV' },
+          { id: 'inciinj', title: 'Reduce the annual incidence of injecting-related HIV' },
+          { id: 'mtct', title: 'Reduce annual mother-to-child transmission of HIV' },
+          { id: 'mtctbreast', title: 'Reduce annual mother-to-child transmission of HIV among breastfeeding mothers' },
+          { id: 'mtctnonbreast', title: 'Reduce annual mother-to-child transmission of HIV among non-breastfeeding mothers' },
+          { id: 'deaths', title: 'Reduce annual AIDS-related deaths' },
+          { id: 'dalys', title: 'Reduce annual HIV-related DALYs' }
+        ];
 
-      $scope.optimizationStatus = statusEnum.NOT_RUNNING;
-      $scope.optimizations = [];
-      $scope.isDirty = false;
+        $scope.optimizationStatus = statusEnum.NOT_RUNNING;
+        $scope.optimizations = [];
+        $scope.isDirty = false;
 
-      /**
-       * Empty charts
-       */
-      var resetCharts = function () {
-        $scope.state.optimisationGraphs = [];
-        $scope.state.financialGraphs = [];
-        $scope.state.radarCharts = [];
-        $scope.state.pieCharts = [];
-        $scope.state.stackedBarChart = undefined;
-        $scope.state.outcomeChart = undefined;
-      };
+        // According to angular best-practices we should wrap every object/value
+        // inside a wrapper object. This is due the fact that directives like ng-if
+        // always create a child scope & the reference can get lost.
+        // see https://github.com/angular/angular.js/wiki/Understanding-Scopes
+        $scope.state = {
+          activeOptimizationName: undefined,
+          isTestRun: false,
+          timelimit: 3600
+        };
+        resetCharts();
 
-      // According to angular best-practices we should wrap every object/value
-      // inside a wrapper object. This is due the fact that directives like ng-if
-      // always create a child scope & the reference can get lost.
-      // see https://github.com/angular/angular.js/wiki/Understanding-Scopes
-      $scope.state = {
-        activeOptimizationName: undefined,
-        isTestRun: false,
-        timelimit: 3600
-      };
-      resetCharts();
+        // Set defaults
+        $scope.params = {};
 
-      // Set defaults
-      $scope.params = {};
+        // Objectives
+        $scope.params.objectives = {};
+        $scope.params.objectives.what = 'outcome';
 
-      // Objectives
-      $scope.params.objectives = {};
-      $scope.params.objectives.what = 'outcome';
+        // Outcome objectives defaults
+        $scope.params.objectives.outcome = {};
+        $scope.params.objectives.outcome.inci = false;
+        $scope.params.objectives.outcome.daly = false;
+        $scope.params.objectives.outcome.death = false;
+        $scope.params.objectives.outcome.costann = false;
 
-      // Outcome objectives defaults
-      $scope.params.objectives.outcome = {};
-      $scope.params.objectives.outcome.inci = false;
-      $scope.params.objectives.outcome.daly = false;
-      $scope.params.objectives.outcome.death = false;
-      $scope.params.objectives.outcome.costann = false;
+        // Default program weightings
+        $scope.params.objectives.money = {};
+        $scope.params.objectives.money.costs = [];
+        if(meta.progs) {
+          $scope.programs = meta.progs.long;
+          $scope.programCodes = meta.progs.short;
 
-      // Default program weightings
-      $scope.params.objectives.money = {};
-      $scope.params.objectives.money.costs = [];
-      if(meta.progs) {
-        $scope.programs = meta.progs.long;
-        $scope.programCodes = meta.progs.short;
+          for ( var i = 0; i < meta.progs.short.length; i++ ) {
+            $scope.params.objectives.money.costs[i] = 100;
+          }
 
-        for ( var i = 0; i < meta.progs.short.length; i++ ) {
-          $scope.params.objectives.money.costs[i] = 100;
+          // Constraints Defaults
+          $scope.params.constraints = {};
+          $scope.params.constraints.txelig = 1;
+          $scope.params.constraints.dontstopart = true;
+
+          $scope.params.constraints.yeardecrease = [];
+          $scope.params.constraints.yearincrease = [];
+          $scope.params.constraints.totaldecrease = [];
+          $scope.params.constraints.totalincrease = [];
+          $scope.params.constraints.coverage = [];
+
+          // Initialize program constraints models
+          for ( var i = 0; i < meta.progs.short.length; i++ ) {
+            $scope.params.constraints.yeardecrease[i] = {};
+            $scope.params.constraints.yeardecrease[i].use = false;
+            $scope.params.constraints.yeardecrease[i].by = 100;
+
+            $scope.params.constraints.yearincrease[i] = {};
+            $scope.params.constraints.yearincrease[i].use = false;
+            $scope.params.constraints.yearincrease[i].by = 100;
+
+            $scope.params.constraints.totaldecrease[i] = {};
+            $scope.params.constraints.totaldecrease[i].use = false;
+            $scope.params.constraints.totaldecrease[i].by = 100;
+
+            $scope.params.constraints.totalincrease[i] = {};
+            $scope.params.constraints.totalincrease[i].use = false;
+            $scope.params.constraints.totalincrease[i].by = 100;
+
+            $scope.params.constraints.coverage[i] = {};
+            $scope.params.constraints.coverage[i].use = false;
+            $scope.params.constraints.coverage[i].level = 0;
+            $scope.params.constraints.coverage[i].year = undefined;
+          }
+        };
+
+        $scope.validations = {
+          years :{
+            valid: function(){ return validateYears().valid},
+            message: "Please specify program optimizations period."
+          },
+          fixedBudget: {
+            valid: function(){ return $scope.params.objectives.outcome.fixed !== undefined;},
+            message: 'Please enter a value for the fixed budget.',
+            condition: function(){return $scope.params.objectives.funding === 'constant';}
+          },
+          variableBudget: {
+            valid: function(){ return validateVariableBudgets()},
+            message: "Please enter a budget for each year.",
+            condition: function(){return $scope.params.objectives.funding === 'variable';}
+          },
+          budgetType: {
+            valid: function(){return $scope.params.objectives.funding!==undefined;},
+            message: "Please pick at least one budget type."
+          },
+          objectivesToMinimizeCount:{
+            valid:function(){return validateObjectivesToMinimize().valid;},
+            message: "You must pick at least one objective to minimize."
+          },
+          objectivesOutcomeWeights:{
+            valid:function(){return validateOutcomeWeights().valid;},
+            message: "You must specify the weighting parameters for all objectives to minimize."
+          }
+        };
+
+        $scope.objectivesToMinimize = [
+          {
+            name:"Cumulative new HIV infections",
+            slug:"inci",
+            title: "New infections weighting"
+          },
+          {
+            name:"Cumulative DALYs",
+            slug: "daly",
+            title:"DALYs weighting"
+          },
+          {
+            name:" Cumulative AIDS-related deaths",
+            slug:"death",
+            title:"Deaths weighting"
+          },
+          {
+            name:"Total HIV-related costs",
+            slug:"cost",
+            title:"Costs weighting"
+          }
+        ];
+
+        $scope.validateYears = validateYears;
+        $scope.validateVariableBudgets = validateVariableBudgets;
+        $scope.validateObjectivesToMinimize = validateObjectivesToMinimize;
+        $scope.validateOutcomeWeights = validateOutcomeWeights;
+
+        // The graphs are shown/hidden after updating the graph type checkboxes.
+        $scope.$watch('types', drawGraphs, true);
+        $scope.yearLoop = [];
+        $scope.yearCols = [];
+
+        // apply existing optimization data, if present
+        if (optimizations && optimizations.data) {
+          $scope.initOptimizations(optimizations.data.optimizations, undefined, true);
         }
 
-        // Constraints Defaults
-        $scope.params.constraints = {};
-        $scope.params.constraints.txelig = 1;
-        $scope.params.constraints.dontstopart = true;
+    };
 
-        $scope.params.constraints.yeardecrease = [];
-        $scope.params.constraints.yearincrease = [];
-        $scope.params.constraints.totaldecrease = [];
-        $scope.params.constraints.totalincrease = [];
-        $scope.params.constraints.coverage = [];
+    var errorMessages = [];
 
-        // Initialize program constraints models
-        for ( var i = 0; i < meta.progs.short.length; i++ ) {
-          $scope.params.constraints.yeardecrease[i] = {};
-          $scope.params.constraints.yeardecrease[i].use = false;
-          $scope.params.constraints.yeardecrease[i].by = 100;
+    var statusEnum = {
+      NOT_RUNNING: { text: "", isActive: false, checking: false },
+      RUNNING: { text: "Optimization is running", isActive: true, checking: false },
+      REQUESTED_TO_STOP : { text:"Optimization is requested to stop", isActive: true, checking: false },
+      STOPPING : { text:"Optimization is stopping", isActive: true, checking: false },
+      CHECKING: {text:"Checking for existing optimization", isActive: false, checking: true}
+    };
 
-          $scope.params.constraints.yearincrease[i] = {};
-          $scope.params.constraints.yearincrease[i].use = false;
-          $scope.params.constraints.yearincrease[i].by = 100;
-
-          $scope.params.constraints.totaldecrease[i] = {};
-          $scope.params.constraints.totaldecrease[i].use = false;
-          $scope.params.constraints.totaldecrease[i].by = 100;
-
-          $scope.params.constraints.totalincrease[i] = {};
-          $scope.params.constraints.totalincrease[i].use = false;
-          $scope.params.constraints.totalincrease[i].by = 100;
-
-          $scope.params.constraints.coverage[i] = {};
-          $scope.params.constraints.coverage[i].use = false;
-          $scope.params.constraints.coverage[i].level = 0;
-          $scope.params.constraints.coverage[i].year = undefined;
-        }
-      }
+    /**
+     * Empty charts
+     */
+    var resetCharts = function () {
+      $scope.state.optimisationGraphs = [];
+      $scope.state.financialGraphs = [];
+      $scope.state.radarCharts = [];
+      $scope.state.pieCharts = [];
+      $scope.state.stackedBarChart = undefined;
+      $scope.state.outcomeChart = undefined;
+    };
 
     var optimizationTimer;
 
@@ -423,7 +513,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       return graphs;
     };
 
-
     var prepareOutcomeChart = function(data) {
       if (data === undefined) return undefined;
 
@@ -489,59 +578,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         typeSelector.enableAnnualCostOptions($scope.types, data.plot[0].multi);
         drawGraphs();
       }
-    }
-
-    $scope.validations = {
-      years :{
-        valid: function(){ return validateYears().valid},
-        message: "Please specify program optimizations period."
-      },
-      fixedBudget: {
-        valid: function(){ return $scope.params.objectives.outcome.fixed !== undefined;},
-        message: 'Please enter a value for the fixed budget.',
-        condition: function(){return $scope.params.objectives.funding === 'constant';}
-      },
-      variableBudget: {
-        valid: function(){ return validateVariableBudgets()},
-        message: "Please enter a budget for each year.",
-        condition: function(){return $scope.params.objectives.funding === 'variable';}
-      },
-      budgetType: {
-        valid: function(){return $scope.params.objectives.funding!==undefined;},
-        message: "Please pick at least one budget type."
-      },
-      objectivesToMinimizeCount:{
-        valid:function(){return validateObjectivesToMinimize().valid;},
-        message: "You must pick at least one objective to minimize."
-      },
-      objectivesOutcomeWeights:{
-        valid:function(){return validateOutcomeWeights().valid;},
-        message: "You must specify the weighting parameters for all objectives to minimize."
-      }
     };
-
-    $scope.objectivesToMinimize = [
-      {
-        name:"Cumulative new HIV infections",
-        slug:"inci",
-        title: "New infections weighting"
-      },
-      {
-        name:"Cumulative DALYs",
-        slug: "daly",
-        title:"DALYs weighting"
-      },
-      {
-        name:" Cumulative AIDS-related deaths",
-        slug:"death",
-        title:"Deaths weighting"
-      },
-      {
-        name:"Total HIV-related costs",
-        slug:"cost",
-        title:"Costs weighting"
-      }
-    ];
 
     /* If some of the budgets are undefined, return false */
     function validateVariableBudgets() {
@@ -595,11 +632,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         }
       });
     }
-
-    $scope.validateYears = validateYears;
-    $scope.validateVariableBudgets = validateVariableBudgets;
-    $scope.validateObjectivesToMinimize = validateObjectivesToMinimize;
-    $scope.validateOutcomeWeights = validateOutcomeWeights;
 
     /**
      * Returns true if at least one chart is available
@@ -805,11 +837,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       }
     }
 
-    $scope.$on('$destroy', function() {
-      // Make sure that the interval is destroyed too
-      stopTimer();
-    });
-
     $scope.deleteOptimization = function (optimizationName) {
       $http.post('/api/analysis/optimization/remove/' + optimizationName)
         .success(function(data){
@@ -845,13 +872,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       modalService.addOptimization(function (name) { create(name); }, $scope.optimizations);
     };
-
-    // The graphs are shown/hidden after updating the graph type checkboxes.
-    $scope.$watch('types', drawGraphs, true);
-
-    $scope.yearLoop = [];
-    $scope.yearCols = [];
-
 
     /**
      * Returns true if the start & end year are required.
@@ -984,11 +1004,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.applyOptimization($scope.state.activeOptimizationName, overwriteParams);
     };
 
-    // apply existing optimization data, if present
-    if (optimizations && optimizations.data) {
-      $scope.initOptimizations(optimizations.data.optimizations, undefined, true);
-    }
-
     $scope.updateTimelimit = function () {
       if ($scope.state.isTestRun) {
         $scope.state.timelimit = 60;
@@ -997,15 +1012,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       }
     };
 
-    $scope.$watch('state.pieCharts', updateChartsForDataExport, true);
-    $scope.$watch('state.outcomeChart', updateChartsForDataExport, true);
-    $scope.$watch('state.radarCharts', updateChartsForDataExport, true);
-    $scope.$watch('state.optimisationGraphs', updateChartsForDataExport, true);
-    $scope.$watch('state.financialGraphs', updateChartsForDataExport, true);
-    $scope.$watch('state.stackedBarChart', updateChartsForDataExport, true);
-    $scope.$watch('state.multipleBudgetsChart', updateChartsForDataExport, true);
-    $scope.$watch('types.plotUncertainties', updateChartsForDataExport, true);
-    $scope.$watch('activeTab', $scope.checkExistingOptimization, true);
-
+    $scope.initialize();
   });
 });
