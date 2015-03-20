@@ -12,7 +12,7 @@
     - db_name: optima
     - db_url: "postgresql://{{db_user}}:{{db_password}}@{{db_host}}:5432/{{db_name}}"
     - num_workers: 2
-    - stop_when_deploy: true
+    - stop_before_deploy: true
 
   vars_files:
     - "{{prudentia_dir}}/vars/global.yml"
