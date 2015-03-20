@@ -394,12 +394,12 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
                 costparam = mean(costparam) if len(coverage)==1 else [costparam[j] for j in range(len(coverage)) if ~isnan(coverage[j])][0]
             saturation = ccparams[0]
             if isinstance(ccparams[4], float):
-                growthratel = exp(ccparams[4]*log(ccparams[0]/ccparams[1]-1)+log(ccparams[3]))
-                growthratem = exp(ccparams[4]*log(ccparams[0]/((ccparams[1]+ccparams[2])/2)-1)+log(ccparams[3]))
-                growthrateu = exp(ccparams[4]*log(ccparams[0]/ccparams[2]-1)+log(ccparams[3]))
-                growthrateplotl = exp(ccparams[4]*log(ccparams[0]/ccparams[1]-1)+log(costparam))
-                growthrateplotm = exp(ccparams[4]*log(ccparams[0]/((ccparams[1]+ccparams[2])/2)-1)+log(costparam))
-                growthrateplotu = exp(ccparams[4]*log(ccparams[0]/ccparams[2]-1)+log(costparam))
+                growthratel = exp((1-ccparams[4])*log(ccparams[0]/ccparams[1]-1)+log(ccparams[3]))
+                growthratem = exp((1-ccparams[4])*log(ccparams[0]/((ccparams[1]+ccparams[2])/2)-1)+log(ccparams[3]))
+                growthrateu = exp((1-ccparams[4])*log(ccparams[0]/ccparams[2]-1)+log(ccparams[3]))
+                growthrateplotl = exp((1-ccparams[4])*log(ccparams[0]/ccparams[1]-1)+log(costparam))
+                growthrateplotm = exp((1-ccparams[4])*log(ccparams[0]/((ccparams[1]+ccparams[2])/2)-1)+log(costparam))
+                growthrateplotu = exp((1-ccparams[4])*log(ccparams[0]/ccparams[2]-1)+log(costparam))
                 convertedccoparams = [[saturation, growthratem, ccparams[4]], [saturation, growthratel, ccparams[4]], [saturation, growthrateu, ccparams[4]]]
                 convertedccoplotparams = [[saturation, growthrateplotm, ccparams[4]], [saturation, growthrateplotl, ccparams[4]], [saturation, growthrateplotu, ccparams[4]]]
             else:
