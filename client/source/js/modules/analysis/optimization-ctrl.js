@@ -671,7 +671,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     }
 
     function constructOptimizationMessage() {
-      var optimizationMessageTemplate = _.template("Optimizing <%= checkedPrograms %> over years <%= startYear %> to <%= endYear %> with <%= budgetLevel %>.");
       var budgetLevel;
 
       if ($scope.params.objectives.funding === 'variable') {
@@ -683,12 +682,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         budgetLevel = budgetLevel + " to $" + $scope.params.objectives.outcome.budgetrange.maxval;
       }
 
-      $scope.optimizationMessage = optimizationMessageTemplate({
+      $scope.optimizationMessage = {
         checkedPrograms : joinArrayAsSentence(validateObjectivesToMinimize().checkedPrograms, 'name', true),
         startYear: $scope.params.objectives.year.start,
         endYear:$scope.params.objectives.year.end,
         budgetLevel: budgetLevel
-      });
+      };
     }
 
     $scope.setActiveTab = function(tabNum){
