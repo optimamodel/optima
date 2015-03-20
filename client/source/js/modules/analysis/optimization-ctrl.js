@@ -672,6 +672,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     function constructOptimizationMessage() {
       var budgetLevel;
+      var checkedPrograms = joinArrayAsSentence(validateObjectivesToMinimize().checkedPrograms, 'name', true);
+      var startYear = $scope.params.objectives.year.start;
+      var endYear = $scope.params.objectives.year.end;
 
       if ($scope.params.objectives.funding === 'variable') {
         budgetLevel = " budget level " + joinArrayAsSentence(_.compact(_($scope.params.objectives.outcome.variable).toArray()), undefined, false, "$");
@@ -682,12 +685,16 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         budgetLevel = budgetLevel + " to $" + $scope.params.objectives.outcome.budgetrange.maxval;
       }
 
-      $scope.optimizationMessage = {
-        checkedPrograms : joinArrayAsSentence(validateObjectivesToMinimize().checkedPrograms, 'name', true),
-        startYear: $scope.params.objectives.year.start,
-        endYear:$scope.params.objectives.year.end,
-        budgetLevel: budgetLevel
-      };
+      if ( budgetLevel && checkedPrograms && startYear && endYear ) {
+        $scope.showOptimizationMessage = true;
+
+        $scope.optimizationMessage = {
+          checkedPrograms: checkedPrograms,
+          startYear: startYear,
+          endYear: endYear,
+          budgetLevel: budgetLevel
+        };
+      }
     }
 
     $scope.setActiveTab = function(tabNum){
