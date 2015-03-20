@@ -73,14 +73,14 @@ define([
               return $q.reject(rejection);
             } else {
               var message, errorText;
-              if (rejection.data && (rejection.data.message || rejection.data.exception)) {
+              if (rejection.data && (rejection.data.message || rejection.data.exception || rejection.data.reason)) {
                 message = 'Something went wrong. Please try again or contact the support team.';
-                errorText = rejection.data.message || rejection.data.exception;
+                errorText = rejection.data.message || rejection.data.exception || rejection.data.reason;
               } else {
                 message = 'Sorry, but our servers feel bad right now. Please, give them some time to recover or contact the support team.';
               }
               var modalService = $injector.get('modalService');
-              modalService.inform(angular.noop, 'Okay', message, 'Upload Error', errorText);
+              modalService.inform(angular.noop, 'Okay', message, 'Server Error', errorText);
 
               return $q.reject(rejection);
             }
