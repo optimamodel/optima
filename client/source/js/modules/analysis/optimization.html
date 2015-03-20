@@ -540,7 +540,7 @@
       <div ng-if="activeTab === 3">
         <div class="section" style="margin-bottom: 45px">
           <h2>Optimization</h2>
-            <span class="info-hint"> Optimizing {{optimizationMessage.checkedPrograms}} over years {{optimizationMessage.startYear}} to {{optimizationMessage.endYear}} with {{optimizationMessage.budgetLevel}}. </span><br/>
+            <span class="info-hint ng-hide" ng-show="showOptimizationMessage"> Optimizing {{optimizationMessage.checkedPrograms}} over years {{optimizationMessage.startYear}} to {{optimizationMessage.endYear}} with {{optimizationMessage.budgetLevel}}. </span><br/>
 
           <div class="elastic_col __va-middle text-right">
             <div class="elastic __fluid float-right">
