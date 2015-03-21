@@ -682,25 +682,23 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       return joinArrayAsSentence(validateObjectivesToMinimize().checkedPrograms, 'name', true);
     };
 
-    function constructOptimizationMessage () {
-      var budgetLevel;
-
+    /**
+     * Returns a description of the chosen budget level for the summary message.
+     */
+    $scope.budgetLevelSummary = function () {
       if ($scope.params.objectives.funding === 'variable') {
-        budgetLevel = " budget level " + joinArrayAsSentence(_.compact(_($scope.params.objectives.outcome.variable).toArray()), undefined, false, "$");
+        var objectives = _.compact(_($scope.params.objectives.outcome.variable).toArray());
+        return " budget level " + joinArrayAsSentence(objectives, undefined, false, "$");
       } else if ($scope.params.objectives.funding === 'constant') {
-        budgetLevel = " fixed budget of $" + $scope.params.objectives.outcome.fixed + " per year";
+        return " fixed budget of $" + $scope.params.objectives.outcome.fixed + " per year";
       } else if ($scope.params.objectives.funding === 'range') {
-        budgetLevel = " budget range between $" + $scope.params.objectives.outcome.budgetrange.minval;
-        budgetLevel = budgetLevel + " to $" + $scope.params.objectives.outcome.budgetrange.maxval;
+        var budgetLevel = " budget range between $" + $scope.params.objectives.outcome.budgetrange.minval;
+        return budgetLevel + " to $" + $scope.params.objectives.outcome.budgetrange.maxval;
       }
+    };
 
-      if ( budgetLevel ) {
-        $scope.showOptimizationMessage = true;
-
-        $scope.optimizationMessage = {
-          budgetLevel: budgetLevel
-        };
-      }
+    function constructOptimizationMessage () {
+      $scope.showOptimizationMessage = true;
     }
 
     $scope.setActiveTab = function (tabNum){
