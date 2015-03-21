@@ -697,10 +697,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       }
     };
 
-    function constructOptimizationMessage () {
-      $scope.showOptimizationMessage = true;
-    }
-
     $scope.setActiveTab = function (tabNum){
       if(tabNum === 3){
       /*Prevent going to third tab if something is invalid in the first tab.
@@ -714,7 +710,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           modalService.inform(function() {}, 'Ok', 'Please correct all errors on this page before proceeding.', 'Cannot view results');
           return;
         }
-        constructOptimizationMessage();
       }
       $scope.activeTab = tabNum;
     };
@@ -962,7 +957,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         resetCharts();
         typeSelector.resetAnnualCostOptions($scope.types);
       }
-      constructOptimizationMessage();
     };
 
     // apply default optimization on page load
