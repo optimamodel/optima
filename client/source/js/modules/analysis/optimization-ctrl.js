@@ -670,9 +670,15 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       return quote + _.compact(_(arr).map(function (val) {var p = (prop ? val[prop] : val);return p ? (before + strOrEmpty(p) + after ) : undefined;})).join(", ") + quote;
     }
 
-    function constructOptimizationMessage() {
+    /**
+     * Returns all the checkedPrograms as a comma separated string.
+     */
+    $scope.checkedProgramsText = function () {
+      return joinArrayAsSentence(validateObjectivesToMinimize().checkedPrograms, 'name', true);
+    };
+
+    function constructOptimizationMessage () {
       var budgetLevel;
-      var checkedPrograms = joinArrayAsSentence(validateObjectivesToMinimize().checkedPrograms, 'name', true);
 
       if ($scope.params.objectives.funding === 'variable') {
         budgetLevel = " budget level " + joinArrayAsSentence(_.compact(_($scope.params.objectives.outcome.variable).toArray()), undefined, false, "$");
@@ -683,11 +689,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         budgetLevel = budgetLevel + " to $" + $scope.params.objectives.outcome.budgetrange.maxval;
       }
 
-      if ( budgetLevel && checkedPrograms ) {
+      if ( budgetLevel ) {
         $scope.showOptimizationMessage = true;
 
         $scope.optimizationMessage = {
-          checkedPrograms: checkedPrograms,
           budgetLevel: budgetLevel
         };
       }
