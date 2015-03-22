@@ -62,6 +62,14 @@ def smoothinterp(newx, origx, origy, smoothness=10):
     return newy
     
 
+def perturb(n=1, span=0.5, randseed=None):
+    """ Define an array of numbers uniformly perturbed with a mean of 1. n = number of points; span = width of distribution on either side of 1."""
+    from numpy.random import rand, seed
+    if randseed>=0: seed(randseed) # Optionally reset random seed
+    output = 1. + 2*span*(rand(n)-0.5)
+    output = output.tolist() # Otherwise, convert to a list
+    return output
+
 
 def printarr(arr, arrformat='%0.2f  '):
     """ 

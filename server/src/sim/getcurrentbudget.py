@@ -7,8 +7,7 @@ def getcurrentbudget(D, alloc=None, randseed=None):
     """
     from makeccocs import ccoeqn, cceqn, cc2eqn, cco2eqn, coverage_params, default_convertedccparams, default_convertedccoparams, makesamples
     from numpy import nan, zeros, array
-    from utils import sanitize
-    from updatedata import perturb
+    from utils import sanitize, perturb
     
     npts = len(D.opt.partvec) # Number of parameter points
 

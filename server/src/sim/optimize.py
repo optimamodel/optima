@@ -260,9 +260,10 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         ## Run with uncertainties
         allocarr = []
         fvalarr = []
-        for s in range(1): # range(len(D.F)): # Loop over all available meta parameters
+        for s in range(len(D.F)): # range(len(D.F)): # Loop over all available meta parameters
             print('========== Running uncertainty optimization %s of %s... ==========' % (s+1, len(D.F)))
-            options.D.F = [D.F[s]] # Loop over fitted parameters
+            options.D.F = [deepcopy(D.F[s])] # Loop over fitted parameters
+            
             options.randseed = s
             optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=fundingchanges.total.dec, xmax=fundingchanges.total.inc, absinitial=stepsizes, MaxIter=maxiters, timelimit=timelimit, fulloutput=True, stoppingfunc=stoppingfunc, verbose=verbose)
             optparams[opttrue] = optparams[opttrue] / optparams[opttrue].sum() * (options.totalspend - optparams[~opttrue].sum()) # Make sure it's normalized -- WARNING KLUDGY

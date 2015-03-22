@@ -95,6 +95,7 @@ def makefittedpars(D, verbose=2):
     
     from printv import printv
     from bunch import Bunch as struct # Replicate Matlab-like structure behavior
+    from utils import perturb
     printv('Initializing fitted parameters...', 1, verbose)
     
     # Initialize fitted parameters
@@ -132,13 +133,7 @@ def normalizeF(unnormF, M, G, normalizeall=False):
 
 
 
-def perturb(n=1, span=0.5, randseed=None):
-    """ Define an array of numbers uniformly perturbed with a mean of 1. n = number of points; span = width of distribution on either side of 1."""
-    from numpy.random import rand, seed
-    if randseed>=0: seed(randseed) # Optionally reset random seed
-    output = 1. + 2*span*(rand(n)-0.5)
-    output = output.tolist() # Otherwise, convert to a list
-    return output
+
 
 
 
