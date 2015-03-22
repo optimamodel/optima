@@ -229,22 +229,32 @@ def gathermultidata(D, Rarr, annual=True, verbose=2, maxyear=2030):
         multi[key].pops = [struct() for p in range(D.G.npops)]
         for p in range(D.G.npops):
             multi[key].pops[p].data = []
+            multi[key].pops[p].best = []
+            multi[key].pops[p].high = []
+            multi[key].pops[p].low = []
             multi[key].pops[p].legend = []
             multi[key].pops[p].title = epititles[key] + ' - ' + D.G.meta.pops.short[p]
             multi[key].pops[p].ylabel = epiylabels[key]
             for sim in range(multi.nsims):
-                thisdata = (Rarr[sim].R[key].pops[0][p,:]*percent)[indices].tolist()
-                multi[key].pops[p].data.append(thisdata)
+                multi[key].pops[p].data.append((Rarr[sim].R[key].pops[0][p,:]*percent)[indices].tolist())
+                multi[key].pops[p].best.append((Rarr[sim].R[key].pops[0][p,:]*percent)[indices].tolist())
+                multi[key].pops[p].low.append((Rarr[sim].R[key].pops[1][p,:]*percent)[indices].tolist())
+                multi[key].pops[p].high.append((Rarr[sim].R[key].pops[2][p,:]*percent)[indices].tolist())
                 multi[key].pops[p].legend.append(Rarr[sim].label)
         multi[key].tot = struct()
         multi[key].tot.data = []
+        multi[key].tot.best = []
+        multi[key].tot.low = []
+        multi[key].tot.high = []
         multi[key].tot.legend = []
         multi[key].tot.title = epititles[key] + ' - Overall'
         multi[key].tot.ylabel = epiylabels[key]
         multi[key].xlabel = 'Years'
         for sim in range(multi.nsims):
-            thisdata =(Rarr[sim].R[key].tot[0]*percent)[indices].tolist()
-            multi[key].tot.data.append(thisdata)
+            multi[key].tot.data.append((Rarr[sim].R[key].tot[0]*percent)[indices].tolist())
+            multi[key].tot.best.append((Rarr[sim].R[key].tot[0]*percent)[indices].tolist())
+            multi[key].tot.low.append((Rarr[sim].R[key].tot[1]*percent)[indices].tolist())
+            multi[key].tot.high.append((Rarr[sim].R[key].tot[2]*percent)[indices].tolist())
             multi[key].tot.legend.append(Rarr[sim].label) # Add legends
     
     # Financial cost outputs
