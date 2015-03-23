@@ -43,7 +43,7 @@
 
       <div ng-if="!type.hasNoIntervals">
         <b>{{type.name}}</b>
-        <div>
+<!--        <div>
           <label class="checkbox-inline">
             <input type="checkbox" ng-model="type.existing">
             People infected before 2015
@@ -54,19 +54,19 @@
             <input type="checkbox" ng-model="type.future">
             People infected after 2015
           </label>
-        </div>
+        </div>-->
         <div>
           <label class="checkbox-inline">
             <input type="checkbox" ng-model="type.total">
             Total PLHIV
           </label>
         </div>
-        <div ng-if="state.stackedCheckboxIsVisible === true">
+<!--        <div ng-if="state.stackedCheckboxIsVisible === true">
           <label class="checkbox-inline">
             <input type="checkbox" ng-model="type.stacked">
             Stacked
           </label>
-        </div>
+        </div>-->
       </div>
 
       <div ng-if="type.hasNoIntervals">
