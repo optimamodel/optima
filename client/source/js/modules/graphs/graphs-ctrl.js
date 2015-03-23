@@ -41,7 +41,7 @@ define([
         bottom: 60,
         left: 60
       },
-      linesStyle: ['__color-black'],
+      areasOpacity: 0.1,
       xAxis: {
         axisLabel: 'Axis X'
       },

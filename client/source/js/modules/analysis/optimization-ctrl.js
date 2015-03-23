@@ -133,7 +133,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       yAxis: {
         axisLabel: ''
       },
-      areasOpacity: 0.4
+      areasOpacity: 0.1
     };
 
     /*
