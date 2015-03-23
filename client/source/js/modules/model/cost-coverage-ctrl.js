@@ -95,7 +95,7 @@ define(['./module', 'underscore'], function (module, _) {
       };
     };
 
-    var getLineScatterOptions = function (options, xLabel, yLabel) {
+    var getlineAreaScatterOptions = function (options, xLabel, yLabel) {
       var defaults = {
         width: 300,
         height: 200,
@@ -128,7 +128,7 @@ define(['./module', 'underscore'], function (module, _) {
     var setUpPlotdataGraph = function (graphData) {
 
       var graph = {
-        options: getLineScatterOptions({
+        options: getlineAreaScatterOptions({
           linesStyle: ['__color-blue-4', '__color-black __dashed', '__color-black __dashed'],
           title: graphData.title,
           hideTitle: true
@@ -178,7 +178,7 @@ define(['./module', 'underscore'], function (module, _) {
      */
     var prepareCostCoverageGraph = function (data) {
       var graph = {
-        options: getLineScatterOptions({
+        options: getlineAreaScatterOptions({
           linesStyle: ['__color-blue-4', '__color-black __dashed', '__color-black __dashed'],
           hideTitle: true
         },

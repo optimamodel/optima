@@ -18,10 +18,10 @@ define([
                 path: 'line-scatter-error'
               }
             },
-            lineScatterArea: {
+            lineAreaScatter: {
               method: 'GET',
               params: {
-                path: 'line-scatter-area'
+                path: 'line-area-scatter'
               }
             }
           }
