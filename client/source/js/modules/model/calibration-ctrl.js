@@ -225,9 +225,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       });
 
       // annual cost charts
-      _(['existing', 'future', 'total']).each(function(type) {
+      _($scope.types.costs.costann).each(function(type) {
         var chartData = response.costann[type][$scope.types.activeAnnualCost];
-        var isActive = $scope.types.costs[0][type];
+        var isActive = $scope.types.costs[1][type];
         if (chartData && isActive) {
           charts.push(generateFinancialChart(chartData));
         }
@@ -245,9 +245,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       }
 
       // cumulative cost charts
-      _(['existing', 'future', 'total']).each(function(type) {
+      _($scope.types.costs.costcum).each(function(type) {
         var chartData = response.costcum[type];
-        var isActive = $scope.types.costs[1][type];
+        var isActive = $scope.types.costs[0][type];
         if (chartData && isActive) {
           charts.push(generateFinancialChart(chartData));
         }
