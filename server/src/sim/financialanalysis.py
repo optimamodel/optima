@@ -115,9 +115,11 @@ def financialanalysis(D, postyear=2015, S=None, rerunmodel=False, artgrowthrate=
     # Store cost plot data
     for plottype in ['annual','cumulative']:
         plotdata[plottype] = {}
+    
+    plotsubtypes = ['existing','total','future'] if rerunmodel else ['total']
 
     plottype='annual'
-    for plotsubtype in ['total']: # ['existing','total','future']:
+    for plotsubtype in plotsubtypes:
         plotdata[plottype][plotsubtype] = {}
         for yscalefactor in costdisplays:
             plotdata[plottype][plotsubtype][yscalefactor] = {}
@@ -134,7 +136,7 @@ def financialanalysis(D, postyear=2015, S=None, rerunmodel=False, artgrowthrate=
                 plotdata[plottype][plotsubtype][yscalefactor]['ylabel'] = 'Proportion of ' + yscalefactor
 
     plottype='cumulative'
-    for plotsubtype in ['total']: #['existing','total','future']:
+    for plotsubtype in plotsubtypes:
         plotdata[plottype][plotsubtype] = {}
         plotdata[plottype][plotsubtype]['xlinedata'] = simtvec
         plotdata[plottype][plotsubtype]['xlabel'] = 'Year'
