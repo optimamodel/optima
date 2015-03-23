@@ -47,7 +47,8 @@ define([
       },
       yAxis: {
         axisLabel: 'Axis Y'
-      }
+      },
+      title: "Willy Wonka Production"
     };
 
     dataMocks.lineAreaScatter().$promise.then(function (data) {
