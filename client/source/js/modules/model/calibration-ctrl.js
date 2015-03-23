@@ -17,12 +17,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       }
     };
 
-    var lineScatterData = {
-      line: [],
-      scatter: [],
-      area: {}
-    };
-
     var initialize = function() {
       $scope.projectInfo = info;
       $scope.canDoFitting = $scope.projectInfo.can_calibrate;
@@ -103,15 +97,22 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     var generateAreaChart = function(yData, xData, title) {
       var chart = {
         options: angular.copy(defaultChartOptions),
-        data: angular.copy(lineScatterData),
+        data: {
+          lines: [],
+          scatter: [],
+          areas: []
+        },
         title: title
       };
 
       chart.options.title = title;
+      chart.options.linesStyle = ['__color-black'];
 
-      chart.data.line = _.zip(xData, yData.best);
-      chart.data.area.lineHigh = _.zip(xData, yData.high);
-      chart.data.area.lineLow = _.zip(xData, yData.low);
+      chart.data.lines.push(_.zip(xData, yData.best));
+      chart.data.areas.push({
+        lineHigh: _.zip(xData, yData.high),
+        lineLow: _.zip(xData, yData.low)
+      });
 
       return chart;
     };
@@ -125,7 +126,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     var generateStackedAreaChart = function(yDataSet, xData, title, legend) {
       var chart = {
         options: angular.copy(defaultChartOptions),
-        data: { areas: []},
+        data: { areas: [] },
         title: title
       };
 

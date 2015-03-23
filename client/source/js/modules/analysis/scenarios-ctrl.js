@@ -52,7 +52,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
           linesGraphData = {
             lines: [],
-            scatter: []
+            scatter: [],
+            areas: []
           };
         };
 
@@ -83,9 +84,22 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           graph.options.legend = legend;
           graph.options.title = title;
 
-          _(yData).each(function(lineData) {
+          // scenario chart data like prevalence have `best` & `data`
+          // financial chart data only has one property `data`
+          var linesData = yData.best || yData.data;
+          _(linesData).each(function(lineData) {
             graph.data.lines.push(_.zip(xData, lineData));
           });
+
+          // the scenario charts have an uncertenty area `low` & `high`
+          if (!_.isEmpty(yData.low) && !_.isEmpty(yData.high)) {
+            _(yData.high).each(function(highLineData, index) {
+              graph.data.areas.push({
+                lineHigh: _.zip(xData, highLineData),
+                lineLow: _.zip(xData, yData.low[index])
+              });
+            });
+          }
 
           return graph;
         };
@@ -94,7 +108,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
          * Returns a financial graph.
          */
         var generateFinancialGraph = function (data) {
-          var graph = generateGraph(data.data, data.xdata, data.title, data.legend, data.xlabel, data.ylabel);
+          var graph = generateGraph(data, data.xdata, data.title, data.legend, data.xlabel, data.ylabel);
           return graph;
         };
 
@@ -116,7 +130,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             // generate graphs showing the overall data for this type
             if (type.total) {
               var title = data.tot.title;
-              var graph = generateGraph(data.tot.data, response.tvec, title, data.tot.legend, data.xlabel, data.tot.ylabel);
+              var graph = generateGraph(data.tot, response.tvec, title, data.tot.legend, data.xlabel, data.tot.ylabel);
               graphs.push(graph);
             }
 
@@ -125,7 +139,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               _(data.pops).each(function (population, populationIndex) {
 
                 var title = population.title;
-                var graph = generateGraph(population.data, response.tvec, title, population.legend, data.xlabel, population.ylabel);
+                var graph = generateGraph(population, response.tvec, title, population.legend, data.xlabel, population.ylabel);
                 graphs.push(graph);
               });
             }
