@@ -11,7 +11,7 @@ from printv import printv
 from datetime import date
 
 
-def financialanalysis(D, postyear=2015, S=None, makeplot=False, artgrowthrate=.05, discountrate=.03, treattime=[8,1,16,3,10], cd4time=[8,8,10,8,2,2], verbose=2):
+def financialanalysis(D, postyear=2015, S=None, rerunmodel=False, artgrowthrate=.05, discountrate=.03, treattime=[8,1,16,3,10], cd4time=[8,8,10,8,2,2], verbose=2):
     '''
     Plot financial commitment graphs
     '''
@@ -43,7 +43,7 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False, artgrowthrate=.0
     simtvec = S.tvec
     noptpts = len(simtvec)
 
-    # Get most recent ART unit costs #TODO use a series not a point!
+    # Get most recent ART unit costs 
     progname = 'ART'
     prognumber = D.data.meta.progs.short.index(progname)
     artunitcost = [D.data.costcov.cost[prognumber][j]/D.data.costcov.cov[prognumber][j] for j in range(len(D.data.costcov.cost[prognumber]))]
@@ -55,15 +55,16 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False, artgrowthrate=.0
         longart = append(longart,[longart[-1]*(1+artgrowthrate)**D.opt.dt])
 
     # Run a simulation with the force of infection set to zero from postyear... 
-    from model import model
-    opt = setoptions(nsims=1, turnofftrans=postyear)
-    S0 = model(D.G, D.M, D.F[0], opt, initstate=None)
+    if rerunmodel:
+        from model import model
+        opt = setoptions(nsims=1, turnofftrans=postyear)
+        S0 = model(D.G, D.M, D.F[0], opt, initstate=None)
+        people['existing'] = S0.people[:,:,:]
+        hivcosts['existing'] = [0.0]*noptpts
 
-    # Extract the number of PLHIV under the baseline sim and the zero transmission sim
+    # Extract the number of PLHIV 
     people['total'] = S.people[:,:,:]
-    people['existing'] = S0.people[:,:,:]
     hivcosts['total'] = [0.0]*noptpts
-    hivcosts['existing'] = [0.0]*noptpts
     longcosts = {} 
     
     # Interpolate costs
@@ -84,10 +85,12 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False, artgrowthrate=.0
 
         # Calculate annual non-treatment costs for all PLHIV under the baseline sim and the zero transmission sim
         coststotalthishealthstate = [people['total'][D.G[healthstate],:,j].sum(axis = (0,1))*costs[j] for j in range(noptpts)]
-        costsexistingthishealthstate  = [people['existing'][D.G[healthstate],:,j].sum(axis = (0,1))*costs[j] for j in range(noptpts)]
+        if rerunmodel:
+            costsexistingthishealthstate  = [people['existing'][D.G[healthstate],:,j].sum(axis = (0,1))*costs[j] for j in range(noptpts)]
         
         hivcosts['total'] = [hivcosts['total'][j] + coststotalthishealthstate[j] for j in range(noptpts)]
-        hivcosts['existing'] = [hivcosts['existing'][j] + costsexistingthishealthstate[j] for j in range(noptpts)]
+        if rerunmodel:
+            hivcosts['existing'] = [hivcosts['existing'][j] + costsexistingthishealthstate[j] for j in range(noptpts)]
 
     # Calculate annual treatment costs for PLHIV
     tx1total = people['total'][D.G.tx1[0]:D.G.fail[-1],:,:].sum(axis=(0,1))
@@ -96,10 +99,11 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False, artgrowthrate=.0
     artcosts['total'] = [onarttotal[j]*artunitcost[j] for j in range(noptpts)]
     
     # Calculate annual treatment costs for existing PLHIV
-    tx1existing = people['existing'][D.G.tx1[0]:D.G.fail[-1],:,:].sum(axis=(0,1))
-    tx2existing = people['existing'][D.G.tx2[0]:D.G.tx2[-1],:,:].sum(axis=(0,1))
-    onartexisting = [tx1existing[j] + tx2existing[j] for j in range(noptpts)]
-    artcosts['existing'] = [onartexisting[j]*artunitcost[j] for j in range(noptpts)]
+    if rerunmodel:
+        tx1existing = people['existing'][D.G.tx1[0]:D.G.fail[-1],:,:].sum(axis=(0,1))
+        tx2existing = people['existing'][D.G.tx2[0]:D.G.tx2[-1],:,:].sum(axis=(0,1))
+        onartexisting = [tx1existing[j] + tx2existing[j] for j in range(noptpts)]
+        artcosts['existing'] = [onartexisting[j]*artunitcost[j] for j in range(noptpts)]
 
     # Cumulative sum function (b/c can't find an inbuilt one)
     def accumu(lis):
@@ -113,7 +117,7 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False, artgrowthrate=.0
         plotdata[plottype] = {}
 
     plottype='annual'
-    for plotsubtype in ['existing','total','future']:
+    for plotsubtype in ['total']: # ['existing','total','future']:
         plotdata[plottype][plotsubtype] = {}
         for yscalefactor in costdisplays:
             plotdata[plottype][plotsubtype][yscalefactor] = {}
@@ -130,7 +134,7 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False, artgrowthrate=.0
                 plotdata[plottype][plotsubtype][yscalefactor]['ylabel'] = 'Proportion of ' + yscalefactor
 
     plottype='cumulative'
-    for plotsubtype in ['existing','total','future']:
+    for plotsubtype in ['total']: #['existing','total','future']:
         plotdata[plottype][plotsubtype] = {}
         plotdata[plottype][plotsubtype]['xlinedata'] = simtvec
         plotdata[plottype][plotsubtype]['xlabel'] = 'Year'
@@ -141,12 +145,13 @@ def financialanalysis(D, postyear=2015, S=None, makeplot=False, artgrowthrate=.0
             y = expanddata(x[:-1], len(x[:-1]), 0, interp=True, dt=D.opt.dt)
             plotdata[plottype][plotsubtype]['ylinedata'] = append(y,[x[-1]])
 
-    for yscalefactor in costdisplays:
-        if 'ylinedata' in plotdata['annual']['total'][yscalefactor].keys():
-            plotdata['annual']['future'][yscalefactor]['ylinedata'] = [max(0.0,plotdata['annual']['total'][yscalefactor]['ylinedata'][j] - plotdata['annual']['existing'][yscalefactor]['ylinedata'][j]) for j in range(noptpts)]
-    x = list(accumu(plotdata['annual']['future']['total']['ylinedata'][0::10]))
-    y = expanddata(x[:-1], len(x[:-1]), 0, interp=True, dt=D.opt.dt)    
-    plotdata['cumulative']['future']['ylinedata'] = append(y,[x[-1]])
+    if rerunmodel:
+        for yscalefactor in costdisplays:
+            if 'ylinedata' in plotdata['annual']['total'][yscalefactor].keys():
+                plotdata['annual']['future'][yscalefactor]['ylinedata'] = [max(0.0,plotdata['annual']['total'][yscalefactor]['ylinedata'][j] - plotdata['annual']['existing'][yscalefactor]['ylinedata'][j]) for j in range(noptpts)]
+        x = list(accumu(plotdata['annual']['future']['total']['ylinedata'][0::10]))
+        y = expanddata(x[:-1], len(x[:-1]), 0, interp=True, dt=D.opt.dt)    
+        plotdata['cumulative']['future']['ylinedata'] = append(y,[x[-1]])
 
     # Calculate net present value of future stream of treatment costs
     inci = S.inci.sum(axis=0)

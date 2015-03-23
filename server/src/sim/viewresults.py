@@ -60,13 +60,10 @@ def viewuncerresults(E, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 
                 
                 else: # Total epi graphs and cost graphs
                     if graph=='costann':
-                        subkey = ['existing','future'][popstot]
+                        subkey = 'total' #['existing','future'][popstot]
                         xdata = E[graph][subkey].total.xdata 
-                    elif graph=='commit':
+                    elif graph in ['commit','costcum']:
                         subkey = 'total'
-                        xdata = E[graph][subkey].xdata 
-                    elif graph=='costcum':
-                        subkey = ['existing','future'][popstot]
                         xdata = E[graph][subkey].xdata 
                     else:
                         subkey = 'tot'
