@@ -54,6 +54,7 @@ def savedata(filename, data, update=True, verbose=2):
     from bunch import Bunch as struct
     
     filename = projectpath(filename)
+    printv('Saving to filename: %s' % filename, 1, verbose)
 
     try: # First try loading the file and updating it
         rfid = open(filename,'rb') # "Read file ID" -- This will fail if the file doesn't exist
@@ -80,6 +81,7 @@ def loaddata(filename, verbose=2):
     printv('Loading data...', 1, verbose)
     if not os.path.exists(filename):
         filename = projectpath(filename)
+    printv('Loading from filename: %s' % filename, 1, verbose)
     try:
         import json
         rfid = open(filename,'rb')
