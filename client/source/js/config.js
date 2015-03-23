@@ -24,11 +24,11 @@ define(['angular'], function (angular) {
           { id: 'tx1', name: 'People on first-line treatment', byPopulation: false, total: true, stacked: false },
           { id: 'tx2', name: 'People on subsequent lines of treatment', byPopulation: false, total: true, stacked: false }
         ],
-        costs:[
-          {id:"costcum", name: "Cumulative costs", existing: false, future: false, total: true, stacked: false},
-          {id:"costann", name: "Annual costs", existing: false, future: false, total: true, stacked: false},
-          {id:'commit', name: 'Commitments', hasNoIntervals: true, checked: false, label: 'Annual new commitments' }
-        ],
+        costs:{
+          costcum: {id:"costcum", name: "Cumulative costs", existing: false, future: false, total: true, stacked: false},
+          costann: {id:"costann", name: "Annual costs", existing: false, future: false, total: true, stacked: false},
+          commit: {id:'commit', name: 'Commitments', hasNoIntervals: true, checked: false, label: 'Annual new commitments' }
+        },
         financialAnnualCosts: [
           {id:'total', name:'Total amount', disabled: true},
           {id:'gdp', name:'Proportion of GDP', disabled: true},
@@ -37,7 +37,9 @@ define(['angular'], function (angular) {
           {id:'totalhealth', name:'Proportion of total health expenditure', disabled: true},
           {id:'domestichealth', name:'Proportion of domestic health expenditure', disabled: true}
         ],
-        activeAnnualCost: 'total'
+        activeAnnualCost: 'total',
+        possibleKeys: ['existing', 'future', 'total', 'stacked'],
+        costsKeys: ['costcum', 'costann', 'commit'] // to preserve ordering
       }
     });
 });

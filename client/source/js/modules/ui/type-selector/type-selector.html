@@ -39,42 +39,42 @@
 
     <h3>Financial results</h3>
 
-    <div ng-repeat="type in types.costs">
+    <div ng-repeat="key in types.costsKeys">
 
-      <div ng-if="!type.hasNoIntervals">
-        <b>{{type.name}}</b>
+      <div ng-if="!types.costs[key].hasNoIntervals">
+        <b>{{types.costs[key].name}}</b>
 <!--        <div>
           <label class="checkbox-inline">
-            <input type="checkbox" ng-model="type.existing">
+            <input type="checkbox" ng-model="types.costs[key].existing">
             People infected before 2015
           </label>
         </div>
         <div>
           <label class="checkbox-inline">
-            <input type="checkbox" ng-model="type.future">
+            <input type="checkbox" ng-model="types.costs[key].future">
             People infected after 2015
           </label>
         </div>-->
         <div>
           <label class="checkbox-inline">
-            <input type="checkbox" ng-model="type.total">
+            <input type="checkbox" ng-model="types.costs[key].total">
             Total PLHIV
           </label>
         </div>
 <!--        <div ng-if="state.stackedCheckboxIsVisible === true">
           <label class="checkbox-inline">
-            <input type="checkbox" ng-model="type.stacked">
+            <input type="checkbox" ng-model="types.costs[key].stacked">
             Stacked
           </label>
         </div>-->
       </div>
 
-      <div ng-if="type.hasNoIntervals">
-        <b>{{type.name}}</b>
+      <div ng-if="types.costs[key].hasNoIntervals">
+        <b>{{types.costs[key].name}}</b>
         <div>
           <label class="checkbox-inline">
-            <input type="checkbox" ng-model="type.checked">
-            {{type.label}}
+            <input type="checkbox" ng-model="types.costs[key].checked">
+            {{types.costs[key].label}}
           </label>
         </div>
       </div>

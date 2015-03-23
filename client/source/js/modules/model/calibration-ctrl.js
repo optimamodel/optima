@@ -30,8 +30,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         }
       });
       // for calibration the overall cost charts should not be shown by default
-      _($scope.types.costs).each(function(entry) {
-        entry.total = false;
+      _($scope.types.costsKeys).each(function(key) {
+        if ($scope.types.costs[key].total!== undefined) {
+          $scope.types.costs[key].total = false; // this does not seem to work, but it's beyond me why - AN
+        }
       });
 
       $scope.calibrationStatus = false;
@@ -158,14 +160,13 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       return chart;
     };
 
-    var possibleKeys = ['existing', 'future', 'total', 'stacked'];
 
     var prepareCharts = function (response) {
       var charts = [];
 
-      var typesCostann = _($scope.types.costs).filter(function (item) {return item.id == "costann";})[0];
-      var typesCostcum = _($scope.types.costs).filter(function (item) {return item.id == "costcum";})[0];
-      var typesCommit = _($scope.types.costs).filter(function (item) {return item.id == "commit";})[0];
+//      var typesCostann = _($scope.types.costs).filter(function (item) {return item.id == "costann";})[0];
+//      var typesCostcum = _($scope.types.costs).filter(function (item) {return item.id == "costcum";})[0];
+//      var typesCommit = _($scope.types.costs).filter(function (item) {return item.id == "commit";})[0];
 
       if (!response) {
         return charts;
@@ -232,8 +233,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       // annual cost charts
 
-      _(possibleKeys).each(function(type) {
-        var isActive = typesCostann[type];
+      _($scope.types.possibleKeys).each(function(type) {
+        var isActive = $scope.types.costs.costann[type];
         if (isActive) {
           var chartData = response.costann[type][$scope.types.activeAnnualCost];
           if (chartData) {
@@ -243,7 +244,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       });
 
       var stackedAnnualData = response.costann.stacked[$scope.types.activeAnnualCost];
-      var stackedAnnualCostIsActive = typesCostann.stacked;
+      var stackedAnnualCostIsActive = $scope.types.costs.costann.stacked;
       if (stackedAnnualData && stackedAnnualCostIsActive) {
         var stackedAreaChart = generateStackedAreaChart(stackedAnnualData.costs,
           response.tvec, stackedAnnualData.title, stackedAnnualData.legend);
@@ -254,9 +255,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       }
 
       // cumulative cost charts
-      _(possibleKeys).each(function(type) {
+      _($scope.types.possibleKeys).each(function(type) {
         var chartData = response.costcum[type];
-        var isActive = typesCostcum[type];
+        var isActive = $scope.types.costs.costcum[type];
         if (isActive) {
           if (chartData) {
             charts.push(generateFinancialChart(chartData));
@@ -265,7 +266,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       });
 
       var stackedCumulativeData = response.costcum.stacked;
-      var stackedCumulativeCostIsActive = typesCostcum.stacked;
+      var stackedCumulativeCostIsActive = $scope.types.costs.costcum.stacked;
       if (stackedCumulativeData && stackedCumulativeCostIsActive) {
         var stackedCumulativeChart = generateStackedAreaChart(
           stackedCumulativeData.costs, response.tvec,
@@ -277,7 +278,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       }
 
       // commitments
-      var commitIsActive = typesCommit.checked;
+      var commitIsActive = $scope.types.costs.commit.checked;
       if (commitIsActive) {
         var commitChartData = response.commit[$scope.types.activeAnnualCost];
         if (commitChartData) {

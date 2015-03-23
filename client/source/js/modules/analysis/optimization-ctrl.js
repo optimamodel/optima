@@ -403,29 +403,35 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       if (graphData === undefined) return graphs;
 
       // annual cost charts
-      _(['existing', 'future', 'total']).each(function(type) {
-        var chartData = graphData.costann[type][$scope.types.activeAnnualCost];
-        var isActive = $scope.types.costs[0][type];
-        if (chartData && isActive) {
-          graphs.push(generateFinancialGraph(chartData));
+      _($scope.types.possibleKeys).each(function(type) {
+        var isActive = $scope.types.costs.costann[type];
+        if (isActive) {
+          var chartData = graphData.costann[type][$scope.types.activeAnnualCost];
+          if (chartData) {
+            graphs.push(generateFinancialGraph(chartData));
+          }
         }
       });
 
 
       // cumulative cost charts
-      _(['existing', 'future', 'total']).each(function(type) {
-        var chartData = graphData.costcum[type];
-        var isActive = $scope.types.costs[1][type];
-        if (chartData && isActive) {
-          graphs.push(generateFinancialGraph(chartData));
+      _($scope.types.possibleKeys).each(function(type) {
+        var isActive = $scope.types.costs.costcum[type];
+        if (isActive) {
+          var chartData = graphData.costcum[type];
+          if (chartData) {
+            graphs.push(generateFinancialGraph(chartData));
+          }
         }
       });
 
       // commitments
-      var commitChartData = graphData.commit[$scope.types.activeAnnualCost];
-      var commitIsActive = $scope.types.costs[2].checked;
-      if (commitChartData && commitIsActive) {
-        graphs.push(generateFinancialGraph(commitChartData));
+      var commitIsActive = $scope.types.costs.commit.checked;
+      if (commitIsActive) {
+        var commitChartData = graphData.commit[$scope.types.activeAnnualCost];
+        if (commitChartData) {
+          graphs.push(generateFinancialGraph(commitChartData));
+        }
       }
 
       return graphs;
