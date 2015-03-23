@@ -8,10 +8,10 @@ Version: 2015feb01 by cliffk
 
 print('WELCOME TO OPTIMA')
 
-testconstant = False
+testconstant = True
 testmultibudget = False
 testtimevarying = False
-testmultiyear = True
+testmultiyear = False
 testconstraints = False
 
 
@@ -94,8 +94,7 @@ if testconstraints:
 
 print('\n\n\n8. Viewing optimization...')
 from viewresults import viewmultiresults
-viewmultiresults(D.optimizations[-1].result.multi)
-
+viewmultiresults(D.plot.optim[-1].multi)
 
 
 

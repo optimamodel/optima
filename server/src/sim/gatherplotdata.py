@@ -250,7 +250,7 @@ def gathermultidata(D, Rarr, annual=True, verbose=2, maxyear=2030):
     # Financial cost outputs
     for key in ['costann', 'costcum']:
         multi[key] = struct()
-        for ac in ['total','future','existing']:
+        for ac in ['total']: #['total','future','existing']:
             origkey = 'annual' if key=='costann' else 'cumulative'
             multi[key][ac] = struct()
             if key=='costcum':

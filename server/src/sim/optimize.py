@@ -24,7 +24,7 @@ from ballsd import ballsd
 
 
 
-def runmodelalloc(D, thisalloc, origalloc, parindices, randseed, financial=True, verbose=2):
+def runmodelalloc(D, thisalloc, origalloc, parindices, randseed, financial=False, verbose=2):
     """ Little function to do calculation since it appears so many times """
 #    oldD = deepcopy(D)
 #    oldD, newcov, newnonhivdalysaverted = getcurrentbudget(oldD, origalloc, randseed=randseed) # Get cost-outcome curves with uncertainty
@@ -66,9 +66,7 @@ def objectivecalc(optimparams, options):
     else:
         raise Exception('Cannot figure out what kind of allocation this is since neither options.ntimepm nor options.years is defined')
     
-    financial=True if options.weights['costann'] else True # TEMP
-
-    R = runmodelalloc(options.D, thisalloc, origalloc, options.parindices, options.randseed, financial=financial) # Actually run
+    R = runmodelalloc(options.D, thisalloc, origalloc, options.parindices, options.randseed, financial=False) # Actually run
     
     tmpplotdata = [] # TEMP
     outcome = 0 # Preallocate objective value 

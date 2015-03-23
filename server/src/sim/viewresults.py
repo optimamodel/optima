@@ -176,7 +176,7 @@ def viewmultiresults(M, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 
                         subkey = 'tot'
                         xdata = M.tvec
                     else:
-                        subkey = ['existing','future'][popstot] # SUPER CONFUSING
+                        subkey = 'total' #['existing','future'][popstot] # SUPER CONFUSING
                         xdata = M[graph][subkey].xdata
                     
                     if onefig:
