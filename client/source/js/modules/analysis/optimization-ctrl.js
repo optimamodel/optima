@@ -97,7 +97,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         $scope.params.constraints.coverage = [];
 
         // Initialize program constraints models
-        for ( var i = 0; i < meta.progs.short.length; i++ ) {
+        for ( i = 0; i < meta.progs.short.length; i++ ) {
           $scope.params.constraints.yeardecrease[i] = {};
           $scope.params.constraints.yeardecrease[i].use = false;
           $scope.params.constraints.yeardecrease[i].by = 100;
@@ -166,7 +166,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         graph.data.lines.push(_.zip(xData, lineData));
       });
 
-      // the optimization charts have an uncertenty area `low` & `high`
+      // the optimization charts have an uncertainty area `low` & `high`
       if (!_.isEmpty(yData.low) && !_.isEmpty(yData.high)) {
         _(yData.high).each(function(highLineData, index) {
           graph.data.areas.push({
@@ -183,8 +183,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      * Returns a prepared chart object for a pie chart.
      */
     var generatePieChart = function(data, legend) {
-      var graphData = [];
-
       var options = {
         height: 350,
         width: 350,
@@ -197,7 +195,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         title: data.name
       };
 
-      graphData = _(data).map(function (value, index) {
+      var graphData = _(data).map(function (value, index) {
         return { value: value, label: legend[index] };
       });
 
@@ -275,8 +273,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      * Returns a prepared chart object for a pie chart.
      */
     var generateStackedBarChart = function(yData, xData, legend, title) {
-      var graphData = [];
-
       var options = {
         height: 200,
         width: 700,
@@ -292,7 +288,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       };
 
 
-      graphData = _(xData).map(function(xValue, index) {
+      var graphData = _(xData).map(function(xValue, index) {
         var yValues = _(yData).map(function(yEntry) { return yEntry[index]; });
         return [xValue, yValues];
       });
@@ -316,8 +312,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      */
     var generateMultipleBudgetsChart = function (yData, xData, labels, legend,
         title, leftTitle, rightTitle) {
-      var graphData = [];
-
       var options = {
         height: 200,
         width: 700,
@@ -334,7 +328,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         rightTitle: rightTitle
       };
 
-      graphData = _(xData).map(function (xValue, index) {
+      var graphData = _(xData).map(function (xValue, index) {
         return [labels[index], xValue, yData[index]];
       });
 
