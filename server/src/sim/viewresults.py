@@ -125,10 +125,14 @@ def viewmultiresults(M, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 
     """
     Generate all outputs required for the model, including prevalence, incidence,
     deaths, etc.
-    Version: 2014dec02
+    Version: 2015mar23
     """
     
-    from matplotlib.pylab import figure, plot, hold, xlabel, ylabel, xlim, ylim, legend, title, ceil, sqrt, subplot, show
+    from matplotlib.pylab import figure, plot, hold, xlabel, ylabel, xlim, ylim, legend, title, ceil, sqrt, subplot, show, fill_between
+    import brewer2mpl as colormap
+    bmap = colormap.get_map('Paired', 'Qualitative', max(3,M.nsims)) # WARNING, won't work with >13
+    if M.nsims>12: raise Exception('Can''t use ColorBrewer with more than 12 colors')
+    colors = bmap.mpl_colors
     
     npops = len(M.prev.pops) # Calculate number of populations
 
@@ -165,7 +169,9 @@ def viewmultiresults(M, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 
                             figure(facecolor='w')
                         hold(True)
                         for sim in range(M.nsims):
-                            plot(M.tvec, M[graph].pops[p].data[sim], linewidth=linewidth)
+                            if graph not in ['costann']:
+                                fill_between(M.tvec, M[graph].pops[p].low[sim], M[graph].pops[p].high[sim], alpha=0.2, edgecolor='none')
+                            plot(M.tvec, M[graph].pops[p].best[sim], linewidth=linewidth, color=colors[sim])
                         
                         title(M[graph].pops[p].title, fontsize=10)
                         if not(onefig): legend(M[graph].pops[p].legend)
@@ -190,7 +196,7 @@ def viewmultiresults(M, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 
                     hold(True)
                     
                     for sim in range(M.nsims):
-                        plot(xdata, M[graph][subkey].data[sim], linewidth=linewidth)
+                        plot(xdata, M[graph][subkey].data[sim], linewidth=linewidth, color=colors[sim])
                     
                     title(M[graph][subkey].title, fontsize=10)
                     if epigraph: xlabel(M[graph].xlabel)

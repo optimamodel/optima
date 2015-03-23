@@ -80,14 +80,10 @@ def loaddata(filename, verbose=2):
     printv('Loading data...', 1, verbose)
     if not os.path.exists(filename):
         filename = projectpath(filename)
-    try:
-        import json
-        rfid = open(filename,'rb')
-        data = struct.fromDict(json.load(rfid))
-    except: #try the old approach
-        import cPickle
-        rfid = open(filename, 'rb')
-        data = cPickle.load(rfid)
+    
+    import json
+    rfid = open(filename,'rb')
+    data = struct.fromDict(json.load(rfid))
 
     printv('...done loading data.', 2, verbose)
     return data
