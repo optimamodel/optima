@@ -5,7 +5,7 @@ default_dataend = 2015
 default_nsims = 5
 
 def makeproject(projectname='example', pops = default_pops, progs = default_progs, datastart=default_datastart, \
-    dataend=default_dataend, nsims=default_nsims, verbose=2, savetofile = True):
+    dataend=default_dataend, nsims=default_nsims, verbose=2, savetofile = True, domakeworkbook=True):
     """
     Initializes the empty project. Only the "Global" and "Fitted" parameters are added on this step.
     The rest of the parameters are calculated after the model is updated with the data from the workbook.
@@ -63,7 +63,8 @@ def makeproject(projectname='example', pops = default_pops, progs = default_prog
     if projectname == 'example': # Don't make a new workbook, but just use the existing one, if the project name is "example"
         print('WARNING, Project name set to "example", not creating a new workbook!')
     else: # Make a new workbook
-        makeworkbook(D.G.workbookname, pops, progs, datastart, dataend, verbose=verbose)
+        if domakeworkbook:
+            makeworkbook(D.G.workbookname, pops, progs, datastart, dataend, verbose=verbose)
     
     printv('  ...done making project.', 2, verbose)
     return D

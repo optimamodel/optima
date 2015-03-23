@@ -1,18 +1,13 @@
-def runsimulation(D, simstartyear=2000, simendyear=2050, verbose=2, makeplot = 0, dosave = True):
+def runsimulation(D, verbose=2, makeplot = 0, dosave = True):
     """
     Calculate initial model estimates.
 
-    Version: 2015jan16 by cliffk
+    Version: 2015mar23 by cliffk
     """
 
     from printv import printv
     printv('Running simulation...', 1, verbose)
-    # please don't use dosave here, let's just save by default. it makes no sense to save in file in web environment :)
-
-    # Set options to update year range
-    from setoptions import setoptions
-    D.opt = setoptions(D.opt, simstartyear=simstartyear, simendyear=simendyear)
-
+    
     # Convert data parameters to model parameters
     if 'M' not in D.keys():
         from makemodelpars import makemodelpars

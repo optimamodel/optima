@@ -12,10 +12,10 @@ def setoptions(opt=None, **kwargs):
     if not(isinstance(opt,dict)): 
         opt = struct() # If existing options structure isn't provided, create it
         opt.parstartyear = kwargs.get('parstartyear', 2000) # First year of parameter time series
-        opt.parendyear = kwargs.get('parendyear', 2050) # Final year of parameter time series -- maximum time period for this project
+        opt.parendyear = kwargs.get('parendyear', 2030) # Final year of parameter time series -- maximum time period for this project
         opt.simstartyear = kwargs.get('simstartyear', 2000) # First year of simulation to run
-        opt.simendyear = kwargs.get('simendyear', 2050) # Final year of simulation to run
-        opt.dt = 0.1 # Timestep
+        opt.simendyear = kwargs.get('simendyear', 2030) # Final year of simulation to run
+        opt.dt = 0.2 # Timestep
         opt.nsims = kwargs.get('nsims', 5) # Number of simulations to store for purposes of uncertainty
         opt.quantiles = [0.5, 0.25, 0.75] # Quantiles to return
         opt.growth = 0.0 # Default population growth rate
