@@ -27,7 +27,7 @@ define(['angular'], function (angular) {
         costs:[
           {id:"costcum", name: "Cumulative costs", existing: false, future: false, total: true, stacked: false},
           {id:"costann", name: "Annual costs", existing: false, future: false, total: true, stacked: false},
-          { id: 'commit', name: 'Commitments', hasNoIntervals: true, checked: false, label: 'Annual new commitments' }
+          {id:'commit', name: 'Commitments', hasNoIntervals: true, checked: false, label: 'Annual new commitments' }
         ],
         financialAnnualCosts: [
           {id:'total', name:'Total amount', disabled: true},

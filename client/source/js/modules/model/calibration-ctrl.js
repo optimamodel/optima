@@ -158,8 +158,14 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       return chart;
     };
 
+    var possibleKeys = ['existing', 'future', 'total', 'stacked'];
+
     var prepareCharts = function (response) {
       var charts = [];
+
+      var typesCostann = _($scope.types.costs).filter(function (item) {return item.id == "costann";})[0];
+      var typesCostcum = _($scope.types.costs).filter(function (item) {return item.id == "costcum";})[0];
+      var typesCommit = _($scope.types.costs).filter(function (item) {return item.id == "commit";})[0];
 
       if (!response) {
         return charts;
@@ -225,16 +231,19 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       });
 
       // annual cost charts
-      _($scope.types.costs.costann).each(function(type) {
-        var chartData = response.costann[type][$scope.types.activeAnnualCost];
-        var isActive = $scope.types.costs[1][type];
-        if (chartData && isActive) {
-          charts.push(generateFinancialChart(chartData));
+
+      _(possibleKeys).each(function(type) {
+        var isActive = typesCostann[type];
+        if (isActive) {
+          var chartData = response.costann[type][$scope.types.activeAnnualCost];
+          if (chartData) {
+            charts.push(generateFinancialChart(chartData));
+          }
         }
       });
 
       var stackedAnnualData = response.costann.stacked[$scope.types.activeAnnualCost];
-      var stackedAnnualCostIsActive = $scope.types.costs[0].stacked;
+      var stackedAnnualCostIsActive = typesCostann.stacked;
       if (stackedAnnualData && stackedAnnualCostIsActive) {
         var stackedAreaChart = generateStackedAreaChart(stackedAnnualData.costs,
           response.tvec, stackedAnnualData.title, stackedAnnualData.legend);
@@ -245,16 +254,18 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       }
 
       // cumulative cost charts
-      _($scope.types.costs.costcum).each(function(type) {
+      _(possibleKeys).each(function(type) {
         var chartData = response.costcum[type];
-        var isActive = $scope.types.costs[0][type];
-        if (chartData && isActive) {
-          charts.push(generateFinancialChart(chartData));
+        var isActive = typesCostcum[type];
+        if (isActive) {
+          if (chartData) {
+            charts.push(generateFinancialChart(chartData));
+          }
         }
       });
 
       var stackedCumulativeData = response.costcum.stacked;
-      var stackedCumulativeCostIsActive = $scope.types.costs[1].stacked;
+      var stackedCumulativeCostIsActive = typesCostcum.stacked;
       if (stackedCumulativeData && stackedCumulativeCostIsActive) {
         var stackedCumulativeChart = generateStackedAreaChart(
           stackedCumulativeData.costs, response.tvec,
@@ -266,12 +277,13 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       }
 
       // commitments
-      var commitChartData = response.commit[$scope.types.activeAnnualCost];
-      var commitIsActive = $scope.types.costs[2].checked;
-      if (commitChartData && commitIsActive) {
-        charts.push(generateFinancialChart(commitChartData));
+      var commitIsActive = typesCommit.checked;
+      if (commitIsActive) {
+        var commitChartData = response.commit[$scope.types.activeAnnualCost];
+        if (commitChartData) {
+          charts.push(generateFinancialChart(commitChartData));
+        }
       }
-
       return charts;
     };
 
