@@ -123,7 +123,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     var optimizationTimer;
 
-    var linesGraphOptions = {
+    var graphOptions = {
       height: 200,
       width: 320,
       margin: CONFIG.GRAPH_MARGINS,
@@ -132,7 +132,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       },
       yAxis: {
         axisLabel: ''
-      }
+      },
+      areasOpacity: 0.4
     };
 
     /*
@@ -142,14 +143,14 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     * y-values from one line.
     */
     var generateGraph = function (yData, xData, title, legend, xLabel, yLabel) {
-      var linesGraphData = {
-        lines: [],
-        scatter: []
-      };
 
       var graph = {
-        options: angular.copy(linesGraphOptions),
-        data: angular.copy(linesGraphData)
+        options: angular.copy(graphOptions),
+        data: {
+          lines: [],
+          scatter: [],
+          areas: []
+        }
       };
 
       graph.options.title = title;
@@ -158,9 +159,22 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       graph.options.xAxis.axisLabel = xLabel;
       graph.options.yAxis.axisLabel = yLabel;
 
-      _(yData).each(function(lineData) {
+      // optimization chart data like prevalence have `best` & `data`
+      // financial chart data only has one property `data`
+      var linesData = yData.best || yData.data;
+      _(linesData).each(function(lineData) {
         graph.data.lines.push(_.zip(xData, lineData));
       });
+
+      // the optimization charts have an uncertenty area `low` & `high`
+      if (!_.isEmpty(yData.low) && !_.isEmpty(yData.high)) {
+        _(yData.high).each(function(highLineData, index) {
+          graph.data.areas.push({
+            highLine: _.zip(xData, highLineData),
+            lowLine: _.zip(xData, yData.low[index])
+          });
+        });
+      }
 
       return graph;
     };
@@ -357,7 +371,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           // generate graphs showing the overall data for this type
           if (type.total) {
             var graph = generateGraph(
-              data.tot.data, results.tvec,
+              data.tot, results.tvec,
               data.tot.title, data.tot.legend,
               data.xlabel, data.tot.ylabel
             );
@@ -368,7 +382,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           if (type.byPopulation) {
             _(data.pops).each(function (population) {
               var graph = generateGraph(
-                population.data, results.tvec,
+                population, results.tvec,
                 population.title, population.legend,
                 data.xlabel, population.ylabel
               );
@@ -385,7 +399,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      * Returns a financial graph.
      */
     var generateFinancialGraph = function(data) {
-      var graph = generateGraph(data.data, data.xdata, data.title, data.legend, data.xlabel, data.ylabel);
+      var graph = generateGraph(data, data.xdata, data.title, data.legend, data.xlabel, data.ylabel);
       return graph;
     };
 
@@ -428,7 +442,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       if (data === undefined) return undefined;
 
       var chart = {
-        options: angular.copy(linesGraphOptions),
+        options: angular.copy(graphOptions),
         data: {
           lines: [],
           scatter: []
