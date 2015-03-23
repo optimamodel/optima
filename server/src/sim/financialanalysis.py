@@ -24,6 +24,9 @@ def financialanalysis(D, postyear=2015, S=None, rerunmodel=False, artgrowthrate=
         print('Using default S since no usable S supplied')
         S = D.S # If not supplied as input, copy from D
     postyear = float(postyear) # Make sure the year for turning off transmission is a float
+    
+    dt = D.S.tvec[1]-D.S.tvec[0]
+    stepsperyear = int(round(1/dt))
 
     # Initialise output structure of plot data
     plotdata = {}
@@ -143,7 +146,7 @@ def financialanalysis(D, postyear=2015, S=None, rerunmodel=False, artgrowthrate=
         plotdata[plottype][plotsubtype]['ylabel'] = 'USD'
         plotdata[plottype][plotsubtype]['title'] = 'Cumulative HIV-related costs - ' + plotsubtype + ' infections'
         if not plotsubtype=='future':
-            x = list(accumu(plotdata['annual'][plotsubtype]['total']['ylinedata'][0::10]))
+            x = list(accumu(plotdata['annual'][plotsubtype]['total']['ylinedata'][0::stepsperyear]))
             y = expanddata(x[:-1], len(x[:-1]), 0, interp=True, dt=D.opt.dt)
             plotdata[plottype][plotsubtype]['ylinedata'] = append(y,[x[-1]])
 
@@ -151,7 +154,7 @@ def financialanalysis(D, postyear=2015, S=None, rerunmodel=False, artgrowthrate=
         for yscalefactor in costdisplays:
             if 'ylinedata' in plotdata['annual']['total'][yscalefactor].keys():
                 plotdata['annual']['future'][yscalefactor]['ylinedata'] = [max(0.0,plotdata['annual']['total'][yscalefactor]['ylinedata'][j] - plotdata['annual']['existing'][yscalefactor]['ylinedata'][j]) for j in range(noptpts)]
-        x = list(accumu(plotdata['annual']['future']['total']['ylinedata'][0::10]))
+        x = list(accumu(plotdata['annual']['future']['total']['ylinedata'][0::stepsperyear]))
         y = expanddata(x[:-1], len(x[:-1]), 0, interp=True, dt=D.opt.dt)    
         plotdata['cumulative']['future']['ylinedata'] = append(y,[x[-1]])
 
