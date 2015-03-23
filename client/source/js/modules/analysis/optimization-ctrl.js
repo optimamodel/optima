@@ -97,7 +97,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         $scope.params.constraints.coverage = [];
 
         // Initialize program constraints models
-        for ( var i = 0; i < meta.progs.short.length; i++ ) {
+        for ( i = 0; i < meta.progs.short.length; i++ ) {
           $scope.params.constraints.yeardecrease[i] = {};
           $scope.params.constraints.yeardecrease[i].use = false;
           $scope.params.constraints.yeardecrease[i].by = 100;
@@ -123,7 +123,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     var optimizationTimer;
 
-    var linesGraphOptions = {
+    var graphOptions = {
       height: 200,
       width: 320,
       margin: CONFIG.GRAPH_MARGINS,
@@ -132,7 +132,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       },
       yAxis: {
         axisLabel: ''
-      }
+      },
+      areasOpacity: 0.1
     };
 
     /*
@@ -142,14 +143,14 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     * y-values from one line.
     */
     var generateGraph = function (yData, xData, title, legend, xLabel, yLabel) {
-      var linesGraphData = {
-        lines: [],
-        scatter: []
-      };
 
       var graph = {
-        options: angular.copy(linesGraphOptions),
-        data: angular.copy(linesGraphData)
+        options: angular.copy(graphOptions),
+        data: {
+          lines: [],
+          scatter: [],
+          areas: []
+        }
       };
 
       graph.options.title = title;
@@ -158,9 +159,22 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       graph.options.xAxis.axisLabel = xLabel;
       graph.options.yAxis.axisLabel = yLabel;
 
-      _(yData).each(function(lineData) {
+      // optimization chart data like prevalence have `best` & `data`
+      // financial chart data only has one property `data`
+      var linesData = yData.best || yData.data;
+      _(linesData).each(function(lineData) {
         graph.data.lines.push(_.zip(xData, lineData));
       });
+
+      // the optimization charts have an uncertainty area `low` & `high`
+      if (!_.isEmpty(yData.low) && !_.isEmpty(yData.high)) {
+        _(yData.high).each(function(highLineData, index) {
+          graph.data.areas.push({
+            highLine: _.zip(xData, highLineData),
+            lowLine: _.zip(xData, yData.low[index])
+          });
+        });
+      }
 
       return graph;
     };
@@ -169,8 +183,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      * Returns a prepared chart object for a pie chart.
      */
     var generatePieChart = function(data, legend) {
-      var graphData = [];
-
       var options = {
         height: 350,
         width: 350,
@@ -183,7 +195,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         title: data.name
       };
 
-      graphData = _(data).map(function (value, index) {
+      var graphData = _(data).map(function (value, index) {
         return { value: value, label: legend[index] };
       });
 
@@ -261,8 +273,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      * Returns a prepared chart object for a pie chart.
      */
     var generateStackedBarChart = function(yData, xData, legend, title) {
-      var graphData = [];
-
       var options = {
         height: 200,
         width: 700,
@@ -278,7 +288,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       };
 
 
-      graphData = _(xData).map(function(xValue, index) {
+      var graphData = _(xData).map(function(xValue, index) {
         var yValues = _(yData).map(function(yEntry) { return yEntry[index]; });
         return [xValue, yValues];
       });
@@ -302,8 +312,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      */
     var generateMultipleBudgetsChart = function (yData, xData, labels, legend,
         title, leftTitle, rightTitle) {
-      var graphData = [];
-
       var options = {
         height: 200,
         width: 700,
@@ -320,7 +328,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         rightTitle: rightTitle
       };
 
-      graphData = _(xData).map(function (xValue, index) {
+      var graphData = _(xData).map(function (xValue, index) {
         return [labels[index], xValue, yData[index]];
       });
 
@@ -357,7 +365,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           // generate graphs showing the overall data for this type
           if (type.total) {
             var graph = generateGraph(
-              data.tot.data, results.tvec,
+              data.tot, results.tvec,
               data.tot.title, data.tot.legend,
               data.xlabel, data.tot.ylabel
             );
@@ -368,7 +376,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           if (type.byPopulation) {
             _(data.pops).each(function (population) {
               var graph = generateGraph(
-                population.data, results.tvec,
+                population, results.tvec,
                 population.title, population.legend,
                 data.xlabel, population.ylabel
               );
@@ -385,7 +393,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      * Returns a financial graph.
      */
     var generateFinancialGraph = function (data) {
-      var graph = generateGraph(data.data, data.xdata, data.title, data.legend, data.xlabel, data.ylabel);
+      var graph = generateGraph(data, data.xdata, data.title, data.legend, data.xlabel, data.ylabel);
       return graph;
     };
 
@@ -395,29 +403,35 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       if (graphData === undefined) return graphs;
 
       // annual cost charts
-      _(['existing', 'future', 'total']).each(function(type) {
-        var chartData = graphData.costann[type][$scope.types.activeAnnualCost];
-        var isActive = $scope.types.costs[0][type];
-        if (chartData && isActive) {
-          graphs.push(generateFinancialGraph(chartData));
+      _($scope.types.possibleKeys).each(function(type) {
+        var isActive = $scope.types.costs.costann[type];
+        if (isActive) {
+          var chartData = graphData.costann[type][$scope.types.activeAnnualCost];
+          if (chartData) {
+            graphs.push(generateFinancialGraph(chartData));
+          }
         }
       });
 
 
       // cumulative cost charts
-      _(['existing', 'future', 'total']).each(function(type) {
-        var chartData = graphData.costcum[type];
-        var isActive = $scope.types.costs[1][type];
-        if (chartData && isActive) {
-          graphs.push(generateFinancialGraph(chartData));
+      _($scope.types.possibleKeys).each(function(type) {
+        var isActive = $scope.types.costs.costcum[type];
+        if (isActive) {
+          var chartData = graphData.costcum[type];
+          if (chartData) {
+            graphs.push(generateFinancialGraph(chartData));
+          }
         }
       });
 
       // commitments
-      var commitChartData = graphData.commit[$scope.types.activeAnnualCost];
-      var commitIsActive = $scope.types.costs[2].checked;
-      if (commitChartData && commitIsActive) {
-        graphs.push(generateFinancialGraph(commitChartData));
+      var commitIsActive = $scope.types.costs.commit.checked;
+      if (commitIsActive) {
+        var commitChartData = graphData.commit[$scope.types.activeAnnualCost];
+        if (commitChartData) {
+          graphs.push(generateFinancialGraph(commitChartData));
+        }
       }
 
       return graphs;
@@ -428,7 +442,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       if (data === undefined) return undefined;
 
       var chart = {
-        options: angular.copy(linesGraphOptions),
+        options: angular.copy(graphOptions),
         data: {
           lines: [],
           scatter: []

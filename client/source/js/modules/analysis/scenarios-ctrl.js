@@ -3,7 +3,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     module.controller('AnalysisScenariosController', function ($scope, $http, $modal, $window, meta, info, scenarioParametersResponse, scenariosResponse, CONFIG, typeSelector) {
 
-        var linesGraphOptions, linesGraphData, responseData, availableScenarioParameters, availableScenarios;
+        var responseData, availableScenarioParameters, availableScenarios;
 
         // initialize all necessary data for this controller
         var initialize = function() {
@@ -37,23 +37,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           }
 
           $scope.types = typeSelector.types;
-
-          linesGraphOptions = {
-            height: 200,
-            width: 320,
-            margin: CONFIG.GRAPH_MARGINS,
-            xAxis: {
-              axisLabel: 'Year'
-            },
-            yAxis: {
-              axisLabel: ''
-            }
-          };
-
-          linesGraphData = {
-            lines: [],
-            scatter: []
-          };
         };
 
         var checkProjectInfo = function (info) {
@@ -73,8 +56,23 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
          */
         var generateGraph = function(yData, xData, title, legend, xLabel,  yLabel) {
           var graph = {
-            options: angular.copy(linesGraphOptions),
-            data: angular.copy(linesGraphData),
+            options: {
+              height: 200,
+              width: 320,
+              margin: CONFIG.GRAPH_MARGINS,
+              xAxis: {
+                axisLabel: 'Year'
+              },
+              yAxis: {
+                axisLabel: ''
+              },
+              areasOpacity: 0.1
+            },
+            data: {
+              lines: [],
+              scatter: [],
+              areas: []
+            },
             title: title
           };
 
@@ -83,9 +81,22 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           graph.options.legend = legend;
           graph.options.title = title;
 
-          _(yData).each(function(lineData) {
+          // scenario chart data like prevalence have `best` & `data`
+          // financial chart data only has one property `data`
+          var linesData = yData.best || yData.data;
+          _(linesData).each(function(lineData) {
             graph.data.lines.push(_.zip(xData, lineData));
           });
+
+          // the scenario charts have an uncertenty area `low` & `high`
+          if (!_.isEmpty(yData.low) && !_.isEmpty(yData.high)) {
+            _(yData.high).each(function(highLineData, index) {
+              graph.data.areas.push({
+                highLine: _.zip(xData, highLineData),
+                lowLine: _.zip(xData, yData.low[index])
+              });
+            });
+          }
 
           return graph;
         };
@@ -94,7 +105,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
          * Returns a financial graph.
          */
         var generateFinancialGraph = function (data) {
-          var graph = generateGraph(data.data, data.xdata, data.title, data.legend, data.xlabel, data.ylabel);
+          var graph = generateGraph(data, data.xdata, data.title, data.legend, data.xlabel, data.ylabel);
           return graph;
         };
 
@@ -116,7 +127,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             // generate graphs showing the overall data for this type
             if (type.total) {
               var title = data.tot.title;
-              var graph = generateGraph(data.tot.data, response.tvec, title, data.tot.legend, data.xlabel, data.tot.ylabel);
+              var graph = generateGraph(data.tot, response.tvec, title, data.tot.legend, data.xlabel, data.tot.ylabel);
               graphs.push(graph);
             }
 
@@ -125,36 +136,43 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               _(data.pops).each(function (population, populationIndex) {
 
                 var title = population.title;
-                var graph = generateGraph(population.data, response.tvec, title, population.legend, data.xlabel, population.ylabel);
+                var graph = generateGraph(population, response.tvec, title, population.legend, data.xlabel, population.ylabel);
                 graphs.push(graph);
               });
             }
           });
 
           // annual cost charts
-          _(['existing', 'future', 'total']).each(function(type) {
-            var chartData = response.costann[type][$scope.types.activeAnnualCost];
-            var isActive = $scope.types.costs[0][type];
-            if (chartData && isActive) {
+          _($scope.types.possibleKeys).each(function(type) {
+            var isActive = $scope.types.costs.costann[type];
+            if (isActive) {
+              var chartData = response.costann[type][$scope.types.activeAnnualCost];
+              if (chartData) {
               graphs.push(generateFinancialGraph(chartData));
+              }
             }
           });
 
 
           // cumulative cost charts
-          _(['existing', 'future', 'total']).each(function(type) {
-            var chartData = response.costcum[type];
-            var isActive = $scope.types.costs[1][type];
-            if (chartData && isActive) {
-              graphs.push(generateFinancialGraph(chartData));
+          _($scope.types.possibleKeys).each(function(type) {
+            var isActive = $scope.types.costs.costcum[type];
+            if (isActive) {
+              var chartData = response.costcum[type];
+              if (chartData) {
+                graphs.push(generateFinancialGraph(chartData));
+              }
             }
           });
 
           // commitments
-          var commitChartData = response.commit[$scope.types.activeAnnualCost];
-          var commitIsActive = $scope.types.costs[2].checked;
+          
+          var commitIsActive = $scope.types.costs.costann.checked;
           if (commitChartData && commitIsActive) {
-            graphs.push(generateFinancialGraph(commitChartData));
+            var commitChartData = response.commit[$scope.types.activeAnnualCost];
+            if (commitChartData) {
+              graphs.push(generateFinancialGraph(commitChartData));
+            }
           }
 
           $scope.graphs = graphs;

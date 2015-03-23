@@ -24,12 +24,8 @@ from ballsd import ballsd
 
 
 
-def runmodelalloc(D, thisalloc, origalloc, parindices, randseed, financial=True, verbose=2):
+def runmodelalloc(D, thisalloc, origalloc, parindices, randseed, financial=False, verbose=2):
     """ Little function to do calculation since it appears so many times """
-#    oldD = deepcopy(D)
-#    oldD, newcov, newnonhivdalysaverted = getcurrentbudget(oldD, origalloc, randseed=randseed) # Get cost-outcome curves with uncertainty
-#    oldM = makemodelpars(oldD.P, oldD.opt, withwhat='c', verbose=0) # Don't print out
-    
     newD = deepcopy(D)
     newD, newcov, newnonhivdalysaverted = getcurrentbudget(newD, thisalloc, randseed=randseed) # Get cost-outcome curves with uncertainty
     newM = makemodelpars(newD.P, newD.opt, withwhat='c', verbose=0) # Don't print out
@@ -66,9 +62,7 @@ def objectivecalc(optimparams, options):
     else:
         raise Exception('Cannot figure out what kind of allocation this is since neither options.ntimepm nor options.years is defined')
     
-    financial=True if options.weights['costann'] else True # TEMP
-
-    R = runmodelalloc(options.D, thisalloc, origalloc, options.parindices, options.randseed, financial=financial) # Actually run
+    R = runmodelalloc(options.D, thisalloc, origalloc, options.parindices, options.randseed, financial=False) # Actually run
     
     tmpplotdata = [] # TEMP
     outcome = 0 # Preallocate objective value 
@@ -260,9 +254,10 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         ## Run with uncertainties
         allocarr = []
         fvalarr = []
-        for s in range(1): # range(len(D.F)): # Loop over all available meta parameters
+        for s in range(len(D.F)): # range(len(D.F)): # Loop over all available meta parameters
             print('========== Running uncertainty optimization %s of %s... ==========' % (s+1, len(D.F)))
-            options.D.F = [D.F[s]] # Loop over fitted parameters
+            options.D.F = [deepcopy(D.F[s])] # Loop over fitted parameters
+            
             options.randseed = s
             optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=fundingchanges.total.dec, xmax=fundingchanges.total.inc, absinitial=stepsizes, MaxIter=maxiters, timelimit=timelimit, fulloutput=True, stoppingfunc=stoppingfunc, verbose=verbose)
             optparams[opttrue] = optparams[opttrue] / optparams[opttrue].sum() * (options.totalspend - optparams[~opttrue].sum()) # Make sure it's normalized -- WARNING KLUDGY

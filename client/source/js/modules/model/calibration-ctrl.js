@@ -17,12 +17,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       }
     };
 
-    var lineScatterData = {
-      line: [],
-      scatter: [],
-      area: {}
-    };
-
     var initialize = function() {
       $scope.projectInfo = info;
       $scope.canDoFitting = $scope.projectInfo.can_calibrate;
@@ -36,8 +30,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         }
       });
       // for calibration the overall cost charts should not be shown by default
-      _($scope.types.costs).each(function(entry) {
-        entry.total = false;
+      _($scope.types.costsKeys).each(function(key) {
+        if ($scope.types.costs[key].total!== undefined) {
+          $scope.types.costs[key].total = false; // this does not seem to work, but it's beyond me why - AN
+        }
       });
 
       $scope.calibrationStatus = false;
@@ -103,15 +99,22 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     var generateAreaChart = function(yData, xData, title) {
       var chart = {
         options: angular.copy(defaultChartOptions),
-        data: angular.copy(lineScatterData),
+        data: {
+          lines: [],
+          scatter: [],
+          areas: []
+        },
         title: title
       };
 
       chart.options.title = title;
+      chart.options.linesStyle = ['__color-black'];
 
-      chart.data.line = _.zip(xData, yData.best);
-      chart.data.area.lineHigh = _.zip(xData, yData.high);
-      chart.data.area.lineLow = _.zip(xData, yData.low);
+      chart.data.lines.push(_.zip(xData, yData.best));
+      chart.data.areas.push({
+        highLine: _.zip(xData, yData.high),
+        lowLine: _.zip(xData, yData.low)
+      });
 
       return chart;
     };
@@ -125,7 +128,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     var generateStackedAreaChart = function(yDataSet, xData, title, legend) {
       var chart = {
         options: angular.copy(defaultChartOptions),
-        data: { areas: []},
+        data: { areas: [] },
         title: title
       };
 
@@ -152,13 +155,18 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       chart.options.xAxis.axisLabel = data.xlabel;
       chart.options.yAxis.axisLabel = data.ylabel;
-      chart.type = 'lineScatterAreaChart';
+      chart.type = 'lineAreaScatterChart';
 
       return chart;
     };
 
+
     var prepareCharts = function (response) {
       var charts = [];
+
+//      var typesCostann = _($scope.types.costs).filter(function (item) {return item.id == "costann";})[0];
+//      var typesCostcum = _($scope.types.costs).filter(function (item) {return item.id == "costcum";})[0];
+//      var typesCommit = _($scope.types.costs).filter(function (item) {return item.id == "commit";})[0];
 
       if (!response) {
         return charts;
@@ -177,7 +185,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
           chart.options.xAxis.axisLabel = data.xlabel;
           chart.options.yAxis.axisLabel = data.tot.ylabel;
-          chart.type = 'lineScatterAreaChart';
+          chart.type = 'lineAreaScatterChart';
 
           // seems like ydata can either be an array of arrays for the
           // populations or a single array when it's used in overall
@@ -199,7 +207,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
             chart.options.xAxis.axisLabel = data.xlabel;
             chart.options.yAxis.axisLabel = population.ylabel;
-            chart.type = 'lineScatterAreaChart';
+            chart.type = 'lineAreaScatterChart';
 
             // seems like ydata can either be an array of arrays for the
             // populations or a single array when it's used in overall
@@ -224,16 +232,19 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       });
 
       // annual cost charts
-      _(['existing', 'future', 'total']).each(function(type) {
-        var chartData = response.costann[type][$scope.types.activeAnnualCost];
-        var isActive = $scope.types.costs[0][type];
-        if (chartData && isActive) {
-          charts.push(generateFinancialChart(chartData));
+
+      _($scope.types.possibleKeys).each(function(type) {
+        var isActive = $scope.types.costs.costann[type];
+        if (isActive) {
+          var chartData = response.costann[type][$scope.types.activeAnnualCost];
+          if (chartData) {
+            charts.push(generateFinancialChart(chartData));
+          }
         }
       });
 
       var stackedAnnualData = response.costann.stacked[$scope.types.activeAnnualCost];
-      var stackedAnnualCostIsActive = $scope.types.costs[0].stacked;
+      var stackedAnnualCostIsActive = $scope.types.costs.costann.stacked;
       if (stackedAnnualData && stackedAnnualCostIsActive) {
         var stackedAreaChart = generateStackedAreaChart(stackedAnnualData.costs,
           response.tvec, stackedAnnualData.title, stackedAnnualData.legend);
@@ -244,16 +255,18 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       }
 
       // cumulative cost charts
-      _(['existing', 'future', 'total']).each(function(type) {
+      _($scope.types.possibleKeys).each(function(type) {
         var chartData = response.costcum[type];
-        var isActive = $scope.types.costs[1][type];
-        if (chartData && isActive) {
-          charts.push(generateFinancialChart(chartData));
+        var isActive = $scope.types.costs.costcum[type];
+        if (isActive) {
+          if (chartData) {
+            charts.push(generateFinancialChart(chartData));
+          }
         }
       });
 
       var stackedCumulativeData = response.costcum.stacked;
-      var stackedCumulativeCostIsActive = $scope.types.costs[1].stacked;
+      var stackedCumulativeCostIsActive = $scope.types.costs.costcum.stacked;
       if (stackedCumulativeData && stackedCumulativeCostIsActive) {
         var stackedCumulativeChart = generateStackedAreaChart(
           stackedCumulativeData.costs, response.tvec,
@@ -265,12 +278,13 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       }
 
       // commitments
-      var commitChartData = response.commit[$scope.types.activeAnnualCost];
-      var commitIsActive = $scope.types.costs[2].checked;
-      if (commitChartData && commitIsActive) {
-        charts.push(generateFinancialChart(commitChartData));
+      var commitIsActive = $scope.types.costs.commit.checked;
+      if (commitIsActive) {
+        var commitChartData = response.commit[$scope.types.activeAnnualCost];
+        if (commitChartData) {
+          charts.push(generateFinancialChart(commitChartData));
+        }
       }
-
       return charts;
     };
 

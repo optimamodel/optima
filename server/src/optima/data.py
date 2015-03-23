@@ -42,12 +42,12 @@ def pie():
 
 @data.route('/line-scatter-error', methods=['GET'])
 @login_required
-def lineScatterError():
+def lineAreaScatterError():
     """ mocks up data for line scatter graph with errors """
     return data.send_static_file('line-scatter-error-chart.json')
 
-@data.route('/line-scatter-area', methods=['GET'])
+@data.route('/line-area-scatter', methods=['GET'])
 @login_required
-def lineScatterArea():
+def lineAreaScatter():
     """ mocks up data for line scatter graph """
-    return data.send_static_file('line-scatter-area-chart.json')
+    return data.send_static_file('line-area-scatter-chart.json')

@@ -4,7 +4,7 @@ define([
   'use strict';
   module.controller('GraphsController', function ($scope, dataMocks, CONFIG) {
 
-    // GRAPH 5
+    // Lines
     // =======
     $scope.options5 = {
       height: 300,
@@ -29,7 +29,7 @@ define([
 
 
 
-    // GRAPH 6
+    // Line + Area
     // =======
 
     $scope.options6 = {
@@ -41,15 +41,17 @@ define([
         bottom: 60,
         left: 60
       },
+      areasOpacity: 0.1,
       xAxis: {
         axisLabel: 'Axis X'
       },
       yAxis: {
         axisLabel: 'Axis Y'
-      }
+      },
+      title: "Willy Wonka Production"
     };
 
-    dataMocks.lineScatterArea().$promise.then(function (data) {
+    dataMocks.lineAreaScatter().$promise.then(function (data) {
       $scope.data6 = data;
     });
 

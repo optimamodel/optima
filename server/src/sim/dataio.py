@@ -54,7 +54,6 @@ def savedata(filename, data, update=True, verbose=2):
     from bunch import Bunch as struct
     
     filename = projectpath(filename)
-    printv('Saving to filename: %s' % filename, 1, verbose)
 
     try: # First try loading the file and updating it
         rfid = open(filename,'rb') # "Read file ID" -- This will fail if the file doesn't exist
@@ -81,15 +80,10 @@ def loaddata(filename, verbose=2):
     printv('Loading data...', 1, verbose)
     if not os.path.exists(filename):
         filename = projectpath(filename)
-    printv('Loading from filename: %s' % filename, 1, verbose)
-    try:
-        import json
-        rfid = open(filename,'rb')
-        data = struct.fromDict(json.load(rfid))
-    except: #try the old approach
-        import cPickle
-        rfid = open(filename, 'rb')
-        data = cPickle.load(rfid)
+    
+    import json
+    rfid = open(filename,'rb')
+    data = struct.fromDict(json.load(rfid))
 
     printv('...done loading data.', 2, verbose)
     return data

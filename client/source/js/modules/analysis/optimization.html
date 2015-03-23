@@ -628,15 +628,15 @@
               </div>
 
               <div ng-if="state.outcomeChart" class="chart-container __small">
-                <div line-scatter-chart data="state.outcomeChart.data" options="state.outcomeChart.options" save-graph-as></div>
+                <div line-area-scatter-chart data="state.outcomeChart.data" options="state.outcomeChart.options" save-graph-as></div>
               </div>
             </div>
 
             <div class="chart-container __small" ng-repeat="chart in state.optimisationGraphs">
-              <div line-scatter-chart data="chart.data" options="chart.options" save-graph-as></div>
+              <div line-area-scatter-chart data="chart.data" options="chart.options" save-graph-as></div>
             </div>
             <div class="chart-container __small" ng-repeat="chart in state.financialGraphs">
-              <div line-scatter-chart data="chart.data" options="chart.options" save-graph-as></div>
+              <div line-area-scatter-chart data="chart.data" options="chart.options" save-graph-as></div>
             </div>
           </div>
         </div>
