@@ -97,14 +97,14 @@ define(['angular', 'jquery', 'underscore', 'saveAs', 'jsPDF', './svg-to-png', '.
            */
           scope.exportFrom = function (graphOrUndefined){
             if(!graphOrUndefined) {
-              modalService.inform(undefined,undefined, "Sorry, this chart cannot be exported");
+              modalService.inform(undefined, undefined, "Sorry, this chart cannot be exported");
               return;
             }
 
             var exportable = exportHelpers.getExportableFrom(graphOrUndefined);
 
             if(exportable === null) {
-              modalService.inform(undefined,undefined, "Sorry, this chart cannot be exported");
+              modalService.inform(undefined, undefined, "Sorry, this chart cannot be exported");
               return;
             }
 
