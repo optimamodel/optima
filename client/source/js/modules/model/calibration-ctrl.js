@@ -153,7 +153,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       chart.options.xAxis.axisLabel = data.xlabel;
       chart.options.yAxis.axisLabel = data.ylabel;
-      chart.type = 'linesAreaScatterAreaChart';
+      chart.type = 'lineAreaScatterChart';
 
       return chart;
     };
@@ -178,7 +178,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
           chart.options.xAxis.axisLabel = data.xlabel;
           chart.options.yAxis.axisLabel = data.tot.ylabel;
-          chart.type = 'lineScatterAreaChart';
+          chart.type = 'lineAreaScatterChart';
 
           // seems like ydata can either be an array of arrays for the
           // populations or a single array when it's used in overall
@@ -200,7 +200,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
             chart.options.xAxis.axisLabel = data.xlabel;
             chart.options.yAxis.axisLabel = population.ylabel;
-            chart.type = 'lineScatterAreaChart';
+            chart.type = 'lineAreaScatterChart';
 
             // seems like ydata can either be an array of arrays for the
             // populations or a single array when it's used in overall

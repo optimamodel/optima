@@ -1,7 +1,7 @@
 define(['./module', './scale-helpers', 'angular'], function (module, scaleHelpers, angular) {
   'use strict';
 
-  module.directive('lineScatterChart', function (d3Charts) {
+  module.directive('lineAreaScatterChart', function (d3Charts) {
     var svg;
 
     function hasValidMin(domain) {
