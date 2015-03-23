@@ -95,8 +95,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           if (!_.isEmpty(yData.low) && !_.isEmpty(yData.high)) {
             _(yData.high).each(function(highLineData, index) {
               graph.data.areas.push({
-                lineHigh: _.zip(xData, highLineData),
-                lineLow: _.zip(xData, yData.low[index])
+                highLine: _.zip(xData, highLineData),
+                lowLine: _.zip(xData, yData.low[index])
               });
             });
           }
