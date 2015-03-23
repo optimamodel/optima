@@ -300,7 +300,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     /**
      * Returns a prepared chart object for a pie chart.
      */
-    var generateMultipleBudgetsChart = function(yData, xData, labels, legend,
+    var generateMultipleBudgetsChart = function (yData, xData, labels, legend,
         title, leftTitle, rightTitle) {
       var graphData = [];
 
@@ -384,12 +384,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     /**
      * Returns a financial graph.
      */
-    var generateFinancialGraph = function(data) {
+    var generateFinancialGraph = function (data) {
       var graph = generateGraph(data.data, data.xdata, data.title, data.legend, data.xlabel, data.ylabel);
       return graph;
     };
 
-    var prepareFinancialGraphs = function(graphData) {
+    var prepareFinancialGraphs = function (graphData) {
       var graphs = [];
 
       if (graphData === undefined) return graphs;
@@ -424,7 +424,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
 
-    var prepareOutcomeChart = function(data) {
+    var prepareOutcomeChart = function (data) {
       if (data === undefined) return undefined;
 
       var chart = {
@@ -444,7 +444,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       return chart;
     };
 
-    $scope.optimizationByName = function(name) {
+    $scope.optimizationByName = function (name) {
       return _($scope.optimizations).find(function(item) {
         return item.name == name;
       });
@@ -650,54 +650,54 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      * @param str
      * @returns {string}
      */
-    function strOrEmpty(str){
+    function strOrEmpty (str) {
       return _(str).isUndefined() ? '' : str;
     }
 
     /**
      * Join the word with a comma between them, except for the last word
-     * @param arr
-     * @param prop if it's not undefined it will pick that specific property from the object
-     * @param quote should the sentence be quoted or not
-     * @param before add something before each word
-     * @param after add something after each word
+     *
+     * @param entries {array} - the entries to be combined
+     * @param property if it's defined it will pick that specific property from the object
+     * @param hasQuote should the sentence be quoted or not
+     * @param wordPrefix add something before each word
+     * @param wordPostfix add something after each word
      * @returns {string}
      */
-    function joinArrayAsSentence(arr, prop, quote, before, after){
-      quote = quote ? '"':'';
-      before = strOrEmpty(before);
-      after = strOrEmpty(after);
-      return quote + _.compact(_(arr).map(function (val) {var p = (prop ? val[prop] : val);return p ? (before + strOrEmpty(p) + after ) : undefined;})).join(", ") + quote;
+    function joinArrayAsSentence (entries, property, hasQuote, wordPrefix, wordPostfix) {
+      var quote = hasQuote ? '"' : '';
+      var prefix = strOrEmpty(wordPrefix);
+      var postfix = strOrEmpty(wordPostfix);
+      var processedEntries = _.compact(_(entries).map(function (entry) {
+        var text = (property ? entry[property] : entry);
+        return text ? ( prefix + strOrEmpty(text) + postfix ) : undefined;
+      }));
+      return quote + processedEntries.join(", ") + quote;
     }
 
-    function constructOptimizationMessage() {
-      var budgetLevel;
-      var checkedPrograms = joinArrayAsSentence(validateObjectivesToMinimize().checkedPrograms, 'name', true);
-      var startYear = $scope.params.objectives.year.start;
-      var endYear = $scope.params.objectives.year.end;
+    /**
+     * Returns all the checkedPrograms as a comma separated string.
+     */
+    $scope.checkedProgramsText = function () {
+      return joinArrayAsSentence(validateObjectivesToMinimize().checkedPrograms, 'name', true);
+    };
 
+    /**
+     * Returns a description of the chosen budget level for the summary message.
+     */
+    $scope.budgetLevelSummary = function () {
       if ($scope.params.objectives.funding === 'variable') {
-        budgetLevel = " budget level " + joinArrayAsSentence(_.compact(_($scope.params.objectives.outcome.variable).toArray()), undefined, false, "$");
+        var objectives = _.compact(_($scope.params.objectives.outcome.variable).toArray());
+        return ' budget level ' + joinArrayAsSentence(objectives, undefined, false, '$');
       } else if ($scope.params.objectives.funding === 'constant') {
-        budgetLevel = " fixed budget of $" + $scope.params.objectives.outcome.fixed + " per year";
+        return ' fixed budget of $' + $scope.params.objectives.outcome.fixed + ' per year';
       } else if ($scope.params.objectives.funding === 'range') {
-        budgetLevel = " budget range between $" + $scope.params.objectives.outcome.budgetrange.minval;
-        budgetLevel = budgetLevel + " to $" + $scope.params.objectives.outcome.budgetrange.maxval;
+        var budgetLevel = ' budget range between $' + $scope.params.objectives.outcome.budgetrange.minval;
+        return budgetLevel + ' to $' + $scope.params.objectives.outcome.budgetrange.maxval;
       }
+    };
 
-      if ( budgetLevel && checkedPrograms && startYear && endYear ) {
-        $scope.showOptimizationMessage = true;
-
-        $scope.optimizationMessage = {
-          checkedPrograms: checkedPrograms,
-          startYear: startYear,
-          endYear: endYear,
-          budgetLevel: budgetLevel
-        };
-      }
-    }
-
-    $scope.setActiveTab = function(tabNum){
+    $scope.setActiveTab = function (tabNum){
       if(tabNum === 3){
       /*Prevent going to third tab if something is invalid in the first tab.
         Cannot just use $scope.state.OptimizationForm.$invalid for this because the validation of the years and the budgets is done in a different way. */
@@ -710,12 +710,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           modalService.inform(function() {}, 'Ok', 'Please correct all errors on this page before proceeding.', 'Cannot view results');
           return;
         }
-        constructOptimizationMessage();
       }
       $scope.activeTab = tabNum;
     };
 
-    $scope.initTimer = function(status) {
+    $scope.initTimer = function (status) {
       if ( !angular.isDefined( optimizationTimer ) ) {
         // Keep polling for updated values after every 5 seconds till we get an error.
         // Error indicates that the model is not optimizing anymore.
@@ -756,7 +755,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       }
     };
 
-    function checkWorkingOptimization() {
+    function checkWorkingOptimization () {
       $http.get('/api/analysis/optimization/working', {ignoreLoadingBar: true})
         .success(function(data, status, headers, config) {
           if (data.status == 'Done') {
@@ -796,7 +795,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       );
     };
 
-    function stopTimer() {
+    function stopTimer () {
       if ( angular.isDefined( optimizationTimer ) ) {
         $interval.cancel(optimizationTimer);
         optimizationTimer = undefined;
@@ -908,7 +907,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     /**
      * Collects all existing charts in the $scope.chartsForDataExport variable.
      */
-    var updateChartsForDataExport = function() {
+    var updateChartsForDataExport = function () {
       $scope.chartsForDataExport = [];
 
       if ( $scope.state.pieCharts && !$scope.types.plotUncertainties ) {
@@ -945,7 +944,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      * Changes active constrains and objectives to the values in provided optimization
      * @param optimization {Object}
      */
-    $scope.applyOptimization = function(name, overwriteParams) {
+    $scope.applyOptimization = function (name, overwriteParams) {
       var optimization = $scope.optimizationByName(name);
       if (overwriteParams) {
         var objectives = optimizationHelpers.toScopeObjectives(optimization.objectives);
@@ -958,11 +957,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         resetCharts();
         typeSelector.resetAnnualCostOptions($scope.types);
       }
-      constructOptimizationMessage();
     };
 
     // apply default optimization on page load
-    $scope.initOptimizations = function(optimizations, name, overwriteParams) {
+    $scope.initOptimizations = function (optimizations, name, overwriteParams) {
       if (!optimizations) return;
 
       $scope.optimizations = angular.copy(optimizations);
