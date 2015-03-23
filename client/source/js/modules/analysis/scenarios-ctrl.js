@@ -3,7 +3,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     module.controller('AnalysisScenariosController', function ($scope, $http, $modal, $window, meta, info, scenarioParametersResponse, scenariosResponse, CONFIG, typeSelector) {
 
-        var linesGraphOptions, linesGraphData, responseData, availableScenarioParameters, availableScenarios;
+        var responseData, availableScenarioParameters, availableScenarios;
 
         // initialize all necessary data for this controller
         var initialize = function() {
@@ -37,24 +37,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           }
 
           $scope.types = typeSelector.types;
-
-          linesGraphOptions = {
-            height: 200,
-            width: 320,
-            margin: CONFIG.GRAPH_MARGINS,
-            xAxis: {
-              axisLabel: 'Year'
-            },
-            yAxis: {
-              axisLabel: ''
-            }
-          };
-
-          linesGraphData = {
-            lines: [],
-            scatter: [],
-            areas: []
-          };
         };
 
         var checkProjectInfo = function (info) {
@@ -74,8 +56,23 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
          */
         var generateGraph = function(yData, xData, title, legend, xLabel,  yLabel) {
           var graph = {
-            options: angular.copy(linesGraphOptions),
-            data: angular.copy(linesGraphData),
+            options: {
+              height: 200,
+              width: 320,
+              margin: CONFIG.GRAPH_MARGINS,
+              xAxis: {
+                axisLabel: 'Year'
+              },
+              yAxis: {
+                axisLabel: ''
+              },
+              areasOpacity: 0.4
+            },
+            data: {
+              lines: [],
+              scatter: [],
+              areas: []
+            },
             title: title
           };
 

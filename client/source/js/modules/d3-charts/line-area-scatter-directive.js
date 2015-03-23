@@ -92,7 +92,7 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
         _(data.areas).each(function (area, index) {
           var color = options.areasStyle[index];
 
-          var areaChart = new d3Charts.AreaChart(chartGroup, chartSize, color);
+          var areaChart = new d3Charts.AreaChart(chartGroup, chartSize, color, options.areasOpacity);
           areaChartInstances.push(areaChart);
 
           var areaData = area.highLine.map(function (dot, index) {
@@ -152,8 +152,6 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
         var format = scaleHelpers.evaluateTickFormat(xMin, xMax);
         return scaleHelpers.customTickFormat(value, format);
       };
-
-      console.log(graphsScales);
 
       d3Charts.drawAxes(
         graphsScales[0],
