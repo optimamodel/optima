@@ -658,10 +658,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      * Join the word with a comma between them, except for the last word
      *
      * @param entries {array} - the entries to be combined
-     * @param prop if it's defined it will pick that specific property from the object
-     * @param quote should the sentence be quoted or not
-     * @param before add something before each word
-     * @param after add something after each word
+     * @param property if it's defined it will pick that specific property from the object
+     * @param hasQuote should the sentence be quoted or not
+     * @param wordPrefix add something before each word
+     * @param wordPostfix add something after each word
      * @returns {string}
      */
     function joinArrayAsSentence (entries, property, hasQuote, wordPrefix, wordPostfix) {
@@ -688,12 +688,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.budgetLevelSummary = function () {
       if ($scope.params.objectives.funding === 'variable') {
         var objectives = _.compact(_($scope.params.objectives.outcome.variable).toArray());
-        return " budget level " + joinArrayAsSentence(objectives, undefined, false, "$");
+        return ' budget level ' + joinArrayAsSentence(objectives, undefined, false, '$');
       } else if ($scope.params.objectives.funding === 'constant') {
-        return " fixed budget of $" + $scope.params.objectives.outcome.fixed + " per year";
+        return ' fixed budget of $' + $scope.params.objectives.outcome.fixed + ' per year';
       } else if ($scope.params.objectives.funding === 'range') {
-        var budgetLevel = " budget range between $" + $scope.params.objectives.outcome.budgetrange.minval;
-        return budgetLevel + " to $" + $scope.params.objectives.outcome.budgetrange.maxval;
+        var budgetLevel = ' budget range between $' + $scope.params.objectives.outcome.budgetrange.minval;
+        return budgetLevel + ' to $' + $scope.params.objectives.outcome.budgetrange.maxval;
       }
     };
 
