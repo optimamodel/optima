@@ -92,19 +92,19 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
         _(data.areas).each(function (area, index) {
           var color = options.areasStyle[index];
 
-          var areaChart = new d3Charts.AreaChart(chartGroup, chartSize, color);
+          var areaChart = new d3Charts.AreaChart(chartGroup, chartSize, color, options.areasOpacity);
           areaChartInstances.push(areaChart);
 
-          var areaData = area.lineHigh.map(function (dot, index) {
+          var areaData = area.highLine.map(function (dot, index) {
             return {
               x: dot[0],
               y0: dot[1],
-              y1: area.lineLow[index][1]
+              y1: area.lowLine[index][1]
             };
           });
           areasData.push(areaData);
 
-          var scales = areaChart.scales(area.lineHigh);
+          var scales = areaChart.scales(area.highLine);
           graphsScales.push(scales);
           var x_domain = scales.x.domain();
           var y_domain = scales.y.domain();
@@ -152,8 +152,6 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
         var format = scaleHelpers.evaluateTickFormat(xMin, xMax);
         return scaleHelpers.customTickFormat(value, format);
       };
-
-      console.log(graphsScales);
 
       d3Charts.drawAxes(
         graphsScales[0],

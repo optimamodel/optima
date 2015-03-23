@@ -41,13 +41,14 @@ define([
         bottom: 60,
         left: 60
       },
-      linesStyle: ['__color-black'],
+      areasOpacity: 0.1,
       xAxis: {
         axisLabel: 'Axis X'
       },
       yAxis: {
         axisLabel: 'Axis Y'
-      }
+      },
+      title: "Willy Wonka Production"
     };
 
     dataMocks.lineAreaScatter().$promise.then(function (data) {

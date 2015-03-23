@@ -110,8 +110,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       chart.data.lines.push(_.zip(xData, yData.best));
       chart.data.areas.push({
-        lineHigh: _.zip(xData, yData.high),
-        lineLow: _.zip(xData, yData.low)
+        highLine: _.zip(xData, yData.high),
+        lowLine: _.zip(xData, yData.low)
       });
 
       return chart;
