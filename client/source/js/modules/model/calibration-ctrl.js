@@ -153,7 +153,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       chart.options.xAxis.axisLabel = data.xlabel;
       chart.options.yAxis.axisLabel = data.ylabel;
-      chart.type = 'lineScatterAreaChart';
+      chart.type = 'linesAreaScatterAreaChart';
 
       return chart;
     };
