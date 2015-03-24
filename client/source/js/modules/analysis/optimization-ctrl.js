@@ -121,10 +121,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         };
 
         $scope.validations = {
-          years :{
-            valid: function () { return validateYears().valid },
-            message: "Please specify program optimizations period."
-          },
+          // years :{
+          //   valid: function () { return validateYears().valid },
+          //   message: "Please specify program optimizations period."
+          // },
           fixedBudget: {
             valid: function () { return $scope.params.objectives.outcome.fixed !== undefined; },
             message: 'Please enter a value for the fixed budget.',
@@ -172,7 +172,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           }
         ];
 
-        $scope.validateYears = validateYears;
+        // $scope.validateYears = validateYears;
         $scope.validateVariableBudgets = validateVariableBudgets;
         $scope.validateObjectivesToMinimize = validateObjectivesToMinimize;
         $scope.validateOutcomeWeights = validateOutcomeWeights;
@@ -585,22 +585,22 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       return _(_($scope.params.objectives.outcome.variable).toArray()).some( function (budget) {return budget === undefined;}) === false;
     }
 
-    function validateYears () {
-       if($scope.params.objectives.year!==undefined){
-         var start = parseInt($scope.params.objectives.year.start);
-         var end = parseInt($scope.params.objectives.year.end);
-         var until = parseInt($scope.params.objectives.year.until);
-         return {
-          start:start,
-          end: end,
-          until: until,
-          valid: (isNaN(start) ||  isNaN(end) || isNaN(until) || end <= start || until <= start) === false
-        };
-       }
-       return {
-        valid:false
-      };
-    }
+    // function validateYears () {
+    //    if($scope.params.objectives.year!==undefined){
+    //      var start = parseInt($scope.params.objectives.year.start);
+    //      var end = parseInt($scope.params.objectives.year.end);
+    //      var until = parseInt($scope.params.objectives.year.until);
+    //      return {
+    //       start:start,
+    //       end: end,
+    //       until: until,
+    //       valid: (isNaN(start) ||  isNaN(end) || isNaN(until) || end <= start || until <= start) === false
+    //     };
+    //    }
+    //    return {
+    //     valid:false
+    //   };
+    // };
 
     function validateObjectivesToMinimize () {
       var checkedPrograms = _($scope.objectivesToMinimize).filter( function (a) {
@@ -624,6 +624,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       };
     }
 
+    /**
+    * Evaluates the conditions defined in $scope.validations and when there is one that do not pass, 
+    * it adds its message with feedback for the user to the errorMessages array.
+    */
     function checkValidation(){
       errorMessages = [];
       _($scope.validations).each( function (validation) {

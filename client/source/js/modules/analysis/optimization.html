@@ -53,6 +53,7 @@
                    ng-required="yearsAreRequired()"
                    min="1950"
                    max="2100"
+                   step="1"
                    name="periodStart">
             to
             <input type="number" class="txbox __inline __l" value="2020" placeholder="e.g. 2020"
@@ -61,6 +62,7 @@
                    ng-required="yearsAreRequired()"
                    min="1950"
                    max="2100"
+                   step="1"
                    name="periodEnd">
             in order to achieve the objectives by
             <input type="number" class="txbox __inline __l" value="2030" placeholder="e.g. 2030"
@@ -68,6 +70,7 @@
                    ng-change="updateYearRange()"
                    min="1950"
                    max="2100"
+                   step="1"
                    name="objectivesUntil">
             , with the following context between the end of the optimized program period and the end of the analysis
             period:
@@ -125,6 +128,7 @@
                          placeholder="e.g. 2025"
                          name="universal"
                          min="1950" max="2100"
+                         step="1"
                          ng-model="params.objectives.year.universal">
                   and then be maintained
 
