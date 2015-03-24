@@ -12,7 +12,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       $scope.initialize = function () {
 
-        $scope.$on('$destroy', function() {
+        $scope.$on('$destroy', function () {
           // Make sure that the interval is terminated whe this controller is destroyed
           stopTimer();
         });
@@ -122,29 +122,29 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
         $scope.validations = {
           years :{
-            valid: function(){ return validateYears().valid},
+            valid: function () { return validateYears().valid },
             message: "Please specify program optimizations period."
           },
           fixedBudget: {
-            valid: function(){ return $scope.params.objectives.outcome.fixed !== undefined;},
+            valid: function () { return $scope.params.objectives.outcome.fixed !== undefined; },
             message: 'Please enter a value for the fixed budget.',
-            condition: function(){return $scope.params.objectives.funding === 'constant';}
+            condition: function () { return $scope.params.objectives.funding === 'constant'; }
           },
           variableBudget: {
-            valid: function(){ return validateVariableBudgets()},
+            valid: function () { return validateVariableBudgets()},
             message: "Please enter a budget for each year.",
-            condition: function(){return $scope.params.objectives.funding === 'variable';}
+            condition: function () { return $scope.params.objectives.funding === 'variable'; }
           },
           budgetType: {
-            valid: function(){return $scope.params.objectives.funding!==undefined;},
+            valid: function () { return $scope.params.objectives.funding!==undefined; },
             message: "Please pick at least one budget type."
           },
-          objectivesToMinimizeCount:{
-            valid:function(){return validateObjectivesToMinimize().valid;},
+          objectivesToMinimizeCount: {
+            valid: function () { return validateObjectivesToMinimize().valid; },
             message: "You must pick at least one objective to minimize."
           },
-          objectivesOutcomeWeights:{
-            valid:function(){return validateOutcomeWeights().valid;},
+          objectivesOutcomeWeights: {
+            valid: function () {return validateOutcomeWeights().valid; },
             message: "You must specify the weighting parameters for all objectives to minimize."
           }
         };
@@ -258,7 +258,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     /**
      * Returns a prepared chart object for a pie chart.
      */
-    var generatePieChart = function(data, legend) {
+    var generatePieChart = function (data, legend) {
       var graphData = [];
 
       var options = {
@@ -273,7 +273,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         title: data.name
       };
 
-      graphData = _(data).map(function (value, index) {
+      graphData = _(data).map( function (value, index) {
         return { value: value, label: legend[index] };
       });
 
@@ -304,7 +304,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     /**
      * Returns a prepared chart object for a radar chart.
      */
-    var generateRadarChart = function(data, legend) {
+    var generateRadarChart = function (data, legend) {
       var graphData = [{axes: []}, {axes: []}, {axes: []}];
 
       var options = {
@@ -312,13 +312,13 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         title: data.name
       };
 
-      graphData[0].axes = _(data.low).map(function (value, index) {
+      graphData[0].axes = _(data.low).map( function (value, index) {
         return { value: value, axis: legend[index] };
       });
-      graphData[1].axes = _(data.best).map(function (value, index) {
+      graphData[1].axes = _(data.best).map( function (value, index) {
         return { value: value, axis: legend[index] };
       });
-      graphData[2].axes = _(data.high).map(function (value, index) {
+      graphData[2].axes = _(data.high).map( function (value, index) {
         return { value: value, axis: legend[index] };
       });
 
@@ -350,7 +350,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     /**
      * Returns a prepared chart object for a pie chart.
      */
-    var generateStackedBarChart = function(yData, xData, legend, title) {
+    var generateStackedBarChart = function (yData, xData, legend, title) {
       var graphData = [];
 
       var options = {
@@ -368,8 +368,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       };
 
 
-      graphData = _(xData).map(function(xValue, index) {
-        var yValues = _(yData).map(function(yEntry) { return yEntry[index]; });
+      graphData = _(xData).map( function (xValue, index) {
+        var yValues = _(yData).map( function (yEntry) { return yEntry[index]; } );
         return [xValue, yValues];
       });
 
@@ -390,7 +390,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     /**
      * Returns a prepared chart object for a pie chart.
      */
-    var generateMultipleBudgetsChart = function(yData, xData, labels, legend,
+    var generateMultipleBudgetsChart = function (yData, xData, labels, legend,
         title, leftTitle, rightTitle) {
       var graphData = [];
 
@@ -410,7 +410,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         rightTitle: rightTitle
       };
 
-      graphData = _(xData).map(function (xValue, index) {
+      graphData = _(xData).map( function (xValue, index) {
         return [labels[index], xValue, yData[index]];
       });
 
@@ -438,7 +438,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         return graphs;
       }
 
-      _($scope.types.population).each(function (type) {
+      _($scope.types.population).each( function (type) {
 
         if (type === undefined) return;
         var data = results[type.id];
@@ -456,7 +456,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
           // generate graphs for this type for each population
           if (type.byPopulation) {
-            _(data.pops).each(function (population) {
+            _(data.pops).each( function (population) {
               var graph = generateGraph(
                 population.data, results.tvec,
                 population.title, population.legend,
@@ -474,18 +474,18 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     /**
      * Returns a financial graph.
      */
-    var generateFinancialGraph = function(data) {
+    var generateFinancialGraph = function (data) {
       var graph = generateGraph(data.data, data.xdata, data.title, data.legend, data.xlabel, data.ylabel);
       return graph;
     };
 
-    var prepareFinancialGraphs = function(graphData) {
+    var prepareFinancialGraphs = function (graphData) {
       var graphs = [];
 
       if (graphData === undefined) return graphs;
 
       // annual cost charts
-      _(['existing', 'future', 'total']).each(function(type) {
+      _(['existing', 'future', 'total']).each( function (type) {
         var chartData = graphData.costann[type][$scope.types.activeAnnualCost];
         var isActive = $scope.types.costs[0][type];
         if (chartData && isActive) {
@@ -495,7 +495,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
 
       // cumulative cost charts
-      _(['existing', 'future', 'total']).each(function(type) {
+      _(['existing', 'future', 'total']).each( function (type) {
         var chartData = graphData.costcum[type];
         var isActive = $scope.types.costs[1][type];
         if (chartData && isActive) {
@@ -513,7 +513,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       return graphs;
     };
 
-    var prepareOutcomeChart = function(data) {
+    var prepareOutcomeChart = function (data) {
       if (data === undefined) return undefined;
 
       var chart = {
@@ -533,14 +533,14 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       return chart;
     };
 
-    $scope.optimizationByName = function(name) {
-      return _($scope.optimizations).find(function(item) {
+    $scope.optimizationByName = function (name) {
+      return _($scope.optimizations).find( function (item) {
         return item.name == name;
       });
     };
 
     // makes all graphs to recalculate and redraw
-    function drawGraphs() {
+    function drawGraphs () {
       var optimization = $scope.optimizationByName($scope.state.activeOptimizationName);
 
       if (!optimization || !optimization.result || !optimization.result.plot) return;
@@ -565,7 +565,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     }
 
     // makes all graphs to recalculate and redraw
-    function updateGraphs(data) {
+    function updateGraphs (data) {
       /* new structure keeps everything together:
        * data.plot[n].alloc => pie & radar
        * data.plot[n].multi => old line-scatterplots
@@ -582,10 +582,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     /* If some of the budgets are undefined, return false */
     function validateVariableBudgets() {
-      return _(_($scope.params.objectives.outcome.variable).toArray()).some(function (budget) {return budget === undefined;}) === false;
+      return _(_($scope.params.objectives.outcome.variable).toArray()).some( function (budget) {return budget === undefined;}) === false;
     }
 
-    function validateYears(){
+    function validateYears () {
        if($scope.params.objectives.year!==undefined){
          var start = parseInt($scope.params.objectives.year.start);
          var end = parseInt($scope.params.objectives.year.end);
@@ -602,8 +602,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       };
     }
 
-    function validateObjectivesToMinimize(){
-      var checkedPrograms = _($scope.objectivesToMinimize).filter(function (a) {
+    function validateObjectivesToMinimize () {
+      var checkedPrograms = _($scope.objectivesToMinimize).filter( function (a) {
         return $scope.params.objectives.outcome[a.slug] === true;
       });
       return {
@@ -613,7 +613,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     }
 
     function validateOutcomeWeights(){
-      var checkedPrograms = _($scope.objectivesToMinimize).filter(function (a) {
+      var checkedPrograms = _($scope.objectivesToMinimize).filter( function (a) {
         return $scope.params.objectives.outcome[a.slug] === true &&
           !($scope.params.objectives.outcome[a.slug+'weight']!==undefined &&
           $scope.params.objectives.outcome[a.slug+'weight']>0);
@@ -626,7 +626,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     function checkValidation(){
       errorMessages = [];
-      _($scope.validations).each(function(validation){
+      _($scope.validations).each( function (validation) {
         if(validation.valid()!==true && (validation.condition === undefined || validation.condition() === true)){
           errorMessages.push({message:validation.message});
         }
@@ -636,7 +636,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     /**
      * Returns true if at least one chart is available
      */
-    $scope.someGraphAvailable = function() {
+    $scope.someGraphAvailable = function () {
       return !(_.isEmpty($scope.state.radarCharts)) ||
         !(_.isEmpty($scope.state.optimisationGraphs)) ||
         !(_.isEmpty($scope.state.financialGraphs)) ||
@@ -650,7 +650,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      * @param str
      * @returns {string}
      */
-    function strOrEmpty(str){
+    function strOrEmpty (str){
       return _(str).isUndefined() ? '' : str;
     }
 
@@ -663,14 +663,14 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      * @param after add something after each word
      * @returns {string}
      */
-    function joinArrayAsSentence(arr, prop, quote, before, after){
+    function joinArrayAsSentence (arr, prop, quote, before, after){
       quote = quote ? '"':'';
       before = strOrEmpty(before);
       after = strOrEmpty(after);
-      return quote + _.compact(_(arr).map(function (val) {var p = (prop ? val[prop] : val);return p ? (before + strOrEmpty(p) + after ) : undefined;})).join(", ") + quote;
+      return quote + _.compact(_(arr).map( function (val) {var p = (prop ? val[prop] : val);return p ? (before + strOrEmpty(p) + after ) : undefined;})).join(", ") + quote;
     }
 
-    function constructOptimizationMessage() {
+    function constructOptimizationMessage () {
       var budgetLevel;
       var checkedPrograms = joinArrayAsSentence(validateObjectivesToMinimize().checkedPrograms, 'name', true);
       var startYear = $scope.params.objectives.year.start;
@@ -697,7 +697,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       }
     }
 
-    $scope.setActiveTab = function(tabNum){
+    $scope.setActiveTab = function (tabNum){
       if(tabNum === 3){
       /*Prevent going to third tab if something is invalid in the first tab.
         Cannot just use $scope.state.OptimizationForm.$invalid for this because the validation of the years and the budgets is done in a different way. */
@@ -707,7 +707,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           return;
         }
         if ($scope.state.OptimizationForm.$invalid) {
-          modalService.inform(function() {}, 'Ok', 'Please correct all errors on this page before proceeding.', 'Cannot view results');
+          modalService.inform( function () {}, 'Ok', 'Please correct all errors on this page before proceeding.', 'Cannot view results' );
           return;
         }
         constructOptimizationMessage();
@@ -715,7 +715,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.activeTab = tabNum;
     };
 
-    $scope.initTimer = function(status) {
+    $scope.initTimer = function (status) {
       if ( !angular.isDefined( optimizationTimer ) ) {
         // Keep polling for updated values after every 5 seconds till we get an error.
         // Error indicates that the model is not optimizing anymore.
@@ -726,7 +726,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         // calculate the number of ticks in timelimit
         var val = ($scope.state.timelimit * 1000) / 250;
         // callback function in start to be called in place of _inc()
-        cfpLoadingBar.start(function () {
+        cfpLoadingBar.start( function () {
           if (cfpLoadingBar.status() >= 0.95) {
             return;
           }
@@ -739,7 +739,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.startOptimization = function () {
       var params = optimizationHelpers.toRequestParameters($scope.params, $scope.state.activeOptimizationName, $scope.state.timelimit);
       $http.post('/api/analysis/optimization/start', params, {ignoreLoadingBar: true})
-        .success(function (data, status, headers, config) {
+        .success( function (data, status, headers, config) {
           if (data.status == "OK" && data.join) {
             $scope.initTimer(statusEnum.RUNNING);
           } else {
@@ -748,7 +748,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         });
     };
 
-    $scope.checkExistingOptimization = function(newTab, oldTab) {
+    $scope.checkExistingOptimization = function (newTab, oldTab) {
       if(newTab !=3) {
         stopTimer();
       } else {
@@ -758,7 +758,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     function checkWorkingOptimization() {
       $http.get('/api/analysis/optimization/working', {ignoreLoadingBar: true})
-        .success(function(data, status, headers, config) {
+        .success( function (data, status, headers, config) {
           if (data.status == 'Done') {
             stopTimer();
           } else {
@@ -769,7 +769,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           $scope.isDirty = data.dirty;
           $scope.initOptimizations(data.optimizations, $scope.state.activeOptimizationName);
         })
-        .error(function(data, status, headers, config) {
+        .error( function (data, status, headers, config) {
           if (data && data.exception) {
             $scope.errorText = data.exception;
           }
@@ -781,7 +781,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       modalService.confirm(
         function (){
           $http.get('/api/analysis/optimization/stop')
-          .success(function(data) {
+          .success( function (data) {
             // Do not cancel timer yet, if the optimization is running
             if ($scope.optimizationStatus) {
               $scope.optimizationStatus = statusEnum.REQUESTED_TO_STOP;
@@ -807,14 +807,14 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     $scope.deleteOptimization = function (optimizationName) {
       $http.post('/api/analysis/optimization/remove/' + optimizationName)
-        .success(function(data){
+        .success( function (data){
           $scope.initOptimizations(data.optimizations, undefined);
         });
     };
 
     $scope.saveOptimization = function () {
       $http.post('/api/analysis/optimization/save')
-        .success(function (data) {
+        .success( function (data) {
           $scope.isDirty = false;
           $scope.initOptimizations(data.optimizations, $scope.state.activeOptimizationName);
       });
@@ -823,7 +823,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     $scope.revertOptimization = function () {
       $http.post('/api/analysis/optimization/revert')
-        .success(function (data) {
+        .success( function (data) {
           $scope.isDirty = false;
           $scope.initOptimizations(data.optimizations, $scope.state.activeOptimizationName);
       });
@@ -833,12 +833,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       var create = function (name) {
         var url = '/api/analysis/optimization/create';
         var params = optimizationHelpers.toRequestParameters($scope.params, name);
-        $http.post(url, params).success(function(data) {
+        $http.post(url, params).success( function (data) {
           $scope.initOptimizations(data.optimizations, name);
         });
       };
 
-      modalService.addOptimization(function (name) { create(name); }, $scope.optimizations);
+      modalService.addOptimization( function (name) { create(name); }, $scope.optimizations );
     };
 
     /**
@@ -883,11 +883,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       // initialize data
       var years = _.range(start, end + 1);
-      $scope.yearLoop = _(years).map(function (year) { return { year: year}; });
+      $scope.yearLoop = _(years).map( function (year) { return { year: year}; } );
 
       var cols = 5;
       var rows = Math.ceil($scope.yearLoop.length / cols);
-      $scope.yearCols = _(_.range(0, rows)).map(function(col, index) {
+      $scope.yearCols = _(_.range(0, rows)).map( function (col, index) {
         return {start: index*cols, end: (index*cols)+cols };
       });
 
@@ -896,7 +896,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     /**
      * Collects all existing charts in the $scope.chartsForDataExport variable.
      */
-    var updateChartsForDataExport = function() {
+    var updateChartsForDataExport = function () {
       $scope.chartsForDataExport = [];
 
       if ( $scope.state.pieCharts && !$scope.types.plotUncertainties ) {
@@ -933,7 +933,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      * Changes active constrains and objectives to the values in provided optimization
      * @param optimization {Object}
      */
-    $scope.applyOptimization = function(name, overwriteParams) {
+    $scope.applyOptimization = function (name, overwriteParams) {
       var optimization = $scope.optimizationByName(name);
       if (overwriteParams) {
         var objectives = optimizationHelpers.toScopeObjectives(optimization.objectives);
@@ -950,12 +950,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     // apply default optimization on page load
-    $scope.initOptimizations = function(optimizations, name, overwriteParams) {
+    $scope.initOptimizations = function (optimizations, name, overwriteParams) {
       if (!optimizations) return;
 
       $scope.optimizations = angular.copy(optimizations);
 
-      var nameExists = name && _($scope.optimizations).some(function(item) {
+      var nameExists = name && _($scope.optimizations).some( function (item) {
         return item.name == name;
       });
 
