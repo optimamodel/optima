@@ -232,15 +232,10 @@ def getModelCalibrateParameters():
     from sim.parameters import parameters
     from sim.manualfit import updateP
     from sim.nested import getnested
-    print('TMPP calibrate')
     calibrate_parameters = [p for p in parameters() if 'calibration' in p and p['calibration']]
-    print('TMPP loadmodel')
     D = load_model(request.project_id, as_bunch = True)
-    print('TMPP todict')
     D_dict = D.toDict()
-    print('TMPP add_calibration')
     result = add_calibration_parameters(D_dict)
-    print('TMPP done')
     return jsonify(result)
 
 @model.route('/data')
