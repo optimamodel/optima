@@ -101,7 +101,7 @@ def printarr(arr, arrformat='%0.2f  '):
     return None
 
 
-def checkmem(origvariable, descend=0, order='n', plot=False):
+def checkmem(origvariable, descend=0, order='n', plot=False, verbose=0):
     """
     Checks how much memory the variable in question uses by dumping it to file.
     
@@ -139,6 +139,7 @@ def checkmem(origvariable, descend=0, order='n', plot=False):
             variables = origvariable
     
     for v,variable in enumerate(variables):
+        if verbose: print('Processing variable %i of %i' % (v+1, len(variables)))
         dumpfile(variable)
         filesize = getsize(filename)
         factor = 1
