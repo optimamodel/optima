@@ -22,10 +22,10 @@ def updatedata(D, workbookname=None, verbose=2, savetofile=True, input_programs=
         workbookname = D.G.workbookname
         
     datapath = fullpath(workbookname)
-    D.data, D.programs = loadworkbook(datapath, input_programs, verbose=verbose)
-    D.programs = restructureprograms(D.programs)
-    D.data = getrealcosts(D.data)
-    
+    data, programs = loadworkbook(datapath, input_programs, verbose=verbose)
+    D.data = getrealcosts(data)
+    if 'programs' not in D:
+        D.programs = restructureprograms(programs)
     if rerun or 'P' not in D: # Rerun if asked or if it doesn't exist
         D = makedatapars(D, verbose=verbose) # Update parameters
     if rerun or 'M' not in D: # Rerun if asked, or if it doesn't exist
