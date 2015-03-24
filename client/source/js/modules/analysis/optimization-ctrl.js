@@ -1,5 +1,5 @@
 /**
- * This controller is doing way too much and this comment will improve once 
+ * Honest comment: this controller is doing way too much and this comment will improve once 
  * 'someone' reverse engineers this tech debt and care to do the right thing for a change.
  */
 
@@ -643,38 +643,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         !(_.isEmpty($scope.state.pieCharts)) ||
         $scope.state.stackedBarChart !== undefined ||
         $scope.state.outcomeChart !== undefined;
-    };
-
-    /**
-     * Update the variables depending on the range in years.
-     */
-    $scope.updateYearRange = function () {
-      // only for variable funding the year range is relevant to produce the loop & col
-      if ($scope.params.objectives.funding === undefined || $scope.params.objectives.funding !== 'variable') {
-        return;
-      }
-
-      // reset data
-      $scope.params.objectives.outcome.variable = {};
-      $scope.yearLoop = [];
-      $scope.yearCols = [];
-
-      var validatedYears = validateYears();
-      if (validatedYears.valid === false) {
-        return;
-      }
-
-      // initialize data
-      var years = _.range(validatedYears.start, validatedYears.end + 1);
-      $scope.yearLoop = _(years).map(function (year) {
-        return {year: year};
-      });
-
-      var cols = 5;
-      var rows = Math.ceil($scope.yearLoop.length / cols);
-      $scope.yearCols = _(_.range(0, rows)).map(function (col, index) {
-        return {start: index * cols, end: (index * cols) + cols};
-      });
     };
 
     /**
