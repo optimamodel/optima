@@ -11,7 +11,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     optimizations, optimizationHelpers) {
 
       $scope.initialize = function () {
-
+        // angular.op = $scope;
         $scope.$on('$destroy', function () {
           // Make sure that the interval is terminated whe this controller is destroyed
           stopTimer();
@@ -121,10 +121,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         };
 
         $scope.validations = {
-          // years :{
-          //   valid: function () { return validateYears().valid },
-          //   message: "Please specify program optimizations period."
-          // },
           fixedBudget: {
             valid: function () { return $scope.params.objectives.outcome.fixed !== undefined; },
             message: 'Please enter a value for the fixed budget.',

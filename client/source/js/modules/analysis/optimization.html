@@ -29,8 +29,11 @@
         <button class="btn __white" ng-class="{ __active: activeTab === 2 }" ng-click="setActiveTab(2)">
           Define constraints
         </button>
-        <button class="btn __white" ng-class="{ __active: activeTab === 3 }" ng-click="setActiveTab(3)">
-          View results
+        <button 
+          class="btn __white" 
+          ng-class="{ __active: activeTab === 3 }" 
+          ng-click="setActiveTab(3)"
+          ng-disabled="state.OptimizationForm.$invalid">View results
         </button>
         <button ng-click="deleteOptimization(state.activeOptimizationName)" type="button" class="btn __red" ng-disabled="optimizations.length <= 1" style="margin-left: 10px">Delete Optimization</button>
       </div>
@@ -44,59 +47,61 @@
 
         <div class="cf">
           <h2>Time horizons and assumptions</h2>
-          <span ng-show="validateYears().valid===false" class="error-hint"> {{validations.years.message}} </span>
-          <div class="float-left margin-left-s">
-            Analyses will consider program optimizations over the period
-            <input type="number" class="txbox __inline __l" value="2015" placeholder="e.g. 2015"
-                   ng-model="params.objectives.year.start"
-                   ng-change="updateYearRange()"
-                   ng-required="yearsAreRequired()"
-                   min="1950"
-                   max="2100"
-                   step="1"
-                   name="periodStart">
-            to
-            <input type="number" class="txbox __inline __l" value="2020" placeholder="e.g. 2020"
-                   ng-model="params.objectives.year.end"
-                   ng-change="updateYearRange()"
-                   ng-required="yearsAreRequired()"
-                   min="1950"
-                   max="2100"
-                   step="1"
-                   name="periodEnd">
-            in order to achieve the objectives by
-            <input type="number" class="txbox __inline __l" value="2030" placeholder="e.g. 2030"
-                   ng-model="params.objectives.year.until"
-                   ng-change="updateYearRange()"
-                   min="1950"
-                   max="2100"
-                   step="1"
-                   name="objectivesUntil">
-            , with the following context between the end of the optimized program period and the end of the analysis
-            period:
+            <span ng-show="periodForm.$invalid" class="error-hint"> Please specify a valid period to optimize the program. </span>
+            <div class="float-left margin-left-s">
 
-            <div ng-messages="state.OptimizationForm.periodStart.$error"
-                 ng-show="state.OptimizationForm.periodStart.$touched && state.OptimizationForm.periodStart.$invalid">
-              <div class="error-hint" ng-message="required">Please provide a value</div>
-              <div class="error-hint" ng-message="min">The minimum value is 1950</div>
-              <div class="error-hint" ng-message="max">The maximum value is 2100</div>
-              <div class="error-hint" ng-message="number">The value should be a number</div>
-            </div>
+              <ng-form name="periodForm">
+                Analyses will consider program optimizations over the period
+                <input type="number" class="txbox __inline __l" value="2015" placeholder="e.g. 2015"
+                       ng-model="params.objectives.year.start"
+                       ng-change="updateYearRange()"
+                       ng-required="yearsAreRequired()"
+                       min="1950"
+                       max="2100"
+                       step="1"
+                       name="periodStart">
+                to
+                <input type="number" class="txbox __inline __l" value="2020" placeholder="e.g. 2020"
+                       ng-model="params.objectives.year.end"
+                       ng-change="updateYearRange()"
+                       ng-required="yearsAreRequired()"
+                       min="1950"
+                       max="2100"
+                       step="1"
+                       name="periodEnd">
+                in order to achieve the objectives by
+                <input type="number" class="txbox __inline __l" value="2030" placeholder="e.g. 2030"
+                       ng-model="params.objectives.year.until"
+                       ng-change="updateYearRange()"
+                       min="1950"
+                       max="2100"
+                       step="1"
+                       name="objectivesUntil">
+                , with the following context between the end of the optimized program period and the end of the analysis
+                period:
+                <div ng-messages="state.OptimizationForm.periodStart.$error"
+                     ng-show="state.OptimizationForm.periodStart.$touched && state.OptimizationForm.periodStart.$invalid">
+                  <div class="error-hint" ng-message="required">Please provide a value</div>
+                  <div class="error-hint" ng-message="min">The minimum value is 1950</div>
+                  <div class="error-hint" ng-message="max">The maximum value is 2100</div>
+                  <div class="error-hint" ng-message="number">The value should be a number</div>
+                </div>
 
-            <div ng-messages="state.OptimizationForm.periodEnd.$error"
-                 ng-show="state.OptimizationForm.periodEnd.$touched && state.OptimizationForm.periodEnd.$invalid">
-              <div class="error-hint" ng-message="required">Please provide a value</div>
-              <div class="error-hint" ng-message="min">The minimum value is 1950</div>
-              <div class="error-hint" ng-message="max">The maximum value is 2100</div>
-              <div class="error-hint" ng-message="number">The value should be a number</div>
-            </div>
+                <div ng-messages="state.OptimizationForm.periodEnd.$error"
+                     ng-show="state.OptimizationForm.periodEnd.$touched && state.OptimizationForm.periodEnd.$invalid">
+                  <div class="error-hint" ng-message="required">Please provide a value</div>
+                  <div class="error-hint" ng-message="min">The minimum value is 1950</div>
+                  <div class="error-hint" ng-message="max">The maximum value is 2100</div>
+                  <div class="error-hint" ng-message="number">The value should be a number</div>
+                </div>
 
-            <div ng-messages="state.OptimizationForm.objectivesUntil.$error"
-                 ng-show="state.OptimizationForm.objectivesUntil.$touched && state.OptimizationForm.objectivesUntil.$invalid">
-              <div class="error-hint" ng-message="min">The minimum value is 1950</div>
-              <div class="error-hint" ng-message="max">The maximum value is 2100</div>
-              <div class="error-hint" ng-message="number">The value should be a number</div>
-            </div>
+                <div ng-messages="state.OptimizationForm.objectivesUntil.$error"
+                     ng-show="state.OptimizationForm.objectivesUntil.$touched && state.OptimizationForm.objectivesUntil.$invalid">
+                  <div class="error-hint" ng-message="min">The minimum value is 1950</div>
+                  <div class="error-hint" ng-message="max">The maximum value is 2100</div>
+                  <div class="error-hint" ng-message="number">The value should be a number</div>
+                </div>
+              </ng-form>              
 
             <div>
               <label>
