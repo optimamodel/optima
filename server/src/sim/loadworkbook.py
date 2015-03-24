@@ -252,6 +252,7 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=2):
                             blh = sheetdata.cell_value(row, 2) # Read in whether indicator is best, low, or high
                             data[name][thispar][blhindices[blh]].append(thesedata) # Actually append the data
                             if thispar=='hivprev':
+                                print thesedata
                                 invalid = logical_or(array(thesedata)>1, array(thesedata)<0)
                                 if any(invalid):
                                     column = nonzero(invalid)[0]
