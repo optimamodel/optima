@@ -16,7 +16,7 @@ from flask.ext.login import login_required, current_user
 from dbconn import db
 from async_calculate import CalculatingThread, start_or_report_calculation, cancel_calculation, check_calculation
 from async_calculate import check_calculation_status, good_exit_status
-from utils import check_project_name, project_exists, load_model, save_model, BAD_REPLY
+from utils import check_project_name, project_exists, load_model, save_model
 from utils import revert_working_model_to_default, save_working_model_as_default, report_exception
 from sim.optimize import optimize, saveoptimization, defaultoptimizations, defaultobjectives, defaultconstraints
 from sim.bunch import bunchify, unbunchify
@@ -35,8 +35,8 @@ def getOptimizationParameters():
     project_name = request.project_name
     project_id = request.project_id
     if not project_exists(project_id):
-        reply = BAD_REPLY
-        reply['reason'] = 'Project %s:%s does not exist' % (project_id, project_name)
+        reply = {'reason':'Project %s:%s does not exist' % (project_id, project_name)}
+        response.status = 500
         return jsonify(reply)
     else:
         D = load_model(project_id)
@@ -59,8 +59,8 @@ def startOptimization():
     project_id = request.project_id
     project_name = request.project_name
     if not project_exists(project_id):
-        reply = BAD_REPLY
-        reply['reason'] = 'Project %s:%s does not exist' % (project_id, project_name)
+        reply = {'reason':'Project %s:%s does not exist' % (project_id, project_name)}
+        response.status = 500
         return jsonify(reply)
     try:
         can_start, can_join, current_calculation = start_or_report_calculation(current_user.id, project_id, optimize, db.session)
@@ -88,7 +88,8 @@ def startOptimization():
             return json.dumps({"status":"OK", "result": msg, "join":can_join})
     except Exception, err:
         var = traceback.format_exc()
-        return jsonify({"status":"NOK", "exception":var})
+        response.status = 500
+        return jsonify({"exception":var})
 
 @optimization.route('/stop')
 @login_required
@@ -161,6 +162,8 @@ def getWorkingModel():
     result['dirty'] = is_dirty
     if error_text:
         result['exception'] = error_text
+    if status=='NOK':
+        response.status = 500
     return jsonify(result)
 
 
@@ -171,13 +174,13 @@ def getWorkingModel():
 def saveModel():
     from sim.optimize import saveoptimization
     """ Saves working model as the default model """
-    reply = BAD_REPLY
-
+    reply = {}
     # get project name
     project_id = request.project_id
     project_name = request.project_name
     if not project_exists(project_id):
         reply['reason'] = 'Project %s:%s does not exist' % (project_id, project_name)
+        response.status = 500
     else:
         # now, save the working model, read results and save for the optimization with the given name
         D_dict = save_working_model_as_default(project_id)
@@ -192,12 +195,12 @@ def saveModel():
 @report_exception()
 def revertCalibrationModel():
     """ Revert working model to the default model """
-    reply = BAD_REPLY
-
+    reply = {}
     # get project name
     project_id = request.project_id
     if not project_exists(project_id):
         reply['reason'] = 'Project %s does not exist' % project_id
+        response.status = 500
     else:
         D_dict = revert_working_model_to_default(project_id)
         D = bunchify(D_dict)
@@ -213,12 +216,12 @@ def revertCalibrationModel():
 def removeOptimizationSet(name):
     """ Removes given optimization from the optimization set """
     from sim.optimize import removeoptimization
-    reply = BAD_REPLY
-
+    reply = {}
     # get project name
     project_id = request.project_id
     if not project_exists(project_id):
         reply['reason'] = 'Project %s does not exist' % project_id
+        response.status = 500
     else:
         D = load_model(project_id, as_bunch = True)
         D = removeoptimization(D, name)
@@ -235,19 +238,20 @@ def removeOptimizationSet(name):
 @report_exception()
 def create_optimization():
     """ Creates a new optimization from the optimization set """
-
-    reply = BAD_REPLY
+    reply = {}
     data = json.loads(request.data)
 
     name = data.get('name')
     if not name:
         reply['reason'] = 'Please provide a name for new optimization'
+        response.status = 500
         return jsonify(reply)
 
     # get project name
     project_id = request.project_id
     if not project_exists(project_id):
         reply['reason'] = 'Project %s does not exist' % project_id
+        response.status = 500
     else:
         D = load_model(project_id, as_bunch = True)
         objectives = data.get('objectives')

@@ -25,7 +25,7 @@ class ProjectTestCase(OptimaTestCase):
         headers = [('project', 'test'),('project-id','1')]
         response = self.client.get('/api/project/info', headers=headers)
         self.assertEqual(response.status_code, 500)
-        self.assertEqual(json.loads(response.data), { "status": "NOK" })
+        self.assertEqual(json.loads(response.data), {})
     
     def test_retrieve_project_info(self):
         project_id = self.create_project('test')

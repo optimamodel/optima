@@ -60,7 +60,7 @@ def doAutoCalibration():
     TODO: do it with the project which is currently in scope
 
     """
-    reply = {'status':'NOK'}
+    reply = {}
     current_app.logger.debug('auto calibration data: %s' % request.data)
     data = json.loads(request.data)
 
@@ -68,6 +68,7 @@ def doAutoCalibration():
     project_id = request.project_id
     if not project_exists(project_id):
         reply['reason'] = 'File for project %s does not exist' % project_id
+        response.status = 500
         return jsonify(reply)
     try:
         can_start, can_join, current_calculation = start_or_report_calculation(current_user.id, project_id, autofit, db.session)
@@ -89,7 +90,8 @@ def doAutoCalibration():
             return json.dumps({"status":"OK", "result": msg, "join":can_join})
     except Exception, err:
         var = traceback.format_exc()
-        return jsonify({"status":"NOK", "exception":var})
+        response.status = 500
+        return jsonify({"exception":var})
 
 @model.route('/calibrate/stop')
 @login_required
@@ -129,6 +131,9 @@ def getWorkingModel():
     result['status'] = status
     if error_text:
         result['exception'] = error_text
+    
+    if status=='NOK':
+        response.status = 500 
     result = add_calibration_parameters(D_dict, result)
     return jsonify(result)
 
@@ -137,13 +142,13 @@ def getWorkingModel():
 @check_project_name
 def saveCalibrationModel():
     """ Saves working model as the default model """
-    reply = {'status':'NOK'}
-
+    reply = {}
     # get project name
     project_name = request.project_name
     project_id = request.project_id
     if not project_exists(project_id):
         reply['reason'] = 'File for project %s does not exist' % project_id
+        response.status = 500
         return jsonify(reply)
 
     try:
@@ -153,7 +158,8 @@ def saveCalibrationModel():
         return jsonify(result)
     except Exception, err:
         var = traceback.format_exc()
-        return jsonify({"status":"NOK", "exception":var})
+        response.status = 500
+        return jsonify({"exception":var})
 
 
 @model.route('/calibrate/revert', methods=['POST'])
@@ -161,13 +167,13 @@ def saveCalibrationModel():
 @check_project_name
 def revertCalibrationModel():
     """ Revert working model to the default model """
-    reply = {'status':'NOK'}
-
+    reply = {}
     # get project name
     project_name = request.project_name
     project_id = request.project_id
     if not project_exists(project_id):
         reply['reason'] = 'File for project %s does not exist' % project_id
+        response.status = 500
         return jsonify(reply)
     try:
         D_dict = revert_working_model_to_default(project_id)
@@ -176,7 +182,8 @@ def revertCalibrationModel():
         return jsonify(result)
     except Exception, err:
         var = traceback.format_exc()
-        return jsonify({"status":"NOK", "exception":var})
+        response.status = 500
+        return jsonify({"exception":var})
 
 @model.route('/calibrate/manual', methods=['POST'])
 @login_required
@@ -219,7 +226,8 @@ def doManualCalibration():
             save_model(project_id, D_dict)
     except Exception, err:
         var = traceback.format_exc()
-        return jsonify({"status":"NOK", "exception":var})
+        response.status = 500
+        return jsonify({"exception":var})
     result = {'graph': D_dict.get('plot',{}).get('E',{})}
     result = add_calibration_parameters(D_dict, result)
     return jsonify(result)
@@ -282,7 +290,8 @@ def setModelGroup(key):
         save_model(project_id, D_dict)
     except Exception, err:
         var = traceback.format_exc()
-        return jsonify({"status":"NOK", "exception":var})
+        response.status = 500
+        return jsonify({"exception":var})
     return jsonify({"status":"OK", "project":project_id, "group":group})
 
 @model.route('/view', methods=['POST'])
@@ -356,7 +365,8 @@ def doCostCoverage():
             save_model(request.project_id, D_dict)
     except Exception, err:
         var = traceback.format_exc()
-        return jsonify({"status":"NOK", "exception":var})
+        response.status = 500
+        return jsonify({"exception":var})
     return jsonify({"status":"OK", "plotdata": for_fe(plotdata), \
         "plotdata_co": for_fe(plotdata_co), "plotdata_cc": for_fe(plotdata_cc), "effectnames": for_fe(effectnames)})
 
@@ -371,13 +381,15 @@ def doCostCoverageEffect():
     args['D'] = load_model(request.project_id)
     try:
         if not args.get('effect'):
-            return jsonify({'status':'NOK','reason':'No effect has been specified'})
+            response.status = 500
+            return jsonify({'reason':'No effect has been specified'})
         if args.get('ccparams'):args['ccparams'] = [float(param) if param else None for param in args['ccparams']]
         if args.get('coparams'):args['coparams'] = [float(param) for param in args['coparams']]
         plotdata, plotdata_co, storeparams_co = makecco(**args)
     except Exception, err:
         var = traceback.format_exc()
-        return jsonify({"status":"NOK", "exception":var})
+        response.status = 500
+        return jsonify({"exception":var})
     return jsonify({"status":"OK", "plotdata": for_fe(plotdata), \
         "plotdata_co": for_fe(plotdata_co), "effect": args['effect']})
 

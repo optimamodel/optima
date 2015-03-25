@@ -53,7 +53,7 @@ def create_user():
         no_of_users = UserDb.query.filter_by( email=email ).count()
 
         if no_of_users>0:
-            return make_response(json.dumps({'status': 'NOK', 'reason':'This email is already in use'}), 409) #409 - Conflict
+            return make_response(json.dumps({'reason':'This email is already in use'}), 409) #409 - Conflict
         else:
             # Save to db
             u = UserDb(name, email, password)
@@ -66,7 +66,7 @@ def create_user():
             # Return user info
             return jsonify({'email': u.email, 'name': u.name })
     else:
-        return make_response(json.dumps({'status': 'NOK', 'reason':'Not all parameters are set'}), 400) #400 - Bad Request
+        return make_response(json.dumps({'reason':'Not all parameters are set'}), 400) #400 - Bad Request
 
 @user.route('/login', methods=['POST'])
 def login():

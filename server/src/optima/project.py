@@ -12,7 +12,7 @@ from utils import verify_admin_request
 from flask.ext.login import login_required, current_user
 from dbconn import db
 from dbmodels import ProjectDb, WorkingProjectDb, ProjectDataDb, WorkLogDb
-from utils import BAD_REPLY, load_model, save_model
+from utils import load_model, save_model
 import time,datetime
 import dateutil.tz
 from datetime import datetime
@@ -290,7 +290,8 @@ def openProject(project_id):
     except:
         proj_exists = False
     if not proj_exists:
-        return jsonify({'status':'NOK','reason':'No such project %s' % project_name})
+        response.status = 500
+        return jsonify({'reason':'No such project %s' % project_name})
     else:
         return jsonify({'status':'OK'})
 
@@ -304,13 +305,14 @@ def giveWorkbook(project_id):
     if project exists, regenerates workbook for it
     if project does not exist, returns an error.
     """
-    reply = BAD_REPLY
+
     proj_exists = False
     cu = current_user
     current_app.logger.debug("giveWorkbook(%s %s)" % (cu.id, project_id))
     project = load_project(project_id)
     if project is None:
-        reply['reason']='Project %s does not exist.' % project_id
+        reply = {'reason':'Project %s does not exist.' % project_id}
+        response.status = 500
         return jsonify(reply)
     else:
         # See if there is matching project data
@@ -344,8 +346,7 @@ def getProjectInformation():
     """
 
     # default response
-    response_data = { "status": "NOK" }
-
+    response_data = {}
     # see if there is matching project
     project = load_project(request.project_id)
 
@@ -365,6 +366,8 @@ def getProjectInformation():
             'can_calibrate': project.can_calibrate(),
             'can_scenarios': project.can_scenarios(),
         }
+    else:
+        response.status = 500
     return jsonify(response_data)
 
 @project.route('/list/all')
@@ -476,15 +479,17 @@ def copyProject(project_id):
     """
     from sqlalchemy.orm.session import make_transient, make_transient_to_detached
     from sim.dataio import projectpath
-    reply = BAD_REPLY
+    reply = {}
     new_project_name = request.args.get('to')
     if not new_project_name:
         reply['reason'] = 'New project name is not given'
+        response.status = 500
         return reply
     # Get project row for current user with project name
     project = load_project(project_id, all_data = True)
     if project is None:
         reply['reason'] = 'Project %s does not exist.' % project_id
+        response.status = 500
         return reply
     project_user_id = project.user_id
     project_data_exists = project.project_data #force loading it
@@ -576,12 +581,12 @@ def uploadExcel():
     from sim.runsimulation import runsimulation
     from sim.dataio import projectpath
     current_app.logger.debug("api/project/update")
+    reply = {}
     project_name = request.project_name
     project_id = request.project_id
     user_id = current_user.id
     current_app.logger.debug("uploadExcel(project id: %s user:%s)" % (project_id, user_id))
 
-    reply = {'status':'NOK'}
     file = request.files['file']
 
     # getting current user path
@@ -590,11 +595,13 @@ def uploadExcel():
         loaddir = DATADIR
     if not file:
         reply['reason'] = 'No file is submitted!'
+        response.status = 500
         return json.dumps(reply)
 
     source_filename = secure_filename(file.filename)
     if not allowed_file(source_filename):
         reply['reason'] = 'File type of %s is not accepted!' % source_filename
+        response.status = 500
         return json.dumps(reply)
 
     reply['file'] = source_filename
@@ -660,12 +667,13 @@ def getData(project_id):
     if project exists, returns data (aka D) for it
     if project does not exist, returns an error.
     """
-    reply = BAD_REPLY
+    reply = {}
     proj_exists = False
     current_app.logger.debug("/api/project/data/%s" % project_id)
     project = load_project(project_id)
     if project is None:
         reply['reason']='Project %s does not exist.' % project_id
+        response.status = 500
         return jsonify(reply)
     else:
         data = project.model
@@ -690,9 +698,7 @@ def createProjectAndSetData():
     Creates a project & uploads data file to update project model.
     """
     user_id = current_user.id
-
-    reply = {'status':'NOK'}
-
+    reply = {}
     project_name = request.values.get('name')
     if not project_name:
         reply['reason'] = 'No project name provided'
@@ -707,6 +713,7 @@ def createProjectAndSetData():
     source_filename = secure_filename(file.filename)
     if not allowed_file(source_filename):
         reply['reason'] = 'File type of %s is not accepted!' % source_filename
+        response.status = 500
         return json.dumps(reply)
 
     data = json.load(file)
@@ -737,22 +744,24 @@ def setData(project_id):
     """
     user_id = current_user.id
     current_app.logger.debug("uploadProject(project id: %s user:%s)" % (project_id, user_id))
-
-    reply = {'status':'NOK'}
+    reply = {}
     file = request.files['file']
 
     if not file:
         reply['reason'] = 'No file is submitted!'
+        response.status = 500
         return json.dumps(reply)
 
     source_filename = secure_filename(file.filename)
     if not allowed_file(source_filename):
         reply['reason'] = 'File type of %s is not accepted!' % source_filename
+        response.status = 500
         return json.dumps(reply)
 
     project = load_project(project_id)
     if project is None:
         reply['reason']='Project %s does not exist.' % project_id
+        response.status = 500
         return jsonify(reply)
 
     data = json.load(file)
