@@ -5,11 +5,12 @@ Created on Sat Nov 29 17:40:34 2014
 
 Version: 2015feb03
 """
-from numpy import linspace, append, npv, zeros, isnan, where
+from numpy import append, npv
 from setoptions import setoptions
 from printv import printv
 from datetime import date
 from pylab import * # TMP
+from utils import smoothinterp
 
 
 def financialanalysis(D, postyear=2015, S=None, rerunmodel=False, artgrowthrate=.05, discountrate=.03, treattime=[8,1,16,3,10], cd4time=[8,8,10,8,2,2], verbose=2):
@@ -39,8 +40,7 @@ def financialanalysis(D, postyear=2015, S=None, rerunmodel=False, artgrowthrate=
     people, hivcosts, artcosts = {}, {}, {}
 
     # Inflation adjusting
-    cpi = D.data.econ.cpi.past[0] # get CPI
-    cpi = expanddata(cpi, len(D.S.tvec)*D.opt.dt, D.data.econ.cpi.future[0][0], interp=True, dt=D.opt.dt)
+    cpi = smoothinterp(newx=D.S.tvec, origx=D.G.datayears, origy=D.data.econ.cpi.past[0], growth=D.data.econ.cpi.future[0][0])
     cpibaseyearindex = D.data.epiyears.index(min(D.data.epiyears[-1],date.today().year))
 
     # Set up variables for time indexing
@@ -51,7 +51,7 @@ def financialanalysis(D, postyear=2015, S=None, rerunmodel=False, artgrowthrate=
     progname = 'ART'
     prognumber = D.data.meta.progs.short.index(progname)
     artunitcost = [D.data.costcov.cost[prognumber][j]/D.data.costcov.cov[prognumber][j] for j in range(len(D.data.costcov.cost[prognumber]))]
-    artunitcost = expanddata(artunitcost, len(D.S.tvec)*D.opt.dt, artgrowthrate, interp=True, dt=D.opt.dt)
+    artunitcost = smoothinterp(newx=D.S.tvec, origx=D.G.datayears, origy=artunitcost, growth=artgrowthrate)
 
     # Make an even longer series for calculating the NPV
     longart = artunitcost
@@ -75,8 +75,8 @@ def financialanalysis(D, postyear=2015, S=None, rerunmodel=False, artgrowthrate=
     for healthno, healthstate in enumerate(D.G.healthstates):
 
         # Expand
-        socialcosts = expanddata(D.data.econ.social.past[healthno], len(D.S.tvec)*D.opt.dt, D.data.econ.social.future[0][0], interp=True, dt=D.opt.dt)
-        othercosts = expanddata(D.data.econ.health.past[healthno], len(D.S.tvec)*D.opt.dt, D.data.econ.health.future[0][0], interp=True, dt=D.opt.dt)
+        socialcosts = smoothinterp(newx=D.S.tvec, origx=D.G.datayears, origy=D.data.econ.social.past[healthno], growth=D.data.econ.social.future[0][0])
+        othercosts = smoothinterp(newx=D.S.tvec, origx=D.G.datayears, origy=D.data.econ.health.past[healthno], growth=D.data.econ.health.future[0][0])
                     
         costs = [(socialcosts[j] + othercosts[j]) for j in range(noptpts)]
 
@@ -196,30 +196,7 @@ def financialanalysis(D, postyear=2015, S=None, rerunmodel=False, artgrowthrate=
             plotdata['commit'][yscalefactor]['ylabel'] = 'Proportion of ' + yscalefactor
 
     return plotdata
-    
-def expanddata(data, length, growthrate, interp=True, dt=None):
-    '''
-    Expand missing data set into full data 
-    '''
-    from utils import sanitize, smoothinterp
-    
-    newdata = zeros(int(length)) # make an array of zeros of the desired length
-    olddata = sanitize(data) # remove nans from original data set
-    if not isinstance(olddata, int): 
-        for i in range(len(data)):
-            if not isnan(data[i]): newdata[i] = data[i] # replace the zeros with numbers where available
-        firstindex = where(newdata==olddata[0])[0][0] # find the first year for which data are available
-        lastindex = where(newdata==olddata[-1])[0][0] # find the last year for which data are available
-        for i in range(firstindex):
-            newdata[firstindex-(i+1)] = newdata[firstindex-i]/(1+growthrate) # back-project using growth rates
-        for i in range(len(newdata)-lastindex-1):
-            newdata[lastindex+i+1] = newdata[lastindex+i]*(1+growthrate) # forward-project using growth rates
-    if interp: # if required, interpolate between years
-        newx = linspace(0,1,int(length/dt))
-        origx = linspace(0,1,len(newdata))
-        newdata = smoothinterp(newx, origx, newdata, smoothness=5)
-    
-    return newdata
+
 
 
 # Test code -- #TODO don't commit with this here. 
