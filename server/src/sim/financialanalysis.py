@@ -111,13 +111,6 @@ def financialanalysis(D, postyear=2015, S=None, rerunmodel=False, artgrowthrate=
         onartexisting = [tx1existing[j] + tx2existing[j] for j in range(noptpts)]
         artcosts['existing'] = [onartexisting[j]*artunitcost[j] for j in range(noptpts)]
 
-    # Cumulative sum function (b/c can't find an inbuilt one)
-    def accumu(lis):
-        total = 0
-        for x in lis:
-            total += x
-            yield total
-
     # Store cost plot data
     for plottype in ['annual','cumulative']:
         plotdata[plottype] = {}
@@ -136,10 +129,10 @@ def financialanalysis(D, postyear=2015, S=None, rerunmodel=False, artgrowthrate=
 #                print('TMP4'); plot(hivcosts['total']); show()
                 if not plotsubtype=='future': plotdata[plottype][plotsubtype][yscalefactor]['ylinedata'] = [(hivcosts[plotsubtype][j] + artcosts[plotsubtype][j])*(cpi[cpibaseyearindex]/cpi[j]) for j in range(noptpts)]
                 plotdata[plottype][plotsubtype][yscalefactor]['ylabel'] = 'USD'
-                raise Exception('TMP')
+#                raise Exception('TMP')
             else:
                 if isinstance(sanitize(D.data.econ[yscalefactor].past[0]),int): continue #raise Exception('No data have been provided for this varaible, so we cannot display the costs as a proportion of this')
-                yscale = expanddata(data=D.data.econ[yscalefactor].past[0], length=len(D.S.tvec)*D.opt.dt, growthrate=D.data.econ[yscalefactor].future[0][0], interp=True, dt=D.opt.dt)
+                yscale = smoothinterp(newx=D.S.tvec, origx=D.G.datayears, origy=D.data.econ[yscalefactor].past[0], growth=D.data.econ[yscalefactor].future[0][0])
                 if not plotsubtype=='future': plotdata[plottype][plotsubtype][yscalefactor]['ylinedata'] = [(hivcosts[plotsubtype][j] + artcosts[plotsubtype][j])/yscale[j] for j in range(noptpts)] 
                 plotdata[plottype][plotsubtype][yscalefactor]['ylabel'] = 'Proportion of ' + yscalefactor
 
@@ -151,17 +144,13 @@ def financialanalysis(D, postyear=2015, S=None, rerunmodel=False, artgrowthrate=
         plotdata[plottype][plotsubtype]['ylabel'] = 'USD'
         plotdata[plottype][plotsubtype]['title'] = 'Cumulative HIV-related costs - ' + plotsubtype + ' infections'
         if not plotsubtype=='future':
-            x = list(accumu(plotdata['annual'][plotsubtype]['total']['ylinedata'][0::stepsperyear]))
-            y = expanddata(x[:-1], len(x[:-1]), 0, interp=True, dt=D.opt.dt)
-            plotdata[plottype][plotsubtype]['ylinedata'] = append(y,[x[-1]])
+            plotdata[plottype][plotsubtype]['ylinedata'] = (cumsum(plotdata['annual'][plotsubtype]['total']['ylinedata'])/stepsperyear).tolist()
 
     if rerunmodel:
         for yscalefactor in costdisplays:
             if 'ylinedata' in plotdata['annual']['total'][yscalefactor].keys():
                 plotdata['annual']['future'][yscalefactor]['ylinedata'] = [max(0.0,plotdata['annual']['total'][yscalefactor]['ylinedata'][j] - plotdata['annual']['existing'][yscalefactor]['ylinedata'][j]) for j in range(noptpts)]
-        x = list(accumu(plotdata['annual']['future']['total']['ylinedata'][0::stepsperyear]))
-        y = expanddata(x[:-1], len(x[:-1]), 0, interp=True, dt=D.opt.dt)    
-        plotdata['cumulative']['future']['ylinedata'] = append(y,[x[-1]])
+        plotdata['cumulative']['future']['ylinedata'] = (cumsum(plotdata['annual']['future']['total']['ylinedata'])/stepsperyear)
 
     # Calculate net present value of future stream of treatment costs
     inci = S.inci.sum(axis=0)
@@ -191,7 +180,7 @@ def financialanalysis(D, postyear=2015, S=None, rerunmodel=False, artgrowthrate=
             plotdata['commit'][yscalefactor]['ylabel'] = 'USD'
         else:
             if isinstance(sanitize(D.data.econ[yscalefactor].past[0]),int): continue
-            yscale = expanddata(data=D.data.econ[yscalefactor].past[0], length=len(D.S.tvec)*D.opt.dt, growthrate=D.data.econ[yscalefactor].future[0][0], dt=D.opt.dt)
+            yscale = smoothinterp(newx=D.S.tvec, origx=D.G.datayears, origy=D.data.econ[yscalefactor].past[0], growth=D.data.econ[yscalefactor].future[0][0])
             plotdata['commit'][yscalefactor]['ylinedata'] = [commitments[j]/yscale[j] for j in range(noptpts)]
             plotdata['commit'][yscalefactor]['ylabel'] = 'Proportion of ' + yscalefactor
 
