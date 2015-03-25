@@ -20,7 +20,7 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
     
     
     
-    def dpar2mpar(datapar, withwhat, default_withwhat='p', smoothness=30):
+    def dpar2mpar(datapar, withwhat, default_withwhat='p', smoothness=5*int(1/opt.dt)):
         """
         Take parameters and turn them into model parameters
         Set withwhat = p if you want to use the epi data for the parameters
@@ -69,9 +69,9 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
     ## Testing parameters -- most are data
     M.hivtest = dpar2mpar(P.hivtest, withwhat) # HIV testing rates
     M.aidstest = dpar2mpar(P.aidstest, withwhat)[0] # AIDS testing rates
-    M.tx1 = dpar2mpar(P.numfirstline, withwhat, smoothness=5)[0] # Number of people on first-line treatment -- 0 since overall not by population
-    M.tx2 = dpar2mpar(P.numsecondline, withwhat, smoothness=5)[0] # Number of people on second-line treatment
-    M.txelig = dpar2mpar(P.txelig, withwhat, smoothness=5)[0] # Treatment eligibility criterion
+    M.tx1 = dpar2mpar(P.numfirstline, withwhat, smoothness=int(1/opt.dt))[0] # Number of people on first-line treatment -- 0 since overall not by population
+    M.tx2 = dpar2mpar(P.numsecondline, withwhat, smoothness=int(1/opt.dt))[0] # Number of people on second-line treatment
+    M.txelig = dpar2mpar(P.txelig, withwhat, smoothness=int(1/opt.dt))[0] # Treatment eligibility criterion
 
     ## MTCT parameters
     M.numpmtct = dpar2mpar(P.numpmtct, withwhat)[0]
