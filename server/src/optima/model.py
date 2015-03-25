@@ -233,8 +233,7 @@ def getModelCalibrateParameters():
     from sim.manualfit import updateP
     from sim.nested import getnested
     calibrate_parameters = [p for p in parameters() if 'calibration' in p and p['calibration']]
-    D = load_model(request.project_id, as_bunch = True)
-    D_dict = D.toDict()
+    D_dict = load_model(request.project_id, as_bunch = False)
     result = add_calibration_parameters(D_dict)
     return jsonify(result)
 
@@ -301,10 +300,10 @@ def doRunSimulation():
     data = json.loads(request.data)
 
     args = {}
-    D = load_model(request.project_id)
-    D_dict = D.toDict()
+    D_dict = load_model(request.project_id, as_bunch = False)
     result = {'graph': D_dict.get('plot',{}).get('E',{})}
     if not result:
+        D = bunchify(D_dict)
         args['D'] = D
         startyear = data.get("startyear")
         if startyear:
