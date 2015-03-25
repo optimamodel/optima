@@ -252,12 +252,10 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=2):
                             blh = sheetdata.cell_value(row, 2) # Read in whether indicator is best, low, or high
                             data[name][thispar][blhindices[blh]].append(thesedata) # Actually append the data
                             if thispar=='hivprev':
-                                validdata = array(thesedata)[~isnan(thesedata)]
-                                if len(validdata):
-                                    invalid = logical_or(array(validdata)>1, array(validdata)<0)
-                                    if any(invalid):
-                                        column = nonzero(invalid)[0]
-                                        raise Exception('Invalid entry in spreadsheet: HIV prevalence (row=%i, column(s)=%s, value=%i)' % (row, column, thesedata[column[0]]))
+                                invalid = logical_or(array(thesedata)>1, array(thesedata)<0)
+                                if any(invalid):
+                                    column = nonzero(invalid)[0]
+                                    raise Exception('Invalid entry in spreadsheet: HIV prevalence (row=%i, column(s)=%s, value=%i)' % (row, column, thesedata[column[0]]))
                             
                         
                         # It's basic data, append the data and check for programs
@@ -269,12 +267,10 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=2):
                                 thesedata = [assumptiondata] # Replace the (presumably blank) data if a non-blank assumption has been entered
                             data[name][thispar].append(thesedata) # Store data
                             if thispar in ['stiprevulc', 'stiprevdis', 'tbprev', 'hivtest', 'aidstest', 'prep', 'condomreg', 'condomcas', 'condomcom', 'circum',  'sharing']: # All probabilities
-                                validdata = array(thesedata)[~isnan(thesedata)]
-                                if len(validdata):
-                                    invalid = logical_or(array(validdata)>1, array(validdata)<0)
-                                    if any(invalid):
-                                        column = nonzero(invalid)[0]
-                                        raise Exception('Invalid entry in spreadsheet: parameter %s (row=%i, column(s)=%s, value=%i)' % (thispar, row, column, thesedata[column[0]]))
+                                invalid = logical_or(array(thesedata)>1, array(thesedata)<0)
+                                if any(invalid):
+                                    column = nonzero(invalid)[0]
+                                    raise Exception('Invalid entry in spreadsheet: parameter %s (row=%i, column(s)=%s, value=%i)' % (thispar, row, column, thesedata[column[0]]))
                             
                             for programname, pops in programs_for_input_key(thispar, input_programs).iteritems(): # Link with programs...?
                                 if (programname in programs) and ((not pops or pops==['']) or subparam in pops):
