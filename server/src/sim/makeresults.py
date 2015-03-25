@@ -1,4 +1,4 @@
-def makeresults(D, allsims=None, quantiles=None, financial=False, verbose=2):
+def makeresults(D, allsims=None, quantiles=None, rerunfinancial=False, verbose=2):
     """
     Generate all outputs required for the model:
         Prevalence
@@ -124,19 +124,19 @@ def makeresults(D, allsims=None, quantiles=None, financial=False, verbose=2):
             from financialanalysis import financialanalysis
             if len(allcosts)==0:
                 for s in range(nsims):
-                    thesecosts = financialanalysis(D, postyear = D.data.epiyears[-1], S = allsims[s], rerunmodel = financial)
+                    thesecosts = financialanalysis(D, postyear = D.data.epiyears[-1], S = allsims[s], rerunmodel = rerunfinancial)
                     allcosts.append(thesecosts)
             
             if data=='costcum':
                 R.costcum.total = quantile(array([allcosts[s]['cumulative']['total']['ylinedata'] for s in range(nsims)]), quantiles=quantiles) 
-                if financial:
+                if rerunfinancial:
                     R.costcum.existing = quantile(array([allcosts[s]['cumulative']['existing']['ylinedata'] for s in range(nsims)]), quantiles=quantiles)
                     R.costcum.future = quantile(array([allcosts[s]['cumulative']['future']['ylinedata'] for s in range(nsims)]), quantiles=quantiles)
             if data=='costann':
                 for yscale in ['total','gdp','revenue','govtexpend','totalhealth','domestichealth']:
                     if 'ylinedata' in allcosts[s]['annual']['total'][yscale]:
                         R.costann.total[yscale] = quantile(array([allcosts[s]['annual']['total'][yscale]['ylinedata'] for s in range(nsims)]), quantiles=quantiles)
-                        if financial:
+                        if rerunfinancial:
                             R.costann.existing[yscale]= quantile(array([allcosts[s]['annual']['existing'][yscale]['ylinedata'] for s in range(nsims)]), quantiles=quantiles)
                             R.costann.future[yscale] = quantile(array([allcosts[s]['annual']['future'][yscale]['ylinedata'] for s in range(nsims)]), quantiles=quantiles)
             if data=='commit':

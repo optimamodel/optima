@@ -9,6 +9,7 @@ from numpy import linspace, append, npv, zeros, isnan, where
 from setoptions import setoptions
 from printv import printv
 from datetime import date
+from pylab import * # TMP
 
 
 def financialanalysis(D, postyear=2015, S=None, rerunmodel=False, artgrowthrate=.05, discountrate=.03, treattime=[8,1,16,3,10], cd4time=[8,8,10,8,2,2], verbose=2):
@@ -92,8 +93,10 @@ def financialanalysis(D, postyear=2015, S=None, rerunmodel=False, artgrowthrate=
             costsexistingthishealthstate  = [people['existing'][D.G[healthstate],:,j].sum(axis = (0,1))*costs[j] for j in range(noptpts)]
         
         hivcosts['total'] = [hivcosts['total'][j] + coststotalthishealthstate[j] for j in range(noptpts)]
+#        print('TMP'); plot(hivcosts['total']); show()
         if rerunmodel:
             hivcosts['existing'] = [hivcosts['existing'][j] + costsexistingthishealthstate[j] for j in range(noptpts)]
+
 
     # Calculate annual treatment costs for PLHIV
     tx1total = people['total'][D.G.tx1[0]:D.G.fail[-1],:,:].sum(axis=(0,1))
@@ -130,8 +133,10 @@ def financialanalysis(D, postyear=2015, S=None, rerunmodel=False, artgrowthrate=
             plotdata[plottype][plotsubtype][yscalefactor]['xlabel'] = 'Year'
             plotdata[plottype][plotsubtype][yscalefactor]['title'] = 'Annual HIV-related costs - ' + plotsubtype + ' infections'
             if yscalefactor=='total':
+#                print('TMP4'); plot(hivcosts['total']); show()
                 if not plotsubtype=='future': plotdata[plottype][plotsubtype][yscalefactor]['ylinedata'] = [(hivcosts[plotsubtype][j] + artcosts[plotsubtype][j])*(cpi[cpibaseyearindex]/cpi[j]) for j in range(noptpts)]
                 plotdata[plottype][plotsubtype][yscalefactor]['ylabel'] = 'USD'
+                raise Exception('TMP')
             else:
                 if isinstance(sanitize(D.data.econ[yscalefactor].past[0]),int): continue #raise Exception('No data have been provided for this varaible, so we cannot display the costs as a proportion of this')
                 yscale = expanddata(data=D.data.econ[yscalefactor].past[0], length=len(D.S.tvec)*D.opt.dt, growthrate=D.data.econ[yscalefactor].future[0][0], interp=True, dt=D.opt.dt)

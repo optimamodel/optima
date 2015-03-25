@@ -34,7 +34,7 @@ def makedatapars(D, verbose=2):
                 validdata = ~isnan(dataarray[r])
                 if sum(validdata): # There's at least one data point
                     output.p[r] = sanitize(dataarray[r]) # Store each extant value
-                    output.t[r] = arange(D.G.datastart, D.G.dataend+1)[~isnan(dataarray[r])] # Store each year
+                    output.t[r] = D.G.datayears[~isnan(dataarray[r])] # Store each year
                 else: # Blank, assume zero
                     output.p[r] = array([0])
                     output.t[r] = array([0])
