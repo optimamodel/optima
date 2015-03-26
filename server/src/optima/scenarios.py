@@ -106,6 +106,5 @@ def runScenarios():
             save_model(project_id, D_dict)
     except Exception, err:
         var = traceback.format_exc()
-        response.status = 500
-        return jsonify({"exception":var})
+        return jsonify({"exception":var}), 500
     return jsonify(D_dict.get('plot',{}).get('scens',{}))

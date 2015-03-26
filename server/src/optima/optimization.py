@@ -36,8 +36,7 @@ def getOptimizationParameters():
     project_id = request.project_id
     if not project_exists(project_id):
         reply = {'reason':'Project %s:%s does not exist' % (project_id, project_name)}
-        response.status = 500
-        return jsonify(reply)
+        return jsonify(reply), 500
     else:
         D = load_model(project_id)
         if not 'optimizations' in D:
@@ -60,8 +59,7 @@ def startOptimization():
     project_name = request.project_name
     if not project_exists(project_id):
         reply = {'reason':'Project %s:%s does not exist' % (project_id, project_name)}
-        response.status = 500
-        return jsonify(reply)
+        return jsonify(reply), 500
     try:
         can_start, can_join, current_calculation = start_or_report_calculation(current_user.id, project_id, optimize, db.session)
         if can_start:
@@ -88,8 +86,7 @@ def startOptimization():
             return json.dumps({"status":"OK", "result": msg, "join":can_join})
     except Exception, err:
         var = traceback.format_exc()
-        response.status = 500
-        return jsonify({"exception":var})
+        return jsonify({"exception":var}), 500
 
 @optimization.route('/stop')
 @login_required
@@ -162,9 +159,10 @@ def getWorkingModel():
     result['dirty'] = is_dirty
     if error_text:
         result['exception'] = error_text
+    response_status = 200
     if status=='NOK':
-        response.status = 500
-    return jsonify(result)
+        response_status = 500
+    return jsonify(result), response_status
 
 
 @optimization.route('/save', methods=['POST'])
@@ -178,16 +176,17 @@ def saveModel():
     # get project name
     project_id = request.project_id
     project_name = request.project_name
+    response_status = 200
     if not project_exists(project_id):
         reply['reason'] = 'Project %s:%s does not exist' % (project_id, project_name)
-        response.status = 500
+        response_status = 500
     else:
         # now, save the working model, read results and save for the optimization with the given name
         D_dict = save_working_model_as_default(project_id)
 
         reply['optimizations'] = D_dict['optimizations']
         reply['status']='OK'
-    return jsonify(reply)
+    return jsonify(reply), response_status
 
 @optimization.route('/revert', methods=['POST'])
 @login_required
@@ -198,15 +197,16 @@ def revertCalibrationModel():
     reply = {}
     # get project name
     project_id = request.project_id
+    response_status = 200
     if not project_exists(project_id):
         reply['reason'] = 'Project %s does not exist' % project_id
-        response.status = 500
+        response_status = 500
     else:
         D_dict = revert_working_model_to_default(project_id)
         D = bunchify(D_dict)
         reply['optimizations'] = D_dict.get('optimizations') or unbunchify(defaultoptimizations(D))
         reply['status']='OK'
-    return jsonify(reply)
+    return jsonify(reply), response_status
 
 
 @optimization.route('/remove/<name>', methods=['POST'])
@@ -219,9 +219,10 @@ def removeOptimizationSet(name):
     reply = {}
     # get project name
     project_id = request.project_id
+    response_status = 200
     if not project_exists(project_id):
         reply['reason'] = 'Project %s does not exist' % project_id
-        response.status = 500
+        response_status = 500
     else:
         D = load_model(project_id, as_bunch = True)
         D = removeoptimization(D, name)
@@ -230,7 +231,7 @@ def removeOptimizationSet(name):
         reply['status']='OK'
         reply['name'] = 'deleted'
         reply['optimizations'] = D_dict['optimizations']
-    return jsonify(reply)
+    return jsonify(reply), response_status
 
 @optimization.route('/create', methods=['POST'])
 @login_required
@@ -244,14 +245,14 @@ def create_optimization():
     name = data.get('name')
     if not name:
         reply['reason'] = 'Please provide a name for new optimization'
-        response.status = 500
-        return jsonify(reply)
+        return jsonify(reply), 500
 
     # get project name
     project_id = request.project_id
+    response_status = 200
     if not project_exists(project_id):
         reply['reason'] = 'Project %s does not exist' % project_id
-        response.status = 500
+        response_status = 500
     else:
         D = load_model(project_id, as_bunch = True)
         objectives = data.get('objectives')
@@ -272,4 +273,4 @@ def create_optimization():
         #return all available optimizations back
         reply['status']='OK'
         reply['optimizations'] = D_dict['optimizations']
-    return jsonify(reply)
+    return jsonify(reply), response_status

@@ -290,8 +290,8 @@ def openProject(project_id):
     except:
         proj_exists = False
     if not proj_exists:
-        response.status = 500
-        return jsonify({'reason':'No such project %s' % project_name})
+        
+        return jsonify({'reason':'No such project %s' % project_id}), 500
     else:
         return jsonify({'status':'OK'})
 
@@ -312,8 +312,7 @@ def giveWorkbook(project_id):
     project = load_project(project_id)
     if project is None:
         reply = {'reason':'Project %s does not exist.' % project_id}
-        response.status = 500
-        return jsonify(reply)
+        return jsonify(reply), 500
     else:
         # See if there is matching project data
         projdata = ProjectDataDb.query.get(project.id)
@@ -349,7 +348,7 @@ def getProjectInformation():
     response_data = {}
     # see if there is matching project
     project = load_project(request.project_id)
-
+    response_status = 200
     # update response
     if project is not None:
         response_data = {
@@ -367,8 +366,8 @@ def getProjectInformation():
             'can_scenarios': project.can_scenarios(),
         }
     else:
-        response.status = 500
-    return jsonify(response_data)
+        response_status = 500
+    return jsonify(response_data), response_status
 
 @project.route('/list/all')
 @login_required
@@ -483,14 +482,12 @@ def copyProject(project_id):
     new_project_name = request.args.get('to')
     if not new_project_name:
         reply['reason'] = 'New project name is not given'
-        response.status = 500
-        return reply
+        return reply, 500
     # Get project row for current user with project name
     project = load_project(project_id, all_data = True)
     if project is None:
         reply['reason'] = 'Project %s does not exist.' % project_id
-        response.status = 500
-        return reply
+        return reply, 500
     project_user_id = project.user_id
     project_data_exists = project.project_data #force loading it
     db.session.expunge(project)
@@ -595,14 +592,12 @@ def uploadExcel():
         loaddir = DATADIR
     if not file:
         reply['reason'] = 'No file is submitted!'
-        response.status = 500
-        return json.dumps(reply)
+        return json.dumps(reply), 500
 
     source_filename = secure_filename(file.filename)
     if not allowed_file(source_filename):
         reply['reason'] = 'File type of %s is not accepted!' % source_filename
-        response.status = 500
-        return json.dumps(reply)
+        return json.dumps(reply), 500
 
     reply['file'] = source_filename
 
@@ -673,8 +668,7 @@ def getData(project_id):
     project = load_project(project_id)
     if project is None:
         reply['reason']='Project %s does not exist.' % project_id
-        response.status = 500
-        return jsonify(reply)
+        return jsonify(reply), 500
     else:
         data = project.model
         #make sure this exists
@@ -713,8 +707,7 @@ def createProjectAndSetData():
     source_filename = secure_filename(file.filename)
     if not allowed_file(source_filename):
         reply['reason'] = 'File type of %s is not accepted!' % source_filename
-        response.status = 500
-        return json.dumps(reply)
+        return json.dumps(reply), 500
 
     data = json.load(file)
 
@@ -749,20 +742,17 @@ def setData(project_id):
 
     if not file:
         reply['reason'] = 'No file is submitted!'
-        response.status = 500
-        return json.dumps(reply)
+        return json.dumps(reply), 500
 
     source_filename = secure_filename(file.filename)
     if not allowed_file(source_filename):
         reply['reason'] = 'File type of %s is not accepted!' % source_filename
-        response.status = 500
-        return json.dumps(reply)
+        return json.dumps(reply), 500
 
     project = load_project(project_id)
     if project is None:
         reply['reason']='Project %s does not exist.' % project_id
-        response.status = 500
-        return jsonify(reply)
+        return jsonify(reply), 500
 
     data = json.load(file)
     data['G']['projectfilename'] = project.model['G']['projectfilename']

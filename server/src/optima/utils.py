@@ -27,8 +27,7 @@ def check_project_name(api_call):
             current_app.logger.error("Exception during request %s: %s" % (request, var))
             reply['reason'] = 'No project is open'
             reply['exception'] = var
-            response.status = 500
-            return jsonify(reply)
+            return jsonify(reply), 500
     return _check_project_name
 
 def report_exception(reason = None):
@@ -44,8 +43,7 @@ def report_exception(reason = None):
                 reply['exception'] = var
                 if reason:
                     reply['reason'] = reason
-                response.status = 500
-                return jsonify(reply)
+                return jsonify(reply), 500
         return __report_exception
     return _report_exception
 
