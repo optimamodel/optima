@@ -127,7 +127,7 @@ def getWorkingModel():
         current_app.logger.debug("optimization for project %s was stopped or cancelled" % project_id)
         async_status, error_text, stop_time = check_calculation_status(current_user.id, project_id, optimize, db.session)
         now_time = datetime.datetime.now(dateutil.tz.tzutc()) #time in DB is UTC-aware
-        if async_status == 'unknown': 
+        if async_status == 'unknown':
             status = 'Done'
         elif async_status in good_exit_status:
             if stop_time and stop_time<now_time: #actually stopped
@@ -172,21 +172,16 @@ def getWorkingModel():
 def saveModel():
     from sim.optimize import saveoptimization
     """ Saves working model as the default model """
-    reply = {}
     # get project name
     project_id = request.project_id
     project_name = request.project_name
-    response_status = 200
     if not project_exists(project_id):
-        reply['reason'] = 'Project %s:%s does not exist' % (project_id, project_name)
-        response_status = 500
+        reply = {'reason': 'Project %s:%s does not exist' % (project_id, project_name)}
+        return jsonify(reply), 500
     else:
         # now, save the working model, read results and save for the optimization with the given name
         D_dict = save_working_model_as_default(project_id)
-
-        reply['optimizations'] = D_dict['optimizations']
-        reply['status']='OK'
-    return jsonify(reply), response_status
+        return jsonify({'optimizations': D_dict['optimizations']})
 
 @optimization.route('/revert', methods=['POST'])
 @login_required
@@ -194,19 +189,17 @@ def saveModel():
 @report_exception()
 def revertCalibrationModel():
     """ Revert working model to the default model """
-    reply = {}
     # get project name
     project_id = request.project_id
-    response_status = 200
     if not project_exists(project_id):
-        reply['reason'] = 'Project %s does not exist' % project_id
-        response_status = 500
+        reply = {'reason': 'Project %s does not exist' % project_id}
+        return jsonify(reply), 500
     else:
         D_dict = revert_working_model_to_default(project_id)
         D = bunchify(D_dict)
-        reply['optimizations'] = D_dict.get('optimizations') or unbunchify(defaultoptimizations(D))
-        reply['status']='OK'
-    return jsonify(reply), response_status
+        optimizations = D_dict.get('optimizations') or unbunchify(defaultoptimizations(D))
+        reply = {'optimizations': optimizations}
+        return jsonify(reply)
 
 
 @optimization.route('/remove/<name>', methods=['POST'])
@@ -216,22 +209,19 @@ def revertCalibrationModel():
 def removeOptimizationSet(name):
     """ Removes given optimization from the optimization set """
     from sim.optimize import removeoptimization
-    reply = {}
     # get project name
     project_id = request.project_id
     response_status = 200
     if not project_exists(project_id):
-        reply['reason'] = 'Project %s does not exist' % project_id
-        response_status = 500
+        reply = {'reason': 'Project %s does not exist' % project_id}
+        return jsonify(reply), 500
     else:
         D = load_model(project_id, as_bunch = True)
         D = removeoptimization(D, name)
         D_dict = D.toDict()
         save_model(project_id, D_dict)
-        reply['status']='OK'
-        reply['name'] = 'deleted'
-        reply['optimizations'] = D_dict['optimizations']
-    return jsonify(reply), response_status
+        reply = {'name': 'deleted', 'optimizations': D_dict['optimizations']}
+        return jsonify(reply)
 
 @optimization.route('/create', methods=['POST'])
 @login_required
@@ -239,20 +229,19 @@ def removeOptimizationSet(name):
 @report_exception()
 def create_optimization():
     """ Creates a new optimization from the optimization set """
-    reply = {}
     data = json.loads(request.data)
 
     name = data.get('name')
     if not name:
-        reply['reason'] = 'Please provide a name for new optimization'
+        reply = {'reason': 'Please provide a name for new optimization'}
         return jsonify(reply), 500
 
     # get project name
     project_id = request.project_id
     response_status = 200
     if not project_exists(project_id):
-        reply['reason'] = 'Project %s does not exist' % project_id
-        response_status = 500
+        reply = {'reason': 'Project %s does not exist' % project_id}
+        return jsonify(reply), 500
     else:
         D = load_model(project_id, as_bunch = True)
         objectives = data.get('objectives')
@@ -271,6 +260,5 @@ def create_optimization():
         D_dict = D.toDict()
         save_model(project_id, D_dict)
         #return all available optimizations back
-        reply['status']='OK'
-        reply['optimizations'] = D_dict['optimizations']
-    return jsonify(reply), response_status
+        reply = {'optimizations': D_dict['optimizations']}
+        return jsonify(reply)
