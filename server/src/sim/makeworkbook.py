@@ -94,7 +94,7 @@ def make_populations_range(name, items):
     """
     column_names = ['Short name','Long name','Male','Female','Injects','Has sex with men', \
     'Has sex with women','Sex worker','Client']
-    row_names = xrange(1, len(items)+1)
+    row_names = range(1, len(items)+1)
     coded_params = []
     for item in items:
         if type(item) is dict:
@@ -127,7 +127,7 @@ def make_programs_range(name, items):
     (2x str)
     """
     column_names = ['Short name','Long name']
-    row_names = xrange(1, len(items)+1)
+    row_names = range(1, len(items)+1)
     coded_params = []
     for item in items:
         if type(item) is dict:
@@ -255,7 +255,7 @@ class SheetRange:
 
     """ gives the list of references to the entries in the row names (which are parameters) """
     def param_refs(self, sheet_name, column_number = 1):
-        par_range = xrange(self.first_row, self.last_row +1)
+        par_range = range(self.first_row, self.last_row +1)
         return [ "='%s'!%s" % (sheet_name, self.get_cell_address(row, self.first_col + column_number)) for row in par_range ]
 
 

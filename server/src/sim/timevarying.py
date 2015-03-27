@@ -37,8 +37,8 @@ def timevarying(allocpm, ntimepm=1, nprogs=None, tvec=None, totalspend=None, fun
     elif ntimepm == 2: # Two parameter curve - exponential
             
         # Indices of initial allocations and shape parameters
-        ai = xrange(nprogs)
-        gi = xrange(nprogs, nprogs*2)
+        ai = range(nprogs)
+        gi = range(nprogs, nprogs*2)
         
         # Values of allocpm at the indcies
         av = [allocpm[j] for j in ai]
@@ -67,9 +67,9 @@ def timevarying(allocpm, ntimepm=1, nprogs=None, tvec=None, totalspend=None, fun
     elif ntimepm in (3, 4): # Three and four parameter curves - logistic (fixed or variable inflection)
             
         # Indices of initial allocations, growth rates and saturations
-        ai = xrange(nprogs)
-        gi = xrange(nprogs,   nprogs*2)
-        si = xrange(nprogs*2, nprogs*3)
+        ai = range(nprogs)
+        gi = range(nprogs,   nprogs*2)
+        si = range(nprogs*2, nprogs*3)
         
         # Values of allocpm at the indcies
         av = [allocpm[j] for j in ai]
@@ -87,7 +87,7 @@ def timevarying(allocpm, ntimepm=1, nprogs=None, tvec=None, totalspend=None, fun
         else:
        
             # In four parameter case use input
-            ii = xrange(nprogs*3, nprogs*4)
+            ii = range(nprogs*3, nprogs*4)
             iv = [allocpm[j] for j in ii]
         
             # Extend to matrix as with other variables

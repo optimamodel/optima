@@ -18,7 +18,7 @@ default_ccplot = None #[None, None, 0]
 default_coparams = None#[.300, .500, .700, .900]
 
 default_effect = [['sex', 'condomcas'], [u'MSM']] # D['programs'][default_progname]['effects'][0]
-default_artelig = xrange(6,31)
+default_artelig = range(6,31)
 coverage_params = ['numost','numpmtct','numfirstline','numsecondline']
 
 ###############################################################################

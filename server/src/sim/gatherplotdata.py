@@ -33,14 +33,14 @@ def gatheruncerdata(D, R, annual=True, verbose=2, maxyear=2030):
     origtvec = deepcopy(uncer['tvec'])
     if annual:
         dt = origtvec[1]-origtvec[0]
-        allindices = xrange(0, len(origtvec), int(round(1/dt)))
+        allindices = range(0, len(origtvec), int(round(1/dt)))
         indices = []
         for i in allindices:
             if origtvec[i]<=maxyear:
                 indices.append(i)
         uncer['tvec'] = [origtvec[i] for i in indices]
     else:
-        indices = xrange(len(origtvec))
+        indices = range(len(origtvec))
     
     for key in epititles.keys():
         percent = 100 if key in ['prev','force'] else 1 # Whether to multiple results by 100
@@ -209,7 +209,7 @@ def gathermultidata(D, Rarr, annual=True, verbose=2, maxyear=2030):
     origtvec = deepcopy(multi['tvec'])
     if annual:
         dt = origtvec[1]-origtvec[0]
-        allindices = xrange(0, len(origtvec), int(round(1/dt)))
+        allindices = range(0, len(origtvec), int(round(1/dt)))
         indices = []
         for i in allindices:
             if origtvec[i]<=maxyear:
@@ -217,7 +217,7 @@ def gathermultidata(D, Rarr, annual=True, verbose=2, maxyear=2030):
         multi['tvec'] = [origtvec[i] for i in indices]
         multi['tvec'] = [origtvec[i] for i in indices]
     else:
-        indices = xrange(len(origtvec))
+        indices = range(len(origtvec))
     
     for key in epititles.keys():
         percent = 100 if key in ['prev','force'] else 1 # Whether to multiple results by 100
@@ -320,7 +320,7 @@ def gatheroptimdata(D, result, verbose=2):
     if optim['kind'] in ['constant', 'timevarying', 'multiyear']:
         optim['outcome'] = dict() # Plot how the outcome improved with optimization
         optim['outcome']['ydata'] = result['fval'].tolist() # Vector of outcomes
-        optim['outcome']['xdata'] = xrange(len(result['fval'].tolist())) # Vector of iterations
+        optim['outcome']['xdata'] = range(len(result['fval'].tolist())) # Vector of iterations
         optim['outcome']['ylabel'] = 'Outcome'
         optim['outcome']['xlabel'] = 'Iteration'
         optim['outcome']['title'] = 'Outcome (initial: %0.0f, final: %0.0f)' % (result['fval'][0], result['fval'][-1])

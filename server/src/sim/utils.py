@@ -162,7 +162,7 @@ def checkmem(origvariable, descend=0, order='n', plot=False, verbose=0):
                 varnames.append(key)
                 variables.append(origvariable[key])
         else:
-            varnames = xrange(len(origvariable))
+            varnames = range(len(origvariable))
             variables = origvariable
     
     for v,variable in enumerate(variables):

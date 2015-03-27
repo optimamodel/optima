@@ -203,10 +203,10 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
     stepsizes = zeros(nprogs * ntimepm)
     
     # Easy access initial allocation indices and turn stepsizes into array
-    ai = xrange(nprogs)
-    gi = xrange(nprogs,   nprogs*2) if ntimepm >= 2 else []
-    si = xrange(nprogs*2, nprogs*3) if ntimepm >= 3 else []
-    ii = xrange(nprogs*3, nprogs*4) if ntimepm >= 4 else []
+    ai = range(nprogs)
+    gi = range(nprogs,   nprogs*2) if ntimepm >= 2 else []
+    si = range(nprogs*2, nprogs*3) if ntimepm >= 3 else []
+    ii = range(nprogs*3, nprogs*4) if ntimepm >= 4 else []
     
     # Turn stepsizes into array
     stepsizes[ai] = stepsize
