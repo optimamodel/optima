@@ -22,10 +22,10 @@ def updatedata(D, workbookname=None, verbose=2, savetofile=True, input_programs=
         workbookname = D.G.workbookname
         
     datapath = fullpath(workbookname)
-    D.data, D.programs = loadworkbook(datapath, input_programs, verbose=verbose)
-    D.programs = restructureprograms(D.programs)
-    D.data = getrealcosts(D.data)
-    
+    data, programs = loadworkbook(datapath, input_programs, verbose=verbose)
+    D.data = getrealcosts(data)
+    if 'programs' not in D:
+        D.programs = restructureprograms(programs)
     if rerun or 'P' not in D: # Rerun if asked or if it doesn't exist
         D = makedatapars(D, verbose=verbose) # Update parameters
     if rerun or 'M' not in D: # Rerun if asked, or if it doesn't exist
@@ -65,15 +65,14 @@ def getrealcosts(data):
 
     from math import isnan
     from datetime import date
-    from financialanalysis import expanddata
+    from utils import smoothinterp
 
     cost = data.costcov.cost
     nprogs = len(data.costcov.cost)
     realcost = [[]]*nprogs
 
     # Get CPI, expand to all years
-    cpi = data.econ.cpi.past[0] 
-    cpi = expanddata(cpi, len(data.epiyears), data.econ.cpi.future[0][0], interp=False, dt=None)
+    cpi = smoothinterp(newx=data.epiyears, origx=data.epiyears, origy=data.econ.cpi.past[0], growth=data.econ.cpi.future[0][0])
 
     # Set the CPI base year to the current year or the last year for which data were provided.
     cpibaseyearindex = data.epiyears.index(min(data.epiyears[-1],date.today().year))

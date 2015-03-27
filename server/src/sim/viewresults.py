@@ -203,7 +203,43 @@ def viewmultiresults(M, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 
     
     if onefig:
         subplot(nxplots, nyplots, count+1)
-        for sim in range(M.nsims): plot(0, 0, linewidth=linewidth)
+        for sim in range(M.nsims): plot(0, 0, linewidth=linewidth, color=colors[sim])
         legend(M[graph].total.legend)
 
     if show_wait: show()
+
+
+
+def viewoptimresults(O):
+    """
+    Plot pies and outcome
+    Version: 2015mar25
+    """
+    from matplotlib.pylab import figure, subplot, pie, title, plot, xlabel, ylabel
+    import brewer2mpl as colormap
+    
+    nprograms = len(O['alloc'][0]['piedata'])
+    bmap = colormap.get_map('Paired', 'Qualitative', max(3,nprograms)) # WARNING, won't work with >13
+    if nprograms>12: raise Exception('Can''t use ColorBrewer with more than 12 colors')
+    colors = bmap.mpl_colors
+    
+    figure(figsize=(8,8))
+    for p in range(2):
+        subplot(2,2,p+1)
+        pie(O['alloc'][p]['piedata'], colors=colors, labels=O['alloc'][p]['legend'])
+        title(O['alloc'][p]['title'])
+    subplot(2,1,2)
+    plot(O['outcome']['xdata'], O['outcome']['ydata'])
+    xlabel(O['outcome']['xlabel'])
+    ylabel(O['outcome']['ylabel'])
+    title(O['outcome']['title'])
+    
+    
+#    >>> D.plot.optim[-1].outcome.keys()
+#['xlabel', 'title', 'ydata', 'xdata', 'ylabel']
+#>>> D.plot.optim[-1].alloc.keys()
+#Traceback (most recent call last):
+#  File "<stdin>", line 1, in <module>
+#AttributeError: 'list' object has no attribute 'keys'
+#>>> D.plot.optim[-1].alloc[0].keys()
+#['piedata', 'legend', 'radardata', 'title']

@@ -24,14 +24,14 @@ from ballsd import ballsd
 
 
 
-def runmodelalloc(D, thisalloc, origalloc, parindices, randseed, financial=False, verbose=2):
+def runmodelalloc(D, thisalloc, origalloc, parindices, randseed, rerunfinancial=False, verbose=2):
     """ Little function to do calculation since it appears so many times """
     newD = deepcopy(D)
     newD, newcov, newnonhivdalysaverted = getcurrentbudget(newD, thisalloc, randseed=randseed) # Get cost-outcome curves with uncertainty
     newM = makemodelpars(newD.P, newD.opt, withwhat='c', verbose=0) # Don't print out
     newD.M = partialupdateM(D.M, newM, parindices)
     S = model(newD.G, newD.M, newD.F[0], newD.opt, verbose=verbose)
-    R = makeresults(D, allsims=[S], financial=financial, verbose=0)
+    R = makeresults(D, allsims=[S], rerunfinancial=rerunfinancial, verbose=0)
     R.debug = struct()
     R.debug.G = deepcopy(newD.G)
     R.debug.M = deepcopy(newD.M)
@@ -62,7 +62,7 @@ def objectivecalc(optimparams, options):
     else:
         raise Exception('Cannot figure out what kind of allocation this is since neither options.ntimepm nor options.years is defined')
     
-    R = runmodelalloc(options.D, thisalloc, origalloc, options.parindices, options.randseed, financial=False) # Actually run
+    R = runmodelalloc(options.D, thisalloc, origalloc, options.parindices, options.randseed, rerunfinancial=False) # Actually run
     
     tmpplotdata = [] # TEMP
     outcome = 0 # Preallocate objective value 
