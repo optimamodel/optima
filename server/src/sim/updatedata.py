@@ -19,23 +19,23 @@ def updatedata(D, workbookname=None, verbose=2, savetofile=True, input_programs=
     printv('Updating data...', 1, verbose)
     
     if workbookname is None:
-        workbookname = D.G.workbookname
+        workbookname = D['G']['workbookname']
         
     datapath = fullpath(workbookname)
     data, programs = loadworkbook(datapath, input_programs, verbose=verbose)
-    D.data = getrealcosts(data)
+    D['data'] = getrealcosts(data)
     if 'programs' not in D:
-        D.programs = restructureprograms(programs)
+        D['programs'] = restructureprograms(programs)
     if rerun or 'P' not in D: # Rerun if asked or if it doesn't exist
         D = makedatapars(D, verbose=verbose) # Update parameters
     if rerun or 'M' not in D: # Rerun if asked, or if it doesn't exist
-        D.M = makemodelpars(D.P, D.opt, verbose=verbose)
+        D['M'] = makemodelpars(D['P'], D['opt'], verbose=verbose)
     if 'F' not in D: # Only rerun if it doesn't exist
         D = makefittedpars(D, verbose=verbose)
     if rerun or 'R' not in D: # Rerun if asked, or if no results
         D = runsimulation(D, makeplot = 0, dosave = False)
     if savetofile:
-        savedata(D.G.projectfilename, D, verbose=verbose) # Update the data file
+        savedata(D['G']['projectfilename'], D, verbose=verbose) # Update the data file
     
     printv('...done updating data.', 2, verbose)
 
@@ -44,7 +44,7 @@ def updatedata(D, workbookname=None, verbose=2, savetofile=True, input_programs=
 
 def restructureprograms(programs):
     '''
-    Restructure D.programs for easier use.
+    Restructure D['programs'] for easier use.
     '''
 
     ccparams = []
@@ -67,23 +67,23 @@ def getrealcosts(data):
     from datetime import date
     from utils import smoothinterp
 
-    cost = data.costcov.cost
-    nprogs = len(data.costcov.cost)
+    cost = data['costcov']['cost']
+    nprogs = len(data['costcov']['cost'])
     realcost = [[]]*nprogs
 
     # Get CPI, expand to all years
-    cpi = smoothinterp(newx=data.epiyears, origx=data.epiyears, origy=data.econ.cpi.past[0], growth=data.econ.cpi.future[0][0])
+    cpi = smoothinterp(newx=data['epiyears'], origx=data['epiyears'], origy=data['econ']['cpi']['past'][0], growth=data['econ']['cpi']['future'][0][0])
 
     # Set the CPI base year to the current year or the last year for which data were provided.
-    cpibaseyearindex = data.epiyears.index(min(data.epiyears[-1],date.today().year))
+    cpibaseyearindex = data['epiyears'].index(min(data['epiyears'][-1],date.today().year))
 
-    for prog in range(nprogs):
+    for prog in xrange(nprogs):
         if len(cost[prog])==1: # If it's an assumption, assume it's already in current prices
             realcost[prog] = cost[prog]
         else:
-            realcost[prog] = [cost[prog][j]*(cpi[cpibaseyearindex]/cpi[j]) if ~isnan(cost[prog][j]) else float('nan') for j in range(len(cost[prog]))]
+            realcost[prog] = [cost[prog][j]*(cpi[cpibaseyearindex]/cpi[j]) if ~isnan(cost[prog][j]) else float('nan') for j in xrange(len(cost[prog]))]
     
-    data.costcov.realcost = realcost
+    data['costcov']['realcost'] = realcost
     
     return data
 
@@ -93,20 +93,18 @@ def makefittedpars(D, verbose=2):
     """ Prepares fitted parameters for the simulation. """
     
     from printv import printv
-    from bunch import Bunch as struct # Replicate Matlab-like structure behavior
     from utils import perturb
     printv('Initializing fitted parameters...', 1, verbose)
     
     # Initialize fitted parameters
-    D.F = [struct() for s in range(D.opt.nsims)]
-    for s in range(D.opt.nsims):
+    D['F'] = [dict() for s in xrange(D['opt']['nsims'])]
+    for s in xrange(D['opt']['nsims']):
         span=0 if s==0 else 0.5 # Don't have any variance for first simulation
-        D.F[s].__doc__ = 'Fitted parameters for simulation %i: initial prevalence, force-of-infection, population size, diagnoses, treatment' % s
-        D.F[s].init  = perturb(D.G.npops,span)
-        D.F[s].popsize = perturb(D.G.npops,span)
-        D.F[s].force = perturb(D.G.npops,span)
-        D.F[s].dx  = perturb(4,span)
-        D.F[s] = unnormalizeF(D.F[s], D.M, D.G, normalizeall=True) # Un-normalize F
+        D['F'][s]['init']  = perturb(D['G']['npops'],span)
+        D['F'][s]['popsize'] = perturb(D['G']['npops'],span)
+        D['F'][s]['force'] = perturb(D['G']['npops'],span)
+        D['F'][s]['dx']  = perturb(4,span)
+        D['F'][s] = unnormalizeF(D['F'][s], D['M'], D['G'], normalizeall=True) # Un-normalize F
     
     return D
 
@@ -114,20 +112,20 @@ def makefittedpars(D, verbose=2):
 def unnormalizeF(normF, M, G, normalizeall=False):
     """ Convert from F values where everything is 1 to F values that can be real-world interpretable. """
     unnormF = deepcopy(normF)
-    for p in range(G.npops):
-        unnormF.init[p] *= M.hivprev[p] # Multiply by initial prevalence
-        if normalizeall: unnormF.popsize[p] *= M.popsize[p][0] # Multiply by initial population size
-    if normalizeall: unnormF.dx[3] *= G.datayears.mean() # Multiply by mean data year
+    for p in xrange(G['npops']):
+        unnormF['init'][p] *= M['hivprev'][p] # Multiply by initial prevalence
+        if normalizeall: unnormF['popsize'][p] *= M['popsize'][p][0] # Multiply by initial population size
+    if normalizeall: unnormF['dx'][3] *= G['datayears'].mean() # Multiply by mean data year
     return unnormF
 
 
 def normalizeF(unnormF, M, G, normalizeall=False):
     """ Convert from F values that can be real-world interpretable to F values where everything is 1. """
     normF = deepcopy(unnormF)
-    for p in range(G.npops):
-        normF.init[p] /= M.hivprev[p] # Divide by initial prevalence
-        if normalizeall: normF.popsize[p] /= M.popsize[p][0] # Divide by initial population size
-    if normalizeall: normF.dx[3] /= G.datayears.mean() # Divide by mean data year
+    for p in xrange(G['npops']):
+        normF['init'][p] /= M['hivprev'][p] # Divide by initial prevalence
+        if normalizeall: normF['popsize'][p] /= M['popsize'][p][0] # Divide by initial population size
+    if normalizeall: normF['dx'][3] /= G['datayears'].mean() # Divide by mean data year
     return normF
 
 

@@ -115,12 +115,12 @@ def timevarying(allocpm, ntimepm=1, nprogs=None, tvec=None, totalspend=None, fun
     # Use funding limits
     if fundingchanges is not None:
         newallocation = allocation # Copy
-        for t in range(1,npts):
-            for p in range(nprogs):
-                if newallocation[p,t]<fundingchanges.total.dec[p]: # Too low: make bigger up to the limit
-                    newallocation[p,t] = fundingchanges.total.dec[p]
-                if newallocation[p,t]>fundingchanges.total.inc[p]: # Too high: make smaller down to the limit
-                    newallocation[p,t] = fundingchanges.total.inc[p]
+        for t in xrange(1,npts):
+            for p in xrange(nprogs):
+                if newallocation[p,t]<fundingchanges['total']['dec'][p]: # Too low: make bigger up to the limit
+                    newallocation[p,t] = fundingchanges['total']['dec'][p]
+                if newallocation[p,t]>fundingchanges['total']['inc'][p]: # Too high: make smaller down to the limit
+                    newallocation[p,t] = fundingchanges['total']['inc'][p]
             newallocation[:,t] *= sum(allocation[:,t]) / sum(newallocation[:,t]) # Normalize
     
 
@@ -155,10 +155,10 @@ def multiyear(allocpm, years=[], totalspends=[], nprogs=None, tvec=None):
     
     # Loop over years, finding indices
     changes = [0,npts]
-    for y in range(nyears):
+    for y in xrange(nyears):
         changes.insert(-1,findinds(tvec>=years[y])[0])
     
-    for y in range(nyears+1):
+    for y in xrange(nyears+1):
         thisalloc = array(allocpm)[proginds+yearindex*nprogs]
         thisalloc *= totalspends[max(0,y-1)] / float(sum(thisalloc))
         allocation[:,changes[y]:changes[y+1]] = tile(thisalloc, (changes[y+1]-changes[y],1)).transpose()  # Assign totals and normalize

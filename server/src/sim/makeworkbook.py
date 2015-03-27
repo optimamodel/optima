@@ -21,7 +21,7 @@ def abbreviate(param):
     return short_param.upper()
 
 def years_range(data_start, data_end):
-    return [x for x in range(data_start, data_end+1)]
+    return [x for x in xrange(data_start, data_end+1)]
 
 class OptimaContent:
     """ the content of the data ranges (row names, column names, optional data and assumptions) """
@@ -311,7 +311,7 @@ class TitledRange:
                 for j, item in enumerate(self.content.data[i]):
                     formats.write_unlocked(self.sheet, current_row, self.data_range.first_col+j, item, row_format)
             else:
-                for j in range(self.data_range.num_cols):
+                for j in xrange(self.data_range.num_cols):
                     formats.write_empty_unlocked(self.sheet, current_row, self.data_range.first_col+j, row_format)
             #emit assumption
             if self.content.has_assumption():
@@ -641,7 +641,7 @@ class OptimaGraphTable:
             titles = [c['title'] for c in s["columns"]]
             max_row = max([len(c['data']) for c in s["columns"]])
 
-            for i in range(len(s["columns"])):
+            for i in xrange(len(s["columns"])):
                 sheet.set_column(i,i,20)
 
             self.formats.write_block_name(sheet, s["name"], 0) #sheet name
