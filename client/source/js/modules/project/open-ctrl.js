@@ -20,10 +20,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.open = function (name, id) {
       $http.get('/api/project/open/' + id)
         .success(function (response) {
-          if (response && response.status === 'NOK') {
-            alert(response.reason);
-            return;
-          }
           activeProject.setActiveProjectFor(name, id, UserManager.data);
           window.location = '/';
         });
