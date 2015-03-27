@@ -121,8 +121,9 @@ def getWorkingModel():
         if status in good_exit_status:
             status = 'Done'
         else:
-            status = 'NOK'
-    if status!='NOK': D_dict = load_model(project_id, working_model = True, as_bunch = False)
+            status = 'Failed'
+    if status != 'Failed':
+        D_dict = load_model(project_id, working_model = True, as_bunch = False)
 
     result = {'graph': D_dict.get('plot',{}).get('E',{})}
     result['status'] = status
@@ -130,7 +131,7 @@ def getWorkingModel():
         result['exception'] = error_text
 
     response_status = 200
-    if status=='NOK':
+    if status == 'Failed':
         response_status = 500
     result = add_calibration_parameters(D_dict, result)
     return jsonify(result), response_status

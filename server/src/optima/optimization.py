@@ -137,9 +137,10 @@ def getWorkingModel():
                 status = 'Stopping'
                 current_app.logger.debug("optimization thread for project %s is about to stop" % project_id)
         else:
-            status = 'NOK'
+            status = 'Failed'
 
-    if status!='NOK': D_dict = load_model(project_id, working_model = True, as_bunch = False)
+    if status != 'Failed':
+        D_dict = load_model(project_id, working_model = True, as_bunch = False)
 
     optimizations = unbunchify(D_dict.get('optimizations'))
     names = [item['name'] for item in optimizations] if optimizations else ['Default']
@@ -155,12 +156,11 @@ def getWorkingModel():
                 #warn that these results are transient
                 is_dirty = True
     result['optimizations'] = new_optimizations
-    result['status'] = status
     result['dirty'] = is_dirty
     if error_text:
         result['exception'] = error_text
     response_status = 200
-    if status=='NOK':
+    if status == 'Failed':
         response_status = 500
     return jsonify(result), response_status
 
