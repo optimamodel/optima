@@ -96,7 +96,7 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=2):
 
     ## Basic setup
     data = dict() # Create structure for holding data
-    data.__date__ = strftime("%Y-%m-%d %H:%M:%S")
+    data['date'] = strftime("%Y-%m-%d %H:%M:%S")
     programs = dict() # Create structure for holding program data
     workbook = open_workbook(filename) # Open workbook
     

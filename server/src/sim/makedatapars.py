@@ -63,7 +63,6 @@ def makedatapars(D, verbose=2):
     ###############################################################################
     
     D['P'] = dict() # Initialize parameters structure
-    D['P'].__doc__ = 'Parameters that have been directly derived from the data, which are then used to create the model parameters'
     D['G']['meta'] = D['data']['meta'] # Copy metadata
     
     ## Key parameters
@@ -91,7 +90,7 @@ def makedatapars(D, verbose=2):
     D['P']['const'] = dict()
     for parclass in D['data']['const'].keys():
         printv('Converting data parameter %s...' % parclass, 3, verbose)
-        if type(D['data']['const'][parclass])==struct: 
+        if type(D['data']['const'][parclass])==dict: 
             D['P']['const'][parclass] = dict()
             for parname in D['data']['const'][parclass].keys():
                 printv('Converting data parameter %s...' % parname, 4, verbose)

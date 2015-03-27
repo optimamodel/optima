@@ -39,7 +39,7 @@ def manualfit(D, F={}, Plist=[], Mlist=[], simstartyear=2000, simendyear=2015, v
     
     # Calculate results
     from makeresults import makeresults
-    D['R'] = makeresults(D, allsims, D['opt'].quantiles, verbose=verbose)
+    D['R'] = makeresults(D, allsims, D['opt']['quantiles'], verbose=verbose)
 
     # Gather plot data
     from gatherplotdata import gatheruncerdata

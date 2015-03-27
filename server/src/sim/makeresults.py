@@ -142,7 +142,7 @@ def makeresults(D, allsims=None, quantiles=None, rerunfinancial=False, verbose=2
                     if 'ylinedata' in allcosts[s]['annual']['total'][yscale]:
                         R['commit'][yscale] = quantile(array([allcosts[s]['commit'][yscale]['ylinedata'] for s in range(nsims)]), quantiles=quantiles)
             
-            R.costshared = thesecosts # TODO think of how to do this better
+            R['costshared'] = thesecosts # TODO think of how to do this better
             
 
     printv('...done calculating results.', 2, verbose)

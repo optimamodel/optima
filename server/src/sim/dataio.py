@@ -56,15 +56,15 @@ def savedata(filename, data, update=True, verbose=2):
 
     try: # First try loading the file and updating it
         rfid = open(filename,'rb') # "Read file ID" -- This will fail if the file doesn't exist
-        origdata = load(rfid)
+        origdata = fromjson(load(rfid))
         if update: origdata.update(data)
         else: origdata = data
         wfid = open(filename,'wb')
-        dump(data, wfid)
+        dump(tojson(data), wfid)
         printv('..updated file', 3, verbose)
     except: # If that fails, save a new file
         wfid = open(filename,'wb')
-        dump(data, wfid)
+        dump(tojson(data), wfid)
         printv('..created new file', 3, verbose)
     printv(' ...done saving data at %s.' % filename, 2, verbose)
     return filename
@@ -82,11 +82,80 @@ def loaddata(filename, verbose=2):
     
     import json
     rfid = open(filename,'rb')
-    data = json.load(rfid)
+    data = fromjson(json.load(rfid))
 
     printv('...done loading data.', 2, verbose)
     return data
 
+
+
+def tojson(x):
+    """ Recursively converts a Bunch into a dictionary.
+        
+        >>> b = Bunch(foo=Bunch(lol=True), hello=42, ponies='are pretty!')
+        >>> unbunchify(b)
+        {'ponies': 'are pretty!', 'foo': {'lol': True}, 'hello': 42}
+        
+        unbunchify will handle intermediary dicts, lists and tuples (as well as
+        their subclasses), but ymmv on custom datatypes.
+        
+        >>> b = Bunch(foo=['bar', Bunch(lol=True)], hello=42, 
+        ...         ponies=('are pretty!', Bunch(lies='are trouble!')))
+        >>> unbunchify(b) #doctest: +NORMALIZE_WHITESPACE
+        {'ponies': ('are pretty!', {'lies': 'are trouble!'}), 
+         'foo': ['bar', {'lol': True}], 'hello': 42}
+        
+        nb. As dicts are not hashable, they cannot be nested in sets/frozensets.
+    """
+    from numpy import ndarray, isnan
+    
+    if isinstance(x, dict):
+        return dict( (k, tojson(v)) for k,v in x.iteritems() )
+    elif isinstance(x, (list, tuple)):
+        return type(x)( tojson(v) for v in x )
+    elif isinstance(x, ndarray):
+        return {"np_array":[tojson(v) for v in x.tolist()], "np_dtype":x.dtype.name}
+    elif isinstance(x, float) and isnan(x):
+        return None
+    else:
+#        print ("x= %s, type(x) = %s" % (x, type(x))) # CK: What the hell was that doing there!?
+        return x
+
+
+def fromjson(x):
+    """ Recursively transforms a dictionary into a Bunch via copy.
+        
+        >>> b = bunchify({'urmom': {'sez': {'what': 'what'}}})
+        >>> b.urmom.sez.what
+        'what'
+        
+        bunchify can handle intermediary dicts, lists and tuples (as well as 
+        their subclasses), but ymmv on custom datatypes.
+        
+        >>> b = bunchify({ 'lol': ('cats', {'hah':'i win again'}), 
+        ...         'hello': [{'french':'salut', 'german':'hallo'}] })
+        >>> b.hello[0].french
+        'salut'
+        >>> b.lol[1].hah
+        'i win again'
+        
+        nb. As dicts are not hashable, they cannot be nested in sets/frozensets.
+    """
+    NP_ARRAY_KEYS = set(["np_array", "np_dtype"])
+    from numpy import asarray, dtype, nan
+    
+    if isinstance(x, dict):
+        dk = x.keys()
+        if len(dk) == 2 and set(dk) == NP_ARRAY_KEYS:
+            return asarray(fromjson(x['np_array']), dtype(x['np_dtype']))
+        else:
+            return dict( (k, fromjson(v)) for k,v in x.iteritems() )
+    elif isinstance(x, (list, tuple)):
+        return type(x)( fromjson(v) for v in x )
+    elif x is None:
+        return nan
+    else:
+        return x
 
 
 def upload_dir_user(dirpath, user_id = None):

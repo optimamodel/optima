@@ -152,7 +152,7 @@ def financialanalysis(D, postyear=2015, S=None, rerunmodel=False, artgrowthrate=
         plotdata['cumulative']['future']['ylinedata'] = (cumsum(plotdata['annual']['future']['total']['ylinedata'])/stepsperyear)
 
     # Calculate net present value of future stream of treatment costs
-    inci = S.inci.sum(axis=0)
+    inci = S['inci'].sum(axis=0)
     commitments = []
     for i in range(len(inci)):
         artflows = longart[i+treattime[0]+treattime[1]:i+treattime[0]+treattime[1]+treattime[2]].tolist() + \
