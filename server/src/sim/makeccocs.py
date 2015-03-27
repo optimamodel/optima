@@ -22,7 +22,7 @@ default_ccparams = []# [0.9, 0.1, 0.3, 4000000.0, None, None] #
 default_ccplot = []#[1000000, None, 0]
 default_coparams = []#[0.3, 0.5, 0.7, 0.9] 
 default_effect = [['sex', 'condomcas'], [u'MSM']] # D['programs'][default_progname]['effects'][0] 
-default_artelig = range(6,31)
+default_artelig = xrange(6,31)
 coverage_params = ['numost','numpmtct','numfirstline','numsecondline']
 
 ## Set defaults for use in getcurrentbudget. The parameters are stored as [median, lower bound, upperbound]
@@ -78,7 +78,7 @@ def makecc(D=None, progname=default_progname, ccparams=default_ccparams, ccplot=
         if len(totalcost)==1: # If it's an assumption, assume it's already in current prices
             totalcost = [totalcost[0]*cpi[cpibaseyearindex]]
         else:
-            totalcost = [totalcost[j]*(cpi[cpibaseyearindex]/cpi[j]) if ~isnan(totalcost[j]) else float('nan') for j in range(len(totalcost))]
+            totalcost = [totalcost[j]*(cpi[cpibaseyearindex]/cpi[j]) if ~isnan(totalcost[j]) else float('nan') for j in xrange(len(totalcost))]
     else:
         cpibaseyear = D['data']['epiyears'][-1]
 
@@ -208,8 +208,8 @@ def makeco(D, progname=default_progname, effect=default_effect, coparams=default
 
         # Populate output structure with scatter data 
         coverage, outcome = getscatterdata(coverage, outcome)
-        plotdata['xscatterdata'] = coverage # [coverage[j]*100.0 for j in range(len(coverage))]
-        plotdata['yscatterdata'] = outcome #[outcome[j]*100.0 for j in range(len(outcome))]
+        plotdata['xscatterdata'] = coverage # [coverage[j]*100.0 for j in xrange(len(coverage))]
+        plotdata['yscatterdata'] = outcome #[outcome[j]*100.0 for j in xrange(len(outcome))]
            
         # Get inputs from GUI (#TODO simplify?)
         if coparams and len(coparams)>3:
@@ -333,7 +333,7 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
             if len(totalcost)==1: # If it's an assumption, assume it's already in current prices
                 totalcost = totalcost
             else:
-                totalcost = [totalcost[j]*(cpi[cpibaseyearindex]/cpi[j]) if ~isnan(totalcost[j]) else float('nan') for j in range(len(totalcost))]
+                totalcost = [totalcost[j]*(cpi[cpibaseyearindex]/cpi[j]) if ~isnan(totalcost[j]) else float('nan') for j in xrange(len(totalcost))]
         else:
             cpibaseyear = D['data']['epiyears'][-1]
 
@@ -380,7 +380,7 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
         
         plotdata['xscatterdata'] = plottotalcost # X scatter data
         plotdata['yscatterdata'] = plotoutcome # Y scatter data
-#        plotdata['yscatterdata'] = [outcome[j]*100.0 for j in range(len(outcome))] # Y scatter data
+#        plotdata['yscatterdata'] = [outcome[j]*100.0 for j in xrange(len(outcome))] # Y scatter data
     
         # Do we have parameters for making curves?
         if (ccparams or D['programs'][progname]['ccparams']) and (coparams or (len(effect)>2 and len(effect[2])>3)):
@@ -390,7 +390,7 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
             costparam = ccparams[3]
             if popadj:
                 costparam = costparam/targetpopsize
-                costparam = mean(costparam) if len(coverage)==1 else [costparam[j] for j in range(len(coverage)) if ~isnan(coverage[j])][0]
+                costparam = mean(costparam) if len(coverage)==1 else [costparam[j] for j in xrange(len(coverage)) if ~isnan(coverage[j])][0]
             saturation = ccparams[0]
             if isinstance(ccparams[4], float):
                 growthratel = exp((1-ccparams[4])*log(ccparams[0]/ccparams[1]-1)+log(ccparams[3]))
@@ -424,8 +424,8 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
                 coparams = effect[2]
                 convertedcoparams = effect[3]
 
-            for j in range(3): convertedccoparams[j].extend([convertedcoparams[0],convertedcoparams[2]])
-            for j in range(3): convertedccoplotparams[j].extend([convertedcoparams[0],convertedcoparams[2]])
+            for j in xrange(3): convertedccoparams[j].extend([convertedcoparams[0],convertedcoparams[2]])
+            for j in xrange(3): convertedccoplotparams[j].extend([convertedcoparams[0],convertedcoparams[2]])
             if len(effect) < 5: # There's no existing info here, append
                 effect.append(convertedccoparams)
             else:
@@ -545,7 +545,7 @@ def getcoverage(D=None, params=[], popadj=0, artelig=default_artelig, progname=d
             if thispar == 'aidstest': # Target population = diagnosed PLHIV, AIDS stage
                 targetpopmodel = D['S']['people'][27:31,:,0:npts].sum(axis=(0,1))
             elif thispar in ['numost','sharing']: # Target population = the sum of all populations that inject
-                injectindices = [i for i, x in enumerate(D['data']['meta']['pops'].injects) if x == 1]
+                injectindices = [i for i, x in enumerate(D['data']['meta']['pops']['injects']) if x == 1]
                 targetpopmodel = D['S']['people'][:,injectindices,0:npts].sum(axis = (0,1))
             elif thispar == 'numpmtct': # Target population = HIV+ pregnant women
                 targetpopmodel = multiply(D['M']['birth'][:,0:npts], D['S']['people'][artelig,:,0:npts].sum(axis=0)).sum(axis=0)
@@ -561,7 +561,7 @@ def getcoverage(D=None, params=[], popadj=0, artelig=default_artelig, progname=d
         print('WARNING, no target parameters for program %s' % progname)
                 
     # We only want the model-estimated size of the targeted population(s) for actual years, not the interpolated years
-    yearindices = range(0,npts,int(1/D['opt']['dt']))
+    yearindices = xrange(0,npts,int(1/D['opt']['dt']))
     targetpop = targetpopmodel[yearindices]
 
     # Do population adjustments if required
@@ -576,14 +576,14 @@ def getcoverage(D=None, params=[], popadj=0, artelig=default_artelig, progname=d
         if len(coveragepercent)==1: # If an assumption has been used, keep this constant over time
             coveragenumber = coveragepercent * targetpop
         else:
-            coveragenumber = [coveragepercent[j] * targetpop[j] for j in range(ndatayears)] # get program coverage 
+            coveragenumber = [coveragepercent[j] * targetpop[j] for j in xrange(ndatayears)] # get program coverage 
         coverage = coveragepercent # this is unnecessary now but might be useful later to set it up this way
         coveragelabel = 'Proportion covered'
         if params:
             costparam = params[3]
             if popadj:
                 costparam = params[3]/targetpop
-                costparam = mean(costparam) if len(coverage)==1 else [costparam[j] for j in range(len(coverage)) if ~isnan(coverage[j])][0]
+                costparam = mean(costparam) if len(coverage)==1 else [costparam[j] for j in xrange(len(coverage)) if ~isnan(coverage[j])][0]
             saturation = params[0]
             if isinstance(params[4], float):
                 growthratel = exp((1-params[4])*log(params[0]/params[1]-1)+log(params[3]))
@@ -608,14 +608,14 @@ def getcoverage(D=None, params=[], popadj=0, artelig=default_artelig, progname=d
         if len(coveragenumber)==1: # If an assumption has been used, keep this constant over time
             coveragepercent = (coveragenumber/targetpop)*100
         else:
-            coveragepercent = [(coveragenumber[j]/targetpop[j])*100 for j in range(ndatayears)] # get program coverage
+            coveragepercent = [(coveragenumber[j]/targetpop[j])*100 for j in xrange(ndatayears)] # get program coverage
         coverage = coveragenumber # this is unnecessary atm but might be useful later to set it up this way
         coveragelabel = 'Number covered'
         if params:
             costparam = params[3]
             if popadj:
                 costparam = params[3]/targetpop
-                costparam = mean(costparam) if len(coverage)==1 else [costparam[j] for j in range(len(coverage)) if ~isnan(coverage[j])][0]
+                costparam = mean(costparam) if len(coverage)==1 else [costparam[j] for j in xrange(len(coverage)) if ~isnan(coverage[j])][0]
             saturation = params[0]*targetpop[-1]
             if isinstance(params[4], float):
                 growthratel = exp((1-params[4])*log(params[0]/params[1]-1)+log(params[3]))
@@ -658,7 +658,7 @@ def getscatterdata(xdata, ydata):
         xdata = xdata[~isnan(xdata)]
         xdatascatter = [xdata[-1]]
     else:
-        for j in range(len(xdata)):
+        for j in xrange(len(xdata)):
             if (~isnan(xdata[j]) and ~isnan(ydata[j])):
                 xdatascatter.append(xdata[j])
                 ydatascatter.append(ydata[j])

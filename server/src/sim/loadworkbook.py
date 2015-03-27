@@ -122,7 +122,7 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=2):
             ## Calculate columns for which data are entered, and store the year ranges
             if groupname in ['keydata', 'cocodata', 'timedata']: # Need to gather year ranges for epidemic etc. data
                 data['epiyears'] = [] # Initialize epidemiology data years
-                for col in range(sheetdata.ncols):
+                for col in xrange(sheetdata.ncols):
                     thiscell = sheetdata.cell_value(1,col) # 1 is the 2nd row which is where the year data should be
                     if thiscell=='' and len(data['epiyears'])>0: #  We've gotten to the end
                         lastdatacol = col # Store this column number
@@ -132,7 +132,7 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=2):
             
             if name == 'econ': # Need to gather year ranges for economic data
                 data['epiyears'] = [] # Initialize epidemiology data years
-                for col in range(sheetdata.ncols):
+                for col in xrange(sheetdata.ncols):
                     thiscell = sheetdata.cell_value(1,col) # 1 is the 2nd row which is where the year data should be
                     if thiscell=='' and len(data['epiyears'])>0: #  We've gotten to the end
                         lastdatacol = col # Store this column number
@@ -152,7 +152,7 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=2):
             
             
             # Loop over each row in the workbook
-            for row in range(sheetdata.nrows): 
+            for row in xrange(sheetdata.nrows): 
                 paramcategory = sheetdata.cell_value(row,0) # See what's in the first column for this row
                 
                 if paramcategory != '': # It's not blank: e.g. "HIV prevalence"
@@ -240,7 +240,7 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=2):
                         # It's key data, save both the values and uncertainties
                         if groupname=='keydata':
                             if len(data[name][thispar])==0: 
-                                data[name][thispar] = [[] for z in range(3)] # Create new variable for best, low, high
+                                data[name][thispar] = [[] for z in xrange(3)] # Create new variable for best, low, high
                             thesedata = sheetdata.row_values(row, start_colx=3, end_colx=lastdatacol) # Data starts in 4th column
                             thesedata = map(lambda val: nan if val=='' else val, thesedata) # Replace blanks with nan
                             assumptiondata = sheetdata.cell_value(row, assumptioncol)
@@ -306,7 +306,7 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=2):
     nprogs = len(data['costcov']['cost'])
     data['origalloc'] = zeros(nprogs)
     indexforcurrentyear = data['epiyears'].index(min(data['epiyears'][-1], date.today().year))
-    for prog in range(nprogs):
+    for prog in xrange(nprogs):
         totalcost = data['costcov']['cost'][prog]
         totalcost = array(totalcost)[:indexforcurrentyear] # Trim years after most recent
         totalcost = totalcost[~isnan(totalcost)]

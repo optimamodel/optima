@@ -25,7 +25,7 @@ def makeresults(D, allsims=None, quantiles=None, rerunfinancial=False, verbose=2
     R['tvec'] = allsims[0]['tvec'] # Copy time vector
     nsims = len(allsims) # Number of simulations to average over
     if quantiles==None: quantiles = D['opt']['quantiles'] # If no quantiles are specified, just use the default ones
-    allpeople = deepcopy(array([allsims[s]['people'] for s in range(nsims)])) # WARNING, might use stupid amounts of memory
+    allpeople = deepcopy(array([allsims[s]['people'] for s in xrange(nsims)])) # WARNING, might use stupid amounts of memory
     
     allcosts = [] # Initialize -- WARNING, need to do better
     datatypes = ['prev', 'plhiv', 'inci', 'force', 'daly', 'death', 'tx1', 'tx2', 'dx', 'costann', 'costcum', 'commit']
@@ -66,21 +66,21 @@ def makeresults(D, allsims=None, quantiles=None, rerunfinancial=False, verbose=2
         
         if data=='inci':
             printv('Calculating incidence...', 3, verbose)
-            allinci = array([allsims[s]['inci'] for s in range(nsims)])
+            allinci = array([allsims[s]['inci'] for s in xrange(nsims)])
             R['inci']['pops'] = quantile(allinci, quantiles=quantiles)
             R['inci']['tot'] = quantile(allinci.sum(axis=1), quantiles=quantiles) # Axis 1 is populations
 
 
         if data=='force':
             printv('Calculating force-of-infection...', 3, verbose)
-            allinci = array([allsims[s]['inci'] for s in range(nsims)])
+            allinci = array([allsims[s]['inci'] for s in xrange(nsims)])
             R['force']['pops'] = quantile(allinci / allpeople[:,:,:,:].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
             R['force']['tot'] = quantile(allinci.sum(axis=1) / allpeople[:,:,:,:].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
         
         
         if data=='death':
             printv('Calculating deaths...', 3, verbose)
-            alldeaths = array([allsims[s]['death'] for s in range(nsims)])
+            alldeaths = array([allsims[s]['death'] for s in xrange(nsims)])
             R['death']['pops'] = quantile(alldeaths, quantiles=quantiles)
             R['death']['tot'] = quantile(alldeaths.sum(axis=1), quantiles=quantiles) # Axis 1 is populations
 
@@ -90,7 +90,7 @@ def makeresults(D, allsims=None, quantiles=None, rerunfinancial=False, verbose=2
             disutils = [D['P']['const']['disutil'][key] for key in D['G']['healthstates']]
             tmpdalypops = allpeople[:,concatenate([D['G']['tx1'], D['G']['tx2']]),:,:].sum(axis=1) * D['P']['const']['disutil']['tx']
             tmpdalytot = allpeople[:,concatenate([D['G']['tx1'], D['G']['tx2']]),:,:].sum(axis=(1,2)) * D['P']['const']['disutil']['tx']
-            for h in range(len(disutils)): # Loop over health states
+            for h in xrange(len(disutils)): # Loop over health states
                 healthstates = array([D['G']['undx'][h], D['G']['dx'][h], D['G']['fail'][h]])
                 tmpdalypops += allpeople[:,healthstates,:,:].sum(axis=1) * disutils[h]
                 tmpdalytot += allpeople[:,healthstates,:,:].sum(axis=(1,2)) * disutils[h]
@@ -100,7 +100,7 @@ def makeresults(D, allsims=None, quantiles=None, rerunfinancial=False, verbose=2
         
         if data=='dx':
             printv('Calculating diagnoses...', 3, verbose)
-            alldx = array([allsims[s]['dx'] for s in range(nsims)])
+            alldx = array([allsims[s]['dx'] for s in xrange(nsims)])
             R['dx']['pops'] = quantile(alldx, quantiles=quantiles)
             R['dx']['tot'] = quantile(alldx.sum(axis=1), quantiles=quantiles) # Axis 1 is populations
             
@@ -121,26 +121,26 @@ def makeresults(D, allsims=None, quantiles=None, rerunfinancial=False, verbose=2
             printv('Calculating costs...', 3, verbose)
             from financialanalysis import financialanalysis
             if len(allcosts)==0:
-                for s in range(nsims):
+                for s in xrange(nsims):
                     thesecosts = financialanalysis(D, postyear = D['data']['epiyears'][-1], S = allsims[s], rerunmodel = rerunfinancial)
                     allcosts.append(thesecosts)
             
             if data=='costcum':
-                R['costcum']['total'] = quantile(array([allcosts[s]['cumulative']['total']['ylinedata'] for s in range(nsims)]), quantiles=quantiles) 
+                R['costcum']['total'] = quantile(array([allcosts[s]['cumulative']['total']['ylinedata'] for s in xrange(nsims)]), quantiles=quantiles) 
                 if rerunfinancial:
-                    R['costcum']['existing'] = quantile(array([allcosts[s]['cumulative']['existing']['ylinedata'] for s in range(nsims)]), quantiles=quantiles)
-                    R['costcum']['future'] = quantile(array([allcosts[s]['cumulative']['future']['ylinedata'] for s in range(nsims)]), quantiles=quantiles)
+                    R['costcum']['existing'] = quantile(array([allcosts[s]['cumulative']['existing']['ylinedata'] for s in xrange(nsims)]), quantiles=quantiles)
+                    R['costcum']['future'] = quantile(array([allcosts[s]['cumulative']['future']['ylinedata'] for s in xrange(nsims)]), quantiles=quantiles)
             if data=='costann':
                 for yscale in ['total','gdp','revenue','govtexpend','totalhealth','domestichealth']:
                     if 'ylinedata' in allcosts[s]['annual']['total'][yscale]:
-                        R['costann']['total'][yscale] = quantile(array([allcosts[s]['annual']['total'][yscale]['ylinedata'] for s in range(nsims)]), quantiles=quantiles)
+                        R['costann']['total'][yscale] = quantile(array([allcosts[s]['annual']['total'][yscale]['ylinedata'] for s in xrange(nsims)]), quantiles=quantiles)
                         if rerunfinancial:
-                            R['costann']['existing'][yscale]= quantile(array([allcosts[s]['annual']['existing'][yscale]['ylinedata'] for s in range(nsims)]), quantiles=quantiles)
-                            R['costann']['future'][yscale] = quantile(array([allcosts[s]['annual']['future'][yscale]['ylinedata'] for s in range(nsims)]), quantiles=quantiles)
+                            R['costann']['existing'][yscale]= quantile(array([allcosts[s]['annual']['existing'][yscale]['ylinedata'] for s in xrange(nsims)]), quantiles=quantiles)
+                            R['costann']['future'][yscale] = quantile(array([allcosts[s]['annual']['future'][yscale]['ylinedata'] for s in xrange(nsims)]), quantiles=quantiles)
             if data=='commit':
                 for yscale in ['total','gdp','revenue','govtexpend','totalhealth','domestichealth']:
                     if 'ylinedata' in allcosts[s]['annual']['total'][yscale]:
-                        R['commit'][yscale] = quantile(array([allcosts[s]['commit'][yscale]['ylinedata'] for s in range(nsims)]), quantiles=quantiles)
+                        R['commit'][yscale] = quantile(array([allcosts[s]['commit'][yscale]['ylinedata'] for s in xrange(nsims)]), quantiles=quantiles)
             
             R['costshared'] = thesecosts # TODO think of how to do this better
             

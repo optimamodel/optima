@@ -112,16 +112,16 @@ def printarr(arr, arrformat='%0.2f  '):
     from numpy import ndim
     if ndim(arr)==1:
         string = ''
-        for i in range(len(arr)):
+        for i in xrange(len(arr)):
             string += arrformat % arr[i]
         print(string)
     elif ndim(arr)==2:
-        for i in range(len(arr)):
+        for i in xrange(len(arr)):
             printarr(arr[i], arrformat)
     elif ndim(arr)==3:
-        for i in range(len(arr)):
+        for i in xrange(len(arr)):
             print('='*len(arr[i][0])*len(arrformat % 1))
-            for j in range(len(arr[i])):
+            for j in xrange(len(arr[i])):
                 printarr(arr[i][j], arrformat)
     else:
         print(arr) # Give up
@@ -162,7 +162,7 @@ def checkmem(origvariable, descend=0, order='n', plot=False, verbose=0):
                 varnames.append(key)
                 variables.append(origvariable[key])
         else:
-            varnames = range(len(origvariable))
+            varnames = xrange(len(origvariable))
             variables = origvariable
     
     for v,variable in enumerate(variables):

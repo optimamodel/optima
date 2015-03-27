@@ -4,7 +4,7 @@ import traceback
 from async_calculate import CalculatingThread, start_or_report_calculation, cancel_calculation
 from async_calculate import check_calculation, check_calculation_status, good_exit_status
 from sim.manualfit import manualfit
-from sim.dataio import fromjson
+from sim.dataio import fromjson, tojson
 from sim.runsimulation import runsimulation
 from sim.makeccocs import makecco, plotallcurves #, default_effectname, default_ccparams, default_coparams
 from utils import load_model, save_model, save_working_model_as_default, revert_working_model_to_default, project_exists, pick_params, check_project_name, for_fe
@@ -347,7 +347,7 @@ def doCostCoverage():
                     else:
                         effect[2] = new_coparams[i][:]
                 new_effects.append(effect)
-            D.programs[progname]['effects'] = new_effects
+            D['programs'][progname]['effects'] = new_effects
         args['D'] = D
         plotdata, plotdata_co, plotdata_cc, effectnames, D = plotallcurves(**args) #effectnames are actually effects
         if do_save:

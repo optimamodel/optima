@@ -77,11 +77,11 @@ def getrealcosts(data):
     # Set the CPI base year to the current year or the last year for which data were provided.
     cpibaseyearindex = data['epiyears'].index(min(data['epiyears'][-1],date.today().year))
 
-    for prog in range(nprogs):
+    for prog in xrange(nprogs):
         if len(cost[prog])==1: # If it's an assumption, assume it's already in current prices
             realcost[prog] = cost[prog]
         else:
-            realcost[prog] = [cost[prog][j]*(cpi[cpibaseyearindex]/cpi[j]) if ~isnan(cost[prog][j]) else float('nan') for j in range(len(cost[prog]))]
+            realcost[prog] = [cost[prog][j]*(cpi[cpibaseyearindex]/cpi[j]) if ~isnan(cost[prog][j]) else float('nan') for j in xrange(len(cost[prog]))]
     
     data['costcov']['realcost'] = realcost
     
@@ -97,8 +97,8 @@ def makefittedpars(D, verbose=2):
     printv('Initializing fitted parameters...', 1, verbose)
     
     # Initialize fitted parameters
-    D['F'] = [dict() for s in range(D['opt']['nsims'])]
-    for s in range(D['opt']['nsims']):
+    D['F'] = [dict() for s in xrange(D['opt']['nsims'])]
+    for s in xrange(D['opt']['nsims']):
         span=0 if s==0 else 0.5 # Don't have any variance for first simulation
         D['F'][s]['init']  = perturb(D['G']['npops'],span)
         D['F'][s]['popsize'] = perturb(D['G']['npops'],span)
@@ -112,7 +112,7 @@ def makefittedpars(D, verbose=2):
 def unnormalizeF(normF, M, G, normalizeall=False):
     """ Convert from F values where everything is 1 to F values that can be real-world interpretable. """
     unnormF = deepcopy(normF)
-    for p in range(G['npops']):
+    for p in xrange(G['npops']):
         unnormF['init'][p] *= M['hivprev'][p] # Multiply by initial prevalence
         if normalizeall: unnormF['popsize'][p] *= M['popsize'][p][0] # Multiply by initial population size
     if normalizeall: unnormF['dx'][3] *= G['datayears'].mean() # Multiply by mean data year
@@ -122,7 +122,7 @@ def unnormalizeF(normF, M, G, normalizeall=False):
 def normalizeF(unnormF, M, G, normalizeall=False):
     """ Convert from F values that can be real-world interpretable to F values where everything is 1. """
     normF = deepcopy(unnormF)
-    for p in range(G['npops']):
+    for p in xrange(G['npops']):
         normF['init'][p] /= M['hivprev'][p] # Divide by initial prevalence
         if normalizeall: normF['popsize'][p] /= M['popsize'][p][0] # Divide by initial population size
     if normalizeall: normF['dx'][3] /= G['datayears'].mean() # Divide by mean data year

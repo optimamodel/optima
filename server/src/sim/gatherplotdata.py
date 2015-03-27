@@ -33,20 +33,20 @@ def gatheruncerdata(D, R, annual=True, verbose=2, maxyear=2030):
     origtvec = deepcopy(uncer['tvec'])
     if annual:
         dt = origtvec[1]-origtvec[0]
-        allindices = range(0, len(origtvec), int(round(1/dt)))
+        allindices = xrange(0, len(origtvec), int(round(1/dt)))
         indices = []
         for i in allindices:
             if origtvec[i]<=maxyear:
                 indices.append(i)
         uncer['tvec'] = [origtvec[i] for i in indices]
     else:
-        indices = range(len(origtvec))
+        indices = xrange(len(origtvec))
     
     for key in epititles.keys():
         percent = 100 if key in ['prev','force'] else 1 # Whether to multiple results by 100
         
         uncer[key] = dict()
-        uncer[key]['pops'] = [dict() for p in range(D['G']['npops'])]
+        uncer[key]['pops'] = [dict() for p in xrange(D['G']['npops'])]
         uncer[key]['tot'] = dict()
         if key not in ['prev','force']: # For stacked area plots -- an option for everything except prevalence and force-of-infection
             uncer[key]['popstacked'] = dict()
@@ -54,7 +54,7 @@ def gatheruncerdata(D, R, annual=True, verbose=2, maxyear=2030):
             uncer[key]['popstacked']['legend'] = []
             uncer[key]['popstacked']['title'] = epititles[key]
             uncer[key]['popstacked']['ylabel'] = epiylabels[key]
-        for p in range(D['G']['npops']):
+        for p in xrange(D['G']['npops']):
             uncer[key]['pops'][p]['best'] = (R[key]['pops'][0][p,:]*percent)[indices].tolist()
             uncer[key]['pops'][p]['low'] = (R[key]['pops'][1][p,:]*percent)[indices].tolist()
             uncer[key]['pops'][p]['high'] = (R[key]['pops'][2][p,:]*percent)[indices].tolist()
@@ -106,7 +106,7 @@ def gatheruncerdata(D, R, annual=True, verbose=2, maxyear=2030):
             if len(uncer[key]['ydata']) != ndatayears:
                 raise Exception('Expect data length of 1 or %i, actually %i' % (ndatayears, len(uncer[key]['ydata'])))
         elif size(epidata,axis=0)==D['G']['npops']: # It's by population
-            for p in range(D['G']['npops']):
+            for p in xrange(D['G']['npops']):
                 thispopdata = epidata[p]
                 if len(thispopdata) == 1: 
                     thispopdata = nan+zeros(ndatayears) # If it's an assumption, just set with nans
@@ -209,7 +209,7 @@ def gathermultidata(D, Rarr, annual=True, verbose=2, maxyear=2030):
     origtvec = deepcopy(multi['tvec'])
     if annual:
         dt = origtvec[1]-origtvec[0]
-        allindices = range(0, len(origtvec), int(round(1/dt)))
+        allindices = xrange(0, len(origtvec), int(round(1/dt)))
         indices = []
         for i in allindices:
             if origtvec[i]<=maxyear:
@@ -217,13 +217,13 @@ def gathermultidata(D, Rarr, annual=True, verbose=2, maxyear=2030):
         multi['tvec'] = [origtvec[i] for i in indices]
         multi['tvec'] = [origtvec[i] for i in indices]
     else:
-        indices = range(len(origtvec))
+        indices = xrange(len(origtvec))
     
     for key in epititles.keys():
         percent = 100 if key in ['prev','force'] else 1 # Whether to multiple results by 100
         multi[key] = dict()
-        multi[key]['pops'] = [dict() for p in range(D['G']['npops'])]
-        for p in range(D['G']['npops']):
+        multi[key]['pops'] = [dict() for p in xrange(D['G']['npops'])]
+        for p in xrange(D['G']['npops']):
             multi[key]['pops'][p]['data'] = []
             multi[key]['pops'][p]['best'] = []
             multi[key]['pops'][p]['high'] = []
@@ -231,7 +231,7 @@ def gathermultidata(D, Rarr, annual=True, verbose=2, maxyear=2030):
             multi[key]['pops'][p]['legend'] = []
             multi[key]['pops'][p]['title'] = epititles[key] + ' - ' + D['G']['meta']['pops']['short'][p]
             multi[key]['pops'][p]['ylabel'] = epiylabels[key]
-            for sim in range(multi['nsims']):
+            for sim in xrange(multi['nsims']):
                 multi[key]['pops'][p]['data'].append((Rarr[sim]['R'][key]['pops'][0][p,:]*percent)[indices].tolist())
                 multi[key]['pops'][p]['best'].append((Rarr[sim]['R'][key]['pops'][0][p,:]*percent)[indices].tolist())
                 multi[key]['pops'][p]['low'].append((Rarr[sim]['R'][key]['pops'][1][p,:]*percent)[indices].tolist())
@@ -246,7 +246,7 @@ def gathermultidata(D, Rarr, annual=True, verbose=2, maxyear=2030):
         multi[key]['tot']['title'] = epititles[key] + ' - Overall'
         multi[key]['tot']['ylabel'] = epiylabels[key]
         multi[key]['xlabel'] = 'Years'
-        for sim in range(multi['nsims']):
+        for sim in xrange(multi['nsims']):
             multi[key]['tot']['data'].append((Rarr[sim]['R'][key]['tot'][0]*percent)[indices].tolist())
             multi[key]['tot']['best'].append((Rarr[sim]['R'][key]['tot'][0]*percent)[indices].tolist())
             multi[key]['tot']['low'].append((Rarr[sim]['R'][key]['tot'][1]*percent)[indices].tolist())
@@ -262,7 +262,7 @@ def gathermultidata(D, Rarr, annual=True, verbose=2, maxyear=2030):
             if key=='costcum':
                 multi[key][ac]['data'] = []
                 multi[key][ac]['legend'] = []
-                for sim in range(multi['nsims']):
+                for sim in xrange(multi['nsims']):
                     thisdata = Rarr[sim]['R'][key][ac][0][indices].tolist()
                     multi[key][ac]['data'].append(thisdata)
                     multi[key][ac]['legend'].append(Rarr[sim]['label']) # Add legends
@@ -276,7 +276,7 @@ def gathermultidata(D, Rarr, annual=True, verbose=2, maxyear=2030):
                     multi[key][ac][yscale]['data'] = []
                     multi[key][ac][yscale]['legend'] = []
                     if 'ylinedata' in Rarr[sim]['R']['costshared'][origkey][ac][yscale]:
-                        for sim in range(multi['nsims']):
+                        for sim in xrange(multi['nsims']):
                            thisdata = Rarr[sim]['R'][key][ac][yscale][0][indices].tolist()
                            multi[key][ac][yscale]['data'].append(thisdata)
                            multi[key][ac][yscale]['legend'].append(Rarr[sim]['label']) # Add legends
@@ -292,7 +292,7 @@ def gathermultidata(D, Rarr, annual=True, verbose=2, maxyear=2030):
         multi['commit'][yscale]['data'] = []
         multi['commit'][yscale]['legend'] = []
         if 'ylinedata' in Rarr[sim]['R']['costshared']['annual']['total'][yscale]:
-            for sim in range(multi['nsims']):
+            for sim in xrange(multi['nsims']):
                 thisdata = Rarr[sim]['R']['commit'][yscale][0][indices].tolist()
                 multi['commit'][yscale]['data'].append(thisdata)
                 multi['commit'][yscale]['legend'].append(Rarr[sim]['label']) # Add legends
@@ -320,14 +320,14 @@ def gatheroptimdata(D, result, verbose=2):
     if optim['kind'] in ['constant', 'timevarying', 'multiyear']:
         optim['outcome'] = dict() # Plot how the outcome improved with optimization
         optim['outcome']['ydata'] = result['fval'].tolist() # Vector of outcomes
-        optim['outcome']['xdata'] = range(len(result['fval'].tolist())) # Vector of iterations
+        optim['outcome']['xdata'] = xrange(len(result['fval'].tolist())) # Vector of iterations
         optim['outcome']['ylabel'] = 'Outcome'
         optim['outcome']['xlabel'] = 'Iteration'
         optim['outcome']['title'] = 'Outcome (initial: %0.0f, final: %0.0f)' % (result['fval'][0], result['fval'][-1])
     if optim['kind']=='constant':
         optim['alloc'] = []
         titles = ['Original','Optimal']
-        for i in range(2): # Original and optimal
+        for i in xrange(2): # Original and optimal
             optim['alloc'].append(dict())
             optim['alloc'][i]['piedata'] = result['allocarr'][i][0].tolist() # A vector of allocations, length nprogs, for pie charts
             optim['alloc'][i]['radardata'] = dict() # Structure for storing radar plot data
@@ -339,7 +339,7 @@ def gatheroptimdata(D, result, verbose=2):
     if optim['kind']=='timevarying' or optim['kind']=='multiyear':
         optim['alloc'] = dict() # Allocation structure
         optim['alloc']['stackdata'] = [] # Empty list
-        for p in range(D['G']['nprogs']): # Loop over programs
+        for p in xrange(D['G']['nprogs']): # Loop over programs
             optim['alloc']['stackdata'].append(result['alloc'][p].tolist()) # Allocation array, nprogs x npts, for stacked area plots
         optim['alloc']['xdata'] = result['xdata'].tolist() # Years
         optim['alloc']['xlabel'] = 'Year'
@@ -349,7 +349,7 @@ def gatheroptimdata(D, result, verbose=2):
     if optim['kind']=='range':
         optim['alloc'] = dict() # Allocations structure
         optim['alloc']['bardata'] = []
-        for b in range(len(result['allocarr'])): # Loop over budgets
+        for b in xrange(len(result['allocarr'])): # Loop over budgets
             optim['alloc']['bardata'].append(result['allocarr'][b].tolist()) # A vector of allocations, length nprogs
         optim['alloc']['xdata'] = result['budgets'].tolist() # Vector of budgets
         optim['alloc']['xlabels'] = result['budgetlabels'] # Budget labels

@@ -103,8 +103,8 @@ def makedatapars(D, verbose=2):
         from copy import deepcopy
         newarray = deepcopy(origarray)
         if 't' in newarray.keys(): 
-            newarray['p'] = [array([0]) for i in range(len(D['G']['meta']['pops']['male']))]
-            newarray['t'] = [array([0]) for i in range(len(D['G']['meta']['pops']['male']))]
+            newarray['p'] = [array([0]) for i in xrange(len(D['G']['meta']['pops']['male']))]
+            newarray['t'] = [array([0]) for i in xrange(len(D['G']['meta']['pops']['male']))]
             count = -1
             if hasattr(popbool,'__iter__'): # May or may not be a list
                 for i,tf in enumerate(popbool):

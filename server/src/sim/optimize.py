@@ -46,7 +46,7 @@ def objectivecalc(optimparams, options):
     
     # Exclude fixed ['costs'] from the optimization
     opttrue = zeros(len(options['D']['data']['origalloc']))
-    for i in range(len(options['D']['data']['origalloc'])):
+    for i in xrange(len(options['D']['data']['origalloc'])):
         if len(options['D']['programs'][options['D']['data']['meta']['progs']['short'][i]]['effects']): opttrue[i] = 1.0
     opttrue = opttrue.astype(bool) # Logical values
     optimparams[opttrue] = optimparams[opttrue] / optimparams[opttrue].sum() * (options['totalspend'] - optimparams[~opttrue].sum()) # Make sure it's normalized -- WARNING KLUDGY
@@ -84,7 +84,7 @@ def objectivecalc(optimparams, options):
 #    if options.tmperrcount[-1]>=30:
 #        figure()
 #        subplot(2,2,1); hold(True)
-#        for i in range(len(tmporigplots)):
+#        for i in xrange(len(tmporigplots)):
 #            plot(options['D']['opt']['partvec'][options['outindices']], tmporigplots[i],c=(0,0,0))
 #            plot(options['D']['opt']['partvec'][options['outindices']], tmpplotdata[i])
 #        subplot(2,2,2)
@@ -144,7 +144,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
     nprogs = len(origalloc)
     totalspend = objectives['outcome']['fixed'] # For fixed budgets
     opttrue = zeros(len(D['data']['origalloc']))
-    for i in range(len(D['data']['origalloc'])):
+    for i in xrange(len(D['data']['origalloc'])):
         if len(D['programs'][D['data']['meta']['progs']['short'][i]]['effects']): opttrue[i] = 1.0
     opttrue = opttrue.astype(bool) # Logical values
     
@@ -160,7 +160,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         fundingchanges[key1] = dict()
         for key2 in keys2:
             fundingchanges[key1][key2] = []
-            for p in range(nprogs):
+            for p in xrange(nprogs):
                 fullkey = key1+key2+'rease'
                 this = constraints[fullkey][p] # Shorten name
                 if key1=='total':
@@ -203,10 +203,10 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
     stepsizes = zeros(nprogs * ntimepm)
     
     # Easy access initial allocation indices and turn stepsizes into array
-    ai = range(nprogs)
-    gi = range(nprogs,   nprogs*2) if ntimepm >= 2 else []
-    si = range(nprogs*2, nprogs*3) if ntimepm >= 3 else []
-    ii = range(nprogs*3, nprogs*4) if ntimepm >= 4 else []
+    ai = xrange(nprogs)
+    gi = xrange(nprogs,   nprogs*2) if ntimepm >= 2 else []
+    si = xrange(nprogs*2, nprogs*3) if ntimepm >= 3 else []
+    ii = xrange(nprogs*3, nprogs*4) if ntimepm >= 4 else []
     
     # Turn stepsizes into array
     stepsizes[ai] = stepsize
@@ -253,7 +253,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         ## Run with uncertainties
         allocarr = []
         fvalarr = []
-        for s in range(len(D['F'])): # range(len(D['F'])): # Loop over all available meta parameters
+        for s in xrange(len(D['F'])): # xrange(len(D['F'])): # Loop over all available meta parameters
             print('========== Running uncertainty optimization %s of %s... ==========' % (s+1, len(D['F'])))
             options['D']['F'] = [deepcopy(D['F'][s])] # Loop over fitted parameters
             
@@ -266,7 +266,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         ## Find which optimization was best
         bestallocind = -1
         bestallocval = inf
-        for s in range(len(fvalarr)):
+        for s in xrange(len(fvalarr)):
             if fvalarr[s][-1]<bestallocval:
                 bestallocval = fvalarr[s][-1]
                 bestallocind = s
@@ -404,7 +404,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         # Normalize
         proginds = arange(nprogs)
         optparams = array(optparams)
-        for y in range(nyears):
+        for y in xrange(nyears):
             theseinds = proginds+y*nprogs
             optparams[theseinds] *= options['totalspends'][y] / float(sum(optparams[theseinds]))
         optparams = optparams.tolist()
@@ -458,7 +458,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         budgets = hstack([1,budgets]) # Include current budget
         allocarr = [origalloc] # Original allocation
         fvalarr = [objectivecalc(optimparams, options=options)] # Outcome for original allocation
-        for b in range(nbudgets):
+        for b in xrange(nbudgets):
             print('========== Running budget optimization %s of %s... ==========' % (b+1, nbudgets))
             options['totalspend'] = totalspend*budgets[b+1] # Total budget, skipping first
             optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=fundingchanges['total']['dec'], xmax=fundingchanges['total']['inc'], absinitial=stepsizes, MaxIter=maxiters, timelimit=timelimit, fulloutput=True, stoppingfunc=stoppingfunc, verbose=verbose)
@@ -471,7 +471,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         result['kind'] = objectives['funding']
         result.budgets = budgets
         result.budgetlabels = ['Original budget']
-        for b in range(nbudgets): result.budgetlabels.append('%i%% budget' % (budgets[b+1]*100./float(budgets[0])))
+        for b in xrange(nbudgets): result.budgetlabels.append('%i%% budget' % (budgets[b+1]*100./float(budgets[0])))
 
         result['fval'] = fvalarr # Append the best value
         result['allocarr'] = allocarr # List of allocations
@@ -591,7 +591,7 @@ def defaultobjectives(D, verbose=2):
     ob['money']['objectives']['inci']['use'] = True # Set incidence to be on by default
 
     ob['money']['costs'] = []
-    for p in range(D['G']['nprogs']):
+    for p in xrange(D['G']['nprogs']):
         ob['money']['costs'].append(100) # By default, use a weighting of 100%
 
     return ob
@@ -608,7 +608,7 @@ def defaultconstraints(D, verbose=2):
     con['dontstopart'] = True # "No one who initiates treatment is to stop receiving ART"
     con['yeardecrease'] = []
     con['yearincrease'] = []
-    for p in range(D['G']['nprogs']): # Loop over all defined programs
+    for p in xrange(D['G']['nprogs']): # Loop over all defined programs
         con['yeardecrease'].append(dict())
         con['yeardecrease'][p]['use'] = False # Tick box: by default don't use
         con['yeardecrease'][p]['by'] = 80 # Text entry box: 0.5 = 50% per year
@@ -617,7 +617,7 @@ def defaultconstraints(D, verbose=2):
         con['yearincrease'][p]['by'] = 120 # Text entry box: 0.5 = 50% per year
     con['totaldecrease'] = []
     con['totalincrease'] = []
-    for p in range(D['G']['nprogs']): # Loop over all defined programs
+    for p in xrange(D['G']['nprogs']): # Loop over all defined programs
         con['totaldecrease'].append(dict())
         con['totaldecrease'][p]['use'] = False # Tick box: by default don't use
         con['totaldecrease'][p]['by'] = 50 # Text entry box: 0.5 = 50% per total
@@ -626,7 +626,7 @@ def defaultconstraints(D, verbose=2):
         con['totalincrease'][p]['by'] = 200 # Text entry box: 0.5 = 50% total
     
     con['coverage'] = []
-    for p in range(D['G']['nprogs']): # Loop over all defined programs
+    for p in xrange(D['G']['nprogs']): # Loop over all defined programs
         con['coverage'].append(dict())
         con['coverage'][p]['use'] = False # Tick box: by default don't use
         con['coverage'][p]['level'] = 0 # First text entry box: default no limit

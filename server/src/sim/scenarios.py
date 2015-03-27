@@ -27,8 +27,8 @@ def runscenarios(D, scenariolist=None, verbose=2):
     scenariopars = makescenarios(D, scenariolist, verbose=verbose)
     
     # Run scenarios
-    D['scens'] = [dict() for s in range(nscenarios)]
-    for scen in range(nscenarios):
+    D['scens'] = [dict() for s in xrange(nscenarios)]
+    for scen in xrange(nscenarios):
         D['scens'][scen]['scenario'] = deepcopy(scenariolist[scen]) # Copy scenario data
         D['scens'][scen]['label'] = scenariolist[scen]['name'] # Copy name
         D['scens'][scen]['M'] = deepcopy(scenariopars[scen]['M'])
@@ -37,7 +37,7 @@ def runscenarios(D, scenariolist=None, verbose=2):
     
     # Calculate results
     from makeresults import makeresults
-    for scen in range(nscenarios):
+    for scen in xrange(nscenarios):
         D['scens'][scen]['R'] = makeresults(D, [D['scens'][scen]['S']], D['opt']['quantiles'], verbose=verbose)
     
     # Gather plot data
@@ -53,11 +53,11 @@ def runscenarios(D, scenariolist=None, verbose=2):
 def makescenarios(D, scenariolist, verbose=2):
     """ Convert a list of scenario parameters into a list of changes to model parameters """
     nscenarios = len(scenariolist)
-    scenariopars = [dict() for s in range(nscenarios)]
-    for scen in range(nscenarios):
+    scenariopars = [dict() for s in xrange(nscenarios)]
+    for scen in xrange(nscenarios):
         scenariopars[scen]['name'] = scenariolist[scen]['name']
         scenariopars[scen]['M'] = deepcopy(D['M']) # Copy the whole thing...too hard to generate nested dictionaries on the fly
-        for par in range(len(scenariolist[scen]['pars'])):
+        for par in xrange(len(scenariolist[scen]['pars'])):
             thesepars = scenariolist[scen]['pars'][par] # Shorten name
             data = getnested(scenariopars[scen]['M'], thesepars['names'])
             if ndim(data)>1:
@@ -93,7 +93,7 @@ def makescenarios(D, scenariolist, verbose=2):
                 else:
                     data[thesepars['pops']] = newdata
             else:
-                for p in range(len(newdata)):
+                for p in xrange(len(newdata)):
                     newdata[p,initialindex:finalindex] = newvalues
                     newdata[p,finalindex:] = newvalues[-1] # Fill in the rest of the array with the last value
             

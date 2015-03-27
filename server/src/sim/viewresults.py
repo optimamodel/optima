@@ -21,7 +21,7 @@ def viewuncerresults(E, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 
         figh.subplots_adjust(hspace=0.5) # More space between
         nplots = onefig
         for graph in whichgraphs.keys():
-            for i in range(len(whichgraphs[graph])):
+            for i in xrange(len(whichgraphs[graph])):
                 if graph[0:4] != 'cost': nplots += whichgraphs[graph][i]*[npops,1][i]
                 else: nplots += whichgraphs[graph][i]
         nxplots = ceil(sqrt(nplots))
@@ -34,12 +34,12 @@ def viewuncerresults(E, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 
     whichgraphkeys.sort()
     for graph in whichgraphkeys: # Loop over each type of data, e.g. prevalence
         epigraph = (graph[0:4] not in ['comm', 'cost']) # Flag for whether or not it's an epi graph vs. a cost graph
-        for popstot in range(2): # Loop over population or total graphs
+        for popstot in xrange(2): # Loop over population or total graphs
             if whichgraphs[graph][popstot]:
                 printv('Plotting graph %s...' % graph, 4, verbose)
                 
                 if popstot==0 and epigraph: # Population graphs for epi data
-                    for p in range(npops):
+                    for p in xrange(npops):
                         if onefig:
                             count += 1
                             subplot(nxplots, nyplots, count)
@@ -144,7 +144,7 @@ def viewmultiresults(M, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 
         figh.subplots_adjust(hspace=0.5) # More space between
         nplots = onefig
         for graph in whichgraphs.keys():
-            for i in range(len(whichgraphs[graph])):
+            for i in xrange(len(whichgraphs[graph])):
                 if graph[0:4] != 'cost': nplots += whichgraphs[graph][i]*[npops,1][i]
                 else: nplots += whichgraphs[graph][i]
         nxplots = ceil(sqrt(nplots))
@@ -155,17 +155,17 @@ def viewmultiresults(M, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 
     count = 0
     for graph in whichgraphs.keys(): # Loop over each type of data, e.g. prevalence
         epigraph = (graph[0:4] != 'cost') # Flag for whether or not it's an epi graph vs. a cost graph
-        for popstot in range(2): # Loop over population or total graphs
+        for popstot in xrange(2): # Loop over population or total graphs
             if whichgraphs[graph][popstot]:
                 if popstot==0 and epigraph: # Population graphs for epi data
-                    for p in range(npops):
+                    for p in xrange(npops):
                         if onefig:
                             count += 1
                             subplot(nxplots, nyplots, count)
                         else:
                             figure(facecolor='w')
                         hold(True)
-                        for sim in range(M['nsims']):
+                        for sim in xrange(M['nsims']):
                             if graph not in ['costann']:
                                 fill_between(M['tvec'], M[graph]['pops'][p]['low'][sim], M[graph]['pops'][p]['high'][sim], alpha=0.2, edgecolor='none')
                             plot(M['tvec'], M[graph]['pops'][p]['best'][sim], linewidth=linewidth, color=colors[sim])
@@ -192,7 +192,7 @@ def viewmultiresults(M, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 
                         figure(facecolor='w')
                     hold(True)
                     
-                    for sim in range(M['nsims']):
+                    for sim in xrange(M['nsims']):
                         plot(xdata, M[graph][subkey]['data'][sim], linewidth=linewidth, color=colors[sim])
                     
                     title(M[graph][subkey]['title'], fontsize=10)
@@ -203,7 +203,7 @@ def viewmultiresults(M, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 
     
     if onefig:
         subplot(nxplots, nyplots, count+1)
-        for sim in range(M['nsims']): plot(0, 0, linewidth=linewidth, color=colors[sim])
+        for sim in xrange(M['nsims']): plot(0, 0, linewidth=linewidth, color=colors[sim])
         legend(M[graph]['total']['legend'])
 
     if show_wait: show()
@@ -224,7 +224,7 @@ def viewoptimresults(O):
     colors = bmap.mpl_colors
     
     figure(figsize=(8,8))
-    for p in range(2):
+    for p in xrange(2):
         subplot(2,2,p+1)
         pie(O['alloc'][p]['piedata'], colors=colors, labels=O['alloc'][p]['legend'])
         title(O['alloc'][p]['title'])

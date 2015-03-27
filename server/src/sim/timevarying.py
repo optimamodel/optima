@@ -37,8 +37,8 @@ def timevarying(allocpm, ntimepm=1, nprogs=None, tvec=None, totalspend=None, fun
     elif ntimepm == 2: # Two parameter curve - exponential
             
         # Indices of initial allocations and shape parameters
-        ai = range(nprogs)
-        gi = range(nprogs, nprogs*2)
+        ai = xrange(nprogs)
+        gi = xrange(nprogs, nprogs*2)
         
         # Values of allocpm at the indcies
         av = [allocpm[j] for j in ai]
@@ -67,9 +67,9 @@ def timevarying(allocpm, ntimepm=1, nprogs=None, tvec=None, totalspend=None, fun
     elif ntimepm in (3, 4): # Three and four parameter curves - logistic (fixed or variable inflection)
             
         # Indices of initial allocations, growth rates and saturations
-        ai = range(nprogs)
-        gi = range(nprogs,   nprogs*2)
-        si = range(nprogs*2, nprogs*3)
+        ai = xrange(nprogs)
+        gi = xrange(nprogs,   nprogs*2)
+        si = xrange(nprogs*2, nprogs*3)
         
         # Values of allocpm at the indcies
         av = [allocpm[j] for j in ai]
@@ -87,7 +87,7 @@ def timevarying(allocpm, ntimepm=1, nprogs=None, tvec=None, totalspend=None, fun
         else:
        
             # In four parameter case use input
-            ii = range(nprogs*3, nprogs*4)
+            ii = xrange(nprogs*3, nprogs*4)
             iv = [allocpm[j] for j in ii]
         
             # Extend to matrix as with other variables
@@ -115,8 +115,8 @@ def timevarying(allocpm, ntimepm=1, nprogs=None, tvec=None, totalspend=None, fun
     # Use funding limits
     if fundingchanges is not None:
         newallocation = allocation # Copy
-        for t in range(1,npts):
-            for p in range(nprogs):
+        for t in xrange(1,npts):
+            for p in xrange(nprogs):
                 if newallocation[p,t]<fundingchanges['total']['dec'][p]: # Too low: make bigger up to the limit
                     newallocation[p,t] = fundingchanges['total']['dec'][p]
                 if newallocation[p,t]>fundingchanges['total']['inc'][p]: # Too high: make smaller down to the limit
@@ -155,10 +155,10 @@ def multiyear(allocpm, years=[], totalspends=[], nprogs=None, tvec=None):
     
     # Loop over years, finding indices
     changes = [0,npts]
-    for y in range(nyears):
+    for y in xrange(nyears):
         changes.insert(-1,findinds(tvec>=years[y])[0])
     
-    for y in range(nyears+1):
+    for y in xrange(nyears+1):
         thisalloc = array(allocpm)[proginds+yearindex*nprogs]
         thisalloc *= totalspends[max(0,y-1)] / float(sum(thisalloc))
         allocation[:,changes[y]:changes[y+1]] = tile(thisalloc, (changes[y+1]-changes[y],1)).transpose()  # Assign totals and normalize

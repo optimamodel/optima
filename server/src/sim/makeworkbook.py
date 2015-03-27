@@ -21,7 +21,7 @@ def abbreviate(param):
     return short_param.upper()
 
 def years_range(data_start, data_end):
-    return [x for x in range(data_start, data_end+1)]
+    return [x for x in xrange(data_start, data_end+1)]
 
 class OptimaContent:
     """ the content of the data ranges (row names, column names, optional data and assumptions) """
@@ -94,7 +94,7 @@ def make_populations_range(name, items):
     """
     column_names = ['Short name','Long name','Male','Female','Injects','Has sex with men', \
     'Has sex with women','Sex worker','Client']
-    row_names = range(1, len(items)+1)
+    row_names = xrange(1, len(items)+1)
     coded_params = []
     for item in items:
         if type(item) is dict:
@@ -127,7 +127,7 @@ def make_programs_range(name, items):
     (2x str)
     """
     column_names = ['Short name','Long name']
-    row_names = range(1, len(items)+1)
+    row_names = xrange(1, len(items)+1)
     coded_params = []
     for item in items:
         if type(item) is dict:
@@ -255,7 +255,7 @@ class SheetRange:
 
     """ gives the list of references to the entries in the row names (which are parameters) """
     def param_refs(self, sheet_name, column_number = 1):
-        par_range = range(self.first_row, self.last_row +1)
+        par_range = xrange(self.first_row, self.last_row +1)
         return [ "='%s'!%s" % (sheet_name, self.get_cell_address(row, self.first_col + column_number)) for row in par_range ]
 
 
@@ -311,7 +311,7 @@ class TitledRange:
                 for j, item in enumerate(self.content.data[i]):
                     formats.write_unlocked(self.sheet, current_row, self.data_range.first_col+j, item, row_format)
             else:
-                for j in range(self.data_range.num_cols):
+                for j in xrange(self.data_range.num_cols):
                     formats.write_empty_unlocked(self.sheet, current_row, self.data_range.first_col+j, row_format)
             #emit assumption
             if self.content.has_assumption():
@@ -641,7 +641,7 @@ class OptimaGraphTable:
             titles = [c['title'] for c in s["columns"]]
             max_row = max([len(c['data']) for c in s["columns"]])
 
-            for i in range(len(s["columns"])):
+            for i in xrange(len(s["columns"])):
                 sheet.set_column(i,i,20)
 
             self.formats.write_block_name(sheet, s["name"], 0) #sheet name

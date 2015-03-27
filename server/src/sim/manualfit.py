@@ -64,7 +64,7 @@ def updateP(D, Plist):
     from numpy import array
     
     oldP = deepcopy(D['P'])
-    for twig in range(len(Plist)):
+    for twig in xrange(len(Plist)):
         setnested(D['P'], Plist[twig]['name'], Plist[twig]['data'])
     
     oldM = makemodelpars(oldP, D['opt'], withwhat='c', verbose=2)
@@ -84,6 +84,6 @@ def updateP(D, Plist):
 def updateM(D, Mlist):
     """ Update certain fields of D['M'] -- way easier than updating D['P'] :) """
     from nested import setnested
-    for twig in range(len(Mlist)):
+    for twig in xrange(len(Mlist)):
         setnested(D['M'], Mlist[twig]['name'], Mlist[twig]['data'])
     return D

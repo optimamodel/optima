@@ -45,7 +45,7 @@ def autofit(D, timelimit=None, maxiters=500, simstartyear=2000, simendyear=2015,
         
         # Prevalence data
         prev = [dict() for p in range(D['G']['npops'])]
-        for p in range(D['G']['npops']): 
+        for p in xrange(D['G']['npops']): 
             prev[p]['data'] = dict()
             prev[p]['model'] = dict()
             prev[p]['data']['x'], prev[p]['data']['y'] = extractdata(D['G']['datayears'], D['data']['key']['hivprev'][0][p]) # The first 0 is for "best"
@@ -55,7 +55,7 @@ def autofit(D, timelimit=None, maxiters=500, simstartyear=2000, simendyear=2015,
         mismatch = 0
         allmismatches = []
         for base in [dx, prev]:
-            for ind in range(len(base)):
+            for ind in xrange(len(base)):
                 for y,year in enumerate(base[ind]['data']['x']):
                     modelind = findinds(S['tvec'], year)
                     if len(modelind)>0: # TODO Cliff check
@@ -100,7 +100,7 @@ def dict2list(Fdict):
     Flist = []
     for key in ['init', 'force']:
         this = Fdict[key]
-        for i in range(len(this)):
+        for i in xrange(len(this)):
             Flist.append(Fdict[key][i])
     return Flist
 
@@ -114,7 +114,7 @@ def list2dict(Forig, Flist):
     Fdict = deepcopy(Forig)
     Flist = Flist.tolist()
     for key in ['init', 'force']:
-        for i in range(len(Fdict[key])):
+        for i in xrange(len(Fdict[key])):
             Fdict[key][i] = Flist.pop(0)
     return Fdict
 

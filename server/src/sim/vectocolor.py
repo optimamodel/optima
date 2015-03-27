@@ -30,7 +30,7 @@ def vectocolor(vector,cmap=None):
       cmap=cm.jet # TODO: use more awesome colormap
       
    if type(vector)==int:
-      vector = range(vector) # They've netered a scalar, not a vector, so convert it to a vector
+      vector = xrange(vector) # They've netered a scalar, not a vector, so convert it to a vector
    
    # The vector has elements
    if len(vector):
@@ -40,7 +40,7 @@ def vectocolor(vector,cmap=None):
        nelements = len(vector) # Count number of elements
        
        colors=zeros((nelements,4))
-       for i in range(nelements):
+       for i in xrange(nelements):
           colors[i,:]=array(cmap(vector[i]))
     
    # It doesn't; just return black
