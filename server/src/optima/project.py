@@ -215,7 +215,8 @@ def update_project(project_id):
     # Check whether we are editing a project
     project = load_project(project_id) if project_id else None
     if not project:
-        abort(404)
+        return jsonify({'reason':'No such project %s' % project_id}), 404
+
     project_name = project.name
 
     makeproject_args = {"projectname": project_name, "savetofile":False}

@@ -110,7 +110,8 @@ def current_user_api():
     cu = current_user
     if not cu.is_anonymous():
         return jsonify({ 'email': cu.email, 'name': cu.name, 'is_admin': cu.is_admin })
-    abort(401)
+    else:
+        return jsonify({ 'reason': 'User is not logged in' }), 401
 
 @user.route('/logout')
 @login_required
