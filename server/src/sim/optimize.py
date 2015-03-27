@@ -262,7 +262,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
             optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=fundingchanges['total']['dec'], xmax=fundingchanges['total']['inc'], absinitial=stepsizes, MaxIter=maxiters, timelimit=timelimit, fulloutput=True, stoppingfunc=stoppingfunc, verbose=verbose)
             optparams[opttrue] = optparams[opttrue] / optparams[opttrue].sum() * (options['totalspend'] - optparams[~opttrue].sum()) # Make sure it's normalized -- WARNING KLUDGY
             allocarr.append(optparams)
-            fvalarr.append(output['fval'])
+            fvalarr.append(output.fval)
         
         ## Find which optimization was best
         bestallocind = -1

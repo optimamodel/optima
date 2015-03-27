@@ -90,13 +90,13 @@ def makedatapars(D, verbose=2):
     
     ## Constants...just take the best value for now -- # TODO: use the uncertainty
     D['P']['const'] = struct()
-    for parclass in D['data']['dataconstyears'].keys():
+    for parclass in D['data']['const'].keys():
         printv('Converting data parameter %s...' % parclass, 3, verbose)
-        if type(D['data']['dataconstyears'][parclass])==struct: 
+        if type(D['data']['const'][parclass])==struct: 
             D['P']['const'][parclass] = struct()
-            for parname in D['data']['dataconstyears'][parclass].keys():
+            for parname in D['data']['const'][parclass].keys():
                 printv('Converting data parameter %s...' % parname, 4, verbose)
-                D['P']['const'][parclass][parname] = D['data']['dataconstyears'][parclass][parname][0] # Taking best value only, hence the 0
+                D['P']['const'][parclass][parname] = D['data']['const'][parclass][parname][0] # Taking best value only, hence the 0
     
     
     ## Change sizes of circumcision and births
