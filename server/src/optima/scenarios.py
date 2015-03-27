@@ -46,7 +46,7 @@ def get_scenario_parameters():
             continue
 
     current_app.logger.debug("real_parameters:%s" % real_parameters)
-    return json.dumps({"parameters":real_parameters})
+    return jsonify({"parameters":real_parameters})
 
 @scenarios.route('/list')
 @login_required
@@ -70,7 +70,7 @@ def list_scenarios():
     else:
         scenarios = [item.scenario for item in D.scens]
     scenarios = unbunchify(scenarios)
-    return json.dumps({'scenarios':scenarios})
+    return jsonify({'scenarios':scenarios})
 
 
 @scenarios.route('/run', methods=['POST'])

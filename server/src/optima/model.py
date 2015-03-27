@@ -82,10 +82,10 @@ def doAutoCalibration():
             args["timelimit"] = timelimit # for the autocalibrate function
             CalculatingThread(db.engine, current_user, project_id, timelimit, 1, autofit, args).start() #run it once
             msg = "Starting thread for user %s project %s:%s" % (current_user.name, project_id, project_name)
-            return json.dumps({"result": msg, "join": True})
+            return jsonify({"result": msg, "join": True})
         else:
             msg = "Thread for user %s project %s:%s (%s) has already started" % (current_user.name, project_id, project_name, current_calculation)
-            return json.dumps({"result": msg, "join": can_join})
+            return jsonify({"result": msg, "join": can_join})
     except Exception, err:
         var = traceback.format_exc()
         return jsonify({"exception":var}), 500
@@ -98,7 +98,7 @@ def stopCalibration():
     project_id = request.project_id
     project_name = request.project_name
     cancel_calculation(current_user.id, project_id, autofit, db.session)
-    return json.dumps({"result": "autofit calculation for user %s project %s:%s requested to stop" % \
+    return jsonify({"result": "autofit calculation for user %s project %s:%s requested to stop" % \
         (current_user.name, project_id, project_name)})
 
 @model.route('/working')
@@ -254,7 +254,7 @@ def getModelGroup(key):
     current_app.logger.debug("getModelGroup: %s" % key)
     D_dict = load_model(request.project_id, as_bunch = False)
     the_group = D_dict.get(key, {})
-    return json.dumps(the_group)
+    return jsonify(the_group)
 
 @model.route('/data/<key>/<subkey>')
 @login_required
