@@ -23,10 +23,10 @@ from time import time
 from dataio import loaddata
 
 D = loaddata('/tmp/projects/example.prj', verbose=0)
-D.M = makemodelpars(D.P, D.opt, verbose=0)
+D['M'] = makemodelpars(D.P, D['opt'], verbose=0)
 
 t=time()
-S = model(D.G, D.M, D.F[0], D.opt, verbose=0)
+S = model(D['G'], D['M'], D['F'][0], D['opt'], verbose=0)
 print('Total time for running model: %0.3f s' % (time()-t))
 
 
@@ -49,7 +49,7 @@ def do_profile(follow=[]):
 
 @do_profile(follow=[model]) # Add decorator to runmodel function
 def runmodel():
-    S = model(D.G, D.M, D.F[0], D.opt, verbose=0)
+    S = model(D['G'], D['M'], D['F'][0], D['opt'], verbose=0)
     return S
 
 result = runmodel()

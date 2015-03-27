@@ -117,10 +117,10 @@ def timevarying(allocpm, ntimepm=1, nprogs=None, tvec=None, totalspend=None, fun
         newallocation = allocation # Copy
         for t in range(1,npts):
             for p in range(nprogs):
-                if newallocation[p,t]<fundingchanges.total.dec[p]: # Too low: make bigger up to the limit
-                    newallocation[p,t] = fundingchanges.total.dec[p]
-                if newallocation[p,t]>fundingchanges.total.inc[p]: # Too high: make smaller down to the limit
-                    newallocation[p,t] = fundingchanges.total.inc[p]
+                if newallocation[p,t]<fundingchanges['total']['dec'][p]: # Too low: make bigger up to the limit
+                    newallocation[p,t] = fundingchanges['total']['dec'][p]
+                if newallocation[p,t]>fundingchanges['total']['inc'][p]: # Too high: make smaller down to the limit
+                    newallocation[p,t] = fundingchanges['total']['inc'][p]
             newallocation[:,t] *= sum(allocation[:,t]) / sum(newallocation[:,t]) # Normalize
     
 
