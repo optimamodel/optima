@@ -5,11 +5,10 @@ Created on Sat Nov 29 17:40:34 2014
 
 Version: 2015feb03
 """
-from numpy import append, npv
+from numpy import append, npv, cumsum
 from setoptions import setoptions
 from printv import printv
 from datetime import date
-from pylab import * # TMP
 from utils import smoothinterp
 
 
@@ -24,10 +23,10 @@ def financialanalysis(D, postyear=2015, S=None, rerunmodel=False, artgrowthrate=
     # Checking inputs... 
     if not(isinstance(S,dict)): 
         print('Using default S since no usable S supplied')
-        S = D.S # If not supplied as input, copy from D
+        S = D['S'] # If not supplied as input, copy from D
     postyear = float(postyear) # Make sure the year for turning off transmission is a float
     
-    dt = D.S.tvec[1]-D.S.tvec[0]
+    dt = D['S']['tvec'][1]-D['S']['tvec'][0]
     stepsperyear = int(round(1/dt))
 
     # Initialise output structure of plot data
@@ -40,57 +39,57 @@ def financialanalysis(D, postyear=2015, S=None, rerunmodel=False, artgrowthrate=
     people, hivcosts, artcosts = {}, {}, {}
 
     # Inflation adjusting
-    cpi = smoothinterp(newx=D.S.tvec, origx=D.G.datayears, origy=D.data.econ.cpi.past[0], growth=D.data.econ.cpi.future[0][0])
-    cpibaseyearindex = D.data.epiyears.index(min(D.data.epiyears[-1],date.today().year))
+    cpi = smoothinterp(newx=D['S']['tvec'], origx=D['G']['datayears'], origy=D['data']['econ']['cpi']['past'][0], growth=D['data']['econ']['cpi']['future'][0][0])
+    cpibaseyearindex = D['data']['epiyears'].index(min(D['data']['epiyears'][-1],date.today().year))
 
     # Set up variables for time indexing
-    simtvec = S.tvec
+    simtvec = S['tvec']
     noptpts = len(simtvec)
 
     # Get most recent ART unit costs 
     progname = 'ART'
-    prognumber = D.data.meta.progs.short.index(progname)
-    artunitcost = [D.data.costcov.cost[prognumber][j]/D.data.costcov.cov[prognumber][j] for j in range(len(D.data.costcov.cost[prognumber]))]
-    artunitcost = smoothinterp(newx=D.S.tvec, origx=D.G.datayears, origy=artunitcost, growth=artgrowthrate)
+    prognumber = D['data']['meta']['progs']['short'].index(progname)
+    artunitcost = [D['data']['costcov']['cost'][prognumber][j]/D['data']['costcov']['cov'][prognumber][j] for j in range(len(D['data']['costcov']['cost'][prognumber]))]
+    artunitcost = smoothinterp(newx=D['S']['tvec'], origx=D['G']['datayears'], origy=artunitcost, growth=artgrowthrate)
 
     # Make an even longer series for calculating the NPV
     longart = artunitcost
     for i in range(noptpts):
-        longart = append(longart,[longart[-1]*(1+artgrowthrate)**D.opt.dt])
+        longart = append(longart,[longart[-1]*(1+artgrowthrate)**D['opt']['dt']])
 
     # Run a simulation with the force of infection set to zero from postyear... 
     if rerunmodel:
         from model import model
         opt = setoptions(nsims=1, turnofftrans=postyear)
-        S0 = model(D.G, D.M, D.F[0], opt, initstate=None)
-        people['existing'] = S0.people[:,:,:]
+        S0 = model(D['G'], D['M'], D['F'][0], opt, initstate=None)
+        people['existing'] = S0['people'][:,:,:]
         hivcosts['existing'] = [0.0]*noptpts
 
     # Extract the number of PLHIV 
-    people['total'] = S.people[:,:,:]
+    people['total'] = S['people'][:,:,:]
     hivcosts['total'] = [0.0]*noptpts
     longcosts = {} 
     
     # Interpolate costs
-    for healthno, healthstate in enumerate(D.G.healthstates):
+    for healthno, healthstate in enumerate(D['G']['healthstates']):
 
         # Expand
-        socialcosts = smoothinterp(newx=D.S.tvec, origx=D.G.datayears, origy=D.data.econ.social.past[healthno], growth=D.data.econ.social.future[0][0])
-        othercosts = smoothinterp(newx=D.S.tvec, origx=D.G.datayears, origy=D.data.econ.health.past[healthno], growth=D.data.econ.health.future[0][0])
+        socialcosts = smoothinterp(newx=D['S']['tvec'], origx=D['G']['datayears'], origy=D['data']['econ']['social']['past'][healthno], growth=D['data']['econ']['social']['future'][0][0])
+        othercosts = smoothinterp(newx=D['S']['tvec'], origx=D['G']['datayears'], origy=D['data']['econ']['health']['past'][healthno], growth=D['data']['econ']['health']['future'][0][0])
                     
         costs = [(socialcosts[j] + othercosts[j]) for j in range(noptpts)]
 
         # Make an even longer series for calculating the NPV
         longothercosts, longsocialcosts = othercosts, socialcosts
         for i in range(noptpts):
-            longothercosts = append(longothercosts,[longothercosts[-1]*(1+D.data.econ.health.future[0][0])**D.opt.dt])
-            longsocialcosts = append(longsocialcosts,[longsocialcosts[-1]*(1+D.data.econ.social.future[0][0])**D.opt.dt])
+            longothercosts = append(longothercosts,[longothercosts[-1]*(1+D['data']['econ']['health']['future'][0][0])**D['opt']['dt']])
+            longsocialcosts = append(longsocialcosts,[longsocialcosts[-1]*(1+D['data']['econ']['social']['future'][0][0])**D['opt']['dt']])
         longcosts[healthstate] = [longothercosts[j] + longsocialcosts[j] for j in range(noptpts*2)]
 
         # Calculate annual non-treatment costs for all PLHIV under the baseline sim and the zero transmission sim
-        coststotalthishealthstate = [people['total'][D.G[healthstate],:,j].sum(axis = (0,1))*costs[j] for j in range(noptpts)]
+        coststotalthishealthstate = [people['total'][D['G'][healthstate],:,j].sum(axis = (0,1))*costs[j] for j in range(noptpts)]
         if rerunmodel:
-            costsexistingthishealthstate  = [people['existing'][D.G[healthstate],:,j].sum(axis = (0,1))*costs[j] for j in range(noptpts)]
+            costsexistingthishealthstate  = [people['existing'][D['G'][healthstate],:,j].sum(axis = (0,1))*costs[j] for j in range(noptpts)]
         
         hivcosts['total'] = [hivcosts['total'][j] + coststotalthishealthstate[j] for j in range(noptpts)]
 #        print('TMP'); plot(hivcosts['total']); show()
@@ -99,15 +98,15 @@ def financialanalysis(D, postyear=2015, S=None, rerunmodel=False, artgrowthrate=
 
 
     # Calculate annual treatment costs for PLHIV
-    tx1total = people['total'][D.G.tx1[0]:D.G.fail[-1],:,:].sum(axis=(0,1))
-    tx2total = people['total'][D.G.tx2[0]:D.G.tx2[-1],:,:].sum(axis=(0,1))
+    tx1total = people['total'][D['G']['tx1'][0]:D['G']['fail'][-1],:,:].sum(axis=(0,1))
+    tx2total = people['total'][D['G']['tx2'][0]:D['G']['tx2'][-1],:,:].sum(axis=(0,1))
     onarttotal = [tx1total[j] + tx2total[j] for j in range(noptpts)]
     artcosts['total'] = [onarttotal[j]*artunitcost[j] for j in range(noptpts)]
     
     # Calculate annual treatment costs for existing PLHIV
     if rerunmodel:
-        tx1existing = people['existing'][D.G.tx1[0]:D.G.fail[-1],:,:].sum(axis=(0,1))
-        tx2existing = people['existing'][D.G.tx2[0]:D.G.tx2[-1],:,:].sum(axis=(0,1))
+        tx1existing = people['existing'][D['G']['tx1'][0]:D['G']['fail'][-1],:,:].sum(axis=(0,1))
+        tx2existing = people['existing'][D['G']['tx2'][0]:D['G']['tx2'][-1],:,:].sum(axis=(0,1))
         onartexisting = [tx1existing[j] + tx2existing[j] for j in range(noptpts)]
         artcosts['existing'] = [onartexisting[j]*artunitcost[j] for j in range(noptpts)]
 
@@ -131,8 +130,8 @@ def financialanalysis(D, postyear=2015, S=None, rerunmodel=False, artgrowthrate=
                 plotdata[plottype][plotsubtype][yscalefactor]['ylabel'] = 'USD'
 #                raise Exception('TMP')
             else:
-                if isinstance(sanitize(D.data.econ[yscalefactor].past[0]),int): continue #raise Exception('No data have been provided for this varaible, so we cannot display the costs as a proportion of this')
-                yscale = smoothinterp(newx=D.S.tvec, origx=D.G.datayears, origy=D.data.econ[yscalefactor].past[0], growth=D.data.econ[yscalefactor].future[0][0])
+                if isinstance(sanitize(D['data']['econ'][yscalefactor]['past'][0]),int): continue #raise Exception('No data have been provided for this varaible, so we cannot display the costs as a proportion of this')
+                yscale = smoothinterp(newx=D['S']['tvec'], origx=D['G']['datayears'], origy=D['data']['econ'][yscalefactor]['past'][0], growth=D['data']['econ'][yscalefactor]['future'][0][0])
                 if not plotsubtype=='future': plotdata[plottype][plotsubtype][yscalefactor]['ylinedata'] = [(hivcosts[plotsubtype][j] + artcosts[plotsubtype][j])/yscale[j] for j in range(noptpts)] 
                 plotdata[plottype][plotsubtype][yscalefactor]['ylabel'] = 'Proportion of ' + yscalefactor
 
@@ -166,7 +165,7 @@ def financialanalysis(D, postyear=2015, S=None, rerunmodel=False, artgrowthrate=
                      longcosts['gt50'][i+cd4time[0]+cd4time[1]+cd4time[2]+cd4time[3]:i+cd4time[0]+cd4time[1]+cd4time[2]+cd4time[3]+cd4time[4]] + \
                      longcosts['aids'][i+cd4time[0]+cd4time[1]+cd4time[2]+cd4time[3]+cd4time[4]:i+cd4time[0]+cd4time[1]+cd4time[2]+cd4time[3]+cd4time[4]+cd4time[5]]
         totalflows = [artflows[j]+otherflows[j] for j in range(len(artflows))]
-        commitments = append(commitments, npv(discountrate, totalflows)*D.opt.dt*inci[i])
+        commitments = append(commitments, npv(discountrate, totalflows)*D['opt']['dt']*inci[i])
     
     # Store commitment cost data
     plotdata['commit'] = {}
@@ -179,22 +178,9 @@ def financialanalysis(D, postyear=2015, S=None, rerunmodel=False, artgrowthrate=
             plotdata['commit'][yscalefactor]['ylinedata'] = [commitments[j]*(cpi[cpibaseyearindex]/cpi[j]) for j in range(len(commitments))]
             plotdata['commit'][yscalefactor]['ylabel'] = 'USD'
         else:
-            if isinstance(sanitize(D.data.econ[yscalefactor].past[0]),int): continue
-            yscale = smoothinterp(newx=D.S.tvec, origx=D.G.datayears, origy=D.data.econ[yscalefactor].past[0], growth=D.data.econ[yscalefactor].future[0][0])
+            if isinstance(sanitize(D['data']['econ'][yscalefactor]['past'][0]),int): continue
+            yscale = smoothinterp(newx=D['S']['tvec'], origx=D['G']['datayears'], origy=D['data']['econ'][yscalefactor]['past'][0], growth=D['data']['econ'][yscalefactor]['future'][0][0])
             plotdata['commit'][yscalefactor]['ylinedata'] = [commitments[j]/yscale[j] for j in range(noptpts)]
             plotdata['commit'][yscalefactor]['ylabel'] = 'Proportion of ' + yscalefactor
 
     return plotdata
-
-
-
-# Test code -- #TODO don't commit with this here. 
-#plotdata = financialanalysis(D)
-#from matplotlib.pylab import figure, plot, hold
-#figure()
-#hold(True)
-#plot(plotdata['annual']['total']['total']['xlinedata'],plotdata['annual']['total']['total']['ylinedata'])
-#figure()
-#hold(True)
-#plot(plotdata['cumulative']['total']['xlinedata'],plotdata['cumulative']['total']['ylinedata'])
-
