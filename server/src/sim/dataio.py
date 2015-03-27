@@ -90,23 +90,7 @@ def loaddata(filename, verbose=2):
 
 
 def tojson(x):
-    """ Recursively converts a Bunch into a dictionary.
-        
-        >>> b = Bunch(foo=Bunch(lol=True), hello=42, ponies='are pretty!')
-        >>> unbunchify(b)
-        {'ponies': 'are pretty!', 'foo': {'lol': True}, 'hello': 42}
-        
-        unbunchify will handle intermediary dicts, lists and tuples (as well as
-        their subclasses), but ymmv on custom datatypes.
-        
-        >>> b = Bunch(foo=['bar', Bunch(lol=True)], hello=42, 
-        ...         ponies=('are pretty!', Bunch(lies='are trouble!')))
-        >>> unbunchify(b) #doctest: +NORMALIZE_WHITESPACE
-        {'ponies': ('are pretty!', {'lies': 'are trouble!'}), 
-         'foo': ['bar', {'lol': True}], 'hello': 42}
-        
-        nb. As dicts are not hashable, they cannot be nested in sets/frozensets.
-    """
+    """ Convert an object to JSON-serializable format, handling e.g. Numpy arrays """
     from numpy import ndarray, isnan
     
     if isinstance(x, dict):
@@ -118,29 +102,11 @@ def tojson(x):
     elif isinstance(x, float) and isnan(x):
         return None
     else:
-#        print ("x= %s, type(x) = %s" % (x, type(x))) # CK: What the hell was that doing there!?
         return x
 
 
 def fromjson(x):
-    """ Recursively transforms a dictionary into a Bunch via copy.
-        
-        >>> b = bunchify({'urmom': {'sez': {'what': 'what'}}})
-        >>> b.urmom.sez.what
-        'what'
-        
-        bunchify can handle intermediary dicts, lists and tuples (as well as 
-        their subclasses), but ymmv on custom datatypes.
-        
-        >>> b = bunchify({ 'lol': ('cats', {'hah':'i win again'}), 
-        ...         'hello': [{'french':'salut', 'german':'hallo'}] })
-        >>> b.hello[0].french
-        'salut'
-        >>> b.lol[1].hah
-        'i win again'
-        
-        nb. As dicts are not hashable, they cannot be nested in sets/frozensets.
-    """
+    """ Convert an object from JSON-serializable format, handling e.g. Numpy arrays """
     NP_ARRAY_KEYS = set(["np_array", "np_dtype"])
     from numpy import asarray, dtype, nan
     

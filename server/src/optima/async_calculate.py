@@ -5,7 +5,7 @@ from signal import *
 
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy import create_engine
-from sim.bunch import Bunch, unbunchify
+from sim.dataio import fromjson, tojson
 from dbmodels import ProjectDb, WorkingProjectDb, WorkLogDb
 
 # Sentinel object used for async calculation
@@ -134,7 +134,7 @@ class CalculatingThread(threading.Thread):
         self.user_id = user.id
         self.project_id = project_id
         self.func = func
-        self.debug_args = unbunchify(args)
+        self.debug_args = fromjson(args)
         self.timelimit = int(timelimit) # to be sure
         self.engine = engine
         self.stop_flag = False
@@ -225,7 +225,7 @@ class CalculatingThread(threading.Thread):
         self.close_db_session()
         print("thread for project %s stopped" % self.project_id)
 
-    def load_model_user(self, id, user_id, as_bunch=True, working_model=True):
+    def load_model_user(self, id, user_id, from_json=True, working_model=True):
         project = self.db_session.query(ProjectDb).filter_by(user_id=user_id, id=id).first()
         model = None
         if project is not None:
@@ -233,15 +233,14 @@ class CalculatingThread(threading.Thread):
                 model = project.model
             else:
                 model = project.working_project.model
-            if as_bunch:
-                model = Bunch.fromDict(model)
+            if from_json:
+                model = fromjson(model)
         return model
 
     def save_model_user(self, id, user_id, model, working_model=True):
         print("save_model_user:%s %s" % (id, user_id))
         project = self.db_session.query(ProjectDb).filter_by(user_id=user_id, id=id).first()
-        if isinstance(model, Bunch):
-            model = model.toDict()
+        model = tojson(model)
         if project is not None:
             if not working_model:
                 project.model = model
