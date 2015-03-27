@@ -35,7 +35,7 @@ def get_project_parameters():
     """
     from sim.parameters import parameters
     project_parameters = [p for p in parameters() if 'modifiable' in p and p['modifiable']]
-    return json.dumps({"parameters":project_parameters})
+    return jsonify({"parameters":project_parameters})
 
 @project.route('/predefined')
 @login_required
@@ -53,7 +53,7 @@ def get_predefined():
         p['active'] = False
         new_parameters = [dict([('value', parameter),('active',True)]) for parameter in p['parameters']]
         if new_parameters: p['parameters'] = new_parameters
-    return json.dumps({"programs":programs, "populations": populations, "categories":program_categories})
+    return jsonify({"programs":programs, "populations": populations, "categories":program_categories})
 
 
 def getPopsAndProgsFromModel(project, trustInputMetadata):
@@ -645,7 +645,7 @@ def uploadExcel():
         db.session.commit()
 
     reply = {'file': source_filename, 'result': 'Project %s is updated' % project_name}
-    return json.dumps(reply)
+    return jsonify(reply)
 
 @project.route('/data/<project_id>')
 @login_required
@@ -689,18 +689,18 @@ def createProjectAndSetData():
     project_name = request.values.get('name')
     if not project_name:
         reply = {'reason': 'No project name provided'}
-        return json.dumps(reply), 500
+        return jsonify(reply), 500
 
     file = request.files['file']
 
     if not file:
         reply = {'reason': 'No file is submitted!'}
-        return json.dumps(reply), 500
+        return jsonify(reply), 500
 
     source_filename = secure_filename(file.filename)
     if not allowed_file(source_filename):
         reply = {'reason': 'File type of %s is not accepted!' % source_filename}
-        return json.dumps(reply), 500
+        return jsonify(reply), 500
 
     data = json.load(file)
 
@@ -714,7 +714,7 @@ def createProjectAndSetData():
     db.session.commit()
 
     reply = {'file': source_filename, 'result': 'Project %s is updated' % project_name}
-    return json.dumps(reply)
+    return jsonify(reply)
 
 
 @project.route('/data/<project_id>', methods=['POST'])
@@ -731,12 +731,12 @@ def setData(project_id):
 
     if not file:
         reply = {'reason': 'No file is submitted!'}
-        return json.dumps(reply), 500
+        return jsonify(reply), 500
 
     source_filename = secure_filename(file.filename)
     if not allowed_file(source_filename):
         reply = {'reason': 'File type of %s is not accepted!' % source_filename}
-        return json.dumps(reply), 500
+        return jsonify(reply), 500
 
     project = load_project(project_id)
     if project is None:
@@ -755,4 +755,4 @@ def setData(project_id):
     db.session.commit()
 
     reply = {'file': source_filename, 'result': 'Project %s is updated' % project_name}
-    return json.dumps(reply)
+    return jsonify(reply)
