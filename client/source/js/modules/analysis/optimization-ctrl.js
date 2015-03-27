@@ -824,7 +824,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     });
 
     $scope.deleteOptimization = function (optimizationName) {
-      $http.post('/api/analysis/optimization/remove/' + optimizationName)
+      $http.post(encodeURI('/api/analysis/optimization/remove/' + optimizationName))
         .success(function(data){
           $scope.initOptimizations(data.optimizations, undefined);
         });
