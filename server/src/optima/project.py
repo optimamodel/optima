@@ -145,6 +145,7 @@ def create_project(project_name):
     """
     from sim.makeproject import default_datastart, default_dataend, default_pops, default_progs
     from sim.runsimulation import runsimulation
+    from sim.dataio import tojson
     current_app.logger.debug("createProject %s for user %s" % (project_name, current_user.email))
     raw_data = json.loads(request.data)
     # get current user
@@ -174,7 +175,7 @@ def create_project(project_name):
     current_app.logger.debug("About to persist project %s for user %s" % (project.name, project.user_id))
     db.session.add(project)
     db.session.commit()
-    new_project_template = D.G.workbookname
+    new_project_template = D['G']['workbookname']
 
     current_app.logger.debug("new_project_template: %s" % new_project_template)
     (dirname, basename) = (upload_dir_user(TEMPLATEDIR), new_project_template)
@@ -249,11 +250,11 @@ def update_project(project_id):
         filedata.close()
         D = model_as_bunch(project.model)
         #resave relevant metadata
-        D.G.projectname = project.name
-        D.G.projectfilename = projectpath(project.name+'.prj')
-        D.G.workbookname = D.G.projectname + '.xlsx'
-        D.G.inputprograms = deepcopy(project.programs)
-        D.G.inputpopulations = deepcopy(project.populations)
+        D['G']['projectname'] = project.name
+        D['G']['projectfilename'] = projectpath(project.name+'.prj')
+        D['G']['workbookname'] = D['G']['projectname'] + '.xlsx'
+        D['G']['inputprograms'] = deepcopy(project.programs)
+        D['G']['inputpopulations'] = deepcopy(project.populations)
         D = updatedata(D, input_programs = project.programs, savetofile = False)
         #and now, because workbook was uploaded, we have to correct the programs and populations
         model = model_as_dict(D)
@@ -266,7 +267,7 @@ def update_project(project_id):
     current_app.logger.debug("About to persist project %s for user %s" % (project.name, project.user_id))
     db.session.add(project)
     db.session.commit()
-    new_project_template = D.G.workbookname
+    new_project_template = D['G']['workbookname']
 
     current_app.logger.debug("new_project_template: %s" % new_project_template)
     (dirname, basename) = (upload_dir_user(TEMPLATEDIR), new_project_template)
@@ -610,11 +611,11 @@ def uploadExcel():
         # update and save model
         D = model_as_bunch(project.model)
         #make sure we get project name and relevant fields up-to-date
-        D.G.projectname = project.name
-        D.G.projectfilename = projectpath(project.name+'.prj')
-        D.G.workbookname = D.G.projectname + '.xlsx'
-        D.G.inputprograms = deepcopy(project.programs)
-        D.G.inputpopulations = deepcopy(project.populations)
+        D['G']['projectname'] = project.name
+        D['G']['projectfilename'] = projectpath(project.name+'.prj')
+        D['G']['workbookname'] = D['G']['projectname'] + '.xlsx'
+        D['G']['inputprograms'] = deepcopy(project.programs)
+        D['G']['inputpopulations'] = deepcopy(project.populations)
 
         # Is this the first time? if so then we have to run simulations
         should_re_run = 'S' not in D
