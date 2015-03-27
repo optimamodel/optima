@@ -126,8 +126,8 @@ def viewmultiresults(M, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 
     """
     
     from matplotlib.pylab import figure, plot, hold, xlabel, ylabel, xlim, ylim, legend, title, ceil, sqrt, subplot, show, fill_between
-    import brewer2mpl as colormap
-    bmap = colormap.get_map('Paired', 'Qualitative', max(3,M['nsims'])) # WARNING, won't work with >13
+    import colorbrewer
+    bmap = colorbrewer.get_map('Paired', 'Qualitative', max(3,M['nsims'])) # WARNING, won't work with >13
     if M['nsims']>12: raise Exception('Can''t use ColorBrewer with more than 12 colors')
     colors = bmap.mpl_colors
     
@@ -216,10 +216,10 @@ def viewoptimresults(O):
     Version: 2015mar25
     """
     from matplotlib.pylab import figure, subplot, pie, title, plot, xlabel, ylabel
-    import brewer2mpl as colormap
+    import colorbrewer
     
     nprograms = len(O['alloc'][0]['piedata'])
-    bmap = colormap.get_map('Paired', 'Qualitative', max(3,nprograms)) # WARNING, won't work with >13
+    bmap = colorbrewer.get_map('Paired', 'Qualitative', max(3,nprograms)) # WARNING, won't work with >13
     if nprograms>12: raise Exception('Can''t use ColorBrewer with more than 12 colors')
     colors = bmap.mpl_colors
     
