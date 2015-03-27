@@ -155,6 +155,7 @@ def getWorkingModel():
                 new_optimizations[new_index] = deepcopy(optimizations[index])
                 #warn that these results are transient
                 is_dirty = True
+    result['status'] = status
     result['optimizations'] = new_optimizations
     result['dirty'] = is_dirty
     if error_text:
