@@ -55,20 +55,20 @@
                 <input type="number" class="txbox __inline __l" value="2015" placeholder="e.g. 2015"
                        ng-model="params.objectives.year.start"
                        ng-change="updateYearRange()"
-                       ng-required="yearsAreRequired()"
                        min="1950"
                        max="2100"
                        step="1"
-                       name="periodStart">
+                       name="periodStart"
+                       required>
                 to
                 <input type="number" class="txbox __inline __l" value="2020" placeholder="e.g. 2020"
                        ng-model="params.objectives.year.end"
                        ng-change="updateYearRange()"
-                       ng-required="yearsAreRequired()"
                        min="1950"
                        max="2100"
                        step="1"
-                       name="periodEnd">
+                       name="periodEnd"
+                       required>
                 in order to achieve the objectives by
                 <input type="number" class="txbox __inline __l" value="2030" placeholder="e.g. 2030"
                        ng-model="params.objectives.year.until"
@@ -76,7 +76,8 @@
                        min="1950"
                        max="2100"
                        step="1"
-                       name="objectivesUntil">
+                       name="objectivesUntil"
+                       required>
                 , with the following context between the end of the optimized program period and the end of the analysis
                 period:
                 <div ng-messages="state.OptimizationForm.periodStart.$error"
