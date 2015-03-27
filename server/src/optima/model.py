@@ -213,7 +213,7 @@ def doManualCalibration():
         Mlist = data.get("M",[])
         args['Mlist'] = Mlist
         D = manualfit(**args)
-        D_dict = D.toDict()
+        D_dict = tojson(D)
         if dosave:
             current_app.logger.debug("model: %s" % project_id)
             save_model(project_id, D_dict)
@@ -313,7 +313,7 @@ def doRunSimulation():
             args["endyear"] = int(endyear)
         args["dosave"] = False
         D = runsimulation(**args)
-        D_dict = D.toDict()
+        D_dict = tojson(D)
         save_model(request.project_id, D_dict)
         result = {'graph':D_dict.get('plot',{}).get('E',{})}
     result = add_calibration_parameters(D_dict, result)
@@ -351,7 +351,7 @@ def doCostCoverage():
         args['D'] = D
         plotdata, plotdata_co, plotdata_cc, effectnames, D = plotallcurves(**args) #effectnames are actually effects
         if do_save:
-            D_dict = D.toDict()
+            D_dict = tojson(D)
             save_model(request.project_id, D_dict)
     except Exception, err:
         var = traceback.format_exc()

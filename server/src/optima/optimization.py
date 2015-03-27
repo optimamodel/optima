@@ -222,7 +222,7 @@ def removeOptimizationSet(name):
     else:
         D = load_model(project_id, from_json = True)
         D = removeoptimization(D, name)
-        D_dict = D.toDict()
+        D_dict = tojson(D)
         save_model(project_id, D_dict)
         reply['status']='OK'
         reply['name'] = 'deleted'
@@ -263,7 +263,7 @@ def create_optimization():
 
         #save new optimization slot
         D = saveoptimization(D, name, objectives, constraints)
-        D_dict = D.toDict()
+        D_dict = tojson(D)
         save_model(project_id, D_dict)
         #return all available optimizations back
         reply['status']='OK'

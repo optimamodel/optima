@@ -168,7 +168,7 @@ def create_project(project_name):
     current_app.logger.debug('Creating new project: %s' % project.name)
 
     D = makeproject(**makeproject_args) # makeproject is supposed to return the name of the existing file...
-    project.model = D.toDict()
+    project.model = tojson(D)
 
     # Save to db
     current_app.logger.debug("About to persist project %s for user %s" % (project.name, project.user_id))
@@ -195,7 +195,7 @@ def update_project(project_id):
 
     from sim.makeproject import default_datastart, default_dataend, default_pops, default_progs
     from sim.runsimulation import runsimulation
-    from sim.dataio import projectpath
+    from sim.dataio import projectpath, tojson
     current_app.logger.debug("updateProject %s for user %s" % (project_id, current_user.email))
     raw_data = json.loads(request.data)
     # get current user
@@ -235,7 +235,7 @@ def update_project(project_id):
 
     D = makeproject(**makeproject_args) # makeproject is supposed to return the name of the existing file...
     #D should have inputprograms and inputpopulations corresponding to the entered data now
-    project.model = D.toDict()
+    project.model = tojson(D)
     db.session.query(WorkingProjectDb).filter_by(id=project.id).delete()
     if can_update and project.project_data is not None and project.project_data.meta is not None:
         # try to reload the data

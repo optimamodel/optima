@@ -99,7 +99,7 @@ def runScenarios():
         D = load_model(project_id)
         args['D'] = D
         D = runscenarios(**args)
-        D_dict = D.toDict()
+        D_dict = tojson(D)
         if dosave:
             current_app.logger.debug("model: %s" % project_id)
             save_model(project_id, D_dict)
