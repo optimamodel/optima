@@ -14,7 +14,6 @@ def makedatapars(D, verbose=2):
 
     
     from printv import printv
-    from bunch import Bunch as struct # Replicate Matlab-like structure behavior
     from numpy import array, isnan, zeros, shape, mean
     from utils import sanitize
     printv('Converting data to parameters...', 1, verbose)

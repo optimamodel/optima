@@ -14,7 +14,6 @@ def autofit(D, timelimit=None, maxiters=500, simstartyear=2000, simendyear=2015,
     from model import model
     from printv import printv
     from ballsd import ballsd
-    from bunch import Bunch as struct
     from utils import findinds
     from copy import deepcopy
     from updatedata import normalizeF, unnormalizeF

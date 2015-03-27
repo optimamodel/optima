@@ -1,6 +1,5 @@
  ## Imports
 from numpy import array, arange, zeros, exp, maximum, minimum, nonzero, concatenate, hstack, absolute, median
-from bunch import Bunch as struct # Replicate Matlab-like structure behavior
 from printv import printv
 from math import pow as mpow
 

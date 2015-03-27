@@ -5,7 +5,6 @@ def setoptions(opt=None, **kwargs):
     Version: 2015feb03 by cliffk
     """
     
-    from bunch import Bunch as struct
     from numpy import arange
     
     # If no options structure is fed in

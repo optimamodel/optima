@@ -14,7 +14,6 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=2):
     from printv import printv
     from numpy import nan, zeros, isnan, array, logical_or, nonzero # For reading in empty values
     from xlrd import open_workbook # For opening Excel workbooks
-    from bunch import Bunch as struct # Replicate Matlab-like structure behavior
     from time import strftime # For determining when a spreadsheet was last uploaded
     from datetime import date
     from programs import programs_for_input_key
@@ -97,10 +96,8 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=2):
 
     ## Basic setup
     data = dict() # Create structure for holding data
-    data.__doc__ = 'Raw data as loaded from the workbook, including both epidemiological and behavioral data, plus economics and velociraptors.'
     data.__date__ = strftime("%Y-%m-%d %H:%M:%S")
     programs = dict() # Create structure for holding program data
-    programs.__doc__ = 'Parameters that define the HIV programs -- cost-coverage and coverage-outcome curves.'
     workbook = open_workbook(filename) # Open workbook
     
     sheetstructure_keys = sheetstructure.keys()

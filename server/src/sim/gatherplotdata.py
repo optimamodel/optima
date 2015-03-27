@@ -16,13 +16,11 @@ costylabels = {}
 def gatheruncerdata(D, R, annual=True, verbose=2, maxyear=2030):
     """ Gather standard results into a form suitable for plotting with uncertainties. """
     from numpy import zeros, nan, size, ndim, array, asarray
-    from bunch import Bunch as struct
     from printv import printv
     from copy import deepcopy
     printv('Gathering epidemiology results...', 3, verbose)
     
     uncer = dict()
-    uncer.__doc__ = 'Output structure containing everything that might need to be plotted'
     uncer['tvec'] = R['tvec'].tolist() # Copy time vector
     uncer['poplabels'] = D['G']['meta']['pops']['short']
     uncer['colorm'] = (0,0.3,1) # Model color
@@ -197,14 +195,12 @@ def gatheruncerdata(D, R, annual=True, verbose=2, maxyear=2030):
 
 def gathermultidata(D, Rarr, annual=True, verbose=2, maxyear=2030):
     """ Gather multi-simulation results (scenarios and optimizations) into a form suitable for plotting. """
-    from bunch import Bunch as struct
     from printv import printv
     from copy import deepcopy
     printv('Gathering multi-simulation results...', 3, verbose)
     
     
     multi = dict()
-    multi.__doc__ = 'Output structure containing everything that might need to be plotted'
     multi['nsims'] = len(Rarr) # Number of simulations
     multi['tvec'] = Rarr[0]['R']['tvec'].tolist() # Copy time vector
     multi['poplabels'] = D['G']['meta']['pops']['long']
@@ -315,7 +311,6 @@ def gathermultidata(D, Rarr, annual=True, verbose=2, maxyear=2030):
 
 def gatheroptimdata(D, result, verbose=2):
     """ Return the data for plotting the optimization results. """
-    from bunch import Bunch as struct
     from printv import printv
     printv('Gathering optimization results...', 3, verbose)
     

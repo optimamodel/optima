@@ -10,7 +10,6 @@ Version: 2015feb06 by cliffk
 """
 
 from printv import printv
-from bunch import Bunch as struct
 from copy import deepcopy
 from numpy import ones, zeros, concatenate, arange, inf, hstack, argmin, array, ndim
 from utils import findinds
@@ -658,7 +657,7 @@ def partialupdateM(oldM, newM, indices, setbefore=False, setafter=True):
     output = deepcopy(oldM)
     for key in output.keys():
         if key not in ['transit', 'pships', 'const', 'tvec', 'hivprev', 'totalacts']: # Exclude certain keys that won't be updated
-            if hasattr(output[key],'keys'): # It's a dict or a bunch, loop again
+            if hasattr(output[key],'keys'): # It's a dict, loop again
                 for key2 in output[key].keys():
                     try:
                         if ndim(output[key][key2])==1:

@@ -1,5 +1,4 @@
 ## Imports
-from bunch import Bunch as struct
 from copy import deepcopy
 from numpy import linspace, ndim
 from nested import getnested, setnested

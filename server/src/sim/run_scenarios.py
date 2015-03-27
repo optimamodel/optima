@@ -22,7 +22,6 @@ from updatedata import updatedata
 D = updatedata(D, verbose=verbose)
 
 print('\n\n\n3. Defining scenarios...')
-from bunch import Bunch as struct
 scenariolist = [dict() for s in range(4)]
 
 ## Current conditions

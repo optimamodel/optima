@@ -93,7 +93,6 @@ def makefittedpars(D, verbose=2):
     """ Prepares fitted parameters for the simulation. """
     
     from printv import printv
-    from bunch import Bunch as struct # Replicate Matlab-like structure behavior
     from utils import perturb
     printv('Initializing fitted parameters...', 1, verbose)
     
@@ -101,7 +100,6 @@ def makefittedpars(D, verbose=2):
     D.F = [dict() for s in range(D['opt']['nsims'])]
     for s in range(D['opt']['nsims']):
         span=0 if s==0 else 0.5 # Don't have any variance for first simulation
-        D.F[s].__doc__ = 'Fitted parameters for simulation %i: initial prevalence, force-of-infection, population size, diagnoses, treatment' % s
         D.F[s].init  = perturb(D['G']['npops'],span)
         D.F[s]['popsize'] = perturb(D['G']['npops'],span)
         D.F[s].force = perturb(D['G']['npops'],span)

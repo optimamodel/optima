@@ -8,10 +8,9 @@ Version: 2015jan16 by cliffk
 ###############################################################################
 
 from math import log
-from numpy import linspace, exp, isnan, multiply, arange, mean
+from numpy import linspace, exp, isnan, multiply, arange, mean, array
 from numpy import log as nplog
 from rtnorm import rtnorm
-from bunch import float_array
 from printv import printv
 from parameters import input_parameter_name
 from copy import deepcopy
@@ -369,7 +368,7 @@ def makecco(D=None, progname=default_progname, effect=default_effect, ccparams=d
             currentoutcome = D['M'][parname][popnumber][timepoint]
         except:
             try:
-                tmp = float_array(D['data'][effect[0][0]][parname][popnumber])
+                tmp = array(D['data'][effect[0][0]][parname][popnumber])
                 currentoutcome = tmp[~isnan(tmp)][-1]
                 print('Parameter %s not found, using last data value %f' % (parname, currentoutcome))
             except:
@@ -650,12 +649,12 @@ def getscatterdata(xdata, ydata):
 
     if (len(xdata) == 1 and len(ydata) > 1):
         xdatascatter = xdata
-        ydata = float_array(ydata)
+        ydata = array(ydata)
         ydata = ydata[~isnan(ydata)]
         ydatascatter = [ydata[-1]]
     elif (len(ydata) == 1 and len(xdata) > 1): 
         ydatascatter = ydata
-        xdata = float_array(xdata)
+        xdata = array(xdata)
         xdata = xdata[~isnan(xdata)]
         xdatascatter = [xdata[-1]]
     else:

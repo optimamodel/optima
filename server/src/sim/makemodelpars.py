@@ -1,6 +1,5 @@
 from printv import printv
 from numpy import zeros, array, exp, shape
-from bunch import Bunch as struct # Replicate Matlab-like structure behavior
 eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
 
 
@@ -14,7 +13,6 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
     printv('Making model parameters...', 1, verbose)
     
     M = dict()
-    M.__doc__ = 'Model parameters to be used directly in the model, calculated from data parameters P.'
     M['tvec'] = opt['partvec'] # Store time vector with the model parameters
     npts = len(M['tvec']) # Number of time points # TODO probably shouldn't be repeated from model.m
     
@@ -122,7 +120,6 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
 
 def totalacts(M, npts):
     totalacts = dict()
-    totalacts.__doc__ = 'Balanced numbers of acts'
     
     popsize = M['popsize']
     pships = M['pships']

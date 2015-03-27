@@ -15,7 +15,6 @@ def makeresults(D, allsims=None, quantiles=None, rerunfinancial=False, verbose=2
     """
     
     from numpy import array, concatenate
-    from bunch import Bunch as struct
     from printv import printv
     from quantile import quantile
     from copy import deepcopy
@@ -23,7 +22,6 @@ def makeresults(D, allsims=None, quantiles=None, rerunfinancial=False, verbose=2
     if allsims is None: allsims = deepcopy([D['S']]) # If not supplied, using sims structure already in D
     
     R = dict()
-    R.__doc__ = 'Output structure containing all worthwhile results from the model'
     R['tvec'] = allsims[0]['tvec'] # Copy time vector
     nsims = len(allsims) # Number of simulations to average over
     if quantiles==None: quantiles = D['opt']['quantiles'] # If no quantiles are specified, just use the default ones
