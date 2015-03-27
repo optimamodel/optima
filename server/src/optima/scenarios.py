@@ -67,7 +67,7 @@ def list_scenarios():
     if not 'scens' in D:
         scenarios = defaultscenarios(D)
     else:
-        scenarios = [item.scenario for item in D.scens]
+        scenarios = [item['scenario'] for item in D['scens']]
     scenarios = tojson(scenarios)
     return json.dumps({'scenarios':scenarios})
 

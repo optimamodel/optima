@@ -23,7 +23,7 @@ from time import time
 from dataio import loaddata
 
 D = loaddata('/tmp/projects/example.prj', verbose=0)
-D['M'] = makemodelpars(D.P, D['opt'], verbose=0)
+D['M'] = makemodelpars(D['P'], D['opt'], verbose=0)
 
 t=time()
 S = model(D['G'], D['M'], D['F'][0], D['opt'], verbose=0)

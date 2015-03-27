@@ -158,13 +158,12 @@ def load_model(id, from_json = True, working_model = False):
         if model is None or len(model.keys())==0:
             current_app.logger.debug("model %s is None" % id)
         else:
-            if from_json:
-                model = model_as_bunch(model)
+            if from_json: model = model_as_bunch(model)
     return model
 
-def save_working_model(id, model):
+def save_working_model(id, model, to_json = False):
 
-    model = model_as_dict(model)
+    if to_json: model = model_as_dict(model)
     project = load_project(id)
 
     # If we do not have an instance for working project, make it now
@@ -207,10 +206,11 @@ def revert_working_model_to_default(id):
 
     return model
 
-def save_model(id, model):
+def save_model(id, model, to_json = False):
+    # model is given as json by default, no need to convert
     current_app.logger.debug("save_model %s" % id)
 
-    model = model_as_dict(model)
+    if to_json:model = model_as_dict(model)
     project = load_project(id)
     project.model = model #we want it to fail if there is no project...
     db.session.add(project)

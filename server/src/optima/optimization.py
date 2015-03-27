@@ -43,7 +43,7 @@ def getOptimizationParameters():
         if not 'optimizations' in D:
             optimizations = defaultoptimizations(D)
         else:
-            optimizations = D.optimizations
+            optimizations = D['optimizations']
         optimizations = tojson(optimizations)
         return json.dumps({'optimizations':optimizations})
 
