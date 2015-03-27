@@ -10,7 +10,7 @@ from sim.makeccocs import makecco, plotallcurves #, default_effectname, default_
 from utils import load_model, save_model, save_working_model_as_default, revert_working_model_to_default, project_exists, pick_params, check_project_name, for_fe
 from utils import report_exception
 from flask.ext.login import login_required, current_user
-from flask import current_app, make_response
+from flask import current_app
 from signal import *
 from dbconn import db
 from sim.autofit import autofit
