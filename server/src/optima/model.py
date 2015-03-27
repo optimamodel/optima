@@ -60,14 +60,13 @@ def doAutoCalibration():
     TODO: do it with the project which is currently in scope
 
     """
-    reply = {}
     current_app.logger.debug('auto calibration data: %s' % request.data)
     data = json.loads(request.data)
 
     project_name = request.project_name
     project_id = request.project_id
     if not project_exists(project_id):
-        reply['reason'] = 'File for project %s does not exist' % project_id
+        reply = {'reason': 'File for project %s does not exist' % project_id}
         return jsonify(reply), 500
     try:
         can_start, can_join, current_calculation = start_or_report_calculation(current_user.id, project_id, autofit, db.session)
@@ -83,10 +82,10 @@ def doAutoCalibration():
             args["timelimit"] = timelimit # for the autocalibrate function
             CalculatingThread(db.engine, current_user, project_id, timelimit, 1, autofit, args).start() #run it once
             msg = "Starting thread for user %s project %s:%s" % (current_user.name, project_id, project_name)
-            return json.dumps({"status":"OK", "result": msg, "join":True})
+            return json.dumps({"result": msg, "join": True})
         else:
             msg = "Thread for user %s project %s:%s (%s) has already started" % (current_user.name, project_id, project_name, current_calculation)
-            return json.dumps({"status":"OK", "result": msg, "join":can_join})
+            return json.dumps({"result": msg, "join": can_join})
     except Exception, err:
         var = traceback.format_exc()
         return jsonify({"exception":var}), 500
@@ -129,10 +128,10 @@ def getWorkingModel():
     result['status'] = status
     if error_text:
         result['exception'] = error_text
-    
-    response_status = 200 
+
+    response_status = 200
     if status=='NOK':
-        response_status = 500 
+        response_status = 500
     result = add_calibration_parameters(D_dict, result)
     return jsonify(result), response_status
 
@@ -141,12 +140,11 @@ def getWorkingModel():
 @check_project_name
 def saveCalibrationModel():
     """ Saves working model as the default model """
-    reply = {}
     # get project name
     project_name = request.project_name
     project_id = request.project_id
     if not project_exists(project_id):
-        reply['reason'] = 'File for project %s does not exist' % project_id
+        reply = {'reason': 'File for project %s does not exist' % project_id}
         return jsonify(reply), 500
 
     try:
@@ -164,12 +162,11 @@ def saveCalibrationModel():
 @check_project_name
 def revertCalibrationModel():
     """ Revert working model to the default model """
-    reply = {}
     # get project name
     project_name = request.project_name
     project_id = request.project_id
     if not project_exists(project_id):
-        reply['reason'] = 'File for project %s does not exist' % project_id
+        reply = {'reason': 'File for project %s does not exist' % project_id}
         return jsonify(reply), 500
     try:
         D_dict = revert_working_model_to_default(project_id)
@@ -196,7 +193,8 @@ def doManualCalibration():
     project_name = request.project_name
     project_id = request.project_id
     if not project_exists(project_id):
-        reply['reason'] = 'Project %s does not exist' % project_id
+        reply = {'reason': 'Project %s does not exist' % project_id}
+        return jsonify(reply), 500
 
     #expects json: {"startyear":year,"endyear":year} and gets project_name from session
     args = {}
@@ -397,4 +395,4 @@ def reloadSpreadsheet(project_id):
     D = load_model(project_id)
     D = updatedata(D, input_programs = project.programs, savetofile = False, rerun = True)
 
-    return jsonify({'status': 'OK'})    
+    return jsonify({'status': 'OK'})
