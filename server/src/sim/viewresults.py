@@ -9,7 +9,7 @@ def viewuncerresults(E, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 
     from printv import printv
 
     
-    npops = len(E.prev.pops) # Calculate number of populations
+    npops = len(E['prev']['pops']) # Calculate number of populations
     
     if onefig:
         figh = figure(figsize=(24,16), facecolor='w')
@@ -46,28 +46,28 @@ def viewuncerresults(E, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 
                         else:
                             figure(facecolor='w')
                         hold(True)
-                        fill_between(E.tvec, E[graph].pops[p].low, E[graph].pops[p].high, alpha=0.2, edgecolor='none')
-                        plot(E.tvec, E[graph].pops[p].best, c=E.colorm, linewidth=linewidth)
-                        if ndim(E[graph].ydata)==2:
-                            scatter(E.xdata, E[graph].ydata[p], c=E.colord)
+                        fill_between(E['tvec'], E[graph]['pops'][p]['low'], E[graph]['pops'][p]['high'], alpha=0.2, edgecolor='none')
+                        plot(E['tvec'], E[graph]['pops'][p]['best'], c=E['colorm'], linewidth=linewidth)
+                        if ndim(E[graph]['ydata'])==2:
+                            scatter(E['xdata'], E[graph]['ydata'][p], c=E['colord'])
                         
-                        title(E[graph].pops[p].title, fontsize=10)
+                        title(E[graph]['pops'][p]['title'], fontsize=10)
                         if not(onefig): legend(('Model','Data'))
-                        xlabel(E[graph].xlabel)
-                        ylabel(E[graph].pops[p].ylabel)
+                        xlabel(E[graph]['xlabel'])
+                        ylabel(E[graph]['pops'][p]['ylabel'])
                         xlim(xmin=simstartyear, xmax=simendyear)
                         ylim(ymin=0)
                 
                 else: # Total epi graphs and cost graphs
                     if graph=='costann':
                         subkey = 'total' #['existing','future'][popstot]
-                        xdata = E[graph][subkey].total.xdata 
+                        xdata = E[graph][subkey]['total']['xdata'] 
                     elif graph in ['commit','costcum']:
                         subkey = 'total'
-                        xdata = E[graph][subkey].xdata 
+                        xdata = E[graph][subkey]['xdata'] 
                     else:
                         subkey = 'tot'
-                        xdata = E.tvec
+                        xdata = E['tvec']
                         
                     if onefig:
                         count += 1
@@ -77,39 +77,39 @@ def viewuncerresults(E, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 
                     hold(True)
                     try:
                         if graph not in ['costann']:
-                            fill_between(xdata, E[graph][subkey].low, E[graph][subkey].high, alpha=0.2, edgecolor='none')
+                            fill_between(xdata, E[graph][subkey]['low'], E[graph][subkey]['high'], alpha=0.2, edgecolor='none')
                         else:
-                            fill_between(xdata, E[graph][subkey].total.low, E[graph][subkey].total.high, alpha=0.2, edgecolor='none')
+                            fill_between(xdata, E[graph][subkey]['total']['low'], E[graph][subkey]['total']['high'], alpha=0.2, edgecolor='none')
                     except:
                         import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                     if graph not in ['costann']:
-                        plot(xdata, E[graph][subkey].best, c=E.colorm, linewidth=linewidth)
+                        plot(xdata, E[graph][subkey]['best'], c=E['colorm'], linewidth=linewidth)
                     else:
-                        plot(xdata, E[graph][subkey].total.best, c=E.colorm, linewidth=linewidth)
+                        plot(xdata, E[graph][subkey]['total']['best'], c=E['colorm'], linewidth=linewidth)
                     if epigraph:
-                        if ndim(E[graph].ydata)==1:
-                            scatter(E.xdata, E[graph].ydata, c=E.colord)
+                        if ndim(E[graph]['ydata'])==1:
+                            scatter(E['xdata'], E[graph]['ydata'], c=E['colord'])
                     
                     if graph not in ['costann']:
-                        title(E[graph][subkey].title, fontsize=10)
+                        title(E[graph][subkey]['title'], fontsize=10)
                     else:
-                        title(E[graph][subkey].total.title, fontsize=10)
-                    if epigraph: xlabel(E[graph].xlabel)
+                        title(E[graph][subkey]['total']['title'], fontsize=10)
+                    if epigraph: xlabel(E[graph]['xlabel'])
                     else: 
                         if graph not in ['costann']:
-                            xlabel(E[graph][subkey].xlabel)
-                            ylabel(E[graph][subkey].ylabel)
+                            xlabel(E[graph][subkey]['xlabel'])
+                            ylabel(E[graph][subkey]['ylabel'])
                         else:
-                            xlabel(E[graph][subkey].total.xlabel)
-                            ylabel(E[graph][subkey].total.ylabel)
+                            xlabel(E[graph][subkey]['total']['xlabel'])
+                            ylabel(E[graph][subkey]['total']['ylabel'])
                     
                     ylim(ymin=0)
     
     if onefig:
         subplot(nxplots, nyplots, count+1)
-        plot(1, 1, c=E.colorm, linewidth=linewidth, label='Model')
+        plot(1, 1, c=E['colorm'], linewidth=linewidth, label='Model')
         fill_between([1,2], [1,1], [2,2], alpha=0.2, edgecolor='none', label='Uncertainty')
-        scatter(0, 0, c=E.colord, label='Data')
+        scatter(0, 0, c=E['colord'], label='Data')
         xlim((0,1))
         ylim((0,1))
         legend()
@@ -127,11 +127,11 @@ def viewmultiresults(M, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 
     
     from matplotlib.pylab import figure, plot, hold, xlabel, ylabel, xlim, ylim, legend, title, ceil, sqrt, subplot, show, fill_between
     import brewer2mpl as colormap
-    bmap = colormap.get_map('Paired', 'Qualitative', max(3,M.nsims)) # WARNING, won't work with >13
-    if M.nsims>12: raise Exception('Can''t use ColorBrewer with more than 12 colors')
+    bmap = colormap.get_map('Paired', 'Qualitative', max(3,M['nsims'])) # WARNING, won't work with >13
+    if M['nsims']>12: raise Exception('Can''t use ColorBrewer with more than 12 colors')
     colors = bmap.mpl_colors
     
-    npops = len(M.prev.pops) # Calculate number of populations
+    npops = len(M.prev['pops']) # Calculate number of populations
 
     
     if onefig:
@@ -165,25 +165,25 @@ def viewmultiresults(M, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 
                         else:
                             figure(facecolor='w')
                         hold(True)
-                        for sim in range(M.nsims):
+                        for sim in range(M['nsims']):
                             if graph not in ['costann']:
-                                fill_between(M.tvec, M[graph].pops[p].low[sim], M[graph].pops[p].high[sim], alpha=0.2, edgecolor='none')
-                            plot(M.tvec, M[graph].pops[p].best[sim], linewidth=linewidth, color=colors[sim])
+                                fill_between(M['tvec'], M[graph]['pops'][p]['low'][sim], M[graph]['pops'][p]['high'][sim], alpha=0.2, edgecolor='none')
+                            plot(M['tvec'], M[graph]['pops'][p]['best'][sim], linewidth=linewidth, color=colors[sim])
                         
-                        title(M[graph].pops[p].title, fontsize=10)
-                        if not(onefig): legend(M[graph].pops[p].legend)
-                        xlabel(M[graph].xlabel)
-                        ylabel(M[graph].pops[p].ylabel)
+                        title(M[graph]['pops'][p]['title'], fontsize=10)
+                        if not(onefig): legend(M[graph]['pops'][p]['legend'])
+                        xlabel(M[graph]['xlabel'])
+                        ylabel(M[graph]['pops'][p]['ylabel'])
                         xlim(xmin=simstartyear, xmax=simendyear)
                         ylim(ymin=0)
                 
                 else: # Total epi graphs and cost graphs
                     if epigraph:
                         subkey = 'tot'
-                        xdata = M.tvec
+                        xdata = M['tvec']
                     else:
                         subkey = 'total' #['existing','future'][popstot] # SUPER CONFUSING
-                        xdata = M[graph][subkey].xdata
+                        xdata = M[graph][subkey]['xdata']
                     
                     if onefig:
                         count += 1
@@ -192,19 +192,19 @@ def viewmultiresults(M, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 
                         figure(facecolor='w')
                     hold(True)
                     
-                    for sim in range(M.nsims):
-                        plot(xdata, M[graph][subkey].data[sim], linewidth=linewidth, color=colors[sim])
+                    for sim in range(M['nsims']):
+                        plot(xdata, M[graph][subkey]['data'][sim], linewidth=linewidth, color=colors[sim])
                     
-                    title(M[graph][subkey].title, fontsize=10)
-                    if epigraph: xlabel(M[graph].xlabel)
-                    else: xlabel(M[graph][subkey].xlabel)
-                    ylabel(M[graph][subkey].ylabel)
+                    title(M[graph][subkey]['title'], fontsize=10)
+                    if epigraph: xlabel(M[graph]['xlabel'])
+                    else: xlabel(M[graph][subkey]['xlabel'])
+                    ylabel(M[graph][subkey]['ylabel'])
                     ylim(ymin=0)
     
     if onefig:
         subplot(nxplots, nyplots, count+1)
-        for sim in range(M.nsims): plot(0, 0, linewidth=linewidth, color=colors[sim])
-        legend(M[graph].total.legend)
+        for sim in range(M['nsims']): plot(0, 0, linewidth=linewidth, color=colors[sim])
+        legend(M[graph]['total']['legend'])
 
     if show_wait: show()
 
@@ -233,13 +233,3 @@ def viewoptimresults(O):
     xlabel(O['outcome']['xlabel'])
     ylabel(O['outcome']['ylabel'])
     title(O['outcome']['title'])
-    
-    
-#    >>> D.plot.optim[-1].outcome.keys()
-#['xlabel', 'title', 'ydata', 'xdata', 'ylabel']
-#>>> D.plot.optim[-1].alloc.keys()
-#Traceback (most recent call last):
-#  File "<stdin>", line 1, in <module>
-#AttributeError: 'list' object has no attribute 'keys'
-#>>> D.plot.optim[-1].alloc[0].keys()
-#['piedata', 'legend', 'radardata', 'title']
