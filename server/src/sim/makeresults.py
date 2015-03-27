@@ -22,7 +22,7 @@ def makeresults(D, allsims=None, quantiles=None, rerunfinancial=False, verbose=2
     printv('Calculating results...', 1, verbose)
     if allsims is None: allsims = deepcopy([D['S']]) # If not supplied, using sims structure already in D
     
-    R = struct()
+    R = dict()
     R.__doc__ = 'Output structure containing all worthwhile results from the model'
     R['tvec'] = allsims[0]['tvec'] # Copy time vector
     nsims = len(allsims) # Number of simulations to average over
@@ -32,7 +32,7 @@ def makeresults(D, allsims=None, quantiles=None, rerunfinancial=False, verbose=2
     allcosts = [] # Initialize -- WARNING, need to do better
     datatypes = ['prev', 'plhiv', 'inci', 'force', 'daly', 'death', 'tx1', 'tx2', 'dx', 'costann', 'costcum', 'commit']
     for data in datatypes:
-        R[data] = struct()
+        R[data] = dict()
         if data[0:4] not in ['cost','comm']:
             R[data]['pops'] = []
             R[data]['tot'] = []
@@ -41,9 +41,9 @@ def makeresults(D, allsims=None, quantiles=None, rerunfinancial=False, verbose=2
             R[data]['existing'] = []
             R[data]['future'] = []
         elif data == 'costann':
-            R[data]['total'] = struct()
-            R[data]['existing'] = struct()
-            R[data]['future'] = struct()
+            R[data]['total'] = dict()
+            R[data]['existing'] = dict()
+            R[data]['future'] = dict()
             for yscale in ['total','gdp','revenue','govtexpend','totalhealth','domestichealth']:
                 R[data]['total'][yscale] = []
                 R[data]['existing'][yscale]= []

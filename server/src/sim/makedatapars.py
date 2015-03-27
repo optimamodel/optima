@@ -26,7 +26,7 @@ def makedatapars(D, verbose=2):
     def data2par(dataarray, usetime=True):
         """ Take an array of data and turn it into default parameters -- here, just take the means """
         nrows = shape(dataarray)[0] # See how many rows need to be filled (either npops, nprogs, or 1)
-        output = struct() # Create structure
+        output = dict() # Create structure
         output['p'] = [0]*nrows # Initialize array for holding population parameters
         if usetime:
             output['t'] = [0]*nrows # Initialize array for holding time parameters
@@ -63,7 +63,7 @@ def makedatapars(D, verbose=2):
     ## Loop over quantities
     ###############################################################################
     
-    D['P'] = struct() # Initialize parameters structure
+    D['P'] = dict() # Initialize parameters structure
     D['P'].__doc__ = 'Parameters that have been directly derived from the data, which are then used to create the model parameters'
     D['G']['meta'] = D['data']['meta'] # Copy metadata
     
@@ -89,11 +89,11 @@ def makedatapars(D, verbose=2):
         D['P'][parclass] = D['data'][parclass]
     
     ## Constants...just take the best value for now -- # TODO: use the uncertainty
-    D['P']['const'] = struct()
+    D['P']['const'] = dict()
     for parclass in D['data']['const'].keys():
         printv('Converting data parameter %s...' % parclass, 3, verbose)
         if type(D['data']['const'][parclass])==struct: 
-            D['P']['const'][parclass] = struct()
+            D['P']['const'][parclass] = dict()
             for parname in D['data']['const'][parclass].keys():
                 printv('Converting data parameter %s...' % parname, 4, verbose)
                 D['P']['const'][parclass][parname] = D['data']['const'][parclass][parname][0] # Taking best value only, hence the 0

@@ -21,7 +21,7 @@ def gatheruncerdata(D, R, annual=True, verbose=2, maxyear=2030):
     from copy import deepcopy
     printv('Gathering epidemiology results...', 3, verbose)
     
-    uncer = struct()
+    uncer = dict()
     uncer.__doc__ = 'Output structure containing everything that might need to be plotted'
     uncer['tvec'] = R['tvec'].tolist() # Copy time vector
     uncer['poplabels'] = D['G']['meta']['pops']['short']
@@ -47,11 +47,11 @@ def gatheruncerdata(D, R, annual=True, verbose=2, maxyear=2030):
     for key in epititles.keys():
         percent = 100 if key in ['prev','force'] else 1 # Whether to multiple results by 100
         
-        uncer[key] = struct()
-        uncer[key]['pops'] = [struct() for p in range(D['G']['npops'])]
-        uncer[key]['tot'] = struct()
+        uncer[key] = dict()
+        uncer[key]['pops'] = [dict() for p in range(D['G']['npops'])]
+        uncer[key]['tot'] = dict()
         if key not in ['prev','force']: # For stacked area plots -- an option for everything except prevalence and force-of-infection
-            uncer[key]['popstacked'] = struct()
+            uncer[key]['popstacked'] = dict()
             uncer[key]['popstacked']['pops'] = []
             uncer[key]['popstacked']['legend'] = []
             uncer[key]['popstacked']['title'] = epititles[key]
@@ -121,10 +121,10 @@ def gatheruncerdata(D, R, annual=True, verbose=2, maxyear=2030):
     
     # Financial cost outputs
     for key in ['costann', 'costcum']:
-        uncer[key] = struct()
+        uncer[key] = dict()
         origkey = 'annual' if key=='costann' else 'cumulative'
         #Set up stacked storage
-        uncer[key]['stacked'] = struct()
+        uncer[key]['stacked'] = dict()
         if key == 'costcum':
             uncer[key]['stacked']['costs'] = []
             uncer[key]['stacked']['legend'] = []
@@ -132,7 +132,7 @@ def gatheruncerdata(D, R, annual=True, verbose=2, maxyear=2030):
             uncer[key]['stacked']['ylabel'] = R['costshared'][origkey]['total']['ylabel']
         else:
             for yscale in ['total','gdp','revenue','govtexpend','totalhealth','domestichealth']:
-                uncer[key]['stacked'][yscale] = struct()
+                uncer[key]['stacked'][yscale] = dict()
                 uncer[key]['stacked'][yscale]['costs'] = []
                 uncer[key]['stacked'][yscale]['legend'] = []
                 uncer[key]['stacked'][yscale]['title'] = 'Annual HIV-related financial costs'
@@ -141,7 +141,7 @@ def gatheruncerdata(D, R, annual=True, verbose=2, maxyear=2030):
 
         #Loop through cost types
         for ac in ['total']: #['total','future','existing']:
-            uncer[key][ac] = struct()
+            uncer[key][ac] = dict()
             if key=='costcum':
                 # Individual line graphs with uncertainty
                 uncer[key][ac]['best'] = R[key][ac][0][indices].tolist()
@@ -158,7 +158,7 @@ def gatheruncerdata(D, R, annual=True, verbose=2, maxyear=2030):
                     uncer[key]['stacked']['legend'].append([ac['title']()])
             else:
                 for yscale in ['total','gdp','revenue','govtexpend','totalhealth','domestichealth']:
-                    uncer[key][ac][yscale] = struct()
+                    uncer[key][ac][yscale] = dict()
                     if 'ylinedata' in R['costshared'][origkey][ac][yscale]:
                         # Individual line graphs with uncertainty
                         uncer[key][ac][yscale]['best'] = R[key][ac][yscale][0][indices].tolist()
@@ -175,9 +175,9 @@ def gatheruncerdata(D, R, annual=True, verbose=2, maxyear=2030):
                             uncer[key]['stacked'][yscale]['legend'].append([ac['title']()])
                             
     # Financial commitment outputs
-    uncer['commit'] = struct()
+    uncer['commit'] = dict()
     for yscale in ['total','gdp','revenue','govtexpend','totalhealth','domestichealth']:
-        uncer['commit'][yscale] = struct()
+        uncer['commit'][yscale] = dict()
         if 'ylinedata' in R['costshared']['annual']['total'][yscale]:
             # Individual line graphs with uncertainty
             uncer['commit'][yscale]['best'] = R['commit'][yscale][0][indices].tolist()
@@ -203,7 +203,7 @@ def gathermultidata(D, Rarr, annual=True, verbose=2, maxyear=2030):
     printv('Gathering multi-simulation results...', 3, verbose)
     
     
-    multi = struct()
+    multi = dict()
     multi.__doc__ = 'Output structure containing everything that might need to be plotted'
     multi['nsims'] = len(Rarr) # Number of simulations
     multi['tvec'] = Rarr[0]['R']['tvec'].tolist() # Copy time vector
@@ -225,8 +225,8 @@ def gathermultidata(D, Rarr, annual=True, verbose=2, maxyear=2030):
     
     for key in epititles.keys():
         percent = 100 if key in ['prev','force'] else 1 # Whether to multiple results by 100
-        multi[key] = struct()
-        multi[key]['pops'] = [struct() for p in range(D['G']['npops'])]
+        multi[key] = dict()
+        multi[key]['pops'] = [dict() for p in range(D['G']['npops'])]
         for p in range(D['G']['npops']):
             multi[key]['pops'][p]['data'] = []
             multi[key]['pops'][p]['best'] = []
@@ -241,7 +241,7 @@ def gathermultidata(D, Rarr, annual=True, verbose=2, maxyear=2030):
                 multi[key]['pops'][p]['low'].append((Rarr[sim]['R'][key]['pops'][1][p,:]*percent)[indices].tolist())
                 multi[key]['pops'][p]['high'].append((Rarr[sim]['R'][key]['pops'][2][p,:]*percent)[indices].tolist())
                 multi[key]['pops'][p]['legend'].append(Rarr[sim]['label'])
-        multi[key]['tot'] = struct()
+        multi[key]['tot'] = dict()
         multi[key]['tot']['data'] = []
         multi[key]['tot']['best'] = []
         multi[key]['tot']['low'] = []
@@ -259,10 +259,10 @@ def gathermultidata(D, Rarr, annual=True, verbose=2, maxyear=2030):
     
     # Financial cost outputs
     for key in ['costann', 'costcum']:
-        multi[key] = struct()
+        multi[key] = dict()
         for ac in ['total']: #['total','future','existing']:
             origkey = 'annual' if key=='costann' else 'cumulative'
-            multi[key][ac] = struct()
+            multi[key][ac] = dict()
             if key=='costcum':
                 multi[key][ac]['data'] = []
                 multi[key][ac]['legend'] = []
@@ -276,7 +276,7 @@ def gathermultidata(D, Rarr, annual=True, verbose=2, maxyear=2030):
                     multi[key][ac]['ylabel'] = Rarr[sim]['R']['costshared'][origkey][ac]['ylabel']
             else:
                 for yscale in ['total','gdp','revenue','govtexpend','totalhealth','domestichealth']:
-                    multi[key][ac][yscale] = struct()
+                    multi[key][ac][yscale] = dict()
                     multi[key][ac][yscale]['data'] = []
                     multi[key][ac][yscale]['legend'] = []
                     if 'ylinedata' in Rarr[sim]['R']['costshared'][origkey][ac][yscale]:
@@ -290,9 +290,9 @@ def gathermultidata(D, Rarr, annual=True, verbose=2, maxyear=2030):
                            multi[key][ac][yscale]['ylabel'] = Rarr[sim]['R']['costshared'][origkey][ac][yscale]['ylabel']                
         
     # Financial commitment outputs
-    multi['commit'] = struct()
+    multi['commit'] = dict()
     for yscale in ['total','gdp','revenue','govtexpend','totalhealth','domestichealth']:
-        multi['commit'][yscale] = struct()
+        multi['commit'][yscale] = dict()
         multi['commit'][yscale]['data'] = []
         multi['commit'][yscale]['legend'] = []
         if 'ylinedata' in Rarr[sim]['R']['costshared']['annual']['total'][yscale]:
@@ -319,11 +319,11 @@ def gatheroptimdata(D, result, verbose=2):
     from printv import printv
     printv('Gathering optimization results...', 3, verbose)
     
-    optim = struct() # These optimization results
+    optim = dict() # These optimization results
     optim['kind'] = result['kind'] # Flag for the kind of optimization
     optim['multi'] = gathermultidata(D, result['Rarr'], verbose=2) # Calculate data for displaying standard epidemiological results
     if optim['kind'] in ['constant', 'timevarying', 'multiyear']:
-        optim['outcome'] = struct() # Plot how the outcome improved with optimization
+        optim['outcome'] = dict() # Plot how the outcome improved with optimization
         optim['outcome']['ydata'] = result['fval'].tolist() # Vector of outcomes
         optim['outcome']['xdata'] = range(len(result['fval'].tolist())) # Vector of iterations
         optim['outcome']['ylabel'] = 'Outcome'
@@ -333,16 +333,16 @@ def gatheroptimdata(D, result, verbose=2):
         optim['alloc'] = []
         titles = ['Original','Optimal']
         for i in range(2): # Original and optimal
-            optim['alloc'].append(struct())
+            optim['alloc'].append(dict())
             optim['alloc'][i]['piedata'] = result['allocarr'][i][0].tolist() # A vector of allocations, length nprogs, for pie charts
-            optim['alloc'][i]['radardata'] = struct() # Structure for storing radar plot data
+            optim['alloc'][i]['radardata'] = dict() # Structure for storing radar plot data
             optim['alloc'][i]['radardata']['best'] = result['allocarr'][i][0].tolist() # 'Best' estimate: the thick line in the radar plot
             optim['alloc'][i]['radardata']['low']  = result['allocarr'][i][1].tolist() # 'Low' estimate: the 
             optim['alloc'][i]['radardata']['high'] = result['allocarr'][i][2].tolist()
             optim['alloc'][i]['title'] = titles[i] # Titles for pies or radar charts
             optim['alloc'][i]['legend'] = D['data']['meta']['progs']['short'] # Program names, length nprogs, for pie and radar
     if optim['kind']=='timevarying' or optim['kind']=='multiyear':
-        optim['alloc'] = struct() # Allocation structure
+        optim['alloc'] = dict() # Allocation structure
         optim['alloc']['stackdata'] = [] # Empty list
         for p in range(D['G']['nprogs']): # Loop over programs
             optim['alloc']['stackdata'].append(result['alloc'][p].tolist()) # Allocation array, nprogs x npts, for stacked area plots
@@ -352,7 +352,7 @@ def gatheroptimdata(D, result, verbose=2):
         optim['alloc']['title'] = 'Optimal allocation'
         optim['alloc']['legend'] = D['data']['meta']['progs']['short'] # Program names, length nprogs
     if optim['kind']=='range':
-        optim['alloc'] = struct() # Allocations structure
+        optim['alloc'] = dict() # Allocations structure
         optim['alloc']['bardata'] = []
         for b in range(len(result['allocarr'])): # Loop over budgets
             optim['alloc']['bardata'].append(result['allocarr'][b].tolist()) # A vector of allocations, length nprogs
@@ -361,7 +361,7 @@ def gatheroptimdata(D, result, verbose=2):
         optim['alloc']['ylabel'] = 'Spend'
         optim['alloc']['title'] = 'Budget allocations'
         optim['alloc']['legend'] = D['data']['meta']['progs']['short'] # Program names, length nprogs
-        optim['outcome'] = struct() # Dictionary with names and values
+        optim['outcome'] = dict() # Dictionary with names and values
         optim['outcome']['bardata'] = result['fval'] # Vector of outcomes, length nbudgets
         optim['outcome']['xdata'] = result['budgets'].tolist() # Vector of budgets
         optim['outcome']['xlabels'] = result['budgetlabels'] # Budget labels

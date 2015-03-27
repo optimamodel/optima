@@ -28,7 +28,7 @@ def runscenarios(D, scenariolist=None, verbose=2):
     scenariopars = makescenarios(D, scenariolist, verbose=verbose)
     
     # Run scenarios
-    D['scens'] = [struct() for s in range(nscenarios)]
+    D['scens'] = [dict() for s in range(nscenarios)]
     for scen in range(nscenarios):
         D['scens'][scen]['scenario'] = deepcopy(scenariolist[scen]) # Copy scenario data
         D['scens'][scen]['label'] = scenariolist[scen]['name'] # Copy name
@@ -54,7 +54,7 @@ def runscenarios(D, scenariolist=None, verbose=2):
 def makescenarios(D, scenariolist, verbose=2):
     """ Convert a list of scenario parameters into a list of changes to model parameters """
     nscenarios = len(scenariolist)
-    scenariopars = [struct() for s in range(nscenarios)]
+    scenariopars = [dict() for s in range(nscenarios)]
     for scen in range(nscenarios):
         scenariopars[scen]['name'] = scenariolist[scen]['name']
         scenariopars[scen]['M'] = deepcopy(D['M']) # Copy the whole thing...too hard to generate nested dictionaries on the fly
@@ -115,7 +115,7 @@ def defaultscenarios(D, verbose=2):
     """ Define a list of default scenarios -- only "Current conditions" by default """
     
     # Start at the very beginning, a very good place to start :)
-    scenariolist = [struct()]
+    scenariolist = [dict()]
     
     ## Current conditions
     scenariolist[0]['name'] = 'Current conditions'

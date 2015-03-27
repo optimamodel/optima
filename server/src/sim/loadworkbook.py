@@ -79,7 +79,7 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=2):
     
     
     ## Ugly, but allow the list of groups to be used as name and also as variables
-    sheetstructure = struct()
+    sheetstructure = dict()
     sheetstructure['metadata'] = metadata
     sheetstructure['cocodata'] = cocodata
     sheetstructure['keydata'] = keydata
@@ -96,10 +96,10 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=2):
     
 
     ## Basic setup
-    data = struct() # Create structure for holding data
+    data = dict() # Create structure for holding data
     data.__doc__ = 'Raw data as loaded from the workbook, including both epidemiological and behavioral data, plus economics and velociraptors.'
     data.__date__ = strftime("%Y-%m-%d %H:%M:%S")
-    programs = struct() # Create structure for holding program data
+    programs = dict() # Create structure for holding program data
     programs.__doc__ = 'Parameters that define the HIV programs -- cost-coverage and coverage-outcome curves.'
     workbook = open_workbook(filename) # Open workbook
     
@@ -116,7 +116,7 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=2):
             sheetname = sheet[0] # Name of the workbook
             name = sheet[1] # Pull out the name of this field, e.g. 'epi'
             subparlist = sheet[2] # List of subparameters
-            data[name] = struct() # Create structure for holding data, e.g. data.epi
+            data[name] = dict() # Create structure for holding data, e.g. data.epi
             sheetdata = workbook.sheet_by_name(sheetname) # Load this workbook
             parcount = -1 # Initialize the parameter count
             printv('  Loading "%s"...' % sheetname, 2, verbose)
@@ -165,7 +165,7 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=2):
                     # It's metadata: pull out each of the pieces
                     if groupname=='metadata': 
                         thispar = subparlist[parcount] # Get the name of this parameter, e.g. 'pop'
-                        data[name][thispar] = struct() # Initialize to empty list
+                        data[name][thispar] = dict() # Initialize to empty list
                         data[name][thispar]['short'] = [] # Store short population/program names, e.g. "FSW"
                         data[name][thispar]['long'] = [] # Store long population/program names, e.g. "Female sex workers"
                         if thispar=='pops':
@@ -190,14 +190,14 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=2):
                     # It's economics data
                     elif groupname in ['econdata']: 
                         thispar = subparlist[parcount] # Get the name of this parameter, e.g. 'popsize'
-                        data[name][thispar] = struct() # Create a structure since need to store future growth assumptions too
+                        data[name][thispar] = dict() # Create a structure since need to store future growth assumptions too
                         data[name][thispar]['past'] = [] # Initialize past data to empty list
                         data[name][thispar]['future'] = [] # Initialize future assumptions to empty list
                     
                     # It's a constant or a cost: create a structure
                     elif groupname=='constants': 
                         thispar = subparlist[parcount][0] # Get the name of this parameter, e.g. 'trans'
-                        data[name][thispar] = struct() # Need yet another structure if it's a constant!
+                        data[name][thispar] = dict() # Need yet another structure if it's a constant!
                     
                     else:
                         raise Exception('Group name %s not recognized!' % groupname)

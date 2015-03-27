@@ -21,9 +21,9 @@ def makeproject(projectname='example', pops = default_pops, progs = default_prog
 
     printv('Making project...', 1, verbose)
 
-    D = struct() # Data structure for saving everything
+    D = dict() # Data structure for saving everything
     D.__doc__ = 'Data structure for storing everything -- data, parameters, simulation results, velociraptors, etc.'
-    D['plot'] = struct() # Initialize plotting data
+    D['plot'] = dict() # Initialize plotting data
     D['plot'].__doc__ = 'Plotting data, including labels, colors, etc., for epidemiology data (E), optimization data (O), and scenario data (S)'
     
     # Initialize options
@@ -31,7 +31,7 @@ def makeproject(projectname='example', pops = default_pops, progs = default_prog
     D['opt'] = setoptions(nsims=nsims)
     
     # Set up "G" -- general parameters structure
-    D['G'] = struct()
+    D['G'] = dict()
     D['G'].__doc__ = 'General parameters for the model, including the number of population groups, project name, etc.'
     D['G']['projectname'] = projectname  
     D['G']['projectfilename'] = projectpath(projectname+'.prj')

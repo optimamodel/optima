@@ -37,18 +37,18 @@ def autofit(D, timelimit=None, maxiters=500, simstartyear=2000, simendyear=2015,
         S = model(D['G'], D['M'], F, D['opt'], verbose=verbose)
         
         # Pull out diagnoses data
-        dx = [struct()]
-        dx[0]['data'] = struct()
-        dx[0]['model'] = struct()
+        dx = [dict()]
+        dx[0]['data'] = dict()
+        dx[0]['model'] = dict()
         dx[0]['data']['x'], dx[0]['data']['y'] = extractdata(D['G']['datayears'], D['data']['opt']['numdiag'][0])
         dx[0]['model']['x'] = S['tvec']
         dx[0]['model']['y'] = S['dx'].sum(axis=0)
         
         # Prevalence data
-        prev = [struct() for p in range(D['G']['npops'])]
+        prev = [dict() for p in range(D['G']['npops'])]
         for p in range(D['G']['npops']): 
-            prev[p]['data'] = struct()
-            prev[p]['model'] = struct()
+            prev[p]['data'] = dict()
+            prev[p]['model'] = dict()
             prev[p]['data']['x'], prev[p]['data']['y'] = extractdata(D['G']['datayears'], D['data']['key']['hivprev'][0][p]) # The first 0 is for "best"
             prev[p]['model']['x'] = S['tvec']
             prev[p]['model']['y'] = S['people'][1:,p,:].sum(axis=0) / S['people'][:,p,:].sum(axis=0) # This is prevalence

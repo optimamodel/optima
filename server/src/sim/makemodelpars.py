@@ -13,7 +13,7 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
 
     printv('Making model parameters...', 1, verbose)
     
-    M = struct()
+    M = dict()
     M.__doc__ = 'Model parameters to be used directly in the model, calculated from data parameters P.'
     M['tvec'] = opt['partvec'] # Store time vector with the model parameters
     npts = len(M['tvec']) # Number of time points # TODO probably shouldn't be repeated from model.m
@@ -79,8 +79,8 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
     M['breast']   = dpar2mpar(P['breast'], withwhat)[0]  
     
     ## Sexual behavior parameters -- all are parameters so can loop over all
-    M['numacts'] = struct()
-    M['condom']  = struct()
+    M['numacts'] = dict()
+    M['condom']  = dict()
     M['numacts']['reg'] = dpar2mpar(P['numactsreg'], withwhat) # ...
     M['numacts']['cas'] = dpar2mpar(P['numactscas'], withwhat) # ...
     M['numacts']['com'] = dpar2mpar(P['numactscom'], withwhat) # ...
@@ -101,8 +101,8 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
     M['prep'] = dpar2mpar(P['prep'], withwhat)
     
     ## Matrices can be used almost directly
-    M['pships'] = struct()
-    M['transit'] = struct()
+    M['pships'] = dict()
+    M['transit'] = dict()
     for key in P['pships'].keys(): M['pships'][key] = array(P['pships'][key])
     for key in P['transit'].keys(): M['transit'][key] = array(P['transit'][key])
     
@@ -121,7 +121,7 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
     return M
 
 def totalacts(M, npts):
-    totalacts = struct()
+    totalacts = dict()
     totalacts.__doc__ = 'Balanced numbers of acts'
     
     popsize = M['popsize']

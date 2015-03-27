@@ -32,7 +32,7 @@ def runmodelalloc(D, thisalloc, origalloc, parindices, randseed, rerunfinancial=
     newD['M'] = partialupdateM(D['M'], newM, parindices)
     S = model(newD['G'], newD['M'], newD['F'][0], newD['opt'], verbose=verbose)
     R = makeresults(D, allsims=[S], rerunfinancial=rerunfinancial, verbose=0)
-    R['debug'] = struct()
+    R['debug'] = dict()
     R['debug']['G'] = deepcopy(newD['G'])
     R['debug']['M'] = deepcopy(newD['M'])
     R['debug']['F'] = deepcopy(newD['F'])
@@ -99,12 +99,12 @@ def objectivecalc(optimparams, options):
 #    if options.tmperrcount[-1]==0:
 #        print('SAVING ORIGINAL DATA')
 #        print options.tmporigdata[-1]['optimparams']
-#        options.tmporigdata.append(struct())
+#        options.tmporigdata.append(dict())
 #        options.tmporigdata[-1]['optimparams'] = optimparams
 ##        options.tmporigdata[-1]['opt']ions = options
 #        options.tmporigdata[-1]['R'] = R
 #    print('SAVING BEST DATA') # TEMP
-    options['tmpbestdata'].append(struct())
+    options['tmpbestdata'].append(dict())
     options['tmpbestdata'][-1]['optimparams'] = optimparams
 #    options['tmpbestdata'][-1]['opt']ions = options
     options['tmpbestdata'][-1]['R'] = R
@@ -151,14 +151,14 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
     
     
     # Define constraints on funding -- per year and total
-    fundingchanges = struct()
+    fundingchanges = dict()
     keys1 = ['year','total']
     keys2 = ['dec','inc']
     abslims = {'dec':0, 'inc':1e9}
     rellims = {'dec':-1e9, 'inc':1e9}
     smallchanges = {'dec':1.0, 'inc':1.0} # WARNING BIZARRE
     for key1 in keys1:
-        fundingchanges[key1] = struct()
+        fundingchanges[key1] = dict()
         for key2 in keys2:
             fundingchanges[key1][key2] = []
             for p in range(nprogs):
@@ -232,7 +232,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
     if objectives['funding'] == 'constant' and objectives['timevarying'] == False:
         
         ## Define options structure
-        options = struct()
+        options = dict()
         options['ntimepm'] = ntimepm # Number of time-varying parameters
         options['nprogs'] = nprogs # Number of programs
         options['D'] = deepcopy(D) # Main data structure
@@ -274,14 +274,14 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         if bestallocind == -1: print('WARNING, best allocation value seems to be infinity!')
         
         # Update the model and store the results
-        result = struct()
+        result = dict()
         result['kind'] = 'constant'
         result['fval'] = fvalarr[bestallocind] # Append the best value noe
         result['allocarr'] = [] # List of allocations
         result['allocarr'].append(quantile([origalloc])) # Kludgy -- run fake quantile on duplicated origalloc just so it matches
         result['allocarr'].append(quantile(allocarr)) # Calculate allocation arrays 
         labels = ['Original','Optimal']
-        result['Rarr'] = [struct(), struct()]
+        result['Rarr'] = [dict(), dict()]
         result['Rarr'][0]['R'] = options['tmpbestdata'][0]['R']
         result['Rarr'][1]['R'] = options['tmpbestdata'][-1]['R']
         result['Rarr'][0]['label'] = 'Original'
@@ -292,7 +292,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
 #            sleep(0.1)
 #            alloc = timevarying(params, ntimepm=len(params)/nprogs, nprogs=nprogs, tvec=D['opt']['partvec'], totalspend=totalspend, fundingchanges=fundingchanges)   
 #            R = runmodelalloc(options['D'], alloc, options['parindices'], options['randseed'], verbose=verbose) # Actually run
-#            result['Rarr'].append(struct()) # Append a structure
+#            result['Rarr'].append(dict()) # Append a structure
 #            result['Rarr'][-1]['R'] = deepcopy(R) # Store the R structure (results)
 #            result['Rarr'][-1]['label'] = labels.pop(0) # Store labels, one at a time
         
@@ -314,7 +314,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
     if objectives['funding'] == 'constant' and objectives['timevarying'] == True:
         
         ## Define options structure
-        options = struct()
+        options = dict()
         options['ntimepm'] = ntimepm # Number of time-varying parameters
         options['nprogs'] = nprogs # Number of programs
         options['D'] = deepcopy(D) # Main data structure
@@ -337,7 +337,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         optparams[opttrue] = optparams[opttrue] / optparams[opttrue].sum() * (options['totalspend'] - optparams[~opttrue].sum())
         
         # Update the model and store the results
-        result = struct()
+        result = dict()
         result['kind'] = 'timevarying'
         result['fval'] = output['fval'] # Append the objective sequence
         result['Rarr'] = []
@@ -346,7 +346,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
             sleep(0.1)
             alloc = timevarying(params, ntimepm=len(params)/nprogs, nprogs=nprogs, tvec=D['opt']['partvec'], totalspend=totalspend, fundingchanges=fundingchanges) #Regenerate allocation
             R = runmodelalloc(options['D'], alloc, options['parindices'], options['randseed'], verbose=verbose) # Actually run
-            result['Rarr'].append(struct()) # Append a structure
+            result['Rarr'].append(dict()) # Append a structure
             result['Rarr'][-1]['R'] = deepcopy(R) # Store the R structure (results)
             result['Rarr'][-1]['label'] = labels.pop(0) # Store labels, one at a time
         result['xdata'] = R['tvec'] # Store time data
@@ -362,7 +362,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
     if objectives['funding'] == 'variable':
         
         ## Define options structure
-        options = struct()
+        options = dict()
         
         options['nprogs'] = nprogs # Number of programs
         options['D'] = deepcopy(D) # Main data structure
@@ -411,7 +411,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         optparams = optparams.tolist()
         
         # Update the model and store the results
-        result = struct()
+        result = dict()
         result['kind'] = 'multiyear'
         result['fval'] = output['fval'] # Append the objective sequence
         result['Rarr'] = []
@@ -420,7 +420,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
             sleep(0.1)
             alloc = multiyear(optimparams, years=options['years'], totalspends=options['totalspends'], nprogs=options['nprogs'], tvec=options['D']['opt']['partvec']) 
             R = runmodelalloc(options['D'], alloc, options['parindices'], options['randseed'], verbose=verbose) # Actually run
-            result['Rarr'].append(struct()) # Append a structure
+            result['Rarr'].append(dict()) # Append a structure
             result['Rarr'][-1]['R'] = deepcopy(R) # Store the R structure (results)
             result['Rarr'][-1]['label'] = labels.pop(0) # Store labels, one at a time
         result['xdata'] = R['tvec'] # Store time data
@@ -439,7 +439,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
     if objectives['funding'] == 'range':
         
         ## Define options structure
-        options = struct()
+        options = dict()
         options['ntimepm'] = 1 # Number of time-varying parameters -- always 1 in this case
         options['nprogs'] = nprogs # Number of programs
         options['D'] = deepcopy(D) # Main data structure
@@ -468,7 +468,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
             fvalarr.append(fval) # Only need last value
 
         # Update the model and store the results
-        result = struct()
+        result = dict()
         result['kind'] = objectives['funding']
         result.budgets = budgets
         result.budgetlabels = ['Original budget']
@@ -482,7 +482,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
             sleep(0.1)
             alloc = timevarying(params, ntimepm=len(params)/nprogs, nprogs=nprogs, tvec=D['opt']['partvec'], totalspend=totalspend, fundingchanges=fundingchanges)
             R = runmodelalloc(options['D'], alloc, options['parindices'], options['randseed'], verbose=verbose) # Actually run
-            result['Rarr'].append(struct()) # Append a structure
+            result['Rarr'].append(dict()) # Append a structure
             result['Rarr'][-1]['R'] = deepcopy(R) # Store the R structure (results)
             result['Rarr'][-1]['label'] = labels.pop(0) # Store labels, one at a time
 
@@ -516,7 +516,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
 
 def saveoptimization(D, name, objectives, constraints, result = None, verbose=2):
     #save the optimization parameters
-    new_optimization = struct()
+    new_optimization = dict()
     new_optimization['name'] = name
     new_optimization['objectives'] = objectives
     new_optimization['constraints'] = constraints
@@ -548,14 +548,14 @@ def defaultobjectives(D, verbose=2):
 
     printv('Defining default objectives...', 3, verbose=verbose)
 
-    ob = struct() # Dictionary of all objectives
-    ob['year'] = struct() # Time periods for objectives
+    ob = dict() # Dictionary of all objectives
+    ob['year'] = dict() # Time periods for objectives
     ob['year']['start'] = 2015 # "Year to begin optimization from"
     ob['year']['end'] = 2020 # "Year to end optimization"
     ob['year']['until'] = 2030 # "Year to project outcomes to"
     ob['what'] = 'outcome' # Alternative is "['money']"
     
-    ob['outcome'] = struct()
+    ob['outcome'] = dict()
     ob['outcome']['fixed'] = sum(D['data']['origalloc']) # "With a fixed amount of ['money'] available"
     ob['outcome']['inci'] = True # "Minimize cumulative HIV incidence"
     ob['outcome']['inciweight'] = 100 # "Incidence weighting"
@@ -566,7 +566,7 @@ def defaultobjectives(D, verbose=2):
     ob['outcome']['costann'] = False # "Minimize cumulative DALYs"
     ob['outcome']['costannweight'] = 100 # "Cost weighting"
     ob['outcome']['variable'] = [] # No variable budgets by default
-    ob['outcome']['budgetrange'] = struct() # For running multiple budgets
+    ob['outcome']['budgetrange'] = dict() # For running multiple budgets
     ob['outcome']['budgetrange']['minval'] = None
     ob['outcome']['budgetrange']['maxval'] = None
     ob['outcome']['budgetrange']['step'] = None
@@ -577,10 +577,10 @@ def defaultobjectives(D, verbose=2):
     ob['artcontinue'] = 1 # No one currently on ART stops
     ob['otherprograms'] = "remain" # Other programs remain constant after optimization ends
 
-    ob['money'] = struct()
-    ob['money']['objectives'] = struct()
+    ob['money'] = dict()
+    ob['money']['objectives'] = dict()
     for objective in ['inci', 'incisex', 'inciinj', 'mtct', 'mtctbreast', 'mtctnonbreast', 'deaths', 'dalys']:
-        ob['money']['objectives'][objective] = struct()
+        ob['money']['objectives'][objective] = dict()
         # Checkbox: by default it's False meaning the objective is not applied
         ob['money']['objectives'][objective]['use'] = False
         # If "By" is not active "To" is used. "By" is active by default. 
@@ -604,31 +604,31 @@ def defaultconstraints(D, verbose=2):
 
     printv('Defining default constraints...', 3, verbose=verbose)
 
-    con = struct()
+    con = dict()
     con['txelig'] = 4 # 4 = "All people diagnosed with HIV"
     con['dontstopart'] = True # "No one who initiates treatment is to stop receiving ART"
     con['yeardecrease'] = []
     con['yearincrease'] = []
     for p in range(D['G']['nprogs']): # Loop over all defined programs
-        con['yeardecrease'].append(struct())
+        con['yeardecrease'].append(dict())
         con['yeardecrease'][p]['use'] = False # Tick box: by default don't use
         con['yeardecrease'][p]['by'] = 80 # Text entry box: 0.5 = 50% per year
-        con['yearincrease'].append(struct())
+        con['yearincrease'].append(dict())
         con['yearincrease'][p]['use'] = False # Tick box: by default don't use
         con['yearincrease'][p]['by'] = 120 # Text entry box: 0.5 = 50% per year
     con['totaldecrease'] = []
     con['totalincrease'] = []
     for p in range(D['G']['nprogs']): # Loop over all defined programs
-        con['totaldecrease'].append(struct())
+        con['totaldecrease'].append(dict())
         con['totaldecrease'][p]['use'] = False # Tick box: by default don't use
         con['totaldecrease'][p]['by'] = 50 # Text entry box: 0.5 = 50% per total
-        con['totalincrease'].append(struct())
+        con['totalincrease'].append(dict())
         con['totalincrease'][p]['use'] = False # Tick box: by default don't use
         con['totalincrease'][p]['by'] = 200 # Text entry box: 0.5 = 50% total
     
     con['coverage'] = []
     for p in range(D['G']['nprogs']): # Loop over all defined programs
-        con['coverage'].append(struct())
+        con['coverage'].append(dict())
         con['coverage'][p]['use'] = False # Tick box: by default don't use
         con['coverage'][p]['level'] = 0 # First text entry box: default no limit
         con['coverage'][p]['year'] = 2030 # Year to reach coverage level by
@@ -640,7 +640,7 @@ def defaultoptimizations(D, verbose=2):
     """ Define a list of default optimizations (one default optimization) """
     
     # Start at the very beginning, a very good place to start :)
-    optimizations = [struct()]
+    optimizations = [dict()]
     
     ## Current conditions
     optimizations[0]['name'] = 'Default'

@@ -101,7 +101,7 @@ print('======================================================================')
 
 print('\n\n\n3. Defining scenarios...')
 from bunch import Bunch as struct
-scenariolist = [struct() for s in range(3)]
+scenariolist = [dict() for s in range(3)]
 
 ## Current conditions
 scenariolist[0]['name'] = 'Current conditions'
@@ -109,7 +109,7 @@ scenariolist[0]['pars'] = [] # No changes
 
 ## Condom use
 scenariolist[1]['name'] = '99% condom use in KAPs'
-scenariolist[1]['pars'] = [struct() for s in range(4)]
+scenariolist[1]['pars'] = [dict() for s in range(4)]
 # MSM regular condom use
 scenariolist[1]['pars'][0]['names'] = ['condom','reg']
 scenariolist[1]['pars'][0]['pops'] = 0
@@ -141,7 +141,7 @@ scenariolist[1]['pars'][3]['endval'] = 0.99
 
 ## Needle sharing
 scenariolist[2]['name'] = 'No needle sharing'
-scenariolist[2]['pars'] = [struct()]
+scenariolist[2]['pars'] = [dict()]
 scenariolist[2]['pars'][0]['names'] = ['sharing']
 scenariolist[2]['pars'][0]['pops'] = 7
 scenariolist[2]['pars'][0]['startyear'] = 2002

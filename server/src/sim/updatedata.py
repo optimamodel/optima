@@ -98,7 +98,7 @@ def makefittedpars(D, verbose=2):
     printv('Initializing fitted parameters...', 1, verbose)
     
     # Initialize fitted parameters
-    D.F = [struct() for s in range(D['opt']['nsims'])]
+    D.F = [dict() for s in range(D['opt']['nsims'])]
     for s in range(D['opt']['nsims']):
         span=0 if s==0 else 0.5 # Don't have any variance for first simulation
         D.F[s].__doc__ = 'Fitted parameters for simulation %i: initial prevalence, force-of-infection, population size, diagnoses, treatment' % s

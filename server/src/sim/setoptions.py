@@ -10,7 +10,7 @@ def setoptions(opt=None, **kwargs):
     
     # If no options structure is fed in
     if not(isinstance(opt,dict)): 
-        opt = struct() # If existing options structure isn't provided, create it
+        opt = dict() # If existing options structure isn't provided, create it
         opt['parstartyear'] = kwargs.get('parstartyear', 2000) # First year of parameter time series
         opt['parendyear'] = kwargs.get('parendyear', 2030) # Final year of parameter time series -- maximum time period for this project
         opt['simstartyear'] = kwargs.get('simstartyear', 2000) # First year of simulation to run
