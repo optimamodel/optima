@@ -23,48 +23,48 @@ def makeproject(projectname='example', pops = default_pops, progs = default_prog
 
     D = struct() # Data structure for saving everything
     D.__doc__ = 'Data structure for storing everything -- data, parameters, simulation results, velociraptors, etc.'
-    D.plot = struct() # Initialize plotting data
-    D.plot.__doc__ = 'Plotting data, including labels, colors, etc., for epidemiology data (E), optimization data (O), and scenario data (S)'
+    D['plot'] = struct() # Initialize plotting data
+    D['plot'].__doc__ = 'Plotting data, including labels, colors, etc., for epidemiology data (E), optimization data (O), and scenario data (S)'
     
     # Initialize options
     from setoptions import setoptions
-    D.opt = setoptions(nsims=nsims)
+    D['opt'] = setoptions(nsims=nsims)
     
     # Set up "G" -- general parameters structure
-    D.G = struct()
-    D.G.__doc__ = 'General parameters for the model, including the number of population groups, project name, etc.'
-    D.G.projectname = projectname  
-    D.G.projectfilename = projectpath(projectname+'.prj')
-    D.G.workbookname = D.G.projectname + '.xlsx'
-    D.G.npops = len(pops)
-    D.G.nprogs = len(progs)
-    D.G.datastart = datastart
-    D.G.dataend = dataend
-    D.G.datayears = arange(D.G.datastart, D.G.dataend+1)
-    D.G.inputprograms = deepcopy(progs) # remember input programs with their possible deviations from standard parameter set (if entered from GUI). 
+    D['G'] = struct()
+    D['G'].__doc__ = 'General parameters for the model, including the number of population groups, project name, etc.'
+    D['G']['projectname'] = projectname  
+    D['G']['projectfilename'] = projectpath(projectname+'.prj')
+    D['G']['workbookname'] = D['G']['projectname'] + '.xlsx'
+    D['G']['npops'] = len(pops)
+    D['G']['nprogs'] = len(progs)
+    D['G']['datastart'] = datastart
+    D['G']['dataend'] = dataend
+    D['G']['datayears'] = arange(D['G']['datastart'], D['G']['dataend']+1)
+    D['G']['inputprograms'] = deepcopy(progs) # remember input programs with their possible deviations from standard parameter set (if entered from GUI). 
     # Hate duplicating the data, but can't think of a cleaner way of export/import.
-    D.G.inputpopulations = deepcopy(pops) # should be there as well, otherwise we cannot export project without data
+    D['G']['inputpopulations'] = deepcopy(pops) # should be there as well, otherwise we cannot export project without data
     # Health states
-    D.G.healthstates = ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'aids']
-    D.G.ncd4 = len(D.G.healthstates)
-    D.G.nstates = 1+D.G.ncd4*5 # Five are undiagnosed, diagnosed, 1st line, failure, 2nd line, plus susceptible
-    D.G.sus  = arange(0,1)
-    D.G.undx = arange(0*D.G.ncd4+1, 1*D.G.ncd4+1)
-    D.G.dx   = arange(1*D.G.ncd4+1, 2*D.G.ncd4+1)
-    D.G.tx1  = arange(2*D.G.ncd4+1, 3*D.G.ncd4+1)
-    D.G.fail = arange(3*D.G.ncd4+1, 4*D.G.ncd4+1)
-    D.G.tx2  = arange(4*D.G.ncd4+1, 5*D.G.ncd4+1)
-    for i,h in enumerate(D.G.healthstates): D.G[h] = [D.G[state][i] for state in ['undx', 'dx', 'tx1', 'fail', 'tx2']]
+    D['G']['healthstates'] = ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'aids']
+    D['G']['ncd4'] = len(D['G']['healthstates'])
+    D['G']['nstates'] = 1+D['G']['ncd4']*5 # Five are undiagnosed, diagnosed, 1st line, failure, 2nd line, plus susceptible
+    D['G']['sus']  = arange(0,1)
+    D['G']['undx'] = arange(0*D['G']['ncd4']+1, 1*D['G']['ncd4']+1)
+    D['G']['dx']   = arange(1*D['G']['ncd4']+1, 2*D['G']['ncd4']+1)
+    D['G']['tx1']  = arange(2*D['G']['ncd4']+1, 3*D['G']['ncd4']+1)
+    D['G']['fail'] = arange(3*D['G']['ncd4']+1, 4*D['G']['ncd4']+1)
+    D['G']['tx2']  = arange(4*D['G']['ncd4']+1, 5*D['G']['ncd4']+1)
+    for i,h in enumerate(D['G']['healthstates']): D['G'][h] = [D['G'][state][i] for state in ['undx', 'dx', 'tx1', 'fail', 'tx2']]
     
     if savetofile: #False if we are using database
-        savedata(D.G.projectfilename, D, verbose=verbose) # Create project -- #TODO: check if an existing project exists and don't overwrite it
+        savedata(D['G']['projectfilename'], D, verbose=verbose) # Create project -- #TODO: check if an existing project exists and don't overwrite it
     
     # Make an Excel template and then prompt the user to save it
     if projectname == 'example': # Don't make a new workbook, but just use the existing one, if the project name is "example"
         print('WARNING, Project name set to "example", not creating a new workbook!')
     else: # Make a new workbook
         if domakeworkbook:
-            makeworkbook(D.G.workbookname, pops, progs, datastart, dataend, verbose=verbose)
+            makeworkbook(D['G']['workbookname'], pops, progs, datastart, dataend, verbose=verbose)
     
     printv('  ...done making project.', 2, verbose)
     return D

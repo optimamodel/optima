@@ -15,12 +15,12 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
     
     M = struct()
     M.__doc__ = 'Model parameters to be used directly in the model, calculated from data parameters P.'
-    M.tvec = opt.partvec # Store time vector with the model parameters
-    npts = len(M.tvec) # Number of time points # TODO probably shouldn't be repeated from model.m
+    M['tvec'] = opt['partvec'] # Store time vector with the model parameters
+    npts = len(M['tvec']) # Number of time points # TODO probably shouldn't be repeated from model.m
     
     
     
-    def dpar2mpar(datapar, withwhat, default_withwhat='p', smoothness=5*int(1/opt.dt)):
+    def dpar2mpar(datapar, withwhat, default_withwhat='p', smoothness=5*int(1/opt['dt'])):
         """
         Take parameters and turn them into model parameters
         Set withwhat = p if you want to use the epi data for the parameters
@@ -39,9 +39,9 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
                 output[pop, :] = datapar[withwhat][pop, :]
             else: # Use parameter
                 if 't' in datapar.keys(): # It's a time parameter
-                    output[pop,:] = smoothinterp(M.tvec, datapar.t[pop], datapar.p[pop], smoothness=smoothness) # Use interpolation
+                    output[pop,:] = smoothinterp(M['tvec'], datapar['t'][pop], datapar['p'][pop], smoothness=smoothness) # Use interpolation
                 else:
-                    output[pop,:] = datapar.p[pop]
+                    output[pop,:] = datapar['p'][pop]
                     print('TMP')
         
         return output
@@ -52,69 +52,69 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
         npops = len(popsizes)        
         output = zeros((npops,npts))
         for pop in range(npops):
-            output[pop,:] = popsizes[pop]*exp(growth*(M.tvec-M.tvec[0])) # Special function for population growth
+            output[pop,:] = popsizes[pop]*exp(growth*(M['tvec']-M['tvec'][0])) # Special function for population growth
             
         return output
     
     
     
     ## Epidemilogy parameters -- most are data
-    M.popsize = grow(P.popsize, opt.growth) # Population size
-    M.hivprev = P.hivprev # Initial HIV prevalence
-    M.stiprevulc = dpar2mpar(P.stiprevulc, withwhat) # STI prevalence
-    M.stiprevdis = dpar2mpar(P.stiprevdis, withwhat) # STI prevalence
-    M.death  = dpar2mpar(P.death, withwhat)  # Death rates
-    M.tbprev = dpar2mpar(P.tbprev, withwhat) # TB prevalence
+    M['popsize'] = grow(P['popsize'], opt['growth']) # Population size
+    M['hivprev'] = P['hivprev'] # Initial HIV prevalence
+    M['stiprevulc'] = dpar2mpar(P['stiprevulc'], withwhat) # STI prevalence
+    M['stiprevdis'] = dpar2mpar(P['stiprevdis'], withwhat) # STI prevalence
+    M['death']  = dpar2mpar(P['death'], withwhat)  # Death rates
+    M['tbprev'] = dpar2mpar(P['tbprev'], withwhat) # TB prevalence
     
     ## Testing parameters -- most are data
-    M.hivtest = dpar2mpar(P.hivtest, withwhat) # HIV testing rates
-    M.aidstest = dpar2mpar(P.aidstest, withwhat)[0] # AIDS testing rates
-    M.tx1 = dpar2mpar(P.numfirstline, withwhat, smoothness=int(1/opt.dt))[0] # Number of people on first-line treatment -- 0 since overall not by population
-    M.tx2 = dpar2mpar(P.numsecondline, withwhat, smoothness=int(1/opt.dt))[0] # Number of people on second-line treatment
-    M.txelig = dpar2mpar(P.txelig, withwhat, smoothness=int(1/opt.dt))[0] # Treatment eligibility criterion
+    M['hivtest'] = dpar2mpar(P['hivtest'], withwhat) # HIV testing rates
+    M['aidstest'] = dpar2mpar(P['aidstest'], withwhat)[0] # AIDS testing rates
+    M['tx1'] = dpar2mpar(P['numfirstline'], withwhat, smoothness=int(1/opt['dt']))[0] # Number of people on first-line treatment -- 0 since overall not by population
+    M['tx2'] = dpar2mpar(P['numsecondline'], withwhat, smoothness=int(1/opt['dt']))[0] # Number of people on second-line treatment
+    M['txelig'] = dpar2mpar(P['txelig'], withwhat, smoothness=int(1/opt['dt']))[0] # Treatment eligibility criterion
 
     ## MTCT parameters
-    M.numpmtct = dpar2mpar(P.numpmtct, withwhat)[0]
-    M.birth    = dpar2mpar(P.birth, withwhat)
-    M.breast   = dpar2mpar(P.breast, withwhat)[0]  
+    M['numpmtct'] = dpar2mpar(P['numpmtct'], withwhat)[0]
+    M['birth']    = dpar2mpar(P['birth'], withwhat)
+    M['breast']   = dpar2mpar(P['breast'], withwhat)[0]  
     
     ## Sexual behavior parameters -- all are parameters so can loop over all
-    M.numacts = struct()
-    M.condom  = struct()
-    M.numacts.reg = dpar2mpar(P.numactsreg, withwhat) # ...
-    M.numacts.cas = dpar2mpar(P.numactscas, withwhat) # ...
-    M.numacts.com = dpar2mpar(P.numactscom, withwhat) # ...
-    M.numacts.inj = dpar2mpar(P.numinject, withwhat) # ..
-    M.condom.reg  = dpar2mpar(P.condomreg, withwhat) # ...
-    M.condom.cas  = dpar2mpar(P.condomcas, withwhat) # ...
-    M.condom.com  = dpar2mpar(P.condomcom, withwhat) # ...
+    M['numacts'] = struct()
+    M['condom']  = struct()
+    M['numacts']['reg'] = dpar2mpar(P['numactsreg'], withwhat) # ...
+    M['numacts']['cas'] = dpar2mpar(P['numactscas'], withwhat) # ...
+    M['numacts']['com'] = dpar2mpar(P['numactscom'], withwhat) # ...
+    M['numacts']['inj'] = dpar2mpar(P['numinject'], withwhat) # ..
+    M['condom']['reg']  = dpar2mpar(P['condomreg'], withwhat) # ...
+    M['condom']['cas']  = dpar2mpar(P['condomcas'], withwhat) # ...
+    M['condom']['com']  = dpar2mpar(P['condomcom'], withwhat) # ...
     
     ## Circumcision parameters
-    M.circum    = dpar2mpar(P.circum, withwhat) # Circumcision percentage
-    M.numcircum = zeros(shape(M.tvec)) # Number to be circumcised -- to be populated by the relevant CCOC at non-zero allocations
+    M['circum']    = dpar2mpar(P['circum'], withwhat) # Circumcision percentage
+    M['numcircum'] = zeros(shape(M['tvec'])) # Number to be circumcised -- to be populated by the relevant CCOC at non-zero allocations
     
     ## Drug behavior parameters
-    M.numost = dpar2mpar(P.numost, withwhat)[0]
-    M.sharing = dpar2mpar(P.sharing, withwhat)
+    M['numost'] = dpar2mpar(P['numost'], withwhat)[0]
+    M['sharing'] = dpar2mpar(P['sharing'], withwhat)
     
     ## Other intervention parameters (proportion of the populations, not absolute numbers)
-    M.prep = dpar2mpar(P.prep, withwhat)
+    M['prep'] = dpar2mpar(P['prep'], withwhat)
     
     ## Matrices can be used almost directly
-    M.pships = struct()
-    M.transit = struct()
-    for key in P.pships.keys(): M.pships[key] = array(P.pships[key])
-    for key in P.transit.keys(): M.transit[key] = array(P.transit[key])
+    M['pships'] = struct()
+    M['transit'] = struct()
+    for key in P['pships'].keys(): M['pships'][key] = array(P['pships'][key])
+    for key in P['transit'].keys(): M['transit'][key] = array(P['transit'][key])
     
     ## Constants...can be used directly
-    M.const = P.const
+    M['const'] = P['const']
     
     ## Calculate total acts
-    M.totalacts = totalacts(M, npts)
+    M['totalacts'] = totalacts(M, npts)
     
     ## Program parameters not related to data
-    M.propaware = zeros(shape(M.hivtest)) # Initialize proportion of PLHIV aware of their status
-    M.txtotal = zeros(shape(M.tx1)) # Initialize total number of people on treatment
+    M['propaware'] = zeros(shape(M['hivtest'])) # Initialize proportion of PLHIV aware of their status
+    M['txtotal'] = zeros(shape(M['tx1'])) # Initialize total number of people on treatment
     
 
     printv('...done making model parameters.', 2, verbose)
@@ -124,11 +124,11 @@ def totalacts(M, npts):
     totalacts = struct()
     totalacts.__doc__ = 'Balanced numbers of acts'
     
-    popsize = M.popsize
-    pships = M.pships
+    popsize = M['popsize']
+    pships = M['pships']
 
     for act in pships.keys():
-        npops = len(M.popsize[:,0])
+        npops = len(M['popsize'][:,0])
         npop=len(popsize); # Number of populations
         mixmatrix = pships[act]
         symmetricmatrix=zeros((npop,npop));
