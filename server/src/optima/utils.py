@@ -23,7 +23,7 @@ def check_project_name(api_call):
             return api_call(*args, **kwargs)
         except Exception, err:
             exception = traceback.format_exc()
-            current_app.logger.error("Exception during request %s: %s" % (request, var))
+            current_app.logger.error("Exception during request %s: %s" % (request, exception))
             reply = {'reason': 'No project is open', 'exception': exception}
             return jsonify(reply), 500
     return _check_project_name
@@ -36,7 +36,7 @@ def report_exception(reason = None):
                 return api_call(*args, **kwargs)
             except Exception, err:
                 exception = traceback.format_exc()
-                current_app.logger.error("Exception during request %s: %s" % (request, var))
+                current_app.logger.error("Exception during request %s: %s" % (request, exception))
                 reply = {'exception': exception}
                 if reason:
                     reply['reason'] = reason
