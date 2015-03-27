@@ -42,10 +42,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         var checkProjectInfo = function (info) {
           if (!info) return;
           var data = info.data;
-          if ( data.status == "OK" ) {
-            $scope.validate = data.can_scenarios;
-            $scope.show_message = !$scope.validate;
-          }
+          $scope.validate = data.can_scenarios;
+          $scope.show_message = !$scope.validate;
         };
 
         /**
@@ -166,7 +164,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           });
 
           // commitments
-          
+
           var commitIsActive = $scope.types.costs.costann.checked;
           if (commitChartData && commitIsActive) {
             var commitChartData = response.commit[$scope.types.activeAnnualCost];

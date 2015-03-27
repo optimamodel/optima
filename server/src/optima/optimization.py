@@ -80,10 +80,10 @@ def startOptimization():
             CalculatingThread(db.engine, current_user, project_id, timelimit, numiter, optimize, args, with_stoppingfunc = True).start()
             msg = "Starting optimization thread for user %s project %s:%s" % (current_user.name, project_id, project_name)
             current_app.logger.debug(msg)
-            return json.dumps({"status":"OK", "result": msg, "join":True})
+            return json.dumps({"result": msg, "join":True})
         else:
             msg = "Thread for user %s project %s:%s (%s) has already started" % (current_user.name, project_id, project_name, current_calculation)
-            return json.dumps({"status":"OK", "result": msg, "join":can_join})
+            return json.dumps({"result": msg, "join":can_join})
     except Exception, err:
         var = traceback.format_exc()
         return jsonify({"exception":var}), 500
@@ -96,7 +96,7 @@ def stopCalibration():
     project_id = request.project_id
     project_name = request.project_name
     cancel_calculation(current_user.id, project_id, optimize, db.session)
-    return json.dumps({"status":"OK", "result": "optimize calculation for user %s project %s:%s requested to stop" \
+    return json.dumps({"result": "optimize calculation for user %s project %s:%s requested to stop" \
         % (current_user.name, project_id, project_name)})
 
 @optimization.route('/working')

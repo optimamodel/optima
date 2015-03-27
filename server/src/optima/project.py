@@ -293,7 +293,7 @@ def openProject(project_id):
 
         return jsonify({'reason':'No such project %s' % project_id}), 500
     else:
-        return jsonify({'status':'OK'})
+        return jsonify({})
 
 @project.route('/workbook/<project_id>')
 @login_required
@@ -386,7 +386,6 @@ def getProjectListAll():
         projects = ProjectDb.query.all()
         for project in projects:
             project_data = {
-                'status': "OK",
                 'id': project.id,
                 'name': project.name,
                 'dataStart': project.datastart,
@@ -421,7 +420,6 @@ def getProjectList():
         projects = ProjectDb.query.filter_by(user_id=current_user.id)
         for project in projects:
             project_data = {
-                'status': "OK",
                 'id': project.id,
                 'name': project.name,
                 'dataStart': project.datastart,
@@ -463,7 +461,7 @@ def deleteProject(project_id):
     if (user_id!=current_user.id):delete_spreadsheet(project_name, user_id)
     current_app.logger.debug("spreadsheets for %s deleted" % project_name)
 
-    return jsonify({'status':'OK','reason':'Project %s deleted.' % project_name})
+    return jsonify({'reason':'Project %s deleted.' % project_name})
 
 @project.route('/copy/<project_id>', methods=['POST'])
 @login_required

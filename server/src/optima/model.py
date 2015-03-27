@@ -98,7 +98,7 @@ def stopCalibration():
     project_id = request.project_id
     project_name = request.project_name
     cancel_calculation(current_user.id, project_id, autofit, db.session)
-    return json.dumps({"status":"OK", "result": "autofit calculation for user %s project %s:%s requested to stop" % \
+    return json.dumps({"result": "autofit calculation for user %s project %s:%s requested to stop" % \
         (current_user.name, project_id, project_name)})
 
 @model.route('/working')
@@ -283,7 +283,7 @@ def setModelGroup(key):
     except Exception, err:
         var = traceback.format_exc()
         return jsonify({"exception":var}), 500
-    return jsonify({"status":"OK", "project":project_id, "group":group})
+    return jsonify({"project":project_id, "group":group})
 
 @model.route('/view', methods=['POST'])
 @login_required
@@ -357,7 +357,7 @@ def doCostCoverage():
     except Exception, err:
         var = traceback.format_exc()
         return jsonify({"exception":var}), 500
-    return jsonify({"status":"OK", "plotdata": for_fe(plotdata), \
+    return jsonify({"plotdata": for_fe(plotdata), \
         "plotdata_co": for_fe(plotdata_co), "plotdata_cc": for_fe(plotdata_cc), "effectnames": for_fe(effectnames)})
 
 @model.route('/costcoverage/effect', methods=['POST'])
@@ -378,7 +378,7 @@ def doCostCoverageEffect():
     except Exception, err:
         var = traceback.format_exc()
         return jsonify({"exception":var}), 500
-    return jsonify({"status":"OK", "plotdata": for_fe(plotdata), \
+    return jsonify({"plotdata": for_fe(plotdata), \
         "plotdata_co": for_fe(plotdata_co), "effect": args['effect']})
 
 
@@ -396,4 +396,4 @@ def reloadSpreadsheet(project_id):
     D = load_model(project_id)
     D = updatedata(D, input_programs = project.programs, savetofile = False, rerun = True)
 
-    return jsonify({'status': 'OK'})
+    return jsonify({})

@@ -753,7 +753,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       var params = optimizationHelpers.toRequestParameters($scope.params, $scope.state.activeOptimizationName, $scope.state.timelimit);
       $http.post('/api/analysis/optimization/start', params, {ignoreLoadingBar: true})
         .success(function (data, status, headers, config) {
-          if (data.status == "OK" && data.join) {
+          if (data.join) {
             $scope.initTimer(statusEnum.RUNNING);
           } else {
             console.log("Cannot poll for optimization now");

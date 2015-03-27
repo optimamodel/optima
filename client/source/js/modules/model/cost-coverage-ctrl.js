@@ -369,18 +369,15 @@ define(['./module', 'underscore'], function (module, _) {
       updateCCParams(model);
 
       $http.post('/api/model/costcoverage', model).success(function (response) {
-        if (response.status === 'OK') {
+        $scope.displayedProgram = angular.copy($scope.selectedProgram);
+        effectNames = response.effectnames;
+        setUpCOParamsFromEffects(response.effectnames);
+        $scope.hasCostCoverResponse = true;
 
-          $scope.displayedProgram = angular.copy($scope.selectedProgram);
-          effectNames = response.effectnames;
-          setUpCOParamsFromEffects(response.effectnames);
-          $scope.hasCostCoverResponse = true;
-
-          resetGraphs();
-          _(plotTypes).each(function (plotType) {
-            prepareGraphsOfType(response[plotType], plotType);
-          });
-        }
+        resetGraphs();
+        _(plotTypes).each(function (plotType) {
+          prepareGraphsOfType(response[plotType], plotType);
+        });
       });
     };
 

@@ -97,7 +97,7 @@ def login():
             except Exception, err:
                 var = traceback.format_exc()
                 print("Exception when logging user %s: \n%s" % (username, var))
-        
+
         # If we came here, login did not succeed
         abort(401)
     else:
@@ -144,7 +144,7 @@ def delete(user_id):
     current_app.logger.debug('/api/user/delete/%s' % user_id)
     user = UserDb.query.get(user_id)
     if not user:
-        abort(404)
+        return jsonify({'reason': 'User does not exist'}), 404
     else:
         user_email = user.email
         from dbmodels import ProjectDb, WorkingProjectDb, ProjectDataDb, WorkLogDb
@@ -160,7 +160,7 @@ def delete(user_id):
         db.session.delete(user)
         db.session.commit()
         current_app.logger.info("deleted user:%s %s" % (user_id, user_email))
-        return jsonify({'status':'OK','deleted':user_id})
+        return jsonify({'deleted':user_id})
 
 #modify user by ID (can change email, name and/or password)
 @user.route('/modify/<user_id>', methods=['PUT'])
@@ -169,7 +169,7 @@ def modify(user_id):
     current_app.logger.debug('/api/user/modify/%s' % user_id)
     user = UserDb.query.get(user_id)
     if not user:
-        abort(404)
+        return jsonify({'reason': 'User does not exist'}), 404
     else:
         new_email = request.args.get('email')
         if new_email is not None:
@@ -184,7 +184,7 @@ def modify(user_id):
         db.session.add(user)
         db.session.commit()
         current_app.logger.info("modified user:%s" % user_id)
-        return jsonify({'status':'OK','modified':user_id})
+        return jsonify({'modified':user_id})
 
 #For Login Manager
 @login_manager.user_loader
