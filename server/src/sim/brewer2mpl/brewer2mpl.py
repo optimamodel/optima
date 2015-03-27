@@ -15,8 +15,7 @@ else:
 __all__ = ('COLOR_MAPS', 'print_maps', 'print_all_maps', 'print_maps_by_type',
            'get_map', 'MAP_TYPES', 'BrewerMap')
 
-_DATADIR = os.path.join(os.path.dirname(__file__), 'data')
-_DATAFILE = os.path.join(_DATADIR, 'colorbrewer_all_schemes.json')
+_DATAFILE = os.path.join(_os.path.dirname(__file__), 'colorbrewer_all_schemes.json') # CK: simplified path
 
 with open(_DATAFILE, 'r') as f:
     COLOR_MAPS = json.load(f)
