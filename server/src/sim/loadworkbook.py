@@ -80,13 +80,13 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=2):
     
     ## Ugly, but allow the list of groups to be used as name and also as variables
     sheetstructure = struct()
-    sheetstructure.metadata = metadata
-    sheetstructure.cocodata = cocodata
-    sheetstructure.keydata = keydata
-    sheetstructure.timedata = timedata
-    sheetstructure.econdata = econdata
-    sheetstructure.matrices = matrices
-    sheetstructure.constants = constants
+    sheetstructure['metadata'] = metadata
+    sheetstructure['cocodata'] = cocodata
+    sheetstructure['keydata'] = keydata
+    sheetstructure['timedata'] = timedata
+    sheetstructure['econdata'] = econdata
+    sheetstructure['matrices'] = matrices
+    sheetstructure['constants'] = constants
     
 
 
@@ -124,24 +124,24 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=2):
             
             ## Calculate columns for which data are entered, and store the year ranges
             if groupname in ['keydata', 'cocodata', 'timedata']: # Need to gather year ranges for epidemic etc. data
-                data.epiyears = [] # Initialize epidemiology data years
+                data['epiyears'] = [] # Initialize epidemiology data years
                 for col in range(sheetdata.ncols):
                     thiscell = sheetdata.cell_value(1,col) # 1 is the 2nd row which is where the year data should be
-                    if thiscell=='' and len(data.epiyears)>0: #  We've gotten to the end
+                    if thiscell=='' and len(data['epiyears'])>0: #  We've gotten to the end
                         lastdatacol = col # Store this column number
                         break # Quit
                     elif thiscell != '': # Nope, more years, keep going
-                        data.epiyears.append(float(thiscell)) # Add this year
+                        data['epiyears'].append(float(thiscell)) # Add this year
             
             if name == 'econ': # Need to gather year ranges for economic data
-                data.epiyears = [] # Initialize epidemiology data years
+                data['epiyears'] = [] # Initialize epidemiology data years
                 for col in range(sheetdata.ncols):
                     thiscell = sheetdata.cell_value(1,col) # 1 is the 2nd row which is where the year data should be
-                    if thiscell=='' and len(data.epiyears)>0: #  We've gotten to the end
+                    if thiscell=='' and len(data['epiyears'])>0: #  We've gotten to the end
                         lastdatacol = col # Store this column number
                         break # Quit
                     elif thiscell != '': # Nope, more years, keep going
-                        data.epiyears.append(float(thiscell)) # Add this year
+                        data['epiyears'].append(float(thiscell)) # Add this year
             
             if lastdatacol:  
                 assumptioncol = lastdatacol + 1 # The "OR" space is in between
@@ -166,21 +166,21 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=2):
                     if groupname=='metadata': 
                         thispar = subparlist[parcount] # Get the name of this parameter, e.g. 'pop'
                         data[name][thispar] = struct() # Initialize to empty list
-                        data[name][thispar].short = [] # Store short population/program names, e.g. "FSW"
-                        data[name][thispar].long = [] # Store long population/program names, e.g. "Female sex workers"
+                        data[name][thispar]['short'] = [] # Store short population/program names, e.g. "FSW"
+                        data[name][thispar]['long'] = [] # Store long population/program names, e.g. "Female sex workers"
                         if thispar=='pops':
-                            data[name][thispar].male = [] # Store whether or not this population is male
-                            data[name][thispar].female = [] # Store whether or not this population is female
-                            data[name][thispar].injects = [] # Store whether or not this population injects drugs
-                            data[name][thispar].sexmen = [] # Store whether or not this population has sex with men
-                            data[name][thispar].sexwomen = [] # Store whether or not this population has sex with women
-                            data[name][thispar].sexworker = [] # Store whether or not this population is a sex worker
-                            data[name][thispar].client = [] # Store whether or not this population is a client of sex workers
+                            data[name][thispar]['male'] = [] # Store whether or not this population is male
+                            data[name][thispar]['female'] = [] # Store whether or not this population is female
+                            data[name][thispar]['injects'] = [] # Store whether or not this population injects drugs
+                            data[name][thispar]['sexmen'] = [] # Store whether or not this population has sex with men
+                            data[name][thispar]['sexwomen'] = [] # Store whether or not this population has sex with women
+                            data[name][thispar]['sexworker'] = [] # Store whether or not this population is a sex worker
+                            data[name][thispar]['client'] = [] # Store whether or not this population is a client of sex workers
                     
                     # It's cost-coverage data: store cost and coverage for each program
                     elif groupname=='cocodata': 
-                        data[name][subparlist[0]] = [] # Initialize coverage to an empty list -- i.e. data.costcov.cov
-                        data[name][subparlist[1]] = [] # Initialize cost to an empty list -- i.e. data.costcov.cost
+                        data[name][subparlist[0]] = [] # Initialize coverage to an empty list -- i.e. data['costcov'].cov
+                        data[name][subparlist[1]] = [] # Initialize cost to an empty list -- i.e. data['costcov']['cost']
                     
                     # It's basic data or a matrix: create an empty list
                     elif groupname in ['keydata', 'timedata', 'matrices']: 
@@ -191,8 +191,8 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=2):
                     elif groupname in ['econdata']: 
                         thispar = subparlist[parcount] # Get the name of this parameter, e.g. 'popsize'
                         data[name][thispar] = struct() # Create a structure since need to store future growth assumptions too
-                        data[name][thispar].past = [] # Initialize past data to empty list
-                        data[name][thispar].future = [] # Initialize future assumptions to empty list
+                        data[name][thispar]['past'] = [] # Initialize past data to empty list
+                        data[name][thispar]['future'] = [] # Initialize future assumptions to empty list
                     
                     # It's a constant or a cost: create a structure
                     elif groupname=='constants': 
@@ -214,17 +214,17 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=2):
                         # It's meta-data, split into pieces
                         if groupname=='metadata': 
                             thesedata = sheetdata.row_values(row, start_colx=2, end_colx=11) # Data starts in 3rd column, finishes in 11th column
-                            data[name][thispar].short.append(thesedata[0])
+                            data[name][thispar]['short'].append(thesedata[0])
 
-                            data[name][thispar].long.append(thesedata[1])
+                            data[name][thispar]['long'].append(thesedata[1])
                             if thispar=='pops':
-                                data[name][thispar].male.append(forcebool(thesedata[2]))
-                                data[name][thispar].female.append(forcebool(thesedata[3]))
-                                data[name][thispar].injects.append(forcebool(thesedata[4]))
-                                data[name][thispar].sexmen.append(forcebool(thesedata[5]))
-                                data[name][thispar].sexwomen.append(forcebool(thesedata[6]))
-                                data[name][thispar].sexworker.append(forcebool(thesedata[7]))
-                                data[name][thispar].client.append(forcebool(thesedata[8]))
+                                data[name][thispar]['male'].append(forcebool(thesedata[2]))
+                                data[name][thispar]['female'].append(forcebool(thesedata[3]))
+                                data[name][thispar]['injects'].append(forcebool(thesedata[4]))
+                                data[name][thispar]['sexmen'].append(forcebool(thesedata[5]))
+                                data[name][thispar]['sexwomen'].append(forcebool(thesedata[6]))
+                                data[name][thispar]['sexworker'].append(forcebool(thesedata[7]))
+                                data[name][thispar]['client'].append(forcebool(thesedata[8]))
                             if thispar=='progs':
                                 if not thesedata[0] in programs: programs[thesedata[0]] = []
 
@@ -286,8 +286,8 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=2):
                             thesedata = sheetdata.row_values(row, start_colx=2, end_colx=lastdatacol) # Data starts in 3rd column
                             thesedata = map(lambda val: nan if val=='' else val, thesedata) # Replace blanks with nan
                             futuredata = sheetdata.row_values(row, start_colx=assumptioncol, end_colx=assumptioncol+3) # Start from the assumption column and read 3
-                            data[name][thispar].past.append(thesedata) # Store data
-                            data[name][thispar].future.append(futuredata) # Store data
+                            data[name][thispar]['past'].append(thesedata) # Store data
+                            data[name][thispar]['future'].append(futuredata) # Store data
                         
                         
                         # It's a matrix, append the data                                     
@@ -306,19 +306,19 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=2):
     
     
     ## Program cost data
-    nprogs = len(data.costcov.cost)
-    data.origalloc = zeros(nprogs)
-    indexforcurrentyear = data.epiyears.index(min(data.epiyears[-1], date.today().year))
+    nprogs = len(data['costcov']['cost'])
+    data['origalloc'] = zeros(nprogs)
+    indexforcurrentyear = data['epiyears'].index(min(data['epiyears'][-1], date.today().year))
     for prog in range(nprogs):
-        totalcost = data.costcov.cost[prog]
+        totalcost = data['costcov']['cost'][prog]
         totalcost = array(totalcost)[:indexforcurrentyear] # Trim years after most recent
         totalcost = totalcost[~isnan(totalcost)]
         try:
             totalcost = totalcost[-1]
         except:
-            print('WARNING, no cost data entered for %s' % data.meta.progs.short[prog])
+            print('WARNING, no cost data entered for %s' % data['meta']['progs']['short'][prog])
             totalcost = 0 # No data entered for this program
-        data.origalloc[prog] = totalcost    
+        data['origalloc'][prog] = totalcost    
     
     
     
