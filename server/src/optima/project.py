@@ -461,7 +461,7 @@ def deleteProject(project_id):
     if (user_id!=current_user.id):delete_spreadsheet(project_name, user_id)
     current_app.logger.debug("spreadsheets for %s deleted" % project_name)
 
-    return jsonify({'reason':'Project %s deleted.' % project_name})
+    return jsonify({'result':'Project %s deleted.' % project_name})
 
 @project.route('/copy/<project_id>', methods=['POST'])
 @login_required
