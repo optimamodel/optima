@@ -341,18 +341,14 @@ def getProjectInformation():
 
     Returns:
         A jsonified project dictionary accessible to the current user.
-        In case of an anonymous user an object with status "NOK" is returned.
+        In case of an anonymous user an object an error response is returned.
     """
 
-    # default response
-    response_data = {}
     # see if there is matching project
     project = load_project(request.project_id)
-    response_status = 200
     # update response
     if project is not None:
-        response_data = {
-            'status': "OK",
+        reply = {
             'id': project.id,
             'name': project.name,
             'dataStart': project.datastart,
@@ -365,9 +361,10 @@ def getProjectInformation():
             'can_calibrate': project.can_calibrate(),
             'can_scenarios': project.can_scenarios(),
         }
+        return jsonify(reply)
     else:
-        response_status = 500
-    return jsonify(response_data), response_status
+        reply = {'reason': 'Project %s does not exist' % project_id}
+        return jsonify(reply), 500
 
 @project.route('/list/all')
 @login_required
