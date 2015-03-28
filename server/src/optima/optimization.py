@@ -39,12 +39,15 @@ def getOptimizationParameters():
         reply['reason'] = 'Project %s:%s does not exist' % (project_id, project_name)
         return jsonify(reply)
     else:
-        D = load_model(project_id)
-        if not 'optimizations' in D:
-            optimizations = defaultoptimizations(D)
+        D_dict = load_model(project_id, from_json = False)
+        if not 'optimizations' in D_dict:
+            # save the defaults once and forever, so that we won't painfully retrieve it later
+            D = fromjson(D_dict)
+            optimizations = tojson(defaultoptimizations(D))
+            D_dict['optimizations'] = optimizations
+            save_model(project_id, D_dict)
         else:
-            optimizations = D['optimizations']
-        optimizations = tojson(optimizations)
+            optimizations = D_dict['optimizations']
         return json.dumps({'optimizations':optimizations})
 
 
@@ -203,8 +206,10 @@ def revertCalibrationModel():
         reply['reason'] = 'Project %s does not exist' % project_id
     else:
         D_dict = revert_working_model_to_default(project_id)
-        D = fromjson(D_dict)
-        reply['optimizations'] = D_dict.get('optimizations') or tojson(defaultoptimizations(D))
+        reply['optimizations'] = D_dict.get('optimizations')
+        if not reply['optimizations']:
+            D = fromjson(D_dict)
+            reply['optimizations'] = tojson(defaultoptimizations(D))
         reply['status']='OK'
     return jsonify(reply)
 
@@ -223,9 +228,9 @@ def removeOptimizationSet(name):
     if not project_exists(project_id):
         reply['reason'] = 'Project %s does not exist' % project_id
     else:
-        D = load_model(project_id, from_json = True)
-        D = removeoptimization(D, name)
-        D_dict = tojson(D)
+        D_dict = load_model(project_id, from_json = False)
+        #no need to convert for that, so don't bother
+        D_dict = removeoptimization(D_dict, name)
         save_model(project_id, D_dict)
         reply['status']='OK'
         reply['name'] = 'deleted'
@@ -252,21 +257,23 @@ def create_optimization():
     if not project_exists(project_id):
         reply['reason'] = 'Project %s does not exist' % project_id
     else:
-        D = load_model(project_id, from_json = True)
+        D_dict = load_model(project_id, from_json = False)
         objectives = data.get('objectives')
-        if objectives:
-            objectives = fromjson( objectives )
-        else:
-            objectives = defaultobjectives(D)
         constraints = data.get('constraints')
-        if constraints:
-            constraints = fromjson( constraints )
-        else:
-            constraints = defaultconstraints(D)
+        if not objectives or not constraints:
+            D = fromjson(D_dict)
+            if objectives:
+                objectives = fromjson( objectives )
+            else:
+                objectives = defaultobjectives(D)
+            if constraints:
+                constraints = fromjson( constraints )
+            else:
+                constraints = defaultconstraints(D)
 
-        #save new optimization slot
-        D = saveoptimization(D, name, objectives, constraints)
-        D_dict = tojson(D)
+        #save new optimization slot - no need to convert back and forth the whole project for that now
+        D_dict = saveoptimization(D_dict, name, objectives, constraints)
+        D_dict['optimizations'] = tojson(D_dict['optimizations'])
         save_model(project_id, D_dict)
         #return all available optimizations back
         reply['status']='OK'
