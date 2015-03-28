@@ -111,15 +111,18 @@ def getWorkingModel():
     import datetime
     import dateutil.tz
     from copy import deepcopy
-
+    
+    current_app.logger.debug("/api/optimization/working")
     result = {}
     D_dict = {}
     # Get optimization working data
     project_id = request.project_id
     project_name = request.project_name
     D_dict_new = load_model(project_id, working_model = False, from_json = False)
-    D_new = fromjson(D_dict_new)
-    new_optimizations = tojson(D_dict_new.get('optimizations')) or defaultoptimizations(D_new)
+    new_optimizations = D_dict_new.get('optimizations')
+    if not new_optimizations:
+        D_new = fromjson(D_dict_new)
+        new_optimizations = tojson(defaultoptimizations(D_new))
     error_text = None
     status = None
 
@@ -143,7 +146,7 @@ def getWorkingModel():
 
     if status!='NOK': D_dict = load_model(project_id, working_model = True, from_json = False)
 
-    optimizations = tojson(D_dict.get('optimizations'))
+    optimizations = D_dict.get('optimizations')
     names = [item['name'] for item in optimizations] if optimizations else ['Default']
     current_app.logger.debug("optimization names: %s" % names)
     is_dirty = False
