@@ -24,6 +24,7 @@ define({
     'ui.router'     : './vendor/angular-ui-router/release/angular-ui-router',
     'ui.bootstrap'  : './vendor/angular-bootstrap/ui-bootstrap-tpls',
     'underscore'    : './vendor/underscore/underscore',
+    'mpld3'         : './js/modules/d3-charts/mpld3.v0.2'
   },
 
   shim: {
@@ -39,6 +40,7 @@ define({
     'radar-chart-d3': ['d3'],
     'saveAs': ['canvas2blob'],
     'ui.bootstrap': ['angular'],
-    'ui.router' : ['angular']
+    'ui.router' : ['angular'],
+    'mpld3' : ['d3']
   }
 });

@@ -22,17 +22,18 @@ default_artelig = range(6,31)
 coverage_params = ['numost','numpmtct','numfirstline','numsecondline']
 
 ###############################################################################
-def plotcc(D, progname=default_progname, ccparams=default_ccparams, ccplot=default_ccplot):
+def plotcc(D, progname=default_progname, ccparams=default_ccparams, ccplot=default_ccplot, plotdata = None):
+    print("plotdata:", plotdata)
     '''
     Plot a single cost-coverage curve
     '''
 
     from makeccocs import makecc
 
-    plotdata, D = makecc(D, progname=progname, ccparams=ccparams, ccplot=ccplot, artelig=default_artelig, verbose=2, nxpts = 1000)
+    if not plotdata: plotdata, D = makecc(D, progname=progname, ccparams=ccparams, ccplot=ccplot, artelig=default_artelig, verbose=2, nxpts = 1000)
 
     printv("plotting cc for program %s" % progname, 4, 2)
-    figure()
+    f = figure()
     hold(True)
     if 'xlinedata' in plotdata.keys():
         plot(plotdata['xlinedata'], plotdata['ylinedata'][0], 'k--', lw = 2)
@@ -44,8 +45,9 @@ def plotcc(D, progname=default_progname, ccparams=default_ccparams, ccplot=defau
     ylabel(plotdata['ylabel'])
     xlim([plotdata['xlowerlim'],plotdata['xupperlim']])
     ylim([plotdata['ylowerlim'],plotdata['yupperlim']])
+    return f
 
-plotcc(D)
+#plotcc(D)
 ###############################################################################
 def plotco(D, progname=default_progname, effect=default_effect, coparams=default_coparams):
     '''

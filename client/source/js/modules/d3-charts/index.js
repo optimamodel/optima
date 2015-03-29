@@ -5,5 +5,6 @@ define([
   './stacked-area-directive',
   './stacked-bar-directive',
   './radar-chart-directive',
-  './two-sided-horizontal-bar-directive'
+  './two-sided-horizontal-bar-directive',
+  './mpld3-directive'
 ], function () {});

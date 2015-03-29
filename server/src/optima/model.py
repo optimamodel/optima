@@ -323,6 +323,8 @@ def doRunSimulation():
 @login_required
 @check_project_name
 def doCostCoverage():
+    import mpld3, copy
+    from sim.plotccocs import plotcc
     """ Calls makecco with parameters supplied from frontend """
     data = json.loads(request.data)
     current_app.logger.debug("/costcoverage" % data)
@@ -350,6 +352,15 @@ def doCostCoverage():
             D['programs'][progname]['effects'] = new_effects
         args['D'] = D
         plotdata, plotdata_co, plotdata_cc, effectnames, D = plotallcurves(**args) #effectnames are actually effects
+        plotcc_args = copy.deepcopy(args)
+        if 'coparams' in plotcc_args: del plotcc_args['coparams']
+        plotcc_args['plotdata'] = copy.deepcopy(plotdata)
+        fig = plotcc(**plotcc_args)
+        dict_fig = mpld3.fig_to_dict(fig)
+        with open('/Users/anna/git/Optima/server/mpld3.json', 'w') as outfile:
+            json.dump(dict_fig, outfile)
+#        mpld3.show()
+ #       current_app.logger.debug(dict_fig)
         if do_save:
             D_dict = tojson(D)
             save_model(request.project_id, D_dict)
@@ -357,7 +368,9 @@ def doCostCoverage():
         var = traceback.format_exc()
         return jsonify({"status":"NOK", "exception":var})
     return jsonify({"status":"OK", "plotdata": for_fe(plotdata), \
-        "plotdata_co": for_fe(plotdata_co), "plotdata_cc": for_fe(plotdata_cc), "effectnames": for_fe(effectnames)})
+        "plotdata_co": for_fe(plotdata_co), "plotdata_cc": for_fe(plotdata_cc), 
+        "effectnames": for_fe(effectnames),
+        "fig": dict_fig})
 
 @model.route('/costcoverage/effect', methods=['POST'])
 @login_required

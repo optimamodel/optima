@@ -51,6 +51,8 @@ define(['./module', 'underscore'], function (module, _) {
       $scope.scaleUpParameter = undefined;
       $scope.nonHivDalys = undefined;
       $scope.validCCParams = undefined;
+      $scope.state = {};
+      $scope.state.props = undefined; 
 
       plotTypes = ['plotdata', 'plotdata_cc', 'plotdata_co'];
 
@@ -375,6 +377,8 @@ define(['./module', 'underscore'], function (module, _) {
           effectNames = response.effectnames;
           setUpCOParamsFromEffects(response.effectnames);
           $scope.hasCostCoverResponse = true;
+          console.log("going to change props to", response.fig);
+          $scope.state.props = response.fig;
 
           resetGraphs();
           _(plotTypes).each(function (plotType) {
