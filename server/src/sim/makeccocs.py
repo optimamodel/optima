@@ -83,7 +83,7 @@ def makecc(D=None, progname=None, ccparams=None, arteligcutoff=None, verbose=def
     plotdata['yscatterdata'] = coverage
 
     # Are there parameters (either given by the user or previously stored)?
-    if (ccparams or D.programs[prognumber]['ccparams']):
+    if (ccparams or D['programs'][prognumber]['ccparams']):
         if not ccparams: ccparams = D['programs'][prognumber]['ccparams']
         convertedccparams = convertparams(D=D, ccparams=ccparams)
 

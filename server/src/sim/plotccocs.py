@@ -6,7 +6,7 @@ Version: 2015jan19 by robynstuart
 from matplotlib.pylab import figure, plot, hold, xlabel, ylabel, title, xlim, ylim
 
 # Set defaults for testing makeccocs
-default_progname = 'OST'
+default_progname = 'FSW programs'
 default_effect = [['sex', 'condomcas'], [u'FSW']] # D.programs[default_prognumber]['effects'][0]
 default_ccparams = {'saturation': 0.9, 'coveragelower': 0.25, 'coverageupper':0.4, 'funding':200000.0, 'scaleup':.5, 'nonhivdalys':None, 'xupperlim':None, 'cpibaseyear':None, 'perperson':0}
 default_coparams = [0.3, 0.5, 0.7, 0.9] 
