@@ -43,16 +43,11 @@ def updatedata(D, workbookname=None, verbose=2, savetofile=True, input_programs=
     
 
 def restructureprograms(programs):
-    '''
-    Restructure D['programs'] for easier use.
-    '''
-
-    ccparams = []
-    convertedccparams = []
-    nonhivdalys = [0.0]
-    keys = ['ccparams','convertedccparams','nonhivdalys','effects','ccplot']
-    for program in programs.keys():
-        programs[program] = dict(zip(keys,[ccparams, convertedccparams, nonhivdalys, programs[program]]))
+    ''' Add things to D['programs'] '''
+    for prognumber, program in enumerate(programs):
+        programs[prognumber]['ccparams'] = None
+        programs[prognumber]['convertedccparams'] = None
+        programs[prognumber]['nonhivdalys'] = 0.0
 
     return programs
     

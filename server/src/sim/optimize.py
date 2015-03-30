@@ -47,7 +47,7 @@ def objectivecalc(optimparams, options):
     # Exclude fixed ['costs'] from the optimization
     opttrue = zeros(len(options['D']['data']['origalloc']))
     for i in xrange(len(options['D']['data']['origalloc'])):
-        if len(options['D']['programs'][options['D']['data']['meta']['progs']['short'][i]]['effects']): opttrue[i] = 1.0
+        if len(options['D']['programs'][i]['effects']): opttrue[i] = 1.0
     opttrue = opttrue.astype(bool) # Logical values
     optimparams[opttrue] = optimparams[opttrue] / optimparams[opttrue].sum() * (options['totalspend'] - optimparams[~opttrue].sum()) # Make sure it's normalized -- WARNING KLUDGY
 
@@ -145,7 +145,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
     totalspend = objectives['outcome']['fixed'] # For fixed budgets
     opttrue = zeros(len(D['data']['origalloc']))
     for i in xrange(len(D['data']['origalloc'])):
-        if len(D['programs'][D['data']['meta']['progs']['short'][i]]['effects']): opttrue[i] = 1.0
+        if len(D['programs'][i]['effects']): opttrue[i] = 1.0
     opttrue = opttrue.astype(bool) # Logical values
     
     
