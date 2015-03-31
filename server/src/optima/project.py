@@ -772,3 +772,17 @@ def setData(project_id):
     reply['file'] = source_filename
 
     return json.dumps(reply)
+
+@project.route('/data/migrate/<migration>', methods=['POST'])
+@verify_admin_request
+def migrateData(migration):
+    """
+    Goes over all available projects and tries to run specified migration on them
+    """
+    import versioning
+    for project_id in db.session.query(ProjectDb.id).distinct():
+        print "project_id", project_id
+        model = load_model(project_id, from_json = False)
+        model = versioning.run_migrations(model)
+        if model is not None: save_model(project_id, model)
+    return 'OK'
