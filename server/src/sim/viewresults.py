@@ -131,7 +131,7 @@ def viewmultiresults(M, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 
     if M['nsims']>12: raise Exception('Can''t use ColorBrewer with more than 12 colors')
     colors = bmap.mpl_colors
     
-    npops = len(M.prev['pops']) # Calculate number of populations
+    npops = len(M['prev']['pops']) # Calculate number of populations
 
     
     if onefig:
