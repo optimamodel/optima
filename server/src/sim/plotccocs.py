@@ -7,7 +7,7 @@ from matplotlib.pylab import figure, plot, hold, xlabel, ylabel, title, xlim, yl
 
 # Set defaults for testing makeccocs
 default_progname = 'FSW programs'
-default_effect = [['sex', 'condomcas'], [u'FSW']] # D.programs[default_prognumber]['effects'][0]
+default_effect = {'paramtype':'sex', 'param':'condomcom', 'popname':u'FSW'} 
 default_ccparams = {'saturation': 0.9, 'coveragelower': 0.25, 'coverageupper':0.4, 'funding':200000.0, 'scaleup':.5, 'nonhivdalys':None, 'xupperlim':None, 'cpibaseyear':None, 'perperson':0}
 default_coparams = [0.3, 0.5, 0.7, 0.9] 
 default_arteligcutoff = 'gt350'
@@ -72,6 +72,7 @@ def plotcco(D, progname=default_progname, effect=default_effect, ccparams=defaul
         xlim([plotdata_cco['xlowerlim'],plotdata_cco['xupperlim']])
         ylim([plotdata_cco['ylowerlim'],plotdata_cco['yupperlim']])
 
+plotcco(D)
 #################################################################################
 def plotprogramcurves(D, progname=default_progname, ccparams=default_ccparams, coparams=default_coparams, arteligcutoff=default_arteligcutoff):
     ''' Plot all curves for a particular program '''

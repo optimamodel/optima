@@ -24,7 +24,6 @@ def makecc(D=None, progname=None, ccparams=None, arteligcutoff=None, verbose=def
     '''Make cost coverage curve.
     Input:
     D: main data structure
-<<<<<<< HEAD
     progname: string
     ccparams: dict containing parameters for the cost-coverage curves, obtained from the GUI. Can be empty.
     artelig: string containing the denominator for ART coverage
@@ -167,7 +166,7 @@ def makeco(D=None, progname=None, effect=None, coparams=None, coverage_params=co
 
     # Check that the selected parameter is in the list of parameters belonging to this program
     short_effectname = [effect['paramtype'], effect['param'], effect['popname']] # only matching by effect "signature"
-    short_effectlist = [[effect['paramtype'], e['param'], e['popname']] for e in D['programs'][prognumber]['effects']]
+    short_effectlist = [[e['paramtype'], e['param'], e['popname']] for e in D['programs'][prognumber]['effects']]
     if short_effectname not in short_effectlist:
         print "makeco short_effectname: %s short_effectlist: %s" % (short_effectname, short_effectlist)
         raise Exception('Please select one of the following effects %s' % D['programs'][prognumber]['effects'])
