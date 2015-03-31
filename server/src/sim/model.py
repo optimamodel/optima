@@ -39,7 +39,7 @@ def model(G, M, F, opt, initstate=None, verbose=2):
     S['newtx2']   = zeros((npops, npts)) # Number initiating ART2 per timestep
     S['death']    = zeros((npops, npts)) # Number of deaths per timestep
     effhivprev = zeros((npops, 1))    # HIV effective prevalence (prevalence times infectiousness)
-    inhomo = zeros((npops, 1))    # Inhomogeneity calculations
+    inhomo = zeros(npops)    # Inhomogeneity calculations
     
     # Also initialize circumcision output
     S['numcircum'] = zeros((npops, npts)) # Number of people circumcised
