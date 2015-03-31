@@ -72,7 +72,6 @@ def plotcco(D, progname=default_progname, effect=default_effect, ccparams=defaul
         xlim([plotdata_cco['xlowerlim'],plotdata_cco['xupperlim']])
         ylim([plotdata_cco['ylowerlim'],plotdata_cco['yupperlim']])
 
-plotcco(D)
 #################################################################################
 def plotprogramcurves(D, progname=default_progname, ccparams=default_ccparams, coparams=default_coparams, arteligcutoff=default_arteligcutoff):
     ''' Plot all curves for a particular program '''
