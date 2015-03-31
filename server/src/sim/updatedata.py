@@ -89,6 +89,7 @@ def makefittedpars(D, verbose=2):
     
     from printv import printv
     from utils import perturb
+    from numpy import zeros
     printv('Initializing fitted parameters...', 1, verbose)
     
     # Initialize fitted parameters
@@ -98,6 +99,7 @@ def makefittedpars(D, verbose=2):
         D['F'][s]['init']  = perturb(D['G']['npops'],span)
         D['F'][s]['popsize'] = perturb(D['G']['npops'],span)
         D['F'][s]['force'] = perturb(D['G']['npops'],span)
+        D['F'][s]['inhomo'] = zeros(D['G']['npops']).tolist()
         D['F'][s]['dx']  = perturb(4,span)
         D['F'][s] = unnormalizeF(D['F'][s], D['M'], D['G'], normalizeall=True) # Un-normalize F
     

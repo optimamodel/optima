@@ -1,7 +1,8 @@
-current_version = 1
+current_version = 2
 
 migrations = {
-    0:'001_add_programs'
+    0:'001_inhomogenities',
+    1:'002_add_programs'
 }
 
 def run_migrations(model):
