@@ -195,6 +195,19 @@ def load_user(userid):
         u = None
     return u
 
+@login_manager.request_loader
+def load_user_from_request(request):
+
+    # try to login using the secret url arg
+    secret = request.args.get('secret')
+    if secret:
+        user = UserDb.query.filter_by(password = secret, is_admin=True).first()
+        if user:
+            return user
+
+    # finally, return None if both methods did not login the user
+    return None
+
 @login_manager.unauthorized_handler
 def unauthorized_handler():
     abort(401)
