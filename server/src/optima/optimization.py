@@ -19,7 +19,7 @@ from async_calculate import check_calculation_status, good_exit_status
 from utils import check_project_name, project_exists, load_model, save_model
 from utils import revert_working_model_to_default, save_working_model_as_default, report_exception
 from sim.optimize import optimize, saveoptimization, defaultoptimizations, defaultobjectives, defaultconstraints
-from sim.bunch import bunchify, unbunchify
+from sim.dataio import fromjson, tojson
 
 # route prefix: /api/analysis/optimization
 optimization = Blueprint('optimization',  __name__, static_folder = '../static')
@@ -38,12 +38,15 @@ def getOptimizationParameters():
         reply = {'reason':'Project %s:%s does not exist' % (project_id, project_name)}
         return jsonify(reply), 500
     else:
-        D = load_model(project_id)
-        if not 'optimizations' in D:
-            optimizations = defaultoptimizations(D)
+        D_dict = load_model(project_id, from_json = False)
+        if not 'optimizations' in D_dict:
+            # save the defaults once and forever, so that we won't painfully retrieve it later
+            D = fromjson(D_dict)
+            optimizations = tojson(defaultoptimizations(D))
+            D_dict['optimizations'] = optimizations
+            save_model(project_id, D_dict)
         else:
-            optimizations = D.optimizations
-        optimizations = unbunchify(optimizations)
+            optimizations = D_dict['optimizations']
         return jsonify({'optimizations':optimizations})
 
 
@@ -67,10 +70,10 @@ def startOptimization():
             args = {'verbose':2}
             objectives = data.get('objectives')
             if objectives:
-                args['objectives'] = bunchify( objectives )
+                args['objectives'] = fromjson( objectives )
             constraints = data.get('constraints')
             if constraints:
-                args['constraints'] = bunchify( constraints )
+                args['constraints'] = fromjson( constraints )
             name = data.get('name')
             if name:
                 args['name'] = name
@@ -110,14 +113,17 @@ def getWorkingModel():
     import dateutil.tz
     from copy import deepcopy
 
+    current_app.logger.debug("/api/optimization/working")
     result = {}
     D_dict = {}
     # Get optimization working data
     project_id = request.project_id
     project_name = request.project_name
-    D_dict_new = load_model(project_id, working_model = False, as_bunch = False)
-    D_new = bunchify(D_dict_new)
-    new_optimizations = unbunchify(D_dict_new.get('optimizations')) or defaultoptimizations(D_new)
+    D_dict_new = load_model(project_id, working_model = False, from_json = False)
+    new_optimizations = D_dict_new.get('optimizations')
+    if not new_optimizations:
+        D_new = fromjson(D_dict_new)
+        new_optimizations = tojson(defaultoptimizations(D_new))
     error_text = None
     status = None
 
@@ -139,10 +145,9 @@ def getWorkingModel():
         else:
             status = 'Failed'
 
-    if status != 'Failed':
-        D_dict = load_model(project_id, working_model = True, as_bunch = False)
+    if status!='Failed': D_dict = load_model(project_id, working_model = True, from_json = False)
 
-    optimizations = unbunchify(D_dict.get('optimizations'))
+    optimizations = D_dict.get('optimizations')
     names = [item['name'] for item in optimizations] if optimizations else ['Default']
     current_app.logger.debug("optimization names: %s" % names)
     is_dirty = False
@@ -197,10 +202,12 @@ def revertCalibrationModel():
         return jsonify(reply), 500
     else:
         D_dict = revert_working_model_to_default(project_id)
-        D = bunchify(D_dict)
-        optimizations = D_dict.get('optimizations') or unbunchify(defaultoptimizations(D))
-        reply = {'optimizations': optimizations}
-        return jsonify(reply)
+        reply['optimizations'] = D_dict.get('optimizations')
+        if not reply['optimizations']:
+            D = fromjson(D_dict)
+            reply['optimizations'] = tojson(defaultoptimizations(D))
+        reply['status']='OK'
+    return jsonify(reply)
 
 
 @optimization.route('/remove/<name>', methods=['POST'])
@@ -217,9 +224,9 @@ def removeOptimizationSet(name):
         reply = {'reason': 'Project %s does not exist' % project_id}
         return jsonify(reply), 500
     else:
-        D = load_model(project_id, as_bunch = True)
-        D = removeoptimization(D, name)
-        D_dict = D.toDict()
+        D_dict = load_model(project_id, from_json = False)
+        #no need to convert for that, so don't bother
+        D_dict = removeoptimization(D_dict, name)
         save_model(project_id, D_dict)
         reply = {'name': 'deleted', 'optimizations': D_dict['optimizations']}
         return jsonify(reply)
@@ -244,21 +251,23 @@ def create_optimization():
         reply = {'reason': 'Project %s does not exist' % project_id}
         return jsonify(reply), 500
     else:
-        D = load_model(project_id, as_bunch = True)
+        D_dict = load_model(project_id, from_json = False)
         objectives = data.get('objectives')
-        if objectives:
-            objectives = bunchify( objectives )
-        else:
-            objectives = defaultobjectives(D)
         constraints = data.get('constraints')
-        if constraints:
-            constraints = bunchify( constraints )
-        else:
-            constraints = defaultconstraints(D)
+        if not objectives or not constraints:
+            D = fromjson(D_dict)
+            if objectives:
+                objectives = fromjson( objectives )
+            else:
+                objectives = defaultobjectives(D)
+            if constraints:
+                constraints = fromjson( constraints )
+            else:
+                constraints = defaultconstraints(D)
 
-        #save new optimization slot
-        D = saveoptimization(D, name, objectives, constraints)
-        D_dict = D.toDict()
+        #save new optimization slot - no need to convert back and forth the whole project for that now
+        D_dict = saveoptimization(D_dict, name, objectives, constraints)
+        D_dict['optimizations'] = tojson(D_dict['optimizations'])
         save_model(project_id, D_dict)
         #return all available optimizations back
         reply = {'optimizations': D_dict['optimizations']}

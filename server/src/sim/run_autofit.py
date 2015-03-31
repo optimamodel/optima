@@ -25,13 +25,13 @@ D = updatedata(D, verbose=verbose)
 print('\n\n\n3. Viewing results...')
 whichgraphs = {'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 'daly':[0,1], 'death':[0,1], 'dx':[0,1], 'tx1':[0,1], 'tx2':[0,1]}
 from viewresults import viewuncerresults
-viewuncerresults(D.plot.E, whichgraphs=whichgraphs, simstartyear=2000, simendyear=2015, onefig=True, verbose=verbose)
+viewuncerresults(D['plot']['E'], whichgraphs=whichgraphs, simstartyear=2000, simendyear=2015, onefig=True, verbose=verbose)
 
 print('\n\n\n4. Running automatic fitting...')
 from autofit import autofit
 autofit(D, timelimit=timelimit, simstartyear=2000, simendyear=2015, verbose=verbose)
 
 print('\n\n\n5. Viewing scenarios...')
-viewuncerresults(D.plot.E, whichgraphs=whichgraphs, simstartyear=2000, simendyear=2015, onefig=True, verbose=verbose)
+viewuncerresults(D['plot']['E'], whichgraphs=whichgraphs, simstartyear=2000, simendyear=2015, onefig=True, verbose=verbose)
 
 print('\n\n\nDONE.')

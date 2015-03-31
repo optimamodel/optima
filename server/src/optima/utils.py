@@ -1,5 +1,5 @@
 import os
-from sim.dataio import DATADIR, TEMPLATEDIR, upload_dir_user
+from sim.dataio import DATADIR, TEMPLATEDIR, upload_dir_user, fromjson, tojson
 from flask import helpers, current_app
 from flask.ext.login import current_user
 from functools import wraps
@@ -130,20 +130,16 @@ def delete_spreadsheet(name, user_id = None):
             os.remove(spreadsheet_file)
 
 def model_as_dict(model):
-    from sim.bunch import Bunch
-    if isinstance(model, Bunch):
-        model = model.toDict()
-    return model
+    return tojson(model)
 
 def model_as_bunch(model):
-    from sim.bunch import Bunch
-    return Bunch.fromDict(model)
+    return fromjson(model)
 
 """
   loads the project with the given name
   returns the model (D).
 """
-def load_model(id, as_bunch = True, working_model = False):
+def load_model(id, from_json = True, working_model = False):
     current_app.logger.debug("load_model:%s" % id)
     model = None
     project = load_project(id)
@@ -157,13 +153,12 @@ def load_model(id, as_bunch = True, working_model = False):
         if model is None or len(model.keys())==0:
             current_app.logger.debug("model %s is None" % id)
         else:
-            if as_bunch:
-                model = model_as_bunch(model)
+            if from_json: model = model_as_bunch(model)
     return model
 
-def save_working_model(id, model):
+def save_working_model(id, model, to_json = False):
 
-    model = model_as_dict(model)
+    if to_json: model = model_as_dict(model)
     project = load_project(id)
 
     # If we do not have an instance for working project, make it now
@@ -206,10 +201,11 @@ def revert_working_model_to_default(id):
 
     return model
 
-def save_model(id, model):
+def save_model(id, model, to_json = False):
+    # model is given as json by default, no need to convert
     current_app.logger.debug("save_model %s" % id)
 
-    model = model_as_dict(model)
+    if to_json:model = model_as_dict(model)
     project = load_project(id)
     project.model = model #we want it to fail if there is no project...
     db.session.add(project)
@@ -224,16 +220,12 @@ def pick_params(params, data, args = {}):
 
 def for_fe(item): #only for json
     import numpy as np
-    from sim.bunch import Bunch as struct
 
     if isinstance(item, list):
         return [for_fe(v) for v in item]
     if isinstance(item, np.ndarray):
         return [for_fe(v) for v in item.tolist()]
-    elif isinstance(item, struct):
-        return item.toDict()
     elif isinstance(item, dict):
-
         return dict( (k, for_fe(v)) for k,v in item.iteritems() )
     elif isinstance(item, float) and np.isnan(item):
         return None

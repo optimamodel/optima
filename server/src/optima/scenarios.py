@@ -2,8 +2,7 @@ from flask import Blueprint, request, jsonify, helpers, current_app
 import json
 import traceback
 from sim.optimize import optimize
-from sim.bunch import unbunchify
-from sim.bunch import bunchify
+from sim.dataio import tojson, fromjson
 from sim.scenarios import runscenarios
 from utils import load_model, save_model, project_exists, check_project_name, report_exception, load_project
 from flask.ext.login import login_required, current_user
@@ -31,11 +30,11 @@ def get_scenario_parameters():
     scenario_params = parameters()
     real_parameters = []
     project = load_project(request.project_id)
-    D = bunchify(project.model)
+    D = fromjson(project.model)
 
     for parameter in scenario_params:
         if not parameter['modifiable']: continue
-        item = bunchify({'names':parameter['keys'], 'pops':0, \
+        item = fromjson({'names':parameter['keys'], 'pops':0, \
             'startyear':project.datastart, 'endyear':project.dataend})
         val_pair = None
         try:
@@ -68,10 +67,9 @@ def list_scenarios():
     if not 'scens' in D:
         scenarios = defaultscenarios(D)
     else:
-        scenarios = [item.scenario for item in D.scens]
-    scenarios = unbunchify(scenarios)
+        scenarios = [item['scenario'] for item in D['scens']]
+    scenarios = tojson(scenarios)
     return jsonify({'scenarios':scenarios})
-
 
 @scenarios.route('/run', methods=['POST'])
 @login_required
@@ -94,13 +92,13 @@ def runScenarios():
     args = {}
     scenarios = data.get("scenarios")
     if scenarios:
-        args["scenariolist"] = bunchify(scenarios)
+        args["scenariolist"] = fromjson(scenarios)
     dosave = data.get("dosave")
     try:
         D = load_model(project_id)
         args['D'] = D
         D = runscenarios(**args)
-        D_dict = D.toDict()
+        D_dict = tojson(D)
         if dosave:
             current_app.logger.debug("model: %s" % project_id)
             save_model(project_id, D_dict)

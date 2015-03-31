@@ -4,7 +4,7 @@ import traceback
 from async_calculate import CalculatingThread, start_or_report_calculation, cancel_calculation
 from async_calculate import check_calculation, check_calculation_status, good_exit_status
 from sim.manualfit import manualfit
-from sim.bunch import bunchify
+from sim.dataio import fromjson, tojson
 from sim.runsimulation import runsimulation
 from sim.makeccocs import makecco, plotallcurves #, default_effectname, default_ccparams, default_coparams
 from utils import load_model, save_model, save_working_model_as_default, revert_working_model_to_default, project_exists, pick_params, check_project_name, for_fe
@@ -122,8 +122,7 @@ def getWorkingModel():
             status = 'Done'
         else:
             status = 'Failed'
-    if status != 'Failed':
-        D_dict = load_model(project_id, working_model = True, as_bunch = False)
+    if status!='Failed': D_dict = load_model(project_id, working_model = True, from_json = False)
 
     result = {'graph': D_dict.get('plot',{}).get('E',{})}
     result['status'] = status
@@ -209,12 +208,12 @@ def doManualCalibration():
     try:
         D = load_model(project_id)
         args['D'] = D
-        F = bunchify(data.get("F",{}))
+        F = fromjson(data.get("F",{}))
         args['F'] = F
         Mlist = data.get("M",[])
         args['Mlist'] = Mlist
         D = manualfit(**args)
-        D_dict = D.toDict()
+        D_dict = tojson(D)
         if dosave:
             current_app.logger.debug("model: %s" % project_id)
             save_model(project_id, D_dict)
@@ -234,7 +233,7 @@ def getModelCalibrateParameters():
     from sim.manualfit import updateP
     from sim.nested import getnested
     calibrate_parameters = [p for p in parameters() if 'calibration' in p and p['calibration']]
-    D_dict = load_model(request.project_id, as_bunch = False)
+    D_dict = load_model(request.project_id, from_json = False)
     result = add_calibration_parameters(D_dict)
     return jsonify(result)
 
@@ -243,7 +242,7 @@ def getModelCalibrateParameters():
 @check_project_name
 def getModel():
     """ Returns the model (aka D or data) for the currently open project. """
-    D = load_model(request.project_id, as_bunch = False)
+    D = load_model(request.project_id, from_json = False)
     return jsonify(result)
 
 @model.route('/data/<key>')
@@ -252,7 +251,7 @@ def getModel():
 def getModelGroup(key):
     """ Returns the subset with the given key for the D (model) in the open project."""
     current_app.logger.debug("getModelGroup: %s" % key)
-    D_dict = load_model(request.project_id, as_bunch = False)
+    D_dict = load_model(request.project_id, from_json = False)
     the_group = D_dict.get(key, {})
     return jsonify(the_group)
 
@@ -262,7 +261,7 @@ def getModelGroup(key):
 def getModelSubGroup(key, subkey):
     """ Returns the subset with the given key and subkey for the D (model) in the open project. """
     current_app.logger.debug("getModelSubGroup: %s %s" % (key, subkey))
-    D_dict = load_model(request.project_id, as_bunch = False)
+    D_dict = load_model(request.project_id, from_json = False)
     the_group = D_dict.get(key,{})
     the_subgroup = the_group.get(subkey, {})
     return jsonify(the_subgroup)
@@ -277,7 +276,7 @@ def setModelGroup(key):
     project_name = request.project_name
     project_id = request.project_id
     try:
-        D_dict = load_model(project_id, as_bunch = False)
+        D_dict = load_model(project_id, from_json = False)
         D_dict[group] = data
         save_model(project_id, D_dict)
     except Exception, err:
@@ -301,10 +300,10 @@ def doRunSimulation():
     data = json.loads(request.data)
 
     args = {}
-    D_dict = load_model(request.project_id, as_bunch = False)
+    D_dict = load_model(request.project_id, from_json = False)
     result = {'graph': D_dict.get('plot',{}).get('E',{})}
     if not result:
-        D = bunchify(D_dict)
+        D = fromjson(D_dict)
         args['D'] = D
         startyear = data.get("startyear")
         if startyear:
@@ -314,7 +313,7 @@ def doRunSimulation():
             args["endyear"] = int(endyear)
         args["dosave"] = False
         D = runsimulation(**args)
-        D_dict = D.toDict()
+        D_dict = tojson(D)
         save_model(request.project_id, D_dict)
         result = {'graph':D_dict.get('plot',{}).get('E',{})}
     result = add_calibration_parameters(D_dict, result)
@@ -348,11 +347,11 @@ def doCostCoverage():
                     else:
                         effect[2] = new_coparams[i][:]
                 new_effects.append(effect)
-            D.programs[progname]['effects'] = new_effects
+            D['programs'][progname]['effects'] = new_effects
         args['D'] = D
         plotdata, plotdata_co, plotdata_cc, effectnames, D = plotallcurves(**args) #effectnames are actually effects
         if do_save:
-            D_dict = D.toDict()
+            D_dict = tojson(D)
             save_model(request.project_id, D_dict)
     except Exception, err:
         var = traceback.format_exc()
