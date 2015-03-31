@@ -31,18 +31,19 @@ def runscenarios(D, scenariolist=None, verbose=2):
     for scen in xrange(nscenarios):
         D['scens'][scen]['scenario'] = deepcopy(scenariolist[scen]) # Copy scenario data
         D['scens'][scen]['label'] = scenariolist[scen]['name'] # Copy name
-        D['scens'][scen]['M'] = deepcopy(scenariopars[scen]['M'])
-        D['scens'][scen]['S'] = model(D['G'], D['scens'][scen]['M'], D['F'][0], D['opt'], verbose=verbose)
+        scenM = deepcopy(scenariopars[scen]['M'])
+        scenS = model(D['G'], scenM, D['F'][0], D['opt'], verbose=verbose)
         printv('Scenario: %i/%i' % (scen+1, nscenarios), 2, verbose)
     
     # Calculate results
     from makeresults import makeresults
+    scenRs = [dict() for scen in xrange(nscenarios)]
     for scen in xrange(nscenarios):
-        D['scens'][scen]['R'] = makeresults(D, [D['scens'][scen]['S']], D['opt']['quantiles'], verbose=verbose)
+        scenRs['R'] = makeresults(D, [scenS], D['opt']['quantiles'], verbose=verbose)
     
     # Gather plot data
     from gatherplotdata import gathermultidata
-    D['plot']['scens'] = gathermultidata(D, D['scens'], verbose=verbose)
+    D['plot']['scens'] = gathermultidata(D, scenRs, verbose=verbose)
     
     printv('...done running scenarios.', 2, verbose)
     return D

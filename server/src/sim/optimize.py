@@ -499,8 +499,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
     if 'optim' not in D['plot']: D['plot']['optim'] = [] # Initialize list if required
     D['plot']['optim'].append(plot_result) # In any case, append
     
-    debug_result = [deepcopy(result['Rarr'][0]['R']['debug']), deepcopy(result['Rarr'][1]['R']['debug'])]
-    result_to_save = {'plot': [plot_result], 'debug': [debug_result]}
+    result_to_save = {'plot': [plot_result]}
 
     ## Save optimization to D
     D = saveoptimization(D, name, objectives, constraints, result_to_save, verbose=2)
