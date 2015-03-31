@@ -96,7 +96,7 @@ def getPopsAndProgsFromModel(project, trustInputMetadata):
     # get and generate programs from D.data.meta
     progs = []
     if trustInputMetadata and model['G'].get('inputprograms'):
-        progs = deepcopy(model['G']['inputprograms']) #if there are already parameters 
+        progs = deepcopy(model['G']['inputprograms']) #if there are already parameters
     else:
         # we should try to rebuild the inputprograms
         for index, short_name in enumerate(D_progs_names):
@@ -145,6 +145,7 @@ def create_project(project_name):
     """
     from sim.makeproject import default_datastart, default_dataend, default_pops, default_progs
     from sim.runsimulation import runsimulation
+    from sim.dataio import tojson
     current_app.logger.debug("createProject %s for user %s" % (project_name, current_user.email))
     raw_data = json.loads(request.data)
     # get current user
@@ -168,13 +169,13 @@ def create_project(project_name):
     current_app.logger.debug('Creating new project: %s' % project.name)
 
     D = makeproject(**makeproject_args) # makeproject is supposed to return the name of the existing file...
-    project.model = D.toDict()
+    project.model = tojson(D)
 
     # Save to db
     current_app.logger.debug("About to persist project %s for user %s" % (project.name, project.user_id))
     db.session.add(project)
     db.session.commit()
-    new_project_template = D.G.workbookname
+    new_project_template = D['G']['workbookname']
 
     current_app.logger.debug("new_project_template: %s" % new_project_template)
     (dirname, basename) = (upload_dir_user(TEMPLATEDIR), new_project_template)
@@ -195,7 +196,7 @@ def update_project(project_id):
 
     from sim.makeproject import default_datastart, default_dataend, default_pops, default_progs
     from sim.runsimulation import runsimulation
-    from sim.dataio import projectpath
+    from sim.dataio import projectpath, tojson
     current_app.logger.debug("updateProject %s for user %s" % (project_id, current_user.email))
     raw_data = json.loads(request.data)
     # get current user
@@ -235,7 +236,7 @@ def update_project(project_id):
 
     D = makeproject(**makeproject_args) # makeproject is supposed to return the name of the existing file...
     #D should have inputprograms and inputpopulations corresponding to the entered data now
-    project.model = D.toDict()
+    project.model = tojson(D)
     db.session.query(WorkingProjectDb).filter_by(id=project.id).delete()
     if can_update and project.project_data is not None and project.project_data.meta is not None:
         # try to reload the data
@@ -249,11 +250,11 @@ def update_project(project_id):
         filedata.close()
         D = model_as_bunch(project.model)
         #resave relevant metadata
-        D.G.projectname = project.name
-        D.G.projectfilename = projectpath(project.name+'.prj')
-        D.G.workbookname = D.G.projectname + '.xlsx'
-        D.G.inputprograms = deepcopy(project.programs)
-        D.G.inputpopulations = deepcopy(project.populations)
+        D['G']['projectname'] = project.name
+        D['G']['projectfilename'] = projectpath(project.name+'.prj')
+        D['G']['workbookname'] = D['G']['projectname'] + '.xlsx'
+        D['G']['inputprograms'] = deepcopy(project.programs)
+        D['G']['inputpopulations'] = deepcopy(project.populations)
         D = updatedata(D, input_programs = project.programs, savetofile = False)
         #and now, because workbook was uploaded, we have to correct the programs and populations
         model = model_as_dict(D)
@@ -266,7 +267,7 @@ def update_project(project_id):
     current_app.logger.debug("About to persist project %s for user %s" % (project.name, project.user_id))
     db.session.add(project)
     db.session.commit()
-    new_project_template = D.G.workbookname
+    new_project_template = D['G']['workbookname']
 
     current_app.logger.debug("new_project_template: %s" % new_project_template)
     (dirname, basename) = (upload_dir_user(TEMPLATEDIR), new_project_template)
@@ -610,12 +611,16 @@ def uploadExcel():
         # update and save model
         D = model_as_bunch(project.model)
         #make sure we get project name and relevant fields up-to-date
-        D.G.projectname = project.name
-        D.G.projectfilename = projectpath(project.name+'.prj')
-        D.G.workbookname = D.G.projectname + '.xlsx'
-        D.G.inputprograms = deepcopy(project.programs)
-        D.G.inputpopulations = deepcopy(project.populations)
-        D = updatedata(D, input_programs = project.programs, savetofile = False)
+        D['G']['projectname'] = project.name
+        D['G']['projectfilename'] = projectpath(project.name+'.prj')
+        D['G']['workbookname'] = D['G']['projectname'] + '.xlsx'
+        D['G']['inputprograms'] = deepcopy(project.programs)
+        D['G']['inputpopulations'] = deepcopy(project.populations)
+
+        # Is this the first time? if so then we have to run simulations
+        should_re_run = 'S' not in D
+
+        D = updatedata(D, input_programs = project.programs, savetofile = False, rerun = should_re_run)
         model = model_as_dict(D)
         project.model = model
         #update the programs and populations based on the data
@@ -678,6 +683,51 @@ def getData(project_id):
             json.dump(data, filedata)
         return helpers.send_from_directory(loaddir, filename)
 
+@project.route('/data', methods=['POST'])
+@login_required
+@report_exception('Unable to copy uploaded data')
+def createProjectAndSetData():
+    """
+    Creates a project & uploads data file to update project model.
+    """
+    user_id = current_user.id
+
+    reply = {'status':'NOK'}
+
+    project_name = request.values.get('name')
+    if not project_name:
+        reply['reason'] = 'No project name provided'
+        return json.dumps(reply)
+
+    file = request.files['file']
+
+    if not file:
+        reply['reason'] = 'No file is submitted!'
+        return json.dumps(reply)
+
+    source_filename = secure_filename(file.filename)
+    if not allowed_file(source_filename):
+        reply['reason'] = 'File type of %s is not accepted!' % source_filename
+        return json.dumps(reply)
+
+    data = json.load(file)
+
+    project = ProjectDb(project_name, user_id, data['G']['datastart'], \
+        data['G']['dataend'], \
+        data['G']['inputprograms'], data['G']['inputpopulations'])
+    project.model = data
+    getPopsAndProgsFromModel(project, trustInputMetadata = True)
+
+    db.session.add(project)
+    db.session.commit()
+
+    reply['status'] = 'OK'
+    reply['result'] = 'Project %s is updated' % project_name
+    reply['file'] = source_filename
+
+    return json.dumps(reply)
+
+
 @project.route('/data/<project_id>', methods=['POST'])
 @login_required
 @report_exception('Unable to copy uploaded data')
@@ -722,3 +772,17 @@ def setData(project_id):
     reply['file'] = source_filename
 
     return json.dumps(reply)
+
+@project.route('/data/migrate', methods=['POST'])
+@verify_admin_request
+def migrateData():
+    """
+    Goes over all available projects and tries to run specified migration on them
+    """
+    import versioning
+    for project_id in db.session.query(ProjectDb.id).distinct():
+        print "project_id", project_id
+        model = load_model(project_id, from_json = False)
+        model = versioning.run_migrations(model)
+        if model is not None: save_model(project_id, model)
+    return 'OK'

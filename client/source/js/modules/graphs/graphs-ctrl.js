@@ -4,7 +4,7 @@ define([
   'use strict';
   module.controller('GraphsController', function ($scope, dataMocks, CONFIG) {
 
-    // GRAPH 5
+    // Lines
     // =======
     $scope.options5 = {
       height: 300,
@@ -29,7 +29,7 @@ define([
 
 
 
-    // GRAPH 6
+    // Line + Area
     // =======
 
     $scope.options6 = {
@@ -41,15 +41,17 @@ define([
         bottom: 60,
         left: 60
       },
+      areasOpacity: 0.1,
       xAxis: {
         axisLabel: 'Axis X'
       },
       yAxis: {
         axisLabel: 'Axis Y'
-      }
+      },
+      title: "Willy Wonka Production"
     };
 
-    dataMocks.lineScatterArea().$promise.then(function (data) {
+    dataMocks.lineAreaScatter().$promise.then(function (data) {
       $scope.data6 = data;
     });
 
@@ -179,6 +181,79 @@ define([
         ['Level 3', 2023, [592339, 559034, 250818]]
       ]
     };
+
+    $scope.radarOptions = {};
+
+    $scope.radarData = [{
+      "axes": [{
+          "value": 54,
+          "axis": "SBCC"
+      }, {
+          "value": 45,
+          "axis": "NSP"
+      }, {
+          "value": 60,
+          "axis": "OST"
+      }, {
+          "value": 29,
+          "axis": "MSM programs"
+      }, {
+          "value": 40,
+          "axis": "FSW programs"
+      }, {
+          "value": 34,
+          "axis": "ART"
+      }, {
+          "value": 51,
+          "axis": "PMTCT"
+      }]
+    }, {
+      "axes": [{
+          "value": 12,
+          "axis": "SBCC"
+      }, {
+          "value": 10,
+          "axis": "NSP"
+      }, {
+          "value": 20,
+          "axis": "OST"
+      }, {
+          "value": 25,
+          "axis": "MSM programs"
+      }, {
+          "value": 15,
+          "axis": "FSW programs"
+      }, {
+          "value": 24,
+          "axis": "ART"
+      }, {
+          "value": 16,
+          "axis": "PMTCT"
+      }]
+    }, {
+      "axes": [{
+          "value": 10,
+          "axis": "SBCC"
+      }, {
+          "value": 5,
+          "axis": "NSP"
+      }, {
+          "value": 10,
+          "axis": "OST"
+      }, {
+          "value": 2,
+          "axis": "MSM programs"
+      }, {
+          "value": 3,
+          "axis": "FSW programs"
+      }, {
+          "value": 5,
+          "axis": "ART"
+      }, {
+          "value": 10,
+          "axis": "PMTCT"
+      }]
+    }];
 
   });
 });

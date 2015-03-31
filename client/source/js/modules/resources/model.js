@@ -10,7 +10,7 @@ define([
       return $resource('/api/model/:path/:suffix/:postsuffix',
         { path: '@path' },
         {
-          saveCalibrateManual: {
+          runManualCalibration: {
             method: 'POST',
             isArray: false,
             params: {

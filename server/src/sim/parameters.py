@@ -11,8 +11,8 @@ No.;Parameter name;Location;Model variable name;Data variable name;Manual calibr
 8;Circumcision | Number of medical male circumcisions performed per year;Programs/scenarios;M.numcircum[:];sex.numcircum;;1;1
 9;STI | Prevalence of ulcerative STIs;Programs/scenarios;M.stiprevulc[:];epi.stiprevulc;;1;1
 10;STI | Prevalence of discharging STIs;Programs/scenarios;M.stiprevdis[:];epi.stiprevdis;;1;1
-11;Testing | Proportion of PLHIV aware of their HIV status;Programs/scenarios;M.propaware[:];txrx.hivtest;;1;1
-12;Testing | Proportion of people who are tested for HIV each year;Programs/scenarios;M.hivtest[:];txrx.hivtest;;1;1
+11;Testing | Proportion of people who are tested for HIV each year;Programs/scenarios;M.hivtest[:];txrx.hivtest;;1;1
+12;Testing | Proportion of PLHIV aware of their HIV status;Programs/scenarios;M.propaware[:];txrx.hivtest;;1;1
 13;Treatment | Number of PLHIV on ART;Programs/scenarios;M.txtotal;txrx.numfirstline;;1;
 14;Treatment | Proportion of PLHIV on ART;Programs/scenarios;M.txtotal;txrx.numfirstline;;1;
 15;Treatment | CD4-based ART eligibility criterion;Programs/scenarios;M.txelig;txrx.txelig;;1;

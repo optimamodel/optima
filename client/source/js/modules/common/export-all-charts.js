@@ -3,7 +3,7 @@ function (angular, $, _, JsPdf) {
   'use strict';
 
   return angular.module('app.export-all-charts', ['app.common.export-helpers'])
-  .directive('exportAllCharts', function ($q, $http, modalService, exportHelpers) {
+  .directive('exportAllCharts', function ($q, $http, exportHelpers) {
     return {
       restrict: 'E',
       scope: {

@@ -13,11 +13,11 @@ from printv import printv
 # default_coparams = [0.3, 0.5, 0.7, 0.9]
 
 default_progname = 'MSM programs'
-default_ccparams = [0.9, 0.5, 0.6, 400000.0, 0.5, None] #
-default_ccplot = [None, None, 0]
-default_coparams = [.300, .500, .700, .900]
+default_ccparams = None # [0.9, 0.5, 0.6, 400000.0, 0.5, None] #
+default_ccplot = None #[None, None, 0]
+default_coparams = None#[.300, .500, .700, .900]
 
-default_effect = [['sex', 'condomcas'], [u'MSM']] # D.programs[default_progname]['effects'][0]
+default_effect = [['sex', 'condomcas'], [u'MSM']] # D['programs'][default_progname]['effects'][0]
 default_artelig = range(6,31)
 coverage_params = ['numost','numpmtct','numfirstline','numsecondline']
 
@@ -45,6 +45,7 @@ def plotcc(D, progname=default_progname, ccparams=default_ccparams, ccplot=defau
     xlim([plotdata['xlowerlim'],plotdata['xupperlim']])
     ylim([plotdata['ylowerlim'],plotdata['yupperlim']])
 
+plotcc(D)
 ###############################################################################
 def plotco(D, progname=default_progname, effect=default_effect, coparams=default_coparams):
     '''
@@ -100,7 +101,7 @@ def plotprogramcco(D, progname=default_progname, ccparams=default_ccparams, ccpl
     '''
 
     plotcc(D, progname=progname, ccparams=ccparams, ccplot=ccplot)
-    for effectnumber, effect in enumerate(D.programs[progname]['effects']):
+    for effectnumber, effect in enumerate(D['programs'][progname]['effects']):
         parname = effect[0][1]
         if parname not in coverage_params:
             plotco(D, progname=progname, effect=effect, coparams=coparams)
@@ -112,7 +113,7 @@ def plotallcco(D, ccparams=default_ccparams, ccplot=default_ccplot, coparams=def
     Plot all cost-coverage, coverage-outcome and cost-outcome curves for all programs
     '''
 
-    for progname in D.programs.keys():
+    for progname in D['programs'].keys():
         plotprogramcco(D, progname=progname, ccparams=ccparams, ccplot=ccplot, coparams=coparams)
 
 ###############################################################################

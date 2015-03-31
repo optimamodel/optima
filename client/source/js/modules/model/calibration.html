@@ -1,6 +1,6 @@
 <div class="page rich">
 
-  <div class="page_subheader">
+  <div class="page_header">
     <div class="section grid">
       <!--form name="CalibrationForm" ng-submit="simulate()">
         <p ng-show="needData" class="error-hint">Please upload Optima spreadsheet first.</p>
@@ -9,19 +9,26 @@
     <div class="section grid">
       <div class="12">
 
-        <label class="checkbox-inline">
-          <a class="btn" href="http://optimamodel.com/files/optima-parameter-priors.pdf" target="_blank">View parameter priors (PDF)</a>
-        </label>
-
-        <label class="checkbox-inline">
-          <input type="checkbox" ng-disabled="!canDoFitting" ng-model="enableAutomaticCalibration">
-          Automatic calibration
-        </label>
-
-        <label class="checkbox-inline">
-          <input type="checkbox" ng-disabled="!canDoFitting" ng-model="enableManualCalibration">
-          Manual calibration
-        </label>
+        <div class="elastic __fluid">
+          <div class="elastic_col __va-middle">
+            <a class="btn" ng-click="reloadSpreadsheet()">Reload spreadsheet</a>
+          </div>
+          <div class="elastic_col __va-middle">
+            <a class="btn" href="http://optimamodel.com/files/optima-parameter-priors.pdf" target="_blank">View parameter priors (PDF)</a>
+          </div>
+          <div class="elastic_col __va-middle">
+            <label class="checkbox-inline">
+              <input type="checkbox" ng-disabled="!canDoFitting" ng-model="enableAutomaticCalibration">
+              Automatic calibration
+            </label>
+          </div>
+          <div class="elastic_col __va-middle">
+            <label class="checkbox-inline">
+              <input type="checkbox" ng-disabled="!canDoFitting" ng-model="enableManualCalibration">
+              Manual calibration
+            </label>
+          </div>
+        </div>
 
       </div>
     </div>
@@ -72,14 +79,14 @@
     </div>
   </div>
 
-  <div class="section __inline calibration-charts" ng-class="{'calibration-charts--full':enableManualCalibration===false}" ng-show="hasCharts" >
+  <div class="section __inline calibration-charts" ng-class="{'calibration-charts--full':enableManualCalibration===false}" ng-show="charts.length > 0" >
     <export-all-charts name="Model calibration" ng-if="charts"></export-all-charts>
     <export-all-data name="Model calibration" charts="charts" ng-if="charts"></export-all-data>
     <div class="grid">
       <div>
-        <div class="chart-container __small" ng-style="hasStackedCharts && {'height':'400px'}" ng-repeat="chart in charts">
-          <div ng-if="chart.type == 'lineScatterAreaChart'" line-scatter-area-chart ng-if="chart.type != 'stackAreaChart'" data="chart.data" options="chart.options" save-graph-as></div>
-          <div ng-if="chart.type == 'stackedAreaChart'" stacked-area-chart data="chart.data" options="chart.options" save-graph-as></div>
+        <div class="chart-container __small" ng-repeat="chart in charts">
+          <div ng-if="chart.type == 'lineAreaScatterChart'" line-area-scatter-chart ng-if="chart.type != 'stackAreaChart'" data="chart.data" options="chart.options" save-graph-as normalise-height></div>
+          <div ng-if="chart.type == 'stackedAreaChart'" stacked-area-chart data="chart.data" options="chart.options" save-graph-as normalise-height></div>
         </div>
       </div>
     </div>
@@ -96,57 +103,44 @@
       </thead>
       <tbody>
       <tr ng-repeat="parameter in parameters.m">
-        <td>{{parameter.title}}</td>
+        <td>{{ ::parameter.title }}</td>
         <td>
-          <span ng-hide="editing" ng-click="editing = true">{{ parameter.data}}</span>
-          <span ng-show="editing">
-            <input class="txbox __inline" ng-model="parameter.data">
-            <button class="btn" ng-click="editing = false; doneEditingParameter();">Ok</button>
-          </span>
+          <span editable-input="parameter.data" on-save="doneEditingParameter"></span>
         </td>
       </tr>
       <!-- Force -->
-      <tr ng-repeat="population in parameters.meta.pops.short track by $index">
-        <td>{{ parameters.types.force }} {{ population }}</td>
+      <tr ng-repeat="population in ::parameters.meta.pops.short track by $index">
+        <td>{{ ::parameters.types.force }} {{ ::population }}</td>
         <td>
-          <span ng-hide="editing" ng-click="editing = true">{{ parameters.f.force[$index] }}</span>
-          <span ng-show="editing">
-            <input class="txbox __inline" ng-model="parameters.f.force[$index]">
-            <button class="btn" ng-click="editing = false; doneEditingParameter();">Ok</button>
-          </span>
+          <span editable-input="parameters.f.force[$index]" on-save="doneEditingParameter"></span>
+        </td>
+      </tr>
+      <!-- Inhomo -->
+      <tr ng-repeat="population in ::parameters.meta.pops.short track by $index">
+        <td>{{ ::parameters.types.inhomo }} {{ ::population }}</td>
+        <td>
+          <span editable-input="parameters.f.inhomo[$index]" on-save="doneEditingParameter"></span>
         </td>
       </tr>
       <!-- Init -->
-      <tr ng-repeat="population in parameters.meta.pops.short track by $index">
-        <td>{{ parameters.types.init }} {{ population }}</td>
+      <tr ng-repeat="population in ::parameters.meta.pops.short track by $index">
+        <td>{{ ::parameters.types.init }} {{ ::population }}</td>
         <td>
-          <span ng-hide="editing" ng-click="editing = true">{{ parameters.f.init[$index] }}</span>
-          <span ng-show="editing">
-            <input class="txbox __inline" ng-model="parameters.f.init[$index]">
-            <button class="btn" ng-click="editing = false; doneEditingParameter();">Ok</button>
-          </span>
+          <span editable-input="parameters.f.init[$index]" on-save="doneEditingParameter"></span>
         </td>
       </tr>
       <!-- Popsize -->
-      <tr ng-repeat="population in parameters.meta.pops.short track by $index">
-        <td>{{ parameters.types.popsize }} {{ population }}</td>
+      <tr ng-repeat="population in ::parameters.meta.pops.short track by $index">
+        <td>{{ ::parameters.types.popsize }} {{ ::population }}</td>
         <td>
-          <span ng-hide="editing" ng-click="editing = true">{{ parameters.f.popsize[$index] }}</span>
-          <span ng-show="editing">
-            <input class="txbox __inline" ng-model="parameters.f.popsize[$index]">
-            <button class="btn" ng-click="editing = false; doneEditingParameter();">Ok</button>
-          </span>
+          <span editable-input="parameters.f.popsize[$index]" on-save="doneEditingParameter"></span>
         </td>
       </tr>
       <!-- Testing Rate -->
       <tr ng-repeat="i in [0, 1, 2, 3] track by $index">
-        <td>{{ parameters.types.dx[i] }}</td>
+        <td>{{ ::parameters.types.dx[i] }}</td>
         <td>
-          <span ng-hide="editing" ng-click="editing = true">{{ parameters.f.dx[i] }}</span>
-          <span ng-show="editing">
-            <input class="txbox __inline" ng-model="parameters.f.dx[i]">
-            <button class="btn" ng-click="editing = false; doneEditingParameter();">Ok</button>
-          </span>
+          <span editable-input="parameters.f.dx[i]" on-save="doneEditingParameter"></span>
         </td>
       </tr>
       </tbody>

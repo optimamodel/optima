@@ -1,12 +1,12 @@
 <div class="modal-header">
-  {{title}}
+  {{ ::title }}
 </div>
 <div class="modal-body">
   Please correct the following errors before proceeding:<br/><br/>
   <ul>
-    <li data-ng-repeat="error in errors">{{error.message}}</li>
+    <li ng-repeat="error in ::errors">{{ ::error.message }}</li>
   </ul>
 </div>
 <div class="modal-footer">
-  <button type="submit" class="btn" data-ng-click="$dismiss('cancel')">Ok</button>
+  <button type="submit" class="btn" ng-click="$dismiss('cancel')">Ok</button>
 </div>

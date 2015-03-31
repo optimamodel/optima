@@ -1,15 +1,14 @@
-define(['./module', 'angular', 'd3'], function (module, angular, d3) {
+define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('AnalysisOptimizationController', function ($scope, $http,
-    $interval, meta, cfpLoadingBar, CONFIG, modalService, graphTypeFactory, optimizations) {
+    $interval, meta, cfpLoadingBar, CONFIG, modalService, typeSelector,
+    optimizations, optimizationHelpers) {
 
       $scope.chartsForDataExport = [];
 
       $scope.meta = meta;
-      $scope.types = graphTypeFactory.types;
-      // reset graph types every time you come to this page
-      angular.extend($scope.types, angular.copy(CONFIG.GRAPH_TYPES));
+      $scope.types = typeSelector.types;
 
       $scope.needData = $scope.meta.progs === undefined;
       $scope.activeTab = 1;
@@ -22,6 +21,17 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
         STOPPING : { text:"Optimization is stopping", isActive: true, checking: false },
         CHECKING: {text:"Checking for existing optimization", isActive: false, checking: true}
       };
+
+      $scope.moneyObjectives = [
+        { id: 'inci', title: 'Reduce the annual incidence of HIV' },
+        { id: 'incisex', title: 'Reduce the annual incidence of sexually transmitted HIV' },
+        { id: 'inciinj', title: 'Reduce the annual incidence of injecting-related HIV' },
+        { id: 'mtct', title: 'Reduce annual mother-to-child transmission of HIV' },
+        { id: 'mtctbreast', title: 'Reduce annual mother-to-child transmission of HIV among breastfeeding mothers' },
+        { id: 'mtctnonbreast', title: 'Reduce annual mother-to-child transmission of HIV among non-breastfeeding mothers' },
+        { id: 'deaths', title: 'Reduce annual AIDS-related deaths' },
+        { id: 'dalys', title: 'Reduce annual HIV-related DALYs' }
+      ];
 
       $scope.optimizationStatus = statusEnum.NOT_RUNNING;
       $scope.optimizations = [];
@@ -45,13 +55,13 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       // see https://github.com/angular/angular.js/wiki/Understanding-Scopes
       $scope.state = {
         activeOptimizationName: undefined,
-        isTestRun: false
+        isTestRun: false,
+        timelimit: 3600
       };
       resetCharts();
 
       // Set defaults
       $scope.params = {};
-      $scope.params.timelimit = 3600;
 
       // Objectives
       $scope.params.objectives = {};
@@ -64,27 +74,8 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       $scope.params.objectives.outcome.death = false;
       $scope.params.objectives.outcome.costann = false;
 
-      // Money objectives defaults
-      $scope.params.objectives.money = {};
-      $scope.params.objectives.money.objectives = {};
-      $scope.params.objectives.money.objectives.dalys = {};
-      $scope.params.objectives.money.objectives.dalys.use = false;
-      $scope.params.objectives.money.objectives.deaths = {};
-      $scope.params.objectives.money.objectives.deaths.use = false;
-      $scope.params.objectives.money.objectives.inci = {};
-      $scope.params.objectives.money.objectives.inci.use = false;
-      $scope.params.objectives.money.objectives.inciinj = {};
-      $scope.params.objectives.money.objectives.inciinj.use = false;
-      $scope.params.objectives.money.objectives.incisex = {};
-      $scope.params.objectives.money.objectives.incisex.use = false;
-      $scope.params.objectives.money.objectives.mtct = {};
-      $scope.params.objectives.money.objectives.mtct.use = false;
-      $scope.params.objectives.money.objectives.mtctbreast = {};
-      $scope.params.objectives.money.objectives.mtctbreast.use = false;
-      $scope.params.objectives.money.objectives.mtctnonbreast = {};
-      $scope.params.objectives.money.objectives.mtctnonbreast.use = false;
-
       // Default program weightings
+      $scope.params.objectives.money = {};
       $scope.params.objectives.money.costs = [];
       if(meta.progs) {
         $scope.programs = meta.progs.long;
@@ -106,7 +97,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
         $scope.params.constraints.coverage = [];
 
         // Initialize program constraints models
-        for ( var i = 0; i < meta.progs.short.length; i++ ) {
+        for ( i = 0; i < meta.progs.short.length; i++ ) {
           $scope.params.constraints.yeardecrease[i] = {};
           $scope.params.constraints.yeardecrease[i].use = false;
           $scope.params.constraints.yeardecrease[i].by = 100;
@@ -132,7 +123,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
 
     var optimizationTimer;
 
-    var linesGraphOptions = {
+    var graphOptions = {
       height: 200,
       width: 320,
       margin: CONFIG.GRAPH_MARGINS,
@@ -141,7 +132,8 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       },
       yAxis: {
         axisLabel: ''
-      }
+      },
+      areasOpacity: 0.1
     };
 
     /*
@@ -151,14 +143,14 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     * y-values from one line.
     */
     var generateGraph = function (yData, xData, title, legend, xLabel, yLabel) {
-      var linesGraphData = {
-        lines: [],
-        scatter: []
-      };
 
       var graph = {
-        options: angular.copy(linesGraphOptions),
-        data: angular.copy(linesGraphData)
+        options: angular.copy(graphOptions),
+        data: {
+          lines: [],
+          scatter: [],
+          areas: []
+        }
       };
 
       graph.options.title = title;
@@ -167,9 +159,22 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       graph.options.xAxis.axisLabel = xLabel;
       graph.options.yAxis.axisLabel = yLabel;
 
-      _(yData).each(function(lineData) {
+      // optimization chart data like prevalence have `best` & `data`
+      // financial chart data only has one property `data`
+      var linesData = yData.best || yData.data;
+      _(linesData).each(function(lineData) {
         graph.data.lines.push(_.zip(xData, lineData));
       });
+
+      // the optimization charts have an uncertainty area `low` & `high`
+      if (!_.isEmpty(yData.low) && !_.isEmpty(yData.high)) {
+        _(yData.high).each(function(highLineData, index) {
+          graph.data.areas.push({
+            highLine: _.zip(xData, highLineData),
+            lowLine: _.zip(xData, yData.low[index])
+          });
+        });
+      }
 
       return graph;
     };
@@ -178,8 +183,6 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
      * Returns a prepared chart object for a pie chart.
      */
     var generatePieChart = function(data, legend) {
-      var graphData = [];
-
       var options = {
         height: 350,
         width: 350,
@@ -192,7 +195,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
         title: data.name
       };
 
-      graphData = _(data).map(function (value, index) {
+      var graphData = _(data).map(function (value, index) {
         return { value: value, label: legend[index] };
       });
 
@@ -270,8 +273,6 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
      * Returns a prepared chart object for a pie chart.
      */
     var generateStackedBarChart = function(yData, xData, legend, title) {
-      var graphData = [];
-
       var options = {
         height: 200,
         width: 700,
@@ -287,7 +288,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       };
 
 
-      graphData = _(xData).map(function(xValue, index) {
+      var graphData = _(xData).map(function(xValue, index) {
         var yValues = _(yData).map(function(yEntry) { return yEntry[index]; });
         return [xValue, yValues];
       });
@@ -309,10 +310,8 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     /**
      * Returns a prepared chart object for a pie chart.
      */
-    var generateMultipleBudgetsChart = function(yData, xData, labels, legend,
+    var generateMultipleBudgetsChart = function (yData, xData, labels, legend,
         title, leftTitle, rightTitle) {
-      var graphData = [];
-
       var options = {
         height: 200,
         width: 700,
@@ -329,7 +328,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
         rightTitle: rightTitle
       };
 
-      graphData = _(xData).map(function (xValue, index) {
+      var graphData = _(xData).map(function (xValue, index) {
         return [labels[index], xValue, yData[index]];
       });
 
@@ -366,7 +365,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
           // generate graphs showing the overall data for this type
           if (type.total) {
             var graph = generateGraph(
-              data.tot.data, results.tvec,
+              data.tot, results.tvec,
               data.tot.title, data.tot.legend,
               data.xlabel, data.tot.ylabel
             );
@@ -377,7 +376,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
           if (type.byPopulation) {
             _(data.pops).each(function (population) {
               var graph = generateGraph(
-                population.data, results.tvec,
+                population, results.tvec,
                 population.title, population.legend,
                 data.xlabel, population.ylabel
               );
@@ -393,44 +392,57 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     /**
      * Returns a financial graph.
      */
-    var generateFinancialGraph = function(data) {
-      var graph = generateGraph(data.data, data.xdata, data.title, data.legend, data.xlabel, data.ylabel);
+    var generateFinancialGraph = function (data) {
+      var graph = generateGraph(data, data.xdata, data.title, data.legend, data.xlabel, data.ylabel);
       return graph;
     };
 
-    var prepareFinancialGraphs = function(graphData) {
+    var prepareFinancialGraphs = function (graphData) {
       var graphs = [];
 
       if (graphData === undefined) return graphs;
 
       // annual cost charts
-      _(['existing', 'future', 'total']).each(function(type) {
-        var chartData = graphData.costann[type][$scope.types.activeAnnualCost];
-        var isActive = $scope.types.costs[0][type];
-        if (chartData && isActive) {
-          graphs.push(generateFinancialGraph(chartData));
+      _($scope.types.possibleKeys).each(function(type) {
+        var isActive = $scope.types.costs.costann[type];
+        if (isActive) {
+          var chartData = graphData.costann[type][$scope.types.activeAnnualCost];
+          if (chartData) {
+            graphs.push(generateFinancialGraph(chartData));
+          }
         }
       });
 
 
       // cumulative cost charts
-      _(['existing', 'future', 'total']).each(function(type) {
-        var chartData = graphData.costcum[type];
-        var isActive = $scope.types.costs[1][type];
-        if (chartData && isActive) {
-          graphs.push(generateFinancialGraph(chartData));
+      _($scope.types.possibleKeys).each(function(type) {
+        var isActive = $scope.types.costs.costcum[type];
+        if (isActive) {
+          var chartData = graphData.costcum[type];
+          if (chartData) {
+            graphs.push(generateFinancialGraph(chartData));
+          }
         }
       });
+
+      // commitments
+      var commitIsActive = $scope.types.costs.commit.checked;
+      if (commitIsActive) {
+        var commitChartData = graphData.commit[$scope.types.activeAnnualCost];
+        if (commitChartData) {
+          graphs.push(generateFinancialGraph(commitChartData));
+        }
+      }
 
       return graphs;
     };
 
 
-    var prepareOutcomeChart = function(data) {
+    var prepareOutcomeChart = function (data) {
       if (data === undefined) return undefined;
 
       var chart = {
-        options: angular.copy(linesGraphOptions),
+        options: angular.copy(graphOptions),
         data: {
           lines: [],
           scatter: []
@@ -446,7 +458,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       return chart;
     };
 
-    $scope.optimizationByName = function(name) {
+    $scope.optimizationByName = function (name) {
       return _($scope.optimizations).find(function(item) {
         return item.name == name;
       });
@@ -488,7 +500,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       if (data && data.plot && data.plot.length > 0) {
         var optimization = $scope.optimizationByName($scope.state.activeOptimizationName);
         optimization.result = data;
-        graphTypeFactory.enableAnnualCostOptions($scope.types, data.plot[0].multi);
+        typeSelector.enableAnnualCostOptions($scope.types, data.plot[0].multi);
         drawGraphs();
       }
     }
@@ -652,70 +664,80 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
      * @param str
      * @returns {string}
      */
-    function strOrEmpty(str){
+    function strOrEmpty (str) {
       return _(str).isUndefined() ? '' : str;
     }
 
     /**
      * Join the word with a comma between them, except for the last word
-     * @param arr
-     * @param prop if it's not undefined it will pick that specific property from the object
-     * @param quote should the sentence be quoted or not
-     * @param before add something before each word
-     * @param after add something after each word
+     *
+     * @param entries {array} - the entries to be combined
+     * @param property if it's defined it will pick that specific property from the object
+     * @param hasQuote should the sentence be quoted or not
+     * @param wordPrefix add something before each word
+     * @param wordPostfix add something after each word
      * @returns {string}
      */
-    function joinArrayAsSentence(arr, prop, quote, before, after){
-      quote = quote ? '"':'';
-      before = strOrEmpty(before);
-      after = strOrEmpty(after);
-      return quote + _.compact(_(arr).map(function (val) {var p = (prop ? val[prop] : val);return p ? (before + strOrEmpty(p) + after ) : undefined;})).join(", ") + quote;
+    function joinArrayAsSentence (entries, property, hasQuote, wordPrefix, wordPostfix) {
+      var quote = hasQuote ? '"' : '';
+      var prefix = strOrEmpty(wordPrefix);
+      var postfix = strOrEmpty(wordPostfix);
+      var processedEntries = _.compact(_(entries).map(function (entry) {
+        var text = (property ? entry[property] : entry);
+        return text ? ( prefix + strOrEmpty(text) + postfix ) : undefined;
+      }));
+      return quote + processedEntries.join(", ") + quote;
     }
 
-    function constructOptimizationMessage() {
-      var budgetLevel;
+    /**
+     * Returns all the checkedPrograms as a comma separated string.
+     */
+    $scope.checkedProgramsText = function () {
+      return joinArrayAsSentence(validateObjectivesToMinimize().checkedPrograms, 'name', true);
+    };
 
+    /**
+     * Returns a description of the chosen budget level for the summary message.
+     */
+    $scope.budgetLevelSummary = function () {
       if ($scope.params.objectives.funding === 'variable') {
-        budgetLevel = " budget level " + joinArrayAsSentence(_.compact(_($scope.params.objectives.outcome.variable).toArray()), undefined, false, "$");
+        var objectives = _.compact(_($scope.params.objectives.outcome.variable).toArray());
+        return ' budget level ' + joinArrayAsSentence(objectives, undefined, false, '$');
       } else if ($scope.params.objectives.funding === 'constant') {
-        budgetLevel = " fixed budget of $" + $scope.params.objectives.outcome.fixed + " per year";
+        return ' fixed budget of $' + $scope.params.objectives.outcome.fixed + ' per year';
       } else if ($scope.params.objectives.funding === 'range') {
-        budgetLevel = " budget range between $" + $scope.params.objectives.outcome.budgetrange.minval;
-        budgetLevel = budgetLevel + " to $" + $scope.params.objectives.outcome.budgetrange.maxval;
+        var budgetLevel = ' budget range between $' + $scope.params.objectives.outcome.budgetrange.minval;
+        return budgetLevel + ' to $' + $scope.params.objectives.outcome.budgetrange.maxval;
       }
+    };
 
-      $scope.optimizationMessage = _.template("Optimizing <%= checkedPrograms %> over years <%= startYear %> to <%= endYear %> with <%= budgetLevel %>.", {
-        checkedPrograms : joinArrayAsSentence(validateObjectivesToMinimize().checkedPrograms, 'name', true),
-        startYear: $scope.params.objectives.year.start,
-        endYear:$scope.params.objectives.year.end,
-        budgetLevel: budgetLevel
-      });
-    }
-
-    $scope.setActiveTab = function(tabNum){
+    $scope.setActiveTab = function (tabNum){
       if(tabNum === 3){
       /*Prevent going to third tab if something is invalid in the first tab.
-        Cannot just use $scope.OptimizationForm.$invalid for this because the validation of the years and the budgets is done in a different way. */
+        Cannot just use $scope.state.OptimizationForm.$invalid for this because the validation of the years and the budgets is done in a different way. */
         checkValidation();
         if(errorMessages.length > 0){
           modalService.informError(errorMessages, 'Cannot view results');
           return;
         }
-        constructOptimizationMessage();
+        if ($scope.state.OptimizationForm.$invalid) {
+          modalService.inform(function() {}, 'Ok', 'Please correct all errors on this page before proceeding.', 'Cannot view results');
+          return;
+        }
       }
       $scope.activeTab = tabNum;
     };
 
-    $scope.initTimer = function(status) {
+    $scope.initTimer = function (status) {
       if ( !angular.isDefined( optimizationTimer ) ) {
         // Keep polling for updated values after every 5 seconds till we get an error.
         // Error indicates that the model is not optimizing anymore.
-        optimizationTimer = $interval(checkWorkingOptimization, 10000, 0, false);
+        optimizationTimer = $interval(checkWorkingOptimization, 30000, 0, false);
         $scope.optimizationStatus = status;
         $scope.errorText = '';
         // start cfpLoadingBar loading
         // calculate the number of ticks in timelimit
-        var val = ($scope.params.timelimit * 1000) / 250;
+        var val = ($scope.state.timelimit * 1000) / 250;
         // callback function in start to be called in place of _inc()
         cfpLoadingBar.start(function () {
           if (cfpLoadingBar.status() >= 0.95) {
@@ -728,8 +750,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     };
 
     $scope.startOptimization = function () {
-      var params = angular.copy($scope.params);
-      params.name = $scope.state.activeOptimizationName;
+      var params = optimizationHelpers.toRequestParameters($scope.params, $scope.state.activeOptimizationName, $scope.state.timelimit);
       $http.post('/api/analysis/optimization/start', params, {ignoreLoadingBar: true})
         .success(function (data, status, headers, config) {
           if (data.status == "OK" && data.join) {
@@ -748,7 +769,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       }
     };
 
-    function checkWorkingOptimization() {
+    function checkWorkingOptimization () {
       $http.get('/api/analysis/optimization/working', {ignoreLoadingBar: true})
         .success(function(data, status, headers, config) {
           if (data.status == 'Done') {
@@ -788,7 +809,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
       );
     };
 
-    function stopTimer() {
+    function stopTimer () {
       if ( angular.isDefined( optimizationTimer ) ) {
         $interval.cancel(optimizationTimer);
         optimizationTimer = undefined;
@@ -803,7 +824,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     });
 
     $scope.deleteOptimization = function (optimizationName) {
-      $http.post('/api/analysis/optimization/remove/' + optimizationName)
+      $http.post(encodeURI('/api/analysis/optimization/remove/' + optimizationName))
         .success(function(data){
           $scope.initOptimizations(data.optimizations, undefined);
         });
@@ -828,13 +849,11 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
 
     $scope.addOptimization = function () {
       var create = function (name) {
-        $http.post('/api/analysis/optimization/create', {
-          name: name, 
-          objectives: $scope.params.objectives,
-          constraints: $scope.params.constraints
-        }).success(function(data) {
-            $scope.initOptimizations(data.optimizations, name);
-          });
+        var url = '/api/analysis/optimization/create';
+        var params = optimizationHelpers.toRequestParameters($scope.params, name);
+        $http.post(url, params).success(function(data) {
+          $scope.initOptimizations(data.optimizations, name);
+        });
       };
 
       modalService.addOptimization(function (name) { create(name); }, $scope.optimizations);
@@ -902,7 +921,7 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
     /**
      * Collects all existing charts in the $scope.chartsForDataExport variable.
      */
-    var updateChartsForDataExport = function() {
+    var updateChartsForDataExport = function () {
       $scope.chartsForDataExport = [];
 
       if ( $scope.state.pieCharts && !$scope.types.plotUncertainties ) {
@@ -939,23 +958,23 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
      * Changes active constrains and objectives to the values in provided optimization
      * @param optimization {Object}
      */
-    $scope.applyOptimization = function(name, overwriteParams) {
+    $scope.applyOptimization = function (name, overwriteParams) {
       var optimization = $scope.optimizationByName(name);
       if (overwriteParams) {
-        _.extend($scope.params.objectives, optimization.objectives);
+        var objectives = optimizationHelpers.toScopeObjectives(optimization.objectives);
+        _.extend($scope.params.objectives, objectives);
         _.extend($scope.params.constraints, optimization.constraints);
       }
       if (optimization.result) {
         updateGraphs(optimization.result);
       } else {
         resetCharts();
-        graphTypeFactory.resetAnnualCostOptions($scope.types);
+        typeSelector.resetAnnualCostOptions($scope.types);
       }
-      constructOptimizationMessage();
     };
 
     // apply default optimization on page load
-    $scope.initOptimizations = function(optimizations, name, overwriteParams) {
+    $scope.initOptimizations = function (optimizations, name, overwriteParams) {
       if (!optimizations) return;
 
       $scope.optimizations = angular.copy(optimizations);
@@ -984,9 +1003,9 @@ define(['./module', 'angular', 'd3'], function (module, angular, d3) {
 
     $scope.updateTimelimit = function () {
       if ($scope.state.isTestRun) {
-        $scope.params.timelimit = 60;
+        $scope.state.timelimit = 60;
       } else {
-        $scope.params.timelimit = 3600;
+        $scope.state.timelimit = 3600;
       }
     };
 

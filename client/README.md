@@ -12,15 +12,11 @@ Installation
     # Install global NPM dependencies:
     npm -g install bower
     npm -g install gulp
-    npm -g install karma
 
     # Also to be able to run tests from CLI
     # without browser window popping consider
     # to install PhantomJS:
     # http://phantomjs.org/download.html
-
-    # Get Ruby dependencies required to compile styles from Sass:
-    bundle install
 
 [Gulp](http://gulpjs.com/) flows
 ----------

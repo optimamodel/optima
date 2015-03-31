@@ -293,12 +293,14 @@ define(['./module', 'd3', 'underscore', './scale-helpers'], function (module, d3
      * @param {element} chart - element where to append the line.
      * @param {object} chartSize - example: { width: 200, height: 100 }.
      * @param {string} colorClass - see available colors in chart/_color.scss.
+     * @param {number} opacity - level of opacity. by default it will be 1.
      */
-    function AreaChart(chart, chartSize, colorClass) {
+    function AreaChart(chart, chartSize, colorClass, opacity) {
       var xScale, yScale;
 
       var className = 'area_chart_path';
       var uniqClassName = _.uniqueId('area_chart_path');
+      var areaOpacity = parseFloat(opacity) || 1;
 
       this.scales = function (dataset) {
         var xExtent = d3.extent(dataset, function (d) {
@@ -335,6 +337,7 @@ define(['./module', 'd3', 'underscore', './scale-helpers'], function (module, d3
 
           chart.append('path')
             .attr('d', area(dataset))
+            .attr('style', 'opacity: ' + areaOpacity)
             .attr('class', [className, uniqClassName, colorClass].join(' '));
         }
       }

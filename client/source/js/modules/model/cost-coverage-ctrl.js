@@ -18,7 +18,7 @@ define(['./module', 'underscore'], function (module, _) {
       $scope.notReady = $scope.needData || $scope.cannotCalibrate;
 
       $scope.optionsErrorMessage = 'To define a cost-coverage curve, values must be provided in the first three text boxes.';
-      $scope.needAllCCParamsMessage = 'First three text boxes must be either all empty, or all have values in them.';
+      $scope.needAllCCParamsMessage = 'First four text boxes must be either all empty, or all have values in them.';
       $scope.all_programs = programs;
 
       if ( !$scope.needData ) {
@@ -95,7 +95,7 @@ define(['./module', 'underscore'], function (module, _) {
       };
     };
 
-    var getLineScatterOptions = function (options, xLabel, yLabel) {
+    var getlineAreaScatterOptions = function (options, xLabel, yLabel) {
       var defaults = {
         width: 300,
         height: 200,
@@ -128,7 +128,7 @@ define(['./module', 'underscore'], function (module, _) {
     var setUpPlotdataGraph = function (graphData) {
 
       var graph = {
-        options: getLineScatterOptions({
+        options: getlineAreaScatterOptions({
           linesStyle: ['__color-blue-4', '__color-black __dashed', '__color-black __dashed'],
           title: graphData.title,
           hideTitle: true
@@ -178,7 +178,7 @@ define(['./module', 'underscore'], function (module, _) {
      */
     var prepareCostCoverageGraph = function (data) {
       var graph = {
-        options: getLineScatterOptions({
+        options: getlineAreaScatterOptions({
           linesStyle: ['__color-blue-4', '__color-black __dashed', '__color-black __dashed'],
           hideTitle: true
         },

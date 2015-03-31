@@ -51,21 +51,20 @@ def savedata(filename, data, update=True, verbose=2):
     printv('Saving data...', 1, verbose)
 
     from json import dump, load
-    from bunch import Bunch as struct
     
     filename = projectpath(filename)
 
     try: # First try loading the file and updating it
         rfid = open(filename,'rb') # "Read file ID" -- This will fail if the file doesn't exist
-        origdata = struct.fromDict(load(rfid))
+        origdata = fromjson(load(rfid))
         if update: origdata.update(data)
         else: origdata = data
         wfid = open(filename,'wb')
-        dump(data.toDict(), wfid)
+        dump(tojson(data), wfid)
         printv('..updated file', 3, verbose)
     except: # If that fails, save a new file
         wfid = open(filename,'wb')
-        dump(data.toDict(), wfid)
+        dump(tojson(data), wfid)
         printv('..created new file', 3, verbose)
     printv(' ...done saving data at %s.' % filename, 2, verbose)
     return filename
@@ -76,22 +75,53 @@ def loaddata(filename, verbose=2):
     Loads the file and imports json data from it.
     If the file cannot be load as json, tries loading it with cPickle.
     """
-    from bunch import Bunch as struct
+
     printv('Loading data...', 1, verbose)
     if not os.path.exists(filename):
         filename = projectpath(filename)
-    try:
-        import json
-        rfid = open(filename,'rb')
-        data = struct.fromDict(json.load(rfid))
-    except: #try the old approach
-        import cPickle
-        rfid = open(filename, 'rb')
-        data = cPickle.load(rfid)
+    
+    import json
+    rfid = open(filename,'rb')
+    data = fromjson(json.load(rfid))
 
     printv('...done loading data.', 2, verbose)
     return data
 
+
+
+def tojson(x):
+    """ Convert an object to JSON-serializable format, handling e.g. Numpy arrays """
+    from numpy import ndarray, isnan
+    
+    if isinstance(x, dict):
+        return dict( (k, tojson(v)) for k,v in x.iteritems() )
+    elif isinstance(x, (list, tuple)):
+        return type(x)( tojson(v) for v in x )
+    elif isinstance(x, ndarray):
+        return {"np_array":[tojson(v) for v in x.tolist()], "np_dtype":x.dtype.name}
+    elif isinstance(x, float) and isnan(x):
+        return None
+    else:
+        return x
+
+
+def fromjson(x):
+    """ Convert an object from JSON-serializable format, handling e.g. Numpy arrays """
+    NP_ARRAY_KEYS = set(["np_array", "np_dtype"])
+    from numpy import asarray, dtype, nan
+    
+    if isinstance(x, dict):
+        dk = x.keys()
+        if len(dk) == 2 and set(dk) == NP_ARRAY_KEYS:
+            return asarray(fromjson(x['np_array']), dtype(x['np_dtype']))
+        else:
+            return dict( (k, fromjson(v)) for k,v in x.iteritems() )
+    elif isinstance(x, (list, tuple)):
+        return type(x)( fromjson(v) for v in x )
+    elif x is None:
+        return nan
+    else:
+        return x
 
 
 def upload_dir_user(dirpath, user_id = None):

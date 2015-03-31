@@ -13,8 +13,9 @@ fi
 # install npm and bower deps
 npm install
 
-# install ruby dependencies required to compile sass styles
-bundle install
+# add version file
+commit=$(git rev-parse --verify --short HEAD)
+tee source/js/version.js <<< "define([], function () { return '$commit'; });"
 
 # build -> unit tests
 node_modules/gulp/bin/gulp.js

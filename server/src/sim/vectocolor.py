@@ -40,7 +40,7 @@ def vectocolor(vector,cmap=None):
        nelements = len(vector) # Count number of elements
        
        colors=zeros((nelements,4))
-       for i in range(nelements):
+       for i in xrange(nelements):
           colors[i,:]=array(cmap(vector[i]))
     
    # It doesn't; just return black

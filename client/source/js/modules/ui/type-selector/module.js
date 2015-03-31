@@ -1,18 +1,15 @@
 define([
-  'angular',
-  ], function (ng) {
+  'angular', '../../../config'
+  ], function (angular) {
     'use strict';
 
-    return ng.module('app.ui.type-selector', [])
+    return angular.module('app.ui.type-selector', ['app.constants'])
       .directive('typeSelector', function() {
         return {
           replace: true,
           restrict: 'E',
           templateUrl: 'js/modules/ui/type-selector/type-selector.html',
-          controller: 'TypeSelectorController',
-          scope: {
-            types: '='
-          }
+          controller: 'TypeSelectorController'
         };
     });
   });

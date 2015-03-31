@@ -60,7 +60,7 @@ define(['angular', 'jquery', './svg-to-png', 'underscore'], function (angular, $
           if ( type == 'blob' ) {
             canvas.toBlob( callback );
           } else {
-            var data = canvas.toDataURL('image/jpeg', 1.0);
+            var data = canvas.toDataURL('image/jpeg', 0.7);
             callback( data );
           }
         };
@@ -94,57 +94,18 @@ define(['angular', 'jquery', './svg-to-png', 'underscore'], function (angular, $
     };
 
     /**
-     * Returns the normalized data ready to export for a line/area chart
+     * Returns the normalized data ready to export for a lineAreaScatter chart
      */
-    var lineAndAreaExport = function (graph){
-      if (!graph.data || !graph.options) return null;
-
+    var lineAreaScatterExport = function (graph){
       var exportable = {
         name: graph.options.title || 'Data',
         columns: []
       };
 
-      var scatter = graphToDictionary(graph.data.scatter);
-      var line = graphToDictionary(graph.data.line);
-
-      var xOfPoints = {}; // merge xPoints with scatter x points
-      xOfPoints.title = graph.options.xAxis.axisLabel;
-      xOfPoints.data = [];
-      xOfPoints.data.push.apply(xOfPoints.data, Object.keys(line));
-      xOfPoints.data.push.apply(xOfPoints.data, Object.keys(scatter));
-      xOfPoints.data.sort();
-      exportable.columns.push(xOfPoints);
-
-      var yOfPoints = {};
-      yOfPoints.title = 'line'; // in theory, yAxis should be overall y title (todo for later, backend should support that)
-      yOfPoints.data = fillFromDictionary(xOfPoints.data, line);
-      exportable.columns.push(yOfPoints);
-
-      _(graph.data.area).each(function(lineData, lineTitle) {
-        var line = graphToDictionary(lineData);
-        var yOfPoints = {};
-        yOfPoints.title = lineTitle;
-        yOfPoints.data = fillFromDictionary(xOfPoints.data, line);
-        exportable.columns.push(yOfPoints);
-      });
-
-      var scatterPoints = {};
-      scatterPoints.title = "scatter";
-      scatterPoints.data = fillFromDictionary(xOfPoints.data, scatter);
-      exportable.columns.push(scatterPoints);
-      return exportable;
-    };
-
-    /**
-     * Returns the normalized data ready to export for a lines chart
-     */
-    var linesExport = function (graph){
-      var exportable = {
-        name: graph.options.title || 'Data',
-        columns: []
-      };
-
-      var lineTitles = graph.options.legend? graph.options.legend : ["line", "high", "low"];
+      // these fallback values are needed for cost-coverage since no legend should be
+      // shown there, but they still need a title in the export
+      // This certainly can be refactored to avoid the hardcoded column titles.
+      var lineTitles = graph.options.legend? graph.options.legend : ["Line", "High", "Low"];
 
       // Collect and sort all the xPoints from the lines and the scatter data.
       // It's good enough to use the x data from the first line as all lines
@@ -160,12 +121,32 @@ define(['angular', 'jquery', './svg-to-png', 'underscore'], function (angular, $
       exportable.columns.push(xOfPoints);
 
       _(graph.data.lines).each(function(lineData, index) {
+
+        var areaExists = graph.data.areas && graph.data.areas[index];
+        // add low line
+        if (areaExists) {
+          var lowLine = graphToDictionary(graph.data.areas[index].lowLine);
+          var yOfLowLinePoints = {};
+          yOfLowLinePoints.title = 'Low ' + lineTitles[index];
+          yOfLowLinePoints.data = fillFromDictionary(xOfPoints.data, lowLine);
+          exportable.columns.push(yOfLowLinePoints);
+        }
+
         // Collecting the Y of the points for the line
         var line = graphToDictionary(lineData);
         var yOfLinePoints = {};
         yOfLinePoints.title = lineTitles[index];
         yOfLinePoints.data = fillFromDictionary(xOfPoints.data, line);
         exportable.columns.push(yOfLinePoints);
+
+        // add high line
+        if (areaExists) {
+          var highLine = graphToDictionary(graph.data.areas[index].highLine);
+          var yOfHighLinePoints = {};
+          yOfHighLinePoints.title = 'High ' + lineTitles[index];
+          yOfHighLinePoints.data = fillFromDictionary(xOfPoints.data, highLine);
+          exportable.columns.push(yOfHighLinePoints);
+        }
       });
 
       var scatterPoints = {};
@@ -281,9 +262,11 @@ define(['angular', 'jquery', './svg-to-png', 'underscore'], function (angular, $
     var getExportableFrom = function (chart){
       if(!chart.data) { return null; }
 
-      if(_.isEqual(Object.keys(chart.data),["line", "scatter", "area"])) { return lineAndAreaExport(chart); }
-      if(_.isEqual(Object.keys(chart.data),["lines", "scatter", "limits"])) { return linesExport(chart); }
-      if(_.isEqual(Object.keys(chart.data),["lines", "scatter"])) { return linesExport(chart); }
+      if(_.isEqual(Object.keys(chart.data),["lines", "scatter", "areas"]) ||
+         _.isEqual(Object.keys(chart.data),["lines", "scatter", "limits"]) ||
+         _.isEqual(Object.keys(chart.data),["lines", "scatter"])) {
+        return lineAreaScatterExport(chart);
+      }
       if(_.isEqual(Object.keys(chart.data),["areas"])) { return areasExport(chart); }
       if(_.isEqual(Object.keys(chart.data),["slices"])) { return pieExport(chart); }
       if(_.isEqual(Object.keys(chart.data),["bars"])) { return stackedBarsExport(chart); }

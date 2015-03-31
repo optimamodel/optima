@@ -1,8 +1,11 @@
 def sanitize(arraywithnans):
         """ Sanitize input to remove NaNs. Warning, does not work on multidimensional data!! """
         from numpy import array, isnan
-        arraywithnans = array(arraywithnans) # Make sure it's an array
-        sanitized = arraywithnans[~isnan(arraywithnans)]
+        try:
+            arraywithnans = array(arraywithnans) # Make sure it's an array
+            sanitized = arraywithnans[~isnan(arraywithnans)]
+        except:
+            raise Exception('Sanitization failed on array:\n %s' % arraywithnans)
         if len(sanitized)==0:
             sanitized = 0
             print('                WARNING, no data entered for this parameter, assuming 0')
@@ -34,7 +37,7 @@ def findinds(val1, val2=None, eps=1e-6):
 
 
 
-def smoothinterp(newx, origx, origy, smoothness=10):
+def smoothinterp(newx=None, origx=None, origy=None, smoothness=10, growth=None):
     """
     Smoothly interpolate over values and keep end points. Same format as numpy.interp.
     
@@ -50,14 +53,49 @@ def smoothinterp(newx, origx, origy, smoothness=10):
     
     Version: 2014dec01 by cliffk
     """
-    from numpy import interp, convolve, linspace, concatenate, ones, exp
+    from numpy import array, interp, convolve, linspace, concatenate, ones, exp, isnan, argsort
+    
+    # Ensure arrays and remove NaNs
+    newx = array(newx)
+    origx = array(origx)
+    origy = array(origy)
+    origy = origy[~isnan(origy)] 
+    origx = origx[~isnan(origy)]
+    
+    # Make sure it's in the correct order
+    correctorder = argsort(origx)
+    origx = origx[correctorder]
+    origy = origy[correctorder]
+    newx = newx[argsort(newx)] # And sort newx just in case
+    
+    # Smooth
     kernel = exp(-linspace(-2,2,2*smoothness+1)**2)
     kernel /= kernel.sum()
     newy = interp(newx, origx, origy) # Use interpolation
     newy = concatenate([newy[0]*ones(smoothness), newy, newy[-1]*ones(smoothness)])
     newy = convolve(newy, kernel, 'valid') # Smooth it out a bit
+    
+    # Apply growth if required
+    if growth is not None:
+        pastindices = findinds(newx<origx[0])
+        futureindices = findinds(newx>origx[-1])
+        if len(pastindices): # If there are past data points
+            firstpoint = pastindices[-1]+1
+            newy[pastindices] = newy[firstpoint] * exp((newx[pastindices]-newx[firstpoint])*growth) # Get last 'good' data point and apply inverse growth
+        if len(futureindices): # If there are past data points
+            lastpoint = futureindices[0]-1
+            newy[futureindices] = newy[lastpoint] * exp((newx[futureindices]-newx[lastpoint])*growth) # Get last 'good' data point and apply growth
+        
     return newy
     
+
+def perturb(n=1, span=0.5, randseed=None):
+    """ Define an array of numbers uniformly perturbed with a mean of 1. n = number of points; span = width of distribution on either side of 1."""
+    from numpy.random import rand, seed
+    if randseed>=0: seed(randseed) # Optionally reset random seed
+    output = 1. + 2*span*(rand(n)-0.5)
+    output = output.tolist() # Otherwise, convert to a list
+    return output
 
 
 def printarr(arr, arrformat='%0.2f  '):
@@ -74,23 +112,23 @@ def printarr(arr, arrformat='%0.2f  '):
     from numpy import ndim
     if ndim(arr)==1:
         string = ''
-        for i in range(len(arr)):
+        for i in xrange(len(arr)):
             string += arrformat % arr[i]
         print(string)
     elif ndim(arr)==2:
-        for i in range(len(arr)):
+        for i in xrange(len(arr)):
             printarr(arr[i], arrformat)
     elif ndim(arr)==3:
-        for i in range(len(arr)):
+        for i in xrange(len(arr)):
             print('='*len(arr[i][0])*len(arrformat % 1))
-            for j in range(len(arr[i])):
+            for j in xrange(len(arr[i])):
                 printarr(arr[i][j], arrformat)
     else:
         print(arr) # Give up
     return None
 
 
-def checkmem(origvariable, descend=0):
+def checkmem(origvariable, descend=0, order='n', plot=False, verbose=0):
     """
     Checks how much memory the variable in question uses by dumping it to file.
     
@@ -101,7 +139,7 @@ def checkmem(origvariable, descend=0):
     from os import getcwd, remove
     from os.path import getsize
     from cPickle import dump
-    from numpy import iterable
+    from numpy import iterable, argsort
     
     filename = getcwd()+'/checkmem.tmp'
     
@@ -110,9 +148,13 @@ def checkmem(origvariable, descend=0):
         dump(variable, wfid)
         return None
     
+    printnames = []
+    printbytes = []
+    printsizes = []
     varnames = []
     variables = []
     if descend==False or not(iterable(origvariable)):
+        varnames = ['']
         variables = [origvariable]
     elif descend==1 and iterable(origvariable):
         if hasattr(origvariable,'keys'):
@@ -124,6 +166,7 @@ def checkmem(origvariable, descend=0):
             variables = origvariable
     
     for v,variable in enumerate(variables):
+        if verbose: print('Processing variable %i of %i' % (v+1, len(variables)))
         dumpfile(variable)
         filesize = getsize(filename)
         factor = 1
@@ -133,6 +176,22 @@ def checkmem(origvariable, descend=0):
             if filesize>10**f:
                 factor = 10**f
                 label = labels[i]
-        print('Variable %s is %0.3f %s' % (varnames[v], float(filesize/float(factor)), label))
+        printnames.append(varnames[v])
+        printbytes.append(filesize)
+        printsizes.append('%0.3f %s' % (float(filesize/float(factor)), label))
         remove(filename)
+
+    if order=='a' or order=='alpha' or order=='alphabetical':
+        inds = argsort(printnames)
+    else:
+        inds = argsort(printbytes)
+    
+    for v in inds:
+        print('Variable %s is %s' % (printnames[v], printsizes[v]))
+    
+    if plot==True:
+        from matplotlib.pylab import pie, array, axes
+        axes(aspect=1)
+        pie(array(printbytes)[inds], labels=array(printnames)[inds], autopct='%0.2f')
+    
     return None

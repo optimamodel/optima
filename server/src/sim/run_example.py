@@ -15,8 +15,8 @@ datafile = kind+'.json'
 spreadsheetfile = kind+'.xlsx'
 if path.exists(datadir+datafile):
     D = loaddata(datadir+datafile)
-    D.G.workbookname = datadir+spreadsheetfile
-    D.G.projectfilename = '/tmp/projects/run_example.prj'
+    D['G']['workbookname'] = datadir+spreadsheetfile
+    D['G']['projectfilename'] = '/tmp/projects/run_example.prj'
 
 
 ## Randomize allocation
@@ -30,12 +30,12 @@ if path.exists(datadir+datafile):
 ##from autofit import autofit
 ##autofit(D, timelimit=30)
 #
-from optimize import optimize
-D.F = [D.F[0]] # Only run a snigle simulation
-optimize(D, maxiters=10, verbose=5)
+#from optimize import optimize
+#D.F = [D.F[0]] # Only run a snigle simulation
+#optimize(D, maxiters=10, verbose=5)
 #
 #
 if doplot:
     print('Viewing results...')
     from viewresults import viewmultiresults
-    viewmultiresults(D.plot.optim[0].multi)
+    viewmultiresults(D['plot']['optim'][0]['multi'])
