@@ -19,7 +19,7 @@ define(['./module', 'underscore'], function (module, _) {
 
       $scope.optionsErrorMessage = 'To define a cost-coverage curve, values must be provided in the first three text boxes.';
       $scope.needAllCCParamsMessage = 'First four text boxes must be either all empty, or all have values in them.';
-      $scope.all_programs = programs;
+      $scope.all_programs = programs.data;
 
       if ( !$scope.needData ) {
         $scope.initializePrograms();
@@ -71,12 +71,17 @@ define(['./module', 'underscore'], function (module, _) {
     $scope.initializePrograms = function () {
       $scope.programs =  _($scope.projectInfo.programs).map(function (item) {
         var acronym = item.short_name;
+
+        var program = _($scope.all_programs).find(function(entry) {
+          return entry.name === acronym;
+        });
+
         return {
           name: item.name,
           acronym: acronym,
           category: item.category,
-          ccparams: $scope.all_programs[acronym].ccparams,
-          ccplot: $scope.all_programs[acronym].ccplot
+          ccparams: program.ccparams,
+          ccplot: program.ccplot
         };
       });
       /** Dec 26 2014
@@ -324,7 +329,7 @@ define(['./module', 'underscore'], function (module, _) {
 
     $scope.hasAllCCParams = function() {
       return hasAllElements($scope.costCoverageParams().slice(0, 4));
-    }
+    };
 
     /**
      * Update current program ccparams based on the selected program.
@@ -338,7 +343,11 @@ define(['./module', 'underscore'], function (module, _) {
       }
       if (model.ccplot) {
         $scope.selectedProgram.ccplot = model.ccplot;
-        $scope.all_programs[$scope.selectedProgram.acronym].ccplot = model.ccplot;
+
+        var programIndex = _($scope.all_programs).findIndex(function(entry) {
+          return entry.name === $scope.selectedProgram.acronym;
+        });
+        $scope.all_programs[programIndex].ccplot = model.ccplot;
       }
     };
 
@@ -385,9 +394,11 @@ define(['./module', 'underscore'], function (module, _) {
     };
 
     $scope.changeProgram = function() {
+
       if($scope.hasCostCoverResponse === true) {
         $scope.hasCostCoverResponse = false;
       }
+
       if (hasAllElements($scope.selectedProgram.ccparams.slice(0,3))) {
         $scope.saturationCoverageLevel = $scope.selectedProgram.ccparams[0]*100;
         $scope.knownMinCoverageLevel = $scope.selectedProgram.ccparams[1]*100;
@@ -403,6 +414,7 @@ define(['./module', 'underscore'], function (module, _) {
         $scope.scaleUpParameter = undefined;
         $scope.nonHivDalys = undefined;
       }
+
       if ($scope.selectedProgram.ccplot) {
         $scope.xAxisMaximum = $scope.selectedProgram.ccplot[0];
         $scope.displayYear = $scope.selectedProgram.ccplot[1];
@@ -425,6 +437,7 @@ define(['./module', 'underscore'], function (module, _) {
         model.all_coparams = $scope.convertedCoParams();
         model.all_effects = effectNames;
       }
+
       retrieveAndUpdateGraphs(model);
     };
 

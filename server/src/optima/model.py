@@ -253,7 +253,7 @@ def getModelGroup(key):
     current_app.logger.debug("getModelGroup: %s" % key)
     D_dict = load_model(request.project_id, from_json = False)
     the_group = D_dict.get(key, {})
-    return json.dumps(the_group)
+    return jsonify({'data': the_group})
 
 @model.route('/data/<key>/<subkey>')
 @login_required
@@ -395,4 +395,4 @@ def reloadSpreadsheet(project_id):
     D = load_model(project_id)
     D = updatedata(D, input_programs = project.programs, savetofile = False, rerun = True)
 
-    return jsonify({'status': 'OK'})    
+    return jsonify({'status': 'OK'})
