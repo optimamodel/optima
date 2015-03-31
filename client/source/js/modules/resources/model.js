@@ -18,30 +18,6 @@ define([
               suffix: 'manual'
             }
           },
-          getKeyData: {
-            method: 'GET',
-            isArray: false,
-            params: {
-              path: 'data',
-              suffix: 'data'
-            }
-          },
-          getKeyF: {
-            method: 'GET',
-            isArray: true,
-            params: {
-              path: 'data',
-              suffix: 'F'
-            }
-          },
-          getKeyG: {
-            method: 'GET',
-            isArray: false,
-            params: {
-              path: 'data',
-              suffix: 'G'
-            }
-          },
           getKeyDataMeta: {
             method: 'GET',
             isArray: false,
