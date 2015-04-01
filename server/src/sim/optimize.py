@@ -26,7 +26,7 @@ from ballsd import ballsd
 def runmodelalloc(D, thisalloc, origalloc, parindices, randseed, rerunfinancial=False, verbose=2):
     """ Little function to do calculation since it appears so many times """
     newD = deepcopy(D)
-    newD, newnonhivdalysaverted = getcurrentbudget(newD, thisalloc, randseed=randseed) # Get cost-outcome curves with uncertainty
+    newD = getcurrentbudget(newD, thisalloc, randseed=randseed) # Get cost-outcome curves with uncertainty
     newM = makemodelpars(newD['P'], newD['opt'], withwhat='c', verbose=0) # Don't print out
     newD['M'] = partialupdateM(D['M'], newM, parindices)
     S = model(newD['G'], newD['M'], newD['F'][0], newD['opt'], verbose=verbose)

@@ -10,9 +10,10 @@ def getcurrentbudget(D, alloc=None, randseed=None):
     from utils import sanitize, perturb
     
     npts = len(D['opt']['partvec']) # Number of parameter points
-    allocprovided = not(isinstance(alloc,type(None))) # Initialise currentbudget if needed
-    currentcoverage = getcurrentcoverage(D=D, alloc=alloc, randseed=randseed) # Get currentcoverage 
-    currentnonhivdalysaverted = zeros(npts) # Initialise currentnonhivdalys
+    if not alloc: 
+        alloc = D['data']['origalloc'] # Initialise currentbudget if needed
+        print('WARNING: No allocation provided to alterparams, using allocation %s for programs %s.' % (alloc, D['data']['meta']['progs']['short']))
+    currentcoverage = getcurrentcoverage(D=D, alloc=alloc, randseed=randseed) # Get current coverage 
 
     # Initialise parameter structure (same as D['P'])
     for param in D['P'].keys():
@@ -22,25 +23,15 @@ def getcurrentbudget(D, alloc=None, randseed=None):
     # Loop over programs
     for prognumber, progname in enumerate(D['data']['meta']['progs']['short']):
         
-        # Get allocation - either it's been passed in, or we figure it out from the data
-        totalcost = alloc[prognumber, :] if allocprovided else sanitize(D['data']['costcov']['cost'][prognumber]).tolist()
-
-        # Extract and sum the number of non-HIV-related DALYs 
-        nonhivdalys = D['programs'][prognumber]['nonhivdalys']
-
-        # TODO -- This should be summed over time anyway... so can make currentcoverage a vector. This was Robyn's intention anyway!
-        currentnonhivdalysaverted += nonhivdalys*currentcoverage[prognumber, :]
-
         # Loop over effects
         for effectnumber, effect in enumerate(D['programs'][prognumber]['effects']):
 
-            # Get population and parameter info
             popname, parname = effect['popname'], effect['param']
             
             if parname in coverage_params: # Is the affected parameter coverage?
-                D['P'][parname]['c'][:] = currentcoverage[prognumber]
+                D['P'][parname]['c'][:] = currentcoverage[prognumber,]
             else: # ... or not?
-                try: # Get population number...
+                try: # Try to get population number...
                     popnumber = D['data']['meta']['pops']['short'].index(popname)
                 except: # ... or raise error if it isn't recognised
                     print('Cannot recognise population %s, it is not in %s' % (popname, D['data']['meta']['pops']['short']))
@@ -55,9 +46,9 @@ def getcurrentbudget(D, alloc=None, randseed=None):
                     except:
                         print('Random sampling for CCOCs failed for program %s, makesamples failed with parameters %s.' % (progname, convertedccoparams))
 
-                D['P'][parname]['c'][popnumber] = cco2eqn(totalcost, convertedccoparams[0]) if len(convertedccoparams[0])==4 else ccoeqn(totalcost, convertedccoparams[0])
+                D['P'][parname]['c'][popnumber] = cco2eqn(alloc[prognumber,], convertedccoparams[0]) if len(convertedccoparams[0])==4 else ccoeqn(alloc[prognumber,], convertedccoparams[0])
 
-    return D, currentnonhivdalysaverted
+    return D
    
 ################################################################
 def getcurrentcoverage(D, alloc=None, randseed=None):
@@ -66,8 +57,8 @@ def getcurrentcoverage(D, alloc=None, randseed=None):
     from makeccocs import cc2eqn, cceqn
     from utils import perturb
     
-    origallocwaslist = 0
-    if isinstance(alloc,list): alloc, origallocwaslist = array(alloc), 1
+    allocwaslist = 0
+    if isinstance(alloc,list): alloc, allocwaslist = array(alloc), 1
     currentcoverage = zeros_like(alloc)
 
     for prognumber, progname in enumerate(D['data']['meta']['progs']['short']):
@@ -80,10 +71,30 @@ def getcurrentcoverage(D, alloc=None, randseed=None):
             currentcoverage[prognumber,] = cc2eqn(alloc[prognumber,], convertedccparams[0]) if len(convertedccparams[0])==2 else cceqn(alloc[prognumber,], convertedccparams[0])        
         else:
             currentcoverage[prognumber,] = array([None]*len(alloc[prognumber,]))
-        if origallocwaslist: currentcoverage = currentcoverage.tolist()
+
+    if allocwaslist: currentcoverage = currentcoverage.tolist()
             
     return currentcoverage
-        
+
+################################################################
+def getcurrentnonhivdalysaverted(D, coverage=None):
+    ''' Get the non-HIV DALYs averted by a particular allocation '''
+    from numpy import zeros_like, array
+
+    coveragewaslist = 0
+    if isinstance(coverage,list): coverage, coveragewaslist = array(coverage), 1
+    currentnonhivdalysaverted = zeros_like(coverage)
+    
+    for prognumber, progname in enumerate(D['data']['meta']['progs']['short']):
+        try: nonhivdalys = D['programs'][prognumber]['nonhivdalys']
+        except:
+            nonhivdalys = [0.]
+            print('WARNING: No non-HIV DALYs found for program %s, assuming zero.' % (progname))
+        currentnonhivdalysaverted[prognumber,] = array(nonhivdalys[0]*coverage[prognumber,])
+
+    if coveragewaslist: currentnonhivdalysaverted = currentnonhivdalysaverted.tolist()
+    return currentnonhivdalysaverted
+    
 ################################################################
 def setdefaultccparams(progname=None):
     '''Set default coverage levels. ONLY for use in BE. In FE, if ccocs haven't been defined then the user won't get to this step'''
