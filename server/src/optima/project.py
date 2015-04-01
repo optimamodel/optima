@@ -773,9 +773,9 @@ def setData(project_id):
 
     return json.dumps(reply)
 
-@project.route('/data/migrate/<migration>', methods=['POST'])
+@project.route('/data/migrate', methods=['POST'])
 @verify_admin_request
-def migrateData(migration):
+def migrateData():
     """
     Goes over all available projects and tries to run specified migration on them
     """

@@ -115,6 +115,13 @@
           <span editable-input="parameters.f.force[$index]" on-save="doneEditingParameter"></span>
         </td>
       </tr>
+      <!-- Inhomo -->
+      <tr ng-repeat="population in ::parameters.meta.pops.short track by $index">
+        <td>{{ ::parameters.types.inhomo }} {{ ::population }}</td>
+        <td>
+          <span editable-input="parameters.f.inhomo[$index]" on-save="doneEditingParameter"></span>
+        </td>
+      </tr>
       <!-- Init -->
       <tr ng-repeat="population in ::parameters.meta.pops.short track by $index">
         <td>{{ ::parameters.types.init }} {{ ::population }}</td>
