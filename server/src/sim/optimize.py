@@ -271,7 +271,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
                 bestallocval = fvalarr[s][-1]
                 bestallocind = s
         if bestallocind == -1: print('WARNING, best allocation value seems to be infinity!')
-        
+
         # Update the model and store the results
         result = dict()
         result['kind'] = 'constant'

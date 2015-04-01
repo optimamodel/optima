@@ -15,7 +15,7 @@ def getcurrentbudget(D, alloc=None, randseed=None):
     allocprovided = not(isinstance(alloc,type(None)))
 
     # Initialise currentcoverage and currentnonhivdalys
-    currentcoverage = zeros((D['G']['nprogs'], npts))
+    currentcoverage = getcurrentcoverage(D=D, alloc=alloc)
     currentnonhivdalysaverted = zeros(npts)
 
     # Initialise parameter structure (same as D['P'])
@@ -35,7 +35,7 @@ def getcurrentbudget(D, alloc=None, randseed=None):
         # Extract the converted cost-coverage parameters... or if there aren't any, use defaults (for sim only; FE produces warning)
         convertedccparams = D['programs'][progname]['convertedccparams'] if D['programs'][progname]['convertedccparams'] else default_convertedccparams
         if randseed>=0: convertedccparams[0][1] = array(perturb(1,(array(convertedccparams[2][1])-array(convertedccparams[1][1]))/2., randseed=randseed)) - 1 + array(convertedccparams[0][1])
-        currentcoverage[prognumber, :] = cc2eqn(totalcost, convertedccparams[0]) if len(convertedccparams[0])==2 else cceqn(totalcost, convertedccparams[0])
+#        currentcoverage[prognumber, :] = cc2eqn(totalcost, convertedccparams[0]) if len(convertedccparams[0])==2 else cceqn(totalcost, convertedccparams[0])
 
         # TODO -- This should be summed over time anyway... so can make currentcoverage a vector. This was Robyn's intention anyway!
         currentnonhivdalysaverted += nonhivdalys[0]*currentcoverage[prognumber, :]
@@ -74,5 +74,29 @@ def getcurrentbudget(D, alloc=None, randseed=None):
 #                if parname=='sharing':
 #                    import traceback; traceback['p']rint_exc(); import pdb; pdb.set_trace()
 
-    return D, currentcoverage, currentnonhivdalysaverted
+    return D, currentnonhivdalysaverted
+    
+def getcurrentcoverage(D, alloc=None):
+    ''' Get the coverage levels corresponding to a particular allocation '''
+    from numpy import zeros_like, ndarray
+    from makeccocs import cc2eqn, cceqn
+    
+    # List case: corresponds to an allocation at a single time point
+    if isinstance(alloc,list):
+        currentcoverage = []
+        for prognumber, progname in enumerate(D['data']['meta']['progs']['short']):
+            convertedccparams = D['programs'][progname]['convertedccparams'] if D['programs'][progname]['convertedccparams'] else default_convertedccparams
+            thiscoverage = cc2eqn(alloc[prognumber], convertedccparams[0]) if len(convertedccparams[0])==2 else cceqn(alloc[prognumber], convertedccparams[0])
+            currentcoverage.append(thiscoverage)
+            
+    # Array case: corresponds to a set of allocations
+    elif isinstance(alloc,ndarray):
+        currentcoverage = zeros_like(alloc)
+        for prognumber, progname in enumerate(D['data']['meta']['progs']['short']):
+            convertedccparams = D['programs'][progname]['convertedccparams'] if D['programs'][progname]['convertedccparams'] else default_convertedccparams
+            currentcoverage[prognumber, :] = cc2eqn(alloc[prognumber,:], convertedccparams[0]) if len(convertedccparams[0])==2 else cceqn(alloc[prognumber,:], convertedccparams[0])
+            
+    return currentcoverage
+        
+        
     
