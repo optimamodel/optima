@@ -336,6 +336,9 @@ def gatheroptimdata(D, result, verbose=2):
             optim['alloc'][i]['radardata']['high'] = result['allocarr'][i][2].tolist()
             optim['alloc'][i]['title'] = titles[i] # Titles for pies or radar charts
             optim['alloc'][i]['legend'] = D['data']['meta']['progs']['short'] # Program names, length nprogs, for pie and radar
+            optim['alloc'][i]['coverage']['best'] = result['covarr'][i][0].tolist() # A vector of coverage levels, length nprogs, for coverage table
+            optim['alloc'][i]['coverage']['low'] = result['covarr'][i][1].tolist() # A vector of coverage levels, length nprogs, for coverage table
+            optim['alloc'][i]['coverage']['high'] = result['covarr'][i][2].tolist() # A vector of coverage levels, length nprogs, for coverage table
     if optim['kind']=='timevarying' or optim['kind']=='multiyear':
         optim['alloc'] = dict() # Allocation structure
         optim['alloc']['stackdata'] = [] # Empty list

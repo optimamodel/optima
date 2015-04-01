@@ -279,6 +279,11 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         result['allocarr'] = [] # List of allocations
         result['allocarr'].append(quantile([origalloc])) # Kludgy -- run fake quantile on duplicated origalloc just so it matches
         result['allocarr'].append(quantile(allocarr)) # Calculate allocation arrays 
+        from getcurrentparams import getcurrentcoverage
+        result['covarr'] = [] # List of coverage levels
+        result['covarr'].append(getcurrentcoverage(D, alloc=result['allocarr'][0]))
+        result['covarr'].append(getcurrentcoverage(D, alloc=result['allocarr'][1]))
+        result['covarr'].append(getcurrentcoverage(D, alloc=result['allocarr'][2]))
         labels = ['Original','Optimal']
         result['Rarr'] = [dict(), dict()]
         result['Rarr'][0]['R'] = options['tmpbestdata'][0]['R']
