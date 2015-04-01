@@ -26,7 +26,7 @@ from ballsd import ballsd
 def runmodelalloc(D, thisalloc, origalloc, parindices, randseed, rerunfinancial=False, verbose=2):
     """ Little function to do calculation since it appears so many times """
     newD = deepcopy(D)
-    newD, newcov, newnonhivdalysaverted = getcurrentbudget(newD, thisalloc, randseed=randseed) # Get cost-outcome curves with uncertainty
+    newD, newnonhivdalysaverted = getcurrentbudget(newD, thisalloc, randseed=randseed) # Get cost-outcome curves with uncertainty
     newM = makemodelpars(newD['P'], newD['opt'], withwhat='c', verbose=0) # Don't print out
     newD['M'] = partialupdateM(D['M'], newM, parindices)
     S = model(newD['G'], newD['M'], newD['F'][0], newD['opt'], verbose=verbose)
@@ -47,7 +47,7 @@ def objectivecalc(optimparams, options):
     # Exclude fixed ['costs'] from the optimization
     opttrue = zeros(len(options['D']['data']['origalloc']))
     for i in xrange(len(options['D']['data']['origalloc'])):
-        if len(options['D']['programs'][options['D']['data']['meta']['progs']['short'][i]]['effects']): opttrue[i] = 1.0
+        if len(options['D']['programs'][i]['effects']): opttrue[i] = 1.0
     opttrue = opttrue.astype(bool) # Logical values
     optimparams[opttrue] = optimparams[opttrue] / optimparams[opttrue].sum() * (options['totalspend'] - optimparams[~opttrue].sum()) # Make sure it's normalized -- WARNING KLUDGY
 
@@ -145,7 +145,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
     totalspend = objectives['outcome']['fixed'] # For fixed budgets
     opttrue = zeros(len(D['data']['origalloc']))
     for i in xrange(len(D['data']['origalloc'])):
-        if len(D['programs'][D['data']['meta']['progs']['short'][i]]['effects']): opttrue[i] = 1.0
+        if len(D['programs'][i]['effects']): opttrue[i] = 1.0
     opttrue = opttrue.astype(bool) # Logical values
     
     
@@ -279,11 +279,10 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         result['allocarr'] = [] # List of allocations
         result['allocarr'].append(quantile([origalloc])) # Kludgy -- run fake quantile on duplicated origalloc just so it matches
         result['allocarr'].append(quantile(allocarr)) # Calculate allocation arrays 
-        from getcurrentparams import getcurrentcoverage
+        from getcurrentbudget import getcurrentcoverage
         result['covarr'] = [] # List of coverage levels
-        result['covarr'].append(getcurrentcoverage(D, alloc=result['allocarr'][0]))
-        result['covarr'].append(getcurrentcoverage(D, alloc=result['allocarr'][1]))
-        result['covarr'].append(getcurrentcoverage(D, alloc=result['allocarr'][2]))
+        result['covarr'].append(getcurrentcoverage(D, alloc=result['allocarr'][0].T).T) # Original coverage
+        result['covarr'].append(getcurrentcoverage(D, alloc=result['allocarr'][-1].T).T) # Coverage under last-run optimization
         labels = ['Original','Optimal']
         result['Rarr'] = [dict(), dict()]
         result['Rarr'][0]['R'] = options['tmpbestdata'][0]['R']

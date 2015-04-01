@@ -26,35 +26,34 @@ def getcurrentbudget(D, alloc=None, randseed=None):
         totalcost = alloc[prognumber, :] if allocprovided else sanitize(D['data']['costcov']['cost'][prognumber]).tolist()
 
         # Extract and sum the number of non-HIV-related DALYs 
-        nonhivdalys = D['programs'][progname]['nonhivdalys']
+        nonhivdalys = D['programs'][prognumber]['nonhivdalys']
 
         # TODO -- This should be summed over time anyway... so can make currentcoverage a vector. This was Robyn's intention anyway!
-        currentnonhivdalysaverted += nonhivdalys[0]*currentcoverage[prognumber, :]
+        currentnonhivdalysaverted += nonhivdalys*currentcoverage[prognumber, :]
 
         # Loop over effects
-        for effectnumber, effect in enumerate(D['programs'][progname]['effects']):
+        for effectnumber, effect in enumerate(D['programs'][prognumber]['effects']):
 
             # Get population and parameter info
-            popname = effect[1]
-            parname = effect[0][1]
+            popname, parname = effect['popname'], effect['param']
             
-            # Is the affected parameter coverage?
-            if parname in coverage_params:
+            if parname in coverage_params: # Is the affected parameter coverage?
                 D['P'][parname]['c'][:] = currentcoverage[prognumber]
-            # ... or not?
-            else:
-                popnumber = D['data']['meta']['pops']['short'].index(popname[0]) if popname[0] in D['data']['meta']['pops']['short'] else 0
-
+            else: # ... or not?
+                try: # Get population number...
+                    popnumber = D['data']['meta']['pops']['short'].index(popname)
+                except: # ... or raise error if it isn't recognised
+                    print('Cannot recognise population %s, it is not in %s' % (popname, D['data']['meta']['pops']['short']))
                 try: # Use parameters if there...
-                    convertedccoparams = effect[4]
+                    convertedccoparams = effect['convertedccoparams']
                 except: # ... otherwise give it some predefined ones
-                    convertedccoparams = setdefaultccoparams(progname=progname, param=effect[0], pop=effect[1])
+                    convertedccoparams = setdefaultccoparams(progname=progname, param=effect['param'], pop=effect['popname'])
                 if randseed>=0:
                     try:
                         convertedccoparams[0][1] = array(perturb(1,(convertedccoparams[2][1]-convertedccoparams[1][1])/2, randseed=randseed)) - 1 + convertedccoparams[0][1]
-                        convertedccoparams[-1], convertedccoparams[-2] = makesamples(effect[2], effect[3][0], effect[3][1], effect[3][2], effect[3][3], samplesize=1, randseed=randseed)
+                        convertedccoparams[-1], convertedccoparams[-2] = makesamples(effect['coparams'], effect['convertedcoparams'][0], effect['convertedcoparams'][1], effect['convertedcoparams'][2], effect['convertedcoparams'][3], randseed=randseed)
                     except:
-                        print('Random sampling for CCOCs failed for program %s, makesamples failed with parameters %s and %s' % (progname, effect[2], effect[3]))
+                        print('Random sampling for CCOCs failed for program %s, makesamples failed with parameters %s.' % (progname, convertedccoparams))
 
                 D['P'][parname]['c'][popnumber] = cco2eqn(totalcost, convertedccoparams[0]) if len(convertedccoparams[0])==4 else ccoeqn(totalcost, convertedccoparams[0])
 
@@ -67,6 +66,7 @@ def getcurrentcoverage(D, alloc=None, randseed=None):
     from makeccocs import cc2eqn, cceqn
     from utils import perturb
     
+    origallocwaslist = 0
     if isinstance(alloc,list): alloc, origallocwaslist = array(alloc), 1
     currentcoverage = zeros_like(alloc)
 
@@ -77,7 +77,7 @@ def getcurrentcoverage(D, alloc=None, randseed=None):
             convertedccparams = setdefaultccparams(progname=progname)
 
         if randseed>=0: convertedccparams[0][1] = array(perturb(1,(array(convertedccparams[2][1])-array(convertedccparams[1][1]))/2., randseed=randseed)) - 1 + array(convertedccparams[0][1]) 
-        currentcoverage[prognumber, :] = cc2eqn(alloc[prognumber,:], convertedccparams[0]) if len(convertedccparams[0])==2 else cceqn(alloc[prognumber,:], convertedccparams[0])
+        currentcoverage[prognumber,] = cc2eqn(alloc[prognumber,], convertedccparams[0]) if len(convertedccparams[0])==2 else cceqn(alloc[prognumber,], convertedccparams[0])
     
     if origallocwaslist: currentcoverage = currentcoverage.tolist()
             

@@ -5,7 +5,11 @@ current_version = 2
 
 migrations = {
     0:'001_inhomogenities',
+<<<<<<< HEAD
     1:'002_removebloat'
+=======
+    1:'002_add_programs'
+>>>>>>> removing-all-hardcoding-copy
 }
 
 def run_migrations(model):

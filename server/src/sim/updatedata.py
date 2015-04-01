@@ -25,7 +25,7 @@ def updatedata(D, workbookname=None, verbose=2, savetofile=True, input_programs=
     data, programs = loadworkbook(datapath, input_programs, verbose=verbose)
     D['data'] = getrealcosts(data)
     if 'programs' not in D:
-        D['programs'] = restructureprograms(programs)
+        D['programs'] = addtoprograms(programs)
     if rerun or 'P' not in D: # Rerun if asked or if it doesn't exist
         D = makedatapars(D, verbose=verbose) # Update parameters
     if rerun or 'M' not in D: # Rerun if asked, or if it doesn't exist
@@ -42,17 +42,12 @@ def updatedata(D, workbookname=None, verbose=2, savetofile=True, input_programs=
     return D
     
 
-def restructureprograms(programs):
-    '''
-    Restructure D['programs'] for easier use.
-    '''
-
-    ccparams = []
-    convertedccparams = []
-    nonhivdalys = [0.0]
-    keys = ['ccparams','convertedccparams','nonhivdalys','effects','ccplot']
-    for program in programs.keys():
-        programs[program] = dict(zip(keys,[ccparams, convertedccparams, nonhivdalys, programs[program]]))
+def addtoprograms(programs):
+    ''' Add things to D['programs'] '''
+    for prognumber, program in enumerate(programs):
+        programs[prognumber]['ccparams'] = None
+        programs[prognumber]['convertedccparams'] = None
+        programs[prognumber]['nonhivdalys'] = 0.0
 
     return programs
     
