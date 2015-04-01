@@ -19,11 +19,11 @@ def migrate(D):
                           'effects':neweffects}
             newprograms.append(newprogram)
             
-            # Reorder programs
-            neworder = []
-            for i in range(D['G']['nprogs']):
-                neworder.append([p['name'] for p in newprograms].index(D['data']['meta']['progs']['short'][i]))
-            reorderednewprograms = [newprograms[i] for i in neworder]
+        # Reorder programs
+        neworder = []
+        for i in range(D['G']['nprogs']):
+            neworder.append([p['name'] for p in newprograms].index(D['data']['meta']['progs']['short'][i]))
+        reorderednewprograms = [newprograms[i] for i in neworder]
             
         D['programs'] = reorderednewprograms
 
