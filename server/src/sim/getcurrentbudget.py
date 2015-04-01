@@ -71,15 +71,16 @@ def getcurrentcoverage(D, alloc=None, randseed=None):
     currentcoverage = zeros_like(alloc)
 
     for prognumber, progname in enumerate(D['data']['meta']['progs']['short']):
-        if D['programs'][prognumber]['convertedccparams']:
-            convertedccparams = D['programs'][prognumber]['convertedccparams'] 
+        if D['programs'][prognumber]['effects']:            
+            if D['programs'][prognumber]['convertedccparams']:
+                convertedccparams = D['programs'][prognumber]['convertedccparams'] 
+            else:
+                convertedccparams = setdefaultccparams(progname=progname)    
+            if randseed>=0: convertedccparams[0][1] = array(perturb(1,(array(convertedccparams[2][1])-array(convertedccparams[1][1]))/2., randseed=randseed)) - 1 + array(convertedccparams[0][1]) 
+            currentcoverage[prognumber,] = cc2eqn(alloc[prognumber,], convertedccparams[0]) if len(convertedccparams[0])==2 else cceqn(alloc[prognumber,], convertedccparams[0])        
         else:
-            convertedccparams = setdefaultccparams(progname=progname)
-
-        if randseed>=0: convertedccparams[0][1] = array(perturb(1,(array(convertedccparams[2][1])-array(convertedccparams[1][1]))/2., randseed=randseed)) - 1 + array(convertedccparams[0][1]) 
-        currentcoverage[prognumber,] = cc2eqn(alloc[prognumber,], convertedccparams[0]) if len(convertedccparams[0])==2 else cceqn(alloc[prognumber,], convertedccparams[0])
-    
-    if origallocwaslist: currentcoverage = currentcoverage.tolist()
+            currentcoverage[prognumber,] = array([None]*len(alloc[prognumber,]))
+        if origallocwaslist: currentcoverage = currentcoverage.tolist()
             
     return currentcoverage
         

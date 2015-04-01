@@ -15,36 +15,36 @@ testmultiyear = False
 testconstraints = False
 
 
-## Set parameters
-projectname = 'example'
-verbose = 10
-ntimepm = 2 # AS: Just use 1 or 2 parameters... using 3 or 4 can cause problems that I'm yet to investigate
-maxiters = 1e3
-maxtime = 60 # Don't run forever :)
-
-if maxtime:
-    from time import time
-    starttime = time()
-    def stoppingfunc():
-        if time()-starttime>maxtime:
-            return True
-        else:
-            return False
-else:
-    stoppingfunc = None
-
-
-
-    
-
-print('\n\n\n1. Making project...')
-from makeproject import makeproject
-D = makeproject(projectname=projectname, pops=['']*6, progs = ['']*7, datastart=2000, dataend=2015, verbose=verbose)
-
-print('\n\n\n2. Updating data...')
-from updatedata import updatedata
-D = updatedata(D, verbose=verbose, savetofile=False)
-
+### Set parameters
+#projectname = 'example'
+#verbose = 10
+#ntimepm = 2 # AS: Just use 1 or 2 parameters... using 3 or 4 can cause problems that I'm yet to investigate
+#maxiters = 1e3
+#maxtime = 60 # Don't run forever :)
+#
+#if maxtime:
+#    from time import time
+#    starttime = time()
+#    def stoppingfunc():
+#        if time()-starttime>maxtime:
+#            return True
+#        else:
+#            return False
+#else:
+#    stoppingfunc = None
+#
+#
+#
+#    
+#
+#print('\n\n\n1. Making project...')
+#from makeproject import makeproject
+#D = makeproject(projectname=projectname, pops=['']*6, progs = ['']*7, datastart=2000, dataend=2015, verbose=verbose)
+#
+#print('\n\n\n2. Updating data...')
+#from updatedata import updatedata
+#D = updatedata(D, verbose=verbose, savetofile=False)
+#
 
 if testconstant:
     print('\n\n\n3. Running constant-budget optimization...')
