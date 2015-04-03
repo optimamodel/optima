@@ -7,17 +7,17 @@ from matplotlib.pylab import figure, plot, hold, xlabel, ylabel, title, xlim, yl
 from numpy import nan
 
 # Set defaults for testing makeccocs
-default_progname = 'FSW programs'
-default_effect = {'paramtype':'sex', 'param':'condomcom', 'popname':u'Clients'} 
-default_ccparams = {'saturation': nan, 
-                    'coveragelower': nan, 
-                    'coverageupper':nan, 
-                    'funding':nan, 
-                    'scaleup':nan, 
+default_progname = 'MSM programs'
+default_effect = {'paramtype':'sex', 'param':'condomcas', 'popname':u'MSM'} 
+default_ccparams = {'saturation': .9, 
+                    'coveragelower': .5, 
+                    'coverageupper':.6, 
+                    'funding':4e5, 
+                    'scaleup':.4, 
                     'nonhivdalys':nan, 
                     'xupperlim':nan, 
                     'cpibaseyear':nan, 
-                    'perperson':nan}
+                    'perperson':None}
 default_coparams = [0.3, 0.5, 0.7, 0.9] 
 default_arteligcutoff = 'gt350'
 coverage_params = ['numost','numpmtct','numfirstline','numsecondline']
@@ -81,6 +81,7 @@ def plotcco(D, progname=default_progname, effect=default_effect, ccparams=defaul
         xlim([plotdata_cco['xlowerlim'],plotdata_cco['xupperlim']])
         ylim([plotdata_cco['ylowerlim'],plotdata_cco['yupperlim']])
 
+plotcco(D)
 #################################################################################
 def plotprogramcurves(D, progname=default_progname, ccparams=default_ccparams, coparams=default_coparams, arteligcutoff=default_arteligcutoff):
     ''' Plot all curves for a particular program '''

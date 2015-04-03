@@ -12,7 +12,6 @@ from numpy import linspace, exp, isnan, multiply, arange, mean, array
 from numpy import log as nplog
 from rtnorm import rtnorm
 from printv import printv
-from copy import deepcopy
 from datetime import date
 
 ## Set coverage parameters...
@@ -229,165 +228,44 @@ def makeco(D=None, progname=None, effect=None, coparams=None, coverage_params=co
 
 #################################################################################
 def makecco(D=None, progname=None, effect=None, ccparams=None, coparams=None, arteligcutoff=None, coverage_params=coverage_params, verbose=default_verbose, nxpts=default_nxpts):
-    '''
-    Make a single cost outcome curve.
-    
-    Inputs: 
-    D: main data structure
-    progname: string
-    effect: bunch struct
-    ccparams: dict containing parameters for the cost-coverage curves, obtained from the GUI. Can be empty.
-    coparams: list. Contains parameters for the coverage-outcome curves
-        coparams(0) = the lower bound for the outcome when coverage = 0
-        coparams(1) = the upper bound for the outcome when coverage = 0
-        coparams(2) = the lower bound for the outcome when coverage = 1
-        coparams(3) = the upper bound for the outcome when coverage = 1
-    '''
-    from parameters import input_parameter_name
-    
-    printv("makecco(%s, %s, %s, %s, %s, %s, %s)" % (progname, effect['popname'], effect['param'], ccparams, coparams, verbose, nxpts), 2, verbose)
-
-    # Check inputs
-    if unicode(progname) not in [p['name'] for p in D['programs']]:
-        printv("progname: %s programs: %s" % (unicode(progname), [p['name'] for p in D['programs']]), 5, verbose)
-        raise Exception('Please select one of the following programs %s' % [p['name'] for p in D['programs']])
-    if not (isinstance(arteligcutoff,str)):
-        print('Assuming universal ART coverage since not otherwise specified....')
-        arteligcutoff = D['G']['healthstates'][0]
-    states, artindex = range(D['G']['nstates']), []
-    for i in range(len(D['G'][arteligcutoff])-1):
-        artindex.extend(states[D['G'][arteligcutoff][i+1]:D['G'][D['G']['healthstates'][-1]][i+1]+1])
+    ''' Make a single cost outcome curve. '''
 
     prognumber = [p['name'] for p in D['programs']].index(progname) # get program number    
 
-    # Check that the selected effect is in the list of effects
-    short_effectname = [effect['paramtype'], effect['param'], effect['popname']] # only matching by effect "signature"
-    short_effectlist = [[e['paramtype'], e['param'], e['popname']] for e in D['programs'][prognumber]['effects']]
-    if short_effectname not in short_effectlist:
-        print "makeco short_effectname: %s short_effectlist: %s" % (short_effectname, short_effectlist)
-        raise Exception('Please select one of the following effects %s' % D['programs'][prognumber]['effects'])
+    plotdata = {}
 
-    # Initialise output structures
-    plotdata, plotdata_co, xupperlim = {}, {}, None
+    plotdata_cc, D = makecc(D=D, progname=progname, ccparams=ccparams, arteligcutoff=arteligcutoff)
+    plotdata_co, effect = makeco(D=D, progname=progname, effect=effect, coparams=coparams, arteligcutoff=arteligcutoff)
 
-    # If ccparams haven't been passed in but there's something stored in D, use the stored version
-    if (not ccparams and D['programs'][prognumber]['ccparams']): ccparams = D['programs'][prognumber]['ccparams']
+    plotdata['xscatterdata'] = plotdata_cc['xscatterdata'] # X scatter data
+    plotdata['yscatterdata'] = plotdata_co['yscatterdata'] # Y scatter data
 
-    # Get population and parameter info
-    partype, parname, popname = effect['paramtype'], effect['param'], effect['popname']
+    # Populate output structure with axis limits
+    plotdata['xlowerlim'], plotdata['ylowerlim'] = plotdata_cc['xlowerlim'], plotdata_co['ylowerlim']
+    plotdata['xupperlim'], plotdata['yupperlim'] = plotdata_cc['xupperlim'], plotdata_co['yupperlim']
 
-    # Only going to make cost-outcome curves for programs where the affected parameter is not coverage
-    if parname not in coverage_params:
-        if popname not in D['data']['meta']['pops']['short']: raise Exception('Cannot recognise population %s, it is not in %s' % (popname, D['data']['meta']['pops']['short']))
-        else: popnumber = D['data']['meta']['pops']['short'].index(popname)
+    # Populate output structure with labels and titles
+    plotdata['title'] = plotdata_co['title']
+    plotdata['xlabel'] = plotdata_cc['xlabel']
+    plotdata['ylabel'] = plotdata_co['ylabel']
 
-        # Extract cost data and adjust to base year specified by user (if given)
-        totalcost = D['data']['costcov']['realcost'][prognumber] # get total cost data
+    # Store whole set of parameters
+    convertedccoparams = D['programs'][prognumber]['convertedccparams']
+    convertedcoparams = effect['convertedcoparams']
+    for j in range(3): convertedccoparams[j].extend([convertedcoparams[0],convertedcoparams[2]])
+    effect['convertedccoparams'] = convertedccoparams 
 
-        if ccparams and ccparams['cpibaseyear'] and ~isnan(ccparams['cpibaseyear']):
-            from utils import smoothinterp
-            cpi = smoothinterp(origy=D['data']['econ']['cpi']['past'][0], origx=D['data']['epiyears'], newx=D['data']['epiyears'], growth=D['data']['econ']['cpi']['future'][0][0])
-            cpibaseyear = ccparams['cpibaseyear']
-            cpibaseyearindex = D['data']['epiyears'].index(cpibaseyear) # get index of CPI base year
-            if len(totalcost)==1: # If it's an assumption, assume it's already in current prices
-                totalcost = [totalcost[0]*cpi[cpibaseyearindex]]
-            else:
-                totalcost = [totalcost[j]*(cpi[cpibaseyearindex]/cpi[j]) if ~isnan(totalcost[j]) else float('nan') for j in xrange(len(totalcost))]
-        else:
-            cpibaseyear = min(D['data']['epiyears'][-1],date.today().year)
+    # Draw lines if we can
+    if 'xlinedata' in plotdata_cc.keys() and 'coparams' in effect.keys():
+        xvalscco = plotdata_cc['xlinedata']
+        mediancco = coeqn(plotdata_cc['ylinedata'][0], [effect['convertedcoparams'][0], effect['convertedcoparams'][2]])
+        mincco = coeqn(plotdata_cc['ylinedata'][1], [effect['coparams'][0], effect['coparams'][2]])
+        maxcco = coeqn(plotdata_cc['ylinedata'][2], [effect['coparams'][1], effect['coparams'][3]])
 
-        # Extract outcome data
-        outcome = D['data'][partype][parname][popnumber]
+        # Populate output structure with cost-outcome curves for plotting
+        plotdata['xlinedata'] = xvalscco # X data for all line plots
+        plotdata['ylinedata'] = [mediancco, mincco, maxcco]
 
-        # Flag to indicate whether we will adjust by population or not, default is not
-        popadj = 0
-        if (ccparams and ccparams['perperson'] and ~isnan(ccparams['perperson'])): popadj = ccparams['perperson']
-
-        # Get target population size (in separate function)       
-        coverage, targetpopsize, coveragelabel = getcoverage(D, artindex=artindex, progname=progname)
-
-        # Adjust cost data by target population size, if requested by user 
-        if popadj: totalcost = totalcost/targetpopsize if len(totalcost)>1 else totalcost/mean(targetpopsize)
-
-        # Get upper limit of x axis for plotting
-        xupperlim = max([x if ~isnan(x) else 0.0 for x in totalcost])*1.5
-        if (ccparams and ccparams['xupperlim'] and ~isnan(ccparams['xupperlim'])): xupperlim = ccparams['xupperlim'] 
-            
-        # Populate output structure with scatter data 
-        totalcost, outcome = getscatterdata(totalcost, outcome)
-
-        # Cliff's code to append the current conditions #TODO fix
-        plottotalcost = deepcopy(totalcost)
-        plotoutcome = deepcopy(outcome)
-        currentcost = D['data']['origalloc'][prognumber]
-        currentoutcome = None
-        try:
-            timepoint = D['opt']['partvec'].index(float(min(D['data']['epiyears'][-1], date.today().year)))
-            currentoutcome = D['M'][parname][popnumber][timepoint]
-        except:
-            try:
-                tmp = array(D['data'][partype][parname][popnumber])
-                currentoutcome = tmp[~isnan(tmp)][-1]
-                print('Parameter %s not found, using last data value %f' % (parname, currentoutcome))
-            except:
-                print('Parameter %s not found, and could not append a point from data: %s' % (parname, tmp))
-        if currentcost is not None and currentoutcome is not None:
-            plottotalcost.append(currentcost) # WARNING KLUDGY, force-append last data point
-            plotoutcome.append(currentoutcome)
-            
-        plotdata['xscatterdata'] = plottotalcost # X scatter data
-        plotdata['yscatterdata'] = plotoutcome # Y scatter data
-
-        # Do we have parameters for making curves?
-        reqccparams = [ccparams['coveragelower'], ccparams['coverageupper'], ccparams['funding'], ccparams['saturation']]
-        if (not coparams and effect['coparams']): coparams = effect['coparams']
-        if (all(reqccparams) and all(~isnan(reqccparams)) and coparams and isinstance(coparams,list) and len(coparams)==4):
-
-            convertedccoparams = convertparams(D=D, ccparams=ccparams)
-            if coparams: # Get coparams from  GUI... 
-                muz, stdevz, muf, stdevf = makecosampleparams(coparams, verbose=verbose)
-                convertedcoparams = [muz, stdevz, muf, stdevf]
-                effect['coparams'] = coparams 
-                effect['convertedcoparams'] = convertedcoparams 
-            else: # ... or access previously stored ones
-                coparams = effect['coparams']
-                convertedcoparams = effect['convertedcoparams']
-
-            for j in range(3): convertedccoparams[j].extend([convertedcoparams[0],convertedcoparams[2]])
-            effect['convertedccoparams'] = convertedccoparams 
-
-            # Create x dataset and initialise y dataset
-            xvalscco = linspace(0,xupperlim,nxpts)
-            xvalsccpop = linspace(0,xupperlim*targetpopsize[-1],nxpts) if popadj else xvalscco
-    
-            # Min, Median and Max lines
-            if ccparams['scaleup']:
-                mediancco = ccoeqn(xvalsccpop, convertedccoparams[0])# Generate min cost-outcome curve
-                mincco = ccoeqn(xvalsccpop, [convertedccoparams[1][0], convertedccoparams[1][1], convertedccoparams[1][2], coparams[0], coparams[2]])# Generate min cost-outcome curve
-                maxcco = ccoeqn(xvalsccpop, [convertedccoparams[2][0], convertedccoparams[2][1], convertedccoparams[2][2], coparams[1], coparams[3]])# Generate max cost-outcome curve
-            else:
-                mediancco = cco2eqn(xvalsccpop, convertedccoparams[0])# Generate min cost-outcome curve
-                mincco = cco2eqn(xvalsccpop, [convertedccoparams[1][0], convertedccoparams[1][1], coparams[0], coparams[2]])# Generate min cost-outcome curve
-                maxcco = cco2eqn(xvalsccpop, [convertedccoparams[2][0], convertedccoparams[2][1], coparams[1], coparams[3]])# Generate max cost-outcome curve
-
-            # Populate output structure with cost-outcome curves for plotting
-            plotdata['xlinedata'] = xvalscco # X data for all line plots
-            plotdata['ylinedata'] = [mediancco,maxcco,mincco] # Y data for second line plot
-
-        # Get the coverage-outcome relationships (this should be kept in the outer level, 
-        # unless the intention is do not produce coverage-outcome relationships when ccparams / coparams are not present - AN)
-        plotdata_co, effect = makeco(D=D, progname=progname, effect=effect, coparams=coparams, arteligcutoff=arteligcutoff, verbose=verbose)
-
-        # Populate output structure with axis limits
-        plotdata['xlowerlim'], plotdata['ylowerlim']  = 0.0, 0.0
-        plotdata['xupperlim']  = xupperlim
-        plotdata['yupperlim'] = 1.0 if any(j < 1 for j in outcome) else max([j if ~isnan(j) else 0.0 for j in outcome])*1.5 if outcome else 1.0
-    
-        # Populate output structure with labels and titles
-        plotdata['title'] = input_parameter_name(parname)+ ' - ' + popname
-        plotdata['xlabel'] = 'USD'+ ', ' + str(int(cpibaseyear)) + ' prices'
-        plotdata['ylabel'] = 'Outcome'
-        
     return plotdata, plotdata_co, effect
 
 ################################################################################
@@ -448,7 +326,7 @@ def getcoverage(D=None, artindex=None, progname=None):
 
     # Extract basic info from data structure
     prognumber = D['data']['meta']['progs']['short'].index(progname) # get program number
-    ndatayears = len(D['data']['epiyears']) # get number of data years
+    #ndatayears = len(D['data']['epiyears']) # get number of data years
 
     # Sort out time vector and indexing
     tvec = arange(D['G']['datastart'], D['G']['dataend']+D['opt']['dt'], D['opt']['dt']) # Extract the time vector from the sim
@@ -581,6 +459,20 @@ def cceqn(x, p, eps=1e-3):
     Returns y which is coverage.
     '''
     y = p[0] / (1 + exp((log(p[1])-nplog(x))/max(1-p[2],eps)))
+
+    return y
+
+###############################################################################
+def coeqn(x, p):
+    '''
+    Straight line equation defining coverage-outcome curve.
+    x is coverage, p is a list of parameters (of length 2):
+        p[0] = outcome at zero coverage
+        p[1] = outcome at full coverage
+    Returns y which is outcome.
+    '''
+    from numpy import array
+    y = (p[1]-p[0]) * array(x) + p[0]
 
     return y
     
