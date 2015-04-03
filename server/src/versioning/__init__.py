@@ -1,11 +1,12 @@
 # how to run it locally:
 # curl -XPOST -i http://localhost:5000/api/project/data/migrate?secret=40a0233e6b155cd08d8f8f4cd3ea85d854af454b334e80f896afff61
 
-current_version = 2
+current_version = 3
 
 migrations = {
     0:'001_inhomogenities',
-    1:'002_add_programs'
+    1:'002_removebloat',
+    2:'003_add_programs'
 }
 
 def run_migrations(model):
