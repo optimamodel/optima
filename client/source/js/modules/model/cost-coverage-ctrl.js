@@ -30,15 +30,6 @@ define(['./module', 'underscore'], function (module, _) {
         $scope.hasCostCoverResponse = false;
       }
 
-      // model parameters
-      $scope.defaultSaturationCoverageLevel = 90;
-      $scope.defaultKnownCoverageLevel = 60;
-      $scope.defaultKnownFundingValue = 400000;
-      $scope.defaultScaleUpParameter = 0.5;
-      $scope.defaultNonHivDalys = 0;
-      $scope.defaultXAxisMaximum = 1000000;
-      $scope.defaultCostDataYear = $scope.projectInfo.dateStart;
-
       plotTypes = ['plotdata', 'plotdata_cc', 'plotdata_co'];
 
       resetGraphs();

@@ -57,7 +57,7 @@
                 <input type="number" class="txbox __inline __m"
                        name="saturationCoverageLevel"
                        min="1" max="100" step="1"
-                       placeholder="e.g.{{ ::defaultSaturationCoverageLevel }}"
+                       placeholder="e.g. 90"
                        ng-model="saturationCoverageLevel"
                        ng-required="!hasValidCCParams()"
                        more-than="knownMaxCoverageLevel"
@@ -76,7 +76,7 @@
                 <input type="number" class="txbox __inline __m"
                        name="knownMinCoverageLevel"
                        min="1" max="100"
-                       placeholder="e.g.{{defaultKnownCoverageLevel-10}}"
+                       placeholder="e.g. 50"
                        less-than="knownMaxCoverageLevel"
                        ng-model="knownMinCoverageLevel"
                        ng-required="!hasValidCCParams()"
@@ -85,14 +85,14 @@
                 <input type="number" class="txbox __inline __m"
                        name="knownMaxCoverageLevel"
                        min="1" max="100"
-                       placeholder="e.g.{{ ::defaultKnownCoverageLevel }}"
+                       placeholder="e.g. 60"
                        ng-model="knownMaxCoverageLevel"
                        ng-required="!hasValidCCParams()"
                        ng-change="updateCurves()">%
                 coverage for this program is:
                 <input type="number" class="txbox __inline __xl"
                        name="knownFundingValue"
-                       min="1" step="1000" placeholder="e.g.{{ ::defaultKnownFundingValue }}"
+                       min="1" step="1000" placeholder="e.g. 400000"
                        ng-model="knownFundingValue"
                        ng-required="!hasValidCCParams()"
                        ng-change="updateCurves()"> USD
@@ -126,7 +126,7 @@
                 <input type="number" class="txbox __inline __xl"
                        name="scaleUpParameter"
                        min="0" max="0.999999999999"
-                       placeholder="e.g.{{ ::defaultScaleUpParameter }}"
+                       placeholder="e.g. 0.5"
                        ng-model="scaleUpParameter"
                        ng-change="updateCurves()">
                 <div ng-messages="CostCoverageForm.scaleUpParameter.$error"
@@ -140,7 +140,7 @@
                 4. [Optional] Full coverage would avert
                 <input type="number" class="txbox __inline __xl"
                        name="nonHivDalys"
-                       min="0" step="1" placeholder="e.g.{{ ::defaultNonHivDalys }}"
+                       min="0" step="1" placeholder="e.g. 0"
                        ng-model="nonHivDalys"
                        ng-change="updateCurves()">
                 non-HIV-related DALYs per year
@@ -154,7 +154,7 @@
                 5. [Optional] Specify the maximum funding (for plotting only):
                 <input type="number" class="txbox __inline __xl"
                        name="xAxisMaximum"
-                       min="1" placeholder="e.g.{{ ::defaultXAxisMaximum }}"
+                       min="1" placeholder="e.g. 1000000"
                        ng-model="xAxisMaximum"
                        ng-change="updateCurves()">
                 <div ng-messages="CostCoverageForm.xAxisMaximum.$error"
