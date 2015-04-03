@@ -376,7 +376,7 @@ def makecco(D=None, progname=None, effect=None, ccparams=None, coparams=None, ar
         # Populate output structure with axis limits
         plotdata['xlowerlim'], plotdata['ylowerlim']  = 0.0, 0.0
         plotdata['xupperlim']  = xupperlim
-        plotdata['yupperlim'] = 1.0 if any(j < 1 for j in outcome) else max([j if ~isnan(j) else 0.0 for j in outcome])*1.5
+        plotdata['yupperlim'] = 1.0 if any(j < 1 for j in outcome) else max([j if ~isnan(j) else 0.0 for j in outcome])*1.5 if outcome else 1.0
     
         # Populate output structure with labels and titles
         plotdata['title'] = input_parameter_name(parname)+ ' - ' + popname
@@ -414,7 +414,7 @@ def plotallcurves(D=None, progname=None, ccparams=None, coparams=None, verbose=d
         if parname not in coverage_params:
 
             # Store outputs
-            plotdata[effectnumber], plotdata_co[effectnumber], new_effect = makecco(D=D, progname=progname, effect=effect, ccparams=D['programs'][prognumber]['ccparams'], coparams=coparams, verbose=verbose)
+            plotdata[effectnumber], plotdata_co[effectnumber], new_effect = makecco(D=D, progname=progname, effect=effect, ccparams=D['programs'][prognumber]['ccparams'], coparams=D['programs'][prognumber]['effects'][effectnumber]['coparams'], verbose=verbose)
             D['programs'][prognumber]['effects'][effectnumber] = deepcopy(new_effect)
             effects[effectnumber] = deepcopy(new_effect)
 
