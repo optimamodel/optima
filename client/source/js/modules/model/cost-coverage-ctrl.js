@@ -15,12 +15,10 @@ define(['./module', 'underscore'], function (module, _) {
       $scope.cannotCalibrate = !info.can_calibrate;
       $scope.notReady = $scope.needData || $scope.cannotCalibrate;
 
-      $scope.optionsErrorMessage = 'To define a cost-coverage curve, values must be provided in the first three text boxes.';
-      $scope.needAllCCParamsMessage = 'First four text boxes must be either all empty, or all have values in them.';
-      $scope.all_programs = programs.data;
+      $scope.programs = programs.data;
 
       if ( !$scope.needData ) {
-        $scope.selectionPrograms = initializePrograms(info.programs, $scope.all_programs);
+        $scope.selectionPrograms = initializePrograms(info.programs, $scope.programs);
         $scope.selectedProgram = $scope.selectionPrograms[0];
         $scope.displayedProgram = null;
 
@@ -35,7 +33,7 @@ define(['./module', 'underscore'], function (module, _) {
     };
 
     function findProgram (acronym) {
-      return _($scope.all_programs).find(function(entry) {
+      return _($scope.programs).find(function(entry) {
         return entry.name === acronym;
       });
     }
@@ -285,7 +283,8 @@ define(['./module', 'underscore'], function (module, _) {
       return params && params.length && _(params).every(function(item) { return item; });
     };
 
-    /**
+    /**?
+     * TODO remove?
      * Returns true if all of the elements in an array are undefined, null or NaN
      */
     var hasOnlyInvalidEntries = function(params) {
@@ -294,18 +293,23 @@ define(['./module', 'underscore'], function (module, _) {
       });
     };
 
-    $scope.areValidParams = function (params) {
+    /**
+     * Returns true if the param is undefined, null or NaN
+     */
+    var isInvalidParam = function(param) {
+      return param === undefined || param === null || typeof param === "number" && isNaN(param);
+    };
+
+    function areValidCoParams (params) {
       return hasAllElements(params) || hasOnlyInvalidEntries(params);
-    };
+    }
 
-    var areCCParamsValid = function (params) {
-      return true;
-      // TODO
-      // return $scope.areValidParams(params.slice(0, 4));
-    };
+    $scope.hasValidCCParams = function () {
+      var params = $scope.costCoverageParams();
+      var allRequiredParamsDefined = params.saturation && params.coveragelower && params.coverageupper && params.funding;
+      var noRequiredParamDefined = isInvalidParam(params.saturation) && isInvalidParam(params.coveragelower) && isInvalidParam(params.coverageupper) && isInvalidParam(params.funding);
 
-    $scope.hasValidCCParams = function() {
-      return !$scope.hasCostCoverResponse || areCCParamsValid($scope.costCoverageParams());
+      return (allRequiredParamsDefined || noRequiredParamDefined);
     };
 
     $scope.hasAllCCParams = function() {
@@ -330,7 +334,7 @@ define(['./module', 'underscore'], function (module, _) {
      */
     var retrieveAndUpdateGraphs = function (model) {
       // validation on Cost-coverage curve plotting options
-      if (!areCCParamsValid(model.ccparams)){
+      if (!$scope.hasValidCCParams(model.ccparams)){
         return;
       }
 
@@ -444,11 +448,11 @@ define(['./module', 'underscore'], function (module, _) {
      *   }
      */
     $scope.updateCurve = _.debounce(function (graphIndex, AdjustmentForm) {
-      if(AdjustmentForm.$valid && $scope.CostCoverageForm.$valid && $scope.hasValidCCParams()) {
+      if(!$scope.hasCostCoverResponse && AdjustmentForm.$valid && $scope.CostCoverageForm.$valid && $scope.hasValidCCParams()) {
         var model = getPlotModel();
         model.coparams = $scope.convertedCoParams()[graphIndex];
         model.effect = effectNames[graphIndex];
-        if (!$scope.areValidParams(model.coparams)) {
+        if (!areValidCoParams(model.coparams)) {
           // no need to show dialog - we inform the user with hints
           return;
         }
