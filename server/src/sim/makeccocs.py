@@ -47,10 +47,11 @@ def makecc(D=None, progname=None, ccparams=None, arteligcutoff=None, verbose=def
     totalcost = D['data']['costcov']['realcost'][prognumber] # get total cost
 
     # If ccparams haven't been passed in but there's something stored in D, use the stored version
-    if (not ccparams and D['programs'][prognumber]['ccparams']): ccparams = D['programs'][prognumber]['ccparams']
+    if (not ccparams and D['programs'][prognumber]['ccparams']):
+        ccparams = D['programs'][prognumber]['ccparams']
 
     # Adjust cost data to year specified by user (if given)
-    if ccparams and ccparams['cpibaseyear'] and ~isnan(ccparams['cpibaseyear']):
+    if ccparams and 'cpibaseyear' in ccparams and ~isnan(ccparams['cpibaseyear']):
         from utils import smoothinterp
         cpi = smoothinterp(origy=D['data']['econ']['cpi']['past'][0], origx=linspace(0,1,len(D['data']['epiyears'])), newx=linspace(0,1,len(D['data']['epiyears'])), growth=D['data']['econ']['cpi']['future'][0][0])
         cpibaseyear = ccparams['cpibaseyear']
@@ -64,19 +65,19 @@ def makecc(D=None, progname=None, ccparams=None, arteligcutoff=None, verbose=def
 
     # Flag to indicate whether we will adjust by population or not
     popadj = 0
-    if (ccparams and ccparams['perperson'] and ~isnan(ccparams['perperson'])): popadj = ccparams['perperson']
+    if (ccparams and 'perperson' in ccparams and ~isnan(ccparams['perperson'])): popadj = ccparams['perperson']
 
-    # Get coverage and target population size (in separate function)       
+    # Get coverage and target population size (in separate function)
     coverage, targetpopsize, coveragelabel = getcoverage(D=D, artindex=artindex, progname=progname)
 
-    # Adjust cost data by target population size, if requested by user 
+    # Adjust cost data by target population size, if requested by user
     if popadj: totalcost = totalcost/targetpopsize if len(totalcost)>1 else totalcost/mean(targetpopsize)
 
     # Get upper limit of x axis for plotting
     xupperlim = max([x if ~isnan(x) else 0.0 for x in totalcost])*1.5
-    if (ccparams and ccparams['xupperlim'] and ~isnan(ccparams['xupperlim'])): xupperlim = ccparams['xupperlim'] 
-        
-    # Populate output structure with scatter data 
+    if (ccparams and 'xupperlim' in ccparams and ~isnan(ccparams['xupperlim'])): xupperlim = ccparams['xupperlim']
+
+    # Populate output structure with scatter data
     totalcost, coverage = getscatterdata(totalcost, coverage)
     plotdata['xscatterdata'] = totalcost
     plotdata['yscatterdata'] = coverage
@@ -92,7 +93,7 @@ def makecc(D=None, progname=None, ccparams=None, arteligcutoff=None, verbose=def
         xvalsccpop = linspace(0,xupperlim*targetpopsize[-1],nxpts) if popadj else xvalscc
 
         # Y data
-        if ccparams['scaleup']:
+        if 'scaleup' in ccparams:
             yvalsccl = cceqn(xvalsccpop, convertedccparams[0])
             yvalsccm = cceqn(xvalsccpop, convertedccparams[1])
             yvalsccu = cceqn(xvalsccpop, convertedccparams[2])
@@ -107,19 +108,20 @@ def makecc(D=None, progname=None, ccparams=None, arteligcutoff=None, verbose=def
             for j in range(len(yvalscc)):
                 yvalscc[j] = [yvalscc[j][k]*targetpopsize[-1] for k in range(len(yvalscc[j]))]
 
-        # Populate output structure 
+        # Populate output structure
         plotdata['xlinedata'] = xvalscc
-        plotdata['ylinedata'] = yvalscc 
+        plotdata['ylinedata'] = yvalscc
 
         # Store parameters and lines
         D['programs'][prognumber]['ccparams'] = ccparams
         D['programs'][prognumber]['convertedccparams'] = convertedccparams
-        if not ccparams['nonhivdalys'] or isnan(ccparams['nonhivdalys']): ccparams['nonhivdalys'] = 0.0
+        if 'nonhivdalys' not in ccparams or isnan(ccparams['nonhivdalys']):
+            ccparams['nonhivdalys'] = 0.0
         D['programs'][prognumber]['nonhivdalys'] = [ccparams['nonhivdalys']]
 
     # Populate output structure with axis limits
     plotdata['xlowerlim'], plotdata['ylowerlim']  = 0.0, 0.0
-    plotdata['xupperlim'] = xupperlim 
+    plotdata['xupperlim'] = xupperlim
     if coveragelabel == 'Proportion covered':
         plotdata['yupperlim']  = 1.0
     else:
@@ -382,7 +384,7 @@ def convertparams(D=None, ccparams=None):
 
     convertedccparams = []
 
-    if ccparams['scaleup']:
+    if 'scaleup' in ccparams:
         growthratel = exp((1-ccparams['scaleup'])*log(ccparams['saturation']/ccparams['coveragelower']-1)+log(ccparams['funding']))
         growthratem = exp((1-ccparams['scaleup'])*log(ccparams['saturation']/((ccparams['coveragelower']+ccparams['coverageupper'])/2)-1)+log(ccparams['funding']))
         growthrateu = exp((1-ccparams['scaleup'])*log(ccparams['saturation']/ccparams['coverageupper']-1)+log(ccparams['funding']))
