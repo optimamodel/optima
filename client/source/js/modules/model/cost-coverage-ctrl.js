@@ -15,12 +15,10 @@ define(['./module', 'underscore'], function (module, _) {
       $scope.cannotCalibrate = !info.can_calibrate;
       $scope.notReady = $scope.needData || $scope.cannotCalibrate;
 
-      $scope.optionsErrorMessage = 'To define a cost-coverage curve, values must be provided in the first three text boxes.';
-      $scope.needAllCCParamsMessage = 'First four text boxes must be either all empty, or all have values in them.';
-      $scope.all_programs = programs.data;
+      $scope.programs = programs.data;
 
       if ( !$scope.needData ) {
-        $scope.selectionPrograms = initializePrograms(info.programs, $scope.all_programs);
+        $scope.selectionPrograms = initializePrograms(info.programs, $scope.programs);
         $scope.selectedProgram = $scope.selectionPrograms[0];
         $scope.displayedProgram = null;
 
@@ -35,7 +33,7 @@ define(['./module', 'underscore'], function (module, _) {
     };
 
     function findProgram (acronym) {
-      return _($scope.all_programs).find(function(entry) {
+      return _($scope.programs).find(function(entry) {
         return entry.name === acronym;
       });
     }

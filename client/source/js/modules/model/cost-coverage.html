@@ -50,8 +50,8 @@
         <div class="elastic_col">
           <div class="section">
             <form name="CostCoverageForm" ng-submit="generateCurves()">
-              <div class="info-hint" ng-show="!hasAllCCParams()">{{ ::optionsErrorMessage }}</div>
-              <div class="error-hint" ng-show="!hasValidCCParams()">{{ ::needAllCCParamsMessage }}</div>
+              <div class="info-hint" ng-show="!hasAllCCParams()">To define a cost-coverage curve, values must be provided in the first three text boxes.</div>
+              <div class="error-hint" ng-show="!hasValidCCParams()">First four text boxes must be either all empty, or all have values in them.</div>
               <div class="section">
                 1. Specify the saturation coverage level:
                 <input type="number" class="txbox __inline __m"
