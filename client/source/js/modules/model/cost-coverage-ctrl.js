@@ -2,12 +2,11 @@ define(['./module', 'underscore'], function (module, _) {
   'use strict';
 
   module.controller('ModelCostCoverageController', function ($scope, $http,
-    $state, meta, info, modalService, programs) {
+    $state, info, modalService, programs) {
 
     var plotTypes, effectNames;
 
     var initialize =function () {
-      $scope.meta = meta;
       $scope.chartsForDataExport = [];
       $scope.titlesForChartsExport = [];
 

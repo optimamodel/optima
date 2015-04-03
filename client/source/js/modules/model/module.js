@@ -52,9 +52,6 @@ define([
             info: function(Project) {
               return Project.info().$promise;
             },
-            meta: function (Model) {
-              return Model.getKeyDataMeta().$promise;
-            },
             programs: function(Model) {
               return Model.getPrograms().$promise;
             }
