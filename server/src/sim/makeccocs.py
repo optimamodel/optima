@@ -49,12 +49,13 @@ def makecc(D=None, progname=None, ccparams=None, arteligcutoff=None, verbose=def
     # If ccparams haven't been passed in but there's something stored in D, use the stored version
     if (not ccparams and D['programs'][prognumber]['ccparams']):
         ccparams = D['programs'][prognumber]['ccparams']
+        print("ccparams from program", ccparams)
 
     # Adjust cost data to year specified by user (if given)
     if ccparams and 'cpibaseyear' in ccparams and ~isnan(ccparams['cpibaseyear']):
         from utils import smoothinterp
         cpi = smoothinterp(origy=D['data']['econ']['cpi']['past'][0], origx=linspace(0,1,len(D['data']['epiyears'])), newx=linspace(0,1,len(D['data']['epiyears'])), growth=D['data']['econ']['cpi']['future'][0][0])
-        cpibaseyear = ccparams['cpibaseyear']
+        cpibaseyear = ccparams.get('cpibaseyear')
         cpibaseyearindex = D['data']['epiyears'].index(cpibaseyear) # get index of CPI base year
         if len(totalcost)==1: # If it's an assumption, assume it's already in current prices
             totalcost = [totalcost[0]*cpi[cpibaseyearindex]]
@@ -83,7 +84,7 @@ def makecc(D=None, progname=None, ccparams=None, arteligcutoff=None, verbose=def
     plotdata['yscatterdata'] = coverage
 
     # Are the curve-making parameters there?
-    reqccparams = [ccparams['coveragelower'], ccparams['coverageupper'], ccparams['funding'], ccparams['saturation']]
+    reqccparams = [ccparams.get('coveragelower'), ccparams.get('coverageupper'), ccparams.get('funding'), ccparams.get('saturation')]
     if all(reqccparams) and all(~isnan(reqccparams)):
 
         convertedccparams = convertparams(D=D, ccparams=ccparams)
@@ -200,7 +201,7 @@ def makeco(D=None, progname=None, effect=None, coparams=None, coverage_params=co
         plotdata['yscatterdata'] = outcome 
            
         # Get params for plotting - either from GUI or get previously stored ones
-        if not coparams and (coparams in effect.keys()): coparams = effect['coparams']
+        if not coparams and (coparams in effect.keys()): coparams = effect.get('coparams')
         if coparams and isinstance(coparams,list): # Check that it's there and is not nan
             if not len(coparams) == 4:
                 raise Exception('Not all of the coverage-outcome parameters have been specified. Please enter the missing parameters to define the curve.')
@@ -253,7 +254,8 @@ def makecco(D=None, progname=None, effect=None, ccparams=None, coparams=None, ar
         plotdata['ylabel'] = plotdata_co['ylabel']
     
         # Draw lines if we can
-        if 'xlinedata' in plotdata_cc.keys() and effect['coparams'] and isinstance(effect['coparams'], list):
+        print("effect", effect)
+        if 'xlinedata' in plotdata_cc.keys() and effect.get('coparams') and isinstance(effect['coparams'], list):
             xvalscco = plotdata_cc['xlinedata']
             mediancco = coeqn(plotdata_cc['ylinedata'][0], [effect['convertedcoparams'][0], effect['convertedcoparams'][2]])
             mincco = coeqn(plotdata_cc['ylinedata'][1], [effect['coparams'][0], effect['coparams'][2]])
@@ -301,7 +303,7 @@ def plotallcurves(D=None, progname=None, ccparams=None, coparams=None, verbose=d
         if parname not in coverage_params:
 
             # Store outputs
-            plotdata[effectnumber], plotdata_co[effectnumber], new_effect = makecco(D=D, progname=progname, effect=effect, ccparams=D['programs'][prognumber]['ccparams'], coparams=D['programs'][prognumber]['effects'][effectnumber]['coparams'], verbose=verbose)
+            plotdata[effectnumber], plotdata_co[effectnumber], new_effect = makecco(D=D, progname=progname, effect=effect, ccparams=D['programs'][prognumber]['ccparams'], coparams=D['programs'][prognumber]['effects'][effectnumber].get('coparams'), verbose=verbose)
             D['programs'][prognumber]['effects'][effectnumber] = deepcopy(new_effect)
             effects[effectnumber] = deepcopy(new_effect)
 
