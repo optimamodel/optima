@@ -230,8 +230,6 @@ def makeco(D=None, progname=None, effect=None, coparams=None, coverage_params=co
 def makecco(D=None, progname=None, effect=None, ccparams=None, coparams=None, arteligcutoff=None, coverage_params=coverage_params, verbose=default_verbose, nxpts=default_nxpts):
     ''' Make a single cost outcome curve. '''
 
-    prognumber = [p['name'] for p in D['programs']].index(progname) # get program number    
-
     plotdata = {}
 
     plotdata_cc, D = makecc(D=D, progname=progname, ccparams=ccparams, arteligcutoff=arteligcutoff)
@@ -249,14 +247,8 @@ def makecco(D=None, progname=None, effect=None, ccparams=None, coparams=None, ar
     plotdata['xlabel'] = plotdata_cc['xlabel']
     plotdata['ylabel'] = plotdata_co['ylabel']
 
-    # Store whole set of parameters
-    convertedccoparams = D['programs'][prognumber]['convertedccparams']
-    convertedcoparams = effect['convertedcoparams']
-    for j in range(3): convertedccoparams[j].extend([convertedcoparams[0],convertedcoparams[2]])
-    effect['convertedccoparams'] = convertedccoparams 
-
     # Draw lines if we can
-    if 'xlinedata' in plotdata_cc.keys() and 'coparams' in effect.keys():
+    if 'xlinedata' in plotdata_cc.keys() and effect['coparams'] and isinstance(effect['coparams'], list):
         xvalscco = plotdata_cc['xlinedata']
         mediancco = coeqn(plotdata_cc['ylinedata'][0], [effect['convertedcoparams'][0], effect['convertedcoparams'][2]])
         mincco = coeqn(plotdata_cc['ylinedata'][1], [effect['coparams'][0], effect['coparams'][2]])
@@ -265,6 +257,13 @@ def makecco(D=None, progname=None, effect=None, ccparams=None, coparams=None, ar
         # Populate output structure with cost-outcome curves for plotting
         plotdata['xlinedata'] = xvalscco # X data for all line plots
         plotdata['ylinedata'] = [mediancco, mincco, maxcco]
+
+        # Store whole set of parameters
+        prognumber = [p['name'] for p in D['programs']].index(progname) # get program number    
+        convertedccoparams = D['programs'][prognumber]['convertedccparams']
+        convertedcoparams = effect['convertedcoparams']
+        for j in range(3): convertedccoparams[j].extend([convertedcoparams[0],convertedcoparams[2]])
+        effect['convertedccoparams'] = convertedccoparams 
 
     return plotdata, plotdata_co, effect
 
