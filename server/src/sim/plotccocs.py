@@ -7,7 +7,7 @@ from matplotlib.pylab import figure, plot, hold, xlabel, ylabel, title, xlim, yl
 from numpy import nan
 
 # Set defaults for testing makeccocs
-default_progname = 'MSM programs'
+default_progname = 'OST'
 default_effect = {'paramtype':'sex', 'param':'condomcas', 'popname':u'MSM'} 
 default_ccparams = {'saturation': .9, 
                     'coveragelower': .5, 

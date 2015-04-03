@@ -230,40 +230,43 @@ def makeco(D=None, progname=None, effect=None, coparams=None, coverage_params=co
 def makecco(D=None, progname=None, effect=None, ccparams=None, coparams=None, arteligcutoff=None, coverage_params=coverage_params, verbose=default_verbose, nxpts=default_nxpts):
     ''' Make a single cost outcome curve. '''
 
-    plotdata = {}
+    plotdata, plotdata_co = {}, {} 
+    parname = effect['param']
 
-    plotdata_cc, D = makecc(D=D, progname=progname, ccparams=ccparams, arteligcutoff=arteligcutoff)
-    plotdata_co, effect = makeco(D=D, progname=progname, effect=effect, coparams=coparams, arteligcutoff=arteligcutoff)
-
-    plotdata['xscatterdata'] = plotdata_cc['xscatterdata'] # X scatter data
-    plotdata['yscatterdata'] = plotdata_co['yscatterdata'] # Y scatter data
-
-    # Populate output structure with axis limits
-    plotdata['xlowerlim'], plotdata['ylowerlim'] = plotdata_cc['xlowerlim'], plotdata_co['ylowerlim']
-    plotdata['xupperlim'], plotdata['yupperlim'] = plotdata_cc['xupperlim'], plotdata_co['yupperlim']
-
-    # Populate output structure with labels and titles
-    plotdata['title'] = plotdata_co['title']
-    plotdata['xlabel'] = plotdata_cc['xlabel']
-    plotdata['ylabel'] = plotdata_co['ylabel']
-
-    # Draw lines if we can
-    if 'xlinedata' in plotdata_cc.keys() and effect['coparams'] and isinstance(effect['coparams'], list):
-        xvalscco = plotdata_cc['xlinedata']
-        mediancco = coeqn(plotdata_cc['ylinedata'][0], [effect['convertedcoparams'][0], effect['convertedcoparams'][2]])
-        mincco = coeqn(plotdata_cc['ylinedata'][1], [effect['coparams'][0], effect['coparams'][2]])
-        maxcco = coeqn(plotdata_cc['ylinedata'][2], [effect['coparams'][1], effect['coparams'][3]])
-
-        # Populate output structure with cost-outcome curves for plotting
-        plotdata['xlinedata'] = xvalscco # X data for all line plots
-        plotdata['ylinedata'] = [mediancco, mincco, maxcco]
-
-        # Store whole set of parameters
-        prognumber = [p['name'] for p in D['programs']].index(progname) # get program number    
-        convertedccoparams = D['programs'][prognumber]['convertedccparams']
-        convertedcoparams = effect['convertedcoparams']
-        for j in range(3): convertedccoparams[j].extend([convertedcoparams[0],convertedcoparams[2]])
-        effect['convertedccoparams'] = convertedccoparams 
+    # Only going to make cost-outcome curves for programs where the affected parameter is not coverage
+    if parname not in coverage_params:
+        plotdata_cc, D = makecc(D=D, progname=progname, ccparams=ccparams, arteligcutoff=arteligcutoff)
+        plotdata_co, effect = makeco(D=D, progname=progname, effect=effect, coparams=coparams, arteligcutoff=arteligcutoff)
+    
+        plotdata['xscatterdata'] = plotdata_cc['xscatterdata'] # X scatter data
+        plotdata['yscatterdata'] = plotdata_co['yscatterdata'] # Y scatter data
+    
+        # Populate output structure with axis limits
+        plotdata['xlowerlim'], plotdata['ylowerlim'] = plotdata_cc['xlowerlim'], plotdata_co['ylowerlim']
+        plotdata['xupperlim'], plotdata['yupperlim'] = plotdata_cc['xupperlim'], plotdata_co['yupperlim']
+    
+        # Populate output structure with labels and titles
+        plotdata['title'] = plotdata_co['title']
+        plotdata['xlabel'] = plotdata_cc['xlabel']
+        plotdata['ylabel'] = plotdata_co['ylabel']
+    
+        # Draw lines if we can
+        if 'xlinedata' in plotdata_cc.keys() and effect['coparams'] and isinstance(effect['coparams'], list):
+            xvalscco = plotdata_cc['xlinedata']
+            mediancco = coeqn(plotdata_cc['ylinedata'][0], [effect['convertedcoparams'][0], effect['convertedcoparams'][2]])
+            mincco = coeqn(plotdata_cc['ylinedata'][1], [effect['coparams'][0], effect['coparams'][2]])
+            maxcco = coeqn(plotdata_cc['ylinedata'][2], [effect['coparams'][1], effect['coparams'][3]])
+    
+            # Populate output structure with cost-outcome curves for plotting
+            plotdata['xlinedata'] = xvalscco # X data for all line plots
+            plotdata['ylinedata'] = [mediancco, mincco, maxcco]
+    
+            # Store whole set of parameters
+            prognumber = [p['name'] for p in D['programs']].index(progname) # get program number    
+            convertedccoparams = D['programs'][prognumber]['convertedccparams']
+            convertedcoparams = effect['convertedcoparams']
+            for j in range(3): convertedccoparams[j].extend([convertedcoparams[0],convertedcoparams[2]])
+            effect['convertedccoparams'] = convertedccoparams 
 
     return plotdata, plotdata_co, effect
 
