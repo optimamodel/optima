@@ -242,8 +242,8 @@ def getModelCalibrateParameters():
 @check_project_name
 def getModel():
     """ Returns the model (aka D or data) for the currently open project. """
-    D = load_model(request.project_id, from_json = False)
-    return jsonify(result)
+    D_dict = load_model(request.project_id, from_json = False)
+    return jsonify(D_dict)
 
 @model.route('/data/<key>')
 @login_required
@@ -382,7 +382,8 @@ def doCostCoverageEffect():
     try:
         if not args.get('effect'):
             return jsonify({'status':'NOK','reason':'No effect has been specified'})
-        if args.get('ccparams'):args['ccparams'] = [float(param) if param else None for param in args['ccparams']]
+        if args.get('ccparams'):
+            args['ccparams'] = dict([(key, (float(param) if param else None)) for (key,param) in args['ccparams'].iteritems()])
         if args.get('coparams'):args['coparams'] = [float(param) for param in args['coparams']]
         plotdata, plotdata_co, storeparams_co = makecco(**args)
     except Exception, err:

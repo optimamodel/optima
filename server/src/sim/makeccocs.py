@@ -116,7 +116,7 @@ def makecc(D=None, progname=None, ccparams=None, arteligcutoff=None, verbose=def
         # Store parameters and lines
         D['programs'][prognumber]['ccparams'] = ccparams
         D['programs'][prognumber]['convertedccparams'] = convertedccparams
-        if 'nonhivdalys' not in ccparams or isnan(ccparams['nonhivdalys']):
+        if 'nonhivdalys' not in ccparams or not ccparams['nonhivdalys'] or isnan(ccparams['nonhivdalys']):
             ccparams['nonhivdalys'] = 0.0
         D['programs'][prognumber]['nonhivdalys'] = [ccparams['nonhivdalys']]
 

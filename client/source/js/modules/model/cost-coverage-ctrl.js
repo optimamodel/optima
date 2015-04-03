@@ -381,11 +381,10 @@ define(['./module', 'underscore'], function (module, _) {
       if($scope.hasCostCoverResponse === true) {
         $scope.hasCostCoverResponse = false;
       }
-
       var program = findProgram($scope.selectedProgram.acronym);
-      $scope.saturationCoverageLevel = program.ccparams.saturation;
-      $scope.knownMinCoverageLevel = program.ccparams.coveragelower;
-      $scope.knownMaxCoverageLevel = program.ccparams.coverageupper;
+      $scope.saturationCoverageLevel = program.ccparams.saturation?program.ccparams.saturation*100:undefined;
+      $scope.knownMinCoverageLevel = program.ccparams.coveragelower?program.ccparams.coveragelower*100:undefined;
+      $scope.knownMaxCoverageLevel = program.ccparams.coverageupper?program.ccparams.coverageupper*100:undefined;
       $scope.knownFundingValue = program.ccparams.funding;
       $scope.scaleUpParameter = program.ccparams.scaleup;
       $scope.nonHivDalys = program.ccparams.nonhivdalys;
@@ -453,7 +452,7 @@ define(['./module', 'underscore'], function (module, _) {
      *   }
      */
     $scope.updateCurve = _.debounce(function (graphIndex, AdjustmentForm) {
-      if(!$scope.hasCostCoverResponse && AdjustmentForm.$valid && $scope.CostCoverageForm.$valid && $scope.hasValidCCParams()) {
+      if($scope.hasCostCoverResponse && AdjustmentForm.$valid && $scope.CostCoverageForm.$valid && $scope.hasValidCCParams()) {
         var model = getPlotModel();
         model.coparams = $scope.convertedCoParams()[graphIndex];
         model.effect = effectNames[graphIndex];
@@ -463,12 +462,14 @@ define(['./module', 'underscore'], function (module, _) {
         }
 
         // clean up model by removing unnecessary parameters
-        if (_.isEmpty(model.ccparams) || hasOnlyInvalidEntries(model.ccparams)) {
+        if (_.isEmpty(model.ccparams) || hasOnlyInvalidEntries(_.values(model.ccparams))) {
           delete model.ccparams;
         }
 
-        if (_.isEmpty(model.coparams) || hasOnlyInvalidEntries(model.coparams)) {
-          delete model.coparams;
+        if (model.coparams) {
+          if (_.isEmpty(model.coparams) || hasOnlyInvalidEntries(model.coparams)) {
+            delete model.coparams;
+          }
         }
 
         // update current program ccparams, if applicable
