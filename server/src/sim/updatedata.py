@@ -45,7 +45,15 @@ def updatedata(D, workbookname=None, verbose=2, savetofile=True, input_programs=
 def addtoprograms(programs):
     ''' Add things to D['programs'] '''
     for prognumber, program in enumerate(programs):
-        programs[prognumber]['ccparams'] = None
+        programs[prognumber]['ccparams'] = {'saturation': None, \
+                                            'coveragelower': None, \
+                                            'coverageupper':None, \
+                                            'funding':None, \
+                                            'scaleup':None, \
+                                            'nonhivdalys':None, \
+                                            'xupperlim':None, \
+                                            'cpibaseyear':None, \
+                                            'perperson':None}
         programs[prognumber]['convertedccparams'] = None
         programs[prognumber]['nonhivdalys'] = 0.0
 
