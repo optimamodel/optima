@@ -50,8 +50,8 @@ def makecc(D=None, progname=None, ccparams=None, arteligcutoff=None, verbose=def
 
     # Adjust cost data to year specified by user (if given)
     if ccparams and ccparams['cpibaseyear']:
-        from financialanalysis import expanddata
-        cpi = expanddata(D['data']['econ']['cpi']['past'][0], len(D['data']['epiyears']), D['data']['econ']['cpi']['future'][0][0], interp=False, dt=None)
+        from utils import smoothinterp
+        cpi = smoothinterp(origy=D['data']['econ']['cpi']['past'][0], origx=linspace(0,1,len(D['data']['epiyears'])), newx=linspace(0,1,len(D['data']['epiyears'])), growth=D['data']['econ']['cpi']['future'][0][0])
         cpibaseyear = ccparams['cpibaseyear']
         cpibaseyearindex = D['data']['epiyears'].index(cpibaseyear) # get index of CPI base year
         if len(totalcost)==1: # If it's an assumption, assume it's already in current prices
@@ -280,8 +280,8 @@ def makecco(D=None, progname=None, effect=None, ccparams=None, coparams=None, ar
         totalcost = D['data']['costcov']['realcost'][prognumber] # get total cost data
 
         if ccparams and ccparams['cpibaseyear']:
-            from financialanalysis import expanddata
-            cpi = expanddata(D['data']['econ']['cpi']['past'][0], len(D['data']['epiyears']), D['data']['econ']['cpi']['future'][0][0], interp=False, dt=None)
+            from utils import smoothinterp
+            cpi = smoothinterp(origy=D['data']['econ']['cpi']['past'][0], origx=D['data']['epiyears'], newx=D['data']['epiyears'], growth=D['data']['econ']['cpi']['future'][0][0])
             cpibaseyear = ccparams['cpibaseyear']
             cpibaseyearindex = D['data']['epiyears'].index(cpibaseyear) # get index of CPI base year
             if len(totalcost)==1: # If it's an assumption, assume it's already in current prices

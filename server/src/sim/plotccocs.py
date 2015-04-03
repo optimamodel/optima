@@ -8,7 +8,15 @@ from matplotlib.pylab import figure, plot, hold, xlabel, ylabel, title, xlim, yl
 # Set defaults for testing makeccocs
 default_progname = 'FSW programs'
 default_effect = {'paramtype':'sex', 'param':'condomcom', 'popname':u'FSW'} 
-default_ccparams = {'saturation': 0.9, 'coveragelower': 0.25, 'coverageupper':0.4, 'funding':200000.0, 'scaleup':.5, 'nonhivdalys':None, 'xupperlim':None, 'cpibaseyear':None, 'perperson':0}
+default_ccparams = {'saturation': 0.9, 
+                    'coveragelower': 0.25, 
+                    'coverageupper':0.4, 
+                    'funding':200000.0, 
+                    'scaleup':.5, 
+                    'nonhivdalys':None, 
+                    'xupperlim':None, 
+                    'cpibaseyear':2009., 
+                    'perperson':0}
 default_coparams = [0.3, 0.5, 0.7, 0.9] 
 default_arteligcutoff = 'gt350'
 coverage_params = ['numost','numpmtct','numfirstline','numsecondline']
