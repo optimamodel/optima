@@ -4,19 +4,20 @@ Plots cost-coverage, coverage-outcome and cost-outcome curves
 Version: 2015jan19 by robynstuart
 """
 from matplotlib.pylab import figure, plot, hold, xlabel, ylabel, title, xlim, ylim
+from numpy import nan
 
 # Set defaults for testing makeccocs
 default_progname = 'FSW programs'
-default_effect = {'paramtype':'sex', 'param':'condomcom', 'popname':u'FSW'} 
-default_ccparams = {'saturation': 0.9, 
-                    'coveragelower': 0.25, 
-                    'coverageupper':0.4, 
-                    'funding':200000.0, 
-                    'scaleup':.5, 
-                    'nonhivdalys':None, 
-                    'xupperlim':None, 
-                    'cpibaseyear':2009., 
-                    'perperson':0}
+default_effect = {'paramtype':'sex', 'param':'condomcom', 'popname':u'Clients'} 
+default_ccparams = {'saturation': nan, 
+                    'coveragelower': nan, 
+                    'coverageupper':nan, 
+                    'funding':nan, 
+                    'scaleup':nan, 
+                    'nonhivdalys':nan, 
+                    'xupperlim':nan, 
+                    'cpibaseyear':nan, 
+                    'perperson':nan}
 default_coparams = [0.3, 0.5, 0.7, 0.9] 
 default_arteligcutoff = 'gt350'
 coverage_params = ['numost','numpmtct','numfirstline','numsecondline']

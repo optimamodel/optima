@@ -40,7 +40,6 @@ def makecc(D=None, progname=None, ccparams=None, arteligcutoff=None, verbose=def
     for i in range(len(D['G'][arteligcutoff])-1): artindex.extend(states[D['G'][arteligcutoff][i+1]:D['G'][D['G']['healthstates'][-1]][i+1]+1])
     if verbose>=2: print('makecc %s %s' % (progname, ccparams))
 
-
     # Initialise output structure
     plotdata = {}
 
@@ -48,8 +47,11 @@ def makecc(D=None, progname=None, ccparams=None, arteligcutoff=None, verbose=def
     prognumber = [p['name'] for p in D['programs']].index(progname) # get program number    
     totalcost = D['data']['costcov']['realcost'][prognumber] # get total cost
 
+    # If ccparams haven't been passed in but there's something stored in D, use the stored version
+    if (not ccparams and D['programs'][prognumber]['ccparams']): ccparams = D['programs'][prognumber]['ccparams']
+
     # Adjust cost data to year specified by user (if given)
-    if ccparams and ccparams['cpibaseyear']:
+    if ccparams and ccparams['cpibaseyear'] and ~isnan(ccparams['cpibaseyear']):
         from utils import smoothinterp
         cpi = smoothinterp(origy=D['data']['econ']['cpi']['past'][0], origx=linspace(0,1,len(D['data']['epiyears'])), newx=linspace(0,1,len(D['data']['epiyears'])), growth=D['data']['econ']['cpi']['future'][0][0])
         cpibaseyear = ccparams['cpibaseyear']
@@ -63,27 +65,27 @@ def makecc(D=None, progname=None, ccparams=None, arteligcutoff=None, verbose=def
 
     # Flag to indicate whether we will adjust by population or not
     popadj = 0
-    if (ccparams and 'perperson' in ccparams.keys() and ccparams['perperson']): popadj = ccparams['perperson']
+    if (ccparams and ccparams['perperson'] and ~isnan(ccparams['perperson'])): popadj = ccparams['perperson']
 
     # Get coverage and target population size (in separate function)       
     coverage, targetpopsize, coveragelabel = getcoverage(D=D, artindex=artindex, progname=progname)
 
     # Adjust cost data by target population size, if requested by user 
-    if (ccparams and 'perperson' in ccparams.keys() and ccparams['perperson']):
-        totalcost = totalcost/targetpopsize if len(totalcost)>1 else totalcost/mean(targetpopsize)
+    if popadj: totalcost = totalcost/targetpopsize if len(totalcost)>1 else totalcost/mean(targetpopsize)
 
     # Get upper limit of x axis for plotting
     xupperlim = max([x if ~isnan(x) else 0.0 for x in totalcost])*1.5
-    if (ccparams and 'xupperlim' in ccparams.keys() and ccparams['xupperlim']): xupperlim = ccparams['xupperlim'] 
+    if (ccparams and ccparams['xupperlim'] and ~isnan(ccparams['xupperlim'])): xupperlim = ccparams['xupperlim'] 
         
     # Populate output structure with scatter data 
     totalcost, coverage = getscatterdata(totalcost, coverage)
     plotdata['xscatterdata'] = totalcost
     plotdata['yscatterdata'] = coverage
 
-    # Are there parameters (either given by the user or previously stored)?
-    if (ccparams or D['programs'][prognumber]['ccparams']):
-        if not ccparams: ccparams = D['programs'][prognumber]['ccparams']
+    # Are the curve-making parameters there?
+    reqccparams = [ccparams['coveragelower'], ccparams['coverageupper'], ccparams['funding'], ccparams['saturation']]
+    if all(reqccparams) and all(~isnan(reqccparams)):
+
         convertedccparams = convertparams(D=D, ccparams=ccparams)
 
         # X data
@@ -113,7 +115,7 @@ def makecc(D=None, progname=None, ccparams=None, arteligcutoff=None, verbose=def
         # Store parameters and lines
         D['programs'][prognumber]['ccparams'] = ccparams
         D['programs'][prognumber]['convertedccparams'] = convertedccparams
-        if not ccparams['nonhivdalys']: ccparams['nonhivdalys'] = 0.0
+        if not ccparams['nonhivdalys'] or isnan(ccparams['nonhivdalys']): ccparams['nonhivdalys'] = 0.0
         D['programs'][prognumber]['nonhivdalys'] = [ccparams['nonhivdalys']]
 
     # Populate output structure with axis limits
@@ -198,7 +200,7 @@ def makeco(D=None, progname=None, effect=None, coparams=None, coverage_params=co
            
         # Get params for plotting - either from GUI or get previously stored ones
         if not coparams and (coparams in effect.keys()): coparams = effect['coparams']
-        if coparams:
+        if coparams and isinstance(coparams,list): # Check that it's there and is not nan
             if not len(coparams) == 4:
                 raise Exception('Not all of the coverage-outcome parameters have been specified. Please enter the missing parameters to define the curve.')
             
@@ -268,6 +270,9 @@ def makecco(D=None, progname=None, effect=None, ccparams=None, coparams=None, ar
     # Initialise output structures
     plotdata, plotdata_co, xupperlim = {}, {}, None
 
+    # If ccparams haven't been passed in but there's something stored in D, use the stored version
+    if (not ccparams and D['programs'][prognumber]['ccparams']): ccparams = D['programs'][prognumber]['ccparams']
+
     # Get population and parameter info
     partype, parname, popname = effect['paramtype'], effect['param'], effect['popname']
 
@@ -279,7 +284,7 @@ def makecco(D=None, progname=None, effect=None, ccparams=None, coparams=None, ar
         # Extract cost data and adjust to base year specified by user (if given)
         totalcost = D['data']['costcov']['realcost'][prognumber] # get total cost data
 
-        if ccparams and ccparams['cpibaseyear']:
+        if ccparams and ccparams['cpibaseyear'] and ~isnan(ccparams['cpibaseyear']):
             from utils import smoothinterp
             cpi = smoothinterp(origy=D['data']['econ']['cpi']['past'][0], origx=D['data']['epiyears'], newx=D['data']['epiyears'], growth=D['data']['econ']['cpi']['future'][0][0])
             cpibaseyear = ccparams['cpibaseyear']
@@ -296,18 +301,17 @@ def makecco(D=None, progname=None, effect=None, ccparams=None, coparams=None, ar
 
         # Flag to indicate whether we will adjust by population or not, default is not
         popadj = 0
-        if (ccparams and 'perperson' in ccparams.keys() and ccparams['perperson']): popadj = ccparams['perperson']
+        if (ccparams and ccparams['perperson'] and ~isnan(ccparams['perperson'])): popadj = ccparams['perperson']
 
         # Get target population size (in separate function)       
         coverage, targetpopsize, coveragelabel = getcoverage(D, artindex=artindex, progname=progname)
 
         # Adjust cost data by target population size, if requested by user 
-        if (ccparams and 'perperson' in ccparams.keys() and ccparams['perperson']):
-            totalcost = totalcost/targetpopsize if len(totalcost)>1 else totalcost/mean(targetpopsize)
+        if popadj: totalcost = totalcost/targetpopsize if len(totalcost)>1 else totalcost/mean(targetpopsize)
 
         # Get upper limit of x axis for plotting
         xupperlim = max([x if ~isnan(x) else 0.0 for x in totalcost])*1.5
-        if (ccparams and 'xupperlim' in ccparams.keys() and ccparams['xupperlim']): xupperlim = ccparams['xupperlim'] 
+        if (ccparams and ccparams['xupperlim'] and ~isnan(ccparams['xupperlim'])): xupperlim = ccparams['xupperlim'] 
             
         # Populate output structure with scatter data 
         totalcost, outcome = getscatterdata(totalcost, outcome)
@@ -335,9 +339,10 @@ def makecco(D=None, progname=None, effect=None, ccparams=None, coparams=None, ar
         plotdata['yscatterdata'] = plotoutcome # Y scatter data
 
         # Do we have parameters for making curves?
-        if (ccparams or D['programs'][prognumber].ccparams) and (coparams or (effect['coparams'] and len(effect['coparams'])>3)):
+        reqccparams = [ccparams['coveragelower'], ccparams['coverageupper'], ccparams['funding'], ccparams['saturation']]
+        if (not coparams and effect['coparams']): coparams = effect['coparams']
+        if (all(reqccparams) and all(~isnan(reqccparams)) and coparams and isinstance(coparams,list) and len(coparams)==4):
 
-            if not ccparams: ccparams = D['programs'][prognumber]['ccparams']
             convertedccoparams = convertparams(D=D, ccparams=ccparams)
             if coparams: # Get coparams from  GUI... 
                 muz, stdevz, muf, stdevf = makecosampleparams(coparams, verbose=verbose)
