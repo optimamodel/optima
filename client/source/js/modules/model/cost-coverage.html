@@ -19,7 +19,7 @@
       <label>
         Select a program: <br>
         <select class="txbox"
-                ng-options="p as p.name group by p.category for p in ::programs"
+                ng-options="p as p.name group by p.category for p in ::selectionPrograms"
                 ng-change="changeProgram()"
                 ng-model="selectedProgram"
                 ng-disabled="notReady"></select>

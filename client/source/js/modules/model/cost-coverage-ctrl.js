@@ -11,9 +11,8 @@ define(['./module', 'underscore'], function (module, _) {
       $scope.titlesForChartsExport = [];
 
       // show message "calibrate the model" and disable the form elements
-      $scope.projectInfo = info;
-      $scope.needData = !$scope.projectInfo.has_data;
-      $scope.cannotCalibrate = !$scope.projectInfo.can_calibrate;
+      $scope.needData = !info.has_data;
+      $scope.cannotCalibrate = !info.can_calibrate;
       $scope.notReady = $scope.needData || $scope.cannotCalibrate;
 
       $scope.optionsErrorMessage = 'To define a cost-coverage curve, values must be provided in the first three text boxes.';
@@ -21,8 +20,8 @@ define(['./module', 'underscore'], function (module, _) {
       $scope.all_programs = programs.data;
 
       if ( !$scope.needData ) {
-        $scope.initializePrograms();
-        $scope.selectedProgram = $scope.programs[0];
+        $scope.selectionPrograms = initializePrograms(info.programs, $scope.all_programs);
+        $scope.selectedProgram = $scope.selectionPrograms[0];
         $scope.displayedProgram = null;
 
         $scope.coParams = [];
@@ -35,6 +34,12 @@ define(['./module', 'underscore'], function (module, _) {
       resetGraphs();
     };
 
+    function findProgram (acronym) {
+      return _($scope.all_programs).find(function(entry) {
+        return entry.name === acronym;
+      });
+    }
+
     /**
      * Redirects the user to View & Calibrate screen.
      */
@@ -46,28 +51,24 @@ define(['./module', 'underscore'], function (module, _) {
     * Creates the models of the programs for this controller.
     * If the backend do not present values for the categories, we'll use 'Others' as default.
     */
-    $scope.initializePrograms = function () {
-      $scope.programs =  _($scope.projectInfo.programs).map(function (item) {
+    function initializePrograms (programsWithNames, programsWithParams) {
+      // TODO I blieve this is only here to ensure the correct order
+      var programs =  _(programsWithNames).map(function (item) {
         var acronym = item.short_name;
 
-        var program = _($scope.all_programs).find(function(entry) {
+        var program = _(programsWithParams).find(function(entry) {
           return entry.name === acronym;
         });
 
         return {
           name: item.name,
           acronym: acronym,
-          category: item.category,
-          ccparams: program.ccparams
+          category: item.category
         };
       });
-      /** Dec 26 2014
-       * fix/306-2-fix-plotting-of-default-ccocs
-       * Default null value for selectedProgram
-       */
-      $scope.programs.unshift({name:'-- No program selected --',category:null, acronym:null});
-    };
-
+      programs.unshift({name:'-- No program selected --',category:null, acronym:null});
+      return programs;
+    }
 
     var resetGraphs= function () {
       $scope.graphs = {
@@ -318,13 +319,9 @@ define(['./module', 'underscore'], function (module, _) {
      * This function is supposed to be called before Draw / Redraw / Save.
      */
     var updateCCParams = function(model) {
-
       if (model.ccparams) {
-        $scope.selectedProgram.ccparams = model.ccparams;
-        var programIndex = _($scope.all_programs).findIndex(function(entry) {
-          return entry.name === $scope.selectedProgram.acronym;
-        });
-        $scope.all_programs[programIndex].ccparams = model.ccparams;
+        var program = findProgram($scope.selectedProgram.acronym);
+        program.ccparams = model.ccparams;
       }
     };
 
@@ -376,15 +373,16 @@ define(['./module', 'underscore'], function (module, _) {
         $scope.hasCostCoverResponse = false;
       }
 
-      $scope.saturationCoverageLevel = $scope.selectedProgram.ccparams.saturation;
-      $scope.knownMinCoverageLevel = $scope.selectedProgram.ccparams.coveragelower;
-      $scope.knownMaxCoverageLevel = $scope.selectedProgram.ccparams.coverageupper;
-      $scope.knownFundingValue = $scope.selectedProgram.ccparams.funding;
-      $scope.scaleUpParameter = $scope.selectedProgram.ccparams.scaleup;
-      $scope.nonHivDalys = $scope.selectedProgram.ccparams.nonhivdalys;
-      $scope.displayYear = $scope.selectedProgram.ccparams.cpibaseyear;
-      $scope.xAxisMaximum = $scope.selectedProgram.ccparams.xupperlim;
-      $scope.calculatePerPerson = $scope.selectedProgram.ccparams.perperson;
+      var program = findProgram($scope.selectedProgram.acronym);
+      $scope.saturationCoverageLevel = program.ccparams.saturation;
+      $scope.knownMinCoverageLevel = program.ccparams.coveragelower;
+      $scope.knownMaxCoverageLevel = program.ccparams.coverageupper;
+      $scope.knownFundingValue = program.ccparams.funding;
+      $scope.scaleUpParameter = program.ccparams.scaleup;
+      $scope.nonHivDalys = program.ccparams.nonhivdalys;
+      $scope.displayYear = program.ccparams.cpibaseyear;
+      $scope.xAxisMaximum = program.ccparams.xupperlim;
+      $scope.calculatePerPerson = program.ccparams.perperson;
 
       $scope.generateCurves();
     };
