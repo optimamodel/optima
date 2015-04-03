@@ -418,13 +418,11 @@ def plotallcurves(D=None, progname=None, ccparams=None, coparams=None, verbose=d
             D['programs'][prognumber]['effects'][effectnumber] = deepcopy(new_effect)
             effects[effectnumber] = deepcopy(new_effect)
 
-    return plotdata, plotdata_co, plotdata_cc, effects, D      
+    return plotdata, plotdata_co, plotdata_cc, effects, D
 
 ################################################################################
 def makeallccocs(D=None, verbose=default_verbose):
-    '''
-    Make all curves for all programs.
-    '''
+    ''' Make all curves for all programs. '''
 
     for program in D['programs']:
         progname = program['name']
@@ -438,9 +436,7 @@ def makeallccocs(D=None, verbose=default_verbose):
 # Helper functions
 ###############################################################################
 def getcoverage(D=None, artindex=None, progname=None):
-    '''
-    Get coverage levels.
-    '''
+    ''' Get coverage levels. '''
     
     coverage = None
     coveragelabel = ''
