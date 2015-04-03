@@ -38,18 +38,6 @@ define(['./module', 'underscore'], function (module, _) {
       $scope.defaultNonHivDalys = 0;
       $scope.defaultXAxisMaximum = 1000000;
       $scope.defaultCostDataYear = $scope.projectInfo.dateStart;
-      $scope.behaviorWithoutMin = 0.3;
-      $scope.behaviorWithoutMax = 0.5;
-      $scope.behaviorWithMin = 0.7;
-      $scope.behaviorWithMax = 0.9;
-      $scope.xAxisMaximum = undefined;
-      $scope.saturationCoverageLevel = undefined;
-      $scope.knownMinCoverageLevel = undefined;
-      $scope.knownMaxCoverageLevel = undefined;
-      $scope.knownFundingValue = undefined;
-      $scope.scaleUpParameter = undefined;
-      $scope.nonHivDalys = undefined;
-      $scope.validCCParams = undefined;
 
       plotTypes = ['plotdata', 'plotdata_cc', 'plotdata_co'];
 
@@ -79,8 +67,7 @@ define(['./module', 'underscore'], function (module, _) {
           name: item.name,
           acronym: acronym,
           category: item.category,
-          ccparams: program.ccparams,
-          ccplot: program.ccplot
+          ccparams: program.ccparams
         };
       });
       /** Dec 26 2014
@@ -271,19 +258,21 @@ define(['./module', 'underscore'], function (module, _) {
       });
     };
 
+    /**
+     * Converts settings from the scope to costCoverage params
+     */
     $scope.costCoverageParams = function () {
-      return [
-        $scope.convertFromPercent($scope.saturationCoverageLevel),
-        $scope.convertFromPercent($scope.knownMinCoverageLevel),
-        $scope.convertFromPercent($scope.knownMaxCoverageLevel),
-        $scope.knownFundingValue,
-        $scope.scaleUpParameter,
-        $scope.nonHivDalys
-      ];
-    };
-
-    var ccPlotParams = function() {
-      return [$scope.xAxisMaximum, $scope.displayYear, $scope.calculatePerPerson];
+      return {
+        saturation: $scope.convertFromPercent($scope.saturationCoverageLevel),
+        coveragelower: $scope.convertFromPercent($scope.knownMinCoverageLevel),
+        coverageupper: $scope.convertFromPercent($scope.knownMaxCoverageLevel),
+        funding: $scope.knownFundingValue,
+        scaleup: $scope.scaleUpParameter,
+        nonhivdalys: $scope.nonHivDalys,
+        xupperlim: $scope.xAxisMaximum,
+        cpibaseyear: $scope.displayYear,
+        perperson: $scope.calculatePerPerson
+      };
     };
 
     /**
@@ -293,8 +282,7 @@ define(['./module', 'underscore'], function (module, _) {
       return {
         progname: $scope.selectedProgram.acronym,
         ccparams: $scope.costCoverageParams(),
-        coparams: [],
-        ccplot: ccPlotParams()
+        coparams: []
       };
     };
 
@@ -319,7 +307,9 @@ define(['./module', 'underscore'], function (module, _) {
     };
 
     var areCCParamsValid = function (params) {
-      return $scope.areValidParams(params.slice(0, 4));
+      return true;
+      // TODO
+      // return $scope.areValidParams(params.slice(0, 4));
     };
 
     $scope.hasValidCCParams = function() {
@@ -327,7 +317,8 @@ define(['./module', 'underscore'], function (module, _) {
     };
 
     $scope.hasAllCCParams = function() {
-      return hasAllElements($scope.costCoverageParams().slice(0, 4));
+      return true;
+      // return hasAllElements($scope.costCoverageParams().slice(0, 4));
     };
 
     /**
@@ -336,17 +327,13 @@ define(['./module', 'underscore'], function (module, _) {
      * This function is supposed to be called before Draw / Redraw / Save.
      */
     var updateCCParams = function(model) {
+
       if (model.ccparams) {
         $scope.selectedProgram.ccparams = model.ccparams;
-        $scope.all_programs[$scope.selectedProgram.acronym].ccparams = model.ccparams;
-      }
-      if (model.ccplot) {
-        $scope.selectedProgram.ccplot = model.ccplot;
-
         var programIndex = _($scope.all_programs).findIndex(function(entry) {
           return entry.name === $scope.selectedProgram.acronym;
         });
-        $scope.all_programs[programIndex].ccplot = model.ccplot;
+        $scope.all_programs[programIndex].ccparams = model.ccparams;
       }
     };
 
@@ -365,9 +352,9 @@ define(['./module', 'underscore'], function (module, _) {
       }
 
       // clean up model by removing unnecessary parameters
-      if (_.isEmpty(model.ccparams) || hasOnlyInvalidEntries(model.ccparams.slice(0,3))) {
-        delete model.ccparams;
-      }
+      // if (_.isEmpty(model.ccparams) || hasOnlyInvalidEntries(model.ccparams.slice(0,3))) {
+      //   delete model.ccparams;
+      // }
 
       if (_.isEmpty(model.coparams) || hasOnlyInvalidEntries(model.coparams)) {
         delete model.coparams;
@@ -398,31 +385,15 @@ define(['./module', 'underscore'], function (module, _) {
         $scope.hasCostCoverResponse = false;
       }
 
-      if (hasAllElements($scope.selectedProgram.ccparams.slice(0,3))) {
-        $scope.saturationCoverageLevel = $scope.selectedProgram.ccparams[0]*100;
-        $scope.knownMinCoverageLevel = $scope.selectedProgram.ccparams[1]*100;
-        $scope.knownMaxCoverageLevel = $scope.selectedProgram.ccparams[2]*100;
-        $scope.knownFundingValue = $scope.selectedProgram.ccparams[3];
-        $scope.scaleUpParameter = $scope.selectedProgram.ccparams[4];
-        $scope.nonHivDalys = $scope.selectedProgram.ccparams[5];
-      } else {
-        $scope.saturationCoverageLevel = undefined;
-        $scope.knownMinCoverageLevel = undefined;
-        $scope.knownMaxCoverageLevel = undefined;
-        $scope.knownFundingValue = undefined;
-        $scope.scaleUpParameter = undefined;
-        $scope.nonHivDalys = undefined;
-      }
-
-      if ($scope.selectedProgram.ccplot) {
-        $scope.xAxisMaximum = $scope.selectedProgram.ccplot[0];
-        $scope.displayYear = $scope.selectedProgram.ccplot[1];
-        $scope.calculatePerPerson = $scope.selectedProgram.ccplot[2];
-      } else {
-        $scope.displayYear = undefined;
-        $scope.xAxisMaximum = undefined;
-        $scope.calculatePerPerson = undefined;
-      }
+      $scope.saturationCoverageLevel = $scope.selectedProgram.ccparams.saturation;
+      $scope.knownMinCoverageLevel = $scope.selectedProgram.ccparams.coveragelower;
+      $scope.knownMaxCoverageLevel = $scope.selectedProgram.ccparams.coverageupper;
+      $scope.knownFundingValue = $scope.selectedProgram.ccparams.funding;
+      $scope.scaleUpParameter = $scope.selectedProgram.ccparams.scaleup;
+      $scope.nonHivDalys = $scope.selectedProgram.ccparams.nonhivdalys;
+      $scope.displayYear = $scope.selectedProgram.ccparams.cpibaseyear;
+      $scope.xAxisMaximum = $scope.selectedProgram.ccparams.xupperlim;
+      $scope.calculatePerPerson = $scope.selectedProgram.ccparams.perperson;
 
       $scope.generateCurves();
     };
