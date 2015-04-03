@@ -21,6 +21,7 @@
         <th>Data start year</th>
         <th>Data end year</th>
         <th>Created on</th>
+        <th>Modified on</th>
         <th>Data uploaded on</th>
       </tr>
       </thead>
@@ -43,6 +44,9 @@
           </td>
           <td>
             {{ ::project.creation_time | date:'yyyy-MM-dd HH:mm:ss'}}
+          </td>
+          <td>
+            {{ ::project.updated_time | date:'yyyy-MM-dd HH:mm:ss'}}
           </td>
           <td>
             {{ project.data_upload_time ? (project.data_upload_time | date:'yyyy-MM-dd HH:mm:ss') : 'No data uploaded'}}
