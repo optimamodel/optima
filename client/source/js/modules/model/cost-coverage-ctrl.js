@@ -46,9 +46,9 @@ define(['./module', 'underscore'], function (module, _) {
     };
 
     /**
-    * Creates the models of the programs for this controller.
-    * If the backend do not present values for the categories, we'll use 'Others' as default.
-    */
+     * Creates the models of the programs for this controller.
+     * If the backend do not present values for the categories, we'll use 'Others' as default.
+     */
     function initializePrograms (programsWithNames, programsWithParams) {
       // TODO I blieve this is only here to ensure the correct order
       var programs =  _(programsWithNames).map(function (item) {
@@ -221,12 +221,17 @@ define(['./module', 'underscore'], function (module, _) {
 
     var setUpCOParamsFromEffects = function (effectNames) {
       $scope.coParams = _(effectNames).map(function (effect) {
-        return [
-          (effect[2] && effect[2][0])? effect[2][0] * 100 : null,
-          (effect[2] && effect[2][1])? effect[2][1] * 100 : null,
-          (effect[2] && effect[2][2])? effect[2][2] * 100 : null,
-          (effect[2] && effect[2][3])? effect[2][3] * 100 : null
-        ];
+        if (effect.coparams) {
+          return [
+            (effect.coparams && effect.coparams[0]) ? effect.coparams[0] * 100 : null,
+            (effect.coparams && effect.coparams[1]) ? effect.coparams[1] * 100 : null,
+            (effect.coparams && effect.coparams[2]) ? effect.coparams[2] * 100 : null,
+            (effect.coparams && effect.coparams[3]) ? effect.coparams[3] * 100 : null
+          ];
+        } else {
+          return [null, null, null, null];
+        }
+
       });
     };
 
