@@ -7,17 +7,17 @@ from matplotlib.pylab import figure, plot, hold, xlabel, ylabel, title, xlim, yl
 from numpy import nan
 
 # Set defaults for testing makeccocs
-default_progname = 'OST'
+default_progname = 'MSM programs'
 default_effect = {'paramtype':'sex', 'param':'condomcas', 'popname':u'MSM'} 
 default_ccparams = {'saturation': .9, 
                     'coveragelower': .5, 
                     'coverageupper':.6, 
                     'funding':4e5, 
-                    'scaleup':.4, 
+                    'scaleup':nan, 
                     'nonhivdalys':nan, 
                     'xupperlim':nan, 
                     'cpibaseyear':nan, 
-                    'perperson':None}
+                    'perperson':nan}
 default_coparams = [0.3, 0.5, 0.7, 0.9] 
 default_arteligcutoff = 'gt350'
 coverage_params = ['numost','numpmtct','numfirstline','numsecondline']

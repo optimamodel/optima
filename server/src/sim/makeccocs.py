@@ -31,7 +31,7 @@ def makecc(D=None, progname=None, ccparams=None, arteligcutoff=None, verbose=def
     # Check inputs... 
     if unicode(progname) not in [p['name'] for p in D['programs']]:
         raise Exception('Please select one of the following programs %s' % [p['name'] for p in D['programs']])
-    if not(isinstance(ccparams,dict)): print('Cost-coverage parameters not provided, will plot data only....')
+    prognumber = [p['name'] for p in D['programs']].index(progname) # get program number    
     if not (isinstance(arteligcutoff,str)):
         print('Assuming universal ART coverage since not otherwise specified....')
         arteligcutoff = D['G']['healthstates'][0]
@@ -39,20 +39,27 @@ def makecc(D=None, progname=None, ccparams=None, arteligcutoff=None, verbose=def
     for i in range(len(D['G'][arteligcutoff])-1): artindex.extend(states[D['G'][arteligcutoff][i+1]:D['G'][D['G']['healthstates'][-1]][i+1]+1])
     if verbose>=2: print('makecc %s %s' % (progname, ccparams))
 
-    # Initialise output structure
-    plotdata = {}
-
-    # Extract basic info from data structure
-    prognumber = [p['name'] for p in D['programs']].index(progname) # get program number    
-    totalcost = D['data']['costcov']['realcost'][prognumber] # get total cost
-
     # If ccparams haven't been passed in but there's something stored in D, use the stored version
     if (not ccparams and D['programs'][prognumber]['ccparams']):
         ccparams = D['programs'][prognumber]['ccparams']
         print("ccparams from program", ccparams)
 
+    # Establish at the beginning whether we will draw a curve or not
+    reqccparams = [ccparams.get('coveragelower'), ccparams.get('coverageupper'), ccparams.get('funding'), ccparams.get('saturation')]
+    if all(reqccparams) and all(~isnan(reqccparams)):
+        drawcurve = 1
+    else:
+        drawcurve = 0
+        print('Cost-coverage parameters not provided, will plot data only....')
+
+    # Initialise output structure
+    plotdata = {}
+
+    # Extract basic info from data structure
+    totalcost = D['data']['costcov']['realcost'][prognumber] # get total cost
+
     # Adjust cost data to year specified by user (if given)
-    if ccparams and 'cpibaseyear' in ccparams and ~isnan(ccparams['cpibaseyear']):
+    if ccparams and 'cpibaseyear' in ccparams and ccparams['cpibaseyear'] and ~isnan(ccparams['cpibaseyear']):
         from utils import smoothinterp
         cpi = smoothinterp(origy=D['data']['econ']['cpi']['past'][0], origx=linspace(0,1,len(D['data']['epiyears'])), newx=linspace(0,1,len(D['data']['epiyears'])), growth=D['data']['econ']['cpi']['future'][0][0])
         cpibaseyear = ccparams.get('cpibaseyear')
@@ -66,7 +73,7 @@ def makecc(D=None, progname=None, ccparams=None, arteligcutoff=None, verbose=def
 
     # Flag to indicate whether we will adjust by population or not
     popadj = 0
-    if (ccparams and 'perperson' in ccparams and ~isnan(ccparams['perperson'])): popadj = ccparams['perperson']
+    if (ccparams and 'perperson' in ccparams and ccparams['perperson'] and ~isnan(ccparams['perperson'])): popadj = ccparams['perperson']
 
     # Get coverage and target population size (in separate function)
     coverage, targetpopsize, coveragelabel = getcoverage(D=D, artindex=artindex, progname=progname)
@@ -76,16 +83,15 @@ def makecc(D=None, progname=None, ccparams=None, arteligcutoff=None, verbose=def
 
     # Get upper limit of x axis for plotting
     xupperlim = max([x if ~isnan(x) else 0.0 for x in totalcost])*1.5
-    if (ccparams and 'xupperlim' in ccparams and ~isnan(ccparams['xupperlim'])): xupperlim = ccparams['xupperlim']
+    if (ccparams and 'xupperlim' in ccparams and ccparams['xupperlim'] and ~isnan(ccparams['xupperlim'])): xupperlim = ccparams['xupperlim']
 
     # Populate output structure with scatter data
     totalcost, coverage = getscatterdata(totalcost, coverage)
     plotdata['xscatterdata'] = totalcost
     plotdata['yscatterdata'] = coverage
 
-    # Are the curve-making parameters there?
-    reqccparams = [ccparams.get('coveragelower'), ccparams.get('coverageupper'), ccparams.get('funding'), ccparams.get('saturation')]
-    if all(reqccparams) and all(~isnan(reqccparams)):
+    # Draw curve if we can
+    if drawcurve:
 
         convertedccparams = convertparams(D=D, ccparams=ccparams)
 
@@ -94,7 +100,7 @@ def makecc(D=None, progname=None, ccparams=None, arteligcutoff=None, verbose=def
         xvalsccpop = linspace(0,xupperlim*targetpopsize[-1],nxpts) if popadj else xvalscc
 
         # Y data
-        if 'scaleup' in ccparams:
+        if 'scaleup' in ccparams and ccparams['scaleup'] and ~isnan(ccparams['scaleup']):
             yvalsccl = cceqn(xvalsccpop, convertedccparams[0])
             yvalsccm = cceqn(xvalsccpop, convertedccparams[1])
             yvalsccu = cceqn(xvalsccpop, convertedccparams[2])
@@ -127,7 +133,7 @@ def makecc(D=None, progname=None, ccparams=None, arteligcutoff=None, verbose=def
         plotdata['yupperlim']  = 1.0
     else:
         plotdata['yupperlim']  = max([x if ~isnan(x) else 0.0 for x in coverage])*1.5
-        if ccparams: plotdata['yupperlim']  = max(yvalscc[2][-1]*1.5,plotdata['yupperlim'])
+        if drawcurve: plotdata['yupperlim']  = max(yvalscc[2][-1]*1.5,plotdata['yupperlim'])
 
     # Populate output structure with labels and titles
     plotdata['title'] = progname
@@ -389,7 +395,7 @@ def convertparams(D=None, ccparams=None):
 
     convertedccparams = []
 
-    if 'scaleup' in ccparams:
+    if 'scaleup' in ccparams and ccparams['scaleup'] and ~isnan(ccparams['scaleup']):
         growthratel = exp((1-ccparams['scaleup'])*log(ccparams['saturation']/ccparams['coveragelower']-1)+log(ccparams['funding']))
         growthratem = exp((1-ccparams['scaleup'])*log(ccparams['saturation']/((ccparams['coveragelower']+ccparams['coverageupper'])/2)-1)+log(ccparams['funding']))
         growthrateu = exp((1-ccparams['scaleup'])*log(ccparams['saturation']/ccparams['coverageupper']-1)+log(ccparams['funding']))
