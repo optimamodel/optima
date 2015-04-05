@@ -119,7 +119,6 @@ These APIs allow front-end to work with projects.
   Returns `401 Unauthorized` if user is not logged in. Otherwise this JSON:
 
   `{
-	status: "OK",
 	name: "Example",
 	dataStart: 2000,
 	dataEnd: 2015,

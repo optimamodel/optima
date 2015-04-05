@@ -100,7 +100,7 @@ class UserTestCase(OptimaTestCase):
         user_ids = [p['user_id'] for p in projects]
         assert(set(user_ids)==set([2,3]))
 
-    def test_admin_list_own_projects(self):   
+    def test_admin_list_own_projects(self):
         other_email = 'test2@test.com'
         self.create_admin_user()
         response = self.login(self.admin_email, self.admin_password)
@@ -144,7 +144,6 @@ class UserTestCase(OptimaTestCase):
         assert(response.status_code==200)
         data = json.loads(response.data)
         assert(data.get('deleted')=='3')
-        assert(data.get('status')=='OK')
         #list users again, verify we have 1 and it's the first one
         response = self.list_users()
         users = json.loads(response.data).get('users')
@@ -166,7 +165,6 @@ class UserTestCase(OptimaTestCase):
             % (self.admin_password, new_email, new_password))
         assert(response.status_code==200)
         data = json.loads(response.data)
-        assert(data.get('status')=='OK')
         assert(data.get('modified')=='2')
         response = self.login(email=new_email, password = new_password)
         response = self.api_create_project()
@@ -185,7 +183,7 @@ class UserTestCase(OptimaTestCase):
     def setUp(self):
         import hashlib
         self.admin_email = "admin@test.com"
-        self.admin_password = hashlib.sha224("admin").hexdigest()        
+        self.admin_password = hashlib.sha224("admin").hexdigest()
         OptimaTestCase.setUp(self)
 
 if __name__ == '__main__':
