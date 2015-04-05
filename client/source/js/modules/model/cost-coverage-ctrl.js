@@ -319,10 +319,15 @@ define(['./module', 'underscore'], function (module, _) {
      */
     $scope.saveModel = function () {
       if($scope.state.CostCoverageForm.$valid) {
+
         var model = getPlotModel(model);
         model.doSave = true;
         model.all_coparams = costCoverageHelpers.toRequestCoParams($scope.state.coParams);
         model.all_effects = effects;
+
+        var program = findProgram($scope.state.selectedProgram.acronym);
+        program.ccparams = model.ccparams;
+
         retrieveAndUpdateGraphs(model);
       }
     };
