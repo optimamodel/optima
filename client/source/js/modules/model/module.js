@@ -30,7 +30,7 @@ define([
           resolve: {
             info: function(Project) {
               return Project.info().$promise;
-            },
+            }
           }
         })
         .state('model.view', {

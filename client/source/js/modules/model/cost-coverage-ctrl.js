@@ -262,26 +262,9 @@ define(['./module', 'underscore'], function (module, _) {
     };
 
     /**
-     * Update current program ccparams based on the selected program.
-     *
-     * This function is supposed to be called before Draw / Redraw / Save.
-     */
-    var updateCCParams = function(model) {
-      if (model.ccparams) {
-        var program = findProgram($scope.selectedProgram.acronym);
-        program.ccparams = model.ccparams;
-      }
-    };
-
-    /**
      * Retrieve and update graphs based on the provided plot models.
      */
     var retrieveAndUpdateGraphs = function (model) {
-      // validation on Cost-coverage curve plotting options
-      if (!$scope.areValidCcParams(model.ccparams)){
-        return;
-      }
-
       $http.post('/api/model/costcoverage', model).success(function (response) {
         if (response.status === 'OK') {
 
@@ -334,10 +317,22 @@ define(['./module', 'underscore'], function (module, _) {
      * The plot model gets saved in the backend.
      */
     $scope.saveModel = function () {
-      var model = getPlotModel(model);
-      model.doSave = true;
-      model.all_coparams = costCoverageHelpers.toRequestCoParams($scope.coParams);
-      model.all_effects = effects;
+      if($scope.CostCoverageForm.$valid) {
+        var model = getPlotModel(model);
+        model.doSave = true;
+        model.all_coparams = costCoverageHelpers.toRequestCoParams($scope.coParams);
+        model.all_effects = effects;
+        retrieveAndUpdateGraphs(model);
+      }
+    };
+
+    /**
+     * Retrieve and update graphs based on the current plot models.
+     *
+     * The plot model gets reverted in the backend.
+     */
+    $scope.revertModel = function () {
+      model = { doRevert: true };
       retrieveAndUpdateGraphs(model);
     };
 
@@ -395,10 +390,10 @@ define(['./module', 'underscore'], function (module, _) {
      */
     $scope.updateCurves = _.debounce(function() { // debounce a bit so we don't update immediately
       if($scope.CostCoverageForm.$valid && $scope.hasCostCoverResponse === true) {
-       var model = getPlotModel();
-       model.all_coparams = costCoverageHelpers.toRequestCoParams($scope.coParams);
-       model.all_effects = effects;
-       retrieveAndUpdateGraphs(model);
+        var model = getPlotModel();
+        model.all_coparams = costCoverageHelpers.toRequestCoParams($scope.coParams);
+        model.all_effects = effects;
+        retrieveAndUpdateGraphs(model);
       }
     }, 500);
 
