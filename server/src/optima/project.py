@@ -365,7 +365,7 @@ def getProjectInformation():
         }
         return jsonify(reply)
     else:
-        reply = {'reason': 'Project %s does not exist' % project_id}
+        reply = {'reason': 'Project %s does not exist' % request.project_id}
         return jsonify(reply), 500
 
 @project.route('/list/all')
