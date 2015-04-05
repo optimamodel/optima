@@ -207,10 +207,11 @@ define(['./module', 'underscore'], function (module, _) {
     };
 
     /**
-     * Converts settings from the scope to costCoverage params
+     * Returns the current parameterised plot model.
      */
-    $scope.costCoverageParams = function () {
-      return {
+    var getPlotModel = function() {
+
+      var costCoverageParams = {
         saturation: costCoverageHelpers.convertFromPercent($scope.saturationCoverageLevel),
         coveragelower: costCoverageHelpers.convertFromPercent($scope.knownMinCoverageLevel),
         coverageupper: costCoverageHelpers.convertFromPercent($scope.knownMaxCoverageLevel),
@@ -221,15 +222,10 @@ define(['./module', 'underscore'], function (module, _) {
         cpibaseyear: $scope.displayYear,
         perperson: $scope.calculatePerPerson
       };
-    };
 
-    /**
-     * Returns the current parameterised plot model.
-     */
-    var getPlotModel = function() {
       return {
         progname: $scope.selectedProgram.acronym,
-        ccparams: $scope.costCoverageParams(),
+        ccparams: costCoverageParams,
         coparams: []
       };
     };
@@ -246,15 +242,14 @@ define(['./module', 'underscore'], function (module, _) {
      * filled out.
      */
     $scope.areValidCcParams = function () {
-      var params = $scope.costCoverageParams();
-      var allRequiredParamsDefined = params.saturation &&
-                                     params.coveragelower &&
-                                     params.coverageupper &&
-                                     params.funding;
-      var noRequiredParamDefined = isInvalidParam(params.saturation) &&
-                                   isInvalidParam(params.coveragelower) &&
-                                   isInvalidParam(params.coverageupper) &&
-                                   isInvalidParam(params.funding);
+      var allRequiredParamsDefined = $scope.saturationCoverageLevel &&
+                                     $scope.knownMinCoverageLevel &&
+                                     $scope.knownMaxCoverageLevel &&
+                                     $scope.knownFundingValue;
+      var noRequiredParamDefined = isInvalidParam($scope.saturationCoverageLevel) &&
+                                   isInvalidParam($scope.knownMinCoverageLevel) &&
+                                   isInvalidParam($scope.knownMaxCoverageLevel) &&
+                                   isInvalidParam($scope.knownFundingValue);
 
       return (Boolean(allRequiredParamsDefined) || noRequiredParamDefined);
     };
