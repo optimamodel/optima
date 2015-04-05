@@ -286,7 +286,7 @@ define(['./module', 'underscore'], function (module, _) {
                                    isInvalidParam(params.coverageupper) &&
                                    isInvalidParam(params.funding);
 
-      return (allRequiredParamsDefined || noRequiredParamDefined);
+      return (Boolean(allRequiredParamsDefined) || noRequiredParamDefined);
     };
 
     /**
@@ -419,7 +419,7 @@ define(['./module', 'underscore'], function (module, _) {
      *   }
      */
     $scope.updateCurve = _.debounce(function (graphIndex, AdjustmentForm) {
-      if($scope.hasCostCoverResponse && AdjustmentForm.$valid && $scope.CostCoverageForm.$valid && $scope.hasValidCCParams()) {
+      if($scope.hasCostCoverResponse && AdjustmentForm.$valid && $scope.CostCoverageForm.$valid) {
         var model = getPlotModel();
         var coParams = costCoverageHelpers.toRequestCoParams($scope.coParams);
         model.coparams = coParams[graphIndex];

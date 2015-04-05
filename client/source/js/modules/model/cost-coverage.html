@@ -49,7 +49,7 @@
         </div>
         <div class="elastic_col">
           <div class="section">
-            <form name="CostCoverageForm" ng-submit="generateCurves()">
+            <form name="CostCoverageForm">
               <div class="error-hint" ng-show="!hasValidCCParams()">First four text boxes must be either all empty, or all have values in them.</div>
               <div class="section">
                 1. Specify the saturation coverage level:
@@ -187,7 +187,6 @@
           </div>
         </div>
       </div>
-
       <div class="section" ng-if="graphs.plotdata.length" ng-repeat="chart in graphs.plotdata">
         <h2 class="section">{{ chart.options.title }}</h2>
 
@@ -257,9 +256,7 @@
             </div>
           </form>
         </div>
-
       </div>
-
     </div>
   </div>
 </div>
