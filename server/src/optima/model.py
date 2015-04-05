@@ -242,8 +242,8 @@ def getModelCalibrateParameters():
 @check_project_name
 def getModel():
     """ Returns the model (aka D or data) for the currently open project. """
-    D = load_model(request.project_id, from_json = False)
-    return jsonify(result)
+    D_dict = load_model(request.project_id, from_json = False)
+    return jsonify(D_dict)
 
 @model.route('/data/<key>')
 @login_required
@@ -253,7 +253,7 @@ def getModelGroup(key):
     current_app.logger.debug("getModelGroup: %s" % key)
     D_dict = load_model(request.project_id, from_json = False)
     the_group = D_dict.get(key, {})
-    return json.dumps(the_group)
+    return jsonify({'data': the_group})
 
 @model.route('/data/<key>/<subkey>')
 @login_required
@@ -324,6 +324,13 @@ def doRunSimulation():
 @check_project_name
 def doCostCoverage():
     """ Calls makecco with parameters supplied from frontend """
+
+    def findIndex(sequence, function):
+      """ Returns the first index in the sequence where function(item) == True. """
+      for index, item in enumerate(sequence):
+        if function(item):
+          return index
+
     data = json.loads(request.data)
     current_app.logger.debug("/costcoverage" % data)
     args = {}
@@ -331,10 +338,13 @@ def doCostCoverage():
     args = pick_params(["progname", "ccparams", "coparams", "ccplot"], data, args)
     do_save = data.get('doSave')
     try:
-        if args.get('ccparams'):args['ccparams'] = [float(param) if param else None for param in args['ccparams']]
-        if args.get('coparams'):del args['coparams']
+        if 'ccparams' in args:
+            args['ccparams'] = {key: float(value) for key, value in args['ccparams'].items() if value}
+        if 'coparams' in args:
+            del args['coparams']
 
-        progname = args['progname']
+        programIndex = findIndex(D['programs'], lambda item: item['name'] == args['progname']);
+
         effects = data.get('all_effects')
         new_coparams = data.get('all_coparams')
         if effects and len(effects):
@@ -347,8 +357,9 @@ def doCostCoverage():
                     else:
                         effect[2] = new_coparams[i][:]
                 new_effects.append(effect)
-            D['programs'][progname]['effects'] = new_effects
+            D['programs'][programIndex]['effects'] = new_effects
         args['D'] = D
+
         plotdata, plotdata_co, plotdata_cc, effectnames, D = plotallcurves(**args) #effectnames are actually effects
         if do_save:
             D_dict = tojson(D)
@@ -371,7 +382,8 @@ def doCostCoverageEffect():
     try:
         if not args.get('effect'):
             return jsonify({'status':'NOK','reason':'No effect has been specified'})
-        if args.get('ccparams'):args['ccparams'] = [float(param) if param else None for param in args['ccparams']]
+        if args.get('ccparams'):
+            args['ccparams'] = dict([(key, (float(param) if param else None)) for (key,param) in args['ccparams'].iteritems()])
         if args.get('coparams'):args['coparams'] = [float(param) for param in args['coparams']]
         plotdata, plotdata_co, storeparams_co = makecco(**args)
     except Exception, err:
@@ -395,4 +407,4 @@ def reloadSpreadsheet(project_id):
     D = load_model(project_id)
     D = updatedata(D, input_programs = project.programs, savetofile = False, rerun = True)
 
-    return jsonify({'status': 'OK'})    
+    return jsonify({'status': 'OK'})

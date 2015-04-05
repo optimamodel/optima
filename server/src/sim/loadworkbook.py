@@ -97,7 +97,7 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=2):
     ## Basic setup
     data = dict() # Create structure for holding data
     data['date'] = strftime("%Y-%m-%d %H:%M:%S")
-    programs = dict() # Create structure for holding program data
+    programs = [] # Create structure for holding program data
     workbook = open_workbook(filename) # Open workbook
     
     sheetstructure_keys = sheetstructure.keys()
@@ -223,8 +223,7 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=2):
                                 data[name][thispar]['sexworker'].append(forcebool(thesedata[7]))
                                 data[name][thispar]['client'].append(forcebool(thesedata[8]))
                             if thispar=='progs':
-                                if not thesedata[0] in programs: programs[thesedata[0]] = []
-
+                                programs.append({'name':thesedata[0], 'effects':[]})
 
                         # It's cost-coverage data, save the cost and coverage values separately
                         if groupname=='cocodata':
@@ -274,8 +273,11 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=2):
                                         raise Exception('Invalid entry in spreadsheet: parameter %s (row=%i, column(s)=%s, value=%i)' % (thispar, row, column, thesedata[column[0]]))
                             
                             for programname, pops in programs_for_input_key(thispar, input_programs).iteritems(): # Link with programs...?
-                                if (programname in programs) and ((not pops or pops==['']) or subparam in pops):
-                                    programs[programname].append([[name, thispar], [subparam]])
+                                if (programname in [programs[j]['name'] for j in range(len(programs))]) and ((not pops or pops==['']) or subparam in pops):
+                                    for prognumber, prog in enumerate(programs):
+                                        if unicode(programname) == prog['name']:
+                                            neweffect = {'paramtype':name, 'param':thispar, 'popname':subparam, 'coparams':None, 'convertedcoparams':None, 'convertedccoparams':None}
+                                            programs[prognumber]['effects'].append(neweffect)
 
 
                         # It's economics data, append the data

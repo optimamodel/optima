@@ -2,7 +2,7 @@ def migrate(D):
     # Remove bloat from scenarios
     if 'scens' in D.keys():
         for i, s in enumerate(D['scens']):
-            try: 
+            try:
                 s.pop('M')
                 s.pop('S')
                 s.pop('R')
