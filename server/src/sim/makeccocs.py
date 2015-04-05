@@ -249,6 +249,15 @@ def makecco(D=None, progname=None, effect=None, ccparams=None, coparams=None, ar
     
         plotdata['xscatterdata'] = plotdata_cc['xscatterdata'] # X scatter data
         plotdata['yscatterdata'] = plotdata_co['yscatterdata'] # Y scatter data
+        #workaround - ROBYN PLEASE HAVE A LOOK
+        if len(plotdata['xscatterdata'])!=len(plotdata['yscatterdata']):
+            minlen = min(len(plotdata['xscatterdata']), len(plotdata['yscatterdata']))
+            if minlen==0:
+                plotdata['xscatterdata']=[]
+                plotdata['yscatterdata']=[]
+            else:
+                plotdata['xscatterdata'] = plotdata['xscatterdata'][-minlen:]
+                plotdata['yscatterdata'] = plotdata['yscatterdata'][-minlen:]
     
         # Populate output structure with axis limits
         plotdata['xlowerlim'], plotdata['ylowerlim'] = plotdata_cc['xlowerlim'], plotdata_co['ylowerlim']
@@ -433,7 +442,6 @@ def getscatterdata(xdata, ydata):
             if (~isnan(xdata[j]) and ~isnan(ydata[j])):
                 xdatascatter.append(xdata[j])
                 ydatascatter.append(ydata[j])
-    
     return xdatascatter, ydatascatter
         
 ###############################################################################

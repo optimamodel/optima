@@ -17,7 +17,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       // always create a child scope & the reference can get lost.
       // see https://github.com/angular/angular.js/wiki/Understanding-Scopes
       $scope.state = {};
-
       $scope.state.chartsForDataExport = [];
       $scope.state.types = typeSelector.types;
 
@@ -81,11 +80,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       // Default program weightings
       $scope.params.objectives.money = {};
       $scope.params.objectives.money.costs = [];
-      if(meta.progs) {
-        $scope.programs = meta.progs.long;
-        $scope.programCodes = meta.progs.short;
+      if(meta.data.progs) {
+        $scope.programs = meta.data.progs.long;
+        $scope.programCodes = meta.data.progs.short;
 
-        for ( var i = 0; i < meta.progs.short.length; i++ ) {
+        for ( var i = 0; i < meta.data.progs.short.length; i++ ) {
           $scope.params.objectives.money.costs[i] = 100;
         }
 
@@ -101,7 +100,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         $scope.params.constraints.coverage = [];
 
         // Initialize program constraints models
-        for ( i = 0; i < meta.progs.short.length; i++ ) {
+        for ( i = 0; i < meta.data.progs.short.length; i++ ) {
           $scope.params.constraints.yeardecrease[i] = {};
           $scope.params.constraints.yeardecrease[i].use = false;
           $scope.params.constraints.yeardecrease[i].by = 100;
@@ -757,7 +756,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       var params = optimizationHelpers.toRequestParameters($scope.params, $scope.state.activeOptimizationName, $scope.state.timelimit);
       $http.post('/api/analysis/optimization/start', params, {ignoreLoadingBar: true})
         .success(function (data, status, headers, config) {
-          if (data.status == "OK" && data.join) {
+          if (data.join) {
             $scope.initTimer(statusEnum.RUNNING);
           } else {
             console.log("Cannot poll for optimization now");

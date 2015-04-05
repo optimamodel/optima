@@ -94,11 +94,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     var removeNoQuestionsAsked = function (user, name, id, index) {
       $http.delete('/api/project/delete/' + id)
         .success(function (response) {
-          if (response && response.status === 'NOK') {
-            modalService.inform(undefined, undefined, response.reason);
-            return;
-          }
-
           user.projects = _(user.projects).filter(function (item) {
             return item.id != id;
           });

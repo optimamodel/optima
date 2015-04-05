@@ -10,12 +10,9 @@ import traceback
 
 ALLOWED_EXTENSIONS = {'txt', 'xlsx', 'xls', 'json'}
 
-BAD_REPLY = {"status":"NOK"}
-
 def check_project_name(api_call):
     @wraps(api_call)
     def _check_project_name(*args, **kwargs):
-        reply = BAD_REPLY
         project_name = None
         project_id = None
         try:
@@ -25,11 +22,10 @@ def check_project_name(api_call):
             request.project_id = project_id
             return api_call(*args, **kwargs)
         except Exception, err:
-            var = traceback.format_exc()
-            current_app.logger.error("Exception during request %s: %s" % (request, var))
-            reply['reason'] = 'No project is open'
-            reply['exception'] = var
-            return jsonify(reply)
+            exception = traceback.format_exc()
+            current_app.logger.error("Exception during request %s: %s" % (request, exception))
+            reply = {'reason': 'No project is open', 'exception': exception}
+            return jsonify(reply), 500
     return _check_project_name
 
 def report_exception(reason = None):
@@ -39,13 +35,12 @@ def report_exception(reason = None):
             try:
                 return api_call(*args, **kwargs)
             except Exception, err:
-                var = traceback.format_exc()
-                current_app.logger.error("Exception during request %s: %s" % (request, var))
-                reply = BAD_REPLY
-                reply['exception'] = var
+                exception = traceback.format_exc()
+                current_app.logger.error("Exception during request %s: %s" % (request, exception))
+                reply = {'exception': exception}
                 if reason:
                     reply['reason'] = reason
-                return jsonify(reply)
+                return jsonify(reply), 500
         return __report_exception
     return _report_exception
 
@@ -98,7 +93,7 @@ def project_exists(id):
     cu = current_user
     if current_user.is_admin:
         return ProjectDb.query.filter_by(id=id).count()>0
-    else: 
+    else:
         return ProjectDb.query.filter_by(id=id, user_id=cu.id).count()>0
 
 def load_project(id, all_data = False):
@@ -107,7 +102,7 @@ def load_project(id, all_data = False):
     current_app.logger.debug("getting project %s for user %s (admin:%s)" % (id, cu.id, cu.is_admin))
     if cu.is_admin:
         query = ProjectDb.query.filter_by(id=id)
-    else: 
+    else:
         query = ProjectDb.query.filter_by(id=id, user_id=cu.id)
     if all_data:
         query = query.options( \

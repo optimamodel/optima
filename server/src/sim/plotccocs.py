@@ -92,7 +92,7 @@ def plotprogramcurves(D, progname=default_progname, ccparams=default_ccparams, c
         plotcco(D, progname=progname, effect=effect, ccparams=ccparams, coparams=coparams, arteligcutoff=arteligcutoff)            
 
 #################################################################################
-def plotall(D):
+def plotall(D, ccparams = default_ccparams, coparams = default_coparams):
     for program in D['programs']:
         plotdata_cc, D = makecc(D=D, progname=program['name'])
         plotprogramcurves(D=D, progname=program['name'])

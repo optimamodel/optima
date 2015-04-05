@@ -265,18 +265,15 @@ define(['./module', 'underscore'], function (module, _) {
      */
     var retrieveAndUpdateGraphs = function (model) {
       $http.post('/api/model/costcoverage', model).success(function (response) {
-        if (response.status === 'OK') {
+        $scope.state.displayedProgram = angular.copy($scope.state.selectedProgram);
+        effects = response.effectnames;
+        $scope.state.coParams = costCoverageHelpers.setUpCoParamsFromEffects(effects);
+        $scope.state.hasCostCoverResponse = true;
 
-          $scope.state.displayedProgram = angular.copy($scope.state.selectedProgram);
-          effects = response.effectnames;
-          $scope.state.coParams = costCoverageHelpers.setUpCoParamsFromEffects(effects);
-          $scope.state.hasCostCoverResponse = true;
-
-          resetGraphs();
-          _(plotTypes).each(function (plotType) {
-            prepareGraphsOfType(response[plotType], plotType);
-          });
-        }
+        resetGraphs();
+        _(plotTypes).each(function (plotType) {
+          prepareGraphsOfType(response[plotType], plotType);
+        });
       });
     };
 
