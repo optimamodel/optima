@@ -333,9 +333,9 @@ define(['./module', 'underscore'], function (module, _) {
         $scope.hasCostCoverResponse = false;
       }
       var program = findProgram($scope.selectedProgram.acronym);
-      $scope.saturationCoverageLevel = program.ccparams.saturation?program.ccparams.saturation*100:undefined;
-      $scope.knownMinCoverageLevel = program.ccparams.coveragelower?program.ccparams.coveragelower*100:undefined;
-      $scope.knownMaxCoverageLevel = program.ccparams.coverageupper?program.ccparams.coverageupper*100:undefined;
+      $scope.saturationCoverageLevel = program.ccparams.saturation ? program.ccparams.saturation * 100 : undefined;
+      $scope.knownMinCoverageLevel = program.ccparams.coveragelower ? program.ccparams.coveragelower * 100 : undefined;
+      $scope.knownMaxCoverageLevel = program.ccparams.coverageupper ? program.ccparams.coverageupper * 100 : undefined;
       $scope.knownFundingValue = program.ccparams.funding;
       $scope.scaleUpParameter = program.ccparams.scaleup;
       $scope.nonHivDalys = program.ccparams.nonhivdalys;
