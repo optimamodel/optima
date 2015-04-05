@@ -10,19 +10,13 @@ define(['./module', 'underscore'], function (module, _) {
       $scope.chartsForDataExport = [];
       $scope.titlesForChartsExport = [];
 
-      $scope.needData = !info.has_data;
-
       $scope.programs = programs.data;
+      $scope.selectionPrograms = initializePrograms(info.programs, $scope.programs);
+      $scope.selectedProgram = $scope.selectionPrograms[0];
+      $scope.displayedProgram = null;
 
-      if ( !$scope.needData ) {
-        $scope.selectionPrograms = initializePrograms(info.programs, $scope.programs);
-        $scope.selectedProgram = $scope.selectionPrograms[0];
-        $scope.displayedProgram = null;
-
-        $scope.coParams = [];
-
-        $scope.hasCostCoverResponse = false;
-      }
+      $scope.coParams = [];
+      $scope.hasCostCoverResponse = false;
 
       plotTypes = ['plotdata', 'plotdata_cc', 'plotdata_co'];
 
