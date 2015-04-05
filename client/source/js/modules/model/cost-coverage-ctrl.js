@@ -2,7 +2,7 @@ define(['./module', 'underscore'], function (module, _) {
   'use strict';
 
   module.controller('ModelCostCoverageController', function ($scope, $http,
-    $state, info, modalService, programs, costCoverageHelpers) {
+    $state, info, modalService, programsResource, costCoverageHelpers) {
 
     // In case there is no model data the controller only needs to show the
     // warning that the user should upload a spreadsheet with data.
@@ -11,19 +11,21 @@ define(['./module', 'underscore'], function (module, _) {
       return;
     }
 
-    var plotTypes, effects;
+    var plotTypes, effects, programs;
 
     var initialize =function () {
-      $scope.chartsForDataExport = [];
-      $scope.titlesForChartsExport = [];
+      programs = programsResource.data;
 
-      $scope.programs = programs.data;
-      $scope.selectionPrograms = initializePrograms(info.programs, $scope.programs);
-      $scope.selectedProgram = $scope.selectionPrograms[0];
-      $scope.displayedProgram = null;
+      $scope.state = {
+        chartsForDataExport: [],
+        titlesForChartsExport: [],
+        displayedProgram: null,
+        selectionPrograms: initializePrograms(info.programs, programs),
+        coParams: [],
+        hasCostCoverResponse: false
+      };
 
-      $scope.coParams = [];
-      $scope.hasCostCoverResponse = false;
+      $scope.state.selectedProgram = $scope.state.selectionPrograms[0];
 
       plotTypes = ['plotdata', 'plotdata_cc', 'plotdata_co'];
 
@@ -34,7 +36,7 @@ define(['./module', 'underscore'], function (module, _) {
      * Returns the program by name.
      */
     function findProgram (acronym) {
-      return _($scope.programs).find(function(entry) {
+      return _(programs).find(function(entry) {
         return entry.name === acronym;
       });
     }
@@ -205,7 +207,7 @@ define(['./module', 'underscore'], function (module, _) {
     var prepareGraphsOfType = function (data, type) {
       if (type === 'plotdata_cc') {
         $scope.ccGraph = prepareCostCoverageGraph(data);
-        $scope.ccGraph.options.title = $scope.displayedProgram.name;
+        $scope.ccGraph.options.title = $scope.state.displayedProgram.name;
       } else if (type === 'plotdata' || type === 'plotdata_co') {
         _(data).each(function (graphData) {
           $scope.graphs[type].push(setUpPlotdataGraph(graphData));
@@ -219,19 +221,19 @@ define(['./module', 'underscore'], function (module, _) {
     var getPlotModel = function() {
 
       var costCoverageParams = {
-        saturation: costCoverageHelpers.convertFromPercent($scope.saturationCoverageLevel),
-        coveragelower: costCoverageHelpers.convertFromPercent($scope.knownMinCoverageLevel),
-        coverageupper: costCoverageHelpers.convertFromPercent($scope.knownMaxCoverageLevel),
-        funding: $scope.knownFundingValue,
-        scaleup: $scope.scaleUpParameter,
-        nonhivdalys: $scope.nonHivDalys,
-        xupperlim: $scope.xAxisMaximum,
-        cpibaseyear: $scope.displayYear,
-        perperson: $scope.calculatePerPerson
+        saturation: costCoverageHelpers.convertFromPercent($scope.state.saturationCoverageLevel),
+        coveragelower: costCoverageHelpers.convertFromPercent($scope.state.knownMinCoverageLevel),
+        coverageupper: costCoverageHelpers.convertFromPercent($scope.state.knownMaxCoverageLevel),
+        funding: $scope.state.knownFundingValue,
+        scaleup: $scope.state.scaleUpParameter,
+        nonhivdalys: $scope.state.nonHivDalys,
+        xupperlim: $scope.state.xAxisMaximum,
+        cpibaseyear: $scope.state.displayYear,
+        perperson: $scope.state.calculatePerPerson
       };
 
       return {
-        progname: $scope.selectedProgram.acronym,
+        progname: $scope.state.selectedProgram.acronym,
         ccparams: costCoverageParams,
         coparams: []
       };
@@ -249,14 +251,14 @@ define(['./module', 'underscore'], function (module, _) {
      * filled out.
      */
     $scope.areValidCcParams = function () {
-      var allRequiredParamsDefined = $scope.saturationCoverageLevel &&
-                                     $scope.knownMinCoverageLevel &&
-                                     $scope.knownMaxCoverageLevel &&
-                                     $scope.knownFundingValue;
-      var noRequiredParamDefined = isInvalidParam($scope.saturationCoverageLevel) &&
-                                   isInvalidParam($scope.knownMinCoverageLevel) &&
-                                   isInvalidParam($scope.knownMaxCoverageLevel) &&
-                                   isInvalidParam($scope.knownFundingValue);
+      var allRequiredParamsDefined = $scope.state.saturationCoverageLevel &&
+                                     $scope.state.knownMinCoverageLevel &&
+                                     $scope.state.knownMaxCoverageLevel &&
+                                     $scope.state.knownFundingValue;
+      var noRequiredParamDefined = isInvalidParam($scope.state.saturationCoverageLevel) &&
+                                   isInvalidParam($scope.state.knownMinCoverageLevel) &&
+                                   isInvalidParam($scope.state.knownMaxCoverageLevel) &&
+                                   isInvalidParam($scope.state.knownFundingValue);
 
       return (Boolean(allRequiredParamsDefined) || noRequiredParamDefined);
     };
@@ -268,10 +270,10 @@ define(['./module', 'underscore'], function (module, _) {
       $http.post('/api/model/costcoverage', model).success(function (response) {
         if (response.status === 'OK') {
 
-          $scope.displayedProgram = angular.copy($scope.selectedProgram);
+          $scope.state.displayedProgram = angular.copy($scope.state.selectedProgram);
           effects = response.effectnames;
-          $scope.coParams = costCoverageHelpers.setUpCoParamsFromEffects(effects);
-          $scope.hasCostCoverResponse = true;
+          $scope.state.coParams = costCoverageHelpers.setUpCoParamsFromEffects(effects);
+          $scope.state.hasCostCoverResponse = true;
 
           resetGraphs();
           _(plotTypes).each(function (plotType) {
@@ -283,19 +285,19 @@ define(['./module', 'underscore'], function (module, _) {
 
     $scope.changeProgram = function() {
 
-      if($scope.hasCostCoverResponse === true) {
-        $scope.hasCostCoverResponse = false;
+      if($scope.state.hasCostCoverResponse === true) {
+        $scope.state.hasCostCoverResponse = false;
       }
-      var program = findProgram($scope.selectedProgram.acronym);
-      $scope.saturationCoverageLevel = program.ccparams.saturation ? program.ccparams.saturation * 100 : undefined;
-      $scope.knownMinCoverageLevel = program.ccparams.coveragelower ? program.ccparams.coveragelower * 100 : undefined;
-      $scope.knownMaxCoverageLevel = program.ccparams.coverageupper ? program.ccparams.coverageupper * 100 : undefined;
-      $scope.knownFundingValue = program.ccparams.funding;
-      $scope.scaleUpParameter = program.ccparams.scaleup;
-      $scope.nonHivDalys = program.ccparams.nonhivdalys;
-      $scope.displayYear = program.ccparams.cpibaseyear;
-      $scope.xAxisMaximum = program.ccparams.xupperlim;
-      $scope.calculatePerPerson = program.ccparams.perperson;
+      var program = findProgram($scope.state.selectedProgram.acronym);
+      $scope.state.saturationCoverageLevel = program.ccparams.saturation ? program.ccparams.saturation * 100 : undefined;
+      $scope.state.knownMinCoverageLevel = program.ccparams.coveragelower ? program.ccparams.coveragelower * 100 : undefined;
+      $scope.state.knownMaxCoverageLevel = program.ccparams.coverageupper ? program.ccparams.coverageupper * 100 : undefined;
+      $scope.state.knownFundingValue = program.ccparams.funding;
+      $scope.state.scaleUpParameter = program.ccparams.scaleup;
+      $scope.state.nonHivDalys = program.ccparams.nonhivdalys;
+      $scope.state.displayYear = program.ccparams.cpibaseyear;
+      $scope.state.xAxisMaximum = program.ccparams.xupperlim;
+      $scope.state.calculatePerPerson = program.ccparams.perperson;
 
       var model = getPlotModel();
       retrieveAndUpdateGraphs(model);
@@ -317,10 +319,10 @@ define(['./module', 'underscore'], function (module, _) {
      * The plot model gets saved in the backend.
      */
     $scope.saveModel = function () {
-      if($scope.CostCoverageForm.$valid) {
+      if($scope.state.CostCoverageForm.$valid) {
         var model = getPlotModel(model);
         model.doSave = true;
-        model.all_coparams = costCoverageHelpers.toRequestCoParams($scope.coParams);
+        model.all_coparams = costCoverageHelpers.toRequestCoParams($scope.state.coParams);
         model.all_effects = effects;
         retrieveAndUpdateGraphs(model);
       }
@@ -346,9 +348,10 @@ define(['./module', 'underscore'], function (module, _) {
      *   }
      */
     $scope.updateCurve = _.debounce(function (graphIndex, AdjustmentForm) {
-      if($scope.hasCostCoverResponse && AdjustmentForm.$valid && $scope.CostCoverageForm.$valid) {
+
+      if($scope.state.hasCostCoverResponse && AdjustmentForm.$valid && $scope.state.CostCoverageForm.$valid) {
         var model = getPlotModel();
-        var coParams = costCoverageHelpers.toRequestCoParams($scope.coParams);
+        var coParams = costCoverageHelpers.toRequestCoParams($scope.state.coParams);
         model.coparams = coParams[graphIndex];
         model.effect = effects[graphIndex];
 
@@ -361,23 +364,23 @@ define(['./module', 'underscore'], function (module, _) {
     },500);
 
     /**
-     * Collects all existing charts in the $scope.chartsForDataExport variable.
+     * Collects all existing charts in the $scope.state.chartsForDataExport variable.
      * In addition all titles are gatherd into titlesForChartsExport. This is
      * needed since the cost coverage graphs have no title on the graphs.
      */
     var updateDataForExport = function() {
-      $scope.chartsForDataExport = [];
-      $scope.titlesForChartsExport = [];
+      $scope.state.chartsForDataExport = [];
+      $scope.state.titlesForChartsExport = [];
 
       if ( $scope.ccGraph) {
-        $scope.chartsForDataExport.push($scope.ccGraph);
-        $scope.titlesForChartsExport.push($scope.ccGraph.options.title);
+        $scope.state.chartsForDataExport.push($scope.ccGraph);
+        $scope.state.titlesForChartsExport.push($scope.ccGraph.options.title);
       }
 
       var charts = _(_.zip($scope.graphs.plotdata, $scope.graphs.plotdata_co)).flatten();
       _( charts ).each(function (chart,index) {
-        $scope.chartsForDataExport.push(chart);
-        $scope.titlesForChartsExport.push(chart.options.title);
+        $scope.state.chartsForDataExport.push(chart);
+        $scope.state.titlesForChartsExport.push(chart.options.title);
       });
     };
 
@@ -389,9 +392,10 @@ define(['./module', 'underscore'], function (module, _) {
      * by pressing the draw button.
      */
     $scope.updateCurves = _.debounce(function() { // debounce a bit so we don't update immediately
-      if($scope.CostCoverageForm.$valid && $scope.hasCostCoverResponse === true) {
+
+      if($scope.state.CostCoverageForm.$valid && $scope.state.hasCostCoverResponse === true) {
         var model = getPlotModel();
-        model.all_coparams = costCoverageHelpers.toRequestCoParams($scope.coParams);
+        model.all_coparams = costCoverageHelpers.toRequestCoParams($scope.state.coParams);
         model.all_effects = effects;
         retrieveAndUpdateGraphs(model);
       }

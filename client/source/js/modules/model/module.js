@@ -51,7 +51,7 @@ define([
           controller: 'ModelCostCoverageController',
           templateUrl: 'js/modules/model/cost-coverage.html',
           resolve: {
-            programs: function(Model) {
+            programsResource: function(Model) {
               return Model.getPrograms().$promise;
             }
           }
