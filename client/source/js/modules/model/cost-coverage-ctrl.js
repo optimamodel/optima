@@ -2,9 +2,9 @@ define(['./module', 'underscore'], function (module, _) {
   'use strict';
 
   module.controller('ModelCostCoverageController', function ($scope, $http,
-    $state, info, modalService, programs) {
+    $state, info, modalService, programs, costCoverageHelpers) {
 
-    var plotTypes, effectNames;
+    var plotTypes, effects;
 
     var initialize =function () {
       $scope.chartsForDataExport = [];
@@ -50,7 +50,7 @@ define(['./module', 'underscore'], function (module, _) {
      * If the backend do not present values for the categories, we'll use 'Others' as default.
      */
     function initializePrograms (programsWithNames, programsWithParams) {
-      // TODO I blieve this is only here to ensure the correct order
+      // This code exists to ensur the correct order.
       var programs =  _(programsWithNames).map(function (item) {
         var acronym = item.short_name;
 
@@ -219,48 +219,14 @@ define(['./module', 'underscore'], function (module, _) {
       }
     };
 
-    var setUpCOParamsFromEffects = function (effectNames) {
-      $scope.coParams = _(effectNames).map(function (effect) {
-        if (effect.coparams) {
-          return [
-            (effect.coparams && effect.coparams[0]) ? effect.coparams[0] * 100 : null,
-            (effect.coparams && effect.coparams[1]) ? effect.coparams[1] * 100 : null,
-            (effect.coparams && effect.coparams[2]) ? effect.coparams[2] * 100 : null,
-            (effect.coparams && effect.coparams[3]) ? effect.coparams[3] * 100 : null
-          ];
-        } else {
-          return [null, null, null, null];
-        }
-
-      });
-    };
-
-    $scope.convertFromPercent = function (value) {
-      if (typeof value !== "number" || isNaN(value)) {
-        return NaN;
-      }
-      return value / 100;
-    };
-
-    $scope.convertedCoParams = function () {
-      return _($scope.coParams).map(function (effect) {
-        return [
-          $scope.convertFromPercent(effect[0]),
-          $scope.convertFromPercent(effect[1]),
-          $scope.convertFromPercent(effect[2]),
-          $scope.convertFromPercent(effect[3])
-        ];
-      });
-    };
-
     /**
      * Converts settings from the scope to costCoverage params
      */
     $scope.costCoverageParams = function () {
       return {
-        saturation: $scope.convertFromPercent($scope.saturationCoverageLevel),
-        coveragelower: $scope.convertFromPercent($scope.knownMinCoverageLevel),
-        coverageupper: $scope.convertFromPercent($scope.knownMaxCoverageLevel),
+        saturation: costCoverageHelpers.convertFromPercent($scope.saturationCoverageLevel),
+        coveragelower: costCoverageHelpers.convertFromPercent($scope.knownMinCoverageLevel),
+        coverageupper: costCoverageHelpers.convertFromPercent($scope.knownMaxCoverageLevel),
         funding: $scope.knownFundingValue,
         scaleup: $scope.scaleUpParameter,
         nonhivdalys: $scope.nonHivDalys,
@@ -364,8 +330,8 @@ define(['./module', 'underscore'], function (module, _) {
         if (response.status === 'OK') {
 
           $scope.displayedProgram = angular.copy($scope.selectedProgram);
-          effectNames = response.effectnames;
-          setUpCOParamsFromEffects(response.effectnames);
+          effects = response.effectnames;
+          $scope.coParams = costCoverageHelpers.setUpCoParamsFromEffects(effects);
           $scope.hasCostCoverResponse = true;
 
           resetGraphs();
@@ -401,8 +367,8 @@ define(['./module', 'underscore'], function (module, _) {
     $scope.generateCurves = function () {
       var model = getPlotModel();
       if ($scope.hasCostCoverResponse) {
-        model.all_coparams = $scope.convertedCoParams();
-        model.all_effects = effectNames;
+        model.all_coparams = costCoverageHelpers.toRequestCoParams($scope.coParams);
+        model.all_effects = effects;
       }
 
       retrieveAndUpdateGraphs(model);
@@ -426,8 +392,8 @@ define(['./module', 'underscore'], function (module, _) {
     $scope.saveModel = function () {
       var model = getPlotModel(model);
       model.doSave = true;
-      model.all_coparams = $scope.convertedCoParams();
-      model.all_effects = effectNames;
+      model.all_coparams = costCoverageHelpers.toRequestCoParams($scope.coParams);
+      model.all_effects = effects;
       retrieveAndUpdateGraphs(model);
     };
 
@@ -454,8 +420,9 @@ define(['./module', 'underscore'], function (module, _) {
     $scope.updateCurve = _.debounce(function (graphIndex, AdjustmentForm) {
       if($scope.hasCostCoverResponse && AdjustmentForm.$valid && $scope.CostCoverageForm.$valid && $scope.hasValidCCParams()) {
         var model = getPlotModel();
-        model.coparams = $scope.convertedCoParams()[graphIndex];
-        model.effect = effectNames[graphIndex];
+        var coParams = costCoverageHelpers.toRequestCoParams($scope.coParams);
+        model.coparams = coParams[graphIndex];
+        model.effect = effects[graphIndex];
         if (!areValidCoParams(model.coparams)) {
           // no need to show dialog - we inform the user with hints
           return;
@@ -478,7 +445,7 @@ define(['./module', 'underscore'], function (module, _) {
         $http.post('/api/model/costcoverage/effect', model).success(function (response) {
           $scope.graphs.plotdata[graphIndex] = setUpPlotdataGraph(response.plotdata);
           $scope.graphs.plotdata_co[graphIndex] = setUpPlotdataGraph(response.plotdata_co);
-          effectNames[graphIndex] = response.effect;
+          effects[graphIndex] = response.effect;
         });
       }
     },500);
