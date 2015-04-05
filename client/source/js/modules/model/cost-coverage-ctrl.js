@@ -4,6 +4,13 @@ define(['./module', 'underscore'], function (module, _) {
   module.controller('ModelCostCoverageController', function ($scope, $http,
     $state, info, modalService, programs, costCoverageHelpers) {
 
+    // In case there is no model data the controller only needs to show the
+    // warning that the user should upload a spreadsheet with data.
+    if (!info.has_data) {
+      $scope.missingModelData = true;
+      return;
+    }
+
     var plotTypes, effects;
 
     var initialize =function () {

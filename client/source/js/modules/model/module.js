@@ -26,16 +26,18 @@ define([
         .state('model', {
           url: '/model',
           abstract: true,
-          template: '<div ui-view></div>'
+          template: '<div ui-view></div>',
+          resolve: {
+            info: function(Project) {
+              return Project.info().$promise;
+            },
+          }
         })
         .state('model.view', {
           url: '/view',
           templateUrl: 'js/modules/model/calibration.html',
           controller: 'ModelCalibrationController',
           resolve: {
-            info: function(Project) {
-              return Project.info().$promise;
-            },
             parameters: function (Model) {
               return Model.getCalibrateParameters().$promise;
             },
@@ -47,19 +49,8 @@ define([
         .state('model.define-cost-coverage-outcome', {
           url: '/define-cost-coverage-outcome',
           controller: 'ModelCostCoverageController',
-          templateProvider: function($templateFactory, Project, $timeout) {
-            return Project.info().$promise.then(function(info) {
-              if (info.has_data) {
-                return $templateFactory.fromUrl('js/modules/model/cost-coverage.html');
-              } else {
-                return $templateFactory.fromUrl('js/modules/upload-info/upload-info.html');
-              }
-            });
-          },
+          templateUrl: 'js/modules/model/cost-coverage.html',
           resolve: {
-            info: function(Project) {
-              return Project.info().$promise;
-            },
             programs: function(Model) {
               return Model.getPrograms().$promise;
             }

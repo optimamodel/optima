@@ -23,19 +23,21 @@ define([
             .state('analysis', {
                 url: '/analysis',
                 abstract: true,
-                template: '<div ui-view></div>'
-            })
-            .state('analysis.scenarios', {
-                url: '/scenarios',
-                templateUrl: 'js/modules/analysis/scenarios.html' ,
-                controller: 'AnalysisScenariosController',
+                template: '<div ui-view></div>',
                 resolve: {
                   info: function($http) {
                     return $http.get('/api/project/info');
                   },
                   meta: function (Model) {
                     return Model.getKeyDataMeta().$promise;
-                  },
+                  }
+                }
+            })
+            .state('analysis.scenarios', {
+                url: '/scenarios',
+                templateUrl: 'js/modules/analysis/scenarios.html' ,
+                controller: 'AnalysisScenariosController',
+                resolve: {
                   scenarioParametersResponse: function($http, info) {
                     return $http.get('/api/analysis/scenarios/parameters');
                   },
@@ -49,9 +51,6 @@ define([
                 templateUrl: 'js/modules/analysis/optimization.html' ,
                 controller: 'AnalysisOptimizationController',
                 resolve: {
-                  meta: function (Model) {
-                    return Model.getKeyDataMeta().$promise;
-                  },
                   optimizations: function($http) {
                     return $http.get('/api/analysis/optimization/list');
                   }

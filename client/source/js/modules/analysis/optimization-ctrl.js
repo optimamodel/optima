@@ -3,14 +3,20 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
   module.controller('AnalysisOptimizationController', function ($scope, $http,
     $interval, meta, cfpLoadingBar, CONFIG, modalService, typeSelector,
-    optimizations, optimizationHelpers) {
+    optimizations, optimizationHelpers, info) {
+
+      // In case there is no model data the controller only needs to show the
+      // warning that the user should upload a spreadsheet with data.
+      if (!info.has_data) {
+        $scope.missingModelData = true;
+        return;
+      }
 
       $scope.chartsForDataExport = [];
 
       $scope.meta = meta;
       $scope.types = typeSelector.types;
 
-      $scope.needData = $scope.meta.progs === undefined;
       $scope.activeTab = 1;
       var errorMessages = [];
 

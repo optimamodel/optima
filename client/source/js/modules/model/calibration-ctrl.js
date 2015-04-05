@@ -4,6 +4,13 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   module.controller('ModelCalibrationController', function ($scope, $http, $interval,
     Model, parameters, meta, info, CONFIG, typeSelector, cfpLoadingBar, calibration) {
 
+    // In case there is no model data the controller only needs to show the
+    // warning that the user should upload a spreadsheet with data.
+    if (!info.has_data) {
+      $scope.missingModelData = true;
+      return;
+    }
+
     var defaultChartOptions = {
       title: 'Title',
       height: 200,
@@ -60,9 +67,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       };
       angular.extend($scope.parameters, calibration.toScopeParameters(parameters));
 
-      if ($scope.projectInfo.has_data){
-        $scope.simulate();
-      }
+      $scope.simulate();
     };
 
     /**

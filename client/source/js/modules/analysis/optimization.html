@@ -1,7 +1,9 @@
 <div class="page">
-  <p ng-show="needData" class="error-hint">Please upload Optima spreadsheet first.</p>
+  <div ng-if="missingModelData">
+    <spreadsheet-upload-hint></spreadsheet-upload-hint>
+  </div>
 
-  <div ng-if="!needData">
+  <div ng-if="!missingModelData">
 
     <div class="grid" style="margin-bottom: 40px">
       <div class="12">
