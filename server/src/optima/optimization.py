@@ -43,9 +43,12 @@ def getOptimizationParameters():
         if not 'optimizations' in D_dict:
             # save the defaults once and forever, so that we won't painfully retrieve it later
             D = fromjson(D_dict)
-            optimizations = tojson(defaultoptimizations(D))
-            D_dict['optimizations'] = optimizations
-            save_model(project_id, D_dict)
+            if 'data' in D:
+                optimizations = tojson(defaultoptimizations(D))
+                D_dict['optimizations'] = optimizations
+                save_model(project_id, D_dict)
+            else:
+                optimizations = []
         else:
             optimizations = D_dict['optimizations']
         return json.dumps({'optimizations':optimizations})
@@ -114,7 +117,7 @@ def getWorkingModel():
     import datetime
     import dateutil.tz
     from copy import deepcopy
-    
+
     current_app.logger.debug("/api/optimization/working")
     result = {}
     D_dict = {}
@@ -135,7 +138,7 @@ def getWorkingModel():
         current_app.logger.debug("optimization for project %s was stopped or cancelled" % project_id)
         async_status, error_text, stop_time = check_calculation_status(current_user.id, project_id, optimize, db.session)
         now_time = datetime.datetime.now(dateutil.tz.tzutc()) #time in DB is UTC-aware
-        if async_status == 'unknown': 
+        if async_status == 'unknown':
             status = 'Done'
         elif async_status in good_exit_status:
             if stop_time and stop_time<now_time: #actually stopped
