@@ -193,16 +193,23 @@
             <h3>Options to adjust curves:</h3>
             <div class="section">
               1. Behavior/outcome without this program ranges between
-              <input type="number" class="txbox __inline"
+              <input type="number"
+                     class="txbox __inline"
                      name="withoutProgramRangeStart"
-                     min="0" max="100" step="1" required
+                     min="0"
+                     max="100"
+                     step="1"
+                     required
                      ng-change="updateCurve($index,AdjustmentForm)"
                      ng-model="coParams[$index][0]"
                      less-than="coParams[$index][1]">%
               and
               <input type="number" class="txbox __inline"
                      name="withoutProgramRangeEnd"
-                     min="0" max="100" step="1" required
+                     min="0"
+                     max="100"
+                     step="1"
+                     required
                      ng-change="updateCurve($index,AdjustmentForm)"
                      ng-model="coParams[$index][1]"
                      more-than="coParams[$index][0]">%
@@ -223,9 +230,26 @@
             </div>
             <div class="section">
               2. Behavior/outcome under full coverage of this program ranges between
-              <input type="number" name="fullCoverageRangeStart" min="0" max="100" step="1" ng-required="true" ng-change="updateCurve($index,AdjustmentForm)" class="txbox __inline" ng-model="coParams[$index][2]" less-than="coParams[$index][3]">%
+              <input type="number"
+                     name="fullCoverageRangeStart"
+                     min="0"
+                     max="100"
+                     step="1"
+                     ng-required="true"
+                     ng-change="updateCurve($index,AdjustmentForm)"
+                     class="txbox __inline"
+                     ng-model="coParams[$index][2]"
+                     less-than="coParams[$index][3]">%
               and
-              <input type="number" name="fullCoverageRangeEnd" min="0" max="100" step="1" ng-required="true" ng-change="updateCurve($index,AdjustmentForm)" class="txbox __inline" ng-model="coParams[$index][3]">%
+              <input type="number"
+                     name="fullCoverageRangeEnd"
+                     min="0"
+                     max="100"
+                     step="1"
+                     ng-required="true"
+                     ng-change="updateCurve($index,AdjustmentForm)"
+                     class="txbox __inline"
+                     ng-model="coParams[$index][3]">%
 
               <div ng-messages="AdjustmentForm.fullCoverageRangeStart.$error"
                    ng-show="AdjustmentForm.fullCoverageRangeStart.$invalid">
