@@ -335,13 +335,11 @@ def doCostCoverage():
     current_app.logger.debug("/costcoverage" % data)
     args = {}
     D = load_model(request.project_id)
-    args = pick_params(["progname", "ccparams", "coparams", "ccplot"], data, args)
+    args = pick_params(["progname", "ccparams"], data, args)
     do_save = data.get('doSave')
     try:
         if 'ccparams' in args:
             args['ccparams'] = {key: float(value) for key, value in args['ccparams'].items() if value}
-        if 'coparams' in args:
-            del args['coparams']
 
         programIndex = findIndex(D['programs'], lambda item: item['name'] == args['progname']);
 
@@ -377,7 +375,7 @@ def doCostCoverageEffect():
     data = json.loads(request.data)
     current_app.logger.debug("/costcoverage/effect(%s)" % data)
     args = {}
-    args = pick_params(["progname", "effect", "ccparams", "coparams", "ccplot"], data, args)
+    args = pick_params(["progname", "effect", "ccparams", "coparams"], data, args)
     args['D'] = load_model(request.project_id)
     try:
         if not args.get('effect'):

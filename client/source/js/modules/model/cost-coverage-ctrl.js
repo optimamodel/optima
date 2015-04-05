@@ -234,8 +234,7 @@ define(['./module', 'underscore'], function (module, _) {
 
       return {
         progname: $scope.state.selectedProgram.acronym,
-        ccparams: costCoverageParams,
-        coparams: []
+        ccparams: costCoverageParams
       };
     };
 
@@ -334,7 +333,8 @@ define(['./module', 'underscore'], function (module, _) {
      * The plot model gets reverted in the backend.
      */
     $scope.revertModel = function () {
-      model = { doRevert: true };
+      $scope.changeProgram(); // this will reset the program
+      var model = getPlotModel();
       retrieveAndUpdateGraphs(model);
     };
 
@@ -388,8 +388,8 @@ define(['./module', 'underscore'], function (module, _) {
     $scope.$watch('ccGraph', updateDataForExport, true);
 
     /**
-     * Retrieve and update graphs based on the current plot models only if the graphs are already rendered
-     * by pressing the draw button.
+     * Retrieve and update graphs based on the current plot models only if the
+     * graphs are already rendered by pressing the draw button.
      */
     $scope.updateCurves = _.debounce(function() { // debounce a bit so we don't update immediately
 
