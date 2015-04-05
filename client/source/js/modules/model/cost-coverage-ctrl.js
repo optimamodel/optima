@@ -259,7 +259,7 @@ define(['./module', 'underscore'], function (module, _) {
       return hasAllElements(params) || hasOnlyInvalidEntries(params);
     }
 
-    $scope.hasValidCCParams = function () {
+    $scope.areValidCcParams = function () {
       var params = $scope.costCoverageParams();
       var allRequiredParamsDefined = params.saturation &&
                                      params.coveragelower &&
@@ -290,7 +290,7 @@ define(['./module', 'underscore'], function (module, _) {
      */
     var retrieveAndUpdateGraphs = function (model) {
       // validation on Cost-coverage curve plotting options
-      if (!$scope.hasValidCCParams(model.ccparams)){
+      if (!$scope.areValidCcParams(model.ccparams)){
         return;
       }
 

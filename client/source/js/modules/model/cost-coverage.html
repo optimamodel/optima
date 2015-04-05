@@ -37,7 +37,7 @@
         <div class="elastic_col">
           <div class="section">
             <form name="CostCoverageForm">
-              <div class="error-hint" ng-show="!hasValidCCParams()">First four text boxes must be either all empty, or all have values in them.</div>
+              <div class="error-hint" ng-show="!areValidCcParams()">First four text boxes must be either all empty, or all have values in them.</div>
               <div class="section">
                 1. Specify the saturation coverage level:
                 <input type="number" class="txbox __inline __m"
@@ -45,7 +45,7 @@
                        min="1" max="100" step="1"
                        placeholder="e.g. 90"
                        ng-model="saturationCoverageLevel"
-                       ng-required="!hasValidCCParams()"
+                       ng-required="!areValidCcParams()"
                        more-than="knownMaxCoverageLevel"
                        ng-change="updateCurves()">%
 
@@ -65,7 +65,7 @@
                        placeholder="e.g. 50"
                        less-than="knownMaxCoverageLevel"
                        ng-model="knownMinCoverageLevel"
-                       ng-required="!hasValidCCParams()"
+                       ng-required="!areValidCcParams()"
                        ng-change="updateCurves()">%
                 and
                 <input type="number" class="txbox __inline __m"
@@ -73,14 +73,14 @@
                        min="1" max="100"
                        placeholder="e.g. 60"
                        ng-model="knownMaxCoverageLevel"
-                       ng-required="!hasValidCCParams()"
+                       ng-required="!areValidCcParams()"
                        ng-change="updateCurves()">%
                 coverage for this program is:
                 <input type="number" class="txbox __inline __xl"
                        name="knownFundingValue"
                        min="1" step="1000" placeholder="e.g. 400000"
                        ng-model="knownFundingValue"
-                       ng-required="!hasValidCCParams()"
+                       ng-required="!areValidCcParams()"
                        ng-change="updateCurves()"> USD
 
                 <div ng-messages="CostCoverageForm.knownMinCoverageLevel.$error"
