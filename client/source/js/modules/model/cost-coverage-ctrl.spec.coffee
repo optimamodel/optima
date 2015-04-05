@@ -35,16 +35,3 @@ define ['angular-mocks', 'Source/modules/model/cost-coverage-ctrl'], ->
           programs: [],
           costCoverageHelpers: costCoverageHelpers
         }
-
-    # move to cost-coverage-service spec
-    # describe 'convertFromPercent()', ->
-    #
-    #   it 'should return a number divided by 100', ->
-    #     expect(scope.convertFromPercent(60)).toBe(0.6)
-    #     expect(scope.convertFromPercent(2)).toBe(0.02)
-    #     expect(scope.convertFromPercent(-33)).toBe(-0.33)
-    #
-    #   it 'should return NaN for anything else then a number', ->
-    #     expect(scope.convertFromPercent("60")).toBeNaN()
-    #     expect(scope.convertFromPercent(undefined)).toBeNaN()
-    #     expect(scope.convertFromPercent(null)).toBeNaN()
