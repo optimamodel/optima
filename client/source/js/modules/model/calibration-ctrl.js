@@ -56,7 +56,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             'Testing rate slope parameter'
           ]
         },
-        meta: meta
+        meta: meta.data
       };
       angular.extend($scope.parameters, calibration.toScopeParameters(parameters));
 

@@ -20,7 +20,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
           if($scope.validate) {
             // add All option in population list
-            meta.pops.long.push("All");
+            meta.data.pops.long.push("All");
 
             // transform scenarioParameters to use attribute `names` instead of `keys`
             // it is the same for the data we have to send to run scenarios
@@ -212,7 +212,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
                 return availableScenarioParameters;
               },
               populationNames: function() {
-                return meta.pops.long;
+                return meta.data.pops.long;
               }
             }
           });
