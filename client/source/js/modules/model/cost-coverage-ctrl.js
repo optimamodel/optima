@@ -275,24 +275,6 @@ define(['./module', 'underscore'], function (module, _) {
         return;
       }
 
-      // stop further execution and return in case of null selectedProgram
-      if ( $scope.selectedProgram.acronym === null ) {
-        return;
-      }
-
-      // TODO fix this
-      // clean up model by removing unnecessary parameters
-      // if (_.isEmpty(model.ccparams) || hasOnlyInvalidEntries(model.ccparams.slice(0,3))) {
-      //   delete model.ccparams;
-      // }
-
-      if (_.isEmpty(model.coparams) || hasOnlyInvalidEntries(model.coparams)) {
-        delete model.coparams;
-      }
-
-      // update current program ccparams,if applicable
-      updateCCParams(model);
-
       $http.post('/api/model/costcoverage', model).success(function (response) {
         if (response.status === 'OK') {
 
@@ -325,19 +307,7 @@ define(['./module', 'underscore'], function (module, _) {
       $scope.xAxisMaximum = program.ccparams.xupperlim;
       $scope.calculatePerPerson = program.ccparams.perperson;
 
-      $scope.generateCurves();
-    };
-
-    /**
-     * Retrieve and update graphs based on the current plot models.
-     */
-    $scope.generateCurves = function () {
       var model = getPlotModel();
-      if ($scope.hasCostCoverResponse) {
-        model.all_coparams = costCoverageHelpers.toRequestCoParams($scope.coParams);
-        model.all_effects = effects;
-      }
-
       retrieveAndUpdateGraphs(model);
     };
 
@@ -391,20 +361,6 @@ define(['./module', 'underscore'], function (module, _) {
         model.coparams = coParams[graphIndex];
         model.effect = effects[graphIndex];
 
-        // clean up model by removing unnecessary parameters
-        if (_.isEmpty(model.ccparams) || hasOnlyInvalidEntries(_.values(model.ccparams))) {
-          delete model.ccparams;
-        }
-
-        if (model.coparams) {
-          if (_.isEmpty(model.coparams) || hasOnlyInvalidEntries(model.coparams)) {
-            delete model.coparams;
-          }
-        }
-
-        // update current program ccparams, if applicable
-        updateCCParams(model);
-
         $http.post('/api/model/costcoverage/effect', model).success(function (response) {
           $scope.graphs.plotdata[graphIndex] = setUpPlotdataGraph(response.plotdata);
           $scope.graphs.plotdata_co[graphIndex] = setUpPlotdataGraph(response.plotdata_co);
@@ -441,9 +397,12 @@ define(['./module', 'underscore'], function (module, _) {
      * Retrieve and update graphs based on the current plot models only if the graphs are already rendered
      * by pressing the draw button.
      */
-    $scope.updateCurves =  _.debounce(function() { // debounce a bit so we don't update immediately
+    $scope.updateCurves = _.debounce(function() { // debounce a bit so we don't update immediately
       if($scope.CostCoverageForm.$valid && $scope.hasCostCoverResponse === true) {
-       $scope.generateCurves();
+       var model = getPlotModel();
+       model.all_coparams = costCoverageHelpers.toRequestCoParams($scope.coParams);
+       model.all_effects = effects;
+       retrieveAndUpdateGraphs(model);
       }
     }, 500);
 
