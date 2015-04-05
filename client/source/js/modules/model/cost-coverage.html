@@ -1,28 +1,23 @@
 <div class="page rich">
 
-  <div class="section grid" ng-show="notReady">
+  <div class="section grid" ng-show="needData">
     <div class="9">
       <h1>Model is not ready</h1>
       <div>
         <p ng-show="needData" class="error-hint">Please upload Optima spreadsheet first.</p>
-
-        <div ng-show="cannotCalibrate && !needData">
-          <p class="error-hint">This model is not yet ready to define cost-coverage assumptions.</p>
-          <button type="button" class="btn" ng-click="gotoViewCalibrate()">View &amp; calibrate model</button>
-        </div>
       </div>
     </div>
   </div>
 
-  <div class="section grid" ng-hide="notReady">
+  <div class="section grid" ng-hide="needData">
     <div class="6">
       <label>
         Select a program: <br>
         <select class="txbox"
                 ng-options="p as p.name group by p.category for p in ::selectionPrograms"
                 ng-change="changeProgram()"
-                ng-model="selectedProgram"
-                ng-disabled="notReady"></select>
+                ng-model="selectedProgram">
+        </select>
       </label>
     </div>
   </div>

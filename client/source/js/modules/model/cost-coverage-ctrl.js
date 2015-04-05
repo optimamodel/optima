@@ -10,10 +10,7 @@ define(['./module', 'underscore'], function (module, _) {
       $scope.chartsForDataExport = [];
       $scope.titlesForChartsExport = [];
 
-      // show message "calibrate the model" and disable the form elements
       $scope.needData = !info.has_data;
-      $scope.cannotCalibrate = !info.can_calibrate;
-      $scope.notReady = $scope.needData || $scope.cannotCalibrate;
 
       $scope.programs = programs.data;
 
