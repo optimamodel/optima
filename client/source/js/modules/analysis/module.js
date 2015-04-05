@@ -25,8 +25,8 @@ define([
                 abstract: true,
                 template: '<div ui-view></div>',
                 resolve: {
-                  info: function($http) {
-                    return $http.get('/api/project/info');
+                  info: function(Project) {
+                    return Project.info().$promise;
                   },
                   meta: function (Model) {
                     return Model.getKeyDataMeta().$promise;
