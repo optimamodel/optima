@@ -14,6 +14,7 @@
                   ng-options="p as p.name group by p.category for p in ::state.selectionPrograms"
                   ng-change="changeProgram()"
                   ng-model="state.selectedProgram">
+            <option value="">-- Please select a program --</option>
           </select>
         </label>
       </div>

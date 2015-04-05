@@ -22,10 +22,9 @@ define(['./module', 'underscore'], function (module, _) {
         displayedProgram: null,
         selectionPrograms: initializePrograms(info.programs, programs),
         coParams: [],
-        hasCostCoverResponse: false
+        hasCostCoverResponse: false,
+        selectedProgram: undefined
       };
-
-      $scope.state.selectedProgram = $scope.state.selectionPrograms[0];
 
       plotTypes = ['plotdata', 'plotdata_cc', 'plotdata_co'];
 
@@ -60,7 +59,6 @@ define(['./module', 'underscore'], function (module, _) {
           category: item.category
         };
       });
-      programs.unshift({name:'-- No program selected --',category:null, acronym:null});
       return programs;
     }
 
@@ -283,10 +281,14 @@ define(['./module', 'underscore'], function (module, _) {
     };
 
     $scope.changeProgram = function() {
-
       if($scope.state.hasCostCoverResponse === true) {
         $scope.state.hasCostCoverResponse = false;
       }
+
+      if($scope.state.selectedProgram === null) {
+        return null;
+      }
+
       var program = findProgram($scope.state.selectedProgram.acronym);
       $scope.state.saturationCoverageLevel = program.ccparams.saturation ? program.ccparams.saturation * 100 : undefined;
       $scope.state.knownMinCoverageLevel = program.ccparams.coveragelower ? program.ccparams.coveragelower * 100 : undefined;
