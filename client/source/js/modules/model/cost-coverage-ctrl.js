@@ -335,17 +335,6 @@ define(['./module', 'underscore'], function (module, _) {
     };
 
     /**
-     * Retrieve and update graphs based on the current plot models.
-     *
-     * The plot model gets reverted in the backend.
-     */
-    $scope.revertModel = function () {
-      var model = getPlotModel(model);
-      model.doRevert = true;
-      retrieveAndUpdateGraphs(model);
-    };
-
-    /**
      * POST /api/model/costcoverage/effect
      *   {
      *     "progname":<chosen progname>
