@@ -36,13 +36,6 @@ define(['./module', 'underscore'], function (module, _) {
     }
 
     /**
-     * Redirects the user to View & Calibrate screen.
-     */
-    $scope.gotoViewCalibrate = function() {
-      $state.go('model.view');
-    };
-
-    /**
      * Creates the models of the programs for this controller.
      * If the backend do not present values for the categories, we'll use 'Others' as default.
      */
