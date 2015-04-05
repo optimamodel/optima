@@ -23,6 +23,9 @@ define(['./module', 'underscore'], function (module, _) {
       resetGraphs();
     };
 
+    /**
+     * Returns the program by name.
+     */
     function findProgram (acronym) {
       return _($scope.programs).find(function(entry) {
         return entry.name === acronym;
@@ -232,33 +235,16 @@ define(['./module', 'underscore'], function (module, _) {
     };
 
     /**
-     * Returns true if all of the elements in an array are defined or not null
-     */
-    var hasAllElements = function(params) {
-      return params && params.length && _(params).every(function(item) { return item; });
-    };
-
-    /**?
-     * TODO remove?
-     * Returns true if all of the elements in an array are undefined, null or NaN
-     */
-    var hasOnlyInvalidEntries = function(params) {
-      return params.every(function(item) {
-        return item === undefined || item === null || typeof item === "number" && isNaN(item);
-      });
-    };
-
-    /**
      * Returns true if the param is undefined, null or NaN
      */
     var isInvalidParam = function(param) {
       return param === undefined || param === null || typeof param === "number" && isNaN(param);
     };
 
-    function areValidCoParams (params) {
-      return hasAllElements(params) || hasOnlyInvalidEntries(params);
-    }
-
+    /**
+     * Returns true if either none or all of the 4 important paramters are
+     * filled out.
+     */
     $scope.areValidCcParams = function () {
       var params = $scope.costCoverageParams();
       var allRequiredParamsDefined = params.saturation &&
@@ -299,6 +285,7 @@ define(['./module', 'underscore'], function (module, _) {
         return;
       }
 
+      // TODO fix this
       // clean up model by removing unnecessary parameters
       // if (_.isEmpty(model.ccparams) || hasOnlyInvalidEntries(model.ccparams.slice(0,3))) {
       //   delete model.ccparams;
@@ -408,10 +395,6 @@ define(['./module', 'underscore'], function (module, _) {
         var coParams = costCoverageHelpers.toRequestCoParams($scope.coParams);
         model.coparams = coParams[graphIndex];
         model.effect = effects[graphIndex];
-        if (!areValidCoParams(model.coparams)) {
-          // no need to show dialog - we inform the user with hints
-          return;
-        }
 
         // clean up model by removing unnecessary parameters
         if (_.isEmpty(model.ccparams) || hasOnlyInvalidEntries(_.values(model.ccparams))) {
