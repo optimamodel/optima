@@ -277,15 +277,16 @@ define(['./module', 'underscore'], function (module, _) {
 
     $scope.hasValidCCParams = function () {
       var params = $scope.costCoverageParams();
-      var allRequiredParamsDefined = params.saturation && params.coveragelower && params.coverageupper && params.funding;
-      var noRequiredParamDefined = isInvalidParam(params.saturation) && isInvalidParam(params.coveragelower) && isInvalidParam(params.coverageupper) && isInvalidParam(params.funding);
+      var allRequiredParamsDefined = params.saturation &&
+                                     params.coveragelower &&
+                                     params.coverageupper &&
+                                     params.funding;
+      var noRequiredParamDefined = isInvalidParam(params.saturation) &&
+                                   isInvalidParam(params.coveragelower) &&
+                                   isInvalidParam(params.coverageupper) &&
+                                   isInvalidParam(params.funding);
 
       return (allRequiredParamsDefined || noRequiredParamDefined);
-    };
-
-    $scope.hasAllCCParams = function() {
-      return true;
-      // return hasAllElements($scope.costCoverageParams().slice(0, 4));
     };
 
     /**
