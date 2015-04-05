@@ -12,12 +12,16 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         return;
       }
 
-      $scope.chartsForDataExport = [];
+      // According to angular best-practices we should wrap every object/value
+      // inside a wrapper object. This is due the fact that directives like ng-if
+      // always create a child scope & the reference can get lost.
+      // see https://github.com/angular/angular.js/wiki/Understanding-Scopes
+      $scope.state = {};
 
-      $scope.meta = meta;
-      $scope.types = typeSelector.types;
+      $scope.state.chartsForDataExport = [];
+      $scope.state.types = typeSelector.types;
 
-      $scope.activeTab = 1;
+      $scope.state.activeTab = 1;
       var errorMessages = [];
 
       var statusEnum = {
@@ -39,9 +43,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         { id: 'dalys', title: 'Reduce annual HIV-related DALYs' }
       ];
 
-      $scope.optimizationStatus = statusEnum.NOT_RUNNING;
-      $scope.optimizations = [];
-      $scope.isDirty = false;
+      $scope.state.optimizationStatus = statusEnum.NOT_RUNNING;
+      $scope.state.optimizations = [];
+      $scope.state.isDirty = false;
 
       /**
        * Empty charts
@@ -55,15 +59,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         $scope.state.outcomeChart = undefined;
       };
 
-      // According to angular best-practices we should wrap every object/value
-      // inside a wrapper object. This is due the fact that directives like ng-if
-      // always create a child scope & the reference can get lost.
-      // see https://github.com/angular/angular.js/wiki/Understanding-Scopes
-      $scope.state = {
-        activeOptimizationName: undefined,
-        isTestRun: false,
-        timelimit: 3600
-      };
+      $scope.state.activeOptimizationName = undefined;
+      $scope.state.isTestRun = false;
+      $scope.state.timelimit = 3600;
       resetCharts();
 
       // Set defaults
@@ -362,7 +360,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         return graphs;
       }
 
-      _($scope.types.population).each(function (type) {
+      _($scope.state.types.population).each(function (type) {
 
         if (type === undefined) return;
         var data = results[type.id];
@@ -409,10 +407,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       if (graphData === undefined) return graphs;
 
       // annual cost charts
-      _($scope.types.possibleKeys).each(function(type) {
-        var isActive = $scope.types.costs.costann[type];
+      _($scope.state.types.possibleKeys).each(function(type) {
+        var isActive = $scope.state.types.costs.costann[type];
         if (isActive) {
-          var chartData = graphData.costann[type][$scope.types.activeAnnualCost];
+          var chartData = graphData.costann[type][$scope.state.types.activeAnnualCost];
           if (chartData) {
             graphs.push(generateFinancialGraph(chartData));
           }
@@ -421,8 +419,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
 
       // cumulative cost charts
-      _($scope.types.possibleKeys).each(function(type) {
-        var isActive = $scope.types.costs.costcum[type];
+      _($scope.state.types.possibleKeys).each(function(type) {
+        var isActive = $scope.state.types.costs.costcum[type];
         if (isActive) {
           var chartData = graphData.costcum[type];
           if (chartData) {
@@ -432,9 +430,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       });
 
       // commitments
-      var commitIsActive = $scope.types.costs.commit.checked;
+      var commitIsActive = $scope.state.types.costs.commit.checked;
       if (commitIsActive) {
-        var commitChartData = graphData.commit[$scope.types.activeAnnualCost];
+        var commitChartData = graphData.commit[$scope.state.types.activeAnnualCost];
         if (commitChartData) {
           graphs.push(generateFinancialGraph(commitChartData));
         }
@@ -465,7 +463,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.optimizationByName = function (name) {
-      return _($scope.optimizations).find(function(item) {
+      return _($scope.state.optimizations).find(function(item) {
         return item.name == name;
       });
     };
@@ -506,7 +504,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       if (data && data.plot && data.plot.length > 0) {
         var optimization = $scope.optimizationByName($scope.state.activeOptimizationName);
         optimization.result = data;
-        typeSelector.enableAnnualCostOptions($scope.types, data.plot[0].multi);
+        typeSelector.enableAnnualCostOptions($scope.state.types, data.plot[0].multi);
         drawGraphs();
       }
     }
@@ -731,7 +729,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           return;
         }
       }
-      $scope.activeTab = tabNum;
+      $scope.state.activeTab = tabNum;
     };
 
     $scope.initTimer = function (status) {
@@ -739,7 +737,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         // Keep polling for updated values after every 5 seconds till we get an error.
         // Error indicates that the model is not optimizing anymore.
         optimizationTimer = $interval(checkWorkingOptimization, 30000, 0, false);
-        $scope.optimizationStatus = status;
+        $scope.state.optimizationStatus = status;
         $scope.errorText = '';
         // start cfpLoadingBar loading
         // calculate the number of ticks in timelimit
@@ -781,11 +779,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           if (data.status == 'Done') {
             stopTimer();
           } else {
-            if (data.status == 'Running') $scope.optimizationStatus = statusEnum.RUNNING;
-            if (data.status == 'Stopping') $scope.optimizationStatus = statusEnum.STOPPING;
-            $scope.initTimer($scope.optimizationStatus);
+            if (data.status == 'Running') $scope.state.optimizationStatus = statusEnum.RUNNING;
+            if (data.status == 'Stopping') $scope.state.optimizationStatus = statusEnum.STOPPING;
+            $scope.initTimer($scope.state.optimizationStatus);
           }
-          $scope.isDirty = data.dirty;
+          $scope.state.isDirty = data.dirty;
           $scope.initOptimizations(data.optimizations, $scope.state.activeOptimizationName);
         })
         .error(function(data, status, headers, config) {
@@ -802,8 +800,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           $http.get('/api/analysis/optimization/stop')
           .success(function(data) {
             // Do not cancel timer yet, if the optimization is running
-            if ($scope.optimizationStatus) {
-              $scope.optimizationStatus = statusEnum.REQUESTED_TO_STOP;
+            if ($scope.state.optimizationStatus) {
+              $scope.state.optimizationStatus = statusEnum.REQUESTED_TO_STOP;
             }
           });
         },
@@ -819,7 +817,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       if ( angular.isDefined( optimizationTimer ) ) {
         $interval.cancel(optimizationTimer);
         optimizationTimer = undefined;
-        $scope.optimizationStatus = statusEnum.NOT_RUNNING;
+        $scope.state.optimizationStatus = statusEnum.NOT_RUNNING;
         cfpLoadingBar.complete();
       }
     }
@@ -839,7 +837,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.saveOptimization = function () {
       $http.post('/api/analysis/optimization/save')
         .success(function (data) {
-          $scope.isDirty = false;
+          $scope.state.isDirty = false;
           $scope.initOptimizations(data.optimizations, $scope.state.activeOptimizationName);
       });
     };
@@ -848,7 +846,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.revertOptimization = function () {
       $http.post('/api/analysis/optimization/revert')
         .success(function (data) {
-          $scope.isDirty = false;
+          $scope.state.isDirty = false;
           $scope.initOptimizations(data.optimizations, $scope.state.activeOptimizationName);
       });
     };
@@ -862,7 +860,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         });
       };
 
-      modalService.addOptimization(function (name) { create(name); }, $scope.optimizations);
+      modalService.addOptimization(function (name) { create(name); }, $scope.state.optimizations);
     };
 
     // The graphs are shown/hidden after updating the graph type checkboxes.
@@ -928,34 +926,34 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      * Collects all existing charts in the $scope.chartsForDataExport variable.
      */
     var updateChartsForDataExport = function () {
-      $scope.chartsForDataExport = [];
+      $scope.state.chartsForDataExport = [];
 
-      if ( $scope.state.pieCharts && !$scope.types.plotUncertainties ) {
-        $scope.chartsForDataExport = $scope.chartsForDataExport.concat($scope.state.pieCharts);
+      if ( $scope.state.pieCharts && !$scope.state.types.plotUncertainties ) {
+        $scope.state.chartsForDataExport = $scope.state.chartsForDataExport.concat($scope.state.pieCharts);
       }
 
-      if ( $scope.state.radarCharts && $scope.types.plotUncertainties ) {
-        $scope.chartsForDataExport = $scope.chartsForDataExport.concat($scope.state.radarCharts);
+      if ( $scope.state.radarCharts && $scope.state.types.plotUncertainties ) {
+        $scope.state.chartsForDataExport = $scope.state.chartsForDataExport.concat($scope.state.radarCharts);
       }
 
       if ( $scope.state.stackedBarChart ) {
-        $scope.chartsForDataExport.push($scope.state.stackedBarChart);
+        $scope.state.chartsForDataExport.push($scope.state.stackedBarChart);
       }
 
       if ( $scope.state.outcomeChart ) {
-        $scope.chartsForDataExport.push($scope.state.outcomeChart);
+        $scope.state.chartsForDataExport.push($scope.state.outcomeChart);
       }
 
       if ( $scope.state.multipleBudgetsChart ) {
-        $scope.chartsForDataExport.push($scope.state.multipleBudgetsChart);
+        $scope.state.chartsForDataExport.push($scope.state.multipleBudgetsChart);
       }
 
       if ( $scope.state.optimisationGraphs ) {
-        $scope.chartsForDataExport = $scope.chartsForDataExport.concat($scope.state.optimisationGraphs);
+        $scope.state.chartsForDataExport = $scope.state.chartsForDataExport.concat($scope.state.optimisationGraphs);
       }
 
       if ( $scope.state.financialGraphs ) {
-        $scope.chartsForDataExport = $scope.chartsForDataExport.concat($scope.state.financialGraphs);
+        $scope.state.chartsForDataExport = $scope.state.chartsForDataExport.concat($scope.state.financialGraphs);
       }
 
     };
@@ -975,7 +973,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         updateGraphs(optimization.result);
       } else {
         resetCharts();
-        typeSelector.resetAnnualCostOptions($scope.types);
+        typeSelector.resetAnnualCostOptions($scope.state.types);
       }
     };
 
@@ -983,9 +981,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.initOptimizations = function (optimizations, name, overwriteParams) {
       if (!optimizations) return;
 
-      $scope.optimizations = angular.copy(optimizations);
+      $scope.state.optimizations = angular.copy(optimizations);
 
-      var nameExists = name && _($scope.optimizations).some(function(item) {
+      var nameExists = name && _($scope.state.optimizations).some(function(item) {
         return item.name == name;
       });
 
@@ -993,7 +991,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         $scope.state.activeOptimizationName = name;
       } else {
         $scope.state.activeOptimizationName = undefined;
-        var optimization = _($scope.optimizations).first();
+        var optimization = _($scope.state.optimizations).first();
         if (optimization) {
           $scope.state.activeOptimizationName = optimization.name;
         }
@@ -1023,7 +1021,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.$watch('state.stackedBarChart', updateChartsForDataExport, true);
     $scope.$watch('state.multipleBudgetsChart', updateChartsForDataExport, true);
     $scope.$watch('types.plotUncertainties', updateChartsForDataExport, true);
-    $scope.$watch('activeTab', $scope.checkExistingOptimization, true);
+    $scope.$watch('state.activeTab', $scope.checkExistingOptimization, true);
 
   });
 });
