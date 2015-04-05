@@ -1,31 +1,18 @@
 <div class="page rich">
 
-  <div class="section grid" ng-show="notReady">
-    <div class="9">
-      <h1>Model is not ready</h1>
-      <div>
-        <p ng-show="needData" class="error-hint">Please upload Optima spreadsheet first.</p>
-
-        <div ng-show="cannotCalibrate && !needData">
-          <p class="error-hint">This model is not yet ready to define cost-coverage assumptions.</p>
-          <button type="button" class="btn" ng-click="gotoViewCalibrate()">View &amp; calibrate model</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="section grid" ng-hide="notReady">
+  <div class="section grid">
     <div class="6">
       <label>
         Select a program: <br>
         <select class="txbox"
-                ng-options="p as p.name group by p.category for p in ::programs"
+                ng-options="p as p.name group by p.category for p in ::selectionPrograms"
                 ng-change="changeProgram()"
-                ng-model="selectedProgram"
-                ng-disabled="notReady"></select>
+                ng-model="selectedProgram">
+        </select>
       </label>
     </div>
   </div>
+
   <div class="section" ng-hide="selectedProgram.acronym == null">
 
     <div class="section" style="margin-bottom: 45px">
@@ -49,15 +36,14 @@
         </div>
         <div class="elastic_col">
           <div class="section">
-            <form name="CostCoverageForm" ng-submit="generateCurves()">
-              <div class="info-hint" ng-show="!hasAllCCParams()">{{ ::optionsErrorMessage }}</div>
-              <div class="error-hint" ng-show="!hasValidCCParams()">{{ ::needAllCCParamsMessage }}</div>
+            <form name="CostCoverageForm">
+              <div class="error-hint" ng-show="!hasValidCCParams()">First four text boxes must be either all empty, or all have values in them.</div>
               <div class="section">
                 1. Specify the saturation coverage level:
                 <input type="number" class="txbox __inline __m"
                        name="saturationCoverageLevel"
                        min="1" max="100" step="1"
-                       placeholder="e.g.{{ ::defaultSaturationCoverageLevel }}"
+                       placeholder="e.g. 90"
                        ng-model="saturationCoverageLevel"
                        ng-required="!hasValidCCParams()"
                        more-than="knownMaxCoverageLevel"
@@ -76,7 +62,7 @@
                 <input type="number" class="txbox __inline __m"
                        name="knownMinCoverageLevel"
                        min="1" max="100"
-                       placeholder="e.g.{{defaultKnownCoverageLevel-10}}"
+                       placeholder="e.g. 50"
                        less-than="knownMaxCoverageLevel"
                        ng-model="knownMinCoverageLevel"
                        ng-required="!hasValidCCParams()"
@@ -85,14 +71,14 @@
                 <input type="number" class="txbox __inline __m"
                        name="knownMaxCoverageLevel"
                        min="1" max="100"
-                       placeholder="e.g.{{ ::defaultKnownCoverageLevel }}"
+                       placeholder="e.g. 60"
                        ng-model="knownMaxCoverageLevel"
                        ng-required="!hasValidCCParams()"
                        ng-change="updateCurves()">%
                 coverage for this program is:
                 <input type="number" class="txbox __inline __xl"
                        name="knownFundingValue"
-                       min="1" step="1000" placeholder="e.g.{{ ::defaultKnownFundingValue }}"
+                       min="1" step="1000" placeholder="e.g. 400000"
                        ng-model="knownFundingValue"
                        ng-required="!hasValidCCParams()"
                        ng-change="updateCurves()"> USD
@@ -126,7 +112,7 @@
                 <input type="number" class="txbox __inline __xl"
                        name="scaleUpParameter"
                        min="0" max="0.999999999999"
-                       placeholder="e.g.{{ ::defaultScaleUpParameter }}"
+                       placeholder="e.g. 0.5"
                        ng-model="scaleUpParameter"
                        ng-change="updateCurves()">
                 <div ng-messages="CostCoverageForm.scaleUpParameter.$error"
@@ -140,7 +126,7 @@
                 4. [Optional] Full coverage would avert
                 <input type="number" class="txbox __inline __xl"
                        name="nonHivDalys"
-                       min="0" step="1" placeholder="e.g.{{ ::defaultNonHivDalys }}"
+                       min="0" step="1" placeholder="e.g. 0"
                        ng-model="nonHivDalys"
                        ng-change="updateCurves()">
                 non-HIV-related DALYs per year
@@ -154,7 +140,7 @@
                 5. [Optional] Specify the maximum funding (for plotting only):
                 <input type="number" class="txbox __inline __xl"
                        name="xAxisMaximum"
-                       min="1" placeholder="e.g.{{ ::defaultXAxisMaximum }}"
+                       min="1" placeholder="e.g. 1000000"
                        ng-model="xAxisMaximum"
                        ng-change="updateCurves()">
                 <div ng-messages="CostCoverageForm.xAxisMaximum.$error"
@@ -188,7 +174,6 @@
           </div>
         </div>
       </div>
-
       <div class="section" ng-if="graphs.plotdata.length" ng-repeat="chart in graphs.plotdata">
         <h2 class="section">{{ chart.options.title }}</h2>
 
@@ -258,9 +243,7 @@
             </div>
           </form>
         </div>
-
       </div>
-
     </div>
   </div>
 </div>

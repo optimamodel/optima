@@ -46,6 +46,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.parameters = {
         types: {
           force: 'Relative force-of-infection for ',
+          inhomo: 'Inhomogeneity in force-of-infection for ',
           popsize: 'Initial population size for ',
           init: 'Initial prevalence for ',
           dx: [

@@ -60,7 +60,7 @@ define(['angular', 'jquery', './svg-to-png', 'underscore'], function (angular, $
           if ( type == 'blob' ) {
             canvas.toBlob( callback );
           } else {
-            var data = canvas.toDataURL('image/jpeg', 1.0);
+            var data = canvas.toDataURL('image/jpeg', 0.7);
             callback( data );
           }
         };

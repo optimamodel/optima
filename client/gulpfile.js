@@ -7,12 +7,10 @@ var karma = require('gulp-karma');
 var livereload = require('gulp-livereload');
 var ngAnnotate = require('gulp-ng-annotate');
 var postcss = require('gulp-postcss');
-var protractor = require('gulp-protractor').protractor;
 var rjs = require('gulp-requirejs');
 var sass = require('gulp-sass');
 var spawn = require('child_process').spawn;
 var uglify = require('gulp-uglify');
-var webdriver = require('gulp-protractor').webdriver_standalone;
 
 var handleError = function (err) {
   console.log(err.name, ' in ', err.plugin, ': ', err.message);
@@ -131,19 +129,6 @@ gulp.task('sass', function () {
     .pipe(gulp.dest('source/assets/css'));
 });
 
-// Protractor
-gulp.task('protractor', function () {
-  return gulp.src('source/js/**/*.e2e.js')
-    .pipe(protractor({ configFile: 'p.conf.js' }));
-});
-
-gulp.task('protractor-ci', function () {
-  return gulp.src('source/js/**/*.e2e.js')
-    .pipe(protractor({ configFile: 'p-compiled.conf.js' }));
-});
-
-gulp.task('webdriver', webdriver);
-
 // Watch
 gulp.task('watch', ['sass'], function () {
   gulp.watch('source/sass/**/*.scss', ['sass']);
@@ -164,5 +149,4 @@ gulp.task('default', ['js', 'copy'], function () {
   }
   catch(err) {
   }
-//  gulp.run('protractor-ci');
 });
