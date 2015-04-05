@@ -37,7 +37,12 @@
         <div class="elastic_col">
           <div class="section">
             <form name="CostCoverageForm">
-              <div class="error-hint" ng-show="!areValidCcParams()">First four text boxes must be either all empty, or all have values in them.</div>
+
+              <div ng-messages="CostCoverageForm.$error"
+                  ng-show="CostCoverageForm.$invalid">
+                <div class="error-hint" ng-message="required">First four text boxes must be either all empty, or all have values in them.</div>
+              </div>
+
               <div class="section">
                 1. Specify the saturation coverage level:
                 <input type="number" class="txbox __inline __m"
@@ -263,6 +268,15 @@
                 <div class="error-hint" ng-message="min">The minimum value is 0</div>
                 <div class="error-hint" ng-message="max">The maximum value is 100</div>
                 <div class="error-hint" ng-message="number">The value should be a number from 0 to 100</div>
+              </div>
+
+              <div ng-messages="AdjustmentForm.$error"
+                  ng-show="AdjustmentForm.$invalid &&
+                           AdjustmentForm.withoutProgramRangeStart.$touched ||
+                           AdjustmentForm.withoutProgramRangeEnd.$touched ||
+                           AdjustmentForm.fullCoverageRangeStart.$touched ||
+                           AdjustmentForm.fullCoverageRangeEnd.$touched">
+                <div class="error-hint" ng-message="required">All four text boxes must be filled out to calculate the curves.</div>
               </div>
             </div>
           </form>
