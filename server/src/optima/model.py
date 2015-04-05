@@ -264,7 +264,7 @@ def getModelSubGroup(key, subkey):
     D_dict = load_model(request.project_id, from_json = False)
     the_group = D_dict.get(key,{})
     the_subgroup = the_group.get(subkey, {})
-    return jsonify(the_subgroup)
+    return jsonify({'data': the_subgroup})
 
 @model.route('/data/<key>', methods=['POST'])
 @login_required
@@ -381,14 +381,9 @@ def doCostCoverageEffect():
     args['D'] = load_model(request.project_id)
     try:
         if not args.get('effect'):
-<<<<<<< HEAD
             return jsonify({'reason':'No effect has been specified'}), 500
-        if args.get('ccparams'):args['ccparams'] = [float(param) if param else None for param in args['ccparams']]
-=======
-            return jsonify({'status':'NOK','reason':'No effect has been specified'})
         if args.get('ccparams'):
             args['ccparams'] = dict([(key, (float(param) if param else None)) for (key,param) in args['ccparams'].iteritems()])
->>>>>>> develop
         if args.get('coparams'):args['coparams'] = [float(param) for param in args['coparams']]
         plotdata, plotdata_co, storeparams_co = makecco(**args)
     except Exception, err:
@@ -412,8 +407,4 @@ def reloadSpreadsheet(project_id):
     D = load_model(project_id)
     D = updatedata(D, input_programs = project.programs, savetofile = False, rerun = True)
 
-<<<<<<< HEAD
     return jsonify({})
-=======
-    return jsonify({'status': 'OK'})
->>>>>>> develop
