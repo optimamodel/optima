@@ -358,6 +358,7 @@ def getProjectInformation():
             'programs': project.programs,
             'populations': project.populations,
             'creation_time': project.creation_time,
+            'updated_time': project.updated_time,
             'data_upload_time': project.data_upload_time(),
             'has_data': project.has_data(),
             'can_calibrate': project.can_calibrate(),
@@ -395,6 +396,7 @@ def getProjectListAll():
                 'programs': project.programs,
                 'populations': project.populations,
                 'creation_time': project.creation_time,
+                'updated_time': project.updated_time,
                 'data_upload_time': project.data_upload_time(),
                 'user_id': project.user_id
             }
@@ -429,6 +431,7 @@ def getProjectList():
                 'programs': project.programs,
                 'populations': project.populations,
                 'creation_time': project.creation_time,
+                'updated_time': project.updated_time,
                 'data_upload_time': project.data_upload_time()
             }
             projects_data.append(project_data)
