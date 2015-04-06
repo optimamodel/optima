@@ -28,7 +28,7 @@
           {{ ::project.creation_time| date:'yyyy-MM-dd HH:mm:ss'}}
         </td>
         <td>
-          {{ ::project.updated_time| date:'yyyy-MM-dd HH:mm:ss'}}
+          {{ ::project.updated_time ? (project.updated_time | date:'yyyy-MM-dd HH:mm:ss') : 'No modification'}}
         </td>
         <td>
           <button class="btn __green" ng-click="open(project.name, project.id)">Open project</button>

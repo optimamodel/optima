@@ -46,9 +46,8 @@ class ProjectDb(db.Model):
                                 uselist=False)
     project_data = db.relationship('ProjectDataDb', backref='projects',
                                 uselist=False)
-    creation_time = db.Column(db.DateTime(timezone=True), default=db.func.now())
-    updated_time = db.Column(db.DateTime(timezone=True),
-                             default=db.func.now(), onupdate=db.func.now())
+    creation_time = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
+    updated_time = db.Column(db.DateTime(timezone=True), onupdate=db.func.now())
 
     def __init__(self, name, user_id, datastart, dataend, \
         programs, populations, model = None, creation_time = None):
