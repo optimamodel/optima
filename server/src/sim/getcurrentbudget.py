@@ -6,7 +6,7 @@ def getcurrentbudget(D, alloc=None, randseed=None):
     Version: 2014nov30
     """
     from makeccocs import ccoeqn, cceqn, cc2eqn, cco2eqn, coverage_params, makesamples
-    from numpy import nan, zeros, array
+    from numpy import nan, zeros, array, isnan
     from utils import sanitize, perturb
     
      # Set defaults, stored as [median, lower bound, upperbound]. ONLY for use in BE. In FE, if ccocs haven't been defined then the user won't get to this step
@@ -35,10 +35,11 @@ def getcurrentbudget(D, alloc=None, randseed=None):
 
         # Extract and sum the number of non-HIV-related DALYs 
         nonhivdalys = D['programs'][prognumber]['nonhivdalys']
+        program_ccparams = D['programs'][prognumber]['convertedccparams']
+        use_default_ccparams = not program_ccparams or (not isinstance(program_ccparams, list) and isnan(program_ccparams))
 
         # Extract the converted cost-coverage parameters... or if there aren't any, use defaults (for sim only; FE produces warning)
-        convertedccparams = D['programs'][prognumber]['convertedccparams'] if D['programs'][prognumber]['convertedccparams'] else default_convertedccparams
-
+        convertedccparams = program_ccparams if not use_default_ccparams else default_convertedccparams
         if randseed>=0: convertedccparams[0][1] = array(perturb(1,(array(convertedccparams[2][1])-array(convertedccparams[1][1]))/2., randseed=randseed)) - 1 + array(convertedccparams[0][1])
         currentcoverage[prognumber, :] = cc2eqn(totalcost, convertedccparams[0]) if len(convertedccparams[0])==2 else cceqn(totalcost, convertedccparams[0])
         currentnonhivdalysaverted += nonhivdalys*currentcoverage[prognumber, :]
