@@ -5,6 +5,7 @@ define([
   'ng-file-upload',
   'ui.bootstrap',
   'ui.router',
+  'gridster',
   './config',
   './modules/contact/index',
   './modules/help/index',
@@ -60,7 +61,8 @@ define([
     'app.user-manager',
     'ngMessages',
     'ui.bootstrap',
-    'ui.router'
+    'ui.router',
+    'gridster'
   ])
 
     .config(function ($httpProvider) {
