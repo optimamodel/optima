@@ -139,7 +139,11 @@ These APIs allow front-end to work with projects.
 Python Linting
 ------------
 
-We linting the python code with pylint. You can run it with:
+We linting the python code with pylint. Install it with:
+
+    pip install pylint
+
+You can run it with:
 
     pylint src/optima
 
