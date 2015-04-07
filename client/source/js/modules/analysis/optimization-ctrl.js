@@ -1019,7 +1019,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.$watch('state.financialGraphs', updateChartsForDataExport, true);
     $scope.$watch('state.stackedBarChart', updateChartsForDataExport, true);
     $scope.$watch('state.multipleBudgetsChart', updateChartsForDataExport, true);
-    $scope.$watch('types.plotUncertainties', updateChartsForDataExport, true);
+    $scope.$watch('state.types.plotUncertainties', updateChartsForDataExport, true);
     $scope.$watch('state.activeTab', $scope.checkExistingOptimization, true);
 
   });
