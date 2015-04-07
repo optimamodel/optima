@@ -9,7 +9,7 @@ User Module
 3. Logout.
 
 """
-from flask import request, jsonify, g, session, flash, abort, Blueprint, url_for, current_app, make_response
+from flask import request, jsonify, g, session, flash, abort, Blueprint, url_for, current_app
 from flask.ext.login import LoginManager, login_user, current_user, logout_user, redirect, login_required
 from dbconn import db
 from dbmodels import UserDb
@@ -53,7 +53,7 @@ def create_user():
         no_of_users = UserDb.query.filter_by( email=email ).count()
 
         if no_of_users>0:
-            return make_response(json.dumps({'status': 'NOK', 'reason':'This email is already in use'}), 409) #409 - Conflict
+            return jsonify({'reason':'This email is already in use'}), 409 #409 - Conflict
         else:
             # Save to db
             u = UserDb(name, email, password)
@@ -66,7 +66,7 @@ def create_user():
             # Return user info
             return jsonify({'email': u.email, 'name': u.name })
     else:
-        return make_response(json.dumps({'status': 'NOK', 'reason':'Not all parameters are set'}), 400) #400 - Bad Request
+        return jsonify({'reason':'Not all parameters are set'}), 400 #400 - Bad Request
 
 @user.route('/login', methods=['POST'])
 def login():
@@ -97,7 +97,7 @@ def login():
             except Exception, err:
                 var = traceback.format_exc()
                 print("Exception when logging user %s: \n%s" % (username, var))
-        
+
         # If we came here, login did not succeed
         abort(401)
     else:
@@ -110,7 +110,8 @@ def current_user_api():
     cu = current_user
     if not cu.is_anonymous():
         return jsonify({ 'email': cu.email, 'name': cu.name, 'is_admin': cu.is_admin })
-    abort(401)
+    else:
+        return jsonify({ 'reason': 'User is not logged in' }), 401
 
 @user.route('/logout')
 @login_required
@@ -144,7 +145,7 @@ def delete(user_id):
     current_app.logger.debug('/api/user/delete/%s' % user_id)
     user = UserDb.query.get(user_id)
     if not user:
-        abort(404)
+        return jsonify({'reason': 'User does not exist'}), 404
     else:
         user_email = user.email
         from dbmodels import ProjectDb, WorkingProjectDb, ProjectDataDb, WorkLogDb
@@ -160,7 +161,7 @@ def delete(user_id):
         db.session.delete(user)
         db.session.commit()
         current_app.logger.info("deleted user:%s %s" % (user_id, user_email))
-        return jsonify({'status':'OK','deleted':user_id})
+        return jsonify({'deleted':user_id})
 
 #modify user by ID (can change email, name and/or password)
 @user.route('/modify/<user_id>', methods=['PUT'])
@@ -169,7 +170,7 @@ def modify(user_id):
     current_app.logger.debug('/api/user/modify/%s' % user_id)
     user = UserDb.query.get(user_id)
     if not user:
-        abort(404)
+        return jsonify({'reason': 'User does not exist'}), 404
     else:
         new_email = request.args.get('email')
         if new_email is not None:
@@ -184,7 +185,7 @@ def modify(user_id):
         db.session.add(user)
         db.session.commit()
         current_app.logger.info("modified user:%s" % user_id)
-        return jsonify({'status':'OK','modified':user_id})
+        return jsonify({'modified':user_id})
 
 #For Login Manager
 @login_manager.user_loader

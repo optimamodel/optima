@@ -276,7 +276,8 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=2):
                                 if (programname in [programs[j]['name'] for j in range(len(programs))]) and ((not pops or pops==['']) or subparam in pops):
                                     for prognumber, prog in enumerate(programs):
                                         if unicode(programname) == prog['name']:
-                                            programs[prognumber]['effects'].append({'paramtype':name, 'param':thispar, 'popname':subparam})
+                                            neweffect = {'paramtype':name, 'param':thispar, 'popname':subparam, 'coparams':None, 'convertedcoparams':None, 'convertedccoparams':None}
+                                            programs[prognumber]['effects'].append(neweffect)
 
 
                         # It's economics data, append the data

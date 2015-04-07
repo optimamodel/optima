@@ -56,7 +56,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             'Testing rate slope parameter'
           ]
         },
-        meta: meta
+        meta: meta.data
       };
       angular.extend($scope.parameters, calibration.toScopeParameters(parameters));
 
@@ -320,7 +320,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.startAutoCalibration = function () {
       $http.post('/api/model/calibrate/auto', $scope.simulationOptions,{ignoreLoadingBar: true})
         .success(function(data, status, headers, config) {
-          if (data.status == "OK" && data.join) {
+          if (data.join) {
       // Keep polling for updated values after every 5 seconds till we get an error.
       // Error indicates that the model is not calibrating anymore.
             autoCalibrationTimer = $interval(checkWorkingAutoCalibration, 5000, 0, false);

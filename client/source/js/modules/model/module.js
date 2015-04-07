@@ -47,13 +47,18 @@ define([
         .state('model.define-cost-coverage-outcome', {
           url: '/define-cost-coverage-outcome',
           controller: 'ModelCostCoverageController',
-          templateUrl: 'js/modules/model/cost-coverage.html',
+          templateProvider: function($templateFactory, Project, $timeout) {
+            return Project.info().$promise.then(function(info) {
+              if (info.has_data) {
+                return $templateFactory.fromUrl('js/modules/model/cost-coverage.html');
+              } else {
+                return $templateFactory.fromUrl('js/modules/upload-info/upload-info.html');
+              }
+            });
+          },
           resolve: {
             info: function(Project) {
               return Project.info().$promise;
-            },
-            meta: function (Model) {
-              return Model.getKeyDataMeta().$promise;
             },
             programs: function(Model) {
               return Model.getPrograms().$promise;

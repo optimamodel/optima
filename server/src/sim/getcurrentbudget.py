@@ -53,7 +53,7 @@ def getcurrentbudget(D, alloc=None, randseed=None):
 ################################################################
 def getcurrentcoverage(D, alloc=None, randseed=None):
     ''' Get the coverage levels corresponding to a particular allocation '''
-    from numpy import zeros_like, array
+    from numpy import zeros_like, array, isnan
     from makeccocs import cc2eqn, cceqn
     from utils import perturb
     
@@ -63,7 +63,10 @@ def getcurrentcoverage(D, alloc=None, randseed=None):
 
     for prognumber, progname in enumerate(D['data']['meta']['progs']['short']):
         if D['programs'][prognumber]['effects']:            
-            if D['programs'][prognumber]['convertedccparams']:
+
+            program_ccparams = D['programs'][prognumber]['convertedccparams']
+            use_default_ccparams = not program_ccparams or (not isinstance(program_ccparams, list) and isnan(program_ccparams))
+            if not use_default_ccparams:
                 convertedccparams = D['programs'][prognumber]['convertedccparams'] 
             else:
                 convertedccparams = setdefaultccparams(progname=progname)    

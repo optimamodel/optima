@@ -31,24 +31,6 @@ app.register_blueprint(model, url_prefix = '/api/model')
 app.register_blueprint(scenarios, url_prefix = '/api/analysis/scenarios')
 app.register_blueprint(optimization, url_prefix = '/api/analysis/optimization')
 
-# Execute this method after every request.
-# Check response and return exception if status is not OK.
-@app.after_request
-def check_response_for_errors(response):
-    responseJS = None
-    try:
-        # Load JSON from string
-        responseJS = json.loads( response.get_data() )
-    except :
-        pass
-
-    # Make sure the response status was OK. Response body is javascript that is successfully
-    # parsed. And status in JSON is NOK implying there was an error.
-    if response.status_code == 200 and responseJS is not None and 'status' in responseJS and responseJS['status'] == "NOK":
-        response.status_code = 500
-
-    return response
-
 
 """ site - needed to correctly redirect to it from blueprints """
 @app.route('/')

@@ -1,5 +1,4 @@
-import json
-from flask import Blueprint
+from flask import Blueprint, jsonify
 from flask.ext.login import login_required
 from generators.line import generatedata
 
@@ -16,7 +15,7 @@ def line():
 @login_required
 def lineParam(numpoints):
     """ mocks up data for line graph with generated data """
-    return json.dumps({
+    return jsonify({
         'values': generatedata(numpoints),
         "key": "Line series",
         "color": "#ff7f0e"

@@ -6,7 +6,7 @@ define ['angular-mocks', 'Source/modules/model/cost-coverage-ctrl'], ->
     beforeEach ->
       module 'app.model'
 
-      inject ($rootScope, $controller) ->
+      inject ($rootScope, $controller, costCoverageHelpers) ->
         meta = {
           "pops": {
             "client": [ 0 ],
@@ -32,33 +32,19 @@ define ['angular-mocks', 'Source/modules/model/cost-coverage-ctrl'], ->
           meta: meta
           modalService: {}
           info: {}
-          programs: []
+          programs: [],
+          costCoverageHelpers: costCoverageHelpers
         }
 
-    describe 'convertFromPercent()', ->
-
-      it 'should return a number divided by 100', ->
-        expect(scope.convertFromPercent(60)).toBe(0.6)
-        expect(scope.convertFromPercent(2)).toBe(0.02)
-        expect(scope.convertFromPercent(-33)).toBe(-0.33)
-
-      it 'should return NaN for anything else then a number', ->
-        expect(scope.convertFromPercent("60")).toBeNaN()
-        expect(scope.convertFromPercent(undefined)).toBeNaN()
-        expect(scope.convertFromPercent(null)).toBeNaN()
-
-    describe 'areValidParams()', ->
-
-      it 'should return true for an array containing NaN, undefined & null', ->
-        expect(scope.areValidParams([NaN, undefined, null])).toBeTruthy()
-        expect(scope.areValidParams([NaN, NaN])).toBeTruthy()
-        expect(scope.areValidParams([undefined])).toBeTruthy()
-        expect(scope.areValidParams([null])).toBeTruthy()
-
-      it 'should return true for an array containing only values', ->
-        expect(scope.areValidParams([1, 'wow', true])).toBeTruthy()
-        expect(scope.areValidParams([2, 54])).toBeTruthy()
-
-      it 'should return false for an array containing mixed values & NaN, undefined or null ', ->
-        expect(scope.areValidParams([NaN, undefined, null, 2])).toBeFalsy()
-        expect(scope.areValidParams([NaN, 'wow'])).toBeFalsy()
+    # move to cost-coverage-service spec
+    # describe 'convertFromPercent()', ->
+    #
+    #   it 'should return a number divided by 100', ->
+    #     expect(scope.convertFromPercent(60)).toBe(0.6)
+    #     expect(scope.convertFromPercent(2)).toBe(0.02)
+    #     expect(scope.convertFromPercent(-33)).toBe(-0.33)
+    #
+    #   it 'should return NaN for anything else then a number', ->
+    #     expect(scope.convertFromPercent("60")).toBeNaN()
+    #     expect(scope.convertFromPercent(undefined)).toBeNaN()
+    #     expect(scope.convertFromPercent(null)).toBeNaN()

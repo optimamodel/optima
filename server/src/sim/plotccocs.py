@@ -4,11 +4,20 @@ Plots cost-coverage, coverage-outcome and cost-outcome curves
 Version: 2015jan19 by robynstuart
 """
 from matplotlib.pylab import figure, plot, hold, xlabel, ylabel, title, xlim, ylim
+from numpy import nan
 
 # Set defaults for testing makeccocs
-default_progname = 'FSW programs'
-default_effect = {'paramtype':'sex', 'param':'condomcom', 'popname':u'FSW'} 
-default_ccparams = {'saturation': 0.9, 'coveragelower': 0.25, 'coverageupper':0.4, 'funding':200000.0, 'scaleup':.5, 'nonhivdalys':None, 'xupperlim':None, 'cpibaseyear':None, 'perperson':0}
+default_progname = 'MSM programs'
+default_effect = {'paramtype':'sex', 'param':'condomcas', 'popname':u'MSM'} 
+default_ccparams = {'saturation': .9, 
+                    'coveragelower': .5, 
+                    'coverageupper':.6, 
+                    'funding':4e5, 
+                    'scaleup':nan, 
+                    'nonhivdalys':nan, 
+                    'xupperlim':nan, 
+                    'cpibaseyear':nan, 
+                    'perperson':nan}
 default_coparams = [0.3, 0.5, 0.7, 0.9] 
 default_arteligcutoff = 'gt350'
 coverage_params = ['numost','numpmtct','numfirstline','numsecondline']
@@ -83,7 +92,7 @@ def plotprogramcurves(D, progname=default_progname, ccparams=default_ccparams, c
         plotcco(D, progname=progname, effect=effect, ccparams=ccparams, coparams=coparams, arteligcutoff=arteligcutoff)            
 
 #################################################################################
-def plotall(D):
+def plotall(D, ccparams = default_ccparams, coparams = default_coparams):
     for program in D['programs']:
         plotdata_cc, D = makecc(D=D, progname=program['name'])
         plotprogramcurves(D=D, progname=program['name'])
