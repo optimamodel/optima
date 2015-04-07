@@ -18,21 +18,13 @@ def migrate(D):
                           'ccparams':D['programs'][program]['ccparams'], \
                           'effects':neweffects}
             newprograms.append(newprogram)
-<<<<<<< HEAD:server/src/versioning/002_add_programs.py
-            
-=======
 
->>>>>>> develop:server/src/versioning/003_add_programs.py
         # Reorder programs
         neworder = []
         for i in range(D['G']['nprogs']):
             neworder.append([p['name'] for p in newprograms].index(D['data']['meta']['progs']['short'][i]))
         reorderednewprograms = [newprograms[i] for i in neworder]
-<<<<<<< HEAD:server/src/versioning/002_add_programs.py
-            
-=======
 
->>>>>>> develop:server/src/versioning/003_add_programs.py
         D['programs'] = reorderednewprograms
 
     return D
