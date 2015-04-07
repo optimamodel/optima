@@ -152,7 +152,7 @@ def tic():
     return time()
 
 
-def toc(start=0, sigfigs=3):
+def toc(start=0, label='', sigfigs=3):
     """
     A little pair of functions to calculate a time difference, sort of like Matlab:
     t = tic()
@@ -160,7 +160,9 @@ def toc(start=0, sigfigs=3):
     """
     from time import time
     elapsed = time() - start
-    print('Elapsed time: %s s' % sigfig(elapsed, sigfigs=sigfigs))
+    if label=='': base = 'Elapsed time: '
+    else: base = 'Elapsed time for %s: ' % label
+    print(base + '%s s' % sigfig(elapsed, sigfigs=sigfigs))
     return None
     
 
