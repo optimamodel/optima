@@ -1,7 +1,9 @@
 <div class="page">
-  <p ng-show="needData" class="error-hint">Please upload Optima spreadsheet first.</p>
+  <div ng-if="missingModelData">
+    <spreadsheet-upload-hint></spreadsheet-upload-hint>
+  </div>
 
-  <div ng-if="!needData">
+  <div ng-if="!missingModelData">
 
     <div class="grid" style="margin-bottom: 40px">
       <div class="12">
@@ -11,7 +13,7 @@
         <select name="optimization-selection" class="txbox"
                 ng-model="state.activeOptimizationName"
                 ng-change="applyOptimization(state.activeOptimizationName, true)">
-          <option ng-repeat="org in optimizations"
+          <option ng-repeat="org in state.optimizations"
                   ng-selected="{{ org.name == state.activeOptimizationName }}"
                   value="{{ ::org.name }}">{{ ::org.name }}</option>
         </select>
@@ -23,16 +25,16 @@
 
     <div class="grid">
       <div class="12 btn-group">
-        <button class="btn __white" ng-class="{ __active: activeTab === 1 }" ng-click="setActiveTab(1)">
+        <button class="btn __white" ng-class="{ __active: state.activeTab === 1 }" ng-click="setActiveTab(1)">
           Define objectives
         </button>
-        <button class="btn __white" ng-class="{ __active: activeTab === 2 }" ng-click="setActiveTab(2)">
+        <button class="btn __white" ng-class="{ __active: state.activeTab === 2 }" ng-click="setActiveTab(2)">
           Define constraints
         </button>
-        <button class="btn __white" ng-class="{ __active: activeTab === 3 }" ng-click="setActiveTab(3)">
+        <button class="btn __white" ng-class="{ __active: state.activeTab === 3 }" ng-click="setActiveTab(3)">
           View results
         </button>
-        <button ng-click="deleteOptimization(state.activeOptimizationName)" type="button" class="btn __red" ng-disabled="optimizations.length <= 1" style="margin-left: 10px">Delete Optimization</button>
+        <button ng-click="deleteOptimization(state.activeOptimizationName)" type="button" class="btn __red" ng-disabled="state.optimizations.length <= 1" style="margin-left: 10px">Delete Optimization</button>
       </div>
     </div>
 
@@ -40,7 +42,7 @@
 
     <form name="state.OptimizationForm" ng-submit="startOptimization()" novalidate="novalidate">
       <!-- Tab 1 -->
-      <div ng-show="activeTab === 1">
+      <div ng-show="state.activeTab === 1">
 
         <div class="cf">
           <h2>Time horizons and assumptions</h2>
@@ -397,7 +399,7 @@
       </div>
 
       <!-- Tab 2 -->
-      <div ng-show="activeTab === 2">
+      <div ng-show="state.activeTab === 2">
 
         <div>
           <p class="warning-hint">Warning: Constraints reduce the effectiveness of the optimization analysis. Use as few
@@ -537,7 +539,7 @@
       </div>
 
       <!-- Tab 3 -->
-      <div ng-if="activeTab === 3">
+      <div ng-if="state.activeTab === 3">
         <div class="section" style="margin-bottom: 45px">
           <h2>Optimization</h2>
           <span class="info-hint">
@@ -552,22 +554,22 @@
 
               <div class="elastic_col __shrink">
                 <button type="submit" class="btn __green"
-                        ng-disabled="optimizationStatus.checking || optimizationStatus.isActive">Start optimization</button>
+                        ng-disabled="state.optimizationStatus.checking || state.optimizationStatus.isActive">Start optimization</button>
               </div>
 
               <div class="elastic_col __shrink">
                 <button type="button" class="btn __red" ng-click="stopOptimization()"
-                        ng-disabled="!optimizationStatus.isActive">Stop optimization
+                        ng-disabled="!state.optimizationStatus.isActive">Stop optimization
                 </button>
               </div>
               <div class="elastic_col __shrink">
                 <button type="button" class="btn" ng-click="saveOptimization()"
-                  ng-disabled="optimizationStatus.isActive || optimizationStatus.checking || errorText">Save optimization
+                  ng-disabled="state.optimizationStatus.isActive || state.optimizationStatus.checking || errorText">Save optimization
                 </button>
               </div>
               <div class="elastic_col __shrink">
                 <button type="button" class="btn" ng-click="revertOptimization()"
-                  ng-disabled="optimizationStatus.isActive || optimizationStatus.checking">Revert
+                  ng-disabled="state.optimizationStatus.isActive || state.optimizationStatus.checking">Revert
                 </button>
                 </div>
 
@@ -579,11 +581,11 @@
             Test run
           </label>
 
-          <div class="error-hint" ng-show="isDirty">
+          <div class="error-hint" ng-show="state.isDirty">
             Attention: the results of previous optimization run have not been saved yet. If you start new optimization without saving, some of these results might be lost.
           </div>
-          <div class="info-hint" ng-show="optimizationStatus.text">
-            {{ optimizationStatus.text }}
+          <div class="info-hint" ng-show="state.optimizationStatus.text">
+            {{ state.optimizationStatus.text }}
           </div>
           <div class="error-hint" ng-show="errorText">
               <pre>{{errorText}}</pre>
@@ -594,12 +596,12 @@
           <div class="grid">
             <div class="12">
               <export-all-charts name="Optimization analyses" ng-if="someGraphAvailable()"></export-all-charts>
-              <export-all-data charts="chartsForDataExport" name="Optimization analyses" ng-if="someGraphAvailable()"></export-all-data>
+              <export-all-data charts="state.chartsForDataExport" name="Optimization analyses" ng-if="someGraphAvailable()"></export-all-data>
             </div>
 
             <div class="grid 12">
 
-              <div ng-if="state.radarCharts && types.plotUncertainties">
+              <div ng-if="state.radarCharts && state.types.plotUncertainties">
                 <div ng-repeat="radarChart in state.radarCharts track by $index">
                   <div class="chart-container __small">
                     <div radar-chart data="radarChart.data" options="radarChart.options" save-graph-as></div>
@@ -607,7 +609,7 @@
                 </div>
               </div>
 
-              <div ng-if="state.pieCharts && !types.plotUncertainties">
+              <div ng-if="state.pieCharts && !state.types.plotUncertainties">
                 <div ng-repeat="pieChart in state.pieCharts track by $index">
                   <div class="chart-container __small">
                     <div pie-chart data="pieChart.data" options="pieChart.options" save-graph-as></div>
