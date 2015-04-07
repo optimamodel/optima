@@ -6,11 +6,11 @@ def getcurrentbudget(D, alloc=None, randseed=None):
     Version: 2014nov30
     """
     from makeccocs import ccoeqn, cco2eqn, coverage_params, makesamples
-    from numpy import nan, zeros, array
+    from numpy import nan, zeros, array, isnan
     from utils import perturb
     
     npts = len(D['opt']['partvec']) # Number of parameter points
-    if not alloc: 
+    if isinstance(alloc,type(None)): 
         alloc = D['data']['origalloc'] # Initialise currentbudget if needed
         print('WARNING: No allocation provided to alterparams, using allocation %s for programs %s.' % (alloc, D['data']['meta']['progs']['short']))
     currentcoverage = getcurrentcoverage(D=D, alloc=alloc, randseed=randseed) # Get current coverage 
@@ -35,9 +35,9 @@ def getcurrentbudget(D, alloc=None, randseed=None):
                     popnumber = D['data']['meta']['pops']['short'].index(popname)
                 except: # ... or raise error if it isn't recognised
                     print('Cannot recognise population %s, it is not in %s' % (popname, D['data']['meta']['pops']['short']))
-                try: # Use parameters if there...
-                    convertedccoparams = effect['convertedccoparams']
-                except: # ... otherwise give it some predefined ones
+                convertedccoparams = effect['convertedccoparams']
+                use_default_ccoparams = not convertedccoparams or (not isinstance(convertedccoparams, list) and isnan(convertedccoparams))
+                if use_default_ccoparams:
                     convertedccoparams = setdefaultccoparams(progname=progname, param=effect['param'], pop=effect['popname'])
                 if randseed>=0:
                     try:
