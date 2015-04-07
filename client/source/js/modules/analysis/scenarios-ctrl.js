@@ -1,49 +1,42 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     'use strict';
 
-    module.controller('AnalysisScenariosController', function ($scope, $http, $modal, $window, meta, info, scenarioParametersResponse, scenariosResponse, CONFIG, typeSelector) {
+    module.controller('AnalysisScenariosController', function ($scope, $http, $modal, meta, info, scenarioParametersResponse, scenariosResponse, CONFIG, typeSelector) {
+
+        // In case there is no model data the controller only needs to show the
+        // warning that the user should upload a spreadsheet with data.
+        if (!info.has_data) {
+          $scope.missingModelData = true;
+          return;
+        }
 
         var responseData, availableScenarioParameters, availableScenarios;
 
         // initialize all necessary data for this controller
         var initialize = function() {
-          $scope.validate = false;
-          $scope.show_message = false;
           $scope.scenarios = [];
 
           $scope.runScenariosOptions = {
             dosave: false
           };
 
-          // check if project is calibrated
-          checkProjectInfo(info);
+          // add All option in population list
+          meta.data.pops.long.push("All");
 
-          if($scope.validate) {
-            // add All option in population list
-            meta.data.pops.long.push("All");
+          // transform scenarioParameters to use attribute `names` instead of `keys`
+          // it is the same for the data we have to send to run scenarios
+          availableScenarioParameters = _(scenarioParametersResponse.data.parameters).map(function(parameters) {
+            return { name: parameters.name, names: parameters.keys, values: parameters.values};
+          });
 
-            // transform scenarioParameters to use attribute `names` instead of `keys`
-            // it is the same for the data we have to send to run scenarios
-            availableScenarioParameters = _(scenarioParametersResponse.data.parameters).map(function(parameters) {
-              return { name: parameters.name, names: parameters.keys, values: parameters.values};
-            });
+          availableScenarios = scenariosResponse.data.scenarios;
 
-            availableScenarios = scenariosResponse.data.scenarios;
-
-            $scope.scenarios = _(availableScenarios).map(function(scenario) {
-              scenario.active = true;
-              return scenario;
-            });
-          }
+          $scope.scenarios = _(availableScenarios).map(function(scenario) {
+            scenario.active = true;
+            return scenario;
+          });
 
           $scope.types = typeSelector.types;
-        };
-
-        var checkProjectInfo = function (info) {
-          if (!info) return;
-          var data = info.data;
-          $scope.validate = data.can_scenarios;
-          $scope.show_message = !$scope.validate;
         };
 
         /**

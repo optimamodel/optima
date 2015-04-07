@@ -42,9 +42,12 @@ def getOptimizationParameters():
         if not 'optimizations' in D_dict:
             # save the defaults once and forever, so that we won't painfully retrieve it later
             D = fromjson(D_dict)
-            optimizations = tojson(defaultoptimizations(D))
-            D_dict['optimizations'] = optimizations
-            save_model(project_id, D_dict)
+            if 'data' in D:
+                optimizations = tojson(defaultoptimizations(D))
+                D_dict['optimizations'] = optimizations
+                save_model(project_id, D_dict)
+            else:
+                optimizations = []
         else:
             optimizations = D_dict['optimizations']
         return jsonify({'optimizations':optimizations})
