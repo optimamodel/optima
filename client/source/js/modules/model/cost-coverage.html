@@ -33,8 +33,7 @@
 
         <export-all-charts ng-if="graphs" name="Cost coverage outcome" custom-titles="state.titlesForChartsExport"></export-all-charts>
         <export-all-data charts="state.chartsForDataExport" name="Cost coverage outcome" ng-if="graphs || ccGraph"></export-all-data>
-
-        <h1>{{ ::state.displayedProgram.name }}</h1>
+        <h1>{{ccGraph.options.title}}</h1>
         <div class="section elastic">
           <div class="elastic_col __shrink" ng-if="ccGraph.data">
             <div class="chart-container">
