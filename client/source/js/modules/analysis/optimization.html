@@ -33,7 +33,7 @@
           class="btn __white" 
           ng-class="{ __active: activeTab === 3 }" 
           ng-click="setActiveTab(3)"
-          ng-disabled="state.OptimizationForm.$invalid">View results
+          ng-disabled="isPreventingViewResults">View results
         </button>
         <button ng-click="deleteOptimization(state.activeOptimizationName)" type="button" class="btn __red" ng-disabled="optimizations.length <= 1" style="margin-left: 10px">Delete Optimization</button>
       </div>
@@ -193,20 +193,20 @@
 
           <h2>Funding assumptions</h2>
           <div class="float-left margin-left-s">
-            <ng-form name="fundingAssumptionsForm">
+            <!-- <ng-form name="fundingAssumptionsForm"> -->
 
               <div 
                   ng-messages="fixedBudgetForm.budgetValue.$error"
-                  ng-show="fixedBudgetForm.$dirty && fixedBudgetForm.budgetValue.$invalid">
+                  ng-show="params.objectives.funding==='constant' && fixedBudgetForm.$dirty && fixedBudgetForm.budgetValue.$invalid">
                 <div class="error-hint" ng-message="required">Please provide a budget value</div>
                 <div class="error-hint" ng-message="number">Please only a numeric value</div>
               </div>
 
               <div 
                   ng-messages="variableBudgetForm.$invalid"
-                  ng-show="variableBudgetForm.$dirty && variableBudgetForm.$invalid">
-                <div class="error-hint" ng-message="required">Bugdets for all years are required</div>
-                <div class="error-hint" ng-message="number">Please only numeric values</div>
+                  ng-show="params.objectives.funding==='variable' && variableBudgetForm.$dirty && variableBudgetForm.$invalid">
+                <div class="error-hint" ng-show="variableBudgetForm.$dirty && variableBudgetForm.$invalid">Bugdets for all years are required</div>
+                <!-- <div class="error-hint" ng-message="number">Please only numeric values</div> -->
               </div>
 
               <div 
@@ -226,7 +226,7 @@
 
               <div 
                   ng-messages="fixedBudgetRangeForm.budgetRangeStep.$error"
-                  ng-show="fixedBudgetRangeForm.$dirty && fixedBudgetRangeForm.budgetRangeStep.$invalid">
+                  ng-show="params.objectives.funding==='range' && fixedBudgetRangeForm.$dirty && fixedBudgetRangeForm.budgetRangeStep.$invalid">
                 <div class="error-hint" ng-message="required">The budget step is required</div>
                 <div class="error-hint" ng-message="min">The minimum number of budgets is {{ (params.objectives.outcome.budgetrange.maxval-params.objectives.outcome.budgetrange.minval)/30 | number:0 }}</div>
                 <div class="error-hint" ng-message="max">The maximum number of budgets is {{ params.objectives.outcome.budgetrange.maxval-params.objectives.outcome.budgetrange.minval }}</div>
@@ -300,7 +300,7 @@
                   <div style="clear:both;"></div>
                 </ng-form>
               </label>
-            </ng-form>
+            <!-- </ng-form> -->
           </div>
         </div>
 

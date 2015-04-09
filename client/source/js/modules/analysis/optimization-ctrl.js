@@ -577,7 +577,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     /* If some of the budgets are undefined, return false */
-    function validateVariableBudgets() {
+    function validateVariableBudgets () {
       return _(_($scope.params.objectives.outcome.variable).toArray()).some( function (budget) {return budget === undefined;}) === false;
     }
 
@@ -608,7 +608,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       };
     }
 
-    function validateOutcomeWeights(){
+    function validateOutcomeWeights () {
       var checkedPrograms = _($scope.objectivesToMinimize).filter( function (a) {
         return $scope.params.objectives.outcome[a.slug] === true &&
           !($scope.params.objectives.outcome[a.slug+'weight']!==undefined &&
@@ -624,14 +624,28 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     * Evaluates the conditions defined in $scope.validations and when there is one that do not pass, 
     * it adds its message with feedback for the user to the errorMessages array.
     */
-    function checkValidation(){
+    function checkValidation () {
       errorMessages = [];
       _($scope.validations).each( function (validation) {
         if(validation.valid()!==true && (validation.condition === undefined || validation.condition() === true)){
           errorMessages.push({message:validation.message});
         }
       });
-    }
+    };
+
+    /**
+     * Returns true if the requisites to view the results are met.
+     */
+    $scope.canViewResults = function () {
+      return $scope.canViewResults;
+    };
+
+    /**
+     * Returns true if the requisites to view the results are NOT met.
+     */
+    $scope.isPreventingViewResults = function () {
+      return !$scope.canViewResults;
+    };
 
     /**
      * Returns true if at least one chart is available
@@ -698,20 +712,20 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     }
 
     $scope.setActiveTab = function (tabNum){
-      if(tabNum === 3){
-      /*Prevent going to third tab if something is invalid in the first tab.
-        Cannot just use $scope.state.OptimizationForm.$invalid for this because the validation of the years and the budgets is done in a different way. */
-        checkValidation();
-        if(errorMessages.length > 0){
-          modalService.informError(errorMessages, 'Cannot view results');
-          return;
-        }
-        if ($scope.state.OptimizationForm.$invalid) {
-          modalService.inform( function () {}, 'Ok', 'Please correct all errors on this page before proceeding.', 'Cannot view results' );
-          return;
-        }
-        constructOptimizationMessage();
-      }
+      // if(tabNum === 3){
+      // /*Prevent going to third tab if something is invalid in the first tab.
+      //   Cannot just use $scope.state.OptimizationForm.$invalid for this because the validation of the years and the budgets is done in a different way. */
+      //   checkValidation();
+      //   if(errorMessages.length > 0){
+      //     modalService.informError(errorMessages, 'Cannot view results');
+      //     return;
+      //   }
+      //   if ($scope.state.OptimizationForm.$invalid) {
+      //     modalService.inform( function () {}, 'Ok', 'Please correct all errors on this page before proceeding.', 'Cannot view results' );
+      //     return;
+      //   }
+      //   constructOptimizationMessage();
+      // }
       $scope.activeTab = tabNum;
     };
 
