@@ -11,7 +11,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     optimizations, optimizationHelpers) {
 
       $scope.initialize = function () {
-        angular.op = $scope;
         $scope.$on('$destroy', function () {
           // Make sure that the interval is terminated whe this controller is destroyed
           stopTimer();
