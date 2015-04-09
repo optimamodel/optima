@@ -361,8 +361,6 @@ def getProjectInformation():
             'updated_time': project.updated_time,
             'data_upload_time': project.data_upload_time(),
             'has_data': project.has_data(),
-            'can_calibrate': project.can_calibrate(),
-            'can_scenarios': project.can_scenarios(),
         }
         return jsonify(reply)
     else:
