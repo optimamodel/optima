@@ -19,7 +19,6 @@ define(['./module', 'underscore'], function (module, _) {
       $scope.state = {
         chartsForDataExport: [],
         titlesForChartsExport: [],
-        displayedProgram: null,
         selectionPrograms: initializePrograms(info.programs, programs),
         coParams: [],
         hasCostCoverResponse: false,
@@ -205,7 +204,7 @@ define(['./module', 'underscore'], function (module, _) {
     var prepareGraphsOfType = function (data, type) {
       if (type === 'plotdata_cc') {
         $scope.ccGraph = prepareCostCoverageGraph(data);
-        $scope.ccGraph.options.title = $scope.state.displayedProgram.name;
+        $scope.ccGraph.options.title = $scope.state.selectedProgram.name;
       } else if (type === 'plotdata' || type === 'plotdata_co') {
         _(data).each(function (graphData) {
           $scope.graphs[type].push(setUpPlotdataGraph(graphData));
@@ -265,7 +264,6 @@ define(['./module', 'underscore'], function (module, _) {
      */
     var retrieveAndUpdateGraphs = function (model) {
       $http.post('/api/model/costcoverage', model).success(function (response) {
-        $scope.state.displayedProgram = angular.copy($scope.state.selectedProgram);
         effects = response.effectnames;
         $scope.state.coParams = costCoverageHelpers.setUpCoParamsFromEffects(effects);
         $scope.state.hasCostCoverResponse = true;
