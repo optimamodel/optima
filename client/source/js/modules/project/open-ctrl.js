@@ -113,7 +113,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $http.delete('/api/project/delete/' + id)
         .success(function (response) {
           $scope.projects = _($scope.projects).filter(function (item) {
-            return item.name != name;
+            return item.id != id;
           });
           activeProject.ifActiveResetFor(name, id, UserManager.data);
         });
