@@ -29,11 +29,11 @@
         <button class="btn __white" ng-class="{ __active: activeTab === 2 }" ng-click="setActiveTab(2)">
           Define constraints
         </button>
-        <button 
+        <button
           class="btn __white" 
           ng-class="{ __active: activeTab === 3 }" 
           ng-click="setActiveTab(3)"
-          ng-disabled="isPreventingViewResults">View results
+          ng-disabled="state.periodForm.$invalid">View results
         </button>
         <button ng-click="deleteOptimization(state.activeOptimizationName)" type="button" class="btn __red" ng-disabled="optimizations.length <= 1" style="margin-left: 10px">Delete Optimization</button>
       </div>
@@ -47,10 +47,10 @@
 
         <div class="cf">
           <h2>Time horizons and assumptions</h2>
-            <span ng-show="periodForm.$invalid" class="error-hint"> Please specify a valid period to optimize the program. </span>
+            <span ng-show="state.periodForm.$invalid" class="error-hint"> Please specify a valid period to optimize the program. </span>
             <div class="float-left margin-left-s">
 
-              <ng-form name="periodForm">
+              <ng-form name="state.periodForm">
                 Analyses will consider program optimizations over the period
                 <input type="number" class="txbox __inline __l" value="2015" placeholder="e.g. 2015"
                        ng-model="params.objectives.year.start"

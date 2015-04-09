@@ -11,7 +11,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     optimizations, optimizationHelpers) {
 
       $scope.initialize = function () {
-        // angular.op = $scope;
+        angular.op = $scope;
         $scope.$on('$destroy', function () {
           // Make sure that the interval is terminated whe this controller is destroyed
           stopTimer();
@@ -631,20 +631,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           errorMessages.push({message:validation.message});
         }
       });
-    };
-
-    /**
-     * Returns true if the requisites to view the results are met.
-     */
-    $scope.canViewResults = function () {
-      return $scope.canViewResults;
-    };
-
-    /**
-     * Returns true if the requisites to view the results are NOT met.
-     */
-    $scope.isPreventingViewResults = function () {
-      return !$scope.canViewResults;
     };
 
     /**
