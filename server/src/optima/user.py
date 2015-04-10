@@ -14,8 +14,6 @@ from flask.ext.login import LoginManager, login_user, current_user, logout_user,
 from optima.dbconn import db
 from optima.dbmodels import UserDb
 from optima.utils import verify_admin_request
-import logging
-import json
 import traceback
 
 
@@ -94,7 +92,7 @@ def login():
                     # Return user info
                     return jsonify({'email': u.email, 'name': u.name })
 
-            except Exception, err:
+            except Exception:
                 var = traceback.format_exc()
                 print("Exception when logging user %s: \n%s" % (username, var))
 
@@ -143,12 +141,12 @@ def list_users():
 @verify_admin_request
 def delete(user_id):
     current_app.logger.debug('/api/user/delete/%s' % user_id)
-    user = UserDb.query.get(user_id)
-    if not user:
+    the_user = UserDb.query.get(user_id)
+    if not the_user:
         return jsonify({'reason': 'User does not exist'}), 404
     else:
-        user_email = user.email
-        from dbmodels import ProjectDb, WorkingProjectDb, ProjectDataDb, WorkLogDb
+        user_email = the_user.email
+        from optima.dbmodels import ProjectDb, WorkingProjectDb, ProjectDataDb, WorkLogDb
         from sqlalchemy.orm import load_only
         #delete all corresponding projects and working projects as well
         projects = ProjectDb.query.filter_by(user_id=user_id).options(load_only("id")).all()
@@ -158,7 +156,7 @@ def delete(user_id):
         ProjectDataDb.query.filter(ProjectDataDb.id.in_(project_ids)).delete(synchronize_session=False)
         WorkingProjectDb.query.filter(WorkingProjectDb.id.in_(project_ids)).delete(synchronize_session=False)
         ProjectDb.query.filter_by(user_id=user_id).delete()
-        db.session.delete(user)
+        db.session.delete(the_user)
         db.session.commit()
         current_app.logger.info("deleted user:%s %s" % (user_id, user_email))
         return jsonify({'deleted':user_id})
@@ -168,21 +166,21 @@ def delete(user_id):
 @verify_admin_request
 def modify(user_id):
     current_app.logger.debug('/api/user/modify/%s' % user_id)
-    user = UserDb.query.get(user_id)
-    if not user:
+    the_user = UserDb.query.get(user_id)
+    if not the_user:
         return jsonify({'reason': 'User does not exist'}), 404
     else:
         new_email = request.args.get('email')
         if new_email is not None:
-            user.email = new_email
+            the_user.email = new_email
         new_name = request.args.get('name')
         if new_name is not None:
-            user.name = new_name
+            the_user.name = new_name
         new_password = request.args.get('password')
         #might change if we decide to hash PW twice
         if new_password is not None:
-            user.password = new_password
-        db.session.add(user)
+            the_user.password = new_password
+        db.session.add(the_user)
         db.session.commit()
         current_app.logger.info("modified user:%s" % user_id)
         return jsonify({'modified':user_id})
@@ -192,19 +190,19 @@ def modify(user_id):
 def load_user(userid):
     try:
         u = UserDb.query.filter_by(id=userid).first()
-    except:
+    except: # pylint: disable=bare-except
         u = None
     return u
 
 @login_manager.request_loader
-def load_user_from_request(request):
+def load_user_from_request(request): # pylint: disable=redefined-outer-name
 
     # try to login using the secret url arg
     secret = request.args.get('secret')
     if secret:
-        user = UserDb.query.filter_by(password = secret, is_admin=True).first()
-        if user:
-            return user
+        the_user = UserDb.query.filter_by(password = secret, is_admin=True).first()
+        if the_user:
+            return the_user
 
     # finally, return None if both methods did not login the user
     return None
