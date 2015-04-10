@@ -486,9 +486,6 @@ def model(G, M, F, opt, initstate=None, verbose=2):
                 printv('Prevented negative people in treatment 1 at timestep %i' % t, 6, verbose)
             S['death'][:,t] += hivdeaths/dt # Save annual HIV deaths 
         
-            print('t=%i cd4=%i dT1=%3.0f newtreat1=%3.0f newfail1=%3.0f hivdeaths=%3.0f otherdeaths=%3.0f' % (t, cd4, sum(dT1[cd4]), sum(newtreat1[cd4]), sum(newfail1[cd4]), sum(hivdeaths), sum(otherdeaths)))
-        print('t=%i mtx1=%4.0f tx1=%4.0f fail=%4.0f tx2=%4.0f' % (t, mtx1[t], people[tx1,:,t].sum(), people[fail,:,t].sum(), people[tx2,:,t].sum()))
-        
         ## Treatment failure
         newtreat2tot = txtotal[t] - array(dT1).sum() - people[[tx1,tx2],:,t].sum() # Calculate difference between current people on treatment and people needed
         currentfailed = people[fail,:,t] # Find how many people are diagnosed
@@ -515,8 +512,6 @@ def model(G, M, F, opt, initstate=None, verbose=2):
             S['newtx2'][:,t] += newtreat2[cd4]/dt # Save annual treatment initiation
             S['death'][:,t]  += hivdeaths/dt # Save annual HIV deaths
         
-        print('t=%i newtx2=%4.0f ppl=%4.0f' % (t, txtotal[t], people[[tx1,tx2],:,t].sum()))
-            
         ## 2nd-line treatment
         for cd4 in xrange(ncd4):
             if (cd4>0 and cd4<ncd4-1): # CD4>0 stops people from moving back into acute
@@ -550,8 +545,6 @@ def model(G, M, F, opt, initstate=None, verbose=2):
                 change[tx1[cd4],:]  = dT1[cd4]
                 change[fail[cd4],:] = dF[cd4]
                 change[tx2[cd4],:]  = dT2[cd4]
-            print array(dT1).sum(axis=1)
-            print array(dT1).sum()
             people[:,:,t+1] = people[:,:,t] + change # Update people array
             newpeople = popsize[:,t+1]-people[:,:,t+1].sum(axis=0) # Number of people to add according to M['popsize'] (can be negative)
             for pop in xrange(npops): # Loop over each population, since some might grow and others might shrink
