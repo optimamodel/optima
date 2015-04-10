@@ -12,7 +12,7 @@ from utils import verify_admin_request
 from flask.ext.login import login_required, current_user
 from dbconn import db
 from dbmodels import ProjectDb, WorkingProjectDb, ProjectDataDb, WorkLogDb
-from utils import BAD_REPLY, load_model, save_model
+from utils import load_model, save_model
 import time,datetime
 import dateutil.tz
 from datetime import datetime
@@ -35,7 +35,7 @@ def get_project_parameters():
     """
     from sim.parameters import parameters
     project_parameters = [p for p in parameters() if 'modifiable' in p and p['modifiable']]
-    return json.dumps({"parameters":project_parameters})
+    return jsonify({"parameters":project_parameters})
 
 @project.route('/predefined')
 @login_required
@@ -53,7 +53,7 @@ def get_predefined():
         p['active'] = False
         new_parameters = [dict([('value', parameter),('active',True)]) for parameter in p['parameters']]
         if new_parameters: p['parameters'] = new_parameters
-    return json.dumps({"programs":programs, "populations": populations, "categories":program_categories})
+    return jsonify({"programs":programs, "populations": populations, "categories":program_categories})
 
 
 def getPopsAndProgsFromModel(project, trustInputMetadata):
@@ -216,7 +216,8 @@ def update_project(project_id):
     # Check whether we are editing a project
     project = load_project(project_id) if project_id else None
     if not project:
-        abort(404)
+        return jsonify({'reason':'No such project %s' % project_id}), 404
+
     project_name = project.name
 
     makeproject_args = {"projectname": project_name, "savetofile":False}
@@ -291,9 +292,10 @@ def openProject(project_id):
     except:
         proj_exists = False
     if not proj_exists:
-        return jsonify({'status':'NOK','reason':'No such project %s' % project_name})
+
+        return jsonify({'reason':'No such project %s' % project_id}), 500
     else:
-        return jsonify({'status':'OK'})
+        return jsonify({})
 
 @project.route('/workbook/<project_id>')
 @login_required
@@ -305,14 +307,14 @@ def giveWorkbook(project_id):
     if project exists, regenerates workbook for it
     if project does not exist, returns an error.
     """
-    reply = BAD_REPLY
+
     proj_exists = False
     cu = current_user
     current_app.logger.debug("giveWorkbook(%s %s)" % (cu.id, project_id))
     project = load_project(project_id)
     if project is None:
-        reply['reason']='Project %s does not exist.' % project_id
-        return jsonify(reply)
+        reply = {'reason':'Project %s does not exist.' % project_id}
+        return jsonify(reply), 500
     else:
         # See if there is matching project data
         projdata = ProjectDataDb.query.get(project.id)
@@ -341,19 +343,14 @@ def getProjectInformation():
 
     Returns:
         A jsonified project dictionary accessible to the current user.
-        In case of an anonymous user an object with status "NOK" is returned.
+        In case of an anonymous user an object an error response is returned.
     """
-
-    # default response
-    response_data = { "status": "NOK" }
 
     # see if there is matching project
     project = load_project(request.project_id)
-
     # update response
     if project is not None:
-        response_data = {
-            'status': "OK",
+        reply = {
             'id': project.id,
             'name': project.name,
             'dataStart': project.datastart,
@@ -361,12 +358,16 @@ def getProjectInformation():
             'programs': project.programs,
             'populations': project.populations,
             'creation_time': project.creation_time,
+            'updated_time': project.updated_time,
             'data_upload_time': project.data_upload_time(),
             'has_data': project.has_data(),
             'can_calibrate': project.can_calibrate(),
             'can_scenarios': project.can_scenarios(),
         }
-    return jsonify(response_data)
+        return jsonify(reply)
+    else:
+        reply = {'reason': 'Project %s does not exist' % request.project_id}
+        return jsonify(reply), 500
 
 @project.route('/list/all')
 @login_required
@@ -388,7 +389,6 @@ def getProjectListAll():
         projects = ProjectDb.query.all()
         for project in projects:
             project_data = {
-                'status': "OK",
                 'id': project.id,
                 'name': project.name,
                 'dataStart': project.datastart,
@@ -396,6 +396,7 @@ def getProjectListAll():
                 'programs': project.programs,
                 'populations': project.populations,
                 'creation_time': project.creation_time,
+                'updated_time': project.updated_time,
                 'data_upload_time': project.data_upload_time(),
                 'user_id': project.user_id
             }
@@ -423,7 +424,6 @@ def getProjectList():
         projects = ProjectDb.query.filter_by(user_id=current_user.id)
         for project in projects:
             project_data = {
-                'status': "OK",
                 'id': project.id,
                 'name': project.name,
                 'dataStart': project.datastart,
@@ -431,6 +431,7 @@ def getProjectList():
                 'programs': project.programs,
                 'populations': project.populations,
                 'creation_time': project.creation_time,
+                'updated_time': project.updated_time,
                 'data_upload_time': project.data_upload_time()
             }
             projects_data.append(project_data)
@@ -465,7 +466,7 @@ def deleteProject(project_id):
     if (user_id!=current_user.id):delete_spreadsheet(project_name, user_id)
     current_app.logger.debug("spreadsheets for %s deleted" % project_name)
 
-    return jsonify({'status':'OK','reason':'Project %s deleted.' % project_name})
+    return jsonify({'result':'Project %s deleted.' % project_name})
 
 @project.route('/copy/<project_id>', methods=['POST'])
 @login_required
@@ -477,16 +478,15 @@ def copyProject(project_id):
     """
     from sqlalchemy.orm.session import make_transient, make_transient_to_detached
     from sim.dataio import projectpath
-    reply = BAD_REPLY
     new_project_name = request.args.get('to')
     if not new_project_name:
-        reply['reason'] = 'New project name is not given'
-        return reply
+        reply = {'reason': 'New project name is not given'}
+        return jsonify(reply), 500
     # Get project row for current user with project name
     project = load_project(project_id, all_data = True)
     if project is None:
-        reply['reason'] = 'Project %s does not exist.' % project_id
-        return reply
+        reply = {'reason': 'Project %s does not exist.' % project_id}
+        return jsonify(reply), 500
     project_user_id = project.user_id
     project_data_exists = project.project_data #force loading it
     db.session.expunge(project)
@@ -506,7 +506,7 @@ def copyProject(project_id):
         db.session.add(project.project_data)
     db.session.commit()
     # let's not copy working project, it should be either saved or discarded
-    return jsonify({'status':'OK','project':project_id, 'user':project_user_id, 'copy_id':new_project_id})
+    return jsonify({'project':project_id, 'user':project_user_id, 'copy_id':new_project_id})
 
 @project.route('/export', methods=['POST'])
 @login_required
@@ -582,7 +582,6 @@ def uploadExcel():
     user_id = current_user.id
     current_app.logger.debug("uploadExcel(project id: %s user:%s)" % (project_id, user_id))
 
-    reply = {'status':'NOK'}
     file = request.files['file']
 
     # getting current user path
@@ -590,15 +589,13 @@ def uploadExcel():
     if not loaddir:
         loaddir = DATADIR
     if not file:
-        reply['reason'] = 'No file is submitted!'
-        return json.dumps(reply)
+        reply = {'reason': 'No file is submitted!'}
+        return jsonify(reply), 500
 
     source_filename = secure_filename(file.filename)
     if not allowed_file(source_filename):
-        reply['reason'] = 'File type of %s is not accepted!' % source_filename
-        return json.dumps(reply)
-
-    reply['file'] = source_filename
+        reply = {'reason': 'File type of %s is not accepted!' % source_filename}
+        return jsonify(reply), 500
 
     filename = project_name + '.xlsx'
     server_filename = os.path.join(loaddir, filename)
@@ -647,9 +644,8 @@ def uploadExcel():
         db.session.add(projdata)
         db.session.commit()
 
-    reply['status'] = 'OK'
-    reply['result'] = 'Project %s is updated' % project_name
-    return json.dumps(reply)
+    reply = {'file': source_filename, 'result': 'Project %s is updated' % project_name}
+    return jsonify(reply)
 
 @project.route('/data/<project_id>')
 @login_required
@@ -661,13 +657,12 @@ def getData(project_id):
     if project exists, returns data (aka D) for it
     if project does not exist, returns an error.
     """
-    reply = BAD_REPLY
     proj_exists = False
     current_app.logger.debug("/api/project/data/%s" % project_id)
     project = load_project(project_id)
     if project is None:
-        reply['reason']='Project %s does not exist.' % project_id
-        return jsonify(reply)
+        reply = {'reason': 'Project %s does not exist.' % project_id }
+        return jsonify(reply), 500
     else:
         data = project.model
         #make sure this exists
@@ -691,24 +686,21 @@ def createProjectAndSetData():
     Creates a project & uploads data file to update project model.
     """
     user_id = current_user.id
-
-    reply = {'status':'NOK'}
-
     project_name = request.values.get('name')
     if not project_name:
-        reply['reason'] = 'No project name provided'
-        return json.dumps(reply)
+        reply = {'reason': 'No project name provided'}
+        return jsonify(reply), 500
 
     file = request.files['file']
 
     if not file:
-        reply['reason'] = 'No file is submitted!'
-        return json.dumps(reply)
+        reply = {'reason': 'No file is submitted!'}
+        return jsonify(reply), 500
 
     source_filename = secure_filename(file.filename)
     if not allowed_file(source_filename):
-        reply['reason'] = 'File type of %s is not accepted!' % source_filename
-        return json.dumps(reply)
+        reply = {'reason': 'File type of %s is not accepted!' % source_filename}
+        return jsonify(reply), 500
 
     data = json.load(file)
 
@@ -721,11 +713,8 @@ def createProjectAndSetData():
     db.session.add(project)
     db.session.commit()
 
-    reply['status'] = 'OK'
-    reply['result'] = 'Project %s is updated' % project_name
-    reply['file'] = source_filename
-
-    return json.dumps(reply)
+    reply = {'file': source_filename, 'result': 'Project %s is updated' % project_name}
+    return jsonify(reply)
 
 
 @project.route('/data/<project_id>', methods=['POST'])
@@ -738,23 +727,21 @@ def setData(project_id):
     """
     user_id = current_user.id
     current_app.logger.debug("uploadProject(project id: %s user:%s)" % (project_id, user_id))
-
-    reply = {'status':'NOK'}
     file = request.files['file']
 
     if not file:
-        reply['reason'] = 'No file is submitted!'
-        return json.dumps(reply)
+        reply = {'reason': 'No file is submitted!'}
+        return jsonify(reply), 500
 
     source_filename = secure_filename(file.filename)
     if not allowed_file(source_filename):
-        reply['reason'] = 'File type of %s is not accepted!' % source_filename
-        return json.dumps(reply)
+        reply = {'reason': 'File type of %s is not accepted!' % source_filename}
+        return jsonify(reply), 500
 
     project = load_project(project_id)
     if project is None:
-        reply['reason']='Project %s does not exist.' % project_id
-        return jsonify(reply)
+        reply = {'reason': 'Project %s does not exist.' % project_id}
+        return jsonify(reply), 500
 
     data = json.load(file)
     data['G']['projectfilename'] = project.model['G']['projectfilename']
@@ -767,11 +754,8 @@ def setData(project_id):
     db.session.add(project)
     db.session.commit()
 
-    reply['status'] = 'OK'
-    reply['result'] = 'Project %s is updated' % project_name
-    reply['file'] = source_filename
-
-    return json.dumps(reply)
+    reply = {'file': source_filename, 'result': 'Project %s is updated' % project_name}
+    return jsonify(reply)
 
 @project.route('/data/migrate', methods=['POST'])
 @verify_admin_request

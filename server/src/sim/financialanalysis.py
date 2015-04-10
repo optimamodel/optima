@@ -11,7 +11,6 @@ from printv import printv
 from datetime import date
 from utils import smoothinterp
 
-
 def financialanalysis(D, postyear=2015, S=None, rerunmodel=False, artgrowthrate=.05, discountrate=.03, treattime=[8,1,16,3,10], cd4time=[8,8,10,8,2,2], verbose=2):
     '''
     Plot financial commitment graphs
@@ -48,7 +47,7 @@ def financialanalysis(D, postyear=2015, S=None, rerunmodel=False, artgrowthrate=
 
     # Get most recent ART unit costs 
     progname = 'ART'
-    prognumber = D['data']['meta']['progs']['short'].index(progname)
+    prognumber = [p['name'] for p in D['programs']].index(progname)
     artunitcost = [D['data']['costcov']['cost'][prognumber][j]/D['data']['costcov']['cov'][prognumber][j] for j in xrange(len(D['data']['costcov']['cost'][prognumber]))]
     artunitcost = smoothinterp(newx=D['S']['tvec'], origx=D['G']['datayears'], origy=artunitcost, growth=artgrowthrate)
 
