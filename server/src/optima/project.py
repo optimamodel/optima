@@ -1,8 +1,7 @@
 import json
-from flask import Blueprint, url_for, helpers, request, jsonify, redirect, current_app, Response, flash
+from flask import Blueprint, helpers, request, jsonify, current_app, Response
 from werkzeug.utils import secure_filename
 import os
-import traceback
 from src.sim.dataio import upload_dir_user, DATADIR, TEMPLATEDIR, fullpath
 from src.sim.updatedata import updatedata
 from src.sim.makeproject import makeproject, makeworkbook
@@ -13,7 +12,7 @@ from src.optima.utils import load_model, save_model
 from flask.ext.login import login_required, current_user # pylint: disable=E0611,F0401
 from src.optima.dbconn import db
 from src.optima.dbmodels import ProjectDb, WorkingProjectDb, ProjectDataDb, WorkLogDb
-import time,datetime
+import datetime
 import dateutil.tz
 from datetime import datetime
 from copy import deepcopy
@@ -144,7 +143,6 @@ def create_project(project_name):
 
     """
     from src.sim.makeproject import default_datastart, default_dataend, default_pops, default_progs
-    from src.sim.runsimulation import runsimulation
     from src.sim.dataio import tojson
     current_app.logger.debug("createProject %s for user %s" % (project_name, current_user.email))
     raw_data = json.loads(request.data)
@@ -194,13 +192,9 @@ def update_project(project_id):
 
     """
 
-    from src.sim.makeproject import default_datastart, default_dataend, default_pops, default_progs
-    from src.sim.runsimulation import runsimulation
     from src.sim.dataio import projectpath, tojson
     current_app.logger.debug("updateProject %s for user %s" % (project_id, current_user.email))
     raw_data = json.loads(request.data)
-    # get current user
-    user_id = current_user.id
 
     current_app.logger.debug("project %s is in edit mode" % project_id)
     current_app.logger.debug(raw_data)
@@ -232,8 +226,6 @@ def update_project(project_id):
     project.programs = makeproject_args['progs']
     project.populations = makeproject_args['pops']
     current_app.logger.debug('Updating existing project %s' % project.name)
-    # to make sure we keep the existing user id when an admin is editing
-    user_id = project.user_id
 
     D = makeproject(**makeproject_args) # makeproject is supposed to return the name of the existing file...
     #D should have inputprograms and inputpopulations corresponding to the entered data now
@@ -308,7 +300,6 @@ def giveWorkbook(project_id):
     if project does not exist, returns an error.
     """
 
-    proj_exists = False
     cu = current_user
     current_app.logger.debug("giveWorkbook(%s %s)" % (cu.id, project_id))
     project = load_project(project_id)
@@ -452,14 +443,13 @@ def deleteProject(project_id):
     user_id = current_user.id
 
     if project is not None:
-        id = project.id
         user_id = project.user_id
         project_name = project.name
         #delete all relevant entries explicitly
-        db.session.query(WorkLogDb).filter_by(project_id=id).delete()
-        db.session.query(ProjectDataDb).filter_by(id=id).delete()
-        db.session.query(WorkingProjectDb).filter_by(id=id).delete()
-        db.session.query(ProjectDb).filter_by(id=id).delete()
+        db.session.query(WorkLogDb).filter_by(project_id=project.id).delete()
+        db.session.query(ProjectDataDb).filter_by(id=project.id).delete()
+        db.session.query(WorkingProjectDb).filter_by(id=project.id).delete()
+        db.session.query(ProjectDb).filter_by(id=project.id).delete()
     db.session.commit()
     current_app.logger.debug("project %s is deleted by user %s" % (project_id, current_user.id))
     delete_spreadsheet(project_name)
@@ -476,7 +466,7 @@ def copyProject(project_id):
     Copies the given project to a different name
     usage: /api/project/copy/<project_id>?to=<new_project_name>
     """
-    from sqlalchemy.orm.session import make_transient, make_transient_to_detached
+    from sqlalchemy.orm.session import make_transient
     from src.sim.dataio import projectpath
     new_project_name = request.args.get('to')
     if not new_project_name:
@@ -574,7 +564,6 @@ def uploadExcel():
     Uploads Excel file, uses it to update the corresponding model.
     Precondition: model should exist.
     """
-    from src.sim.runsimulation import runsimulation
     from src.sim.dataio import projectpath
     current_app.logger.debug("api/project/update")
     project_name = request.project_name
@@ -582,24 +571,24 @@ def uploadExcel():
     user_id = current_user.id
     current_app.logger.debug("uploadExcel(project id: %s user:%s)" % (project_id, user_id))
 
-    file = request.files['file']
+    uploaded_file = request.files['file']
 
     # getting current user path
     loaddir =  upload_dir_user(DATADIR)
     if not loaddir:
         loaddir = DATADIR
-    if not file:
+    if not uploaded_file:
         reply = {'reason': 'No file is submitted!'}
         return jsonify(reply), 500
 
-    source_filename = secure_filename(file.filename)
+    source_filename = secure_filename(uploaded_file.filename)
     if not allowed_file(source_filename):
         reply = {'reason': 'File type of %s is not accepted!' % source_filename}
         return jsonify(reply), 500
 
     filename = project_name + '.xlsx'
     server_filename = os.path.join(loaddir, filename)
-    file.save(server_filename)
+    uploaded_file.save(server_filename)
 
     # See if there is matching project
     project = load_project(project_id)
@@ -617,7 +606,7 @@ def uploadExcel():
         # Is this the first time? if so then we have to run simulations
         should_re_run = 'S' not in D
 
-        D = updatedata(D, input_programs = project.programs, savetofile = False, rerun = should_re_run)
+        D = updatedata(D, input_programs = project.programs, savetofile=False, rerun=should_re_run)
         model = model_as_dict(D)
         project.model = model
         #update the programs and populations based on the data
@@ -652,12 +641,12 @@ def uploadExcel():
 @report_exception()
 def getData(project_id):
     """
-    download data for the project with the given name.
+    Download data for the project with the given name.
     expects project name (project should already exist)
     if project exists, returns data (aka D) for it
     if project does not exist, returns an error.
+
     """
-    proj_exists = False
     current_app.logger.debug("/api/project/data/%s" % project_id)
     project = load_project(project_id)
     if project is None:
@@ -682,27 +671,25 @@ def getData(project_id):
 @login_required
 @report_exception('Unable to copy uploaded data')
 def createProjectAndSetData():
-    """
-    Creates a project & uploads data file to update project model.
-    """
+    """ Creates a project & uploads data file to update project model. """
     user_id = current_user.id
     project_name = request.values.get('name')
     if not project_name:
         reply = {'reason': 'No project name provided'}
         return jsonify(reply), 500
 
-    file = request.files['file']
+    uploaded_file = request.files['file']
 
-    if not file:
+    if not uploaded_file:
         reply = {'reason': 'No file is submitted!'}
         return jsonify(reply), 500
 
-    source_filename = secure_filename(file.filename)
+    source_filename = secure_filename(uploaded_file.filename)
     if not allowed_file(source_filename):
         reply = {'reason': 'File type of %s is not accepted!' % source_filename}
         return jsonify(reply), 500
 
-    data = json.load(file)
+    data = json.load(uploaded_file)
 
     project = ProjectDb(project_name, user_id, data['G']['datastart'], \
         data['G']['dataend'], \
@@ -727,13 +714,13 @@ def setData(project_id):
     """
     user_id = current_user.id
     current_app.logger.debug("uploadProject(project id: %s user:%s)" % (project_id, user_id))
-    file = request.files['file']
+    uploaded_file = request.files['file']
 
-    if not file:
+    if not uploaded_file:
         reply = {'reason': 'No file is submitted!'}
         return jsonify(reply), 500
 
-    source_filename = secure_filename(file.filename)
+    source_filename = secure_filename(uploaded_file.filename)
     if not allowed_file(source_filename):
         reply = {'reason': 'File type of %s is not accepted!' % source_filename}
         return jsonify(reply), 500
@@ -743,7 +730,7 @@ def setData(project_id):
         reply = {'reason': 'Project %s does not exist.' % project_id}
         return jsonify(reply), 500
 
-    data = json.load(file)
+    data = json.load(uploaded_file)
     data['G']['projectfilename'] = project.model['G']['projectfilename']
     data['G']['workbookname'] = project.model['G']['workbookname']
     data['G']['projectname'] = project.model['G']['projectname']
@@ -763,7 +750,7 @@ def migrateData():
     """
     Goes over all available projects and tries to run specified migration on them
     """
-    import versioning
+    import src.versioning
     for project_id in db.session.query(ProjectDb.id).distinct():
         print "project_id", project_id
         model = load_model(project_id, from_json = False)

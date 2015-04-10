@@ -1,13 +1,13 @@
 from flask import Blueprint, request, jsonify, helpers, current_app
 import json
 import traceback
-from sim.optimize import optimize
-from sim.dataio import tojson, fromjson
-from sim.scenarios import runscenarios
-from utils import load_model, save_model, project_exists, check_project_name, report_exception, load_project
+from src.sim.optimize import optimize
+from src.sim.dataio import tojson, fromjson
+from src.sim.scenarios import runscenarios
+from src.optima.utils import load_model, save_model, project_exists, check_project_name, report_exception, load_project
 from flask.ext.login import login_required, current_user # pylint: disable=E0611,F0401
-from dbconn import db
-from dbmodels import ProjectDb, WorkingProjectDb
+from src.optima.dbconn import db
+from src.optima.dbmodels import ProjectDb, WorkingProjectDb
 
 
 # route prefix: /api/analysis/scenarios
@@ -16,8 +16,8 @@ scenarios.config = {}
 
 @scenarios.record
 def record_params(setup_state):
-  app = setup_state.app
-  scenarios.config = dict([(key,value) for (key,value) in app.config.iteritems()])
+    app = setup_state.app
+    scenarios.config = dict([(key,value) for (key,value) in app.config.iteritems()])
 
 
 @scenarios.route('/parameters')
@@ -25,8 +25,8 @@ def record_params(setup_state):
 @check_project_name
 @report_exception()
 def get_scenario_parameters():
-    from sim.parameters import parameters
-    from sim.scenarios import getparvalues
+    from src.sim.parameters import parameters
+    from src.sim.scenarios import getparvalues
     scenario_params = parameters()
     real_parameters = []
     project = load_project(request.project_id)
@@ -56,7 +56,7 @@ def list_scenarios():
     Returns a list of scenarios defined by the user, or the default scenario list
 
     """
-    from sim.scenarios import defaultscenarios
+    from src.sim.scenarios import defaultscenarios
     current_app.logger.debug("/api/analysis/scenarios/list")
     # get project name
     project_id = request.project_id

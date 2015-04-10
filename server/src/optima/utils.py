@@ -1,5 +1,5 @@
 import os
-from sim.dataio import DATADIR, TEMPLATEDIR, upload_dir_user, fromjson, tojson
+from src.sim.dataio import DATADIR, TEMPLATEDIR, upload_dir_user, fromjson, tojson
 from flask import helpers, current_app
 from flask.ext.login import current_user # pylint: disable=E0611,F0401
 from functools import wraps
