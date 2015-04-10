@@ -110,7 +110,7 @@ def stopCalibration():
 @login_required
 @check_project_name
 @report_exception()
-def getWorkingModel():
+def getWorkingModel(): # pylint: disable=R0912, R0914, R0915
     """ Returns the working model for optimization. """
     import datetime
     import dateutil.tz

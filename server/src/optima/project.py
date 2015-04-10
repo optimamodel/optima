@@ -3,29 +3,29 @@ from flask import Blueprint, url_for, helpers, request, jsonify, redirect, curre
 from werkzeug.utils import secure_filename
 import os
 import traceback
-from sim.dataio import upload_dir_user, DATADIR, TEMPLATEDIR, fullpath
-from sim.updatedata import updatedata
-from sim.makeproject import makeproject, makeworkbook
-from utils import allowed_file, project_exists, delete_spreadsheet, load_project
-from utils import check_project_name, load_model, save_model, report_exception, model_as_bunch, model_as_dict
-from utils import verify_admin_request
+from src.sim.dataio import upload_dir_user, DATADIR, TEMPLATEDIR, fullpath
+from src.sim.updatedata import updatedata
+from src.sim.makeproject import makeproject, makeworkbook
+from src.optima.utils import allowed_file, project_exists, delete_spreadsheet, load_project
+from src.optima.utils import check_project_name, report_exception, model_as_bunch, model_as_dict
+from src.optima.utils import verify_admin_request
+from src.optima.utils import load_model, save_model
 from flask.ext.login import login_required, current_user # pylint: disable=E0611,F0401
-from dbconn import db
-from dbmodels import ProjectDb, WorkingProjectDb, ProjectDataDb, WorkLogDb
-from utils import load_model, save_model
+from src.optima.dbconn import db
+from src.optima.dbmodels import ProjectDb, WorkingProjectDb, ProjectDataDb, WorkLogDb
 import time,datetime
 import dateutil.tz
 from datetime import datetime
 from copy import deepcopy
 
-""" route prefix: /api/project """
+# route prefix: /api/project
 project = Blueprint('project',  __name__, static_folder = '../static')
 project.config = {}
 
 @project.record
 def record_params(setup_state):
-  app = setup_state.app
-  project.config = dict([(key,value) for (key,value) in app.config.iteritems()])
+    app = setup_state.app
+    project.config = dict([(key,value) for (key,value) in app.config.iteritems()])
 
 @project.route('/parameters')
 @login_required
@@ -33,7 +33,7 @@ def get_project_parameters():
     """
     Gives back project parameters (modifiable)
     """
-    from sim.parameters import parameters
+    from src.sim.parameters import parameters
     project_parameters = [p for p in parameters() if 'modifiable' in p and p['modifiable']]
     return jsonify({"parameters":project_parameters})
 
@@ -43,8 +43,8 @@ def get_predefined():
     """
     Gives back default populations and programs
     """
-    from sim.programs import programs, program_categories
-    from sim.populations import populations
+    from src.sim.programs import programs, program_categories
+    from src.sim.populations import populations
     programs = programs()
     populations = populations()
     program_categories = program_categories()
@@ -61,8 +61,8 @@ def getPopsAndProgsFromModel(project, trustInputMetadata):
     Initializes "meta data" about populations and programs from model.
     keep_old_parameters (for program parameters) will be True if we import from Excel.
     """
-    from sim.programs import programs
-    from sim.populations import populations
+    from src.sim.programs import programs
+    from src.sim.populations import populations
     programs = programs()
     populations = populations()
     model = project.model
