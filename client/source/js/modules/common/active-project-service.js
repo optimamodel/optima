@@ -29,8 +29,8 @@ define([
             // Do nothing if no project found for that user.
             if(!project.hasProjectFor(user)) { return; }
             var loaded_project = JSON.parse(project.getProjectFor(user));
-            project.name = loaded_project['name'];
-            project.id = loaded_project['id'];
+            project.name = loaded_project.name;
+            project.id = loaded_project.id;
             $http.defaults.headers.common.project = project.name;
             $http.defaults.headers.common['project-id'] = project.id;
           },

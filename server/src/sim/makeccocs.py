@@ -86,6 +86,7 @@ def makecc(D=None, progname=None, ccparams=None, arteligcutoff=None, verbose=def
     if (ccparams and 'xupperlim' in ccparams and ccparams['xupperlim'] and ~isnan(ccparams['xupperlim'])): xupperlim = ccparams['xupperlim']
 
     # Populate output structure with scatter data
+    plotdata['allxscatterdata'] = totalcost
     totalcost, coverage = getscatterdata(totalcost, coverage)
     plotdata['xscatterdata'] = totalcost
     plotdata['yscatterdata'] = coverage
@@ -202,6 +203,7 @@ def makeco(D=None, progname=None, effect=None, coparams=None, coverage_params=co
         plotdata['yupperlim'] = 1.0 if any(j < 1 for j in outcome) else max([j if ~isnan(j) else 0.0 for j in outcome])*1.5
 
         # Populate output structure with scatter data 
+        plotdata['allyscatterdata'] = outcome
         coverage, outcome = getscatterdata(coverage, outcome)
         plotdata['xscatterdata'] = coverage 
         plotdata['yscatterdata'] = outcome 
@@ -247,18 +249,13 @@ def makecco(D=None, progname=None, effect=None, ccparams=None, coparams=None, ar
         plotdata_cc, D = makecc(D=D, progname=progname, ccparams=ccparams, arteligcutoff=arteligcutoff)
         plotdata_co, effect = makeco(D=D, progname=progname, effect=effect, coparams=coparams, arteligcutoff=arteligcutoff)
     
-        plotdata['xscatterdata'] = plotdata_cc['xscatterdata'] # X scatter data
-        plotdata['yscatterdata'] = plotdata_co['yscatterdata'] # Y scatter data
-        #workaround - ROBYN PLEASE HAVE A LOOK
-        if len(plotdata['xscatterdata'])!=len(plotdata['yscatterdata']):
-            minlen = min(len(plotdata['xscatterdata']), len(plotdata['yscatterdata']))
-            if minlen==0:
-                plotdata['xscatterdata']=[]
-                plotdata['yscatterdata']=[]
-            else:
-                plotdata['xscatterdata'] = plotdata['xscatterdata'][-minlen:]
-                plotdata['yscatterdata'] = plotdata['yscatterdata'][-minlen:]
-    
+        # Collect scatter data and make sure it's the right length etc
+        totalcost = plotdata_cc['allxscatterdata']
+        outcome = plotdata_co['allyscatterdata'] 
+        totalcost, outcome = getscatterdata(totalcost, outcome)
+        plotdata['xscatterdata'] = totalcost 
+        plotdata['yscatterdata'] = outcome 
+            
         # Populate output structure with axis limits
         plotdata['xlowerlim'], plotdata['ylowerlim'] = plotdata_cc['xlowerlim'], plotdata_co['ylowerlim']
         plotdata['xupperlim'], plotdata['yupperlim'] = plotdata_cc['xupperlim'], plotdata_co['yupperlim']

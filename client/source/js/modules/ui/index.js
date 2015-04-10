@@ -2,6 +2,7 @@ define([
   'angular',
   './editable/index',
   './menu/index',
+  './spreadsheet-upload-hint/index',
   './modal/modal-service',
   '../common/file-upload-service',
   '../common/active-project-service',
