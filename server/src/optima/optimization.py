@@ -12,7 +12,7 @@ Optimization Module
 import json
 import traceback
 from flask import request, jsonify, Blueprint, current_app
-from flask.ext.login import login_required, current_user
+from flask.ext.login import login_required, current_user # pylint: disable=E0611,F0401
 from dbconn import db
 from async_calculate import CalculatingThread, start_or_report_calculation, cancel_calculation, check_calculation
 from async_calculate import check_calculation_status, good_exit_status

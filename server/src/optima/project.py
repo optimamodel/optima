@@ -9,7 +9,7 @@ from sim.makeproject import makeproject, makeworkbook
 from utils import allowed_file, project_exists, delete_spreadsheet, load_project
 from utils import check_project_name, load_model, save_model, report_exception, model_as_bunch, model_as_dict
 from utils import verify_admin_request
-from flask.ext.login import login_required, current_user
+from flask.ext.login import login_required, current_user # pylint: disable=E0611,F0401
 from dbconn import db
 from dbmodels import ProjectDb, WorkingProjectDb, ProjectDataDb, WorkLogDb
 from utils import load_model, save_model

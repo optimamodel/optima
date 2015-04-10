@@ -5,7 +5,7 @@ from sim.optimize import optimize
 from sim.dataio import tojson, fromjson
 from sim.scenarios import runscenarios
 from utils import load_model, save_model, project_exists, check_project_name, report_exception, load_project
-from flask.ext.login import login_required, current_user
+from flask.ext.login import login_required, current_user # pylint: disable=E0611,F0401
 from dbconn import db
 from dbmodels import ProjectDb, WorkingProjectDb
 

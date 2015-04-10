@@ -10,7 +10,7 @@ User Module
 
 """
 from flask import request, jsonify, g, session, flash, abort, Blueprint, url_for, current_app
-from flask.ext.login import LoginManager, login_user, current_user, logout_user, redirect, login_required
+from flask.ext.login import LoginManager, login_user, current_user, logout_user, redirect, login_required # pylint: disable=E0611,F0401
 from dbconn import db
 from dbmodels import UserDb
 from utils import verify_admin_request
