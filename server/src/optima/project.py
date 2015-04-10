@@ -2,16 +2,16 @@ import json
 from flask import Blueprint, helpers, request, jsonify, current_app, Response
 from werkzeug.utils import secure_filename
 import os
-from src.sim.dataio import upload_dir_user, DATADIR, TEMPLATEDIR, fullpath
-from src.sim.updatedata import updatedata
-from src.sim.makeproject import makeproject, makeworkbook
-from src.optima.utils import allowed_file, project_exists, delete_spreadsheet, load_project
-from src.optima.utils import check_project_name, report_exception, model_as_bunch, model_as_dict
-from src.optima.utils import verify_admin_request
-from src.optima.utils import load_model, save_model
+from sim.dataio import upload_dir_user, DATADIR, TEMPLATEDIR, fullpath
+from sim.updatedata import updatedata
+from sim.makeproject import makeproject, makeworkbook
+from optima.utils import allowed_file, project_exists, delete_spreadsheet, load_project
+from optima.utils import check_project_name, report_exception, model_as_bunch, model_as_dict
+from optima.utils import verify_admin_request
+from optima.utils import load_model, save_model
 from flask.ext.login import login_required, current_user # pylint: disable=E0611,F0401
-from src.optima.dbconn import db
-from src.optima.dbmodels import ProjectDb, WorkingProjectDb, ProjectDataDb, WorkLogDb
+from optima.dbconn import db
+from optima.dbmodels import ProjectDb, WorkingProjectDb, ProjectDataDb, WorkLogDb
 import datetime
 import dateutil.tz
 from datetime import datetime

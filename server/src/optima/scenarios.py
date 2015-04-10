@@ -1,9 +1,9 @@
 from flask import Blueprint, request, jsonify, current_app
 import json
 import traceback
-from src.sim.dataio import tojson, fromjson
-from src.sim.scenarios import runscenarios
-from src.optima.utils import load_model, save_model, project_exists, check_project_name, report_exception, load_project
+from sim.dataio import tojson, fromjson
+from sim.scenarios import runscenarios
+from optima.utils import load_model, save_model, project_exists, check_project_name, report_exception, load_project
 from flask.ext.login import login_required # pylint: disable=E0611,F0401
 
 # route prefix: /api/analysis/scenarios

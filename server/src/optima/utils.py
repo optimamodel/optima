@@ -1,11 +1,11 @@
 import os
-from src.sim.dataio import DATADIR, TEMPLATEDIR, upload_dir_user, fromjson, tojson
+from sim.dataio import DATADIR, TEMPLATEDIR, upload_dir_user, fromjson, tojson
 from flask import helpers, current_app
 from flask.ext.login import current_user # pylint: disable=E0611,F0401
 from functools import wraps
 from flask import request, jsonify, abort
-from src.optima.dbconn import db
-from src.optima.dbmodels import ProjectDb, WorkingProjectDb, UserDb
+from optima.dbconn import db
+from optima.dbmodels import ProjectDb, WorkingProjectDb, UserDb
 import traceback
 
 ALLOWED_EXTENSIONS = {'txt', 'xlsx', 'xls', 'json'}

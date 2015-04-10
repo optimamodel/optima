@@ -1,7 +1,7 @@
 from flask import Flask, redirect
 from flask.ext.sqlalchemy import SQLAlchemy
 import json
-from src.sim.dataio import DATADIR
+from sim.dataio import DATADIR
 import optima.dbconn
 import os
 import sys

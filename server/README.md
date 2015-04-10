@@ -143,7 +143,7 @@ We linting the python code with pylint. Install it with:
 
     pip install pylint
 
-You can run it with:
+You can run it from the server directory with:
 
     pylint src/optima
 

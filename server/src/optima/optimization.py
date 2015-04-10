@@ -13,14 +13,14 @@ import json
 import traceback
 from flask import request, jsonify, Blueprint, current_app
 from flask.ext.login import login_required, current_user # pylint: disable=E0611,F0401
-from src.optima.dbconn import db
-from src.optima.async_calculate import CalculatingThread, start_or_report_calculation
-from src.optima.async_calculate import cancel_calculation, check_calculation
-from src.optima.async_calculate import check_calculation_status, good_exit_status
-from src.optima.utils import check_project_name, project_exists, load_model, save_model
-from src.optima.utils import revert_working_model_to_default, save_working_model_as_default, report_exception
-from src.sim.optimize import optimize, saveoptimization, defaultoptimizations, defaultobjectives, defaultconstraints
-from src.sim.dataio import fromjson, tojson
+from optima.dbconn import db
+from optima.async_calculate import CalculatingThread, start_or_report_calculation
+from optima.async_calculate import cancel_calculation, check_calculation
+from optima.async_calculate import check_calculation_status, good_exit_status
+from optima.utils import check_project_name, project_exists, load_model, save_model
+from optima.utils import revert_working_model_to_default, save_working_model_as_default, report_exception
+from sim.optimize import optimize, saveoptimization, defaultoptimizations, defaultobjectives, defaultconstraints
+from sim.dataio import fromjson, tojson
 
 # route prefix: /api/analysis/optimization
 optimization = Blueprint('optimization',  __name__, static_folder = '../static')
@@ -217,7 +217,7 @@ def revertCalibrationModel():
 @report_exception()
 def removeOptimizationSet(name):
     """ Removes given optimization from the optimization set """
-    from src.sim.optimize import removeoptimization
+    from sim.optimize import removeoptimization
     # get project name
     project_id = request.project_id
     if not project_exists(project_id):

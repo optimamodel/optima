@@ -1,21 +1,21 @@
 from flask import Blueprint, request, jsonify
 import json
 import traceback
-from src.optima.async_calculate import CalculatingThread, start_or_report_calculation
-from src.optima.async_calculate import cancel_calculation, check_calculation
-from src.optima.async_calculate import check_calculation_status, good_exit_status
-from src.sim.manualfit import manualfit
-from src.sim.dataio import fromjson, tojson
-from src.sim.runsimulation import runsimulation
-from src.sim.makeccocs import makecco, plotallcurves #, default_effectname, default_ccparams, default_coparams
-from src.optima.utils import load_model, save_model, save_working_model_as_default, revert_working_model_to_default, project_exists, pick_params, check_project_name, for_fe
-from src.optima.utils import report_exception
+from optima.async_calculate import CalculatingThread, start_or_report_calculation
+from optima.async_calculate import cancel_calculation, check_calculation
+from optima.async_calculate import check_calculation_status, good_exit_status
+from sim.manualfit import manualfit
+from sim.dataio import fromjson, tojson
+from sim.runsimulation import runsimulation
+from sim.makeccocs import makecco, plotallcurves #, default_effectname, default_ccparams, default_coparams
+from optima.utils import load_model, save_model, save_working_model_as_default, revert_working_model_to_default, project_exists, pick_params, check_project_name, for_fe
+from optima.utils import report_exception
 from flask.ext.login import login_required, current_user # pylint: disable=E0611,F0401
 from flask import current_app
 from signal import *
-from src.optima.dbconn import db
-from src.sim.autofit import autofit
-from src.sim.updatedata import updatedata
+from optima.dbconn import db
+from sim.autofit import autofit
+from sim.updatedata import updatedata
 
 # route prefix: /api/model
 model = Blueprint('model',  __name__, static_folder = '../static')
@@ -25,8 +25,8 @@ def add_calibration_parameters(D_dict, result = None):
     """
     picks the parameters for calibration based on D as dictionary and the parameters settings
     """
-    from src.sim.parameters import parameters
-    from src.sim.nested import getnested
+    from sim.parameters import parameters
+    from sim.nested import getnested
     calibrate_parameters = [p for p in parameters() if 'calibration' in p and p['calibration']]
     if result is None: result = {}
     result['F'] = D_dict.get('F', {})
@@ -301,7 +301,8 @@ def doRunSimulation():
         if endyear:
             args["endyear"] = int(endyear)
         args["dosave"] = False
-        D = runsimulation(**args) # pylint: disable=W0142
+        # pylint: disable=W0142
+        D = runsimulation(**args)
         D_dict = tojson(D)
         save_model(request.project_id, D_dict)
         result = {'graph':D_dict.get('plot',{}).get('E',{})}
@@ -390,7 +391,7 @@ def reloadSpreadsheet(project_id):
     """
     Reload the excel spreadsheet and re-run the simulations.
     """
-    from src.optima.utils import load_project
+    from optima.utils import load_project
 
     project = load_project(project_id)
     D = load_model(project_id)

@@ -11,9 +11,9 @@ User Module
 """
 from flask import request, jsonify, g, session, flash, abort, Blueprint, url_for, current_app
 from flask.ext.login import LoginManager, login_user, current_user, logout_user, redirect, login_required # pylint: disable=E0611,F0401
-from src.optima.dbconn import db
-from src.optima.dbmodels import UserDb
-from src.optima.utils import verify_admin_request
+from optima.dbconn import db
+from optima.dbmodels import UserDb
+from optima.utils import verify_admin_request
 import logging
 import json
 import traceback
