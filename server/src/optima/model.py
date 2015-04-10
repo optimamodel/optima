@@ -1,20 +1,21 @@
 from flask import Blueprint, request, jsonify
 import json
 import traceback
-from async_calculate import CalculatingThread, start_or_report_calculation, cancel_calculation
-from async_calculate import check_calculation, check_calculation_status, good_exit_status
-from sim.manualfit import manualfit
-from sim.dataio import fromjson, tojson
-from sim.runsimulation import runsimulation
-from sim.makeccocs import makecco, plotallcurves #, default_effectname, default_ccparams, default_coparams
-from utils import load_model, save_model, save_working_model_as_default, revert_working_model_to_default, project_exists, pick_params, check_project_name, for_fe
-from utils import report_exception
-from flask.ext.login import login_required, current_user
+from src.optima.async_calculate import CalculatingThread, start_or_report_calculation
+from src.optima.async_calculate import cancel_calculation, check_calculation
+from src.optima.async_calculate import check_calculation_status, good_exit_status
+from src.sim.manualfit import manualfit
+from src.sim.dataio import fromjson, tojson
+from src.sim.runsimulation import runsimulation
+from src.sim.makeccocs import makecco, plotallcurves #, default_effectname, default_ccparams, default_coparams
+from src.optima.utils import load_model, save_model, save_working_model_as_default, revert_working_model_to_default, project_exists, pick_params, check_project_name, for_fe
+from src.optima.utils import report_exception
+from flask.ext.login import login_required, current_user # pylint: disable=E0611,F0401
 from flask import current_app
 from signal import *
-from dbconn import db
-from sim.autofit import autofit
-from sim.updatedata import updatedata
+from src.optima.dbconn import db
+from src.sim.autofit import autofit
+from src.sim.updatedata import updatedata
 
 # route prefix: /api/model
 model = Blueprint('model',  __name__, static_folder = '../static')
@@ -24,8 +25,8 @@ def add_calibration_parameters(D_dict, result = None):
     """
     picks the parameters for calibration based on D as dictionary and the parameters settings
     """
-    from sim.parameters import parameters
-    from sim.nested import getnested
+    from src.sim.parameters import parameters
+    from src.sim.nested import getnested
     calibrate_parameters = [p for p in parameters() if 'calibration' in p and p['calibration']]
     if result is None: result = {}
     result['F'] = D_dict.get('F', {})
@@ -86,7 +87,7 @@ def doAutoCalibration():
         else:
             msg = "Thread for user %s project %s:%s (%s) has already started" % (current_user.name, project_id, project_name, current_calculation)
             return jsonify({"result": msg, "join": can_join})
-    except Exception, err:
+    except Exception:
         var = traceback.format_exc()
         return jsonify({"exception":var}), 500
 
@@ -110,14 +111,12 @@ def getWorkingModel():
     D_dict = {}
     # Make sure model is calibrating
     project_id = request.project_id
-    project_name = request.project_name
     error_text = None
-    stop_time = None
     if check_calculation(current_user.id, project_id, autofit, db.session):
         status = 'Running'
     else:
         current_app.logger.debug('No longer calibrating')
-        status, error_text, stop_time = check_calculation_status(current_user.id, project_id, autofit, db.session)
+        status, error_text, _ = check_calculation_status(current_user.id, project_id, autofit, db.session)
         if status in good_exit_status:
             status = 'Done'
         else:
@@ -141,7 +140,6 @@ def getWorkingModel():
 def saveCalibrationModel():
     """ Saves working model as the default model """
     # get project name
-    project_name = request.project_name
     project_id = request.project_id
     if not project_exists(project_id):
         reply = {'reason': 'File for project %s does not exist' % project_id}
@@ -152,7 +150,7 @@ def saveCalibrationModel():
         result = {'graph': D_dict.get('plot',{}).get('E',{})}
         result = add_calibration_parameters(D_dict, result)
         return jsonify(result)
-    except Exception, err:
+    except Exception:
         var = traceback.format_exc()
         return jsonify({"exception":var}), 500
 
@@ -163,7 +161,6 @@ def saveCalibrationModel():
 def revertCalibrationModel():
     """ Revert working model to the default model """
     # get project name
-    project_name = request.project_name
     project_id = request.project_id
     if not project_exists(project_id):
         reply = {'reason': 'File for project %s does not exist' % project_id}
@@ -173,7 +170,7 @@ def revertCalibrationModel():
         result = {'graph': D_dict.get('plot',{}).get('E',{})}
         result = add_calibration_parameters(D_dict, result)
         return jsonify(result)
-    except Exception, err:
+    except Exception:
         var = traceback.format_exc()
         return jsonify({"exception":var}), 500
 
@@ -190,7 +187,6 @@ def doManualCalibration():
     data = json.loads(request.data)
     current_app.logger.debug("/api/model/calibrate/manual %s" % data)
     # get project name
-    project_name = request.project_name
     project_id = request.project_id
     if not project_exists(project_id):
         reply = {'reason': 'Project %s does not exist' % project_id}
@@ -212,12 +208,12 @@ def doManualCalibration():
         args['F'] = F
         Mlist = data.get("M",[])
         args['Mlist'] = Mlist
-        D = manualfit(**args)
+        D = manualfit(**args) # pylint: disable=W0142
         D_dict = tojson(D)
         if dosave:
             current_app.logger.debug("model: %s" % project_id)
             save_model(project_id, D_dict)
-    except Exception, err:
+    except Exception:
         var = traceback.format_exc()
         return jsonify({"exception":var}), 500
     result = {'graph': D_dict.get('plot',{}).get('E',{})}
@@ -229,10 +225,6 @@ def doManualCalibration():
 @check_project_name
 def getModelCalibrateParameters():
     """ Returns the parameters of the given model. """
-    from sim.parameters import parameters
-    from sim.manualfit import updateP
-    from sim.nested import getnested
-    calibrate_parameters = [p for p in parameters() if 'calibration' in p and p['calibration']]
     D_dict = load_model(request.project_id, from_json = False)
     result = add_calibration_parameters(D_dict)
     return jsonify(result)
@@ -273,13 +265,12 @@ def setModelGroup(key):
     """ Stores the provided data as a subset with the given key for the D (model) in the open project. """
     data = json.loads(request.data)
     current_app.logger.debug("set parameters group: %s for data: %s" % (group, data))
-    project_name = request.project_name
     project_id = request.project_id
     try:
         D_dict = load_model(project_id, from_json = False)
         D_dict[group] = data
         save_model(project_id, D_dict)
-    except Exception, err:
+    except Exception:
         var = traceback.format_exc()
         return jsonify({"exception":var}), 500
     return jsonify({"project":project_id, "group":group})
@@ -293,10 +284,8 @@ def doRunSimulation():
     Starts simulation for the given project and given date range.
 
     Returns back the file with the simulation data.
-    (?) #FIXME find out how to use it
 
     """
-    import os
     data = json.loads(request.data)
 
     args = {}
@@ -312,7 +301,7 @@ def doRunSimulation():
         if endyear:
             args["endyear"] = int(endyear)
         args["dosave"] = False
-        D = runsimulation(**args)
+        D = runsimulation(**args) # pylint: disable=W0142
         D_dict = tojson(D)
         save_model(request.project_id, D_dict)
         result = {'graph':D_dict.get('plot',{}).get('E',{})}
@@ -322,14 +311,14 @@ def doRunSimulation():
 @model.route('/costcoverage', methods=['POST'])
 @login_required
 @check_project_name
-def doCostCoverage():
+def doCostCoverage(): # pylint: disable=R0914
     """ Calls makecco with parameters supplied from frontend """
 
     def findIndex(sequence, function):
-      """ Returns the first index in the sequence where function(item) == True. """
-      for index, item in enumerate(sequence):
-        if function(item):
-          return index
+        """ Returns the first index in the sequence where function(item) == True. """
+        for index, item in enumerate(sequence):
+            if function(item):
+                return index
 
     data = json.loads(request.data)
     current_app.logger.debug("/costcoverage" % data)
@@ -341,7 +330,7 @@ def doCostCoverage():
         if 'ccparams' in args:
             args['ccparams'] = {key: float(value) for key, value in args['ccparams'].items() if value}
 
-        programIndex = findIndex(D['programs'], lambda item: item['name'] == args['progname']);
+        programIndex = findIndex(D['programs'], lambda item: item['name'] == args['progname'])
 
         effects = data.get('all_effects')
         new_coparams = data.get('all_coparams')
@@ -358,11 +347,12 @@ def doCostCoverage():
             D['programs'][programIndex]['effects'] = new_effects
         args['D'] = D
 
-        plotdata, plotdata_co, plotdata_cc, effectnames, D = plotallcurves(**args) #effectnames are actually effects
+        # effectnames are actually effects
+        plotdata, plotdata_co, plotdata_cc, effectnames, D = plotallcurves(**args) # pylint: disable=W0142
         if do_save:
             D_dict = tojson(D)
             save_model(request.project_id, D_dict)
-    except Exception, err:
+    except Exception:
         var = traceback.format_exc()
         return jsonify({"exception":var}), 500
     return jsonify({"plotdata": for_fe(plotdata), \
@@ -383,8 +373,9 @@ def doCostCoverageEffect():
         if args.get('ccparams'):
             args['ccparams'] = dict([(key, (float(param) if param else None)) for (key,param) in args['ccparams'].iteritems()])
         if args.get('coparams'):args['coparams'] = [float(param) for param in args['coparams']]
-        plotdata, plotdata_co, storeparams_co = makecco(**args)
-    except Exception, err:
+        # effectnames are actually effects
+        plotdata, plotdata_co, _ = makecco(**args) # pylint: disable=W0142
+    except Exception:
         var = traceback.format_exc()
         return jsonify({"exception":var}), 500
     return jsonify({"plotdata": for_fe(plotdata), \
@@ -399,7 +390,7 @@ def reloadSpreadsheet(project_id):
     """
     Reload the excel spreadsheet and re-run the simulations.
     """
-    from utils import load_project
+    from src.optima.utils import load_project
 
     project = load_project(project_id)
     D = load_model(project_id)
