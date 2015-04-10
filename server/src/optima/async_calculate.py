@@ -49,7 +49,7 @@ def start_or_report_calculation(user_id, project_id, func, db_session): #only ca
     return can_start, can_join, work_type
 
 
-def finish_calculation(user_id, project_id, func, db_session, status='completed', error_text=None, stop_now = False): # pylint: disable=W0613
+def finish_calculation(user_id, project_id, func, db_session, status='completed', error_text=None, stop_now = False): # pylint: disable=W0613, R0913
     import datetime
     import dateutil.tz
     project = db_session.query(ProjectDb).filter_by(user_id=user_id, id=project_id).first()
@@ -126,7 +126,7 @@ class CalculatingThread(threading.Thread):
 
     """
 
-    def __init__(self, engine, user, project_id, timelimit, numiter, func, args, with_stoppingfunc = False):
+    def __init__(self, engine, user, project_id, timelimit, numiter, func, args, with_stoppingfunc = False): # pylint: disable=R0913
         super(CalculatingThread, self).__init__()
 
         self.args = args
