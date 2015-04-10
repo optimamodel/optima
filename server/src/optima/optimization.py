@@ -13,13 +13,14 @@ import json
 import traceback
 from flask import request, jsonify, Blueprint, current_app
 from flask.ext.login import login_required, current_user # pylint: disable=E0611,F0401
-from dbconn import db
-from async_calculate import CalculatingThread, start_or_report_calculation, cancel_calculation, check_calculation
-from async_calculate import check_calculation_status, good_exit_status
-from utils import check_project_name, project_exists, load_model, save_model
-from utils import revert_working_model_to_default, save_working_model_as_default, report_exception
-from sim.optimize import optimize, saveoptimization, defaultoptimizations, defaultobjectives, defaultconstraints
-from sim.dataio import fromjson, tojson
+from src.optima.dbconn import db
+from src.optima.async_calculate import CalculatingThread, start_or_report_calculation
+from src.optima.async_calculate import cancel_calculation, check_calculation
+from src.optima.async_calculate import check_calculation_status, good_exit_status
+from src.optima.utils import check_project_name, project_exists, load_model, save_model
+from src.optima.utils import revert_working_model_to_default, save_working_model_as_default, report_exception
+from src.sim.optimize import optimize, saveoptimization, defaultoptimizations, defaultobjectives, defaultconstraints
+from src.sim.dataio import fromjson, tojson
 
 # route prefix: /api/analysis/optimization
 optimization = Blueprint('optimization',  __name__, static_folder = '../static')
@@ -90,7 +91,7 @@ def startOptimization():
         else:
             msg = "Thread for user %s project %s:%s (%s) has already started" % (current_user.name, project_id, project_name, current_calculation)
             return jsonify({"result": msg, "join":can_join})
-    except Exception, err:
+    except Exception:
         var = traceback.format_exc()
         return jsonify({"exception":var}), 500
 
@@ -111,7 +112,6 @@ def stopCalibration():
 @report_exception()
 def getWorkingModel():
     """ Returns the working model for optimization. """
-    from flask import stream_with_context, request, Response
     import datetime
     import dateutil.tz
     from copy import deepcopy
@@ -121,7 +121,6 @@ def getWorkingModel():
     D_dict = {}
     # Get optimization working data
     project_id = request.project_id
-    project_name = request.project_name
     D_dict_new = load_model(project_id, working_model = False, from_json = False)
     new_optimizations = D_dict_new.get('optimizations')
     if not new_optimizations:
@@ -179,7 +178,6 @@ def getWorkingModel():
 @check_project_name
 @report_exception()
 def saveModel():
-    from sim.optimize import saveoptimization
     """ Saves working model as the default model """
     # get project name
     project_id = request.project_id
@@ -219,10 +217,9 @@ def revertCalibrationModel():
 @report_exception()
 def removeOptimizationSet(name):
     """ Removes given optimization from the optimization set """
-    from sim.optimize import removeoptimization
+    from src.sim.optimize import removeoptimization
     # get project name
     project_id = request.project_id
-    response_status = 200
     if not project_exists(project_id):
         reply = {'reason': 'Project %s does not exist' % project_id}
         return jsonify(reply), 500
@@ -249,7 +246,6 @@ def create_optimization():
 
     # get project name
     project_id = request.project_id
-    response_status = 200
     if not project_exists(project_id):
         reply = {'reason': 'Project %s does not exist' % project_id}
         return jsonify(reply), 500
