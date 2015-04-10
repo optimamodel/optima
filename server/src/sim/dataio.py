@@ -22,7 +22,7 @@ def fullpath(filename, datadir=DATADIR):
     """
     "Normalizes" filename:  if it is full path, leaves it alone. Otherwise, prepends it with datadir.
     """
-    
+
     result = filename
 
     # get user dir path
@@ -51,7 +51,7 @@ def savedata(filename, data, update=True, verbose=2):
     printv('Saving data...', 1, verbose)
 
     from json import dump, load
-    
+
     filename = projectpath(filename)
 
     try: # First try loading the file and updating it
@@ -79,7 +79,7 @@ def loaddata(filename, verbose=2):
     printv('Loading data...', 1, verbose)
     if not os.path.exists(filename):
         filename = projectpath(filename)
-    
+
     import json
     rfid = open(filename,'rb')
     data = fromjson(json.load(rfid))
@@ -92,7 +92,7 @@ def loaddata(filename, verbose=2):
 def tojson(x):
     """ Convert an object to JSON-serializable format, handling e.g. Numpy arrays """
     from numpy import ndarray, isnan
-    
+
     if isinstance(x, dict):
         return dict( (k, tojson(v)) for k,v in x.iteritems() )
     elif isinstance(x, (list, tuple)):
@@ -109,7 +109,7 @@ def fromjson(x):
     """ Convert an object from JSON-serializable format, handling e.g. Numpy arrays """
     NP_ARRAY_KEYS = set(["np_array", "np_dtype"])
     from numpy import asarray, dtype, nan
-    
+
     if isinstance(x, dict):
         dk = x.keys()
         if len(dk) == 2 and set(dk) == NP_ARRAY_KEYS:
@@ -125,28 +125,28 @@ def fromjson(x):
 
 
 def upload_dir_user(dirpath, user_id = None):
-    
-    try:
-        from flask.ext.login import current_user
 
-        # get current user 
+    try:
+        from flask.ext.login import current_user # pylint: disable=E0611,F0401
+
+        # get current user
         if current_user.is_anonymous() == False:
 
             current_user_id = user_id if user_id else current_user.id
-    
+
             # user_path
             user_path = os.path.join(dirpath, str(current_user_id))
-    
+
             # if dir does not exist
             if not(os.path.exists(dirpath)):
                 os.makedirs(dirpath)
-    
+
             # if dir with user id does not exist
             if not(os.path.exists(user_path)):
                 os.makedirs(user_path)
-            
+
             return user_path
     except:
         return dirpath
-    
+
     return dirpath
