@@ -28,6 +28,15 @@ def runmodelalloc(D, thisalloc, origalloc, parindices, randseed, rerunfinancial=
     newD = deepcopy(D)
     newD, newcov, newnonhivdalysaverted = getcurrentbudget(newD, thisalloc, randseed=randseed) # Get cost-outcome curves with uncertainty
     newM = makemodelpars(newD['P'], newD['opt'], withwhat='c', verbose=0) # Don't print out
+    
+    # Hideous hack for ART to use linear unit cost
+    artind = D['data']['meta']['progs']['short'].index('ART')
+    currcost = origalloc[artind]
+    currcov = D['M']['tx1'][-1]
+    unitcost = currcost/currcov
+    newM['tx1'][parindices] = thisalloc[artind]/unitcost
+    
+    # Now update things
     newD['M'] = partialupdateM(D['M'], newM, parindices)
     S = model(newD['G'], newD['M'], newD['F'][0], newD['opt'], verbose=verbose)
     R = makeresults(D, allsims=[S], rerunfinancial=rerunfinancial, verbose=0)
