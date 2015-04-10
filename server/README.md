@@ -135,3 +135,16 @@ These APIs allow front-end to work with projects.
 		 ...
 		]
    }`
+
+Python Linting
+------------
+
+We linting the python code with pylint. Install it with:
+
+    pip install pylint
+
+You can run it from the server directory with:
+
+    pylint src/optima
+
+The configuration can be found in `pylintrc`.

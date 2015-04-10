@@ -126,7 +126,45 @@ def printarr(arr, arrformat='%0.2f  '):
     else:
         print(arr) # Give up
     return None
+    
 
+
+def sigfig(x, sigfigs=3):
+    """ Return a string representation of variable x with sigfigs number of significant figures """
+    from numpy import log10, floor
+    magnitude = floor(log10(abs(x)))
+    factor = 10**(sigfigs-magnitude-1)
+    x = round(x*factor)/float(factor)
+    digits = int(abs(magnitude) + max(0, sigfigs - max(0,magnitude) - 1) + 1 + (x<0) + (abs(x)<1)) # one because, one for decimal, one for minus
+    decimals = int(max(0,-magnitude+sigfigs-1))
+    strformat = '%' + '%i.%i' % (digits, decimals)  + 'f'
+    string = strformat % x
+    return string
+
+
+def tic():
+    """
+    A little pair of functions to calculate a time difference, sort of like Matlab:
+    t = tic()
+    toc(t)
+    """
+    from time import time
+    return time()
+
+
+def toc(start=0, label='', sigfigs=3):
+    """
+    A little pair of functions to calculate a time difference, sort of like Matlab:
+    t = tic()
+    toc(t)
+    """
+    from time import time
+    elapsed = time() - start
+    if label=='': base = 'Elapsed time: '
+    else: base = 'Elapsed time for %s: ' % label
+    print(base + '%s s' % sigfig(elapsed, sigfigs=sigfigs))
+    return None
+    
 
 def checkmem(origvariable, descend=0, order='n', plot=False, verbose=0):
     """
