@@ -143,9 +143,9 @@ def create_project(project_name):
     {"npops":6,"nprogs":8, "datastart":2000, "dataend":2015}
 
     """
-    from sim.makeproject import default_datastart, default_dataend, default_pops, default_progs
-    from sim.runsimulation import runsimulation
-    from sim.dataio import tojson
+    from src.sim.makeproject import default_datastart, default_dataend, default_pops, default_progs
+    from src.sim.runsimulation import runsimulation
+    from src.sim.dataio import tojson
     current_app.logger.debug("createProject %s for user %s" % (project_name, current_user.email))
     raw_data = json.loads(request.data)
     # get current user
@@ -194,9 +194,9 @@ def update_project(project_id):
 
     """
 
-    from sim.makeproject import default_datastart, default_dataend, default_pops, default_progs
-    from sim.runsimulation import runsimulation
-    from sim.dataio import projectpath, tojson
+    from src.sim.makeproject import default_datastart, default_dataend, default_pops, default_progs
+    from src.sim.runsimulation import runsimulation
+    from src.sim.dataio import projectpath, tojson
     current_app.logger.debug("updateProject %s for user %s" % (project_id, current_user.email))
     raw_data = json.loads(request.data)
     # get current user
@@ -477,7 +477,7 @@ def copyProject(project_id):
     usage: /api/project/copy/<project_id>?to=<new_project_name>
     """
     from sqlalchemy.orm.session import make_transient, make_transient_to_detached
-    from sim.dataio import projectpath
+    from src.sim.dataio import projectpath
     new_project_name = request.args.get('to')
     if not new_project_name:
         reply = {'reason': 'New project name is not given'}
@@ -516,7 +516,7 @@ def exportGraph():
     """
     saves data as Excel file
     """
-    from sim.makeworkbook import OptimaGraphTable
+    from src.sim.makeworkbook import OptimaGraphTable
     data = json.loads(request.data)
 
     sheet = [{
@@ -537,7 +537,7 @@ def exportAllGraphs():
     """
     saves All data as Excel files
     """
-    from sim.makeworkbook import OptimaGraphTable
+    from src.sim.makeworkbook import OptimaGraphTable
 
     data = json.loads(request.data)
     project_name = request.project_name
@@ -574,8 +574,8 @@ def uploadExcel():
     Uploads Excel file, uses it to update the corresponding model.
     Precondition: model should exist.
     """
-    from sim.runsimulation import runsimulation
-    from sim.dataio import projectpath
+    from src.sim.runsimulation import runsimulation
+    from src.sim.dataio import projectpath
     current_app.logger.debug("api/project/update")
     project_name = request.project_name
     project_id = request.project_id
