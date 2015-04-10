@@ -18,8 +18,8 @@ class AnalysisTestCase(OptimaTestCase):
         self.assertEqual(response.status_code, 401)
 
     def test_list_scenarios(self):
-        from src.sim.scenarios import defaultscenarios
-        from src.sim.bunch import unbunchify
+        from sim.scenarios import defaultscenarios
+        from sim.bunch import unbunchify
         response = self.create_user()
         response = self.login()
         project_id = self.create_project('test')

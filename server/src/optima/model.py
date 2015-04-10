@@ -208,7 +208,7 @@ def doManualCalibration():
         args['F'] = F
         Mlist = data.get("M",[])
         args['Mlist'] = Mlist
-        D = manualfit(**args) # pylint: disable=W0142
+        D = manualfit(**args)
         D_dict = tojson(D)
         if dosave:
             current_app.logger.debug("model: %s" % project_id)
@@ -264,16 +264,16 @@ def getModelSubGroup(key, subkey):
 def setModelGroup(key):
     """ Stores the provided data as a subset with the given key for the D (model) in the open project. """
     data = json.loads(request.data)
-    current_app.logger.debug("set parameters group: %s for data: %s" % (group, data))
+    current_app.logger.debug("set parameters key: %s for data: %s" % (key, data))
     project_id = request.project_id
     try:
         D_dict = load_model(project_id, from_json = False)
-        D_dict[group] = data
+        D_dict[key] = data
         save_model(project_id, D_dict)
     except Exception:
         var = traceback.format_exc()
         return jsonify({"exception":var}), 500
-    return jsonify({"project":project_id, "group":group})
+    return jsonify({"project":project_id, "key":key})
 
 @model.route('/view', methods=['POST'])
 @login_required
@@ -301,7 +301,6 @@ def doRunSimulation():
         if endyear:
             args["endyear"] = int(endyear)
         args["dosave"] = False
-        # pylint: disable=W0142
         D = runsimulation(**args)
         D_dict = tojson(D)
         save_model(request.project_id, D_dict)
@@ -349,7 +348,7 @@ def doCostCoverage(): # pylint: disable=R0914
         args['D'] = D
 
         # effectnames are actually effects
-        plotdata, plotdata_co, plotdata_cc, effectnames, D = plotallcurves(**args) # pylint: disable=W0142
+        plotdata, plotdata_co, plotdata_cc, effectnames, D = plotallcurves(**args)
         if do_save:
             D_dict = tojson(D)
             save_model(request.project_id, D_dict)
@@ -375,7 +374,7 @@ def doCostCoverageEffect():
             args['ccparams'] = dict([(key, (float(param) if param else None)) for (key,param) in args['ccparams'].iteritems()])
         if args.get('coparams'):args['coparams'] = [float(param) for param in args['coparams']]
         # effectnames are actually effects
-        plotdata, plotdata_co, _ = makecco(**args) # pylint: disable=W0142
+        plotdata, plotdata_co, _ = makecco(**args)
     except Exception:
         var = traceback.format_exc()
         return jsonify({"exception":var}), 500

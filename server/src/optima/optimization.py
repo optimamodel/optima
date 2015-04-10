@@ -153,12 +153,12 @@ def getWorkingModel(): # pylint: disable=R0912, R0914, R0915
     names = [item['name'] for item in optimizations] if optimizations else ['Default']
     current_app.logger.debug("optimization names: %s" % names)
     is_dirty = False
-    for new_index, optimization in enumerate(new_optimizations):
+    for new_index, new_optimization in enumerate(new_optimizations):
         #trying to update the results in the current model with the available results from the working model
-        name = optimization['name']
+        name = new_optimization['name']
         if optimizations and name in names:
             index = names.index(name)
-            if ('result' in optimizations[index]) and (optimization.get('result')!=optimizations[index]['result']):
+            if ('result' in optimizations[index]) and (new_optimization.get('result')!=optimizations[index]['result']):
                 new_optimizations[new_index] = deepcopy(optimizations[index])
                 #warn that these results are transient
                 is_dirty = True

@@ -3,7 +3,7 @@ import json
 import traceback
 from sim.dataio import tojson, fromjson
 from sim.scenarios import runscenarios
-from optima.utils import load_model, save_model, project_exists, check_project_name, report_exception, load_project
+from optima.utils import load_model, save_model, check_project_exists, check_project_name, report_exception, load_project
 from flask.ext.login import login_required # pylint: disable=E0611,F0401
 
 # route prefix: /api/analysis/scenarios
@@ -21,8 +21,8 @@ def record_params(setup_state):
 @check_project_name
 @report_exception()
 def get_scenario_parameters():
-    from src.sim.parameters import parameters
-    from src.sim.scenarios import getparvalues
+    from sim.parameters import parameters
+    from sim.scenarios import getparvalues
     scenario_params = parameters()
     real_parameters = []
     project = load_project(request.project_id)
@@ -37,7 +37,7 @@ def get_scenario_parameters():
             val_pair = getparvalues(D, item)
             parameter['values'] = val_pair
             real_parameters.append(parameter)
-        except:
+        except: # pylint: disable=bare-except
             continue
 
     current_app.logger.debug("real_parameters:%s" % real_parameters)
@@ -46,30 +46,29 @@ def get_scenario_parameters():
 @scenarios.route('/list')
 @login_required
 @check_project_name
+@check_project_exists
 @report_exception()
 def list_scenarios():
     """
     Returns a list of scenarios defined by the user, or the default scenario list
 
     """
-    from src.sim.scenarios import defaultscenarios
+    from sim.scenarios import defaultscenarios
     current_app.logger.debug("/api/analysis/scenarios/list")
     # get project name
     project_id = request.project_id
-    if not project_exists(project_id):
-        reply['reason'] = 'Project %s does not exist' % project_id
-        return reply
     D = load_model(project_id)
     if not 'scens' in D:
-        scenarios = defaultscenarios(D)
+        the_scenarios = defaultscenarios(D)
     else:
-        scenarios = [item['scenario'] for item in D['scens']]
-    scenarios = tojson(scenarios)
-    return jsonify({'scenarios':scenarios})
+        the_scenarios = [item['scenario'] for item in D['scens']]
+    the_scenarios = tojson(the_scenarios)
+    return jsonify({'scenarios':the_scenarios})
 
 @scenarios.route('/run', methods=['POST'])
 @login_required
 @check_project_name
+@check_project_exists
 def runScenarios():
     """
     Gets a list of scenarios defined by the user, produces graphs out of them
@@ -80,15 +79,12 @@ def runScenarios():
     current_app.logger.debug("/api/analysis/scenarios/run %s" % data)
     # get project name
     project_id = request.project_id
-    if not project_exists(project_id):
-        reply['reason'] = 'Project %s does not exist' % project_id
-        return reply
 
     #expects json: {"scenarios":[scenariolist]} and gets project_name from session
     args = {}
-    scenarios = data.get("scenarios")
-    if scenarios:
-        args["scenariolist"] = fromjson(scenarios)
+    the_scenarios = data.get("scenarios")
+    if the_scenarios:
+        args["scenariolist"] = fromjson(the_scenarios)
     dosave = data.get("dosave")
     try:
         D = load_model(project_id)

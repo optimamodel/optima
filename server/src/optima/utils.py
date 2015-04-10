@@ -28,6 +28,19 @@ def check_project_name(api_call):
             return jsonify(reply), 500
     return _check_project_name
 
+#this should be run after check_project_name
+def check_project_exists(api_call):
+    @wraps(api_call)
+    def _check_project_exists(*args, **kwargs):
+        if not project_exists(request.headers['project-id']):
+            error_msg = 'Project %s does not exist' % project_id
+            current_app.logger.error(error_msg)
+            reply = {'reason':error_msg}
+            return jsonify(reply), 500
+        else:
+            return api_call(*args, **kwargs)
+    return _check_project_exists
+
 def report_exception(reason = None):
     def _report_exception(api_call):
         @wraps(api_call)
