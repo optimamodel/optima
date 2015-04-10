@@ -209,7 +209,7 @@ def makeco(D=None, progname=None, effect=None, coparams=None, coverage_params=co
         plotdata['yscatterdata'] = outcome 
            
         # Get params for plotting - either from GUI or get previously stored ones
-        if not coparams and (coparams in effect.keys()): coparams = effect.get('coparams')
+        if not coparams and ('coparams' in effect.keys()): coparams = effect.get('coparams')
         if coparams and isinstance(coparams,list): # Check that it's there and is not nan
             if not len(coparams) == 4:
                 raise Exception('Not all of the coverage-outcome parameters have been specified. Please enter the missing parameters to define the curve.')

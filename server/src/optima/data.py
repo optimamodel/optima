@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify
-from flask.ext.login import login_required
+from flask.ext.login import login_required # pylint: disable=E0611,F0401
 from generators.line import generatedata
 
 # route prefix: /api/data

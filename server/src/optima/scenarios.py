@@ -1,14 +1,10 @@
-from flask import Blueprint, request, jsonify, helpers, current_app
+from flask import Blueprint, request, jsonify, current_app
 import json
 import traceback
-from sim.optimize import optimize
 from sim.dataio import tojson, fromjson
 from sim.scenarios import runscenarios
-from utils import load_model, save_model, project_exists, check_project_name, report_exception, load_project
-from flask.ext.login import login_required, current_user
-from dbconn import db
-from dbmodels import ProjectDb, WorkingProjectDb
-
+from optima.utils import load_model, save_model, check_project_exists, check_project_name, report_exception, load_project
+from flask.ext.login import login_required # pylint: disable=E0611,F0401
 
 # route prefix: /api/analysis/scenarios
 scenarios = Blueprint('scenarios',  __name__, static_folder = '../static')
@@ -16,8 +12,8 @@ scenarios.config = {}
 
 @scenarios.record
 def record_params(setup_state):
-  app = setup_state.app
-  scenarios.config = dict([(key,value) for (key,value) in app.config.iteritems()])
+    app = setup_state.app
+    scenarios.config = dict([(key,value) for (key,value) in app.config.iteritems()])
 
 
 @scenarios.route('/parameters')
@@ -41,7 +37,7 @@ def get_scenario_parameters():
             val_pair = getparvalues(D, item)
             parameter['values'] = val_pair
             real_parameters.append(parameter)
-        except:
+        except: # pylint: disable=bare-except
             continue
 
     current_app.logger.debug("real_parameters:%s" % real_parameters)
@@ -50,6 +46,7 @@ def get_scenario_parameters():
 @scenarios.route('/list')
 @login_required
 @check_project_name
+@check_project_exists
 @report_exception()
 def list_scenarios():
     """
@@ -60,20 +57,18 @@ def list_scenarios():
     current_app.logger.debug("/api/analysis/scenarios/list")
     # get project name
     project_id = request.project_id
-    if not project_exists(project_id):
-        reply['reason'] = 'Project %s does not exist' % project_id
-        return reply
     D = load_model(project_id)
     if not 'scens' in D:
-        scenarios = defaultscenarios(D)
+        the_scenarios = defaultscenarios(D)
     else:
-        scenarios = [item['scenario'] for item in D['scens']]
-    scenarios = tojson(scenarios)
-    return jsonify({'scenarios':scenarios})
+        the_scenarios = [item['scenario'] for item in D['scens']]
+    the_scenarios = tojson(the_scenarios)
+    return jsonify({'scenarios':the_scenarios})
 
 @scenarios.route('/run', methods=['POST'])
 @login_required
 @check_project_name
+@check_project_exists
 def runScenarios():
     """
     Gets a list of scenarios defined by the user, produces graphs out of them
@@ -84,15 +79,12 @@ def runScenarios():
     current_app.logger.debug("/api/analysis/scenarios/run %s" % data)
     # get project name
     project_id = request.project_id
-    if not project_exists(project_id):
-        reply['reason'] = 'Project %s does not exist' % project_id
-        return reply
 
     #expects json: {"scenarios":[scenariolist]} and gets project_name from session
     args = {}
-    scenarios = data.get("scenarios")
-    if scenarios:
-        args["scenariolist"] = fromjson(scenarios)
+    the_scenarios = data.get("scenarios")
+    if the_scenarios:
+        args["scenariolist"] = fromjson(the_scenarios)
     dosave = data.get("dosave")
     try:
         D = load_model(project_id)
@@ -102,7 +94,7 @@ def runScenarios():
         if dosave:
             current_app.logger.debug("model: %s" % project_id)
             save_model(project_id, D_dict)
-    except Exception, err:
+    except Exception:
         var = traceback.format_exc()
         return jsonify({"exception":var}), 500
     return jsonify(D_dict.get('plot',{}).get('scens',{}))
