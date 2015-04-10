@@ -76,10 +76,6 @@ def minimizemoney(D, objectives=None, constraints=None, maxiters=1000, timelimit
     printv('Running money minimization...', 1, verbose)
     
     
-    # Set up parameter vector for time-varying optimisation...
-    stepsize = 100000
-    growsize = 0.01
-
     origR = deepcopy(D['R'])
     origalloc = D['data']['origalloc']
     
