@@ -59,8 +59,13 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=10, growth=None):
     newx = array(newx)
     origx = array(origx)
     origy = array(origy)
-    origy = origy[~isnan(origy)] 
-    origx = origx[~isnan(origy)]
+    try:
+        origy = origy[~isnan(origy)] 
+        origx = origx[~isnan(origy)]
+    except:
+        print('goddammit')
+        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+
     
     # Make sure it's in the correct order
     correctorder = argsort(origx)
