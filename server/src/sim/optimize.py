@@ -300,15 +300,17 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         options['normalizations'] = normalizations # Whether to normalize a parameter
         options['totalspend'] = sum(origalloc) # Total budget
         options['fundingchanges'] = fundingchanges # Constraints-based funding changes
+        options['randseed'] = 0
         options['tmpbestdata'] = []
         
         
         
         ## Run original
-        allocarr = [origalloc] # Original allocation
-        fvalarr = [objectivecalc(optimparams, options=options)] # Outcome for original allocation
+        objectivecalc(optimparams, options=options)
         
         ## Run with uncertainties
+        allocarr = [] # Original allocation
+        fvalarr = [] # Outcome for original allocation
         for s in xrange(len(D['F'])): # xrange(len(D['F'])): # Loop over all available meta parameters
             print('========== Running uncertainty optimization %s of %s... ==========' % (s+1, len(D['F'])))
             options['D']['F'] = [deepcopy(D['F'][s])] # Loop over fitted parameters
