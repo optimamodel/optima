@@ -52,6 +52,52 @@ def runmodelalloc(D, thisalloc, origalloc, parindices, randseed, rerunfinancial=
 
 
 
+def constrainbudget(origbudget, total=None, limits=None):
+    """ Take an unnormalized/unconstrained budget and normalize and constrain it """
+    normbudget = deepcopy(origbudget)
+    
+    eps = 1e-3 # Don't try to make an exact match, I don't have that much faith in my algorithm
+    
+    if total < sum(limits['dec']) or total > sum(limits['inc']):
+        raise Exception('Budget cannot be constrained since the total %f is outside the low-high limits [%f, %f]' % (total, sum(limits['dec']), sum(limits['inc'])))
+    
+    nprogs = len(normbudget)
+    proginds = arange(nprogs)
+    limlow = zeros(nprogs, dtype=bool)
+    limhigh = zeros(nprogs, dtype=bool)
+    for p in proginds:
+        if normbudget[p] <= limits['dec'][p]:
+            normbudget[p] = limits['dec'][p]
+            limlow[p] = 1
+        if normbudget[p] >= limits['inc'][p]:
+            normbudget[p] = limits['inc'][p]
+            limhigh[p] = 1
+    
+    # Too high
+    while sum(normbudget) > total+eps:
+        overshoot = sum(normbudget) - total
+        toomuch = sum(normbudget[~limlow]) / (sum(normbudget[~limlow]) - overshoot)
+        for p in proginds[~limlow]:
+            proposed = normbudget[p] / toomuch
+            if proposed <= limits['dec'][p]:
+                proposed = limits['dec'][p]
+                limlow[p] = 1
+            normbudget[p] = proposed
+        
+    # Too low
+    while sum(normbudget) < total-eps:
+        undershoot = total - sum(normbudget)
+        toolittle = (sum(normbudget[~limhigh]) + undershoot) / sum(normbudget[~limhigh])
+        for p in proginds[~limhigh]:
+            proposed = normbudget[p] * toolittle
+            if proposed >= limits['inc'][p]:
+                proposed = limits['inc'][p]
+                limhigh[p] = 1
+            normbudget[p] = proposed
+    
+    return normbudget
+
+
 def objectivecalc(optimparams, options):
     """ Calculate the objective function """
     origparams = options['D']['data']['origalloc']
@@ -61,7 +107,7 @@ def objectivecalc(optimparams, options):
     for i in xrange(len(options['D']['data']['origalloc'])):
         if len(options['D']['programs'][i]['effects']): opttrue[i] = 1.0
     opttrue = opttrue.astype(bool) # Logical values
-    optimparams[opttrue] = optimparams[opttrue] / optimparams[opttrue].sum() * (options['totalspend'] - optimparams[~opttrue].sum()) # Make sure it's normalized -- WARNING KLUDGY
+    optimparams = constrainbudget(optimparams, total=options['totalspend'], limits=options['fundingchanges']['total'])
 
 
     if 'ntimepm' in options.keys():
@@ -271,7 +317,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
             
             options['randseed'] = s
             optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=fundingchanges['total']['dec'], xmax=fundingchanges['total']['inc'], absinitial=stepsizes, MaxIter=maxiters, timelimit=timelimit, fulloutput=True, stoppingfunc=stoppingfunc, verbose=verbose)
-            optparams[opttrue] = optparams[opttrue] / optparams[opttrue].sum() * (options['totalspend'] - optparams[~opttrue].sum()) # Make sure it's normalized -- WARNING KLUDGY
+            optparams = constrainbudget(optparams, total=totalspend, limits=fundingchanges['total']) # Constrain the budget using the total amount and the total funding changes
             allocarr.append(optparams)
             fvalarr.append(output.fval)
         
@@ -558,7 +604,7 @@ def defaultobjectives(D, verbose=2):
     ob = dict() # Dictionary of all objectives
     ob['year'] = dict() # Time periods for objectives
     ob['year']['start'] = 2015 # "Year to begin optimization from"
-    ob['year']['end'] = 2020 # "Year to end optimization"
+    ob['year']['end'] = 2030 # "Year to end optimization"
     ob['year']['until'] = 2030 # "Year to project outcomes to"
     ob['what'] = 'outcome' # Alternative is "['money']"
     
