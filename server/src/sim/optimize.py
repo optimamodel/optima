@@ -30,11 +30,14 @@ def runmodelalloc(D, thisalloc, origalloc, parindices, randseed, rerunfinancial=
     newM = makemodelpars(newD['P'], newD['opt'], withwhat='c', verbose=0) # Don't print out
     
     # Hideous hack for ART to use linear unit cost
-    artind = D['data']['meta']['progs']['short'].index('ART')
-    currcost = origalloc[artind]
-    currcov = D['M']['tx1'][-1]
-    unitcost = currcost/currcov
-    newM['tx1'][parindices] = thisalloc[artind]/unitcost
+    try:
+        artind = D['data']['meta']['progs']['short'].index('ART')
+        currcost = origalloc[artind]
+        currcov = D['M']['tx1'][-1]
+        unitcost = currcost/currcov
+        newM['tx1'][parindices] = thisalloc[artind]/unitcost
+    except:
+        pass
     
     # Now update things
     newD['M'] = partialupdateM(D['M'], newM, parindices)
