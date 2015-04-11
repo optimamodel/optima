@@ -298,24 +298,23 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         options['outindices'] = outindices # Indices for the outcome to be evaluated over
         options['parindices'] = parindices # Indices for the parameters to be updated on
         options['normalizations'] = normalizations # Whether to normalize a parameter
-        options['totalspend'] = totalspend # Total budget
+        options['totalspend'] = sum(origalloc) # Total budget
         options['fundingchanges'] = fundingchanges # Constraints-based funding changes
-        
-        
-#        options.tmporigdata = []
         options['tmpbestdata'] = []
-#        options.tmperrcount = [0]
-#        options.tmperrhist = [None]
         
+        
+        
+        ## Run original
+        allocarr = [origalloc] # Original allocation
+        fvalarr = [objectivecalc(optimparams, options=options)] # Outcome for original allocation
         
         ## Run with uncertainties
-        allocarr = []
-        fvalarr = []
         for s in xrange(len(D['F'])): # xrange(len(D['F'])): # Loop over all available meta parameters
             print('========== Running uncertainty optimization %s of %s... ==========' % (s+1, len(D['F'])))
             options['D']['F'] = [deepcopy(D['F'][s])] # Loop over fitted parameters
             
             options['randseed'] = s
+            options['totalspend'] = totalspend # Total budget
             optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=fundingchanges['total']['dec'], xmax=fundingchanges['total']['inc'], absinitial=stepsizes, MaxIter=maxiters, timelimit=timelimit, fulloutput=True, stoppingfunc=stoppingfunc, verbose=verbose)
             optparams = constrainbudget(optparams, total=totalspend, limits=fundingchanges['total']) # Constrain the budget using the total amount and the total funding changes
             allocarr.append(optparams)
