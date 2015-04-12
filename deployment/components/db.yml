@@ -1,5 +1,5 @@
 ---
-  - include: "{{prudentia_dir}}/tasks/postgres_9.3.yml"
+  - include: "{{root_dir}}/tasks/postgres_9.4.yml"
     tags: db
 
   - name: Database | Create db
