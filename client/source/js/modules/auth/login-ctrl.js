@@ -1,4 +1,4 @@
-define(['./module', 'crypto'], function (module) {
+define(['./module', '../sha224/sha224'], function (module) {
   'use strict';
 
   return module.controller('LoginController', function ($scope, $window, User) {
