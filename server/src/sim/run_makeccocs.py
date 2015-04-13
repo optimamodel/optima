@@ -30,9 +30,18 @@ from runsimulation import runsimulation
 D = runsimulation(D, verbose=verbose)
 
 # Actually run makeccocs
-from plotccocs import plotallcco
+from plotccocs import plotall
 #plotallcco(D=D)
-plotallcco(D=D, coparams=[], ccparams=[0.9, 0.15, 0.25, 800000.0, None, None], ccplot=[1000000,None,1])
+ccparams = {'saturation': 0.9, 
+          'coveragelower': 0.15, 
+          'coverageupper':0.25, 
+          'funding':800000.0, 
+          'scaleup':None, 
+          'nonhivdalys':None, 
+          'xupperlim':1000000, 
+          'cpibaseyear':None, 
+          'perperson':None}
+plotall(D=D, coparams=[], ccparams=ccparams)
 if show_wait:
     from matplotlib.pylab import show
     show()

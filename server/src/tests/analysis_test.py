@@ -13,7 +13,7 @@ class AnalysisTestCase(OptimaTestCase):
 
     def test_optimization_start_response_without_a_project(self):
         response = self.client.post('/api/analysis/optimization/start', follow_redirects=True)
-        expected_data = { "reason": "No project is open", "status": "NOK"}
+        expected_data = { "reason": "No project is open"}
         print "response data: %s" % response.data
         self.assertEqual(response.status_code, 401)
 

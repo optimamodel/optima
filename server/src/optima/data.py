@@ -1,6 +1,5 @@
-import json
-from flask import Blueprint
-from flask.ext.login import login_required
+from flask import Blueprint, jsonify
+from flask.ext.login import login_required # pylint: disable=E0611,F0401
 from generators.line import generatedata
 
 # route prefix: /api/data
@@ -16,7 +15,7 @@ def line():
 @login_required
 def lineParam(numpoints):
     """ mocks up data for line graph with generated data """
-    return json.dumps({
+    return jsonify({
         'values': generatedata(numpoints),
         "key": "Line series",
         "color": "#ff7f0e"

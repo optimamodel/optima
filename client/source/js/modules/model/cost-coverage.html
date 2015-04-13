@@ -1,266 +1,295 @@
 <div class="page rich">
 
-  <div class="section grid" ng-show="notReady">
-    <div class="9">
-      <h1>Model is not ready</h1>
-      <div>
-        <p ng-show="needData" class="error-hint">Please upload Optima spreadsheet first.</p>
+  <div ng-if="missingModelData">
+    <spreadsheet-upload-hint></spreadsheet-upload-hint>
+  </div>
 
-        <div ng-show="cannotCalibrate && !needData">
-          <p class="error-hint">This model is not yet ready to define cost-coverage assumptions.</p>
-          <button type="button" class="btn" ng-click="gotoViewCalibrate()">View &amp; calibrate model</button>
-        </div>
+  <div ng-if="!missingModelData">
+
+    <div class="section grid">
+      <div class="6">
+        <label>
+          Select a program: <br>
+          <select class="txbox"
+                  ng-options="p as p.name group by p.category for p in ::state.selectionPrograms"
+                  ng-change="changeProgram()"
+                  ng-model="state.selectedProgram">
+            <option value="">-- Please select a program --</option>
+          </select>
+        </label>
       </div>
     </div>
-  </div>
 
-  <div class="section grid" ng-hide="notReady">
-    <div class="6">
-      <label>
-        Select a program: <br>
-        <select class="txbox"
-                ng-options="p as p.name group by p.category for p in ::programs"
-                ng-change="changeProgram()"
-                ng-model="selectedProgram"
-                ng-disabled="notReady"></select>
-      </label>
-    </div>
-  </div>
-  <div class="section" ng-hide="selectedProgram.acronym == null">
+    <div class="section" ng-hide="state.selectedProgram.acronym == null">
 
-    <div class="section" style="margin-bottom: 45px">
-      <button type="button" class="btn" ng-click="saveModel()">Save model</button>
-      <button type="button" class="btn" ng-click="revertModel()">Revert model</button>
-      <button type="button" class="btn" ng-click="uploadDefault()" style="margin-left: 60px">Upload default cost-coverage-outcome curves</button>
-    </div>
+      <div class="section" style="margin-bottom: 45px">
+        <button type="button" class="btn" ng-click="saveModel()">Save model</button>
+        <button type="button" class="btn" ng-click="revertModel()">Revert model</button>
+        <button type="button" class="btn" ng-click="uploadDefault()" style="margin-left: 27px">Upload default cost-coverage-outcome curves</button>
+      </div>
 
 
-    <div class="section" ng-show="hasCostCoverResponse">
+      <div class="section" ng-show="state.hasCostCoverResponse">
 
-      <export-all-charts ng-if="graphs" name="Cost coverage outcome" custom-titles="titlesForChartsExport"></export-all-charts>
-      <export-all-data charts="chartsForDataExport" name="Cost coverage outcome" ng-if="graphs || ccGraph"></export-all-data>
+        <export-all-charts ng-if="graphs" name="Cost coverage outcome" custom-titles="state.titlesForChartsExport"></export-all-charts>
+        <export-all-data charts="state.chartsForDataExport" name="Cost coverage outcome" ng-if="graphs || ccGraph"></export-all-data>
+        <h1>{{ccGraph.options.title}}</h1>
+        <div class="section elastic">
+          <div class="elastic_col __shrink" ng-if="ccGraph.data">
+            <div class="chart-container">
+              <div line-area-scatter-chart data="ccGraph.data" options="ccGraph.options" save-graph-as></div>
+            </div>
+          </div>
+          <div class="elastic_col">
+            <div class="section">
+              <form name="state.CostCoverageForm">
 
-      <h1>{{ displayedProgram.name }}</h1>
-      <div class="section elastic">
-        <div class="elastic_col __shrink" ng-if="ccGraph.data">
-          <div class="chart-container">
-            <div line-area-scatter-chart data="ccGraph.data" options="ccGraph.options" save-graph-as></div>
+                <div ng-messages="state.CostCoverageForm.$error"
+                    ng-show="state.CostCoverageForm.$invalid">
+                  <div class="error-hint" ng-message="required">First four text boxes must be either all empty, or all have values in them.</div>
+                </div>
+
+                <div class="section">
+                  1. Specify the saturation coverage level:
+                  <input type="number" class="txbox __inline __m"
+                         name="state.saturationCoverageLevel"
+                         min="1" max="100" step="1"
+                         placeholder="e.g. 90"
+                         ng-model="state.saturationCoverageLevel"
+                         ng-required="!areValidCcParams()"
+                         more-than="state.knownMaxCoverageLevel"
+                         ng-change="updateCurves()">%
+
+                  <div ng-messages="state.CostCoverageForm.state.saturationCoverageLevel.$error"
+                       ng-show="state.CostCoverageForm.state.saturationCoverageLevel.$touched && state.CostCoverageForm.state.saturationCoverageLevel.$invalid">
+                    <div class="error-hint" ng-message="min">The minimum value is 1</div>
+                    <div class="error-hint" ng-message="max">The maximum value is 100</div>
+                    <div class="error-hint" ng-message="moreThan">The value must be greater than Known Maximum Coverage Level ({{ state.knownMaxCoverageLevel }}%)</div>
+                    <div class="error-hint" ng-message="number">The value should be a number from 1 to 100</div>
+                  </div>
+                </div>
+                <div class="section">
+                  2. The estimated amount of funding needed to get between
+                  <input type="number" class="txbox __inline __m"
+                         name="state.knownMinCoverageLevel"
+                         min="1" max="100"
+                         placeholder="e.g. 50"
+                         less-than="state.knownMaxCoverageLevel"
+                         ng-model="state.knownMinCoverageLevel"
+                         ng-required="!areValidCcParams()"
+                         ng-change="updateCurves()">%
+                  and
+                  <input type="number" class="txbox __inline __m"
+                         name="state.knownMaxCoverageLevel"
+                         min="1" max="100"
+                         placeholder="e.g. 60"
+                         ng-model="state.knownMaxCoverageLevel"
+                         ng-required="!areValidCcParams()"
+                         ng-change="updateCurves()">%
+                  coverage for this program is:
+                  <input type="number" class="txbox __inline __xl"
+                         name="state.knownFundingValue"
+                         min="1" step="1000" placeholder="e.g. 400000"
+                         ng-model="state.knownFundingValue"
+                         ng-required="!areValidCcParams()"
+                         ng-change="updateCurves()"> USD
+
+                  <div ng-messages="state.CostCoverageForm.state.knownMinCoverageLevel.$error"
+                       ng-show="state.CostCoverageForm.state.knownMinCoverageLevel.$touched && state.CostCoverageForm.state.knownMinCoverageLevel.$invalid">
+                    <div class="error-hint" ng-message="required">The field Known Minimum Coverage Level is required</div>
+                    <div class="error-hint" ng-message="min">The minimum value is 1</div>
+                    <div class="error-hint" ng-message="max">The maximum value is 100</div>
+                    <div class="error-hint" ng-message="lessThan">The value must be less than Known Maximum Coverage Level</div>
+                    <div class="error-hint" ng-message="number">The value should be a number from 1 to 100</div>
+                  </div>
+
+                  <div ng-messages="state.CostCoverageForm.state.knownMaxCoverageLevel.$error"
+                       ng-show="state.CostCoverageForm.state.knownMaxCoverageLevel.$touched && state.CostCoverageForm.state.knownMaxCoverageLevel.$invalid">
+                    <div class="error-hint" ng-message="required">The field Known Maximum Coverage Level is required</div>
+                    <div class="error-hint" ng-message="min">The minimum value is 1</div>
+                    <div class="error-hint" ng-message="max">The maximum value is 100</div>
+                    <div class="error-hint" ng-message="number">The value should be a number from 1 to 100</div>
+                  </div>
+
+                  <div ng-messages="state.CostCoverageForm.state.knownFundingValue.$error"
+                       ng-show="state.CostCoverageForm.state.knownFundingValue.$touched && state.CostCoverageForm.state.knownFundingValue.$invalid">
+                    <div class="error-hint" ng-message="required">The field Known Funding Value is required</div>
+                    <div class="error-hint" ng-message="min">The minimum value is 1</div>
+                    <div class="error-hint" ng-message="number">The value should be a number</div>
+                  </div>
+                </div>
+                <div class="section">
+                  3. [Optional] Specify scale-up parameters:
+                  <input type="number" class="txbox __inline __xl"
+                         name="state.scaleUpParameter"
+                         min="0" max="0.999999999999"
+                         placeholder="e.g. 0.5"
+                         ng-model="state.scaleUpParameter"
+                         ng-change="updateCurves()">
+                  <div ng-messages="state.CostCoverageForm.state.scaleUpParameter.$error"
+                       ng-show="state.CostCoverageForm.state.scaleUpParameter.$touched && state.CostCoverageForm.state.scaleUpParameter.$invalid">
+                    <div class="error-hint" ng-message="max">The maximum value is 0.999999999999</div>
+                    <div class="error-hint" ng-message="min">The minimum value is 0</div>
+                    <div class="error-hint" ng-message="number">The value should be a number from 0 to 0.999999999999</div>
+                  </div>
+                </div>
+                <div class="section">
+                  4. [Optional] Full coverage would avert
+                  <input type="number" class="txbox __inline __xl"
+                         name="state.nonHivDalys"
+                         min="0" step="1" placeholder="e.g. 0"
+                         ng-model="state.nonHivDalys"
+                         ng-change="updateCurves()">
+                  non-HIV-related DALYs per year
+                  <div ng-messages="state.CostCoverageForm.state.nonHivDalys.$error"
+                       ng-show="state.CostCoverageForm.state.nonHivDalys.$touched && state.CostCoverageForm.state.nonHivDalys.$invalid">
+                    <div class="error-hint" ng-message="min">The minimum value is 0</div>
+                    <div class="error-hint" ng-message="number">The value should be a number</div>
+                  </div>
+                </div>
+                <div class="section">
+                  5. [Optional] Specify the maximum funding (for plotting only):
+                  <input type="number" class="txbox __inline __xl"
+                         name="state.xAxisMaximum"
+                         min="1" placeholder="e.g. 1000000"
+                         ng-model="state.xAxisMaximum"
+                         ng-change="updateCurves()">
+                  <div ng-messages="state.CostCoverageForm.state.xAxisMaximum.$error"
+                       ng-show="state.CostCoverageForm.state.xAxisMaximum.$touched && state.CostCoverageForm.state.xAxisMaximum.$invalid">
+                    <div class="error-hint" ng-message="min">The minimum value is 1</div>
+                    <div class="error-hint" ng-message="number">The value should be a number</div>
+                  </div>
+                </div>
+                <div class="section">
+                  6. [Optional] Display program cost data in
+                  <input type="number" class="txbox __inline __l"
+                         name="state.displayYear"
+                         placeholder="e.g.{{ ::projectInfo.dataEnd }}"
+                         min="{{ ::projectInfo.dataStart }}"
+                         max="{{ ::projectInfo.dataEnd }}"
+                         ng-model="state.displayYear"
+                         ng-change="updateCurves()">
+                  prices
+                  <div ng-messages="state.CostCoverageForm.state.displayYear.$error"
+                       ng-show="state.CostCoverageForm.state.displayYear.$touched && state.CostCoverageForm.state.displayYear.$invalid">
+                    <div class="error-hint" ng-message="min">The year entered cannot be before the project start date, which is {{ ::projectInfo.dataStart }}</div>
+                    <div class="error-hint" ng-message="max">The year entered cannot be after the project end date, which is {{ ::projectInfo.dataEnd }}</div>
+                    <div class="error-hint" ng-message="number">The value should be a number</div>
+                  </div>
+                </div>
+                <div class="section">
+                  7. [Optional] Display program costs in dollar spent per person in the targeted population
+                  <input type="checkbox" ng-model="state.calculatePerPerson" class="__inline" ng-change="updateCurves()"/>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
-        <div class="elastic_col">
-          <div class="section">
-            <form name="CostCoverageForm" ng-submit="generateCurves()">
-              <div class="info-hint" ng-show="!hasAllCCParams()">{{ ::optionsErrorMessage }}</div>
-              <div class="error-hint" ng-show="!hasValidCCParams()">{{ ::needAllCCParamsMessage }}</div>
-              <div class="section">
-                1. Specify the saturation coverage level:
-                <input type="number" class="txbox __inline __m"
-                       name="saturationCoverageLevel"
-                       min="1" max="100" step="1"
-                       placeholder="e.g.{{ ::defaultSaturationCoverageLevel }}"
-                       ng-model="saturationCoverageLevel"
-                       ng-required="!hasValidCCParams()"
-                       more-than="knownMaxCoverageLevel"
-                       ng-change="updateCurves()">%
+        <div class="section" ng-if="graphs.plotdata.length" ng-repeat="chart in graphs.plotdata">
+          <h2 class="section">{{ chart.options.title }}</h2>
 
-                <div ng-messages="CostCoverageForm.saturationCoverageLevel.$error"
-                     ng-show="CostCoverageForm.saturationCoverageLevel.$touched && CostCoverageForm.saturationCoverageLevel.$invalid">
-                  <div class="error-hint" ng-message="min">The minimum value is 1</div>
-                  <div class="error-hint" ng-message="max">The maximum value is 100</div>
-                  <div class="error-hint" ng-message="moreThan">The value must be greater than Known Maximum Coverage Level ({{ knownMaxCoverageLevel }}%)</div>
-                  <div class="error-hint" ng-message="number">The value should be a number from 1 to 100</div>
-                </div>
+          <div class="section elastic">
+            <div class="elastic_col __shrink" style="width: 320px">
+              <div class="chart-container" ng-init="coGraph = graphs.plotdata_co[$index]">
+                <div line-area-scatter-chart data="coGraph.data" options="coGraph.options" save-graph-as></div>
               </div>
+            </div>
+
+            <div class="elastic_col" style="width: 340px">
+              <div class="chart-container">
+                <div line-area-scatter-chart data="chart.data" options="chart.options" save-graph-as></div>
+              </div>
+            </div>
+            <form name="AdjustmentForm" class="elastic_col">
+              <h3>Options to adjust curves:</h3>
               <div class="section">
-                2. The estimated amount of funding needed to get between
-                <input type="number" class="txbox __inline __m"
-                       name="knownMinCoverageLevel"
-                       min="1" max="100"
-                       placeholder="e.g.{{defaultKnownCoverageLevel-10}}"
-                       less-than="knownMaxCoverageLevel"
-                       ng-model="knownMinCoverageLevel"
-                       ng-required="!hasValidCCParams()"
-                       ng-change="updateCurves()">%
+                1. Behavior/outcome without this program ranges between
+                <input type="number"
+                       class="txbox __inline"
+                       name="withoutProgramRangeStart"
+                       min="0"
+                       max="100"
+                       step="1"
+                       required
+                       ng-change="updateCurve($index,AdjustmentForm)"
+                       ng-model="state.coParams[$index][0]"
+                       less-than="state.coParams[$index][1]">%
                 and
-                <input type="number" class="txbox __inline __m"
-                       name="knownMaxCoverageLevel"
-                       min="1" max="100"
-                       placeholder="e.g.{{ ::defaultKnownCoverageLevel }}"
-                       ng-model="knownMaxCoverageLevel"
-                       ng-required="!hasValidCCParams()"
-                       ng-change="updateCurves()">%
-                coverage for this program is:
-                <input type="number" class="txbox __inline __xl"
-                       name="knownFundingValue"
-                       min="1" step="1000" placeholder="e.g.{{ ::defaultKnownFundingValue }}"
-                       ng-model="knownFundingValue"
-                       ng-required="!hasValidCCParams()"
-                       ng-change="updateCurves()"> USD
+                <input type="number" class="txbox __inline"
+                       name="withoutProgramRangeEnd"
+                       min="0"
+                       max="100"
+                       step="1"
+                       required
+                       ng-change="updateCurve($index,AdjustmentForm)"
+                       ng-model="state.coParams[$index][1]"
+                       more-than="state.coParams[$index][0]">%
 
-                <div ng-messages="CostCoverageForm.knownMinCoverageLevel.$error"
-                     ng-show="CostCoverageForm.knownMinCoverageLevel.$touched && CostCoverageForm.knownMinCoverageLevel.$invalid">
-                  <div class="error-hint" ng-message="required">The field Known Minimum Coverage Level is required</div>
-                  <div class="error-hint" ng-message="min">The minimum value is 1</div>
-                  <div class="error-hint" ng-message="max">The maximum value is 100</div>
-                  <div class="error-hint" ng-message="lessThan">The value must be less than Known Maximum Coverage Level</div>
-                  <div class="error-hint" ng-message="number">The value should be a number from 1 to 100</div>
-                </div>
-
-                <div ng-messages="CostCoverageForm.knownMaxCoverageLevel.$error"
-                     ng-show="CostCoverageForm.knownMaxCoverageLevel.$touched && CostCoverageForm.knownMaxCoverageLevel.$invalid">
-                  <div class="error-hint" ng-message="required">The field Known Maximum Coverage Level is required</div>
-                  <div class="error-hint" ng-message="min">The minimum value is 1</div>
-                  <div class="error-hint" ng-message="max">The maximum value is 100</div>
-                  <div class="error-hint" ng-message="number">The value should be a number from 1 to 100</div>
-                </div>
-
-                <div ng-messages="CostCoverageForm.knownFundingValue.$error"
-                     ng-show="CostCoverageForm.knownFundingValue.$touched && CostCoverageForm.knownFundingValue.$invalid">
-                  <div class="error-hint" ng-message="required">The field Known Funding Value is required</div>
-                  <div class="error-hint" ng-message="min">The minimum value is 1</div>
-                  <div class="error-hint" ng-message="number">The value should be a number</div>
-                </div>
-              </div>
-              <div class="section">
-                3. [Optional] Specify scale-up parameters:
-                <input type="number" class="txbox __inline __xl"
-                       name="scaleUpParameter"
-                       min="0" max="0.999999999999"
-                       placeholder="e.g.{{ ::defaultScaleUpParameter }}"
-                       ng-model="scaleUpParameter"
-                       ng-change="updateCurves()">
-                <div ng-messages="CostCoverageForm.scaleUpParameter.$error"
-                     ng-show="CostCoverageForm.scaleUpParameter.$touched && CostCoverageForm.scaleUpParameter.$invalid">
-                  <div class="error-hint" ng-message="max">The maximum value is 0.999999999999</div>
+                <div ng-messages="AdjustmentForm.withoutProgramRangeStart.$error"
+                     ng-show="AdjustmentForm.withoutProgramRangeStart.$invalid">
                   <div class="error-hint" ng-message="min">The minimum value is 0</div>
-                  <div class="error-hint" ng-message="number">The value should be a number from 0 to 0.999999999999</div>
+                  <div class="error-hint" ng-message="max">The maximum value is 100</div>
+                  <div class="error-hint" ng-message="lessThan">The first parameter must be lower than the second one</div>
+                  <div class="error-hint" ng-message="number">The value should be a number from 0 to 100</div>
                 </div>
-              </div>
-              <div class="section">
-                4. [Optional] Full coverage would avert
-                <input type="number" class="txbox __inline __xl"
-                       name="nonHivDalys"
-                       min="0" step="1" placeholder="e.g.{{ ::defaultNonHivDalys }}"
-                       ng-model="nonHivDalys"
-                       ng-change="updateCurves()">
-                non-HIV-related DALYs per year
-                <div ng-messages="CostCoverageForm.nonHivDalys.$error"
-                     ng-show="CostCoverageForm.nonHivDalys.$touched && CostCoverageForm.nonHivDalys.$invalid">
+                <div ng-messages="AdjustmentForm.withoutProgramRangeEnd.$error"
+                     ng-show="AdjustmentForm.withoutProgramRangeEnd.$touched && AdjustmentForm.withoutProgramRangeEnd.$invalid">
                   <div class="error-hint" ng-message="min">The minimum value is 0</div>
-                  <div class="error-hint" ng-message="number">The value should be a number</div>
+                  <div class="error-hint" ng-message="max">The maximum value is 100</div>
+                  <div class="error-hint" ng-message="number">The value should be a number from 0 to 100</div>
                 </div>
               </div>
               <div class="section">
-                5. [Optional] Specify the maximum funding (for plotting only):
-                <input type="number" class="txbox __inline __xl"
-                       name="xAxisMaximum"
-                       min="1" placeholder="e.g.{{ ::defaultXAxisMaximum }}"
-                       ng-model="xAxisMaximum"
-                       ng-change="updateCurves()">
-                <div ng-messages="CostCoverageForm.xAxisMaximum.$error"
-                     ng-show="CostCoverageForm.xAxisMaximum.$touched && CostCoverageForm.xAxisMaximum.$invalid">
-                  <div class="error-hint" ng-message="min">The minimum value is 1</div>
-                  <div class="error-hint" ng-message="number">The value should be a number</div>
+                2. Behavior/outcome under full coverage of this program ranges between
+                <input type="number"
+                       name="fullCoverageRangeStart"
+                       min="0"
+                       max="100"
+                       step="1"
+                       required
+                       ng-change="updateCurve($index,AdjustmentForm)"
+                       class="txbox __inline"
+                       ng-model="state.coParams[$index][2]"
+                       less-than="state.coParams[$index][3]">%
+                and
+                <input type="number"
+                       name="fullCoverageRangeEnd"
+                       min="0"
+                       max="100"
+                       step="1"
+                       required
+                       ng-change="updateCurve($index,AdjustmentForm)"
+                       class="txbox __inline"
+                       ng-model="state.coParams[$index][3]">%
+
+                <div ng-messages="AdjustmentForm.fullCoverageRangeStart.$error"
+                     ng-show="AdjustmentForm.fullCoverageRangeStart.$invalid">
+                  <div class="error-hint" ng-message="min">The minimum value is 0</div>
+                  <div class="error-hint" ng-message="max">The maximum value is 100</div>
+                  <div class="error-hint" ng-message="lessThan">The first parameter must be lower than the second one</div>
+                  <div class="error-hint" ng-message="number">The value should be a number from 0 to 100</div>
                 </div>
-              </div>
-              <div class="section">
-                6. [Optional] Display program cost data in
-                <input type="number" class="txbox __inline __l"
-                       name="displayYear"
-                       placeholder="e.g.{{ ::projectInfo.dataEnd }}"
-                       min="{{ ::projectInfo.dataStart }}"
-                       max="{{ ::projectInfo.dataEnd }}"
-                       ng-model="displayYear"
-                       ng-change="updateCurves()">
-                prices
-                <div ng-messages="CostCoverageForm.displayYear.$error"
-                     ng-show="CostCoverageForm.displayYear.$touched && CostCoverageForm.displayYear.$invalid">
-                  <div class="error-hint" ng-message="min">The year entered cannot be before the project start date, which is {{ ::projectInfo.dataStart }}</div>
-                  <div class="error-hint" ng-message="max">The year entered cannot be after the project end date, which is {{ ::projectInfo.dataEnd }}</div>
-                  <div class="error-hint" ng-message="number">The value should be a number</div>
+                <div ng-messages="AdjustmentForm.fullCoverageRangeEnd.$error"
+                     ng-show="AdjustmentForm.fullCoverageRangeEnd.$touched && AdjustmentForm.fullCoverageRangeEnd.$invalid">
+                  <div class="error-hint" ng-message="min">The minimum value is 0</div>
+                  <div class="error-hint" ng-message="max">The maximum value is 100</div>
+                  <div class="error-hint" ng-message="number">The value should be a number from 0 to 100</div>
                 </div>
-              </div>
-              <div class="section">
-                7. [Optional] Display program costs in dollar spent per person in the targeted population
-                <input type="checkbox" ng-model="calculatePerPerson" class="__inline" ng-change="updateCurves()"/>
+
+                <div ng-messages="AdjustmentForm.$error"
+                    ng-show="AdjustmentForm.$invalid &&
+                             AdjustmentForm.withoutProgramRangeStart.$touched ||
+                             AdjustmentForm.withoutProgramRangeEnd.$touched ||
+                             AdjustmentForm.fullCoverageRangeStart.$touched ||
+                             AdjustmentForm.fullCoverageRangeEnd.$touched">
+                  <div class="error-hint" ng-message="required">All four text boxes must be filled out to calculate the curves.</div>
+                </div>
               </div>
             </form>
           </div>
         </div>
       </div>
-
-      <div class="section" ng-if="graphs.plotdata.length" ng-repeat="chart in graphs.plotdata">
-        <h2 class="section">{{ chart.options.title }}</h2>
-
-        <div class="section elastic">
-          <div class="elastic_col __shrink" style="width: 320px">
-            <div class="chart-container" ng-init="coGraph = graphs.plotdata_co[$index]">
-              <div line-area-scatter-chart data="coGraph.data" options="coGraph.options" save-graph-as></div>
-            </div>
-          </div>
-
-          <div class="elastic_col" style="width: 340px">
-            <div class="chart-container">
-              <div line-area-scatter-chart data="chart.data" options="chart.options" save-graph-as></div>
-            </div>
-          </div>
-          <form name="AdjustmentForm" class="elastic_col">
-            <h3>Options to adjust curves:</h3>
-            <div class="section">
-              1. Behavior/outcome without this program ranges between
-              <input type="number" class="txbox __inline"
-                     name="withoutProgramRangeStart"
-                     min="0" max="100" step="1" required
-                     ng-change="updateCurve($index,AdjustmentForm)"
-                     ng-model="coParams[$index][0]"
-                     less-than="coParams[$index][1]">%
-              and
-              <input type="number" class="txbox __inline"
-                     name="withoutProgramRangeEnd"
-                     min="0" max="100" step="1" required
-                     ng-change="updateCurve($index,AdjustmentForm)"
-                     ng-model="coParams[$index][1]"
-                     more-than="coParams[$index][0]">%
-
-              <div ng-messages="AdjustmentForm.withoutProgramRangeStart.$error"
-                   ng-show="AdjustmentForm.withoutProgramRangeStart.$invalid">
-                <div class="error-hint" ng-message="min">The minimum value is 0</div>
-                <div class="error-hint" ng-message="max">The maximum value is 100</div>
-                <div class="error-hint" ng-message="lessThan">The first parameter must be lower than the second one</div>
-                <div class="error-hint" ng-message="number">The value should be a number from 0 to 100</div>
-              </div>
-              <div ng-messages="AdjustmentForm.withoutProgramRangeEnd.$error"
-                   ng-show="AdjustmentForm.withoutProgramRangeEnd.$touched && AdjustmentForm.withoutProgramRangeEnd.$invalid">
-                <div class="error-hint" ng-message="min">The minimum value is 0</div>
-                <div class="error-hint" ng-message="max">The maximum value is 100</div>
-                <div class="error-hint" ng-message="number">The value should be a number from 0 to 100</div>
-              </div>
-            </div>
-            <div class="section">
-              2. Behavior/outcome under full coverage of this program ranges between
-              <input type="number" name="fullCoverageRangeStart" min="0" max="100" step="1" ng-required="true" ng-change="updateCurve($index,AdjustmentForm)" class="txbox __inline" ng-model="coParams[$index][2]" less-than="coParams[$index][3]">%
-              and
-              <input type="number" name="fullCoverageRangeEnd" min="0" max="100" step="1" ng-required="true" ng-change="updateCurve($index,AdjustmentForm)" class="txbox __inline" ng-model="coParams[$index][3]">%
-
-              <div ng-messages="AdjustmentForm.fullCoverageRangeStart.$error"
-                   ng-show="AdjustmentForm.fullCoverageRangeStart.$invalid">
-                <div class="error-hint" ng-message="min">The minimum value is 0</div>
-                <div class="error-hint" ng-message="max">The maximum value is 100</div>
-                <div class="error-hint" ng-message="lessThan">The first parameter must be lower than the second one</div>
-                <div class="error-hint" ng-message="number">The value should be a number from 0 to 100</div>
-              </div>
-              <div ng-messages="AdjustmentForm.fullCoverageRangeEnd.$error"
-                   ng-show="AdjustmentForm.fullCoverageRangeEnd.$touched && AdjustmentForm.fullCoverageRangeEnd.$invalid">
-                <div class="error-hint" ng-message="min">The minimum value is 0</div>
-                <div class="error-hint" ng-message="max">The maximum value is 100</div>
-                <div class="error-hint" ng-message="number">The value should be a number from 0 to 100</div>
-              </div>
-            </div>
-          </form>
-        </div>
-
-      </div>
-
     </div>
+
   </div>
 </div>

@@ -4,9 +4,8 @@ import time
 from signal import *
 
 from sqlalchemy.orm import sessionmaker, scoped_session
-from sqlalchemy import create_engine
 from sim.dataio import fromjson, tojson
-from dbmodels import ProjectDb, WorkingProjectDb, WorkLogDb
+from optima.dbmodels import ProjectDb, WorkingProjectDb, WorkLogDb
 
 # Sentinel object used for async calculation
 sentinel = {
@@ -49,7 +48,8 @@ def start_or_report_calculation(user_id, project_id, func, db_session): #only ca
         print("No such project %s, cannot start calculation" % project_id)
     return can_start, can_join, work_type
 
-def finish_calculation(user_id, project_id, func, db_session, status='completed', error_text=None, stop_now = False):
+
+def finish_calculation(user_id, project_id, func, db_session, status='completed', error_text=None, stop_now = False): # pylint: disable=W0613, R0913
     import datetime
     import dateutil.tz
     project = db_session.query(ProjectDb).filter_by(user_id=user_id, id=project_id).first()
@@ -101,8 +101,8 @@ def check_calculation_status(user_id, project_id, func, db_session):
             stop_time = work_log.stop_time
     return status, error_text, stop_time
 
-def interrupt(*args):
-    global sentinel
+def interrupt(*args): # pylint: disable=W0613
+    global sentinel # pylint: disable=W0602
     print("stopping all threads")
     sentinel['exit'] = True
     sys.exit()
@@ -126,7 +126,7 @@ class CalculatingThread(threading.Thread):
 
     """
 
-    def __init__(self, engine, user, project_id, timelimit, numiter, func, args, with_stoppingfunc = False):
+    def __init__(self, engine, user, project_id, timelimit, numiter, func, args, with_stoppingfunc = False): # pylint: disable=R0913
         super(CalculatingThread, self).__init__()
 
         self.args = args
@@ -151,9 +151,11 @@ class CalculatingThread(threading.Thread):
         self.db_session = scoped_session(sessionmaker(self.engine)) #creating scoped_session, eventually bound to engine
 
     def close_db_session(self):
-        self.db_session.connection().close() # this line might be redundant (not 100% sure - not clearly described)
+        # this line might be redundant (not 100% sure - not clearly described)
+        self.db_session.connection().close() # pylint: disable=E1101
         self.db_session.remove()
-        self.db_session.bind.dispose() # black magic to actually close the connection by forcing the engine to dispose of garbage (I assume)
+        # black magic to actually close the connection by forcing the engine to dispose of garbage (I assume)
+        self.db_session.bind.dispose() # pylint: disable=E1101
 
 
     def check_stop_flag(self):
@@ -166,7 +168,7 @@ class CalculatingThread(threading.Thread):
             if new_time_checked-self.start_time>=self.timelimit:
                 print "max allotted time has passed"
                 self.stop_flag = True
-            elif new_time_checked-self.last_time_checked>=self.leap_seconds: 
+            elif new_time_checked-self.last_time_checked>=self.leap_seconds:
                 print "calling check calculation..."
                 self.init_db_session()
                 self.stop_flag = not check_calculation(self.user_id, self.project_id, self.func, self.db_session)
@@ -186,18 +188,19 @@ class CalculatingThread(threading.Thread):
     def run(self):
         import traceback
         self.start_time = time.time()
-        self.last_time_checked = self.start_time-self.leap_seconds-1; # never checked anything yet
+        # never checked anything yet
+        self.last_time_checked = self.start_time - self.leap_seconds - 1
         self.init_db_session()
-        D = self.load_model_user(self.project_id, self.user_id, working_model = False) #we start from the current model
+        # we start from the current model
+        D = self.load_model_user(self.project_id, self.user_id, working_model=False)
         self.close_db_session()
         self.iterations = 1
-        was_error = False
         error_text = None
         cancel_status = 'completed'
         if self.with_stoppingfunc:
             self.args['stoppingfunc'] = getattr(self, 'has_stop_flag')
 
-        #run the thing once. 
+        #run the thing once.
         while True:
             # do we have to stop?
             if self.has_stop_flag():
@@ -211,10 +214,9 @@ class CalculatingThread(threading.Thread):
                 self.init_db_session()
                 self.save_model_user(self.project_id, self.user_id, D)
                 self.close_db_session()
-            except Exception, err:
+            except Exception:
                 var = traceback.format_exc()
                 print("ERROR in Iteration %s for user: %s, args: %s calculation: %s\n %s" % (self.iterations, self.user_name, self.debug_args, self.func.__name__, var))
-                was_error = True
                 error_text = var
                 cancel_status='error'
                 break
@@ -225,8 +227,8 @@ class CalculatingThread(threading.Thread):
         self.close_db_session()
         print("thread for project %s stopped" % self.project_id)
 
-    def load_model_user(self, id, user_id, from_json=True, working_model=True):
-        project = self.db_session.query(ProjectDb).filter_by(user_id=user_id, id=id).first()
+    def load_model_user(self, project_id, user_id, from_json=True, working_model=True):
+        project = self.db_session.query(ProjectDb).filter_by(user_id=user_id, id=project_id).first()
         model = None
         if project is not None:
             if project.working_project is None or not working_model:
@@ -237,9 +239,9 @@ class CalculatingThread(threading.Thread):
                 model = fromjson(model)
         return model
 
-    def save_model_user(self, id, user_id, model, working_model=True):
-        print("save_model_user:%s %s" % (id, user_id))
-        project = self.db_session.query(ProjectDb).filter_by(user_id=user_id, id=id).first()
+    def save_model_user(self, project_id, user_id, model, working_model=True):
+        print("save_model_user:%s %s" % (project_id, user_id))
+        project = self.db_session.query(ProjectDb).filter_by(user_id=user_id, id=project_id).first()
         model = tojson(model)
         if project is not None:
             if not working_model:
@@ -253,4 +255,4 @@ class CalculatingThread(threading.Thread):
                     self.db_session.add(project.working_project)
             self.db_session.commit()
         else:
-            print("no such model: user %s project %s" % (user_id, id))
+            print("no such model: user %s project %s" % (user_id, project_id))

@@ -56,6 +56,7 @@ define([
     'app.save-graph-as',
     'app.ui',
     'app.ui.modal',
+    'app.ui.spreadsheet-upload-hint',
     'app.user-manager',
     'ngMessages',
     'ui.bootstrap',
@@ -85,7 +86,7 @@ define([
               return $q.reject(rejection);
             }
           }
-        }
+        };
       });
     })
 
