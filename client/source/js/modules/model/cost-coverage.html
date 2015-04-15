@@ -41,7 +41,7 @@
             </div>
           </div>
           <div class="chart-container">
-            <div mpld3-chart state="state"></div>
+            <div mpld3-chart chart="state.props"></div>
           </div>
         </div>
           <div class="elastic_col">
@@ -202,6 +202,12 @@
               <div class="chart-container">
                 <div line-area-scatter-chart data="chart.data" options="chart.options" save-graph-as></div>
               </div>
+            </div>
+            <div class="chart-container">
+              <div mpld3-chart chart="state.fig_co[$index]"></div>
+            </div>
+            <div class="chart-container">
+              <div mpld3-chart chart="state.fig[$index]"></div>
             </div>
             <form name="AdjustmentForm" class="elastic_col">
               <h3>Options to adjust curves:</h3>

@@ -66,7 +66,9 @@ define(['./module', 'underscore'], function (module, _) {
       $scope.graphs = {
         plotdata: [],
         plotdata_cc: {},
-        plotdata_co: []
+        plotdata_co: [],
+        fig: [],
+        fig_co: []
       };
     };
 
@@ -268,7 +270,9 @@ define(['./module', 'underscore'], function (module, _) {
         effects = response.effectnames;
         $scope.state.coParams = costCoverageHelpers.setUpCoParamsFromEffects(effects);
         $scope.state.hasCostCoverResponse = true;
-        $scope.state.props = response.fig;
+        $scope.state.props = response.fig_cc;
+        $scope.state.fig_co = response.fig_co;
+        $scope.state.fig = response.fig_cco;
 
         resetGraphs();
         _(plotTypes).each(function (plotType) {
@@ -362,6 +366,8 @@ define(['./module', 'underscore'], function (module, _) {
         $http.post('/api/model/costcoverage/effect', model).success(function (response) {
           $scope.graphs.plotdata[graphIndex] = setUpPlotdataGraph(response.plotdata);
           $scope.graphs.plotdata_co[graphIndex] = setUpPlotdataGraph(response.plotdata_co);
+          $scope.state.fig[graphIndex] = response.fig_cco;
+          $scope.state.fig_co[graphIndex] = response.fig_co;
           effects[graphIndex] = response.effect;
         });
       }

@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 import json
 import traceback
+import mpld3
 from optima.async_calculate import CalculatingThread, start_or_report_calculation
 from optima.async_calculate import cancel_calculation, check_calculation
 from optima.async_calculate import check_calculation_status, good_exit_status
@@ -289,8 +290,7 @@ def doRunSimulation():
 @check_project_name
 def doCostCoverage(): # pylint: disable=R0914
     """ Calls makecco with parameters supplied from frontend """
-    import mpld3, copy
-    from sim.plotccocs import plotcc
+    from sim.plotccocs import do_plotcc, do_plotcco, do_plotco
 
     def findIndex(sequence, function):
         """ Returns the first index in the sequence where function(item) == True. """
@@ -325,31 +325,30 @@ def doCostCoverage(): # pylint: disable=R0914
             D['programs'][programIndex]['effects'] = new_effects
         args['D'] = D
         # effectnames are actually effects
-        plotdata, plotdata_co, plotdata_cc, effectnames, D = plotallcurves(**args)
-        plotcc_args = copy.deepcopy(args)
-        if 'coparams' in plotcc_args: del plotcc_args['coparams']
-        plotcc_args['plotdata_cc'] = copy.deepcopy(plotdata_cc)
-        fig = plotcc(**plotcc_args)
-        dict_fig = mpld3.fig_to_dict(fig)
-        with open('/Users/anna/git/Optima/server/mpld3.json', 'w') as outfile:
-            json.dump(dict_fig, outfile)
-#        mpld3.show()
- #       current_app.logger.debug(dict_fig)
+        figsize = (4,3)
+        plotdata_cco, plotdata_co, plotdata_cc, effectnames, D = plotallcurves(**args)
+        fig_cc = do_plotcc(plotdata_cc, figsize)
+        dict_fig_cc = mpld3.fig_to_dict(fig_cc)
+        dict_fig_co = map(lambda key: mpld3.fig_to_dict(do_plotco(plotdata_co[key], figsize)), plotdata_co.keys())
+        dict_fig_cco = map(lambda key: mpld3.fig_to_dict(do_plotcco(plotdata_cco[key], figsize)), plotdata_cco.keys())
         if do_save:
             D_dict = tojson(D)
             save_model(request.project_id, D_dict)
     except Exception:
         var = traceback.format_exc()
         return jsonify({"exception":var}), 500
-    return jsonify({"plotdata": for_fe(plotdata), \
+    return jsonify({"plotdata": for_fe(plotdata_cco), \
         "plotdata_co": for_fe(plotdata_co), "plotdata_cc": for_fe(plotdata_cc), \
         "effectnames": for_fe(effectnames),
-        "fig": dict_fig})
+        "fig_cc": dict_fig_cc,
+        "fig_co": dict_fig_co,
+        "fig_cco": dict_fig_cco})
 
 @model.route('/costcoverage/effect', methods=['POST'])
 @login_required
 @check_project_name
 def doCostCoverageEffect():
+    from sim.plotccocs import do_plotco, do_plotcco
     data = json.loads(request.data)
     current_app.logger.debug("/costcoverage/effect(%s)" % data)
     args = {}
@@ -362,12 +361,18 @@ def doCostCoverageEffect():
             args['ccparams'] = dict([(key, (float(param) if param else None)) for (key,param) in args['ccparams'].iteritems()])
         if args.get('coparams'):args['coparams'] = [float(param) for param in args['coparams']]
         # effectnames are actually effects
-        plotdata, plotdata_co, _ = makecco(**args)
+        figsize = (4,3)
+        plotdata, plotdata_co, _ = makecco(**args) # plotdata is actually plotdata_cco
+        fig_co = do_plotco(plotdata_co, figsize)
+        dict_fig_co = mpld3.fig_to_dict(fig_co)
+        fig_cco = do_plotcco(plotdata, figsize)
+        dict_fig_cco = mpld3.fig_to_dict(fig_cco)
     except Exception:
         var = traceback.format_exc()
         return jsonify({"exception":var}), 500
     return jsonify({"plotdata": for_fe(plotdata), \
-        "plotdata_co": for_fe(plotdata_co), "effect": args['effect']})
+        "plotdata_co": for_fe(plotdata_co), "effect": args['effect'], \
+        "fig_co": dict_fig_co, "fig_cco": dict_fig_cco})
 
 
 @model.route('/reloadSpreadsheet/<project_id>', methods=['GET'])
