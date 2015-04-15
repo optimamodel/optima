@@ -328,7 +328,7 @@ def doCostCoverage(): # pylint: disable=R0914
         plotdata, plotdata_co, plotdata_cc, effectnames, D = plotallcurves(**args)
         plotcc_args = copy.deepcopy(args)
         if 'coparams' in plotcc_args: del plotcc_args['coparams']
-        plotcc_args['plotdata'] = copy.deepcopy(plotdata)
+        plotcc_args['plotdata_cc'] = copy.deepcopy(plotdata_cc)
         fig = plotcc(**plotcc_args)
         dict_fig = mpld3.fig_to_dict(fig)
         with open('/Users/anna/git/Optima/server/mpld3.json', 'w') as outfile:

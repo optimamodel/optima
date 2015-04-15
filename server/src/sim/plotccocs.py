@@ -26,10 +26,10 @@ coverage_params = ['numost','numpmtct','numfirstline','numsecondline']
 from makeccocs import makecc, makeco, makecco
 ###############################################################################
 
-def plotcc(D, progname=default_progname, ccparams=default_ccparams, ccplot=default_ccplot, plotdata = None):
+def plotcc(D, progname=default_progname, ccparams=default_ccparams, plotdata_cc = None):
     ''' Plot cost-coverage curve'''
 
-    if not plotdata: plotdata, D = makecc(D, progname=progname, ccparams=ccparams, ccplot=ccplot, artelig=default_artelig, verbose=2, nxpts = 1000)
+    if not plotdata_cc: plotdata_cc, D = makecc(D, progname=progname, ccparams=ccparams, artelig=default_artelig, verbose=2, nxpts = 1000)
     f = figure()
     hold(True)
     if 'xlinedata' in plotdata_cc.keys():
