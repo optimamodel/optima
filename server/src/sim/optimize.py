@@ -31,13 +31,14 @@ def runmodelalloc(D, thisalloc, origalloc, parindices, randseed, rerunfinancial=
     
     # Hideous hack for ART to use linear unit cost
     try:
+        from utils import sanitize
         artind = D['data']['meta']['progs']['short'].index('ART')
-        currcost = origalloc[artind]
-        currcov = D['M']['tx1'][-1]
+        currcost = sanitize(D['data']['costcov']['cost'][artind])[-1]
+        currcov = sanitize(D['data']['costcov']['cov'][artind])[-1]
         unitcost = currcost/currcov
         newM['tx1'][parindices] = thisalloc[artind]/unitcost
     except:
-        pass
+        print('Attempt to calculate ART coverage failed for an unknown reason')
     
     # Now update things
     newD['M'] = partialupdateM(D['M'], newM, parindices)
