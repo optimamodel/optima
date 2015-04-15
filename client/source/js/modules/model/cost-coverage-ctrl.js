@@ -19,7 +19,7 @@ define(['./module', 'underscore'], function (module, _) {
       $scope.state = {
         chartsForDataExport: [],
         titlesForChartsExport: [],
-        selectionPrograms: initializePrograms(info.programs, programs),
+        selectionPrograms: info.programs,
         coParams: [],
         hasCostCoverResponse: false,
         selectedProgram: undefined
@@ -37,28 +37,6 @@ define(['./module', 'underscore'], function (module, _) {
       return _(programs).find(function(entry) {
         return entry.name === acronym;
       });
-    }
-
-    /**
-     * Creates the models of the programs for this controller.
-     * If the backend do not present values for the categories, we'll use 'Others' as default.
-     */
-    function initializePrograms (programsWithNames, programsWithParams) {
-      // This code exists to ensur the correct order.
-      var programs =  _(programsWithNames).map(function (item) {
-        var acronym = item.short_name;
-
-        var program = _(programsWithParams).find(function(entry) {
-          return entry.name === acronym;
-        });
-
-        return {
-          name: item.name,
-          acronym: acronym,
-          category: item.category
-        };
-      });
-      return programs;
     }
 
     var resetGraphs= function () {
@@ -230,7 +208,7 @@ define(['./module', 'underscore'], function (module, _) {
       };
 
       return {
-        progname: $scope.state.selectedProgram.acronym,
+        progname: $scope.state.selectedProgram.short_name,
         ccparams: costCoverageParams
       };
     };
@@ -301,7 +279,7 @@ define(['./module', 'underscore'], function (module, _) {
         return null;
       }
 
-      var program = findProgram($scope.state.selectedProgram.acronym);
+      var program = findProgram($scope.state.selectedProgram.short_name);
       $scope.state.saturationCoverageLevel = program.ccparams.saturation ? program.ccparams.saturation * 100 : undefined;
       $scope.state.knownMinCoverageLevel = program.ccparams.coveragelower ? program.ccparams.coveragelower * 100 : undefined;
       $scope.state.knownMaxCoverageLevel = program.ccparams.coverageupper ? program.ccparams.coverageupper * 100 : undefined;
@@ -342,7 +320,7 @@ define(['./module', 'underscore'], function (module, _) {
       model.all_coparams = costCoverageHelpers.toRequestCoParams($scope.state.coParams);
       model.all_effects = effects;
 
-      var program = findProgram($scope.state.selectedProgram.acronym);
+      var program = findProgram($scope.state.selectedProgram.short_name);
       program.ccparams = model.ccparams;
 
       retrieveAndUpdateGraphs(model);
