@@ -348,9 +348,7 @@ def getProjectInformation():
             'creation_time': project_entry.creation_time,
             'updated_time': project_entry.updated_time,
             'data_upload_time': project_entry.data_upload_time(),
-            'has_data': project_entry.has_data(),
-            'can_calibrate': project_entry.can_calibrate(),
-            'can_scenarios': project_entry.can_scenarios(),
+            'has_data': project_entry.has_data()
         }
         return jsonify(reply)
     else:

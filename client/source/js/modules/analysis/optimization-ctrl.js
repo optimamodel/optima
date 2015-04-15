@@ -862,9 +862,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       modalService.addOptimization(function (name) { create(name); }, $scope.state.optimizations);
     };
 
-    // The graphs are shown/hidden after updating the graph type checkboxes.
-    $scope.$watch('types', drawGraphs, true);
-
     $scope.yearLoop = [];
     $scope.yearCols = [];
 
@@ -1012,6 +1009,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       }
     };
 
+    $scope.$watch('state.types', drawGraphs, true); // The graphs are shown/hidden after updating the graph type checkboxes
     $scope.$watch('state.pieCharts', updateChartsForDataExport, true);
     $scope.$watch('state.outcomeChart', updateChartsForDataExport, true);
     $scope.$watch('state.radarCharts', updateChartsForDataExport, true);
