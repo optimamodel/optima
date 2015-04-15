@@ -332,7 +332,7 @@ define(['./module', 'underscore'], function (module, _) {
      * The plot model gets saved in the backend.
      */
     $scope.saveModel = function () {
-      if($scope.state.CostCoverageForm.$invalid || this.state.CombinedAdjustmentForms.$invalid) {
+      if($scope.state.CostCoverageForm.$invalid || $scope.state.CombinedAdjustmentForms.$invalid) {
         modalService.inform(function() {}, 'Ok', 'Please correct all errors on this page before proceeding.', 'Cannot save invalid model');
         return;
       }
