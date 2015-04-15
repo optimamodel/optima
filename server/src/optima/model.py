@@ -348,7 +348,8 @@ def doCostCoverageEffect():
             return jsonify({'reason':'No effect has been specified'}), 500
         if args.get('ccparams'):
             args['ccparams'] = dict([(key, (float(param) if param else None)) for (key,param) in args['ccparams'].iteritems()])
-        if args.get('coparams'):args['coparams'] = [float(param) for param in args['coparams']]
+        if args.get('coparams'):
+            args['coparams'] = map(lambda param: float(param) if param else None, args['coparams'])
         # effectnames are actually effects
         plotdata, plotdata_co, _ = makecco(**args)
     except Exception:
