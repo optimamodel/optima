@@ -44,6 +44,12 @@ def runscenarios(D, scenariolist=None, verbose=2):
     from gatherplotdata import gathermultidata
     D['plot']['scens'] = gathermultidata(D, D['scens'], verbose=verbose)
     
+    # Clean up -- inefficient, yes!
+    for scen in xrange(nscenarios):
+        D['scens'][scen].pop('M')
+        D['scens'][scen].pop('S')
+        D['scens'][scen].pop('R')
+    
     printv('...done running scenarios.', 2, verbose)
     return D
 

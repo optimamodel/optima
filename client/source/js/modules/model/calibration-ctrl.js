@@ -4,6 +4,13 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   module.controller('ModelCalibrationController', function ($scope, $http, $interval,
     Model, parameters, meta, info, CONFIG, typeSelector, cfpLoadingBar, calibration) {
 
+    // In case there is no model data the controller only needs to show the
+    // warning that the user should upload a spreadsheet with data.
+    if (!info.has_data) {
+      $scope.missingModelData = true;
+      return;
+    }
+
     var defaultChartOptions = {
       title: 'Title',
       height: 200,
@@ -46,6 +53,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.parameters = {
         types: {
           force: 'Relative force-of-infection for ',
+          inhomo: 'Inhomogeneity in force-of-infection for ',
           popsize: 'Initial population size for ',
           init: 'Initial prevalence for ',
           dx: [
@@ -55,13 +63,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             'Testing rate slope parameter'
           ]
         },
-        meta: meta
+        meta: meta.data
       };
       angular.extend($scope.parameters, calibration.toScopeParameters(parameters));
 
-      if ($scope.projectInfo.has_data){
-        $scope.simulate();
-      }
+      $scope.simulate();
     };
 
     /**
@@ -319,7 +325,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.startAutoCalibration = function () {
       $http.post('/api/model/calibrate/auto', $scope.simulationOptions,{ignoreLoadingBar: true})
         .success(function(data, status, headers, config) {
-          if (data.status == "OK" && data.join) {
+          if (data.join) {
       // Keep polling for updated values after every 5 seconds till we get an error.
       // Error indicates that the model is not calibrating anymore.
             autoCalibrationTimer = $interval(checkWorkingAutoCalibration, 5000, 0, false);

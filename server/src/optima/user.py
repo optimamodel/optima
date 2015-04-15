@@ -9,13 +9,11 @@ User Module
 3. Logout.
 
 """
-from flask import request, jsonify, g, session, flash, abort, Blueprint, url_for, current_app, make_response
-from flask.ext.login import LoginManager, login_user, current_user, logout_user, redirect, login_required
-from dbconn import db
-from dbmodels import UserDb
-from utils import verify_admin_request
-import logging
-import json
+from flask import request, jsonify, g, session, flash, abort, Blueprint, url_for, current_app
+from flask.ext.login import LoginManager, login_user, current_user, logout_user, redirect, login_required # pylint: disable=E0611,F0401
+from optima.dbconn import db
+from optima.dbmodels import UserDb
+from optima.utils import verify_admin_request
 import traceback
 
 
@@ -53,7 +51,7 @@ def create_user():
         no_of_users = UserDb.query.filter_by( email=email ).count()
 
         if no_of_users>0:
-            return make_response(json.dumps({'status': 'NOK', 'reason':'This email is already in use'}), 409) #409 - Conflict
+            return jsonify({'reason':'This email is already in use'}), 409 #409 - Conflict
         else:
             # Save to db
             u = UserDb(name, email, password)
@@ -66,7 +64,7 @@ def create_user():
             # Return user info
             return jsonify({'email': u.email, 'name': u.name })
     else:
-        return make_response(json.dumps({'status': 'NOK', 'reason':'Not all parameters are set'}), 400) #400 - Bad Request
+        return jsonify({'reason':'Not all parameters are set'}), 400 #400 - Bad Request
 
 @user.route('/login', methods=['POST'])
 def login():
@@ -94,10 +92,10 @@ def login():
                     # Return user info
                     return jsonify({'email': u.email, 'name': u.name })
 
-            except Exception, err:
+            except Exception:
                 var = traceback.format_exc()
                 print("Exception when logging user %s: \n%s" % (username, var))
-        
+
         # If we came here, login did not succeed
         abort(401)
     else:
@@ -110,7 +108,8 @@ def current_user_api():
     cu = current_user
     if not cu.is_anonymous():
         return jsonify({ 'email': cu.email, 'name': cu.name, 'is_admin': cu.is_admin })
-    abort(401)
+    else:
+        return jsonify({ 'reason': 'User is not logged in' }), 401
 
 @user.route('/logout')
 @login_required
@@ -142,12 +141,12 @@ def list_users():
 @verify_admin_request
 def delete(user_id):
     current_app.logger.debug('/api/user/delete/%s' % user_id)
-    user = UserDb.query.get(user_id)
-    if not user:
-        abort(404)
+    the_user = UserDb.query.get(user_id)
+    if not the_user:
+        return jsonify({'reason': 'User does not exist'}), 404
     else:
-        user_email = user.email
-        from dbmodels import ProjectDb, WorkingProjectDb, ProjectDataDb, WorkLogDb
+        user_email = the_user.email
+        from optima.dbmodels import ProjectDb, WorkingProjectDb, ProjectDataDb, WorkLogDb
         from sqlalchemy.orm import load_only
         #delete all corresponding projects and working projects as well
         projects = ProjectDb.query.filter_by(user_id=user_id).options(load_only("id")).all()
@@ -157,43 +156,56 @@ def delete(user_id):
         ProjectDataDb.query.filter(ProjectDataDb.id.in_(project_ids)).delete(synchronize_session=False)
         WorkingProjectDb.query.filter(WorkingProjectDb.id.in_(project_ids)).delete(synchronize_session=False)
         ProjectDb.query.filter_by(user_id=user_id).delete()
-        db.session.delete(user)
+        db.session.delete(the_user)
         db.session.commit()
         current_app.logger.info("deleted user:%s %s" % (user_id, user_email))
-        return jsonify({'status':'OK','deleted':user_id})
+        return jsonify({'deleted':user_id})
 
 #modify user by ID (can change email, name and/or password)
 @user.route('/modify/<user_id>', methods=['PUT'])
 @verify_admin_request
 def modify(user_id):
     current_app.logger.debug('/api/user/modify/%s' % user_id)
-    user = UserDb.query.get(user_id)
-    if not user:
-        abort(404)
+    the_user = UserDb.query.get(user_id)
+    if not the_user:
+        return jsonify({'reason': 'User does not exist'}), 404
     else:
         new_email = request.args.get('email')
         if new_email is not None:
-            user.email = new_email
+            the_user.email = new_email
         new_name = request.args.get('name')
         if new_name is not None:
-            user.name = new_name
+            the_user.name = new_name
         new_password = request.args.get('password')
         #might change if we decide to hash PW twice
         if new_password is not None:
-            user.password = new_password
-        db.session.add(user)
+            the_user.password = new_password
+        db.session.add(the_user)
         db.session.commit()
         current_app.logger.info("modified user:%s" % user_id)
-        return jsonify({'status':'OK','modified':user_id})
+        return jsonify({'modified':user_id})
 
 #For Login Manager
 @login_manager.user_loader
 def load_user(userid):
     try:
         u = UserDb.query.filter_by(id=userid).first()
-    except:
+    except: # pylint: disable=bare-except
         u = None
     return u
+
+@login_manager.request_loader
+def load_user_from_request(request): # pylint: disable=redefined-outer-name
+
+    # try to login using the secret url arg
+    secret = request.args.get('secret')
+    if secret:
+        the_user = UserDb.query.filter_by(password = secret, is_admin=True).first()
+        if the_user:
+            return the_user
+
+    # finally, return None if both methods did not login the user
+    return None
 
 @login_manager.unauthorized_handler
 def unauthorized_handler():

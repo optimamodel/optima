@@ -12,24 +12,25 @@ define ['angular-mocks', 'Source/modules/analysis/optimization-ctrl'], ->
 
       inject ($rootScope, $controller) ->
         meta = {
-          "pops": {
-            "client": [ 0 ],
-            "female": [ 0 ],
-            "injects": [ 0 ],
-            "long": [ "Men who have sex with men" ],
-            "male": [ 1 ],
-            "sexmen": [ 0 ],
-            "sexwomen": [ 1 ],
-            "sexworker": [ 0 ],
-            "short": [ "MSM" ]
-          },
-          "progs": {
-            "currentbudget": [ 154000.00000000003 ],
-            "long": [ "Social and behavior change communication" ],
-            "short": [ "SBCC" ]
+          data: {
+            "pops": {
+              "client": [ 0 ],
+              "female": [ 0 ],
+              "injects": [ 0 ],
+              "long": [ "Men who have sex with men" ],
+              "male": [ 1 ],
+              "sexmen": [ 0 ],
+              "sexwomen": [ 1 ],
+              "sexworker": [ 0 ],
+              "short": [ "MSM" ]
+            },
+            "progs": {
+              "currentbudget": [ 154000.00000000003 ],
+              "long": [ "Social and behavior change communication" ],
+              "short": [ "SBCC" ]
+            }
           }
         }
-        optimizations = []
 
         scope = $rootScope.$new()
         subject = $controller 'AnalysisOptimizationController', {
@@ -37,7 +38,8 @@ define ['angular-mocks', 'Source/modules/analysis/optimization-ctrl'], ->
           meta: meta
           modalService: {}
           cfpLoadingBar: {}
-          optimizations: optimizations
+          optimizations: []
+          info: { has_data: true }
         }
 
     describe 'yearsAreRequired()', ->

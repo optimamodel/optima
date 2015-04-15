@@ -32,8 +32,6 @@ def model(G, M, F, opt, initstate=None, verbose=2):
     S['sexinci']  = zeros((npops, npts)) # Incidene through sex
     S['injinci']  = zeros((npops, npts)) # Incidene through injecting
     S['inci']     = zeros((npops, npts)) # Total incidence
-    S['prev']     = zeros((npops, npts)) # Prevalence by population
-    S['allprev']  = zeros((1, npts))     # Overall prevalence
     S['births']   = zeros((1, npts))     # Number of births
     S['mtct']     = zeros((1, npts))     # Number of mother-to-child transmissions
     S['dx']       = zeros((npops, npts)) # Number diagnosed per timestep
@@ -41,6 +39,7 @@ def model(G, M, F, opt, initstate=None, verbose=2):
     S['newtx2']   = zeros((npops, npts)) # Number initiating ART2 per timestep
     S['death']    = zeros((npops, npts)) # Number of deaths per timestep
     effhivprev = zeros((npops, 1))    # HIV effective prevalence (prevalence times infectiousness)
+    inhomo = zeros(npops)    # Inhomogeneity calculations
     
     # Also initialize circumcision output
     S['numcircum'] = zeros((npops, npts)) # Number of people circumcised
@@ -87,11 +86,10 @@ def model(G, M, F, opt, initstate=None, verbose=2):
     
     # Population sizes
     popsize = M['popsize'] # Population sizes
-    for pop in xrange(npops): popsize[pop,:] *= F['popsize'][pop]*1.0 / M['popsize'][pop][0] # Calculate adjusted population sizes -- WARNING, kind of ugly
+    for pop in xrange(npops): popsize[pop,:] *= float(F['popsize'][pop]) / M['popsize'][pop][0] # Calculate adjusted population sizes -- WARNING, kind of ugly
     
     # Logical arrays for population types
     male = array(G['meta']['pops']['male']).astype(bool) # Male populations
-    # pwid = array(G['meta']['pops']['injects']).astype(bool) # PWID populations
     
     # Infection propabilities
     mmi  = M['const']['trans']['mmi']          # Male -> male insertive
@@ -133,6 +131,7 @@ def model(G, M, F, opt, initstate=None, verbose=2):
     
     # Force of infection metaparameter
     Fforce = array(F['force'])
+    Finhomo = array(F['inhomo'])
     
     # Proportion of PLHIV who are aware of their status
     propaware = M['propaware']
@@ -166,6 +165,12 @@ def model(G, M, F, opt, initstate=None, verbose=2):
             effhivprev[pop] = (effundx+effdx+efftx) / allpeople[pop,t]; # Calculate HIV "prevalence", scaled for infectiousness based on CD4 count; assume that treatment failure infectiousness is same as corresponding CD4 count
             if not(effhivprev[pop]>=0): 
                 raise Exception('HIV prevalence invalid in population %s! (=%f)' % (pop, effhivprev[pop]))
+        
+        ## Calculate inhomogeneity in the force-of-infection based on prevalence
+        for pop in xrange(npops):
+            c = Finhomo[pop]
+            thisprev = sum(people[1:,pop,t]) / allpeople[pop,t] # Probably a better way of doing this
+            inhomo[pop] = (c+eps) / (exp(c+eps)-1) * exp(c*(1-thisprev)) # Don't shift the mean, but make it maybe nonlinear based on prevalence
         
         # Also calculate effective MTCT transmissibility
         effmtct  = mtcb*M['breast'][t] + mtcn*(1-M['breast'][t]) # Effective MTCT transmission
@@ -380,7 +385,7 @@ def model(G, M, F, opt, initstate=None, verbose=2):
         ## Set up
     
         # New infections -- through pre-calculated force of infection
-        newinfections = forceinfvec * Fforce * people[0,:,t] # Will be useful to define this way when calculating 'cost per new infection'
+        newinfections = forceinfvec * Fforce * inhomo * people[0,:,t] # Will be useful to define this way when calculating 'cost per new infection'
     
         # Initalise / reset arrays
         dU = []; dD = []; dT1 = []; dF = []; dT2 = [];  # Reset differences

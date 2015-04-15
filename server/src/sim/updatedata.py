@@ -25,7 +25,7 @@ def updatedata(D, workbookname=None, verbose=2, savetofile=True, input_programs=
     data, programs = loadworkbook(datapath, input_programs, verbose=verbose)
     D['data'] = getrealcosts(data)
     if 'programs' not in D:
-        D['programs'] = restructureprograms(programs)
+        D['programs'] = addtoprograms(programs)
     if rerun or 'P' not in D: # Rerun if asked or if it doesn't exist
         D = makedatapars(D, verbose=verbose) # Update parameters
     if rerun or 'M' not in D: # Rerun if asked, or if it doesn't exist
@@ -42,17 +42,20 @@ def updatedata(D, workbookname=None, verbose=2, savetofile=True, input_programs=
     return D
     
 
-def restructureprograms(programs):
-    '''
-    Restructure D['programs'] for easier use.
-    '''
-
-    ccparams = []
-    convertedccparams = []
-    nonhivdalys = [0.0]
-    keys = ['ccparams','convertedccparams','nonhivdalys','effects','ccplot']
-    for program in programs.keys():
-        programs[program] = dict(zip(keys,[ccparams, convertedccparams, nonhivdalys, programs[program]]))
+def addtoprograms(programs):
+    ''' Add things to D['programs'] '''
+    for prognumber, program in enumerate(programs):
+        programs[prognumber]['ccparams'] = {'saturation': None, 
+                                            'coveragelower': None, 
+                                            'coverageupper':None, 
+                                            'funding':None, 
+                                            'scaleup':None, 
+                                            'nonhivdalys':None, 
+                                            'xupperlim':None, 
+                                            'cpibaseyear':None, 
+                                            'perperson':None}
+        programs[prognumber]['convertedccparams'] = None
+        programs[prognumber]['nonhivdalys'] = 0.0
 
     return programs
     
@@ -94,6 +97,7 @@ def makefittedpars(D, verbose=2):
     
     from printv import printv
     from utils import perturb
+    from numpy import zeros
     printv('Initializing fitted parameters...', 1, verbose)
     
     # Initialize fitted parameters
@@ -103,6 +107,7 @@ def makefittedpars(D, verbose=2):
         D['F'][s]['init']  = perturb(D['G']['npops'],span)
         D['F'][s]['popsize'] = perturb(D['G']['npops'],span)
         D['F'][s]['force'] = perturb(D['G']['npops'],span)
+        D['F'][s]['inhomo'] = zeros(D['G']['npops']).tolist()
         D['F'][s]['dx']  = perturb(4,span)
         D['F'][s] = unnormalizeF(D['F'][s], D['M'], D['G'], normalizeall=True) # Un-normalize F
     

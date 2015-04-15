@@ -1,21 +1,18 @@
 import os
 from sim.dataio import DATADIR, TEMPLATEDIR, upload_dir_user, fromjson, tojson
 from flask import helpers, current_app
-from flask.ext.login import current_user
+from flask.ext.login import current_user # pylint: disable=E0611,F0401
 from functools import wraps
 from flask import request, jsonify, abort
-from dbconn import db
-from dbmodels import ProjectDb, WorkingProjectDb, UserDb
+from optima.dbconn import db
+from optima.dbmodels import ProjectDb, UserDb
 import traceback
 
 ALLOWED_EXTENSIONS = {'txt', 'xlsx', 'xls', 'json'}
 
-BAD_REPLY = {"status":"NOK"}
-
 def check_project_name(api_call):
     @wraps(api_call)
     def _check_project_name(*args, **kwargs):
-        reply = BAD_REPLY
         project_name = None
         project_id = None
         try:
@@ -24,13 +21,27 @@ def check_project_name(api_call):
             request.project_name = project_name
             request.project_id = project_id
             return api_call(*args, **kwargs)
-        except Exception, err:
-            var = traceback.format_exc()
-            current_app.logger.error("Exception during request %s: %s" % (request, var))
-            reply['reason'] = 'No project is open'
-            reply['exception'] = var
-            return jsonify(reply)
+        except Exception:
+            exception = traceback.format_exc()
+            current_app.logger.error("Exception during request %s: %s" % (request, exception))
+            reply = {'reason': 'No project is open', 'exception': exception}
+            return jsonify(reply), 500
     return _check_project_name
+
+#this should be run after check_project_name
+def check_project_exists(api_call):
+    @wraps(api_call)
+    def _check_project_exists(*args, **kwargs):
+        project_id = request.headers['project-id']
+        project_name = request.headers['project']
+        if not project_exists(project_id):
+            error_msg = 'Project %s(%s) does not exist' % (project_id, project_name)
+            current_app.logger.error(error_msg)
+            reply = {'reason':error_msg}
+            return jsonify(reply), 500
+        else:
+            return api_call(*args, **kwargs)
+    return _check_project_exists
 
 def report_exception(reason = None):
     def _report_exception(api_call):
@@ -38,19 +49,20 @@ def report_exception(reason = None):
         def __report_exception(*args, **kwargs):
             try:
                 return api_call(*args, **kwargs)
-            except Exception, err:
-                var = traceback.format_exc()
-                current_app.logger.error("Exception during request %s: %s" % (request, var))
-                reply = BAD_REPLY
-                reply['exception'] = var
+            except Exception:
+                exception = traceback.format_exc()
+                current_app.logger.error("Exception during request %s: %s" % (request, exception))
+                reply = {'exception': exception}
                 if reason:
                     reply['reason'] = reason
-                return jsonify(reply)
+                return jsonify(reply), 500
         return __report_exception
     return _report_exception
 
-#verification by secret (hashed pw) or by being a user with admin rights
 def verify_admin_request(api_call):
+    """
+    verification by secret (hashed pw) or by being a user with admin rights
+    """
     @wraps(api_call)
     def _verify_admin_request(*args, **kwargs):
         u = None
@@ -67,25 +79,26 @@ def verify_admin_request(api_call):
     return _verify_admin_request
 
 
-""" Finds out if this file is allowed to be uploaded """
 def allowed_file(filename):
+    """
+    Finds out if this file is allowed to be uploaded
+    """
     return '.' in filename and \
     filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
 def loaddir(app):
-    loaddir = app.config['UPLOAD_FOLDER']
-    if not loaddir:
-        loaddir = DATADIR
-    return loaddir
+    the_loaddir = app.config['UPLOAD_FOLDER']
+    if not the_loaddir:
+        the_loaddir = DATADIR
+    return the_loaddir
 
 def send_as_json_file(data):
     import json
-    from flask import Response
-    loaddir =  upload_dir_user(TEMPLATEDIR)
-    if not loaddir:
-        loaddir = TEMPLATEDIR
+    the_loaddir =  upload_dir_user(TEMPLATEDIR)
+    if not the_loaddir:
+        the_loaddir = TEMPLATEDIR
     filename = 'data.json'
-    server_filename = os.path.join(loaddir, filename)
+    server_filename = os.path.join(the_loaddir, filename)
     print "server_filename", server_filename
     with open(server_filename, 'wb') as filedata:
         json.dump(data, filedata)
@@ -94,21 +107,21 @@ def send_as_json_file(data):
     return response
 
 
-def project_exists(id):
+def project_exists(project_id):
     cu = current_user
     if current_user.is_admin:
-        return ProjectDb.query.filter_by(id=id).count()>0
-    else: 
-        return ProjectDb.query.filter_by(id=id, user_id=cu.id).count()>0
+        return ProjectDb.query.filter_by(id=project_id).count()>0
+    else:
+        return ProjectDb.query.filter_by(id=project_id, user_id=cu.id).count()>0
 
-def load_project(id, all_data = False):
+def load_project(project_id, all_data = False):
     from sqlalchemy.orm import undefer, defaultload
     cu = current_user
-    current_app.logger.debug("getting project %s for user %s (admin:%s)" % (id, cu.id, cu.is_admin))
+    current_app.logger.debug("getting project %s for user %s (admin:%s)" % (project_id, cu.id, cu.is_admin))
     if cu.is_admin:
-        query = ProjectDb.query.filter_by(id=id)
-    else: 
-        query = ProjectDb.query.filter_by(id=id, user_id=cu.id)
+        query = ProjectDb.query.filter_by(id=project_id)
+    else:
+        query = ProjectDb.query.filter_by(id=project_id, user_id=cu.id)
     if all_data:
         query = query.options( \
             undefer('model'), \
@@ -116,7 +129,7 @@ def load_project(id, all_data = False):
             defaultload(ProjectDb.project_data).undefer('meta'))
     project = query.first()
     if project is None:
-        current_app.logger.warning("no such project found: %s for user %s %s" % (id, cu.id, cu.name))
+        current_app.logger.warning("no such project found: %s for user %s %s" % (project_id, cu.id, cu.name))
     return project
 
 def save_data_spreadsheet(name, folder=DATADIR):
@@ -128,7 +141,7 @@ def save_data_spreadsheet(name, folder=DATADIR):
 def delete_spreadsheet(name, user_id = None):
     spreadsheet_file = name
     for parent_dir in [TEMPLATEDIR, DATADIR]:
-        user_dir = upload_dir_user(TEMPLATEDIR, user_id)
+        user_dir = upload_dir_user(parent_dir, user_id)
         if not spreadsheet_file.startswith(user_dir):
             spreadsheet_file = helpers.safe_join(user_dir, name+ '.xlsx')
         if os.path.exists(spreadsheet_file):
@@ -140,46 +153,31 @@ def model_as_dict(model):
 def model_as_bunch(model):
     return fromjson(model)
 
-"""
-  loads the project with the given name
-  returns the model (D).
-"""
-def load_model(id, from_json = True, working_model = False):
-    current_app.logger.debug("load_model:%s" % id)
+def load_model(project_id, from_json = True, working_model = False):
+    """
+      loads the project with the given name
+      returns the model (D).
+    """
+    current_app.logger.debug("load_model:%s" % project_id)
     model = None
-    project = load_project(id)
+    project = load_project(project_id)
     if project is not None:
         if  working_model == False or project.working_project is None:
-            current_app.logger.debug("project %s loading main model" % id)
+            current_app.logger.debug("project %s loading main model" % project_id)
             model = project.model
         else:
-            current_app.logger.debug("project %s loading working model" % id)
+            current_app.logger.debug("project %s loading working model" % project_id)
             model = project.working_project.model
         if model is None or len(model.keys())==0:
-            current_app.logger.debug("model %s is None" % id)
+            current_app.logger.debug("model %s is None" % project_id)
         else:
             if from_json: model = model_as_bunch(model)
     return model
 
-def save_working_model(id, model, to_json = False):
+def save_working_model_as_default(project_id):
+    current_app.logger.debug("save_working_model_as_default %s" % project_id)
 
-    if to_json: model = model_as_dict(model)
-    project = load_project(id)
-
-    # If we do not have an instance for working project, make it now
-    if project.working_project is None:
-        working_project = WorkingProjectDb(project.id, model=model, is_calibrating=True)
-    else:
-        project.working_project.model = model
-        working_project = project.working_project
-
-    db.session.add(working_project)
-    db.session.commit()
-
-def save_working_model_as_default(id):
-    current_app.logger.debug("save_working_model_as_default %s" % id)
-
-    project = load_project(id)
+    project = load_project(project_id)
     model = project.model
 
     # Make sure there is a working project
@@ -191,10 +189,10 @@ def save_working_model_as_default(id):
 
     return model
 
-def revert_working_model_to_default(id):
-    current_app.logger.debug("revert_working_model_to_default %s" % id)
+def revert_working_model_to_default(project_id):
+    current_app.logger.debug("revert_working_model_to_default %s" % project_id)
 
-    project = load_project(id, all_data = True)
+    project = load_project(project_id, all_data = True)
     model = project.model
 
     # Make sure there is a working project
@@ -206,17 +204,18 @@ def revert_working_model_to_default(id):
 
     return model
 
-def save_model(id, model, to_json = False):
+def save_model(project_id, model, to_json = False):
     # model is given as json by default, no need to convert
-    current_app.logger.debug("save_model %s" % id)
+    current_app.logger.debug("save_model %s" % project_id)
 
     if to_json:model = model_as_dict(model)
-    project = load_project(id)
+    project = load_project(project_id)
     project.model = model #we want it to fail if there is no project...
     db.session.add(project)
     db.session.commit()
 
-def pick_params(params, data, args = {}):
+def pick_params(params, data, args = None):
+    if args is None: args = {}
     for param in params:
         the_value = data.get(param)
         if the_value:
