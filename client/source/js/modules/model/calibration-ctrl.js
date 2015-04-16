@@ -26,7 +26,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     var initialize = function() {
       $scope.projectInfo = info;
-      $scope.canDoFitting = $scope.projectInfo.can_calibrate;
+      $scope.canDoFitting = false;
 
       $scope.types = typeSelector.types;
 

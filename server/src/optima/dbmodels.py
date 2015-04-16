@@ -74,12 +74,6 @@ class ProjectDb(db.Model):
     def data_upload_time(self):
         return self.project_data.upload_time if self.project_data else None
 
-    def can_calibrate(self):
-        return self.has_model_parameters()
-
-    def can_scenarios(self):
-        return self.has_model_parameters()
-
 
 
 class WorkingProjectDb(db.Model): # pylint: disable=R0903

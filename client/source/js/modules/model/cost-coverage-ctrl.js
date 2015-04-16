@@ -19,7 +19,7 @@ define(['./module', 'underscore'], function (module, _) {
       $scope.state = {
         chartsForDataExport: [],
         titlesForChartsExport: [],
-        selectionPrograms: initializePrograms(info.programs, programs),
+        selectionPrograms: info.programs,
         coParams: [],
         hasCostCoverResponse: false,
         selectedProgram: undefined,
@@ -38,28 +38,6 @@ define(['./module', 'underscore'], function (module, _) {
       return _(programs).find(function(entry) {
         return entry.name === acronym;
       });
-    }
-
-    /**
-     * Creates the models of the programs for this controller.
-     * If the backend do not present values for the categories, we'll use 'Others' as default.
-     */
-    function initializePrograms (programsWithNames, programsWithParams) {
-      // This code exists to ensur the correct order.
-      var programs =  _(programsWithNames).map(function (item) {
-        var acronym = item.short_name;
-
-        var program = _(programsWithParams).find(function(entry) {
-          return entry.name === acronym;
-        });
-
-        return {
-          name: item.name,
-          acronym: acronym,
-          category: item.category
-        };
-      });
-      return programs;
     }
 
     var resetGraphs= function () {
@@ -233,7 +211,7 @@ define(['./module', 'underscore'], function (module, _) {
       };
 
       return {
-        progname: $scope.state.selectedProgram.acronym,
+        progname: $scope.state.selectedProgram.short_name,
         ccparams: costCoverageParams
       };
     };
@@ -246,10 +224,10 @@ define(['./module', 'underscore'], function (module, _) {
     };
 
     /**
-     * Returns true if either none or all of the 4 important paramters are
-     * filled out.
+     * Returns true if some, but not all of the 4 important cost coverage
+     * paramters are filled out.
      */
-    $scope.areValidCcParams = function () {
+    $scope.costCoverageFormIsPartlyFilledOut = function () {
       var allRequiredParamsDefined = $scope.state.saturationCoverageLevel &&
                                      $scope.state.knownMinCoverageLevel &&
                                      $scope.state.knownMaxCoverageLevel &&
@@ -259,7 +237,24 @@ define(['./module', 'underscore'], function (module, _) {
                                    isInvalidParam($scope.state.knownMaxCoverageLevel) &&
                                    isInvalidParam($scope.state.knownFundingValue);
 
-      return (Boolean(allRequiredParamsDefined) || noRequiredParamDefined);
+      return !(Boolean(allRequiredParamsDefined) || noRequiredParamDefined);
+    };
+
+    /**
+     * Returns true if some, but not all of the 4 cost outcome paramters are
+     * filled out.
+     */
+    $scope.costOutcomeFormIsPartlyFilledOut = function (index) {
+      var allParamsDefined = $scope.state.coParams[index][0] &&
+                             $scope.state.coParams[index][1] &&
+                             $scope.state.coParams[index][2] &&
+                             $scope.state.coParams[index][3];
+      var noParamDefined = isInvalidParam($scope.state.coParams[index][0]) &&
+                           isInvalidParam($scope.state.coParams[index][1]) &&
+                           isInvalidParam($scope.state.coParams[index][2]) &&
+                           isInvalidParam($scope.state.coParams[index][3]);
+
+      return !(Boolean(allParamsDefined) || noParamDefined);
     };
 
     /**
@@ -290,7 +285,7 @@ define(['./module', 'underscore'], function (module, _) {
         return null;
       }
 
-      var program = findProgram($scope.state.selectedProgram.acronym);
+      var program = findProgram($scope.state.selectedProgram.short_name);
       $scope.state.saturationCoverageLevel = program.ccparams.saturation ? program.ccparams.saturation * 100 : undefined;
       $scope.state.knownMinCoverageLevel = program.ccparams.coveragelower ? program.ccparams.coveragelower * 100 : undefined;
       $scope.state.knownMaxCoverageLevel = program.ccparams.coverageupper ? program.ccparams.coverageupper * 100 : undefined;
@@ -321,18 +316,20 @@ define(['./module', 'underscore'], function (module, _) {
      * The plot model gets saved in the backend.
      */
     $scope.saveModel = function () {
-      if($scope.state.CostCoverageForm.$valid) {
-
-        var model = getPlotModel(model);
-        model.doSave = true;
-        model.all_coparams = costCoverageHelpers.toRequestCoParams($scope.state.coParams);
-        model.all_effects = effects;
-
-        var program = findProgram($scope.state.selectedProgram.acronym);
-        program.ccparams = model.ccparams;
-
-        retrieveAndUpdateGraphs(model);
+      if($scope.state.CostCoverageForm.$invalid || $scope.state.CombinedAdjustmentForms.$invalid) {
+        modalService.inform(function() {}, 'Ok', 'Please correct all errors on this page before proceeding.', 'Cannot save invalid model');
+        return;
       }
+
+      var model = getPlotModel(model);
+      model.doSave = true;
+      model.all_coparams = costCoverageHelpers.toRequestCoParams($scope.state.coParams);
+      model.all_effects = effects;
+
+      var program = findProgram($scope.state.selectedProgram.short_name);
+      program.ccparams = model.ccparams;
+
+      retrieveAndUpdateGraphs(model);
     };
 
     /**
@@ -356,7 +353,6 @@ define(['./module', 'underscore'], function (module, _) {
      *   }
      */
     $scope.updateCurve = _.debounce(function (graphIndex, AdjustmentForm) {
-
       if($scope.state.hasCostCoverResponse && AdjustmentForm.$valid && $scope.state.CostCoverageForm.$valid) {
         var model = getPlotModel();
         var coParams = costCoverageHelpers.toRequestCoParams($scope.state.coParams);
