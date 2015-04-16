@@ -17,6 +17,7 @@ from signal import *
 from optima.dbconn import db
 from sim.autofit import autofit
 from sim.updatedata import updatedata
+from sim.plotccocs import do_plotcc, do_plotcco, do_plotco
 
 # route prefix: /api/model
 model = Blueprint('model',  __name__, static_folder = '../static')
@@ -290,7 +291,6 @@ def doRunSimulation():
 @check_project_name
 def doCostCoverage(): # pylint: disable=R0914
     """ Calls makecco with parameters supplied from frontend """
-    from sim.plotccocs import do_plotcc, do_plotcco, do_plotco
 
     def findIndex(sequence, function):
         """ Returns the first index in the sequence where function(item) == True. """
@@ -327,10 +327,10 @@ def doCostCoverage(): # pylint: disable=R0914
         # effectnames are actually effects
         figsize = (3,2)
         plotdata_cco, plotdata_co, plotdata_cc, effectnames, D = plotallcurves(**args)
-        fig_cc = do_plotcc(plotdata_cc, figsize)
+        fig_cc = do_plotcc(plotdata_cc, figsize, False)
         dict_fig_cc = mpld3.fig_to_dict(fig_cc)
-        dict_fig_co = map(lambda key: mpld3.fig_to_dict(do_plotco(plotdata_co[key], figsize)), plotdata_co.keys())
-        dict_fig_cco = map(lambda key: mpld3.fig_to_dict(do_plotcco(plotdata_cco[key], figsize)), plotdata_cco.keys())
+        dict_fig_co = map(lambda key: mpld3.fig_to_dict(do_plotco(plotdata_co[key], figsize, False)), plotdata_co.keys())
+        dict_fig_cco = map(lambda key: mpld3.fig_to_dict(do_plotcco(plotdata_cco[key], figsize, False)), plotdata_cco.keys())
         if do_save:
             D_dict = tojson(D)
             save_model(request.project_id, D_dict)
@@ -348,7 +348,6 @@ def doCostCoverage(): # pylint: disable=R0914
 @login_required
 @check_project_name
 def doCostCoverageEffect():
-    from sim.plotccocs import do_plotco, do_plotcco
     data = json.loads(request.data)
     current_app.logger.debug("/costcoverage/effect(%s)" % data)
     args = {}
@@ -364,9 +363,9 @@ def doCostCoverageEffect():
         # effectnames are actually effects
         figsize = (3,2)
         plotdata, plotdata_co, _ = makecco(**args) # plotdata is actually plotdata_cco
-        fig_co = do_plotco(plotdata_co, figsize)
+        fig_co = do_plotco(plotdata_co, figsize, False)
         dict_fig_co = mpld3.fig_to_dict(fig_co)
-        fig_cco = do_plotcco(plotdata, figsize)
+        fig_cco = do_plotcco(plotdata, figsize, False)
         dict_fig_cco = mpld3.fig_to_dict(fig_cco)
     except Exception:
         var = traceback.format_exc()

@@ -23,7 +23,7 @@ define({
     'ui.router'     : './vendor/angular-ui-router/release/angular-ui-router',
     'ui.bootstrap'  : './vendor/angular-bootstrap/ui-bootstrap-tpls',
     'underscore'    : './vendor/underscore/underscore',
-    'mpld3'         : './js/modules/d3-charts/mpld3.v0.2'
+    'mpld3'         : './js/modules/d3-charts/mpld3.v0.3-patched'
   },
 
   shim: {

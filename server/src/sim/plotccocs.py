@@ -3,30 +3,31 @@ Plots cost-coverage, coverage-outcome and cost-outcome curves
 
 Version: 2015jan19 by robynstuart
 """
-from matplotlib.pylab import figure, plot, hold, xlabel, ylabel, title, xlim, ylim
+from matplotlib.pylab import figure, plot, hold, xlabel, ylabel, title, xlim, ylim, gca
 from numpy import nan
 
 # Set defaults for testing makeccocs
 default_progname = 'MSM programs'
-default_effect = {'paramtype':'sex', 'param':'condomcas', 'popname':u'MSM'} 
-default_ccparams = {'saturation': .9, 
-                    'coveragelower': .5, 
-                    'coverageupper':.6, 
-                    'funding':4e5, 
-                    'scaleup':nan, 
-                    'nonhivdalys':nan, 
-                    'xupperlim':nan, 
-                    'cpibaseyear':nan, 
+default_effect = {'paramtype':'sex', 'param':'condomcas', 'popname':u'MSM'}
+default_ccparams = {'saturation': .9,
+                    'coveragelower': .5,
+                    'coverageupper':.6,
+                    'funding':4e5,
+                    'scaleup':nan,
+                    'nonhivdalys':nan,
+                    'xupperlim':nan,
+                    'cpibaseyear':nan,
                     'perperson':nan}
-default_coparams = [0.3, 0.5, 0.7, 0.9] 
+default_coparams = [0.3, 0.5, 0.7, 0.9]
 default_arteligcutoff = 'gt350'
 coverage_params = ['numost','numpmtct','numfirstline','numsecondline']
 
 ###############################################################################
 from makeccocs import makecc, makeco, makecco
 ###############################################################################
-def do_plotcc(plotdata_cc, figsize = None):
+def do_plotcc(plotdata_cc, figsize=None, showTitle=True):
     """ Actually plot cost-coverage curve"""
+
     cost_coverage_figure = None
     if figsize:
         cost_coverage_figure = figure(figsize=figsize, dpi=100)
@@ -34,16 +35,22 @@ def do_plotcc(plotdata_cc, figsize = None):
         cost_coverage_figure = figure()
 
     hold(True)
+
     if 'xlinedata' in plotdata_cc.keys():
         plot(plotdata_cc['xlinedata'], plotdata_cc['ylinedata'][1], 'k--', lw = 2)
         plot(plotdata_cc['xlinedata'], plotdata_cc['ylinedata'][0], 'b-', lw = 2)
         plot(plotdata_cc['xlinedata'], plotdata_cc['ylinedata'][2], 'k--', lw = 2)
     plot(plotdata_cc['xscatterdata'], plotdata_cc['yscatterdata'], 'ro')
-    title(plotdata_cc['title'])
-    xlabel(plotdata_cc['xlabel'])
-    ylabel(plotdata_cc['ylabel'])
     xlim([plotdata_cc['xlowerlim'],plotdata_cc['xupperlim']])
     ylim([plotdata_cc['ylowerlim'],plotdata_cc['yupperlim']])
+
+    axis = cost_coverage_figure.gca()
+    axis.tick_params(axis='both', which='major', labelsize=11)
+    axis.set_xlabel(plotdata_cc['xlabel'], fontsize=11)
+    axis.set_ylabel(plotdata_cc['ylabel'], fontsize=11)
+    if showTitle:
+        title(plotdata_cc['title'])
+
     return cost_coverage_figure
 
 
@@ -54,7 +61,7 @@ def plotcc(D, progname=default_progname, ccparams=default_ccparams, arteligcutof
     return do_plotcc(plotdata_cc)
 
 ###############################################################################
-def do_plotco(plotdata_co, figsize = None):
+def do_plotco(plotdata_co, figsize = None, showTitle=True):
     """ Actually Plot coverage-outcome curve"""
     coverage_outcome_figure = None
     if plotdata_co:
@@ -68,9 +75,14 @@ def do_plotco(plotdata_co, figsize = None):
             plot(plotdata_co['xlinedata'], plotdata_co['ylinedata'][1], 'k--', lw = 2)
             plot(plotdata_co['xlinedata'], plotdata_co['ylinedata'][2], 'k--', lw = 2)
         plot(plotdata_co['xscatterdata'], plotdata_co['yscatterdata'], 'ro')
-        title(plotdata_co['title'])
-        xlabel(plotdata_co['xlabel'])
-        ylabel(plotdata_co['ylabel'])
+        if showTitle:
+            title(plotdata_co['title'])
+
+        axis = coverage_outcome_figure.gca()
+        axis.tick_params(axis='both', which='major', labelsize=11)
+        axis.set_xlabel(plotdata_co['xlabel'], fontsize=11)
+        axis.set_ylabel(plotdata_co['ylabel'], fontsize=11)
+
         xlim([plotdata_co['xlowerlim'],plotdata_co['xupperlim']])
         ylim([plotdata_co['ylowerlim'],plotdata_co['yupperlim']])
     return coverage_outcome_figure
@@ -83,7 +95,7 @@ def plotco(D, progname=default_progname, effect=default_effect, coparams=default
     return do_plotco(plotdata_co)
 
 #################################################################################
-def do_plotcco(plotdata_cco, figsize = None):
+def do_plotcco(plotdata_cco, figsize = None, showTitle=True):
     """ Actually plot cost-outcome curve"""
     cost_outcome_figure = None
     if plotdata_cco:
@@ -97,9 +109,14 @@ def do_plotcco(plotdata_cco, figsize = None):
             plot(plotdata_cco['xlinedata'], plotdata_cco['ylinedata'][1], 'k--', lw = 2)
             plot(plotdata_cco['xlinedata'], plotdata_cco['ylinedata'][2], 'k--', lw = 2)
         plot(plotdata_cco['xscatterdata'], plotdata_cco['yscatterdata'], 'ro')
-        title(plotdata_cco['title'])
-        xlabel(plotdata_cco['xlabel'])
-        ylabel(plotdata_cco['ylabel'] )
+        if showTitle:
+            title(plotdata_cco['title'])
+
+        axis = cost_outcome_figure.gca()
+        axis.tick_params(axis='both', which='major', labelsize=11)
+        axis.set_xlabel(plotdata_cco['xlabel'], fontsize=11)
+        axis.set_ylabel(plotdata_cco['ylabel'], fontsize=11)
+
         xlim([plotdata_cco['xlowerlim'],plotdata_cco['xupperlim']])
         ylim([plotdata_cco['ylowerlim'],plotdata_cco['yupperlim']])
     return cost_outcome_figure
@@ -117,10 +134,10 @@ def plotprogramcurves(D, progname=default_progname, ccparams=default_ccparams, c
     ''' Plot all curves for a particular program '''
 
     plotcc(D, progname=progname, ccparams=ccparams, arteligcutoff=arteligcutoff)
-    prognumber = [p['name'] for p in D['programs']].index(progname) # get program number    
+    prognumber = [p['name'] for p in D['programs']].index(progname) # get program number
     for effectnumber, effect in enumerate(D['programs'][prognumber]['effects']):
         plotco(D, progname=progname, effect=effect, coparams=coparams, arteligcutoff=arteligcutoff)
-        plotcco(D, progname=progname, effect=effect, ccparams=ccparams, coparams=coparams, arteligcutoff=arteligcutoff)            
+        plotcco(D, progname=progname, effect=effect, ccparams=ccparams, coparams=coparams, arteligcutoff=arteligcutoff)
 
 #################################################################################
 def plotall(D, ccparams = default_ccparams, coparams = default_coparams):
