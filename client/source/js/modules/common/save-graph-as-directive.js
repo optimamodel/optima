@@ -57,10 +57,18 @@ define(['angular', 'jquery', 'underscore', 'saveAs', 'jsPDF', './svg-to-png', '.
            * In this function the original SVG is enhanced by injecting styling.
            */
           var exportGraphAsSvg = function() {
-            var originalSvg = elem.parent().find('svg');
-            var orginalWidth = originalSvg.width();
-            var orginalHeight = originalSvg.height();
-            var originalStyle = originalSvg.attr('style');
+            var originalStyle, className;
+            var elementId = elem.attr('id');
+            var isMpld3 = elementId.indexOf('mpld3') != -1;
+
+            var $originalSvg = elem.parent().find('svg');
+            var orginalWidth = $originalSvg.width();
+            var orginalHeight = $originalSvg.height();
+            if (isMpld3) {
+              originalStyle = 'padding: ' + $originalSvg.css('padding');
+            } else {
+              originalStyle = $originalSvg.attr('style');
+            }
             var scalingFactor = 1;
 
             // In order to have styled graphs the css content used to render
@@ -70,18 +78,21 @@ define(['angular', 'jquery', 'underscore', 'saveAs', 'jsPDF', './svg-to-png', '.
 
               // It is needed to fetch all as mpld3 injects multiple style tags into the DOM
               var $styleTagContentList = $('style').map(function(index, style) {
-                return $(style).html();
+                var styleContent = $(style).html();
+                if (styleContent.indexOf('div#' + elementId) != -1) {
+                  return styleContent.replace(/div#/g, '#');
+                }
               });
 
               var styleContent = $styleTagContentList.get().join('\n');
               styleContent = styleContent + '\n' + chartStylesheetContent;
 
               // create svg element
-              var svg = svgToPng.createSvg(orginalWidth, orginalHeight, scalingFactor, originalStyle);
+              var svg = svgToPng.createSvg(orginalWidth, orginalHeight, scalingFactor, originalStyle, elementId);
 
               // add styles and content to the svg
               var styles = '<style>' + styleContent + '</style>';
-              svg.innerHTML = styles + originalSvg.html();
+              svg.innerHTML = styles + $originalSvg.html();
 
               // create img element with the svg as data source
               var svgXML = (new XMLSerializer()).serializeToString(svg);
