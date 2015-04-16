@@ -31,7 +31,7 @@ def do_plotcc(plotdata_cc, figsize = None):
     if figsize:
         cost_coverage_figure = figure(figsize=figsize, dpi=100)
     else:
-        cost_coverage_figure = figu
+        cost_coverage_figure = figure()
 
     hold(True)
     if 'xlinedata' in plotdata_cc.keys():
@@ -61,7 +61,7 @@ def do_plotco(plotdata_co, figsize = None):
         if figsize:
             coverage_outcome_figure = figure(figsize = figsize, dpi=100)
         else:
-            coverage_outcome_figure = figure
+            coverage_outcome_figure = figure()
         hold(True)
         if 'xlinedata' in plotdata_co.keys():
             plot(plotdata_co['xlinedata'], plotdata_co['ylinedata'][0], color = 'b', lw = 2)
@@ -90,7 +90,7 @@ def do_plotcco(plotdata_cco, figsize = None):
         if figsize:
             cost_outcome_figure = figure(figsize = figsize, dpi=100)
         else:
-            cost_outcome_figure = figure
+            cost_outcome_figure = figure()
         hold(True)
         if 'xlinedata' in plotdata_cco.keys():
             plot(plotdata_cco['xlinedata'], plotdata_cco['ylinedata'][0], color = 'b', lw = 2)
