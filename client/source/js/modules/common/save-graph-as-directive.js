@@ -7,7 +7,7 @@ define(['angular', 'jquery', 'underscore', 'saveAs', 'jsPDF', './svg-to-png', '.
       return {
         restrict: 'A',
         link: function (scope, elem, attrs) {
-          var chartCssUrl = '/assets/css/chart.css';
+          var chartStylesheetUrl = '/assets/css/chart.css';
 
           /**
            * Initializes the directive by appending the html and setting up the
@@ -63,21 +63,30 @@ define(['angular', 'jquery', 'underscore', 'saveAs', 'jsPDF', './svg-to-png', '.
             var originalStyle = originalSvg.attr('style');
             var scalingFactor = 1;
 
-            // in order to have styled graphs the css content used to render
+            // In order to have styled graphs the css content used to render
             // graphs is retrieved & inject it into the svg as style tag
-            var cssContentRequest = $http.get(chartCssUrl);
-            cssContentRequest.success(function(cssContent) {
+            var chartStylesheetRequest = $http.get(chartStylesheetUrl);
+            chartStylesheetRequest.success(function(chartStylesheetContent) {
+
+              // It is needed to fetch all as mpld3 injects multiple style tags into the DOM
+              var $styleTagContentList = $('style').map(function(index, style) {
+                return $(style).html();
+              });
+
+              var styleContent = $styleTagContentList.get().join('\n');
+              styleContent = styleContent + '\n' + chartStylesheetContent;
 
               // create svg element
               var svg = svgToPng.createSvg(orginalWidth, orginalHeight, scalingFactor, originalStyle);
 
               // add styles and content to the svg
-              var styles = '<style>' + cssContent + '</style>';
+              var styles = '<style>' + styleContent + '</style>';
               svg.innerHTML = styles + originalSvg.html();
 
               // create img element with the svg as data source
               var svgXML = (new XMLSerializer()).serializeToString(svg);
               saveAs(new Blob([svgXML], { type: 'image/svg' }), 'graph.svg');
+
             }).error(function() {
               alert("Please reload and try again, something went wrong while generating the graph.");
             });
