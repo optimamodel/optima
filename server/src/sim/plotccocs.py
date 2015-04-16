@@ -27,11 +27,12 @@ from makeccocs import makecc, makeco, makecco
 ###############################################################################
 def do_plotcc(plotdata_cc, figsize = None):
     """ Actually plot cost-coverage curve"""
-    f = None
+    cost_coverage_figure = None
     if figsize:
-        f = figure(figsize = figsize)
+        cost_coverage_figure = figure(figsize=figsize, dpi=100)
     else:
-        f = figure
+        cost_coverage_figure = figu
+
     hold(True)
     if 'xlinedata' in plotdata_cc.keys():
         plot(plotdata_cc['xlinedata'], plotdata_cc['ylinedata'][1], 'k--', lw = 2)
@@ -43,7 +44,7 @@ def do_plotcc(plotdata_cc, figsize = None):
     ylabel(plotdata_cc['ylabel'])
     xlim([plotdata_cc['xlowerlim'],plotdata_cc['xupperlim']])
     ylim([plotdata_cc['ylowerlim'],plotdata_cc['yupperlim']])
-    return f
+    return cost_coverage_figure
 
 
 def plotcc(D, progname=default_progname, ccparams=default_ccparams, arteligcutoff=default_arteligcutoff):
@@ -55,12 +56,12 @@ def plotcc(D, progname=default_progname, ccparams=default_ccparams, arteligcutof
 ###############################################################################
 def do_plotco(plotdata_co, figsize = None):
     """ Actually Plot coverage-outcome curve"""
-    f = None
+    coverage_outcome_figure = None
     if plotdata_co:
         if figsize:
-            f = figure(figsize = figsize)
+            coverage_outcome_figure = figure(figsize = figsize, dpi=100)
         else:
-            f = figure
+            coverage_outcome_figure = figure
         hold(True)
         if 'xlinedata' in plotdata_co.keys():
             plot(plotdata_co['xlinedata'], plotdata_co['ylinedata'][0], color = 'b', lw = 2)
@@ -72,24 +73,24 @@ def do_plotco(plotdata_co, figsize = None):
         ylabel(plotdata_co['ylabel'])
         xlim([plotdata_co['xlowerlim'],plotdata_co['xupperlim']])
         ylim([plotdata_co['ylowerlim'],plotdata_co['yupperlim']])
-    return f
+    return coverage_outcome_figure
 
 
 def plotco(D, progname=default_progname, effect=default_effect, coparams=default_coparams, arteligcutoff=default_arteligcutoff):
     ''' Plot coverage-outcome curve'''
-    
+
     plotdata_co, effect = makeco(D=D, progname=progname, effect=effect, coparams=coparams, arteligcutoff=arteligcutoff)
     return do_plotco(plotdata_co)
 
 #################################################################################
 def do_plotcco(plotdata_cco, figsize = None):
     """ Actually plot cost-outcome curve"""
-    f = None
+    cost_outcome_figure = None
     if plotdata_cco:
         if figsize:
-            f = figure(figsize = figsize)
+            cost_outcome_figure = figure(figsize = figsize, dpi=100)
         else:
-            f = figure
+            cost_outcome_figure = figure
         hold(True)
         if 'xlinedata' in plotdata_cco.keys():
             plot(plotdata_cco['xlinedata'], plotdata_cco['ylinedata'][0], color = 'b', lw = 2)
@@ -100,8 +101,8 @@ def do_plotcco(plotdata_cco, figsize = None):
         xlabel(plotdata_cco['xlabel'])
         ylabel(plotdata_cco['ylabel'] )
         xlim([plotdata_cco['xlowerlim'],plotdata_cco['xupperlim']])
-#        ylim([plotdata_cco['ylowerlim'],plotdata_cco['yupperlim']])
-    return f
+        ylim([plotdata_cco['ylowerlim'],plotdata_cco['yupperlim']])
+    return cost_outcome_figure
 
 
 def plotcco(D, progname=default_progname, effect=default_effect, ccparams=default_ccparams, coparams=default_coparams, \

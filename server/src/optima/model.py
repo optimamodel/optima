@@ -325,7 +325,7 @@ def doCostCoverage(): # pylint: disable=R0914
             D['programs'][programIndex]['effects'] = new_effects
         args['D'] = D
         # effectnames are actually effects
-        figsize = (4,3)
+        figsize = (3,2)
         plotdata_cco, plotdata_co, plotdata_cc, effectnames, D = plotallcurves(**args)
         fig_cc = do_plotcc(plotdata_cc, figsize)
         dict_fig_cc = mpld3.fig_to_dict(fig_cc)
@@ -362,7 +362,7 @@ def doCostCoverageEffect():
         if args.get('coparams'):
             args['coparams'] = map(lambda param: float(param) if param else None, args['coparams'])
         # effectnames are actually effects
-        figsize = (4,3)
+        figsize = (3,2)
         plotdata, plotdata_co, _ = makecco(**args) # plotdata is actually plotdata_cco
         fig_co = do_plotco(plotdata_co, figsize)
         dict_fig_co = mpld3.fig_to_dict(fig_co)
