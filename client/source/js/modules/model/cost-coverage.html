@@ -37,11 +37,11 @@
         <div class="section elastic">
           <div class="elastic_col __shrink" ng-if="ccGraph.data">
             <div class="chart-container">
-              <div line-area-scatter-chart data="ccGraph.data" options="ccGraph.options" save-graph-as></div>
+              <div line-area-scatter-chart data="ccGraph.data" options="ccGraph.options" chart-toolbar="{ reset: false }"></div>
             </div>
           </div>
           <div class="chart-container">
-            <div mpld3-chart chart="state.props" save-graph-as></div>
+            <div mpld3-chart chart="state.props" chart-toolbar></div>
           </div>
         </div>
           <div class="elastic_col">
@@ -196,13 +196,13 @@
             <div class="section elastic">
               <div class="elastic_col __shrink" style="width: 320px">
                 <div class="chart-container" ng-init="coGraph = graphs.plotdata_co[$index]">
-                  <div line-area-scatter-chart data="coGraph.data" options="coGraph.options" save-graph-as></div>
+                  <div line-area-scatter-chart data="coGraph.data" options="coGraph.options" chart-toolbar="{ reset: false }"></div>
                 </div>
               </div>
 
               <div class="elastic_col" style="width: 340px">
                 <div class="chart-container">
-                  <div line-area-scatter-chart data="chart.data" options="chart.options" save-graph-as></div>
+                  <div line-area-scatter-chart data="chart.data" options="chart.options" chart-toolbar="{ reset: false }"></div>
                 </div>
               </div>
 
@@ -298,10 +298,10 @@
 
             <div>
               <div class="chart-container">
-                <div mpld3-chart chart="state.fig_co[$index]" save-graph-as></div>
+                <div mpld3-chart chart="state.fig_co[$index]" chart-toolbar></div>
               </div>
               <div class="chart-container">
-                <div mpld3-chart chart="state.fig[$index]" save-graph-as></div>
+                <div mpld3-chart chart="state.fig[$index]" chart-toolbar></div>
               </div>
             </div>
           </div>

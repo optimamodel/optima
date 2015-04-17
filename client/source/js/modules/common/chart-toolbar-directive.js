@@ -2,8 +2,8 @@ define(['angular', 'jquery', 'underscore', 'saveAs', 'jsPDF', './svg-to-png', '.
   function (angular, $, _, saveAs, jspdf, svgToPng) {
   'use strict';
 
-  return angular.module('app.save-graph-as', [])
-    .directive('saveGraphAs', function ($http, modalService, exportHelpers) {
+  return angular.module('app.chart-toolbar', [])
+    .directive('chartToolbar', function ($http, modalService, exportHelpers) {
       return {
         restrict: 'A',
         link: function (scope, elem, attrs) {
@@ -14,9 +14,16 @@ define(['angular', 'jquery', 'underscore', 'saveAs', 'jsPDF', './svg-to-png', '.
            * event handlers.
            */
           var initialize = function() {
-            var template = '<div class="chart-buttons btn-group">' +
-            '<button class="btn figure">Export figure</button>' +
-            '<button class="btn data">Export data</button>' +
+            var options = scope.$eval(attrs.chartToolbar) || {};
+
+            var template = '<div>';
+            if (options.reset !== false) {
+              template = template + '<button class="btn chart-reset-button">Reset</button>';
+            }
+            template = template + '<div class="chart-export-buttons btn-group">' +
+                '<button class="btn figure">Export figure</button>' +
+                '<button class="btn data">Export data</button>' +
+              '</div>' +
             '</div>';
 
             var buttons = angular.element(template);
@@ -48,6 +55,16 @@ define(['angular', 'jquery', 'underscore', 'saveAs', 'jsPDF', './svg-to-png', '.
                 var chart = _.reduce(chartAccessor.split('.'), accessReference, scope);
 
                 scope.exportFrom(chart);
+              })
+              .on('click', '.chart-reset-button', function (event) {
+                event.preventDefault();
+
+                var id = $(elem).attr('id');
+                var figure = _(mpld3.figures).findWhere({ figid: id });
+                if (figure) {
+                  figure.toolbar.fig.reset();
+                }
+
               });
           };
 

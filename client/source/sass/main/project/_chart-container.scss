@@ -19,9 +19,15 @@
   }
 }
 
-.chart-buttons {
+.chart-export-buttons {
   position: absolute;
   right: 10px;
+  top: 10px;
+}
+
+.chart-reset-button {
+  position: absolute;
+  left: 10px;
   top: 10px;
 }
 

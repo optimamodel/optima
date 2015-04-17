@@ -604,7 +604,7 @@
               <div ng-if="state.radarCharts && state.types.plotUncertainties">
                 <div ng-repeat="radarChart in state.radarCharts track by $index">
                   <div class="chart-container __small">
-                    <div radar-chart data="radarChart.data" options="radarChart.options" save-graph-as></div>
+                    <div radar-chart data="radarChart.data" options="radarChart.options" chart-toolbar="{ reset: false }"></div>
                   </div>
                 </div>
               </div>
@@ -612,33 +612,33 @@
               <div ng-if="state.pieCharts && !state.types.plotUncertainties">
                 <div ng-repeat="pieChart in state.pieCharts track by $index">
                   <div class="chart-container __small">
-                    <div pie-chart data="pieChart.data" options="pieChart.options" save-graph-as></div>
+                    <div pie-chart data="pieChart.data" options="pieChart.options" chart-toolbar="{ reset: false }"></div>
                   </div>
                 </div>
               </div>
 
               <div ng-if="state.stackedBarChart">
                 <div class="chart-container __large">
-                  <div stacked-bar-chart data="state.stackedBarChart.data" options="state.stackedBarChart.options" save-graph-as></div>
+                  <div stacked-bar-chart data="state.stackedBarChart.data" options="state.stackedBarChart.options" chart-toolbar="{ reset: false }"></div>
                 </div>
               </div>
 
               <div ng-if="state.multipleBudgetsChart">
                 <div class="chart-container __large">
-                  <div two-sided-horizontal-bar-chart data="state.multipleBudgetsChart.data" options="state.multipleBudgetsChart.options" save-graph-as></div>
+                  <div two-sided-horizontal-bar-chart data="state.multipleBudgetsChart.data" options="state.multipleBudgetsChart.options" chart-toolbar="{ reset: false }"></div>
                 </div>
               </div>
 
               <div ng-if="state.outcomeChart" class="chart-container __small">
-                <div line-area-scatter-chart data="state.outcomeChart.data" options="state.outcomeChart.options" save-graph-as></div>
+                <div line-area-scatter-chart data="state.outcomeChart.data" options="state.outcomeChart.options" chart-toolbar="{ reset: false }"></div>
               </div>
             </div>
 
             <div class="chart-container __small" ng-repeat="chart in state.optimisationGraphs">
-              <div line-area-scatter-chart data="chart.data" options="chart.options" save-graph-as></div>
+              <div line-area-scatter-chart data="chart.data" options="chart.options" chart-toolbar="{ reset: false }"></div>
             </div>
             <div class="chart-container __small" ng-repeat="chart in state.financialGraphs">
-              <div line-area-scatter-chart data="chart.data" options="chart.options" save-graph-as></div>
+              <div line-area-scatter-chart data="chart.data" options="chart.options" chart-toolbar="{ reset: false }"></div>
             </div>
           </div>
         </div>
