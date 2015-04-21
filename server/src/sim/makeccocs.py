@@ -117,6 +117,7 @@ def makecc(D=None, progname=None, ccparams=None, arteligcutoff=None, verbose=def
                 yvalscc[j] = [yvalscc[j][k]*targetpopsize[-1] for k in range(len(yvalscc[j]))]
 
         # Populate output structure
+        plotdata['xpop'] = xvalsccpop
         plotdata['xlinedata'] = xvalscc
         plotdata['ylinedata'] = yvalscc
 
@@ -268,21 +269,31 @@ def makecco(D=None, progname=None, effect=None, ccparams=None, coparams=None, ar
         # Draw lines if we can
         print("effect", effect)
         if 'xlinedata' in plotdata_cc.keys() and effect.get('coparams') and isinstance(effect['coparams'], list):
+
+            # Store whole set of parameters
+            prognumber = [p['name'] for p in D['programs']].index(progname) # get program number    
+            convertedccoparams = D['programs'][prognumber]['convertedccparams']
+            convertedcoparams = effect['convertedcoparams']
+            convertedccoparams[0].extend([convertedcoparams[0],convertedcoparams[2]])
+            convertedccoparams[1].extend([coparams[0],coparams[2]])
+            convertedccoparams[2].extend([coparams[1],coparams[3]])
+            effect['convertedccoparams'] = convertedccoparams 
+
             xvalscco = plotdata_cc['xlinedata']
-            mediancco = coeqn(plotdata_cc['ylinedata'][0], [effect['convertedcoparams'][0], effect['convertedcoparams'][2]])
-            mincco = coeqn(plotdata_cc['ylinedata'][1], [effect['coparams'][0], effect['coparams'][2]])
-            maxcco = coeqn(plotdata_cc['ylinedata'][2], [effect['coparams'][1], effect['coparams'][3]])
+            xvalsccpop = plotdata_cc['xpop']
+            if len(convertedccoparams[0]) == 5:
+                mediancco = ccoeqn(xvalsccpop, convertedccoparams[0])
+                mincco = ccoeqn(xvalsccpop,  convertedccoparams[1])
+                maxcco = ccoeqn(xvalsccpop,  convertedccoparams[2])
+            elif len(convertedccoparams[0]) == 4:
+                mediancco = cco2eqn(xvalsccpop, convertedccoparams[0])
+                mincco = cco2eqn(xvalsccpop,  convertedccoparams[1])
+                maxcco = cco2eqn(xvalsccpop,  convertedccoparams[2])
     
             # Populate output structure with cost-outcome curves for plotting
             plotdata['xlinedata'] = xvalscco # X data for all line plots
             plotdata['ylinedata'] = [mediancco, mincco, maxcco]
     
-            # Store whole set of parameters
-            prognumber = [p['name'] for p in D['programs']].index(progname) # get program number    
-            convertedccoparams = D['programs'][prognumber]['convertedccparams']
-            convertedcoparams = effect['convertedcoparams']
-            for j in range(3): convertedccoparams[j].extend([convertedcoparams[0],convertedcoparams[2]])
-            effect['convertedccoparams'] = convertedccoparams 
 
     return plotdata, plotdata_co, effect
 
