@@ -119,7 +119,6 @@ These APIs allow front-end to work with projects.
   Returns `401 Unauthorized` if user is not logged in. Otherwise this JSON:
 
   `{
-	status: "OK",
 	name: "Example",
 	dataStart: 2000,
 	dataEnd: 2015,
@@ -136,3 +135,16 @@ These APIs allow front-end to work with projects.
 		 ...
 		]
    }`
+
+Python Linting
+------------
+
+We linting the python code with pylint. Install it with:
+
+    pip install pylint
+
+You can run it from the server directory with:
+
+    pylint src/optima
+
+The configuration can be found in `pylintrc`.

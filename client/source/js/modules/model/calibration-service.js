@@ -17,6 +17,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       f.dx = _(f.dx).map(parseFloat);
       f.force = _(f.force).map(parseFloat);
+      f.inhomo = _(f.inhomo).map(parseFloat);
       f.init = _(f.init).map(parseFloat);
       f.popsize = _(f.popsize).map(parseFloat);
       return f;

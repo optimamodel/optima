@@ -8,10 +8,10 @@ Version: 2015feb01 by cliffk
 
 print('WELCOME TO OPTIMA')
 
-testconstant = False
+testconstant = True
 testmultibudget = False
 testtimevarying = False
-testmultiyear = True
+testmultiyear = False
 testconstraints = False
 
 
@@ -57,7 +57,7 @@ if testtimevarying:
     print('\n\n\n4. Running constant-budget optimization...')
     from optimize import optimize, defaultobjectives
     objectives = defaultobjectives(D, verbose=verbose)
-    objectives.timevarying = True
+    objectives['timevarying'] = True
     optimize(D, objectives=objectives, maxiters=maxiters, stoppingfunc=stoppingfunc, verbose=verbose)
 
 
@@ -65,8 +65,8 @@ if testmultiyear:
     print('\n\n\n5. Running multi-year-budget optimization...')
     from optimize import optimize, defaultobjectives
     objectives = defaultobjectives(D, verbose=verbose)
-    objectives.funding = 'variable'
-    objectives.outcome.variable = {u'2015': 2000000, u'2016': 3000000, u'2017': 4000000, u'2018': 5000000, u'2019': 6000000, u'2020': 7000000} # Variable budgets
+    objectives['funding'] = 'variable'
+    objectives['outcome']['variable'] = {u'2015': 2000000, u'2016': 3000000, u'2017': 4000000, u'2018': 5000000, u'2019': 6000000, u'2020': 7000000} # Variable budgets
     optimize(D, objectives=objectives, maxiters=maxiters, stoppingfunc=stoppingfunc, verbose=verbose)
 
 
@@ -74,10 +74,10 @@ if testmultibudget:
     print('\n\n\n6. Running multiple-budget optimization...')
     from optimize import optimize, defaultobjectives
     objectives = defaultobjectives(D, verbose=verbose)
-    objectives.funding = 'range'
-    objectives.outcome.budgetrange.minval = 0
-    objectives.outcome.budgetrange.maxval = 1
-    objectives.outcome.budgetrange.step = 0.5
+    objectives['funding'] = 'range'
+    objectives['outcome']['budgetrange']['minval'] = 0
+    objectives['outcome']['budgetrange']['maxval'] = 1
+    objectives['outcome']['budgetrange']['step'] = 0.5
     optimize(D, objectives=objectives, maxiters=maxiters, stoppingfunc=stoppingfunc, verbose=verbose)
 
 
@@ -88,14 +88,13 @@ if testconstraints:
     constraints = defaultconstraints(D, verbose=verbose)
     constraintkeys = ['yeardecrease', 'yearincrease', 'totaldecrease', 'totalincrease']
     for key in constraintkeys:
-        for p in range(D.G.nprogs):
-            constraints[key][p].use = True # Turn on all constraints
+        for p in range(D['G']['nprogs']):
+            constraints[key][p]['use'] = True # Turn on all constraints
     optimize(D, objectives=objectives, maxiters=maxiters, stoppingfunc=stoppingfunc, verbose=verbose)
 
 print('\n\n\n8. Viewing optimization...')
 from viewresults import viewmultiresults
-viewmultiresults(D.optimizations[-1].result.multi)
-
+viewmultiresults(D['plot']['optim'][-1]['multi'])
 
 
 

@@ -37,7 +37,7 @@ def findinds(val1, val2=None, eps=1e-6):
 
 
 
-def smoothinterp(newx, origx, origy, smoothness=10):
+def smoothinterp(newx=None, origx=None, origy=None, smoothness=10, growth=None):
     """
     Smoothly interpolate over values and keep end points. Same format as numpy.interp.
     
@@ -53,14 +53,49 @@ def smoothinterp(newx, origx, origy, smoothness=10):
     
     Version: 2014dec01 by cliffk
     """
-    from numpy import interp, convolve, linspace, concatenate, ones, exp
+    from numpy import array, interp, convolve, linspace, concatenate, ones, exp, isnan, argsort
+    
+    # Ensure arrays and remove NaNs
+    newx = array(newx)
+    origx = array(origx)
+    origy = array(origy)
+    origy = origy[~isnan(origy)] 
+    origx = origx[~isnan(origy)]
+    
+    # Make sure it's in the correct order
+    correctorder = argsort(origx)
+    origx = origx[correctorder]
+    origy = origy[correctorder]
+    newx = newx[argsort(newx)] # And sort newx just in case
+    
+    # Smooth
     kernel = exp(-linspace(-2,2,2*smoothness+1)**2)
     kernel /= kernel.sum()
     newy = interp(newx, origx, origy) # Use interpolation
     newy = concatenate([newy[0]*ones(smoothness), newy, newy[-1]*ones(smoothness)])
     newy = convolve(newy, kernel, 'valid') # Smooth it out a bit
+    
+    # Apply growth if required
+    if growth is not None:
+        pastindices = findinds(newx<origx[0])
+        futureindices = findinds(newx>origx[-1])
+        if len(pastindices): # If there are past data points
+            firstpoint = pastindices[-1]+1
+            newy[pastindices] = newy[firstpoint] * exp((newx[pastindices]-newx[firstpoint])*growth) # Get last 'good' data point and apply inverse growth
+        if len(futureindices): # If there are past data points
+            lastpoint = futureindices[0]-1
+            newy[futureindices] = newy[lastpoint] * exp((newx[futureindices]-newx[lastpoint])*growth) # Get last 'good' data point and apply growth
+        
     return newy
     
+
+def perturb(n=1, span=0.5, randseed=None):
+    """ Define an array of numbers uniformly perturbed with a mean of 1. n = number of points; span = width of distribution on either side of 1."""
+    from numpy.random import rand, seed
+    if randseed>=0: seed(randseed) # Optionally reset random seed
+    output = 1. + 2*span*(rand(n)-0.5)
+    output = output.tolist() # Otherwise, convert to a list
+    return output
 
 
 def printarr(arr, arrformat='%0.2f  '):
@@ -77,23 +112,61 @@ def printarr(arr, arrformat='%0.2f  '):
     from numpy import ndim
     if ndim(arr)==1:
         string = ''
-        for i in range(len(arr)):
+        for i in xrange(len(arr)):
             string += arrformat % arr[i]
         print(string)
     elif ndim(arr)==2:
-        for i in range(len(arr)):
+        for i in xrange(len(arr)):
             printarr(arr[i], arrformat)
     elif ndim(arr)==3:
-        for i in range(len(arr)):
+        for i in xrange(len(arr)):
             print('='*len(arr[i][0])*len(arrformat % 1))
-            for j in range(len(arr[i])):
+            for j in xrange(len(arr[i])):
                 printarr(arr[i][j], arrformat)
     else:
         print(arr) # Give up
     return None
+    
 
 
-def checkmem(origvariable, descend=0, order='n', plot=False):
+def sigfig(x, sigfigs=3):
+    """ Return a string representation of variable x with sigfigs number of significant figures """
+    from numpy import log10, floor
+    magnitude = floor(log10(abs(x)))
+    factor = 10**(sigfigs-magnitude-1)
+    x = round(x*factor)/float(factor)
+    digits = int(abs(magnitude) + max(0, sigfigs - max(0,magnitude) - 1) + 1 + (x<0) + (abs(x)<1)) # one because, one for decimal, one for minus
+    decimals = int(max(0,-magnitude+sigfigs-1))
+    strformat = '%' + '%i.%i' % (digits, decimals)  + 'f'
+    string = strformat % x
+    return string
+
+
+def tic():
+    """
+    A little pair of functions to calculate a time difference, sort of like Matlab:
+    t = tic()
+    toc(t)
+    """
+    from time import time
+    return time()
+
+
+def toc(start=0, label='', sigfigs=3):
+    """
+    A little pair of functions to calculate a time difference, sort of like Matlab:
+    t = tic()
+    toc(t)
+    """
+    from time import time
+    elapsed = time() - start
+    if label=='': base = 'Elapsed time: '
+    else: base = 'Elapsed time for %s: ' % label
+    print(base + '%s s' % sigfig(elapsed, sigfigs=sigfigs))
+    return None
+    
+
+def checkmem(origvariable, descend=0, order='n', plot=False, verbose=0):
     """
     Checks how much memory the variable in question uses by dumping it to file.
     
@@ -131,6 +204,7 @@ def checkmem(origvariable, descend=0, order='n', plot=False):
             variables = origvariable
     
     for v,variable in enumerate(variables):
+        if verbose: print('Processing variable %i of %i' % (v+1, len(variables)))
         dumpfile(variable)
         filesize = getsize(filename)
         factor = 1

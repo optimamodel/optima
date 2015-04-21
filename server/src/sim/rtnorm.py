@@ -81,7 +81,7 @@ def rtnorm(a, b, mu=0., sigma=1., size=1, probabilities=False):
         b = (b-mu) / sigma
 
     # Generate the random variables
-    r = array([rtstdnorm(a, b) for x in range(size)])
+    r = array([rtstdnorm(a, b) for x in xrange(size)])
 
     # Scaling
     if not mu == 0. or not sigma == 1.:

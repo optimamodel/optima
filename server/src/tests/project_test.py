@@ -20,13 +20,13 @@ class ProjectTestCase(OptimaTestCase):
     def test_create_project(self):
         response = self.api_create_project()
         self.assertEqual(response.status_code, 200)
-    
+
     def test_retrieve_project_info_fails(self):
         headers = [('project', 'test'),('project-id','1')]
         response = self.client.get('/api/project/info', headers=headers)
         self.assertEqual(response.status_code, 500)
-        self.assertEqual(json.loads(response.data), { "status": "NOK" })
-    
+        self.assertEqual(json.loads(response.data), {u'reason': u'Project 1 does not exist'})
+
     def test_retrieve_project_info(self):
         project_id = self.create_project('test')
 
@@ -35,8 +35,7 @@ class ProjectTestCase(OptimaTestCase):
         self.assertEqual(response.status_code, 200)
         project_data = json.loads(response.data)
         self.assertEqual(project_data['name'], 'test')
-        self.assertEqual(project_data['status'], 'OK')
-    
+
     def test_retrieve_project_list(self):
         project_id = self.create_project('test2')
 
@@ -45,8 +44,7 @@ class ProjectTestCase(OptimaTestCase):
         projects_data = json.loads(response.data)
         self.assertEqual(projects_data['projects'][0]['name'], 'test2')
         self.assertEqual(projects_data['projects'][0]['id'], project_id)
-        self.assertEqual(projects_data['projects'][0]['status'], 'OK')
-    
+
     def test_project_parameters(self):
         from sim.parameters import parameter_name
         response = self.client.get('/api/project/parameters')
@@ -79,7 +77,7 @@ class ProjectTestCase(OptimaTestCase):
         content_disposition = response.headers.get('Content-Disposition')
         self.assertTrue(len(content_disposition)>0)
         file_name_info = re.search('filename=\s*(\S*)', content_disposition)
-        self.assertTrue(len(file_name_info.groups())>0) 
+        self.assertTrue(len(file_name_info.groups())>0)
         file_name = file_name_info.group(1)
         self.assertEqual(file_name,'test.xlsx')
         output_path = '/tmp/project_test.xlsx'
@@ -91,7 +89,7 @@ class ProjectTestCase(OptimaTestCase):
         result = filecmp.cmp(file_path, output_path)
         self.assertTrue(result)
         os.remove(output_path)
-    
+
     def test_copy_project(self):
         # create project
         response = self.api_create_project()

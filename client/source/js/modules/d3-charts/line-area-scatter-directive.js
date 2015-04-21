@@ -1,8 +1,12 @@
 define(['./module', './scale-helpers', 'angular'], function (module, scaleHelpers, angular) {
   'use strict';
 
-  module.directive('lineScatterChart', function (d3Charts) {
+  module.directive('lineAreaScatterChart', function (d3Charts) {
     var svg;
+
+    function hasValidMin(domain) {
+      return (domain[0]!==null && !isNaN(domain[0]));
+    }
 
     // see available colors in chart/_color.scss.
     var colors = [
@@ -24,8 +28,9 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
       '__color-salmon-5'
     ];
 
-    var drawGraph = function (data, options, rootElement) {
+    function drawGraph(data, options, rootElement) {
       options.linesStyle = options.linesStyle || colors;
+      options.areasStyle = options.areasStyle || colors;
       options = d3Charts.adaptOptions(options);
 
       // to prevent creating multiple graphs we want to remove the existing svg
@@ -53,12 +58,11 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
 
       var scatterDataExists = (data.scatter && (data.scatter.length > 0));
       var linesDataExists = (data.lines && data.lines.length > 0);
-
-      var hasValidMin = function(domain) {
-        return (domain[0]!==null && !isNaN(domain[0]));
-      };
+      var areasDataExists = (data.areas && data.areas.length > 0);
 
       var lineChartInstances = [];
+      var areaChartInstances = [];
+      var areasData = [];
       var graphsScales = [];
       var yMax = 0;
       var xMax = 0;
@@ -82,6 +86,36 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
           if(hasValidMin(x_domain)) { xMin = Math.min(xMin, x_domain[0]); }
         });
       }
+
+      // initialize areas
+      if (areasDataExists) {
+        _(data.areas).each(function (area, index) {
+          var color = options.areasStyle[index];
+
+          var areaChart = new d3Charts.AreaChart(chartGroup, chartSize, color, options.areasOpacity);
+          areaChartInstances.push(areaChart);
+
+          var areaData = area.highLine.map(function (dot, index) {
+            return {
+              x: dot[0],
+              y0: dot[1],
+              y1: area.lowLine[index][1]
+            };
+          });
+          areasData.push(areaData);
+
+          var scales = areaChart.scales(area.highLine);
+          graphsScales.push(scales);
+          var x_domain = scales.x.domain();
+          var y_domain = scales.y.domain();
+          yMax = Math.max(yMax, y_domain[1]);
+          xMax = Math.max(xMax, x_domain[1]);
+          if(hasValidMin(y_domain)) { yMin = Math.min(yMin, y_domain[0]); }
+          if(hasValidMin(x_domain)) { xMin = Math.min(xMin, x_domain[0]); }
+
+        });
+      }
+
       // initialize scatterChart
       if (scatterDataExists || data.limits) {
         scatterChartInstance = new d3Charts.ScatterChart(chartGroup, chartSize);
@@ -103,7 +137,7 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
         xMax = xMax + 1;
       }
 
-      // normalizing all graphs scales to include maximum possible x and y
+      // normalize graph scales to include min and max of the combined graphs
       _(graphsScales).each(function (scale) {
         scale.y.domain([yMin, yMax]);
         scale.x.domain([Math.floor(xMin), scaleHelpers.flexCeil(xMax)]);
@@ -128,6 +162,10 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
 
       d3Charts.drawTitleAndLegend(svg, options, headerGroup);
 
+      _(areaChartInstances).each(function (areaChart, index) {
+        areaChart.draw(areasData[index]);
+      });
+
       // draw available charts
       _(lineChartInstances).each(function (lineChart, index) {
         lineChart.draw(data.lines[index]);
@@ -135,7 +173,7 @@ define(['./module', './scale-helpers', 'angular'], function (module, scaleHelper
       if (scatterDataExists) {
         scatterChartInstance.draw(data.scatter);
       }
-    };
+    }
 
     return {
       scope: {
