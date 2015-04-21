@@ -274,7 +274,9 @@ def makecco(D=None, progname=None, effect=None, ccparams=None, coparams=None, ar
             prognumber = [p['name'] for p in D['programs']].index(progname) # get program number    
             convertedccoparams = D['programs'][prognumber]['convertedccparams']
             convertedcoparams = effect['convertedcoparams']
-            for j in range(3): convertedccoparams[j].extend([convertedcoparams[0],convertedcoparams[2]])
+            convertedccoparams[0].extend([convertedcoparams[0],convertedcoparams[2]])
+            convertedccoparams[1].extend([coparams[0],coparams[2]])
+            convertedccoparams[2].extend([coparams[1],coparams[3]])
             effect['convertedccoparams'] = convertedccoparams 
 
             xvalscco = plotdata_cc['xlinedata']
