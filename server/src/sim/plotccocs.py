@@ -4,8 +4,10 @@ Plots cost-coverage, coverage-outcome and cost-outcome curves
 Version: 2015jan19 by robynstuart
 """
 from matplotlib.pylab import figure, plot, hold, xlabel, ylabel, title, xlim, ylim, gca, scatter
+from matplotlib.ticker import MaxNLocator
 from numpy import nan
 from mpld3 import plugins
+from utils import OptimaTickFormatter
 
 # Set defaults for testing makeccocs
 default_progname = 'PWID programs'
@@ -68,12 +70,18 @@ def do_plotcc(plotdata_cc, figsize=None, showTitle=True):
     axis.tick_params(axis='both', which='major', labelsize=11)
     axis.set_xlabel(plotdata_cc['xlabel'], fontsize=11)
     axis.set_ylabel(plotdata_cc['ylabel'], fontsize=11)
+    axis.get_xaxis().set_major_locator(MaxNLocator(nbins=3))
+
     if showTitle:
         title(plotdata_cc['title'])
 
     # clear all plugins from the figure
     plugins.clear(cost_coverage_figure)
-    plugins.connect(cost_coverage_figure, plugins.BoxZoom(button=False), plugins.Zoom(button=False))
+    plugins.connect(
+        cost_coverage_figure,
+        plugins.BoxZoom(button=False),
+        plugins.Zoom(button=False),
+        OptimaTickFormatter())
 
     return cost_coverage_figure
 
@@ -126,13 +134,18 @@ def do_plotco(plotdata_co, figsize = None, showTitle=True):
         axis.tick_params(axis='both', which='major', labelsize=11)
         axis.set_xlabel(plotdata_co['xlabel'], fontsize=11)
         axis.set_ylabel(plotdata_co['ylabel'], fontsize=11)
+        axis.get_xaxis().set_major_locator(MaxNLocator(nbins=3))
 
         xlim([plotdata_co['xlowerlim'],plotdata_co['xupperlim']])
         ylim([plotdata_co['ylowerlim'],plotdata_co['yupperlim']])
 
         # clear all plugins from the figure
         plugins.clear(coverage_outcome_figure)
-        plugins.connect(coverage_outcome_figure, plugins.BoxZoom(button=False), plugins.Zoom(button=False))
+        plugins.connect(
+            coverage_outcome_figure,
+            plugins.BoxZoom(button=False),
+            plugins.Zoom(button=False),
+            OptimaTickFormatter())
 
     return coverage_outcome_figure
 
@@ -185,13 +198,18 @@ def do_plotcco(plotdata_cco, figsize = None, showTitle=True):
         axis.tick_params(axis='both', which='major', labelsize=11)
         axis.set_xlabel(plotdata_cco['xlabel'], fontsize=11)
         axis.set_ylabel(plotdata_cco['ylabel'], fontsize=11)
+        axis.get_xaxis().set_major_locator(MaxNLocator(nbins=3))
 
         xlim([plotdata_cco['xlowerlim'],plotdata_cco['xupperlim']])
         ylim([plotdata_cco['ylowerlim'],plotdata_cco['yupperlim']])
 
         # clear all plugins from the figure
         plugins.clear(cost_outcome_figure)
-        plugins.connect(cost_outcome_figure, plugins.BoxZoom(button=False), plugins.Zoom(button=False))
+        plugins.connect(
+            cost_outcome_figure,
+            plugins.BoxZoom(button=False),
+            plugins.Zoom(button=False),
+            OptimaTickFormatter())
     return cost_outcome_figure
 
 
