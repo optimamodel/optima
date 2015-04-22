@@ -37,24 +37,34 @@ def do_plotcc(plotdata_cc, figsize=None, showTitle=True):
 
     hold(True)
 
+    axis = cost_coverage_figure.gca()
+
     if 'xlinedata' in plotdata_cc.keys():
-        plot(plotdata_cc['xlinedata'], plotdata_cc['ylinedata'][1],
+        axis.plot(
+            plotdata_cc['xlinedata'],
+            plotdata_cc['ylinedata'][1],
             linestyle='--',
             linewidth=2,
             color='#000000')
-        plot(plotdata_cc['xlinedata'], plotdata_cc['ylinedata'][0],
+        axis.plot(
+            plotdata_cc['xlinedata'],
+            plotdata_cc['ylinedata'][0],
             linestyle='-',
             linewidth=2,
             color='#a6cee3')
-        plot(plotdata_cc['xlinedata'], plotdata_cc['ylinedata'][2],
+        axis.plot(
+            plotdata_cc['xlinedata'],
+            plotdata_cc['ylinedata'][2],
             linestyle='--',
             linewidth=2,
             color='#000000')
-    scatter(plotdata_cc['xscatterdata'], plotdata_cc['yscatterdata'], color='#666666')
+    axis.scatter(
+        plotdata_cc['xscatterdata'],
+        plotdata_cc['yscatterdata'],
+        color='#666666')
     xlim([plotdata_cc['xlowerlim'],plotdata_cc['xupperlim']])
     ylim([plotdata_cc['ylowerlim'],plotdata_cc['yupperlim']])
 
-    axis = cost_coverage_figure.gca()
     axis.tick_params(axis='both', which='major', labelsize=11)
     axis.set_xlabel(plotdata_cc['xlabel'], fontsize=11)
     axis.set_ylabel(plotdata_cc['ylabel'], fontsize=11)
@@ -84,15 +94,35 @@ def do_plotco(plotdata_co, figsize = None, showTitle=True):
         else:
             coverage_outcome_figure = figure()
         hold(True)
+
+        axis = coverage_outcome_figure.gca()
+
         if 'xlinedata' in plotdata_co.keys():
-            plot(plotdata_co['xlinedata'], plotdata_co['ylinedata'][0], color = 'b', lw = 2)
-            plot(plotdata_co['xlinedata'], plotdata_co['ylinedata'][1], 'k--', lw = 2)
-            plot(plotdata_co['xlinedata'], plotdata_co['ylinedata'][2], 'k--', lw = 2)
-        plot(plotdata_co['xscatterdata'], plotdata_co['yscatterdata'], 'ro')
+            axis.plot(
+                plotdata_co['xlinedata'],
+                plotdata_co['ylinedata'][0],
+                linestyle='-',
+                linewidth=2,
+                color='#a6cee3')
+            axis.plot(
+                plotdata_co['xlinedata'],
+                plotdata_co['ylinedata'][1],
+                linestyle='--',
+                linewidth=2,
+                color='#000000')
+            axis.plot(
+                plotdata_co['xlinedata'],
+                plotdata_co['ylinedata'][2],
+                linestyle='--',
+                linewidth=2,
+                color='#000000')
+        axis.scatter(
+            plotdata_co['xscatterdata'],
+            plotdata_co['yscatterdata'],
+            color='#666666')
         if showTitle:
             title(plotdata_co['title'])
 
-        axis = coverage_outcome_figure.gca()
         axis.tick_params(axis='both', which='major', labelsize=11)
         axis.set_xlabel(plotdata_co['xlabel'], fontsize=11)
         axis.set_ylabel(plotdata_co['ylabel'], fontsize=11)
@@ -123,15 +153,35 @@ def do_plotcco(plotdata_cco, figsize = None, showTitle=True):
         else:
             cost_outcome_figure = figure()
         hold(True)
+
+        axis = cost_outcome_figure.gca()
+
         if 'xlinedata' in plotdata_cco.keys():
-            plot(plotdata_cco['xlinedata'], plotdata_cco['ylinedata'][0], color = 'b', lw = 2)
-            plot(plotdata_cco['xlinedata'], plotdata_cco['ylinedata'][1], 'k--', lw = 2)
-            plot(plotdata_cco['xlinedata'], plotdata_cco['ylinedata'][2], 'k--', lw = 2)
-        plot(plotdata_cco['xscatterdata'], plotdata_cco['yscatterdata'], 'ro')
+            axis.plot(
+                plotdata_cco['xlinedata'],
+                plotdata_cco['ylinedata'][0],
+                linestyle='-',
+                linewidth=2,
+                color='#a6cee3')
+            axis.plot(
+                plotdata_cco['xlinedata'],
+                plotdata_cco['ylinedata'][1],
+                linestyle='--',
+                linewidth=2,
+                color='#000000')
+            axis.plot(
+                plotdata_cco['xlinedata'],
+                plotdata_cco['ylinedata'][2],
+                linestyle='--',
+                linewidth=2,
+                color='#000000')
+        axis.scatter(
+            plotdata_cco['xscatterdata'],
+            plotdata_cco['yscatterdata'],
+            color='#666666')
         if showTitle:
             title(plotdata_cco['title'])
 
-        axis = cost_outcome_figure.gca()
         axis.tick_params(axis='both', which='major', labelsize=11)
         axis.set_xlabel(plotdata_cco['xlabel'], fontsize=11)
         axis.set_ylabel(plotdata_cco['ylabel'], fontsize=11)
