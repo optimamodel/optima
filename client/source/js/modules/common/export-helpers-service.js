@@ -274,9 +274,47 @@ define(['angular', 'jquery', './svg-to-png', 'underscore'], function (angular, $
       return null;
     };
 
+    /**
+     * Returns the normalized data of an Mpld3 chart ready to export.
+     *
+     * @param {object} chart - an object which must contain the Mpld3 chart data.
+     */
+    var getMpld3ExportableFrom = function (chart) {
+      console.log(chart);
+      if(!chart.data) { return null; }
+
+      var exportable = {
+        name: 'Data',
+        columns: []
+      };
+
+      var xColumnData = [];
+      _(chart.data).each(function(entry) {
+        _(entry).each(function(point) {
+          xColumnData.push(point[0]);
+        });
+      });
+      xColumnData.sort();
+      exportable.columns.push({
+        title: chart.axes[0].texts[0].text,
+        data: xColumnData
+      });
+
+      _(chart.data).each(function(entry) {
+        var column = {
+          title: chart.axes[0].texts[1].text
+        };
+        column.data = fillFromDictionary(xColumnData, _.object(entry));
+        exportable.columns.push(column);
+      });
+
+      return exportable;
+    };
+
     return {
       generateGraphAsPngOrJpeg: generateGraphAsPngOrJpeg,
-      getExportableFrom: getExportableFrom
+      getExportableFrom: getExportableFrom,
+      getMpld3ExportableFrom: getMpld3ExportableFrom
     };
   }]);
 });

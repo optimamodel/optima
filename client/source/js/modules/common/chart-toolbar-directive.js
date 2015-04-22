@@ -47,14 +47,20 @@ define(['angular', 'jquery', 'underscore', 'saveAs', 'jsPDF', './svg-to-png', '.
               .on('click', '.data', function (event) {
                 event.preventDefault();
 
-                // Get the accessor to the chart object in the scope.
-                // Find it via the data attribute.
-                // Inspired by http://stackoverflow.com/a/6394168/837709
-                var chartAccessor = attrs.data.replace(new RegExp('.data$'), '');
                 function accessReference(obj, accessor) { return obj[accessor]; }
-                var chart = _.reduce(chartAccessor.split('.'), accessReference, scope);
 
-                scope.exportFrom(chart);
+                if (_(attrs).has('mpld3Chart')) {
+                  var mpld3Chart = _.reduce(attrs.chart.split('.'), accessReference, scope);
+                  scope.exportMpld3From(mpld3Chart);
+                } else {
+                  // Get the accessor to the chart object in the scope.
+                  // Find it via the data attribute.
+                  // Inspired by http://stackoverflow.com/a/6394168/837709
+                  var chartAccessor = attrs.data.replace(new RegExp('.data$'), '');
+                  var chart = _.reduce(chartAccessor.split('.'), accessReference, scope);
+
+                  scope.exportFrom(chart);
+                }
               })
               .on('click', '.chart-reset-button', function (event) {
                 event.preventDefault();
@@ -130,6 +136,44 @@ define(['angular', 'jquery', 'underscore', 'saveAs', 'jsPDF', './svg-to-png', '.
           };
 
           /**
+           * Requesting a Spreadsheet from the prepared dataset.
+           */
+          var exportApiRequest = function(title, exportableData) {
+            $http({url:'/api/project/export',
+                  method:'POST',
+                  data: exportableData,
+                  headers: {'Content-type': 'application/json'},
+                  responseType:'arraybuffer'})
+              .success(function (response, status, headers, config) {
+                  var blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                  // The saveAs function must be wrapped in a setTimeout with 0 ms because Angular has a problem with fileSaver.js on FF 34.0 and the download doesn't start
+                  setTimeout(function() {
+                    saveAs(blob, (title+'.xlsx'));
+                  }, 0);
+              });
+          };
+
+          /**
+           * Exports the data of a mpld3 graph.
+           */
+          scope.exportMpld3From = function (chart){
+            if(!chart) {
+              modalService.inform(undefined, undefined, "Sorry, this chart cannot be exported");
+              return;
+            }
+
+            var exportable = exportHelpers.getMpld3ExportableFrom(chart);
+
+            if(exportable === null) {
+              modalService.inform(undefined, undefined, "Sorry, this chart cannot be exported");
+              return;
+            }
+
+            var title = chart.title || 'Data';
+            exportApiRequest(title, exportable);
+          };
+
+          /**
            * Exports the data of the graph in the format returned by the API
            */
           scope.exportFrom = function (graphOrUndefined){
@@ -146,19 +190,7 @@ define(['angular', 'jquery', 'underscore', 'saveAs', 'jsPDF', './svg-to-png', '.
             }
 
             var title = graphOrUndefined.options.title || 'Data';
-            $http({url:'/api/project/export',
-                  method:'POST',
-                  data: exportable,
-                  headers: {'Content-type': 'application/json'},
-                  responseType:'arraybuffer'})
-              .success(function (response, status, headers, config) {
-                  var blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-                  // The saveAs function must be wrapped in a setTimeout with 0 ms because Angular has a problem with fileSaver.js on FF 34.0 and the download doesn't start
-                  setTimeout(function() {
-                    saveAs(blob, (title+'.xlsx'));
-                  }, 0);
-              })
-              .error(function () {});
+            exportApiRequest(title, exportable);
           };
 
           initialize();
