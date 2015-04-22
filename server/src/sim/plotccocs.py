@@ -3,7 +3,7 @@ Plots cost-coverage, coverage-outcome and cost-outcome curves
 
 Version: 2015jan19 by robynstuart
 """
-from matplotlib.pylab import figure, plot, hold, xlabel, ylabel, title, xlim, ylim, gca
+from matplotlib.pylab import figure, plot, hold, xlabel, ylabel, title, xlim, ylim, gca, scatter
 from numpy import nan
 from mpld3 import plugins
 
@@ -38,10 +38,19 @@ def do_plotcc(plotdata_cc, figsize=None, showTitle=True):
     hold(True)
 
     if 'xlinedata' in plotdata_cc.keys():
-        plot(plotdata_cc['xlinedata'], plotdata_cc['ylinedata'][1], 'k--', lw = 2)
-        plot(plotdata_cc['xlinedata'], plotdata_cc['ylinedata'][0], 'b-', lw = 2)
-        plot(plotdata_cc['xlinedata'], plotdata_cc['ylinedata'][2], 'k--', lw = 2)
-    plot(plotdata_cc['xscatterdata'], plotdata_cc['yscatterdata'], 'ro')
+        plot(plotdata_cc['xlinedata'], plotdata_cc['ylinedata'][1],
+            linestyle='--',
+            linewidth=2,
+            color='#000000')
+        plot(plotdata_cc['xlinedata'], plotdata_cc['ylinedata'][0],
+            linestyle='-',
+            linewidth=2,
+            color='#a6cee3')
+        plot(plotdata_cc['xlinedata'], plotdata_cc['ylinedata'][2],
+            linestyle='--',
+            linewidth=2,
+            color='#000000')
+    scatter(plotdata_cc['xscatterdata'], plotdata_cc['yscatterdata'], color='#666666')
     xlim([plotdata_cc['xlowerlim'],plotdata_cc['xupperlim']])
     ylim([plotdata_cc['ylowerlim'],plotdata_cc['yupperlim']])
 
