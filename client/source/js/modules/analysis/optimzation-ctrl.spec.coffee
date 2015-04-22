@@ -31,7 +31,6 @@ define ['angular-mocks', 'Source/modules/analysis/optimization-ctrl'], ->
             }
           }
         }
-        optimizations = []
 
         scope = $rootScope.$new()
         subject = $controller 'AnalysisOptimizationController', {
@@ -39,7 +38,8 @@ define ['angular-mocks', 'Source/modules/analysis/optimization-ctrl'], ->
           meta: meta
           modalService: {}
           cfpLoadingBar: {}
-          optimizations: optimizations
+          optimizations: []
+          info: { has_data: true }
         }
 
     describe 'yearsAreRequired()', ->

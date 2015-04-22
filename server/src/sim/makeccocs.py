@@ -86,6 +86,7 @@ def makecc(D=None, progname=None, ccparams=None, arteligcutoff=None, verbose=def
     if (ccparams and 'xupperlim' in ccparams and ccparams['xupperlim'] and ~isnan(ccparams['xupperlim'])): xupperlim = ccparams['xupperlim']
 
     # Populate output structure with scatter data
+    plotdata['allxscatterdata'] = totalcost
     totalcost, coverage = getscatterdata(totalcost, coverage)
     plotdata['xscatterdata'] = totalcost
     plotdata['yscatterdata'] = coverage
@@ -116,6 +117,7 @@ def makecc(D=None, progname=None, ccparams=None, arteligcutoff=None, verbose=def
                 yvalscc[j] = [yvalscc[j][k]*targetpopsize[-1] for k in range(len(yvalscc[j]))]
 
         # Populate output structure
+        plotdata['xpop'] = xvalsccpop
         plotdata['xlinedata'] = xvalscc
         plotdata['ylinedata'] = yvalscc
 
@@ -202,12 +204,13 @@ def makeco(D=None, progname=None, effect=None, coparams=None, coverage_params=co
         plotdata['yupperlim'] = 1.0 if any(j < 1 for j in outcome) else max([j if ~isnan(j) else 0.0 for j in outcome])*1.5
 
         # Populate output structure with scatter data 
+        plotdata['allyscatterdata'] = outcome
         coverage, outcome = getscatterdata(coverage, outcome)
         plotdata['xscatterdata'] = coverage 
         plotdata['yscatterdata'] = outcome 
            
         # Get params for plotting - either from GUI or get previously stored ones
-        if not coparams and (coparams in effect.keys()): coparams = effect.get('coparams')
+        if not coparams and ('coparams' in effect.keys()): coparams = effect.get('coparams')
         if coparams and isinstance(coparams,list): # Check that it's there and is not nan
             if not len(coparams) == 4:
                 raise Exception('Not all of the coverage-outcome parameters have been specified. Please enter the missing parameters to define the curve.')
@@ -247,18 +250,13 @@ def makecco(D=None, progname=None, effect=None, ccparams=None, coparams=None, ar
         plotdata_cc, D = makecc(D=D, progname=progname, ccparams=ccparams, arteligcutoff=arteligcutoff)
         plotdata_co, effect = makeco(D=D, progname=progname, effect=effect, coparams=coparams, arteligcutoff=arteligcutoff)
     
-        plotdata['xscatterdata'] = plotdata_cc['xscatterdata'] # X scatter data
-        plotdata['yscatterdata'] = plotdata_co['yscatterdata'] # Y scatter data
-        #workaround - ROBYN PLEASE HAVE A LOOK
-        if len(plotdata['xscatterdata'])!=len(plotdata['yscatterdata']):
-            minlen = min(len(plotdata['xscatterdata']), len(plotdata['yscatterdata']))
-            if minlen==0:
-                plotdata['xscatterdata']=[]
-                plotdata['yscatterdata']=[]
-            else:
-                plotdata['xscatterdata'] = plotdata['xscatterdata'][-minlen:]
-                plotdata['yscatterdata'] = plotdata['yscatterdata'][-minlen:]
-    
+        # Collect scatter data and make sure it's the right length etc
+        totalcost = plotdata_cc['allxscatterdata']
+        outcome = plotdata_co['allyscatterdata'] 
+        totalcost, outcome = getscatterdata(totalcost, outcome)
+        plotdata['xscatterdata'] = totalcost 
+        plotdata['yscatterdata'] = outcome 
+            
         # Populate output structure with axis limits
         plotdata['xlowerlim'], plotdata['ylowerlim'] = plotdata_cc['xlowerlim'], plotdata_co['ylowerlim']
         plotdata['xupperlim'], plotdata['yupperlim'] = plotdata_cc['xupperlim'], plotdata_co['yupperlim']
@@ -271,21 +269,31 @@ def makecco(D=None, progname=None, effect=None, ccparams=None, coparams=None, ar
         # Draw lines if we can
         print("effect", effect)
         if 'xlinedata' in plotdata_cc.keys() and effect.get('coparams') and isinstance(effect['coparams'], list):
+
+            # Store whole set of parameters
+            prognumber = [p['name'] for p in D['programs']].index(progname) # get program number    
+            convertedccoparams = D['programs'][prognumber]['convertedccparams']
+            convertedcoparams = effect['convertedcoparams']
+            convertedccoparams[0].extend([convertedcoparams[0],convertedcoparams[2]])
+            convertedccoparams[1].extend([coparams[0],coparams[2]])
+            convertedccoparams[2].extend([coparams[1],coparams[3]])
+            effect['convertedccoparams'] = convertedccoparams 
+
             xvalscco = plotdata_cc['xlinedata']
-            mediancco = coeqn(plotdata_cc['ylinedata'][0], [effect['convertedcoparams'][0], effect['convertedcoparams'][2]])
-            mincco = coeqn(plotdata_cc['ylinedata'][1], [effect['coparams'][0], effect['coparams'][2]])
-            maxcco = coeqn(plotdata_cc['ylinedata'][2], [effect['coparams'][1], effect['coparams'][3]])
+            xvalsccpop = plotdata_cc['xpop']
+            if len(convertedccoparams[0]) == 5:
+                mediancco = ccoeqn(xvalsccpop, convertedccoparams[0])
+                mincco = ccoeqn(xvalsccpop,  convertedccoparams[1])
+                maxcco = ccoeqn(xvalsccpop,  convertedccoparams[2])
+            elif len(convertedccoparams[0]) == 4:
+                mediancco = cco2eqn(xvalsccpop, convertedccoparams[0])
+                mincco = cco2eqn(xvalsccpop,  convertedccoparams[1])
+                maxcco = cco2eqn(xvalsccpop,  convertedccoparams[2])
     
             # Populate output structure with cost-outcome curves for plotting
             plotdata['xlinedata'] = xvalscco # X data for all line plots
             plotdata['ylinedata'] = [mediancco, mincco, maxcco]
     
-            # Store whole set of parameters
-            prognumber = [p['name'] for p in D['programs']].index(progname) # get program number    
-            convertedccoparams = D['programs'][prognumber]['convertedccparams']
-            convertedcoparams = effect['convertedcoparams']
-            for j in range(3): convertedccoparams[j].extend([convertedcoparams[0],convertedcoparams[2]])
-            effect['convertedccoparams'] = convertedccoparams 
 
     return plotdata, plotdata_co, effect
 

@@ -1,6 +1,6 @@
 {
   "name": "Optima",
-  "version": "1.18",
+  "version": "1.19",
   "main": "source/index.html",
   "ignore": [
     "**/.*",
@@ -15,9 +15,9 @@
     "angular-bootstrap": "=0.12.1",
     "angular-ui-router": "=0.2.13",
     "canvas-toBlob.js": "=0.1.3",
-    "crypto-js-evanvosberg": "=3.1.2",
+    "crypto-js-evanvosberg": "=3.1.4",
     "d3": "=3.4.11",
-    "FileSaver": "#c69c21d488",
+    "FileSaver": "#239f3c427f68809e17a9c747e4cb31376782efca",
     "jquery": "=2.1.1",
     "jspdf": "=1.0.272",
     "ng-file-upload": "=3.2.4",

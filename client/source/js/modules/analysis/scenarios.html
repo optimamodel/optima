@@ -1,18 +1,12 @@
 <div class="rich">
 
-    <div class="section grid" ng-show="!validate">
-        <div class="9">
-            <h1 ng-show="!show_message">Validating...</h1>
-            <h1 ng-show="show_message">Model is not ready</h1>
-            <div ng-show="show_message">
-                <p>This model is not yet ready to execute scenarios.</p>
-                <button type="button" class="btn" ng-click="gotoViewCalibrate()">View &amp; calibrate model</button>
-            </div>
-        </div>
+  <div ng-if="missingModelData">
+    <spreadsheet-upload-hint></spreadsheet-upload-hint>
+  </div>
 
-    </div>
+  <div ng-if="!missingModelData">
 
-    <div class="section grid" ng-show="validate">
+    <div class="section grid">
         <div class="9">
             <h1>Manage scenarios</h1>
 
@@ -54,8 +48,7 @@
         </div>
     </div>
 
-
-    <div class="grid section" ng-show="validate">
+    <div class="grid section">
       <div class="12">
         <export-all-charts ng-if="graphs" name="Analysis scenarios"></export-all-charts>
         <export-all-data name="Analysis scenarios" charts="graphs" ng-if="graphs"></export-all-data>
@@ -67,7 +60,6 @@
       </div>
     </div>
 
+  </div>
 
-
-<input type="hidden" name="params" value="{{ formParams }}">
 </div>
