@@ -20,6 +20,7 @@ from model import model
 from makemodelpars import makemodelpars
 from quantile import quantile
 from ballsd import ballsd
+from getcurrentbudget import getcoverage
 
 
 
@@ -279,10 +280,12 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         result['allocarr'] = [] # List of allocations
         result['allocarr'].append(quantile([origalloc])) # Kludgy -- run fake quantile on duplicated origalloc just so it matches
         result['allocarr'].append(quantile(allocarr)) # Calculate allocation arrays 
-        from getcurrentbudget import getcurrentcoverage
-        result['covarr'] = [] # List of coverage levels
-        result['covarr'].append(getcurrentcoverage(D, alloc=result['allocarr'][0].T).T) # Original coverage
-        result['covarr'].append(getcurrentcoverage(D, alloc=result['allocarr'][-1].T).T) # Coverage under last-run optimization
+        result['covnumarr'] = [] # List of coverage levels
+        result['covnumarr'].append(getcoverage(D, alloc=result['allocarr'][0].T)['num'].T) # Original coverage
+        result['covnumarr'].append(getcoverage(D, alloc=result['allocarr'][-1].T)['num'].T) # Coverage under last-run optimization
+        result['covperarr'] = [] # List of coverage levels
+        result['covperarr'].append(getcoverage(D, alloc=result['allocarr'][0].T)['per'].T) # Original coverage
+        result['covperarr'].append(getcoverage(D, alloc=result['allocarr'][-1].T)['per'].T) # Coverage under last-run optimization
         labels = ['Original','Optimal']
         result['Rarr'] = [dict(), dict()]
         result['Rarr'][0]['R'] = options['tmpbestdata'][0]['R']

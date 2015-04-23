@@ -13,9 +13,9 @@ def getcurrentbudget(D, alloc=None, randseed=None):
     if isinstance(alloc,type(None)): 
         alloc = D['data']['origalloc'] # Initialise currentbudget if needed
         print('WARNING: No allocation provided to alterparams, using allocation %s for programs %s.' % (alloc, D['data']['meta']['progs']['short']))
-    currentcoverage = getcurrentcoverage(D=D, alloc=alloc, randseed=randseed) # Get current coverage 
-
-    # Initialise parameter structure (same as D['P'])
+    coverage = getcoverage(D=D, alloc=alloc, randseed=randseed) # Get current coverage 
+ 
+   # Initialise parameter structure (same as D['P'])
     for param in D['P'].keys():
         if isinstance(D['P'][param], dict) and 'p' in D['P'][param].keys():
             D['P'][param]['c'] = nan+zeros((len(D['P'][param]['p']), npts))
@@ -29,7 +29,8 @@ def getcurrentbudget(D, alloc=None, randseed=None):
             popname, parname = effect['popname'], effect['param']
             
             if parname in coverage_params: # Is the affected parameter coverage?
-                D['P'][parname]['c'][:] = currentcoverage[prognumber,]
+                coveragetype = 'num' if any(j > 1 for j in D['data']['costcov']['cov'][prognumber]) else 'per'
+                D['P'][parname]['c'][:] = coverage[coveragetype][prognumber,]
             else: # ... or not?
                 try: # Try to get population number...
                     popnumber = D['data']['meta']['pops']['short'].index(popname)
@@ -51,33 +52,43 @@ def getcurrentbudget(D, alloc=None, randseed=None):
     return D
    
 ################################################################
-def getcurrentcoverage(D, alloc=None, randseed=None):
+def getcoverage(D, alloc=None, randseed=None):
     ''' Get the coverage levels corresponding to a particular allocation '''
     from numpy import zeros_like, array, isnan
-    from makeccocs import cc2eqn, cceqn
+    from makeccocs import cc2eqn, cceqn, gettargetpop
     from utils import perturb
     
     allocwaslist = 0
     if isinstance(alloc,list): alloc, allocwaslist = array(alloc), 1
-    currentcoverage = zeros_like(alloc)
+    coverage = {}
+    coverage['num'], coverage['per'] = zeros_like(alloc), zeros_like(alloc)
 
     for prognumber, progname in enumerate(D['data']['meta']['progs']['short']):
         if D['programs'][prognumber]['effects']:            
 
+            targetpop = gettargetpop(D=D, artindex=range(D['G']['nstates'])[1::], progname=progname)[-1]
             program_ccparams = D['programs'][prognumber]['convertedccparams']
             use_default_ccparams = not program_ccparams or (not isinstance(program_ccparams, list) and isnan(program_ccparams))
             if not use_default_ccparams:
                 convertedccparams = D['programs'][prognumber]['convertedccparams'] 
             else:
-                convertedccparams = setdefaultccparams(progname=progname)    
+                convertedccparams = setdefaultccparams(progname=progname)
             if randseed>=0: convertedccparams[0][1] = array(perturb(1,(array(convertedccparams[2][1])-array(convertedccparams[1][1]))/2., randseed=randseed)) - 1 + array(convertedccparams[0][1]) 
-            currentcoverage[prognumber,] = cc2eqn(alloc[prognumber,], convertedccparams[0]) if len(convertedccparams[0])==2 else cceqn(alloc[prognumber,], convertedccparams[0])        
+            if any(j > 1 for j in D['data']['costcov']['cov'][prognumber]):
+                coverage['num'][prognumber,] = cc2eqn(alloc[prognumber,], convertedccparams[0]) if len(convertedccparams[0])==2 else cceqn(alloc[prognumber,], convertedccparams[0])
+                coverage['per'][prognumber,] = coverage['num'][prognumber,]/targetpop
+            else:
+                coverage['per'][prognumber,] = cc2eqn(alloc[prognumber,], convertedccparams[0]) if len(convertedccparams[0])==2 else cceqn(alloc[prognumber,], convertedccparams[0])
+                coverage['num'][prognumber,] = coverage['per'][prognumber,]*targetpop
         else:
-            currentcoverage[prognumber,] = array([None]*len(alloc[prognumber,]))
+            coverage['per'][prognumber,] = array([None]*len(alloc[prognumber,]))
+            coverage['num'][prognumber,] = array([None]*len(alloc[prognumber,]))
 
-    if allocwaslist: currentcoverage = currentcoverage.tolist()
+    if allocwaslist:
+        coverage['num'] = coverage['num'].tolist()
+        coverage['per'] = coverage['per'].tolist()
             
-    return currentcoverage
+    return coverage
 
 ################################################################
 def getcurrentnonhivdalysaverted(D, coverage=None):
