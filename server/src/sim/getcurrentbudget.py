@@ -129,7 +129,7 @@ def setdefaultccoparams(progname=None, param=None, pop=None):
     return default_convertedccoparams
 
 ################################################################
-def makecoverageplot(D, optno=-1, barwidth=.35):
+def makecoverageplot(D, optno=-1, barwidth=.35, makeplot=0):
     ''' Make coverage bar graph '''
     
     from matplotlib.pyplot import bar, xlabel, ylabel, title, xticks, legend, tight_layout, show, figure, ylim
@@ -138,36 +138,54 @@ def makecoverageplot(D, optno=-1, barwidth=.35):
     import colorbrewer
     bmap = colorbrewer.get_map('Paired', 'Qualitative', 3) # WARNING, won't work with >13
     colors = bmap.mpl_colors
-    
+
+    error_config = {'ecolor': '0.3'}    
+
     plotdata = {}
     plotdata['per'] = {}
     plotdata['num'] = {}
-    
+
+    xlabels = [p['name'] for p in D['programs'] if p['effects']]
+    xlabels = [textwrap.fill(text,width=8) for text in xlabels]
+    index = arange(len(xlabels))
+        
     for key in ['num','per']:
         plotdata[key] = {}
         origcov = D['optimizations'][optno]['result']['plot'][0]['alloc'][0]['coverage'][key]['best']
         opticov = D['optimizations'][optno]['result']['plot'][0]['alloc'][1]['coverage'][key]['best']
+
+        origcovrange = [D['optimizations'][optno]['result']['plot'][0]['alloc'][0]['coverage'][key]['high'][j]-D['optimizations'][optno]['result']['plot'][0]['alloc'][0]['coverage'][key]['low'][j] for j in range(D['G']['nprogs'])]
+        opticovrange = [D['optimizations'][optno]['result']['plot'][0]['alloc'][1]['coverage'][key]['high'][j]-D['optimizations'][optno]['result']['plot'][0]['alloc'][1]['coverage'][key]['low'][j] for j in range(D['G']['nprogs'])]
+
         plotdata[key]['orig'] = [origcov[j] for j in range(len(D['programs'])) if D['programs'][j]['effects']]
         plotdata[key]['opti'] = [opticov[j] for j in range(len(D['programs'])) if D['programs'][j]['effects']]
+        plotdata[key]['origrange'] = [origcovrange[j] for j in range(len(D['programs'])) if D['programs'][j]['effects']]
+        plotdata[key]['optirange'] = [opticovrange[j] for j in range(len(D['programs'])) if D['programs'][j]['effects']]
 
-        xlabels = [D['optimizations'][optno]['result']['plot'][0]['alloc'][0]['legend'][j] for j in range(len(D['programs'])) if D['programs'][j]['effects']]
-        xlabels = [textwrap.fill(text,8) for text in xlabels]
+        plotdata[key]['xlabel'] = 'Programs'
+        plotdata[key]['ylabel'] = 'Coverage'
+        plotdata[key]['title'] = 'Coverage'
+        plotdata[key]['xlabels'] = xlabels
 
-        index = arange(len(xlabels))
+        if makeplot:
+            figure
+            bar(index, plotdata[key]['orig'], barwidth, 
+                label='Original',
+                yerr=plotdata[key]['origrange'],
+                error_kw=error_config,
+                color=colors[0])
+            bar(index+barwidth, plotdata[key]['opti'], barwidth, 
+                label='Optimal',
+                yerr=plotdata[key]['optirange'],
+                error_kw=error_config,
+                color=colors[1])
+            xlabel(plotdata[key]['xlabel'])
+            ylabel(plotdata[key]['ylabel'])
+            title(plotdata[key]['title'])
+            xticks(index+barwidth, plotdata[key]['xlabels'])
+            if key == 'per': ylim([0,1])
+            legend()
+            tight_layout()
+            show()
     
-        figure
-        bar(index, plotdata[key]['orig'], barwidth, 
-            label='Original',
-            color=colors[0])
-        bar(index+barwidth, plotdata[key]['opti'], barwidth, 
-            label='Optimal',
-            color=colors[1])
-        xlabel('Programs')
-        ylabel('Coverage')
-        title('Coverage')
-        xticks(index+barwidth, xlabels)
-        if key == 'per': ylim([0,1])
-        legend()
-        tight_layout()
-        show()
-    
+    return plotdata

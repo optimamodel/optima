@@ -333,7 +333,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         options['fundingchanges'] = fundingchanges # Constraints-based funding changes
         parammin = concatenate((fundingchanges['total']['dec'], ones(nprogs)*-1e9))  
         parammax = concatenate((fundingchanges['total']['inc'], ones(nprogs)*1e9))  
-        options['randseed'] = None
+        options['randseed'] = 1
         
         
         
