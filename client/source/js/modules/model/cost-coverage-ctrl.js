@@ -266,16 +266,15 @@ define(['./module', 'underscore'], function (module, _) {
       $scope.state.chartsForDataExport = [];
       $scope.state.titlesForChartsExport = [];
 
-      // if ( $scope.ccGraph) {
-      //   $scope.state.chartsForDataExport.push($scope.ccGraph);
-      //   $scope.state.titlesForChartsExport.push($scope.ccGraph.options.title);
-      // }
-      //
-      // var charts = _(_.zip($scope.graphs.plotdata, $scope.graphs.plotdata_co)).flatten();
-      // _( charts ).each(function (chart,index) {
-      //   $scope.state.chartsForDataExport.push(chart);
-      //   $scope.state.titlesForChartsExport.push(chart.options.title);
-      // });
+      if ( $scope.state.costCoverageChart ) {
+        $scope.state.chartsForDataExport.push($scope.state.costCoverageChart);
+        // $scope.state.titlesForChartsExport.push($scope.ccGraph.options.title);
+      }
+      var charts = _(_.zip($scope.state.costOutcomeCharts, $scope.state.coverageOutcomeCharts)).flatten();
+      _( charts ).each(function (chart, index) {
+        $scope.state.chartsForDataExport.push(chart);
+        // $scope.state.titlesForChartsExport.push(chart.options.title);
+      });
     };
 
     /**
