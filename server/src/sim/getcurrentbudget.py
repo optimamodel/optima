@@ -127,3 +127,47 @@ def setdefaultccoparams(progname=None, param=None, pop=None):
     print('WARNING: Cost-outcome curve not found for program %s, parameter %s and population %s... Using defaults.' % (progname, param, pop))
     
     return default_convertedccoparams
+
+################################################################
+def makecoverageplot(D, optno=-1, barwidth=.35):
+    ''' Make coverage bar graph '''
+    
+    from matplotlib.pyplot import bar, xlabel, ylabel, title, xticks, legend, tight_layout, show, figure, ylim
+    from numpy import arange
+    import textwrap
+    import colorbrewer
+    bmap = colorbrewer.get_map('Paired', 'Qualitative', 3) # WARNING, won't work with >13
+    colors = bmap.mpl_colors
+    
+    plotdata = {}
+    plotdata['per'] = {}
+    plotdata['num'] = {}
+    
+    for key in ['num','per']:
+        plotdata[key] = {}
+        origcov = D['optimizations'][optno]['result']['plot'][0]['alloc'][0]['coverage'][key]['best']
+        opticov = D['optimizations'][optno]['result']['plot'][0]['alloc'][1]['coverage'][key]['best']
+        plotdata[key]['orig'] = [origcov[j] for j in range(len(D['programs'])) if D['programs'][j]['effects']]
+        plotdata[key]['opti'] = [opticov[j] for j in range(len(D['programs'])) if D['programs'][j]['effects']]
+
+        xlabels = [D['optimizations'][optno]['result']['plot'][0]['alloc'][0]['legend'][j] for j in range(len(D['programs'])) if D['programs'][j]['effects']]
+        xlabels = [textwrap.fill(text,8) for text in xlabels]
+
+        index = arange(len(xlabels))
+    
+        figure
+        bar(index, plotdata[key]['orig'], barwidth, 
+            label='Original',
+            color=colors[0])
+        bar(index+barwidth, plotdata[key]['opti'], barwidth, 
+            label='Optimal',
+            color=colors[1])
+        xlabel('Programs')
+        ylabel('Coverage')
+        title('Coverage')
+        xticks(index+barwidth, xlabels)
+        if key == 'per': ylim([0,1])
+        legend()
+        tight_layout()
+        show()
+    
