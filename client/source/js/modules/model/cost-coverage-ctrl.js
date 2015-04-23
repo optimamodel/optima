@@ -49,27 +49,6 @@ define(['./module', 'underscore'], function (module, _) {
       $scope.state.outcomeTitles = [];
     };
 
-    var getlineAreaScatterOptions = function (options, xLabel, yLabel) {
-      var defaults = {
-        width: 300,
-        height: 200,
-        margin: {
-          top: 20,
-          right: 15,
-          bottom: 40,
-          left: 60
-        },
-        xAxis: {
-          axisLabel: xLabel || 'X'
-        },
-        yAxis: {
-          axisLabel: yLabel || 'Y'
-        }
-      };
-
-      return _(angular.copy(defaults)).extend(options);
-    };
-
     /* Methods
      ========= */
 
