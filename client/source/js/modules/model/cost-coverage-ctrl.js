@@ -266,15 +266,25 @@ define(['./module', 'underscore'], function (module, _) {
       $scope.state.chartsForDataExport = [];
       $scope.state.titlesForChartsExport = [];
 
+      // chart data
       if ( $scope.state.costCoverageChart ) {
         $scope.state.chartsForDataExport.push($scope.state.costCoverageChart);
-        // $scope.state.titlesForChartsExport.push($scope.ccGraph.options.title);
       }
       var charts = _(_.zip($scope.state.costOutcomeCharts, $scope.state.coverageOutcomeCharts)).flatten();
-      _( charts ).each(function (chart, index) {
+      _( charts ).each(function (chart) {
         $scope.state.chartsForDataExport.push(chart);
-        // $scope.state.titlesForChartsExport.push(chart.options.title);
       });
+
+      // chart titles
+      if ( $scope.state.costCoverageChartTitle ) {
+        $scope.state.titlesForChartsExport.push($scope.state.costCoverageChartTitle);
+      }
+      _( $scope.state.outcomeTitles ).each(function (title) {
+        // we push two titles as there are cost outcome charts & coverage outcome charts
+        $scope.state.titlesForChartsExport.push(title);
+        $scope.state.titlesForChartsExport.push(title);
+      });
+
     };
 
     /**
