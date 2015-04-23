@@ -37,14 +37,14 @@ else:
 
     
 
-#print('\n\n\n1. Making project...')
-#from makeproject import makeproject
-#D = makeproject(projectname=projectname, pops=['']*6, progs = ['']*7, datastart=2000, dataend=2015, verbose=verbose)
-#
-#print('\n\n\n2. Updating data...')
-#from updatedata import updatedata
-#D = updatedata(D, verbose=verbose, savetofile=False)
-#
+print('\n\n\n1. Making project...')
+from makeproject import makeproject
+D = makeproject(projectname=projectname, pops=['']*6, progs = ['']*7, datastart=2000, dataend=2015, verbose=verbose)
+
+print('\n\n\n2. Updating data...')
+from updatedata import updatedata
+D = updatedata(D, verbose=verbose, savetofile=False)
+
 
 if testconstant:
     print('\n\n\n3. Running constant-budget optimization...')
