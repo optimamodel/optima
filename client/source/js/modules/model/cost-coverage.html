@@ -31,9 +31,12 @@
 
       <div class="section" ng-show="state.hasCostCoverResponse">
 
-        <export-all-charts ng-if="graphs" name="Cost coverage outcome" custom-titles="state.titlesForChartsExport"></export-all-charts>
-        <export-all-data charts="state.chartsForDataExport" name="Cost coverage outcome" ng-if="graphs || ccGraph"></export-all-data>
-        <h1>{{ccGraph.options.title}}</h1>
+        <export-all-charts name="Cost coverage outcome"
+                           custom-titles="state.titlesForChartsExport"></export-all-charts>
+        <export-all-data charts="state.chartsForDataExport"
+                         name="Cost coverage outcome">
+        </export-all-data>
+        <h1>{{ state.costCoverageChartTitle }}</h1>
         <div class="section elastic">
           <div class="elastic_col __shrink" ng-if="state.costCoverageChart">
             <div class="chart-container">
@@ -186,8 +189,8 @@
         </div>
 
         <form name="state.CombinedAdjustmentForms">
-          <div class="section" ng-if="graphs.plotdata.length" ng-repeat="graph in graphs.plotdata">
-            <h2 class="section">{{ graph.options.title }}</h2>
+          <div class="section" ng-if="state.costOutcomeCharts.length" ng-repeat="chart in state.costOutcomeCharts track by chart.id">
+            <h2 class="section">{{ state.outcomeTitles[$index] }}</h2>
 
             <div class="section elastic">
 
