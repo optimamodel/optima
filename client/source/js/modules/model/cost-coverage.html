@@ -37,7 +37,7 @@
         <div class="section elastic">
           <div class="elastic_col __shrink" ng-if="state.props">
             <div class="chart-container">
-              <div mpld3-chart chart="state.props" chart-toolbar></div>
+              <div mpld3-chart="state.props" chart-toolbar></div>
             </div>
           </div>
           <div class="elastic_col">
@@ -186,20 +186,20 @@
         </div>
 
         <form name="state.CombinedAdjustmentForms">
-          <div class="section" ng-if="graphs.plotdata.length" ng-repeat="chart in graphs.plotdata">
-            <h2 class="section">{{ chart.options.title }}</h2>
+          <div class="section" ng-if="graphs.plotdata.length" ng-repeat="graph in graphs.plotdata">
+            <h2 class="section">{{ graph.options.title }}</h2>
 
             <div class="section elastic">
 
               <div class="elastic_col __shrink" style="width: 320px">
                 <div class="chart-container">
-                  <div mpld3-chart chart="state.fig_co[$index]" chart-toolbar></div>
+                  <div mpld3-chart="state.fig_co[$index]" chart-toolbar></div>
                 </div>
               </div>
 
               <div class="elastic_col" style="width: 340px">
                 <div class="chart-container">
-                  <div mpld3-chart chart="state.fig[$index]" chart-toolbar></div>
+                  <div mpld3-chart="state.fig[$index]" chart-toolbar></div>
                 </div>
               </div>
 

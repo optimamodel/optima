@@ -47,18 +47,12 @@ define(['angular', 'jquery', 'underscore', 'saveAs', 'jsPDF', './svg-to-png', '.
               .on('click', '.data', function (event) {
                 event.preventDefault();
 
-                function accessReference(obj, accessor) { return obj[accessor]; }
-
                 if (_(attrs).has('mpld3Chart')) {
-                  var mpld3Chart = _.reduce(attrs.chart.split('.'), accessReference, scope);
+                  var mpld3Chart = scope.$eval(attrs.mpld3Chart);
                   scope.exportMpld3From(mpld3Chart);
                 } else {
-                  // Get the accessor to the chart object in the scope.
-                  // Find it via the data attribute.
-                  // Inspired by http://stackoverflow.com/a/6394168/837709
                   var chartAccessor = attrs.data.replace(new RegExp('.data$'), '');
-                  var chart = _.reduce(chartAccessor.split('.'), accessReference, scope);
-
+                  var chart = scope.$eval(chartAccessor);
                   scope.exportFrom(chart);
                 }
               })

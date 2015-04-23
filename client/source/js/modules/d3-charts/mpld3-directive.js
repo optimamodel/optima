@@ -4,7 +4,7 @@ define(['./module','underscore', 'jquery', 'mpld3'], function (module, _, $) {
   module.directive('mpld3Chart', function () {
     return {
       scope: {
-        chart: '='
+        chart: '=mpld3Chart'
       },
       link: function (scope, element) {
         var newId = 'mpld3-chart' + _.uniqueId();
