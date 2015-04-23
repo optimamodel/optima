@@ -6,7 +6,8 @@ define([
   './modal/modal-service',
   '../common/file-upload-service',
   '../common/active-project-service',
-  '../user-manager/index'
+  '../user-manager/index',
+  './gridster/index'
 ], function (angular) {
   'use strict';
 
@@ -15,7 +16,8 @@ define([
     'app.ui.editable',
     'app.ui.modal',
     'app.common.file-upload',
-    'app.ui.menu'
+    'app.ui.menu',
+    'app.ui.gridster'
   ])
 
     .controller('MainCtrl', function ($scope, $state, activeProject, UserManager, modalService, fileUpload) {

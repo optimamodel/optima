@@ -12,6 +12,7 @@ define({
     'canvg'         : './vendor/canvg/dist/canvg.bundle',
     'canvas2blob'   : './vendor/canvas-toBlob.js/canvas-toBlob',
     'd3'            : './vendor/d3/d3',
+    'gridster'      : './vendor/angular-gridster/src/angular-gridster',
     'saveAs'        : './vendor/FileSaver/FileSaver',
     'jquery'        : './vendor/jquery/dist/jquery',
     'jsPDF'         : './vendor/jspdf/dist/jspdf.min',
@@ -38,6 +39,7 @@ define({
     'radar-chart-d3': ['d3'],
     'saveAs': ['canvas2blob'],
     'ui.bootstrap': ['angular'],
-    'ui.router' : ['angular']
+    'ui.router' : ['angular'],
+    'gridster' : ['angular']
   }
 });

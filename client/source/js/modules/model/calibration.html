@@ -83,13 +83,11 @@
     <div class="section __inline calibration-charts" ng-class="{'calibration-charts--full':enableManualCalibration===false}" ng-show="charts.length > 0" >
       <export-all-charts name="Model calibration" ng-if="charts"></export-all-charts>
       <export-all-data name="Model calibration" charts="charts" ng-if="charts"></export-all-data>
-      <div class="grid">
-        <div>
-          <div class="chart-container __small" ng-repeat="chart in charts">
+      <div class="grid" resizable-chart-panel="charts">
+          <div class="chart-container __small" ng-repeat="chart in charts track by chart.id" resizable-chart="chart">
             <div ng-if="chart.type == 'lineAreaScatterChart'" line-area-scatter-chart ng-if="chart.type != 'stackAreaChart'" data="chart.data" options="chart.options" save-graph-as normalise-height></div>
             <div ng-if="chart.type == 'stackedAreaChart'" stacked-area-chart data="chart.data" options="chart.options" save-graph-as normalise-height></div>
           </div>
-        </div>
       </div>
     </div>
 
