@@ -35,9 +35,9 @@
         <export-all-data charts="state.chartsForDataExport" name="Cost coverage outcome" ng-if="graphs || ccGraph"></export-all-data>
         <h1>{{ccGraph.options.title}}</h1>
         <div class="section elastic">
-          <div class="elastic_col __shrink" ng-if="state.props">
+          <div class="elastic_col __shrink" ng-if="state.costCoverageChart">
             <div class="chart-container">
-              <div mpld3-chart="state.props" chart-toolbar></div>
+              <div mpld3-chart="state.costCoverageChart" chart-toolbar></div>
             </div>
           </div>
           <div class="elastic_col">
@@ -193,13 +193,13 @@
 
               <div class="elastic_col __shrink" style="width: 320px">
                 <div class="chart-container">
-                  <div mpld3-chart="state.fig_co[$index]" chart-toolbar></div>
+                  <div mpld3-chart="state.coverageOutcomeCharts[$index]" chart-toolbar></div>
                 </div>
               </div>
 
               <div class="elastic_col" style="width: 340px">
                 <div class="chart-container">
-                  <div mpld3-chart="state.fig[$index]" chart-toolbar></div>
+                  <div mpld3-chart="state.costOutcomeCharts[$index]" chart-toolbar></div>
                 </div>
               </div>
 
