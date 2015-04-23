@@ -35,15 +35,11 @@
         <export-all-data charts="state.chartsForDataExport" name="Cost coverage outcome" ng-if="graphs || ccGraph"></export-all-data>
         <h1>{{ccGraph.options.title}}</h1>
         <div class="section elastic">
-          <div class="elastic_col __shrink" ng-if="ccGraph.data">
+          <div class="elastic_col __shrink" ng-if="state.props">
             <div class="chart-container">
-              <div line-area-scatter-chart data="ccGraph.data" options="ccGraph.options" chart-toolbar="{ reset: false }"></div>
+              <div mpld3-chart chart="state.props" chart-toolbar></div>
             </div>
           </div>
-          <div class="chart-container">
-            <div mpld3-chart chart="state.props" chart-toolbar></div>
-          </div>
-        </div>
           <div class="elastic_col">
             <div class="section">
               <form name="state.CostCoverageForm">
