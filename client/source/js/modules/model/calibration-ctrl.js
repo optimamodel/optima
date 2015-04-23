@@ -2,7 +2,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ModelCalibrationController', function ($scope, $http, $interval,
-    Model, parameters, meta, info, CONFIG, typeSelector, cfpLoadingBar, calibration) {
+    Model, parameters, meta, info, CONFIG, typeSelector, cfpLoadingBar, calibration, modalService) {
 
     // In case there is no model data the controller only needs to show the
     // warning that the user should upload a spreadsheet with data.
@@ -27,6 +27,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     var initialize = function() {
       $scope.projectInfo = info;
       $scope.canDoFitting = false;
+
+      $scope.hasSpreadsheet = info.data_upload_time? true: false; 
 
       $scope.types = typeSelector.types;
 
@@ -75,9 +77,13 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      * Reloads the page after that.
      */
     $scope.reloadSpreadsheet = function () {
+      if(!$scope.hasSpreadsheet) { 
+        modalService.inform(undefined,undefined,"Sorry, no spreadsheet was uploaded for this project."); 
+      } else {
       $http.get('/api/model/reloadSpreadsheet/' + info.id)
         .success(function (response) {
           window.location.reload();});
+      }
     };
 
     /**
