@@ -280,7 +280,6 @@ define(['angular', 'jquery', './svg-to-png', 'underscore'], function (angular, $
      * @param {object} chart - an object which must contain the Mpld3 chart data.
      */
     var getMpld3ExportableFrom = function (chart) {
-      console.log(chart);
       if(!chart.data) { return null; }
 
       var exportable = {
