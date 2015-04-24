@@ -12,7 +12,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       $scope.initialize = function () {
         $scope.$on('$destroy', function () {
-          // Make sure that the interval is terminated whe this controller is destroyed
+          // Make sure that the interval is terminated when this controller is destroyed
           stopTimer();
         });
 
@@ -948,7 +948,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       }
     };
 
-    // apply default optimization on page load
+    /*
+     * Apply default optimization on page load.
+     */
     $scope.initOptimizations = function (optimizations, name, overwriteParams) {
       if (!optimizations) return;
 
