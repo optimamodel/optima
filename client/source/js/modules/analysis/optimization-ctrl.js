@@ -24,13 +24,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.$watch('state.stackedBarChart', updateChartsForDataExport, true);
       $scope.$watch('state.multipleBudgetsChart', updateChartsForDataExport, true);
       $scope.$watch('types.plotUncertainties', updateChartsForDataExport, true);
-      $scope.$watch('activeTab', $scope.checkExistingOptimization, true);
+      $scope.$watch('state.activeTab', $scope.checkExistingOptimization, true);
 
       $scope.chartsForDataExport = [];
       $scope.meta = meta;
       $scope.types = typeSelector.types;
       $scope.needData = $scope.meta.progs === undefined;
-      $scope.activeTab = 1;
 
       $scope.moneyObjectives = [
         { id: 'inci', title: 'Reduce the annual incidence of HIV' },
@@ -52,6 +51,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       // always create a child scope & the reference can get lost.
       // see https://github.com/angular/angular.js/wiki/Understanding-Scopes
       $scope.state = {
+        activeTab: 1,
         activeOptimizationName: undefined,
         isTestRun: false,
         timelimit: 3600
@@ -712,7 +712,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.setActiveTab = function (tabNum) {
-      $scope.activeTab = tabNum;
+      $scope.state.activeTab = tabNum;
     };
 
     $scope.initTimer = function (status) {
