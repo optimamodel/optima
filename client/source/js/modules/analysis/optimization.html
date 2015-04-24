@@ -33,11 +33,11 @@
         </button>
 
         <button
-          class="btn __white" 
-          ng-class="{ __active: state.activeTab === 3 }" 
+          class="btn __white"
+          ng-class="{ __active: state.activeTab === 3 }"
           ng-click="setActiveTab(3)"
           ng-disabled="
-            state.periodForm.$invalid 
+            state.periodForm.$invalid
             || (params.objectives.funding == 'constant' && state.fixedBudgetForm.$invalid)
             || (params.objectives.funding == 'variable' && state.variableBudgetForm.$invalid)
             || (params.objectives.funding == 'range' && state.fixedBudgetRangeForm.$invalid)
@@ -110,7 +110,7 @@
                   <div class="error-hint" ng-message="max">The maximum value is 2100</div>
                   <div class="error-hint" ng-message="number">The value should be a number</div>
                 </div>
-              </ng-form>              
+              </ng-form>
 
             <div>
               <label>
@@ -203,28 +203,28 @@
           <div class="float-left margin-left-s">
             <!-- <ng-form name="fundingAssumptionsForm"> -->
 
-              <div 
+              <div
                   ng-messages="state.fixedBudgetForm.budgetValue.$error"
                   ng-show="params.objectives.funding==='constant' && state.fixedBudgetForm.$dirty && state.fixedBudgetForm.budgetValue.$invalid">
                 <div class="error-hint" ng-message="required">Please provide a budget value</div>
                 <div class="error-hint" ng-message="number">Please only a numeric value</div>
               </div>
 
-              <div 
+              <div
                   ng-messages="variableBudgetForm.$invalid"
                   ng-show="params.objectives.funding==='variable' && variableBudgetForm.$dirty && variableBudgetForm.$invalid">
                 <div class="error-hint" ng-show="variableBudgetForm.$dirty && variableBudgetForm.$invalid">Bugdets for all years are required</div>
                 <!-- <div class="error-hint" ng-message="number">Please only numeric values</div> -->
               </div>
 
-              <div 
+              <div
                   ng-messages="state.fixedBudgetRangeForm.budgetRangeMin.$error"
                   ng-show="state.fixedBudgetRangeForm.$dirty && state.fixedBudgetRangeForm.budgetRangeMin.$invalid">
                 <div class="error-hint" ng-message="required">The minimum budget is required</div>
                 <div class="error-hint" ng-message="number">Please only numeric values</div>
               </div>
 
-              <div 
+              <div
                   ng-messages="state.fixedBudgetRangeForm.budgetRangeMax.$error"
                   ng-show="state.fixedBudgetRangeForm.$dirty && state.fixedBudgetRangeForm.budgetRangeMax.$invalid">
                 <div class="error-hint" ng-message="required">The maximum budget is required</div>
@@ -232,7 +232,7 @@
                 <div class="error-hint" ng-message="number">Please only numeric values</div>
               </div>
 
-              <div 
+              <div
                   ng-messages="state.fixedBudgetRangeForm.budgetRangeStep.$error"
                   ng-show="params.objectives.funding==='range' && state.fixedBudgetRangeForm.$dirty && state.fixedBudgetRangeForm.budgetRangeStep.$invalid">
                 <div class="error-hint" ng-message="required">The budget step is required</div>
@@ -255,14 +255,16 @@
                 </label>
               </ng-form>
               <label class="checkbox-inline" style="padding:0 0 0 40px;">
-                <input 
-                  type="checkbox" 
+                <input
+                  type="checkbox"
                   ng-model="params.objectives.timevarying"
                   ng-disabled="params.objectives.funding!='constant'">
                 Allow time-varying optimization
               </label>
+
               <br/>
-              <label style="padding:0 0 0 20px;">
+
+              <label>
                 <input type="radio" name="fundingAssumptions" value="variable"
                        ng-model="params.objectives.funding"
                        ng-change="updateYearRange()"/>
@@ -283,6 +285,7 @@
                   </div>
                 </ng-form>
               </label>
+
               <label class="checkbox-inline">
                 <input type="radio" name="fundingAssumptions" ng-model="params.objectives.funding" value="range"/>
                 Optimize a range of fixed budgets from amount
