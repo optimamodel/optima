@@ -39,9 +39,14 @@
         </export-all-data>
         <h1>{{ state.costCoverageChartTitle }}</h1>
         <div class="section elastic">
-          <div class="elastic_col __shrink" ng-if="state.costCoverageChart">
-            <div class="chart-container">
+          <div class="elastic_col __shrink" style="width: 337px">
+            <div class="chart-container" ng-if="state.costCoverageChart">
               <div mpld3-chart="state.costCoverageChart" chart-toolbar></div>
+            </div>
+            <div class="chart-container"
+                 ng-if="!state.costCoverageChart"
+                 style="text-align: center; height: 225px; padding-top: 105px;">
+              <span>Loading …</span>
             </div>
           </div>
           <div class="elastic_col">
