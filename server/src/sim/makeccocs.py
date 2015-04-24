@@ -34,9 +34,10 @@ def makecc(D=None, progname=None, ccparams=None, arteligcutoff=None, verbose=def
     prognumber = [p['name'] for p in D['programs']].index(progname) # get program number    
     if not (isinstance(arteligcutoff,str)):
         print('Assuming universal ART coverage since not otherwise specified....')
-        arteligcutoff = D['G']['healthstates'][0]
-    states, artindex = range(D['G']['nstates']), []
-    for i in range(len(D['G'][arteligcutoff])-1): artindex.extend(states[D['G'][arteligcutoff][i+1]:D['G'][D['G']['healthstates'][-1]][i+1]+1])
+        artindex = range(D['G']['nstates'])[1::]
+    else:
+        states, artindex = range(D['G']['nstates']), []
+        for i in range(len(D['G'][arteligcutoff])-1): artindex.extend(states[D['G'][arteligcutoff][i+1]:D['G'][D['G']['healthstates'][-1]][i+1]+1])
     if verbose>=2: print('makecc %s %s' % (progname, ccparams))
 
     # If ccparams haven't been passed in but there's something stored in D, use the stored version
