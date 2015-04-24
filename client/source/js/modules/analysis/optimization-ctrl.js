@@ -1,5 +1,5 @@
 /**
- * Honest comment: this controller is doing way too much and this comment will improve once 
+ * Honest comment: this controller is doing way too much and this comment will improve once
  * 'someone' reverse engineers this tech debt and care to do the right thing for a change.
  */
 
@@ -113,29 +113,29 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         $scope.params.constraints.coverage = [];
 
         // Initialize program constraints models
-        for ( var i = 0; i < meta.progs.short.length; i++ ) {
-          $scope.params.constraints.yeardecrease[i] = {};
-          $scope.params.constraints.yeardecrease[i].use = false;
-          $scope.params.constraints.yeardecrease[i].by = 100;
+        for ( var j = 0; j < meta.progs.short.length; j++ ) {
+          $scope.params.constraints.yeardecrease[j] = {};
+          $scope.params.constraints.yeardecrease[j].use = false;
+          $scope.params.constraints.yeardecrease[j].by = 100;
 
-          $scope.params.constraints.yearincrease[i] = {};
-          $scope.params.constraints.yearincrease[i].use = false;
-          $scope.params.constraints.yearincrease[i].by = 100;
+          $scope.params.constraints.yearincrease[j] = {};
+          $scope.params.constraints.yearincrease[j].use = false;
+          $scope.params.constraints.yearincrease[j].by = 100;
 
-          $scope.params.constraints.totaldecrease[i] = {};
-          $scope.params.constraints.totaldecrease[i].use = false;
-          $scope.params.constraints.totaldecrease[i].by = 100;
+          $scope.params.constraints.totaldecrease[j] = {};
+          $scope.params.constraints.totaldecrease[j].use = false;
+          $scope.params.constraints.totaldecrease[j].by = 100;
 
-          $scope.params.constraints.totalincrease[i] = {};
-          $scope.params.constraints.totalincrease[i].use = false;
-          $scope.params.constraints.totalincrease[i].by = 100;
+          $scope.params.constraints.totalincrease[j] = {};
+          $scope.params.constraints.totalincrease[j].use = false;
+          $scope.params.constraints.totalincrease[j].by = 100;
 
-          $scope.params.constraints.coverage[i] = {};
-          $scope.params.constraints.coverage[i].use = false;
-          $scope.params.constraints.coverage[i].level = 0;
-          $scope.params.constraints.coverage[i].year = undefined;
+          $scope.params.constraints.coverage[j] = {};
+          $scope.params.constraints.coverage[j].use = false;
+          $scope.params.constraints.coverage[j].level = 0;
+          $scope.params.constraints.coverage[j].year = undefined;
         }
-      };
+      }
 
         $scope.validations = {
           fixedBudget: {
@@ -144,7 +144,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             condition: function () { return $scope.params.objectives.funding === 'constant'; }
           },
           variableBudget: {
-            valid: function () { return validateVariableBudgets()},
+            valid: function () { return validateVariableBudgets(); },
             message: "Please enter a budget for each year.",
             condition: function () { return $scope.params.objectives.funding === 'variable'; }
           },
@@ -605,7 +605,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         typeSelector.enableAnnualCostOptions($scope.state.types, data.plot[0].multi);
         drawGraphs();
       }
-    };
+    }
 
     /* If some of the budgets are undefined, return false */
     function validateVariableBudgets () {
@@ -652,9 +652,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     }
 
     /**
-    * Evaluates the conditions defined in $scope.validations and when there is one that do not pass, 
-    * it adds its message with feedback for the user to the errorMessages array.
-    */
+     * Evaluates the conditions defined in $scope.validations and when there is
+     * one that do not pass, it adds its message with feedback for the user to
+     * the errorMessages array.
+     */
     function checkValidation () {
       errorMessages = [];
       _($scope.validations).each( function (validation) {
@@ -662,7 +663,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           errorMessages.push({message:validation.message});
         }
       });
-    };
+    }
 
     /**
      * Returns true if at least one chart is available
@@ -766,7 +767,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.checkExistingOptimization = function (newTab, oldTab) {
-      if(newTab !=3) {
+      if(newTab !== 3) {
         stopTimer();
       } else {
         checkWorkingOptimization();
