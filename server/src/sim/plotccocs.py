@@ -28,8 +28,8 @@ coverage_params = ['numost','numpmtct','numfirstline','numsecondline']
 ###############################################################################
 from makeccocs import makecc, makeco, makecco
 ###############################################################################
-def plot_cost_coverage(plotdata_cc, figsize=None):
-    """ Actually plot cost-coverage curve"""
+def plot_cost_coverage(plotdata, figsize=None):
+    """ Plot the cost-coverage figure """
 
     cost_coverage_figure = None
     if figsize:
@@ -41,37 +41,37 @@ def plot_cost_coverage(plotdata_cc, figsize=None):
 
     axis = cost_coverage_figure.gca()
 
-    if 'xlinedata' in plotdata_cc.keys():
+    if 'xlinedata' in plotdata.keys():
         axis.plot(
-            plotdata_cc['xlinedata'],
-            plotdata_cc['ylinedata'][1],
+            plotdata['xlinedata'],
+            plotdata['ylinedata'][1],
             linestyle='--',
             linewidth=2,
             color='#000000')
         axis.plot(
-            plotdata_cc['xlinedata'],
-            plotdata_cc['ylinedata'][0],
+            plotdata['xlinedata'],
+            plotdata['ylinedata'][0],
             linestyle='-',
             linewidth=2,
             color='#a6cee3')
         axis.plot(
-            plotdata_cc['xlinedata'],
-            plotdata_cc['ylinedata'][2],
+            plotdata['xlinedata'],
+            plotdata['ylinedata'][2],
             linestyle='--',
             linewidth=2,
             color='#000000')
     axis.scatter(
-        plotdata_cc['xscatterdata'],
-        plotdata_cc['yscatterdata'],
+        plotdata['xscatterdata'],
+        plotdata['yscatterdata'],
         color='#666666')
 
-    axis.set_xlim([plotdata_cc['xlowerlim'],plotdata_cc['xupperlim']])
-    axis.set_ylim([plotdata_cc['ylowerlim'],plotdata_cc['yupperlim']])
+    axis.set_xlim([plotdata['xlowerlim'], plotdata['xupperlim']])
+    axis.set_ylim([plotdata['ylowerlim'], plotdata['yupperlim']])
     axis.tick_params(axis='both', which='major', labelsize=11)
-    axis.set_xlabel(plotdata_cc['xlabel'], fontsize=11)
-    axis.set_ylabel(plotdata_cc['ylabel'], fontsize=11)
+    axis.set_xlabel(plotdata['xlabel'], fontsize=11)
+    axis.set_ylabel(plotdata['ylabel'], fontsize=11)
     axis.get_xaxis().set_major_locator(MaxNLocator(nbins=3))
-    axis.set_title(plotdata_cc['title'])
+    axis.set_title(plotdata['title'])
 
     # clear all plugins from the figure
     plugins.clear(cost_coverage_figure)
@@ -85,16 +85,16 @@ def plot_cost_coverage(plotdata_cc, figsize=None):
 
 
 def plotcc(D, progname=default_progname, ccparams=default_ccparams, arteligcutoff=default_arteligcutoff):
-    ''' Plot cost-coverage curve'''
+    """ Generate cost-coverage data and plot it. """
 
     plotdata_cc, D = makecc(D, progname=progname, ccparams=ccparams, arteligcutoff=arteligcutoff)
     return plot_cost_coverage(plotdata_cc)
 
 ###############################################################################
-def plot_coverage_outcome(plotdata_co, figsize = None):
-    """ Actually Plot coverage-outcome curve"""
+def plot_coverage_outcome(plotdata, figsize = None):
+    """ Plot the coverage-outcome figure """
     coverage_outcome_figure = None
-    if plotdata_co:
+    if plotdata:
         if figsize:
             coverage_outcome_figure = figure(figsize = figsize, dpi=100)
         else:
@@ -103,37 +103,37 @@ def plot_coverage_outcome(plotdata_co, figsize = None):
 
         axis = coverage_outcome_figure.gca()
 
-        if 'xlinedata' in plotdata_co.keys():
+        if 'xlinedata' in plotdata.keys():
             axis.plot(
-                plotdata_co['xlinedata'],
-                plotdata_co['ylinedata'][0],
+                plotdata['xlinedata'],
+                plotdata['ylinedata'][0],
                 linestyle='-',
                 linewidth=2,
                 color='#a6cee3')
             axis.plot(
-                plotdata_co['xlinedata'],
-                plotdata_co['ylinedata'][1],
+                plotdata['xlinedata'],
+                plotdata['ylinedata'][1],
                 linestyle='--',
                 linewidth=2,
                 color='#000000')
             axis.plot(
-                plotdata_co['xlinedata'],
-                plotdata_co['ylinedata'][2],
+                plotdata['xlinedata'],
+                plotdata['ylinedata'][2],
                 linestyle='--',
                 linewidth=2,
                 color='#000000')
         axis.scatter(
-            plotdata_co['xscatterdata'],
-            plotdata_co['yscatterdata'],
+            plotdata['xscatterdata'],
+            plotdata['yscatterdata'],
             color='#666666')
 
-        axis.set_title(plotdata_co['title'])
+        axis.set_title(plotdata['title'])
         axis.tick_params(axis='both', which='major', labelsize=11)
-        axis.set_xlabel(plotdata_co['xlabel'], fontsize=11)
-        axis.set_ylabel(plotdata_co['ylabel'], fontsize=11)
+        axis.set_xlabel(plotdata['xlabel'], fontsize=11)
+        axis.set_ylabel(plotdata['ylabel'], fontsize=11)
         axis.get_xaxis().set_major_locator(MaxNLocator(nbins=3))
-        axis.set_xlim([plotdata_co['xlowerlim'],plotdata_co['xupperlim']])
-        axis.set_ylim([plotdata_co['ylowerlim'],plotdata_co['yupperlim']])
+        axis.set_xlim([plotdata['xlowerlim'], plotdata['xupperlim']])
+        axis.set_ylim([plotdata['ylowerlim'], plotdata['yupperlim']])
 
         # clear all plugins from the figure
         plugins.clear(coverage_outcome_figure)
@@ -147,16 +147,17 @@ def plot_coverage_outcome(plotdata_co, figsize = None):
 
 
 def plotco(D, progname=default_progname, effect=default_effect, coparams=default_coparams, arteligcutoff=default_arteligcutoff):
-    ''' Plot coverage-outcome curve'''
+    """ Generate coverage-outcome data and plot it. """
 
     plotdata_co, effect = makeco(D=D, progname=progname, effect=effect, coparams=coparams, arteligcutoff=arteligcutoff)
     return plot_coverage_outcome(plotdata_co)
 
 #################################################################################
-def plot_cost_outcome(plotdata_cco, figsize = None):
-    """ Actually plot cost-outcome curve"""
+def plot_cost_outcome(plotdata, figsize = None):
+    """ Plot the cost-outcome figure """
+
     cost_outcome_figure = None
-    if plotdata_cco:
+    if plotdata:
         if figsize:
             cost_outcome_figure = figure(figsize = figsize, dpi=100)
         else:
@@ -165,37 +166,37 @@ def plot_cost_outcome(plotdata_cco, figsize = None):
 
         axis = cost_outcome_figure.gca()
 
-        if 'xlinedata' in plotdata_cco.keys():
+        if 'xlinedata' in plotdata.keys():
             axis.plot(
-                plotdata_cco['xlinedata'],
-                plotdata_cco['ylinedata'][0],
+                plotdata['xlinedata'],
+                plotdata['ylinedata'][0],
                 linestyle='-',
                 linewidth=2,
                 color='#a6cee3')
             axis.plot(
-                plotdata_cco['xlinedata'],
-                plotdata_cco['ylinedata'][1],
+                plotdata['xlinedata'],
+                plotdata['ylinedata'][1],
                 linestyle='--',
                 linewidth=2,
                 color='#000000')
             axis.plot(
-                plotdata_cco['xlinedata'],
-                plotdata_cco['ylinedata'][2],
+                plotdata['xlinedata'],
+                plotdata['ylinedata'][2],
                 linestyle='--',
                 linewidth=2,
                 color='#000000')
         axis.scatter(
-            plotdata_cco['xscatterdata'],
-            plotdata_cco['yscatterdata'],
+            plotdata['xscatterdata'],
+            plotdata['yscatterdata'],
             color='#666666')
 
-        axis.set_title(plotdata_cco['title'])
+        axis.set_title(plotdata['title'])
         axis.tick_params(axis='both', which='major', labelsize=11)
-        axis.set_xlabel(plotdata_cco['xlabel'], fontsize=11)
-        axis.set_ylabel(plotdata_cco['ylabel'], fontsize=11)
+        axis.set_xlabel(plotdata['xlabel'], fontsize=11)
+        axis.set_ylabel(plotdata['ylabel'], fontsize=11)
         axis.get_xaxis().set_major_locator(MaxNLocator(nbins=3))
-        axis.set_xlim([plotdata_cco['xlowerlim'],plotdata_cco['xupperlim']])
-        axis.set_ylim([plotdata_cco['ylowerlim'],plotdata_cco['yupperlim']])
+        axis.set_xlim([plotdata['xlowerlim'],plotdata['xupperlim']])
+        axis.set_ylim([plotdata['ylowerlim'],plotdata['yupperlim']])
 
         # clear all plugins from the figure
         plugins.clear(cost_outcome_figure)
@@ -209,14 +210,14 @@ def plot_cost_outcome(plotdata_cco, figsize = None):
 
 def plotcco(D, progname=default_progname, effect=default_effect, ccparams=default_ccparams, coparams=default_coparams, \
     arteligcutoff=default_arteligcutoff):
-    ''' Plot cost-outcome curve'''
+    """ Generate cost-outcome data and plot it. """
 
     plotdata_cco, plotdata_co, effect = makecco(D, progname=progname, effect=effect, ccparams=ccparams, coparams=coparams, arteligcutoff=arteligcutoff)
     return plot_cost_outcome(plotdata_cco)
 
 #################################################################################
 def plotprogramcurves(D, progname=default_progname, ccparams=default_ccparams, coparams=default_coparams, arteligcutoff=default_arteligcutoff):
-    ''' Plot all curves for a particular program '''
+    """ Plot all figures for a particular program """
 
     plotcc(D, progname=progname, ccparams=ccparams, arteligcutoff=arteligcutoff)
     prognumber = [p['name'] for p in D['programs']].index(progname) # get program number
