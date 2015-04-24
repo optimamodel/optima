@@ -27,8 +27,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     var initialize = function() {
       $scope.projectInfo = info;
       $scope.canDoFitting = false;
-
-      $scope.hasSpreadsheet = info.data_upload_time? true: false; 
+      $scope.hasSpreadsheet = info.data_upload_time ? true : false;
 
       $scope.types = typeSelector.types;
 
@@ -73,16 +72,17 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     /**
-     * Makes the backend to reload the spreadsheet.
-     * Reloads the page after that.
+     * Makes the backend to reload the spreadsheet and reloads the page after that.
      */
     $scope.reloadSpreadsheet = function () {
-      if(!$scope.hasSpreadsheet) { 
-        modalService.inform(undefined,undefined,"Sorry, no spreadsheet was uploaded for this project."); 
+      if(!$scope.hasSpreadsheet) {
+        var message = "Sorry, this project was created without uploading a spreadsheet and therefore can not be reloaded.";
+        modalService.inform(undefined, undefined, message);
       } else {
-      $http.get('/api/model/reloadSpreadsheet/' + info.id)
-        .success(function (response) {
-          window.location.reload();});
+        $http.get('/api/model/reloadSpreadsheet/' + info.id)
+          .success(function (response) {
+            window.location.reload();
+          });
       }
     };
 
