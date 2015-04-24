@@ -64,7 +64,10 @@
 
               <ng-form name="state.periodForm">
                 Analyses will consider program optimizations over the period
-                <input type="number" class="txbox __inline __l" value="2015" placeholder="e.g. 2015"
+                <input type="number"
+                       class="txbox __inline __l"
+                       value="2015"
+                       placeholder="e.g. 2015"
                        ng-model="params.objectives.year.start"
                        ng-change="updateYearRange()"
                        min="1950"
@@ -73,7 +76,10 @@
                        name="periodStart"
                        required>
                 to
-                <input type="number" class="txbox __inline __l" value="2020" placeholder="e.g. 2020"
+                <input type="number"
+                       class="txbox __inline __l"
+                       value="2020"
+                       placeholder="e.g. 2020"
                        ng-model="params.objectives.year.end"
                        ng-change="updateYearRange()"
                        min="1950"
@@ -82,7 +88,10 @@
                        name="periodEnd"
                        required>
                 in order to achieve the objectives by
-                <input type="number" class="txbox __inline __l" value="2030" placeholder="e.g. 2030"
+                <input type="number"
+                       class="txbox __inline __l"
+                       value="2030"
+                       placeholder="e.g. 2030"
                        ng-model="params.objectives.year.until"
                        ng-change="updateYearRange()"
                        min="1950"
