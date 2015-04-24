@@ -258,9 +258,14 @@
 
               <ng-form name="state.fixedBudgetForm">
                 <label class="checkbox-inline">
-                  <input type="radio" name="fundingAssumptions" ng-model="params.objectives.funding" value="constant"/>
+                  <input type="radio"
+                         name="fundingAssumptions"
+                         ng-model="params.objectives.funding"
+                         value="constant"
+                         required />
                   Optimize a fixed budget of total amount
-                  <input type="number" class="txbox __inline __l"
+                  <input type="number"
+                         class="txbox __inline __l"
                          ng-required="params.objectives.funding==='constant'"
                          ng-model="params.objectives.outcome.fixed"
                          min="0"
@@ -280,9 +285,12 @@
               <br/>
 
               <label>
-                <input type="radio" name="fundingAssumptions" value="variable"
+                <input type="radio"
+                       name="fundingAssumptions"
+                       value="variable"
                        ng-model="params.objectives.funding"
-                       ng-change="updateYearRange()"/>
+                       ng-change="updateYearRange()"
+                       required />
                 Optimize a variable budget for each year in the program period:
                 <br/>
                 <ng-form name="state.variableBudgetForm">
@@ -302,7 +310,11 @@
               </label>
 
               <label class="checkbox-inline">
-                <input type="radio" name="fundingAssumptions" ng-model="params.objectives.funding" value="range"/>
+                <input type="radio"
+                       name="fundingAssumptions"
+                       ng-model="params.objectives.funding"
+                       value="range"
+                       required />
                 Optimize a range of fixed budgets from amount
                 <ng-form name="state.fixedBudgetRangeForm">
                   <input type="number" class="txbox __inline __l"
