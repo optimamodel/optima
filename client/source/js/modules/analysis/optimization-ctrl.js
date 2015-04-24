@@ -10,53 +10,53 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $interval, meta, cfpLoadingBar, CONFIG, modalService, typeSelector,
     optimizations, optimizationHelpers, info) {
 
-      $scope.initialize = function () {
-        $scope.$on('$destroy', function () {
-          // Make sure that the interval is terminated when this controller is destroyed
-          stopTimer();
-        });
+    $scope.initialize = function () {
+      $scope.$on('$destroy', function () {
+        // Make sure that the interval is terminated when this controller is destroyed
+        stopTimer();
+      });
 
-        $scope.$watch('state.pieCharts', updateChartsForDataExport, true);
-        $scope.$watch('state.outcomeChart', updateChartsForDataExport, true);
-        $scope.$watch('state.radarCharts', updateChartsForDataExport, true);
-        $scope.$watch('state.optimisationGraphs', updateChartsForDataExport, true);
-        $scope.$watch('state.financialGraphs', updateChartsForDataExport, true);
-        $scope.$watch('state.stackedBarChart', updateChartsForDataExport, true);
-        $scope.$watch('state.multipleBudgetsChart', updateChartsForDataExport, true);
-        $scope.$watch('types.plotUncertainties', updateChartsForDataExport, true);
-        $scope.$watch('activeTab', $scope.checkExistingOptimization, true);
+      $scope.$watch('state.pieCharts', updateChartsForDataExport, true);
+      $scope.$watch('state.outcomeChart', updateChartsForDataExport, true);
+      $scope.$watch('state.radarCharts', updateChartsForDataExport, true);
+      $scope.$watch('state.optimisationGraphs', updateChartsForDataExport, true);
+      $scope.$watch('state.financialGraphs', updateChartsForDataExport, true);
+      $scope.$watch('state.stackedBarChart', updateChartsForDataExport, true);
+      $scope.$watch('state.multipleBudgetsChart', updateChartsForDataExport, true);
+      $scope.$watch('types.plotUncertainties', updateChartsForDataExport, true);
+      $scope.$watch('activeTab', $scope.checkExistingOptimization, true);
 
-        $scope.chartsForDataExport = [];
-        $scope.meta = meta;
-        $scope.types = typeSelector.types;
-        $scope.needData = $scope.meta.progs === undefined;
-        $scope.activeTab = 1;
+      $scope.chartsForDataExport = [];
+      $scope.meta = meta;
+      $scope.types = typeSelector.types;
+      $scope.needData = $scope.meta.progs === undefined;
+      $scope.activeTab = 1;
 
-        $scope.moneyObjectives = [
-          { id: 'inci', title: 'Reduce the annual incidence of HIV' },
-          { id: 'incisex', title: 'Reduce the annual incidence of sexually transmitted HIV' },
-          { id: 'inciinj', title: 'Reduce the annual incidence of injecting-related HIV' },
-          { id: 'mtct', title: 'Reduce annual mother-to-child transmission of HIV' },
-          { id: 'mtctbreast', title: 'Reduce annual mother-to-child transmission of HIV among breastfeeding mothers' },
-          { id: 'mtctnonbreast', title: 'Reduce annual mother-to-child transmission of HIV among non-breastfeeding mothers' },
-          { id: 'deaths', title: 'Reduce annual AIDS-related deaths' },
-          { id: 'dalys', title: 'Reduce annual HIV-related DALYs' }
-        ];
+      $scope.moneyObjectives = [
+        { id: 'inci', title: 'Reduce the annual incidence of HIV' },
+        { id: 'incisex', title: 'Reduce the annual incidence of sexually transmitted HIV' },
+        { id: 'inciinj', title: 'Reduce the annual incidence of injecting-related HIV' },
+        { id: 'mtct', title: 'Reduce annual mother-to-child transmission of HIV' },
+        { id: 'mtctbreast', title: 'Reduce annual mother-to-child transmission of HIV among breastfeeding mothers' },
+        { id: 'mtctnonbreast', title: 'Reduce annual mother-to-child transmission of HIV among non-breastfeeding mothers' },
+        { id: 'deaths', title: 'Reduce annual AIDS-related deaths' },
+        { id: 'dalys', title: 'Reduce annual HIV-related DALYs' }
+      ];
 
-        $scope.optimizationStatus = statusEnum.NOT_RUNNING;
-        $scope.optimizations = [];
-        $scope.isDirty = false;
+      $scope.optimizationStatus = statusEnum.NOT_RUNNING;
+      $scope.optimizations = [];
+      $scope.isDirty = false;
 
-        // According to angular best-practices we should wrap every object/value
-        // inside a wrapper object. This is due the fact that directives like ng-if
-        // always create a child scope & the reference can get lost.
-        // see https://github.com/angular/angular.js/wiki/Understanding-Scopes
-        $scope.state = {
-          activeOptimizationName: undefined,
-          isTestRun: false,
-          timelimit: 3600
-        };
-        resetCharts();
+      // According to angular best-practices we should wrap every object/value
+      // inside a wrapper object. This is due the fact that directives like ng-if
+      // always create a child scope & the reference can get lost.
+      // see https://github.com/angular/angular.js/wiki/Understanding-Scopes
+      $scope.state = {
+        activeOptimizationName: undefined,
+        isTestRun: false,
+        timelimit: 3600
+      };
+      resetCharts();
 
       // In case there is no model data the controller only needs to show the
       // warning that the user should upload a spreadsheet with data.
@@ -137,67 +137,67 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         }
       }
 
-        $scope.validations = {
-          fixedBudget: {
-            valid: function () { return $scope.params.objectives.outcome.fixed !== undefined; },
-            message: 'Please enter a value for the fixed budget.',
-            condition: function () { return $scope.params.objectives.funding === 'constant'; }
-          },
-          variableBudget: {
-            valid: function () { return validateVariableBudgets(); },
-            message: "Please enter a budget for each year.",
-            condition: function () { return $scope.params.objectives.funding === 'variable'; }
-          },
-          budgetType: {
-            valid: function () { return $scope.params.objectives.funding!==undefined; },
-            message: "Please pick at least one budget type."
-          },
-          objectivesToMinimizeCount: {
-            valid: function () { return validateObjectivesToMinimize().valid; },
-            message: "You must pick at least one objective to minimize."
-          },
-          objectivesOutcomeWeights: {
-            valid: function () {return validateOutcomeWeights().valid; },
-            message: "You must specify the weighting parameters for all objectives to minimize."
-          }
-        };
-
-        $scope.objectivesToMinimize = [
-          {
-            name:"Cumulative new HIV infections",
-            slug:"inci",
-            title: "New infections weighting"
-          },
-          {
-            name:"Cumulative DALYs",
-            slug: "daly",
-            title:"DALYs weighting"
-          },
-          {
-            name:" Cumulative AIDS-related deaths",
-            slug:"death",
-            title:"Deaths weighting"
-          },
-          {
-            name:"Total HIV-related costs",
-            slug:"cost",
-            title:"Costs weighting"
-          }
-        ];
-
-        $scope.validateVariableBudgets = validateVariableBudgets;
-        $scope.validateObjectivesToMinimize = validateObjectivesToMinimize;
-        $scope.validateOutcomeWeights = validateOutcomeWeights;
-
-        // The graphs are shown/hidden after updating the graph type checkboxes.
-        $scope.$watch('types', drawGraphs, true);
-        $scope.yearLoop = [];
-        $scope.yearCols = [];
-
-        // apply existing optimization data, if present
-        if (optimizations && optimizations.data) {
-          $scope.initOptimizations(optimizations.data.optimizations, undefined, true);
+      $scope.validations = {
+        fixedBudget: {
+          valid: function () { return $scope.params.objectives.outcome.fixed !== undefined; },
+          message: 'Please enter a value for the fixed budget.',
+          condition: function () { return $scope.params.objectives.funding === 'constant'; }
+        },
+        variableBudget: {
+          valid: function () { return validateVariableBudgets(); },
+          message: "Please enter a budget for each year.",
+          condition: function () { return $scope.params.objectives.funding === 'variable'; }
+        },
+        budgetType: {
+          valid: function () { return $scope.params.objectives.funding!==undefined; },
+          message: "Please pick at least one budget type."
+        },
+        objectivesToMinimizeCount: {
+          valid: function () { return validateObjectivesToMinimize().valid; },
+          message: "You must pick at least one objective to minimize."
+        },
+        objectivesOutcomeWeights: {
+          valid: function () {return validateOutcomeWeights().valid; },
+          message: "You must specify the weighting parameters for all objectives to minimize."
         }
+      };
+
+      $scope.objectivesToMinimize = [
+        {
+          name:"Cumulative new HIV infections",
+          slug:"inci",
+          title: "New infections weighting"
+        },
+        {
+          name:"Cumulative DALYs",
+          slug: "daly",
+          title:"DALYs weighting"
+        },
+        {
+          name:" Cumulative AIDS-related deaths",
+          slug:"death",
+          title:"Deaths weighting"
+        },
+        {
+          name:"Total HIV-related costs",
+          slug:"cost",
+          title:"Costs weighting"
+        }
+      ];
+
+      $scope.validateVariableBudgets = validateVariableBudgets;
+      $scope.validateObjectivesToMinimize = validateObjectivesToMinimize;
+      $scope.validateOutcomeWeights = validateOutcomeWeights;
+
+      // The graphs are shown/hidden after updating the graph type checkboxes.
+      $scope.$watch('types', drawGraphs, true);
+      $scope.yearLoop = [];
+      $scope.yearCols = [];
+
+      // apply existing optimization data, if present
+      if (optimizations && optimizations.data) {
+        $scope.initOptimizations(optimizations.data.optimizations, undefined, true);
+      }
     };
 
     var errorMessages = [];
