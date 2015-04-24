@@ -230,7 +230,11 @@ define(['./module', 'underscore'], function (module, _) {
 
         $http.post('/api/model/costcoverage/effect', model).success(function (response) {
           $scope.state.costOutcomeCharts[graphIndex] = response.fig_cco;
+          $scope.state.costOutcomeCharts[graphIndex].axes[0].texts.splice(2, 1);
+
           $scope.state.coverageOutcomeCharts[graphIndex] = response.fig_co;
+          $scope.state.coverageOutcomeCharts[graphIndex].axes[0].texts.splice(2, 1);
+
           effects[graphIndex] = response.effect;
         });
       }

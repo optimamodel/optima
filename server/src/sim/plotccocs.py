@@ -28,7 +28,7 @@ coverage_params = ['numost','numpmtct','numfirstline','numsecondline']
 ###############################################################################
 from makeccocs import makecc, makeco, makecco
 ###############################################################################
-def do_plotcc(plotdata_cc, figsize=None, showTitle=True):
+def do_plotcc(plotdata_cc, figsize=None):
     """ Actually plot cost-coverage curve"""
 
     cost_coverage_figure = None
@@ -71,9 +71,7 @@ def do_plotcc(plotdata_cc, figsize=None, showTitle=True):
     axis.set_xlabel(plotdata_cc['xlabel'], fontsize=11)
     axis.set_ylabel(plotdata_cc['ylabel'], fontsize=11)
     axis.get_xaxis().set_major_locator(MaxNLocator(nbins=3))
-
-    if showTitle:
-        axis.set_title(plotdata_cc['title'])
+    axis.set_title(plotdata_cc['title'])
 
     # clear all plugins from the figure
     plugins.clear(cost_coverage_figure)
@@ -93,7 +91,7 @@ def plotcc(D, progname=default_progname, ccparams=default_ccparams, arteligcutof
     return do_plotcc(plotdata_cc)
 
 ###############################################################################
-def do_plotco(plotdata_co, figsize = None, showTitle=True):
+def do_plotco(plotdata_co, figsize = None):
     """ Actually Plot coverage-outcome curve"""
     coverage_outcome_figure = None
     if plotdata_co:
@@ -129,9 +127,7 @@ def do_plotco(plotdata_co, figsize = None, showTitle=True):
             plotdata_co['yscatterdata'],
             color='#666666')
 
-        if showTitle:
-            axis.set_title(plotdata_co['title'])
-
+        axis.set_title(plotdata_co['title'])
         axis.tick_params(axis='both', which='major', labelsize=11)
         axis.set_xlabel(plotdata_co['xlabel'], fontsize=11)
         axis.set_ylabel(plotdata_co['ylabel'], fontsize=11)
@@ -157,7 +153,7 @@ def plotco(D, progname=default_progname, effect=default_effect, coparams=default
     return do_plotco(plotdata_co)
 
 #################################################################################
-def do_plotcco(plotdata_cco, figsize = None, showTitle=True):
+def do_plotcco(plotdata_cco, figsize = None):
     """ Actually plot cost-outcome curve"""
     cost_outcome_figure = None
     if plotdata_cco:
@@ -192,9 +188,8 @@ def do_plotcco(plotdata_cco, figsize = None, showTitle=True):
             plotdata_cco['xscatterdata'],
             plotdata_cco['yscatterdata'],
             color='#666666')
-        if showTitle:
-            axis.set_title(plotdata_cco['title'])
 
+        axis.set_title(plotdata_cco['title'])
         axis.tick_params(axis='both', which='major', labelsize=11)
         axis.set_xlabel(plotdata_cco['xlabel'], fontsize=11)
         axis.set_ylabel(plotdata_cco['ylabel'], fontsize=11)
