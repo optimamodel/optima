@@ -37,7 +37,7 @@ def do_plotcc(plotdata_cc, figsize=None, showTitle=True):
     else:
         cost_coverage_figure = figure()
 
-    hold(True)
+    cost_coverage_figure.hold(True)
 
     axis = cost_coverage_figure.gca()
 
@@ -64,16 +64,16 @@ def do_plotcc(plotdata_cc, figsize=None, showTitle=True):
         plotdata_cc['xscatterdata'],
         plotdata_cc['yscatterdata'],
         color='#666666')
-    xlim([plotdata_cc['xlowerlim'],plotdata_cc['xupperlim']])
-    ylim([plotdata_cc['ylowerlim'],plotdata_cc['yupperlim']])
 
+    axis.set_xlim([plotdata_cc['xlowerlim'],plotdata_cc['xupperlim']])
+    axis.set_ylim([plotdata_cc['ylowerlim'],plotdata_cc['yupperlim']])
     axis.tick_params(axis='both', which='major', labelsize=11)
     axis.set_xlabel(plotdata_cc['xlabel'], fontsize=11)
     axis.set_ylabel(plotdata_cc['ylabel'], fontsize=11)
     axis.get_xaxis().set_major_locator(MaxNLocator(nbins=3))
 
     if showTitle:
-        title(plotdata_cc['title'])
+        axis.set_title(plotdata_cc['title'])
 
     # clear all plugins from the figure
     plugins.clear(cost_coverage_figure)
@@ -101,7 +101,7 @@ def do_plotco(plotdata_co, figsize = None, showTitle=True):
             coverage_outcome_figure = figure(figsize = figsize, dpi=100)
         else:
             coverage_outcome_figure = figure()
-        hold(True)
+        coverage_outcome_figure.hold(True)
 
         axis = coverage_outcome_figure.gca()
 
@@ -128,16 +128,16 @@ def do_plotco(plotdata_co, figsize = None, showTitle=True):
             plotdata_co['xscatterdata'],
             plotdata_co['yscatterdata'],
             color='#666666')
+
         if showTitle:
-            title(plotdata_co['title'])
+            axis.set_title(plotdata_co['title'])
 
         axis.tick_params(axis='both', which='major', labelsize=11)
         axis.set_xlabel(plotdata_co['xlabel'], fontsize=11)
         axis.set_ylabel(plotdata_co['ylabel'], fontsize=11)
         axis.get_xaxis().set_major_locator(MaxNLocator(nbins=3))
-
-        xlim([plotdata_co['xlowerlim'],plotdata_co['xupperlim']])
-        ylim([plotdata_co['ylowerlim'],plotdata_co['yupperlim']])
+        axis.set_xlim([plotdata_co['xlowerlim'],plotdata_co['xupperlim']])
+        axis.set_ylim([plotdata_co['ylowerlim'],plotdata_co['yupperlim']])
 
         # clear all plugins from the figure
         plugins.clear(coverage_outcome_figure)
@@ -165,7 +165,7 @@ def do_plotcco(plotdata_cco, figsize = None, showTitle=True):
             cost_outcome_figure = figure(figsize = figsize, dpi=100)
         else:
             cost_outcome_figure = figure()
-        hold(True)
+        cost_outcome_figure.hold(True)
 
         axis = cost_outcome_figure.gca()
 
@@ -193,15 +193,14 @@ def do_plotcco(plotdata_cco, figsize = None, showTitle=True):
             plotdata_cco['yscatterdata'],
             color='#666666')
         if showTitle:
-            title(plotdata_cco['title'])
+            axis.set_title(plotdata_cco['title'])
 
         axis.tick_params(axis='both', which='major', labelsize=11)
         axis.set_xlabel(plotdata_cco['xlabel'], fontsize=11)
         axis.set_ylabel(plotdata_cco['ylabel'], fontsize=11)
         axis.get_xaxis().set_major_locator(MaxNLocator(nbins=3))
-
-        xlim([plotdata_cco['xlowerlim'],plotdata_cco['xupperlim']])
-        ylim([plotdata_cco['ylowerlim'],plotdata_cco['yupperlim']])
+        axis.set_xlim([plotdata_cco['xlowerlim'],plotdata_cco['xupperlim']])
+        axis.set_ylim([plotdata_cco['ylowerlim'],plotdata_cco['yupperlim']])
 
         # clear all plugins from the figure
         plugins.clear(cost_outcome_figure)
