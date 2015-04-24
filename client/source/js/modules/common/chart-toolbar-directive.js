@@ -1,5 +1,5 @@
-define(['angular', 'jquery', 'underscore', 'saveAs', 'jsPDF', './svg-to-png', './export-helpers-service'],
-  function (angular, $, _, saveAs, jspdf, svgToPng) {
+define(['angular', 'jquery', 'mpld3', 'underscore', 'saveAs', 'jsPDF', './svg-to-png', './export-helpers-service'],
+  function (angular, $, mpld3, _, saveAs, jspdf, svgToPng) {
   'use strict';
 
   return angular.module('app.chart-toolbar', [])

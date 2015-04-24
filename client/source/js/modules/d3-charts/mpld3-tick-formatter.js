@@ -1,4 +1,4 @@
-define(['./scale-helpers', 'mpld3'], function (scaleHelpers) {
+define(['./scale-helpers', 'mpld3'], function (scaleHelpers, mpld3) {
   'use strict';
 
   function OptimaTickFormatter(fig, props) {

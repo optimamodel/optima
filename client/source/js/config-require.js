@@ -40,6 +40,9 @@ define({
     'saveAs': ['canvas2blob'],
     'ui.bootstrap': ['angular'],
     'ui.router' : ['angular'],
-    'mpld3' : ['d3']
+    'mpld3' : {
+      'deps': ['d3'],
+      'exports': 'mpld3'
+    }
   }
 });

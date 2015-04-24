@@ -1,4 +1,4 @@
-define(['./module','underscore', 'jquery', 'mpld3'], function (module, _, $) {
+define(['./module','underscore', 'jquery', 'mpld3'], function (module, _, $, mpld3) {
   'use strict';
 
   module.directive('mpld3Chart', function () {
