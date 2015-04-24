@@ -249,7 +249,7 @@ define(['./module', 'underscore'], function (module, _) {
         $scope.state.chartsForDataExport.push($scope.state.costCoverageChart);
       }
 
-      var charts = _(_().zip($scope.state.costOutcomeCharts, $scope.state.coverageOutcomeCharts)).flatten();
+      var charts = _(_.zip($scope.state.costOutcomeCharts, $scope.state.coverageOutcomeCharts)).flatten();
       _(charts).each(function (chart) {
         $scope.state.chartsForDataExport.push(chart);
       });
