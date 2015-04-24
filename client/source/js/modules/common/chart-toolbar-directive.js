@@ -64,7 +64,6 @@ define(['angular', 'jquery', 'underscore', 'saveAs', 'jsPDF', './svg-to-png', '.
                 if (figure) {
                   figure.toolbar.fig.reset();
                 }
-
               });
           };
 
@@ -76,7 +75,7 @@ define(['angular', 'jquery', 'underscore', 'saveAs', 'jsPDF', './svg-to-png', '.
           var exportGraphAsSvg = function() {
             var originalStyle;
             var elementId = elem.attr('id');
-            var isMpld3 = elementId.indexOf('mpld3') != -1;
+            var isMpld3 = elementId && elementId.indexOf('mpld3') != -1;
 
             var $originalSvg = elem.parent().find('svg');
             var orginalWidth = $originalSvg.width();
