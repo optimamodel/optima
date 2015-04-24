@@ -1,3 +1,5 @@
+from mpld3 import plugins
+
 def sanitize(arraywithnans):
         """ Sanitize input to remove NaNs. Warning, does not work on multidimensional data!! """
         from numpy import array, isnan
@@ -223,13 +225,25 @@ def checkmem(origvariable, descend=0, order='n', plot=False, verbose=0):
         inds = argsort(printnames)
     else:
         inds = argsort(printbytes)
-    
+
     for v in inds:
         print('Variable %s is %s' % (printnames[v], printsizes[v]))
-    
+
     if plot==True:
         from matplotlib.pylab import pie, array, axes
         axes(aspect=1)
         pie(array(printbytes)[inds], labels=array(printnames)[inds], autopct='%0.2f')
-    
+
     return None
+
+class OptimaTickFormatter(plugins.PluginBase):
+    """
+    Optima Tick Formatter plugin
+
+    Since tickFormatting is not working properly we patch & customise it only in
+    the Front-end. See this issue for more information about the current status
+    of tick customisation: https://github.com/jakevdp/mpld3/issues/22
+    """
+
+    def __init__(self):
+        self.dict_ = {"type": "optimaTickFormatter"}
