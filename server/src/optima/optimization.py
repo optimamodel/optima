@@ -184,12 +184,12 @@ def saveModel():
 @check_project_name
 @check_project_exists
 @report_exception()
-def revertCalibrationModel():
+def revertWorkingModel():
     """ Revert working model to the default model """
     # get project name
     project_id = request.project_id
     D_dict = revert_working_model_to_default(project_id)
-    reply['optimizations'] = D_dict.get('optimizations')
+    reply = {'optimizations': D_dict.get('optimizations')}
     if not reply['optimizations']:
         D = fromjson(D_dict)
         reply['optimizations'] = tojson(defaultoptimizations(D))
