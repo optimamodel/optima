@@ -13,7 +13,7 @@ define(['./module', 'underscore'], function (module, _) {
 
     var effects, programs;
 
-    var initialize =function () {
+    var initialize = function () {
       programs = programsResource.data;
 
       $scope.state = {
@@ -41,7 +41,7 @@ define(['./module', 'underscore'], function (module, _) {
       });
     }
 
-    var resetCharts= function () {
+    var resetCharts = function () {
       $scope.state.costCoverageChart = undefined;
       $scope.state.costCoverageChartTitle = undefined;
       $scope.state.costOutcomeCharts = [];
@@ -78,7 +78,7 @@ define(['./module', 'underscore'], function (module, _) {
     /**
      * Returns true if the param is undefined, null or NaN
      */
-    var isInvalidParam = function(param) {
+    var isInvalidParam = function (param) {
       return param === undefined || param === null || typeof param === "number" && isNaN(param);
     };
 
@@ -155,9 +155,9 @@ define(['./module', 'underscore'], function (module, _) {
       }
 
       var program = findProgram($scope.state.selectedProgram.short_name);
-      $scope.state.saturationCoverageLevel = program.ccparams.saturation ? program.ccparams.saturation * 100 : undefined;
-      $scope.state.knownMinCoverageLevel = program.ccparams.coveragelower ? program.ccparams.coveragelower * 100 : undefined;
-      $scope.state.knownMaxCoverageLevel = program.ccparams.coverageupper ? program.ccparams.coverageupper * 100 : undefined;
+      $scope.state.saturationCoverageLevel = program.ccparams.saturation * 100 || undefined;
+      $scope.state.knownMinCoverageLevel = program.ccparams.coveragelower * 100 || undefined;
+      $scope.state.knownMaxCoverageLevel = program.ccparams.coverageupper * 100 || undefined;
       $scope.state.knownFundingValue = program.ccparams.funding;
       $scope.state.scaleUpParameter = program.ccparams.scaleup;
       $scope.state.nonHivDalys = program.ccparams.nonhivdalys;
@@ -171,12 +171,7 @@ define(['./module', 'underscore'], function (module, _) {
 
     $scope.uploadDefault = function () {
       var message = 'Upload default cost-coverage-outcome curves will be available in a future version of Optima. We are working hard in make it happen for you!';
-      modalService.inform(
-        function () {},
-        'Okay',
-        message,
-        'Thanks for your interest!'
-      );
+      modalService.inform(_.noop, 'Okay', message, 'Thanks for your interest!');
     };
 
     /**
@@ -186,7 +181,7 @@ define(['./module', 'underscore'], function (module, _) {
      */
     $scope.saveModel = function () {
       if($scope.state.CostCoverageForm.$invalid || $scope.state.CombinedAdjustmentForms.$invalid) {
-        modalService.inform(function() {}, 'Ok', 'Please correct all errors on this page before proceeding.', 'Cannot save invalid model');
+        modalService.inform(_.noop, 'Ok', 'Please correct all errors on this page before proceeding.', 'Cannot save invalid model');
         return;
       }
 
@@ -253,8 +248,9 @@ define(['./module', 'underscore'], function (module, _) {
       if ( $scope.state.costCoverageChart ) {
         $scope.state.chartsForDataExport.push($scope.state.costCoverageChart);
       }
-      var charts = _(_.zip($scope.state.costOutcomeCharts, $scope.state.coverageOutcomeCharts)).flatten();
-      _( charts ).each(function (chart) {
+
+      var charts = _(_().zip($scope.state.costOutcomeCharts, $scope.state.coverageOutcomeCharts)).flatten();
+      _(charts).each(function (chart) {
         $scope.state.chartsForDataExport.push(chart);
       });
 
@@ -262,12 +258,12 @@ define(['./module', 'underscore'], function (module, _) {
       if ( $scope.state.costCoverageChartTitle ) {
         $scope.state.titlesForChartsExport.push($scope.state.costCoverageChartTitle);
       }
-      _( $scope.state.outcomeTitles ).each(function (title) {
+
+      _($scope.state.outcomeTitles).each(function (title) {
         // we push two titles as there are cost outcome charts & coverage outcome charts
         $scope.state.titlesForChartsExport.push(title);
         $scope.state.titlesForChartsExport.push(title);
       });
-
     };
 
     /**
