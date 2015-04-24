@@ -59,10 +59,35 @@
 
         <div class="cf">
           <h2>Time horizons and assumptions</h2>
-            <span ng-show="state.periodForm.$invalid" class="error-hint"> Please specify a valid period to optimize the program. </span>
             <div class="float-left margin-left-s">
 
               <ng-form name="state.periodForm">
+                <div ng-messages="state.periodForm.periodStart.$error"
+                     ng-show="state.periodForm.periodStart.$invalid">
+                  <div class="error-hint" ng-message="required">Please provide a value</div>
+                  <div class="error-hint" ng-message="min">The minimum value is 1950</div>
+                  <div class="error-hint" ng-message="max">The maximum value is 2100</div>
+                  <div class="error-hint" ng-message="number">The value should be a number</div>
+
+                </div>
+
+                <div ng-messages="state.periodForm.periodEnd.$error"
+                     ng-show="state.periodForm.periodEnd.$invalid">
+                  <div class="error-hint" ng-message="required">Please provide a value</div>
+                  <div class="error-hint" ng-message="min">The minimum value is 1950</div>
+                  <div class="error-hint" ng-message="max">The maximum value is 2100</div>
+                  <div class="error-hint" ng-message="number">The value should be a number</div>
+                  <div class="error-hint" ng-message="moreThan">The end year must be larger than the start year</div>
+                </div>
+
+                <div ng-messages="state.periodForm.objectivesUntil.$error"
+                     ng-show="state.periodForm.objectivesUntil.$invalid">
+                  <div class="error-hint" ng-message="min">The minimum value is 1950</div>
+                  <div class="error-hint" ng-message="max">The maximum value is 2100</div>
+                  <div class="error-hint" ng-message="number">The value should be a number</div>
+                  <div class="error-hint" ng-message="moreThan">The objectives year must be larger than the start year</div>
+                </div>
+
                 Analyses will consider program optimizations over the period
                 <input type="number"
                        class="txbox __inline __l"
@@ -83,6 +108,7 @@
                        min="1950"
                        max="2100"
                        step="1"
+                       more-than="params.objectives.year.start"
                        name="periodEnd"
                        required>
                 in order to achieve the objectives by
@@ -94,32 +120,11 @@
                        min="1950"
                        max="2100"
                        step="1"
+                       more-than="params.objectives.year.start"
                        name="objectivesUntil"
                        required>
                 , with the following context between the end of the optimized program period and the end of the analysis
                 period:
-                <div ng-messages="state.OptimizationForm.periodStart.$error"
-                     ng-show="state.OptimizationForm.periodStart.$touched && state.OptimizationForm.periodStart.$invalid">
-                  <div class="error-hint" ng-message="required">Please provide a value</div>
-                  <div class="error-hint" ng-message="min">The minimum value is 1950</div>
-                  <div class="error-hint" ng-message="max">The maximum value is 2100</div>
-                  <div class="error-hint" ng-message="number">The value should be a number</div>
-                </div>
-
-                <div ng-messages="state.OptimizationForm.periodEnd.$error"
-                     ng-show="state.OptimizationForm.periodEnd.$touched && state.OptimizationForm.periodEnd.$invalid">
-                  <div class="error-hint" ng-message="required">Please provide a value</div>
-                  <div class="error-hint" ng-message="min">The minimum value is 1950</div>
-                  <div class="error-hint" ng-message="max">The maximum value is 2100</div>
-                  <div class="error-hint" ng-message="number">The value should be a number</div>
-                </div>
-
-                <div ng-messages="state.OptimizationForm.objectivesUntil.$error"
-                     ng-show="state.OptimizationForm.objectivesUntil.$touched && state.OptimizationForm.objectivesUntil.$invalid">
-                  <div class="error-hint" ng-message="min">The minimum value is 1950</div>
-                  <div class="error-hint" ng-message="max">The maximum value is 2100</div>
-                  <div class="error-hint" ng-message="number">The value should be a number</div>
-                </div>
               </ng-form>
 
             <div>
