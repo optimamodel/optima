@@ -148,10 +148,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           message: "Please enter a budget for each year.",
           condition: function () { return $scope.params.objectives.funding === 'variable'; }
         },
-        budgetType: {
-          valid: function () { return $scope.params.objectives.funding!==undefined; },
-          message: "Please pick at least one budget type."
-        },
         objectivesToMinimizeCount: {
           valid: function () { return validateObjectivesToMinimize().valid; },
           message: "You must pick at least one objective to minimize."
