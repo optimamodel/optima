@@ -17,7 +17,7 @@ from signal import *
 from optima.dbconn import db
 from sim.autofit import autofit
 from sim.updatedata import updatedata
-from sim.plotccocs import do_plotcc, do_plotcco, do_plotco
+from sim.plotccocs import plot_cost_coverage, plot_cost_outcome, plot_coverage_outcome
 
 # route prefix: /api/model
 model = Blueprint('model',  __name__, static_folder = '../static')
@@ -327,10 +327,10 @@ def doCostCoverage(): # pylint: disable=R0914
         # effectnames are actually effects
         figsize = (3,2)
         plotdata_cco, plotdata_co, plotdata_cc, effectnames, D = plotallcurves(**args)
-        fig_cc = do_plotcc(plotdata_cc, figsize)
+        fig_cc = plot_cost_coverage(plotdata_cc, figsize)
         dict_fig_cc = mpld3.fig_to_dict(fig_cc)
-        dict_fig_co = map(lambda key: mpld3.fig_to_dict(do_plotco(plotdata_co[key], figsize)), plotdata_co.keys())
-        dict_fig_cco = map(lambda key: mpld3.fig_to_dict(do_plotcco(plotdata_cco[key], figsize)), plotdata_cco.keys())
+        dict_fig_co = map(lambda key: mpld3.fig_to_dict(plot_coverage_outcome(plotdata_co[key], figsize)), plotdata_co.keys())
+        dict_fig_cco = map(lambda key: mpld3.fig_to_dict(plot_cost_outcome(plotdata_cco[key], figsize)), plotdata_cco.keys())
         if do_save:
             D_dict = tojson(D)
             save_model(request.project_id, D_dict)
@@ -362,9 +362,9 @@ def doCostCoverageEffect():
         # effectnames are actually effects
         figsize = (3,2)
         plotdata, plotdata_co, _ = makecco(**args) # plotdata is actually plotdata_cco
-        fig_co = do_plotco(plotdata_co, figsize)
+        fig_co = plot_coverage_outcome(plotdata_co, figsize)
         dict_fig_co = mpld3.fig_to_dict(fig_co)
-        fig_cco = do_plotcco(plotdata, figsize)
+        fig_cco = plot_cost_outcome(plotdata, figsize)
         dict_fig_cco = mpld3.fig_to_dict(fig_cco)
     except Exception:
         var = traceback.format_exc()

@@ -28,7 +28,7 @@ coverage_params = ['numost','numpmtct','numfirstline','numsecondline']
 ###############################################################################
 from makeccocs import makecc, makeco, makecco
 ###############################################################################
-def do_plotcc(plotdata_cc, figsize=None):
+def plot_cost_coverage(plotdata_cc, figsize=None):
     """ Actually plot cost-coverage curve"""
 
     cost_coverage_figure = None
@@ -88,10 +88,10 @@ def plotcc(D, progname=default_progname, ccparams=default_ccparams, arteligcutof
     ''' Plot cost-coverage curve'''
 
     plotdata_cc, D = makecc(D, progname=progname, ccparams=ccparams, arteligcutoff=arteligcutoff)
-    return do_plotcc(plotdata_cc)
+    return plot_cost_coverage(plotdata_cc)
 
 ###############################################################################
-def do_plotco(plotdata_co, figsize = None):
+def plot_coverage_outcome(plotdata_co, figsize = None):
     """ Actually Plot coverage-outcome curve"""
     coverage_outcome_figure = None
     if plotdata_co:
@@ -150,10 +150,10 @@ def plotco(D, progname=default_progname, effect=default_effect, coparams=default
     ''' Plot coverage-outcome curve'''
 
     plotdata_co, effect = makeco(D=D, progname=progname, effect=effect, coparams=coparams, arteligcutoff=arteligcutoff)
-    return do_plotco(plotdata_co)
+    return plot_coverage_outcome(plotdata_co)
 
 #################################################################################
-def do_plotcco(plotdata_cco, figsize = None):
+def plot_cost_outcome(plotdata_cco, figsize = None):
     """ Actually plot cost-outcome curve"""
     cost_outcome_figure = None
     if plotdata_cco:
@@ -212,7 +212,7 @@ def plotcco(D, progname=default_progname, effect=default_effect, ccparams=defaul
     ''' Plot cost-outcome curve'''
 
     plotdata_cco, plotdata_co, effect = makecco(D, progname=progname, effect=effect, ccparams=ccparams, coparams=coparams, arteligcutoff=arteligcutoff)
-    return do_plotcco(plotdata_cco)
+    return plot_cost_outcome(plotdata_cco)
 
 #################################################################################
 def plotprogramcurves(D, progname=default_progname, ccparams=default_ccparams, coparams=default_coparams, arteligcutoff=default_arteligcutoff):
