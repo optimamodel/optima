@@ -21,7 +21,6 @@ define(['angular', 'jquery', './svg-to-png', 'underscore'], function (angular, $
     var generateGraphAsPngOrJpeg = function( el, callback, type ) {
 
       var elementId = $(el).find('[mpld3-chart]').attr('id');
-      var isMpld3 = elementId.indexOf('mpld3') != -1;
       var $originalSvg = el.find('svg');
       var orginalWidth = $originalSvg.outerWidth();
       var orginalHeight = $originalSvg.outerHeight();
