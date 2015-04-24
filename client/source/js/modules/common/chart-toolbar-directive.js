@@ -74,7 +74,7 @@ define(['angular', 'jquery', 'underscore', 'saveAs', 'jsPDF', './svg-to-png', '.
            * In this function the original SVG is enhanced by injecting styling.
            */
           var exportGraphAsSvg = function() {
-            var originalStyle, className;
+            var originalStyle;
             var elementId = elem.attr('id');
             var isMpld3 = elementId.indexOf('mpld3') != -1;
 
@@ -90,7 +90,7 @@ define(['angular', 'jquery', 'underscore', 'saveAs', 'jsPDF', './svg-to-png', '.
 
             // In order to have styled graphs the css content used to render
             // graphs is retrieved & inject it into the svg as style tag
-            var chartStylesheetRequest = $http.get(chartStylesheetUrl);
+            var chartStylesheetRequest = $http.get(chartStylesheetUrl, { cache: true });
             chartStylesheetRequest.success(function(chartStylesheetContent) {
 
               // It is needed to fetch all as mpld3 injects multiple style tags into the DOM
