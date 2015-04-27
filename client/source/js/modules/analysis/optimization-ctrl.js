@@ -1,11 +1,10 @@
-/**
- * Honest comment: this controller is doing way too much and this comment will improve once
- * 'someone' reverse engineers this tech debt and care to do the right thing for a change.
- */
-
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
+  /**
+   * Defines & validates objectives, parameters & constraints to run, display &
+   * save optimization results.
+   */
   module.controller('AnalysisOptimizationController', function ($scope, $http,
     $interval, meta, cfpLoadingBar, CONFIG, modalService, typeSelector,
     optimizations, optimizationHelpers, info) {
