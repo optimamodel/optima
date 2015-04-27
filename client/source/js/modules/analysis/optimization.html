@@ -45,6 +45,7 @@
             || (params.objectives.funding == 'constant' && state.fixedBudgetForm.$invalid)
             || (params.objectives.funding == 'variable' && state.variableBudgetForm.$invalid)
             || (params.objectives.funding == 'range' && state.fixedBudgetRangeForm.$invalid)
+            || state.objectivesToMinimizeForm.$invalid
             ">View results
         </button>
         <button ng-click="deleteOptimization(state.activeOptimizationName)" type="button" class="btn __red" ng-disabled="state.optimizations.length <= 1" style="margin-left: 10px">Delete Optimization</button>
@@ -347,19 +348,27 @@
         <hr style="clear: both; padding-top: 10px" class="__dashed"/>
 
         <div class="section" ng-if="params.objectives.what == 'outcome'">
-          <h2>Objective(s) to minimize</h2>
-          <span ng-show="validateObjectivesToMinimize().valid===false" class="error-hint"> {{ ::validations.objectivesToMinimizeCount.message }} </span>
-          <div ng-repeat="objective in ::objectivesToMinimize" class="checkbox-block">
-            <label>
-              <input type="checkbox" ng-model="params.objectives.outcome[objective.slug]">
-              {{ ::objective.name }}
-            </label>
+          <ng-form name="state.objectivesToMinimizeForm">
+            <h2>Objective(s) to minimize</h2>
+            <div ng-repeat="objective in ::state.objectivesToMinimize" class="checkbox-block">
+              <label>
+                <input type="checkbox"
+                       ng-model="params.objectives.outcome[objective.slug]"
+                       ng-required="!anyObjectiveToMinimizeIsSelected()">
+                {{ ::objective.name }}
+              </label>
+            </div>
+          </ng-form>
+
+          <div ng-messages="state.objectivesToMinimizeForm.$error"
+               ng-show="state.objectivesToMinimizeForm && state.objectivesToMinimizeForm.$invalid">
+            <div class="error-hint" ng-message="required">You must pick at least one objective to minimize.</div>
           </div>
 
           <br>
 
           <span ng-show="validateOutcomeWeights().valid===false" class="error-hint"> {{validations.objectivesOutcomeWeights.message}} </span>
-          <div ng-repeat="objective in ::objectivesToMinimize" ng-if="params.objectives.outcome[objective.slug] === true">
+          <div ng-repeat="objective in ::state.objectivesToMinimize" ng-if="params.objectives.outcome[objective.slug] === true">
             <div class="objective-checkbox">
               <div class="objective-checkbox__title"> {{ ::objective.title }} =</div>
               <input type="number" class="txbox __inline __s" value="1" ng-model="params.objectives.outcome[objective.slug+'weight']">%

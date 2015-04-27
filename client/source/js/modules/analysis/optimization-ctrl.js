@@ -138,40 +138,35 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       }
 
       $scope.validations = {
-        objectivesToMinimizeCount: {
-          valid: function () { return validateObjectivesToMinimize().valid; },
-          message: "You must pick at least one objective to minimize."
-        },
         objectivesOutcomeWeights: {
           valid: function () {return validateOutcomeWeights().valid; },
           message: "You must specify the weighting parameters for all objectives to minimize."
         }
       };
 
-      $scope.objectivesToMinimize = [
+      $scope.state.objectivesToMinimize = [
         {
-          name:"Cumulative new HIV infections",
-          slug:"inci",
+          name: "Cumulative new HIV infections",
+          slug: "inci",
           title: "New infections weighting"
         },
         {
-          name:"Cumulative DALYs",
+          name: "Cumulative DALYs",
           slug: "daly",
-          title:"DALYs weighting"
+          title: "DALYs weighting"
         },
         {
-          name:" Cumulative AIDS-related deaths",
-          slug:"death",
-          title:"Deaths weighting"
+          name: " Cumulative AIDS-related deaths",
+          slug: "death",
+          title: "Deaths weighting"
         },
         {
-          name:"Total HIV-related costs",
-          slug:"cost",
-          title:"Costs weighting"
+          name: "Total HIV-related costs",
+          slug: "costann",
+          title: "Costs weighting"
         }
       ];
 
-      $scope.validateObjectivesToMinimize = validateObjectivesToMinimize;
       $scope.validateOutcomeWeights = validateOutcomeWeights;
 
       // The graphs are shown/hidden after updating the graph type checkboxes.
@@ -592,17 +587,17 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     }
 
     function validateObjectivesToMinimize () {
-      var checkedPrograms = _($scope.objectivesToMinimize).filter( function (a) {
+      var checkedPrograms = _($scope.state.objectivesToMinimize).filter( function (a) {
         return $scope.params.objectives.outcome[a.slug] === true;
       });
+
       return {
-        checkedPrograms : checkedPrograms,
-        valid: checkedPrograms.length > 0
+        checkedPrograms : checkedPrograms
       };
     }
 
     function validateOutcomeWeights () {
-      var checkedPrograms = _($scope.objectivesToMinimize).filter( function (a) {
+      var checkedPrograms = _($scope.state.objectivesToMinimize).filter( function (a) {
         return $scope.params.objectives.outcome[a.slug] === true &&
           !($scope.params.objectives.outcome[a.slug+'weight']!==undefined &&
           $scope.params.objectives.outcome[a.slug+'weight']>0);
@@ -945,6 +940,21 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       } else {
         $scope.state.timelimit = 3600;
       }
+    };
+
+    /**
+     * Returns true if any the objectives to minimize is selected.
+     */
+    $scope.anyObjectiveToMinimizeIsSelected = function () {
+      var keys = _($scope.state.objectivesToMinimize).map(function(objective) {
+        return objective.slug;
+      });
+
+      var objectivesToMinimize = _($scope.params.objectives.outcome).filter(function(objective, key) {
+        return _(keys).contains(key);
+      });
+
+      return _.some(objectivesToMinimize);
     };
 
     $scope.initialize();
