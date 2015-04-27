@@ -143,11 +143,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           message: 'Please enter a value for the fixed budget.',
           condition: function () { return $scope.params.objectives.funding === 'constant'; }
         },
-        variableBudget: {
-          valid: function () { return validateVariableBudgets(); },
-          message: "Please enter a budget for each year.",
-          condition: function () { return $scope.params.objectives.funding === 'variable'; }
-        },
         objectivesToMinimizeCount: {
           valid: function () { return validateObjectivesToMinimize().valid; },
           message: "You must pick at least one objective to minimize."
@@ -181,7 +176,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         }
       ];
 
-      $scope.validateVariableBudgets = validateVariableBudgets;
       $scope.validateObjectivesToMinimize = validateObjectivesToMinimize;
       $scope.validateOutcomeWeights = validateOutcomeWeights;
 
@@ -600,11 +594,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         typeSelector.enableAnnualCostOptions($scope.state.types, data.plot[0].multi);
         drawGraphs();
       }
-    }
-
-    /* If some of the budgets are undefined, return false */
-    function validateVariableBudgets () {
-      return _(_($scope.params.objectives.outcome.variable).toArray()).some( function (budget) {return budget === undefined;}) === false;
     }
 
     function validateObjectivesToMinimize () {

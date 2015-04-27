@@ -218,44 +218,6 @@
           <div class="float-left margin-left-s">
             <!-- <ng-form name="fundingAssumptionsForm"> -->
 
-              <div
-                  ng-messages="state.fixedBudgetForm.budgetValue.$error"
-                  ng-show="params.objectives.funding==='constant' && state.fixedBudgetForm.$dirty && state.fixedBudgetForm.budgetValue.$invalid">
-                <div class="error-hint" ng-message="required">Please provide a budget value.</div>
-                <div class="error-hint" ng-message="number">Please provide a numeric value for the fixed budget.</div>
-              </div>
-
-              <div
-                  ng-messages="variableBudgetForm.$invalid"
-                  ng-show="params.objectives.funding==='variable' && variableBudgetForm.$dirty && variableBudgetForm.$invalid">
-                <div class="error-hint" ng-show="variableBudgetForm.$dirty && variableBudgetForm.$invalid">Bugdets for all years are required</div>
-                <!-- <div class="error-hint" ng-message="number">Please only numeric values</div> -->
-              </div>
-
-              <div
-                  ng-messages="state.fixedBudgetRangeForm.budgetRangeMin.$error"
-                  ng-show="state.fixedBudgetRangeForm.$dirty && state.fixedBudgetRangeForm.budgetRangeMin.$invalid">
-                <div class="error-hint" ng-message="required">The minimum budget is required</div>
-                <div class="error-hint" ng-message="number">Please only numeric values</div>
-              </div>
-
-              <div
-                  ng-messages="state.fixedBudgetRangeForm.budgetRangeMax.$error"
-                  ng-show="state.fixedBudgetRangeForm.$dirty && state.fixedBudgetRangeForm.budgetRangeMax.$invalid">
-                <div class="error-hint" ng-message="required">The maximum budget is required</div>
-                <div class="error-hint" ng-message="moreThan">The maximum budget must be greater than {{ params.objectives.outcome.budgetrange.minval }}</div>
-                <div class="error-hint" ng-message="number">Please only numeric values</div>
-              </div>
-
-              <div
-                  ng-messages="state.fixedBudgetRangeForm.budgetRangeStep.$error"
-                  ng-show="params.objectives.funding==='range' && state.fixedBudgetRangeForm.$dirty && state.fixedBudgetRangeForm.budgetRangeStep.$invalid">
-                <div class="error-hint" ng-message="required">The budget step is required</div>
-                <div class="error-hint" ng-message="min">The minimum number of budgets is {{ (params.objectives.outcome.budgetrange.maxval-params.objectives.outcome.budgetrange.minval)/30 | number:0 }}</div>
-                <div class="error-hint" ng-message="max">The maximum number of budgets is {{ params.objectives.outcome.budgetrange.maxval-params.objectives.outcome.budgetrange.minval }}</div>
-                <div class="error-hint" ng-message="number">Please only numeric values</div>
-              </div>
-
               <ng-form name="state.fixedBudgetForm">
                 <label class="checkbox-inline">
                   <input type="radio"
@@ -284,6 +246,12 @@
 
               <br/>
 
+              <div ng-messages="state.fixedBudgetForm.budgetValue.$error"
+                   ng-show="params.objectives.funding==='constant' && state.fixedBudgetForm.$dirty && state.fixedBudgetForm.budgetValue.$invalid">
+                <div class="error-hint" ng-message="required">Please provide a budget value.</div>
+                <div class="error-hint" ng-message="number">Please provide a numeric value for the fixed budget.</div>
+              </div>
+
               <label>
                 <input type="radio"
                        name="fundingAssumptions"
@@ -296,11 +264,13 @@
                 <ng-form name="state.variableBudgetForm">
                   <div ng-if="params.objectives.funding==='variable'" style="padding:0 0 0 50px;">
                     <div ng-repeat="yCols in ::yearCols" style="padding:0 0 10px 0;">
-                      <span ng-repeat="yloop in ::yearLoop.slice(yCols.start,yCols.end)">
+                      <span ng-repeat="yloop in ::yearLoop.slice(yCols.start, yCols.end)">
                         {{ ::yloop.year }}:
-                        <input type="number" class="txbox __inline __l" required
-                          ng-required="params.objectives.funding==='variable'"
-                          ng-init="params.objectives.outcome.variable[yloop.year]=undefined"
+                        <input type="number"
+                          class="txbox __inline __l"
+                          required
+                          min="0"
+                          ng-init="params.objectives.outcome.variable[yloop.year] = undefined"
                           ng-model="params.objectives.outcome.variable[yloop.year]"/> &nbsp;
                       </span>
                     </div>
@@ -308,6 +278,13 @@
                   </div>
                 </ng-form>
               </label>
+
+              <div ng-messages="state.variableBudgetForm.$error"
+                   ng-show="params.objectives.funding==='variable' && state.variableBudgetForm.$dirty && state.variableBudgetForm.$invalid">
+                <div class="error-hint" ng-message="required">Please fill out the budget for each year.</div>
+                <div class="error-hint" ng-message="min">You can't declare a budget smaller than zero.</div>
+                <div class="error-hint" ng-message="number">Please only provide numeric values each budget field.</div>
+              </div>
 
               <label class="checkbox-inline">
                 <input type="radio"
@@ -338,6 +315,31 @@
                   <div style="clear:both;"></div>
                 </ng-form>
               </label>
+
+              <div
+                  ng-messages="state.fixedBudgetRangeForm.budgetRangeMin.$error"
+                  ng-show="state.fixedBudgetRangeForm.$dirty && state.fixedBudgetRangeForm.budgetRangeMin.$invalid">
+                <div class="error-hint" ng-message="required">The minimum budget is required</div>
+                <div class="error-hint" ng-message="number">Please only numeric values</div>
+              </div>
+
+              <div
+                  ng-messages="state.fixedBudgetRangeForm.budgetRangeMax.$error"
+                  ng-show="state.fixedBudgetRangeForm.$dirty && state.fixedBudgetRangeForm.budgetRangeMax.$invalid">
+                <div class="error-hint" ng-message="required">The maximum budget is required</div>
+                <div class="error-hint" ng-message="moreThan">The maximum budget must be greater than {{ params.objectives.outcome.budgetrange.minval }}</div>
+                <div class="error-hint" ng-message="number">Please only numeric values</div>
+              </div>
+
+              <div
+                  ng-messages="state.fixedBudgetRangeForm.budgetRangeStep.$error"
+                  ng-show="params.objectives.funding==='range' && state.fixedBudgetRangeForm.$dirty && state.fixedBudgetRangeForm.budgetRangeStep.$invalid">
+                <div class="error-hint" ng-message="required">The budget step is required</div>
+                <div class="error-hint" ng-message="min">The minimum number of budgets is {{ (params.objectives.outcome.budgetrange.maxval-params.objectives.outcome.budgetrange.minval)/30 | number:0 }}</div>
+                <div class="error-hint" ng-message="max">The maximum number of budgets is {{ params.objectives.outcome.budgetrange.maxval-params.objectives.outcome.budgetrange.minval }}</div>
+                <div class="error-hint" ng-message="number">Please only numeric values</div>
+              </div>
+
             <!-- </ng-form> -->
           </div>
         </div>
