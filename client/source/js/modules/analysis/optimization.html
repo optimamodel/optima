@@ -46,6 +46,7 @@
             || (params.objectives.funding == 'variable' && state.variableBudgetForm.$invalid)
             || (params.objectives.funding == 'range' && state.fixedBudgetRangeForm.$invalid)
             || state.objectivesToMinimizeForm.$invalid
+            || state.outcomeWeightsForm.$invalid
             ">View results
         </button>
         <button ng-click="deleteOptimization(state.activeOptimizationName)" type="button" class="btn __red" ng-disabled="state.optimizations.length <= 1" style="margin-left: 10px">Delete Optimization</button>
@@ -367,12 +368,28 @@
 
           <br>
 
-          <span ng-show="validateOutcomeWeights().valid===false" class="error-hint"> {{validations.objectivesOutcomeWeights.message}} </span>
-          <div ng-repeat="objective in ::state.objectivesToMinimize" ng-if="params.objectives.outcome[objective.slug] === true">
-            <div class="objective-checkbox">
-              <div class="objective-checkbox__title"> {{ ::objective.title }} =</div>
-              <input type="number" class="txbox __inline __s" value="1" ng-model="params.objectives.outcome[objective.slug+'weight']">%
+          <ng-form name="state.outcomeWeightsForm">
+
+            <div ng-repeat="objective in ::state.objectivesToMinimize" ng-if="params.objectives.outcome[objective.slug] === true">
+              <div class="objective-checkbox">
+                <div class="objective-checkbox__title"> {{ ::objective.title }} =</div>
+                <input type="number"
+                       min="0"
+                       max="100"
+                       class="txbox __inline __s"
+                       ng-model="params.objectives.outcome[objective.slug+'weight']"
+                       required>%
+              </div>
             </div>
+
+          </ng-form>
+
+          <div ng-messages="state.outcomeWeightsForm.$error"
+               ng-show="state.outcomeWeightsForm && state.outcomeWeightsForm.$invalid">
+            <div class="error-hint" ng-message="required">You must specify the weighting parameters for all objectives to minimize.</div>
+            <div class="error-hint" ng-message="min">The weight can not be less than 0%.</div>
+            <div class="error-hint" ng-message="max">The weight can not be more than 100%.</div>
+            <div class="error-hint" ng-message="number">The weight must be specified as number.</div>
           </div>
 
         </div>

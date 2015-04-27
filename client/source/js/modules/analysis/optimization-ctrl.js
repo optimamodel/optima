@@ -137,13 +137,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         }
       }
 
-      $scope.validations = {
-        objectivesOutcomeWeights: {
-          valid: function () {return validateOutcomeWeights().valid; },
-          message: "You must specify the weighting parameters for all objectives to minimize."
-        }
-      };
-
       $scope.state.objectivesToMinimize = [
         {
           name: "Cumulative new HIV infections",
@@ -166,8 +159,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           title: "Costs weighting"
         }
       ];
-
-      $scope.validateOutcomeWeights = validateOutcomeWeights;
 
       // The graphs are shown/hidden after updating the graph type checkboxes.
       $scope.$watch('types', drawGraphs, true);
@@ -586,18 +577,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       }
     }
 
-    function validateOutcomeWeights () {
-      var checkedPrograms = _($scope.state.objectivesToMinimize).filter( function (a) {
-        return $scope.params.objectives.outcome[a.slug] === true &&
-          !($scope.params.objectives.outcome[a.slug+'weight']!==undefined &&
-          $scope.params.objectives.outcome[a.slug+'weight']>0);
-      });
-      return {
-        checkedPrograms : checkedPrograms,
-        valid: checkedPrograms.length === 0
-      };
-    }
-
     /**
      * Returns true if at least one chart is available
      */
@@ -641,7 +620,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     }
 
     /**
-     * Returns all the checkedPrograms as a comma separated string.
+     * Returns the names of the objectives to minimize as a comma separated string.
      */
     $scope.selectedObjectivesToMinimizeString = function () {
       var selectedObjectivesToMinimize = _($scope.state.objectivesToMinimize).filter(function (objective) {
