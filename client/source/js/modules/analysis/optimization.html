@@ -398,7 +398,7 @@
         <div class="section" ng-if="params.objectives.what == 'money'">
           What is the minimum amount of money required to achieve the following objectives:
 
-          <div class="margin-top-xs" ng-repeat="item in ::moneyObjectives">
+          <div class="margin-top-xs" ng-repeat="item in ::state.moneyObjectives">
             <div class="checkbox-block">
               <label ng-init="iObjective = params.objectives.money.objectives[item.id]">
                 <input type="checkbox" ng-model="iObjective.use">

@@ -31,7 +31,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.types = typeSelector.types;
       $scope.needData = $scope.meta.progs === undefined;
 
-      $scope.moneyObjectives = [
+      $scope.state.moneyObjectives = [
         { id: 'inci', title: 'Reduce the annual incidence of HIV' },
         { id: 'incisex', title: 'Reduce the annual incidence of sexually transmitted HIV' },
         { id: 'inciinj', title: 'Reduce the annual incidence of injecting-related HIV' },
