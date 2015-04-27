@@ -586,16 +586,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       }
     }
 
-    function validateObjectivesToMinimize () {
-      var checkedPrograms = _($scope.state.objectivesToMinimize).filter( function (a) {
-        return $scope.params.objectives.outcome[a.slug] === true;
-      });
-
-      return {
-        checkedPrograms : checkedPrograms
-      };
-    }
-
     function validateOutcomeWeights () {
       var checkedPrograms = _($scope.state.objectivesToMinimize).filter( function (a) {
         return $scope.params.objectives.outcome[a.slug] === true &&
@@ -653,8 +643,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     /**
      * Returns all the checkedPrograms as a comma separated string.
      */
-    $scope.checkedProgramsText = function () {
-      return joinArrayAsSentence(validateObjectivesToMinimize().checkedPrograms, 'name', true);
+    $scope.selectedObjectivesToMinimizeString = function () {
+      var selectedObjectivesToMinimize = _($scope.state.objectivesToMinimize).filter(function (objective) {
+        return $scope.params.objectives.outcome[objective.slug] === true;
+      });
+
+      return joinArrayAsSentence(selectedObjectivesToMinimize, 'name', true);
     };
 
     /**
