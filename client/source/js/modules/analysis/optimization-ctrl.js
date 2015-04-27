@@ -138,11 +138,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       }
 
       $scope.validations = {
-        fixedBudget: {
-          valid: function () { return $scope.params.objectives.outcome.fixed !== undefined; },
-          message: 'Please enter a value for the fixed budget.',
-          condition: function () { return $scope.params.objectives.funding === 'constant'; }
-        },
         objectivesToMinimizeCount: {
           valid: function () { return validateObjectivesToMinimize().valid; },
           message: "You must pick at least one objective to minimize."
@@ -616,20 +611,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         checkedPrograms : checkedPrograms,
         valid: checkedPrograms.length === 0
       };
-    }
-
-    /**
-     * Evaluates the conditions defined in $scope.validations and when there is
-     * one that do not pass, it adds its message with feedback for the user to
-     * the errorMessages array.
-     */
-    function checkValidation () {
-      errorMessages = [];
-      _($scope.validations).each( function (validation) {
-        if(validation.valid()!==true && (validation.condition === undefined || validation.condition() === true)){
-          errorMessages.push({message:validation.message});
-        }
-      });
     }
 
     /**
