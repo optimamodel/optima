@@ -31,17 +31,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.types = typeSelector.types;
       $scope.needData = $scope.meta.progs === undefined;
 
-      $scope.state.moneyObjectives = [
-        { id: 'inci', title: 'Reduce the annual incidence of HIV' },
-        { id: 'incisex', title: 'Reduce the annual incidence of sexually transmitted HIV' },
-        { id: 'inciinj', title: 'Reduce the annual incidence of injecting-related HIV' },
-        { id: 'mtct', title: 'Reduce annual mother-to-child transmission of HIV' },
-        { id: 'mtctbreast', title: 'Reduce annual mother-to-child transmission of HIV among breastfeeding mothers' },
-        { id: 'mtctnonbreast', title: 'Reduce annual mother-to-child transmission of HIV among non-breastfeeding mothers' },
-        { id: 'deaths', title: 'Reduce annual AIDS-related deaths' },
-        { id: 'dalys', title: 'Reduce annual HIV-related DALYs' }
-      ];
-
       $scope.optimizationStatus = statusEnum.NOT_RUNNING;
       $scope.optimizations = [];
       $scope.isDirty = false;
@@ -56,6 +45,18 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         isTestRun: false,
         timelimit: 3600
       };
+
+      $scope.state.moneyObjectives = [
+        { id: 'inci', title: 'Reduce the annual incidence of HIV' },
+        { id: 'incisex', title: 'Reduce the annual incidence of sexually transmitted HIV' },
+        { id: 'inciinj', title: 'Reduce the annual incidence of injecting-related HIV' },
+        { id: 'mtct', title: 'Reduce annual mother-to-child transmission of HIV' },
+        { id: 'mtctbreast', title: 'Reduce annual mother-to-child transmission of HIV among breastfeeding mothers' },
+        { id: 'mtctnonbreast', title: 'Reduce annual mother-to-child transmission of HIV among non-breastfeeding mothers' },
+        { id: 'deaths', title: 'Reduce annual AIDS-related deaths' },
+        { id: 'dalys', title: 'Reduce annual HIV-related DALYs' }
+      ];
+
       resetCharts();
 
       // In case there is no model data the controller only needs to show the
