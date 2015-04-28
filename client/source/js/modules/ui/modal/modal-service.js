@@ -36,10 +36,7 @@ define([
               $scope.message = message || 'Are you sure?';
               $scope.acceptButton = acceptButton || 'Yes';
               $scope.rejectButton = rejectButton || 'No';
-              $scope.$on('$destroy', function (){
-                // Release the taken resources and observed events
-                $document.off('keydown', onModalKeyDown);
-              });
+              $scope.$on('$destroy', function (){ $document.off('keydown', onModalKeyDown); });  // unobserve
             }]
           });
           return modalInstance.result.then(onAccepted, onRejected);
@@ -55,7 +52,7 @@ define([
          * @param {string} [errorText] - optional text for a error message.
          */
         inform: function (onAccepted, acceptButton, message, title, errorText) {
-          $modal.open({
+          var modalInstance = $modal.open({
             templateUrl: 'js/modules/ui/modal/modal-inform.html',
             controller: ['$scope', function ($scope) {
               $scope.message = message || 'Be informed';
@@ -63,7 +60,8 @@ define([
               $scope.acceptButton = acceptButton || 'Okay';
               $scope.errorText = errorText;
             }]
-          }).result.finally(onAccepted);
+          });
+        return modalInstance.result.finally(onAccepted);
         },
 
         /**
@@ -71,13 +69,14 @@ define([
          * It parses errors to display them neatly to the user.
          */
         informError: function (errors, title) {
-          $modal.open({
+          var modalInstance = $modal.open({
             templateUrl: 'js/modules/ui/modal/modal-inform-errors.html',
             controller: ['$scope', function ($scope) {
               $scope.errors = errors;
               $scope.title = title ? title : 'Error';
             }]
           });
+          return modalInstance;
         },
 
         /**
@@ -137,7 +136,7 @@ define([
         * callback depending on the user's choice.
         */
         choice: function (onChoiceA, onChoiceB, choiceAButton, choiceBButton, message, title) {
-          $modal.open({
+          var modalInstance = $modal.open({
             templateUrl: 'js/modules/ui/modal/modal-choice.html',
             controller: ['$scope', function ($scope) {
               $scope.title = title || '';
@@ -156,6 +155,7 @@ define([
               };
             }]
           });
+          return modalInstance;
         }
 
       };
