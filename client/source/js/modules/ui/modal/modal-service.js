@@ -22,11 +22,9 @@ define([
          */
         confirm: function (onAccepted, onRejected, acceptButton, rejectButton, message, title) {
 
-          var onModalKeyDown = function (anEvent) {
-                debugger
-                if(anEvent.keyCode == 13) { return modalInstance.close(true) } // ENTER
-                if(anEvent.keyCode == 78) { return } // N
-                if(anEvent.keyCode == 89) { return } // Y
+          var onModalKeyDown = function (anEvent) {            
+            if(anEvent.keyCode == 78) { return modalInstance.dismiss('N') } // N
+            if(anEvent.keyCode == 89) { return modalInstance.close(true) } // Y
           };
 
           var modalInstance = $modal.open({
