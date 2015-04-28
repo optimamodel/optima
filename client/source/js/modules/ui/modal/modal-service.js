@@ -21,15 +21,30 @@ define([
          * executes the right callback depending on the user's choice.
          */
         confirm: function (onAccepted, onRejected, acceptButton, rejectButton, message, title) {
-          $modal.open({
+
+          var onModalKeyDown = function (anEvent) {
+                debugger
+                if(anEvent.keyCode == 13) { return modalInstance.close(true) } // ENTER
+                if(anEvent.keyCode == 78) { return } // N
+                if(anEvent.keyCode == 89) { return } // Y
+          };
+
+          var modalInstance = $modal.open({
             templateUrl: 'js/modules/ui/modal/modal-confirm.html',
-            controller: ['$scope', function ($scope) {
+            controller: ['$scope', '$document', function ($scope, $document) {
+              $document.on('keydown', onModalKeyDown);
+
               $scope.title = title ? title : 'Please respond …';
               $scope.message = message || 'Are you sure?';
               $scope.acceptButton = acceptButton || 'Yes';
               $scope.rejectButton = rejectButton || 'No';
+              $scope.$on('$destroy', function (){
+                // Release the taken resources and observed events
+                $document.off('keydown', onModalKeyDown);
+              });
             }]
-          }).result.then(onAccepted, onRejected);
+          });
+          return modalInstance.result.then(onAccepted, onRejected);
         },
 
         /**
