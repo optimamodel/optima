@@ -128,9 +128,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       if ($event) { $event.preventDefault(); }
       var message = 'Are you sure you want to permanently remove project "' + name + '"?';
       modalService.confirm(
-        function (){ debugger 
-          removeNoQuestionsAsked(name, id, index); },
-        function (){ console.log('rejected') },
+        function (){ removeNoQuestionsAsked(name, id, index); },
+        function (){  },
         'Yes, remove this project',
         'No',
         message,

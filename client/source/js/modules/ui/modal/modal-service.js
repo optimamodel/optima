@@ -23,7 +23,6 @@ define([
         confirm: function (onAccepted, onRejected, acceptButton, rejectButton, message, title) {
 
           var onModalKeyDown = function (anEvent) {        
-            console.log(anEvent.keyCode);    
             if(anEvent.keyCode == 78) { return modalInstance.dismiss('N') } // N
             if(anEvent.keyCode == 89) { return modalInstance.close('Y') } // Y
           };
@@ -193,7 +192,7 @@ define([
 
               $document.on('keydown', onModalKeyDown); // observe
               $scope.$on('$destroy', function (){ $document.off('keydown', onModalKeyDown); });  // unobserve
-              
+
             }]
           });
           return modalInstance;
