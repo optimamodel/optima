@@ -22,9 +22,9 @@ define([
          */
         confirm: function (onAccepted, onRejected, acceptButton, rejectButton, message, title) {
 
-          var onModalKeyDown = function (anEvent) {
-            if(anEvent.keyCode == 78) { return modalInstance.dismiss('N'); } // N
-            if(anEvent.keyCode == 89) { return modalInstance.close('Y'); } // Y
+          var onModalKeyDown = function (event) {
+            if(event.keyCode == 78) { return modalInstance.dismiss('N'); } // N
+            if(event.keyCode == 89) { return modalInstance.close('Y'); } // Y
           };
 
           var modalInstance = $modal.open({
@@ -52,9 +52,9 @@ define([
          */
         inform: function (onAccepted, acceptButton, message, title, errorText) {
 
-          var onModalKeyDown = function (anEvent) {
-            if(anEvent.keyCode == 79) { return modalInstance.dismiss('O'); } // O of OK
-            if(anEvent.keyCode == 13) { return modalInstance.close('ENTER'); }
+          var onModalKeyDown = function (event) {
+            if(event.keyCode == 79) { return modalInstance.dismiss('O'); } // O of OK
+            if(event.keyCode == 13) { return modalInstance.close('ENTER'); }
           };
 
           var modalInstance = $modal.open({
@@ -77,9 +77,9 @@ define([
          */
         informError: function (errors, title) {
 
-          var onModalKeyDown = function (anEvent) {
-            if(anEvent.keyCode == 79) { return modalInstance.dismiss('O'); } // O of OK
-            if(anEvent.keyCode == 13) { return modalInstance.close('ENTER'); }
+          var onModalKeyDown = function (event) {
+            if(event.keyCode == 79) { return modalInstance.dismiss('O'); } // O of OK
+            if(event.keyCode == 13) { return modalInstance.close('ENTER'); }
           };
 
           var modalInstance = $modal.open({
@@ -99,8 +99,8 @@ define([
          */
         showPrompt: function (title, label, cb, options) {
 
-          var onModalKeyDown = function (anEvent) {
-            if(anEvent.keyCode == 27) { return modalInstance.dismiss('ESC'); }
+          var onModalKeyDown = function (event) {
+            if(event.keyCode == 27) { return modalInstance.dismiss('ESC'); }
           };
 
           options = options || {};
@@ -132,8 +132,8 @@ define([
          */
         addOptimization: function (callback, optimizations) {
 
-          var onModalKeyDown = function (anEvent) {
-            if(anEvent.keyCode == 27) { return modalInstance.dismiss('ESC'); }
+          var onModalKeyDown = function (event) {
+            if(event.keyCode == 27) { return modalInstance.dismiss('ESC'); }
           };
 
           var modalInstance = $modal.open({
@@ -169,8 +169,8 @@ define([
         * callback depending on the user's choice.
         */
         choice: function (onChoiceA, onChoiceB, choiceAButton, choiceBButton, message, title) {
-          var onModalKeyDown = function (anEvent) {
-            if(anEvent.keyCode == 27) { return modalInstance.dismiss('ESC'); }
+          var onModalKeyDown = function (event) {
+            if(event.keyCode == 27) { return modalInstance.dismiss('ESC'); }
           };
           var modalInstance = $modal.open({
             templateUrl: 'js/modules/ui/modal/modal-choice.html',
