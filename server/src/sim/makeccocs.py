@@ -84,7 +84,6 @@ def makecc(D=None, progname=None, ccparams=None, arteligcutoff=None, verbose=def
 
     # Get upper limit of x axis for plotting
     xupperlim = max([x if ~isnan(x) else 0.0 for x in totalcost])*1.5
-    if (ccparams and 'xupperlim' in ccparams and ccparams['xupperlim'] and ~isnan(ccparams['xupperlim'])): xupperlim = ccparams['xupperlim']
 
     # Populate output structure with scatter data
     plotdata['allxscatterdata'] = totalcost

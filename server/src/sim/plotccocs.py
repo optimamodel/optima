@@ -18,7 +18,6 @@ default_ccparams = {'saturation': .7,
                     'funding':9e6,
                     'scaleup':.2,
                     'nonhivdalys':nan,
-                    'xupperlim':2e7,
                     'cpibaseyear':nan,
                     'perperson':nan}
 default_coparams = [0.15, 0.3, 0.4, 0.55]
