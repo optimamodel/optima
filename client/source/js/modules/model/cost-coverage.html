@@ -159,16 +159,16 @@
                   5. [Optional] Display program cost data in
                   <input type="number" class="txbox __inline __l"
                          name="displayYear"
-                         placeholder="e.g.{{ ::projectInfo.dataEnd }}"
-                         min="{{ ::projectInfo.dataStart }}"
-                         max="{{ ::projectInfo.dataEnd }}"
+                         placeholder="e.g.{{ state.info.dataEnd }}"
+                         min="{{ state.info.dataStart }}"
+                         max="{{ state.info.dataEnd }}"
                          ng-model="state.displayYear"
                          ng-change="updateCurves()">
                   prices
                   <div ng-messages="state.CostCoverageForm.displayYear.$error"
                        ng-show="state.CostCoverageForm.displayYear.$touched && state.CostCoverageForm.displayYear.$invalid">
-                    <div class="error-hint" ng-message="min">The year entered cannot be before the project start date, which is {{ ::projectInfo.dataStart }}</div>
-                    <div class="error-hint" ng-message="max">The year entered cannot be after the project end date, which is {{ ::projectInfo.dataEnd }}</div>
+                    <div class="error-hint" ng-message="min">The year entered cannot be before the project start date, which is {{ state.info.dataStart }}</div>
+                    <div class="error-hint" ng-message="max">The year entered cannot be after the project end date, which is {{ state.info.dataEnd }}</div>
                     <div class="error-hint" ng-message="number">The value should be a number</div>
                   </div>
                 </div>
