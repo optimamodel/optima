@@ -19,6 +19,8 @@ define(['angular', 'jquery', 'mpld3', 'underscore', 'saveAs', 'jsPDF', './svg-to
             var template = '<div>';
             if (options.reset !== false) {
               template = template + '<button class="btn chart-reset-button">Reset</button>';
+              template = template + '<button class="btn chart-zoom-button">Zoom</button>';
+              template = template + '<button class="btn chart-move-button">Move</button>';
             }
             template = template + '<div class="chart-export-buttons btn-group">' +
                 '<button class="btn figure">Export figure</button>' +
@@ -63,6 +65,32 @@ define(['angular', 'jquery', 'mpld3', 'underscore', 'saveAs', 'jsPDF', './svg-to
                 var figure = _(mpld3.figures).findWhere({ figid: id });
                 if (figure) {
                   figure.toolbar.fig.reset();
+                }
+              })
+              .on('click', '.chart-zoom-button', function (event) {
+                event.preventDefault();
+
+                var id = $(elem).attr('id');
+                var figure = _(mpld3.figures).findWhere({ figid: id });
+
+                if (figure) {
+                  var zoomPlugin = _(figure.plugins).find(function(plugin) {
+                    return plugin.constructor.name === 'mpld3_BoxZoomPlugin';
+                  });
+                  if (zoomPlugin.enabled) {
+                    zoomPlugin.deactivate();
+                  } else {
+                    zoomPlugin.activate();
+                  }
+                }
+              })
+              .on('click', '.chart-move-button', function (event) {
+                event.preventDefault();
+
+                var id = $(elem).attr('id');
+                var figure = _(mpld3.figures).findWhere({ figid: id });
+                if (figure) {
+                  figure.toolbar.fig.toggle_zoom();
                 }
               });
           };

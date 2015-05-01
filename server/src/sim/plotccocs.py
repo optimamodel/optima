@@ -77,8 +77,8 @@ def plot_cost_coverage(plotdata, figsize=None):
     plugins.clear(cost_coverage_figure)
     plugins.connect(
         cost_coverage_figure,
-        plugins.BoxZoom(button=False),
-        plugins.Zoom(button=False),
+        # Box zoom is needed to manually create a zoom button in the JS front-end
+        plugins.BoxZoom(button=False, enabled=False),
         OptimaTickFormatter())
 
     return cost_coverage_figure
@@ -139,8 +139,8 @@ def plot_coverage_outcome(plotdata, figsize = None):
         plugins.clear(coverage_outcome_figure)
         plugins.connect(
             coverage_outcome_figure,
-            plugins.BoxZoom(button=False),
-            plugins.Zoom(button=False),
+            # Box zoom is needed to manually create a zoom button in the JS front-end
+            plugins.BoxZoom(button=False, enabled=False),
             OptimaTickFormatter())
 
     return coverage_outcome_figure
@@ -202,8 +202,8 @@ def plot_cost_outcome(plotdata, figsize = None):
         plugins.clear(cost_outcome_figure)
         plugins.connect(
             cost_outcome_figure,
-            plugins.BoxZoom(button=False),
-            plugins.Zoom(button=False),
+            # Box zoom is needed to manually create a zoom button in the JS front-end
+            plugins.BoxZoom(button=False, enabled=False),
             OptimaTickFormatter())
     return cost_outcome_figure
 
