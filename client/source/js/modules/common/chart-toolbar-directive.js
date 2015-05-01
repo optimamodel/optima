@@ -15,6 +15,7 @@ define(['angular', 'jquery', 'mpld3', 'underscore', 'saveAs', 'jsPDF', './svg-to
            * Initializes the directive.
            */
           var initialize = function() {
+            scope.chartType = attrs.chartType;
           };
 
           scope.exportFigure = function (event) {
@@ -38,7 +39,7 @@ define(['angular', 'jquery', 'mpld3', 'underscore', 'saveAs', 'jsPDF', './svg-to
               var mpld3Chart = scope.$eval(attrs.mpld3ChartData);
               scope.exportMpld3From(mpld3Chart);
             } else {
-              var chartAccessor = attrs.data.replace(new RegExp('.data$'), '');
+              var chartAccessor = attrs.d3ChartData.replace(new RegExp('.data$'), '');
               var chart = scope.$eval(chartAccessor);
               scope.exportFrom(chart);
             }
