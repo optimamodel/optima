@@ -3,19 +3,19 @@ Plots cost-coverage, coverage-outcome and cost-outcome curves
 
 Version: 2015jan19 by robynstuart
 """
-from matplotlib.pylab import figure, plot, hold, xlabel, ylabel, title, xlim, ylim, gca, scatter
+from matplotlib.pylab import figure #plot, hold, xlabel, ylabel, title, xlim, ylim, gca, scatter
 from matplotlib.ticker import MaxNLocator
 from numpy import nan
 from mpld3 import plugins
 from utils import OptimaTickFormatter
 
 # Set defaults for testing makeccocs
-default_progname = 'PWID programs'
-default_effect = {'paramtype':'sex', 'param':'condomreg', 'popname':u'Male PWID'}
+default_progname = 'NSP'
+default_effect = {'paramtype':'inj', 'param':'sharing', 'popname':u'Male PWID'}
 default_ccparams = {'saturation': .7,
                     'coveragelower': .4,
                     'coverageupper':.5,
-                    'funding':9e6,
+                    'funding':9e5,
                     'scaleup':.2,
                     'nonhivdalys':nan,
                     'cpibaseyear':nan,
@@ -188,6 +188,10 @@ def plot_cost_outcome(plotdata, figsize = None):
             plotdata['xscatterdata'],
             plotdata['yscatterdata'],
             color='#666666')
+        axis.scatter(
+            plotdata['xcurrentdata'],
+            plotdata['ycurrentdata'],
+            color='#d22c2c')
 
         axis.set_title(plotdata['title'])
         axis.tick_params(axis='both', which='major', labelsize=11)
