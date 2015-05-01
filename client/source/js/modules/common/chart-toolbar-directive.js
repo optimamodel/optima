@@ -11,6 +11,12 @@ define(['angular', 'jquery', 'mpld3', 'underscore', 'saveAs', 'jsPDF', './svg-to
         link: function (scope, elem, attrs) {
           var chartStylesheetUrl = '/assets/css/chart.css';
 
+          /**
+           * Initializes the directive.
+           */
+          var initialize = function() {
+          };
+
           scope.exportFigure = function (event) {
             //strange event not getting passed commenting for now and writing in html rather
             //event.preventDefault();
