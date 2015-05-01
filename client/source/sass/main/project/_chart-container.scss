@@ -25,10 +25,14 @@
   top: 10px;
 }
 
-.chart-reset-button {
-  position: absolute;
-  left: 10px;
-  top: 10px;
+.chart-icon {
+  padding: 4px;
+  cursor: pointer;
+  color: gray;
+}
+
+.active-icon {
+  color: black;
 }
 
 .calibration-charts {

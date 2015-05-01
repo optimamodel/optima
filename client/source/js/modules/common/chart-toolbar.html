@@ -1,0 +1,11 @@
+<div>
+    <div>
+        <i class="fa fa-refresh chart-icon chart-reset-button" ng-click="$event.preventDefault();resetChart($event)"></i>
+        <i class="fa fa-arrows chart-icon chart-zoom-button" ng-click="$event.preventDefault();zoomChart()"></i>
+        <i class="fa fa-search chart-icon chart-move-button" ng-click="$event.preventDefault();moveChart()"></i>
+    </div>
+    <div class="chart-export-buttons btn-group">
+        <button class="btn figure" ng-click="$event.preventDefault();exportFigure()">Export figure</button>
+        <button class="btn data" ng-click="$event.preventDefault();exportData()">Export data</button>
+    </div>
+</div>

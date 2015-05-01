@@ -5,94 +5,77 @@ define(['angular', 'jquery', 'mpld3', 'underscore', 'saveAs', 'jsPDF', './svg-to
   return angular.module('app.chart-toolbar', [])
     .directive('chartToolbar', function ($http, modalService, exportHelpers) {
       return {
-        restrict: 'A',
+        restrict: 'E',
+        templateUrl: '/js/modules/common/chart-toolbar.html',
+        replace:true,
         link: function (scope, elem, attrs) {
           var chartStylesheetUrl = '/assets/css/chart.css';
 
-          /**
-           * Initializes the directive by appending the html and setting up the
-           * event handlers.
-           */
-          var initialize = function() {
-            var options = scope.$eval(attrs.chartToolbar) || {};
+          scope.exportFigure = function (event) {
+            //strange event not getting passed commenting for now and writing in html rather
+            //event.preventDefault();
 
-            var template = '<div>';
-            if (options.reset !== false) {
-              template = template + '<button class="btn chart-reset-button">Reset</button>';
-              template = template + '<button class="btn chart-zoom-button">Zoom</button>';
-              template = template + '<button class="btn chart-move-button">Move</button>';
+            modalService.choice(
+              exportGraphAsSvg, // first button callback
+              exportGraphAsPng, // second button callback
+              'Download as SVG', // first button text
+              'Download as PNG', // second button text
+              'Please choose your preferred format', // modal message
+              'Export figure' // modal title
+            );
+          };
+
+          scope.exportData = function (event) {
+            //event.preventDefault();
+
+            if (_(attrs).has('mpld3ChartData')) {
+              var mpld3Chart = scope.$eval(attrs.mpld3ChartData);
+              scope.exportMpld3From(mpld3Chart);
+            } else {
+              var chartAccessor = attrs.data.replace(new RegExp('.data$'), '');
+              var chart = scope.$eval(chartAccessor);
+              scope.exportFrom(chart);
             }
-            template = template + '<div class="chart-export-buttons btn-group">' +
-                '<button class="btn figure">Export figure</button>' +
-                '<button class="btn data">Export data</button>' +
-              '</div>' +
-            '</div>';
+          };
 
-            var buttons = angular.element(template);
-            // append export buttons
-            elem.after(buttons);
+          scope.resetChart = function (event) {
+            //event.preventDefault();
 
-            // setup click handlers for the different actions
-            buttons
-              .on('click', '.figure', function (event) {
-                event.preventDefault();
+            var id = attrs.chartId;
+            var figure = _(mpld3.figures).findWhere({ figid: id });
+            if (figure) {
+              figure.toolbar.fig.reset();
+            }
+          };
 
-                modalService.choice(
-                  exportGraphAsSvg, // first button callback
-                  exportGraphAsPng, // second button callback
-                  'Download as SVG', // first button text
-                  'Download as PNG', // second button text
-                  'Please choose your preferred format', // modal message
-                  'Export figure' // modal title
-                );
-              })
-              .on('click', '.data', function (event) {
-                event.preventDefault();
+          scope.zoomChart = function (event) {
+            //event.preventDefault();
 
-                if (_(attrs).has('mpld3Chart')) {
-                  var mpld3Chart = scope.$eval(attrs.mpld3Chart);
-                  scope.exportMpld3From(mpld3Chart);
-                } else {
-                  var chartAccessor = attrs.data.replace(new RegExp('.data$'), '');
-                  var chart = scope.$eval(chartAccessor);
-                  scope.exportFrom(chart);
-                }
-              })
-              .on('click', '.chart-reset-button', function (event) {
-                event.preventDefault();
+            var id = attrs.chartId;
+            var figure = _(mpld3.figures).findWhere({ figid: id });
 
-                var id = $(elem).attr('id');
-                var figure = _(mpld3.figures).findWhere({ figid: id });
-                if (figure) {
-                  figure.toolbar.fig.reset();
-                }
-              })
-              .on('click', '.chart-zoom-button', function (event) {
-                event.preventDefault();
-
-                var id = $(elem).attr('id');
-                var figure = _(mpld3.figures).findWhere({ figid: id });
-
-                if (figure) {
-                  var zoomPlugin = _(figure.plugins).find(function(plugin) {
-                    return plugin.constructor.name === 'mpld3_BoxZoomPlugin';
-                  });
-                  if (zoomPlugin.enabled) {
-                    zoomPlugin.deactivate();
-                  } else {
-                    zoomPlugin.activate();
-                  }
-                }
-              })
-              .on('click', '.chart-move-button', function (event) {
-                event.preventDefault();
-
-                var id = $(elem).attr('id');
-                var figure = _(mpld3.figures).findWhere({ figid: id });
-                if (figure) {
-                  figure.toolbar.fig.toggle_zoom();
-                }
+            if (figure) {
+              var zoomPlugin = _(figure.plugins).find(function(plugin) {
+                return plugin.constructor.name === 'mpld3_BoxZoomPlugin';
               });
+              if (zoomPlugin.enabled) {
+                scope.zoomEnabled = false;
+                zoomPlugin.deactivate();
+              } else {
+                scope.zoomEnabled = true;
+                zoomPlugin.activate();
+              }
+            }
+          };
+
+          scope.moveChart = function (event) {
+            //event.preventDefault();
+
+            var id = attrs.chartId;
+            var figure = _(mpld3.figures).findWhere({ figid: id });
+            if (figure) {
+              figure.toolbar.fig.toggle_zoom();
+            }
           };
 
           /**
