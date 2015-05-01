@@ -8,6 +8,7 @@ define(['angular', 'jquery', 'mpld3', 'underscore', 'saveAs', 'jsPDF', './svg-to
         restrict: 'E',
         templateUrl: '/js/modules/common/chart-toolbar.html',
         replace:true,
+        scope: true,
         link: function (scope, elem, attrs) {
           var chartStylesheetUrl = '/assets/css/chart.css';
 

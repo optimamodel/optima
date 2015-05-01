@@ -41,7 +41,8 @@
         <div class="section elastic">
           <div class="elastic_col __shrink" style="width: 337px">
             <div class="chart-container" ng-if="state.costCoverageChart">
-              <div mpld3-chart="state.costCoverageChart" id="mpld3-chart1"></div><chart-toolbar chart-type="mpld3" mpld3-chart-data="state.costCoverageChart" chart-id="mpld3-chart1"></chart-toolbar>
+              <div mpld3-chart="state.costCoverageChart" id="mpld3-chart1"></div>
+              <chart-toolbar chart-type="mpld3" mpld3-chart-data="state.costCoverageChart" chart-id="mpld3-chart1"></chart-toolbar>
             </div>
             <div class="chart-container"
                  ng-if="!state.costCoverageChart"
@@ -202,13 +203,15 @@
 
               <div class="elastic_col __shrink" style="width: 320px">
                 <div class="chart-container">
-                  <div mpld3-chart="state.coverageOutcomeCharts[$index]" id="mpld3-chart2{{$index}}"></div><chart-toolbar chart-type="mpld3" mpld3-chart-data="state.costCoverageChart" chart-id="mpld3-chart2{{$index}}"></chart-toolbar>
+                  <div mpld3-chart="state.coverageOutcomeCharts[$index]" id="mpld3-chart2{{$index}}"></div>
+                  <chart-toolbar chart-type="mpld3" mpld3-chart-data="state.costCoverageChart" chart-id="mpld3-chart2{{$index}}"></chart-toolbar>
                 </div>
               </div>
 
               <div class="elastic_col" style="width: 340px">
                 <div class="chart-container">
-                  <div mpld3-chart="state.costOutcomeCharts[$index]" id="mpld3-chart3{{$index}}"></div><chart-toolbar chart-type="mpld3" mpld3-chart-data="state.costCoverageChart" chart-id="mpld3-chart3"></chart-toolbar>
+                  <div mpld3-chart="state.costOutcomeCharts[$index]" id="mpld3-chart3{{$index}}"></div>
+                  <chart-toolbar chart-type="mpld3" mpld3-chart-data="state.costCoverageChart" chart-id="mpld3-chart3{{$index}}"></chart-toolbar>
                 </div>
               </div>
 

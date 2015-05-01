@@ -1,5 +1,5 @@
 <div>
-    <div ng-if="chartType === 'mpld3'">{{zoomEnabled}}
+    <div ng-if="chartType === 'mpld3'">
         <i class="fa fa-refresh chart-icon chart-reset-button" ng-click="resetChart({$event:$event})"></i>
         <i class="fa fa-arrows chart-icon chart-zoom-button" ng-click="zoomChart({$event:$event})" ng-class="{'active-icon': zoomEnabled}"></i>
         <i class="fa fa-search chart-icon chart-move-button" ng-click="moveChart({$event:$event})" ng-class="{'active-icon': moveEnabled}"></i>
