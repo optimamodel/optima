@@ -18,9 +18,8 @@ define(['angular', 'jquery', 'mpld3', 'underscore', 'saveAs', 'jsPDF', './svg-to
             scope.chartType = attrs.chartType;
           };
 
-          scope.exportFigure = function (event) {
-            //strange event not getting passed commenting for now and writing in html rather
-            //event.preventDefault();
+          scope.exportFigure = function (params) {
+            params.$event.preventDefault();
 
             modalService.choice(
               exportGraphAsSvg, // first button callback
@@ -32,8 +31,8 @@ define(['angular', 'jquery', 'mpld3', 'underscore', 'saveAs', 'jsPDF', './svg-to
             );
           };
 
-          scope.exportData = function (event) {
-            //event.preventDefault();
+          scope.exportData = function (params) {
+            params.$event.preventDefault();
 
             if (_(attrs).has('mpld3ChartData')) {
               var mpld3Chart = scope.$eval(attrs.mpld3ChartData);
@@ -45,8 +44,8 @@ define(['angular', 'jquery', 'mpld3', 'underscore', 'saveAs', 'jsPDF', './svg-to
             }
           };
 
-          scope.resetChart = function (event) {
-            //event.preventDefault();
+          scope.resetChart = function (params) {
+            params.$event.preventDefault();
 
             var id = attrs.chartId;
             var figure = _(mpld3.figures).findWhere({ figid: id });
@@ -55,8 +54,8 @@ define(['angular', 'jquery', 'mpld3', 'underscore', 'saveAs', 'jsPDF', './svg-to
             }
           };
 
-          scope.zoomChart = function (event) {
-            //event.preventDefault();
+          scope.zoomChart = function (params) {
+            params.$event.preventDefault();
 
             var id = attrs.chartId;
             var figure = _(mpld3.figures).findWhere({ figid: id });
@@ -75,13 +74,14 @@ define(['angular', 'jquery', 'mpld3', 'underscore', 'saveAs', 'jsPDF', './svg-to
             }
           };
 
-          scope.moveChart = function (event) {
-            //event.preventDefault();
+          scope.moveChart = function (params) {
+            params.$event.preventDefault();
 
             var id = attrs.chartId;
             var figure = _(mpld3.figures).findWhere({ figid: id });
             if (figure) {
               figure.toolbar.fig.toggle_zoom();
+              scope.moveEnabled = figure.toolbar.fig.zoom_on;
             }
           };
 
