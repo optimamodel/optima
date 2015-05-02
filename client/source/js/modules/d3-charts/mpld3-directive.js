@@ -6,13 +6,11 @@ define(['./module','underscore', 'jquery', 'mpld3'], function (module, _, $, mpl
       scope: {
         chart: '=mpld3Chart'
       },
-      link: function (scope, element) {
-        var newId = 'mpld3-chart' + _.uniqueId();
-        $(element).attr('id', newId);
+      link: function (scope, element, attrs) {
         $(element).attr('class', 'mpld3-chart');
         scope.$watch('chart', function() {
           $(element).html("");
-          mpld3.draw_figure(newId, scope.chart);
+          mpld3.draw_figure(attrs.id, scope.chart);
         }, true);
       }
     };

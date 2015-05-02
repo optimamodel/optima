@@ -86,8 +86,9 @@
       <div class="grid">
         <div>
           <div class="chart-container __small" ng-repeat="chart in charts">
-            <div ng-if="chart.type == 'lineAreaScatterChart'" line-area-scatter-chart ng-if="chart.type != 'stackAreaChart'" data="chart.data" options="chart.options" chart-toolbar="{ reset: false }" normalise-height></div>
-            <div ng-if="chart.type == 'stackedAreaChart'" stacked-area-chart data="chart.data" options="chart.options" chart-toolbar="{ reset: false }" normalise-height></div>
+            <div ng-if="chart.type == 'lineAreaScatterChart'" line-area-scatter-chart ng-if="chart.type != 'stackAreaChart'" data="chart.data" options="chart.options" normalise-height></div>
+            <chart-toolbar chart-type="d3" d3-chart-data="chart.data"></chart-toolbar>
+            <div ng-if="chart.type == 'stackedAreaChart'" stacked-area-chart data="chart.data" options="chart.options" normalise-height></div>
           </div>
         </div>
       </div>

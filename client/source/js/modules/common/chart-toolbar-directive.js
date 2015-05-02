@@ -5,66 +5,128 @@ define(['angular', 'jquery', 'mpld3', 'underscore', 'saveAs', 'jsPDF', './svg-to
   return angular.module('app.chart-toolbar', [])
     .directive('chartToolbar', function ($http, modalService, exportHelpers) {
       return {
-        restrict: 'A',
+        restrict: 'E',
+        templateUrl: '/js/modules/common/chart-toolbar.html',
+        replace:true,
+        scope: true,
         link: function (scope, elem, attrs) {
           var chartStylesheetUrl = '/assets/css/chart.css';
 
           /**
-           * Initializes the directive by appending the html and setting up the
-           * event handlers.
+           * Initializes the directive.
            */
           var initialize = function() {
-            var options = scope.$eval(attrs.chartToolbar) || {};
+            scope.chartType = attrs.chartType;
+          };
 
-            var template = '<div>';
-            if (options.reset !== false) {
-              template = template + '<button class="btn chart-reset-button">Reset</button>';
+          /**
+           * Opens a dialog to provide the user with the option to export the
+           * chart as svg or png.
+           */
+          scope.exportFigure = function (params) {
+            params.$event.preventDefault();
+
+            modalService.choice(
+              exportGraphAsSvg, // first button callback
+              exportGraphAsPng, // second button callback
+              'Download as SVG', // first button text
+              'Download as PNG', // second button text
+              'Please choose your preferred format', // modal message
+              'Export figure' // modal title
+            );
+          };
+
+          /**
+           * Exports the data of this chart as xls file format and triggers the
+           * download.
+           */
+          scope.exportData = function (params) {
+            params.$event.preventDefault();
+
+            if (_(attrs).has('mpld3ChartData')) {
+              var mpld3Chart = scope.$eval(attrs.mpld3ChartData);
+              scope.exportMpld3From(mpld3Chart);
+            } else {
+              var chartAccessor = attrs.d3ChartData.replace(new RegExp('.data$'), '');
+              var chart = scope.$eval(chartAccessor);
+              scope.exportFrom(chart);
             }
-            template = template + '<div class="chart-export-buttons btn-group">' +
-                '<button class="btn figure">Export figure</button>' +
-                '<button class="btn data">Export data</button>' +
-              '</div>' +
-            '</div>';
+          };
 
-            var buttons = angular.element(template);
-            // append export buttons
-            elem.after(buttons);
+          /**
+           * Returns the mpld3 figure of this chart.
+           */
+          function getFigure () {
+            var id = attrs.chartId;
+            return _(mpld3.figures).findWhere({ figid: id });
+          }
 
-            // setup click handlers for the different actions
-            buttons
-              .on('click', '.figure', function (event) {
-                event.preventDefault();
+          /**
+           * Returns the zoomPlugin of the mpdl3 figure of this chart.
+           */
+          function getZoomPlugin () {
+            return _(getFigure().plugins).find(function(plugin) {
+              return plugin.constructor.name === 'mpld3_BoxZoomPlugin';
+            });
+          }
 
-                modalService.choice(
-                  exportGraphAsSvg, // first button callback
-                  exportGraphAsPng, // second button callback
-                  'Download as SVG', // first button text
-                  'Download as PNG', // second button text
-                  'Please choose your preferred format', // modal message
-                  'Export figure' // modal title
-                );
-              })
-              .on('click', '.data', function (event) {
-                event.preventDefault();
+          /**
+           * Disable both the zoom and the pan button.
+           */
+          function resetButtons () {
+            // disable zoom
+            getZoomPlugin().deactivate();
+            scope.zoomEnabled = false;
 
-                if (_(attrs).has('mpld3Chart')) {
-                  var mpld3Chart = scope.$eval(attrs.mpld3Chart);
-                  scope.exportMpld3From(mpld3Chart);
-                } else {
-                  var chartAccessor = attrs.data.replace(new RegExp('.data$'), '');
-                  var chart = scope.$eval(chartAccessor);
-                  scope.exportFrom(chart);
-                }
-              })
-              .on('click', '.chart-reset-button', function (event) {
-                event.preventDefault();
+            // disable pan
+            getFigure().toolbar.fig.disable_zoom();
+            scope.panEnabled = false;
+          }
 
-                var id = $(elem).attr('id');
-                var figure = _(mpld3.figures).findWhere({ figid: id });
-                if (figure) {
-                  figure.toolbar.fig.reset();
-                }
-              });
+          /**
+           * Resets zoom & pan to its initial state.
+           */
+          scope.resetChart = function (params) {
+            params.$event.preventDefault();
+
+            getFigure().toolbar.fig.reset();
+          };
+
+          /**
+           * Toggle the zoom functionality on the chart.
+           *
+           * Reseting all the other buttons as well to ensure that none of them
+           * are enabled at the same time.
+           */
+          scope.zoomChart = function (params) {
+            params.$event.preventDefault();
+
+            var zoomWasEnabled = getZoomPlugin().enabled;
+            resetButtons();
+
+            if (!zoomWasEnabled) {
+              scope.zoomEnabled = true;
+              getZoomPlugin().activate();
+            }
+          };
+
+          /**
+           * Toggle the pan functionality on the chart.
+           *
+           * Reseting all the other buttons as well to ensure that none of them
+           * are enabled at the same time.
+           */
+          scope.panChart = function (params) {
+            params.$event.preventDefault();
+
+            var panWasEnabled = getFigure().toolbar.fig.zoom_on;
+
+            resetButtons();
+
+            if (!panWasEnabled) {
+              getFigure().toolbar.fig.enable_zoom();
+              scope.panEnabled = true;
+            }
           };
 
           /**
