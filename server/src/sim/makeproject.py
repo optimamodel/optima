@@ -17,6 +17,7 @@ def makeproject(projectname='example', pops = default_pops, progs = default_prog
     from printv import printv
     from numpy import arange
     from copy import deepcopy
+    from versioning import current_version
 
     printv('Making project...', 1, verbose)
 
@@ -29,6 +30,7 @@ def makeproject(projectname='example', pops = default_pops, progs = default_prog
     
     # Set up "G" -- general parameters structure
     D['G'] = dict()
+    D['G']['version'] = current_version # so that we know the version of new project with regard to data structure
     D['G']['projectname'] = projectname  
     D['G']['projectfilename'] = projectpath(projectname+'.prj')
     D['G']['workbookname'] = D['G']['projectname'] + '.xlsx'

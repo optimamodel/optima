@@ -83,8 +83,7 @@ def makecc(D=None, progname=None, ccparams=None, arteligcutoff=None, verbose=def
     if popadj: totalcost = totalcost/targetpopsize if len(totalcost)>1 else totalcost/mean(targetpopsize)
 
     # Get upper limit of x axis for plotting
-    xupperlim = max([x if ~isnan(x) else 0.0 for x in totalcost])*1.5
-    if (ccparams and 'xupperlim' in ccparams and ccparams['xupperlim'] and ~isnan(ccparams['xupperlim'])): xupperlim = ccparams['xupperlim']
+    xupperlim = max([x if ~isnan(x) else 0.0 for x in totalcost])*15.
 
     # Populate output structure with scatter data
     plotdata['allxscatterdata'] = totalcost
@@ -242,12 +241,18 @@ def makeco(D=None, progname=None, effect=None, coparams=None, coverage_params=co
 #################################################################################
 def makecco(D=None, progname=None, effect=None, ccparams=None, coparams=None, arteligcutoff=None, coverage_params=coverage_params, verbose=default_verbose, nxpts=default_nxpts):
     ''' Make a single cost outcome curve. '''
+    from numpy import array, where
+    from datetime import date
 
     plotdata, plotdata_co = {}, {} 
-    parname = effect['param']
+    prognumber = [p['name'] for p in D['programs']].index(progname) # get program number    
+    partype, parname, popname = effect['paramtype'], effect['param'], effect['popname'] # Get population and parameter info
 
     # Only going to make cost-outcome curves for programs where the affected parameter is not coverage
     if parname not in coverage_params:
+        if popname not in D['data']['meta']['pops']['short']: raise Exception('Cannot recognise population %s, it is not in %s' % (popname, D['data']['meta']['pops']['short']))
+        else: popnumber = D['data']['meta']['pops']['short'].index(popname)
+
         plotdata_cc, D = makecc(D=D, progname=progname, ccparams=ccparams, arteligcutoff=arteligcutoff)
         plotdata_co, effect = makeco(D=D, progname=progname, effect=effect, coparams=coparams, arteligcutoff=arteligcutoff)
     
@@ -257,7 +262,24 @@ def makecco(D=None, progname=None, effect=None, ccparams=None, coparams=None, ar
         totalcost, outcome = getscatterdata(totalcost, outcome)
         plotdata['xscatterdata'] = totalcost 
         plotdata['yscatterdata'] = outcome 
-            
+
+       # Make additional scatter data for current param vals
+        currentcost = D['data']['origalloc'][prognumber]
+        try:
+            timepoint = where(abs(D['opt']['partvec']-float(min(D['data']['epiyears'][-1], date.today().year)))<0.001)
+            if parname[:6] == 'condom':
+                parname1, parname2 = parname[:6], parname[6:]
+                currentoutcome = D['M'][parname1][parname2][popnumber][timepoint]
+            else:
+                currentoutcome = D['M'][parname][popnumber][timepoint]
+        except:
+            tmp = array(D['data'][partype][parname][popnumber])
+            currentoutcome = tmp[~isnan(tmp)][-1]
+            print('Parameter %s not found, using last data value %f' % (parname, currentoutcome))
+
+        plotdata['xcurrentdata'] = currentcost 
+        plotdata['ycurrentdata'] = currentoutcome 
+
         # Populate output structure with axis limits
         plotdata['xlowerlim'], plotdata['ylowerlim'] = plotdata_cc['xlowerlim'], plotdata_co['ylowerlim']
         plotdata['xupperlim'], plotdata['yupperlim'] = plotdata_cc['xupperlim'], plotdata_co['yupperlim']
