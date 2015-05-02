@@ -207,6 +207,16 @@ define(['./module', 'underscore'], function (module, _) {
     };
 
     /**
+     * Returns a new unique ID.
+     *
+     * Background: Due Mpld3 issues with re-rending a chart on the same ID we
+     * create a new one every time.
+     */
+     $scope.generateChartId = function () {
+       return 'chart' + _.uniqueId();
+     };
+
+    /**
      * POST /api/model/costcoverage/effect
      *   {
      *     "progname":<chosen progname>
