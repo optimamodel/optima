@@ -55,23 +55,37 @@ define(['angular', 'jquery', 'mpld3', 'underscore', 'saveAs', 'jsPDF', './svg-to
             }
           };
 
+          function resetButtons () {
+            var id = attrs.chartId;
+            var figure = _(mpld3.figures).findWhere({ figid: id });
+
+            var zoomPlugin = _(figure.plugins).find(function(plugin) {
+              return plugin.constructor.name === 'mpld3_BoxZoomPlugin';
+            });
+            // disable zoom
+            zoomPlugin.deactivate();
+            scope.zoomEnabled = false;
+
+            // disable pan
+            figure.toolbar.fig.disable_zoom();
+            scope.moveEnabled = false;
+          }
+
           scope.zoomChart = function (params) {
             params.$event.preventDefault();
 
             var id = attrs.chartId;
             var figure = _(mpld3.figures).findWhere({ figid: id });
+            var zoomPlugin = _(figure.plugins).find(function(plugin) {
+              return plugin.constructor.name === 'mpld3_BoxZoomPlugin';
+            });
 
-            if (figure) {
-              var zoomPlugin = _(figure.plugins).find(function(plugin) {
-                return plugin.constructor.name === 'mpld3_BoxZoomPlugin';
-              });
-              if (zoomPlugin.enabled) {
-                scope.zoomEnabled = false;
-                zoomPlugin.deactivate();
-              } else {
-                scope.zoomEnabled = true;
-                zoomPlugin.activate();
-              }
+            var zoomWasEnabled = zoomPlugin.enabled;
+            resetButtons();
+
+            if (!zoomWasEnabled) {
+              scope.zoomEnabled = true;
+              zoomPlugin.activate();
             }
           };
 
@@ -80,9 +94,13 @@ define(['angular', 'jquery', 'mpld3', 'underscore', 'saveAs', 'jsPDF', './svg-to
 
             var id = attrs.chartId;
             var figure = _(mpld3.figures).findWhere({ figid: id });
-            if (figure) {
-              figure.toolbar.fig.toggle_zoom();
-              scope.moveEnabled = figure.toolbar.fig.zoom_on;
+            var panWasEnabled = figure.toolbar.fig.zoom_on;
+
+            resetButtons();
+
+            if (!panWasEnabled) {
+              figure.toolbar.fig.enable_zoom();
+              scope.moveEnabled = true;
             }
           };
 
