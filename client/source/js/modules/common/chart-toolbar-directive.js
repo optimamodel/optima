@@ -19,6 +19,10 @@ define(['angular', 'jquery', 'mpld3', 'underscore', 'saveAs', 'jsPDF', './svg-to
             scope.chartType = attrs.chartType;
           };
 
+          /**
+           * Opens a dialog to provide the user with the option to export the
+           * chart as svg or png.
+           */
           scope.exportFigure = function (params) {
             params.$event.preventDefault();
 
@@ -32,6 +36,10 @@ define(['angular', 'jquery', 'mpld3', 'underscore', 'saveAs', 'jsPDF', './svg-to
             );
           };
 
+          /**
+           * Exports the data of this chart as xls file format and triggers the
+           * download.
+           */
           scope.exportData = function (params) {
             params.$event.preventDefault();
 
@@ -45,62 +53,79 @@ define(['angular', 'jquery', 'mpld3', 'underscore', 'saveAs', 'jsPDF', './svg-to
             }
           };
 
-          scope.resetChart = function (params) {
-            params.$event.preventDefault();
-
+          /**
+           * Returns the mpld3 figure of this chart.
+           */
+          function getFigure () {
             var id = attrs.chartId;
-            var figure = _(mpld3.figures).findWhere({ figid: id });
-            if (figure) {
-              figure.toolbar.fig.reset();
-            }
-          };
+            return _(mpld3.figures).findWhere({ figid: id });
+          }
 
-          function resetButtons () {
-            var id = attrs.chartId;
-            var figure = _(mpld3.figures).findWhere({ figid: id });
-
-            var zoomPlugin = _(figure.plugins).find(function(plugin) {
+          /**
+           * Returns the zoomPlugin of the mpdl3 figure of this chart.
+           */
+          function getZoomPlugin () {
+            return _(getFigure().plugins).find(function(plugin) {
               return plugin.constructor.name === 'mpld3_BoxZoomPlugin';
             });
+          }
+
+          /**
+           * Disable both the zoom and the pan button.
+           */
+          function resetButtons () {
             // disable zoom
-            zoomPlugin.deactivate();
+            getZoomPlugin().deactivate();
             scope.zoomEnabled = false;
 
             // disable pan
-            figure.toolbar.fig.disable_zoom();
-            scope.moveEnabled = false;
+            getFigure().toolbar.fig.disable_zoom();
+            scope.panEnabled = false;
           }
 
+          /**
+           * Resets zoom & pan to its initial state.
+           */
+          scope.resetChart = function (params) {
+            params.$event.preventDefault();
+
+            getFigure().toolbar.fig.reset();
+          };
+
+          /**
+           * Toggle the zoom functionality on the chart.
+           *
+           * Reseting all the other buttons as well to ensure that none of them
+           * are enabled at the same time.
+           */
           scope.zoomChart = function (params) {
             params.$event.preventDefault();
 
-            var id = attrs.chartId;
-            var figure = _(mpld3.figures).findWhere({ figid: id });
-            var zoomPlugin = _(figure.plugins).find(function(plugin) {
-              return plugin.constructor.name === 'mpld3_BoxZoomPlugin';
-            });
-
-            var zoomWasEnabled = zoomPlugin.enabled;
+            var zoomWasEnabled = getZoomPlugin().enabled;
             resetButtons();
 
             if (!zoomWasEnabled) {
               scope.zoomEnabled = true;
-              zoomPlugin.activate();
+              getZoomPlugin().activate();
             }
           };
 
-          scope.moveChart = function (params) {
+          /**
+           * Toggle the pan functionality on the chart.
+           *
+           * Reseting all the other buttons as well to ensure that none of them
+           * are enabled at the same time.
+           */
+          scope.panChart = function (params) {
             params.$event.preventDefault();
 
-            var id = attrs.chartId;
-            var figure = _(mpld3.figures).findWhere({ figid: id });
-            var panWasEnabled = figure.toolbar.fig.zoom_on;
+            var panWasEnabled = getFigure().toolbar.fig.zoom_on;
 
             resetButtons();
 
             if (!panWasEnabled) {
-              figure.toolbar.fig.enable_zoom();
-              scope.moveEnabled = true;
+              getFigure().toolbar.fig.enable_zoom();
+              scope.panEnabled = true;
             }
           };
 
