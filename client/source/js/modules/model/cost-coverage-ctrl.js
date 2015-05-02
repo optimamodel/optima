@@ -162,7 +162,6 @@ define(['./module', 'underscore'], function (module, _) {
       $scope.state.nonHivDalys = program.ccparams.nonhivdalys;
       $scope.state.displayYear = program.ccparams.cpibaseyear;
       $scope.state.calculatePerPerson = program.ccparams.perperson;
-      console.log("info", info);
       $scope.state.info = info;
 
       var model = getPlotModel();
