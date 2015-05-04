@@ -4,6 +4,9 @@ default_datastart = 2000
 default_dataend = 2015
 default_nsims = 5
 
+# IMPORTANT: increment this if structure of D changes
+current_version = 4
+
 def makeproject(projectname='example', pops = default_pops, progs = default_progs, datastart=default_datastart, \
     dataend=default_dataend, nsims=default_nsims, verbose=2, savetofile = True, domakeworkbook=True):
     """
@@ -29,6 +32,7 @@ def makeproject(projectname='example', pops = default_pops, progs = default_prog
     
     # Set up "G" -- general parameters structure
     D['G'] = dict()
+    D['G']['version'] = current_version # so that we know the version of new project with regard to data structure
     D['G']['projectname'] = projectname  
     D['G']['projectfilename'] = projectpath(projectname+'.prj')
     D['G']['workbookname'] = D['G']['projectname'] + '.xlsx'

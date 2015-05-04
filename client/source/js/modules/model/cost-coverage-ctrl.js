@@ -64,7 +64,6 @@ define(['./module', 'underscore'], function (module, _) {
         funding: $scope.state.knownFundingValue,
         scaleup: $scope.state.scaleUpParameter,
         nonhivdalys: $scope.state.nonHivDalys,
-        xupperlim: $scope.state.xAxisMaximum,
         cpibaseyear: $scope.state.displayYear,
         perperson: $scope.state.calculatePerPerson
       };
@@ -162,8 +161,8 @@ define(['./module', 'underscore'], function (module, _) {
       $scope.state.scaleUpParameter = program.ccparams.scaleup;
       $scope.state.nonHivDalys = program.ccparams.nonhivdalys;
       $scope.state.displayYear = program.ccparams.cpibaseyear;
-      $scope.state.xAxisMaximum = program.ccparams.xupperlim;
       $scope.state.calculatePerPerson = program.ccparams.perperson;
+      $scope.state.info = info;
 
       var model = getPlotModel();
       retrieveAndUpdateGraphs(model);
@@ -206,6 +205,16 @@ define(['./module', 'underscore'], function (module, _) {
       var model = getPlotModel();
       retrieveAndUpdateGraphs(model);
     };
+
+    /**
+     * Returns a new unique ID.
+     *
+     * Background: Due Mpld3 issues with re-rending a chart on the same ID we
+     * create a new one every time.
+     */
+     $scope.generateChartId = function () {
+       return 'chart' + _.uniqueId();
+     };
 
     /**
      * POST /api/model/costcoverage/effect
