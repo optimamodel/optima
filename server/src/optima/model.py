@@ -1,7 +1,6 @@
 from flask import Blueprint, request, jsonify
 import json
 import traceback
-import mpld3
 from optima.async_calculate import CalculatingThread, start_or_report_calculation
 from optima.async_calculate import cancel_calculation, check_calculation
 from optima.async_calculate import check_calculation_status, good_exit_status
@@ -327,10 +326,9 @@ def doCostCoverage(): # pylint: disable=R0914
         # effectnames are actually effects
         figsize = (3,2)
         plotdata_cco, plotdata_co, plotdata_cc, effectnames, D = plotallcurves(**args)
-        fig_cc = plot_cost_coverage(plotdata_cc, figsize)
-        dict_fig_cc = mpld3.fig_to_dict(fig_cc)
-        dict_fig_co = map(lambda key: mpld3.fig_to_dict(plot_coverage_outcome(plotdata_co[key], figsize)), plotdata_co.keys())
-        dict_fig_cco = map(lambda key: mpld3.fig_to_dict(plot_cost_outcome(plotdata_cco[key], figsize)), plotdata_cco.keys())
+        dict_fig_cc = plot_cost_coverage(plotdata_cc, figsize)
+        dict_fig_co = map(lambda key: plot_coverage_outcome(plotdata_co[key], figsize), plotdata_co.keys())
+        dict_fig_cco = map(lambda key: plot_cost_outcome(plotdata_cco[key], figsize), plotdata_cco.keys())
         if do_save:
             D_dict = tojson(D)
             save_model(request.project_id, D_dict)
@@ -362,10 +360,8 @@ def doCostCoverageEffect():
         # effectnames are actually effects
         figsize = (3,2)
         plotdata, plotdata_co, _ = makecco(**args) # plotdata is actually plotdata_cco
-        fig_co = plot_coverage_outcome(plotdata_co, figsize)
-        dict_fig_co = mpld3.fig_to_dict(fig_co)
-        fig_cco = plot_cost_outcome(plotdata, figsize)
-        dict_fig_cco = mpld3.fig_to_dict(fig_cco)
+        dict_fig_co = plot_coverage_outcome(plotdata_co, figsize)
+        dict_fig_cco = plot_cost_outcome(plotdata, figsize)
     except Exception:
         var = traceback.format_exc()
         return jsonify({"exception":var}), 500
