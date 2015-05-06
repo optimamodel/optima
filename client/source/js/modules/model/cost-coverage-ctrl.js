@@ -43,6 +43,7 @@ define(['./module', 'underscore'], function (module, _) {
 
     var resetCharts = function () {
       $scope.state.costCoverageChart = undefined;
+      $scope.state.costCoverageChartId = undefined;
       $scope.state.costCoverageChartTitle = undefined;
       $scope.state.costOutcomeCharts = [];
       $scope.state.coverageOutcomeCharts = [];
@@ -122,11 +123,13 @@ define(['./module', 'underscore'], function (module, _) {
       resetCharts();
 
       $http.post('/api/model/costcoverage', model).success(function (response) {
+
         effects = response.effectnames;
         $scope.state.coParams = costCoverageHelpers.setUpCoParamsFromEffects(effects);
         $scope.state.hasCostCoverResponse = true;
 
         $scope.state.costCoverageChartTitle = response.fig_cc.axes[0].texts[2].text;
+        $scope.state.costCoverageChartId = $scope.generateChartId();
         $scope.state.costCoverageChart = response.fig_cc;
         $scope.state.costCoverageChart.axes[0].texts.splice(2, 1);
 

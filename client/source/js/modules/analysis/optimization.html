@@ -129,13 +129,13 @@
                 period:
               </ng-form>
 
-            <div>
+            <div class="top-spaced">
               <label>
                 <input type="checkbox" ng-model="params.objectives.year.artcontinue">
                 ART programs will continue:
               </label>
 
-              <div class="elastic_col __va-middle" style="padding:0px 0px 0 20px;">
+              <div class="elastic_col __va-middle indented">
                 <label>
                   <input type="radio" name="artcontinue" ng-model="params.objectives.artcontinue" value="1">
                   During the program period, no one who initiates treatment is to stop ART, except by natural attrition
@@ -151,8 +151,13 @@
                 <label>
                   <input type="radio" name="artcontinue" ng-model="params.objectives.artcontinue" value="4">
                   ART coverage will scale up, reaching
-                  <input type="number" class="txbox __inline __s" value="90"
+                  <input type="number"
+                         class="txbox __inline __m"
+                         value="90"
                          placeholder="e.g. 90"
+                         min="0"
+                         max="100"
+                         name="universalcov"
                          ng-model="params.objectives.year.universalcov">%
                   coverage of treatment-eligible people by
                   <input type="number" class="txbox __inline __l"
@@ -162,6 +167,14 @@
                          step="1"
                          ng-model="params.objectives.year.universal">
                   and then be maintained
+
+                  <div ng-messages="state.OptimizationForm.universalcov.$error"
+                       ng-show="state.OptimizationForm.universalcov.$touched && state.OptimizationForm.universalcov.$invalid">
+                    <div class="error-hint" ng-message="required">Please provide a value for ART coverage</div>
+                    <div class="error-hint" ng-message="min">The minimum percentage of ART coverage can only be 0</div>
+                    <div class="error-hint" ng-message="max">The maximum percentage of ART coverage can only be 0</div>
+                    <div class="error-hint" ng-message="number">The value of ART coverage should be a number</div>
+                  </div>
 
                   <div ng-messages="state.OptimizationForm.universal.$error"
                        ng-show="state.OptimizationForm.universal.$touched && state.OptimizationForm.universal.$invalid">
@@ -174,13 +187,13 @@
               </div>
             </div>
 
-            <div>
+            <div class="top-spaced">
               <label>
                 <input type="checkbox" ng-model="params.objectives.year.otherprograms">
                 All other behavioral and contextual parameters:
               </label>
 
-              <div class="elastic_col __va-middle" style="padding:0px 0px 0px 0px;">
+              <div class="elastic_col __va-middle indented">
                 <label class="checkbox-inline">
                   <input type="radio" name="otherprograms" ng-model="params.objectives.otherprograms" value="revert">
                   revert to the levels prior to the program period
@@ -228,7 +241,7 @@
                          required />
                   Optimize a fixed budget of total amount
                   <input type="number"
-                         class="txbox __inline __l"
+                         class="txbox __inline __xl"
                          ng-required="params.objectives.funding==='constant'"
                          ng-model="params.objectives.outcome.fixed"
                          min="0"

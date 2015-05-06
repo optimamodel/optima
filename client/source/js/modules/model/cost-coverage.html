@@ -40,9 +40,9 @@
         <h1>{{ state.costCoverageChartTitle }}</h1>
         <div class="section elastic">
           <div class="elastic_col __shrink" style="width: 337px">
-            <div class="chart-container" ng-if="state.costCoverageChart" ng-init="chartId = generateChartId()">
-              <div mpld3-chart="state.costCoverageChart" id="{{ chartId }}"></div>
-              <chart-toolbar chart-type="mpld3" mpld3-chart-data="state.costCoverageChart" chart-id="{{ chartId }}"></chart-toolbar>
+            <div class="chart-container" ng-if="state.costCoverageChart">
+              <div mpld3-chart="state.costCoverageChart" id="{{ state.costCoverageChartId }}"></div>
+              <chart-toolbar chart-type="mpld3" mpld3-chart-data="state.costCoverageChart" chart-id="{{ state.costCoverageChartId }}"></chart-toolbar>
             </div>
             <div class="chart-container"
                  ng-if="!state.costCoverageChart"
