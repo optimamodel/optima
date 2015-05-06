@@ -34,9 +34,10 @@ def makecc(D=None, progname=None, ccparams=None, arteligcutoff=None, verbose=def
     prognumber = [p['name'] for p in D['programs']].index(progname) # get program number    
     if not (isinstance(arteligcutoff,str)):
         print('Assuming universal ART coverage since not otherwise specified....')
-        arteligcutoff = D['G']['healthstates'][0]
-    states, artindex = range(D['G']['nstates']), []
-    for i in range(len(D['G'][arteligcutoff])-1): artindex.extend(states[D['G'][arteligcutoff][i+1]:D['G'][D['G']['healthstates'][-1]][i+1]+1])
+        artindex = range(D['G']['nstates'])[1::]
+    else:
+        states, artindex = range(D['G']['nstates']), []
+        for i in range(len(D['G'][arteligcutoff])-1): artindex.extend(states[D['G'][arteligcutoff][i+1]:D['G'][D['G']['healthstates'][-1]][i+1]+1])
     if verbose>=2: print('makecc %s %s' % (progname, ccparams))
 
     # If ccparams haven't been passed in but there's something stored in D, use the stored version
@@ -82,8 +83,7 @@ def makecc(D=None, progname=None, ccparams=None, arteligcutoff=None, verbose=def
     if popadj: totalcost = totalcost/targetpopsize if len(totalcost)>1 else totalcost/mean(targetpopsize)
 
     # Get upper limit of x axis for plotting
-    xupperlim = max([x if ~isnan(x) else 0.0 for x in totalcost])*1.5
-    if (ccparams and 'xupperlim' in ccparams and ccparams['xupperlim'] and ~isnan(ccparams['xupperlim'])): xupperlim = ccparams['xupperlim']
+    xupperlim = max([x if ~isnan(x) else 0.0 for x in totalcost])*15.
 
     # Populate output structure with scatter data
     plotdata['allxscatterdata'] = totalcost
@@ -117,6 +117,7 @@ def makecc(D=None, progname=None, ccparams=None, arteligcutoff=None, verbose=def
                 yvalscc[j] = [yvalscc[j][k]*targetpopsize[-1] for k in range(len(yvalscc[j]))]
 
         # Populate output structure
+        plotdata['xpop'] = xvalsccpop
         plotdata['xlinedata'] = xvalscc
         plotdata['ylinedata'] = yvalscc
 
@@ -240,12 +241,18 @@ def makeco(D=None, progname=None, effect=None, coparams=None, coverage_params=co
 #################################################################################
 def makecco(D=None, progname=None, effect=None, ccparams=None, coparams=None, arteligcutoff=None, coverage_params=coverage_params, verbose=default_verbose, nxpts=default_nxpts):
     ''' Make a single cost outcome curve. '''
+    from numpy import array, where
+    from datetime import date
 
     plotdata, plotdata_co = {}, {} 
-    parname = effect['param']
+    prognumber = [p['name'] for p in D['programs']].index(progname) # get program number    
+    partype, parname, popname = effect['paramtype'], effect['param'], effect['popname'] # Get population and parameter info
 
     # Only going to make cost-outcome curves for programs where the affected parameter is not coverage
     if parname not in coverage_params:
+        if popname not in D['data']['meta']['pops']['short']: raise Exception('Cannot recognise population %s, it is not in %s' % (popname, D['data']['meta']['pops']['short']))
+        else: popnumber = D['data']['meta']['pops']['short'].index(popname)
+
         plotdata_cc, D = makecc(D=D, progname=progname, ccparams=ccparams, arteligcutoff=arteligcutoff)
         plotdata_co, effect = makeco(D=D, progname=progname, effect=effect, coparams=coparams, arteligcutoff=arteligcutoff)
     
@@ -255,7 +262,24 @@ def makecco(D=None, progname=None, effect=None, ccparams=None, coparams=None, ar
         totalcost, outcome = getscatterdata(totalcost, outcome)
         plotdata['xscatterdata'] = totalcost 
         plotdata['yscatterdata'] = outcome 
-            
+
+       # Make additional scatter data for current param vals
+        currentcost = D['data']['origalloc'][prognumber]
+        try:
+            timepoint = where(abs(D['opt']['partvec']-float(min(D['data']['epiyears'][-1], date.today().year)))<0.001)
+            if parname[:6] == 'condom':
+                parname1, parname2 = parname[:6], parname[6:]
+                currentoutcome = D['M'][parname1][parname2][popnumber][timepoint]
+            else:
+                currentoutcome = D['M'][parname][popnumber][timepoint]
+        except:
+            tmp = array(D['data'][partype][parname][popnumber])
+            currentoutcome = tmp[~isnan(tmp)][-1]
+            print('Parameter %s not found, using last data value %f' % (parname, currentoutcome))
+
+        plotdata['xcurrentdata'] = currentcost 
+        plotdata['ycurrentdata'] = currentoutcome 
+
         # Populate output structure with axis limits
         plotdata['xlowerlim'], plotdata['ylowerlim'] = plotdata_cc['xlowerlim'], plotdata_co['ylowerlim']
         plotdata['xupperlim'], plotdata['yupperlim'] = plotdata_cc['xupperlim'], plotdata_co['yupperlim']
@@ -268,21 +292,31 @@ def makecco(D=None, progname=None, effect=None, ccparams=None, coparams=None, ar
         # Draw lines if we can
         print("effect", effect)
         if 'xlinedata' in plotdata_cc.keys() and effect.get('coparams') and isinstance(effect['coparams'], list):
+
+            # Store whole set of parameters
+            prognumber = [p['name'] for p in D['programs']].index(progname) # get program number    
+            convertedccoparams = D['programs'][prognumber]['convertedccparams']
+            convertedcoparams = effect['convertedcoparams']
+            convertedccoparams[0].extend([convertedcoparams[0],convertedcoparams[2]])
+            convertedccoparams[1].extend([coparams[0],coparams[2]])
+            convertedccoparams[2].extend([coparams[1],coparams[3]])
+            effect['convertedccoparams'] = convertedccoparams 
+
             xvalscco = plotdata_cc['xlinedata']
-            mediancco = coeqn(plotdata_cc['ylinedata'][0], [effect['convertedcoparams'][0], effect['convertedcoparams'][2]])
-            mincco = coeqn(plotdata_cc['ylinedata'][1], [effect['coparams'][0], effect['coparams'][2]])
-            maxcco = coeqn(plotdata_cc['ylinedata'][2], [effect['coparams'][1], effect['coparams'][3]])
+            xvalsccpop = plotdata_cc['xpop']
+            if len(convertedccoparams[0]) == 5:
+                mediancco = ccoeqn(xvalsccpop, convertedccoparams[0])
+                mincco = ccoeqn(xvalsccpop,  convertedccoparams[1])
+                maxcco = ccoeqn(xvalsccpop,  convertedccoparams[2])
+            elif len(convertedccoparams[0]) == 4:
+                mediancco = cco2eqn(xvalsccpop, convertedccoparams[0])
+                mincco = cco2eqn(xvalsccpop,  convertedccoparams[1])
+                maxcco = cco2eqn(xvalsccpop,  convertedccoparams[2])
     
             # Populate output structure with cost-outcome curves for plotting
             plotdata['xlinedata'] = xvalscco # X data for all line plots
             plotdata['ylinedata'] = [mediancco, mincco, maxcco]
     
-            # Store whole set of parameters
-            prognumber = [p['name'] for p in D['programs']].index(progname) # get program number    
-            convertedccoparams = D['programs'][prognumber]['convertedccparams']
-            convertedcoparams = effect['convertedcoparams']
-            for j in range(3): convertedccoparams[j].extend([convertedcoparams[0],convertedcoparams[2]])
-            effect['convertedccoparams'] = convertedccoparams 
 
     return plotdata, plotdata_co, effect
 

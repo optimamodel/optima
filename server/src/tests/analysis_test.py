@@ -19,7 +19,7 @@ class AnalysisTestCase(OptimaTestCase):
 
     def test_list_scenarios(self):
         from sim.scenarios import defaultscenarios
-        from sim.bunch import unbunchify
+        from sim.dataio import tojson
         response = self.create_user()
         response = self.login()
         project_id = self.create_project('test')
@@ -33,7 +33,7 @@ class AnalysisTestCase(OptimaTestCase):
         self.assertTrue('scenarios' in data)
         scenarios = data.get('scenarios')
         self.assertTrue(scenarios is not None)
-        default_scenarios = unbunchify(defaultscenarios(D))
+        default_scenarios = tojson(defaultscenarios(D))
         self.assertEqual(scenarios, default_scenarios)
 
 if __name__ == '__main__':

@@ -71,7 +71,10 @@ gulp.task('copy', ['sass'], function () {
     // minify requirejs
     gulp.src(['build/vendor/requirejs/require.js'])
       .pipe(uglify().on('error', handleError))
-      .pipe(gulp.dest('build/vendor/requirejs'))
+      .pipe(gulp.dest('build/vendor/requirejs')),
+    // copy mpld3, instead of minifying because we're using constructor names for plugin identification
+    gulp.src(['source/js/modules/d3-charts/mpld3.v0.3-patched.js'])
+      .pipe(gulp.dest('build/js/modules/d3-charts'))
   );
 });
 
@@ -83,7 +86,8 @@ gulp.task('js', function () {
     insertRequire: ['js/main'],
     name: 'js/main',
     optimize: 'none',
-    wrap: true
+    wrap: true,
+    excludeShallow: ['mpld3'] // excludes mpld3 from requirejs build
   };
   var config = _(configBuild).extend(configRequire);
 

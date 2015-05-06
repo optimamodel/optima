@@ -55,7 +55,8 @@
       </div>
       <div>
         <div class="chart-container __small" ng-repeat="chart in graphs">
-          <div line-area-scatter-chart data="chart.data" options="chart.options" save-graph-as></div>
+          <div line-area-scatter-chart data="chart.data" options="chart.options"></div>
+          <chart-toolbar chart-type="d3" d3-chart-data="chart.data"></chart-toolbar>
         </div>
       </div>
     </div>

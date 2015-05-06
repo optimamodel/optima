@@ -19,27 +19,40 @@ define(['angular', 'jquery', './svg-to-png', 'underscore'], function (angular, $
      *                          a string of JPEG image data is returned
      */
     var generateGraphAsPngOrJpeg = function( el, callback, type ) {
-      var originalSvg = el.find('svg');
-      var orginalWidth = $(originalSvg).outerWidth();
-      var orginalHeight = $(originalSvg).outerHeight();
-      var originalStyle = originalSvg.attr('style');
+
+      var elementId = $(el).find('[mpld3-chart]').attr('id');
+      var $originalSvg = el.find('svg');
+      var orginalWidth = $originalSvg.outerWidth();
+      var orginalHeight = $originalSvg.outerHeight();
+      var originalStyle = $originalSvg.attr('style') || '';
       var scalingFactor = 4.2;
 
       // in order to have styled graphs the css content used to render
       // graphs is retrieved & inject it into the svg as style tag
       var cssContentRequest = $http.get(chartCssUrl);
-      cssContentRequest.success(function(cssContent) {
+      cssContentRequest.success(function(chartStylesheetContent) {
+
+        // It is needed to fetch all as mpld3 injects multiple style tags into the DOM
+        var $styleTagContentList = $('style').map(function(index, style) {
+          var styleContent = $(style).html();
+          if (styleContent.indexOf('div#' + elementId) != -1) {
+            return styleContent.replace(/div#/g, '#');
+          }
+        });
+
+        var styleContent = $styleTagContentList.get().join('\n');
+        styleContent = styleContent + '\n' + chartStylesheetContent;
 
         // make sure we scale the padding and append it to the original styling
         // info: later declarations overwrite previous ones
-        var style = originalStyle + '; background:#fff; ' + svgToPng.scalePaddingStyle(originalSvg, scalingFactor);
+        var svgInlineStyle = originalStyle + '; background:#fff; ' + svgToPng.scalePaddingStyle($originalSvg, scalingFactor);
 
         // create svg element
-        var svg = svgToPng.createSvg(orginalWidth, orginalHeight, scalingFactor, style);
+        var svg = svgToPng.createSvg(orginalWidth, orginalHeight, scalingFactor, svgInlineStyle, elementId);
 
         // add styles and content to the svg
-        var styles = '<style>' + cssContent + '</style>';
-        svg.innerHTML = styles + originalSvg.html();
+        var styles = '<style>' + styleContent + '</style>';
+        svg.innerHTML = styles + $originalSvg.html();
 
         // create img element with the svg as data source
         var svgXML = (new XMLSerializer()).serializeToString(svg);
@@ -274,9 +287,46 @@ define(['angular', 'jquery', './svg-to-png', 'underscore'], function (angular, $
       return null;
     };
 
+    /**
+     * Returns the normalized data of an Mpld3 chart ready to export.
+     *
+     * @param {object} chart - an object which must contain the Mpld3 chart data.
+     */
+    var getMpld3ExportableFrom = function (chart) {
+      if(!chart.data) { return null; }
+
+      var exportable = {
+        name: 'Data',
+        columns: []
+      };
+
+      var xColumnData = [];
+      _(chart.data).each(function(entry) {
+        _(entry).each(function(point) {
+          xColumnData.push(point[0]);
+        });
+      });
+      xColumnData.sort();
+      exportable.columns.push({
+        title: chart.axes[0].texts[0].text,
+        data: xColumnData
+      });
+
+      _(chart.data).each(function(entry) {
+        var column = {
+          title: chart.axes[0].texts[1].text
+        };
+        column.data = fillFromDictionary(xColumnData, _.object(entry));
+        exportable.columns.push(column);
+      });
+
+      return exportable;
+    };
+
     return {
       generateGraphAsPngOrJpeg: generateGraphAsPngOrJpeg,
-      getExportableFrom: getExportableFrom
+      getExportableFrom: getExportableFrom,
+      getMpld3ExportableFrom: getMpld3ExportableFrom
     };
   }]);
 });
