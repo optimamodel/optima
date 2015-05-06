@@ -18,7 +18,7 @@ define([
     'app.ui.menu'
   ])
 
-    .controller('MainCtrl', function ($scope, $state, activeProject, UserManager, modalService, fileUpload) {
+    .controller('MainCtrl', function ($scope, $state, activeProject, UserManager, modalService, fileUpload, PreventNavigation) {
 
       $scope.user = UserManager.data;
       $scope.userLogged = function () {
@@ -168,5 +168,60 @@ define([
          }
       }
 
+      $scope.$on('$stateChangeStart',function (event, toState, toParams, fromState, fromParams) {
+        switch ( fromState.name ) {
+          case 'model.view':
+            if ( PreventNavigation.getCalibration() ) {
+              event.preventDefault();
+              var message = 'Are you sure you want to leave this page?';
+              modalService.confirm(
+                function (){
+                  PreventNavigation.setCalibration(false);
+                  $state.go(toState.name);
+                },
+                function (){},
+                'Yes',
+                'No',
+                message,
+                'You haven\'t saved calibration?'
+              );
+            }
+            break;
+          case 'model.define-cost-coverage-outcome':
+            if ( PreventNavigation.getCostcoverage() ) {
+              event.preventDefault();
+              var message = 'Are you sure you want to leave this page?';
+              modalService.confirm(
+                function (){
+                  PreventNavigation.setCostcoverage(false);
+                  $state.go(toState.name);
+                },
+                function (){},
+                'Yes',
+                'No',
+                message,
+                'You haven\'t saved model'
+              );
+            }
+            break;
+          case 'analysis.optimization':
+            if ( PreventNavigation.getOptimization() ) {
+              event.preventDefault();
+              var message = 'Are you sure you want to leave this page?';
+              modalService.confirm(
+                function (){
+                  PreventNavigation.setOptimization(false);
+                  $state.go(toState.name);
+                },
+                function (){},
+                'Yes',
+                'No',
+                message,
+                'You haven\'t saved optimization'
+              );
+            }
+            break;
+        }
+      });
     });
 });

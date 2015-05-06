@@ -1,8 +1,8 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
-  module.controller('ModelCalibrationController', function ($scope, $http, $interval,
-    Model, parameters, meta, info, CONFIG, typeSelector, cfpLoadingBar, calibration, modalService) {
+  module.controller('ModelCalibrationController', function ($scope, $state, $http, $interval,
+    Model, parameters, meta, info, CONFIG, typeSelector, cfpLoadingBar, calibration, modalService, PreventNavigation) {
 
     // In case there is no model data the controller only needs to show the
     // warning that the user should upload a spreadsheet with data.
@@ -307,6 +307,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     var storeSavedCalibrationAndUpdate = function (data) {
       calibration.storeLastSavedResponse(data);
       updateChartsAndParameters(data);
+
+      // set PreventNavigation.calibration state to false
+      PreventNavigation.setCalibration(false);
     };
 
     var updateChartsAndParameters = function (data) {
@@ -349,6 +352,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               var pct = cfpLoadingBar.status() + (0.95/val);
               cfpLoadingBar.set(pct);
             });
+
+            // set PreventNavigation.calibration state to true
+            PreventNavigation.setCalibration(true);
           } else {
             console.log("Cannot poll for calibration now");
           }
