@@ -67,9 +67,12 @@ def objectivecalc(optimparams, options):
     outcome = 0 # Preallocate objective value 
     for key in options['outcomekeys']:
         if options['weights'][key]>0: # Don't bother unless it's actually used
-            if key!='costann': thisoutcome = R[key]['tot'][0][options['outindices']].sum()
-            else: thisoutcome = R[key]['total']['total'][0][options['outindices']].sum() # Special case for costann
-            tmpplotdata.append(R[key]['tot'][0][options['outindices']]) # TEMP
+            if key!='costann':
+                this_outindices = R[key]['tot'][0][options['outindices']]
+            else:
+                this_outindices = R[key]['total']['total'][0][options['outindices']] # Special case for costann
+            thisoutcome = this_outindices.sum()
+            tmpplotdata.append(this_outindices) # TEMP
             outcome += thisoutcome * options['weights'][key] / float(options['normalizations'][key]) * options['D']['opt']['dt'] # Calculate objective
     
 #    print('DEBUGGING....................................................................................')
