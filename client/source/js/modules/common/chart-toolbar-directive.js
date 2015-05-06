@@ -142,7 +142,7 @@ define(['angular', 'jquery', 'mpld3', 'underscore', 'saveAs', 'jsPDF', './svg-to
             var $originalSvg = elem.parent().find('svg');
             var orginalWidth = $originalSvg.width();
             var orginalHeight = $originalSvg.height();
-            if (isMpld3) {
+            if (scope.chartType === 'mpld3') {
               originalStyle = 'padding: ' + $originalSvg.css('padding');
             } else {
               originalStyle = $originalSvg.attr('style');
