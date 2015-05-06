@@ -43,6 +43,7 @@ define(['./module', 'underscore'], function (module, _) {
 
     var resetCharts = function () {
       $scope.state.costCoverageChart = undefined;
+      $scope.state.costCoverageChartId = undefined;
       $scope.state.costCoverageChartTitle = undefined;
       $scope.state.costOutcomeCharts = [];
       $scope.state.coverageOutcomeCharts = [];
@@ -123,16 +124,12 @@ define(['./module', 'underscore'], function (module, _) {
 
       $http.post('/api/model/costcoverage', model).success(function (response) {
 
-        //Following line will remove old mpld3
-        //Reason for placing this line of code here is that placing it anywhere else somehow recreates the charts
-        //from old data in $scope.state.costCoverageChart, I suspect the watch statements registered to be reason for this.
-        mpld3.figures.splice(0, mpld3.figures.length);
-
         effects = response.effectnames;
         $scope.state.coParams = costCoverageHelpers.setUpCoParamsFromEffects(effects);
         $scope.state.hasCostCoverResponse = true;
 
         $scope.state.costCoverageChartTitle = response.fig_cc.axes[0].texts[2].text;
+        $scope.state.costCoverageChartId = $scope.generateChartId();
         $scope.state.costCoverageChart = response.fig_cc;
         $scope.state.costCoverageChart.axes[0].texts.splice(2, 1);
 
