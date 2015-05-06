@@ -26,7 +26,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.$watch('state.activeTab', $scope.checkExistingOptimization, true);
 
       $scope.chartsForDataExport = [];
-      $scope.meta = meta;
+      $scope.meta = meta.data;
       $scope.types = typeSelector.types;
       $scope.needData = $scope.meta.progs === undefined;
 
@@ -93,11 +93,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       // Default program weightings
       $scope.params.objectives.money = {};
       $scope.params.objectives.money.costs = [];
-      if(meta.progs) {
-        $scope.programs = meta.progs.long;
-        $scope.programCodes = meta.progs.short;
+      if($scope.meta.progs) {
+        $scope.programs = $scope.meta.progs.long;
+        $scope.programCodes = $scope.meta.progs.short;
 
-        for ( var i = 0; i < meta.progs.short.length; i++ ) {
+        for ( var i = 0; i < $scope.meta.progs.short.length; i++ ) {
           $scope.params.objectives.money.costs[i] = 100;
         }
 
@@ -113,7 +113,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         $scope.params.constraints.coverage = [];
 
         // Initialize program constraints models
-        for ( var j = 0; j < meta.progs.short.length; j++ ) {
+        for ( var j = 0; j < $scope.meta.progs.short.length; j++ ) {
           $scope.params.constraints.yeardecrease[j] = {};
           $scope.params.constraints.yeardecrease[j].use = false;
           $scope.params.constraints.yeardecrease[j].by = 100;
