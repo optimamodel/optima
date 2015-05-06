@@ -122,6 +122,12 @@ define(['./module', 'underscore'], function (module, _) {
       resetCharts();
 
       $http.post('/api/model/costcoverage', model).success(function (response) {
+
+        //Following line will remove old mpld3
+        //Reason for placing this line of code here is that placing it anywhere else somehow recreates the charts
+        //from old data in $scope.state.costCoverageChart, I suspect the watch statements registered to be reason for this.
+        mpld3.figures.splice(0, mpld3.figures.length);
+
         effects = response.effectnames;
         $scope.state.coParams = costCoverageHelpers.setUpCoParamsFromEffects(effects);
         $scope.state.hasCostCoverResponse = true;
