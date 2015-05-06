@@ -4,9 +4,10 @@ Plots cost-coverage, coverage-outcome and cost-outcome curves
 Version: 2015jan19 by robynstuart
 """
 from matplotlib.pylab import figure #plot, hold, xlabel, ylabel, title, xlim, ylim, gca, scatter
+from matplotlib.pyplot import close
 from matplotlib.ticker import MaxNLocator
 from numpy import nan
-from mpld3 import plugins
+from mpld3 import plugins, fig_to_dict
 from utils import OptimaTickFormatter
 
 # Set defaults for testing makeccocs
@@ -30,6 +31,7 @@ from makeccocs import makecc, makeco, makecco
 def plot_cost_coverage(plotdata, figsize=None):
     """ Plot the cost-coverage figure """
 
+    result = None
     cost_coverage_figure = None
     if figsize:
         cost_coverage_figure = figure(figsize=figsize, dpi=100)
@@ -80,18 +82,24 @@ def plot_cost_coverage(plotdata, figsize=None):
         plugins.BoxZoom(button=False, enabled=False),
         OptimaTickFormatter())
 
-    return cost_coverage_figure
+    result = fig_to_dict(cost_coverage_figure)
+    cost_coverage_figure.clf()
+    axis.cla()
+    close(cost_coverage_figure)
+
+    return result
 
 
 def plotcc(D, progname=default_progname, ccparams=default_ccparams, arteligcutoff=default_arteligcutoff):
     """ Generate cost-coverage data and plot it. """
 
     plotdata_cc, D = makecc(D, progname=progname, ccparams=ccparams, arteligcutoff=arteligcutoff)
-    return plot_cost_coverage(plotdata_cc)
+    plot_cost_coverage(plotdata_cc)
 
 ###############################################################################
 def plot_coverage_outcome(plotdata, figsize = None):
     """ Plot the coverage-outcome figure """
+    result = None
     coverage_outcome_figure = None
     if plotdata:
         if figsize:
@@ -142,20 +150,25 @@ def plot_coverage_outcome(plotdata, figsize = None):
             plugins.BoxZoom(button=False, enabled=False),
             OptimaTickFormatter())
 
-    return coverage_outcome_figure
+        result = fig_to_dict(coverage_outcome_figure)
+        coverage_outcome_figure.clf()
+        axis.cla()
+        close(coverage_outcome_figure)
+    return result
 
 
 def plotco(D, progname=default_progname, effect=default_effect, coparams=default_coparams, arteligcutoff=default_arteligcutoff):
     """ Generate coverage-outcome data and plot it. """
 
     plotdata_co, effect = makeco(D=D, progname=progname, effect=effect, coparams=coparams, arteligcutoff=arteligcutoff)
-    return plot_coverage_outcome(plotdata_co)
+    plot_coverage_outcome(plotdata_co)
 
 #################################################################################
 def plot_cost_outcome(plotdata, figsize = None):
     """ Plot the cost-outcome figure """
 
     cost_outcome_figure = None
+    result = None
     if plotdata:
         if figsize:
             cost_outcome_figure = figure(figsize = figsize, dpi=100)
@@ -208,7 +221,11 @@ def plot_cost_outcome(plotdata, figsize = None):
             # Box zoom is needed to manually create a zoom button in the JS front-end
             plugins.BoxZoom(button=False, enabled=False),
             OptimaTickFormatter())
-    return cost_outcome_figure
+        result = fig_to_dict(cost_outcome_figure)
+        cost_outcome_figure.clf()
+        axis.cla()
+        close(cost_outcome_figure)
+    return result
 
 
 def plotcco(D, progname=default_progname, effect=default_effect, ccparams=default_ccparams, coparams=default_coparams, \
@@ -216,7 +233,7 @@ def plotcco(D, progname=default_progname, effect=default_effect, ccparams=defaul
     """ Generate cost-outcome data and plot it. """
 
     plotdata_cco, plotdata_co, effect = makecco(D, progname=progname, effect=effect, ccparams=ccparams, coparams=coparams, arteligcutoff=arteligcutoff)
-    return plot_cost_outcome(plotdata_cco)
+    plot_cost_outcome(plotdata_cco)
 
 #################################################################################
 def plotprogramcurves(D, progname=default_progname, ccparams=default_ccparams, coparams=default_coparams, arteligcutoff=default_arteligcutoff):
