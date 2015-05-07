@@ -168,74 +168,59 @@ define([
          }
       }
 
+      var confirmPopup = function (message, head, stateName, trigger) {
+        modalService.confirm(
+          function (){
+            trigger();
+            $state.go(stateName);
+          },
+          function (){},
+          'Yes',
+          'No',
+          message,
+          head
+        );
+      }
       $scope.$on('$stateChangeStart',function (event, toState, toParams, fromState, fromParams) {
         switch ( fromState.name ) {
           case 'model.view':
             if ( PreventNavigation.getCalibration() ) {
               event.preventDefault();
               var message = 'Are you sure you want to leave this page?';
-              modalService.confirm(
-                function (){
-                  PreventNavigation.setCalibration(false);
-                  $state.go(toState.name);
-                },
-                function (){},
-                'Yes',
-                'No',
-                message,
-                'You haven\'t saved calibration?'
-              );
+              var head = 'You haven\'t saved calibration?';
+              confirmPopup(message, head, toState.name, function () {
+                PreventNavigation.setCalibration(false);
+              });
             }
             break;
           case 'model.define-cost-coverage-outcome':
             if ( PreventNavigation.getCostcoverage() ) {
               event.preventDefault();
               var message = 'Are you sure you want to leave this page?';
-              modalService.confirm(
-                function (){
-                  PreventNavigation.setCostcoverage(false);
-                  $state.go(toState.name);
-                },
-                function (){},
-                'Yes',
-                'No',
-                message,
-                'You haven\'t saved model'
-              );
+              var head = 'You haven\'t saved model';
+              confirmPopup(message, head, toState.name, function () {
+                PreventNavigation.setCostcoverage(false);
+              });
             }
             break;
           case 'analysis.optimization':
             if ( PreventNavigation.getOptimization() ) {
               event.preventDefault();
               var message = 'Are you sure you want to leave this page?';
-              modalService.confirm(
-                function (){
-                  PreventNavigation.setOptimization(false);
-                  $state.go(toState.name);
-                },
-                function (){},
-                'Yes',
-                'No',
-                message,
-                'You haven\'t saved optimization'
-              );
+              var head = 'You haven\'t saved optimization';
+              confirmPopup(message, head, toState.name, function () {
+                PreventNavigation.setOptimization(false);
+              });
             }
             break;
           case 'analysis.scenarios':
             if ( PreventNavigation.getScenario() ) {
               event.preventDefault();
               var message = 'Are you sure you want to leave this page?';
-              modalService.confirm(
-                function (){
-                  PreventNavigation.setScenario(false);
-                  $state.go(toState.name);
-                },
-                function (){},
-                'Yes',
-                'No',
-                message,
-                'You haven\'t saved new scenario(s)'
-              );
+              var head = 'You haven\'t saved new scenario(s)';
+              confirmPopup(message, head, toState.name, function () {
+                PreventNavigation.setScenario(false);
+              });
             }
             break;
         }
