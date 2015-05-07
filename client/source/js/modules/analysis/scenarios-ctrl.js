@@ -1,7 +1,8 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     'use strict';
 
-    module.controller('AnalysisScenariosController', function ($scope, $http, $modal, meta, info, scenarioParametersResponse, scenariosResponse, CONFIG, typeSelector) {
+    module.controller('AnalysisScenariosController', function ($scope, $http, $modal, meta, info, scenarioParametersResponse, 
+      scenariosResponse, CONFIG, typeSelector, PreventNavigation) {
 
         // In case there is no model data the controller only needs to show the
         // warning that the user should upload a spreadsheet with data.
@@ -189,6 +190,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             .success(function(data) {
               responseData = data;
               updateGraphs(responseData);
+              
+              if ( saveScenario ) {
+                // set PreventNavigation.scenario state to false
+                PreventNavigation.setScenario(false);
+              }
+              
             });
         };
 
@@ -222,6 +229,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
                     newscenario.active = true;
                     newscenario.pars = newscenario.pars || [];
                     $scope.scenarios.push(newscenario);
+
+                    // set PreventNavigation.scenario state to true
+                    PreventNavigation.setScenario(true);
                 });
         };
 

@@ -20,6 +20,7 @@ define([
       this.calibration = false;
       this.costcoverage = false;
       this.optimization = false;
+      this.scenario = false;
     }
 
     /**
@@ -80,6 +81,26 @@ define([
      */
     PreventNavigation.prototype.getOptimization = function() {
       return this.optimization;
+    }
+
+    /**
+     * set value for scenario
+     *
+     * @param bool
+     * @return 
+     */
+    PreventNavigation.prototype.setScenario = function(bool) {
+      this.scenario = bool;
+    }
+
+    /**
+     * get value of scenario
+     *
+     * @param
+     * @return bool
+     */
+    PreventNavigation.prototype.getScenario = function() {
+      return this.scenario;
     }
     
     return new PreventNavigation();

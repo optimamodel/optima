@@ -221,6 +221,23 @@ define([
               );
             }
             break;
+          case 'analysis.scenarios':
+            if ( PreventNavigation.getScenario() ) {
+              event.preventDefault();
+              var message = 'Are you sure you want to leave this page?';
+              modalService.confirm(
+                function (){
+                  PreventNavigation.setScenario(false);
+                  $state.go(toState.name);
+                },
+                function (){},
+                'Yes',
+                'No',
+                message,
+                'You haven\'t saved new scenario(s)'
+              );
+            }
+            break;
         }
       });
     });
