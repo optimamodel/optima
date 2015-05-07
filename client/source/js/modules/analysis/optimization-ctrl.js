@@ -69,7 +69,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       // inside a wrapper object. This is due the fact that directives like ng-if
       // always create a child scope & the reference can get lost.
       // see https://github.com/angular/angular.js/wiki/Understanding-Scopes
-      $scope.state = {};
+
+      //This line is setting already existing state to blank again
+      //$scope.state = {};
       $scope.state.chartsForDataExport = [];
       $scope.state.types = typeSelector.types;
 
