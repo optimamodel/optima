@@ -11,97 +11,31 @@ define([
   'use strict';
 
   return angular.module('app.common.prevent-navigation',[])
-  .factory('PreventNavigation', [function () {
+  .factory('PreventNavigation', [ function () {
     
     /**
      * PreventNavigation class constructor
      */
-    function PreventNavigation() {
-      this.calibration = false;
-      this.costcoverage = false;
-      this.optimization = false;
-      this.scenario = false;
+    function PreventNavigation () {
     }
 
     /**
-     * set value for calibration
-     *
-     * @param bool
-     * @return 
+     * Answers true if the user can navigate out of the current state, false otherwise.
      */
-    PreventNavigation.prototype.setCalibration = function(bool) {
-      this.calibration = bool;
-    }
+    PreventNavigation.prototype.canNavigate = function () {
+      return false;
+    };
 
     /**
-     * get value of calibration
-     *
-     * @param
-     * @return bool
+     * Reacts to the change of state attempt.
      */
-    PreventNavigation.prototype.getCalibration = function() {
-      return this.calibration;
-    }
-
-    /**
-     * set value for costcoverage
-     *
-     * @param bool
-     * @return 
-     */
-    PreventNavigation.prototype.setCostcoverage = function(bool) {
-      this.costcoverage = bool;
-    }
-
-    /**
-     * get value of costcoverage
-     *
-     * @param bool
-     * @return 
-     */
-    PreventNavigation.prototype.getCostcoverage = function() {
-      return this.costcoverage;
-    }
-
-    /**
-     * set value for optimization
-     *
-     * @param bool
-     * @return 
-     */
-    PreventNavigation.prototype.setOptimization = function(bool) {
-      this.optimization = bool;
-    }
-
-    /**
-     * get value of optimization
-     *
-     * @param
-     * @return bool
-     */
-    PreventNavigation.prototype.getOptimization = function() {
-      return this.optimization;
-    }
-
-    /**
-     * set value for scenario
-     *
-     * @param bool
-     * @return 
-     */
-    PreventNavigation.prototype.setScenario = function(bool) {
-      this.scenario = bool;
-    }
-
-    /**
-     * get value of scenario
-     *
-     * @param
-     * @return bool
-     */
-    PreventNavigation.prototype.getScenario = function() {
-      return this.scenario;
-    }
+    PreventNavigation.prototype.onStateChangeStart = function (event, toState, toParams, fromState, fromParams) {
+      if(this.canNavigate()){
+        console.info('going to state: ', toState);
+      } else {
+        console.warn('NOT going to state: ', toState);
+      }
+    };
     
     return new PreventNavigation();
  }]);
