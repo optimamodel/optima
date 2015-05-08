@@ -11,7 +11,7 @@ define([
   'use strict';
 
   return angular.module('app.common.prevent-navigation',[])
-  .factory('PreventNavigation', [ function () {
+  .factory('PreventNavigation', [ '$state', 'modalService', function ($state, modalService) {
     
     /**
      * PreventNavigation class constructor
@@ -19,16 +19,33 @@ define([
     function PreventNavigation () {
     };
 
+
+    /**
+     * Displays a modal confirmation window with the given message and action.
+     * Evaluates callback when the user confirms going to the target state.
+     */
+    PreventNavigation.prototype.confirmPopup = function (message, head, onAccept, onReject) {
+      modalService.confirm(
+        onAccept,
+        onReject,
+        'Yes',
+        'No',
+        message,
+        head
+      );
+    };
+
     /**
      * Displays a modal confirmation window asking the user for confirmation 
      * about navigating out of the current state.
      */
-    PreventNavigation.prototype.confirmNavigation = function (event) {
+    PreventNavigation.prototype.confirmNavigation = function (event, toState) {
       event.preventDefault();
       var message = 'Are you sure you want to leave this page?';
-      var head = 'You haven\'t saved calibration?';
-      confirmPopup(message, head, toState.name, function () {
-        PreventNavigation.setCalibration(false);
+      var head = 'You have changed values';
+      this.confirmPopup(message, head, function () {
+        console.log('going to state: ',toState.name);
+        $state.go(toState.name);
       });      
     };
 
@@ -44,7 +61,7 @@ define([
      */
     PreventNavigation.prototype.onStateChangeStart = function (event, toState, toParams, fromState, fromParams) {
       if( !this.canNavigate() ){
-        this.confirmNavigation(event);
+        this.confirmNavigation(event, toState);
       }
     };
 

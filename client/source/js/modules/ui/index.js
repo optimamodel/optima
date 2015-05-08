@@ -27,7 +27,6 @@ define([
 
         // Observes state change to prevent unwanted state loss due to navigation clicks.
         $scope.$on('$stateChangeStart', function (event, toState, toParams, fromState, fromParams) {
-          console.info('from ', fromState, ' to ', toState);
           PreventNavigation.onStateChangeStart(event, toState, toParams, fromState, fromParams);
         });
 
@@ -163,6 +162,9 @@ define([
         };
       };
 
+      /**
+      * Anaswers true if the user is logged in, false otherwise.
+      */
       $scope.userLogged = function () {
         return UserManager.isLoggedIn;
       };
