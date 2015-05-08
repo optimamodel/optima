@@ -1,35 +1,26 @@
+/**
+ * This controller does mhm and aham.
+ * Also allows to mmmm due to oooh
+ */
+
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ModelCalibrationController', function ($scope, $state, $http, $interval,
     Model, parameters, meta, info, CONFIG, typeSelector, cfpLoadingBar, calibration, modalService, PreventNavigation) {
 
-    // In case there is no model data the controller only needs to show the
-    // warning that the user should upload a spreadsheet with data.
-    if (!info.has_data) {
-      $scope.missingModelData = true;
-      return;
-    }
-
-    var defaultChartOptions = {
-      title: 'Title',
-      height: 200,
-      width: 320,
-      margin: CONFIG.GRAPH_MARGINS,
-      xAxis: {
-        axisLabel: 'Year'
-      },
-      yAxis: {
-        axisLabel: 'Prevalence (%)'
-      }
-    };
-
-    var initialize = function() {
+    $scope.initialize = function () {
       $scope.projectInfo = info;
       $scope.canDoFitting = false;
       $scope.hasSpreadsheet = info.data_upload_time ? true : false;
-
       $scope.types = typeSelector.types;
+
+      // In case there is no model data the controller only needs to show the
+      // warning that the user should upload a spreadsheet with data.
+      if (!info.has_data) {
+        $scope.missingModelData = true;
+        return;
+      }
 
       // for calibration the overall charts should not be shown by default
       _($scope.types.population).each(function(entry) {
@@ -43,6 +34,19 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           $scope.types.costs[key].total = false; // this does not seem to work, but it's beyond me why - AN
         }
       });
+
+    $scope.defaultChartOptions = {
+        title: 'Title',
+        height: 200,
+        width: 320,
+        margin: CONFIG.GRAPH_MARGINS,
+        xAxis: {
+          axisLabel: 'Year'
+        },
+        yAxis: {
+          axisLabel: 'Prevalence (%)'
+        }
+      };
 
       $scope.calibrationStatus = false;
 
@@ -67,9 +71,13 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         meta: meta.data
       };
       angular.extend($scope.parameters, calibration.toScopeParameters(parameters));
-
       $scope.simulate();
-    };
+
+      // The charts are shown/hidden after updating the chart type checkboxes.
+      $scope.$watch('types', function () {
+        updateChartsAndParameters(calibration.lastPreviewResponse());
+      }, true);      
+    };  // $scope.initialize
 
     /**
      * Makes the backend to reload the spreadsheet and reloads the page after that.
@@ -110,7 +118,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      */
     var generateAreaChart = function(yData, xData, title) {
       var chart = {
-        options: angular.copy(defaultChartOptions),
+        options: angular.copy($scope.defaultChartOptions),
         data: {
           lines: [],
           scatter: [],
@@ -139,7 +147,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     */
     var generateStackedAreaChart = function(yDataSet, xData, title, legend) {
       var chart = {
-        options: angular.copy(defaultChartOptions),
+        options: angular.copy($scope.defaultChartOptions),
         data: { areas: [] },
         title: title
       };
@@ -307,9 +315,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     var storeSavedCalibrationAndUpdate = function (data) {
       calibration.storeLastSavedResponse(data);
       updateChartsAndParameters(data);
-
-      // set PreventNavigation.calibration state to false
-      PreventNavigation.setCalibration(false);
     };
 
     var updateChartsAndParameters = function (data) {
@@ -352,9 +357,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               var pct = cfpLoadingBar.status() + (0.95/val);
               cfpLoadingBar.set(pct);
             });
-
-            // set PreventNavigation.calibration state to true
-            PreventNavigation.setCalibration(true);
           } else {
             console.log("Cannot poll for calibration now");
           }
@@ -433,12 +435,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       }
     };
 
-    initialize();
-
-    // The charts are shown/hidden after updating the chart type checkboxes.
-    $scope.$watch('types', function () {
-      updateChartsAndParameters(calibration.lastPreviewResponse());
-    }, true);
+    $scope.initialize();
 
   });
 });

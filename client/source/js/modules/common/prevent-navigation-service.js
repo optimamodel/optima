@@ -17,7 +17,20 @@ define([
      * PreventNavigation class constructor
      */
     function PreventNavigation () {
-    }
+    };
+
+    /**
+     * Displays a modal confirmation window asking the user for confirmation 
+     * about navigating out of the current state.
+     */
+    PreventNavigation.prototype.confirmNavigation = function (event) {
+      event.preventDefault();
+      var message = 'Are you sure you want to leave this page?';
+      var head = 'You haven\'t saved calibration?';
+      confirmPopup(message, head, toState.name, function () {
+        PreventNavigation.setCalibration(false);
+      });      
+    };
 
     /**
      * Answers true if the user can navigate out of the current state, false otherwise.
@@ -30,13 +43,11 @@ define([
      * Reacts to the change of state attempt.
      */
     PreventNavigation.prototype.onStateChangeStart = function (event, toState, toParams, fromState, fromParams) {
-      if(this.canNavigate()){
-        console.info('going to state: ', toState);
-      } else {
-        console.warn('NOT going to state: ', toState);
+      if( !this.canNavigate() ){
+        this.confirmNavigation(event);
       }
     };
-    
+
     return new PreventNavigation();
  }]);
 });
