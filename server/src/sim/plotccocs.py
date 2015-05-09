@@ -83,64 +83,55 @@ def plotcc(D, progname=default_progname, ccparams=default_ccparams, arteligcutof
     plot_cost_coverage(plotdata_cc)
 
 ###############################################################################
-def plot_coverage_outcome(plotdata, figsize = None):
+def plot_coverage_outcome(plotdata, figure=None, closeFigure=True):
     """ Plot the coverage-outcome figure """
-    result = None
-    coverage_outcome_figure = None
-    if plotdata:
-        if figsize:
-            coverage_outcome_figure = figure(figsize = figsize, dpi=100)
-        else:
-            coverage_outcome_figure = figure()
-        coverage_outcome_figure.hold(True)
 
-        axis = coverage_outcome_figure.gca()
+    if plotdata == None:
+        return None
 
-        if 'xlinedata' in plotdata.keys():
-            axis.plot(
-                plotdata['xlinedata'],
-                plotdata['ylinedata'][0],
-                linestyle='-',
-                linewidth=2,
-                color='#a6cee3')
-            axis.plot(
-                plotdata['xlinedata'],
-                plotdata['ylinedata'][1],
-                linestyle='--',
-                linewidth=2,
-                color='#000000')
-            axis.plot(
-                plotdata['xlinedata'],
-                plotdata['ylinedata'][2],
-                linestyle='--',
-                linewidth=2,
-                color='#000000')
-        axis.scatter(
-            plotdata['xscatterdata'],
-            plotdata['yscatterdata'],
-            color='#666666')
+    coverage_outcome_figure = figure if figure else figure()
+    coverage_outcome_figure.hold(True)
 
-        axis.set_title(plotdata['title'])
-        axis.tick_params(axis='both', which='major', labelsize=11)
-        axis.set_xlabel(plotdata['xlabel'], fontsize=11)
-        axis.set_ylabel(plotdata['ylabel'], fontsize=11)
-        axis.get_xaxis().set_major_locator(MaxNLocator(nbins=3))
-        axis.set_xlim([plotdata['xlowerlim'], plotdata['xupperlim']])
-        axis.set_ylim([plotdata['ylowerlim'], plotdata['yupperlim']])
+    axis = coverage_outcome_figure.gca()
 
-        # clear all plugins from the figure
-        plugins.clear(coverage_outcome_figure)
-        plugins.connect(
-            coverage_outcome_figure,
-            # Box zoom is needed to manually create a zoom button in the JS front-end
-            plugins.BoxZoom(button=False, enabled=False),
-            OptimaTickFormatter())
+    if 'xlinedata' in plotdata.keys():
+        axis.plot(
+            plotdata['xlinedata'],
+            plotdata['ylinedata'][0],
+            linestyle='-',
+            linewidth=2,
+            color='#a6cee3')
+        axis.plot(
+            plotdata['xlinedata'],
+            plotdata['ylinedata'][1],
+            linestyle='--',
+            linewidth=2,
+            color='#000000')
+        axis.plot(
+            plotdata['xlinedata'],
+            plotdata['ylinedata'][2],
+            linestyle='--',
+            linewidth=2,
+            color='#000000')
+    axis.scatter(
+        plotdata['xscatterdata'],
+        plotdata['yscatterdata'],
+        color='#666666')
 
-        result = fig_to_dict(coverage_outcome_figure)
+    axis.set_title(plotdata['title'])
+    axis.tick_params(axis='both', which='major', labelsize=11)
+    axis.set_xlabel(plotdata['xlabel'], fontsize=11)
+    axis.set_ylabel(plotdata['ylabel'], fontsize=11)
+    axis.get_xaxis().set_major_locator(MaxNLocator(nbins=3))
+    axis.set_xlim([plotdata['xlowerlim'], plotdata['xupperlim']])
+    axis.set_ylim([plotdata['ylowerlim'], plotdata['yupperlim']])
+
+    if closeFigure:
         coverage_outcome_figure.clf()
         axis.cla()
         close(coverage_outcome_figure)
-    return result
+
+    return coverage_outcome_figure
 
 
 def plotco(D, progname=default_progname, effect=default_effect, coparams=default_coparams, arteligcutoff=default_arteligcutoff):
