@@ -152,7 +152,7 @@
                   <input type="radio" name="artcontinue" ng-model="params.objectives.artcontinue" value="4">
                   ART coverage will scale up, reaching
                   <input type="number"
-                         class="txbox __inline __m"
+                         class="txbox __inline __l"
                          value="90"
                          placeholder="e.g. 90"
                          min="0"
@@ -224,9 +224,8 @@
           </div>
         </div>
 
-        <hr class="__dashed" style="clear: both; padding-top: 10px"/>
-
         <div class="section" ng-if="params.objectives.what == 'outcome'">
+          <hr class="__dashed" style="clear: both; padding-top: 10px"/>
 
           <h2>Funding assumptions</h2>
           <div class="float-left margin-left-s">
@@ -358,12 +357,12 @@
           </div>
         </div>
 
-        <hr style="clear: both; padding-top: 10px" class="__dashed"/>
-
         <div class="section" ng-if="params.objectives.what == 'outcome'">
+          <hr style="clear: both; padding-top: 10px" class="__dashed"/>
+
           <ng-form name="state.objectivesToMinimizeForm">
             <h2>Objective(s) to minimize</h2>
-            <div ng-repeat="objective in ::state.objectivesToMinimize" class="checkbox-block">
+            <div class="indented" ng-repeat="objective in ::state.objectivesToMinimize" class="checkbox-block">
               <label>
                 <input type="checkbox"
                        ng-model="params.objectives.outcome[objective.slug]"
@@ -382,7 +381,7 @@
 
           <ng-form name="state.outcomeWeightsForm">
 
-            <div ng-repeat="objective in ::state.objectivesToMinimize" ng-if="params.objectives.outcome[objective.slug] === true">
+            <div class="indented" ng-repeat="objective in ::state.objectivesToMinimize" ng-if="params.objectives.outcome[objective.slug] === true">
               <div class="objective-checkbox">
                 <div class="objective-checkbox__title"> {{ ::objective.title }} =</div>
                 <input type="number"
@@ -408,9 +407,11 @@
 
 
         <div class="section" ng-if="params.objectives.what == 'money'">
+          <hr style="clear: both; padding-top: 10px" class="__dashed"/>
+
           What is the minimum amount of money required to achieve the following objectives:
 
-          <div class="margin-top-xs" ng-repeat="item in ::state.moneyObjectives">
+          <div class="margin-top-xs indented" ng-repeat="item in ::state.moneyObjectives">
             <div class="checkbox-block">
               <label ng-init="iObjective = params.objectives.money.objectives[item.id]">
                 <input type="checkbox" ng-model="iObjective.use">
@@ -493,7 +494,7 @@
           <div class="cf margin-top-s">
             <h2>Cost assumptions</h2>
 
-            <div class="float-left margin-left-xs">
+            <div class="indented">
               <table class="table table-bordered table-hover table-striped" style="width: auto">
                 <thead>
                 <tr>
