@@ -3,7 +3,7 @@ Plots cost-coverage, coverage-outcome and cost-outcome curves
 
 Version: 2015jan19 by robynstuart
 """
-from matplotlib.pylab import figure #plot, hold, xlabel, ylabel, title, xlim, ylim, gca, scatter
+from matplotlib.pylab import figure
 from matplotlib.pyplot import close
 from matplotlib.ticker import MaxNLocator
 from numpy import nan
@@ -28,16 +28,10 @@ coverage_params = ['numost','numpmtct','numfirstline','numsecondline']
 ###############################################################################
 from makeccocs import makecc, makeco, makecco
 ###############################################################################
-def plot_cost_coverage(plotdata, figsize=None):
+def plot_cost_coverage(plotdata, figure=None, closeFigure=True):
     """ Plot the cost-coverage figure """
 
-    result = None
-    cost_coverage_figure = None
-    if figsize:
-        cost_coverage_figure = figure(figsize=figsize, dpi=100)
-    else:
-        cost_coverage_figure = figure()
-
+    cost_coverage_figure = figure if figure else figure()
     cost_coverage_figure.hold(True)
 
     axis = cost_coverage_figure.gca()
@@ -74,20 +68,12 @@ def plot_cost_coverage(plotdata, figsize=None):
     axis.get_xaxis().set_major_locator(MaxNLocator(nbins=3))
     axis.set_title(plotdata['title'])
 
-    # clear all plugins from the figure
-    plugins.clear(cost_coverage_figure)
-    plugins.connect(
-        cost_coverage_figure,
-        # Box zoom is needed to manually create a zoom button in the JS front-end
-        plugins.BoxZoom(button=False, enabled=False),
-        OptimaTickFormatter())
+    if closeFigure:
+        cost_coverage_figure.clf()
+        axis.cla()
+        close(cost_coverage_figure)
 
-    result = fig_to_dict(cost_coverage_figure)
-    cost_coverage_figure.clf()
-    axis.cla()
-    close(cost_coverage_figure)
-
-    return result
+    return cost_coverage_figure
 
 
 def plotcc(D, progname=default_progname, ccparams=default_ccparams, arteligcutoff=default_arteligcutoff):

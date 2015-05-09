@@ -16,7 +16,8 @@ from signal import *
 from optima.dbconn import db
 from sim.autofit import autofit
 from sim.updatedata import updatedata
-from sim.plotccocs import plot_cost_coverage, plot_cost_outcome, plot_coverage_outcome
+from sim.plotccocs import plot_cost_outcome, plot_coverage_outcome
+from optima.plotting import generate_cost_coverage_chart
 
 # route prefix: /api/model
 model = Blueprint('model',  __name__, static_folder = '../static')
@@ -326,7 +327,7 @@ def doCostCoverage(): # pylint: disable=R0914
         # effectnames are actually effects
         figsize = (3,2)
         plotdata_cco, plotdata_co, plotdata_cc, effectnames, D = plotallcurves(**args)
-        dict_fig_cc = plot_cost_coverage(plotdata_cc, figsize)
+        dict_fig_cc = generate_cost_coverage_chart(plotdata_cc)
         dict_fig_co = map(lambda key: plot_coverage_outcome(plotdata_co[key], figsize), plotdata_co.keys())
         dict_fig_cco = map(lambda key: plot_cost_outcome(plotdata_cco[key], figsize), plotdata_cco.keys())
         if do_save:
