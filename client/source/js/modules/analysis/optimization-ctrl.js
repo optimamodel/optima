@@ -42,19 +42,42 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         activeTab: 1,
         activeOptimizationName: undefined,
         isTestRun: false,
-        timelimit: 3600
+        timelimit: 3600,
+        chartsForDataExport: [],
+        types: typeSelector.types,
+        moneyObjectives: [
+          { id: 'inci', title: 'Reduce the annual incidence of HIV' },
+          { id: 'incisex', title: 'Reduce the annual incidence of sexually transmitted HIV' },
+          { id: 'inciinj', title: 'Reduce the annual incidence of injecting-related HIV' },
+          { id: 'mtct', title: 'Reduce annual mother-to-child transmission of HIV' },
+          { id: 'mtctbreast', title: 'Reduce annual mother-to-child transmission of HIV among breastfeeding mothers' },
+          { id: 'mtctnonbreast', title: 'Reduce annual mother-to-child transmission of HIV among non-breastfeeding mothers' },
+          { id: 'deaths', title: 'Reduce annual AIDS-related deaths' },
+          { id: 'dalys', title: 'Reduce annual HIV-related DALYs' }
+        ],
+        objectivesToMinimize: [
+          {
+            name: "Cumulative new HIV infections",
+            slug: "inci",
+            title: "New infections weighting"
+          },
+          {
+            name: "Cumulative DALYs",
+            slug: "daly",
+            title: "DALYs weighting"
+          },
+          {
+            name: " Cumulative AIDS-related deaths",
+            slug: "death",
+            title: "Deaths weighting"
+          },
+          {
+            name: "Total HIV-related costs",
+            slug: "costann",
+            title: "Costs weighting"
+          }
+        ]
       };
-
-      $scope.state.moneyObjectives = [
-        { id: 'inci', title: 'Reduce the annual incidence of HIV' },
-        { id: 'incisex', title: 'Reduce the annual incidence of sexually transmitted HIV' },
-        { id: 'inciinj', title: 'Reduce the annual incidence of injecting-related HIV' },
-        { id: 'mtct', title: 'Reduce annual mother-to-child transmission of HIV' },
-        { id: 'mtctbreast', title: 'Reduce annual mother-to-child transmission of HIV among breastfeeding mothers' },
-        { id: 'mtctnonbreast', title: 'Reduce annual mother-to-child transmission of HIV among non-breastfeeding mothers' },
-        { id: 'deaths', title: 'Reduce annual AIDS-related deaths' },
-        { id: 'dalys', title: 'Reduce annual HIV-related DALYs' }
-      ];
 
       resetCharts();
 
@@ -65,17 +88,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         return;
       }
 
-      // According to angular best-practices we should wrap every object/value
-      // inside a wrapper object. This is due the fact that directives like ng-if
-      // always create a child scope & the reference can get lost.
-      // see https://github.com/angular/angular.js/wiki/Understanding-Scopes
-
-      //This line is setting already existing state to blank again
-      //$scope.state = {};
-      $scope.state.chartsForDataExport = [];
-      $scope.state.types = typeSelector.types;
-
-      $scope.state.activeTab = 1;
       var errorMessages = [];
 
       // Set defaults
@@ -138,29 +150,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           $scope.params.constraints.coverage[j].year = undefined;
         }
       }
-
-      $scope.state.objectivesToMinimize = [
-        {
-          name: "Cumulative new HIV infections",
-          slug: "inci",
-          title: "New infections weighting"
-        },
-        {
-          name: "Cumulative DALYs",
-          slug: "daly",
-          title: "DALYs weighting"
-        },
-        {
-          name: " Cumulative AIDS-related deaths",
-          slug: "death",
-          title: "Deaths weighting"
-        },
-        {
-          name: "Total HIV-related costs",
-          slug: "costann",
-          title: "Costs weighting"
-        }
-      ];
 
       // The graphs are shown/hidden after updating the graph type checkboxes.
       $scope.$watch('types', drawGraphs, true);
