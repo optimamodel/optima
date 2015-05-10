@@ -131,7 +131,9 @@
                   3. [Optional] Specify scale-up parameters:
                   <input type="number" class="txbox __inline __xl"
                          name="scaleUpParameter"
-                         min="0" max="0.999999999999"
+                         min="0"
+                         max="0.999999999999"
+                         step="0.1"
                          placeholder="e.g. 0.5"
                          ng-model="state.scaleUpParameter"
                          ng-change="updateCurves()">
