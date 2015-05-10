@@ -86,7 +86,7 @@ def plotcc(D, progname=default_progname, ccparams=default_ccparams, arteligcutof
 def plot_coverage_outcome(plotdata, figure=None, closeFigure=True):
     """ Plot the coverage-outcome figure """
 
-    if plotdata == None:
+    if not plotdata:
         return None
 
     coverage_outcome_figure = figure if figure else figure()
@@ -141,68 +141,59 @@ def plotco(D, progname=default_progname, effect=default_effect, coparams=default
     plot_coverage_outcome(plotdata_co)
 
 #################################################################################
-def plot_cost_outcome(plotdata, figsize = None):
+def plot_cost_outcome(plotdata, figure=None, closeFigure=True):
     """ Plot the cost-outcome figure """
 
-    cost_outcome_figure = None
-    result = None
-    if plotdata:
-        if figsize:
-            cost_outcome_figure = figure(figsize = figsize, dpi=100)
-        else:
-            cost_outcome_figure = figure()
-        cost_outcome_figure.hold(True)
+    if not plotdata:
+        return None
 
-        axis = cost_outcome_figure.gca()
+    cost_outcome_figure = figure if figure else figure()
+    cost_outcome_figure.hold(True)
 
-        if 'xlinedata' in plotdata.keys():
-            axis.plot(
-                plotdata['xlinedata'],
-                plotdata['ylinedata'][0],
-                linestyle='-',
-                linewidth=2,
-                color='#a6cee3')
-            axis.plot(
-                plotdata['xlinedata'],
-                plotdata['ylinedata'][1],
-                linestyle='--',
-                linewidth=2,
-                color='#000000')
-            axis.plot(
-                plotdata['xlinedata'],
-                plotdata['ylinedata'][2],
-                linestyle='--',
-                linewidth=2,
-                color='#000000')
-        axis.scatter(
-            plotdata['xscatterdata'],
-            plotdata['yscatterdata'],
-            color='#666666')
-        axis.scatter(
-            plotdata['xcurrentdata'],
-            plotdata['ycurrentdata'],
-            color='#d22c2c')
+    axis = cost_outcome_figure.gca()
 
-        axis.set_title(plotdata['title'])
-        axis.tick_params(axis='both', which='major', labelsize=11)
-        axis.set_xlabel(plotdata['xlabel'], fontsize=11)
-        axis.set_ylabel(plotdata['ylabel'], fontsize=11)
-        axis.get_xaxis().set_major_locator(MaxNLocator(nbins=3))
-        axis.set_xlim([plotdata['xlowerlim'],plotdata['xupperlim']])
-        axis.set_ylim([plotdata['ylowerlim'],plotdata['yupperlim']])
+    if 'xlinedata' in plotdata.keys():
+        axis.plot(
+            plotdata['xlinedata'],
+            plotdata['ylinedata'][0],
+            linestyle='-',
+            linewidth=2,
+            color='#a6cee3')
+        axis.plot(
+            plotdata['xlinedata'],
+            plotdata['ylinedata'][1],
+            linestyle='--',
+            linewidth=2,
+            color='#000000')
+        axis.plot(
+            plotdata['xlinedata'],
+            plotdata['ylinedata'][2],
+            linestyle='--',
+            linewidth=2,
+            color='#000000')
+    axis.scatter(
+        plotdata['xscatterdata'],
+        plotdata['yscatterdata'],
+        color='#666666')
+    axis.scatter(
+        plotdata['xcurrentdata'],
+        plotdata['ycurrentdata'],
+        color='#d22c2c')
 
-        # clear all plugins from the figure
-        plugins.clear(cost_outcome_figure)
-        plugins.connect(
-            cost_outcome_figure,
-            # Box zoom is needed to manually create a zoom button in the JS front-end
-            plugins.BoxZoom(button=False, enabled=False),
-            OptimaTickFormatter())
-        result = fig_to_dict(cost_outcome_figure)
+    axis.set_title(plotdata['title'])
+    axis.tick_params(axis='both', which='major', labelsize=11)
+    axis.set_xlabel(plotdata['xlabel'], fontsize=11)
+    axis.set_ylabel(plotdata['ylabel'], fontsize=11)
+    axis.get_xaxis().set_major_locator(MaxNLocator(nbins=3))
+    axis.set_xlim([plotdata['xlowerlim'],plotdata['xupperlim']])
+    axis.set_ylim([plotdata['ylowerlim'],plotdata['yupperlim']])
+
+    if closeFigure:
         cost_outcome_figure.clf()
         axis.cla()
         close(cost_outcome_figure)
-    return result
+
+    return cost_outcome_figure
 
 
 def plotcco(D, progname=default_progname, effect=default_effect, ccparams=default_ccparams, coparams=default_coparams, \
