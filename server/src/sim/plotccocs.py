@@ -26,10 +26,10 @@ coverage_params = ['numost','numpmtct','numfirstline','numsecondline']
 ###############################################################################
 from makeccocs import makecc, makeco, makecco
 ###############################################################################
-def plot_cost_coverage(plotdata, figure=None, closeFigure=True):
+def plot_cost_coverage(plotdata, existingFigure=None, closeFigure=True):
     """ Plot the cost-coverage figure """
 
-    cost_coverage_figure = figure if figure else figure()
+    cost_coverage_figure = existingFigure if existingFigure else figure()
     cost_coverage_figure.hold(True)
 
     axis = cost_coverage_figure.gca()
@@ -81,13 +81,13 @@ def plotcc(D, progname=default_progname, ccparams=default_ccparams, arteligcutof
     plot_cost_coverage(plotdata_cc)
 
 ###############################################################################
-def plot_coverage_outcome(plotdata, figure=None, closeFigure=True):
+def plot_coverage_outcome(plotdata, existingFigure=None, closeFigure=True):
     """ Plot the coverage-outcome figure """
 
     if not plotdata:
         return None
 
-    coverage_outcome_figure = figure if figure else figure()
+    coverage_outcome_figure = existingFigure if existingFigure else figure()
     coverage_outcome_figure.hold(True)
 
     axis = coverage_outcome_figure.gca()
@@ -139,13 +139,13 @@ def plotco(D, progname=default_progname, effect=default_effect, coparams=default
     plot_coverage_outcome(plotdata_co)
 
 #################################################################################
-def plot_cost_outcome(plotdata, figure=None, closeFigure=True):
+def plot_cost_outcome(plotdata, existingFigure=None, closeFigure=True):
     """ Plot the cost-outcome figure """
 
     if not plotdata:
         return None
 
-    cost_outcome_figure = figure if figure else figure()
+    cost_outcome_figure = existingFigure if existingFigure else figure()
     cost_outcome_figure.hold(True)
 
     axis = cost_outcome_figure.gca()
