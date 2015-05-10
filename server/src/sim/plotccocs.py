@@ -7,8 +7,6 @@ from matplotlib.pylab import figure
 from matplotlib.pyplot import close
 from matplotlib.ticker import MaxNLocator
 from numpy import nan
-from mpld3 import plugins, fig_to_dict
-from utils import OptimaTickFormatter
 
 # Set defaults for testing makeccocs
 default_progname = 'NSP'
