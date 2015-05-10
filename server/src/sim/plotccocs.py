@@ -26,7 +26,7 @@ coverage_params = ['numost','numpmtct','numfirstline','numsecondline']
 ###############################################################################
 from makeccocs import makecc, makeco, makecco
 ###############################################################################
-def plot_cost_coverage(plotdata, existingFigure=None, closeFigure=True):
+def plot_cost_coverage(plotdata, existingFigure=None):
     """ Plot the cost-coverage figure """
 
     cost_coverage_figure = existingFigure if existingFigure else figure()
@@ -66,11 +66,6 @@ def plot_cost_coverage(plotdata, existingFigure=None, closeFigure=True):
     axis.get_xaxis().set_major_locator(MaxNLocator(nbins=3))
     axis.set_title(plotdata['title'])
 
-    if closeFigure:
-        cost_coverage_figure.clf()
-        axis.cla()
-        close(cost_coverage_figure)
-
     return cost_coverage_figure
 
 
@@ -81,7 +76,7 @@ def plotcc(D, progname=default_progname, ccparams=default_ccparams, arteligcutof
     plot_cost_coverage(plotdata_cc)
 
 ###############################################################################
-def plot_coverage_outcome(plotdata, existingFigure=None, closeFigure=True):
+def plot_coverage_outcome(plotdata, existingFigure=None):
     """ Plot the coverage-outcome figure """
 
     if not plotdata:
@@ -124,11 +119,6 @@ def plot_coverage_outcome(plotdata, existingFigure=None, closeFigure=True):
     axis.set_xlim([plotdata['xlowerlim'], plotdata['xupperlim']])
     axis.set_ylim([plotdata['ylowerlim'], plotdata['yupperlim']])
 
-    if closeFigure:
-        coverage_outcome_figure.clf()
-        axis.cla()
-        close(coverage_outcome_figure)
-
     return coverage_outcome_figure
 
 
@@ -139,7 +129,7 @@ def plotco(D, progname=default_progname, effect=default_effect, coparams=default
     plot_coverage_outcome(plotdata_co)
 
 #################################################################################
-def plot_cost_outcome(plotdata, existingFigure=None, closeFigure=True):
+def plot_cost_outcome(plotdata, existingFigure=None):
     """ Plot the cost-outcome figure """
 
     if not plotdata:
@@ -185,11 +175,6 @@ def plot_cost_outcome(plotdata, existingFigure=None, closeFigure=True):
     axis.get_xaxis().set_major_locator(MaxNLocator(nbins=3))
     axis.set_xlim([plotdata['xlowerlim'],plotdata['xupperlim']])
     axis.set_ylim([plotdata['ylowerlim'],plotdata['yupperlim']])
-
-    if closeFigure:
-        cost_outcome_figure.clf()
-        axis.cla()
-        close(cost_outcome_figure)
 
     return cost_outcome_figure
 

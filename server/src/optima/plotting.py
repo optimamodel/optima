@@ -19,7 +19,7 @@ def generate_cost_coverage_chart(plotdata):
     """ Returns the cost-coverage chart as Mpld3 JSON format """
 
     blank_figure = figure(figsize=(3,2), dpi=100)
-    cost_coverage_figure = plot_cost_coverage(plotdata, figure=blank_figure, closeFigure=False)
+    cost_coverage_figure = plot_cost_coverage(plotdata, figure=blank_figure)
 
     # clear all plugins from the figure
     plugins.clear(cost_coverage_figure)
@@ -43,7 +43,7 @@ def generate_coverage_outcome_chart(plotdata):
     """ Returns the coverage-outcome chart as Mpld3 JSON format """
 
     blank_figure = figure(figsize=(3,2), dpi=100)
-    coverage_outcome_figure = plot_coverage_outcome(plotdata, figure=blank_figure, closeFigure=False)
+    coverage_outcome_figure = plot_coverage_outcome(plotdata, figure=blank_figure)
 
     # clear all plugins from the figure
     plugins.clear(coverage_outcome_figure)
@@ -67,7 +67,7 @@ def generate_cost_outcome_chart(plotdata):
     """ Returns the cost-outcome chart as Mpld3 JSON format """
 
     blank_figure = figure(figsize=(3,2), dpi=100)
-    cost_outcome_figure = plot_cost_outcome(plotdata, figure=blank_figure, closeFigure=False)
+    cost_outcome_figure = plot_cost_outcome(plotdata, figure=blank_figure)
 
     # clear all plugins from the figure
     plugins.clear(cost_outcome_figure)
