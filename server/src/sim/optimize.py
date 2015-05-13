@@ -36,7 +36,7 @@ def runmodelalloc(D, thisalloc, origalloc, parindices, randseed, rerunfinancial=
         currcost = sanitize(D['data']['costcov']['cost'][artind])[-1]
         currcov = sanitize(D['data']['costcov']['cov'][artind])[-1]
         unitcost = currcost/currcov
-        newM['tx1'][parindices] = thisalloc[artind]/unitcost
+        newM['tx1'].flat[parindices] = thisalloc[artind]/unitcost
     except:
         print('Attempt to calculate ART coverage failed for an unknown reason')
     
