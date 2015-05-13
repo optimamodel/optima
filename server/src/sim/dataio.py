@@ -50,22 +50,13 @@ def savedata(filename, data, update=True, verbose=2):
     """
     printv('Saving data...', 1, verbose)
 
-    from json import dump, load
-
+    from json import dump
+    
     filename = projectpath(filename)
 
-    try: # First try loading the file and updating it
-        rfid = open(filename,'rb') # "Read file ID" -- This will fail if the file doesn't exist
-        origdata = fromjson(load(rfid))
-        if update: origdata.update(data)
-        else: origdata = data
-        wfid = open(filename,'wb')
-        dump(tojson(data), wfid)
-        printv('..updated file', 3, verbose)
-    except: # If that fails, save a new file
-        wfid = open(filename,'wb')
-        dump(tojson(data), wfid)
-        printv('..created new file', 3, verbose)
+    wfid = open(filename,'wb')
+    dump(tojson(data), wfid)
+    printv('..created new file', 3, verbose)
     printv(' ...done saving data at %s.' % filename, 2, verbose)
     return filename
 
