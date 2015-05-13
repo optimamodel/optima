@@ -1,4 +1,5 @@
-define(['./module', 'crypto'], function (module) {
+define(['./module', '../sha224/sha224'], function (module, SHA224) {
+
   'use strict';
 
   return module.controller('LoginController', function ($scope, $window, User) {
@@ -13,7 +14,7 @@ define(['./module', 'crypto'], function (module) {
       }
 
       $scope.error = '';
-      var hashed_password = CryptoJS.SHA224($scope.password).toString();
+      var hashed_password = SHA224($scope.password).toString();
 
       User.login({
         email: $scope.email,

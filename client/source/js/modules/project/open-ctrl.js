@@ -129,7 +129,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       var message = 'Are you sure you want to permanently remove project "' + name + '"?';
       modalService.confirm(
         function (){ removeNoQuestionsAsked(name, id, index); },
-        function (){},
+        function (){  },
         'Yes, remove this project',
         'No',
         message,

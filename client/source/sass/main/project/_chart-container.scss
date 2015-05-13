@@ -19,10 +19,20 @@
   }
 }
 
-.chart-buttons {
+.chart-export-buttons {
   position: absolute;
   right: 10px;
   top: 10px;
+}
+
+.chart-icon {
+  padding: 4px;
+  cursor: pointer;
+  color: gray;
+}
+
+.active-icon {
+  color: black;
 }
 
 .calibration-charts {

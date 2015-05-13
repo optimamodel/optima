@@ -1,4 +1,4 @@
-define(['./module'], function (module) {
+define(['./module', '../sha224/sha224'], function (module, SHA224) {
   'use strict';
 
   return module.controller('RegisterController', function ($scope, $window, User) {
@@ -14,7 +14,7 @@ define(['./module'], function (module) {
 
       $scope.error = false;
 
-      var hashed_password = CryptoJS.SHA224($scope.password).toString();
+      var hashed_password = SHA224($scope.password).toString();
 
       User.create({
         name: $scope.fullName,

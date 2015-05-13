@@ -6,7 +6,7 @@ define(['jquery', 'underscore'], function (jQuery, _) {
    *
    * With the scalingFactor argument a SVG image can be blown up.
    */
-  var createSvg = function(viewBoxWidth, viewBoxheight, scalingFactor, originalStyle) {
+  var createSvg = function(viewBoxWidth, viewBoxheight, scalingFactor, originalStyle, id) {
     var xmlns = "http://www.w3.org/2000/svg";
     var svg = document.createElementNS(xmlns, "svg");
     var viewBox = "0 0 " + viewBoxWidth + " " + viewBoxheight;
@@ -15,6 +15,9 @@ define(['jquery', 'underscore'], function (jQuery, _) {
     svg.setAttributeNS(null, "height", viewBoxheight * scalingFactor);
     svg.setAttributeNS(null, "version", "1.1");
     svg.setAttributeNS(null, "style", originalStyle);
+    if (id) {
+      svg.setAttributeNS(null, "id", id);
+    }
     return svg;
   };
 

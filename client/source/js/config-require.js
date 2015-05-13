@@ -11,7 +11,6 @@ define({
     'async'         : './vendor/requirejs-plugins/src/async',
     'canvg'         : './vendor/canvg/dist/canvg.bundle',
     'canvas2blob'   : './vendor/canvas-toBlob.js/canvas-toBlob',
-    'crypto'        : './vendor/crypto-js-evanvosberg/build/rollups/sha224',
     'd3'            : './vendor/d3/d3',
     'saveAs'        : './vendor/FileSaver/FileSaver',
     'jquery'        : './vendor/jquery/dist/jquery',
@@ -24,6 +23,7 @@ define({
     'ui.router'     : './vendor/angular-ui-router/release/angular-ui-router',
     'ui.bootstrap'  : './vendor/angular-bootstrap/ui-bootstrap-tpls',
     'underscore'    : './vendor/underscore/underscore',
+    'mpld3'         : './js/modules/d3-charts/mpld3.v0.3-patched'
   },
 
   shim: {
@@ -39,6 +39,10 @@ define({
     'radar-chart-d3': ['d3'],
     'saveAs': ['canvas2blob'],
     'ui.bootstrap': ['angular'],
-    'ui.router' : ['angular']
+    'ui.router' : ['angular'],
+    'mpld3' : {
+      'deps': ['d3'],
+      'exports': 'mpld3'
+    }
   }
 });

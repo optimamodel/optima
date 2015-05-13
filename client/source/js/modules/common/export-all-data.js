@@ -22,11 +22,24 @@ function (_) {
           var exportables = [];
           var showAlert = false;
           _(graphs).each(function (graph, index) {
-            var exportable = exportHelpers.getExportableFrom(graph);
-            if ( exportable ) {
-              exportables.push(exportable);
+
+            // The only way to distinct the custom d3 charts from mpld3 charts is
+            // to check for differences in the data structure. Checking for `id`
+            // and `data` should be good enough.
+            if (_(graph).has('id') && _(graph).has('data')) {
+              var mpld3Exportable = exportHelpers.getMpld3ExportableFrom(graph);
+              if ( mpld3Exportable ) {
+                exportables.push(mpld3Exportable);
+              } else {
+                showAlert = true;
+              }
             } else {
-              showAlert = true;
+              var exportable = exportHelpers.getExportableFrom(graph);
+              if ( exportable ) {
+                exportables.push(exportable);
+              } else {
+                showAlert = true;
+              }
             }
           });
           if(showAlert) { modalService.inform(undefined,undefined,"Sorry, some graphs cannot be exported"); }

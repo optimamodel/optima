@@ -38,7 +38,6 @@ ccparams = {'saturation': 0.9,
           'funding':800000.0, 
           'scaleup':None, 
           'nonhivdalys':None, 
-          'xupperlim':1000000, 
           'cpibaseyear':None, 
           'perperson':None}
 plotall(D=D, coparams=[], ccparams=ccparams)

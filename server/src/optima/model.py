@@ -16,6 +16,7 @@ from signal import *
 from optima.dbconn import db
 from sim.autofit import autofit
 from sim.updatedata import updatedata
+from sim.plotccocs import plot_cost_coverage, plot_cost_outcome, plot_coverage_outcome
 
 # route prefix: /api/model
 model = Blueprint('model',  __name__, static_folder = '../static')
@@ -322,17 +323,23 @@ def doCostCoverage(): # pylint: disable=R0914
                 new_effects.append(effect)
             D['programs'][programIndex]['effects'] = new_effects
         args['D'] = D
-
         # effectnames are actually effects
-        plotdata, plotdata_co, plotdata_cc, effectnames, D = plotallcurves(**args)
+        figsize = (3,2)
+        plotdata_cco, plotdata_co, plotdata_cc, effectnames, D = plotallcurves(**args)
+        dict_fig_cc = plot_cost_coverage(plotdata_cc, figsize)
+        dict_fig_co = map(lambda key: plot_coverage_outcome(plotdata_co[key], figsize), plotdata_co.keys())
+        dict_fig_cco = map(lambda key: plot_cost_outcome(plotdata_cco[key], figsize), plotdata_cco.keys())
         if do_save:
             D_dict = tojson(D)
             save_model(request.project_id, D_dict)
     except Exception:
         var = traceback.format_exc()
         return jsonify({"exception":var}), 500
-    return jsonify({"plotdata": for_fe(plotdata), \
-        "plotdata_co": for_fe(plotdata_co), "plotdata_cc": for_fe(plotdata_cc), "effectnames": for_fe(effectnames)})
+    return jsonify({
+        "effectnames": for_fe(effectnames),
+        "fig_cc": dict_fig_cc,
+        "fig_co": dict_fig_co,
+        "fig_cco": dict_fig_cco})
 
 @model.route('/costcoverage/effect', methods=['POST'])
 @login_required
@@ -348,14 +355,20 @@ def doCostCoverageEffect():
             return jsonify({'reason':'No effect has been specified'}), 500
         if args.get('ccparams'):
             args['ccparams'] = dict([(key, (float(param) if param else None)) for (key,param) in args['ccparams'].iteritems()])
-        if args.get('coparams'):args['coparams'] = [float(param) for param in args['coparams']]
+        if args.get('coparams'):
+            args['coparams'] = map(lambda param: float(param) if param or (type(param) is int and param == 0) else None, args['coparams'])
         # effectnames are actually effects
-        plotdata, plotdata_co, _ = makecco(**args)
+        figsize = (3,2)
+        plotdata, plotdata_co, _ = makecco(**args) # plotdata is actually plotdata_cco
+        dict_fig_co = plot_coverage_outcome(plotdata_co, figsize)
+        dict_fig_cco = plot_cost_outcome(plotdata, figsize)
     except Exception:
         var = traceback.format_exc()
         return jsonify({"exception":var}), 500
-    return jsonify({"plotdata": for_fe(plotdata), \
-        "plotdata_co": for_fe(plotdata_co), "effect": args['effect']})
+    return jsonify({
+        "effect": args['effect'],
+        "fig_co": dict_fig_co,
+        "fig_cco": dict_fig_cco })
 
 
 @model.route('/reloadSpreadsheet/<project_id>', methods=['GET'])

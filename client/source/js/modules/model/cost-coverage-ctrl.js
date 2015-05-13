@@ -11,23 +11,25 @@ define(['./module', 'underscore'], function (module, _) {
       return;
     }
 
-    var plotTypes, effects, programs;
+    var effects, programs;
 
-    var initialize =function () {
+    var initialize = function () {
       programs = programsResource.data;
 
       $scope.state = {
         chartsForDataExport: [],
         titlesForChartsExport: [],
-        selectionPrograms: initializePrograms(info.programs, programs),
+        selectionPrograms: info.programs,
         coParams: [],
         hasCostCoverResponse: false,
         selectedProgram: undefined
       };
 
-      plotTypes = ['plotdata', 'plotdata_cc', 'plotdata_co'];
+      resetCharts();
 
-      resetGraphs();
+      $scope.$watch('state.costCoverageChart', updateDataForExport, true);
+      $scope.$watch('state.costOutcomeCharts', updateDataForExport, true);
+      $scope.$watch('state.coverageOutcomeCharts', updateDataForExport, true);
     };
 
     /**
@@ -39,178 +41,17 @@ define(['./module', 'underscore'], function (module, _) {
       });
     }
 
-    /**
-     * Creates the models of the programs for this controller.
-     * If the backend do not present values for the categories, we'll use 'Others' as default.
-     */
-    function initializePrograms (programsWithNames, programsWithParams) {
-      // This code exists to ensur the correct order.
-      var programs =  _(programsWithNames).map(function (item) {
-        var acronym = item.short_name;
-
-        var program = _(programsWithParams).find(function(entry) {
-          return entry.name === acronym;
-        });
-
-        return {
-          name: item.name,
-          acronym: acronym,
-          category: item.category
-        };
-      });
-      return programs;
-    }
-
-    var resetGraphs= function () {
-      $scope.graphs = {
-        plotdata: [],
-        plotdata_cc: {},
-        plotdata_co: []
-      };
-    };
-
-    var getlineAreaScatterOptions = function (options, xLabel, yLabel) {
-      var defaults = {
-        width: 300,
-        height: 200,
-        margin: {
-          top: 20,
-          right: 15,
-          bottom: 40,
-          left: 60
-        },
-        xAxis: {
-          axisLabel: xLabel || 'X'
-        },
-        yAxis: {
-          axisLabel: yLabel || 'Y'
-        }
-      };
-
-      return _(angular.copy(defaults)).extend(options);
+    var resetCharts = function () {
+      $scope.state.costCoverageChart = undefined;
+      $scope.state.costCoverageChartId = undefined;
+      $scope.state.costCoverageChartTitle = undefined;
+      $scope.state.costOutcomeCharts = [];
+      $scope.state.coverageOutcomeCharts = [];
+      $scope.state.outcomeTitles = [];
     };
 
     /* Methods
      ========= */
-
-    /**
-     * Calculates graphs objects of types plotdata and plotdata_co
-     * returns ready to draw Graph object
-     * @param graphData - api reply
-     * @returns {{options, data: {lines: Array, scatter: Array}}}
-     */
-    var setUpPlotdataGraph = function (graphData) {
-
-      var graph = {
-        options: getlineAreaScatterOptions({
-          linesStyle: ['__color-blue-4', '__color-black __dashed', '__color-black __dashed'],
-          title: graphData.title,
-          hideTitle: true
-        }, graphData.xlabel, graphData.ylabel),
-        data: {
-          lines: [],
-          scatter: []
-        }
-      };
-
-      // quit if data is empty - empty graph placeholder will be displayed
-      if (graphData.ylinedata) {
-
-        var numOfLines = graphData.ylinedata.length;
-
-        _(graphData.xlinedata).each(function (x, index) {
-          var y = graphData.ylinedata;
-          for (var i = 0; i < numOfLines; i++) {
-            if (!graph.data.lines[i]) {
-              graph.data.lines[i] = [];
-            }
-
-            graph.data.lines[i].push([x, y[i][index]]);
-          }
-        });
-      }
-
-      _(graphData.xscatterdata).each(function (x, index) {
-        var y = graphData.yscatterdata;
-
-        if (y[index]) {
-          graph.data.scatter.push([x, y[index]]);
-        }
-      });
-
-      // set up the data limits
-      graph.data.limits = [
-        [graphData.xlowerlim, graphData.ylowerlim],
-        [graphData.xupperlim, graphData.yupperlim]
-      ];
-
-      return graph;
-    };
-
-    /**
-     * Generates ready to plot graph for a cost coverage.
-     */
-    var prepareCostCoverageGraph = function (data) {
-      var graph = {
-        options: getlineAreaScatterOptions({
-          linesStyle: ['__color-blue-4', '__color-black __dashed', '__color-black __dashed'],
-          hideTitle: true
-        },
-        data.xlabel, data.ylabel),
-        data: {
-          lines: [],
-          scatter: []
-        }
-      };
-
-      if (data.ylinedata) {
-        var numOfLines = data.ylinedata.length;
-        _(data.xlinedata).each(function (x, index) {
-          var y = data.ylinedata;
-          for (var i = 0; i < numOfLines; i++) {
-            if (!graph.data.lines[i]) {
-              graph.data.lines[i] = [];
-            }
-
-            graph.data.lines[i].push([x, y[i][index]]);
-          }
-        });
-      }
-
-      _(data.xscatterdata).each(function (x, index) {
-        var y = data.yscatterdata;
-
-        if (y[index]) {
-          graph.data.scatter.push([x, y[index]]);
-        }
-      });
-
-      // set up the data limits
-      graph.data.limits = [
-        [data.xlowerlim, data.ylowerlim],
-        [data.xupperlim, data.yupperlim]
-      ];
-      return graph;
-    };
-
-    /**
-     * Receives graphs data with plot type to calculate, calculates all graphs
-     * of given type and writes them to $scope.graphs[type] except for the
-     * cost coverage graph which will be written to $scope.ccGraph
-     *
-     * @param data - usually api request with graphs data
-     * @param type - string
-     */
-    var prepareGraphsOfType = function (data, type) {
-      if (type === 'plotdata_cc') {
-        $scope.ccGraph = prepareCostCoverageGraph(data);
-        $scope.ccGraph.options.title = $scope.state.selectedProgram.name;
-      } else if (type === 'plotdata' || type === 'plotdata_co') {
-        _(data).each(function (graphData) {
-          $scope.graphs[type].push(setUpPlotdataGraph(graphData));
-        });
-      }
-    };
 
     /**
      * Returns the current parameterised plot model.
@@ -224,13 +65,12 @@ define(['./module', 'underscore'], function (module, _) {
         funding: $scope.state.knownFundingValue,
         scaleup: $scope.state.scaleUpParameter,
         nonhivdalys: $scope.state.nonHivDalys,
-        xupperlim: $scope.state.xAxisMaximum,
         cpibaseyear: $scope.state.displayYear,
         perperson: $scope.state.calculatePerPerson
       };
 
       return {
-        progname: $scope.state.selectedProgram.acronym,
+        progname: $scope.state.selectedProgram.short_name,
         ccparams: costCoverageParams
       };
     };
@@ -238,15 +78,15 @@ define(['./module', 'underscore'], function (module, _) {
     /**
      * Returns true if the param is undefined, null or NaN
      */
-    var isInvalidParam = function(param) {
+    var isInvalidParam = function (param) {
       return param === undefined || param === null || typeof param === "number" && isNaN(param);
     };
 
     /**
-     * Returns true if either none or all of the 4 important paramters are
-     * filled out.
+     * Returns true if some, but not all of the 4 important cost coverage
+     * paramters are filled out.
      */
-    $scope.areValidCcParams = function () {
+    $scope.costCoverageFormIsPartlyFilledOut = function () {
       var allRequiredParamsDefined = $scope.state.saturationCoverageLevel &&
                                      $scope.state.knownMinCoverageLevel &&
                                      $scope.state.knownMaxCoverageLevel &&
@@ -256,21 +96,53 @@ define(['./module', 'underscore'], function (module, _) {
                                    isInvalidParam($scope.state.knownMaxCoverageLevel) &&
                                    isInvalidParam($scope.state.knownFundingValue);
 
-      return (Boolean(allRequiredParamsDefined) || noRequiredParamDefined);
+      return !(Boolean(allRequiredParamsDefined) || noRequiredParamDefined);
+    };
+
+    /**
+     * Returns true if some, but not all of the 4 cost outcome paramters are
+     * filled out.
+     */
+    $scope.costOutcomeFormIsPartlyFilledOut = function (index) {
+      var allParamsDefined = $scope.state.coParams[index][0] &&
+                             $scope.state.coParams[index][1] &&
+                             $scope.state.coParams[index][2] &&
+                             $scope.state.coParams[index][3];
+      var noParamDefined = isInvalidParam($scope.state.coParams[index][0]) &&
+                           isInvalidParam($scope.state.coParams[index][1]) &&
+                           isInvalidParam($scope.state.coParams[index][2]) &&
+                           isInvalidParam($scope.state.coParams[index][3]);
+
+      return !(Boolean(allParamsDefined) || noParamDefined);
     };
 
     /**
      * Retrieve and update graphs based on the provided plot models.
      */
     var retrieveAndUpdateGraphs = function (model) {
+      resetCharts();
+
       $http.post('/api/model/costcoverage', model).success(function (response) {
+
         effects = response.effectnames;
         $scope.state.coParams = costCoverageHelpers.setUpCoParamsFromEffects(effects);
         $scope.state.hasCostCoverResponse = true;
 
-        resetGraphs();
-        _(plotTypes).each(function (plotType) {
-          prepareGraphsOfType(response[plotType], plotType);
+        $scope.state.costCoverageChartTitle = response.fig_cc.axes[0].texts[2].text;
+        $scope.state.costCoverageChartId = $scope.generateChartId();
+        $scope.state.costCoverageChart = response.fig_cc;
+        $scope.state.costCoverageChart.axes[0].texts.splice(2, 1);
+
+        $scope.state.outcomeTitles = _(response.fig_co).map(function(chart) {
+          return chart.axes[0].texts[2].text;
+        });
+        $scope.state.coverageOutcomeCharts = response.fig_co;
+        _($scope.state.coverageOutcomeCharts).each(function(chart) {
+          chart.axes[0].texts.splice(2, 1);
+        });
+        $scope.state.costOutcomeCharts = response.fig_cco;
+        _($scope.state.costOutcomeCharts).each(function(chart) {
+          chart.axes[0].texts.splice(2, 1);
         });
       });
     };
@@ -284,16 +156,16 @@ define(['./module', 'underscore'], function (module, _) {
         return null;
       }
 
-      var program = findProgram($scope.state.selectedProgram.acronym);
-      $scope.state.saturationCoverageLevel = program.ccparams.saturation ? program.ccparams.saturation * 100 : undefined;
-      $scope.state.knownMinCoverageLevel = program.ccparams.coveragelower ? program.ccparams.coveragelower * 100 : undefined;
-      $scope.state.knownMaxCoverageLevel = program.ccparams.coverageupper ? program.ccparams.coverageupper * 100 : undefined;
+      var program = findProgram($scope.state.selectedProgram.short_name);
+      $scope.state.saturationCoverageLevel = program.ccparams.saturation * 100 || undefined;
+      $scope.state.knownMinCoverageLevel = program.ccparams.coveragelower * 100 || undefined;
+      $scope.state.knownMaxCoverageLevel = program.ccparams.coverageupper * 100 || undefined;
       $scope.state.knownFundingValue = program.ccparams.funding;
       $scope.state.scaleUpParameter = program.ccparams.scaleup;
       $scope.state.nonHivDalys = program.ccparams.nonhivdalys;
       $scope.state.displayYear = program.ccparams.cpibaseyear;
-      $scope.state.xAxisMaximum = program.ccparams.xupperlim;
       $scope.state.calculatePerPerson = program.ccparams.perperson;
+      $scope.state.info = info;
 
       var model = getPlotModel();
       retrieveAndUpdateGraphs(model);
@@ -301,12 +173,7 @@ define(['./module', 'underscore'], function (module, _) {
 
     $scope.uploadDefault = function () {
       var message = 'Upload default cost-coverage-outcome curves will be available in a future version of Optima. We are working hard in make it happen for you!';
-      modalService.inform(
-        function () {},
-        'Okay',
-        message,
-        'Thanks for your interest!'
-      );
+      modalService.inform(_.noop, 'Okay', message, 'Thanks for your interest!');
     };
 
     /**
@@ -315,18 +182,20 @@ define(['./module', 'underscore'], function (module, _) {
      * The plot model gets saved in the backend.
      */
     $scope.saveModel = function () {
-      if($scope.state.CostCoverageForm.$valid) {
-
-        var model = getPlotModel(model);
-        model.doSave = true;
-        model.all_coparams = costCoverageHelpers.toRequestCoParams($scope.state.coParams);
-        model.all_effects = effects;
-
-        var program = findProgram($scope.state.selectedProgram.acronym);
-        program.ccparams = model.ccparams;
-
-        retrieveAndUpdateGraphs(model);
+      if($scope.state.CostCoverageForm.$invalid || $scope.state.CombinedAdjustmentForms.$invalid) {
+        modalService.inform(_.noop, 'Ok', 'Please correct all errors on this page before proceeding.', 'Cannot save invalid model');
+        return;
       }
+
+      var model = getPlotModel(model);
+      model.doSave = true;
+      model.all_coparams = costCoverageHelpers.toRequestCoParams($scope.state.coParams);
+      model.all_effects = effects;
+
+      var program = findProgram($scope.state.selectedProgram.short_name);
+      program.ccparams = model.ccparams;
+
+      retrieveAndUpdateGraphs(model);
     };
 
     /**
@@ -341,6 +210,16 @@ define(['./module', 'underscore'], function (module, _) {
     };
 
     /**
+     * Returns a new unique ID.
+     *
+     * Background: Due Mpld3 issues with re-rending a chart on the same ID we
+     * create a new one every time.
+     */
+     $scope.generateChartId = function () {
+       return 'chart' + _.uniqueId();
+     };
+
+    /**
      * POST /api/model/costcoverage/effect
      *   {
      *     "progname":<chosen progname>
@@ -350,7 +229,6 @@ define(['./module', 'underscore'], function (module, _) {
      *   }
      */
     $scope.updateCurve = _.debounce(function (graphIndex, AdjustmentForm) {
-
       if($scope.state.hasCostCoverResponse && AdjustmentForm.$valid && $scope.state.CostCoverageForm.$valid) {
         var model = getPlotModel();
         var coParams = costCoverageHelpers.toRequestCoParams($scope.state.coParams);
@@ -358,8 +236,12 @@ define(['./module', 'underscore'], function (module, _) {
         model.effect = effects[graphIndex];
 
         $http.post('/api/model/costcoverage/effect', model).success(function (response) {
-          $scope.graphs.plotdata[graphIndex] = setUpPlotdataGraph(response.plotdata);
-          $scope.graphs.plotdata_co[graphIndex] = setUpPlotdataGraph(response.plotdata_co);
+          $scope.state.costOutcomeCharts[graphIndex] = response.fig_cco;
+          $scope.state.costOutcomeCharts[graphIndex].axes[0].texts.splice(2, 1);
+
+          $scope.state.coverageOutcomeCharts[graphIndex] = response.fig_co;
+          $scope.state.coverageOutcomeCharts[graphIndex].axes[0].texts.splice(2, 1);
+
           effects[graphIndex] = response.effect;
         });
       }
@@ -374,20 +256,27 @@ define(['./module', 'underscore'], function (module, _) {
       $scope.state.chartsForDataExport = [];
       $scope.state.titlesForChartsExport = [];
 
-      if ( $scope.ccGraph) {
-        $scope.state.chartsForDataExport.push($scope.ccGraph);
-        $scope.state.titlesForChartsExport.push($scope.ccGraph.options.title);
+      // chart data
+      if ( $scope.state.costCoverageChart ) {
+        $scope.state.chartsForDataExport.push($scope.state.costCoverageChart);
       }
 
-      var charts = _(_.zip($scope.graphs.plotdata, $scope.graphs.plotdata_co)).flatten();
-      _( charts ).each(function (chart,index) {
+      var charts = _(_.zip($scope.state.costOutcomeCharts, $scope.state.coverageOutcomeCharts)).flatten();
+      _(charts).each(function (chart) {
         $scope.state.chartsForDataExport.push(chart);
-        $scope.state.titlesForChartsExport.push(chart.options.title);
+      });
+
+      // chart titles
+      if ( $scope.state.costCoverageChartTitle ) {
+        $scope.state.titlesForChartsExport.push($scope.state.costCoverageChartTitle);
+      }
+
+      _($scope.state.outcomeTitles).each(function (title) {
+        // we push two titles as there are cost outcome charts & coverage outcome charts
+        $scope.state.titlesForChartsExport.push(title);
+        $scope.state.titlesForChartsExport.push(title);
       });
     };
-
-    $scope.$watch('graphs', updateDataForExport, true);
-    $scope.$watch('ccGraph', updateDataForExport, true);
 
     /**
      * Retrieve and update graphs based on the current plot models only if the
