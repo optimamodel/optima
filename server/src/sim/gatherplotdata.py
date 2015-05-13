@@ -323,7 +323,7 @@ def gatheroptimdata(D, result, verbose=2):
         optim['outcome']['xdata'] = range(len(result['fval'].tolist())) # Vector of iterations
         optim['outcome']['ylabel'] = 'Outcome'
         optim['outcome']['xlabel'] = 'Iteration'
-        optim['outcome']['title'] = 'Outcome (initial: %0.0f, final: %0.0f)' % (result['fval'][0], result['fval'][-1])
+        optim['outcome']['title'] = 'Outcome (initial: %0.2f, final: %0.2f)' % (result['fval'][0], result['fval'][-1])
     if optim['kind']=='constant':
         optim['alloc'] = []
         titles = ['Original','Optimal']
