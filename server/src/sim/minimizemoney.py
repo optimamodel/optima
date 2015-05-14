@@ -6,7 +6,7 @@ Version: 2015may14 by cliffk
 
 from printv import printv
 from copy import deepcopy
-from numpy import ones, zeros, concatenate, arange
+from numpy import zeros, arange, array
 from utils import findinds
 from makeresults import makeresults
 from timevarying import timevarying
@@ -135,13 +135,8 @@ def minimizemoney(D, objectives=None, constraints=None, maxiters=1000, timelimit
     outindices = arange(initialindex,finaloutindex)
     normalizations = dict()
         
-    # Initial values of time-varying parameters
-    growthrate = zeros(nprogs)   if ntimepm >= 2 else []
-    saturation = origalloc       if ntimepm >= 3 else []
-    inflection = ones(nprogs)*.5 if ntimepm >= 4 else []
-    
     # Concatenate parameters to be optimised
-    optimparams = concatenate((origalloc, growthrate, saturation, inflection)) # WARNING, not used for multi-year optimizations
+    optimparams = deepcopy(origalloc)
         
     
     
@@ -172,7 +167,18 @@ def minimizemoney(D, objectives=None, constraints=None, maxiters=1000, timelimit
             options['D']['F'] = [deepcopy(D['F'][s])] # Loop over fitted parameters
             
             options['randseed'] = s
+            
+            # First, see if it meets targets already
             targetsmet, optparams = objectivecalc(optimparams, options)
+            if targetsmet:
+                print('DONE: Current allocation meets targets!')
+            
+            # Now try infinite money
+            targetsmet, optparams = objectivecalc(array(optimparams)*1e9, options)
+            if not(targetsmet):
+                print('DONE: Infinite allocation can''t meet targets!')
+            
+        
             optparams[opttrue] = optparams[opttrue] / optparams[opttrue].sum() * (options['totalspend'] - optparams[~opttrue].sum()) # Make sure it's normalized -- WARNING KLUDGY
             allocarr.append(optparams)
         
