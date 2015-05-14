@@ -11,12 +11,13 @@ define([
   'use strict';
 
   return angular.module('app.common.prevent-navigation',[])
-  .factory('PreventNavigation', [ '$state', 'modalService', function ($state, modalService) {
+  .factory('PreventNavigation', [ '$state', '$rootScope', 'modalService', function ($state, $rootScope, modalService) {
     
     /**
      * PreventNavigation class constructor
      */
     function PreventNavigation () {
+      this.modelDict = {};
     };
 
 
@@ -43,9 +44,10 @@ define([
       event.preventDefault();
       var message = 'Are you sure you want to leave this page?';
       var head = 'You have changed values';
+      var obj = this;
       this.confirmPopup(message, head, function () {
-        console.log('going to state: ',toState.name);
         $state.go(toState.name);
+        $rootScope.modelDict = obj.modelDict;
       });      
     };
 
@@ -53,16 +55,27 @@ define([
      * Answers true if the user can navigate out of the current state, false otherwise.
      */
     PreventNavigation.prototype.canNavigate = function () {
-      return false;
+      return true;
     };
 
     /**
      * Reacts to the change of state attempt.
      */
-    PreventNavigation.prototype.onStateChangeStart = function (event, toState, toParams, fromState, fromParams) {
-      if( !this.canNavigate() ){
+    PreventNavigation.prototype.onStateChangeStart = function (event, toState, toParams, fromState, fromParams, modelDict) {
+      
+      var canNavigate = angular.toJson(this.modelDict) == angular.toJson(modelDict);
+
+      if( !canNavigate ){
         this.confirmNavigation(event, toState);
       }
+    };
+
+    /**
+     * Reacts to the successful change of state attempt.
+     */
+    PreventNavigation.prototype.onStateChangeSuccess = function (event, toState, toParams, fromState, fromParams, modelDict) {
+      $rootScope.modelDict = this.modelDict = modelDict;
+
     };
 
     return new PreventNavigation();

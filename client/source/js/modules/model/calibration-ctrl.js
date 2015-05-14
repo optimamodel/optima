@@ -6,7 +6,7 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
-  module.controller('ModelCalibrationController', function ($scope, $state, $http, $interval,
+  module.controller('ModelCalibrationController', function ($scope, $rootScope, $state, $http, $interval,
     Model, parameters, meta, info, CONFIG, typeSelector, cfpLoadingBar, calibration, modalService, PreventNavigation) {
 
     $scope.initialize = function () {
@@ -327,6 +327,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         $scope.canDoFitting = true;
 
         angular.extend($scope.parameters, calibration.toScopeParameters(data));
+        $rootScope.modelDict = data;
       }
     };
 
