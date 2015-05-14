@@ -29,6 +29,7 @@ def runmodelalloc(D, optimparams, parindices, randseed, rerunfinancial=False, ve
     optimparams[opttrue] = optimparams[opttrue] / optimparams[opttrue].sum() * (sum(optimparams) - optimparams[~opttrue].sum()) # Make sure it's normalized -- WARNING KLUDGY
 
     thisalloc = timevarying(optimparams, ntimepm=1, nprogs=len(optimparams), tvec=D['opt']['partvec'], totalspend=sum(optimparams)) 
+    
     newD, newcov, newnonhivdalysaverted = getcurrentbudget(newD, thisalloc, randseed=randseed) # Get cost-outcome curves with uncertainty
     newM = makemodelpars(newD['P'], newD['opt'], withwhat='c', verbose=0) # Don't print out
     newD['M'] = partialupdateM(D['M'], newM, parindices)
@@ -39,6 +40,7 @@ def runmodelalloc(D, optimparams, parindices, randseed, rerunfinancial=False, ve
     R['debug']['M'] = deepcopy(newD['M'])
     R['debug']['F'] = deepcopy(newD['F'])
     R['debug']['S'] = deepcopy(S)
+    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     return R
 
 
@@ -91,7 +93,6 @@ def minimizemoney(D, objectives=None, constraints=None, maxiters=1000, timelimit
 
     # Handle original allocation
     nprogs = len(origalloc)
-    totalspend = objectives['outcome']['fixed'] # For fixed budgets
     opttrue = zeros(len(D['data']['origalloc']))
     for i in xrange(len(D['data']['origalloc'])):
         if len(D['programs'][i]['effects']): opttrue[i] = 1.0
@@ -155,7 +156,6 @@ def minimizemoney(D, objectives=None, constraints=None, maxiters=1000, timelimit
         options['outindices'] = outindices # Indices for the outcome to be evaluated over
         options['parindices'] = parindices # Indices for the parameters to be updated on
         options['normalizations'] = normalizations # Whether to normalize a parameter
-        options['totalspend'] = totalspend # Total budget
         options['fundingchanges'] = fundingchanges # Constraints-based funding changes
         options['tmpbestdata'] = []
         
@@ -174,12 +174,13 @@ def minimizemoney(D, objectives=None, constraints=None, maxiters=1000, timelimit
                 print('DONE: Current allocation meets targets!')
             
             # Now try infinite money
+            options['D']['P']['txelig']['c'][:] = 1e3 # Increase treatment eligibility to everyone
             targetsmet, optparams = objectivecalc(array(optimparams)*1e9, options)
             if not(targetsmet):
-                print('DONE: Infinite allocation can''t meet targets!')
+                print("DONE: Infinite allocation can't meet targets!")
             
         
-            optparams[opttrue] = optparams[opttrue] / optparams[opttrue].sum() * (options['totalspend'] - optparams[~opttrue].sum()) # Make sure it's normalized -- WARNING KLUDGY
+            optparams[opttrue] = optparams[opttrue] / optparams[opttrue].sum() * (sum(optparams) - optparams[~opttrue].sum()) # Make sure it's normalized -- WARNING KLUDGY
             allocarr.append(optparams)
         
         # Update the model and store the results
