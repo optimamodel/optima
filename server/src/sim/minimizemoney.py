@@ -6,7 +6,7 @@ Version: 2015may14 by cliffk
 
 from printv import printv
 from copy import deepcopy
-from numpy import ones, zeros, concatenate, arange, inf
+from numpy import ones, zeros, concatenate, arange
 from utils import findinds
 from makeresults import makeresults
 from timevarying import timevarying
@@ -14,7 +14,6 @@ from getcurrentbudget import getcurrentbudget
 from model import model
 from makemodelpars import makemodelpars
 from quantile import quantile
-from ballsd import ballsd
 from optimize import saveoptimization, defaultobjectives, defaultconstraints, partialupdateM
 
 
@@ -76,7 +75,6 @@ def minimizemoney(D, objectives=None, constraints=None, maxiters=1000, timelimit
     printv('Running money minimization...', 1, verbose)
     
     
-    origR = deepcopy(D['R'])
     origalloc = D['data']['origalloc']
     
     # Make sure objectives and constraints exist, and overwrite using saved ones if available
@@ -169,7 +167,6 @@ def minimizemoney(D, objectives=None, constraints=None, maxiters=1000, timelimit
         
         ## Run with uncertainties
         allocarr = []
-        fvalarr = []
         for s in xrange(len(D['F'])): # xrange(len(D['F'])): # Loop over all available meta parameters
             print('========== Running uncertainty optimization %s of %s... ==========' % (s+1, len(D['F'])))
             options['D']['F'] = [deepcopy(D['F'][s])] # Loop over fitted parameters
@@ -179,19 +176,9 @@ def minimizemoney(D, objectives=None, constraints=None, maxiters=1000, timelimit
             optparams[opttrue] = optparams[opttrue] / optparams[opttrue].sum() * (options['totalspend'] - optparams[~opttrue].sum()) # Make sure it's normalized -- WARNING KLUDGY
             allocarr.append(optparams)
         
-        ## Find which optimization was best
-        bestallocind = -1
-        bestallocval = inf
-        for s in xrange(len(fvalarr)):
-            if fvalarr[s][-1]<bestallocval:
-                bestallocval = fvalarr[s][-1]
-                bestallocind = s
-        if bestallocind == -1: print('WARNING, best allocation value seems to be infinity!')
-        
         # Update the model and store the results
         result = dict()
         result['kind'] = 'constant'
-        result['fval'] = fvalarr[bestallocind] # Append the best value noe
         result['allocarr'] = [] # List of allocations
         result['allocarr'].append(quantile([origalloc])) # Kludgy -- run fake quantile on duplicated origalloc just so it matches
         result['allocarr'].append(quantile(allocarr)) # Calculate allocation arrays 
