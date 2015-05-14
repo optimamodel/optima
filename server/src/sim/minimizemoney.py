@@ -1,7 +1,7 @@
 """
 Minimize money code...to be combined with optimize.py eventually
     
-Version: 2015apr10 by cliffk
+Version: 2015may14 by cliffk
 """
 
 from printv import printv
@@ -50,23 +50,23 @@ def objectivecalc(optimparams, options):
 
     R = runmodelalloc(options['D'], optimparams, options['parindices'], options['randseed'], rerunfinancial=False) # Actually run
     
-    tmpplotdata = [] # TEMP
-    outcome = 0 # Preallocate objective value 
-    for key in options['outcomekeys']:
-        if options['weights'][key]>0: # Don't bother unless it's actually used
-            if key!='costann': thisoutcome = R[key]['tot'][0][options['outindices']].sum()
-            else: thisoutcome = R[key]['total']['total'][0][options['outindices']].sum() # Special case for costann
-            tmpplotdata.append(R[key]['tot'][0][options['outindices']]) # TEMP
-            outcome += thisoutcome * options['weights'][key] / float(options['normalizations'][key]) * options['D']['opt']['dt'] # Calculate objective
+    targetsmet = False
+    for key in options['targets']:
+        if options['targets'][key]['use']: # Don't bother unless it's actually used
+            orig = R[key]['tot'][0][options['outindices'][0]]
+            new = R[key]['tot'][0][options['outindices'][-1]]
+            if options['targets'][key]['by_active']:
+                if new < orig*options['targets'][key]['by']:
+                    targetsmet = True
+                print('For target %s, orig:%f new:%f; met=%s' % (key, orig, new, targetsmet))
+            else:
+                print('NOT IMPLEMENTED')
     
     options['tmpbestdata'].append(dict())
     options['tmpbestdata'][-1]['optimparams'] = optimparams
-#    options['tmpbestdata'][-1]['opt']ions = options
     options['tmpbestdata'][-1]['R'] = R
-#    print options['tmpbestdata'][-1]['optimparams']
-
     
-    return outcome
+    return targetsmet, optimparams
     
     
     
@@ -135,36 +135,8 @@ def minimizemoney(D, objectives=None, constraints=None, maxiters=1000, timelimit
     finaloutindex = findinds(D['opt']['partvec'], objectives['year']['until'])
     parindices = arange(initialindex,finalparindex)
     outindices = arange(initialindex,finaloutindex)
-    weights = dict()
     normalizations = dict()
-    outcomekeys = ['inci', 'death', 'daly', 'costann']
-    if sum([objectives['outcome'][key] for key in outcomekeys])>1: # Only normalize if multiple objectives, since otherwise doesn't make a lot of sense
-        for key in outcomekeys:
-            thisweight = objectives['outcome'][key+'weight'] * objectives['outcome'][key] / 100.
-            weights.update({key:thisweight}) # Get weight, and multiply by "True" or "False" and normalize from percentage
-            if key!='costann': thisnormalization = origR[key]['tot'][0][outindices].sum()
-            else: thisnormalization = origR[key]['total']['total'][0][outindices].sum() # Special case for costann
-            normalizations.update({key:thisnormalization})
-    else:
-        for key in outcomekeys:
-            weights.update({key:int(objectives['outcome'][key])}) # Weight of 1
-            normalizations.update({key:1}) # Normalizatoin of 1
         
-    # Initiate probabilities of parameters being selected
-    stepsizes = zeros(nprogs * ntimepm)
-    
-    # Easy access initial allocation indices and turn stepsizes into array
-    ai = range(nprogs)
-    gi = range(nprogs,   nprogs*2) if ntimepm >= 2 else []
-    si = range(nprogs*2, nprogs*3) if ntimepm >= 3 else []
-    ii = range(nprogs*3, nprogs*4) if ntimepm >= 4 else []
-    
-    # Turn stepsizes into array
-    stepsizes[ai] = stepsize
-    stepsizes[gi] = growsize if ntimepm > 1 else 0
-    stepsizes[si] = stepsize
-    stepsizes[ii] = growsize # Not sure that growsize is an appropriate starting point
-    
     # Initial values of time-varying parameters
     growthrate = zeros(nprogs)   if ntimepm >= 2 else []
     saturation = origalloc       if ntimepm >= 3 else []
@@ -177,28 +149,22 @@ def minimizemoney(D, objectives=None, constraints=None, maxiters=1000, timelimit
     
     
     ###########################################################################
-    ## Constant budget optimization
+    ## Money minimization optimization
     ###########################################################################
-    if objectives['funding'] == 'constant' and objectives['timevarying'] == False:
+    if 1: # objectives['funding'] == 'constant' and objectives['timevarying'] == False:
         
         ## Define options structure
         options = dict()
         options['ntimepm'] = ntimepm # Number of time-varying parameters
         options['nprogs'] = nprogs # Number of programs
         options['D'] = deepcopy(D) # Main data structure
-        options['outcomekeys'] = outcomekeys # Names of outcomes, e.g. 'inci'
-        options['weights'] = weights # Weights for each parameter
+        options['targets'] = objectives['money']['objectives'] # Names of outcomes, e.g. 'inci'
         options['outindices'] = outindices # Indices for the outcome to be evaluated over
         options['parindices'] = parindices # Indices for the parameters to be updated on
         options['normalizations'] = normalizations # Whether to normalize a parameter
         options['totalspend'] = totalspend # Total budget
         options['fundingchanges'] = fundingchanges # Constraints-based funding changes
-        
-        
-#        options.tmporigdata = []
         options['tmpbestdata'] = []
-#        options.tmperrcount = [0]
-#        options.tmperrhist = [None]
         
         
         ## Run with uncertainties
@@ -209,10 +175,9 @@ def minimizemoney(D, objectives=None, constraints=None, maxiters=1000, timelimit
             options['D']['F'] = [deepcopy(D['F'][s])] # Loop over fitted parameters
             
             options['randseed'] = s
-            optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=fundingchanges['total']['dec'], xmax=fundingchanges['total']['inc'], absinitial=stepsizes, MaxIter=maxiters, timelimit=timelimit, fulloutput=True, stoppingfunc=stoppingfunc, verbose=verbose)
+            targetsmet, optparams = objectivecalc(optimparams, options)
             optparams[opttrue] = optparams[opttrue] / optparams[opttrue].sum() * (options['totalspend'] - optparams[~opttrue].sum()) # Make sure it's normalized -- WARNING KLUDGY
             allocarr.append(optparams)
-            fvalarr.append(output.fval)
         
         ## Find which optimization was best
         bestallocind = -1
