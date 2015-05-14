@@ -52,13 +52,6 @@ define([
     };
 
     /**
-     * Answers true if the user can navigate out of the current state, false otherwise.
-     */
-    PreventNavigation.prototype.canNavigate = function () {
-      return true;
-    };
-
-    /**
      * Reacts to the change of state attempt.
      */
     PreventNavigation.prototype.onStateChangeStart = function (event, toState, toParams, fromState, fromParams, modelDict) {
