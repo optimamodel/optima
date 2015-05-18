@@ -19,7 +19,6 @@ define([
     function PreventNavigation () {
     };
 
-
     /**
      * Displays a modal confirmation window with the given message and action.
      * Evaluates callback when the user confirms going to the target state.
