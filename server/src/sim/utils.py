@@ -167,7 +167,7 @@ def toc(start=0, label='', sigfigs=3):
     
 
 
-def printdata(data, name='Variable', depth=1, maxlen=50, indent=''):
+def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0):
     """
     Nicely print a complicated data structure, a la Matlab.
     Arguments:
@@ -193,19 +193,20 @@ def printdata(data, name='Variable', depth=1, maxlen=50, indent=''):
         return string+datastring
     
     string = printentry(data).replace('\n',' \ ') # Remove newlines
-    print(indent + name + ' | ' + string)
+    print(level*'..' + indent + name + ' | ' + string)
 
 
     if depth>0:
+        level += 1
         if type(data)==dict:
             keys = data.keys()
             maxkeylen = max([len(key) for key in keys])
             for key in keys:
                 thisindent = ' '*(maxkeylen-len(key))
-                printdata(data[key], name=key, depth=depth-1, indent=thisindent+indent+'  ')
+                printdata(data[key], name=key, depth=depth-1, indent=indent+thisindent, level=level)
         elif type(data) in [list, tuple]:
             for i in range(len(data)):
-                printdata(data[i], name='[%i]'%i, depth=depth-1, indent=indent+'  ')
+                printdata(data[i], name='[%i]'%i, depth=depth-1, indent=indent, level=level)
         print('\n')
     return None
 
