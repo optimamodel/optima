@@ -18,7 +18,9 @@ define([
     'app.ui.menu'
   ])
 
-    .controller('MainCtrl', function ($scope, $state, activeProject, UserManager, modalService, fileUpload, PreventNavigation) {
+    .controller('MainCtrl', function ($scope, $state, $rootScope, activeProject, UserManager, modalService, fileUpload, PreventNavigation) {
+
+      $rootScope.modelDict = {};
 
       $scope.initialize = function () {
         $scope.user = UserManager.data;
@@ -27,8 +29,12 @@ define([
 
         // Observes state change to prevent unwanted state loss due to navigation clicks.
         $scope.$on('$stateChangeStart', function (event, toState, toParams, fromState, fromParams) {
-          PreventNavigation.onStateChangeStart(event, toState, toParams, fromState, fromParams);
+          PreventNavigation.onStateChangeStart(event, toState, toParams, fromState, fromParams, $rootScope.modelDict);
         });
+        $scope.$on('$stateChangeSuccess', function (event, toState, toParams, fromState, fromParams) {
+          PreventNavigation.onStateChangeSuccess(event, toState, toParams, fromState, fromParams, $rootScope.modelDict);
+        });
+        
 
         var adminMenu = {
           title: 'Admin',
