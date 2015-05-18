@@ -166,6 +166,51 @@ def toc(start=0, label='', sigfigs=3):
     return None
     
 
+
+def printdata(data, name='Variable', depth=1, maxlen=50, indent=''):
+    """
+    Nicely print a complicated data structure, a la Matlab.
+    Arguments:
+      data: the data to display
+      name: the name of the variable (automatically read except for first one)
+      depth: how many levels of recursion to follow
+      maxlen: number of characters of data to display (if 0, don't show data)
+      indent: where to start the indent (used internally)
+    
+    """
+    datatype = type(data)
+    def printentry(data):
+        from numpy import shape, ndarray
+        if datatype==dict: string = ('dict with %i keys' % len(data.keys()))
+        elif datatype==list: string = ('list of length %i' % len(data))
+        elif datatype==tuple: string = ('tuple of length %i' % len(data))
+        elif datatype==ndarray: string = ('array of shape %s' % str(shape(data)))
+        else: string = datatype.__name__
+        if maxlen>0:
+            datastring = ' | '+str(data)
+            if len(datastring)>maxlen: datastring = datastring[:maxlen] + ' <etc> ' + datastring[-maxlen:]
+        else: datastring=''
+        return string+datastring
+    
+    string = printentry(data).replace('\n',' \ ') # Remove newlines
+    print(indent + name + ' | ' + string)
+
+
+    if depth>0:
+        if type(data)==dict:
+            keys = data.keys()
+            maxkeylen = max([len(key) for key in keys])
+            for key in keys:
+                thisindent = ' '*(maxkeylen-len(key))
+                printdata(data[key], name=key, depth=depth-1, indent=thisindent+indent+'  ')
+        elif type(data) in [list, tuple]:
+            for i in range(len(data)):
+                printdata(data[i], name='[%i]'%i, depth=depth-1, indent=indent+'  ')
+        print('\n')
+    return None
+
+
+
 def checkmem(origvariable, descend=0, order='n', plot=False, verbose=0):
     """
     Checks how much memory the variable in question uses by dumping it to file.

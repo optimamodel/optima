@@ -33,6 +33,10 @@ def runmodelalloc(D, optimparams, parindices, randseed, rerunfinancial=False, ve
     newD, newcov, newnonhivdalysaverted = getcurrentbudget(newD, thisalloc, randseed=randseed) # Get cost-outcome curves with uncertainty
     newM = makemodelpars(newD['P'], newD['opt'], withwhat='c', verbose=0) # Don't print out
     newD['M'] = partialupdateM(D['M'], newM, parindices)
+    for key in [u'popsize']:
+        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+
+        newD['M'][key] = D['M'][key]
     S = model(newD['G'], newD['M'], newD['F'][0], newD['opt'], verbose=verbose)
     R = makeresults(D, allsims=[S], rerunfinancial=rerunfinancial, verbose=0)
     R['debug'] = dict()
@@ -40,7 +44,8 @@ def runmodelalloc(D, optimparams, parindices, randseed, rerunfinancial=False, ve
     R['debug']['M'] = deepcopy(newD['M'])
     R['debug']['F'] = deepcopy(newD['F'])
     R['debug']['S'] = deepcopy(S)
-    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+    from viewresults import viewparameters
+    viewparameters(newD['M'])
     return R
 
 
@@ -174,7 +179,7 @@ def minimizemoney(D, objectives=None, constraints=None, maxiters=1000, timelimit
                 print('DONE: Current allocation meets targets!')
             
             # Now try infinite money
-            options['D']['P']['txelig']['c'][:] = 1e3 # Increase treatment eligibility to everyone
+#            options['D']['P']['txelig']['c'][:] = 1e3 # Increase treatment eligibility to everyone
             targetsmet, optparams = objectivecalc(array(optimparams)*1e9, options)
             if not(targetsmet):
                 print("DONE: Infinite allocation can't meet targets!")
