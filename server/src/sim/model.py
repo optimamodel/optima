@@ -442,8 +442,12 @@ def model(G, M, F, opt, initstate=None, verbose=2):
             else: # It's greater than one: it's a number
                 newtreat1tot = txtotal[t] - people[txind,:,t].sum() # New people on treatment is just the total requested minus total current
         else:
-            txtotal[t] = mtx1[t] + mtx2[t] # If it's not defined, define it
-            newtreat1tot = mtx1[t] - people[tx1,:,t].sum() # Calculate difference between current people on treatment and people needed
+            if mtx1[t]<=1:
+                currplhiv = people[plhivind,:,t].sum()
+                currtx = people[txind,:,t].sum()
+                newtreat1tot =  mtx1[t] * currplhiv - currtx
+            else:
+                newtreat1tot = mtx1[t] - people[tx1,:,t].sum() # Calculate difference between current people on treatment and people needed
         currentdiagnosed = people[dx,:,t] # Find how many people are diagnosed
         for cd4 in xrange(ncd4):
             if cd4>0: 
@@ -487,7 +491,7 @@ def model(G, M, F, opt, initstate=None, verbose=2):
             S['death'][:,t] += hivdeaths/dt # Save annual HIV deaths 
         
         ## Treatment failure
-        newtreat2tot = txtotal[t] - array(dT1).sum() - people[[tx1,tx2],:,t].sum() # Calculate difference between current people on treatment and people needed
+        newtreat2tot = mtx2[t] - people[tx2,:,t].sum() # Calculate difference between current people on treatment and people needed
         currentfailed = people[fail,:,t] # Find how many people are diagnosed
         for cd4 in xrange(ncd4):
             if cd4>0:
