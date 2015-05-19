@@ -49,7 +49,6 @@ def runmodelalloc(D, thisalloc, origalloc, parindices, randseed, rerunfinancial=
     R['debug']['M'] = deepcopy(newD['M'])
     R['debug']['F'] = deepcopy(newD['F'])
     R['debug']['S'] = deepcopy(S)
-    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     return R
 
 
