@@ -491,7 +491,7 @@ def model(G, M, F, opt, initstate=None, verbose=2):
             S['death'][:,t] += hivdeaths/dt # Save annual HIV deaths 
         
         ## Treatment failure
-        newtreat2tot = txtotal[t] - array(dT1).sum() - people[[tx1,tx2],:,t].sum() # Calculate difference between current people on treatment and people needed
+        newtreat2tot = mtx2[t] - people[tx2,:,t].sum() # Calculate difference between current people on treatment and people needed
         currentfailed = people[fail,:,t] # Find how many people are diagnosed
         for cd4 in xrange(ncd4):
             if cd4>0:
