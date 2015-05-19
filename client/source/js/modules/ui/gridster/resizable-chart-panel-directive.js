@@ -10,6 +10,9 @@ define(['./module', 'underscore'], function (module, _) {
    */
   return module
       .directive('resizableChartPanel', function () {
+        // configure the gridster items
+        var rows = 5, cols = 4, columns = 16, margin = 10;
+
         /**
          * We use the chart id to track by id in ng-repeat to avoid redrawing of all the charts when the chart array
          * is updated when resizing the charts.
@@ -18,11 +21,14 @@ define(['./module', 'underscore'], function (module, _) {
           return _.uniqueId("chart_");
         };
 
-        var resizeChart = function (chart, newWidth, newHeight) {
+        function getHeightOffset(chart){
+          return chart.type == 'stackedAreaChart' ? 210 : 100;
+        }
+
+        var resizeChart = function (chart, colWidth) {
           var widthOffset = 20;
           var heightOffset = chart.type == 'stackedAreaChart' ? 210 : 100;
-          chart.options.width = newWidth - widthOffset;
-          chart.options.height = newHeight - heightOffset;
+          chart.options.width = chart.gridsterItem.sizeX * colWidth - widthOffset;
           chart.id = generateChartId();
         };
 
@@ -31,20 +37,22 @@ define(['./module', 'underscore'], function (module, _) {
         /**
          * Resize all charts. The resizing is done after the gridster items are already rendered.
          */
-        var resizeAllCharts = function (charts) {
+        var resizeAllCharts = function (charts, colWidth) {
           // small optimization: avoid double resizing during the initial render
-          if (initialResize === true) {
-            initialResize = false;
+          if (!colWidth) {
             return;
           }
-          $('.chart-container').each(function (index, chartContainer) {
-            var newWidth = $(chartContainer).outerWidth();
-            var newHeight = $(chartContainer).outerHeight();
-            // happens when removing the chart
-            if (index < charts.length) {
-              var chart = charts[index];
-              resizeChart(chart, newWidth, newHeight);
-            }
+          angular.forEach(charts,function(chart, index) {
+            var row = Math.floor(index / cols) * rows, col = (index % cols) * cols;
+
+            chart.gridsterItem = {
+              sizeX: cols,
+              sizeY: Math.ceil((chart.options.height + getHeightOffset(chart))/colWidth),
+              row: row,
+              col: col,
+              index: index};
+            chart.id = generateChartId();
+            resizeChart(chart, colWidth);
           });
           // shallow copy instead of deep copy with angular.copy
           // trigger a change for the surrounding repeater
@@ -60,25 +68,23 @@ define(['./module', 'underscore'], function (module, _) {
             charts: "=resizableChartPanel"
           },
           link: function (scope, element) {
-            // configure the gridster items
-            var rows = 5, cols = 4;
+
+            angular.forEach(scope.charts,function(chart) {
+              chart.id=generateChartId();
+            });
             scope.$watch('charts', function (charts) {
-              _(charts).each(function (chart, index) {
-                var row = Math.floor(index / cols) * rows, col = (index % cols) * cols;
-                chart.gridsterItem = {sizeX: cols, sizeY: rows, row: row, col: col, index: index};
-                chart.id = generateChartId();
-              });
-              resizeAllCharts(charts);
+              resizeAllCharts(charts, scope.currentColumnWidth);
             });
 
             /** When the window or gridster element are resized */
-            scope.$on('gridster-resized', function () {
-              resizeAllCharts(scope.charts);
+            scope.$on('gridster-resized', function (event, widths) {
+              scope.currentColumnWidth = (widths[0]- margin )/columns;
+              resizeAllCharts(scope.charts, scope.currentColumnWidth);
             });
 
             scope.gridsterOpts = {
-              columns: 16,
-              margins: [10, 10],
+              columns: columns,
+              margins: [margin, margin],
               resizable: {
                 // item finished resizing
                 stop: function (event, $element, widget) {
@@ -90,7 +96,9 @@ define(['./module', 'underscore'], function (module, _) {
                   var newWidth = previewHolder.width();
                   var newHeight = previewHolder.height();
                   var chart = scope.charts[widget.index];
-                  resizeChart(chart, newWidth, newHeight);
+                  chart.options.width = newWidth - 2 * margin;
+                  chart.options.height = newHeight - getHeightOffset(chart);
+                  chart.id=generateChartId();
                   // shallow copy instead of deep copy with angular.copy
                   scope.charts[widget.index] = _.clone(chart);
                 }

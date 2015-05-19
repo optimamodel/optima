@@ -1,7 +1,7 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
-  module.controller('ModelCalibrationController', function ($scope, $http, $interval,
+  module.controller('ModelCalibrationController', function ($scope, $http, $interval, $timeout,
     Model, parameters, meta, info, CONFIG, typeSelector, cfpLoadingBar, calibration) {
 
     // In case there is no model data the controller only needs to show the
@@ -10,6 +10,13 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.missingModelData = true;
       return;
     }
+
+    $scope.changeManualCalibration = function() {
+      $scope.enableManualCalibration = !$scope.enableManualCalibration;
+      $timeout(function(){
+        $scope.dummyValue=new Date();
+      },50);
+    };
 
     var defaultChartOptions = {
       title: 'Title',

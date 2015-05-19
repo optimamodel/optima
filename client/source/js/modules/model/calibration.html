@@ -25,7 +25,7 @@
             </div>
             <div class="elastic_col __va-middle">
               <label class="checkbox-inline">
-                <input type="checkbox" ng-disabled="!canDoFitting" ng-model="enableManualCalibration">
+                <input type="checkbox" ng-disabled="!canDoFitting" ng-click="changeManualCalibration()">
                 Manual calibration
               </label>
             </div>
@@ -80,7 +80,7 @@
       </div>
     </div>
 
-    <div class="section __inline calibration-charts" ng-class="{'calibration-charts--full':enableManualCalibration===false}" ng-show="charts.length > 0" >
+    <div class="section __inline calibration-charts" ng-class="{'calibration-charts--full':enableManualCalibration===false}" ng-if="charts.length > 0" >
       <export-all-charts name="Model calibration" ng-if="charts"></export-all-charts>
       <export-all-data name="Model calibration" charts="charts" ng-if="charts"></export-all-data>
       <div class="grid" resizable-chart-panel="charts">
