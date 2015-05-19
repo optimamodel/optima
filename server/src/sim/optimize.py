@@ -49,6 +49,7 @@ def runmodelalloc(D, thisalloc, origalloc, parindices, randseed, rerunfinancial=
     R['debug']['M'] = deepcopy(newD['M'])
     R['debug']['F'] = deepcopy(newD['F'])
     R['debug']['S'] = deepcopy(S)
+    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     return R
 
 
@@ -634,7 +635,7 @@ def defaultobjectives(D, verbose=2):
 
     ob['money'] = dict()
     ob['money']['objectives'] = dict()
-    for objective in ['inci', 'incisex', 'inciinj', 'mtct', 'mtctbreast', 'mtctnonbreast', 'deaths', 'dalys']:
+    for objective in ['inci', 'incisex', 'inciinj', 'mtct', 'mtctbreast', 'mtctnonbreast', 'death', 'dalys']:
         ob['money']['objectives'][objective] = dict()
         # Checkbox: by default it's False meaning the objective is not applied
         ob['money']['objectives'][objective]['use'] = False
