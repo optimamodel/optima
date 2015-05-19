@@ -3,16 +3,6 @@ GRIDCOLORMAP
 
 Create a qualitative colormap by assigning points according to the minimum pairwise distance.
 
-Usage example:
-from matplotlib.pylab import *
-from gridcolormap import gridcolormap
-ncolors = 10
-piedata = rand(ncolors)
-colors = gridcolormap(ncolors, doplot=True)
-figure()
-pie(piedata, colors=colors)
-show()
-
 Version: 2015may13 by cliffk
 """
 

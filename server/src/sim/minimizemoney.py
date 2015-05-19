@@ -1,12 +1,12 @@
 """
 Minimize money code...to be combined with optimize.py eventually
     
-Version: 2015may14 by cliffk
+Version: 2015apr10 by cliffk
 """
 
 from printv import printv
 from copy import deepcopy
-from numpy import zeros, arange, array
+from numpy import ones, zeros, concatenate, arange, inf
 from utils import findinds
 from makeresults import makeresults
 from timevarying import timevarying
@@ -14,6 +14,7 @@ from getcurrentbudget import getcurrentbudget
 from model import model
 from makemodelpars import makemodelpars
 from quantile import quantile
+from ballsd import ballsd
 from optimize import saveoptimization, defaultobjectives, defaultconstraints, partialupdateM
 
 
@@ -29,14 +30,9 @@ def runmodelalloc(D, optimparams, parindices, randseed, rerunfinancial=False, ve
     optimparams[opttrue] = optimparams[opttrue] / optimparams[opttrue].sum() * (sum(optimparams) - optimparams[~opttrue].sum()) # Make sure it's normalized -- WARNING KLUDGY
 
     thisalloc = timevarying(optimparams, ntimepm=1, nprogs=len(optimparams), tvec=D['opt']['partvec'], totalspend=sum(optimparams)) 
-    
     newD, newcov, newnonhivdalysaverted = getcurrentbudget(newD, thisalloc, randseed=randseed) # Get cost-outcome curves with uncertainty
     newM = makemodelpars(newD['P'], newD['opt'], withwhat='c', verbose=0) # Don't print out
     newD['M'] = partialupdateM(D['M'], newM, parindices)
-    for key in [u'popsize']:
-        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-
-        newD['M'][key] = D['M'][key]
     S = model(newD['G'], newD['M'], newD['F'][0], newD['opt'], verbose=verbose)
     R = makeresults(D, allsims=[S], rerunfinancial=rerunfinancial, verbose=0)
     R['debug'] = dict()
@@ -44,8 +40,6 @@ def runmodelalloc(D, optimparams, parindices, randseed, rerunfinancial=False, ve
     R['debug']['M'] = deepcopy(newD['M'])
     R['debug']['F'] = deepcopy(newD['F'])
     R['debug']['S'] = deepcopy(S)
-    from viewresults import viewparameters
-    viewparameters(newD['M'])
     return R
 
 
@@ -56,23 +50,23 @@ def objectivecalc(optimparams, options):
 
     R = runmodelalloc(options['D'], optimparams, options['parindices'], options['randseed'], rerunfinancial=False) # Actually run
     
-    targetsmet = False
-    for key in options['targets']:
-        if options['targets'][key]['use']: # Don't bother unless it's actually used
-            orig = R[key]['tot'][0][options['outindices'][0]]
-            new = R[key]['tot'][0][options['outindices'][-1]]
-            if options['targets'][key]['by_active']:
-                if new < orig*options['targets'][key]['by']:
-                    targetsmet = True
-                print('For target %s, orig:%f new:%f; met=%s' % (key, orig, new, targetsmet))
-            else:
-                print('NOT IMPLEMENTED')
+    tmpplotdata = [] # TEMP
+    outcome = 0 # Preallocate objective value 
+    for key in options['outcomekeys']:
+        if options['weights'][key]>0: # Don't bother unless it's actually used
+            if key!='costann': thisoutcome = R[key]['tot'][0][options['outindices']].sum()
+            else: thisoutcome = R[key]['total']['total'][0][options['outindices']].sum() # Special case for costann
+            tmpplotdata.append(R[key]['tot'][0][options['outindices']]) # TEMP
+            outcome += thisoutcome * options['weights'][key] / float(options['normalizations'][key]) * options['D']['opt']['dt'] # Calculate objective
     
     options['tmpbestdata'].append(dict())
     options['tmpbestdata'][-1]['optimparams'] = optimparams
+#    options['tmpbestdata'][-1]['opt']ions = options
     options['tmpbestdata'][-1]['R'] = R
+#    print options['tmpbestdata'][-1]['optimparams']
+
     
-    return targetsmet, optimparams
+    return outcome
     
     
     
@@ -82,6 +76,7 @@ def minimizemoney(D, objectives=None, constraints=None, maxiters=1000, timelimit
     printv('Running money minimization...', 1, verbose)
     
     
+    origR = deepcopy(D['R'])
     origalloc = D['data']['origalloc']
     
     # Make sure objectives and constraints exist, and overwrite using saved ones if available
@@ -98,6 +93,7 @@ def minimizemoney(D, objectives=None, constraints=None, maxiters=1000, timelimit
 
     # Handle original allocation
     nprogs = len(origalloc)
+    totalspend = objectives['outcome']['fixed'] # For fixed budgets
     opttrue = zeros(len(D['data']['origalloc']))
     for i in xrange(len(D['data']['origalloc'])):
         if len(D['programs'][i]['effects']): opttrue[i] = 1.0
@@ -139,58 +135,98 @@ def minimizemoney(D, objectives=None, constraints=None, maxiters=1000, timelimit
     finaloutindex = findinds(D['opt']['partvec'], objectives['year']['until'])
     parindices = arange(initialindex,finalparindex)
     outindices = arange(initialindex,finaloutindex)
+    weights = dict()
     normalizations = dict()
+    outcomekeys = ['inci', 'death', 'daly', 'costann']
+    if sum([objectives['outcome'][key] for key in outcomekeys])>1: # Only normalize if multiple objectives, since otherwise doesn't make a lot of sense
+        for key in outcomekeys:
+            thisweight = objectives['outcome'][key+'weight'] * objectives['outcome'][key] / 100.
+            weights.update({key:thisweight}) # Get weight, and multiply by "True" or "False" and normalize from percentage
+            if key!='costann': thisnormalization = origR[key]['tot'][0][outindices].sum()
+            else: thisnormalization = origR[key]['total']['total'][0][outindices].sum() # Special case for costann
+            normalizations.update({key:thisnormalization})
+    else:
+        for key in outcomekeys:
+            weights.update({key:int(objectives['outcome'][key])}) # Weight of 1
+            normalizations.update({key:1}) # Normalizatoin of 1
         
+    # Initiate probabilities of parameters being selected
+    stepsizes = zeros(nprogs * ntimepm)
+    
+    # Easy access initial allocation indices and turn stepsizes into array
+    ai = range(nprogs)
+    gi = range(nprogs,   nprogs*2) if ntimepm >= 2 else []
+    si = range(nprogs*2, nprogs*3) if ntimepm >= 3 else []
+    ii = range(nprogs*3, nprogs*4) if ntimepm >= 4 else []
+    
+    # Turn stepsizes into array
+    stepsizes[ai] = stepsize
+    stepsizes[gi] = growsize if ntimepm > 1 else 0
+    stepsizes[si] = stepsize
+    stepsizes[ii] = growsize # Not sure that growsize is an appropriate starting point
+    
+    # Initial values of time-varying parameters
+    growthrate = zeros(nprogs)   if ntimepm >= 2 else []
+    saturation = origalloc       if ntimepm >= 3 else []
+    inflection = ones(nprogs)*.5 if ntimepm >= 4 else []
+    
     # Concatenate parameters to be optimised
-    optimparams = deepcopy(origalloc)
+    optimparams = concatenate((origalloc, growthrate, saturation, inflection)) # WARNING, not used for multi-year optimizations
         
     
     
     
     ###########################################################################
-    ## Money minimization optimization
+    ## Constant budget optimization
     ###########################################################################
-    if 1: # objectives['funding'] == 'constant' and objectives['timevarying'] == False:
+    if objectives['funding'] == 'constant' and objectives['timevarying'] == False:
         
         ## Define options structure
         options = dict()
         options['ntimepm'] = ntimepm # Number of time-varying parameters
         options['nprogs'] = nprogs # Number of programs
         options['D'] = deepcopy(D) # Main data structure
-        options['targets'] = objectives['money']['objectives'] # Names of outcomes, e.g. 'inci'
+        options['outcomekeys'] = outcomekeys # Names of outcomes, e.g. 'inci'
+        options['weights'] = weights # Weights for each parameter
         options['outindices'] = outindices # Indices for the outcome to be evaluated over
         options['parindices'] = parindices # Indices for the parameters to be updated on
         options['normalizations'] = normalizations # Whether to normalize a parameter
+        options['totalspend'] = totalspend # Total budget
         options['fundingchanges'] = fundingchanges # Constraints-based funding changes
+        
+        
+#        options.tmporigdata = []
         options['tmpbestdata'] = []
+#        options.tmperrcount = [0]
+#        options.tmperrhist = [None]
         
         
         ## Run with uncertainties
         allocarr = []
+        fvalarr = []
         for s in xrange(len(D['F'])): # xrange(len(D['F'])): # Loop over all available meta parameters
             print('========== Running uncertainty optimization %s of %s... ==========' % (s+1, len(D['F'])))
             options['D']['F'] = [deepcopy(D['F'][s])] # Loop over fitted parameters
             
             options['randseed'] = s
-            
-            # First, see if it meets targets already
-            targetsmet, optparams = objectivecalc(optimparams, options)
-            if targetsmet:
-                print('DONE: Current allocation meets targets!')
-            
-            # Now try infinite money
-#            options['D']['P']['txelig']['c'][:] = 1e3 # Increase treatment eligibility to everyone
-            targetsmet, optparams = objectivecalc(array(optimparams)*1e9, options)
-            if not(targetsmet):
-                print("DONE: Infinite allocation can't meet targets!")
-            
-        
-            optparams[opttrue] = optparams[opttrue] / optparams[opttrue].sum() * (sum(optparams) - optparams[~opttrue].sum()) # Make sure it's normalized -- WARNING KLUDGY
+            optparams, fval, exitflag, output = ballsd(objectivecalc, optimparams, options=options, xmin=fundingchanges['total']['dec'], xmax=fundingchanges['total']['inc'], absinitial=stepsizes, MaxIter=maxiters, timelimit=timelimit, fulloutput=True, stoppingfunc=stoppingfunc, verbose=verbose)
+            optparams[opttrue] = optparams[opttrue] / optparams[opttrue].sum() * (options['totalspend'] - optparams[~opttrue].sum()) # Make sure it's normalized -- WARNING KLUDGY
             allocarr.append(optparams)
+            fvalarr.append(output.fval)
+        
+        ## Find which optimization was best
+        bestallocind = -1
+        bestallocval = inf
+        for s in xrange(len(fvalarr)):
+            if fvalarr[s][-1]<bestallocval:
+                bestallocval = fvalarr[s][-1]
+                bestallocind = s
+        if bestallocind == -1: print('WARNING, best allocation value seems to be infinity!')
         
         # Update the model and store the results
         result = dict()
         result['kind'] = 'constant'
+        result['fval'] = fvalarr[bestallocind] # Append the best value noe
         result['allocarr'] = [] # List of allocations
         result['allocarr'].append(quantile([origalloc])) # Kludgy -- run fake quantile on duplicated origalloc just so it matches
         result['allocarr'].append(quantile(allocarr)) # Calculate allocation arrays 
