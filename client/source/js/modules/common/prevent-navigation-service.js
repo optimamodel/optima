@@ -12,6 +12,12 @@ define([
 
   return angular.module('app.common.prevent-navigation',[])
   .factory('PreventNavigation', [ '$state', '$rootScope', 'modalService', function ($state, $rootScope, modalService) {
+    
+    /**
+     * PreventNavigation class constructor
+     */
+    function PreventNavigation () {
+    };
 
     /**
      * Sets the model to reflect about.
