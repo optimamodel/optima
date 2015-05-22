@@ -10,6 +10,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     Model, parameters, meta, info, CONFIG, typeSelector, cfpLoadingBar, calibration, modalService, PreventNavigation) {
 
     $scope.initialize = function () {
+      PreventNavigation.setControllerModel($scope);
       $scope.projectInfo = info;
       $scope.canDoFitting = false;
       $scope.hasSpreadsheet = info.data_upload_time ? true : false;

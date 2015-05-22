@@ -12,12 +12,13 @@ define([
 
   return angular.module('app.common.prevent-navigation',[])
   .factory('PreventNavigation', [ '$state', '$rootScope', 'modalService', function ($state, $rootScope, modalService) {
-    
+
     /**
-     * PreventNavigation class constructor
+     * Sets the model to reflect about.
      */
-    function PreventNavigation () {
-      this.modelDict = {};
+    PreventNavigation.prototype.setControllerModel = function (controllerModel) {
+      console.log(controllerModel);
+      this.controllerModelSnapshot = _.extend( {}, controllerModel );
     };
 
     /**
@@ -43,19 +44,28 @@ define([
       event.preventDefault();
       var message = 'Are you sure you want to leave this page?';
       var head = 'You have changed values';
-      var obj = this;
+      var self = this;
       this.confirmPopup(message, head, function () {
         $state.go(toState.name);
-        $rootScope.modelDict = obj.modelDict;
+        // $rootScope.controllerModel = self.controllerModel;   whaaaat?
       });      
+    };
+
+
+    /**
+     * Answers true when the controllerModel has a state that differs from its snapshot.
+     */
+    PreventNavigation.prototype.hasSameState = function (controllerModel) {
+      return true;
+      // return angular.equal(this.controllerModelSnapshot, controllerModel);
     };
 
     /**
      * Reacts to the change of state attempt.
      */
-    PreventNavigation.prototype.onStateChangeStart = function (event, toState, toParams, fromState, fromParams, modelDict) {
+    PreventNavigation.prototype.onStateChangeStart = function (event, toState, toParams, fromState, fromParams, controllerModel) {
       
-      var canNavigate = angular.toJson(this.modelDict) == angular.toJson(modelDict);
+      var canNavigate = this.hasSameState(controllerModel);
 
       if( !canNavigate ){
         this.confirmNavigation(event, toState);
@@ -65,8 +75,10 @@ define([
     /**
      * Reacts to the successful change of state attempt.
      */
-    PreventNavigation.prototype.onStateChangeSuccess = function (event, toState, toParams, fromState, fromParams, modelDict) {
-      $rootScope.modelDict = this.modelDict = modelDict;
+    PreventNavigation.prototype.onStateChangeSuccess = function (event, toState, toParams, fromState, fromParams, controllerModel) {
+      console.log('PreventNavigation >> onStateChangeSuccess',controllerModel);
+      // $rootScope.modelDict = this.controllerModel = controllerModel;   whaaaat?
+      this.controllerModelSnapshot = controllerModel;
 
     };
 
