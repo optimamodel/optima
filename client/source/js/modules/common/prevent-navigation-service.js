@@ -11,7 +11,7 @@ define([
   'use strict';
 
   return angular.module('app.common.prevent-navigation',[])
-  .factory('PreventNavigation', [ '$state', '$rootScope', 'modalService', function ($state, $rootScope, modalService) {
+  .factory('PreventNavigation', [ '$state', 'modalService', function ($state, modalService) {
     
     /**
      * PreventNavigation class constructor
@@ -53,7 +53,6 @@ define([
       var self = this;
       this.confirmPopup(message, head, function () {
         $state.go(toState.name);
-        // $rootScope.controllerModel = self.controllerModel;   whaaaat?
       });      
     };
 
@@ -83,9 +82,7 @@ define([
      */
     PreventNavigation.prototype.onStateChangeSuccess = function (event, toState, toParams, fromState, fromParams, controllerModel) {
       console.log('PreventNavigation >> onStateChangeSuccess',controllerModel);
-      // $rootScope.modelDict = this.controllerModel = controllerModel;   whaaaat?
       this.controllerModelSnapshot = controllerModel;
-
     };
 
     return new PreventNavigation();
