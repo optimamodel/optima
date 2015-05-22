@@ -14,6 +14,8 @@ define(['./module', 'underscore'], function (module, _) {
     var effects, programs;
 
     var initialize = function () {
+      PreventNavigation.setControllerModel($scope);
+
       programs = programsResource.data;
 
       $scope.state = {
@@ -169,10 +171,6 @@ define(['./module', 'underscore'], function (module, _) {
 
       var model = getPlotModel();
       retrieveAndUpdateGraphs(model);
-      
-      // set PreventNavigation.costcoverage state to true
-      PreventNavigation.setCostcoverage(true);
-
     };
 
     $scope.uploadDefault = function () {
@@ -200,9 +198,6 @@ define(['./module', 'underscore'], function (module, _) {
       program.ccparams = model.ccparams;
 
       retrieveAndUpdateGraphs(model);
-      
-      // set PreventNavigation.costcoverage state to false
-      PreventNavigation.setCostcoverage(false);
     };
 
     /**
@@ -214,9 +209,6 @@ define(['./module', 'underscore'], function (module, _) {
       $scope.changeProgram(); // this will reset the program
       var model = getPlotModel();
       retrieveAndUpdateGraphs(model);
-
-      // set PreventNavigation.costcoverage state to false
-      PreventNavigation.setCostcoverage(false);
     };
 
     /**

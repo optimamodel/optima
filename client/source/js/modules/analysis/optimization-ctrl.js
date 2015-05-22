@@ -10,6 +10,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     optimizations, optimizationHelpers, info, PreventNavigation) {
 
     $scope.initialize = function () {
+
+      PreventNavigation.setControllerModel($scope);
+
       $scope.$on('$destroy', function () {
         // Make sure that the interval is terminated when this controller is destroyed
         stopTimer();
@@ -676,11 +679,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         .success(function (data, status, headers, config) {
           if (data.join) {
             $scope.initTimer(statusEnum.RUNNING);
-
-            // set PreventNavigation.optimization state to true
-            PreventNavigation.setOptimization(true);
           } else {
-            console.log("Cannot poll for optimization now");
+            console.log('Cannot poll for optimization now');
           }
         });
     };
@@ -755,8 +755,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           $scope.state.isDirty = false;
           $scope.initOptimizations(data.optimizations, $scope.state.activeOptimizationName);
       });
-      // set PreventNavigation.optimization state to false
-      PreventNavigation.setOptimization(false);
     };
 
 
@@ -766,8 +764,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           $scope.state.isDirty = false;
           $scope.initOptimizations(data.optimizations, $scope.state.activeOptimizationName);
       });
-      // set PreventNavigation.optimization state to false
-      PreventNavigation.setOptimization(false);
     };
 
     $scope.addOptimization = function () {
