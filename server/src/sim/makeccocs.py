@@ -399,27 +399,29 @@ def getcoverage(D=None, artindex=None, progname=None):
 
     # Figure out the total model-estimated size of the targeted population(s)
     for thispar in targetpars: # Loop through parameters
-        if len(D['P'][thispar]['p'])==D['G']['npops']: # For parameters whose effect is differentiated by population, we add up the targeted populations
-            targetpopmodel = D['S']['people'][:,popnumbers,0:npts].sum(axis=(0,1))
-        elif len(D['P'][thispar]['p'])==1: # For parameters whose effects are not differentiated by population, we make special cases depending on the parameter
-            if thispar == 'aidstest': # Target population = diagnosed PLHIV, AIDS stage
-                targetpopmodel = D['S']['people'][27:31,:,0:npts].sum(axis=(0,1))
-            elif thispar in ['numost','sharing']: # Target population = the sum of all populations that inject
-                injectindices = [i for i, x in enumerate(D['data']['meta']['pops']['injects']) if x == 1]
-                targetpopmodel = D['S']['people'][:,injectindices,0:npts].sum(axis = (0,1))
-            elif thispar == 'numpmtct': # Target population = HIV+ pregnant women
-                targetpopmodel = multiply(D['M']['birth'][:,0:npts], D['S']['people'][artindex,:,0:npts].sum(axis=0)).sum(axis=0)
-            elif thispar == 'breast': # Target population = HIV+ breastfeeding women
-                targetpopmodel = multiply(D['M']['birth'][:,0:npts], D['M']['breast'][0:npts], D['S']['people'][artindex,:,0:npts].sum(axis=0)).sum(axis=0)
-            elif thispar in ['numfirstline','numsecondline']: # Target population = diagnosed PLHIV
-                targetpopmodel = D['S']['people'][artindex,:,0:npts].sum(axis=(0,1))
-            elif thispar == 'numcircum': # Target population = men (??)
+        if D['P'].get(thispar):
+            if len(D['P'][thispar]['p'])==D['G']['npops']: # For parameters whose effect is differentiated by population, we add up the targeted populations
+                targetpopmodel = D['S']['people'][:,popnumbers,0:npts].sum(axis=(0,1))
+            elif len(D['P'][thispar]['p'])==1: # For parameters whose effects are not differentiated by population, we make special cases depending on the parameter
+                if thispar == 'aidstest': # Target population = diagnosed PLHIV, AIDS stage
+                    targetpopmodel = D['S']['people'][27:31,:,0:npts].sum(axis=(0,1))
+                elif thispar in ['numost','sharing']: # Target population = the sum of all populations that inject
+                    injectindices = [i for i, x in enumerate(D['data']['meta']['pops']['injects']) if x == 1]
+                    targetpopmodel = D['S']['people'][:,injectindices,0:npts].sum(axis = (0,1))
+                elif thispar == 'numpmtct': # Target population = HIV+ pregnant women
+                    targetpopmodel = multiply(D['M']['birth'][:,0:npts], D['S']['people'][artindex,:,0:npts].sum(axis=0)).sum(axis=0)
+                elif thispar == 'breast': # Target population = HIV+ breastfeeding women
+                    targetpopmodel = multiply(D['M']['birth'][:,0:npts], D['M']['breast'][0:npts], D['S']['people'][artindex,:,0:npts].sum(axis=0)).sum(axis=0)
+                elif thispar in ['numfirstline','numsecondline']: # Target population = diagnosed PLHIV
+                    targetpopmodel = D['S']['people'][artindex,:,0:npts].sum(axis=(0,1))
+                else:
+                    print('WARNING, Unrecognized parameter %s' % thispar)
+            else:
+                print('WARNING, Parameter %s of odd length %s' % (thispar, len(D['P'][thispar]['p'])))
+        else:
+            if thispar == 'numcircum': # Target population = men (??)
                 maleindices = [i for i, x in enumerate(D['data']['meta']['pops']['female']) if x == 0]
                 targetpopmodel = D['S']['people'][:,maleindices,0:npts].sum(axis = (0,1))
-            else:
-                print('WARNING, Unrecognized parameter %s' % thispar)
-        else:
-            print('WARNING, Parameter %s of odd length %s' % (thispar, len(D['P'][thispar]['p'])))
     if len(targetpars)==0:
         print('WARNING, no target parameters for program %s' % progname)
                 
