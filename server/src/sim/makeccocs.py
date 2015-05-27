@@ -15,7 +15,7 @@ from printv import printv
 from datetime import date
 
 ## Set coverage parameters...
-coverage_params = ['numost','numpmtct','numfirstline','numsecondline']
+coverage_params = ['numcircum','numost','numpmtct','numfirstline','numsecondline']
 default_nxpts = 100 # Set the number of points to make the lines
 default_verbose = 2
 ######################################################################
@@ -413,6 +413,9 @@ def getcoverage(D=None, artindex=None, progname=None):
                 targetpopmodel = multiply(D['M']['birth'][:,0:npts], D['M']['breast'][0:npts], D['S']['people'][artindex,:,0:npts].sum(axis=0)).sum(axis=0)
             elif thispar in ['numfirstline','numsecondline']: # Target population = diagnosed PLHIV
                 targetpopmodel = D['S']['people'][artindex,:,0:npts].sum(axis=(0,1))
+            elif thispar == 'numcircum': # Target population = men (??)
+                maleindices = [i for i, x in enumerate(D['data']['meta']['pops']['female']) if x == 0]
+                targetpopmodel = D['S']['people'][:,maleindices,0:npts].sum(axis = (0,1))
             else:
                 print('WARNING, Unrecognized parameter %s' % thispar)
         else:
