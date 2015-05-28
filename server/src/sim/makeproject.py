@@ -10,7 +10,7 @@ current_version = 5
 class Region:
     def __init__(self):
         self.D = dict() # Data structure for saving everything
-        self.name = 'Unnamed'
+        self.regionname = 'Unnamed'
         
     def makeproject(self, projectname='example', pops = default_pops, progs = default_progs, datastart=default_datastart, \
         dataend=default_dataend, nsims=default_nsims, verbose=2, savetofile = True, domakeworkbook=True):
@@ -95,11 +95,11 @@ class Region:
     def getdata(self):
         return self.D
         
-    def setname(self, name):
-        self.name = name
+    def setregionname(self, regionname):
+        self.regionname = regionname
         
-    def getname(self):
-        return self.name
+    def getregionname(self):
+        return self.regionname
         
         
         

@@ -4,59 +4,18 @@ RUN_OPTIMA
 Basic run.
 
 Version: 2015feb01 by cliffk
+Modified: 2015may15 by davidkedz
 """
 
 
-print('WELCOME TO RUN_OPTIMA\n')
+print('WELCOME TO OPTIMA')
 
-from time import time
-from makeproject import Region
+from project import Project
 
-## Set parameters
-verbose = 4
-show_wait = False
-nsims = 5
+projectname = raw_input('Please enter a name for your project: ')
 
-cmdinput = ''
-cmdinputlist = []
-
-regionlist = []
-
-while(cmdinput != 'q'):
-    cmdinputlist = cmdinput.split(None,1)
-    if len(cmdinputlist)>1:
-
-        # Is the first word 'load'? Then load a relevant json file named after the rest of the string.
-        if cmdinputlist[0] == 'load':
-            projectname = cmdinputlist[1]
-            starttime = time()
-            
-            print('\n\n\n1. Making project...')
-            regionlist.append(Region())
-            regionlist[-1].setname(projectname)
-            regionlist[-1].makeproject(projectname=projectname, pops=['']*6, progs = ['']*7, datastart=2000, dataend=2015, verbose=verbose)
-            regionlist[-1].getdata()['opt']['nsims'] = nsims # Reset options
-            
-            print('\n\n\n2. Updating data...')
-            from updatedata import updatedata
-            regionlist[-1].setdata(updatedata(regionlist[-1].getdata(), verbose=verbose))
-            
-            print('\n\n\n3. Viewing results...')
-            from viewresults import viewuncerresults
-            viewuncerresults(regionlist[-1].getdata()['plot']['E'])
-            
-            print('\n\n\nDONE; elapsed: %f s' % (time()-starttime))
-            
-    print('Regions loaded...')
-    if len(regionlist) == 0:
-        print('None')
-    else:
-        for region in regionlist:
-            print(region.getname())
-    
-    print("To load a region titled 'region_name', type: load <region_name>")
-    print('To quit, type: q')
-    cmdinput = raw_input('Enter command: ')
+currentproject = Project(projectname)
+currentproject.run()
 
 #print('WELCOME TO RUN_OPTIMA')
 #
