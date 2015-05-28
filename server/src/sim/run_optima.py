@@ -25,8 +25,6 @@ regionlist = []
 while(cmdinput != 'q'):
     cmdinputlist = cmdinput.split(None,1)
     if len(cmdinputlist)>1:
-        
-        print('Huh?')
 
         # Is the first word 'load'? Then load a relevant json file named after the rest of the string.
         if cmdinputlist[0] == 'load':

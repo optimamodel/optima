@@ -154,7 +154,7 @@ def filter_by_properties(param_refs, base_params, the_filter):
     """
     result = []
     filter_set = set(the_filter.iteritems())
-    for (param_ref, param) in zip(param_refs, base_params):
+    for (param_ref, param) in zip(param_refs, base_params):     
         if set(param.iteritems()) & filter_set:
             result.append(param_ref)
     return result
