@@ -10,7 +10,7 @@ Modified: 2015may15 by davidkedz
 
 print('WELCOME TO OPTIMA')
 
-from project import Project
+from projectclass import Project
 
 projectname = raw_input('Please enter a name for your project: ')
 
