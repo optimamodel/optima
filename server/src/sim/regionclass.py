@@ -21,6 +21,24 @@ class Region:
         self.D = dict() # Data structure for saving everything
         self.regionname = 'Unnamed'
         
+    def setdata(self, D):
+        self.D = D
+        
+    def getdata(self):
+        return self.D
+        
+    def setregionname(self, regionname):
+        self.regionname = regionname
+        
+    def getregionname(self):
+        return self.regionname
+        
+    def loaddatafrom(self, path):
+        from dataio import loaddata
+        self.setdata(loaddata(path))
+        
+    ### Legacy methods.
+        
     def makeproject(self, projectname='example', pops = default_pops, progs = default_progs, datastart=default_datastart, \
         dataend=default_dataend, nsims=default_nsims, verbose=2, savetofile = True, domakeworkbook=True):
         """
@@ -97,15 +115,3 @@ class Region:
         
         printv('  ...done making workbook %s.' % path, 2, verbose)
         return path
-    
-    def setdata(self, D):
-        self.D = D
-        
-    def getdata(self):
-        return self.D
-        
-    def setregionname(self, regionname):
-        self.regionname = regionname
-        
-    def getregionname(self):
-        return self.regionname

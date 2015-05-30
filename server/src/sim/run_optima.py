@@ -3,6 +3,10 @@ RUN_OPTIMA
 
 Basic run.
 
+Note: Loading will no longer work, without manually coding a directory path for .json files in projectclass.py.
+      The hardcoding should be modified eventually but, for now, go to runproject.py in the gpa folder of the analyses repo.
+      That will give a better idea of how to run Optima in OOP form.
+
 Version: 2015feb01 by cliffk
 Modified: 2015may15 by davidkedz
 """
