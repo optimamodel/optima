@@ -6,18 +6,20 @@ This function tests that the manual fitting is working.
 Version: 2015jan27 by cliffk
 """
 
+defaultpops = [{u'name': u'Female sex workers', u'short_name': u'FSW', u'sexworker': True, u'injects': False, u'sexmen': True, u'client': False, u'female': True, u'male': False, u'sexwomen': False}, {u'name': u'Clients of sex workers', u'short_name': u'Clients', u'sexworker': False, u'injects': False, u'sexmen': False, u'client': True, u'female': False, u'male': True, u'sexwomen': True}]
+defaultprogs = [{u'category': u'Prevention', u'short_name': u'Condoms', u'name': u'Condom promotion and distribution', u'parameters': [{u'value': {u'pops': [u''], u'signature': [u'condom', u'reg']}}, {u'value': {u'pops': [u''], u'signature': [u'condom', u'cas']}}]}]
 
 print('WELCOME TO OPTIMA')
 
 ## Set parameters
-projectname = 'example'
+projectname = 'example2'
 verbose = 10
 nsims = 1
 
 
 print('\n\n\n1. Making project...')
 from makeproject import makeproject
-D = makeproject(projectname=projectname, pops=['']*6, progs = ['']*7, datastart=2000, dataend=2015, verbose=verbose)
+D = makeproject(projectname=projectname, pops=defaultpops, progs = defaultprogs, datastart=2000, dataend=2015, verbose=verbose)
 D['opt']['nsims'] = nsims # Reset options
 
 print('\n\n\n2. Updating data...')
