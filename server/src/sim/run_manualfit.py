@@ -12,7 +12,7 @@ defaultprogs = [{u'category': u'Prevention', u'short_name': u'Condoms', u'name':
 print('WELCOME TO OPTIMA')
 
 ## Set parameters
-projectname = 'example2'
+projectname = 'example'
 verbose = 10
 nsims = 1
 

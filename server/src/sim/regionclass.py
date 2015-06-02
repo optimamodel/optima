@@ -5,26 +5,19 @@ Created on Fri May 29 23:16:12 2015
 @author: David Kedziora
 """
 
-# Default values are currently duplicated in legacy makeproject.py and regionclass.py.
-# Consider making them globals at some stage.
-default_pops = ['']*6
-default_progs = ['']*7
-default_datastart = 2000
-default_dataend = 2015
-default_nsims = 5
-
-# IMPORTANT: increment this if structure of D changes
-current_version = 5
+import preloaded
 
 class Region:
-    def __init__(self):
-        self.D = dict() # Data structure for saving everything
-        self.regionname = 'Unnamed'
+    def __init__(self, regionname):
+        self.D = dict()                 # Data structure for saving everything. Will hopefully be broken down eventually.
+        self.regionname = regionname
         
-    def setdata(self, D):
+        self.simboxlist = []            # Container for simbox objects (e.g. optimisations, grouped scenarios, etc.)
+        
+    def setD(self, D):
         self.D = D
         
-    def getdata(self):
+    def getD(self):
         return self.D
         
     def setregionname(self, regionname):
@@ -35,12 +28,12 @@ class Region:
         
     def loaddatafrom(self, path):
         from dataio import loaddata
-        self.setdata(loaddata(path))
+        self.setD(loaddata(path))
         
     ### Legacy methods.
         
-    def makeproject(self, projectname='example', pops = default_pops, progs = default_progs, datastart=default_datastart, \
-        dataend=default_dataend, nsims=default_nsims, verbose=2, savetofile = True, domakeworkbook=True):
+    def makeproject(self, projectname='example', pops = preloaded.default_pops, progs = preloaded.default_progs, datastart = preloaded.default_datastart, \
+        dataend = preloaded.default_dataend, nsims = preloaded.default_nsims, verbose=2, savetofile = True, domakeworkbook=True):
         """
         Initializes the empty project. Only the "Global" and "Fitted" parameters are added on this step.
         The rest of the parameters are calculated after the model is updated with the data from the workbook.
@@ -63,7 +56,7 @@ class Region:
         
         # Set up "G" -- general parameters structure
         self.D['G'] = dict()
-        self.D['G']['version'] = current_version # so that we know the version of new project with regard to data structure
+        self.D['G']['version'] = preloaded.current_version # so that we know the version of new project with regard to data structure
         self.D['G']['projectname'] = projectname  
         self.D['G']['projectfilename'] = projectpath(projectname+'.prj')
         self.D['G']['workbookname'] = self.D['G']['projectname'] + '.xlsx'
@@ -100,7 +93,7 @@ class Region:
         printv('  ...done making project.', 2, verbose)
     
     
-    def makeworkbook(self, name, pops, progs, datastart=default_datastart, dataend=default_dataend, verbose=2):
+    def makeworkbook(self, name, pops, progs, datastart=preloaded.default_datastart, dataend=preloaded.default_dataend, verbose=2):
         """ Generate the Optima workbook -- the hard work is done by makeworkbook.py """
         from printv import printv
         from dataio import templatepath

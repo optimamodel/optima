@@ -1,15 +1,10 @@
-default_pops = ['']*6
-default_progs = ['']*7
-default_datastart = 2000
-default_dataend = 2015
-default_nsims = 5
-
+import preloaded
 from regionclass import Region
         
 ### Legacy Functions
 
-def makeproject(projectname='example', pops = default_pops, progs = default_progs, datastart=default_datastart, \
-    dataend=default_dataend, nsims=default_nsims, verbose=2, savetofile = True, domakeworkbook=True):
+def makeproject(projectname='example', pops = preloaded.default_pops, progs = preloaded.default_progs, datastart = preloaded.default_datastart, \
+    dataend = preloaded.default_dataend, nsims = preloaded.default_nsims, verbose=2, savetofile = True, domakeworkbook=True):
     """
     Initializes the empty project. Only the "Global" and "Fitted" parameters are added on this step.
     The rest of the parameters are calculated after the model is updated with the data from the workbook.
@@ -17,10 +12,10 @@ def makeproject(projectname='example', pops = default_pops, progs = default_prog
     Version: 2015jan27 by cliffk
     """
     
-    temp = Region()
+    temp = Region(projectname)
     temp.makeproject(projectname, pops, progs, datastart, dataend, nsims, verbose, savetofile, domakeworkbook)
     
-    return temp.getdata()
+    return temp.getD()
 
 #def makeproject(projectname='example', pops = default_pops, progs = default_progs, datastart=default_datastart, \
 #    dataend=default_dataend, nsims=default_nsims, verbose=2, savetofile = True, domakeworkbook=True):
