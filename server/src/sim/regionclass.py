@@ -30,6 +30,16 @@ class Region:
         from dataio import loaddata
         self.setD(loaddata(path))
         
+    def printsimboxlist(self):
+        if len(self.simboxlist) == 0:
+            print('No simulations are currently associated with region %s.' % self.getregionname())
+        else:
+            print('Collections of simulations associated with this project...')
+            fid = 0
+            for simbox in self.simboxlist:
+                fid += 1
+                print('%i: %s' % (fid, self.simboxlist.getsimboxname()))
+        
     ### Legacy methods.
         
     def makeproject(self, projectname='example', pops = preloaded.default_pops, progs = preloaded.default_progs, datastart = preloaded.default_datastart, \

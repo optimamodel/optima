@@ -156,14 +156,7 @@ class Project:
         while(subinput != 'r'):
             
             print('\n--------------------\n')
-            if len(currentregion.simboxlist) == 0:
-                print('No simulations are currently associated with region %s.' % currentregion.getregionname())
-            else:
-                print('Collections of simulations associated with this project...')
-                fid = 0
-                for simbox in currentregion.simboxlist:
-                    fid += 1
-                    print('%i: %s' % (fid, currentregion.simboxlist.getsimboxname()))
+            currentregion.printsimboxlist()
             
 #            print("To make a new region titled 'region_name', type: make region_name")
 #            if len(self.regionlist) > 0:
