@@ -81,7 +81,7 @@ class Portfolio:
                         print('Creating region %s with data from: ' % regionname)
                         print(self.regd+'/'+templist[fchoice-1])
                         self.regionlist.append(Region(regionname))
-                        self.regionlist[-1].loaddatafrom(self.regd+'/'+templist[fchoice-1])
+                        self.regionlist[-1].loadDfrom(self.regd+'/'+templist[fchoice-1])
                 
                 # Is the first word 'examine'? Then enter a subloop that processes commands regarding the relevant region.
                 elif cmdinputlist[0] == 'examine' and len(self.regionlist) > 0:
@@ -119,14 +119,8 @@ class Portfolio:
                     # LINK TO GPA METHOD OR FUNCTION. MUST OPERATE ON A SUBSET LIST OF REGIONS.
                     
             print('\n--------------------\n')
-            if len(self.regionlist) == 0:
-                print('No regions are currently associated with portfolio %s.' % self.portfolioname)
-            else:
-                print('Regions associated with this portfolio...')
-                fid = 0
-                for region in self.regionlist:
-                    fid += 1
-                    print('%i: %s' % (fid, region.getregionname()))
+            self.printregionlist()
+            print('')
             if len(self.regionlist) > 1:
                 print('Geographical prioritisation analysis now available.')
                 print('To run this analysis over all regions, type: gpa all')       # To be extended when the time comes.
@@ -155,13 +149,43 @@ class Portfolio:
         # The command sub-loop begins here.
         while(subinput != 'r'):
             
-            print('\n--------------------\n')
-            currentregion.printsimboxlist()
+            subinputlist = subinput.split(None,1)
+            if len(subinputlist)>1:
             
-#            print("To make a new region titled 'region_name', type: make region_name")
+                # Is the first word 'make'? Then make a simbox named after the rest of the string.
+                if subinputlist[0] == 'check':
+                    if subinputlist[1] == 'data':
+                        currentregion.printdata();
+                    if subinputlist[1] == 'metadata':
+                        currentregion.printmetadata();
+                
+                # Is the first word 'make'? Then make a simbox named after the rest of the string.
+                elif subinputlist[0] == 'make':
+                    simboxname = subinputlist[1]                
+                    
+                    # SimBox is created.
+                    print('Creating simulation container %s.' % simboxname)
+                    currentregion.createsimbox(simboxname)
+            
+            print('\n--------------------\n')
+            currentregion.printsimboxlist(assubset=False)
+            
+            print("\nTo check 'x', where 'x' is 'data' or 'metadata' associated with this region, type: check x")
+            print("To make a new simulation container in this region titled 'simbox_name', type: make simbox_name")
 #            if len(self.regionlist) > 0:
 #                print("To examine a region numbered 'region_id', type: examine region_id")
             print('To return to portfolio level, type: r')
             subinput = raw_input('Enter command: ')
         print('\nNow examining portfolio %s as a whole.' % self.portfolioname)
         return
+        
+    def printregionlist(self):
+        if len(self.regionlist) == 0:
+            print('No regions are currently associated with portfolio %s.' % self.portfolioname)
+        else:
+            print('Regions associated with this portfolio...')
+            fid = 0
+            for region in self.regionlist:
+                fid += 1
+                print('%i: %s' % (fid, region.getregionname()))
+                region.printsimboxlist(assubset=True)

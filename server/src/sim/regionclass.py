@@ -6,19 +6,59 @@ Created on Fri May 29 23:16:12 2015
 """
 
 import preloaded
+from simboxclass import SimBox, Sim
 
 class Region:
     def __init__(self, regionname):
         self.D = dict()                 # Data structure for saving everything. Will hopefully be broken down eventually.
         self.regionname = regionname
         
+        self.data = None                # This used to be D.data.
+        self.metadata = None            # This used to be D.G.
+        
         self.simboxlist = []            # Container for simbox objects (e.g. optimisations, grouped scenarios, etc.)
         
-    def setD(self, D):
-        self.D = D
+    def createsimbox(self, simboxname):
+        self.simboxlist.append(SimBox(simboxname))
         
-    def getD(self):
-        return self.D
+        # Makes sure that a new simbox has at least one sim object, ready to run. It is passed regional data and metadata.
+        self.simboxlist[-1].createsim(simboxname+'-initial', self.data, self.metadata)
+        
+    def printdata(self):
+        print(self.data)
+    
+    def printmetadata(self):
+        print(self.metadata)
+        
+    def printsimboxlist(self, assubset = False):
+        # Prints with nice arrow formats if assubset is true. Otherwise numbers the list.        
+        if assubset:
+            if len(self.simboxlist) > 0:
+                for simbox in self.simboxlist:
+                    print(' --> %s' % simbox.getsimboxname())
+                    simbox.printsimlist(assubsubset=True)
+        else:
+            if len(self.simboxlist) == 0:
+                print('No simulations are currently associated with region %s.' % self.getregionname())
+            else:
+                print('Collections of simulations associated with this project...')
+                fid = 0
+                for simbox in self.simboxlist:
+                    fid += 1
+                    print('%i: %s' % (fid, simbox.getsimboxname()))
+                    simbox.printsimlist(assubsubset=False)
+                
+    def setdata(self, data):
+        self.data = data
+        
+    def getdata(self):
+        return self.data
+        
+    def setmetadata(self, metadata):
+        self.metadata = metadata
+        
+    def getmetadata(self):
+        return self.metadata
         
     def setregionname(self, regionname):
         self.regionname = regionname
@@ -26,21 +66,20 @@ class Region:
     def getregionname(self):
         return self.regionname
         
-    def loaddatafrom(self, path):
+    ### Refers to legacy D.
+        
+    def loadDfrom(self, path):
         from dataio import loaddata
-        self.setD(loaddata(path))
+        tempD = loaddata(path)
+        self.setD(tempD)
+        self.setdata(tempD['data'])
+        self.setmetadata(tempD['G'])
         
-    def printsimboxlist(self):
-        if len(self.simboxlist) == 0:
-            print('No simulations are currently associated with region %s.' % self.getregionname())
-        else:
-            print('Collections of simulations associated with this project...')
-            fid = 0
-            for simbox in self.simboxlist:
-                fid += 1
-                print('%i: %s' % (fid, self.simboxlist.getsimboxname()))
+    def setD(self, D):
+        self.D = D
         
-    ### Legacy methods.
+    def getD(self):
+        return self.D
         
     def makeproject(self, projectname='example', pops = preloaded.default_pops, progs = preloaded.default_progs, datastart = preloaded.default_datastart, \
         dataend = preloaded.default_dataend, nsims = preloaded.default_nsims, verbose=2, savetofile = True, domakeworkbook=True):
