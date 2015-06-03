@@ -17,24 +17,24 @@ from regionclass import Region
 
 
 
-class Project:
-    def __init__(self, projectname):
+class Portfolio:
+    def __init__(self, portfolioname):
         self.regionlist = []                # List to hold Region objects.
-        self.projectname = projectname
-        self.cwd = os.getcwd()              # Should get the current working directory where Project object is instantiated.
+        self.portfolioname = portfolioname
+        self.cwd = os.getcwd()              # Should get the current working directory where Portfolio object is instantiated.
         self.regd = self.cwd + '/regions'  # May be good to remove hardcoding at some stage...
         
     def run(self):
         """
-        All processes associated with the project are run here.
-        Consider this as a 'main' loop for the project.
+        All processes associated with the portfolio are run here.
+        Consider this as a 'main' loop for the portfolio.
            
         Version: 2015may28 by davidkedz
         """
         #from time import time
         
-        print('\nProject %s has been activated.' % self.projectname)
-        print('\nThe script that created this project is in...')
+        print('\nPortfolio %s has been activated.' % self.portfolioname)
+        print('\nThe script that created this portfolio is in...')
         print(self.cwd)
         print('Region data will be sourced from...')
         print(self.regd)
@@ -96,10 +96,10 @@ class Project:
                         print('Region ID numbers only range from 1 to %i, inclusive.' % len(self.regionlist))
                     
                     
-#                    print('\n\n\n1. Making project...')
+#                    print('\n\n\n1. Making portfolio...')
 #                    regionlist.append(Region())
-#                    regionlist[-1].setregionname(projectname)
-#                    regionlist[-1].makeproject(projectname=projectname, pops=['']*6, progs = ['']*7, datastart=2000, dataend=2015, verbose=verbose)
+#                    regionlist[-1].setregionname(portfolioname)
+#                    regionlist[-1].makeportfolio(portfolioname=portfolioname, pops=['']*6, progs = ['']*7, datastart=2000, dataend=2015, verbose=verbose)
 #                    regionlist[-1].getdata()['opt']['nsims'] = nsims # Reset options
 #                    
 #                    print('\n\n\n2. Updating data...')
@@ -120,9 +120,9 @@ class Project:
                     
             print('\n--------------------\n')
             if len(self.regionlist) == 0:
-                print('No regions are currently associated with project %s.' % self.projectname)
+                print('No regions are currently associated with portfolio %s.' % self.portfolioname)
             else:
-                print('Regions associated with this project...')
+                print('Regions associated with this portfolio...')
                 fid = 0
                 for region in self.regionlist:
                     fid += 1
@@ -140,7 +140,7 @@ class Project:
     def examineregion(self, currentregion):
         """
         All processes associated with a stored region are run here.
-        Consider this as a sub-loop for the project class.
+        Consider this as a sub-loop for the portfolio class.
         Note that currentregion has to be a region object.
            
         Version: 2015may28 by davidkedz
@@ -161,7 +161,7 @@ class Project:
 #            print("To make a new region titled 'region_name', type: make region_name")
 #            if len(self.regionlist) > 0:
 #                print("To examine a region numbered 'region_id', type: examine region_id")
-            print('To return to project level, type: r')
+            print('To return to portfolio level, type: r')
             subinput = raw_input('Enter command: ')
-        print('\nNow examining project %s as a whole.' % self.projectname)
+        print('\nNow examining portfolio %s as a whole.' % self.portfolioname)
         return
