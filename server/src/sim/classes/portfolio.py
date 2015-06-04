@@ -13,7 +13,7 @@ nsims = 5
 import os
 from numpy import arange
 
-from regionclass import Region
+from region import Region
 
 
 

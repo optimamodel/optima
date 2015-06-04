@@ -1,10 +1,10 @@
-import preloaded
+import defaults
 from regionclass import Region
         
 ### Legacy Functions
 
-def makeproject(projectname='example', pops = preloaded.default_pops, progs = preloaded.default_progs, datastart = preloaded.default_datastart, \
-    dataend = preloaded.default_dataend, nsims = preloaded.default_nsims, verbose=2, savetofile = True, domakeworkbook=True):
+def makeproject(projectname='example', pops = defaults.default_pops, progs = defaults.default_progs, datastart = defaults.default_datastart, \
+    dataend = defaults.default_dataend, nsims = defaults.default_nsims, verbose=2, savetofile = True, domakeworkbook=True):
     """
     Initializes the empty project. Only the "Global" and "Fitted" parameters are added on this step.
     The rest of the parameters are calculated after the model is updated with the data from the workbook.
@@ -80,18 +80,20 @@ def makeproject(projectname='example', pops = preloaded.default_pops, progs = pr
 #    return D
 #
 #
-#def makeworkbook(name, pops, progs, datastart=default_datastart, dataend=default_dataend, verbose=2):
-#    """ Generate the Optima workbook -- the hard work is done by makeworkbook.py """
-#    from printv import printv
-#    from dataio import templatepath
-#    from makeworkbook import OptimaWorkbook
-#
-#    printv("""Generating workbook with parameters:
-#             name = %s, pops = %s, progs = %s, datastart = %s, dataend = %s""" \
-#             % (name, pops, progs, datastart, dataend), 1, verbose)
-#    path = templatepath(name)
-#    book = OptimaWorkbook(name, pops, progs, datastart, dataend)
-#    book.create(path)
-#    
-#    printv('  ...done making workbook %s.' % path, 2, verbose)
-#    return path
+
+# This function is required by project.py in order to use the frontend
+def makeworkbook(name, pops, progs, datastart=default_datastart, dataend=default_dataend, verbose=2):
+   """ Generate the Optima workbook -- the hard work is done by makeworkbook.py """
+   from printv import printv
+   from dataio import templatepath
+   from makeworkbook import OptimaWorkbook
+
+   printv("""Generating workbook with parameters:
+            name = %s, pops = %s, progs = %s, datastart = %s, dataend = %s""" \
+            % (name, pops, progs, datastart, dataend), 1, verbose)
+   path = templatepath(name)
+   book = OptimaWorkbook(name, pops, progs, datastart, dataend)
+   book.create(path)
+   
+   printv('  ...done making workbook %s.' % path, 2, verbose)
+   return path
