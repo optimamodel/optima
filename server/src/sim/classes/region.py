@@ -6,7 +6,7 @@ Created on Fri May 29 23:16:12 2015
 """
 
 import defaults
-from simboxclass import SimBox, Sim
+from simbox import SimBox, Sim
 
 class Region:
     def __init__(self, regionname):

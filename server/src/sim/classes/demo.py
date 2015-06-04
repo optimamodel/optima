@@ -50,7 +50,7 @@ import sys;
 sys.path.append(findoptima())
 sys.path.append(findoptima() + '/classes')
 
-from projectclass import Project
+from portfolio import Portfolio
 
 projectname = raw_input('Please enter a name for your project: ')
 
