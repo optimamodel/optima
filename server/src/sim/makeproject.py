@@ -1,10 +1,10 @@
-import preloaded
+import defaults
 from regionclass import Region
         
 ### Legacy Functions
 
-def makeproject(projectname='example', pops = preloaded.default_pops, progs = preloaded.default_progs, datastart = preloaded.default_datastart, \
-    dataend = preloaded.default_dataend, nsims = preloaded.default_nsims, verbose=2, savetofile = True, domakeworkbook=True):
+def makeproject(projectname='example', pops = defaults.default_pops, progs = defaults.default_progs, datastart = defaults.default_datastart, \
+    dataend = defaults.default_dataend, nsims = defaults.default_nsims, verbose=2, savetofile = True, domakeworkbook=True):
     """
     Initializes the empty project. Only the "Global" and "Fitted" parameters are added on this step.
     The rest of the parameters are calculated after the model is updated with the data from the workbook.

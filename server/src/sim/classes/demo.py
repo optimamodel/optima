@@ -1,5 +1,7 @@
 # This demo exists so that it can be included in the pull request - rather than
-# having two pull requests, one for each repository
+# having two pull requests, one for each repository. This file should be deleted
+# after the pull request is merged - or else maybe stored here as a self-contained
+# demo in the same way that run_optima.py is in the main repository?
 
 """
 RUNPROJECT
