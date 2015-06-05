@@ -156,8 +156,12 @@ class Portfolio:
                 if subinputlist[0] == 'check':
                     if subinputlist[1] == 'data':
                         currentregion.printdata();
-                    if subinputlist[1] == 'metadata':
+                    elif subinputlist[1] == 'metadata':
                         currentregion.printmetadata();
+                    elif subinputlist[1] == 'options':
+                        currentregion.printoptions();
+                    elif subinputlist[1] == 'programs':
+                        currentregion.printprograms();
                 
                 # Is the first word 'make'? Then make a simbox named after the rest of the string.
                 elif subinputlist[0] == 'make':
@@ -166,14 +170,42 @@ class Portfolio:
                     # SimBox is created.
                     print('Creating simulation container %s.' % simboxname)
                     currentregion.createsimbox(simboxname)
+                
+                # Is the first word 'run'? Then process all simulation objects in a simbox of choice.
+                elif subinputlist[0] == 'run' and len(currentregion.simboxlist) > 0:
+                    simboxid = subinputlist[1]                
+                    
+                    try:
+                        int(simboxid)
+                    except ValueError:
+                        simboxid = 0
+                    if int(simboxid) in arange(1,len(currentregion.simboxlist)+1):
+                        currentregion.runsimbox(currentregion.simboxlist[int(simboxid)-1])
+                    else:
+                        print('Simulation container ID numbers only range from 1 to %i, inclusive.' % len(currentregion.simboxlist))
+                        
+                # Is the first word 'plot'? Then plot all the processed results in a simbox of choice.
+                elif subinputlist[0] == 'plot' and len(currentregion.simboxlist) > 0:
+                    simboxid = subinputlist[1]                
+                    
+                    try:
+                        int(simboxid)
+                    except ValueError:
+                        simboxid = 0
+                    if int(simboxid) in arange(1,len(currentregion.simboxlist)+1):
+                        currentregion.plotsimbox(currentregion.simboxlist[int(simboxid)-1])
+                    else:
+                        print('Simulation container ID numbers only range from 1 to %i, inclusive.' % len(currentregion.simboxlist))
             
             print('\n--------------------\n')
             currentregion.printsimboxlist(assubset=False)
             
-            print("\nTo check 'x', where 'x' is 'data' or 'metadata' associated with this region, type: check x")
+            print("\nTo check region specifics, where 'x' is as follows, type: check x")
+            print("Placeholder 'x' can be: 'data', 'metadata', 'options', 'programs'")
             print("To make a new simulation container in this region titled 'simbox_name', type: make simbox_name")
-#            if len(self.regionlist) > 0:
-#                print("To examine a region numbered 'region_id', type: examine region_id")
+            if len(currentregion.simboxlist) > 0:
+                print("To run all unprocessed simulations in 'simbox_id', type: run simbox_id")
+                print("To plot all processed simulations in 'simbox_id', type: plot simbox_id")
             print('To return to portfolio level, type: r')
             subinput = raw_input('Enter command: ')
         print('\nNow examining portfolio %s as a whole.' % self.portfolioname)

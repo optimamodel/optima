@@ -45,7 +45,7 @@ import sys;
 sys.path.append(findoptima())
 sys.path.append(findoptima() + '/classes')
 
-from portfolioclass import Portfolio
+from portfolio import Portfolio
 
 portfolioname = raw_input('Please enter a name for your portfolio: ')
 

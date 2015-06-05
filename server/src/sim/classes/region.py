@@ -6,23 +6,34 @@ Created on Fri May 29 23:16:12 2015
 """
 
 import defaults
-from simbox import SimBox, Sim
+from simbox import SimBox
 
 class Region:
     def __init__(self, regionname):
         self.D = dict()                 # Data structure for saving everything. Will hopefully be broken down eventually.
         self.regionname = regionname
         
-        self.data = None                # This used to be D.data.
-        self.metadata = None            # This used to be D.G.
+        self.data = None                # This used to be D['data'].
+        self.metadata = None            # This used to be D['G'].
+        
+        self.options = None             # This used to be D['opt']. Is it constant? Or should it be tagged 'default'?
+        self.programs = None            # This used to be D['programs']. Is it constant? Or should it be tagged 'default'?
         
         self.simboxlist = []            # Container for simbox objects (e.g. optimisations, grouped scenarios, etc.)
         
     def createsimbox(self, simboxname):
         self.simboxlist.append(SimBox(simboxname))
         
-        # Makes sure that a new simbox has at least one sim object, ready to run. It is passed regional data and metadata.
-        self.simboxlist[-1].createsim(simboxname+'-initial', self.data, self.metadata)
+        # Makes sure that a new simbox has at least one sim object, ready to run. It is passed regional data, metadata and options.
+        self.simboxlist[-1].createsim(simboxname+'-initial', self.data, self.metadata, self.options)
+        
+    # Runs through every simulation in simbox (if not processed) and processes them.
+    def runsimbox(self, simbox):
+        simbox.runallsims(self.data, self.metadata, self.options, self.programs, forcerun = False)
+        
+    # Runs through every simulation in simbox (if processed) and plots them.
+    def plotsimbox(self, simbox):
+        simbox.plotallsims()
         
     def printdata(self):
         print(self.data)
@@ -30,13 +41,19 @@ class Region:
     def printmetadata(self):
         print(self.metadata)
         
+    def printoptions(self):
+        print(self.options)
+        
+    def printprograms(self):
+        print(self.programs)
+        
     def printsimboxlist(self, assubset = False):
         # Prints with nice arrow formats if assubset is true. Otherwise numbers the list.        
         if assubset:
             if len(self.simboxlist) > 0:
                 for simbox in self.simboxlist:
                     print(' --> %s' % simbox.getsimboxname())
-                    simbox.printsimlist(assubsubset=True)
+                    simbox.printsimlist(assubsubset = True)
         else:
             if len(self.simboxlist) == 0:
                 print('No simulations are currently associated with region %s.' % self.getregionname())
@@ -46,7 +63,7 @@ class Region:
                 for simbox in self.simboxlist:
                     fid += 1
                     print('%i: %s' % (fid, simbox.getsimboxname()))
-                    simbox.printsimlist(assubsubset=False)
+                    simbox.printsimlist(assubsubset = False)
                 
     def setdata(self, data):
         self.data = data
@@ -60,6 +77,18 @@ class Region:
     def getmetadata(self):
         return self.metadata
         
+    def setoptions(self, options):
+        self.options = options
+        
+    def getoptions(self):
+        return self.options
+    
+    def setprograms(self, programs):
+        self.programs = programs
+        
+    def getprograms(self):
+        return self.programs
+        
     def setregionname(self, regionname):
         self.regionname = regionname
         
@@ -71,9 +100,11 @@ class Region:
     def loadDfrom(self, path):
         from dataio import loaddata
         tempD = loaddata(path)
-        self.setD(tempD)
+        self.setD(tempD)                # It would be great to get rid of setD one day. But only when data is fully decomposed.
         self.setdata(tempD['data'])
         self.setmetadata(tempD['G'])
+        self.setoptions(tempD['opt'])
+        self.setprograms(tempD['programs'])
         
     def setD(self, D):
         self.D = D
