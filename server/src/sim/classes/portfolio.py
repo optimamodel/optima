@@ -183,7 +183,20 @@ class Portfolio:
                         currentregion.runsimbox(currentregion.simboxlist[int(simboxid)-1])
                     else:
                         print('Simulation container ID numbers only range from 1 to %i, inclusive.' % len(currentregion.simboxlist))
-                        
+                
+                # Is the first word 'opt'? Then optimise all simulation objects in a simbox of choice.
+                elif subinputlist[0] == 'opt' and len(currentregion.simboxlist) > 0:
+                    simboxid = subinputlist[1]                
+                    
+                    try:
+                        int(simboxid)
+                    except ValueError:
+                        simboxid = 0
+                    if int(simboxid) in arange(1,len(currentregion.simboxlist)+1):
+                        currentregion.optsimbox(currentregion.simboxlist[int(simboxid)-1])
+                    else:
+                        print('Simulation container ID numbers only range from 1 to %i, inclusive.' % len(currentregion.simboxlist))                
+                
                 # Is the first word 'plot'? Then plot all the processed results in a simbox of choice.
                 elif subinputlist[0] == 'plot' and len(currentregion.simboxlist) > 0:
                     simboxid = subinputlist[1]                
@@ -205,6 +218,7 @@ class Portfolio:
             print("To make a new simulation container in this region titled 'simbox_name', type: make simbox_name")
             if len(currentregion.simboxlist) > 0:
                 print("To run all unprocessed simulations in 'simbox_id', type: run simbox_id")
+                print("To optimise all unprocessed simulations in 'simbox_id', type: opt simbox_id")    # Heavy work ahead.
                 print("To plot all processed simulations in 'simbox_id', type: plot simbox_id")
             print('To return to portfolio level, type: r')
             subinput = raw_input('Enter command: ')

@@ -30,6 +30,11 @@ class Region:
     # Runs through every simulation in simbox (if not processed) and processes them.
     def runsimbox(self, simbox):
         simbox.runallsims(self.data, self.metadata, self.options, self.programs, forcerun = False)
+    
+    # Runs through every simulation in simbox (if not processed) and optimises them.
+    # Currently uses default settings.
+    def optsimbox(self, simbox):
+        simbox.optallsims(self.data, self.metadata, self.options, self.programs, forcerun = True)
         
     # Runs through every simulation in simbox (if processed) and plots them.
     def plotsimbox(self, simbox):
