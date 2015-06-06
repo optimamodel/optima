@@ -61,7 +61,7 @@ class Portfolio:
                     else:
                         print('Which data file do you wish to load into %s?' % regionname)
                         fid = 0
-                        templist = os.listdir(self.regd);
+                        templist = [x for x in os.listdir(self.regd) if x.endswith('.json') ]
                         
                         # Displays files in regions folder along with an integer id for easy selection.
                         for filename in templist:
