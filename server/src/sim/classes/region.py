@@ -120,19 +120,13 @@ class Region:
     def getD(self):
         return self.D
         
-
-    def makeworkbook(self, name, pops, progs, datastart=defaults.datastart, dataend=defaults.dataend, verbose=2):
+    def makeworkbook(self,filename):
         """ Generate the Optima workbook -- the hard work is done by makeworkbook.py """
         from printv import printv
         from dataio import templatepath
         from makeworkbook import OptimaWorkbook
-    
-        printv("""Generating workbook with parameters:
-                 name = %s, pops = %s, progs = %s, datastart = %s, dataend = %s""" \
-                 % (name, pops, progs, datastart, dataend), 1, verbose)
-        path = templatepath(name)
-        book = OptimaWorkbook(name, pops, progs, datastart, dataend)
+
+        path = templatepath(filename)
+        book = OptimaWorkbook(filename, self.metadata['populations'], self.metadata['programs'], self.metadata['datastart'], self.metadata['dataend'])
         book.create(path)
         
-        printv('  ...done making workbook %s.' % path, 2, verbose)
-        return path
