@@ -13,6 +13,19 @@ class SimBox:
         
         self.simlist = []
         
+    @classmethod
+    def fromdict(SimBox,simboxdict):
+        s = SimBox(None)
+        self.name = simboxdict['name']
+        self.simlist = [Sim.fromdict(x) for x in simboxdict['simlist']]
+        return s
+
+    def todict(SimBox):
+        simboxdict = {}
+        simboxdict['name'] = self.name
+        simboxdict['simlist'] = [s.todict() for s in self.simlist]
+        return simboxdict
+       
     # Creates a simulation object but makes sure to initialise it immediately after, ready for processing.
     def createsim(self, simname, regiondata, regionmetadata, regionoptions):
         print('Preparing new simulation for container %s...')
