@@ -61,7 +61,7 @@ class Region:
         if assubset:
             if len(self.simboxlist) > 0:
                 for simbox in self.simboxlist:
-                    print(' --> %s' % simbox.getsimboxname())
+                    print(' --> %s' % simbox.getname())
                     simbox.printsimlist(assubsubset = True)
         else:
             if len(self.simboxlist) == 0:
@@ -71,7 +71,7 @@ class Region:
                 fid = 0
                 for simbox in self.simboxlist:
                     fid += 1
-                    print('%i: %s' % (fid, simbox.getsimboxname()))
+                    print('%i: %s' % (fid, simbox.getname()))
                     simbox.printsimlist(assubsubset = False)
                 
     def setdata(self, data):

@@ -8,8 +8,8 @@ Created on Tue Jun 02 01:03:34 2015
 from sim import Sim
 
 class SimBox:
-    def __init__(self, simboxname):
-        self.simboxname = simboxname
+    def __init__(self, name):
+        self.name = name
         
         self.simlist = []
         
@@ -42,13 +42,13 @@ class SimBox:
                     print('   --> %s%s' % (sim.getname(), (" (unprocessed)" if not sim.isprocessed() else " (processed)")))
         else:
             if len(self.simlist) == 0:
-                print('No simulations are currently stored in container %s.' % self.getsimboxname())
+                print('No simulations are currently stored in container %s.' % self.getname())
             else:
                 for sim in self.simlist:
                     print(' --> %s%s' % (sim.getname(), (" (unprocessed)" if not sim.isprocessed() else " (processed)")))
         
-    def setsimboxname(self, simboxname):
-        self.simboxname = simboxname
+    def setname(self, name):
+        self.name = name
         
-    def getsimboxname(self):
-        return self.simboxname
+    def getname(self):
+        return self.name
