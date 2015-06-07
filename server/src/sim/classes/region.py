@@ -101,11 +101,13 @@ class Region:
         regiondict['D'] = self.D 
         return regiondict
 
-    def createsimbox(self, simboxname, isopt = False):
+    def createsimbox(self, simboxname, isopt = False, createdefault = True):
         if isopt:
             self.simboxlist.append(SimBoxOpt(simboxname))
         else:
             self.simboxlist.append(SimBox(simboxname))
+        if createdefault:
+            self.simboxlist[-1].createsim(simboxname + '-default', self.data, self.metadata, self.options)
             
     def createsiminsimbox(self, simname, simbox):
         simbox.createsim(simname, self.data, self.metadata, self.options)

@@ -161,9 +161,9 @@ class Portfolio:
                     # SimBox (standard or optimisation) is created.
                     print('Creating %s simulation container %s.' % (("standard" if fchoice == 1 else "optimisation"), simboxname))
                     if fchoice == 1:
-                        currentregion.createsimbox(simboxname)
+                        currentregion.createsimbox(simboxname, createdefault = False)
                     if fchoice == 2:
-                        currentregion.createsimbox(simboxname, isopt = True)
+                        currentregion.createsimbox(simboxname, isopt = True, createdefault = False)
                         
                 # Is the first word 'sim'? Then initialise a new sim object in a simbox of choice.
                 elif subinputlist[0] == 'sim' and len(currentregion.simboxlist) > 0:
