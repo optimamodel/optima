@@ -109,11 +109,15 @@ class Region:
         from dataio import loaddata
         tempD = loaddata(path)
         self.setD(tempD)                # It would be great to get rid of setD one day. But only when data is fully decomposed.
-        self.setdata(tempD['data'])
-        self.setmetadata(tempD['G'])
         self.setoptions(tempD['opt'])
         self.setprograms(tempD['programs'])
-        
+        self.data = tempD['data']
+
+        # Adapter for new internal data structures
+        self.metadata = tempD['G']
+        self.metadata['populations'] = self.metadata['inputpopulations']
+        self.metadata['programs'] = self.metadata['inputprograms']
+
     def setD(self, D):
         self.D = D
         
@@ -124,9 +128,27 @@ class Region:
         """ Generate the Optima workbook -- the hard work is done by makeworkbook.py """
         from printv import printv
         from dataio import templatepath
-        from makeworkbook import OptimaWorkbook
+        import makeworkbook
 
         path = templatepath(filename)
-        book = OptimaWorkbook(filename, self.metadata['populations'], self.metadata['programs'], self.metadata['datastart'], self.metadata['dataend'])
+        book = makeworkbook.OptimaWorkbook(filename, self.metadata['populations'], self.metadata['programs'], self.metadata['datastart'], self.metadata['dataend'])
         book.create(path)
         
+    def loadworkbook(self,filename):
+        """ Load an XSLX file into region.data """
+        import loadworkbook
+
+        # Note
+        # 'data' is different depending on whether or not 'programs' is assigned below or not
+        # Also, when loading Haiti.xlsx, the variable 'programs' below is different to
+        # the contents of D['programs'] obtained by loading 'haiti.json'
+        data, programs = loadworkbook.loadworkbook(filename)
+
+        # For now, check that the uploaded programs are the same
+        # In future, check region UUID
+        if [x['name'] for x in programs] != [x['short_name'] for x in self.metadata['programs']]:
+            raise Exception('The programs in the XLSX file do not match the region')
+
+        # Save variables to region
+        self.metadata['programs'] = programs
+        self.data = data
