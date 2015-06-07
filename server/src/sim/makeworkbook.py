@@ -329,7 +329,7 @@ class TitledRange:
         return self.data_range.param_refs(self.sheet.get_name(), column_number)
 
 class OptimaWorkbook:
-    def __init__(self, name, pops, progs, data_start = 2000, data_end = 2015, verbose = 2):
+    def __init__(self, name, pops, progs, data_start = 2000, data_end = 2015, verbose = 0):
         self.sheet_names = OrderedDict([ \
             ('instr', 'Instructions'), \
             ('meta','Populations & programs'), \
