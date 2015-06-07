@@ -80,8 +80,7 @@ class Portfolio:
                         # Region is created.
                         print('Creating region %s with data from: ' % regionname)
                         print(self.regd+'/'+templist[fchoice-1])
-                        self.regionlist.append(Region(regionname,defaults.pops,defaults.progs,defaults.datastart,defaults.dataend))
-                        self.regionlist[-1].loadDfrom(self.regd+'/'+templist[fchoice-1])
+                        self.regionlist.append(Region.load(self.regd+'/'+templist[fchoice-1],regionname))
                 
                 # Is the first word 'examine'? Then enter a subloop that processes commands regarding the relevant region.
                 elif cmdinputlist[0] == 'examine' and len(self.regionlist) > 0:
