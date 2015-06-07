@@ -80,34 +80,31 @@ class Sim:
     # Very dangerous, as stability relies on the trust that no data passed in is being changed behind the scenes...
     def initialise(self):
         r = self.getregion()
-        regiondata = r.data
-        regionmetadata = r.metadata
-        regionoptions = r.options
 
         from makedatapars import makedatapars
         from numpy import arange
 
         # Explicit construction of tempD, so that one day we know how to recode makedatapars.
         tempD = dict()
-        tempD['data'] = regiondata
-        tempD['G'] = regionmetadata
-        tempD['G']['datayears'] = arange(regionmetadata['datastart'], regionmetadata['dataend']+1)
-        tempD['G']['npops'] = len(regionmetadata['populations'])
-        tempD['G']['nprogs'] = len(regionmetadata['programs'])
+        tempD['data'] = r.data
+        tempD['G'] = r.metadata
+        tempD['G']['datayears'] = arange(r.metadata['datastart'], r.metadata['dataend']+1)
+        tempD['G']['npops'] = len(r.metadata['populations'])
+        tempD['G']['nprogs'] = len(r.metadata['programs'])
 
         tempD = makedatapars(tempD)
         self.parsdata = tempD['P']
         
         from makemodelpars import makemodelpars
         
-        self.parsmodel = makemodelpars(self.parsdata, regionoptions)
+        self.parsmodel = makemodelpars(self.parsdata, r.options)
         
         from updatedata import makefittedpars
         
         # Explicit construction of tempD, so that one day we know how to recode makefittedpars.
         tempD = dict()
-        tempD['opt'] = regionoptions
-        tempD['G'] = regionmetadata
+        tempD['opt'] = r.options
+        tempD['G'] = r.metadata
         tempD['M'] = self.parsmodel
         
         tempD = makefittedpars(tempD)
@@ -116,15 +113,12 @@ class Sim:
     # Runs model given all the initialised parameters.
     def run(self):
         r = self.getregion()
-        regiondata = r.data
-        regionmetadata = r.metadata
-        regionoptions = r.options
 
         from model import model
 
         allsims = []
         for s in range(len(self.parsfitted)):   # Parallelise eventually.
-            S = model(regionmetadata, self.parsmodel, self.parsfitted[s], regionoptions)
+            S = model(r.metadata, self.parsmodel, self.parsfitted[s], r.options)
             allsims.append(S)
         self.debug['structure'] = allsims[0]     # Save one full sim structure for troubleshooting and... funsies?
     
@@ -133,24 +127,24 @@ class Sim:
         
         # Explicit construction of tempD, so that one day we know how to recode makeresults.
         tempD = dict()
-        tempD['G'] = regionmetadata
+        tempD['G'] = r.metadata
         tempD['P'] = self.parsdata
         tempD['S'] = self.debug['structure']
         
         # Input that only the financialanalysis subfunction in makeresults wants.
         # It would be a good idea to somehow separate the two...
-        tempD['data'] = regiondata
-        tempD['opt'] = regionoptions
-        tempD['programs'] = regionmetadata['programs']
+        tempD['data'] = r.data
+        tempD['opt'] = r.options
+        tempD['programs'] = r.metadata['programs']
         
-        self.debug['results'] = makeresults(tempD, allsims, regionoptions['quantiles'])
+        self.debug['results'] = makeresults(tempD, allsims, r.options['quantiles'])
     
         # Gather plot data.
         from gatherplotdata import gatheruncerdata
         
         tempD = dict()
-        tempD['data'] = regiondata
-        tempD['G'] = regionmetadata
+        tempD['data'] = r.data
+        tempD['G'] = r.metadata
         
         self.plotdata = gatheruncerdata(tempD, self.debug['results'])
         
@@ -172,17 +166,14 @@ class SimBudget(Sim):
     # Currently just optimises simulation according to defaults.
     def optimise(self):
         r = self.getregion()
-        regiondata = r.data
-        regionmetadata = r.metadata
-        regionoptions = r.options
 
         from optimize import optimize
         
         tempD = dict()
-        tempD['data'] = regiondata
-        tempD['opt'] = regionoptions
-        tempD['programs'] = regionmetadata['programs']
-        tempD['G'] = regionmetadata
+        tempD['data'] = r.data
+        tempD['opt'] = r.options
+        tempD['programs'] = r.metadata['programs']
+        tempD['G'] = r.metadata
         tempD['P'] = self.parsdata
         tempD['M'] = self.parsmodel
         tempD['F'] = self.parsfitted
