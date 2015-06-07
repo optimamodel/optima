@@ -49,7 +49,7 @@ class Region:
         import dataio
         regiondict = dataio.loaddata(filename)
         if 'uuid' in regiondict.keys(): # This is a new-type JSON file
-            r = r.fromdict(regiondict)
+            r.fromdict(regiondict)
         else:
             r.fromdict_legacy(regiondict)
         return r
@@ -91,14 +91,14 @@ class Region:
         regiondict = {}
         regiondict['version'] = 1 # Could do something later by checking the version number
 
-        #regiondict['metadata'] = self.metadata 
-        #regiondict['data'] = self.data 
-        #regiondict['simboxlist'] = [Simbox.todict(x) for x in self.simboxlist]
-        #regiondict['options'] = self.options # Populate default options here = self.options 
-        #regiondict['ccocs'] = self.ccocs 
-        #regiondict['calibrations'] = self.calibrations 
+        regiondict['metadata'] = self.metadata 
+        regiondict['data'] = self.data 
+        regiondict['simboxlist'] = [Simbox.todict(x) for x in self.simboxlist]
+        regiondict['options'] = self.options # Populate default options here = self.options 
+        regiondict['ccocs'] = self.ccocs 
+        regiondict['calibrations'] = self.calibrations 
         regiondict['uuid'] = self.uuid 
-        #regiondict['D'] = self.D 
+        regiondict['D'] = self.D 
         return regiondict
 
     def createsimbox(self, simboxname):
