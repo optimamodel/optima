@@ -6,7 +6,7 @@ Created on Fri May 29 23:16:12 2015
 """
 
 import defaults
-from simbox import SimBox
+from simbox import SimBox, SimBoxOpt
 import setoptions
 import uuid
 
@@ -101,12 +101,17 @@ class Region:
         regiondict['D'] = self.D 
         return regiondict
 
-    def createsimbox(self, simboxname):
-        self.simboxlist.append(SimBox(simboxname))
-        
-        # Makes sure that a new simbox has at least one sim object, ready to run. It is passed regional data, metadata and options.
-        self.simboxlist[-1].createsim(simboxname+'-initial', self.data, self.metadata, self.options)
-        
+    def createsimbox(self, simboxname, isopt = False):
+        if isopt:
+            self.simboxlist.append(SimBoxOpt(simboxname))
+        else:
+            self.simboxlist.append(SimBox(simboxname))
+            
+    def createsiminsimbox(self, simname, simbox):
+        simbox.createsim(simname, self.data, self.metadata, self.options)
+    
+# Combine into one SimBox dependent run method?
+#------------------------------------
     # Runs through every simulation in simbox (if not processed) and processes them.
     def runsimbox(self, simbox):
         simbox.runallsims(self.data, self.metadata, self.options, forcerun = False)
@@ -114,7 +119,11 @@ class Region:
     # Runs through every simulation in simbox (if not processed) and optimises them.
     # Currently uses default settings.
     def optsimbox(self, simbox):
-        simbox.optallsims(self.data, self.metadata, self.options, self.metadata['programs'], forcerun = True)
+        if isinstance(simbox, SimBoxOpt):
+            simbox.optallsims(self.data, self.metadata, self.options, forcerun = True)
+        else:
+            print('Cannot optimise a standard container.')
+#------------------------------------
         
     # Runs through every simulation in simbox (if processed) and plots them.
     def plotsimbox(self, simbox):
@@ -137,7 +146,7 @@ class Region:
         if assubset:
             if len(self.simboxlist) > 0:
                 for simbox in self.simboxlist:
-                    print(' --> %s' % simbox.getname())
+                    print(' --> %s%s' % (simbox.getname(), (" (optimisation container)" if isinstance(simbox, SimBoxOpt) else " (standard container)")))
                     simbox.printsimlist(assubsubset = True)
         else:
             if len(self.simboxlist) == 0:
@@ -147,7 +156,7 @@ class Region:
                 fid = 0
                 for simbox in self.simboxlist:
                     fid += 1
-                    print('%i: %s' % (fid, simbox.getname()))
+                    print('%i: %s%s' % (fid, simbox.getname(), (" (optimisation container)" if isinstance(simbox, SimBoxOpt) else " (standard container)")))
                     simbox.printsimlist(assubsubset = False)
                 
     def setdata(self, data):
