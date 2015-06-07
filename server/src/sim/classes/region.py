@@ -21,7 +21,11 @@ class Region:
         self.metadata['name'] = name
 
         self.data = None
+
         self.options = setoptions.setoptions() # Populate default options here
+        
+        self.ccocs = None
+        self.calibrations = None
         
         self.simboxlist = []            # Container for simbox objects (e.g. optimisations, grouped scenarios, etc.)
         
