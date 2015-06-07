@@ -95,23 +95,6 @@ class Portfolio:
                     else:
                         print('Region ID numbers only range from 1 to %i, inclusive.' % len(self.regionlist))
                     
-                    
-#                    print('\n\n\n1. Making portfolio...')
-#                    regionlist.append(Region())
-#                    regionlist[-1].setregionname(portfolioname)
-#                    regionlist[-1].makeportfolio(portfolioname=portfolioname, pops=['']*6, progs = ['']*7, datastart=2000, dataend=2015, verbose=verbose)
-#                    regionlist[-1].getdata()['opt']['nsims'] = nsims # Reset options
-#                    
-#                    print('\n\n\n2. Updating data...')
-#                    from updatedata import updatedata
-#                    regionlist[-1].setdata(updatedata(regionlist[-1].getdata(), verbose=verbose))
-#                    
-#                    print('\n\n\n3. Viewing results...')
-#                    from viewresults import viewuncerresults
-#                    viewuncerresults(regionlist[-1].getdata()['plot']['E'])
-#                    
-#                    print('\n\n\nDONE; elapsed: %f s' % (time()-starttime))
-                    
                 # Is the first word 'gpa'? Then, ideally, run geo-prioritisation analysis on subset derived from rest of the string.
                 elif cmdinputlist[0] == 'gpa' and len(self.regionlist) > 1:
                     print('Gotcha! There is no geographical prioritisation analysis! This is just a stub.')
@@ -167,9 +150,35 @@ class Portfolio:
                 elif subinputlist[0] == 'make':
                     simboxname = subinputlist[1]                
                     
-                    # SimBox is created.
-                    print('Creating simulation container %s.' % simboxname)
-                    currentregion.createsimbox(simboxname)
+                    # Check whether user wants this to be a standard or optimisation container.
+                    fchoice = 0
+                    while fchoice not in arange(1,3):
+                        try:
+                            fchoice = int(raw_input('Enter 1 or 2 to create a standard or optimisation container, respectively: '))
+                        except ValueError:
+                            fchoice = 0
+                            continue                    
+                    
+                    # SimBox (standard or optimisation) is created.
+                    print('Creating %s simulation container %s.' % (("standard" if fchoice == 1 else "optimisation"), simboxname))
+                    if fchoice == 1:
+                        currentregion.createsimbox(simboxname)
+                    if fchoice == 2:
+                        currentregion.createsimbox(simboxname, isopt = True)
+                        
+                # Is the first word 'sim'? Then initialise a new sim object in a simbox of choice.
+                elif subinputlist[0] == 'sim' and len(currentregion.simboxlist) > 0:
+                    simname = subinputlist[1]                    
+                    
+                    fchoice = 0
+                    while fchoice not in arange(1,len(currentregion.simboxlist)+1):
+                        try:
+                            fchoice = int(raw_input('Enter the ID number of a simulation container (between 1 and %i, inclusive): ' % len(currentregion.simboxlist)))
+                        except ValueError:
+                            fchoice = 0
+                            continue
+                    
+                    currentregion.createsiminsimbox(simname, currentregion.simboxlist[fchoice-1])
                 
                 # Is the first word 'run'? Then process all simulation objects in a simbox of choice.
                 elif subinputlist[0] == 'run' and len(currentregion.simboxlist) > 0:
@@ -212,11 +221,14 @@ class Portfolio:
             
             print('\n--------------------\n')
             currentregion.printsimboxlist(assubset=False)
+            if len(currentregion.simboxlist) == 0:
+                print("Processing cannot begin without the creation of a container.")
             
             print("\nTo check region specifics, where 'x' is as follows, type: check x")
             print("Placeholder 'x' can be: 'data', 'metadata', 'options', 'programs'")
             print("To make a new simulation container in this region titled 'simbox_name', type: make simbox_name")
             if len(currentregion.simboxlist) > 0:
+                print("To initialise a new simulation titled 'sim_name', type: sim sim_name")
                 print("To run all unprocessed simulations in 'simbox_id', type: run simbox_id")
                 print("To optimise all unprocessed simulations in 'simbox_id', type: opt simbox_id")    # Heavy work ahead.
                 print("To plot all processed simulations in 'simbox_id', type: plot simbox_id")

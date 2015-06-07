@@ -24,11 +24,6 @@ class SimBox:
             if forcerun or not sim.isprocessed():
                 sim.run(regiondata, regionmetadata, regionoptions)
                 
-    def optallsims(self, regiondata, regionmetadata, regionoptions, forcerun = False):
-        for sim in self.simlist:
-            if forcerun or not sim.isprocessed():
-                sim.optimise(regiondata, regionmetadata, regionoptions)
-                
     def plotallsims(self):
         for sim in self.simlist:
             if sim.isprocessed():
@@ -61,7 +56,7 @@ class SimBox:
                     print('   --> %s%s' % (sim.getname(), (" (unprocessed)" if not sim.isprocessed() else " (processed)")))
         else:
             if len(self.simlist) == 0:
-                print('No simulations are currently stored in container %s.' % self.getname())
+                print(' --> No simulations are currently stored in container %s.' % self.getname())
             else:
                 for sim in self.simlist:
                     print(' --> %s%s' % (sim.getname(), (" (unprocessed)" if not sim.isprocessed() else " (processed)")))
@@ -71,3 +66,15 @@ class SimBox:
         
     def getname(self):
         return self.name
+        
+        
+        
+# A container just for Sims with budgets.
+class SimBoxOpt(SimBox):
+    def __init__(self, name):
+        SimBox.__init__(self, name)
+                
+    def optallsims(self, regiondata, regionmetadata, regionoptions, forcerun = False):
+        for sim in self.simlist:
+            if forcerun or not sim.isprocessed():
+                sim.optimise(regiondata, regionmetadata, regionoptions)
