@@ -134,7 +134,7 @@ class Portfolio:
             subinputlist = subinput.split(None,1)
             if len(subinputlist)>1:
             
-                # Is the first word 'make'? Then make a simbox named after the rest of the string.
+                # Is the first word 'check'? Then display region-specific data.
                 if subinputlist[0] == 'check':
                     if subinputlist[1] == 'data':
                         currentregion.printdata();
@@ -205,8 +205,8 @@ class Portfolio:
                     else:
                         print('Simulation container ID numbers only range from 1 to %i, inclusive.' % len(currentregion.simboxlist))                
                 
-                # Is the first word 'plot'? Then plot all the processed results in a simbox of choice.
-                elif subinputlist[0] == 'plot' and len(currentregion.simboxlist) > 0:
+                # Is the first word 'plot' or 'multiplot'? Then plot all the processed results in a simbox of choice.
+                elif (subinputlist[0] == 'plot' or 'multiplot') and len(currentregion.simboxlist) > 0:
                     simboxid = subinputlist[1]                
                     
                     try:
@@ -214,7 +214,7 @@ class Portfolio:
                     except ValueError:
                         simboxid = 0
                     if int(simboxid) in arange(1,len(currentregion.simboxlist)+1):
-                        currentregion.plotsimbox(currentregion.simboxlist[int(simboxid)-1])
+                        currentregion.plotsimbox(currentregion.simboxlist[int(simboxid)-1], multiplot = (True if subinputlist[0] == 'multiplot' else False))
                     else:
                         print('Simulation container ID numbers only range from 1 to %i, inclusive.' % len(currentregion.simboxlist))
             
@@ -230,7 +230,8 @@ class Portfolio:
                 print("To initialise a new simulation titled 'sim_name', type: sim sim_name")
                 print("To run all unprocessed simulations in 'simbox_id', type: run simbox_id")
                 print("To optimise all unprocessed simulations in 'simbox_id', type: opt simbox_id")    # Heavy work ahead.
-                print("To plot all processed simulations in 'simbox_id', type: plot simbox_id")
+                print("To plot each processed simulation in 'simbox_id', type: plot simbox_id")
+                print("To plot all processed simulations in 'simbox_id', type: multiplot simbox_id")
             print('To return to portfolio level, type: r')
             subinput = raw_input('Enter command: ')
         print('\nNow examining portfolio %s as a whole.' % self.portfolioname)

@@ -5,7 +5,7 @@ Created on Tue Jun 02 01:03:34 2015
 @author: David Kedziora
 """
 
-from sim import Sim
+from sim import Sim, SimBudget
 
 class SimBox:
     def __init__(self, name):
@@ -28,7 +28,7 @@ class SimBox:
        
     # Creates a simulation object but makes sure to initialise it immediately after, ready for processing.
     def createsim(self, simname, regiondata, regionmetadata, regionoptions):
-        print('Preparing new simulation for container %s...')
+        print('Preparing new basic simulation for standard container %s...' % self.name)
         self.simlist.append(Sim(simname))
         self.simlist[-1].initialise(regiondata, regionmetadata, regionoptions)
     
@@ -42,7 +42,8 @@ class SimBox:
             if sim.isprocessed():
                 sim.plotresults()
 
-    def viewmultiresults(self,regionmetadata):
+    # Needs to check processing like plotallsims.
+    def viewmultiresults(self, regionmetadata):
         # Superimpose plots, like in the scenarios page in the frontend
 
         tempD = {}
@@ -86,6 +87,15 @@ class SimBox:
 class SimBoxOpt(SimBox):
     def __init__(self, name):
         SimBox.__init__(self, name)
+        
+    # Overwrites the standard Sim create method. This is where budget data would be attached.
+    def createsim(self, simname, regiondata, regionmetadata, regionoptions):
+        if len(self.simlist) > 0:
+            print('Optimisation containers can only contain one initial simulation!')
+        else:
+            print('Preparing new budget simulation for optimisation container %s...' % self.name)
+            self.simlist.append(SimBudget(simname+'-initial'))
+            self.simlist[-1].initialise(regiondata, regionmetadata, regionoptions)
                 
     def optallsims(self, regiondata, regionmetadata, regionoptions, forcerun = False):
         for sim in self.simlist:

@@ -125,9 +125,12 @@ class Region:
             print('Cannot optimise a standard container.')
 #------------------------------------
         
-    # Runs through every simulation in simbox (if processed) and plots them.
-    def plotsimbox(self, simbox):
-        simbox.plotallsims()
+    # Runs through every simulation in simbox (if processed) and plots them, either multiplot or individual style.
+    def plotsimbox(self, simbox, multiplot = False):
+        if multiplot:
+            simbox.viewmultiresults(self.metadata)
+        else:
+            simbox.plotallsims()
         
     def printdata(self):
         print(self.data)

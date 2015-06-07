@@ -125,8 +125,21 @@ class Sim:
         
         self.plotdata = gatheruncerdata(tempD, self.debug['results'])
         
-        self.processed = True
-    
+        self.processed = True        
+        
+    def plotresults(self):
+        
+        from viewresults import viewuncerresults
+        
+        viewuncerresults(self.plotdata, show_wait = True)
+
+
+
+# Derived Sim class that should store budget data.
+class SimBudget(Sim):
+    def __init__(self, name):
+        Sim.__init__(self, name)
+        
     # Currently just optimises simulation according to defaults.
     def optimise(self, regiondata, regionmetadata, regionoptions):
         
@@ -146,10 +159,3 @@ class Sim:
         
         tempD['S'] = self.debug['structure']     # Error rising. Where does S come from? Do I need to run simulation first?
         optimize(tempD, maxiters = 1)   # Temporary restriction on iterations. Not meant to be hardcoded!
-        
-        
-    def plotresults(self):
-        
-        from viewresults import viewuncerresults
-        
-        viewuncerresults(self.plotdata, show_wait = True)
