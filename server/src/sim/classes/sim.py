@@ -14,8 +14,9 @@ class Sim:
         self.parsmodel = None       # This used to be D['M'].
         self.parsfitted = None      # This used to be D['F'].
         
-        self.results = None         # This used to be D['R'].
-        self.structure = None       # This used to be D['S'].
+        self.debug = {}             # This stores the (large) output from running the simulation
+        self.debug['results'] = None         # This used to be D['R'].
+        self.debug['structure'] = None       # This used to be D['S'].
         
         self.plotdata = None        # This used to be D['plot']['E']. Be aware that it is not D['plot']!        
         self.plotdataopt = []       # This used to be D['plot']['optim']. Be aware that it is not D['plot']!
@@ -71,7 +72,7 @@ class Sim:
         for s in range(len(self.parsfitted)):   # Parallelise eventually.
             S = model(regionmetadata, self.parsmodel, self.parsfitted[s], regionoptions)
             allsims.append(S)
-        self.structure = allsims[0]     # Save one full sim structure for troubleshooting and... funsies?
+        self.debug['structure'] = allsims[0]     # Save one full sim structure for troubleshooting and... funsies?
     
         # Calculate results.
         from makeresults import makeresults
@@ -80,7 +81,7 @@ class Sim:
         tempD = dict()
         tempD['G'] = regionmetadata
         tempD['P'] = self.parsdata
-        tempD['S'] = self.structure
+        tempD['S'] = self.debug['structure']
         
         # Input that only the financialanalysis subfunction in makeresults wants.
         # It would be a good idea to somehow separate the two...
@@ -88,7 +89,7 @@ class Sim:
         tempD['opt'] = regionoptions
         tempD['programs'] = regionmetadata['programs']
         
-        self.results = makeresults(tempD, allsims, regionoptions['quantiles'])
+        self.debug['results'] = makeresults(tempD, allsims, regionoptions['quantiles'])
     
         # Gather plot data.
         from gatherplotdata import gatheruncerdata
@@ -97,7 +98,7 @@ class Sim:
         tempD['data'] = regiondata
         tempD['G'] = regionmetadata
         
-        self.plotdata = gatheruncerdata(tempD, self.results)
+        self.plotdata = gatheruncerdata(tempD, self.debug['results'])
         
         self.processed = True
     
@@ -114,11 +115,11 @@ class Sim:
         tempD['P'] = self.parsdata
         tempD['M'] = self.parsmodel
         tempD['F'] = self.parsfitted
-        tempD['R'] = self.results
+        tempD['R'] = self.debug['results']
         tempD['plot'] = dict()
         tempD['plot']['optim'] = self.plotdataopt
         
-        tempD['S'] = self.structure     # Error rising. Where does S come from? Do I need to run simulation first?
+        tempD['S'] = self.debug['structure']     # Error rising. Where does S come from? Do I need to run simulation first?
         optimize(tempD, maxiters = 1)   # Temporary restriction on iterations. Not meant to be hardcoded!
         
         
