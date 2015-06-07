@@ -6,30 +6,43 @@ Created on Tue Jun 02 01:03:34 2015
 """
 
 from sim import Sim, SimBudget
+import weakref
 
 class SimBox:
-    def __init__(self, name):
+    def __init__(self, name,region):
         self.name = name
-        
         self.simlist = []
-        
+        self.region = weakref.ref(region)
+
     @classmethod
-    def fromdict(SimBox,simboxdict):
-        s = SimBox(None)
-        s.name = simboxdict['name']
-        s.simlist = [Sim.fromdict(x) for x in simboxdict['simlist']]
+    def fromdict(SimBox,simboxdict,region):
+        assert(simboxdict['region_uuid'] == region.uuid)
+
+        s = SimBox(simboxdict['name'],region)
+        s.simlist = [Sim.fromdict(x,region) for x in simboxdict['simlist']]
+        s.region = weakref.ref(region)
+
         return s
 
     def todict(self):
         simboxdict = {}
         simboxdict['name'] = self.name
         simboxdict['simlist'] = [s.todict() for s in self.simlist]
+        simboxdict['region_uuid'] = self.getregion().uuid
+
         return simboxdict
-       
+    
+    def getregion(self):
+        # self.region is a weakref object, which means to get
+        # the region you need to do self.region() rather than
+        # self.region. This function abstracts away this 
+        # implementation detail in case it changes in future
+        return self.region()
+
     # Creates a simulation object but makes sure to initialise it immediately after, ready for processing.
     def createsim(self, simname, regiondata, regionmetadata, regionoptions):
         print('Preparing new basic simulation for standard container %s...' % self.name)
-        self.simlist.append(Sim(simname))
+        self.simlist.append(Sim(simname,self.getregion()))
         self.simlist[-1].initialise(regiondata, regionmetadata, regionoptions)
     
     def runallsims(self, regiondata, regionmetadata, regionoptions, forcerun = False):

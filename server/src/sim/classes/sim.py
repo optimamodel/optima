@@ -5,8 +5,10 @@ Created on Fri Jun 05 23:27:38 2015
 @author: David Kedziora
 """
 
+import weakref
+
 class Sim:
-    def __init__(self, name):
+    def __init__(self, name,region):
         self.name = name
         self.processed = False      # This tag monitors if the simulation has been run.
         
@@ -21,10 +23,13 @@ class Sim:
         self.plotdata = None        # This used to be D['plot']['E']. Be aware that it is not D['plot']!        
         self.plotdataopt = []       # This used to be D['plot']['optim']. Be aware that it is not D['plot']!
     
+        self.region = weakref.ref(region)
+
     @classmethod
-    def fromdict(SimBox,simdict):
-        s = Sim(None)
-        s.name = simdict['name'] 
+    def fromdict(SimBox,simdict,region):
+        assert(simdict['region_uuid'] == region.uuid)
+
+        s = Sim(simdict['name'],region)
         s.processed  = simdict['processed']  
         s.parsdata  = simdict['parsdata']  
         s.parsmodel  = simdict['parsmodel']  
@@ -32,6 +37,7 @@ class Sim:
         s.debug  = simdict['debug']   
         s.plotdata  = simdict['plotdata']  
         s.plotdataopt  = simdict['plotdataopt']  
+        s.region = weakref.ref(region)
         return s
 
     def todict(self):
@@ -44,8 +50,16 @@ class Sim:
         simdict['debug']   = self.debug 
         simdict['plotdata']  = self.plotdata 
         simdict['plotdataopt']  = self.plotdataopt 
+        simdict['region_uuid'] = self.getregion().uuid
         return simdict
-       
+    
+    def getregion(self):
+        # self.region is a weakref object, which means to get
+        # the region you need to do self.region() rather than
+        # self.region. This function abstracts away this 
+        # implementation detail in case it changes in future
+        return self.region()
+
     def setname(self, name):
         self.name = name
         
