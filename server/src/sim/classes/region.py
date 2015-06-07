@@ -11,6 +11,10 @@ import setoptions
 
 class Region:
     def __init__(self, name,populations,programs,datastart,dataend):
+        # The standard constructor takes in the initial metadata directly
+        # In normal usage, this information would come from the frontend
+        # whether web interface, or an interactive prompt
+
         self.D = dict()                 # Data structure for saving everything. Will hopefully be broken down eventually.
               
         self.metadata = defaults.metadata  # Loosely analogous to D['G']. Start with default HIV metadata
@@ -28,7 +32,16 @@ class Region:
         self.calibrations = None
         
         self.simboxlist = []            # Container for simbox objects (e.g. optimisations, grouped scenarios, etc.)
-        
+    
+    @classmethod
+    def load(Region,filename,name=None):
+        # Create a new region by loading a JSON file
+        # If a name is not specified, the one contained in the JSON file is used
+        # Currently, thi
+        r = Region(name,None,None,None,None)
+        r.loadDfrom(filename)
+        return r
+
     def createsimbox(self, simboxname):
         self.simboxlist.append(SimBox(simboxname))
         
@@ -123,8 +136,11 @@ class Region:
         self.metadata = tempD['G'] # Copy everything from G by default
         self.metadata['programs'] = tempD['programs']
         self.metadata['populations'] = self.metadata['inputpopulations']
-        self.metadata['name'] = current_name
-
+        if current_name is not None: # current_name is none if this function is being called from Region.load()
+            self.metadata['name'] = current_name
+        else:
+            self.metadata['name'] = self.metadata['projectname']
+            
         self.data = tempD['data']
         self.options = tempD['opt']
 

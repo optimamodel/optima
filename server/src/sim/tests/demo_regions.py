@@ -6,8 +6,7 @@ import region
 
 def test_from_json():
 	# Test running a simulation from JSON
-	r = region.Region('Haiti (from JSON)',defaults.haiti['populations'],defaults.haiti['programs'],defaults.haiti['datastart'],defaults.haiti['dataend'])
-	r.loadDfrom('./regions/Haiti.json')
+	r = region.Region.load('./regions/Haiti.json')
 	r.createsimbox('Simbox 1')
 	r.runsimbox(r.simboxlist[0])
 	return r
