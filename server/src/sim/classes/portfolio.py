@@ -14,7 +14,7 @@ import os
 from numpy import arange
 
 from region import Region
-
+import defaults
 
 
 class Portfolio:
