@@ -12,7 +12,7 @@ class SimBox:
     def __init__(self, name,region):
         self.name = name
         self.simlist = []
-        self.region = weakref.ref(region)
+        self.setregion(region)
 
     @classmethod
     def fromdict(SimBox,simboxdict,region):
@@ -20,7 +20,7 @@ class SimBox:
 
         s = SimBox(simboxdict['name'],region)
         s.simlist = [Sim.fromdict(x,region) for x in simboxdict['simlist']]
-        s.region = weakref.ref(region)
+        s.setregion(region)
 
         return s
 
@@ -32,6 +32,9 @@ class SimBox:
 
         return simboxdict
     
+    def setregion(self,region):
+        self.region = weakref.ref(region)
+
     def getregion(self):
         # self.region is a weakref object, which means to get
         # the region you need to do self.region() rather than

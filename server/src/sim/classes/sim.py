@@ -23,7 +23,7 @@ class Sim:
         self.plotdata = None        # This used to be D['plot']['E']. Be aware that it is not D['plot']!        
         self.plotdataopt = []       # This used to be D['plot']['optim']. Be aware that it is not D['plot']!
     
-        self.region = weakref.ref(region)
+        self.setregion(region)
 
     @classmethod
     def fromdict(SimBox,simdict,region):
@@ -37,7 +37,7 @@ class Sim:
         s.debug  = simdict['debug']   
         s.plotdata  = simdict['plotdata']  
         s.plotdataopt  = simdict['plotdataopt']  
-        s.region = weakref.ref(region)
+        s.setregion(region)
         return s
 
     def todict(self):
@@ -53,6 +53,9 @@ class Sim:
         simdict['region_uuid'] = self.getregion().uuid
         return simdict
     
+    def setregion(self,region):
+        self.region = weakref.ref(region)
+
     def getregion(self):
         # self.region is a weakref object, which means to get
         # the region you need to do self.region() rather than
@@ -168,7 +171,7 @@ class SimBudget(Sim):
         regiondata = r.data
         regionmetadata = r.metadata
         regionoptions = r.options
-        
+
         from optimize import optimize
         
         tempD = dict()
