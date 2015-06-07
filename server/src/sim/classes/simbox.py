@@ -39,13 +39,13 @@ class SimBox:
         if assubsubset:
             if len(self.simlist) > 0:
                 for sim in self.simlist:
-                    print('   --> %s%s' % (sim.getsimname(), (" (unprocessed)" if not sim.isprocessed() else " (processed)")))
+                    print('   --> %s%s' % (sim.getname(), (" (unprocessed)" if not sim.isprocessed() else " (processed)")))
         else:
             if len(self.simlist) == 0:
                 print('No simulations are currently stored in container %s.' % self.getsimboxname())
             else:
                 for sim in self.simlist:
-                    print(' --> %s%s' % (sim.getsimname(), (" (unprocessed)" if not sim.isprocessed() else " (processed)")))
+                    print(' --> %s%s' % (sim.getname(), (" (unprocessed)" if not sim.isprocessed() else " (processed)")))
         
     def setsimboxname(self, simboxname):
         self.simboxname = simboxname

@@ -6,8 +6,8 @@ Created on Fri Jun 05 23:27:38 2015
 """
 
 class Sim:
-    def __init__(self, simname):
-        self.simname = simname
+    def __init__(self, name):
+        self.name = name
         self.processed = False      # This tag monitors if the simulation has been run.
         
         self.parsdata = None        # This used to be D['P'].
@@ -20,11 +20,11 @@ class Sim:
         self.plotdata = None        # This used to be D['plot']['E']. Be aware that it is not D['plot']!        
         self.plotdataopt = []       # This used to be D['plot']['optim']. Be aware that it is not D['plot']!
         
-    def setsimname(self, simname):
-        self.simname = simname
+    def setname(self, name):
+        self.name = name
         
-    def getsimname(self):
-        return self.simname
+    def getname(self):
+        return self.name
         
     def isprocessed(self):
         return self.processed
