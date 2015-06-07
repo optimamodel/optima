@@ -36,30 +36,6 @@ class Sim:
         from makedatapars import makedatapars
         from numpy import arange
 
-        # datapath = fullpath(workbookname)
-        # data, programs = loadworkbook(datapath, input_programs, verbose=verbose)
-        # D['data'] = getrealcosts(data)
-        # if 'programs' not in D:
-        #     D['programs'] = addtoprograms(programs)
-        # if rerun or 'P' not in D: # Rerun if asked or if it doesn't exist
-        #     D = makedatapars(D, verbose=verbose) # Update parameters
-        # if rerun or 'M' not in D: # Rerun if asked, or if it doesn't exist
-        #     D['M'] = makemodelpars(D['P'], D['opt'], verbose=verbose)
-        # if 'F' not in D: # Only rerun if it doesn't exist
-        #     D = makefittedpars(D, verbose=verbose)
-        # if rerun or 'R' not in D: # Rerun if asked, or if no results
-        #     D = runsimulation(D, makeplot = 0, dosave = False)
-        # if savetofile:
-        #     savedata(D['G']['projectfilename'], D, verbose=verbose) # Update the data file
-        
-        # printv('...done updating data.', 2, verbose)
-
-        # return D
-
-
-
-
-
         # Explicit construction of tempD, so that one day we know how to recode makedatapars.
         tempD = dict()
         tempD['data'] = regiondata
