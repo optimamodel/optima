@@ -1,4 +1,4 @@
-def loadworkbook(filename='example.xlsx', input_programs = None, verbose=2):
+def loadworkbook(filename='example.xlsx', input_programs = None, verbose=0):
     """
     Loads the workbook (i.e. reads its contents into the data structure).
     This data structure is used in the next step to update the corresponding model.
