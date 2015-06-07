@@ -11,7 +11,7 @@ from simbox import SimBox
 class Region:
     def __init__(self, regionname):
         self.D = dict()                 # Data structure for saving everything. Will hopefully be broken down eventually.
-        self.regionname = regionname
+        self.name = regionname
         
         self.data = None                # This used to be D['data'].
         self.metadata = None            # This used to be D['G'].
@@ -95,10 +95,10 @@ class Region:
         return self.programs
         
     def setregionname(self, regionname):
-        self.regionname = regionname
+        self.name = regionname
         
     def getregionname(self):
-        return self.regionname
+        return self.name
         
     ### Refers to legacy D.
         
