@@ -11,6 +11,12 @@ def test_from_json():
 	r.runsimbox(r.simboxlist[0])
 	return r
 
+
+def test_saving_and_loading():
+	r = region.Region.load('./regions/Haiti.json') # Load old style JSON
+	r.save('./regions/Haiti_newstyle.json')
+	r2 = region.Region.load('./regions/Haiti_newstyle.json') # Load new style JSON
+
 def test_from_xlsx():
 	# Test running a simulation from XLSX
 	r = region.Region('Haiti (from XLSX)',defaults.haiti['populations'],defaults.haiti['programs'],defaults.haiti['datastart'],defaults.haiti['dataend'])
@@ -30,8 +36,8 @@ def test_multiresults():
 	r.runsimbox(r.simboxlist[0])
 	r.simboxlist[0].viewmultiresults(r.metadata)
 
-test_from_json()
-test_from_xlsx()
-test_uncerresults()
-test_multiresults()
-
+test_saving_and_loading()
+# test_from_json()
+# test_from_xlsx()
+# test_uncerresults()
+# test_multiresults()

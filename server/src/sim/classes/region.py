@@ -8,6 +8,7 @@ Created on Fri May 29 23:16:12 2015
 import defaults
 from simbox import SimBox
 import setoptions
+import uuid
 
 class Region:
     def __init__(self, name,populations,programs,datastart,dataend):
@@ -33,14 +34,72 @@ class Region:
         
         self.simboxlist = []            # Container for simbox objects (e.g. optimisations, grouped scenarios, etc.)
     
+        self.uuid = str(uuid.uuid4()) # Store UUID as a string - we just want a (practically) unique tag, no advanced functionality
+
+
     @classmethod
     def load(Region,filename,name=None):
         # Create a new region by loading a JSON file
         # If a name is not specified, the one contained in the JSON file is used
-        # Currently, thi
+        # Note that this function can be used with an old-type or new-type JSON file
+        # A new-type JSON file will read a Region object including the UUID
+        # While an old-type JSON file corresponds to 'D' and the region will get a new UUID
         r = Region(name,None,None,None,None)
-        r.loadDfrom(filename)
+
+        import dataio
+        regiondict = dataio.loaddata(filename)
+        if 'uuid' in regiondict.keys(): # This is a new-type JSON file
+            r = r.fromdict(regiondict)
+        else:
+            r.fromdict_legacy(regiondict)
         return r
+
+    def fromdict(self,regiondict):
+        # Assign variables from a new-type JSON file created using Region.todict()
+        self.metadata = regiondict['metadata']
+        self.data = regiondict['data']
+        self.simboxlist = [Simbox.fromdict(x) for x in regiondict['simboxlist']]
+        self.options = regiondict['options'] # Populate default options here
+        self.ccocs = regiondict['ccocs']
+        self.calibrations = regiondict['calibrations']       
+        self.uuid = regiondict['uuid']
+        self.D = regiondict['D']
+            
+    def fromdict_legacy(self, tempD):
+        # Load an old-type D dictionary into the region
+
+        self.setD(tempD)                # It would be great to get rid of setD one day. But only when data is fully decomposed.
+        
+        current_name = self.metadata['name']
+        self.metadata = tempD['G'] # Copy everything from G by default
+        self.metadata['programs'] = tempD['programs']
+        self.metadata['populations'] = self.metadata['inputpopulations']
+        if current_name is not None: # current_name is none if this function is being called from Region.load()
+            self.metadata['name'] = current_name
+        else:
+            self.metadata['name'] = self.metadata['projectname']
+
+        self.data = tempD['data']
+        self.options = tempD['opt']
+    
+    def save(self,filename):
+        import dataio
+        dataio.savedata(filename,self.todict())
+
+    def todict(self):
+        # Return a dictionary representation of the object for use with Region.fromdict()
+        regiondict = {}
+        regiondict['version'] = 1 # Could do something later by checking the version number
+
+        #regiondict['metadata'] = self.metadata 
+        #regiondict['data'] = self.data 
+        #regiondict['simboxlist'] = [Simbox.todict(x) for x in self.simboxlist]
+        #regiondict['options'] = self.options # Populate default options here = self.options 
+        #regiondict['ccocs'] = self.ccocs 
+        #regiondict['calibrations'] = self.calibrations 
+        regiondict['uuid'] = self.uuid 
+        #regiondict['D'] = self.D 
+        return regiondict
 
     def createsimbox(self, simboxname):
         self.simboxlist.append(SimBox(simboxname))
@@ -120,29 +179,6 @@ class Region:
         
     def getregionname(self):
         return self.metadata['name']
-        
-    ### Refers to legacy D.
-        
-    def loadDfrom(self, path):
-        from dataio import loaddata
-        # NB. Probably less important to use accessor methods within the region class
-        # The region methods have privileged access to the member variables, but the deal
-        # is they are also responsible for keeping the class in a usable state
-        # In any case, this function is a temporary workaround while D is still being used
-        tempD = loaddata(path)
-        self.setD(tempD)                # It would be great to get rid of setD one day. But only when data is fully decomposed.
-        
-        current_name = self.metadata['name']
-        self.metadata = tempD['G'] # Copy everything from G by default
-        self.metadata['programs'] = tempD['programs']
-        self.metadata['populations'] = self.metadata['inputpopulations']
-        if current_name is not None: # current_name is none if this function is being called from Region.load()
-            self.metadata['name'] = current_name
-        else:
-            self.metadata['name'] = self.metadata['projectname']
-            
-        self.data = tempD['data']
-        self.options = tempD['opt']
 
 
     def setD(self, D):
@@ -184,4 +220,4 @@ class Region:
     def __repr__(self):
         n_simbox = len(self.simboxlist)
         n_sims = sum([len(x.simlist) for x in self.simboxlist])
-        return "Region '%s' - %d populations, %d programs, %d simboxes, %d simulations" % (self.metadata['name'],len(self.metadata['populations']),len(self.metadata['programs']),n_simbox,n_sims)
+        return "Region %s ('%s')" % (self.uuid,self.metadata['name'])
