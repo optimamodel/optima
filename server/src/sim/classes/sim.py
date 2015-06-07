@@ -71,8 +71,12 @@ class Sim:
     
     # Initialises P, M and F matrices belonging to the Sim object, but does not run simulation yet.
     # Very dangerous, as stability relies on the trust that no data passed in is being changed behind the scenes...
-    def initialise(self, regiondata, regionmetadata, regionoptions):
-        
+    def initialise(self):
+        r = self.getregion()
+        regiondata = r.data
+        regionmetadata = r.metadata
+        regionoptions = r.options
+
         from makedatapars import makedatapars
         from numpy import arange
 
@@ -103,8 +107,12 @@ class Sim:
         self.parsfitted = tempD['F']
     
     # Runs model given all the initialised parameters.
-    def run(self, regiondata, regionmetadata, regionoptions):
-        
+    def run(self):
+        r = self.getregion()
+        regiondata = r.data
+        regionmetadata = r.metadata
+        regionoptions = r.options
+
         from model import model
 
         allsims = []
@@ -155,7 +163,11 @@ class SimBudget(Sim):
         Sim.__init__(self, name)
         
     # Currently just optimises simulation according to defaults.
-    def optimise(self, regiondata, regionmetadata, regionoptions):
+    def optimise(self):
+        r = self.getregion()
+        regiondata = r.data
+        regionmetadata = r.metadata
+        regionoptions = r.options
         
         from optimize import optimize
         

@@ -108,22 +108,22 @@ class Region:
         else:
             self.simboxlist.append(SimBox(simboxname,self))
         if createdefault:
-            self.simboxlist[-1].createsim(simboxname + '-default', self.data, self.metadata, self.options)
+            self.simboxlist[-1].createsim(simboxname + '-default')
             
     def createsiminsimbox(self, simname, simbox):
-        simbox.createsim(simname, self.data, self.metadata, self.options)
+        simbox.createsim(simname)
     
 # Combine into one SimBox dependent run method?
 #------------------------------------
     # Runs through every simulation in simbox (if not processed) and processes them.
     def runsimbox(self, simbox):
-        simbox.runallsims(self.data, self.metadata, self.options, forcerun = False)
+        simbox.runallsims(forcerun = False)
     
     # Runs through every simulation in simbox (if not processed) and optimises them.
     # Currently uses default settings.
     def optsimbox(self, simbox):
         if isinstance(simbox, SimBoxOpt):
-            simbox.optallsims(self.data, self.metadata, self.options, forcerun = True)
+            simbox.optallsims(forcerun = True)
         else:
             print('Cannot optimise a standard container.')
 #------------------------------------

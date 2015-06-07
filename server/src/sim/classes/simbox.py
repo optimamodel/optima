@@ -40,15 +40,15 @@ class SimBox:
         return self.region()
 
     # Creates a simulation object but makes sure to initialise it immediately after, ready for processing.
-    def createsim(self, simname, regiondata, regionmetadata, regionoptions):
+    def createsim(self, simname):
         print('Preparing new basic simulation for standard container %s...' % self.name)
         self.simlist.append(Sim(simname,self.getregion()))
-        self.simlist[-1].initialise(regiondata, regionmetadata, regionoptions)
+        self.simlist[-1].initialise()
     
-    def runallsims(self, regiondata, regionmetadata, regionoptions, forcerun = False):
+    def runallsims(self, forcerun = False):
         for sim in self.simlist:
             if forcerun or not sim.isprocessed():
-                sim.run(regiondata, regionmetadata, regionoptions)
+                sim.run()
                 
     def plotallsims(self):
         for sim in self.simlist:
@@ -98,19 +98,19 @@ class SimBox:
         
 # A container just for Sims with budgets.
 class SimBoxOpt(SimBox):
-    def __init__(self, name):
-        SimBox.__init__(self, name)
+    def __init__(self,name,region):
+        SimBox.__init__(self,name,region)
         
     # Overwrites the standard Sim create method. This is where budget data would be attached.
-    def createsim(self, simname, regiondata, regionmetadata, regionoptions):
+    def createsim(self, simname):
         if len(self.simlist) > 0:
             print('Optimisation containers can only contain one initial simulation!')
         else:
             print('Preparing new budget simulation for optimisation container %s...' % self.name)
             self.simlist.append(SimBudget(simname+'-initial'))
-            self.simlist[-1].initialise(regiondata, regionmetadata, regionoptions)
+            self.simlist[-1].initialise()
                 
-    def optallsims(self, regiondata, regionmetadata, regionoptions, forcerun = False):
+    def optallsims(self, forcerun = False):
         for sim in self.simlist:
             if forcerun or not sim.isprocessed():
-                sim.optimise(regiondata, regionmetadata, regionoptions)
+                sim.optimise()
