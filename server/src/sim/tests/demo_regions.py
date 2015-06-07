@@ -16,11 +16,13 @@ def test_saving_and_loading():
 	r = region.Region.load('./regions/Haiti.json') # Load old style JSON
 	r.save('./regions/Haiti_newstyle.json')
 	r2 = region.Region.load('./regions/Haiti_newstyle.json') # Load new style JSON
-	print r
-	print r2
 	r2.createsimbox('Simbox 1')
 	r2.runsimbox(r2.simboxlist[0])
-
+	r2.save('./regions/Haiti_newstyle_withsim.json')
+	r3 = region.Region.load('./regions/Haiti_newstyle_withsim.json') # Load new style JSON
+	print r
+	print r3
+	
 def test_from_xlsx():
 	# Test running a simulation from XLSX
 	r = region.Region('Haiti (from XLSX)',defaults.haiti['populations'],defaults.haiti['programs'],defaults.haiti['datastart'],defaults.haiti['dataend'])

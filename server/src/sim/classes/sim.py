@@ -20,7 +20,32 @@ class Sim:
         
         self.plotdata = None        # This used to be D['plot']['E']. Be aware that it is not D['plot']!        
         self.plotdataopt = []       # This used to be D['plot']['optim']. Be aware that it is not D['plot']!
-        
+    
+    @classmethod
+    def fromdict(SimBox,simdict):
+        s = Sim(None)
+        s.name = simdict['name'] 
+        s.processed  = simdict['processed']  
+        s.parsdata  = simdict['parsdata']  
+        s.parsmodel  = simdict['parsmodel']  
+        s.parsfitted  = simdict['parsfitted']  
+        s.debug  = simdict['debug']   
+        s.plotdata  = simdict['plotdata']  
+        s.plotdataopt  = simdict['plotdataopt']  
+        return s
+
+    def todict(self):
+        simdict = {}
+        simdict['name'] = self.name
+        simdict['processed']  = self.processed 
+        simdict['parsdata']  = self.parsdata 
+        simdict['parsmodel']  = self.parsmodel 
+        simdict['parsfitted']  = self.parsfitted 
+        simdict['debug']   = self.debug 
+        simdict['plotdata']  = self.plotdata 
+        simdict['plotdataopt']  = self.plotdataopt 
+        return simdict
+       
     def setname(self, name):
         self.name = name
         

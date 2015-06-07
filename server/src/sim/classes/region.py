@@ -58,7 +58,7 @@ class Region:
         # Assign variables from a new-type JSON file created using Region.todict()
         self.metadata = regiondict['metadata']
         self.data = regiondict['data']
-        self.simboxlist = [Simbox.fromdict(x) for x in regiondict['simboxlist']]
+        self.simboxlist = [SimBox.fromdict(x) for x in regiondict['simboxlist']]
         self.options = regiondict['options'] # Populate default options here
         self.ccocs = regiondict['ccocs']
         self.calibrations = regiondict['calibrations']       
@@ -93,7 +93,7 @@ class Region:
 
         regiondict['metadata'] = self.metadata 
         regiondict['data'] = self.data 
-        regiondict['simboxlist'] = [Simbox.todict(x) for x in self.simboxlist]
+        regiondict['simboxlist'] = [sbox.todict() for sbox in self.simboxlist]
         regiondict['options'] = self.options # Populate default options here = self.options 
         regiondict['ccocs'] = self.ccocs 
         regiondict['calibrations'] = self.calibrations 
