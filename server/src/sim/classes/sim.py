@@ -61,7 +61,11 @@ class Sim:
         # the region you need to do self.region() rather than
         # self.region. This function abstracts away this 
         # implementation detail in case it changes in future
-        return self.region()
+        r = self.region()
+        if r is None:
+            raise Exception('The parent region has been garbage-collected and the reference is no longer valid')
+        else:
+            return r
 
     def setname(self, name):
         self.name = name
