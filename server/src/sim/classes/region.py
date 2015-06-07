@@ -120,8 +120,8 @@ class Region:
     def getD(self):
         return self.D
         
-    def makeproject(self, projectname='example', pops = defaults.default_pops, progs = defaults.default_progs, datastart = defaults.default_datastart, \
-        dataend = defaults.default_dataend, nsims = defaults.default_nsims, verbose=2, savetofile = True, domakeworkbook=True):
+    def makeproject(self, projectname='example', pops = defaults.pops, progs = defaults.progs, datastart = defaults.datastart, \
+        dataend = defaults.dataend, nsims = defaults.nsims, verbose=2, savetofile = True, domakeworkbook=True):
         """
         Initializes the empty project. Only the "Global" and "Fitted" parameters are added on this step.
         The rest of the parameters are calculated after the model is updated with the data from the workbook.
@@ -181,7 +181,7 @@ class Region:
         printv('  ...done making project.', 2, verbose)
     
     
-    def makeworkbook(self, name, pops, progs, datastart=defaults.default_datastart, dataend=defaults.default_dataend, verbose=2):
+    def makeworkbook(self, name, pops, progs, datastart=defaults.datastart, dataend=defaults.dataend, verbose=2):
         """ Generate the Optima workbook -- the hard work is done by makeworkbook.py """
         from printv import printv
         from dataio import templatepath

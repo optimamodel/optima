@@ -4,4 +4,4 @@ import add_optima_paths
 import region
 
 import defaults
-r = region.Region('test',defaults.default_pops,defaults.default_progs,defaults.default_datastart,defaults.default_dataend)
+r = region.Region('test',defaults.pops,defaults.progs,defaults.datastart,defaults.dataend)
