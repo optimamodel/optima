@@ -8,16 +8,19 @@ Created on Fri May 29 23:16:12 2015
 import defaults
 from simbox import SimBox
 
+
 class Region:
-    def __init__(self, regionname):
+    def __init__(self, name,populations,programs,datastart,dataend):
         self.D = dict()                 # Data structure for saving everything. Will hopefully be broken down eventually.
-        self.name = regionname
-        
-        self.data = None                # This used to be D['data'].
-        self.metadata = None            # This used to be D['G'].
-        
+              
+        self.metadata = {}            # Loosely analogous to D['G']
+        self.metadata['datastart'] = datastart
+        self.metadata['dataend'] = dataend
+        self.metadata['populations'] = populations
+        self.metadata['programs'] = programs
+        self.metadata['name'] = name
+
         self.options = None             # This used to be D['opt']. Is it constant? Or should it be tagged 'default'?
-        self.programs = None            # This used to be D['programs']. Is it constant? Or should it be tagged 'default'?
         
         self.simboxlist = []            # Container for simbox objects (e.g. optimisations, grouped scenarios, etc.)
         
@@ -95,10 +98,10 @@ class Region:
         return self.programs
         
     def setregionname(self, regionname):
-        self.name = regionname
+        self.metadata['name'] = regionname
         
     def getregionname(self):
-        return self.name
+        return self.metadata['name']
         
     ### Refers to legacy D.
         

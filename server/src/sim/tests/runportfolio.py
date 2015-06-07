@@ -23,6 +23,7 @@ For developers:
 Version: 2015may29
 """
 import add_optima_paths
+import defaults
 
 print('WELCOME TO OPTIMA')
 
