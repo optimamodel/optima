@@ -160,3 +160,8 @@ class Region:
         import updatedata
         self.metadata['programs'] = programs
         self.data = updatedata.getrealcosts(data)
+
+    def __repr__(self):
+        n_simbox = len(self.simboxlist)
+        n_sims = sum([len(x.simlist) for x in self.simboxlist])
+        return "Region '%s' - %d populations, %d programs, %d simboxes, %d simulations" % (self.metadata['name'],len(self.metadata['populations']),len(self.metadata['programs']),n_simbox,n_sims)
