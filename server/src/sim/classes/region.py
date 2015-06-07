@@ -7,20 +7,21 @@ Created on Fri May 29 23:16:12 2015
 
 import defaults
 from simbox import SimBox
-
+import setoptions
 
 class Region:
     def __init__(self, name,populations,programs,datastart,dataend):
         self.D = dict()                 # Data structure for saving everything. Will hopefully be broken down eventually.
               
-        self.metadata = {}            # Loosely analogous to D['G']
+        self.metadata = defaults.metadata  # Loosely analogous to D['G']. Start with default HIV metadata
         self.metadata['datastart'] = datastart
         self.metadata['dataend'] = dataend
         self.metadata['populations'] = populations
         self.metadata['programs'] = programs
         self.metadata['name'] = name
 
-        self.options = None             # This used to be D['opt']. Is it constant? Or should it be tagged 'default'?
+        self.data = None
+        self.options = setoptions.setoptions() # Populate default options here
         
         self.simboxlist = []            # Container for simbox objects (e.g. optimisations, grouped scenarios, etc.)
         
@@ -32,12 +33,12 @@ class Region:
         
     # Runs through every simulation in simbox (if not processed) and processes them.
     def runsimbox(self, simbox):
-        simbox.runallsims(self.data, self.metadata, self.options, self.programs, forcerun = False)
+        simbox.runallsims(self.data, self.metadata, self.options, forcerun = False)
     
     # Runs through every simulation in simbox (if not processed) and optimises them.
     # Currently uses default settings.
     def optsimbox(self, simbox):
-        simbox.optallsims(self.data, self.metadata, self.options, self.programs, forcerun = True)
+        simbox.optallsims(self.data, self.metadata, self.options, self.metadata['programs'], forcerun = True)
         
     # Runs through every simulation in simbox (if processed) and plots them.
     def plotsimbox(self, simbox):
@@ -53,7 +54,7 @@ class Region:
         print(self.options)
         
     def printprograms(self):
-        print(self.programs)
+        print(self.metadata['programs'])
         
     def printsimboxlist(self, assubset = False):
         # Prints with nice arrow formats if assubset is true. Otherwise numbers the list.        
@@ -92,10 +93,10 @@ class Region:
         return self.options
     
     def setprograms(self, programs):
-        self.programs = programs
+        self.metadata['programs'] = programs
         
     def getprograms(self):
-        return self.programs
+        return self.metadata['programs']
         
     def setregionname(self, regionname):
         self.metadata['name'] = regionname
@@ -107,16 +108,22 @@ class Region:
         
     def loadDfrom(self, path):
         from dataio import loaddata
+        # NB. Probably less important to use accessor methods within the region class
+        # The region methods have privileged access to the member variables, but the deal
+        # is they are also responsible for keeping the class in a usable state
+        # In any case, this function is a temporary workaround while D is still being used
         tempD = loaddata(path)
         self.setD(tempD)                # It would be great to get rid of setD one day. But only when data is fully decomposed.
-        self.setoptions(tempD['opt'])
-        self.setprograms(tempD['programs'])
-        self.data = tempD['data']
-
-        # Adapter for new internal data structures
-        self.metadata = tempD['G']
+        
+        current_name = self.metadata['name']
+        self.metadata = tempD['G'] # Copy everything from G by default
+        self.metadata['programs'] = tempD['programs']
         self.metadata['populations'] = self.metadata['inputpopulations']
-        self.metadata['programs'] = self.metadata['inputprograms']
+        self.metadata['name'] = current_name
+
+        self.data = tempD['data']
+        self.options = tempD['opt']
+
 
     def setD(self, D):
         self.D = D
@@ -150,5 +157,6 @@ class Region:
             raise Exception('The programs in the XLSX file do not match the region')
 
         # Save variables to region
+        import updatedata
         self.metadata['programs'] = programs
-        self.data = data
+        self.data = updatedata.getrealcosts(data)

@@ -34,12 +34,40 @@ class Sim:
     def initialise(self, regiondata, regionmetadata, regionoptions):
         
         from makedatapars import makedatapars
+        from numpy import arange
+
+        # datapath = fullpath(workbookname)
+        # data, programs = loadworkbook(datapath, input_programs, verbose=verbose)
+        # D['data'] = getrealcosts(data)
+        # if 'programs' not in D:
+        #     D['programs'] = addtoprograms(programs)
+        # if rerun or 'P' not in D: # Rerun if asked or if it doesn't exist
+        #     D = makedatapars(D, verbose=verbose) # Update parameters
+        # if rerun or 'M' not in D: # Rerun if asked, or if it doesn't exist
+        #     D['M'] = makemodelpars(D['P'], D['opt'], verbose=verbose)
+        # if 'F' not in D: # Only rerun if it doesn't exist
+        #     D = makefittedpars(D, verbose=verbose)
+        # if rerun or 'R' not in D: # Rerun if asked, or if no results
+        #     D = runsimulation(D, makeplot = 0, dosave = False)
+        # if savetofile:
+        #     savedata(D['G']['projectfilename'], D, verbose=verbose) # Update the data file
         
+        # printv('...done updating data.', 2, verbose)
+
+        # return D
+
+
+
+
+
         # Explicit construction of tempD, so that one day we know how to recode makedatapars.
         tempD = dict()
         tempD['data'] = regiondata
         tempD['G'] = regionmetadata
-        
+        tempD['G']['datayears'] = arange(regionmetadata['datastart'], regionmetadata['dataend']+1)
+        tempD['G']['npops'] = len(regionmetadata['populations'])
+        tempD['G']['nprogs'] = len(regionmetadata['programs'])
+
         tempD = makedatapars(tempD)
         self.parsdata = tempD['P']
         
@@ -59,7 +87,7 @@ class Sim:
         self.parsfitted = tempD['F']
     
     # Runs model given all the initialised parameters.
-    def run(self, regiondata, regionmetadata, regionoptions, regionprograms):
+    def run(self, regiondata, regionmetadata, regionoptions):
         
         from model import model
 
@@ -82,7 +110,7 @@ class Sim:
         # It would be a good idea to somehow separate the two...
         tempD['data'] = regiondata
         tempD['opt'] = regionoptions
-        tempD['programs'] = regionprograms
+        tempD['programs'] = regionmetadata['programs']
         
         self.results = makeresults(tempD, allsims, regionoptions['quantiles'])
     
@@ -98,14 +126,14 @@ class Sim:
         self.processed = True
     
     # Currently just optimises simulation according to defaults.
-    def optimise(self, regiondata, regionmetadata, regionoptions, regionprograms):
+    def optimise(self, regiondata, regionmetadata, regionoptions):
         
         from optimize import optimize
         
         tempD = dict()
         tempD['data'] = regiondata
         tempD['opt'] = regionoptions
-        tempD['programs'] = regionprograms
+        tempD['programs'] = regionmetadata['programs']
         tempD['G'] = regionmetadata
         tempD['P'] = self.parsdata
         tempD['M'] = self.parsmodel

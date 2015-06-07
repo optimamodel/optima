@@ -19,15 +19,15 @@ class SimBox:
         self.simlist.append(Sim(simname))
         self.simlist[-1].initialise(regiondata, regionmetadata, regionoptions)
     
-    def runallsims(self, regiondata, regionmetadata, regionoptions, regionprograms, forcerun = False):
+    def runallsims(self, regiondata, regionmetadata, regionoptions, forcerun = False):
         for sim in self.simlist:
             if forcerun or not sim.isprocessed():
-                sim.run(regiondata, regionmetadata, regionoptions, regionprograms)
+                sim.run(regiondata, regionmetadata, regionoptions)
                 
-    def optallsims(self, regiondata, regionmetadata, regionoptions, regionprograms, forcerun = False):
+    def optallsims(self, regiondata, regionmetadata, regionoptions, forcerun = False):
         for sim in self.simlist:
             if forcerun or not sim.isprocessed():
-                sim.optimise(regiondata, regionmetadata, regionoptions, regionprograms)
+                sim.optimise(regiondata, regionmetadata, regionoptions)
                 
     def plotallsims(self):
         for sim in self.simlist:
