@@ -83,7 +83,7 @@ def makecc(D=None, progname=None, ccparams=None, arteligcutoff=None, verbose=def
     if popadj: totalcost = totalcost/targetpopsize if len(totalcost)>1 else totalcost/mean(targetpopsize)
 
     # Get upper limit of x axis for plotting
-    xupperlim = max([x if ~isnan(x) else 0.0 for x in totalcost])*15.
+    xupperlim = max([x if ~isnan(x) else 0.0 for x in totalcost])*3.
     if (ccparams and 'xupperlim' in ccparams and ccparams['xupperlim'] and ~isnan(ccparams['xupperlim'])): xupperlim = ccparams['xupperlim']
 
     # Populate output structure with scatter data
