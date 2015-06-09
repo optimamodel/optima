@@ -91,18 +91,16 @@ class Portfolio:
                     else:
                         print('Region ID numbers only range from 1 to %i, inclusive.' % len(self.regionlist))
                     
-                # Is the first word 'gpa'? Then, ideally, run geo-prioritisation analysis on subset derived from rest of the string.
-                elif cmdinputlist[0] == 'gpa' and len(self.regionlist) > 1:
-                    print('Gotcha! There is no geographical prioritisation analysis! This is just a stub.')
-                    
-                    # LINK TO GPA METHOD OR FUNCTION. MUST OPERATE ON A SUBSET LIST OF REGIONS.
+            # If command is 'gpa', create GPA SimBoxes in each region.
+            if cmdinput == 'gpa' and len(self.regionlist) > 1:
+                self.geoprioanalysis()
                     
             print('\n--------------------\n')
             self.printregionlist()
             print('')
             if len(self.regionlist) > 1:
                 print('Geographical prioritisation analysis now available.')
-                print('To run this analysis over all regions, type: gpa all')       # To be extended when the time comes.
+                print('To run this analysis, type: gpa')       # To be extended when the time comes.
             
             print("To make a new region titled 'region_name', type: make region_name")
             if len(self.regionlist) > 0:
@@ -244,3 +242,10 @@ class Portfolio:
                 fid += 1
                 print('%i: %s' % (fid, region.getregionname()))
                 region.printsimboxlist(assubset=True)
+    
+    def geoprioanalysis(self):
+        gpaname = raw_input('Enter a title for the current analysis: ')
+        
+        for currentregion in self.regionlist:
+            print('Initialising a simulation in region %s for this GPA.' % currentregion.getregionname())
+            currentregion.createsimbox('GPA-'+gpaname, isopt = True, createdefault = True)

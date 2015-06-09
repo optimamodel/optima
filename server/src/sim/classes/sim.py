@@ -179,7 +179,16 @@ class SimBudget(Sim):
         tempD['F'] = self.parsfitted
         tempD['R'] = self.debug['results']
         tempD['plot'] = dict()
-        tempD['plot']['optim'] = self.plotdataopt
         
         tempD['S'] = self.debug['structure']     # Error rising. Where does S come from? Do I need to run simulation first?
-        optimize(tempD, maxiters = 1)   # Temporary restriction on iterations. Not meant to be hardcoded!
+        optimize(tempD, maxiters = 2)   # Temporary restriction on iterations. Not meant to be hardcoded!
+        
+        self.plotdataopt = tempD['plot']['optim'][-1]       # What's this -1 business about?
+        
+#        # Figure out plotting shortly.
+#        from viewresults import viewmultiresults, viewoptimresults
+#        
+#        viewmultiresults(tempD['plot']['optim'][-1]['multi'], show_wait = True)
+#        viewmultiresults(tempD['plot']['optim'][-1]['multi'], show_wait = True)
+#        viewoptimresults(tempD['plot']['optim'][-1])
+#        viewoptimresults(tempD['plot']['optim'][-1])
