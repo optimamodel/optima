@@ -63,7 +63,7 @@ class SimBox:
                 sim.plotresults()
 
     # Needs to check processing like plotallsims.
-    def viewmultiresults(self, regionmetadata):
+    def viewmultiresults(self):
         # Superimpose plots, like in the scenarios page in the frontend
         r = self.region()
 
