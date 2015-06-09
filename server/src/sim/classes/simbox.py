@@ -71,17 +71,23 @@ class SimBox:
         tempD['G'] = r.metadata
 
         Rarr = []
+        cannotgetmulti = False
         for sim in self.simlist:
+            if not sim.isprocessed():
+                cannotgetmulti = True
             tmp = {}
             tmp['R'] = sim.debug['results']
             tmp['label'] = sim.name
 
             Rarr.append(tmp)
 
-        import gatherplotdata,viewresults
-        multidata = gatherplotdata.gathermultidata(tempD, Rarr,verbose=0)
-        #viewmultiresults(M, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 'daly':[0,1], 'death':[0,1], 'dx':[0,1], 'tx1':[0,1], 'tx2':[0,1], 'costcum':[1,1]}, simstartyear=2000, simendyear=2030, onefig=True, verbose=2, show_wait=False, linewidth=2):
-        viewresults.viewmultiresults(multidata, show_wait = True)
+        if cannotgetmulti:
+            print('Some simulations in this container are not yet processed!')
+        else:
+            import gatherplotdata,viewresults
+            multidata = gatherplotdata.gathermultidata(tempD, Rarr,verbose=0)
+            #viewmultiresults(M, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 'daly':[0,1], 'death':[0,1], 'dx':[0,1], 'tx1':[0,1], 'tx2':[0,1], 'costcum':[1,1]}, simstartyear=2000, simendyear=2030, onefig=True, verbose=2, show_wait=False, linewidth=2):
+            viewresults.viewmultiresults(multidata, show_wait = True)
 
     def printsimlist(self, assubsubset = False):
         # Prints with long arrow formats if assubsubset is true. Otherwise uses short arrows.        
@@ -115,10 +121,11 @@ class SimBoxOpt(SimBox):
             print('Optimisation containers can only contain one initial simulation!')
         else:
             print('Preparing new budget simulation for optimisation container %s...' % self.name)
-            self.simlist.append(SimBudget(simname+'-initial'))
+            self.simlist.append(SimBudget(simname+'-initial',self.getregion()))
             self.simlist[-1].initialise()
-                
-    def optallsims(self, forcerun = False):
+    
+    def runallsims(self, forcerun = False):
         for sim in self.simlist:
             if forcerun or not sim.isprocessed():
+                sim.run()           # Is this really necessary, just to get D['S']?
                 sim.optimise()

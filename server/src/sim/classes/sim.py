@@ -8,7 +8,7 @@ Created on Fri Jun 05 23:27:38 2015
 import weakref
 
 class Sim:
-    def __init__(self, name,region):
+    def __init__(self, name, region):
         self.name = name
         self.processed = False      # This tag monitors if the simulation has been run.
         
@@ -160,8 +160,8 @@ class Sim:
 
 # Derived Sim class that should store budget data.
 class SimBudget(Sim):
-    def __init__(self, name):
-        Sim.__init__(self, name)
+    def __init__(self, name, region):
+        Sim.__init__(self, name, region)
         
     # Currently just optimises simulation according to defaults.
     def optimise(self):

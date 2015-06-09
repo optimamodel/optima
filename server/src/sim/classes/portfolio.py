@@ -14,8 +14,6 @@ import os
 from numpy import arange
 
 from region import Region
-import defaults
-
 
 class Portfolio:
     def __init__(self, portfolioname):
@@ -31,7 +29,6 @@ class Portfolio:
            
         Version: 2015may28 by davidkedz
         """
-        #from time import time
         
         print('\nPortfolio %s has been activated.' % self.portfolioname)
         print('\nThe script that created this portfolio is in...')
@@ -192,18 +189,18 @@ class Portfolio:
                     else:
                         print('Simulation container ID numbers only range from 1 to %i, inclusive.' % len(currentregion.simboxlist))
                 
-                # Is the first word 'opt'? Then optimise all simulation objects in a simbox of choice.
-                elif subinputlist[0] == 'opt' and len(currentregion.simboxlist) > 0:
-                    simboxid = subinputlist[1]                
-                    
-                    try:
-                        int(simboxid)
-                    except ValueError:
-                        simboxid = 0
-                    if int(simboxid) in arange(1,len(currentregion.simboxlist)+1):
-                        currentregion.optsimbox(currentregion.simboxlist[int(simboxid)-1])
-                    else:
-                        print('Simulation container ID numbers only range from 1 to %i, inclusive.' % len(currentregion.simboxlist))                
+#                # Is the first word 'opt'? Then optimise all simulation objects in a simbox of choice.
+#                elif subinputlist[0] == 'opt' and len(currentregion.simboxlist) > 0:
+#                    simboxid = subinputlist[1]                
+#                    
+#                    try:
+#                        int(simboxid)
+#                    except ValueError:
+#                        simboxid = 0
+#                    if int(simboxid) in arange(1,len(currentregion.simboxlist)+1):
+#                        currentregion.optsimbox(currentregion.simboxlist[int(simboxid)-1])
+#                    else:
+#                        print('Simulation container ID numbers only range from 1 to %i, inclusive.' % len(currentregion.simboxlist))                
                 
                 # Is the first word 'plot' or 'multiplot'? Then plot all the processed results in a simbox of choice.
                 elif (subinputlist[0] == 'plot' or 'multiplot') and len(currentregion.simboxlist) > 0:
@@ -228,8 +225,8 @@ class Portfolio:
             print("To make a new simulation container in this region titled 'simbox_name', type: make simbox_name")
             if len(currentregion.simboxlist) > 0:
                 print("To initialise a new simulation titled 'sim_name', type: sim sim_name")
-                print("To run all unprocessed simulations in 'simbox_id', type: run simbox_id")
-                print("To optimise all unprocessed simulations in 'simbox_id', type: opt simbox_id")    # Heavy work ahead.
+                print("To process all unprocessed simulations in 'simbox_id', type: run simbox_id")
+                print("This will be a simple run or an optimisation depending on simulation container type.")
                 print("To plot each processed simulation in 'simbox_id', type: plot simbox_id")
                 print("To plot all processed simulations in 'simbox_id', type: multiplot simbox_id")
             print('To return to portfolio level, type: r')
