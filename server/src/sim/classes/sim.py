@@ -185,7 +185,18 @@ class Sim:
 class SimBudget(Sim):
     def __init__(self, name, region):
         Sim.__init__(self, name, region)
-        
+        self.plotdataopt = None
+
+    def todict(self):
+        simdict = Sim.todict(self)
+        simdict['type'] = 'SimBudget'
+        simdict['plotdataopt'] = self.plotdataopt
+        return simdict
+
+    def load_dict(self,simdict):
+        Sim.load_dict(self,simdict)
+        self.plotdataopt = simdict['plotdataopt']
+
     # Currently just optimises simulation according to defaults.
     def optimise(self):
         r = self.getregion()
