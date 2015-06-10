@@ -27,22 +27,32 @@ class Sim:
         self.setregion(region)
 
     @classmethod
-    def fromdict(SimBox,simdict,region):
+    def fromdict(Sim,simdict,region):
+        # This function instantiates the correct subtype based on simdict['type']
         assert(simdict['region_uuid'] == region.uuid)
-
-        s = Sim(simdict['name'],region)
-        s.processed  = simdict['processed']  
-        s.parsdata  = simdict['parsdata']  
-        s.parsmodel  = simdict['parsmodel']  
-        s.parsfitted  = simdict['parsfitted']  
-        s.debug  = simdict['debug']   
-        s.plotdata  = simdict['plotdata']  
-        s.plotdataopt  = simdict['plotdataopt']  
+        print simdict['type']
+        if simdict['type'] == 'Sim':
+            s = Sim(simdict['name'],region)
+        if simdict['type'] == 'SimParameter':
+            s = SimParameter(simdict['name'],region)
+        if simdict['type'] == 'SimBudget':
+            s = SimBudget(simdict['name'],region)
         s.setregion(region)
+        s.load_dict(simdict)
         return s
+
+    def load_dict(self,simdict):
+        self.processed  = simdict['processed']  
+        self.parsdata  = simdict['parsdata']  
+        self.parsmodel  = simdict['parsmodel']  
+        self.parsfitted  = simdict['parsfitted']  
+        self.debug  = simdict['debug']   
+        self.plotdata  = simdict['plotdata']  
+        self.plotdataopt  = simdict['plotdataopt']  
 
     def todict(self):
         simdict = {}
+        simdict['type'] = 'Sim'
         simdict['name'] = self.name
         simdict['processed']  = self.processed 
         simdict['parsdata']  = self.parsdata 
@@ -210,6 +220,16 @@ class SimParameter(Sim):
     def __init__(self, name, region):
         Sim.__init__(self, name, region)
         self.parameter_overrides = []
+
+    def todict(self):
+        simdict = Sim.todict(self)
+        simdict['type'] = 'SimParameter'
+        simdict['parameter_overrides'] = self.parameter_overrides
+        return simdict
+
+    def load_dict(self,simdict):
+        Sim.load_dict(self,simdict)
+        self.parameter_overrides = simdict['parameter_overrides'] 
 
     def create_override(self,parname,pop,startyear,endyear,startval,endval):
         # Create override for a single parameter, preserving the current dictionary representation of scenarios
