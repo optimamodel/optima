@@ -116,8 +116,8 @@ class Sim:
         tempD['G'] = r.metadata
         tempD['M'] = self.parsmodel
         
-        tempD = makefittedpars(tempD)
-        self.parsfitted = tempD['F']
+        #tempD = makefittedpars(tempD)
+        self.parsfitted = r.D['F']
         
         self.initialised = True
 
