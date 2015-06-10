@@ -109,9 +109,11 @@ class Region:
             self.simboxlist.append(SimBox(simboxname,self))
         if createdefault:
             self.simboxlist[-1].createsim(simboxname + '-default')
-            
+        return self.simboxlist[-1]
+        
     def createsiminsimbox(self, simname, simbox):
-        simbox.createsim(simname)
+        new_sim = simbox.createsim(simname)
+        return new_sim
     
 # Combine into one SimBox dependent run method?
 #------------------------------------

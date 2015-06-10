@@ -51,7 +51,8 @@ class SimBox:
         print('Preparing new basic simulation for standard container %s...' % self.name)
         self.simlist.append(Sim(simname,self.getregion()))
         self.simlist[-1].initialise()
-    
+        return self.simlist[-1]
+        
     def runallsims(self, forcerun = False):
         for sim in self.simlist:
             if forcerun or not sim.isprocessed():
