@@ -7,6 +7,7 @@ Created on Fri May 29 23:16:12 2015
 
 import defaults
 from simbox import SimBox, SimBoxOpt
+import sim
 import setoptions
 import uuid
 
@@ -82,7 +83,15 @@ class Region:
 
         self.data = tempD['data']
         self.options = tempD['opt']
-    
+
+        # Go through the scenarios and convert them
+        sbox = self.createsimbox('Scenarios')
+        for scenario in tempD['scens']: # Separate cases in the web list 
+            newsim = sim.SimParameter(scenario['scenario']['name'],self)
+            for par in scenario['scenario']['pars']:
+                newsim.create_override(par['names'],par['pops'],par['startyear'],par['endyear'],par['startval'],par['endval'])
+            sbox.simlist.append(newsim)
+
     def save(self,filename):
         import dataio
         dataio.savedata(filename,self.todict())
