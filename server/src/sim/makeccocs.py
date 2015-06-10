@@ -398,6 +398,8 @@ def getcoverage(D=None, artindex=None, progname=None):
     targetpars = list(set(targetpars))
     popnumbers = list(set(popnumbers))
 
+    targetpopmodel = None
+
     # Figure out the total model-estimated size of the targeted population(s)
     for thispar in targetpars: # Loop through parameters
         if len(D['P'][thispar]['p'])==D['G']['npops']: # For parameters whose effect is differentiated by population, we add up the targeted populations
@@ -423,7 +425,10 @@ def getcoverage(D=None, artindex=None, progname=None):
                 
     # We only want the model-estimated size of the targeted population(s) for actual years, not the interpolated years
     yearindices = xrange(0,npts,int(1/D['opt']['dt']))
-    targetpop = targetpopmodel[yearindices]
+    
+    targetpop = None
+    if targetpopmodel is not None:
+        targetpop = targetpopmodel[yearindices]
 
     coverage = D['data']['costcov']['cov'][prognumber] 
     coveragelabel = 'Number covered' if any(j > 1 for j in D['data']['costcov']['cov'][prognumber]) else 'Proportion covered'
