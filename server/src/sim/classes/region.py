@@ -143,7 +143,7 @@ class Region:
     # Runs through every simulation in simbox (if processed) and plots them, either multiplot or individual style.
     def plotsimbox(self, simbox, multiplot = False):
         if multiplot:
-            simbox.viewmultiresults(self.metadata)
+            simbox.viewmultiresults()
         else:
             simbox.plotallsims()
         
