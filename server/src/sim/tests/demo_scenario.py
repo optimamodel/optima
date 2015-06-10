@@ -15,7 +15,8 @@ def create_scenarios():
 	sim2.create_override(['txtotal'],'all',2015,2030,0.4,0.81)
 
 	# Put them in a simbox, run them, and plot results
-
+	sbox = r.createsimbox('Test scenarios')
+	sbox.simlist = [sim1,sim2]
 	sbox.runallsims()
 	sbox.viewmultiresults()
 
@@ -48,4 +49,4 @@ def run_existing():
 	sbox.viewmultiresults()
 
 #save_and_load_scenarios()
-run_existing()
+create_scenarios()
