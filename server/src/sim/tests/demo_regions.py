@@ -8,8 +8,8 @@ def test_from_json():
 	# Test running a simulation from JSON
 	r = region.Region.load('./regions/Haiti.json')
 	r.createsimbox('Simbox 1')
-	r.simboxlist[0].createsim('sim1') 
-	r.runsimbox(r.simboxlist[0])
+	r.simboxlist[-1].createsim('sim1') 
+	r.runsimbox(r.simboxlist[-1])
 	return r
 
 
