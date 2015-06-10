@@ -44,7 +44,7 @@ def test_multiresults():
 	r = test_from_json()
 	r.simboxlist[0].createsim('sim2') # This should really be r.simboxlist.createsim('sim_name') ...
 	r.runsimbox(r.simboxlist[0])
-	r.simboxlist[0].viewmultiresults(r.metadata)
+	r.simboxlist[0].viewmultiresults()
 
 test_saving_and_loading()
 test_from_json()
