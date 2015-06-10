@@ -11,7 +11,8 @@ class Sim:
     def __init__(self, name, region):
         self.name = name
         self.processed = False      # This tag monitors if the simulation has been run.
-        
+        self.initialised = False    # This tag monitors if the simulation has been initialised.
+
         self.parsdata = None        # This used to be D['P'].
         self.parsmodel = None       # This used to be D['M'].
         self.parsfitted = None      # This used to be D['F'].
@@ -109,9 +110,22 @@ class Sim:
         
         tempD = makefittedpars(tempD)
         self.parsfitted = tempD['F']
-    
+        
+        self.initialised = True
+
+    def makemodelpars(self):
+        # SimParameter, SimBudget and SimCoverge differ in how they calculate D.M
+        # but are otherwise almost identical. Thus this is the function that is
+        # expected to be re-implemented in the derived classes
+        from makemodelpars import makemodelpars
+
+        self.parsmodel = makemodelpars(self.parsdata, r.options)
+
     # Runs model given all the initialised parameters.
     def run(self):
+        if not self.initialised:
+            self.initialize()
+
         r = self.getregion()
 
         from model import model
