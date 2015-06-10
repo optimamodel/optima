@@ -37,7 +37,7 @@ def test_from_xlsx():
 
 def test_uncerresults():
 	r = test_from_json()
-	r.simboxlist[0].plotallsims()
+	r.simboxlist[-1].plotallsims()
 
 
 def test_multiresults():
