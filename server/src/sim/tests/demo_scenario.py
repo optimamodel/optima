@@ -47,4 +47,5 @@ def run_existing():
 	sbox.runallsims()
 	sbox.viewmultiresults()
 
-save_and_load_scenarios()
+#save_and_load_scenarios()
+run_existing()

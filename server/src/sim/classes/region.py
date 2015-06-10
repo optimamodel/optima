@@ -85,12 +85,13 @@ class Region:
         self.options = tempD['opt']
 
         # Go through the scenarios and convert them
-        sbox = self.createsimbox('Scenarios')
-        for scenario in tempD['scens']: # Separate cases in the web list 
-            newsim = sim.SimParameter(scenario['scenario']['name'],self)
-            for par in scenario['scenario']['pars']:
-                newsim.create_override(par['names'],par['pops'],par['startyear'],par['endyear'],par['startval'],par['endval'])
-            sbox.simlist.append(newsim)
+        if 'scens' in tempD.keys():
+            sbox = self.createsimbox('Scenarios')
+            for scenario in tempD['scens']: # Separate cases in the web list 
+                newsim = sim.SimParameter(scenario['scenario']['name'],self)
+                for par in scenario['scenario']['pars']:
+                    newsim.create_override(par['names'],par['pops'],par['startyear'],par['endyear'],par['startval'],par['endval'])
+                sbox.simlist.append(newsim)
 
     def save(self,filename):
         import dataio
