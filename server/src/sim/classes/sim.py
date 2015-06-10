@@ -124,7 +124,7 @@ class Sim:
     # Runs model given all the initialised parameters.
     def run(self):
         if not self.initialised:
-            self.initialize()
+            self.initialise()
 
         r = self.getregion()
 
