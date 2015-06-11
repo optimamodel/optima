@@ -245,6 +245,4 @@ class Region:
         self.data = updatedata.getrealcosts(data)
 
     def __repr__(self):
-        n_simbox = len(self.simboxlist)
-        n_sims = sum([len(x.simlist) for x in self.simboxlist])
         return "Region %s ('%s')" % (self.uuid,self.metadata['name'])
