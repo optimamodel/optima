@@ -7,12 +7,14 @@ Created on Tue Jun 02 01:03:34 2015
 
 from sim import Sim, SimBudget
 import weakref
+import uuid
 
 class SimBox:
     def __init__(self, name,region):
         self.name = name
         self.simlist = []
         self.setregion(region)
+        self.uuid = str(uuid.uuid4()) # Store UUID as a string - we just want a (practically) unique tag, no advanced functionality
 
     @classmethod
     def fromdict(SimBox,simboxdict,region):
@@ -21,6 +23,7 @@ class SimBox:
         s = SimBox(simboxdict['name'],region)
         s.simlist = [Sim.fromdict(x,region) for x in simboxdict['simlist']]
         s.setregion(region)
+        s.uuid = simboxdict['uuid'] # Loading a region restores the original UUID
 
         return s
 
@@ -29,6 +32,7 @@ class SimBox:
         simboxdict['name'] = self.name
         simboxdict['simlist'] = [s.todict() for s in self.simlist]
         simboxdict['region_uuid'] = self.getregion().uuid
+        simboxdict['uuid'] = self.uuid
 
         return simboxdict
     
@@ -108,7 +112,9 @@ class SimBox:
         
     def getname(self):
         return self.name
-        
+
+    def __repr__(self):
+        return "SimBox %s ('%s')" % (self.uuid,self.name)
         
         
 # A container just for Sims with budgets.
@@ -144,3 +150,6 @@ class SimBoxOpt(SimBox):
                 
          # Generates a new SimBudget from the last Sim that was optimised in the list, but only when the loop has ended.
         self.createsimopt(tempsim)
+
+    def __repr__(self):
+        return "SimBoxOpt %s ('%s')" % (self.uuid,self.name)

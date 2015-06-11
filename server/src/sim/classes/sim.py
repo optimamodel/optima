@@ -6,12 +6,14 @@ Created on Fri Jun 05 23:27:38 2015
 """
 
 import weakref
+import uuid
 
 class Sim:
     def __init__(self, name, region):
         self.name = name
         self.processed = False      # This tag monitors if the simulation has been run.
         self.initialised = False    # This tag monitors if the simulation has been initialised.
+        self.uuid = str(uuid.uuid4()) # Store UUID as a string - we just want a (practically) unique tag, no advanced functionality
 
         self.parsdata = None        # This used to be D['P'].
         self.parsmodel = None       # This used to be D['M'].
@@ -48,6 +50,7 @@ class Sim:
         self.debug  = simdict['debug']   
         self.plotdata  = simdict['plotdata']  
         self.plotdataopt  = simdict['plotdataopt']  
+        self.uuid = simdict['uuid']
 
     def todict(self):
         simdict = {}
@@ -61,6 +64,7 @@ class Sim:
         simdict['plotdata']  = self.plotdata 
         simdict['plotdataopt']  = self.plotdataopt 
         simdict['region_uuid'] = self.getregion().uuid
+        simdict['uuid'] = self.uuid
         return simdict
     
     def setregion(self,region):
@@ -178,7 +182,8 @@ class Sim:
         
         viewuncerresults(self.plotdata, show_wait = True)
 
-
+    def __repr__(self):
+        return "Sim %s ('%s')" % (self.uuid,self.name)
 
 # Derived Sim class that should store budget data.
 class SimBudget(Sim):
@@ -248,7 +253,9 @@ class SimBudget(Sim):
         # Saves optimisation results to this Sim. New 'G', 'M', 'F', 'S'.
         self.debug['results'] = tempD['result']
         self.resultopt = tempD['result']['debug']
-        
+    
+    def __repr__(self):
+        return "SimBudget %s ('%s')" % (self.uuid,self.name)    
 
 class SimParameter(Sim):
     def __init__(self, name, region):
@@ -355,3 +362,6 @@ class SimParameter(Sim):
                 data = newdata # In all other cases, reset the whole thing (if both are 1D, or if both are 2D
 
             setnested(self.parsmodel, thesepars['names'], data)
+
+    def __repr__(self):
+        return "SimParameter %s ('%s')" % (self.uuid,self.name)    
