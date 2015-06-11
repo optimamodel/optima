@@ -248,4 +248,8 @@ class Portfolio:
         
         for currentregion in self.regionlist:
             print('Initialising a simulation in region %s for this GPA.' % currentregion.getregionname())
-            currentregion.createsimbox('GPA-'+gpaname, isopt = True, createdefault = True)
+            tempsimbox = currentregion.createsimbox('GPA-'+gpaname, isopt = True, createdefault = True)
+            currentregion.createsiminsimbox('GPA-'+gpaname, tempsimbox)
+            currentregion.runsimbox(tempsimbox)
+            currentregion.runsimbox(tempsimbox)     # Do an extra run just to make sure that the optimised SimBudget is processed.
+            currentregion.plotsimbox(tempsimbox, multiplot = True)
