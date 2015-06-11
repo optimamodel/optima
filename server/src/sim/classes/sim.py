@@ -184,8 +184,10 @@ class Sim:
 class SimBudget(Sim):
     def __init__(self, name, region):
         Sim.__init__(self, name, region)
-        self.plotdataopt = []       # This used to be D['plot']['optim'][-1]. Be aware that it is not D['plot']!
-        self.resultopt = None
+        self.plotdataopt = None       # This used to be D['plot']['optim'][-1]. Be aware that it is not D['plot']!
+        self.resultopt = None       # The resulting data structures after optimisation.
+        self.origalloc = None       # The budget allocations before optimisation.
+        self.optalloc = None        # The resulting budget allocations after optimisation.
 
     def todict(self):
         simdict = Sim.todict(self)
@@ -200,12 +202,12 @@ class SimBudget(Sim):
     # Essentially copies old SimBudget into new SimBudget, except overwriting where applicable with sim.resultopt.
     # This will need to be monitored carefully! Every additional data structure in Sim+SimBudget must be written here.
     def specialoptload(self, sim):
-        self.setregion(sim.getregion())     # Did optimisation change D['G']? This could be dangerous!        
+        self.setregion(sim.getregion())     # Did optimisation change D['G']? Is it important? If so, this could be dangerous!        
         
 #        from copy import deepcopy
 #        sim = deepcopy(insim)        
         
-        self.name = (sim.name[:-8] if sim.name.endswith('-initial') else sim.name)+'-opt'
+        self.setname((sim.name[:-8] if sim.name.endswith('-initial') else sim.name)+'-opt')
         self.processed = False
         self.initialised = True    # This special loading is considered initialisation.
 
@@ -213,17 +215,19 @@ class SimBudget(Sim):
         self.parsmodel = sim.resultopt['M']         # New D['M'].
         self.parsfitted = sim.resultopt['F']        # New D['F'].
         
+        # Will need to run to get these.
         self.debug = {}
-#        self.debug['results'] = sim.debug['results']        # Is this used for anything at the moment?
         self.debug['results'] = None
-        self.debug['structure'] = sim.resultopt['S']        # New D['S'].
+        self.debug['structure'] = None
         
         self.plotdata = None
         
-        self.plotdataopt = []
+        self.plotdataopt = None
         self.resultopt = None
+        self.origalloc = sim.optalloc
+        self.optalloc = None
 
-    # Currently just optimises simulation according to defaults.
+    # Currently just optimises simulation according to defaults. As in... fixed budget!
     def optimise(self):
         r = self.getregion()
 
@@ -231,6 +235,8 @@ class SimBudget(Sim):
         
         tempD = dict()
         tempD['data'] = r.data
+        if not self.origalloc == None:
+            tempD['data']['origalloc'] = self.origalloc
         tempD['opt'] = r.options
         tempD['programs'] = r.metadata['programs']
         tempD['G'] = r.metadata
@@ -240,16 +246,23 @@ class SimBudget(Sim):
         tempD['R'] = self.debug['results']      # Does this do anything?
         tempD['plot'] = dict()
         
-        tempD['S'] = self.debug['structure']     # Error rising. Where does S come from? Do I need to run simulation first?
-        optimize(tempD, maxiters = 2, returnresult = True)   # Temporary restriction on iterations. Not meant to be hardcoded!
+        tempD['S'] = self.debug['structure']     # Need to run simulation before optimisation!
+        optimize(tempD, maxiters = 3, returnresult = True)   # Temporary restriction on iterations. Not meant to be hardcoded!
         
         self.plotdataopt = tempD['plot']['optim'][-1]       # What's this -1 business about?
         
         # Saves optimisation results to this Sim. New 'G', 'M', 'F', 'S'.
-        self.debug['results'] = tempD['result']
-        self.resultopt = tempD['result']['debug']
+        # self.debug['results'] = tempD['result']       # Maybe store just the results of a normal run in self.debug.
+        self.resultopt = tempD['result']['debug']       # Optimisation results are kept separate from debug['results'].
+#        self.test = tempD['test']        
         
+        # The new optimised allocations will be derived from the pie chart plotting data.
+        # Let's hope it's always there...
+        self.optalloc = self.plotdataopt['alloc'][-1]['piedata']
 
+
+
+# Derived Sim class that should store parameter overwrites.
 class SimParameter(Sim):
     def __init__(self, name, region):
         Sim.__init__(self, name, region)

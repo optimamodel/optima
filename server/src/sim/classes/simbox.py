@@ -129,7 +129,7 @@ class SimBoxOpt(SimBox):
     def createsimopt(self, sim):
         if not sim == None:
             print('Converting optimisation results into a new budget simulation...')
-            self.simlist.append(SimBudget((sim.getname()[:-8] if sim.getname().endswith('-initial') else sim.getname())+'-opt',self.getregion()))
+            self.simlist.append(SimBudget(sim.getname(),self.getregion()))
             
             # The copy can't be completely deep or shallow, so we load the new SimBudget with a developer-made method.
             self.simlist[-1].specialoptload(sim)
