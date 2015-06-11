@@ -22,7 +22,6 @@ class Sim:
         self.debug['structure'] = None       # This used to be D['S'].
         
         self.plotdata = None        # This used to be D['plot']['E']. Be aware that it is not D['plot']!        
-        self.plotdataopt = []       # This used to be D['plot']['optim']. Be aware that it is not D['plot']!
     
         self.setregion(region)
 
@@ -88,7 +87,7 @@ class Sim:
         return self.processed
     
     # Initialises P, M and F matrices belonging to the Sim object, but does not run simulation yet.
-    # Very dangerous, as stability relies on the trust that no data passed in is being changed behind the scenes...
+    # Region defaults can be overwritten by passing in parameters, e.g. in the case of creating a new optimised Sim Budget.
     def initialise(self):
         r = self.getregion()
 
@@ -117,7 +116,7 @@ class Sim:
         tempD['M'] = self.parsmodel
         
         #tempD = makefittedpars(tempD)
-        self.parsfitted = r.D['F']
+        self.parsfitted = r.D['F']      # Temporary solution. Remember, D should not be stored in region.
         
         self.initialised = True
 
@@ -185,7 +184,8 @@ class Sim:
 class SimBudget(Sim):
     def __init__(self, name, region):
         Sim.__init__(self, name, region)
-        self.plotdataopt = None
+        self.plotdataopt = []       # This used to be D['plot']['optim'][-1]. Be aware that it is not D['plot']!
+        self.resultopt = None
 
     def todict(self):
         simdict = Sim.todict(self)
@@ -196,6 +196,32 @@ class SimBudget(Sim):
     def load_dict(self,simdict):
         Sim.load_dict(self,simdict)
         self.plotdataopt = simdict['plotdataopt']
+    
+    # Essentially copies old SimBudget into new SimBudget, except overwriting where applicable with sim.resultopt.
+    # This will need to be monitored carefully! Every additional data structure in Sim+SimBudget must be written here.
+    def specialoptload(self, sim):
+        self.setregion(sim.getregion())     # Did optimisation change D['G']? This could be dangerous!        
+        
+#        from copy import deepcopy
+#        sim = deepcopy(insim)        
+        
+        self.name = (sim.name[:-8] if sim.name.endswith('-initial') else sim.name)+'-opt'
+        self.processed = False
+        self.initialised = True    # This special loading is considered initialisation.
+
+        self.parsdata = sim.parsdata
+        self.parsmodel = sim.resultopt['M']         # New D['M'].
+        self.parsfitted = sim.resultopt['F']        # New D['F'].
+        
+        self.debug = {}
+#        self.debug['results'] = sim.debug['results']        # Is this used for anything at the moment?
+        self.debug['results'] = None
+        self.debug['structure'] = sim.resultopt['S']        # New D['S'].
+        
+        self.plotdata = None
+        
+        self.plotdataopt = []
+        self.resultopt = None
 
     # Currently just optimises simulation according to defaults.
     def optimise(self):
@@ -211,21 +237,18 @@ class SimBudget(Sim):
         tempD['P'] = self.parsdata
         tempD['M'] = self.parsmodel
         tempD['F'] = self.parsfitted
-        tempD['R'] = self.debug['results']
+        tempD['R'] = self.debug['results']      # Does this do anything?
         tempD['plot'] = dict()
         
         tempD['S'] = self.debug['structure']     # Error rising. Where does S come from? Do I need to run simulation first?
-        optimize(tempD, maxiters = 2)   # Temporary restriction on iterations. Not meant to be hardcoded!
+        optimize(tempD, maxiters = 2, returnresult = True)   # Temporary restriction on iterations. Not meant to be hardcoded!
         
         self.plotdataopt = tempD['plot']['optim'][-1]       # What's this -1 business about?
         
-#        # Figure out plotting shortly.
-#        from viewresults import viewmultiresults, viewoptimresults
-#        
-#        viewmultiresults(tempD['plot']['optim'][-1]['multi'], show_wait = True)
-#        viewmultiresults(tempD['plot']['optim'][-1]['multi'], show_wait = True)
-#        viewoptimresults(tempD['plot']['optim'][-1])
-#        viewoptimresults(tempD['plot']['optim'][-1])
+        # Saves optimisation results to this Sim. New 'G', 'M', 'F', 'S'.
+        self.debug['results'] = tempD['result']
+        self.resultopt = tempD['result']['debug']
+        
 
 class SimParameter(Sim):
     def __init__(self, name, region):

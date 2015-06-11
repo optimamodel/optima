@@ -72,18 +72,18 @@ class SimBox:
         tempD['G'] = r.metadata
 
         Rarr = []
-        cannotgetmulti = False
+        atleastoneplot = False
         for sim in self.simlist:
-            if not sim.isprocessed():
-                cannotgetmulti = True
-            tmp = {}
-            tmp['R'] = sim.debug['results']
-            tmp['label'] = sim.name
+            if sim.isprocessed():
+                atleastoneplot = True
+                tmp = {}
+                tmp['R'] = sim.debug['results']
+                tmp['label'] = sim.name
+    
+                Rarr.append(tmp)
 
-            Rarr.append(tmp)
-
-        if cannotgetmulti:
-            print('Some simulations in this container are not yet processed!')
+        if not atleastoneplot:
+            print('Not one simulation in this container is processed. No plot data exists.')
         else:
             import gatherplotdata,viewresults
             multidata = gatherplotdata.gathermultidata(tempD, Rarr,verbose=0)
@@ -124,9 +124,23 @@ class SimBoxOpt(SimBox):
             print('Preparing new budget simulation for optimisation container %s...' % self.name)
             self.simlist.append(SimBudget(simname+'-initial',self.getregion()))
             self.simlist[-1].initialise()
+            
+    # This creates a duplicate SimBudget to 'sim', except with optimised 'G', 'M', 'F', 'S' from sim.resultopt.
+    def createsimopt(self, sim):
+        if not sim == None:
+            print('Converting optimisation results into a new budget simulation...')
+            self.simlist.append(SimBudget((sim.getname()[:-8] if sim.getname().endswith('-initial') else sim.getname())+'-opt',self.getregion()))
+            
+            # The copy can't be completely deep or shallow, so we load the new SimBudget with a developer-made method.
+            self.simlist[-1].specialoptload(sim)
     
     def runallsims(self, forcerun = False):
+        tempsim = None
         for sim in self.simlist:
             if forcerun or not sim.isprocessed():
-                sim.run()           # Is this really necessary, just to get D['S']?
+                sim.run()               # Is this really necessary, just to get D['S']?
                 sim.optimise()
+                tempsim = sim
+                
+         # Generates a new SimBudget from the last Sim that was optimised in the list, but only when the loop has ended.
+        self.createsimopt(tempsim)
