@@ -251,5 +251,4 @@ class Portfolio:
             tempsimbox = currentregion.createsimbox('GPA-'+gpaname, isopt = True, createdefault = True)
             currentregion.createsiminsimbox('GPA-'+gpaname, tempsimbox)
             currentregion.runsimbox(tempsimbox)
-            currentregion.runsimbox(tempsimbox)     # Do an extra run just to make sure that the optimised SimBudget is processed.
             currentregion.plotsimbox(tempsimbox, multiplot = True)

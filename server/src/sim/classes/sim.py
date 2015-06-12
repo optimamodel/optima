@@ -10,8 +10,8 @@ import weakref
 class Sim:
     def __init__(self, name, region):
         self.name = name
+        self.initialised = False    # This tag monitors if the simulation has been initialised.        
         self.processed = False      # This tag monitors if the simulation has been run.
-        self.initialised = False    # This tag monitors if the simulation has been initialised.
 
         self.parsdata = None        # This used to be D['P'].
         self.parsmodel = None       # This used to be D['M'].
@@ -184,7 +184,12 @@ class Sim:
 class SimBudget(Sim):
     def __init__(self, name, region):
         Sim.__init__(self, name, region)
-        self.plotdataopt = None       # This used to be D['plot']['optim'][-1]. Be aware that it is not D['plot']!
+        
+        # This tag monitors if the simulation has been optimised (not whether it is the optimum).
+        # Also different from standard processing.
+        self.optimised = False        
+        
+        self.plotdataopt = None     # This used to be D['plot']['optim'][-1]. Be aware that it is not D['plot']!
         self.resultopt = None       # The resulting data structures after optimisation.
         self.origalloc = None       # The budget allocations before optimisation.
         self.optalloc = None        # The resulting budget allocations after optimisation.
@@ -198,6 +203,9 @@ class SimBudget(Sim):
     def load_dict(self,simdict):
         Sim.load_dict(self,simdict)
         self.plotdataopt = simdict['plotdataopt']
+        
+    def isoptimised(self):
+        return self.optimised
     
     # Essentially copies old SimBudget into new SimBudget, except overwriting where applicable with sim.resultopt.
     # This will need to be monitored carefully! Every additional data structure in Sim+SimBudget must be written here.
@@ -259,6 +267,8 @@ class SimBudget(Sim):
         # The new optimised allocations will be derived from the pie chart plotting data.
         # Let's hope it's always there...
         self.optalloc = self.plotdataopt['alloc'][-1]['piedata']
+        
+        self.optimised = True
 
 
 

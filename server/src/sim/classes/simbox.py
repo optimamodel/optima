@@ -126,6 +126,7 @@ class SimBoxOpt(SimBox):
             self.simlist[-1].initialise()
             
     # This creates a duplicate SimBudget to 'sim', except with optimised 'G', 'M', 'F', 'S' from sim.resultopt.
+    # As an optimised version of the previous SimBudget, it will also be automatically processed, to get plotdata.
     def createsimopt(self, sim):
         if not sim == None:
             print('Converting optimisation results into a new budget simulation...')
@@ -133,14 +134,33 @@ class SimBoxOpt(SimBox):
             
             # The copy can't be completely deep or shallow, so we load the new SimBudget with a developer-made method.
             self.simlist[-1].specialoptload(sim)
+            self.simlist[-1].run()
+            
     
     def runallsims(self, forcerun = False):
         tempsim = None
         for sim in self.simlist:
             if forcerun or not sim.isprocessed():
-                sim.run()               # Is this really necessary, just to get D['S']?
+                sim.run()
+            if sim.isprocessed() and (forcerun or not sim.isoptimised()):
                 sim.optimise()
                 tempsim = sim
                 
          # Generates a new SimBudget from the last Sim that was optimised in the list, but only when the loop has ended.
         self.createsimopt(tempsim)
+    
+    # Special printing method for SimBoxOpt to take into account whether a Sim was already optimised.
+    def printsimlist(self, assubsubset = False):
+        # Prints with long arrow formats if assubsubset is true. Otherwise uses short arrows.        
+        if assubsubset:
+            if len(self.simlist) > 0:
+                for sim in self.simlist:
+                    print('   --> %s%s' % (sim.getname(), (" (initialised)" if not sim.isprocessed() else " (simulated + %s)" %
+                                             ("further optimisable" if not sim.isoptimised() else "already optimised"))))
+        else:
+            if len(self.simlist) == 0:
+                print(' --> No simulations are currently stored in container %s.' % self.getname())
+            else:
+                for sim in self.simlist:
+                    print(' --> %s%s' % (sim.getname(), (" (initialised)" if not sim.isprocessed() else " (simulated + %s)" %
+                                             ("further optimisable" if not sim.isoptimised() else "already optimised"))))
