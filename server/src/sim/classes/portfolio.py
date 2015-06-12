@@ -77,7 +77,7 @@ class Portfolio:
                         # Region is created.
                         print('Creating region %s with data from: ' % regionname)
                         print(self.regd+'/'+templist[fchoice-1])
-                        self.regionlist.append(Region.load(self.regd+'/'+templist[fchoice-1],regionname))
+                        self.appendregion(Region.load(self.regd+'/'+templist[fchoice-1],regionname))
                 
                 # Is the first word 'examine'? Then enter a subloop that processes commands regarding the relevant region.
                 elif cmdinputlist[0] == 'examine' and len(self.regionlist) > 0:
@@ -107,7 +107,11 @@ class Portfolio:
                 print("To examine a region numbered 'region_id', type: examine region_id")
             print('To quit, type: q')
             cmdinput = raw_input('Enter command: ')
-            
+    
+    # Appends region onto regionlist.
+    def appendregion(self, region):
+        self.regionlist.append(region)    
+    
     def examineregion(self, currentregion):
         """
         All processes associated with a stored region are run here.
@@ -186,19 +190,6 @@ class Portfolio:
                         currentregion.runsimbox(currentregion.simboxlist[int(simboxid)-1])
                     else:
                         print('Simulation container ID numbers only range from 1 to %i, inclusive.' % len(currentregion.simboxlist))
-                
-#                # Is the first word 'opt'? Then optimise all simulation objects in a simbox of choice.
-#                elif subinputlist[0] == 'opt' and len(currentregion.simboxlist) > 0:
-#                    simboxid = subinputlist[1]                
-#                    
-#                    try:
-#                        int(simboxid)
-#                    except ValueError:
-#                        simboxid = 0
-#                    if int(simboxid) in arange(1,len(currentregion.simboxlist)+1):
-#                        currentregion.optsimbox(currentregion.simboxlist[int(simboxid)-1])
-#                    else:
-#                        print('Simulation container ID numbers only range from 1 to %i, inclusive.' % len(currentregion.simboxlist))                
                 
                 # Is the first word 'plot' or 'multiplot'? Then plot all the processed results in a simbox of choice.
                 elif (subinputlist[0] == 'plot' or 'multiplot') and len(currentregion.simboxlist) > 0:
