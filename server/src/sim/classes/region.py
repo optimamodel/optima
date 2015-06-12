@@ -7,6 +7,7 @@ Created on Fri May 29 23:16:12 2015
 
 import defaults
 from simbox import SimBox, SimBoxOpt
+import sim
 import setoptions
 import uuid
 
@@ -49,6 +50,7 @@ class Region:
         import dataio
         regiondict = dataio.loaddata(filename)
         if 'uuid' in regiondict.keys(): # This is a new-type JSON file
+            r.uuid = regiondict['uuid'] # Loading a region restores the original UUID
             r.fromdict(regiondict)
         else:
             r.fromdict_legacy(regiondict)
@@ -58,7 +60,7 @@ class Region:
         # Assign variables from a new-type JSON file created using Region.todict()
         self.metadata = regiondict['metadata']
         self.data = regiondict['data']
-        self.simboxlist = [SimBox.fromdict(x) for x in regiondict['simboxlist']]
+        self.simboxlist = [SimBox.fromdict(x,self) for x in regiondict['simboxlist']]
         self.options = regiondict['options'] # Populate default options here
         self.ccocs = regiondict['ccocs']
         self.calibrations = regiondict['calibrations']       
@@ -81,7 +83,16 @@ class Region:
 
         self.data = tempD['data']
         self.options = tempD['opt']
-    
+
+        # Go through the scenarios and convert them
+        if 'scens' in tempD.keys():
+            sbox = self.createsimbox('Scenarios')
+            for scenario in tempD['scens']: # Separate cases in the web list 
+                newsim = sim.SimParameter(scenario['scenario']['name'],self)
+                for par in scenario['scenario']['pars']:
+                    newsim.create_override(par['names'],par['pops'],par['startyear'],par['endyear'],par['startval'],par['endval'])
+                sbox.simlist.append(newsim)
+
     def save(self,filename):
         import dataio
         dataio.savedata(filename,self.todict())
@@ -103,34 +114,36 @@ class Region:
 
     def createsimbox(self, simboxname, isopt = False, createdefault = True):
         if isopt:
-            self.simboxlist.append(SimBoxOpt(simboxname))
+            self.simboxlist.append(SimBoxOpt(simboxname,self))
         else:
-            self.simboxlist.append(SimBox(simboxname))
+            self.simboxlist.append(SimBox(simboxname,self))
         if createdefault:
-            self.simboxlist[-1].createsim(simboxname + '-default', self.data, self.metadata, self.options)
-            
+            self.simboxlist[-1].createsim(simboxname + '-default')
+        return self.simboxlist[-1]
+        
     def createsiminsimbox(self, simname, simbox):
-        simbox.createsim(simname, self.data, self.metadata, self.options)
+        new_sim = simbox.createsim(simname)
+        return new_sim
     
 # Combine into one SimBox dependent run method?
 #------------------------------------
     # Runs through every simulation in simbox (if not processed) and processes them.
     def runsimbox(self, simbox):
-        simbox.runallsims(self.data, self.metadata, self.options, forcerun = False)
+        simbox.runallsims(forcerun = False)
     
-    # Runs through every simulation in simbox (if not processed) and optimises them.
-    # Currently uses default settings.
-    def optsimbox(self, simbox):
-        if isinstance(simbox, SimBoxOpt):
-            simbox.optallsims(self.data, self.metadata, self.options, forcerun = True)
-        else:
-            print('Cannot optimise a standard container.')
+#    # Runs through every simulation in simbox (if not processed) and optimises them.
+#    # Currently uses default settings.
+#    def optsimbox(self, simbox):
+#        if isinstance(simbox, SimBoxOpt):
+#            simbox.optallsims(forcerun = True)
+#        else:
+#            print('Cannot optimise a standard container.')
 #------------------------------------
         
     # Runs through every simulation in simbox (if processed) and plots them, either multiplot or individual style.
     def plotsimbox(self, simbox, multiplot = False):
         if multiplot:
-            simbox.viewmultiresults(self.metadata)
+            simbox.viewmultiresults()
         else:
             simbox.plotallsims()
         

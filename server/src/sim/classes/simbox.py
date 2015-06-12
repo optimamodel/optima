@@ -6,36 +6,57 @@ Created on Tue Jun 02 01:03:34 2015
 """
 
 from sim import Sim, SimBudget
+import weakref
 
 class SimBox:
-    def __init__(self, name):
+    def __init__(self, name,region):
         self.name = name
-        
         self.simlist = []
-        
+        self.setregion(region)
+
     @classmethod
-    def fromdict(SimBox,simboxdict):
-        s = SimBox(None)
-        s.name = simboxdict['name']
-        s.simlist = [Sim.fromdict(x) for x in simboxdict['simlist']]
+    def fromdict(SimBox,simboxdict,region):
+        assert(simboxdict['region_uuid'] == region.uuid)
+
+        s = SimBox(simboxdict['name'],region)
+        s.simlist = [Sim.fromdict(x,region) for x in simboxdict['simlist']]
+        s.setregion(region)
+
         return s
 
     def todict(self):
         simboxdict = {}
         simboxdict['name'] = self.name
         simboxdict['simlist'] = [s.todict() for s in self.simlist]
+        simboxdict['region_uuid'] = self.getregion().uuid
+
         return simboxdict
-       
-    # Creates a simulation object but makes sure to initialise it immediately after, ready for processing.
-    def createsim(self, simname, regiondata, regionmetadata, regionoptions):
-        print('Preparing new basic simulation for standard container %s...' % self.name)
-        self.simlist.append(Sim(simname))
-        self.simlist[-1].initialise(regiondata, regionmetadata, regionoptions)
     
-    def runallsims(self, regiondata, regionmetadata, regionoptions, forcerun = False):
+    def setregion(self,region):
+        self.region = weakref.ref(region)
+
+    def getregion(self):
+        # self.region is a weakref object, which means to get
+        # the region you need to do self.region() rather than
+        # self.region. This function abstracts away this 
+        # implementation detail in case it changes in future
+        r = self.region()
+        if r is None:
+            raise Exception('The parent region has been garbage-collected and the reference is no longer valid')
+        else:
+            return r
+
+    # Creates a simulation object but makes sure to initialise it immediately after, ready for processing.
+    def createsim(self, simname):
+        print('Preparing new basic simulation for standard container %s...' % self.name)
+        self.simlist.append(Sim(simname,self.getregion()))
+        self.simlist[-1].initialise()
+        return self.simlist[-1]
+        
+    def runallsims(self, forcerun = False):
         for sim in self.simlist:
             if forcerun or not sim.isprocessed():
-                sim.run(regiondata, regionmetadata, regionoptions)
+                sim.run()
                 
     def plotallsims(self):
         for sim in self.simlist:
@@ -43,24 +64,31 @@ class SimBox:
                 sim.plotresults()
 
     # Needs to check processing like plotallsims.
-    def viewmultiresults(self, regionmetadata):
+    def viewmultiresults(self):
         # Superimpose plots, like in the scenarios page in the frontend
+        r = self.region()
 
         tempD = {}
-        tempD['G'] = regionmetadata
+        tempD['G'] = r.metadata
 
         Rarr = []
+        atleastoneplot = False
         for sim in self.simlist:
-            tmp = {}
-            tmp['R'] = sim.debug['results']
-            tmp['label'] = sim.name
+            if sim.isprocessed():
+                atleastoneplot = True
+                tmp = {}
+                tmp['R'] = sim.debug['results']
+                tmp['label'] = sim.name
+    
+                Rarr.append(tmp)
 
-            Rarr.append(tmp)
-
-        import gatherplotdata,viewresults
-        multidata = gatherplotdata.gathermultidata(tempD, Rarr,verbose=0)
-        #viewmultiresults(M, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 'daly':[0,1], 'death':[0,1], 'dx':[0,1], 'tx1':[0,1], 'tx2':[0,1], 'costcum':[1,1]}, simstartyear=2000, simendyear=2030, onefig=True, verbose=2, show_wait=False, linewidth=2):
-        viewresults.viewmultiresults(multidata, show_wait = True)
+        if not atleastoneplot:
+            print('Not one simulation in this container is processed. No plot data exists.')
+        else:
+            import gatherplotdata,viewresults
+            multidata = gatherplotdata.gathermultidata(tempD, Rarr,verbose=0)
+            #viewmultiresults(M, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 'daly':[0,1], 'death':[0,1], 'dx':[0,1], 'tx1':[0,1], 'tx2':[0,1], 'costcum':[1,1]}, simstartyear=2000, simendyear=2030, onefig=True, verbose=2, show_wait=False, linewidth=2):
+            viewresults.viewmultiresults(multidata, show_wait = True)
 
     def printsimlist(self, assubsubset = False):
         # Prints with long arrow formats if assubsubset is true. Otherwise uses short arrows.        
@@ -85,19 +113,34 @@ class SimBox:
         
 # A container just for Sims with budgets.
 class SimBoxOpt(SimBox):
-    def __init__(self, name):
-        SimBox.__init__(self, name)
+    def __init__(self,name,region):
+        SimBox.__init__(self,name,region)
         
     # Overwrites the standard Sim create method. This is where budget data would be attached.
-    def createsim(self, simname, regiondata, regionmetadata, regionoptions):
+    def createsim(self, simname):
         if len(self.simlist) > 0:
             print('Optimisation containers can only contain one initial simulation!')
         else:
             print('Preparing new budget simulation for optimisation container %s...' % self.name)
-            self.simlist.append(SimBudget(simname+'-initial'))
-            self.simlist[-1].initialise(regiondata, regionmetadata, regionoptions)
-                
-    def optallsims(self, regiondata, regionmetadata, regionoptions, forcerun = False):
+            self.simlist.append(SimBudget(simname+'-initial',self.getregion()))
+            self.simlist[-1].initialise()
+            
+    # This creates a duplicate SimBudget to 'sim', except with optimised 'G', 'M', 'F', 'S' from sim.resultopt.
+    def createsimopt(self, sim):
+        if not sim == None:
+            print('Converting optimisation results into a new budget simulation...')
+            self.simlist.append(SimBudget(sim.getname(),self.getregion()))
+            
+            # The copy can't be completely deep or shallow, so we load the new SimBudget with a developer-made method.
+            self.simlist[-1].specialoptload(sim)
+    
+    def runallsims(self, forcerun = False):
+        tempsim = None
         for sim in self.simlist:
             if forcerun or not sim.isprocessed():
-                sim.optimise(regiondata, regionmetadata, regionoptions)
+                sim.run()               # Is this really necessary, just to get D['S']?
+                sim.optimise()
+                tempsim = sim
+                
+         # Generates a new SimBudget from the last Sim that was optimised in the list, but only when the loop has ended.
+        self.createsimopt(tempsim)

@@ -173,7 +173,7 @@ def objectivecalc(optimparams, options):
     
     
     
-def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None, verbose=5, name='Default', stoppingfunc = None):
+def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None, verbose=5, name='Default', stoppingfunc = None, returnresult=False):
     """ Perform the actual optimization """
     from time import sleep
     
@@ -565,6 +565,12 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
     D = saveoptimization(D, name, objectives, constraints, result_to_save, verbose=2)
 
     printv('...done optimizing programs.', 2, verbose)
+    
+    # This is new code for the OOP structure. Legacy users will not run this line because returnresult is false by default.
+    if returnresult:
+        D['result'] = result['Rarr'][-1]['R']
+#        D['test'] = result  # Temp.
+    
     return D
 
 

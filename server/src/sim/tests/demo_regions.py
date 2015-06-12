@@ -8,8 +8,8 @@ def test_from_json():
 	# Test running a simulation from JSON
 	r = region.Region.load('./regions/Haiti.json')
 	r.createsimbox('Simbox 1')
-	r.simboxlist[0].createsim('sim1',r.data,r.metadata,r.options) # This is really confusing....
-	r.runsimbox(r.simboxlist[0])
+	r.simboxlist[-1].createsim('sim1') 
+	r.runsimbox(r.simboxlist[-1])
 	return r
 
 
@@ -18,7 +18,7 @@ def test_saving_and_loading():
 	r.save('./regions/Haiti_newstyle.json')
 	r2 = region.Region.load('./regions/Haiti_newstyle.json') # Load new style JSON
 	r2.createsimbox('Simbox 1')
-	r2.simboxlist[0].createsim('sim1',r2.data,r2.metadata,r2.options)
+	r2.simboxlist[0].createsim('sim1')
 	r2.runsimbox(r2.simboxlist[0])
 	r2.save('./regions/Haiti_newstyle_withsim.json')
 	r3 = region.Region.load('./regions/Haiti_newstyle_withsim.json') # Load new style JSON
@@ -32,19 +32,19 @@ def test_from_xlsx():
 	r.makeworkbook('./regions/Haiti_Test.xlsx') # Write to a dummy file for test purposes
 	r.loadworkbook('./regions/Haiti.xlsx')
 	r.createsimbox('Simbox 1')
-	r.simboxlist[0].createsim('sim1',r.data,r.metadata,r.options) # This is really confusing....
+	r.simboxlist[0].createsim('sim1') # This is really confusing....
 	r.runsimbox(r.simboxlist[0])
 
 def test_uncerresults():
 	r = test_from_json()
-	r.simboxlist[0].plotallsims()
+	r.simboxlist[-1].plotallsims()
 
 
 def test_multiresults():
 	r = test_from_json()
-	r.simboxlist[0].createsim('sim2',r.data,r.metadata,r.options) # This should really be r.simboxlist.createsim('sim_name') ...
+	r.simboxlist[0].createsim('sim2') # This should really be r.simboxlist.createsim('sim_name') ...
 	r.runsimbox(r.simboxlist[0])
-	r.simboxlist[0].viewmultiresults(r.metadata)
+	r.simboxlist[0].viewmultiresults()
 
 test_saving_and_loading()
 test_from_json()

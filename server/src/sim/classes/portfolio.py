@@ -14,8 +14,6 @@ import os
 from numpy import arange
 
 from region import Region
-import defaults
-
 
 class Portfolio:
     def __init__(self, portfolioname):
@@ -31,7 +29,6 @@ class Portfolio:
            
         Version: 2015may28 by davidkedz
         """
-        #from time import time
         
         print('\nPortfolio %s has been activated.' % self.portfolioname)
         print('\nThe script that created this portfolio is in...')
@@ -94,18 +91,16 @@ class Portfolio:
                     else:
                         print('Region ID numbers only range from 1 to %i, inclusive.' % len(self.regionlist))
                     
-                # Is the first word 'gpa'? Then, ideally, run geo-prioritisation analysis on subset derived from rest of the string.
-                elif cmdinputlist[0] == 'gpa' and len(self.regionlist) > 1:
-                    print('Gotcha! There is no geographical prioritisation analysis! This is just a stub.')
-                    
-                    # LINK TO GPA METHOD OR FUNCTION. MUST OPERATE ON A SUBSET LIST OF REGIONS.
+            # If command is 'gpa', create GPA SimBoxes in each region.
+            if cmdinput == 'gpa' and len(self.regionlist) > 1:
+                self.geoprioanalysis()
                     
             print('\n--------------------\n')
             self.printregionlist()
             print('')
             if len(self.regionlist) > 1:
                 print('Geographical prioritisation analysis now available.')
-                print('To run this analysis over all regions, type: gpa all')       # To be extended when the time comes.
+                print('To run this analysis, type: gpa')       # To be extended when the time comes.
             
             print("To make a new region titled 'region_name', type: make region_name")
             if len(self.regionlist) > 0:
@@ -192,18 +187,18 @@ class Portfolio:
                     else:
                         print('Simulation container ID numbers only range from 1 to %i, inclusive.' % len(currentregion.simboxlist))
                 
-                # Is the first word 'opt'? Then optimise all simulation objects in a simbox of choice.
-                elif subinputlist[0] == 'opt' and len(currentregion.simboxlist) > 0:
-                    simboxid = subinputlist[1]                
-                    
-                    try:
-                        int(simboxid)
-                    except ValueError:
-                        simboxid = 0
-                    if int(simboxid) in arange(1,len(currentregion.simboxlist)+1):
-                        currentregion.optsimbox(currentregion.simboxlist[int(simboxid)-1])
-                    else:
-                        print('Simulation container ID numbers only range from 1 to %i, inclusive.' % len(currentregion.simboxlist))                
+#                # Is the first word 'opt'? Then optimise all simulation objects in a simbox of choice.
+#                elif subinputlist[0] == 'opt' and len(currentregion.simboxlist) > 0:
+#                    simboxid = subinputlist[1]                
+#                    
+#                    try:
+#                        int(simboxid)
+#                    except ValueError:
+#                        simboxid = 0
+#                    if int(simboxid) in arange(1,len(currentregion.simboxlist)+1):
+#                        currentregion.optsimbox(currentregion.simboxlist[int(simboxid)-1])
+#                    else:
+#                        print('Simulation container ID numbers only range from 1 to %i, inclusive.' % len(currentregion.simboxlist))                
                 
                 # Is the first word 'plot' or 'multiplot'? Then plot all the processed results in a simbox of choice.
                 elif (subinputlist[0] == 'plot' or 'multiplot') and len(currentregion.simboxlist) > 0:
@@ -228,8 +223,8 @@ class Portfolio:
             print("To make a new simulation container in this region titled 'simbox_name', type: make simbox_name")
             if len(currentregion.simboxlist) > 0:
                 print("To initialise a new simulation titled 'sim_name', type: sim sim_name")
-                print("To run all unprocessed simulations in 'simbox_id', type: run simbox_id")
-                print("To optimise all unprocessed simulations in 'simbox_id', type: opt simbox_id")    # Heavy work ahead.
+                print("To process all unprocessed simulations in 'simbox_id', type: run simbox_id")
+                print("This will be a simple run or an optimisation depending on simulation container type.")
                 print("To plot each processed simulation in 'simbox_id', type: plot simbox_id")
                 print("To plot all processed simulations in 'simbox_id', type: multiplot simbox_id")
             print('To return to portfolio level, type: r')
@@ -247,3 +242,14 @@ class Portfolio:
                 fid += 1
                 print('%i: %s' % (fid, region.getregionname()))
                 region.printsimboxlist(assubset=True)
+    
+    def geoprioanalysis(self):
+        gpaname = raw_input('Enter a title for the current analysis: ')
+        
+        for currentregion in self.regionlist:
+            print('Initialising a simulation in region %s for this GPA.' % currentregion.getregionname())
+            tempsimbox = currentregion.createsimbox('GPA-'+gpaname, isopt = True, createdefault = True)
+            currentregion.createsiminsimbox('GPA-'+gpaname, tempsimbox)
+            currentregion.runsimbox(tempsimbox)
+            currentregion.runsimbox(tempsimbox)     # Do an extra run just to make sure that the optimised SimBudget is processed.
+            currentregion.plotsimbox(tempsimbox, multiplot = True)
