@@ -1,9 +1,10 @@
 import uuid
 from operator import mul
+
 class Program:
 	def __init__(self,name):
 		self.name = name
-		self.uuid = uuid.uuid4()
+		self.uuid = str(uuid.uuid4())
 
 		self.modalities = []
 		self.metamodalities = [] # One metamodality for every combination of modalities, including single modalities
@@ -22,12 +23,8 @@ class Program:
 
 
 		self.effective_coverage = []
-		for m in self.metamodalities:
-			effective_coverage.append(m.get_coverage(self.modalities,coverage))
-
-
-
-
+		for mm in self.metamodalities:
+			effective_coverage.append(mm.get_coverage(self.modalities,coverage))
 
 			for i in xrange(0,len(self.metamodalities)):
 				coverages = []
@@ -35,15 +32,18 @@ class Program:
 					coverages.append()
 				self.effective_coverage
 
-	def add_modality(self,name):
-		new_modality = Modality(name)
+	def add_modality(self,name,maxcoverage=1):
+		new_modality = Modality(name,maxcoverage)
 		self.modalities.append(new_modality)
 		# Synchronize metamodalities
 		# Add a new metamodality with all of the previous ones
 		current_metamodalities = len(self.metamodalities)
-		for i in xrange(0,len(current_metamodalities)):
-			self.metamodalities.append(Metamodality(new_modality,metamodality=self.metamodalities[i]))
-		self.metamodalities.append()
+		for i in xrange(0,current_metamodalities):
+			self.metamodalities.append(Metamodality([new_modality],metamodality=self.metamodalities[i]))
+		self.metamodalities.append(Metamodality([new_modality]))
+		self.reflow_metamodalities()
+
+		return new_modality
 
 	def remove_modality(self,name,uuid):
 		idx = 1 # Actually look up the modality by name or by uuid
@@ -53,14 +53,50 @@ class Program:
 	def reflow_metamodalities(self):
 		# This function goes through and calculates the metamodality maxcoverage
 		# and enforces no double counting (when reachability interaction is not additive)
+
 		if self.reachability_interaction == 'random':
 			# Random reachability means that if modality 1 is capable of reaching 40/100 people, and 
 			# modality 2 is capable of reaching 20/100 people, then the probability of one person being reached
 			# by both programs is (40/100)*(20/100)
-			modality_coverage = [m.maxcoverage for m in self.modalities] # The maximum coverage for each modality
-			# Now go through the metamodalities
+			for mm in self.metamodalities:
+				mm.maxcoverage = reduce(mul,[m.maxcoverage for m in self.modalities if m.uuid in mm.modalities]) # This is the total fraction reached
 			
+			print 'MODALITIES'
+			print [m.maxcoverage for m in self.modalities]
+			print 'BEFORE'
+			print [mm.maxcoverage for mm in self.metamodalities]
+			print sum([mm.maxcoverage for mm in self.metamodalities])
+			# Now we go through the subsets - basically, if metamodality 1 is a subset of metamodality 2, then we subtract metamodality 2's coverage from metamodality 1
+			for i in xrange(len(self.modalities),0,-1): # Iterate over metamodalities containing i modalities
+				print i
+				superset = [mm for mm in self.metamodalities if len(mm.modalities) >= i]
+				subset = [mm for mm in self.metamodalities if len(mm.modalities) == i-1]
+				# Now for each modality in the superset, subtract off the subset
+				# if i > 1:
+				# 	raise Exception('bah')
 
+				for sub in subset:
+					for sup in superset: 
+						if set(sub.modalities).issubset(set(sup.modalities)):
+							print 'Removing %s (%.2f) from %s (%.2f->%.2f)' % (sup,sup.maxcoverage,sub,sub.maxcoverage,sub.maxcoverage-sup.maxcoverage) 
+							sub.maxcoverage -= sup.maxcoverage
+							# if sub.maxcoverage < 0:
+							# 	sub.maxcoverage = 0
+				print superset
+				print subset
+
+			print 'AFTER'
+			print [mm.maxcoverage for mm in self.metamodalities]
+			print sum([mm.maxcoverage for mm in self.metamodalities])
+			print '----'
+
+# Lets say modalities 1, 2 and 3 all reach 100% of the population
+# Then we say
+# modality 1 gets 1 removed due to (1,2) and 1 removed due to (1,3)
+# Let's say modality 1 can reach 100% of the population, but modalities 2 and 3 can reach 50%. Then
+# (1)
+# Then we have 50% of the population reached only by modality 1
+# 
 
 class Metamodality:
 	# The metamodality knows the coverage (number of people) who fall into the overlapping category
@@ -114,11 +150,14 @@ class Metamodality:
 				actual_coverage *= coverage[i]/modalities[i].maxcoverage
 		return actual_coverage
 
+	def __repr__(self):
+		return '(%s)' % (','.join([s[0:4] for s in self.modalities]))
+
 class Modality:
-	def __init__(self,name):
+	def __init__(self,name,maxcoverage = 1):
 		self.name = name
 
-		self.maxcoverage = 1 # The maximum fraction of the total population that this modality can reach
+		self.maxcoverage = maxcoverage # The maximum fraction of the total population that this modality can reach
 
 		# The number of people reached by this program is self.get_coverage(spending)*self.maxcoverage*population_size
 
@@ -127,15 +166,17 @@ class Modality:
 
 		# Cost-Coverage
 		self.ccfun = linear
+		self.ccparams = {}
 		self.ccparams['function'] = 'linear' # Use this dictionary to load/save
-		self.ccparams['parameters'] = [1 0]
+		self.ccparams['parameters'] = [1,0]
 		
 		# Coverage-outcome
 		self.cofun = linear
+		self.coparams = {}
 		self.coparams['function'] = 'linear' # Use this dictionary to load/save
-		self.coparams['parameters'] = [1 0]
+		self.coparams['parameters'] = [1,0]
 
-		self.uuid = uuid.uuid4()
+		self.uuid = str(uuid.uuid4())
 
 	def get_coverage(self,spending):
 		# self.ccparams['function'] is one of the keys in self.ccfun
@@ -144,6 +185,9 @@ class Modality:
 
 	def getoutcome(self,effective_coverage):
 		return self.cofun(self.coparams['parameters'],effective_coverage)
+
+	def __repr__(self):
+		return '%s (%s)' % (self.name,self.uuid[0:4])
 
 def linear(params,x):
 	return params[0]*x+params[1]
