@@ -387,3 +387,32 @@ class SimParameter(Sim):
 
     def __repr__(self):
         return "SimParameter %s ('%s')" % (self.uuid,self.name)    
+
+# Derived Sim class that should store parameter overwrites.
+class SimBudget2(Sim):
+    def __init__(self, name, region):
+        Sim.__init__(self, name, region)
+        self.budget = [] # This is a list of arrays, 
+
+    def todict(self):
+        simdict = Sim.todict(self)
+        simdict['type'] = 'SimBudget2'
+        simdict['budget'] = self.budget
+        return simdict
+
+    def load_dict(self,simdict):
+        Sim.load_dict(self,simdict)
+        self.budget = simdict['budget'] 
+
+    def makemodelpars(self):
+        r = self.getregion()
+        from copy import deepcopy
+        tempD = deepcopy(r.D)
+        import getcurrentbudget
+        # alloc (i.e. budget) goes in here
+        tempD = getcurrentbudget.getcurrentbudget(D)
+        import makemodelpars
+        self.parsmodel = makemodelpars.makemodelpars(tempD['P'],r.options,withwhat='c')
+
+    def __repr__(self):
+        return "SimBudget2 %s ('%s')" % (self.uuid,self.name)    
