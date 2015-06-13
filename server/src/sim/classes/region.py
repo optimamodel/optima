@@ -82,6 +82,8 @@ class Region:
             self.metadata['name'] = self.metadata['projectname']
 
         self.data = tempD['data']
+        self.data['current_budget'] = tempD['data']['costcov']['cost']
+
         self.options = tempD['opt']
 
         # Go through the scenarios and convert them
@@ -243,6 +245,7 @@ class Region:
         import updatedata
         self.metadata['programs'] = programs
         self.data = updatedata.getrealcosts(data)
-
+        self.data['current_budget'] = self.data['costcov']['cost']
+        
     def __repr__(self):
         return "Region %s ('%s')" % (self.uuid,self.metadata['name'])
