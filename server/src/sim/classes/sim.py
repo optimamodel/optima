@@ -392,7 +392,7 @@ class SimParameter(Sim):
 class SimBudget2(Sim):
     def __init__(self, name, region):
         Sim.__init__(self, name, region)
-        self.budget = [] # This is a list of arrays, 
+        self.budget = region.data['current_budget'] # After running sanitize(), this is alloc 
 
     def todict(self):
         simdict = Sim.todict(self)
@@ -411,6 +411,7 @@ class SimBudget2(Sim):
         import getcurrentbudget
         # alloc (i.e. budget) goes in here
         tempD = getcurrentbudget.getcurrentbudget(D)
+
         import makemodelpars
         self.parsmodel = makemodelpars.makemodelpars(tempD['P'],r.options,withwhat='c')
 

@@ -39,3 +39,14 @@ metadata['fail'] = arange(3*metadata['ncd4']+1, 4*metadata['ncd4']+1)
 metadata['tx2']  = arange(4*metadata['ncd4']+1, 5*metadata['ncd4']+1)
 for i,h in enumerate(metadata['healthstates']): 
 	metadata[h] = [metadata[state][i] for state in ['undx', 'dx', 'tx1', 'fail', 'tx2']]
+
+
+program = {}
+program['ccparams'] = {}
+program['ccparams']['function'] = 'cceqn' # Use this dictionary to load/save
+program['ccparams']['parameters'] = {u'coveragelower': 0.2, u'nonhivdalys': 0.0, u'funding': 300000.0, u'saturation': 0.98, u'coverageupper': 0.75, u'scaleup': 0.73}
+
+program['coparams'] = []
+program['coparams'].append({'function':'coeqn','parameters':[0.2, 0.25, 0.8, 0.85]})
+
+

@@ -29,13 +29,33 @@ import program
 # Then we have 50% of the population reached only by modality 1
 # 
 
+import region
+r = region.Region.load('./regions/georgia_working.json')
 
-r =  program.Program('Increased testing')
-m = []
-m.append(r.add_modality('TV ads',1))
-m.append(r.add_modality('Mobile clinic',0.5))
-m.append(r.add_modality('GP flyers',0.5))
-m.append(r.add_modality('GP flyers2',0.5))
+p = program.Program.import_legacy(r.D['programs'][0])
+m = p.modalities[0]
+print m
+print m.cc_data
+print m.co_data
+print m.get_convertedccparams()
+print m.get_convertedcoparams(m.co_data[1])
+
+
+
+from pylab import *
+from numpy import arange,linspace
+spending = linspace(0.0,5e6,100)
+coverage = m.get_coverage(spending)
+plot(spending, coverage)
+show()
+
+
+# r =  program.Program('Increased testing')
+# m = []
+# m.append(r.add_modality('TV ads',1))
+# m.append(r.add_modality('Mobile clinic',0.5))
+# m.append(r.add_modality('GP flyers',0.5))
+# m.append(r.add_modality('GP flyers2',0.5))
 
 # Clearly if we have 4 programs, we have
 # (1,2,3,4) = 0.0625
@@ -44,8 +64,8 @@ m.append(r.add_modality('GP flyers2',0.5))
 # (1,3,4) = 0.12 -> 0.0625
 # Now consider (1,3)
 
-print r.modalities
-print r.metamodalities
+# print r.modalities
+# print r.metamodalities
 #p = programs.Program('Test program')
 
 
