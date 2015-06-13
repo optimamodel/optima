@@ -14,23 +14,20 @@ class Program:
 		# The reachability interaction enables the metamodality maxcoverage to be automatically set
 
 	def calculate_effective_coverage(self,spending):
-		# These are the shaded areas in the target population plots
+		# This function returns an array of effective coverage values for each metamodality
+		# reflow_metamodalities should generally be run before this function is called
+		# this is meant to happen automatically when add_modality() or remove_modality is called()
 		assert(len(spending)==len(self.modalities))
 
 		coverage = []
 		for i in xrange(0,len(spending)):
 			coverage.append(self.modalities[i].get_coverage(spending[i]))
 
-
-		self.effective_coverage = []
+		effective_coverage = []
 		for mm in self.metamodalities:
 			effective_coverage.append(mm.get_coverage(self.modalities,coverage))
 
-			for i in xrange(0,len(self.metamodalities)):
-				coverages = []
-				for j in xrange(0,len(self.metamodalities[i])):
-					coverages.append()
-				self.effective_coverage
+		return effective_coverage
 
 	def add_modality(self,name,maxcoverage=1.0):
 		new_modality = Modality(name,maxcoverage)
@@ -48,7 +45,8 @@ class Program:
 	def remove_modality(self,name,uuid):
 		idx = 1 # Actually look up the modality by name or by uuid
 		m = self.modalities.pop(idx)
-
+		self.reflow_metamodalities()
+		return m
 
 	def reflow_metamodalities(self):
 		# This function goes through and calculates the metamodality maxcoverage
@@ -111,9 +109,10 @@ class Metamodality:
 			if m.uuid in self.modalities:
 				outcomes.append(m.get_coverage(effective_coverage))
 
-		# The method controls how the effective coverage from each contributing
-		# modality is combined
-		if self.method == 'maximum':
+		# Suppose the effective_coverage is 0.3. That means that 30% of the population is covered by 
+		# ALL of the programs associated with this metamodality. The final outcome can be 
+		# combined in different ways depending on the method selected here
+		if self.method == 'maximum': # Return the highest outcome as the total outcome
 			return max(outcomes)
 
 	def get_coverage(self,modalities,coverage):
@@ -166,16 +165,44 @@ class Modality:
 	def get_coverage(self,spending):
 		# self.ccparams['function'] is one of the keys in self.ccfun
 		# self.ccparams['parameters'] contains whatever is required by the curve function
-		return self.ccfun(self.ccparams['parameters'],spending)
+		return self.ccfun(spending,self.ccparams['parameters'])
 
 	def getoutcome(self,effective_coverage):
-		return self.cofun(self.coparams['parameters'],effective_coverage)
+		return self.cofun(effective_coverage,self.coparams['parameters'])
 
 	def __repr__(self):
 		return '%s (%s)' % (self.name,self.uuid[0:4])
 
-def linear(params,x):
+def linear(x,params,):
 	return params[0]*x+params[1]
 
-def sigmoid(params,x):
+def sigmoid(x,params):
 	return params[0]/exp((params[1]*(x-params[2])/params[3]))
+
+def coeqn(x, p):
+    '''
+    Straight line equation defining coverage-outcome curve.
+    x is coverage, p is a list of parameters (of length 2):
+        p[0] = outcome at zero coverage
+        p[1] = outcome at full coverage
+    Returns y which is outcome.
+    '''
+    from numpy import array
+    y = (p[1]-p[0]) * array(x) + p[0]
+
+    return y
+    
+def ccoeqn(x, p):
+    '''
+    5-parameter equation defining cost-outcome curves.
+    x is total cost, p is a list of parameters (of length 5):
+        p[0] = saturation
+        p[1] = inflection point
+        p[2] = growth rate...
+        p[3] = outcome at zero coverage
+        p[4] = outcome at full coverage
+    Returns y which is coverage.
+    '''
+    y = (p[4]-p[3]) * (p[0] / (1 + exp((log(p[1])-nplog(x))/(1-p[2])))) + p[3]
+
+    return y
