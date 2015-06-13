@@ -13,6 +13,13 @@ class Program:
 		self.reachability_interaction = 'random' # These are the options on slide 7 of the proposal
 		# The reachability interaction enables the metamodality maxcoverage to be automatically set
 
+		# This stores the list of effects. Each modality and metamodality must contain a coverage-outcome
+		# curve for each effect in the Program
+		self.effects = {}
+		self.effects['paramtype'] = []
+		self.effects['popname'] = []
+		self.effects['param'] = []
+
 	def calculate_effective_coverage(self,spending):
 		# This function returns an array of effective coverage values for each metamodality
 		# reflow_metamodalities should generally be run before this function is called
@@ -78,6 +85,7 @@ class Program:
 			print 'AFTER'
 			print [mm.maxcoverage for mm in self.metamodalities]
 			print sum([mm.maxcoverage for mm in self.metamodalities])
+			# The above sum should be <= 1, otherwise double-counting is definitely occuring
 			print '----'
 
 
@@ -90,6 +98,10 @@ class Metamodality:
 	# And it must be smaller than the smallest coverage for the individual modalities
 	def __init__(self,modalities,method='maximum',metamodality=None,overlap=None): # where m1 and m2 are Modality instances
 		self.modalities = [m.uuid for m in modalities]
+
+		# The reason for storing self.maxcoverage here is because it might be over-ridden
+		# manually by users in the future. This is the quantity that defines the extent to which
+		# the modalities overlap 
 		self.maxcoverage = min([m.maxcoverage for m in modalities]) # Default upper bound on fractional coverage of the total population
 		
 
