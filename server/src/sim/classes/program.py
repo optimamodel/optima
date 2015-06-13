@@ -32,7 +32,7 @@ class Program:
 					coverages.append()
 				self.effective_coverage
 
-	def add_modality(self,name,maxcoverage=1):
+	def add_modality(self,name,maxcoverage=1.0):
 		new_modality = Modality(name,maxcoverage)
 		self.modalities.append(new_modality)
 		# Synchronize metamodalities
@@ -68,35 +68,20 @@ class Program:
 			print sum([mm.maxcoverage for mm in self.metamodalities])
 			# Now we go through the subsets - basically, if metamodality 1 is a subset of metamodality 2, then we subtract metamodality 2's coverage from metamodality 1
 			for i in xrange(len(self.modalities),0,-1): # Iterate over metamodalities containing i modalities
-				print i
 				superset = [mm for mm in self.metamodalities if len(mm.modalities) >= i]
 				subset = [mm for mm in self.metamodalities if len(mm.modalities) == i-1]
-				# Now for each modality in the superset, subtract off the subset
-				# if i > 1:
-				# 	raise Exception('bah')
+
 
 				for sub in subset:
 					for sup in superset: 
 						if set(sub.modalities).issubset(set(sup.modalities)):
-							print 'Removing %s (%.2f) from %s (%.2f->%.2f)' % (sup,sup.maxcoverage,sub,sub.maxcoverage,sub.maxcoverage-sup.maxcoverage) 
 							sub.maxcoverage -= sup.maxcoverage
-							# if sub.maxcoverage < 0:
-							# 	sub.maxcoverage = 0
-				print superset
-				print subset
 
 			print 'AFTER'
 			print [mm.maxcoverage for mm in self.metamodalities]
 			print sum([mm.maxcoverage for mm in self.metamodalities])
 			print '----'
 
-# Lets say modalities 1, 2 and 3 all reach 100% of the population
-# Then we say
-# modality 1 gets 1 removed due to (1,2) and 1 removed due to (1,3)
-# Let's say modality 1 can reach 100% of the population, but modalities 2 and 3 can reach 50%. Then
-# (1)
-# Then we have 50% of the population reached only by modality 1
-# 
 
 class Metamodality:
 	# The metamodality knows the coverage (number of people) who fall into the overlapping category
@@ -154,7 +139,7 @@ class Metamodality:
 		return '(%s)' % (','.join([s[0:4] for s in self.modalities]))
 
 class Modality:
-	def __init__(self,name,maxcoverage = 1):
+	def __init__(self,name,maxcoverage = 1.0):
 		self.name = name
 
 		self.maxcoverage = maxcoverage # The maximum fraction of the total population that this modality can reach
@@ -168,13 +153,13 @@ class Modality:
 		self.ccfun = linear
 		self.ccparams = {}
 		self.ccparams['function'] = 'linear' # Use this dictionary to load/save
-		self.ccparams['parameters'] = [1,0]
+		self.ccparams['parameters'] = [0.5,0.0]
 		
 		# Coverage-outcome
 		self.cofun = linear
 		self.coparams = {}
 		self.coparams['function'] = 'linear' # Use this dictionary to load/save
-		self.coparams['parameters'] = [1,0]
+		self.coparams['parameters'] = [1.0,0.0]
 
 		self.uuid = str(uuid.uuid4())
 
