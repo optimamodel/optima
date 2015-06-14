@@ -7,8 +7,13 @@ from numpy import linspace, exp, isnan, multiply, arange, mean, array
 from numpy import log as nplog
 
 class Program:
-	def __init__(self,name):
+	def __init__(self,name,full_name = None,category = 'None'):
 		self.name = name
+		if full_name is None:
+			self.full_name = name
+		else:
+			self.full_name = full_name
+		self.category = category
 		self.uuid = str(uuid.uuid4())
 
 		self.modalities = []
