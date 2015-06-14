@@ -220,9 +220,9 @@ class Modality:
 	def get_outcomes(self,coverage):
 		# Calculate all of the outcomes for this modality as a function of modality coverage
 		outcomes = []
-		for i in xrange(0,len(outcomes)):
+		for i in xrange(0,len(self.co_data)):
 			convertedcoparams = self.get_convertedcoparams(self.co_data[i])
-			co_arg = convertedccparams[0] # Apply random perturbation here
+			co_arg = convertedcoparams[0] # Apply random perturbation here
 			outcomes.append(self.cofun[i](coverage,co_arg))
 		return outcomes 
 
@@ -252,13 +252,15 @@ class Modality:
 
 	def get_convertedcoparams(self,co_data):
 		# Copied from makeccocs.makecosampleparams()
+		# Convert the co_data into parameter values for co_fun
+		# Naturally, this conversion depends on the functional form of co_fun
 		coparams = co_data['parameters']
 		if co_data['function'] == 'coeqn':
 			muz, stdevz = (coparams[0]+coparams[1])/2, (coparams[1]-coparams[0])/6 # Mean and standard deviation calcs
 			muf, stdevf = (coparams[2]+coparams[3])/2, (coparams[3]-coparams[2])/6 # Mean and standard deviation calcs
-		
+			convertedcoparams = [muz, stdevz, muf, stdevf]
+			convertedcoparams = [[muz,muf],[muz,muf],[muz,muf]] # DEBUG CODE, DO THIS PROPERLY LATER
 		#printv("coparams: %s muz: %s stdevz: %s muf: %s stdevf: %s" % (coparams, muz, stdevz, muf, stdevf), 5, verbose)
-		convertedcoparams = [muz, stdevz, muf, stdevf]
 		return convertedcoparams
 
 	def __repr__(self):

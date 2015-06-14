@@ -34,19 +34,31 @@ r = region.Region.load('./regions/georgia_working.json')
 
 p = program.Program.import_legacy(r.D['programs'][0])
 m = p.modalities[0]
-print m
-print m.cc_data
-print m.co_data
-print m.get_convertedccparams()
-print m.get_convertedcoparams(m.co_data[1])
+# print m
+# print m.cc_data
+# print m.co_data
+# print m.get_convertedccparams()
+# print m.get_convertedcoparams(m.co_data[1])
 
 
 
 from pylab import *
 from numpy import arange,linspace
 spending = linspace(0.0,5e6,100)
+
+# Plot cost-coverage
 coverage = m.get_coverage(spending)
+figure(1)
 plot(spending, coverage)
+
+# Plot coverage-outcome
+outcomes = m.get_outcomes(coverage)
+f, axarr = subplots(len(outcomes), sharex=True)
+count = 0
+for outcome in outcomes:
+	axarr[count].plot(coverage,outcome)
+	axarr[count].set_ylim([0,1])
+	count += 1
 show()
 
 
