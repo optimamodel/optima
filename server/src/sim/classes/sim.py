@@ -393,6 +393,7 @@ class SimBudget2(Sim):
     def __init__(self, name, region):
         Sim.__init__(self, name, region)
         self.budget = region.data['current_budget'] # After running sanitize(), this is alloc 
+        self.program_set = region.program_sets[0] # Eventually modify to support multiple programs
 
     def todict(self):
         simdict = Sim.todict(self)

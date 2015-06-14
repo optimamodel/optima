@@ -194,8 +194,6 @@ class Modality:
 		# For now, self.maxcoverage scales the total coverage and helps to work out the metamodality coverage
 		self.maxcoverage = maxcoverage # The maximum fraction of the total population that this modality can reach
 
-		# The number of people reached by this program is self.get_coverage(spending)*self.maxcoverage*population_size
-
 		# Cost-Coverage - the modality contains one
 		self.cc_data = cc_data
 		if cc_data['function'] == 'cceqn':

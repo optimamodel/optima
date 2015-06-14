@@ -10,6 +10,7 @@ from simbox import SimBox, SimBoxOpt
 import sim
 import setoptions
 import uuid
+import program
 
 class Region:
     def __init__(self, name,populations,programs,datastart,dataend):
@@ -30,7 +31,7 @@ class Region:
 
         self.options = setoptions.setoptions() # Populate default options here
         
-        self.ccocs = None
+        self.program_sets = []
         self.calibrations = None
         
         self.simboxlist = []            # Container for simbox objects (e.g. optimisations, grouped scenarios, etc.)
@@ -62,7 +63,7 @@ class Region:
         self.data = regiondict['data']
         self.simboxlist = [SimBox.fromdict(x,self) for x in regiondict['simboxlist']]
         self.options = regiondict['options'] # Populate default options here
-        self.ccocs = regiondict['ccocs']
+        self.program_sets = regiondict['program_sets'] # sets of Programs i.e. an array of sets of CCOCs
         self.calibrations = regiondict['calibrations']       
         self.uuid = regiondict['uuid']
         self.D = regiondict['D']
@@ -95,6 +96,14 @@ class Region:
                     newsim.create_override(par['names'],par['pops'],par['startyear'],par['endyear'],par['startval'],par['endval'])
                 sbox.simlist.append(newsim)
 
+        program_set = {}
+        program_set['name'] = 'Default'
+        program_set['uuid'] = str(uuid.uuid4())
+        program_set['programs'] = []
+        for prog in self.metadata['programs']:
+            program_set['programs'].append(program.Program(prog))
+        self.program_sets.append(program_set)
+
     def save(self,filename):
         import dataio
         dataio.savedata(filename,self.todict())
@@ -108,7 +117,7 @@ class Region:
         regiondict['data'] = self.data 
         regiondict['simboxlist'] = [sbox.todict() for sbox in self.simboxlist]
         regiondict['options'] = self.options # Populate default options here = self.options 
-        regiondict['ccocs'] = self.ccocs 
+        regiondict['program_sets'] = self.program_sets 
         regiondict['calibrations'] = self.calibrations 
         regiondict['uuid'] = self.uuid 
         regiondict['D'] = self.D 
