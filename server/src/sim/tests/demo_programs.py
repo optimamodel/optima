@@ -59,6 +59,14 @@ for outcome in outcomes:
 	axarr[count].plot(coverage,outcome)
 	axarr[count].set_ylim([0,1])
 	count += 1
+
+# Plot cost-coverage-outcome
+f, axarr = subplots(len(outcomes), sharex=True)
+count = 0
+for outcome in outcomes:
+	axarr[count].plot(spending,outcome)
+	axarr[count].set_ylim([0,1])
+	count += 1
 show()
 
 
