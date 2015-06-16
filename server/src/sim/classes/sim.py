@@ -196,8 +196,14 @@ class SimBudget(Sim):
         
         self.plotdataopt = None     # This used to be D['plot']['optim'][-1]. Be aware that it is not D['plot']!
         self.resultopt = None       # The resulting data structures after optimisation.
-        self.origalloc = None       # The budget allocations before optimisation.
+        
+        # I hope SimBudget always has a region attached...         
+        self.origalloc = self.getregion().data['origalloc']     # The budget allocations before optimisation.
+        self.origobj = None                                     # The current objective function value for the origalloc budget.
+        
         self.optalloc = None        # The resulting budget allocations after optimisation.
+        self.optobj = None          # The resulting objective function value for the optalloc budget.
+
 
     def todict(self):
         simdict = Sim.todict(self)
@@ -237,19 +243,23 @@ class SimBudget(Sim):
         
         self.plotdataopt = None
         self.resultopt = None
+        
+        # The previous SimBudget's optimal allocation and objective become the initial values for this SimBudget.
         self.origalloc = sim.optalloc
+        self.origobj = sim.optobj
+        
         self.optalloc = None
+        self.optobj = None
 
     # Currently just optimises simulation according to defaults. As in... fixed budget!
-    def optimise(self):
+    def optimise(self, test = False):
         r = self.getregion()
 
         from optimize import optimize
         
         tempD = dict()
         tempD['data'] = r.data
-        if not self.origalloc == None:
-            tempD['data']['origalloc'] = self.origalloc
+        tempD['data']['origalloc'] = self.origalloc
         tempD['opt'] = r.options
         tempD['programs'] = r.metadata['programs']
         tempD['G'] = r.metadata
@@ -260,23 +270,45 @@ class SimBudget(Sim):
         tempD['plot'] = dict()
         
         tempD['S'] = self.debug['structure']     # Need to run simulation before optimisation!
-        optimize(tempD, maxiters = 3, returnresult = True)   # Temporary restriction on iterations. Not meant to be hardcoded!
+        #optimize(tempD, maxiters = 3, returnresult = True)   # Temporary restriction on iterations. Not meant to be hardcoded!
+        optimize(tempD, maxiters=1e3, timelimit=5, returnresult = True),        
         
         self.plotdataopt = tempD['plot']['optim'][-1]       # What's this -1 business about?
         
         # Saves optimisation results to this Sim. New 'G', 'M', 'F', 'S'.
         # self.debug['results'] = tempD['result']       # Maybe store just the results of a normal run in self.debug.
         self.resultopt = tempD['result']['debug']       # Optimisation results are kept separate from debug['results'].
-#        self.test = tempD['test']        
+        self.optobj = tempD['objective'][-1]            # This assumes that the last objective value in an optimisation cycle is best. Is that safe...?
         
         # The new optimised allocations will be derived from the pie chart plotting data.
         # Let's hope it's always there...
         self.optalloc = self.plotdataopt['alloc'][-1]['piedata']
         
-        self.optimised = True
+        # If test is on, the optimisation results will be stored, but SimBudget can be re-optimised.
+        if not test:
+            self.optimised = True
+    
+    # Calculates the objective function value for (1-factor)*alloc and (1+factor)*alloc. Make sure factor<1.
+    # Converts into discretised derivatives for alloc- and alloc+. (Note that both VALUES should be the same sign, i.e. -ve for DALYs.)
+    # Involves three optimisations. Useful for GPA, where rates need to be compared between regions.
+    def calculateobjectivegradients(self,factor):
+        curralloc = self.origalloc
+        
+        self.optimise(test = True)
+        currobj = self.optobj
+        
+        self.origalloc = [x*(1-factor) for x in curralloc]
+        self.optimise(test = True)
+        gradneg = (currobj - self.optobj)/factor
+        
+        self.origalloc = [x*(1+factor) for x in curralloc]
+        self.optimise(test = True)
+        gradpos = (self.optobj - currobj)/factor
+        
+        return (gradneg, gradpos)
 
-        def __repr__(self):
-            return "SimBudget %s ('%s')" % (self.uuid,self.name)   
+    def __repr__(self):
+        return "SimBudget %s ('%s')" % (self.uuid,self.name)   
 
 # Derived Sim class that should store parameter overwrites.
 class SimParameter(Sim):

@@ -127,20 +127,10 @@ class Region:
         new_sim = simbox.createsim(simname)
         return new_sim
     
-# Combine into one SimBox dependent run method?
-#------------------------------------
     # Runs through every simulation in simbox (if not processed) and processes them.
+    # May optimise too depending on SimBox type.
     def runsimbox(self, simbox):
         simbox.runallsims(forcerun = False)
-    
-#    # Runs through every simulation in simbox (if not processed) and optimises them.
-#    # Currently uses default settings.
-#    def optsimbox(self, simbox):
-#        if isinstance(simbox, SimBoxOpt):
-#            simbox.optallsims(forcerun = True)
-#        else:
-#            print('Cannot optimise a standard container.')
-#------------------------------------
         
     # Runs through every simulation in simbox (if processed) and plots them, either multiplot or individual style.
     def plotsimbox(self, simbox, multiplot = False):

@@ -142,7 +142,7 @@ class SimBoxOpt(SimBox):
             self.simlist[-1].specialoptload(sim)
             self.simlist[-1].run()
             
-    
+    # Overwrites normal Sim method so that SimBudget is not only run, but optimised, with the results copied to a new SimBudget.
     def runallsims(self, forcerun = False):
         tempsim = None
         for sim in self.simlist:
