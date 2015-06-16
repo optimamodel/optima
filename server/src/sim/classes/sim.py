@@ -111,7 +111,7 @@ class Sim:
         
         self.makemodelpars()
         
-        from updatedata import makefittedpars
+        # from updatedata import makefittedpars
         
         # Explicit construction of tempD, so that one day we know how to recode makefittedpars.
         tempD = dict()
@@ -120,6 +120,7 @@ class Sim:
         tempD['M'] = self.parsmodel
         
         #tempD = makefittedpars(tempD)
+        # CALIBRATION SHOULD GO HERE. MAYBE.
         self.parsfitted = r.D['F']      # Temporary solution. Remember, D should not be stored in region.
         
         self.initialised = True
