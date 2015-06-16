@@ -6,6 +6,8 @@ from math import log
 from numpy import linspace, exp, isnan, multiply, arange, mean, array
 from numpy import log as nplog
 
+coverage_params = ['numost','numpmtct','numfirstline','numsecondline']
+
 class Program:
 	def __init__(self,name,full_name = None,category = 'None'):
 		self.name = name
@@ -48,10 +50,14 @@ class Program:
 		co_data = []
 		for effect in programdata['effects']:
 			this_co = {}
-			this_co['function'] = 'coeqn'
-			this_co['parameters'] = effect['coparams']
+			if 'coparams' not in effect.keys():
+				this_co['function'] = 'identity'
+				this_co['parameters'] = None
+			else:
+				this_co['function'] = 'coeqn'
+				this_co['parameters'] = effect['coparams']
 			co_data.append(this_co)
-		m = p.add_modality(p.name,cc_data,co_data)
+		m = p.add_modality(p.name,cc_data,co_data,programdata['nonhivdalys'])
 		return p
 
 	def calculate_effective_coverage(self,spending):
@@ -70,13 +76,13 @@ class Program:
 
 		return effective_coverage
 
-	def add_modality(self,name,ccparams=None,coparams=None):
+	def add_modality(self,name,ccparams=None,coparams=None,nonhivdalys=0):
 		if ccparams is None:
 			ccparams = defaults.program['ccparams']
 		if coparams is None:
 			coparams = defaults.program['coparams']
 
-		new_modality = Modality(name,ccparams,coparams,maxcoverage=1.0)
+		new_modality = Modality(name,ccparams,coparams,nonhivdalys,maxcoverage=1.0)
 		self.modalities.append(new_modality)
 		# Synchronize metamodalities
 		# Add a new metamodality with all of the previous ones
@@ -189,7 +195,7 @@ class Metamodality:
 		return '(%s)' % (','.join([s[0:4] for s in self.modalities]))
 
 class Modality:
-	def __init__(self,name,cc_data,co_data,maxcoverage = 1.0):
+	def __init__(self,name,cc_data,co_data,nonhivdalys,maxcoverage = 1.0):
 		# Note - cc_data and co_data store the things which the user enters into the frontend
 		# The functions take in convertedcc_data and convertedco_data, which are stored internally
 		self.name = name
@@ -210,7 +216,10 @@ class Modality:
 		for co in self.co_data:
 			if co['function'] == 'coeqn':
 				self.cofun.append(coeqn)
+			elif co['function'] == 'identity':
+				self.cofun = identity
 
+		self.nonhivdalys = nonhivdalys
 		self.uuid = str(uuid.uuid4())
 
 	def get_coverage(self,spending):
@@ -263,13 +272,21 @@ class Modality:
 			muf, stdevf = (coparams[2]+coparams[3])/2, (coparams[3]-coparams[2])/6 # Mean and standard deviation calcs
 			convertedcoparams = [muz, stdevz, muf, stdevf]
 			convertedcoparams = [[muz,muf],[muz,muf],[muz,muf]] # DEBUG CODE, DO THIS PROPERLY LATER
-		#printv("coparams: %s muz: %s stdevz: %s muf: %s stdevf: %s" % (coparams, muz, stdevz, muf, stdevf), 5, verbose)
+		elif co_data['function'] == 'identity':
+			convertedcoparams = None # No parameters required
 		return convertedcoparams
 
 	def __repr__(self):
 		return '%s (%s)' % (self.name,self.uuid[0:4])
 
-def linear(x,params,):
+
+
+# --------------------------- functional forms for the CCOCs
+
+def identity(x,params):
+	return x
+
+def linear(x,params):
 	return params[0]*x+params[1]
 
 def sigmoid(x,params):
