@@ -34,6 +34,7 @@ class Program:
 		self.effects['param'] = []
 		self.effects['iscoverageparam'] = []
 
+
 	@classmethod
 	def import_legacy(Program,programdata):
 		# Take in D['programs'][i] and return a corresponding Program instance
@@ -52,12 +53,6 @@ class Program:
 
 		cc_data = {}
 		cc_data['function'] = 'cceqn'
-
-		# Workaround for coverage programs
-		if 'coparams' not in programdata['effects'][0].keys():
-			cc_data['function'] = 'cc2eqn' # OST etc. use cc2eqn
-		else:
-			cc_data['function'] = 'cceqn'
 		cc_data['parameters'] = programdata['ccparams']
 
 		co_data = []
@@ -269,10 +264,12 @@ class Modality:
 
 		# Cost-Coverage - the modality contains one
 		self.cc_data = cc_data
-		if cc_data['function'] == 'cc2eqn':
-			self.ccfun = cc2eqn
+		if cc_data['function'] == 'cceqn':
+			self.ccfun = cceqn_wrapper
+		elif cc_data['function'] is None:
+			self.ccfun = None # This happens for spending-only programs
 		else:
-			self.ccfun = cceqn
+			raise Exception('cost-coverage function was not assigned - it was %s' % (cc_data['function']))
 
 		# Coverage-outcome - the modality contains one for each program effect
 		self.co_data = co_data
@@ -282,6 +279,10 @@ class Modality:
 				self.cofun.append(coeqn)
 			elif co['function'] == 'identity':
 				self.cofun.append(identity)
+			elif co['function'] is None:
+				self.cofun.append(None) # This happens for spending-only programs
+			else:
+				raise Exception('coverage-outcome function was not assigned - it was %s' % (co['function']))
 
 		self.nonhivdalys = nonhivdalys
 		self.uuid = str(uuid.uuid4())
@@ -316,8 +317,8 @@ class Modality:
 	    convertedccparams = []
 
 	    # Construct the convertedccparams depending on which functional form is being used
-	    if self.cc_data['function'] in ['cceqn','cc2eqn']:
-	    	# The if statement below handles cceqn vs cc2eqn. Should split these properly later
+	    if self.cc_data['function'] == 'cceqn':
+	    	# The
 		    if 'scaleup' in ccparams and ccparams['scaleup'] and ~isnan(ccparams['scaleup']):
 		        growthratel = exp((1-ccparams['scaleup'])*log(ccparams['saturation']/ccparams['coveragelower']-1)+log(ccparams['funding']))
 		        growthratem = exp((1-ccparams['scaleup'])*log(ccparams['saturation']/((ccparams['coveragelower']+ccparams['coverageupper'])/2)-1)+log(ccparams['funding']))
@@ -387,6 +388,13 @@ def ccoeqn(x, p):
     y = (p[4]-p[3]) * (p[0] / (1 + exp((log(p[1])-nplog(x))/(1-p[2])))) + p[3]
 
     return y
+
+def cceqn_wrapper(x,p):
+	# Wrapper for cceqn and cc2eqn
+	if len(p) == 2:
+		return cc2eqn(x,p)
+	else:
+		return cceqn(x,p)
 
 def cceqn(x, p, eps=1e-3):
     '''
