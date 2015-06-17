@@ -422,10 +422,10 @@ class SimBudget2(Sim):
 
             for i in xrange(0,len(prog.effects['param'])): # For each of the effects
                 if prog.effects['iscoverageparam'][i]:
-                    P[prog.effects['param']]['c'][:] = outcomes[i]
+                    P[prog.effects['param'][i]]['c'][:] = outcomes[i]
                 else:
                     popnumber = r.get_popidx(prog.effects['popname'][i])-1 # Yes, get_popidx is 1-based rather than 0 based...cf. scenarios
-                    P[prog.effects['param'][i]]['c'][popnumber] = 1
+                    P[prog.effects['param'][i]]['c'][popnumber] = outcomes[i]
 
         from makemodelpars import makemodelpars
         self.parsmodel = makemodelpars(P, r.options, withwhat='c')

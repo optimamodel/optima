@@ -17,7 +17,6 @@ class Program:
 		self.category = category
 		self.uuid = str(uuid.uuid4())
 
-		self.spending_only_modalities = [] # A list of modalities that have no coverage - and therefore do not contribute to the metamodalities
 		self.modalities = []
 		self.metamodalities = [] # One metamodality for every combination of modalities, including single modalities
 		self.effective_coverage = [] # An effective coverage for every metamodality
@@ -48,7 +47,7 @@ class Program:
 		# Legacy programs only have one modality
 		# Some complete programs have only one spending_only modality
 		if len(programdata['effects']) == 0:
-			m = p.add_modality(p.name,spending_only = True)
+			m = p.add_modality(p.name)
 			return p
 
 		cc_data = {}
@@ -119,13 +118,8 @@ class Program:
 			final_outcomes.append(tmp)
 		return final_outcomes
 
-	def add_modality(self,name,ccparams=None,coparams=None,nonhivdalys=0,spending_only = False):
-		if spending_only:
-			new_modality = Modality(name)
-			self.spending_only_modalities.append(new_modality)
-			return new_modality
-
-		new_modality = Modality(name,ccparams,coparams,nonhivdalys,maxcoverage=1.0)
+	def add_modality(self,name,cc_data={'function':'null','parameters':None},co_data = [{'function':'null','parameters':None}],nonhivdalys=0):
+		new_modality = Modality(name,cc_data,co_data,nonhivdalys,maxcoverage=1.0)
 		self.modalities.append(new_modality)
 		# Synchronize metamodalities
 		# Add a new metamodality with all of the previous ones
@@ -252,7 +246,7 @@ class Metamodality:
 		return '(%s)' % (','.join([s[0:4] for s in self.modalities]))
 
 class Modality:
-	def __init__(self,name,cc_data={'function':None,'parameters':None},co_data = [{'function':None,'parameters':None}],nonhivdalys = None, maxcoverage = 1.0):
+	def __init__(self,name,cc_data,co_data,nonhivdalys, maxcoverage = 1.0):
 		# Note - cc_data and co_data store the things which the user enters into the frontend
 		# The functions take in convertedcc_data and convertedco_data, which are stored internally
 		self.name = name
@@ -266,8 +260,8 @@ class Modality:
 		self.cc_data = cc_data
 		if cc_data['function'] == 'cceqn':
 			self.ccfun = cceqn_wrapper
-		elif cc_data['function'] is None:
-			self.ccfun = None # This happens for spending-only programs
+		elif cc_data['function'] is 'null':
+			self.ccfun = null # This happens for spending-only programs
 		else:
 			raise Exception('cost-coverage function was not assigned - it was %s' % (cc_data['function']))
 
@@ -279,8 +273,8 @@ class Modality:
 				self.cofun.append(coeqn)
 			elif co['function'] == 'identity':
 				self.cofun.append(identity)
-			elif co['function'] is None:
-				self.cofun.append(None) # This happens for spending-only programs
+			elif co['function'] is 'null':
+				self.cofun.append(null) # This happens for spending-only programs
 			else:
 				raise Exception('coverage-outcome function was not assigned - it was %s' % (co['function']))
 
@@ -291,12 +285,7 @@ class Modality:
 		# self.cc_data['function'] is one of the keys in self.ccfun
 		# self.cc_data['parameters'] contains whatever is required by the curve function
 		convertedccparams = self.get_convertedccparams()
-		cc_arg = convertedccparams[0] # Apply random perturbation here
-		print self.name
-		print cc_arg
-		print self.ccfun
-		print self.cc_data
-		print self.co_data
+		cc_arg = convertedccparams[0] if convertedccparams is not None else None # Apply random perturbation here
 		return self.ccfun(spending,cc_arg)
 
 	def get_outcomes(self,coverage):
@@ -309,28 +298,29 @@ class Modality:
 		return outcomes 
 
 	def get_convertedccparams(self):
-	    ''' Convert GUI inputs into the form needed for the calculations '''
-	    # Essentially, the GUI contains boxes for the user to enter information about
-	    # the curves. This information is used to construct the parameters for
-	    # the actual curve functions
-	    ccparams = self.cc_data['parameters']
-	    convertedccparams = []
+		''' Convert GUI inputs into the form needed for the calculations '''
+		# Essentially, the GUI contains boxes for the user to enter information about
+		# the curves. This information is used to construct the parameters for
+		# the actual curve functions
+		ccparams = self.cc_data['parameters']
+		convertedccparams = []
 
-	    # Construct the convertedccparams depending on which functional form is being used
-	    if self.cc_data['function'] == 'cceqn':
-	    	# The
-		    if 'scaleup' in ccparams and ccparams['scaleup'] and ~isnan(ccparams['scaleup']):
-		        growthratel = exp((1-ccparams['scaleup'])*log(ccparams['saturation']/ccparams['coveragelower']-1)+log(ccparams['funding']))
-		        growthratem = exp((1-ccparams['scaleup'])*log(ccparams['saturation']/((ccparams['coveragelower']+ccparams['coverageupper'])/2)-1)+log(ccparams['funding']))
-		        growthrateu = exp((1-ccparams['scaleup'])*log(ccparams['saturation']/ccparams['coverageupper']-1)+log(ccparams['funding']))
-		        convertedccparams = [[ccparams['saturation'], growthratem, ccparams['scaleup']], [ccparams['saturation'], growthratel, ccparams['scaleup']], [ccparams['saturation'], growthrateu, ccparams['scaleup']]]
-		    else:
-		        growthratel = (-1/ccparams['funding'])*log((2*ccparams['saturation'])/(ccparams['coveragelower']+ccparams['saturation']) - 1)        
-		        growthratem = (-1/ccparams['funding'])*log((2*ccparams['saturation'])/(((ccparams['coveragelower']+ccparams['coverageupper'])/2)+ccparams['saturation']) - 1)        
-		        growthrateu = (-1/ccparams['funding'])*log((2*ccparams['saturation'])/(ccparams['coverageupper']+ccparams['saturation']) - 1)        
-		        convertedccparams = [[ccparams['saturation'], growthratem], [ccparams['saturation'], growthratel], [ccparams['saturation'], growthrateu]]
-		                    
-		    return convertedccparams
+		# Construct the convertedccparams depending on which functional form is being used
+		if self.cc_data['function'] == 'cceqn':
+			# The
+			if 'scaleup' in ccparams and ccparams['scaleup'] and ~isnan(ccparams['scaleup']):
+				growthratel = exp((1-ccparams['scaleup'])*log(ccparams['saturation']/ccparams['coveragelower']-1)+log(ccparams['funding']))
+				growthratem = exp((1-ccparams['scaleup'])*log(ccparams['saturation']/((ccparams['coveragelower']+ccparams['coverageupper'])/2)-1)+log(ccparams['funding']))
+				growthrateu = exp((1-ccparams['scaleup'])*log(ccparams['saturation']/ccparams['coverageupper']-1)+log(ccparams['funding']))
+				convertedccparams = [[ccparams['saturation'], growthratem, ccparams['scaleup']], [ccparams['saturation'], growthratel, ccparams['scaleup']], [ccparams['saturation'], growthrateu, ccparams['scaleup']]]
+			else:
+				growthratel = (-1/ccparams['funding'])*log((2*ccparams['saturation'])/(ccparams['coveragelower']+ccparams['saturation']) - 1)        
+				growthratem = (-1/ccparams['funding'])*log((2*ccparams['saturation'])/(((ccparams['coveragelower']+ccparams['coverageupper'])/2)+ccparams['saturation']) - 1)        
+				growthrateu = (-1/ccparams['funding'])*log((2*ccparams['saturation'])/(ccparams['coverageupper']+ccparams['saturation']) - 1)        
+				convertedccparams = [[ccparams['saturation'], growthratem], [ccparams['saturation'], growthratel], [ccparams['saturation'], growthrateu]]
+		elif self.cc_data['function'] == 'null':
+			convertedccparams = None # No parameters required             
+		return convertedccparams
 
 	def get_convertedcoparams(self,this_co_data):
 		# Copied from makeccocs.makecosampleparams()
@@ -344,7 +334,7 @@ class Modality:
 			muf, stdevf = (coparams[2]+coparams[3])/2, (coparams[3]-coparams[2])/6 # Mean and standard deviation calcs
 			convertedcoparams = [muz, stdevz, muf, stdevf]
 			convertedcoparams = [[muz,muf],[muz,muf],[muz,muf]] # DEBUG CODE, DO THIS PROPERLY LATER
-		elif this_co_data['function'] == 'identity':
+		elif this_co_data['function'] in ['identity','null']:
 			convertedcoparams = None # No parameters required
 		return convertedcoparams
 
@@ -356,6 +346,9 @@ class Modality:
 def identity(x,params):
 	return x
 
+def null(x,params):
+	return 0
+
 def linear(x,params):
 	return params[0]*x+params[1]
 
@@ -363,31 +356,31 @@ def sigmoid(x,params):
 	return params[0]/exp((params[1]*(x-params[2])/params[3]))
 
 def coeqn(x, p):
-    '''
-    Straight line equation defining coverage-outcome curve.
-    x is coverage, p is a list of parameters (of length 2):
-        p[0] = outcome at zero coverage
-        p[1] = outcome at full coverage
-    Returns y which is outcome.
-    '''
-    y = (p[1]-p[0]) * array(x) + p[0]
+	'''
+	Straight line equation defining coverage-outcome curve.
+	x is coverage, p is a list of parameters (of length 2):
+		p[0] = outcome at zero coverage
+		p[1] = outcome at full coverage
+	Returns y which is outcome.
+	'''
+	y = (p[1]-p[0]) * array(x) + p[0]
 
-    return y
+	return y
    
 def ccoeqn(x, p):
-    '''
-    5-parameter equation defining cost-outcome curves.
-    x is total cost, p is a list of parameters (of length 5):
-        p[0] = saturation
-        p[1] = inflection point
-        p[2] = growth rate...
-        p[3] = outcome at zero coverage
-        p[4] = outcome at full coverage
-    Returns y which is coverage.
-    '''
-    y = (p[4]-p[3]) * (p[0] / (1 + exp((log(p[1])-nplog(x))/(1-p[2])))) + p[3]
+	'''
+	5-parameter equation defining cost-outcome curves.
+	x is total cost, p is a list of parameters (of length 5):
+		p[0] = saturation
+		p[1] = inflection point
+		p[2] = growth rate...
+		p[3] = outcome at zero coverage
+		p[4] = outcome at full coverage
+	Returns y which is coverage.
+	'''
+	y = (p[4]-p[3]) * (p[0] / (1 + exp((log(p[1])-nplog(x))/(1-p[2])))) + p[3]
 
-    return y
+	return y
 
 def cceqn_wrapper(x,p):
 	# Wrapper for cceqn and cc2eqn
@@ -397,36 +390,36 @@ def cceqn_wrapper(x,p):
 		return cceqn(x,p)
 
 def cceqn(x, p, eps=1e-3):
-    '''
-    3-parameter equation defining cost-coverage curve.
-    x is total cost, p is a list of parameters (of length 3):
-        p[0] = saturation
-        p[1] = inflection point
-        p[2] = growth rate... 
-    Returns y which is coverage.
-    '''
-    y = p[0] / (1 + exp((log(p[1])-nplog(x))/max(1-p[2],eps)))
+	'''
+	3-parameter equation defining cost-coverage curve.
+	x is total cost, p is a list of parameters (of length 3):
+		p[0] = saturation
+		p[1] = inflection point
+		p[2] = growth rate... 
+	Returns y which is coverage.
+	'''
+	y = p[0] / (1 + exp((log(p[1])-nplog(x))/max(1-p[2],eps)))
 
-    return y
+	return y
 
 def cco2eqn(x, p):
-    '''
-    4-parameter equation defining cost-outcome curves.
-    x is total cost, p is a list of parameters (of length 2):
-        p[0] = saturation
-        p[1] = growth rate
-        p[2] = outcome at zero coverage
-        p[3] = outcome at full coverage
-    Returns y which is coverage.'''
-    y = (p[3]-p[2]) * (2*p[0] / (1 + exp(-p[1]*x)) - p[0]) + p[2]
-    return y
+	'''
+	4-parameter equation defining cost-outcome curves.
+	x is total cost, p is a list of parameters (of length 2):
+		p[0] = saturation
+		p[1] = growth rate
+		p[2] = outcome at zero coverage
+		p[3] = outcome at full coverage
+	Returns y which is coverage.'''
+	y = (p[3]-p[2]) * (2*p[0] / (1 + exp(-p[1]*x)) - p[0]) + p[2]
+	return y
 
 def cc2eqn(x, p):
-    '''
-    2-parameter equation defining cc curves.
-    x is total cost, p is a list of parameters (of length 2):
-        p[0] = saturation
-        p[1] = growth rate
-    Returns y which is coverage. '''
-    y =  2*p[0] / (1 + exp(-p[1]*x)) - p[0]
-    return y
+	'''
+	2-parameter equation defining cc curves.
+	x is total cost, p is a list of parameters (of length 2):
+		p[0] = saturation
+		p[1] = growth rate
+	Returns y which is coverage. '''
+	y =  2*p[0] / (1 + exp(-p[1]*x)) - p[0]
+	return y
