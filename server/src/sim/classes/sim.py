@@ -390,9 +390,10 @@ class SimParameter(Sim):
 
 # Derived Sim class that should store parameter overwrites.
 class SimBudget2(Sim):
-    def __init__(self, name, region):
+    def __init__(self, name, region,budget):
+        # budget and alloc are the same thing i.e. an 'alloc' *is* actually a budget
         Sim.__init__(self, name, region)
-        self.budget = region.data['current_budget'] # After running sanitize(), this is alloc 
+        self.budget = budget # This contains spending values for all of the modalities for the simulation timepoints i.e. there are len(D['opt']['partvec']) spending values
         self.program_set = region.program_sets[0] # Eventually modify to support multiple programs
 
     def todict(self):
@@ -407,14 +408,27 @@ class SimBudget2(Sim):
 
     def makemodelpars(self):
         r = self.getregion()
-        from copy import deepcopy
-        tempD = deepcopy(r.D)
-        import getcurrentbudget
-        # alloc (i.e. budget) goes in here
-        tempD = getcurrentbudget.getcurrentbudget(D)
+        npts = len(r.options['partvec']) # Number of time points
 
-        import makemodelpars
-        self.parsmodel = makemodelpars.makemodelpars(tempD['P'],r.options,withwhat='c')
+        P = self.parsdata 
+        from numpy import nan, zeros
+        for param in P.keys():
+            if isinstance(P[param], dict) and 'p' in P[param].keys():
+                P[param]['c'] = nan+zeros((len(P[param]['p']), npts))
+
+        for prog, spending in zip(self.program_set['programs'], self.budget):
+            coverage = prog.get_coverage(spending)
+            outcomes = prog.get_outcomes(coverage)
+
+            for i in xrange(0,len(prog.effects['param'])): # For each of the effects
+                if prog.effects['iscoverageparam'][i]:
+                    P[prog.effects['param']]['c'][:] = outcomes[i]
+                else:
+                    popnumber = r.get_popidx(prog.effects['popname'][i])-1 # Yes, get_popidx is 1-based rather than 0 based...cf. scenarios
+                    P[prog.effects['param'][i]]['c'][popnumber] = 1
+
+        from makemodelpars import makemodelpars
+        self.parsmodel = makemodelpars(P, r.options, withwhat='c')
 
     def __repr__(self):
         return "SimBudget2 %s ('%s')" % (self.uuid,self.name)    

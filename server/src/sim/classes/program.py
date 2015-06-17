@@ -3,10 +3,9 @@ from operator import mul
 import defaults
 
 from math import log
-from numpy import linspace, exp, isnan, multiply, arange, mean, array
+from numpy import linspace, exp, isnan, multiply, arange, mean, array, maximum
 from numpy import log as nplog
 
-coverage_params = ['numost','numpmtct','numfirstline','numsecondline']
 
 class Program:
 	def __init__(self,name,full_name = None,category = 'None'):
@@ -32,6 +31,7 @@ class Program:
 		self.effects['paramtype'] = []
 		self.effects['popname'] = []
 		self.effects['param'] = []
+		self.effects['iscoverageparam'] = []
 
 	@classmethod
 	def import_legacy(Program,programdata):
@@ -41,13 +41,27 @@ class Program:
 		p.effects['paramtype'] = [x['paramtype'] for x in programdata['effects']]
 		p.effects['popname'] = [x['popname'] for x in programdata['effects']]
 		p.effects['param'] = [x['param'] for x in programdata['effects']]
-	
+		p.effects['iscoverageparam'] = [x['param'] in ['numost','numpmtct','numfirstline','numsecondline'] for x in programdata['effects']]
+
 		# Legacy programs only have one modality
+		# Some complete programs have only one spending_only modality
+		if len(programdata['effects']) == 0:
+			m = p.add_modality(p.name)
+			return p
+
 		cc_data = {}
 		cc_data['function'] = 'cceqn'
+
+		# Workaround for coverage programs
+		if 'coparams' not in programdata['effects'][0].keys():
+			cc_data['function'] = 'cc2eqn' # OST etc. use cc2eqn
+		else:
+			cc_data['function'] = 'cceqn'
 		cc_data['parameters'] = programdata['ccparams']
 
 		co_data = []
+		# Take care here - the effects should probably be added to all of the modalities in the same order
+		# That is, they should be in the same order as the program effects
 		for effect in programdata['effects']:
 			this_co = {}
 			if 'coparams' not in effect.keys():
@@ -60,21 +74,54 @@ class Program:
 		m = p.add_modality(p.name,cc_data,co_data,programdata['nonhivdalys'])
 		return p
 
-	def calculate_effective_coverage(self,spending):
+	def get_coverage(self,spending):
 		# This function returns an array of effective coverage values for each metamodality
 		# reflow_metamodalities should generally be run before this function is called
 		# this is meant to happen automatically when add_modality() or remove_modality is called()
+		if len(self.modalities) == 1:
+			spending = array([[spending]]) # Need a better solution...
+
 		assert(len(spending)==len(self.modalities))
 
+		# First, get the coverage for each modality
 		coverage = []
 		for i in xrange(0,len(spending)):
-			coverage.append(self.modalities[i].get_coverage(spending[i]))
+			coverage.append(self.modalities[i].get_coverage(spending[i,:]))
 
+		# Next, calculate the coverage for each metamodality
 		effective_coverage = []
 		for mm in self.metamodalities:
 			effective_coverage.append(mm.get_coverage(self.modalities,coverage))
 
+		# Return the metamodality coverage
 		return effective_coverage
+
+	def get_outcomes(self,effective_coverage):
+		# Each metamodality will return a set of outcomes for its bound effects
+		# That is, if the program has 3 effects, each metamodality will return 3 arrays
+		# These then need to be combined into the overall program effect on the parameters
+		# perhaps using the nonlinear saturating system
+		# NOTE - an outcome IS a parameter value
+		outcomes = []
+		for mm,coverage in zip(self.metamodalities,effective_coverage):
+			outcomes.append(mm.get_outcomes(self.modalities,coverage))
+
+		# Note that outcomes is a list of lists, because the metamodality returns a list of outputs
+		# rather than a matrix
+		# Now we need to merge all of the entries of outcomes into a single outcome. This is done on a per-effect basis
+
+		final_outcomes = []
+		#print outcomes
+		#print len(self.effects['param'])
+		for i in xrange(0,len(self.effects['param'])): # For each output effect
+			# In this loop, we iterate over the metamodalities and then combine the outcome into a single parameter
+			# that is returned for use in D.M
+			tmp = outcomes[0][i]
+			for j in xrange(0,len(outcomes)): # For each metamodality
+				tmp += outcomes[j][i]
+			tmp *= (1/len(outcomes))
+			final_outcomes.append(tmp)
+		return final_outcomes
 
 	def add_modality(self,name,ccparams=None,coparams=None,nonhivdalys=0):
 		if ccparams is None:
@@ -111,11 +158,11 @@ class Program:
 			for mm in self.metamodalities:
 				mm.maxcoverage = reduce(mul,[m.maxcoverage for m in self.modalities if m.uuid in mm.modalities]) # This is the total fraction reached
 			
-			print 'MODALITIES'
-			print [m.maxcoverage for m in self.modalities]
-			print 'BEFORE'
-			print [mm.maxcoverage for mm in self.metamodalities]
-			print sum([mm.maxcoverage for mm in self.metamodalities])
+			# print 'MODALITIES'
+			# print [m.maxcoverage for m in self.modalities]
+			# print 'BEFORE'
+			# print [mm.maxcoverage for mm in self.metamodalities]
+			# print sum([mm.maxcoverage for mm in self.metamodalities])
 			# Now we go through the subsets - basically, if metamodality 1 is a subset of metamodality 2, then we subtract metamodality 2's coverage from metamodality 1
 			for i in xrange(len(self.modalities),0,-1): # Iterate over metamodalities containing i modalities
 				superset = [mm for mm in self.metamodalities if len(mm.modalities) >= i]
@@ -127,11 +174,11 @@ class Program:
 						if set(sub.modalities).issubset(set(sup.modalities)):
 							sub.maxcoverage -= sup.maxcoverage
 
-			print 'AFTER'
-			print [mm.maxcoverage for mm in self.metamodalities]
-			print sum([mm.maxcoverage for mm in self.metamodalities])
+			# print 'AFTER'
+			# print [mm.maxcoverage for mm in self.metamodalities]
+			# print sum([mm.maxcoverage for mm in self.metamodalities])
 			# The above sum should be <= 1, otherwise double-counting is definitely occuring
-			print '----'
+			# print '----'
 
 
 class Metamodality:
@@ -160,17 +207,31 @@ class Metamodality:
 
 		self.method = method
 
-	def get_outcome(self,modalities,effective_coverage):
+	def get_outcomes(self,modalities,effective_coverage):
 		outcomes = []
 		for m in modalities:
 			if m.uuid in self.modalities:
-				outcomes.append(m.get_coverage(effective_coverage))
+				outcomes.append(m.get_outcomes(effective_coverage))
+
+		# The modality returns an set of outcomes (an array of arrays)
+		# Now we need to iterate over them to get a single outcome from the metamodality
 
 		# Suppose the effective_coverage is 0.3. That means that 30% of the population is covered by 
 		# ALL of the programs associated with this metamodality. The final outcome can be 
 		# combined in different ways depending on the method selected here
-		if self.method == 'maximum': # Return the highest outcome as the total outcome
-			return max(outcomes)
+		final_outcomes = []
+		for i in xrange(0,len(outcomes[0])): # For each output effect
+			# In this loop, we iterate over the modalities and then combine the outcome into a single parameter
+			# that is returned for use in D.M
+			tmp = [x[i] for x in outcomes] # These are the outcomes for effect i for each modality
+			if self.method == 'maximum':
+				out = tmp[0]
+				for j in xrange(1,len(tmp)):
+					out = maximum(out,tmp[j]) # use maximum function from numpy
+			final_outcomes.append(out)
+
+		return final_outcomes
+
 
 	def get_coverage(self,modalities,coverage):
 		# Return a list of all of the coverages corresponding to the modalities
@@ -195,10 +256,15 @@ class Metamodality:
 		return '(%s)' % (','.join([s[0:4] for s in self.modalities]))
 
 class Modality:
-	def __init__(self,name,cc_data,co_data,nonhivdalys,maxcoverage = 1.0):
+	def __init__(self,name,cc_data= None,co_data = None,nonhivdalys = None, maxcoverage = 1.0):
 		# Note - cc_data and co_data store the things which the user enters into the frontend
 		# The functions take in convertedcc_data and convertedco_data, which are stored internally
 		self.name = name
+
+		if cc_data is None:
+			self.spending_only = True
+		else:
+			self.spending_only = False
 
 		# This variable may be removed in future once the algorithm/calculations are more finalized
 		# This is because the maxcoverage can also be accounted for in the ccfun()
@@ -207,7 +273,9 @@ class Modality:
 
 		# Cost-Coverage - the modality contains one
 		self.cc_data = cc_data
-		if cc_data['function'] == 'cceqn':
+		if cc_data['function'] == 'cc2eqn':
+			self.ccfun = cc2eqn
+		else:
 			self.ccfun = cceqn
 
 		# Coverage-outcome - the modality contains one for each program effect
@@ -227,6 +295,8 @@ class Modality:
 		# self.cc_data['parameters'] contains whatever is required by the curve function
 		convertedccparams = self.get_convertedccparams()
 		cc_arg = convertedccparams[0] # Apply random perturbation here
+		print cc_arg
+		print self.name
 		return self.ccfun(spending,cc_arg)
 
 	def get_outcomes(self,coverage):
@@ -236,6 +306,7 @@ class Modality:
 			convertedcoparams = self.get_convertedcoparams(self.co_data[i])
 			co_arg = convertedcoparams[0] # Apply random perturbation here
 			outcomes.append(self.cofun[i](coverage,co_arg))
+		print outcomes
 		return outcomes 
 
 	def get_convertedccparams(self):

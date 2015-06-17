@@ -101,7 +101,7 @@ class Region:
         program_set['uuid'] = str(uuid.uuid4())
         program_set['programs'] = []
         for prog in self.metadata['programs']:
-            program_set['programs'].append(program.Program(prog))
+            program_set['programs'].append(program.Program.import_legacy(prog))
         self.program_sets.append(program_set)
 
     def save(self,filename):
@@ -258,3 +258,18 @@ class Region:
         
     def __repr__(self):
         return "Region %s ('%s')" % (self.uuid,self.metadata['name'])
+
+    def get_popidx(self,shortname):
+        # Return the index corresponding to a population shortname
+        poplist = [x['short_name'] for x in self.metadata['populations']]
+
+        if shortname == 'all':
+            return len(poplist)+1
+        else:
+            try:
+                popidx = poplist.index(shortname) + 1 # For some reason (frontend?) these indexes are 1-based rather than 0-based
+            except:
+                print 'Population "%s" not found! Valid populations are:' % (shortname)
+                print poplist
+                raise Exception('InvalidPopulation')
+            return popidx
