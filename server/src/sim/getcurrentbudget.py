@@ -28,11 +28,9 @@ def getcurrentbudget(D, alloc=None, randseed=None):
             D['P'][param]['c'] = nan+zeros((len(D['P'][param]['p']), npts))
 
     # Loop over programs
-    print alloc
     for prognumber, progname in enumerate(D['data']['meta']['progs']['short']):
         
         # Get allocation - either it's been passed in, or we figure it out from the data
-        print prognumber
         totalcost = alloc[prognumber, :] if allocprovided else sanitize(D['data']['costcov']['cost'][prognumber]).tolist()
 
         # Extract and sum the number of non-HIV-related DALYs 
