@@ -17,6 +17,7 @@ class Program:
 		self.category = category
 		self.uuid = str(uuid.uuid4())
 
+		self.spending_only_modalities = [] # A list of modalities that have no coverage - and therefore do not contribute to the metamodalities
 		self.modalities = []
 		self.metamodalities = [] # One metamodality for every combination of modalities, including single modalities
 		self.effective_coverage = [] # An effective coverage for every metamodality
@@ -46,7 +47,7 @@ class Program:
 		# Legacy programs only have one modality
 		# Some complete programs have only one spending_only modality
 		if len(programdata['effects']) == 0:
-			m = p.add_modality(p.name)
+			m = p.add_modality(p.name,spending_only = True)
 			return p
 
 		cc_data = {}
@@ -123,11 +124,11 @@ class Program:
 			final_outcomes.append(tmp)
 		return final_outcomes
 
-	def add_modality(self,name,ccparams=None,coparams=None,nonhivdalys=0):
-		if ccparams is None:
-			ccparams = defaults.program['ccparams']
-		if coparams is None:
-			coparams = defaults.program['coparams']
+	def add_modality(self,name,ccparams=None,coparams=None,nonhivdalys=0,spending_only = False):
+		if spending_only:
+			new_modality = Modality(name)
+			self.spending_only_modalities.append(new_modality)
+			return new_modality
 
 		new_modality = Modality(name,ccparams,coparams,nonhivdalys,maxcoverage=1.0)
 		self.modalities.append(new_modality)
@@ -256,15 +257,10 @@ class Metamodality:
 		return '(%s)' % (','.join([s[0:4] for s in self.modalities]))
 
 class Modality:
-	def __init__(self,name,cc_data= None,co_data = None,nonhivdalys = None, maxcoverage = 1.0):
+	def __init__(self,name,cc_data={'function':None,'parameters':None},co_data = [{'function':None,'parameters':None}],nonhivdalys = None, maxcoverage = 1.0):
 		# Note - cc_data and co_data store the things which the user enters into the frontend
 		# The functions take in convertedcc_data and convertedco_data, which are stored internally
 		self.name = name
-
-		if cc_data is None:
-			self.spending_only = True
-		else:
-			self.spending_only = False
 
 		# This variable may be removed in future once the algorithm/calculations are more finalized
 		# This is because the maxcoverage can also be accounted for in the ccfun()
@@ -285,7 +281,7 @@ class Modality:
 			if co['function'] == 'coeqn':
 				self.cofun.append(coeqn)
 			elif co['function'] == 'identity':
-				self.cofun = identity
+				self.cofun.append(identity)
 
 		self.nonhivdalys = nonhivdalys
 		self.uuid = str(uuid.uuid4())
@@ -295,8 +291,6 @@ class Modality:
 		# self.cc_data['parameters'] contains whatever is required by the curve function
 		convertedccparams = self.get_convertedccparams()
 		cc_arg = convertedccparams[0] # Apply random perturbation here
-		print cc_arg
-		print self.name
 		return self.ccfun(spending,cc_arg)
 
 	def get_outcomes(self,coverage):
@@ -304,9 +298,8 @@ class Modality:
 		outcomes = []
 		for i in xrange(0,len(self.co_data)):
 			convertedcoparams = self.get_convertedcoparams(self.co_data[i])
-			co_arg = convertedcoparams[0] # Apply random perturbation here
+			co_arg = convertedcoparams[0] if convertedcoparams is not None else None # Apply random perturbation here
 			outcomes.append(self.cofun[i](coverage,co_arg))
-		print outcomes
 		return outcomes 
 
 	def get_convertedccparams(self):
@@ -318,8 +311,8 @@ class Modality:
 	    convertedccparams = []
 
 	    # Construct the convertedccparams depending on which functional form is being used
-	    if self.cc_data['function'] == 'cceqn':
-
+	    if self.cc_data['function'] in ['cceqn','cc2eqn']:
+	    	# The if statement below handles cceqn vs cc2eqn. Should split these properly later
 		    if 'scaleup' in ccparams and ccparams['scaleup'] and ~isnan(ccparams['scaleup']):
 		        growthratel = exp((1-ccparams['scaleup'])*log(ccparams['saturation']/ccparams['coveragelower']-1)+log(ccparams['funding']))
 		        growthratem = exp((1-ccparams['scaleup'])*log(ccparams['saturation']/((ccparams['coveragelower']+ccparams['coverageupper'])/2)-1)+log(ccparams['funding']))
@@ -333,24 +326,24 @@ class Modality:
 		                    
 		    return convertedccparams
 
-	def get_convertedcoparams(self,co_data):
+	def get_convertedcoparams(self,this_co_data):
 		# Copied from makeccocs.makecosampleparams()
-		# Convert the co_data into parameter values for co_fun
+		# Convert the this_co_data into parameter values for co_fun
 		# Naturally, this conversion depends on the functional form of co_fun
-		coparams = co_data['parameters']
-		if co_data['function'] == 'coeqn':
+		# Note that here, this_co_data is a *single* element from self.this_co_data
+		coparams = this_co_data['parameters']
+
+		if this_co_data['function'] == 'coeqn':
 			muz, stdevz = (coparams[0]+coparams[1])/2, (coparams[1]-coparams[0])/6 # Mean and standard deviation calcs
 			muf, stdevf = (coparams[2]+coparams[3])/2, (coparams[3]-coparams[2])/6 # Mean and standard deviation calcs
 			convertedcoparams = [muz, stdevz, muf, stdevf]
 			convertedcoparams = [[muz,muf],[muz,muf],[muz,muf]] # DEBUG CODE, DO THIS PROPERLY LATER
-		elif co_data['function'] == 'identity':
+		elif this_co_data['function'] == 'identity':
 			convertedcoparams = None # No parameters required
 		return convertedcoparams
 
 	def __repr__(self):
 		return '%s (%s)' % (self.name,self.uuid[0:4])
-
-
 
 # --------------------------- functional forms for the CCOCs
 
