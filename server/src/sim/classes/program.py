@@ -291,6 +291,11 @@ class Modality:
 		# self.cc_data['parameters'] contains whatever is required by the curve function
 		convertedccparams = self.get_convertedccparams()
 		cc_arg = convertedccparams[0] # Apply random perturbation here
+		print self.name
+		print cc_arg
+		print self.ccfun
+		print self.cc_data
+		print self.co_data
 		return self.ccfun(spending,cc_arg)
 
 	def get_outcomes(self,coverage):
