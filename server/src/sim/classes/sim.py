@@ -77,7 +77,7 @@ class Sim:
         # implementation detail in case it changes in future
         r = self.region()
         if r is None:
-            raise Exception('The parent region has been garbage-collected and the reference is no longer valid')
+            raise Exception('The parent region has been garbage-collected and the reference is no longer valid.')
         else:
             return r
 
@@ -195,7 +195,6 @@ class SimBudget(Sim):
         self.optimised = False        
         
         self.plotdataopt = None     # This used to be D['plot']['optim'][-1]. Be aware that it is not D['plot']!
-        self.resultopt = None       # The resulting data structures after optimisation.
         
         # I hope SimBudget always has a region attached...         
         self.alloc = self.getregion().data['origalloc']     # The budget allocations before optimisation.
@@ -242,7 +241,6 @@ class SimBudget(Sim):
         self.plotdata = None
         
         self.plotdataopt = None
-        self.resultopt = None
         
         # The previous SimBudget's optimal allocation and objective become the initial values for this SimBudget.
         self.alloc = optalloc
@@ -296,25 +294,42 @@ class SimBudget(Sim):
         # Optimisation returns an allocation, (hopefully corresponding) objective function value and whether a new SimBudget should be made.
         return (optalloc, optobj, resultopt, makenew)
     
-    # MOMENTARILY BUGGED.
-    # Calculates the objective function value for (1-factor)*alloc and (1+factor)*alloc. Make sure factor<1.
-    # Converts into discretised derivatives for alloc- and alloc+. (Note that both VALUES should be the same sign, i.e. -ve for DALYs.)
-    # Involves three optimisations. Useful for GPA, where rates need to be compared between regions.
-    def calculateobjectivegradients(self,factor):
+    # Calculates objective values for optimisations with budget-totalbudgetdiff and budget+totalbudgetdiff.
+    # Works out by how much objective values will change moving to either allocation. Scales this to a per $ value, like a derivative.
+    # Involves three optimisations. Useful for GPA, where objective change rates need to be compared between regions.
+    # Note that individual allocations will be adjusted in current proportion to change in budget.
+    def calculateobjectivediff(self, totalbudgetdiff):
         curralloc = self.alloc
+        totalloc = sum(curralloc)
         
-        self.optimise(test = True)
-        currobj = self.optobj
+        print curralloc
+        print self.alloc
         
-        self.alloc = [x*(1-factor) for x in curralloc]
-        self.optimise(test = True)
-        gradneg = (currobj - self.optobj)/factor
-        
-        self.alloc = [x*(1+factor) for x in curralloc]
-        self.optimise(test = True)
-        gradpos = (self.optobj - currobj)/factor
-        
-        return (gradneg, gradpos)
+        if totalbudgetdiff > totalloc:
+            raise Exception('The amount you want to change the budget of a region by is greater than the total region budget!')
+        else:
+            a, currobj, b, c = self.optimise(makenew = False)
+            
+            self.alloc = [x*(1-totalbudgetdiff/totalloc) for x in curralloc]
+            a, lowobj, b, c = self.optimise(makenew = False)
+            gradneg = (lowobj - currobj)/totalbudgetdiff
+            
+            print curralloc
+            print self.alloc
+            
+            self.alloc = [x*(1+totalbudgetdiff/totalloc) for x in curralloc]
+            a, highobj, b, c = self.optimise(makenew = False)
+            gradpos = (highobj - currobj)/totalbudgetdiff
+            
+            print curralloc
+            print self.alloc
+            
+            self.alloc = curralloc
+            
+            print curralloc
+            print self.alloc
+            
+            return (gradneg, gradpos)
 
     def __repr__(self):
         return "SimBudget %s ('%s')" % (self.uuid,self.name)   
