@@ -269,7 +269,7 @@ class SimBudget(Sim):
         
         tempD['S'] = self.debug['structure']     # Need to run simulation before optimisation!
         #optimize(tempD, maxiters = 3, returnresult = True)   # Temporary restriction on iterations. Not meant to be hardcoded!
-        optimize(tempD, maxiters=1e3, timelimit=5, returnresult = True),        
+        optimize(tempD, maxiters=1e3, timelimit=400, returnresult = True),        
         
         self.plotdataopt = tempD['plot']['optim'][-1]       # What's this -1 business about?
         
@@ -294,42 +294,22 @@ class SimBudget(Sim):
         # Optimisation returns an allocation, (hopefully corresponding) objective function value and whether a new SimBudget should be made.
         return (optalloc, optobj, resultopt, makenew)
     
-    # Calculates objective values for optimisations with budget-totalbudgetdiff and budget+totalbudgetdiff.
-    # Works out by how much objective values will change moving to either allocation. Scales this to a per $ value, like a derivative.
-    # Involves three optimisations. Useful for GPA, where objective change rates need to be compared between regions.
-    # Note that individual allocations will be adjusted in current proportion to change in budget.
-    def calculateobjectivediff(self, totalbudgetdiff):
+    # Calculates objective values for certain multiplications of a total budget.
+    # The idea is to spline a cost-effectiveness curve for varying budget totals.
+    def calculateeffectivenesscurve(self):
         curralloc = self.alloc
-        totalloc = sum(curralloc)
         
-        print curralloc
-        print self.alloc
+        factors = [0.1, 0.2, 0.5, 1, 2, 5]
+        objarr = []
         
-        if totalbudgetdiff > totalloc:
-            raise Exception('The amount you want to change the budget of a region by is greater than the total region budget!')
-        else:
+        for factor in factors:
+            self.alloc = [x*factor for x in curralloc]
             a, currobj, b, c = self.optimise(makenew = False)
+            objarr.append(currobj)            
             
-            self.alloc = [x*(1-totalbudgetdiff/totalloc) for x in curralloc]
-            a, lowobj, b, c = self.optimise(makenew = False)
-            gradneg = (lowobj - currobj)/totalbudgetdiff
+        self.alloc = curralloc
             
-            print curralloc
-            print self.alloc
-            
-            self.alloc = [x*(1+totalbudgetdiff/totalloc) for x in curralloc]
-            a, highobj, b, c = self.optimise(makenew = False)
-            gradpos = (highobj - currobj)/totalbudgetdiff
-            
-            print curralloc
-            print self.alloc
-            
-            self.alloc = curralloc
-            
-            print curralloc
-            print self.alloc
-            
-            return (gradneg, gradpos)
+        return (factors, objarr)
 
     def __repr__(self):
         return "SimBudget %s ('%s')" % (self.uuid,self.name)   
