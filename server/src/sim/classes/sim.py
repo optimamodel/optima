@@ -298,6 +298,7 @@ class SimBudget(Sim):
     # The idea is to spline a cost-effectiveness curve for varying budget totals.
     def calculateeffectivenesscurve(self):
         curralloc = self.alloc
+        totalloc = sum(curralloc)
         
         factors = [0.1, 0.2, 0.5, 1, 2, 5]
         objarr = []
@@ -308,8 +309,10 @@ class SimBudget(Sim):
             objarr.append(currobj)            
             
         self.alloc = curralloc
+        
+        factors,objarr = ([0.1, 0.2, 0.5, 1, 2, 5],[7420.5665291930309,6895.5487199112631,3774.2076700271682,3708.4290662398462,3618.188538137224,3503.5918712593821])
             
-        return (factors, objarr)
+        return ([x*totalloc for x in factors], objarr)
 
     def __repr__(self):
         return "SimBudget %s ('%s')" % (self.uuid,self.name)   
