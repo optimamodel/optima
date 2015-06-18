@@ -234,6 +234,7 @@ class Portfolio:
                 print('%i: %s' % (fid, region.getregionname()))
                 region.printsimboxlist(assubset=True)
     
+    # Consider making a list of references (weak?) to GPA simboxes.
     def geoprioanalysis(self):
         gpaname = raw_input('Enter a title for the current analysis: ')
         

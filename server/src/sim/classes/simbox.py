@@ -117,7 +117,7 @@ class SimBox:
         return "SimBox %s ('%s')" % (self.uuid,self.name)
         
         
-# A container just for Sims with budgets.
+# A container just for Sims with budgets. (No hard-coded restriction on multiple unoptimised SimBudgets exist, but may be considered lest things 'break'.)
 class SimBoxOpt(SimBox):
     def __init__(self,name,region):
         SimBox.__init__(self,name,region)
@@ -133,27 +133,28 @@ class SimBoxOpt(SimBox):
             
     # This creates a duplicate SimBudget to 'sim', except with optimised 'G', 'M', 'F', 'S' from sim.resultopt.
     # As an optimised version of the previous SimBudget, it will also be automatically processed, to get plotdata.
-    def createsimopt(self, sim):
+    def createsimopt(self, sim, optalloc, optobj, resultopt):
         if not sim == None:
             print('Converting optimisation results into a new budget simulation...')
             self.simlist.append(SimBudget(sim.getname(),self.getregion()))
             
             # The copy can't be completely deep or shallow, so we load the new SimBudget with a developer-made method.
-            self.simlist[-1].specialoptload(sim)
+            self.simlist[-1].specialoptload(sim, optalloc, optobj, resultopt)
             self.simlist[-1].run()
             
-    
+    # Overwrites normal SimBox method so that SimBudget is not only run, but optimised, with the results (possibly) copied to a new SimBudget.
     def runallsims(self, forcerun = False):
         tempsim = None
         for sim in self.simlist:
             if forcerun or not sim.isprocessed():
                 sim.run()
             if sim.isprocessed() and (forcerun or not sim.isoptimised()):
-                sim.optimise()
+                (optalloc, optobj, resultopt, makenew) = sim.optimise()
                 tempsim = sim
                 
-         # Generates a new SimBudget from the last Sim that was optimised in the list, but only when the loop has ended.
-        self.createsimopt(tempsim)
+        # Generates a new SimBudget from the last Sim that was optimised in the list, but only when the loop has ended and if requested.
+        if makenew:
+            self.createsimopt(tempsim, optalloc, optobj, resultopt)
     
     # Special printing method for SimBoxOpt to take into account whether a Sim was already optimised.
     def printsimlist(self, assubsubset = False):

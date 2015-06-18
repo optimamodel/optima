@@ -49,7 +49,7 @@ class Sim:
         self.parsfitted  = simdict['parsfitted']  
         self.debug  = simdict['debug']   
         self.plotdata  = simdict['plotdata']  
-        self.plotdataopt  = simdict['plotdataopt']  
+        self.plotdataopt  = simdict['plotdataopt']      # Note: A method of a base class should not refer to derived class members. Overload instead.
         self.uuid = simdict['uuid']
 
     def todict(self):
@@ -62,7 +62,7 @@ class Sim:
         simdict['parsfitted']  = self.parsfitted 
         simdict['debug']   = self.debug 
         simdict['plotdata']  = self.plotdata 
-        simdict['plotdataopt']  = self.plotdataopt 
+        simdict['plotdataopt']  = self.plotdataopt      # Note: A method of a base class should not refer to derived class members. Overload instead.
         simdict['region_uuid'] = self.getregion().uuid
         simdict['uuid'] = self.uuid
         return simdict
@@ -77,7 +77,7 @@ class Sim:
         # implementation detail in case it changes in future
         r = self.region()
         if r is None:
-            raise Exception('The parent region has been garbage-collected and the reference is no longer valid')
+            raise Exception('The parent region has been garbage-collected and the reference is no longer valid.')
         else:
             return r
 
@@ -91,7 +91,6 @@ class Sim:
         return self.processed
     
     # Initialises P, M and F matrices belonging to the Sim object, but does not run simulation yet.
-    # Region defaults can be overwritten by passing in parameters, e.g. in the case of creating a new optimised Sim Budget.
     def initialise(self):
         r = self.getregion()
 
@@ -111,21 +110,20 @@ class Sim:
         
         self.makemodelpars()
         
-        from updatedata import makefittedpars
+        # Hmm... should we just makefittedpars and calibrate later? Or calibrate here?
+#        # Explicit construction of tempD, so that one day we know how to recode makefittedpars.
+#        tempD = dict()
+#        tempD['opt'] = r.options
+#        tempD['G'] = r.metadata
+#        tempD['M'] = self.parsmodel
         
-        # Explicit construction of tempD, so that one day we know how to recode makefittedpars.
-        tempD = dict()
-        tempD['opt'] = r.options
-        tempD['G'] = r.metadata
-        tempD['M'] = self.parsmodel
-        
-        #tempD = makefittedpars(tempD)
+#        tempD = makefittedpars(tempD)
         self.parsfitted = r.D['F']      # Temporary solution. Remember, D should not be stored in region.
         
         self.initialised = True
 
     def makemodelpars(self):
-        # SimParameter, SimBudget and SimCoverge differ in how they calculate D.M
+        # SimParameter, SimBudget and SimCoverage differ in how they calculate D.M
         # but are otherwise almost identical. Thus this is the function that is
         # expected to be re-implemented in the derived classes
         from makemodelpars import makemodelpars
@@ -141,7 +139,8 @@ class Sim:
         r = self.getregion()
 
         from model import model
-
+        
+        # Note: Work out what we're looping through. There may be a more sensible alternative...?
         allsims = []
         for s in range(len(self.parsfitted)):   # Parallelise eventually.
             S = model(r.metadata, self.parsmodel, self.parsfitted[s], r.options)
@@ -168,6 +167,7 @@ class Sim:
         # Gather plot data.
         from gatherplotdata import gatheruncerdata
         
+        # Explicit construction of tempD, so that one day we know how to recode gatheruncerdata.
         tempD = dict()
         tempD['data'] = r.data
         tempD['G'] = r.metadata
@@ -195,9 +195,14 @@ class SimBudget(Sim):
         self.optimised = False        
         
         self.plotdataopt = None     # This used to be D['plot']['optim'][-1]. Be aware that it is not D['plot']!
-        self.resultopt = None       # The resulting data structures after optimisation.
-        self.origalloc = None       # The budget allocations before optimisation.
-        self.optalloc = None        # The resulting budget allocations after optimisation.
+        
+        # I hope SimBudget always has a region attached...         
+        self.alloc = self.getregion().data['origalloc']     # The budget allocations before optimisation.
+        self.obj = None                                     # The current objective function value for the origalloc budget.
+        
+#        self.optalloc = None        # The resulting budget allocations after optimisation.
+#        self.optobj = None          # The resulting objective function value for the optalloc budget.
+
 
     def todict(self):
         simdict = Sim.todict(self)
@@ -214,7 +219,7 @@ class SimBudget(Sim):
     
     # Essentially copies old SimBudget into new SimBudget, except overwriting where applicable with sim.resultopt.
     # This will need to be monitored carefully! Every additional data structure in Sim+SimBudget must be written here.
-    def specialoptload(self, sim):
+    def specialoptload(self, sim, optalloc, optobj, resultopt):
         self.setregion(sim.getregion())     # Did optimisation change D['G']? Is it important? If so, this could be dangerous!        
         
 #        from copy import deepcopy
@@ -225,8 +230,8 @@ class SimBudget(Sim):
         self.initialised = True    # This special loading is considered initialisation.
 
         self.parsdata = sim.parsdata
-        self.parsmodel = sim.resultopt['M']         # New D['M'].
-        self.parsfitted = sim.resultopt['F']        # New D['F'].
+        self.parsmodel = resultopt['M']         # New D['M'].
+        self.parsfitted = resultopt['F']        # New D['F'].
         
         # Will need to run to get these.
         self.debug = {}
@@ -236,20 +241,23 @@ class SimBudget(Sim):
         self.plotdata = None
         
         self.plotdataopt = None
-        self.resultopt = None
-        self.origalloc = sim.optalloc
-        self.optalloc = None
+        
+        # The previous SimBudget's optimal allocation and objective become the initial values for this SimBudget.
+        self.alloc = optalloc
+        self.obj = optobj
+        
+#        self.optalloc = None
+#        self.optobj = None
 
     # Currently just optimises simulation according to defaults. As in... fixed budget!
-    def optimise(self):
+    def optimise(self, makenew = True):
         r = self.getregion()
 
         from optimize import optimize
         
         tempD = dict()
         tempD['data'] = r.data
-        if not self.origalloc == None:
-            tempD['data']['origalloc'] = self.origalloc
+        tempD['data']['origalloc'] = self.alloc
         tempD['opt'] = r.options
         tempD['programs'] = r.metadata['programs']
         tempD['G'] = r.metadata
@@ -260,23 +268,51 @@ class SimBudget(Sim):
         tempD['plot'] = dict()
         
         tempD['S'] = self.debug['structure']     # Need to run simulation before optimisation!
-        optimize(tempD, maxiters = 3, returnresult = True)   # Temporary restriction on iterations. Not meant to be hardcoded!
+        #optimize(tempD, maxiters = 3, returnresult = True)   # Temporary restriction on iterations. Not meant to be hardcoded!
+        optimize(tempD, maxiters=1e3, timelimit=400, returnresult = True),        
         
         self.plotdataopt = tempD['plot']['optim'][-1]       # What's this -1 business about?
         
-        # Saves optimisation results to this Sim. New 'G', 'M', 'F', 'S'.
-        # self.debug['results'] = tempD['result']       # Maybe store just the results of a normal run in self.debug.
-        self.resultopt = tempD['result']['debug']       # Optimisation results are kept separate from debug['results'].
-#        self.test = tempD['test']        
+#        # Saves optimisation results to this Sim. New 'G', 'M', 'F', 'S'.
+#        # self.debug['results'] = tempD['result']       # Maybe store just the results of a normal run in self.debug.
+#        self.resultopt = tempD['result']['debug']       # Optimisation results are kept separate from debug['results'].
+#        self.optobj = tempD['objective'][-1]            # This assumes that the last objective value in an optimisation cycle is best. Is that safe...?
+#        
+#        # The new optimised allocations will be derived from the pie chart plotting data.
+#        # Let's hope it's always there...
+#        self.optalloc = self.plotdataopt['alloc'][-1]['piedata']
         
-        # The new optimised allocations will be derived from the pie chart plotting data.
-        # Let's hope it's always there...
-        self.optalloc = self.plotdataopt['alloc'][-1]['piedata']
+        # Let's try returning these rather than storing them...
+        optalloc = self.plotdataopt['alloc'][-1]['piedata']
+        optobj = tempD['objective'][-1]
+        resultopt = tempD['result']['debug']    # VERY temporary. Only until we understand how to regenerate parameters from new allocations.
         
-        self.optimised = True
+        # If makenew is on, the optimisation results will be initialised in a new SimBudget.
+        if makenew:
+            self.optimised = True
+        
+        # Optimisation returns an allocation, (hopefully corresponding) objective function value and whether a new SimBudget should be made.
+        return (optalloc, optobj, resultopt, makenew)
+    
+    # Calculates objective values for certain multiplications of a total budget.
+    # The idea is to spline a cost-effectiveness curve for varying budget totals.
+    def calculateeffectivenesscurve(self):
+        curralloc = self.alloc
+        
+        factors = [0.1, 0.2, 0.5, 1, 2, 5]
+        objarr = []
+        
+        for factor in factors:
+            self.alloc = [x*factor for x in curralloc]
+            a, currobj, b, c = self.optimise(makenew = False)
+            objarr.append(currobj)            
+            
+        self.alloc = curralloc
+            
+        return (factors, objarr)
 
-        def __repr__(self):
-            return "SimBudget %s ('%s')" % (self.uuid,self.name)   
+    def __repr__(self):
+        return "SimBudget %s ('%s')" % (self.uuid,self.name)   
 
 # Derived Sim class that should store parameter overwrites.
 class SimParameter(Sim):

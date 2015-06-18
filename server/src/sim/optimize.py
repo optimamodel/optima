@@ -569,7 +569,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
     # This is new code for the OOP structure. Legacy users will not run this line because returnresult is false by default.
     if returnresult:
         D['result'] = result['Rarr'][-1]['R']
-#        D['test'] = result  # Temp.
+        D['objective'] = result['fval']
     
     return D
 
