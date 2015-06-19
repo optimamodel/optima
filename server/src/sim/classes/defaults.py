@@ -6,6 +6,10 @@ Created on Tue Jun 02 00:08:51 2015
 """
 current_version = 5
 
+### OPTIMISATION DEFAULTS
+maxiters = 1e3
+timelimit = 600
+
 ### REGION DEFAULTS
 
 # Region information for default example project

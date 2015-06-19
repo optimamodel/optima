@@ -7,6 +7,7 @@ Created on Fri Jun 05 23:27:38 2015
 
 import weakref
 import uuid
+import defaults
 
 class Sim:
     def __init__(self, name, region):
@@ -269,7 +270,7 @@ class SimBudget(Sim):
         
         tempD['S'] = self.debug['structure']     # Need to run simulation before optimisation!
         #optimize(tempD, maxiters = 3, returnresult = True)   # Temporary restriction on iterations. Not meant to be hardcoded!
-        optimize(tempD, maxiters=1e3, timelimit=400, returnresult = True),        
+        optimize(tempD, maxiters=defaults.maxiters, timelimit=defaults.timelimit, returnresult = True),        
         
         self.plotdataopt = tempD['plot']['optim'][-1]       # What's this -1 business about?
         
@@ -310,7 +311,7 @@ class SimBudget(Sim):
             
         self.alloc = curralloc
         
-        factors,objarr = ([0.1, 0.2, 0.5, 1, 2, 5],[7420.5665291930309,6895.5487199112631,3774.2076700271682,3708.4290662398462,3618.188538137224,3503.5918712593821])
+        # factors,objarr = ([0.1, 0.2, 0.5, 1, 2, 5],[7420.5665291930309,6895.5487199112631,3774.2076700271682,3708.4290662398462,3618.188538137224,3503.5918712593821])
             
         return ([x*totalloc for x in factors], objarr)
 

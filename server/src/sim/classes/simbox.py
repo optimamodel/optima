@@ -6,8 +6,11 @@ Created on Tue Jun 02 01:03:34 2015
 """
 
 from sim import Sim, SimBudget
+
 import weakref
 import uuid
+
+from scipy.interpolate import PchipInterpolator as pchip
 
 class SimBox:
     def __init__(self, name,region):
@@ -117,10 +120,15 @@ class SimBox:
         return "SimBox %s ('%s')" % (self.uuid,self.name)
         
         
+
 # A container just for Sims with budgets. (No hard-coded restriction on multiple unoptimised SimBudgets exist, but may be considered lest things 'break'.)
 class SimBoxOpt(SimBox):
     def __init__(self,name,region):
         SimBox.__init__(self,name,region)
+        
+        # Budget Objective Curve data, used for GPA. (Assuming initial budget spending is fixed.)
+        self.BOCx = None        # Array of budget allocation totals.
+        self.BOCy = None        # Array of corresponding optimum objective values.
         
     # Overwrites the standard Sim create method. This is where budget data would be attached.
     def createsim(self, simname):
@@ -156,6 +164,18 @@ class SimBoxOpt(SimBox):
         if makenew:
             self.createsimopt(tempsim, optalloc, optobj, resultopt)
     
+    def calculateBOCxy(self):
+        if (not self.BOCx == None) or (not self.BOCy == None):
+            print('Budget objective curve already exists for optimisation container %s...' % self.name)
+        else:
+            try:
+                sim = self.simlist[-1]
+                if not sim.isprocessed():
+                    sim.run()
+                self.BOCx, self.BOCy = sim.calculateeffectivenesscurve()
+            except:
+                print('There was a problem generating budget objective curve data...')
+    
     # Special printing method for SimBoxOpt to take into account whether a Sim was already optimised.
     def printsimlist(self, assubsubset = False):
         # Prints with long arrow formats if assubsubset is true. Otherwise uses short arrows.        
@@ -171,6 +191,26 @@ class SimBoxOpt(SimBox):
                 for sim in self.simlist:
                     print(' --> %s%s' % (sim.getname(), (" (initialised)" if not sim.isprocessed() else " (simulated + %s)" %
                                              ("further optimisable" if not sim.isoptimised() else "already optimised"))))
+
+    # GPA function. Returns spline for objective effectiveness at different budget totals.
+    def getBOCspline(self):
+        try:
+            return pchip(self.BOCx, self.BOCy, extrapolate=True)
+        except:
+            print('Budget objective curve data does not seem to exist...')
+        
+    def plotBOCspline(self):
+        import matplotlib.pyplot as plt
+        from numpy import linspace
+        
+        try:
+            f = self.getBOCspline()
+            x = linspace(min(self.BOCx), max(self.BOCx), 200)
+            plt.plot(x,f(x),'-')
+            plt.legend(['BOC'], loc='best')
+            plt.show()
+        except:
+            print('Plotting of budget objective curve failed!')
 
     def __repr__(self):
         return "SimBoxOpt %s ('%s')" % (self.uuid,self.name)
