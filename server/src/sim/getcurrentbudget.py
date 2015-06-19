@@ -72,6 +72,17 @@ def getcurrentbudget(D, alloc=None, randseed=None):
                     print('Calculating parameter from CCOCs failed for program %s; cost-outcome curve does not exist for population %s, parameters %s' % (progname, effect['popname'], effect['param']))
                     convertedccoparams = default_convertedccoparams
 
+                # DIAGNOSTIC OUTPUT FOR NEW PROGRAMS
+                # from makeccocs import coeqn
+                # a = cceqn(totalcost[0],convertedccparams[0])
+                # b = coeqn(a,[effect['convertedcoparams'][0]]+[effect['convertedcoparams'][2]])
+                # c = ccoeqn(totalcost[0],convertedccoparams[0])
+                # print '---'
+                # print 'totalcost: ', totalcost[0]
+                # print 'coverage: ', a
+                # print 'outcome: ',b
+                # print 'co_arg: ', [effect['convertedcoparams'][0]]+[effect['convertedcoparams'][2]]
+
                 D['P'][parname]['c'][popnumber] = cco2eqn(totalcost, convertedccoparams[0]) if len(convertedccparams[0])==2 else ccoeqn(totalcost, convertedccoparams[0])            
 
     return D, currentcoverage, currentnonhivdalysaverted

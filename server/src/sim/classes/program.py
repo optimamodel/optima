@@ -89,6 +89,8 @@ class Program:
 			effective_coverage.append(mm.get_coverage(self.modalities,coverage))
 
 		# Return the metamodality coverage
+		# The indexing is
+		# effective_coverage[metamodality][effect][time]
 		return effective_coverage
 
 	def get_outcomes(self,effective_coverage):
@@ -101,8 +103,10 @@ class Program:
 		for mm,coverage in zip(self.metamodalities,effective_coverage):
 			outcomes.append(mm.get_outcomes(self.modalities,coverage))
 
+		# Indexing is outcomes[metamodality][effect][time]
 		# Note that outcomes is a list of lists, because the metamodality returns a list of outputs
 		# rather than a matrix
+		# What we want is outcomes[effect][time]
 		# Now we need to merge all of the entries of outcomes into a single outcome. This is done on a per-effect basis
 
 		final_outcomes = []
@@ -112,10 +116,11 @@ class Program:
 			# In this loop, we iterate over the metamodalities and then combine the outcome into a single parameter
 			# that is returned for use in D.M
 			tmp = outcomes[0][i]
-			for j in xrange(0,len(outcomes)): # For each metamodality
+			for j in xrange(1,len(outcomes)): # For each metamodality
 				tmp += outcomes[j][i]
 			tmp *= (1/len(outcomes))
 			final_outcomes.append(tmp)
+		#print final_outcomes
 		return final_outcomes
 
 	def add_modality(self,name,cc_data={'function':'null','parameters':None},co_data = [{'function':'null','parameters':None}],nonhivdalys=0):
@@ -203,6 +208,9 @@ class Metamodality:
 			if m.uuid in self.modalities:
 				outcomes.append(m.get_outcomes(effective_coverage))
 
+		#print 'METAMODALITY'
+		# It is indexed
+		# outcomes[modality][effect][time]
 		# The modality returns an set of outcomes (an array of arrays)
 		# Now we need to iterate over them to get a single outcome from the metamodality
 
@@ -213,13 +221,17 @@ class Metamodality:
 		for i in xrange(0,len(outcomes[0])): # For each output effect
 			# In this loop, we iterate over the modalities and then combine the outcome into a single parameter
 			# that is returned for use in D.M
+			# Each element in outcomes corresponds to 
 			tmp = [x[i] for x in outcomes] # These are the outcomes for effect i for each modality
+			# tmp is a list of tmp[modality][outcome] for fixed effect. Now we have to iterate over tmp
 			if self.method == 'maximum':
 				out = tmp[0]
 				for j in xrange(1,len(tmp)):
 					out = maximum(out,tmp[j]) # use maximum function from numpy
 			final_outcomes.append(out)
 
+		#print final_outcomes
+		# Indexing is final_outcomes[effect][time]
 		return final_outcomes
 
 

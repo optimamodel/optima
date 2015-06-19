@@ -457,9 +457,12 @@ class SimBudget2(Sim):
                 P[param]['c'] = nan+zeros((len(P[param]['p']), npts))
 
         for prog, spending in zip(self.program_set['programs'], self.budget):
-            coverage = prog.get_coverage(spending)
-            outcomes = prog.get_outcomes(coverage)
+            coverage = prog.get_coverage(spending) # Returns metamodality coverage
+            outcomes = prog.get_outcomes(coverage) # Returns program outcomes (for each effect)
 
+            print '--- SIM'
+            print 'Coverage: ', coverage[0][0][0]
+            print 'Outcome: ', [x[0][0] for x in outcomes]
             for i in xrange(0,len(prog.effects['param'])): # For each of the effects
                 if prog.effects['iscoverageparam'][i]:
                     P[prog.effects['param'][i]]['c'][:] = outcomes[i]
