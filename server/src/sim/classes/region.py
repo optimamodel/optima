@@ -117,7 +117,7 @@ class Region:
         regiondict['data'] = self.data 
         regiondict['simboxlist'] = [sbox.todict() for sbox in self.simboxlist]
         regiondict['options'] = self.options # Populate default options here = self.options 
-        regiondict['program_sets'] = self.program_sets 
+        regiondict['program_sets'] = []#self.program_sets 
         regiondict['calibrations'] = self.calibrations 
         regiondict['uuid'] = self.uuid 
         regiondict['D'] = self.D 
