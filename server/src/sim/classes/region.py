@@ -166,6 +166,13 @@ class Region:
                 return True
         return False
         
+    def getsimboxwithBOC(self):
+        for sb in self.simboxlist:
+            if isinstance(sb,SimBoxOpt) and sb.hasBOC:
+                return sb
+        print "There is no SimBox available with a Budget Objective Curve!"
+        return None
+        
     def printdata(self):
         print(self.data)
     

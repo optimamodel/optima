@@ -130,6 +130,8 @@ class SimBox:
         
 
 # A container just for Sims with budgets. (No hard-coded restriction on multiple unoptimised SimBudgets exist, but may be considered lest things 'break'.)
+# Note: I'm starting to think it best that there is only ever on SimBudget under focus, i.e. the latest one.
+#       SimBoxOpt should always return data from the last SimBudget in its list.
 class SimBoxOpt(SimBox):
     def __init__(self,name,region):
         SimBox.__init__(self,name,region)
@@ -246,6 +248,9 @@ class SimBoxOpt(SimBox):
             plt.show()
         except:
             print('Plotting of budget objective curve failed!')
+            
+    def getlatestalloc(self):
+        return self.simlist[-1].alloc
 
     def __repr__(self):
         return "SimBoxOpt %s ('%s')" % (self.uuid,self.name)

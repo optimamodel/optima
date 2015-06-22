@@ -14,6 +14,7 @@ import os
 from numpy import arange
 
 from region import Region
+from geoprioritisation import gpaoptimisefixedtotal
 
 class Portfolio:
     def __init__(self, portfolioname):
@@ -238,6 +239,8 @@ class Portfolio:
     def geoprioanalysis(self):
         # gpaname = raw_input('Enter a title for the current analysis: ')
         
+        self.simboxref = []
+        
         for currentregion in self.regionlist:
             if not currentregion.hassimboxwithBOC():
                 print('Initialising a simulation in region %s for this GPA.' % currentregion.getregionname())
@@ -245,3 +248,8 @@ class Portfolio:
                 currentregion.createsiminsimbox('GPA-test', tempsimbox)
                 currentregion.runsimbox(tempsimbox)
                 currentregion.developBOC(tempsimbox)
+                self.simboxref.append(tempsimbox)
+            else:
+                self.simboxref.append(currentregion.getsimboxwithBOC())
+        
+        gpaoptimisefixedtotal(self.simboxref)
