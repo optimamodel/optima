@@ -236,11 +236,12 @@ class Portfolio:
     
     # Consider making a list of references (weak?) to GPA simboxes.
     def geoprioanalysis(self):
-        gpaname = raw_input('Enter a title for the current analysis: ')
+        # gpaname = raw_input('Enter a title for the current analysis: ')
         
         for currentregion in self.regionlist:
-            print('Initialising a simulation in region %s for this GPA.' % currentregion.getregionname())
-            tempsimbox = currentregion.createsimbox('GPA-'+gpaname, isopt = True, createdefault = True)
-            currentregion.createsiminsimbox('GPA-'+gpaname, tempsimbox)
-            currentregion.runsimbox(tempsimbox)
-            currentregion.plotsimbox(tempsimbox, multiplot = True)
+            if not currentregion.hassimboxwithBOC():
+                print('Initialising a simulation in region %s for this GPA.' % currentregion.getregionname())
+                tempsimbox = currentregion.createsimbox('GPA-test', isopt = True, createdefault = True)
+                currentregion.createsiminsimbox('GPA-test', tempsimbox)
+                currentregion.runsimbox(tempsimbox)
+                currentregion.developBOC(tempsimbox)

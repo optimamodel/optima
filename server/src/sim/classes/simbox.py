@@ -24,6 +24,13 @@ class SimBox:
         assert(simboxdict['region_uuid'] == region.uuid)
 
         s = SimBox(simboxdict['name'], region)
+#        for x in simboxdict['simlist']:
+#            if x['type'] == 'Sim':
+#                s.simlist.append(Sim.fromdict(x,region))
+#            if x['type'] == 'SimParameter':
+#                s.simlist.append(SimParameter.fromdict(x,region))   # To be coded.
+#            if x['type'] == 'SimBudget':
+#                s.simlist.append(SimBudget.fromdict(x,region))
         s.simlist = [Sim.fromdict(x,region) for x in simboxdict['simlist']]
         s.setregion(region)
         s.uuid = simboxdict['uuid'] # Loading a region restores the original UUID
@@ -131,11 +138,31 @@ class SimBoxOpt(SimBox):
         self.BOCx = None        # Array of budget allocation totals.
         self.BOCy = None        # Array of corresponding optimum objective values.
         
+        self.hasBOC = False
+        
+    @classmethod
+    def fromdict(SimBoxOpt, simboxdict, region):
+        assert(simboxdict['region_uuid'] == region.uuid)
+
+        s = SimBoxOpt(simboxdict['name'], region)
+#        s.simlist = [SimBudget.fromdict(x,region) for x in simboxdict['simlist']]
+        s.simlist = [Sim.fromdict(x,region) for x in simboxdict['simlist']]
+        s.setregion(region)
+        s.uuid = simboxdict['uuid'] # Loading a region restores the original UUID
+        s.hasBOC = simboxdict['has_BOC']
+        s.BOCx = simboxdict['BOC_budgets']
+        s.BOCy = simboxdict['BOC_objectives']
+
+        return s        
+        
     def todict(self):
         simboxdict = SimBox.todict(self)
         simboxdict['type'] = 'SimBoxOpt'    # Overwrites SimBox type.
+        simboxdict['has_BOC'] = self.hasBOC
         simboxdict['BOC_budgets'] = self.BOCx
         simboxdict['BOC_objectives'] = self.BOCy
+        
+        return simboxdict
         
     # Overwrites the standard Sim create method. This is where budget data would be attached.
     def createsim(self, simname):
@@ -180,6 +207,7 @@ class SimBoxOpt(SimBox):
                 if not sim.isprocessed():
                     sim.run()
                 self.BOCx, self.BOCy = sim.calculateeffectivenesscurve()
+                self.hasBOC = True
             except:
                 print('There was a problem generating budget objective curve data...')
     

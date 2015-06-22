@@ -153,6 +153,18 @@ class Region:
             simbox.viewmultiresults()
         else:
             simbox.plotallsims()
+            
+    def developBOC(self, simbox):
+        try:
+            simbox.calculateBOCxy()
+        except:
+            print "SimBox cannot produce a Budget Objective Curve!"
+        
+    def hassimboxwithBOC(self):
+        for sb in self.simboxlist:
+            if isinstance(sb,SimBoxOpt) and sb.hasBOC:
+                return True
+        return False
         
     def printdata(self):
         print(self.data)
