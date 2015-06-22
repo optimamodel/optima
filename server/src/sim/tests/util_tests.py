@@ -1,39 +1,135 @@
 import add_optima_paths
-import extra_utils
+from extra_utils import dict_equal
 from copy import deepcopy
-
-d1 = {'a':1,'b':2}
-d2 = {'b':2,'a':1}
-d3 = {'b':3,'a':1}
-
-d4 = {'a':1,'b':2,'c':3}
-d5 = {'b':2,'c':3,'a':1}
-d6 = {'b':2,'c':[3,4],'a':1}
-
-d7 = [[1,2],[3,4]]
-d8 = [[1,2],[3,4]]
-d9 = [[1,3],[3,4]]
-
-print extra_utils.dict_equal(d1,d2) # true
-print extra_utils.dict_equal(d1,d3) # false
-print extra_utils.dict_equal(d4,d5) # true
-print extra_utils.dict_equal(d5,d6) # false
-print extra_utils.dict_equal(d7,d8) # true
-print extra_utils.dict_equal(d8,d9) # false
-
+import unittest
+import numpy
 import region
 
-r = region.Region.load('./regions/Haiti.json');
-d1 = r.todict()
-d2 = r.todict()
-r2 = region.Region.load('./regions/Sudan.json');
-d3 = r2.todict()
+class TestDictEqual(unittest.TestCase):
 
-print extra_utils.dict_equal(d1,d2) # true
-print extra_utils.dict_equal(d2,d3) # false
+	def test_mismatched_types_str(self):
+		d1 = {'a':1}
+		d2 = 'a'
+		self.assertFalse(dict_equal(d1,d2))
 
+	def test_mismatched_types_tuple(self):
+		d1 = {'a':1}
+		d2 = {'a':(1)}
+		self.assertFalse(dict_equal(d1,d2))
 
-print d1.keys()
-print d2.keys()
-print d3.keys()
-print d4.keys()
+	def test_empty(self):
+		d1 = {'a':1}
+		d2 = []
+		self.assertFalse(dict_equal(d1,d2))
+
+	def test_mismatched_keys(self):
+		d1 = {'a':1}
+		d2 = {'b':1}
+		self.assertFalse(dict_equal(d1,d2))
+
+	def test_list_basic(self):
+		d1 = [1,2,3]
+		d2 = [1,2,3]
+		self.assertTrue(dict_equal(d1,d2))
+
+	def test_list_basic_false(self):
+		d1 = [1,2,3]
+		d2 = [1,2,4]
+		self.assertFalse(dict_equal(d1,d2))
+
+	def test_list_nested_true(self):
+		d1 = [[1,2],[3,4]]
+		d2 = [[1,2],[3,4]]
+		self.assertTrue(dict_equal(d1,d2))
+
+	def test_list_nested_false(self):
+		d1 = [[1,2],[3,4]]
+		d2 = [[1,3],[3,4]]
+		self.assertFalse(dict_equal(d1,d2))
+
+	def test_list_nested_mismatch(self):
+		d1 = [[1,2],[3,4]]
+		d2 = [[1,3],[3,4,5]]
+		self.assertFalse(dict_equal(d1,d2))
+
+	def test_list_nested_mismatch_levels(self):
+		d1 = [[1,2],[3,4]]
+		d2 = [[1,3],[3,4,[5]]]
+		self.assertFalse(dict_equal(d1,d2))
+
+	def test_nested_basic(self):
+		d1 = {'a':1,'b':{'c':1}}
+		d2 = {'a':1,'b':{'c':1}}
+		self.assertTrue(dict_equal(d1,d2))
+
+	def test_nested_basic_false(self):
+		d1 = {'a':1,'b':{'c':1}}
+		d2 = {'a':1,'b':{'c':2}}
+		self.assertFalse(dict_equal(d1,d2))
+
+	def test_nested_basic_keymismatch(self):
+		d1 = {'a':1,'b':{'c':1}}
+		d2 = {'a':1,'b':{'d':1}}
+		self.assertFalse(dict_equal(d1,d2))
+
+	def test_base_basic(self):
+		d1 = {'a':1,'b':2}
+		d2 = {'a':1,'b':2}
+		self.assertTrue(dict_equal(d1,d2))
+
+	def test_base_basic_false(self):
+		d1 = {'a':1,'b':2}
+		d2 = {'a':1,'b':3}
+		self.assertFalse(dict_equal(d1,d2))
+
+	def test_base_mixed_types(self):
+		d1 = {'b':2,'c':[3,4],'a':1}
+		d2 = {'b':2,'c':[3,4],'a':1}
+		self.assertTrue(dict_equal(d1,d2))
+
+	def test_base_mixed_types_false(self):
+		d1 = {'b':2,'c':[3,4],'a':1}
+		d2 = {'b':2,'c':[3,5],'a':1}
+		self.assertFalse(dict_equal(d1,d2))
+
+	def test_numpy_true(self):
+		a = numpy.array([1, 2, 3])
+		b = numpy.array([1, 2, 3])
+		self.assertTrue(dict_equal(a,b))
+
+	def test_numpy_false(self):
+		a = numpy.array([1, 2, 3])
+		b = numpy.array([1, 2, 4])
+		self.assertFalse(dict_equal(a,b))
+
+	def test_numpy_mismatch(self):
+		a = numpy.array([1, 2, 3])
+		b = numpy.array([1, 2, 3, 4])
+		self.assertFalse(dict_equal(a,b))
+
+	def test_numpy_nd_true(self):
+		a = numpy.array([[1, 2], [3,4]])
+		b = numpy.array([[1, 2], [3,4]])
+		self.assertTrue(dict_equal(a,b))
+
+	def test_numpy_nd_false(self):
+		a = numpy.array([[1, 2], [3,4]])
+		b = numpy.array([[1, 2], [3,5]])
+		self.assertFalse(dict_equal(a,b))
+
+	def test_numpy_nd_mismatch(self):
+		a = numpy.array([[1, 2], [3,4]])
+		b = numpy.array([[1, 2,3], [3,5,6]])
+		self.assertFalse(dict_equal(a,b))
+
+	def test_region(self):
+		r = region.Region.load('./regions/Haiti.json');
+		d1 = r.todict()
+		d2 = r.todict()
+		r2 = region.Region.load('./regions/Sudan.json');
+		d3 = r2.todict()
+		self.assertTrue(dict_equal(d1,d2))
+		self.assertFalse(dict_equal(d1,d3))
+	
+if __name__ == '__main__':
+    unittest.main()
