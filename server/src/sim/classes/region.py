@@ -51,6 +51,7 @@ class Region:
         import dataio
         regiondict = dataio.loaddata(filename)
         if 'uuid' in regiondict.keys(): # This is a new-type JSON file
+            print "This is a new-type JSON file."
             r.uuid = regiondict['uuid'] # Loading a region restores the original UUID
             r.fromdict(regiondict)
         else:
@@ -61,7 +62,12 @@ class Region:
         # Assign variables from a new-type JSON file created using Region.todict()
         self.metadata = regiondict['metadata']
         self.data = regiondict['data']
-        self.simboxlist = [SimBox.fromdict(x,self) for x in regiondict['simboxlist']]
+        self.simboxlist = []
+        for x in regiondict['simboxlist']:
+            if x['type'] == 'SimBoxOpt':
+                self.simboxlist.append(SimBoxOpt.fromdict(x,self))
+            else:
+                self.simboxlist.append(SimBox.fromdict(x,self))
         self.options = regiondict['options'] # Populate default options here
         self.program_sets = regiondict['program_sets'] # sets of Programs i.e. an array of sets of CCOCs
         self.calibrations = regiondict['calibrations']       

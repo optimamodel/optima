@@ -50,7 +50,7 @@ class Sim:
         self.parsfitted  = simdict['parsfitted']  
         self.debug  = simdict['debug']   
         self.plotdata  = simdict['plotdata']  
-        self.plotdataopt  = simdict['plotdataopt']      # Note: A method of a base class should not refer to derived class members. Overload instead.
+        #self.plotdataopt  = simdict['plotdataopt']      # Note: A method of a base class should not refer to derived class members. Overload instead.
         self.uuid = simdict['uuid']
 
     def todict(self):
@@ -63,7 +63,7 @@ class Sim:
         simdict['parsfitted']  = self.parsfitted 
         simdict['debug']   = self.debug 
         simdict['plotdata']  = self.plotdata 
-        simdict['plotdataopt']  = self.plotdataopt      # Note: A method of a base class should not refer to derived class members. Overload instead.
+        #simdict['plotdataopt']  = self.plotdataopt      # Note: A method of a base class should not refer to derived class members. Overload instead.
         simdict['region_uuid'] = self.getregion().uuid
         simdict['uuid'] = self.uuid
         return simdict

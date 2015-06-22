@@ -13,17 +13,17 @@ import uuid
 from scipy.interpolate import PchipInterpolator as pchip
 
 class SimBox:
-    def __init__(self, name,region):
+    def __init__(self, name, region):
         self.name = name
         self.simlist = []
         self.setregion(region)
         self.uuid = str(uuid.uuid4()) # Store UUID as a string - we just want a (practically) unique tag, no advanced functionality
 
     @classmethod
-    def fromdict(SimBox,simboxdict,region):
+    def fromdict(SimBox, simboxdict, region):
         assert(simboxdict['region_uuid'] == region.uuid)
 
-        s = SimBox(simboxdict['name'],region)
+        s = SimBox(simboxdict['name'], region)
         s.simlist = [Sim.fromdict(x,region) for x in simboxdict['simlist']]
         s.setregion(region)
         s.uuid = simboxdict['uuid'] # Loading a region restores the original UUID
@@ -32,6 +32,7 @@ class SimBox:
 
     def todict(self):
         simboxdict = {}
+        simboxdict['type'] = 'SimBox'
         simboxdict['name'] = self.name
         simboxdict['simlist'] = [s.todict() for s in self.simlist]
         simboxdict['region_uuid'] = self.getregion().uuid
@@ -129,6 +130,12 @@ class SimBoxOpt(SimBox):
         # Budget Objective Curve data, used for GPA. (Assuming initial budget spending is fixed.)
         self.BOCx = None        # Array of budget allocation totals.
         self.BOCy = None        # Array of corresponding optimum objective values.
+        
+    def todict(self):
+        simboxdict = SimBox.todict(self)
+        simboxdict['type'] = 'SimBoxOpt'    # Overwrites SimBox type.
+        simboxdict['BOC_budgets'] = self.BOCx
+        simboxdict['BOC_objectives'] = self.BOCy
         
     # Overwrites the standard Sim create method. This is where budget data would be attached.
     def createsim(self, simname):
