@@ -1,5 +1,7 @@
 # This demonstration creates a region, saves a corresponding XLSX file
 # and then loads it back again
+import sys
+sys.path.append('../tests')
 import add_optima_paths
 import defaults
 import region

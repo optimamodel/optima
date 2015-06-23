@@ -25,7 +25,7 @@ class Sim:
         self.debug['structure'] = None       # This used to be D['S'].
         
         self.plotdata = None        # This used to be D['plot']['E']. Be aware that it is not D['plot']!        
-    
+        self.plotdataopt = None # TEMP DEBUG, DON'T COMMIT
         self.setregion(region)
 
     @classmethod
@@ -460,9 +460,12 @@ class SimBudget2(Sim):
             coverage = prog.get_coverage(spending) # Returns metamodality coverage
             outcomes = prog.get_outcomes(coverage) # Returns program outcomes (for each effect)
 
-            print '--- SIM'
-            print 'Coverage: ', coverage[0][0][0]
-            print 'Outcome: ', [x[0][0] for x in outcomes]
+            try:
+                print '--- SIM'
+                print 'Coverage: ', coverage[0][0][0]
+                print 'Outcome: ', [x[0][0] for x in outcomes]
+            except:
+                continue
             for i in xrange(0,len(prog.effects['param'])): # For each of the effects
                 if prog.effects['iscoverageparam'][i]:
                     P[prog.effects['param'][i]]['c'][:] = outcomes[i]
