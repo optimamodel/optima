@@ -37,6 +37,8 @@ define(['angular', 'jquery', './svg-to-png', 'underscore'], function (angular, $
           var styleContent = $(style).html();
           if (styleContent.indexOf('div#' + elementId) != -1) {
             return styleContent.replace(/div#/g, '#');
+          } else {
+            return styleContent;
           }
         });
 

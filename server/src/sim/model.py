@@ -82,7 +82,7 @@ def model(G, M, F, opt, initstate=None, verbose=2):
     # Concatenate all PLHIV, diagnosed and treated for ease
     plhivind = concatenate([undx, dx, tx1, fail, tx2]) # All PLHIV
     dxind    = concatenate([dx, tx1, fail, tx2])       # All people who have been diagnosed
-    txind    = concatenate([tx1, fail, tx2])           # All people on treatment
+    txind    = concatenate([tx1, tx2])           # All people on treatment
     
     # Population sizes
     popsize = M['popsize'] # Population sizes
@@ -181,7 +181,7 @@ def model(G, M, F, opt, initstate=None, verbose=2):
         elif txelig[t]>350: currelig = arange(2,ncd4) # Exclude acute and CD4>500
         elif txelig[t]>200: currelig = arange(3,ncd4)
         elif txelig[t]>50:  currelig = arange(4,ncd4)
-        elif txelig[t]>0:   currelig = arange(5,ncd4) # Only people in the last health state
+        elif txelig[t]>=0:   currelig = arange(5,ncd4) # Only people in the last health state
         else: raise Exception('Treatment eligibility %s at time %s does not seem to be valid' % (txelig[t], t))
         
         
@@ -442,7 +442,12 @@ def model(G, M, F, opt, initstate=None, verbose=2):
             else: # It's greater than one: it's a number
                 newtreat1tot = txtotal[t] - people[txind,:,t].sum() # New people on treatment is just the total requested minus total current
         else:
-            newtreat1tot = mtx1[t] - people[tx1,:,t].sum() # Calculate difference between current people on treatment and people needed
+            if mtx1[t]<=1:
+                currplhiv = people[plhivind,:,t].sum()
+                currtx = people[txind,:,t].sum()
+                newtreat1tot =  mtx1[t] * currplhiv - currtx
+            else:
+                newtreat1tot = mtx1[t] - people[tx1,:,t].sum() # Calculate difference between current people on treatment and people needed
         currentdiagnosed = people[dx,:,t] # Find how many people are diagnosed
         for cd4 in xrange(ncd4):
             if cd4>0: 
@@ -484,7 +489,7 @@ def model(G, M, F, opt, initstate=None, verbose=2):
                 dT1[cd4] = maximum(dT1[cd4], -people[tx1[cd4],:,t]) # Ensure it doesn't go below 0 -- # TODO kludgy
                 printv('Prevented negative people in treatment 1 at timestep %i' % t, 6, verbose)
             S['death'][:,t] += hivdeaths/dt # Save annual HIV deaths 
-
+        
         ## Treatment failure
         newtreat2tot = mtx2[t] - people[tx2,:,t].sum() # Calculate difference between current people on treatment and people needed
         currentfailed = people[fail,:,t] # Find how many people are diagnosed
@@ -510,7 +515,7 @@ def model(G, M, F, opt, initstate=None, verbose=2):
                 printv('Prevented negative people in failure at timestep %i' % t, 6, verbose)
             S['newtx2'][:,t] += newtreat2[cd4]/dt # Save annual treatment initiation
             S['death'][:,t]  += hivdeaths/dt # Save annual HIV deaths
-            
+        
         ## 2nd-line treatment
         for cd4 in xrange(ncd4):
             if (cd4>0 and cd4<ncd4-1): # CD4>0 stops people from moving back into acute

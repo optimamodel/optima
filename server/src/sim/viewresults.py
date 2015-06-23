@@ -126,10 +126,8 @@ def viewmultiresults(M, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 
     """
     
     from matplotlib.pylab import figure, plot, hold, xlabel, ylabel, xlim, ylim, legend, title, ceil, sqrt, subplot, show, fill_between
-    import colorbrewer
-    bmap = colorbrewer.get_map('Paired', 'Qualitative', max(3,M['nsims'])) # WARNING, won't work with >13
-    if M['nsims']>12: raise Exception('Can''t use ColorBrewer with more than 12 colors')
-    colors = bmap.mpl_colors
+    from gridcolormap import gridcolormap
+    colors = gridcolormap(M['nsims'])
     
     npops = len(M['prev']['pops']) # Calculate number of populations
 
@@ -216,12 +214,10 @@ def viewoptimresults(O):
     Version: 2015mar25
     """
     from matplotlib.pylab import figure, subplot, pie, title, plot, xlabel, ylabel
-    import colorbrewer
+    from gridcolormap import gridcolormap
     
     nprograms = len(O['alloc'][0]['piedata'])
-    bmap = colorbrewer.get_map('Paired', 'Qualitative', max(3,nprograms)) # WARNING, won't work with >13
-    if nprograms>12: raise Exception('Can''t use ColorBrewer with more than 12 colors')
-    colors = bmap.mpl_colors
+    colors = gridcolormap(nprograms)
     
     figure(figsize=(8,8))
     for p in xrange(2):
@@ -233,3 +229,48 @@ def viewoptimresults(O):
     xlabel(O['outcome']['xlabel'])
     ylabel(O['outcome']['ylabel'])
     title(O['outcome']['title'])
+
+
+def viewparameters(M):
+    """
+    Plot the entries of D['M']
+    """
+    from numpy import transpose
+    from matplotlib.pylab import subplot, plot, title, hold, legend, shape, xlim, figure
+    nx = 6
+    ny = 4
+    count = 0
+    
+    figh = figure(figsize=(24,16), facecolor='w')
+    figh.subplots_adjust(left=0.04) # Less space on left
+    figh.subplots_adjust(right=0.99) # Less space on right
+    figh.subplots_adjust(top=0.98) # Less space on bottom
+    figh.subplots_adjust(bottom=0.04) # Less space on bottom
+    figh.subplots_adjust(wspace=0.5) # More space between
+    figh.subplots_adjust(hspace=0.5) # More space between
+    for key in M.keys():
+        count += 1
+        subplot(nx, ny, count); hold(True)
+        if len(shape(M[key]))==2:
+            if shape(M[key])[1] == len(M['tvec']) and key != 'tvec':
+                plot(M['tvec'], transpose(M[key]))
+                xlim((M['tvec'][0],M['tvec'][-1]))
+        if len(shape(M[key]))==1:
+            if shape(M[key])[0] == len(M['tvec']) and key != 'tvec':
+                plot(M['tvec'], M[key])
+                xlim((M['tvec'][0],M['tvec'][-1]))
+        else:
+            if type(M[key])==dict:
+                count -= 1
+                for key2 in M[key].keys():
+                    try:
+                        plot(M[key][key2])
+                        title(key)
+                    except:
+                        print('Plotting failed for %s+%s' % (key, key2))
+                legend(M[key].keys())
+            try:
+                plot(M[key])
+            except:
+                print('Plotting failed for %s' % (key))
+        title(key)
