@@ -9,15 +9,28 @@ from numpy import arange, zeros, ones
 from scipy.optimize import minimize
 
 # The object returned by getBOCspline() is a pchip. See SimBoxOpt.
-from scipy.interpolate import PchipInterpolator as pchip
+#from scipy.interpolate import PchipInterpolator as pchip
 
-def totalobjectivefunc(x, gpasimboxes):
+def totalobjectivefunc(x, (gpasimboxes, grandtotal)):
     """Objective function. A secondary argument of all simboxes under gpa must be passed in during minimisation."""
+    """Input x contains len(x)-1 budget totals, while x[len(x)] is a lagrangian multiplier."""
+    
+    l = x[-1]    # Lagrangian multiplier
     
     totalobj = 0
-    for i in arange(0,len(x)):
-        totalobj += gpasimboxes[i].getBOCspline()(x[i])
+    for i in arange(0,len(x)-1):
+        totalobj += (gpasimboxes[i].getBOCspline().derivative()(x[i]) + l)**2
+    totalobj += (sum(x[:-1])-grandtotal)**2
+    print totalobj
     return totalobj
+    
+#def totalobjectivefunc(x, gpasimboxes):
+#    """Objective function. A secondary argument of all simboxes under gpa must be passed in during minimisation."""
+#    
+#    totalobj = 0
+#    for i in arange(0,len(x)):
+#        totalobj += gpasimboxes[i].getBOCspline()(x[i])
+#    return totalobj
     
 def totalobjectivejac(x, gpasimboxes):
     
@@ -65,10 +78,13 @@ def totalobjectivejac(x, gpasimboxes):
 #               constraints=cons, tol=1e-15, options={'disp': True})
 
 def gpaoptimisefixedtotal(simboxref):
-    budgettotals = zeros([len(simboxref)])
+#    budgettotals = zeros([len(simboxref)+1])
+    budgettotals = []
+    minbound = []
     for i in arange(0,len(simboxref)):
         print simboxref[i].getlatestalloc()
-        budgettotals[i] = sum(simboxref[i].getlatestalloc())
+        budgettotals.append(sum(simboxref[i].getlatestalloc()))
+        minbound.append(0)
     grandtotal = sum(budgettotals)
     print budgettotals
     
@@ -84,11 +100,20 @@ def gpaoptimisefixedtotal(simboxref):
 #         'jac' : totalbudgetconstraintjac})
 
     print 'Yo'
-    print totalobjectivefunc(budgettotals,simboxref)
-    print totalobjectivejac(budgettotals,simboxref)
+    print totalobjectivefunc(budgettotals,(simboxref,grandtotal))
+#    print totalobjectivejac(budgettotals,simboxref)
     print 'No'
          
-    res = minimize(totalobjectivefunc, budgettotals, args=(simboxref), jac=totalobjectivejac,               
-               bounds=[(0,None) for x in simboxref], constraints=cons, options={'disp': True})
+#    res = minimize(totalobjectivefunc, budgettotals, args=(simboxref), jac=totalobjectivejac,               
+#               bounds=[(0,None) for x in simboxref], constraints=cons, options={'disp': True})
                
-    print res
+    from ballsd import ballsd
+    
+    budgettotals.append(0)    # Lagrange multiplier initial guess.
+    minbound.append(None)     # Lagrange multiplier minimum.
+    X, FVAL, EXITFLAG, OUTPUT = ballsd(totalobjectivefunc, budgettotals, options=(simboxref, grandtotal), xmin = minbound)
+               
+    print X
+    print FVAL
+    print EXITFLAG
+    print OUTPUT
