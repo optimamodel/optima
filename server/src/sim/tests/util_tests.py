@@ -14,7 +14,7 @@ class TestDictEqual(unittest.TestCase):
 
 	def test_mismatched_types_tuple(self):
 		d1 = {'a':1}
-		d2 = {'a':(1)}
+		d2 = {'a':(1,)}
 		self.assertFalse(dict_equal(d1,d2))
 
 	def test_empty(self):
