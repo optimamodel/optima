@@ -113,13 +113,18 @@ class Sim:
         
         # Hmm... should we just makefittedpars and calibrate later? Or calibrate here?
 #        # Explicit construction of tempD, so that one day we know how to recode makefittedpars.
-#        tempD = dict()
-#        tempD['opt'] = r.options
-#        tempD['G'] = r.metadata
-#        tempD['M'] = self.parsmodel
+#        
         
-#        tempD = makefittedpars(tempD)
-        self.parsfitted = r.D['F']      # Temporary solution. Remember, D should not be stored in region.
+        if 'F' not in r.D.keys():
+            import updatedata
+            tempD = dict()
+            tempD['opt'] = r.options
+            tempD['G'] = r.metadata
+            tempD['M'] = self.parsmodel
+            tempD = updatedata.makefittedpars(tempD)
+            self.parsfitted = tempD['F']
+        else:
+            self.parsfitted = r.D['F']      # Temporary solution. Remember, D should not be stored in region.
         
         self.initialised = True
 
