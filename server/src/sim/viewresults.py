@@ -76,16 +76,16 @@ def viewuncerresults(E, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 
                         figure(facecolor='w')
                     hold(True)
                     try:
-                        if graph not in ['costann']:
-                            fill_between(xdata, E[graph][subkey]['low'], E[graph][subkey]['high'], alpha=0.2, edgecolor='none')
-                        else:
+                        if graph=='costann':
                             fill_between(xdata, E[graph][subkey]['total']['low'], E[graph][subkey]['total']['high'], alpha=0.2, edgecolor='none')
+                            plot(xdata, E[graph][subkey]['total']['best'], c=E['colorm'], linewidth=linewidth)
+                            title(E[graph][subkey]['total']['title'], fontsize=10)
+                        else:
+                            fill_between(xdata, E[graph][subkey]['low'], E[graph][subkey]['high'], alpha=0.2, edgecolor='none')
+                            plot(xdata, E[graph][subkey]['best'], c=E['colorm'], linewidth=linewidth)
+                            title(E[graph][subkey]['title'], fontsize=10)
                     except:
                         import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-                    if graph not in ['costann']:
-                        plot(xdata, E[graph][subkey]['best'], c=E['colorm'], linewidth=linewidth)
-                    else:
-                        plot(xdata, E[graph][subkey]['total']['best'], c=E['colorm'], linewidth=linewidth)
                     if epigraph:
                         if ndim(E[graph]['ydata'])==1:
                             scatter(E['xdata'], E[graph]['ydata'], c=E['colord'])
