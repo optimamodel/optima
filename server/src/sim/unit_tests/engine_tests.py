@@ -11,7 +11,7 @@ def compare_cached_region(fcn,regenerate = False):
 	# If cached output
 	test_name = fcn.__name__
 	test_region = fcn()
-	fname = './cache_' + test_name
+	fname = './cache_' + test_name + '.json'
 	if regenerate or fname.replace('./','') not in os.listdir(os.getcwd()): # Test existance more nicely
 		# Write to file
 		test_region.save(fname)
