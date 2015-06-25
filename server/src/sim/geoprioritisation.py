@@ -11,35 +11,29 @@ from numpy import arange, linspace
 # The object returned by getBOCspline() is a pchip. See SimBoxOpt.
 #from scipy.interpolate import PchipInterpolator as pchip
 
-def totalobjectivefunc(xin, (gpasimboxes, scalingfactors, grandtotal)):
-    """Objective function. A secondary argument of all simboxes under gpa must be passed in during minimisation."""
-    """Input x contains len(x)-1 budget totals, while x[len(x)] is a lagrangian multiplier."""
-
-    x = [xin[i]*scalingfactors[i] for i in arange(0,len(xin))]    
+#def totalobjectivefunc(xin, (gpasimboxes, grandtotal)):
+#    """Objective function. A secondary argument of all simboxes under gpa must be passed in during minimisation."""
+#
+#    x = [xin[i]*scalingfactors[i] for i in arange(0,len(xin))]    
+#    
+#    l = x[-1]    # Lagrangian multiplier
+#    
+#    totalobj = 0
+#    for i in arange(0,len(x)-1):
+#        totalobj += (gpasimboxes[i].getBOCspline().derivative()(x[i]) + l)**2
+#    totalobj += (sum(x[:-1])-grandtotal)**2
+#    print totalobj
+#    return totalobj
     
-    l = x[-1]    # Lagrangian multiplier
+def testobjectivefunc(xin, (gpapchips, grandtotal)):
+    """Objective function. A secondary argument of all pchips under gpa must be passed in during minimisation."""
+    x = [xi*grandtotal/sum(xin) for xi in xin]
     
     totalobj = 0
-    for i in arange(0,len(x)-1):
-        totalobj += (gpasimboxes[i].getBOCspline().derivative()(x[i]) + l)**2
-    totalobj += (sum(x[:-1])-grandtotal)**2
+    for i in arange(0,len(x)):
+        totalobj += gpapchips[i](x[i])
     print totalobj
     return totalobj
-    
-def testobjectivefunc(xin, (gpapchips, scalingfactors, grandtotal)):
-    """Objective function. A secondary argument of all pchips under gpa must be passed in during minimisation."""
-    """Input x contains len(x)-1 budget totals, while x[len(x)] is a lagrangian multiplier."""
-    
-    x = [xin[i]*scalingfactors[i] for i in arange(0,len(xin))]    
-    
-    l = x[-1]    # Lagrangian multiplier
-    
-    totalobj = 0
-    for i in arange(0,len(x)-1):
-        totalobj += (gpapchips[i].derivative()(x[i]) + l)**2
-    totalobj += (sum(x[:-1])-grandtotal)**2
-    print totalobj**0.5
-    return totalobj**0.5
     
 #def totalobjectivefunc(x, gpasimboxes):
 #    """Objective function. A secondary argument of all simboxes under gpa must be passed in during minimisation."""
@@ -121,8 +115,9 @@ plt.show()
 from ballsd import ballsd
 
 grandtotal = GIB + HIB
-lin = min(abs(GS.derivative()(GIB)),abs(HS.derivative()(HIB)))
-X, FVAL, EXITFLAG, OUTPUT = ballsd(testobjectivefunc, [GIB, HIB, lin], options=([GS,HS], [1, 1, -1], grandtotal), TolX = 1e-30, AbsTolFun = 1e-30, RelTolFun = 1e-15, xmin = [0,0,None])
+XOUT, FVAL, EXITFLAG, OUTPUT = ballsd(testobjectivefunc, [GIB, HIB], options=([GS,HS], grandtotal), xmin = [0,0], xmax = [grandtotal, grandtotal])
+X = [xi*grandtotal/sum(XOUT) for xi in XOUT]
+
 
 def gpaoptimisefixedtotal(simboxref):
 #    budgettotals = zeros([len(simboxref)+1])
