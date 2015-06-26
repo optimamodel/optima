@@ -235,7 +235,6 @@ class Portfolio:
                 print('%i: %s' % (fid, region.getregionname()))
                 region.printsimboxlist(assubset=True)
     
-    # Consider making a list of references (weak?) to GPA simboxes.
     def geoprioanalysis(self):
         # gpaname = raw_input('Enter a title for the current analysis: ')
         
@@ -250,6 +249,6 @@ class Portfolio:
                 currentregion.developBOC(tempsimbox)
                 self.simboxref.append(tempsimbox)
             else:
-                self.simboxref.append(currentregion.getsimboxwithBOC())
+                self.simboxref.append(currentregion.getsimboxwithBOC())     # Note: Kludgy but the best that can be done without user input.
         
         gpaoptimisefixedtotal(self.simboxref)

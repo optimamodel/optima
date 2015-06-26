@@ -165,7 +165,9 @@ class Region:
             if isinstance(sb,SimBoxOpt) and sb.hasBOC:
                 return True
         return False
-        
+    
+    # Returns the first SimBoxOpt in Region that has a calculated BOC.
+    # Let's pretend for the moment that you don't have multiple ones from which you wish to choose one...
     def getsimboxwithBOC(self):
         for sb in self.simboxlist:
             if isinstance(sb,SimBoxOpt) and sb.hasBOC:
