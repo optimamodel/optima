@@ -202,9 +202,10 @@ class SimBudget(Sim):
         
         self.plotdataopt = None     # This used to be D['plot']['optim'][-1]. Be aware that it is not D['plot']!
         
-        # I hope SimBudget always has a region attached...         
-        self.alloc = self.getregion().data['origalloc']     # The budget allocations before optimisation.
-        self.obj = None                                     # The current objective function value for the origalloc budget.
+        from copy import deepcopy        
+        
+        self.alloc = deepcopy(self.getregion().data['origalloc'])   # The budget allocations before optimisation.
+        self.obj = None                                             # The current objective function value for the origalloc budget.
         
 #        self.optalloc = None        # The resulting budget allocations after optimisation.
 #        self.optobj = None          # The resulting objective function value for the optalloc budget.
@@ -214,11 +215,17 @@ class SimBudget(Sim):
         simdict = Sim.todict(self)
         simdict['type'] = 'SimBudget'
         simdict['plotdataopt'] = self.plotdataopt
+        simdict['alloc'] = self.alloc
+        simdict['optimised'] = self.optimised
+        simdict['objective'] = self.obj
         return simdict
 
     def load_dict(self,simdict):
         Sim.load_dict(self,simdict)
         self.plotdataopt = simdict['plotdataopt']
+        self.alloc = simdict['alloc']
+        self.optimised = simdict['optimised']
+        self.obj = simdict['objective']
         
     def isoptimised(self):
         return self.optimised
@@ -255,27 +262,27 @@ class SimBudget(Sim):
 #        self.optalloc = None
 #        self.optobj = None
 
-    # Currently just optimises simulation according to defaults. As in... fixed budget!
-    def optimise(self, makenew = True):
+    # Currently just optimises simulation according to defaults. As in... fixed initial budget!
+    def optimise(self, makenew = True, inputmaxiters = defaults.maxiters, inputtimelimit = defaults.timelimit):
         r = self.getregion()
 
         from optimize import optimize
+        from copy import deepcopy         # Leave nothing to chance! Otherwise optimize will modify region data and cause save/load bugs.
         
         tempD = dict()
-        tempD['data'] = r.data
-        tempD['data']['origalloc'] = self.alloc
-        tempD['opt'] = r.options
-        tempD['programs'] = r.metadata['programs']
-        tempD['G'] = r.metadata
-        tempD['P'] = self.parsdata
-        tempD['M'] = self.parsmodel
-        tempD['F'] = self.parsfitted
-        tempD['R'] = self.debug['results']      # Does this do anything?
+        tempD['data'] = deepcopy(r.data)
+        tempD['data']['origalloc'] = deepcopy(self.alloc)
+        tempD['opt'] = deepcopy(r.options)
+        tempD['programs'] = deepcopy(r.metadata['programs'])
+        tempD['G'] = deepcopy(r.metadata)
+        tempD['P'] = deepcopy(self.parsdata)
+        tempD['M'] = deepcopy(self.parsmodel)
+        tempD['F'] = deepcopy(self.parsfitted)
+        tempD['R'] = deepcopy(self.debug['results'])      # Does this do anything?
         tempD['plot'] = dict()
         
-        tempD['S'] = self.debug['structure']     # Need to run simulation before optimisation!
-        #optimize(tempD, maxiters = 3, returnresult = True)   # Temporary restriction on iterations. Not meant to be hardcoded!
-        optimize(tempD, maxiters=defaults.maxiters, timelimit=defaults.timelimit, returnresult = True),        
+        tempD['S'] = deepcopy(self.debug['structure'])     # Need to run simulation before optimisation!
+        optimize(tempD, maxiters = inputmaxiters, timelimit = inputtimelimit, returnresult = True),        
         
         self.plotdataopt = tempD['plot']['optim'][-1]       # What's this -1 business about?
         
@@ -297,28 +304,55 @@ class SimBudget(Sim):
         if makenew:
             self.optimised = True
         
-        # Optimisation returns an allocation, (hopefully corresponding) objective function value and whether a new SimBudget should be made.
+        # Optimisation returns an allocation and a (hopefully corresponding) objective function value.
+        # It also returns a resulting data structure (that we'll hopefully remove the need for eventually).
+        # Finally, it returns a boolean for whether a new SimBudget should be made.
         return (optalloc, optobj, resultopt, makenew)
     
-    # Calculates objective values for certain multiplications of a total budget.
+    # Calculates objective values for certain multiplications of a total budget (passed in as list of factors).
     # The idea is to spline a cost-effectiveness curve for varying budget totals.
-    def calculateeffectivenesscurve(self):
+    # Note: We don't care about the allocations in detail. This is just a function between totals and the objective.
+    def calculateeffectivenesscurve(self, factors):
         curralloc = self.alloc
-        totalloc = sum(curralloc)
         
-        factors = [0.1, 0.2, 0.5, 1, 2, 5]
+        totallocs = []
         objarr = []
         
+        # Work out which programs don't have an effect and are thus fixed costs (e.g. admin).
+        # These will be ignored when testing different allocations.
+        fixedtrue = [1.0]*(len(curralloc))
+        for i in xrange(len(curralloc)):
+            if len(self.getregion().metadata['programs'][i]['effects']): fixedtrue[i] = 0.0
+        
+        # List of factors is currently assumed to be monotonically increasing or reoptimisation issues will arise...
         for factor in factors:
-            self.alloc = [x*factor for x in curralloc]
-            a, currobj, b, c = self.optimise(makenew = False)
-            objarr.append(currobj)            
+            try:
+                print('Testing budget allocation multiplier of %f.' % factor)
+                self.alloc = [curralloc[i]*(factor+(1-factor)*fixedtrue[i]) for i in xrange(len(curralloc))]
+                betteralloc, currobj, b, c = self.optimise(makenew = False, inputtimelimit = 3.0)                               
+                
+                # What if the objective is worse than the one for a lower budget total? Keep optimising! (And hope you avoid local minima...)
+                if len(objarr) > 0:                
+                    for i in xrange(defaults.reopts):
+                        if currobj > objarr[-1]:    # Note: Make sure that the objective is meant to monotonically decrease with money!
+                            print('Attempting to optimise further. Curve is not currently monotonic.')
+                            self.alloc = betteralloc                        
+                            betteralloc, currobj, b, c = self.optimise(makenew = False, inputtimelimit = 3.0)           
+                
+                    if currobj <= objarr[-1]:
+                        print('Local curve monotonicity has been maintained.')
+                    else:
+                        print('Curve is not locally monotonic. Local maxima may be involved. Curve calculation will continue anyway.')
+                
+                objarr.append(currobj)
+                totallocs.append(sum(betteralloc))
+            except:
+                print('Multiplying pertinent budget allocation values by %f failed.' % factor)
             
         self.alloc = curralloc
         
-        # factors,objarr = ([0.1, 0.2, 0.5, 1, 2, 5],[7420.5665291930309,6895.5487199112631,3774.2076700271682,3708.4290662398462,3618.188538137224,3503.5918712593821])
-            
-        return ([x*totalloc for x in factors], objarr)
+        # Remember that total alloc includes fixed costs (e.g admin)!
+        return (totallocs, objarr)
 
     def __repr__(self):
         return "SimBudget %s ('%s')" % (self.uuid,self.name)   

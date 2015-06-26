@@ -208,7 +208,7 @@ class SimBoxOpt(SimBox):
                 sim = self.simlist[-1]
                 if not sim.isprocessed():
                     sim.run()
-                self.BOCx, self.BOCy = sim.calculateeffectivenesscurve()
+                self.BOCx, self.BOCy = sim.calculateeffectivenesscurve([0, 0.1, 0.2, 0.5, 1, 2, 5])
                 self.hasBOC = True
             except:
                 print('There was a problem generating budget objective curve data...')
