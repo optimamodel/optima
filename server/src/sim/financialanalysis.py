@@ -125,7 +125,7 @@ def financialanalysis(D, postyear=2015, S=None, rerunmodel=False, artgrowthrate=
             plotdata[plottype][plotsubtype][yscalefactor]['title'] = 'Annual HIV-related costs - ' + plotsubtype + ' infections'
             if yscalefactor=='total':
 #                print('TMP4'); plot(hivcosts['total']); show()
-                if not plotsubtype=='future': plotdata[plottype][plotsubtype][yscalefactor]['ylinedata'] = [(hivcosts[plotsubtype][j] + artcosts[plotsubtype][j])*(cpi[cpibaseyearindex]/cpi[j]) for j in xrange(noptpts)]
+                if not plotsubtype=='future': plotdata[plottype][plotsubtype][yscalefactor]['ylinedata'] = [(hivcosts[plotsubtype][j] + artcosts[plotsubtype][j])*(cpi[cpibaseyearindex][0]/cpi[j]) for j in xrange(noptpts)]
                 plotdata[plottype][plotsubtype][yscalefactor]['ylabel'] = 'USD'
 #                raise Exception('TMP')
             else:
@@ -174,7 +174,7 @@ def financialanalysis(D, postyear=2015, S=None, rerunmodel=False, artgrowthrate=
         plotdata['commit'][yscalefactor]['xlabel'] = 'Year'
         plotdata['commit'][yscalefactor]['title'] = 'Annual spending commitments from new HIV infections'
         if yscalefactor=='total':                    
-            plotdata['commit'][yscalefactor]['ylinedata'] = [commitments[j]*(cpi[cpibaseyearindex]/cpi[j]) for j in xrange(len(commitments))]
+            plotdata['commit'][yscalefactor]['ylinedata'] = [commitments[j]*(cpi[cpibaseyearindex][0]/cpi[j]) for j in xrange(len(commitments))]
             plotdata['commit'][yscalefactor]['ylabel'] = 'USD'
         else:
             if isinstance(sanitize(D['data']['econ'][yscalefactor]['past'][0]),int): continue
