@@ -60,6 +60,8 @@ def gpaoptimisefixedtotal(simboxref):
     print('Optimised Budget Grand Total: $%.2f' % sum(X))
     print('Initial Objective Total: %f' % totinobj)
     print('Optimised Objective Total: %f\n' % totoptobj)
+    
+    return X
 
 ## Hard coded test of BALLSD-based GPA.
 #def testobjectivefunc(xin, (gpapchips, grandtotal)):

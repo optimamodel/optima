@@ -44,6 +44,7 @@ class Sim:
         return s
 
     def load_dict(self,simdict):
+        self.initialised = simdict['initialised']
         self.processed  = simdict['processed']  
         self.parsdata  = simdict['parsdata']  
         self.parsmodel  = simdict['parsmodel']  
@@ -57,6 +58,7 @@ class Sim:
         simdict = {}
         simdict['type'] = 'Sim'
         simdict['name'] = self.name
+        simdict['initialised']  = self.initialised
         simdict['processed']  = self.processed 
         simdict['parsdata']  = self.parsdata 
         simdict['parsmodel']  = self.parsmodel 
@@ -329,7 +331,7 @@ class SimBudget(Sim):
             try:
                 print('Testing budget allocation multiplier of %f.' % factor)
                 self.alloc = [curralloc[i]*(factor+(1-factor)*fixedtrue[i]) for i in xrange(len(curralloc))]
-                betteralloc, currobj, b, c = self.optimise(makenew = False, inputtimelimit = 3.0)                               
+                betteralloc, currobj, b, c = self.optimise(makenew = False)                               
                 
                 # What if the objective is worse than the one for a lower budget total? Keep optimising! (And hope you avoid local minima...)
                 if len(objarr) > 0:                
@@ -337,7 +339,7 @@ class SimBudget(Sim):
                         if currobj > objarr[-1]:    # Note: Make sure that the objective is meant to monotonically decrease with money!
                             print('Attempting to optimise further. Curve is not currently monotonic.')
                             self.alloc = betteralloc                        
-                            betteralloc, currobj, b, c = self.optimise(makenew = False, inputtimelimit = 3.0)           
+                            betteralloc, currobj, b, c = self.optimise(makenew = False)           
                 
                     if currobj <= objarr[-1]:
                         print('Local curve monotonicity has been maintained.')
@@ -353,6 +355,36 @@ class SimBudget(Sim):
         
         # Remember that total alloc includes fixed costs (e.g admin)!
         return (totallocs, objarr)
+    
+    # Scales the variable costs of an alloc so that the sum of the alloc equals newtotal.
+    def scalealloctototal(self, newtotal):
+        curralloc = self.alloc
+        
+        # Work out which programs don't have an effect and are thus fixed costs (e.g. admin).
+        # These will be ignored when testing different allocations.
+        fixedtrue = [1.0]*(len(curralloc))
+        for i in xrange(len(curralloc)):
+            if len(self.getregion().metadata['programs'][i]['effects']): fixedtrue[i] = 0.0
+                
+        # Extract the fixed costs from scaling.
+        fixedtotal = sum([curralloc[i]*fixedtrue[i] for i in xrange(len(curralloc))])
+        vartotal = sum([curralloc[i]*(1.0-fixedtrue[i]) for i in xrange(len(curralloc))])
+        scaledtotal = newtotal - fixedtotal
+        
+        # Deal with a couple of possible errors.
+        if scaledtotal < 0:
+            print('Warning: You are attempting to generate an allocation for a budget total that is smaller than the sum of relevant fixed costs!')
+            print('Continuing with the assumption that all non-fixed program allocations are zero.')
+            print('This may invalidate certain analyses such as GPA.')
+            scaledtotal = 0
+        try:
+            factor = scaledtotal/vartotal
+        except:
+            print("Possible 'divide by zero' error.")
+            curralloc[0] = scaledtotal      # Shove all the budget into the first program.
+        
+        # Updates the alloc of this SimBudget according to the scaled values.
+        self.alloc = [curralloc[i]*(factor+(1-factor)*fixedtrue[i]) for i in xrange(len(curralloc))]
 
     def __repr__(self):
         return "SimBudget %s ('%s')" % (self.uuid,self.name)   

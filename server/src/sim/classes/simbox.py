@@ -187,12 +187,14 @@ class SimBoxOpt(SimBox):
             self.simlist[-1].run()
             
     # Overwrites normal SimBox method so that SimBudget is not only run, but optimised, with the results (possibly) copied to a new SimBudget.
-    def runallsims(self, forcerun = False):
+    def runallsims(self, forcerun = False, forceopt = False):
         tempsim = None
+        makenew = False
+        
         for sim in self.simlist:
             if forcerun or not sim.isprocessed():
                 sim.run()
-            if sim.isprocessed() and (forcerun or not sim.isoptimised()):
+            if sim.isprocessed() and (forceopt or not sim.isoptimised()):
                 (optalloc, optobj, resultopt, makenew) = sim.optimise()
                 tempsim = sim
                 
@@ -251,6 +253,20 @@ class SimBoxOpt(SimBox):
             
     def getlatestalloc(self):
         return self.simlist[-1].alloc
+    
+    # Complicated method that ends up with an additional stored SimBudget optimised for a different budget total.
+    # Note: Read comments carefully. This is a messy process. Deepcopy used for safety.
+    #       Also, it may be worth stripping the legacy code of processes at some stage so that the procedure is transparent in OOP form.
+    def copysimoptfornewtotal(self, newtotal):
+        from copy import deepcopy
+        remsim = deepcopy(self.simlist[-1])                 # Memorises latest SimBudget in SimBoxOpt.
+        self.simlist[-1].scalealloctototal(newtotal)        # Overwrites the alloc of this SimBudget with a new one that exemplifies a particular budget total (e.g. from GPA).
+        self.runallsims()                                   # Optimises the SimBudget with the new alloc. (Presumably, the optimize function reinitialises all model parameters for this alloc...)
+        self.simlist[-2] = deepcopy(remsim)                 # Having created a new SimBudget, reverts the old one.
+        self.simlist[-2].optimised = True                   # But locks it so that it cannot be further optimised.
+        self.simlist[-1].optimised = True                   # Likewise locks the new SimBudget.
+        self.runallsims(forcerun = True)                    # Processes both the old and new SimBudget (as well as any previous SimBudgets in the SimBoxOpt).
+
 
     def __repr__(self):
         return "SimBoxOpt %s ('%s')" % (self.uuid,self.name)

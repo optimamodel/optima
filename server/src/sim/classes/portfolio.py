@@ -251,4 +251,6 @@ class Portfolio:
             else:
                 self.simboxref.append(currentregion.getsimboxwithBOC())     # Note: Kludgy but the best that can be done without user input.
         
-        gpaoptimisefixedtotal(self.simboxref)
+        newtotals = gpaoptimisefixedtotal(self.simboxref)
+        for i in xrange(len(newtotals)):
+            self.simboxref[i].copysimoptfornewtotal(newtotals[i])
