@@ -198,9 +198,7 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=2):
                     
                     else:
                         raise Exception('Group name %s not recognized!' % groupname)
-                        
-
-                
+                                        
                 if paramcategory == '': # The first column is blank: it's time for the data
                     subparam = sheetdata.cell_value(row, 1) # Get the name of a subparameter, e.g. 'FSW', population size for a given population
                     
@@ -278,7 +276,6 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=2):
                                         if unicode(programname) == prog['name']:
                                             neweffect = {'paramtype':name, 'param':thispar, 'popname':subparam, 'coparams':None, 'convertedcoparams':None, 'convertedccoparams':None}
                                             programs[prognumber]['effects'].append(neweffect)
-
 
                         # It's economics data, append the data
                         if groupname=='econdata': 

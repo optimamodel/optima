@@ -56,6 +56,9 @@ def addtoprograms(programs):
                                             'perperson':None}
         programs[prognumber]['convertedccparams'] = None
         programs[prognumber]['nonhivdalys'] = 0.0
+        
+        if program['name'] == 'VMMC':
+            program['effects'] = [{'paramtype':'sex', 'param':'numcircum', 'popname':u'Total', 'coparams':None, 'convertedcoparams':None, 'convertedccoparams':None}]
 
     return programs
     
