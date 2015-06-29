@@ -11,8 +11,8 @@ from mpld3 import plugins, fig_to_dict
 from utils import OptimaTickFormatter
 
 # Set defaults for testing makeccocs
-default_progname = 'NSP'
-default_effect = {'paramtype':'inj', 'param':'sharing', 'popname':u'Male PWID'}
+default_progname = 'VMMC'
+default_effect = {'paramtype':'sex', 'param':'circum', 'popname':u'Males 20-24'}
 default_ccparams = {'saturation': .7,
                     'coveragelower': .4,
                     'coverageupper':.5,
