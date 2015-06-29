@@ -50,7 +50,8 @@ def addtoprograms(programs):
                                             'coverageupper':None, 
                                             'funding':None, 
                                             'scaleup':None, 
-                                            'nonhivdalys':None, 
+                                            'nonhivdalys':None,
+                                            'xupperlim':None,
                                             'cpibaseyear':None, 
                                             'perperson':None}
         programs[prognumber]['convertedccparams'] = None

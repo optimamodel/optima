@@ -83,7 +83,8 @@ def makecc(D=None, progname=None, ccparams=None, arteligcutoff=None, verbose=def
     if popadj: totalcost = totalcost/targetpopsize if len(totalcost)>1 else totalcost/mean(targetpopsize)
 
     # Get upper limit of x axis for plotting
-    xupperlim = max([x if ~isnan(x) else 0.0 for x in totalcost])*15.
+    xupperlim = max([x if ~isnan(x) else 0.0 for x in totalcost])*3.
+    if (ccparams and 'xupperlim' in ccparams and ccparams['xupperlim'] and ~isnan(ccparams['xupperlim'])): xupperlim = ccparams['xupperlim']
 
     # Populate output structure with scatter data
     plotdata['allxscatterdata'] = totalcost
@@ -397,6 +398,8 @@ def getcoverage(D=None, artindex=None, progname=None):
     targetpars = list(set(targetpars))
     popnumbers = list(set(popnumbers))
 
+    targetpopmodel = None
+
     # Figure out the total model-estimated size of the targeted population(s)
     for thispar in targetpars: # Loop through parameters
         if D['P'].get(thispar):
@@ -427,7 +430,10 @@ def getcoverage(D=None, artindex=None, progname=None):
                 
     # We only want the model-estimated size of the targeted population(s) for actual years, not the interpolated years
     yearindices = xrange(0,npts,int(1/D['opt']['dt']))
-    targetpop = targetpopmodel[yearindices]
+    
+    targetpop = None
+    if targetpopmodel is not None:
+        targetpop = targetpopmodel[yearindices]
 
     coverage = D['data']['costcov']['cov'][prognumber] 
     coveragelabel = 'Number covered' if any(j > 1 for j in D['data']['costcov']['cov'][prognumber]) else 'Proportion covered'
