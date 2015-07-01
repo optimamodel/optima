@@ -12,6 +12,16 @@ import setoptions
 import uuid
 import program
 
+from scipy.interpolate import PchipInterpolator as pchip
+
+#### Multiprocessor helper functions for Region class.
+#def unwrap_self_developBOCsubprocess(*arg, **kwarg):
+#    return Region.developBOCsubprocess(*arg, **kwarg)
+#    
+#def f(x):
+#    return x**2
+
+### The actual Region class.
 class Region:
     def __init__(self, name,populations,programs,datastart,dataend):
         # The standard constructor takes in the initial metadata directly
@@ -31,8 +41,12 @@ class Region:
 
         self.options = setoptions.setoptions() # Populate default options here
         
+        # Budget Objective Curve data, used for GPA. (Assuming initial budget spending is fixed.)
+        self.BOCx = []        # Array of budget allocation totals.
+        self.BOCy = []        # Array of corresponding optimum objective values.
+        
         self.program_sets = []
-        self.calibrations = None
+        self.calibrations = None        # Remember. Current BOC data assumes loaded data is calibrated by default.
         
         self.simboxlist = []            # Container for simbox objects (e.g. optimisations, grouped scenarios, etc.)
     
@@ -73,6 +87,10 @@ class Region:
         self.calibrations = regiondict['calibrations']       
         self.uuid = regiondict['uuid']
         self.D = regiondict['D']
+        
+        # BOC loading.
+        self.BOCx = regiondict['BOC_budgets']
+        self.BOCy = regiondict['BOC_objectives']
             
     def fromdict_legacy(self, tempD):
         # Load an old-type D dictionary into the region
@@ -126,7 +144,12 @@ class Region:
         regiondict['program_sets'] = []#self.program_sets 
         regiondict['calibrations'] = self.calibrations 
         regiondict['uuid'] = self.uuid 
-        regiondict['D'] = self.D 
+        regiondict['D'] = self.D
+        
+        # BOC saving.
+        regiondict['BOC_budgets'] = self.BOCx
+        regiondict['BOC_objectives'] = self.BOCy    
+        
         return regiondict
 
     def createsimbox(self, simboxname, isopt = False, createdefault = True):
@@ -154,26 +177,92 @@ class Region:
         else:
             simbox.plotallsims()
             
-    def developBOC(self, simbox):
-        try:
-            simbox.calculateBOCxy()
-        except:
-            print "SimBox cannot produce a Budget Objective Curve!"
+    # Method to generate a budget objective curve (BOC) for the Region.
+    # Creates a temporary SimBoxOpt with a temporary SimBudget and calculates the BOC.
+    # Ends by deleting the temporary objects and retaining BOC data.
+    def developBOC(self, varfactors):      
+        if not self.hasBOC():
+            
+            simbox = self.createsimbox(self.getregionname() + '-BOC-Calculations', isopt = True, createdefault = False)
+            sim = self.createsiminsimbox(simbox.getname(), simbox)
+            sim.run()   # Make sure simulation is processed, or 'financialanalysis' will not have its D['S'] component. Something to eventually change...
+            try:
+                self.BOCx, self.BOCy = sim.calculateeffectivenesscurve(varfactors)
+                print("Region %s has calculated a Budget Objective Curve for..." % self.getregionname())
+                print(varfactors)
+            except:
+                print("Region %s has failed to produce a Budget Objective Curve for..." % self.getregionname())
+                print(varfactors)
+            self.simboxlist.remove(simbox)
+            
+#            from multiprocessing import Pool
+#            
+#            pool = Pool(processes = defaults.cores)
+#            
+#            BOCresults = pool.map(f, varfactors)
+#            pool.close()
+#            
+#            print BOCresults
+        else:
+            print('Budget Objective Curve data already exists for region %s. Proceeding onwards...' % self.getregionname())
         
-    def hassimboxwithBOC(self):
-        for sb in self.simboxlist:
-            if isinstance(sb,SimBoxOpt) and sb.hasBOC:
-                return True
-        return False
+#    def developBOCsubprocess(self, varfactorsslice):
+#        BOCx = []
+#        BOCy = []
+#        simbox = self.createsimbox(self.getregionname() + '-BOC-Calculations', isopt = True, createdefault = False)
+#        sim = self.createsiminsimbox(simbox.getname(), simbox)
+#        sim.run()   # Make sure simulation is processed, or 'financialanalysis' will not have its D['S'] component. Something to eventually change...
+#        try:
+#            BOCx, BOCy = sim.calculateeffectivenesscurve(varfactorsslice)
+#            print("Region %s has calculated a Budget Objective Curve for..." % self.getregionname())
+#            print(varfactorsslice)
+#        except:
+#            print("Region %s has failed to produce a Budget Objective Curve for..." % self.getregionname())
+#            print(varfactorsslice)
+#        self.simboxlist.remove(simbox)
+#        return (BOCx, BOCy)
+        
     
-    # Returns the first SimBoxOpt in Region that has a calculated BOC.
-    # Let's pretend for the moment that you don't have multiple ones from which you wish to choose one...
-    def getsimboxwithBOC(self):
-        for sb in self.simboxlist:
-            if isinstance(sb,SimBoxOpt) and sb.hasBOC:
-                return sb
-        print "There is no SimBox available with a Budget Objective Curve!"
-        return None
+    # GPA function. Returns spline for objective effectiveness at different budget totals.
+    def getBOCspline(self):
+        try:
+            return pchip(self.BOCx, self.BOCy, extrapolate=True)
+        except:
+            print('Budget Objective Curve data does not seem to exist...')
+        
+    def plotBOCspline(self):
+        import matplotlib.pyplot as plt
+        from numpy import linspace
+        
+        try:
+            f = self.getBOCspline()
+            x = linspace(min(self.BOCx), max(self.BOCx), 200)
+            plt.plot(x,f(x),'-')
+            plt.legend(['BOC'], loc='best')
+            plt.show()
+        except:
+            print('Plotting of Budget Objective Curve failed!')
+            
+#    def hassimboxwithBOC(self):
+#        for sb in self.simboxlist:
+#            if isinstance(sb,SimBoxOpt) and sb.hasBOC:
+#                return True
+#        return False
+        
+    def hasBOC(self):
+        if len(self.BOCx) == 0 and len(self.BOCy) == 0:
+            return False
+        else:
+            return True
+    
+#    # Returns the first SimBoxOpt in Region that has a calculated BOC.
+#    # Let's pretend for the moment that you don't have multiple ones from which you wish to choose one...
+#    def getsimboxwithBOC(self):
+#        for sb in self.simboxlist:
+#            if isinstance(sb,SimBoxOpt) and sb.hasBOC:
+#                return sb
+#        print "There is no SimBox available with a Budget Objective Curve!"
+#        return None
         
     def printdata(self):
         print(self.data)
@@ -244,7 +333,7 @@ class Region:
         
     def makeworkbook(self,filename):
         """ Generate the Optima workbook -- the hard work is done by makeworkbook.py """
-        from printv import printv
+#        from printv import printv
         from dataio import templatepath
         import makeworkbook
 

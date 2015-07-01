@@ -6,6 +6,9 @@ Created on Tue Jun 02 00:08:51 2015
 """
 current_version = 5
 
+### MULTIPROCESSING
+cores = 3       # How many parallel processes do you want running at a time?
+
 ### OPTIMISATION DEFAULTS
 maxiters = 1e3
 timelimit = 600

@@ -288,15 +288,6 @@ class SimBudget(Sim):
         
         self.plotdataopt = tempD['plot']['optim'][-1]       # What's this -1 business about?
         
-#        # Saves optimisation results to this Sim. New 'G', 'M', 'F', 'S'.
-#        # self.debug['results'] = tempD['result']       # Maybe store just the results of a normal run in self.debug.
-#        self.resultopt = tempD['result']['debug']       # Optimisation results are kept separate from debug['results'].
-#        self.optobj = tempD['objective'][-1]            # This assumes that the last objective value in an optimisation cycle is best. Is that safe...?
-#        
-#        # The new optimised allocations will be derived from the pie chart plotting data.
-#        # Let's hope it's always there...
-#        self.optalloc = self.plotdataopt['alloc'][-1]['piedata']
-        
         # Let's try returning these rather than storing them...
         optalloc = self.plotdataopt['alloc'][-1]['piedata']
         optobj = tempD['objective'][-1]
@@ -311,14 +302,16 @@ class SimBudget(Sim):
         # Finally, it returns a boolean for whether a new SimBudget should be made.
         return (optalloc, optobj, resultopt, makenew)
     
-    # Calculates objective values for certain multiplications of a total budget (passed in as list of factors).
-    # The idea is to spline a cost-effectiveness curve for varying budget totals.
+    # Calculates objective values for certain multiplications of an alloc's variable costs (passed in as list of factors).
+    # The idea is to spline a cost-effectiveness curve across several budget totals.
     # Note: We don't care about the allocations in detail. This is just a function between totals and the objective.
     def calculateeffectivenesscurve(self, factors):
         curralloc = self.alloc
         
         totallocs = []
         objarr = []
+#        timelimit = defaults.timelimit
+        timelimit = 1.0
         
         # Work out which programs don't have an effect and are thus fixed costs (e.g. admin).
         # These will be ignored when testing different allocations.
@@ -331,20 +324,20 @@ class SimBudget(Sim):
             try:
                 print('Testing budget allocation multiplier of %f.' % factor)
                 self.alloc = [curralloc[i]*(factor+(1-factor)*fixedtrue[i]) for i in xrange(len(curralloc))]
-                betteralloc, currobj, b, c = self.optimise(makenew = False)                               
+                betteralloc, currobj, b, c = self.optimise(makenew = False, inputtimelimit = timelimit)                               
                 
-                # What if the objective is worse than the one for a lower budget total? Keep optimising! (And hope you avoid local minima...)
-                if len(objarr) > 0:                
-                    for i in xrange(defaults.reopts):
-                        if currobj > objarr[-1]:    # Note: Make sure that the objective is meant to monotonically decrease with money!
-                            print('Attempting to optimise further. Curve is not currently monotonic.')
-                            self.alloc = betteralloc                        
-                            betteralloc, currobj, b, c = self.optimise(makenew = False)           
-                
-                    if currobj <= objarr[-1]:
-                        print('Local curve monotonicity has been maintained.')
-                    else:
-                        print('Curve is not locally monotonic. Local maxima may be involved. Curve calculation will continue anyway.')
+#                # What if the objective is worse than the one for a lower budget total? Keep optimising! (And hope you avoid local minima...)
+#                if len(objarr) > 0:                
+#                    for i in xrange(defaults.reopts):
+#                        if currobj > objarr[-1]:    # Note: Make sure that the objective is meant to monotonically decrease with money!
+#                            print('Attempting to optimise further. Curve is not currently monotonic.')
+#                            self.alloc = betteralloc                        
+#                            betteralloc, currobj, b, c = self.optimise(makenew = False, inputtimelimit = timelimit)           
+#                
+#                    if currobj <= objarr[-1]:
+#                        print('Local curve monotonicity has been maintained.')
+#                    else:
+#                        print('Curve is not locally monotonic. Local maxima may be involved. Curve calculation will continue anyway.')
                 
                 objarr.append(currobj)
                 totallocs.append(sum(betteralloc))

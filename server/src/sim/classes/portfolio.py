@@ -235,22 +235,31 @@ class Portfolio:
                 print('%i: %s' % (fid, region.getregionname()))
                 region.printsimboxlist(assubset=True)
     
+    # Iterate through loaded regions. Develop default BOCs if they do not have them.
     def geoprioanalysis(self):
         # gpaname = raw_input('Enter a title for the current analysis: ')
         
-        self.simboxref = []
+        #varfactors = [0.0, 0.2, 0.5, 1.0, 2.0, 5.0]
+        varfactors = [0.0, 1.0, 2.0]
         
         for currentregion in self.regionlist:
-            if not currentregion.hassimboxwithBOC():
-                print('Initialising a simulation in region %s for this GPA.' % currentregion.getregionname())
-                tempsimbox = currentregion.createsimbox('GPA-test', isopt = True, createdefault = True)
-                currentregion.createsiminsimbox('GPA-test', tempsimbox)
-                currentregion.runsimbox(tempsimbox)
-                currentregion.developBOC(tempsimbox)
-                self.simboxref.append(tempsimbox)
-            else:
-                self.simboxref.append(currentregion.getsimboxwithBOC())     # Note: Kludgy but the best that can be done without user input.
+            if not currentregion.hasBOC():
+                print('Region %s has no Budget Objective Curve. Initialising calculation.' % currentregion.getregionname())
+                currentregion.developBOC(varfactors)
         
-        newtotals = gpaoptimisefixedtotal(self.simboxref)
-        for i in xrange(len(newtotals)):
-            self.simboxref[i].copysimoptfornewtotal(newtotals[i])
+#        self.simboxref = []
+#        
+#        for currentregion in self.regionlist:
+#            if not currentregion.hassimboxwithBOC():
+#                print('Initialising a simulation in region %s for this GPA.' % currentregion.getregionname())
+#                tempsimbox = currentregion.createsimbox('GPA-test', isopt = True, createdefault = True)
+#                currentregion.createsiminsimbox('GPA-test', tempsimbox)
+#                currentregion.runsimbox(tempsimbox)
+#                currentregion.developBOC(tempsimbox)
+#                self.simboxref.append(tempsimbox)
+#            else:
+#                self.simboxref.append(currentregion.getsimboxwithBOC())     # Note: Kludgy but the best that can be done without user input.
+#        
+#        newtotals = gpaoptimisefixedtotal(self.simboxref)
+#        for i in xrange(len(newtotals)):
+#            self.simboxref[i].copysimoptfornewtotal(newtotals[i])

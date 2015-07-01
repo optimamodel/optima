@@ -10,7 +10,7 @@ from sim import Sim, SimBudget
 import weakref
 import uuid
 
-from scipy.interpolate import PchipInterpolator as pchip
+#from scipy.interpolate import PchipInterpolator as pchip
 
 class SimBox:
     def __init__(self, name, region):
@@ -137,10 +137,10 @@ class SimBoxOpt(SimBox):
         SimBox.__init__(self,name,region)
         
         # Budget Objective Curve data, used for GPA. (Assuming initial budget spending is fixed.)
-        self.BOCx = None        # Array of budget allocation totals.
-        self.BOCy = None        # Array of corresponding optimum objective values.
-        
-        self.hasBOC = False
+#        self.BOCx = None        # Array of budget allocation totals.
+#        self.BOCy = None        # Array of corresponding optimum objective values.
+#        
+#        self.hasBOC = False
         
     @classmethod
     def fromdict(SimBoxOpt, simboxdict, region):
@@ -151,29 +151,32 @@ class SimBoxOpt(SimBox):
         s.simlist = [Sim.fromdict(x,region) for x in simboxdict['simlist']]
         s.setregion(region)
         s.uuid = simboxdict['uuid'] # Loading a region restores the original UUID
-        s.hasBOC = simboxdict['has_BOC']
-        s.BOCx = simboxdict['BOC_budgets']
-        s.BOCy = simboxdict['BOC_objectives']
+#        s.hasBOC = simboxdict['has_BOC']
+#        s.BOCx = simboxdict['BOC_budgets']
+#        s.BOCy = simboxdict['BOC_objectives']
 
         return s        
         
     def todict(self):
         simboxdict = SimBox.todict(self)
         simboxdict['type'] = 'SimBoxOpt'    # Overwrites SimBox type.
-        simboxdict['has_BOC'] = self.hasBOC
-        simboxdict['BOC_budgets'] = self.BOCx
-        simboxdict['BOC_objectives'] = self.BOCy
+#        simboxdict['has_BOC'] = self.hasBOC
+#        simboxdict['BOC_budgets'] = self.BOCx
+#        simboxdict['BOC_objectives'] = self.BOCy
         
         return simboxdict
         
     # Overwrites the standard Sim create method. This is where budget data would be attached.
     def createsim(self, simname):
+        sim = None
         if len(self.simlist) > 0:
             print('Optimisation containers can only contain one initial simulation!')
         else:
             print('Preparing new budget simulation for optimisation container %s...' % self.name)
             self.simlist.append(SimBudget(simname+'-initial',self.getregion()))
             self.simlist[-1].initialise()
+            sim = self.simlist[-1]
+        return sim
             
     # This creates a duplicate SimBudget to 'sim', except with optimised 'G', 'M', 'F', 'S' from sim.resultopt.
     # As an optimised version of the previous SimBudget, it will also be automatically processed, to get plotdata.
@@ -202,18 +205,18 @@ class SimBoxOpt(SimBox):
         if makenew:
             self.createsimopt(tempsim, optalloc, optobj, resultopt)
     
-    def calculateBOCxy(self):
-        if (not self.BOCx == None) or (not self.BOCy == None):
-            print('Budget objective curve already exists for optimisation container %s...' % self.name)
-        else:
-            try:
-                sim = self.simlist[-1]
-                if not sim.isprocessed():
-                    sim.run()
-                self.BOCx, self.BOCy = sim.calculateeffectivenesscurve([0, 0.1, 0.2, 0.5, 1, 2, 5])
-                self.hasBOC = True
-            except:
-                print('There was a problem generating budget objective curve data...')
+#    def calculateBOCxy(self):
+#        if (not self.BOCx == None) or (not self.BOCy == None):
+#            print('Budget objective curve already exists for optimisation container %s...' % self.name)
+#        else:
+#            try:
+#                sim = self.simlist[-1]
+#                if not sim.isprocessed():
+#                    sim.run()
+#                self.BOCx, self.BOCy = sim.calculateeffectivenesscurve([0, 0.1, 0.2, 0.5, 1, 2, 5])
+#                self.hasBOC = True
+#            except:
+#                print('There was a problem generating budget objective curve data...')
     
     # Special printing method for SimBoxOpt to take into account whether a Sim was already optimised.
     def printsimlist(self, assubsubset = False):
@@ -231,28 +234,28 @@ class SimBoxOpt(SimBox):
                     print(' --> %s%s' % (sim.getname(), (" (initialised)" if not sim.isprocessed() else " (simulated + %s)" %
                                              ("further optimisable" if not sim.isoptimised() else "already optimised"))))
 
-    # GPA function. Returns spline for objective effectiveness at different budget totals.
-    def getBOCspline(self):
-        try:
-            return pchip(self.BOCx, self.BOCy, extrapolate=True)
-        except:
-            print('Budget objective curve data does not seem to exist...')
-        
-    def plotBOCspline(self):
-        import matplotlib.pyplot as plt
-        from numpy import linspace
-        
-        try:
-            f = self.getBOCspline()
-            x = linspace(min(self.BOCx), max(self.BOCx), 200)
-            plt.plot(x,f(x),'-')
-            plt.legend(['BOC'], loc='best')
-            plt.show()
-        except:
-            print('Plotting of budget objective curve failed!')
+#    # GPA function. Returns spline for objective effectiveness at different budget totals.
+#    def getBOCspline(self):
+#        try:
+#            return pchip(self.BOCx, self.BOCy, extrapolate=True)
+#        except:
+#            print('Budget objective curve data does not seem to exist...')
+#        
+#    def plotBOCspline(self):
+#        import matplotlib.pyplot as plt
+#        from numpy import linspace
+#        
+#        try:
+#            f = self.getBOCspline()
+#            x = linspace(min(self.BOCx), max(self.BOCx), 200)
+#            plt.plot(x,f(x),'-')
+#            plt.legend(['BOC'], loc='best')
+#            plt.show()
+#        except:
+#            print('Plotting of budget objective curve failed!')
             
-    def getlatestalloc(self):
-        return self.simlist[-1].alloc
+#    def getlatestalloc(self):
+#        return self.simlist[-1].alloc
     
     # Complicated method that ends up with an additional stored SimBudget optimised for a different budget total.
     # Note: Read comments carefully. This is a messy process. Deepcopy used for safety.
