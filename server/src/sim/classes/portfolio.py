@@ -280,7 +280,7 @@ class Portfolio:
 ### GPA Methods
 
     # Iterate through loaded regions. Develop default BOCs if they do not have them.
-    def geoprioanalysis(self):
+    def geoprioanalysis(self, gpaname = 'test'):
         # gpaname = raw_input('Enter a title for the current analysis: ')
         
         varfactors = [0.0, 0.3, 0.6, 1.0, 1.8, 3.2, 10.0]
@@ -293,20 +293,20 @@ class Portfolio:
             else:
                 print('Region %s already has a Budget Objective Curve.' % currentregion.getregionname())
         
-#        self.simboxref = []
-#        
-#        for currentregion in self.regionlist:
-#            if not currentregion.hassimboxwithBOC():
-#                print('Initialising a simulation in region %s for this GPA.' % currentregion.getregionname())
-#                tempsimbox = currentregion.createsimbox('GPA-test', isopt = True, createdefault = True)
-#                currentregion.createsiminsimbox('GPA-test', tempsimbox)
-#                currentregion.runsimbox(tempsimbox)
+        newtotals = gpaoptimisefixedtotal(self.regionlist)        
+        for i in xrange(len(newtotals)):
+            currentregion = self.regionlist[i]
+            print('Initialising a simulation container in region %s for this GPA.' % currentregion.getregionname())
+            tempsimbox = currentregion.createsimbox('GPA-'+gpaname, isopt = True, createdefault = True)
+            currentregion.runsimbox(tempsimbox)
+            tempsimbox.createsimoptgpa(newtotals[i])
+            tempsimbox.viewmultiresults()
 #                currentregion.developBOC(tempsimbox)
 #                self.simboxref.append(tempsimbox)
 #            else:
 #                self.simboxref.append(currentregion.getsimboxwithBOC())     # Note: Kludgy but the best that can be done without user input.
 #        
-        newtotals = gpaoptimisefixedtotal(self.regionlist)
+#        newtotals = gpaoptimisefixedtotal(self.regionlist)
 #        for i in xrange(len(newtotals)):
 #            self.simboxref[i].copysimoptfornewtotal(newtotals[i])
 
