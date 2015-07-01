@@ -204,19 +204,7 @@ class SimBoxOpt(SimBox):
         # Generates a new SimBudget from the last Sim that was optimised in the list, but only when the loop has ended and if requested.
         if makenew:
             self.createsimopt(tempsim, optalloc, optobj, resultopt)
-    
-#    def calculateBOCxy(self):
-#        if (not self.BOCx == None) or (not self.BOCy == None):
-#            print('Budget objective curve already exists for optimisation container %s...' % self.name)
-#        else:
-#            try:
-#                sim = self.simlist[-1]
-#                if not sim.isprocessed():
-#                    sim.run()
-#                self.BOCx, self.BOCy = sim.calculateeffectivenesscurve([0, 0.1, 0.2, 0.5, 1, 2, 5])
-#                self.hasBOC = True
-#            except:
-#                print('There was a problem generating budget objective curve data...')
+            
     
     # Special printing method for SimBoxOpt to take into account whether a Sim was already optimised.
     def printsimlist(self, assubsubset = False):
@@ -234,41 +222,19 @@ class SimBoxOpt(SimBox):
                     print(' --> %s%s' % (sim.getname(), (" (initialised)" if not sim.isprocessed() else " (simulated + %s)" %
                                              ("further optimisable" if not sim.isoptimised() else "already optimised"))))
 
-#    # GPA function. Returns spline for objective effectiveness at different budget totals.
-#    def getBOCspline(self):
-#        try:
-#            return pchip(self.BOCx, self.BOCy, extrapolate=True)
-#        except:
-#            print('Budget objective curve data does not seem to exist...')
-#        
-#    def plotBOCspline(self):
-#        import matplotlib.pyplot as plt
-#        from numpy import linspace
-#        
-#        try:
-#            f = self.getBOCspline()
-#            x = linspace(min(self.BOCx), max(self.BOCx), 200)
-#            plt.plot(x,f(x),'-')
-#            plt.legend(['BOC'], loc='best')
-#            plt.show()
-#        except:
-#            print('Plotting of budget objective curve failed!')
-            
-#    def getlatestalloc(self):
-#        return self.simlist[-1].alloc
     
-    # Complicated method that ends up with an additional stored SimBudget optimised for a different budget total.
-    # Note: Read comments carefully. This is a messy process. Deepcopy used for safety.
-    #       Also, it may be worth stripping the legacy code of processes at some stage so that the procedure is transparent in OOP form.
-    def copysimoptfornewtotal(self, newtotal):
-        from copy import deepcopy
-        remsim = deepcopy(self.simlist[-1])                 # Memorises latest SimBudget in SimBoxOpt.
-        self.simlist[-1].scalealloctototal(newtotal)        # Overwrites the alloc of this SimBudget with a new one that exemplifies a particular budget total (e.g. from GPA).
-        self.runallsims()                                   # Optimises the SimBudget with the new alloc. (Presumably, the optimize function reinitialises all model parameters for this alloc...)
-        self.simlist[-2] = deepcopy(remsim)                 # Having created a new SimBudget, reverts the old one.
-        self.simlist[-2].optimised = True                   # But locks it so that it cannot be further optimised.
-        self.simlist[-1].optimised = True                   # Likewise locks the new SimBudget.
-        self.runallsims(forcerun = True)                    # Processes both the old and new SimBudget (as well as any previous SimBudgets in the SimBoxOpt).
+#    # Complicated method that ends up with an additional stored SimBudget optimised for a different budget total.
+#    # Note: Read comments carefully. This is a messy process. Deepcopy used for safety.
+#    #       Also, it may be worth stripping the legacy code of processes at some stage so that the procedure is transparent in OOP form.
+#    def copysimoptfornewtotal(self, newtotal):
+#        from copy import deepcopy
+#        remsim = deepcopy(self.simlist[-1])                 # Memorises latest SimBudget in SimBoxOpt.
+#        self.simlist[-1].scalealloctototal(newtotal)        # Overwrites the alloc of this SimBudget with a new one that exemplifies a particular budget total (e.g. from GPA).
+#        self.runallsims()                                   # Optimises the SimBudget with the new alloc. (Presumably, the optimize function reinitialises all model parameters for this alloc...)
+#        self.simlist[-2] = deepcopy(remsim)                 # Having created a new SimBudget, reverts the old one.
+#        self.simlist[-2].optimised = True                   # But locks it so that it cannot be further optimised.
+#        self.simlist[-1].optimised = True                   # Likewise locks the new SimBudget.
+#        self.runallsims(forcerun = True)                    # Processes both the old and new SimBudget (as well as any previous SimBudgets in the SimBoxOpt).
 
 
     def __repr__(self):

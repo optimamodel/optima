@@ -177,53 +177,49 @@ class Region:
         else:
             simbox.plotallsims()
             
+###----------------------------------------------------------------------------
+### GPA Methods
+            
     # Method to generate a budget objective curve (BOC) for the Region.
     # Creates a temporary SimBoxOpt with a temporary SimBudget and calculates the BOC.
     # Ends by deleting the temporary objects and retaining BOC data.
-    def developBOC(self, varfactors):      
-        if not self.hasBOC():
-            
+    def developBOC(self, varfactors, forcecalc = False, extendresults = False):      
+        if forcecalc or extendresults or not self.hasBOC():
             simbox = self.createsimbox(self.getregionname() + '-BOC-Calculations', isopt = True, createdefault = False)
             sim = self.createsiminsimbox(simbox.getname(), simbox)
             sim.run()   # Make sure simulation is processed, or 'financialanalysis' will not have its D['S'] component. Something to eventually change...
             try:
-                self.BOCx, self.BOCy = sim.calculateeffectivenesscurve(varfactors)
+                testBOCx, testBOCy = sim.calculateeffectivenesscurve(varfactors)
                 print("Region %s has calculated a Budget Objective Curve for..." % self.getregionname())
                 print(varfactors)
             except:
                 print("Region %s has failed to produce a Budget Objective Curve for..." % self.getregionname())
                 print(varfactors)
-            self.simboxlist.remove(simbox)
             
-#            from multiprocessing import Pool
-#            
-#            pool = Pool(processes = defaults.cores)
-#            
-#            BOCresults = pool.map(f, varfactors)
-#            pool.close()
-#            
-#            print BOCresults
+            if extendresults:
+                self.BOCx.extend(testBOCx)
+                self.BOCy.extend(testBOCy)
+            else:
+                self.BOCx = testBOCx
+                self.BOCy = testBOCy
+            
+            # Keeps the BOC sorted with respect to budget totals (i.e. the x axis).
+            self.BOCx, self.BOCy = [list(a) for a in zip(*sorted(zip(self.BOCx, self.BOCy), key=lambda pair: pair[0]))]
+            
+            self.simboxlist.remove(simbox)      # Deletes temporary SimBoxOpt.
         else:
             print('Budget Objective Curve data already exists for region %s. Proceeding onwards...' % self.getregionname())
-        
-#    def developBOCsubprocess(self, varfactorsslice):
-#        BOCx = []
-#        BOCy = []
-#        simbox = self.createsimbox(self.getregionname() + '-BOC-Calculations', isopt = True, createdefault = False)
-#        sim = self.createsiminsimbox(simbox.getname(), simbox)
-#        sim.run()   # Make sure simulation is processed, or 'financialanalysis' will not have its D['S'] component. Something to eventually change...
-#        try:
-#            BOCx, BOCy = sim.calculateeffectivenesscurve(varfactorsslice)
-#            print("Region %s has calculated a Budget Objective Curve for..." % self.getregionname())
-#            print(varfactorsslice)
-#        except:
-#            print("Region %s has failed to produce a Budget Objective Curve for..." % self.getregionname())
-#            print(varfactorsslice)
-#        self.simboxlist.remove(simbox)
-#        return (BOCx, BOCy)
-        
     
-    # GPA function. Returns spline for objective effectiveness at different budget totals.
+    # For now, this is just a complete recalculation of BOC data that already exists. In case you were originally optimising for 1 second or something.
+    def recalculateBOC(self):
+        if self.hasBOC():
+            varfactors = self.converttotalstofactors(self.BOCx)
+            
+            self.developBOC(varfactors, forcecalc = True)
+        else:
+            print('Budget Objective Curve data does not seem to exist. Cannot refine.')
+    
+    # Returns spline for objective values achieved at different budget totals.
     def getBOCspline(self):
         try:
             return pchip(self.BOCx, self.BOCy, extrapolate=True)
@@ -242,12 +238,6 @@ class Region:
             plt.show()
         except:
             print('Plotting of Budget Objective Curve failed!')
-            
-#    def hassimboxwithBOC(self):
-#        for sb in self.simboxlist:
-#            if isinstance(sb,SimBoxOpt) and sb.hasBOC:
-#                return True
-#        return False
         
     def hasBOC(self):
         if len(self.BOCx) == 0 and len(self.BOCy) == 0:
@@ -255,14 +245,38 @@ class Region:
         else:
             return True
     
-#    # Returns the first SimBoxOpt in Region that has a calculated BOC.
-#    # Let's pretend for the moment that you don't have multiple ones from which you wish to choose one...
-#    def getsimboxwithBOC(self):
-#        for sb in self.simboxlist:
-#            if isinstance(sb,SimBoxOpt) and sb.hasBOC:
-#                return sb
-#        print "There is no SimBox available with a Budget Objective Curve!"
-#        return None
+    # Useful helper function to convert a summed alloc to a multiplicative factor, ignoring fixed costs.
+    def converttotalstofactors(self, totals):
+        print('Subtracting fixed costs from budget totals and converting to multiplicative factors...')
+        print('A budget total equals non-fixed programs multiplied by the corresponding factor and added to fixed costs.')
+
+        factors = []        
+        defaultalloc = self.data['origalloc']        
+        
+        # Work out which programs don't have an effect and are thus fixed costs (e.g. admin).
+        fixedtrue = [1.0]*(len(defaultalloc))
+        for i in xrange(len(defaultalloc)):
+            if len(self.metadata['programs'][i]['effects']): fixedtrue[i] = 0.0
+        fixedtotal = sum([defaultalloc[i]*fixedtrue[i] for i in xrange(len(defaultalloc))])
+        vartotal = sum([defaultalloc[i]*(1.0-fixedtrue[i]) for i in xrange(len(defaultalloc))])
+        
+        for total in totals:
+            try:
+                factor = (total-fixedtotal)/vartotal
+            except:
+                print('Divide-by-zero warning: The allocation sum of variable cost programs may be zero.')
+                print('Returning a multiplicative budget factor of zero and continuing on...')
+                factor = 0.0
+            if factor < 0.0:
+                print('Budget total $%f is less than the sum of the allocation fixed costs! Not possible.' % total)
+                print('Returning a multiplicative budget factor of zero and continuing on...')
+                factor = 0.0
+            print('Returning a budget multiplication factor of %f for the budget total of $%f.' % (factor, total))
+            factors.append(factor)
+        
+        return factors
+
+###----------------------------------------------------------------------------       
         
     def printdata(self):
         print(self.data)

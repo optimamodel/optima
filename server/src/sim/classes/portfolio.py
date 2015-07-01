@@ -91,21 +91,58 @@ class Portfolio:
                         self.examineregion(self.regionlist[int(regionid)-1])
                     else:
                         print('Region ID numbers only range from 1 to %i, inclusive.' % len(self.regionlist))
+                        
+                # Is the first word 'refine'? Then recalculate the BOC for the relevant region.
+                elif cmdinputlist[0] == 'refine' and len(self.regionlist) > 1:
+                    regionid = cmdinputlist[1]
+                    try:
+                        int(regionid)
+                    except ValueError:
+                        regionid = 0
+                    if int(regionid) in arange(1,len(self.regionlist)+1):
+                        self.refineregionBOC(self.regionlist[int(regionid)-1])
+                    else:
+                        print('Region ID numbers only range from 1 to %i, inclusive.' % len(self.regionlist))
+                        
+                # Is the first word 'improve'? Then calculate BOC data for a few more budget factors.
+                elif cmdinputlist[0] == 'improve' and len(self.regionlist) > 1:
+                    regionid = cmdinputlist[1]
+                    try:
+                        int(regionid)
+                    except ValueError:
+                        regionid = 0
+                    if int(regionid) in arange(1,len(self.regionlist)+1):
+                        inputfactors = raw_input('Type a list of space-delimited multiplicative factors to test cost-effectiveness for: ')
+                        try:
+                            factorlist = [float(factor) for factor in inputfactors.split()]
+                        except:
+                            print('It was not possible to split the input into a list of floats.')
+                            factorlist = []
+                        self.improveregionBOC(self.regionlist[int(regionid)-1], factorlist)
+                    else:
+                        print('Region ID numbers only range from 1 to %i, inclusive.' % len(self.regionlist))
                     
             # If command is 'gpa', create GPA SimBoxes in each region.
             if cmdinput == 'gpa' and len(self.regionlist) > 1:
                 self.geoprioanalysis()
+                
+            # If command is 'qs', save to default region filenames (overwriting if necessary).
+            if cmdinput == 'qs':
+                self.quicksaveregions()
                     
             print('\n--------------------\n')
             self.printregionlist()
             print('')
             if len(self.regionlist) > 1:
                 print('Geographical prioritisation analysis now available.')
-                print('To run this analysis, type: gpa')       # To be extended when the time comes.
+                print('To run this analysis, type: gpa')
+                print("To recalculate cost-effectiveness data for a region numbered 'region_id', type: refine region_id")
+                print("To calculate additional cost-effectiveness data for a region numbered 'region_id', type: improve region_id")
             
             print("To make a new region titled 'region_name', type: make region_name")
             if len(self.regionlist) > 0:
                 print("To examine a region numbered 'region_id', type: examine region_id")
+            print("To quicksave all regions as .json files titled by 'region_name', type: qs")
             print('To quit, type: q')
             cmdinput = raw_input('Enter command: ')
     
@@ -235,6 +272,13 @@ class Portfolio:
                 print('%i: %s' % (fid, region.getregionname()))
                 region.printsimboxlist(assubset=True)
     
+    def quicksaveregions(self):
+        for currentregion in self.regionlist:
+            currentregion.save(self.regd + '/' + currentregion.getregionname() + '.json')
+
+###----------------------------------------------------------------------------
+### GPA Methods
+
     # Iterate through loaded regions. Develop default BOCs if they do not have them.
     def geoprioanalysis(self):
         # gpaname = raw_input('Enter a title for the current analysis: ')
@@ -246,6 +290,8 @@ class Portfolio:
             if not currentregion.hasBOC():
                 print('Region %s has no Budget Objective Curve. Initialising calculation.' % currentregion.getregionname())
                 currentregion.developBOC(varfactors)
+            else:
+                print('Region %s already has a Budget Objective Curve.' % currentregion.getregionname())
         
 #        self.simboxref = []
 #        
@@ -263,3 +309,9 @@ class Portfolio:
 #        newtotals = gpaoptimisefixedtotal(self.simboxref)
 #        for i in xrange(len(newtotals)):
 #            self.simboxref[i].copysimoptfornewtotal(newtotals[i])
+
+    def refineregionBOC(self, region):
+        region.recalculateBOC()
+        
+    def improveregionBOC(self, region, factorlist):
+        region.developBOC(factorlist, extendresults = True)
