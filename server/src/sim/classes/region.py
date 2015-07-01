@@ -337,7 +337,12 @@ class Region:
         
     def getregionname(self):
         return self.metadata['name']
-
+     
+    def setorigalloc(self, alloc):
+        self.data['origalloc'] = alloc
+        
+    def getorigalloc(self):
+        return self.data['origalloc']
 
     def setD(self, D):
         self.D = D

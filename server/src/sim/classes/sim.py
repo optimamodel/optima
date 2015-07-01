@@ -310,8 +310,8 @@ class SimBudget(Sim):
         
         totallocs = []
         objarr = []
-#        timelimit = defaults.timelimit
-        timelimit = 1.0
+        timelimit = defaults.timelimit
+#        timelimit = 1.0
         
         # Work out which programs don't have an effect and are thus fixed costs (e.g. admin).
         # These will be ignored when testing different allocations.

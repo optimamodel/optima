@@ -283,8 +283,8 @@ class Portfolio:
     def geoprioanalysis(self):
         # gpaname = raw_input('Enter a title for the current analysis: ')
         
-        #varfactors = [0.0, 0.2, 0.5, 1.0, 2.0, 5.0]
-        varfactors = [0.0, 1.0, 2.0]
+        varfactors = [0.0, 0.3, 0.6, 1.0, 1.8, 3.2, 10.0]
+#        varfactors = [0.0, 1.0, 2.0]
         
         for currentregion in self.regionlist:
             if not currentregion.hasBOC():
@@ -306,7 +306,7 @@ class Portfolio:
 #            else:
 #                self.simboxref.append(currentregion.getsimboxwithBOC())     # Note: Kludgy but the best that can be done without user input.
 #        
-#        newtotals = gpaoptimisefixedtotal(self.simboxref)
+        newtotals = gpaoptimisefixedtotal(self.regionlist)
 #        for i in xrange(len(newtotals)):
 #            self.simboxref[i].copysimoptfornewtotal(newtotals[i])
 

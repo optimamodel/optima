@@ -13,39 +13,41 @@ def constrainbudgetinputs(x, grandtotal):
     return [xi*grandtotal/sum(x) for xi in x]
 
 # Total objective function to minimise is just the sum of BOC values for a set of regional budget totals.
-def totalobjectivefunc(x, (gpasimboxes, grandtotal)):
+def totalobjectivefunc(x, (regionlist, grandtotal)):
     """Objective function. A secondary argument of all simboxes under gpa must be passed in during minimisation."""
     x = constrainbudgetinputs(x, grandtotal)
     
     totalobj = 0
     for i in arange(0,len(x)):
-        totalobj += gpasimboxes[i].getBOCspline()(x[i])
+        totalobj += regionlist[i].getBOCspline()(x[i])
     print totalobj
     return totalobj
 
-def gpaoptimisefixedtotal(simboxref):
+def gpaoptimisefixedtotal(regionlist):
     
     # Start by working out initial (regional budget total) inputs to perturb from, including their sum.
     budgettotals = []
-    for i in arange(0,len(simboxref)):
-        # print simboxref[i].getlatestalloc()
-        budgettotals.append(sum(simboxref[i].getlatestalloc()))
+    for i in arange(0,len(regionlist)):
+        print('Original allocation for region %s:' % regionlist[i].getregionname())
+        regionlist[i].printprograms()
+        print(regionlist[i].getorigalloc())
+        budgettotals.append(sum(regionlist[i].getorigalloc()))
     grandtotal = sum(budgettotals)
-    minbound = [0]*len(simboxref)
-    maxbound = [grandtotal]*len(simboxref)
+    minbound = [0]*len(regionlist)
+    maxbound = [grandtotal]*len(regionlist)
     # print budgettotals
     
                
-    X, FVAL, EXITFLAG, OUTPUT = ballsd(totalobjectivefunc, budgettotals, options=(simboxref, grandtotal), xmin = minbound, xmax = maxbound)
+    X, FVAL, EXITFLAG, OUTPUT = ballsd(totalobjectivefunc, budgettotals, options=(regionlist, grandtotal), xmin = minbound, xmax = maxbound)
     X = constrainbudgetinputs(X, grandtotal)
     
     # Display GPA results for debugging purposes.
     totinobj = 0
     totoptobj = 0
-    for i in arange(0,len(simboxref)):
-        regionname = simboxref[i].getregion().getregionname()
-        inobj = simboxref[i].getBOCspline()(budgettotals[i])
-        optobj = simboxref[i].getBOCspline()(X[i])
+    for i in arange(0,len(regionlist)):
+        regionname = regionlist[i].getregionname()
+        inobj = regionlist[i].getBOCspline()(budgettotals[i])
+        optobj = regionlist[i].getBOCspline()(X[i])
         totinobj += inobj
         totoptobj += optobj
         print('Region %s...' % regionname)
@@ -53,8 +55,8 @@ def gpaoptimisefixedtotal(simboxref):
         print('Optimised Budget Total: $%.2f' % X[i])
         print('Initial Objective: %f' % inobj)
         print('Optimised Objective: %f' % optobj)
-        print('Initial BOC Derivative: %.3e' % simboxref[i].getBOCspline().derivative()(budgettotals[i]))
-        print('Optimised BOC Derivative: %.3e\n' % simboxref[i].getBOCspline().derivative()(X[i]))
+        print('Initial BOC Derivative: %.3e' % regionlist[i].getBOCspline().derivative()(budgettotals[i]))
+        print('Optimised BOC Derivative: %.3e\n' % regionlist[i].getBOCspline().derivative()(X[i]))
     print('GPA Portfolio Results...')
     print('Initial Budget Grand Total: $%.2f' % sum(budgettotals))
     print('Optimised Budget Grand Total: $%.2f' % sum(X))
