@@ -6,7 +6,7 @@ import region
 import sim
 import simbox
 
-def dict_equal(d1,d2,verbose=2,keyname=''):
+def dict_equal(d1,d2,verbose=0,keyname=''):
 	# Check if two dictionaries contain the same stuff
 
 	# Check that they're the same type
@@ -45,10 +45,11 @@ def dict_equal(d1,d2,verbose=2,keyname=''):
 	# We might have a list of ndarrays 
 	elif isinstance(d1,list):
 		if len(d1) != len(d2):
-			print "List length doesn't match - (keyname=%s)" % (keyname)
+			if verbose:
+				print "List length doesn't match - (keyname=%s)" % (keyname)
 			return False
 		rval = all([dict_equal(d1[x],d2[x]) for x in xrange(0,len(d1))]) 
-		if not rval:
+		if verbose and not rval:
 			print d1[1]
 			print d2[1]
 			print "List items don't match - (keyname=%s)" % (keyname)
