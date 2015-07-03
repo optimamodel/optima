@@ -38,21 +38,10 @@ def dict_equal(d1,d2,verbose=2,keyname=''):
 			return all([dict_equal(d1[k],d2[k],keyname=k) for k in d1.keys() if k is not 'UUID']) # Need to skip the UUID
 	
 	# Vector reduction for ndarrays
-	elif isinstance(d1,numpy.ndarray):
-		is_eq = (d1 == d2)
-		if isinstance(is_eq,numpy.ndarray): # Why is this necessary sometimes...
-			is_eq = (d1 == d2).all()
-		elif not isinstance(is_eq,bool):
-			raise Exception('Unknown returned data type!')
-		if verbose and not is_eq:
-			print 'Numpy array mismatch'
-		return is_eq
+	elif isinstance(d1,(float,numpy.ndarray)):
+		# We need to check array equality considering NaN==NaN to be true
+		return isequalwithequalnans(d1,d2)
 
-	elif isinstance(d1,float):
-		if numpy.isnan(d1) and numpy.isnan(d2):
-			return true
-		else:
-			return
 	# We might have a list of ndarrays 
 	elif isinstance(d1,list):
 		if len(d1) != len(d2):
@@ -69,3 +58,31 @@ def dict_equal(d1,d2,verbose=2,keyname=''):
 		return d1 == d2
 	else:
 		raise Exception("Do not know how to compare objects of type %s" % type(d1))
+
+def isequalwithequalnans(a,b):
+	# A close of Matlab for testing equality of arrays containing NaNs
+	# Note that the type of a and b is *assumed* to be the same
+	# i.e. this function will return true if the type conversion leads to equality
+	# e.g. isequalwithequalnans(1,1.0) -> True
+	if isinstance(a,float):
+		if numpy.isnan(a) and numpy.isnan(b):
+			return True
+		else:
+			return a==b
+
+	elif isinstance(a,numpy.ndarray):
+		if not numpy.all(a.size == b.size): # If they are different sizes, they aren't equal
+			return False
+		if a.size == 0:
+			return True # Two empty arrays are equal
+
+		# Now check if the non NaN entries are equal
+		non_nan_equal =  numpy.ma.all(numpy.ma.masked_where(numpy.isnan(a), a) == numpy.ma.masked_where(numpy.isnan(b), b)) 
+		if not non_nan_equal:
+			return False
+
+		# Finally, check that the NaNs are in the same place
+		return numpy.array_equal(numpy.isnan(a),numpy.isnan(b))
+	else:
+		raise Exception('Unrecognized type')
+
