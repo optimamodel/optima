@@ -10,52 +10,40 @@ import program
 from pylab import *
 from numpy import arange,linspace
 
-p = program.Program('FSW','FSW programs')
+default_effects = {'paramtype':'normal','popname':'FSW','param':['testing'],'iscoverageparam':False}
+p = program.Program('FSW','FSW programs',default_effects)
 ccdata = {'function': 'cceqn', 'parameters': {u'coveragelower': 0.2, u'nonhivdalys': 0.0, u'funding': 300000.0, u'saturation': 0.98, u'coverageupper': 0.75, u'scaleup': 0.73}}
 codata = [{'function': 'coeqn', 'parameters': [0.2, 0.25, 0.8, 0.85]}, {'function': 'coeqn', 'parameters': [0.7949999999999999, 0.835, 0.96, 1]}, {'function': 'coeqn', 'parameters': [0.78, 0.8200000000000001, 0.96, 1]}]
 m = p.add_modality('M1',ccdata,codata)
 
-# This file tests various behaviours of programs
 class TestPrograms(unittest.TestCase):
 
 	def test_normal(self):
 		# Make a normal type program and test expected output
-		p = program.Program('short_name','full_name')
-		ccdata = {'function': 'cceqn', 'parameters': {u'coveragelower': 0, u'nonhivdalys': 0.0, u'funding': 300000.0, u'saturation': 0.5, u'coverageupper': 1, u'scaleup': 1}}
-		
-		# Refer to program.py. Currently we have
-		#muz, stdevz = (coparams[0]+coparams[1])/2, (coparams[1]-coparams[0])/6 # Mean and standard deviation calcs
-		#muf, stdevf = (coparams[2]+coparams[3])/2, (coparams[3]-coparams[2])/6 # Mean and standard deviation calcs
-		#convertedcoparams = [[muz,muf],[muz,muf],[muz,muf]] # DEBUG CODE, DO THIS PROPERLY LATER
-		#cc_arg = convertedccparams[0] if convertedccparams is not None else None # Apply random perturbation here
-		# Thus the coeqn parameters to go from 0 to 1 
-		codata = [{'function': 'coeqn', 'parameters': [0, 0, 1, 1]}] # Linear coverage-outcome from 0 to 1 exactly
+		p = program.Program('short_name','full_name',default_effects)
+		ccdata = {'function': 'cceqn', 'parameters': {u'coveragelower': 0.1, u'nonhivdalys': 1.0, u'funding': 300000.0, u'saturation': 0.98, u'coverageupper': 0.9, u'scaleup': 0.73}}
+		codata = [{'function': 'coeqn', 'parameters': [0, 0, 0.5, 0.5]}] # Linear coverage-outcome from 0 to 1 exactly
 		m = p.add_modality('modality_name',ccdata,codata)
 
-		
+		# Various tests here
+		c = p.get_coverage(300000.0)
+		c2 = p.get_coverage(100000000.0)
 
-		def coeqn(x, p):
-			'''
-			Straight line equation defining coverage-outcome curve.
-			x is coverage, p is a list of parameters (of length 2):
-				p[0] = outcome at zero coverage
-				p[1] = outcome at full coverage
-			Returns y which is outcome.
-			'''
-			y = (p[1]-p[0]) * array(x) + p[0]
-
-			return y
-
+		self.assertAlmostEqual(c2[0],numpy.array([0.98]),places=7) # Max coverage is saturation
+		#print c
+		print p.get_outcomes(c)
 
 	def test_coverage(self): 
 		# Test coverage type programs
+		return
 
 	def test_spending(self):
 		# Test spending only programs
+		return
 
 	def test_modalities(self):
 		# Test overlapping modalities
-
+		return
 
 
 

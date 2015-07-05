@@ -8,7 +8,7 @@ from numpy import log as nplog
 
 
 class Program:
-	def __init__(self,name,full_name = None,category = 'None'):
+	def __init__(self,name,full_name = None,effects = {},category = 'None'):
 		self.name = name
 		if full_name is None:
 			self.full_name = name
@@ -27,11 +27,15 @@ class Program:
 		# This stores the list of effects. Each modality and metamodality must contain a coverage-outcome
 		# curve for each effect in the Program
 		# May require effects as an argument to the constructor later?
-		self.effects = {}
-		self.effects['paramtype'] = []
-		self.effects['popname'] = []
-		self.effects['param'] = []
-		self.effects['iscoverageparam'] = []
+
+		self.effects = effects
+		if not effects:
+			self.effects['paramtype'] = []
+			self.effects['popname'] = []
+			self.effects['param'] = [] # This must be a list
+			self.effects['iscoverageparam'] = []
+
+		assert(isinstance(self.effects['param'],list))
 
 
 	@classmethod
@@ -110,14 +114,14 @@ class Program:
 		# Now we need to merge all of the entries of outcomes into a single outcome. This is done on a per-effect basis
 
 		final_outcomes = []
-		#print outcomes
-		#print len(self.effects['param'])
+
 		for i in xrange(0,len(self.effects['param'])): # For each output effect
 			# In this loop, we iterate over the metamodalities and then combine the outcome into a single parameter
 			# that is returned for use in D.M
 			tmp = outcomes[0][i]
-			for j in xrange(1,len(outcomes)): # For each metamodality
-				tmp += outcomes[j][i]
+			if len(outcomes) > 1:
+				for j in xrange(1,len(outcomes)): # For each metamodality
+					tmp += outcomes[j][i]
 			tmp *= (1/len(outcomes))
 			final_outcomes.append(tmp)
 		#print final_outcomes
@@ -284,7 +288,7 @@ class Modality:
 			if co['function'] == 'coeqn':
 				self.cofun.append(coeqn)
 			elif co['function'] == 'identity':
-				self.cofun.append(identity)
+				self.cofun.append(identity) # This happens for coverage programs
 			elif co['function'] is 'null':
 				self.cofun.append(null) # This happens for spending-only programs
 			else:
@@ -395,7 +399,7 @@ def ccoeqn(x, p):
 	return y
 
 def cceqn_wrapper(x,p):
-	# Wrapper for cceqn and cc2eqn
+	# Wrapper that automatically chooses between cceqn and cc2eqn
 	if len(p) == 2:
 		return cc2eqn(x,p)
 	else:
