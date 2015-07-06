@@ -36,8 +36,18 @@ class TestPrograms(unittest.TestCase):
 
 
 	def test_coverage(self): 
-		# Test coverage type programs
-		return
+		p = program.Program('short_name','full_name',default_effects)
+		ccdata = {'function': 'cceqn', 'parameters': {u'coveragelower': 0.1, u'nonhivdalys': 1.0, u'funding': 300000.0, u'saturation': 0.98, u'coverageupper': 0.9, u'scaleup': 0.73}}
+		codata = [{'function': 'identity', 'parameters': None}] # Linear coverage-outcome from 0 to 1 exactly
+		m = p.add_modality('modality_name',ccdata,codata)
+
+		# Various tests here
+		c = p.get_coverage(300000.0)
+		outcomes = p.get_outcomes(c)
+
+		self.assertAlmostEqual(c[0],numpy.array([0.5]),places=7) # The expected coverage for this curve 
+		self.assertEqual(c[0],outcomes[0]) # The outcome should be exactly the same as the coverage
+
 
 	def test_spending(self):
 		# Test spending only programs
@@ -52,6 +62,7 @@ class TestPrograms(unittest.TestCase):
 	def test_plot(self):
 		# Make a plot of the CC, CO and CCO curves (the same as the web interface)
 		return True # Temporarily disable this test
+
 		p1 = deepcopy(p)
 		
 		spending = linspace(0.0,5e6,100)
