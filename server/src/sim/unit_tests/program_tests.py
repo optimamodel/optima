@@ -28,10 +28,12 @@ class TestPrograms(unittest.TestCase):
 		# Various tests here
 		c = p.get_coverage(300000.0)
 		c2 = p.get_coverage(100000000.0)
+		outcomes = p.get_outcomes(c)
 
 		self.assertAlmostEqual(c2[0],numpy.array([0.98]),places=7) # Max coverage is saturation
-		#print c
-		print p.get_outcomes(c)
+		self.assertAlmostEqual(c[0],numpy.array([0.5]),places=7) # Max coverage is saturation
+		self.assertAlmostEqual(c[0],2*outcomes[0],places=7) # Max coverage is saturation
+
 
 	def test_coverage(self): 
 		# Test coverage type programs
