@@ -50,11 +50,36 @@ class TestPrograms(unittest.TestCase):
 
 
 	def test_spending(self):
-		# Test spending only programs
-		return
+		# Test spending only programs - should return 0 coverage and 0 outcome
+		p = program.Program('short_name','full_name',default_effects)
+		m = p.add_modality('null')
+
+		# Various tests here
+		c = p.get_coverage(300000.0)
+		outcomes = p.get_outcomes(c)
+
+		self.assertEqual(c[0],numpy.array([0])) # The expected coverage for this curve 
+		self.assertEqual(outcomes[0],0) # The outcome should be exactly the same as the coverage
 
 	def test_modalities(self):
 		# Test overlapping modalities
+		return
+
+	def test_overlapping_coverage(self):
+		# Test overlapping coverage only
+		return
+		
+	def test_overlapping_spending(self):
+		# Test overlapping spending only
+		return
+			
+	def test_overlapping_coverage_noncoverage(self):
+		# Test metamodalities with 2x normal modalities, and 2x coverage only modalities
+		return
+
+
+	def test_overlapping_mixture(self):
+		# Test metamodalities with a mixture of normal, coverage, and spending only
 		return
 
 
