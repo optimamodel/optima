@@ -276,6 +276,8 @@ class Modality:
 		self.cc_data = cc_data
 		if cc_data['function'] == 'cceqn':
 			self.ccfun = cceqn_wrapper
+		elif cc_data['function'] == 'linear':
+			self.ccfun = linear
 		elif cc_data['function'] is 'null':
 			self.ccfun = null # This happens for spending-only programs
 		else:
@@ -287,6 +289,8 @@ class Modality:
 		for co in self.co_data:
 			if co['function'] == 'coeqn':
 				self.cofun.append(coeqn)
+			elif co['function'] == 'linear':
+				self.cofun.append(linear)
 			elif co['function'] == 'identity':
 				self.cofun.append(identity) # This happens for coverage programs
 			elif co['function'] is 'null':
@@ -335,7 +339,9 @@ class Modality:
 				growthrateu = (-1/ccparams['funding'])*log((2*ccparams['saturation'])/(ccparams['coverageupper']+ccparams['saturation']) - 1)        
 				convertedccparams = [[ccparams['saturation'], growthratem], [ccparams['saturation'], growthratel], [ccparams['saturation'], growthrateu]]
 		elif self.cc_data['function'] == 'null':
-			convertedccparams = None # No parameters required             
+			convertedccparams = None # No parameters required
+		elif self.cc_data['function'] == 'linear':
+			convertedccparams = [ccparams]             
 		return convertedccparams
 
 	def get_convertedcoparams(self,this_co_data):
@@ -351,6 +357,8 @@ class Modality:
 			convertedcoparams = [[muz,muf],[muz,muf],[muz,muf]] # DEBUG CODE, DO THIS PROPERLY LATER
 		elif this_co_data['function'] in ['identity','null']:
 			convertedcoparams = None # No parameters required
+		elif this_co_data['function'] == 'linear':
+			convertedcoparams = [coparams]
 		return convertedcoparams
 
 	def __repr__(self):

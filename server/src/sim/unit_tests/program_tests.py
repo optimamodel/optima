@@ -61,6 +61,23 @@ class TestPrograms(unittest.TestCase):
 		self.assertEqual(c[0],numpy.array([0])) # The expected coverage for this curve 
 		self.assertEqual(outcomes[0],0) # The outcome should be exactly the same as the coverage
 
+	def test_linear(self):
+		# Test linear CC and CO functions (for testing modalities)
+		p = program.Program('short_name','full_name',default_effects)
+		ccdata = {'function': 'linear', 'parameters': [2.0, 0.0]}
+		codata = [{'function': 'linear', 'parameters': [2.0, 0.0]}] # Linear coverage-outcome from 0 to 1 exactly
+		m1 = p.add_modality('modality_name',ccdata,codata)
+
+		self.assertAlmostEqual(p.get_coverage(0.0)[0],0,places=7) 
+		self.assertAlmostEqual(p.get_coverage(0.5)[0],1,places=7) 
+		self.assertAlmostEqual(p.get_coverage(1.0)[0],2,places=7) 
+
+		self.assertAlmostEqual(p.get_outcomes([0.0])[0],0,places=7) 
+		self.assertAlmostEqual(p.get_outcomes([0.5])[0],1,places=7) 
+		self.assertAlmostEqual(p.get_outcomes([1.0])[0],2,places=7) 
+
+		return
+
 	def test_modalities(self):
 		# Test overlapping modalities
 		return
