@@ -63,7 +63,7 @@ class Program:
 		# That is, they should be in the same order as the program effects
 		for effect in programdata['effects']:
 			this_co = {}
-			if 'coparams' not in effect.keys():
+			if 'coparams' not in effect.keys() or (isinstance(effect['coparams'],float) and isnan(effect['coparams'])): # Some legacy effects use nan to represent a null CO curve
 				this_co['function'] = 'identity'
 				this_co['parameters'] = None
 			else:
@@ -344,7 +344,6 @@ class Modality:
 		# Naturally, this conversion depends on the functional form of co_fun
 		# Note that here, this_co_data is a *single* element from self.this_co_data
 		coparams = this_co_data['parameters']
-
 		if this_co_data['function'] == 'coeqn':
 			muz, stdevz = (coparams[0]+coparams[1])/2, (coparams[1]-coparams[0])/6 # Mean and standard deviation calcs
 			muf, stdevf = (coparams[2]+coparams[3])/2, (coparams[3]-coparams[2])/6 # Mean and standard deviation calcs
