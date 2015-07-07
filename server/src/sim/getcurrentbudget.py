@@ -84,7 +84,7 @@ def getcurrentbudget(D, alloc=None, randseed=None):
                 # print 'co_arg: ', [effect['convertedcoparams'][0]]+[effect['convertedcoparams'][2]]
                 # TODO: Check line below - Haiti has len(convertedccoparams[0]) == 4 and len(convertedccparams[0]) == 4 which tries to use ccoeqn rather than cco2eqn
                 #print 'CC: %d, CCO: %d' % (len(convertedccparams[0]),len(convertedccoparams[0]))
-                D['P'][parname]['c'][popnumber] = cco2eqn(totalcost, convertedccoparams[0]) if len(convertedccparams[0])==2 else ccoeqn(totalcost, convertedccoparams[0])            
+                D['P'][parname]['c'][popnumber] = cco2eqn(totalcost, convertedccoparams[0]) if len(convertedccoparams[0])==4 else ccoeqn(totalcost, convertedccoparams[0])            
 
     return D, currentcoverage, currentnonhivdalysaverted
     
