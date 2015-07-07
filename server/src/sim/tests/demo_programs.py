@@ -5,7 +5,7 @@ import sim
 import numpy
 
 # This function tests the program calculation
-r = region.Region.load('./regions/georgia_working.json')
+r = region.Region.load('./regions/haiti.json')
 
 # Make an example budget
 a = r.D['data']['origalloc']
