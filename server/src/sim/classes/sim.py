@@ -8,6 +8,7 @@ Created on Fri Jun 05 23:27:38 2015
 import weakref
 import uuid
 import defaults
+from copy import deepcopy
 
 class Sim:
     def __init__(self, name, region):
@@ -115,7 +116,6 @@ class Sim:
         
         # Hmm... should we just makefittedpars and calibrate later? Or calibrate here?
 #        # Explicit construction of tempD, so that one day we know how to recode makefittedpars.
-#        
         
         if 'F' not in r.D.keys():
             import updatedata
@@ -193,6 +193,10 @@ class Sim:
     def __repr__(self):
         return "Sim %s ('%s')" % (self.uuid,self.name)
 
+
+#------------------------------------------------------------------------------
+
+
 # Derived Sim class that should store budget data.
 class SimBudget(Sim):
     def __init__(self, name, region, budget = []):
@@ -204,19 +208,16 @@ class SimBudget(Sim):
         
         self.plotdataopt = None     # This used to be D['plot']['optim'][-1]. Be aware that it is not D['plot']!
         
-        from copy import deepcopy        
-        
-        self.alloc = deepcopy(self.getregion().data['origalloc'])   # The budget allocations before optimisation.
-        self.obj = None                                             # The current objective function value for the origalloc budget.
-        
         from timevarying import timevarying        
         
-        # If a budget is provided, it will become an overwrite.
-        # Otherwise a default budget is initialised from region's origalloc fixed over all timesteps.
-        if len(budget) == 0:
+        if len(budget) == 0:    # If budget not provided, allocation is drawn from region data and budget is an extended array of allocation.
+            self.alloc = deepcopy(self.getregion().data['origalloc'])
             self.budget = timevarying(self.alloc, ntimepm = 1, nprogs = len(self.alloc), tvec = self.getregion().options['partvec'])
-        else:
+        else:                   # If budget is provided, allocation is the first slice of this.
             self.budget = budget
+            self.alloc = [alloclist[0] for alloclist in self.budget]
+        
+        self.obj = None                                             # The current objective function value for the origalloc budget.
             
         self.program_set = region.program_sets[0]   # Eventually modify to support multiple programs.
 
@@ -242,35 +243,35 @@ class SimBudget(Sim):
     def isoptimised(self):
         return self.optimised
         
-#    def makemodelpars(self):
-#        r = self.getregion()
-#        npts = len(r.options['partvec']) # Number of time points
-#
-#        P = self.parsdata 
-#        from numpy import nan, zeros
-#        for param in P.keys():
-#            if isinstance(P[param], dict) and 'p' in P[param].keys():
-#                P[param]['c'] = nan+zeros((len(P[param]['p']), npts))
-#
-#        for prog, spending in zip(self.program_set['programs'], self.budget):
-#            coverage = prog.get_coverage(spending) # Returns metamodality coverage
-#            outcomes = prog.get_outcomes(coverage) # Returns program outcomes (for each effect)
-#
-#            try:
-#                print '--- SIM'
-#                print 'Coverage: ', coverage[0][0][0]
-#                print 'Outcome: ', [x[0][0] for x in outcomes]
-#            except:
-#                continue
-#            for i in xrange(0,len(prog.effects['param'])): # For each of the effects
-#                if prog.effects['iscoverageparam'][i]:
-#                    P[prog.effects['param'][i]]['c'][:] = outcomes[i]
-#                else:
-#                    popnumber = r.get_popidx(prog.effects['popname'][i])-1 # Yes, get_popidx is 1-based rather than 0 based...cf. scenarios
-#                    P[prog.effects['param'][i]]['c'][popnumber] = outcomes[i]
-#
-#        from makemodelpars import makemodelpars
-#        self.parsmodel = makemodelpars(P, r.options, withwhat='c')
+    def makemodelpars(self):
+        r = self.getregion()
+        npts = len(r.options['partvec']) # Number of time points
+
+        P = self.parsdata 
+        from numpy import nan, zeros
+        for param in P.keys():
+            if isinstance(P[param], dict) and 'p' in P[param].keys():
+                P[param]['c'] = nan+zeros((len(P[param]['p']), npts))
+
+        for prog, spending in zip(self.program_set['programs'], self.budget):
+            coverage = prog.get_coverage(spending) # Returns metamodality coverage
+            outcomes = prog.get_outcomes(coverage) # Returns program outcomes (for each effect)
+
+            try:
+                print '--- SIM'
+                print 'Coverage: ', coverage[0][0][0]
+                print 'Outcome: ', [x[0][0] for x in outcomes]
+            except:
+                continue
+            for i in xrange(0,len(prog.effects['param'])): # For each of the effects
+                if prog.effects['iscoverageparam'][i]:
+                    P[prog.effects['param'][i]]['c'][:] = outcomes[i]
+                else:
+                    popnumber = r.get_popidx(prog.effects['popname'][i])-1 # Yes, get_popidx is 1-based rather than 0 based...cf. scenarios
+                    P[prog.effects['param'][i]]['c'][popnumber] = outcomes[i]
+
+        from makemodelpars import makemodelpars
+        self.parsmodel = makemodelpars(P, r.options, withwhat='c')
     
     # Essentially copies old SimBudget into new SimBudget, except overwriting where applicable with sim.resultopt.
     # This will need to be monitored carefully! Every additional data structure in Sim+SimBudget must be written here.
@@ -309,7 +310,6 @@ class SimBudget(Sim):
         r = self.getregion()
 
         from optimize import optimize
-        from copy import deepcopy         # Leave nothing to chance! Otherwise optimize will modify region data and cause save/load bugs.
         
         tempD = dict()
         tempD['data'] = deepcopy(r.data)
@@ -331,7 +331,8 @@ class SimBudget(Sim):
         # Let's try returning these rather than storing them...
         optalloc = self.plotdataopt['alloc'][-1]['piedata']
         optobj = tempD['objective'][-1]
-        resultopt = tempD['result']['debug']    # VERY temporary. Only until we understand how to regenerate parameters from new allocations.
+#        resultopt = tempD['result']['debug']    # VERY temporary. Only until we understand how to regenerate parameters from new allocations.
+        newbudget = tempD['result']['debug']['newbudget']
         
         # If makenew is on, the optimisation results will be initialised in a new SimBudget.
         if makenew:
@@ -340,7 +341,7 @@ class SimBudget(Sim):
         # Optimisation returns an allocation and a (hopefully corresponding) objective function value.
         # It also returns a resulting data structure (that we'll hopefully remove the need for eventually).
         # Finally, it returns a boolean for whether a new SimBudget should be made.
-        return (optalloc, optobj, resultopt, makenew)
+        return (optalloc, optobj, newbudget, makenew)
     
     # Calculates objective values for certain multiplications of an alloc's variable costs (passed in as list of factors).
     # The idea is to spline a cost-effectiveness curve across several budget totals.
@@ -359,7 +360,6 @@ class SimBudget(Sim):
         for i in xrange(len(curralloc)):
             if len(self.getregion().metadata['programs'][i]['effects']): fixedtrue[i] = 0.0
         
-        # List of factors is currently assumed to be monotonically increasing or reoptimisation issues will arise...
         for factor in factors:
             try:
                 print('Testing budget allocation multiplier of %f.' % factor)
@@ -409,57 +409,10 @@ class SimBudget(Sim):
 
     def __repr__(self):
         return "SimBudget %s ('%s')" % (self.uuid,self.name)   
+   
+   
+#------------------------------------------------------------------------------
 
-## Derived Sim class that should store parameter overwrites.
-#class SimBudget2(Sim):
-#    def __init__(self, name, region,budget):
-#        # budget and alloc are the same thing i.e. an 'alloc' *is* actually a budget
-#        Sim.__init__(self, name, region)
-#        self.budget = budget # This contains spending values for all of the modalities for the simulation timepoints i.e. there are len(D['opt']['partvec']) spending values
-#        self.program_set = region.program_sets[0] # Eventually modify to support multiple programs
-#
-#    def todict(self):
-#        simdict = Sim.todict(self)
-#        simdict['type'] = 'SimBudget2'
-#        simdict['budget'] = self.budget
-#        return simdict
-#
-#    def load_dict(self,simdict):
-#        Sim.load_dict(self,simdict)
-#        self.budget = simdict['budget'] 
-#
-#    def makemodelpars(self):
-#        r = self.getregion()
-#        npts = len(r.options['partvec']) # Number of time points
-#
-#        P = self.parsdata 
-#        from numpy import nan, zeros
-#        for param in P.keys():
-#            if isinstance(P[param], dict) and 'p' in P[param].keys():
-#                P[param]['c'] = nan+zeros((len(P[param]['p']), npts))
-#
-#        for prog, spending in zip(self.program_set['programs'], self.budget):
-#            coverage = prog.get_coverage(spending) # Returns metamodality coverage
-#            outcomes = prog.get_outcomes(coverage) # Returns program outcomes (for each effect)
-#
-#            try:
-#                print '--- SIM'
-#                print 'Coverage: ', coverage[0][0][0]
-#                print 'Outcome: ', [x[0][0] for x in outcomes]
-#            except:
-#                continue
-#            for i in xrange(0,len(prog.effects['param'])): # For each of the effects
-#                if prog.effects['iscoverageparam'][i]:
-#                    P[prog.effects['param'][i]]['c'][:] = outcomes[i]
-#                else:
-#                    popnumber = r.get_popidx(prog.effects['popname'][i])-1 # Yes, get_popidx is 1-based rather than 0 based...cf. scenarios
-#                    P[prog.effects['param'][i]]['c'][popnumber] = outcomes[i]
-#
-#        from makemodelpars import makemodelpars
-#        self.parsmodel = makemodelpars(P, r.options, withwhat='c')
-#
-#    def __repr__(self):
-#        return "SimBudget2 %s ('%s')" % (self.uuid,self.name)    
 
 # Derived Sim class that should store parameter overwrites.
 class SimParameter(Sim):

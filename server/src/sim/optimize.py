@@ -49,6 +49,7 @@ def runmodelalloc(D, thisalloc, origalloc, parindices, randseed, rerunfinancial=
     R['debug']['M'] = deepcopy(newD['M'])
     R['debug']['F'] = deepcopy(newD['F'])
     R['debug']['S'] = deepcopy(S)
+    R['debug']['newbudget'] = deepcopy(thisalloc)     # Assuming thisalloc is the optimised full budget, it is being stored...
     return R
 
 

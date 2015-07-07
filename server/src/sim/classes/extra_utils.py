@@ -1,7 +1,7 @@
 import numpy
 import sys
 sys.path.append('../tests')
-import add_optima_paths
+#import add_optima_paths
 import region
 import sim
 import simbox

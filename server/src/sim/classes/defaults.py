@@ -8,8 +8,7 @@ current_version = 5
 
 ### OPTIMISATION DEFAULTS
 maxiters = 1e3
-timelimit = 600
-reopts = 3      # For the times when your BOC refuses to be monotonically decreasing.
+timelimit = 3#600
 
 ### REGION DEFAULTS
 
