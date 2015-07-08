@@ -15,7 +15,7 @@ from printv import printv
 from datetime import date
 
 ## Set coverage parameters...
-coverage_params = ['numost','numpmtct','numfirstline','numsecondline']
+coverage_params = ['numcircum','numost','numpmtct','numfirstline','numsecondline']
 default_nxpts = 100 # Set the number of points to make the lines
 default_verbose = 2
 ######################################################################
@@ -35,8 +35,9 @@ def makecc(D=None, progname=None, ccparams=None, arteligcutoff=None, verbose=def
     if not (isinstance(arteligcutoff,str)):
         print('Assuming universal ART coverage since not otherwise specified....')
         artindex = range(D['G']['nstates'])[1::] # Include everyone infected
-    states, artindex = range(D['G']['nstates']), []
-    for i in range(len(D['G'][arteligcutoff])-1): artindex.extend(states[D['G'][arteligcutoff][i+1]:D['G'][D['G']['healthstates'][-1]][i+1]+1])
+    else:
+        states, artindex = range(D['G']['nstates']), []
+        for i in range(len(D['G'][arteligcutoff])-1): artindex.extend(states[D['G'][arteligcutoff][i+1]:D['G'][D['G']['healthstates'][-1]][i+1]+1])
     if verbose>=2: print('makecc %s %s' % (progname, ccparams))
 
     # If ccparams haven't been passed in but there's something stored in D, use the stored version
@@ -84,7 +85,7 @@ def makecc(D=None, progname=None, ccparams=None, arteligcutoff=None, verbose=def
     if popadj: totalcost = totalcost/targetpop if len(totalcost)>1 else totalcost/mean(targetpop)
 
     # Get upper limit of x axis for plotting
-    xupperlim = max([x if ~isnan(x) else 0.0 for x in totalcost])*1.5
+    xupperlim = max([x if ~isnan(x) else 0.0 for x in totalcost])*3.
     if (ccparams and 'xupperlim' in ccparams and ccparams['xupperlim'] and ~isnan(ccparams['xupperlim'])): xupperlim = ccparams['xupperlim']
 
     # Populate output structure with scatter data
@@ -243,12 +244,18 @@ def makeco(D=None, progname=None, effect=None, coparams=None, coverage_params=co
 #################################################################################
 def makecco(D=None, progname=None, effect=None, ccparams=None, coparams=None, arteligcutoff=None, coverage_params=coverage_params, verbose=default_verbose, nxpts=default_nxpts):
     ''' Make a single cost outcome curve. '''
+    from numpy import array, where
+    from datetime import date
 
     plotdata, plotdata_co = {}, {} 
-    parname = effect['param']
+    prognumber = [p['name'] for p in D['programs']].index(progname) # get program number    
+    partype, parname, popname = effect['paramtype'], effect['param'], effect['popname'] # Get population and parameter info
 
     # Only going to make cost-outcome curves for programs where the affected parameter is not coverage
     if parname not in coverage_params:
+        if popname not in D['data']['meta']['pops']['short']: raise Exception('Cannot recognise population %s, it is not in %s' % (popname, D['data']['meta']['pops']['short']))
+        else: popnumber = D['data']['meta']['pops']['short'].index(popname)
+
         plotdata_cc, D = makecc(D=D, progname=progname, ccparams=ccparams, arteligcutoff=arteligcutoff)
         plotdata_co, effect = makeco(D=D, progname=progname, effect=effect, coparams=coparams, arteligcutoff=arteligcutoff)
     
@@ -258,7 +265,24 @@ def makecco(D=None, progname=None, effect=None, ccparams=None, coparams=None, ar
         totalcost, outcome = getscatterdata(totalcost, outcome)
         plotdata['xscatterdata'] = totalcost 
         plotdata['yscatterdata'] = outcome 
-            
+
+       # Make additional scatter data for current param vals
+        currentcost = D['data']['origalloc'][prognumber]
+        try:
+            timepoint = where(abs(D['opt']['partvec']-float(min(D['data']['epiyears'][-1], date.today().year)))<0.001)
+            if parname[:6] == 'condom':
+                parname1, parname2 = parname[:6], parname[6:]
+                currentoutcome = D['M'][parname1][parname2][popnumber][timepoint]
+            else:
+                currentoutcome = D['M'][parname][popnumber][timepoint]
+        except:
+            tmp = array(D['data'][partype][parname][popnumber])
+            currentoutcome = tmp[~isnan(tmp)][-1]
+            print('Parameter %s not found, using last data value %f' % (parname, currentoutcome))
+
+        plotdata['xcurrentdata'] = currentcost 
+        plotdata['ycurrentdata'] = currentoutcome 
+
         # Populate output structure with axis limits
         plotdata['xlowerlim'], plotdata['ylowerlim'] = plotdata_cc['xlowerlim'], plotdata_co['ylowerlim']
         plotdata['xupperlim'], plotdata['yupperlim'] = plotdata_cc['xupperlim'], plotdata_co['yupperlim']
@@ -382,32 +406,42 @@ def gettargetpop(D=None, artindex=None, progname=None):
     targetpars = list(set(targetpars))
     popnumbers = list(set(popnumbers))
 
+    targetpopmodel = None
+
     # Figure out the total model-estimated size of the targeted population(s)
     for thispar in targetpars: # Loop through parameters
-        if len(D['P'][thispar]['p'])==D['G']['npops']: # For parameters whose effect is differentiated by population, we add up the targeted populations
-            targetpopmodel = D['S']['people'][:,popnumbers,0:npts].sum(axis=(0,1))
-        elif len(D['P'][thispar]['p'])==1: # For parameters whose effects are not differentiated by population, we make special cases depending on the parameter
-            if thispar == 'aidstest': # Target population = diagnosed PLHIV, AIDS stage
-                targetpopmodel = D['S']['people'][27:31,:,0:npts].sum(axis=(0,1))
-            elif thispar in ['numost','sharing']: # Target population = the sum of all populations that inject
-                injectindices = [i for i, x in enumerate(D['data']['meta']['pops']['injects']) if x == 1]
-                targetpopmodel = D['S']['people'][:,injectindices,0:npts].sum(axis = (0,1))
-            elif thispar == 'numpmtct': # Target population = HIV+ pregnant women
-                targetpopmodel = multiply(D['M']['birth'][:,0:npts], D['S']['people'][artindex,:,0:npts].sum(axis=0)).sum(axis=0)
-            elif thispar == 'breast': # Target population = HIV+ breastfeeding women
-                targetpopmodel = multiply(D['M']['birth'][:,0:npts], D['M']['breast'][0:npts], D['S']['people'][artindex,:,0:npts].sum(axis=0)).sum(axis=0)
-            elif thispar in ['numfirstline','numsecondline']: # Target population = diagnosed PLHIV
-                targetpopmodel = D['S']['people'][artindex,:,0:npts].sum(axis=(0,1))
+        if D['P'].get(thispar):
+            if len(D['P'][thispar]['p'])==D['G']['npops']: # For parameters whose effect is differentiated by population, we add up the targeted populations
+                targetpopmodel = D['S']['people'][:,popnumbers,0:npts].sum(axis=(0,1))
+            elif len(D['P'][thispar]['p'])==1: # For parameters whose effects are not differentiated by population, we make special cases depending on the parameter
+                if thispar == 'aidstest': # Target population = diagnosed PLHIV, AIDS stage
+                    targetpopmodel = D['S']['people'][27:31,:,0:npts].sum(axis=(0,1))
+                elif thispar in ['numost','sharing']: # Target population = the sum of all populations that inject
+                    injectindices = [i for i, x in enumerate(D['data']['meta']['pops']['injects']) if x == 1]
+                    targetpopmodel = D['S']['people'][:,injectindices,0:npts].sum(axis = (0,1))
+                elif thispar == 'numpmtct': # Target population = HIV+ pregnant women
+                    targetpopmodel = multiply(D['M']['birth'][:,0:npts], D['S']['people'][artindex,:,0:npts].sum(axis=0)).sum(axis=0)
+                elif thispar == 'breast': # Target population = HIV+ breastfeeding women
+                    targetpopmodel = multiply(D['M']['birth'][:,0:npts], D['M']['breast'][0:npts], D['S']['people'][artindex,:,0:npts].sum(axis=0)).sum(axis=0)
+                elif thispar in ['numfirstline','numsecondline']: # Target population = diagnosed PLHIV
+                    targetpopmodel = D['S']['people'][artindex,:,0:npts].sum(axis=(0,1))
+                else:
+                    print('WARNING, Unrecognized parameter %s' % thispar)
             else:
-                print('WARNING, Unrecognized parameter %s' % thispar)
+                print('WARNING, Parameter %s of odd length %s' % (thispar, len(D['P'][thispar]['p'])))
         else:
-            print('WARNING, Parameter %s of odd length %s' % (thispar, len(D['P'][thispar]['p'])))
+            if thispar == 'numcircum': # Target population = men (??)
+                maleindices = [i for i, x in enumerate(D['data']['meta']['pops']['female']) if x == 0]
+                targetpopmodel = D['S']['people'][:,maleindices,0:npts].sum(axis = (0,1))
     if len(targetpars)==0:
         print('WARNING, no target parameters for program %s' % progname)
                 
     # We only want the model-estimated size of the targeted population(s) for actual years, not the interpolated years
     yearindices = xrange(0,npts,int(1/D['opt']['dt']))
-    targetpop = targetpopmodel[yearindices]
+    
+    targetpop = None
+    if targetpopmodel is not None:
+        targetpop = targetpopmodel[yearindices]
 
     return targetpop
 

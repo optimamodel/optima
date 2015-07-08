@@ -50,12 +50,15 @@ def addtoprograms(programs):
                                             'coverageupper':None, 
                                             'funding':None, 
                                             'scaleup':None, 
-                                            'nonhivdalys':None, 
-                                            'xupperlim':None, 
+                                            'nonhivdalys':None,
+                                            'xupperlim':None,
                                             'cpibaseyear':None, 
                                             'perperson':None}
         programs[prognumber]['convertedccparams'] = None
         programs[prognumber]['nonhivdalys'] = 0.0
+        
+        if program['name'] == 'VMMC':
+            program['effects'] = [{'paramtype':'sex', 'param':'numcircum', 'popname':u'Total', 'coparams':None, 'convertedcoparams':None, 'convertedccoparams':None}]
 
     return programs
     

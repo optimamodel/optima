@@ -318,12 +318,26 @@ def gatheroptimdata(D, result, verbose=2):
     optim['kind'] = result['kind'] # Flag for the kind of optimization
     optim['multi'] = gathermultidata(D, result['Rarr'], verbose=2) # Calculate data for displaying standard epidemiological results
     if optim['kind'] in ['constant', 'timevarying', 'multiyear']:
-        optim['outcome'] = dict() # Plot how the outcome improved with optimization
-        optim['outcome']['ydata'] = result['fval'].tolist() # Vector of outcomes
-        optim['outcome']['xdata'] = range(len(result['fval'].tolist())) # Vector of iterations
-        optim['outcome']['ylabel'] = 'Outcome'
-        optim['outcome']['xlabel'] = 'Iteration'
-        optim['outcome']['title'] = 'Outcome (initial: %0.0f, final: %0.0f)' % (result['fval'][0], result['fval'][-1])
+        try:
+            optim['outcome'] = dict() # Plot how the outcome improved with optimization
+            optim['outcome']['ydata'] = result['fval'].tolist() # Vector of outcomes
+            optim['outcome']['xdata'] = range(len(result['fval'].tolist())) # Vector of iterations
+            optim['outcome']['ylabel'] = 'Outcome'
+            optim['outcome']['xlabel'] = 'Iteration'
+            rinit = result['fval'][0]
+            rfin = result['fval'][-1]
+            rreduc = 100*(1 - result['fval'][-1]/result['fval'][0])
+            if result['fval'][0]>1:
+                optim['outcome']['title'] = 'Outcome (initial: %0.0f, final: %0.0f, reduction: %0.0f%%)' % (rinit, rfin, rreduc)
+            else:
+                optim['outcome']['title'] = 'Outcome (initial: %0.3f, final: %0.3f, reduction: %0.0f%%)' % (rinit, rfin, rreduc)
+        except:
+            optim['outcome'] = dict() # Plot how the outcome improved with optimization
+            optim['outcome']['ydata'] = [0] # Vector of outcomes
+            optim['outcome']['xdata'] = [0] # Vector of iterations
+            optim['outcome']['ylabel'] = 'Outcome'
+            optim['outcome']['xlabel'] = 'Iteration'
+            optim['outcome']['title'] = 'Outcome'
     if optim['kind']=='constant':
         optim['alloc'] = []
         titles = ['Original','Optimal']
