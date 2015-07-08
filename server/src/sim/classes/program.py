@@ -41,12 +41,13 @@ class Program:
 	@classmethod
 	def import_legacy(Program,programdata):
 		# Take in D['programs'][i] and return a corresponding Program instance
-		p = Program(programdata['name'])
+		effects = {}
+		effects['paramtype'] = [x['paramtype'] for x in programdata['effects']]
+		effects['popname'] = [x['popname'] for x in programdata['effects']]
+		effects['param'] = [x['param'] for x in programdata['effects']]
+		effects['iscoverageparam'] = [x['param'] in ['numost','numpmtct','numfirstline','numsecondline'] for x in programdata['effects']]
 
-		p.effects['paramtype'] = [x['paramtype'] for x in programdata['effects']]
-		p.effects['popname'] = [x['popname'] for x in programdata['effects']]
-		p.effects['param'] = [x['param'] for x in programdata['effects']]
-		p.effects['iscoverageparam'] = [x['param'] in ['numost','numpmtct','numfirstline','numsecondline'] for x in programdata['effects']]
+		p = Program(programdata['name'],effects=effects)
 
 		# Legacy programs only have one modality
 		# Some complete programs have only one spending_only modality
