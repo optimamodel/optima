@@ -74,12 +74,8 @@ def getcoverage(D, alloc=None, randseed=None):
             else:
                 convertedccparams = setdefaultccparams(progname=progname)
             if randseed>=0: convertedccparams[0][1] = array(perturb(1,(array(convertedccparams[2][1])-array(convertedccparams[1][1]))/2., randseed=randseed)) - 1 + array(convertedccparams[0][1]) 
-            if any(j > 1 for j in D['data']['costcov']['cov'][prognumber]):
-                coverage['num'][prognumber,] = cc2eqn(alloc[prognumber,], convertedccparams[0]) if len(convertedccparams[0])==2 else cceqn(alloc[prognumber,], convertedccparams[0])
-                coverage['per'][prognumber,] = coverage['num'][prognumber,]/targetpop
-            else:
-                coverage['per'][prognumber,] = cc2eqn(alloc[prognumber,], convertedccparams[0]) if len(convertedccparams[0])==2 else cceqn(alloc[prognumber,], convertedccparams[0])
-                coverage['num'][prognumber,] = coverage['per'][prognumber,]*targetpop
+            coverage['per'][prognumber,] = cc2eqn(alloc[prognumber,], convertedccparams[0]) if len(convertedccparams[0])==2 else cceqn(alloc[prognumber,], convertedccparams[0])
+            coverage['num'][prognumber,] = coverage['per'][prognumber,]*targetpop
         else:
             coverage['per'][prognumber,] = array([None]*len(alloc[prognumber,]))
             coverage['num'][prognumber,] = array([None]*len(alloc[prognumber,]))
