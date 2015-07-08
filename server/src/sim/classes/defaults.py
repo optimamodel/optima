@@ -8,7 +8,7 @@ current_version = 5
 
 ### OPTIMISATION DEFAULTS
 maxiters = 1e3
-timelimit = 3#600
+timelimit = 1#600
 
 ### REGION DEFAULTS
 

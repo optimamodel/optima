@@ -13,6 +13,12 @@ from region import Region
 #currentportfolio = Portfolio('test')
 r = Region.load('./regions/Haiti.json')
 sb = r.createsimbox('AndCrumpets', isopt = True, createdefault = True)
+import defaults
+r.runsimbox(sb)
+r.runsimbox(sb)
+r.runsimbox(sb)
+r.runsimbox(sb)
+r.runsimbox(sb)
 r.runsimbox(sb)
 r.runsimbox(sb)
 sb.viewmultiresults()   # They look the same.

@@ -291,9 +291,12 @@ class SimBudget(Sim):
         self.plotdata = None
         
         self.plotdataopt = None
+
+        from timevarying import timevarying
         
         # The previous SimBudget's optimal allocation and objective become the initial values for this SimBudget.
         self.alloc = optalloc
+        self.budget = timevarying(self.alloc, ntimepm = 1, nprogs = len(self.alloc), tvec = self.getregion().options['partvec'])
         self.obj = optobj
         
 #        self.optalloc = None
@@ -325,8 +328,8 @@ class SimBudget(Sim):
         # Let's try returning these rather than storing them...
         optalloc = self.plotdataopt['alloc'][-1]['piedata']
         optobj = tempD['objective'][-1]
-#        resultopt = tempD['result']['debug']    # VERY temporary. Only until we understand how to regenerate parameters from new allocations.
-        newbudget = tempD['result']['debug']['newbudget']
+        resultopt = tempD['result']['debug']    # VERY temporary. Only until we understand how to regenerate parameters from new allocations.
+#        newbudget = tempD['result']['debug']['newbudget']
         
         # If makenew is on, the optimisation results will be initialised in a new SimBudget.
         if makenew:
@@ -335,7 +338,7 @@ class SimBudget(Sim):
         # Optimisation returns an allocation and a (hopefully corresponding) objective function value.
         # It also returns a resulting data structure (that we'll hopefully remove the need for eventually).
         # Finally, it returns a boolean for whether a new SimBudget should be made.
-        return (optalloc, optobj, newbudget, makenew)
+        return (optalloc, optobj, resultopt, makenew)
     
     # Calculates objective values for certain multiplications of an alloc's variable costs (passed in as list of factors).
     # The idea is to spline a cost-effectiveness curve across several budget totals.
