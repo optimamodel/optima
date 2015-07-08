@@ -257,12 +257,6 @@ class SimBudget(Sim):
             coverage = prog.get_coverage(spending) # Returns metamodality coverage
             outcomes = prog.get_outcomes(coverage) # Returns program outcomes (for each effect)
 
-            try:
-                print '--- SIM'
-                print 'Coverage: ', coverage[0][0][0]
-                print 'Outcome: ', [x[0][0] for x in outcomes]
-            except:
-                continue
             for i in xrange(0,len(prog.effects['param'])): # For each of the effects
                 if prog.effects['iscoverageparam'][i]:
                     P[prog.effects['param'][i]]['c'][:] = outcomes[i]

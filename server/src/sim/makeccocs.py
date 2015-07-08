@@ -539,7 +539,6 @@ def ccoeqn(x, p):
         p[4] = outcome at full coverage
     Returns y which is coverage.
     '''
-    print p
     y = (p[4]-p[3]) * (p[0] / (1 + exp((log(p[1])-nplog(x))/(1-p[2])))) + p[3]
 
     return y
