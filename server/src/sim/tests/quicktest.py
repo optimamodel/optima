@@ -6,14 +6,11 @@ Created on Tue Jul 07 22:24:46 2015
 """
 
 import add_optima_paths
-
-#from portfolio import Portfolio
 from region import Region
 
-#currentportfolio = Portfolio('test')
 r = Region.load('./regions/Haiti.json')
 sb = r.createsimbox('AndCrumpets', isopt = True, createdefault = True)
-import defaults
+
 r.runsimbox(sb)
 r.runsimbox(sb)
 r.runsimbox(sb)

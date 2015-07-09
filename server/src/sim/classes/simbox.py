@@ -104,12 +104,6 @@ class SimBox:
             multidata = gatherplotdata.gathermultidata(tempD, Rarr,verbose=0)
             #viewmultiresults(M, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 'daly':[0,1], 'death':[0,1], 'dx':[0,1], 'tx1':[0,1], 'tx2':[0,1], 'costcum':[1,1]}, simstartyear=2000, simendyear=2030, onefig=True, verbose=2, show_wait=False, linewidth=2):
             viewresults.viewmultiresults(multidata, show_wait = True)
-            
-#    def viewoptimresults(self):
-#        import viewresults
-#        
-#        # Continue here....
-#        viewresults.viewoptimresults(D['plot']['optim'][-1])
 
     def printsimlist(self, assubsubset = False):
         # Prints with long arrow formats if assubsubset is true. Otherwise uses short arrows.        
@@ -210,7 +204,59 @@ class SimBoxOpt(SimBox):
         # Generates a new SimBudget from the last Sim that was optimised in the list, but only when the loop has ended and if requested.
         if makenew:
             self.createsimopt(tempsim, optalloc, optobj, resultopt)
+    
+    # A custom built plotting function to roughly mirror legacy 'viewoptimresults'.
+    def viewoptimresults(self, plotasbar = False):
+        atleastoneplot = False
+        for sim in self.simlist:
+            if sim.isinitialised():
+                atleastoneplot = True
+                
+        if not atleastoneplot:
+            print('There is no optimisation data in this simulation container to plot.')
+        else:
+            r = self.region()
             
+            from matplotlib.pylab import figure, subplot, plot, pie, bar, title, legend, xticks, ylabel, show
+            from gridcolormap import gridcolormap
+            from matplotlib import gridspec
+        
+            nprograms = len(r.data['origalloc'])
+            colors = gridcolormap(nprograms)
+            
+            if plotasbar:
+                figure(figsize=(len(self.simlist)*2+4,nprograms/2))
+                gs = gridspec.GridSpec(1, 2, width_ratios=[len(self.simlist), 2]) 
+                ind = xrange(len(self.simlist))
+                width = 0.8       # the width of the bars: can also be len(x) sequence
+                
+                subplot(gs[0])
+                bar(ind, [sim.alloc[-1] for sim in self.simlist], width, color=colors[-1])
+                for p in xrange(2,nprograms+1):
+                    bar(ind, [sim.alloc[-p] for sim in self.simlist], width, color=colors[-p], bottom=[sum(sim.alloc[1-p:]) for sim in self.simlist])
+                xticks([index+width/2.0 for index in ind], [sim.getname() for sim in self.simlist])
+                ylabel('Budget Allocation ($)')
+                
+                subplot(gs[1])
+                for prog in xrange(nprograms): plot(0, 0, linewidth=3, color=colors[prog])
+                legend(r.data['meta']['progs']['short'])
+            else:
+                figure(figsize=(12,4*(len(self.simlist)/3+1)))
+                c = 0
+                for p in xrange(len(self.simlist)):
+                    sim = self.simlist[p]
+                    if sim.isprocessed():
+                        subplot(len(self.simlist)/3+1,3,p-c+1)
+                        pie(sim.alloc, colors=colors, labels=r.data['meta']['progs']['short'])
+                        title(sim.getname())
+                    else:
+                        c += 1
+            show()
+#        subplot(2,1,2)
+#        plot(O['outcome']['xdata'], O['outcome']['ydata'])
+#        xlabel(O['outcome']['xlabel'])
+#        ylabel(O['outcome']['ylabel'])
+#        title(O['outcome']['title'])
     
     # Special printing method for SimBoxOpt to take into account whether a Sim was already optimised.
     def printsimlist(self, assubsubset = False):

@@ -174,6 +174,9 @@ class Region:
     def plotsimbox(self, simbox, multiplot = False):
         if multiplot:
             simbox.viewmultiresults()
+            if isinstance(simbox, SimBoxOpt):
+                simbox.viewoptimresults(plotasbar = False)
+                simbox.viewoptimresults(plotasbar = True)
         else:
             simbox.plotallsims()
             

@@ -90,7 +90,10 @@ class Sim:
         
     def getname(self):
         return self.name
-        
+    
+    def isinitialised(self):
+        return self.initialised   
+    
     def isprocessed(self):
         return self.processed
     
