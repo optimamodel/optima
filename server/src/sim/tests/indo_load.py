@@ -4,7 +4,7 @@ Loads the Indonesian xlsx and converts into seven regional xlsx files.
 
 Created on Thu Jul 09 19:11:49 2015
 
-@author: David Kedziora
+@author: David Kedziora, Romesh Abeysuriya
 """
 
 import sys
@@ -63,6 +63,8 @@ for regid in xrange(len(regionlist)):
                     else:
                         # Copy and paste, skipping unnecessary rows and columns.
                         celldata = insheet.cell_value(rowindex, colindex)
+                        if isinstance(celldata,unicode) and '('+abb+')' in celldata:
+                            celldata = celldata.replace(' ('+abb+')','')
                         if (tag == 'meta' and colindex == 1 and insheet.cell_type(rowindex, colindex) == 2):
                             outsheet.write(rowindex-rowskip, colindex-colskip, celldata-rowcorrect)                 # Adjust number ids for pops and progs.
                         elif (tag == 'data' and insheet.cell_type(rowindex, colindex) == 2 and \
