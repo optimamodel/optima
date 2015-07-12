@@ -560,7 +560,7 @@ def model(G, M, F, opt, initstate=None, verbose=2):
                 for errstate in xrange(nstates): # Loop over all heath states
                     for errpop in xrange(npops): # Loop over all populations
                         if not(people[errstate,errpop,t+1]>=0):
-                            print('WARNING, Non-positive people found: people[%s, %s, %s] = %s' % (t+1, errpop, errstate, people[errstate,errpop,t+1]))
+                            print('WARNING, Non-positive people found: people[%s, %s, %s] = %s' % (errstate, errpop, t+1, people[errstate,errpop,t+1]))
                             people[errstate,errpop,t+1] = 0 # Reset
         
         # Do some sanity checks
