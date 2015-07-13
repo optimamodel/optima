@@ -2,6 +2,7 @@
 from numpy import array, arange, zeros, exp, maximum, minimum, nonzero, concatenate, hstack, absolute, median
 from printv import printv
 from math import pow as mpow
+from copy import deepcopy
 
 def model(G, M, F, opt, initstate=None, verbose=2):
     """
@@ -15,6 +16,9 @@ def model(G, M, F, opt, initstate=None, verbose=2):
     ## Setup
     ###############################################################################
     
+    M = deepcopy(M)
+    F = deepcopy(F)
+
     eps = 1e-3 # Define another small number to avoid divide-by-zero errors
     
     # Initialize basic quantities
