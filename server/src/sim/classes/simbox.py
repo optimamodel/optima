@@ -180,13 +180,13 @@ class SimBoxOpt(SimBox):
             
     # This creates a duplicate SimBudget to 'sim', except with optimised 'G', 'M', 'F', 'S' from sim.resultopt.
     # As an optimised version of the previous SimBudget, it will also be automatically processed, to get plotdata.
-    def createsimopt(self, sim, optalloc, optobj, resultopt):
+    def createsimopt(self, sim, optbudget):
         if not sim == None:
             print('Converting optimisation results into a new budget simulation...')
-            self.simlist.append(SimBudget(sim.getname(), self.getregion()))
+            self.simlist.append(SimBudget(sim.getname(), self.getregion(), optbudget))
             
             # The copy can't be completely deep or shallow, so we load the new SimBudget with a developer-made method.
-            self.simlist[-1].specialoptload(sim, optalloc, optobj, resultopt)
+#            self.simlist[-1].specialoptload(sim, optalloc, optobj, resultopt)
             self.simlist[-1].run()
             
     # Overwrites normal SimBox method so that SimBudget is not only run, but optimised, with the results (possibly) copied to a new SimBudget.
@@ -198,12 +198,13 @@ class SimBoxOpt(SimBox):
             if forcerun or not sim.isprocessed():
                 sim.run()
             if sim.isprocessed() and (forceopt or not sim.isoptimised()):
-                (optalloc, optobj, resultopt, makenew) = sim.optimise()
+                (optbudget, makenew) = sim.optimise()
                 tempsim = sim
                 
         # Generates a new SimBudget from the last Sim that was optimised in the list, but only when the loop has ended and if requested.
         if makenew:
-            self.createsimopt(tempsim, optalloc, optobj, resultopt)
+#            self.createsimopt(tempsim, optalloc, optobj, resultopt)
+            self.createsimopt(tempsim, optbudget)
     
     # A custom built plotting function to roughly mirror legacy 'viewoptimresults'.
     def viewoptimresults(self, plotasbar = False):
