@@ -32,6 +32,8 @@ def getcurrentbudget(D, alloc=None, randseed=None):
         
         # Get allocation - either it's been passed in, or we figure it out from the data
         totalcost = alloc[prognumber, :] if allocprovided else sanitize(D['data']['costcov']['cost'][prognumber]).tolist()
+        if progname == 'OST':
+            print 'GCB totalcost', totalcost[0]
 
         # Extract and sum the number of non-HIV-related DALYs 
         nonhivdalys = D['programs'][prognumber]['nonhivdalys']
@@ -42,6 +44,10 @@ def getcurrentbudget(D, alloc=None, randseed=None):
         convertedccparams = program_ccparams if not use_default_ccparams else default_convertedccparams
         if randseed>=0: convertedccparams[0][1] = array(perturb(1,(array(convertedccparams[2][1])-array(convertedccparams[1][1]))/2., randseed=randseed)) - 1 + array(convertedccparams[0][1])
         currentcoverage[prognumber, :] = cc2eqn(totalcost, convertedccparams[0]) if len(convertedccparams[0])==2 else cceqn(totalcost, convertedccparams[0])
+        if progname == 'OST':
+            print 'GCB convertedccparams',convertedccparams
+            print 'GCB coverage', currentcoverage[prognumber,0]
+
         currentnonhivdalysaverted += nonhivdalys*currentcoverage[prognumber, :]
 
         # Loop over effects
@@ -53,6 +59,9 @@ def getcurrentbudget(D, alloc=None, randseed=None):
             # Is the affected parameter coverage?
             if parname in coverage_params:
                 D['P'][parname]['c'][:] = currentcoverage[prognumber]
+                if progname == 'OST':
+                    print 'GCB par', D['P'][parname]['c'][0]
+
             # ... or not?
             else:
                 try: # Get population number...
