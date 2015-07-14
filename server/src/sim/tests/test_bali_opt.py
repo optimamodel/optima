@@ -29,6 +29,7 @@ s_reconstruct.plotresults = None
 
 # Now, recompute using our initialization
 s_reconstruct.initialise()
+s_reconstruct.makemodelpars(randseed=4)
 s_reconstruct.run()
 sb2 = simbox.SimBox('check',r)
 sb2.simlist = [s_cliff,s_reconstruct]

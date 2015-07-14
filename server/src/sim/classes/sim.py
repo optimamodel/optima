@@ -263,7 +263,7 @@ class SimBudget(Sim):
     def isoptimised(self):
         return self.optimised
         
-    def makemodelpars(self):
+    def makemodelpars(self,randseed=0):
         Sim.makemodelpars(self)
         
 #        r = self.getregion()
@@ -282,7 +282,7 @@ class SimBudget(Sim):
         
         from optimize import getcurrentbudget
         
-        tempD, a, b = getcurrentbudget(tempD, alloc = self.budget, randseed = 0)
+        tempD, a, b = getcurrentbudget(tempD, alloc = self.budget, randseed = randseed)
         self.parsdata = tempD['P']
         P = self.parsdata
         

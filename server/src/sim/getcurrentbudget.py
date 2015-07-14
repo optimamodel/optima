@@ -8,7 +8,8 @@ def getcurrentbudget(D, alloc=None, randseed=None):
     from makeccocs import ccoeqn, cceqn, cc2eqn, cco2eqn, coverage_params, makesamples
     from numpy import nan, zeros, array, isnan
     from utils import sanitize, perturb
-    
+    from copy import deepcopy
+
      # Set defaults, stored as [median, lower bound, upperbound]. ONLY for use in BE. In FE, if ccocs haven't been defined then the user won't get to this step
     default_convertedccparams = [[0.8, 4.9e-06], [0.8, 4.7e-06], [0.8, 5.1e-06]]
     default_convertedccoparams = [[0.8, 4.9e-06, 0.4, 0.8, 0], [0.8, 4.7e-06, 5.1e-06, 0.4, 0.8, 0], [0.8, 4.9e-06, 0.4, 0.8, 0]]
@@ -41,12 +42,16 @@ def getcurrentbudget(D, alloc=None, randseed=None):
         use_default_ccparams = not program_ccparams or (not isinstance(program_ccparams, list) and isnan(program_ccparams))
 
         # Extract the converted cost-coverage parameters... or if there aren't any, use defaults (for sim only; FE produces warning)
-        convertedccparams = program_ccparams if not use_default_ccparams else default_convertedccparams
+        temp =  program_ccparams if not use_default_ccparams else default_convertedccparams
+        convertedccparams = deepcopy(temp)
+        if progname == 'OST':
+            print 'GCB convertedccparams preperturb',convertedccparams
         if randseed>=0: convertedccparams[0][1] = array(perturb(1,(array(convertedccparams[2][1])-array(convertedccparams[1][1]))/2., randseed=randseed)) - 1 + array(convertedccparams[0][1])
         currentcoverage[prognumber, :] = cc2eqn(totalcost, convertedccparams[0]) if len(convertedccparams[0])==2 else cceqn(totalcost, convertedccparams[0])
         if progname == 'OST':
-            print 'GCB convertedccparams',convertedccparams
+            print 'GCB convertedccparams postperturb',convertedccparams
             print 'GCB coverage', currentcoverage[prognumber,0]
+            print 'GCB randseed',randseed
 
         currentnonhivdalysaverted += nonhivdalys*currentcoverage[prognumber, :]
 
