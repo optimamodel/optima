@@ -35,3 +35,5 @@ sb2.simlist = [s_cliff,s_reconstruct]
 sb2.viewmultiresults() # See if they are the same...
 
 
+# What does a non-opt sim look like?
+sb3 = r.createsimbox('asdf2', isopt = False, createdefault = True)

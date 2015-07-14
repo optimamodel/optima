@@ -115,6 +115,11 @@ class Sim:
         tempD = makedatapars(tempD)
         self.parsdata = tempD['P']
         
+        # Make sure region D['P'] and generated D['P'] are equal.
+        from extra_utils import dict_equal
+        test = r.D['P']
+        print [dict_equal(test[x1],self.parsdata[x2]) for (x1,x2) in zip(sorted(test.keys()), sorted(self.parsdata.keys()))]
+        
         self.makemodelpars()
         
         # Hmm... should we just makefittedpars and calibrate later? Or calibrate here?
@@ -141,6 +146,18 @@ class Sim:
         r = self.getregion()
 
         self.parsmodel = makemodelpars(self.parsdata, r.options)
+        
+        # Make sure region D['M'] and generated D['M'] are equal.
+        from extra_utils import dict_equal
+        test = r.D['opt']
+        print [dict_equal(test[x1],r.options[x2]) for (x1,x2) in zip(sorted(test.keys()), sorted(r.options.keys()))]
+        
+        # Make sure region D['M'] and generated D['M'] are equal.
+        from extra_utils import dict_equal
+        test = r.D['M']
+        print [dict_equal(test[x1],self.parsmodel[x2]) for (x1,x2) in zip(sorted(test.keys()), sorted(self.parsmodel.keys()))]
+        
+        print
 
     # Runs model given all the initialised parameters.
     def run(self):
@@ -249,6 +266,9 @@ class SimBudget(Sim):
     def makemodelpars(self):
         Sim.makemodelpars(self)
         
+#        r = self.getregion()
+#        self.parsmodel = r.D['M']
+        
         from makemodelpars import makemodelpars        
         
         r = self.getregion()
@@ -293,6 +313,8 @@ class SimBudget(Sim):
         
         # Now update things
         self.parsmodel = partialupdateM(deepcopy(self.parsmodel), deepcopy(tempparsmodel), parindices)
+        
+        print        
         
 #    def makemodelpars(self):
 ##        Sim.makemodelpars(self)        
