@@ -337,13 +337,14 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         result = dict()
         result['kind'] = 'constant'
         result['fval'] = fvalarr[bestallocind] # Append the best value noe
+
         result['allocarr'] = [] # List of allocations
         result['allocarr'].append(quantile([origalloc])) # Kludgy -- run fake quantile on duplicated origalloc just so it matches
         result['allocarr'].append(quantile(allocarr)) # Calculate allocation arrays 
         labels = ['Original','Optimal']
         result['Rarr'] = [dict(), dict()]
         result['Rarr'][0]['R'] = options['tmpbestdata'][0]['R']
-        result['Rarr'][1]['R'] = options['tmpbestdata'][-1]['R']
+        result['Rarr'][1]['R'] = options['tmpbestdata'][bestallocind]['R']
         result['Rarr'][0]['label'] = 'Original'
         result['Rarr'][1]['label'] = 'Optimal'
 #        for i,params in enumerate([options.tmpbest, allocarr[bestallocind]]): # CK: loop over original and (the best) optimal allocations
