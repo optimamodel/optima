@@ -420,7 +420,8 @@ def gettargetpop(D=None, artindex=None, progname=None):
                     injectindices = [i for i, x in enumerate(D['data']['meta']['pops']['injects']) if x == 1]
                     targetpopmodel = D['S']['people'][:,injectindices,0:npts].sum(axis = (0,1))
                 elif thispar == 'numpmtct': # Target population = HIV+ pregnant women
-                    targetpopmodel = multiply(D['M']['birth'][:,0:npts], D['S']['people'][artindex,:,0:npts].sum(axis=0)).sum(axis=0)
+#                    targetpopmodel = multiply(D['M']['birth'][:,0:npts], D['S']['people'][artindex,:,0:npts].sum(axis=0)).sum(axis=0)
+                    targetpopmodel = multiply(D['M']['birth'][:,0:npts], D['S']['people'][artindex,:,0:npts].sum(axis=0)).sum(axis=0)+multiply(multiply(D['M']['birth'][:,0:npts], D['S']['people'][artindex,:,0:npts].sum(axis=0)).sum(axis=0),D['M']['breast'][0:npts])
                 elif thispar == 'breast': # Target population = HIV+ breastfeeding women
                     targetpopmodel = multiply(D['M']['birth'][:,0:npts], D['M']['breast'][0:npts], D['S']['people'][artindex,:,0:npts].sum(axis=0)).sum(axis=0)
                 elif thispar in ['numfirstline','numsecondline']: # Target population = diagnosed PLHIV
