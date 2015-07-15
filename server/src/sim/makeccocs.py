@@ -34,7 +34,7 @@ def makecc(D=None, progname=None, ccparams=None, arteligcutoff=None, verbose=def
     prognumber = [p['name'] for p in D['programs']].index(progname) # get program number    
     if not (isinstance(arteligcutoff,str)):
         print('Assuming universal ART coverage since not otherwise specified....')
-        artindex = range(D['G']['nstates'])[1::]
+        artindex = range(D['G']['nstates'])[1::] # Include everyone infected
     else:
         states, artindex = range(D['G']['nstates']), []
         for i in range(len(D['G'][arteligcutoff])-1): artindex.extend(states[D['G'][arteligcutoff][i+1]:D['G'][D['G']['healthstates'][-1]][i+1]+1])
@@ -77,10 +77,12 @@ def makecc(D=None, progname=None, ccparams=None, arteligcutoff=None, verbose=def
     if (ccparams and 'perperson' in ccparams and ccparams['perperson'] and ~isnan(ccparams['perperson'])): popadj = ccparams['perperson']
 
     # Get coverage and target population size (in separate function)
-    coverage, targetpopsize, coveragelabel = getcoverage(D=D, artindex=artindex, progname=progname)
+    coverage, coveragelabel = getcoverage(D=D, progname=progname)
+    targetpop = gettargetpop(D=D, artindex=artindex, progname=progname)
+
 
     # Adjust cost data by target population size, if requested by user
-    if popadj: totalcost = totalcost/targetpopsize if len(totalcost)>1 else totalcost/mean(targetpopsize)
+    if popadj: totalcost = totalcost/targetpop if len(totalcost)>1 else totalcost/mean(targetpop)
 
     # Get upper limit of x axis for plotting
     xupperlim = max([x if ~isnan(x) else 0.0 for x in totalcost])*3.
@@ -99,7 +101,7 @@ def makecc(D=None, progname=None, ccparams=None, arteligcutoff=None, verbose=def
 
         # X data
         xvalscc = linspace(0,xupperlim,nxpts) # take nxpts points between 0 and user-specified max
-        xvalsccpop = linspace(0,xupperlim*targetpopsize[-1],nxpts) if popadj else xvalscc
+        xvalsccpop = linspace(0,xupperlim*targetpop[-1],nxpts) if popadj else xvalscc
 
         # Y data
         if 'scaleup' in ccparams and ccparams['scaleup'] and ~isnan(ccparams['scaleup']):
@@ -115,7 +117,7 @@ def makecc(D=None, progname=None, ccparams=None, arteligcutoff=None, verbose=def
 
         if coveragelabel=='Number covered':
             for j in range(len(yvalscc)):
-                yvalscc[j] = [yvalscc[j][k]*targetpopsize[-1] for k in range(len(yvalscc[j]))]
+                yvalscc[j] = [yvalscc[j][k]*targetpop[-1] for k in range(len(yvalscc[j]))]
 
         # Populate output structure
         plotdata['xpop'] = xvalsccpop
@@ -197,7 +199,7 @@ def makeco(D=None, progname=None, effect=None, coparams=None, coverage_params=co
         
         # Get data for scatter plots
         outcome = D['data'][partype][parname][popnumber]
-        coverage, targetpopsize, coveragelabel = getcoverage(D=D, artindex=artindex, progname=progname)
+        coverage, coveragelabel = getcoverage(D=D, progname=progname)
 
         # Populate output structure with axis limits
         plotdata['xlowerlim'], plotdata['ylowerlim']  = 0.0, 0.0
@@ -323,9 +325,7 @@ def makecco(D=None, progname=None, effect=None, ccparams=None, coparams=None, ar
 
 ################################################################################
 def plotallcurves(D=None, progname=None, ccparams=None, coparams=None, verbose=default_verbose):
-    '''
-    Make all cost outcome curves for a given program.
-    '''
+    ''' Make all cost outcome curves for a given program. '''
     from copy import deepcopy
     # Get the cost-coverage and coverage-outcome relationships     
     plotdata_cc, D = makecc(D=D, progname=progname, ccparams=ccparams, verbose=verbose)
@@ -371,21 +371,29 @@ def makeallccocs(D=None, verbose=default_verbose):
 ###############################################################################
 # Helper functions
 ###############################################################################
-def getcoverage(D=None, artindex=None, progname=None):
+def getcoverage(D=None, progname=None):
     ''' Get coverage levels. '''
     
     coverage = None
     coveragelabel = ''
 
-    # Extract basic info from data structure
+    # Extract info from data structure
     prognumber = D['data']['meta']['progs']['short'].index(progname) # get program number
-    #ndatayears = len(D['data']['epiyears']) # get number of data years
+    coverage = D['data']['costcov']['cov'][prognumber] 
+    coveragelabel = 'Number covered' if any(j > 1 for j in D['data']['costcov']['cov'][prognumber]) else 'Proportion covered'
 
+    return coverage, coveragelabel
+
+###############################################################################
+def gettargetpop(D=None, artindex=None, progname=None):
+    ''' Calculate target population for a given program'''
+    
     # Sort out time vector and indexing
     tvec = arange(D['G']['datastart'], D['G']['dataend']+D['opt']['dt'], D['opt']['dt']) # Extract the time vector from the sim
     npts = len(tvec) # Number of sim points
 
     # Figure out the targeted population(s) 
+    prognumber = D['data']['meta']['progs']['short'].index(progname) # get program number
     targetpops = []
     targetpars = []
     popnumbers = []
@@ -435,10 +443,8 @@ def getcoverage(D=None, artindex=None, progname=None):
     if targetpopmodel is not None:
         targetpop = targetpopmodel[yearindices]
 
-    coverage = D['data']['costcov']['cov'][prognumber] 
-    coveragelabel = 'Number covered' if any(j > 1 for j in D['data']['costcov']['cov'][prognumber]) else 'Proportion covered'
+    return targetpop
 
-    return coverage, targetpop, coveragelabel
 
 ###############################################################################
 def convertparams(D=None, ccparams=None):
