@@ -11,7 +11,7 @@ import defaults
 from copy import deepcopy
 
 class Sim:
-    def __init__(self, name, region):
+    def __init__(self, name, region, calibration = None):
         self.name = name
         self.initialised = False    # This tag monitors if the simulation has been initialised.        
         self.processed = False      # This tag monitors if the simulation has been run.
@@ -20,7 +20,8 @@ class Sim:
         self.parsdata = None        # This used to be D['P'].
         self.parsmodel = None       # This used to be D['M'].
         self.parsfitted = None      # This used to be D['F'].
-        
+        self.calibration = calibration if calibration is not None else region.calibrations[0] # Use the first region calibration by default
+
         self.debug = {}             # This stores the (large) output from running the simulation
         self.debug['results'] = None         # This used to be D['R'].
         self.debug['structure'] = None       # This used to be D['S'].
@@ -33,7 +34,6 @@ class Sim:
     def fromdict(Sim,simdict,region):
         # This function instantiates the correct subtype based on simdict['type']
         assert(simdict['region_uuid'] == region.uuid)
-        print simdict['type']
         if simdict['type'] == 'Sim':
             s = Sim(simdict['name'],region)
         if simdict['type'] == 'SimParameter':
@@ -52,8 +52,8 @@ class Sim:
         self.parsfitted  = simdict['parsfitted']  
         self.debug  = simdict['debug']   
         self.plotdata  = simdict['plotdata']  
-        #self.plotdataopt  = simdict['plotdataopt']      # Note: A method of a base class should not refer to derived class members. Overload instead.
         self.uuid = simdict['uuid']
+        self.calibration = simdict['calibration']
 
     def todict(self):
         simdict = {}
@@ -66,9 +66,9 @@ class Sim:
         simdict['parsfitted']  = self.parsfitted 
         simdict['debug']   = self.debug 
         simdict['plotdata']  = self.plotdata 
-        #simdict['plotdataopt']  = self.plotdataopt      # Note: A method of a base class should not refer to derived class members. Overload instead.
         simdict['region_uuid'] = self.getregion().uuid
         simdict['uuid'] = self.uuid
+        simdict['calibration'] = self.calibration
         return simdict
     
     def setregion(self,region):
