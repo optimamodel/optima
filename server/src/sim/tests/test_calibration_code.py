@@ -6,6 +6,10 @@ import region
 import sim
 import simbox
 
+# Run the code below while in the oop_experiment branch first, then 
+# run everything else (with the block below commented out) in the 
+# oop_calibration branch
+
 # r1 = region.Region.load('./regions/georgia_working.json')
 # sb0 = r1.createsimbox('Original', isopt = False, createdefault = True)
 # r1.runsimbox(sb0)
