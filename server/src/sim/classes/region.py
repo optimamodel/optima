@@ -131,12 +131,11 @@ class Region:
         c = {}
         c['uuid'] = str(uuid.uuid4())
         c['name'] = 'Default'
-        c['parameters'] = {}
-        c['parameters']['const'] = self.D['P'].pop('const')
-        c['parameters']['hivprev'] = self.D['P'].pop('hivprev')
-        c['parameters']['popsize'] = self.D['P'].pop('popsize')
-        c['parameters']['pships'] = self.D['P'].pop('pships')
-        c['parameters']['transit'] = self.D['P'].pop('transit')
+        c['const'] = self.D['P'].pop('const')
+        c['hivprev'] = self.D['P'].pop('hivprev')
+        c['popsize'] = self.D['P'].pop('popsize')
+        c['pships'] = self.D['P'].pop('pships')
+        c['transit'] = self.D['P'].pop('transit')
         c['metaparameters'] = self.D.pop('F')
         self.calibrations.append(c)
 
@@ -166,24 +165,23 @@ class Region:
         c['uuid'] = str(uuid.uuid4())
         c['name'] = name
 
-        c['parameters'] = {}
 
         ## Key parameters - These were hivprev and pships, and are now in the calibration
         for parname in D['data']['key'].keys():
-            c['parameters'][parname] = dataindex(D['data']['key'][parname][0], 0) # Population size and prevalence -- # TODO: use uncertainties!
+            c[parname] = dataindex(D['data']['key'][parname][0], 0) # Population size and prevalence -- # TODO: use uncertainties!
         
         # Matrices
         for parclass in ['pships', 'transit']:
             printv('Converting data parameter %s...' % parclass, 3, verbose)
-            c['parameters'][parclass] = D['data'][parclass]
+            c[parclass] = D['data'][parclass]
 
         # Constants
-        c['parameters']['const'] = dict()
+        c['const'] = dict()
         for parclass in self.data['const'].keys():
             if type(self.data['const'][parclass])==dict: 
-                c['parameters']['const'][parclass] = dict()
+                c['const'][parclass] = dict()
                 for parname in self.data['const'][parclass].keys():
-                    c['parameters']['const'][parclass][parname] = self.data['const'][parclass][parname][0] # Taking best value only, hence the 0
+                    c['const'][parclass][parname] = self.data['const'][parclass][parname][0] # Taking best value only, hence the 0
         
         ## !! unnormalizeF requires D.M...? But what if this is not in sync somehow?
         ## It's also unclear how this could work in the original code...
