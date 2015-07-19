@@ -391,7 +391,7 @@ class Sim:
         # Explicit construction of tempD, so that one day we know how to recode makeresults.
         tempD = dict()
         tempD['G'] = r.metadata
-        tempD['P'] = self.parsdata
+        tempD['P'] = deepcopy(self.parsdata)
         tempD['P']['const'] = self.calibration['const']
 
         tempD['S'] = self.debug['structure']
@@ -499,6 +499,7 @@ class SimBudget(Sim):
         # SimBudget2 will do it all properly
         # So as a hack, overwrite P with the values in the calibration which is what is supposed
         # to be referenced directly (c.f., Sim.makemodelpars())
+        # No need for deepcopy here, because we are working with the tempD parsdata
         P['pships'] = self.calibration['pships']
         P['hivprev'] = self.calibration['hivprev']
         P['popsize'] = self.calibration['popsize']
