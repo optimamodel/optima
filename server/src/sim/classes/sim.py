@@ -238,9 +238,6 @@ class SimBudget(Sim):
             self.alloc = [alloclist[0] for alloclist in self.budget]
         
         self.obj = None                                             # The current objective function value for the origalloc budget.
-            
-        self.program_set = region.program_sets[0]   # Eventually modify to support multiple programs.
-
 
     def todict(self):
         simdict = Sim.todict(self)
@@ -313,9 +310,7 @@ class SimBudget(Sim):
         
         # Now update things
         self.parsmodel = partialupdateM(deepcopy(self.parsmodel), deepcopy(tempparsmodel), parindices)
-        
-        print        
-    
+            
     # Essentially copies old SimBudget into new SimBudget, except overwriting where applicable with sim.resultopt.
     # This will need to be monitored carefully! Every additional data structure in Sim+SimBudget must be written here.
     def specialoptload(self, sim, optalloc, optobj, resultopt):
