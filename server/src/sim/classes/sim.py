@@ -315,60 +315,6 @@ class SimBudget(Sim):
         self.parsmodel = partialupdateM(deepcopy(self.parsmodel), deepcopy(tempparsmodel), parindices)
         
         print        
-        
-#    def makemodelpars(self):
-##        Sim.makemodelpars(self)        
-#        
-#        r = self.getregion()
-#        npts = len(r.options['partvec']) # Number of time points
-#
-#        P = self.parsdata 
-#        from numpy import nan, zeros
-#        for param in P.keys():
-#            if isinstance(P[param], dict) and 'p' in P[param].keys():
-#                P[param]['c'] = nan+zeros((len(P[param]['p']), npts))
-#
-#        for prog, spending in zip(self.program_set['programs'], self.budget):
-#            coverage = prog.get_coverage(spending) # Returns metamodality coverage
-#            outcomes = prog.get_outcomes(coverage) # Returns program outcomes (for each effect)
-#
-#            for i in xrange(0,len(prog.effects['param'])): # For each of the effects
-#                if prog.effects['iscoverageparam'][i]:
-#                    P[prog.effects['param'][i]]['c'][:] = outcomes[i]
-#                else:
-#                    popnumber = r.get_popidx(prog.effects['popname'][i])-1 # Yes, get_popidx is 1-based rather than 0 based...cf. scenarios
-#                    P[prog.effects['param'][i]]['c'][popnumber] = outcomes[i]
-#
-#        from makemodelpars import makemodelpars
-#        
-#        self.parsmodel = makemodelpars(P, r.options, withwhat='c')
-##        tempparsmodel = makemodelpars(P, r.options, withwhat='c')
-##        
-##        from utils import findinds
-##        from numpy import arange
-##        
-##        # Hardcoded quick hack. Better to be linked to 'default objectives' function in optimize.
-##        obys = 2015 # "Year to begin optimization from"
-##        obye = 2030 # "Year to end optimization"
-##        initialindex = findinds(r.options['partvec'], obys)
-##        finalparindex = findinds(r.options['partvec'], obye) 
-##        parindices = arange(initialindex,finalparindex)
-##        
-##        # Hideous hack for ART to use linear unit cost
-##        try:
-##            from utils import sanitize
-##            artind = r.data['meta']['progs']['short'].index('ART')
-##            currcost = sanitize(r.data['costcov']['cost'][artind])[-1]
-##            currcov = sanitize(r.data['costcov']['cov'][artind])[-1]
-##            unitcost = currcost/currcov
-##            tempparsmodel['tx1'].flat[parindices] = self.alloc[artind]/unitcost
-##        except:
-##            print('Attempt to calculate ART coverage failed for an unknown reason')
-##        
-##        from optimize import partialupdateM        
-##        
-##        # Now update things
-##        self.parsmodel = partialupdateM(deepcopy(self.parsmodel), tempparsmodel, parindices)
     
     # Essentially copies old SimBudget into new SimBudget, except overwriting where applicable with sim.resultopt.
     # This will need to be monitored carefully! Every additional data structure in Sim+SimBudget must be written here.
