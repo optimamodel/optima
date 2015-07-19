@@ -393,7 +393,7 @@ class Sim:
         tempD['G'] = r.metadata
         tempD['P'] = self.parsdata
         tempD['P']['const'] = self.calibration['const']
-        
+
         tempD['S'] = self.debug['structure']
         
         # Input that only the financialanalysis subfunction in makeresults wants.
@@ -495,6 +495,16 @@ class SimBudget(Sim):
         self.parsdata = tempD['P']
         P = self.parsdata
         
+        # Here, we just need a hack to get SimBudget to work
+        # SimBudget2 will do it all properly
+        # So as a hack, overwrite P with the values in the calibration which is what is supposed
+        # to be referenced directly (c.f., Sim.makemodelpars())
+        P['pships'] = self.calibration['pships']
+        P['hivprev'] = self.calibration['hivprev']
+        P['popsize'] = self.calibration['popsize']
+        P['transit'] = self.calibration['transit']
+        P['const'] = self.calibration['const']
+
         tempparsmodel = makemodelpars(P, r.options, withwhat='c')
         
         from utils import findinds
