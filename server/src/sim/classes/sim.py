@@ -25,7 +25,7 @@ class Sim:
         self.parsdata = None        # This used to be D['P'].
         self.parsmodel = None       # This used to be D['M'].
         self.parsfitted = None      # This used to be D['F'].
-        self.calibration = calibration if calibration is not None else region.calibrations[0] # Use the first region calibration by default
+        self.calibration = calibration if calibration is not None else region.calibrations[0]['uuid'] # Use the first region calibration by default - could reorder the region's calibrations to choose a default later
 
         self.debug = {}             # This stores the (large) output from running the simulation
         self.debug['results'] = None         # This used to be D['R'].
@@ -94,6 +94,13 @@ class Sim:
         else:
             return r
 
+    def getcalibration(self):
+        # Return a deepcopy of the selected calibration
+        r = self.getregion()
+        uuids = [x['uuid'] for x in r.calibrations]
+        idx = uuids.index(self.calibration)
+        return deepcopy(r.calibrations[idx])
+
     def setname(self, name):
         self.name = name
         
@@ -109,6 +116,7 @@ class Sim:
     # Initialises P, M and F matrices belonging to the Sim object, but does not run simulation yet.
     def initialise(self):
         r = self.getregion()
+        calibration = self.getcalibration()
 
         from makedatapars import makedatapars
         from numpy import arange
@@ -125,15 +133,15 @@ class Sim:
 
         self.makemodelpars()
 
-        self.parsfitted = self.calibration['metaparameters']
+        self.parsfitted = calibration['metaparameters']
         self.initialised = True
 
     def makedatapars(self, verbose=2):
         # This method creates self.parsdata
         # parsdata is *intended* to only store things with D.P.T and D.P.C
+        r = self.getregion() 
+        calibration = self.getcalibration()
 
-
-        r = self.getregion()        
         ## Preliminaries
         
         def data2par(dataarray, region,usetime=True):
@@ -161,7 +169,6 @@ class Sim:
             return output
 
         ## Loop over quantities
-        
         self.parsdata = dict() # Initialize parameters structure
         
         ## Key parameters - These were hivprev and pships, and are now in the calibration
@@ -212,6 +219,8 @@ class Sim:
         # but are otherwise almost identical. Thus this is the function that is
         # expected to be re-implemented in the derived classes
         r = self.getregion()
+        calibration = self.getcalibration()
+
         opt = r.options
         withwhat = 'p'
 
@@ -308,8 +317,8 @@ class Sim:
             return pshipacts
 
         ## Epidemiology parameters -- most are data
-        M['popsize'] = grow(self.calibration['popsize'], opt['growth']) # Population size
-        M['hivprev'] = self.calibration['hivprev'] # Initial HIV prevalence
+        M['popsize'] = grow(calibration['popsize'], opt['growth']) # Population size
+        M['hivprev'] = calibration['hivprev'] # Initial HIV prevalence
         M['stiprevulc'] = dpar2mpar(self.parsdata['stiprevulc'], withwhat) # STI prevalence
         M['stiprevdis'] = dpar2mpar(self.parsdata['stiprevdis'], withwhat) # STI prevalence
         M['death']  = dpar2mpar(self.parsdata['death'], withwhat)  # Death rates
@@ -352,13 +361,13 @@ class Sim:
         ## Matrices can be used almost directly
         M['pships'] = dict()
         M['transit'] = dict()
-        for key in self.calibration['pships'].keys(): 
-            M['pships'][key] = array(self.calibration['pships'][key])
-        for key in self.calibration['transit'].keys(): 
-            M['transit'][key] = array(self.calibration['transit'][key])
+        for key in calibration['pships'].keys(): 
+            M['pships'][key] = array(calibration['pships'][key])
+        for key in calibration['transit'].keys(): 
+            M['transit'][key] = array(calibration['transit'][key])
 
         ## Constants...can be used directly
-        M['const'] = self.calibration['const']
+        M['const'] = calibration['const']
 
         ## Calculate total acts
         M['totalacts'] = totalacts(M, npts)
@@ -375,6 +384,7 @@ class Sim:
             self.initialise()
 
         r = self.getregion()
+        calibration = self.getcalibration()
 
         from model import model
         
@@ -392,7 +402,7 @@ class Sim:
         tempD = dict()
         tempD['G'] = r.metadata
         tempD['P'] = deepcopy(self.parsdata)
-        tempD['P']['const'] = self.calibration['const']
+        tempD['P']['const'] = calibration['const']
 
         tempD['S'] = self.debug['structure']
         
@@ -481,7 +491,8 @@ class SimBudget(Sim):
         from makemodelpars import makemodelpars        
         
         r = self.getregion()
-        
+        calibration = self.getcalibration()
+
         tempD = dict()
         tempD['G'] = deepcopy(r.metadata)
         tempD['P'] = deepcopy(self.parsdata)
@@ -500,11 +511,11 @@ class SimBudget(Sim):
         # So as a hack, overwrite P with the values in the calibration which is what is supposed
         # to be referenced directly (c.f., Sim.makemodelpars())
         # No need for deepcopy here, because we are working with the tempD parsdata
-        P['pships'] = self.calibration['pships']
-        P['hivprev'] = self.calibration['hivprev']
-        P['popsize'] = self.calibration['popsize']
-        P['transit'] = self.calibration['transit']
-        P['const'] = self.calibration['const']
+        P['pships'] = calibration['pships']
+        P['hivprev'] = calibration['hivprev']
+        P['popsize'] = calibration['popsize']
+        P['transit'] = calibration['transit']
+        P['const'] = calibration['const']
 
         tempparsmodel = makemodelpars(P, r.options, withwhat='c')
         

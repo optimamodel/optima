@@ -81,7 +81,7 @@ class Region:
         
         import numpy
         if isinstance(regiondict['calibrations'], float) and numpy.isnan(regiondict['calibrations']):
-            regiondict['calibrations'] = [None]
+            regiondict['calibrations'] = [{'uuid':None}]
         self.calibrations = regiondict['calibrations']
         self.uuid = regiondict['uuid']
         self.D = regiondict['D']
