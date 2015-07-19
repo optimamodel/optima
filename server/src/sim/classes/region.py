@@ -46,7 +46,7 @@ class Region:
         self.BOCy = []        # Array of corresponding optimum objective values.
         
         self.program_sets = []
-        self.calibrations = None        # Remember. Current BOC data assumes loaded data is calibrated by default.
+        self.calibrations = [None]        # Remember. Current BOC data assumes loaded data is calibrated by default.
         
         self.simboxlist = []            # Container for simbox objects (e.g. optimisations, grouped scenarios, etc.)
     
@@ -76,18 +76,24 @@ class Region:
         # Assign variables from a new-type JSON file created using Region.todict()
         self.metadata = regiondict['metadata']
         self.data = regiondict['data']
+        self.options = regiondict['options'] # Populate default options here
+        self.program_sets = regiondict['program_sets'] # sets of Programs i.e. an array of sets of CCOCs
+        
+        import numpy
+        if isinstance(regiondict['calibrations'], float) and numpy.isnan(regiondict['calibrations']):
+            regiondict['calibrations'] = [None]
+        self.calibrations = regiondict['calibrations']
+        print self.calibrations
+        self.uuid = regiondict['uuid']
+        self.D = regiondict['D']
+        
         self.simboxlist = []
         for x in regiondict['simboxlist']:
             if x['type'] == 'SimBoxOpt':
                 self.simboxlist.append(SimBoxOpt.fromdict(x,self))
             else:
                 self.simboxlist.append(SimBox.fromdict(x,self))
-        self.options = regiondict['options'] # Populate default options here
-        self.program_sets = regiondict['program_sets'] # sets of Programs i.e. an array of sets of CCOCs
-        self.calibrations = regiondict['calibrations']       
-        self.uuid = regiondict['uuid']
-        self.D = regiondict['D']
-        
+
         # BOC loading.
         self.BOCx = regiondict['BOC_budgets']
         self.BOCy = regiondict['BOC_objectives']
@@ -111,6 +117,29 @@ class Region:
 
         self.options = tempD['opt']
 
+        program_set = {}
+        program_set['name'] = 'Default'
+        program_set['uuid'] = str(uuid.uuid4())
+        program_set['programs'] = []
+        for prog in self.metadata['programs']:
+            program_set['programs'].append(program.Program.import_legacy(prog))
+        self.program_sets.append(program_set)
+
+        # Make the calibration - legacy files have one calibration
+        # Using pop will remove them from the region so that downstream calls
+        # will raise errors if they are not updated to use the new calibration
+        c = {}
+        c['uuid'] = str(uuid.uuid4())
+        c['name'] = 'Default'
+        c['parameters'] = {}
+        c['parameters']['const'] = self.D['P'].pop('const')
+        c['parameters']['hivprev'] = self.D['P'].pop('hivprev')
+        c['parameters']['popsize'] = self.D['P'].pop('popsize')
+        c['parameters']['pships'] = self.D['P'].pop('pships')
+        c['parameters']['transit'] = self.D['P'].pop('transit')
+        c['metaparameters'] = self.D.pop('F')
+        self.calibrations.append(c)
+
         # Go through the scenarios and convert them
         if 'scens' in tempD.keys():
             sbox = self.createsimbox('Scenarios')
@@ -120,13 +149,56 @@ class Region:
                     newsim.create_override(par['names'],par['pops'],par['startyear'],par['endyear'],par['startval'],par['endval'])
                 sbox.simlist.append(newsim)
 
-        program_set = {}
-        program_set['name'] = 'Default'
-        program_set['uuid'] = str(uuid.uuid4())
-        program_set['programs'] = []
-        for prog in self.metadata['programs']:
-            program_set['programs'].append(program.Program.import_legacy(prog))
-        self.program_sets.append(program_set)
+    def calibration_from_data(self,name='Data (auto)'):
+        # Create a new calibration in the region corresponding to the data. This draws on code
+        # from makedatapars
+
+        def dataindex(dataarray, index):
+            """ Take an array of data return either the first or last (...or some other) non-NaN entry """
+            nrows = shape(dataarray)[0] # See how many rows need to be filled (either npops, nprogs, or 1)
+            output = zeros(nrows) # Create structure
+            for r in xrange(nrows): 
+                output[r] = sanitize(dataarray[r])[index] # Return the specified index -- usually either the first [0] or last [-1]
+            
+            return output
+        
+        c = {}
+        c['uuid'] = str(uuid.uuid4())
+        c['name'] = name
+
+        c['parameters'] = {}
+
+        ## Key parameters - These were hivprev and pships, and are now in the calibration
+        for parname in D['data']['key'].keys():
+            c['parameters'][parname] = dataindex(D['data']['key'][parname][0], 0) # Population size and prevalence -- # TODO: use uncertainties!
+        
+        # Matrices
+        for parclass in ['pships', 'transit']:
+            printv('Converting data parameter %s...' % parclass, 3, verbose)
+            c['parameters'][parclass] = D['data'][parclass]
+
+        # Constants
+        c['parameters']['const'] = dict()
+        for parclass in self.data['const'].keys():
+            if type(self.data['const'][parclass])==dict: 
+                c['parameters']['const'][parclass] = dict()
+                for parname in self.data['const'][parclass].keys():
+                    c['parameters']['const'][parclass][parname] = self.data['const'][parclass][parname][0] # Taking best value only, hence the 0
+        
+        ## !! unnormalizeF requires D.M...? But what if this is not in sync somehow?
+        ## It's also unclear how this could work in the original code...
+        ## This suggests that unnormalization of the metaparameters should be performed
+        ## automatically inside the sim prior to running
+        c['metaparameters'] = [dict() for s in xrange(D['opt']['nsims'])]
+        for s in xrange(D['opt']['nsims']):
+            span=0 if s==0 else 0.5 # Don't have any variance for first simulation
+            c['metaparameters'][s]['init']  = perturb(D['G']['npops'],span)
+            c['metaparameters'][s]['popsize'] = perturb(D['G']['npops'],span)
+            c['metaparameters'][s]['force'] = perturb(D['G']['npops'],span)
+            c['metaparameters'][s]['inhomo'] = zeros(D['G']['npops']).tolist()
+            c['metaparameters'][s]['dx']  = perturb(4,span)
+            #c['metaparameters'][s] = unnormalizeF(D['F'][s], D['M'], D['G'], normalizeall=True) # Un-normalize F
+        self.calibrations.append(c)
 
     def save(self,filename):
         import dataio
@@ -141,15 +213,15 @@ class Region:
         regiondict['data'] = self.data 
         regiondict['simboxlist'] = [sbox.todict() for sbox in self.simboxlist]
         regiondict['options'] = self.options # Populate default options here = self.options 
-        regiondict['program_sets'] = []#self.program_sets 
-        regiondict['calibrations'] = self.calibrations 
+        regiondict['program_sets'] = [[1]] #self.program_sets 
+        regiondict['calibrations'] = self.calibrations # Calibrations are stored as dictionaries
         regiondict['uuid'] = self.uuid 
         regiondict['D'] = self.D
-        
+
         # BOC saving.
         regiondict['BOC_budgets'] = self.BOCx
         regiondict['BOC_objectives'] = self.BOCy    
-        
+
         return regiondict
 
     def createsimbox(self, simboxname, isopt = False, createdefault = True):
