@@ -46,7 +46,7 @@ class Region:
         self.BOCy = []        # Array of corresponding optimum objective values.
         
         self.program_sets = []
-        self.calibrations = [None]        # Remember. Current BOC data assumes loaded data is calibrated by default.
+        self.calibrations = []        # Remember. Current BOC data assumes loaded data is calibrated by default.
         
         self.simboxlist = []            # Container for simbox objects (e.g. optimisations, grouped scenarios, etc.)
     
@@ -83,7 +83,6 @@ class Region:
         if isinstance(regiondict['calibrations'], float) and numpy.isnan(regiondict['calibrations']):
             regiondict['calibrations'] = [None]
         self.calibrations = regiondict['calibrations']
-        print self.calibrations
         self.uuid = regiondict['uuid']
         self.D = regiondict['D']
         

@@ -11,9 +11,11 @@ import simbox
 # r1.runsimbox(sb0)
 # r1.save('./calibration_old.json')
 
+# print 'LOADING OLD DATA'
 original = region.Region.load('calibration_old.json')
+print 'LOADING LEGACY DATA FOR NEW RUN'
 r = region.Region.load('./regions/georgia_working.json')
-sb = r.createsimbox('Original', isopt = False, createdefault = True)
+sb = r.createsimbox('New', isopt = False, createdefault = True)
 r.runsimbox(sb)
 
 sb2 = simbox.SimBox('ASDF',r)

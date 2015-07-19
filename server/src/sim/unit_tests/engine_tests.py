@@ -18,7 +18,7 @@ def compare_cached_region(fcn,regenerate = False):
 		return False # Is there a magic value to return to filter the results?
 	else:
 		previous_region = region.Region.load(fname)
-		return extra_utils.dict_equal(test_region.todict(),previous_region.todict())
+		return extra_utils.dict_equal(test_region.todict(),previous_region.todict(),verbose=True)
 
 class TestRegion(unittest.TestCase):
 
