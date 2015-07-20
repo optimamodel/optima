@@ -2,15 +2,17 @@
 from numpy import array, arange, zeros, exp, maximum, minimum, nonzero, concatenate, hstack, absolute, median
 from printv import printv
 from math import pow as mpow
+from copy import deepcopy
 
-def model(G, M, F, opt, initstate=None, verbose=2):
+def model(G, tmpM, tmpF, opt, initstate=None, verbose=2):
     """
     This function runs the model.
     
     Version: 2015feb04 by cliffk
     """
     printv('Running model...', 1, verbose, newline=False)
-
+    M = deepcopy(tmpM)
+    F = deepcopy(tmpF)
     ###############################################################################
     ## Setup
     ###############################################################################
