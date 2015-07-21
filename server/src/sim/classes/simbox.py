@@ -20,22 +20,23 @@ class SimBox:
         self.uuid = str(uuid.uuid4()) # Store UUID as a string - we just want a (practically) unique tag, no advanced functionality
 
     @classmethod
-    def fromdict(SimBox, simboxdict, region):
+    def fromdict(SimBox,simboxdict,region):
         assert(simboxdict['region_uuid'] == region.uuid)
 
-        s = SimBox(simboxdict['name'], region)
-#        for x in simboxdict['simlist']:
-#            if x['type'] == 'Sim':
-#                s.simlist.append(Sim.fromdict(x,region))
-#            if x['type'] == 'SimParameter':
-#                s.simlist.append(SimParameter.fromdict(x,region))   # To be coded.
-#            if x['type'] == 'SimBudget':
-#                s.simlist.append(SimBudget.fromdict(x,region))
-        s.simlist = [Sim.fromdict(x,region) for x in simboxdict['simlist']]
-        s.setregion(region)
-        s.uuid = simboxdict['uuid'] # Loading a region restores the original UUID
+        if simboxdict['type'] == 'SimBox':
+            s = SimBox(simboxdict['name'], region)
+        elif simboxdict['type'] == 'SimBoxOpt':
+            s = SimBoxOpt(simboxdict['name'], region)
 
+        s.setregion(region)
+        s.load_dict(simboxdict)
+        
         return s
+
+    def load_dict(self, simboxdict):
+        r = self.getregion()
+        self.simlist = [Sim.fromdict(x,r) for x in simboxdict['simlist']]
+        self.uuid = simboxdict['uuid'] # Loading a region restores the original UUID
 
     def todict(self):
         simboxdict = {}
@@ -125,7 +126,7 @@ class SimBox:
         return self.name
 
     def __repr__(self):
-        return "SimBox %s ('%s')" % (self.uuid,self.name)
+        return "SimBox %s ('%s')" % (self.uuid[0:8],self.name)
         
         
 
@@ -137,26 +138,16 @@ class SimBoxOpt(SimBox):
         SimBox.__init__(self,name,region)
         
         # Budget Objective Curve data, used for GPA. (Assuming initial budget spending is fixed.)
+#        self.hasBOC = False
 #        self.BOCx = None        # Array of budget allocation totals.
 #        self.BOCy = None        # Array of corresponding optimum objective values.
-#        
-#        self.hasBOC = False
         
-    @classmethod
-    def fromdict(SimBoxOpt, simboxdict, region):
-        assert(simboxdict['region_uuid'] == region.uuid)
-
-        s = SimBoxOpt(simboxdict['name'], region)
-#        s.simlist = [SimBudget.fromdict(x,region) for x in simboxdict['simlist']]
-        s.simlist = [Sim.fromdict(x,region) for x in simboxdict['simlist']]
-        s.setregion(region)
-        s.uuid = simboxdict['uuid'] # Loading a region restores the original UUID
+    def load_dict(self, simboxdict):
+        SimBox.load_dict(self,simboxdict)
 #        s.hasBOC = simboxdict['has_BOC']
 #        s.BOCx = simboxdict['BOC_budgets']
 #        s.BOCy = simboxdict['BOC_objectives']
-
-        return s        
-        
+       
     def todict(self):
         simboxdict = SimBox.todict(self)
         simboxdict['type'] = 'SimBoxOpt'    # Overwrites SimBox type.
@@ -291,5 +282,5 @@ class SimBoxOpt(SimBox):
 
 
     def __repr__(self):
-        return "SimBoxOpt %s ('%s')" % (self.uuid,self.name)
+        return "SimBoxOpt %s ('%s')" % (self.uuid[0:8],self.name)
 

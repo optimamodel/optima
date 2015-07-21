@@ -85,16 +85,12 @@ class Region:
         import numpy
         if isinstance(regiondict['calibrations'], float) and numpy.isnan(regiondict['calibrations']):
             regiondict['calibrations'] = [{'uuid':None}]
+
         self.calibrations = regiondict['calibrations']
         self.uuid = regiondict['uuid']
         self.D = regiondict['D']
         
-        self.simboxlist = []
-        for x in regiondict['simboxlist']:
-            if x['type'] == 'SimBoxOpt':
-                self.simboxlist.append(SimBoxOpt.fromdict(x,self))
-            else:
-                self.simboxlist.append(SimBox.fromdict(x,self))
+        self.simboxlist = [SimBox.fromdict(x,self) for x in regiondict['simboxlist']]
 
         # BOC loading.
         self.BOCx = regiondict['BOC_budgets']
