@@ -79,6 +79,9 @@ class Region:
         self.options = regiondict['options'] # Populate default options here
         self.program_sets = regiondict['program_sets'] # sets of Programs i.e. an array of sets of CCOCs
         
+        # The statement below for calibrations handles loading earlier versions of the new-type JSON files
+        # which don't have calibrations already defined. It is suggested in future that these regions should
+        # be loaded, a new calibration created from D, and then saved again, so that this statement can be removed
         import numpy
         if isinstance(regiondict['calibrations'], float) and numpy.isnan(regiondict['calibrations']):
             regiondict['calibrations'] = [{'uuid':None}]
