@@ -11,6 +11,9 @@ import sim
 import setoptions
 import uuid
 import program
+from numpy import array, isnan, zeros, shape, mean
+from utils import sanitize, perturb
+from printv import printv
 
 from scipy.interpolate import PchipInterpolator as pchip
 
@@ -146,7 +149,7 @@ class Region:
                     newsim.create_override(par['names'],par['pops'],par['startyear'],par['endyear'],par['startval'],par['endval'])
                 sbox.simlist.append(newsim)
 
-    def calibration_from_data(self,name='Data (auto)'):
+    def calibration_from_data(self,name='Data (auto)',verbose=2):
         # Create a new calibration in the region corresponding to the data. This draws on code
         # from makedatapars
 
@@ -165,13 +168,13 @@ class Region:
 
 
         ## Key parameters - These were hivprev and pships, and are now in the calibration
-        for parname in D['data']['key'].keys():
-            c[parname] = dataindex(D['data']['key'][parname][0], 0) # Population size and prevalence -- # TODO: use uncertainties!
+        for parname in self.data['key'].keys():
+            c[parname] = dataindex(self.data['key'][parname][0], 0) # Population size and prevalence -- # TODO: use uncertainties!
         
         # Matrices
         for parclass in ['pships', 'transit']:
             printv('Converting data parameter %s...' % parclass, 3, verbose)
-            c[parclass] = D['data'][parclass]
+            c[parclass] = self.data[parclass]
 
         # Constants
         c['const'] = dict()
@@ -185,13 +188,13 @@ class Region:
         ## It's also unclear how this could work in the original code...
         ## This suggests that unnormalization of the metaparameters should be performed
         ## automatically inside the sim prior to running
-        c['metaparameters'] = [dict() for s in xrange(D['opt']['nsims'])]
-        for s in xrange(D['opt']['nsims']):
+        c['metaparameters'] = [dict() for s in xrange(self.options['nsims'])]
+        for s in xrange(self.options['nsims']):
             span=0 if s==0 else 0.5 # Don't have any variance for first simulation
-            c['metaparameters'][s]['init']  = perturb(D['G']['npops'],span)
-            c['metaparameters'][s]['popsize'] = perturb(D['G']['npops'],span)
-            c['metaparameters'][s]['force'] = perturb(D['G']['npops'],span)
-            c['metaparameters'][s]['inhomo'] = zeros(D['G']['npops']).tolist()
+            c['metaparameters'][s]['init']  = perturb(len(self.metadata['populations']),span)
+            c['metaparameters'][s]['popsize'] = perturb(len(self.metadata['populations']),span)
+            c['metaparameters'][s]['force'] = perturb(len(self.metadata['populations']),span)
+            c['metaparameters'][s]['inhomo'] = zeros(len(self.metadata['populations'])).tolist()
             c['metaparameters'][s]['dx']  = perturb(4,span)
             #c['metaparameters'][s] = unnormalizeF(D['F'][s], D['M'], D['G'], normalizeall=True) # Un-normalize F
         self.calibrations.append(c)
@@ -452,6 +455,9 @@ class Region:
         self.data = updatedata.getrealcosts(data)
         self.data['current_budget'] = self.data['costcov']['cost']
         
+        # Finally, create a calibration from the data
+        self.calibration_from_data()
+
     def __repr__(self):
         return "Region %s ('%s')" % (self.uuid,self.metadata['name'])
 
