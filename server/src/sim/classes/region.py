@@ -458,6 +458,9 @@ class Region:
         # Finally, create a calibration from the data
         self.calibration_from_data()
 
+        if 'meta' not in self.metadata.keys():
+            self.metadata['meta'] = self.data['meta']
+
     def __repr__(self):
         return "Region %s ('%s')" % (self.uuid,self.metadata['name'])
 
