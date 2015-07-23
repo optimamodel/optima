@@ -605,7 +605,7 @@ class SimBudget(Sim):
         
         # Let's try returning these rather than storing them...
 #        optalloc = self.plotdataopt['alloc'][-1]['piedata']
-#        optobj = tempD['objective'][-1]
+        optobj = tempD['objective'][-1]
 #        resultopt = tempD['result']['debug']    # VERY temporary. Only until we understand how to regenerate parameters from new allocations.
 #        newbudget = tempD['result']['debug']['newbudget']
 #        print optalloc
@@ -626,7 +626,7 @@ class SimBudget(Sim):
         optalloc = tempD['optalloc']
         optbudget = timevarying(optalloc, ntimepm = 1, nprogs = len(optalloc), tvec = self.getregion().options['partvec'])        
         
-        return (optbudget, makenew)
+        return (optbudget, optobj, makenew)
     
     # Calculates objective values for certain multiplications of an alloc's variable costs (passed in as list of factors).
     # The idea is to spline a cost-effectiveness curve across several budget totals.
@@ -649,9 +649,11 @@ class SimBudget(Sim):
             try:
                 print('Testing budget allocation multiplier of %f.' % factor)
                 self.alloc = [curralloc[i]*(factor+(1-factor)*fixedtrue[i]) for i in xrange(len(curralloc))]
-                betteralloc, currobj, b, c = self.optimise(makenew = False, inputtimelimit = timelimit)
+                betterbudget, betterobj, a = self.optimise(makenew = False, inputtimelimit = timelimit)
                 
-                objarr.append(currobj)
+                betteralloc = [alloclist[0] for alloclist in betterbudget]
+                
+                objarr.append(betterobj)
                 totallocs.append(sum(betteralloc))
             except:
                 print('Multiplying pertinent budget allocation values by %f failed.' % factor)

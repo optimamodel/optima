@@ -189,7 +189,7 @@ class SimBoxOpt(SimBox):
             if forcerun or not sim.isprocessed():
                 sim.run()
             if sim.isprocessed() and (forceopt or not sim.isoptimised()):
-                (optbudget, makenew) = sim.optimise()
+                (optbudget, optobj, makenew) = sim.optimise()
                 tempsim = sim
                 
         # Generates a new SimBudget from the last Sim that was optimised in the list, but only when the loop has ended and if requested.
