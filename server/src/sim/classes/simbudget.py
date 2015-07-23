@@ -115,89 +115,8 @@ class SimBudget(Sim):
         
         # Now update things
         self.parsmodel = partialupdateM(deepcopy(self.parsmodel), deepcopy(tempparsmodel), parindices)
-            
-    # Essentially copies old SimBudget into new SimBudget, except overwriting where applicable with sim.resultopt.
-    # This will need to be monitored carefully! Every additional data structure in Sim+SimBudget must be written here.
-    def specialoptload(self, sim, optalloc, optobj, resultopt):
-        self.setregion(sim.getregion())     # Did optimisation change D['G']? Is it important? If so, this could be dangerous!        
         
-#        from copy import deepcopy
-#        sim = deepcopy(insim)        
         
-        self.setname((sim.name[:-8] if sim.name.endswith('-initial') else sim.name)+'-opt')
-        self.processed = False
-        self.initialised = True    # This special loading is considered initialisation.
-
-        self.parsdata = sim.parsdata
-        self.parsmodel = resultopt['M']         # New D['M'].
-        self.parsfitted = resultopt['F']        # New D['F'].
-        
-        # Will need to run to get these.
-        self.debug = {}
-        self.debug['results'] = None
-        self.debug['structure'] = None
-        
-        self.plotdata = None
-        
-        self.plotdataopt = None
-
-        from timevarying import timevarying
-        
-        # The previous SimBudget's optimal allocation and objective become the initial values for this SimBudget.
-        self.alloc = optalloc
-        self.budget = timevarying(self.alloc, ntimepm = 1, nprogs = len(self.alloc), tvec = self.getregion().options['partvec'])
-        self.obj = optobj
-        
-#        self.optalloc = None
-#        self.optobj = None
-
-    # Currently just optimises simulation according to defaults. As in... fixed initial budget!
-    def optimise(self, makenew = True, inputmaxiters = defaults.maxiters, inputtimelimit = defaults.timelimit):
-        r = self.getregion()
-
-        from optimize import optimize
-        
-        tempD = dict()
-        tempD['data'] = deepcopy(r.data)
-        tempD['data']['origalloc'] = deepcopy(self.alloc)
-        tempD['opt'] = deepcopy(r.options)
-        tempD['programs'] = deepcopy(r.metadata['programs'])
-        tempD['G'] = deepcopy(r.metadata)
-        tempD['P'] = deepcopy(self.parsdata)
-        tempD['M'] = deepcopy(self.parsmodel)
-        tempD['F'] = deepcopy(self.parsfitted)
-        tempD['R'] = deepcopy(self.debug['results'])      # Does this do anything?
-        tempD['plot'] = dict()
-        
-        tempD['S'] = deepcopy(self.debug['structure'])     # Need to run simulation before optimisation!
-        optimize(tempD, maxiters = inputmaxiters, timelimit = inputtimelimit, returnresult = True),        
-        
-        self.plotdataopt = tempD['plot']['optim'][-1]       # What's this -1 business about?
-        
-        # Let's try returning these rather than storing them...
-#        optalloc = self.plotdataopt['alloc'][-1]['piedata']
-        optobj = tempD['objective'][-1]
-#        resultopt = tempD['result']['debug']    # VERY temporary. Only until we understand how to regenerate parameters from new allocations.
-#        newbudget = tempD['result']['debug']['newbudget']
-#        print optalloc
-#        print newbudget
-        
-        # If makenew is on, the optimisation results will be initialised in a new SimBudget.
-        if makenew:
-            self.optimised = True
-        
-#        # Optimisation returns an allocation and a (hopefully corresponding) objective function value.
-#        # It also returns a resulting data structure (that we'll hopefully remove the need for eventually).
-#        # Finally, it returns a boolean for whether a new SimBudget should be made.
-#        return (optalloc, optobj, resultopt, makenew)
-        
-        # Maybe should avoid hardcoding the timevarying bit, but it works for default optimisation.
-        from timevarying import timevarying          
-        
-        optalloc = tempD['optalloc']
-        optbudget = timevarying(optalloc, ntimepm = 1, nprogs = len(optalloc), tvec = self.getregion().options['partvec'])        
-        
-        return (optbudget, optobj, makenew)
     
     # Calculates objective values for certain multiplications of an alloc's variable costs (passed in as list of factors).
     # The idea is to spline a cost-effectiveness curve across several budget totals.

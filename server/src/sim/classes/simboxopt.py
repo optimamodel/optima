@@ -8,6 +8,9 @@ Created on Thu Jul 23 21:32:57 2015
 from simbox import SimBox
 from simbudget import SimBudget
 
+import defaults
+from copy import deepcopy
+
 # A container just for Sims with budgets. (No hard-coded restriction on multiple unoptimised SimBudgets exist, but may be considered lest things 'break'.)
 # Note: I'm starting to think it best that there is only ever on SimBudget under focus, i.e. the latest one.
 #       SimBoxOpt should always return data from the last SimBudget in its list.
@@ -15,23 +18,12 @@ class SimBoxOpt(SimBox):
     def __init__(self,name,region):
         SimBox.__init__(self,name,region)
         
-        # Budget Objective Curve data, used for GPA. (Assuming initial budget spending is fixed.)
-#        self.hasBOC = False
-#        self.BOCx = None        # Array of budget allocation totals.
-#        self.BOCy = None        # Array of corresponding optimum objective values.
-        
     def load_dict(self, simboxdict):
         SimBox.load_dict(self,simboxdict)
-#        s.hasBOC = simboxdict['has_BOC']
-#        s.BOCx = simboxdict['BOC_budgets']
-#        s.BOCy = simboxdict['BOC_objectives']
        
     def todict(self):
         simboxdict = SimBox.todict(self)
         simboxdict['type'] = 'SimBoxOpt'    # Overwrites SimBox type.
-#        simboxdict['has_BOC'] = self.hasBOC
-#        simboxdict['BOC_budgets'] = self.BOCx
-#        simboxdict['BOC_objectives'] = self.BOCy
         
         return simboxdict
         
@@ -46,6 +38,71 @@ class SimBoxOpt(SimBox):
             self.simlist[-1].initialise()
             sim = self.simlist[-1]
         return sim
+        
+    # Overwrites normal SimBox method so that SimBudget is not only run, but optimised, with the results (possibly) copied to a new SimBudget.
+    def runallsims(self, forcerun = False, forceopt = False):
+        tempsim = None
+        makenew = False
+        
+        for sim in self.simlist:
+            if forcerun or not sim.isprocessed():
+                sim.run()
+            if sim.isprocessed() and (forceopt or not sim.isoptimised()):
+                (optbudget, optobj, makenew) = self.optimise(sim)
+                tempsim = sim
+                
+        # Generates a new SimBudget from the last Sim that was optimised in the list, but only when the loop has ended and if requested.
+        if makenew:
+#            self.createsimopt(tempsim, optalloc, optobj, resultopt)
+            self.createsimopt(tempsim, optbudget)
+            
+    # Currently just optimises simulation according to defaults. As in... fixed initial budget!
+    def optimise(self, origsim, makenew = True, inputmaxiters = defaults.maxiters, inputtimelimit = defaults.timelimit):
+        r = self.getregion()
+
+        from optimize import optimize
+        
+        tempD = dict()
+        tempD['data'] = deepcopy(r.data)
+        tempD['data']['origalloc'] = deepcopy(origsim.alloc)
+        tempD['opt'] = deepcopy(r.options)
+        tempD['programs'] = deepcopy(r.metadata['programs'])
+        tempD['G'] = deepcopy(r.metadata)
+        tempD['P'] = deepcopy(origsim.parsdata)
+        tempD['M'] = deepcopy(origsim.parsmodel)
+        tempD['F'] = deepcopy(origsim.parsfitted)
+        tempD['R'] = deepcopy(origsim.debug['results'])      # Does this do anything?
+        tempD['plot'] = dict()
+        
+        tempD['S'] = deepcopy(origsim.debug['structure'])     # Need to run simulation before optimisation!
+        optimize(tempD, maxiters = inputmaxiters, timelimit = inputtimelimit, returnresult = True),        
+        
+        origsim.plotdataopt = tempD['plot']['optim'][-1]       # What's this -1 business about?
+        
+        # Let's try returning these rather than storing them...
+#        optalloc = self.plotdataopt['alloc'][-1]['piedata']
+        optobj = tempD['objective'][-1]
+#        resultopt = tempD['result']['debug']    # VERY temporary. Only until we understand how to regenerate parameters from new allocations.
+#        newbudget = tempD['result']['debug']['newbudget']
+#        print optalloc
+#        print newbudget
+        
+        # If makenew is on, the optimisation results will be initialised in a new SimBudget.
+        if makenew:
+            origsim.optimised = True
+        
+#        # Optimisation returns an allocation and a (hopefully corresponding) objective function value.
+#        # It also returns a resulting data structure (that we'll hopefully remove the need for eventually).
+#        # Finally, it returns a boolean for whether a new SimBudget should be made.
+#        return (optalloc, optobj, resultopt, makenew)
+        
+        # Maybe should avoid hardcoding the timevarying bit, but it works for default optimisation.
+        from timevarying import timevarying          
+        
+        optalloc = tempD['optalloc']
+        optbudget = timevarying(optalloc, ntimepm = 1, nprogs = len(optalloc), tvec = self.getregion().options['partvec'])        
+        
+        return (optbudget, optobj, makenew)
             
     # This creates a duplicate SimBudget to 'sim', except with optimised 'G', 'M', 'F', 'S' from sim.resultopt.
     # As an optimised version of the previous SimBudget, it will also be automatically processed, to get plotdata.
@@ -57,23 +114,6 @@ class SimBoxOpt(SimBox):
             # The copy can't be completely deep or shallow, so we load the new SimBudget with a developer-made method.
 #            self.simlist[-1].specialoptload(sim, optalloc, optobj, resultopt)
             self.simlist[-1].run()
-            
-    # Overwrites normal SimBox method so that SimBudget is not only run, but optimised, with the results (possibly) copied to a new SimBudget.
-    def runallsims(self, forcerun = False, forceopt = False):
-        tempsim = None
-        makenew = False
-        
-        for sim in self.simlist:
-            if forcerun or not sim.isprocessed():
-                sim.run()
-            if sim.isprocessed() and (forceopt or not sim.isoptimised()):
-                (optbudget, optobj, makenew) = sim.optimise()
-                tempsim = sim
-                
-        # Generates a new SimBudget from the last Sim that was optimised in the list, but only when the loop has ended and if requested.
-        if makenew:
-#            self.createsimopt(tempsim, optalloc, optobj, resultopt)
-            self.createsimopt(tempsim, optbudget)
     
     # A custom built plotting function to roughly mirror legacy 'viewoptimresults'.
     def viewoptimresults(self, plotasbar = False):
