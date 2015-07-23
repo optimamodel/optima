@@ -103,6 +103,41 @@ class SimBoxOpt(SimBox):
         optbudget = timevarying(optalloc, ntimepm = 1, nprogs = len(optalloc), tvec = self.getregion().options['partvec'])        
         
         return (optbudget, optobj, makenew)
+        
+    # Calculates objective values for certain multiplications of an alloc's variable costs (passed in as list of factors).
+    # The idea is to spline a cost-effectiveness curve across several budget totals.
+    # Note: We don't care about the allocations in detail. This is just a function between totals and the objective.
+    def calculateeffectivenesscurve(self, sim, factors):
+        curralloc = sim.alloc
+        
+        totallocs = []
+        objarr = []
+        timelimit = defaults.timelimit
+#        timelimit = 1.0
+        
+        # Work out which programs don't have an effect and are thus fixed costs (e.g. admin).
+        # These will be ignored when testing different allocations.
+        fixedtrue = [1.0]*(len(curralloc))
+        for i in xrange(len(curralloc)):
+            if len(self.getregion().metadata['programs'][i]['effects']): fixedtrue[i] = 0.0
+        
+        for factor in factors:
+            try:
+                print('Testing budget allocation multiplier of %f.' % factor)
+                sim.alloc = [curralloc[i]*(factor+(1-factor)*fixedtrue[i]) for i in xrange(len(curralloc))]
+                betterbudget, betterobj, a = self.optimise(sim, makenew = False, inputtimelimit = timelimit)
+                
+                betteralloc = [alloclist[0] for alloclist in betterbudget]
+                
+                objarr.append(betterobj)
+                totallocs.append(sum(betteralloc))
+            except:
+                print('Multiplying pertinent budget allocation values by %f failed.' % factor)
+            
+        sim.alloc = curralloc
+        
+        # Remember that total alloc includes fixed costs (e.g admin)!
+        return (totallocs, objarr)
             
     # This creates a duplicate SimBudget to 'sim', except with optimised 'G', 'M', 'F', 'S' from sim.resultopt.
     # As an optimised version of the previous SimBudget, it will also be automatically processed, to get plotdata.
@@ -191,13 +226,44 @@ class SimBoxOpt(SimBox):
     def createsimoptgpa(self, newtotal):
         from copy import deepcopy
         remsim = deepcopy(self.simlist[-1])                 # Memorises latest SimBudget in SimBoxOpt.
-        self.simlist[-1].scalealloctototal(newtotal)        # Overwrites the alloc of this SimBudget with a new one that exemplifies a particular budget total (e.g. from GPA).
+        self.scalealloctototal(self.simlist[-1], newtotal)  # Overwrites the alloc of this SimBudget with a new one that exemplifies a particular budget total (e.g. from GPA).
         self.runallsims()                                   # Optimises the SimBudget with the new alloc. (Presumably, the optimize function reinitialises all model parameters for this alloc...)
         self.simlist[-2] = deepcopy(remsim)                 # Having created a new SimBudget, reverts the old one.
         self.simlist[-2].optimised = True                   # But locks it so that it cannot be further optimised.
         self.simlist[-1].optimised = True                   # Likewise locks the new SimBudget.
         self.runallsims(forcerun = True)                    # Processes both the old and new SimBudget (as well as any previous SimBudgets in the SimBoxOpt).
 
+
+    # Scales the variable costs of an alloc so that the sum of the alloc equals newtotal.
+    # Note: Can this be fused with the scaling on the Region level...?
+    def scalealloctototal(self, sim, newtotal):
+        curralloc = sim.alloc
+        
+        # Work out which programs don't have an effect and are thus fixed costs (e.g. admin).
+        # These will be ignored when testing different allocations.
+        fixedtrue = [1.0]*(len(curralloc))
+        for i in xrange(len(curralloc)):
+            if len(self.getregion().metadata['programs'][i]['effects']): fixedtrue[i] = 0.0
+                
+        # Extract the fixed costs from scaling.
+        fixedtotal = sum([curralloc[i]*fixedtrue[i] for i in xrange(len(curralloc))])
+        vartotal = sum([curralloc[i]*(1.0-fixedtrue[i]) for i in xrange(len(curralloc))])
+        scaledtotal = newtotal - fixedtotal
+        
+        # Deal with a couple of possible errors.
+        if scaledtotal < 0:
+            print('Warning: You are attempting to generate an allocation for a budget total that is smaller than the sum of relevant fixed costs!')
+            print('Continuing with the assumption that all non-fixed program allocations are zero.')
+            print('This may invalidate certain analyses such as GPA.')
+            scaledtotal = 0
+        try:
+            factor = scaledtotal/vartotal
+        except:
+            print("Possible 'divide by zero' error.")
+            curralloc[0] = scaledtotal      # Shove all the budget into the first program.
+        
+        # Updates the alloc of this SimBudget according to the scaled values.
+        sim.alloc = [curralloc[i]*(factor+(1-factor)*fixedtrue[i]) for i in xrange(len(curralloc))]
 
     def __repr__(self):
         return "SimBoxOpt %s ('%s')" % (self.uuid[0:8],self.name)

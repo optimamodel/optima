@@ -263,7 +263,7 @@ class Region:
             sim = self.createsiminsimbox(simbox.getname(), simbox)
             sim.run()   # Make sure simulation is processed, or 'financialanalysis' will not have its D['S'] component. Something to eventually change...
             try:
-                testBOCx, testBOCy = sim.calculateeffectivenesscurve(varfactors)
+                testBOCx, testBOCy = simbox.calculateeffectivenesscurve(sim, varfactors)
                 print("Region %s has calculated a Budget Objective Curve for..." % self.getregionname())
                 print(varfactors)
             except:

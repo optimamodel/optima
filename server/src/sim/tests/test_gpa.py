@@ -24,4 +24,4 @@ r1.createsimbox('sb-test-opt', isopt = True, createdefault = True)
 r1.simboxlist[-1].runallsims()
 r1.simboxlist[-1].viewmultiresults()
 
-#p1.geoprioanalysis()
+p1.geoprioanalysis()
