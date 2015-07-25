@@ -5,7 +5,7 @@ Created on Tue Jun 02 01:03:34 2015
 @author: David Kedziora
 """
 
-from sim import Sim #, SimBudget
+from sim import Sim
 
 import weakref
 import uuid
@@ -25,6 +25,8 @@ class SimBox:
 
         if simboxdict['type'] == 'SimBox':
             s = SimBox(simboxdict['name'], region)
+        elif simboxdict['type'] == 'SimBoxCal':
+            s = SimBoxCal(simboxdict['name'], region)
         elif simboxdict['type'] == 'SimBoxOpt':
             s = SimBoxOpt(simboxdict['name'], region)
 
@@ -132,4 +134,5 @@ class SimBox:
 
 #%% Tail imports pointing to derived classes, so as to avoid circular import problems.
 
+from simboxcal import SimBoxCal
 from simboxopt import SimBoxOpt

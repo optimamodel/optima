@@ -297,10 +297,14 @@ class Portfolio:
         for i in xrange(len(newtotals)):
             currentregion = self.regionlist[i]
             print('Initialising a simulation container in region %s for this GPA.' % currentregion.getregionname())
-            tempsimbox = currentregion.createsimbox('GPA-'+gpaname, isopt = True, createdefault = True)
+            tempsimbox = currentregion.createsimbox('GPA-'+gpaname, isopt = True, createdefault = False)
+            initsimorig = tempsimbox.createsim('GPA-'+gpaname+'-init', forcecreate = False)
+            initsimcopy = tempsimbox.createsim('GPA-'+gpaname+'-initcopy', forcecreate = True)
+            tempsimbox.scalealloctototal(initsimcopy, newtotals[i])
             currentregion.runsimbox(tempsimbox)
-            tempsimbox.createsimoptgpa(newtotals[i])
-            tempsimbox.viewmultiresults()
+            tempsimbox.simlist.remove(initsimcopy)
+#            tempsimbox.createsimoptgpa(newtotals[i])
+            tempsimbox.viewoptimresults(plotasbar = True)
 #                currentregion.developBOC(tempsimbox)
 #                self.simboxref.append(tempsimbox)
 #            else:

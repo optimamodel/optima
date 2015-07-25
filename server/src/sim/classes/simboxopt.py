@@ -27,34 +27,29 @@ class SimBoxOpt(SimBox):
         
         return simboxdict
         
-    # Overwrites the standard Sim create method. This is where budget data would be attached.
-    def createsim(self, simname):
-        sim = None
-        if len(self.simlist) > 0:
-            print('Optimisation containers can only contain one initial simulation!')
-        else:
-            print('Preparing new budget simulation for optimisation container %s...' % self.name)
-            self.simlist.append(SimBudget(simname+'-initial',self.getregion()))
-            self.simlist[-1].initialise()
-            sim = self.simlist[-1]
-        return sim
+    # Overwrites the standard Sim create method for SimBudgets. Only one per SimBoxOpt can be unoptimised in general.
+    def createsim(self, simname, budget = [], forcecreate = False):
+        if not forcecreate:
+            for sim in self.simlist:
+                if not sim.isoptimised():
+                    print('Optimisation containers can only contain one unoptimised simulation!')
+                    return None
+        print('Preparing new budget simulation for optimisation container %s...' % self.name)
+        newsim = SimBudget(simname, self.getregion(), budget)
+        newsim.initialise()
+        self.simlist.append(newsim)
+        return newsim
         
-    # Overwrites normal SimBox method so that SimBudget is not only run, but optimised, with the results (possibly) copied to a new SimBudget.
+    # Overwrites normal SimBox method so that SimBudget is not only run, but optimised, with the results copied to a new SimBudget.
     def runallsims(self, forcerun = False, forceopt = False):
-        tempsim = None
-        makenew = False
         
-        for sim in self.simlist:
+        # Reversed so that the loop doesn't keep including new SimBudgets appended to simlist.
+        for sim in reversed(self.simlist):
             if forcerun or not sim.isprocessed():
                 sim.run()
             if sim.isprocessed() and (forceopt or not sim.isoptimised()):
-                (optbudget, optobj, makenew) = self.optimise(sim)
-                tempsim = sim
-                
-        # Generates a new SimBudget from the last Sim that was optimised in the list, but only when the loop has ended and if requested.
-        if makenew:
-#            self.createsimopt(tempsim, optalloc, optobj, resultopt)
-            self.createsimopt(tempsim, optbudget)
+                self.optimise(sim, makenew = True)
+
             
     # Currently just optimises simulation according to defaults. As in... fixed initial budget!
     def optimise(self, origsim, makenew = True, inputmaxiters = defaults.maxiters, inputtimelimit = defaults.timelimit):
@@ -88,8 +83,6 @@ class SimBoxOpt(SimBox):
 #        print newbudget
         
         # If makenew is on, the optimisation results will be initialised in a new SimBudget.
-        if makenew:
-            origsim.optimised = True
         
 #        # Optimisation returns an allocation and a (hopefully corresponding) objective function value.
 #        # It also returns a resulting data structure (that we'll hopefully remove the need for eventually).
@@ -101,6 +94,13 @@ class SimBoxOpt(SimBox):
         
         optalloc = tempD['optalloc']
         optbudget = timevarying(optalloc, ntimepm = 1, nprogs = len(optalloc), tvec = self.getregion().options['partvec'])        
+
+        if makenew:
+            origsim.optimised = True
+            
+            print('Converting optimisation results into a new budget simulation...')
+            newsim = self.createsim(origsim.getname(), optbudget, forcecreate = True)
+            newsim.run()
         
         return (optbudget, optobj, makenew)
         
@@ -139,16 +139,7 @@ class SimBoxOpt(SimBox):
         # Remember that total alloc includes fixed costs (e.g admin)!
         return (totallocs, objarr)
             
-    # This creates a duplicate SimBudget to 'sim', except with optimised 'G', 'M', 'F', 'S' from sim.resultopt.
-    # As an optimised version of the previous SimBudget, it will also be automatically processed, to get plotdata.
-    def createsimopt(self, sim, optbudget):
-        if not sim == None:
-            print('Converting optimisation results into a new budget simulation...')
-            self.simlist.append(SimBudget(sim.getname(), self.getregion(), optbudget))
-            
-            # The copy can't be completely deep or shallow, so we load the new SimBudget with a developer-made method.
-#            self.simlist[-1].specialoptload(sim, optalloc, optobj, resultopt)
-            self.simlist[-1].run()
+
     
     # A custom built plotting function to roughly mirror legacy 'viewoptimresults'.
     def viewoptimresults(self, plotasbar = False):
@@ -219,19 +210,6 @@ class SimBoxOpt(SimBox):
                     print(' --> %s%s' % (sim.getname(), (" (initialised)" if not sim.isprocessed() else " (simulated + %s)" %
                                              ("further optimisable" if not sim.isoptimised() else "already optimised"))))
 
-    
-    # Complicated method that ends up with an additional stored SimBudget optimised for a different budget total.
-    # Note: Read comments carefully. This is a messy process. Deepcopy used for safety.
-    #       Also, it may be worth stripping the legacy code of processes at some stage so that the procedure is transparent in OOP form.
-    def createsimoptgpa(self, newtotal):
-        from copy import deepcopy
-        remsim = deepcopy(self.simlist[-1])                 # Memorises latest SimBudget in SimBoxOpt.
-        self.scalealloctototal(self.simlist[-1], newtotal)  # Overwrites the alloc of this SimBudget with a new one that exemplifies a particular budget total (e.g. from GPA).
-        self.runallsims()                                   # Optimises the SimBudget with the new alloc. (Presumably, the optimize function reinitialises all model parameters for this alloc...)
-        self.simlist[-2] = deepcopy(remsim)                 # Having created a new SimBudget, reverts the old one.
-        self.simlist[-2].optimised = True                   # But locks it so that it cannot be further optimised.
-        self.simlist[-1].optimised = True                   # Likewise locks the new SimBudget.
-        self.runallsims(forcerun = True)                    # Processes both the old and new SimBudget (as well as any previous SimBudgets in the SimBoxOpt).
 
 
     # Scales the variable costs of an alloc so that the sum of the alloc equals newtotal.
