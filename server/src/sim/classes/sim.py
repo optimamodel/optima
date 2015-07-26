@@ -380,6 +380,7 @@ class Sim:
         self.parsmodel = M
 
     def run(self):
+        # Returns the full debug output
         if not self.initialised:
             self.initialise()
 
@@ -413,7 +414,7 @@ class Sim:
         tempD['programs'] = r.metadata['programs']
         
         self.debug['results'] = makeresults(tempD, allsims, r.options['quantiles'])
-    
+
         # Gather plot data.
         from gatherplotdata import gatheruncerdata
         
@@ -424,7 +425,9 @@ class Sim:
         
         self.plotdata = gatheruncerdata(tempD, self.debug['results'])
         
-        self.processed = True        
+        self.processed = True
+
+        return allsims[0]        
         
     def plotresults(self):
         
