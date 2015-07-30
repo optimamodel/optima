@@ -10,21 +10,21 @@ import simbox
 # run everything else (with the block below commented out) in the 
 # oop_calibration branch
 
-# r1 = region.Region.load('./regions/georgia_working.json')
-# sb0 = r1.createsimbox('Original', isopt = False, createdefault = True)
-# r1.runsimbox(sb0)
-# r1.save('./calibration_old.json')
+r1 = region.Region.load('./regions/georgia_working.json')
+sb0 = r1.createsimbox('Original', isopt = False, createdefault = True)
+r1.runsimbox(sb0)
+r1.save('./calibration_old.json')
 
-# print 'LOADING OLD DATA'
-original = region.Region.load('calibration_old.json')
-print 'LOADING LEGACY DATA FOR NEW RUN'
-r = region.Region.load('./regions/georgia_working.json')
-sb = r.createsimbox('New', isopt = False, createdefault = True)
-r.runsimbox(sb)
-
-sb2 = simbox.SimBox('ASDF',r)
-sb2.simlist = [r.simboxlist[1].simlist[0],original.simboxlist[1].simlist[0]]
-sb2.viewmultiresults()
+## print 'LOADING OLD DATA'
+#original = region.Region.load('calibration_old.json')
+#print 'LOADING LEGACY DATA FOR NEW RUN'
+#r = region.Region.load('./regions/georgia_working.json')
+#sb = r.createsimbox('New', isopt = False, createdefault = True)
+#r.runsimbox(sb)
+#
+#sb2 = simbox.SimBox('ASDF',r)
+#sb2.simlist = [r.simboxlist[1].simlist[0],original.simboxlist[1].simlist[0]]
+#sb2.viewmultiresults()
 # s = sim.Sim('test1',r);
 # s.run()
 # s.plotresults()
