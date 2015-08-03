@@ -388,6 +388,8 @@ def getcoverage(D=None, progname=None):
 def gettargetpop(D=None, artindex=None, progname=None):
     ''' Calculate target population for a given program'''
     
+    from numpy import cumsum
+    
     # Sort out time vector and indexing
     tvec = arange(D['G']['datastart'], D['G']['dataend']+D['opt']['dt'], D['opt']['dt']) # Extract the time vector from the sim
     npts = len(tvec) # Number of sim points
@@ -420,8 +422,7 @@ def gettargetpop(D=None, artindex=None, progname=None):
                     injectindices = [i for i, x in enumerate(D['data']['meta']['pops']['injects']) if x == 1]
                     targetpopmodel = D['S']['people'][:,injectindices,0:npts].sum(axis = (0,1))
                 elif thispar == 'numpmtct': # Target population = HIV+ pregnant women
-#                    targetpopmodel = multiply(D['M']['birth'][:,0:npts], D['S']['people'][artindex,:,0:npts].sum(axis=0)).sum(axis=0)
-                    targetpopmodel = multiply(D['M']['birth'][:,0:npts], D['S']['people'][artindex,:,0:npts].sum(axis=0)).sum(axis=0)+multiply(multiply(D['M']['birth'][:,0:npts], D['S']['people'][artindex,:,0:npts].sum(axis=0)).sum(axis=0),D['M']['breast'][0:npts])
+                    targetpopmodel = cumsum(multiply(D['M']['birth'][:,0:npts]*D['opt']['dt'], D['S']['people'][artindex,:,0:npts].sum(axis=0)).sum(axis=0))
                 elif thispar == 'breast': # Target population = HIV+ breastfeeding women
                     targetpopmodel = multiply(D['M']['birth'][:,0:npts], D['M']['breast'][0:npts], D['S']['people'][artindex,:,0:npts].sum(axis=0)).sum(axis=0)
                 elif thispar in ['numfirstline','numsecondline']: # Target population = diagnosed PLHIV
