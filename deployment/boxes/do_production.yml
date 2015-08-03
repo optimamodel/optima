@@ -4,7 +4,7 @@
   vars:
     # prudentia_dir -> is passed in the cmd line
     - root_dir: ..
-    - version: master
+    - version: develop
 
     - db_host: optima-prod-db.startersquad.com
     - db_user: app
