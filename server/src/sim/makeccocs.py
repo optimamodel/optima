@@ -65,10 +65,11 @@ def makecc(D=None, progname=None, ccparams=None, arteligcutoff=None, verbose=def
         cpi = smoothinterp(origy=D['data']['econ']['cpi']['past'][0], origx=linspace(0,1,len(D['data']['epiyears'])), newx=linspace(0,1,len(D['data']['epiyears'])), growth=D['data']['econ']['cpi']['future'][0][0])
         cpibaseyear = ccparams.get('cpibaseyear')
         cpibaseyearindex = D['data']['epiyears'].index(cpibaseyear) # get index of CPI base year
+        origcpibaseyearindex = D['data']['epiyears'].index(min(D['data']['epiyears'][-1],date.today().year))
         if len(totalcost)==1: # If it's an assumption, assume it's already in current prices
-            totalcost = [totalcost[0]*cpi[cpibaseyearindex]]
+            totalcost = [totalcost[0]*(cpi[cpibaseyearindex]/cpi[origcpibaseyearindex])]
         else:
-            totalcost = [totalcost[j]*(cpi[cpibaseyearindex]/cpi[j]) if ~isnan(totalcost[j]) else float('nan') for j in xrange(len(totalcost))]
+            totalcost = [totalcost[j]*(cpi[cpibaseyearindex]/cpi[origcpibaseyearindex]) if ~isnan(totalcost[j]) else float('nan') for j in xrange(len(totalcost))]
     else:
         cpibaseyear = min(D['data']['epiyears'][-1],date.today().year)
 
