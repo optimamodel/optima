@@ -96,6 +96,11 @@ def makedatapars(D, verbose=2):
                 printv('Converting data parameter %s...' % parname, 4, verbose)
                 D['P']['const'][parclass][parname] = D['data']['const'][parclass][parname][0] # Taking best value only, hence the 0
     
+    ## Add a data parameter for number circumcised, if VMMC is a program
+    if  'VMMC' in [p['name'] for p in D['programs']]:
+        printv('Making a data parameter for numcircum', 2, verbose)
+        prognumber = [p['name'] for p in D['programs']].index('VMMC')
+        D['P']['numcircum'] = data2par([D['data']['costcov']['cov'][prognumber]], usetime=True)
     
     ## Change sizes of circumcision and births
     def popexpand(origarray, popbool):

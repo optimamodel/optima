@@ -247,6 +247,7 @@ def makecco(D=None, progname=None, effect=None, ccparams=None, coparams=None, ar
     ''' Make a single cost outcome curve. '''
     from numpy import array, where
     from datetime import date
+    from copy import deepcopy
 
     plotdata, plotdata_co = {}, {} 
     prognumber = [p['name'] for p in D['programs']].index(progname) # get program number    
@@ -299,7 +300,7 @@ def makecco(D=None, progname=None, effect=None, ccparams=None, coparams=None, ar
 
             # Store whole set of parameters
             prognumber = [p['name'] for p in D['programs']].index(progname) # get program number    
-            convertedccoparams = D['programs'][prognumber]['convertedccparams']
+            convertedccoparams = deepcopy(D['programs'][prognumber]['convertedccparams'])
             convertedcoparams = effect['convertedcoparams']
             convertedccoparams[0].extend([convertedcoparams[0],convertedcoparams[2]])
             convertedccoparams[1].extend([coparams[0],coparams[2]])
@@ -428,14 +429,13 @@ def gettargetpop(D=None, artindex=None, progname=None):
                     targetpopmodel = multiply(D['M']['birth'][:,0:npts], D['M']['breast'][0:npts], D['S']['people'][artindex,:,0:npts].sum(axis=0)).sum(axis=0)
                 elif thispar in ['numfirstline','numsecondline']: # Target population = diagnosed PLHIV
                     targetpopmodel = D['S']['people'][artindex,:,0:npts].sum(axis=(0,1))
-                else:
-                    print('WARNING, Unrecognized parameter %s' % thispar)
+                elif thispar == 'numcircum': # Target population = men (??)
+                    maleindices = [i for i, x in enumerate(D['data']['meta']['pops']['female']) if x == 0]
+                    targetpopmodel = D['S']['people'][:,maleindices,0:npts].sum(axis = (0,1))
             else:
                 print('WARNING, Parameter %s of odd length %s' % (thispar, len(D['P'][thispar]['p'])))
         else:
-            if thispar == 'numcircum': # Target population = men (??)
-                maleindices = [i for i, x in enumerate(D['data']['meta']['pops']['female']) if x == 0]
-                targetpopmodel = D['S']['people'][:,maleindices,0:npts].sum(axis = (0,1))
+            print('WARNING, Unrecognized parameter %s' % thispar)
     if len(targetpars)==0:
         print('WARNING, no target parameters for program %s' % progname)
                 
