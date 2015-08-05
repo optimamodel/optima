@@ -115,8 +115,75 @@ class SimBudget(Sim):
         
         # Now update things
         self.parsmodel = partialupdateM(deepcopy(self.parsmodel), deepcopy(tempparsmodel), parindices)
+    
+    
+    # Work out the objective value of this SimBudget and its allocation.
+    # WARNING: Hard-coded. Derived from default option of legacy optimize function.
+    def calculateobjectivevalue(self):
+        if not self.isprocessed():
+            print('Need to simulate and produce results to calculate objective value.')
+            self.run()
         
+        r = self.getregion()
         
+        # Objectives are currently hard coded and mimic defaultobjectives in optimize.py. Needs to change.
+        objectives = dict()
+        objectives['year'] = dict()
+        objectives['year']['start'] = 2015              # "Year to begin optimization from".
+        objectives['year']['end'] = 2030                # "Year to end optimization".
+        objectives['year']['until'] = 2030              # "Year to project outcomes to".
+        objectives['outcome'] = dict()
+        objectives['outcome']['inci'] = True            # "Minimize cumulative HIV incidence"
+        objectives['outcome']['inciweight'] = 100       # "Incidence weighting"
+        objectives['outcome']['daly'] = False           # "Minimize cumulative DALYs"
+        objectives['outcome']['dalyweight'] = 100       # "DALY weighting"
+        objectives['outcome']['death'] = False          # "Minimize cumulative AIDS-related deaths"
+        objectives['outcome']['deathweight'] = 100      # "Death weighting"
+        objectives['outcome']['costann'] = False        # "Minimize cumulative DALYs"
+        objectives['outcome']['costannweight'] = 100    # "Cost weighting"        
+        
+        from utils import findinds
+        from numpy import arange        
+        
+        initialindex = findinds(r.options['partvec'], objectives['year']['start'])
+        finalparindex = findinds(r.options['partvec'], objectives['year']['end'])
+        finaloutindex = findinds(r.options['partvec'], objectives['year']['until'])
+        parindices = arange(initialindex,finalparindex)
+        outindices = arange(initialindex,finaloutindex)        
+        
+        # Unnecessary with defaults, but normalise and weight objectives if there are multiple options.
+        weights = dict()
+        normalizations = dict()
+        outcomekeys = ['inci', 'death', 'daly', 'costann']
+        if sum([objectives['outcome'][key] for key in outcomekeys])>1:      # Only normalize if multiple objectives, since otherwise doesn't make a lot of sense.
+            for key in outcomekeys:
+                thisweight = objectives['outcome'][key+'weight'] * objectives['outcome'][key] / 100.
+                weights.update({key:thisweight})    # Get weight, and multiply by "True" or "False" and normalize from percentage.
+                if key!='costann': thisnormalization = self.debug['results'][key]['tot'][0][outindices].sum()
+                else: thisnormalization = self.debug['results'][key]['total']['total'][0][outindices].sum()     # Special case for costann.
+                normalizations.update({key:thisnormalization})
+        else:
+            for key in outcomekeys:
+                weights.update({key:int(objectives['outcome'][key])}) # Weight of 1
+                normalizations.update({key:1}) # Normalizatoin of 1        
+                
+        ## Define options structure
+        options = dict()
+        options['outcomekeys'] = outcomekeys
+        options['weights'] = weights # Weights for each parameter
+        options['outindices'] = outindices # Indices for the outcome to be evaluated over
+        options['parindices'] = parindices # Indices for the parameters to be updated on
+        options['normalizations'] = normalizations # Whether to normalize a parameter
+        options['randseed'] = 0  
+        
+        outcome = 0 # Preallocate objective value 
+        for key in options['outcomekeys']:
+            if options['weights'][key]>0: # Don't bother unless it's actually used
+                if key!='costann': thisoutcome = self.debug['results'][key]['tot'][0][options['outindices']].sum()
+                else: thisoutcome = self.debug['results'][key]['total']['total'][0][options['outindices']].sum() # Special case for costann
+                outcome += thisoutcome * options['weights'][key] / float(options['normalizations'][key]) * r.options['dt'] # Calculate objective
+        
+        return outcome
 
     def __repr__(self):
         return "SimBudget %s ('%s')" % (self.uuid,self.name) 

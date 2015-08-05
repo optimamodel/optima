@@ -19,9 +19,11 @@ from geoprioritisation import gpaoptimisefixedtotal
 class Portfolio:
     def __init__(self, portfolioname):
         self.regionlist = []                # List to hold Region objects.
+        self.gpalist = []                   # List to hold GPA runs, specifically lists of SimBoxOpt references, for quick use.
+                                            # Will need to be careful about error checking when deletions are implemented.
         self.portfolioname = portfolioname
         self.cwd = os.getcwd()              # Should get the current working directory where Portfolio object is instantiated.
-        self.regd = self.cwd + '/regions'  # May be good to remove hardcoding at some stage...
+        self.regd = self.cwd + '/regions'   # May be good to remove hardcoding at some stage...
         
     def run(self):
         """
@@ -121,10 +123,28 @@ class Portfolio:
                         self.improveregionBOC(self.regionlist[int(regionid)-1], factorlist)
                     else:
                         print('Region ID numbers only range from 1 to %i, inclusive.' % len(self.regionlist))
-                    
+                        
             # If command is 'gpa', create GPA SimBoxes in each region.
             if cmdinput == 'gpa' and len(self.regionlist) > 1:
                 self.geoprioanalysis()
+                
+            # If command is 'review', plot all information relevant to a previous GPA run.
+            if cmdinput == 'review' and len(self.gpalist) > 0:
+                
+                for gparun in xrange(len(self.gpalist)):
+                    print('GPA %i...' % (gparun + 1))
+                    for gpasimbox in self.gpalist[gparun]:
+                        print(' --> %s' % gpasimbox.getname())
+                    
+                # Makes sure that an integer is specified.
+                while fchoice not in arange(1,len(self.gpalist)+1):
+                    try:
+                        fchoice = int(raw_input('Choose a number between 1 and %i, inclusive: ' % fchoice))
+                    except ValueError:
+                        fchoice = 0
+                        continue
+                    
+                self.geoprioreview(self.gpalist[fchoice-1])
                 
             # If command is 'qs', save to default region filenames (overwriting if necessary).
             if cmdinput == 'qs':
@@ -138,6 +158,8 @@ class Portfolio:
                 print('To run this analysis, type: gpa')
                 print("To recalculate cost-effectiveness data for a region numbered 'region_id', type: refine region_id")
                 print("To calculate additional cost-effectiveness data for a region numbered 'region_id', type: improve region_id")
+                if len(self.gpalist) > 0:
+                    print('To review results from previous GPA runs, type: review')
             
             print("To make a new region titled 'region_name', type: make region_name")
             if len(self.regionlist) > 0:
@@ -280,8 +302,7 @@ class Portfolio:
 ### GPA Methods
 
     # Iterate through loaded regions. Develop default BOCs if they do not have them.
-    def geoprioanalysis(self, gpaname = 'test'):
-        # gpaname = raw_input('Enter a title for the current analysis: ')
+    def geoprioanalysis(self, gpaname = 'Test'):
         
         varfactors = [0.0, 0.3, 0.6, 1.0, 1.8, 3.2, 10.0]
 #        varfactors = [0.0, 1.0, 2.0]
@@ -293,26 +314,28 @@ class Portfolio:
             else:
                 print('Region %s already has a Budget Objective Curve.' % currentregion.getregionname())
         
-        newtotals = gpaoptimisefixedtotal(self.regionlist)        
+        newtotals = gpaoptimisefixedtotal(self.regionlist)
+        gpasimboxlist = []      # List to link to GPA simboxes. Again, will need to error check if deletions are implemented.
         for i in xrange(len(newtotals)):
             currentregion = self.regionlist[i]
             print('Initialising a simulation container in region %s for this GPA.' % currentregion.getregionname())
             tempsimbox = currentregion.createsimbox('GPA-'+gpaname, isopt = True, createdefault = False)
-            initsimorig = tempsimbox.createsim('GPA-'+gpaname+'-init', forcecreate = False)
-            initsimcopy = tempsimbox.createsim('GPA-'+gpaname+'-initcopy', forcecreate = True)
+            initsimorig = tempsimbox.createsim('GPA '+gpaname+' - '+currentregion.getname()+' - Initial', forcecreate = False)
+            initsimcopy = tempsimbox.createsim('GPA '+gpaname+' - '+currentregion.getname()+' - GPA Optimised', forcecreate = True)
             tempsimbox.scalealloctototal(initsimcopy, newtotals[i])
             currentregion.runsimbox(tempsimbox)
             tempsimbox.simlist.remove(initsimcopy)
-#            tempsimbox.createsimoptgpa(newtotals[i])
             tempsimbox.viewoptimresults(plotasbar = True)
-#                currentregion.developBOC(tempsimbox)
-#                self.simboxref.append(tempsimbox)
-#            else:
-#                self.simboxref.append(currentregion.getsimboxwithBOC())     # Note: Kludgy but the best that can be done without user input.
-#        
-#        newtotals = gpaoptimisefixedtotal(self.regionlist)
-#        for i in xrange(len(newtotals)):
-#            self.simboxref[i].copysimoptfornewtotal(newtotals[i])
+            gpasimboxlist.append(tempsimbox)
+         
+        self.gpalist.append(gpasimboxlist)      # Attach list of simboxes to GPA list for easy recall.
+    
+    # Iterate through loaded regions. Develop default BOCs if they do not have them.
+    def geoprioreview(self, gpasimboxlist):
+        
+        for gpasimbox in gpasimboxlist:
+            print(gpasimbox.getname())
+            gpasimbox.getregion().plotsimbox(gpasimbox, multiplot = True)   # Note: Really stupid excessive way of doing all plots. May simplify later.
 
     def refineregionBOC(self, region):
         region.recalculateBOC()

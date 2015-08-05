@@ -102,7 +102,7 @@ class SimBoxOpt(SimBox):
             origsim.optimised = True
             
             print('Converting optimisation results into a new budget simulation...')
-            newsim = self.createsim(origsim.getname(), optbudget, forcecreate = True)
+            newsim = self.createsim(origsim.getname() + ' Optimised', optbudget, forcecreate = True)
             newsim.run()
         
         return (optbudget, optobj, makenew)
