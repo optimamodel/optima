@@ -81,7 +81,6 @@ def makecc(D=None, progname=None, ccparams=None, arteligcutoff=None, verbose=def
     coverage, coveragelabel = getcoverage(D=D, progname=progname)
     targetpop = gettargetpop(D=D, artindex=artindex, progname=progname)
 
-
     # Adjust cost data by target population size, if requested by user
     if popadj: totalcost = totalcost/targetpop if len(totalcost)>1 else totalcost/mean(targetpop)
 
@@ -204,7 +203,8 @@ def makeco(D=None, progname=None, effect=None, coparams=None, coverage_params=co
 
         # Populate output structure with axis limits
         plotdata['xlowerlim'], plotdata['ylowerlim']  = 0.0, 0.0
-        plotdata['xupperlim'] = 1.0 if coveragelabel == 'Proportion covered' else max([j if ~isnan(j) else 0.0 for j in coverage])*1.5
+        targetpop = gettargetpop(D=D, artindex=artindex, progname=progname)
+        plotdata['xupperlim'] = 1.0 if coveragelabel == 'Proportion covered' else targetpop[-1]
         plotdata['yupperlim'] = 1.0 if any(j < 1 for j in outcome) else max([j if ~isnan(j) else 0.0 for j in outcome])*1.5
 
         # Populate output structure with scatter data 
@@ -267,6 +267,7 @@ def makecco(D=None, progname=None, effect=None, ccparams=None, coparams=None, ar
         totalcost, outcome = getscatterdata(totalcost, outcome)
         plotdata['xscatterdata'] = totalcost 
         plotdata['yscatterdata'] = outcome 
+        coverage, coveragelabel = getcoverage(D=D, progname=progname)
 
        # Make additional scatter data for current param vals
         currentcost = D['data']['origalloc'][prognumber]
@@ -309,6 +310,7 @@ def makecco(D=None, progname=None, effect=None, ccparams=None, coparams=None, ar
 
             xvalscco = plotdata_cc['xlinedata']
             xvalsccpop = plotdata_cc['xpop']
+ 
             if len(convertedccoparams[0]) == 5:
                 mediancco = ccoeqn(xvalsccpop, convertedccoparams[0])
                 mincco = ccoeqn(xvalsccpop,  convertedccoparams[1])
@@ -450,11 +452,11 @@ def gettargetpop(D=None, artindex=None, progname=None):
 
 
 ###############################################################################
+#def convertparams(D=None, coveragelabel=None, targetpop=None, ccparams=None):
 def convertparams(D=None, ccparams=None):
     ''' Convert GUI inputs into the form needed for the calculations '''
 
     convertedccparams = []
-
     if 'scaleup' in ccparams and ccparams['scaleup'] and ~isnan(ccparams['scaleup']):
         growthratel = exp((1-ccparams['scaleup'])*log(ccparams['saturation']/ccparams['coveragelower']-1)+log(ccparams['funding']))
         growthratem = exp((1-ccparams['scaleup'])*log(ccparams['saturation']/((ccparams['coveragelower']+ccparams['coverageupper'])/2)-1)+log(ccparams['funding']))
@@ -462,7 +464,7 @@ def convertparams(D=None, ccparams=None):
         convertedccparams = [[ccparams['saturation'], growthratem, ccparams['scaleup']], [ccparams['saturation'], growthratel, ccparams['scaleup']], [ccparams['saturation'], growthrateu, ccparams['scaleup']]]
     else:
         growthratel = (-1/ccparams['funding'])*log((2*ccparams['saturation'])/(ccparams['coveragelower']+ccparams['saturation']) - 1)        
-        growthratem = (-1/ccparams['funding'])*log((2*ccparams['saturation'])/(((ccparams['coveragelower']+ccparams['coverageupper'])/2)+ccparams['saturation']) - 1)        
+        growthratem = (-1/ccparams['funding'])*log((2*ccparams['saturation'])/(((ccparams['coveragelower']+ccparams['coverageupper'])/2)+ccparams['saturation']) - 1)
         growthrateu = (-1/ccparams['funding'])*log((2*ccparams['saturation'])/(ccparams['coverageupper']+ccparams['saturation']) - 1)        
         convertedccparams = [[ccparams['saturation'], growthratem], [ccparams['saturation'], growthratel], [ccparams['saturation'], growthrateu]]
                     
@@ -585,4 +587,3 @@ def makesamples(coparams, muz, stdevz, muf, stdevf, samplesize=1, randseed=None)
     fullsample = rtnorm(coparams[2], coparams[3], mu=muf, sigma=stdevf, size=samplesize)[0]
         
     return zerosample, fullsample
-
