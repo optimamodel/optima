@@ -245,6 +245,8 @@ class SimBoxOpt(SimBox):
         
         # Updates the alloc of this SimBudget according to the scaled values.
         sim.alloc = [curralloc[i]*(factor+(1-factor)*fixedtrue[i]) for i in xrange(len(curralloc))]
+        
+    
 
     def __repr__(self):
         return "SimBoxOpt %s ('%s')" % (self.uuid[0:8],self.name)

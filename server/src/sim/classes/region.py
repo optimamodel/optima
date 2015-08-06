@@ -255,18 +255,27 @@ class Region:
         except:
             print('Budget Objective Curve data does not seem to exist...')
         
-    def plotBOCspline(self):
+    def plotBOCspline(self, returnplot = False):
         import matplotlib.pyplot as plt
         from numpy import linspace
         
         try:
             f = self.getBOCspline()
             x = linspace(min(self.BOCx), max(self.BOCx), 200)
-            plt.plot(x,f(x),'-')
-            plt.legend(['BOC'], loc='best')
-            plt.show()
+            
+            fig = plt.figure()
+            ax = fig.add_subplot(111)
+            
+            plt.plot(x,f(x),'-',label='BOC')
+            if returnplot:
+                return ax
+            else:
+                plt.legend(loc='best')
+                plt.show()
         except:
             print('Plotting of Budget Objective Curve failed!')
+        
+        return None
         
     def hasBOC(self):
         if len(self.BOCx) == 0 and len(self.BOCy) == 0:
@@ -304,6 +313,18 @@ class Region:
             factors.append(factor)
         
         return factors
+    
+    # We assume that fixed-cost programs never change. This function returns their sum.
+    def returnfixedcostsum(self):
+        defaultalloc = self.data['origalloc']        
+        
+        # Work out which programs don't have an effect and are thus fixed costs (e.g. admin).
+        fixedtrue = [1.0]*(len(defaultalloc))
+        for i in xrange(len(defaultalloc)):
+            if len(self.metadata['programs'][i]['effects']): fixedtrue[i] = 0.0
+        fixedtotal = sum([defaultalloc[i]*fixedtrue[i] for i in xrange(len(defaultalloc))])
+        
+        return fixedtotal
 
 ###----------------------------------------------------------------------------       
         
