@@ -71,14 +71,16 @@ def getrealcosts(data):
 
     from math import isnan
     from datetime import date
-    from utils import smoothinterp
+    from utils import smoothinterp, sanitize
 
     cost = data['costcov']['cost']
     nprogs = len(data['costcov']['cost'])
     realcost = [[]]*nprogs
 
     # Get CPI, expand to all years
-    cpi = smoothinterp(newx=data['epiyears'], origx=data['epiyears'], origy=data['econ']['cpi']['past'][0], growth=data['econ']['cpi']['future'][0][0])
+    cpi = sanitize(data['econ']['cpi']['past'][0])
+    if len(cpi)<len(data['epiyears']): # Only interpolate if there's missing data
+        cpi = smoothinterp(newx=data['epiyears'], origx=data['epiyears'], origy=data['econ']['cpi']['past'][0], growth=data['econ']['cpi']['future'][0][0])
 
     # Set the CPI base year to the current year or the last year for which data were provided.
     cpibaseyearindex = data['epiyears'].index(min(data['epiyears'][-1],date.today().year))
@@ -135,8 +137,6 @@ def normalizeF(unnormF, M, G, normalizeall=False):
         if normalizeall: normF['popsize'][p] /= M['popsize'][p][0] # Divide by initial population size
     if normalizeall: normF['dx'][3] /= G['datayears'].mean() # Divide by mean data year
     return normF
-
-
 
 
 
