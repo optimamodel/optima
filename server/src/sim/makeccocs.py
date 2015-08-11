@@ -13,6 +13,7 @@ from numpy import log as nplog
 from rtnorm import rtnorm
 from printv import printv
 from datetime import date
+from utils import findinds
 
 ## Set coverage parameters...
 coverage_params = ['numcircum','numost','numpmtct','numfirstline','numsecondline']
@@ -432,7 +433,7 @@ def gettargetpop(D=None, artindex=None, progname=None):
                 elif thispar in ['numfirstline','numsecondline']: # Target population = diagnosed PLHIV
                     targetpopmodel = D['S']['people'][artindex,:,0:npts].sum(axis=(0,1))
                 elif thispar == 'numcircum': # Target population = men (??)
-                    maleindices = [i for i, x in enumerate(D['data']['meta']['pops']['female']) if x == 0]
+                    maleindices = findinds(D['data']['meta']['pops']['male'])
                     targetpopmodel = D['S']['people'][:,maleindices,0:npts].sum(axis = (0,1))
             else:
                 print('WARNING, Parameter %s of odd length %s' % (thispar, len(D['P'][thispar]['p'])))
