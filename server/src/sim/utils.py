@@ -167,7 +167,7 @@ def toc(start=0, label='', sigfigs=3):
     
 
 
-def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0):
+def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0, showcontents=False):
     """
     Nicely print a complicated data structure, a la Matlab.
     Arguments:
@@ -185,8 +185,10 @@ def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0):
         elif datatype==list: string = ('list of length %i' % len(data))
         elif datatype==tuple: string = ('tuple of length %i' % len(data))
         elif datatype==ndarray: string = ('array of shape %s' % str(shape(data)))
+        elif datatype.__name__=='module': string = ('module with %i components' % len(dir(data)))
+        elif datatype.__name__=='class': string = ('class with %i components' % len(dir(data)))
         else: string = datatype.__name__
-        if maxlen>0:
+        if showcontents and maxlen>0:
             datastring = ' | '+str(data)
             if len(datastring)>maxlen: datastring = datastring[:maxlen] + ' <etc> ' + datastring[-maxlen:]
         else: datastring=''
@@ -207,6 +209,13 @@ def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0):
         elif type(data) in [list, tuple]:
             for i in range(len(data)):
                 printdata(data[i], name='[%i]'%i, depth=depth-1, indent=indent, level=level)
+        elif type(data).__name__ in ['module', 'class']:
+            keys = dir(data)
+            maxkeylen = max([len(key) for key in keys])
+            for key in keys:
+                if key[0]!='_': # Skip these
+                    thisindent = ' '*(maxkeylen-len(key))
+                    printdata(getattr(data,key), name=key, depth=depth-1, indent=indent+thisindent, level=level)
         print('\n')
     return None
 
