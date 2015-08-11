@@ -204,7 +204,8 @@ def makeco(D=None, progname=None, effect=None, coparams=None, coverage_params=co
 
         # Populate output structure with axis limits
         plotdata['xlowerlim'], plotdata['ylowerlim']  = 0.0, 0.0
-        plotdata['xupperlim'] = 1.0 if coveragelabel == 'Proportion covered' else max([j if ~isnan(j) else 0.0 for j in coverage])*1.5
+        targetpop = gettargetpop(D=D, artindex=artindex, progname=progname)
+        plotdata['xupperlim'] = 1.0 if coveragelabel == 'Proportion covered' else targetpop[-1]
         plotdata['yupperlim'] = 1.0 if any(j < 1 for j in outcome) else max([j if ~isnan(j) else 0.0 for j in outcome])*1.5
 
         # Populate output structure with scatter data 
