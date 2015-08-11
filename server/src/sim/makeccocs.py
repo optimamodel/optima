@@ -235,6 +235,7 @@ def makeco(D=None, progname=None, effect=None, coparams=None, coverage_params=co
             # Populate output structure with coverage-outcome curves for plotting
             plotdata['xlinedata'] = xvalsco # X data for all line plots
             plotdata['ylinedata'] = [linspace(muz,muf,nxpts), ymax, ymin] # ALL Y data (for three lines)
+            plotdata['yupperlim'] = max(ymax[-1], plotdata['yupperlim'])
 
         # Populate output structure with labels and titles
         plotdata['title'] = input_parameter_name(parname)+ ' - ' + popname
