@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Loads the Indonesian xlsx and converts into seven regional xlsx files.
+Loads the Malawi xlsx and converts into 32 regional (technically district) xlsx files.
 
-Created on Thu Jul 09 19:11:49 2015
+Created on Thu Aug 10 19:00:00 2015
 
 @author: David Kedziora, Romesh Abeysuriya
 """
