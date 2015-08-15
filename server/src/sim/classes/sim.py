@@ -114,7 +114,7 @@ class Sim:
         return self.processed
     
     # Initialises P, M and F matrices belonging to the Sim object, but does not run simulation yet.
-    def initialise(self):
+    def initialise(self, forcebasicmodel = False):
         r = self.getregion()
         calibration = self.getcalibration()
 
@@ -130,8 +130,12 @@ class Sim:
         tempD['G']['nprogs'] = len(r.metadata['programs'])
 
         self.makedatapars()
-
-        self.makemodelpars()
+        
+        # Sometimes you'll want derived Sim classes to use Sim's basic makemodelpars function. Turn on forcebasicmodel for that.
+        if forcebasicmodel:
+            Sim.makemodelpars(self)
+        else:
+            self.makemodelpars()
 
         self.parsfitted = calibration['metaparameters']
         self.initialised = True

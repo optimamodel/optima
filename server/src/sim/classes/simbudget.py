@@ -32,6 +32,8 @@ class SimBudget(Sim):
         
         self.obj = None                                             # The current objective function value for the origalloc budget.
 
+        
+
     def todict(self):
         simdict = Sim.todict(self)
         simdict['type'] = 'SimBudget'
@@ -52,6 +54,11 @@ class SimBudget(Sim):
         
     def isoptimised(self):
         return self.optimised
+        
+    # SimBudget actually needs to run once as a standard Sim so as to generate a default D.S structure (for getcurrentbudget purposes).
+    def initialise(self):
+        Sim.initialise(self, forcebasicmodel = True)
+        Sim.run(self)
         
     def makemodelpars(self,randseed=0):
         Sim.makemodelpars(self)
