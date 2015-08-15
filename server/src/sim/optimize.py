@@ -26,7 +26,7 @@ from ballsd import ballsd
 def runmodelalloc(D, thisalloc, origalloc, parindices, randseed, rerunfinancial=False, verbose=2):
     """ Little function to do calculation since it appears so many times """
     newD = deepcopy(D)
-    newD, newcov, newnonhivdalysaverted = getcurrentbudget(newD, thisalloc, randseed=randseed) # Get cost-outcome curves with uncertainty
+    newD = getcurrentbudget(newD, thisalloc, randseed=randseed) # Get cost-outcome curves with uncertainty
     newM = makemodelpars(newD['P'], newD['opt'], withwhat='c', verbose=0) # Don't print out
     
     # Hideous hack for ART to use linear unit cost
@@ -51,8 +51,8 @@ def runmodelalloc(D, thisalloc, origalloc, parindices, randseed, rerunfinancial=
     R['debug']['S'] = deepcopy(S)
     R['debug']['newbudget'] = deepcopy(thisalloc)     # Assuming thisalloc is the optimised full budget, it is being stored...
     return R
-
-
+    
+    
 
 def constrainbudget(origbudget, total=None, limits=None):
     """ Take an unnormalized/unconstrained budget and normalize and constrain it """
