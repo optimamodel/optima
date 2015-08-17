@@ -20,6 +20,7 @@ from model import model
 from makemodelpars import makemodelpars
 from quantile import quantile
 from ballsd import ballsd
+from getcurrentbudget import getcoverage
 
 
 
@@ -332,7 +333,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
                 bestallocval = fvalarr[s][-1]
                 bestallocind = s
         if bestallocind == -1: print('WARNING, best allocation value seems to be infinity!')
-        
+
         # Update the model and store the results
         result = dict()
         result['kind'] = 'constant'
@@ -340,6 +341,12 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         result['allocarr'] = [] # List of allocations
         result['allocarr'].append(quantile([origalloc])) # Kludgy -- run fake quantile on duplicated origalloc just so it matches
         result['allocarr'].append(quantile(allocarr)) # Calculate allocation arrays 
+        result['covnumarr'] = [] # List of coverage levels
+        result['covnumarr'].append(getcoverage(D, alloc=result['allocarr'][0].T)['num'].T) # Original coverage
+        result['covnumarr'].append(getcoverage(D, alloc=result['allocarr'][-1].T)['num'].T) # Coverage under last-run optimization
+        result['covperarr'] = [] # List of coverage levels
+        result['covperarr'].append(getcoverage(D, alloc=result['allocarr'][0].T)['per'].T) # Original coverage
+        result['covperarr'].append(getcoverage(D, alloc=result['allocarr'][-1].T)['per'].T) # Coverage under last-run optimization
         labels = ['Original','Optimal']
         result['Rarr'] = [dict(), dict()]
         result['Rarr'][0]['R'] = options['tmpbestdata'][0]['R']
@@ -387,7 +394,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         options['fundingchanges'] = fundingchanges # Constraints-based funding changes
         parammin = concatenate((fundingchanges['total']['dec'], ones(nprogs)*-1e9))  
         parammax = concatenate((fundingchanges['total']['inc'], ones(nprogs)*1e9))  
-        options['randseed'] = None
+        options['randseed'] = 1
         
         
         

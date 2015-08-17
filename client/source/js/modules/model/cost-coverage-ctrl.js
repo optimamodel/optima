@@ -65,6 +65,7 @@ define(['./module', 'underscore'], function (module, _) {
         funding: $scope.state.knownFundingValue,
         scaleup: $scope.state.scaleUpParameter,
         nonhivdalys: $scope.state.nonHivDalys,
+        xupperlim: $scope.state.xAxisMaximum,
         cpibaseyear: $scope.state.displayYear,
         perperson: $scope.state.calculatePerPerson
       };
@@ -164,6 +165,7 @@ define(['./module', 'underscore'], function (module, _) {
       $scope.state.scaleUpParameter = program.ccparams.scaleup;
       $scope.state.nonHivDalys = program.ccparams.nonhivdalys;
       $scope.state.displayYear = program.ccparams.cpibaseyear;
+      $scope.state.xAxisMaximum = program.ccparams.xupperlim;
       $scope.state.calculatePerPerson = program.ccparams.perperson;
       $scope.state.info = info;
 
