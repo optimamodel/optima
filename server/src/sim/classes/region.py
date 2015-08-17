@@ -6,7 +6,7 @@ Created on Fri May 29 23:16:12 2015
 """
 
 import defaults
-from simbox import SimBox, SimBoxOpt
+from simbox import SimBox, SimBoxCal, SimBoxOpt
 import sim
 import setoptions
 import uuid
@@ -149,56 +149,6 @@ class Region(object):
                     newsim.create_override(par['names'],par['pops'],par['startyear'],par['endyear'],par['startval'],par['endval'])
                 sbox.simlist.append(newsim)
 
-    def calibration_from_data(self,name='Data (auto)',verbose=2):
-        # Create a new calibration in the region corresponding to the data. This draws on code
-        # from makedatapars
-
-        def dataindex(dataarray, index):
-            """ Take an array of data return either the first or last (...or some other) non-NaN entry """
-            nrows = shape(dataarray)[0] # See how many rows need to be filled (either npops, nprogs, or 1)
-            output = zeros(nrows) # Create structure
-            for r in xrange(nrows): 
-                output[r] = sanitize(dataarray[r])[index] # Return the specified index -- usually either the first [0] or last [-1]
-            
-            return output
-        
-        c = {}
-        c['uuid'] = str(uuid.uuid4())
-        c['name'] = name
-
-
-        ## Key parameters - These were hivprev and pships, and are now in the calibration
-        for parname in self.data['key'].keys():
-            c[parname] = dataindex(self.data['key'][parname][0], 0) # Population size and prevalence -- # TODO: use uncertainties!
-        
-        # Matrices
-        for parclass in ['pships', 'transit']:
-            printv('Converting data parameter %s...' % parclass, 3, verbose)
-            c[parclass] = self.data[parclass]
-
-        # Constants
-        c['const'] = dict()
-        for parclass in self.data['const'].keys():
-            if type(self.data['const'][parclass])==dict: 
-                c['const'][parclass] = dict()
-                for parname in self.data['const'][parclass].keys():
-                    c['const'][parclass][parname] = self.data['const'][parclass][parname][0] # Taking best value only, hence the 0
-        
-        ## !! unnormalizeF requires D.M...? But what if this is not in sync somehow?
-        ## It's also unclear how this could work in the original code...
-        ## This suggests that unnormalization of the metaparameters should be performed
-        ## automatically inside the sim prior to running
-        c['metaparameters'] = [dict() for s in xrange(self.options['nsims'])]
-        for s in xrange(self.options['nsims']):
-            span=0 if s==0 else 0.5 # Don't have any variance for first simulation
-            c['metaparameters'][s]['init']  = perturb(len(self.metadata['populations']),span)
-            c['metaparameters'][s]['popsize'] = perturb(len(self.metadata['populations']),span)
-            c['metaparameters'][s]['force'] = perturb(len(self.metadata['populations']),span)
-            c['metaparameters'][s]['inhomo'] = zeros(len(self.metadata['populations'])).tolist()
-            c['metaparameters'][s]['dx']  = perturb(4,span)
-            #c['metaparameters'][s] = unnormalizeF(D['F'][s], D['M'], D['G'], normalizeall=True) # Un-normalize F
-        self.calibrations.append(c)
-
     def save(self,filename):
         import dataio
         dataio.savedata(filename,self.todict())
@@ -223,8 +173,13 @@ class Region(object):
 
         return regiondict
 
-    def createsimbox(self, simboxname, isopt = False, createdefault = True):
-        if isopt:
+    def createsimbox(self, simboxname, iscal = False, isopt = False, createdefault = True):
+        if iscal and isopt:
+            print('Error: Cannot create a simbox that is simultaneously for calibration and optimisation.')
+            return None
+        if iscal:
+            self.simboxlist.append(SimBoxCal(simboxname,self))
+        elif isopt:
             self.simboxlist.append(SimBoxOpt(simboxname,self))
         else:
             self.simboxlist.append(SimBox(simboxname,self))
@@ -300,18 +255,27 @@ class Region(object):
         except:
             print('Budget Objective Curve data does not seem to exist...')
         
-    def plotBOCspline(self):
+    def plotBOCspline(self, returnplot = False):
         import matplotlib.pyplot as plt
         from numpy import linspace
         
         try:
             f = self.getBOCspline()
             x = linspace(min(self.BOCx), max(self.BOCx), 200)
-            plt.plot(x,f(x),'-')
-            plt.legend(['BOC'], loc='best')
-            plt.show()
+            
+            fig = plt.figure()
+            ax = fig.add_subplot(111)
+            
+            plt.plot(x,f(x),'-',label='BOC')
+            if returnplot:
+                return ax
+            else:
+                plt.legend(loc='best')
+                plt.show()
         except:
             print('Plotting of Budget Objective Curve failed!')
+        
+        return None
         
     def hasBOC(self):
         if len(self.BOCx) == 0 and len(self.BOCy) == 0:
@@ -349,6 +313,18 @@ class Region(object):
             factors.append(factor)
         
         return factors
+    
+    # We assume that fixed-cost programs never change. This function returns their sum.
+    def returnfixedcostsum(self):
+        defaultalloc = self.data['origalloc']        
+        
+        # Work out which programs don't have an effect and are thus fixed costs (e.g. admin).
+        fixedtrue = [1.0]*(len(defaultalloc))
+        for i in xrange(len(defaultalloc)):
+            if len(self.metadata['programs'][i]['effects']): fixedtrue[i] = 0.0
+        fixedtotal = sum([defaultalloc[i]*fixedtrue[i] for i in xrange(len(defaultalloc))])
+        
+        return fixedtotal
 
 ###----------------------------------------------------------------------------       
         
@@ -455,8 +431,10 @@ class Region(object):
         self.data = updatedata.getrealcosts(data)
         self.data['current_budget'] = self.data['costcov']['cost']
         
-        # Finally, create a calibration from the data
-        self.calibration_from_data()
+        # Finally, create a calibration from the data.
+        simbox = self.createsimbox(self.getregionname() + '-default-calibration', iscal = True, createdefault = True)
+        simbox.calibratefromdefaultdata()
+        self.simboxlist.remove(simbox)      # Deletes temporary SimBoxCal.
 
         if 'meta' not in self.metadata.keys():
             self.metadata['meta'] = self.data['meta']

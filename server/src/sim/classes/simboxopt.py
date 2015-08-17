@@ -42,9 +42,12 @@ class SimBoxOpt(SimBox):
         
     # Overwrites normal SimBox method so that SimBudget is not only run, but optimised, with the results copied to a new SimBudget.
     def runallsims(self, forcerun = False, forceopt = False):
+        numsims = len(self.simlist)        
         
-        # Reversed so that the loop doesn't keep including new SimBudgets appended to simlist.
-        for sim in reversed(self.simlist):
+        # The loop only optimises unoptimised SimBudgets that were already in the simlist before new ones were added.
+        # This assumes the first 'numsims' amount of SimBudgets were originally in the list. Deleting and shuffling positions will cause problems!
+        for x in xrange(numsims):
+            sim = self.simlist[x]
             if forcerun or not sim.isprocessed():
                 sim.run()
             if sim.isprocessed() and (forceopt or not sim.isoptimised()):
@@ -99,7 +102,7 @@ class SimBoxOpt(SimBox):
             origsim.optimised = True
             
             print('Converting optimisation results into a new budget simulation...')
-            newsim = self.createsim(origsim.getname(), optbudget, forcecreate = True)
+            newsim = self.createsim(origsim.getname() + ' Optimised', optbudget, forcecreate = True)
             newsim.run()
         
         return (optbudget, optobj, makenew)
@@ -242,6 +245,8 @@ class SimBoxOpt(SimBox):
         
         # Updates the alloc of this SimBudget according to the scaled values.
         sim.alloc = [curralloc[i]*(factor+(1-factor)*fixedtrue[i]) for i in xrange(len(curralloc))]
+        
+    
 
     def __repr__(self):
         return "SimBoxOpt %s ('%s')" % (self.uuid[0:8],self.name)

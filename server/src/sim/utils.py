@@ -34,7 +34,18 @@ def findinds(val1, val2=None, eps=1e-6):
     if ndim(val1)==1: # Uni-dimensional
         output = output[0] # Return an array rather than a tuple of arrays if one-dimensional
     return output
-
+    
+    
+def dataindex(dataarray, index):        
+    """ Take an array of data and return either the first or last (or some other) non-NaN entry. """
+    from numpy import zeros, shape
+    
+    nrows = shape(dataarray)[0] # See how many rows need to be filled (either npops, nprogs, or 1).
+    output = zeros(nrows)       # Create structure
+    for r in xrange(nrows): 
+        output[r] = sanitize(dataarray[r])[index] # Return the specified index -- usually either the first [0] or last [-1]
+    
+    return output
 
 
 def smoothinterp(newx=None, origx=None, origy=None, smoothness=10, growth=None):

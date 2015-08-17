@@ -19,9 +19,11 @@ from geoprioritisation import gpaoptimisefixedtotal
 class Portfolio(object):
     def __init__(self, portfolioname):
         self.regionlist = []                # List to hold Region objects.
+        self.gpalist = []                   # List to hold GPA runs, specifically lists of SimBoxOpt references, for quick use.
+                                            # Will need to be careful about error checking when deletions are implemented.
         self.portfolioname = portfolioname
         self.cwd = os.getcwd()              # Should get the current working directory where Portfolio object is instantiated.
-        self.regd = self.cwd + '/regions'  # May be good to remove hardcoding at some stage...
+        self.regd = self.cwd + '/regions'   # May be good to remove hardcoding at some stage...
         
     def run(self):
         """
@@ -121,10 +123,28 @@ class Portfolio(object):
                         self.improveregionBOC(self.regionlist[int(regionid)-1], factorlist)
                     else:
                         print('Region ID numbers only range from 1 to %i, inclusive.' % len(self.regionlist))
-                    
+                        
             # If command is 'gpa', create GPA SimBoxes in each region.
             if cmdinput == 'gpa' and len(self.regionlist) > 1:
                 self.geoprioanalysis()
+                
+            # If command is 'review', plot all information relevant to a previous GPA run.
+            if cmdinput == 'review' and len(self.gpalist) > 0:
+                
+                for gparun in xrange(len(self.gpalist)):
+                    print('GPA %i...' % (gparun + 1))
+                    for gpasimbox in self.gpalist[gparun]:
+                        print(' --> %s' % gpasimbox.getname())
+                    
+                # Makes sure that an integer is specified.
+                while fchoice not in arange(1,len(self.gpalist)+1):
+                    try:
+                        fchoice = int(raw_input('Choose a number between 1 and %i, inclusive: ' % len(self.gpalist)))
+                    except ValueError:
+                        fchoice = 0
+                        continue
+                    
+                self.geoprioreview(self.gpalist[fchoice-1])
                 
             # If command is 'qs', save to default region filenames (overwriting if necessary).
             if cmdinput == 'qs':
@@ -138,6 +158,8 @@ class Portfolio(object):
                 print('To run this analysis, type: gpa')
                 print("To recalculate cost-effectiveness data for a region numbered 'region_id', type: refine region_id")
                 print("To calculate additional cost-effectiveness data for a region numbered 'region_id', type: improve region_id")
+                if len(self.gpalist) > 0:
+                    print('To review results from previous GPA runs, type: review')
             
             print("To make a new region titled 'region_name', type: make region_name")
             if len(self.regionlist) > 0:
@@ -280,8 +302,7 @@ class Portfolio(object):
 ### GPA Methods
 
     # Iterate through loaded regions. Develop default BOCs if they do not have them.
-    def geoprioanalysis(self, gpaname = 'test'):
-        # gpaname = raw_input('Enter a title for the current analysis: ')
+    def geoprioanalysis(self, gpaname = 'Test'):
         
         varfactors = [0.0, 0.3, 0.6, 1.0, 1.8, 3.2, 10.0]
 #        varfactors = [0.0, 1.0, 2.0]
@@ -293,26 +314,116 @@ class Portfolio(object):
             else:
                 print('Region %s already has a Budget Objective Curve.' % currentregion.getregionname())
         
-        newtotals = gpaoptimisefixedtotal(self.regionlist)        
+        newtotals = gpaoptimisefixedtotal(self.regionlist)
+        gpasimboxlist = []      # List to link to GPA simboxes. Again, will need to error check if deletions are implemented.
         for i in xrange(len(newtotals)):
             currentregion = self.regionlist[i]
             print('Initialising a simulation container in region %s for this GPA.' % currentregion.getregionname())
-            tempsimbox = currentregion.createsimbox('GPA-'+gpaname, isopt = True, createdefault = False)
-            initsimorig = tempsimbox.createsim('GPA-'+gpaname+'-init', forcecreate = False)
-            initsimcopy = tempsimbox.createsim('GPA-'+gpaname+'-initcopy', forcecreate = True)
+            tempsimbox = currentregion.createsimbox('GPA '+gpaname+' - '+currentregion.getregionname(), isopt = True, createdefault = False)
+            initsimorig = tempsimbox.createsim(currentregion.getregionname()+' - Initial', forcecreate = False)
+            initsimcopy = tempsimbox.createsim(currentregion.getregionname()+' - GPA', forcecreate = True)
             tempsimbox.scalealloctototal(initsimcopy, newtotals[i])
             currentregion.runsimbox(tempsimbox)
             tempsimbox.simlist.remove(initsimcopy)
-#            tempsimbox.createsimoptgpa(newtotals[i])
             tempsimbox.viewoptimresults(plotasbar = True)
-#                currentregion.developBOC(tempsimbox)
-#                self.simboxref.append(tempsimbox)
-#            else:
-#                self.simboxref.append(currentregion.getsimboxwithBOC())     # Note: Kludgy but the best that can be done without user input.
-#        
-#        newtotals = gpaoptimisefixedtotal(self.regionlist)
-#        for i in xrange(len(newtotals)):
-#            self.simboxref[i].copysimoptfornewtotal(newtotals[i])
+            gpasimboxlist.append(tempsimbox)
+         
+        self.gpalist.append(gpasimboxlist)      # Attach list of simboxes to GPA list for easy recall.
+    
+    # Iterate through loaded regions. Develop default BOCs if they do not have them.
+    def geoprioreview(self, gpasimboxlist):
+        
+        for gpasimbox in gpasimboxlist:
+            print(gpasimbox.getname())
+            gpasimbox.getregion().plotsimbox(gpasimbox, multiplot = True)   # Note: Really stupid excessive way of doing all plots. May simplify later.
+        
+        # Display GPA results for debugging purposes. Modified version of code in geoprioritisation.py. May fuse later.
+        totsumin = 0
+        totsumopt = 0
+        totsumgpaopt = 0
+        esttotsuminobj = 0
+        esttotsumoptobj = 0
+        esttotsumgpaoptobj = 0
+        realtotsuminobj = 0
+        realtotsumoptobj = 0
+        realtotsumgpaoptobj = 0
+        for i in xrange(len(gpasimboxlist)):
+            r = gpasimboxlist[i].getregion()
+            regionname = r.getregionname()
+
+            print('Region %s...' % regionname)
+            sumin = sum(gpasimboxlist[i].simlist[0].alloc)
+            sumopt = sum(gpasimboxlist[i].simlist[1].alloc)
+            sumgpaopt = sum(gpasimboxlist[i].simlist[2].alloc)
+            estsuminobj = r.getBOCspline()([sumin])
+            estsumoptobj = r.getBOCspline()([sumopt])
+            estsumgpaoptobj = r.getBOCspline()([sumgpaopt])
+            realsuminobj = gpasimboxlist[i].simlist[0].calculateobjectivevalue()
+            realsumoptobj = gpasimboxlist[i].simlist[1].calculateobjectivevalue()
+            realsumgpaoptobj = gpasimboxlist[i].simlist[2].calculateobjectivevalue()
+            
+            import matplotlib.pyplot as plt
+            ax = r.plotBOCspline(returnplot = True)
+            ms = 10
+            mw = 2
+            ax.plot(sumopt, estsumoptobj, 'x', markersize = ms, markeredgewidth = mw, label = 'Init. Opt. Est.')
+            ax.plot(sumopt, realsumoptobj, '+', markersize = ms, markeredgewidth = mw, label = 'Init. Opt. Real')
+            ax.plot(sumgpaopt, estsumgpaoptobj, 'x', markersize = ms, markeredgewidth = mw, label = 'GPA Opt. Est.')
+            ax.plot(sumgpaopt, realsumgpaoptobj, '+', markersize = ms, markeredgewidth = mw, label = 'GPA Opt. Real')
+            ax.legend(loc='best')
+            plt.show()
+            
+            if sumin == sumopt:
+                print('Initial Unoptimised/Optimised Budget Total: $%.2f' % sumin)
+            else:
+                print('Initial Unoptimised Budget Total: $%.2f' % sumin)
+                print('Initial Optimised Budget Total: $%.2f' % sumopt)
+            print('GPA Optimised Budget Total: $%.2f' % sumgpaopt)
+            print
+            if not sumin == sumopt: print('Initial Unoptimised Objective Estimate (BOC): %f' % estsuminobj)
+            print('Initial Optimised Objective Estimate (BOC): %f' % estsumoptobj)
+            print('GPA Optimised Objective Estimate (BOC): %f' % estsumgpaoptobj)
+            print
+            if not sumin == sumopt: print('Initial Unoptimised BOC Derivative: %.3e' % r.getBOCspline().derivative()(sumin))
+            print('Initial Optimised BOC Derivative: %.3e' % r.getBOCspline().derivative()(sumopt))
+            print('GPA Optimised BOC Derivative: %.3e' % r.getBOCspline().derivative()(sumgpaopt))
+            print
+            print('Initial Unoptimised Real Objective: %f' % realsuminobj)
+            print('Initial Optimised Real Objective: %f' % realsumoptobj)
+            print('GPA Optimised Real Objective: %f' % realsumgpaoptobj)
+            print('BOC Estimate was off for %s objective by: %f (%f%%)' % (regionname, estsumgpaoptobj-realsumgpaoptobj, 100*abs(estsumgpaoptobj-realsumgpaoptobj)/realsumgpaoptobj))
+            print('\n')
+            
+            totsumin += sumin
+            totsumopt += sumopt
+            totsumgpaopt += sumgpaopt
+            esttotsuminobj += estsuminobj
+            esttotsumoptobj += estsumoptobj
+            esttotsumgpaoptobj += estsumgpaoptobj
+            realtotsuminobj += realsuminobj
+            realtotsumoptobj += realsumoptobj
+            realtotsumgpaoptobj += realsumgpaoptobj
+            
+        print('\nGPA Aggregated Results...\n')
+        if totsumin == totsumopt:
+            print('Initial Unoptimised/Optimised Budget Grand Total: $%.2f' % totsumin)
+        else:
+            print('Initial Unoptimised Budget Grand Total: $%.2f' % totsumin)
+            print('Initial Optimised Budget Grand Total: $%.2f' % totsumopt)
+        print('GPA Optimised Budget Grand Total: $%.2f' % totsumgpaopt)
+        print
+        if not totsumin == totsumopt: print('Initial Unoptimised Objective Sum Estimate (BOC): %f' % esttotsuminobj)
+        print('Initial Optimised Objective Sum Estimate (BOC): %f' % esttotsumoptobj)
+        print('GPA Optimised Objective Sum Estimate (BOC): %f' % esttotsumgpaoptobj)
+        print('Aggregate Objective Improvement Estimate (BOC): %f (%f%%)' % (esttotsumgpaoptobj-esttotsumoptobj, 100*(esttotsumoptobj-esttotsumgpaoptobj)/esttotsumoptobj))
+        print
+        print('Initial Unoptimised Real Objective Sum: %f' % realtotsuminobj)
+        print('Initial Optimised Real Objective Sum: %f' % realtotsumoptobj)
+        print('GPA Optimised Real Objective Sum: %f' % realtotsumgpaoptobj)
+        print('BOC Estimate was off for aggregate objective by: %f (%f%%)' % (esttotsumgpaoptobj-realtotsumgpaoptobj, 100*abs(esttotsumgpaoptobj-realtotsumgpaoptobj)/realtotsumgpaoptobj))
+        print('Real Aggregate Objective Improvement: %f (%f%%)' % (realtotsumgpaoptobj-realtotsumoptobj, 100*(realtotsumoptobj-realtotsumgpaoptobj)/realtotsumoptobj))        
+        print('\n')
+        
 
     def refineregionBOC(self, region):
         region.recalculateBOC()
