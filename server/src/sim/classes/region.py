@@ -25,7 +25,7 @@ from scipy.interpolate import PchipInterpolator as pchip
 #    return x**2
 
 ### The actual Region class.
-class Region:
+class Region(object):
     def __init__(self, name,populations,programs,datastart,dataend):
         # The standard constructor takes in the initial metadata directly
         # In normal usage, this information would come from the frontend

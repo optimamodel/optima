@@ -16,7 +16,7 @@ from numpy import arange
 from region import Region
 from geoprioritisation import gpaoptimisefixedtotal
 
-class Portfolio:
+class Portfolio(object):
     def __init__(self, portfolioname):
         self.regionlist = []                # List to hold Region objects.
         self.portfolioname = portfolioname

@@ -15,7 +15,7 @@ from utils import sanitize
 from printv import printv
 from numpy import zeros, array, exp, shape
 
-class Sim:
+class Sim(object):
     def __init__(self, name, region, calibration = None):
         self.name = name
         self.initialised = False    # This tag monitors if the simulation has been initialised.        

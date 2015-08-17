@@ -107,22 +107,39 @@ class TestPrograms(unittest.TestCase):
 
 	def test_overlapping_coverage(self):
 		# Test overlapping coverage only
-
+		print "ENTERING DEBUG"
 		p = program.Program('short_name','full_name',default_effects)
 		ccdata = {'function': 'linear', 'parameters': [1.0, 0.0]}
 		codata = [{'function': 'identity', 'parameters': None}] # Linear coverage-outcome from 0 to 1 exactly
 		m1 = p.add_modality('M1',ccdata,codata)
 		m2 = p.add_modality('M2',ccdata,codata)
 
-		# TESTS - if we have
-		# m1, m2
-		# mm1 = m1
-		# mm2 = m2
-		# mm3 = m1+m2
-		# Then mm1 = mm3 == m1/2
-		# m2 - mm3 = mm2
+		def validate(m1,m2,mm1,mm2,mm3):
+			# TESTS - if we have
+			# m1, m2
+			# mm1 = m1
+			# mm2 = m2
+			# mm3 = m1+m2
+			# Then mm1 = mm3 == m1/2
+			# m2 - mm3 = mm2
+
+			self.assertAlmostEqual(mm1,mm3,places=7) 
+			self.assertAlmostEqual(mm1,m1/2,places=7) 
+			self.assertAlmostEqual(m2-mm3,mm2,places=7) 
 
 
+		c = p.get_coverage(numpy.array([[0.5],[0.5]]))
+		validate(0.5,0.5,c[0],c[2],c[1])
+
+		c = p.get_coverage(numpy.array([[0.25],[0.5]]))
+		validate(0.25,0.5,c[0],c[2],c[1])
+
+		c = p.get_coverage(numpy.array([[0.0],[0.5]]))
+		validate(0.0,0.5,c[0],c[2],c[1])
+
+		c = p.get_coverage(numpy.array([[0.5],[0.0]]))
+		validate(0.5,0.0,c[0],c[2],c[1])
+		
 		return
 		
 	def test_overlapping_spending(self):

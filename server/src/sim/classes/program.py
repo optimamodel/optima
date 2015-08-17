@@ -7,7 +7,7 @@ from numpy import linspace, exp, isnan, multiply, arange, mean, array, maximum
 from numpy import log as nplog
 
 
-class Program:
+class Program(object):
 	def __init__(self,name,full_name = None,effects = {},category = 'None'):
 		self.name = name
 		if full_name is None:
@@ -81,27 +81,39 @@ class Program:
 		#
 		# Note that coverage is *supposed* to always be in normalized units (i.e. percentage of population)
 		# The method program.convert_units() does the conversion to number of people at the last minute
-		#
-		# TODO: This function needs to contain the contents of reflow_metamodalities, working on the actual coverage values
-
+		
 		if len(self.modalities) == 1:
 			spending = array([[spending]]) # Need a better solution...
 
 		assert(len(spending)==len(self.modalities))
 
-		# First, get the coverage for each modality
-		coverage = []
+		# First, get the temporary coverage for each modality
 		for i in xrange(0,len(spending)):
-			coverage.append(self.modalities[i].get_coverage(spending[i,:]))
+			self.modalities[i].temp_coverage = self.modalities[i].get_coverage(spending[i,:])
+		
+		print self.modalities[0].temp_coverage
+
+		# Now compute the metamodality coverage
+		if self.reachability_interaction == 'random':
+			for mm in self.metamodalities:
+				mm.temp_coverage1 = reduce(mul,[m.temp_coverage for m in self.modalities if m.uuid in mm.modalities]) # This is the total fraction reached
+				
+			for i in xrange(len(self.modalities),0,-1): # Iterate over metamodalities containing i modalities
+				superset = [mm for mm in self.metamodalities if len(mm.modalities) >= i]
+				subset = [mm for mm in self.metamodalities if len(mm.modalities) == i-1]
+
+				for sub in subset:
+					for sup in superset: 
+						if set(sub.modalities).issubset(set(sup.modalities)):
+							sub.temp_coverage1 -= sup.temp_coverage1
+
+		print 'rerun'					
+		print self.modalities[0].temp_coverage
+
 
 		# Next, calculate the coverage for each metamodality
-		effective_coverage = []
-		for mm in self.metamodalities:
-			effective_coverage.append(mm.get_coverage(self.modalities,coverage))
-
-		# Return the metamodality coverage
-		# The indexing is
-		# effective_coverage[metamodality][effect][time]
+		effective_coverage = [mm.temp_coverage1 for mm in self.metamodalities]
+		
 		return effective_coverage
 
 	def get_outcomes(self,effective_coverage):
@@ -154,7 +166,6 @@ class Program:
 		for i in xrange(0,current_metamodalities):
 			self.metamodalities.append(Metamodality([new_modality],metamodality=self.metamodalities[i]))
 		self.metamodalities.append(Metamodality([new_modality]))
-		self.reflow_metamodalities()
 
 		return new_modality
 
@@ -162,43 +173,7 @@ class Program:
 		raise Exception('Not fully implemented yet!')
 		idx = 1 # Actually look up the modality by name or by uuid
 		m = self.modalities.pop(idx)
-		self.reflow_metamodalities()
 		return m
-
-	def reflow_metamodalities(self):
-		# This function goes through and calculates the metamodality maxcoverage
-		# and enforces no double counting (when reachability interaction is not additive)
-
-		# Need to use the actual modality coverages instead of the maxcoverage
-		if self.reachability_interaction == 'random':
-			# Random reachability means that if modality 1 is capable of reaching 40/100 people, and 
-			# modality 2 is capable of reaching 20/100 people, then the probability of one person being reached
-			# by both programs is (40/100)*(20/100)
-			for mm in self.metamodalities:
-				mm.maxcoverage = reduce(mul,[m.maxcoverage for m in self.modalities if m.uuid in mm.modalities]) # This is the total fraction reached
-			
-			# print 'MODALITIES'
-			# print [m.maxcoverage for m in self.modalities]
-			# print 'BEFORE'
-			# print [mm.maxcoverage for mm in self.metamodalities]
-			# print sum([mm.maxcoverage for mm in self.metamodalities])
-			# Now we go through the subsets - basically, if metamodality 1 is a subset of metamodality 2, then we subtract metamodality 2's coverage from metamodality 1
-			for i in xrange(len(self.modalities),0,-1): # Iterate over metamodalities containing i modalities
-				superset = [mm for mm in self.metamodalities if len(mm.modalities) >= i]
-				subset = [mm for mm in self.metamodalities if len(mm.modalities) == i-1]
-
-
-				for sub in subset:
-					for sup in superset: 
-						if set(sub.modalities).issubset(set(sup.modalities)):
-							sub.maxcoverage -= sup.maxcoverage
-
-			# print 'AFTER'
-			# print [mm.maxcoverage for mm in self.metamodalities]
-			# print sum([mm.maxcoverage for mm in self.metamodalities])
-			# The above sum should be <= 1, otherwise double-counting is definitely occuring
-			# print '----'
-
 
 class Metamodality:
 	# The metamodality knows the coverage (number of people) who fall into the overlapping category
@@ -210,20 +185,10 @@ class Metamodality:
 	def __init__(self,modalities,method='maximum',metamodality=None,overlap=None): # where m1 and m2 are Modality instances
 		self.modalities = [m.uuid for m in modalities]
 
-		# The reason for storing self.maxcoverage here is because it might be over-ridden
-		# manually by users in the future. This is the quantity that defines the extent to which
-		# the modalities overlap 
-		self.maxcoverage = min([m.maxcoverage for m in modalities]) # Default upper bound on fractional coverage of the total population
-		
-
-
 		if metamodality is not None:
 			self.modalities += metamodality.modalities # Append the UUIDs from the previous metamodality object
 
-		# We do not store weakrefs here because conversion from class to dict
-		# may be frequent here, and it could become expensive if the references
-		# are regenerated too frequently
-
+		self.temp_coverage = 0 # This is used internally by program.get_coverage()
 		self.method = method
 
 	def get_outcomes(self,modalities,effective_coverage):
@@ -287,10 +252,7 @@ class Modality:
 		# The functions take in convertedcc_data and convertedco_data, which are stored internally
 		self.name = name
 
-		# This variable may be removed in future once the algorithm/calculations are more finalized
-		# This is because the maxcoverage can also be accounted for in the ccfun()
-		# For now, self.maxcoverage scales the total coverage and helps to work out the metamodality coverage
-		self.maxcoverage = maxcoverage # The maximum fraction of the total population that this modality can reach
+		self.temp_coverage = 0 # This is used internally by program.get_coverage()
 
 		# Cost-Coverage - the modality contains one
 		self.cc_data = cc_data
