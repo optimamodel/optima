@@ -67,6 +67,8 @@ class SimBoxOpt(SimBox):
         tempD['programs'] = deepcopy(r.metadata['programs'])
         tempD['G'] = deepcopy(r.metadata)
         tempD['P'] = deepcopy(origsim.parsdata)
+        for key in origsim.getcalibration().keys():     # Quick fix since calibration change. But is it safe...?
+            tempD['P'][key] = origsim.getcalibration()[key] 
         tempD['M'] = deepcopy(origsim.parsmodel)
         tempD['F'] = deepcopy(origsim.parsfitted)
         tempD['R'] = deepcopy(origsim.debug['results'])      # Does this do anything?

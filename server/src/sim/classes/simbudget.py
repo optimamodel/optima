@@ -58,8 +58,13 @@ class SimBudget(Sim):
     # SimBudget actually needs to run once as a standard Sim so as to generate a default D.S structure (for getcurrentbudget purposes).
     def initialise(self):
         Sim.initialise(self, forcebasicmodel = True)
-        Sim.run(self)
+        Sim.run(self)   # The first run produces the Sim structure required to produce a SimBudget model.
         
+        Sim.initialise(self, forcebasicmodel = False)
+        Sim.run(self)   # The second run produces the actual SimBudget model required for optimisation.
+    
+    # Warning: Be careful about running this and then processing the simulation multiple times.
+    # It is not clear if modified D.M and D.S structures will produce different D.M and D.S structures the next time around.
     def makemodelpars(self,randseed=0):
         Sim.makemodelpars(self)
         
@@ -74,13 +79,15 @@ class SimBudget(Sim):
         tempD = dict()
         tempD['G'] = deepcopy(r.metadata)
         tempD['P'] = deepcopy(self.parsdata)
+        tempD['M'] = deepcopy(self.parsmodel)
+        tempD['S'] = deepcopy(self.debug['structure'])
         tempD['data'] = deepcopy(r.data)
         tempD['opt'] = deepcopy(r.options)
         tempD['programs'] = deepcopy(r.metadata['programs'])
         
         from optimize import getcurrentbudget
         
-        tempD, a, b = getcurrentbudget(tempD, alloc = self.budget, randseed = randseed)
+        tempD = getcurrentbudget(tempD, alloc = self.budget, randseed = randseed)
         self.parsdata = tempD['P']
         P = self.parsdata
         
@@ -106,6 +113,7 @@ class SimBudget(Sim):
         initialindex = findinds(r.options['partvec'], obys)
         finalparindex = findinds(r.options['partvec'], obye) 
         parindices = arange(initialindex,finalparindex)
+        # Note: If the range of indices do not cover enough of the data, you will get strange tx1 problems.
         
         # Hideous hack for ART to use linear unit cost
         try:
