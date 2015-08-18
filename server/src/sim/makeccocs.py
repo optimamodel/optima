@@ -13,6 +13,7 @@ from numpy import log as nplog
 from rtnorm import rtnorm
 from printv import printv
 from datetime import date
+from utils import findinds
 
 ## Set coverage parameters...
 coverage_params = ['numcircum','numost','numpmtct','numfirstline','numsecondline']
@@ -80,7 +81,6 @@ def makecc(D=None, progname=None, ccparams=None, arteligcutoff=None, verbose=def
     # Get coverage and target population size (in separate function)
     coverage, coveragelabel = getcoverage(D=D, progname=progname)
     targetpop = gettargetpop(D=D, artindex=artindex, progname=progname)
-
 
     # Adjust cost data by target population size, if requested by user
     if popadj: totalcost = totalcost/targetpop if len(totalcost)>1 else totalcost/mean(targetpop)
@@ -249,6 +249,7 @@ def makecco(D=None, progname=None, effect=None, ccparams=None, coparams=None, ar
     ''' Make a single cost outcome curve. '''
     from numpy import array, where
     from datetime import date
+    from copy import deepcopy
 
     plotdata, plotdata_co = {}, {} 
     prognumber = [p['name'] for p in D['programs']].index(progname) # get program number    
@@ -268,6 +269,7 @@ def makecco(D=None, progname=None, effect=None, ccparams=None, coparams=None, ar
         totalcost, outcome = getscatterdata(totalcost, outcome)
         plotdata['xscatterdata'] = totalcost 
         plotdata['yscatterdata'] = outcome 
+        coverage, coveragelabel = getcoverage(D=D, progname=progname)
 
        # Make additional scatter data for current param vals
         currentcost = D['data']['origalloc'][prognumber]
@@ -301,7 +303,7 @@ def makecco(D=None, progname=None, effect=None, ccparams=None, coparams=None, ar
 
             # Store whole set of parameters
             prognumber = [p['name'] for p in D['programs']].index(progname) # get program number    
-            convertedccoparams = D['programs'][prognumber]['convertedccparams']
+            convertedccoparams = deepcopy(D['programs'][prognumber]['convertedccparams'])
             convertedcoparams = effect['convertedcoparams']
             convertedccoparams[0].extend([convertedcoparams[0],convertedcoparams[2]])
             convertedccoparams[1].extend([coparams[0],coparams[2]])
@@ -310,6 +312,7 @@ def makecco(D=None, progname=None, effect=None, ccparams=None, coparams=None, ar
 
             xvalscco = plotdata_cc['xlinedata']
             xvalsccpop = plotdata_cc['xpop']
+ 
             if len(convertedccoparams[0]) == 5:
                 mediancco = ccoeqn(xvalsccpop, convertedccoparams[0])
                 mincco = ccoeqn(xvalsccpop,  convertedccoparams[1])
@@ -430,14 +433,13 @@ def gettargetpop(D=None, artindex=None, progname=None):
                     targetpopmodel = multiply(D['M']['birth'][:,0:npts], D['M']['breast'][0:npts], D['S']['people'][artindex,:,0:npts].sum(axis=0)).sum(axis=0)
                 elif thispar in ['numfirstline','numsecondline']: # Target population = diagnosed PLHIV
                     targetpopmodel = D['S']['people'][artindex,:,0:npts].sum(axis=(0,1))
-                else:
-                    print('WARNING, Unrecognized parameter %s' % thispar)
+                elif thispar == 'numcircum': # Target population = men (??)
+                    maleindices = findinds(D['data']['meta']['pops']['male'])
+                    targetpopmodel = D['S']['people'][:,maleindices,0:npts].sum(axis = (0,1))
             else:
                 print('WARNING, Parameter %s of odd length %s' % (thispar, len(D['P'][thispar]['p'])))
         else:
-            if thispar == 'numcircum': # Target population = men (??)
-                maleindices = [i for i, x in enumerate(D['data']['meta']['pops']['female']) if x == 0]
-                targetpopmodel = D['S']['people'][:,maleindices,0:npts].sum(axis = (0,1))
+            print('WARNING, Unrecognized parameter %s' % thispar)
     if len(targetpars)==0:
         print('WARNING, no target parameters for program %s' % progname)
                 
@@ -452,11 +454,11 @@ def gettargetpop(D=None, artindex=None, progname=None):
 
 
 ###############################################################################
+#def convertparams(D=None, coveragelabel=None, targetpop=None, ccparams=None):
 def convertparams(D=None, ccparams=None):
     ''' Convert GUI inputs into the form needed for the calculations '''
 
     convertedccparams = []
-
     if 'scaleup' in ccparams and ccparams['scaleup'] and ~isnan(ccparams['scaleup']):
         growthratel = exp((1-ccparams['scaleup'])*log(ccparams['saturation']/ccparams['coveragelower']-1)+log(ccparams['funding']))
         growthratem = exp((1-ccparams['scaleup'])*log(ccparams['saturation']/((ccparams['coveragelower']+ccparams['coverageupper'])/2)-1)+log(ccparams['funding']))
@@ -464,7 +466,7 @@ def convertparams(D=None, ccparams=None):
         convertedccparams = [[ccparams['saturation'], growthratem, ccparams['scaleup']], [ccparams['saturation'], growthratel, ccparams['scaleup']], [ccparams['saturation'], growthrateu, ccparams['scaleup']]]
     else:
         growthratel = (-1/ccparams['funding'])*log((2*ccparams['saturation'])/(ccparams['coveragelower']+ccparams['saturation']) - 1)        
-        growthratem = (-1/ccparams['funding'])*log((2*ccparams['saturation'])/(((ccparams['coveragelower']+ccparams['coverageupper'])/2)+ccparams['saturation']) - 1)        
+        growthratem = (-1/ccparams['funding'])*log((2*ccparams['saturation'])/(((ccparams['coveragelower']+ccparams['coverageupper'])/2)+ccparams['saturation']) - 1)
         growthrateu = (-1/ccparams['funding'])*log((2*ccparams['saturation'])/(ccparams['coverageupper']+ccparams['saturation']) - 1)        
         convertedccparams = [[ccparams['saturation'], growthratem], [ccparams['saturation'], growthratel], [ccparams['saturation'], growthrateu]]
                     
@@ -587,4 +589,3 @@ def makesamples(coparams, muz, stdevz, muf, stdevf, samplesize=1, randseed=None)
     fullsample = rtnorm(coparams[2], coparams[3], mu=muf, sigma=stdevf, size=samplesize)[0]
         
     return zerosample, fullsample
-
