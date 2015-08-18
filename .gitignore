@@ -10,3 +10,4 @@ server/build
 \~\$*
 *.prj
 *.ipynb
+*.bin

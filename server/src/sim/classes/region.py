@@ -14,6 +14,7 @@ import program
 from numpy import array, isnan, zeros, shape, mean
 from utils import sanitize, perturb
 from printv import printv
+import cPickle
 
 from scipy.interpolate import PchipInterpolator as pchip
 
@@ -25,7 +26,7 @@ from scipy.interpolate import PchipInterpolator as pchip
 #    return x**2
 
 ### The actual Region class.
-class Region:
+class Region(object):
     def __init__(self, name,populations,programs,datastart,dataend):
         # The standard constructor takes in the initial metadata directly
         # In normal usage, this information would come from the frontend
@@ -55,7 +56,6 @@ class Region:
     
         self.uuid = str(uuid.uuid4()) # Store UUID as a string - we just want a (practically) unique tag, no advanced functionality
 
-
     @classmethod
     def load(Region,filename,name=None):
         # Create a new region by loading a JSON file
@@ -73,6 +73,17 @@ class Region:
             r.fromdict(regiondict)
         else:
             r.fromdict_legacy(regiondict)
+        return r
+
+    @classmethod
+    def load_binary(Region,filename,name=None):
+        # Use this function to load a region saved with region.save_binary
+        r = Region(name,None,None,None,None)
+
+        with open(filename,'rb') as file_data:
+            regiondict = cPickle.load(file_data)
+        r.uuid = regiondict['uuid'] # Loading a region restores the original UUID
+        r.fromdict(regiondict)
         return r
 
     def fromdict(self,regiondict):
@@ -152,6 +163,11 @@ class Region:
     def save(self,filename):
         import dataio
         dataio.savedata(filename,self.todict())
+
+    def save_binary(self,filename):
+        # Binary files are smaller, faster to load, and fix the NaN/None problem
+        with open(filename,'wb') as file_data:
+            cPickle.dump(self.todict(),file_data)
 
     def todict(self):
         # Return a dictionary representation of the object for use with Region.fromdict()

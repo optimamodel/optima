@@ -12,7 +12,7 @@ import uuid
 
 #from scipy.interpolate import PchipInterpolator as pchip
 
-class SimBox:
+class SimBox(object):
     def __init__(self, name, region):
         self.name = name
         self.simlist = []

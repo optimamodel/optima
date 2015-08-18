@@ -28,6 +28,19 @@ def test_saving_and_loading():
 	print r3
 	print r3.simboxlist[0].simlist[0].processed
 
+def test_saving_and_loading_binary():
+	r = region.Region.load('./regions/Haiti.json') # Load old style JSON
+	r.save_binary('./regions/Haiti_newstyle.bin')
+	r2 = region.Region.load_binary('./regions/Haiti_newstyle.bin') # Load new style JSON
+	r2.createsimbox('Simbox 1')
+	r2.simboxlist[0].createsim('sim1')
+	r2.runsimbox(r2.simboxlist[0])
+	r2.save_binary('./regions/Haiti_newstyle_withsim.bin')
+	r3 = region.Region.load_binary('./regions/Haiti_newstyle_withsim.bin') # Load new style JSON
+	print r
+	print r3
+	print r3.simboxlist[0].simlist[0].processed
+
 def test_from_xlsx():
 	# Test running a simulation from XLSX
 	r = region.Region('Haiti (from XLSX)',defaults.haiti['populations'],defaults.haiti['programs'],defaults.haiti['datastart'],defaults.haiti['dataend'])
@@ -48,8 +61,8 @@ def test_multiresults():
 	r.runsimbox(r.simboxlist[0])
 	r.simboxlist[0].viewmultiresults()
 
-test_saving_and_loading()
-test_from_json()
-test_from_xlsx()
-test_uncerresults()
-test_multiresults()
+test_saving_and_loading_binary()
+# test_from_json()
+# test_from_xlsx()
+# test_uncerresults()
+# test_multiresults()
