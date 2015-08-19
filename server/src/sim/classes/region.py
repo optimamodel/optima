@@ -14,7 +14,7 @@ import program
 from numpy import array, isnan, zeros, shape, mean
 from utils import sanitize, perturb
 from printv import printv
-import cPickle
+import dataio_binary
 
 from scipy.interpolate import PchipInterpolator as pchip
 
@@ -79,9 +79,7 @@ class Region(object):
     def load_binary(Region,filename,name=None):
         # Use this function to load a region saved with region.save_binary
         r = Region(name,None,None,None,None)
-
-        with open(filename,'rb') as file_data:
-            regiondict = cPickle.load(file_data)
+        regiondict = dataio_binary.load(filename)
         r.uuid = regiondict['uuid'] # Loading a region restores the original UUID
         r.fromdict(regiondict)
         return r
@@ -165,9 +163,7 @@ class Region(object):
         dataio.savedata(filename,self.todict())
 
     def save_binary(self,filename):
-        # Binary files are smaller, faster to load, and fix the NaN/None problem
-        with open(filename,'wb') as file_data:
-            cPickle.dump(self.todict(),file_data)
+        dataio_binary.save(self.todict(),filename)
 
     def todict(self):
         # Return a dictionary representation of the object for use with Region.fromdict()
