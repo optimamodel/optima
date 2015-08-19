@@ -4,8 +4,8 @@ No.;Parameter name;Location;Model variable name;Data variable name;Manual calibr
 1;Condoms | Proportion of sexual acts in which condoms are used with commercial partners;Programs/scenarios;M.condom.com[:];sex.condomcom;;1;1
 2;Condoms | Proportion of sexual acts in which condoms are used with casual partners;Programs/scenarios;M.condom.cas[:];sex.condomcas;;1;1
 3;Condoms | Proportion of sexual acts in which condoms are used with regular partners;Programs/scenarios;M.condom.reg[:];sex.condomreg;;1;1
-4;Acts | Number of sexual acts per person per year with commercial partners;Programs/scenarios;M.numacts.cas[:];sex.numactscas;;1;1
-5;Acts | Number of sexual acts per person per year with casual partners;Programs/scenarios;M.numacts.com[:];sex.numactscom;;1;1
+4;Acts | Number of sexual acts per person per year with casual partners;Programs/scenarios;M.numacts.cas[:];sex.numactscas;;1;1
+5;Acts | Number of sexual acts per person per year with commercial partners;Programs/scenarios;M.numacts.com[:];sex.numactscom;;1;1
 6;Acts | Number of sexual acts per person per year with regular partners;Programs/scenarios;M.numacts.reg[:];sex.numactsreg;;1;1
 7;Circumcision | Proportion of males who are circumcised;Programs/scenarios;M.circum[:];sex.circum;;1;1
 8;Circumcision | Number of medical male circumcisions performed per year;Programs/scenarios;M.numcircum[:];sex.numcircum;;1;1
