@@ -81,13 +81,20 @@ def makecc(D=None, progname=None, ccparams=None, arteligcutoff=None, verbose=def
     coverage, coveragelabel = getcoverage(D=D, progname=progname)
     targetpop = gettargetpop(D=D, artindex=artindex, progname=progname)
 
-
     # Adjust cost data by target population size, if requested by user
     if popadj: totalcost = totalcost/targetpop if len(totalcost)>1 else totalcost/mean(targetpop)
 
     # Get upper limit of x axis for plotting
     xupperlim = max([x if ~isnan(x) else 0.0 for x in totalcost])*3.
     if (ccparams and 'xupperlim' in ccparams and ccparams['xupperlim'] and ~isnan(ccparams['xupperlim'])): xupperlim = ccparams['xupperlim']
+
+    # Populate output structure with axis limits
+    plotdata['xlowerlim'], plotdata['ylowerlim']  = 0.0, 0.0
+    plotdata['xupperlim'] = xupperlim
+    if coveragelabel == 'Proportion covered':
+        plotdata['yupperlim']  = 1.0
+    else:
+        plotdata['yupperlim']  = max([x if ~isnan(x) else 0.0 for x in coverage])*1.5
 
     # Populate output structure with scatter data
     plotdata['allxscatterdata'] = totalcost
@@ -132,14 +139,7 @@ def makecc(D=None, progname=None, ccparams=None, arteligcutoff=None, verbose=def
             ccparams['nonhivdalys'] = 0.0
         D['programs'][prognumber]['nonhivdalys'] = [ccparams['nonhivdalys']]
 
-    # Populate output structure with axis limits
-    plotdata['xlowerlim'], plotdata['ylowerlim']  = 0.0, 0.0
-    plotdata['xupperlim'] = xupperlim
-    if coveragelabel == 'Proportion covered':
-        plotdata['yupperlim']  = 1.0
-    else:
-        plotdata['yupperlim']  = max([x if ~isnan(x) else 0.0 for x in coverage])*1.5
-        if drawcurve: plotdata['yupperlim']  = max(yvalscc[2][-1]*1.5,plotdata['yupperlim'])
+        if coveragelabel == 'Number covered': plotdata['yupperlim']  = max(yvalscc[2][-1]*1.5,plotdata['yupperlim'])
 
     # Populate output structure with labels and titles
     plotdata['title'] = progname
