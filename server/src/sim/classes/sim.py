@@ -148,7 +148,7 @@ class Sim(object):
 
         ## Preliminaries
         
-        def data2par(dataarray, region,usetime=True):
+        def data2par(dataarray, region, usetime=True):
             """ Take an array of data and turn it into default parameters -- here, just take the means """
             nrows = shape(dataarray)[0] # See how many rows need to be filled (either npops, nprogs, or 1)
             output = dict() # Create structure
@@ -186,6 +186,12 @@ class Sim(object):
                     self.parsdata[parname] = data2par(r.data[parclass][parname], r, usetime=True)
                 else:
                     self.parsdata[parname] = data2par(r.data[parclass][parname], r, usetime=True) # TMP
+        
+        ## Add a data parameter for number circumcised, if VMMC is a program
+        if 'VMMC' in [p['name'] for p in r.metadata['programs']]:
+            printv('Making a data parameter for numcircum', 2, verbose)
+            prognumber = [p['name'] for p in r.metadata['programs']].index('VMMC')
+            self.parsdata['numcircum'] = data2par([r.data['costcov']['cov'][prognumber]], r, usetime=True)        
         
         ## Change sizes of circumcision and births
         def popexpand(origarray, popbool):
