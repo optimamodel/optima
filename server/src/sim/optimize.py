@@ -22,6 +22,8 @@ from quantile import quantile
 from ballsd import ballsd
 from getcurrentbudget import getcoverage
 
+import defaults
+
 
 
 def runmodelalloc(D, thisalloc, origalloc, parindices, randseed, rerunfinancial=False, verbose=2):
@@ -620,21 +622,21 @@ def defaultobjectives(D, verbose=2):
 
     ob = dict() # Dictionary of all objectives
     ob['year'] = dict() # Time periods for objectives
-    ob['year']['start'] = 2015 # "Year to begin optimization from"
-    ob['year']['end'] = 2030 # "Year to end optimization"
-    ob['year']['until'] = 2030 # "Year to project outcomes to"
+    ob['year']['start'] = defaults.startenduntil[0] # "Year to begin optimization from"
+    ob['year']['end'] = defaults.startenduntil[1] # "Year to end optimization"
+    ob['year']['until'] = defaults.startenduntil[2] # "Year to project outcomes to"
     ob['what'] = 'outcome' # Alternative is "['money']"
     
     ob['outcome'] = dict()
     ob['outcome']['fixed'] = sum(D['data']['origalloc']) # "With a fixed amount of ['money'] available"
-    ob['outcome']['inci'] = True # "Minimize cumulative HIV incidence"
-    ob['outcome']['inciweight'] = 100 # "Incidence weighting"
-    ob['outcome']['daly'] = False # "Minimize cumulative DALYs"
-    ob['outcome']['dalyweight'] = 100 # "DALY weighting"
-    ob['outcome']['death'] = False # "Minimize cumulative AIDS-related deaths"
-    ob['outcome']['deathweight'] = 100 # "Death weighting"
-    ob['outcome']['costann'] = False # "Minimize cumulative DALYs"
-    ob['outcome']['costannweight'] = 100 # "Cost weighting"
+    ob['outcome']['inci'] = defaults.incidalydeathcost[0] # "Minimize cumulative HIV incidence"
+    ob['outcome']['inciweight'] = defaults.incidalydeathcostweight[0] # "Incidence weighting"
+    ob['outcome']['daly'] = defaults.incidalydeathcost[1] # "Minimize cumulative DALYs"
+    ob['outcome']['dalyweight'] = defaults.incidalydeathcostweight[1] # "DALY weighting"
+    ob['outcome']['death'] = defaults.incidalydeathcost[2] # "Minimize cumulative AIDS-related deaths"
+    ob['outcome']['deathweight'] = defaults.incidalydeathcostweight[2] # "Death weighting"
+    ob['outcome']['costann'] = defaults.incidalydeathcost[3] # "Minimize cumulative DALYs"
+    ob['outcome']['costannweight'] = defaults.incidalydeathcostweight[3] # "Cost weighting"
     ob['outcome']['variable'] = [] # No variable budgets by default
     ob['outcome']['budgetrange'] = dict() # For running multiple budgets
     ob['outcome']['budgetrange']['minval'] = None

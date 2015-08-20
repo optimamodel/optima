@@ -10,6 +10,13 @@ current_version = 5
 maxiters = 1e3
 timelimit = 5.01#600
 
+### OBJECTIVE DEFAULTS
+startenduntil = [2015, 2030, 2030]
+#incidalydeathcost = [True, False, False, False]
+#incidalydeathcostweight = [100.0, 100.0, 100.0, 100.0]
+incidalydeathcost = [True, False, True, False]
+incidalydeathcostweight = [50.0, 100.0, 50.0, 100.0]
+
 ### REGION DEFAULTS
 
 # Region information for default example project

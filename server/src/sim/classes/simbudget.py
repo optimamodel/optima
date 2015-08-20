@@ -144,18 +144,18 @@ class SimBudget(Sim):
         # Objectives are currently hard coded and mimic defaultobjectives in optimize.py. Needs to change.
         objectives = dict()
         objectives['year'] = dict()
-        objectives['year']['start'] = 2015              # "Year to begin optimization from".
-        objectives['year']['end'] = 2030                # "Year to end optimization".
-        objectives['year']['until'] = 2030              # "Year to project outcomes to".
+        objectives['year']['start'] = defaults.startenduntil[0]              # "Year to begin optimization from".
+        objectives['year']['end'] = defaults.startenduntil[1]                # "Year to end optimization".
+        objectives['year']['until'] = defaults.startenduntil[2]              # "Year to project outcomes to".
         objectives['outcome'] = dict()
-        objectives['outcome']['inci'] = True            # "Minimize cumulative HIV incidence"
-        objectives['outcome']['inciweight'] = 100       # "Incidence weighting"
-        objectives['outcome']['daly'] = False           # "Minimize cumulative DALYs"
-        objectives['outcome']['dalyweight'] = 100       # "DALY weighting"
-        objectives['outcome']['death'] = False          # "Minimize cumulative AIDS-related deaths"
-        objectives['outcome']['deathweight'] = 100      # "Death weighting"
-        objectives['outcome']['costann'] = False        # "Minimize cumulative DALYs"
-        objectives['outcome']['costannweight'] = 100    # "Cost weighting"        
+        objectives['outcome']['inci'] = defaults.incidalydeathcost[0]                   # "Minimize cumulative HIV incidence".
+        objectives['outcome']['inciweight'] = defaults.incidalydeathcostweight[0]       # "Incidence weighting".
+        objectives['outcome']['daly'] = defaults.incidalydeathcost[1]                   # "Minimize cumulative DALYs".
+        objectives['outcome']['dalyweight'] = defaults.incidalydeathcostweight[1]       # "DALY weighting".
+        objectives['outcome']['death'] = defaults.incidalydeathcost[2]                  # "Minimize cumulative AIDS-related deaths".
+        objectives['outcome']['deathweight'] = defaults.incidalydeathcostweight[2]      # "Death weighting".
+        objectives['outcome']['costann'] = defaults.incidalydeathcost[3]                # "Minimize cumulative DALYs".
+        objectives['outcome']['costannweight'] = defaults.incidalydeathcostweight[3]    # "Cost weighting".
         
         from utils import findinds
         from numpy import arange        
