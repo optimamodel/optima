@@ -256,9 +256,35 @@ class Program(object):
 		# functions
 		# conversion from FE parameters to BE parameters
 
+		# EXAMPLE INPUTS
+		# cc_inputs = {}
+		# cc_inputs['pop'] = 'FSW'
+		# cc_inputs['form'] = 'cc_scaleup'
+		# cc_inputs['fe_params'] = {u'coveragelower': 0.2, u'nonhivdalys': 0.0, u'funding': 300000.0, u'saturation': 0.98, u'coverageupper': 0.75, u'scaleup': 0.73}
+
+		# co_inputs = {}
+		# co_inputs['pop'] = 'FSW'
+		# co_inputs['signature'] = 'hivtest'
+		# co_inputs['form'] = 'co_cofun'
+		# co_inputs['fe_params'] = [0, 0, 2, 2]
+
+
+		# Existing programs have signature
+		[{u'value': {u'pops': [u'FSW'], u'signature': [u'condom', u'com']}},
+		 {u'value': {u'pops': [u'Clients'], u'signature': [u'condom', u'com']}},
+		 {u'value': {u'pops': [u'FSW'], u'signature': [u'hivtest']}},
+		 {u'value': {u'pops': [u'Clients'], u'signature': [u'hivtest']}}]
+
+		 # A set of effects - each effect has a population
+		 # Each population has a coverage
+		 # Need to be able to generate a list of effects easily
+		 # And a list of populations easily
+
+
 		# TODO - cc_inputs and co_inputs should name their populations and/or target parameters
 		# Then the cc stuff could be stored either in a dictionary or in an array
 		
+
 		# cc_inputs - an array of tuples, containing ('form',fe_ccparams)
 		# co_inputs - an array of lists of tuples
 		# 	- the first index corresponds to the associated cost-coverage curve
@@ -272,14 +298,17 @@ class Program(object):
 		self.coverage_outcome = []
 
 		for cc,co_list in zip(cc_inputs,co_inputs):
-			cc_class = getattr(ccocs, cc[0]) # This is the class corresponding to the CC form e.g. it could be ccocs.cc_scaleup
-			self.cost_coverage.append(cc_class(cc[1])) # Instantiate it with the CC data, and append it to the program's CC array
+			cc_class = getattr(ccocs, cc['form']) # This is the class corresponding to the CC form e.g. it could be ccocs.cc_scaleup
+			self.cost_coverage.append(cc_class(cc['fe_params'])) # Instantiate it with the CC data, and append it to the program's CC array
 		
 			co_temp = []
 			for co in co_list:
-				co_class = getattr(ccocs, co[0])
-				co_temp.append(co_class(co[1])) 
+				co_class = getattr(ccocs, co['form'])
+				co_temp.append(co_class(co['fe_params'])) 
 			self.coverage_outcome.append(co_temp)
+
+	def get_effects(self):
+		# Returns a list of tuples storing effects as (population,parameter)
 
 	def get_coverage(self,spending):
 		return [cc.evaluate(s) for cc,s in zip(self.cost_coverage,spending)]
