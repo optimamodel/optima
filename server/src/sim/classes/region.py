@@ -53,8 +53,9 @@ class Region(object):
         self.calibrations = []        # Remember. Current BOC data assumes loaded data is calibrated by default.
         
         self.simboxlist = []            # Container for simbox objects (e.g. optimisations, grouped scenarios, etc.)
-    
-        self.uuid = str(uuid.uuid4()) # Store UUID as a string - we just want a (practically) unique tag, no advanced functionality
+        
+        self.uuid = None
+        self.genuuid()  # Store UUID as a string - we just want a (practically) unique tag, no advanced functionality
 
     @classmethod
     def load(Region,filename,name=None):
@@ -218,8 +219,7 @@ class Region(object):
         else:
             simbox.plotallsims()
             
-###----------------------------------------------------------------------------
-### GPA Methods
+#%% GPA Methods
             
     # Method to generate a budget objective curve (BOC) for the Region.
     # Creates a temporary SimBoxOpt with a temporary SimBudget and calculates the BOC.
@@ -338,8 +338,7 @@ class Region(object):
         
         return fixedtotal
 
-###----------------------------------------------------------------------------       
-        
+#%%        
     def printdata(self):
         print(self.data)
     
@@ -369,7 +368,11 @@ class Region(object):
                     fid += 1
                     print('%i: %s%s' % (fid, simbox.getname(), (" (optimisation container)" if isinstance(simbox, SimBoxOpt) else " (standard container)")))
                     simbox.printsimlist(assubsubset = False)
-                
+    
+    # Generate a new uuid.
+    def genuuid(self):
+        self.uuid = str(uuid.uuid4())
+            
     def setdata(self, data):
         self.data = data
         

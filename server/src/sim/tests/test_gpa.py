@@ -17,38 +17,30 @@ p1 = Portfolio('p-test')
 p1.appendregion(Region.load('./regions/Malawi 150820.json'))
 
 r1 = p1.regionlist[0]
-#r2 = p1.regionlist[1]
 
 ## Temporary fixes regarding unfinished VMMC work. Will wait for Robyn's changes.
 r1.metadata['programs'][0]['effects'] = []
 
-r1.createsimbox('sb-test-sim', isopt = False, createdefault = True)
-r1.simboxlist[-1].runallsims()
+def testsimopt(region):
 
-r1.createsimbox('sb-test-opt', isopt = True, createdefault = True)
-r1.simboxlist[-1].runallsims()
+    r1.createsimbox('sb-test-sim', isopt = False, createdefault = True)
+    r1.simboxlist[-1].runallsims()
+    
+    r1.createsimbox('sb-test-opt', isopt = True, createdefault = True)
+    r1.simboxlist[-1].runallsims()
+    
+    r1.simboxlist[0].viewmultiresults()
+    r1.simboxlist[-1].viewmultiresults()
+    
+    print()
+    print('%30s%15s' % ('Unoptimised...', 'Optimised...'))
+    for x in xrange(len(r1.metadata['inputprograms'])):
+        print('%-15s%15.2f%15.2f' % (r1.metadata['inputprograms'][x]['short_name']+':',
+                                     r1.simboxlist[-1].simlist[0].alloc[x],
+                                     r1.simboxlist[-1].simlist[-1].alloc[x]))
 
-r1.simboxlist[0].viewmultiresults()
-r1.simboxlist[-1].viewmultiresults()
+testsimopt(r1)
 
-print()
-print('%30s%15s' % ('Unoptimised...', 'Optimised...'))
-for x in xrange(len(r1.metadata['inputprograms'])):
-    print('%-15s%15.2f%15.2f' % (r1.metadata['inputprograms'][x]['short_name']+':',
-                                 r1.simboxlist[-1].simlist[0].alloc[x],
-                                 r1.simboxlist[-1].simlist[-1].alloc[x]))
+#p1.splitcombinedregion(r1, './regions/150817 - Malawi district (population & prevalence).xlsx')
 
-#r1.simboxlist[-1].viewmultiresults()
-#m1 = deepcopy(r1.simboxlist[-1].simlist[-1].parsmodel)
-#s1 = deepcopy(r1.simboxlist[-1].simlist[-1].debug['structure'])
-#r1.simboxlist[-1].simlist[-1].makemodelpars()
-#r1.simboxlist[-1].simlist[-1].run()
-#ma = deepcopy(r1.simboxlist[-1].simlist[-1].parsmodel)
-#sa = deepcopy(r1.simboxlist[-1].simlist[-1].debug['structure'])
-#r1.simboxlist[-1].simlist[-1].makemodelpars()
-#r1.simboxlist[-1].simlist[-1].run()
-#r1.simboxlist[-1].viewmultiresults()
-#m2 = deepcopy(r1.simboxlist[-1].simlist[-1].parsmodel)
-#s2 = deepcopy(r1.simboxlist[-1].simlist[-1].debug['structure'])
-#
 #p1.geoprioanalysis()

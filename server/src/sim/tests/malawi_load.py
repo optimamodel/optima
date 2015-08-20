@@ -23,39 +23,92 @@ from updatedata import updatedata
 from xlrd import open_workbook  # For opening Excel workbooks.
 import xlsxwriter
 
-#regionlist = ['Bali','Central Java','East Java','West Java','Jakarta','Papua','Riau']
-#abbrevlist = ['B','CJ','EJ','WJ','J','P','R']
+# Load Malawi workbooks.
+natbook = open_workbook('./regions/150818 - Malawi.xlsx')
+distbook = open_workbook('./regions/150817 - Malawi district (population & prevalence) - annotated.xlsx')
+natsheetnames = natbook.sheet_names()
+distsheetnames = distbook.sheet_names()
 
-# Load Indonesia workbook.
-inbook = open_workbook('./regions/Malawi_District 20150731.xlsx')
-insheetnames = inbook.sheet_names()
-
-summarysheet = inbook.sheet_by_name('Summary ')
+summarysheet = distbook.sheet_by_name('Summary - sub-populations')
 
 # Determine region names from summary sheet.
 districtlist = []
 for rowindex in xrange(summarysheet.nrows):
+    if summarysheet.cell_value(rowindex, 0) == 'National total':
+        break
     if summarysheet.cell_type(rowindex, 0) == 2:    # Check if 1st cell in row is a number.
         districtlist.append(summarysheet.cell_value(rowindex, 1))
 print districtlist
 print len(districtlist)
-    
+
+# Work out PLHIV national. Hacky.
+plhivdenom = 0
+distsheet = distbook.sheet_by_name('National PLHIV share')
+distrow = distsheet.row(17)
+for colindex in xrange(len(distrow)):
+    celldata = distsheet.cell_value(17, colindex)
+#    print celldata
+    if colindex > 0: plhivdenom += celldata
+#    outsheet.write(rowindex-rowbuffer, colindex, celldata)
+
+# Main loop.
 for districtname in districtlist:
-    try:
-        districtsheet = inbook.sheet_by_name(districtname)
+#    try:
+        print('Producing: %s' % districtname)
+        districtsheet = distbook.sheet_by_name(districtname)
         outbook = xlsxwriter.Workbook('./regions/Malawi ('+districtname+').xlsx')
-        outsheet = outbook.add_worksheet(districtname)
         
-        for rowindex in xrange(districtsheet.nrows):
-            inrow = districtsheet.row(rowindex)
-            for colindex in xrange(len(inrow)):
-                celldata = districtsheet.cell_value(rowindex, colindex)
-                outsheet.write(rowindex, colindex, celldata)
+        #%% National file copying.
+        
+        plhivnum = 0
+        plhivfrac = 0
+        
+        for natsheetname in natsheetnames:
+
+            rowbuffer = 0
+            
+            natsheet = natbook.sheet_by_name(natsheetname)
+            outsheet = outbook.add_worksheet(natsheetname)
+        
+            if natsheetname == 'Demographics & HIV prevalence':        
+                natsheet = distbook.sheet_by_name(districtname)
+                rowbuffer = 2
+                
+            if natsheetname == 'Testing & treatment':
+                plhivfrac = float(plhivnum)/float(plhivdenom)
+                print plhivfrac
+        
+            # Iterate through rows.
+            for rowindex in xrange(rowbuffer, natsheet.nrows):
+                natrow = natsheet.row(rowindex)
+                
+                # Iterate through cells in a row.
+                for colindex in xrange(len(natrow)):
+                    celldata = natsheet.cell_value(rowindex, colindex)
+                    if rowindex == 95 and colindex == 31:
+                        plhivnum = celldata
+                    if (natsheetname == 'Testing & treatment' 
+                    and (natsheet.cell_value(rowindex-2, 0) in ['Number of people on first-line treatment','Number of people on subsequent lines of treatment'] or 
+                    natsheet.cell_value(rowindex-3, 0) in ['Number of people on first-line treatment','Number of people on subsequent lines of treatment'])
+                    and natsheet.cell_type(rowindex, colindex) == 2):
+                        outsheet.write(rowindex-rowbuffer, colindex, float(celldata)*plhivfrac)
+                    else:
+                        outsheet.write(rowindex-rowbuffer, colindex, celldata)           
+        
+#        #%% District sheet copying.
+#        
+#        outsheet = outbook.add_worksheet(districtname)
+#        
+#        for rowindex in xrange(districtsheet.nrows):
+#            distrow = districtsheet.row(rowindex)
+#            for colindex in xrange(len(distrow)):
+#                celldata = districtsheet.cell_value(rowindex, colindex)
+#                outsheet.write(rowindex, colindex, celldata)
             
         outbook.close()
         
-    except:
-        print('There is a problem loading a district sheet.')
+#    except:
+#        print('There is a problem loading a district sheet.')
     
 
 

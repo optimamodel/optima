@@ -11,6 +11,7 @@ show_wait = False       # Hmm. Not used? Can be left for the moment until decide
 nsims = 5   
 
 import os
+from copy import deepcopy
 from numpy import arange
 
 from region import Region
@@ -298,8 +299,52 @@ class Portfolio(object):
         for currentregion in self.regionlist:
             currentregion.save(self.regd + '/' + currentregion.getregionname() + '.json')
 
-###----------------------------------------------------------------------------
-### GPA Methods
+    # Creates a duplicate of a region.
+    # Note: Everything is deep-copied, but a new uuid is given to mark a unique region.
+    def duplicateregion(self, targetregion):
+        newregion = deepcopy(targetregion)
+        newregion.genuuid()
+        self.appendregion(newregion)
+        return newregion
+        
+
+#%% GPA Methods
+
+    # Break an aggregate region (e.g. a nation) into subregions (e.g. districts), according to a provided population and prevalence data file.
+    def splitcombinedregion(self, aggregateregion, popprevfile):
+        
+        from xlrd import open_workbook  # For opening Excel workbooks.
+        
+        inbook = open_workbook(popprevfile)
+        summarysheet = inbook.sheet_by_name('Summary - sub-populations')
+
+        # Determine region names from summary sheet.
+        subregionlist = []
+        for rowindex in xrange(summarysheet.nrows):
+            if summarysheet.cell_value(rowindex, 0) == 'National total':
+                break
+            if summarysheet.cell_type(rowindex, 0) == 2:    # Check if 1st cell in row is a number.
+                subregionlist.append(summarysheet.cell_value(rowindex, 1))
+        print subregionlist
+        print len(subregionlist)
+        
+        for subregionname in subregionlist:
+            try:
+                print('Creating region: %s' % subregionname)
+                subregionsheet = inbook.sheet_by_name(subregionname)
+                newregion = self.duplicateregion(aggregateregion)
+                newregion.setregionname(subregionname)
+                
+#                for rowindex in xrange(districtsheet.nrows):
+#                    inrow = districtsheet.row(rowindex)
+#                    for colindex in xrange(len(inrow)):
+#                        celldata = districtsheet.cell_value(rowindex, colindex)
+                
+            except:
+                print('There is a problem loading a district sheet. All subsequent actions are cancelled.')
+        
+        # Finalise conversion by removing original aggregate region.
+        self.regionlist.remove(aggregateregion)
 
     # Iterate through loaded regions. Develop default BOCs if they do not have them.
     def geoprioanalysis(self, gpaname = 'Test'):
@@ -421,7 +466,7 @@ class Portfolio(object):
         print('Initial Optimised Real Objective Sum: %f' % realtotsumoptobj)
         print('GPA Optimised Real Objective Sum: %f' % realtotsumgpaoptobj)
         print('BOC Estimate was off for aggregate objective by: %f (%f%%)' % (esttotsumgpaoptobj-realtotsumgpaoptobj, 100*abs(esttotsumgpaoptobj-realtotsumgpaoptobj)/realtotsumgpaoptobj))
-        print('Real Aggregate Objective Improvement: %f (%f%%)' % (realtotsumgpaoptobj-realtotsumoptobj, 100*(realtotsumoptobj-realtotsumgpaoptobj)/realtotsumoptobj))        
+        print('Real Aggregate Objective Improvement (After Individual Optimisation): %f (%f%%)' % (realtotsumgpaoptobj-realtotsumoptobj, 100*(realtotsumoptobj-realtotsumgpaoptobj)/realtotsumoptobj))        
         print('\n')
         
 
