@@ -25,12 +25,24 @@ class ccoc(object):
 		pass
 
 	def evaluate(self,x):
+		# Todo: incorporate perturbation
 		p = self.convertparams()
 		return self.function(x,p)
+
+	def invert(self,y):
+		p = self.convertparams()
+		return self.inverse(y,p)
+
+	def inverse(self,y,p):
+		# This function should find the inverse numerically
+		# but it can be overloaded by derived classes to provide
+		# an analytic inverse
+		raise Exception('Numerical inverse not implemented yet')
 
 	def __init__(self,fe_params):
 		self.fe_params = fe_params
 
+######## SPECIFIC CCOC IMPLEMENTATIONS
 
 class cc_scaleup(ccoc):
 	def function(self,x,p):
@@ -58,6 +70,9 @@ class co_cofun(ccoc):
 	def function(self,x,p):
 		return coeqn(x,p)
 
+	def inverse(self,y,p):
+		return (y-p[0])/(p[1]-p[0]) 
+		
 	def convertparams(self):
 		muz, stdevz = (self.fe_params[0]+self.fe_params[1])/2, (self.fe_params[1]-self.fe_params[0])/6 # Mean and standard deviation calcs
 		muf, stdevf = (self.fe_params[2]+self.fe_params[3])/2, (self.fe_params[3]-self.fe_params[2])/6 # Mean and standard deviation calcs

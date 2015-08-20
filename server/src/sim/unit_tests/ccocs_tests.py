@@ -47,6 +47,10 @@ class TestCCOCs(unittest.TestCase):
 		self.assertAlmostEqual(coverage_outcome.evaluate(0.5),1,places=7) 
 		self.assertAlmostEqual(coverage_outcome.evaluate(1.0),2,places=7) 
 
+		self.assertAlmostEqual(coverage_outcome.invert(0.0),0,places=7) 
+		self.assertAlmostEqual(coverage_outcome.invert(1.0),0.5,places=7) 
+		self.assertAlmostEqual(coverage_outcome.invert(2.0),1.0,places=7) 
+
 if __name__ == '__main__':
     unittest.main()
 
