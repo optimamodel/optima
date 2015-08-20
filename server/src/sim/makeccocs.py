@@ -195,10 +195,16 @@ def makeco(D=None, progname=None, effect=None, coparams=None, coverage_params=co
 
     # Only going to make cost-outcome curves for programs where the affected parameter is not coverage
     if parname not in coverage_params:
-        if popname not in D['data']['meta']['pops']['short']: raise Exception('Cannot recognise population %s, it is not in %s' % (popname, D['data']['meta']['pops']['short']))
-        else: popnumber = D['data']['meta']['pops']['short'].index(popname)
+        if progname == 'VMMC': 
+            maleindices = [i for i, x in enumerate(D['data']['meta']['pops']['male']) if x == 1]
+            males = [D['data']['meta']['pops']['short'][j] for j in maleindices]
+            popnumber = males.index(popname)
+        else:
+            if popname not in D['data']['meta']['pops']['short']: raise Exception('Cannot recognise population %s, it is not in %s' % (popname, D['data']['meta']['pops']['short']))
+            else: popnumber = D['data']['meta']['pops']['short'].index(popname)
         
         # Get data for scatter plots
+
         outcome = D['data'][partype][parname][popnumber]
         coverage, coveragelabel = getcoverage(D=D, progname=progname)
 
