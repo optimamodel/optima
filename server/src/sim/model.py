@@ -240,7 +240,7 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2):
             try:
                 osteff = 1 - min(1,numost/numpwid)*effost # Proportion of PWID on OST, making sure there aren't more people on OST than PWID
             except:
-                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                import traceback; traceback.print_exc(); import pdb; pdb.set_trace() # this will break if happens in web context
             if osteff<0: raise Exception('Bug in osteff = 1 - min(1,numost/numpwid)*effost: osteff=%f numost=%f numpwid=%f effost=%f' % (osteff, numost, numpwid, effost))
        
        # Iterate through partnership pairs
@@ -415,14 +415,14 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2):
                 progin = dt*prog[cd4-1]*people[undx[cd4-1],:,t]
             else: 
                 progin = 0 # Cannot progress into acute stage
-            if cd4<ncd4-1: 
-                progout = dt*prog[cd4]*people[undx[cd4],:,t]
+            if cd4<ncd4-1: # CHECK: many subsequent commands will break if cd4<0 - should this whole block (and those below) be moved into the case when cd4>0?
+                progout = dt*prog[cd4]*people[undx[cd4],:,t]  # will break if cd4<0
                 testingrate[cd4] = hivtest[:,t] # Population specific testing rates
             else: 
                 progout = 0  # Cannot progress out of AIDS stage
                 testingrate[cd4] = maximum(hivtest[:,t], aidstest[t]) # Testing rate in the AIDS stage (if larger!)
             if propdx is None: # No proportion diagnosed information, go with testing rate
-                newdiagnoses[cd4] = dt * people[undx[cd4],:,t] * testingrate[cd4] * dxtime[t]
+                newdiagnoses[cd4] = dt * people[undx[cd4],:,t] * testingrate[cd4] * dxtime[t] # will break if cd4<0
             else: # It exists, use what's calculated before
                 newdiagnoses[cd4] = fractiontodx * people[undx[cd4],:,t]
             hivdeaths   = dt * people[undx[cd4],:,t] * death[cd4]
@@ -456,7 +456,7 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2):
                 progin = dt*prog[cd4-1]*people[dx[cd4-1],:,t]
             else: 
                 progin = 0 # Cannot progress into acute stage
-            if cd4<ncd4-1: 
+            if cd4<ncd4-1: # CHECK: many subsequent commands will break if cd4<0 (like it was in the code above)
                 progout = dt*prog[cd4]*people[dx[cd4],:,t]
             else: 
                 progout = 0 # Cannot progress out of AIDS stage
@@ -483,7 +483,7 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2):
                 recovout = dt*recov[cd4-2]*people[tx1[cd4],:,t]
             else: 
                 recovout = 0 # Cannot recover out of gt500 stage (or acute stage)
-            newfail1[cd4] = dt * people[tx1[cd4],:,t] * failfirst
+            newfail1[cd4] = dt * people[tx1[cd4],:,t] * failfirst # CHECK: also can break if cd4<0
             hivdeaths   = dt * people[tx1[cd4],:,t] * death[cd4] * deathtx # Use death by CD4 state if lower than death on treatment
             otherdeaths = dt * people[tx1[cd4],:,t] * background
             dT1.append(recovin - recovout + newtreat1[cd4] - newfail1[cd4] - hivdeaths - otherdeaths)
@@ -500,7 +500,7 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2):
                 progin = dt*prog[cd4-1]*people[fail[cd4-1],:,t] 
             else: 
                 progin = 0 # Cannot progress into acute stage
-            if cd4<ncd4-1: 
+            if cd4<ncd4-1: #CHECK: move the rest of this block under cd4>0 branch?
                 progout = dt*prog[cd4]*people[fail[cd4],:,t] 
             else: 
                 progout = 0 # Cannot progress out of AIDS stage
@@ -524,6 +524,7 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2):
                 recovin = dt*recov[cd4-1]*people[tx2[cd4+1],:,t]
             else: 
                 recovin = 0 # Cannot recover in to acute or AIDS stage
+             #CHECK: move the rest of this block under cd4>0 branch?
             if cd4>1: # CD4>1 stops people from moving back into acute
                 recovout = dt*recov[cd4-2]*people[tx2[cd4],:,t]
             else: 
