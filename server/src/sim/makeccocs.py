@@ -242,6 +242,22 @@ def makeco(D=None, progname=None, effect=None, coparams=None, coverage_params=co
         plotdata['xlabel'] = coveragelabel
         plotdata['ylabel'] = 'Outcome'
         
+    elif progname == 'VMMC': # New process for VMMC, wherein we internally calculate coverage-outcome curves but don't show the user
+        maleindices = [i for i, x in enumerate(D['data']['meta']['pops']['male']) if x == 1]
+        males = [D['data']['meta']['pops']['short'][j] for j in maleindices]
+        partype, parname = 'sex', 'circum' # Reset parameter
+        for popnumber, popname in enumerate(males):
+
+            # Figure out slope parameters
+            initval = D['M']['circum'][popnumber][-1]
+            allmales = D['M']['popsize'][popnumber,-1].sum(axis=0)
+            uncircmales = allmales*initval
+            fullcov = 1.
+
+            # Assume that the number of circumcisions is distributed in accordance with the population size
+
+
+        
     return plotdata, effect
 
 #################################################################################
