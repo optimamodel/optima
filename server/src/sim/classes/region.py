@@ -279,6 +279,8 @@ class Region(object):
             ax = fig.add_subplot(111)
             
             plt.plot(x,f(x),'-',label='BOC')
+            plt.xlabel('Allocation Total')            
+            plt.ylabel('Outcome')
             if returnplot:
                 return ax
             else:

@@ -8,6 +8,8 @@ Created on Thu Jul 23 21:26:39 2015
 from sim import Sim
 
 import defaults
+from utils import findinds
+from numpy import arange 
 from copy import deepcopy
 
 # Derived Sim class that should store budget data.
@@ -32,6 +34,7 @@ class SimBudget(Sim):
         
         self.obj = None                                             # The current objective function value for the origalloc budget.
 
+        self.normalisations = dict()
         
 
     def todict(self):
@@ -62,6 +65,10 @@ class SimBudget(Sim):
         
         Sim.initialise(self, forcebasicmodel = False)
         Sim.run(self)   # The second run produces the actual SimBudget model required for optimisation.
+        
+        # Normalisations for multiple objective aims are calculated from the unoptimised SimBudget's epidemiological results.
+        # As they are not updated later, it is wise only to use the original unoptimised SimBudget as an outcome-calculating 'normaliser'.
+        self.normalisations = self.calculatenormalisations(['inci', 'death', 'daly', 'costann'])    
     
     # Warning: Be careful about running this and then processing the simulation multiple times.
     # It is not clear if modified D.M and D.S structures will produce different D.M and D.S structures the next time around.
@@ -104,9 +111,6 @@ class SimBudget(Sim):
 
         tempparsmodel = makemodelpars(P, r.options, withwhat='c')
         
-        from utils import findinds
-        from numpy import arange
-        
         # Hardcoded quick hack. Better to be linked to 'default objectives' function in optimize.
         obys = 2015 # "Year to begin optimization from"
         obye = 2030 # "Year to end optimization"
@@ -133,8 +137,8 @@ class SimBudget(Sim):
     
     
     # Work out the objective value of this SimBudget and its allocation.
-    # WARNING: Hard-coded. Derived from default option of legacy optimize function.
-    def calculateobjectivevalue(self):
+    # WARNING: Currently bugged for multiple aims as normalisation values always reflect the final totals.
+    def calculateobjectivevalue(self, normaliser = None):
         if not self.isprocessed():
             print('Need to simulate and produce results to calculate objective value.')
             self.run()
@@ -157,9 +161,6 @@ class SimBudget(Sim):
         objectives['outcome']['costann'] = defaults.incidalydeathcost[3]                # "Minimize cumulative DALYs".
         objectives['outcome']['costannweight'] = defaults.incidalydeathcostweight[3]    # "Cost weighting".
         
-        from utils import findinds
-        from numpy import arange        
-        
         initialindex = findinds(r.options['partvec'], objectives['year']['start'])
         finalparindex = findinds(r.options['partvec'], objectives['year']['end'])
         finaloutindex = findinds(r.options['partvec'], objectives['year']['until'])
@@ -168,19 +169,19 @@ class SimBudget(Sim):
         
         # Unnecessary with defaults, but normalise and weight objectives if there are multiple options.
         weights = dict()
-        normalizations = dict()
+#        normalizations = dict()
         outcomekeys = ['inci', 'death', 'daly', 'costann']
         if sum([objectives['outcome'][key] for key in outcomekeys])>1:      # Only normalize if multiple objectives, since otherwise doesn't make a lot of sense.
             for key in outcomekeys:
                 thisweight = objectives['outcome'][key+'weight'] * objectives['outcome'][key] / 100.
                 weights.update({key:thisweight})    # Get weight, and multiply by "True" or "False" and normalize from percentage.
-                if key!='costann': thisnormalization = self.debug['results'][key]['tot'][0][outindices].sum()
-                else: thisnormalization = self.debug['results'][key]['total']['total'][0][outindices].sum()     # Special case for costann.
-                normalizations.update({key:thisnormalization})
+#                if key!='costann': thisnormalization = self.debug['results'][key]['tot'][0][outindices].sum()
+#                else: thisnormalization = self.debug['results'][key]['total']['total'][0][outindices].sum()     # Special case for costann.
+#                normalizations.update({key:thisnormalization})
         else:
             for key in outcomekeys:
                 weights.update({key:int(objectives['outcome'][key])}) # Weight of 1
-                normalizations.update({key:1}) # Normalizatoin of 1        
+#                normalizations.update({key:1}) # Normalizatoin of 1     
                 
         ## Define options structure
         options = dict()
@@ -188,7 +189,12 @@ class SimBudget(Sim):
         options['weights'] = weights # Weights for each parameter
         options['outindices'] = outindices # Indices for the outcome to be evaluated over
         options['parindices'] = parindices # Indices for the parameters to be updated on
-        options['normalizations'] = normalizations # Whether to normalize a parameter
+        
+        # Decides which SimBudget normalises the outcomes.
+        if normaliser == None:
+            options['normalizations'] = self.normalisations # Whether to normalize a parameter
+        else:
+            options['normalizations'] = normaliser.normalisations
         options['randseed'] = 0  
         
         outcome = 0 # Preallocate objective value 
@@ -199,6 +205,29 @@ class SimBudget(Sim):
                 outcome += thisoutcome * options['weights'][key] / float(options['normalizations'][key]) * r.options['dt'] # Calculate objective
         
         return outcome
+    
+    # Calculates normalisations used for objectives with multiple aims.
+    def calculatenormalisations(self, outcomekeys):
+        r = self.getregion()        
+        
+        initialindex = findinds(r.options['partvec'], defaults.startenduntil[0])
+        finaloutindex = findinds(r.options['partvec'], defaults.startenduntil[2])
+        outindices = arange(initialindex,finaloutindex)        
+        
+        normalizations = dict()
+        if sum(defaults.incidalydeathcost)>1:
+            for key in outcomekeys:
+                if key!='costann':
+                    thisnormalization = self.debug['results'][key]['tot'][0][outindices].sum()
+                else:
+                    thisnormalization = self.debug['results'][key]['total']['total'][0][outindices].sum()     # Special case for costann.
+                normalizations.update({key:thisnormalization})
+        else:
+            for key in outcomekeys:
+                normalizations.update({key:1})
+            
+        return normalizations
+        
 
     def __repr__(self):
         return "SimBudget %s ('%s')" % (self.uuid,self.name) 

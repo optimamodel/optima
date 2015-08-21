@@ -62,7 +62,7 @@ class Portfolio(object):
                     else:
                         print('Which data file do you wish to load into %s?' % regionname)
                         fid = 0
-                        templist = [x for x in os.listdir(self.regd) if x.endswith('.json') ]
+                        templist = [x for x in os.listdir(self.regd) if x.endswith('.json')]
                         
                         # Displays files in regions folder along with an integer id for easy selection.
                         for filename in templist:
@@ -404,8 +404,8 @@ class Portfolio(object):
             estsumoptobj = r.getBOCspline()([sumopt])
             estsumgpaoptobj = r.getBOCspline()([sumgpaopt])
             realsuminobj = gpasimboxlist[i].simlist[0].calculateobjectivevalue()
-            realsumoptobj = gpasimboxlist[i].simlist[1].calculateobjectivevalue()
-            realsumgpaoptobj = gpasimboxlist[i].simlist[2].calculateobjectivevalue()
+            realsumoptobj = gpasimboxlist[i].simlist[1].calculateobjectivevalue(normaliser = gpasimboxlist[i].simlist[0])
+            realsumgpaoptobj = gpasimboxlist[i].simlist[2].calculateobjectivevalue(normaliser = gpasimboxlist[i].simlist[0])
             
             import matplotlib.pyplot as plt
             ax = r.plotBOCspline(returnplot = True)

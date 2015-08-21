@@ -14,7 +14,7 @@ timelimit = 5.01#600
 startenduntil = [2015, 2030, 2030]
 #incidalydeathcost = [True, False, False, False]
 #incidalydeathcostweight = [100.0, 100.0, 100.0, 100.0]
-incidalydeathcost = [True, False, True, False]
+incidalydeathcost = [True, False, False, False]
 incidalydeathcostweight = [50.0, 100.0, 50.0, 100.0]
 
 ### REGION DEFAULTS
