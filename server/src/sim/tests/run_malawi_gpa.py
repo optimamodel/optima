@@ -8,29 +8,23 @@ Created on Thu Jul 23 18:03:48 2015
 import add_optima_paths
 from portfolio import Portfolio
 from region import Region
-from sim import Sim
-from extra_utils import dict_equal
-from copy import deepcopy
 import os
 
-p1 = Portfolio('p-test')
-#p1.appendregion(Region.load('./regions/Georgia good.json'))
-#p1.appendregion(Region.load('./regions/Malawi 150820.json'))
+# Create a Portfolio to hold all of Malawi's districts (i.e. Regions).
+p1 = Portfolio('Malawi Project')
 
+# List all the json files in the regions sub-directory.
 templist = [x for x in os.listdir('./regions/') if x.endswith('.json')]
 
 for x in templist:
-    if x[2] == '.' and x[0:2] in ['11','12']:#,'13','14','15','16','17']:
-        newregion = Region.load('./regions/' + x)
-        newregion.setregionname(x[4:-5])
-        newregion.metadata['programs'][0]['effects'] = []
-        p1.appendregion(newregion)
+    # Make sure you only select files with the right format (i.e. Regex 4 Dummies).
+    if x[2] == '.' and x[0:2] in ['11','12','13','14','15','16','17']:
+        newregion = Region.load('./regions/' + x)           # Load up a Region from the json file.
+        newregion.setregionname(x[4:-11])                   # Give it a nicer name.
+        newregion.metadata['programs'][0]['effects'] = []   # Neutralise VMMC as per Robyn's request.
+        p1.appendregion(newregion)                          # Put that Region into a Portfolio.
 
-#r1 = p1.regionlist[0]
-
-## Temporary fixes regarding unfinished VMMC work. Will wait for Robyn's changes.
-#r1.metadata['programs'][0]['effects'] = []
-
+# Ignore this. It helps you run a simulation and an optimisation for a region of your choice.
 def testsimopt(r1):
 
     r1.createsimbox('sb-test-sim', isopt = False, createdefault = True)
@@ -49,8 +43,8 @@ def testsimopt(r1):
                                      r1.simboxlist[-1].simlist[0].alloc[x],
                                      r1.simboxlist[-1].simlist[-1].alloc[x]))
 
-#testsimopt(r1)
+#testsimopt(newregion)
 
-#p1.splitcombinedregion(r1, './regions/150817 - Malawi district (population & prevalence).xlsx')
+p1.geoprioanalysis()                # Run the GPA algorithm.
 
-p1.geoprioanalysis()
+p1.geoprioreview(p1.gpalist[0])     # Did those results go by too quickly? Review the plots and a results summary.

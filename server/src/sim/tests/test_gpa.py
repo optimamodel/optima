@@ -14,7 +14,8 @@ from copy import deepcopy
 
 p1 = Portfolio('p-test')
 #p1.appendregion(Region.load('./regions/Georgia good.json'))
-p1.appendregion(Region.load('./regions/Malawi 150820.json'))
+#p1.appendregion(Region.load('./regions/Malawi 150820.json'))
+p1.appendregion(Region.load('./regions/01. Dedza_fixed.json'))
 
 r1 = p1.regionlist[0]
 
@@ -39,8 +40,8 @@ def testsimopt(region):
                                      r1.simboxlist[-1].simlist[0].alloc[x],
                                      r1.simboxlist[-1].simlist[-1].alloc[x]))
 
-#testsimopt(r1)
+testsimopt(r1)
 
 #p1.splitcombinedregion(r1, './regions/150817 - Malawi district (population & prevalence).xlsx')
 
-p1.geoprioanalysis()
+#p1.geoprioanalysis()

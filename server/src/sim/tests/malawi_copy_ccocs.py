@@ -10,13 +10,13 @@ master_programs = deepcopy(r.D['programs'])
 metadata_programs = deepcopy(r.metadata['programs'])
 
 import os
-flist = [x for x in os.listdir("C:/Users/romesh/Google Drive/Optima/Country applications/Malawi/Data/District level/Project files") if x.endswith('json')]
+flist = [x for x in os.listdir("./regions/") if x.endswith('json')]
 
 for fname in flist:
-	r = Region.load("C:/Users/romesh/Google Drive/Optima/Country applications/Malawi/Data/District level/Project files/"+fname)
+	r = Region.load("./regions/"+fname)
 	r.D['programs'] = deepcopy(master_programs)
 	r.metadata['programs'] = deepcopy(metadata_programs)
-	r.save("C:/Users/romesh/Google Drive/Optima/Country applications/Malawi/Data/District level/Project files/"+fname.replace('.json','_fixed.json'))
+	r.save("./regions/"+fname.replace('.json','_fixed.json'))
 
 
 

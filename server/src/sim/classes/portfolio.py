@@ -15,7 +15,6 @@ from copy import deepcopy
 from numpy import arange
 
 from region import Region
-from geoprioritisation import gpaoptimisefixedtotal
 
 class Portfolio(object):
     def __init__(self, portfolioname):
@@ -346,21 +345,27 @@ class Portfolio(object):
         # Finalise conversion by removing original aggregate region.
         self.regionlist.remove(aggregateregion)
 
-    # Iterate through loaded regions. Develop default BOCs if they do not have them.
+
+
+    # The GPA algorithm.
     def geoprioanalysis(self, gpaname = 'Test'):
         
+        # First, choose 'spend' factors for the construction of your Budget Objective Curve.
         varfactors = [0.0, 0.3, 0.6, 1.0, 1.8, 3.2, 10.0]
-#        varfactors = [0.0, 1.0, 2.0]
         
+        # If a loaded region does not store Budget Objective data in its json file, then calculate some.
         for currentregion in self.regionlist:
             if not currentregion.hasBOC():
                 print('Region %s has no Budget Objective Curve. Initialising calculation.' % currentregion.getregionname())
                 currentregion.developBOC(varfactors)
             else:
                 print('Region %s already has a Budget Objective Curve.' % currentregion.getregionname())
-        
+            
+        # The actual optimisation process.
+        from geoprioritisation import gpaoptimisefixedtotal
         newtotals = gpaoptimisefixedtotal(self.regionlist)
-        gpasimboxlist = []      # List to link to GPA simboxes. Again, will need to error check if deletions are implemented.
+        
+        gpasimboxlist = []      # Set up temporary storage for SimBoxOpts involved in this GPA. (Warning: Deleted regions and simboxes could corrupt this!)
         for i in xrange(len(newtotals)):
             currentregion = self.regionlist[i]
             print('Initialising a simulation container in region %s for this GPA.' % currentregion.getregionname())
