@@ -195,16 +195,10 @@ def makeco(D=None, progname=None, effect=None, coparams=None, coverage_params=co
 
     # Only going to make cost-outcome curves for programs where the affected parameter is not coverage
     if parname not in coverage_params:
-        if progname == 'VMMC': 
-            maleindices = [i for i, x in enumerate(D['data']['meta']['pops']['male']) if x == 1]
-            males = [D['data']['meta']['pops']['short'][j] for j in maleindices]
-            popnumber = males.index(popname)
-        else:
-            if popname not in D['data']['meta']['pops']['short']: raise Exception('Cannot recognise population %s, it is not in %s' % (popname, D['data']['meta']['pops']['short']))
-            else: popnumber = D['data']['meta']['pops']['short'].index(popname)
+        if popname not in D['data']['meta']['pops']['short']: raise Exception('Cannot recognise population %s, it is not in %s' % (popname, D['data']['meta']['pops']['short']))
+        else: popnumber = D['data']['meta']['pops']['short'].index(popname)
         
         # Get data for scatter plots
-
         outcome = D['data'][partype][parname][popnumber]
         coverage, coveragelabel = getcoverage(D=D, progname=progname)
 
@@ -247,6 +241,26 @@ def makeco(D=None, progname=None, effect=None, coparams=None, coverage_params=co
         plotdata['title'] = input_parameter_name(parname)+ ' - ' + popname
         plotdata['xlabel'] = coveragelabel
         plotdata['ylabel'] = 'Outcome'
+        
+    elif progname == 'VMMC': # New process for VMMC, wherein we internally calculate coverage-outcome curves but don't show the user
+        maleindices = [i for i, x in enumerate(D['data']['meta']['pops']['male']) if x == 1]
+        males = [D['data']['meta']['pops']['short'][j] for j in maleindices]
+        partype, parname = 'sex', 'circum' # Reset parameter
+        totalmales = D['M']['popsize'][maleindices,-1].sum(axis=0)
+        for popnumber, popname in enumerate(males):
+
+            # Figure out slope parameters
+            initval = D['M']['circum'][popnumber][-1]
+            fullcov = 1.
+
+            outcome = D['data'][partype][parname][popnumber]
+            coverage, coveragelabel = getcoverage(D=D, progname=progname)
+
+            # Assume that the number of circumcisions is distributed in accordance with the population size
+            
+            
+
+
         
     return plotdata, effect
 
