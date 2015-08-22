@@ -5,6 +5,9 @@ Created on Sat Aug 22 16:38:48 2015
 @author: cliffk
 """
 
+import sys; sys.path.append('/u/cliffk/unsw/optima/server/src/sim')
+from utils import printdata as pd
+
 from pylab import *
 import shapefile as sh
 
@@ -21,6 +24,17 @@ for p in xrange(len(testshape.points)):
     x.append(testshape.points[p][0])
     y.append(testshape.points[p][1])
 
-scatter(x,y)
+figure()
+axes()
+
+def plotshape(points, color):
+    polygon = Polygon(points, color=color)
+    gca().add_patch(polygon)
+    axis('scaled')
+    show()
+
+
+points = [[2, 1], [8, 1], [8, 4]]
+plotshape(testshape.points, (1,0,0))
 
 print('Done.')
