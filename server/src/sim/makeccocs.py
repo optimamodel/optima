@@ -17,6 +17,7 @@ from datetime import date
 ## Set coverage parameters...
 coverage_params = ['numcircum','numost','numpmtct','numfirstline','numsecondline']
 default_nxpts = 100 # Set the number of points to make the lines
+epsilon = 1e-3 # TEMP: small number to perturb co curve for vmmc
 default_verbose = 2
 ######################################################################
 def makecc(D=None, progname=None, ccparams=None, arteligcutoff=None, verbose=default_verbose, nxpts=default_nxpts):
@@ -194,7 +195,7 @@ def makeco(D=None, progname=None, effect=None, coparams=None, coverage_params=co
     partype, parname, popname = effect['paramtype'], effect['param'], effect['popname']
 
     # Only going to make cost-outcome curves for programs where the affected parameter is not coverage
-    if parname not in coverage_params:
+    if parname not in coverage_params and parname != 'circum':
         if popname not in D['data']['meta']['pops']['short']: raise Exception('Cannot recognise population %s, it is not in %s' % (popname, D['data']['meta']['pops']['short']))
         else: popnumber = D['data']['meta']['pops']['short'].index(popname)
         
@@ -241,7 +242,20 @@ def makeco(D=None, progname=None, effect=None, coparams=None, coverage_params=co
         plotdata['title'] = input_parameter_name(parname)+ ' - ' + popname
         plotdata['xlabel'] = coveragelabel
         plotdata['ylabel'] = 'Outcome'
-                
+        
+    if parname == 'circum': # New process for VMMC, wherein we internally calculate coverage-outcome curves but don't show the user
+        popnumber = D['data']['meta']['pops']['short'].index(popname)
+        initvallb = D['M']['circum'][popnumber][-1] - epsilon
+        initvalub = D['M']['circum'][popnumber][-1] + epsilon
+        fullcovlb,fullcovub = .98, .99
+        coparams = [initvallb,initvalub,fullcovlb,fullcovub]
+        muz, stdevz, muf, stdevf = makecosampleparams(coparams, verbose=verbose)
+        convertedcoparams = [muz, stdevz, muf, stdevf]
+        
+        # Populate output structure with coverage-outcome curves for plotting
+        effect['coparams'] = coparams 
+        effect['convertedcoparams'] = convertedcoparams 
+
     return plotdata, effect
 
 #################################################################################
@@ -256,7 +270,7 @@ def makecco(D=None, progname=None, effect=None, ccparams=None, coparams=None, ar
     partype, parname, popname = effect['paramtype'], effect['param'], effect['popname'] # Get population and parameter info
 
     # Only going to make cost-outcome curves for programs where the affected parameter is not coverage
-    if parname not in coverage_params:
+    if parname not in coverage_params and parname != 'circum':
         if popname not in D['data']['meta']['pops']['short']: raise Exception('Cannot recognise population %s, it is not in %s' % (popname, D['data']['meta']['pops']['short']))
         else: popnumber = D['data']['meta']['pops']['short'].index(popname)
 
@@ -324,6 +338,17 @@ def makecco(D=None, progname=None, effect=None, ccparams=None, coparams=None, ar
             plotdata['xlinedata'] = xvalscco # X data for all line plots
             plotdata['ylinedata'] = [mediancco, mincco, maxcco]
     
+    if parname == 'circum': # New process for VMMC, wherein we internally calculate coverage-outcome curves but don't show the user
+        plotdata_cc, D = makecc(D=D, progname=progname, ccparams=ccparams, arteligcutoff=arteligcutoff)
+        plotdata_co, effect = makeco(D=D, progname=progname, effect=effect, coparams=coparams, arteligcutoff=arteligcutoff)
+        prognumber = [p['name'] for p in D['programs']].index(progname) # get program number    
+        convertedccoparams = deepcopy(D['programs'][prognumber]['convertedccparams'])
+        coparams = effect['coparams']
+        convertedcoparams = effect['convertedcoparams']
+        convertedccoparams[0].extend([convertedcoparams[0],convertedcoparams[2]])
+        convertedccoparams[1].extend([coparams[0],coparams[2]])
+        convertedccoparams[2].extend([coparams[1],coparams[3]])
+        effect['convertedccoparams'] = convertedccoparams 
 
     return plotdata, plotdata_co, effect
 
