@@ -11,6 +11,7 @@ from extra_utils import dict_equal
 from copy import deepcopy
 from makeccocs import convertparams
 import os
+import numpy
 
 malawi = Region.load('./regions/Malawi 150820.json')
 
@@ -32,22 +33,22 @@ for fname in [x for x in os.listdir(path_prefix) if x.endswith('json')]:
 
 	coverage_params = ['numcircum','numost','numpmtct','numfirstline','numsecondline']
 	for prognumber in xrange(0,len(progs)): # Loop over programs
-	    if len(progs[prognumber].get('effects')): # If the programs has effects.... (otherwise it's a fixed cost program)
 	    # WARNING - shoudn't spending-only programs have scaled costs as well??
+	    if not numpy.isnan(progs[prognumber]['ccparams']['funding']):
 	        progs[prognumber]['ccparams']['funding'] *= relative_popsize
-
 	        progs[prognumber]['convertedccparams'] = convertparams(ccparams=progs[prognumber]['ccparams'])
 
-	        for effectnumber, effect in enumerate(progs[prognumber]['effects']):
-	            parname = effect['param']
-	            if parname not in coverage_params: # Only going to make cost-outcome curves for programs where the affected parameter is not coverage
-	                convertedccoparams = deepcopy(progs[prognumber]['convertedccparams'])
-	                convertedcoparams = effect['convertedcoparams']
-	                coparams = effect['coparams']
-	                convertedccoparams[0].extend([convertedcoparams[0],convertedcoparams[2]])
-	                convertedccoparams[1].extend([coparams[0],coparams[2]])
-	                convertedccoparams[2].extend([coparams[1],coparams[3]])
-	                progs[prognumber]['effects'][effectnumber]['convertedccoparams'] = convertedccoparams 
+	        if len(progs[prognumber].get('effects')):
+		        for effectnumber, effect in enumerate(progs[prognumber]['effects']):
+		            parname = effect['param']
+		            if parname not in coverage_params: # Only going to make cost-outcome curves for programs where the affected parameter is not coverage
+		                convertedccoparams = deepcopy(progs[prognumber]['convertedccparams'])
+		                convertedcoparams = effect['convertedcoparams']
+		                coparams = effect['coparams']
+		                convertedccoparams[0].extend([convertedcoparams[0],convertedcoparams[2]])
+		                convertedccoparams[1].extend([coparams[0],coparams[2]])
+		                convertedccoparams[2].extend([coparams[1],coparams[3]])
+		                progs[prognumber]['effects'][effectnumber]['convertedccoparams'] = convertedccoparams 
 
 	district.D['programs'] = deepcopy(district.metadata['programs']) # the metadata variable is the master copy
 	district.save(path_prefix+fname.replace('.json','_oop.json'))
