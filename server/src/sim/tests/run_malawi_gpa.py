@@ -18,7 +18,7 @@ templist = [x for x in os.listdir('./regions/') if x.endswith('.json')]
 
 for x in templist:
     # Make sure you only select files with the right format (i.e. Regex 4 Dummies).
-    if x[2] == '.' and x[0:2] in ['11','12','13','14','15','16','17']:
+    if x[2] == '.' and x[0:2] in ['11','12']:#,'13','14','15','16','17']:
         newregion = Region.load('./regions/' + x)           # Load up a Region from the json file.
         newregion.setregionname(x[4:-11])                   # Give it a nicer name.
         newregion.metadata['programs'][0]['effects'] = []   # Neutralise VMMC as per Robyn's request.
