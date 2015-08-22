@@ -647,14 +647,13 @@ def equilibrate(G, M, Finit):
     failratio = 0.3 # Put fewer people than expected on failure because ART is relatively new...or something
     
     # Shorten key variables
-    hivprev = M['hivprev']
     initpeople = zeros((G['nstates'],G['npops']))
+    allinfected = M['popsize'][:,0] * Finit[:] # Set initial infected population
     
     # Can calculate equilibrium for each population separately
     for p in xrange(G['npops']):
         # Set up basic calculations
-        uninfected = M['popsize'][p,0] * (1-hivprev[p]) # Set initial susceptible population -- easy peasy! # TODO -- should this have F['popsize'] involved?
-        allinfected = M['popsize'][:,0] * Finit[:] # Set initial infected population
+        uninfected = M['popsize'][p,0] * (1-Finit[p]) # Set initial susceptible population -- easy peasy! # TODO -- should this have F['popsize'] involved?
         popinfected = allinfected[p]
         
         # Treatment & treatment failure
@@ -671,7 +670,7 @@ def equilibrate(G, M, Finit):
         
         # Diagnosed & undiagnosed
         nevertreated = popinfected - totaltreat
-        assumedforceinf = hivprev[p]*prevtoforceinf # To calculate ratio of people in the initial category, need to estimate the force-of-infection
+        assumedforceinf = Finit[p]*prevtoforceinf # To calculate ratio of people in the initial category, need to estimate the force-of-infection
         undxdxrates = assumedforceinf + M['hivtest'][p,0] # Ratio of undiagnosed to diagnosed
         undiagnosed = nevertreated * assumedforceinf / undxdxrates     
         diagnosed = nevertreated * M['hivtest'][p,0] / undxdxrates
