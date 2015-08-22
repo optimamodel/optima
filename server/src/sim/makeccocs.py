@@ -255,7 +255,7 @@ def makeco(D=None, progname=None, effect=None, coparams=None, coverage_params=co
         # Populate output structure with coverage-outcome curves for plotting
         effect['coparams'] = coparams 
         effect['convertedcoparams'] = convertedcoparams 
-                    
+
     return plotdata, effect
 
 #################################################################################
@@ -316,7 +316,7 @@ def makecco(D=None, progname=None, effect=None, ccparams=None, coparams=None, ar
 
             # Store whole set of parameters
             prognumber = [p['name'] for p in D['programs']].index(progname) # get program number    
-            convertedccoparams = D['programs'][prognumber]['convertedccparams']
+            convertedccoparams = deepcopy(D['programs'][prognumber]['convertedccparams'])
             convertedcoparams = effect['convertedcoparams']
             convertedccoparams[0].extend([convertedcoparams[0],convertedcoparams[2]])
             convertedccoparams[1].extend([coparams[0],coparams[2]])
