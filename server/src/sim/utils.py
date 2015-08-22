@@ -187,7 +187,8 @@ def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0, sho
       depth: how many levels of recursion to follow
       maxlen: number of characters of data to display (if 0, don't show data)
       indent: where to start the indent (used internally)
-    
+
+    Version: 1.0 (2015aug21)    
     """
     datatype = type(data)
     def printentry(data):
