@@ -1,1 +1,0 @@
-These files can be placed in Optima/server/src/sim/tests/regions
