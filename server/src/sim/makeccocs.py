@@ -249,6 +249,7 @@ def makecco(D=None, progname=None, effect=None, ccparams=None, coparams=None, ar
     ''' Make a single cost outcome curve. '''
     from numpy import array, where
     from datetime import date
+    from copy import deepcopy
 
     plotdata, plotdata_co = {}, {} 
     prognumber = [p['name'] for p in D['programs']].index(progname) # get program number    
@@ -301,7 +302,7 @@ def makecco(D=None, progname=None, effect=None, ccparams=None, coparams=None, ar
 
             # Store whole set of parameters
             prognumber = [p['name'] for p in D['programs']].index(progname) # get program number    
-            convertedccoparams = D['programs'][prognumber]['convertedccparams']
+            convertedccoparams = deepcopy(D['programs'][prognumber]['convertedccparams'])
             convertedcoparams = effect['convertedcoparams']
             convertedccoparams[0].extend([convertedcoparams[0],convertedcoparams[2]])
             convertedccoparams[1].extend([coparams[0],coparams[2]])
