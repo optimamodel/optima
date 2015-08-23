@@ -243,7 +243,7 @@ def plotcco(D, progname=default_progname, effect=default_effect, ccparams=defaul
 def plotprogramcurves(D, progname=default_progname, ccparams=default_ccparams, coparams=default_coparams, arteligcutoff=default_arteligcutoff, doclose=True):
     """ Plot all figures for a particular program """
 
-    plotcc(D, progname=progname, ccparams=ccparams, arteligcutoff=arteligcutoff)
+    plotcc(D, progname=progname, ccparams=ccparams, arteligcutoff=arteligcutoff, doclose=doclose)
     prognumber = [p['name'] for p in D['programs']].index(progname) # get program number
     for effectnumber, effect in enumerate(D['programs'][prognumber]['effects']):
         plotco(D, progname=progname, effect=effect, coparams=coparams, arteligcutoff=arteligcutoff, doclose=doclose)

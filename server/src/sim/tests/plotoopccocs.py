@@ -11,8 +11,6 @@ import os
 from numpy import sort
 from sim import Sim
 from plotccocs import makecc, plotprogramcurves
-from pylab import show
-
 
 # List all the json files in the regions sub-directory.
 templist = sort([x for x in os.listdir('./regions/') if x.endswith('.json')])
@@ -37,5 +35,3 @@ for i,program in enumerate(D['programs']):
         if len(program['effects'])>0:
             plotdata_cc, D = makecc(D=D, progname=program['name'])
             plotprogramcurves(D=D, progname=program['name'], doclose=False)
-
-show()
