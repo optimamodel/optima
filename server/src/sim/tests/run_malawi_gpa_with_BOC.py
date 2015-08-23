@@ -18,7 +18,7 @@ nationcheck = Region.load('./regions/Malawi 150820.json')
 # List all the json files in the regions sub-directory.
 templist = [x for x in os.listdir('./regions/') if x.endswith('.json')]
 
-reglimit = 2    # How many districts do you want to load?
+reglimit = 40    # How many districts do you want to load?
 
 calc = 0
 regcount = 0
@@ -60,9 +60,9 @@ def testsimopt(r1):
 # Use this if you want to check GPA results for any region, numbered from 1 to 32.
 # Only run this if you have run geoprioanalysis.
 def check(x):
+    sb = p1.gpalist[-1][x-1]    
+    
     print(sb.getregion().getregionname())
-
-    sb = p1.gpalist[-1][x-1]
 
     sb.getregion().plotsimbox(sb, multiplot = True)
     
