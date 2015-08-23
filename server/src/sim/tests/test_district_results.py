@@ -33,13 +33,14 @@ programs = [u'VMMC', u'FSW programs', u'MSM programs', u'HTC', u'ART', u'PMTCT',
 
 
 somealloc1 = array([  69.,   11.,    1.,  231.,  # 0-3
-                     905.,  314.,  117.,  224.,  # 4-7
+                     9905.,  314.,  117.,  224.,  # 4-7
                      758.,   97.,   78.,   70.,  # 8-11
                      180.,  202.,  181.,   28.   # 12-15
-                     ])*1e3
+                     ])*1e6
 
 
 somealloc2 = deepcopy(somealloc1)/1e9
+somealloc2[4] = somealloc1[4] # ART
 
 somebudget1 = timevarying(somealloc1, ntimepm = 1, nprogs = len(somealloc1), tvec = r1.options['partvec'])
 somebudget2 = timevarying(somealloc2, ntimepm = 1, nprogs = len(somealloc2), tvec = r1.options['partvec'])

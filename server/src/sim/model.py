@@ -441,8 +441,9 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2):
             otherdeaths = dt * people[undx[cd4],:,t] * background
             dU.append(progin - progout - newdiagnoses[cd4] - hivdeaths - otherdeaths) # Add in new infections after loop
             if ((dU[cd4]+people[undx[cd4],:,t])<0).any():
+                old = deepcopy(dU[cd4])
                 dU[cd4] = maximum(dU[cd4], -people[undx[cd4],:,t]) # Ensure it doesn't go below 0 -- # TODO kludgy
-                printv('Prevented negative people in undiagnosed at timestep %i' % t, 6, verbose)
+                printv('Prevented %f negative people in undiagnosed at timestep %i' % (sum(old-dU[cd4]), t), 6, verbose)
             S['dx'][:,t]    += newdiagnoses[cd4]/dt # Save annual diagnoses 
             S['death'][:,t] += hivdeaths/dt    # Save annual HIV deaths 
         dU[0] = dU[0] + newinfections # Now add newly infected people
@@ -475,8 +476,9 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2):
             newtreat1[cd4] = minimum(newtreat1[cd4], currentdiagnosed[cd4,:]+inflows-outflows) # Allow it to go negative
             dD.append(inflows - outflows - newtreat1[cd4])
             if ((dD[cd4]+people[dx[cd4],:,t])<0).any():
+                old = deepcopy(dD[cd4])
                 dD[cd4] = maximum(dD[cd4], -people[dx[cd4],:,t]) # Ensure it doesn't go below 0 -- # TODO kludgy
-                printv('Prevented negative people in diagnosed at timestep %i' % t, 6, verbose)
+                printv('Prevented %f negative people in diagnosed at timestep %i' % (sum(old-dD[cd4]), t), 6, verbose)
             S['newtx1'][:,t] += newtreat1[cd4]/dt # Save annual treatment initiation
             S['death'][:,t]  += hivdeaths/dt # Save annual HIV deaths 
         
@@ -495,8 +497,9 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2):
             otherdeaths = dt * people[tx1[cd4],:,t] * background
             dT1.append(recovin - recovout + newtreat1[cd4] - newfail1[cd4] - hivdeaths - otherdeaths)
             if ((dT1[cd4]+people[tx1[cd4],:,t])<0).any():
+                old = deepcopy(dT1[cd4])
                 dT1[cd4] = maximum(dT1[cd4], -people[tx1[cd4],:,t]) # Ensure it doesn't go below 0 -- # TODO kludgy
-                printv('Prevented negative people in treatment 1 at timestep %i' % t, 6, verbose)
+                printv('Prevented %0.0f negative people in treatment 1 at timestep %i' % (sum(old-dT1[cd4]), t), 6, verbose)
             S['death'][:,t] += hivdeaths/dt # Save annual HIV deaths 
         
         ## Treatment failure
