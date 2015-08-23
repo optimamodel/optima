@@ -12,6 +12,8 @@ from pylab import sort
 from os import listdir
 from multiprocessing import Process
 
+usebatch = False
+
 
 n = 1e7
 processes = []
@@ -30,14 +32,17 @@ def calculate_boc_for_region(regionname, integer):
 districts = sort([x.split('.')[0] for x in listdir('./regions/') if x.endswith('.json')])
 
 
-print districts
 for i,district in enumerate(districts):
-    p = Process(target=calculate_boc_for_region, args=(district,i))
-    p.start()
-    processes.append(p)
+    if usebatch:
+        p = Process(target=calculate_boc_for_region, args=(district,i))
+        p.start()
+        processes.append(p)
+    else:
+        calculate_boc_for_region(district,i)
 
-for p in processes:
-    p.join()
+if usebatch:
+    for p in processes:
+        p.join()
 
 
 print('DONE.')
