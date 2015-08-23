@@ -573,7 +573,6 @@ def equilibrate(G, M, Finit):
     # Set parameters
     prevtoforceinf = 0.1 # Assume force-of-infection is proportional to prevalence -- 0.1 means that if prevalence is 10%, annual force-of-infection is 1%
     efftreatmentrate = 0.1 # Inverse of average duration of treatment in years...I think
-    failratio = 0.3 # Put fewer people than expected on failure because ART is relatively new...or something
     
     # Shorten key variables
     initpeople = zeros((G['nstates'],G['npops']))
@@ -588,14 +587,8 @@ def equilibrate(G, M, Finit):
         # Treatment & treatment failure
         fractotal =  popinfected / sum(allinfected) # Fractional total of infected people in this population
         treatment1 = M['tx1'][0] * fractotal # Number of people on 1st-line treatment
-        treatment2 = M['tx2'][0] * fractotal # Number of people on 2nd-line treatment
-        treatfail = treatment1 * M['const']['fail']['first'] * efftreatmentrate * failratio # Number of people with treatment failure -- # TODO: check
-        totaltreat = treatment1 + treatment2 + treatfail
-        if totaltreat > popinfected: # More people on treatment than ever infected, uh oh!
-            treatment1 *= popinfected/totaltreat
-            treatment2 *= popinfected/totaltreat
-            treatfail *= popinfected/totaltreat
-            totaltreat = popinfected
+        totaltreat = treatment1
+        assert treatment1<=popinfected, 'More people on treatment than infected' # More people on treatment than ever infected, uh oh!
         
         # Diagnosed & undiagnosed
         nevertreated = popinfected - totaltreat
@@ -614,19 +607,14 @@ def equilibrate(G, M, Finit):
         undiagnosed *= progratios
         diagnosed *= progratios
         treatment1 *= recovratios
-        treatfail *= progratios
-        treatment2 *= recovratios
         
         # Populated equilibrated array
         initpeople[G['sus'], p] = uninfected
         initpeople[G['undx'], p] = undiagnosed
         initpeople[G['dx'], p] = diagnosed
         initpeople[G['tx1'], p] = treatment1
-        initpeople[G['fail'], p] = treatfail
-        initpeople[G['tx2'], p] = treatment2
     
-        if not((initpeople>=0).all()):
-            print('Non-positive people found during epidemic initialization!') # If not every element is a real number >0, throw an error
+        assert (initpeople>=0).all(), 'Non-positive people found during epidemic initialization!' # If not every element is a real number >0, throw an error
         
     return initpeople
 
