@@ -5,7 +5,6 @@ Created on Fri Jun 05 23:27:38 2015
 @author: David Kedziora
 """
 
-import weakref
 import uuid
 import defaults
 from copy import deepcopy
@@ -81,14 +80,14 @@ class Sim(object):
         return simdict
     
     def setregion(self,region):
-        self.region = weakref.ref(region)
+        self.region = region
 
     def getregion(self):
         # self.region is a weakref object, which means to get
         # the region you need to do self.region() rather than
         # self.region. This function abstracts away this 
         # implementation detail in case it changes in future
-        r = self.region()
+        r = self.region
         if r is None:
             raise Exception('The parent region has been garbage-collected and the reference is no longer valid.')
         else:
