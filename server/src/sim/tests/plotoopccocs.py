@@ -10,6 +10,8 @@ from region import Region
 import os
 from numpy import sort
 from sim import Sim
+from plotccocs import makecc, plotprogramcurves
+from pylab import show
 
 
 # List all the json files in the regions sub-directory.
@@ -20,7 +22,6 @@ s = Sim('test-sim',r1)
 s.initialise()
 S = s.run()
 
-from makeccocs import plotallcurves
 D = dict()
 D['G'] = r1.metadata
 D['data'] = r1.data
@@ -29,10 +30,12 @@ D['programs'] = r1.metadata['programs']
 D['P'] = s.parsdata
 D['S'] = S
 D['M'] = s.parsmodel
-for program in D['programs']:
-    progname = program['name']
-    if len(program['effects']):
-        print(progname)
-        plotdata_cco, plotdata_co, plotdata_cc, effects, D = plotallcurves(D, unicode(progname))
-    else:
-        print(progname+' not used')
+
+selection = range(0,2)
+for i,program in enumerate(D['programs']):
+    if i in selection:
+        if len(program['effects'])>0:
+            plotdata_cc, D = makecc(D=D, progname=program['name'])
+            plotprogramcurves(D=D, progname=program['name'], doclose=False)
+
+show()

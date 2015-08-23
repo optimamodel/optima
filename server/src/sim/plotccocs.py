@@ -29,7 +29,7 @@ coverage_params = ['numost','numpmtct','numfirstline','numsecondline']
 ###############################################################################
 from makeccocs import makecc, makeco, makecco
 ###############################################################################
-def plot_cost_coverage(plotdata, figsize=None):
+def plot_cost_coverage(plotdata, figsize=None, doclose=True):
     """ Plot the cost-coverage figure """
 
     result = None
@@ -84,21 +84,22 @@ def plot_cost_coverage(plotdata, figsize=None):
         OptimaTickFormatter())
 
     result = fig_to_dict(cost_coverage_figure)
-    cost_coverage_figure.clf()
-    axis.cla()
-    close(cost_coverage_figure)
+    if doclose: 
+        cost_coverage_figure.clf()
+        axis.cla()
+        close(cost_coverage_figure)
 
     return result
 
 
-def plotcc(D, progname=default_progname, ccparams=default_ccparams, arteligcutoff=default_arteligcutoff):
+def plotcc(D, progname=default_progname, ccparams=default_ccparams, arteligcutoff=default_arteligcutoff, doclose=True):
     """ Generate cost-coverage data and plot it. """
 
     plotdata_cc, D = makecc(D, progname=progname, ccparams=ccparams, arteligcutoff=arteligcutoff)
-    plot_cost_coverage(plotdata_cc)
+    plot_cost_coverage(plotdata_cc, doclose=doclose)
 
 ###############################################################################
-def plot_coverage_outcome(plotdata, figsize = None):
+def plot_coverage_outcome(plotdata, figsize = None, doclose=True):
     """ Plot the coverage-outcome figure """
     result = None
     coverage_outcome_figure = None
@@ -152,20 +153,21 @@ def plot_coverage_outcome(plotdata, figsize = None):
             OptimaTickFormatter())
 
         result = fig_to_dict(coverage_outcome_figure)
-        coverage_outcome_figure.clf()
-        axis.cla()
-        close(coverage_outcome_figure)
+        if doclose: 
+            coverage_outcome_figure.clf()
+            axis.cla()
+            close(coverage_outcome_figure)
     return result
 
 
-def plotco(D, progname=default_progname, effect=default_effect, coparams=default_coparams, arteligcutoff=default_arteligcutoff):
+def plotco(D, progname=default_progname, effect=default_effect, coparams=default_coparams, arteligcutoff=default_arteligcutoff, doclose=True):
     """ Generate coverage-outcome data and plot it. """
 
     plotdata_co, effect = makeco(D=D, progname=progname, effect=effect, coparams=coparams, arteligcutoff=arteligcutoff)
-    plot_coverage_outcome(plotdata_co)
+    plot_coverage_outcome(plotdata_co, doclose=doclose)
 
 #################################################################################
-def plot_cost_outcome(plotdata, figsize = None):
+def plot_cost_outcome(plotdata, figsize = None, doclose=True):
     """ Plot the cost-outcome figure """
 
     cost_outcome_figure = None
@@ -223,31 +225,32 @@ def plot_cost_outcome(plotdata, figsize = None):
             plugins.BoxZoom(button=False, enabled=False),
             OptimaTickFormatter())
         result = fig_to_dict(cost_outcome_figure)
-        cost_outcome_figure.clf()
-        axis.cla()
-        close(cost_outcome_figure)
+        if doclose:
+            cost_outcome_figure.clf()
+            axis.cla()
+            close(cost_outcome_figure)
     return result
 
 
 def plotcco(D, progname=default_progname, effect=default_effect, ccparams=default_ccparams, coparams=default_coparams, \
-    arteligcutoff=default_arteligcutoff):
+    arteligcutoff=default_arteligcutoff, doclose=True):
     """ Generate cost-outcome data and plot it. """
 
     plotdata_cco, plotdata_co, effect = makecco(D, progname=progname, effect=effect, ccparams=ccparams, coparams=coparams, arteligcutoff=arteligcutoff)
-    plot_cost_outcome(plotdata_cco)
+    plot_cost_outcome(plotdata_cco, doclose=doclose)
 
 #################################################################################
-def plotprogramcurves(D, progname=default_progname, ccparams=default_ccparams, coparams=default_coparams, arteligcutoff=default_arteligcutoff):
+def plotprogramcurves(D, progname=default_progname, ccparams=default_ccparams, coparams=default_coparams, arteligcutoff=default_arteligcutoff, doclose=True):
     """ Plot all figures for a particular program """
 
     plotcc(D, progname=progname, ccparams=ccparams, arteligcutoff=arteligcutoff)
     prognumber = [p['name'] for p in D['programs']].index(progname) # get program number
     for effectnumber, effect in enumerate(D['programs'][prognumber]['effects']):
-        plotco(D, progname=progname, effect=effect, coparams=coparams, arteligcutoff=arteligcutoff)
-        plotcco(D, progname=progname, effect=effect, ccparams=ccparams, coparams=coparams, arteligcutoff=arteligcutoff)
+        plotco(D, progname=progname, effect=effect, coparams=coparams, arteligcutoff=arteligcutoff, doclose=doclose)
+        plotcco(D, progname=progname, effect=effect, ccparams=ccparams, coparams=coparams, arteligcutoff=arteligcutoff, doclose=doclose)
 
 #################################################################################
-def plotall(D, ccparams = default_ccparams, coparams = default_coparams):
+def plotall(D, ccparams = default_ccparams, coparams = default_coparams, doclose=True):
     for program in D['programs']:
         plotdata_cc, D = makecc(D=D, progname=program['name'])
-        plotprogramcurves(D=D, progname=program['name'])
+        plotprogramcurves(D=D, progname=program['name'], doclose=doclose)
