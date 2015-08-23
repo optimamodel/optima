@@ -10,6 +10,7 @@ from portfolio import Portfolio
 from region import Region
 import os
 from copy import deepcopy
+from utils import tic, toc
 
 from numpy import array, sort
 from timevarying import timevarying
@@ -45,7 +46,9 @@ somealloc2[4] = somealloc1[4] # ART
 somebudget1 = timevarying(somealloc1, ntimepm = 1, nprogs = len(somealloc1), tvec = r1.options['partvec'])
 somebudget2 = timevarying(somealloc2, ntimepm = 1, nprogs = len(somealloc2), tvec = r1.options['partvec'])
 
+t = tic()
 s1 = sb1.createsim('test1', budget = somebudget1, forcecreate = True)
+toc(t)
 s1.plotresults()
 s2 = sb1.createsim('test2', budget = somebudget2, forcecreate = True)
 s2.plotresults()
