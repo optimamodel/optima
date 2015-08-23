@@ -35,4 +35,8 @@ colors = gridcolormap(numregions)
 for r in xrange(numregions):
     plotshape(sf.shape(r).points, colors[r])
 
+
+names = []
+for i in range(numregions): names.append(sf.record(i)[4])
+
 print('Done.')

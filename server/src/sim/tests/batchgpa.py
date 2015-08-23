@@ -41,8 +41,8 @@ for newregion in regionlist:
 
 
 
-print('Running GPA...')
-p1.geoprioanalysis(usebatch=True)                # Run the GPA algorithm.
+#print('Running GPA...')
+#p1.geoprioanalysis(usebatch=True)                # Run the GPA algorithm.
 
 print('Saving portfolio...')
 p1.save()
