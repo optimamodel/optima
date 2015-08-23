@@ -4,16 +4,12 @@ from printv import printv
 from math import pow as mpow
 from copy import deepcopy
 
-def model(G, tmpM, tmpF, opt, initstate=None, verbose=2):
+def model(G, tmpM, tmpF, opt, initstate=None, verbose=2, safetymargin=0.8):
     """
-    This function runs the model.
+    This function runs the model. Safetymargin is how close to get to moving all people from a compartment in a single timestep.
     
     Version: 2015feb04 by cliffk
     """
-    
-    print('TEMP')
-    verbose = 7  
-    safetymargin = 0.8 # Don't move more than this fraction of people out of a compartment in a single timestep
     
     printv('Running model...', 1, verbose, newline=False)
 
