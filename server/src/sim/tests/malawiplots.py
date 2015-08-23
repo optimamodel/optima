@@ -6,10 +6,11 @@ Created on Mon Aug 24 01:38:57 2015
 """
 
 import add_optima_paths # analysis:ignore
-from utils import tic, toc, printdata as pd # analysis:ignore
+from utils import tic, toc, printdata as pd, findinds # analysis:ignore
 from dataio import loaddata
-from pylab import figure, subplot, arange, maximum, savefig
+from pylab import figure, subplot, arange, maximum, savefig, zeros, array
 from portfolio import loadportfolio
+from colortools import vectocolor
 
 
 from matplotlib.pyplot import rc 
@@ -17,15 +18,17 @@ rc('font', family='serif')
 rc('font', serif='Linux Biolinum') 
 rc('font', size=14)
 
-dosave = True
-makeslide1 = False
-makeslide2 = True
-makeslide3 = False
-makeslide4 = False
+dosave = 1
+makeslide1 = 1
+makeslide2 = 1
+makeslide3 = 1
+makeslide4 = 1
 
 nationaljson = '/u/cliffk/unsw/countries/malawi/malawi-steeper-ccocs.json'
 portfolioname = '/u/cliffk/unsw/optima/server/src/sim/tests/malawi-gpa-done.npz'
+gisfile = '/u/cliffk/unsw/countries/malawi/gis/MWI_adm1'
 districtstouse = ['Blantyre City', 'Chitipa']
+
 
 
 
@@ -73,6 +76,77 @@ def plotallocations(progdata, progs, labels, factor=1e6, compare=True):
 
 
 
+
+
+
+
+##################################################################
+## Plot a map
+##################################################################
+
+
+def plotmap(data, names, gisfile, titles=[''], figsize=(8,8)):
+    from pylab import axis, gca, Polygon, show, figure, hold, colorbar, title, scatter, concatenate, ndim, size
+    import shapefile as sh
+    
+    def plotshape(points, color):
+        polygon = Polygon(points, color=color)
+        gca().add_patch(polygon)
+        axis('scaled')
+        show()
+
+    # Read in data and get names
+    sf = sh.Reader(gisfile)
+    numregions = sf.numRecords
+    gisnames = []
+    for i in range(numregions): gisnames.append(sf.record(i)[4])
+    
+    # Calculate number of maps
+    if ndim(data)==1: nmaps = 1
+    else: nmaps = size(data,0)
+    
+    # Process colors
+    if nmaps==1:
+        colors = [vectocolor(data)]
+    else:
+        colors = []
+        for m in range(nmaps):
+            tmp = vectocolor(concatenate(([0], [data.min()], data[m,:], [data.max()])))
+            colors.append(tmp[2:-1])
+            
+    
+    # Create figure
+    figure(figsize=figsize)
+    
+    ax = []
+    for m in range(nmaps):
+        ax.append(subplot(1,nmaps,m+1))
+        ax[-1].get_xaxis().set_visible(False)
+        ax[-1].get_yaxis().set_visible(False)
+        hold(True)
+        
+        for i,name in enumerate(names):
+            try:
+                match = gisnames.index(name)
+                plotshape(sf.shape(match).points, colors[m][i])
+            except:
+                print('Name "%s" not matched to GIS file' % name)
+        xlims = ax[-1].get_xlim()
+        ylims = ax[-1].get_ylim()
+        scatter(zeros(len(data.flatten())+1),zeros(len(data.flatten())+1),c=concatenate(([0],data.flatten())))
+        ax[-1].set_xlim(xlims)
+        ax[-1].set_ylim(ylims)
+        title(titles[m])
+    
+    colorbar()
+    
+    
+    
+    
+
+
+
+
 ##################################################################
 ## Load portfolio
 ##################################################################
@@ -96,7 +170,7 @@ progdata = [origalloc,optimalloc]
 labels = ['Current budget allocation','Optimal budget allocation']
 if makeslide1:
     plotallocations(progdata, progs, labels)
-    if dosave: savefig('/u/cliffk/unsw/countries/malawi/results/nationalallocation.png',dpi=200)
+    if dosave: savefig('/u/cliffk/unsw/countries/malawi/results/nationalallocation.png', dpi=200)
 
 
 
@@ -104,6 +178,24 @@ if makeslide1:
 ## Slide 2 -- map of Malawi colored by PLHIV
 ##################################################################
 
+ndistricts = len(P.gpalist[0])
+year = 2015
+
+plhiv = zeros(ndistricts)
+prev = zeros(ndistricts)
+distnames = []
+for d in range(ndistricts):
+    R = P.gpalist[0][d].getregion()
+    distnames.append(R.getregionname())
+    yearind = findinds(R.simboxlist[0].simlist[0].plotdata['tvec'], year)
+    plhiv[d] = array(R.simboxlist[0].simlist[0].plotdata['plhiv']['tot']['best'])[yearind]
+    prev[d] = array(R.simboxlist[0].simlist[0].plotdata['prev']['tot']['best'])[yearind]
+
+if makeslide2:
+    plotmap(prev, distnames, gisfile, titles=['HIV prevalence per district (%)'], figsize=(6,8))
+    if dosave: savefig('/u/cliffk/unsw/countries/malawi/results/prevalencemap.png', dpi=200)
+    plotmap(plhiv, distnames, gisfile, titles=['PLHIV per district'], figsize=(6,8))
+    if dosave: savefig('/u/cliffk/unsw/countries/malawi/results/plhivmap.png', dpi=200)
 
 
 
@@ -112,7 +204,18 @@ if makeslide1:
 ## Slide 3 -- map of Malawi colored by spend
 ##################################################################
 
-
+factor = 1e6
+allocations = zeros((2,ndistricts))
+distnames = []
+for d in range(ndistricts):
+    R = P.gpalist[0][d].getregion()
+    distnames.append(R.getregionname())
+    for i in range(2):
+        allocations[i,d] = sum(P.gpalist[0][d].simlist[0+2*i].alloc)
+    
+if makeslide3:
+    plotmap(allocations/1e6, distnames, gisfile, titles=['Current spending ($USm)', 'Optimal spending ($USm)'], figsize=(10,8))
+    if dosave: savefig('/u/cliffk/unsw/countries/malawi/results/spendingmap.png', dpi=200)
 
 
 
