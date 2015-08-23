@@ -10,7 +10,7 @@
     - db_user: app
     - db_name: optima
     - db_url: "postgresql://{{db_user}}:{{db_password}}@{{db_host}}:5432/{{db_name}}"
-    - num_workers: {{ansible_processor_cores * 2}}
+    - num_workers: "{{ansible_processor_cores * 2}}"
 
   vars_files:
     - "{{prudentia_dir}}/vars/global.yml"
