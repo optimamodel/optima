@@ -6,37 +6,41 @@ Created on Mon Jul 20 04:34:26 2015
 """
 
 import add_optima_paths # analysis:ignore
-from utils import run, tic, toc
+from utils import tic, toc
 from region import Region
 from pylab import sort
 from os import listdir
-from pylab import pause
+from multiprocessing import Process
+
 
 n = 1e7
+processes = []
 
 
-def batch():
-    districts = sort([x.rstrip('.json') for x in listdir('./regions/') if x.endswith('.json')])
-    districts = districts[:4]
-    for district in districts:
-        string = "from batch import calculate_boc_for_region; calculate_boc_for_region('%s')" % district
-        print string
-        command = 'python -c "%s" &' % string
-        run(command, printoutput=True)
-        
-
-
-
-
-
-def calculate_boc_for_region(regionname):
-#    targetregion = Region.load('./regions/' + regionname + '.json')           # Load up a Region from the json file.
-#    targetregion.recalculateBOC()
-#    targetregion.save('./regions/' + regionname + '.json')
-    print('hi from %s' % regionname)
-    tmp = 0
+def calculate_boc_for_region(regionname, integer):
+    print('============ Starting region %s (%i) =============' % (regionname, integer))
     t = tic()
-    for i in range(int(n)): tmp += 1
+    targetregion = Region.load('./regions/' + regionname + '.json')           # Load up a Region from the json file.
+    targetregion.recalculateBOC()
+    targetregion.save('./regions/' + regionname + '.json')
     toc(t)
-    
     print('============ Done with region %s =============' % regionname)
+    
+
+districts = sort([x.split('.')[0] for x in listdir('./regions/') if x.endswith('.json')])
+
+
+print districts
+for i,district in enumerate(districts):
+    p = Process(target=calculate_boc_for_region, args=(district,i))
+    p.start()
+    processes.append(p)
+
+for p in processes:
+    p.join()
+
+
+print('DONE.')
+
+
+

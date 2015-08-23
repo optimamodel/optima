@@ -499,7 +499,7 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2, safetymargin=0.8, bench
                 for errstate in xrange(nstates): # Loop over all heath states
                     for errpop in xrange(npops): # Loop over all populations
                         if not(people[errstate,errpop,t+1]>=0):
-                            print('WARNING, Non-positive people found: people[%s, %s, %s] = %s' % (errstate, errpop, t+1, people[errstate,errpop,t+1]))
+                            printv('WARNING, Non-positive people found: people[%s, %s, %s] = %s' % (errstate, errpop, t+1, people[errstate,errpop,t+1]), 4, verbose=verbose)
                             people[errstate,errpop,t+1] = 0 # Reset
         
         # Do some sanity checks
@@ -556,7 +556,7 @@ def fit2time(pars, tvec):
     
     
     
-def equilibrate(G, M, Finit):
+def equilibrate(G, M, Finit, verbose=2):
     """
     Calculate the quilibrium point by estimating the ratio of input and output 
     rates for each of the health states.
@@ -627,7 +627,7 @@ def equilibrate(G, M, Finit):
         initpeople[G['tx2'], p] = treatment2
     
         if not((initpeople>=0).all()):
-            print('Non-positive people found during epidemic initialization!') # If not every element is a real number >0, throw an error
+            printv('Non-positive people found during epidemic initialization!', 4, verbose) # If not every element is a real number >0, throw an error
         
     return initpeople
 
