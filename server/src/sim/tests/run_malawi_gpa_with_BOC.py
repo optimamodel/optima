@@ -18,7 +18,7 @@ nationcheck = Region.load('./regions/Malawi 150820.json')
 # List all the json files in the regions sub-directory.
 templist = [x for x in os.listdir('./regions/') if x.endswith('.json')]
 
-reglimit = 40    # How many districts do you want to load?
+reglimit = 2    # How many districts do you want to load?
 
 calc = 0
 regcount = 0
@@ -117,6 +117,10 @@ def check(x):
     for x in xrange(len(r.metadata['inputprograms'])):
         print('%-20s%20.2f%20.2f%20.2f' % (r.metadata['inputprograms'][x]['short_name']+':',r.simboxlist[-1].simlist[0].alloc[x],r.simboxlist[-1].simlist[1].alloc[x],r.simboxlist[-1].simlist[2].alloc[x]))
     print('\n')
+    
+    print r.simboxlist[-1].simlist[0].alloc
+    print r.simboxlist[-1].simlist[1].alloc
+    print r.simboxlist[-1].simlist[2].alloc
     
 # Recalculate BOC for region numbered between 1 and 32.
 def refine(x):
