@@ -3,17 +3,18 @@ from numpy import array, zeros, exp, maximum, minimum, nonzero, concatenate, hst
 from printv import printv
 from math import pow as mpow
 from copy import deepcopy
-from utils import tic, toc
 
-def model(G, tmpM, tmpF, opt, initstate=None, verbose=2, safetymargin=0.8):
+def model(G, tmpM, tmpF, opt, initstate=None, verbose=2, safetymargin=0.8, benchmark=False):
     """
     This function runs the model. Safetymargin is how close to get to moving all people from a compartment in a single timestep.
     
-    Version: 2015feb04 by cliffk
+    Version: 2015aug23 by cliffk
     """
     
     printv('Running model...', 1, verbose, newline=False)
-    ttttmp = tic()
+    if benchmark: 
+        from utils import tic, toc
+        starttime = tic()
 
     ###############################################################################
     ## Setup
@@ -515,7 +516,7 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2, safetymargin=0.8):
 
 
     printv('  ...done running model.', 2, verbose)
-    toc(ttttmp)
+    if benchmark: toc(starttime)
     return S
 
 
