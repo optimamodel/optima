@@ -12,7 +12,7 @@ nsims = 5
 
 import os
 from copy import deepcopy
-from numpy import arange
+from numpy import arange, empty
 
 from region import Region
 
@@ -348,7 +348,7 @@ class Portfolio(object):
 
 
     # The GPA algorithm.
-    def geoprioanalysis(self, gpaname = 'Test'):
+    def geoprioanalysis(self, gpaname = 'Test', usebatch=False):
         
         # First, choose 'spend' factors for the construction of your Budget Objective Curve.
         varfactors = [0.0, 0.3, 0.6, 1.0, 1.8, 3.2, 10.0]
@@ -365,18 +365,27 @@ class Portfolio(object):
         from geoprioritisation import gpaoptimisefixedtotal
         newtotals = gpaoptimisefixedtotal(self.regionlist)
         
-        gpasimboxlist = []      # Set up temporary storage for SimBoxOpts involved in this GPA. (Warning: Deleted regions and simboxes could corrupt this!)
-        for i in xrange(len(newtotals)):
-            currentregion = self.regionlist[i]
+        gpasimboxlist = empty(len(newtotals), dtype=object)      # Set up temporary storage for SimBoxOpts involved in this GPA. (Warning: Deleted regions and simboxes could corrupt this!)
+        
+        def makegpasimbox(currentregion, i, gpasimboxlist):
             print('Initialising a simulation container in region %s for this GPA.' % currentregion.getregionname())
             tempsimbox = currentregion.createsimbox('GPA '+gpaname+' - '+currentregion.getregionname(), isopt = True, createdefault = False)
-            initsimorig = tempsimbox.createsim(currentregion.getregionname()+' - Initial', forcecreate = False)
+            tempsimbox.createsim(currentregion.getregionname()+' - Initial', forcecreate = False)
             initsimcopy = tempsimbox.createsim(currentregion.getregionname()+' - GPA', forcecreate = True)
             tempsimbox.scalealloctototal(initsimcopy, newtotals[i])
             currentregion.runsimbox(tempsimbox)
             tempsimbox.simlist.remove(initsimcopy)
-            tempsimbox.viewoptimresults(plotasbar = True)
-            gpasimboxlist.append(tempsimbox)
+            gpasimboxlist[i] = tempsimbox
+        
+        # Run the loop
+        for i in xrange(len(newtotals)):
+            currentregion = self.regionlist[i]
+            if usebatch:
+                print('hi!')
+            else:
+                makegpasimbox(currentregion, i, gpasimboxlist)
+                gpasimboxlist[i].viewoptimresults(plotasbar = True)
+            
          
         self.gpalist.append(gpasimboxlist)      # Attach list of simboxes to GPA list for easy recall.
     
