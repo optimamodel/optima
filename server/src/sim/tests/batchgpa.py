@@ -13,12 +13,10 @@ from pylab import sort
 from multiprocessing import Process, Queue
 
 usebatch = True
-maxdistricts = 5
-print('TEMP')
 
 # Create a Portfolio to hold all of Malawi's districts (i.e. Regions).
 p1 = Portfolio('Malawi 2015-Aug-23')
-districts = sort([x.split('.')[0] for x in listdir('./regions/') if x.endswith('.json')])[:maxdistricts]
+districts = sort([x.split('.')[0] for x in listdir('./regions/') if x.endswith('.json')])[:3]
 
 outputqueue = Queue()
 
@@ -45,4 +43,10 @@ for newregion in regionlist:
 
 print('Running GPA...')
 p1.geoprioanalysis(usebatch=True)                # Run the GPA algorithm.
+
+print('Saving portfolio...')
+p1.save()
+
+
+print('Done.')
 

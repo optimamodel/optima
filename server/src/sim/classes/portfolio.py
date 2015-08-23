@@ -12,9 +12,16 @@ nsims = 5
 
 import os
 from copy import deepcopy
-from numpy import arange, empty
+from numpy import arange, empty, savez_compressed, load
 
 from region import Region
+
+def loadportfolio(filename):
+    ''' Tiny function to load a saved portfolio '''
+    try: p = load(filename)['arr_0'].tolist()
+    except: raise Exception("Couldn't load, maybe incorrect filename?")
+    return p
+
 
 class Portfolio(object):
     def __init__(self, portfolioname):
@@ -306,7 +313,13 @@ class Portfolio(object):
         self.appendregion(newregion)
         return newregion
         
-
+    def save(self, filename=None, folder=''):
+        ''' A quick function to save a portfolio to a Numpy object '''
+        if filename is None:
+            filename = self.portfolioname
+        savez_compressed(folder+filename,self)
+        return None
+    
 #%% GPA Methods
 
     # Break an aggregate region (e.g. a nation) into subregions (e.g. districts), according to a provided population and prevalence data file.
