@@ -468,7 +468,7 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2):
             otherdeaths = dt * people[dx[cd4],:,t] * background
             inflows = progin + newdiagnoses[cd4]
             outflows = progout + hivdeaths + otherdeaths
-            newtreat1[cd4] = maximum(0, minimum(newtreat1[cd4], currentdiagnosed[cd4,:]+inflows-outflows)) # Make sure it doesn't go negative
+            newtreat1[cd4] = minimum(newtreat1[cd4], currentdiagnosed[cd4,:]+inflows-outflows) # Allow it to go negative
             dD.append(inflows - outflows - newtreat1[cd4])
             if ((dD[cd4]+people[dx[cd4],:,t])<0).any():
                 dD[cd4] = maximum(dD[cd4], -people[dx[cd4],:,t]) # Ensure it doesn't go below 0 -- # TODO kludgy

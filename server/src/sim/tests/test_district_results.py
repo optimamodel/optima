@@ -39,7 +39,7 @@ somealloc1 = array([  69.,   11.,    1.,  231.,  # 0-3
                      ])*1e3
 
 
-somealloc2 = deepcopy(somealloc1)/1e3
+somealloc2 = deepcopy(somealloc1)/1e9
 
 somebudget1 = timevarying(somealloc1, ntimepm = 1, nprogs = len(somealloc1), tvec = r1.options['partvec'])
 somebudget2 = timevarying(somealloc2, ntimepm = 1, nprogs = len(somealloc2), tvec = r1.options['partvec'])
