@@ -16,7 +16,7 @@ usebatch = True
 
 # Create a Portfolio to hold all of Malawi's districts (i.e. Regions).
 p1 = Portfolio('Malawi 2015-Aug-23')
-districts = sort([x.split('.')[0] for x in listdir('./regions/') if x.endswith('.json')])[:3]
+districts = sort([x.split('.')[0] for x in listdir('./regions/') if x.endswith('.json')])
 
 outputqueue = Queue()
 
