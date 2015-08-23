@@ -16,7 +16,7 @@ rc('font', serif='Linux Biolinum')
 rc('font', size=14)
 
 dosave = True
-makeslide1 = True
+makeslide1 = False
 makeslide2 = True
 makeslide3 = False
 makeslide4 = False
@@ -81,5 +81,8 @@ if makeslide1:
 ##################################################################
 ## Slide 2 -- map of Malawi colored by PLHIV
 ##################################################################
+
+
+
 
 print('Done.')
