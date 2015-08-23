@@ -5,10 +5,11 @@ Created on Thu Jul 23 18:03:48 2015
 @author: David Kedziora
 """
 
-import add_optima_paths
+import add_optima_paths # analysis:ignore
 from portfolio import Portfolio
 from region import Region
 import os
+from copy import deepcopy
 
 from numpy import array
 from timevarying import timevarying
@@ -16,7 +17,7 @@ from timevarying import timevarying
 # Create a Portfolio to hold all of Malawi's districts (i.e. Regions).
 p1 = Portfolio('Malawi Project')
 
-nationcheck = Region.load('./regions/Malawi 150820.json')
+#nationcheck = Region.load('./regions/Malawi 150820.json')
 
 # List all the json files in the regions sub-directory.
 templist = [x for x in os.listdir('./regions/') if x.endswith('.json')]
@@ -26,20 +27,21 @@ r1 = Region.load('./regions/' + templist[0])
 p1.appendregion(r1)
 sb1 = r1.createsimbox('sb-test-sim', isopt = True, createdefault = False)
 
-somealloc1 = array([  69454.47833463,   11105.0737051 ,     955.5926023 ,
-        230749.0566001 ,  904569.59885948,  314305.36722688,
-        117133.30209556,  223988.92188441,  758209.96017722,
-         96873.51978427,   77915.94903046,   69506.23213035,
-        179788.6464339 ,  202370.30827412,  181083.13675534,
-         27876.48285146])
-somebudget1 = timevarying(somealloc1, ntimepm = 1, nprogs = len(somealloc1), tvec = r1.options['partvec'])
+# From [i['short_name'] for i in r1.metadata['inputprograms']]
+#             0       1                2                 3        4     5          6         7            8      9      10        11    12         13     14                15
+programs = [u'VMMC', u'FSW programs', u'MSM programs', u'HTC', u'ART', u'PMTCT', u'OVC', u'Other care', u'MGMT', u'HR', u'ENV', u'SP', u'M&E', u'Other', u'Condoms & SBCC', u'CT']
 
-somealloc2 = array([  69454.47833463,   11105.0737051 ,     955.5926023 ,
-        230749.0566001 ,  904569.59885948,  314305.36722688,
-        117133.30209556,  223988.92188441,  758209.96017722,
-         96873.51978427,   77915.94903046,   69506.23213035,
-        179788.6464339 ,  202370.30827412,  181083.13675534,
-         27876.48285146])/10
+
+somealloc1 = array([  69.,   11.,    1.,  231.,  # 0-3
+                     905.,  314.,  117.,  224.,  # 4-7
+                     758.,   97.,   78.,   70.,  # 8-11
+                     180.,  202.,  181.,   28.   # 12-15
+                     ])*1e3
+
+
+somealloc2 = deepcopy(somealloc1)/1e3
+
+somebudget1 = timevarying(somealloc1, ntimepm = 1, nprogs = len(somealloc1), tvec = r1.options['partvec'])
 somebudget2 = timevarying(somealloc2, ntimepm = 1, nprogs = len(somealloc2), tvec = r1.options['partvec'])
 
 s1 = sb1.createsim('test1', budget = somebudget1, forcecreate = True)
