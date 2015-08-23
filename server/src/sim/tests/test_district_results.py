@@ -11,7 +11,7 @@ from region import Region
 import os
 from copy import deepcopy
 
-from numpy import array
+from numpy import array, sort
 from timevarying import timevarying
 
 # Create a Portfolio to hold all of Malawi's districts (i.e. Regions).
@@ -20,7 +20,7 @@ p1 = Portfolio('Malawi Project')
 #nationcheck = Region.load('./regions/Malawi 150820.json')
 
 # List all the json files in the regions sub-directory.
-templist = [x for x in os.listdir('./regions/') if x.endswith('.json')]
+templist = sort([x for x in os.listdir('./regions/') if x.endswith('.json')])
 
 r1 = Region.load('./regions/' + templist[0])
 

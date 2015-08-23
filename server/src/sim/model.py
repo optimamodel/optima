@@ -10,6 +10,10 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2):
     
     Version: 2015feb04 by cliffk
     """
+    
+    print('TEMP')
+    verbose = 7  
+    
     printv('Running model...', 1, verbose, newline=False)
     M = deepcopy(tmpM)
     F = deepcopy(tmpF)
