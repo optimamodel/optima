@@ -121,6 +121,7 @@ def check(x):
     print r.simboxlist[-1].simlist[0].alloc
     print r.simboxlist[-1].simlist[1].alloc
     print r.simboxlist[-1].simlist[2].alloc
+    print('\n')
     
 # Recalculate BOC for region numbered between 1 and 32.
 def refine(x):
