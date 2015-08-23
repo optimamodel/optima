@@ -444,6 +444,12 @@ class Portfolio(object):
             print('BOC Estimate was off for %s objective by: %f (%f%%)' % (regionname, estsumgpaoptobj-realsumgpaoptobj, 100*abs(estsumgpaoptobj-realsumgpaoptobj)/realsumgpaoptobj))
             print('\n')
             
+            
+            print('%40s%20s%20s' % ('Unoptimised...', 'Optimised...', 'GPA Optimised...'))
+            for x in xrange(len(r.metadata['inputprograms'])):
+                print('%-20s%20.2f%20.2f%20.2f' % (r.metadata['inputprograms'][x]['short_name']+':',r.simboxlist[-1].simlist[0].alloc[x],r.simboxlist[-1].simlist[1].alloc[x],r.simboxlist[-1].simlist[2].alloc[x]))
+            print('\n')
+            
             totsumin += sumin
             totsumopt += sumopt
             totsumgpaopt += sumgpaopt
@@ -471,6 +477,7 @@ class Portfolio(object):
         print('Initial Optimised Real Objective Sum: %f' % realtotsumoptobj)
         print('GPA Optimised Real Objective Sum: %f' % realtotsumgpaoptobj)
         print('BOC Estimate was off for aggregate objective by: %f (%f%%)' % (esttotsumgpaoptobj-realtotsumgpaoptobj, 100*abs(esttotsumgpaoptobj-realtotsumgpaoptobj)/realtotsumgpaoptobj))
+        print('Real Aggregate Objective Improvement (Before Individual Optimisation): %f (%f%%)' % (realtotsumgpaoptobj-realtotsuminobj, 100*(realtotsuminobj-realtotsumgpaoptobj)/realtotsuminobj))
         print('Real Aggregate Objective Improvement (After Individual Optimisation): %f (%f%%)' % (realtotsumgpaoptobj-realtotsumoptobj, 100*(realtotsumoptobj-realtotsumgpaoptobj)/realtotsumoptobj))        
         print('\n')
         

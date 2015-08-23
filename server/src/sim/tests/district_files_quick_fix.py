@@ -13,23 +13,55 @@ import os
 # Create a Portfolio to hold all of Malawi's districts (i.e. Regions).
 p1 = Portfolio('Malawi Project')
 
-nationcheck = Region.load('./regions/Malawi 150820.json')
-
 # List all the json files in the regions sub-directory.
 templist = [x for x in os.listdir('./regions/') if x.endswith('.json')]
 
-calc = 0
+normaliser = Region.load('./regions/Malawi 150820.json')
+denom = sum(normaliser.calibrations[0]['popsize'])
+
+from datetime import date
+from numpy import nan, zeros, isnan, array, logical_or, nonzero
+
+popcalc = 0
+alloccalc = 0
+
 for x in templist:
     # Make sure you only select files with the right format (i.e. Regex 4 Dummies).
-    if x[2] == '.':# and x[0:2] in ['11','12']:#,'13','14','15','16','17']:
+    if x[2] == '.':
+        print(x)
         newregion = Region.load('./regions/' + x)           # Load up a Region from the json file.
-        newregion.setregionname(x[4:-5])                   # Give it a nicer name.
-        print newregion.metadata['programs'][0]['effects']   # Neutralise VMMC as per Robyn's request.
+        
+        totalloc = sum(newregion.data['origalloc'])        
+        
+        numer = sum(newregion.calibrations[0]['popsize'])
+        popcalc += numer
+#        newregion.data['origalloc'] *= numer/denom
         p1.appendregion(newregion)                          # Put that Region into a Portfolio.
-        print sum(newregion.data['origalloc'])        
-        calc += sum(newregion.data['origalloc'])
-print calc
-print sum(nationcheck.data['origalloc'])
+        
+#        totalloc = sum(newregion.data['origalloc'])
+        alloccalc += totalloc
+        
+        print numer
+        print totalloc
+        
+#p1.quicksaveregions()
+print popcalc
+print denom
+
+print alloccalc
+print sum(normaliser.data['origalloc'])
+
+alloccalc2 = 0
+for someregion in p1.regionlist:
+    regpoptot = sum(someregion.calibrations[0]['popsize'])
+    someregion.data['origalloc'] *= regpoptot/popcalc
+    totalloc = sum(someregion.data['origalloc'])  
+    alloccalc2 += totalloc
+print alloccalc2
+print sum(normaliser.data['origalloc'])
+
+p1.quicksaveregions()
+
 
 # Ignore this. It helps you run a simulation and an optimisation for a region of your choice.
 def testsimopt(r1):
@@ -52,8 +84,6 @@ def testsimopt(r1):
 
 #testsimopt(newregion)
 
-p1.geoprioanalysis()                # Run the GPA algorithm.
+#p1.geoprioanalysis()                # Run the GPA algorithm.
 
-p1.quicksaveregions()
-
-p1.geoprioreview(p1.gpalist[0])     # Did those results go by too quickly? Review the plots and a results summary.
+#p1.geoprioreview(p1.gpalist[0])     # Did those results go by too quickly? Review the plots and a results summary.
