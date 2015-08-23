@@ -68,8 +68,11 @@ def gpaoptimisefixedtotal(regionlist):
         print('Optimised Budget Total: $%.2f' % X[i])
         print('Initial Objective: %f' % inobj)
         print('Optimised Objective: %f' % optobj)
-        print('Initial BOC Derivative: %.3e' % regionlist[i].getBOCspline().derivative()(budgettotals[i]))
-        print('Optimised BOC Derivative: %.3e\n' % regionlist[i].getBOCspline().derivative()(X[i]))
+        try:
+            print('Initial BOC Derivative: %.3e' % regionlist[i].getBOCspline().derivative()(budgettotals[i]))
+            print('Optimised BOC Derivative: %.3e\n' % regionlist[i].getBOCspline().derivative()(X[i]))
+        except:
+            print('BOC derivatives not available')
     print('GPA Portfolio Results...')
     print('Initial Budget Grand Total: $%.2f' % sum(budgettotals))
     print('Optimised Budget Grand Total: $%.2f' % sum(X))
