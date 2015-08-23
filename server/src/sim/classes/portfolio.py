@@ -365,6 +365,10 @@ class Portfolio(object):
         from geoprioritisation import gpaoptimisefixedtotal
         newtotals = gpaoptimisefixedtotal(self.regionlist)
         
+        if usebatch:
+            from multiprocessing import Process, Queue
+            outputqueue = Queue()
+        
         gpasimboxlist = empty(len(newtotals), dtype=object)      # Set up temporary storage for SimBoxOpts involved in this GPA. (Warning: Deleted regions and simboxes could corrupt this!)
         
         def makegpasimbox(currentregion, i, gpasimboxlist):
@@ -376,13 +380,32 @@ class Portfolio(object):
             currentregion.runsimbox(tempsimbox)
             tempsimbox.simlist.remove(initsimcopy)
             gpasimboxlist[i] = tempsimbox
+                
+        def batchmakegpasimbox(currentregion, i, outputqueue):
+            print('Initialising a simulation container in region %s for this GPA.' % currentregion.getregionname())
+            tempsimbox = currentregion.createsimbox('GPA '+gpaname+' - '+currentregion.getregionname(), isopt = True, createdefault = False)
+            tempsimbox.createsim(currentregion.getregionname()+' - Initial', forcecreate = False)
+            initsimcopy = tempsimbox.createsim(currentregion.getregionname()+' - GPA', forcecreate = True)
+            tempsimbox.scalealloctototal(initsimcopy, newtotals[i])
+            currentregion.runsimbox(tempsimbox)
+            tempsimbox.simlist.remove(initsimcopy)
+            outputqueue.put(tempsimbox)
+        
         
         # Run the loop
-        for i in xrange(len(newtotals)):
-            currentregion = self.regionlist[i]
-            if usebatch:
-                print('hi!')
-            else:
+        if usebatch:
+            processes = []
+            for i in xrange(len(newtotals)):
+                currentregion = self.regionlist[i]
+                prc = Process(target=batchmakegpasimbox, args=(currentregion, i, outputqueue))
+                prc.start()
+                processes.append(prc)
+            for i in xrange(len(newtotals)):
+                gpasimboxlist[i] = outputqueue.get()
+        
+        else:
+            for i in xrange(len(newtotals)):
+                currentregion = self.regionlist[i]
                 makegpasimbox(currentregion, i, gpasimboxlist)
                 gpasimboxlist[i].viewoptimresults(plotasbar = True)
             
