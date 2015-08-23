@@ -265,7 +265,10 @@ class Region(object):
         try:
             return pchip(self.BOCx, self.BOCy, extrapolate=True)
         except:
-            raise Exception('Budget Objective Curve data does not seem to exist...')
+            try:
+                return pchip(self.BOCx, self.BOCy) # For backwards compatibility with Numpy 1.8
+            except:
+                raise Exception('Budget Objective Curve data does not seem to exist...')
         
     def plotBOCspline(self, returnplot = False):
         import matplotlib.pyplot as plt
