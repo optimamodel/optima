@@ -50,7 +50,23 @@ class Portfolio(object):
         self.portfolioname = portfolioname
         self.cwd = os.getcwd()              # Should get the current working directory where Portfolio object is instantiated.
         self.regd = self.cwd + '/regions'   # May be good to remove hardcoding at some stage...
-        
+    
+    def todict(self):
+        portfoliodict = {}
+        portfoliodict['regionlist'] = self.regionlist
+        portfoliodict['gpalist'] = self.gpalist
+        portfoliodict['portfolioname'] = self.portfolioname
+        portfoliodict['cwd'] = self.cwd
+        portfoliodict['regd'] = self.regd
+        return portfoliodict
+
+    def fromdict(self,portfoliodict):
+        self.regionlist = portfoliodict['regionlist'] 
+        self.gpalist = portfoliodict['gpalist'] 
+        self.portfolioname = portfoliodict['portfolioname'] 
+        self.cwd = portfoliodict['cwd'] 
+        self.regd = portfoliodict['regd']
+
     def run(self):
         """
         All processes associated with the portfolio are run here.
