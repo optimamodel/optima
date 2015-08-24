@@ -15,6 +15,7 @@ from copy import deepcopy
 from numpy import arange, empty, savez_compressed, load
 from region import Region
 import multiprocessing
+import dataio_binary
 
 def makegpasimbox(inputs):
     # This helper function creates a GPA simbox inside a region
@@ -66,19 +67,11 @@ class Portfolio(object):
 
     @classmethod
     def load(Portfolio,filename):
-        ''' Tiny function to load a saved portfolio '''
-        try: 
-            p = load(filename)['arr_0'].tolist()
-        except: 
-            raise Exception("Couldn't load, maybe incorrect filename?")
+        p = dataio_binary.load(filename)
         return Portfolio(p)
 
-    def save(self, filename=None, folder=''):
-        ''' A quick function to save a portfolio to a Numpy object '''
-        if filename is None:
-            filename = self.portfolioname
-        savez_compressed(folder+filename,self.todict())
-        return None
+    def save(self, filename):
+        dataio_binary.save(self.todict(),filename)
 
     def run(self):
         """
@@ -435,7 +428,7 @@ class Portfolio(object):
         for x in outputs:
             r = Region(x[0])
             self.regionlist.append(r)
-            self.gpalist.append(x[1])
+            self.gpalist.append(r.retrieve_uuid(x[1]))
 
     # Iterate through loaded regions. Develop default BOCs if they do not have them.
     def geoprioreview(self, gpasimboxlist):

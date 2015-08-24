@@ -32,4 +32,4 @@ if __name__ == '__main__':
     print('Running GPA...')
     p1.geoprioanalysis(usebatch=True)                # Run the GPA algorithm.
     print('Saving portfolio...')
-    p1.save()
+    p1.save('malawi-gpa.bin')
