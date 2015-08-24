@@ -156,7 +156,7 @@ class SimBoxOpt(SimBox):
         if not atleastoneplot:
             print('There is no optimisation data in this simulation container to plot.')
         else:
-            r = self.region
+            r = self.region()
             
             from matplotlib.pylab import figure, subplot, plot, pie, bar, title, legend, xticks, ylabel, show
             from gridcolormap import gridcolormap
