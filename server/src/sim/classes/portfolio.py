@@ -401,12 +401,20 @@ class Portfolio(object):
         inputs = [(r.todict(),'Test',newtotal) for (r,newtotal) in zip(self.regionlist,newtotals)] # Could zip a third array of gpaname strings here
         if usebatch:
             pool = multiprocessing.Pool()
-            gpasimboxlist = [Region(x).retrieve_uuid(simbox_uuid) for (x,simbox_uuid) in pool.map(makegpasimbox,inputs)]
+            outputs = pool.map(makegpasimbox,inputs)
         else:
-            gpasimboxlist = [Region.retrieve_uuid(simbox_uuid) for (x,simbox_uuid) in [makegpasimbox(y) for y in inputs]]
-        
-        self.gpalist.append(gpasimboxlist)      # Attach list of simboxes to GPA list for easy recall.
-    
+            outputs = [makegpasimbox(y) for y in inputs]
+
+        # Update the regionlist now that all of the regions have had GPA run on them
+        # Otherwise, the simboxlist references will be broken when their parent regions
+        # (the ones inside the array 'outputs') go out of scope
+        self.regionlist = []
+        self.gpalist = []
+        for x in outputs:
+            r = Region(x[0])
+            self.regionlist.append(r)
+            self.gpalist.append(x[1])
+
     # Iterate through loaded regions. Develop default BOCs if they do not have them.
     def geoprioreview(self, gpasimboxlist):
         
