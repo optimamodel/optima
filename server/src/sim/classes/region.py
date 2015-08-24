@@ -27,35 +27,43 @@ from scipy.interpolate import PchipInterpolator as pchip
 
 ### The actual Region class.
 class Region(object):
-    def __init__(self, name,populations,programs,datastart,dataend):
+    def __init__(self,name,populations=None,programs=None,datastart=None,dataend=None,filename=None):
+        # Usage
+        # r = Region(name,populations,programs,datastart,dataend) (see defaults.py haiti) 
+        # r = Region(regiondict) -> regiondict = r.fromdict()
+        # r = Region(filename='save.json') # NOT IMPLEMENTED YET
+
         # The standard constructor takes in the initial metadata directly
         # In normal usage, this information would come from the frontend
         # whether web interface, or an interactive prompt
+        if isinstance(name,dict):
+            # variable 'name' is actually a regiondict
+            self.fromdict(name)
+        else:
+            self.D = dict()                 # Data structure for saving everything. Will hopefully be broken down eventually.
+                  
+            self.metadata = defaults.metadata  # Loosely analogous to D['G']. Start with default HIV metadata
+            self.metadata['datastart'] = datastart
+            self.metadata['dataend'] = dataend
+            self.metadata['populations'] = populations
+            self.metadata['programs'] = programs
+            self.metadata['name'] = name
 
-        self.D = dict()                 # Data structure for saving everything. Will hopefully be broken down eventually.
-              
-        self.metadata = defaults.metadata  # Loosely analogous to D['G']. Start with default HIV metadata
-        self.metadata['datastart'] = datastart
-        self.metadata['dataend'] = dataend
-        self.metadata['populations'] = populations
-        self.metadata['programs'] = programs
-        self.metadata['name'] = name
+            self.data = None
 
-        self.data = None
-
-        self.options = setoptions.setoptions() # Populate default options here
-        
-        # Budget Objective Curve data, used for GPA. (Assuming initial budget spending is fixed.)
-        self.BOCx = []        # Array of budget allocation totals.
-        self.BOCy = []        # Array of corresponding optimum objective values.
-        
-        self.program_sets = []
-        self.calibrations = []        # Remember. Current BOC data assumes loaded data is calibrated by default.
-        
-        self.simboxlist = []            # Container for simbox objects (e.g. optimisations, grouped scenarios, etc.)
-        
-        self.uuid = None
-        self.genuuid()  # Store UUID as a string - we just want a (practically) unique tag, no advanced functionality
+            self.options = setoptions.setoptions() # Populate default options here
+            
+            # Budget Objective Curve data, used for GPA. (Assuming initial budget spending is fixed.)
+            self.BOCx = []        # Array of budget allocation totals.
+            self.BOCy = []        # Array of corresponding optimum objective values.
+            
+            self.program_sets = []
+            self.calibrations = []        # Remember. Current BOC data assumes loaded data is calibrated by default.
+            
+            self.simboxlist = []            # Container for simbox objects (e.g. optimisations, grouped scenarios, etc.)
+            
+            self.uuid = None
+            self.genuuid()  # Store UUID as a string - we just want a (practically) unique tag, no advanced functionality
 
     @classmethod
     def load(Region,filename,name=None):
@@ -70,7 +78,6 @@ class Region(object):
         regiondict = dataio.loaddata(filename)
         if 'uuid' in regiondict.keys(): # This is a new-type JSON file
             print "This is a new-type JSON file."
-            r.uuid = regiondict['uuid'] # Loading a region restores the original UUID
             r.fromdict(regiondict)
         else:
             r.fromdict_legacy(regiondict)
@@ -87,6 +94,7 @@ class Region(object):
 
     def fromdict(self,regiondict):
         # Assign variables from a new-type JSON file created using Region.todict()
+        self.uuid = regiondict['uuid'] # Loading a region restores the original UUID
         self.metadata = regiondict['metadata']
         self.data = regiondict['data']
         self.options = regiondict['options'] # Populate default options here
@@ -186,6 +194,17 @@ class Region(object):
 
         return regiondict
 
+    def retrieve_uuid(self,target_uuid):
+        # Retrieve a simbox or a sim from within the region by looking up it's uuid
+        for sbox in self.simboxlist:
+            if sbox.uuid == target_uuid:
+                return sbox
+            else:
+                for s in sbox.simlist:
+                    if s.uuid == target_uuid:
+                        return s
+        raise Exception('UUID not found')
+        
     def createsimbox(self, simboxname, iscal = False, isopt = False, createdefault = True):
         if iscal and isopt:
             print('Error: Cannot create a simbox that is simultaneously for calibration and optimisation.')

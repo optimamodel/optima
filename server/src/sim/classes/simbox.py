@@ -7,6 +7,7 @@ Created on Tue Jun 02 01:03:34 2015
 
 from sim import Sim
 
+import weakref
 import uuid
 
 #from scipy.interpolate import PchipInterpolator as pchip
@@ -50,14 +51,14 @@ class SimBox(object):
         return simboxdict
     
     def setregion(self,region):
-        self.region = region
+        self.region = weakref.ref(region)
 
     def getregion(self):
         # self.region is a weakref object, which means to get
         # the region you need to do self.region() rather than
         # self.region. This function abstracts away this 
         # implementation detail in case it changes in future
-        r = self.region
+        r = self.region()
         if r is None:
             raise Exception('The parent region has been garbage-collected and the reference is no longer valid')
         else:
@@ -83,7 +84,7 @@ class SimBox(object):
     # Needs to check processing like plotallsims.
     def viewmultiresults(self):
         # Superimpose plots, like in the scenarios page in the frontend
-        r = self.region
+        r = self.region()
 
         tempD = {}
         tempD['G'] = r.metadata

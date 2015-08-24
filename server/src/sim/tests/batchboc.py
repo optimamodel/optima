@@ -10,7 +10,7 @@ from utils import tic, toc
 from region import Region
 from pylab import sort
 from os import listdir
-from multiprocessing import Process
+from multiprocessing import Process,freeze_support
 
 usebatch = True
 
@@ -24,20 +24,21 @@ def calculate_boc_for_region(regionname, integer):
     toc(t)
     print('============ Done with region %s =============' % regionname)
     
+if __name__ == '__main__':
+    freeze_support()
+    processes = []
+    districts = sort([x.split('.')[0] for x in listdir('./regions/') if x.endswith('.json')])
+    for i,district in enumerate(districts):
+        if usebatch:
+            p = Process(target=calculate_boc_for_region, args=(district,i))
+            p.start()
+            processes.append(p)
+        else:
+            calculate_boc_for_region(district,i)
 
-processes = []
-districts = sort([x.split('.')[0] for x in listdir('./regions/') if x.endswith('.json')])
-for i,district in enumerate(districts):
     if usebatch:
-        p = Process(target=calculate_boc_for_region, args=(district,i))
-        p.start()
-        processes.append(p)
-    else:
-        calculate_boc_for_region(district,i)
-
-if usebatch:
-    for p in processes:
-        p.join()
+        for p in processes:
+            p.join()
 
 
 print('DONE.')
