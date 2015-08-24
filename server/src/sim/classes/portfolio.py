@@ -13,8 +13,8 @@ nsims = 5
 import os
 from copy import deepcopy
 from numpy import arange, empty, savez_compressed, load
-
 from region import Region
+import multiprocessing
 
 def loadportfolio(filename):
     ''' Tiny function to load a saved portfolio '''
@@ -22,6 +22,25 @@ def loadportfolio(filename):
     except: raise Exception("Couldn't load, maybe incorrect filename?")
     return p
 
+def makegpasimbox(inputs):
+    # This helper function creates a GPA simbox inside a region
+    # This function is declared outside the Portfolio class because
+    # a) this way it can be pickled
+    # b) it doesn't depend on a specific portfolio instance i.e. 'self'
+    #    and therefore it shouldn't be a *method*
+    regiondict = inputs[0]
+    gpaname = inputs[1]
+    newtotal = inputs[2]
+
+    currentregion = Region(regiondict)
+    print('Initialising a simulation container in region %s for this GPA.' % currentregion.getregionname())
+    tempsimbox = currentregion.createsimbox('GPA '+gpaname+' - '+currentregion.getregionname(), isopt = True, createdefault = False)
+    tempsimbox.createsim(currentregion.getregionname()+' - Initial', forcecreate = False)
+    initsimcopy = tempsimbox.createsim(currentregion.getregionname()+' - GPA', forcecreate = True)
+    tempsimbox.scalealloctototal(initsimcopy, newtotal)
+    currentregion.runsimbox(tempsimbox)
+    tempsimbox.simlist.remove(initsimcopy)
+    return (currentregion.todict(),tempsimbox.uuid)
 
 class Portfolio(object):
     def __init__(self, portfolioname):
@@ -376,53 +395,16 @@ class Portfolio(object):
             
         # The actual optimisation process.
         from geoprioritisation import gpaoptimisefixedtotal
+        
         newtotals = gpaoptimisefixedtotal(self.regionlist)
-        
+              
+        inputs = [(r.todict(),'Test',newtotal) for (r,newtotal) in zip(self.regionlist,newtotals)] # Could zip a third array of gpaname strings here
         if usebatch:
-            from multiprocessing import Process, Queue
-            outputqueue = Queue()
-        
-        gpasimboxlist = empty(len(newtotals), dtype=object)      # Set up temporary storage for SimBoxOpts involved in this GPA. (Warning: Deleted regions and simboxes could corrupt this!)
-        
-        def makegpasimbox(currentregion, i, gpasimboxlist):
-            print('Initialising a simulation container in region %s for this GPA.' % currentregion.getregionname())
-            tempsimbox = currentregion.createsimbox('GPA '+gpaname+' - '+currentregion.getregionname(), isopt = True, createdefault = False)
-            tempsimbox.createsim(currentregion.getregionname()+' - Initial', forcecreate = False)
-            initsimcopy = tempsimbox.createsim(currentregion.getregionname()+' - GPA', forcecreate = True)
-            tempsimbox.scalealloctototal(initsimcopy, newtotals[i])
-            currentregion.runsimbox(tempsimbox)
-            tempsimbox.simlist.remove(initsimcopy)
-            gpasimboxlist[i] = tempsimbox
-                
-        def batchmakegpasimbox(currentregion, i, outputqueue):
-            print('Initialising a simulation container in region %s for this GPA.' % currentregion.getregionname())
-            tempsimbox = currentregion.createsimbox('GPA '+gpaname+' - '+currentregion.getregionname(), isopt = True, createdefault = False)
-            tempsimbox.createsim(currentregion.getregionname()+' - Initial', forcecreate = False)
-            initsimcopy = tempsimbox.createsim(currentregion.getregionname()+' - GPA', forcecreate = True)
-            tempsimbox.scalealloctototal(initsimcopy, newtotals[i])
-            currentregion.runsimbox(tempsimbox)
-            tempsimbox.simlist.remove(initsimcopy)
-            outputqueue.put(tempsimbox)
-        
-        
-        # Run the loop
-        if usebatch:
-            processes = []
-            for i in xrange(len(newtotals)):
-                currentregion = self.regionlist[i]
-                prc = Process(target=batchmakegpasimbox, args=(currentregion, i, outputqueue))
-                prc.start()
-                processes.append(prc)
-            for i in xrange(len(newtotals)):
-                gpasimboxlist[i] = outputqueue.get()
-        
+            pool = multiprocessing.Pool()
+            gpasimboxlist = [Region(x).retrieve_uuid(simbox_uuid) for (x,simbox_uuid) in pool.map(makegpasimbox,inputs)]
         else:
-            for i in xrange(len(newtotals)):
-                currentregion = self.regionlist[i]
-                makegpasimbox(currentregion, i, gpasimboxlist)
-                gpasimboxlist[i].viewoptimresults(plotasbar = True)
-            
-         
+            gpasimboxlist = [Region.retrieve_uuid(simbox_uuid) for (x,simbox_uuid) in [makegpasimbox(y) for y in inputs]]
+        
         self.gpalist.append(gpasimboxlist)      # Attach list of simboxes to GPA list for easy recall.
     
     # Iterate through loaded regions. Develop default BOCs if they do not have them.
