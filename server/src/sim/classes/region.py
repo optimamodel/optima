@@ -194,6 +194,17 @@ class Region(object):
 
         return regiondict
 
+    def retrieve_uuid(self,target_uuid):
+        # Retrieve a simbox or a sim from within the region by looking up it's uuid
+        for sbox in self.simboxlist:
+            if sbox.uuid == target_uuid:
+                return sbox
+            else:
+                for s in sbox.simlist:
+                    if s.uuid == target_uuid:
+                        return s
+        raise Exception('UUID not found')
+        
     def createsimbox(self, simboxname, iscal = False, isopt = False, createdefault = True):
         if iscal and isopt:
             print('Error: Cannot create a simbox that is simultaneously for calibration and optimisation.')
