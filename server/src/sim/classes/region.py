@@ -27,7 +27,7 @@ from scipy.interpolate import PchipInterpolator as pchip
 
 ### The actual Region class.
 class Region(object):
-    def __init__(self, name,populations,programs,datastart,dataend):
+    def __init__(self,name,populations,programs,datastart,dataend):
         # The standard constructor takes in the initial metadata directly
         # In normal usage, this information would come from the frontend
         # whether web interface, or an interactive prompt
@@ -70,7 +70,6 @@ class Region(object):
         regiondict = dataio.loaddata(filename)
         if 'uuid' in regiondict.keys(): # This is a new-type JSON file
             print "This is a new-type JSON file."
-            r.uuid = regiondict['uuid'] # Loading a region restores the original UUID
             r.fromdict(regiondict)
         else:
             r.fromdict_legacy(regiondict)
@@ -87,6 +86,7 @@ class Region(object):
 
     def fromdict(self,regiondict):
         # Assign variables from a new-type JSON file created using Region.todict()
+        self.uuid = regiondict['uuid'] # Loading a region restores the original UUID
         self.metadata = regiondict['metadata']
         self.data = regiondict['data']
         self.options = regiondict['options'] # Populate default options here
