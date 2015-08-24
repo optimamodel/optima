@@ -11,3 +11,4 @@ server/build
 *.prj
 *.ipynb
 *.bin
+*.npz

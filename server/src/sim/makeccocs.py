@@ -470,7 +470,7 @@ def gettargetpop(D=None, artindex=None, progname=None):
         print('WARNING, no target parameters for program %s' % progname)
                 
     # We only want the model-estimated size of the targeted population(s) for actual years, not the interpolated years
-    yearindices = xrange(0,npts,int(1/D['opt']['dt']))
+    yearindices = range(0,npts,int(1/D['opt']['dt']))
     
     targetpop = None
     if targetpopmodel is not None:

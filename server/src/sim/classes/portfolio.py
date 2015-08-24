@@ -12,19 +12,67 @@ nsims = 5
 
 import os
 from copy import deepcopy
-from numpy import arange
-
+from numpy import arange, empty, savez_compressed, load
 from region import Region
+import multiprocessing
+import dataio_binary
+
+def makegpasimbox(inputs):
+    # This helper function creates a GPA simbox inside a region
+    # This function is declared outside the Portfolio class because
+    # a) this way it can be pickled
+    # b) it doesn't depend on a specific portfolio instance i.e. 'self'
+    #    and therefore it shouldn't be a *method*
+    regiondict = inputs[0]
+    gpaname = inputs[1]
+    newtotal = inputs[2]
+
+    currentregion = Region(regiondict)
+    print('Initialising a simulation container in region %s for this GPA.' % currentregion.getregionname())
+    tempsimbox = currentregion.createsimbox('GPA '+gpaname+' - '+currentregion.getregionname(), isopt = True, createdefault = False)
+    tempsimbox.createsim(currentregion.getregionname()+' - Initial', forcecreate = False)
+    initsimcopy = tempsimbox.createsim(currentregion.getregionname()+' - GPA', forcecreate = True)
+    tempsimbox.scalealloctototal(initsimcopy, newtotal)
+    currentregion.runsimbox(tempsimbox)
+    tempsimbox.simlist.remove(initsimcopy)
+    return (currentregion.todict(),tempsimbox.uuid)
 
 class Portfolio(object):
     def __init__(self, portfolioname):
-        self.regionlist = []                # List to hold Region objects.
-        self.gpalist = []                   # List to hold GPA runs, specifically lists of SimBoxOpt references, for quick use.
-                                            # Will need to be careful about error checking when deletions are implemented.
-        self.portfolioname = portfolioname
-        self.cwd = os.getcwd()              # Should get the current working directory where Portfolio object is instantiated.
-        self.regd = self.cwd + '/regions'   # May be good to remove hardcoding at some stage...
-        
+        if isinstance(portfolioname,dict):
+            self.fromdict(portfolioname)
+        else:
+            self.regionlist = []                # List to hold Region objects.
+            self.gpalist = []                   # List to hold GPA runs, specifically lists of SimBoxOpt references, for quick use.
+                                                # Will need to be careful about error checking when deletions are implemented.
+            self.portfolioname = portfolioname
+            self.cwd = os.getcwd()              # Should get the current working directory where Portfolio object is instantiated.
+            self.regd = self.cwd + '/regions'   # May be good to remove hardcoding at some stage...
+    
+    def todict(self):
+        portfoliodict = {}
+        portfoliodict['regionlist'] = [x.todict() for x in self.regionlist]
+        portfoliodict['gpalist'] = [x.uuid for x in self.gpalist]
+        portfoliodict['portfolioname'] = self.portfolioname
+        portfoliodict['cwd'] = self.cwd
+        portfoliodict['regd'] = self.regd
+        return portfoliodict
+
+    def fromdict(self,portfoliodict):
+        self.regionlist = [Region(x) for x in portfoliodict['regionlist']]
+        self.gpalist = [r.retrieve_uuid(u) for (r,u) in zip(self.regionlist,portfoliodict['gpalist'])] 
+        self.portfolioname = portfoliodict['portfolioname'] 
+        self.cwd = portfoliodict['cwd'] 
+        self.regd = portfoliodict['regd']
+
+    @classmethod
+    def load(Portfolio,filename):
+        p = dataio_binary.load(filename)
+        return Portfolio(p)
+
+    def save(self, filename):
+        dataio_binary.save(self.todict(),filename)
+
     def run(self):
         """
         All processes associated with the portfolio are run here.
@@ -305,8 +353,7 @@ class Portfolio(object):
         newregion.genuuid()
         self.appendregion(newregion)
         return newregion
-        
-
+            
 #%% GPA Methods
 
     # Break an aggregate region (e.g. a nation) into subregions (e.g. districts), according to a provided population and prevalence data file.
@@ -348,7 +395,7 @@ class Portfolio(object):
 
 
     # The GPA algorithm.
-    def geoprioanalysis(self, gpaname = 'Test'):
+    def geoprioanalysis(self, gpaname = 'Test', usebatch=False):
         
         # First, choose 'spend' factors for the construction of your Budget Objective Curve.
         varfactors = [0.0, 0.3, 0.6, 1.0, 1.8, 3.2, 10.0]
@@ -363,23 +410,26 @@ class Portfolio(object):
             
         # The actual optimisation process.
         from geoprioritisation import gpaoptimisefixedtotal
-        newtotals = gpaoptimisefixedtotal(self.regionlist)
         
-        gpasimboxlist = []      # Set up temporary storage for SimBoxOpts involved in this GPA. (Warning: Deleted regions and simboxes could corrupt this!)
-        for i in xrange(len(newtotals)):
-            currentregion = self.regionlist[i]
-            print('Initialising a simulation container in region %s for this GPA.' % currentregion.getregionname())
-            tempsimbox = currentregion.createsimbox('GPA '+gpaname+' - '+currentregion.getregionname(), isopt = True, createdefault = False)
-            initsimorig = tempsimbox.createsim(currentregion.getregionname()+' - Initial', forcecreate = False)
-            initsimcopy = tempsimbox.createsim(currentregion.getregionname()+' - GPA', forcecreate = True)
-            tempsimbox.scalealloctototal(initsimcopy, newtotals[i])
-            currentregion.runsimbox(tempsimbox)
-            tempsimbox.simlist.remove(initsimcopy)
-            tempsimbox.viewoptimresults(plotasbar = True)
-            gpasimboxlist.append(tempsimbox)
-         
-        self.gpalist.append(gpasimboxlist)      # Attach list of simboxes to GPA list for easy recall.
-    
+        newtotals = gpaoptimisefixedtotal(self.regionlist)
+              
+        inputs = [(r.todict(),'Test',newtotal) for (r,newtotal) in zip(self.regionlist,newtotals)] # Could zip a third array of gpaname strings here
+        if usebatch:
+            pool = multiprocessing.Pool()
+            outputs = pool.map(makegpasimbox,inputs)
+        else:
+            outputs = [makegpasimbox(y) for y in inputs]
+
+        # Update the regionlist now that all of the regions have had GPA run on them
+        # Otherwise, the simboxlist references will be broken when their parent regions
+        # (the ones inside the array 'outputs') go out of scope
+        self.regionlist = []
+        self.gpalist = []
+        for x in outputs:
+            r = Region(x[0])
+            self.regionlist.append(r)
+            self.gpalist.append(r.retrieve_uuid(x[1]))
+
     # Iterate through loaded regions. Develop default BOCs if they do not have them.
     def geoprioreview(self, gpasimboxlist):
         

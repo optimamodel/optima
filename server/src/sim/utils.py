@@ -301,6 +301,17 @@ def checkmem(origvariable, descend=0, order='n', plot=False, verbose=0):
 
     return None
 
+
+def run(command, printinput=False, printoutput=False):
+   """ Make it easier to run bash commands. Version: 1.0 Date: 2015aug16 """
+   from subprocess import Popen, PIPE
+   if printinput: print(command)
+   try: output = Popen(command, shell=True, stdout=PIPE).communicate()[0]
+   except: output = 'Shell command failed'
+   if printoutput: print(output)
+   return output
+
+
 # CK: This should be moved elsewhere...
 try:
     from mpld3 import plugins
