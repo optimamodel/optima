@@ -22,7 +22,8 @@ define(['angular'], function (angular) {
           { id: 'force', name: 'Incidence per 100 person-years', byPopulation: false, total: true},
           { id: 'dx', name: 'New HIV diagnoses', byPopulation: false, total: false, stacked: true },
           { id: 'tx1', name: 'People on first-line treatment', byPopulation: false, total: true, stacked: false },
-          { id: 'tx2', name: 'People on subsequent lines of treatment', byPopulation: false, total: true, stacked: false }
+          // TODO 2015-08-24 hidden for the workshop
+          // { id: 'tx2', name: 'People on subsequent lines of treatment', byPopulation: false, total: true, stacked: false }
         ],
         costs:{
           costcum: {id:"costcum", name: "Cumulative costs", existing: false, future: false, total: true, stacked: false},
