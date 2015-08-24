@@ -16,12 +16,6 @@ from numpy import arange, empty, savez_compressed, load
 from region import Region
 import multiprocessing
 
-def loadportfolio(filename):
-    ''' Tiny function to load a saved portfolio '''
-    try: p = load(filename)['arr_0'].tolist()
-    except: raise Exception("Couldn't load, maybe incorrect filename?")
-    return p
-
 def makegpasimbox(inputs):
     # This helper function creates a GPA simbox inside a region
     # This function is declared outside the Portfolio class because
@@ -44,28 +38,47 @@ def makegpasimbox(inputs):
 
 class Portfolio(object):
     def __init__(self, portfolioname):
-        self.regionlist = []                # List to hold Region objects.
-        self.gpalist = []                   # List to hold GPA runs, specifically lists of SimBoxOpt references, for quick use.
-                                            # Will need to be careful about error checking when deletions are implemented.
-        self.portfolioname = portfolioname
-        self.cwd = os.getcwd()              # Should get the current working directory where Portfolio object is instantiated.
-        self.regd = self.cwd + '/regions'   # May be good to remove hardcoding at some stage...
+        if isinstance(portfolioname,dict):
+            self.fromdict(portfolioname)
+        else:
+            self.regionlist = []                # List to hold Region objects.
+            self.gpalist = []                   # List to hold GPA runs, specifically lists of SimBoxOpt references, for quick use.
+                                                # Will need to be careful about error checking when deletions are implemented.
+            self.portfolioname = portfolioname
+            self.cwd = os.getcwd()              # Should get the current working directory where Portfolio object is instantiated.
+            self.regd = self.cwd + '/regions'   # May be good to remove hardcoding at some stage...
     
     def todict(self):
         portfoliodict = {}
-        portfoliodict['regionlist'] = self.regionlist
-        portfoliodict['gpalist'] = self.gpalist
+        portfoliodict['regionlist'] = [x.todict() for x in self.regionlist]
+        portfoliodict['gpalist'] = [x.uuid for x in self.gpalist]
         portfoliodict['portfolioname'] = self.portfolioname
         portfoliodict['cwd'] = self.cwd
         portfoliodict['regd'] = self.regd
         return portfoliodict
 
     def fromdict(self,portfoliodict):
-        self.regionlist = portfoliodict['regionlist'] 
-        self.gpalist = portfoliodict['gpalist'] 
+        self.regionlist = [Region(x) for x in portfoliodict['regionlist']]
+        self.gpalist = [r.retrieve_uuid(u) for (r,u) in zip(self.regionlist,portfoliodict['gpalist'])] 
         self.portfolioname = portfoliodict['portfolioname'] 
         self.cwd = portfoliodict['cwd'] 
         self.regd = portfoliodict['regd']
+
+    @classmethod
+    def load(Portfolio,filename):
+        ''' Tiny function to load a saved portfolio '''
+        try: 
+            p = load(filename)['arr_0'].tolist()
+        except: 
+            raise Exception("Couldn't load, maybe incorrect filename?")
+        return Portfolio(p)
+
+    def save(self, filename=None, folder=''):
+        ''' A quick function to save a portfolio to a Numpy object '''
+        if filename is None:
+            filename = self.portfolioname
+        savez_compressed(folder+filename,self.todict())
+        return None
 
     def run(self):
         """
@@ -347,14 +360,7 @@ class Portfolio(object):
         newregion.genuuid()
         self.appendregion(newregion)
         return newregion
-        
-    def save(self, filename=None, folder=''):
-        ''' A quick function to save a portfolio to a Numpy object '''
-        if filename is None:
-            filename = self.portfolioname
-        savez_compressed(folder+filename,self)
-        return None
-    
+            
 #%% GPA Methods
 
     # Break an aggregate region (e.g. a nation) into subregions (e.g. districts), according to a provided population and prevalence data file.
