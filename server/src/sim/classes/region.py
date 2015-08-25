@@ -27,18 +27,12 @@ from scipy.interpolate import PchipInterpolator as pchip
 
 ### The actual Region class.
 class Region(object):
-    def __init__(self,name,populations=None,programs=None,datastart=None,dataend=None,filename=None):
+    def __init__(self,name,populations=None,programs=None,datastart=None,dataend=None):
         # Usage
         # r = Region(name,populations,programs,datastart,dataend) (see defaults.py haiti) 
         # r = Region(regiondict) -> regiondict = r.fromdict()
-        # r = Region(filename='save.json') # NOT IMPLEMENTED YET
 
-        if filename is not None:
-            raise Exception('Not implemented yet')
-            ## Something like:
-            #d = dataio_binary.load(filename)
-            #self.fromdict(d)
-        elif isinstance(name,dict):
+        if isinstance(name,dict):
             # variable 'name' is actually a regiondict
             self.fromdict(name)
         else:
@@ -69,6 +63,18 @@ class Region(object):
 
     @classmethod
     def load(Region,filename,name=None):
+        # Use this function to load a region saved with region.save
+        r = Region(name,None,None,None,None)
+        regiondict = dataio_binary.load(filename)
+        r.uuid = regiondict['uuid'] # Loading a region restores the original UUID
+        r.fromdict(regiondict)
+        return r
+
+    def save(self,filename):
+        dataio_binary.save(self.todict(),filename)
+                    
+    @classmethod
+    def load_json(Region,filename,name=None):
         # Create a new region by loading a JSON file
         # If a name is not specified, the one contained in the JSON file is used
         # Note that this function can be used with an old-type or new-type JSON file
@@ -85,14 +91,9 @@ class Region(object):
             r.fromdict_legacy(regiondict)
         return r
 
-    @classmethod
-    def load_binary(Region,filename,name=None):
-        # Use this function to load a region saved with region.save_binary
-        r = Region(name,None,None,None,None)
-        regiondict = dataio_binary.load(filename)
-        r.uuid = regiondict['uuid'] # Loading a region restores the original UUID
-        r.fromdict(regiondict)
-        return r
+    def save_json(self,filename):
+        import dataio
+        dataio.savedata(filename,self.todict())
 
     def __getstate__(self):
         # Note that this pickling method should only be implemented for classes
@@ -129,6 +130,26 @@ class Region(object):
         self.BOCx = regiondict['BOC_budgets']
         self.BOCy = regiondict['BOC_objectives']
             
+    def todict(self):
+        # Return a dictionary representation of the object for use with Region.fromdict()
+        regiondict = {}
+        regiondict['version'] = 1 # Could do something later by checking the version number
+
+        regiondict['metadata'] = self.metadata 
+        regiondict['data'] = self.data 
+        regiondict['simboxlist'] = [sbox.todict() for sbox in self.simboxlist]
+        regiondict['options'] = self.options # Populate default options here = self.options 
+        regiondict['program_sets'] = [[1]] #self.program_sets 
+        regiondict['calibrations'] = self.calibrations # Calibrations are stored as dictionaries
+        regiondict['uuid'] = self.uuid 
+        regiondict['D'] = self.D
+
+        # BOC saving.
+        regiondict['BOC_budgets'] = self.BOCx
+        regiondict['BOC_objectives'] = self.BOCy    
+
+        return regiondict
+
     def fromdict_legacy(self, tempD):
         # Load an old-type D dictionary into the region
 
@@ -178,33 +199,6 @@ class Region(object):
                 for par in scenario['scenario']['pars']:
                     newsim.create_override(par['names'],par['pops'],par['startyear'],par['endyear'],par['startval'],par['endval'])
                 sbox.simlist.append(newsim)
-
-    def save(self,filename):
-        import dataio
-        dataio.savedata(filename,self.todict())
-
-    def save_binary(self,filename):
-        dataio_binary.save(self.todict(),filename)
-
-    def todict(self):
-        # Return a dictionary representation of the object for use with Region.fromdict()
-        regiondict = {}
-        regiondict['version'] = 1 # Could do something later by checking the version number
-
-        regiondict['metadata'] = self.metadata 
-        regiondict['data'] = self.data 
-        regiondict['simboxlist'] = [sbox.todict() for sbox in self.simboxlist]
-        regiondict['options'] = self.options # Populate default options here = self.options 
-        regiondict['program_sets'] = [[1]] #self.program_sets 
-        regiondict['calibrations'] = self.calibrations # Calibrations are stored as dictionaries
-        regiondict['uuid'] = self.uuid 
-        regiondict['D'] = self.D
-
-        # BOC saving.
-        regiondict['BOC_budgets'] = self.BOCx
-        regiondict['BOC_objectives'] = self.BOCy    
-
-        return regiondict
 
     def retrieve_uuid(self,target_uuid):
         # Retrieve a simbox or a sim from within the region by looking up it's uuid
