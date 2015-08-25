@@ -132,7 +132,6 @@ def extract_pops(workbook_data):
         entry['client'] =  bool(popdict['client'][i])
         entry['female'] =  bool(popdict['female'][i])
         entry['male'] =  bool(popdict['male'][i])
-        entry['sexwomen'] =  bool(popdict['sexwomen'][i])
         out.append(entry)
     return out
 

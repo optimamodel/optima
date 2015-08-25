@@ -34,7 +34,18 @@ def findinds(val1, val2=None, eps=1e-6):
     if ndim(val1)==1: # Uni-dimensional
         output = output[0] # Return an array rather than a tuple of arrays if one-dimensional
     return output
-
+    
+    
+def dataindex(dataarray, index):        
+    """ Take an array of data and return either the first or last (or some other) non-NaN entry. """
+    from numpy import zeros, shape
+    
+    nrows = shape(dataarray)[0] # See how many rows need to be filled (either npops, nprogs, or 1).
+    output = zeros(nrows)       # Create structure
+    for r in xrange(nrows): 
+        output[r] = sanitize(dataarray[r])[index] # Return the specified index -- usually either the first [0] or last [-1]
+    
+    return output
 
 
 def smoothinterp(newx=None, origx=None, origy=None, smoothness=10, growth=None):
@@ -167,7 +178,7 @@ def toc(start=0, label='', sigfigs=3):
     
 
 
-def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0):
+def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0, showcontents=False):
     """
     Nicely print a complicated data structure, a la Matlab.
     Arguments:
@@ -176,7 +187,8 @@ def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0):
       depth: how many levels of recursion to follow
       maxlen: number of characters of data to display (if 0, don't show data)
       indent: where to start the indent (used internally)
-    
+
+    Version: 1.0 (2015aug21)    
     """
     datatype = type(data)
     def printentry(data):
@@ -185,8 +197,10 @@ def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0):
         elif datatype==list: string = ('list of length %i' % len(data))
         elif datatype==tuple: string = ('tuple of length %i' % len(data))
         elif datatype==ndarray: string = ('array of shape %s' % str(shape(data)))
+        elif datatype.__name__=='module': string = ('module with %i components' % len(dir(data)))
+        elif datatype.__name__=='class': string = ('class with %i components' % len(dir(data)))
         else: string = datatype.__name__
-        if maxlen>0:
+        if showcontents and maxlen>0:
             datastring = ' | '+str(data)
             if len(datastring)>maxlen: datastring = datastring[:maxlen] + ' <etc> ' + datastring[-maxlen:]
         else: datastring=''
@@ -207,6 +221,13 @@ def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0):
         elif type(data) in [list, tuple]:
             for i in range(len(data)):
                 printdata(data[i], name='[%i]'%i, depth=depth-1, indent=indent, level=level)
+        elif type(data).__name__ in ['module', 'class']:
+            keys = dir(data)
+            maxkeylen = max([len(key) for key in keys])
+            for key in keys:
+                if key[0]!='_': # Skip these
+                    thisindent = ' '*(maxkeylen-len(key))
+                    printdata(getattr(data,key), name=key, depth=depth-1, indent=indent+thisindent, level=level)
         print('\n')
     return None
 
@@ -279,6 +300,17 @@ def checkmem(origvariable, descend=0, order='n', plot=False, verbose=0):
         pie(array(printbytes)[inds], labels=array(printnames)[inds], autopct='%0.2f')
 
     return None
+
+
+def run(command, printinput=False, printoutput=False):
+   """ Make it easier to run bash commands. Version: 1.0 Date: 2015aug16 """
+   from subprocess import Popen, PIPE
+   if printinput: print(command)
+   try: output = Popen(command, shell=True, stdout=PIPE).communicate()[0]
+   except: output = 'Shell command failed'
+   if printoutput: print(output)
+   return output
+
 
 # CK: This should be moved elsewhere...
 try:

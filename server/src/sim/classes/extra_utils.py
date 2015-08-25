@@ -6,7 +6,7 @@ import region
 import sim
 import simbox
 
-def dict_equal(d1,d2,verbose=0,keyname=''):
+def dict_equal(d1,d2,verbose=0,debug_string=''):
 	# Check if two dictionaries contain the same stuff
 
 	# Check that they're the same type
@@ -17,25 +17,25 @@ def dict_equal(d1,d2,verbose=0,keyname=''):
 
 	if type(d1) != type(d2):
 		if verbose:
-			print 'Types of %s and %s are different: they are %s and %s' % (d1,d2,type(d1),type(d2))
+			print '%s Types of %s and %s are different: they are %s and %s' % (debug_string,d1,d2,type(d1),type(d2))
 		return False
 
 	if isinstance(d1,sim.Sim) or isinstance(d1,simbox.SimBox) or isinstance(d1,region.Region):
-		return dict_equal(d1.todict(),d2.todict())
+		return dict_equal(d1.todict(),d2.todict(),verbose=verbose,debug_string=' d1.todict()->')
 
 	if d1 is None and d2 is None:
 		if verbose:
-			print '%s and %s are None (keyname=%s)' % (d1,d2,keyname)
+			print '%s %s and %s are None' % (debug_string,d1,d2)
 		return True
 
 	# If they are dictionaries, check all of their fields
 	if isinstance(d1,dict):
 		if d1.viewkeys() != d2.viewkeys():
 			if verbose:
-				print 'Keys do not match: d1=%s,d2=%s' % (d1.keys(),d2.keys())
+				print '%s Keys do not match: d1=%s,d2=%s' % (debug_string,d1.viewkeys(),d2.viewkeys())
 			return False
 		else:
-			return all([dict_equal(d1[k],d2[k],keyname=k) for k in d1.keys() if k is not 'UUID']) # Need to skip the UUID
+			return all([dict_equal(d1[k],d2[k],verbose=verbose,debug_string='%s dict[%s]->' % (debug_string,k)) for k in d1.keys() if k is not 'UUID']) # Need to skip the UUID
 	
 	# Vector reduction for ndarrays
 	elif isinstance(d1,(float,numpy.ndarray)):
@@ -46,19 +46,20 @@ def dict_equal(d1,d2,verbose=0,keyname=''):
 	elif isinstance(d1,list):
 		if len(d1) != len(d2):
 			if verbose:
-				print "List length doesn't match - (keyname=%s)" % (keyname)
+				print "%s List length doesn't match" % (debug_string)
 			return False
-		rval = all([dict_equal(d1[x],d2[x]) for x in xrange(0,len(d1))]) 
+		rval = all([dict_equal(d1[x],d2[x],verbose=verbose,debug_string='%s list[%s]->' % (debug_string,x)) for x in xrange(0,len(d1))]) 
 		if verbose and not rval:
 			print d1[1]
 			print d2[1]
-			print "List items don't match - (keyname=%s)" % (keyname)
+			print "%s List items don't match"  % (debug_string)
+			return False
 		return rval
 	# Direct equality
 	elif isinstance(d1,(tuple,int,str,unicode)):
 		return d1 == d2
 	else:
-		raise Exception("Do not know how to compare objects of type %s" % type(d1))
+		raise Exception("%s Do not know how to compare objects of type %s" % (debug_string,type(d1)))
 
 def isequalwithequalnans(a,b):
 	# A close of Matlab for testing equality of arrays containing NaNs

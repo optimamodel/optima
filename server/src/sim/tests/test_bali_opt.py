@@ -33,9 +33,4 @@ s_reconstruct.makemodelpars(randseed=0)
 s_reconstruct.run()
 sb2 = simbox.SimBox('check',r)
 sb2.simlist = [s_cliff,s_reconstruct]
-
-from extra_utils import dict_equal
-for parname in s_cliff.parsmodel.keys():
-	print parname, dict_equal(s_cliff.parsmodel[parname],s_reconstruct.parsmodel[parname])
-
 sb2.viewmultiresults() # See if they are the same...

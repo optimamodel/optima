@@ -11,18 +11,69 @@ show_wait = False       # Hmm. Not used? Can be left for the moment until decide
 nsims = 5   
 
 import os
-from numpy import arange
-
+from copy import deepcopy
+from numpy import arange, empty, savez_compressed, load
 from region import Region
-from geoprioritisation import gpaoptimisefixedtotal
+import multiprocessing
+import dataio_binary
 
-class Portfolio:
+def makegpasimbox(inputs):
+    # This helper function creates a GPA simbox inside a region
+    # This function is declared outside the Portfolio class because
+    # a) this way it can be pickled
+    # b) it doesn't depend on a specific portfolio instance i.e. 'self'
+    #    and therefore it shouldn't be a *method*
+    regiondict = inputs[0]
+    gpaname = inputs[1]
+    newtotal = inputs[2]
+
+    currentregion = Region(regiondict)
+    print('Initialising a simulation container in region %s for this GPA.' % currentregion.getregionname())
+    tempsimbox = currentregion.createsimbox('GPA '+gpaname+' - '+currentregion.getregionname(), isopt = True, createdefault = False)
+    tempsimbox.createsim(currentregion.getregionname()+' - Initial', forcecreate = False)
+    initsimcopy = tempsimbox.createsim(currentregion.getregionname()+' - GPA', forcecreate = True)
+    tempsimbox.scalealloctototal(initsimcopy, newtotal)
+    currentregion.runsimbox(tempsimbox)
+    tempsimbox.simlist.remove(initsimcopy)
+    return (currentregion.todict(),tempsimbox.uuid)
+
+class Portfolio(object):
     def __init__(self, portfolioname):
-        self.regionlist = []                # List to hold Region objects.
-        self.portfolioname = portfolioname
-        self.cwd = os.getcwd()              # Should get the current working directory where Portfolio object is instantiated.
-        self.regd = self.cwd + '/regions'  # May be good to remove hardcoding at some stage...
-        
+        if isinstance(portfolioname,dict):
+            self.fromdict(portfolioname)
+        else:
+            self.regionlist = []                # List to hold Region objects.
+            self.gpalist = []                   # List to hold GPA runs, specifically lists of SimBoxOpt references, for quick use.
+                                                # Will need to be careful about error checking when deletions are implemented.
+            self.portfolioname = portfolioname
+            self.cwd = os.getcwd()              # Should get the current working directory where Portfolio object is instantiated.
+            self.regd = self.cwd + '/regions'   # May be good to remove hardcoding at some stage...
+    
+
+    def todict(self):
+        portfoliodict = {}
+        portfoliodict['regionlist'] = [x.todict() for x in self.regionlist]
+        portfoliodict['gpalist'] = [x.uuid for x in self.gpalist]
+        portfoliodict['portfolioname'] = self.portfolioname
+        portfoliodict['cwd'] = self.cwd
+        portfoliodict['regd'] = self.regd
+        return portfoliodict
+
+    def fromdict(self,portfoliodict):
+        self.regionlist = [Region(x) for x in portfoliodict['regionlist']]
+        self.gpalist = [r.retrieve_uuid(u) for (r,u) in zip(self.regionlist,portfoliodict['gpalist'])] 
+        self.portfolioname = portfoliodict['portfolioname'] 
+        self.cwd = portfoliodict['cwd'] 
+        self.regd = portfoliodict['regd']
+
+    @classmethod
+    def load(Portfolio,filename):
+        p = dataio_binary.load(filename)
+        return Portfolio(p)
+
+    def save(self, filename):
+        dataio_binary.save(self.todict(),filename)
+
     def run(self):
         """
         All processes associated with the portfolio are run here.
@@ -59,7 +110,7 @@ class Portfolio:
                     else:
                         print('Which data file do you wish to load into %s?' % regionname)
                         fid = 0
-                        templist = [x for x in os.listdir(self.regd) if x.endswith('.json') ]
+                        templist = [x for x in os.listdir(self.regd) if x.endswith('.json')]
                         
                         # Displays files in regions folder along with an integer id for easy selection.
                         for filename in templist:
@@ -121,10 +172,28 @@ class Portfolio:
                         self.improveregionBOC(self.regionlist[int(regionid)-1], factorlist)
                     else:
                         print('Region ID numbers only range from 1 to %i, inclusive.' % len(self.regionlist))
-                    
+                        
             # If command is 'gpa', create GPA SimBoxes in each region.
             if cmdinput == 'gpa' and len(self.regionlist) > 1:
                 self.geoprioanalysis()
+                
+            # If command is 'review', plot all information relevant to a previous GPA run.
+            if cmdinput == 'review' and len(self.gpalist) > 0:
+                
+                for gparun in xrange(len(self.gpalist)):
+                    print('GPA %i...' % (gparun + 1))
+                    for gpasimbox in self.gpalist[gparun]:
+                        print(' --> %s' % gpasimbox.getname())
+                    
+                # Makes sure that an integer is specified.
+                while fchoice not in arange(1,len(self.gpalist)+1):
+                    try:
+                        fchoice = int(raw_input('Choose a number between 1 and %i, inclusive: ' % len(self.gpalist)))
+                    except ValueError:
+                        fchoice = 0
+                        continue
+                    
+                self.geoprioreview(self.gpalist[fchoice-1])
                 
             # If command is 'qs', save to default region filenames (overwriting if necessary).
             if cmdinput == 'qs':
@@ -138,6 +207,8 @@ class Portfolio:
                 print('To run this analysis, type: gpa')
                 print("To recalculate cost-effectiveness data for a region numbered 'region_id', type: refine region_id")
                 print("To calculate additional cost-effectiveness data for a region numbered 'region_id', type: improve region_id")
+                if len(self.gpalist) > 0:
+                    print('To review results from previous GPA runs, type: review')
             
             print("To make a new region titled 'region_name', type: make region_name")
             if len(self.regionlist) > 0:
@@ -276,39 +347,191 @@ class Portfolio:
         for currentregion in self.regionlist:
             currentregion.save(self.regd + '/' + currentregion.getregionname() + '.json')
 
-###----------------------------------------------------------------------------
-### GPA Methods
+    # Creates a duplicate of a region.
+    # Note: Everything is deep-copied, but a new uuid is given to mark a unique region.
+    def duplicateregion(self, targetregion):
+        newregion = deepcopy(targetregion)
+        newregion.genuuid()
+        self.appendregion(newregion)
+        return newregion
+            
+#%% GPA Methods
 
-    # Iterate through loaded regions. Develop default BOCs if they do not have them.
-    def geoprioanalysis(self, gpaname = 'test'):
-        # gpaname = raw_input('Enter a title for the current analysis: ')
+    # Break an aggregate region (e.g. a nation) into subregions (e.g. districts), according to a provided population and prevalence data file.
+    def splitcombinedregion(self, aggregateregion, popprevfile):
         
+        from xlrd import open_workbook  # For opening Excel workbooks.
+        
+        inbook = open_workbook(popprevfile)
+        summarysheet = inbook.sheet_by_name('Summary - sub-populations')
+
+        # Determine region names from summary sheet.
+        subregionlist = []
+        for rowindex in xrange(summarysheet.nrows):
+            if summarysheet.cell_value(rowindex, 0) == 'National total':
+                break
+            if summarysheet.cell_type(rowindex, 0) == 2:    # Check if 1st cell in row is a number.
+                subregionlist.append(summarysheet.cell_value(rowindex, 1))
+        print subregionlist
+        print len(subregionlist)
+        
+        for subregionname in subregionlist:
+            try:
+                print('Creating region: %s' % subregionname)
+                subregionsheet = inbook.sheet_by_name(subregionname)
+                newregion = self.duplicateregion(aggregateregion)
+                newregion.setregionname(subregionname)
+                
+#                for rowindex in xrange(districtsheet.nrows):
+#                    inrow = districtsheet.row(rowindex)
+#                    for colindex in xrange(len(inrow)):
+#                        celldata = districtsheet.cell_value(rowindex, colindex)
+                
+            except:
+                print('There is a problem loading a district sheet. All subsequent actions are cancelled.')
+        
+        # Finalise conversion by removing original aggregate region.
+        self.regionlist.remove(aggregateregion)
+
+
+
+    # The GPA algorithm.
+    def geoprioanalysis(self, gpaname = 'Test', usebatch=False):
+        
+        # First, choose 'spend' factors for the construction of your Budget Objective Curve.
         varfactors = [0.0, 0.3, 0.6, 1.0, 1.8, 3.2, 10.0]
-#        varfactors = [0.0, 1.0, 2.0]
         
+        # If a loaded region does not store Budget Objective data in its json file, then calculate some.
         for currentregion in self.regionlist:
             if not currentregion.hasBOC():
                 print('Region %s has no Budget Objective Curve. Initialising calculation.' % currentregion.getregionname())
                 currentregion.developBOC(varfactors)
             else:
                 print('Region %s already has a Budget Objective Curve.' % currentregion.getregionname())
+            
+        # The actual optimisation process.
+        from geoprioritisation import gpaoptimisefixedtotal
         
-        newtotals = gpaoptimisefixedtotal(self.regionlist)        
-        for i in xrange(len(newtotals)):
-            currentregion = self.regionlist[i]
-            print('Initialising a simulation container in region %s for this GPA.' % currentregion.getregionname())
-            tempsimbox = currentregion.createsimbox('GPA-'+gpaname, isopt = True, createdefault = True)
-            currentregion.runsimbox(tempsimbox)
-            tempsimbox.createsimoptgpa(newtotals[i])
-            tempsimbox.viewmultiresults()
-#                currentregion.developBOC(tempsimbox)
-#                self.simboxref.append(tempsimbox)
-#            else:
-#                self.simboxref.append(currentregion.getsimboxwithBOC())     # Note: Kludgy but the best that can be done without user input.
-#        
-#        newtotals = gpaoptimisefixedtotal(self.regionlist)
-#        for i in xrange(len(newtotals)):
-#            self.simboxref[i].copysimoptfornewtotal(newtotals[i])
+        newtotals = gpaoptimisefixedtotal(self.regionlist)
+              
+        inputs = [(r.todict(),'Test',newtotal) for (r,newtotal) in zip(self.regionlist,newtotals)] # Could zip a third array of gpaname strings here
+        if usebatch:
+            pool = multiprocessing.Pool()
+            outputs = pool.map(makegpasimbox,inputs)
+        else:
+            outputs = [makegpasimbox(y) for y in inputs]
+
+        # Update the regionlist now that all of the regions have had GPA run on them
+        # Otherwise, the simboxlist references will be broken when their parent regions
+        # (the ones inside the array 'outputs') go out of scope
+        self.regionlist = []
+        self.gpalist = []
+        for x in outputs:
+            r = Region(x[0])
+            self.regionlist.append(r)
+            self.gpalist.append(r.retrieve_uuid(x[1]))
+
+    # Iterate through loaded regions. Develop default BOCs if they do not have them.
+    def geoprioreview(self, gpasimboxlist):
+        
+        for gpasimbox in gpasimboxlist:
+            print(gpasimbox.getname())
+            gpasimbox.getregion().plotsimbox(gpasimbox, multiplot = True)   # Note: Really stupid excessive way of doing all plots. May simplify later.
+        
+        # Display GPA results for debugging purposes. Modified version of code in geoprioritisation.py. May fuse later.
+        totsumin = 0
+        totsumopt = 0
+        totsumgpaopt = 0
+        esttotsuminobj = 0
+        esttotsumoptobj = 0
+        esttotsumgpaoptobj = 0
+        realtotsuminobj = 0
+        realtotsumoptobj = 0
+        realtotsumgpaoptobj = 0
+        for i in xrange(len(gpasimboxlist)):
+            r = gpasimboxlist[i].getregion()
+            regionname = r.getregionname()
+
+            print('Region %s...' % regionname)
+            sumin = sum(gpasimboxlist[i].simlist[0].alloc)
+            sumopt = sum(gpasimboxlist[i].simlist[1].alloc)
+            sumgpaopt = sum(gpasimboxlist[i].simlist[2].alloc)
+            estsuminobj = r.getBOCspline()([sumin])
+            estsumoptobj = r.getBOCspline()([sumopt])
+            estsumgpaoptobj = r.getBOCspline()([sumgpaopt])
+            realsuminobj = gpasimboxlist[i].simlist[0].calculateobjectivevalue()
+            realsumoptobj = gpasimboxlist[i].simlist[1].calculateobjectivevalue(normaliser = gpasimboxlist[i].simlist[0])
+            realsumgpaoptobj = gpasimboxlist[i].simlist[2].calculateobjectivevalue(normaliser = gpasimboxlist[i].simlist[0])
+            
+            import matplotlib.pyplot as plt
+            ax = r.plotBOCspline(returnplot = True)
+            ms = 10
+            mw = 2
+            ax.plot(sumopt, estsumoptobj, 'x', markersize = ms, markeredgewidth = mw, label = 'Init. Opt. Est.')
+            ax.plot(sumopt, realsumoptobj, '+', markersize = ms, markeredgewidth = mw, label = 'Init. Opt. Real')
+            ax.plot(sumgpaopt, estsumgpaoptobj, 'x', markersize = ms, markeredgewidth = mw, label = 'GPA Opt. Est.')
+            ax.plot(sumgpaopt, realsumgpaoptobj, '+', markersize = ms, markeredgewidth = mw, label = 'GPA Opt. Real')
+            ax.legend(loc='best')
+            plt.show()
+            
+            if sumin == sumopt:
+                print('Initial Unoptimised/Optimised Budget Total: $%.2f' % sumin)
+            else:
+                print('Initial Unoptimised Budget Total: $%.2f' % sumin)
+                print('Initial Optimised Budget Total: $%.2f' % sumopt)
+            print('GPA Optimised Budget Total: $%.2f' % sumgpaopt)
+            print
+            if not sumin == sumopt: print('Initial Unoptimised Objective Estimate (BOC): %f' % estsuminobj)
+            print('Initial Optimised Objective Estimate (BOC): %f' % estsumoptobj)
+            print('GPA Optimised Objective Estimate (BOC): %f' % estsumgpaoptobj)
+            print
+            if not sumin == sumopt: print('Initial Unoptimised BOC Derivative: %.3e' % r.getBOCspline().derivative()(sumin))
+            print('Initial Optimised BOC Derivative: %.3e' % r.getBOCspline().derivative()(sumopt))
+            print('GPA Optimised BOC Derivative: %.3e' % r.getBOCspline().derivative()(sumgpaopt))
+            print
+            print('Initial Unoptimised Real Objective: %f' % realsuminobj)
+            print('Initial Optimised Real Objective: %f' % realsumoptobj)
+            print('GPA Optimised Real Objective: %f' % realsumgpaoptobj)
+            print('BOC Estimate was off for %s objective by: %f (%f%%)' % (regionname, estsumgpaoptobj-realsumgpaoptobj, 100*abs(estsumgpaoptobj-realsumgpaoptobj)/realsumgpaoptobj))
+            print('\n')
+            
+            
+            print('%40s%20s%20s' % ('Unoptimised...', 'Optimised...', 'GPA Optimised...'))
+            for x in xrange(len(r.metadata['inputprograms'])):
+                print('%-20s%20.2f%20.2f%20.2f' % (r.metadata['inputprograms'][x]['short_name']+':',r.simboxlist[-1].simlist[0].alloc[x],r.simboxlist[-1].simlist[1].alloc[x],r.simboxlist[-1].simlist[2].alloc[x]))
+            print('\n')
+            
+            totsumin += sumin
+            totsumopt += sumopt
+            totsumgpaopt += sumgpaopt
+            esttotsuminobj += estsuminobj
+            esttotsumoptobj += estsumoptobj
+            esttotsumgpaoptobj += estsumgpaoptobj
+            realtotsuminobj += realsuminobj
+            realtotsumoptobj += realsumoptobj
+            realtotsumgpaoptobj += realsumgpaoptobj
+            
+        print('\nGPA Aggregated Results...\n')
+        if totsumin == totsumopt:
+            print('Initial Unoptimised/Optimised Budget Grand Total: $%.2f' % totsumin)
+        else:
+            print('Initial Unoptimised Budget Grand Total: $%.2f' % totsumin)
+            print('Initial Optimised Budget Grand Total: $%.2f' % totsumopt)
+        print('GPA Optimised Budget Grand Total: $%.2f' % totsumgpaopt)
+        print
+        if not totsumin == totsumopt: print('Initial Unoptimised Objective Sum Estimate (BOC): %f' % esttotsuminobj)
+        print('Initial Optimised Objective Sum Estimate (BOC): %f' % esttotsumoptobj)
+        print('GPA Optimised Objective Sum Estimate (BOC): %f' % esttotsumgpaoptobj)
+        print('Aggregate Objective Improvement Estimate (BOC): %f (%f%%)' % (esttotsumgpaoptobj-esttotsumoptobj, 100*(esttotsumoptobj-esttotsumgpaoptobj)/esttotsumoptobj))
+        print
+        print('Initial Unoptimised Real Objective Sum: %f' % realtotsuminobj)
+        print('Initial Optimised Real Objective Sum: %f' % realtotsumoptobj)
+        print('GPA Optimised Real Objective Sum: %f' % realtotsumgpaoptobj)
+        print('BOC Estimate was off for aggregate objective by: %f (%f%%)' % (esttotsumgpaoptobj-realtotsumgpaoptobj, 100*abs(esttotsumgpaoptobj-realtotsumgpaoptobj)/realtotsumgpaoptobj))
+        print('Real Aggregate Objective Improvement (Before Individual Optimisation): %f (%f%%)' % (realtotsumgpaoptobj-realtotsuminobj, 100*(realtotsuminobj-realtotsumgpaoptobj)/realtotsuminobj))
+        print('Real Aggregate Objective Improvement (After Individual Optimisation): %f (%f%%)' % (realtotsumgpaoptobj-realtotsumoptobj, 100*(realtotsumoptobj-realtotsumgpaoptobj)/realtotsumoptobj))        
+        print('\n')
+        
 
     def refineregionBOC(self, region):
         region.recalculateBOC()

@@ -33,10 +33,6 @@ def runmodelalloc(D, optimparams, parindices, randseed, rerunfinancial=False, ve
     newD, newcov, newnonhivdalysaverted = getcurrentbudget(newD, thisalloc, randseed=randseed) # Get cost-outcome curves with uncertainty
     newM = makemodelpars(newD['P'], newD['opt'], withwhat='c', verbose=0) # Don't print out
     newD['M'] = partialupdateM(D['M'], newM, parindices)
-    for key in [u'popsize']:
-        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-
-        newD['M'][key] = D['M'][key]
     S = model(newD['G'], newD['M'], newD['F'][0], newD['opt'], verbose=verbose)
     R = makeresults(D, allsims=[S], rerunfinancial=rerunfinancial, verbose=0)
     R['debug'] = dict()
@@ -44,8 +40,6 @@ def runmodelalloc(D, optimparams, parindices, randseed, rerunfinancial=False, ve
     R['debug']['M'] = deepcopy(newD['M'])
     R['debug']['F'] = deepcopy(newD['F'])
     R['debug']['S'] = deepcopy(S)
-    from viewresults import viewparameters
-    viewparameters(newD['M'])
     return R
 
 
@@ -167,6 +161,7 @@ def minimizemoney(D, objectives=None, constraints=None, maxiters=1000, timelimit
         
         ## Run with uncertainties
         allocarr = []
+        terminate = False
         for s in xrange(len(D['F'])): # xrange(len(D['F'])): # Loop over all available meta parameters
             print('========== Running uncertainty optimization %s of %s... ==========' % (s+1, len(D['F'])))
             options['D']['F'] = [deepcopy(D['F'][s])] # Loop over fitted parameters
@@ -174,15 +169,39 @@ def minimizemoney(D, objectives=None, constraints=None, maxiters=1000, timelimit
             options['randseed'] = s
             
             # First, see if it meets targets already
+            print('========== Checking if current allocation meets targets ==========')
             targetsmet, optparams = objectivecalc(optimparams, options)
             if targetsmet:
                 print('DONE: Current allocation meets targets!')
+                break
             
             # Now try infinite money
-#            options['D']['P']['txelig']['c'][:] = 1e3 # Increase treatment eligibility to everyone
+            print('========== Checking if infinite allocation meets targets ==========')
             targetsmet, optparams = objectivecalc(array(optimparams)*1e9, options)
             if not(targetsmet):
                 print("DONE: Infinite allocation can't meet targets!")
+                break
+            
+            
+            # Keep doubling funding till targets are met...
+            print('========== Doubling funding until ceiling is reached ==========')
+            fundingfactor = 1.0
+            targetsmet = False
+            while not(targetsmet):
+                fundingfactor *= 2
+                targetsmet, optparams = objectivecalc(array(optimparams)*fundingfactor, options)
+                print('Current funding factor: %f' % fundingfactor)
+            
+            # Now home in on the solution
+            print('========== Homing in on solution ==========')
+            upperlim = fundingfactor
+            lowerlim = fundingfactor/2.
+            while (upperlim-lowerlim>0.1): # Keep looping until they converge to within 10% of the budget
+                fundingfactor = (upperlim+lowerlim)/2
+                targetsmet, optparams = objectivecalc(array(optimparams)*fundingfactor, options)
+                print('Current funding factor (low, high): %f (%f, %f)' % (fundingfactor, lowerlim, upperlim))
+                if targetsmet: upperlim=fundingfactor
+                else: lowerlim=fundingfactor
             
         
             optparams[opttrue] = optparams[opttrue] / optparams[opttrue].sum() * (sum(optparams) - optparams[~opttrue].sum()) # Make sure it's normalized -- WARNING KLUDGY

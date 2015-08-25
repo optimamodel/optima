@@ -9,3 +9,6 @@ server/p-env
 server/build
 \~\$*
 *.prj
+*.ipynb
+*.bin
+*.npz

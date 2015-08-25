@@ -159,7 +159,20 @@
                   </div>
                 </div>
                 <div class="section">
-                  5. [Optional] Display program cost data in
+                  5. [Optional] Specify the maximum funding (for plotting only):
+                  <input type="number" class="txbox __inline __xl"
+                         name="xAxisMaximum"
+                         min="1" placeholder="e.g. 1000000"
+                         ng-model="state.xAxisMaximum"
+                         ng-change="updateCurves()">
+                  <div ng-messages="state.CostCoverageForm.xAxisMaximum.$error"
+                       ng-show="state.CostCoverageForm.xAxisMaximum.$touched && state.CostCoverageForm.xAxisMaximum.$invalid">
+                    <div class="error-hint" ng-message="min">The minimum value is 1</div>
+                    <div class="error-hint" ng-message="number">The value should be a number</div>
+                  </div>
+                </div>
+                <div class="section">
+                  6. [Optional] Display program cost data in
                   <input type="number" class="txbox __inline __l"
                          name="displayYear"
                          placeholder="e.g.{{ state.info.dataEnd }}"
@@ -176,7 +189,7 @@
                   </div>
                 </div>
                 <div class="section">
-                  6. [Optional] Display program costs in dollar spent per person in the targeted population
+                  7. [Optional] Display program costs in dollar spent per person in the targeted population
                   <input type="checkbox" ng-model="state.calculatePerPerson" class="__inline" ng-change="updateCurves()"/>
                 </div>
               </form>

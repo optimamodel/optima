@@ -65,7 +65,7 @@ class TestPrograms(unittest.TestCase):
 		# Test linear CC and CO functions (for testing modalities)
 		p = program.Program('short_name','full_name',default_effects)
 		ccdata = {'function': 'linear', 'parameters': [2.0, 0.0]}
-		codata = [{'function': 'linear', 'parameters': [2.0, 0.0]}] # Linear coverage-outcome from 0 to 1 exactly
+		codata = [{'function': 'linear', 'parameters': [2.0, 0.0]}] 
 		m1 = p.add_modality('modality_name',ccdata,codata)
 
 		self.assertAlmostEqual(p.get_coverage(0.0)[0],0,places=7) 
@@ -80,10 +80,66 @@ class TestPrograms(unittest.TestCase):
 
 	def test_modalities(self):
 		# Test overlapping modalities
+
+		# Let's say modality 1 can reach 100% of the population, but modalities 2 and 3 can reach 50%. Then
+		# (1) - 1
+		# (2) - 0.5
+		# (3) - 0.5
+		# (1,2) = 1*0.5
+		# (1,3) = 1*0.5
+		# (2,3) = 0.5*0.5 = 0.25
+		# (1,2,3) = 1*0.5*0.5 = 0.25
+
+		# This includes double counting
+		# Now, we remove the double counting
+		# The unique coverage we want is
+		# (1) - 0.25
+		# (2) - 0
+		# (3) - 0
+		# (1,2) = 0.25
+		# (1,3) = 0.25
+		# (2,3) = 0
+		# (1,2,3) = 0.25
+
+
+
 		return
 
 	def test_overlapping_coverage(self):
 		# Test overlapping coverage only
+		print "ENTERING DEBUG"
+		p = program.Program('short_name','full_name',default_effects)
+		ccdata = {'function': 'linear', 'parameters': [1.0, 0.0]}
+		codata = [{'function': 'identity', 'parameters': None}] # Linear coverage-outcome from 0 to 1 exactly
+		m1 = p.add_modality('M1',ccdata,codata)
+		m2 = p.add_modality('M2',ccdata,codata)
+
+		def validate(m1,m2,mm1,mm2,mm3):
+			# TESTS - if we have
+			# m1, m2
+			# mm1 = m1
+			# mm2 = m2
+			# mm3 = m1+m2
+			# Then mm1 = mm3 == m1/2
+			# m2 - mm3 = mm2
+
+			self.assertAlmostEqual(mm1,mm3,places=7) 
+			self.assertAlmostEqual(mm1,m1/2,places=7) 
+			self.assertAlmostEqual(m2-mm3,mm2,places=7) 
+
+
+		c = p.get_coverage(numpy.array([[0.5],[0.5]]))
+		validate(0.5,0.5,c[0],c[2],c[1])
+
+		c = p.get_coverage(numpy.array([[0.25],[0.5]]))
+		validate(0.25,0.5,c[0],c[2],c[1])
+
+		c = p.get_coverage(numpy.array([[0.0],[0.5]]))
+		validate(0.0,0.5,c[0],c[2],c[1])
+
+		c = p.get_coverage(numpy.array([[0.5],[0.0]]))
+		validate(0.5,0.0,c[0],c[2],c[1])
+		
 		return
 		
 	def test_overlapping_spending(self):

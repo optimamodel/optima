@@ -8,14 +8,27 @@ Created on Thu Jun 18 21:46:25 2015
 from numpy import arange
 from ballsd import ballsd
 
-# Simple scaling of budget totals to adhere to fixed grand total constraint. Other constraints may be required later.
-def constrainbudgetinputs(x, grandtotal):
-    return [xi*grandtotal/sum(x) for xi in x]
+# Simple scaling of budget totals to adhere to fixed grand total constraint.
+# Must also adhere to minimum bound constraints.
+def constrainbudgetinputs(x, grandtotal, minbound):
+    
+    # First make sure all values are not below the respective minimum bounds.
+    for i in xrange(len(x)):
+        if x[i] < minbound[i]:
+            x[i] = minbound[i]
+    
+    # Then scale all excesses over the minimum bounds so that the new sum is grandtotal.
+    constrainedx = []
+    for i in xrange(len(x)):
+        xi = (x[i] - minbound[i])*(grandtotal - sum(minbound))/(sum(x) - sum(minbound)) + minbound[i]
+        constrainedx.append(xi)
+    
+    return constrainedx
 
 # Total objective function to minimise is just the sum of BOC values for a set of regional budget totals.
-def totalobjectivefunc(x, (regionlist, grandtotal)):
+def totalobjectivefunc(x, (regionlist, grandtotal, minbound)):
     """Objective function. A secondary argument of all simboxes under gpa must be passed in during minimisation."""
-    x = constrainbudgetinputs(x, grandtotal)
+    x = constrainbudgetinputs(x, grandtotal, minbound)
     
     totalobj = 0
     for i in arange(0,len(x)):
@@ -33,13 +46,13 @@ def gpaoptimisefixedtotal(regionlist):
         print(regionlist[i].getorigalloc())
         budgettotals.append(sum(regionlist[i].getorigalloc()))
     grandtotal = sum(budgettotals)
-    minbound = [0]*len(regionlist)
+    minbound = [r.returnfixedcostsum() for r in regionlist]
     maxbound = [grandtotal]*len(regionlist)
     # print budgettotals
     
                
-    X, FVAL, EXITFLAG, OUTPUT = ballsd(totalobjectivefunc, budgettotals, options=(regionlist, grandtotal), xmin = minbound, xmax = maxbound)
-    X = constrainbudgetinputs(X, grandtotal)
+    X, FVAL, EXITFLAG, OUTPUT = ballsd(totalobjectivefunc, budgettotals, options=(regionlist, grandtotal, minbound), xmin = minbound, xmax = maxbound)
+    X = constrainbudgetinputs(X, grandtotal, minbound)
     
     # Display GPA results for debugging purposes.
     totinobj = 0
@@ -55,8 +68,11 @@ def gpaoptimisefixedtotal(regionlist):
         print('Optimised Budget Total: $%.2f' % X[i])
         print('Initial Objective: %f' % inobj)
         print('Optimised Objective: %f' % optobj)
-        print('Initial BOC Derivative: %.3e' % regionlist[i].getBOCspline().derivative()(budgettotals[i]))
-        print('Optimised BOC Derivative: %.3e\n' % regionlist[i].getBOCspline().derivative()(X[i]))
+        try:
+            print('Initial BOC Derivative: %.3e' % regionlist[i].getBOCspline().derivative()(budgettotals[i]))
+            print('Optimised BOC Derivative: %.3e\n' % regionlist[i].getBOCspline().derivative()(X[i]))
+        except:
+            print('BOC derivatives not available')
     print('GPA Portfolio Results...')
     print('Initial Budget Grand Total: $%.2f' % sum(budgettotals))
     print('Optimised Budget Grand Total: $%.2f' % sum(X))

@@ -1,11 +1,13 @@
-def viewuncerresults(E, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 'force':[0,1], 'daly':[0,1], 'death':[0,1], 'dx':[0,1], 'tx1':[0,1], 'tx2':[0,1], 'costann':[0,1], 'costcum':[0,1], 'commit':[0,1]}, simstartyear=2000, simendyear=2030, onefig=True, verbose=2, show_wait=False, linewidth=2):
+whichgraphdefaults = {'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 'force':[0,1], 'daly':[0,1], 'death':[0,1], 'dx':[0,1], 'tx1':[0,1], 'tx2':[0,0], 'costann':[0,0], 'costcum':[0,0], 'commit':[0,0]}
+
+def viewuncerresults(E, whichgraphs=whichgraphdefaults, simstartyear=2000, simendyear=2030, onefig=True, verbose=2, show_wait=False, linewidth=2):
     """
     Generate all outputs required for the model, including prevalence, incidence,
     deaths, etc.
     Version: 2015jan18
     """
     
-    from matplotlib.pylab import figure, plot, hold, scatter, xlabel, ylabel, xlim, ylim, legend, title, ndim, ceil, sqrt, subplot, show, fill_between
+    from matplotlib.pylab import figure, plot, hold, scatter, xlabel, ylabel, xlim, ylim, legend, title, ndim, ceil, sqrt, subplot, show, fill_between, sort
     from printv import printv
 
     
@@ -30,8 +32,7 @@ def viewuncerresults(E, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 
         if nxplots*nyplots<nplots: nyplots += 1
     
     count = 0
-    whichgraphkeys = whichgraphs.keys()
-    whichgraphkeys.sort()
+    whichgraphkeys = sort(whichgraphs.keys())
     for graph in whichgraphkeys: # Loop over each type of data, e.g. prevalence
         epigraph = (graph[0:4] not in ['comm', 'cost']) # Flag for whether or not it's an epi graph vs. a cost graph
         for popstot in xrange(2): # Loop over population or total graphs
@@ -76,16 +77,16 @@ def viewuncerresults(E, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 
                         figure(facecolor='w')
                     hold(True)
                     try:
-                        if graph not in ['costann']:
-                            fill_between(xdata, E[graph][subkey]['low'], E[graph][subkey]['high'], alpha=0.2, edgecolor='none')
-                        else:
+                        if graph=='costann':
                             fill_between(xdata, E[graph][subkey]['total']['low'], E[graph][subkey]['total']['high'], alpha=0.2, edgecolor='none')
+                            plot(xdata, E[graph][subkey]['total']['best'], c=E['colorm'], linewidth=linewidth)
+                            title(E[graph][subkey]['total']['title'], fontsize=10)
+                        else:
+                            fill_between(xdata, E[graph][subkey]['low'], E[graph][subkey]['high'], alpha=0.2, edgecolor='none')
+                            plot(xdata, E[graph][subkey]['best'], c=E['colorm'], linewidth=linewidth)
+                            title(E[graph][subkey]['title'], fontsize=10)
                     except:
                         import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-                    if graph not in ['costann']:
-                        plot(xdata, E[graph][subkey]['best'], c=E['colorm'], linewidth=linewidth)
-                    else:
-                        plot(xdata, E[graph][subkey]['total']['best'], c=E['colorm'], linewidth=linewidth)
                     if epigraph:
                         if ndim(E[graph]['ydata'])==1:
                             scatter(E['xdata'], E[graph]['ydata'], c=E['colord'])
@@ -118,14 +119,14 @@ def viewuncerresults(E, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 
 
 
 
-def viewmultiresults(M, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 'daly':[0,1], 'death':[0,1], 'dx':[0,1], 'tx1':[0,1], 'tx2':[0,1], 'costcum':[1,1]}, simstartyear=2000, simendyear=2030, onefig=True, verbose=2, show_wait=False, linewidth=2):
+def viewmultiresults(M, whichgraphs=whichgraphdefaults, simstartyear=2000, simendyear=2030, onefig=True, verbose=2, show_wait=False, linewidth=2):
     """
     Generate all outputs required for the model, including prevalence, incidence,
     deaths, etc.
     Version: 2015mar23
     """
     
-    from matplotlib.pylab import figure, plot, hold, xlabel, ylabel, xlim, ylim, legend, title, ceil, sqrt, subplot, show, fill_between
+    from matplotlib.pylab import figure, plot, hold, xlabel, ylabel, xlim, ylim, legend, title, ceil, sqrt, subplot, show, fill_between, sort
     from gridcolormap import gridcolormap
     colors = gridcolormap(M['nsims'])
     
@@ -151,7 +152,10 @@ def viewmultiresults(M, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 
         if nxplots*nyplots<nplots: nyplots += 1
     
     count = 0
-    for graph in whichgraphs.keys(): # Loop over each type of data, e.g. prevalence
+    print('HIIIIIIIIIIIIIIIIIIII')
+    print (whichgraphs.keys())
+    print sort(whichgraphs.keys())
+    for graph in sort(whichgraphs.keys()): # Loop over each type of data, e.g. prevalence
         epigraph = (graph[0:4] != 'cost') # Flag for whether or not it's an epi graph vs. a cost graph
         for popstot in xrange(2): # Loop over population or total graphs
             if whichgraphs[graph][popstot]:
@@ -202,7 +206,7 @@ def viewmultiresults(M, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 
     if onefig:
         subplot(nxplots, nyplots, count+1)
         for sim in xrange(M['nsims']): plot(0, 0, linewidth=linewidth, color=colors[sim])
-        legend(M[graph]['total']['legend'])
+        legend(M['costcum']['total']['legend']) # WARNING, KLUDGY -- # TODO -- why does only costcum have the right format?
 
     if show_wait: show()
 

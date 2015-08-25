@@ -83,7 +83,9 @@ def loaddata(filename, verbose=2):
 
 def tojson(x):
     """ Convert an object to JSON-serializable format, handling e.g. Numpy arrays """
-    from numpy import ndarray, isnan
+    # For numpy arrays - identified by np_array and then np_dtype as a secondary key
+    # For numpy float64 - identified by np_float64 only
+    from numpy import ndarray, isnan, float64
 
     if isinstance(x, dict):
         return dict( (k, tojson(v)) for k,v in x.iteritems() )
@@ -91,6 +93,8 @@ def tojson(x):
         return type(x)( tojson(v) for v in x )
     elif isinstance(x, ndarray):
         return {"np_array":[tojson(v) for v in x.tolist()], "np_dtype":x.dtype.name}
+    elif isinstance(x,float64):
+        return {"np_float64":x}
     elif isinstance(x, float) and isnan(x):
         return None
     else:
@@ -99,13 +103,14 @@ def tojson(x):
 
 def fromjson(x):
     """ Convert an object from JSON-serializable format, handling e.g. Numpy arrays """
-    NP_ARRAY_KEYS = set(["np_array", "np_dtype"])
-    from numpy import asarray, dtype, nan
+    from numpy import asarray, dtype, nan, float64
 
     if isinstance(x, dict):
         dk = x.keys()
-        if len(dk) == 2 and set(dk) == NP_ARRAY_KEYS:
-            return asarray(fromjson(x['np_array']), dtype(x['np_dtype']))
+        if len(dk) == 2 and 'np_array' in dk:
+            return asarray(fromjson(x['np_array']), dtype(x['np_dtype'])) 
+        elif len(dk) == 1 and 'np_float64' in dk:
+            return float64(x['np_float64'])
         else:
             return dict( (k, fromjson(v)) for k,v in x.iteritems() )
     elif isinstance(x, (list, tuple)):

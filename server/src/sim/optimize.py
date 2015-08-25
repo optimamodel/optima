@@ -20,13 +20,16 @@ from model import model
 from makemodelpars import makemodelpars
 from quantile import quantile
 from ballsd import ballsd
+from getcurrentbudget import getcoverage
+
+import defaults
 
 
 
 def runmodelalloc(D, thisalloc, origalloc, parindices, randseed, rerunfinancial=False, verbose=2):
     """ Little function to do calculation since it appears so many times """
     newD = deepcopy(D)
-    newD, newcov, newnonhivdalysaverted = getcurrentbudget(newD, thisalloc, randseed=randseed) # Get cost-outcome curves with uncertainty
+    newD = getcurrentbudget(newD, thisalloc, randseed=randseed) # Get cost-outcome curves with uncertainty
     newM = makemodelpars(newD['P'], newD['opt'], withwhat='c', verbose=0) # Don't print out
     
     # Hideous hack for ART to use linear unit cost
@@ -51,8 +54,8 @@ def runmodelalloc(D, thisalloc, origalloc, parindices, randseed, rerunfinancial=
     R['debug']['S'] = deepcopy(S)
     R['debug']['newbudget'] = deepcopy(thisalloc)     # Assuming thisalloc is the optimised full budget, it is being stored...
     return R
-
-
+    
+    
 
 def constrainbudget(origbudget, total=None, limits=None):
     """ Take an unnormalized/unconstrained budget and normalize and constrain it """
@@ -333,7 +336,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
                 bestallocval = fvalarr[s][-1]
                 bestallocind = s
         if bestallocind == -1: print('WARNING, best allocation value seems to be infinity!')
-        
+
         # Update the model and store the results
         result = dict()
         result['kind'] = 'constant'
@@ -342,6 +345,12 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         result['allocarr'] = [] # List of allocations
         result['allocarr'].append(quantile([origalloc])) # Kludgy -- run fake quantile on duplicated origalloc just so it matches
         result['allocarr'].append(quantile(allocarr)) # Calculate allocation arrays 
+        result['covnumarr'] = [] # List of coverage levels
+        result['covnumarr'].append(getcoverage(D, alloc=result['allocarr'][0].T)['num'].T) # Original coverage
+        result['covnumarr'].append(getcoverage(D, alloc=result['allocarr'][-1].T)['num'].T) # Coverage under last-run optimization
+        result['covperarr'] = [] # List of coverage levels
+        result['covperarr'].append(getcoverage(D, alloc=result['allocarr'][0].T)['per'].T) # Original coverage
+        result['covperarr'].append(getcoverage(D, alloc=result['allocarr'][-1].T)['per'].T) # Coverage under last-run optimization
         labels = ['Original','Optimal']
         result['Rarr'] = [dict(), dict()]
         result['Rarr'][0]['R'] = options['tmpbestdata'][0]['R']
@@ -389,7 +398,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         options['fundingchanges'] = fundingchanges # Constraints-based funding changes
         parammin = concatenate((fundingchanges['total']['dec'], ones(nprogs)*-1e9))  
         parammax = concatenate((fundingchanges['total']['inc'], ones(nprogs)*1e9))  
-        options['randseed'] = None
+        options['randseed'] = 1
         
         
         
@@ -571,8 +580,9 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
     
     # This is new code for the OOP structure. Legacy users will not run this line because returnresult is false by default.
     if returnresult:
-        D['result'] = result['Rarr'][-1]['R']
-        D['objective'] = result['fval']
+#        D['result'] = result['Rarr'][-1]['R']
+        D['objective'] = result['fval']         # Note: Need to check this rigorously. Optimize is becoming a mess.
+        D['optalloc'] = [x for x in optparams]  # This works for default optimisation. It may not for any more-complicated options.
     
     return D
 
@@ -614,21 +624,21 @@ def defaultobjectives(D, verbose=2):
 
     ob = dict() # Dictionary of all objectives
     ob['year'] = dict() # Time periods for objectives
-    ob['year']['start'] = 2015 # "Year to begin optimization from"
-    ob['year']['end'] = 2030 # "Year to end optimization"
-    ob['year']['until'] = 2030 # "Year to project outcomes to"
+    ob['year']['start'] = defaults.startenduntil[0] # "Year to begin optimization from"
+    ob['year']['end'] = defaults.startenduntil[1] # "Year to end optimization"
+    ob['year']['until'] = defaults.startenduntil[2] # "Year to project outcomes to"
     ob['what'] = 'outcome' # Alternative is "['money']"
     
     ob['outcome'] = dict()
     ob['outcome']['fixed'] = sum(D['data']['origalloc']) # "With a fixed amount of ['money'] available"
-    ob['outcome']['inci'] = True # "Minimize cumulative HIV incidence"
-    ob['outcome']['inciweight'] = 100 # "Incidence weighting"
-    ob['outcome']['daly'] = False # "Minimize cumulative DALYs"
-    ob['outcome']['dalyweight'] = 100 # "DALY weighting"
-    ob['outcome']['death'] = False # "Minimize cumulative AIDS-related deaths"
-    ob['outcome']['deathweight'] = 100 # "Death weighting"
-    ob['outcome']['costann'] = False # "Minimize cumulative DALYs"
-    ob['outcome']['costannweight'] = 100 # "Cost weighting"
+    ob['outcome']['inci'] = defaults.incidalydeathcost[0] # "Minimize cumulative HIV incidence"
+    ob['outcome']['inciweight'] = defaults.incidalydeathcostweight[0] # "Incidence weighting"
+    ob['outcome']['daly'] = defaults.incidalydeathcost[1] # "Minimize cumulative DALYs"
+    ob['outcome']['dalyweight'] = defaults.incidalydeathcostweight[1] # "DALY weighting"
+    ob['outcome']['death'] = defaults.incidalydeathcost[2] # "Minimize cumulative AIDS-related deaths"
+    ob['outcome']['deathweight'] = defaults.incidalydeathcostweight[2] # "Death weighting"
+    ob['outcome']['costann'] = defaults.incidalydeathcost[3] # "Minimize cumulative DALYs"
+    ob['outcome']['costannweight'] = defaults.incidalydeathcostweight[3] # "Cost weighting"
     ob['outcome']['variable'] = [] # No variable budgets by default
     ob['outcome']['budgetrange'] = dict() # For running multiple budgets
     ob['outcome']['budgetrange']['minval'] = None

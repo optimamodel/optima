@@ -6,19 +6,23 @@ import unittest
 import region
 import extra_utils
 
+import os
+prepend_path = os.path.dirname(os.path.realpath(__file__)) + '/'
+
 def compare_cached_region(fcn,regenerate = False):
-	# This function takes in a function object that returns a region 
-	# If cached output
+	# This function takes in a function object that generates a saveable
+	# object, which must be comparable using dict_equal
+
 	test_name = fcn.__name__
-	test_region = fcn()
-	fname = './cache_' + test_name + '.json'
-	if regenerate or fname.replace('./','') not in os.listdir(os.getcwd()): # Test existance more nicely
+	new_obj = fcn()
+	fname = prepend_path + 'cache_' + test_name + '.bin'
+	if regenerate or not os.path.isfile(fname): # Test existance more nicely
 		# Write to file
-		test_region.save(fname)
+		new_obj.save(fname)
 		return False # Is there a magic value to return to filter the results?
 	else:
-		previous_region = region.Region.load(fname)
-		return extra_utils.dict_equal(test_region.todict(),previous_region.todict())
+		old_obj = region.Region.load(fname)
+		return extra_utils.dict_equal(old_obj,new_obj,verbose=True)
 
 class TestRegion(unittest.TestCase):
 
@@ -26,9 +30,9 @@ class TestRegion(unittest.TestCase):
 		# Test running a simulation from JSON
 		def testfcn():
 			r = region.Region.load('../tests/regions/Haiti.json')
-			r.createsimbox('Simbox 1')
-			r.simboxlist[-1].createsim('sim1') 
-			r.runsimbox(r.simboxlist[-1])
+			# r.createsimbox('Simbox 1')
+			# r.simboxlist[-1].createsim('sim1') 
+			# r.runsimbox(r.simboxlist[-1])
 			return r
 		self.assertTrue(compare_cached_region(testfcn))
 

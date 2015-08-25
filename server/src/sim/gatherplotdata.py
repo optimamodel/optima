@@ -99,13 +99,7 @@ def gatheruncerdata(D, R, annual=True, verbose=2, maxyear=2030):
             uncer['tx2']['ydata'] = zeros(ndatayears).tolist()
 
 
-        if size(epidata[0])==1 and ndim(epidata)==1: # It's not by population
-            uncer[key]['ydata'] = (array(epidata)*percent).tolist()
-            if len(uncer[key]['ydata']) == 1:
-                uncer[key]['ydata'] = nan+zeros(ndatayears) # If it's an assumption, just set with nans
-            if len(uncer[key]['ydata']) != ndatayears:
-                raise Exception('Expect data length of 1 or %i, actually %i' % (ndatayears, len(uncer[key]['ydata'])))
-        elif size(epidata,axis=0)==D['G']['npops']: # It's by population
+        if size(epidata,axis=0)==D['G']['npops']: # It's by population
             for p in xrange(D['G']['npops']):
                 thispopdata = epidata[p]
                 if len(thispopdata) == 1: 
@@ -113,6 +107,12 @@ def gatheruncerdata(D, R, annual=True, verbose=2, maxyear=2030):
                 elif len(thispopdata) != ndatayears:
                     raise Exception('Expect data length of 1 or %i, actually %i' % (ndatayears, len(thispopdata)))
                 uncer[key]['ydata'][p] = (asarray(thispopdata)*percent).tolist() # Stupid, but make sure it's an array, then make sure it's a list
+        elif size(epidata[0])==1 and ndim(epidata)==1: # It's not by population
+            uncer[key]['ydata'] = (array(epidata)*percent).tolist()
+            if len(uncer[key]['ydata']) == 1:
+                uncer[key]['ydata'] = nan+zeros(ndatayears) # If it's an assumption, just set with nans
+            if len(uncer[key]['ydata']) != ndatayears:
+                raise Exception('Expect data length of 1 or %i, actually %i' % (ndatayears, len(uncer[key]['ydata'])))
         else:
             raise Exception("Can't figure out size of epidata; doesn't seem to be a vector or a matrix")
     
@@ -350,6 +350,15 @@ def gatheroptimdata(D, result, verbose=2):
             optim['alloc'][i]['radardata']['high'] = result['allocarr'][i][2].tolist()
             optim['alloc'][i]['title'] = titles[i] # Titles for pies or radar charts
             optim['alloc'][i]['legend'] = D['data']['meta']['progs']['short'] # Program names, length nprogs, for pie and radar
+            optim['alloc'][i]['coverage'] = {}
+            optim['alloc'][i]['coverage']['num'] = {}
+            optim['alloc'][i]['coverage']['num']['best'] = result['covnumarr'][i][0].tolist() # A vector of coverage levels, length nprogs, for coverage table
+            optim['alloc'][i]['coverage']['num']['low'] = result['covnumarr'][i][1].tolist() # A vector of coverage levels, length nprogs, for coverage table
+            optim['alloc'][i]['coverage']['num']['high'] = result['covnumarr'][i][2].tolist() # A vector of coverage levels, length nprogs, for coverage table
+            optim['alloc'][i]['coverage']['per'] = {}
+            optim['alloc'][i]['coverage']['per']['best'] = result['covperarr'][i][0].tolist() # A vector of coverage levels, length nprogs, for coverage table
+            optim['alloc'][i]['coverage']['per']['low'] = result['covperarr'][i][1].tolist() # A vector of coverage levels, length nprogs, for coverage table
+            optim['alloc'][i]['coverage']['per']['high'] = result['covperarr'][i][2].tolist() # A vector of coverage levels, length nprogs, for coverage table
     if optim['kind']=='timevarying' or optim['kind']=='multiyear':
         optim['alloc'] = dict() # Allocation structure
         optim['alloc']['stackdata'] = [] # Empty list

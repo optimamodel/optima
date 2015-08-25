@@ -13,10 +13,12 @@ from numpy import log as nplog
 from rtnorm import rtnorm
 from printv import printv
 from datetime import date
+from utils import findinds
 
 ## Set coverage parameters...
-coverage_params = ['numost','numpmtct','numfirstline','numsecondline']
+coverage_params = ['numcircum','numost','numpmtct','numfirstline','numsecondline']
 default_nxpts = 100 # Set the number of points to make the lines
+epsilon = 1e-3 # TEMP: small number to perturb co curve for vmmc
 default_verbose = 2
 ######################################################################
 def makecc(D=None, progname=None, ccparams=None, arteligcutoff=None, verbose=default_verbose, nxpts=default_nxpts):
@@ -34,7 +36,7 @@ def makecc(D=None, progname=None, ccparams=None, arteligcutoff=None, verbose=def
     prognumber = [p['name'] for p in D['programs']].index(progname) # get program number    
     if not (isinstance(arteligcutoff,str)):
         print('Assuming universal ART coverage since not otherwise specified....')
-        artindex = range(D['G']['nstates'])[1::]
+        artindex = range(D['G']['nstates'])[1::] # Include everyone infected
     else:
         states, artindex = range(D['G']['nstates']), []
         for i in range(len(D['G'][arteligcutoff])-1): artindex.extend(states[D['G'][arteligcutoff][i+1]:D['G'][D['G']['healthstates'][-1]][i+1]+1])
@@ -65,10 +67,11 @@ def makecc(D=None, progname=None, ccparams=None, arteligcutoff=None, verbose=def
         cpi = smoothinterp(origy=D['data']['econ']['cpi']['past'][0], origx=linspace(0,1,len(D['data']['epiyears'])), newx=linspace(0,1,len(D['data']['epiyears'])), growth=D['data']['econ']['cpi']['future'][0][0])
         cpibaseyear = ccparams.get('cpibaseyear')
         cpibaseyearindex = D['data']['epiyears'].index(cpibaseyear) # get index of CPI base year
+        origcpibaseyearindex = D['data']['epiyears'].index(min(D['data']['epiyears'][-1],date.today().year))
         if len(totalcost)==1: # If it's an assumption, assume it's already in current prices
-            totalcost = [totalcost[0]*cpi[cpibaseyearindex]]
+            totalcost = [totalcost[0]*(cpi[cpibaseyearindex]/cpi[origcpibaseyearindex])]
         else:
-            totalcost = [totalcost[j]*(cpi[cpibaseyearindex]/cpi[j]) if ~isnan(totalcost[j]) else float('nan') for j in xrange(len(totalcost))]
+            totalcost = [totalcost[j]*(cpi[cpibaseyearindex]/cpi[origcpibaseyearindex]) if ~isnan(totalcost[j]) else float('nan') for j in xrange(len(totalcost))]
     else:
         cpibaseyear = min(D['data']['epiyears'][-1],date.today().year)
 
@@ -77,13 +80,23 @@ def makecc(D=None, progname=None, ccparams=None, arteligcutoff=None, verbose=def
     if (ccparams and 'perperson' in ccparams and ccparams['perperson'] and ~isnan(ccparams['perperson'])): popadj = ccparams['perperson']
 
     # Get coverage and target population size (in separate function)
-    coverage, targetpopsize, coveragelabel = getcoverage(D=D, artindex=artindex, progname=progname)
+    coverage, coveragelabel = getcoverage(D=D, progname=progname)
+    targetpop = gettargetpop(D=D, artindex=artindex, progname=progname)
 
     # Adjust cost data by target population size, if requested by user
-    if popadj: totalcost = totalcost/targetpopsize if len(totalcost)>1 else totalcost/mean(targetpopsize)
+    if popadj: totalcost = totalcost/targetpop if len(totalcost)>1 else totalcost/mean(targetpop)
 
     # Get upper limit of x axis for plotting
-    xupperlim = max([x if ~isnan(x) else 0.0 for x in totalcost])*15.
+    xupperlim = max([x if ~isnan(x) else 0.0 for x in totalcost])*3.
+    if (ccparams and 'xupperlim' in ccparams and ccparams['xupperlim'] and ~isnan(ccparams['xupperlim'])): xupperlim = ccparams['xupperlim']
+
+    # Populate output structure with axis limits
+    plotdata['xlowerlim'], plotdata['ylowerlim']  = 0.0, 0.0
+    plotdata['xupperlim'] = xupperlim
+    if coveragelabel == 'Proportion covered':
+        plotdata['yupperlim']  = 1.0
+    else:
+        plotdata['yupperlim']  = max([x if ~isnan(x) else 0.0 for x in coverage])*1.5
 
     # Populate output structure with scatter data
     plotdata['allxscatterdata'] = totalcost
@@ -98,7 +111,7 @@ def makecc(D=None, progname=None, ccparams=None, arteligcutoff=None, verbose=def
 
         # X data
         xvalscc = linspace(0,xupperlim,nxpts) # take nxpts points between 0 and user-specified max
-        xvalsccpop = linspace(0,xupperlim*targetpopsize[-1],nxpts) if popadj else xvalscc
+        xvalsccpop = linspace(0,xupperlim*targetpop[-1],nxpts) if popadj else xvalscc
 
         # Y data
         if 'scaleup' in ccparams and ccparams['scaleup'] and ~isnan(ccparams['scaleup']):
@@ -114,7 +127,7 @@ def makecc(D=None, progname=None, ccparams=None, arteligcutoff=None, verbose=def
 
         if coveragelabel=='Number covered':
             for j in range(len(yvalscc)):
-                yvalscc[j] = [yvalscc[j][k]*targetpopsize[-1] for k in range(len(yvalscc[j]))]
+                yvalscc[j] = [yvalscc[j][k]*targetpop[-1] for k in range(len(yvalscc[j]))]
 
         # Populate output structure
         plotdata['xpop'] = xvalsccpop
@@ -128,14 +141,7 @@ def makecc(D=None, progname=None, ccparams=None, arteligcutoff=None, verbose=def
             ccparams['nonhivdalys'] = 0.0
         D['programs'][prognumber]['nonhivdalys'] = [ccparams['nonhivdalys']]
 
-    # Populate output structure with axis limits
-    plotdata['xlowerlim'], plotdata['ylowerlim']  = 0.0, 0.0
-    plotdata['xupperlim'] = xupperlim
-    if coveragelabel == 'Proportion covered':
-        plotdata['yupperlim']  = 1.0
-    else:
-        plotdata['yupperlim']  = max([x if ~isnan(x) else 0.0 for x in coverage])*1.5
-        if drawcurve: plotdata['yupperlim']  = max(yvalscc[2][-1]*1.5,plotdata['yupperlim'])
+        if coveragelabel == 'Number covered': plotdata['yupperlim']  = max(yvalscc[2][-1]*1.5,plotdata['yupperlim'])
 
     # Populate output structure with labels and titles
     plotdata['title'] = progname
@@ -190,17 +196,18 @@ def makeco(D=None, progname=None, effect=None, coparams=None, coverage_params=co
     partype, parname, popname = effect['paramtype'], effect['param'], effect['popname']
 
     # Only going to make cost-outcome curves for programs where the affected parameter is not coverage
-    if parname not in coverage_params:
+    if parname not in coverage_params and parname != 'circum':
         if popname not in D['data']['meta']['pops']['short']: raise Exception('Cannot recognise population %s, it is not in %s' % (popname, D['data']['meta']['pops']['short']))
         else: popnumber = D['data']['meta']['pops']['short'].index(popname)
         
         # Get data for scatter plots
         outcome = D['data'][partype][parname][popnumber]
-        coverage, targetpopsize, coveragelabel = getcoverage(D=D, artindex=artindex, progname=progname)
+        coverage, coveragelabel = getcoverage(D=D, progname=progname)
 
         # Populate output structure with axis limits
         plotdata['xlowerlim'], plotdata['ylowerlim']  = 0.0, 0.0
-        plotdata['xupperlim'] = 1.0 if coveragelabel == 'Proportion covered' else max([j if ~isnan(j) else 0.0 for j in coverage])*1.5
+        targetpop = gettargetpop(D=D, artindex=artindex, progname=progname)
+        plotdata['xupperlim'] = 1.0 if coveragelabel == 'Proportion covered' else targetpop[-1]
         plotdata['yupperlim'] = 1.0 if any(j < 1 for j in outcome) else max([j if ~isnan(j) else 0.0 for j in outcome])*1.5
 
         # Populate output structure with scatter data 
@@ -230,12 +237,26 @@ def makeco(D=None, progname=None, effect=None, coparams=None, coverage_params=co
             # Populate output structure with coverage-outcome curves for plotting
             plotdata['xlinedata'] = xvalsco # X data for all line plots
             plotdata['ylinedata'] = [linspace(muz,muf,nxpts), ymax, ymin] # ALL Y data (for three lines)
+            plotdata['yupperlim'] = max(ymax[-1], plotdata['yupperlim'])
 
         # Populate output structure with labels and titles
         plotdata['title'] = input_parameter_name(parname)+ ' - ' + popname
         plotdata['xlabel'] = coveragelabel
         plotdata['ylabel'] = 'Outcome'
         
+    if parname == 'circum': # New process for VMMC, wherein we internally calculate coverage-outcome curves but don't show the user
+        popnumber = D['data']['meta']['pops']['short'].index(popname)
+        initvallb = D['M']['circum'][popnumber][-1] - epsilon
+        initvalub = D['M']['circum'][popnumber][-1] + epsilon
+        fullcovlb,fullcovub = .98, .99
+        coparams = [initvallb,initvalub,fullcovlb,fullcovub]
+        muz, stdevz, muf, stdevf = makecosampleparams(coparams, verbose=verbose)
+        convertedcoparams = [muz, stdevz, muf, stdevf]
+        
+        # Populate output structure with coverage-outcome curves for plotting
+        effect['coparams'] = coparams 
+        effect['convertedcoparams'] = convertedcoparams 
+
     return plotdata, effect
 
 #################################################################################
@@ -243,13 +264,14 @@ def makecco(D=None, progname=None, effect=None, ccparams=None, coparams=None, ar
     ''' Make a single cost outcome curve. '''
     from numpy import array, where
     from datetime import date
+    from copy import deepcopy
 
     plotdata, plotdata_co = {}, {} 
     prognumber = [p['name'] for p in D['programs']].index(progname) # get program number    
     partype, parname, popname = effect['paramtype'], effect['param'], effect['popname'] # Get population and parameter info
 
     # Only going to make cost-outcome curves for programs where the affected parameter is not coverage
-    if parname not in coverage_params:
+    if parname not in coverage_params and parname != 'circum':
         if popname not in D['data']['meta']['pops']['short']: raise Exception('Cannot recognise population %s, it is not in %s' % (popname, D['data']['meta']['pops']['short']))
         else: popnumber = D['data']['meta']['pops']['short'].index(popname)
 
@@ -262,6 +284,7 @@ def makecco(D=None, progname=None, effect=None, ccparams=None, coparams=None, ar
         totalcost, outcome = getscatterdata(totalcost, outcome)
         plotdata['xscatterdata'] = totalcost 
         plotdata['yscatterdata'] = outcome 
+        coverage, coveragelabel = getcoverage(D=D, progname=progname)
 
        # Make additional scatter data for current param vals
         currentcost = D['data']['origalloc'][prognumber]
@@ -295,7 +318,7 @@ def makecco(D=None, progname=None, effect=None, ccparams=None, coparams=None, ar
 
             # Store whole set of parameters
             prognumber = [p['name'] for p in D['programs']].index(progname) # get program number    
-            convertedccoparams = D['programs'][prognumber]['convertedccparams']
+            convertedccoparams = deepcopy(D['programs'][prognumber]['convertedccparams'])
             convertedcoparams = effect['convertedcoparams']
             convertedccoparams[0].extend([convertedcoparams[0],convertedcoparams[2]])
             convertedccoparams[1].extend([coparams[0],coparams[2]])
@@ -304,6 +327,7 @@ def makecco(D=None, progname=None, effect=None, ccparams=None, coparams=None, ar
 
             xvalscco = plotdata_cc['xlinedata']
             xvalsccpop = plotdata_cc['xpop']
+ 
             if len(convertedccoparams[0]) == 5:
                 mediancco = ccoeqn(xvalsccpop, convertedccoparams[0])
                 mincco = ccoeqn(xvalsccpop,  convertedccoparams[1])
@@ -317,14 +341,23 @@ def makecco(D=None, progname=None, effect=None, ccparams=None, coparams=None, ar
             plotdata['xlinedata'] = xvalscco # X data for all line plots
             plotdata['ylinedata'] = [mediancco, mincco, maxcco]
     
+    if parname == 'circum': # New process for VMMC, wherein we internally calculate coverage-outcome curves but don't show the user
+        plotdata_cc, D = makecc(D=D, progname=progname, ccparams=ccparams, arteligcutoff=arteligcutoff)
+        plotdata_co, effect = makeco(D=D, progname=progname, effect=effect, coparams=coparams, arteligcutoff=arteligcutoff)
+        prognumber = [p['name'] for p in D['programs']].index(progname) # get program number    
+        convertedccoparams = deepcopy(D['programs'][prognumber]['convertedccparams'])
+        coparams = effect['coparams']
+        convertedcoparams = effect['convertedcoparams']
+        convertedccoparams[0].extend([convertedcoparams[0],convertedcoparams[2]])
+        convertedccoparams[1].extend([coparams[0],coparams[2]])
+        convertedccoparams[2].extend([coparams[1],coparams[3]])
+        effect['convertedccoparams'] = convertedccoparams 
 
     return plotdata, plotdata_co, effect
 
 ################################################################################
 def plotallcurves(D=None, progname=None, ccparams=None, coparams=None, verbose=default_verbose):
-    '''
-    Make all cost outcome curves for a given program.
-    '''
+    ''' Make all cost outcome curves for a given program. '''
     from copy import deepcopy
     # Get the cost-coverage and coverage-outcome relationships     
     plotdata_cc, D = makecc(D=D, progname=progname, ccparams=ccparams, verbose=verbose)
@@ -370,21 +403,31 @@ def makeallccocs(D=None, verbose=default_verbose):
 ###############################################################################
 # Helper functions
 ###############################################################################
-def getcoverage(D=None, artindex=None, progname=None):
+def getcoverage(D=None, progname=None):
     ''' Get coverage levels. '''
     
     coverage = None
     coveragelabel = ''
 
-    # Extract basic info from data structure
+    # Extract info from data structure
     prognumber = D['data']['meta']['progs']['short'].index(progname) # get program number
-    #ndatayears = len(D['data']['epiyears']) # get number of data years
+    coverage = D['data']['costcov']['cov'][prognumber] 
+    coveragelabel = 'Number covered' if any(j > 1 for j in D['data']['costcov']['cov'][prognumber]) else 'Proportion covered'
 
+    return coverage, coveragelabel
+
+###############################################################################
+def gettargetpop(D=None, artindex=None, progname=None):
+    ''' Calculate target population for a given program'''
+    
+    from numpy import cumsum
+    
     # Sort out time vector and indexing
     tvec = arange(D['G']['datastart'], D['G']['dataend']+D['opt']['dt'], D['opt']['dt']) # Extract the time vector from the sim
     npts = len(tvec) # Number of sim points
 
     # Figure out the targeted population(s) 
+    prognumber = D['data']['meta']['progs']['short'].index(progname) # get program number
     targetpops = []
     targetpars = []
     popnumbers = []
@@ -397,44 +440,51 @@ def getcoverage(D=None, artindex=None, progname=None):
     targetpars = list(set(targetpars))
     popnumbers = list(set(popnumbers))
 
+    targetpopmodel = None
+
     # Figure out the total model-estimated size of the targeted population(s)
     for thispar in targetpars: # Loop through parameters
-        if len(D['P'][thispar]['p'])==D['G']['npops']: # For parameters whose effect is differentiated by population, we add up the targeted populations
-            targetpopmodel = D['S']['people'][:,popnumbers,0:npts].sum(axis=(0,1))
-        elif len(D['P'][thispar]['p'])==1: # For parameters whose effects are not differentiated by population, we make special cases depending on the parameter
-            if thispar == 'aidstest': # Target population = diagnosed PLHIV, AIDS stage
-                targetpopmodel = D['S']['people'][27:31,:,0:npts].sum(axis=(0,1))
-            elif thispar in ['numost','sharing']: # Target population = the sum of all populations that inject
-                injectindices = [i for i, x in enumerate(D['data']['meta']['pops']['injects']) if x == 1]
-                targetpopmodel = D['S']['people'][:,injectindices,0:npts].sum(axis = (0,1))
-            elif thispar == 'numpmtct': # Target population = HIV+ pregnant women
-                targetpopmodel = multiply(D['M']['birth'][:,0:npts], D['S']['people'][artindex,:,0:npts].sum(axis=0)).sum(axis=0)
-            elif thispar == 'breast': # Target population = HIV+ breastfeeding women
-                targetpopmodel = multiply(D['M']['birth'][:,0:npts], D['M']['breast'][0:npts], D['S']['people'][artindex,:,0:npts].sum(axis=0)).sum(axis=0)
-            elif thispar in ['numfirstline','numsecondline']: # Target population = diagnosed PLHIV
-                targetpopmodel = D['S']['people'][artindex,:,0:npts].sum(axis=(0,1))
+        if D['P'].get(thispar):
+            if len(D['P'][thispar]['p'])==D['G']['npops']: # For parameters whose effect is differentiated by population, we add up the targeted populations
+                targetpopmodel = D['S']['people'][:,popnumbers,0:npts].sum(axis=(0,1))
+            elif len(D['P'][thispar]['p'])==1: # For parameters whose effects are not differentiated by population, we make special cases depending on the parameter
+                if thispar == 'aidstest': # Target population = diagnosed PLHIV, AIDS stage
+                    targetpopmodel = D['S']['people'][27:31,:,0:npts].sum(axis=(0,1))
+                elif thispar in ['numost','sharing']: # Target population = the sum of all populations that inject
+                    injectindices = [i for i, x in enumerate(D['data']['meta']['pops']['injects']) if x == 1]
+                    targetpopmodel = D['S']['people'][:,injectindices,0:npts].sum(axis = (0,1))
+                elif thispar == 'numpmtct': # Target population = HIV+ pregnant women
+                    targetpopmodel = cumsum(multiply(D['M']['birth'][:,0:npts]*D['opt']['dt'], D['S']['people'][artindex,:,0:npts].sum(axis=0)).sum(axis=0))
+                elif thispar == 'breast': # Target population = HIV+ breastfeeding women
+                    targetpopmodel = multiply(D['M']['birth'][:,0:npts], D['M']['breast'][0:npts], D['S']['people'][artindex,:,0:npts].sum(axis=0)).sum(axis=0)
+                elif thispar in ['numfirstline','numsecondline']: # Target population = diagnosed PLHIV
+                    targetpopmodel = D['S']['people'][artindex,:,0:npts].sum(axis=(0,1))
+                elif thispar == 'numcircum': # Target population = men (??)
+                    maleindices = findinds(D['data']['meta']['pops']['male'])
+                    targetpopmodel = D['S']['people'][:,maleindices,0:npts].sum(axis = (0,1))
             else:
-                print('WARNING, Unrecognized parameter %s' % thispar)
+                print('WARNING, Parameter %s of odd length %s' % (thispar, len(D['P'][thispar]['p'])))
         else:
-            print('WARNING, Parameter %s of odd length %s' % (thispar, len(D['P'][thispar]['p'])))
+            print('WARNING, Unrecognized parameter %s' % thispar)
     if len(targetpars)==0:
         print('WARNING, no target parameters for program %s' % progname)
                 
     # We only want the model-estimated size of the targeted population(s) for actual years, not the interpolated years
-    yearindices = xrange(0,npts,int(1/D['opt']['dt']))
-    targetpop = targetpopmodel[yearindices]
+    yearindices = range(0,npts,int(1/D['opt']['dt']))
+    
+    targetpop = None
+    if targetpopmodel is not None:
+        targetpop = targetpopmodel[yearindices]
 
-    coverage = D['data']['costcov']['cov'][prognumber] 
-    coveragelabel = 'Number covered' if any(j > 1 for j in D['data']['costcov']['cov'][prognumber]) else 'Proportion covered'
+    return targetpop
 
-    return coverage, targetpop, coveragelabel
 
 ###############################################################################
+#def convertparams(D=None, coveragelabel=None, targetpop=None, ccparams=None):
 def convertparams(D=None, ccparams=None):
     ''' Convert GUI inputs into the form needed for the calculations '''
 
     convertedccparams = []
-
     if 'scaleup' in ccparams and ccparams['scaleup'] and ~isnan(ccparams['scaleup']):
         growthratel = exp((1-ccparams['scaleup'])*log(ccparams['saturation']/ccparams['coveragelower']-1)+log(ccparams['funding']))
         growthratem = exp((1-ccparams['scaleup'])*log(ccparams['saturation']/((ccparams['coveragelower']+ccparams['coverageupper'])/2)-1)+log(ccparams['funding']))
@@ -442,7 +492,7 @@ def convertparams(D=None, ccparams=None):
         convertedccparams = [[ccparams['saturation'], growthratem, ccparams['scaleup']], [ccparams['saturation'], growthratel, ccparams['scaleup']], [ccparams['saturation'], growthrateu, ccparams['scaleup']]]
     else:
         growthratel = (-1/ccparams['funding'])*log((2*ccparams['saturation'])/(ccparams['coveragelower']+ccparams['saturation']) - 1)        
-        growthratem = (-1/ccparams['funding'])*log((2*ccparams['saturation'])/(((ccparams['coveragelower']+ccparams['coverageupper'])/2)+ccparams['saturation']) - 1)        
+        growthratem = (-1/ccparams['funding'])*log((2*ccparams['saturation'])/(((ccparams['coveragelower']+ccparams['coverageupper'])/2)+ccparams['saturation']) - 1)
         growthrateu = (-1/ccparams['funding'])*log((2*ccparams['saturation'])/(ccparams['coverageupper']+ccparams['saturation']) - 1)        
         convertedccparams = [[ccparams['saturation'], growthratem], [ccparams['saturation'], growthratel], [ccparams['saturation'], growthrateu]]
                     
@@ -565,4 +615,3 @@ def makesamples(coparams, muz, stdevz, muf, stdevf, samplesize=1, randseed=None)
     fullsample = rtnorm(coparams[2], coparams[3], mu=muf, sigma=stdevf, size=samplesize)[0]
         
     return zerosample, fullsample
-

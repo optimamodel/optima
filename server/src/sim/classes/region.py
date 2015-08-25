@@ -6,11 +6,15 @@ Created on Fri May 29 23:16:12 2015
 """
 
 import defaults
-from simbox import SimBox, SimBoxOpt
+from simbox import SimBox, SimBoxCal, SimBoxOpt
 import sim
 import setoptions
 import uuid
 import program
+from numpy import array, isnan, zeros, shape, mean
+from utils import sanitize, perturb
+from printv import printv
+import dataio_binary
 
 from scipy.interpolate import PchipInterpolator as pchip
 
@@ -22,36 +26,44 @@ from scipy.interpolate import PchipInterpolator as pchip
 #    return x**2
 
 ### The actual Region class.
-class Region:
-    def __init__(self, name,populations,programs,datastart,dataend):
+class Region(object):
+    def __init__(self,name,populations=None,programs=None,datastart=None,dataend=None,filename=None):
+        # Usage
+        # r = Region(name,populations,programs,datastart,dataend) (see defaults.py haiti) 
+        # r = Region(regiondict) -> regiondict = r.fromdict()
+        # r = Region(filename='save.json') # NOT IMPLEMENTED YET
+
         # The standard constructor takes in the initial metadata directly
         # In normal usage, this information would come from the frontend
         # whether web interface, or an interactive prompt
+        if isinstance(name,dict):
+            # variable 'name' is actually a regiondict
+            self.fromdict(name)
+        else:
+            self.D = dict()                 # Data structure for saving everything. Will hopefully be broken down eventually.
+                  
+            self.metadata = defaults.metadata  # Loosely analogous to D['G']. Start with default HIV metadata
+            self.metadata['datastart'] = datastart
+            self.metadata['dataend'] = dataend
+            self.metadata['populations'] = populations
+            self.metadata['programs'] = programs
+            self.metadata['name'] = name
 
-        self.D = dict()                 # Data structure for saving everything. Will hopefully be broken down eventually.
-              
-        self.metadata = defaults.metadata  # Loosely analogous to D['G']. Start with default HIV metadata
-        self.metadata['datastart'] = datastart
-        self.metadata['dataend'] = dataend
-        self.metadata['populations'] = populations
-        self.metadata['programs'] = programs
-        self.metadata['name'] = name
+            self.data = None
 
-        self.data = None
-
-        self.options = setoptions.setoptions() # Populate default options here
-        
-        # Budget Objective Curve data, used for GPA. (Assuming initial budget spending is fixed.)
-        self.BOCx = []        # Array of budget allocation totals.
-        self.BOCy = []        # Array of corresponding optimum objective values.
-        
-        self.program_sets = []
-        self.calibrations = None        # Remember. Current BOC data assumes loaded data is calibrated by default.
-        
-        self.simboxlist = []            # Container for simbox objects (e.g. optimisations, grouped scenarios, etc.)
-    
-        self.uuid = str(uuid.uuid4()) # Store UUID as a string - we just want a (practically) unique tag, no advanced functionality
-
+            self.options = setoptions.setoptions() # Populate default options here
+            
+            # Budget Objective Curve data, used for GPA. (Assuming initial budget spending is fixed.)
+            self.BOCx = []        # Array of budget allocation totals.
+            self.BOCy = []        # Array of corresponding optimum objective values.
+            
+            self.program_sets = []
+            self.calibrations = []        # Remember. Current BOC data assumes loaded data is calibrated by default.
+            
+            self.simboxlist = []            # Container for simbox objects (e.g. optimisations, grouped scenarios, etc.)
+            
+            self.uuid = None
+            self.genuuid()  # Store UUID as a string - we just want a (practically) unique tag, no advanced functionality
 
     @classmethod
     def load(Region,filename,name=None):
@@ -66,28 +78,41 @@ class Region:
         regiondict = dataio.loaddata(filename)
         if 'uuid' in regiondict.keys(): # This is a new-type JSON file
             print "This is a new-type JSON file."
-            r.uuid = regiondict['uuid'] # Loading a region restores the original UUID
             r.fromdict(regiondict)
         else:
             r.fromdict_legacy(regiondict)
         return r
 
+    @classmethod
+    def load_binary(Region,filename,name=None):
+        # Use this function to load a region saved with region.save_binary
+        r = Region(name,None,None,None,None)
+        regiondict = dataio_binary.load(filename)
+        r.uuid = regiondict['uuid'] # Loading a region restores the original UUID
+        r.fromdict(regiondict)
+        return r
+
     def fromdict(self,regiondict):
         # Assign variables from a new-type JSON file created using Region.todict()
+        self.uuid = regiondict['uuid'] # Loading a region restores the original UUID
         self.metadata = regiondict['metadata']
         self.data = regiondict['data']
-        self.simboxlist = []
-        for x in regiondict['simboxlist']:
-            if x['type'] == 'SimBoxOpt':
-                self.simboxlist.append(SimBoxOpt.fromdict(x,self))
-            else:
-                self.simboxlist.append(SimBox.fromdict(x,self))
         self.options = regiondict['options'] # Populate default options here
         self.program_sets = regiondict['program_sets'] # sets of Programs i.e. an array of sets of CCOCs
-        self.calibrations = regiondict['calibrations']       
+        
+        # The statement below for calibrations handles loading earlier versions of the new-type JSON files
+        # which don't have calibrations already defined. It is suggested in future that these regions should
+        # be loaded, a new calibration created from D, and then saved again, so that this statement can be removed
+        import numpy
+        if isinstance(regiondict['calibrations'], float) and numpy.isnan(regiondict['calibrations']):
+            regiondict['calibrations'] = [{'uuid':None}]
+
+        self.calibrations = regiondict['calibrations']
         self.uuid = regiondict['uuid']
         self.D = regiondict['D']
         
+        self.simboxlist = [SimBox.fromdict(x,self) for x in regiondict['simboxlist']]
+
         # BOC loading.
         self.BOCx = regiondict['BOC_budgets']
         self.BOCy = regiondict['BOC_objectives']
@@ -111,6 +136,28 @@ class Region:
 
         self.options = tempD['opt']
 
+        program_set = {}
+        program_set['name'] = 'Default'
+        program_set['uuid'] = str(uuid.uuid4())
+        program_set['programs'] = []
+        for prog in self.metadata['programs']:
+            program_set['programs'].append(program.Program.import_legacy(prog))
+        self.program_sets.append(program_set)
+
+        # Make the calibration - legacy files have one calibration
+        # Using pop will remove them from the region so that downstream calls
+        # will raise errors if they are not updated to use the new calibration
+        c = {}
+        c['uuid'] = str(uuid.uuid4())
+        c['name'] = 'Default'
+        c['const'] = self.D['P'].pop('const')
+        c['hivprev'] = self.D['P'].pop('hivprev')
+        c['popsize'] = self.D['P'].pop('popsize')
+        c['pships'] = self.D['P'].pop('pships')
+        c['transit'] = self.D['P'].pop('transit')
+        c['metaparameters'] = self.D.pop('F')
+        self.calibrations.append(c)
+
         # Go through the scenarios and convert them
         if 'scens' in tempD.keys():
             sbox = self.createsimbox('Scenarios')
@@ -120,17 +167,12 @@ class Region:
                     newsim.create_override(par['names'],par['pops'],par['startyear'],par['endyear'],par['startval'],par['endval'])
                 sbox.simlist.append(newsim)
 
-        program_set = {}
-        program_set['name'] = 'Default'
-        program_set['uuid'] = str(uuid.uuid4())
-        program_set['programs'] = []
-        for prog in self.metadata['programs']:
-            program_set['programs'].append(program.Program.import_legacy(prog))
-        self.program_sets.append(program_set)
-
     def save(self,filename):
         import dataio
         dataio.savedata(filename,self.todict())
+
+    def save_binary(self,filename):
+        dataio_binary.save(self.todict(),filename)
 
     def todict(self):
         # Return a dictionary representation of the object for use with Region.fromdict()
@@ -141,19 +183,35 @@ class Region:
         regiondict['data'] = self.data 
         regiondict['simboxlist'] = [sbox.todict() for sbox in self.simboxlist]
         regiondict['options'] = self.options # Populate default options here = self.options 
-        regiondict['program_sets'] = []#self.program_sets 
-        regiondict['calibrations'] = self.calibrations 
+        regiondict['program_sets'] = [[1]] #self.program_sets 
+        regiondict['calibrations'] = self.calibrations # Calibrations are stored as dictionaries
         regiondict['uuid'] = self.uuid 
         regiondict['D'] = self.D
-        
+
         # BOC saving.
         regiondict['BOC_budgets'] = self.BOCx
         regiondict['BOC_objectives'] = self.BOCy    
-        
+
         return regiondict
 
-    def createsimbox(self, simboxname, isopt = False, createdefault = True):
-        if isopt:
+    def retrieve_uuid(self,target_uuid):
+        # Retrieve a simbox or a sim from within the region by looking up it's uuid
+        for sbox in self.simboxlist:
+            if sbox.uuid == target_uuid:
+                return sbox
+            else:
+                for s in sbox.simlist:
+                    if s.uuid == target_uuid:
+                        return s
+        raise Exception('UUID not found')
+        
+    def createsimbox(self, simboxname, iscal = False, isopt = False, createdefault = True):
+        if iscal and isopt:
+            print('Error: Cannot create a simbox that is simultaneously for calibration and optimisation.')
+            return None
+        if iscal:
+            self.simboxlist.append(SimBoxCal(simboxname,self))
+        elif isopt:
             self.simboxlist.append(SimBoxOpt(simboxname,self))
         else:
             self.simboxlist.append(SimBox(simboxname,self))
@@ -180,8 +238,7 @@ class Region:
         else:
             simbox.plotallsims()
             
-###----------------------------------------------------------------------------
-### GPA Methods
+#%% GPA Methods
             
     # Method to generate a budget objective curve (BOC) for the Region.
     # Creates a temporary SimBoxOpt with a temporary SimBudget and calculates the BOC.
@@ -192,7 +249,7 @@ class Region:
             sim = self.createsiminsimbox(simbox.getname(), simbox)
             sim.run()   # Make sure simulation is processed, or 'financialanalysis' will not have its D['S'] component. Something to eventually change...
             try:
-                testBOCx, testBOCy = sim.calculateeffectivenesscurve(varfactors)
+                testBOCx, testBOCy = simbox.calculateeffectivenesscurve(sim, varfactors)
                 print("Region %s has calculated a Budget Objective Curve for..." % self.getregionname())
                 print(varfactors)
             except:
@@ -227,20 +284,34 @@ class Region:
         try:
             return pchip(self.BOCx, self.BOCy, extrapolate=True)
         except:
-            print('Budget Objective Curve data does not seem to exist...')
+            try:
+                return pchip(self.BOCx, self.BOCy) # For backwards compatibility with Numpy 1.8
+            except:
+                raise Exception('Budget Objective Curve data does not seem to exist...')
         
-    def plotBOCspline(self):
+    def plotBOCspline(self, returnplot = False):
         import matplotlib.pyplot as plt
         from numpy import linspace
         
         try:
             f = self.getBOCspline()
             x = linspace(min(self.BOCx), max(self.BOCx), 200)
-            plt.plot(x,f(x),'-')
-            plt.legend(['BOC'], loc='best')
-            plt.show()
+            
+            fig = plt.figure()
+            ax = fig.add_subplot(111)
+            
+            plt.plot(x,f(x),'-',label='BOC')
+            plt.xlabel('Allocation Total')            
+            plt.ylabel('Outcome')
+            if returnplot:
+                return ax
+            else:
+                plt.legend(loc='best')
+                plt.show()
         except:
             print('Plotting of Budget Objective Curve failed!')
+        
+        return None
         
     def hasBOC(self):
         if len(self.BOCx) == 0 and len(self.BOCy) == 0:
@@ -278,9 +349,20 @@ class Region:
             factors.append(factor)
         
         return factors
-
-###----------------------------------------------------------------------------       
+    
+    # We assume that fixed-cost programs never change. This function returns their sum.
+    def returnfixedcostsum(self):
+        defaultalloc = self.data['origalloc']        
         
+        # Work out which programs don't have an effect and are thus fixed costs (e.g. admin).
+        fixedtrue = [1.0]*(len(defaultalloc))
+        for i in xrange(len(defaultalloc)):
+            if len(self.metadata['programs'][i]['effects']): fixedtrue[i] = 0.0
+        fixedtotal = sum([defaultalloc[i]*fixedtrue[i] for i in xrange(len(defaultalloc))])
+        
+        return fixedtotal
+
+#%%        
     def printdata(self):
         print(self.data)
     
@@ -310,7 +392,11 @@ class Region:
                     fid += 1
                     print('%i: %s%s' % (fid, simbox.getname(), (" (optimisation container)" if isinstance(simbox, SimBoxOpt) else " (standard container)")))
                     simbox.printsimlist(assubsubset = False)
-                
+    
+    # Generate a new uuid.
+    def genuuid(self):
+        self.uuid = str(uuid.uuid4())
+            
     def setdata(self, data):
         self.data = data
         
@@ -365,6 +451,8 @@ class Region:
         
     def loadworkbook(self,filename):
         """ Load an XSLX file into region.data """
+        raise Exception('This function is broken temporarily because it does not create a calibration')
+        
         import loadworkbook
 
         # Note
@@ -384,6 +472,14 @@ class Region:
         self.data = updatedata.getrealcosts(data)
         self.data['current_budget'] = self.data['costcov']['cost']
         
+        # Finally, create a calibration from the data.
+        simbox = self.createsimbox(self.getregionname() + '-default-calibration', iscal = True, createdefault = True)
+        simbox.calibratefromdefaultdata()
+        self.simboxlist.remove(simbox)      # Deletes temporary SimBoxCal.
+
+        if 'meta' not in self.metadata.keys():
+            self.metadata['meta'] = self.data['meta']
+
     def __repr__(self):
         return "Region %s ('%s')" % (self.uuid,self.metadata['name'])
 

@@ -15,7 +15,7 @@ for i in xrange(0,len(r.D['opt']['partvec'])-1):
     alloc = numpy.append(alloc,a,axis=1)
 
 
-s = sim.SimBudget('Test',r,alloc)
+s = sim.SimBudget2('Test',r,alloc)
 s.initialise()
 
 m_new = s.parsmodel # New D.M
