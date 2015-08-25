@@ -23,11 +23,8 @@ def makegpasimbox(inputs):
     # a) this way it can be pickled
     # b) it doesn't depend on a specific portfolio instance i.e. 'self'
     #    and therefore it shouldn't be a *method*
-    regiondict = inputs[0]
-    gpaname = inputs[1]
-    newtotal = inputs[2]
+    currentregion,gpaname,newtotal = inputs
 
-    currentregion = Region(regiondict)
     print('Initialising a simulation container in region %s for this GPA.' % currentregion.getregionname())
     tempsimbox = currentregion.createsimbox('GPA '+gpaname+' - '+currentregion.getregionname(), isopt = True, createdefault = False)
     tempsimbox.createsim(currentregion.getregionname()+' - Initial', forcecreate = False)
@@ -35,7 +32,7 @@ def makegpasimbox(inputs):
     tempsimbox.scalealloctototal(initsimcopy, newtotal)
     currentregion.runsimbox(tempsimbox)
     tempsimbox.simlist.remove(initsimcopy)
-    return (currentregion.todict(),tempsimbox.uuid)
+    return (currentregion,tempsimbox.uuid)
 
 class Portfolio(object):
     def __init__(self, portfolioname):
@@ -413,8 +410,12 @@ class Portfolio(object):
         from geoprioritisation import gpaoptimisefixedtotal
         
         newtotals = gpaoptimisefixedtotal(self.regionlist)
-              
-        inputs = [(r.todict(),'Test',newtotal) for (r,newtotal) in zip(self.regionlist,newtotals)] # Could zip a third array of gpaname strings here
+        
+        # Assemble the inputs for makegpasimbox()
+        inputs = []
+        for (r,newtotal) in zip(self.regionlist,newtotals):
+            inputs.append((r,'Test',newtotal))
+
         if usebatch:
             pool = multiprocessing.Pool()
             outputs = pool.map(makegpasimbox,inputs)
@@ -427,9 +428,9 @@ class Portfolio(object):
         self.regionlist = []
         self.gpalist = []
         for x in outputs:
-            r = Region(x[0])
+            r,simboxid = x
             self.regionlist.append(r)
-            self.gpalist.append(r.retrieve_uuid(x[1]))
+            self.gpalist.append(r.retrieve_uuid(simboxid))
 
     # Iterate through loaded regions. Develop default BOCs if they do not have them.
     def geoprioreview(self, gpasimboxlist):

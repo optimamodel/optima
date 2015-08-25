@@ -33,10 +33,12 @@ class Region(object):
         # r = Region(regiondict) -> regiondict = r.fromdict()
         # r = Region(filename='save.json') # NOT IMPLEMENTED YET
 
-        # The standard constructor takes in the initial metadata directly
-        # In normal usage, this information would come from the frontend
-        # whether web interface, or an interactive prompt
-        if isinstance(name,dict):
+        if filename is not None:
+            raise Exception('Not implemented yet')
+            ## Something like:
+            #d = dataio_binary.load(filename)
+            #self.fromdict(d)
+        elif isinstance(name,dict):
             # variable 'name' is actually a regiondict
             self.fromdict(name)
         else:
@@ -91,6 +93,16 @@ class Region(object):
         r.uuid = regiondict['uuid'] # Loading a region restores the original UUID
         r.fromdict(regiondict)
         return r
+
+    def __getstate__(self):
+        # Note that this pickling method should only be implemented for classes
+        # that can be saved directly i.e. portfolios and regions
+        # simboxes and sims need more care so that the region references are
+        # handled correctly
+        return self.todict()
+
+    def __setstate__(self, state):
+        self.fromdict(state)
 
     def fromdict(self,regiondict):
         # Assign variables from a new-type JSON file created using Region.todict()

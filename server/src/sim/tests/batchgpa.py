@@ -15,7 +15,7 @@ import multiprocessing
 usebatch = True
 
 def loaddistrict(district):
-    return Region.load('./regions/' + district + '.json').todict()
+    return Region.load('./regions/' + district + '.json')
 
 if __name__ == '__main__':
     p1 = Portfolio('malawi-gpa')
@@ -23,7 +23,7 @@ if __name__ == '__main__':
 
     if usebatch:
         pool = multiprocessing.Pool()
-        results = [Region(x) for x in pool.map(loaddistrict, districts)]
+        results = pool.map(loaddistrict, districts)
     else:
         results = [loaddistrict(x) for x in districts]
     
