@@ -316,8 +316,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         ## Run with uncertainties
         allocarr = [] # Original allocation
         fvalarr = [] # Outcome for original allocation
-#        for s in xrange(len(D['F'])): # xrange(len(D['F'])): # Loop over all available meta parameters
-        for s in xrange(4): # xrange(len(D['F'])): # Loop over all available meta parameters
+        for s in xrange(len(D['F'])): # Loop over all available meta parameters
             print('========== Running uncertainty optimization %s of %s... ==========' % (s+1, len(D['F'])))
             options['D']['F'] = [deepcopy(D['F'][s])] # Loop over fitted parameters
             
