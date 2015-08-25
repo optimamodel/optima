@@ -58,7 +58,7 @@ class Portfolio(object):
 
     def fromdict(self,portfoliodict):
         self.regionlist = [Region(x) for x in portfoliodict['regionlist']]
-        self.gpalist = [r.retrieve_uuid(u) for (r,u) in zip(self.regionlist,portfoliodict['gpalist'])] 
+        self.gpalist = [r.fetch(u) for (r,u) in zip(self.regionlist,portfoliodict['gpalist'])] 
         self.portfolioname = portfoliodict['portfolioname'] 
         self.cwd = portfoliodict['cwd'] 
         self.regd = portfoliodict['regd']
@@ -430,7 +430,7 @@ class Portfolio(object):
         for x in outputs:
             r,simboxid = x
             self.regionlist.append(r)
-            self.gpalist.append(r.retrieve_uuid(simboxid))
+            self.gpalist.append(r.fetch(simboxid))
 
     # Iterate through loaded regions. Develop default BOCs if they do not have them.
     def geoprioreview(self, gpasimboxlist):

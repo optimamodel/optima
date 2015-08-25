@@ -200,8 +200,8 @@ class Region(object):
                     newsim.create_override(par['names'],par['pops'],par['startyear'],par['endyear'],par['startval'],par['endval'])
                 sbox.simlist.append(newsim)
 
-    def retrieve_uuid(self,target_uuid):
-        # Retrieve a simbox or a sim from within the region by looking up it's uuid
+    def fetch(self,target_uuid):
+        # Fetch a simbox or a sim from within the region by looking up it's uuid
         for sbox in self.simboxlist:
             if sbox.uuid == target_uuid:
                 return sbox
