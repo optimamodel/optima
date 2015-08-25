@@ -82,7 +82,7 @@ class SimBox(object):
                 sim.plotresults()
 
     # Needs to check processing like plotallsims.
-    def viewmultiresults(self):
+    def viewmultiresults(self,show_wait=True):
         # Superimpose plots, like in the scenarios page in the frontend
         r = self.region()
 
@@ -106,7 +106,7 @@ class SimBox(object):
             import gatherplotdata, viewresults
             multidata = gatherplotdata.gathermultidata(tempD, Rarr,verbose=0)
             #viewmultiresults(M, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 'daly':[0,1], 'death':[0,1], 'dx':[0,1], 'tx1':[0,1], 'tx2':[0,1], 'costcum':[1,1]}, simstartyear=2000, simendyear=2030, onefig=True, verbose=2, show_wait=False, linewidth=2):
-            viewresults.viewmultiresults(multidata, show_wait = True)
+            viewresults.viewmultiresults(multidata, show_wait = show_wait)
 
     def printsimlist(self, assubsubset = False):
         # Prints with long arrow formats if assubsubset is true. Otherwise uses short arrows.        

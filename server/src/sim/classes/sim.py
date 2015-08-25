@@ -439,11 +439,11 @@ class Sim(object):
 
         return allsims[0]        
         
-    def plotresults(self):
+    def plotresults(self, show_wait=True):
         
         from viewresults import viewuncerresults
         
-        viewuncerresults(self.plotdata, show_wait = True)
+        viewuncerresults(self.plotdata,show_wait=show_wait)
 
     def __repr__(self):
         return "Sim %s ('%s')" % (self.uuid,self.name)

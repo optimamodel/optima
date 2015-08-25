@@ -49,6 +49,7 @@ class Portfolio(object):
             self.cwd = os.getcwd()              # Should get the current working directory where Portfolio object is instantiated.
             self.regd = self.cwd + '/regions'   # May be good to remove hardcoding at some stage...
     
+
     def todict(self):
         portfoliodict = {}
         portfoliodict['regionlist'] = [x.todict() for x in self.regionlist]

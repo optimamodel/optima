@@ -451,6 +451,8 @@ class Region(object):
         
     def loadworkbook(self,filename):
         """ Load an XSLX file into region.data """
+        raise Exception('This function is broken temporarily because it does not create a calibration')
+        
         import loadworkbook
 
         # Note
