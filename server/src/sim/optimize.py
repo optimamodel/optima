@@ -316,7 +316,8 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         ## Run with uncertainties
         allocarr = [] # Original allocation
         fvalarr = [] # Outcome for original allocation
-        for s in xrange(len(D['F'])): # xrange(len(D['F'])): # Loop over all available meta parameters
+#        for s in xrange(len(D['F'])): # xrange(len(D['F'])): # Loop over all available meta parameters
+        for s in xrange(4): # xrange(len(D['F'])): # Loop over all available meta parameters
             print('========== Running uncertainty optimization %s of %s... ==========' % (s+1, len(D['F'])))
             options['D']['F'] = [deepcopy(D['F'][s])] # Loop over fitted parameters
             
@@ -340,6 +341,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         result = dict()
         result['kind'] = 'constant'
         result['fval'] = fvalarr[bestallocind] # Append the best value noe
+
         result['allocarr'] = [] # List of allocations
         result['allocarr'].append(quantile([origalloc])) # Kludgy -- run fake quantile on duplicated origalloc just so it matches
         result['allocarr'].append(quantile(allocarr)) # Calculate allocation arrays 
@@ -352,7 +354,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         labels = ['Original','Optimal']
         result['Rarr'] = [dict(), dict()]
         result['Rarr'][0]['R'] = options['tmpbestdata'][0]['R']
-        result['Rarr'][1]['R'] = options['tmpbestdata'][-1]['R']
+        result['Rarr'][1]['R'] = options['tmpbestdata'][bestallocind]['R']
         result['Rarr'][0]['label'] = 'Original'
         result['Rarr'][1]['label'] = 'Optimal'
 #        for i,params in enumerate([options.tmpbest, allocarr[bestallocind]]): # CK: loop over original and (the best) optimal allocations
