@@ -4,7 +4,7 @@ from numpy import linspace, ndim
 from nested import getnested, setnested
 from utils import findinds
 
-def runscenarios(D, scenariolist=None, verbose=2):
+def runscenarios(D, scenariolist=None, verbose=2, debug=False):
     """
     Run all the scenarios. The hard work is actually done by makescenarios, which
     takes the list of scenarios and makes the required changes to the model parameters
@@ -45,10 +45,11 @@ def runscenarios(D, scenariolist=None, verbose=2):
     D['plot']['scens'] = gathermultidata(D, D['scens'], verbose=verbose)
     
     # Clean up -- inefficient, yes!
-    for scen in xrange(nscenarios):
-        D['scens'][scen].pop('M')
-        D['scens'][scen].pop('S')
-        D['scens'][scen].pop('R')
+    if not(debug):
+        for scen in xrange(nscenarios):
+            D['scens'][scen].pop('M')
+            D['scens'][scen].pop('S')
+            D['scens'][scen].pop('R')
     
     printv('...done running scenarios.', 2, verbose)
     return D
@@ -61,6 +62,7 @@ def makescenarios(D, scenariolist, verbose=2):
     nscenarios = len(scenariolist)
     scenariopars = [dict() for s in xrange(nscenarios)]
     for scen in xrange(nscenarios):
+        print('scenario %s of %s' % (scen, nscenarios))
         scenariopars[scen]['name'] = scenariolist[scen]['name']
         scenariopars[scen]['M'] = deepcopy(D['M']) # Copy the whole thing...too hard to generate nested dictionaries on the fly
         for par in xrange(len(scenariolist[scen]['pars'])):
@@ -70,13 +72,13 @@ def makescenarios(D, scenariolist, verbose=2):
                 if thesepars['pops'] < len(data):
                     newdata = data[thesepars['pops']] # If it's more than one dimension, use population data too
                 else:
-                    newdata = data[:] # Get all populations
+                    newdata = deepcopy(data[:]) # Get all populations
             else:
-                newdata = data # If it's not, just use the whole thing
+                newdata = deepcopy(data) # If it's not, just use the whole thing
             
             # Get current values
-            initialindex = findinds(D['opt']['partvec'], thesepars['startyear'])
-            finalindex = findinds(D['opt']['partvec'], thesepars['endyear'])
+            initialindex = findinds(D['opt']['partvec'], thesepars['startyear'])[0] # Convert from array to scalar
+            finalindex = findinds(D['opt']['partvec'], thesepars['endyear'])[0]
             if thesepars['startval'] == -1:
                 if ndim(newdata)==1: initialvalue = newdata[initialindex]
                 else: initialvalue = newdata[:,initialindex].mean(axis=0) # Get the mean if multiple populations
@@ -102,6 +104,7 @@ def makescenarios(D, scenariolist, verbose=2):
                 for p in xrange(len(newdata)):
                     newdata[p,initialindex:finalindex] = newvalues
                     newdata[p,finalindex:] = newvalues[-1] # Fill in the rest of the array with the last value
+
             
             # Update data
             if ndim(data)>1 and ndim(newdata)==1:

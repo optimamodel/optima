@@ -69,7 +69,8 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2):
     txfactor = M['const']['eff']['tx'] * dxfactor # And treatment efficacy
     
     ## Metaparameters to get nice diagnosis fits
-    dxtime  = fit2time(F['dx'],  S['tvec'] - G['datayears'].mean()) # Subtraction to normalize F['dx'][2]
+    dxtime  = fit2time(F['dx'],  S['tvec']) # Logistic fit
+    
     
     ## Shorten variables and remove dict calls to make things faster...
     
@@ -87,7 +88,7 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2):
     txind    = concatenate([tx1, tx2])           # All people on treatment
     
     # Population sizes
-    popsize = M['popsize'] # Population sizes
+    popsize = deepcopy(M['popsize']) # Population sizes
     for pop in xrange(npops): popsize[pop,:] *= float(F['popsize'][pop]) / M['popsize'][pop][0] # Calculate adjusted population sizes -- WARNING, kind of ugly
     
     # Logical arrays for population types
