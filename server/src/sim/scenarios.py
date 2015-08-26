@@ -70,16 +70,10 @@ def makescenarios(D, scenariolist, verbose=2):
             data = getnested(scenariopars[scen]['M'], thesepars['names'])
             if ndim(data)>1:
                 if thesepars['pops'] < len(data):
-                    print('hi')
-                    print([thesepars['pops'], len(data)])
                     newdata = data[thesepars['pops']] # If it's more than one dimension, use population data too
                 else:
-                    print('sssuuup')
-                    print([thesepars['pops'], len(data)])
                     newdata = deepcopy(data[:]) # Get all populations
             else:
-                print('hiiiii')
-                print(ndim(data))
                 newdata = deepcopy(data) # If it's not, just use the whole thing
             
             # Get current values
