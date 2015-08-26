@@ -369,7 +369,7 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2):
         if tobecirc[t] > 0:
             tobecircpop = tobecirc[t] * (reqcirc / sum(reqcirc))
             newlycirc = minimum(tobecircpop, reqcirc)
-            if t < npts: # Perform for all but the last timestep
+            if t < npts-1: # Perform for all but the last timestep
                 for pop in xrange(npops): # Loop through the populations
                     if male[pop]: # Only calculate for males
                         propcirc[pop, t+1] = median([0, 1, (numcircad[pop] + newlycirc[pop]) / newsusmales[pop]]) # Circumcision coverage for next time step (element of [0, 1])

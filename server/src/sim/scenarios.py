@@ -62,7 +62,6 @@ def makescenarios(D, scenariolist, verbose=2):
     nscenarios = len(scenariolist)
     scenariopars = [dict() for s in xrange(nscenarios)]
     for scen in xrange(nscenarios):
-        print('scenario %s of %s' % (scen, nscenarios))
         scenariopars[scen]['name'] = scenariolist[scen]['name']
         scenariopars[scen]['M'] = deepcopy(D['M']) # Copy the whole thing...too hard to generate nested dictionaries on the fly
         for par in xrange(len(scenariolist[scen]['pars'])):
@@ -77,8 +76,8 @@ def makescenarios(D, scenariolist, verbose=2):
                 newdata = deepcopy(data) # If it's not, just use the whole thing
             
             # Get current values
-            initialindex = findinds(D['opt']['partvec'], thesepars['startyear'])[0] # Convert from array to scalar
-            finalindex = findinds(D['opt']['partvec'], thesepars['endyear'])[0]
+            initialindex = findinds(D['opt']['partvec'], thesepars['startyear']) # WARNING -- should convert from array to scalar
+            finalindex = findinds(D['opt']['partvec'], thesepars['endyear'])
             if thesepars['startval'] == -1:
                 if ndim(newdata)==1: initialvalue = newdata[initialindex]
                 else: initialvalue = newdata[:,initialindex].mean(axis=0) # Get the mean if multiple populations
@@ -113,6 +112,11 @@ def makescenarios(D, scenariolist, verbose=2):
                 data = newdata # In all other cases, reset the whole thing (if both are 1D, or if both are 2D
 
             setnested(scenariopars[scen]['M'], thesepars['names'], data)
+            
+            ## Calculate total acts
+            from makemodelpars import totalacts
+            npts = len(scenariopars[scen]['M']['tvec'])
+            scenariopars[scen]['M']['totalacts'] = totalacts(scenariopars[scen]['M'], npts)
                 
     return scenariopars
 
