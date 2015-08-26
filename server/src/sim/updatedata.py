@@ -125,7 +125,7 @@ def unnormalizeF(normF, M, G, normalizeall=False):
     for p in xrange(G['npops']):
         unnormF['init'][p] *= M['hivprev'][p] # Multiply by initial prevalence
         if normalizeall: unnormF['popsize'][p] *= M['popsize'][p][0] # Multiply by initial population size
-    if normalizeall: unnormF['dx'][2] += G['datayears'].mean() # Multiply by mean data year
+    if normalizeall: unnormF['dx'][2] += G['datayears'].mean()-1 # Add mean data year
     return unnormF
 
 
@@ -135,7 +135,7 @@ def normalizeF(unnormF, M, G, normalizeall=False):
     for p in xrange(G['npops']):
         normF['init'][p] /= M['hivprev'][p] # Divide by initial prevalence
         if normalizeall: normF['popsize'][p] /= M['popsize'][p][0] # Divide by initial population size
-    if normalizeall: normF['dx'][2] -= G['datayears'].mean() # Divide by mean data year
+    if normalizeall: normF['dx'][2] -= G['datayears'].mean()+1 # Subtract mean data year
     return normF
 
 
