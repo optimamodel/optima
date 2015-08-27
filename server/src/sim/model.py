@@ -625,9 +625,13 @@ def equilibrate(G, M, Finit):
         Finit = fitted parameters for initial prevalence
         initpeople = nstates x npops array
     
-    Version: 2014nov26
+    Version: 2015aug27
     """
     from numpy import zeros, hstack, inf
+    
+    if any(Finit>1.0):
+        print('Initial HIV prevalence invalid in metaparameters')
+        Finit[Finit>1.0] = 1.0
     
     # Set parameters
     prevtoforceinf = 0.1 # Assume force-of-infection is proportional to prevalence -- 0.1 means that if prevalence is 10%, annual force-of-infection is 1%
@@ -636,14 +640,15 @@ def equilibrate(G, M, Finit):
     
     # Shorten key variables
     initpeople = zeros((G['nstates'],G['npops']))
-    allinfected = M['popsize'][:,0] * Finit[:] # Set initial infected population
+    allinitialpeople = M['popsize'][:,0]
+    allinfected = allinitialpeople * Finit[:] # Set initial infected population
     
     # Can calculate equilibrium for each population separately
     for p in xrange(G['npops']):
         # Set up basic calculations
-        uninfected = M['popsize'][p,0] * (1-Finit[p]) # Set initial susceptible population -- easy peasy! # TODO -- should this have F['popsize'] involved?
         popinfected = allinfected[p]
-        
+        uninfected = allinitialpeople[p] - popinfected # Set initial susceptible population -- easy peasy! # TODO -- should this have F['popsize'] involved?
+
         # Treatment & treatment failure
         fractotal =  popinfected / sum(allinfected) # Fractional total of infected people in this population
         treatment1 = M['tx1'][0] * fractotal # Number of people on 1st-line treatment
