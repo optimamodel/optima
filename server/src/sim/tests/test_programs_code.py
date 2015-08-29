@@ -4,7 +4,7 @@ import region
 import sim
 import numpy
 from timevarying import timevarying
-
+import programset
 # This function tests the program calculation
 # r = region.Region.load_json('./regions/Dedza.json')
 # r.save_json('asdf.json')
@@ -15,7 +15,12 @@ r = region.Region.load('asdf.bin')
 a = r.D['data']['origalloc']
 budget = timevarying(a,nprogs=len(a), tvec=r.options['partvec'], totalspend=sum(a))
 
-print r.programsets[0].get_outcomes(budget)
+r.programsets.append(programset.ProgramSet.import_legacy('New',r.metadata['programs']))
+
+
+s = sim.SimBudget2('Temp',r,budget,programset=r.programsets[1].uuid)
+print s.getprogramset()
+
 #s = sim.SimBudget2
 
 # alloc = a

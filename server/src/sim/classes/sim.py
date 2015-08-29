@@ -27,6 +27,10 @@ class Sim(object):
         self.parsfitted = None      # This used to be D['F'].
         self.calibration = calibration if calibration is not None else region.calibrations[0]['uuid'] # Use the first region calibration by default - could reorder the region's calibrations to choose a default later
 
+        # Check the calibration exists
+        if self.calibration not in [x['uuid'] for x in region.calibrations]:
+            raise Exception('The provided calibration UUID could not be found in the provided region')
+
         self.debug = {}             # This stores the (large) output from running the simulation
         self.debug['results'] = None         # This used to be D['R'].
         self.debug['structure'] = None       # This used to be D['S'].
@@ -570,48 +574,47 @@ class SimParameter(Sim):
         return "SimParameter %s ('%s')" % (self.uuid,self.name)   
 
 class SimBudget2(Sim):
-    def __init__(self, name, region,budget):
-        # budget and alloc are the same thing i.e. an 'alloc' *is* actually a budget
-        Sim.__init__(self, name, region)
+
+    def __init__(self, name, region,budget,calibration=None,programset=None):
+        Sim.__init__(self, name, region,calibration)
         self.budget = budget # This contains spending values for all of the modalities for the simulation timepoints i.e. there are len(D['opt']['partvec']) spending values
-        self.program_set = region.program_sets[0] # Eventually modify to support multiple programs
+        self.programset = programset if programset is not None else region.programsets[0].uuid # Use the first program set by default
+
+        # Check that the program set exists
+        if self.programset not in [x.uuid for x in region.programsets]:
+            raise Exception('The provided program set UUID could not be found in the provided region')
 
     def todict(self):
         simdict = Sim.todict(self)
         simdict['type'] = 'SimBudget2'
         simdict['budget'] = self.budget
+        simdict['programset'] = self.programset
         return simdict
 
     def load_dict(self,simdict):
         Sim.load_dict(self,simdict)
         self.budget = simdict['budget'] 
+        self.programset = simdict['programset']
+
+    def getprogramset(self):
+        # Return a reference to the selected program set
+        r = self.getregion()
+        uuids = [x.uuid for x in r.programsets]
+        return r.programsets[uuids.index(self.programset)]
 
     def makemodelpars(self):
         r = self.getregion()
         npts = len(r.options['partvec']) # Number of time points
 
-        P = self.parsdata 
-        from numpy import nan, zeros
-        for param in P.keys():
-            if isinstance(P[param], dict) and 'p' in P[param].keys():
-                P[param]['c'] = nan+zeros((len(P[param]['p']), npts))
+        programset = region.programsets
 
-        for prog, spending in zip(self.program_set['programs'], self.budget):
-            coverage = prog.get_coverage(spending) # Returns metamodality coverage
-            outcomes = prog.get_outcomes(coverage) # Returns program outcomes (for each effect)
 
-            try:
-                print '--- SIM'
-                print 'Coverage: ', coverage[0][0][0]
-                print 'Outcome: ', [x[0][0] for x in outcomes]
-            except:
-                continue
-            for i in xrange(0,len(prog.effects['param'])): # For each of the effects
-                if prog.effects['iscoverageparam'][i]:
-                    P[prog.effects['param'][i]]['c'][:] = outcomes[i]
-                else:
-                    popnumber = r.get_popidx(prog.effects['popname'][i])-1 # Yes, get_popidx is 1-based rather than 0 based...cf. scenarios
-                    P[prog.effects['param'][i]]['c'][popnumber] = outcomes[i]
+        for i in xrange(0,len(prog.effects['param'])): # For each of the effects
+            if prog.effects['iscoverageparam'][i]:
+                P[prog.effects['param'][i]]['c'][:] = outcomes[i]
+            else:
+                popnumber = r.get_popidx(prog.effects['popname'][i])-1 # Yes, get_popidx is 1-based rather than 0 based...cf. scenarios
+                P[prog.effects['param'][i]]['c'][popnumber] = outcomes[i]
 
         from makemodelpars import makemodelpars
         self.parsmodel = makemodelpars(P, r.options, withwhat='c')
