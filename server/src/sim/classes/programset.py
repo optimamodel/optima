@@ -127,6 +127,7 @@ class ProgramSet(object):
 				if len(effects[effect]) == 1: # There is no overlapping of modalities
 					prog = effects[effect][0]
 					this_coverage = coverage[progs_reaching_pop.index(prog)] # Get the coverage that this program has for this population
+					assert(effect not in outcomes[pop].keys()) # Multiple programs should not be able to write to the same parameter *without* going through the overlapping calculation
 					outcomes[pop][effect] = prog.get_outcome(pop,effect,this_coverage) # Get the program outcome and store it in the outcomes dict
 				else:
 					raise Exception('Overlap, coverage distribution, and effect combination go here')

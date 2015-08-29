@@ -3,13 +3,21 @@ import program
 import region
 import sim
 import numpy
+from timevarying import timevarying
 
 # This function tests the program calculation
-r = region.Region.load_json('./regions/Dedza.json')
-print r.programsets
-# # Make an example budget
-# a = r.D['data']['origalloc']
-# a = numpy.reshape(a, (-1, 1))
+# r = region.Region.load_json('./regions/Dedza.json')
+# r.save_json('asdf.json')
+# r.save('asdf.bin')
+r = region.Region.load('asdf.bin')
+
+# Make an example budget from the default allocation
+a = r.D['data']['origalloc']
+budget = timevarying(a,nprogs=len(a), tvec=r.options['partvec'], totalspend=sum(a))
+
+print r.programsets[0].get_outcomes(budget)
+#s = sim.SimBudget2
+
 # alloc = a
 # for i in xrange(0,len(r.D['opt']['partvec'])-1):
 #     alloc = numpy.append(alloc,a,axis=1)
