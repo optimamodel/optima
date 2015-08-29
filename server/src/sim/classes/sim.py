@@ -602,12 +602,20 @@ class SimBudget2(Sim):
         uuids = [x.uuid for x in r.programsets]
         return r.programsets[uuids.index(self.programset)]
 
+    def initialize(self):
+        # Need to make a temporary sim, and then use makemodelpars
+        # temporary sim should be created here, because optimization will
+        # call makemodelpars() many times, but the temporary sim from 
+        # data pars won't change. Could consider just storing the output instead
+        # of storing the whole sim?
+        return
+
     def makemodelpars(self):
         r = self.getregion()
         npts = len(r.options['partvec']) # Number of time points
 
-        programset = region.programsets
-
+        programset = self.getprogramset()
+        outcomes = programset.get_outcomes(self.budget)
 
         for i in xrange(0,len(prog.effects['param'])): # For each of the effects
             if prog.effects['iscoverageparam'][i]:
