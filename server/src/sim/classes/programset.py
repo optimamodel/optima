@@ -12,22 +12,14 @@ class ProgramSet(object):
 		self.name = name
 		self.uuid = str(uuid.uuid4())
 		self.programs = []
-
-		# self.modalities = []
-		# self.metamodalities = [] # One metamodality for every combination of modalities, including single modalities
-		# self.effective_coverage = [] # An effective coverage for every metamodality
-
 		self.reachability_interaction = 'random' # These are the options on slide 7 of the proposal
 		self.current_version = 1
-		# The reachability interaction enables the metamodality maxcoverage to be automatically set
-
-		# This stores the list of effects. Each modality and metamodality must contain a coverage-outcome
-		# curve for each effect in the Program
-		# May require effects as an argument to the constructor later?
 
 	@classmethod
 	def import_legacy(ProgramSet,name,programdata):
-		# In legacy projects, the programdata list contains one entry per program
+		# This function initializes the programs based on the dictionary programdata, obtained
+		# from r.metadata['programs']
+
 		ps = ProgramSet(name)
 		ps.programs = [] # Make sure we start with an empty program list
 		
@@ -81,6 +73,66 @@ class ProgramSet(object):
 		return ps
 
 
+	def progs_by_pop(self):
+		# Return a dictionary where the keys are all of the populations
+		# reached by the programs, and the values are lists of references 
+		# to the programs reaching that population 
+		# e.g., pops = {'FSW',[<Program 1a04>,<Program a351>]}
+
+		pops = defaultdict(list)
+		for prog in self.programs:
+			pops_reached = prog.pops()
+			for pop in pops_reached:
+				pops[pop].append(prog)
+		return pops
+
+	def progs_by_effect(self,pop):
+		# Like progs_by_pop, this function returns a dictionary 
+		# like {'condomcas': [Program 6b39 (Condoms & SBCC)], u'hivtest': [Program b127 (HTC)]}
+		# These are specific to the population provided as an input argument
+		effects = defaultdict(list)
+		for prog in self.programs:
+			prog_effects = prog.get_effects()
+			for effect in prog_effects:
+				if effect[0] == pop: # If the effect applies to the current population
+					effects[effect[1]].append(prog)
+		return effects
+
+	def get_outcomes(self,budget):
+		# An alloc is a vector of numbers for each program, that is subject to optimization
+		# A budget is spending at a particular time, for each program
+		# In the legacy code, we would say 
+		# 	budget = timevarying.timevarying(alloc)
+
+		# First, we need to know which populations to iterate over
+		outcomes = {}
+
+		pops = self.progs_by_pop();
+
+		for pop in pops.keys():
+			progs_reaching_pop = pops[pop]
+
+			# Now get the coverage for this program
+			coverage = []
+			for prog in progs_reaching_pop:
+				spending = budget[self.programs.index(prog),:] # Get the amount of money spent on this program
+				coverage.append(prog.get_coverage(pop,spending)) # Calculate the program's coverage
+
+			# Next, get the list of effects to iterate over
+			effects = self.progs_by_effect(pop) 
+
+			#Now we iterate over the effects
+			outcomes[pop] = {}
+			for effect in effects.keys():			
+				if len(effects[effect]) == 1: # There is no overlapping of modalities
+					prog = effects[effect][0]
+					this_coverage = coverage[progs_reaching_pop.index(prog)] # Get the coverage that this program has for this population
+					outcomes[pop][effect] = prog.get_outcome(pop,effect,this_coverage) # Get the program outcome and store it in the outcomes dict
+				else:
+					raise Exception('Overlap, coverage distribution, and effect combination go here')
+		
+		return outcomes
+
 	def get_coverage(self,spending):
 		# This function returns an array of effective coverage values for each metamodality
 		# reflow_metamodalities should generally be run before this function is called
@@ -114,16 +166,14 @@ class ProgramSet(object):
 						if set(sub.modalities).issubset(set(sup.modalities)):
 							sub.temp_coverage1 -= sup.temp_coverage1
 
-		print 'rerun'					
-		print self.modalities[0].temp_coverage
-
-
 		# Next, calculate the coverage for each metamodality
 		effective_coverage = [mm.temp_coverage1 for mm in self.metamodalities]
 		
 		return effective_coverage
 
-	def get_outcomes(self,effective_coverage):
+	def get_outcomes_legacy(self,effective_coverage):
+		raise Exception('This code is scheduled for removal')
+		# This function sketches out what the combination of output parameters might be like
 		# Each metamodality will return a set of outcomes for its bound effects
 		# That is, if the program has 3 effects, each metamodality will return 3 arrays
 		# These then need to be combined into the overall program effect on the parameters
@@ -162,25 +212,6 @@ class ProgramSet(object):
 		# coverage into numbers of people
 
 		return output_outcomes
-
-
-	def add_modality(self,name,cc_data={'function':'null','parameters':None},co_data = [{'function':'null','parameters':None}],nonhivdalys=0):
-		new_modality = Modality(name,cc_data,co_data,nonhivdalys,maxcoverage=1.0)
-		self.modalities.append(new_modality)
-		# Synchronize metamodalities
-		# Add a new metamodality with all of the previous ones
-		current_metamodalities = len(self.metamodalities)
-		for i in xrange(0,current_metamodalities):
-			self.metamodalities.append(Metamodality([new_modality],metamodality=self.metamodalities[i]))
-		self.metamodalities.append(Metamodality([new_modality]))
-
-		return new_modality
-
-	def remove_modality(self,name,uuid):
-		raise Exception('Not fully implemented yet!')
-		idx = 1 # Actually look up the modality by name or by uuid
-		m = self.modalities.pop(idx)
-		return m
 
 	def __repr__(self):
 		return 'ProgramSet %s (%s)' % (self.uuid[0:4],self.name)
@@ -298,22 +329,23 @@ class Program(object):
 			assert(co['pop'] not in self.coverage_outcome.keys() or co['param'] not in self.coverage_outcome[co['pop']].keys()) # Each program can only have one CO curve per effect
 			self.coverage_outcome[co['pop']][co['param']] = co_class(co['fe_params']) # Instantiate it with the CC data, and append it to the program's CC array
 
+	def pops(self):
+		# Return a list of populations covered by this program
+		return [p for p in self.coverage_outcome.keys() if p is not None]
 
 	def get_effects(self):
 		# Returns a list of tuples storing effects as (population,parameter)
-		
+		effects = []
+		for pop in self.pops():
+			for param in self.coverage_outcome[pop].keys():
+				effects.append((pop,param))
+		return effects
 
-		# A set of effects - each effect has a population
-		# Each population has a coverage
-		# Need to be able to generate a list of effects easily
-		# And a list of populations easily
-		return
-
-	def get_coverage(self,spending,pop):
+	def get_coverage(self,pop,spending):
 		# Return the coverage of a particular population given the spending amount
-		return self.cost_coverage[cc['pop']].evaluate(spending)
+		return self.cost_coverage[pop].evaluate(spending)
 
-	def get_outcome(self,coverage,pop,effect):
+	def get_outcome(self,pop,effect,coverage):
 		# Return the outcome for a particular effect given the parent population's coverage
 		if isinstance(effect,list):
 			effect = '-'.join(effect)
