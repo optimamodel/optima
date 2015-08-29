@@ -15,8 +15,8 @@ import defaults
 class TestSyntax(unittest.TestCase):
 
 	def test_portfolio_save_load(self):
-		r1 = region.Region.load('../tests/regions/Dedza.json')
-		r2 = region.Region.load('../tests/regions/Dowa.json')
+		r1 = region.Region.load_json('../tests/regions/Dedza.json')
+		r2 = region.Region.load_json('../tests/regions/Dowa.json')
 		tempsimbox1 = r1.createsimbox('GPA1', isopt = True, createdefault = True)
 		tempsimbox2 = r2.createsimbox('GPA2', isopt = True, createdefault = True)
 		
@@ -30,27 +30,27 @@ class TestSyntax(unittest.TestCase):
 		print p2.gpalist
 
 	def test_saving_and_loading(self):
-		r = region.Region.load('../tests/regions/Dedza.json') # Load old style JSON
-		r.save('../tests/regions/Dedza_newstyle.json')
-		r2 = region.Region.load('../tests/regions/Dedza_newstyle.json') # Load new style JSON
+		r = region.Region.load_json('../tests/regions/Dedza.json') # Load old style JSON
+		r.save_json('../tests/regions/Dedza_newstyle.json')
+		r2 = region.Region.load_json('../tests/regions/Dedza_newstyle.json') # Load new style JSON
 		r2.createsimbox('Simbox 1')
 		r2.simboxlist[0].createsim('sim1')
 		r2.runsimbox(r2.simboxlist[0])
-		r2.save('../tests/regions/Dedza_newstyle_withsim.json')
-		r3 = region.Region.load('../tests/regions/Dedza_newstyle_withsim.json') # Load new style JSON
+		r2.save('../tests/regions/Dedza_newstyle_withsim.bin')
+		r3 = region.Region.load('../tests/regions/Dedza_newstyle_withsim.bin') # Load new style JSON
 		print r
 		print r3
 		print r3.simboxlist[0].simlist[0].processed
 
 	def test_saving_and_loading_binary(self):
-		r = region.Region.load('../tests/regions/Dedza.json') # Load old style JSON
-		r.save_binary('../tests/regions/Dedza_newstyle.bin')
-		r2 = region.Region.load_binary('../tests/regions/Dedza_newstyle.bin') # Load new style JSON
+		r = region.Region.load_json('../tests/regions/Dedza.json') # Load old style JSON
+		r.save('../tests/regions/Dedza_newstyle.bin')
+		r2 = region.Region.load('../tests/regions/Dedza_newstyle.bin') # Load new style JSON
 		r2.createsimbox('Simbox 1')
 		r2.simboxlist[0].createsim('sim1')
 		r2.runsimbox(r2.simboxlist[0])
-		r2.save_binary('../tests/regions/Dedza_newstyle_withsim.bin')
-		r3 = region.Region.load_binary('../tests/regions/Dedza_newstyle_withsim.bin') # Load new style JSON
+		r2.save('../tests/regions/Dedza_newstyle_withsim.bin')
+		r3 = region.Region.load('../tests/regions/Dedza_newstyle_withsim.bin') # Load new style JSON
 		print r
 		print r3
 		print r3.simboxlist[0].simlist[0].processed
