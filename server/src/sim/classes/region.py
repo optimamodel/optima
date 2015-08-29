@@ -15,7 +15,7 @@ from numpy import array, isnan, zeros, shape, mean
 from utils import sanitize, perturb
 from printv import printv
 import dataio_binary
-
+from programset import ProgramSet
 from scipy.interpolate import PchipInterpolator as pchip
 
 #### Multiprocessor helper functions for Region class.
@@ -53,13 +53,14 @@ class Region(object):
             self.BOCx = []        # Array of budget allocation totals.
             self.BOCy = []        # Array of corresponding optimum objective values.
             
-            self.program_sets = []
+            self.programsets = []
             self.calibrations = []        # Remember. Current BOC data assumes loaded data is calibrated by default.
             
             self.simboxlist = []            # Container for simbox objects (e.g. optimisations, grouped scenarios, etc.)
             
             self.uuid = None
             self.genuuid()  # Store UUID as a string - we just want a (practically) unique tag, no advanced functionality
+            self.current_version = 2 # This is stored in the regiondict
 
     @classmethod
     def load(Region,filename,name=None):
@@ -105,13 +106,22 @@ class Region(object):
     def __setstate__(self, state):
         self.fromdict(state)
 
+    def upgrade_version(self,regiondict):
+        # Upgrade the saved region dictionary prior to running fromdict()
+        # Note that regiondict is a reference, so code here changes the regiondict externally!
+        if regiondict['version'] <= 1: 
+            # Version 1 regions did not have program sets - they can be created from the saved metadata
+            regiondict['programsets'] = [ProgramSet.import_legacy('Default',regiondict['metadata']['programs'])]
+
     def fromdict(self,regiondict):
         # Assign variables from a new-type JSON file created using Region.todict()
+        self.upgrade_version(regiondict)
+
         self.uuid = regiondict['uuid'] # Loading a region restores the original UUID
         self.metadata = regiondict['metadata']
         self.data = regiondict['data']
         self.options = regiondict['options'] # Populate default options here
-        self.program_sets = regiondict['program_sets'] # sets of Programs i.e. an array of sets of CCOCs
+        self.programsets = regiondict['programsets'] # sets of Programs i.e. an array of sets of CCOCs
         
         # The statement below for calibrations handles loading earlier versions of the new-type JSON files
         # which don't have calibrations already defined. It is suggested in future that these regions should
@@ -133,13 +143,13 @@ class Region(object):
     def todict(self):
         # Return a dictionary representation of the object for use with Region.fromdict()
         regiondict = {}
-        regiondict['version'] = 1 # Could do something later by checking the version number
+        regiondict['version'] = self.current_version # Could do something later by checking the version number
 
         regiondict['metadata'] = self.metadata 
         regiondict['data'] = self.data 
         regiondict['simboxlist'] = [sbox.todict() for sbox in self.simboxlist]
         regiondict['options'] = self.options # Populate default options here = self.options 
-        regiondict['program_sets'] = [[1]] #self.program_sets 
+        regiondict['programsets'] = self.programsets 
         regiondict['calibrations'] = self.calibrations # Calibrations are stored as dictionaries
         regiondict['uuid'] = self.uuid 
         regiondict['D'] = self.D
@@ -152,7 +162,6 @@ class Region(object):
 
     def fromdict_legacy(self, tempD):
         # Load an old-type D dictionary into the region
-
         self.setD(tempD)                # It would be great to get rid of setD one day. But only when data is fully decomposed.
         
         current_name = self.metadata['name']
@@ -169,13 +178,7 @@ class Region(object):
 
         self.options = tempD['opt']
 
-        program_set = {}
-        program_set['name'] = 'Default'
-        program_set['uuid'] = str(uuid.uuid4())
-        program_set['programs'] = []
-        for prog in self.metadata['programs']:
-            program_set['programs'].append(program.Program.import_legacy(prog))
-        self.program_sets.append(program_set)
+        self.programsets = ProgramSet.import_legacy('Default',self.metadata['programs'])
 
         # Make the calibration - legacy files have one calibration
         # Using pop will remove them from the region so that downstream calls
