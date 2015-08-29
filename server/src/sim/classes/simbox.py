@@ -129,7 +129,12 @@ class SimBox(object):
 
     def __repr__(self):
         return "SimBox %s ('%s')" % (self.uuid[0:8],self.name)
-        
+
+    def __getstate__(self):
+        raise Exception('Simbox must be saved via a region')
+
+    def __setstate__(self, state):
+        raise Exception('Simboxes must be re-created via a region')
         
 
 #%% Tail imports pointing to derived classes, so as to avoid circular import problems.

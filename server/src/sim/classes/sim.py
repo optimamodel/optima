@@ -448,6 +448,11 @@ class Sim(object):
     def __repr__(self):
         return "Sim %s ('%s')" % (self.uuid,self.name)
 
+    def __getstate__(self):
+        raise Exception('Simobject must be saved via a region')
+
+    def __setstate__(self, state):
+        raise Exception('Simobjects must be re-created via a region')
 
 
 #------------------------------------------------------------------------------
