@@ -57,7 +57,7 @@ class cc_scaleup(ccoc):
 
 class cc_noscaleup(ccoc):
 	def function(self,x,p):
-		return cceqn(x,p)
+		return cc2eqn(x,p)
 
 	def convertparams(self):
 		growthratel = (-1/self.fe_params['funding'])*log((2*self.fe_params['saturation'])/(self.fe_params['coveragelower']+self.fe_params['saturation']) - 1)        
