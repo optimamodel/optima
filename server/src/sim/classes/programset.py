@@ -1,76 +1,85 @@
 import uuid
 from operator import mul
 import defaults
-
+from collections import defaultdict
 import ccocs
+
+coverage_params = ['numcircum','numost','numpmtct','numfirstline','numsecondline'] # This list is copied from makeccocs.py
 
 class ProgramSet(object):
 	# This class is a collection of programs/modalities
-	def __init__(self,name,full_name = None,effects = {},category = 'None'):
+	def __init__(self,name):
 		self.name = name
-		if full_name is None:
-			self.full_name = name
-		else:
-			self.full_name = full_name
-		self.category = category
 		self.uuid = str(uuid.uuid4())
+		self.programs = []
 
-		self.modalities = []
-		self.metamodalities = [] # One metamodality for every combination of modalities, including single modalities
-		self.effective_coverage = [] # An effective coverage for every metamodality
+		# self.modalities = []
+		# self.metamodalities = [] # One metamodality for every combination of modalities, including single modalities
+		# self.effective_coverage = [] # An effective coverage for every metamodality
 
 		self.reachability_interaction = 'random' # These are the options on slide 7 of the proposal
+		self.current_version = 1
 		# The reachability interaction enables the metamodality maxcoverage to be automatically set
 
 		# This stores the list of effects. Each modality and metamodality must contain a coverage-outcome
 		# curve for each effect in the Program
 		# May require effects as an argument to the constructor later?
 
-		self.effects = effects
-		if not effects:
-			self.effects['paramtype'] = []
-			self.effects['popname'] = []
-			self.effects['param'] = [] # This must be a list
-			self.effects['iscoverageparam'] = []
-
-		assert(isinstance(self.effects['param'],list))
-
-
 	@classmethod
-	def import_legacy(Program,programdata):
-		# Take in D['programs'][i] and return a corresponding Program instance
-		effects = {}
-		effects['paramtype'] = [x['paramtype'] for x in programdata['effects']]
-		effects['popname'] = [x['popname'] for x in programdata['effects']]
-		effects['param'] = [x['param'] for x in programdata['effects']]
-		effects['iscoverageparam'] = [x['param'] in ['numost','numpmtct','numfirstline','numsecondline'] for x in programdata['effects']]
+	def import_legacy(ProgramSet,name,programdata):
+		# In legacy projects, the programdata list contains one entry per program
+		ps = ProgramSet(name)
+		ps.programs = [] # Make sure we start with an empty program list
+		
+		for prog in programdata:
+			cc_inputs = []
+			co_inputs = []
 
-		p = Program(programdata['name'],effects=effects)
-
-		# Legacy programs only have one modality
-		# Some complete programs have only one spending_only modality
-		if len(programdata['effects']) == 0:
-			m = p.add_modality(p.name)
-			return p
-
-		cc_data = {}
-		cc_data['function'] = 'cceqn'
-		cc_data['parameters'] = programdata['ccparams']
-
-		co_data = []
-		# Take care here - the effects should probably be added to all of the modalities in the same order
-		# That is, they should be in the same order as the program effects
-		for effect in programdata['effects']:
-			this_co = {}
-			if 'coparams' not in effect.keys() or (isinstance(effect['coparams'],float) and isnan(effect['coparams'])): # Some legacy effects use nan to represent a null CO curve
-				this_co['function'] = 'identity'
-				this_co['parameters'] = None
+			if not prog['effects']: 
+				# A program without any effects is a spending-only program
+				cc_input = {}
+				cc_input['pop'] = None
+				cc_input['form'] = 'null'
+				cc_input['fe_params'] = None
+				cc_inputs.append(cc_input)
+				
+				co_input = {}
+				co_input['pop'] = None
+				co_input['param'] = None
+				co_input['form'] = 'null'
+				co_input['fe_params'] = None
+				co_inputs.append(co_input)
 			else:
-				this_co['function'] = 'coeqn'
-				this_co['parameters'] = effect['coparams']
-			co_data.append(this_co)
-		m = p.add_modality(p.name,cc_data,co_data,programdata['nonhivdalys'])
-		return p
+				target_pops = list(set([effect['popname'] for effect in prog['effects']])) # Unique list of affected populations. In legacy programs, they all share the same CC curve
+				
+				for pop in target_pops:
+					cc_input = {}
+					cc_input['pop'] = pop
+					if 'scaleup' in prog['ccparams'].keys():
+						cc_input['form'] = 'cc_scaleup'
+					else:
+						cc_input['form'] = 'cc_noscaleup'
+					cc_input['fe_params'] = prog['ccparams']
+					cc_inputs.append(cc_input)
+
+				for effect in prog['effects']:
+					co_input = {}
+					co_input['pop'] = effect['popname']
+					co_input['param'] = effect['param']
+
+					if effect['param'] in coverage_params: 
+						co_input['form'] = 'identity'
+						co_input['fe_params'] = None
+					else:
+						co_input['form'] = 'co_cofun'
+						co_input['fe_params'] = effect['coparams']
+					
+					co_inputs.append(co_input)
+
+			ps.programs.append(Program(prog['name'],cc_inputs,co_inputs,prog['nonhivdalys']))
+
+		return ps
+
 
 	def get_coverage(self,spending):
 		# This function returns an array of effective coverage values for each metamodality
@@ -247,7 +256,6 @@ class MetaProgram(object):
 	def __repr__(self):
 		return '(%s)' % (','.join([s[0:4] for s in self.modalities]))
 
-
 class Program(object):
 	# This class is a single modality - a single thing that 
 	def __init__(self,name,cc_inputs,co_inputs,nonhivdalys):
@@ -264,15 +272,9 @@ class Program(object):
 
 		# co_inputs[0] = {}
 		# co_inputs[0]['pop'] = 'FSW'
-		# co_inputs[0]['signature'] = 'hivtest'
+		# co_inputs[0]['param'] = 'hivtest'
 		# co_inputs[0]['form'] = 'co_cofun'
 		# co_inputs[0]['fe_params'] = [0, 0, 2, 2]
-
-		# Existing programs have signature
-		# [{u'value': {u'pops': [u'FSW'], u'signature': [u'condom', u'com']}},
-		#  {u'value': {u'pops': [u'Clients'], u'signature': [u'condom', u'com']}},
-		#  {u'value': {u'pops': [u'FSW'], u'signature': [u'hivtest']}},
-		#  {u'value': {u'pops': [u'Clients'], u'signature': [u'hivtest']}}]
 
 		self.name = name		
 		self.nonhivdalys = nonhivdalys
@@ -289,10 +291,10 @@ class Program(object):
 		self.coverage_outcome = defaultdict(dict)
 		for co in co_inputs:
 			co_class = getattr(ccocs, co['form'])
-			if isinstance(co['signature'],list): # Note that lists cannot be dictionary keys, so [u'condom', u'com'] -> 'condom-com'
-				co['signature'] = '-'.join(co['signature'])
-			assert(co['pop'] not in self.coverage_outcome.keys() or co['signature'] not in self.coverage_outcome[co['pop']].keys()) # Each program can only have one CO curve per effect
-			self.coverage_outcome[co['pop']][co['signature']] = cc_class(cc['fe_params']) # Instantiate it with the CC data, and append it to the program's CC array
+			if isinstance(co['param'],list): # Note that lists cannot be dictionary keys, so [u'condom', u'com'] -> 'condom-com'
+				co['param'] = '-'.join(co['param'])
+			assert(co['pop'] not in self.coverage_outcome.keys() or co['param'] not in self.coverage_outcome[co['pop']].keys()) # Each program can only have one CO curve per effect
+			self.coverage_outcome[co['pop']][co['param']] = cc_class(cc['fe_params']) # Instantiate it with the CC data, and append it to the program's CC array
 
 
 	def get_effects(self):

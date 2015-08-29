@@ -11,14 +11,17 @@ class ccoc(object):
 	# - The ability to perturb BE parameters prior to retrieving the output value
 	__metaclass__ = abc.ABCMeta
 
-	@abc.abstractmethod
+	def __init__(self,fe_params):
+		self.fe_params = fe_params
+
+	@abc.abstractmethod # This method must be defined by the derived class
 	def function(self,x,p):
 		# This function takes in either a spending value or coverage
 		# and the functional parameters for the object, and returns
 		# the coverage or the outcome
 		pass
 
-	@abc.abstractmethod
+	@abc.abstractmethod # This method must be defined by the derived class
 	def convertparams(self,perturb=False):
 		# Take the current frontend parameters, and convert them into backend parameters
 		# that can be passed into ccoc.function()
@@ -38,9 +41,6 @@ class ccoc(object):
 		# but it can be overloaded by derived classes to provide
 		# an analytic inverse
 		raise Exception('Numerical inverse not implemented yet')
-
-	def __init__(self,fe_params):
-		self.fe_params = fe_params
 
 ######## SPECIFIC CCOC IMPLEMENTATIONS
 
