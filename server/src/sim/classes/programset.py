@@ -182,6 +182,8 @@ class ProgramSet(object):
 		m = self.modalities.pop(idx)
 		return m
 
+	def __repr__(self):
+		return 'ProgramSet %s (%s)' % (self.uuid[0:4],self.name)
 
 class MetaProgram(object):
 	# A metaprogram corresponds to an overlap of programs
@@ -294,7 +296,7 @@ class Program(object):
 			if isinstance(co['param'],list): # Note that lists cannot be dictionary keys, so [u'condom', u'com'] -> 'condom-com'
 				co['param'] = '-'.join(co['param'])
 			assert(co['pop'] not in self.coverage_outcome.keys() or co['param'] not in self.coverage_outcome[co['pop']].keys()) # Each program can only have one CO curve per effect
-			self.coverage_outcome[co['pop']][co['param']] = cc_class(cc['fe_params']) # Instantiate it with the CC data, and append it to the program's CC array
+			self.coverage_outcome[co['pop']][co['param']] = co_class(co['fe_params']) # Instantiate it with the CC data, and append it to the program's CC array
 
 
 	def get_effects(self):
