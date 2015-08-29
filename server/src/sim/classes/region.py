@@ -17,7 +17,7 @@ from printv import printv
 import dataio_binary
 from programset import ProgramSet
 from scipy.interpolate import PchipInterpolator as pchip
-
+import cPickle
 #### Multiprocessor helper functions for Region class.
 #def unwrap_self_developBOCsubprocess(*arg, **kwarg):
 #    return Region.developBOCsubprocess(*arg, **kwarg)
@@ -111,7 +111,15 @@ class Region(object):
         # Note that regiondict is a reference, so code here changes the regiondict externally!
         if regiondict['version'] <= 1: 
             # Version 1 regions did not have program sets - they can be created from the saved metadata
-            regiondict['programsets'] = [ProgramSet.import_legacy('Default',regiondict['metadata']['programs'])]
+            # Note that fromdict() expects programsets to be serialized as a string
+            regiondict['programsets'] = cPickle.dumps([ProgramSet.import_legacy('Default',regiondict['metadata']['programs'])]) 
+
+        # The statement below for calibrations handles loading earlier versions of the new-type JSON files
+        # which don't have calibrations already defined. It is suggested in future that these regions should
+        # be loaded, a new calibration created from D, and then saved again, so that this statement can be removed
+        import numpy
+        if isinstance(regiondict['calibrations'], float) and numpy.isnan(regiondict['calibrations']):
+            regiondict['calibrations'] = [{'uuid':None}]
 
     def fromdict(self,regiondict):
         # Assign variables from a new-type JSON file created using Region.todict()
@@ -121,15 +129,7 @@ class Region(object):
         self.metadata = regiondict['metadata']
         self.data = regiondict['data']
         self.options = regiondict['options'] # Populate default options here
-        self.programsets = regiondict['programsets'] # sets of Programs i.e. an array of sets of CCOCs
-        
-        # The statement below for calibrations handles loading earlier versions of the new-type JSON files
-        # which don't have calibrations already defined. It is suggested in future that these regions should
-        # be loaded, a new calibration created from D, and then saved again, so that this statement can be removed
-        import numpy
-        if isinstance(regiondict['calibrations'], float) and numpy.isnan(regiondict['calibrations']):
-            regiondict['calibrations'] = [{'uuid':None}]
-
+        self.programsets = cPickle.loads(regiondict['programsets']) # sets of Programs i.e. an array of sets of CCOCs
         self.calibrations = regiondict['calibrations']
         self.uuid = regiondict['uuid']
         self.D = regiondict['D']
@@ -149,7 +149,7 @@ class Region(object):
         regiondict['data'] = self.data 
         regiondict['simboxlist'] = [sbox.todict() for sbox in self.simboxlist]
         regiondict['options'] = self.options # Populate default options here = self.options 
-        regiondict['programsets'] = self.programsets 
+        regiondict['programsets'] = cPickle.dumps(self.programsets) # Serialize the programset
         regiondict['calibrations'] = self.calibrations # Calibrations are stored as dictionaries
         regiondict['uuid'] = self.uuid 
         regiondict['D'] = self.D
@@ -178,6 +178,7 @@ class Region(object):
 
         self.options = tempD['opt']
 
+        # Legacy programs can be imported from the region metadata
         self.programsets = ProgramSet.import_legacy('Default',self.metadata['programs'])
 
         # Make the calibration - legacy files have one calibration
