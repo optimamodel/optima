@@ -250,72 +250,71 @@ class MetaProgram(object):
 
 class Program(object):
 	# This class is a single modality - a single thing that 
-	def __init__(self,name,cc_inputs,co_inputs,nonhivdalys, maxcoverage = 1.0):
+	def __init__(self,name,cc_inputs,co_inputs,nonhivdalys):
 		# THINGS THAT PROGRAMS HAVE
 		# frontend quantities
 		# functions
 		# conversion from FE parameters to BE parameters
 
 		# EXAMPLE INPUTS
-		# cc_inputs = {}
-		# cc_inputs['pop'] = 'FSW'
-		# cc_inputs['form'] = 'cc_scaleup'
-		# cc_inputs['fe_params'] = {u'coveragelower': 0.2, u'nonhivdalys': 0.0, u'funding': 300000.0, u'saturation': 0.98, u'coverageupper': 0.75, u'scaleup': 0.73}
+		# cc_inputs[0] = {}
+		# cc_inputs[0]['pop'] = 'FSW'
+		# cc_inputs[0]['form'] = 'cc_scaleup'
+		# cc_inputs[0]['fe_params'] = {u'coveragelower': 0.2, u'nonhivdalys': 0.0, u'funding': 300000.0, u'saturation': 0.98, u'coverageupper': 0.75, u'scaleup': 0.73}
 
-		# co_inputs = {}
-		# co_inputs['pop'] = 'FSW'
-		# co_inputs['signature'] = 'hivtest'
-		# co_inputs['form'] = 'co_cofun'
-		# co_inputs['fe_params'] = [0, 0, 2, 2]
-
+		# co_inputs[0] = {}
+		# co_inputs[0]['pop'] = 'FSW'
+		# co_inputs[0]['signature'] = 'hivtest'
+		# co_inputs[0]['form'] = 'co_cofun'
+		# co_inputs[0]['fe_params'] = [0, 0, 2, 2]
 
 		# Existing programs have signature
-		[{u'value': {u'pops': [u'FSW'], u'signature': [u'condom', u'com']}},
-		 {u'value': {u'pops': [u'Clients'], u'signature': [u'condom', u'com']}},
-		 {u'value': {u'pops': [u'FSW'], u'signature': [u'hivtest']}},
-		 {u'value': {u'pops': [u'Clients'], u'signature': [u'hivtest']}}]
+		# [{u'value': {u'pops': [u'FSW'], u'signature': [u'condom', u'com']}},
+		#  {u'value': {u'pops': [u'Clients'], u'signature': [u'condom', u'com']}},
+		#  {u'value': {u'pops': [u'FSW'], u'signature': [u'hivtest']}},
+		#  {u'value': {u'pops': [u'Clients'], u'signature': [u'hivtest']}}]
 
-		 # A set of effects - each effect has a population
-		 # Each population has a coverage
-		 # Need to be able to generate a list of effects easily
-		 # And a list of populations easily
-
-
-		# TODO - cc_inputs and co_inputs should name their populations and/or target parameters
-		# Then the cc stuff could be stored either in a dictionary or in an array
-		
-
-		# cc_inputs - an array of tuples, containing ('form',fe_ccparams)
-		# co_inputs - an array of lists of tuples
-		# 	- the first index corresponds to the associated cost-coverage curve
-		# 	- the second index corresponds to the outcome
 		self.name = name		
 		self.nonhivdalys = nonhivdalys
 		self.uuid = str(uuid.uuid4())
 
-		assert(len(cc_inputs) == len(co_inputs))
-		self.cost_coverage = []
-		self.coverage_outcome = []
+		assert(set([x['pop'] for x in cc_inputs]) == set([x['pop'] for x in co_inputs])) # A CC curve must be defined for every population that this program affects
 
-		for cc,co_list in zip(cc_inputs,co_inputs):
-			cc_class = getattr(ccocs, cc['form']) # This is the class corresponding to the CC form e.g. it could be ccocs.cc_scaleup
-			self.cost_coverage.append(cc_class(cc['fe_params'])) # Instantiate it with the CC data, and append it to the program's CC array
-		
-			co_temp = []
-			for co in co_list:
-				co_class = getattr(ccocs, co['form'])
-				co_temp.append(co_class(co['fe_params'])) 
-			self.coverage_outcome.append(co_temp)
+		self.cost_coverage = defaultdict(list)
+		for cc in cc_inputs:
+			cc_class = getattr(ccocs, cc['form']) # This is the class corresponding to the CC form e.g. it could be  a <ccocs.cc_scaleup> object
+			assert(cc['pop'] not in self.cost_coverage.keys()) # Each program can only have one CC curve per population
+			self.cost_coverage[cc['pop']] = cc_class(cc['fe_params']) # Instantiate it with the CC data, and append it to the program's CC array
+
+		self.coverage_outcome = defaultdict(dict)
+		for co in co_inputs:
+			co_class = getattr(ccocs, co['form'])
+			if isinstance(co['signature'],list): # Note that lists cannot be dictionary keys, so [u'condom', u'com'] -> 'condom-com'
+				co['signature'] = '-'.join(co['signature'])
+			assert(co['pop'] not in self.coverage_outcome.keys() or co['signature'] not in self.coverage_outcome[co['pop']].keys()) # Each program can only have one CO curve per effect
+			self.coverage_outcome[co['pop']][co['signature']] = cc_class(cc['fe_params']) # Instantiate it with the CC data, and append it to the program's CC array
+
 
 	def get_effects(self):
 		# Returns a list of tuples storing effects as (population,parameter)
+		
 
-	def get_coverage(self,spending):
-		return [cc.evaluate(s) for cc,s in zip(self.cost_coverage,spending)]
+		# A set of effects - each effect has a population
+		# Each population has a coverage
+		# Need to be able to generate a list of effects easily
+		# And a list of populations easily
+		return
 
-	def get_outcomes(self,coverage):
-		return [ [co.evaluate(s) for co in this_co_list] for this_co_list,coverage in zip(self.coverage_outcome,coverage)]
+	def get_coverage(self,spending,pop):
+		# Return the coverage of a particular population given the spending amount
+		return self.cost_coverage[cc['pop']].evaluate(spending)
+
+	def get_outcome(self,coverage,pop,effect):
+		# Return the outcome for a particular effect given the parent population's coverage
+		if isinstance(effect,list):
+			effect = '-'.join(effect)
+		return self.coverage_outcome[pop][effect].evaluate(coverage)
 
 	def __repr__(self):
-		return '%s (%s)' % (self.name,self.uuid[0:4])
+		return 'Program %s (%s)' % (self.uuid[0:4],self.name)
 
