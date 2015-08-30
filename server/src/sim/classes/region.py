@@ -213,6 +213,9 @@ class Region(object):
                 for s in sbox.simlist:
                     if s.uuid == target_uuid:
                         return s
+        for pset in self.programsets:
+            if pset.uuid == target_uuid:
+                return pset
         raise Exception('UUID not found')
         
     def createsimbox(self, simboxname, iscal = False, isopt = False, createdefault = True):
@@ -372,7 +375,6 @@ class Region(object):
         
         return fixedtotal
 
-#%%        
     def printdata(self):
         print(self.data)
     
