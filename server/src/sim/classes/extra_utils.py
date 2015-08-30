@@ -40,7 +40,10 @@ def dict_equal(d1,d2,verbose=0,debug_string=''):
 	# Vector reduction for ndarrays
 	elif isinstance(d1,(float,numpy.ndarray)):
 		# We need to check array equality considering NaN==NaN to be true
-		return isequalwithequalnans(d1,d2)
+		comparison = isequalwithequalnans(d1,d2)
+		if not comparison and verbose:
+			print '%s arrays do not match' % (debug_string)
+		return comparison 
 
 	# We might have a list of ndarrays 
 	elif isinstance(d1,list):
