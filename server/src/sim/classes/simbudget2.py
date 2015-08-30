@@ -1,5 +1,9 @@
 from sim import Sim
 import numpy
+import programset
+from utils import findinds
+from numpy import arange 
+from copy import deepcopy
 
 class SimBudget2(Sim):
 
@@ -44,8 +48,9 @@ class SimBudget2(Sim):
         # Available populations are
         #   - All of the populations listed in r.metadata['inputpopulations'] (access by short name)
         #   - total
-        # And then the numbers of people reached by the following program names
+        # And then the numbers of people potentially reached by the following program names
         #   - aidstest, numost, sharing, numpmtct, breast, numfirstline, numsecondline, numcircum
+
         self.popsizes = {}
         r = self.getregion()
         s = Sim('temp',r,self.calibration) # Make a base sim with the selected calibration
@@ -74,131 +79,118 @@ class SimBudget2(Sim):
         self.popsizes['numsecondline'] = self.popsizes['numfirstline']
         self.popsizes['numcircum'] = people[:,ismale,:].sum(axis = (0,1))
 
-    def initialize(self):
-        # Need to make a temporary sim, and then use makemodelpars
-        # temporary sim should be created here, because optimization will
-        # call makemodelpars() many times, but the temporary sim from 
-        # data pars won't change. Could consider just storing the output instead
-        # of storing the whole sim?
-        return
-
     def makemodelpars(self,perturb=False):
         # If perturb == True, then a random perturbation will be applied at the CCOC level
         r = self.getregion()
-        npts = len(r.options['partvec']) # Number of time points
+        self.makedatapars() # Construct the data pars
 
-        programset = self.getprogramset()
-        outcomes = programset.get_outcomes(self.budget,perturb)
+        # First, set self.parsmodel as though this was a base sim
+        # This assigns parts of self.parsmodel from the calibration
+        # Specifically, these are the parts of self.parsmodel that do not go through
+        # dpar2mpar - popsize,hivprev,pships,transit,totalacts,propaware,txtotal
+        Sim.makemodelpars(self) # First, set self.parsmodel as though this was a base sim 
 
-        for i in xrange(0,len(prog.effects['param'])): # For each of the effects
-            if prog.effects['iscoverageparam'][i]:
-                P[prog.effects['param'][i]]['c'][:] = outcomes[i]
-            else:
-                popnumber = r.get_popidx(prog.effects['popname'][i])-1 # Yes, get_popidx is 1-based rather than 0 based...cf. scenarios
-                P[prog.effects['param'][i]]['c'][popnumber] = outcomes[i]
+        # Save a copy of the original model parameters for partialupdateM
+        # This should be done properly and removed in future when optimize.py is updated
+        base_parsmodel = deepcopy(self.parsmodel) 
 
-        from makemodelpars import makemodelpars
-        self.parsmodel = makemodelpars(P, r.options, withwhat='c')
+        # Calculate self.popsizes if it has not already been calculated
+        # This calculation should persist if used in a loop
+        if not self.popsizes:  
+            self.get_estimated_popsizes()
+
+        # Get the parameter values from the CCOCs
+        progs = self.getprogramset()
+        outcomes = progs.get_outcomes(self.budget,perturb)
+
+        # Declare a helper function to convert population names into array indexes
+        pops = [x['short_name'] for x in r.metadata['inputpopulations']]
+        popnumber = lambda s: pops.index(s)
+        npops = len(pops)
+        npts = len(r.options['partvec'])
+
+        # Now we overwrite the data parameters (computed via Sim.makemodelpars()) with program values
+        # if the program specified the parameter value
+
+        # TODO - fix these parameter names
+        self.parsmodel['numfirstline'] = self.parsmodel['tx1']            
+        self.parsmodel['numsecondline'] = self.parsmodel['tx2']            
+        self.parsmodel['numactsreg'] = self.parsmodel['numacts']['reg'] 
+        self.parsmodel['numactscas'] = self.parsmodel['numacts']['cas'] 
+        self.parsmodel['numactscom'] = self.parsmodel['numacts']['com'] 
+        self.parsmodel['numactsinj'] = self.parsmodel['numacts']['inj'] 
+        self.parsmodel['condomreg'] = self.parsmodel['condom']['reg']  
+        self.parsmodel['condomcas'] = self.parsmodel['condom']['cas']  
+        self.parsmodel['condomcom'] = self.parsmodel['condom']['com']  
+
+        # TODO - In these loops, time indexes should be used to achieve the outcome of partialupdateM
+        # That is, we should only overwrite the arrays for the indexes that are meant to be overwritten
+        # instead of storing a complete base parsmodel and using partialupdateM afterwards
+
+        # First, assign population-dependent parameters
+        for par in ['hivprev','stiprevulc','stiprevdis','death','tbprev','hivtest','birth','numactsreg','numactscas','numactscom','numactsinj','condomreg','condomcas','condomcom','circum','sharing','prep']:
+            for pop in pops:
+                if pop in outcomes.keys() and par in outcomes[pop].keys():
+                    if par in programset.coverage_params: 
+                        # If this is a coverage par, rescale it by population size - note that all coverage pars have
+                        # had a specific popsize calculated in self.get_estimated_popsizes
+                        # Hence popsizes is queried by parameter, rather than population
+                        self.parsmodel[par][popnumber(pop),:] = outcomes[pop][par]*self.popsizes[par]
+                    else:
+                        self.parsmodel[par][popnumber(pop),:] = outcomes[pop][par]
+
+        # Next, assign total (whole region) parameters
+        for par in ['aidstest','numfirstline','numsecondline','txelig','numpmtct','breast','numost','numcircum']:
+            if par in outcomes['Total']:
+                self.parsmodel[par] = outcomes['Total'][par]
+
+        # FINALLY, APPLY SOME HACKS THAT NEED TO BE CLEANED UP
+
+        # TODO - fix these parameter names
+        self.parsmodel['tx1'] = self.parsmodel['numfirstline']
+        self.parsmodel['tx2'] = self.parsmodel['numsecondline']
+        self.parsmodel['numacts']['reg'] = self.parsmodel['numactsreg']
+        self.parsmodel['numacts']['cas'] = self.parsmodel['numactscas']
+        self.parsmodel['numacts']['com'] = self.parsmodel['numactscom']
+        self.parsmodel['numacts']['inj'] = self.parsmodel['numactsinj']
+        self.parsmodel['condom']['reg']  = self.parsmodel['condomreg'] 
+        self.parsmodel['condom']['cas']  = self.parsmodel['condomcas'] 
+        self.parsmodel['condom']['com']  = self.parsmodel['condomcom'] 
+
+        # And remove the temporary keys
+        del self.parsmodel['numfirstline']
+        del self.parsmodel['numsecondline']
+        del self.parsmodel['numactsreg']
+        del self.parsmodel['numactscas']
+        del self.parsmodel['numactscom']
+        del self.parsmodel['numactsinj']
+        del self.parsmodel['condomreg'] 
+        del self.parsmodel['condomcas'] 
+        del self.parsmodel['condomcom'] 
+
+        # Hardcoded quick hack. Better to be linked to 'default objectives' function in optimize.
+        obys = 2015 # "Year to begin optimization from"
+        obye = 2030 # "Year to end optimization"
+        initialindex = findinds(r.options['partvec'], obys)
+        finalparindex = findinds(r.options['partvec'], obye) 
+        parindices = arange(initialindex,finalparindex)
+        # Note: If the range of indices do not cover enough of the data, you will get strange tx1 problems.
+        
+        # Hideous hack for ART to use linear unit cost
+        try:
+            from utils import sanitize
+            artind = r.data['meta']['progs']['short'].index('ART')
+            currcost = sanitize(r.data['costcov']['cost'][artind])[-1]
+            currcov = sanitize(r.data['costcov']['cov'][artind])[-1]
+            unitcost = currcost/currcov
+            tempparsmodel['tx1'].flat[parindices] = self.alloc[artind]/unitcost
+        except:
+            print('Attempt to calculate ART coverage failed for an unknown reason')
+        
+        from optimize import partialupdateM        
+        
+        # Now update things
+        self.parsmodel = partialupdateM(base_parsmodel, deepcopy(self.parsmodel), parindices)
 
     def __repr__(self):
         return "SimBudget2 %s ('%s')" % (self.uuid,self.name)  
-
-
-def gettargetpop(D=None, artindex=None, progname=None):
-    ''' Calculate target population for a given program'''
-    
-    from numpy import cumsum
-    
-    # Sort out time vector and indexing
-    tvec = arange(D['G']['datastart'], D['G']['dataend']+D['opt']['dt'], D['opt']['dt']) # Extract the time vector from the sim
-    npts = len(tvec) # Number of sim points
-
-    # Figure out the targeted population(s) 
-    prognumber = D['data']['meta']['progs']['short'].index(progname) # get program number
-    targetpops = []
-    targetpars = []
-    popnumbers = []
-    for effect in D['programs'][prognumber]['effects']:
-        targetpops.append(effect['popname'])
-        targetpars.append(effect['param'])
-        if effect['popname'] in D['data']['meta']['pops']['short']:
-            popnumbers.append(D['data']['meta']['pops']['short'].index(effect['popname']))
-    targetpops = list(set(targetpops))
-    targetpars = list(set(targetpars))
-    popnumbers = list(set(popnumbers))
-
-    targetpopmodel = None
-
-    # Figure out the total model-estimated size of the targeted population(s)
-    for thispar in targetpars: # Loop through parameters
-        if D['P'].get(thispar):
-            if len(D['P'][thispar]['p'])==D['G']['npops']: # For parameters whose effect is differentiated by population, we add up the targeted populations
-                targetpopmodel = D['S']['people'][:,popnumbers,0:npts].sum(axis=(0,1))
-            elif len(D['P'][thispar]['p'])==1: # For parameters whose effects are not differentiated by population, we make special cases depending on the parameter
-                if thispar == 'aidstest': # Target population = diagnosed PLHIV, AIDS stage
-                    targetpopmodel = D['S']['people'][27:31,:,0:npts].sum(axis=(0,1))
-                elif thispar in ['numost','sharing']: # Target population = the sum of all populations that inject
-                    injectindices = [i for i, x in enumerate(D['data']['meta']['pops']['injects']) if x == 1]
-                    targetpopmodel = D['S']['people'][:,injectindices,0:npts].sum(axis = (0,1))
-                elif thispar == 'numpmtct': # Target population = HIV+ pregnant women
-                    targetpopmodel = cumsum(multiply(D['M']['birth'][:,0:npts]*D['opt']['dt'], D['S']['people'][artindex,:,0:npts].sum(axis=0)).sum(axis=0))
-                elif thispar == 'breast': # Target population = HIV+ breastfeeding women
-                    targetpopmodel = multiply(D['M']['birth'][:,0:npts], D['M']['breast'][0:npts], D['S']['people'][artindex,:,0:npts].sum(axis=0)).sum(axis=0)
-                elif thispar in ['numfirstline','numsecondline']: # Target population = diagnosed PLHIV
-                    targetpopmodel = D['S']['people'][artindex,:,0:npts].sum(axis=(0,1))
-                elif thispar == 'numcircum': # Target population = men (??)
-                    maleindices = findinds(D['data']['meta']['pops']['male'])
-                    targetpopmodel = D['S']['people'][:,maleindices,0:npts].sum(axis = (0,1))
-            else:
-                print('WARNING, Parameter %s of odd length %s' % (thispar, len(D['P'][thispar]['p'])))
-        else:
-            print('WARNING, Unrecognized parameter %s' % thispar)
-    if len(targetpars)==0:
-        print('WARNING, no target parameters for program %s' % progname)
-                
-    # We only want the model-estimated size of the targeted population(s) for actual years, not the interpolated years
-    yearindices = range(0,npts,int(1/D['opt']['dt']))
-    
-    targetpop = None
-    if targetpopmodel is not None:
-        targetpop = targetpopmodel[yearindices]
-
-    return targetpop
-
-
-
-
-
-def getcoverage(D, alloc=None, randseed=None):
-    ''' Get the coverage levels corresponding to a particular allocation '''
-    from numpy import zeros_like, array, isnan
-    from makeccocs import cc2eqn, cceqn, gettargetpop
-    from utils import perturb
-    
-    allocwaslist = 0
-    if isinstance(alloc,list): alloc, allocwaslist = array(alloc), 1
-    coverage = {}
-    coverage['num'], coverage['per'] = zeros_like(alloc), zeros_like(alloc)
-
-    for prognumber, progname in enumerate(D['data']['meta']['progs']['short']):
-        if D['programs'][prognumber]['effects']:            
-
-            targetpop = gettargetpop(D=D, artindex=range(D['G']['nstates'])[1::], progname=progname)[-1]
-            program_ccparams = D['programs'][prognumber]['convertedccparams']
-            use_default_ccparams = not program_ccparams or (not isinstance(program_ccparams, list) and isnan(program_ccparams))
-            if not use_default_ccparams:
-                convertedccparams = D['programs'][prognumber]['convertedccparams'] 
-            else:
-                convertedccparams = setdefaultccparams(progname=progname)
-            if randseed>=0: convertedccparams[0][1] = array(perturb(1,(array(convertedccparams[2][1])-array(convertedccparams[1][1]))/2., randseed=randseed)) - 1 + array(convertedccparams[0][1]) 
-            coverage['per'][prognumber,] = cc2eqn(alloc[prognumber,], convertedccparams[0]) if len(convertedccparams[0])==2 else cceqn(alloc[prognumber,], convertedccparams[0])
-            coverage['num'][prognumber,] = coverage['per'][prognumber,]*targetpop
-        else:
-            coverage['per'][prognumber,] = array([None]*len(alloc[prognumber,]))
-            coverage['num'][prognumber,] = array([None]*len(alloc[prognumber,]))
-
-    if allocwaslist:
-        coverage['num'] = coverage['num'].tolist()
-        coverage['per'] = coverage['per'].tolist()
-            
-    return coverage

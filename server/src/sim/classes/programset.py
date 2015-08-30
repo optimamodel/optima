@@ -5,6 +5,7 @@ from collections import defaultdict
 import ccocs
 
 coverage_params = ['numcircum','numost','numpmtct','numfirstline','numsecondline'] # This list is copied from makeccocs.py
+# What about aidstest, sharing, and breast?
 
 class ProgramSet(object):
 	# This class is a collection of programs/modalities
@@ -58,6 +59,12 @@ class ProgramSet(object):
 					co_input = {}
 					co_input['pop'] = effect['popname']
 					co_input['param'] = effect['param']
+
+					if co_input['param'] in coverage_params and co_input['pop'] != 'Total':
+						# If simbudget2 uses special popsize estimates for the coverage parameters
+						# but this coverage parameter targets a population, then should the population size
+						# or the special estimate be used?
+						raise Exception('A coverage parameter has been defined for a specific population? Look into this')
 
 					if effect['param'] in coverage_params: 
 						co_input['form'] = 'identity'
@@ -116,7 +123,7 @@ class ProgramSet(object):
 			coverage = []
 			for prog in progs_reaching_pop:
 				spending = budget[self.programs.index(prog),:] # Get the amount of money spent on this program
-				coverage.append(prog.get_coverage(pop,spending),perturb) # Calculate the program's coverage
+				coverage.append(prog.get_coverage(pop,spending,perturb)) # Calculate the program's coverage
 
 			# Next, get the list of effects to iterate over
 			effects = self.progs_by_effect(pop) 
