@@ -27,9 +27,9 @@ class ccoc(object):
 		# that can be passed into ccoc.function()
 		pass
 
-	def evaluate(self,x):
+	def evaluate(self,x,perturb=False):
 		# Todo: incorporate perturbation
-		p = self.convertparams()
+		p = self.convertparams(perturb)
 		return self.function(x,p)
 
 	def invert(self,y):
@@ -48,7 +48,7 @@ class cc_scaleup(ccoc):
 	def function(self,x,p):
 		return cceqn(x,p)
 
-	def convertparams(self):
+	def convertparams(self,perturb=False):
 		growthratel = exp((1-self.fe_params['scaleup'])*log(self.fe_params['saturation']/self.fe_params['coveragelower']-1)+log(self.fe_params['funding']))
 		growthratem = exp((1-self.fe_params['scaleup'])*log(self.fe_params['saturation']/((self.fe_params['coveragelower']+self.fe_params['coverageupper'])/2)-1)+log(self.fe_params['funding']))
 		growthrateu = exp((1-self.fe_params['scaleup'])*log(self.fe_params['saturation']/self.fe_params['coverageupper']-1)+log(self.fe_params['funding']))
@@ -59,7 +59,7 @@ class cc_noscaleup(ccoc):
 	def function(self,x,p):
 		return cc2eqn(x,p)
 
-	def convertparams(self):
+	def convertparams(self,perturb=False):
 		growthratel = (-1/self.fe_params['funding'])*log((2*self.fe_params['saturation'])/(self.fe_params['coveragelower']+self.fe_params['saturation']) - 1)        
 		growthratem = (-1/self.fe_params['funding'])*log((2*self.fe_params['saturation'])/(((self.fe_params['coveragelower']+self.fe_params['coverageupper'])/2)+self.fe_params['saturation']) - 1)        
 		growthrateu = (-1/self.fe_params['funding'])*log((2*self.fe_params['saturation'])/(self.fe_params['coverageupper']+self.fe_params['saturation']) - 1)        
@@ -73,7 +73,7 @@ class co_cofun(ccoc):
 	def inverse(self,y,p):
 		return (y-p[0])/(p[1]-p[0]) 
 		
-	def convertparams(self):
+	def convertparams(self,perturb=False):
 		muz, stdevz = (self.fe_params[0]+self.fe_params[1])/2, (self.fe_params[1]-self.fe_params[0])/6 # Mean and standard deviation calcs
 		muf, stdevf = (self.fe_params[2]+self.fe_params[3])/2, (self.fe_params[3]-self.fe_params[2])/6 # Mean and standard deviation calcs
 		convertedcoparams = [muz, stdevz, muf, stdevf]
@@ -84,21 +84,21 @@ class co_linear(ccoc):
 	def function(self,x,p):
 		return linear(x,p)
 
-	def convertparams(self):
+	def convertparams(self,perturb=False):
 		return self.fe_params
 
 class identity(ccoc):
 	def function(self,x,p):
 		return x
 
-	def convertparams(self):
+	def convertparams(self,perturb=False):
 		return None
 
 class null(ccoc):
 	def function(self,x,p):
 		return None
 
-	def convertparams(self):
+	def convertparams(self,perturb=False):
 		return None
 
 ############## FUNCTIONAL FORMS COPIED FROM makeccocs.py ##############

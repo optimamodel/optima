@@ -98,7 +98,7 @@ class ProgramSet(object):
 					effects[effect[1]].append(prog)
 		return effects
 
-	def get_outcomes(self,budget):
+	def get_outcomes(self,budget,perturb=False):
 		# An alloc is a vector of numbers for each program, that is subject to optimization
 		# A budget is spending at a particular time, for each program
 		# In the legacy code, we would say 
@@ -116,7 +116,7 @@ class ProgramSet(object):
 			coverage = []
 			for prog in progs_reaching_pop:
 				spending = budget[self.programs.index(prog),:] # Get the amount of money spent on this program
-				coverage.append(prog.get_coverage(pop,spending)) # Calculate the program's coverage
+				coverage.append(prog.get_coverage(pop,spending),perturb) # Calculate the program's coverage
 
 			# Next, get the list of effects to iterate over
 			effects = self.progs_by_effect(pop) 
@@ -128,20 +128,21 @@ class ProgramSet(object):
 					prog = effects[effect][0]
 					this_coverage = coverage[progs_reaching_pop.index(prog)] # Get the coverage that this program has for this population
 					assert(effect not in outcomes[pop].keys()) # Multiple programs should not be able to write to the same parameter *without* going through the overlapping calculation
-					outcomes[pop][effect] = prog.get_outcome(pop,effect,this_coverage) # Get the program outcome and store it in the outcomes dict
+					outcomes[pop][effect] = prog.get_outcome(pop,effect,this_coverage,perturb) # Get the program outcome and store it in the outcomes dict
 				else:
 					raise Exception('Overlap, coverage distribution, and effect combination go here')
 		
 		return outcomes
 
-	def get_coverage(self,spending):
+	def get_coverage_legacy(self,spending):
 		# This function returns an array of effective coverage values for each metamodality
 		# reflow_metamodalities should generally be run before this function is called
 		# this is meant to happen automatically when add_modality() or remove_modality is called()
 		#
 		# Note that coverage is *supposed* to always be in normalized units (i.e. percentage of population)
 		# The method program.convert_units() does the conversion to number of people at the last minute
-		
+		raise Exception('This code is scheduled for removal')
+
 		if len(self.modalities) == 1:
 			spending = array([[spending]]) # Need a better solution...
 
@@ -342,15 +343,15 @@ class Program(object):
 				effects.append((pop,param))
 		return effects
 
-	def get_coverage(self,pop,spending):
+	def get_coverage(self,pop,spending,perturb=False):
 		# Return the coverage of a particular population given the spending amount
-		return self.cost_coverage[pop].evaluate(spending)
+		return self.cost_coverage[pop].evaluate(spending,perturb)
 
-	def get_outcome(self,pop,effect,coverage):
+	def get_outcome(self,pop,effect,coverage,perturb=False):
 		# Return the outcome for a particular effect given the parent population's coverage
 		if isinstance(effect,list):
 			effect = '-'.join(effect)
-		return self.coverage_outcome[pop][effect].evaluate(coverage)
+		return self.coverage_outcome[pop][effect].evaluate(coverage,perturb)
 
 	def __repr__(self):
 		return 'Program %s (%s)' % (self.uuid[0:4],self.name)

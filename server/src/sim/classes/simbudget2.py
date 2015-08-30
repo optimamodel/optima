@@ -37,7 +37,8 @@ class SimBudget2(Sim):
         # of storing the whole sim?
         return
 
-    def makemodelpars(self):
+    def makemodelpars(self,perturb=False):
+        # If perturb == True, then a random perturbation will be applied at the CCOC level
         r = self.getregion()
         npts = len(r.options['partvec']) # Number of time points
 
@@ -56,3 +57,41 @@ class SimBudget2(Sim):
 
     def __repr__(self):
         return "SimBudget2 %s ('%s')" % (self.uuid,self.name)  
+
+
+
+
+
+def getcoverage(D, alloc=None, randseed=None):
+    ''' Get the coverage levels corresponding to a particular allocation '''
+    from numpy import zeros_like, array, isnan
+    from makeccocs import cc2eqn, cceqn, gettargetpop
+    from utils import perturb
+    
+    allocwaslist = 0
+    if isinstance(alloc,list): alloc, allocwaslist = array(alloc), 1
+    coverage = {}
+    coverage['num'], coverage['per'] = zeros_like(alloc), zeros_like(alloc)
+
+    for prognumber, progname in enumerate(D['data']['meta']['progs']['short']):
+        if D['programs'][prognumber]['effects']:            
+
+            targetpop = gettargetpop(D=D, artindex=range(D['G']['nstates'])[1::], progname=progname)[-1]
+            program_ccparams = D['programs'][prognumber]['convertedccparams']
+            use_default_ccparams = not program_ccparams or (not isinstance(program_ccparams, list) and isnan(program_ccparams))
+            if not use_default_ccparams:
+                convertedccparams = D['programs'][prognumber]['convertedccparams'] 
+            else:
+                convertedccparams = setdefaultccparams(progname=progname)
+            if randseed>=0: convertedccparams[0][1] = array(perturb(1,(array(convertedccparams[2][1])-array(convertedccparams[1][1]))/2., randseed=randseed)) - 1 + array(convertedccparams[0][1]) 
+            coverage['per'][prognumber,] = cc2eqn(alloc[prognumber,], convertedccparams[0]) if len(convertedccparams[0])==2 else cceqn(alloc[prognumber,], convertedccparams[0])
+            coverage['num'][prognumber,] = coverage['per'][prognumber,]*targetpop
+        else:
+            coverage['per'][prognumber,] = array([None]*len(alloc[prognumber,]))
+            coverage['num'][prognumber,] = array([None]*len(alloc[prognumber,]))
+
+    if allocwaslist:
+        coverage['num'] = coverage['num'].tolist()
+        coverage['per'] = coverage['per'].tolist()
+            
+    return coverage
