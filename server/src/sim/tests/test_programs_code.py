@@ -25,6 +25,9 @@ s1.initialise()
 s2.initialise()
 from extra_utils import dict_equal
 dict_equal(s1.parsmodel,s2.parsmodel,True)
+
+pset = r.fetch(s2.programset)
+
 s1.run()
 sb = simbox.SimBox('Plot',r)
 sb.simlist = [s1,s2]

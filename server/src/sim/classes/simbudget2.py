@@ -142,7 +142,10 @@ class SimBudget2(Sim):
         # Next, assign total (whole region) parameters
         for par in ['aidstest','numfirstline','numsecondline','txelig','numpmtct','breast','numost','numcircum']:
             if par in outcomes['Total']:
-                self.parsmodel[par] = outcomes['Total'][par]
+                if par in programset.coverage_params: 
+                    self.parsmodel[par] = outcomes['Total'][par]*self.popsizes[par]
+                else:
+                    self.parsmodel[par] = outcomes['Total'][par]
 
         # FINALLY, APPLY SOME HACKS THAT NEED TO BE CLEANED UP
 

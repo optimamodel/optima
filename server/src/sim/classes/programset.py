@@ -93,15 +93,18 @@ class ProgramSet(object):
 				pops[pop].append(prog)
 		return pops
 
-	def progs_by_effect(self,pop):
+	def progs_by_effect(self,pop=None):
 		# Like progs_by_pop, this function returns a dictionary 
 		# like {'condomcas': [Program 6b39 (Condoms & SBCC)], u'hivtest': [Program b127 (HTC)]}
 		# These are specific to the population provided as an input argument
+		# If no population is specified, then (pop,program) tuples for the parameter are returned instead
 		effects = defaultdict(list)
 		for prog in self.programs:
 			prog_effects = prog.get_effects()
 			for effect in prog_effects:
-				if effect[0] == pop: # If the effect applies to the current population
+				if pop is None:
+					effects[effect[1]].append((effect[0],prog))
+				elif effect[0] == pop: # If the effect applies to the selected population
 					effects[effect[1]].append(prog)
 		return effects
 
