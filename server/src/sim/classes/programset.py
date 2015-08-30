@@ -327,7 +327,7 @@ class Program(object):
 
 		assert(set([x['pop'] for x in cc_inputs]) == set([x['pop'] for x in co_inputs])) # A CC curve must be defined for every population that this program affects
 
-		self.cost_coverage = defaultdict(list)
+		self.cost_coverage = dict()
 		for cc in cc_inputs:
 			cc_class = getattr(ccocs, cc['form']) # This is the class corresponding to the CC form e.g. it could be  a <ccocs.cc_scaleup> object
 			assert(cc['pop'] not in self.cost_coverage.keys()) # Each program can only have one CC curve per population
