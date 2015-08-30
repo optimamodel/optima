@@ -394,7 +394,7 @@ class Sim(object):
         self.parsmodel = M
 
     def run(self):
-        # Returns the full debug output
+        # Returns the full debug output i.e. D.S
         if not self.initialised:
             self.initialise()
 
