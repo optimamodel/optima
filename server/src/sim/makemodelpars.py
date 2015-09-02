@@ -77,12 +77,11 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
     M['breast']   = dpar2mpar(P['breast'], withwhat)[0]  
     
     ## Sexual behavior parameters -- all are parameters so can loop over all
-    M['numacts'] = dict()
     M['condom']  = dict()
-    M['numacts']['reg'] = dpar2mpar(P['numactsreg'], withwhat) # ...
-    M['numacts']['cas'] = dpar2mpar(P['numactscas'], withwhat) # ...
-    M['numacts']['com'] = dpar2mpar(P['numactscom'], withwhat) # ...
-    M['numacts']['inj'] = dpar2mpar(P['numinject'], withwhat) # ..
+    M['numactsreg'] = dpar2mpar(P['numactsreg'], withwhat) # ...
+    M['numactscas'] = dpar2mpar(P['numactscas'], withwhat) # ...
+    M['numactscom'] = dpar2mpar(P['numactscom'], withwhat) # ...
+    M['numactsinj'] = dpar2mpar(P['numinject'], withwhat) # ..
     M['condom']['reg']  = dpar2mpar(P['condomreg'], withwhat) # ...
     M['condom']['cas']  = dpar2mpar(P['condomcas'], withwhat) # ...
     M['condom']['com']  = dpar2mpar(P['condomcom'], withwhat) # ...
@@ -125,6 +124,12 @@ def totalacts(M, npts):
     popsize = M['popsize']
     pships = M['pships']
 
+    numacts = dict()
+    numacts['reg'] = M['numactsreg']
+    numacts['cas'] = M['numactscas']
+    numacts['com'] = M['numactscom']
+    numacts['inj'] = M['numactsinj']
+
     for act in pships.keys():
         npops = len(M['popsize'][:,0])
         npop=len(popsize); # Number of populations
@@ -135,9 +140,9 @@ def totalacts(M, npts):
                 symmetricmatrix[pop1,pop2] = symmetricmatrix[pop1,pop2] + (mixmatrix[pop1,pop2] + mixmatrix[pop2,pop1]) / float(eps+((mixmatrix[pop1,pop2]>0)+(mixmatrix[pop2,pop1]>0)))
 
         a = zeros((npops,npops,npts))
-        numacts = M['numacts'][act]
+        numact = numacts[act]
         for t in xrange(npts):
-            a[:,:,t] = reconcileacts(symmetricmatrix.copy(), popsize[:,t], numacts[:,t]) # Note use of copy()
+            a[:,:,t] = reconcileacts(symmetricmatrix.copy(), popsize[:,t], numact[:,t]) # Note use of copy()
 
         totalacts[act] = a
     

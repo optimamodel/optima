@@ -118,7 +118,10 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2, safetymargin=0.8, bench
     asym      = M['transit']['asym'] # Asymmetric transitions
     
     # Intervention uptake (P=proportion, N=number)
-    condom   = M['condom']    # Condoms (P)
+    condom   = dict()
+    condom['reg']  = M['condomreg']
+    condom['cas']  = M['condomcas']
+    condom['com']  = M['condomcom']
     sharing  = M['sharing']   # Sharing injecting equiptment (P)
     numpmtct = M['numpmtct']  # PMTCT (N)
     ost      = M['numost']    # OST (N)

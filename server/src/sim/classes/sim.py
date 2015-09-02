@@ -301,15 +301,13 @@ class Sim(object):
         M['breast']   = dpar2mpar(self.parsdata['breast'], withwhat)[0]  
 
         ## Sexual behavior parameters -- all are parameters so can loop over all
-        M['numacts'] = dict()
-        M['condom']  = dict()
-        M['numacts']['reg'] = dpar2mpar(self.parsdata['numactsreg'], withwhat) # ...
-        M['numacts']['cas'] = dpar2mpar(self.parsdata['numactscas'], withwhat) # ...
-        M['numacts']['com'] = dpar2mpar(self.parsdata['numactscom'], withwhat) # ...
-        M['numacts']['inj'] = dpar2mpar(self.parsdata['numinject'], withwhat) # ..
-        M['condom']['reg']  = dpar2mpar(self.parsdata['condomreg'], withwhat) # ...
-        M['condom']['cas']  = dpar2mpar(self.parsdata['condomcas'], withwhat) # ...
-        M['condom']['com']  = dpar2mpar(self.parsdata['condomcom'], withwhat) # ...
+        M['numactsreg'] = dpar2mpar(self.parsdata['numactsreg'], withwhat) # ...
+        M['numactscas'] = dpar2mpar(self.parsdata['numactscas'], withwhat) # ...
+        M['numactscom'] = dpar2mpar(self.parsdata['numactscom'], withwhat) # ...
+        M['numactsinj'] = dpar2mpar(self.parsdata['numinject'], withwhat) # ..
+        M['condomreg']  = dpar2mpar(self.parsdata['condomreg'], withwhat) # ...
+        M['condomcas']  = dpar2mpar(self.parsdata['condomcas'], withwhat) # ...
+        M['condomcom']  = dpar2mpar(self.parsdata['condomcom'], withwhat) # ...
 
         ## Circumcision parameters
         M['circum']    = dpar2mpar(self.parsdata['circum'], withwhat) # Circumcision percentage
@@ -334,7 +332,7 @@ class Sim(object):
         M['const'] = calibration['const']
 
         ## Calculate total acts
-        M['totalacts'] = calculate_totalacts(M['popsize'],M['pships'],M['numacts'])
+        M['totalacts'] = calculate_totalacts(M)
 
         ## Program parameters not related to data
         M['propaware'] = zeros(shape(M['hivtest'])) # Initialize proportion of PLHIV aware of their status
@@ -524,8 +522,16 @@ class SimParameter(Sim):
 
 
         
-def calculate_totalacts(popsize,pships,numacts):
+def calculate_totalacts(M):
     eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
+
+    popsize = M['popsize']
+    pships = M['pships']
+    numacts = dict()
+    numacts['reg'] = M['numactsreg']
+    numacts['cas'] = M['numactscas']
+    numacts['com'] = M['numactscom']
+    numacts['inj'] = M['numactsinj']
 
     totalacts = dict()
     npts = popsize.shape[1]

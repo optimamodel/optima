@@ -109,6 +109,10 @@ class SimBudget2(Sim):
         npops = len(pops)
         npts = len(r.options['partvec'])
 
+        # TODO - fix these parameter names
+        self.parsmodel['numfirstline'] = self.parsmodel['tx1']            
+        self.parsmodel['numsecondline'] = self.parsmodel['tx2']     
+
         # First check - all of the parameters and populations provided by the ProgramSet should exist
         outcome_pops = set(outcomes.keys()) # Manually add the special population 'Total'
         outcome_pars = set(reduce(operator.add,[outcomes[x].keys() for x in outcomes.keys()]))
@@ -123,20 +127,8 @@ class SimBudget2(Sim):
 
         # Now we overwrite the data parameters (computed via Sim.makemodelpars()) with program values
         # if the program specified the parameter value
-
-        # TODO - fix these parameter names
-        self.parsmodel['numfirstline'] = self.parsmodel['tx1']            
-        self.parsmodel['numsecondline'] = self.parsmodel['tx2']            
-        self.parsmodel['numactsreg'] = self.parsmodel['numacts']['reg'] 
-        self.parsmodel['numactscas'] = self.parsmodel['numacts']['cas'] 
-        self.parsmodel['numactscom'] = self.parsmodel['numacts']['com'] 
-        self.parsmodel['numactsinj'] = self.parsmodel['numacts']['inj'] 
-        self.parsmodel['condomreg'] = self.parsmodel['condom']['reg']  
-        self.parsmodel['condomcas'] = self.parsmodel['condom']['cas']  
-        self.parsmodel['condomcom'] = self.parsmodel['condom']['com']  
-
         update_indexes = numpy.logical_and(r.options['partvec']>program_start_year, r.options['partvec']<program_end_year) # This does the same thing as partialupdateM
-
+        
         # First, assign population-dependent parameters
         for par in ['hivprev','stiprevulc','stiprevdis','death','tbprev','hivtest','birth','numactsreg','numactscas','numactscom','numactsinj','condomreg','condomcas','condomcom','circum','sharing','prep']:
             for pop in pops:
@@ -158,8 +150,7 @@ class SimBudget2(Sim):
                     self.parsmodel[par][update_indexes] = outcomes['Total'][par][update_indexes]
 
         # Finally, realculate totalacts in case numacts is different now for some reason
-
-        self.parsmodel['totalacts'] = sim.calculate_totalacts(self.parsmodel['popsize'],self.parsmodel['pships'],self.parsmodel['numacts'])
+        self.parsmodel['totalacts'] = sim.calculate_totalacts(self.parsmodel)
 
 
         # FINALLY, APPLY SOME HACKS THAT NEED TO BE CLEANED UP
@@ -167,35 +158,21 @@ class SimBudget2(Sim):
         # TODO - fix these parameter names
         self.parsmodel['tx1'] = self.parsmodel['numfirstline']
         self.parsmodel['tx2'] = self.parsmodel['numsecondline']
-        self.parsmodel['numacts']['reg'] = self.parsmodel['numactsreg']
-        self.parsmodel['numacts']['cas'] = self.parsmodel['numactscas']
-        self.parsmodel['numacts']['com'] = self.parsmodel['numactscom']
-        self.parsmodel['numacts']['inj'] = self.parsmodel['numactsinj']
-        self.parsmodel['condom']['reg']  = self.parsmodel['condomreg'] 
-        self.parsmodel['condom']['cas']  = self.parsmodel['condomcas'] 
-        self.parsmodel['condom']['com']  = self.parsmodel['condomcom'] 
-
+        
         # And remove the temporary keys
         del self.parsmodel['numfirstline']
         del self.parsmodel['numsecondline']
-        del self.parsmodel['numactsreg']
-        del self.parsmodel['numactscas']
-        del self.parsmodel['numactscom']
-        del self.parsmodel['numactsinj']
-        del self.parsmodel['condomreg'] 
-        del self.parsmodel['condomcas'] 
-        del self.parsmodel['condomcom'] 
        
         # Hideous hack for ART to use linear unit cost
-        try:
-            from utils import sanitize
-            artind = r.data['meta']['progs']['short'].index('ART')
-            currcost = sanitize(r.data['costcov']['cost'][artind])[-1]
-            currcov = sanitize(r.data['costcov']['cov'][artind])[-1]
-            unitcost = currcost/currcov
-            tempparsmodel['tx1'].flat[parindices] = self.alloc[artind]/unitcost
-        except:
-            print('Attempt to calculate ART coverage failed for an unknown reason')
+        #try:
+        from utils import sanitize
+        artind = r.data['meta']['progs']['short'].index('ART')
+        currcost = sanitize(r.data['costcov']['cost'][artind])[-1]
+        currcov = sanitize(r.data['costcov']['cov'][artind])[-1]
+        unitcost = currcost/currcov
+        self.parsmodel['tx1'].flat[update_indexes] = self.budget[:,1][artind]/unitcost
+        #except:
+        #    print('Attempt to calculate ART coverage failed for an unknown reason')
         
     def __repr__(self):
         return "SimBudget2 %s ('%s')" % (self.uuid,self.name)  

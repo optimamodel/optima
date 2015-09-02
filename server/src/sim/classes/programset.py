@@ -336,8 +336,8 @@ class Program(object):
 		self.coverage_outcome = defaultdict(dict)
 		for co in co_inputs:
 			co_class = getattr(ccocs, co['form'])
-			if isinstance(co['param'],list): # Note that lists cannot be dictionary keys, so [u'condom', u'com'] -> 'condom-com'
-				co['param'] = '-'.join(co['param'])
+			if isinstance(co['param'],list): # Note that lists cannot be dictionary keys, so [u'condom', u'com'] -> 'condomcom'
+				co['param'] = ''.join(co['param'])
 			assert(co['pop'] not in self.coverage_outcome.keys() or co['param'] not in self.coverage_outcome[co['pop']].keys()) # Each program can only have one CO curve per effect
 			self.coverage_outcome[co['pop']][co['param']] = co_class(co['fe_params']) # Instantiate it with the CC data, and append it to the program's CC array
 
@@ -360,7 +360,7 @@ class Program(object):
 	def get_outcome(self,pop,effect,coverage,perturb=False):
 		# Return the outcome for a particular effect given the parent population's coverage
 		if isinstance(effect,list):
-			effect = '-'.join(effect)
+			effect = ''.join(effect)
 		return self.coverage_outcome[pop][effect].evaluate(coverage,perturb)
 
 	def __repr__(self):

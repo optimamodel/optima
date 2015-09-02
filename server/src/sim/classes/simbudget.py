@@ -133,8 +133,18 @@ class SimBudget(Sim):
         from optimize import partialupdateM        
         
         # Now update things
+        self.parsmodel['condom'] = dict()
+        self.parsmodel['condom']['reg'] = self.parsmodel['condomreg']
+        self.parsmodel['condom']['cas'] = self.parsmodel['condomcas']
+        self.parsmodel['condom']['com'] = self.parsmodel['condomcom']
+        del self.parsmodel['condomreg']
+        del self.parsmodel['condomcas']
+        del self.parsmodel['condomcom']
         self.parsmodel = partialupdateM(deepcopy(self.parsmodel), deepcopy(tempparsmodel), parindices)
-    
+        self.parsmodel['condomreg'] = self.parsmodel['condom']['reg']
+        self.parsmodel['condomcas'] = self.parsmodel['condom']['cas']
+        self.parsmodel['condomcom'] = self.parsmodel['condom']['com']
+        del self.parsmodel['condom']
     
     # Work out the objective value of this SimBudget and its allocation.
     # WARNING: Currently bugged for multiple aims as normalisation values always reflect the final totals.
