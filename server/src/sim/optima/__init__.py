@@ -32,3 +32,4 @@ from portfolio import Portfolio
 from programset import ProgramSet
 from region import Region
 
+from plot import plot
