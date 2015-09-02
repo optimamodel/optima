@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Jul 23 21:32:57 2015
-
-@author: David Kedziora
-"""
-
 from simbox import SimBox
 from simbudget import SimBudget
 

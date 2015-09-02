@@ -12,8 +12,7 @@ import setoptions
 import uuid
 import program
 from numpy import array, isnan, zeros, shape, mean
-from utils import sanitize, perturb
-from printv import printv
+from liboptima.utils import sanitize, perturb,printv
 import dataio_binary
 from programset import ProgramSet
 from scipy.interpolate import PchipInterpolator as pchip

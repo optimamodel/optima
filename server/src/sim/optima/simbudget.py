@@ -1,14 +1,7 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Jul 23 21:26:39 2015
-
-@author: David Kedziora
-"""
-
 from sim import Sim
 
 import defaults
-from utils import findinds
+from liboptima.utils import findinds
 from numpy import arange 
 from copy import deepcopy
 
@@ -121,7 +114,7 @@ class SimBudget(Sim):
         
         # Hideous hack for ART to use linear unit cost
         try:
-            from utils import sanitize
+            from liboptima.utils import sanitize
             artind = r.data['meta']['progs']['short'].index('ART')
             currcost = sanitize(r.data['costcov']['cost'][artind])[-1]
             currcov = sanitize(r.data['costcov']['cov'][artind])[-1]

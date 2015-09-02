@@ -6,7 +6,7 @@ Data input/output. Uses JSON format.
 Version: 2014nov17 by cliffk
 """
 
-from printv import printv
+from liboptima.utils import printv
 import os
 
 

@@ -1,4 +1,4 @@
-from printv import printv
+from liboptima.utils import printv
 from numpy import zeros, array, exp, shape
 eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
 
@@ -25,7 +25,7 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
         Set withwhat = c if you want to use the ccoc data for the parameters
         """
         from numpy import isnan
-        from utils import smoothinterp
+        from liboptima.utils import smoothinterp
 
         withwhat = withwhat if withwhat in datapar else default_withwhat #if that is not there, then it has to fail anyway
         

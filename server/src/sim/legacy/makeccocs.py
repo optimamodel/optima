@@ -11,9 +11,9 @@ from math import log
 from numpy import linspace, exp, isnan, multiply, arange, mean, array
 from numpy import log as nplog
 from rtnorm import rtnorm
-from printv import printv
+from liboptima.utils import printv
 from datetime import date
-from utils import findinds
+from liboptima.utils import findinds
 
 ## Set coverage parameters...
 coverage_params = ['numcircum','numost','numpmtct','numfirstline','numsecondline']

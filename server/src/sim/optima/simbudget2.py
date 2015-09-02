@@ -2,7 +2,7 @@ import sim
 from sim import Sim
 import numpy
 import programset
-from utils import findinds
+from liboptima.utils import findinds
 from numpy import arange 
 from copy import deepcopy
 import operator
@@ -165,7 +165,7 @@ class SimBudget2(Sim):
        
         # Hideous hack for ART to use linear unit cost
         #try:
-        from utils import sanitize
+        from liboptima.utils import sanitize
         artind = r.data['meta']['progs']['short'].index('ART')
         currcost = sanitize(r.data['costcov']['cost'][artind])[-1]
         currcov = sanitize(r.data['costcov']['cov'][artind])[-1]

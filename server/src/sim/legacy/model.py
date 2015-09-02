@@ -1,6 +1,6 @@
  ## Imports
 from numpy import array, zeros, exp, maximum, minimum, nonzero, concatenate, hstack, absolute, median
-from printv import printv
+from liboptima.utils import printv
 from math import pow as mpow
 from copy import deepcopy
 
