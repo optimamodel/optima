@@ -1,9 +1,11 @@
+import sim 
 from sim import Sim
 import numpy
 import programset
 from utils import findinds
 from numpy import arange 
 from copy import deepcopy
+import operator
 
 class SimBudget2(Sim):
 
@@ -107,6 +109,18 @@ class SimBudget2(Sim):
         npops = len(pops)
         npts = len(r.options['partvec'])
 
+        # First check - all of the parameters and populations provided by the ProgramSet should exist
+        outcome_pops = set(outcomes.keys()) # Manually add the special population 'Total'
+        outcome_pars = set(reduce(operator.add,[outcomes[x].keys() for x in outcomes.keys()]))
+        project_pops = set(pops + ['Total'])
+        project_pars = set(self.parsmodel.keys())
+
+        if not (outcome_pops <= project_pops):
+            print "Warning - outcomes exist for populations that are not in the Project: ", outcome_pops - project_pops
+
+        if not (outcome_pars <= project_pars):
+            print "Warning - outcomes exist for parameters that are not in the Project: ", outcome_pars - project_pars
+
         # Now we overwrite the data parameters (computed via Sim.makemodelpars()) with program values
         # if the program specified the parameter value
 
@@ -142,6 +156,11 @@ class SimBudget2(Sim):
                     self.parsmodel[par][update_indexes] = outcomes['Total'][par][update_indexes]*self.popsizes[par][update_indexes]
                 else:
                     self.parsmodel[par][update_indexes] = outcomes['Total'][par][update_indexes]
+
+        # Finally, realculate totalacts in case numacts is different now for some reason
+
+        self.parsmodel['totalacts'] = sim.calculate_totalacts(self.parsmodel['popsize'],self.parsmodel['pships'],self.parsmodel['numacts'])
+
 
         # FINALLY, APPLY SOME HACKS THAT NEED TO BE CLEANED UP
 

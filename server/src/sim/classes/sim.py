@@ -279,56 +279,6 @@ class Sim(object):
                
            return output
 
-        def totalacts(M, npts):
-            eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
-
-            totalacts = dict()
-
-            popsize = M['popsize']
-            pships = M['pships']
-
-            for act in pships.keys():
-                npops = len(M['popsize'][:,0])
-                npop=len(popsize); # Number of populations
-                mixmatrix = pships[act]
-                symmetricmatrix=zeros((npop,npop));
-                for pop1 in xrange(npop):
-                    for pop2 in xrange(npop):
-                        symmetricmatrix[pop1,pop2] = symmetricmatrix[pop1,pop2] + (mixmatrix[pop1,pop2] + mixmatrix[pop2,pop1]) / float(eps+((mixmatrix[pop1,pop2]>0)+(mixmatrix[pop2,pop1]>0)))
-
-                a = zeros((npops,npops,npts))
-                numacts = M['numacts'][act]
-                for t in xrange(npts):
-                    a[:,:,t] = reconcileacts(symmetricmatrix.copy(), popsize[:,t], numacts[:,t]) # Note use of copy()
-
-                totalacts[act] = a
-            
-            return totalacts
-
-        def reconcileacts(symmetricmatrix,popsize,popacts):
-            eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
-
-            # Make sure the dimensions all agree
-            npop=len(popsize); # Number of populations
-
-            for pop1 in xrange(npop):
-                symmetricmatrix[pop1,:]=symmetricmatrix[pop1,:]*popsize[pop1];
-
-            # Divide by the sum of the column to normalize the probability, then
-            # multiply by the number of acts and population size to get total number of
-            # acts
-            for pop1 in xrange(npop):
-                symmetricmatrix[:,pop1]=popsize[pop1]*popacts[pop1]*symmetricmatrix[:,pop1] / float(eps+sum(symmetricmatrix[:,pop1]))
-
-            # Reconcile different estimates of number of acts, which must balance
-            pshipacts=zeros((npop,npop));
-            for pop1 in xrange(npop):
-                for pop2 in xrange(npop):
-                    balanced = (symmetricmatrix[pop1,pop2] * popsize[pop1] + symmetricmatrix[pop2,pop1] * popsize[pop2])/(popsize[pop1]+popsize[pop2]); # here are two estimates for each interaction; reconcile them here
-                    pshipacts[pop2,pop1] = balanced/popsize[pop2]; # Divide by population size to get per-person estimate
-                    pshipacts[pop1,pop2] = balanced/popsize[pop1]; # ...and for the other population
-
-            return pshipacts
 
         ## Epidemiology parameters -- most are data
         M['popsize'] = grow(calibration['popsize'], opt['growth']) # Population size
@@ -384,8 +334,7 @@ class Sim(object):
         M['const'] = calibration['const']
 
         ## Calculate total acts
-        M['totalacts'] = totalacts(M, npts)
-
+        M['totalacts'] = calculate_totalacts(M['popsize'],M['pships'],M['numacts'])
 
         ## Program parameters not related to data
         M['propaware'] = zeros(shape(M['hivtest'])) # Initialize proportion of PLHIV aware of their status
@@ -572,6 +521,58 @@ class SimParameter(Sim):
 
     def __repr__(self):
         return "SimParameter %s ('%s')" % (self.uuid,self.name)   
+
+
+        
+def calculate_totalacts(popsize,pships,numacts):
+    eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
+
+    totalacts = dict()
+    npts = popsize.shape[1]
+
+    for act in pships.keys():
+        npops = len(popsize[:,0])
+        npop=len(popsize); # Number of populations
+        mixmatrix = pships[act]
+        symmetricmatrix=zeros((npop,npop));
+        for pop1 in xrange(npop):
+            for pop2 in xrange(npop):
+                symmetricmatrix[pop1,pop2] = symmetricmatrix[pop1,pop2] + (mixmatrix[pop1,pop2] + mixmatrix[pop2,pop1]) / float(eps+((mixmatrix[pop1,pop2]>0)+(mixmatrix[pop2,pop1]>0)))
+
+        a = zeros((npops,npops,npts))
+        numact = numacts[act]
+        for t in xrange(npts):
+            a[:,:,t] = reconcileacts(symmetricmatrix.copy(), popsize[:,t], numact[:,t]) # Note use of copy()
+
+        totalacts[act] = a
+    
+    return totalacts
+
+def reconcileacts(symmetricmatrix,popsize,popacts):
+    eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
+
+    # Make sure the dimensions all agree
+    npop=len(popsize); # Number of populations
+
+    for pop1 in xrange(npop):
+        symmetricmatrix[pop1,:]=symmetricmatrix[pop1,:]*popsize[pop1];
+
+    # Divide by the sum of the column to normalize the probability, then
+    # multiply by the number of acts and population size to get total number of
+    # acts
+    for pop1 in xrange(npop):
+        symmetricmatrix[:,pop1]=popsize[pop1]*popacts[pop1]*symmetricmatrix[:,pop1] / float(eps+sum(symmetricmatrix[:,pop1]))
+
+    # Reconcile different estimates of number of acts, which must balance
+    pshipacts=zeros((npop,npop));
+    for pop1 in xrange(npop):
+        for pop2 in xrange(npop):
+            balanced = (symmetricmatrix[pop1,pop2] * popsize[pop1] + symmetricmatrix[pop2,pop1] * popsize[pop2])/(popsize[pop1]+popsize[pop2]); # here are two estimates for each interaction; reconcile them here
+            pshipacts[pop2,pop1] = balanced/popsize[pop2]; # Divide by population size to get per-person estimate
+            pshipacts[pop1,pop2] = balanced/popsize[pop1]; # ...and for the other population
+
+    return pshipacts
+
 
 #%% Tail imports pointing to derived classes, so as to avoid circular import problems.
 
