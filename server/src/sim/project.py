@@ -25,8 +25,7 @@ Version: 2015sep02 by cliffk
 """
 
 from copy import deepcopy
-import cPickle
-from gzip import GzipFile
+import numpy
 from metadata import Metadata
 import settings
     
@@ -86,22 +85,20 @@ class Project(object):
     #######################################################################################################
     
     @classmethod
-    def load(Project,filename):
+    def load(filename):
         ''' Load a saved project '''
-        print('WARNING DOES NOT WORK')
-        with GzipFile(filename, 'rb') as fileobj: project = cPickle.load(fileobj)
+        try: project = numpy.load(filename)['arr_0'].tolist()
+        except: raise Exception("Couldn't load, maybe incorrect filename?")
         print('Project loaded from "%s"' % filename)
         return project
-
-    def save(self,filename):
-        ''' Save the current project '''
-        print('WARNING DOES NOT WORK')
-        with GzipFile(filename, 'wb') as fileobj: cPickle.dump(self, fileobj, protocol=2)
+    
+    
+    def save(self, filename=None, folder=''):
+        ''' A quick function to save a portfolio to a Numpy object '''
+        if filename is None: filename = self.name
+        numpy.savez_compressed(folder+filename,self)
         print('Project "%s" saved to "%s"' % (self.name, filename))
         return None
-    
-    
-    
     
     
     
