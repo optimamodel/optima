@@ -15,11 +15,11 @@ In addition, an Optima project contains:
     3. settings -- timestep, indices, etc.
 
 Methods for structure lists:
-    1. add
-    2. remove
-    3.copy
-    4. rename
-    5. show
+    1. add -- add a new structure to the list
+    2. remove -- remove a structure from the list
+    3. copy -- copy a structure in the list
+    4. rename -- rename a structure in the list
+    5. show -- show information on all items in the list(s)
 
 Version: 2015sep02 by cliffk
 """
@@ -90,7 +90,7 @@ class Project(object):
         ''' Load a saved project '''
         print('WARNING DOES NOT WORK')
         with GzipFile(filename, 'rb') as fileobj: project = cPickle.load(fileobj)
-        print('Project loaded')
+        print('Project loaded from "%s"' % filename)
         return project
 
     def save(self,filename):
@@ -175,7 +175,7 @@ class Project(object):
     
     
     def show(self, what=None):
-        ''' Show all items in a structure list '''
+        ''' Show all items in the structure list(s) -- pretty useless for now '''
         if what is None: whatlist = ['p', 'c', 's', 'o']
         if type(what)==str: whatlist = [what]
         if type(what)==list: whatlist = what
@@ -183,11 +183,11 @@ class Project(object):
             structlist = self.getwhat(w)
             keys = structlist.keys()
             print('\n'*3)
-            print('Number of items in structured list "%s": %i' % (w, len(keys)))
+            print('Number of items in structure list "%s": %i' % (w, len(keys)))
             print('Keys:')
-            for key in keys:
-                print('  Name                 | Date')
-                print('  %20s | %20s' % (structlist[key].name, structlist[key].date))
+            for i,key in enumerate(keys):
+                print('  Name                 | Number')
+                print('  %20s | %20s' % (key, str(i)))
         return None
     
     
