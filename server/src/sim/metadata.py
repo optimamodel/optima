@@ -8,7 +8,6 @@ from uuid import uuid4
 from datetime import datetime
 from time import mktime
 from utils import run
-dateformat = '%Y-%b-%d %H:%M:%S'
 
 version = 3.0
 
@@ -16,6 +15,7 @@ version = 3.0
 
 class Metadata(object):
     ''' Store all metadata for an Optima project '''
+    
     
     def __init__(self, name='default'):
         ''' Create the metadata '''
@@ -33,6 +33,7 @@ class Metadata(object):
         return None
     
     
+    
     def __repr__(self):
         ''' Print out useful information when called '''
         output = '\n'
@@ -46,8 +47,11 @@ class Metadata(object):
         return output
     
     
+    
     def getdate(self, which='modified', fmt='str'):
         ''' Return either the date created or modified ("which") as either a str or int ("fmt") '''
+        
+        dateformat = '%Y-%b-%d %H:%M:%S'
         
         if which=='created': dateobj = self.created
         elif which=='modified': dateobj = self.modified
@@ -56,6 +60,7 @@ class Metadata(object):
         if fmt=='str': return dateobj.strftime(dateformat) # Return string representation of time
         elif fmt=='int': return mktime(dateobj.timetuple()) # So ugly!! But it works -- return integer representation of time
         else: raise Exception('"fmt=%s" not understood; must be "str" or "int"' % fmt)
+    
     
     
     def setdate(self):
