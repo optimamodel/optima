@@ -79,7 +79,9 @@ class SimBudget2(Sim):
         self.popsizes['numsecondline'] = self.popsizes['numfirstline']
         self.popsizes['numcircum'] = people[:,ismale,:].sum(axis = (0,1))
 
-    def makemodelpars(self,perturb=False):
+    def makemodelpars(self,perturb=False,program_start_year=2015,program_end_year=numpy.inf):
+        # The programs will be used to overwrite the parameter values for times between program_start_year and program_end_year
+
         # If perturb == True, then a random perturbation will be applied at the CCOC level
         r = self.getregion()
         self.makedatapars() # Construct the data pars
@@ -89,10 +91,6 @@ class SimBudget2(Sim):
         # Specifically, these are the parts of self.parsmodel that do not go through
         # dpar2mpar - popsize,hivprev,pships,transit,totalacts,propaware,txtotal
         Sim.makemodelpars(self) # First, set self.parsmodel as though this was a base sim 
-
-        # Save a copy of the original model parameters for partialupdateM
-        # This should be done properly and removed in future when optimize.py is updated
-        base_parsmodel = deepcopy(self.parsmodel) 
 
         # Calculate self.popsizes if it has not already been calculated
         # This calculation should persist if used in a loop
@@ -123,9 +121,7 @@ class SimBudget2(Sim):
         self.parsmodel['condomcas'] = self.parsmodel['condom']['cas']  
         self.parsmodel['condomcom'] = self.parsmodel['condom']['com']  
 
-        # TODO - In these loops, time indexes should be used to achieve the outcome of partialupdateM
-        # That is, we should only overwrite the arrays for the indexes that are meant to be overwritten
-        # instead of storing a complete base parsmodel and using partialupdateM afterwards
+        update_indexes = numpy.logical_and(r.options['partvec']>program_start_year, r.options['partvec']<program_end_year) # This does the same thing as partialupdateM
 
         # First, assign population-dependent parameters
         for par in ['hivprev','stiprevulc','stiprevdis','death','tbprev','hivtest','birth','numactsreg','numactscas','numactscom','numactsinj','condomreg','condomcas','condomcom','circum','sharing','prep']:
@@ -135,17 +131,17 @@ class SimBudget2(Sim):
                         # If this is a coverage par, rescale it by population size - note that all coverage pars have
                         # had a specific popsize calculated in self.get_estimated_popsizes
                         # Hence popsizes is queried by parameter, rather than population
-                        self.parsmodel[par][popnumber(pop),:] = outcomes[pop][par]*self.popsizes[par]
+                        self.parsmodel[par][popnumber(pop),update_indexes] = outcomes[pop][par][update_indexes]*self.popsizes[par][update_indexes]
                     else:
-                        self.parsmodel[par][popnumber(pop),:] = outcomes[pop][par]
+                        self.parsmodel[par][popnumber(pop),update_indexes] = outcomes[pop][par][update_indexes]
 
         # Next, assign total (whole region) parameters
         for par in ['aidstest','numfirstline','numsecondline','txelig','numpmtct','breast','numost','numcircum']:
             if par in outcomes['Total']:
                 if par in programset.coverage_params: 
-                    self.parsmodel[par] = outcomes['Total'][par]*self.popsizes[par]
+                    self.parsmodel[par][update_indexes] = outcomes['Total'][par][update_indexes]*self.popsizes[par][update_indexes]
                 else:
-                    self.parsmodel[par] = outcomes['Total'][par]
+                    self.parsmodel[par][update_indexes] = outcomes['Total'][par][update_indexes]
 
         # FINALLY, APPLY SOME HACKS THAT NEED TO BE CLEANED UP
 
@@ -170,15 +166,7 @@ class SimBudget2(Sim):
         del self.parsmodel['condomreg'] 
         del self.parsmodel['condomcas'] 
         del self.parsmodel['condomcom'] 
-
-        # Hardcoded quick hack. Better to be linked to 'default objectives' function in optimize.
-        obys = 2015 # "Year to begin optimization from"
-        obye = 2030 # "Year to end optimization"
-        initialindex = findinds(r.options['partvec'], obys)
-        finalparindex = findinds(r.options['partvec'], obye) 
-        parindices = arange(initialindex,finalparindex)
-        # Note: If the range of indices do not cover enough of the data, you will get strange tx1 problems.
-        
+       
         # Hideous hack for ART to use linear unit cost
         try:
             from utils import sanitize
@@ -190,10 +178,5 @@ class SimBudget2(Sim):
         except:
             print('Attempt to calculate ART coverage failed for an unknown reason')
         
-        from optimize import partialupdateM        
-        
-        # Now update things
-        self.parsmodel = partialupdateM(base_parsmodel, deepcopy(self.parsmodel), parindices)
-
     def __repr__(self):
         return "SimBudget2 %s ('%s')" % (self.uuid,self.name)  
