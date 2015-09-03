@@ -4,11 +4,14 @@
 
 import sys
 sys.path.append('..')
-import optima
-from liboptima.utils import dict_equal
 import unittest
 import numpy
+import optima, liboptima
+from optima import Project,Sim,SimParameter,SimBudget2,ProgramSet # Shortcuts for particular items
+from liboptima.utils import dict_equal
 
+P = Project.load_json('../projects/Dedza.json')
+P.save('test_temp_project.bin')
 
 class TestSyntax(unittest.TestCase):
 
@@ -60,6 +63,52 @@ class TestSyntax(unittest.TestCase):
 		r3.simboxlist[0].createsim('sim2') # This should really be r.simboxlist.createsim('sim_name') ...
 		r3.runsimbox(r3.simboxlist[0])
 		r3.simboxlist[0].viewmultiresults(show_wait=False)
+
+	### EXAMPLE WORKFLOWS
+
+	def test_1(self): #  Workflow 1a - Save components to share with other users
+		P = Project.load('test_temp_project.bin')
+		P.programsets[0].save('example_ccocs.bin')
+		liboptima.save(P.calibrations[0],'example_parameters.bin')
+		P.save('myproject.bin')
+		
+	def test_2(self): # Workflow 2 - Minimal epidemic projection workflow
+		P = Project.load('test_temp_project.bin')
+		optima.plot(Sim('Example',P),show_wait=False)	
+
+	def test_3(self):	# Workflow 3 - Minimal parameter scenarios workflow
+		P = Project.load('test_temp_project.bin')
+		sim1 = Sim('Base',P)
+		sim2 = SimParameter('Test & Treat only',P)
+		sim2.create_override(['propaware'],'all',2020,2030,0.9,0.9)
+		sim2.create_override(['death'],'all',2015,2030,0.1,0.9)
+		optima.plot([sim1,sim2],show_wait=False)	
+
+	def test_4(self):	# Workflow 4 - Minimal budget/coverage scenarios workflow
+		P = Project.load('test_temp_project.bin')
+		sim1 = SimBudget2('Test',P,P.data['origalloc'])
+		optima.plot(sim1,show_wait=False)	
+
+	def test_5(self):	# Workflow 5 - Minimal optimization workflow
+		P = Project.load('test_temp_project.bin')
+		sb = P.createsimbox('Opt', isopt = True, createdefault = True)
+		P.runsimbox(sb)
+		sb.plotallsims(show_wait=False)
+
+	def test_8(self): # Workflow 8 - Loading someone else's programs
+		P = Project.load('test_temp_project.bin')
+		ccocs2 = ProgramSet.load('example_ccocs.bin')
+		P.programsets.append(ccocs2)
+		sim1 = SimBudget2('Test',P,P.data['origalloc'],programset=ccocs2.uuid)
+		optima.plot(sim1,show_wait=False)
+
+	def test_9(self): # Workflow 9 - Loading someone else's parameters/calibration
+		P = Project.load('test_temp_project.bin')
+		cal = liboptima.load('example_parameters.bin')
+		P.calibrations.append(cal)
+		sim1 = SimBudget2('Test',P,P.data['origalloc'],calibration=cal['uuid'])
+		optima.plot(sim1,show_wait=False)
+
 
 	# def test_from_xlsx(self):
 	# 	# Test running a simulation from XLSX

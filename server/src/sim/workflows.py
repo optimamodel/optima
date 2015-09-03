@@ -1,7 +1,7 @@
 import optima,liboptima # Get everything
-from optima import Project,Sim,SimParameter,SimBudget2 # Shortcuts for particular items
+from optima import Project,Sim,SimParameter,SimBudget2,ProgramSet # Shortcuts for particular items
 
-selected_workflows = [3]
+selected_workflows = [8,9]
 
 ############## 
 # Workflow 1 - Initialization
@@ -82,3 +82,16 @@ if 9 in selected_workflows:
 	P.calibrations.append(cal)
 	sim1 = SimBudget2('Test',P,P.data['origalloc'],calibration=cal['uuid'])
 	optima.plot(sim1)
+
+############## 
+# Workflow 10 - Comparing different calibrations
+
+if 10 in selected_workflows:
+	raise Exception('Todo')
+
+############## 
+# Workflow 10 - Comparing different allocs
+
+if 10 in selected_workflows:
+	raise Exception('Todo')
+

@@ -63,10 +63,10 @@ class SimBox(object):
             if forcerun or not sim.isprocessed():
                 sim.run()
                 
-    def plotallsims(self):
+    def plotallsims(self,show_wait=True):
         for sim in self.simlist:
             if sim.isprocessed():
-                sim.plotresults()
+                sim.plotresults(show_wait=show_wait)
 
     # Needs to check processing like plotallsims.
     def viewmultiresults(self,show_wait=True):

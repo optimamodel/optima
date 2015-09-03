@@ -3,7 +3,7 @@
 import sim
 import simbox
 
-def plot(sims):
+def plot(sims,show_wait=True):
 	# Put a lone sim into a list
 	if isinstance(sims,sim.Sim):
 		sims = [sims]
@@ -15,11 +15,11 @@ def plot(sims):
 			s.run()
 
 	if len(sims) == 1:
-		sims[0].plotresults()
+		sims[0].plotresults(show_wait=show_wait)
 	else:
 		# You can't just use viewmultiresults, a lot of tempD stuff is contained in SimBox
 		# So we just make the plot via a SimBox - makes no difference to the user anyway
 		sbox = simbox.SimBox('temp',sims[0].getproject()) 
 		sbox.simlist = sims
-		sbox.viewmultiresults()
+		sbox.viewmultiresults(show_wait=show_wait)
 
