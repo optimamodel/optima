@@ -19,7 +19,7 @@ def plot(sims):
 	else:
 		# You can't just use viewmultiresults, a lot of tempD stuff is contained in SimBox
 		# So we just make the plot via a SimBox - makes no difference to the user anyway
-		sbox = simbox.SimBox('temp',sims[0].getregion()) 
+		sbox = simbox.SimBox('temp',sims[0].getproject()) 
 		sbox.simlist = sims
 		sbox.viewmultiresults()
 

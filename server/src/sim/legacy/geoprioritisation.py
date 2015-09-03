@@ -25,52 +25,52 @@ def constrainbudgetinputs(x, grandtotal, minbound):
     
     return constrainedx
 
-# Total objective function to minimise is just the sum of BOC values for a set of regional budget totals.
-def totalobjectivefunc(x, (regionlist, grandtotal, minbound)):
+# Total objective function to minimise is just the sum of BOC values for a set of projectal budget totals.
+def totalobjectivefunc(x, (projectlist, grandtotal, minbound)):
     """Objective function. A secondary argument of all simboxes under gpa must be passed in during minimisation."""
     x = constrainbudgetinputs(x, grandtotal, minbound)
     
     totalobj = 0
     for i in arange(0,len(x)):
-        totalobj += regionlist[i].getBOCspline()(x[i])
+        totalobj += projectlist[i].getBOCspline()(x[i])
     print totalobj
     return totalobj
 
-def gpaoptimisefixedtotal(regionlist):
+def gpaoptimisefixedtotal(projectlist):
     
-    # Start by working out initial (regional budget total) inputs to perturb from, including their sum.
+    # Start by working out initial (projectal budget total) inputs to perturb from, including their sum.
     budgettotals = []
-    for i in arange(0,len(regionlist)):
-        print('Original allocation for region %s:' % regionlist[i].getregionname())
-        regionlist[i].printprograms()
-        print(regionlist[i].getorigalloc())
-        budgettotals.append(sum(regionlist[i].getorigalloc()))
+    for i in arange(0,len(projectlist)):
+        print('Original allocation for project %s:' % projectlist[i].getprojectname())
+        projectlist[i].printprograms()
+        print(projectlist[i].getorigalloc())
+        budgettotals.append(sum(projectlist[i].getorigalloc()))
     grandtotal = sum(budgettotals)
-    minbound = [r.returnfixedcostsum() for r in regionlist]
-    maxbound = [grandtotal]*len(regionlist)
+    minbound = [r.returnfixedcostsum() for r in projectlist]
+    maxbound = [grandtotal]*len(projectlist)
     # print budgettotals
     
                
-    X, FVAL, EXITFLAG, OUTPUT = ballsd(totalobjectivefunc, budgettotals, options=(regionlist, grandtotal, minbound), xmin = minbound, xmax = maxbound)
+    X, FVAL, EXITFLAG, OUTPUT = ballsd(totalobjectivefunc, budgettotals, options=(projectlist, grandtotal, minbound), xmin = minbound, xmax = maxbound)
     X = constrainbudgetinputs(X, grandtotal, minbound)
     
     # Display GPA results for debugging purposes.
     totinobj = 0
     totoptobj = 0
-    for i in arange(0,len(regionlist)):
-        regionname = regionlist[i].getregionname()
-        inobj = regionlist[i].getBOCspline()(budgettotals[i])
-        optobj = regionlist[i].getBOCspline()(X[i])
+    for i in arange(0,len(projectlist)):
+        projectname = projectlist[i].getprojectname()
+        inobj = projectlist[i].getBOCspline()(budgettotals[i])
+        optobj = projectlist[i].getBOCspline()(X[i])
         totinobj += inobj
         totoptobj += optobj
-        print('Region %s...' % regionname)
+        print('Project %s...' % projectname)
         print('Initial Budget Total: $%.2f' % budgettotals[i])
         print('Optimised Budget Total: $%.2f' % X[i])
         print('Initial Objective: %f' % inobj)
         print('Optimised Objective: %f' % optobj)
         try:
-            print('Initial BOC Derivative: %.3e' % regionlist[i].getBOCspline().derivative()(budgettotals[i]))
-            print('Optimised BOC Derivative: %.3e\n' % regionlist[i].getBOCspline().derivative()(X[i]))
+            print('Initial BOC Derivative: %.3e' % projectlist[i].getBOCspline().derivative()(budgettotals[i]))
+            print('Optimised BOC Derivative: %.3e\n' % projectlist[i].getBOCspline().derivative()(X[i]))
         except:
             print('BOC derivatives not available')
     print('GPA Portfolio Results...')

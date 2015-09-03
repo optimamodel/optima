@@ -7,7 +7,7 @@ Created on Mon Jul 20 04:34:26 2015
 
 import add_optima_paths # analysis:ignore
 from utils import tic, toc
-from region import Region
+from project import Project
 from pylab import sort
 from os import listdir
 from multiprocessing import Process,freeze_support
@@ -15,26 +15,26 @@ from multiprocessing import Process,freeze_support
 usebatch = True
 
 
-def calculate_boc_for_region(regionname, integer):
-    print('============ Starting region %s (%i) =============' % (regionname, integer))
+def calculate_boc_for_project(projectname, integer):
+    print('============ Starting project %s (%i) =============' % (projectname, integer))
     t = tic()
-    targetregion = Region.load('./regions/' + regionname + '.json')           # Load up a Region from the json file.
-    targetregion.recalculateBOC()
-    targetregion.save('./regions/' + regionname + '.json')
+    targetproject = Project.load('./projects/' + projectname + '.json')           # Load up a project from the json file.
+    targetproject.recalculateBOC()
+    targetproject.save('./projects/' + projectname + '.json')
     toc(t)
-    print('============ Done with region %s =============' % regionname)
+    print('============ Done with project %s =============' % projectname)
     
 if __name__ == '__main__':
     freeze_support()
     processes = []
-    districts = sort([x.split('.')[0] for x in listdir('./regions/') if x.endswith('.json')])
+    districts = sort([x.split('.')[0] for x in listdir('./projects/') if x.endswith('.json')])
     for i,district in enumerate(districts):
         if usebatch:
-            p = Process(target=calculate_boc_for_region, args=(district,i))
+            p = Process(target=calculate_boc_for_project, args=(district,i))
             p.start()
             processes.append(p)
         else:
-            calculate_boc_for_region(district,i)
+            calculate_boc_for_project(district,i)
 
     if usebatch:
         for p in processes:

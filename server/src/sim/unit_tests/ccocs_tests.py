@@ -5,7 +5,7 @@ from extra_utils import dict_equal
 from copy import deepcopy
 import unittest
 import numpy
-import region
+import project
 import ccocs
 from pylab import *
 from numpy import arange,linspace

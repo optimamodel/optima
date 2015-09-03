@@ -6,8 +6,8 @@ from liboptima.utils import perturb, dataindex,printv
 
 # A container for calibrating Sims.
 class SimBoxCal(SimBox):
-    def __init__(self,name,region):
-        SimBox.__init__(self,name,region)
+    def __init__(self,name,project):
+        SimBox.__init__(self,name,project)
         
     def load_dict(self, simboxdict):
         SimBox.load_dict(self,simboxdict)
@@ -18,11 +18,11 @@ class SimBoxCal(SimBox):
         
         return simboxdict
 
-    # Create a new calibration in the region storing this SimBoxCal corresponding to its data.
+    # Create a new calibration in the project storing this SimBoxCal corresponding to its data.
     # This code is drawn from legacy makedatapars.
     def calibratefromdefaultdata(self, name='Data (auto)', verbose=2):
 
-        r = self.getregion()
+        r = self.getproject()
         
         c = {}
         c['uuid'] = str(uuid.uuid4())

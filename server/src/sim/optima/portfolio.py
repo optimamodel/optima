@@ -13,43 +13,43 @@ nsims = 5
 import os
 from copy import deepcopy
 from numpy import arange, empty, savez_compressed, load
-from region import Region
+from project import Project
 import multiprocessing
 import dataio_binary
 
 def makegpasimbox(inputs):
-    # This helper function creates a GPA simbox inside a region
+    # This helper function creates a GPA simbox inside a project
     # This function is declared outside the Portfolio class because
     # a) this way it can be pickled
     # b) it doesn't depend on a specific portfolio instance i.e. 'self'
     #    and therefore it shouldn't be a *method*
-    currentregion,gpaname,newtotal = inputs
+    currentproject,gpaname,newtotal = inputs
 
-    print('Initialising a simulation container in region %s for this GPA.' % currentregion.getregionname())
-    tempsimbox = currentregion.createsimbox('GPA '+gpaname+' - '+currentregion.getregionname(), isopt = True, createdefault = False)
-    tempsimbox.createsim(currentregion.getregionname()+' - Initial', forcecreate = False)
-    initsimcopy = tempsimbox.createsim(currentregion.getregionname()+' - GPA', forcecreate = True)
+    print('Initialising a simulation container in project %s for this GPA.' % currentproject.getprojectname())
+    tempsimbox = currentproject.createsimbox('GPA '+gpaname+' - '+currentproject.getprojectname(), isopt = True, createdefault = False)
+    tempsimbox.createsim(currentproject.getprojectname()+' - Initial', forcecreate = False)
+    initsimcopy = tempsimbox.createsim(currentproject.getprojectname()+' - GPA', forcecreate = True)
     tempsimbox.scalealloctototal(initsimcopy, newtotal)
-    currentregion.runsimbox(tempsimbox)
+    currentproject.runsimbox(tempsimbox)
     tempsimbox.simlist.remove(initsimcopy)
-    return (currentregion,tempsimbox.uuid)
+    return (currentproject,tempsimbox.uuid)
 
 class Portfolio(object):
     def __init__(self, portfolioname):
         if isinstance(portfolioname,dict):
             self.fromdict(portfolioname)
         else:
-            self.regionlist = []                # List to hold Region objects.
+            self.projectlist = []                # List to hold Project objects.
             self.gpalist = []                   # List to hold GPA runs, specifically lists of SimBoxOpt references, for quick use.
                                                 # Will need to be careful about error checking when deletions are implemented.
             self.portfolioname = portfolioname
             self.cwd = os.getcwd()              # Should get the current working directory where Portfolio object is instantiated.
-            self.regd = self.cwd + '/regions'   # May be good to remove hardcoding at some stage...
+            self.regd = self.cwd + '/projects'   # May be good to remove hardcoding at some stage...
     
 
     def todict(self):
         portfoliodict = {}
-        portfoliodict['regionlist'] = [x.todict() for x in self.regionlist]
+        portfoliodict['projectlist'] = [x.todict() for x in self.projectlist]
         portfoliodict['gpalist'] = [x.uuid for x in self.gpalist]
         portfoliodict['portfolioname'] = self.portfolioname
         portfoliodict['cwd'] = self.cwd
@@ -57,8 +57,8 @@ class Portfolio(object):
         return portfoliodict
 
     def fromdict(self,portfoliodict):
-        self.regionlist = [Region(x) for x in portfoliodict['regionlist']]
-        self.gpalist = [r.fetch(u) for (r,u) in zip(self.regionlist,portfoliodict['gpalist'])] 
+        self.projectlist = [Project(x) for x in portfoliodict['projectlist']]
+        self.gpalist = [r.fetch(u) for (r,u) in zip(self.projectlist,portfoliodict['gpalist'])] 
         self.portfolioname = portfoliodict['portfolioname'] 
         self.cwd = portfoliodict['cwd'] 
         self.regd = portfoliodict['regd']
@@ -82,7 +82,7 @@ class Portfolio(object):
         print('\nPortfolio %s has been activated.' % self.portfolioname)
         print('\nThe script that created this portfolio is in...')
         print(self.cwd)
-        print('Region data will be sourced from...')
+        print('Project data will be sourced from...')
         print(self.regd)
         
         # Initialised variables required by the command loop.
@@ -95,21 +95,21 @@ class Portfolio(object):
             cmdinputlist = cmdinput.split(None,1)
             if len(cmdinputlist)>1:
         
-                # Is the first word 'make'? Then make a region named after the rest of the string.
+                # Is the first word 'make'? Then make a project named after the rest of the string.
                 if cmdinputlist[0] == 'make':
-                    regionname = cmdinputlist[1]
+                    projectname = cmdinputlist[1]
                     # starttime = time()
                     
-                    # Checks for files in regions directory. Regex control for .json endings would be nice to implement later...
+                    # Checks for files in projects directory. Regex control for .json endings would be nice to implement later...
                     if len(os.listdir(self.regd)) < 1:
                         print('Not possible. There are no .json files to use in...')
                         print(self.regd)
                     else:
-                        print('Which data file do you wish to load into %s?' % regionname)
+                        print('Which data file do you wish to load into %s?' % projectname)
                         fid = 0
                         templist = [x for x in os.listdir(self.regd) if x.endswith('.json')]
                         
-                        # Displays files in regions folder along with an integer id for easy selection.
+                        # Displays files in projects folder along with an integer id for easy selection.
                         for filename in templist:
                             fid += 1
                             print('%i: %s' % (fid, filename))
@@ -123,55 +123,55 @@ class Portfolio(object):
                                 fchoice = 0
                                 continue
                         
-                        # Region is created.
-                        print('Creating region %s with data from: ' % regionname)
+                        # Project is created.
+                        print('Creating project %s with data from: ' % projectname)
                         print(self.regd+'/'+templist[fchoice-1])
-                        self.appendregion(Region.load(self.regd+'/'+templist[fchoice-1],regionname))
+                        self.appendproject(Project.load(self.regd+'/'+templist[fchoice-1],projectname))
                 
-                # Is the first word 'examine'? Then enter a subloop that processes commands regarding the relevant region.
-                elif cmdinputlist[0] == 'examine' and len(self.regionlist) > 0:
-                    regionid = cmdinputlist[1]
+                # Is the first word 'examine'? Then enter a subloop that processes commands regarding the relevant project.
+                elif cmdinputlist[0] == 'examine' and len(self.projectlist) > 0:
+                    projectid = cmdinputlist[1]
                     try:
-                        int(regionid)
+                        int(projectid)
                     except ValueError:
-                        regionid = 0
-                    if int(regionid) in arange(1,len(self.regionlist)+1):
-                        self.examineregion(self.regionlist[int(regionid)-1])
+                        projectid = 0
+                    if int(projectid) in arange(1,len(self.projectlist)+1):
+                        self.examineproject(self.projectlist[int(projectid)-1])
                     else:
-                        print('Region ID numbers only range from 1 to %i, inclusive.' % len(self.regionlist))
+                        print('Project ID numbers only range from 1 to %i, inclusive.' % len(self.projectlist))
                         
-                # Is the first word 'refine'? Then recalculate the BOC for the relevant region.
-                elif cmdinputlist[0] == 'refine' and len(self.regionlist) > 1:
-                    regionid = cmdinputlist[1]
+                # Is the first word 'refine'? Then recalculate the BOC for the relevant project.
+                elif cmdinputlist[0] == 'refine' and len(self.projectlist) > 1:
+                    projectid = cmdinputlist[1]
                     try:
-                        int(regionid)
+                        int(projectid)
                     except ValueError:
-                        regionid = 0
-                    if int(regionid) in arange(1,len(self.regionlist)+1):
-                        self.refineregionBOC(self.regionlist[int(regionid)-1])
+                        projectid = 0
+                    if int(projectid) in arange(1,len(self.projectlist)+1):
+                        self.refineprojectBOC(self.projectlist[int(projectid)-1])
                     else:
-                        print('Region ID numbers only range from 1 to %i, inclusive.' % len(self.regionlist))
+                        print('Project ID numbers only range from 1 to %i, inclusive.' % len(self.projectlist))
                         
                 # Is the first word 'improve'? Then calculate BOC data for a few more budget factors.
-                elif cmdinputlist[0] == 'improve' and len(self.regionlist) > 1:
-                    regionid = cmdinputlist[1]
+                elif cmdinputlist[0] == 'improve' and len(self.projectlist) > 1:
+                    projectid = cmdinputlist[1]
                     try:
-                        int(regionid)
+                        int(projectid)
                     except ValueError:
-                        regionid = 0
-                    if int(regionid) in arange(1,len(self.regionlist)+1):
+                        projectid = 0
+                    if int(projectid) in arange(1,len(self.projectlist)+1):
                         inputfactors = raw_input('Type a list of space-delimited multiplicative factors to test cost-effectiveness for: ')
                         try:
                             factorlist = [float(factor) for factor in inputfactors.split()]
                         except:
                             print('It was not possible to split the input into a list of floats.')
                             factorlist = []
-                        self.improveregionBOC(self.regionlist[int(regionid)-1], factorlist)
+                        self.improveprojectBOC(self.projectlist[int(projectid)-1], factorlist)
                     else:
-                        print('Region ID numbers only range from 1 to %i, inclusive.' % len(self.regionlist))
+                        print('Project ID numbers only range from 1 to %i, inclusive.' % len(self.projectlist))
                         
-            # If command is 'gpa', create GPA SimBoxes in each region.
-            if cmdinput == 'gpa' and len(self.regionlist) > 1:
+            # If command is 'gpa', create GPA SimBoxes in each project.
+            if cmdinput == 'gpa' and len(self.projectlist) > 1:
                 self.geoprioanalysis()
                 
             # If command is 'review', plot all information relevant to a previous GPA run.
@@ -192,44 +192,44 @@ class Portfolio(object):
                     
                 self.geoprioreview(self.gpalist[fchoice-1])
                 
-            # If command is 'qs', save to default region filenames (overwriting if necessary).
+            # If command is 'qs', save to default project filenames (overwriting if necessary).
             if cmdinput == 'qs':
-                self.quicksaveregions()
+                self.quicksaveprojects()
                     
             print('\n--------------------\n')
-            self.printregionlist()
+            self.printprojectlist()
             print('')
-            if len(self.regionlist) > 1:
+            if len(self.projectlist) > 1:
                 print('Geographical prioritisation analysis now available.')
                 print('To run this analysis, type: gpa')
-                print("To recalculate cost-effectiveness data for a region numbered 'region_id', type: refine region_id")
-                print("To calculate additional cost-effectiveness data for a region numbered 'region_id', type: improve region_id")
+                print("To recalculate cost-effectiveness data for a project numbered 'project_id', type: refine project_id")
+                print("To calculate additional cost-effectiveness data for a project numbered 'project_id', type: improve project_id")
                 if len(self.gpalist) > 0:
                     print('To review results from previous GPA runs, type: review')
             
-            print("To make a new region titled 'region_name', type: make region_name")
-            if len(self.regionlist) > 0:
-                print("To examine a region numbered 'region_id', type: examine region_id")
-            print("To quicksave all regions as .json files titled by 'region_name', type: qs")
+            print("To make a new project titled 'project_name', type: make project_name")
+            if len(self.projectlist) > 0:
+                print("To examine a project numbered 'project_id', type: examine project_id")
+            print("To quicksave all projects as .json files titled by 'project_name', type: qs")
             print('To quit, type: q')
             cmdinput = raw_input('Enter command: ')
     
-    # Appends region onto regionlist.
-    def appendregion(self, region):
-        self.regionlist.append(region)    
+    # Appends project onto projectlist.
+    def appendproject(self, project):
+        self.projectlist.append(project)    
     
-    def examineregion(self, currentregion):
+    def examineproject(self, currentproject):
         """
-        All processes associated with a stored region are run here.
+        All processes associated with a stored project are run here.
         Consider this as a sub-loop for the portfolio class.
-        Note that currentregion has to be a region object.
+        Note that currentproject has to be a project object.
            
         Version: 2015may28 by davidkedz
         """
         
-        print('\nRegion %s is now in focus.' % currentregion.getregionname())
+        print('\nProject %s is now in focus.' % currentproject.getprojectname())
         
-        # Initialised variables required by the particular region sub-loop.
+        # Initialised variables required by the particular project sub-loop.
         subinput = ''
         subinputlist = []
         
@@ -239,16 +239,16 @@ class Portfolio(object):
             subinputlist = subinput.split(None,1)
             if len(subinputlist)>1:
             
-                # Is the first word 'check'? Then display region-specific data.
+                # Is the first word 'check'? Then display project-specific data.
                 if subinputlist[0] == 'check':
                     if subinputlist[1] == 'data':
-                        currentregion.printdata();
+                        currentproject.printdata();
                     elif subinputlist[1] == 'metadata':
-                        currentregion.printmetadata();
+                        currentproject.printmetadata();
                     elif subinputlist[1] == 'options':
-                        currentregion.printoptions();
+                        currentproject.printoptions();
                     elif subinputlist[1] == 'programs':
-                        currentregion.printprograms();
+                        currentproject.printprograms();
                 
                 # Is the first word 'make'? Then make a simbox named after the rest of the string.
                 elif subinputlist[0] == 'make':
@@ -266,59 +266,59 @@ class Portfolio(object):
                     # SimBox (standard or optimisation) is created.
                     print('Creating %s simulation container %s.' % (("standard" if fchoice == 1 else "optimisation"), simboxname))
                     if fchoice == 1:
-                        currentregion.createsimbox(simboxname, createdefault = False)
+                        currentproject.createsimbox(simboxname, createdefault = False)
                     if fchoice == 2:
-                        currentregion.createsimbox(simboxname, isopt = True, createdefault = False)
+                        currentproject.createsimbox(simboxname, isopt = True, createdefault = False)
                         
                 # Is the first word 'sim'? Then initialise a new sim object in a simbox of choice.
-                elif subinputlist[0] == 'sim' and len(currentregion.simboxlist) > 0:
+                elif subinputlist[0] == 'sim' and len(currentproject.simboxlist) > 0:
                     simname = subinputlist[1]                    
                     
                     fchoice = 0
-                    while fchoice not in arange(1,len(currentregion.simboxlist)+1):
+                    while fchoice not in arange(1,len(currentproject.simboxlist)+1):
                         try:
-                            fchoice = int(raw_input('Enter the ID number of a simulation container (between 1 and %i, inclusive): ' % len(currentregion.simboxlist)))
+                            fchoice = int(raw_input('Enter the ID number of a simulation container (between 1 and %i, inclusive): ' % len(currentproject.simboxlist)))
                         except ValueError:
                             fchoice = 0
                             continue
                     
-                    currentregion.createsiminsimbox(simname, currentregion.simboxlist[fchoice-1])
+                    currentproject.createsiminsimbox(simname, currentproject.simboxlist[fchoice-1])
                 
                 # Is the first word 'run'? Then process all simulation objects in a simbox of choice.
-                elif subinputlist[0] == 'run' and len(currentregion.simboxlist) > 0:
+                elif subinputlist[0] == 'run' and len(currentproject.simboxlist) > 0:
                     simboxid = subinputlist[1]                
                     
                     try:
                         int(simboxid)
                     except ValueError:
                         simboxid = 0
-                    if int(simboxid) in arange(1,len(currentregion.simboxlist)+1):
-                        currentregion.runsimbox(currentregion.simboxlist[int(simboxid)-1])
+                    if int(simboxid) in arange(1,len(currentproject.simboxlist)+1):
+                        currentproject.runsimbox(currentproject.simboxlist[int(simboxid)-1])
                     else:
-                        print('Simulation container ID numbers only range from 1 to %i, inclusive.' % len(currentregion.simboxlist))
+                        print('Simulation container ID numbers only range from 1 to %i, inclusive.' % len(currentproject.simboxlist))
                 
                 # Is the first word 'plot' or 'multiplot'? Then plot all the processed results in a simbox of choice.
-                elif (subinputlist[0] == 'plot' or 'multiplot') and len(currentregion.simboxlist) > 0:
+                elif (subinputlist[0] == 'plot' or 'multiplot') and len(currentproject.simboxlist) > 0:
                     simboxid = subinputlist[1]                
                     
                     try:
                         int(simboxid)
                     except ValueError:
                         simboxid = 0
-                    if int(simboxid) in arange(1,len(currentregion.simboxlist)+1):
-                        currentregion.plotsimbox(currentregion.simboxlist[int(simboxid)-1], multiplot = (True if subinputlist[0] == 'multiplot' else False))
+                    if int(simboxid) in arange(1,len(currentproject.simboxlist)+1):
+                        currentproject.plotsimbox(currentproject.simboxlist[int(simboxid)-1], multiplot = (True if subinputlist[0] == 'multiplot' else False))
                     else:
-                        print('Simulation container ID numbers only range from 1 to %i, inclusive.' % len(currentregion.simboxlist))
+                        print('Simulation container ID numbers only range from 1 to %i, inclusive.' % len(currentproject.simboxlist))
             
             print('\n--------------------\n')
-            currentregion.printsimboxlist(assubset=False)
-            if len(currentregion.simboxlist) == 0:
+            currentproject.printsimboxlist(assubset=False)
+            if len(currentproject.simboxlist) == 0:
                 print("Processing cannot begin without the creation of a container.")
             
-            print("\nTo check region specifics, where 'x' is as follows, type: check x")
+            print("\nTo check project specifics, where 'x' is as follows, type: check x")
             print("Placeholder 'x' can be: 'data', 'metadata', 'options', 'programs'")
-            print("To make a new simulation container in this region titled 'simbox_name', type: make simbox_name")
-            if len(currentregion.simboxlist) > 0:
+            print("To make a new simulation container in this project titled 'simbox_name', type: make simbox_name")
+            if len(currentproject.simboxlist) > 0:
                 print("To initialise a new simulation titled 'sim_name', type: sim sim_name")
                 print("To process all unprocessed simulations in 'simbox_id', type: run simbox_id")
                 print("This will be a simple run or an optimisation depending on simulation container type.")
@@ -329,55 +329,55 @@ class Portfolio(object):
         print('\nNow examining portfolio %s as a whole.' % self.portfolioname)
         return
         
-    def printregionlist(self):
-        if len(self.regionlist) == 0:
-            print('No regions are currently associated with portfolio %s.' % self.portfolioname)
+    def printprojectlist(self):
+        if len(self.projectlist) == 0:
+            print('No projects are currently associated with portfolio %s.' % self.portfolioname)
         else:
-            print('Regions associated with this portfolio...')
+            print('Projects associated with this portfolio...')
             fid = 0
-            for region in self.regionlist:
+            for project in self.projectlist:
                 fid += 1
-                print('%i: %s' % (fid, region.getregionname()))
-                region.printsimboxlist(assubset=True)
+                print('%i: %s' % (fid, project.getprojectname()))
+                project.printsimboxlist(assubset=True)
     
-    def quicksaveregions(self):
-        for currentregion in self.regionlist:
-            currentregion.save(self.regd + '/' + currentregion.getregionname() + '.json')
+    def quicksaveprojects(self):
+        for currentproject in self.projectlist:
+            currentproject.save(self.regd + '/' + currentproject.getprojectname() + '.json')
 
-    # Creates a duplicate of a region.
-    # Note: Everything is deep-copied, but a new uuid is given to mark a unique region.
-    def duplicateregion(self, targetregion):
-        newregion = deepcopy(targetregion)
-        newregion.genuuid()
-        self.appendregion(newregion)
-        return newregion
+    # Creates a duplicate of a project.
+    # Note: Everything is deep-copied, but a new uuid is given to mark a unique project.
+    def duplicateproject(self, targetproject):
+        newproject = deepcopy(targetproject)
+        newproject.genuuid()
+        self.appendproject(newproject)
+        return newproject
             
 #%% GPA Methods
 
-    # Break an aggregate region (e.g. a nation) into subregions (e.g. districts), according to a provided population and prevalence data file.
-    def splitcombinedregion(self, aggregateregion, popprevfile):
+    # Break an aggregate project (e.g. a nation) into subprojects (e.g. districts), according to a provided population and prevalence data file.
+    def splitcombinedproject(self, aggregateproject, popprevfile):
         
         from xlrd import open_workbook  # For opening Excel workbooks.
         
         inbook = open_workbook(popprevfile)
         summarysheet = inbook.sheet_by_name('Summary - sub-populations')
 
-        # Determine region names from summary sheet.
-        subregionlist = []
+        # Determine project names from summary sheet.
+        subprojectlist = []
         for rowindex in xrange(summarysheet.nrows):
             if summarysheet.cell_value(rowindex, 0) == 'National total':
                 break
             if summarysheet.cell_type(rowindex, 0) == 2:    # Check if 1st cell in row is a number.
-                subregionlist.append(summarysheet.cell_value(rowindex, 1))
-        print subregionlist
-        print len(subregionlist)
+                subprojectlist.append(summarysheet.cell_value(rowindex, 1))
+        print subprojectlist
+        print len(subprojectlist)
         
-        for subregionname in subregionlist:
+        for subprojectname in subprojectlist:
             try:
-                print('Creating region: %s' % subregionname)
-                subregionsheet = inbook.sheet_by_name(subregionname)
-                newregion = self.duplicateregion(aggregateregion)
-                newregion.setregionname(subregionname)
+                print('Creating project: %s' % subprojectname)
+                subprojectsheet = inbook.sheet_by_name(subprojectname)
+                newproject = self.duplicateproject(aggregateproject)
+                newproject.setprojectname(subprojectname)
                 
 #                for rowindex in xrange(districtsheet.nrows):
 #                    inrow = districtsheet.row(rowindex)
@@ -387,8 +387,8 @@ class Portfolio(object):
             except:
                 print('There is a problem loading a district sheet. All subsequent actions are cancelled.')
         
-        # Finalise conversion by removing original aggregate region.
-        self.regionlist.remove(aggregateregion)
+        # Finalise conversion by removing original aggregate project.
+        self.projectlist.remove(aggregateproject)
 
 
 
@@ -398,22 +398,22 @@ class Portfolio(object):
         # First, choose 'spend' factors for the construction of your Budget Objective Curve.
         varfactors = [0.0, 0.3, 0.6, 1.0, 1.8, 3.2, 10.0]
         
-        # If a loaded region does not store Budget Objective data in its json file, then calculate some.
-        for currentregion in self.regionlist:
-            if not currentregion.hasBOC():
-                print('Region %s has no Budget Objective Curve. Initialising calculation.' % currentregion.getregionname())
-                currentregion.developBOC(varfactors)
+        # If a loaded project does not store Budget Objective data in its json file, then calculate some.
+        for currentproject in self.projectlist:
+            if not currentproject.hasBOC():
+                print('Project %s has no Budget Objective Curve. Initialising calculation.' % currentproject.getprojectname())
+                currentproject.developBOC(varfactors)
             else:
-                print('Region %s already has a Budget Objective Curve.' % currentregion.getregionname())
+                print('Project %s already has a Budget Objective Curve.' % currentproject.getprojectname())
             
         # The actual optimisation process.
         from geoprioritisation import gpaoptimisefixedtotal
         
-        newtotals = gpaoptimisefixedtotal(self.regionlist)
+        newtotals = gpaoptimisefixedtotal(self.projectlist)
         
         # Assemble the inputs for makegpasimbox()
         inputs = []
-        for (r,newtotal) in zip(self.regionlist,newtotals):
+        for (r,newtotal) in zip(self.projectlist,newtotals):
             inputs.append((r,'Test',newtotal))
 
         if usebatch:
@@ -422,22 +422,22 @@ class Portfolio(object):
         else:
             outputs = [makegpasimbox(y) for y in inputs]
 
-        # Update the regionlist now that all of the regions have had GPA run on them
-        # Otherwise, the simboxlist references will be broken when their parent regions
+        # Update the projectlist now that all of the projects have had GPA run on them
+        # Otherwise, the simboxlist references will be broken when their parent projects
         # (the ones inside the array 'outputs') go out of scope
-        self.regionlist = []
+        self.projectlist = []
         self.gpalist = []
         for x in outputs:
             r,simboxid = x
-            self.regionlist.append(r)
+            self.projectlist.append(r)
             self.gpalist.append(r.fetch(simboxid))
 
-    # Iterate through loaded regions. Develop default BOCs if they do not have them.
+    # Iterate through loaded projects. Develop default BOCs if they do not have them.
     def geoprioreview(self, gpasimboxlist):
         
         for gpasimbox in gpasimboxlist:
             print(gpasimbox.getname())
-            gpasimbox.getregion().plotsimbox(gpasimbox, multiplot = True)   # Note: Really stupid excessive way of doing all plots. May simplify later.
+            gpasimbox.getproject().plotsimbox(gpasimbox, multiplot = True)   # Note: Really stupid excessive way of doing all plots. May simplify later.
         
         # Display GPA results for debugging purposes. Modified version of code in geoprioritisation.py. May fuse later.
         totsumin = 0
@@ -450,10 +450,10 @@ class Portfolio(object):
         realtotsumoptobj = 0
         realtotsumgpaoptobj = 0
         for i in xrange(len(gpasimboxlist)):
-            r = gpasimboxlist[i].getregion()
-            regionname = r.getregionname()
+            r = gpasimboxlist[i].getproject()
+            projectname = r.getprojectname()
 
-            print('Region %s...' % regionname)
+            print('Project %s...' % projectname)
             sumin = sum(gpasimboxlist[i].simlist[0].alloc)
             sumopt = sum(gpasimboxlist[i].simlist[1].alloc)
             sumgpaopt = sum(gpasimboxlist[i].simlist[2].alloc)
@@ -493,7 +493,7 @@ class Portfolio(object):
             print('Initial Unoptimised Real Objective: %f' % realsuminobj)
             print('Initial Optimised Real Objective: %f' % realsumoptobj)
             print('GPA Optimised Real Objective: %f' % realsumgpaoptobj)
-            print('BOC Estimate was off for %s objective by: %f (%f%%)' % (regionname, estsumgpaoptobj-realsumgpaoptobj, 100*abs(estsumgpaoptobj-realsumgpaoptobj)/realsumgpaoptobj))
+            print('BOC Estimate was off for %s objective by: %f (%f%%)' % (projectname, estsumgpaoptobj-realsumgpaoptobj, 100*abs(estsumgpaoptobj-realsumgpaoptobj)/realsumgpaoptobj))
             print('\n')
             
             
@@ -534,8 +534,8 @@ class Portfolio(object):
         print('\n')
         
 
-    def refineregionBOC(self, region):
-        region.recalculateBOC()
+    def refineprojectBOC(self, project):
+        project.recalculateBOC()
         
-    def improveregionBOC(self, region, factorlist):
-        region.developBOC(factorlist, extendresults = True)
+    def improveprojectBOC(self, project, factorlist):
+        project.developBOC(factorlist, extendresults = True)

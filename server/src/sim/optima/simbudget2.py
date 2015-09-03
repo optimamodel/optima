@@ -9,15 +9,15 @@ import operator
 
 class SimBudget2(Sim):
 
-    def __init__(self, name, region,budget,calibration=None,programset=None):
-        Sim.__init__(self, name, region,calibration)
+    def __init__(self, name, project,budget,calibration=None,programset=None):
+        Sim.__init__(self, name, project,calibration)
         self.budget = budget # This contains spending values for all of the modalities for the simulation timepoints i.e. there are len(D['opt']['partvec']) spending values
-        self.programset = programset if programset is not None else region.programsets[0].uuid # Use the first program set by default
-        self.popsizes = {} # Estimates for the population size obtained by running a base Sim within the parent region
+        self.programset = programset if programset is not None else project.programsets[0].uuid # Use the first program set by default
+        self.popsizes = {} # Estimates for the population size obtained by running a base Sim within the parent project
 
         # Check that the program set exists
-        if self.programset not in [x.uuid for x in region.programsets]:
-            raise Exception('The provided program set UUID could not be found in the provided region')
+        if self.programset not in [x.uuid for x in project.programsets]:
+            raise Exception('The provided program set UUID could not be found in the provided project')
 
     def todict(self):
         simdict = Sim.todict(self)
@@ -36,7 +36,7 @@ class SimBudget2(Sim):
 
     def getprogramset(self):
         # Return a reference to the selected program set
-        r = self.getregion()
+        r = self.getproject()
         uuids = [x.uuid for x in r.programsets]
         return r.programsets[uuids.index(self.programset)]
 
@@ -45,7 +45,7 @@ class SimBudget2(Sim):
         # fractions of populations (coverage) into actual numbers of people
         # This function generates a dict like {'FSW':[1 1.1 1.2...],'....'} where the keys are different
         # population breakdowns, and the values are arrays of number of people for each time in 
-        # region.options['partvec']
+        # project.options['partvec']
         #
         # Available populations are
         #   - All of the populations listed in r.metadata['inputpopulations'] (access by short name)
@@ -54,7 +54,7 @@ class SimBudget2(Sim):
         #   - aidstest, numost, sharing, numpmtct, breast, numfirstline, numsecondline, numcircum
 
         self.popsizes = {}
-        r = self.getregion()
+        r = self.getproject()
         s = Sim('temp',r,self.calibration) # Make a base sim with the selected calibration
         DS = s.run() # Retrieve D.S
         people = DS['people']
@@ -85,7 +85,7 @@ class SimBudget2(Sim):
         # The programs will be used to overwrite the parameter values for times between program_start_year and program_end_year
 
         # If perturb == True, then a random perturbation will be applied at the CCOC level
-        r = self.getregion()
+        r = self.getproject()
         self.makedatapars() # Construct the data pars
 
         # First, set self.parsmodel as though this was a base sim
@@ -141,7 +141,7 @@ class SimBudget2(Sim):
                     else:
                         self.parsmodel[par][popnumber(pop),update_indexes] = outcomes[pop][par][update_indexes]
 
-        # Next, assign total (whole region) parameters
+        # Next, assign total (whole project) parameters
         for par in ['aidstest','numfirstline','numsecondline','txelig','numpmtct','breast','numost','numcircum']:
             if par in outcomes['Total']:
                 if par in programset.coverage_params: 

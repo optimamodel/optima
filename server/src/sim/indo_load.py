@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Loads the Indonesian xlsx and converts into seven regional xlsx files.
+Loads the Indonesian xlsx and converts into seven projectal xlsx files.
 
 Created on Thu Jul 09 19:11:49 2015
 
@@ -11,7 +11,7 @@ import sys
 sys.path.append('../tests')
 import add_optima_paths
 import defaults
-import region
+import project
 import programs
 import loadworkbook
 import re
@@ -23,20 +23,20 @@ from updatedata import updatedata
 from xlrd import open_workbook  # For opening Excel workbooks.
 import xlsxwriter
 
-regionlist = ['Bali','Central Java','East Java','West Java','Jakarta','Papua','Riau']
+projectlist = ['Bali','Central Java','East Java','West Java','Jakarta','Papua','Riau']
 abbrevlist = ['B','CJ','EJ','WJ','J','P','R']
 
 # Load Indonesia workbook.
-inbook = open_workbook('./regions/Indonesia2015regions-CK.xlsx')
+inbook = open_workbook('./projects/Indonesia2015projects-CK.xlsx')
 insheetnames = inbook.sheet_names()
 
-# Go through list of regions.
-for regid in xrange(len(regionlist)):
+# Go through list of projects.
+for regid in xrange(len(projectlist)):
     
-    abb = abbrevlist[regid]     # Each region corresponds with an abbreviation.
+    abb = abbrevlist[regid]     # Each project corresponds with an abbreviation.
 
-    # Produce regional workbook.
-    outbook = xlsxwriter.Workbook('./regions/Indonesia ('+regionlist[regid]+').xlsx')
+    # Produce projectal workbook.
+    outbook = xlsxwriter.Workbook('./projects/Indonesia ('+projectlist[regid]+').xlsx')
     
     tag = ''
     
@@ -79,7 +79,7 @@ for regid in xrange(len(regionlist)):
                         elif (tag == 'data' and insheet.cell_type(rowindex, colindex) == 2 and \
                         ((insheet.cell_value(rowindex, 1) == 'ART' and insheet.cell_value(rowindex, 2) == 'Coverage') or \
                         (insheet.cell_value(rowindex, 1) in ['ART','MGMT','M&E'] and insheet.cell_value(rowindex, 2) == 'Cost'))):
-                            outsheet.write(rowindex-rowskip, colindex-colskip, celldata/float(len(regionlist)))     # Divide national costs amongst regions. (Arguable with ART...)
+                            outsheet.write(rowindex-rowskip, colindex-colskip, celldata/float(len(projectlist)))     # Divide national costs amongst projects. (Arguable with ART...)
                         else:
                             outsheet.write(rowindex-rowskip, colindex-colskip, celldata)
                 
@@ -183,7 +183,7 @@ def fake_D(fname):
     # Set up "G" -- general parameters structure
     D['G'] = dict()
     D['G']['version'] = current_version # so that we know the version of new project with regard to data structure
-    projectname = fname.replace('./regions/','').replace('.xlsx','') 
+    projectname = fname.replace('./projects/','').replace('.xlsx','') 
     D['G']['projectname'] = projectname 
     D['G']['projectfilename'] = projectpath(projectname+'.prj')
     D['G']['workbookname'] = fname
@@ -209,16 +209,16 @@ def fake_D(fname):
     
     return D
 
-def makejson(region_name):
+def makejson(project_name):
     # Make a project
-    D = fake_D('./regions/Indonesia (%s).xlsx' % (region_name))
+    D = fake_D('./projects/Indonesia (%s).xlsx' % (project_name))
 
     # Load the XLSX file
     D = updatedata(D, workbookname=None, verbose=2, rerun=True)
 
     print D['programs']
     # Save a JSON
-    savedata('./regions/indonesia_%s.json' % (region_name.lower()),D)
+    savedata('./projects/indonesia_%s.json' % (project_name.lower()),D)
 
-for r in regionlist:
+for r in projectlist:
     makejson(r)

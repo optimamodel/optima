@@ -30,6 +30,6 @@ from simboxcal import SimBoxCal
 
 from portfolio import Portfolio
 from programset import ProgramSet
-from region import Region
+from project import Project
 
 from plot import plot

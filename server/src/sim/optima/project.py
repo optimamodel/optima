@@ -17,22 +17,22 @@ import dataio_binary
 from programset import ProgramSet
 from scipy.interpolate import PchipInterpolator as pchip
 import cPickle
-#### Multiprocessor helper functions for Region class.
+#### Multiprocessor helper functions for Project class.
 #def unwrap_self_developBOCsubprocess(*arg, **kwarg):
-#    return Region.developBOCsubprocess(*arg, **kwarg)
+#    return Project.developBOCsubprocess(*arg, **kwarg)
 #    
 #def f(x):
 #    return x**2
 
-### The actual Region class.
-class Region(object):
+### The actual Project class.
+class Project(object):
     def __init__(self,name,populations=None,programs=None,datastart=None,dataend=None):
         # Usage
-        # r = Region(name,populations,programs,datastart,dataend) (see defaults.py haiti) 
-        # r = Region(regiondict) -> regiondict = r.fromdict()
+        # r = Project(name,populations,programs,datastart,dataend) (see defaults.py haiti) 
+        # r = Project(projectdict) -> projectdict = r.fromdict()
 
         if isinstance(name,dict):
-            # variable 'name' is actually a regiondict
+            # variable 'name' is actually a projectdict
             self.fromdict(name)
         else:
             self.D = dict()                 # Data structure for saving everything. Will hopefully be broken down eventually.
@@ -59,36 +59,36 @@ class Region(object):
             
             self.uuid = None
             self.genuuid()  # Store UUID as a string - we just want a (practically) unique tag, no advanced functionality
-            self.current_version = 2 # This is stored in the regiondict
+            self.current_version = 2 # This is stored in the projectdict
 
     @classmethod
-    def load(Region,filename,name=None):
-        # Use this function to load a region saved with region.save
-        r = Region(name,None,None,None,None)
-        regiondict = dataio_binary.load(filename)
-        r.uuid = regiondict['uuid'] # Loading a region restores the original UUID
-        r.fromdict(regiondict)
+    def load(Project,filename,name=None):
+        # Use this function to load a project saved with project.save
+        r = Project(name,None,None,None,None)
+        projectdict = dataio_binary.load(filename)
+        r.uuid = projectdict['uuid'] # Loading a project restores the original UUID
+        r.fromdict(projectdict)
         return r
 
     def save(self,filename):
         dataio_binary.save(self.todict(),filename)
                     
     @classmethod
-    def load_json(Region,filename,name=None):
-        # Create a new region by loading a JSON file
+    def load_json(Project,filename,name=None):
+        # Create a new project by loading a JSON file
         # If a name is not specified, the one contained in the JSON file is used
         # Note that this function can be used with an old-type or new-type JSON file
-        # A new-type JSON file will read a Region object including the UUID
-        # While an old-type JSON file corresponds to 'D' and the region will get a new UUID
-        r = Region(name,None,None,None,None)
+        # A new-type JSON file will read a Project object including the UUID
+        # While an old-type JSON file corresponds to 'D' and the project will get a new UUID
+        r = Project(name,None,None,None,None)
 
         import dataio
-        regiondict = dataio.loaddata(filename)
-        if 'uuid' in regiondict.keys(): # This is a new-type JSON file
+        projectdict = dataio.loaddata(filename)
+        if 'uuid' in projectdict.keys(): # This is a new-type JSON file
             print "This is a new-type JSON file."
-            r.fromdict(regiondict)
+            r.fromdict(projectdict)
         else:
-            r.fromdict_legacy(regiondict)
+            r.fromdict_legacy(projectdict)
         return r
 
     def save_json(self,filename):
@@ -97,77 +97,77 @@ class Region(object):
 
     def __getstate__(self):
         # Note that this pickling method should only be implemented for classes
-        # that can be saved directly i.e. portfolios and regions
-        # simboxes and sims need more care so that the region references are
+        # that can be saved directly i.e. portfolios and projects
+        # simboxes and sims need more care so that the project references are
         # handled correctly
         return self.todict()
 
     def __setstate__(self, state):
         self.fromdict(state)
 
-    def upgrade_version(self,regiondict):
-        # Upgrade the saved region dictionary prior to running fromdict()
-        # Note that regiondict is a reference, so code here changes the regiondict externally!
-        if regiondict['version'] <= 1: 
-            # Version 1 regions did not have program sets - they can be created from the saved metadata
+    def upgrade_version(self,projectdict):
+        # Upgrade the saved project dictionary prior to running fromdict()
+        # Note that projectdict is a reference, so code here changes the projectdict externally!
+        if projectdict['version'] <= 1: 
+            # Version 1 projects did not have program sets - they can be created from the saved metadata
             # Note that fromdict() expects programsets to be serialized as a string
-            regiondict['programsets'] = cPickle.dumps([ProgramSet.import_legacy('Default',regiondict['metadata']['programs'])]) 
+            projectdict['programsets'] = cPickle.dumps([ProgramSet.import_legacy('Default',projectdict['metadata']['programs'])]) 
 
         # The statement below for calibrations handles loading earlier versions of the new-type JSON files
-        # which don't have calibrations already defined. It is suggested in future that these regions should
+        # which don't have calibrations already defined. It is suggested in future that these projects should
         # be loaded, a new calibration created from D, and then saved again, so that this statement can be removed
         import numpy
-        if isinstance(regiondict['calibrations'], float) and numpy.isnan(regiondict['calibrations']):
-            regiondict['calibrations'] = [{'uuid':None}]
+        if isinstance(projectdict['calibrations'], float) and numpy.isnan(projectdict['calibrations']):
+            projectdict['calibrations'] = [{'uuid':None}]
 
-    def fromdict(self,regiondict):
-        # Assign variables from a new-type JSON file created using Region.todict()
-        self.upgrade_version(regiondict)
+    def fromdict(self,projectdict):
+        # Assign variables from a new-type JSON file created using Project.todict()
+        self.upgrade_version(projectdict)
 
-        self.uuid = regiondict['uuid'] # Loading a region restores the original UUID
-        self.metadata = regiondict['metadata']
-        self.data = regiondict['data']
-        self.options = regiondict['options'] # Populate default options here
-        self.programsets = cPickle.loads(regiondict['programsets']) # sets of Programs i.e. an array of sets of CCOCs
-        self.calibrations = regiondict['calibrations']
-        self.uuid = regiondict['uuid']
-        self.D = regiondict['D']
+        self.uuid = projectdict['uuid'] # Loading a project restores the original UUID
+        self.metadata = projectdict['metadata']
+        self.data = projectdict['data']
+        self.options = projectdict['options'] # Populate default options here
+        self.programsets = cPickle.loads(projectdict['programsets']) # sets of Programs i.e. an array of sets of CCOCs
+        self.calibrations = projectdict['calibrations']
+        self.uuid = projectdict['uuid']
+        self.D = projectdict['D']
         
-        self.simboxlist = [SimBox.fromdict(x,self) for x in regiondict['simboxlist']]
+        self.simboxlist = [SimBox.fromdict(x,self) for x in projectdict['simboxlist']]
 
         # BOC loading.
-        self.BOCx = regiondict['BOC_budgets']
-        self.BOCy = regiondict['BOC_objectives']
+        self.BOCx = projectdict['BOC_budgets']
+        self.BOCy = projectdict['BOC_objectives']
             
     def todict(self):
-        # Return a dictionary representation of the object for use with Region.fromdict()
-        regiondict = {}
-        regiondict['version'] = self.current_version # Could do something later by checking the version number
+        # Return a dictionary representation of the object for use with Project.fromdict()
+        projectdict = {}
+        projectdict['version'] = self.current_version # Could do something later by checking the version number
 
-        regiondict['metadata'] = self.metadata 
-        regiondict['data'] = self.data 
-        regiondict['simboxlist'] = [sbox.todict() for sbox in self.simboxlist]
-        regiondict['options'] = self.options # Populate default options here = self.options 
-        regiondict['programsets'] = cPickle.dumps(self.programsets) # Serialize the programset
-        regiondict['calibrations'] = self.calibrations # Calibrations are stored as dictionaries
-        regiondict['uuid'] = self.uuid 
-        regiondict['D'] = self.D
+        projectdict['metadata'] = self.metadata 
+        projectdict['data'] = self.data 
+        projectdict['simboxlist'] = [sbox.todict() for sbox in self.simboxlist]
+        projectdict['options'] = self.options # Populate default options here = self.options 
+        projectdict['programsets'] = cPickle.dumps(self.programsets) # Serialize the programset
+        projectdict['calibrations'] = self.calibrations # Calibrations are stored as dictionaries
+        projectdict['uuid'] = self.uuid 
+        projectdict['D'] = self.D
 
         # BOC saving.
-        regiondict['BOC_budgets'] = self.BOCx
-        regiondict['BOC_objectives'] = self.BOCy    
+        projectdict['BOC_budgets'] = self.BOCx
+        projectdict['BOC_objectives'] = self.BOCy    
 
-        return regiondict
+        return projectdict
 
     def fromdict_legacy(self, tempD):
-        # Load an old-type D dictionary into the region
+        # Load an old-type D dictionary into the project
         self.setD(tempD)                # It would be great to get rid of setD one day. But only when data is fully decomposed.
         
         current_name = self.metadata['name']
         self.metadata = tempD['G'] # Copy everything from G by default
         self.metadata['programs'] = tempD['programs']
         self.metadata['populations'] = self.metadata['inputpopulations']
-        if current_name is not None: # current_name is none if this function is being called from Region.load()
+        if current_name is not None: # current_name is none if this function is being called from Project.load()
             self.metadata['name'] = current_name
         else:
             self.metadata['name'] = self.metadata['projectname']
@@ -177,11 +177,11 @@ class Region(object):
 
         self.options = tempD['opt']
 
-        # Legacy programs can be imported from the region metadata
+        # Legacy programs can be imported from the project metadata
         self.programsets = ProgramSet.import_legacy('Default',self.metadata['programs'])
 
         # Make the calibration - legacy files have one calibration
-        # Using pop will remove them from the region so that downstream calls
+        # Using pop will remove them from the project so that downstream calls
         # will raise errors if they are not updated to use the new calibration
         c = {}
         c['uuid'] = str(uuid.uuid4())
@@ -204,7 +204,7 @@ class Region(object):
                 sbox.simlist.append(newsim)
 
     def fetch(self,target_uuid):
-        # Fetch a simbox or a sim from within the region by looking up it's uuid
+        # Fetch a simbox or a sim from within the project by looking up it's uuid
         for sbox in self.simboxlist:
             if sbox.uuid == target_uuid:
                 return sbox
@@ -252,20 +252,20 @@ class Region(object):
             
 #%% GPA Methods
             
-    # Method to generate a budget objective curve (BOC) for the Region.
+    # Method to generate a budget objective curve (BOC) for the Project.
     # Creates a temporary SimBoxOpt with a temporary SimBudget and calculates the BOC.
     # Ends by deleting the temporary objects and retaining BOC data.
     def developBOC(self, varfactors, forcecalc = False, extendresults = False):      
         if forcecalc or extendresults or not self.hasBOC():
-            simbox = self.createsimbox(self.getregionname() + '-BOC-Calculations', isopt = True, createdefault = False)
+            simbox = self.createsimbox(self.getprojectname() + '-BOC-Calculations', isopt = True, createdefault = False)
             sim = self.createsiminsimbox(simbox.getname(), simbox)
             sim.run()   # Make sure simulation is processed, or 'financialanalysis' will not have its D['S'] component. Something to eventually change...
             try:
                 testBOCx, testBOCy = simbox.calculateeffectivenesscurve(sim, varfactors)
-                print("Region %s has calculated a Budget Objective Curve for..." % self.getregionname())
+                print("Project %s has calculated a Budget Objective Curve for..." % self.getprojectname())
                 print(varfactors)
             except:
-                print("Region %s has failed to produce a Budget Objective Curve for..." % self.getregionname())
+                print("Project %s has failed to produce a Budget Objective Curve for..." % self.getprojectname())
                 print(varfactors)
             
             if extendresults:
@@ -280,7 +280,7 @@ class Region(object):
             
             self.simboxlist.remove(simbox)      # Deletes temporary SimBoxOpt.
         else:
-            print('Budget Objective Curve data already exists for region %s. Proceeding onwards...' % self.getregionname())
+            print('Budget Objective Curve data already exists for project %s. Proceeding onwards...' % self.getprojectname())
     
     # For now, this is just a complete recalculation of BOC data that already exists. In case you were originally optimising for 1 second or something.
     def recalculateBOC(self):
@@ -395,7 +395,7 @@ class Region(object):
                     simbox.printsimlist(assubsubset = True)
         else:
             if len(self.simboxlist) == 0:
-                print('No simulations are currently associated with region %s.' % self.getregionname())
+                print('No simulations are currently associated with project %s.' % self.getprojectname())
             else:
                 print('Collections of simulations associated with this project...')
                 fid = 0
@@ -432,10 +432,10 @@ class Region(object):
     def getprograms(self):
         return self.metadata['programs']
         
-    def setregionname(self, regionname):
-        self.metadata['name'] = regionname
+    def setprojectname(self, projectname):
+        self.metadata['name'] = projectname
         
-    def getregionname(self):
+    def getprojectname(self):
         return self.metadata['name']
      
     def setorigalloc(self, alloc):
@@ -461,7 +461,7 @@ class Region(object):
         book.create(path)
         
     def loadworkbook(self,filename):
-        """ Load an XSLX file into region.data """
+        """ Load an XSLX file into project.data """
         raise Exception('This function is broken temporarily because it does not create a calibration')
         
         import loadworkbook
@@ -473,18 +473,18 @@ class Region(object):
         data, programs = loadworkbook.loadworkbook(filename)
 
         # For now, check that the uploaded programs are the same
-        # In future, check region UUID
+        # In future, check project UUID
         if [x['name'] for x in programs] != [x['short_name'] for x in self.metadata['programs']]:
-            raise Exception('The programs in the XLSX file do not match the region')
+            raise Exception('The programs in the XLSX file do not match the project')
 
-        # Save variables to region
+        # Save variables to project
         import updatedata
         self.metadata['programs'] = programs
         self.data = updatedata.getrealcosts(data)
         self.data['current_budget'] = self.data['costcov']['cost']
         
         # Finally, create a calibration from the data.
-        simbox = self.createsimbox(self.getregionname() + '-default-calibration', iscal = True, createdefault = True)
+        simbox = self.createsimbox(self.getprojectname() + '-default-calibration', iscal = True, createdefault = True)
         simbox.calibratefromdefaultdata()
         self.simboxlist.remove(simbox)      # Deletes temporary SimBoxCal.
 
@@ -492,7 +492,7 @@ class Region(object):
             self.metadata['meta'] = self.data['meta']
 
     def __repr__(self):
-        return "Region %s ('%s')" % (self.uuid,self.metadata['name'])
+        return "Project %s ('%s')" % (self.uuid,self.metadata['name'])
 
     def get_popidx(self,shortname):
         # Return the index corresponding to a population shortname

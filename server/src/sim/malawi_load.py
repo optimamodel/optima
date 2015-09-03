@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Loads the Malawi xlsx and converts into 32 regional (technically district) xlsx files.
+Loads the Malawi xlsx and converts into 32 projectal (technically district) xlsx files.
 
 Created on Thu Aug 10 19:00:00 2015
 
@@ -11,7 +11,7 @@ import sys
 sys.path.append('../tests')
 import add_optima_paths
 import defaults
-import region
+import project
 import programs
 import loadworkbook
 import re
@@ -24,14 +24,14 @@ from xlrd import open_workbook  # For opening Excel workbooks.
 import xlsxwriter
 
 # Load Malawi workbooks.
-natbook = open_workbook('./regions/150818 - Malawi.xlsx')
-distbook = open_workbook('./regions/150817 - Malawi district (population & prevalence) - annotated.xlsx')
+natbook = open_workbook('./projects/150818 - Malawi.xlsx')
+distbook = open_workbook('./projects/150817 - Malawi district (population & prevalence) - annotated.xlsx')
 natsheetnames = natbook.sheet_names()
 distsheetnames = distbook.sheet_names()
 
 summarysheet = distbook.sheet_by_name('Summary - sub-populations')
 
-# Determine region names from summary sheet.
+# Determine project names from summary sheet.
 districtlist = []
 for rowindex in xrange(summarysheet.nrows):
     if summarysheet.cell_value(rowindex, 0) == 'National total':
@@ -56,7 +56,7 @@ for districtname in districtlist:
 #    try:
         print('Producing: %s' % districtname)
         districtsheet = distbook.sheet_by_name(districtname)
-        outbook = xlsxwriter.Workbook('./regions/Malawi ('+districtname+').xlsx')
+        outbook = xlsxwriter.Workbook('./projects/Malawi ('+districtname+').xlsx')
         
         #%% National file copying.
         
@@ -112,13 +112,13 @@ for districtname in districtlist:
     
 
 
-## Go through list of regions.
-#for regid in xrange(len(regionlist)):
+## Go through list of projects.
+#for regid in xrange(len(projectlist)):
 #    
-#    abb = abbrevlist[regid]     # Each region corresponds with an abbreviation.
+#    abb = abbrevlist[regid]     # Each project corresponds with an abbreviation.
 #
-#    # Produce regional workbook.
-#    outbook = xlsxwriter.Workbook('./regions/Indonesia ('+regionlist[regid]+').xlsx')
+#    # Produce projectal workbook.
+#    outbook = xlsxwriter.Workbook('./projects/Indonesia ('+projectlist[regid]+').xlsx')
     
 #    tag = ''
 #    
@@ -161,7 +161,7 @@ for districtname in districtlist:
 #                        elif (tag == 'data' and insheet.cell_type(rowindex, colindex) == 2 and \
 #                        ((insheet.cell_value(rowindex, 1) == 'ART' and insheet.cell_value(rowindex, 2) == 'Coverage') or \
 #                        (insheet.cell_value(rowindex, 1) in ['ART','MGMT','M&E'] and insheet.cell_value(rowindex, 2) == 'Cost'))):
-#                            outsheet.write(rowindex-rowskip, colindex-colskip, celldata/float(len(regionlist)))     # Divide national costs amongst regions. (Arguable with ART...)
+#                            outsheet.write(rowindex-rowskip, colindex-colskip, celldata/float(len(projectlist)))     # Divide national costs amongst projects. (Arguable with ART...)
 #                        else:
 #                            outsheet.write(rowindex-rowskip, colindex-colskip, celldata)
                 
@@ -266,7 +266,7 @@ def fake_D(fname):
     # Set up "G" -- general parameters structure
     D['G'] = dict()
     D['G']['version'] = current_version # so that we know the version of new project with regard to data structure
-    projectname = fname.replace('./regions/','').replace('.xlsx','') 
+    projectname = fname.replace('./projects/','').replace('.xlsx','') 
     D['G']['projectname'] = projectname 
     D['G']['projectfilename'] = projectpath(projectname+'.prj')
     D['G']['workbookname'] = fname
@@ -292,16 +292,16 @@ def fake_D(fname):
     
     return D
 
-def makejson(region_name):
+def makejson(project_name):
     # Make a project
-    D = fake_D('./regions/Indonesia (%s).xlsx' % (region_name))
+    D = fake_D('./projects/Indonesia (%s).xlsx' % (project_name))
 
     # Load the XLSX file
     D = updatedata(D, workbookname=None, verbose=2, rerun=True)
 
     print D['programs']
     # Save a JSON
-    savedata('./regions/indonesia_%s.json' % (region_name.lower()),D)
+    savedata('./projects/indonesia_%s.json' % (project_name.lower()),D)
 
-#for r in regionlist:
+#for r in projectlist:
 #    makejson(r)

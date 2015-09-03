@@ -7,16 +7,16 @@ Created on Thu Jul 23 18:03:48 2015
 
 import add_optima_paths
 from portfolio import Portfolio
-from region import Region
+from project import Project
 import os
 
-# Create a Portfolio to hold all of Malawi's districts (i.e. Regions).
+# Create a Portfolio to hold all of Malawi's districts (i.e. Projects).
 p1 = Portfolio('Malawi Project')
 
-nationcheck = Region.load('./regions/Malawi 150820.json')
+nationcheck = Project.load('./projects/Malawi 150820.json')
 
-# List all the json files in the regions sub-directory.
-templist = [x for x in os.listdir('./regions/') if x.endswith('.json')]
+# List all the json files in the projects sub-directory.
+templist = [x for x in os.listdir('./projects/') if x.endswith('.json')]
 
 reglimit = 2    # How many districts do you want to load?
 
@@ -27,18 +27,18 @@ for x in templist:
     if x[:-5].replace(" ", "").isalpha():
         regcount += 1
         print x
-        newregion = Region.load('./regions/' + x)           # Load up a Region from the json file.
-        p1.appendregion(newregion)                          # Put that Region into a Portfolio.
-        print('Region alloc total: %f' % sum(newregion.data['origalloc']))       
-        calc += sum(newregion.data['origalloc'])
+        newproject = Project.load('./projects/' + x)           # Load up a Project from the json file.
+        p1.appendproject(newproject)                          # Put that Project into a Portfolio.
+        print('Project alloc total: %f' % sum(newproject.data['origalloc']))       
+        calc += sum(newproject.data['origalloc'])
         
         # A way to load only the first few files you want.        
         if regcount == reglimit:
             break
-print('Region alloc total sum: %f' % calc)
+print('Project alloc total sum: %f' % calc)
 print('Nation alloc total: %f' % sum(nationcheck.data['origalloc']))
 
-# Ignore this. It helps you run a simulation and an optimisation for a region of your choice.
+# Ignore this. It helps you run a simulation and an optimisation for a project of your choice.
 def testsimopt(r1):
 
     r1.createsimbox('sb-test-sim', isopt = False, createdefault = True)
@@ -57,19 +57,19 @@ def testsimopt(r1):
                                      r1.simboxlist[-1].simlist[0].alloc[x],
                                      r1.simboxlist[-1].simlist[-1].alloc[x]))
                                      
-# Use this if you want to check GPA results for any region, numbered from 1 to 32.
+# Use this if you want to check GPA results for any project, numbered from 1 to 32.
 # Only run this if you have run geoprioanalysis.
 def check(x):
     sb = p1.gpalist[-1][x-1]    
     
-    print(sb.getregion().getregionname())
+    print(sb.getproject().getprojectname())
 
-    sb.getregion().plotsimbox(sb, multiplot = True)
+    sb.getproject().plotsimbox(sb, multiplot = True)
     
-    r = sb.getregion()
-    regionname = r.getregionname()
+    r = sb.getproject()
+    projectname = r.getprojectname()
 
-    print('Region %s...' % regionname)
+    print('Project %s...' % projectname)
     sumin = sum(sb.simlist[0].alloc)
     sumopt = sum(sb.simlist[1].alloc)
     sumgpaopt = sum(sb.simlist[2].alloc)
@@ -109,7 +109,7 @@ def check(x):
     print('Initial Unoptimised Real Objective: %f' % realsuminobj)
     print('Initial Optimised Real Objective: %f' % realsumoptobj)
     print('GPA Optimised Real Objective: %f' % realsumgpaoptobj)
-    print('BOC Estimate was off for %s objective by: %f (%f%%)' % (regionname, estsumgpaoptobj-realsumgpaoptobj, 100*abs(estsumgpaoptobj-realsumgpaoptobj)/realsumgpaoptobj))
+    print('BOC Estimate was off for %s objective by: %f (%f%%)' % (projectname, estsumgpaoptobj-realsumgpaoptobj, 100*abs(estsumgpaoptobj-realsumgpaoptobj)/realsumgpaoptobj))
     print('\n')
     
     
@@ -123,17 +123,17 @@ def check(x):
     print r.simboxlist[-1].simlist[2].alloc
     print('\n')
     
-# Recalculate BOC for region numbered between 1 and 32.
+# Recalculate BOC for project numbered between 1 and 32.
 def refine(x):
-    p1.refineregionBOC(p1.regionlist[x-1])
+    p1.refineprojectBOC(p1.projectlist[x-1])
     
 def refineall():
-    for x in xrange(len(p1.regionlist)):
+    for x in xrange(len(p1.projectlist)):
         refine(x+1)
     
-    p1.quicksaveregions()
+    p1.quicksaveprojects()
 
-#testsimopt(newregion)
+#testsimopt(newproject)
 
 p1.geoprioanalysis()                # Run the GPA algorithm.
 

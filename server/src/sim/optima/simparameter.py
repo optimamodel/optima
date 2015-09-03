@@ -8,8 +8,8 @@ from copy import deepcopy
 
 # Derived Sim class that should store parameter overwrites.
 class SimParameter(Sim):
-    def __init__(self, name, region, calibration = None):
-        Sim.__init__(self, name, region, calibration)
+    def __init__(self, name, project, calibration = None):
+        Sim.__init__(self, name, project, calibration)
         self.parameter_overrides = []
 
     def todict(self):
@@ -28,7 +28,7 @@ class SimParameter(Sim):
         #
         # Also need to validate the parameter name
         if type(pop) is str:
-            r = self.getregion()
+            r = self.getproject()
             poplist = [x['short_name'] for x in r.metadata['populations']] + ['all']
             try:
                 popidx = poplist.index(pop) + 1 # For some reason (frontend?) these indexes are 1-based rather than 0-based
@@ -59,7 +59,7 @@ class SimParameter(Sim):
         Sim.makemodelpars(self) 
 
         # Now compute the overrides as per scenarios.py -> makescenarios()
-        r = self.getregion()
+        r = self.getproject()
         for thesepars in self.parameter_overrides:
             data = getnested(self.parsmodel, thesepars['names'])
             if ndim(data)>1:

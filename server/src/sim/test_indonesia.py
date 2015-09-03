@@ -1,10 +1,10 @@
-# This demonstration creates a region,  saves a corresponding XLSX file
+# This demonstration creates a project,  saves a corresponding XLSX file
 # and then loads it back again
 import sys
 sys.path.append('../tests')
 import add_optima_paths
 import defaults
-import region
+import project
 import programs
 import loadworkbook
 import re
@@ -110,7 +110,7 @@ def fake_D(fname):
 	# Set up "G" -- general parameters structure
 	D['G'] = dict()
 	D['G']['version'] = current_version # so that we know the version of new project with regard to data structure
-	projectname = fname.replace('./regions/','').replace('.xlsx','') 
+	projectname = fname.replace('./projects/','').replace('.xlsx','') 
 	D['G']['projectname'] = projectname 
 	D['G']['projectfilename'] = projectpath(projectname+'.prj')
 	D['G']['workbookname'] = fname
@@ -136,17 +136,17 @@ def fake_D(fname):
 	
 	return D
 
-def makejson(region_name):
+def makejson(project_name):
 	# Make a project
-	D = fake_D('./regions/Indonesia (%s).xlsx' % (region_name))
+	D = fake_D('./projects/Indonesia (%s).xlsx' % (project_name))
 
 	# Load the XLSX file
 	D = updatedata(D, workbookname=None, verbose=2, rerun=True)
 
 	print D['programs']
 	# Save a JSON
-	savedata('./regions/indonesia_%s.json' % (region_name.lower()),D)
+	savedata('./projects/indonesia_%s.json' % (project_name.lower()),D)
 
 makejson('Bali')
-regions = ['Bali','Central Java','East Java','Jakarta','Papua','Riau','West Java']
+projects = ['Bali','Central Java','East Java','Jakarta','Papua','Riau','West Java']
 

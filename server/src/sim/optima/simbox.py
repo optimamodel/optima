@@ -6,61 +6,61 @@ import uuid
 #from scipy.interpolate import PchipInterpolator as pchip
 
 class SimBox(object):
-    def __init__(self, name, region):
+    def __init__(self, name, project):
         self.name = name
         self.simlist = []
-        self.setregion(region)
+        self.setproject(project)
         self.uuid = str(uuid.uuid4()) # Store UUID as a string - we just want a (practically) unique tag, no advanced functionality
 
     @classmethod
-    def fromdict(SimBox,simboxdict,region):
-        assert(simboxdict['region_uuid'] == region.uuid)
+    def fromdict(SimBox,simboxdict,project):
+        assert(simboxdict['project_uuid'] == project.uuid)
 
         if simboxdict['type'] == 'SimBox':
-            s = SimBox(simboxdict['name'], region)
+            s = SimBox(simboxdict['name'], project)
         elif simboxdict['type'] == 'SimBoxCal':
-            s = SimBoxCal(simboxdict['name'], region)
+            s = SimBoxCal(simboxdict['name'], project)
         elif simboxdict['type'] == 'SimBoxOpt':
-            s = SimBoxOpt(simboxdict['name'], region)
+            s = SimBoxOpt(simboxdict['name'], project)
 
-        s.setregion(region)
+        s.setproject(project)
         s.load_dict(simboxdict)
         
         return s
 
     def load_dict(self, simboxdict):
-        r = self.getregion()
+        r = self.getproject()
         self.simlist = [Sim.fromdict(x,r) for x in simboxdict['simlist']]
-        self.uuid = simboxdict['uuid'] # Loading a region restores the original UUID
+        self.uuid = simboxdict['uuid'] # Loading a project restores the original UUID
 
     def todict(self):
         simboxdict = {}
         simboxdict['type'] = 'SimBox'
         simboxdict['name'] = self.name
         simboxdict['simlist'] = [s.todict() for s in self.simlist]
-        simboxdict['region_uuid'] = self.getregion().uuid
+        simboxdict['project_uuid'] = self.getproject().uuid
         simboxdict['uuid'] = self.uuid
 
         return simboxdict
     
-    def setregion(self,region):
-        self.region = weakref.ref(region)
+    def setproject(self,project):
+        self.project = weakref.ref(project)
 
-    def getregion(self):
-        # self.region is a weakref object, which means to get
-        # the region you need to do self.region() rather than
-        # self.region. This function abstracts away this 
+    def getproject(self):
+        # self.project is a weakref object, which means to get
+        # the project you need to do self.project() rather than
+        # self.project. This function abstracts away this 
         # implementation detail in case it changes in future
-        r = self.region()
+        r = self.project()
         if r is None:
-            raise Exception('The parent region has been garbage-collected and the reference is no longer valid')
+            raise Exception('The parent project has been garbage-collected and the reference is no longer valid')
         else:
             return r
 
     # Creates a simulation object but makes sure to initialise it immediately after, ready for processing.
     def createsim(self, simname):
         print('Preparing new basic simulation for standard container %s...' % self.name)
-        self.simlist.append(Sim(simname,self.getregion()))
+        self.simlist.append(Sim(simname,self.getproject()))
         self.simlist[-1].initialise()
         return self.simlist[-1]
         
@@ -77,7 +77,7 @@ class SimBox(object):
     # Needs to check processing like plotallsims.
     def viewmultiresults(self,show_wait=True):
         # Superimpose plots, like in the scenarios page in the frontend
-        r = self.region()
+        r = self.project()
 
         tempD = {}
         tempD['G'] = r.metadata
@@ -124,10 +124,10 @@ class SimBox(object):
         return "SimBox %s ('%s')" % (self.uuid[0:8],self.name)
 
     def __getstate__(self):
-        raise Exception('Simbox must be saved via a region')
+        raise Exception('Simbox must be saved via a project')
 
     def __setstate__(self, state):
-        raise Exception('Simboxes must be re-created via a region')
+        raise Exception('Simboxes must be re-created via a project')
         
 
 #%% Tail imports pointing to derived classes, so as to avoid circular import problems.

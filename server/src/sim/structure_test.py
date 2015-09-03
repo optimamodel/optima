@@ -2,11 +2,11 @@ import optima
 import liboptima.utils
 from timevarying import timevarying
 
-r = optima.Region.load_json('./regions/Dedza.json')
+r = optima.Project.load_json('./projects/Dedza.json')
 
 # This function tests the program calculation
 r.save('asdf.bin')
-r = optima.Region.load('asdf.bin')
+r = optima.Project.load('asdf.bin')
 
 # Make an example budget from the default allocation
 a = r.D['data']['origalloc']

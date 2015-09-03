@@ -6,10 +6,10 @@ Created on Thu Jul 23 18:03:48 2015
 """
 
 import add_optima_paths
-from region import Region
+from project import Project
 
-def calculate_boc_for_region(regionname):
+def calculate_boc_for_project(projectname):
 
-    targetregion = Region.load('./regions/' + regionname + '.json')           # Load up a Region from the json file.
-    targetregion.recalculateBOC()
-    targetregion.save('./regions/' + regionname + '.json')
+    targetproject = Project.load('./projects/' + projectname + '.json')           # Load up a Project from the json file.
+    targetproject.recalculateBOC()
+    targetproject.save('./projects/' + projectname + '.json')

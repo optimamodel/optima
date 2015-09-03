@@ -2,7 +2,7 @@
 # for all coverage-type programs
 
 import add_optima_paths
-from region import Region
+from project import Project
 from copy import deepcopy
 import simbox
 from makeccocs import ccoeqn, cceqn, cc2eqn, cco2eqn, coverage_params, makesamples
@@ -12,7 +12,7 @@ from getcurrentbudget import getcurrentbudget
 from timevarying import timevarying
 from makemodelpars import makemodelpars
 
-r = Region.load('./regions/georgia_working.json')
+r = Project.load('./projects/georgia_working.json')
 D = r.D
 alloc = D['data']['origalloc']
 

@@ -182,7 +182,7 @@ def rtstdnorm(a, b):
                     r = lbound + z
                     return r
             elif (k<=ka+2) or (k>=kb and b<xmax):
-                # Two leftmost and rightmost regions
+                # Two leftmost and rightmost projects
                 sim = x[k] + (x[k+1]-x[k]) * rand()
                 if (sim >= a) and (sim <= b):
                     # Accept this proposition, otherwise reject

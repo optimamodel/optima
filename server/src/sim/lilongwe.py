@@ -1,13 +1,13 @@
-# This demonstration creates a region, saves a corresponding XLSX file
+# This demonstration creates a project, saves a corresponding XLSX file
 # and then loads it back again
 import sys
 sys.path.append('../tests')
 import add_optima_paths
 import defaults
-import region
+import project
 import sim
 
-r = region.Region.load('./regions/lilongwe.json')
+r = project.Project.load('./projects/lilongwe.json')
 s = sim.Sim('Base',r)
 s.run()
 s.plotresults()

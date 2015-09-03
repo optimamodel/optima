@@ -97,9 +97,9 @@ def plotmap(data, names, gisfile, titles=[''], figsize=(8,8)):
 
     # Read in data and get names
     sf = sh.Reader(gisfile)
-    numregions = sf.numRecords
+    numprojects = sf.numRecords
     gisnames = []
-    for i in range(numregions): gisnames.append(sf.record(i)[4])
+    for i in range(numprojects): gisnames.append(sf.record(i)[4])
     
     # Calculate number of maps
     if ndim(data)==1: nmaps = 1
@@ -185,8 +185,8 @@ plhiv = zeros(ndistricts)
 prev = zeros(ndistricts)
 distnames = []
 for d in range(ndistricts):
-    R = P.gpalist[0][d].getregion()
-    distnames.append(R.getregionname())
+    R = P.gpalist[0][d].getproject()
+    distnames.append(R.getprojectname())
     yearind = findinds(R.simboxlist[0].simlist[0].plotdata['tvec'], year)
     plhiv[d] = array(R.simboxlist[0].simlist[0].plotdata['plhiv']['tot']['best'])[yearind]
     prev[d] = array(R.simboxlist[0].simlist[0].plotdata['prev']['tot']['best'])[yearind]
@@ -208,8 +208,8 @@ factor = 1e6
 allocations = zeros((2,ndistricts))
 distnames = []
 for d in range(ndistricts):
-    R = P.gpalist[0][d].getregion()
-    distnames.append(R.getregionname())
+    R = P.gpalist[0][d].getproject()
+    distnames.append(R.getprojectname())
     for i in range(2):
         allocations[i,d] = sum(P.gpalist[0][d].simlist[0+2*i].alloc)
     
@@ -220,13 +220,13 @@ if makeslide3:
 
 
 ##################################################################
-## Slide 4 -- allocations from two different regions
+## Slide 4 -- allocations from two different projects
 ##################################################################
 
 progdata = [0, 0]
 for i in range(len(P.gpalist[0])):
     for dist in range(2):
-        if P.gpalist[0][i].getregion().getregionname()==districtstouse[dist]:
+        if P.gpalist[0][i].getproject().getprojectname()==districtstouse[dist]:
             progdata[dist] = P.gpalist[0][i].simlist[2].alloc
 if makeslide4:
     plotallocations(progdata, progs, districtstouse, factor=1e3, compare=False)

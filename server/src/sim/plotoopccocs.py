@@ -6,15 +6,15 @@ Created on Sun Aug 23 18:36:39 2015
 """
 
 import add_optima_paths # analysis:ignore
-from region import Region
+from project import Project
 import os
 from numpy import sort
 from sim import Sim
 from plotccocs import makecc, plotprogramcurves
 
-# List all the json files in the regions sub-directory.
-templist = sort([x for x in os.listdir('./regions/') if x.endswith('.json')])
-r1 = Region.load('./regions/' + templist[0])
+# List all the json files in the projects sub-directory.
+templist = sort([x for x in os.listdir('./projects/') if x.endswith('.json')])
+r1 = Project.load('./projects/' + templist[0])
 
 s = Sim('test-sim',r1)
 s.initialise()

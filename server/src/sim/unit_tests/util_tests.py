@@ -146,11 +146,11 @@ class TestDictEqual(unittest.TestCase):
 		self.assertTrue(dict_equal(b,c))
 		self.assertFalse(dict_equal(c,d))
 
-	# def test_region(self):
-	# 	r = region.Region.load('../tests/regions/Haiti.json');
+	# def test_project(self):
+	# 	r = project.Project.load('../tests/projects/Haiti.json');
 	# 	d1 = r.todict()
 	# 	d2 = r.todict()
-	# 	r2 = region.Region.load('../tests/regions/Sudan.json');
+	# 	r2 = project.Project.load('../tests/projects/Sudan.json');
 	# 	d3 = r2.todict()
 	# 	self.assertTrue(dict_equal(d1,d2))
 	# 	self.assertFalse(dict_equal(d1,d3))

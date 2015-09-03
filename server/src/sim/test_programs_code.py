@@ -1,6 +1,6 @@
 import add_optima_paths
 import program
-import region
+import project
 import sim
 import numpy
 from timevarying import timevarying
@@ -8,9 +8,9 @@ import programset
 import simbox
 
 # This function tests the program calculation
-# r = region.Region.load_json('./regions/Dedza.json')
+# r = project.Project.load_json('./projects/Dedza.json')
 # r.save('asdf.bin')
-r = region.Region.load('asdf.bin')
+r = project.Project.load('asdf.bin')
 
 # Make an example budget from the default allocation
 a = r.D['data']['origalloc']

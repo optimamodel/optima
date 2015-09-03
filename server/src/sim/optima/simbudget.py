@@ -7,8 +7,8 @@ from copy import deepcopy
 
 # Derived Sim class that should store budget data.
 class SimBudget(Sim):
-    def __init__(self, name, region, budget = []):
-        Sim.__init__(self, name, region)
+    def __init__(self, name, project, budget = []):
+        Sim.__init__(self, name, project)
         
         # This tag monitors if the simulation has been optimised (not whether it is the optimum).
         # Also different from standard processing.
@@ -18,9 +18,9 @@ class SimBudget(Sim):
         
         from timevarying import timevarying        
         
-        if len(budget) == 0:    # If budget not provided, allocation is drawn from region data and budget is an extended array of allocation.
-            self.alloc = deepcopy(self.getregion().data['origalloc'])
-            self.budget = timevarying(self.alloc, ntimepm = 1, nprogs = len(self.alloc), tvec = self.getregion().options['partvec'])
+        if len(budget) == 0:    # If budget not provided, allocation is drawn from project data and budget is an extended array of allocation.
+            self.alloc = deepcopy(self.getproject().data['origalloc'])
+            self.budget = timevarying(self.alloc, ntimepm = 1, nprogs = len(self.alloc), tvec = self.getproject().options['partvec'])
         else:                   # If budget is provided, allocation is the first slice of this.
             self.budget = budget
             self.alloc = [alloclist[0] for alloclist in self.budget]
@@ -68,12 +68,12 @@ class SimBudget(Sim):
     def makemodelpars(self,randseed=0):
         Sim.makemodelpars(self)
         
-#        r = self.getregion()
+#        r = self.getproject()
 #        self.parsmodel = r.D['M']
         
         from makemodelpars import makemodelpars        
         
-        r = self.getregion()
+        r = self.getproject()
         calibration = self.getcalibration()
 
         tempD = dict()
@@ -146,7 +146,7 @@ class SimBudget(Sim):
             print('Need to simulate and produce results to calculate objective value.')
             self.run()
         
-        r = self.getregion()
+        r = self.getproject()
         
         # Objectives are currently hard coded and mimic defaultobjectives in optimize.py. Needs to change.
         objectives = dict()
@@ -211,7 +211,7 @@ class SimBudget(Sim):
     
     # Calculates normalisations used for objectives with multiple aims.
     def calculatenormalisations(self, outcomekeys):
-        r = self.getregion()        
+        r = self.getproject()        
         
         initialindex = findinds(r.options['partvec'], defaults.startenduntil[0])
         finaloutindex = findinds(r.options['partvec'], defaults.startenduntil[2])

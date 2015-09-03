@@ -5,7 +5,7 @@
 
 import add_optima_paths
 from portfolio import Portfolio
-from region import Region
+from project import Project
 from sim import Sim
 from extra_utils import dict_equal
 from copy import deepcopy
@@ -13,14 +13,14 @@ from makeccocs import convertparams
 import os
 import numpy
 
-malawi = Region.load('./regions/Malawi 150820.json')
+malawi = Project.load('./projects/Malawi 150820.json')
 
 # Set the location of the original district JSON files
-path_prefix = "./regions"
+path_prefix = "./projects"
 #path_prefix = "C:/Users/romesh/Google Drive/Optima/Country applications/Malawi/Data/District level/Project files/"
 
 for fname in [x for x in os.listdir(path_prefix) if x.endswith('json')]:
-	district = Region.load(path_prefix+fname)
+	district = Project.load(path_prefix+fname)
 
 	# Copy the national programs into the district
 	district.metadata['programs'] = deepcopy(malawi.metadata['programs'])

@@ -8,8 +8,8 @@ from copy import deepcopy
 # Note: I'm starting to think it best that there is only ever on SimBudget under focus, i.e. the latest one.
 #       SimBoxOpt should always return data from the last SimBudget in its list.
 class SimBoxOpt(SimBox):
-    def __init__(self,name,region):
-        SimBox.__init__(self,name,region)
+    def __init__(self,name,project):
+        SimBox.__init__(self,name,project)
         
     def load_dict(self, simboxdict):
         SimBox.load_dict(self,simboxdict)
@@ -28,7 +28,7 @@ class SimBoxOpt(SimBox):
                     print('Optimisation containers can only contain one unoptimised simulation!')
                     return None
         print('Preparing new budget simulation for optimisation container %s...' % self.name)
-        newsim = SimBudget(simname, self.getregion(), budget)
+        newsim = SimBudget(simname, self.getproject(), budget)
         newsim.initialise()
         self.simlist.append(newsim)
         return newsim
@@ -49,7 +49,7 @@ class SimBoxOpt(SimBox):
             
     # Currently just optimises simulation according to defaults. As in... fixed initial budget!
     def optimise(self, origsim, makenew = True, inputmaxiters = defaults.maxiters, inputtimelimit = defaults.timelimit):
-        r = self.getregion()
+        r = self.getproject()
 
         from optimize import optimize
         
@@ -91,7 +91,7 @@ class SimBoxOpt(SimBox):
         from timevarying import timevarying          
         
         optalloc = tempD['optalloc']
-        optbudget = timevarying(optalloc, ntimepm = 1, nprogs = len(optalloc), tvec = self.getregion().options['partvec'])        
+        optbudget = timevarying(optalloc, ntimepm = 1, nprogs = len(optalloc), tvec = self.getproject().options['partvec'])        
 
         if makenew:
             origsim.optimised = True
@@ -117,7 +117,7 @@ class SimBoxOpt(SimBox):
         # These will be ignored when testing different allocations.
         fixedtrue = [1.0]*(len(curralloc))
         for i in xrange(len(curralloc)):
-            if len(self.getregion().metadata['programs'][i]['effects']): fixedtrue[i] = 0.0
+            if len(self.getproject().metadata['programs'][i]['effects']): fixedtrue[i] = 0.0
         
         for factor in factors:
             try:
@@ -149,7 +149,7 @@ class SimBoxOpt(SimBox):
         if not atleastoneplot:
             print('There is no optimisation data in this simulation container to plot.')
         else:
-            r = self.region()
+            r = self.project()
             
             from matplotlib.pylab import figure, subplot, plot, pie, bar, title, legend, xticks, ylabel, show
             from gridcolormap import gridcolormap
@@ -211,7 +211,7 @@ class SimBoxOpt(SimBox):
 
 
     # Scales the variable costs of an alloc so that the sum of the alloc equals newtotal.
-    # Note: Can this be fused with the scaling on the Region level...?
+    # Note: Can this be fused with the scaling on the Project level...?
     def scalealloctototal(self, sim, newtotal):
         curralloc = sim.alloc
         
@@ -219,7 +219,7 @@ class SimBoxOpt(SimBox):
         # These will be ignored when testing different allocations.
         fixedtrue = [1.0]*(len(curralloc))
         for i in xrange(len(curralloc)):
-            if len(self.getregion().metadata['programs'][i]['effects']): fixedtrue[i] = 0.0
+            if len(self.getproject().metadata['programs'][i]['effects']): fixedtrue[i] = 0.0
                 
         # Extract the fixed costs from scaling.
         fixedtotal = sum([curralloc[i]*fixedtrue[i] for i in xrange(len(curralloc))])

@@ -29,8 +29,8 @@ import program
 # Then we have 50% of the population reached only by modality 1
 # 
 
-import region
-r = region.Region.load('./regions/georgia_working.json')
+import project
+r = project.Project.load('./projects/georgia_working.json')
 
 p = program.Program.import_legacy(r.D['programs'][0])
 m = p.modalities[0]

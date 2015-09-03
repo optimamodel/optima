@@ -6,11 +6,11 @@ Created on Tue Jul 07 22:24:46 2015
 """
 
 import add_optima_paths
-from region import Region
+from project import Project
 from copy import deepcopy
 import simbox
 
-r = Region.load('./regions/indonesia_bali.json')
+r = Project.load('./projects/indonesia_bali.json')
 sb = r.createsimbox('asdf', isopt = True, createdefault = True)
 
 r.runsimbox(sb)

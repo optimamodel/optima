@@ -7,7 +7,7 @@ from liboptima.utils import sanitize, printv
 from numpy import zeros, array, exp, shape
 
 class Sim(object):
-    def __init__(self, name, region, calibration = None):
+    def __init__(self, name, project, calibration = None):
         self.name = name
         self.initialised = False    # This tag monitors if the simulation has been initialised.        
         self.processed = False      # This tag monitors if the simulation has been run.
@@ -16,11 +16,11 @@ class Sim(object):
         self.parsdata = None        # This used to be D['P'].
         self.parsmodel = None       # This used to be D['M'].
         self.parsfitted = None      # This used to be D['F'].
-        self.calibration = calibration if calibration is not None else region.calibrations[0]['uuid'] # Use the first region calibration by default - could reorder the region's calibrations to choose a default later
+        self.calibration = calibration if calibration is not None else project.calibrations[0]['uuid'] # Use the first project calibration by default - could reorder the project's calibrations to choose a default later
 
         # Check the calibration exists
-        if self.calibration not in [x['uuid'] for x in region.calibrations]:
-            raise Exception('The provided calibration UUID could not be found in the provided region')
+        if self.calibration not in [x['uuid'] for x in project.calibrations]:
+            raise Exception('The provided calibration UUID could not be found in the provided project')
 
         self.debug = {}             # This stores the (large) output from running the simulation
         self.debug['results'] = None         # This used to be D['R'].
@@ -28,19 +28,19 @@ class Sim(object):
         
         self.plotdata = None        # This used to be D['plot']['E']. Be aware that it is not D['plot']!        
         self.plotdataopt = None # TEMP DEBUG, DON'T COMMIT
-        self.setregion(region)
+        self.setproject(project)
 
     @classmethod
-    def fromdict(Sim,simdict,region):
+    def fromdict(Sim,simdict,project):
         # This function instantiates the correct subtype based on simdict['type']
-        assert(simdict['region_uuid'] == region.uuid)
+        assert(simdict['project_uuid'] == project.uuid)
         if simdict['type'] == 'Sim':
-            s = Sim(simdict['name'],region)
+            s = Sim(simdict['name'],project)
         if simdict['type'] == 'SimParameter':
-            s = SimParameter(simdict['name'],region)
+            s = SimParameter(simdict['name'],project)
         if simdict['type'] == 'SimBudget':
-            s = SimBudget(simdict['name'],region)
-        s.setregion(region)
+            s = SimBudget(simdict['name'],project)
+        s.setproject(project)
         s.load_dict(simdict)
         return s
 
@@ -70,28 +70,28 @@ class Sim(object):
         simdict['parsfitted']  = self.parsfitted 
         simdict['debug']   = self.debug 
         simdict['plotdata']  = self.plotdata 
-        simdict['region_uuid'] = self.getregion().uuid
+        simdict['project_uuid'] = self.getproject().uuid
         simdict['uuid'] = self.uuid
         simdict['calibration'] = self.calibration
         return simdict
     
-    def setregion(self,region):
-        self.region = weakref.ref(region)
+    def setproject(self,project):
+        self.project = weakref.ref(project)
 
-    def getregion(self):
-        # self.region is a weakref object, which means to get
-        # the region you need to do self.region() rather than
-        # self.region. This function abstracts away this 
+    def getproject(self):
+        # self.project is a weakref object, which means to get
+        # the project you need to do self.project() rather than
+        # self.project. This function abstracts away this 
         # implementation detail in case it changes in future
-        r = self.region()
+        r = self.project()
         if r is None:
-            raise Exception('The parent region has been garbage-collected and the reference is no longer valid.')
+            raise Exception('The parent project has been garbage-collected and the reference is no longer valid.')
         else:
             return r
 
     def getcalibration(self):
         # Return a deepcopy of the selected calibration
-        r = self.getregion()
+        r = self.getproject()
         uuids = [x['uuid'] for x in r.calibrations]
         idx = uuids.index(self.calibration)
         return deepcopy(r.calibrations[idx])
@@ -110,7 +110,7 @@ class Sim(object):
     
     # Initialises P, M and F matrices belonging to the Sim object, but does not run simulation yet.
     def initialise(self, forcebasicmodel = False):
-        r = self.getregion()
+        r = self.getproject()
         calibration = self.getcalibration()
 
         from makedatapars import makedatapars
@@ -138,12 +138,12 @@ class Sim(object):
     def makedatapars(self, verbose=2):
         # This method creates self.parsdata
         # parsdata is *intended* to only store things with D.P.T and D.P.C
-        r = self.getregion() 
+        r = self.getproject() 
         calibration = self.getcalibration()
 
         ## Preliminaries
         
-        def data2par(dataarray, region, usetime=True):
+        def data2par(dataarray, project, usetime=True):
             """ Take an array of data and turn it into default parameters -- here, just take the means """
             nrows = shape(dataarray)[0] # See how many rows need to be filled (either npops, nprogs, or 1)
             output = dict() # Create structure
@@ -154,7 +154,7 @@ class Sim(object):
                     validdata = ~isnan(dataarray[n])
                     if sum(validdata): # There's at least one data point
                         output['p'][n] = sanitize(dataarray[n]) # Store each extant value
-                        output['t'][n] = region.metadata['datayears'][~isnan(dataarray[n])] # Store each year
+                        output['t'][n] = project.metadata['datayears'][~isnan(dataarray[n])] # Store each year
                     else: # Blank, assume zero
                         output['p'][n] = array([0])
                         output['t'][n] = array([0])
@@ -223,7 +223,7 @@ class Sim(object):
         # SimParameter, SimBudget and SimCoverage differ in how they calculate D.M
         # but are otherwise almost identical. Thus this is the function that is
         # expected to be re-implemented in the derived classes
-        r = self.getregion()
+        r = self.getproject()
         calibration = self.getcalibration()
 
         opt = r.options
@@ -336,7 +336,7 @@ class Sim(object):
         if not self.initialised:
             self.initialise()
 
-        r = self.getregion()
+        r = self.getproject()
         calibration = self.getcalibration()
 
         from model import model
@@ -391,10 +391,10 @@ class Sim(object):
         return "Sim %s ('%s')" % (self.uuid,self.name)
 
     def __getstate__(self):
-        raise Exception('Simobject must be saved via a region')
+        raise Exception('Simobject must be saved via a project')
 
     def __setstate__(self, state):
-        raise Exception('Simobjects must be re-created via a region')
+        raise Exception('Simobjects must be re-created via a project')
 
 
 #------------------------------------------------------------------------------
@@ -403,8 +403,8 @@ class Sim(object):
 
 # Derived Sim class that should store parameter overwrites.
 class SimParameter(Sim):
-    def __init__(self, name, region, calibration = None):
-        Sim.__init__(self, name, region, calibration)
+    def __init__(self, name, project, calibration = None):
+        Sim.__init__(self, name, project, calibration)
         self.parameter_overrides = []
 
     def todict(self):
@@ -423,7 +423,7 @@ class SimParameter(Sim):
         #
         # Also need to validate the parameter name
         if type(pop) is str:
-            r = self.getregion()
+            r = self.getproject()
             poplist = [x['short_name'] for x in r.metadata['populations']] + ['all']
             try:
                 popidx = poplist.index(pop) + 1 # For some reason (frontend?) these indexes are 1-based rather than 0-based
@@ -454,7 +454,7 @@ class SimParameter(Sim):
         Sim.makemodelpars(self) 
 
         # Now compute the overrides as per scenarios.py -> makescenarios()
-        r = self.getregion()
+        r = self.getproject()
         for thesepars in self.parameter_overrides:
             data = getnested(self.parsmodel, thesepars['names'])
             if ndim(data)>1:

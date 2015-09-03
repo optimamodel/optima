@@ -7,16 +7,16 @@ Created on Thu Jul 23 18:03:48 2015
 
 import add_optima_paths
 from portfolio import Portfolio
-from region import Region
+from project import Project
 import os
 
-# Create a Portfolio to hold all of Malawi's districts (i.e. Regions).
+# Create a Portfolio to hold all of Malawi's districts (i.e. Projects).
 p1 = Portfolio('Malawi Project')
 
-# List all the json files in the regions sub-directory.
-templist = [x for x in os.listdir('./regions/') if x.endswith('.json')]
+# List all the json files in the projects sub-directory.
+templist = [x for x in os.listdir('./projects/') if x.endswith('.json')]
 
-normaliser = Region.load('./regions/Malawi 150820.json')
+normaliser = Project.load('./projects/Malawi 150820.json')
 denom = sum(normaliser.calibrations[0]['popsize'])
 
 from datetime import date
@@ -29,22 +29,22 @@ for x in templist:
     # Make sure you only select files with the right format (i.e. Regex 4 Dummies).
     if x[2] == '.':
         print(x)
-        newregion = Region.load('./regions/' + x)           # Load up a Region from the json file.
+        newproject = Project.load('./projects/' + x)           # Load up a Project from the json file.
         
-        totalloc = sum(newregion.data['origalloc'])        
+        totalloc = sum(newproject.data['origalloc'])        
         
-        numer = sum(newregion.calibrations[0]['popsize'])
+        numer = sum(newproject.calibrations[0]['popsize'])
         popcalc += numer
-#        newregion.data['origalloc'] *= numer/denom
-        p1.appendregion(newregion)                          # Put that Region into a Portfolio.
+#        newproject.data['origalloc'] *= numer/denom
+        p1.appendproject(newproject)                          # Put that Project into a Portfolio.
         
-#        totalloc = sum(newregion.data['origalloc'])
+#        totalloc = sum(newproject.data['origalloc'])
         alloccalc += totalloc
         
         print numer
         print totalloc
         
-#p1.quicksaveregions()
+#p1.quicksaveprojects()
 print popcalc
 print denom
 
@@ -52,18 +52,18 @@ print alloccalc
 print sum(normaliser.data['origalloc'])
 
 alloccalc2 = 0
-for someregion in p1.regionlist:
-    regpoptot = sum(someregion.calibrations[0]['popsize'])
-    someregion.data['origalloc'] *= regpoptot/popcalc
-    totalloc = sum(someregion.data['origalloc'])  
+for someproject in p1.projectlist:
+    regpoptot = sum(someproject.calibrations[0]['popsize'])
+    someproject.data['origalloc'] *= regpoptot/popcalc
+    totalloc = sum(someproject.data['origalloc'])  
     alloccalc2 += totalloc
 print alloccalc2
 print sum(normaliser.data['origalloc'])
 
-p1.quicksaveregions()
+p1.quicksaveprojects()
 
 
-# Ignore this. It helps you run a simulation and an optimisation for a region of your choice.
+# Ignore this. It helps you run a simulation and an optimisation for a project of your choice.
 def testsimopt(r1):
 
     r1.createsimbox('sb-test-sim', isopt = False, createdefault = True)
@@ -82,7 +82,7 @@ def testsimopt(r1):
                                      r1.simboxlist[-1].simlist[0].alloc[x],
                                      r1.simboxlist[-1].simlist[-1].alloc[x]))
 
-#testsimopt(newregion)
+#testsimopt(newproject)
 
 #p1.geoprioanalysis()                # Run the GPA algorithm.
 

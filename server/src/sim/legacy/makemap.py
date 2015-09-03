@@ -21,7 +21,7 @@ def plotshape(points, color):
 
 sf = sh.Reader(filename)
 
-numregions = sf.numRecords
+numprojects = sf.numRecords
 
 figure()
 ax = axes(frameon=False)
@@ -30,13 +30,13 @@ ax.get_yaxis().set_visible(False)
 hold(True)
 
 from gridcolormap import gridcolormap
-colors = gridcolormap(numregions)
+colors = gridcolormap(numprojects)
 
-for r in xrange(numregions):
+for r in xrange(numprojects):
     plotshape(sf.shape(r).points, colors[r])
 
 
 names = []
-for i in range(numregions): names.append(sf.record(i)[4])
+for i in range(numprojects): names.append(sf.record(i)[4])
 
 print('Done.')
