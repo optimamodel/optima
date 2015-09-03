@@ -30,6 +30,7 @@ class Metadata(object):
         except:
             self.gitbranch = 'Git branch information not retrivable'
             self.gitversion = 'Git version information not retrivable'
+            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         return None
     
     

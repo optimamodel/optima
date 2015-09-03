@@ -72,7 +72,7 @@ def dataindex(dataarray, index):
     
     nrows = shape(dataarray)[0] # See how many rows need to be filled (either npops, nprogs, or 1).
     output = zeros(nrows)       # Create structure
-    for r in xrange(nrows): 
+    for r in range(nrows): 
         output[r] = sanitize(dataarray[r])[index] # Return the specified index -- usually either the first [0] or last [-1]
     
     return output
@@ -153,16 +153,16 @@ def printarr(arr, arrformat='%0.2f  '):
     from numpy import ndim
     if ndim(arr)==1:
         string = ''
-        for i in xrange(len(arr)):
+        for i in range(len(arr)):
             string += arrformat % arr[i]
         print(string)
     elif ndim(arr)==2:
-        for i in xrange(len(arr)):
+        for i in range(len(arr)):
             printarr(arr[i], arrformat)
     elif ndim(arr)==3:
-        for i in xrange(len(arr)):
+        for i in range(len(arr)):
             print('='*len(arr[i][0])*len(arrformat % 1))
-            for j in xrange(len(arr[i])):
+            for j in range(len(arr[i])):
                 printarr(arr[i][j], arrformat)
     else:
         print(arr) # Give up
@@ -333,10 +333,10 @@ def checkmem(origvariable, descend=0, order='n', plot=False, verbose=0):
 
 
 def run(command, printinput=False, printoutput=False):
-   """ Make it easier to run bash commands. Version: 1.0 Date: 2015aug16 """
+   """ Make it easier to run bash commands. Version: 1.1 Date: 2015sep03 """
    from subprocess import Popen, PIPE
    if printinput: print(command)
-   try: output = Popen(command, shell=True, stdout=PIPE).communicate()[0]
+   try: output = Popen(command, shell=True, stdout=PIPE).communicate()[0].decode("utf-8")
    except: output = 'Shell command failed'
    if printoutput: print(output)
    return output
@@ -394,6 +394,7 @@ Version: 2014nov29 by cliffk
 
 def getnested(nesteddict, keylist, safe=False): 
     """ Get a value from a nested dictionary"""
+    from functools import reduce
     output = reduce(lambda d, k: d.get(k) if d else None if safe else d[k], keylist, nesteddict)
     return output
 
