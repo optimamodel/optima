@@ -1,7 +1,7 @@
 """
 METADATA
 
-Version: 2015sep02 by cliffk
+Version: 2015sep03 by cliffk
 """
 
 from uuid import uuid4
@@ -9,7 +9,7 @@ from datetime import datetime
 from time import mktime
 from utils import run
 
-version = 3.0
+version = 2.0
 
 
 
@@ -43,7 +43,7 @@ class Metadata(object):
         output += '  Date modified: %s\n'    % self.getdate(which='modified')
         output += '     Git branch: %s\n'    % self.gitbranch
         output += '    Git version: %s\n'    % self.gitversion
-        output += '           UUID: %s\n'    % str(self.uuid)
+        output += '           UUID: %s\n'    % self.uuid
         return output
     
     

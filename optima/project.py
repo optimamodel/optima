@@ -21,14 +21,14 @@ Methods for structure lists:
     4. rename -- rename a structure in the list
     5. show -- show information on all items in the list(s)
 
-Version: 2015sep02 by cliffk
+Version: 2015sep03 by cliffk
 """
 
 from copy import deepcopy
 import cPickle
 from gzip import GzipFile
 from metadata import Metadata
-import settings
+from settings import Settings
     
 
 
@@ -40,9 +40,10 @@ class Project(object):
     ## Built-in methods
     #######################################################################################################
     
-    
     def __init__(self,name='default',spreadsheet=None):
         ''' Initialize the project ''' 
+        
+        
         self.name = name
         
         ## Define the structure lists
@@ -54,7 +55,7 @@ class Project(object):
         ## Define other quantities
         self.data = {}
         self.metadata = Metadata(name=name)
-        self.settings = settings
+        self.settings = Settings()
         
         return None
     
@@ -88,14 +89,12 @@ class Project(object):
     @classmethod
     def load(Project,filename):
         ''' Load a saved project '''
-        print('WARNING DOES NOT WORK')
         with GzipFile(filename, 'rb') as fileobj: project = cPickle.load(fileobj)
         print('Project loaded from "%s"' % filename)
         return project
 
     def save(self,filename):
         ''' Save the current project '''
-        print('WARNING DOES NOT WORK')
         with GzipFile(filename, 'wb') as fileobj: cPickle.dump(self, fileobj, protocol=2)
         print('Project "%s" saved to "%s"' % (self.name, filename))
         return None
