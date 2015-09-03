@@ -4,106 +4,125 @@ from numpy import linspace, exp, isnan, multiply, arange, mean, array, maximum
 from numpy import log as nplog
 
 class ccoc(object):
-	# A ccoc object has
-	# - A set of frontend parameters
-	# - A selected functional form for the curve
-	# - A mapping function that converts the FE parameters into BE parameters
-	# - The ability to perturb BE parameters prior to retrieving the output value
-	__metaclass__ = abc.ABCMeta
+    # A ccoc object has
+    # - A set of frontend parameters
+    # - A selected functional form for the curve
+    # - A mapping function that converts the FE parameters into BE parameters
+    # - The ability to perturb BE parameters prior to retrieving the output value
+    __metaclass__ = abc.ABCMeta
 
-	def __init__(self,fe_params):
-		self.fe_params = fe_params
+    def __init__(self,fe_params):
+        self.fe_params = fe_params
 
-	@abc.abstractmethod # This method must be defined by the derived class
-	def function(self,x,p):
-		# This function takes in either a spending value or coverage
-		# and the functional parameters for the object, and returns
-		# the coverage or the outcome
-		pass
 
-	@abc.abstractmethod # This method must be defined by the derived class
-	def convertparams(self,perturb=False):
-		# Take the current frontend parameters, and convert them into backend parameters
-		# that can be passed into ccoc.function()
-		pass
+    @classmethod
+    def fromdict(ccoc,ccocsdict):
+        # This function instantiates the correct subtype based on simdict['type']
+        ccoc_class = globals()[ccocsdict['type']] # This is the class corresponding to the CC form e.g. it could be  a <ccocs.cc_scaleup> object
+        c = ccoc_class(None)
+        c.load_dict(ccocsdict)
+        return c
 
-	def evaluate(self,x,perturb=False):
-		# Todo: incorporate perturbation
-		p = self.convertparams(perturb)
-		return self.function(x,p)
+    def load_dict(self,ccocsdict):
+        self.fe_params = ccocsdict['fe_params']
 
-	def invert(self,y):
-		p = self.convertparams()
-		return self.inverse(y,p)
+    def todict(self):
+        ccocsdict = {}
+        ccocsdict['type'] = self.__class__.__name__
+        ccocsdict['fe_params'] = self.fe_params
+        return ccocsdict
 
-	def inverse(self,y,p):
-		# This function should find the inverse numerically
-		# but it can be overloaded by derived classes to provide
-		# an analytic inverse
-		raise Exception('Numerical inverse not implemented yet')
+
+    @abc.abstractmethod # This method must be defined by the derived class
+    def function(self,x,p):
+        # This function takes in either a spending value or coverage
+        # and the functional parameters for the object, and returns
+        # the coverage or the outcome
+        pass
+
+    @abc.abstractmethod # This method must be defined by the derived class
+    def convertparams(self,perturb=False):
+        # Take the current frontend parameters, and convert them into backend parameters
+        # that can be passed into ccoc.function()
+        pass
+
+    def evaluate(self,x,perturb=False):
+        # Todo: incorporate perturbation
+        p = self.convertparams(perturb)
+        return self.function(x,p)
+
+    def invert(self,y):
+        p = self.convertparams()
+        return self.inverse(y,p)
+
+    def inverse(self,y,p):
+        # This function should find the inverse numerically
+        # but it can be overloaded by derived classes to provide
+        # an analytic inverse
+        raise Exception('Numerical inverse not implemented yet')
 
 ######## SPECIFIC CCOC IMPLEMENTATIONS
 
 class cc_scaleup(ccoc):
-	def function(self,x,p):
-		return cceqn(x,p)
+    def function(self,x,p):
+        return cceqn(x,p)
 
-	def convertparams(self,perturb=False):
-		growthratel = exp((1-self.fe_params['scaleup'])*log(self.fe_params['saturation']/self.fe_params['coveragelower']-1)+log(self.fe_params['funding']))
-		growthratem = exp((1-self.fe_params['scaleup'])*log(self.fe_params['saturation']/((self.fe_params['coveragelower']+self.fe_params['coverageupper'])/2)-1)+log(self.fe_params['funding']))
-		growthrateu = exp((1-self.fe_params['scaleup'])*log(self.fe_params['saturation']/self.fe_params['coverageupper']-1)+log(self.fe_params['funding']))
-		convertedccparams = [[self.fe_params['saturation'], growthratem, self.fe_params['scaleup']], [self.fe_params['saturation'], growthratel, self.fe_params['scaleup']], [self.fe_params['saturation'], growthrateu, self.fe_params['scaleup']]]
-		return convertedccparams[0] # TODO: This is currently only returning the unperturbed case
+    def convertparams(self,perturb=False):
+        growthratel = exp((1-self.fe_params['scaleup'])*log(self.fe_params['saturation']/self.fe_params['coveragelower']-1)+log(self.fe_params['funding']))
+        growthratem = exp((1-self.fe_params['scaleup'])*log(self.fe_params['saturation']/((self.fe_params['coveragelower']+self.fe_params['coverageupper'])/2)-1)+log(self.fe_params['funding']))
+        growthrateu = exp((1-self.fe_params['scaleup'])*log(self.fe_params['saturation']/self.fe_params['coverageupper']-1)+log(self.fe_params['funding']))
+        convertedccparams = [[self.fe_params['saturation'], growthratem, self.fe_params['scaleup']], [self.fe_params['saturation'], growthratel, self.fe_params['scaleup']], [self.fe_params['saturation'], growthrateu, self.fe_params['scaleup']]]
+        return convertedccparams[0] # TODO: This is currently only returning the unperturbed case
 
 class cc_noscaleup(ccoc):
-	def function(self,x,p):
-		return cc2eqn(x,p)
+    def function(self,x,p):
+        return cc2eqn(x,p)
 
-	def convertparams(self,perturb=False):
-		growthratel = (-1/self.fe_params['funding'])*log((2*self.fe_params['saturation'])/(self.fe_params['coveragelower']+self.fe_params['saturation']) - 1)        
-		growthratem = (-1/self.fe_params['funding'])*log((2*self.fe_params['saturation'])/(((self.fe_params['coveragelower']+self.fe_params['coverageupper'])/2)+self.fe_params['saturation']) - 1)        
-		growthrateu = (-1/self.fe_params['funding'])*log((2*self.fe_params['saturation'])/(self.fe_params['coverageupper']+self.fe_params['saturation']) - 1)        
-		convertedccparams = [[self.fe_params['saturation'], growthratem], [self.fe_params['saturation'], growthratel], [self.fe_params['saturation'], growthrateu]]
-		return convertedccparams[0] # TODO: This is currently only returning the unperturbed case
+    def convertparams(self,perturb=False):
+        growthratel = (-1/self.fe_params['funding'])*log((2*self.fe_params['saturation'])/(self.fe_params['coveragelower']+self.fe_params['saturation']) - 1)        
+        growthratem = (-1/self.fe_params['funding'])*log((2*self.fe_params['saturation'])/(((self.fe_params['coveragelower']+self.fe_params['coverageupper'])/2)+self.fe_params['saturation']) - 1)        
+        growthrateu = (-1/self.fe_params['funding'])*log((2*self.fe_params['saturation'])/(self.fe_params['coverageupper']+self.fe_params['saturation']) - 1)        
+        convertedccparams = [[self.fe_params['saturation'], growthratem], [self.fe_params['saturation'], growthratel], [self.fe_params['saturation'], growthrateu]]
+        return convertedccparams[0] # TODO: This is currently only returning the unperturbed case
 
 class co_cofun(ccoc):
-	def function(self,x,p):
-		return coeqn(x,p)
+    def function(self,x,p):
+        return coeqn(x,p)
 
-	def inverse(self,y,p):
-		return (y-p[0])/(p[1]-p[0]) 
-		
-	def convertparams(self,perturb=False):
-		muz, stdevz = (self.fe_params[0]+self.fe_params[1])/2, (self.fe_params[1]-self.fe_params[0])/6 # Mean and standard deviation calcs
-		muf, stdevf = (self.fe_params[2]+self.fe_params[3])/2, (self.fe_params[3]-self.fe_params[2])/6 # Mean and standard deviation calcs
-		convertedcoparams = [muz, stdevz, muf, stdevf]
-		convertedcoparams = [[muz,muf],[muz,muf],[muz,muf]] # DEBUG CODE, DO THIS PROPERLY LATER
-		return convertedcoparams[0] # TODO: This is currently only returning the unperturbed case
+    def inverse(self,y,p):
+        return (y-p[0])/(p[1]-p[0]) 
+        
+    def convertparams(self,perturb=False):
+        muz, stdevz = (self.fe_params[0]+self.fe_params[1])/2, (self.fe_params[1]-self.fe_params[0])/6 # Mean and standard deviation calcs
+        muf, stdevf = (self.fe_params[2]+self.fe_params[3])/2, (self.fe_params[3]-self.fe_params[2])/6 # Mean and standard deviation calcs
+        convertedcoparams = [muz, stdevz, muf, stdevf]
+        convertedcoparams = [[muz,muf],[muz,muf],[muz,muf]] # DEBUG CODE, DO THIS PROPERLY LATER
+        return convertedcoparams[0] # TODO: This is currently only returning the unperturbed case
 
 class co_linear(ccoc):
-	def function(self,x,p):
-		return linear(x,p)
+    def function(self,x,p):
+        return linear(x,p)
 
-	def convertparams(self,perturb=False):
-		return self.fe_params
+    def convertparams(self,perturb=False):
+        return self.fe_params
 
 class identity(ccoc):
-	def function(self,x,p):
-		return x
+    def function(self,x,p):
+        return x
 
-	def convertparams(self,perturb=False):
-		return None
+    def convertparams(self,perturb=False):
+        return None
 
 class null(ccoc):
-	def function(self,x,p):
-		return None
+    def function(self,x,p):
+        return None
 
-	def convertparams(self,perturb=False):
-		return None
+    def convertparams(self,perturb=False):
+        return None
 
 ############## FUNCTIONAL FORMS COPIED FROM makeccocs.py ##############
 def linear(x,params):
-	return params[0]*x+params[1]
+    return params[0]*x+params[1]
 
 def cc2eqn(x, p):
     '''
