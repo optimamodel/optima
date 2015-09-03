@@ -1,11 +1,10 @@
 import sys
-sys.path.append('../tests')
-import add_optima_paths
-from extra_utils import dict_equal
+sys.path.append('..')
+import optima
+from liboptima.utils import dict_equal
 from copy import deepcopy
 import unittest
 import numpy
-import region
 
 class TestDictEqual(unittest.TestCase):
 
@@ -147,17 +146,17 @@ class TestDictEqual(unittest.TestCase):
 		self.assertTrue(dict_equal(b,c))
 		self.assertFalse(dict_equal(c,d))
 
-	def test_region(self):
-		r = region.Region.load('../tests/regions/Haiti.json');
-		d1 = r.todict()
-		d2 = r.todict()
-		r2 = region.Region.load('../tests/regions/Sudan.json');
-		d3 = r2.todict()
-		self.assertTrue(dict_equal(d1,d2))
-		self.assertFalse(dict_equal(d1,d3))
-		r.createsimbox('Simbox 1')
-		d4 = r.todict()
-		self.assertFalse(dict_equal(d1,d4))
+	# def test_region(self):
+	# 	r = region.Region.load('../tests/regions/Haiti.json');
+	# 	d1 = r.todict()
+	# 	d2 = r.todict()
+	# 	r2 = region.Region.load('../tests/regions/Sudan.json');
+	# 	d3 = r2.todict()
+	# 	self.assertTrue(dict_equal(d1,d2))
+	# 	self.assertFalse(dict_equal(d1,d3))
+	# 	r.createsimbox('Simbox 1')
+	# 	d4 = r.todict()
+	# 	self.assertFalse(dict_equal(d1,d4))
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,18 +1,9 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Jun 05 23:27:38 2015
-
-@author: David Kedziora
-"""
-
 import weakref
 import uuid
 import defaults
 from copy import deepcopy
-from printv import printv
 from numpy import array, isnan, zeros, shape, mean
-from utils import sanitize
-from printv import printv
+from liboptima.utils import sanitize, printv
 from numpy import zeros, array, exp, shape
 
 class Sim(object):
@@ -250,7 +241,7 @@ class Sim(object):
            Set withwhat = c if you want to use the ccoc data for the parameters
            """
            from numpy import isnan
-           from utils import smoothinterp
+           from liboptima.utils import smoothinterp
 
            withwhat = withwhat if withwhat in datapar else default_withwhat #if that is not there, then it has to fail anyway
            
@@ -578,9 +569,3 @@ def reconcileacts(symmetricmatrix,popsize,popacts):
             pshipacts[pop1,pop2] = balanced/popsize[pop1]; # ...and for the other population
 
     return pshipacts
-
-
-#%% Tail imports pointing to derived classes, so as to avoid circular import problems.
-
-from simbudget import SimBudget
-from simbudget2 import SimBudget2

@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Jun 02 01:03:34 2015
-
-@author: David Kedziora
-"""
-
 from sim import Sim
 
 import weakref

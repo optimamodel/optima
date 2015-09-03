@@ -9,10 +9,10 @@ Allocation optimization code:
 Version: 2015feb06 by cliffk
 """
 
-from printv import printv
+from liboptima.utils import printv
 from copy import deepcopy
 from numpy import ones, zeros, concatenate, arange, inf, hstack, argmin, array, ndim
-from utils import findinds
+from liboptima.utils import findinds
 from makeresults import makeresults
 from timevarying import timevarying, multiyear
 from getcurrentbudget import getcurrentbudget
@@ -22,7 +22,7 @@ from quantile import quantile
 from ballsd import ballsd
 from getcurrentbudget import getcoverage
 
-import defaults
+import optima.defaults as defaults
 
 
 

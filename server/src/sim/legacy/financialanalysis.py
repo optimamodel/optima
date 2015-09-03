@@ -7,15 +7,15 @@ Version: 2015feb03
 """
 from numpy import append, npv, cumsum
 from setoptions import setoptions
-from printv import printv
+from liboptima.utils import printv
 from datetime import date
-from utils import smoothinterp, findinds
+from liboptima.utils import smoothinterp, findinds
 
 def financialanalysis(D, postyear=2015, S=None, rerunmodel=False, artgrowthrate=.05, discountrate=.03, treattime=[8,1,16,3,10], cd4time=[8,8,10,8,2,2], verbose=2):
     '''
     Plot financial commitment graphs
     '''
-    from utils import sanitize
+    from liboptima.utils import sanitize
 
     printv('Running financial analysis...', 2, verbose)
     

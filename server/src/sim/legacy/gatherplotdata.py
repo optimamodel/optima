@@ -16,7 +16,7 @@ costylabels = {}
 def gatheruncerdata(D, R, annual=True, verbose=2, maxyear=2030):
     """ Gather standard results into a form suitable for plotting with uncertainties. """
     from numpy import zeros, nan, size, ndim, array, asarray
-    from printv import printv
+    from liboptima.utils import printv
     from copy import deepcopy
     printv('Gathering epidemiology results...', 3, verbose)
     
@@ -195,7 +195,7 @@ def gatheruncerdata(D, R, annual=True, verbose=2, maxyear=2030):
 
 def gathermultidata(D, Rarr, annual=True, verbose=2, maxyear=2030):
     """ Gather multi-simulation results (scenarios and optimizations) into a form suitable for plotting. """
-    from printv import printv
+    from liboptima.utils import printv
     from copy import deepcopy
     printv('Gathering multi-simulation results...', 3, verbose)
     

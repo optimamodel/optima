@@ -7,7 +7,7 @@ def getcurrentbudget(D, alloc=None, randseed=None):
     """
     from makeccocs import ccoeqn, cco2eqn, coverage_params, makesamples
     from numpy import nan, zeros, array, isnan
-    from utils import perturb
+    from liboptima.utils import perturb
     
     npts = len(D['opt']['partvec']) # Number of parameter points
     if isinstance(alloc,type(None)): 
@@ -56,7 +56,7 @@ def getcoverage(D, alloc=None, randseed=None):
     ''' Get the coverage levels corresponding to a particular allocation '''
     from numpy import zeros_like, array, isnan
     from makeccocs import cc2eqn, cceqn, gettargetpop
-    from utils import perturb
+    from liboptima.utils import perturb
     
     allocwaslist = 0
     if isinstance(alloc,list): alloc, allocwaslist = array(alloc), 1

@@ -15,7 +15,7 @@ def makeresults(D, allsims=None, quantiles=None, rerunfinancial=False, verbose=2
     """
     
     from numpy import array, concatenate
-    from printv import printv
+    from liboptima.utils import printv
     from quantile import quantile
     from copy import deepcopy
     printv('Calculating results...', 1, verbose)

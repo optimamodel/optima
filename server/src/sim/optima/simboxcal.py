@@ -1,16 +1,8 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Jul 23 23:52:18 2015
-
-@author: David Kedziora
-"""
-
 from simbox import SimBox
 
 import uuid
 from numpy import zeros
-from utils import perturb, dataindex
-from printv import printv
+from liboptima.utils import perturb, dataindex,printv
 
 # A container for calibrating Sims.
 class SimBoxCal(SimBox):

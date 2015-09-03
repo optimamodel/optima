@@ -8,7 +8,7 @@ def viewuncerresults(E, whichgraphs=whichgraphdefaults, simstartyear=2000, simen
     """
     
     from matplotlib.pylab import figure, plot, hold, scatter, xlabel, ylabel, xlim, ylim, legend, title, ndim, ceil, sqrt, subplot, show, fill_between, sort
-    from printv import printv
+    from liboptima.utils import printv
 
     
     npops = len(E['prev']['pops']) # Calculate number of populations
