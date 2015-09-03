@@ -25,7 +25,8 @@ Version: 2015sep03 by cliffk
 """
 
 from copy import deepcopy
-import cPickle
+try: import cPickle as pickle # For Python 2 compatibility
+except: import pickle
 from gzip import GzipFile
 from metadata import Metadata
 from settings import Settings
@@ -88,13 +89,13 @@ class Project(object):
     @classmethod
     def load(Project,filename):
         ''' Load a saved project '''
-        with GzipFile(filename, 'rb') as fileobj: project = cPickle.load(fileobj)
+        with GzipFile(filename, 'rb') as fileobj: project = pickle.load(fileobj)
         print('Project loaded from "%s"' % filename)
         return project
 
     def save(self,filename):
         ''' Save the current project '''
-        with GzipFile(filename, 'wb') as fileobj: cPickle.dump(self, fileobj, protocol=2)
+        with GzipFile(filename, 'wb') as fileobj: pickle.dump(self, fileobj, protocol=2)
         print('Project "%s" saved to "%s"' % (self.name, filename))
         return None
     
@@ -128,10 +129,10 @@ class Project(object):
         ''' Check that a name exists if it needs to; check that a name doesn't exist if it's not supposed to '''
         structlist = self.getwhat(what)
         if checkabsent is not None and overwrite==False:
-            if structlist.has_key(checkabsent):
+            if checkabsent in structlist:
                 raise Exception('Structure list "%s" already has item named "%s"' % (what, checkabsent))
         if checkexists is not None:
-            if not structlist.has_key(checkexists):
+            if not checkexists in structlist:
                 raise Exception('Structure list "%s" has no item named "%s"' % (what, checkexists))
         return None
     
@@ -170,23 +171,7 @@ class Project(object):
         structlist[new] = structlist.pop(orig)
         print('Item "%s" renamed to "%s" in structure list "%s"' % (orig, new, what))
         return None
-    
-    
-    def show(self, what=None):
-        ''' Show all items in the structure list(s) -- pretty useless for now '''
-        if what is None: whatlist = ['p', 'c', 's', 'o']
-        if type(what)==str: whatlist = [what]
-        if type(what)==list: whatlist = what
-        for w in whatlist:
-            structlist = self.getwhat(w)
-            keys = structlist.keys()
-            print('\n'*3)
-            print('Number of items in structure list "%s": %i' % (w, len(keys)))
-            print('Keys:')
-            for i,key in enumerate(keys):
-                print('  Name                 | Number')
-                print('  %20s | %20s' % (key, str(i)))
-        return None
+
     
     
     
