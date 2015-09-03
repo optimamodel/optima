@@ -1,7 +1,7 @@
 import optima
 import liboptima.utils
 from timevarying import timevarying
-
+import numpy
 r = optima.Project.load_json('./projects/Dedza.json')
 
 # This function tests the program calculation
@@ -11,6 +11,7 @@ r = optima.Project.load('asdf.bin')
 # Make an example budget from the default allocation
 a = r.D['data']['origalloc']
 budget = timevarying(a,nprogs=len(a), tvec=r.options['partvec'], totalspend=sum(a))
+
 
 # Make a second programset, for fun
 s1 = optima.SimBudget('SimBudget',r,budget)

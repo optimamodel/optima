@@ -311,7 +311,7 @@ def gathermultidata(D, Rarr, annual=True, verbose=2, maxyear=2030):
 
 def gatheroptimdata(D, result, verbose=2):
     """ Return the data for plotting the optimization results. """
-    from printv import printv
+    from liboptima.utils import printv
     printv('Gathering optimization results...', 3, verbose)
     
     optim = dict() # These optimization results

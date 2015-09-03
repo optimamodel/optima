@@ -19,14 +19,7 @@ import dataio_binary
 from programset import ProgramSet
 from scipy.interpolate import PchipInterpolator as pchip
 import cPickle
-#### Multiprocessor helper functions for Project class.
-#def unwrap_self_developBOCsubprocess(*arg, **kwarg):
-#    return Project.developBOCsubprocess(*arg, **kwarg)
-#    
-#def f(x):
-#    return x**2
 
-### The actual Project class.
 class Project(object):
     def __init__(self,name,populations=None,programs=None,datastart=None,dataend=None):
         # Usage
@@ -181,7 +174,7 @@ class Project(object):
         self.options = tempD['opt']
 
         # Legacy programs can be imported from the project metadata
-        self.programsets = ProgramSet.import_legacy('Default',self.metadata['programs'])
+        self.programsets = [ProgramSet.import_legacy('Default',self.metadata['programs'])]
 
         # Make the calibration - legacy files have one calibration
         # Using pop will remove them from the project so that downstream calls

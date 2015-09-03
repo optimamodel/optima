@@ -4,6 +4,7 @@ import defaults
 from collections import defaultdict
 import ccocs
 from copy import deepcopy
+import dataio_binary
 
 coverage_params = ['numcircum','numost','numpmtct','numfirstline','numsecondline'] # This list is copied from makeccocs.py
 # What about aidstest, sharing, and breast?
@@ -16,6 +17,18 @@ class ProgramSet(object):
         self.programs = []
         self.reachability_interaction = 'random' # These are the options on slide 7 of the proposal
         self.current_version = 1
+
+    @classmethod
+    def load(ProgramSet,filename,name=None):
+        # Use this function to load a ProgramSet saved with ProgramSet.save
+        r = ProgramSet(name)
+        psetdict = dataio_binary.load(filename)
+        r.uuid = psetdict['uuid'] # Loading a ProgramSet restores the original UUID
+        r.fromdict(psetdict)
+        return r
+
+    def save(self,filename):
+        dataio_binary.save(self.todict(),filename)
 
     @classmethod
     def fromdict(ProgramSet,psetdict):
@@ -55,6 +68,12 @@ class ProgramSet(object):
             co_inputs = []
 
             if prog['effects']: # A spending only program has no effects - it exists in the program list but because it covers no populations, it gets skipped when evaluating parameters
+                
+                # First, sanitize the population names
+                for effect in prog['effects']:
+                    if effect['popname'] in ['Total','Average','Overall']:
+                        effect['popname'] = 'Overall'
+
                 target_pops = list(set([effect['popname'] for effect in prog['effects']])) # Unique list of affected populations. In legacy programs, they all share the same CC curve
                 
                 for pop in target_pops:
@@ -72,11 +91,11 @@ class ProgramSet(object):
                     co_input['pop'] = effect['popname']
                     co_input['param'] = effect['param']
 
-                    if co_input['param'] in coverage_params and co_input['pop'] != 'Total':
+                    if co_input['param'] in coverage_params and co_input['pop'] != 'Overall':
                         # If simbudget2 uses special popsize estimates for the coverage parameters
                         # but this coverage parameter targets a population, then should the population size
                         # or the special estimate be used?
-                        raise Exception('A coverage parameter has been defined for a specific population? Look into this')
+                        raise Exception('A coverage parameter (%s) has been defined for a specific population (%s)? Look into this' % (co_input['param'],co_input['pop']))
 
                     if effect['param'] in coverage_params: 
                         co_input['form'] = 'identity'

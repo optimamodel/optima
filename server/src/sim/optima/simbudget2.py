@@ -6,11 +6,17 @@ from liboptima.utils import findinds
 from numpy import arange 
 from copy import deepcopy
 import operator
+from timevarying import timevarying
 
 class SimBudget2(Sim):
 
-    def __init__(self, name, project,budget,calibration=None,programset=None):
+    def __init__(self,name,project,budget,calibration=None,programset=None):
         Sim.__init__(self, name, project,calibration)
+
+        if len(budget.shape)==1: # User probably put in an alloc
+            print "Alloc provided instead of budget. Automatically calling timevarying() to convert"
+            budget = timevarying(budget,nprogs=len(budget), tvec=project.options['partvec'], totalspend=sum(budget))
+
         self.budget = budget # This contains spending values for all of the modalities for the simulation timepoints i.e. there are len(D['opt']['partvec']) spending values
         self.programset = programset if programset is not None else project.programsets[0].uuid # Use the first program set by default
         self.popsizes = {} # Estimates for the population size obtained by running a base Sim within the parent project
@@ -116,7 +122,7 @@ class SimBudget2(Sim):
         # First check - all of the parameters and populations provided by the ProgramSet should exist
         outcome_pops = set(outcomes.keys()) 
         outcome_pars = set(reduce(operator.add,[outcomes[x].keys() for x in outcomes.keys()],[]))
-        project_pops = set(pops + ['Total']) # Manually add the special population 'Total'
+        project_pops = set(pops + ['Overall']) # Manually add the special population 'Total'
         project_pars = set(self.parsmodel.keys())
 
         if not (outcome_pops <= project_pops):
@@ -143,11 +149,11 @@ class SimBudget2(Sim):
 
         # Next, assign total (whole project) parameters
         for par in ['aidstest','numfirstline','numsecondline','txelig','numpmtct','breast','numost','numcircum']:
-            if par in outcomes['Total']:
+            if par in outcomes['Overall']: # This string should match the conversion in ProgramSet.import_legacy()
                 if par in programset.coverage_params: 
-                    self.parsmodel[par][update_indexes] = outcomes['Total'][par][update_indexes]*self.popsizes[par][update_indexes]
+                    self.parsmodel[par][update_indexes] = outcomes['Overall'][par][update_indexes]*self.popsizes[par][update_indexes]
                 else:
-                    self.parsmodel[par][update_indexes] = outcomes['Total'][par][update_indexes]
+                    self.parsmodel[par][update_indexes] = outcomes['Overall'][par][update_indexes]
 
         # Finally, realculate totalacts in case numacts is different now for some reason
         self.parsmodel['totalacts'] = sim.calculate_totalacts(self.parsmodel)

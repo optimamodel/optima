@@ -23,6 +23,7 @@ sys.path.append(findoptima() + '/legacy')
 from sim import Sim
 from simbudget import SimBudget
 from simbudget2 import SimBudget2
+from simparameter import SimParameter
 
 from simbox import SimBox
 from simboxopt import SimBoxOpt
