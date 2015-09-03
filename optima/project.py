@@ -118,9 +118,9 @@ class Project(object):
         '''
         if what is None: raise Exception('No structure list provided')
         elif what in ['p', 'pars', 'params', 'parameters']: structlist = self.params
-        elif what in ['c', 'ccocs', 'CCOCs']: structlist = self.ccocs
-        elif what in ['s', 'scens', 'scenarios']: structlist = self.scens
-        elif what in ['o', 'opts', 'optims', 'optimisations', 'optimizations']: structlist = self.optims
+        elif what in ['c', 'ccoc', 'ccocs', 'CCOCs']: structlist = self.ccocs
+        elif what in ['s', 'scen', 'scens', 'scenario', 'scenarios']: structlist = self.scens
+        elif what in ['o', 'opt', 'opts', 'optim', 'optims', 'optimisation', 'optimization', 'optimisations', 'optimizations']: structlist = self.optims
         else: raise Exception('Structure list "%s" not understood' % what)
         return structlist
     
@@ -137,11 +137,11 @@ class Project(object):
         return None
     
     
-    def add(self, what, name='default', newentry=None, overwrite=False):
+    def add(self, what, name='default', item=None, overwrite=False):
         ''' Add an entry to a structure list '''
         structlist = self.getwhat(what)
         self.checkname(what, checkabsent=name, overwrite=overwrite)
-        structlist[name] = newentry
+        structlist[name] = item
         print('Item "%s" added to structure list "%s"' % (name, what))
         return None
     
@@ -174,8 +174,33 @@ class Project(object):
 
     
     
+    #######################################################################################################
+    ## Convenience functions
+    #######################################################################################################
     
+    print('WARNING, need unique add() methods for the different...uhh...classes')
+    def addparams(self, name='default', params=None, overwrite=False): self.add(self, what='params', name=name, item=params, overwrite=overwrite)
+    def addccocs(self,  name='default', ccocs=None,  overwrite=False): self.add(self, what='ccocs', name=name, item=ccocs, overwrite=overwrite)
+    def addscen(self,   name='default', scen=None,   overwrite=False): self.add(self, what='scen', name=name, item=scen, overwrite=overwrite)
+    def addoptim(self,  name='default', optim=None,  overwrite=False): self.add(self, what='optim', name=name, item=optim, overwrite=overwrite)
+ 
+    def rmparams(self, name): self.remove(self, what='params', name=name)
+    def rmccocs(self,  name): self.remove(self, what='ccocs',  name=name)
+    def rmscen(self,   name): self.remove(self, what='scen',   name=name)
+    def rmoptim(self,  name): self.remove(self, what='optim',  name=name)
     
+    def copyparams(self, orig='default', new='new', overwrite=False): self.copy(self, what='params', orig=orig, new=new, overwrite=overwrite)
+    def copyccocs(self,  orig='default', new='new', overwrite=False): self.copy(self, what='ccocs',  orig=orig, new=new, overwrite=overwrite)
+    def copyscen(self,   orig='default', new='new', overwrite=False): self.copy(self, what='scen',   orig=orig, new=new, overwrite=overwrite)
+    def copyoptim(self,  orig='default', new='new', overwrite=False): self.copy(self, what='optim',  orig=orig, new=new, overwrite=overwrite)
+        
+    def renameparams(self, orig='default', new='new', overwrite=False): self.rename(self, what='params', orig=orig, new=new, overwrite=overwrite)
+    def renameccocs(self,  orig='default', new='new', overwrite=False): self.rename(self, what='ccocs',  orig=orig, new=new, overwrite=overwrite)
+    def renamescen(self,   orig='default', new='new', overwrite=False): self.rename(self, what='scen',   orig=orig, new=new, overwrite=overwrite)
+    def renameoptim(self,  orig='default', new='new', overwrite=False): self.rename(self, what='optim',  orig=orig, new=new, overwrite=overwrite)
+
+    
+
 
     #######################################################################################################
     ## Methods to perform major tasks
