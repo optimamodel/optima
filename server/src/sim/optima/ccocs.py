@@ -2,6 +2,7 @@ import abc
 from math import log
 from numpy import linspace, exp, isnan, multiply, arange, mean, array, maximum
 from numpy import log as nplog
+from copy import deepcopy
 
 class ccoc(object):
     # A ccoc object has
@@ -13,7 +14,6 @@ class ccoc(object):
 
     def __init__(self,fe_params):
         self.fe_params = fe_params
-
 
     @classmethod
     def fromdict(ccoc,ccocsdict):
@@ -30,7 +30,7 @@ class ccoc(object):
         ccocsdict = {}
         ccocsdict['type'] = self.__class__.__name__
         ccocsdict['fe_params'] = self.fe_params
-        return ccocsdict
+        return deepcopy(ccocsdict)
 
 
     @abc.abstractmethod # This method must be defined by the derived class

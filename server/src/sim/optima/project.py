@@ -6,7 +6,9 @@ Created on Fri May 29 23:16:12 2015
 """
 
 import defaults
-from simbox import SimBox, SimBoxCal, SimBoxOpt
+from simbox import SimBox
+from simboxopt import SimBoxOpt
+from simboxcal import SimBoxCal
 import sim
 import setoptions
 import uuid
@@ -111,7 +113,8 @@ class Project(object):
         if projectdict['version'] <= 1: 
             # Version 1 projects did not have program sets - they can be created from the saved metadata
             # Note that fromdict() expects programsets to be serialized as a string
-            projectdict['programsets'] = cPickle.dumps([ProgramSet.import_legacy('Default',projectdict['metadata']['programs'])]) 
+            pset = ProgramSet.import_legacy('Default',projectdict['metadata']['programs'])
+            projectdict['programsets'] = [pset.todict()]
 
         # The statement below for calibrations handles loading earlier versions of the new-type JSON files
         # which don't have calibrations already defined. It is suggested in future that these projects should
@@ -128,7 +131,7 @@ class Project(object):
         self.metadata = projectdict['metadata']
         self.data = projectdict['data']
         self.options = projectdict['options'] # Populate default options here
-        self.programsets = cPickle.loads(projectdict['programsets']) # sets of Programs i.e. an array of sets of CCOCs
+        self.programsets = [ProgramSet.fromdict(x) for x in projectdict['programsets']] # sets of Programs i.e. an array of sets of CCOCs
         self.calibrations = projectdict['calibrations']
         self.uuid = projectdict['uuid']
         self.D = projectdict['D']
@@ -148,7 +151,7 @@ class Project(object):
         projectdict['data'] = self.data 
         projectdict['simboxlist'] = [sbox.todict() for sbox in self.simboxlist]
         projectdict['options'] = self.options # Populate default options here = self.options 
-        projectdict['programsets'] = cPickle.dumps(self.programsets) # Serialize the programset
+        projectdict['programsets'] = [pset.todict() for pset in self.programsets] # Serialize the programset
         projectdict['calibrations'] = self.calibrations # Calibrations are stored as dictionaries
         projectdict['uuid'] = self.uuid 
         projectdict['D'] = self.D

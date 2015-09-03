@@ -114,9 +114,9 @@ class SimBudget2(Sim):
         self.parsmodel['numsecondline'] = self.parsmodel['tx2']     
 
         # First check - all of the parameters and populations provided by the ProgramSet should exist
-        outcome_pops = set(outcomes.keys()) # Manually add the special population 'Total'
-        outcome_pars = set(reduce(operator.add,[outcomes[x].keys() for x in outcomes.keys()]))
-        project_pops = set(pops + ['Total'])
+        outcome_pops = set(outcomes.keys()) 
+        outcome_pars = set(reduce(operator.add,[outcomes[x].keys() for x in outcomes.keys()],[]))
+        project_pops = set(pops + ['Total']) # Manually add the special population 'Total'
         project_pars = set(self.parsmodel.keys())
 
         if not (outcome_pops <= project_pops):
@@ -151,7 +151,6 @@ class SimBudget2(Sim):
 
         # Finally, realculate totalacts in case numacts is different now for some reason
         self.parsmodel['totalacts'] = sim.calculate_totalacts(self.parsmodel)
-
 
         # FINALLY, APPLY SOME HACKS THAT NEED TO BE CLEANED UP
 

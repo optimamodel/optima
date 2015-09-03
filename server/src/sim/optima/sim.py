@@ -27,7 +27,6 @@ class Sim(object):
         self.debug['structure'] = None       # This used to be D['S'].
         
         self.plotdata = None        # This used to be D['plot']['E']. Be aware that it is not D['plot']!        
-        self.plotdataopt = None # TEMP DEBUG, DON'T COMMIT
         self.setproject(project)
 
     @classmethod
@@ -565,3 +564,7 @@ def reconcileacts(symmetricmatrix,popsize,popacts):
             pshipacts[pop1,pop2] = balanced/popsize[pop1]; # ...and for the other population
 
     return pshipacts
+
+from simbudget import SimBudget
+from simbudget2 import SimBudget2
+from simparameter import SimParameter

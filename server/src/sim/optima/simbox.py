@@ -123,3 +123,8 @@ class SimBox(object):
     def __setstate__(self, state):
         raise Exception('Simboxes must be re-created via a project')
         
+
+#%% Tail imports pointing to derived classes, so as to avoid circular import problems.
+
+from simboxcal import SimBoxCal
+from simboxopt import SimBoxOpt
