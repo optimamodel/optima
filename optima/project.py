@@ -29,7 +29,6 @@ import cPickle
 from gzip import GzipFile
 from metadata import Metadata
 from settings import Settings
-    
 
 
 class Project(object):
