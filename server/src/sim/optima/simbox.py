@@ -15,14 +15,8 @@ class SimBox(object):
     @classmethod
     def fromdict(SimBox,simboxdict,project):
         assert(simboxdict['project_uuid'] == project.uuid)
-
-        if simboxdict['type'] == 'SimBox':
-            s = SimBox(simboxdict['name'], project)
-        elif simboxdict['type'] == 'SimBoxCal':
-            s = SimBoxCal(simboxdict['name'], project)
-        elif simboxdict['type'] == 'SimBoxOpt':
-            s = SimBoxOpt(simboxdict['name'], project)
-
+        simbox_type = globals()[simboxdict['type']]
+        s = simbox_type(simboxdict['name'], project)
         s.setproject(project)
         s.load_dict(simboxdict)
         

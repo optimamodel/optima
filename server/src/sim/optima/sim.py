@@ -34,12 +34,8 @@ class Sim(object):
     def fromdict(Sim,simdict,project):
         # This function instantiates the correct subtype based on simdict['type']
         assert(simdict['project_uuid'] == project.uuid)
-        if simdict['type'] == 'Sim':
-            s = Sim(simdict['name'],project)
-        if simdict['type'] == 'SimParameter':
-            s = SimParameter(simdict['name'],project)
-        if simdict['type'] == 'SimBudget':
-            s = SimBudget(simdict['name'],project)
+        sim_type = globals()[simdict['type']]
+        s = sim_type(simdict['name'],project)
         s.setproject(project)
         s.load_dict(simdict)
         return s
