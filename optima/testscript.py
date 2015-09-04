@@ -15,9 +15,10 @@ from utils import tic, toc, blank, pd # analysis:ignore
 
 # Define tests to run
 tests = [
+'makespreadsheet',
 #'creation',
 #'saveload',
-'loadspreadsheet',
+#'loadspreadsheet',
 ]
 
 blank()
@@ -32,6 +33,16 @@ blank()
 ##############################################################################
 
 T = tic()
+
+
+## Spreadsheet creation test
+if 'makespreadsheet' in tests:
+    from makeworkbook import makeworkbook
+    makeworkbook()
+    print('Done.')
+    blank()
+    
+    
 
 ## Project creation test
 if 'creation' in tests:

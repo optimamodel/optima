@@ -14,11 +14,41 @@ from xlsxwriter.utility import re, xl_rowcol_to_cell
 from collections import OrderedDict
 from utils import printv
 
+defaultpops = [
+ {'name': 'Female sex workers',
+  'short_name': 'FSW',
+  'client': False,
+  'female': True,
+  'injects': False,
+  'male': False,
+  'sexmen': True,
+  'sexwomen': False,
+  'sexworker': True,
+  },
+ {'name': 'Clients of sex workers',
+  'short_name': 'Clients',
+  'client': True,
+  'female': False,
+  'injects': False,
+  'male': True,
+  'sexmen': False,
+  'sexwomen': True,
+  'sexworker': False,
+  }]
 
-def makeworkbook(filename='default.xlsx', pops=['',''], progs=['',''], datastart=2000, dataend=2020, verbose=2):
+defaultprogs = [
+{'name': 'Condom promotion and distribution',
+'short_name': 'Condoms',
+'category': 'Prevention',
+ 'parameters': [{'value': {'pops': [''], 'signature': ['condom', 'reg']}},
+ {'value': {'pops': [''], 'signature': ['condom', 'cas']}}],
+ }]
+
+
+def makeworkbook(filename='default.xlsx', pops=defaultpops, progs=defaultprogs, datastart=2000, dataend=2020, verbose=2):
     """ Generate the Optima workbook -- the hard work is done by makeworkbook.py """
 
-    printv('Generating workbook with parameters: \nname = %s, pops = %s, progs = %s, datastart = %s, dataend = %s''' % (filename, pops, progs, datastart, dataend), 1, verbose)
+    printv('Generating spreadsheet: pops=%i, progs=%i, datastart=%s, dataend=%s''' % (len(pops), len(progs), datastart, dataend), 1, verbose)
     book = OptimaSpreadsheet(filename, pops, progs, datastart, dataend)
     book.create(filename)
     
