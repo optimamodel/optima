@@ -37,10 +37,10 @@ def makeparams(data, verbose=2):
                 validdata = ~isnan(dataarray[r])
                 if sum(validdata): # There's at least one data point
                     output['p'][r] = sanitize(dataarray[r]) # Store each extant value
-                    output['t'][r] = array(data['epiyears'])[~isnan(dataarray[r])] # Store each year
+                    output['t'][r] = ar(data['epiyears'])[~isnan(dataarray[r])] # Store each year
                 else: # Blank, assume zero
-                    output['p'][r] = array([0])
-                    output['t'][r] = array([0])
+                    output['p'][r] = ar([0])
+                    output['t'][r] = ar([0])
 
         else:
             print('TMP6666')
@@ -111,8 +111,8 @@ def makeparams(data, verbose=2):
         from copy import deepcopy
         newarray = deepcopy(origarray)
         if 't' in newarray.keys(): 
-            newarray['p'] = [array([0]) for i in range(len(data['popprog']['pops']['male']))]
-            newarray['t'] = [array([0]) for i in range(len(data['popprog']['pops']['male']))]
+            newarray['p'] = [ar([0]) for i in range(len(data['popprog']['pops']['male']))]
+            newarray['t'] = [ar([0]) for i in range(len(data['popprog']['pops']['male']))]
             count = -1
             if hasattr(popbool,'__iter__'): # May or may not be a list
                 for i,tf in enumerate(popbool):
@@ -131,8 +131,8 @@ def makeparams(data, verbose=2):
         
         return newarray
     
-    params['birth']     = popexpand(params['birth'],     array(data['popprog']['pops']['female'])==1)
-    params['circum']    = popexpand(params['circum'],    array(data['popprog']['pops']['male'])==1)
+    params['birth']     = popexpand(params['birth'],     ar(data['popprog']['pops']['female'])==1)
+    params['circum']    = popexpand(params['circum'],    ar(data['popprog']['pops']['male'])==1)
             
             
 

@@ -39,6 +39,12 @@ from settings import Settings
 from loadspreadsheet import loadspreadsheet
 from makeparams import makeparams
 
+def loadprj(filename):
+    ''' Load a saved project '''
+    with GzipFile(filename, 'rb') as fileobj: project = pickle.load(fileobj)
+    print('Project loaded from "%s"' % filename)
+    return project
+
 
 class Project(object):
     
@@ -50,8 +56,6 @@ class Project(object):
     
     def __init__(self,name='default',spreadsheet=None):
         ''' Initialize the project ''' 
-        
-        self.name = name
         
         ## Define the structure sets
         self.params = {}
@@ -76,9 +80,9 @@ class Project(object):
         ''' Print out useful information when called '''
         output = '\n'
         output += '============================================================\n'
-        output += '      Project name: %s\n'    % self.name
+        output += '      Project name: %s\n'    % self.metadata.name
+        output += '          Filename: %s\n'    % self.metadata.filename
         output += '\n'
-        
         output += '    Parameter sets: %i\n'    % len(self.params)
         output += '        CCOCs sets: %i\n'    % len(self.ccocs)
         output += '     Scenario sets: %i\n'    % len(self.scens)
@@ -103,20 +107,29 @@ class Project(object):
     #######################################################################################################
     
     
-    @classmethod
-    def load(Project, filename):
-        ''' Load a saved project '''
-        with GzipFile(filename, 'rb') as fileobj: project = pickle.load(fileobj)
-        print('Project loaded from "%s"' % filename)
+    def reload(self, filename=None):
+        ''' Replace the contents of the current project from the file '''
+        filename = self.reconcilefilenames(filename)
+        project = loadprj(filename)
         return project
 
 
-
-    def save(self, filename):
+    def save(self, filename=None):
         ''' Save the current project '''
+        filename = self.reconcilefilenames(filename)
         with GzipFile(filename, 'wb') as fileobj: pickle.dump(self, fileobj, protocol=2)
-        print('Project "%s" saved to "%s"' % (self.name, filename))
+        print('Project "%s" saved to "%s"' % (self.metadata.name, filename))
         return None
+        
+        
+    def reconcilefilenames(self, filename=None):
+        if filename is None: # filename isn't available
+            if self.metadata.filename is None: # metadata.filename isn't available
+                self.metadata.filename = self.metadata.name+'.prj' # Use project name as filename if none provided
+            filename = self.metadata.filename # Replace filename with stored filename
+        else: # filename is available
+            self.metadata.filename = filename # Update stored filename with the new filename
+        return filename
     
     
     

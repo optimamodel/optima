@@ -20,6 +20,7 @@ class Metadata(object):
     def __init__(self, name='default'):
         ''' Create the metadata '''
         self.name = name
+        self.filename = None
         self.uuid = uuid4()
         self.created = datetime.today()
         self.modified = datetime.today()
@@ -40,6 +41,7 @@ class Metadata(object):
         ''' Print out useful information when called -- see also repr() for the project class'''
         output = '\n'
         output += '   Project name: %s\n'    % self.name
+        output += '       Filename: %s\n'    % self.filename
         output += ' Optima version: %0.1f\n' % self.version
         output += '   Date created: %s\n'    % self.getdate(which='created')
         output += '  Date modified: %s\n'    % self.getdate(which='modified')

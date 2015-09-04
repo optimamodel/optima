@@ -44,16 +44,30 @@ if 'creation' in tests:
 
 
 
+
 ## Project save/load test
 if 'saveload' in tests:
     print('Running save/load test...')
+    
+    from project import Project, loadprj
     filename = 'testproject.prj'
-    from project import Project
+    
+    print('  Checking saving...')
     P = Project()
     P.save(filename)
-    Q = Project.load(filename)
+    
+    print('  Checking loading...')
+    Q = loadprj(filename)
+    Q.save()
+    Q.reload()
+    
+    print('  Checking defaults...')
+    Z = Project()
+    Z.save()
+    
     print('Done.')
     blank()
+
 
 
 
