@@ -1,5 +1,5 @@
 ###############################################################################
-##### 2.0 STATUS: partly converted, need to add new features
+##### 2.0 STATUS: partly converted, need to add new features, but mostly ok
 ###############################################################################
 
 

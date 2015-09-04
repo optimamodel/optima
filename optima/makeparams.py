@@ -1,5 +1,5 @@
 ###############################################################################
-##### 2.0 STATUS: works, but need to tidy up
+##### 2.0 STATUS: runs, but need to tidy up a lot -- remove unused parameters etc.
 ###############################################################################
 
 def makeparams(data, verbose=2):

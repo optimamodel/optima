@@ -1,13 +1,39 @@
+###############################################################################
+##### 2.0 STATUS: probably fine code-wise but need to update once spreadsheet changes decided
+###############################################################################
+
 """
-OptimaWorkbook and related classes
+OptimaSpreadsheet and related classes
 Created by: SSQ
-Started: 2-nov-2014
+
+Version: 2015sep04 by cliffk
 """
 
 import re
 import xlsxwriter
 from xlsxwriter.utility import *
 from collections import OrderedDict
+
+
+def makeworkbook(name='default', pops=['']*2, progs=['']*2, datastart=2000, dataend=2020, verbose=2):
+    """ Generate the Optima workbook -- the hard work is done by makeworkbook.py """
+    from printv import printv
+    from dataio import templatepath
+    from makeworkbook import OptimaWorkbook
+
+    printv("""Generating workbook with parameters:
+             name = %s, pops = %s, progs = %s, datastart = %s, dataend = %s""" \
+             % (name, pops, progs, datastart, dataend), 1, verbose)
+    path = templatepath(name)
+    book = OptimaWorkbook(name, pops, progs, datastart, dataend)
+    book.create(path)
+    
+    printv('  ...done making workbook %s.' % path, 2, verbose)
+    return path
+
+
+
+
 
 
 def abbreviate(param):
@@ -161,7 +187,7 @@ def filter_by_properties(param_refs, base_params, the_filter):
 
 
 class OptimaFormats:
-    """ the formats used in the workbook """
+    """ the formats used in the spreadsheet """
     BG_COLOR = '#18C1FF'
     BORDER_COLOR = 'white'
 
@@ -328,7 +354,7 @@ class TitledRange:
     def param_refs(self, column_number = 0):
         return self.data_range.param_refs(self.sheet.get_name(), column_number)
 
-class OptimaWorkbook:
+class OptimaSpreadsheet:
     def __init__(self, name, pops, progs, data_start = 2000, data_end = 2015, verbose = 0):
         self.sheet_names = OrderedDict([ \
             ('instr', 'Instructions'), \
@@ -607,7 +633,7 @@ class OptimaWorkbook:
 
     def create(self, path):
         if self.verbose >=1: 
-            print("""Creating workbook %s with parameters:
+            print("""Creating spreadsheet %s with parameters:
             npops = %s, nprogs = %s, data_start = %s, data_end = %s""" % \
             (path, self.npops, self.nprogs, self.data_start, self.data_end))
         self.book = xlsxwriter.Workbook(path)
