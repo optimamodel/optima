@@ -147,7 +147,7 @@ class Project(object):
         
     def reconcilefilenames(self, filename=None):
         ''' If filename exists, update metadata; if not, take from metadata; if that doesn't exist, then generate '''
-        if filename is not None: # filename is available
+        if filename: # filename is available
             self.metadata.filename = filename # Update stored filename with the new filename
         else: # filename isn't available
             if self.metadata.filename is None: # metadata.filename isn't available
