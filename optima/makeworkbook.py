@@ -9,27 +9,21 @@ Created by: SSQ
 Version: 2015sep04 by cliffk
 """
 
-import re
 import xlsxwriter
-from xlsxwriter.utility import *
+from xlsxwriter.utility import re, xl_rowcol_to_cell
 from collections import OrderedDict
+from utils import printv
 
 
-def makeworkbook(name='default', pops=['']*2, progs=['']*2, datastart=2000, dataend=2020, verbose=2):
+def makeworkbook(filename='default.xlsx', pops=['',''], progs=['',''], datastart=2000, dataend=2020, verbose=2):
     """ Generate the Optima workbook -- the hard work is done by makeworkbook.py """
-    from printv import printv
-    from dataio import templatepath
-    from makeworkbook import OptimaWorkbook
 
-    printv("""Generating workbook with parameters:
-             name = %s, pops = %s, progs = %s, datastart = %s, dataend = %s""" \
-             % (name, pops, progs, datastart, dataend), 1, verbose)
-    path = templatepath(name)
-    book = OptimaWorkbook(name, pops, progs, datastart, dataend)
-    book.create(path)
+    printv('Generating workbook with parameters: \nname = %s, pops = %s, progs = %s, datastart = %s, dataend = %s''' % (filename, pops, progs, datastart, dataend), 1, verbose)
+    book = OptimaSpreadsheet(filename, pops, progs, datastart, dataend)
+    book.create(filename)
     
-    printv('  ...done making workbook %s.' % path, 2, verbose)
-    return path
+    printv('  ...done making workbook %s.' % filename, 2, verbose)
+    return filename
 
 
 
@@ -47,7 +41,7 @@ def abbreviate(param):
     return short_param.upper()
 
 def years_range(data_start, data_end):
-    return [x for x in xrange(data_start, data_end+1)]
+    return [x for x in range(data_start, data_end+1)]
 
 class OptimaContent:
     """ the content of the data ranges (row names, column names, optional data and assumptions) """
@@ -179,9 +173,9 @@ def filter_by_properties(param_refs, base_params, the_filter):
     filter parameter references by properties of the parameters.
     """
     result = []
-    filter_set = set(the_filter.iteritems())
+    filter_set = set(the_filter.items())
     for (param_ref, param) in zip(param_refs, base_params):     
-        if set(param.iteritems()) & filter_set:
+        if set(param.items()) & filter_set:
             result.append(param_ref)
     return result
 
@@ -337,7 +331,7 @@ class TitledRange:
                 for j, item in enumerate(self.content.data[i]):
                     formats.write_unlocked(self.sheet, current_row, self.data_range.first_col+j, item, row_format)
             else:
-                for j in xrange(self.data_range.num_cols):
+                for j in range(self.data_range.num_cols):
                     formats.write_empty_unlocked(self.sheet, current_row, self.data_range.first_col+j, row_format)
             #emit assumption
             if self.content.has_assumption():
@@ -537,7 +531,7 @@ class OptimaSpreadsheet:
         names = ['Interactions between regular partners', 'Interactions between casual partners', \
         'Interactions between commercial partners', 'Interactions between people who inject drugs']
 
-        for ind in xrange(len(self.pops)):
+        for ind in range(len(self.pops)):
             self.current_sheet.set_column(2+ind,2+ind,12)
         for name in names:
             current_row = self.emit_matrix_block(name, current_row, self.ref_pop_range, self.ref_pop_range)
@@ -547,7 +541,7 @@ class OptimaSpreadsheet:
         names = ['Age-related population transitions (average number of years before movement)', \
         'Risk-related population transitions (average number of years before movement)']
 
-        for ind in xrange(len(self.pops)):
+        for ind in range(len(self.pops)):
             self.current_sheet.set_column(2+ind,2+ind,12)
         for name in names:
             current_row = self.emit_matrix_block(name, current_row, self.ref_pop_range, self.ref_pop_range)
@@ -667,7 +661,7 @@ class OptimaGraphTable:
             titles = [c['title'] for c in s["columns"]]
             max_row = max([len(c['data']) for c in s["columns"]])
 
-            for i in xrange(len(s["columns"])):
+            for i in range(len(s["columns"])):
                 sheet.set_column(i,i,20)
 
             self.formats.write_block_name(sheet, s["name"], 0) #sheet name
