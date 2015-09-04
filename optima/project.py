@@ -13,6 +13,7 @@ Version: 2015sep04 by cliffk
 
 
 ## Load general modules
+from numpy import array # TEMP?
 from copy import deepcopy
 try: import cPickle as pickle # For Python 2 compatibility
 except: import pickle
@@ -286,8 +287,12 @@ class Project(object):
         ''' This function runs a single simulation '''
         if dt is None: dt=self.settings.dt # Specify the timestep if none is specified, usually 0.1
         simpars = makesimpars(self.params[name], start=start, end=end, dt=dt) # "self.params[name]" is e.g. P.params['default']
+        
+        # TEMP
+        simpars['male'] = array(self.data['meta']['pops']['male']).astype(bool) # Male populations -- TEMP
         S = model(simpars, self.settings)
         return S
+        
     
     
 #    def runscen(self, name='default', start=2000, end=2030):

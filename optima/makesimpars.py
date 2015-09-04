@@ -120,7 +120,7 @@ def makesimpars(P, start=2000, end=2030, dt=0.1, withwhat='p', verbose=2):
     M['propaware'] = zeros(shape(M['hivtest'])) # Initialize proportion of PLHIV aware of their status
     M['txtotal'] = zeros(shape(M['tx1'])) # Initialize total number of people on treatment
     
-
+    
     printv('...done making model parameters.', 2, verbose)
     return M
 

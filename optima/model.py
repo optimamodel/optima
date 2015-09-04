@@ -3,12 +3,12 @@
 ###############################################################################
 
  ## Imports
-from numpy import array, zeros, exp, maximum, minimum, nonzero, concatenate, hstack, absolute, median
+from numpy import array, zeros, exp, maximum, minimum, concatenate, hstack, absolute, median
 from utils import printv
 from math import pow as mpow
 from copy import deepcopy
 
-def model(M, opt, initstate=None, verbose=2, safetymargin=0.8, benchmark=False):
+def model(M, settings, initstate=None, verbose=2, safetymargin=0.8, benchmark=False):
     """
     This function runs the model. Safetymargin is how close to get to moving all people from a compartment in a single timestep.
     
@@ -23,19 +23,27 @@ def model(M, opt, initstate=None, verbose=2, safetymargin=0.8, benchmark=False):
     ###############################################################################
     ## Setup
     ###############################################################################
+    npops = len(M['hivprev']) # WARNING TEMP
+    
     M = deepcopy(M)
-    F = deepcopy(tmpF)
+    
+    F = []
+    F[0] = {}
+    F[0]['init']  = zeros(npops)
+    F[0]['popsize'] = zeros(npops)
+    F[0]['force'] = zeros(npops)
+    F[0]['inhomo'] = zeros(npops)
+    F[0]['dx']  = zeros(4)
 
     eps = 1e-3 # Define another small number to avoid divide-by-zero errors
     
     # Initialize basic quantities
     S       = dict()    # Sim output structure
     S['tvec']  = M['tvec']   # Append time vector
-    dt      = opt['dt']      # Shorten dt
+    dt      = M['tvec'][1]-M['tvec'][0]      # Shorten dt
     npts    = len(S['tvec']) # Number of time points
-    npops   = G['npops']     # Shorten number of pops
-    ncd4    = G['ncd4']      # Shorten number of CD4 states
-    nstates = G['nstates']   # Shorten number of health states
+    ncd4    = settings.ncd4      # Shorten number of CD4 states
+    nstates = settings.ncomparts   # Shorten number of health states
     
     # Initialize arrays
     people     = zeros((nstates, npops, npts)) # Matrix to hold everything
@@ -58,17 +66,18 @@ def model(M, opt, initstate=None, verbose=2, safetymargin=0.8, benchmark=False):
     S['reqcircum'] = zeros((1, npts))     # Total number of men not circumcised ('req' for 'required')
     
     # Set initial epidemic conditions 
-    if initstate is None: people[:,:,0] = equilibrate(G, M, array(F['init'])) # No it hasn't, so run equilibration
+    if initstate is None: people[:,:,0] = equilibrate(settings, M, array(F['init'])) # No it hasn't, so run equilibration
     else: people[:,:,0] = initstate # Yes it has, so use it.
     
     # Biological and failure parameters -- death etc
-    prog       = h2a(G, M['const']['prog'])  # Disease progression rates
-    recov      = h2a(G, M['const']['recov']) # Recovery rates
-    death      = h2a(G, M['const']['death']) # HIV death rates
+    H = settings.hivstates
+    prog       = h2a(H, M['const']['prog'])  # Disease progression rates
+    recov      = h2a(H, M['const']['recov']) # Recovery rates
+    death      = h2a(H, M['const']['death']) # HIV death rates
     deathtx    = M['const']['death']['treat']   # Death rate whilst on treatment
     
     # Calculate other things outside the loop
-    cd4trans = h2a(G, M['const']['cd4trans']) # Convert a dictionary to an array
+    cd4trans = h2a(H, M['const']['cd4trans']) # Convert a dictionary to an array
     healthtime = 1 / hstack([prog, death[-1]]) # Calculate how long is spent in each health state, with death considered the time spent in CD4<50
     cd4transnorm = sum(cd4trans * healthtime) / sum(healthtime)
     cd4trans /= cd4transnorm # Normalize CD4 transmission
@@ -76,15 +85,16 @@ def model(M, opt, initstate=None, verbose=2, safetymargin=0.8, benchmark=False):
     txfactor = M['const']['eff']['tx'] * dxfactor # And treatment efficacy
     
     ## Metaparameters to get nice diagnosis fits
-    dxtime  = fit2time(F['dx'],  S['tvec'] - G['datayears'].mean()) # Subtraction to normalize F['dx'][2]
+    # WARNING
+    dxtime  = fit2time(F['dx'],  S['tvec'] - 2015.0) # Subtraction to normalize F['dx'][2]
     
     ## Shorten variables and remove dict calls to make things faster...
     
     # Disease state indices
-    sus  = G['sus']  # Susceptible
-    undx = G['undx'] # Undiagnosed
-    dx   = G['dx']   # Diagnosed
-    tx1  = G['tx1']  # Treatment -- 1st line
+    sus  = settings.uninf  # Susceptible
+    undx = settings.undiag # Undiagnosed
+    dx   = settings.diag   # Diagnosed
+    tx1  = settings.treat  # Treatment -- 1st line
     
     # Concatenate all PLHIV, diagnosed and treated for ease
     plhivind = concatenate([undx, dx, tx1]) # All PLHIV
@@ -95,7 +105,7 @@ def model(M, opt, initstate=None, verbose=2, safetymargin=0.8, benchmark=False):
     for pop in range(npops): popsize[pop,:] *= float(F['popsize'][pop]) / M['popsize'][pop][0] # Calculate adjusted population sizes -- WARNING, kind of ugly
     
     # Logical arrays for population types
-    male = array(G['meta']['pops']['male']).astype(bool) # Male populations
+    male = array(M['male']).astype(bool) # Male populations
     
     # Infection propabilities
     mmi  = M['const']['trans']['mmi']          # Male -> male insertive
@@ -112,7 +122,7 @@ def model(M, opt, initstate=None, verbose=2, safetymargin=0.8, benchmark=False):
     effprep   = (1 - M['const']['eff']['prep']) * M['prep'] # PrEP effect
     effcondom = 1 - M['const']['eff']['condom']          # Condom effect
     effpmtct  = 1 - M['const']['eff']['pmtct']           # PMTCT effect
-    effost    = 1 - M['const']['eff']['ost']             # OST effect
+#    effost    = 1 - M['const']['eff']['ost']             # OST effect
     
     # Partnerships, acts and transitions
     pshipsinj = M['pships']['inj']
@@ -125,7 +135,7 @@ def model(M, opt, initstate=None, verbose=2, safetymargin=0.8, benchmark=False):
     condom   = M['condom']    # Condoms (P)
     sharing  = M['sharing']   # Sharing injecting equiptment (P)
     numpmtct = M['numpmtct']  # PMTCT (N)
-    ost      = M['numost']    # OST (N)
+#    ost      = M['numost']    # OST (N)
     propcirc = M['circum']    # Proportion of men circumcised (P)
     tobecirc = M['numcircum'] # Number of men to be circumcised (N)
     mtx1     = M['tx1']       # 1st line treatement (N) -- tx1 already used for index of people on treatment
@@ -234,18 +244,20 @@ def model(M, opt, initstate=None, verbose=2, safetymargin=0.8, benchmark=False):
         ## Injecting partnerships...
         
         # Transmission effects
-        if ost[t]<=1: # It's a proportion
-            osteff = 1 - ost[t]*effost
-            if osteff<0: raise Exception('Bug in osteff = 1 - ost[t]*effost: osteff=%f ost[t]=%f effost=%f' % (osteff, ost[t], effost))
-        else: # It's a number, convert to a proportion using the PWID flag
-            numost = ost[t] # Total number of people on OST
-            numpwid = M['popsize'][nonzero(G['meta']['pops']['injects']),t].sum() # Total number of PWID
-            try:
-                osteff = 1 - min(1,numost/numpwid)*effost # Proportion of PWID on OST, making sure there aren't more people on OST than PWID
-            except:
-                print('OST calculation failed')
-                raise
-            if osteff<0: raise Exception('Bug in osteff = 1 - min(1,numost/numpwid)*effost: osteff=%f numost=%f numpwid=%f effost=%f' % (osteff, numost, numpwid, effost))
+        # TEMP
+        osteff = 1
+#        if ost[t]<=1: # It's a proportion
+#            osteff = 1 - ost[t]*effost
+#            if osteff<0: raise Exception('Bug in osteff = 1 - ost[t]*effost: osteff=%f ost[t]=%f effost=%f' % (osteff, ost[t], effost))
+#        else: # It's a number, convert to a proportion using the PWID flag
+#            numost = ost[t] # Total number of people on OST
+#            numpwid = M['popsize'][nonzero(G['meta']['pops']['injects']),t].sum() # Total number of PWID
+#            try:
+#                osteff = 1 - min(1,numost/numpwid)*effost # Proportion of PWID on OST, making sure there aren't more people on OST than PWID
+#            except:
+#                print('OST calculation failed')
+#                raise
+#            if osteff<0: raise Exception('Bug in osteff = 1 - min(1,numost/numpwid)*effost: osteff=%f numost=%f numpwid=%f effost=%f' % (osteff, numost, numpwid, effost))
        
        # Iterate through partnership pairs
         for pop1 in range(npops):
@@ -264,9 +276,10 @@ def model(M, opt, initstate=None, verbose=2, safetymargin=0.8, benchmark=False):
         ## Turn off transmission (after a certain time - if specified)
         ###############################################################################
 
-        if S['tvec'][t] >= abs(opt['turnofftrans']):
-            if opt['turnofftrans'] > 0: forceinfvec *= 0
-            if opt['turnofftrans'] < 0: break
+# TEMP
+#        if S['tvec'][t] >= abs(opt['turnofftrans']):
+#            if opt['turnofftrans'] > 0: forceinfvec *= 0
+#            if opt['turnofftrans'] < 0: break
                
                
         ###############################################################################
@@ -311,10 +324,11 @@ def model(M, opt, initstate=None, verbose=2, safetymargin=0.8, benchmark=False):
                         circsmoving = numcirc[p1] * transrate * dt
                         numcirc[p1] -= circsmoving
                         numcirc[p2] += circsmoving
-                    elif male[p1] and not male[p2] and transrate > 0: # Sanity check for males moving into female populations
-                        raise Exception('Males are transitioning into a female population! (%s->%s)' % (G['meta']['pops']['short'][p1], G['meta']['pops']['short'][p2]))
-                    elif male[p2] and not male[p1] and transrate > 0: # Sanity check for females moving into male populations   
-                        raise Exception('Females are transitioning into a male population! (%s->%s)' % (G['meta']['pops']['short'][p1], G['meta']['pops']['short'][p2]))
+                        # TEMP
+#                    elif male[p1] and not male[p2] and transrate > 0: # Sanity check for males moving into female populations
+#                        raise Exception('Males are transitioning into a female population! (%s->%s)' % (G['meta']['pops']['short'][p1], G['meta']['pops']['short'][p2]))
+#                    elif male[p2] and not male[p1] and transrate > 0: # Sanity check for females moving into male populations   
+#                        raise Exception('Females are transitioning into a male population! (%s->%s)' % (G['meta']['pops']['short'][p1], G['meta']['pops']['short'][p2]))
                         
                     # Now actually do it for the people array
                     peoplemoving = people[:, p1, t] * absolute(transrate) * dt
@@ -535,10 +549,10 @@ def model(M, opt, initstate=None, verbose=2, safetymargin=0.8, benchmark=False):
     
     
 
-def h2a(G, parstruct, verbose=2):
+def h2a(healthstates, parstruct, verbose=2):
     """ Convert a health state structure to an array """
     outarray = []
-    for state in G['healthstates']:
+    for state in healthstates:
         try: 
             outarray.append(parstruct[state])
         except: 
@@ -560,7 +574,7 @@ def fit2time(pars, tvec):
     
     
     
-def equilibrate(G, M, Finit, verbose=2):
+def equilibrate(settings, M, Finit, verbose=2):
     """
     Calculate the quilibrium point by estimating the ratio of input and output 
     rates for each of the health states.
@@ -575,17 +589,20 @@ def equilibrate(G, M, Finit, verbose=2):
     """
     from numpy import zeros, hstack, inf
     
+    npops = len(M['hivprev']) # WARNING len(M['hivprev']) is npops
+    H = settings.hivstates
+    
     # Set parameters
     prevtoforceinf = 0.1 # Assume force-of-infection is proportional to prevalence -- 0.1 means that if prevalence is 10%, annual force-of-infection is 1%
     efftreatmentrate = 0.1 # Inverse of average duration of treatment in years...I think
     failratio = 0.3 # Put fewer people than expected on failure because ART is relatively new...or something
     
     # Shorten key variables
-    initpeople = zeros((G['nstates'],G['npops']))
+    initpeople = zeros((settings.ncomparts,npops)) 
     allinfected = M['popsize'][:,0] * Finit[:] # Set initial infected population
     
     # Can calculate equilibrium for each population separately
-    for p in range(G['npops']):
+    for p in range(npops):
         # Set up basic calculations
         uninfected = M['popsize'][p,0] * (1-Finit[p]) # Set initial susceptible population -- easy peasy! # TODO -- should this have F['popsize'] involved?
         popinfected = allinfected[p]
@@ -610,9 +627,9 @@ def equilibrate(G, M, Finit, verbose=2):
         diagnosed = nevertreated * M['hivtest'][p,0] / undxdxrates
         
         # Set rates within
-        progratios = hstack([h2a(G, M['const']['prog']), M['const']['death']['aids']]) # For last rate, use AIDS death as dominant rate
+        progratios = hstack([h2a(H, M['const']['prog']), M['const']['death']['aids']]) # For last rate, use AIDS death as dominant rate
         progratios = (1/progratios)  / sum(1/progratios) # Normalize
-        recovratios = hstack([inf, h2a(G, M['const']['recov']), efftreatmentrate]) # Not sure if this is right...inf since no progression to acute, treatmentrate since main entry here # TODO check
+        recovratios = hstack([inf, h2a(H, M['const']['recov']), efftreatmentrate]) # Not sure if this is right...inf since no progression to acute, treatmentrate since main entry here # TODO check
         recovratios = (1/recovratios)  / sum(1/recovratios) # Normalize
         
         # Final calculations
@@ -623,12 +640,12 @@ def equilibrate(G, M, Finit, verbose=2):
         treatment2 *= recovratios
         
         # Populated equilibrated array
-        initpeople[G['sus'], p] = uninfected
-        initpeople[G['undx'], p] = undiagnosed
-        initpeople[G['dx'], p] = diagnosed
-        initpeople[G['tx1'], p] = treatment1
-        initpeople[G['fail'], p] = treatfail
-        initpeople[G['tx2'], p] = treatment2
+        initpeople[settings.uninf, p] = uninfected
+        initpeople[settings.undiag, p] = undiagnosed
+        initpeople[settings.diag, p] = diagnosed
+        initpeople[settings.treat, p] = treatment1
+#        initpeople[G['fail'], p] = treatfail
+#        initpeople[G['tx2'], p] = treatment2
     
         if not((initpeople>=0).all()):
             printv('Non-positive people found during epidemic initialization!', 4, verbose) # If not every element is a real number >0, throw an error
