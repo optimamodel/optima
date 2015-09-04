@@ -286,8 +286,8 @@ class Project(object):
         ''' This function runs a single simulation '''
         if dt is None: dt=self.settings.dt # Specify the timestep if none is specified, usually 0.1
         simpars = makesimpars(self.params[name], start=start, end=end, dt=dt) # "self.params[name]" is e.g. P.params['default']
-#        S = model(simpars, self.settings)
-        return simpars
+        S = model(simpars, self.settings)
+        return S
     
     
 #    def runscen(self, name='default', start=2000, end=2030):

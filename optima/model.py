@@ -8,7 +8,7 @@ from utils import printv
 from math import pow as mpow
 from copy import deepcopy
 
-def model(G, tmpM, tmpF, opt, initstate=None, verbose=2, safetymargin=0.8, benchmark=False):
+def model(M, opt, initstate=None, verbose=2, safetymargin=0.8, benchmark=False):
     """
     This function runs the model. Safetymargin is how close to get to moving all people from a compartment in a single timestep.
     
@@ -23,7 +23,7 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2, safetymargin=0.8, bench
     ###############################################################################
     ## Setup
     ###############################################################################
-    M = deepcopy(tmpM)
+    M = deepcopy(M)
     F = deepcopy(tmpF)
 
     eps = 1e-3 # Define another small number to avoid divide-by-zero errors
