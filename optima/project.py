@@ -24,12 +24,18 @@ Methods for structure lists:
 Version: 2015sep03 by cliffk
 """
 
+## Load general modules
 from copy import deepcopy
 try: import cPickle as pickle # For Python 2 compatibility
 except: import pickle
 from gzip import GzipFile
+
+## Load classes
 from metadata import Metadata
 from settings import Settings
+
+## Load other Optima functions
+from loadspreadsheet import loadspreadsheet
 
 
 class Project(object):
@@ -56,6 +62,10 @@ class Project(object):
         self.data = {}
         self.metadata = Metadata(name=name)
         self.settings = Settings()
+        
+        ## Load spreadsheet, if available
+        if spreadsheet is not None:
+            self.data = loadspreadsheet(spreadsheet)
         
         return None
     
