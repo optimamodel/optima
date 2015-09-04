@@ -1,24 +1,29 @@
-from printv import printv
-from numpy import zeros, array, exp, shape
+###############################################################################
+##### 2.0 STATUS: still legacy!!! Just put in hacks to get it to work; search for TODO
+###############################################################################
+
+from utils import printv
+from numpy import zeros, array, arange, exp, shape
 eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
+TEMPGROWTH = 0.0
 
 
-def makesimpars(P, opt, withwhat='p', verbose=2):
+def makesimpars(P, start=2000, end=2030, dt=0.1, withwhat='p', verbose=2):
     """
     Prepares model parameters to run the simulation.
     
-    Version: 2015jan27
+    Version: 2015sep04
     """
 
     printv('Making model parameters...', 1, verbose)
     
     M = dict()
-    M['tvec'] = opt['partvec'] # Store time vector with the model parameters
+    M['tvec'] = arange(start, end+dt, dt) # Store time vector with the model parameters
     npts = len(M['tvec']) # Number of time points # TODO probably shouldn't be repeated from model.m
     
     
     
-    def dpar2mpar(datapar, withwhat, default_withwhat='p', smoothness=5*int(1/opt['dt'])):
+    def dpar2mpar(datapar, withwhat, default_withwhat='p', smoothness=5*int(1/dt)):
         """
         Take parameters and turn them into model parameters
         Set withwhat = p if you want to use the epi data for the parameters
@@ -57,7 +62,7 @@ def makesimpars(P, opt, withwhat='p', verbose=2):
     
     
     ## Epidemilogy parameters -- most are data
-    M['popsize'] = grow(P['popsize'], opt['growth']) # Population size
+    M['popsize'] = grow(P['popsize'], TEMPGROWTH) # Population size
     M['hivprev'] = P['hivprev'] # Initial HIV prevalence
     M['stiprevulc'] = dpar2mpar(P['stiprevulc'], withwhat) # STI prevalence
     M['stiprevdis'] = dpar2mpar(P['stiprevdis'], withwhat) # STI prevalence
@@ -67,9 +72,9 @@ def makesimpars(P, opt, withwhat='p', verbose=2):
     ## Testing parameters -- most are data
     M['hivtest'] = dpar2mpar(P['hivtest'], withwhat) # HIV testing rates
     M['aidstest'] = dpar2mpar(P['aidstest'], withwhat)[0] # AIDS testing rates
-    M['tx1'] = dpar2mpar(P['numfirstline'], withwhat, smoothness=int(1/opt['dt']))[0] # Number of people on first-line treatment -- 0 since overall not by population
-    M['tx2'] = dpar2mpar(P['numsecondline'], withwhat, smoothness=int(1/opt['dt']))[0] # Number of people on second-line treatment
-    M['txelig'] = dpar2mpar(P['txelig'], withwhat, smoothness=int(1/opt['dt']))[0] # Treatment eligibility criterion
+    M['tx1'] = dpar2mpar(P['numfirstline'], withwhat, smoothness=int(1/dt))[0] # Number of people on first-line treatment -- 0 since overall not by population
+    M['tx2'] = dpar2mpar(P['numsecondline'], withwhat, smoothness=int(1/dt))[0] # Number of people on second-line treatment
+    M['txelig'] = dpar2mpar(P['txelig'], withwhat, smoothness=int(1/dt))[0] # Treatment eligibility criterion
 
     ## MTCT parameters
     M['numpmtct'] = dpar2mpar(P['numpmtct'], withwhat)[0]
@@ -89,8 +94,8 @@ def makesimpars(P, opt, withwhat='p', verbose=2):
     
     ## Circumcision parameters
     M['circum']    = dpar2mpar(P['circum'], withwhat) # Circumcision percentage
-    M['numcircum'] = dpar2mpar(P['numcircum'], withwhat)[0] # Number to be circumcised -- to be populated by the relevant CCOC at non-zero allocations
-#    M['numcircum'] = zeros(shape(M['tvec'])) # Number to be circumcised -- to be populated by the relevant CCOC at non-zero allocations
+#    M['numcircum'] = dpar2mpar(P['numcircum'], withwhat)[0] # Number to be circumcised -- to be populated by the relevant CCOC at non-zero allocations
+    M['numcircum'] = zeros(shape(M['tvec'])) # Number to be circumcised -- to be populated by the relevant CCOC at non-zero allocations
     
     ## Drug behavior parameters
     M['numost'] = dpar2mpar(P['numost'], withwhat)[0]

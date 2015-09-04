@@ -101,18 +101,13 @@ if 'loadspreadsheet' in tests:
 
 
 
-## Load spreadsheet test
+## Run simulation test
 if 'runsim' in tests:
     print('Running runsim test...')
     from project import Project
-    
-    print('  Loading spreadsheet')
     P = Project(spreadsheet='test.xlsx')
-    
-    print('  Run the simulation')
-    Q = Project()
-    Q.loadspreadsheet('test.xlsx')
-    
+    S = P.runsim('default')
+
     print('Done.')
     blank()
 
