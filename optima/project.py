@@ -231,26 +231,25 @@ class Project(object):
     ## Convenience functions
     #######################################################################################################
     
-    # WARNING, need unique add() methods for the different...uhh...classes, unless these are defined elsewhere
-    def addparams(self, name='default', params=None, overwrite=False): self.add(self, what='params', name=name, item=params, overwrite=overwrite)
-    def addccocs(self,  name='default', ccocs=None,  overwrite=False): self.add(self, what='ccocs', name=name, item=ccocs, overwrite=overwrite)
-    def addscen(self,   name='default', scen=None,   overwrite=False): self.add(self, what='scen', name=name, item=scen, overwrite=overwrite)
-    def addoptim(self,  name='default', optim=None,  overwrite=False): self.add(self, what='optim', name=name, item=optim, overwrite=overwrite)
+    def addparams(self, name='default', params=None, overwrite=False): self.add(what='params', name=name, item=params, overwrite=overwrite)
+    def addccocs(self,  name='default', ccocs=None,  overwrite=False): self.add(what='ccocs', name=name, item=ccocs, overwrite=overwrite)
+    def addscen(self,   name='default', scen=None,   overwrite=False): self.add(what='scen', name=name, item=scen, overwrite=overwrite)
+    def addoptim(self,  name='default', optim=None,  overwrite=False): self.add(what='optim', name=name, item=optim, overwrite=overwrite)
  
-    def rmparams(self, name): self.remove(self, what='params', name=name)
-    def rmccocs(self,  name): self.remove(self, what='ccocs',  name=name)
-    def rmscen(self,   name): self.remove(self, what='scen',   name=name)
-    def rmoptim(self,  name): self.remove(self, what='optim',  name=name)
+    def rmparams(self, name): self.remove(what='params', name=name)
+    def rmccocs(self,  name): self.remove(what='ccocs',  name=name)
+    def rmscen(self,   name): self.remove(what='scen',   name=name)
+    def rmoptim(self,  name): self.remove(what='optim',  name=name)
     
-    def copyparams(self, orig='default', new='new', overwrite=False): self.copy(self, what='params', orig=orig, new=new, overwrite=overwrite)
-    def copyccocs(self,  orig='default', new='new', overwrite=False): self.copy(self, what='ccocs',  orig=orig, new=new, overwrite=overwrite)
-    def copyscen(self,   orig='default', new='new', overwrite=False): self.copy(self, what='scen',   orig=orig, new=new, overwrite=overwrite)
-    def copyoptim(self,  orig='default', new='new', overwrite=False): self.copy(self, what='optim',  orig=orig, new=new, overwrite=overwrite)
+    def copyparams(self, orig='default', new='new', overwrite=False): self.copy(what='params', orig=orig, new=new, overwrite=overwrite)
+    def copyccocs(self,  orig='default', new='new', overwrite=False): self.copy(what='ccocs',  orig=orig, new=new, overwrite=overwrite)
+    def copyscen(self,   orig='default', new='new', overwrite=False): self.copy(what='scen',   orig=orig, new=new, overwrite=overwrite)
+    def copyoptim(self,  orig='default', new='new', overwrite=False): self.copy(what='optim',  orig=orig, new=new, overwrite=overwrite)
         
-    def renameparams(self, orig='default', new='new', overwrite=False): self.rename(self, what='params', orig=orig, new=new, overwrite=overwrite)
-    def renameccocs(self,  orig='default', new='new', overwrite=False): self.rename(self, what='ccocs',  orig=orig, new=new, overwrite=overwrite)
-    def renamescen(self,   orig='default', new='new', overwrite=False): self.rename(self, what='scen',   orig=orig, new=new, overwrite=overwrite)
-    def renameoptim(self,  orig='default', new='new', overwrite=False): self.rename(self, what='optim',  orig=orig, new=new, overwrite=overwrite)
+    def renameparams(self, orig='default', new='new', overwrite=False): self.rename(what='params', orig=orig, new=new, overwrite=overwrite)
+    def renameccocs(self,  orig='default', new='new', overwrite=False): self.rename(what='ccocs',  orig=orig, new=new, overwrite=overwrite)
+    def renamescen(self,   orig='default', new='new', overwrite=False): self.rename(what='scen',   orig=orig, new=new, overwrite=overwrite)
+    def renameoptim(self,  orig='default', new='new', overwrite=False): self.rename(what='optim',  orig=orig, new=new, overwrite=overwrite)
 
     
 
