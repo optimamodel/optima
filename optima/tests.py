@@ -12,10 +12,10 @@ Version: 2015sep04 by cliffk
 ## Define tests to run here!!!
 tests = [
 'makespreadsheet',
-'makeproject',
-'saveload',
-'loadspreadsheet',
-'runsim',
+#'makeproject',
+#'saveload',
+#'loadspreadsheet',
+#'runsim',
 ]
 
 
@@ -45,12 +45,12 @@ T = tic()
 ## Spreadsheet creation test
 if 'makespreadsheet' in tests:
     print('Running make spreadsheet test...')
-    from makeworkbook import makeworkbook
-    makeworkbook()
+    from makespreadsheet import makespreadsheet
+    makespreadsheet()
     print('Done.')
     blank()
-    
-    
+
+
 
 ## Project creation test
 if 'makeproject' in tests:

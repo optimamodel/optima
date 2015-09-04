@@ -45,14 +45,14 @@ defaultprogs = [
  }]
 
 
-def makeworkbook(filename='default.xlsx', pops=defaultpops, progs=defaultprogs, datastart=2000, dataend=2020, verbose=2):
-    """ Generate the Optima workbook -- the hard work is done by makeworkbook.py """
+def makespreadsheet(filename='default.xlsx', pops=defaultpops, progs=defaultprogs, datastart=2000, dataend=2020, verbose=2):
+    """ Generate the Optima spreadsheet -- the hard work is done by makespreadsheet.py """
 
     printv('Generating spreadsheet: pops=%i, progs=%i, datastart=%s, dataend=%s''' % (len(pops), len(progs), datastart, dataend), 1, verbose)
     book = OptimaSpreadsheet(filename, pops, progs, datastart, dataend)
     book.create(filename)
     
-    printv('  ...done making workbook %s.' % filename, 2, verbose)
+    printv('  ...done making spreadsheet %s.' % filename, 2, verbose)
     return filename
 
 
