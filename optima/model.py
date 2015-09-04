@@ -1,5 +1,5 @@
 ###############################################################################
-##### 2.0 STATUS: partly converted, need to add new features, but mostly ok
+##### 2.0 STATUS: still legacy!!! Just put in hacks to get it to work; search for TODO
 ###############################################################################
 
  ## Imports

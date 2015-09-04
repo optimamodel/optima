@@ -1,28 +1,16 @@
-"""
-PROJECT
-
-The main Optima project class. Almost all Optima functionality is provided by this class.
-
-An Optima project is based around 4 major lists:
-    1. params -- a list of parameter structures
-    2. ccocs -- a list of CCOC structures
-    3. scens -- a list of scenario structures
-    4. optims -- a list of optimization structures
-
-In addition, an Optima project contains:
-    1. data -- loaded from the spreadsheet
-    2. metadata -- project name, creation date, etc.
-    3. settings -- timestep, indices, etc.
-
-Methods for structure lists:
-    1. add -- add a new structure to the list
-    2. remove -- remove a structure from the list
-    3. copy -- copy a structure in the list
-    4. rename -- rename a structure in the list
-    5. show -- show information on all items in the list(s)
+'''
+This module defines the Project class, which is the main class used in Optima.
+The only other thing it contains is a loadprj() function, since that doesn't
+need to be in the class.
 
 Version: 2015sep04 by cliffk
-"""
+'''
+
+
+#######################################################################################################
+## Header -- imports and loadprj() function
+#######################################################################################################
+
 
 ## Load general modules
 from copy import deepcopy
@@ -38,6 +26,9 @@ from settings import Settings
 ## Load other Optima functions
 from loadspreadsheet import loadspreadsheet
 from makeparams import makeparams
+from maketimepars import maketimepars
+from model import model
+
 
 def loadprj(filename):
     ''' Load a saved project '''
@@ -46,12 +37,43 @@ def loadprj(filename):
     return project
 
 
+
+
+#######################################################################################################
+## Project class -- this contains everything else!
+#######################################################################################################
+
 class Project(object):
+    """
+    PROJECT
+    
+    The main Optima project class. Almost all Optima functionality is provided by this class.
+    
+    An Optima project is based around 4 major lists:
+        1. params -- a list of parameter structures
+        2. ccocs -- a list of CCOC structures
+        3. scens -- a list of scenario structures
+        4. optims -- a list of optimization structures
+    
+    In addition, an Optima project contains:
+        1. data -- loaded from the spreadsheet
+        2. metadata -- project name, creation date, etc.
+        3. settings -- timestep, indices, etc.
+    
+    Methods for structure lists:
+        1. add -- add a new structure to the list
+        2. remove -- remove a structure from the list
+        3. copy -- copy a structure in the list
+        4. rename -- rename a structure in the list
+        5. show -- show information on all items in the list(s)
+    
+    Version: 2015sep04 by cliffk
+    """
     
     
     
     #######################################################################################################
-    ## Built-in methods
+    ## Built-in methods -- initialization, and the thing to print if you call a project
     #######################################################################################################
     
     def __init__(self,name='default',spreadsheet=None):
@@ -228,7 +250,7 @@ class Project(object):
     
     
     #######################################################################################################
-    ## Convenience functions
+    ## Convenience functions -- NOTE, do we need these...?
     #######################################################################################################
     
     def addparams(self, name='default', params=None, overwrite=False): self.add(what='params', name=name, item=params, overwrite=overwrite)
@@ -254,34 +276,49 @@ class Project(object):
     
 
 
+
     #######################################################################################################
     ## Methods to perform major tasks
     #######################################################################################################
 
+    def runsim(self, what='params', name='default'):
+        ''' This function runs a single simulation '''
+        timepars = maketimepars(self.getwhat(what)[name]) # "self.getwhat(what)[name]" is e.g. P.params['default']
+        S = model(timepars, self.settings)
+        return S
     
     def calibrate(self):
+        print('Not implemented')
         return None
     
     def autofit(self):
+        print('Not implemented')
         return None
     
     def manualfit(self):
+        print('Not implemented')
         return None
     
     def mcmc(self):
+        print('Not implemented')
         return None
         
     def makescenarios(self):
+        print('Not implemented')
         return None
     
     def optimize(self):
+        print('Not implemented')
         return None
     
-    def plotcalibration(self):
-        return None
     
-    def plotscens(self):
-        return None
     
-    def plotoptim(self):
+    
+    #######################################################################################################
+    ## Plotting methods
+    #######################################################################################################    
+    
+    
+    def plotepi(self, params='default', scens=None, optims=None):
+        print('Not implemented')
         return None
