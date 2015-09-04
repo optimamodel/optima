@@ -1,22 +1,25 @@
-def loadworkbook(filename='example.xlsx', input_programs = None, verbose=0):
+###############################################################################
+##### 2.0 STATUS: partly converted, need to add new features
+###############################################################################
+
+
+def loadspreadsheet(filename='example.xlsx', verbose=0):
     """
-    Loads the workbook (i.e. reads its contents into the data structure).
+    Loads the spreadsheet (i.e. reads its contents into the data structure).
     This data structure is used in the next step to update the corresponding model.
-    The workbook is assumed to be in the format specified in example.xlsx.
     
-    Version: 2015mar12
+    Version: 2015sep04
     """
     
     ###########################################################################
     ## Preliminaries
     ###########################################################################
     
-    from printv import printv
+    from utils import printv
     from numpy import nan, zeros, isnan, array, logical_or, nonzero # For reading in empty values
     from xlrd import open_workbook # For opening Excel workbooks
     from time import strftime # For determining when a spreadsheet was last uploaded
     from datetime import date
-    from programs import programs_for_input_key
     printv('Loading data from %s...' % filename, 1, verbose)
     
     
@@ -37,7 +40,7 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=0):
     
     # Metadata -- population and program names -- array sizes are (# populations) and (# programs)
     # groupname   sheetname                 name    thispar
-    metadata = [['Populations & programs', 'meta', ['pops', 'progs']]]
+    popprogdata = [['Populations & programs', 'popprog', ['pops', 'progs']]]
     
     # Key data -- array sizes are time x population x uncertainty
     keydata =  [['Demographics & HIV prevalence', 'key', ['popsize', 'hivprev']]]
@@ -79,7 +82,7 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=0):
     
     ## Ugly, but allow the list of groups to be used as name and also as variables
     sheetstructure = dict()
-    sheetstructure['metadata'] = metadata
+    sheetstructure['popprogdata'] = popprogdata
     sheetstructure['cocodata'] = cocodata
     sheetstructure['keydata'] = keydata
     sheetstructure['timedata'] = timedata
@@ -101,9 +104,9 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=0):
     workbook = open_workbook(filename) # Open workbook
     
     sheetstructure_keys = sheetstructure.keys()
-    metadata_index = sheetstructure_keys.index('metadata')
-    #ensure that metadata is parsed first
-    sheetstructure_keys = ['metadata']+ sheetstructure_keys[:metadata_index]+sheetstructure_keys[metadata_index+1:]
+    popprogdata_index = sheetstructure_keys.index('popprogdata')
+    #ensure that popprogdata is parsed first
+    sheetstructure_keys = ['popprogdata']+ sheetstructure_keys[:popprogdata_index]+sheetstructure_keys[popprogdata_index+1:]
     
     ## Loop over each group of sheets
     for groupname in sheetstructure_keys: # Loop over each type of data, but treat constants differently
@@ -122,7 +125,7 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=0):
             ## Calculate columns for which data are entered, and store the year ranges
             if groupname in ['keydata', 'cocodata', 'timedata']: # Need to gather year ranges for epidemic etc. data
                 data['epiyears'] = [] # Initialize epidemiology data years
-                for col in xrange(sheetdata.ncols):
+                for col in range(sheetdata.ncols):
                     thiscell = sheetdata.cell_value(1,col) # 1 is the 2nd row which is where the year data should be
                     if thiscell=='' and len(data['epiyears'])>0: #  We've gotten to the end
                         lastdatacol = col # Store this column number
@@ -132,7 +135,7 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=0):
             
             if name == 'econ': # Need to gather year ranges for economic data
                 data['epiyears'] = [] # Initialize epidemiology data years
-                for col in xrange(sheetdata.ncols):
+                for col in range(sheetdata.ncols):
                     thiscell = sheetdata.cell_value(1,col) # 1 is the 2nd row which is where the year data should be
                     if thiscell=='' and len(data['epiyears'])>0: #  We've gotten to the end
                         lastdatacol = col # Store this column number
@@ -152,15 +155,15 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=0):
             
             
             # Loop over each row in the workbook
-            for row in xrange(sheetdata.nrows): 
+            for row in range(sheetdata.nrows): 
                 paramcategory = sheetdata.cell_value(row,0) # See what's in the first column for this row
                 
                 if paramcategory != '': # It's not blank: e.g. "HIV prevalence"
                     printv('Loading "%s"...' % paramcategory, 3, verbose)
                     parcount += 1 # Increment the parameter count
                     
-                    # It's metadata: pull out each of the pieces
-                    if groupname=='metadata': 
+                    # It's popprogdata: pull out each of the pieces
+                    if groupname=='popprogdata': 
                         thispar = subparlist[parcount] # Get the name of this parameter, e.g. 'pop'
                         data[name][thispar] = dict() # Initialize to empty list
                         data[name][thispar]['short'] = [] # Store short population/program names, e.g. "FSW"
@@ -206,8 +209,8 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=0):
                         printv('Parameter: %s' % subparam, 4, verbose)
                         
                         
-                        # It's meta-data, split into pieces
-                        if groupname=='metadata': 
+                        # It's popprog-data, split into pieces
+                        if groupname=='popprogdata': 
                             thesedata = sheetdata.row_values(row, start_colx=2, end_colx=11) # Data starts in 3rd column, finishes in 11th column
                             data[name][thispar]['short'].append(thesedata[0])
 
@@ -237,7 +240,7 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=0):
                         # It's key data, save both the values and uncertainties
                         if groupname=='keydata':
                             if len(data[name][thispar])==0: 
-                                data[name][thispar] = [[] for z in xrange(3)] # Create new variable for best, low, high
+                                data[name][thispar] = [[] for z in range(3)] # Create new variable for best, low, high
                             thesedata = sheetdata.row_values(row, start_colx=3, end_colx=lastdatacol) # Data starts in 4th column
                             thesedata = map(lambda val: nan if val=='' else val, thesedata) # Replace blanks with nan
                             assumptiondata = sheetdata.cell_value(row, assumptioncol)
@@ -270,12 +273,13 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=0):
                                         column = nonzero(invalid)[0]
                                         raise Exception('Invalid entry in spreadsheet: parameter %s (row=%i, column(s)=%s, value=%i)' % (thispar, row, column, thesedata[column[0]]))
                             
-                            for programname, pops in programs_for_input_key(thispar, input_programs).iteritems(): # Link with programs...?
-                                if (programname in [programs[j]['name'] for j in range(len(programs))]) and ((not pops or pops==['']) or subparam in pops):
-                                    for prognumber, prog in enumerate(programs):
-                                        if unicode(programname) == prog['name']:
-                                            neweffect = {'paramtype':name, 'param':thispar, 'popname':subparam, 'coparams':None, 'convertedcoparams':None, 'convertedccoparams':None}
-                                            programs[prognumber]['effects'].append(neweffect)
+                            print('[TODO] Replace this with something that writes the links into the spreadsheet')
+#                            for programname, pops in programs_for_input_key(thispar, input_programs).iteritems(): # Link with programs...?
+#                                if (programname in [programs[j]['name'] for j in range(len(programs))]) and ((not pops or pops==['']) or subparam in pops):
+#                                    for prognumber, prog in enumerate(programs):
+#                                        if programname == prog['name']:
+#                                            neweffect = {'paramtype':name, 'param':thispar, 'popname':subparam, 'coparams':None, 'convertedcoparams':None, 'convertedccoparams':None}
+#                                            programs[prognumber]['effects'].append(neweffect)
 
                         # It's economics data, append the data
                         if groupname=='econdata': 
@@ -305,14 +309,14 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=0):
     nprogs = len(data['costcov']['cost'])
     data['origalloc'] = zeros(nprogs)
     indexforcurrentyear = data['epiyears'].index(min(data['epiyears'][-1], date.today().year))
-    for prog in xrange(nprogs):
+    for prog in range(nprogs):
         totalcost = data['costcov']['cost'][prog]
         totalcost = array(totalcost)[:indexforcurrentyear] # Trim years after most recent
         totalcost = totalcost[~isnan(totalcost)]
         try:
             totalcost = totalcost[-1]
         except:
-            print('WARNING, no cost data entered for %s' % data['meta']['progs']['short'][prog])
+            print('WARNING, no cost data entered for %s' % data['popprog']['progs']['short'][prog])
             totalcost = 0 # No data entered for this program
         data['origalloc'][prog] = totalcost    
     

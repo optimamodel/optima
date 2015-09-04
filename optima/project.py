@@ -65,7 +65,7 @@ class Project(object):
         
         ## Load spreadsheet, if available
         if spreadsheet is not None:
-            self.data = loadspreadsheet(spreadsheet)
+            self.data = self.loadspreadsheet(spreadsheet)
         
         return None
     
@@ -97,19 +97,23 @@ class Project(object):
     #######################################################################################################
     
     @classmethod
-    def load(Project,filename):
+    def load(Project, filename):
         ''' Load a saved project '''
         with GzipFile(filename, 'rb') as fileobj: project = pickle.load(fileobj)
         print('Project loaded from "%s"' % filename)
         return project
 
-    def save(self,filename):
+    def save(self, filename):
         ''' Save the current project '''
         with GzipFile(filename, 'wb') as fileobj: pickle.dump(self, fileobj, protocol=2)
         print('Project "%s" saved to "%s"' % (self.name, filename))
         return None
     
-    
+    def loadspreadsheet(self, filename):
+        ''' Load a data spreadsheet -- enormous, ugly function so located in its own file '''
+        self.data = loadspreadsheet(filename)
+        return None
+        
     
     
     
@@ -188,7 +192,7 @@ class Project(object):
     ## Convenience functions
     #######################################################################################################
     
-    print('WARNING, need unique add() methods for the different...uhh...classes, unless these are defined elsewhere')
+    # WARNING, need unique add() methods for the different...uhh...classes, unless these are defined elsewhere
     def addparams(self, name='default', params=None, overwrite=False): self.add(self, what='params', name=name, item=params, overwrite=overwrite)
     def addccocs(self,  name='default', ccocs=None,  overwrite=False): self.add(self, what='ccocs', name=name, item=ccocs, overwrite=overwrite)
     def addscen(self,   name='default', scen=None,   overwrite=False): self.add(self, what='scen', name=name, item=scen, overwrite=overwrite)
