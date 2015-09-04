@@ -74,6 +74,8 @@ def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0, sho
       depth: how many levels of recursion to follow
       maxlen: number of characters of data to display (if 0, don't show data)
       indent: where to start the indent (used internally)
+    
+    Note: "printdata" is aliased to "pd".
 
     Version: 1.0 (2015aug21)    
     """
@@ -117,7 +119,7 @@ def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0, sho
                     printdata(getattr(data,key), name=key, depth=depth-1, indent=indent+thisindent, level=level)
         print('\n')
     return None
-
+pd = printdata # Alias to make it easier to use
 
 
 

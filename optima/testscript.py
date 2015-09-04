@@ -11,7 +11,7 @@ Version: 2015sep04 by cliffk
 ## Initialization
 ##############################################################################
 
-from utils import tic, toc, blank
+from utils import tic, toc, blank, pd # analysis:ignore
 
 # Define tests to run
 tests = [
@@ -47,6 +47,10 @@ if 'loadspreadsheet' in tests:
     print('Running loadspreadsheet test...')
     from project import Project
     P = Project(spreadsheet='test.xlsx')
+    Q = Project()
+    Q.loadspreadsheet('test.xlsx')
+    print(P)
+    print(Q)
     print('Done.')
     blank()
 

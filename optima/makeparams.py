@@ -1,4 +1,8 @@
-def makedatapars(D, verbose=2):
+###############################################################################
+##### 2.0 STATUS: partly converted, need to tidy up
+###############################################################################
+
+def makeparams(data, metadata, verbose=2):
     """
     Translates the raw data (which were read from the spreadsheet). into
     parameters that can be used in the model. These are then used 
@@ -13,7 +17,7 @@ def makedatapars(D, verbose=2):
     ###############################################################################
 
     
-    from printv import printv
+    from utils import printv
     from numpy import array, isnan, zeros, shape, mean
     from utils import sanitize
     printv('Converting data to parameters...', 1, verbose)
@@ -29,7 +33,7 @@ def makedatapars(D, verbose=2):
         output['p'] = [0]*nrows # Initialize array for holding population parameters
         if usetime:
             output['t'] = [0]*nrows # Initialize array for holding time parameters
-            for r in xrange(nrows): 
+            for r in range(nrows): 
                 validdata = ~isnan(dataarray[r])
                 if sum(validdata): # There's at least one data point
                     output['p'][r] = sanitize(dataarray[r]) # Store each extant value
@@ -40,7 +44,7 @@ def makedatapars(D, verbose=2):
 
         else:
             print('TMP6666')
-            for r in xrange(nrows): 
+            for r in range(nrows): 
                 output['p'][r] = mean(sanitize(dataarray[r])) # Calculate mean for each population
                 print('TMP223')
         
@@ -50,7 +54,7 @@ def makedatapars(D, verbose=2):
         """ Take an array of data return either the first or last (...or some other) non-NaN entry """
         nrows = shape(dataarray)[0] # See how many rows need to be filled (either npops, nprogs, or 1)
         output = zeros(nrows) # Create structure
-        for r in xrange(nrows): 
+        for r in range(nrows): 
             output[r] = sanitize(dataarray[r])[index] # Return the specified index -- usually either the first [0] or last [-1]
         
         return output
@@ -62,45 +66,45 @@ def makedatapars(D, verbose=2):
     ## Loop over quantities
     ###############################################################################
     
-    D['P'] = dict() # Initialize parameters structure
-    D['G']['meta'] = D['data']['meta'] # Copy metadata
+    params = dict() # Initialize parameters structure
+    D['G']['meta'] = data['meta'] # Copy metadata
     
     ## Key parameters
-    for parname in D['data']['key'].keys():
+    for parname in data['key'].keys():
         printv('Converting data parameter %s...' % parname, 2, verbose)
-        D['P'][parname] = dataindex(D['data']['key'][parname][0], 0) # Population size and prevalence -- # TODO: use uncertainties!
+        params[parname] = dataindex(data['key'][parname][0], 0) # Population size and prevalence -- # TODO: use uncertainties!
     
     ## Loop over parameters that can be converted automatically
     for parclass in ['epi', 'txrx', 'sex', 'inj']:
         printv('Converting data parameter %s...' % parclass, 3, verbose)
-        for parname in D['data'][parclass].keys():
+        for parname in data[parclass].keys():
             printv('Converting data parameter %s...' % parname, 4, verbose)
             if parname in ['numfirstline','numsecondline','txelig']:
-                D['P'][parname] = data2par(D['data'][parclass][parname], usetime=True)
+                params[parname] = data2par(data[parclass][parname], usetime=True)
             else:
-                D['P'][parname] = data2par(D['data'][parclass][parname], usetime=True) # TMP
+                params[parname] = data2par(data[parclass][parname], usetime=True) # TMP
     
     
     ## Matrices can be used directly
     for parclass in ['pships', 'transit']:
         printv('Converting data parameter %s...' % parclass, 3, verbose)
-        D['P'][parclass] = D['data'][parclass]
+        params[parclass] = data[parclass]
     
     ## Constants...just take the best value for now -- # TODO: use the uncertainty
-    D['P']['const'] = dict()
-    for parclass in D['data']['const'].keys():
+    params['const'] = dict()
+    for parclass in data['const'].keys():
         printv('Converting data parameter %s...' % parclass, 3, verbose)
-        if type(D['data']['const'][parclass])==dict: 
-            D['P']['const'][parclass] = dict()
-            for parname in D['data']['const'][parclass].keys():
+        if type(data['const'][parclass])==dict: 
+            params['const'][parclass] = dict()
+            for parname in data['const'][parclass].keys():
                 printv('Converting data parameter %s...' % parname, 4, verbose)
-                D['P']['const'][parclass][parname] = D['data']['const'][parclass][parname][0] # Taking best value only, hence the 0
+                params['const'][parclass][parname] = data['const'][parclass][parname][0] # Taking best value only, hence the 0
     
     ## Add a data parameter for number circumcised, if VMMC is a program
     if  'VMMC' in [p['name'] for p in D['programs']]:
         printv('Making a data parameter for numcircum', 2, verbose)
         prognumber = [p['name'] for p in D['programs']].index('VMMC')
-        D['P']['numcircum'] = data2par([D['data']['costcov']['cov'][prognumber]], usetime=True)
+        params['numcircum'] = data2par([data['costcov']['cov'][prognumber]], usetime=True)
     
     ## Change sizes of circumcision and births
     def popexpand(origarray, popbool):
@@ -108,8 +112,8 @@ def makedatapars(D, verbose=2):
         from copy import deepcopy
         newarray = deepcopy(origarray)
         if 't' in newarray.keys(): 
-            newarray['p'] = [array([0]) for i in xrange(len(D['G']['meta']['pops']['male']))]
-            newarray['t'] = [array([0]) for i in xrange(len(D['G']['meta']['pops']['male']))]
+            newarray['p'] = [array([0]) for i in range(len(D['G']['meta']['pops']['male']))]
+            newarray['t'] = [array([0]) for i in range(len(D['G']['meta']['pops']['male']))]
             count = -1
             if hasattr(popbool,'__iter__'): # May or may not be a list
                 for i,tf in enumerate(popbool):
@@ -128,8 +132,8 @@ def makedatapars(D, verbose=2):
         
         return newarray
     
-    D['P']['birth']     = popexpand(D['P']['birth'],     array(D['G']['meta']['pops']['female'])==1)
-    D['P']['circum']    = popexpand(D['P']['circum'],    array(D['G']['meta']['pops']['male'])==1)
+    params['birth']     = popexpand(params['birth'],     array(D['G']['meta']['pops']['female'])==1)
+    params['circum']    = popexpand(params['circum'],    array(D['G']['meta']['pops']['male'])==1)
             
             
 

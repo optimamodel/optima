@@ -29,6 +29,7 @@ from copy import deepcopy
 try: import cPickle as pickle # For Python 2 compatibility
 except: import pickle
 from gzip import GzipFile
+from datetime import datetime
 
 ## Load classes
 from metadata import Metadata
@@ -36,6 +37,7 @@ from settings import Settings
 
 ## Load other Optima functions
 from loadspreadsheet import loadspreadsheet
+from makeparams import makeparams
 
 
 class Project(object):
@@ -115,7 +117,14 @@ class Project(object):
     
     def loadspreadsheet(self, filename):
         ''' Load a data spreadsheet -- enormous, ugly function so located in its own file '''
+        
+        ## Load spreadsheet and update metadata
         self.data = loadspreadsheet(filename)
+        self.metadata.spreadsheetdate = datetime.today() # Update date when spreadsheet was last loaded
+        
+        ## If default parameters don't exist, create them
+        if 'default' not in self.params:
+            self.params['default'] = makeparams()
         return None
         
     
