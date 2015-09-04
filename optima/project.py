@@ -123,12 +123,13 @@ class Project(object):
         
         
     def reconcilefilenames(self, filename=None):
-        if filename is None: # filename isn't available
+        ''' If filename exists, update metadata; if not, take from metadata; if that doesn't exist, then generate '''
+        if filename is not None: # filename is available
+            self.metadata.filename = filename # Update stored filename with the new filename
+        else: # filename isn't available
             if self.metadata.filename is None: # metadata.filename isn't available
                 self.metadata.filename = self.metadata.name+'.prj' # Use project name as filename if none provided
-            filename = self.metadata.filename # Replace filename with stored filename
-        else: # filename is available
-            self.metadata.filename = filename # Update stored filename with the new filename
+            filename = self.metadata.filename # Replace filename with stored filename            
         return filename
     
     
