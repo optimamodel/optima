@@ -16,8 +16,8 @@ from utils import tic, toc, blank, pd # analysis:ignore
 # Define tests to run
 tests = [
 #'creation',
-'saveload',
-#'loadspreadsheet',
+#'saveload',
+'loadspreadsheet',
 ]
 
 blank()
@@ -75,13 +75,17 @@ if 'saveload' in tests:
 if 'loadspreadsheet' in tests:
     print('Running loadspreadsheet test...')
     from project import Project
+    
+    print('  Create a project from a spreadsheet')
     P = Project(spreadsheet='test.xlsx')
+    
+    print('  Load a project, then create a spreadsheet')
     Q = Project()
     Q.loadspreadsheet('test.xlsx')
-    print(P)
-    print(Q)
+    
     print('Done.')
     blank()
+
 
 
 print('\n\n\nDONE: ran %i tests' % len(tests))

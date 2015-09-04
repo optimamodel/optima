@@ -150,8 +150,8 @@ class Project(object):
     
     def makeparams(self, name='default', overwrite=False):
         ''' Regenerate the parameters from the spreadsheet data -- also a large function '''
-        self.checkname(what='params', checkabsent=name, overwrite=overwrite) # Check that parameters aren't being overwritten
-        self.params[name] = makeparams(self.data) # Create parameters
+        params = makeparams(self.data) # Create parameters
+        self.addparams(name=name, params=params) # Store parameters
         return None
     
     
@@ -163,7 +163,7 @@ class Project(object):
     #######################################################################################################
     
     
-    def getwhat(self, what):
+    def getwhat(self, what=None):
         ''' 
         Figure out what kind of structure list is being requested, e.g.
             structlist = getwhat('parameters')
@@ -178,7 +178,7 @@ class Project(object):
         return structlist
     
     
-    def checkname(self, what, checkexists=None, checkabsent=None, overwrite=False):
+    def checkname(self, what=None, checkexists=None, checkabsent=None, overwrite=False):
         ''' Check that a name exists if it needs to; check that a name doesn't exist if it's not supposed to '''
         structlist = self.getwhat(what)
         if checkabsent is not None and overwrite==False:
@@ -190,7 +190,7 @@ class Project(object):
         return None
     
     
-    def add(self, what, name='default', item=None, overwrite=False):
+    def add(self, what=None, name='default', item=None, overwrite=False):
         ''' Add an entry to a structure list '''
         structlist = self.getwhat(what)
         self.checkname(what, checkabsent=name, overwrite=overwrite)
@@ -199,7 +199,7 @@ class Project(object):
         return None
     
     
-    def remove(self, what, name):
+    def remove(self, what=None, name=None):
         ''' Remove an entry from a structure list by name '''
         structlist = self.getwhat(what)
         self.checkname(what, checkexists=name)
@@ -208,7 +208,7 @@ class Project(object):
         return None
     
     
-    def copy(self, what, orig='default', new='copy', overwrite=False):
+    def copy(self, what=None, orig='default', new='copy', overwrite=False):
         ''' Copy an entry in a structure list '''
         structlist = self.getwhat(what)
         self.checkname(what, checkexists=orig, checkabsent=new, overwrite=overwrite)
@@ -217,7 +217,7 @@ class Project(object):
         return None
     
     
-    def rename(self, what, orig='default', new='new', overwrite=False):
+    def rename(self, what=None, orig='default', new='new', overwrite=False):
         ''' Rename an entry in a structure list '''
         structlist = self.getwhat(what)
         self.checkname(what, checkexists=orig, checkabsent=new, overwrite=overwrite)
