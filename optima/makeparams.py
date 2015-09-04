@@ -1,15 +1,15 @@
 ###############################################################################
-##### 2.0 STATUS: partly converted, need to tidy up
+##### 2.0 STATUS: works, but need to tidy up
 ###############################################################################
 
-def makeparams(data, metadata, verbose=2):
+def makeparams(data, verbose=2):
     """
     Translates the raw data (which were read from the spreadsheet). into
-    parameters that can be used in the model. These are then used 
-    These data are then used to update the corresponding model (project).
-    This method should be called before any simulation can run.
+    parameters that can be used in the model. These data are then used to update 
+    the corresponding model (project). This method should be called before a 
+    simulation is run.
     
-    Version: 2014nov25 by cliffk
+    Version: 2015sep04 by cliffk
     """
     
     ###############################################################################
@@ -18,7 +18,7 @@ def makeparams(data, metadata, verbose=2):
 
     
     from utils import printv
-    from numpy import array, isnan, zeros, shape, mean
+    from numpy import array as ar, isnan, zeros, shape, mean
     from utils import sanitize
     printv('Converting data to parameters...', 1, verbose)
     
@@ -37,7 +37,7 @@ def makeparams(data, metadata, verbose=2):
                 validdata = ~isnan(dataarray[r])
                 if sum(validdata): # There's at least one data point
                     output['p'][r] = sanitize(dataarray[r]) # Store each extant value
-                    output['t'][r] = D['G']['datayears'][~isnan(dataarray[r])] # Store each year
+                    output['t'][r] = array(data['epiyears'])[~isnan(dataarray[r])] # Store each year
                 else: # Blank, assume zero
                     output['p'][r] = array([0])
                     output['t'][r] = array([0])
@@ -67,7 +67,6 @@ def makeparams(data, metadata, verbose=2):
     ###############################################################################
     
     params = dict() # Initialize parameters structure
-    D['G']['meta'] = data['meta'] # Copy metadata
     
     ## Key parameters
     for parname in data['key'].keys():
@@ -100,11 +99,11 @@ def makeparams(data, metadata, verbose=2):
                 printv('Converting data parameter %s...' % parname, 4, verbose)
                 params['const'][parclass][parname] = data['const'][parclass][parname][0] # Taking best value only, hence the 0
     
-    ## Add a data parameter for number circumcised, if VMMC is a program
-    if  'VMMC' in [p['name'] for p in D['programs']]:
-        printv('Making a data parameter for numcircum', 2, verbose)
-        prognumber = [p['name'] for p in D['programs']].index('VMMC')
-        params['numcircum'] = data2par([data['costcov']['cov'][prognumber]], usetime=True)
+#    ## Add a data parameter for number circumcised, if VMMC is a program
+#    if  'VMMC' in [p['name'] for p in D['programs']]:
+#        printv('Making a data parameter for numcircum', 2, verbose)
+#        prognumber = [p['name'] for p in D['programs']].index('VMMC')
+#        params['numcircum'] = data2par([data['costcov']['cov'][prognumber]], usetime=True)
     
     ## Change sizes of circumcision and births
     def popexpand(origarray, popbool):
@@ -112,8 +111,8 @@ def makeparams(data, metadata, verbose=2):
         from copy import deepcopy
         newarray = deepcopy(origarray)
         if 't' in newarray.keys(): 
-            newarray['p'] = [array([0]) for i in range(len(D['G']['meta']['pops']['male']))]
-            newarray['t'] = [array([0]) for i in range(len(D['G']['meta']['pops']['male']))]
+            newarray['p'] = [array([0]) for i in range(len(data['popprog']['pops']['male']))]
+            newarray['t'] = [array([0]) for i in range(len(data['popprog']['pops']['male']))]
             count = -1
             if hasattr(popbool,'__iter__'): # May or may not be a list
                 for i,tf in enumerate(popbool):
@@ -122,7 +121,7 @@ def makeparams(data, metadata, verbose=2):
                         newarray['p'][i] = origarray['p'][count]
                         newarray['t'][i] = origarray['t'][count]
         else: 
-            newarray['p'] = zeros(shape(D['G']['meta']['pops']['male']))
+            newarray['p'] = zeros(shape(data['popprog']['pops']['male']))
             count = -1
             if hasattr(popbool,'__iter__'): # May or may not be a list
                 for i,tf in enumerate(popbool):
@@ -132,11 +131,11 @@ def makeparams(data, metadata, verbose=2):
         
         return newarray
     
-    params['birth']     = popexpand(params['birth'],     array(D['G']['meta']['pops']['female'])==1)
-    params['circum']    = popexpand(params['circum'],    array(D['G']['meta']['pops']['male'])==1)
+    params['birth']     = popexpand(params['birth'],     array(data['popprog']['pops']['female'])==1)
+    params['circum']    = popexpand(params['circum'],    array(data['popprog']['pops']['male'])==1)
             
             
 
     printv('...done converting data to parameters.', 2, verbose)
     
-    return D
+    return params

@@ -16,7 +16,8 @@ from utils import tic, toc, blank, pd # analysis:ignore
 # Define tests to run
 tests = [
 #'creation',
-'loadspreadsheet',
+'saveload',
+#'loadspreadsheet',
 ]
 
 blank()
@@ -40,6 +41,20 @@ if 'creation' in tests:
     print(P)
     print('Done.')
     blank()
+
+
+
+## Project save/load test
+if 'saveload' in tests:
+    print('Running save/load test...')
+    filename = 'testproject.prj'
+    from project import Project
+    P = Project()
+    P.save(filename)
+    Q = Project.load(filename)
+    print('Done.')
+    blank()
+
 
 
 ## Load spreadsheet test

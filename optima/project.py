@@ -21,7 +21,7 @@ Methods for structure lists:
     4. rename -- rename a structure in the list
     5. show -- show information on all items in the list(s)
 
-Version: 2015sep03 by cliffk
+Version: 2015sep04 by cliffk
 """
 
 ## Load general modules
@@ -51,19 +51,19 @@ class Project(object):
     def __init__(self,name='default',spreadsheet=None):
         ''' Initialize the project ''' 
         
-        
         self.name = name
         
-        ## Define the structure lists
+        ## Define the structure sets
         self.params = {}
         self.ccocs = {}
         self.scens = {}
         self.optims = {}
         
         ## Define other quantities
-        self.data = {}
-        self.metadata = Metadata(name=name)
-        self.settings = Settings()
+        self.metadata = Metadata(name=name) # Project metadata
+        self.settings = Settings() # Global settings
+        self.data = {} # Data from the spreadsheet
+        self.programs = {} # Programs and program-parameter links -- WARNING, is this necessary?
         
         ## Load spreadsheet, if available
         if spreadsheet is not None:
@@ -99,8 +99,9 @@ class Project(object):
     
     
     #######################################################################################################
-    ## Methods for I/O
+    ## Methods for I/O and spreadsheet loading
     #######################################################################################################
+    
     
     @classmethod
     def load(Project, filename):
@@ -109,24 +110,35 @@ class Project(object):
         print('Project loaded from "%s"' % filename)
         return project
 
+
+
     def save(self, filename):
         ''' Save the current project '''
         with GzipFile(filename, 'wb') as fileobj: pickle.dump(self, fileobj, protocol=2)
         print('Project "%s" saved to "%s"' % (self.name, filename))
         return None
     
+    
+    
     def loadspreadsheet(self, filename):
         ''' Load a data spreadsheet -- enormous, ugly function so located in its own file '''
         
         ## Load spreadsheet and update metadata
-        self.data = loadspreadsheet(filename)
+        self.data, self.programs = loadspreadsheet(filename) # WARNING -- might want to change this
         self.metadata.spreadsheetdate = datetime.today() # Update date when spreadsheet was last loaded
         
         ## If default parameters don't exist, create them
         if 'default' not in self.params:
-            self.params['default'] = makeparams()
+            self.makeparams(name='default')
         return None
-        
+    
+    
+    
+    def makeparams(self, name='default', overwrite=False):
+        ''' Regenerate the parameters from the spreadsheet data -- also a large function '''
+        self.checkname(what='params', checkabsent=name, overwrite=overwrite) # Check that parameters aren't being overwritten
+        self.params[name] = makeparams(self.data) # Create parameters
+        return None
     
     
     
