@@ -3,7 +3,7 @@ from numpy import zeros, array, exp, shape
 eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
 
 
-def makemodelpars(P, opt, withwhat='p', verbose=2):
+def makesimpars(P, opt, withwhat='p', verbose=2):
     """
     Prepares model parameters to run the simulation.
     

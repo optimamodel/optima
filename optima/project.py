@@ -26,7 +26,7 @@ from settings import Settings
 ## Load other Optima functions
 from loadspreadsheet import loadspreadsheet
 from makeparams import makeparams
-from maketimepars import maketimepars
+from makesimpars import makesimpars
 from model import model
 
 
@@ -283,7 +283,7 @@ class Project(object):
 
     def runsim(self, what='params', name='default'):
         ''' This function runs a single simulation '''
-        timepars = maketimepars(self.getwhat(what)[name]) # "self.getwhat(what)[name]" is e.g. P.params['default']
+        timepars = makesimpars(self.getwhat(what)[name]) # "self.getwhat(what)[name]" is e.g. P.params['default']
         S = model(timepars, self.settings)
         return S
     
