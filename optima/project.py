@@ -281,11 +281,22 @@ class Project(object):
     ## Methods to perform major tasks
     #######################################################################################################
 
-    def runsim(self, what='params', name='default'):
+
+    def runsim(self, name='default', start=2000, end=2030, dt=None):
         ''' This function runs a single simulation '''
-        timepars = makesimpars(self.getwhat(what)[name]) # "self.getwhat(what)[name]" is e.g. P.params['default']
-        S = model(timepars, self.settings)
+        if dt is None: dt=self.settings.dt # Specify the timestep if none is specified, usually 0.1
+        simpars = makesimpars(self.params[name], start=start, end=end, dt=dt) # "self.params[name]" is e.g. P.params['default']
+        S = model(simpars, self.settings)
         return S
+    
+    
+#    def runscen(self, name='default', start=2000, end=2030):
+#        ''' This function runs a single scenario '''
+#        simpars = makesimpars(self.params[name], start=start, end=end) # "self.getwhat(what)[name]" is e.g. P.params['default']
+#        simpars = applyoverrides(simpars, self.scens[name])
+#        S = model(simpars, self.settings)
+#        return S
+    
     
     def calibrate(self):
         print('Not implemented')
