@@ -10,7 +10,7 @@ from numpy import arange
 
 class Settings():
     def __init__(self):
-        self.dt = 0.1 # Timestep
+        self.dt = 0.2 # Timestep
         self.hivstates = ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'aids']
         self.ncd4 = len(self.hivstates)
         self.uninf  = arange(0,1) # Uninfected
