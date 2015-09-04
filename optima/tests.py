@@ -15,10 +15,11 @@ from utils import tic, toc, blank, pd # analysis:ignore
 
 # Define tests to run
 tests = [
-'makespreadsheet',
+#'makespreadsheet',
 #'creation',
 #'saveload',
 #'loadspreadsheet',
+'runsim',
 ]
 
 blank()
@@ -90,12 +91,34 @@ if 'loadspreadsheet' in tests:
     print('  Create a project from a spreadsheet')
     P = Project(spreadsheet='test.xlsx')
     
-    print('  Load a project, then create a spreadsheet')
+    print('  Load a project, then load a spreadsheet')
     Q = Project()
     Q.loadspreadsheet('test.xlsx')
     
     print('Done.')
     blank()
+
+
+
+
+## Load spreadsheet test
+if 'runsim' in tests:
+    print('Running runsim test...')
+    from project import Project
+    
+    print('  Loading spreadsheet')
+    P = Project(spreadsheet='test.xlsx')
+    
+    print('  Run the simulation')
+    Q = Project()
+    Q.loadspreadsheet('test.xlsx')
+    
+    print('Done.')
+    blank()
+
+
+
+
 
 
 
