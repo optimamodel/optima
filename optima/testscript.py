@@ -19,9 +19,10 @@ tests = [
 'loadspreadsheet',
 ]
 
+blank()
 print('Running tests:')
 for i,test in enumerate(tests): print(('%i.  '+test) % (i+1))
-blank(3)
+blank()
 
 
 
@@ -38,6 +39,7 @@ if 'creation' in tests:
     P = Project()
     print(P)
     print('Done.')
+    blank()
 
 
 ## Load spreadsheet test
@@ -46,8 +48,8 @@ if 'loadspreadsheet' in tests:
     from project import Project
     P = Project(spreadsheet='test.xlsx')
     print('Done.')
+    blank()
 
 
-blank(3)
 print('\n\n\nDONE: ran %i tests' % len(tests))
 toc(T)

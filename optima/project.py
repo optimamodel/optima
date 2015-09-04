@@ -65,7 +65,7 @@ class Project(object):
         
         ## Load spreadsheet, if available
         if spreadsheet is not None:
-            self.data = self.loadspreadsheet(spreadsheet)
+            self.loadspreadsheet(spreadsheet)
         
         return None
     
