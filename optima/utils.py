@@ -1,3 +1,8 @@
+##############################################################################
+## PRINTING FUNCTIONS
+##############################################################################
+
+
 def printv(string, thisverbose=1, verbose=2, newline=True):
     """
     Optionally print a message and automatically indent.
@@ -7,6 +12,127 @@ def printv(string, thisverbose=1, verbose=2, newline=True):
         if newline: print('%s%s' % (indents,string)) # Actually print
         else: print('%s%s' % (indents,string)), # Actually print
 
+
+def blank(n=3):
+    ''' Tiny function to print n blank lines '''
+    print('\n'*n)
+
+
+
+def printarr(arr, arrformat='%0.2f  '):
+    """ 
+    Print a numpy array nicely.
+    
+    Example:
+        from utils import printarr
+        from numpy import random
+        printarr(rand(3,7,4))
+    
+    Version: 2014dec01 by cliffk
+    """
+    from numpy import ndim
+    if ndim(arr)==1:
+        string = ''
+        for i in range(len(arr)):
+            string += arrformat % arr[i]
+        print(string)
+    elif ndim(arr)==2:
+        for i in range(len(arr)):
+            printarr(arr[i], arrformat)
+    elif ndim(arr)==3:
+        for i in range(len(arr)):
+            print('='*len(arr[i][0])*len(arrformat % 1))
+            for j in range(len(arr[i])):
+                printarr(arr[i][j], arrformat)
+    else:
+        print(arr) # Give up
+    return None
+    
+
+
+def sigfig(x, sigfigs=3):
+    """ Return a string representation of variable x with sigfigs number of significant figures """
+    from numpy import log10, floor
+    magnitude = floor(log10(abs(x)))
+    factor = 10**(sigfigs-magnitude-1)
+    x = round(x*factor)/float(factor)
+    digits = int(abs(magnitude) + max(0, sigfigs - max(0,magnitude) - 1) + 1 + (x<0) + (abs(x)<1)) # one because, one for decimal, one for minus
+    decimals = int(max(0,-magnitude+sigfigs-1))
+    strformat = '%' + '%i.%i' % (digits, decimals)  + 'f'
+    string = strformat % x
+    return string
+
+    
+
+
+def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0, showcontents=False):
+    """
+    Nicely print a complicated data structure, a la Matlab.
+    Arguments:
+      data: the data to display
+      name: the name of the variable (automatically read except for first one)
+      depth: how many levels of recursion to follow
+      maxlen: number of characters of data to display (if 0, don't show data)
+      indent: where to start the indent (used internally)
+
+    Version: 1.0 (2015aug21)    
+    """
+    datatype = type(data)
+    def printentry(data):
+        from numpy import shape, ndarray
+        if datatype==dict: string = ('dict with %i keys' % len(data.keys()))
+        elif datatype==list: string = ('list of length %i' % len(data))
+        elif datatype==tuple: string = ('tuple of length %i' % len(data))
+        elif datatype==ndarray: string = ('array of shape %s' % str(shape(data)))
+        elif datatype.__name__=='module': string = ('module with %i components' % len(dir(data)))
+        elif datatype.__name__=='class': string = ('class with %i components' % len(dir(data)))
+        else: string = datatype.__name__
+        if showcontents and maxlen>0:
+            datastring = ' | '+str(data)
+            if len(datastring)>maxlen: datastring = datastring[:maxlen] + ' <etc> ' + datastring[-maxlen:]
+        else: datastring=''
+        return string+datastring
+    
+    string = printentry(data).replace('\n',' \ ') # Remove newlines
+    print(level*'..' + indent + name + ' | ' + string)
+
+
+    if depth>0:
+        level += 1
+        if type(data)==dict:
+            keys = data.keys()
+            maxkeylen = max([len(key) for key in keys])
+            for key in keys:
+                thisindent = ' '*(maxkeylen-len(key))
+                printdata(data[key], name=key, depth=depth-1, indent=indent+thisindent, level=level)
+        elif type(data) in [list, tuple]:
+            for i in range(len(data)):
+                printdata(data[i], name='[%i]'%i, depth=depth-1, indent=indent, level=level)
+        elif type(data).__name__ in ['module', 'class']:
+            keys = dir(data)
+            maxkeylen = max([len(key) for key in keys])
+            for key in keys:
+                if key[0]!='_': # Skip these
+                    thisindent = ' '*(maxkeylen-len(key))
+                    printdata(getattr(data,key), name=key, depth=depth-1, indent=indent+thisindent, level=level)
+        print('\n')
+    return None
+
+
+
+
+
+
+
+
+
+
+
+
+
+##############################################################################
+## MATHEMATICAL FUNCTIONS
+##############################################################################
 
 
 def quantile(data, quantiles=[0.5, 0.25, 0.75]):
@@ -139,48 +265,107 @@ def perturb(n=1, span=0.5, randseed=None):
     return output
 
 
-def printarr(arr, arrformat='%0.2f  '):
-    """ 
-    Print a numpy array nicely.
-    
-    Example:
-        from utils import printarr
-        from numpy import random
-        printarr(rand(3,7,4))
-    
-    Version: 2014dec01 by cliffk
-    """
-    from numpy import ndim
-    if ndim(arr)==1:
-        string = ''
-        for i in range(len(arr)):
-            string += arrformat % arr[i]
-        print(string)
-    elif ndim(arr)==2:
-        for i in range(len(arr)):
-            printarr(arr[i], arrformat)
-    elif ndim(arr)==3:
-        for i in range(len(arr)):
-            print('='*len(arr[i][0])*len(arrformat % 1))
-            for j in range(len(arr[i])):
-                printarr(arr[i][j], arrformat)
-    else:
-        print(arr) # Give up
-    return None
-    
 
 
-def sigfig(x, sigfigs=3):
-    """ Return a string representation of variable x with sigfigs number of significant figures """
-    from numpy import log10, floor
-    magnitude = floor(log10(abs(x)))
-    factor = 10**(sigfigs-magnitude-1)
-    x = round(x*factor)/float(factor)
-    digits = int(abs(magnitude) + max(0, sigfigs - max(0,magnitude) - 1) + 1 + (x<0) + (abs(x)<1)) # one because, one for decimal, one for minus
-    decimals = int(max(0,-magnitude+sigfigs-1))
-    strformat = '%' + '%i.%i' % (digits, decimals)  + 'f'
-    string = strformat % x
-    return string
+
+
+
+##############################################################################
+## NESTED DICTIONARY FUNCTIONS
+##############################################################################
+
+"""
+Four little functions to get and set data from nested dictionaries. The first two were stolen from:
+    http://stackoverflow.com/questions/14692690/access-python-nested-dictionary-items-via-a-list-of-keys
+
+"getnested" will get the value for the given list of keys:
+    getnested(foo, ['a','b'])
+
+"setnested" will set the value for the given list of keys:
+    setnested(foo, ['a','b'], 3)
+
+"makenested" will recursively update a dictionary with the given list of keys:
+    makenested(foo, ['a','b'])
+
+"iternested" will return a list of all the twigs in the current dictionary:
+    twigs = iternested(foo)
+
+Example 1:
+    from nested import makenested, getnested, setnested
+    foo = {}
+    makenested(foo, ['a','b'])
+    foo['a']['b'] = 3
+    print getnested(foo, ['a','b'])    # 3
+    setnested(foo, ['a','b'], 7)
+    print getnested(foo, ['a','b'])    # 7
+    makenested(foo, ['yerevan','parcels'])
+    setnested(foo, ['yerevan','parcels'], 'were tasty')
+    print foo['yerevan']  # {'parcels': 'were tasty'}
+
+Example 2:
+    from nested import makenested, iternested, setnested
+    foo = {}
+    makenested(foo, ['a','x'])
+    makenested(foo, ['a','y'])
+    makenested(foo, ['a','z'])
+    makenested(foo, ['b','a','x'])
+    makenested(foo, ['b','a','y'])
+    count = 0
+    for twig in iternested(foo):
+        count += 1
+        setnested(foo, twig, count)   # {'a': {'y': 1, 'x': 2, 'z': 3}, 'b': {'a': {'y': 4, 'x': 5}}}
+
+Version: 2014nov29 by cliffk
+"""
+
+def getnested(nesteddict, keylist, safe=False): 
+    """ Get a value from a nested dictionary"""
+    from functools import reduce
+    output = reduce(lambda d, k: d.get(k) if d else None if safe else d[k], keylist, nesteddict)
+    return output
+
+def setnested(nesteddict, keylist, value): 
+    """ Set a value in a nested dictionary """
+    getnested(nesteddict, keylist[:-1])[keylist[-1]] = value
+    return None # Modify nesteddict in place
+
+def makenested(nesteddict, keylist,item=None):
+    """ Insert item into nested dictionary, creating keys if required """
+    currentlevel = nesteddict
+    for i,key in enumerate(keylist[:-1]):
+    	if not(key in currentlevel):
+    		currentlevel[key] = {}
+    	currentlevel = currentlevel[key]
+    currentlevel[keylist[-1]] = item
+
+def iternested(nesteddict,previous = []):
+	output = []
+	for k in nesteddict.items():
+		if isinstance(k[1],dict):
+			output += iternested(k[1],previous+[k[0]]) # Need to add these at the first level
+		else:
+			output.append(previous+[k[0]])
+	return output
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+##############################################################################
+## MISCELLANEOUS FUNCTIONS
+##############################################################################
 
 
 def tic():
@@ -191,6 +376,7 @@ def tic():
     """
     from time import time
     return time()
+
 
 
 def toc(start=0, label='', sigfigs=3):
@@ -206,61 +392,6 @@ def toc(start=0, label='', sigfigs=3):
     print(base + '%s s' % sigfig(elapsed, sigfigs=sigfigs))
     return None
     
-
-
-def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0, showcontents=False):
-    """
-    Nicely print a complicated data structure, a la Matlab.
-    Arguments:
-      data: the data to display
-      name: the name of the variable (automatically read except for first one)
-      depth: how many levels of recursion to follow
-      maxlen: number of characters of data to display (if 0, don't show data)
-      indent: where to start the indent (used internally)
-
-    Version: 1.0 (2015aug21)    
-    """
-    datatype = type(data)
-    def printentry(data):
-        from numpy import shape, ndarray
-        if datatype==dict: string = ('dict with %i keys' % len(data.keys()))
-        elif datatype==list: string = ('list of length %i' % len(data))
-        elif datatype==tuple: string = ('tuple of length %i' % len(data))
-        elif datatype==ndarray: string = ('array of shape %s' % str(shape(data)))
-        elif datatype.__name__=='module': string = ('module with %i components' % len(dir(data)))
-        elif datatype.__name__=='class': string = ('class with %i components' % len(dir(data)))
-        else: string = datatype.__name__
-        if showcontents and maxlen>0:
-            datastring = ' | '+str(data)
-            if len(datastring)>maxlen: datastring = datastring[:maxlen] + ' <etc> ' + datastring[-maxlen:]
-        else: datastring=''
-        return string+datastring
-    
-    string = printentry(data).replace('\n',' \ ') # Remove newlines
-    print(level*'..' + indent + name + ' | ' + string)
-
-
-    if depth>0:
-        level += 1
-        if type(data)==dict:
-            keys = data.keys()
-            maxkeylen = max([len(key) for key in keys])
-            for key in keys:
-                thisindent = ' '*(maxkeylen-len(key))
-                printdata(data[key], name=key, depth=depth-1, indent=indent+thisindent, level=level)
-        elif type(data) in [list, tuple]:
-            for i in range(len(data)):
-                printdata(data[i], name='[%i]'%i, depth=depth-1, indent=indent, level=level)
-        elif type(data).__name__ in ['module', 'class']:
-            keys = dir(data)
-            maxkeylen = max([len(key) for key in keys])
-            for key in keys:
-                if key[0]!='_': # Skip these
-                    thisindent = ' '*(maxkeylen-len(key))
-                    printdata(getattr(data,key), name=key, depth=depth-1, indent=indent+thisindent, level=level)
-        print('\n')
-    return None
-
 
 
 def checkmem(origvariable, descend=0, order='n', plot=False, verbose=0):
@@ -340,84 +471,3 @@ def run(command, printinput=False, printoutput=False):
    except: output = 'Shell command failed'
    if printoutput: print(output)
    return output
-
-
-
-
-
-
-
-
-"""
-Four little functions to get and set data from nested dictionaries. The first two were stolen from:
-    http://stackoverflow.com/questions/14692690/access-python-nested-dictionary-items-via-a-list-of-keys
-
-"getnested" will get the value for the given list of keys:
-    getnested(foo, ['a','b'])
-
-"setnested" will set the value for the given list of keys:
-    setnested(foo, ['a','b'], 3)
-
-"makenested" will recursively update a dictionary with the given list of keys:
-    makenested(foo, ['a','b'])
-
-"iternested" will return a list of all the twigs in the current dictionary:
-    twigs = iternested(foo)
-
-Example 1:
-    from nested import makenested, getnested, setnested
-    foo = {}
-    makenested(foo, ['a','b'])
-    foo['a']['b'] = 3
-    print getnested(foo, ['a','b'])    # 3
-    setnested(foo, ['a','b'], 7)
-    print getnested(foo, ['a','b'])    # 7
-    makenested(foo, ['yerevan','parcels'])
-    setnested(foo, ['yerevan','parcels'], 'were tasty')
-    print foo['yerevan']  # {'parcels': 'were tasty'}
-
-Example 2:
-    from nested import makenested, iternested, setnested
-    foo = {}
-    makenested(foo, ['a','x'])
-    makenested(foo, ['a','y'])
-    makenested(foo, ['a','z'])
-    makenested(foo, ['b','a','x'])
-    makenested(foo, ['b','a','y'])
-    count = 0
-    for twig in iternested(foo):
-        count += 1
-        setnested(foo, twig, count)   # {'a': {'y': 1, 'x': 2, 'z': 3}, 'b': {'a': {'y': 4, 'x': 5}}}
-
-Version: 2014nov29 by cliffk
-"""
-
-def getnested(nesteddict, keylist, safe=False): 
-    """ Get a value from a nested dictionary"""
-    from functools import reduce
-    output = reduce(lambda d, k: d.get(k) if d else None if safe else d[k], keylist, nesteddict)
-    return output
-
-def setnested(nesteddict, keylist, value): 
-    """ Set a value in a nested dictionary """
-    getnested(nesteddict, keylist[:-1])[keylist[-1]] = value
-    return None # Modify nesteddict in place
-
-def makenested(nesteddict, keylist,item=None):
-    """ Insert item into nested dictionary, creating keys if required """
-    currentlevel = nesteddict
-    for i,key in enumerate(keylist[:-1]):
-    	if not(key in currentlevel):
-    		currentlevel[key] = {}
-    	currentlevel = currentlevel[key]
-    currentlevel[keylist[-1]] = item
-
-def iternested(nesteddict,previous = []):
-	output = []
-	for k in nesteddict.items():
-		if isinstance(k[1],dict):
-			output += iternested(k[1],previous+[k[0]]) # Need to add these at the first level
-		else:
-			output.append(previous+[k[0]])
-	return output
-

@@ -23,6 +23,7 @@ class Metadata(object):
         self.uuid = uuid4()
         self.created = datetime.today()
         self.modified = datetime.today()
+        self.spreadsheetdate = 'Spreadsheet never loaded'
         self.version = version
         try:
             self.gitbranch = run('git rev-parse --abbrev-ref HEAD').rstrip('\n')
@@ -36,12 +37,13 @@ class Metadata(object):
     
     
     def __repr__(self):
-        ''' Print out useful information when called '''
+        ''' Print out useful information when called -- see also repr() for the project class'''
         output = '\n'
         output += '   Project name: %s\n'    % self.name
         output += ' Optima version: %0.1f\n' % self.version
         output += '   Date created: %s\n'    % self.getdate(which='created')
         output += '  Date modified: %s\n'    % self.getdate(which='modified')
+        output += '    Data loaded: %s\n'    % self.getdate(which='spreadsheetdate')
         output += '     Git branch: %s\n'    % self.gitbranch
         output += '    Git version: %s\n'    % self.gitversion
         output += '           UUID: %s\n'    % self.uuid
@@ -56,8 +58,10 @@ class Metadata(object):
         
         if which=='created': dateobj = self.created
         elif which=='modified': dateobj = self.modified
-        else: raise Exception('"which=%s" not understood; must be "created" or "modified"' % which)
+        elif which=='spreadsheet': dateobj = self.spreadsheetdate
+        else: raise Exception('Getting date for "which=%s" not understood; must be "created", "modified", or "spreadsheet"' % which)
         
+        if type(dateobj)==str: return dateobj # Return directly if it's a string
         if fmt=='str': return dateobj.strftime(dateformat) # Return string representation of time
         elif fmt=='int': return mktime(dateobj.timetuple()) # So ugly!! But it works -- return integer representation of time
         else: raise Exception('"fmt=%s" not understood; must be "str" or "int"' % fmt)

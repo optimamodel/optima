@@ -104,7 +104,7 @@ def loadspreadsheet(filename='example.xlsx', verbose=0):
     try: workbook = open_workbook(filename) # Open workbook
     except: raise Exception('Failed to load spreadsheet: file "%s" not found!' % filename)
     
-    sheetstructure_keys = sheetstructure.keys()
+    sheetstructure_keys = list(sheetstructure.keys())
     popprogdata_index = sheetstructure_keys.index('popprogdata')
     #ensure that popprogdata is parsed first
     sheetstructure_keys = ['popprogdata']+ sheetstructure_keys[:popprogdata_index]+sheetstructure_keys[popprogdata_index+1:]
@@ -230,7 +230,7 @@ def loadspreadsheet(filename='example.xlsx', verbose=0):
                         # It's cost-coverage data, save the cost and coverage values separately
                         if groupname=='cocodata':
                             thesedata = sheetdata.row_values(row, start_colx=3, end_colx=lastdatacol) # Data starts in 4th column
-                            thesedata = map(lambda val: nan if val=='' else val, thesedata) # Replace blanks with nan
+                            thesedata = list(map(lambda val: nan if val=='' else val, thesedata)) # Replace blanks with nan
                             assumptiondata = sheetdata.cell_value(row, assumptioncol)
                             if assumptiondata != '': thesedata = [assumptiondata] # Replace the (presumably blank) data if a non-blank assumption has been entered
                             ccindices = {'Coverage':0, 'Cost':1} # Define best-low-high indices
@@ -243,14 +243,17 @@ def loadspreadsheet(filename='example.xlsx', verbose=0):
                             if len(data[name][thispar])==0: 
                                 data[name][thispar] = [[] for z in range(3)] # Create new variable for best, low, high
                             thesedata = sheetdata.row_values(row, start_colx=3, end_colx=lastdatacol) # Data starts in 4th column
-                            thesedata = map(lambda val: nan if val=='' else val, thesedata) # Replace blanks with nan
+                            thesedata = list(map(lambda val: nan if val=='' else val, thesedata)) # Replace blanks with nan
                             assumptiondata = sheetdata.cell_value(row, assumptioncol)
                             if assumptiondata != '': thesedata = [assumptiondata] # Replace the (presumably blank) data if a non-blank assumption has been entered
                             blhindices = {'best':0, 'low':1, 'high':2} # Define best-low-high indices
                             blh = sheetdata.cell_value(row, 2) # Read in whether indicator is best, low, or high
                             data[name][thispar][blhindices[blh]].append(thesedata) # Actually append the data
                             if thispar=='hivprev':
-                                validdata = array(thesedata)[~isnan(thesedata)]
+                                try:
+                                    validdata = array(thesedata)[~isnan(thesedata)]
+                                except:
+                                    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                                 if len(validdata):
                                     invalid = logical_or(array(validdata)>1, array(validdata)<0)
                                     if any(invalid):
@@ -261,7 +264,7 @@ def loadspreadsheet(filename='example.xlsx', verbose=0):
                         # It's basic data, append the data and check for programs
                         if groupname=='timedata': 
                             thesedata = sheetdata.row_values(row, start_colx=2, end_colx=lastdatacol) # Data starts in 3rd column
-                            thesedata = map(lambda val: nan if val=='' else val, thesedata) # Replace blanks with nan
+                            thesedata = list(map(lambda val: nan if val=='' else val, thesedata)) # Replace blanks with nan
                             assumptiondata = sheetdata.cell_value(row, assumptioncol)
                             if assumptiondata != '': # There's an assumption entered
                                 thesedata = [assumptiondata] # Replace the (presumably blank) data if a non-blank assumption has been entered
@@ -274,7 +277,7 @@ def loadspreadsheet(filename='example.xlsx', verbose=0):
                                         column = nonzero(invalid)[0]
                                         raise Exception('Invalid entry in spreadsheet: parameter %s (row=%i, column(s)=%s, value=%i)' % (thispar, row, column, thesedata[column[0]]))
                             
-                            print('[TODO] Replace this with something that writes the links into the spreadsheet')
+                            # [TODO] Replace this with something that writes the links into the spreadsheet
 #                            for programname, pops in programs_for_input_key(thispar, input_programs).iteritems(): # Link with programs...?
 #                                if (programname in [programs[j]['name'] for j in range(len(programs))]) and ((not pops or pops==['']) or subparam in pops):
 #                                    for prognumber, prog in enumerate(programs):
@@ -285,7 +288,7 @@ def loadspreadsheet(filename='example.xlsx', verbose=0):
                         # It's economics data, append the data
                         if groupname=='econdata': 
                             thesedata = sheetdata.row_values(row, start_colx=2, end_colx=lastdatacol) # Data starts in 3rd column
-                            thesedata = map(lambda val: nan if val=='' else val, thesedata) # Replace blanks with nan
+                            thesedata = list(map(lambda val: nan if val=='' else val, thesedata)) # Replace blanks with nan
                             futuredata = sheetdata.row_values(row, start_colx=assumptioncol, end_colx=assumptioncol+3) # Start from the assumption column and read 3
                             data[name][thispar]['past'].append(thesedata) # Store data
                             data[name][thispar]['future'].append(futuredata) # Store data
@@ -294,14 +297,14 @@ def loadspreadsheet(filename='example.xlsx', verbose=0):
                         # It's a matrix, append the data                                     
                         elif groupname=='matrices':
                             thesedata = sheetdata.row_values(row, start_colx=2, end_colx=sheetdata.ncols) # Data starts in 3rd column
-                            thesedata = map(lambda val: 0 if val=='' else val, thesedata) # Replace blanks with 0
+                            thesedata = list(map(lambda val: 0 if val=='' else val, thesedata)) # Replace blanks with 0
                             data[name][thispar].append(thesedata) # Store data
                         
                         
                         # It's a constant, create a new dictionary entry
                         elif name=='const' or name=='cost':
                             thesedata = sheetdata.row_values(row, start_colx=2, end_colx=5) # Data starts in 3rd column, finishes in 5th column
-                            thesedata = map(lambda val: nan if val=='' else val, thesedata) # Replace blanks with nan
+                            thesedata = list(map(lambda val: nan if val=='' else val, thesedata)) # Replace blanks with nan
                             subpar = subparlist[parcount][1].pop(0) # Pop first entry of subparameter list, which is namelist[parcount][1]
                             data[name][thispar][subpar] = thesedata # Store data
     

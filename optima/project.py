@@ -73,8 +73,10 @@ class Project(object):
     def __repr__(self):
         ''' Print out useful information when called '''
         output = '\n'
+        output += '============================================================\n'
         output += '      Project name: %s\n'    % self.name
         output += '\n'
+        
         output += '    Parameter sets: %i\n'    % len(self.params)
         output += '        CCOCs sets: %i\n'    % len(self.ccocs)
         output += '     Scenario sets: %i\n'    % len(self.scens)
@@ -83,9 +85,11 @@ class Project(object):
         output += '    Optima version: %0.1f\n' % self.metadata.version
         output += '      Date created: %s\n'    % self.metadata.getdate(which='created')
         output += '     Date modified: %s\n'    % self.metadata.getdate(which='modified')
+        output += 'Spreadsheet loaded: %s\n'    % self.metadata.getdate(which='spreadsheet')
         output += '        Git branch: %s\n'    % self.metadata.gitbranch
         output += '       Git version: %s\n'    % self.metadata.gitversion
         output += '              UUID: %s\n'    % str(self.metadata.uuid)
+        output += '============================================================'
         return output
     
     
