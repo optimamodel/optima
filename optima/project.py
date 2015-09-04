@@ -178,7 +178,7 @@ class Project(object):
     ## Convenience functions
     #######################################################################################################
     
-    print('WARNING, need unique add() methods for the different...uhh...classes')
+    print('WARNING, need unique add() methods for the different...uhh...classes, unless these are defined elsewhere')
     def addparams(self, name='default', params=None, overwrite=False): self.add(self, what='params', name=name, item=params, overwrite=overwrite)
     def addccocs(self,  name='default', ccocs=None,  overwrite=False): self.add(self, what='ccocs', name=name, item=ccocs, overwrite=overwrite)
     def addscen(self,   name='default', scen=None,   overwrite=False): self.add(self, what='scen', name=name, item=scen, overwrite=overwrite)
