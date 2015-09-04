@@ -289,7 +289,7 @@ class Project(object):
         simpars = makesimpars(self.params[name], start=start, end=end, dt=dt) # "self.params[name]" is e.g. P.params['default']
         
         # TEMP
-        simpars['male'] = array(self.data['meta']['pops']['male']).astype(bool) # Male populations -- TEMP
+        simpars['male'] = array(self.data['popprog']['pops']['male']).astype(bool) # Male populations -- TEMP
         S = model(simpars, self.settings)
         return S
         

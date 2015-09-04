@@ -7,20 +7,26 @@ To use: comment out lines in the definition of 'tests' to not run those tests.
 Version: 2015sep04 by cliffk
 """
 
+
+
+## Define tests to run here!!!
+tests = [
+'makespreadsheet',
+'makeproject',
+'saveload',
+'loadspreadsheet',
+'runsim',
+]
+
+
+
+
+
 ##############################################################################
 ## Initialization
 ##############################################################################
 
 from utils import tic, toc, blank, pd # analysis:ignore
-
-# Define tests to run
-tests = [
-#'makespreadsheet',
-#'creation',
-#'saveload',
-#'loadspreadsheet',
-'runsim',
-]
 
 blank()
 print('Running tests:')
@@ -38,6 +44,7 @@ T = tic()
 
 ## Spreadsheet creation test
 if 'makespreadsheet' in tests:
+    print('Running make spreadsheet test...')
     from makeworkbook import makeworkbook
     makeworkbook()
     print('Done.')
@@ -46,8 +53,8 @@ if 'makespreadsheet' in tests:
     
 
 ## Project creation test
-if 'creation' in tests:
-    print('Running creation test...')
+if 'makeproject' in tests:
+    print('Running make project test...')
     from project import Project
     P = Project()
     print(P)
@@ -107,7 +114,6 @@ if 'runsim' in tests:
     from project import Project
     P = Project(spreadsheet='test.xlsx')
     S = P.runsim('default')
-
     print('Done.')
     blank()
 

@@ -27,13 +27,12 @@ def model(M, settings, initstate=None, verbose=2, safetymargin=0.8, benchmark=Fa
     
     M = deepcopy(M)
     
-    F = []
-    F[0] = {}
-    F[0]['init']  = zeros(npops)
-    F[0]['popsize'] = zeros(npops)
-    F[0]['force'] = zeros(npops)
-    F[0]['inhomo'] = zeros(npops)
-    F[0]['dx']  = zeros(4)
+    F = {}
+    F['init']  = 1+zeros(npops)
+    F['popsize'] = 1e3+zeros(npops)
+    F['force'] = 1+zeros(npops)
+    F['inhomo'] = zeros(npops)
+    F['dx']  = 1+zeros(4)
 
     eps = 1e-3 # Define another small number to avoid divide-by-zero errors
     
