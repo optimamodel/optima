@@ -101,7 +101,8 @@ def loadspreadsheet(filename='example.xlsx', verbose=0):
     data = dict() # Create structure for holding data
     data['date'] = strftime("%Y-%m-%d %H:%M:%S")
     programs = [] # Create structure for holding program data
-    workbook = open_workbook(filename) # Open workbook
+    try: workbook = open_workbook(filename) # Open workbook
+    except: raise Exception('Failed to load spreadsheet: file "%s" not found!' % filename)
     
     sheetstructure_keys = sheetstructure.keys()
     popprogdata_index = sheetstructure_keys.index('popprogdata')
