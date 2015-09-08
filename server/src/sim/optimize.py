@@ -127,11 +127,14 @@ def objectivecalc(optimparams, options):
     outcome = 0 # Preallocate objective value 
     for key in options['outcomekeys']:
         if options['weights'][key]>0: # Don't bother unless it's actually used
-            if key!='costann': thisoutcome = R[key]['tot'][0][options['outindices']].sum()
-            else: thisoutcome = R[key]['total']['total'][0][options['outindices']].sum() # Special case for costann
-            tmpplotdata.append(R[key]['tot'][0][options['outindices']]) # TEMP
+            if key!='costann':
+                thisoutcome = R[key]['tot'][0][options['outindices']].sum()
+                tmpplotdata.append(R[key]['tot'][0][options['outindices']]) # TEMP
+            else:
+                thisoutcome = R[key]['total']['total'][0][options['outindices']].sum() # Special case for costann
+                tmpplotdata.append(R[key]['total']['total'][0][options['outindices']]) # TEMP
             outcome += thisoutcome * options['weights'][key] / float(options['normalizations'][key]) * options['D']['opt']['dt'] # Calculate objective
-    
+            print
 #    print('DEBUGGING....................................................................................')
 #    from matplotlib.pylab import figure, plot, hold, subplot, show, close, pie
 #    close('all')
@@ -570,6 +573,8 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
 
     ## Save optimization to D
     D = saveoptimization(D, name, objectives, constraints, result_to_save, verbose=2)
+
+    D['debugresult'] = result
 
     printv('...done optimizing programs.', 2, verbose)
     return D
