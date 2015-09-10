@@ -4,7 +4,7 @@ import defaults
 from collections import defaultdict
 import ccocs
 from copy import deepcopy
-import dataio_binary
+import liboptima.dataio_binary as dataio_binary
 
 coverage_params = ['numcircum','numost','numpmtct','numfirstline','numsecondline'] # This list is copied from makeccocs.py
 # What about aidstest, sharing, and breast?
