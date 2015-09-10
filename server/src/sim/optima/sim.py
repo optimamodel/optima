@@ -299,6 +299,9 @@ class Sim(object):
         M['circum']    = dpar2mpar(self.parsdata['circum'], withwhat) # Circumcision percentage
         if 'VMMC' in [p['name'] for p in r.metadata['programs']]:
             M['numcircum'] = dpar2mpar(self.parsdata['numcircum'], withwhat)[0] # Number to be circumcised -- to be populated by the relevant CCOC at non-zero allocations
+        else:
+            M['numcircum'] = zeros(shape(M['tvec'])) # Number to be circumcised -- to be populated by the relevant CCOC
+            
 
         ## Drug behavior parameters
         M['numost'] = dpar2mpar(self.parsdata['numost'], withwhat)[0]

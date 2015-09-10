@@ -2,7 +2,8 @@ import optima,liboptima
 from timevarying import timevarying
 
 # This function tests the program calculation
-r = optima.Project.load_json('./projects/Dedza.json')
+#r = optima.Project.load_json('./projects/Dedza.json')
+r = optima.Project.load_json('tests/regions/projects/georgia_working.json')
 
 # Loading binary files is faster, so uncomment below to save and then use
 # a binary project
