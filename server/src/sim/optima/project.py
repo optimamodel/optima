@@ -15,7 +15,7 @@ import uuid
 import program
 from numpy import array, isnan, zeros, shape, mean
 from liboptima.utils import sanitize, perturb,printv
-import dataio_binary
+import liboptima.dataio_binary as dataio_binary
 from programset import ProgramSet
 from scipy.interpolate import PchipInterpolator as pchip
 import cPickle

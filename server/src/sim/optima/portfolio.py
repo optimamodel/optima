@@ -15,7 +15,7 @@ from copy import deepcopy
 from numpy import arange, empty, savez_compressed, load
 from project import Project
 import multiprocessing
-import dataio_binary
+import liboptima.dataio_binary as dataio_binary
 
 def makegpasimbox(inputs):
     # This helper function creates a GPA simbox inside a project
