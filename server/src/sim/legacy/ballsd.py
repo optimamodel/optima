@@ -8,8 +8,9 @@ def ballsd(function, x, options = None, stepsize = 0.1, sinc = 2, sdec = 2, pinc
     
     X, FVAL, EXITFLAG, OUTPUT = ballsd(FUN,X0) starts at X0 and attempts to find a 
     local minimizer X of the function FUN. FUN accepts input X and returns a scalar 
-    function value F evaluated  at X. X0 can be a scalar, list, or Numpy array of 
-    any size. The outputs are:
+    function value F evaluated  at X. FUN may return multiple outputs in a tuple, in which
+    case the first element of this tuple is retained as the scalar value.
+    X0 can be a scalar, list, or Numpy array of any size. The outputs are:
                X -- The parameter set that minimizes the objective function
             FVAL -- The value of the objective function at X
         EXITFLAG -- The exit condition of the algorithm possibilities are:
@@ -94,6 +95,8 @@ def ballsd(function, x, options = None, stepsize = 0.1, sinc = 2, sdec = 2, pinc
     ## Initialization
     s1[s1==0] = mean(s1[s1!=0]) # Replace step sizes of zeros with the mean of non-zero entries
     fval = function(x) if options is None else function(x,options) # Calculate initial value of the objective function
+    if isinstance(fval,tuple):
+        fval = fval[0]
     count = 0 # Keep track of how many iterations have occurred
     exitflag = -1 # Set default exit flag
     abserrorhistory = zeros(int(StallIterLimit)) # Store previous error changes
@@ -141,6 +144,8 @@ def ballsd(function, x, options = None, stepsize = 0.1, sinc = 2, sdec = 2, pinc
         xnew = deepcopy(x) # Initialize the new parameter set
         xnew[par] = newval # Update the new parameter set
         fvalnew = function(xnew) if options is None else function(xnew, options) # Calculate the objective function for the new parameter set
+        if isinstance(fvalnew,tuple):
+            fvalnew = fvalnew[0]
         abserrorhistory[mod(count,StallIterLimit)] = fval - fvalnew # Keep track of improvements in the error
         relerrorhistory[mod(count,StallIterLimit)] = fval/float(fvalnew)-1 # Keep track of improvements in the error  
         if verbose>5:
