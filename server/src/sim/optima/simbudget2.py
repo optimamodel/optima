@@ -23,9 +23,8 @@ class SimBudget2(Sim):
     def get_budget(self):
         from timevarying import timevarying
         project = self.getproject()
-        budget = timevarying(self.alloc,nprogs=len(self.alloc), tvec=project.options['partvec'], totalspend=sum(self.alloc))
+        budget = timevarying(self.alloc,nprogs=len(self.alloc), tvec=projSect.options['partvec'], totalspend=sum(self.alloc))
         return budget
-
 
     def todict(self):
         simdict = Sim.todict(self)

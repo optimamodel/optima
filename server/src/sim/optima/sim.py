@@ -330,9 +330,9 @@ class Sim(object):
 
         self.parsmodel = M
 
-    def run(self):
+    def run(self,force_initialise=False):
         # Returns the full debug output i.e. D.S
-        if not self.initialised:
+        if not self.initialised or force_initialise: # Force initialization if something might have changed
             self.initialise()
 
         r = self.getproject()
