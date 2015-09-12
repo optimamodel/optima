@@ -6,18 +6,13 @@ from liboptima.utils import findinds
 from numpy import arange 
 from copy import deepcopy
 import operator
-from timevarying import timevarying
 
 class SimBudget2(Sim):
 
-    def __init__(self,name,project,budget,calibration=None,programset=None):
+    def __init__(self,name,project,alloc,calibration=None,programset=None):
         Sim.__init__(self, name, project,calibration)
 
-        if len(budget.shape)==1: # User probably put in an alloc
-            print "Alloc provided instead of budget. Automatically calling timevarying() to convert"
-            budget = timevarying(budget,nprogs=len(budget), tvec=project.options['partvec'], totalspend=sum(budget))
-
-        self.budget = budget # This contains spending values for all of the modalities for the simulation timepoints i.e. there are len(D['opt']['partvec']) spending values
+        self.alloc = alloc # This contains spending values for all of the modalities for the simulation timepoints i.e. there are len(D['opt']['partvec']) spending values
         self.programset = programset if programset is not None else project.programsets[0].uuid # Use the first program set by default
         self.popsizes = {} # Estimates for the population size obtained by running a base Sim within the parent project
 
@@ -25,17 +20,24 @@ class SimBudget2(Sim):
         if self.programset not in [x.uuid for x in project.programsets]:
             raise Exception('The provided program set UUID could not be found in the provided project')
 
+    def get_budget(self):
+        from timevarying import timevarying
+        project = self.getproject()
+        budget = timevarying(self.alloc,nprogs=len(self.alloc), tvec=project.options['partvec'], totalspend=sum(self.alloc))
+        return budget
+
+
     def todict(self):
         simdict = Sim.todict(self)
         simdict['type'] = 'SimBudget2'
-        simdict['budget'] = self.budget
+        simdict['alloc'] = self.alloc
         simdict['programset'] = self.programset
         simdict['popsizes'] = self.popsizes
         return simdict
 
     def load_dict(self,simdict):
         Sim.load_dict(self,simdict)
-        self.budget = simdict['budget'] 
+        self.alloc = simdict['alloc'] 
         self.programset = simdict['programset']
         self.programset = simdict['programset']
         self.popsizes = simdict['popsizes']
@@ -107,7 +109,7 @@ class SimBudget2(Sim):
 
         # Get the parameter values from the CCOCs
         progs = self.getprogramset()
-        outcomes = progs.get_outcomes(self.budget,perturb)
+        outcomes = progs.get_outcomes(self.get_budget(),perturb)
 
         # Declare a helper function to convert population names into array indexes
         pops = [x['short_name'] for x in r.metadata['inputpopulations']]
@@ -175,7 +177,7 @@ class SimBudget2(Sim):
         currcost = sanitize(r.data['costcov']['cost'][artind])[-1]
         currcov = sanitize(r.data['costcov']['cov'][artind])[-1]
         unitcost = currcost/currcov
-        self.parsmodel['tx1'].flat[update_indexes] = self.budget[:,1][artind]/unitcost
+        self.parsmodel['tx1'].flat[update_indexes] = self.alloc[:,1][artind]/unitcost
         #except:
         #    print('Attempt to calculate ART coverage failed for an unknown reason')
         
