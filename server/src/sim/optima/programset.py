@@ -48,12 +48,18 @@ class ProgramSet(object):
         psetdict['current_version'] = self.current_version 
 
         return deepcopy(psetdict)
-        
+    
     def __getstate__(self):
         return self.todict()
 
     def __setstate__(self, state):
         self.fromdict(state)
+
+    def optimizable(self):
+        # Return an array the same length as the number of programs
+        # containing 'True' if the program has effects and can therefore
+        # be optimized
+        return [True for prog in self.programs if prog['effects'] else False]
 
     @classmethod
     def import_legacy(ProgramSet,name,programdata):
