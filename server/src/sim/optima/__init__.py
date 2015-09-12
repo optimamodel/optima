@@ -28,6 +28,7 @@ from simparameter import SimParameter
 from simbox import SimBox
 from simboxopt import SimBoxOpt
 from simboxcal import SimBoxCal
+from optimization import Optimization
 
 from portfolio import Portfolio
 from programset import ProgramSet

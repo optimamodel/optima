@@ -10,6 +10,11 @@ from simbudget2 import SimBudget2
 # The optimization delegates to optimize_<type>
 # based on the key in the optimization
 
+### TODO
+# - Optimization = alloc
+# - SimBudget = budget
+# For the SimBudget that goes it, only the ProgramSet and Calibration are used
+# So maybe actually just take in those two things only?
 
 
 inputmaxiters = defaults.maxiters, inputtimelimit = defaults.timelimit
@@ -17,7 +22,7 @@ inputmaxiters = defaults.maxiters, inputtimelimit = defaults.timelimit
 
 class Optimization(SimBox):
 
-	def __init__(self,name,project,sim,objectives=default_objectives,constraints=default_constraints,alloc=None):
+	def __init__(self,name,project,sim,objectives=None,constraints=None,alloc=None):
 		# For this one, we can ignore the simlist
 		SimBox.__init__(self,name,project)
 
@@ -26,10 +31,10 @@ class Optimization(SimBox):
 
 		self.initial_sim = sim 
 		self.optimized_sim = None
-		self.objectives = objectives
-		self.constraints = constraints
+		self.objectives = objectives if objectives is not None else self.defaultobjectives()
+		self.constraints = constraints if constraints is not None else self.defaultconstraints()
 		if alloc is None:
-			print 'Using data original allocation'
+			print 'Using original data allocation'
 			self.initial_alloc = project.data['origalloc']
 		else:
 			self.initial_alloc = alloc
@@ -47,15 +52,22 @@ class Optimization(SimBox):
         d = SimBox.todict(self)
         d['type'] = 'Optimization'    # Overwrites SimBox type.
 		d['initial_sim']  = self.initial_sim.todict()
-		d['optimized_sim']  = self.optimized_sim if isinstance(self.optimized_sim ,SimBudget2) else None
+		d['optimized_sim']  = self.optimized_sim if isinstance(self.optimized_sim,SimBudget2) else None
 		d['options']  = self.options 
 		d['constraints']  = self.constraints 
 		d['initial_alloc']  = self.initial_alloc 
         return d
 
-    def optimize(self,maxiters=1000,timelimit=None,verbose=5,stoppingfunc=None):
+    def optimize(self,maxiters=1000,timelimit=None,verbose=5,stoppingfunc=None,batch=False):
     	# Run the optimization and store the output in self.optimized_sim
+        # Non-parallel by default, in case the user wants to parallelize at a different level
+        # The idea is that the user explicitly specifies the level that they want to parallelize
         r = self.getproject()
+        objectives = self.objectives
+
+        # What's the current epidemiology?
+        self.initial_sim.alloc = self.initial_alloc
+        self.initial_sim.run(force_initialise=True) # We might have changed the alloc, so re-initialize
 
         # What type of optimization are we doing?
         if objectives['funding'] == 'constant' and objectives['timevarying'] == False:
@@ -67,121 +79,213 @@ class Optimization(SimBox):
         elif objectives['funding'] == 'range':
         	optimization_type = 'multibudget'
 
-        # What's the current epidemiology?
-        self.initial_sim.alloc = self.initial_alloc
-        self.initial_sim.run(force_initialise=True) # We might have changed the alloc, so re-initialize
+            ## Define indices, weights, and normalization factors
+        initialindex = findinds(D['opt']['partvec'], objectives['year']['start'])
+        finalparindex = findinds(D['opt']['partvec'], objectives['year']['end'])
+        finaloutindex = findinds(D['opt']['partvec'], objectives['year']['until'])
+        parindices = arange(initialindex,finalparindex)
+        outindices = arange(initialindex,finaloutindex)
+        weights = dict()
+        normalizations = dict()
+        outcomekeys = ['inci', 'death', 'daly', 'costann']
+        if sum([objectives['outcome'][key] for key in outcomekeys])>1: # Only normalize if multiple objectives, since otherwise doesn't make a lot of sense
+            for key in outcomekeys:
+                thisweight = objectives['outcome'][key+'weight'] * objectives['outcome'][key] / 100.
+                weights.update({key:thisweight}) # Get weight, and multiply by "True" or "False" and normalize from percentage
+                if key!='costann': thisnormalization = origR[key]['tot'][0][outindices].sum()
+                else: thisnormalization = origR[key]['total']['total'][0][outindices].sum() # Special case for costann
+                normalizations.update({key:thisnormalization})
+        else:
+            for key in outcomekeys:
+                weights.update({key:int(objectives['outcome'][key])}) # Weight of 1
+                normalizations.update({key:1}) # Normalizatoin of 1
+
+        # This should probably be cleaned up a bit
+        ntimepm = 1 + int(objectives['timevarying'])*int(objectives['funding']=='constant') # Either 1 or 2, but only if funding==constant
+
+        ###############################
+        # DEFINE OPTIMPARAMS, FUNDINGCHANGES AND STEPSIZES
+        if optimization_type in ['constant','timevarying','multibudget']:
+
+            # Initial values of time-varying parameters
+            growthrate = zeros(nprogs)   if ntimepm >= 2 else []
+            saturation = origalloc       if ntimepm >= 3 else []
+            inflection = ones(nprogs)*.5 if ntimepm >= 4 else []
+
+            optimparams = concatenate((origalloc, growthrate, saturation, inflection)) 
+
+            fundingchanges = dict()
+            keys1 = ['year','total']
+            keys2 = ['dec','inc']
+            abslims = {'dec':0, 'inc':1e9}
+            rellims = {'dec':-1e9, 'inc':1e9}
+            smallchanges = {'dec':1.0, 'inc':1.0} # WARNING BIZARRE
+            for key1 in keys1:
+                fundingchanges[key1] = dict()
+                for key2 in keys2:
+                    fundingchanges[key1][key2] = []
+                    for p in xrange(nprogs):
+                        fullkey = key1+key2+'rease'
+                        this = constraints[fullkey][p] # Shorten name
+                        if key1=='total':
+                            if not(opttrue[p]): # Not an optimized parameter
+                                fundingchanges[key1][key2].append(origalloc[p]*smallchanges[key2])
+                            elif this['use'] and objectives['funding'] != 'variable': # Don't constrain variable-year-spend optimizations
+                                newlim = this['by']/100.*origalloc[p]
+                                fundingchanges[key1][key2].append(newlim)
+                            else: 
+                                fundingchanges[key1][key2].append(abslims[key2])
+                        elif key1=='year':
+                            if this['use'] and objectives['funding'] != 'variable': # Don't constrain variable-year-spend optimizations
+                                newlim = this['by']/100.-1 # Relative change in funding
+                                fundingchanges[key1][key2].append(newlim)
+                            else: 
+                                fundingchanges[key1][key2].append(rellims[key2])
+
+            # Initiate probabilities of parameters being selected
+            stepsizes = zeros(nprogs * ntimepm)
+            
+            # Easy access initial allocation indices and turn stepsizes into array
+            ai = range(nprogs)
+            gi = range(nprogs,   nprogs*2) if ntimepm >= 2 else []
+            si = range(nprogs*2, nprogs*3) if ntimepm >= 3 else []
+            ii = range(nprogs*3, nprogs*4) if ntimepm >= 4 else []
+            
+            # Turn stepsizes into array
+            stepsizes[ai] = stepsize
+            stepsizes[gi] = growsize if ntimepm > 1 else 0
+            stepsizes[si] = stepsize
+            stepsizes[ii] = growsize # Not sure that growsize is an appropriate starting point
+
+        elif optimization_type == 'multiyear':
+            # There are also modifications to fundingchanges
+            nyears = len(objectivecalc_options['years'])
+            optimparams = array(origalloc.tolist()*nyears).flatten() # Duplicate parameters
+            parammin = zeros(len(optimparams))
+            
+            keys1 = ['year','total']
+            keys2 = ['dec','inc']
+            abslims = {'dec':0, 'inc':1e9}
+            rellims = {'dec':-1e9, 'inc':1e9}
+            for key1 in keys1:
+                for key2 in keys2:
+                    objectivecalc_options['fundingchanges'][key1][key2] *= nyears # I know this just points to the list rather than copies, but should be fine. I hope
+            
+            stepsizes = stepsize + zeros(len(optimparams))
+
+        ###############################
+        # DEFINE ALLOCS TO ITERATE OVER
+        if optimization_type in ['constant','timevarying','multiyear']:
+            allocs = [self.initial_alloc]
+        elif optimization_type == 'multibudget':
+            allocs = arange(objectives['outcome']['budgetrange']['minval'], objectives['outcome']['budgetrange']['maxval']+objectives['outcome']['budgetrange']['step'], objectives['outcome']['budgetrange']['step'])
+            closesttocurrent = argmin(abs(allocs-1)) + 1 # Find the index of the budget closest to current and add 1 since prepend current budget
+            allocs = hstack([1,allocs]) # Include current budget
+
+        ###############################
+        # DEFINE METAPARAMETERS TO ITERATE OVER
+        if optimization_type == 'constant':
+            metaparameterlist = self.initial_sim.getcalibration()['metaparameters']
+        elif optimization_type in ['timevarying','multiyear','multibudget']:
+            metaparameterlist = [self.initial_sim.getcalibration()['metaparameters'][0]]
 
 
-        # Make the objectivecalc options and
-
+        ###############################
+        # DEFINE OBJECTIVECALC_OPTIONS
         objectivecalc_options = dict()
         objectivecalc_options['D'] = deepcopy(D) # Main data structure
-        objectivecalc_options['normalizations'] = normalizations # Whether to normalize a parameter
         objectivecalc_options['fundingchanges'] = fundingchanges # Constraints-based funding changes
+        objectivecalc_options['normalizations'] = normalizations # Whether to normalize a parameter
         objectivecalc_options['weights'] = weights # Weights for each parameter
         objectivecalc_options['outcomekeys'] = outcomekeys # Names of outcomes, e.g. 'inci'
         objectivecalc_options['nprogs'] = nprogs # Number of programs
         objectivecalc_options['outindices'] = outindices # Indices for the outcome to be evaluated over
         objectivecalc_options['parindices'] = parindices # Indices for the parameters to be updated on
 
-        if constant:
-        	objectivecalc_options['ntimepm'] = ntimepm # Number of time-varying parameters
-        	objectivecalc_options['totalspend'] = sum(origalloc) # Total budget
-        	objectivecalc_options['randseed'] = 0
-        	objectivecalc_options['tmpbestdata'] = []
+        objectivecalc_options['sim'] = self.initial_sim.make_standalone_copy() # Indices for the parameters to be updated on
+        objectivecalc_options['optimization_type'] = optimization_type
+        if optimization_type == 'constant':
+            objectivecalc_options['ntimepm'] = ntimepm
+            objectivecalc_options['totalspend'] = totalspend # Total budget
+            objectivecalc_options['randseed'] = 0
 
+        elif optimization_type == 'timevarying':
+            objectivecalc_options['ntimepm'] = ntimepm
+            objectivecalc_options['totalspend'] = totalspend # Total budget
+            parammin = concatenate((fundingchanges['total']['dec'], ones(nprogs)*-1e9))  
+            parammax = concatenate((fundingchanges['total']['inc'], ones(nprogs)*1e9))  
+            objectivecalc_options['randseed'] = 1
 
-        	# constant
-        	ballsd_options['xmin'] = fundingchanges['total']['dec']
-        	ballsd_options['xmax']=fundingchanges['total']['inc']
-        	ballsd_options['absinitial']=stepsizes
+        elif optimization_type == 'multiyear':
+            objectivecalc_options['randseed'] = None # Death is enough randomness on its own
+            objectivecalc_options['years'] = []
+            objectivecalc_options['totalspends'] = []
+            yearkeys = objectives['outcome']['variable'].keys()
+            yearkeys.sort() # God damn I hate in-place methods
+            for key in yearkeys: # Stored as a list of years:
+                objectivecalc_options['years'].append(float(key)) # Convert from string to number
+                objectivecalc_options['totalspends'].append(objectives['outcome']['variable'][key]) # Append this year
 
-        	metaparameterlist = all of them
-        	run ballsd for each d.f
+        elif optimization_type == 'multibudget':
+            objectivecalc_options['ntimepm'] = 1 # Number of time-varying parameters -- always 1 in this case
+            objectivecalc_options['totalspend'] = totalspend # Total budget
+            objectivecalc_options['randseed'] = None
 
-        if timevarying:
-        	## Define objectivecalc_options structure
-        	objectivecalc_options['ntimepm'] = ntimepm # Number of time-varying parameters
-        	objectivecalc_options['totalspend'] = totalspend # Total budget
-        	parammin = concatenate((fundingchanges['total']['dec'], ones(nprogs)*-1e9))  
-        	parammax = concatenate((fundingchanges['total']['inc'], ones(nprogs)*1e9))  
-        	objectivecalc_options['randseed'] = 1
+        # DEFINE BALLSD_OPTIONS
+        ballsd_options['MaxIter']=maxiters
+        ballsd_options['timelimit']=timelimit
+        ballsd_options['fulloutput']=True
+        ballsd_options['stoppingfunc']=stoppingfunc
+        ballsd_options['verbose']=verbose
 
-        	# timevarying
-        	ballsd_options['xmin'] = parammin
-        	ballsd_options['xmax']=parammax
-        	ballsd_options['absinitial']=stepsizes
+        if optimization_type == 'constant':
+            ballsd_options['xmin'] = fundingchanges['total']['dec']
+            ballsd_options['xmax']=fundingchanges['total']['inc']
+            ballsd_options['absinitial']=stepsizes
+       
+        elif optimization_type == 'timevarying':
+            ballsd_options['xmin'] = parammin
+            ballsd_options['xmax']=parammax
+            ballsd_options['absinitial']=stepsizes
+       
+        elif optimization_type == 'multiyear':
+            ballsd_options['xmin'] = fundingchanges['total']['dec']
+            ballsd_options['xmax'] = fundingchanges['total']['inc']
+            ballsd_options['absinitial']=None
+       
+        elif optimization_type == 'multibudget':
+            ballsd_options['xmin'] = fundingchanges['total']['dec']
+            ballsd_options['xmax']=fundingchanges['total']['inc']
+            ballsd_options['absinitial']=stepsizes
 
-        	metaparameterlist = (just one)
-        	run ballsd
-
-        if multiple year :
-        	objectivecalc_options['randseed'] = None # Death is enough randomness on its own
-        	objectivecalc_options['years'] = []
-        	objectivecalc_options['totalspends'] = []
-        	yearkeys = objectives['outcome']['variable'].keys()
-        	yearkeys.sort() # God damn I hate in-place methods
-        	for key in yearkeys: # Stored as a list of years:
-        	    objectivecalc_options['years'].append(float(key)) # Convert from string to number
-        	    objectivecalc_options['totalspends'].append(objectives['outcome']['variable'][key]) # Append this year
-
-    	    # multiple year 
-    	    ballsd_options['xmin'] = fundingchanges['total']['dec']
-    	    ballsd_options['xmax'] = fundingchanges['total']['inc']
-
-    	    ## Define optimization parameters
-    	    nyears = len(options['years'])
-    	    optimparams = array(origalloc.tolist()*nyears).flatten() # Duplicate parameters
-    	    parammin = zeros(len(optimparams))
-    	    stepsizes = stepsize + zeros(len(optimparams))
-    	    keys1 = ['year','total']
-    	    keys2 = ['dec','inc']
-    	    abslims = {'dec':0, 'inc':1e9}
-    	    rellims = {'dec':-1e9, 'inc':1e9}
-    	    for key1 in keys1:
-    	        for key2 in keys2:
-    	            options['fundingchanges'][key1][key2] *= nyears # I know this just points to the list rather than copies, but should be fine. I hope
-
-    	    metaparameterlist = (just one)
-    	    run ballsd with the special fundingchanges
-
-        if multiple allocs:
-        	objectivecalc_options['ntimepm'] = 1 # Number of time-varying parameters -- always 1 in this case
-        	objectivecalc_options['totalspend'] = totalspend # Total budget
-        	objectivecalc_options['randseed'] = None
-
-
-        	# multiple budgets
-        	ballsd_options['xmin'] = fundingchanges['total']['dec']
-        	ballsd_options['xmax']=fundingchanges['total']['inc']
-        	ballsd_options['absinitial']=stepsizes
-
-
-        	allocs = multiple_allocs(alloc)
-
-        	metaparameterlist = (just one)
-        	for alloc:
-        		ballsd on each alloc
-
-        # Now we have a list of allocs
-        # and a list of *individual* calibrations (not calibrationsets)
-        # Iterate over them and optimize each one
-        # What we want to get back is - the parameters, and the fval, in a tuple
-        # and then we just pick the best one
-        for budget in budgets:
+        # Now, enumerate the (alloc,metaparameters,objective_options,ballsd_options) tuples to iterate over
+        iterations = []
+        for alloc in allocs:
         	for metaparameters in metaparameterlist:
-        		ballsd
+        		iterations.append((alloc,metaparameters,objective_options,ballsd_options))
+
+        if batch:
+            raise Exception('Batch pool here')
+        else:
+            for inputs in iterations:
+                parallel_ballsd_wrapper(standalone_sim,inputs):
+
+
+            ballsd(objective,objective_options,ballsd_options)
+
+        # Now, optparams is the thing that came OUT of ballsd_wrapper i.e.
+        # it is the thing that went IN to objectivecalc
+        # Since objectivecalc gives us the sim, we just capture it
+        # which *should* account for the normalization?
+        # If not, then use the legacy postprocessing of optparams here
+
 
         # Pick the best one, and keep it
 
      		put multiple budget simbudgets into 
         ballsd(objective,objective_options,ballsd_options)
 
-       		- objective uses objective_options to
-       			0. Convert the optimizationparams into a budget
-       			1. initialize a SimBudget2
-       			2. run the SimBudget2
-       			3. compute the value of the objective and return it
+
 
         and it should be possible to run multiple ballsds in parallel. so accumulating output should not be done yet
 
@@ -212,41 +316,6 @@ class Optimization(SimBox):
 	        D['optalloc'] = [x for x in optparams]  # This works for default optimisation. It may not for any more-complicated options.
 	    
 	    return D
-
-
-	def get_fundingchanges(self):
-		# Define constraints on funding -- per year and total
-		fundingchanges = dict()
-		keys1 = ['year','total']
-		keys2 = ['dec','inc']
-		abslims = {'dec':0, 'inc':1e9}
-		rellims = {'dec':-1e9, 'inc':1e9}
-		smallchanges = {'dec':1.0, 'inc':1.0} # WARNING BIZARRE
-		for key1 in keys1:
-		    fundingchanges[key1] = dict()
-		    for key2 in keys2:
-		        fundingchanges[key1][key2] = []
-		        for p in xrange(nprogs):
-		            fullkey = key1+key2+'rease'
-		            this = self.constraints[fullkey][p] # Shorten name
-		            if key1=='total':
-		                if not(opttrue[p]): # Not an optimized parameter
-		                    fundingchanges[key1][key2].append(origalloc[p]*smallchanges[key2])
-		                elif this['use'] and objectives['funding'] != 'variable': # Don't constrain variable-year-spend optimizations
-		                    newlim = this['by']/100.*origalloc[p]
-		                    fundingchanges[key1][key2].append(newlim)
-		                else: 
-		                    fundingchanges[key1][key2].append(abslims[key2])
-		            elif key1=='year':
-		                if this['use'] and objectives['funding'] != 'variable': # Don't constrain variable-year-spend optimizations
-		                    newlim = this['by']/100.-1 # Relative change in funding
-		                    fundingchanges[key1][key2].append(newlim)
-		                else: 
-		                    fundingchanges[key1][key2].append(rellims[key2])
-
-
-
-
 
 
     # Calculates objective values for certain multiplications of an alloc's variable costs (passed in as list of factors).
@@ -343,15 +412,102 @@ class Optimization(SimBox):
 
     
 
-    # Scales the variable costs of an alloc so that the sum of the alloc equals newtotal.
-    # Note: Can this be fused with the scaling on the Project level...?
-    
-    
-
     def __repr__(self):
         return "SimBoxOpt %s ('%s')" % (self.uuid[0:4],self.name)
 
 
+def objectivecalc(optimparams, objective_options):
+    """ Calculate the objective function """
+
+    s = objective_options['sim']
+
+    # First, constrain the alloc
+    optimparams = constrain_alloc(optimparams, total=objective_options['totalspend'], limits=objective_options['fundingchanges']['total'])
+
+    # Next, turn it into a budget and put it into the sim
+    if optimization_type in ['constant','timevarying','multibudget']
+        s.budget = timevarying(optimparams, ntimepm=objective_options['ntimepm'], nprogs=objective_options['nprogs'], tvec=objective_options['D']['opt']['partvec'], totalspend=objective_options['totalspend'], fundingchanges=objective_options['fundingchanges']) 
+    elif optimization_type == 'multiyear'
+        s.budget = multiyear(optimparams, years=objective_options['years'], totalspends=objective_options['totalspends'], nprogs=objective_options['nprogs'], tvec=objective_options['D']['opt']['partvec']) 
+    else:
+        raise Exception('Cannot figure out what kind of allocation this is since neither objective_options[\'ntimepm\'] nor objective_options[\'years\'] is defined')
+    
+    # Run the simulation
+    s.run(force_initialise=True)
+
+    # Compute the objective value and return it
+
+    outcome = 0 # Preallocate objective value 
+    for key in objective_options['outcomekeys']:
+        if objective_options['weights'][key]>0: # Don't bother unless it's actually used
+            if key!='costann': 
+                thisoutcome = R[key]['tot'][0][objective_options['outindices']].sum()
+            else: 
+                thisoutcome = R[key]['total']['total'][0][objective_options['outindices']].sum() # Special case for costann
+            outcome += thisoutcome * objective_options['weights'][key] / float(objective_options['normalizations'][key]) * objective_options['D']['opt']['dt'] # Calculate objective
+    
+    return outcome, deepcopy(s.budget)
+
+def parallel_ballsd_wrapper(standalone_sim,inputs):
+    # inputs are (alloc,metaparameters,objective_options,ballsd_options)
+    # SINGLE ones of each of these
+    # The idea is that we define the objective 
+    alloc = inputs[0]
+    metaparameters = inputs[1]
+    objective_options = inputs[2]
+    ballsd_options = inputs[3]
+
+    objective_options['sim'].project.calibrations[0]['metaparameters'] = metaparameters
+
+    optparams, fval, exitflag, output =  ballsd(objectivecalc,optimparams,options=objective_options,xmin=ballsd_options['xmin'],xmax=ballsd_options['xmax'],absinitial=ballsd_options['absinitial'],MaxIter=ballsd_options['MaxIter'],timelimit=ballsd_options['timelimit'],fulloutput=ballsd_options['fulloutput'],stoppingfunc=ballsd_options['stoppingfunc'],verbose=ballsd_options['verbose']
+
+    return (optparams,output.fval)
+
+def constrain_alloc(origalloc,total, limits):
+    """ Take an unnormalized/unconstrained alloc and normalize and constrain it """
+    # this used to be constrainalloc
+    normalloc = deepcopy(origalloc)
+    
+    eps = 1e-3 # Don't try to make an exact match, I don't have that much faith in my algorithm
+    
+    if total < sum(limits['dec']) or total > sum(limits['inc']):
+        raise Exception('Budget cannot be constrained since the total %f is outside the low-high limits [%f, %f]' % (total, sum(limits['dec']), sum(limits['inc'])))
+    
+    nprogs = len(normalloc)
+    proginds = arange(nprogs)
+    limlow = zeros(nprogs, dtype=bool)
+    limhigh = zeros(nprogs, dtype=bool)
+    for p in proginds:
+        if normalloc[p] <= limits['dec'][p]:
+            normalloc[p] = limits['dec'][p]
+            limlow[p] = 1
+        if normalloc[p] >= limits['inc'][p]:
+            normalloc[p] = limits['inc'][p]
+            limhigh[p] = 1
+    
+    # Too high
+    while sum(normalloc) > total+eps:
+        overshoot = sum(normalloc) - total
+        toomuch = sum(normalloc[~limlow]) / (sum(normalloc[~limlow]) - overshoot)
+        for p in proginds[~limlow]:
+            proposed = normalloc[p] / toomuch
+            if proposed <= limits['dec'][p]:
+                proposed = limits['dec'][p]
+                limlow[p] = 1
+            normalloc[p] = proposed
+        
+    # Too low
+    while sum(normalloc) < total-eps:
+        undershoot = total - sum(normalloc)
+        toolittle = (sum(normalloc[~limhigh]) + undershoot) / sum(normalloc[~limhigh])
+        for p in proginds[~limhigh]:
+            proposed = normalloc[p] * toolittle
+            if proposed >= limits['inc'][p]:
+                proposed = limits['inc'][p]
+                limhigh[p] = 1
+            normalloc[p] = proposed
+    
+    return normalloc
 
 def defaultobjectives(D, verbose=2):
     """
