@@ -91,15 +91,18 @@ class Sim(object):
         else:
             return self.project
 
-    def make_standalone(self):
+    def make_standalone_copy(self):
         # I'm not entirely happy about this function
         # The problem is when you want to do a parallel optimization, you need to 
         # run a multiprocessing pool inside a *simbox*, and it makes no sense to 
         # pass the entire parent region around. But a weakref cannot be pickled
         # So this function should STRICTLY only be used for TEMPORARY Sims that
         # need to be passed into a multiprocessing loop/pool
-        self.project = deepcopy(self.getproject())
-        self.project.simboxlist = list() # delete the simboxlist
+        s2 = deepcopy(self)
+        s2.project = deepcopy(self.getproject())
+        s2.project.simboxlist = list() # delete the simboxlist to try and save a bit of space
+        s2.project.calibrations = [x for x in s2.project.calibrations if x['uuid'] == s2.calibration] # Keep only the calibration being used
+        return s2
 
     def getcalibration(self):
         # Return a deepcopy of the selected calibration
