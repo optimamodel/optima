@@ -152,9 +152,7 @@ def viewmultiresults(M, whichgraphs=whichgraphdefaults, simstartyear=2000, simen
         if nxplots*nyplots<nplots: nyplots += 1
     
     count = 0
-    print('HIIIIIIIIIIIIIIIIIIII')
-    print (whichgraphs.keys())
-    print sort(whichgraphs.keys())
+
     for graph in sort(whichgraphs.keys()): # Loop over each type of data, e.g. prevalence
         epigraph = (graph[0:4] != 'cost') # Flag for whether or not it's an epi graph vs. a cost graph
         for popstot in xrange(2): # Loop over population or total graphs
