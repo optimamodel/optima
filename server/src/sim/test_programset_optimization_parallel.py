@@ -1,6 +1,5 @@
 import optima,liboptima
 from timevarying import timevarying
-import multiprocessing
 
 # Define a function to run optimize
 def do_optimize(inputs):
@@ -29,10 +28,16 @@ if __name__ == "__main__":
 	# Use the parallel_execute_simboxes method to run do_optimize() in parallel
 	r.parallel_execute_simboxes(do_optimize,[opt,sb])
 
-	### Use the lines below to save cached output so that the optimizations can be examined without recomputing each time
+	## Use the lines below to save cached output so that the optimizations can be examined without recomputing each time
 	# r.save('optim_test.bin')
 	# r = optima.Project.load('optim_test.bin')
 	# opt = r.simboxlist[0]
 	# sb = r.simboxlist[1]
 
+	print sum(opt.initial_alloc)
+	print sum(opt.optimized_alloc)
+	print sum(sb.simlist[0].alloc)
+	print sum(sb.simlist[-1].alloc)
+
 	optima.plot([opt.initial_sim,opt.optimized_sim,sb.simlist[0],sb.simlist[-1]])
+
