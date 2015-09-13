@@ -82,7 +82,7 @@ class Sim(object):
         # the project you need to do self.project() rather than
         # self.project. This function abstracts away this 
         # implementation detail in case it changes in future
-        if isinstance(self.project,weakref.ref)
+        if isinstance(self.project,weakref.ref):
             r = self.project()
             if r is None:
                 raise Exception('The parent project has been garbage-collected and the reference is no longer valid.')
@@ -98,10 +98,21 @@ class Sim(object):
         # pass the entire parent region around. But a weakref cannot be pickled
         # So this function should STRICTLY only be used for TEMPORARY Sims that
         # need to be passed into a multiprocessing loop/pool
-        s2 = deepcopy(self)
-        s2.project = deepcopy(self.getproject())
+
+        # First, get a normal copy
+        s2 = self.duplicate()
+
+        # Now, tweak the project contained within the copy        
+        s2.project = deepcopy(s2.getproject())
         s2.project.simboxlist = list() # delete the simboxlist to try and save a bit of space
         s2.project.calibrations = [x for x in s2.project.calibrations if x['uuid'] == s2.calibration] # Keep only the calibration being used
+        return s2
+
+    def duplicate(self):
+        # Return a deep-copied new Sim that is the same as the current Sim, but with a new UUID 
+        simdict = self.todict()
+        s2 = Sim.fromdict(simdict,self.getproject())
+        s2.uuid = str(uuid.uuid4())
         return s2
 
     def getcalibration(self):
@@ -384,7 +395,8 @@ class Sim(object):
         tempD['opt'] = r.options
         tempD['programs'] = r.metadata['programs']
         
-        self.debug['results'] = makeresults(tempD, allsims, r.options['quantiles'])
+        R = makeresults(tempD, allsims, r.options['quantiles'])
+        self.debug['results'] = R
 
         # Gather plot data.
         from gatherplotdata import gatheruncerdata
@@ -398,7 +410,7 @@ class Sim(object):
         
         self.processed = True
 
-        return allsims[0]        
+        return (allsims[0],R)   
         
     def plotresults(self, show_wait=True):
         
@@ -414,11 +426,6 @@ class Sim(object):
 
     def __setstate__(self, state):
         raise Exception('Simobjects must be re-created via a project')
-
-    def duplicate(self):
-        # Return a copy of the sim with a new UUID
-        self.uuid = str(uuid.uuid4()) # Store UUID as a string - we just want a (practically) unique tag, no advanced functionality
-
 
 #------------------------------------------------------------------------------
         

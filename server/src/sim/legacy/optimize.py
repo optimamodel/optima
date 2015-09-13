@@ -18,8 +18,8 @@ from timevarying import timevarying, multiyear
 from getcurrentbudget import getcurrentbudget
 from model import model
 from makemodelpars import makemodelpars
-from quantile import quantile
-from ballsd import ballsd
+from liboptima.quantile import quantile
+from liboptima.ballsd import ballsd
 from getcurrentbudget import getcoverage
 
 import optima.defaults as defaults

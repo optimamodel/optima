@@ -9,7 +9,7 @@ def scalealloctototal(curralloc,newtotal,pset):
     curralloc = deepcopy(curralloc)
 
     optimizable = pset.optimizable()
-    fixedtrue = [1.0 for opt in optimizable if opt else 0.0]
+    fixedtrue = [1.0 if opt else 0.0 for opt in optimizable]
 
     # Extract the fixed costs from scaling.
     fixedtotal = sum([curralloc[i]*fixedtrue[i] for i in xrange(len(curralloc))])

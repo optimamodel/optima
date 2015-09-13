@@ -18,7 +18,7 @@ r1 = Project.load('./projects/' + templist[0])
 
 s = Sim('test-sim',r1)
 s.initialise()
-S = s.run()
+S = s.run()[0]
 
 D = dict()
 D['G'] = r1.metadata

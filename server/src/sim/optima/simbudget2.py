@@ -10,10 +10,10 @@ from timevarying import timevarying
 
 class SimBudget2(Sim):
 
-    def __init__(self,name,project,budget,calibration=None,programset=None):
+    def __init__(self,name,project,budget=None,calibration=None,programset=None):
         Sim.__init__(self, name, project,calibration)
 
-        if len(budget.shape)==1: # User probably put in an alloc
+        if budget is not None and len(budget.shape)==1: # User probably put in an alloc
             print "Alloc provided instead of budget. Automatically calling timevarying() to convert with constant spending"
             budget = timevarying(budget,nprogs=len(budget), tvec=project.options['partvec'], totalspend=sum(budget))
 
@@ -62,7 +62,7 @@ class SimBudget2(Sim):
         self.popsizes = {}
         r = self.getproject()
         s = Sim('temp',r,self.calibration) # Make a base sim with the selected calibration
-        DS = s.run() # Retrieve D.S
+        DS = s.run()[0] # Retrieve D.S
         people = DS['people']
 
         # Define indexes for various breakdowns

@@ -59,7 +59,7 @@ class ProgramSet(object):
         # Return an array the same length as the number of programs
         # containing 'True' if the program has effects and can therefore
         # be optimized
-        return [True for prog in self.programs if prog['effects'] else False]
+        return [True if prog.coverage_outcome else False for prog in self.programs]
 
     @classmethod
     def import_legacy(ProgramSet,name,programdata):
