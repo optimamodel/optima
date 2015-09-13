@@ -35,6 +35,4 @@ if __name__ == "__main__":
 	# opt = r.simboxlist[0]
 	# sb = r.simboxlist[1]
 
-	optima.plot([opt.initial_sim,opt.optimized_sim])
-
-	optima.plot([sb.simlist[0],sb.simlist[-1]])
+	optima.plot([opt.initial_sim,opt.optimized_sim,sb.simlist[0],sb.simlist[-1]])
