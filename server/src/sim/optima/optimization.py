@@ -30,8 +30,6 @@ class Optimization(SimBox):
         # i.e. if you construct an Optimization with an input Sim, it is NOT retained
         SimBox.__init__(self,name,project)
 
-        if sim is None and (calibration is None or programset is None):
-            raise Exception('Optimizations must be created either with an input Sim or a calibration+programset')
         if sim is not None and (calibration is not None or programset is not None):
             raise Exception('To avoid ambiguity, providing a Sim and providing calibrations/programsets are mutually exclusive')
 
@@ -51,34 +49,37 @@ class Optimization(SimBox):
             self.initial_alloc = initial_alloc
 
         self.initial_sim = SimBudget2('Initial',project,self.initial_alloc,calibration,programset)
-
-        self.optimized_sim = None
         self.objectives = objectives if objectives is not None else defaultobjectives(self.initial_sim.getprogramset())
         self.constraints = constraints if constraints is not None else defaultconstraints(self.initial_sim.getprogramset())
+        self.optimized_sim = None
+        self.optimized_alloc = None
         self.optimization_results = None # Store results that aren't contained within single Sims e.g. quantiles
 
-    def load_dict(self, simboxdict):
-        SimBox.load_dict(self,simboxdict)
+    def load_dict(self, d):
+        SimBox.load_dict(self,d)
         r = self.getproject()
-        self.optimized_sim  = Sim.fromdict(d['optimized_sim'],r) if d['optimized_sim'] is not None else None
+        self.initial_alloc  = d['initial_alloc']
         self.initial_sim  = Sim.fromdict(d['initial_sim'],r)
         self.objectives  = d['objectives']
         self.constraints  = d['constraints']
-        self.initial_alloc  = d['initial_alloc']
+        self.optimized_sim  = Sim.fromdict(d['optimized_sim'],r) if d['optimized_sim'] is not None else None
+        self.optimized_alloc = d['optimized_alloc']
         self.optimization_results = d['optimization_results']
 
     def todict(self):
         d = SimBox.todict(self)
         d['type'] = 'Optimization'    # Overwrites SimBox type.
-        d['initial_sim']  = self.initial_sim.todict()
-        d['optimized_sim']  = self.optimized_sim if isinstance(self.optimized_sim,SimBudget2) else None
-        d['options']  = self.options 
-        d['constraints']  = self.constraints 
         d['initial_alloc']  = self.initial_alloc 
+        d['initial_sim']  = self.initial_sim.todict()
+        d['constraints']  = self.constraints 
+        d['objectives']  = self.objectives 
+        d['optimized_sim']  = self.optimized_sim.todict() if isinstance(self.optimized_sim,SimBudget2) else None
+        d['optimized_alloc'] = self.optimized_alloc
         d['optimization_results'] = self.optimization_results
+
         return d
 
-    def optimize(self,maxiters=1000,timelimit=30,verbose=5,stoppingfunc=None,batch=False):
+    def optimize(self,maxiters=1000,timelimit=30,verbose=1,stoppingfunc=None,batch=False):
         # Run the optimization and store the output in self.optimized_sim
         # Non-parallel by default, in case the user wants to parallelize at a different level
         # The idea is that the user explicitly specifies the level that they want to parallelize
@@ -301,6 +302,7 @@ class Optimization(SimBox):
 
         # Make a SimBudget for the optimal budget
         best_optimparams = min(outputs,key=lambda x: x[1])[0] # Return 
+        self.optimized_alloc = best_optimparams # WARNING - this probably breaks if timevarying...
         best_budget = objectivecalc(best_optimparams,objectivecalc_options,getbudget=True)
         self.optimized_sim = SimBudget2('Optimized',self.getproject(),best_budget,self.initial_sim.calibration,self.initial_sim.programset)
         self.optimized_sim.run(force_initialise=True)
@@ -400,7 +402,6 @@ def objectivecalc(optimparams, objective_options, getbudget = False):
     s.budget = budget
 
     # Run the simulation
-    print s
     S,R = s.run(force_initialise=True)
 
     # Compute the objective value and return it

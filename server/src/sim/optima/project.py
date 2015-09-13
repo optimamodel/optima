@@ -510,23 +510,37 @@ class Project(object):
                 raise Exception('InvalidPopulation')
             return popidx
 
-    def parallel_load_projects(self,outputs,inputs):
+    def parallel_execute_simboxes(self,fun,simboxes,other_inputs=None):
         # For use with multiprocessing
-        # Take in a list of projects and UUIDs of simboxes
-        # Move the simboxes from the array of projects into this project
-        # inputs is an array of [(project,simbox_uuid)]
-        # outputs is an array of [project]
-        # Iterate over the output projects, copy the simbox with the input uuid
-        # to this project
+        # CAUTION - use this, and parallel processing, at your own risk!!
+        #
+        # fun takes in:
+        # fun(inputs) where inputs is a tuple of (project,simbox_uuid,other_inputs)
+        # other_inputs should be an array the same length as uuids
+        #
+        # Note that simboxes is a list of references to simboxes
+        # That way, they are updated and overwritten in the parent workspace!
+        # WARNING
+        # simbox.load_dict overwrites simbox.simlist
+        # This means that any references to raw sims inside the old simboxes will be 
+        # invalidated!
 
-        simbox_uuid_list = [x.uuid for x in self.simboxlist]
+        inputs = []
+        if other_inputs is None:
+            for simbox in simboxes:
+                inputs.append((self,simbox.uuid,None))
+        else:
+            for simbox,other_input in zip(simboxes,other_inputs):
+                inputs.append((self,simbox.uuid,other_input))
+
+        pool = multiprocessing.Pool()
+        outputs = pool.map(fun,inputs)
 
         # Overwrite the SimBoxes in this project with the ones from the output projects
-        for a,b in zip(outputs,inputs):
-            p = a[0]
-            uuid = b[1]
+        for i in xrange(len(simboxes)):
+            # For each simbox, there was a corresponding output project
+            output_project = outputs[i]
+            uuid = simboxes[i].uuid
 
-            output_simbox = p.fetch(uuid)
-            index = simbox_uuid_list.index(uuid)
-            self.simboxlist[index] = SimBox.fromdict(output_simbox.todict(),self) # Load the simbox into this region
-
+            # Now replace the simbox with the one from the output project
+            simboxes[i].load_dict(output_project.fetch(uuid).todict())

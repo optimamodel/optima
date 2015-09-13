@@ -14,7 +14,6 @@ class SimBudget2(Sim):
         Sim.__init__(self, name, project,calibration)
 
         if budget is not None and len(budget.shape)==1: # User probably put in an alloc
-            print "Alloc provided instead of budget. Automatically calling timevarying() to convert with constant spending"
             budget = timevarying(budget,nprogs=len(budget), tvec=project.options['partvec'], totalspend=sum(budget))
 
         self.budget = budget # This contains spending values for all of the modalities for the simulation timepoints i.e. there are len(D['opt']['partvec']) spending values

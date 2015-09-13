@@ -122,7 +122,7 @@ def makeresults(D, allsims=None, quantiles=None, rerunfinancial=False, verbose=2
             from financialanalysis import financialanalysis
             if len(allcosts)==0:
                 for s in xrange(nsims):
-                    thesecosts = financialanalysis(D, postyear = D['data']['epiyears'][-1], S = allsims[s], rerunmodel = rerunfinancial)
+                    thesecosts = financialanalysis(D, postyear = D['data']['epiyears'][-1], S = allsims[s], rerunmodel = rerunfinancial,verbose=verbose)
                     allcosts.append(thesecosts)
             
             if data=='costcum':

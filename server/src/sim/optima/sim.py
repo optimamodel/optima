@@ -161,7 +161,7 @@ class Sim(object):
         self.parsfitted = calibration['metaparameters']
         self.initialised = True
 
-    def makedatapars(self, verbose=2):
+    def makedatapars(self, verbose=0):
         # This method creates self.parsdata
         # parsdata is *intended* to only store things with D.P.T and D.P.C
         r = self.getproject() 
@@ -361,7 +361,7 @@ class Sim(object):
 
         self.parsmodel = M
 
-    def run(self,force_initialise=False):
+    def run(self,force_initialise=False,verbose=0):
         # Returns the full debug output i.e. D.S
         if not self.initialised or force_initialise: # Force initialization if something might have changed
             self.initialise()
@@ -374,7 +374,7 @@ class Sim(object):
         # Note: Work out what we're looping through. There may be a more sensible alternative...?
         allsims = []
         for s in range(len(self.parsfitted)):   # Parallelise eventually.
-            S = model(r.metadata, self.parsmodel, self.parsfitted[s], r.options)
+            S = model(r.metadata, self.parsmodel, self.parsfitted[s], r.options,verbose=verbose)
             allsims.append(S)
         self.debug['structure'] = allsims[0]     # Save one full sim structure for troubleshooting and... funsies?
     
@@ -395,7 +395,7 @@ class Sim(object):
         tempD['opt'] = r.options
         tempD['programs'] = r.metadata['programs']
         
-        R = makeresults(tempD, allsims, r.options['quantiles'])
+        R = makeresults(tempD, allsims, r.options['quantiles'],verbose=verbose)
         self.debug['results'] = R
 
         # Gather plot data.
@@ -406,7 +406,7 @@ class Sim(object):
         tempD['data'] = r.data
         tempD['G'] = r.metadata
         
-        self.plotdata = gatheruncerdata(tempD, self.debug['results'])
+        self.plotdata = gatheruncerdata(tempD, self.debug['results'],verbose=verbose)
         
         self.processed = True
 

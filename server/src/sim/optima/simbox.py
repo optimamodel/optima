@@ -128,3 +128,4 @@ class SimBox(object):
 
 from simboxcal import SimBoxCal
 from simboxopt import SimBoxOpt
+from optimization import Optimization
