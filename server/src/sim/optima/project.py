@@ -19,12 +19,15 @@ import liboptima.dataio_binary as dataio_binary
 from programset import ProgramSet
 from scipy.interpolate import PchipInterpolator as pchip
 import cPickle
+import multiprocessing
 
+current_version = 2
 class Project(object):
     def __init__(self,name,populations=None,programs=None,datastart=None,dataend=None):
         # Usage
         # r = Project(name,populations,programs,datastart,dataend) (see defaults.py haiti) 
         # r = Project(projectdict) -> projectdict = r.fromdict()
+
 
         if isinstance(name,dict):
             # variable 'name' is actually a projectdict
@@ -54,7 +57,8 @@ class Project(object):
             
             self.uuid = None
             self.genuuid()  # Store UUID as a string - we just want a (practically) unique tag, no advanced functionality
-            self.current_version = 2 # This is stored in the projectdict
+            
+            self.current_version = current_version # This is stored in the projectdict
 
     @classmethod
     def load(Project,filename,name=None):
@@ -120,6 +124,7 @@ class Project(object):
         # Assign variables from a new-type JSON file created using Project.todict()
         self.upgrade_version(projectdict)
 
+        self.current_version = current_version
         self.uuid = projectdict['uuid'] # Loading a project restores the original UUID
         self.metadata = projectdict['metadata']
         self.data = projectdict['data']
@@ -504,3 +509,24 @@ class Project(object):
                 print poplist
                 raise Exception('InvalidPopulation')
             return popidx
+
+    def parallel_load_projects(self,outputs,inputs):
+        # For use with multiprocessing
+        # Take in a list of projects and UUIDs of simboxes
+        # Move the simboxes from the array of projects into this project
+        # inputs is an array of [(project,simbox_uuid)]
+        # outputs is an array of [project]
+        # Iterate over the output projects, copy the simbox with the input uuid
+        # to this project
+
+        simbox_uuid_list = [x.uuid for x in self.simboxlist]
+
+        # Overwrite the SimBoxes in this project with the ones from the output projects
+        for a,b in zip(outputs,inputs):
+            p = a[0]
+            uuid = b[1]
+
+            output_simbox = p.fetch(uuid)
+            index = simbox_uuid_list.index(uuid)
+            self.simboxlist[index] = SimBox.fromdict(output_simbox.todict(),self) # Load the simbox into this region
+
