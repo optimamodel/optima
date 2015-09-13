@@ -100,7 +100,7 @@ class SimBoxOpt(SimBox):
             newsim = self.createsim(origsim.getname() + ' Optimised', optbudget, forcecreate = True)
             newsim.run()
         
-        return (optbudget, optobj, makenew)
+        return (optbudget, optobj, newsim)
         
     # Calculates objective values for certain multiplications of an alloc's variable costs (passed in as list of factors).
     # The idea is to spline a cost-effectiveness curve across several budget totals.
