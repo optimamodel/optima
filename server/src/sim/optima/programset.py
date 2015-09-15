@@ -444,6 +444,7 @@ class Program(object):
             print 'Program %s is spending only' % (self.name)
             return
 
+        # Set up the figure
         if self.cost_coverage.keys() == ['Overall']: # coverage program
             f, axarr = pylab.subplots(n_pops, 1)
         else:
@@ -458,20 +459,10 @@ class Program(object):
         count = 0
         for pop in self.cost_coverage.keys():
             # Go down the first column
-            x = numpy.linspace(0,5e6,100) # Spending range. Can choose more intelligently...
-            y = self.cost_coverage[pop].evaluate(x) 
-            yl = self.cost_coverage[pop].evaluate(x,bounds='lower') 
-            yu =self.cost_coverage[pop].evaluate(x,bounds='upper') 
-
-            axarr[count,0].plot(x,y)
-            axarr[count,0].plot(x,yl)
-            axarr[count,0].plot(x,yu)
-            axarr[count,0].set_xlabel('Spending ($)')
-            axarr[count,0].set_ylabel('Coverage (fractional)')
-            axarr[count,0].set_title('CC: '+ pop)
-
+            self.plot_single(pop,ax=axarr[count,0],show_wait=False)
             count += 1
 
+        # Delete extra rows
         while count < n_rows:
             f.delaxes(axarr[count,0])
             count += 1
@@ -484,33 +475,8 @@ class Program(object):
         count = 0
         for pop in self.cost_coverage.keys():
             for par in self.coverage_outcome[pop].keys():
-                xc = numpy.linspace(0,1,100) # Spending range. Can choose more intelligently...
-                yc = self.coverage_outcome[pop][par].evaluate(xc) 
-                ycl = self.coverage_outcome[pop][par].evaluate(xc,bounds='lower') 
-                ycu =self.coverage_outcome[pop][par].evaluate(xc,bounds='upper') 
-
-                xp = numpy.linspace(0,5e6,100)
-                cc = self.cost_coverage[pop].evaluate(x)
-                ccl = self.cost_coverage[pop].evaluate(x,bounds='lower') 
-                ccu =self.cost_coverage[pop].evaluate(x,bounds='upper') 
-                yp = self.coverage_outcome[pop][par].evaluate(cc)
-                ypl = self.coverage_outcome[pop][par].evaluate(ccl,bounds='lower') 
-                ypu =self.coverage_outcome[pop][par].evaluate(ccu,bounds='upper') 
-
-                axarr[count,1].plot(xc,yc)
-                axarr[count,1].plot(xc,ycl)
-                axarr[count,1].plot(xc,ycu)
-                axarr[count,1].set_xlabel('Coverage (fractional)')
-                axarr[count,1].set_ylabel(par)
-                axarr[count,1].set_title('CO: '+ pop+'-'+par)
-
-                axarr[count,2].plot(xp,yp)
-                axarr[count,2].plot(xp,ypl)
-                axarr[count,2].plot(xp,ypu)
-                axarr[count,2].set_xlabel('Spending ($)')
-                axarr[count,2].set_ylabel(par)
-                axarr[count,2].set_title('CCO: '+ pop+'-'+par)
-
+                self.plot_single(pop,par,cco=False,ax=axarr[count,1],show_wait=False)
+                self.plot_single(pop,par,cco=True,ax=axarr[count,2],show_wait=False)
                 count += 1
 
         if show_wait:
@@ -547,25 +513,25 @@ class Program(object):
         if ax is None:
             f,ax = pylab.subplots(1,1)
 
-            ax.plot(x,y)
-            ax.plot(x,yl)
-            ax.plot(x,yu)
+        ax.plot(x,y)
+        ax.plot(x,yl)
+        ax.plot(x,yu)
 
-            if par is None:
-                ax.xlabel('Spending ($)')
-                ax.ylabel('Coverage (fractional)')
-                ax.title(pop)
-            elif not cco:
-                ax.xlabel('Coverage (fractional)')
-                ax.ylabel(par)
-                ax.title(pop+'-'+par)
-            else:
-                ax.set_xlabel('Spending ($)')
-                ax.set_ylabel(par)
-                ax.set_title(pop+'-'+par)
+        if par is None:
+            ax.set_xlabel('Spending ($)')
+            ax.set_ylabel('Coverage (fractional)')
+            ax.set_title(pop)
+        elif not cco:
+            ax.set_xlabel('Coverage (fractional)')
+            ax.set_ylabel(par)
+            ax.set_title(pop+'-'+par)
+        else:
+            ax.set_xlabel('Spending ($)')
+            ax.set_ylabel(par)
+            ax.set_title(pop+'-'+par)
 
-            if show_wait:
-                pylab.show()
+        if show_wait:
+            pylab.show()
 
 
 

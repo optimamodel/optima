@@ -13,6 +13,6 @@ import optima
 r = optima.Project.load('asdf.bin')
 
 r.programsets[0].programs[3].plot()
-print r.programsets[0].programs[5].coverage_outcome['Overall']
+#print r.programsets[0].programs[5].coverage_outcome['Overall']
 #r.programsets[0].programs[1].plot_single('FSW')
-# r.programsets[0].programs[1].plot_single('FSW','condomcom',cco=True)
+#r.programsets[0].programs[1].plot_single('FSW','condomcom',cco=True)
