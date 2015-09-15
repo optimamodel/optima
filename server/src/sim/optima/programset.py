@@ -435,6 +435,114 @@ class Program(object):
         # Then plot a column of outcomes
         # Then plot a column of coverage-outcomes
 
+        # how many pops 
+        n_pops = len(self.cost_coverage.keys())
+        n_pars = sum([len(self.coverage_outcome[x].keys()) for x in self.cost_coverage.keys()])
+        n_rows = max(n_pops,n_pars)
+
+        if n_rows == 0:
+            print 'Program %s is spending only' % (self.name)
+            return
+
+        if self.cost_coverage.keys() == ['Overall']: # coverage program
+            f, axarr = pylab.subplots(n_pops, 1)
+        else:
+            f, axarr = pylab.subplots(n_rows, 3)
+        f.tight_layout()
+        f.canvas.set_window_title(self.name)
+
+        if not isinstance(axarr,numpy.ndarray): # A 1x1 subplot returns an axis, not a list of axes
+            axarr =[[axarr]]
+
+        # Plot populations
+        count = 0
+        for pop in self.cost_coverage.keys():
+            # Go down the first column
+            x = numpy.linspace(0,5e6,100) # Spending range. Can choose more intelligently...
+            y = self.cost_coverage[pop].evaluate(x) 
+            yl = self.cost_coverage[pop].evaluate(x,bounds='lower') 
+            yu =self.cost_coverage[pop].evaluate(x,bounds='upper') 
+
+            axarr[count,0].plot(x,y)
+            axarr[count,0].plot(x,yl)
+            axarr[count,0].plot(x,yu)
+            axarr[count,0].set_xlabel('Spending ($)')
+            axarr[count,0].set_ylabel('Coverage (fractional)')
+            axarr[count,0].set_title('CC: '+ pop)
+
+            count += 1
+
+        # If no effects, return now
+        if axarr.shape[0] == 1:
+            return
+
+        # Next, plot the coverages and effects
+        count = 0
+        for pop in self.cost_coverage.keys():
+            for par in self.coverage_outcome[pop].keys():
+                xc = numpy.linspace(0,1,100) # Spending range. Can choose more intelligently...
+                yc = self.coverage_outcome[pop][par].evaluate(xc) 
+                ycl = self.coverage_outcome[pop][par].evaluate(xc,bounds='lower') 
+                ycu =self.coverage_outcome[pop][par].evaluate(xc,bounds='upper') 
+
+                xp = numpy.linspace(0,5e6,100)
+                cc = self.cost_coverage[pop].evaluate(x)
+                ccl = self.cost_coverage[pop].evaluate(x,bounds='lower') 
+                ccu =self.cost_coverage[pop].evaluate(x,bounds='upper') 
+                yp = self.coverage_outcome[pop][par].evaluate(cc)
+                ypl = self.coverage_outcome[pop][par].evaluate(ccl,bounds='lower') 
+                ypu =self.coverage_outcome[pop][par].evaluate(ccu,bounds='upper') 
+
+                axarr[count,1].plot(xc,yc)
+                axarr[count,1].plot(xc,ycl)
+                axarr[count,1].plot(xc,ycu)
+                axarr[count,1].set_xlabel('Coverage (fractional)')
+                axarr[count,1].set_ylabel(par)
+                axarr[count,1].set_title('CO: '+ pop+'-'+par)
+
+                axarr[count,2].plot(xp,yp)
+                axarr[count,2].plot(xp,ypl)
+                axarr[count,2].plot(xp,ypu)
+                axarr[count,2].set_xlabel('Spending ($)')
+                axarr[count,2].set_ylabel(par)
+                axarr[count,2].set_title('CCO: '+ pop+'-'+par)
+
+                count += 1
+
+        pylab.show()
+
+        return
+
+        spending = linspace(0.0,5e6,100)
+
+        # Plot cost-coverage
+        coverage = m.get_coverage(spending)
+        figure(1)
+        plot(spending, coverage)
+
+        # Plot coverage-outcome
+        outcomes = m.get_outcomes(coverage)
+        f, axarr = subplots(len(outcomes), sharex=True)
+        count = 0
+        for outcome in outcomes:
+            axarr[count].plot(coverage,outcome)
+            axarr[count].set_ylim([0,1])
+            count += 1
+
+        # Plot cost-coverage-outcome
+        f, axarr = subplots(len(outcomes), sharex=True)
+        count = 0
+        for outcome in outcomes:
+            axarr[count].plot(spending,outcome)
+            axarr[count].set_ylim([0,1])
+            count += 1
+        show()
+
+
+
+
+
+
 
         return
 

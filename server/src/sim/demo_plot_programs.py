@@ -1,5 +1,5 @@
 import add_optima_paths
-import program
+import optima.program as program
 
 
 # Let's say modality 1 can reach 100% of the population, but modalities 2 and 3 can reach 50%. Then
@@ -29,8 +29,8 @@ import program
 # Then we have 50% of the population reached only by modality 1
 # 
 
-import project
-r = project.Project.load('./projects/georgia_working.json')
+import optima
+r = optima.Project.load_json('./projects/georgia_working.json')
 
 p = program.Program.import_legacy(r.D['programs'][0])
 m = p.modalities[0]

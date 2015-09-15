@@ -5,7 +5,7 @@ import defaults
 from math import log
 from numpy import linspace, exp, isnan, multiply, arange, mean, array, maximum
 from numpy import log as nplog
-
+import pylab
 
 class Program(object):
 	def __init__(self,name,full_name = None,effects = {},category = 'None'):
