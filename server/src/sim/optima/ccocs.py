@@ -62,22 +62,6 @@ class ccoc(object):
         # an analytic inverse
         raise Exception('Numerical inverse not implemented yet')
 
-    # def plot(self,xvals=None,perturb=False,bounds=None,draw=False,show_wait=True):
-    #     # Return a tuple of X-Y values for this CCOC
-    #     if xvals is None:
-    #         xvals = linspace(0.0,5e6,100) # TODO: More sensible guess
-
-    #     yvals = self.evaluate(xvals,perturb,bounds)
-
-    #     if draw:
-    #         pylab.figure(1)
-    #         pylab.plot(xvals, yvals)
-    #         if show_wait:
-    #             pylab.show()
-
-
-    #     return vstack((xvals,yvals))
-
 ######## SPECIFIC CCOC IMPLEMENTATIONS
 
 class cc_scaleup(ccoc):

@@ -119,6 +119,46 @@ class ProgramSet(object):
         return ps
 
 
+    def plot(self,pop,par=None,cco=False,show_wait=True):
+        # Take in a pop, or a pop and a par
+        # Superimpose all curves affecting that quantity
+
+        # First, get a list of all of the programs we are dealing with
+        f,ax = pylab.subplots(1,1)
+
+        if par is None: # Plot cost-coverage
+            progs = [prog for prog in self.programs if pop in prog.cost_coverage.keys()]
+
+            # Go through and plot coverage for all programs reaching this population
+            x = numpy.linspace(0,5e6,100)
+            for prog in progs:
+                ax.plot(x,prog.get_coverage(pop,x),label=prog.name)
+            ax.set_xlabel('Spending ($)')
+            ax.set_ylabel('Coverage (fractional)')
+        else:
+            progs = [prog for prog in self.programs if (pop,par) in prog.get_effects()]
+        
+            if cco==False: # Plot coverage-outcome
+                x = numpy.linspace(0,1,100)
+                for prog in progs:
+                    ax.plot(x,prog.get_outcome(pop,par,x),label=prog.name)
+                ax.set_xlabel('Coverage (fractional)')
+                ax.set_ylabel(par)
+            else: # Plot cost-coverage-outcome
+                x = numpy.linspace(0,5e6,100)
+                for prog in progs:
+                    cc = prog.get_coverage(pop,x)
+                    ax.plot(x,prog.get_outcome(pop,par,cc),label=prog.name)
+                ax.set_xlabel('Spending ($)')
+                ax.set_ylabel(par)
+
+        ax.legend(loc='lower right')
+
+        if show_wait:
+            pylab.show()
+
+        return
+
     def progs_by_pop(self):
         # Return a dictionary where the keys are all of the populations
         # reached by the programs, and the values are lists of references 
@@ -263,6 +303,16 @@ class ProgramSet(object):
         # coverage into numbers of people
 
         return output_outcomes
+
+    def __getitem__(self,name):
+        # Support dict-style indexing based on name e.g.
+        # programset.programs[1] might be the same as programset['MSM programs']
+        for prog in self.programs:
+            if prog.name == name:
+                return prog
+        print "Available programs:"
+        print [prog.name for prog in self.programs]
+        raise Exception('Program "%s" not found' % (name))
 
     def __repr__(self):
         return 'ProgramSet %s (%s)' % (self.uuid[0:4],self.name)
@@ -532,8 +582,6 @@ class Program(object):
 
         if show_wait:
             pylab.show()
-
-
 
     def __repr__(self):
         return 'Program %s (%s)' % (self.uuid[0:4],self.name)
