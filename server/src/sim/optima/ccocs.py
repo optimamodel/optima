@@ -3,6 +3,7 @@ from math import log
 from numpy import linspace, exp, isnan, multiply, arange, mean, array, maximum
 from numpy import log as nplog
 from copy import deepcopy
+import pylab
 
 class ccoc(object):
     # A ccoc object has
@@ -41,12 +42,12 @@ class ccoc(object):
         pass
 
     @abc.abstractmethod # This method must be defined by the derived class
-    def convertparams(self,perturb=False):
+    def convertparams(self,perturb=False,bounds=None):
         # Take the current frontend parameters, and convert them into backend parameters
         # that can be passed into ccoc.function()
         pass
 
-    def evaluate(self,x,perturb=False):
+    def evaluate(self,x,perturb=False,bounds=None):
         # Todo: incorporate perturbation
         p = self.convertparams(perturb)
         return self.function(x,p)
@@ -61,29 +62,59 @@ class ccoc(object):
         # an analytic inverse
         raise Exception('Numerical inverse not implemented yet')
 
+    def plot(self,xlim=None,perturb=False,bounds=None,draw=False,show_wait=True):
+        # Return a tuple of X-Y values for this CCOC
+        if xlim is None:
+            xlim = 5e6 # TODO: More sensible guess
+
+        xvals = linspace(0.0,xlim,100)
+        yvals = self.evaluate(xvals,perturb,bounds)
+
+        if draw:
+            pylab.figure(1)
+            pylab.plot(xvals, yvals)
+            if show_wait:
+                pylab.show()
+
+        return zip(xvals,yvals)
+
 ######## SPECIFIC CCOC IMPLEMENTATIONS
 
 class cc_scaleup(ccoc):
     def function(self,x,p):
         return cceqn(x,p)
 
-    def convertparams(self,perturb=False):
+    def convertparams(self,perturb=False,bounds=None):
         growthratel = exp((1-self.fe_params['scaleup'])*log(self.fe_params['saturation']/self.fe_params['coveragelower']-1)+log(self.fe_params['funding']))
         growthratem = exp((1-self.fe_params['scaleup'])*log(self.fe_params['saturation']/((self.fe_params['coveragelower']+self.fe_params['coverageupper'])/2)-1)+log(self.fe_params['funding']))
         growthrateu = exp((1-self.fe_params['scaleup'])*log(self.fe_params['saturation']/self.fe_params['coverageupper']-1)+log(self.fe_params['funding']))
         convertedccparams = [[self.fe_params['saturation'], growthratem, self.fe_params['scaleup']], [self.fe_params['saturation'], growthratel, self.fe_params['scaleup']], [self.fe_params['saturation'], growthrateu, self.fe_params['scaleup']]]
-        return convertedccparams[0] # TODO: This is currently only returning the unperturbed case
+        if bounds==None:
+            return convertedccparams[0]
+        elif bounds=='upper':
+            return convertedccparams[2]
+        elif bounds=='lower':
+            return convertedccparams[1]
+        else:
+            raise Exception('Unrecognized bounds')
 
 class cc_noscaleup(ccoc):
     def function(self,x,p):
         return cc2eqn(x,p)
 
-    def convertparams(self,perturb=False):
+    def convertparams(self,perturb=False,bounds=None):
         growthratel = (-1/self.fe_params['funding'])*log((2*self.fe_params['saturation'])/(self.fe_params['coveragelower']+self.fe_params['saturation']) - 1)        
         growthratem = (-1/self.fe_params['funding'])*log((2*self.fe_params['saturation'])/(((self.fe_params['coveragelower']+self.fe_params['coverageupper'])/2)+self.fe_params['saturation']) - 1)        
         growthrateu = (-1/self.fe_params['funding'])*log((2*self.fe_params['saturation'])/(self.fe_params['coverageupper']+self.fe_params['saturation']) - 1)        
         convertedccparams = [[self.fe_params['saturation'], growthratem], [self.fe_params['saturation'], growthratel], [self.fe_params['saturation'], growthrateu]]
-        return convertedccparams[0] # TODO: This is currently only returning the unperturbed case
+        if bounds==None:
+            return convertedccparams[0]
+        elif bounds=='upper':
+            return convertedccparams[2]
+        elif bounds=='lower':
+            return convertedccparams[1]
+        else:
+            raise Exception('Unrecognized bounds')
 
 class co_cofun(ccoc):
     def function(self,x,p):
@@ -92,32 +123,39 @@ class co_cofun(ccoc):
     def inverse(self,y,p):
         return (y-p[0])/(p[1]-p[0]) 
         
-    def convertparams(self,perturb=False):
+    def convertparams(self,perturb=False,bounds=None):
         muz, stdevz = (self.fe_params[0]+self.fe_params[1])/2, (self.fe_params[1]-self.fe_params[0])/6 # Mean and standard deviation calcs
         muf, stdevf = (self.fe_params[2]+self.fe_params[3])/2, (self.fe_params[3]-self.fe_params[2])/6 # Mean and standard deviation calcs
         convertedcoparams = [muz, stdevz, muf, stdevf]
         convertedcoparams = [[muz,muf],[muz,muf],[muz,muf]] # DEBUG CODE, DO THIS PROPERLY LATER
-        return convertedcoparams[0] # TODO: This is currently only returning the unperturbed case
+        if bounds==None:
+            return convertedcoparams[0]
+        elif bounds=='upper':
+            return convertedcoparams[2]
+        elif bounds=='lower':
+            return convertedcoparams[1]
+        else:
+            raise Exception('Unrecognized bounds')
 
 class co_linear(ccoc):
     def function(self,x,p):
         return linear(x,p)
 
-    def convertparams(self,perturb=False):
+    def convertparams(self,perturb=False,bounds=None):
         return self.fe_params
 
 class identity(ccoc):
     def function(self,x,p):
         return x
 
-    def convertparams(self,perturb=False):
+    def convertparams(self,perturb=False,bounds=None):
         return None
 
 class null(ccoc):
     def function(self,x,p):
         return None
 
-    def convertparams(self,perturb=False):
+    def convertparams(self,perturb=False,bounds=None):
         return None
 
 ############## FUNCTIONAL FORMS COPIED FROM makeccocs.py ##############
