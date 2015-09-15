@@ -31,7 +31,7 @@ pset['FSW programs'].plot()
 ########## PLOTTING PROGRAMSETS
 # programset plotting is about superimposing programs that have overlapping coverage or effects
 # Since legacy programs have no overlap, we need to artifically create some to demonstrate plotting
-# Let's pretend that FSW progams somehow cover MSM
+# Let's pretend that MSM programs somehow cover FSW and affect FSW-condomcom
 
 pset['MSM programs'].cost_coverage['FSW'] = pset['MSM programs'].cost_coverage['MSM']
 pset['MSM programs'].coverage_outcome['FSW']['condomcom'] = pset['MSM programs'].coverage_outcome['MSM']['condomcas']
