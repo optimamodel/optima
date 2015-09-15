@@ -16,7 +16,7 @@ def makeresults(D, allsims=None, quantiles=None, rerunfinancial=False, verbose=2
     
     from numpy import array, concatenate
     from liboptima.utils import printv
-    from quantile import quantile
+    from liboptima.quantile import quantile
     from copy import deepcopy
     printv('Calculating results...', 1, verbose)
     if allsims is None: allsims = deepcopy([D['S']]) # If not supplied, using sims structure already in D
