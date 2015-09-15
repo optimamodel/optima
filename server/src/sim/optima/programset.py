@@ -429,7 +429,7 @@ class Program(object):
             effect = ''.join(effect)
         return self.coverage_outcome[pop][effect].evaluate(coverage,perturb)
 
-    def plot(self):
+    def plot(self,show_wait=True):
         # # This function will just plot everything
         # First, plot coverages
         # Then plot a column of outcomes
@@ -472,6 +472,10 @@ class Program(object):
 
             count += 1
 
+        while count < n_rows:
+            f.delaxes(axarr[count,0])
+            count += 1
+
         # If no effects, return now
         if axarr.shape[0] == 1:
             return
@@ -509,44 +513,12 @@ class Program(object):
 
                 count += 1
 
-        pylab.show()
+        if show_wait:
+            pylab.show()
 
         return
 
-        spending = linspace(0.0,5e6,100)
-
-        # Plot cost-coverage
-        coverage = m.get_coverage(spending)
-        figure(1)
-        plot(spending, coverage)
-
-        # Plot coverage-outcome
-        outcomes = m.get_outcomes(coverage)
-        f, axarr = subplots(len(outcomes), sharex=True)
-        count = 0
-        for outcome in outcomes:
-            axarr[count].plot(coverage,outcome)
-            axarr[count].set_ylim([0,1])
-            count += 1
-
-        # Plot cost-coverage-outcome
-        f, axarr = subplots(len(outcomes), sharex=True)
-        count = 0
-        for outcome in outcomes:
-            axarr[count].plot(spending,outcome)
-            axarr[count].set_ylim([0,1])
-            count += 1
-        show()
-
-
-
-
-
-
-
-        return
-
-    def plot_single(self,pop=None,par=None,cco=False,draw=True,show_wait=True):
+    def plot_single(self,pop=None,par=None,cco=False,show_wait=True,ax=None):
         # Make a single plot of one of the CCOC objects
         # USAGE
         # - specify a population and no par to see cost-coverage
@@ -572,24 +544,25 @@ class Program(object):
             yl = self.coverage_outcome[pop][par].evaluate(ccl,bounds='lower') 
             yu =self.coverage_outcome[pop][par].evaluate(ccu,bounds='upper') 
 
-        if draw:
-            pylab.figure(1)
-            pylab.plot(x,y)
-            pylab.plot(x,yl)
-            pylab.plot(x,yu)
+        if ax is None:
+            f,ax = pylab.subplots(1,1)
+
+            ax.plot(x,y)
+            ax.plot(x,yl)
+            ax.plot(x,yu)
 
             if par is None:
-                pylab.xlabel('Spending ($)')
-                pylab.ylabel('Coverage (fractional)')
-                pylab.title(pop)
+                ax.xlabel('Spending ($)')
+                ax.ylabel('Coverage (fractional)')
+                ax.title(pop)
             elif not cco:
-                pylab.xlabel('Coverage (fractional)')
-                pylab.ylabel(par)
-                pylab.title(pop+'-'+par)
+                ax.xlabel('Coverage (fractional)')
+                ax.ylabel(par)
+                ax.title(pop+'-'+par)
             else:
-                pylab.xlabel('Spending ($)')
-                pylab.ylabel(par)
-                pylab.title(pop+'-'+par)
+                ax.set_xlabel('Spending ($)')
+                ax.set_ylabel(par)
+                ax.set_title(pop+'-'+par)
 
             if show_wait:
                 pylab.show()
