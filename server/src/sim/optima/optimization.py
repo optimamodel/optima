@@ -302,8 +302,7 @@ class Optimization(SimBox):
 
         # Make a SimBudget for the optimal budget
         best_optimparams = min(outputs,key=lambda x: x[1])[0] # Return 
-        self.optimized_alloc = best_optimparams # WARNING - this probably breaks if timevarying...
-        best_optimparams,best_budget = objectivecalc(best_optimparams,objectivecalc_options,getbudget=True) # get budget and normalized alloc
+        self.optimized_alloc,best_budget = objectivecalc(best_optimparams,objectivecalc_options,getbudget=True) # get budget and normalized alloc
         self.optimized_sim = SimBudget2('Optimized',self.getproject(),best_budget,self.initial_sim.calibration,self.initial_sim.programset)
         self.optimized_sim.run(force_initialise=True)
 
@@ -386,7 +385,7 @@ def objectivecalc(optimparams, objective_options, getbudget = False):
 
     # First, constrain the alloc
     optimparams = constrain_alloc(optimparams, total=objective_options['totalspend'], limits=objective_options['fundingchanges']['total'])
-    
+
     s = objective_options['sim']
 
     # Next, turn it into a budget and put it into the sim
