@@ -503,7 +503,7 @@ class Program(object):
         f.canvas.set_window_title(self.name)
 
         if not isinstance(axarr,numpy.ndarray): # A 1x1 subplot returns an axis, not a list of axes
-            axarr =[[axarr]]
+            axarr = numpy.array([[axarr]])
 
         # Plot populations
         count = 0
@@ -519,6 +519,8 @@ class Program(object):
 
         # If no effects, return now
         if axarr.shape[0] == 1:
+            if show_wait:
+                pylab.show()
             return
 
         # Next, plot the coverages and effects
