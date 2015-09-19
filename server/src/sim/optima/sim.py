@@ -418,6 +418,18 @@ class Sim(object):
         
         viewuncerresults(self.plotdata,show_wait=show_wait)
 
+    def plot_pars(self, show_wait=True):
+        from viewresults import viewparameters
+
+        if not self.initialised or force_initialise: # Force initialization if something might have changed
+            self.initialise()
+
+        # a = self.parsmodel
+        # b = self.getcalibration()
+        # M = dict(a.items() + b.items())
+
+        viewparameters(self.parsmodel)
+
     def __repr__(self):
         return "Sim %s ('%s')" % (self.uuid,self.name)
 
