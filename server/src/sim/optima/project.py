@@ -21,7 +21,7 @@ from scipy.interpolate import PchipInterpolator as pchip
 import cPickle
 import multiprocessing
 
-current_version = 2
+current_version = 3
 class Project(object):
     def __init__(self,name,populations=None,programs=None,datastart=None,dataend=None):
         # Usage
@@ -113,12 +113,24 @@ class Project(object):
             pset = ProgramSet.import_legacy('Default',projectdict['metadata']['programs'])
             projectdict['programsets'] = [pset.todict()]
 
+
         # The statement below for calibrations handles loading earlier versions of the new-type JSON files
         # which don't have calibrations already defined. It is suggested in future that these projects should
         # be loaded, a new calibration created from D, and then saved again, so that this statement can be removed
         import numpy
         if isinstance(projectdict['calibrations'], float) and numpy.isnan(projectdict['calibrations']):
             projectdict['calibrations'] = [{'uuid':None}]
+            print "No calibration"
+
+        if projectdict['version'] < 3: 
+            program_list = [x['name'] for x in projectdict['metadata']['programs']]
+            projectdict['data']['ccocs'] = {}
+            for i in range(len(program_list)):
+                projectdict['data']['ccocs'][program_list[i]] = {}
+                projectdict['data']['ccocs'][program_list[i]]['cost'] = projectdict['data']['costcov']['realcost'][i]
+                projectdict['data']['ccocs'][program_list[i]]['historical_cost'] = projectdict['data']['costcov']['cost'][i] # These are the non-inflation adjusted raw costs
+                projectdict['data']['ccocs'][program_list[i]]['coverage'] = projectdict['data']['costcov']['cov'][i]
+            del projectdict['data']['costcov']
 
     def fromdict(self,projectdict):
         # Assign variables from a new-type JSON file created using Project.todict()
@@ -203,6 +215,15 @@ class Project(object):
                 for par in scenario['scenario']['pars']:
                     newsim.create_override(par['names'],par['pops'],par['startyear'],par['endyear'],par['startval'],par['endval'])
                 sbox.simlist.append(newsim)
+
+        program_list = [x['name'] for x in self.metadata['programs']]
+        self.data['ccocs'] = {}
+        for i in range(len(program_list)):
+            self.data['ccocs'][program_list[i]] = {}
+            self.data['ccocs'][program_list[i]]['cost'] = self.data['costcov']['realcost'][i]
+            self.data['ccocs'][program_list[i]]['historical_cost'] = self.data['costcov']['cost'][i] # These are the non-inflation adjusted raw costs
+            self.data['ccocs'][program_list[i]]['coverage'] = self.data['costcov']['cov'][i]
+        del self.data['costcov']
 
     def fetch(self,target_uuid):
         # Fetch a simbox or a sim from within the project by looking up it's uuid
