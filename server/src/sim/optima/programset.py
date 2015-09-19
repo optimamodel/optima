@@ -220,6 +220,10 @@ class ProgramSet(object):
                     assert(effect not in outcomes[pop].keys()) # Multiple programs should not be able to write to the same parameter *without* going through the overlapping calculation
                     outcomes[pop][effect] = prog.get_outcome(pop,effect,this_coverage,perturb) # Get the program outcome and store it in the outcomes dict
                 else:
+                    print 'OVERLAPPING MODALITIES DETECTED'
+                    print 'Pop: %s Effect: %s' % (pop,effect)
+                    print 'Programs ',[x.name for x in effects[effect]]
+                    print
                     raise Exception('Overlap, coverage distribution, and effect combination go here')
         
         return outcomes
@@ -553,7 +557,8 @@ class Program(object):
                 sim.initialise()
 
             prog_index = [a.name for a in sim.getprogramset().programs].index(self.name)
-            prog_start_index = numpy.argmin(numpy.abs(sim.program_start_year-sim.default_pars['tvec']))
+            prog_start_index = numpy.argmin(numpy.abs(sim.program_start_year-sim.default_pars['tvec'])) if numpy.isfinite(sim.program_start_year) else None
+            prog_end_index = numpy.argmin(numpy.abs(sim.program_end_year-sim.default_pars['tvec'])) if numpy.isfinite(sim.program_end_year) else None
 
 
         if par is None:
@@ -569,12 +574,14 @@ class Program(object):
                 p = sim.getproject()
                 datacost = p.data['ccocs'][self.name]['cost']
                 datacoverage = get_data_coverage(self.name,pop,sim)
+                ax.scatter(datacost,datacoverage,color='#666666',zorder=8)
 
                 # What is the alloc for this program?
                 # Let's go with the upper and lower bounds of the budget for this program
-                ax.scatter(datacost,datacoverage,color='#666666',zorder=8)
-                ax.axvline(x=max(sim.budget[prog_index,:]), ymin=0, ymax=1, color='red',zorder=9)
-                ax.axvline(x=min(sim.budget[prog_index,:]), ymin=0, ymax=1, color='red',zorder=9)
+                if prog_start_index is not None:
+                    ax.axvline(x=sim.budget[prog_index,prog_start_index], color='red',zorder=9)
+                if prog_end_index is not None:
+                    ax.axvline(x=sim.budget[prog_index,prog_end_index], color='blue',zorder=8)
 
         elif not cco:  
             # coverage-outcome plot          
@@ -594,7 +601,10 @@ class Program(object):
                     datacoverage = get_data_coverage(self.name,pop,sim)
                     ax.scatter(datacoverage,dataoutcome,color='#666666',zorder=8)
 
-                ax.axvline(x=self.cost_coverage[pop].evaluate(sim.budget[prog_index,prog_start_index]), ymin=0, ymax=1, color='red',zorder=9)
+                if prog_start_index is not None:
+                    ax.axvline(x=self.cost_coverage[pop].evaluate(sim.budget[prog_index,prog_start_index]), ymin=0, ymax=1, color='red',zorder=9)
+                if prog_end_index is not None:
+                    ax.axvline(x=self.cost_coverage[pop].evaluate(sim.budget[prog_index,prog_end_index]), ymin=0, ymax=1, color='blue',zorder=8)
 
         else:
             x = numpy.linspace(0,5e6,100)
@@ -617,15 +627,28 @@ class Program(object):
 
                 if par in sim.default_pars:
                     popnumber = [a['short_name'] for a in p.metadata['inputpopulations']].index(pop)
-                    spending_at_time = sim.budget[prog_index,prog_start_index]
-                    datapar_at_time = sim.default_pars[par][popnumber,prog_start_index]
-                    cc_at_time = self.cost_coverage[pop].evaluate(spending_at_time)
-                    modelpar_at_time = self.coverage_outcome[pop][par].evaluate(cc_at_time)
-                    ax.axvline(spending_at_time, color='red',zorder=9)
-                    ax.axhline(datapar_at_time, color='red',zorder=9)
-                    ax.scatter([spending_at_time,spending_at_time],[datapar_at_time,modelpar_at_time],color='red',zorder=10)
+
+                    def overlay_scatters(index,color,order):
+                        spending_at_time = sim.budget[prog_index,index]
+                        datapar_at_time = sim.default_pars[par][popnumber,index]
+                        cc_at_time = self.cost_coverage[pop].evaluate(spending_at_time)
+                        modelpar_at_time = self.coverage_outcome[pop][par].evaluate(cc_at_time)
+                        ax.axvline(spending_at_time, color=color,zorder=order)
+                        ax.axhline(datapar_at_time, color=color,zorder=order)
+                        ax.scatter([spending_at_time,spending_at_time],[datapar_at_time,modelpar_at_time],color=color,zorder=order)
+
+                    if prog_start_index is not None:
+                        overlay_scatters(prog_start_index,'red',9)
+                    if prog_end_index is not None:
+                        overlay_scatters(prog_end_index,'blue',8)
+
                 else:
-                    ax.axvline(sim.budget[prog_index,prog_start_index], color='red',zorder=9)
+                    if prog_start_index is not None:
+                        ax.axvline(sim.budget[prog_index,prog_start_index], color='red',zorder=9)
+                    if prog_end_index is not None:
+                        ax.axvline(sim.budget[prog_index,prog_stop_index], color='blue',zorder=8)
+
+
 
         ax.plot(x,y,linestyle='-',color='#a6cee3',linewidth=2)
         ax.plot(x,yl,linestyle='--',color='#000000',linewidth=2)
