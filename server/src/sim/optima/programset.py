@@ -87,7 +87,7 @@ class ProgramSet(object):
                 for pop in target_pops:
                     cc_input = dict()
                     cc_input['pop'] = pop
-                    if 'scaleup' in prog['ccparams'].keys():
+                    if 'scaleup' in prog['ccparams'].keys() and prog['ccparams']['scaleup'] and ~numpy.isnan(prog['ccparams']['scaleup']):
                         cc_input['form'] = 'cc_scaleup'
                     else:
                         cc_input['form'] = 'cc_noscaleup'
