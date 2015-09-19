@@ -130,7 +130,6 @@ class Project(object):
                 projectdict['data']['ccocs'][program_list[i]]['cost'] = projectdict['data']['costcov']['realcost'][i]
                 projectdict['data']['ccocs'][program_list[i]]['historical_cost'] = projectdict['data']['costcov']['cost'][i] # These are the non-inflation adjusted raw costs
                 projectdict['data']['ccocs'][program_list[i]]['coverage'] = projectdict['data']['costcov']['cov'][i]
-            del projectdict['data']['costcov']
 
     def fromdict(self,projectdict):
         # Assign variables from a new-type JSON file created using Project.todict()
@@ -223,7 +222,6 @@ class Project(object):
             self.data['ccocs'][program_list[i]]['cost'] = self.data['costcov']['realcost'][i]
             self.data['ccocs'][program_list[i]]['historical_cost'] = self.data['costcov']['cost'][i] # These are the non-inflation adjusted raw costs
             self.data['ccocs'][program_list[i]]['coverage'] = self.data['costcov']['cov'][i]
-        del self.data['costcov']
 
     def fetch(self,target_uuid):
         # Fetch a simbox or a sim from within the project by looking up it's uuid
