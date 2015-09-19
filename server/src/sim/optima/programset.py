@@ -564,6 +564,7 @@ class Program(object):
             prog_end_index = numpy.argmin(numpy.abs(sim.program_end_year-sim.default_pars['tvec'])) if numpy.isfinite(sim.program_end_year) else None
             datacost = p.data['ccocs'][self.name]['cost']
             cost_x_limit = max(max(sim.budget[prog_index,:]),numpy.nanmax(datacost))*2
+            popnumber = [a['short_name'] for a in p.metadata['inputpopulations']].index(pop)
         else:
             cost_x_limit = 1e6
 
@@ -610,9 +611,12 @@ class Program(object):
                     ax.scatter(datacoverage,dataoutcome,color='#666666',zorder=8)
 
                 if prog_start_index is not None:
-                    ax.axvline(x=self.cost_coverage[pop].evaluate(sim.budget[prog_index,prog_start_index]), ymin=0, ymax=1, color='red',zorder=9)
+                    ax.axvline(x=self.cost_coverage[pop].evaluate(sim.budget[prog_index,prog_start_index]), color='red',zorder=9)
+                    ax.axhline(y=sim.default_pars[par][popnumber,prog_start_index], color='red',zorder=9)
+
                 if prog_end_index is not None:
-                    ax.axvline(x=self.cost_coverage[pop].evaluate(sim.budget[prog_index,prog_end_index]), ymin=0, ymax=1, color='blue',zorder=8)
+                    ax.axvline(x=self.cost_coverage[pop].evaluate(sim.budget[prog_index,prog_end_index]), color='blue',zorder=8)
+                    ax.axhline(y=sim.default_pars[par][popnumber,prog_end_index], color='blue',zorder=9)
 
         else:
             x_limit = cost_x_limit
@@ -635,7 +639,6 @@ class Program(object):
 
 
                 if par in sim.default_pars:
-                    popnumber = [a['short_name'] for a in p.metadata['inputpopulations']].index(pop)
 
                     def overlay_scatters(index,color,order):
                         spending_at_time = sim.budget[prog_index,index]
@@ -698,7 +701,7 @@ def get_data_coverage(progname,targetpop,sim):
         for i in range(len(datacoverage)): 
             if numpy.isfinite(datacoverage[i]):
                 matching_index = numpy.argmin(numpy.abs(epiyears[i]-sim.popsizes['tvec']))
-                datacoverage[i] /= sim.popsizes[pop][matching_index]
+                datacoverage[i] /= sim.popsizes[targetpop][matching_index]
 
     return datacoverage
 
