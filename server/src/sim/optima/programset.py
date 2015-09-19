@@ -501,11 +501,12 @@ class Program(object):
 
         # Set up the figure
         if self.cost_coverage.keys() == ['Overall']: # coverage program
-            f, axarr = pylab.subplots(n_pops, 1)
+            f, axarr = pylab.subplots(n_pops, 1,figsize=(24,16))
         else:
-            f, axarr = pylab.subplots(n_rows, 3)
+            f, axarr = pylab.subplots(n_rows, 3,figsize=(24,16))
         f.tight_layout()
         f.canvas.set_window_title(self.name)
+        # f.set_size_inches(100,100)
 
         if not isinstance(axarr,numpy.ndarray): # A 1x1 subplot returns an axis, not a list of axes
             axarr = numpy.array([[axarr]])
@@ -553,25 +554,30 @@ class Program(object):
 
         if sim is not None:
             # What is the index of this program in the alloc/budget?
+            p = sim.getproject()
+
             if not sim.isinitialised():
                 sim.initialise()
 
             prog_index = [a.name for a in sim.getprogramset().programs].index(self.name)
             prog_start_index = numpy.argmin(numpy.abs(sim.program_start_year-sim.default_pars['tvec'])) if numpy.isfinite(sim.program_start_year) else None
             prog_end_index = numpy.argmin(numpy.abs(sim.program_end_year-sim.default_pars['tvec'])) if numpy.isfinite(sim.program_end_year) else None
-
+            datacost = p.data['ccocs'][self.name]['cost']
+            cost_x_limit = max(max(sim.budget[prog_index,:]),numpy.nanmax(datacost))*2
+        else:
+            cost_x_limit = 1e6
 
         if par is None:
-            # We can superimpose the coverage data
-            x = numpy.linspace(0,1e6,100)
+            x_limit = cost_x_limit
+
+            # And then plot the CC curve
+            x = numpy.linspace(0,x_limit,100)
             y = self.cost_coverage[pop].evaluate(x) 
             yl = self.cost_coverage[pop].evaluate(x,bounds='lower') 
             yu = self.cost_coverage[pop].evaluate(x,bounds='upper') 
 
-            # Plot cost vs coverage in data
             if sim is not None:
                 # Get the program data
-                p = sim.getproject()
                 datacost = p.data['ccocs'][self.name]['cost']
                 datacoverage = get_data_coverage(self.name,pop,sim)
                 ax.scatter(datacost,datacoverage,color='#666666',zorder=8)
@@ -583,9 +589,11 @@ class Program(object):
                 if prog_end_index is not None:
                     ax.axvline(x=sim.budget[prog_index,prog_end_index], color='blue',zorder=8)
 
+
         elif not cco:  
-            # coverage-outcome plot          
-            x = numpy.linspace(0,1,100)
+            # coverage-outcome plot
+            x_limit = 1          
+            x = numpy.linspace(0,x_limit,100)
             y = self.coverage_outcome[pop][par].evaluate(x) # plot coverage-outcome
             yl = self.coverage_outcome[pop][par].evaluate(x,bounds='lower') 
             yu = self.coverage_outcome[pop][par].evaluate(x,bounds='upper') 
@@ -607,7 +615,9 @@ class Program(object):
                     ax.axvline(x=self.cost_coverage[pop].evaluate(sim.budget[prog_index,prog_end_index]), ymin=0, ymax=1, color='blue',zorder=8)
 
         else:
-            x = numpy.linspace(0,5e6,100)
+            x_limit = cost_x_limit
+
+            x = numpy.linspace(0,x_limit,100)
             cc = self.cost_coverage[pop].evaluate(x)
             ccl = self.cost_coverage[pop].evaluate(x,bounds='lower') 
             ccu =self.cost_coverage[pop].evaluate(x,bounds='upper') 
@@ -616,7 +626,6 @@ class Program(object):
             yu =self.coverage_outcome[pop][par].evaluate(ccu,bounds='upper') 
 
             if sim is not None:
-                p = sim.getproject()
                 datacost = p.data['ccocs'][self.name]['cost']
                 dataoutcome = get_data_outcome(pop,par,sim)
                 if len(dataoutcome) == 1:
@@ -653,23 +662,21 @@ class Program(object):
         ax.plot(x,y,linestyle='-',color='#a6cee3',linewidth=2)
         ax.plot(x,yl,linestyle='--',color='#000000',linewidth=2)
         ax.plot(x,yu,linestyle='--',color='#000000',linewidth=2)
-        
+        ax.set_xlim([0,x_limit])
+
         if par is None:
             ax.set_xlabel('Spending ($)')
             ax.set_ylabel('Coverage (fractional)')
             ax.set_title(pop)
             ax.set_ylim([0,1])
-            ax.set_xlim([0,max(x)])
         elif not cco:
             ax.set_xlabel('Coverage (fractional)')
             ax.set_ylabel(par)
             ax.set_title(pop+'-'+par)
-            ax.set_xlim([0,1])
         else:
             ax.set_xlabel('Spending ($)')
             ax.set_ylabel(par)
             ax.set_title(pop+'-'+par)
-            ax.set_xlim([0,max(x)])
 
         if show_wait:
             pylab.show()
