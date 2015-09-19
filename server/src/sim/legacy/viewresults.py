@@ -233,14 +233,14 @@ def viewoptimresults(O):
     title(O['outcome']['title'])
 
 
-def viewparameters(M):
+def viewparameters(M,show_wait=True):
     """
     Plot the entries of D['M']
     """
-    from numpy import transpose
-    from matplotlib.pylab import subplot, plot, title, hold, legend, shape, xlim, figure
-    nx = 6
-    ny = 4
+    from numpy import transpose,ceil
+    from matplotlib.pylab import subplot, plot, title, hold, legend, shape, xlim, figure,show
+    ny = 5
+    nx = ceil(len(M.keys())/ny)
     count = 0
     
     figh = figure(figsize=(24,16), facecolor='w')
@@ -250,6 +250,7 @@ def viewparameters(M):
     figh.subplots_adjust(bottom=0.04) # Less space on bottom
     figh.subplots_adjust(wspace=0.5) # More space between
     figh.subplots_adjust(hspace=0.5) # More space between
+
     for key in M.keys():
         count += 1
         subplot(nx, ny, count); hold(True)
@@ -276,3 +277,6 @@ def viewparameters(M):
             except:
                 print('Plotting failed for %s' % (key))
         title(key)
+
+    if show_wait: 
+        show()
