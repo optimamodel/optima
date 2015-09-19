@@ -23,21 +23,6 @@ def sanitize(arraywithnans):
 
         return sanitized
 
-def sanitize(arraywithnans):
-        """ Sanitize input to remove NaNs. Warning, does not work on multidimensional data!! """
-        from numpy import array, isnan
-        try:
-            arraywithnans = array(arraywithnans) # Make sure it's an array
-            sanitized = arraywithnans[~isnan(arraywithnans)]
-        except:
-            raise Exception('Sanitization failed on array:\n %s' % arraywithnans)
-        if len(sanitized)==0:
-            sanitized = 0
-            print('                WARNING, no data entered for this parameter, assuming 0')
-
-        return sanitized
-
-
 def findinds(val1, val2=None, eps=1e-6):
     """
     Little function to find matches even if two things aren't eactly equal (eg. 
