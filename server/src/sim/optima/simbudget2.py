@@ -8,6 +8,8 @@ from copy import deepcopy
 import operator
 from timevarying import timevarying
 
+# todo: default_pars should be stored in the calibration
+
 class SimBudget2(Sim):
 
     def __init__(self,name,project,budget=None,calibration=None,programset=None):
@@ -22,6 +24,7 @@ class SimBudget2(Sim):
         self.budget = budget # This contains spending values for all of the modalities for the simulation timepoints i.e. there are len(D['opt']['partvec']) spending values
         self.programset = programset if programset is not None else project.programsets[0].uuid # Use the first program set by default
         self.popsizes = {} # Estimates for the population size obtained by running a base Sim within the parent project
+        self.default_pars = {}
 
         # Check that the program set exists
         if self.programset not in [x.uuid for x in project.programsets]:
@@ -37,6 +40,7 @@ class SimBudget2(Sim):
         simdict['budget'] = self.budget
         simdict['programset'] = self.programset
         simdict['popsizes'] = self.popsizes
+        simdict['default_pars'] = self.default_pars
         simdict['program_start_year'] = self.program_start_year 
         simdict['program_end_year'] = self.program_end_year 
         return simdict
@@ -47,6 +51,7 @@ class SimBudget2(Sim):
         self.programset = simdict['programset']
         self.programset = simdict['programset']
         self.popsizes = simdict['popsizes']
+        self.default_pars = simdict['default_pars']
         self.program_start_year = simdict['program_start_year']
         self.program_end_year = simdict['program_end_year']
 
@@ -97,7 +102,10 @@ class SimBudget2(Sim):
         self.popsizes['numsecondline'] = self.popsizes['numfirstline']
         self.popsizes['numcircum'] = people[:,ismale,:].sum(axis = (0,1))
         self.popsizes['tvec'] = deepcopy(DS['tvec'])
-        
+
+        # Store the parameters so they can be superimposed on plots
+        self.default_pars = s.parsmodel
+
     def makemodelpars(self,perturb=False):
         # The programs will be used to overwrite the parameter values for times between program_start_year and program_end_year
 

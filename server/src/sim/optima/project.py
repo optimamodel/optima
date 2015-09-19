@@ -20,6 +20,7 @@ from programset import ProgramSet
 from scipy.interpolate import PchipInterpolator as pchip
 import cPickle
 import multiprocessing
+import numpy
 
 current_version = 3
 class Project(object):
@@ -127,9 +128,9 @@ class Project(object):
             projectdict['data']['ccocs'] = {}
             for i in range(len(program_list)):
                 projectdict['data']['ccocs'][program_list[i]] = {}
-                projectdict['data']['ccocs'][program_list[i]]['cost'] = projectdict['data']['costcov']['realcost'][i]
-                projectdict['data']['ccocs'][program_list[i]]['historical_cost'] = projectdict['data']['costcov']['cost'][i] # These are the non-inflation adjusted raw costs
-                projectdict['data']['ccocs'][program_list[i]]['coverage'] = projectdict['data']['costcov']['cov'][i]
+                projectdict['data']['ccocs'][program_list[i]]['cost'] = numpy.array(projectdict['data']['costcov']['realcost'][i])
+                projectdict['data']['ccocs'][program_list[i]]['historical_cost'] = numpy.array(projectdict['data']['costcov']['cost'][i]) # These are the non-inflation adjusted raw costs
+                projectdict['data']['ccocs'][program_list[i]]['coverage'] = numpy.array(projectdict['data']['costcov']['cov'][i])
 
     def fromdict(self,projectdict):
         # Assign variables from a new-type JSON file created using Project.todict()
@@ -219,9 +220,9 @@ class Project(object):
         self.data['ccocs'] = {}
         for i in range(len(program_list)):
             self.data['ccocs'][program_list[i]] = {}
-            self.data['ccocs'][program_list[i]]['cost'] = self.data['costcov']['realcost'][i]
-            self.data['ccocs'][program_list[i]]['historical_cost'] = self.data['costcov']['cost'][i] # These are the non-inflation adjusted raw costs
-            self.data['ccocs'][program_list[i]]['coverage'] = self.data['costcov']['cov'][i]
+            self.data['ccocs'][program_list[i]]['cost'] = numpy.array(self.data['costcov']['realcost'][i])
+            self.data['ccocs'][program_list[i]]['historical_cost'] = numpy.array(self.data['costcov']['cost'][i]) # These are the non-inflation adjusted raw costs
+            self.data['ccocs'][program_list[i]]['coverage'] = numpy.array(self.data['costcov']['cov'][i])
 
     def fetch(self,target_uuid):
         # Fetch a simbox or a sim from within the project by looking up it's uuid
