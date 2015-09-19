@@ -547,46 +547,55 @@ class Program(object):
         if ax is None:
             f,ax = pylab.subplots(1,1)
 
+        if sim is not None:
+            # What is the index of this program in the alloc/budget?
+            if not sim.isinitialised():
+                sim.initialise()
+
+            prog_index = [a.name for a in sim.getprogramset().programs].index(self.name)
+            prog_start_index = numpy.argmin(numpy.abs(sim.program_start_year-sim.default_pars['tvec']))
+
+
         if par is None:
             # We can superimpose the coverage data
-            x = numpy.linspace(0,5e6,100)
+            x = numpy.linspace(0,1e6,100)
             y = self.cost_coverage[pop].evaluate(x) 
             yl = self.cost_coverage[pop].evaluate(x,bounds='lower') 
             yu = self.cost_coverage[pop].evaluate(x,bounds='upper') 
 
             # Plot cost vs coverage in data
             if sim is not None:
-                assert(isinstance(sim,simbudget2.SimBudget2))
-                if not sim.isinitialised():
-                    sim.initialise()
-
                 # Get the program data
                 p = sim.getproject()
-                xscatter = p.data['ccocs'][self.name]['cost']
-                yscatter = p.data['ccocs'][self.name]['coverage']
-                xyears   = p.data['epiyears'] # The corresponding years
+                datacost = p.data['ccocs'][self.name]['cost']
+                datacoverage = get_data_coverage(self.name,pop,sim)
 
-                print xscatter
-                print yscatter
-                print sim.popsizes['tvec']
-                
-                # Rescale the Y-values according to the population size estimate
-                if numpy.any(yscatter > 1): # Only rescale if not percentages
-                    for i in range(len(yscatter)): 
-                        if numpy.isfinite(xscatter[i]):
-                            matching_index = numpy.argmin(numpy.abs(xyears[i]-sim.popsizes['tvec']))
-                            print yscatter[i]
-                            print sim.popsizes[pop][matching_index]
-                            yscatter[i] /= sim.popsizes[pop][matching_index]
+                # What is the alloc for this program?
+                # Let's go with the upper and lower bounds of the budget for this program
+                ax.scatter(datacost,datacoverage,color='#666666',zorder=8)
+                ax.axvline(x=max(sim.budget[prog_index,:]), ymin=0, ymax=1, color='red',zorder=9)
+                ax.axvline(x=min(sim.budget[prog_index,:]), ymin=0, ymax=1, color='red',zorder=9)
 
-                ax.scatter(xscatter,yscatter,color='#666666')
-
-
-        elif not cco:            
+        elif not cco:  
+            # coverage-outcome plot          
             x = numpy.linspace(0,1,100)
-            y =  self.coverage_outcome[pop][par].evaluate(x) # plot coverage-outcome
+            y = self.coverage_outcome[pop][par].evaluate(x) # plot coverage-outcome
             yl = self.coverage_outcome[pop][par].evaluate(x,bounds='lower') 
-            yu =self.coverage_outcome[pop][par].evaluate(x,bounds='upper') 
+            yu = self.coverage_outcome[pop][par].evaluate(x,bounds='upper') 
+
+            if sim is not None:
+                # First, get the outcome and coverage
+                # First, find the population index
+                dataoutcome = get_data_outcome(pop,par,sim)
+
+                if len(dataoutcome) == 1:
+                    ax.axhline(dataoutcome[0], color='#666666',zorder=8)
+                else:
+                    datacoverage = get_data_coverage(self.name,pop,sim)
+                    ax.scatter(datacoverage,dataoutcome,color='#666666',zorder=8)
+
+                ax.axvline(x=self.cost_coverage[pop].evaluate(sim.budget[prog_index,prog_start_index]), ymin=0, ymax=1, color='red',zorder=9)
+
         else:
             x = numpy.linspace(0,5e6,100)
             cc = self.cost_coverage[pop].evaluate(x)
@@ -596,22 +605,48 @@ class Program(object):
             yl = self.coverage_outcome[pop][par].evaluate(ccl,bounds='lower') 
             yu =self.coverage_outcome[pop][par].evaluate(ccu,bounds='upper') 
 
-        ax.plot(x,y)
-        ax.plot(x,yl)
-        ax.plot(x,yu)
+            if sim is not None:
+                p = sim.getproject()
+                datacost = p.data['ccocs'][self.name]['cost']
+                dataoutcome = get_data_outcome(pop,par,sim)
+                if len(dataoutcome) == 1:
+                    ax.axhline(dataoutcome[0], color='#666666',zorder=8)
+                else:
+                    ax.scatter(datacost,dataoutcome,color='#666666',zorder=8)
 
+
+                if par in sim.default_pars:
+                    popnumber = [a['short_name'] for a in p.metadata['inputpopulations']].index(pop)
+                    spending_at_time = sim.budget[prog_index,prog_start_index]
+                    datapar_at_time = sim.default_pars[par][popnumber,prog_start_index]
+                    cc_at_time = self.cost_coverage[pop].evaluate(spending_at_time)
+                    modelpar_at_time = self.coverage_outcome[pop][par].evaluate(cc_at_time)
+                    ax.axvline(spending_at_time, color='red',zorder=9)
+                    ax.axhline(datapar_at_time, color='red',zorder=9)
+                    ax.scatter([spending_at_time,spending_at_time],[datapar_at_time,modelpar_at_time],color='red',zorder=10)
+                else:
+                    ax.axvline(sim.budget[prog_index,prog_start_index], color='red',zorder=9)
+
+        ax.plot(x,y,linestyle='-',color='#a6cee3',linewidth=2)
+        ax.plot(x,yl,linestyle='--',color='#000000',linewidth=2)
+        ax.plot(x,yu,linestyle='--',color='#000000',linewidth=2)
+        
         if par is None:
             ax.set_xlabel('Spending ($)')
             ax.set_ylabel('Coverage (fractional)')
             ax.set_title(pop)
+            ax.set_ylim([0,1])
+            ax.set_xlim([0,max(x)])
         elif not cco:
             ax.set_xlabel('Coverage (fractional)')
             ax.set_ylabel(par)
             ax.set_title(pop+'-'+par)
+            ax.set_xlim([0,1])
         else:
             ax.set_xlabel('Spending ($)')
             ax.set_ylabel(par)
             ax.set_title(pop+'-'+par)
+            ax.set_xlim([0,max(x)])
 
         if show_wait:
             pylab.show()
@@ -619,3 +654,32 @@ class Program(object):
     def __repr__(self):
         return 'Program %s (%s)' % (self.uuid[0:4],self.name)
 
+def get_data_coverage(progname,targetpop,sim):
+    p = sim.getproject()
+
+    datacoverage = p.data['ccocs'][progname]['coverage']
+    epiyears = p.data['epiyears'] # The corresponding years
+
+    if len(datacoverage)==1:
+        datacoverage = datacoverage*numpy.ones(epiyears.shape)
+
+    # Rescale the coverage according to the population size estimate
+    if numpy.any(datacoverage > 1): # Only rescale if not percentages
+        for i in range(len(datacoverage)): 
+            if numpy.isfinite(datacoverage[i]):
+                matching_index = numpy.argmin(numpy.abs(epiyears[i]-sim.popsizes['tvec']))
+                datacoverage[i] /= sim.popsizes[pop][matching_index]
+
+    return datacoverage
+
+def get_data_outcome(pop,par,sim):
+    p = sim.getproject()
+    popnumber = [a['short_name'] for a in p.metadata['inputpopulations']].index(pop)
+
+    # Now, find the data for this program
+    for partype in p.data.keys():
+        if par in p.data[partype]:
+            dataoutcome = p.data[partype][par][popnumber]
+            return dataoutcome
+
+    raise Exception('Parameter %s not found' % (par))

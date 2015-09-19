@@ -49,7 +49,7 @@ class ccoc(object):
 
     def evaluate(self,x,perturb=False,bounds=None):
         # Todo: incorporate perturbation
-        p = self.convertparams(perturb)
+        p = self.convertparams(perturb,bounds)
         return self.function(x,p)
 
     def invert(self,y):
@@ -108,10 +108,16 @@ class co_cofun(ccoc):
         return (y-p[0])/(p[1]-p[0]) 
         
     def convertparams(self,perturb=False,bounds=None):
+        # fe_params: list. Contains parameters for the coverage-outcome curves, obtained from the GUI
+        #     fe_params[0] = the lower bound for the outcome when coverage = 0
+        #     fe_params[1] = the upper bound for the outcome when coverage = 0
+        #     fe_params[2] = the lower bound for the outcome when coverage = 1
+        #     fe_params[3] = the upper bound for the outcome when coverage = 1
+        
         muz, stdevz = (self.fe_params[0]+self.fe_params[1])/2, (self.fe_params[1]-self.fe_params[0])/6 # Mean and standard deviation calcs
         muf, stdevf = (self.fe_params[2]+self.fe_params[3])/2, (self.fe_params[3]-self.fe_params[2])/6 # Mean and standard deviation calcs
         convertedcoparams = [muz, stdevz, muf, stdevf]
-        convertedcoparams = [[muz,muf],[muz,muf],[muz,muf]] # DEBUG CODE, DO THIS PROPERLY LATER
+        convertedcoparams = [[muz,muf],[muz-stdevz,muf-stdevf],[muz+stdevz,muf+stdevf]] # DEBUG CODE, DO THIS PROPERLY LATER
         if bounds==None:
             return convertedcoparams[0]
         elif bounds=='upper':
