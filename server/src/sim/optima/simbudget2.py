@@ -13,7 +13,10 @@ class SimBudget2(Sim):
     def __init__(self,name,project,budget=None,calibration=None,programset=None):
         Sim.__init__(self, name, project,calibration)
 
-        if budget is not None and len(budget.shape)==1: # User probably put in an alloc
+        if budget is None: # Use data alloc
+            budget = project.data['origalloc']
+
+        if len(budget.shape)==1: # User probably put in an alloc
             budget = timevarying(budget,nprogs=len(budget), tvec=project.options['partvec'], totalspend=sum(budget))
 
         self.budget = budget # This contains spending values for all of the modalities for the simulation timepoints i.e. there are len(D['opt']['partvec']) spending values
@@ -24,12 +27,18 @@ class SimBudget2(Sim):
         if self.programset not in [x.uuid for x in project.programsets]:
             raise Exception('The provided program set UUID could not be found in the provided project')
 
+        # The CCOCs will be used between the years specified here 
+        self.program_start_year = 2015
+        self.program_end_year = numpy.inf
+
     def todict(self):
         simdict = Sim.todict(self)
         simdict['type'] = 'SimBudget2'
         simdict['budget'] = self.budget
         simdict['programset'] = self.programset
         simdict['popsizes'] = self.popsizes
+        simdict['program_start_year'] = self.program_start_year 
+        simdict['program_end_year'] = self.program_end_year 
         return simdict
 
     def load_dict(self,simdict):
@@ -38,6 +47,8 @@ class SimBudget2(Sim):
         self.programset = simdict['programset']
         self.programset = simdict['programset']
         self.popsizes = simdict['popsizes']
+        self.program_start_year = simdict['program_start_year']
+        self.program_end_year = simdict['program_end_year']
 
     def getprogramset(self):
         # Return a reference to the selected program set
@@ -85,8 +96,9 @@ class SimBudget2(Sim):
         self.popsizes['numfirstline'] = people[artindex,:,:].sum(axis=(0,1))
         self.popsizes['numsecondline'] = self.popsizes['numfirstline']
         self.popsizes['numcircum'] = people[:,ismale,:].sum(axis = (0,1))
-
-    def makemodelpars(self,perturb=False,program_start_year=2015,program_end_year=numpy.inf):
+        self.popsizes['tvec'] = deepcopy(DS['tvec'])
+        
+    def makemodelpars(self,perturb=False):
         # The programs will be used to overwrite the parameter values for times between program_start_year and program_end_year
 
         # If perturb == True, then a random perturbation will be applied at the CCOC level
@@ -132,7 +144,7 @@ class SimBudget2(Sim):
 
         # Now we overwrite the data parameters (computed via Sim.makemodelpars()) with program values
         # if the program specified the parameter value
-        update_indexes = numpy.logical_and(r.options['partvec']>program_start_year, r.options['partvec']<program_end_year) # This does the same thing as partialupdateM
+        update_indexes = numpy.logical_and(r.options['partvec']>self.program_start_year, r.options['partvec']<self.program_end_year) # This does the same thing as partialupdateM
         
         # First, assign population-dependent parameters
         for par in ['hivprev','stiprevulc','stiprevdis','death','tbprev','hivtest','birth','numactsreg','numactscas','numactscom','numactsinj','condomreg','condomcas','condomcom','circum','sharing','prep']:
