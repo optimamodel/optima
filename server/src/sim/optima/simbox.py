@@ -1,7 +1,7 @@
 from sim import Sim
 
 import weakref
-import uuid
+import liboptima
 
 #from scipy.interpolate import PchipInterpolator as pchip
 
@@ -10,7 +10,7 @@ class SimBox(object):
         self.name = name
         self.simlist = []
         self.setproject(project)
-        self.uuid = str(uuid.uuid4()) # Store UUID as a string - we just want a (practically) unique tag, no advanced functionality
+        self.uuid = liboptima.genuuid() # Store UUID as a string - we just want a (practically) unique tag, no advanced functionality
 
     @classmethod
     def fromdict(SimBox,simboxdict,project):
@@ -115,7 +115,7 @@ class SimBox(object):
         return self.name
 
     def __repr__(self):
-        return "SimBox %s ('%s')" % (self.uuid[0:8],self.name)
+        return "SimBox %s ('%s')" % (liboptima.shortuuid(self.uuid),self.name)
 
     def __getstate__(self):
         raise Exception('Simbox must be saved via a project')

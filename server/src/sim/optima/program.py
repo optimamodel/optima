@@ -1,7 +1,7 @@
 import uuid
 from operator import mul
 import defaults
-
+import liboptima
 from math import log
 from numpy import linspace, exp, isnan, multiply, arange, mean, array, maximum
 from numpy import log as nplog
@@ -15,7 +15,7 @@ class Program(object):
 		else:
 			self.full_name = full_name
 		self.category = category
-		self.uuid = str(uuid.uuid4())
+		self.uuid = liboptima.genuuid()
 
 		self.modalities = []
 		self.metamodalities = [] # One metamodality for every combination of modalities, including single modalities
@@ -281,7 +281,7 @@ class Modality:
 				raise Exception('coverage-outcome function was not assigned - it was %s' % (co['function']))
 
 		self.nonhivdalys = nonhivdalys
-		self.uuid = str(uuid.uuid4())
+		self.uuid = liboptima.genuuid()
 
 	def get_coverage(self,spending):
 		# self.cc_data['function'] is one of the keys in self.ccfun
@@ -344,7 +344,7 @@ class Modality:
 		return convertedcoparams
 
 	def __repr__(self):
-		return '%s (%s)' % (self.name,self.uuid[0:4])
+		return '%s (%s)' % (self.name,liboptima.shortuuid(self.uuid))
 
 # --------------------------- functional forms for the CCOCs
 

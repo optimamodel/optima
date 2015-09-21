@@ -1,8 +1,8 @@
 from simbox import SimBox
 
-import uuid
 from numpy import zeros
 from liboptima.utils import perturb, dataindex,printv
+import liboptima
 
 # A container for calibrating Sims.
 class SimBoxCal(SimBox):
@@ -25,7 +25,7 @@ class SimBoxCal(SimBox):
         r = self.getproject()
         
         c = {}
-        c['uuid'] = str(uuid.uuid4())
+        c['uuid'] = liboptima.genuuid()
         c['name'] = name
 
         ## Key parameters - These were hivprev and pships, and are now in the calibration
@@ -64,4 +64,4 @@ class SimBoxCal(SimBox):
         
 
     def __repr__(self):
-        return "SimBoxCal %s ('%s')" % (self.uuid[0:8],self.name)
+        return "SimBoxCal %s ('%s')" % (liboptima.shortuuid(self.uuid),self.name)

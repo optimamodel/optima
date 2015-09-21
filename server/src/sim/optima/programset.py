@@ -320,7 +320,7 @@ class ProgramSet(object):
         raise Exception('Program "%s" not found' % (name))
 
     def __repr__(self):
-        return 'ProgramSet %s (%s)' % (self.uuid[0:4],self.name)
+        return 'ProgramSet %s (%s)' % (liboptima.shortuuid(self.uuid),self.name)
 
 class MetaProgram(object):
     # A metaprogram corresponds to an overlap of programs
@@ -685,7 +685,7 @@ class Program(object):
             pylab.show()
 
     def __repr__(self):
-        return 'Program %s (%s)' % (self.uuid[0:4],self.name)
+        return 'Program %s (%s)' % (liboptima.shortuuid(self.uuid),self.name)
 
 def get_data_coverage(progname,targetpop,sim):
     p = sim.getproject()

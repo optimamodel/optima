@@ -33,22 +33,26 @@ class Optimization(SimBox):
         if sim is not None and (calibration is not None or programset is not None):
             raise Exception('To avoid ambiguity, providing a Sim and providing calibrations/programsets are mutually exclusive')
 
-        # Make sure calibration and programset are both UUIDs        
-        if sim is not None:
-            programset = sim.programset
-            calibration = sim.calibration
-        if isinstance(calibration,dict):
-            calibration = calibration['uuid']
-        if isinstance(programset,ProgramSet):
-            programset = programset.uuid
-
+        # Make sure calibration and programset are both UUIDs
         if initial_alloc is None:
             print 'Using original data allocation'
             self.initial_alloc = project.data['origalloc']
         else:
             self.initial_alloc = initial_alloc
 
-        self.initial_sim = SimBudget2('Initial',project,self.initial_alloc,calibration,programset)
+        # Make the initial Sim either from an input Sim or from a programset+calibration combo 
+        if sim is not None:
+            assert(isinstance(sim,SimBudget2))
+            assert(sim.getproject().uuid == project.uuid) # The Sim must be from the same project as the
+            self.initial_sim = Sim.fromdict(sim.todict(),project) # Make a deep copy of the input Sim 
+        else:
+            if isinstance(calibration,dict):
+                calibration = calibration['uuid']
+            if isinstance(programset,ProgramSet):
+                programset = programset.uuid
+
+            self.initial_sim = SimBudget2('Initial',project,self.initial_alloc,calibration,programset)
+        
         self.objectives = objectives if objectives is not None else defaultobjectives(self.initial_sim.getprogramset())
         self.constraints = constraints if constraints is not None else defaultconstraints(self.initial_sim.getprogramset())
         self.optimized_sim = None
@@ -374,7 +378,7 @@ class Optimization(SimBox):
                 show()
 
     def __repr__(self):
-        return "Optimization %s ('%s')" % (self.uuid[0:4],self.name)
+        return "Optimization %s ('%s')" % (liboptima.shortuuid(self.uuid),self.name)
 
 
 def objectivecalc(optimparams, objective_options, getbudget = False):

@@ -1,6 +1,6 @@
 from simbox import SimBox
 from simbudget import SimBudget
-
+import liboptima
 import defaults
 from copy import deepcopy
 
@@ -244,4 +244,4 @@ class SimBoxOpt(SimBox):
     
 
     def __repr__(self):
-        return "SimBoxOpt %s ('%s')" % (self.uuid[0:8],self.name)
+        return "SimBoxOpt %s ('%s')" % (liboptima.shortuuid(self.uuid),self.name)

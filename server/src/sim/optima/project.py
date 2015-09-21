@@ -15,6 +15,7 @@ import uuid
 import program
 from numpy import array, isnan, zeros, shape, mean
 from liboptima.utils import sanitize, perturb,printv
+import liboptima
 import liboptima.dataio_binary as dataio_binary
 from programset import ProgramSet
 from scipy.interpolate import PchipInterpolator as pchip
@@ -56,8 +57,7 @@ class Project(object):
             
             self.simboxlist = []            # Container for simbox objects (e.g. optimisations, grouped scenarios, etc.)
             
-            self.uuid = None
-            self.genuuid()  # Store UUID as a string - we just want a (practically) unique tag, no advanced functionality
+            self.uuid = liboptima.genuuid()
             
             self.current_version = current_version # This is stored in the projectdict
 
@@ -197,7 +197,7 @@ class Project(object):
         # Using pop will remove them from the project so that downstream calls
         # will raise errors if they are not updated to use the new calibration
         c = {}
-        c['uuid'] = str(uuid.uuid4())
+        c['uuid'] = liboptima.genuuid()
         c['name'] = 'Default'
         c['const'] = self.D['P'].pop('const')
         c['hivprev'] = self.D['P'].pop('hivprev')
@@ -425,9 +425,7 @@ class Project(object):
                     print('%i: %s%s' % (fid, simbox.getname(), (" (optimisation container)" if isinstance(simbox, SimBoxOpt) else " (standard container)")))
                     simbox.printsimlist(assubsubset = False)
     
-    # Generate a new uuid.
-    def genuuid(self):
-        self.uuid = str(uuid.uuid4())
+
             
     def setdata(self, data):
         self.data = data
@@ -513,7 +511,7 @@ class Project(object):
             self.metadata['meta'] = self.data['meta']
 
     def __repr__(self):
-        return "Project %s ('%s')" % (self.uuid,self.metadata['name'])
+        return "Project %s ('%s')" % (liboptima.shortuuid(self.uuid),self.metadata['name'])
 
     def get_popidx(self,shortname):
         # Return the index corresponding to a population shortname

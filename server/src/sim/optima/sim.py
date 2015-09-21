@@ -1,8 +1,8 @@
 import weakref
-import uuid
 import defaults
 from copy import deepcopy
 from numpy import array, isnan, zeros, shape, mean
+import liboptima
 from liboptima.utils import sanitize, printv
 from numpy import zeros, array, exp, shape
 
@@ -11,7 +11,7 @@ class Sim(object):
         self.name = name
         self.initialised = False    # This tag monitors if the simulation has been initialised.        
         self.processed = False      # This tag monitors if the simulation has been run.
-        self.uuid = str(uuid.uuid4()) # Store UUID as a string - we just want a (practically) unique tag, no advanced functionality
+        self.uuid = liboptima.genuuid()
 
         self.parsdata = None        # This used to be D['P'].
         self.parsmodel = None       # This used to be D['M'].
@@ -112,7 +112,7 @@ class Sim(object):
         # Return a deep-copied new Sim that is the same as the current Sim, but with a new UUID 
         simdict = self.todict()
         s2 = Sim.fromdict(simdict,self.getproject())
-        s2.uuid = str(uuid.uuid4())
+        s2.uuid = liboptima.genuuid()
         return s2
 
     def getcalibration(self):
@@ -431,7 +431,7 @@ class Sim(object):
         viewparameters(self.parsmodel)
 
     def __repr__(self):
-        return "Sim %s ('%s')" % (self.uuid,self.name)
+        return "Sim %s ('%s')" % (liboptima.shortuuid(self.uuid),self.name)
 
     def __getstate__(self):
         raise Exception('Simobject must be saved via a project')
