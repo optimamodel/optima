@@ -47,6 +47,11 @@ class ccoc(object):
         # that can be passed into ccoc.function()
         pass
 
+    @abc.abstractmethod # This method must be defined by the derived class
+    def defaults(self):
+        # Return default fe_params for this CCOC
+        pass
+
     def evaluate(self,x,perturb=False,bounds=None):
         # Todo: incorporate perturbation
         p = self.convertparams(perturb,bounds)
@@ -82,6 +87,15 @@ class cc_scaleup(ccoc):
         else:
             raise Exception('Unrecognized bounds')
 
+    def default(self):
+        fe_params = {}
+        fe_params['scaleup'] = 1
+        fe_params['saturation'] = 1
+        fe_params['coveragelower'] = 0
+        fe_params['coverageupper'] = 1
+        fe_params['funding'] = 0
+        return fe_params
+
 class cc_noscaleup(ccoc):
     def function(self,x,p):
         return cc2eqn(x,p)
@@ -99,6 +113,14 @@ class cc_noscaleup(ccoc):
             return convertedccparams[1]
         else:
             raise Exception('Unrecognized bounds')
+
+    def default(self):
+        fe_params = {}
+        fe_params['saturation'] = 1
+        fe_params['coveragelower'] = 0
+        fe_params['coverageupper'] = 1
+        fe_params['funding'] = 0
+        return fe_params
 
 class co_cofun(ccoc):
     def function(self,x,p):
@@ -127,12 +149,18 @@ class co_cofun(ccoc):
         else:
             raise Exception('Unrecognized bounds')
 
+    def default(self):
+        return [0,0,1,1] # [zero coverage lower, zero coverage upper, full coverage lower, full coverage upper]
+
 class co_linear(ccoc):
     def function(self,x,p):
         return linear(x,p)
 
     def convertparams(self,perturb=False,bounds=None):
         return self.fe_params
+
+    def default(self):
+        return [1,0] # [gradient intercept]
 
 class identity(ccoc):
     def function(self,x,p):
@@ -141,11 +169,17 @@ class identity(ccoc):
     def convertparams(self,perturb=False,bounds=None):
         return None
 
+    def default(self):
+        return None
+
 class null(ccoc):
     def function(self,x,p):
         return None
 
     def convertparams(self,perturb=False,bounds=None):
+        return None
+
+    def default(self):
         return None
 
 ############## FUNCTIONAL FORMS COPIED FROM makeccocs.py ##############
