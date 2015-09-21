@@ -87,7 +87,7 @@ class cc_scaleup(ccoc):
         else:
             raise Exception('Unrecognized bounds')
 
-    def default(self):
+    def defaults(self):
         fe_params = {}
         fe_params['scaleup'] = 1
         fe_params['saturation'] = 1
@@ -114,7 +114,7 @@ class cc_noscaleup(ccoc):
         else:
             raise Exception('Unrecognized bounds')
 
-    def default(self):
+    def defaults(self):
         fe_params = {}
         fe_params['saturation'] = 1
         fe_params['coveragelower'] = 0
@@ -149,7 +149,7 @@ class co_cofun(ccoc):
         else:
             raise Exception('Unrecognized bounds')
 
-    def default(self):
+    def defaults(self):
         return [0,0,1,1] # [zero coverage lower, zero coverage upper, full coverage lower, full coverage upper]
 
 class co_linear(ccoc):
@@ -159,7 +159,7 @@ class co_linear(ccoc):
     def convertparams(self,perturb=False,bounds=None):
         return self.fe_params
 
-    def default(self):
+    def defaults(self):
         return [1,0] # [gradient intercept]
 
 class identity(ccoc):
@@ -169,7 +169,7 @@ class identity(ccoc):
     def convertparams(self,perturb=False,bounds=None):
         return None
 
-    def default(self):
+    def defaults(self):
         return None
 
 class null(ccoc):
@@ -179,7 +179,7 @@ class null(ccoc):
     def convertparams(self,perturb=False,bounds=None):
         return None
 
-    def default(self):
+    def defaults(self):
         return None
 
 ############## FUNCTIONAL FORMS COPIED FROM makeccocs.py ##############
