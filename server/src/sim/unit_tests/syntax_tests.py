@@ -109,6 +109,20 @@ class TestSyntax(unittest.TestCase):
 		sim1 = SimBudget2('Test',P,P.data['origalloc'],calibration=cal['uuid'])
 		optima.plot(sim1,show_wait=False)
 
+	def test_optimization_from_sim(self): # Workflow 9 - Loading someone else's parameters/calibration
+		r = optima.Project.load_json('./projects/Dedza.json')
+		opt = optima.Optimization('Example',r,calibration=r.calibrations[0],programset=r.programsets[0],initial_alloc=r.data['origalloc']) # Make a sim, implicitly selecting a calibration and programset/ccocs
+		opt.optimize(timelimit = 5)
+		optima.plot([opt.initial_sim,opt.optimized_sim],show_wait=False)
+
+	def test_optimization_from_pset_and_cal(self): # Workflow 9 - Loading someone else's parameters/calibration
+		r = optima.Project.load_json('./projects/Dedza.json')
+		s = optima.SimBudget2('test',r)
+		opt = optima.Optimization('Example',r,sim=s)
+		opt.optimize(timelimit = 5)
+		optima.plot([opt.initial_sim,opt.optimized_sim],show_wait=False)
+
+
 
 	# def test_from_xlsx(self):
 	# 	# Test running a simulation from XLSX
