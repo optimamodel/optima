@@ -210,7 +210,7 @@ def minimizemoney(D, objectives=None, constraints=None, maxiters=1000, timelimit
             
             # Optimize spending
             newD = optimize(D, objectives=None, constraints=None, maxiters=20, timelimit=None, verbose=5, name='tmp_minimizemoney', stoppingfunc = None) # Run default optimization
-            optparams = newD['debugresult']['allocarr'][0]  # Copy optimization parameters out of newD
+            optparams = newD['debugresult']['allocarr'][1]  # Copy optimization parameters out of newD
 
 
             

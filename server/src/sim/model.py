@@ -272,7 +272,7 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2):
         
         # We have two ways to calculate number of births...
         if (asym<0).any(): # Method 1 -- children are being modelled directly
-            print('NB, not implemented') # TODO Use negative entries in transitions matrix
+#            print('NB, not implemented') # TODO Use negative entries in transitions matrix
             birthrate = M['birth'][:,t] # Use birthrate parameter from input spreadsheet
         else: # Method 2 -- children are not being modelled directly
             birthrate = M['birth'][:,t] # Use birthrate parameter from input spreadsheet
@@ -319,7 +319,9 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2):
                         people[:, p1, t] -= peoplemoving # Take away from pop1...
                         people[:, p2, t] += peoplemoving # ... then add to pop2
                     else: # Otherwise: it's births
-                        print('NB, not implemented') # TODO -- get these births working
+                        people[G['sus'], p2, t] += sum(peoplemoving)*(1-effmtct)
+                        people[G['undx'][0], p2, t] += sum(peoplemoving)*effmtct
+#                        print('NB, not implemented') # TODO -- get these births working
 #                        
 #                        # The proportion of births infected
 #                        propbirthsinfected = infectedbirths / totalbirths;
