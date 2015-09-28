@@ -273,21 +273,30 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2):
         # We have two ways to calculate number of births...
         if (asym<0).any(): # Method 1 -- children are being modelled directly
 #            print('NB, not implemented') # TODO Use negative entries in transitions matrix
-            birthrate = M['birth'][:,t] # Use birthrate parameter from input spreadsheet
+#            birthrate = M['birth'][:,t] # Use birthrate parameter from input spreadsheet
+            S['births'][0,t] = 0
+            for p1 in xrange(npops):
+                for p2 in xrange(npops):
+                    transyears = asym[p1, p2] # Current transition rate
+                    if absolute(transyears) > 0: # Is the given rate non zero
+                        transrate = 1/float(transyears) # Invert
+                        S['births'][0,t] += sum(people[:, p1, t] * absolute(transrate) * dt)
+            S['mtct'][0,t] = 0
+              
         else: # Method 2 -- children are not being modelled directly
             birthrate = M['birth'][:,t] # Use birthrate parameter from input spreadsheet
-        S['births'][0,t] = sum(birthrate * allpeople[:,t])
-        mtcttx       = sum(birthrate * sum(people[tx1,:,t] +people[tx2,:,t]))  * pmtcteff # MTCT from those on treatment (not eligible for PMTCT)
-        mtctuntx     = sum(birthrate * sum(people[undx,:,t]+people[fail,:,t])) * effmtct  # MTCT from those undiagnosed or failed (also not eligible)
-        birthselig   = sum(birthrate * sum(people[dx,:,t])) # Births to diagnosed mothers eligible for PMTCT
-        if numpmtct[t]>1: # It's greater than 1: assume it's a number
-            receivepmtct = min(numpmtct[t], birthselig) # Births protected by PMTCT -- constrained by number eligible 
-        else: # It's a proportion
-            receivepmtct = numpmtct[t]*birthselig # Births protected by PMTCT -- constrained by number eligible 
-        mtctdx = (birthselig - receivepmtct) * effmtct # MTCT from those diagnosed not receiving PMTCT
-        mtctpmtct = receivepmtct * pmtcteff # MTCT from those receiving PMTCT
-        S['mtct'][0,t] = mtctuntx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components
-        
+            S['births'][0,t] = sum(birthrate * allpeople[:,t])
+            mtcttx       = sum(birthrate * sum(people[tx1,:,t] +people[tx2,:,t]))  * pmtcteff # MTCT from those on treatment (not eligible for PMTCT)
+            mtctuntx     = sum(birthrate * sum(people[undx,:,t]+people[fail,:,t])) * effmtct  # MTCT from those undiagnosed or failed (also not eligible)
+            birthselig   = sum(birthrate * sum(people[dx,:,t])) # Births to diagnosed mothers eligible for PMTCT
+            if numpmtct[t]>1: # It's greater than 1: assume it's a number
+                receivepmtct = min(numpmtct[t], birthselig) # Births protected by PMTCT -- constrained by number eligible 
+            else: # It's a proportion
+                receivepmtct = numpmtct[t]*birthselig # Births protected by PMTCT -- constrained by number eligible 
+            mtctdx = (birthselig - receivepmtct) * effmtct # MTCT from those diagnosed not receiving PMTCT
+            mtctpmtct = receivepmtct * pmtcteff # MTCT from those receiving PMTCT
+            S['mtct'][0,t] = mtctuntx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components
+            
         
         ###############################################################################
         ## Population transitions
@@ -314,13 +323,29 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2):
                         raise Exception('Females are transitioning into a male population! (%s->%s)' % (G['meta']['pops']['short'][p1], G['meta']['pops']['short'][p2]))
                         
                     # Now actually do it for the people array
-                    peoplemoving = people[:, p1, t] * absolute(transrate) * dt
                     if transrate > 0: # Normal situation, e.g. aging - people move from one pop to another
+                        peoplemoving = people[:, p1, t] * absolute(transrate) * dt                        
                         people[:, p1, t] -= peoplemoving # Take away from pop1...
                         people[:, p2, t] += peoplemoving # ... then add to pop2
                     else: # Otherwise: it's births
-                        people[G['sus'], p2, t] += sum(peoplemoving)*(1-effmtct)
-                        people[G['undx'][0], p2, t] += sum(peoplemoving)*effmtct
+                        birthrate = absolute(transrate) * dt
+                        
+                        popbirths    = sum(birthrate * people[:,p1,t])
+                        mtcttx       = (birthrate * sum(people[tx1,p1,t] +people[tx2,p1,t]))  * pmtcteff # MTCT from those on treatment (not eligible for PMTCT)
+                        mtctuntx     = (birthrate * sum(people[undx,p1,t]+people[fail,p1,t])) * effmtct  # MTCT from those undiagnosed or failed (also not eligible)
+                        birthselig   = (birthrate * sum(people[dx,p1,t])) # Births to diagnosed mothers eligible for PMTCT
+                        if numpmtct[t]>1: # It's greater than 1: assume it's a number
+                            receivepmtct = min(numpmtct[t]*float(popbirths)/float(S['births'][0,t]), birthselig) # Births protected by PMTCT -- constrained by number eligible 
+                        else: # It's a proportion
+                            receivepmtct = numpmtct[t]*birthselig # Births protected by PMTCT -- constrained by number eligible 
+                        mtctdx = (birthselig - receivepmtct) * effmtct # MTCT from those diagnosed not receiving PMTCT
+                        mtctpmtct = receivepmtct * pmtcteff # MTCT from those receiving PMTCT
+                        popmtct = mtctuntx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components                        
+                        
+                        S['mtct'][0,t] += popmtct                   
+                        
+                        people[G['sus'], p2, t] += popbirths - popmtct
+                        people[G['undx'][0], p2, t] += popmtct
 #                        print('NB, not implemented') # TODO -- get these births working
 #                        
 #                        # The proportion of births infected
