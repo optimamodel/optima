@@ -272,8 +272,6 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2):
         
         # We have two ways to calculate number of births...
         if (asym<0).any(): # Method 1 -- children are being modelled directly
-#            print('NB, not implemented') # TODO Use negative entries in transitions matrix
-#            birthrate = M['birth'][:,t] # Use birthrate parameter from input spreadsheet
             S['births'][0,t] = 0
             for p1 in xrange(npops):
                 for p2 in xrange(npops):
@@ -346,14 +344,6 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2):
                         
                         people[G['sus'], p2, t] += popbirths - popmtct
                         people[G['undx'][0], p2, t] += popmtct
-#                        print('NB, not implemented') # TODO -- get these births working
-#                        
-#                        # The proportion of births infected
-#                        propbirthsinfected = infectedbirths / totalbirths;
-#                        
-#                        # People stay in pop1 with new babies going into either susceptible or CD4>500 in pop2
-#                        people([pg['sus'] pg.undiag(1)], p2, t) = people([pg['sus'] pg.undiag(1)], p2, t) + ...
-#                            + sum(peoplemoving) * [1-propbirthsinfected; propbirthsinfected];
                             
         ## Symmetric transitions - people swap between two populations
         for p1 in xrange(npops):
