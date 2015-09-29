@@ -13,9 +13,8 @@ def makedatapars(D, verbose=2):
     ###############################################################################
 
     
-    from printv import printv
+    from liboptima.utils import sanitize,printv
     from numpy import array, isnan, zeros, shape, mean
-    from utils import sanitize
     printv('Converting data to parameters...', 1, verbose)
     
     
