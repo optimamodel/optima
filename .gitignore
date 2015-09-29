@@ -9,7 +9,3 @@ server/p-env
 server/build
 \~\$*
 *.prj
-*.bin
-*.json
-*.xlsx
-*.npz
