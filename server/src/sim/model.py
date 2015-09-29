@@ -283,10 +283,10 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2):
               
         else: # Method 2 -- children are not being modelled directly
             birthrate = M['birth'][:,t] # Use birthrate parameter from input spreadsheet
-            S['births'][0,t] = sum(birthrate * allpeople[:,t])
-            mtcttx       = sum(birthrate * sum(people[tx1,:,t] +people[tx2,:,t]))  * pmtcteff # MTCT from those on treatment (not eligible for PMTCT)
-            mtctuntx     = sum(birthrate * sum(people[undx,:,t]+people[fail,:,t])) * effmtct  # MTCT from those undiagnosed or failed (also not eligible)
-            birthselig   = sum(birthrate * sum(people[dx,:,t])) # Births to diagnosed mothers eligible for PMTCT
+            S['births'][0,t] = sum(birthrate * dt * allpeople[:,t])
+            mtcttx       = sum(birthrate * dt * sum(people[tx1,:,t] +people[tx2,:,t]))  * pmtcteff # MTCT from those on treatment (not eligible for PMTCT)
+            mtctuntx     = sum(birthrate * dt * sum(people[undx,:,t]+people[fail,:,t])) * effmtct  # MTCT from those undiagnosed or failed (also not eligible)
+            birthselig   = sum(birthrate * dt * sum(people[dx,:,t])) # Births to diagnosed mothers eligible for PMTCT
             if numpmtct[t]>1: # It's greater than 1: assume it's a number
                 receivepmtct = min(numpmtct[t], birthselig) # Births protected by PMTCT -- constrained by number eligible 
             else: # It's a proportion
@@ -326,12 +326,12 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2):
                         people[:, p1, t] -= peoplemoving # Take away from pop1...
                         people[:, p2, t] += peoplemoving # ... then add to pop2
                     else: # Otherwise: it's births
-                        birthrate = absolute(transrate) * dt
+                        birthrate = absolute(transrate)
                         
-                        popbirths    = sum(birthrate * people[:,p1,t])
-                        mtcttx       = (birthrate * sum(people[tx1,p1,t] +people[tx2,p1,t]))  * pmtcteff # MTCT from those on treatment (not eligible for PMTCT)
-                        mtctuntx     = (birthrate * sum(people[undx,p1,t]+people[fail,p1,t])) * effmtct  # MTCT from those undiagnosed or failed (also not eligible)
-                        birthselig   = (birthrate * sum(people[dx,p1,t])) # Births to diagnosed mothers eligible for PMTCT
+                        popbirths    = sum(birthrate * dt * people[:,p1,t])
+                        mtcttx       = (birthrate * dt * sum(people[tx1,p1,t] +people[tx2,p1,t]))  * pmtcteff # MTCT from those on treatment (not eligible for PMTCT)
+                        mtctuntx     = (birthrate * dt * sum(people[undx,p1,t]+people[fail,p1,t])) * effmtct  # MTCT from those undiagnosed or failed (also not eligible)
+                        birthselig   = (birthrate * dt * sum(people[dx,p1,t])) # Births to diagnosed mothers eligible for PMTCT
                         if numpmtct[t]>1: # It's greater than 1: assume it's a number
                             receivepmtct = min(numpmtct[t]*float(popbirths)/float(S['births'][0,t]), birthselig) # Births protected by PMTCT -- constrained by number eligible 
                         else: # It's a proportion
