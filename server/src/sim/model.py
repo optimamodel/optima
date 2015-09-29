@@ -6,16 +6,21 @@ from copy import deepcopy
 
 def model(G, tmpM, tmpF, opt, initstate=None, verbose=2, safetymargin=0.8, benchmark=False):
     """
-    This function runs the model.
+    This function runs the model. Safetymargin is how close to get to moving all people from a compartment in a single timestep.
     
-    Version: 2015feb04 by cliffk
+    Version: 2015aug23 by cliffk
     """
+    
     printv('Running model...', 1, verbose, newline=False)
-    M = deepcopy(tmpM)
-    F = deepcopy(tmpF)
+    if benchmark: 
+        from utils import tic, toc
+        starttime = tic()
+
     ###############################################################################
     ## Setup
     ###############################################################################
+    M = deepcopy(tmpM)
+    F = deepcopy(tmpF)
     
     eps = 1e-3 # Define another small number to avoid divide-by-zero errors
     
@@ -69,7 +74,6 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2, safetymargin=0.8, bench
     ## Metaparameters to get nice diagnosis fits
     dxtime  = fit2time(F['dx'],  S['tvec'] - G['datayears'].mean()) # Subtraction to normalize F['dx'][2]
     
-    
     ## Shorten variables and remove dict calls to make things faster...
     
     # Disease state indices
@@ -121,9 +125,6 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2, safetymargin=0.8, bench
     propcirc = M['circum']    # Proportion of men circumcised (P)
     tobecirc = M['numcircum'] # Number of men to be circumcised (N)
     mtx1     = M['tx1']       # 1st line treatement (N) -- tx1 already used for index of people on treatment
-    mtx2     = M['tx2']       # 2nd line treatement (N) -- tx2 already used for index of people on treatment
-    txtotal  = M['txtotal']   # Total number on treatment -- initialised as zeros (N or P)
-    txelig   = M['txelig']    # Total eligible for treatment (N)
     hivtest  = M['hivtest']   # HIV testing (P)
     aidstest = M['aidstest']  # HIV testing in AIDS stage (P)
     
@@ -238,7 +239,8 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2, safetymargin=0.8, bench
             try:
                 osteff = 1 - min(1,numost/numpwid)*effost # Proportion of PWID on OST, making sure there aren't more people on OST than PWID
             except:
-                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                print('OST calculation failed')
+                raise
             if osteff<0: raise Exception('Bug in osteff = 1 - min(1,numost/numpwid)*effost: osteff=%f numost=%f numpwid=%f effost=%f' % (osteff, numost, numpwid, effost))
        
        # Iterate through partnership pairs
@@ -369,7 +371,11 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2, safetymargin=0.8, bench
             if t < npts-1: # Perform for all but the last timestep
                 for pop in xrange(npops): # Loop through the populations
                     if male[pop]: # Only calculate for males
-                        propcirc[pop, t+1] = median([0, 1, (numcircad[pop] + newlycirc[pop]) / newsusmales[pop]]) # Circumcision coverage for next time step (element of [0, 1])
+                        try:
+                            propcirc[pop, t+1] = median([0, 1, (numcircad[pop] + newlycirc[pop]) / newsusmales[pop]]) # Circumcision coverage for next time step (element of [0, 1])
+                        except:
+                            print('Circumcision calculation failed')
+                            raise
         else:
             newlycirc = zeros(npops)
             
@@ -493,7 +499,7 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2, safetymargin=0.8, bench
                 for errstate in xrange(nstates): # Loop over all heath states
                     for errpop in xrange(npops): # Loop over all populations
                         if not(people[errstate,errpop,t+1]>=0):
-                            print('WARNING, Non-positive people found: people[%s, %s, %s] = %s' % (t+1, errpop, errstate, people[errstate,errpop,t+1]))
+                            printv('WARNING, Non-positive people found: people[%s, %s, %s] = %s' % (errstate, errpop, t+1, people[errstate,errpop,t+1]), 4, verbose=verbose)
                             people[errstate,errpop,t+1] = 0 # Reset
         
         # Do some sanity checks
@@ -510,6 +516,7 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2, safetymargin=0.8, bench
 
 
     printv('  ...done running model.', 2, verbose)
+    if benchmark: toc(starttime)
     return S
 
 
@@ -549,7 +556,7 @@ def fit2time(pars, tvec):
     
     
     
-def equilibrate(G, M, Finit):
+def equilibrate(G, M, Finit, verbose=2):
     """
     Calculate the quilibrium point by estimating the ratio of input and output 
     rates for each of the health states.
@@ -560,13 +567,9 @@ def equilibrate(G, M, Finit):
         Finit = fitted parameters for initial prevalence
         initpeople = nstates x npops array
     
-    Version: 2015aug27
+    Version: 2014nov26
     """
     from numpy import zeros, hstack, inf
-    
-    if any(Finit>1.0):
-        print('Initial HIV prevalence invalid in metaparameters')
-        Finit[Finit>1.0] = 1.0
     
     # Set parameters
     prevtoforceinf = 0.1 # Assume force-of-infection is proportional to prevalence -- 0.1 means that if prevalence is 10%, annual force-of-infection is 1%
@@ -575,14 +578,13 @@ def equilibrate(G, M, Finit):
     
     # Shorten key variables
     initpeople = zeros((G['nstates'],G['npops']))
-    allinitialpeople = M['popsize'][:,0]
-    allinfected = allinitialpeople * Finit[:] # Set initial infected population
+    allinfected = M['popsize'][:,0] * Finit[:] # Set initial infected population
     
     # Can calculate equilibrium for each population separately
     for p in xrange(G['npops']):
         # Set up basic calculations
+        uninfected = M['popsize'][p,0] * (1-Finit[p]) # Set initial susceptible population -- easy peasy! # TODO -- should this have F['popsize'] involved?
         popinfected = allinfected[p]
-        uninfected = allinitialpeople[p] - popinfected # Set initial susceptible population -- easy peasy! # TODO -- should this have F['popsize'] involved?
 
         # Treatment & treatment failure
         fractotal =  popinfected / sum(allinfected) # Fractional total of infected people in this population
@@ -625,7 +627,7 @@ def equilibrate(G, M, Finit):
         initpeople[G['tx2'], p] = treatment2
     
         if not((initpeople>=0).all()):
-            print('Non-positive people found during epidemic initialization!') # If not every element is a real number >0, throw an error
+            printv('Non-positive people found during epidemic initialization!', 4, verbose) # If not every element is a real number >0, throw an error
         
     return initpeople
 
