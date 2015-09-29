@@ -16,6 +16,7 @@ from makemodelpars import makemodelpars
 from quantile import quantile
 from optimize import saveoptimization, defaultobjectives, defaultconstraints, partialupdateM
 from getcurrentbudget import getcoverage
+from optimize import optimize
 
 
 
@@ -205,6 +206,13 @@ def minimizemoney(D, objectives=None, constraints=None, maxiters=1000, timelimit
                 fundingfactor *= 2
                 targetsmet, optparams = objectivecalc(array(optimparams)*fundingfactor, options)
                 print('Current funding factor: %f' % fundingfactor)
+            
+            
+            # Optimize spending
+            newD = optimize(D, objectives=None, constraints=None, maxiters=20, timelimit=None, verbose=5, name='tmp_minimizemoney', stoppingfunc = None) # Run default optimization
+            optparams = newD['debugresult']['allocarr'][1]  # Copy optimization parameters out of newD
+
+
             
             # Now home in on the solution
             print('========== Homing in on solution ==========')

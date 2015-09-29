@@ -268,7 +268,8 @@ def loadworkbook(filename='example.xlsx', input_programs = None, verbose=2):
                                     invalid = logical_or(array(validdata)>1, array(validdata)<0)
                                     if any(invalid):
                                         column = nonzero(invalid)[0]
-                                        raise Exception('Invalid entry in spreadsheet: parameter %s (row=%i, column(s)=%s, value=%i)' % (thispar, row, column, thesedata[column[0]]))
+                                        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                                        raise Exception('Invalid entry in spreadsheet: parameter %s (row=%i, column(s)=%s, value=%f)' % (thispar, row+1, column, thesedata[column[0]]))
                             
                             for programname, pops in programs_for_input_key(thispar, input_programs).iteritems(): # Link with programs...?
                                 if (programname in [programs[j]['name'] for j in range(len(programs))]) and ((not pops or pops==['']) or subparam in pops):
