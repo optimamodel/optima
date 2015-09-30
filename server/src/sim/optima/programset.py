@@ -10,6 +10,13 @@ import pylab
 import numpy
 import simbudget2
 
+#### TODO LIST
+# - Ignore data when plotting if there is a mismatch (if programset has been moved to a different region)
+# - Add perturbations to CCOCs
+# - Examine auto fitting
+# - Incorporate metamodality reflow
+# - Add metamodality tests
+
 coverage_params = ['numcircum','numost','numpmtct','numfirstline','numsecondline'] # This list is copied from makeccocs.py
 # What about aidstest, sharing, and breast?
 
