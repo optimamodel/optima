@@ -553,18 +553,26 @@ class Program(object):
             f,ax = pylab.subplots(1,1)
 
         if sim is not None:
+            if not isinstance(sim,simbudget2.SimBudget2):
+                raise Exception('You must provide a SimBudget2 to plot program data')
+
             # What is the index of this program in the alloc/budget?
             p = sim.getproject()
 
             if not sim.isinitialised():
                 sim.initialise()
 
-            prog_index = [a.name for a in sim.getprogramset().programs].index(self.name)
-            prog_start_index = numpy.argmin(numpy.abs(sim.program_start_year-sim.default_pars['tvec'])) if numpy.isfinite(sim.program_start_year) else None
-            prog_end_index = numpy.argmin(numpy.abs(sim.program_end_year-sim.default_pars['tvec'])) if numpy.isfinite(sim.program_end_year) else None
-            datacost = p.data['ccocs'][self.name]['cost']
-            cost_x_limit = max(max(sim.budget[prog_index,:]),numpy.nanmax(datacost))*2
-            popnumber = [a['short_name'] for a in p.metadata['inputpopulations']].index(pop)
+            prog_list = [a.name for a in sim.getprogramset().programs]
+            if self.name not in prog_list:
+                sim = None
+                cost_x_limit = 1e6
+            else:
+                prog_index = [a.name for a in sim.getprogramset().programs].index(self.name)
+                prog_start_index = numpy.argmin(numpy.abs(sim.program_start_year-sim.default_pars['tvec'])) if numpy.isfinite(sim.program_start_year) else None
+                prog_end_index = numpy.argmin(numpy.abs(sim.program_end_year-sim.default_pars['tvec'])) if numpy.isfinite(sim.program_end_year) else None
+                datacost = p.data['ccocs'][self.name]['cost']
+                cost_x_limit = max(max(sim.budget[prog_index,:]),numpy.nanmax(datacost))*2
+                popnumber = [a['short_name'] for a in p.metadata['inputpopulations']].index(pop)
         else:
             cost_x_limit = 1e6
 
@@ -647,7 +655,7 @@ class Program(object):
                         modelpar_at_time = self.coverage_outcome[pop][par].evaluate(cc_at_time)
                         ax.axvline(spending_at_time, color=color,zorder=order)
                         ax.axhline(datapar_at_time, color=color,zorder=order)
-                        ax.scatter([spending_at_time,spending_at_time],[datapar_at_time,modelpar_at_time],color=color,zorder=order)
+                        # ax.scatter([spending_at_time,spending_at_time],[datapar_at_time,modelpar_at_time],color=color,zorder=order)
 
                     if prog_start_index is not None:
                         overlay_scatters(prog_start_index,'red',9)

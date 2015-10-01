@@ -2,6 +2,7 @@ import optima.ccocs as ccocs
 import optima
 
 r = optima.Project.load_json('projects/Dedza.json')
+s = optima.SimBudget2('Demo',r);
 
 ########## PLOTTING PROGRAMS
 # There are many different options for plotting programs
@@ -16,17 +17,17 @@ pset = r.programsets[0]
 # First, consider the plots that could be made for FSW programs
 # that affect condomcom in population FSW. This happens to be program 1
 # in the list of programs. So we can do the following
-pset.programs[1].plot_single('FSW') # Plot the cost-coverage curve
-pset.programs[1].plot_single('FSW','condomcom') # Plot the coverage-outcome curve
-pset.programs[1].plot_single('FSW','condomcom',cco=True) # Plot the cost-coverage-outcome curve
+pset.programs[1].plot_single('FSW',sim=s) # Plot the cost-coverage curve
+pset.programs[1].plot_single('FSW','condomcom',sim=s) # Plot the coverage-outcome curve
+pset.programs[1].plot_single('FSW','condomcom',cco=True,sim=s) # Plot the cost-coverage-outcome curve
 
 # The ProgramSet class has overloaded indexing, which enables programs to be accessed as though
 # the ProgramSet was a dictionary. So instead of the above, we can do exactly the same thing with
-pset['FSW programs'].plot_single('FSW','condomcom',cco=True) # Plot the cost-coverage-outcome curve
+pset['FSW programs'].plot_single('FSW','condomcom',cco=True,sim=s) # Plot the cost-coverage-outcome curve
 # This works because pset.programs[1].name == 'FSW programs'
 
 # Now, we might want to plot all of the curves associated with a program. For this, use
-pset['FSW programs'].plot()
+pset['FSW programs'].plot(sim=s)
 
 ########## PLOTTING PROGRAMSETS
 # programset plotting is about superimposing programs that have overlapping coverage or effects
