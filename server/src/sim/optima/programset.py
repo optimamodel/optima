@@ -565,7 +565,7 @@ class Program(object):
             prog_list = [a.name for a in sim.getprogramset().programs]
             if self.name not in prog_list:
                 sim = None
-                cost_x_limit = 1e6
+                cost_x_limit = self.cost_coverage[pop].xlims()[0]
             else:
                 prog_index = [a.name for a in sim.getprogramset().programs].index(self.name)
                 prog_start_index = numpy.argmin(numpy.abs(sim.program_start_year-sim.default_pars['tvec'])) if numpy.isfinite(sim.program_start_year) else None
@@ -574,7 +574,7 @@ class Program(object):
                 cost_x_limit = max(max(sim.budget[prog_index,:]),numpy.nanmax(datacost))*2
                 popnumber = [a['short_name'] for a in p.metadata['inputpopulations']].index(pop)
         else:
-            cost_x_limit = 1e6
+            cost_x_limit = self.cost_coverage[pop].xlims()[0]
 
         if par is None:
             x_limit = cost_x_limit
@@ -589,6 +589,8 @@ class Program(object):
                 # Get the program data
                 datacost = p.data['ccocs'][self.name]['cost']
                 datacoverage = get_data_coverage(self.name,pop,sim)
+                print datacost
+                print datacoverage
                 ax.scatter(datacost,datacoverage,color='#666666',zorder=8)
 
                 # What is the alloc for this program?

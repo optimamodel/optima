@@ -57,6 +57,11 @@ class ccoc(object):
         p = self.convertparams(perturb,bounds)
         return self.function(x,p)
 
+    def xlims(self):
+        # Return sensible x-limits for the curve based on the parameters
+        # This is used for plotting if no data is available
+        return [0,1]
+
     def invert(self,y):
         p = self.convertparams()
         return self.inverse(y,p)
@@ -96,6 +101,9 @@ class cc_scaleup(ccoc):
         fe_params['funding'] = 0
         return fe_params
 
+    def xlims(self):
+        return [0,2e6]
+
 class cc_noscaleup(ccoc):
     def function(self,x,p):
         return cc2eqn(x,p)
@@ -121,6 +129,9 @@ class cc_noscaleup(ccoc):
         fe_params['coverageupper'] = 1
         fe_params['funding'] = 0
         return fe_params
+
+    def xlims(self):
+        return [0,2e6]
 
 class co_cofun(ccoc):
     def function(self,x,p):
