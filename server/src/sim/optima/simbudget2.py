@@ -92,7 +92,8 @@ class SimBudget2(Sim):
         for i in xrange(len(pops)): # Iterate over the populations
             self.popsizes[pops[i]] = people[:,i,:].sum(axis=(0))
 
-        self.popsizes['total'] = people.sum(axis=(0,1))
+        self.popsizes['total'] = people.sum(axis=(0,1)) # This should be removed in favour of using Overall
+        self.popsizes['Overall'] = people.sum(axis=(0,1)) # This popsize is used for programs affecting all populations
         self.popsizes['aidstest'] = people[aidstested,:,:].sum(axis=(0,1)) 
         self.popsizes['numost'] = people[:,injects,:].sum(axis=(0,1))
         self.popsizes['sharing'] = self.popsizes['numost']

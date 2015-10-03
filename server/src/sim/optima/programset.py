@@ -572,7 +572,8 @@ class Program(object):
                 prog_end_index = numpy.argmin(numpy.abs(sim.program_end_year-sim.default_pars['tvec'])) if numpy.isfinite(sim.program_end_year) else None
                 datacost = p.data['ccocs'][self.name]['cost']
                 cost_x_limit = max(2*max(sim.budget[prog_index,:]),2*numpy.nanmax(datacost),self.cost_coverage[pop].xlims()[1])
-                popnumber = [a['short_name'] for a in p.metadata['inputpopulations']].index(pop)
+                if pop != 'Overall':
+                    popnumber = [a['short_name'] for a in p.metadata['inputpopulations']].index(pop)
         else:
             cost_x_limit = self.cost_coverage[pop].xlims()[1]
 
@@ -622,11 +623,17 @@ class Program(object):
 
                 if prog_start_index is not None:
                     ax.axvline(x=self.cost_coverage[pop].evaluate(sim.budget[prog_index,prog_start_index]), color='red',zorder=9)
-                    ax.axhline(y=sim.default_pars[par][popnumber,prog_start_index], color='red',zorder=9)
+                    if pop == 'Overall':
+                        ax.axhline(y=sim.popsizes['Overall'][prog_start_index], color='red',zorder=9)
+                    else:
+                        ax.axhline(y=sim.default_pars[par][popnumber,prog_start_index], color='red',zorder=9)
 
                 if prog_end_index is not None:
                     ax.axvline(x=self.cost_coverage[pop].evaluate(sim.budget[prog_index,prog_end_index]), color='blue',zorder=8)
-                    ax.axhline(y=sim.default_pars[par][popnumber,prog_end_index], color='blue',zorder=9)
+                    if pop == 'Overall':
+                        ax.axhline(y=sim.popsizes['Overall'][prog_end_index], color='red',zorder=9)
+                    else:
+                        ax.axhline(y=sim.default_pars[par][popnumber,prog_end_index], color='blue',zorder=9)
 
         else:
             x_limit = cost_x_limit
