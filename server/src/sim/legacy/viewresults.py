@@ -14,7 +14,7 @@ def viewuncerresults(E, whichgraphs=whichgraphdefaults, simstartyear=2000, simen
     npops = len(E['prev']['pops']) # Calculate number of populations
     
     if onefig:
-        figh = figure(figsize=(24,16), facecolor='w')
+        figh = figure(figsize=(18,12), facecolor='w')
         figh.subplots_adjust(left=0.04) # Less space on left
         figh.subplots_adjust(right=0.99) # Less space on right
         figh.subplots_adjust(top=0.98) # Less space on bottom
@@ -134,7 +134,7 @@ def viewmultiresults(M, whichgraphs=whichgraphdefaults, simstartyear=2000, simen
 
     
     if onefig:
-        figh = figure(figsize=(24,16), facecolor='w')
+        figh = figure(figsize=(18,12), facecolor='w')
         figh.subplots_adjust(left=0.04) # Less space on left
         figh.subplots_adjust(right=0.99) # Less space on right
         figh.subplots_adjust(top=0.98) # Less space on bottom
@@ -243,7 +243,7 @@ def viewparameters(M,show_wait=True):
     nx = ceil(len(M.keys())/ny)
     count = 0
     
-    figh = figure(figsize=(24,16), facecolor='w')
+    figh = figure(figsize=(18,12), facecolor='w')
     figh.subplots_adjust(left=0.04) # Less space on left
     figh.subplots_adjust(right=0.99) # Less space on right
     figh.subplots_adjust(top=0.98) # Less space on bottom

@@ -5,6 +5,7 @@ from collections import defaultdict
 import ccocs
 from copy import deepcopy
 import liboptima.dataio_binary as dataio_binary
+import liboptima
 import pylab
 import numpy
 import simbudget2

@@ -2,7 +2,8 @@ import optima.ccocs as ccocs
 import optima
 import numpy
 from copy import deepcopy
-r = optima.Project.load_json('./projects/Dedza.json')
+r = optima.Project.load_json('./projects/Malawi 150820.json')
+#r = optima.Project.load_json('./projects/Dedza.json')
 
 s  = optima.SimBudget2('Default',r)
 

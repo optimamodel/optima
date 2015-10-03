@@ -5,20 +5,21 @@ Created on Thu Jul 23 18:03:48 2015
 @author: David Kedziora
 """
 
-import add_optima_paths
-from portfolio import Portfolio
-from project import Project
+#import add_optima_paths
+import optima, liboptima
+#from portfolio import Portfolio
+#from project import Project
 import os
 
 # Create a Portfolio to hold all of Malawi's districts (i.e. Projects).
-p1 = Portfolio('Malawi Project')
+p1 = optima.Portfolio('Malawi Project')
 
-nationcheck = Project.load('./projects/Malawi 150820.json')
+nationcheck = optima.Project.load_json('./projects/Final Malawi Archive/Malawi 150820.json')
 
 # List all the json files in the projects sub-directory.
-templist = [x for x in os.listdir('./projects/') if x.endswith('.json')]
+templist = [x for x in os.listdir('./projects/Final Malawi Archive/') if x.endswith('.json')]
 
-reglimit = 2    # How many districts do you want to load?
+reglimit = 50    # How many districts do you want to load?
 
 calc = 0
 regcount = 0
@@ -27,7 +28,7 @@ for x in templist:
     if x[:-5].replace(" ", "").isalpha():
         regcount += 1
         print x
-        newproject = Project.load('./projects/' + x)           # Load up a Project from the json file.
+        newproject = optima.Project.load_json('./projects/Final Malawi Archive/' + x)           # Load up a Project from the json file.
         p1.appendproject(newproject)                          # Put that Project into a Portfolio.
         print('Project alloc total: %f' % sum(newproject.data['origalloc']))       
         calc += sum(newproject.data['origalloc'])
@@ -138,3 +139,12 @@ def refineall():
 p1.geoprioanalysis()                # Run the GPA algorithm.
 
 #p1.geoprioreview(p1.gpalist[0])     # Did those results go by too quickly? Review the plots and a results summary.
+
+#i = -2
+#import matplotlib.pyplot as plt
+#ax = p1.projectlist[i].plotBOCspline(returnplot = True)
+#ms = 10
+#mw = 2
+#ax.plot(p1.projectlist[i].BOCx, p1.projectlist[i].BOCy, 'x', markersize = ms, markeredgewidth = mw, label = 'Tested Totals')
+#ax.legend(loc='best')
+#plt.show()

@@ -6,7 +6,7 @@ Created on Thu Jun 18 21:46:25 2015
 """
 
 from numpy import arange
-from ballsd import ballsd
+import liboptima
 
 # Simple scaling of budget totals to adhere to fixed grand total constraint.
 # Must also adhere to minimum bound constraints.
@@ -42,7 +42,7 @@ def gpaoptimisefixedtotal(projectlist):
     budgettotals = []
     for i in arange(0,len(projectlist)):
         print('Original allocation for project %s:' % projectlist[i].getprojectname())
-        projectlist[i].printprograms()
+        #projectlist[i].printprograms()
         print(projectlist[i].getorigalloc())
         budgettotals.append(sum(projectlist[i].getorigalloc()))
     grandtotal = sum(budgettotals)
@@ -51,7 +51,7 @@ def gpaoptimisefixedtotal(projectlist):
     # print budgettotals
     
                
-    X, FVAL, EXITFLAG, OUTPUT = ballsd(totalobjectivefunc, budgettotals, options=(projectlist, grandtotal, minbound), xmin = minbound, xmax = maxbound)
+    X, FVAL, EXITFLAG, OUTPUT = liboptima.ballsd.ballsd(totalobjectivefunc, budgettotals, options=(projectlist, grandtotal, minbound), xmin = minbound, xmax = maxbound)
     X = constrainbudgetinputs(X, grandtotal, minbound)
     
     # Display GPA results for debugging purposes.
