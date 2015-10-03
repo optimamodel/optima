@@ -565,16 +565,16 @@ class Program(object):
             prog_list = [a.name for a in sim.getprogramset().programs]
             if self.name not in prog_list:
                 sim = None
-                cost_x_limit = self.cost_coverage[pop].xlims()[0]
+                cost_x_limit = self.cost_coverage[pop].xlims()[1]
             else:
                 prog_index = [a.name for a in sim.getprogramset().programs].index(self.name)
                 prog_start_index = numpy.argmin(numpy.abs(sim.program_start_year-sim.default_pars['tvec'])) if numpy.isfinite(sim.program_start_year) else None
                 prog_end_index = numpy.argmin(numpy.abs(sim.program_end_year-sim.default_pars['tvec'])) if numpy.isfinite(sim.program_end_year) else None
                 datacost = p.data['ccocs'][self.name]['cost']
-                cost_x_limit = max(max(sim.budget[prog_index,:]),numpy.nanmax(datacost))*2
+                cost_x_limit = max(2*max(sim.budget[prog_index,:]),2*numpy.nanmax(datacost),self.cost_coverage[pop].xlims()[1])
                 popnumber = [a['short_name'] for a in p.metadata['inputpopulations']].index(pop)
         else:
-            cost_x_limit = self.cost_coverage[pop].xlims()[0]
+            cost_x_limit = self.cost_coverage[pop].xlims()[1]
 
         if par is None:
             x_limit = cost_x_limit
