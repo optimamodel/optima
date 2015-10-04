@@ -93,6 +93,7 @@ class SimBoxOpt(SimBox):
         optalloc = tempD['optalloc']
         optbudget = timevarying(optalloc, ntimepm = 1, nprogs = len(optalloc), tvec = self.getproject().options['partvec'])        
 
+        newsim = None
         if makenew:
             origsim.optimised = True
             

@@ -14,10 +14,10 @@ import os
 # Create a Portfolio to hold all of Malawi's districts (i.e. Projects).
 p1 = optima.Portfolio('Malawi Project')
 
-nationcheck = optima.Project.load_json('./projects/Final Malawi Archive/Malawi 150820.json')
+nationcheck = optima.Project.load_json('./projects/Current Malawi GPA Files/Malawi 150820.json')
 
 # List all the json files in the projects sub-directory.
-templist = [x for x in os.listdir('./projects/Final Malawi Archive/') if x.endswith('.json')]
+templist = [x for x in os.listdir('./projects/Current Malawi GPA Files/') if x.endswith('.json')]
 
 reglimit = 50    # How many districts do you want to load?
 
@@ -28,7 +28,7 @@ for x in templist:
     if x[:-5].replace(" ", "").isalpha():
         regcount += 1
         print x
-        newproject = optima.Project.load_json('./projects/Final Malawi Archive/' + x)           # Load up a Project from the json file.
+        newproject = optima.Project.load('./projects/Current Malawi GPA Files/' + x)           # Load up a Project from the json file.
         p1.appendproject(newproject)                          # Put that Project into a Portfolio.
         print('Project alloc total: %f' % sum(newproject.data['origalloc']))       
         calc += sum(newproject.data['origalloc'])
@@ -136,11 +136,13 @@ def refineall():
 
 #testsimopt(newproject)
 
+#refineall()
+
 p1.geoprioanalysis()                # Run the GPA algorithm.
 
 #p1.geoprioreview(p1.gpalist[0])     # Did those results go by too quickly? Review the plots and a results summary.
 
-#i = -2
+#i = 0
 #import matplotlib.pyplot as plt
 #ax = p1.projectlist[i].plotBOCspline(returnplot = True)
 #ms = 10
