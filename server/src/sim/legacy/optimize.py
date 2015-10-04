@@ -33,15 +33,15 @@ def runmodelalloc(D, thisalloc, origalloc, parindices, randseed, rerunfinancial=
     newM = makemodelpars(newD['P'], newD['opt'], withwhat='c', verbose=0) # Don't print out
     
     # Hideous hack for ART to use linear unit cost
-    try:
-        from utils import sanitize
-        artind = D['data']['meta']['progs']['short'].index('ART')
-        currcost = sanitize(D['data']['costcov']['cost'][artind])[-1]
-        currcov = sanitize(D['data']['costcov']['cov'][artind])[-1]
-        unitcost = currcost/currcov
-        newM['tx1'].flat[parindices] = thisalloc[artind]/unitcost
-    except:
-        print('Attempt to calculate ART coverage failed for an unknown reason')
+    #try:
+    from liboptima.utils import sanitize
+    artind = D['data']['meta']['progs']['short'].index('ART')
+    currcost = sanitize(D['data']['costcov']['cost'][artind])[-1]
+    currcov = sanitize(D['data']['costcov']['cov'][artind])[-1]
+    unitcost = currcost/currcov
+    newM['tx1'].flat[parindices] = thisalloc[artind]/unitcost
+   #except:
+    #    print('Attempt to calculate ART coverage failed for an unknown reason')
     
     # Now update things
     newD['M'] = partialupdateM(D['M'], newM, parindices)
@@ -733,34 +733,34 @@ def partialupdateM(oldM, newM, indices, setbefore=False, setafter=True):
         if key not in ['transit', 'pships', 'const', 'tvec', 'hivprev', 'totalacts']: # Exclude certain keys that won't be updated
             if hasattr(output[key],'keys'): # It's a dict, loop again
                 for key2 in output[key].keys():
-                    try:
-                        if ndim(output[key][key2])==1:
-                            output[key][key2][indices] = newM[key][key2][indices]
-                            if setbefore: output[key][key2][:min(indices)] = newM[key][key2][:min(indices)]
-                            if setafter: output[key][key2][max(indices):] = newM[key][key2][max(indices):]
-                        elif ndim(output[key][key2])==2:
-                            output[key][key2][:,indices] = newM[key][key2][:,indices]
-                            if setbefore: output[key][key2][:,:min(indices)] = newM[key][key2][:,:min(indices)]
-                            if setafter: output[key][key2][:,max(indices):] = newM[key][key2][:,max(indices):]
-                        else:
-                            raise Exception('%i dimensions for parameter M.%s.%s' % (ndim(output[key][key2][indices]), key, key2))
-                    except:
-                        print('Could not set indices for parameter M.%s.%s, indices %i-%i' % (key, key2, min(indices), max(indices)))
+                    #try:
+                    if ndim(output[key][key2])==1:
+                        output[key][key2][indices] = newM[key][key2][indices]
+                        if setbefore: output[key][key2][:min(indices)] = newM[key][key2][:min(indices)]
+                        if setafter: output[key][key2][max(indices):] = newM[key][key2][max(indices):]
+                    elif ndim(output[key][key2])==2:
+                        output[key][key2][:,indices] = newM[key][key2][:,indices]
+                        if setbefore: output[key][key2][:,:min(indices)] = newM[key][key2][:,:min(indices)]
+                        if setafter: output[key][key2][:,max(indices):] = newM[key][key2][:,max(indices):]
+                    else:
+                        raise Exception('%i dimensions for parameter M.%s.%s' % (ndim(output[key][key2][indices]), key, key2))
+                    #except:
+                    #    print('Could not set indices for parameter M.%s.%s, indices %i-%i' % (key, key2, min(indices), max(indices)))
 #                        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
             else:
-                try:
-                    if ndim(output[key])==1:
-                        output[key][indices] = newM[key][indices]
-                        if setbefore: output[key][:min(indices)] = newM[key][:min(indices)]
-                        if setafter: output[key][max(indices):] = newM[key][max(indices):]
-                    elif ndim(output[key])==2:
-                        output[key][:,indices] = newM[key][:,indices]
-                        if setbefore: output[key][:,:min(indices)] = newM[key][:,:min(indices)]
-                        if setafter: output[key][:,max(indices):] = newM[key][:,max(indices):]
-                    else:
-                        raise Exception('%i dimensions for parameter M.%s' % (ndim(output[key][indices]), key, key2))
-                except:
-                    print('Could not set indices for parameter M.%s, indices %i-%i' % (key, min(indices), max(indices)))
+                #try:
+                if ndim(output[key])==1:
+                    output[key][indices] = newM[key][indices]
+                    if setbefore: output[key][:min(indices)] = newM[key][:min(indices)]
+                    if setafter: output[key][max(indices):] = newM[key][max(indices):]
+                elif ndim(output[key])==2:
+                    output[key][:,indices] = newM[key][:,indices]
+                    if setbefore: output[key][:,:min(indices)] = newM[key][:,:min(indices)]
+                    if setafter: output[key][:,max(indices):] = newM[key][:,max(indices):]
+                else:
+                    raise Exception('%i dimensions for parameter M.%s' % (ndim(output[key][indices]), key, key2))
+                #except:
+                #    print('Could not set indices for parameter M.%s, indices %i-%i' % (key, min(indices), max(indices)))
 #                    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     
     output['totalacts'] = totalacts(output, len(output['tvec'])) # Update total acts

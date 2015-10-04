@@ -113,32 +113,17 @@ class SimBudget(Sim):
         # Note: If the range of indices do not cover enough of the data, you will get strange tx1 problems.
         
         # Hideous hack for ART to use linear unit cost
-        try:
-            from liboptima.utils import sanitize
-            artind = r.data['meta']['progs']['short'].index('ART')
-            currcost = sanitize(r.data['costcov']['cost'][artind])[-1]
-            currcov = sanitize(r.data['costcov']['cov'][artind])[-1]
-            unitcost = currcost/currcov
-            tempparsmodel['tx1'].flat[parindices] = self.alloc[artind]/unitcost
-        except:
-            print('Attempt to calculate ART coverage failed for an unknown reason')
-        
+        from liboptima.utils import sanitize
+        artind = r.data['meta']['progs']['short'].index('ART')
+        currcost = sanitize(r.data['costcov']['cost'][artind])[-1]
+        currcov = sanitize(r.data['costcov']['cov'][artind])[-1]
+        unitcost = currcost/currcov
+        tempparsmodel['tx1'].flat[parindices] = self.alloc[artind]/unitcost
+
         from optimize import partialupdateM        
         
-        # Now update things
-        self.parsmodel['condom'] = dict()
-        self.parsmodel['condom']['reg'] = self.parsmodel['condomreg']
-        self.parsmodel['condom']['cas'] = self.parsmodel['condomcas']
-        self.parsmodel['condom']['com'] = self.parsmodel['condomcom']
-        del self.parsmodel['condomreg']
-        del self.parsmodel['condomcas']
-        del self.parsmodel['condomcom']
         self.parsmodel = partialupdateM(deepcopy(self.parsmodel), deepcopy(tempparsmodel), parindices)
-        self.parsmodel['condomreg'] = self.parsmodel['condom']['reg']
-        self.parsmodel['condomcas'] = self.parsmodel['condom']['cas']
-        self.parsmodel['condomcom'] = self.parsmodel['condom']['com']
-        del self.parsmodel['condom']
-    
+
     # Work out the objective value of this SimBudget and its allocation.
     # WARNING: Currently bugged for multiple aims as normalisation values always reflect the final totals.
     def calculateobjectivevalue(self, normaliser = None):
