@@ -61,7 +61,7 @@ def testsimopt(r1):
 # Use this if you want to check GPA results for any project, numbered from 1 to 32.
 # Only run this if you have run geoprioanalysis.
 def check(x):
-    sb = p1.gpalist[-1][x-1]    
+    sb = p1.gpalist[x-1]    
     
     print(sb.getproject().getprojectname())
 
