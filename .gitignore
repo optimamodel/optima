@@ -12,3 +12,4 @@ server/build
 *.bin
 *.json
 *.xlsx
+*.npz
