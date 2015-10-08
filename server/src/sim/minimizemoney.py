@@ -186,25 +186,38 @@ def minimizemoney(D, objectives=None, constraints=None, maxiters=1000, timelimit
             
             options['randseed'] = s
             
-            # First, see if it meets targets already
-            print('========== Checking if current allocation meets targets ==========')
-            targetsmet, optparams = objectivecalc(optimparams, options)
-            if targetsmet:
-                print('DONE: Current allocation meets targets!')
-                break
+            # Run current allocation for debugging purposes, as this may affect 'options' persistently somehow...
+            print('========== Running current allocation to set up baseline ==========')
+            targetsmet, optparams = objectivecalc(optimparams, options)            
             
-            # Now try infinite money
+            # Try infinite money
             print('========== Checking if infinite allocation meets targets ==========')
             targetsmet, optparams = objectivecalc(array(optimparams)*1e9, options)
             if not(targetsmet):
                 print("DONE: Infinite allocation can't meet targets!")
                 break
             
+            # Try zero money
+            print('========== Checking if zero allocation meets targets ==========')
+            targetsmet, optparams = objectivecalc(array(optimparams)*1e-9, options)
+            if targetsmet:
+                print("DONE: Even zero allocation meets targets!")
+                break
+            
+            # First, see if it meets targets already
+            print('========== Checking if current allocation meets targets ==========')
+            targetsmet, optparams = objectivecalc(optimparams, options)
+            
+            # Halve funding if targets are already met...
+            print('========== Halve funding until floor is reached ==========')
+            fundingfactor = 1.0
+            while targetsmet:
+                fundingfactor /= 2
+                targetsmet, optparams = objectivecalc(array(optimparams)*fundingfactor, options)
+                print('Current funding factor: %f' % fundingfactor)
             
             # Keep doubling funding till targets are met...
             print('========== Doubling funding until ceiling is reached ==========')
-            fundingfactor = 1.0
-            targetsmet = False
             while not(targetsmet):
                 fundingfactor *= 2
                 targetsmet, optparams = objectivecalc(array(optimparams)*fundingfactor, options)
@@ -212,8 +225,9 @@ def minimizemoney(D, objectives=None, constraints=None, maxiters=1000, timelimit
             
             
             # Optimize spending
-            D['data']['origalloc'] = optparams
-            newD = optimize(D, objectives=None, constraints=None, maxiters=20, timelimit=100, verbose=5, name='tmp_minimizemoney', stoppingfunc = None) # Run default optimization
+            tempD = deepcopy(D)
+            tempD['data']['origalloc'] = optparams
+            newD = optimize(tempD, objectives=None, constraints=None, maxiters=20, timelimit=100, verbose=5, name='tmp_minimizemoney', stoppingfunc = None) # Run default optimization
             optimparams = newD['debugresult']['allocarr'][1][0]/fundingfactor  # Copy optimization parameters out of newD
 
 
