@@ -68,6 +68,7 @@ def objectivecalc(optimparams, options):
     targetsmet = False
     for key in options['targets']:
         if options['targets'][key]['use']: # Don't bother unless it's actually used
+            if key == 'deaths': key = 'death'   # Horrible hack to handle bug on the front-end that does not seem to be tracked.
             orig = R[key]['tot'][0][options['outindices'][0]]
             new = R[key]['tot'][0][options['outindices'][-1]]
             if options['targets'][key]['by_active']:
