@@ -52,7 +52,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           { id: 'mtct', title: 'Reduce annual mother-to-child transmission of HIV' },
           { id: 'mtctbreast', title: 'Reduce annual mother-to-child transmission of HIV among breastfeeding mothers' },
           { id: 'mtctnonbreast', title: 'Reduce annual mother-to-child transmission of HIV among non-breastfeeding mothers' },
-          { id: 'deaths', title: 'Reduce annual AIDS-related deaths' },
+          { id: 'death', title: 'Reduce annual AIDS-related deaths' },
           { id: 'dalys', title: 'Reduce annual HIV-related DALYs' }
         ],
         objectivesToMinimize: [
