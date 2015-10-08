@@ -138,7 +138,7 @@ def refineall():
 
 #refineall()
 
-p1.geoprioanalysis()                # Run the GPA algorithm.
+#p1.geoprioanalysis()                # Run the GPA algorithm.
 
 #p1.geoprioreview(p1.gpalist[0])     # Did those results go by too quickly? Review the plots and a results summary.
 

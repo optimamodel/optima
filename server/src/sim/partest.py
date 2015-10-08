@@ -2,8 +2,8 @@ import optima.ccocs as ccocs
 import optima
 import numpy
 from copy import deepcopy
-#r = optima.Project.load_json('./projects/Malawi 150820.json')
-r = optima.Project.load_json('./projects/Dedza.json')
+r = optima.Project.load_json('./projects/Current Malawi GPA Files - Copy/Malawi 150820.json')
+#r = optima.Project.load_json('./projects/Current Malawi GPA Files - Copy/Dedza.json')
 
 s  = optima.SimBudget2('Default',r)
 
@@ -11,4 +11,4 @@ s  = optima.SimBudget2('Default',r)
 # s.budget[0,:] = numpy.linspace(1,1e6,len(r.options['partvec']))
 # r.programsets[0]['FSW programs'].coverage_outcome['FSW']['condomcom'].fe_params = [0.975,0.975,1,1]
 
-r.programsets[0]['MSM programs'].plot(sim=s) # Plot the cost-coverage curve
+r.programsets[0]['FSW programs'].plot(sim=s) # Plot the cost-coverage curve
