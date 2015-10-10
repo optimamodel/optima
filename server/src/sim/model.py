@@ -283,8 +283,8 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2, safetymargin=0.8, bench
         else: # Method 2 -- children are not being modelled directly
             birthrate = M['birth'][:,t] # Use birthrate parameter from input spreadsheet
             S['births'][0,t] = sum(birthrate * dt * allpeople[:,t])
-            mtcttx       = sum(birthrate * dt * sum(people[tx1,:,t] +people[tx2,:,t]))  * pmtcteff # MTCT from those on treatment (not eligible for PMTCT)
-            mtctuntx     = sum(birthrate * dt * sum(people[undx,:,t]+people[fail,:,t])) * effmtct  # MTCT from those undiagnosed or failed (also not eligible)
+            mtcttx       = sum(birthrate * dt * sum(people[tx1,:,t]))  * pmtcteff # MTCT from those on treatment (not eligible for PMTCT)
+            mtctuntx     = sum(birthrate * dt * sum(people[undx,:,t])) * effmtct  # MTCT from those undiagnosed or failed (also not eligible)
             birthselig   = sum(birthrate * dt * sum(people[dx,:,t])) # Births to diagnosed mothers eligible for PMTCT
 
             if numpmtct[t]>1: # It's greater than 1: assume it's a number
