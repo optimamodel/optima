@@ -2,18 +2,18 @@
 // ====
 
 $grid-columns: (
-        '\31 ',
-        '\32 ',
-        '\33 ',
-        '\34 ',
-        '\35 ',
-        '\36 ',
-        '\37 ',
-        '\38 ',
-        '\39 ',
-        '\31 0',
-        '\31 1',
-        '\31 2',
+  '\31 ',
+  '\32 ',
+  '\33 ',
+  '\34 ',
+  '\35 ',
+  '\36 ',
+  '\37 ',
+  '\38 ',
+  '\39 ',
+  '\31 0',
+  '\31 1',
+  '\31 2',
 );
 
 $grid-columns-length: length($grid-columns);
@@ -57,23 +57,25 @@ $grid-gutter-half: $layout-gutter / 2;
   $escaped: nth($grid-columns, $i);
   $grid-current-column-width: $i * $grid-column-width;
 
-  .\+\+#{$i} {
-    @extend %grid-columns-all;
-    margin-left: $grid-current-column-width;
-  }
+  // temporaryily removed unused grid features since they don't work with 
 
-  .#{$escaped}\+\+ {
-    @extend %grid-columns-all;
-    margin-right: $grid-current-column-width;
-  }
-
-  .\-\-#{$i} {
-    @extend %grid-columns-push-pull;
-    left: -$grid-current-column-width;
-  }
-
-  .#{$escaped}\-\- {
-    @extend %grid-columns-push-pull;
-    left: $grid-current-column-width;
-  }
+  // .\+\+#{$i} {
+  //   @extend %grid-columns-all;
+  //   margin-left: $grid-current-column-width;
+  // }
+  //
+  // .#{$escaped}\+\+ {
+  //   @extend %grid-columns-all;
+  //   margin-right: $grid-current-column-width;
+  // }
+  //
+  // .\-\-#{$i} {
+  //   @extend %grid-columns-push-pull;
+  //   left: -$grid-current-column-width;
+  // }
+  //
+  // .#{$escaped}\-\- {
+  //   @extend %grid-columns-push-pull;
+  //   left: $grid-current-column-width;
+  // }
 }

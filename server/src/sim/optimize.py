@@ -178,6 +178,14 @@ def objectivecalc(optimparams, options):
     
     
 def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None, verbose=5, name='Default', stoppingfunc = None):
+    
+    # Hack to divert optimize function to minimizemoney if relevant objectives have been specified.
+    if objectives is not None:
+        if objectives['what'] == 'money':
+            from minimizemoney import minimizemoney
+            D = minimizemoney(D, objectives, constraints, maxiters, timelimit, verbose, name, stoppingfunc)
+            return D
+
     """ Perform the actual optimization """
     from time import sleep
     
