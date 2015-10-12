@@ -384,5 +384,6 @@ def reloadSpreadsheet(project_id):
     project = load_project(project_id)
     D = load_model(project_id)
     D = updatedata(D, input_programs = project.programs, savetofile = False, rerun = True)
-
+    D_dict = tojson(D)
+    save_model(project_id, D_dict)
     return jsonify({})
