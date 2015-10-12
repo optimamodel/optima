@@ -82,6 +82,10 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2, safetymargin=0.8, bench
     dx   = G['dx']   # Diagnosed
     tx1  = G['tx1']  # Treatment -- 1st line
     
+    # DJK Note: Disease state indices that were omitted for some reason...?
+    tx2  = G['tx2']  # Treatment -- 2nd line
+    fail  = G['fail']  # Treatment Failure
+    
     # Concatenate all PLHIV, diagnosed and treated for ease
     plhivind = concatenate([undx, dx, tx1]) # All PLHIV
     dxind    = concatenate([dx, tx1])       # All people who have been diagnosed
