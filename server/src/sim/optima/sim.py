@@ -16,10 +16,16 @@ class Sim(object):
         self.parsdata = None        # This used to be D['P'].
         self.parsmodel = None       # This used to be D['M'].
         self.parsfitted = None      # This used to be D['F'].
-        self.calibration = calibration if calibration is not None else project.calibrations[0]['uuid'] # Use the first project calibration by default - could reorder the project's calibrations to choose a default later
+
+        if calibration is not None:
+            self.calibration = calibration
+        elif project is None:
+            self.calibration = None
+        else:
+            self.calibration = project.calibrations[0]['uuid'] # Use the first project calibration by default - could reorder the project's calibrations to choose a default later
 
         # Check the calibration exists
-        if self.calibration not in [x['uuid'] for x in project.calibrations]:
+        if self.calibration is not None and self.calibration not in [x['uuid'] for x in project.calibrations]:
             raise Exception('The provided calibration UUID could not be found in the provided project')
 
         self.debug = {}             # This stores the (large) output from running the simulation
@@ -30,9 +36,10 @@ class Sim(object):
         self.setproject(project)
 
     @classmethod
-    def fromdict(Sim,simdict,project):
+    def fromdict(Sim,simdict,project=None):
         # This function instantiates the correct subtype based on simdict['type']
-        assert(simdict['project_uuid'] == project.uuid)
+        if project is not None:
+            assert(simdict['project_uuid'] == project.uuid)
         sim_type = globals()[simdict['type']]
         s = sim_type(simdict['name'],project)
         s.setproject(project)
@@ -75,13 +82,19 @@ class Sim(object):
         return simdict
     
     def setproject(self,project):
-        self.project = weakref.ref(project)
+        if project is None:
+            self.project = None
+        else:
+            self.project = weakref.ref(project)
 
     def getproject(self):
         # self.project is a weakref object, which means to get
         # the project you need to do self.project() rather than
         # self.project. This function abstracts away this 
         # implementation detail in case it changes in future
+        if self.project is None:
+            raise Exception('Sim not linked to a parent project')
+
         if isinstance(self.project,weakref.ref):
             r = self.project()
             if r is None:
