@@ -307,6 +307,8 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2, safetymargin=0.8, bench
         # Number of people circumcised - we only care about susceptibles
         numcirc = (people[sus, :, t] * male * propcirc[:, t]).flatten()
         
+        mtctperpop = zeros((1, npops))     # Number of mother-to-child transmissions for this timestep, split by population groups.
+        
         ## Asymmetric transitions - people move from one population to another
         for p1 in xrange(npops):
             for p2 in xrange(npops):
@@ -345,6 +347,7 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2, safetymargin=0.8, bench
                         popmtct = mtctuntx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components                        
                         
                         S['mtct'][0,t] += popmtct                   
+                        mtctperpop[0,p2] += popmtct                        
                         
                         people[G['sus'], p2, t] += popbirths - popmtct
                         people[G['undx'][0], p2, t] += popmtct
@@ -424,7 +427,7 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2, safetymargin=0.8, bench
         
         ## Susceptibles
         dS = -newinfections # Change in number of susceptibles -- death rate already taken into account in pm.totalpop and dt
-        S['inci'][:,t] = newinfections/float(dt)  # Store new infections
+        S['inci'][:,t] = (newinfections + mtctperpop)/float(dt)  # Store new infections AND new MTCT births
 
         ## Undiagnosed
         propdx = None
