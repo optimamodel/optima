@@ -50,11 +50,15 @@ def addtoprograms(programs):
                                             'coverageupper':None, 
                                             'funding':None, 
                                             'scaleup':None, 
-                                            'nonhivdalys':None, 
+                                            'nonhivdalys':None,
+                                            'xupperlim':None,
                                             'cpibaseyear':None, 
                                             'perperson':None}
         programs[prognumber]['convertedccparams'] = None
         programs[prognumber]['nonhivdalys'] = 0.0
+        
+        if program['name'] == 'VMMC':
+            program['effects'] = [{'paramtype':'sex', 'param':'numcircum', 'popname':u'Total', 'coparams':None, 'convertedcoparams':None, 'convertedccoparams':None}]
 
     return programs
     
@@ -67,14 +71,16 @@ def getrealcosts(data):
 
     from math import isnan
     from datetime import date
-    from utils import smoothinterp
+    from utils import smoothinterp, sanitize
 
     cost = data['costcov']['cost']
     nprogs = len(data['costcov']['cost'])
     realcost = [[]]*nprogs
 
     # Get CPI, expand to all years
-    cpi = smoothinterp(newx=data['epiyears'], origx=data['epiyears'], origy=data['econ']['cpi']['past'][0], growth=data['econ']['cpi']['future'][0][0])
+    cpi = sanitize(data['econ']['cpi']['past'][0])
+    if len(cpi)<len(data['epiyears']): # Only interpolate if there's missing data
+        cpi = smoothinterp(newx=data['epiyears'], origx=data['epiyears'], origy=data['econ']['cpi']['past'][0], growth=data['econ']['cpi']['future'][0][0])
 
     # Set the CPI base year to the current year or the last year for which data were provided.
     cpibaseyearindex = data['epiyears'].index(min(data['epiyears'][-1],date.today().year))
@@ -119,7 +125,7 @@ def unnormalizeF(normF, M, G, normalizeall=False):
     for p in xrange(G['npops']):
         unnormF['init'][p] *= M['hivprev'][p] # Multiply by initial prevalence
         if normalizeall: unnormF['popsize'][p] *= M['popsize'][p][0] # Multiply by initial population size
-    if normalizeall: unnormF['dx'][3] *= G['datayears'].mean() # Multiply by mean data year
+    if normalizeall: unnormF['dx'][2] += G['datayears'].mean()-1 # Add mean data year
     return unnormF
 
 
@@ -129,10 +135,8 @@ def normalizeF(unnormF, M, G, normalizeall=False):
     for p in xrange(G['npops']):
         normF['init'][p] /= M['hivprev'][p] # Divide by initial prevalence
         if normalizeall: normF['popsize'][p] /= M['popsize'][p][0] # Divide by initial population size
-    if normalizeall: normF['dx'][3] /= G['datayears'].mean() # Divide by mean data year
+    if normalizeall: normF['dx'][2] -= G['datayears'].mean()+1 # Subtract mean data year
     return normF
-
-
 
 
 

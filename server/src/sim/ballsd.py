@@ -1,6 +1,6 @@
 def ballsd(function, x, options = None, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, \
     pinitial = None, sinitial = None, absinitial = None, xmin = None, xmax = None, MaxRangeIter = 1000, \
-    MaxFunEvals = None, MaxIter = 1e3, AbsTolFun = 1e-6, RelTolFun = 5e-3, TolX = None, StallIterLimit = 40, \
+    MaxFunEvals = None, MaxIter = 1e3, AbsTolFun = 1e-6, RelTolFun = 1e-3, TolX = None, StallIterLimit = 100, \
     fulloutput = True, maxarraysize = 1e6, timelimit = 3600, stoppingfunc = None, verbose = 10):
     """
     Optimization using the Bayesian adaptive locally linear stochastic descent 
@@ -96,11 +96,11 @@ def ballsd(function, x, options = None, stepsize = 0.1, sinc = 2, sdec = 2, pinc
     fval = function(x) if options is None else function(x,options) # Calculate initial value of the objective function
     count = 0 # Keep track of how many iterations have occurred
     exitflag = -1 # Set default exit flag
-    abserrorhistory = zeros(StallIterLimit) # Store previous error changes
-    relerrorhistory = zeros(StallIterLimit) # Store previous error changes
+    abserrorhistory = zeros(int(StallIterLimit)) # Store previous error changes
+    relerrorhistory = zeros(int(StallIterLimit)) # Store previous error changes
     if fulloutput: # Include additional output structure
-        fulloutputfval = zeros(MaxIter) # Store all objective function values
-        fulloutputx = zeros((MaxIter,nparams)) # Store all parameters
+        fulloutputfval = zeros(int(MaxIter)) # Store all objective function values
+        fulloutputx = zeros((int(MaxIter),int(nparams))) # Store all parameters
     
     ## Loop
     start = time()

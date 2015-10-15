@@ -159,6 +159,8 @@ define(['angular', 'jquery', 'mpld3', 'underscore', 'saveAs', 'jsPDF', './svg-to
                 var styleContent = $(style).html();
                 if (styleContent.indexOf('div#' + elementId) != -1) {
                   return styleContent.replace(/div#/g, '#');
+                } else {
+                  return styleContent;
                 }
               });
 

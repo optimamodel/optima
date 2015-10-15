@@ -9,7 +9,7 @@ from numpy import append, npv, cumsum
 from setoptions import setoptions
 from printv import printv
 from datetime import date
-from utils import smoothinterp
+from utils import smoothinterp, findinds
 
 def financialanalysis(D, postyear=2015, S=None, rerunmodel=False, artgrowthrate=.05, discountrate=.03, treattime=[8,1,16,3,10], cd4time=[8,8,10,8,2,2], verbose=2):
     '''
@@ -39,7 +39,7 @@ def financialanalysis(D, postyear=2015, S=None, rerunmodel=False, artgrowthrate=
 
     # Inflation adjusting
     cpi = smoothinterp(newx=D['S']['tvec'], origx=D['G']['datayears'], origy=D['data']['econ']['cpi']['past'][0], growth=D['data']['econ']['cpi']['future'][0][0])
-    cpibaseyearindex = D['data']['epiyears'].index(min(D['data']['epiyears'][-1],date.today().year))
+    cpibaseyearindex = findinds(D['S']['tvec'],min(D['data']['epiyears'][-1],date.today().year)) # Get the index (in tvec units) of either the most recent year of data or the current year
 
     # Set up variables for time indexing
     simtvec = S['tvec']
@@ -125,7 +125,7 @@ def financialanalysis(D, postyear=2015, S=None, rerunmodel=False, artgrowthrate=
             plotdata[plottype][plotsubtype][yscalefactor]['title'] = 'Annual HIV-related costs - ' + plotsubtype + ' infections'
             if yscalefactor=='total':
 #                print('TMP4'); plot(hivcosts['total']); show()
-                if not plotsubtype=='future': plotdata[plottype][plotsubtype][yscalefactor]['ylinedata'] = [(hivcosts[plotsubtype][j] + artcosts[plotsubtype][j])*(cpi[cpibaseyearindex]/cpi[j]) for j in xrange(noptpts)]
+                if not plotsubtype=='future': plotdata[plottype][plotsubtype][yscalefactor]['ylinedata'] = [(hivcosts[plotsubtype][j] + artcosts[plotsubtype][j])*(cpi[cpibaseyearindex][0]/cpi[j]) for j in xrange(noptpts)]
                 plotdata[plottype][plotsubtype][yscalefactor]['ylabel'] = 'USD'
 #                raise Exception('TMP')
             else:
@@ -174,7 +174,7 @@ def financialanalysis(D, postyear=2015, S=None, rerunmodel=False, artgrowthrate=
         plotdata['commit'][yscalefactor]['xlabel'] = 'Year'
         plotdata['commit'][yscalefactor]['title'] = 'Annual spending commitments from new HIV infections'
         if yscalefactor=='total':                    
-            plotdata['commit'][yscalefactor]['ylinedata'] = [commitments[j]*(cpi[cpibaseyearindex]/cpi[j]) for j in xrange(len(commitments))]
+            plotdata['commit'][yscalefactor]['ylinedata'] = [commitments[j]*(cpi[cpibaseyearindex][0]/cpi[j]) for j in xrange(len(commitments))]
             plotdata['commit'][yscalefactor]['ylabel'] = 'USD'
         else:
             if isinstance(sanitize(D['data']['econ'][yscalefactor]['past'][0]),int): continue

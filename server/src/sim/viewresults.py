@@ -76,16 +76,16 @@ def viewuncerresults(E, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 
                         figure(facecolor='w')
                     hold(True)
                     try:
-                        if graph not in ['costann']:
-                            fill_between(xdata, E[graph][subkey]['low'], E[graph][subkey]['high'], alpha=0.2, edgecolor='none')
-                        else:
+                        if graph=='costann':
                             fill_between(xdata, E[graph][subkey]['total']['low'], E[graph][subkey]['total']['high'], alpha=0.2, edgecolor='none')
+                            plot(xdata, E[graph][subkey]['total']['best'], c=E['colorm'], linewidth=linewidth)
+                            title(E[graph][subkey]['total']['title'], fontsize=10)
+                        else:
+                            fill_between(xdata, E[graph][subkey]['low'], E[graph][subkey]['high'], alpha=0.2, edgecolor='none')
+                            plot(xdata, E[graph][subkey]['best'], c=E['colorm'], linewidth=linewidth)
+                            title(E[graph][subkey]['title'], fontsize=10)
                     except:
                         import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-                    if graph not in ['costann']:
-                        plot(xdata, E[graph][subkey]['best'], c=E['colorm'], linewidth=linewidth)
-                    else:
-                        plot(xdata, E[graph][subkey]['total']['best'], c=E['colorm'], linewidth=linewidth)
                     if epigraph:
                         if ndim(E[graph]['ydata'])==1:
                             scatter(E['xdata'], E[graph]['ydata'], c=E['colord'])
@@ -126,10 +126,8 @@ def viewmultiresults(M, whichgraphs={'prev':[1,1], 'plhiv':[0,1], 'inci':[0,1], 
     """
     
     from matplotlib.pylab import figure, plot, hold, xlabel, ylabel, xlim, ylim, legend, title, ceil, sqrt, subplot, show, fill_between
-    import colorbrewer
-    bmap = colorbrewer.get_map('Paired', 'Qualitative', max(3,M['nsims'])) # WARNING, won't work with >13
-    if M['nsims']>12: raise Exception('Can''t use ColorBrewer with more than 12 colors')
-    colors = bmap.mpl_colors
+    from gridcolormap import gridcolormap
+    colors = gridcolormap(M['nsims'])
     
     npops = len(M['prev']['pops']) # Calculate number of populations
 
@@ -216,12 +214,10 @@ def viewoptimresults(O):
     Version: 2015mar25
     """
     from matplotlib.pylab import figure, subplot, pie, title, plot, xlabel, ylabel
-    import colorbrewer
+    from gridcolormap import gridcolormap
     
     nprograms = len(O['alloc'][0]['piedata'])
-    bmap = colorbrewer.get_map('Paired', 'Qualitative', max(3,nprograms)) # WARNING, won't work with >13
-    if nprograms>12: raise Exception('Can''t use ColorBrewer with more than 12 colors')
-    colors = bmap.mpl_colors
+    colors = gridcolormap(nprograms)
     
     figure(figsize=(8,8))
     for p in xrange(2):
@@ -233,3 +229,60 @@ def viewoptimresults(O):
     xlabel(O['outcome']['xlabel'])
     ylabel(O['outcome']['ylabel'])
     title(O['outcome']['title'])
+
+
+def viewparameters(M):
+    """
+    Plot the entries of D['M']
+    """
+    from numpy import transpose
+    from matplotlib.pylab import subplot, plot, title, hold, legend, shape, xlim, figure
+    nx = 8
+    ny = 5
+    count = 0
+    
+    figh = figure(figsize=(24,16), facecolor='w')
+    figh.subplots_adjust(left=0.04) # Less space on left
+    figh.subplots_adjust(right=0.99) # Less space on right
+    figh.subplots_adjust(top=0.98) # Less space on bottom
+    figh.subplots_adjust(bottom=0.04) # Less space on bottom
+    figh.subplots_adjust(wspace=0.5) # More space between
+    figh.subplots_adjust(hspace=0.5) # More space between
+    for key in M.keys():
+        count += 1
+        subplot(nx, ny, count); hold(True)
+        if len(shape(M[key]))==2:
+            if shape(M[key])[1] == len(M['tvec']) and key != 'tvec':
+                plot(M['tvec'], transpose(M[key]))
+                xlim((M['tvec'][0],M['tvec'][-1]))
+        if len(shape(M[key]))==1:
+            if shape(M[key])[0] == len(M['tvec']) and key != 'tvec':
+                plot(M['tvec'], M[key])
+                xlim((M['tvec'][0],M['tvec'][-1]))
+        else:
+            if type(M[key])==dict:
+                count -= 1
+                for key2 in M[key].keys():
+                    try:
+                        count += 1
+                        plot(transpose(M[key][key2]))
+                        title(key)
+                    except:
+                        count -= 1
+                        try:
+                            for key3 in M[key][key2].keys():
+                                count += 1
+                                plot(M[key][key2])
+                                title(key)
+                        except:
+                            count -= 1
+                            print('Plotting failed for three-key case %s+%s'  % (key, key2))
+                        print('Plotting failed for two-key case %s+%s' % (key, key2))
+                legend(M[key].keys())
+            else:
+                try:
+                    plot(M[key])
+                except:
+                    print('Plotting failed for one-key case %s' % (key))
+                    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+        title(key)
