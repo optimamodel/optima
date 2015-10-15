@@ -1,19 +1,22 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     'use strict';
 
-    module.controller('AnalysisScenariosController', function ($scope, $http, $modal, meta, info, scenarioParametersResponse, scenariosResponse, CONFIG, typeSelector) {
-
-        // In case there is no model data the controller only needs to show the
-        // warning that the user should upload a spreadsheet with data.
-        if (!info.has_data) {
-          $scope.missingModelData = true;
-          return;
-        }
-
-        var responseData, availableScenarioParameters, availableScenarios;
+    module.controller('AnalysisScenariosController', function ($scope, $http, $modal, meta, info, scenarioParametersResponse, 
+      scenariosResponse, CONFIG, typeSelector, PreventNavigation) {
 
         // initialize all necessary data for this controller
         var initialize = function() {
+          PreventNavigation.setControllerModel($scope);
+
+          // In case there is no model data the controller only needs to show the
+          // warning that the user should upload a spreadsheet with data.
+          if (!info.has_data) {
+            $scope.missingModelData = true;
+            return;
+          }
+
+          var responseData, availableScenarioParameters, availableScenarios;
+
           $scope.scenarios = [];
 
           $scope.runScenariosOptions = {

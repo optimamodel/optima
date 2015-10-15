@@ -7,9 +7,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
    */
   module.controller('AnalysisOptimizationController', function ($scope, $http,
     $interval, meta, cfpLoadingBar, CONFIG, modalService, typeSelector,
-    optimizations, optimizationHelpers, info) {
+    optimizations, optimizationHelpers, info, PreventNavigation) {
 
     $scope.initialize = function () {
+
+      PreventNavigation.setControllerModel($scope);
+
       $scope.$on('$destroy', function () {
         // Make sure that the interval is terminated when this controller is destroyed
         stopTimer();
@@ -668,7 +671,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           if (data.join) {
             $scope.initTimer(statusEnum.RUNNING);
           } else {
-            console.log("Cannot poll for optimization now");
+            console.log('Cannot poll for optimization now');
           }
         });
     };

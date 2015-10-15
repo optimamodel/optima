@@ -38,8 +38,10 @@ define([
           templateUrl: 'js/modules/model/calibration.html',
           controller: 'ModelCalibrationController',
           resolve: {
-            parameters: function (Model) {
-              return Model.getCalibrateParameters().$promise;
+            parameters: function (Model, $rootScope) {
+              var parameterData = Model.getCalibrateParameters().$promise;
+              $rootScope.modelDict = parameterData;
+              return parameterData;
             },
             meta: function (Model) {
               return Model.getKeyDataMeta().$promise;

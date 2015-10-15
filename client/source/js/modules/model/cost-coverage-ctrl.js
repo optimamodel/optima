@@ -2,7 +2,7 @@ define(['./module', 'underscore'], function (module, _) {
   'use strict';
 
   module.controller('ModelCostCoverageController', function ($scope, $http,
-    $state, info, modalService, programsResource, costCoverageHelpers) {
+    $state, info, modalService, programsResource, costCoverageHelpers, PreventNavigation) {
 
     // In case there is no model data the controller only needs to show the
     // warning that the user should upload a spreadsheet with data.
@@ -14,6 +14,8 @@ define(['./module', 'underscore'], function (module, _) {
     var effects, programs;
 
     var initialize = function () {
+      PreventNavigation.setControllerModel($scope);
+
       programs = programsResource.data;
 
       $scope.state = {
