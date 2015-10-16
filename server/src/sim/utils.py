@@ -290,23 +290,6 @@ def checkmem(origvariable, descend=0, order='n', plot=False, verbose=0):
 
     return None
 
-# CK: This should be moved elsewhere...
-try:
-    from mpld3 import plugins
-    class OptimaTickFormatter(plugins.PluginBase):
-        """
-        Optima Tick Formatter plugin
-    
-        Since tickFormatting is not working properly we patch & customise it only in
-        the Front-end. See this issue for more information about the current status
-        of tick customisation: https://github.com/jakevdp/mpld3/issues/22
-        """
-    
-        def __init__(self):
-            self.dict_ = {"type": "optimaTickFormatter"}
-except:
-    print('MPLD3 not found')
-
 def dict_equal(d1,d2,verbose=0,debug_string=''):
 	# Check if two dictionaries contain the same stuff
 
