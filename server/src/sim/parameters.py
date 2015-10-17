@@ -14,16 +14,15 @@ No.;Parameter name;Location;Model variable name;Data variable name;Manual calibr
 11;Testing | Proportion of people who are tested for HIV each year;Programs/scenarios;M.hivtest[:];txrx.hivtest;;1;1
 12;Testing | Proportion of PLHIV aware of their HIV status;Programs/scenarios;M.propaware[:];txrx.hivtest;;1;1
 13;Treatment | Number of PLHIV on ART;Programs/scenarios;M.txtotal;txrx.numfirstline;;1;
-14;Treatment | Proportion of PLHIV on ART;Programs/scenarios;M.txtotal;txrx.numfirstline;;1;
-15;Treatment | CD4-based ART eligibility criterion;Programs/scenarios;M.txelig;txrx.txelig;;1;
-16;PrEP | Proportion of risk encounters covered by PrEP;Programs/scenarios;M.prep[:];txrx.prep;;1;1
-17;Injecting drug use | Number of injections per person per year;Programs/scenarios;M.numacts.inj[:];inj.numinject;;1;1
-18;Injecting drug use | Proportion of injections using receptively shared needle-syringes;Programs/scenarios;M.sharing[:,:];inj.sharing;;1;1
-19;Injecting drug use | Proportion of people on OST;Programs/scenarios;M.numost;inj.numost;;1;
-20;Injecting drug use | Number of people on OST;Programs/scenarios;M.numost;inj.numost;;1;
-21;PMTCT | Proportion of pregnant women receiving Option B/B+;Programs/scenarios;M.numpmtct;txrx.numpmtct;;1;
-22;PMTCT | Number of pregnant women receiving Option B/B+;Programs/scenarios;M.numpmtct;txrx.numpmtct;;1;
-23;PMTCT | Proportion of mothers who breastfeed;Programs/scenarios;M.breast;txrx.breast;;1;
+14;Treatment | CD4-based ART eligibility criterion;Programs/scenarios;M.txelig;txrx.txelig;;1;
+15;PrEP | Proportion of risk encounters covered by PrEP;Programs/scenarios;M.prep[:];txrx.prep;;1;1
+16;Injecting drug use | Number of injections per person per year;Programs/scenarios;M.numacts.inj[:];inj.numinject;;1;1
+17;Injecting drug use | Proportion of injections using receptively shared needle-syringes;Programs/scenarios;M.sharing[:,:];inj.sharing;;1;1
+18;Injecting drug use | Proportion of people on OST;Programs/scenarios;M.numost;inj.numost;;1;
+19;Injecting drug use | Number of people on OST;Programs/scenarios;M.numost;inj.numost;;1;
+20;PMTCT | Proportion of pregnant women receiving Option B/B+;Programs/scenarios;M.numpmtct;txrx.numpmtct;;1;
+21;PMTCT | Number of pregnant women receiving Option B/B+;Programs/scenarios;M.numpmtct;txrx.numpmtct;;1;
+22;PMTCT | Proportion of mothers who breastfeed;Programs/scenarios;M.breast;txrx.breast;;1;
 1;Mortality | HIV-related mortality rate (AIDS stage);Manual calibration;M.const.death.aids;const.death.aids;1;;
 2;Efficacy | Per-exposure efficacy of medical male circumcision;Manual calibration;M.const.eff.circ;const.eff.circ;1;;
 3;Efficacy | Per-exposure efficacy of condoms;Manual calibration;M.const.eff.condom;const.eff.condom;1;;
@@ -39,7 +38,7 @@ No.;Parameter name;Location;Model variable name;Data variable name;Manual calibr
 13;Per-exposure HIV transmission probability for penile-vaginal receptive intercourse;Manual calibration;M.const.trans.mfr;const.trans.mfr;1;;
 14;Per-exposure HIV transmission probability for penile-anal insertive intercourse;Manual calibration;M.const.trans.mmi;const.trans.mmi;1;;
 15;Per-exposure HIV transmission probability for penile-anal receptive intercourse;Manual calibration;M.const.trans.mmr;const.trans.mmr;1;;
-""" 
+"""
 
 def maybe_bool(p):
     if p in ['0','1']: p = bool(int(p))
@@ -105,4 +104,3 @@ def parameter_name(key): #params is the output of parameters() method
         return entry[0]['name']
     else:
         return None
-
