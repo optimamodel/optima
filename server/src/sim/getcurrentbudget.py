@@ -131,9 +131,10 @@ def makecoverageplot(D, optno=-1, barwidth=.35, makeplot=0):
     from matplotlib.pyplot import bar, xlabel, ylabel, title, xticks, legend, tight_layout, show, figure, ylim
     from numpy import arange
     import textwrap
-    import colorbrewer
-    bmap = colorbrewer.get_map('Paired', 'Qualitative', 3) # WARNING, won't work with >13
-    colors = bmap.mpl_colors
+#    import colorbrewer
+#    bmap = colorbrewer.get_map('Paired', 'Qualitative', 3) # WARNING, won't work with >13
+    from gridcolormap import gridcolormap
+    colors = gridcolormap(2)
 
     error_config = {'ecolor': '0.3'}    
 
@@ -183,5 +184,5 @@ def makecoverageplot(D, optno=-1, barwidth=.35, makeplot=0):
             legend()
             tight_layout()
             show()
-    
+
     return plotdata
