@@ -89,8 +89,10 @@ def makemodelpars(P, opt, withwhat='p', verbose=2):
     
     ## Circumcision parameters
     M['circum']    = dpar2mpar(P['circum'], withwhat) # Circumcision percentage
-    M['numcircum'] = dpar2mpar(P['numcircum'], withwhat)[0] # Number to be circumcised -- to be populated by the relevant CCOC at non-zero allocations
-#    M['numcircum'] = zeros(shape(M['tvec'])) # Number to be circumcised -- to be populated by the relevant CCOC at non-zero allocations
+    if  'numcircum' in P.keys():
+        M['numcircum'] = dpar2mpar(P['numcircum'], withwhat)[0] # Number to be circumcised -- to be populated by the relevant CCOC at non-zero allocations
+    else:
+        M['numcircum'] = zeros(shape(M['tvec'])) # Number to be circumcised -- to be populated by the relevant CCOC at non-zero allocations
     
     ## Drug behavior parameters
     M['numost'] = dpar2mpar(P['numost'], withwhat)[0]
