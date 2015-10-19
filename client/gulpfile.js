@@ -1,6 +1,6 @@
 var _ = require('underscore');
 var assets  = require('postcss-assets');
-var autoprefixer = require('autoprefixer-core');
+var autoprefixer = require('autoprefixer');
 var es = require('event-stream');
 var gulp = require('gulp');
 var karma = require('gulp-karma');
@@ -11,6 +11,7 @@ var rjs = require('gulp-requirejs');
 var sass = require('gulp-sass');
 var spawn = require('child_process').spawn;
 var uglify = require('gulp-uglify');
+var plumber = require('gulp-plumber');
 
 var handleError = function (err) {
   console.log(err.name, ' in ', err.plugin, ': ', err.message);
@@ -117,19 +118,30 @@ gulp.task('karma-ci', function () {
 
 // Sass
 gulp.task('sass', function () {
-  var processors = [
-    assets({
-      basePath: 'source/',
-      loadPaths: ['assets/fonts/', 'assets/images/']
-    }),
-    autoprefixer
-  ];
+  var cssGlobbing = require('gulp-css-globbing');
+  var postcss = require('gulp-postcss');
+  var sass = require('gulp-sass');
 
   return gulp.src(['source/sass/*.scss', '!source/sass/_*.scss'])
-    .pipe(sass({
-      outputStyle: 'compressed'
-    }).on('error', handleError))
-    .pipe(postcss(processors).on('error', handleError))
+    .pipe(plumber(handleError))
+    .pipe(cssGlobbing({
+      extensions: '.scss'
+    }))
+    .pipe(sass())
+    .pipe(postcss([
+      require('postcss-assets')({
+        basePath: 'source/',
+        loadPaths: ['assets/fonts/', 'assets/images/']
+      }),
+      require('postcss-import')({
+        path: 'source/'
+      }),
+      require('autoprefixer'),
+      require('csswring')({
+        preserveHacks: true,
+        removeAllComments: true
+      })
+    ]))
     .pipe(gulp.dest('source/assets/css'));
 });
 

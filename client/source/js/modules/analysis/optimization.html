@@ -125,11 +125,11 @@
                        more-than="params.objectives.year.start"
                        name="objectivesUntil"
                        required>
-                , with the following context between the end of the optimized program period and the end of the analysis
-                period:
+                , with the following context between the end of the optimized program period and the end of the analysis period.
               </ng-form>
 
-            <div class="top-spaced">
+            <!-- TODO 2015-08-24 ART programs were hidden for the workshop -->
+            <div class="top-spaced" style="display: none">
               <label>
                 <input type="checkbox" ng-model="params.objectives.year.artcontinue">
                 ART programs will continue:
@@ -187,7 +187,8 @@
               </div>
             </div>
 
-            <div class="top-spaced">
+            <!-- TODO 2015-08-24 behavioral and contextual parameters were hidden for the workshop -->
+            <div class="top-spaced" style="display: none">
               <label>
                 <input type="checkbox" ng-model="params.objectives.year.otherprograms">
                 All other behavioral and contextual parameters:
@@ -217,9 +218,11 @@
               <input type="radio" name="minimizationType" ng-model="params.objectives.what" value="outcome">
               Minimize outcomes
             </label>
-            <label class="checkbox-inline">
+
+            <!-- TODO 2015-08-24 Minimize money option was hidden for the workshop -->
+            <label class="checkbox-inline"><!-- style="display: none"-->
               <input type="radio" name="minimizationType" ng-model="params.objectives.what" value="money">
-              Minimize money
+              Minimize money (BETA)
             </label>
           </div>
         </div>
@@ -249,7 +252,9 @@
                   in the program period
                 </label>
               </ng-form>
-              <label class="checkbox-inline" style="padding:0 0 0 40px;">
+
+              <!-- TODO 2015-08-24 Allow time-varying optimization option was hidden for the workshop -->
+              <label class="checkbox-inline" style="padding:0 0 0 40px; display: none">
                 <input
                   type="checkbox"
                   ng-model="params.objectives.timevarying"
@@ -265,7 +270,8 @@
                 <div class="error-hint" ng-message="number">Please provide a numeric value for the fixed budget.</div>
               </div>
 
-              <label>
+              <!-- TODO 2015-08-24 Optimize a variable budget option was hidden for the workshop -->
+              <label style="display: none">
                 <input type="radio"
                        name="fundingAssumptions"
                        value="variable"
@@ -299,7 +305,8 @@
                 <div class="error-hint" ng-message="number">Please only provide numeric values each budget field.</div>
               </div>
 
-              <label class="checkbox-inline">
+              <!-- TODO 2015-08-24 Optimize a variable budget option was hidden for the workshop -->
+              <label class="checkbox-inline" style="display: none">
                 <input type="radio"
                        name="fundingAssumptions"
                        ng-model="params.objectives.funding"

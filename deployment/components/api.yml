@@ -60,8 +60,7 @@
       - update
 
   - name: API | Migrate
-    shell: curl -XPOST -i http://0.0.0.0:8000/api/project/data/migrate?secret=40a0233e6b155cd08d8f8f4cd3ea85d854af454b334e80f896afff61
-    sudo: yes
+    uri: url=http://0.0.0.0:8000/api/project/data/migrate?secret=40a0233e6b155cd08d8f8f4cd3ea85d854af454b334e80f896afff61 method=POST timeout=300
     tags:
       - api
       - update

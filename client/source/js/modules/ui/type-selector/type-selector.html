@@ -8,7 +8,8 @@
 
     <h3>Epidemiological results</h3>
 
-    <div ng-if="state.plotUncertaintiesIsVisible === true">
+    <!-- TODO 2015-08-24 plotUncertainties were hidden for the workshop -->
+    <div ng-if="state.plotUncertaintiesIsVisible === true" style="display: none">
       <label class="checkbox-inline">
         <input type="checkbox" ng-model="types.plotUncertainties">
         Plot uncertainties
