@@ -240,7 +240,8 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2):
             try:
                 osteff = 1 - min(1,numost/numpwid)*effost # Proportion of PWID on OST, making sure there aren't more people on OST than PWID
             except:
-                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                print('OST calculation failed')
+                raise
             if osteff<0: raise Exception('Bug in osteff = 1 - min(1,numost/numpwid)*effost: osteff=%f numost=%f numpwid=%f effost=%f' % (osteff, numost, numpwid, effost))
        
        # Iterate through partnership pairs
@@ -374,7 +375,8 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2):
                         try:
                             propcirc[pop, t+1] = median([0, 1, (numcircad[pop] + newlycirc[pop]) / newsusmales[pop]]) # Circumcision coverage for next time step (element of [0, 1])
                         except:
-                            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                            print('Circumcision calculation failed')
+                            raise
         else:
             newlycirc = zeros(npops)
             
