@@ -70,6 +70,77 @@ class Project(object):
         r.fromdict(projectdict)
         return r
 
+    def save_db(self,save_all = False):
+        # Save the project to the database
+        # Sims etc. need to be saved separately
+        projectdict = self.todict()
+
+        import db
+        conn = db.getconn()
+        c = conn.cursor()
+        
+        if save_all:
+            for sbox in self.simboxlist:
+                sbox.save_db()
+            for pset in self.programsets:
+                pset.save_db()
+            for cal in self.calibrations.keys():
+                # TODO proper dumps syntax
+                calstr = cPickle.dumps(self.calibrations[cal])
+                # TODO proper update syntax
+                c.execute('INSERT INTO calibrations VALUES ($,$) ON DUPLICATE KEY UPDATE data = $',cal,calstr,calstr)
+                conn.commit()
+                conn.close()
+
+        # Now strip object already stored in the database
+        projectdict['simboxlist'] = [sbox.uuid for sbox in self.simboxlist]
+        projectdict['programsets'] = [pset.uuid for pset in self.programsets] # Serialize the programset
+        projectdict['calibrations'] = self.calibrations.keys() # Calibrations are stored as dictionaries
+        
+        pstr = cPickle.dumps(projectdict)
+        c.execute('INSERT INTO projects VALUES ($,$) ON DUPLICATE KEY UPDATE data = $',self.uuid,pstr,pstr)
+        conn.commit()
+        conn.close()
+
+
+    @classmethod
+    def load_db(Project,uuid):
+        import db
+        conn = db.getconn()
+        c = conn.cursor()
+        c.execute('SELECT data FROM projects WHERE projects.uuid = $',uuid)
+        # TODO get proper syntax for this
+        for row in c:
+            projectdict = cPickle.loads(str(row['data']))
+        conn.commit() # TODO should we be getting a read only cursor?
+        conn.close()
+
+        r = Project(name,None,None,None,None)
+        r.uuid = projectdict['uuid'] # Loading a project restores the original UUID
+        r.fromdict(projectdict)
+        return r
+
+    def load_simbox(self,uuid):
+        # Add a known SimBox to the project
+
+    def load_programsets(self,uuid):
+        # Add a known programset to the project
+    def load_calibrations(self,uuid):
+        # Add a known calibration to the project
+
+
+
+        projectdict = cPickle.dumps
+
+        with gzip.GzipFile(fname, 'rb') as file_data:
+            obj = cPickle.load(file_data)
+
+
+        simboxes = self.simboxlist
+
+        # Strip the simboxes
+        return
+
     def save(self,filename):
         dataio_binary.save(self.todict(),filename)
                     
