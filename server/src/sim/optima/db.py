@@ -10,11 +10,11 @@ def makedb():
 
 	conn = sqlite3.connect('optima.db')
 	c = conn.cursor()
-	c.execute('CREATE TABLE projects(uuid text, data blob)')
-	c.execute('CREATE TABLE simboxes(uuid text, data blob)')
-	c.execute('CREATE TABLE sims(uuid text, data blob)')
-	c.execute('CREATE TABLE calibrations(uuid text, data blob)')
-	c.execute('CREATE TABLE programsets(uuid text, data blob)')
+	c.execute('CREATE TABLE projects(uuid TEXT UNIQUE, data BLOB)')
+	c.execute('CREATE TABLE simboxes(uuid TEXT UNIQUE, data BLOB)')
+	c.execute('CREATE TABLE sims(uuid TEXT UNIQUE, data BLOB)')
+	c.execute('CREATE TABLE calibrations(uuid TEXT UNIQUE, data BLOB)')
+	c.execute('CREATE TABLE programsets(uuid TEXT UNIQUE, data BLOB)')
 
 	conn.commit()
 	conn.close()
@@ -54,3 +54,7 @@ def store(table,uuid,data):
 # store('projects','1d83',x)
 # x2 = retrieve('projects','1d83')
 # print x2
+# y = ['asdf',2]
+# store('projects','1d83',y)
+# x3 = retrieve('projects','1d83')
+# print x3
