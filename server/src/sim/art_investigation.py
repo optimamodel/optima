@@ -3,7 +3,7 @@ from timevarying import timevarying
 from copy import deepcopy
 import numpy
 
-r = optima.Project.load_json('./projects/Malawi 150820.json')
+r = optima.Project.load_json('./projects/Current Malawi GPA Files/Malawi 150820.json')
 
 print [x['short_name'] for x in r.metadata['inputprograms']]
 
