@@ -24,14 +24,16 @@ def getconn():
 
 def sanitize(table_name):
 	# Prevent SQL injection for table name substitution
-    return ''.join( chr for chr in table_name if chr.isalnum() )
+    return ''.join( chr for chr in table_name if (chr.isalnum() or chr == '-'))
 
 def retrieve(table,uuid):
 	conn = getconn()
 	c = conn.cursor()
 	c.execute('SELECT data FROM %s WHERE %s.uuid = "%s"' % (sanitize(table),sanitize(table),sanitize(uuid)))
 	d = c.fetchall()
-	assert(len(d)==1)
+	print sanitize(uuid)
+	if len(d) > 1:
+		print d
 	datastr = str(d[0][0])
 	conn.commit()
 	conn.close()

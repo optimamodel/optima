@@ -18,8 +18,6 @@ import sys;
 sys.path.append(findoptima())
 sys.path.append(findoptima() + '/legacy')
 
-
-
 from sim import Sim
 from simbudget import SimBudget
 from simbudget2 import SimBudget2
@@ -35,3 +33,5 @@ from programset import ProgramSet
 from project import Project
 
 from plot import plot
+
+import db

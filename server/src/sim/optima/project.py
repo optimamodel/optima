@@ -9,6 +9,7 @@ import defaults
 from simbox import SimBox
 from simboxopt import SimBoxOpt
 from simboxcal import SimBoxCal
+from optimization import Optimization
 import sim
 import setoptions
 import uuid
@@ -62,9 +63,9 @@ class Project(object):
             self.current_version = current_version # This is stored in the projectdict
 
     @classmethod
-    def load(Project,filename,name=None):
+    def load(Project,filename):
         # Use this function to load a project saved with project.save
-        r = Project(name,None,None,None,None)
+        r = Project(None,None,None,None,None)
         projectdict = dataio_binary.load(filename)
         r.uuid = projectdict['uuid'] # Loading a project restores the original UUID
         r.fromdict(projectdict)
@@ -76,69 +77,63 @@ class Project(object):
         projectdict = self.todict()
 
         import db
-        conn = db.getconn()
-        c = conn.cursor()
-        
+
         if save_all:
             for sbox in self.simboxlist:
-                sbox.save_db()
+                db.store('simboxes',sbox.uuid,sbox.todict())
             for pset in self.programsets:
-                pset.save_db()
-            for cal in self.calibrations.keys():
-                # TODO proper dumps syntax
-                calstr = cPickle.dumps(self.calibrations[cal])
-                # TODO proper update syntax
-                c.execute('INSERT INTO calibrations VALUES ($,$) ON DUPLICATE KEY UPDATE data = $',cal,calstr,calstr)
-                conn.commit()
-                conn.close()
+                db.store('programsets',pset.uuid,pset.todict())
+            for cal in self.calibrations:
+                db.store('calibrations',cal['uuid'],cal)
 
-        # Now strip object already stored in the database
-        projectdict['simboxlist'] = [sbox.uuid for sbox in self.simboxlist]
-        projectdict['programsets'] = [pset.uuid for pset in self.programsets] # Serialize the programset
-        projectdict['calibrations'] = self.calibrations.keys() # Calibrations are stored as dictionaries
+        # Now strip objects already stored elsewhere in the database
+        projectdict['simboxlist'] = []
+        projectdict['programsets'] = []
+        projectdict['calibrations'] = []
         
-        pstr = cPickle.dumps(projectdict)
-        c.execute('INSERT INTO projects VALUES ($,$) ON DUPLICATE KEY UPDATE data = $',self.uuid,pstr,pstr)
-        conn.commit()
-        conn.close()
-
+        db.store('projects',self.uuid,projectdict)
 
     @classmethod
     def load_db(Project,uuid):
+        # Given a UUID, query the database and return a project
+        # The project will not have any SimBoxes, programsets, or calibrations
         import db
-        conn = db.getconn()
-        c = conn.cursor()
-        c.execute('SELECT data FROM projects WHERE projects.uuid = $',uuid)
-        # TODO get proper syntax for this
-        for row in c:
-            projectdict = cPickle.loads(str(row['data']))
-        conn.commit() # TODO should we be getting a read only cursor?
-        conn.close()
-
-        r = Project(name,None,None,None,None)
-        r.uuid = projectdict['uuid'] # Loading a project restores the original UUID
+        projectdict = db.retrieve('projects',uuid)
+        r = Project(None,None,None,None,None)
+        r.uuid = projectdict['uuid']
         r.fromdict(projectdict)
         return r
 
     def load_simbox(self,uuid):
         # Add a known SimBox to the project
+        import db
+        sbox = SimBox.fromdict(db.retrieve('simboxes',uuid),self)
+        self.simboxlist.append(sbox)
+
+        # Make sure we've populated the programset and calibrations used by the simulations
+        # in this SimBox
+        if isinstance(sbox,Optimization):
+            if sbox.initial_sim.programset not in [pset.uuid for pset in self.programsets]:
+                self.load_programsets(sbox.initial_sim.programset)
+            if sbox.initial_sim.calibration not in [cal['uuid'] for calibration in self.calibrations]:
+                self.load_calibrations(sbox.initial_sim.calibration)
+        else:
+            for s in sbox.simlist:
+                if s.calibration not in [cal['uuid'] for calibration in self.calibrations]:
+                    self.load_calibrations(s.calibration)
+        return sbox
 
     def load_programsets(self,uuid):
         # Add a known programset to the project
+        import db
+        sbox = ProgramSet.fromdict(db.retrieve('programsets',uuid))
+        self.simboxlist.append(sbox)
+        return
+
     def load_calibrations(self,uuid):
         # Add a known calibration to the project
-
-
-
-        projectdict = cPickle.dumps
-
-        with gzip.GzipFile(fname, 'rb') as file_data:
-            obj = cPickle.load(file_data)
-
-
-        simboxes = self.simboxlist
-
-        # Strip the simboxes
+        import db
+        self.calibrations.append(db.retrieve('calibrations',uuid))
         return
 
     def save(self,filename):
