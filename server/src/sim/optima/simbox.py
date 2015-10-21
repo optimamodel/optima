@@ -17,9 +17,7 @@ class SimBox(object):
         assert(simboxdict['project_uuid'] == project.uuid)
         simbox_type = globals()[simboxdict['type']]
         s = simbox_type(simboxdict['name'], project)
-        s.setproject(project)
         s.load_dict(simboxdict)
-        
         return s
 
     def load_dict(self, simboxdict):

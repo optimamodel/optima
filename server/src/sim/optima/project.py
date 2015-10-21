@@ -107,20 +107,21 @@ class Project(object):
     def load_simbox(self,uuid):
         # Add a known SimBox to the project
         import db
-        sbox = SimBox.fromdict(db.retrieve('simboxes',uuid),self)
+        sbdict = db.retrieve('simboxes',uuid)
+
+        # Before we can load the SimBox, we have to load all of the dependencies
+        if sbdict['type'] == 'Optimization':
+            if sbdict['initial_sim']['programset'] not in [pset.uuid for pset in self.programsets]:
+                self.load_programsets(sbdict['initial_sim']['programset'])
+            if sbdict['initial_sim']['calibration'] not in [cal['uuid'] for calibration in self.calibrations]:
+                self.load_calibrations(sbdict['initial_sim']['calibration'])
+        else:
+            for s in sbdict['simlist']:
+                if s['calibration'] not in [cal['uuid'] for cal in self.calibrations]:
+                    self.load_calibrations(s['calibration'])
+        sbox = SimBox.fromdict(sbdict,self)
         self.simboxlist.append(sbox)
 
-        # Make sure we've populated the programset and calibrations used by the simulations
-        # in this SimBox
-        if isinstance(sbox,Optimization):
-            if sbox.initial_sim.programset not in [pset.uuid for pset in self.programsets]:
-                self.load_programsets(sbox.initial_sim.programset)
-            if sbox.initial_sim.calibration not in [cal['uuid'] for calibration in self.calibrations]:
-                self.load_calibrations(sbox.initial_sim.calibration)
-        else:
-            for s in sbox.simlist:
-                if s.calibration not in [cal['uuid'] for calibration in self.calibrations]:
-                    self.load_calibrations(s.calibration)
         return sbox
 
     def load_programsets(self,uuid):

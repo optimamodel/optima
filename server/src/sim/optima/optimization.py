@@ -3,6 +3,7 @@ from simbox import SimBox
 from simbudget2 import SimBudget2
 from programset import ProgramSet
 from collections import defaultdict
+import liboptima
 from liboptima.utils import printv,findinds
 from liboptima.ballsd import ballsd
 from liboptima.quantile import quantile
@@ -35,7 +36,6 @@ class Optimization(SimBox):
 
         # Make sure calibration and programset are both UUIDs
         if initial_alloc is None:
-            print 'Using original data allocation'
             self.initial_alloc = project.data['origalloc']
         else:
             self.initial_alloc = initial_alloc
@@ -53,8 +53,12 @@ class Optimization(SimBox):
 
             self.initial_sim = SimBudget2('Initial',project,self.initial_alloc,calibration,programset)
         
-        self.objectives = objectives if objectives is not None else defaultobjectives(self.initial_sim.getprogramset())
-        self.constraints = constraints if constraints is not None else defaultconstraints(self.initial_sim.getprogramset())
+        if calibration is None and programset is None and sim is None: # If only the project is specified, then we are loading a dict later
+            self.objectives = None
+            self.constraints = None
+        else: 
+            self.objectives = objectives if objectives is not None else defaultobjectives(self.initial_sim.getprogramset())
+            self.constraints = constraints if constraints is not None else defaultconstraints(self.initial_sim.getprogramset())
         self.optimized_sim = None
         self.optimized_alloc = None
         self.optimization_results = None # Store results that aren't contained within single Sims e.g. quantiles

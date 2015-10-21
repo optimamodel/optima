@@ -22,9 +22,12 @@ class Sim(object):
         elif project is None:
             self.calibration = None
         else:
-            self.calibration = project.calibrations[0]['uuid'] # Use the first project calibration by default - could reorder the project's calibrations to choose a default later
+            if len(project.calibrations) > 0:
+                self.calibration = project.calibrations[0]['uuid'] # Use the first project calibration by default - could reorder the project's calibrations to choose a default later
+            else:
+                self.calibration = None
 
-        # Check the calibration exists
+        # Check the calibration, if provided, exists
         if self.calibration is not None and self.calibration not in [x['uuid'] for x in project.calibrations]:
             raise Exception('The provided calibration UUID could not be found in the provided project')
 
@@ -42,7 +45,6 @@ class Sim(object):
             assert(simdict['project_uuid'] == project.uuid)
         sim_type = globals()[simdict['type']]
         s = sim_type(simdict['name'],project)
-        s.setproject(project)
         s.load_dict(simdict)
         return s
 

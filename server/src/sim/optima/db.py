@@ -31,7 +31,6 @@ def retrieve(table,uuid):
 	c = conn.cursor()
 	c.execute('SELECT data FROM %s WHERE %s.uuid = "%s"' % (sanitize(table),sanitize(table),sanitize(uuid)))
 	d = c.fetchall()
-	print sanitize(uuid)
 	if len(d) > 1:
 		print d
 	datastr = str(d[0][0])

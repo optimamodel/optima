@@ -13,6 +13,7 @@ from timevarying import timevarying
 class SimBudget2(Sim):
 
     def __init__(self,name,project,budget=None,calibration=None,programset=None):
+        # programset and calibration are UUIDs
         Sim.__init__(self, name, project,calibration)
 
         if budget is None: # Use data alloc
@@ -22,12 +23,16 @@ class SimBudget2(Sim):
             budget = timevarying(budget,nprogs=len(budget), tvec=project.options['partvec'], totalspend=sum(budget))
 
         self.budget = budget # This contains spending values for all of the modalities for the simulation timepoints i.e. there are len(D['opt']['partvec']) spending values
-        self.programset = programset if programset is not None else project.programsets[0].uuid # Use the first program set by default
+        
+        self.programset = programset
+        if self.programset is None and len(project.programsets) > 0:
+            self.programset = project.programsets[0].uuid
+
         self.popsizes = {} # Estimates for the population size obtained by running a base Sim within the parent project
         self.default_pars = {}
 
         # Check that the program set exists
-        if self.programset not in [x.uuid for x in project.programsets]:
+        if programset is not None and self.programset not in [x.uuid for x in project.programsets]:
             raise Exception('The provided program set UUID could not be found in the provided project')
 
         # The CCOCs will be used between the years specified here 

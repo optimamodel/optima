@@ -6,6 +6,8 @@ from timevarying import timevarying
 # r.save('./projects/georgia.bin')
 
 # Initialize the objects
+# TODO - could be refined by automatic fetching
+
 initialize = False
 
 def plot_optimization(project_uuid,optimization_uuid):
@@ -17,6 +19,7 @@ def plot_optimization(project_uuid,optimization_uuid):
 def plot_simbox(project_uuid,simbox_uuid):
 	r = optima.Project.load_db(project_uuid)
 	sb = r.load_simbox(simbox_uuid)
+	print r.simboxlist
 	optima.plot(sb.simlist)
 	return
 
@@ -38,15 +41,16 @@ if initialize:
 	r.save_db(save_all=True) # Save the project to the database
 
 else:
+	# Load the binary file, to show it works
 	r1 = optima.Project.load('demo_database_project.bin')
 	sb_uuids = [sb.uuid for sb in r1.simboxlist]
 
-	# Now make some plots
-	plot_optimization(r1.uuid,r1.simboxlist[-1].uuid)
+	print r1.simboxlist
 
+	#print r1.uuid
+	#print r1.simboxlist[0].uuid
+	plot_simbox(r1.uuid,r1.simboxlist[0].uuid)
+	#plot_optimization(r1.uuid,r1.simboxlist[-1].uuid)
 
-# Now, load the project from the database
-#r2 = optima.Project.load_db(r.uuid)
+	#optima.plot([r1.simboxlist[-1].initial_sim,r1.simboxlist[-1].optimized_sim])
 
-# s2 = optima.Sim.fetch(s.uuid)
-# optima.plot(s2)

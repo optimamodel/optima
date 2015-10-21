@@ -18,8 +18,8 @@ class TestSyntax(unittest.TestCase):
 	def test_portfolio_save_load(self):
 		r1 = optima.Project.load_json('../projects/Dedza.json')
 		r2 = optima.Project.load_json('../projects/Dowa.json')
-		tempsimbox1 = r1.createsimbox('GPA1', isopt = True, createdefault = True)
-		tempsimbox2 = r2.createsimbox('GPA2', isopt = True, createdefault = True)
+		tempsimbox1 = r1.createsimbox('GPA1', isopt = False, createdefault = True)
+		tempsimbox2 = r2.createsimbox('GPA2', isopt = False, createdefault = True)
 		
 		p1 = optima.Portfolio('test')
 		p1.appendproject(r1)
@@ -89,11 +89,11 @@ class TestSyntax(unittest.TestCase):
 		sim1 = SimBudget2('Test',P,P.data['origalloc'])
 		optima.plot(sim1,show_wait=False)	
 
-	def test_5(self):	# Workflow 5 - Minimal optimization workflow
-		P = Project.load('test_temp_project.bin')
-		sb = P.createsimbox('Opt', isopt = True, createdefault = True)
-		P.runsimbox(sb)
-		sb.plotallsims(show_wait=False)
+	# def test_5(self):	# Workflow 5 - Minimal optimization workflow
+	# 	P = Project.load('test_temp_project.bin')
+	# 	sb = P.createsimbox('Opt', isopt = False, createdefault = True)
+	# 	P.runsimbox(sb)
+	# 	sb.plotallsims(show_wait=False)
 
 	def test_8(self): # Workflow 8 - Loading someone else's programs
 		P = Project.load('test_temp_project.bin')
@@ -110,13 +110,13 @@ class TestSyntax(unittest.TestCase):
 		optima.plot(sim1,show_wait=False)
 
 	def test_optimization_from_sim(self): # Workflow 9 - Loading someone else's parameters/calibration
-		r = optima.Project.load_json('./projects/Dedza.json')
+		r = optima.Project.load_json('../projects/Dedza.json')
 		opt = optima.Optimization('Example',r,calibration=r.calibrations[0],programset=r.programsets[0],initial_alloc=r.data['origalloc']) # Make a sim, implicitly selecting a calibration and programset/ccocs
 		opt.optimize(timelimit = 5)
 		optima.plot([opt.initial_sim,opt.optimized_sim],show_wait=False)
 
 	def test_optimization_from_pset_and_cal(self): # Workflow 9 - Loading someone else's parameters/calibration
-		r = optima.Project.load_json('./projects/Dedza.json')
+		r = optima.Project.load_json('../projects/Dedza.json')
 		s = optima.SimBudget2('test',r)
 		opt = optima.Optimization('Example',r,sim=s)
 		opt.optimize(timelimit = 5)

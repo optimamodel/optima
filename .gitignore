@@ -12,3 +12,4 @@ server/build
 *.ipynb
 *.bin
 *.npz
+*.db
