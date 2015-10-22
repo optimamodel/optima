@@ -3,12 +3,12 @@
 ###############################################################################
 
 
-def loadspreadsheet(filename='example.xlsx', verbose=0):
+def loadspreadsheet(filename='test.xlsx', verbose=0):
     """
     Loads the spreadsheet (i.e. reads its contents into the data structure).
     This data structure is used in the next step to update the corresponding model.
     
-    Version: 2015sep04
+    Version: 2015oct22
     """
     
     ###########################################################################
@@ -16,10 +16,9 @@ def loadspreadsheet(filename='example.xlsx', verbose=0):
     ###########################################################################
     
     from utils import printv
-    from numpy import nan, zeros, isnan, array, logical_or, nonzero # For reading in empty values
+    from numpy import nan, isnan, array, logical_or, nonzero # For reading in empty values
     from xlrd import open_workbook # For opening Excel workbooks
     from time import strftime # For determining when a spreadsheet was last uploaded
-    from datetime import date
     printv('Loading data from %s...' % filename, 1, verbose)
     
     
@@ -40,13 +39,10 @@ def loadspreadsheet(filename='example.xlsx', verbose=0):
     
     # Metadata -- population and program names -- array sizes are (# populations) and (# programs)
     # groupname   sheetname                 name    thispar
-    popprogdata = [['Populations & programs', 'popprog', ['pops', 'progs']]]
+    popdata = [['Populations', 'pops', ['pops', 'progs']]]
     
     # Key data -- array sizes are time x population x uncertainty
     keydata =  [['Demographics & HIV prevalence', 'key', ['popsize', 'hivprev']]]
-    
-    # Cost-coverage data -- array sizes are time x programs x cost/coverage
-    cocodata = [['Cost & coverage',     'costcov', ['cov', 'cost']]]
     
     # Time data -- array sizes are time x population
     timedata = [
@@ -82,8 +78,7 @@ def loadspreadsheet(filename='example.xlsx', verbose=0):
     
     ## Ugly, but allow the list of groups to be used as name and also as variables
     sheetstructure = dict()
-    sheetstructure['popprogdata'] = popprogdata
-    sheetstructure['cocodata'] = cocodata
+    sheetstructure['popdata'] = popdata
     sheetstructure['keydata'] = keydata
     sheetstructure['timedata'] = timedata
     sheetstructure['econdata'] = econdata
@@ -105,9 +100,9 @@ def loadspreadsheet(filename='example.xlsx', verbose=0):
     except: raise Exception('Failed to load spreadsheet: file "%s" not found!' % filename)
     
     sheetstructure_keys = list(sheetstructure.keys())
-    popprogdata_index = sheetstructure_keys.index('popprogdata')
-    #ensure that popprogdata is parsed first
-    sheetstructure_keys = ['popprogdata']+ sheetstructure_keys[:popprogdata_index]+sheetstructure_keys[popprogdata_index+1:]
+    popdata_index = sheetstructure_keys.index('popdata')
+    #ensure that popdata is parsed first
+    sheetstructure_keys = ['popdata']+ sheetstructure_keys[:popdata_index]+sheetstructure_keys[popdata_index+1:]
     
     ## Loop over each group of sheets
     for groupname in sheetstructure_keys: # Loop over each type of data, but treat constants differently
@@ -163,25 +158,18 @@ def loadspreadsheet(filename='example.xlsx', verbose=0):
                     printv('Loading "%s"...' % paramcategory, 3, verbose)
                     parcount += 1 # Increment the parameter count
                     
-                    # It's popprogdata: pull out each of the pieces
-                    if groupname=='popprogdata': 
-                        thispar = subparlist[parcount] # Get the name of this parameter, e.g. 'pop'
-                        data[name][thispar] = dict() # Initialize to empty list
-                        data[name][thispar]['short'] = [] # Store short population/program names, e.g. "FSW"
-                        data[name][thispar]['long'] = [] # Store long population/program names, e.g. "Female sex workers"
-                        if thispar=='pops':
-                            data[name][thispar]['male'] = [] # Store whether or not this population is male
-                            data[name][thispar]['female'] = [] # Store whether or not this population is female
-                            data[name][thispar]['injects'] = [] # Store whether or not this population injects drugs
-                            data[name][thispar]['sexmen'] = [] # Store whether or not this population has sex with men
-                            data[name][thispar]['sexwomen'] = [] # Store whether or not this population has sex with women
-                            data[name][thispar]['sexworker'] = [] # Store whether or not this population is a sex worker
-                            data[name][thispar]['client'] = [] # Store whether or not this population is a client of sex workers
-                    
-                    # It's cost-coverage data: store cost and coverage for each program
-                    elif groupname=='cocodata': 
-                        data[name][subparlist[0]] = [] # Initialize coverage to an empty list -- i.e. data['costcov'].cov
-                        data[name][subparlist[1]] = [] # Initialize cost to an empty list -- i.e. data['costcov']['cost']
+                    # It's popdata: pull out each of the pieces
+                    if groupname=='popdata': 
+                        data[name]['pops'] = dict() # Initialize to empty list
+                        data[name]['pops']['short'] = [] # Store short population/program names, e.g. "FSW"
+                        data[name]['pops']['long'] = [] # Store long population/program names, e.g. "Female sex workers"
+                        data[name]['pops']['male'] = [] # Store whether or not this population is male
+                        data[name]['pops']['female'] = [] # Store whether or not this population is female
+                        data[name]['pops']['injects'] = [] # Store whether or not this population injects drugs
+                        data[name]['pops']['sexmen'] = [] # Store whether or not this population has sex with men
+                        data[name]['pops']['sexwomen'] = [] # Store whether or not this population has sex with women
+                        data[name]['pops']['sexworker'] = [] # Store whether or not this population is a sex worker
+                        data[name]['pops']['client'] = [] # Store whether or not this population is a client of sex workers
                     
                     # It's basic data or a matrix: create an empty list
                     elif groupname in ['keydata', 'timedata', 'matrices']: 
@@ -210,22 +198,20 @@ def loadspreadsheet(filename='example.xlsx', verbose=0):
                         printv('Parameter: %s' % subparam, 4, verbose)
                         
                         
-                        # It's popprog-data, split into pieces
-                        if groupname=='popprogdata': 
+                        # It's pops-data, split into pieces
+                        if groupname=='popdata': 
                             thesedata = sheetdata.row_values(row, start_colx=2, end_colx=11) # Data starts in 3rd column, finishes in 11th column
                             data[name][thispar]['short'].append(thesedata[0])
 
                             data[name][thispar]['long'].append(thesedata[1])
                             if thispar=='pops':
-                                data[name][thispar]['male'].append(forcebool(thesedata[2]))
-                                data[name][thispar]['female'].append(forcebool(thesedata[3]))
-                                data[name][thispar]['injects'].append(forcebool(thesedata[4]))
-                                data[name][thispar]['sexmen'].append(forcebool(thesedata[5]))
-                                data[name][thispar]['sexwomen'].append(forcebool(thesedata[6]))
-                                data[name][thispar]['sexworker'].append(forcebool(thesedata[7]))
-                                data[name][thispar]['client'].append(forcebool(thesedata[8]))
-                            if thispar=='progs':
-                                programs.append({'name':thesedata[0], 'effects':[]})
+                                data[name]['pops']['male'].append(forcebool(thesedata[2]))
+                                data[name]['pops']['female'].append(forcebool(thesedata[3]))
+                                data[name]['pops']['injects'].append(forcebool(thesedata[4]))
+                                data[name]['pops']['sexmen'].append(forcebool(thesedata[5]))
+                                data[name]['pops']['sexwomen'].append(forcebool(thesedata[6]))
+                                data[name]['pops']['sexworker'].append(forcebool(thesedata[7]))
+                                data[name]['pops']['client'].append(forcebool(thesedata[8]))
 
                         # It's cost-coverage data, save the cost and coverage values separately
                         if groupname=='cocodata':
@@ -308,21 +294,7 @@ def loadspreadsheet(filename='example.xlsx', verbose=0):
                             subpar = subparlist[parcount][1].pop(0) # Pop first entry of subparameter list, which is namelist[parcount][1]
                             data[name][thispar][subpar] = thesedata # Store data
     
-    
-    ## Program cost data
-    nprogs = len(data['costcov']['cost'])
-    data['origalloc'] = zeros(nprogs)
-    indexforcurrentyear = data['epiyears'].index(min(data['epiyears'][-1], date.today().year))
-    for prog in range(nprogs):
-        totalcost = data['costcov']['cost'][prog]
-        totalcost = array(totalcost)[:indexforcurrentyear] # Trim years after most recent
-        totalcost = totalcost[~isnan(totalcost)]
-        try:
-            totalcost = totalcost[-1]
-        except:
-            print('WARNING, no cost data entered for %s' % data['popprog']['progs']['short'][prog])
-            totalcost = 0 # No data entered for this program
-        data['origalloc'][prog] = totalcost    
+       
     
     
     
