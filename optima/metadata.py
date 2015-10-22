@@ -21,7 +21,7 @@ class Metadata(object):
         ''' Create the metadata '''
         self.name = name
         self.filename = None
-        self.uuid = uuid4()
+        self.id = uuid4()
         self.created = datetime.today()
         self.modified = datetime.today()
         self.spreadsheetdate = 'Spreadsheet never loaded'
