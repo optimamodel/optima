@@ -117,7 +117,7 @@ class Project(object):
         output += 'Spreadsheet loaded: %s\n'    % self.metadata.getdate(which='spreadsheet')
         output += '        Git branch: %s\n'    % self.metadata.gitbranch
         output += '       Git version: %s\n'    % self.metadata.gitversion
-        output += '              UUID: %s\n'    % str(self.metadata.uuid)
+        output += '                ID: %s\n'    % str(self.metadata.id)
         output += '============================================================'
         return output
     
@@ -173,8 +173,8 @@ class Project(object):
     
     def makeparams(self, name='default', overwrite=False):
         ''' Regenerate the parameters from the spreadsheet data -- also a large function '''
-        parset = Parameterset()
-        params = makeparams(parset, self.data) # Create parameters
+#        parset = Parameterset()
+        params = makeparams(self.data) # Create parameters
         self.addparams(name=name, params=params) # Store parameters
         return None
     

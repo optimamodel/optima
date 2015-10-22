@@ -48,7 +48,7 @@ class Metadata(object):
         output += '    Data loaded: %s\n'    % self.getdate(which='spreadsheetdate')
         output += '     Git branch: %s\n'    % self.gitbranch
         output += '    Git version: %s\n'    % self.gitversion
-        output += '           UUID: %s\n'    % self.uuid
+        output += '             ID: %s\n'    % self.id
         return output
     
     
