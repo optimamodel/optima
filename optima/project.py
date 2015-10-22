@@ -130,8 +130,8 @@ class Project(object):
     #######################################################################################################
     
     
-    def reload(self, filename=None):
-        ''' Replace the contents of the current project from the file '''
+    def loadfromfile(self, filename=None):
+        ''' Replace the contents of the current project from the file -- WARNING, do we need this?'''
         filename = self.reconcilefilenames(filename)
         project = loadprj(filename)
         return project
@@ -173,7 +173,8 @@ class Project(object):
     
     def makeparams(self, name='default', overwrite=False):
         ''' Regenerate the parameters from the spreadsheet data -- also a large function '''
-        params = makeparams(self.data) # Create parameters
+        parset = Parameterset()
+        params = makeparams(parset, self.data) # Create parameters
         self.addparams(name=name, params=params) # Store parameters
         return None
     
