@@ -26,7 +26,7 @@ from settings import Settings
 
 ## Load other Optima functions
 from loadspreadsheet import loadspreadsheet
-from makeparams import makeparams
+from parameters import makeparams
 from makesimpars import makesimpars
 from model import model
 
@@ -157,23 +157,22 @@ class Project(object):
     
     
     
-    def loadspreadsheet(self, filename):
+    def loadspreadsheet(self, filename, name='default'):
         ''' Load a data spreadsheet -- enormous, ugly function so located in its own file '''
         
         ## Load spreadsheet and update metadata
         self.data, self.programs = loadspreadsheet(filename) # WARNING -- might want to change this
         self.metadata.spreadsheetdate = datetime.today() # Update date when spreadsheet was last loaded
         
-        ## If default parameters don't exist, create them
-        if 'default' not in self.params:
-            self.makeparams(name='default')
+        ## If parameter set of that name doesn't exist, create it; otherwise makeparams has to be called explicitly
+        if name not in self.params:
+            self.makeparams(name=name)
         return None
     
     
     
     def makeparams(self, name='default', overwrite=False):
         ''' Regenerate the parameters from the spreadsheet data -- also a large function '''
-#        parset = Parameterset()
         params = makeparams(self.data) # Create parameters
         self.addparams(name=name, params=params) # Store parameters
         return None
