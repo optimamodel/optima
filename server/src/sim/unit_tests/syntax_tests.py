@@ -122,17 +122,8 @@ class TestSyntax(unittest.TestCase):
 		opt.optimize(timelimit = 5)
 		optima.plot([opt.initial_sim,opt.optimized_sim],show_wait=False)
 
-
-
-	# def test_from_xlsx(self):
-	# 	# Test running a simulation from XLSX
-	# 	r = project.Project('Haiti (from XLSX)',defaults.haiti['populations'],defaults.haiti['programs'],defaults.haiti['datastart'],defaults.haiti['dataend'])
-	# 	r.makeworkbook('../projects/Haiti_Test.xlsx') # Write to a dummy file for test purposes
-	# 	r.loadworkbook('../projects/Haiti.xlsx')
-	# 	r.createsimbox('Simbox 1')
-	# 	r.simboxlist[0].createsim('sim1') # This is really confusing....
-	# 	r.runsimbox(r.simboxlist[0])
-
+	# TODO - something with saving and loading XLSX files
+	# TODO - something to do with saving and loading project.simlist entries
 	
 
 if __name__ == '__main__':

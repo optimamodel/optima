@@ -23,6 +23,13 @@ def plot_simbox(project_uuid,simbox_uuid):
 	optima.plot(sb.simlist)
 	return
 
+def plot_sim(project_uuid,sim_uuid):
+	r = optima.Project.load_db(project_uuid)
+	s = r.load_sim(sim_uuid)
+	print r.simboxlist
+	print r.simlist
+	optima.plot(s)
+	return
 
 if initialize:
 	optima.db.makedb()
@@ -37,6 +44,15 @@ if initialize:
 	opt.optimize(timelimit = 5)
 	r.simboxlist.append(opt)
 
+	s1 = optima.Sim('test1',r);
+	s2 = optima.Sim('test2',r);
+	s3 = optima.Sim('test3',r);
+	s1.run()
+	s2.run()
+	s3.run()
+
+	r.simlist = [s1,s2,s3]
+
 	r.save('demo_database_project.bin') # Save the database to a file
 	r.save_db(save_all=True) # Save the project to the database
 
@@ -49,7 +65,8 @@ else:
 
 	#print r1.uuid
 	#print r1.simboxlist[0].uuid
-	plot_simbox(r1.uuid,r1.simboxlist[0].uuid)
+	#plot_simbox(r1.uuid,r1.simboxlist[0].uuid)
+	plot_sim(r1.uuid,r1.simlist[0].uuid)
 	#plot_optimization(r1.uuid,r1.simboxlist[-1].uuid)
 
 	#optima.plot([r1.simboxlist[-1].initial_sim,r1.simboxlist[-1].optimized_sim])

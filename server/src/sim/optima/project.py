@@ -6,6 +6,7 @@ Created on Fri May 29 23:16:12 2015
 """
 
 import defaults
+from sim import Sim
 from simbox import SimBox
 from simboxopt import SimBoxOpt
 from simboxcal import SimBoxCal
@@ -24,7 +25,8 @@ import cPickle
 import multiprocessing
 import numpy
 
-current_version = 3
+current_version = 4
+
 class Project(object):
     def __init__(self,name,populations=None,programs=None,datastart=None,dataend=None):
         # Usage
@@ -57,7 +59,7 @@ class Project(object):
             self.calibrations = []        # Remember. Current BOC data assumes loaded data is calibrated by default.
             
             self.simboxlist = []            # Container for simbox objects (e.g. optimisations, grouped scenarios, etc.)
-            
+            self.simlist = [] # Container for Sims
             self.uuid = liboptima.genuuid()
             
             self.current_version = current_version # This is stored in the projectdict
@@ -81,6 +83,8 @@ class Project(object):
         if save_all:
             for sbox in self.simboxlist:
                 db.store('simboxes',sbox.uuid,sbox.todict())
+            for s in self.simlist:
+                db.store('sims',s.uuid,s.todict())
             for pset in self.programsets:
                 db.store('programsets',pset.uuid,pset.todict())
             for cal in self.calibrations:
@@ -88,6 +92,7 @@ class Project(object):
 
         # Now strip objects already stored elsewhere in the database
         projectdict['simboxlist'] = []
+        projectdict['simlist'] = []
         projectdict['programsets'] = []
         projectdict['calibrations'] = []
         
@@ -123,6 +128,23 @@ class Project(object):
         self.simboxlist.append(sbox)
 
         return sbox
+
+    def load_sim(self,uuid):
+        # Add a known SimBox to the project
+        import db
+        simdict = db.retrieve('sims',uuid)
+
+        # Before we can load the SimBox, we have to load all of the dependencies
+        if simdict['type'] == 'SimBudget2':
+            if simdict['programset'] not in [pset.uuid for pset in self.programsets]:
+                self.load_programsets(simdict['programset'])
+        if simdict['calibration'] not in [cal['uuid'] for calibration in self.calibrations]:
+                self.load_calibrations(simdict['calibration'])
+        
+        s = Sim.fromdict(simdict,self)
+        self.simlist.append(s)
+
+        return s
 
     def load_programsets(self,uuid):
         # Add a known programset to the project
@@ -190,6 +212,9 @@ class Project(object):
             projectdict['calibrations'] = [{'uuid':None}]
             print "No calibration"
 
+        if projectdict['version'] < 4:
+            projectdict['simlist'] = []
+
         if projectdict['version'] < 3: 
             program_list = [x['name'] for x in projectdict['metadata']['programs']]
             projectdict['data']['ccocs'] = {}
@@ -214,6 +239,7 @@ class Project(object):
         self.D = projectdict['D']
         
         self.simboxlist = [SimBox.fromdict(x,self) for x in projectdict['simboxlist']]
+        self.simlist = [Sim.fromdict(x,self) for x in projectdict['simlist']]
 
         # BOC loading.
         self.BOCx = projectdict['BOC_budgets']
@@ -227,6 +253,7 @@ class Project(object):
         projectdict['metadata'] = self.metadata 
         projectdict['data'] = self.data 
         projectdict['simboxlist'] = [sbox.todict() for sbox in self.simboxlist]
+        projectdict['simlist'] = [s.todict() for s in self.simlist]
         projectdict['options'] = self.options # Populate default options here = self.options 
         projectdict['programsets'] = [pset.todict() for pset in self.programsets] # Serialize the programset
         projectdict['calibrations'] = self.calibrations # Calibrations are stored as dictionaries
