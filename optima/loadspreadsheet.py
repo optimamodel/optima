@@ -39,10 +39,13 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
     
     # Metadata -- population and program names -- array sizes are (# populations) and (# programs)
     # groupname   sheetname                 name    thispar
-    popdata = [['Populations', 'pops', ['pops', 'progs']]]
+    popdata = [['Populations', ['pops']]]
     
-    # Key data -- array sizes are time x population x uncertainty
-    keydata =  [['Demographics & HIV prevalence', 'key', ['popsize', 'hivprev']]]
+    # Population size data -- array sizes are time x population x uncertainty
+    popsizedata =  [['Population size', ['popsize']]]
+    
+    # HIV prevalence data -- array sizes are time x population x uncertainty
+    hivprevdata =  [['HIV prevalence', ['hivprev']]]
     
     # Time data -- array sizes are time x population
     timedata = [
@@ -79,7 +82,8 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
     ## Ugly, but allow the list of groups to be used as name and also as variables
     sheetstructure = dict()
     sheetstructure['popdata'] = popdata
-    sheetstructure['keydata'] = keydata
+    sheetstructure['popsizedata'] = popsizedata
+    sheetstructure['hivprevdata'] = hivprevdata
     sheetstructure['timedata'] = timedata
     sheetstructure['econdata'] = econdata
     sheetstructure['matrices'] = matrices
