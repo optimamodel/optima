@@ -11,7 +11,7 @@ import numpy
 import simbudget2
 
 #### TODO LIST
-# - Ignore data when plotting if there is a mismatch (if programset has been moved to a different region)
+# - Ignore data when plotting if there is a mismatch (i.e. if programset has been moved to a different region and a program with the same name exists but has different effects or reaches a different population)
 # - Add perturbations to CCOCs
 # - Examine auto fitting
 # - Incorporate metamodality reflow
@@ -27,6 +27,9 @@ class ProgramSet(object):
         self.uuid = str(uuid.uuid4())
         self.programs = []
         self.default_reachability_interaction = 'random' # These are the options on slide 7 of the proposal
+        assert(self.default_reachability_interaction in ['random','additive','nested']) # Supported reachability types
+        self.specific_reachability_interaction = defaultdict(dict) # Override reachability e.g. self.specific_reachability_interaction['FSW']['testing'] = 'additive'
+
         self.current_version = 1
 
     @classmethod
@@ -43,12 +46,18 @@ class ProgramSet(object):
 
     @classmethod
     def fromdict(ProgramSet,psetdict):
+        self.upgrade_version(projectdict)
+
         p = ProgramSet(None)
         p.name = psetdict['name']
         p.uuid = psetdict['uuid']
         p.programs = [Program.fromdict(x) for x in psetdict['programs']]
         p.default_reachability_interaction = psetdict['default_reachability_interaction']
         return p
+
+    def upgrade_version(self,projectdict):
+        # Upgrade the projectdict to support new versions
+        return projectdict
 
     def todict(self):
         psetdict = dict()
@@ -240,6 +249,23 @@ class ProgramSet(object):
                     print 'Programs ',[x.name for x in effects[effect]]
                     print
                     raise Exception('Overlap, coverage distribution, and effect combination go here')
+                    
+                    if pop in self.specific_reachability_interaction.keys() and effect in self.specific_reachability_interaction[pop].keys():
+                        interaction = self.specific_reachability_interaction[pop][effect]
+                    else:
+                        interaction = self.default_reachability_interaction
+
+                    if interaction == 'random':
+                        outcomes[pop][effect] = 0;
+                    elif interaction == 'additive':
+                        for prog in effects[effect]:
+                            # Note that outcomes[pop][effect] is a vector 
+
+                    elif interaction == 'nested':
+
+                    else:
+                        raise Exception('Unknown reachability type "%s"',interaction)
+
         
         return outcomes
 
@@ -460,8 +486,6 @@ class Program(object):
                 # Get the program data
                 datacost = p.data['ccocs'][self.name]['cost']
                 datacoverage = get_data_coverage(self.name,pop,sim)
-                print datacost
-                print datacoverage
                 ax.scatter(datacost,datacoverage,color='#666666',zorder=8)
 
                 # What is the alloc for this program?
