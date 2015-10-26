@@ -26,7 +26,7 @@ class ProgramSet(object):
         self.name = name
         self.uuid = str(uuid.uuid4())
         self.programs = []
-        self.reachability_interaction = 'random' # These are the options on slide 7 of the proposal
+        self.default_reachability_interaction = 'random' # These are the options on slide 7 of the proposal
         self.current_version = 1
 
     @classmethod
@@ -47,7 +47,7 @@ class ProgramSet(object):
         p.name = psetdict['name']
         p.uuid = psetdict['uuid']
         p.programs = [Program.fromdict(x) for x in psetdict['programs']]
-        p.reachability_interaction = psetdict['reachability_interaction']
+        p.default_reachability_interaction = psetdict['default_reachability_interaction']
         return p
 
     def todict(self):
@@ -55,7 +55,7 @@ class ProgramSet(object):
         psetdict['name'] = self.name 
         psetdict['uuid'] = self.uuid 
         psetdict['programs'] = [x.todict() for x in self.programs]
-        psetdict['reachability_interaction'] = self.reachability_interaction 
+        psetdict['default_reachability_interaction'] = self.default_reachability_interaction 
         psetdict['current_version'] = self.current_version 
 
         return deepcopy(psetdict)
@@ -181,11 +181,14 @@ class ProgramSet(object):
                 pops[pop].append(prog)
         return pops
 
-    def progs_by_effect(self,pop=None):
+    def progs_by_effect(self,pop=None,filter_effect=None):
         # Like progs_by_pop, this function returns a dictionary 
         # like {'condomcas': [Program 6b39 (Condoms & SBCC)], u'hivtest': [Program b127 (HTC)]}
         # These are specific to the population provided as an input argument
         # If no population is specified, then (pop,program) tuples for the parameter are returned instead
+        # EXTRA USAGE
+        # If filter_effect is provided, then only the requested effect will be returned
+        # e.g. pset.progs_by_effect('FSW','testing') might return [Program a2b6 (FSW programs), Program 430b (HTC)]
         effects = defaultdict(list)
         for prog in self.programs:
             prog_effects = prog.get_effects()
@@ -194,7 +197,11 @@ class ProgramSet(object):
                     effects[effect[1]].append((effect[0],prog))
                 elif effect[0] == pop: # If the effect applies to the selected population
                     effects[effect[1]].append(prog)
-        return effects
+
+        if filter_effect is None:
+            return effects
+        else
+            return effects[filter_effect]
 
     def get_outcomes(self,budget,perturb=False):
         # An alloc is a vector of numbers for each program, that is subject to optimization
@@ -236,85 +243,13 @@ class ProgramSet(object):
         
         return outcomes
 
-    def get_coverage_legacy(self,spending):
-        # This function returns an array of effective coverage values for each metamodality
-        # reflow_metamodalities should generally be run before this function is called
-        # this is meant to happen automatically when add_modality() or remove_modality is called()
-        #
-        # Note that coverage is *supposed* to always be in normalized units (i.e. percentage of population)
-        # The method program.convert_units() does the conversion to number of people at the last minute
-        raise Exception('This code is scheduled for removal')
-
-        if len(self.modalities) == 1:
-            spending = array([[spending]]) # Need a better solution...
-
-        assert(len(spending)==len(self.modalities))
-
-        # First, get the temporary coverage for each modality
-        for i in xrange(0,len(spending)):
-            self.modalities[i].temp_coverage = self.modalities[i].get_coverage(spending[i,:])
-        
-        print self.modalities[0].temp_coverage
-
-        # Now compute the metamodality coverage
-        if self.reachability_interaction == 'random':
-            for mm in self.metamodalities:
-                mm.temp_coverage1 = reduce(mul,[m.temp_coverage for m in self.modalities if m.uuid in mm.modalities]) # This is the total fraction reached
-                
-            for i in xrange(len(self.modalities),0,-1): # Iterate over metamodalities containing i modalities
-                superset = [mm for mm in self.metamodalities if len(mm.modalities) >= i]
-                subset = [mm for mm in self.metamodalities if len(mm.modalities) == i-1]
-
-                for sub in subset:
-                    for sup in superset: 
-                        if set(sub.modalities).issubset(set(sup.modalities)):
-                            sub.temp_coverage1 -= sup.temp_coverage1
-
-        # Next, calculate the coverage for each metamodality
-        effective_coverage = [mm.temp_coverage1 for mm in self.metamodalities]
-        
-        return effective_coverage
-
-    def get_outcomes_legacy(self,effective_coverage):
-        raise Exception('This code is scheduled for removal')
-        # This function sketches out what the combination of output parameters might be like
-        # Each metamodality will return a set of outcomes for its bound effects
-        # That is, if the program has 3 effects, each metamodality will return 3 arrays
-        # These then need to be combined into the overall program effect on the parameters
-        # perhaps using the nonlinear saturating system
-        # For coverage programs, the CO curve is the identity function and thus the units
-        # are still normalized. De-normalization happens as a third step
-        outcomes = []
-        for mm,coverage in zip(self.metamodalities,effective_coverage):
-            outcomes.append(mm.get_outcomes(self.modalities,coverage))
-
-        # Indexing is outcomes[metamodality][effect][time]
-        # Note that outcomes is a list of lists, because the metamodality returns a list of outputs
-        # rather than a matrix
-        # What we want is outcomes[effect][time]
-        # Now we need to merge all of the entries of outcomes into a single outcome. This is done on a per-effect basis
-
-        output_outcomes = []
-
-        for i in xrange(0,len(self.effects['param'])): # For each output effect
-            # In this loop, we iterate over the metamodalities and then combine the outcome into a single parameter
-            # that is returned for use in D.M
-            tmp = outcomes[0][i]
-            if len(outcomes) > 1:
-                for j in xrange(1,len(outcomes)): # For each metamodality
-                    tmp += outcomes[j][i]
-            tmp *= (1/len(outcomes))
-            output_outcomes.append(tmp)
-        #print output_outcomes
-        return output_outcomes
-
     def convert_units(self,output_outcomes,sim_output):
         # This function takes in a set of outcomes (generated by this program) and
         # simobject output e.g. sim_output = sim.run()
         # It iterates over the modalities to find coverage-type modalities
         # It then uses the population sizes in sim_output to convert nondimensional 
         # coverage into numbers of people
-
+        # Currently not fully implemented
         return output_outcomes
 
     def __getitem__(self,name):
@@ -329,79 +264,6 @@ class ProgramSet(object):
 
     def __repr__(self):
         return 'ProgramSet %s (%s)' % (liboptima.shortuuid(self.uuid),self.name)
-
-class MetaProgram(object):
-    # A metaprogram corresponds to an overlap of programs
-    
-    # The metamodality knows the coverage (number of people) who fall into the overlapping category
-    # The amount of overlap still needs to be specified though
-    # For example, if the population size is 100 people, and modality 1 reaches 40, and modality 2 reaches 20,
-    # and the metamodality reaches 10, then we know that 10 people are reached by both - 50% of modality 2, and 25% of modality 1
-    # So the metamodality coverage is a fraction of the total population
-    # And it must be smaller than the smallest coverage for the individual modalities
-    def __init__(self,modalities,method='maximum',metamodality=None,overlap=None): # where m1 and m2 are Modality instances
-        self.modalities = [m.uuid for m in modalities]
-
-        if metamodality is not None:
-            self.modalities += metamodality.modalities # Append the UUIDs from the previous metamodality object
-
-        self.temp_coverage = 0 # This is used internally by program.get_coverage()
-        self.method = method
-
-    def get_outcomes(self,modalities,effective_coverage):
-        outcomes = []
-        for m in modalities:
-            if m.uuid in self.modalities:
-                outcomes.append(m.get_outcomes(effective_coverage))
-
-        #print 'METAMODALITY'
-        # It is indexed
-        # outcomes[modality][effect][time]
-        # The modality returns an set of outcomes (an array of arrays)
-        # Now we need to iterate over them to get a single outcome from the metamodality
-
-        # Suppose the effective_coverage is 0.3. That means that 30% of the population is covered by 
-        # ALL of the programs associated with this metamodality. The final outcome can be 
-        # combined in different ways depending on the method selected here
-        final_outcomes = []
-        for i in xrange(0,len(outcomes[0])): # For each output effect
-            # In this loop, we iterate over the modalities and then combine the outcome into a single parameter
-            # that is returned for use in D.M
-            # Each element in outcomes corresponds to 
-            tmp = [x[i] for x in outcomes] # These are the outcomes for effect i for each modality
-            # tmp is a list of tmp[modality][outcome] for fixed effect. Now we have to iterate over tmp
-            if self.method == 'maximum':
-                out = tmp[0]
-                for j in xrange(1,len(tmp)):
-                    out = maximum(out,tmp[j]) # use maximum function from numpy
-            final_outcomes.append(out)
-
-        #print final_outcomes
-        # Indexing is final_outcomes[effect][time]
-        return final_outcomes
-
-
-    def get_coverage(self,modalities,coverage):
-        # Return a list of all of the coverages corresponding to the modalities
-        # referred to by this metamodality instance
-        # There is one coverage for each modality
-
-        # Note that internally, the coverages are divided equally
-        # For example, if the population size is 100 people, and modality 1 is capable of reaching 40, and modality 2 is capable of reaching 20,
-        # and the metamodality reaches 10, then we know that 10 people are reached by both. So we set the metamodality maxcoverage
-        # to 10 people (0.1). 
-        # Now, suppose modality 1 reaches 20 people, and modality 2 reaches 20 people. This mean that of the metamodality now reaches 5 people
-        # So we have
-        # metamodalitycoverage = (m_1_actualcoverage/m_1_max*m_2_actualcoverage/m_2_max)*self.maxcoverage
-        # is the fraction of the total population reached by this combination of programs
-        actual_coverage = self.maxcoverage
-        for i in xrange(0,len(modalities)):
-            if modalities[i].uuid in self.modalities:
-                actual_coverage *= coverage[i]/modalities[i].maxcoverage
-        return actual_coverage
-
-    def __repr__(self):
-        return '(%s)' % (','.join([s[0:4] for s in self.modalities]))
 
 class Program(object):
     # This class is a single modality - a single thing that 
