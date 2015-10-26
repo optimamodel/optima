@@ -510,7 +510,7 @@
                 </tr>
                 </thead>
                 <tbody>
-                <tr ng-repeat="p in ::programs">
+                <tr ng-repeat="p in ::programs track by $index">
                   <td>{{ ::p }}</td>
                   <td>
                     <input type="number" class="txbox __inline __s" ng-model="params.objectives.money.costs[$index]">%
@@ -575,7 +575,7 @@
             </tr>
             </thead>
             <tbody>
-            <tr ng-repeat="p in ::programs">
+            <tr ng-repeat="p in ::programs track by $index">
               <td>
                 <input type="checkbox" ng-model="params.constraints.yeardecrease[$index].use">
               </td>
@@ -608,7 +608,7 @@
             </tr>
             </thead>
             <tbody>
-            <tr ng-repeat="p in ::programs">
+            <tr ng-repeat="p in ::programs track by $index">
               <td>
                 <input type="checkbox" ng-model="params.constraints.totaldecrease[$index].use">
               </td>
@@ -643,7 +643,7 @@
             </tr>
             </thead>
             <tbody>
-            <tr ng-repeat="p in ::programs">
+            <tr ng-repeat="p in ::programs track by $index">
               <td>
                 <input type="checkbox" ng-model="params.constraints.coverage[$index].use">
               </td>
