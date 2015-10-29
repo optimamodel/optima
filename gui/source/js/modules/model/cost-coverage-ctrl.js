@@ -48,6 +48,8 @@ define(['./module', 'underscore'], function (module, _) {
       $scope.state.costOutcomeCharts = [];
       $scope.state.coverageOutcomeCharts = [];
       $scope.state.outcomeTitles = [];
+      $scope.state.outcomeParamsInPercentage = [];
+      $scope.state.outcomeParamsMax = [];
     };
 
     /* Methods
@@ -137,6 +139,13 @@ define(['./module', 'underscore'], function (module, _) {
         $scope.state.outcomeTitles = _(response.fig_co).map(function(chart) {
           return chart.axes[0].texts[2].text;
         });
+        $scope.state.outcomeParamsInPercentage = _($scope.state.outcomeTitles).map(function(title) {
+          return title.indexOf('Number of sexual acts') === -1 ? true : false;
+        });
+        $scope.state.outcomeParamsMax = _($scope.state.outcomeParamsInPercentage).map(function(inPercentage) {
+          return inPercentage ? 100 : undefined;
+        });
+
         $scope.state.coverageOutcomeCharts = response.fig_co;
         _($scope.state.coverageOutcomeCharts).each(function(chart) {
           chart.axes[0].texts.splice(2, 1);
