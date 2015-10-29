@@ -116,8 +116,13 @@ gulp.task('karma-ci', function () {
     }).on('error', handleError));
 });
 
+gulp.task('font-awesome', function() {
+  return gulp.src('source/vendor/font-awesome/fonts/*')
+    .pipe(gulp.dest('source/assets/fonts'))
+})
+
 // Sass
-gulp.task('sass', function () {
+gulp.task('sass', ['font-awesome'], function () {
   var cssGlobbing = require('gulp-css-globbing');
   var postcss = require('gulp-postcss');
   var sass = require('gulp-sass');
