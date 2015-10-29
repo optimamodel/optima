@@ -287,8 +287,15 @@ def model(M, settings, initstate=None, verbose=2, safetymargin=0.8, benchmark=Fa
         
         # We have two ways to calculate number of births...
         if (asym<0).any(): # Method 1 -- children are being modelled directly
-            print('NB, not implemented') # TODO Use negative entries in transitions matrix
-            birthrate = M['birth'][:,t] # Use birthrate parameter from input spreadsheet
+            S['births'][0,t] = 0
+            for p1 in range(npops):
+                for p2 in range(npops):
+                    transyears = asym[p1, p2] # Current transition rate
+                    if absolute(transyears) > 0: # Is the given rate non zero
+                        transrate = 1/float(transyears) # Invert
+                        S['births'][0,t] += sum(people[:, p1, t] * absolute(transrate) * dt)
+            S['mtct'][0,t] = 0
+              
         else: # Method 2 -- children are not being modelled directly
             birthrate = M['birth'][:,t] # Use birthrate parameter from input spreadsheet
         S['births'][0,t] = sum(birthrate * allpeople[:,t])
@@ -310,6 +317,8 @@ def model(M, settings, initstate=None, verbose=2, safetymargin=0.8, benchmark=Fa
         
         # Number of people circumcised - we only care about susceptibles
         numcirc = (people[sus, :, t] * male * propcirc[:, t]).flatten()
+        
+        mtctperpop = zeros((1, npops))     # Number of mother-to-child transmissions for this timestep, split by population groups.
         
         ## Asymmetric transitions - people move from one population to another
         for p1 in range(npops):
@@ -335,14 +344,25 @@ def model(M, settings, initstate=None, verbose=2, safetymargin=0.8, benchmark=Fa
                         people[:, p1, t] -= peoplemoving # Take away from pop1...
                         people[:, p2, t] += peoplemoving # ... then add to pop2
                     else: # Otherwise: it's births
-                        print('NB, not implemented') # TODO -- get these births working
-#                        
-#                        # The proportion of births infected
-#                        propbirthsinfected = infectedbirths / totalbirths;
-#                        
-#                        # People stay in pop1 with new babies going into either susceptible or CD4>500 in pop2
-#                        people([pg['sus'] pg.undiag(1)], p2, t) = people([pg['sus'] pg.undiag(1)], p2, t) + ...
-#                            + sum(peoplemoving) * [1-propbirthsinfected; propbirthsinfected];
+                        birthrate = absolute(transrate)
+                        
+                        popbirths    = sum(birthrate * dt * people[:,p1,t])
+                        mtcttx       = (birthrate * dt * sum(people[tx1,p1,t] +people[tx2,p1,t]))  * pmtcteff # MTCT from those on treatment (not eligible for PMTCT)
+                        mtctuntx     = (birthrate * dt * sum(people[undx,p1,t]+people[fail,p1,t])) * effmtct  # MTCT from those undiagnosed or failed (also not eligible)
+                        birthselig   = (birthrate * dt * sum(people[dx,p1,t])) # Births to diagnosed mothers eligible for PMTCT
+                        if numpmtct[t]>1: # It's greater than 1: assume it's a number
+                            receivepmtct = min(numpmtct[t]*float(popbirths)/float(S['births'][0,t]), birthselig) # Births protected by PMTCT -- constrained by number eligible 
+                        else: # It's a proportion
+                            receivepmtct = numpmtct[t]*birthselig # Births protected by PMTCT -- constrained by number eligible 
+                        mtctdx = (birthselig - receivepmtct) * effmtct # MTCT from those diagnosed not receiving PMTCT
+                        mtctpmtct = receivepmtct * pmtcteff # MTCT from those receiving PMTCT
+                        popmtct = mtctuntx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components                        
+                        
+                        S['mtct'][0,t] += popmtct                   
+                        mtctperpop[0,p2] += popmtct                        
+                        
+                        people[settings.sus, p2, t] += popbirths - popmtct
+                        people[settings.undx[0], p2, t] += popmtct
                             
         ## Symmetric transitions - people swap between two populations
         for p1 in range(npops):
@@ -419,7 +439,7 @@ def model(M, settings, initstate=None, verbose=2, safetymargin=0.8, benchmark=Fa
         
         ## Susceptibles
         dS = -newinfections # Change in number of susceptibles -- death rate already taken into account in pm.totalpop and dt
-        S['inci'][:,t] = newinfections/float(dt)  # Store new infections
+        S['inci'][:,t] = (newinfections + mtctperpop)/float(dt)  # Store new infections AND new MTCT births
 
         ## Undiagnosed
         propdx = None
