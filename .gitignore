@@ -14,3 +14,6 @@ server/build
 *.xlsx
 *.npz
 *.db
+
+client/source/assets/fonts/FontAwesome*
+client/source/assets/fonts/fontawesome*
