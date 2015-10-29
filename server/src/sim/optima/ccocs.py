@@ -35,16 +35,20 @@ class ccoc(object):
 
 
     @abc.abstractmethod # This method must be defined by the derived class
-    def function(self,x,p):
+    def function(self,x,p,t=None):
         # This function takes in either a spending value or coverage
         # and the functional parameters for the object, and returns
         # the coverage or the outcome
+        # Optionally takes in an array of times as well. t should be the
+        # same size as x
         pass
 
     @abc.abstractmethod # This method must be defined by the derived class
     def convertparams(self,perturb=False,bounds=None):
         # Take the current frontend parameters, and convert them into backend parameters
         # that can be passed into ccoc.function()
+        # 'bounds' can be 'upper' or 'lower' to generate the curves displayed to the user
+        # as the uncertainty ranges
         pass
 
     @abc.abstractmethod # This method must be defined by the derived class
@@ -52,21 +56,20 @@ class ccoc(object):
         # Return default fe_params for this CCOC
         pass
 
-    def evaluate(self,x,perturb=False,bounds=None):
-        # Todo: incorporate perturbation
+    def evaluate(self,x,t=None,perturb=False,bounds=None):
         p = self.convertparams(perturb,bounds)
-        return self.function(x,p)
+        return self.function(x,p,t)
 
     def xlims(self):
         # Return sensible x-limits for the curve based on the parameters
         # This is used for plotting if no data is available
         return [0,1]
 
-    def invert(self,y):
+    def invert(self,y,t=None):
         p = self.convertparams()
-        return self.inverse(y,p)
+        return self.inverse(y,p,t)
 
-    def inverse(self,y,p):
+    def inverse(self,y,p,t=None):
         # This function should find the inverse numerically
         # but it can be overloaded by derived classes to provide
         # an analytic inverse
@@ -75,7 +78,7 @@ class ccoc(object):
 ######## SPECIFIC CCOC IMPLEMENTATIONS
 
 class cc_scaleup(ccoc):
-    def function(self,x,p):
+    def function(self,x,p,t=None):
         return cceqn(x,p)
 
     def convertparams(self,perturb=False,bounds=None):
@@ -105,7 +108,7 @@ class cc_scaleup(ccoc):
         return [0,2e6]
 
 class cc_noscaleup(ccoc):
-    def function(self,x,p):
+    def function(self,x,p,t=None):
         return cc2eqn(x,p)
 
     def convertparams(self,perturb=False,bounds=None):
@@ -134,10 +137,10 @@ class cc_noscaleup(ccoc):
         return [0,2e6]
 
 class co_cofun(ccoc):
-    def function(self,x,p):
+    def function(self,x,p,t=None):
         return coeqn(x,p)
 
-    def inverse(self,y,p):
+    def inverse(self,y,p,t=None):
         return (y-p[0])/(p[1]-p[0]) 
         
     def convertparams(self,perturb=False,bounds=None):
@@ -164,7 +167,7 @@ class co_cofun(ccoc):
         return [0,0,1,1] # [zero coverage lower, zero coverage upper, full coverage lower, full coverage upper]
 
 class co_linear(ccoc):
-    def function(self,x,p):
+    def function(self,x,p,t=None):
         return linear(x,p)
 
     def convertparams(self,perturb=False,bounds=None):
@@ -174,7 +177,7 @@ class co_linear(ccoc):
         return [1,0] # [gradient intercept]
 
 class identity(ccoc):
-    def function(self,x,p):
+    def function(self,x,p,t=None):
         return x
 
     def convertparams(self,perturb=False,bounds=None):
@@ -184,7 +187,7 @@ class identity(ccoc):
         return None
 
 class null(ccoc):
-    def function(self,x,p):
+    def function(self,x,p,t=None):
         return None
 
     def convertparams(self,perturb=False,bounds=None):

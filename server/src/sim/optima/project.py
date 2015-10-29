@@ -14,7 +14,6 @@ from optimization import Optimization
 import sim
 import setoptions
 import uuid
-import program
 from numpy import array, isnan, zeros, shape, mean
 from liboptima.utils import sanitize, perturb,printv
 import liboptima

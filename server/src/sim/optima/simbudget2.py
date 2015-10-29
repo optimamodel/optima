@@ -132,7 +132,7 @@ class SimBudget2(Sim):
 
         # Get the parameter values from the CCOCs
         progs = self.getprogramset()
-        outcomes = progs.get_outcomes(self.budget,perturb)
+        outcomes = progs.get_outcomes(r.options['partvec'],self.budget,perturb)
 
         # Declare a helper function to convert population names into array indexes
         pops = [x['short_name'] for x in r.metadata['inputpopulations']]

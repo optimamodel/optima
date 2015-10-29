@@ -16,6 +16,7 @@ import simbudget2
 # - Examine auto fitting
 # - Incorporate metamodality reflow
 # - Add metamodality tests
+# - How should plotting work with time-varying CCOCs? Will need to decide on the plotting routines first
 
 coverage_params = ['numcircum','numost','numpmtct','numfirstline','numsecondline'] # This list is copied from makeccocs.py
 # What about aidstest, sharing, and breast?
@@ -46,14 +47,16 @@ class ProgramSet(object):
 
     @classmethod
     def fromdict(ProgramSet,psetdict):
-        self.upgrade_version(projectdict)
 
         p = ProgramSet(None)
+        psetdict = p.upgrade_version(psetdict)
+        
         p.name = psetdict['name']
         p.uuid = psetdict['uuid']
         p.programs = [Program.fromdict(x) for x in psetdict['programs']]
         p.default_reachability_interaction = psetdict['default_reachability_interaction']
         return p
+
 
     def upgrade_version(self,projectdict):
         # Upgrade the projectdict to support new versions
@@ -209,15 +212,15 @@ class ProgramSet(object):
 
         if filter_effect is None:
             return effects
-        else
+        else:
             return effects[filter_effect]
 
-    def get_outcomes(self,budget,perturb=False):
+    def get_outcomes(self,tvec,budget,perturb=False):
         # An alloc is a vector of numbers for each program, that is subject to optimization
         # A budget is spending at a particular time, for each program
         # In the legacy code, we would say 
         #   budget = timevarying.timevarying(alloc)
-
+        # 'tvec' should have a size corresponding to 'budget'
         # First, we need to know which populations to iterate over
         outcomes = dict()
 
@@ -230,7 +233,7 @@ class ProgramSet(object):
             coverage = []
             for prog in progs_reaching_pop:
                 spending = budget[self.programs.index(prog),:] # Get the amount of money spent on this program
-                coverage.append(prog.get_coverage(pop,spending,perturb)) # Calculate the program's coverage
+                coverage.append(prog.get_coverage(pop,spending,t=tvec,perturb=perturb)) # Calculate the program's coverage
 
             # Next, get the list of effects to iterate over
             effects = self.progs_by_effect(pop) 
@@ -242,7 +245,7 @@ class ProgramSet(object):
                     prog = effects[effect][0]
                     this_coverage = coverage[progs_reaching_pop.index(prog)] # Get the coverage that this program has for this population
                     assert(effect not in outcomes[pop].keys()) # Multiple programs should not be able to write to the same parameter *without* going through the overlapping calculation
-                    outcomes[pop][effect] = prog.get_outcome(pop,effect,this_coverage,perturb) # Get the program outcome and store it in the outcomes dict
+                    outcomes[pop][effect] = prog.get_outcome(pop,effect,this_coverage,t=tvec,perturb=perturb) # Get the program outcome and store it in the outcomes dict
                 else:
                     print 'OVERLAPPING MODALITIES DETECTED'
                     print 'Pop: %s Effect: %s' % (pop,effect)
@@ -258,11 +261,9 @@ class ProgramSet(object):
                     if interaction == 'random':
                         outcomes[pop][effect] = 0;
                     elif interaction == 'additive':
-                        for prog in effects[effect]:
-                            # Note that outcomes[pop][effect] is a vector 
-
+                        pass
                     elif interaction == 'nested':
-
+                        pass
                     else:
                         raise Exception('Unknown reachability type "%s"',interaction)
 
@@ -370,15 +371,15 @@ class Program(object):
                 effects.append((pop,param))
         return effects
 
-    def get_coverage(self,pop,spending,perturb=False):
+    def get_coverage(self,pop,spending,t=None,perturb=False):
         # Return the coverage of a particular population given the spending amount
-        return self.cost_coverage[pop].evaluate(spending,perturb)
+        return self.cost_coverage[pop].evaluate(spending,t=t,perturb=perturb)
 
-    def get_outcome(self,pop,effect,coverage,perturb=False):
+    def get_outcome(self,pop,effect,coverage,t=None,perturb=False):
         # Return the outcome for a particular effect given the parent population's coverage
         if isinstance(effect,list):
             effect = ''.join(effect)
-        return self.coverage_outcome[pop][effect].evaluate(coverage,perturb)
+        return self.coverage_outcome[pop][effect].evaluate(coverage,t=t,perturb=perturb)
 
     def plot(self,sim=None,show_wait=True):
         # # This function will just plot everything
