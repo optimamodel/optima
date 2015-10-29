@@ -744,7 +744,11 @@ def migrateData():
     Goes over all available projects and tries to run specified migration on them
     """
     import versioning
-    for project_id in db.session.query(ProjectDb.id).distinct():
+    from sim.makeproject import current_version
+    for row in db.session.execute(
+        "select distinct id from projects where (model->'G'->>'version')::text!=':val'", {'val':current_version}):
+        print "row", row
+        project_id = row[0]
         print "project_id", project_id
         model = load_model(project_id, from_json = False)
         model = versioning.run_migrations(model)

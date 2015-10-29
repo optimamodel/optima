@@ -32,6 +32,8 @@ def updatedata(D, workbookname=None, verbose=2, savetofile=True, input_programs=
         D['M'] = makemodelpars(D['P'], D['opt'], verbose=verbose)
     if 'F' not in D: # Only rerun if it doesn't exist
         D = makefittedpars(D, verbose=verbose)
+    elif 'F' in D and len(D['F'])==1:
+        D['F'][0]['popsize'] = [D['M']['popsize'][p][0] for p in range(D['G']['npops'])]
     if rerun or 'R' not in D: # Rerun if asked, or if no results
         D = runsimulation(D, makeplot = 0, dosave = False)
     if savetofile:
