@@ -12,3 +12,8 @@ server/build
 *.ipynb
 *.bin
 *.npz
+*.bin
+*.json
+*.xlsx
+*.npz
+*.db
