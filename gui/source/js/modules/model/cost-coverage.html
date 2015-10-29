@@ -198,6 +198,10 @@
         </div>
 
         <form name="state.CombinedAdjustmentForms">
+          <div ng-show="state.costOutcomeCharts.length === 0" class="info-hint">
+            You have not defined any effects for this program.
+          </div>
+
           <div class="section" ng-if="state.costOutcomeCharts.length" ng-repeat="chart in state.costOutcomeCharts track by chart.id">
             <h2 class="section">{{ state.outcomeTitles[$index] }}</h2>
 

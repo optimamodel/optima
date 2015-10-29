@@ -275,7 +275,8 @@ def loadspreadsheet(filename='example.xlsx', verbose=0):
                                     invalid = logical_or(array(validdata)>1, array(validdata)<0)
                                     if any(invalid):
                                         column = nonzero(invalid)[0]
-                                        raise Exception('Invalid entry in spreadsheet: parameter %s (row=%i, column(s)=%s, value=%i)' % (thispar, row, column, thesedata[column[0]]))
+                                        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                                        raise Exception('Invalid entry in spreadsheet: parameter %s (row=%i, column(s)=%s, value=%f)' % (thispar, row+1, column, thesedata[column[0]]))
                             
                             # [TODO] Replace this with something that writes the links into the spreadsheet
 #                            for programname, pops in programs_for_input_key(thispar, input_programs).iteritems(): # Link with programs...?

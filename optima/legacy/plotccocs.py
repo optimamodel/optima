@@ -3,12 +3,10 @@ Plots cost-coverage, coverage-outcome and cost-outcome curves
 
 Version: 2015jan19 by robynstuart
 """
-from matplotlib.pylab import figure #plot, hold, xlabel, ylabel, title, xlim, ylim, gca, scatter
+from matplotlib.pylab import figure
 from matplotlib.pyplot import close
 from matplotlib.ticker import MaxNLocator
 from numpy import nan
-from mpld3 import plugins, fig_to_dict
-from utils import OptimaTickFormatter
 
 # Set defaults for testing makeccocs
 default_progname = 'VMMC'
@@ -29,16 +27,14 @@ coverage_params = ['numost','numpmtct','numfirstline','numsecondline']
 ###############################################################################
 from makeccocs import makecc, makeco, makecco
 ###############################################################################
+<<<<<<< HEAD:optima/legacy/plotccocs.py
 def plot_cost_coverage(plotdata, figsize=None, doclose=True):
+=======
+def plot_cost_coverage(plotdata, existingFigure=None):
+>>>>>>> develop:server/src/sim/plotccocs.py
     """ Plot the cost-coverage figure """
 
-    result = None
-    cost_coverage_figure = None
-    if figsize:
-        cost_coverage_figure = figure(figsize=figsize, dpi=100)
-    else:
-        cost_coverage_figure = figure()
-
+    cost_coverage_figure = existingFigure if existingFigure else figure()
     cost_coverage_figure.hold(True)
 
     axis = cost_coverage_figure.gca()
@@ -75,6 +71,7 @@ def plot_cost_coverage(plotdata, figsize=None, doclose=True):
     axis.get_xaxis().set_major_locator(MaxNLocator(nbins=3))
     axis.set_title(plotdata['title'])
 
+<<<<<<< HEAD:optima/legacy/plotccocs.py
     # clear all plugins from the figure
     plugins.clear(cost_coverage_figure)
     plugins.connect(
@@ -90,6 +87,9 @@ def plot_cost_coverage(plotdata, figsize=None, doclose=True):
         close(cost_coverage_figure)
 
     return result
+=======
+    return cost_coverage_figure
+>>>>>>> develop:server/src/sim/plotccocs.py
 
 
 def plotcc(D, progname=default_progname, ccparams=default_ccparams, arteligcutoff=default_arteligcutoff, doclose=True):
@@ -99,6 +99,7 @@ def plotcc(D, progname=default_progname, ccparams=default_ccparams, arteligcutof
     plot_cost_coverage(plotdata_cc, doclose=doclose)
 
 ###############################################################################
+<<<<<<< HEAD:optima/legacy/plotccocs.py
 def plot_coverage_outcome(plotdata, figsize = None, doclose=True):
     """ Plot the coverage-outcome figure """
     result = None
@@ -158,6 +159,52 @@ def plot_coverage_outcome(plotdata, figsize = None, doclose=True):
             axis.cla()
             close(coverage_outcome_figure)
     return result
+=======
+def plot_coverage_outcome(plotdata, existingFigure=None):
+    """ Plot the coverage-outcome figure """
+
+    if not plotdata:
+        return None
+
+    coverage_outcome_figure = existingFigure if existingFigure else figure()
+    coverage_outcome_figure.hold(True)
+
+    axis = coverage_outcome_figure.gca()
+
+    if 'xlinedata' in plotdata.keys():
+        axis.plot(
+            plotdata['xlinedata'],
+            plotdata['ylinedata'][0],
+            linestyle='-',
+            linewidth=2,
+            color='#a6cee3')
+        axis.plot(
+            plotdata['xlinedata'],
+            plotdata['ylinedata'][1],
+            linestyle='--',
+            linewidth=2,
+            color='#000000')
+        axis.plot(
+            plotdata['xlinedata'],
+            plotdata['ylinedata'][2],
+            linestyle='--',
+            linewidth=2,
+            color='#000000')
+    axis.scatter(
+        plotdata['xscatterdata'],
+        plotdata['yscatterdata'],
+        color='#666666')
+
+    axis.set_title(plotdata['title'])
+    axis.tick_params(axis='both', which='major', labelsize=11)
+    axis.set_xlabel(plotdata['xlabel'], fontsize=11)
+    axis.set_ylabel(plotdata['ylabel'], fontsize=11)
+    axis.get_xaxis().set_major_locator(MaxNLocator(nbins=3))
+    axis.set_xlim([plotdata['xlowerlim'], plotdata['xupperlim']])
+    axis.set_ylim([plotdata['ylowerlim'], plotdata['yupperlim']])
+
+    return coverage_outcome_figure
+>>>>>>> develop:server/src/sim/plotccocs.py
 
 
 def plotco(D, progname=default_progname, effect=default_effect, coparams=default_coparams, arteligcutoff=default_arteligcutoff, doclose=True):
@@ -167,6 +214,7 @@ def plotco(D, progname=default_progname, effect=default_effect, coparams=default
     plot_coverage_outcome(plotdata_co, doclose=doclose)
 
 #################################################################################
+<<<<<<< HEAD:optima/legacy/plotccocs.py
 def plot_cost_outcome(plotdata, figsize = None, doclose=True):
     """ Plot the cost-outcome figure """
 
@@ -230,6 +278,56 @@ def plot_cost_outcome(plotdata, figsize = None, doclose=True):
             axis.cla()
             close(cost_outcome_figure)
     return result
+=======
+def plot_cost_outcome(plotdata, existingFigure=None):
+    """ Plot the cost-outcome figure """
+
+    if not plotdata:
+        return None
+
+    cost_outcome_figure = existingFigure if existingFigure else figure()
+    cost_outcome_figure.hold(True)
+
+    axis = cost_outcome_figure.gca()
+
+    if 'xlinedata' in plotdata.keys():
+        axis.plot(
+            plotdata['xlinedata'],
+            plotdata['ylinedata'][0],
+            linestyle='-',
+            linewidth=2,
+            color='#a6cee3')
+        axis.plot(
+            plotdata['xlinedata'],
+            plotdata['ylinedata'][1],
+            linestyle='--',
+            linewidth=2,
+            color='#000000')
+        axis.plot(
+            plotdata['xlinedata'],
+            plotdata['ylinedata'][2],
+            linestyle='--',
+            linewidth=2,
+            color='#000000')
+    axis.scatter(
+        plotdata['xscatterdata'],
+        plotdata['yscatterdata'],
+        color='#666666')
+    axis.scatter(
+        plotdata['xcurrentdata'],
+        plotdata['ycurrentdata'],
+        color='#d22c2c')
+
+    axis.set_title(plotdata['title'])
+    axis.tick_params(axis='both', which='major', labelsize=11)
+    axis.set_xlabel(plotdata['xlabel'], fontsize=11)
+    axis.set_ylabel(plotdata['ylabel'], fontsize=11)
+    axis.get_xaxis().set_major_locator(MaxNLocator(nbins=3))
+    axis.set_xlim([plotdata['xlowerlim'],plotdata['xupperlim']])
+    axis.set_ylim([plotdata['ylowerlim'],plotdata['yupperlim']])
+
+    return cost_outcome_figure
+>>>>>>> develop:server/src/sim/plotccocs.py
 
 
 def plotcco(D, progname=default_progname, effect=default_effect, ccparams=default_ccparams, coparams=default_coparams, \
