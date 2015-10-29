@@ -2,44 +2,43 @@
   <div class="section" ng-show="projects.length">
     <h3>Available projects:</h3>
 
-    <form>
-      <div class="form-group">
-        <div class="input-group">
-          <div class="input-group-addon"><i class="fa fa-search"></i></div>
-
-          <input type="text" class="form-control" placeholder="Filter Projects" ng-model="searchTerm">
-
-        </div>
-      </div>
-    </form>
+    <input type="text"
+           class="txbox"
+           style="margin-bottom: 20px"
+           placeholder="&#x1f50e; Filter Projects" ng-model="searchTerm">
 
     <table class="table table-bordered table-hover table-striped" style="width: auto">
       <thead>
       <tr>
-        <th ng-click="updateSorting('name')">
+        <th ng-click="updateSorting('name')" class="sortable">
           Name
           <span ng-show="sortType == 'name' && !sortReverse" class="fa fa-caret-down"></span>
           <span ng-show="sortType == 'name' && sortReverse" class="fa fa-caret-up"></span>
+          <span ng-show="sortType != 'name'" class="fa fa-caret-up" style="visibility: hidden"></span>
         </th>
-        <th ng-click="updateSorting('populations.length')">
+        <th ng-click="updateSorting('populations.length')" class="sortable">
           Populations
           <span ng-show="sortType == 'populations.length' && !sortReverse" class="fa fa-caret-down"></span>
           <span ng-show="sortType == 'populations.length' && sortReverse" class="fa fa-caret-up"></span>
+          <span ng-show="sortType != 'populations.length'" class="fa fa-caret-up" style="visibility: hidden"></span>
         </th>
-        <th ng-click="updateSorting('programs.length')">
+        <th ng-click="updateSorting('programs.length')" class="sortable">
           Programs
           <span ng-show="sortType == 'programs.length' && !sortReverse" class="fa fa-caret-down"></span>
           <span ng-show="sortType == 'programs.length' && sortReverse" class="fa fa-caret-up"></span>
+          <span ng-show="sortType != 'programs.length'" class="fa fa-caret-up" style="visibility: hidden"></span>
         </th>
-        <th ng-click="updateSorting('creation_time')">
+        <th ng-click="updateSorting('creation_time')" class="sortable">
           Created on
           <span ng-show="sortType == 'creation_time' && !sortReverse" class="fa fa-caret-down"></span>
           <span ng-show="sortType == 'creation_time' && sortReverse" class="fa fa-caret-up"></span>
+          <span ng-show="sortType != 'creation_time'" class="fa fa-caret-up" style="visibility: hidden"></span>
         </th>
-        <th ng-click="updateSorting('updated_time')">
+        <th ng-click="updateSorting('updated_time')" class="sortable">
           Updated on
           <span ng-show="sortType == 'updated_time' && !sortReverse" class="fa fa-caret-down"></span>
           <span ng-show="sortType == 'updated_time' && sortReverse" class="fa fa-caret-up"></span>
+          <span ng-show="sortType != 'updated_time'" class="fa fa-caret-up" style="visibility: hidden"></span>
         </th>
         <th colspan="7">Actions</th>
       </tr>
