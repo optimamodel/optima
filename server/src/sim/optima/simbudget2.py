@@ -161,6 +161,8 @@ class SimBudget2(Sim):
         update_indexes = numpy.logical_and(r.options['partvec']>self.program_start_year, r.options['partvec']<self.program_end_year) # This does the same thing as partialupdateM
         
         # First, assign population-dependent parameters
+        # TODO: Invert the loop to iterate over the intersection of the project parameters
+        # and program parameters - that way it will behave sensibly if there is a mismatch
         for par in ['hivprev','stiprevulc','stiprevdis','death','tbprev','hivtest','birth','numactsreg','numactscas','numactscom','numactsinj','condomreg','condomcas','condomcom','circum','sharing','prep']:
             for pop in pops:
                 if pop in outcomes.keys() and par in outcomes[pop].keys():
