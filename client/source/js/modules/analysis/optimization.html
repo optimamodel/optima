@@ -420,7 +420,7 @@
 
           <div class="margin-top-xs indented" ng-repeat="item in ::state.moneyObjectives">
             <div class="checkbox-block">
-              <label ng-init="iObjective = moneyObjectives[item.id]">
+              <label>
                 <input type="checkbox" ng-model="moneyObjectives[item.id].use">
                 {{ ::item.title }}
               </label>

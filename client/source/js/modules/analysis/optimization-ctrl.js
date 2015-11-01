@@ -6,7 +6,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
    * save optimization results.
    */
   module.controller('AnalysisOptimizationController', function ($scope, $http,
-    $interval, meta, cfpLoadingBar, CONFIG, modalService, typeSelector,
+    $interval, $injector, meta, cfpLoadingBar, CONFIG, modalService, typeSelector,
     optimizations, optimizationHelpers, info) {
 
     $scope.initialize = function () {
@@ -14,6 +14,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         // Make sure that the interval is terminated when this controller is destroyed
         stopTimer();
       });
+
+      $scope.optimizationInProgress = false;
 
       $scope.$watch('state.pieCharts', updateChartsForDataExport, true);
       $scope.$watch('state.outcomeChart', updateChartsForDataExport, true);
@@ -665,6 +667,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       var params = optimizationHelpers.toRequestParameters($scope.params, $scope.state.activeOptimizationName, $scope.state.timelimit);
       $http.post('/api/analysis/optimization/start', params, {ignoreLoadingBar: true})
         .success(function (data, status, headers, config) {
+          $scope.optimizationInProgress = true;
           if (data.join) {
             $scope.initTimer(statusEnum.RUNNING);
           } else {
@@ -685,6 +688,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $http.get('/api/analysis/optimization/working', {ignoreLoadingBar: true})
         .success( function (data, status, headers, config) {
           if (data.status == 'Failed') {
+            if($scope.optimizationInProgress === true) {
+              var modalService = $injector.get('modalService');
+              var message = 'Something went wrong. Please try again or contact the support team.';
+              modalService.inform(angular.noop, 'Okay', message, 'Server Error', data.exception);
+              $scope.optimizationInProgress = false;
+            }
             $scope.errorText = data.exception;
             stopTimer();
           } else {
