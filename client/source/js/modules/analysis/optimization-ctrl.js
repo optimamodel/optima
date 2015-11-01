@@ -684,15 +684,20 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     function checkWorkingOptimization () {
       $http.get('/api/analysis/optimization/working', {ignoreLoadingBar: true})
         .success( function (data, status, headers, config) {
-          if (data.status == 'Done') {
+          if (data.status == 'Failed') {
+            $scope.errorText = data.exception;
             stopTimer();
           } else {
-            if (data.status == 'Running') $scope.state.optimizationStatus = statusEnum.RUNNING;
-            if (data.status == 'Stopping') $scope.state.optimizationStatus = statusEnum.STOPPING;
-            $scope.initTimer($scope.state.optimizationStatus);
+            if (data.status == 'Done') {
+              stopTimer();
+            } else {
+              if (data.status == 'Running') $scope.state.optimizationStatus = statusEnum.RUNNING;
+              if (data.status == 'Stopping') $scope.state.optimizationStatus = statusEnum.STOPPING;
+              $scope.initTimer($scope.state.optimizationStatus);
+            }
+            $scope.state.isDirty = data.dirty;
+            $scope.initOptimizations(data.optimizations, $scope.state.activeOptimizationName);
           }
-          $scope.state.isDirty = data.dirty;
-          $scope.initOptimizations(data.optimizations, $scope.state.activeOptimizationName);
         })
         .error( function (data, status, headers, config) {
           if (data && data.exception) {
@@ -864,6 +869,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         var objectives = optimizationHelpers.toScopeObjectives(optimization.objectives);
         _.extend($scope.params.objectives, objectives);
         _.extend($scope.params.constraints, optimization.constraints);
+        $scope.moneyObjectives = $scope.params.objectives.money.objectives;
       }
       if (optimization.result) {
         updateGraphs(optimization.result);
