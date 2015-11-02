@@ -11,43 +11,66 @@ from datetime import datetime
 from utils import printv
 from numpy import array as ar, isnan, zeros, shape, mean
 from utils import sanitize
+try: import cPickle as pickle # For Python 2 compatibility
+except: import pickle
+from gzip import GzipFile
 
 
 
 class Parameter(object):
     ''' The definition of a single parameter '''
     
-    def __init__(self):
-        self.full = None
-        self.short = None
-        self.t = None # Time data, e.g. [2002, 2008]
-        self.y = None # Value data, e.g. [0.3, 0.7]
-        self.m = None # Multiplicative metaparameter, e.g. 1
+    def __init__(self, full=None, short=None, t=[], y=[], m=1):
+        self.full = full # Full parameter name
+        self.short = short # Short parameter name
+        self.t = t # Time data, e.g. [2002, 2008]
+        self.y = y # Value data, e.g. [0.3, 0.7]
+        self.m = m # Multiplicative metaparameter, e.g. 1
+
+
+
+
+
+class Parameters(object):
+    ''' A complete set of parameters required for a simulation run '''
+
 
 
 
 
 
 class Parameterset(object):
-    ''' A full set of all parameters '''
+    ''' A full set of all parameters, possibly including multiple uncertainty runs '''
     
     def __init__(self, name='default'):
-        self.name = name
-        self.id = uuid4()
-        self.created = datetime.today()
-        self.modified = datetime.today()
+        self.name = name # Name of the parameter set, e.g. 'default'
+        self.id = uuid4() # ID
+        self.created = datetime.today() # Date created
+        self.modified = datetime.today() # Date modified
+        self.pars = [] # List of Parameters objects -- only one if no uncertainty
     
     def __repr__(self):
         ''' Print out useful information when called'''
         output = '\n'
         output += 'Parameter set name: %s\n'    % self.name
+        output += '    Number of runs: %s\n'    % len(self.pars)
         output += '      Date created: %s\n'    % self.getdate(which='created')
         output += '     Date modified: %s\n'    % self.getdate(which='modified')
         output += '                ID: %s\n'    % self.id
         return output
     
+    
+    def save(self, filename=None): # WARNING, can we just use a generic save method? Do we really need a different one for each object?
+        ''' Save this parameter set to a file '''
+        if filename is None: filename = self.name+'.pars'
+        with GzipFile(filename, 'wb') as fileobj: pickle.dump(self, fileobj, protocol=2)
+        print('Parameter set "%s" saved to "%s"' % (self.name, filename))
+        return None
+    
+    
     def listpars():
         ''' A method for listing all parameters '''
+    
     
     def plotpars():
         ''' Plot all parameters, I guess against data '''

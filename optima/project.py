@@ -26,7 +26,7 @@ from settings import Settings
 
 ## Load other Optima functions
 from loadspreadsheet import loadspreadsheet
-#from parameters import makeparams
+from parameters import Parameterset
 #from makesimpars import makesimpars
 from model import model
 
@@ -51,7 +51,7 @@ class Project(object):
     The main Optima project class. Almost all Optima functionality is provided by this class.
     
     An Optima project is based around 4 major lists:
-        1. params -- a list of parameter structures
+        1. parset -- a list of parameter structures
         2. responses -- a list of response structures
         3. scens -- a list of scenario structures
         4. optims -- a list of optimization structures
@@ -164,17 +164,18 @@ class Project(object):
         self.data = loadspreadsheet(filename) # WARNING -- might want to change this
         self.metadata.spreadsheetdate = datetime.today() # Update date when spreadsheet was last loaded
         
-        ## If parameter set of that name doesn't exist, create it; otherwise makeparams has to be called explicitly
-        if name not in self.params:
-            self.makeparams(name=name)
+        ## If parameter set of that name doesn't exist, create it; otherwise makeparset has to be called explicitly
+        if name not in self.parset:
+            self.makeparset(name=name)
         return None
     
     
     
-    def makeparams(self, name='default', overwrite=False):
+    def makeparset(self, name='default', overwrite=False):
         ''' Regenerate the parameters from the spreadsheet data -- also a large function '''
-#        params = makeparams(self.data) # Create parameters
-#        self.addparams(name=name, params=params) # Store parameters
+        parset = Parameterset()
+        parset.makeparset(self.data) # Create parameters
+        self.addparset(name=name, parset=parset) # Store parameters
         return None
     
     
@@ -190,10 +191,10 @@ class Project(object):
         ''' 
         Figure out what kind of structure list is being requested, e.g.
             structlist = getwhat('parameters')
-        will return P.params.
+        will return P.parset.
         '''
         if what is None: raise Exception('No structure list provided')
-        elif what in ['p', 'pars', 'params', 'parameters']: structlist = self.parsets
+        elif what in ['p', 'pars', 'parset', 'parameters']: structlist = self.parsets
         elif what in ['r', 'resp', 'response', 'responses']: structlist = self.resps # WARNING, inconsistent terminology!
         elif what in ['s', 'scen', 'scens', 'scenario', 'scenarios']: structlist = self.scens
         elif what in ['o', 'opt', 'opts', 'optim', 'optims', 'optimisation', 'optimization', 'optimisations', 'optimizations']: structlist = self.optims
@@ -254,22 +255,22 @@ class Project(object):
     ## Convenience functions -- NOTE, do we need these...?
     #######################################################################################################
     
-    def addparams(self,   name='default', params=None,   overwrite=False): self.add(what='params',   name=name, item=params, overwrite=overwrite)
+    def addparset(self,   name='default', parset=None,   overwrite=False): self.add(what='parset',   name=name, item=parset, overwrite=overwrite)
     def addresponse(self, name='default', response=None, overwrite=False): self.add(what='response', name=name, item=response, overwrite=overwrite)
     def addscen(self,     name='default', scen=None,     overwrite=False): self.add(what='scen',     name=name, item=scen, overwrite=overwrite)
     def addoptim(self,    name='default', optim=None,    overwrite=False): self.add(what='optim',    name=name, item=optim, overwrite=overwrite)
  
-    def rmparams(self,   name): self.remove(what='params',   name=name)
+    def rmparset(self,   name): self.remove(what='parset',   name=name)
     def rmresponse(self, name): self.remove(what='response', name=name)
     def rmscen(self,     name): self.remove(what='scen',     name=name)
     def rmoptim(self,    name): self.remove(what='optim',    name=name)
     
-    def copyparams(self,   orig='default', new='new', overwrite=False): self.copy(what='params',   orig=orig, new=new, overwrite=overwrite)
+    def copyparset(self,   orig='default', new='new', overwrite=False): self.copy(what='parset',   orig=orig, new=new, overwrite=overwrite)
     def copyresponse(self, orig='default', new='new', overwrite=False): self.copy(what='response', orig=orig, new=new, overwrite=overwrite)
     def copyscen(self,     orig='default', new='new', overwrite=False): self.copy(what='scen',     orig=orig, new=new, overwrite=overwrite)
     def copyoptim(self,    orig='default', new='new', overwrite=False): self.copy(what='optim',    orig=orig, new=new, overwrite=overwrite)
         
-    def renameparams(self,   orig='default', new='new', overwrite=False): self.rename(what='params',   orig=orig, new=new, overwrite=overwrite)
+    def renameparset(self,   orig='default', new='new', overwrite=False): self.rename(what='parset',   orig=orig, new=new, overwrite=overwrite)
     def renameresponse(self, orig='default', new='new', overwrite=False): self.rename(what='response', orig=orig, new=new, overwrite=overwrite)
     def renamescen(self,     orig='default', new='new', overwrite=False): self.rename(what='scen',     orig=orig, new=new, overwrite=overwrite)
     def renameoptim(self,    orig='default', new='new', overwrite=False): self.rename(what='optim',    orig=orig, new=new, overwrite=overwrite)
@@ -286,7 +287,7 @@ class Project(object):
     def runsim(self, name='default', start=2000, end=2030, dt=None):
         ''' This function runs a single simulation '''
         if dt is None: dt=self.settings.dt # Specify the timestep if none is specified, usually 0.1
-        simpars = makesimpars(self.params[name], start=start, end=end, dt=dt) # "self.params[name]" is e.g. P.params['default']
+        simpars = makesimpars(self.parset[name], start=start, end=end, dt=dt) # "self.parset[name]" is e.g. P.parset['default']
         
         simpars['male'] = array(self.data['popprog']['pops']['male']).astype(bool) # Male populations -- TEMP
         S = model(simpars, self.settings)
@@ -296,7 +297,7 @@ class Project(object):
     
 #    def runscen(self, name='default', start=2000, end=2030):
 #        ''' This function runs a single scenario '''
-#        simpars = makesimpars(self.params[name], start=start, end=end) # "self.getwhat(what)[name]" is e.g. P.params['default']
+#        simpars = makesimpars(self.parset[name], start=start, end=end) # "self.getwhat(what)[name]" is e.g. P.parset['default']
 #        simpars = applyoverrides(simpars, self.scens[name])
 #        S = model(simpars, self.settings)
 #        return S
@@ -334,6 +335,6 @@ class Project(object):
     #######################################################################################################    
     
     
-    def plotepi(self, params='default', scens=None, optims=None):
+    def plotepi(self, parset='default', scens=None, optims=None):
         print('Not implemented')
         return None
