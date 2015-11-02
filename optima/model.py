@@ -34,7 +34,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     
     simpars = deepcopy(simpars)
     
-    F = {}
+    F = {} # WARNING, should change
     F['init']  = 1+zeros(npops)
     F['popsize'] = 1e3+zeros(npops)
     F['force'] = 1+zeros(npops)
@@ -44,32 +44,32 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     eps = 1e-3 # Define another small number to avoid divide-by-zero errors
     
     # Initialize basic quantities
-    S       = dict()    # Sim output structure
-    S['tvec']  = simpars['tvec']   # Append time vector
+    results = Results()    # Sim output structure
+    results.tvec  = simpars['tvec']   # Append time vector
     dt      = simpars['tvec'][1]-simpars['tvec'][0]      # Shorten dt
-    npts    = len(S['tvec']) # Number of time points
+    npts    = len(results.tvec) # Number of time points
     ncd4    = settings.ncd4      # Shorten number of CD4 states
     nstates = settings.ncomparts   # Shorten number of health states
     
     # Initialize arrays
     people     = zeros((nstates, npops, npts)) # Matrix to hold everything
     allpeople  = zeros((npops, npts)) # Population sizes
-    S['sexinci']  = zeros((npops, npts)) # Incidence through sex
-    S['injinci']  = zeros((npops, npts)) # Incidence through injecting
-    S['inci']     = zeros((npops, npts)) # Total incidence
-    S['births']   = zeros((1, npts))     # Number of births
-    S['mtct']     = zeros((1, npts))     # Number of mother-to-child transmissions
-    S['dx']       = zeros((npops, npts)) # Number diagnosed per timestep
-    S['newtx1']   = zeros((npops, npts)) # Number initiating ART1 per timestep
-    S['newtx2']   = zeros((npops, npts)) # Number initiating ART2 per timestep -- UNUSED
-    S['death']    = zeros((npops, npts)) # Number of deaths per timestep
+    results.sexinci = zeros((npops, npts)) # Incidence through sex
+    results.injinci = zeros((npops, npts)) # Incidence through injecting
+    results.inci    = zeros((npops, npts)) # Total incidence
+    results.births  = zeros((1, npts))     # Number of births
+    results.mtct    = zeros((1, npts))     # Number of mother-to-child transmissions
+    results.dx      = zeros((npops, npts)) # Number diagnosed per timestep
+    results.newtx1  = zeros((npops, npts)) # Number initiating ART1 per timestep
+    results.newtx2  = zeros((npops, npts)) # Number initiating ART2 per timestep -- UNUSED
+    results.death   = zeros((npops, npts)) # Number of deaths per timestep
     effhivprev = zeros((npops, 1))    # HIV effective prevalence (prevalence times infectiousness)
     inhomo = zeros(npops)    # Inhomogeneity calculations
     
     # Also initialize circumcision output
-    S['numcircum'] = zeros((npops, npts)) # Number of people circumcised
-    S['newcircum'] = zeros((npops, npts)) # Number of people newly circumcised per timestep
-    S['reqcircum'] = zeros((1, npts))     # Total number of men not circumcised ('req' for 'required')
+    results.numcircum = zeros((npops, npts)) # Number of people circumcised
+    results.newcircum = zeros((npops, npts)) # Number of people newly circumcised per timestep
+    results.reqcircum = zeros((1, npts))     # Total number of men not circumcised ('req' for 'required')
     
     
     
@@ -96,7 +96,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     
     ## Metaparameters to get nice diagnosis fits
     # WARNING
-    dxtime  = fit2time(F['dx'],  S['tvec'] - 2015.0) # Subtraction to normalize F['dx'][2]
+    dxtime  = fit2time(F['dx'],  results.tvec - 2015.0) # Subtraction to normalize F['dx'][2]
     
     ## Shorten variables and remove dict calls to make things faster...
     
@@ -193,7 +193,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
         ## Calculate "effective" HIV prevalence -- taking diagnosis and treatment into account
         for pop in range(npops): # Loop over each population group
             allpeople[pop,t] = sum(people[:,pop,t]) # All people in this population group at this time point
-            if not(allpeople[pop,t]>0): raise Exception('No people in population %i at timestep %i (time %0.1f)' % (pop, t, S['tvec'][t]))
+            if not(allpeople[pop,t]>0): raise Exception('No people in population %i at timestep %i (time %0.1f)' % (pop, t, results.tvec[t]))
             effundx = sum(cd4trans * people[undx,pop,t]); # Effective number of infecious undiagnosed people
             effdx   = sum(dxfactor * people[dx,pop,t]) # ...and diagnosed/failed
             efftx   = sum(txfactor * people[tx1,pop,t]) # ...and treated
@@ -289,7 +289,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
         ###############################################################################
 
 # TEMP
-#        if S['tvec'][t] >= abs(opt['turnofftrans']):
+#        if results.tvec[t] >= abs(opt['turnofftrans']):
 #            if opt['turnofftrans'] > 0: forceinfvec *= 0
 #            if opt['turnofftrans'] < 0: break
                
@@ -300,18 +300,18 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
         
         # We have two ways to calculate number of births...
         if (asym<0).any(): # Method 1 -- children are being modelled directly
-            S['births'][0,t] = 0
+            results.births[0,t] = 0
             for p1 in range(npops):
                 for p2 in range(npops):
                     transyears = asym[p1, p2] # Current transition rate
                     if absolute(transyears) > 0: # Is the given rate non zero
                         transrate = 1/float(transyears) # Invert
-                        S['births'][0,t] += sum(people[:, p1, t] * absolute(transrate) * dt)
-            S['mtct'][0,t] = 0
+                        results.births[0,t] += sum(people[:, p1, t] * absolute(transrate) * dt)
+            results.mtct[0,t] = 0
               
         else: # Method 2 -- children are not being modelled directly
             birthrate = simpars['birth'][:,t] # Use birthrate parameter from input spreadsheet
-        S['births'][0,t] = sum(birthrate * allpeople[:,t])
+        results.births[0,t] = sum(birthrate * allpeople[:,t])
         mtcttx       = sum(birthrate * sum(people[tx1,:,t]))  * pmtcteff # MTCT from those on treatment (not eligible for PMTCT)
         mtctuntx     = sum(birthrate * sum(people[undx,:,t])) * effmtct  # MTCT from those undiagnosed or failed (also not eligible)
         birthselig   = sum(birthrate * sum(people[dx,:,t])) # Births to diagnosed mothers eligible for PMTCT
@@ -321,7 +321,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
             receivepmtct = numpmtct[t]*birthselig # Births protected by PMTCT -- constrained by number eligible 
         mtctdx = (birthselig - receivepmtct) * effmtct # MTCT from those diagnosed not receiving PMTCT
         mtctpmtct = receivepmtct * pmtcteff # MTCT from those receiving PMTCT
-        S['mtct'][0,t] = mtctuntx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components
+        results.mtct[0,t] = mtctuntx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components
         
         
         ###############################################################################
@@ -364,14 +364,14 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
                         mtctuntx     = (birthrate * dt * sum(people[undx,p1,t]+people[fail,p1,t])) * effmtct  # MTCT from those undiagnosed or failed (also not eligible)
                         birthselig   = (birthrate * dt * sum(people[dx,p1,t])) # Births to diagnosed mothers eligible for PMTCT
                         if numpmtct[t]>1: # It's greater than 1: assume it's a number
-                            receivepmtct = min(numpmtct[t]*float(popbirths)/float(S['births'][0,t]), birthselig) # Births protected by PMTCT -- constrained by number eligible 
+                            receivepmtct = min(numpmtct[t]*float(popbirths)/float(results.births[0,t]), birthselig) # Births protected by PMTCT -- constrained by number eligible 
                         else: # It's a proportion
                             receivepmtct = numpmtct[t]*birthselig # Births protected by PMTCT -- constrained by number eligible 
                         mtctdx = (birthselig - receivepmtct) * effmtct # MTCT from those diagnosed not receiving PMTCT
                         mtctpmtct = receivepmtct * pmtcteff # MTCT from those receiving PMTCT
                         popmtct = mtctuntx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components                        
                         
-                        S['mtct'][0,t] += popmtct                   
+                        results.mtct[0,t] += popmtct                   
                         mtctperpop[0,p2] += popmtct                        
                         
                         people[settings.sus, p2, t] += popbirths - popmtct
@@ -429,9 +429,9 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
         else:
             newlycirc = zeros(npops)
             
-        S['reqcircum'][0, t] = sum(reqcirc)
-        S['newcircum'][:, t] = newlycirc
-        S['numcircum'][:, t] = numcircad + newlycirc
+        results.reqcircum[0, t] = sum(reqcirc)
+        results.newcircum[:, t] = newlycirc
+        results.numcircum[:, t] = numcircad + newlycirc
         
         
         ###############################################################################
@@ -452,7 +452,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
         
         ## Susceptibles
         dS = -newinfections # Change in number of susceptibles -- death rate already taken into account in pm.totalpop and dt
-        S['inci'][:,t] = (newinfections + mtctperpop)/float(dt)  # Store new infections AND new MTCT births
+        results.inci[:,t] = (newinfections + mtctperpop)/float(dt)  # Store new infections AND new MTCT births
 
         ## Undiagnosed
         propdx = None
@@ -480,8 +480,8 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
             otherdeaths = dt * people[undx[cd4],:,t] * background
             dU.append(progin - progout - newdiagnoses[cd4] - hivdeaths - otherdeaths) # Add in new infections after loop
             dU[cd4] = negativepeople('undiagnosed', dU[cd4], people[undx[cd4],:,t], t)
-            S['dx'][:,t]    += newdiagnoses[cd4]/dt # Save annual diagnoses 
-            S['death'][:,t] += hivdeaths/dt    # Save annual HIV deaths 
+            results.dx[:,t]    += newdiagnoses[cd4]/dt # Save annual diagnoses 
+            results.death[:,t] += hivdeaths/dt    # Save annual HIV deaths 
         dU[0] = dU[0] + newinfections # Now add newly infected people
         
         ## Diagnosed
@@ -505,8 +505,8 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
             newtreat1[cd4] = maximum(newtreat1[cd4], -safetymargin*people[tx1[cd4],:,t]) # Make sure it doesn't exceed the number of people in the treatment compartment
             dD.append(inflows - outflows - newtreat1[cd4])
             dD[cd4] = negativepeople('diagnosed', dD[cd4], people[dx[cd4],:,t], t)
-            S['newtx1'][:,t] += newtreat1[cd4]/dt # Save annual treatment initiation
-            S['death'][:,t]  += hivdeaths/dt # Save annual HIV deaths 
+            results.newtxt1[:,t] += newtreat1[cd4]/dt # Save annual treatment initiation
+            results.death[:,t]  += hivdeaths/dt # Save annual HIV deaths 
         
         ## 1st-line treatment
         for cd4 in range(ncd4):
@@ -522,7 +522,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
             otherdeaths = dt * people[tx1[cd4],:,t] * background
             dT1.append(recovin - recovout + newtreat1[cd4] - hivdeaths - otherdeaths)
             dT1[cd4] = negativepeople('treat1', dT1[cd4], people[tx1[cd4],:,t], t)
-            S['death'][:,t] += hivdeaths/dt # Save annual HIV deaths 
+            results.death[:,t] += hivdeaths/dt # Save annual HIV deaths 
         
 
 
@@ -559,7 +559,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
                 raise Exception('Values too large')
                 
     # Append final people array to sim output
-    S['people'] = people
+    results.people = people
 
 
     
@@ -567,7 +567,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
 
     printv('  ...done running model.', 2, verbose)
     if benchmark: toc(starttime)
-    return S
+    return results
 
 
 
