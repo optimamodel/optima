@@ -4,11 +4,19 @@
 
  ## Imports
 from numpy import array, zeros, exp, maximum, minimum, concatenate, hstack, absolute, median
-from utils import printv
+from utils import printv, uuid, today, tic, toc
 from math import pow as mpow
 from copy import deepcopy
 
-def model(M, settings, verbose=2, safetymargin=0.8, benchmark=False):
+
+class Results(object):
+    ''' Lightweight structure to hold results -- use this instead of a dict '''
+    def __init__(self):
+        self.id = uuid()
+        self.created = today()
+
+
+def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     """
     This function runs the model. Safetymargin is how close to get to moving all people from a compartment in a single timestep.
     
@@ -17,15 +25,14 @@ def model(M, settings, verbose=2, safetymargin=0.8, benchmark=False):
     
     printv('Running model...', 1, verbose, newline=False)
     if benchmark: 
-        from utils import tic, toc
         starttime = tic()
 
     ###############################################################################
     ## Setup
     ###############################################################################
-    npops = len(M['hivprev']) # WARNING TEMP
+    npops = len(simpars['hivprev']) # WARNING TEMP
     
-    M = deepcopy(M)
+    simpars = deepcopy(simpars)
     
     F = {}
     F['init']  = 1+zeros(npops)
@@ -38,8 +45,8 @@ def model(M, settings, verbose=2, safetymargin=0.8, benchmark=False):
     
     # Initialize basic quantities
     S       = dict()    # Sim output structure
-    S['tvec']  = M['tvec']   # Append time vector
-    dt      = M['tvec'][1]-M['tvec'][0]      # Shorten dt
+    S['tvec']  = simpars['tvec']   # Append time vector
+    dt      = simpars['tvec'][1]-simpars['tvec'][0]      # Shorten dt
     npts    = len(S['tvec']) # Number of time points
     ncd4    = settings.ncd4      # Shorten number of CD4 states
     nstates = settings.ncomparts   # Shorten number of health states
@@ -67,25 +74,25 @@ def model(M, settings, verbose=2, safetymargin=0.8, benchmark=False):
     
     
     # Biological and failure parameters -- death etc
-    Mc = M['const']
+    Mc = simpars['const']
     prog = []; recov = []; death = []; cd4trans = []
     for key in ['progacute', 'proggt500', 'proggt350', 'proggt200', 'proggt50']: prog.append(Mc[key])
     for key in ['recovgt500', 'recovgt350', 'recovgt200', 'recovgt50']: recov.append(Mc[key])
     for key in ['deathacute', 'deathgt500', 'deathgt350', 'deathgt200', 'deathgt50', 'deathaids']: death.append(Mc[key])
     for key in ['cd4transacute', 'cd4transgt500', 'cd4transgt350', 'cd4transgt200', 'cd4transgt50', 'cd4transaids']: cd4trans.append(Mc[key])
-    deathtx    = M['const']['deathtreat']   # Death rate whilst on treatment
-    M['prog'] = prog # for equilibrate()
-    M['recov'] = recov    
+    deathtx    = simpars['const']['deathtreat']   # Death rate whilst on treatment
+    simpars['prog'] = prog # for equilibrate()
+    simpars['recov'] = recov    
     
     # Calculate other things outside the loop
     healthtime = 1 / hstack([prog, death[-1]]) # Calculate how long is spent in each health state, with death considered the time spent in CD4<50
     cd4transnorm = sum(cd4trans * healthtime) / sum(healthtime)
     cd4trans /= cd4transnorm # Normalize CD4 transmission
-    dxfactor = M['const']['effdx'] * cd4trans # Include diagnosis efficacy
-    txfactor = M['const']['efftx'] * dxfactor # And treatment efficacy
+    dxfactor = simpars['const']['effdx'] * cd4trans # Include diagnosis efficacy
+    txfactor = simpars['const']['efftx'] * dxfactor # And treatment efficacy
     
     # Set initial epidemic conditions 
-    people[:,:,0] = equilibrate(settings, M, array(F['init'])) # No it hasn't, so run equilibration
+    people[:,:,0] = equilibrate(settings, simpars, array(F['init'])) # No it hasn't, so run equilibration
     
     ## Metaparameters to get nice diagnosis fits
     # WARNING
@@ -105,54 +112,54 @@ def model(M, settings, verbose=2, safetymargin=0.8, benchmark=False):
     dxind    = concatenate([dx, tx1])       # All people who have been diagnosed
     
     # Population sizes
-    popsize = deepcopy(M['popsize']) # Population sizes
-    for pop in range(npops): popsize[pop,:] *= float(F['popsize'][pop]) / M['popsize'][pop][0] # Calculate adjusted population sizes -- WARNING, kind of ugly
+    popsize = deepcopy(simpars['popsize']) # Population sizes
+    for pop in range(npops): popsize[pop,:] *= float(F['popsize'][pop]) / simpars['popsize'][pop][0] # Calculate adjusted population sizes -- WARNING, kind of ugly
     
     # Logical arrays for population types
-    male = array(M['male']).astype(bool) # Male populations
+    male = array(simpars['male']).astype(bool) # Male populations
     
     # Infection propabilities
-    mmi  = M['const']['transmmi']          # Male -> male insertive
-    mfi  = M['const']['transmfi']          # Male -> female insertive
-    mmr  = M['const']['transmmr']          # Male -> male receptive
-    mfr  = M['const']['transmfr']          # Male -> female receptive
-    mtcb = M['const']['mtctbreast']   # MTCT with breastfeeding
-    mtcn = M['const']['mtctnobreast'] # MTCT no breastfeeding
-    transinj = M['const']['transinj']      # Injecting
+    mmi  = simpars['const']['transmmi']          # Male -> male insertive
+    mfi  = simpars['const']['transmfi']          # Male -> female insertive
+    mmr  = simpars['const']['transmmr']          # Male -> male receptive
+    mfr  = simpars['const']['transmfr']          # Male -> female receptive
+    mtcb = simpars['const']['mtctbreast']   # MTCT with breastfeeding
+    mtcn = simpars['const']['mtctnobreast'] # MTCT no breastfeeding
+    transinj = simpars['const']['transinj']      # Injecting
     
     # Further potential effects on transmission
-    effsti    = M['const']['effsti'] * M['stiprev']  # STI effect
-    effcirc   = 1 - M['const']['effcirc']            # Circumcision effect
-    effprep   = (1 - M['const']['effprep']) * M['prep'] # PrEP effect
-    effcondom = 1 - M['const']['effcondom']          # Condom effect
-    effpmtct  = 1 - M['const']['effpmtct']           # PMTCT effect
-#    effost    = 1 - M['const']['effost']             # OST effect
+    effsti    = simpars['const']['effsti'] * simpars['stiprev']  # STI effect
+    effcirc   = 1 - simpars['const']['effcirc']            # Circumcision effect
+    effprep   = (1 - simpars['const']['effprep']) * simpars['prep'] # PrEP effect
+    effcondom = 1 - simpars['const']['effcondom']          # Condom effect
+    effpmtct  = 1 - simpars['const']['effpmtct']           # PMTCT effect
+#    effost    = 1 - simpars['const']['effost']             # OST effect
     
     # Partnerships, acts and transitions
-    pshipsinj = M['partinj']
+    pshipsinj = simpars['partinj']
     pships = dict() # TEMP
-    for key in ['reg','cas','com']: pships[key] = M['part'+key]
-    totalacts = M['totalacts']
-    sym       = M['transitsym']  # Symmetric transitions
-    asym      = M['transitasym'] # Asymmetric transitions
+    for key in ['reg','cas','com']: pships[key] = simpars['part'+key]
+    totalacts = simpars['totalacts']
+    sym       = simpars['transitsym']  # Symmetric transitions
+    asym      = simpars['transitasym'] # Asymmetric transitions
     
     # Intervention uptake (P=proportion, N=number)
-    condom   = M['condom']    # Condoms (P)
-    sharing  = M['sharing']   # Sharing injecting equiptment (P)
-    numpmtct = M['numpmtct']  # PMTCT (N)
-#    ost      = M['numost']    # OST (N)
-    propcirc = M['circum']    # Proportion of men circumcised (P)
-    tobecirc = M['numcircum'] # Number of men to be circumcised (N)
-    mtx1     = M['tx1']       # 1st line treatement (N) -- tx1 already used for index of people on treatment
-    hivtest  = M['hivtest']   # HIV testing (P)
-    aidstest = M['aidstest']  # HIV testing in AIDS stage (P)
+    condom   = simpars['condom']    # Condoms (P)
+    sharing  = simpars['sharing']   # Sharing injecting equiptment (P)
+    numpmtct = simpars['numpmtct']  # PMTCT (N)
+#    ost      = simpars['numost']    # OST (N)
+    propcirc = simpars['circum']    # Proportion of men circumcised (P)
+    tobecirc = simpars['numcircum'] # Number of men to be circumcised (N)
+    mtx1     = simpars['tx1']       # 1st line treatement (N) -- tx1 already used for index of people on treatment
+    hivtest  = simpars['hivtest']   # HIV testing (P)
+    aidstest = simpars['aidstest']  # HIV testing in AIDS stage (P)
     
     # Force of infection metaparameter
     Fforce = array(F['force'])
     Finhomo = array(F['inhomo'])
     
     # Proportion of PLHIV who are aware of their status
-    propaware = M['propaware']
+    propaware = simpars['propaware']
     
     # Initialize the list of sex acts so it doesn't have to happen in the time loop
     sexactslist = []
@@ -201,7 +208,7 @@ def model(M, settings, verbose=2, safetymargin=0.8, benchmark=False):
             inhomo[pop] = (c+eps) / (exp(c+eps)-1) * exp(c*(1-thisprev)) # Don't shift the mean, but make it maybe nonlinear based on prevalence
         
         # Also calculate effective MTCT transmissibility
-        effmtct  = mtcb*M['breast'][t] + mtcn*(1-M['breast'][t]) # Effective MTCT transmission
+        effmtct  = mtcb*simpars['breast'][t] + mtcn*(1-simpars['breast'][t]) # Effective MTCT transmission
         pmtcteff = (1 - effpmtct) * effmtct # Effective MTCT transmission whilst on PMTCT
                 
         
@@ -256,7 +263,7 @@ def model(M, settings, verbose=2, safetymargin=0.8, benchmark=False):
 #            if osteff<0: raise Exception('Bug in osteff = 1 - ost[t]*effost: osteff=%f ost[t]=%f effost=%f' % (osteff, ost[t], effost))
 #        else: # It's a number, convert to a proportion using the PWID flag
 #            numost = ost[t] # Total number of people on OST
-#            numpwid = M['popsize'][nonzero(G['meta']['pops']['injects']),t].sum() # Total number of PWID
+#            numpwid = simpars['popsize'][nonzero(G['meta']['pops']['injects']),t].sum() # Total number of PWID
 #            try:
 #                osteff = 1 - min(1,numost/numpwid)*effost # Proportion of PWID on OST, making sure there aren't more people on OST than PWID
 #            except:
@@ -303,7 +310,7 @@ def model(M, settings, verbose=2, safetymargin=0.8, benchmark=False):
             S['mtct'][0,t] = 0
               
         else: # Method 2 -- children are not being modelled directly
-            birthrate = M['birth'][:,t] # Use birthrate parameter from input spreadsheet
+            birthrate = simpars['birth'][:,t] # Use birthrate parameter from input spreadsheet
         S['births'][0,t] = sum(birthrate * allpeople[:,t])
         mtcttx       = sum(birthrate * sum(people[tx1,:,t]))  * pmtcteff # MTCT from those on treatment (not eligible for PMTCT)
         mtctuntx     = sum(birthrate * sum(people[undx,:,t])) * effmtct  # MTCT from those undiagnosed or failed (also not eligible)
@@ -401,7 +408,7 @@ def model(M, settings, verbose=2, safetymargin=0.8, benchmark=False):
         
         # Number circumcised this time step after transitions and deaths
         # NOTE: Only background death rate is needed as only considering susceptibles -- circumcision doesn't effect infected men
-        numcircad   = numcirc * (1 - M['death'][:, t]) * dt
+        numcircad   = numcirc * (1 - simpars['death'][:, t]) * dt
         newsusmales = (people[sus, :, t] * male).flatten() # Susceptible males after transitions
         
         # Determine how many are left uncircumcised
@@ -441,7 +448,7 @@ def model(M, settings, verbose=2, safetymargin=0.8, benchmark=False):
         testingrate  = [0] * ncd4
         newdiagnoses = [0] * ncd4
         newtreat1    = [0] * ncd4
-        background   = M['death'][:, t] # TODO make OST effect this death rates
+        background   = simpars['death'][:, t] # TODO make OST effect this death rates
         
         ## Susceptibles
         dS = -newinfections # Change in number of susceptibles -- death rate already taken into account in pm.totalpop and dt
@@ -532,7 +539,7 @@ def model(M, settings, verbose=2, safetymargin=0.8, benchmark=False):
                 change[dx[cd4],:]   = dD[cd4]
                 change[tx1[cd4],:]  = dT1[cd4]
             people[:,:,t+1] = people[:,:,t] + change # Update people array
-            newpeople = popsize[:,t+1]-people[:,:,t+1].sum(axis=0) # Number of people to add according to M['popsize'] (can be negative)
+            newpeople = popsize[:,t+1]-people[:,:,t+1].sum(axis=0) # Number of people to add according to simpars['popsize'] (can be negative)
             for pop in range(npops): # Loop over each population, since some might grow and others might shrink
                 if newpeople[pop]>=0: # People are entering: they enter the susceptible population
                     people[0,pop,t+1] += newpeople[pop]
@@ -586,14 +593,14 @@ def fit2time(pars, tvec):
     
     
     
-def equilibrate(settings, M, Finit, verbose=2):
+def equilibrate(settings, simpars, Finit, verbose=2):
     """
     Calculate the quilibrium point by estimating the ratio of input and output 
     rates for each of the health states.
     
     Usage:
         G = general parameters
-        M = model parameters
+        simpars = model parameters
         Finit = fitted parameters for initial prevalence
         initpeople = nstates x npops array
     
@@ -601,7 +608,7 @@ def equilibrate(settings, M, Finit, verbose=2):
     """
     from numpy import zeros, hstack, inf
     
-    npops = len(M['hivprev']) # WARNING len(M['hivprev']) is npops
+    npops = len(simpars['hivprev']) # WARNING len(simpars['hivprev']) is npops
     
     # Set parameters
     prevtoforceinf = 0.1 # Assume force-of-infection is proportional to prevalence -- 0.1 means that if prevalence is 10%, annual force-of-infection is 1%
@@ -610,18 +617,18 @@ def equilibrate(settings, M, Finit, verbose=2):
     
     # Shorten key variables
     initpeople = zeros((settings.ncomparts,npops)) 
-    allinfected = M['popsize'][:,0] * Finit[:] # Set initial infected population
+    allinfected = simpars['popsize'][:,0] * Finit[:] # Set initial infected population
     
     # Can calculate equilibrium for each population separately
     for p in range(npops):
         # Set up basic calculations
-        uninfected = M['popsize'][p,0] * (1-Finit[p]) # Set initial susceptible population -- easy peasy! # TODO -- should this have F['popsize'] involved?
+        uninfected = simpars['popsize'][p,0] * (1-Finit[p]) # Set initial susceptible population -- easy peasy! # TODO -- should this have F['popsize'] involved?
         popinfected = allinfected[p]
         
         # Treatment & treatment failure
         fractotal =  popinfected / sum(allinfected) # Fractional total of infected people in this population
-        treatment1 = M['tx1'][0] * fractotal # Number of people on 1st-line treatment
-        treatfail = treatment1 * M['const']['fail'] * efftreatmentrate * failratio # Number of people with treatment failure -- # TODO: check
+        treatment1 = simpars['tx1'][0] * fractotal # Number of people on 1st-line treatment
+        treatfail = treatment1 * simpars['const']['fail'] * efftreatmentrate * failratio # Number of people with treatment failure -- # TODO: check
         totaltreat = treatment1 + treatfail
         if totaltreat > popinfected: # More people on treatment than ever infected, uh oh!
             treatment1 *= popinfected/totaltreat
@@ -631,14 +638,14 @@ def equilibrate(settings, M, Finit, verbose=2):
         # Diagnosed & undiagnosed
         nevertreated = popinfected - totaltreat
         assumedforceinf = Finit[p]*prevtoforceinf # To calculate ratio of people in the initial category, need to estimate the force-of-infection
-        undxdxrates = assumedforceinf + M['hivtest'][p,0] # Ratio of undiagnosed to diagnosed
+        undxdxrates = assumedforceinf + simpars['hivtest'][p,0] # Ratio of undiagnosed to diagnosed
         undiagnosed = nevertreated * assumedforceinf / undxdxrates     
-        diagnosed = nevertreated * M['hivtest'][p,0] / undxdxrates
+        diagnosed = nevertreated * simpars['hivtest'][p,0] / undxdxrates
         
         # Set rates within
-        progratios = hstack([M['prog'], M['const']['deathaids']]) # For last rate, use AIDS death as dominant rate
+        progratios = hstack([simpars['prog'], simpars['const']['deathaids']]) # For last rate, use AIDS death as dominant rate
         progratios = (1/progratios)  / sum(1/progratios) # Normalize
-        recovratios = hstack([inf, M['recov'], efftreatmentrate]) # Not sure if this is right...inf since no progression to acute, treatmentrate since main entry here # TODO check
+        recovratios = hstack([inf, simpars['recov'], efftreatmentrate]) # Not sure if this is right...inf since no progression to acute, treatmentrate since main entry here # TODO check
         recovratios = (1/recovratios)  / sum(1/recovratios) # Normalize
         
         # Final calculations
