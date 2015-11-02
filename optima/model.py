@@ -4,16 +4,11 @@
 
  ## Imports
 from numpy import array, zeros, exp, maximum, minimum, concatenate, hstack, absolute, median
-from utils import printv, uuid, today, tic, toc
+from utils import printv, tic, toc
 from math import pow as mpow
 from copy import deepcopy
+from results import Results
 
-
-class Results(object):
-    ''' Lightweight structure to hold results -- use this instead of a dict '''
-    def __init__(self):
-        self.id = uuid()
-        self.created = today()
 
 
 def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
@@ -554,6 +549,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
                 
     # Append final people array to sim output
     results.people = people
+    results.derivedresults() # Generate derived results
 
 
     

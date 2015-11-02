@@ -294,6 +294,7 @@ class Project(object):
         results = model(simpars, self.settings)
         results.pars = self.parsets[name]
         results.projectinfo = str(self) # Store all the information about this project
+        
         return results
         
     
