@@ -11,12 +11,12 @@ from numpy import array, isnan, zeros, shape, mean
 from utils import printv, sanitize, save, uuid, today, getdate
 
 
+
 class Parameter(object):
     ''' The definition of a single parameter '''
     
-    def __init__(self, full=None, short=None, t=[], y=[], m=1):
-        self.full = full # Full parameter name
-        self.short = short # Short parameter name
+    def __init__(self, name='', t=[], y=[], m=1):
+        self.name = name# Parameter name
         self.t = t # Time data, e.g. [2002, 2008]
         self.y = y # Value data, e.g. [0.3, 0.7]
         self.m = m # Multiplicative metaparameter, e.g. 1
@@ -25,13 +25,10 @@ class Parameter(object):
         ''' Print out useful information when called'''
         output = '\n'
         output += 'Parameter name: %s\n'    % self.name
-        output += '    Number of runs: %s\n'    % len(self.pars)
-        output += '      Date created: %s\n'    % getdate(self.created)
-        output += '     Date modified: %s\n'    % getdate(self.modified)
-        output += '                ID: %s\n'    % self.id
+        output += '   Time points: %s\n'    % self.t
+        output += '        Values: %s\n'    % self.y
+        output += ' Metaparameter: %s\n'    % self.m
         return output
-
-
 
 
 
@@ -86,10 +83,11 @@ class Parameterset(object):
         printv('Converting data to parameters...', 1, verbose)
         
         
-        def data2par(dataarray, usetime=True):
+        def data2par(parname, dataarray, usetime=True):
             """ Take an array of data and turn it into default parameters -- here, just take the means """
             nrows = shape(dataarray)[0] # See how many rows need to be filled (either npops, nprogs, or 1)
             par = Parameter() # Create structure
+            par.name = parname # Store the name of the parameter
             par.m = 1 # Set metaparameter to 1
             par.y = [0]*nrows # Initialize array for holding population parameters
             if usetime:
@@ -162,7 +160,7 @@ class Parameterset(object):
         
         for parname in sheets['Other epidemiology'] + sheets['Testing & treatment'] + sheets['Sexual behavior'] + sheets['Injecting behavior']:
             printv('Converting data parameter %s...' % parname, 3, verbose)
-            pars[parname] = data2par(data[parname])
+            pars[parname] = data2par(parname, data[parname])
         
 
         # Fix up ones of the wrong size
