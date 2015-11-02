@@ -48,6 +48,12 @@ class Results(object):
         self.reqcircum = Result()
         self.sexinci = Result()
     
+#    def __repr__(self):
+#        ''' This will eventually include information that's useful... '''
+    
+    
+#    def plot():
+    
     
     
     def derivedresults(self, verbose=2):
