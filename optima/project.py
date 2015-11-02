@@ -3,7 +3,7 @@ This module defines the Project class, which is the main class used in Optima.
 The only other thing it contains is a loadprj() function, since that doesn't
 need to be in the class.
 
-Version: 2015sep04 by cliffk
+Version: 2015nov02 by cliffk
 '''
 
 
@@ -26,6 +26,7 @@ from loadspreadsheet import loadspreadsheet
 from model import model
 from utils import save, load, run, getdate, uuid, today, deepcopy
 
+## Specify the version, for the purposes of figuring out which version was used to create a project
 version = 2.0
 
 
@@ -290,8 +291,8 @@ class Project(object):
         simpars = self.parsets[name].interp(start=start, end=end, dt=dt) # "self.parset[name]" is e.g. P.parset['default']
         
         simpars['male'] = array(self.data['pops']['male']).astype(bool) # Male populations -- TEMP
-        S = model(simpars, self.settings)
-        return S
+        results = model(simpars, self.settings)
+        return results
         
     
     
