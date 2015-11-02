@@ -1,7 +1,7 @@
 def loadspreadsheet(filename='test.xlsx', verbose=0):
     """
-    Loads the spreadsheet (i.e. reads its contents into the data groupsure).
-    This data groupsure is used in the next step to update the corresponding model.
+    Loads the spreadsheet (i.e. reads its contents into the data sheetsure).
+    This data sheetsure is used in the next step to update the corresponding model.
     
     Version: 2015oct31
     """
@@ -32,58 +32,55 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
     ## Define the workbook and parameter names
     ###########################################################################
         
-    groups = dict()
+    sheets = dict()
     
     # Define group names explicitly so keep order
-    groupnames = [
-    'popdata',
-    'popsizedata',
-    'hivprevdata',
-    'timedata',
-    'matrices',
-    'constants',
-    'econdata']
+    sheetnames = [
+    'Populations',
+    'Population size',
+    'HIV prevalence',
+    'Other epidemiology',
+    'Optional indicators',
+    'Testing & treatment',
+    'Sexual behavior',
+    'Injecting behavior',
+    'Partnerships',
+    'Transitions',
+    'Constants',
+    'Economics and costs']
     
     # Metadata -- population and program names -- array sizes are (# populations) and (# programs)
-    # groupname           sheetname       thispar
-    groups['popdata'] = [['Populations', ['pops']]]
+    sheets['Populations'] = ['pops']
     
     # Population size data -- array sizes are time x population x uncertainty
-    groups['popsizedata'] =  [['Population size', ['popsize']]]
+    sheets['Population size'] =  ['popsize']
     
     # HIV prevalence data -- array sizes are time x population x uncertainty
-    groups['hivprevdata'] =  [['HIV prevalence', ['hivprev']]]
+    sheets['HIV prevalence'] =  ['hivprev']
     
     # Time data -- array sizes are time x population
-    groups['timedata'] = [
-                 ['Other epidemiology',  ['death', 'stiprevulc', 'stiprevdis', 'tbprev']], \
-                 ['Optional indicators', ['numtest', 'numdiag', 'numinfect', 'prev', 'death', 'newtreat']], \
-                 ['Testing & treatment', ['hivtest', 'aidstest', 'numfirstline', 'numsecondline', 'txelig', 'prep', 'numpmtct', 'birth', 'breast']], \
-                 ['Sexual behavior',     ['numactsreg', 'numactscas', 'numactscom', 'condomreg', 'condomcas', 'condomcom', 'circum']], \
-                 ['Injecting behavior',  ['numinject', 'sharing', 'numost']]
-                ]
+    sheets['Other epidemiology']  = ['death', 'stiprevulc', 'stiprevdis', 'tbprev']
+    sheets['Optional indicators'] = ['numtest', 'numdiag', 'numinfect', 'prev', 'death', 'newtreat']
+    sheets['Testing & treatment'] = ['hivtest', 'aidstest', 'numfirstline', 'numsecondline', 'txelig', 'prep', 'numpmtct', 'birth', 'breast']
+    sheets['Sexual behavior']     = ['numactsreg', 'numactscas', 'numactscom', 'condomreg', 'condomcas', 'condomcom', 'circum']
+    sheets['Injecting behavior']  = ['numinject', 'sharing', 'numost']
     
     # Economics data -- like time data but with a different end
-    groups['econdata'] = [['Economics and costs', ['cpi', 'ppp', 'gdp', 'revenue', 'govtexpend', 'totalhealth', 'domestichealth', 'domestichiv', 'globalfund', 'pepfar', 'otherint', 'private', 'health', 'social']]]
+    sheets['Economics and costs'] = ['cpi', 'ppp', 'gdp', 'revenue', 'govtexpend', 'totalhealth', 'domestichealth', 'domestichiv', 'globalfund', 'pepfar', 'otherint', 'private', 'health', 'social']
 
-                 
     # Matrix data -- array sizes are population x population
-    groups['matrices'] = [
-                ['Partnerships', ['reg','cas','com','inj']], \
-                ['Transitions',  ['asym','sym']]
-               ]
+    sheets['Partnerships'] = ['partreg','partcas','partcom','partinj']
+    sheets['Transitions']  = ['transasym','transsym']
     
     # Constants -- array sizes are scalars x uncertainty
-    groups['constants'] = [
-                 ['Constants', [['trans',    ['mfi', 'mfr', 'mmi', 'mmr', 'inj', 'mtctbreast', 'mtctnobreast']], \
-                                ['cd4trans', ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'aids']], \
-                                ['prog',     ['acute', 'gt500', 'gt350', 'gt200', 'gt50']],\
-                                ['recov',    ['gt500', 'gt350', 'gt200', 'gt50', 'aids']],\
-                                ['fail',     ['first', 'second']],\
-                                ['death',    ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'aids', 'treat', 'tb']],\
-                                ['eff',      ['condom', 'circ', 'dx', 'sti', 'dis', 'ost', 'pmtct', 'tx', 'prep']],\
-                                ['disutil',  ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'aids','tx']]]]
-                ]
+    sheets['Constants'] = [['trans',    ['mfi', 'mfr', 'mmi', 'mmr', 'inj', 'mtctbreast', 'mtctnobreast']], \
+                           ['cd4trans', ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'aids']], \
+                           ['prog',     ['acute', 'gt500', 'gt350', 'gt200', 'gt50']],\
+                           ['recov',    ['gt500', 'gt350', 'gt200', 'gt50', 'aids']],\
+                           ['fail',     ['first', 'second']],\
+                           ['death',    ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'aids', 'treat', 'tb']],\
+                           ['eff',      ['condom', 'circ', 'dx', 'sti', 'dis', 'ost', 'pmtct', 'tx', 'prep']],\
+                           ['disutil',  ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'aids','tx']]]
     
 
     
@@ -95,15 +92,15 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
     
 
     ## Basic setup
-    data = dict() # Create groupsure for holding data
+    data = dict() # Create sheetsure for holding data
     data['date'] = strftime("%Y-%m-%d %H:%M:%S")
-    programs = [] # Create groupsure for holding program data
+    programs = [] # Create sheetsure for holding program data
     try: workbook = open_workbook(filename) # Open workbook
     except: raise Exception('Failed to load spreadsheet: file "%s" not found or other problem' % filename)
     
     ## Loop over each group of sheets
-    for groupname in groupnames: # Loop over each type of data, but treat constants differently
-        sheetgroup = groups[groupname]
+    for sheetname in sheetnames: # Loop over each type of data, but treat constants differently
+        sheetgroup = sheets[sheetname]
         for sheet in sheetgroup: # Loop over each workbook for that data -- just one for constants
             lastdatacol = None
             sheetname = sheet[0] # Name of the workbook
@@ -114,7 +111,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
             
             
             ## Calculate columns for which data are entered, and store the year ranges
-            if groupname == 'popsizedata': # Need to gather year ranges for epidemic etc. data
+            if sheetname == 'popsizedata': # Need to gather year ranges for epidemic etc. data
                 data['epiyears'] = [] # Initialize epidemiology data years
                 for col in range(sheetdata.ncols):
                     thiscell = sheetdata.cell_value(1,col) # 1 is the 2nd row which is where the year data should be
@@ -125,7 +122,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
                         data['epiyears'].append(float(thiscell)) # Add this year
             
             # V2 -- this might have to change
-            if groupname == 'econdata': # Need to gather year ranges for economic data
+            if sheetname == 'econdata': # Need to gather year ranges for economic data
                 data['epiyears'] = [] # Initialize epidemiology data years
                 for col in range(sheetdata.ncols):
                     thiscell = sheetdata.cell_value(1,col) # 1 is the 2nd row which is where the year data should be
@@ -155,7 +152,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
                     parcount += 1 # Increment the parameter count
                     
                     # It's popdata: pull out each of the pieces
-                    if groupname=='popdata': 
+                    if sheetname=='popdata': 
                         thispar = subparlist[parcount] # Get the name of this parameter, e.g. 'popsize'
                         data['pops'] = dict() # Initialize to empty list
                         data['pops']['short'] = [] # Store short population/program names, e.g. "FSW"
@@ -169,24 +166,24 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
                         data['pops']['client'] = [] # Store whether or not this population is a client of sex workers
                     
                     # It's basic data or a matrix: create an empty list
-                    elif groupname in ['popsizedata', 'hivprevdata', 'timedata', 'matrices']: 
+                    elif sheetname in ['popsizedata', 'hivprevdata', 'timedata', 'matrices']: 
                         thispar = subparlist[parcount] # Get the name of this parameter, e.g. 'popsize'
                         data[thispar] = [] # Initialize to empty list
                     
                     # It's economics data
-                    elif groupname in ['econdata']: 
+                    elif sheetname in ['econdata']: 
                         thispar = subparlist[parcount] # Get the name of this parameter, e.g. 'popsize'
-                        data[thispar] = dict() # Create a groupsure since need to store future growth assumptions too
+                        data[thispar] = dict() # Create a sheetsure since need to store future growth assumptions too
                         data[thispar]['past'] = [] # Initialize past data to empty list
                         data[thispar]['future'] = [] # Initialize future assumptions to empty list
                     
-                    # It's a constant or a cost: create a groupsure
-                    elif groupname=='constants': 
+                    # It's a constant or a cost: create a sheetsure
+                    elif sheetname=='constants': 
                         thispar = subparlist[parcount][0] # Get the name of this parameter, e.g. 'trans'
-                        data[thispar] = dict() # Need yet another groupsure if it's a constant!
+                        data[thispar] = dict() # Need yet another sheetsure if it's a constant!
                     
                     else:
-                        raise Exception('Group name %s not recognized!' % groupname)
+                        raise Exception('Group name %s not recognized!' % sheetname)
                 
                 
                 
@@ -199,7 +196,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
                         
                         
                         # It's pops-data, split into pieces
-                        if groupname=='popdata': 
+                        if sheetname=='popdata': 
                             thesedata = sheetdata.row_values(row, start_colx=2, end_colx=11) # Data starts in 3rd column, finishes in 11th column
                             data[thispar]['short'].append(thesedata[0])
 
@@ -215,7 +212,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
 
                         
                         # It's key data, save both the values and uncertainties
-                        if groupname in ['popsizedata', 'hivprevdata']:
+                        if sheetname in ['popsizedata', 'hivprevdata']:
                             if len(data[thispar])==0: 
                                 data[thispar] = [[] for z in range(3)] # Create new variable for best, low, high
                             thesedata = sheetdata.row_values(row, start_colx=3, end_colx=lastdatacol) # Data starts in 4th column
@@ -238,7 +235,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
                             
                         
                         # It's basic data, append the data and check for programs
-                        if groupname=='timedata': 
+                        if sheetname=='timedata': 
                             thesedata = sheetdata.row_values(row, start_colx=2, end_colx=lastdatacol) # Data starts in 3rd column
                             thesedata = list(map(lambda val: nan if val=='' else val, thesedata)) # Replace blanks with nan
                             assumptiondata = sheetdata.cell_value(row, assumptioncol)
@@ -257,7 +254,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
 
 
                         # It's economics data, append the data
-                        if groupname=='econdata': 
+                        if sheetname=='econdata': 
                             thesedata = sheetdata.row_values(row, start_colx=2, end_colx=lastdatacol) # Data starts in 3rd column
                             thesedata = list(map(lambda val: nan if val=='' else val, thesedata)) # Replace blanks with nan
                             futuredata = sheetdata.row_values(row, start_colx=assumptioncol, end_colx=assumptioncol+3) # Start from the assumption column and read 3
@@ -266,14 +263,14 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
                         
                         
                         # It's a matrix, append the data                                     
-                        elif groupname=='matrices':
+                        elif sheetname=='matrices':
                             thesedata = sheetdata.row_values(row, start_colx=2, end_colx=sheetdata.ncols) # Data starts in 3rd column
                             thesedata = list(map(lambda val: 0 if val=='' else val, thesedata)) # Replace blanks with 0
                             data[thispar].append(thesedata) # Store data
                         
                         
                         # It's a constant, create a new dictionary entry
-                        elif groupname=='constants':
+                        elif sheetname=='constants':
                             thesedata = sheetdata.row_values(row, start_colx=2, end_colx=5) # Data starts in 3rd column, finishes in 5th column
                             thesedata = list(map(lambda val: nan if val=='' else val, thesedata)) # Replace blanks with nan
                             subpar = subparlist[parcount][1].pop(0) # Pop first entry of subparameter list, which is namelist[parcount][1]
