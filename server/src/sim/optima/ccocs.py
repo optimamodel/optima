@@ -1,6 +1,6 @@
 import abc
 from math import log
-from numpy import linspace, exp, isnan, multiply, arange, mean, array, maximum,vstack
+from numpy import linspace, exp, isnan, multiply, arange, mean, array, maximum,vstack,ones
 from numpy import log as nplog
 from copy import deepcopy
 import pylab
@@ -74,6 +74,10 @@ class ccoc(object):
         # but it can be overloaded by derived classes to provide
         # an analytic inverse
         raise Exception('Numerical inverse not implemented yet')
+
+    def delta_out(self,t=None):
+        # Return the gradient of the linear CCOC, for each time
+        raise Exception('This method is only provided by linear CCOCs')
 
 ######## SPECIFIC CCOC IMPLEMENTATIONS
 
@@ -165,6 +169,12 @@ class co_cofun(ccoc):
 
     def defaults(self):
         return [0,0,1,1] # [zero coverage lower, zero coverage upper, full coverage lower, full coverage upper]
+
+    def delta_out(self,t=None):
+        grad = mean(self.fe_params[2:])-mean(self.fe_params[0:2])
+        if t is not None:
+            grad *= ones(t.shape)
+        return grad
 
 class co_linear(ccoc):
     def function(self,x,p,t=None):

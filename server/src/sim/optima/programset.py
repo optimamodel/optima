@@ -260,13 +260,7 @@ class ProgramSet(object):
                     this_outcome = [prog.get_outcome(pop,effect,cov,t=tvec,perturb=perturb) for (prog,cov) in zip(proglist,this_coverage)]
 
                     # Also, compute delta_out
-                    delta_out = []
-                    for prog in proglist:
-                        c = prog.coverage_outcome[pop][effect]
-                        if c.__class__.__name__ == 'co_cofun':
-                            delta_out.append(numpy.mean(c.fe_params[2:])-numpy.mean(c.fe_params[0:2]))
-                        else:
-                            raise Exception("Don't know how to compute delta_out for the given CCOC type")
+                    delta_out = [prog.coverage_outcome[pop][effect].delta_out(tvec) for prog in proglist]
 
                     # DEBUG OUTPUT - these are the quantities needed for the calculation
                     print proglist
@@ -282,11 +276,31 @@ class ProgramSet(object):
                     # In the budget, rows correspond to programs, and columns to time
                     # Thus we have a sequence of row vectors that needs to be added
                     if interaction == 'random':
+                        # Outcome = c1(1-c2)* delta_out1 + c2(1-c2)*delta_out2 + c1c2* max(delta_out1,delta_out2)
                         outcomes[pop][effect] = 0;
                     elif interaction == 'additive':
+                        # Outcome = c1*delta_out1 + c2*delta_out2
                         outcomes[pop][effect] = numpy.sum(this_outcome,0);
                     elif interaction == 'nested':
-                        pass
+                        # Outcome =c3*max(delta_out1,delta_out2,delta_out3) + (c2-c3)*max(delta_out1,delta_out2) + (c1 -c2)*delta_out1, where c3<c2<c1.
+                        
+                        # The items at each time need to be sorted
+                        outcomes[pop][effect] = numpy.zeros(this_outcome[0].shape)
+                        # Iterate over time
+                        for i in xrange(0,len(tvec)):
+                            o = 0
+                            cov = [x[i] for x in this_coverage]
+                            cov_tuple = sorted(zip(cov,delta_out)) # A tuple storing the coverage and delta out, ordered by coverage
+                            print cov_tuple
+                            for j in xrange(0,len(cov_tuple)): # For each entry in here
+                                if j == 0:
+                                    c1 = cov_tuple[j][0]
+                                else:
+                                    c1 = cov_tuple[j][0]-cov_tuple[j-1][0]
+                                print 'ASDF', c1,numpy.max([x[1] for x in cov_tuple[j:]])
+                                o += c1*numpy.max([x[1] for x in cov_tuple[j:]])
+                            outcomes[pop][effect][i] = o
+
                     else:
                         raise Exception('Unknown reachability type "%s"',interaction)
 

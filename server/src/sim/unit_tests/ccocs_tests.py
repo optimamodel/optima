@@ -102,13 +102,25 @@ class TestCCOCs(unittest.TestCase):
 		budget_2d = numpy.array(([0.2,0.2],[0.3,0.3],[0.4,0.4],[0.4,0.4])) # Here is the spending
 		budget_2d.shape = (4,2)
 		# Note - the effects should be
-		# program 1: 0.2, program 2: 0.6, program 3: 1.2
+		# COVERAGE: 0.2,0.3,0.4
+		# OUTCOME: 0.2,0.6,1.2
 		# at both times in the 2d case
 
 		# Test additive
 		ps.specific_reachability_interaction['testpop']['testpar'] = 'additive'
 		numpy.testing.assert_allclose(ps.get_outcomes(tvec_1d,budget_1d)['testpop']['testpar'],[2.0])
 		numpy.testing.assert_allclose(ps.get_outcomes(tvec_2d,budget_2d)['testpop']['testpar'],[2.0,2.0])
+
+		# Test nested
+		# COVERAGE: 0.2,0.3,0.4
+		# DELTA_OUT = 3
+		# OUTCOME: 0.2,0.6,1.2
+		# For Outcome =c3*max(delta_out1,delta_out2,delta_out3) + (c2-c3)*max(delta_out1,delta_out2) + (c1 -c2)*delta_out1, where c3<c2<c1.
+		# we should have
+		# 0.2*3 + 0.1*3 + 0.1*3 = 0.4*3 = 1.2
+		ps.specific_reachability_interaction['testpop']['testpar'] = 'nested'
+		numpy.testing.assert_allclose(ps.get_outcomes(tvec_1d,budget_1d)['testpop']['testpar'],[1.2])
+		numpy.testing.assert_allclose(ps.get_outcomes(tvec_2d,budget_2d)['testpop']['testpar'],[1.2,1.2])
 
 if __name__ == '__main__':
 	# Run all tests
