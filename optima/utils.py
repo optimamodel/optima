@@ -471,3 +471,36 @@ def run(command, printinput=False, printoutput=False):
    except: output = 'Shell command failed'
    if printoutput: print(output)
    return output
+
+
+
+
+
+
+
+
+
+
+
+
+##############################################################################
+## CLASS FUNCTIONS
+##############################################################################
+
+def save(obj, filename=None):
+    try: import cPickle as pickle # For Python 2 compatibility
+    except: import pickle
+    from gzip import GzipFile
+    with GzipFile(filename, 'wb') as fileobj: pickle.dump(obj, fileobj, protocol=2)
+    print('Object "%s" saved to "%s"' % (object.name, filename))
+    return None
+
+
+def load(filename):
+    ''' Load a saved file '''
+    try: import cPickle as pickle # For Python 2 compatibility
+    except: import pickle
+    from gzip import GzipFile
+    with GzipFile(filename, 'rb') as fileobj: obj = pickle.load(fileobj)
+    print('Object loaded from "%s"' % filename)
+    return obj

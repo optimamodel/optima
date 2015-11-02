@@ -74,7 +74,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
     # Time data -- array sizes are time x population
     sheets['Other epidemiology']  = ['death', 'stiprev', 'tbprev']
     sheets['Optional indicators'] = ['optnumtest', 'optnumdiag', 'optnuminfect', 'optprev', 'optdeath', 'optnewtreat']
-    sheets['Testing & treatment'] = ['hivtest', 'aidstest', 'numfirstline', 'numsecondline', 'txelig', 'prep', 'numpmtct', 'birth', 'breast']
+    sheets['Testing & treatment'] = ['hivtest', 'aidstest', 'numtx', 'prep', 'numpmtct', 'birth', 'breast']
     sheets['Sexual behavior']     = ['numactsreg', 'numactscas', 'numactscom', 'condomreg', 'condomcas', 'condomcom', 'circum']
     sheets['Injecting behavior']  = ['numinject', 'sharing', 'numost']
     
@@ -103,7 +103,9 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
 
     ## Basic setup
     data = dict() # Create sheetsure for holding data
-    data['date'] = strftime("%Y-%m-%d %H:%M:%S")
+    data['meta'] = dict()
+    data['meta']['date'] = strftime("%Y-%m-%d %H:%M:%S")
+    data['meta']['sheets'] = sheets # Store parameter names
     try: workbook = open_workbook(filename) # Open workbook
     except: raise Exception('Failed to load spreadsheet: file "%s" not found or other problem' % filename)
     

@@ -9,7 +9,7 @@ Version: 2015oct22 by cliffk
 from uuid import uuid4
 from datetime import datetime
 from utils import printv
-from numpy import array as ar, isnan, zeros, shape, mean
+from numpy import array, isnan, zeros, shape, mean
 from utils import sanitize
 try: import cPickle as pickle # For Python 2 compatibility
 except: import pickle
@@ -76,7 +76,7 @@ class Parameterset(object):
         ''' Plot all parameters, I guess against data '''
 
 
-    def data2pars(self, data, verbose=2):
+    def makeparsfromdata(self, data, verbose=2):
         """
         Translates the raw data (which were read from the spreadsheet). into
         parameters that can be used in the model. These data are then used to update 
@@ -101,10 +101,10 @@ class Parameterset(object):
                     validdata = ~isnan(dataarray[r])
                     if sum(validdata): # There's at least one data point
                         par.y[r] = sanitize(dataarray[r]) # Store each extant value
-                        par.t[r] = ar(data['epiyears'])[~isnan(dataarray[r])] # Store each year
+                        par.t[r] = array(data['years'])[~isnan(dataarray[r])] # Store each year
                     else: # Blank, assume zero
-                        par.y[r] = ar([0])
-                        par.t[r] = ar([0])
+                        par.y[r] = array([0])
+                        par.t[r] = array([0])
         
             else:
                 raise Exception('Not implemented')
@@ -129,30 +129,20 @@ class Parameterset(object):
         
         
         ## Change sizes of circumcision and births
-        def popexpand(origarray, popbool):
+        def popexpand(origpar, popbool):
             """ For variables that are only defined for certain populations, expand to the full array. WARNING, doesn't work for time """
-            from copy import deepcopy
-            newarray = deepcopy(origarray)
-            if 't' in newarray.keys(): 
-                newarray['p'] = [ar([0]) for i in range(len(data['popprog']['pops']['male']))]
-                newarray['t'] = [ar([0]) for i in range(len(data['popprog']['pops']['male']))]
-                count = -1
-                if hasattr(popbool,'__iter__'): # May or may not be a list
-                    for i,tf in enumerate(popbool):
-                        if tf:
-                            count += 1
-                            newarray['p'][i] = origarray['p'][count]
-                            newarray['t'][i] = origarray['t'][count]
-            else: 
-                newarray['p'] = zeros(shape(data['popprog']['pops']['male']))
-                count = -1
-                if hasattr(popbool,'__iter__'): # May or may not be a list
-                    for i,tf in enumerate(popbool):
-                        if tf:
-                            count += 1
-                            newarray['p'][i] = origarray['p'][count]
+            newpar = Parameter()
+            newpar.y = [array([0]) for i in range(len(data['pops']['male']))]
+            newpar.t = [array([0]) for i in range(len(data['pops']['male']))]
+            count = -1
+            if hasattr(popbool,'__iter__'): # May or may not be a list
+                for i,tf in enumerate(popbool):
+                    if tf:
+                        count += 1
+                        newpar.y[i] = origpar.y[count]
+                        newpar.t[i] = origpar.t[count]
             
-            return newarray
+            return newpar
         
         
         
@@ -164,54 +154,34 @@ class Parameterset(object):
         ## Loop over quantities
         ###############################################################################
         
+        pars = dict()
+        
         ## Key parameters
-        self.popsize = dataindex(data['popsize'][0], 0) # WARNING, will want to change
-        self.hivprev = dataindex(data['hivprev'][0], 0) # WARNING, will want to change
+        for parname in ['popsize', 'hivprev']:
+            pars[parname] = dataindex(data[parname][0], 0) # WARNING, will want to change
         
         ## Parameters that can be converted automatically
-        self.death      = data2par(data['epi']['death'])
-        self.tbprev     = data2par(data['epi']['tbprev'])
-        self.stiprevdis = data2par(data['epi']['stiprevdis'])
-        self.stiprevulc = data2par(data['epi']['stiprevulc'])
+        sheets = data['meta']['sheets']
         
-        self.numtx    = data2par(data['txrx']['numtx'])
-        self.numpmtct = data2par(data['txrx']['numpmtct'])
-        self.txelig   = data2par(data['txrx']['txelig'])
-        self.breast   = data2par(data['txrx']['breast'])
-        self.birth    = data2par(data['txrx']['birth'])
-        self.hivtest  = data2par(data['txrx']['hivtest'])
-        self.aidstest = data2par(data['txrx']['aidstest'])
-        self.prep     = data2par(data['txrx']['prep'])
+        for parname in sheets['Other epidemiology'] + sheets['Testing & treatment'] + sheets['Sexual behavior'] + sheets['Injecting behavior']:
+            printv('Converting data parameter %s...' % parname, 3, verbose)
+            pars[parname] = data2par(data[parname])
         
-        self.numactsreg = data2par(data['sex']['numactsreg'])
-        self.numactscas = data2par(data['sex']['numactscas'])
-        self.numactscom = data2par(data['sex']['numactscom'])
-        self.condomreg  = data2par(data['sex']['condomreg'])
-        self.condomcas  = data2par(data['sex']['condomcas'])
-        self.condomcas  = data2par(data['sex']['condomcas'])
-        self.circum     = data2par(data['sex']['circum'])
-        
-        self.numinject = data2par(data['inj']['numinject'])
-        self.sharing   = data2par(data['inj']['sharing'])
-        self.numost    = data2par(data['inj']['numost'])
-        
+
         # Fix up ones of the wrong size
-        self.birth      = popexpand(self.birth,     ar(data['popprog']['pops']['female'])==1)
-        self.circum    = popexpand(self.circum,    ar(data['popprog']['pops']['male'])==1)
+        pars['birth']     = popexpand(pars['birth'],     array(data['pops']['female'])==1)
+        pars['circum']    = popexpand(pars['circum'],    array(data['pops']['male'])==1)
         
         
         ## WARNING, not sure what to do with these
-        self.pships = data['pships'] 
-        self.transit = data['transit']
+        for parname in ['partreg', 'partcas', 'partcom', 'partinj', 'transsym', 'transasym']:
+            printv('Converting data parameter %s...' % parname, 3, verbose)
+            pars[parname] = data[parname]
         
-        self.const = dict()
-        for parclass in data['const'].keys():
-            printv('Converting data parameter %s...' % parclass, 3, verbose)
-            if type(data['const'][parclass])==dict: 
-                self.const[parclass] = dict()
-                for parname in data['const'][parclass].keys():
-                    printv('Converting data parameter %s...' % parname, 4, verbose)
-                    self.const[parclass][parname] = data['const'][parclass][parname][0] # Taking best value only, hence the 0
+        pars['const'] = dict()
+        for parname in data['const'].keys():
+            printv('Converting data parameter %s...' % parname, 3, verbose)
+            pars['const'][parname] = data['const'][parname][0] # Taking best value only, hence the 0
 
         
         

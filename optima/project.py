@@ -15,9 +15,6 @@ Version: 2015sep04 by cliffk
 ## Load general modules
 from numpy import array # TEMP?
 from copy import deepcopy
-try: import cPickle as pickle # For Python 2 compatibility
-except: import pickle
-from gzip import GzipFile
 from datetime import datetime
 
 ## Load classes
@@ -29,13 +26,9 @@ from loadspreadsheet import loadspreadsheet
 from parameters import Parameterset
 #from makesimpars import makesimpars
 from model import model
+from utils import save
 
 
-def loadprj(filename):
-    ''' Load a saved project '''
-    with GzipFile(filename, 'rb') as fileobj: project = pickle.load(fileobj)
-    print('Project loaded from "%s"' % filename)
-    return project
 
 
 
@@ -103,7 +96,7 @@ class Project(object):
         ''' Print out useful information when called '''
         output = '\n'
         output += '============================================================\n'
-        output += '      Project name: %s\n'    % self.metadata.name
+        output += '      Project name: %s\n'    % self.name
         output += '          Filename: %s\n'    % self.metadata.filename
         output += '\n'
         output += '    Parameter sets: %i\n'    % len(self.parsets)
@@ -140,8 +133,7 @@ class Project(object):
     def save(self, filename=None):
         ''' Save the current project '''
         filename = self.reconcilefilenames(filename)
-        with GzipFile(filename, 'wb') as fileobj: pickle.dump(self, fileobj, protocol=2)
-        print('Project "%s" saved to "%s"' % (self.metadata.name, filename))
+        save(self, filename)
         return None
         
         
@@ -161,22 +153,16 @@ class Project(object):
         ''' Load a data spreadsheet -- enormous, ugly function so located in its own file '''
         
         ## Load spreadsheet and update metadata
-        self.data = loadspreadsheet(filename) # WARNING -- might want to change this
+        self.data = loadspreadsheet(filename) # Do the hard work of actually loading the spreadsheet
         self.metadata.spreadsheetdate = datetime.today() # Update date when spreadsheet was last loaded
         
-        ## If parameter set of that name doesn't exist, create it; otherwise makeparset has to be called explicitly
-        if name not in self.parset:
-            self.makeparset(name=name)
+        ## If parameter set of that name doesn't exist, create it
+        if name not in self.parsets:
+            parset = Parameterset()
+            parset.makeparsfromdata(self.data) # Create parameters
+            self.addparset(name=name, parset=parset) # Store parameters
         return None
     
-    
-    
-    def makeparset(self, name='default', overwrite=False):
-        ''' Regenerate the parameters from the spreadsheet data -- also a large function '''
-        parset = Parameterset()
-        parset.makeparset(self.data) # Create parameters
-        self.addparset(name=name, parset=parset) # Store parameters
-        return None
     
     
     
