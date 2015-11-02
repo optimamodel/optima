@@ -31,12 +31,13 @@ class Results(object):
         
         # Key results
         self.prev = Result()
-        self.infect = Result()
-        self.plhiv = Result()
-        self.dalys = Result()
-        self.death = Result()
-        self.treat = Result()
-        self.diag = Result()
+        self.force = Result()
+        self.numinci = Result()
+        self.numplhiv = Result()
+#        self.dalys = Result()
+        self.numdeath = Result()
+        self.numtreat = Result()
+        self.numdiag = Result()
         
         # Other quantities
         self.births = Result()
@@ -64,12 +65,12 @@ class Results(object):
         self.prev.pops = quantile(allpeople[:,1:,:,:].sum(axis=1) / allpeople[:,:,:,:].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
         self.prev.tot = quantile(allpeople[:,1:,:,:].sum(axis=(1,2)) / allpeople[:,:,:,:].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
         
-        self.plhiv.pops = quantile(allpeople[:,1:,:,:].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
-        self.plhiv.tot = quantile(allpeople[:,1:,:,:].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
+        self.numplhiv.pops = quantile(allpeople[:,1:,:,:].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
+        self.numplhiv.tot = quantile(allpeople[:,1:,:,:].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
         
         allinci = array([self.inci])
-        self.inci.pops = quantile(allinci, quantiles=quantiles)
-        self.inci.tot = quantile(allinci.sum(axis=1), quantiles=quantiles) # Axis 1 is populations
+        self.numinci.pops = quantile(allinci, quantiles=quantiles)
+        self.numinci.tot = quantile(allinci.sum(axis=1), quantiles=quantiles) # Axis 1 is populations
 
 
         allinci = array([self.inci])
@@ -78,8 +79,8 @@ class Results(object):
     
     
         alldeaths = array([self.death])
-        self.death.pops = quantile(alldeaths, quantiles=quantiles)
-        self.death.tot = quantile(alldeaths.sum(axis=1), quantiles=quantiles) # Axis 1 is populations
+        self.numdeath.pops = quantile(alldeaths, quantiles=quantiles)
+        self.numdeath.tot = quantile(alldeaths.sum(axis=1), quantiles=quantiles) # Axis 1 is populations
 
 # WARNING, need to implement
 #        disutils = [D[self.pars['const']['disutil'][key] for key in D['G['healthstates']]
@@ -94,5 +95,5 @@ class Results(object):
         
     
         alldx = array([self.dx])
-        self.diag.pops = quantile(alldx, quantiles=quantiles)
-        self.diag.tot = quantile(alldx.sum(axis=1), quantiles=quantiles) # Axis 1 is populations
+        self.numdiag.pops = quantile(alldx, quantiles=quantiles)
+        self.numdiag.tot = quantile(alldx.sum(axis=1), quantiles=quantiles) # Axis 1 is populations
