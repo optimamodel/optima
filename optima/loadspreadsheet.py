@@ -3,7 +3,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
     Loads the spreadsheet (i.e. reads its contents into the data sheetsure).
     This data sheetsure is used in the next step to update the corresponding model.
     
-    Version: 2015oct31
+    Version: 2015nov01
     """
     
     ###########################################################################
@@ -28,6 +28,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
         
     
     def validatedata(thesedata, sheetname, thispar, row):
+        ''' Do basic validation on the data: at least one point entered, between 0 and 1 '''
         validdata = array(thesedata)[~isnan(thesedata)]
         if len(validdata):
             invalid = logical_or(array(validdata)>1, array(validdata)<0)
@@ -35,8 +36,12 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
                 column = nonzero(invalid)[0]
                 raise Exception('Invalid entry in spreadsheet "%s": parameter %s (row=%i, column(s)=%s, value=%f)' % (thispar, sheetname, row+1, column, thesedata[column[0]]))
 
-
+    def blank2nan(thesedata):
+        ''' Convert a blank entry to a nan '''
+        return list(map(lambda val: nan if val=='' else val, thesedata))
         
+    
+    
     ###########################################################################
     ## Define the workbook and parameter names
     ###########################################################################
@@ -81,7 +86,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
     sheets['Constants'] = [['transmfi', 'transmfr', 'transmmi', 'transmmr', 'transinj', 'mtctbreast', 'mtctnobreast'], 
                            ['cd4transacute', 'cd4transgt500', 'cd4transgt350', 'cd4transgt200', 'cd4transgt50', 'cd4transaids'],
                            ['progacute', 'proggt500', 'proggt350', 'proggt200', 'proggt50'],
-                           ['recovgt500', 'recovgt350', 'recovgt200', 'recovgt50', 'recovaids'],
+                           ['recovgt500', 'recovgt350', 'recovgt200', 'recovgt50'],
                            ['fail'],
                            ['deathacute', 'deathgt500', 'deathgt350', 'deathgt200', 'deathgt50', 'deathaids', 'deathtreat', 'deathtb'],
                            ['effcondom', 'effcirc', 'effdx', 'effsti', 'effdis', 'effost', 'effpmtct', 'efftx', 'effprep'],
@@ -115,7 +120,20 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
             data['years'].append(float(thiscell)) # Add this year
     assumptioncol = lastdatacol + 1 # Figure out which column the assumptions are in; the "OR" space is in between
     
+    ## Initialize populations
+    data['pops'] = dict() # Initialize to empty list
+    data['pops']['short'] = [] # Store short population/program names, e.g. "FSW"
+    data['pops']['long'] = [] # Store long population/program names, e.g. "Female sex workers"
+    data['pops']['male'] = [] # Store whether or not this population is male
+    data['pops']['female'] = [] # Store whether or not this population is female
+    data['pops']['injects'] = [] # Store whether or not this population injects drugs
+    data['pops']['sexmen'] = [] # Store whether or not this population has sex with men
+    data['pops']['sexwomen'] = [] # Store whether or not this population has sex with women
+    data['pops']['sexworker'] = [] # Store whether or not this population is a sex worker
+    data['pops']['client'] = [] # Store whether or not this population is a client of sex workers
     
+    ## Initialize constants
+    data['const'] = dict() # Initialize to empty list
     
     
     ##################################################################
@@ -132,97 +150,74 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
         # Loop over each row in the workbook, starting from the top
         for row in range(sheetdata.nrows): 
             paramcategory = sheetdata.cell_value(row,0) # See what's in the first column for this row
+            subparam = sheetdata.cell_value(row, 1) # Get the name of a subparameter, e.g. 'FSW', population size for a given population
             
             if paramcategory != '': # It's not blank: e.g. "HIV prevalence"
                 printv('Loading "%s"...' % paramcategory, 3, verbose)
                 parcount += 1 # Increment the parameter count
                 
-                # It's popdata: pull out each of the pieces
-                if sheetname=='Populations': 
-                    thispar = subparlist[parcount] # Get the name of this parameter, e.g. 'popsize'
-                    data['pops'] = dict() # Initialize to empty list
-                    data['pops']['short'] = [] # Store short population/program names, e.g. "FSW"
-                    data['pops']['long'] = [] # Store long population/program names, e.g. "Female sex workers"
-                    data['pops']['male'] = [] # Store whether or not this population is male
-                    data['pops']['female'] = [] # Store whether or not this population is female
-                    data['pops']['injects'] = [] # Store whether or not this population injects drugs
-                    data['pops']['sexmen'] = [] # Store whether or not this population has sex with men
-                    data['pops']['sexwomen'] = [] # Store whether or not this population has sex with women
-                    data['pops']['sexworker'] = [] # Store whether or not this population is a sex worker
-                    data['pops']['client'] = [] # Store whether or not this population is a client of sex workers
-                
-                # It's the constants: create a list
-                elif sheetname=='Constants':
-                    data['constants'] = [] # Initialize to empty list
-                
-                # It's anything else: create an empty list
-                else: 
+                # It's anything other than the populations or constants sheet: create an empty list
+                if sheetname not in ['Populations', 'Constants']: 
                     thispar = subparlist[parcount] # Get the name of this parameter, e.g. 'popsize'
                     data[thispar] = [] # Initialize to empty list
             
-            
-            if paramcategory == '': # The first column is blank: it's time for the data
-                subparam = sheetdata.cell_value(row, 1) # Get the name of a subparameter, e.g. 'FSW', population size for a given population
+            elif subparam != '': # The first column is blank: it's time for the data
+                printv('Parameter: %s' % subparam, 4, verbose)
                 
-                if subparam != '': # The subparameter name isn't blank, load something!
-                    printv('Parameter: %s' % subparam, 4, verbose)
-                    
-                    
-                    # It's pops-data, split into pieces
-                    if sheetname=='Populations': 
-                        thesedata = sheetdata.row_values(row, start_colx=2, end_colx=11) # Data starts in 3rd column, finishes in 11th column
-                        data['pops']['short'].append(thesedata[0])
-                        data['pops']['long'].append(thesedata[1])
-                        data['pops']['male'].append(forcebool(thesedata[2]))
-                        data['pops']['female'].append(forcebool(thesedata[3]))
-                        data['pops']['injects'].append(forcebool(thesedata[4]))
-                        data['pops']['sexmen'].append(forcebool(thesedata[5]))
-                        data['pops']['sexwomen'].append(forcebool(thesedata[6]))
-                        data['pops']['sexworker'].append(forcebool(thesedata[7]))
-                        data['pops']['client'].append(forcebool(thesedata[8]))
+                # It's pops-data, split into pieces
+                if sheetname=='Populations': 
+                    thesedata = sheetdata.row_values(row, start_colx=2, end_colx=11) # Data starts in 3rd column, finishes in 11th column
+                    data['pops']['short'].append(thesedata[0])
+                    data['pops']['long'].append(thesedata[1])
+                    data['pops']['male'].append(forcebool(thesedata[2]))
+                    data['pops']['female'].append(forcebool(thesedata[3]))
+                    data['pops']['injects'].append(forcebool(thesedata[4]))
+                    data['pops']['sexmen'].append(forcebool(thesedata[5]))
+                    data['pops']['sexwomen'].append(forcebool(thesedata[6]))
+                    data['pops']['sexworker'].append(forcebool(thesedata[7]))
+                    data['pops']['client'].append(forcebool(thesedata[8]))
+
+                
+                # It's key data, save both the values and uncertainties
+                if sheetname in ['Population size', 'HIV prevalence']:
+                    if len(data[thispar])==0: 
+                        data[thispar] = [[] for z in range(3)] # Create new variable for best, low, high
+                    thesedata = blank2nan(sheetdata.row_values(row, start_colx=3, end_colx=lastdatacol)) # Data starts in 4th column -- need room for high/best/low
+                    assumptiondata = sheetdata.cell_value(row, assumptioncol)
+                    if assumptiondata != '': thesedata = [assumptiondata] # Replace the (presumably blank) data if a non-blank assumption has been entered
+                    blhindices = {'best':0, 'low':1, 'high':2} # Define best-low-high indices
+                    blh = sheetdata.cell_value(row, 2) # Read in whether indicator is best, low, or high
+                    data[thispar][blhindices[blh]].append(thesedata) # Actually append the data
+                    if thispar=='hivprev':
+                       validatedata(thesedata, sheetname, thispar, row)
 
                     
-                    # It's key data, save both the values and uncertainties
-                    if sheetname in ['Population size', 'HIV prevalence']:
-                        if len(data[thispar])==0: 
-                            data[thispar] = [[] for z in range(3)] # Create new variable for best, low, high
-                        thesedata = sheetdata.row_values(row, start_colx=3, end_colx=lastdatacol) # Data starts in 4th column -- need room for high/best/low
-                        thesedata = list(map(lambda val: nan if val=='' else val, thesedata)) # Replace blanks with nan
-                        assumptiondata = sheetdata.cell_value(row, assumptioncol)
-                        if assumptiondata != '': thesedata = [assumptiondata] # Replace the (presumably blank) data if a non-blank assumption has been entered
-                        blhindices = {'best':0, 'low':1, 'high':2} # Define best-low-high indices
-                        blh = sheetdata.cell_value(row, 2) # Read in whether indicator is best, low, or high
-                        data[thispar][blhindices[blh]].append(thesedata) # Actually append the data
-                        if thispar=='hivprev':
-                           validatedata(thesedata, sheetname, thispar, row)
-
-                        
-                    
-                    # It's basic data, append the data and check for programs
-                    if sheetname in ['Other epidemiology', 'Optional indicators', 'Testing & treatment', 'Sexual behavior', 'Injecting behavior']: 
-                        thesedata = sheetdata.row_values(row, start_colx=2, end_colx=lastdatacol-1) # Data starts in 3rd column, and ends lastdatacol-1
-                        thesedata = list(map(lambda val: nan if val=='' else val, thesedata)) # Replace blanks with nan
-                        assumptiondata = sheetdata.cell_value(row, assumptioncol-1)
-                        if assumptiondata != '': # There's an assumption entered
-                            thesedata = [assumptiondata] # Replace the (presumably blank) data if a non-blank assumption has been entered
-                        data[thispar].append(thesedata) # Store data
-                        if thispar in ['stiprev', 'tbprev', 'hivtest', 'aidstest', 'prep', 'condomreg', 'condomcas', 'condomcom', 'circum',  'sharing']: # All probabilities
-                            validatedata(thesedata, sheetname, thispar, row)                        
+                
+                # It's basic data, append the data and check for programs
+                if sheetname in ['Other epidemiology', 'Optional indicators', 'Testing & treatment', 'Sexual behavior', 'Injecting behavior']: 
+                    thesedata = blank2nan(sheetdata.row_values(row, start_colx=2, end_colx=lastdatacol-1)) # Data starts in 3rd column, and ends lastdatacol-1
+                    assumptiondata = sheetdata.cell_value(row, assumptioncol-1)
+                    if assumptiondata != '': # There's an assumption entered
+                        thesedata = [assumptiondata] # Replace the (presumably blank) data if a non-blank assumption has been entered
+                    data[thispar].append(thesedata) # Store data
+                    if thispar in ['stiprev', 'tbprev', 'hivtest', 'aidstest', 'prep', 'condomreg', 'condomcas', 'condomcom', 'circum',  'sharing']: # All probabilities
+                        validatedata(thesedata, sheetname, thispar, row)                        
 
 
-                    # It's a matrix, append the data                                     
-                    elif sheetname in ['Partnerships', 'Transitions']:
-                        thesedata = sheetdata.row_values(row, start_colx=2, end_colx=sheetdata.ncols) # Data starts in 3rd column
-                        thesedata = list(map(lambda val: 0 if val=='' else val, thesedata)) # Replace blanks with 0
-                        data[thispar].append(thesedata) # Store data
-                    
-                    
-                    # It's a constant, create a new dictionary entry
-                    elif sheetname in ['Constants']:
-                        thesedata = sheetdata.row_values(row, start_colx=2, end_colx=5) # Data starts in 3rd column, finishes in 5th column
-                        thesedata = list(map(lambda val: nan if val=='' else val, thesedata)) # Replace blanks with nan
-                        subpar = subparlist[parcount].pop(0) # Pop first entry of subparameter list, which is namelist[parcount][1]
-                        data[thispar][subpar] = thesedata # Store data
+
+                # It's a matrix, append the data                                     
+                elif sheetname in ['Partnerships', 'Transitions']:
+                    thesedata = sheetdata.row_values(row, start_colx=2, end_colx=sheetdata.ncols) # Data starts in 3rd column
+                    thesedata = list(map(lambda val: 0 if val=='' else val, thesedata)) # Replace blanks with 0
+                    data[thispar].append(thesedata) # Store data
+                
+                
+                
+                # It's a constant, create a new dictionary entry
+                elif sheetname in ['Constants']:
+                    thesedata = blank2nan(sheetdata.row_values(row, start_colx=2, end_colx=5)) # Data starts in 3rd column, finishes in 5th column
+                    subpar = subparlist[parcount].pop(0) # Pop first entry of subparameter list, which is namelist[parcount][1]
+                    data['const'][subpar] = thesedata # Store data
     
     
     

@@ -3,7 +3,7 @@ Test script to see if Optima works.
 
 To use: comment out lines in the definition of 'tests' to not run those tests.
 
-Version: 2015sep04 by cliffk
+Version: 2015nov01 by cliffk
 """
 
 
@@ -17,7 +17,7 @@ tests = [
 #'runsim',
 ]
 
-
+numericalassertions = True # Whether or not to actually run things and test their values
 
 
 
@@ -100,6 +100,9 @@ if 'loadspreadsheet' in tests:
     print('  Load a project, then load a spreadsheet')
     Q = Project()
     Q.loadspreadsheet('test.xlsx')
+    
+    if numericalassertions:
+        assert Q.data['const']['effcondom'][0]==0.05, 'Condom efficacy not 95% or not being read in properly'
     
     print('Done.')
     blank()
