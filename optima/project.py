@@ -62,7 +62,7 @@ class Project(object):
         4. rename -- rename a structure in the list
         5. show -- show information on all items in the list(s)
     
-    Version: 2015sep04 by cliffk
+    Version: 2015nov02 by cliffk
     """
     
     
@@ -292,6 +292,8 @@ class Project(object):
         
         simpars['male'] = array(self.data['pops']['male']).astype(bool) # Male populations -- TEMP
         results = model(simpars, self.settings)
+        results.pars = self.parsets[name]
+        results.projectinfo = str(self) # Store all the information about this project
         return results
         
     

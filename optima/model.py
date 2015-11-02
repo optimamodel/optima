@@ -505,7 +505,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
             newtreat1[cd4] = maximum(newtreat1[cd4], -safetymargin*people[tx1[cd4],:,t]) # Make sure it doesn't exceed the number of people in the treatment compartment
             dD.append(inflows - outflows - newtreat1[cd4])
             dD[cd4] = negativepeople('diagnosed', dD[cd4], people[dx[cd4],:,t], t)
-            results.newtxt1[:,t] += newtreat1[cd4]/dt # Save annual treatment initiation
+            results.newtx1[:,t] += newtreat1[cd4]/dt # Save annual treatment initiation
             results.death[:,t]  += hivdeaths/dt # Save annual HIV deaths 
         
         ## 1st-line treatment
@@ -551,12 +551,6 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
                         if not(people[errstate,errpop,t+1]>=0):
                             printv('WARNING, Non-positive people found: people[%s, %s, %s] = %s' % (errstate, errpop, t+1, people[errstate,errpop,t+1]), 4, verbose=verbose)
                             people[errstate,errpop,t+1] = 0 # Reset
-        
-        # Do some sanity checks
-        for key in S.keys():
-            if S[key].max()>1e12:
-                print('WARNING, values for array %s are too large' % key)
-                raise Exception('Values too large')
                 
     # Append final people array to sim output
     results.people = people
