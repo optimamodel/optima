@@ -6,15 +6,9 @@ parameters, respetively.
 Version: 2015oct22 by cliffk
 """
 
-from uuid import uuid4
-from datetime import datetime
-from utils import printv
-from numpy import array, isnan, zeros, shape, mean
-from utils import sanitize
-try: import cPickle as pickle # For Python 2 compatibility
-except: import pickle
-from gzip import GzipFile
 
+from numpy import array, isnan, zeros, shape, mean
+from utils import printv, sanitize, save, uuid, today
 
 
 class Parameter(object):
@@ -44,9 +38,9 @@ class Parameterset(object):
     
     def __init__(self, name='default'):
         self.name = name # Name of the parameter set, e.g. 'default'
-        self.id = uuid4() # ID
-        self.created = datetime.today() # Date created
-        self.modified = datetime.today() # Date modified
+        self.id = uuid() # ID
+        self.created = today() # Date created
+        self.modified = today() # Date modified
         self.pars = [] # List of Parameters objects -- only one if no uncertainty
     
     def __repr__(self):
@@ -63,8 +57,7 @@ class Parameterset(object):
     def save(self, filename=None): # WARNING, can we just use a generic save method? Do we really need a different one for each object?
         ''' Save this parameter set to a file '''
         if filename is None: filename = self.name+'.pars'
-        with GzipFile(filename, 'wb') as fileobj: pickle.dump(self, fileobj, protocol=2)
-        print('Parameter set "%s" saved to "%s"' % (self.name, filename))
+        save(self, filename)
         return None
     
     

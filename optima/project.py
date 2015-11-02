@@ -14,9 +14,6 @@ Version: 2015sep04 by cliffk
 
 ## Load general modules
 from numpy import array # TEMP?
-from copy import deepcopy
-from datetime import datetime
-from uuid import uuid4
 
 ## Load classes
 from settings import Settings
@@ -27,7 +24,7 @@ from parameters import Parameterset
 from loadspreadsheet import loadspreadsheet
 #from makesimpars import makesimpars
 from model import model
-from utils import save, load, run, getdate
+from utils import save, load, run, getdate, uuid, today, deepcopy
 
 version = 2.0
 
@@ -89,9 +86,9 @@ class Project(object):
         
         ## Define metadata
         self.filename = None
-        self.id = uuid4()
-        self.created = datetime.today()
-        self.modified = datetime.today()
+        self.id = uuid()
+        self.created = today()
+        self.modified = today()
         self.spreadsheetdate = 'Spreadsheet never loaded'
         self.version = version
         try:
@@ -171,7 +168,7 @@ class Project(object):
         
         ## Load spreadsheet and update metadata
         self.data = loadspreadsheet(filename) # Do the hard work of actually loading the spreadsheet
-        self.spreadsheetdate = datetime.today() # Update date when spreadsheet was last loaded
+        self.spreadsheetdate = today() # Update date when spreadsheet was last loaded
         
         ## If parameter set of that name doesn't exist, create it
         if name not in self.parsets:

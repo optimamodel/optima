@@ -1,4 +1,13 @@
 ##############################################################################
+## TOP-LEVEL IMPORTS
+##############################################################################
+from uuid import uuid4 as uuid # analysis:ignore
+from datetime import datetime; today = datetime.today # analysis:ignore
+from copy import deepcopy # analysis:ignore
+
+
+
+##############################################################################
 ## PRINTING FUNCTIONS
 ##############################################################################
 
