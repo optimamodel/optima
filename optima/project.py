@@ -26,8 +26,8 @@ from settings import Settings
 
 ## Load other Optima functions
 from loadspreadsheet import loadspreadsheet
-from parameters import makeparams
-from makesimpars import makesimpars
+#from parameters import makeparams
+#from makesimpars import makesimpars
 from model import model
 
 
