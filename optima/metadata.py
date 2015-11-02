@@ -6,7 +6,6 @@ Version: 2015sep03 by cliffk
 
 from uuid import uuid4
 from datetime import datetime
-from time import mktime
 from utils import run
 
 version = 2.0
@@ -17,9 +16,8 @@ class Metadata(object):
     ''' Store all metadata for an Optima project '''
     
     
-    def __init__(self, name='default'):
+    def __init__(self):
         ''' Create the metadata '''
-        self.name = name
         self.filename = None
         self.id = uuid4()
         self.created = datetime.today()
@@ -50,27 +48,3 @@ class Metadata(object):
         output += '    Git version: %s\n'    % self.gitversion
         output += '             ID: %s\n'    % self.id
         return output
-    
-    
-    
-    def getdate(self, which='modified', fmt='str'):
-        ''' Return either the date created or modified ("which") as either a str or int ("fmt") '''
-        
-        dateformat = '%Y-%b-%d %H:%M:%S'
-        
-        if which=='created': dateobj = self.created
-        elif which=='modified': dateobj = self.modified
-        elif which=='spreadsheet': dateobj = self.spreadsheetdate
-        else: raise Exception('Getting date for "which=%s" not understood; must be "created", "modified", or "spreadsheet"' % which)
-        
-        if type(dateobj)==str: return dateobj # Return directly if it's a string
-        if fmt=='str': return dateobj.strftime(dateformat) # Return string representation of time
-        elif fmt=='int': return mktime(dateobj.timetuple()) # So ugly!! But it works -- return integer representation of time
-        else: raise Exception('"fmt=%s" not understood; must be "str" or "int"' % fmt)
-    
-    
-    
-    def setdate(self):
-        ''' Update the last modified date '''
-        self.modified = datetime.today()
-        return None

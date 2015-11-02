@@ -70,7 +70,7 @@ class Project(object):
     ## Built-in methods -- initialization, and the thing to print if you call a project
     #######################################################################################################
     
-    def __init__(self,name='default',spreadsheet=None):
+    def __init__(self, name='default', spreadsheet=None):
         ''' Initialize the project ''' 
         
         ## Define the structure sets
@@ -80,10 +80,10 @@ class Project(object):
         self.optims = {}
         
         ## Define other quantities
-        self.metadata = Metadata(name=name) # Project metadata
+        self.name = name
+        self.metadata = Metadata() # Project metadata
         self.settings = Settings() # Global settings
         self.data = {} # Data from the spreadsheet
-        self.programs = {} # Programs and program-parameter links -- WARNING, is this necessary?
         
         ## Load spreadsheet, if available
         if spreadsheet is not None:
