@@ -8,7 +8,7 @@ from utils import printv
 from math import pow as mpow
 from copy import deepcopy
 
-def model(M, settings, initstate=None, verbose=2, safetymargin=0.8, benchmark=False):
+def model(M, settings, verbose=2, safetymargin=0.8, benchmark=False):
     """
     This function runs the model. Safetymargin is how close to get to moving all people from a compartment in a single timestep.
     
@@ -65,8 +65,7 @@ def model(M, settings, initstate=None, verbose=2, safetymargin=0.8, benchmark=Fa
     S['reqcircum'] = zeros((1, npts))     # Total number of men not circumcised ('req' for 'required')
     
     # Set initial epidemic conditions 
-    if initstate is None: people[:,:,0] = equilibrate(settings, M, array(F['init'])) # No it hasn't, so run equilibration
-    else: people[:,:,0] = initstate # Yes it has, so use it.
+    people[:,:,0] = equilibrate(settings, M, array(F['init'])) # No it hasn't, so run equilibration
     
     # Biological and failure parameters -- death etc
     H = settings.hivstates
