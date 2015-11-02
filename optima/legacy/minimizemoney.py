@@ -105,8 +105,8 @@ def minimizemoney(D, objectives=None, constraints=None, maxiters=1000, timelimit
 
     # Do this so if e.g. /100 won't have problems
     objectives = deepcopy(objectives)
-    if objectives['money']['objectives']['death']['use']: objectives['outcome']['death'] = True     # Setup death outcome optimisation if need be.
-    if objectives['money']['objectives']['dalys']['use']: objectives['outcome']['daly'] = True      # Setup daly outcome optimisation if need be.
+#    if objectives['money']['objectives']['death']['use']: objectives['outcome']['death'] = True     # Setup death outcome optimisation if need be.
+#    if objectives['money']['objectives']['dalys']['use']: objectives['outcome']['daly'] = True      # Setup daly outcome optimisation if need be.
     constraints = deepcopy(constraints)
     ntimepm=1 + int(objectives['timevarying'])*int(objectives['funding']=='constant') # Either 1 or 2, but only if funding==constant
 
@@ -252,6 +252,8 @@ def minimizemoney(D, objectives=None, constraints=None, maxiters=1000, timelimit
                 print('Current funding factor (low, high): %f (%f, %f)' % (fundingfactor, lowerlim, upperlim))
                 if targetsmet: upperlim=fundingfactor
                 else: lowerlim=fundingfactor
+            if (upperlim-lowerlim<=0.1):    # Just to make sure that the optimal allocation returned is for the goals-meeting upperlim factor!
+                targetsmet, optparams = objectivecalc(array(optimparams)*upperlim, options)
             
         
             optparams[opttrue] = optparams[opttrue] / optparams[opttrue].sum() * (sum(optparams) - optparams[~opttrue].sum()) # Make sure it's normalized -- WARNING KLUDGY
