@@ -96,31 +96,33 @@ class TestCCOCs(unittest.TestCase):
 		# Make the triple program budget
 		tvec_1d = numpy.array([1])
 		tvec_2d = numpy.array([1,2])
-		budget_1d = numpy.array(([0.2,0.3,0.4,0.4])) # Here is the spending
+		budget_1d = numpy.array(([0.4,0.3,0.1,0.4])) # Here is the spending
 		budget_1d.shape = (4,1)
 		# Note that a 2d budget has time in rows
-		budget_2d = numpy.array(([0.2,0.2],[0.3,0.3],[0.4,0.4],[0.4,0.4])) # Here is the spending
+		budget_2d = numpy.array(([0.4,0.4],[0.3,0.3],[0.1,0.1],[0.4,0.4])) # Here is the spending
 		budget_2d.shape = (4,2)
 		# Note - the effects should be
-		# COVERAGE: 0.2,0.3,0.4
-		# OUTCOME: 0.2,0.6,1.2
+		# COVERAGE: 0.4,0.3,0.1
+		# OUTCOME: 0.4,0.6,0.3
 		# at both times in the 2d case
 
 		# Test additive
 		ps.specific_reachability_interaction['testpop']['testpar'] = 'additive'
-		numpy.testing.assert_allclose(ps.get_outcomes(tvec_1d,budget_1d)['testpop']['testpar'],[2.0])
-		numpy.testing.assert_allclose(ps.get_outcomes(tvec_2d,budget_2d)['testpop']['testpar'],[2.0,2.0])
+		numpy.testing.assert_allclose(ps.get_outcomes(tvec_1d,budget_1d)['testpop']['testpar'],[1.3])
+		numpy.testing.assert_allclose(ps.get_outcomes(tvec_2d,budget_2d)['testpop']['testpar'],[1.3,1.3])
 
 		# Test nested
-		# COVERAGE: 0.2,0.3,0.4
-		# DELTA_OUT = 3
-		# OUTCOME: 0.2,0.6,1.2
+		# COVERAGE: 0.4,0.3,0.1
+		# DELTA_OUT = [1,2,3]
+		# Or equivalently
+		# coverage: 0.1,0.3,0.4
+		# delta_out = [3 2 1]
 		# For Outcome =c3*max(delta_out1,delta_out2,delta_out3) + (c2-c3)*max(delta_out1,delta_out2) + (c1 -c2)*delta_out1, where c3<c2<c1.
 		# we should have
-		# 0.2*3 + 0.1*3 + 0.1*3 = 0.4*3 = 1.2
+		# 0.1*3 + 0.2*2 + 0.1*1 = 0.3+0.4+0.1 = 0.8
 		ps.specific_reachability_interaction['testpop']['testpar'] = 'nested'
-		numpy.testing.assert_allclose(ps.get_outcomes(tvec_1d,budget_1d)['testpop']['testpar'],[1.2])
-		numpy.testing.assert_allclose(ps.get_outcomes(tvec_2d,budget_2d)['testpop']['testpar'],[1.2,1.2])
+		numpy.testing.assert_allclose(ps.get_outcomes(tvec_1d,budget_1d)['testpop']['testpar'],[0.8])
+		numpy.testing.assert_allclose(ps.get_outcomes(tvec_2d,budget_2d)['testpop']['testpar'],[0.8,0.8])
 
 if __name__ == '__main__':
 	# Run all tests
