@@ -161,7 +161,7 @@ class Project(object):
         ''' Load a data spreadsheet -- enormous, ugly function so located in its own file '''
         
         ## Load spreadsheet and update metadata
-        self.data, self.programs = loadspreadsheet(filename) # WARNING -- might want to change this
+        self.data = loadspreadsheet(filename) # WARNING -- might want to change this
         self.metadata.spreadsheetdate = datetime.today() # Update date when spreadsheet was last loaded
         
         ## If parameter set of that name doesn't exist, create it; otherwise makeparams has to be called explicitly
@@ -173,8 +173,8 @@ class Project(object):
     
     def makeparams(self, name='default', overwrite=False):
         ''' Regenerate the parameters from the spreadsheet data -- also a large function '''
-        params = makeparams(self.data) # Create parameters
-        self.addparams(name=name, params=params) # Store parameters
+#        params = makeparams(self.data) # Create parameters
+#        self.addparams(name=name, params=params) # Store parameters
         return None
     
     

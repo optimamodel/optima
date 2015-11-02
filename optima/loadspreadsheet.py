@@ -55,8 +55,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
     'Injecting behavior',
     'Partnerships',
     'Transitions',
-    'Constants',
-    'Economics and costs']
+    'Constants']
     
     # Metadata -- population and program names -- array sizes are (# populations) and (# programs)
     sheets['Populations'] = ['pops']
@@ -79,13 +78,13 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
     sheets['Transitions']  = ['transasym','transsym']
     
     # Constants -- array sizes are scalars x uncertainty
-    sheets['Constants'] = [['transmfi', 'transmfr', 'transmmi', 'transmmr', 'transinj', 'mtctbreast', 'mtctnobreast'], \
-                           ['cd4transacute', 'cd4transgt500', 'cd4transgt350', 'cd4transgt200', 'cd4transgt50', 'cd4transaids'], \
-                           ['progacute', 'proggt500', 'proggt350', 'proggt200', 'proggt50'],\
-                           ['recovgt500', 'recovgt350', 'recovgt200', 'recovgt50', 'recovaids'],\
-                           ['fail'],\
-                           ['deathacute', 'deathgt500', 'deathgt350', 'deathgt200', 'deathgt50', 'deathaids', 'deathtreat', 'deathtb'],\
-                           ['effcondom', 'effcirc', 'effdx', 'effsti', 'effdis', 'effost', 'effpmtct', 'efftx', 'effprep'],\
+    sheets['Constants'] = [['transmfi', 'transmfr', 'transmmi', 'transmmr', 'transinj', 'mtctbreast', 'mtctnobreast'], 
+                           ['cd4transacute', 'cd4transgt500', 'cd4transgt350', 'cd4transgt200', 'cd4transgt50', 'cd4transaids'],
+                           ['progacute', 'proggt500', 'proggt350', 'proggt200', 'proggt50'],
+                           ['recovgt500', 'recovgt350', 'recovgt200', 'recovgt50', 'recovaids'],
+                           ['fail'],
+                           ['deathacute', 'deathgt500', 'deathgt350', 'deathgt200', 'deathgt50', 'deathaids', 'deathtreat', 'deathtb'],
+                           ['effcondom', 'effcirc', 'effdx', 'effsti', 'effdis', 'effost', 'effpmtct', 'efftx', 'effprep'],
                            ['disutilacute', 'disutilgt500', 'disutilgt350', 'disutilgt200', 'disutilgt50', 'disutilaids','disutiltx']]
     
 
@@ -152,6 +151,10 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
                     data['pops']['sexworker'] = [] # Store whether or not this population is a sex worker
                     data['pops']['client'] = [] # Store whether or not this population is a client of sex workers
                 
+                # It's the constants: create a list
+                elif sheetname=='Constants':
+                    data['constants'] = [] # Initialize to empty list
+                
                 # It's anything else: create an empty list
                 else: 
                     thispar = subparlist[parcount] # Get the name of this parameter, e.g. 'popsize'
@@ -191,10 +194,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
                         blh = sheetdata.cell_value(row, 2) # Read in whether indicator is best, low, or high
                         data[thispar][blhindices[blh]].append(thesedata) # Actually append the data
                         if thispar=='hivprev':
-                            try:
-                                validatedata(thesedata, sheetname, thispar, row)
-                            except:
-                                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                           validatedata(thesedata, sheetname, thispar, row)
 
                         
                     
@@ -202,8 +202,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
                     if sheetname in ['Other epidemiology', 'Optional indicators', 'Testing & treatment', 'Sexual behavior', 'Injecting behavior']: 
                         thesedata = sheetdata.row_values(row, start_colx=2, end_colx=lastdatacol-1) # Data starts in 3rd column, and ends lastdatacol-1
                         thesedata = list(map(lambda val: nan if val=='' else val, thesedata)) # Replace blanks with nan
-                        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-                        assumptiondata = sheetdata.cell_value(row, assumptioncol)
+                        assumptiondata = sheetdata.cell_value(row, assumptioncol-1)
                         if assumptiondata != '': # There's an assumption entered
                             thesedata = [assumptiondata] # Replace the (presumably blank) data if a non-blank assumption has been entered
                         data[thispar].append(thesedata) # Store data
@@ -212,17 +211,17 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
 
 
                     # It's a matrix, append the data                                     
-                    elif sheetname=='matrices':
+                    elif sheetname in ['Partnerships', 'Transitions']:
                         thesedata = sheetdata.row_values(row, start_colx=2, end_colx=sheetdata.ncols) # Data starts in 3rd column
                         thesedata = list(map(lambda val: 0 if val=='' else val, thesedata)) # Replace blanks with 0
                         data[thispar].append(thesedata) # Store data
                     
                     
                     # It's a constant, create a new dictionary entry
-                    elif sheetname=='constants':
+                    elif sheetname in ['Constants']:
                         thesedata = sheetdata.row_values(row, start_colx=2, end_colx=5) # Data starts in 3rd column, finishes in 5th column
                         thesedata = list(map(lambda val: nan if val=='' else val, thesedata)) # Replace blanks with nan
-                        subpar = subparlist[parcount][1].pop(0) # Pop first entry of subparameter list, which is namelist[parcount][1]
+                        subpar = subparlist[parcount].pop(0) # Pop first entry of subparameter list, which is namelist[parcount][1]
                         data[thispar][subpar] = thesedata # Store data
     
     
@@ -230,3 +229,6 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
     
     printv('...done loading data.', 2, verbose)
     return data
+
+
+#loadspreadsheet('test.xlsx') # Uncomment for debugging
