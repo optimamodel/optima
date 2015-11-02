@@ -15,8 +15,7 @@ from utils import printv, sanitize, save, uuid, today, getdate
 class Parameter(object):
     ''' The definition of a single parameter '''
     
-    def __init__(self, name='', t=[], y=[], m=1):
-        self.name = name# Parameter name
+    def __init__(self, t=[], y=[], m=1):
         self.t = t # Time data, e.g. [2002, 2008]
         self.y = y # Value data, e.g. [0.3, 0.7]
         self.m = m # Multiplicative metaparameter, e.g. 1
@@ -24,7 +23,6 @@ class Parameter(object):
     def __repr__(self):
         ''' Print out useful information when called'''
         output = '\n'
-        output += 'Parameter name: %s\n'    % self.name
         output += '   Time points: %s\n'    % self.t
         output += '        Values: %s\n'    % self.y
         output += ' Metaparameter: %s\n'    % self.m
@@ -42,7 +40,7 @@ class Parameterset(object):
         self.id = uuid() # ID
         self.created = today() # Date created
         self.modified = today() # Date modified
-        self.pars = [] # List of Parameters objects -- only one if no uncertainty
+        self.pars = [] # List of dicts holding Parameter objects -- only one if no uncertainty
     
     def __repr__(self):
         ''' Print out useful information when called'''
@@ -138,12 +136,7 @@ class Parameterset(object):
                         newpar.t[i] = origpar.t[count]
             
             return newpar
-        
-        
-        
-        
-        
-        
+
         
         ###############################################################################
         ## Loop over quantities
