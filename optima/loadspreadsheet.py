@@ -183,7 +183,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
                     if sheetname in ['Population size', 'HIV prevalence']:
                         if len(data[thispar])==0: 
                             data[thispar] = [[] for z in range(3)] # Create new variable for best, low, high
-                        thesedata = sheetdata.row_values(row, start_colx=3, end_colx=lastdatacol) # Data starts in 4th column
+                        thesedata = sheetdata.row_values(row, start_colx=3, end_colx=lastdatacol) # Data starts in 4th column -- need room for high/best/low
                         thesedata = list(map(lambda val: nan if val=='' else val, thesedata)) # Replace blanks with nan
                         assumptiondata = sheetdata.cell_value(row, assumptioncol)
                         if assumptiondata != '': thesedata = [assumptiondata] # Replace the (presumably blank) data if a non-blank assumption has been entered
@@ -200,8 +200,9 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
                     
                     # It's basic data, append the data and check for programs
                     if sheetname in ['Other epidemiology', 'Optional indicators', 'Testing & treatment', 'Sexual behavior', 'Injecting behavior']: 
-                        thesedata = sheetdata.row_values(row, start_colx=2, end_colx=lastdatacol) # Data starts in 3rd column
+                        thesedata = sheetdata.row_values(row, start_colx=2, end_colx=lastdatacol-1) # Data starts in 3rd column, and ends lastdatacol-1
                         thesedata = list(map(lambda val: nan if val=='' else val, thesedata)) # Replace blanks with nan
+                        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                         assumptiondata = sheetdata.cell_value(row, assumptioncol)
                         if assumptiondata != '': # There's an assumption entered
                             thesedata = [assumptiondata] # Replace the (presumably blank) data if a non-blank assumption has been entered
