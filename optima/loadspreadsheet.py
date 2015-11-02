@@ -59,28 +59,25 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
     sheets['HIV prevalence'] =  ['hivprev']
     
     # Time data -- array sizes are time x population
-    sheets['Other epidemiology']  = ['death', 'stiprevulc', 'stiprevdis', 'tbprev']
+    sheets['Other epidemiology']  = ['death', 'stiprev', 'tbprev']
     sheets['Optional indicators'] = ['numtest', 'numdiag', 'numinfect', 'prev', 'death', 'newtreat']
     sheets['Testing & treatment'] = ['hivtest', 'aidstest', 'numfirstline', 'numsecondline', 'txelig', 'prep', 'numpmtct', 'birth', 'breast']
     sheets['Sexual behavior']     = ['numactsreg', 'numactscas', 'numactscom', 'condomreg', 'condomcas', 'condomcom', 'circum']
     sheets['Injecting behavior']  = ['numinject', 'sharing', 'numost']
     
-    # Economics data -- like time data but with a different end
-    sheets['Economics and costs'] = ['cpi', 'ppp', 'gdp', 'revenue', 'govtexpend', 'totalhealth', 'domestichealth', 'domestichiv', 'globalfund', 'pepfar', 'otherint', 'private', 'health', 'social']
-
     # Matrix data -- array sizes are population x population
     sheets['Partnerships'] = ['partreg','partcas','partcom','partinj']
     sheets['Transitions']  = ['transasym','transsym']
     
     # Constants -- array sizes are scalars x uncertainty
-    sheets['Constants'] = [['trans',    ['mfi', 'mfr', 'mmi', 'mmr', 'inj', 'mtctbreast', 'mtctnobreast']], \
-                           ['cd4trans', ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'aids']], \
-                           ['prog',     ['acute', 'gt500', 'gt350', 'gt200', 'gt50']],\
-                           ['recov',    ['gt500', 'gt350', 'gt200', 'gt50', 'aids']],\
-                           ['fail',     ['first', 'second']],\
-                           ['death',    ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'aids', 'treat', 'tb']],\
-                           ['eff',      ['condom', 'circ', 'dx', 'sti', 'dis', 'ost', 'pmtct', 'tx', 'prep']],\
-                           ['disutil',  ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'aids','tx']]]
+    sheets['Constants'] = [['transmfi', 'transmfr', 'transmmi', 'transmmr', 'transinj', 'mtctbreast', 'mtctnobreast'], \
+                           ['cd4transacute', 'cd4transgt500', 'cd4transgt350', 'cd4transgt200', 'cd4transgt50', 'cd4transaids'], \
+                           ['progacute', 'proggt500', 'proggt350', 'proggt200', 'proggt50'],\
+                           ['recovgt500', 'recovgt350', 'recovgt200', 'recovgt50', 'recovaids'],\
+                           ['fail'],\
+                           ['deathacute', 'deathgt500', 'deathgt350', 'deathgt200', 'deathgt50', 'deathaids', 'deathtreat', 'deathtb'],\
+                           ['effcondom', 'effcirc', 'effdx', 'effsti', 'effdis', 'effost', 'effpmtct', 'efftx', 'effprep'],\
+                           ['disutilacute', 'disutilgt500', 'disutilgt350', 'disutilgt200', 'disutilgt50', 'disutilaids','disutiltx']]
     
 
     
