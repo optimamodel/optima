@@ -8,7 +8,7 @@ Version: 2015sep04 by cliffk
 
 
 #######################################################################################################
-## Header -- imports and loadprj() function
+## Header -- imports and version
 #######################################################################################################
 
 
@@ -16,17 +16,20 @@ Version: 2015sep04 by cliffk
 from numpy import array # TEMP?
 from copy import deepcopy
 from datetime import datetime
+from uuid import uuid4
 
 ## Load classes
-from metadata import Metadata
 from settings import Settings
+from parameters import Parameterset
+
 
 ## Load other Optima functions
 from loadspreadsheet import loadspreadsheet
-from parameters import Parameterset
 #from makesimpars import makesimpars
 from model import model
-from utils import save, load
+from utils import save, load, run, getdate
+
+version = 2.0
 
 
 
@@ -85,6 +88,21 @@ class Project(object):
         self.settings = Settings() # Global settings
         self.data = {} # Data from the spreadsheet
         
+        ## Define metadata
+        self.filename = None
+        self.id = uuid4()
+        self.created = datetime.today()
+        self.modified = datetime.today()
+        self.spreadsheetdate = 'Spreadsheet never loaded'
+        self.version = version
+        try:
+            self.gitbranch = run('git rev-parse --abbrev-ref HEAD').rstrip('\n')
+            self.gitversion = run('git rev-parse HEAD').rstrip('\n')
+        except:
+            self.gitbranch = 'Git branch information not retrivable'
+            self.gitversion = 'Git version information not retrivable'
+            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+        
         ## Load spreadsheet, if available
         if spreadsheet is not None:
             self.loadspreadsheet(spreadsheet)
@@ -104,13 +122,13 @@ class Project(object):
         output += '     Scenario sets: %i\n'    % len(self.scens)
         output += ' Optimization sets: %i\n'    % len(self.optims)
         output += '\n'
-        output += '    Optima version: %0.1f\n' % self.metadata.version
-        output += '      Date created: %s\n'    % self.metadata.getdate(which='created')
-        output += '     Date modified: %s\n'    % self.metadata.getdate(which='modified')
-        output += 'Spreadsheet loaded: %s\n'    % self.metadata.getdate(which='spreadsheet')
-        output += '        Git branch: %s\n'    % self.metadata.gitbranch
-        output += '       Git version: %s\n'    % self.metadata.gitversion
-        output += '                ID: %s\n'    % str(self.metadata.id)
+        output += '    Optima version: %0.1f\n' % self.version
+        output += '      Date created: %s\n'    % getdate(self.created)
+        output += '     Date modified: %s\n'    % getdate(self.modified)
+        output += 'Spreadsheet loaded: %s\n'    % getdate(self.spreadsheet)
+        output += '        Git branch: %s\n'    % self.gitbranch
+        output += '       Git version: %s\n'    % self.gitversion
+        output += '                ID: %s\n'    % self.id
         output += '============================================================'
         return output
     
