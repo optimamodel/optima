@@ -29,7 +29,7 @@ from simboxcal import SimBoxCal
 from optimization import Optimization
 
 from portfolio import Portfolio
-from programset import ProgramSet
+from programset import ProgramSet,Program
 from project import Project
 
 from plot import plot

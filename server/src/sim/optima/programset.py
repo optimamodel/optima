@@ -251,17 +251,40 @@ class ProgramSet(object):
                     print 'Pop: %s Effect: %s' % (pop,effect)
                     print 'Programs ',[x.name for x in effects[effect]]
                     print
-                    raise Exception('Overlap, coverage distribution, and effect combination go here')
                     
+                    # 'coverage' is an array matched to 'progs_reaching_pop'
+                    # However, not all of those programs may target the parameter examined here
+                    # So first, get the coverage and parameter value for each program in isolation
+                    proglist = effects[effect] # Programs reaching this effect
+                    this_coverage = [coverage[progs_reaching_pop.index(prog)] for prog in proglist] # Get the coverage that this program has for this population
+                    this_outcome = [prog.get_outcome(pop,effect,cov,t=tvec,perturb=perturb) for (prog,cov) in zip(proglist,this_coverage)]
+
+                    # Also, compute delta_out
+                    delta_out = []
+                    for prog in proglist:
+                        c = prog.coverage_outcome[pop][effect]
+                        if c.__class__.__name__ == 'co_cofun':
+                            delta_out.append(numpy.mean(c.fe_params[2:])-numpy.mean(c.fe_params[0:2]))
+                        else:
+                            raise Exception("Don't know how to compute delta_out for the given CCOC type")
+
+                    # DEBUG OUTPUT - these are the quantities needed for the calculation
+                    print proglist
+                    print this_coverage
+                    print this_outcome
+                    print delta_out
+
                     if pop in self.specific_reachability_interaction.keys() and effect in self.specific_reachability_interaction[pop].keys():
                         interaction = self.specific_reachability_interaction[pop][effect]
                     else:
                         interaction = self.default_reachability_interaction
 
+                    # In the budget, rows correspond to programs, and columns to time
+                    # Thus we have a sequence of row vectors that needs to be added
                     if interaction == 'random':
                         outcomes[pop][effect] = 0;
                     elif interaction == 'additive':
-                        pass
+                        outcomes[pop][effect] = numpy.sum(this_outcome,0);
                     elif interaction == 'nested':
                         pass
                     else:
