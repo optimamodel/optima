@@ -53,7 +53,7 @@ class Parameterset(object):
         ''' Plot all parameters, I guess against data '''
 
 
-    def makeparams(self, data, verbose=2):
+    def data2pars(self, data, verbose=2):
         """
         Translates the raw data (which were read from the spreadsheet). into
         parameters that can be used in the model. These data are then used to update 
