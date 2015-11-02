@@ -26,7 +26,7 @@ from loadspreadsheet import loadspreadsheet
 from parameters import Parameterset
 #from makesimpars import makesimpars
 from model import model
-from utils import save
+from utils import save, load
 
 
 
@@ -126,7 +126,7 @@ class Project(object):
     def loadfromfile(self, filename=None):
         ''' Replace the contents of the current project from the file -- WARNING, do we need this?'''
         filename = self.reconcilefilenames(filename)
-        project = loadprj(filename)
+        project = load(filename)
         return project
 
 
