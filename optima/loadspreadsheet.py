@@ -27,7 +27,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
             raise Exception('Boolean data supposed to be entered, but not understood (%s)' % entry)
         
     
-    def validatedata(thesedata, sheetname, thispar, row, column):
+    def validatedata(thesedata, sheetname, thispar, row):
         validdata = array(thesedata)[~isnan(thesedata)]
         if len(validdata):
             invalid = logical_or(array(validdata)>1, array(validdata)<0)
@@ -103,36 +103,32 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
     try: workbook = open_workbook(filename) # Open workbook
     except: raise Exception('Failed to load spreadsheet: file "%s" not found or other problem' % filename)
     
+    
+    ## Calculate columns for which data are entered, and store the year ranges
+    sheetdata = workbook.sheet_by_name('Population size') # Load this workbook
+    data['years'] = [] # Initialize epidemiology data years
+    for col in range(sheetdata.ncols):
+        thiscell = sheetdata.cell_value(1,col) # 1 is the 2nd row which is where the year data should be
+        if thiscell=='' and len(data['years'])>0: #  We've gotten to the end
+            lastdatacol = col # Store this column number
+            break # Quit
+        elif thiscell != '': # Nope, more years, keep going
+            data['years'].append(float(thiscell)) # Add this year
+    assumptioncol = lastdatacol + 1 # Figure out which column the assumptions are in; the "OR" space is in between
+    
+    
+    
+    
+    ##################################################################
+    ## Now, actually load the data
+    ##################################################################    
+    
     ## Loop over each group of sheets
     for sheetname in sheetnames: # Loop over each type of data, but treat constants differently
-        lastdatacol = None
         subparlist = sheets[sheetname] # List of subparameters
         sheetdata = workbook.sheet_by_name(sheetname) # Load this workbook
         parcount = -1 # Initialize the parameter count
         printv('  Loading "%s"...' % sheetname, 2, verbose)
-        
-        ## Calculate columns for which data are entered, and store the year ranges
-        if sheetname == 'Population size': # Need to gather year ranges for epidemic etc. data
-            data['years'] = [] # Initialize epidemiology data years
-            for col in range(sheetdata.ncols):
-                thiscell = sheetdata.cell_value(1,col) # 1 is the 2nd row which is where the year data should be
-                if thiscell=='' and len(data['years'])>0: #  We've gotten to the end
-                    lastdatacol = col # Store this column number
-                    break # Quit
-                elif thiscell != '': # Nope, more years, keep going
-                    data['years'].append(float(thiscell)) # Add this year
-        
-        ## Figure out which column the assumptions are in
-        if lastdatacol:  
-            assumptioncol = lastdatacol + 1 # The "OR" space is in between
-        
-        
-        
-        
-        ##################################################################
-        ## Now, actually load the data
-        ##################################################################
-        
         
         # Loop over each row in the workbook, starting from the top
         for row in range(sheetdata.nrows): 
@@ -195,7 +191,11 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
                         blh = sheetdata.cell_value(row, 2) # Read in whether indicator is best, low, or high
                         data[thispar][blhindices[blh]].append(thesedata) # Actually append the data
                         if thispar=='hivprev':
-                            validatedata(thesedata, sheetname, thispar, row)
+                            try:
+                                validatedata(thesedata, sheetname, thispar, row)
+                            except:
+                                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+
                         
                     
                     # It's basic data, append the data and check for programs
