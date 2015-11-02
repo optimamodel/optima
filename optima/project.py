@@ -292,6 +292,7 @@ class Project(object):
         
         simpars['male'] = array(self.data['pops']['male']).astype(bool) # Male populations -- TEMP
         results = model(simpars, self.settings)
+        results.derivedresults() # Generate derived results
         results.pars = self.parsets[name]
         results.projectinfo = str(self) # Store all the information about this project
         

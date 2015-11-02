@@ -549,7 +549,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
                 
     # Append final people array to sim output
     results.people = people
-    results.derivedresults() # Generate derived results
+    
 
 
     
