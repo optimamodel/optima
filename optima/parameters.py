@@ -20,9 +20,9 @@ class Parameter(object):
     def __init__(self):
         self.full = None
         self.short = None
-        self.t = None
-        self.y = None
-        self.m = None
+        self.t = None # Time data, e.g. [2002, 2008]
+        self.y = None # Value data, e.g. [0.3, 0.7]
+        self.m = None # Multiplicative metaparameter, e.g. 1
 
 
 

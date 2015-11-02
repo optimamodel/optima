@@ -47,8 +47,8 @@ def model(M, settings, initstate=None, verbose=2, safetymargin=0.8, benchmark=Fa
     # Initialize arrays
     people     = zeros((nstates, npops, npts)) # Matrix to hold everything
     allpeople  = zeros((npops, npts)) # Population sizes
-    S['sexinci']  = zeros((npops, npts)) # Incidene through sex
-    S['injinci']  = zeros((npops, npts)) # Incidene through injecting
+    S['sexinci']  = zeros((npops, npts)) # Incidence through sex
+    S['injinci']  = zeros((npops, npts)) # Incidence through injecting
     S['inci']     = zeros((npops, npts)) # Total incidence
     S['births']   = zeros((1, npts))     # Number of births
     S['mtct']     = zeros((1, npts))     # Number of mother-to-child transmissions
