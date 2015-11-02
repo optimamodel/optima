@@ -18,6 +18,7 @@ tests = [
 ]
 
 numericalassertions = True # Whether or not to actually run things and test their values
+doplot = True # Whether or not to show diagnostic plots
 
 
 
@@ -124,9 +125,17 @@ if 'loadspreadsheet' in tests:
 if 'runsim' in tests:
     t = tic()
     print('Running runsim test...')
+    
+    from pylab import plot, xlabel, ylabel, show
     from project import Project
     P = Project(spreadsheet='test.xlsx')
     S = P.runsim('default')
+    if doplot:
+        plot(S['tvec'], S['people'][0,0,:])
+        xlabel('Year')
+        ylabel('Number of susceptibles')
+        show()
+    
     done(t)
 
 
