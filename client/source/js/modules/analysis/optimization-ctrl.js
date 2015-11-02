@@ -694,9 +694,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               modalService.inform(angular.noop, 'Okay', message, 'Server Error', data.exception);
             }
             $scope.errorText = data.exception;
+            $scope.optimizationInProgress = false;
             stopTimer();
           } else {
             if (data.status == 'Done') {
+              $scope.optimizationInProgress = false;
               stopTimer();
             } else {
               if (data.status == 'Running') $scope.state.optimizationStatus = statusEnum.RUNNING;
@@ -706,7 +708,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             $scope.state.isDirty = data.dirty;
             $scope.initOptimizations(data.optimizations, $scope.state.activeOptimizationName);
           }
-          $scope.optimizationInProgress = false;
         })
         .error( function (data, status, headers, config) {
           if (data && data.exception) {
