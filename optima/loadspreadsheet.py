@@ -80,7 +80,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
     
     # Matrix data -- array sizes are population x population
     sheets['Partnerships'] = ['partreg','partcas','partcom','partinj']
-    sheets['Transitions']  = ['transasym','transsym']
+    sheets['Transitions']  = ['transitasym','transitsym']
     
     # Constants -- array sizes are scalars x uncertainty
     sheets['Constants'] = [['transmfi', 'transmfr', 'transmmi', 'transmmr', 'transinj', 'mtctbreast', 'mtctnobreast'], 

@@ -111,7 +111,7 @@ def makeparsfromdata(data, verbose=2):
     
     
     ## WARNING, not sure what to do with these
-    for parname in ['partreg', 'partcas', 'partcom', 'partinj', 'transsym', 'transasym']:
+    for parname in ['partreg', 'partcas', 'partcom', 'partinj', 'transitsym', 'transitasym']:
         printv('Converting data parameter %s...' % parname, 3, verbose)
         pars[parname] = data[parname]
     
@@ -345,7 +345,7 @@ class Parameterset(object):
         M['prep'] = dpar2mpar(P['prep'])
         
         ## Matrices can be used almost directly
-        for parname in ['partreg', 'partcas', 'partcom', 'partinj', 'transsym', 'transasym']:
+        for parname in ['partreg', 'partcas', 'partcom', 'partinj', 'transitsym', 'transitasym']:
             M[parname] = array(P[parname])
         
         ## Constants...can be used directly
