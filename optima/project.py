@@ -84,7 +84,6 @@ class Project(object):
         
         ## Define other quantities
         self.name = name
-        self.metadata = Metadata() # Project metadata
         self.settings = Settings() # Global settings
         self.data = {} # Data from the spreadsheet
         
@@ -115,7 +114,7 @@ class Project(object):
         output = '\n'
         output += '============================================================\n'
         output += '      Project name: %s\n'    % self.name
-        output += '          Filename: %s\n'    % self.metadata.filename
+        output += '          Filename: %s\n'    % self.filename
         output += '\n'
         output += '    Parameter sets: %i\n'    % len(self.parsets)
         output += '     Response sets: %i\n'    % len(self.respsets)
@@ -125,7 +124,7 @@ class Project(object):
         output += '    Optima version: %0.1f\n' % self.version
         output += '      Date created: %s\n'    % getdate(self.created)
         output += '     Date modified: %s\n'    % getdate(self.modified)
-        output += 'Spreadsheet loaded: %s\n'    % getdate(self.spreadsheet)
+        output += 'Spreadsheet loaded: %s\n'    % getdate(self.spreadsheetdate)
         output += '        Git branch: %s\n'    % self.gitbranch
         output += '       Git version: %s\n'    % self.gitversion
         output += '                ID: %s\n'    % self.id
@@ -158,11 +157,11 @@ class Project(object):
     def reconcilefilenames(self, filename=None):
         ''' If filename exists, update metadata; if not, take from metadata; if that doesn't exist, then generate '''
         if filename: # filename is available
-            self.metadata.filename = filename # Update stored filename with the new filename
+            self.filename = filename # Update stored filename with the new filename
         else: # filename isn't available
-            if self.metadata.filename is None: # metadata.filename isn't available
-                self.metadata.filename = self.metadata.name+'.prj' # Use project name as filename if none provided
-            filename = self.metadata.filename # Replace filename with stored filename            
+            if self.filename is None: # metadata.filename isn't available
+                self.filename = self.name+'.prj' # Use project name as filename if none provided
+            filename = self.filename # Replace filename with stored filename            
         return filename
     
     
@@ -172,7 +171,7 @@ class Project(object):
         
         ## Load spreadsheet and update metadata
         self.data = loadspreadsheet(filename) # Do the hard work of actually loading the spreadsheet
-        self.metadata.spreadsheetdate = datetime.today() # Update date when spreadsheet was last loaded
+        self.spreadsheetdate = datetime.today() # Update date when spreadsheet was last loaded
         
         ## If parameter set of that name doesn't exist, create it
         if name not in self.parsets:

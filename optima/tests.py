@@ -67,7 +67,7 @@ if 'makeproject' in tests:
 if 'saveload' in tests:
     print('Running save/load test...')
     
-    from project import Project, loadprj
+    from project import Project, load
     filename = 'testproject.prj'
     
     print('  Checking saving...')
@@ -75,7 +75,7 @@ if 'saveload' in tests:
     P.save(filename)
     
     print('  Checking loading...')
-    Q = loadprj(filename)
+    Q = load(filename)
     Q.save()
     Q.loadfromfile()
     

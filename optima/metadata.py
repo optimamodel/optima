@@ -4,11 +4,7 @@ METADATA
 Version: 2015sep03 by cliffk
 """
 
-from uuid import uuid4
-from datetime import datetime
-from utils import run
 
-version = 2.0
 
 
 
@@ -18,19 +14,7 @@ class Metadata(object):
     
     def __init__(self):
         ''' Create the metadata '''
-        self.filename = None
-        self.id = uuid4()
-        self.created = datetime.today()
-        self.modified = datetime.today()
-        self.spreadsheetdate = 'Spreadsheet never loaded'
-        self.version = version
-        try:
-            self.gitbranch = run('git rev-parse --abbrev-ref HEAD').rstrip('\n')
-            self.gitversion = run('git rev-parse HEAD').rstrip('\n')
-        except:
-            self.gitbranch = 'Git branch information not retrivable'
-            self.gitversion = 'Git version information not retrivable'
-            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+
         return None
     
     

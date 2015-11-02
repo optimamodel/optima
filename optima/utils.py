@@ -497,7 +497,7 @@ def save(obj, filename=None):
     from gzip import GzipFile
     
     with GzipFile(filename, 'wb') as fileobj: pickle.dump(obj, fileobj, protocol=2)
-    print('Object "%s" saved to "%s"' % (object.name, filename))
+    print('Object "%s" saved to "%s"' % (obj.name, filename))
     return None
 
 
@@ -520,6 +520,7 @@ def getdate(obj, which='modified', fmt='str'):
         dateformat = '%Y-%b-%d %H:%M:%S'
         
         try:
+            if type(obj)==str: return obj # Return directly if it's a string
             obj.timetuple() # Try something that will only work if it's a date object
             dateobj = obj # Test passed: it's a date object
         except: # It's not a date object
@@ -528,7 +529,6 @@ def getdate(obj, which='modified', fmt='str'):
             elif which=='spreadsheet': dateobj = obj.spreadsheetdate
             else: raise Exception('Getting date for "which=%s" not understood; must be "created", "modified", or "spreadsheet"' % which)
         
-        if type(dateobj)==str: return dateobj # Return directly if it's a string
         if fmt=='str': return dateobj.strftime(dateformat) # Return string representation of time
         elif fmt=='int': return mktime(dateobj.timetuple()) # So ugly!! But it works -- return integer representation of time
         else: raise Exception('"fmt=%s" not understood; must be "str" or "int"' % fmt)
