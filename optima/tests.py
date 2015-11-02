@@ -14,7 +14,7 @@ tests = [
 'makeproject',
 'saveload',
 'loadspreadsheet',
-#'runsim',
+'runsim',
 ]
 
 numericalassertions = True # Whether or not to actually run things and test their values

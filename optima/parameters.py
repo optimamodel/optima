@@ -10,6 +10,8 @@ Version: 2015oct22 by cliffk
 from numpy import array, isnan, zeros, shape, mean
 from utils import printv, sanitize, save, uuid, today, getdate
 
+eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
+
 
 def data2par(parname, dataarray, data, usetime=True):
     """ Take an array of data and turn it into default parameters -- here, just take the means """
@@ -127,6 +129,64 @@ def makeparsfromdata(data, verbose=2):
 
 
 
+def totalacts(M, npts):
+        totalacts = dict()
+        
+        popsize = M['popsize']
+    
+        for act in ['reg','cas','com','inj']:
+            npops = len(M['popsize'][:,0])
+            npop=len(popsize); # Number of populations
+            mixmatrix = M['part'+act]
+            symmetricmatrix=zeros((npop,npop));
+            for pop1 in range(npop):
+                for pop2 in range(npop):
+                    symmetricmatrix[pop1,pop2] = symmetricmatrix[pop1,pop2] + (mixmatrix[pop1,pop2] + mixmatrix[pop2,pop1]) / float(eps+((mixmatrix[pop1,pop2]>0)+(mixmatrix[pop2,pop1]>0)))
+    
+            a = zeros((npops,npops,npts))
+            numacts = M['numacts'][act]
+            for t in range(npts):
+                a[:,:,t] = reconcileacts(symmetricmatrix.copy(), popsize[:,t], numacts[:,t]) # Note use of copy()
+    
+            totalacts[act] = a
+        
+        return totalacts
+    
+    
+def reconcileacts(symmetricmatrix,popsize,popacts):
+
+    # Make sure the dimensions all agree
+    npop=len(popsize); # Number of populations
+    
+    for pop1 in range(npop):
+        symmetricmatrix[pop1,:]=symmetricmatrix[pop1,:]*popsize[pop1];
+    
+    # Divide by the sum of the column to normalize the probability, then
+    # multiply by the number of acts and population size to get total number of
+    # acts
+    for pop1 in range(npop):
+        symmetricmatrix[:,pop1]=popsize[pop1]*popacts[pop1]*symmetricmatrix[:,pop1] / float(eps+sum(symmetricmatrix[:,pop1]))
+    
+    # Reconcile different estimates of number of acts, which must balance
+    pshipacts=zeros((npop,npop));
+    for pop1 in range(npop):
+        for pop2 in range(npop):
+            balanced = (symmetricmatrix[pop1,pop2] * popsize[pop1] + symmetricmatrix[pop2,pop1] * popsize[pop2])/(popsize[pop1]+popsize[pop2]); # here are two estimates for each interaction; reconcile them here
+            pshipacts[pop2,pop1] = balanced/popsize[pop2]; # Divide by population size to get per-person estimate
+            pshipacts[pop1,pop2] = balanced/popsize[pop1]; # ...and for the other population
+
+    return pshipacts
+
+
+
+
+
+
+
+
+
+
+
 
 
 class Parameter(object):
@@ -179,6 +239,132 @@ class Parameterset(object):
     def makeparsfromdata(self, data, verbose=2):
         self.pars.append(makeparsfromdata(data, verbose=verbose))
         return None
+
+
+
+
+
+
+
+
+
+    def interp(self, ind=0, start=2000, end=2030, dt=0.2, verbose=2):
+    
+        ###############################################################################
+        ##### 2.0 STATUS: still legacy!!! Just put in hacks to get it to work; search for TODO
+        ###############################################################################
+    
+        """
+        Prepares model parameters to run the simulation.
+        
+        Version: 2015sep04
+        """
+        
+        P = self.pars[ind] # Shorten name of parameters thing
+        
+        from utils import printv
+        from numpy import zeros, array, arange, exp, shape
+        TEMPGROWTH = 0.0
+    
+    
+    
+        printv('Making model parameters...', 1, verbose)
+        
+        M = dict()
+        M['tvec'] = arange(start, end+dt, dt) # Store time vector with the model parameters
+        npts = len(M['tvec']) # Number of time points # TODO probably shouldn't be repeated from model.m
+        
+        
+        
+        def dpar2mpar(datapar, smoothness=5*int(1/dt)):
+            """
+            Take parameters and turn them into model parameters
+            """
+            from utils import smoothinterp
+    
+            npops = len(datapar.t)
+            
+            output = zeros((npops,npts))
+            for pop in range(npops):
+                output[pop,:] = smoothinterp(M['tvec'], datapar.t[pop], datapar.y[pop], smoothness=smoothness) # Use interpolation
+            
+            return output
+        
+        
+        def grow(popsizes, growth):
+            """ Define a special function for population growth, which is just an exponential growth curve """
+            npops = len(popsizes)        
+            output = zeros((npops,npts))
+            for pop in range(npops):
+                output[pop,:] = popsizes[pop]*exp(growth*(M['tvec']-M['tvec'][0])) # Special function for population growth
+                
+            return output
+        
+        
+        
+        ## Epidemilogy parameters -- most are data
+        M['popsize'] = grow(P['popsize'], TEMPGROWTH) # Population size
+        M['hivprev'] = P['hivprev'] # Initial HIV prevalence
+        M['stiprev'] = dpar2mpar(P['stiprev']) # STI prevalence
+        M['death']  = dpar2mpar(P['death'])  # Death rates
+        M['tbprev'] = dpar2mpar(P['tbprev']) # TB prevalence
+        
+        ## Testing parameters -- most are data
+        M['hivtest'] = dpar2mpar(P['hivtest']) # HIV testing rates
+        M['aidstest'] = dpar2mpar(P['aidstest'])[0] # AIDS testing rates
+        M['tx1'] = dpar2mpar(P['numtx'], smoothness=int(1/dt))[0] # Number of people on first-line treatment -- 0 since overall not by population
+    
+        ## MTCT parameters
+        M['numpmtct'] = dpar2mpar(P['numpmtct'])[0]
+        M['birth']    = dpar2mpar(P['birth'])
+        M['breast']   = dpar2mpar(P['breast'])[0]  
+        
+        ## Sexual behavior parameters -- all are parameters so can loop over all
+        M['numacts'] = dict()
+        M['condom']  = dict()
+        M['numacts']['reg'] = dpar2mpar(P['numactsreg']) # ...
+        M['numacts']['cas'] = dpar2mpar(P['numactscas']) # ...
+        M['numacts']['com'] = dpar2mpar(P['numactscom']) # ...
+        M['numacts']['inj'] = dpar2mpar(P['numinject']) # ..
+        M['condom']['reg']  = dpar2mpar(P['condomreg']) # ...
+        M['condom']['cas']  = dpar2mpar(P['condomcas']) # ...
+        M['condom']['com']  = dpar2mpar(P['condomcom']) # ...
+        
+        ## Circumcision parameters
+        M['circum']    = dpar2mpar(P['circum']) # Circumcision percentage
+        if  'numcircum' in P.keys():
+            M['numcircum'] = dpar2mpar(P['numcircum'])[0] # Number to be circumcised -- to be populated by the relevant CCOC at non-zero allocations
+        else:
+            M['numcircum'] = zeros(shape(M['tvec'])) # Number to be circumcised -- to be populated by the relevant CCOC at non-zero allocations
+        
+        ## Drug behavior parameters
+        M['numost'] = dpar2mpar(P['numost'])[0]
+        M['sharing'] = dpar2mpar(P['sharing'])
+        
+        ## Other intervention parameters (proportion of the populations, not absolute numbers)
+        M['prep'] = dpar2mpar(P['prep'])
+        
+        ## Matrices can be used almost directly
+        for parname in ['partreg', 'partcas', 'partcom', 'partinj', 'transsym', 'transasym']:
+            M[parname] = array(P[parname])
+        
+        ## Constants...can be used directly
+        M['const'] = P['const']
+        
+        ## Calculate total acts
+        M['totalacts'] = totalacts(M, npts)
+        
+        ## Program parameters not related to data
+        M['propaware'] = zeros(shape(M['hivtest'])) # Initialize proportion of PLHIV aware of their status
+        M['txtotal'] = zeros(shape(M['tx1'])) # Initialize total number of people on treatment
+        
+        
+        printv('...done making model parameters.', 2, verbose)
+        return M
+    
+    
+            
+        
 
 
     

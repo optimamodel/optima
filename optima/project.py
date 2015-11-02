@@ -287,9 +287,9 @@ class Project(object):
     def runsim(self, name='default', start=2000, end=2030, dt=None):
         ''' This function runs a single simulation '''
         if dt is None: dt=self.settings.dt # Specify the timestep if none is specified, usually 0.1
-        simpars = makesimpars(self.parset[name], start=start, end=end, dt=dt) # "self.parset[name]" is e.g. P.parset['default']
+        simpars = self.parsets[name].interp(start=start, end=end, dt=dt) # "self.parset[name]" is e.g. P.parset['default']
         
-        simpars['male'] = array(self.data['popprog']['pops']['male']).astype(bool) # Male populations -- TEMP
+        simpars['male'] = array(self.data['pops']['male']).astype(bool) # Male populations -- TEMP
         S = model(simpars, self.settings)
         return S
         

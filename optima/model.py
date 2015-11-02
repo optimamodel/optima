@@ -93,6 +93,7 @@ def model(M, settings, verbose=2, safetymargin=0.8, benchmark=False):
     undx = settings.undiag # Undiagnosed
     dx   = settings.diag   # Diagnosed
     tx1  = settings.treat  # Treatment -- 1st line
+    fail = settings.fail  # Failure
     
     # Concatenate all PLHIV, diagnosed and treated for ease
     plhivind = concatenate([undx, dx, tx1]) # All PLHIV
@@ -346,7 +347,7 @@ def model(M, settings, verbose=2, safetymargin=0.8, benchmark=False):
                         birthrate = absolute(transrate)
                         
                         popbirths    = sum(birthrate * dt * people[:,p1,t])
-                        mtcttx       = (birthrate * dt * sum(people[tx1,p1,t] +people[tx2,p1,t]))  * pmtcteff # MTCT from those on treatment (not eligible for PMTCT)
+                        mtcttx       = (birthrate * dt * sum(people[tx1,p1,t]))  * pmtcteff # MTCT from those on treatment (not eligible for PMTCT)
                         mtctuntx     = (birthrate * dt * sum(people[undx,p1,t]+people[fail,p1,t])) * effmtct  # MTCT from those undiagnosed or failed (also not eligible)
                         birthselig   = (birthrate * dt * sum(people[dx,p1,t])) # Births to diagnosed mothers eligible for PMTCT
                         if numpmtct[t]>1: # It's greater than 1: assume it's a number
@@ -628,12 +629,10 @@ def equilibrate(settings, M, Finit, verbose=2):
         # Treatment & treatment failure
         fractotal =  popinfected / sum(allinfected) # Fractional total of infected people in this population
         treatment1 = M['tx1'][0] * fractotal # Number of people on 1st-line treatment
-        treatment2 = M['tx2'][0] * fractotal # Number of people on 2nd-line treatment
-        treatfail = treatment1 * M['const']['fail']['first'] * efftreatmentrate * failratio # Number of people with treatment failure -- # TODO: check
-        totaltreat = treatment1 + treatment2 + treatfail
+        treatfail = treatment1 * M['const']['fail'] * efftreatmentrate * failratio # Number of people with treatment failure -- # TODO: check
+        totaltreat = treatment1 + treatfail
         if totaltreat > popinfected: # More people on treatment than ever infected, uh oh!
             treatment1 *= popinfected/totaltreat
-            treatment2 *= popinfected/totaltreat
             treatfail *= popinfected/totaltreat
             totaltreat = popinfected
         
@@ -645,7 +644,7 @@ def equilibrate(settings, M, Finit, verbose=2):
         diagnosed = nevertreated * M['hivtest'][p,0] / undxdxrates
         
         # Set rates within
-        progratios = hstack([h2a(H, M['const']['prog']), M['const']['death']['aids']]) # For last rate, use AIDS death as dominant rate
+        progratios = hstack([h2a(H, M['const']['prog']), M['const']['deathaids']]) # For last rate, use AIDS death as dominant rate
         progratios = (1/progratios)  / sum(1/progratios) # Normalize
         recovratios = hstack([inf, h2a(H, M['const']['recov']), efftreatmentrate]) # Not sure if this is right...inf since no progression to acute, treatmentrate since main entry here # TODO check
         recovratios = (1/recovratios)  / sum(1/recovratios) # Normalize
@@ -655,7 +654,6 @@ def equilibrate(settings, M, Finit, verbose=2):
         diagnosed *= progratios
         treatment1 *= recovratios
         treatfail *= progratios
-        treatment2 *= recovratios
         
         # Populated equilibrated array
         initpeople[settings.uninf, p] = uninfected
