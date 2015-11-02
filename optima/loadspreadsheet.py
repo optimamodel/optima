@@ -250,13 +250,6 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
                             
 
 
-                        # It's economics data, append the data
-                        if sheetname=='econdata': 
-                            thesedata = sheetdata.row_values(row, start_colx=2, end_colx=lastdatacol) # Data starts in 3rd column
-                            thesedata = list(map(lambda val: nan if val=='' else val, thesedata)) # Replace blanks with nan
-                            futuredata = sheetdata.row_values(row, start_colx=assumptioncol, end_colx=assumptioncol+3) # Start from the assumption column and read 3
-                            data[thispar]['past'].append(thesedata) # Store data
-                            data[thispar]['future'].append(futuredata) # Store data
                         
                         
                         # It's a matrix, append the data                                     
