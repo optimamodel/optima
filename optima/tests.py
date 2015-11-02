@@ -27,6 +27,16 @@ numericalassertions = True # Whether or not to actually run things and test thei
 
 from utils import tic, toc, blank, pd # analysis:ignore
 
+def done(t=0):
+    print('Done.')
+    toc(t)
+    blank()
+    
+
+
+
+
+
 blank()
 print('Running tests:')
 for i,test in enumerate(tests): print(('%i.  '+test) % (i+1))
@@ -43,28 +53,29 @@ T = tic()
 
 ## Spreadsheet creation test
 if 'makespreadsheet' in tests:
+    t = tic()
     print('Running make spreadsheet test...')
     from makespreadsheet import makespreadsheet
     makespreadsheet()
-    print('Done.')
-    blank()
+    done(t)
 
 
 
 ## Project creation test
 if 'makeproject' in tests:
+    t = tic()
     print('Running make project test...')
     from project import Project
     P = Project()
     print(P)
-    print('Done.')
-    blank()
+    done(t)
 
 
 
 
 ## Project save/load test
 if 'saveload' in tests:
+    t = tic()
     print('Running save/load test...')
     
     from project import Project, load
@@ -83,14 +94,14 @@ if 'saveload' in tests:
     Z = Project()
     Z.save()
     
-    print('Done.')
-    blank()
+    done(t)
 
 
 
 
 ## Load spreadsheet test
 if 'loadspreadsheet' in tests:
+    t = tic()
     print('Running loadspreadsheet test...')
     from project import Project
     
@@ -104,20 +115,19 @@ if 'loadspreadsheet' in tests:
     if numericalassertions:
         assert Q.data['const']['effcondom'][0]==0.05, 'Condom efficacy not 95% or not being read in properly'
     
-    print('Done.')
-    blank()
+    done(t)
 
 
 
 
 ## Run simulation test
 if 'runsim' in tests:
+    t = tic()
     print('Running runsim test...')
     from project import Project
     P = Project(spreadsheet='test.xlsx')
     S = P.runsim('default')
-    print('Done.')
-    blank()
+    done(t)
 
 
 
