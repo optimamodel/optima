@@ -1,4 +1,13 @@
 ##############################################################################
+## TOP-LEVEL IMPORTS
+##############################################################################
+from uuid import uuid4 as uuid # analysis:ignore
+from datetime import datetime; today = datetime.today # analysis:ignore
+from copy import deepcopy # analysis:ignore
+
+
+
+##############################################################################
 ## PRINTING FUNCTIONS
 ##############################################################################
 
@@ -471,3 +480,72 @@ def run(command, printinput=False, printoutput=False):
    except: output = 'Shell command failed'
    if printoutput: print(output)
    return output
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+##############################################################################
+## CLASS FUNCTIONS
+##############################################################################
+
+
+def save(obj, filename=None):
+    ''' Save an object to file '''
+    try: import cPickle as pickle # For Python 2 compatibility
+    except: import pickle
+    from gzip import GzipFile
+    
+    with GzipFile(filename, 'wb') as fileobj: pickle.dump(obj, fileobj, protocol=2)
+    print('Object "%s" saved to "%s"' % (obj.name, filename))
+    return None
+
+
+
+def load(filename):
+    ''' Load a saved file '''
+    try: import cPickle as pickle # For Python 2 compatibility
+    except: import pickle
+    from gzip import GzipFile
+    with GzipFile(filename, 'rb') as fileobj: obj = pickle.load(fileobj)
+    print('Object loaded from "%s"' % filename)
+    return obj
+
+
+
+def getdate(obj, which='modified', fmt='str'):
+        ''' Return either the date created or modified ("which") as either a str or int ("fmt") '''
+        from time import mktime
+        
+        dateformat = '%Y-%b-%d %H:%M:%S'
+        
+        try:
+            if type(obj)==str: return obj # Return directly if it's a string
+            obj.timetuple() # Try something that will only work if it's a date object
+            dateobj = obj # Test passed: it's a date object
+        except: # It's not a date object
+            if which=='created': dateobj = obj.created
+            elif which=='modified': dateobj = obj.modified
+            elif which=='spreadsheet': dateobj = obj.spreadsheetdate
+            else: raise Exception('Getting date for "which=%s" not understood; must be "created", "modified", or "spreadsheet"' % which)
+        
+        if fmt=='str': return dateobj.strftime(dateformat) # Return string representation of time
+        elif fmt=='int': return mktime(dateobj.timetuple()) # So ugly!! But it works -- return integer representation of time
+        else: raise Exception('"fmt=%s" not understood; must be "str" or "int"' % fmt)
+    
+    
+    
+def setdate(obj):
+    ''' Update the last modified date '''
+    from datetime import datetime
+    obj.modified = datetime.today()
+    return None

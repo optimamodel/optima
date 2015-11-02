@@ -8,7 +8,7 @@ from utils import printv
 from math import pow as mpow
 from copy import deepcopy
 
-def model(M, settings, initstate=None, verbose=2, safetymargin=0.8, benchmark=False):
+def model(M, settings, verbose=2, safetymargin=0.8, benchmark=False):
     """
     This function runs the model. Safetymargin is how close to get to moving all people from a compartment in a single timestep.
     
@@ -47,8 +47,8 @@ def model(M, settings, initstate=None, verbose=2, safetymargin=0.8, benchmark=Fa
     # Initialize arrays
     people     = zeros((nstates, npops, npts)) # Matrix to hold everything
     allpeople  = zeros((npops, npts)) # Population sizes
-    S['sexinci']  = zeros((npops, npts)) # Incidene through sex
-    S['injinci']  = zeros((npops, npts)) # Incidene through injecting
+    S['sexinci']  = zeros((npops, npts)) # Incidence through sex
+    S['injinci']  = zeros((npops, npts)) # Incidence through injecting
     S['inci']     = zeros((npops, npts)) # Total incidence
     S['births']   = zeros((1, npts))     # Number of births
     S['mtct']     = zeros((1, npts))     # Number of mother-to-child transmissions
@@ -64,24 +64,28 @@ def model(M, settings, initstate=None, verbose=2, safetymargin=0.8, benchmark=Fa
     S['newcircum'] = zeros((npops, npts)) # Number of people newly circumcised per timestep
     S['reqcircum'] = zeros((1, npts))     # Total number of men not circumcised ('req' for 'required')
     
-    # Set initial epidemic conditions 
-    if initstate is None: people[:,:,0] = equilibrate(settings, M, array(F['init'])) # No it hasn't, so run equilibration
-    else: people[:,:,0] = initstate # Yes it has, so use it.
+    
     
     # Biological and failure parameters -- death etc
-    H = settings.hivstates
-    prog       = h2a(H, M['const']['prog'])  # Disease progression rates
-    recov      = h2a(H, M['const']['recov']) # Recovery rates
-    death      = h2a(H, M['const']['death']) # HIV death rates
-    deathtx    = M['const']['death']['treat']   # Death rate whilst on treatment
+    Mc = M['const']
+    prog = []; recov = []; death = []; cd4trans = []
+    for key in ['progacute', 'proggt500', 'proggt350', 'proggt200', 'proggt50']: prog.append(Mc[key])
+    for key in ['recovgt500', 'recovgt350', 'recovgt200', 'recovgt50']: recov.append(Mc[key])
+    for key in ['deathacute', 'deathgt500', 'deathgt350', 'deathgt200', 'deathgt50', 'deathaids']: death.append(Mc[key])
+    for key in ['cd4transacute', 'cd4transgt500', 'cd4transgt350', 'cd4transgt200', 'cd4transgt50', 'cd4transaids']: cd4trans.append(Mc[key])
+    deathtx    = M['const']['deathtreat']   # Death rate whilst on treatment
+    M['prog'] = prog # for equilibrate()
+    M['recov'] = recov    
     
     # Calculate other things outside the loop
-    cd4trans = h2a(H, M['const']['cd4trans']) # Convert a dictionary to an array
     healthtime = 1 / hstack([prog, death[-1]]) # Calculate how long is spent in each health state, with death considered the time spent in CD4<50
     cd4transnorm = sum(cd4trans * healthtime) / sum(healthtime)
     cd4trans /= cd4transnorm # Normalize CD4 transmission
-    dxfactor = M['const']['eff']['dx'] * cd4trans # Include diagnosis efficacy
-    txfactor = M['const']['eff']['tx'] * dxfactor # And treatment efficacy
+    dxfactor = M['const']['effdx'] * cd4trans # Include diagnosis efficacy
+    txfactor = M['const']['efftx'] * dxfactor # And treatment efficacy
+    
+    # Set initial epidemic conditions 
+    people[:,:,0] = equilibrate(settings, M, array(F['init'])) # No it hasn't, so run equilibration
     
     ## Metaparameters to get nice diagnosis fits
     # WARNING
@@ -94,6 +98,7 @@ def model(M, settings, initstate=None, verbose=2, safetymargin=0.8, benchmark=Fa
     undx = settings.undiag # Undiagnosed
     dx   = settings.diag   # Diagnosed
     tx1  = settings.treat  # Treatment -- 1st line
+    fail = settings.fail  # Failure
     
     # Concatenate all PLHIV, diagnosed and treated for ease
     plhivind = concatenate([undx, dx, tx1]) # All PLHIV
@@ -107,28 +112,29 @@ def model(M, settings, initstate=None, verbose=2, safetymargin=0.8, benchmark=Fa
     male = array(M['male']).astype(bool) # Male populations
     
     # Infection propabilities
-    mmi  = M['const']['trans']['mmi']          # Male -> male insertive
-    mfi  = M['const']['trans']['mfi']          # Male -> female insertive
-    mmr  = M['const']['trans']['mmr']          # Male -> male receptive
-    mfr  = M['const']['trans']['mfr']          # Male -> female receptive
-    mtcb = M['const']['trans']['mtctbreast']   # MTCT with breastfeeding
-    mtcn = M['const']['trans']['mtctnobreast'] # MTCT no breastfeeding
-    transinj = M['const']['trans']['inj']      # Injecting
+    mmi  = M['const']['transmmi']          # Male -> male insertive
+    mfi  = M['const']['transmfi']          # Male -> female insertive
+    mmr  = M['const']['transmmr']          # Male -> male receptive
+    mfr  = M['const']['transmfr']          # Male -> female receptive
+    mtcb = M['const']['mtctbreast']   # MTCT with breastfeeding
+    mtcn = M['const']['mtctnobreast'] # MTCT no breastfeeding
+    transinj = M['const']['transinj']      # Injecting
     
     # Further potential effects on transmission
-    effsti    = M['const']['eff']['sti'] * M['stiprevulc']  # STI effect
-    effcirc   = 1 - M['const']['eff']['circ']            # Circumcision effect
-    effprep   = (1 - M['const']['eff']['prep']) * M['prep'] # PrEP effect
-    effcondom = 1 - M['const']['eff']['condom']          # Condom effect
-    effpmtct  = 1 - M['const']['eff']['pmtct']           # PMTCT effect
-#    effost    = 1 - M['const']['eff']['ost']             # OST effect
+    effsti    = M['const']['effsti'] * M['stiprev']  # STI effect
+    effcirc   = 1 - M['const']['effcirc']            # Circumcision effect
+    effprep   = (1 - M['const']['effprep']) * M['prep'] # PrEP effect
+    effcondom = 1 - M['const']['effcondom']          # Condom effect
+    effpmtct  = 1 - M['const']['effpmtct']           # PMTCT effect
+#    effost    = 1 - M['const']['effost']             # OST effect
     
     # Partnerships, acts and transitions
-    pshipsinj = M['pships']['inj']
-    pships    = M['pships']
+    pshipsinj = M['partinj']
+    pships = dict() # TEMP
+    for key in ['reg','cas','com']: pships[key] = M['part'+key]
     totalacts = M['totalacts']
-    sym       = M['transit']['sym']  # Symmetric transitions
-    asym      = M['transit']['asym'] # Asymmetric transitions
+    sym       = M['transitsym']  # Symmetric transitions
+    asym      = M['transitasym'] # Asymmetric transitions
     
     # Intervention uptake (P=proportion, N=number)
     condom   = M['condom']    # Condoms (P)
@@ -347,7 +353,7 @@ def model(M, settings, initstate=None, verbose=2, safetymargin=0.8, benchmark=Fa
                         birthrate = absolute(transrate)
                         
                         popbirths    = sum(birthrate * dt * people[:,p1,t])
-                        mtcttx       = (birthrate * dt * sum(people[tx1,p1,t] +people[tx2,p1,t]))  * pmtcteff # MTCT from those on treatment (not eligible for PMTCT)
+                        mtcttx       = (birthrate * dt * sum(people[tx1,p1,t]))  * pmtcteff # MTCT from those on treatment (not eligible for PMTCT)
                         mtctuntx     = (birthrate * dt * sum(people[undx,p1,t]+people[fail,p1,t])) * effmtct  # MTCT from those undiagnosed or failed (also not eligible)
                         birthselig   = (birthrate * dt * sum(people[dx,p1,t])) # Births to diagnosed mothers eligible for PMTCT
                         if numpmtct[t]>1: # It's greater than 1: assume it's a number
@@ -565,19 +571,6 @@ def model(M, settings, initstate=None, verbose=2, safetymargin=0.8, benchmark=Fa
 ###############################################################################
 ## Helper functions
 ###############################################################################
-    
-    
-
-def h2a(healthstates, parstruct, verbose=2):
-    """ Convert a health state structure to an array """
-    outarray = []
-    for state in healthstates:
-        try: 
-            outarray.append(parstruct[state])
-        except: 
-            printv('State %s not found' % state, 6, verbose)
-    return array(outarray)
-
 
 
 
@@ -609,7 +602,6 @@ def equilibrate(settings, M, Finit, verbose=2):
     from numpy import zeros, hstack, inf
     
     npops = len(M['hivprev']) # WARNING len(M['hivprev']) is npops
-    H = settings.hivstates
     
     # Set parameters
     prevtoforceinf = 0.1 # Assume force-of-infection is proportional to prevalence -- 0.1 means that if prevalence is 10%, annual force-of-infection is 1%
@@ -629,12 +621,10 @@ def equilibrate(settings, M, Finit, verbose=2):
         # Treatment & treatment failure
         fractotal =  popinfected / sum(allinfected) # Fractional total of infected people in this population
         treatment1 = M['tx1'][0] * fractotal # Number of people on 1st-line treatment
-        treatment2 = M['tx2'][0] * fractotal # Number of people on 2nd-line treatment
-        treatfail = treatment1 * M['const']['fail']['first'] * efftreatmentrate * failratio # Number of people with treatment failure -- # TODO: check
-        totaltreat = treatment1 + treatment2 + treatfail
+        treatfail = treatment1 * M['const']['fail'] * efftreatmentrate * failratio # Number of people with treatment failure -- # TODO: check
+        totaltreat = treatment1 + treatfail
         if totaltreat > popinfected: # More people on treatment than ever infected, uh oh!
             treatment1 *= popinfected/totaltreat
-            treatment2 *= popinfected/totaltreat
             treatfail *= popinfected/totaltreat
             totaltreat = popinfected
         
@@ -646,9 +636,9 @@ def equilibrate(settings, M, Finit, verbose=2):
         diagnosed = nevertreated * M['hivtest'][p,0] / undxdxrates
         
         # Set rates within
-        progratios = hstack([h2a(H, M['const']['prog']), M['const']['death']['aids']]) # For last rate, use AIDS death as dominant rate
+        progratios = hstack([M['prog'], M['const']['deathaids']]) # For last rate, use AIDS death as dominant rate
         progratios = (1/progratios)  / sum(1/progratios) # Normalize
-        recovratios = hstack([inf, h2a(H, M['const']['recov']), efftreatmentrate]) # Not sure if this is right...inf since no progression to acute, treatmentrate since main entry here # TODO check
+        recovratios = hstack([inf, M['recov'], efftreatmentrate]) # Not sure if this is right...inf since no progression to acute, treatmentrate since main entry here # TODO check
         recovratios = (1/recovratios)  / sum(1/recovratios) # Normalize
         
         # Final calculations
@@ -656,7 +646,6 @@ def equilibrate(settings, M, Finit, verbose=2):
         diagnosed *= progratios
         treatment1 *= recovratios
         treatfail *= progratios
-        treatment2 *= recovratios
         
         # Populated equilibrated array
         initpeople[settings.uninf, p] = uninfected

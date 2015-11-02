@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
 """
 Test script to see if Optima works.
 
 To use: comment out lines in the definition of 'tests' to not run those tests.
 
-Version: 2015sep04 by cliffk
+Version: 2015nov01 by cliffk
 """
 
 
@@ -18,7 +17,7 @@ tests = [
 'runsim',
 ]
 
-
+numericalassertions = True # Whether or not to actually run things and test their values
 
 
 
@@ -27,6 +26,16 @@ tests = [
 ##############################################################################
 
 from utils import tic, toc, blank, pd # analysis:ignore
+
+def done(t=0):
+    print('Done.')
+    toc(t)
+    blank()
+    
+
+
+
+
 
 blank()
 print('Running tests:')
@@ -44,31 +53,32 @@ T = tic()
 
 ## Spreadsheet creation test
 if 'makespreadsheet' in tests:
+    t = tic()
     print('Running make spreadsheet test...')
     from makespreadsheet import makespreadsheet
     makespreadsheet()
-    print('Done.')
-    blank()
+    done(t)
 
 
 
 ## Project creation test
 if 'makeproject' in tests:
+    t = tic()
     print('Running make project test...')
     from project import Project
     P = Project()
     print(P)
-    print('Done.')
-    blank()
+    done(t)
 
 
 
 
 ## Project save/load test
 if 'saveload' in tests:
+    t = tic()
     print('Running save/load test...')
     
-    from project import Project, loadprj
+    from project import Project, load
     filename = 'testproject.prj'
     
     print('  Checking saving...')
@@ -76,7 +86,7 @@ if 'saveload' in tests:
     P.save(filename)
     
     print('  Checking loading...')
-    Q = loadprj(filename)
+    Q = load(filename)
     Q.save()
     Q.loadfromfile()
     
@@ -84,14 +94,14 @@ if 'saveload' in tests:
     Z = Project()
     Z.save()
     
-    print('Done.')
-    blank()
+    done(t)
 
 
 
 
 ## Load spreadsheet test
 if 'loadspreadsheet' in tests:
+    t = tic()
     print('Running loadspreadsheet test...')
     from project import Project
     
@@ -102,20 +112,22 @@ if 'loadspreadsheet' in tests:
     Q = Project()
     Q.loadspreadsheet('test.xlsx')
     
-    print('Done.')
-    blank()
+    if numericalassertions:
+        assert Q.data['const']['effcondom'][0]==0.05, 'Condom efficacy not 95% or not being read in properly'
+    
+    done(t)
 
 
 
 
 ## Run simulation test
 if 'runsim' in tests:
+    t = tic()
     print('Running runsim test...')
     from project import Project
     P = Project(spreadsheet='test.xlsx')
     S = P.runsim('default')
-    print('Done.')
-    blank()
+    done(t)
 
 
 
