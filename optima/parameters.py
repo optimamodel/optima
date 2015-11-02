@@ -8,7 +8,7 @@ Version: 2015oct22 by cliffk
 
 
 from numpy import array, isnan, zeros, shape, mean
-from utils import printv, sanitize, save, uuid, today
+from utils import printv, sanitize, save, uuid, today, getdate
 
 
 class Parameter(object):
@@ -20,13 +20,17 @@ class Parameter(object):
         self.t = t # Time data, e.g. [2002, 2008]
         self.y = y # Value data, e.g. [0.3, 0.7]
         self.m = m # Multiplicative metaparameter, e.g. 1
+    
+    def __repr__(self):
+        ''' Print out useful information when called'''
+        output = '\n'
+        output += 'Parameter name: %s\n'    % self.name
+        output += '    Number of runs: %s\n'    % len(self.pars)
+        output += '      Date created: %s\n'    % getdate(self.created)
+        output += '     Date modified: %s\n'    % getdate(self.modified)
+        output += '                ID: %s\n'    % self.id
+        return output
 
-
-
-
-
-class Parameters(object):
-    ''' A complete set of parameters required for a simulation run '''
 
 
 
@@ -48,8 +52,8 @@ class Parameterset(object):
         output = '\n'
         output += 'Parameter set name: %s\n'    % self.name
         output += '    Number of runs: %s\n'    % len(self.pars)
-        output += '      Date created: %s\n'    % self.getdate(which='created')
-        output += '     Date modified: %s\n'    % self.getdate(which='modified')
+        output += '      Date created: %s\n'    % getdate(self.created)
+        output += '     Date modified: %s\n'    % getdate(self.modified)
         output += '                ID: %s\n'    % self.id
         return output
     
@@ -177,5 +181,8 @@ class Parameterset(object):
             pars['const'][parname] = data['const'][parname][0] # Taking best value only, hence the 0
 
         
+        self.pars.append(pars)
         
         printv('...done converting data to parameters.', 2, verbose)
+        
+        return None
