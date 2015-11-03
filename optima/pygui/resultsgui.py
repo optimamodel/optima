@@ -10,7 +10,7 @@ translate =  QtGui.QApplication.translate
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
-        MainWindow.setObjectName(("MainWindow"))
+        MainWindow.setObjectName(("Optima Results GUI"))
         MainWindow.resize(800, 600)
         self.centralwidget = QtGui.QWidget(MainWindow)
         self.centralwidget.setObjectName(("centralwidget"))
@@ -51,10 +51,10 @@ class Ui_MainWindow(object):
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
-        MainWindow.setWindowTitle(translate("MainWindow", "MainWindow", None))
-        self.checkBox_2.setText(translate("MainWindow", "CheckBox", None))
-        self.checkBox.setText(translate("MainWindow", "CheckBox", None))
-        self.pushButton.setText(translate("MainWindow", "Plot", None))
+        MainWindow.setWindowTitle(translate("Optima Results GUI", "Optima Results GUI", None))
+        self.checkBox_2.setText(translate("Optima Results GUI", "CheckBox", None))
+        self.checkBox.setText(translate("Optima Results GUI", "CheckBox", None))
+        self.pushButton.setText(translate("Optima Results GUI", "Plot", None))
         
         
         
