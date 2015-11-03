@@ -247,37 +247,30 @@ class ProgramSet(object):
                     assert(effect not in outcomes[pop].keys()) # Multiple programs should not be able to write to the same parameter *without* going through the overlapping calculation
                     outcomes[pop][effect] = prog.get_outcome(pop,effect,this_coverage,t=tvec,perturb=perturb) # Get the program outcome and store it in the outcomes dict
                 else:
-                    # print 'OVERLAPPING MODALITIES DETECTED'
-                    # print 'Pop: %s Effect: %s' % (pop,effect)
-                    # print 'Programs ',[x.name for x in effects[effect]]
-                    # print
-                    
-                    # 'coverage' is an array matched to 'progs_reaching_pop'
-                    # However, not all of those programs may target the parameter examined here
-                    # So first, get the coverage and parameter value for each program in isolation
-                    # Along with other useful arrays
+                    # Construct some useful arrays for the calculations
                     proglist = effects[effect] # Programs reaching this effect
                     this_coverage = [coverage[progs_reaching_pop.index(prog)] for prog in proglist] # Get the coverage that this program has for this population
                     this_outcome = [prog.get_outcome(pop,effect,cov,t=tvec,perturb=perturb) for (prog,cov) in zip(proglist,this_coverage)]
                     zero_coverage_outcome = [prog.get_outcome(pop,effect,numpy.zeros(cov.shape),t=tvec,perturb=perturb) for (prog,cov) in zip(proglist,this_coverage)]
-                    delta_out = [prog.coverage_outcome[pop][effect].delta_out(tvec) for prog in proglist] # This is the gradient 
-                    # Note that anything that uses delta_out will break if the CCOC is nonlinear
+                    delta_out = [prog.coverage_outcome[pop][effect].gradient(tvec) for prog in proglist] # This is the gradient 
 
-                    # Todo - Check that the zero_coverage_outcome numbers are consistent
+                    # Check all programs are linear
+                    if not numpy.all([prog.coverage_outcome[pop][effect].is_linear for prog in proglist]):
+                        for prog in proglist:
+                            print "%s: %s" % (prog.name,prog.coverage_outcome[pop][effect].__class__.__name__) 
+                        raise Exception("Overlapping modalities must all have linear coverage-outcome functions")
+                    
+                    # Check that all the programs have the same zero coverage outcome
+                    if not numpy.all([numpy.allclose(x-zero_coverage_outcome[0],0) for x in zero_coverage_outcome]):
+                        raise Exception("The zero coverage parameter value is not the same for every program")
 
-                    # DEBUG OUTPUT - these are the quantities needed for the calculation
-                    # print proglist
-                    # print this_coverage
-                    # print this_outcome
-                    # print delta_out
-
+                    # Check if the user has selected a specific interaction for this parameter
                     if pop in self.specific_reachability_interaction.keys() and effect in self.specific_reachability_interaction[pop].keys():
                         interaction = self.specific_reachability_interaction[pop][effect]
                     else:
                         interaction = self.default_reachability_interaction
 
-                    # In the budget, rows correspond to programs, and columns to time
-                    # Thus we have a sequence of row vectors that needs to be added
+                    # Parameter starts out with the zero coverage value
                     outcomes[pop][effect] = zero_coverage_outcome[0]
 
                     if interaction == 'random':
@@ -316,8 +309,7 @@ class ProgramSet(object):
 
                     elif interaction == 'nested':
                         # Outcome += c3*max(delta_out1,delta_out2,delta_out3) + (c2-c3)*max(delta_out1,delta_out2) + (c1 -c2)*delta_out1, where c3<c2<c1.
-                        # The items at each time need to be sorted
-                        # Iterate over time
+                        # The programs need to be sorted *at each time*
                         for i in xrange(0,len(tvec)):
                             cov = [x[i] for x in this_coverage]
                             delt = [x[i] for x in delta_out]

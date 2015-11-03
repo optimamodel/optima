@@ -1,6 +1,6 @@
 import abc
 from math import log
-from numpy import linspace, exp, isnan, multiply, arange, mean, array, maximum,vstack,ones
+from numpy import linspace, exp, isnan, multiply, arange, mean, array, maximum, vstack, ones, zeros
 from numpy import log as nplog
 from copy import deepcopy
 import pylab
@@ -15,6 +15,7 @@ class ccoc(object):
 
     def __init__(self,fe_params):
         self.fe_params = fe_params
+        self.is_linear = False # If function is linear, then ccoc.gradient() is mathematically valid
 
     @classmethod
     def fromdict(ccoc,ccocsdict):
@@ -75,9 +76,19 @@ class ccoc(object):
         # an analytic inverse
         raise Exception('Numerical inverse not implemented yet')
 
-    def delta_out(self,t=None):
+    def gradient(self,t=None,x=[0,1]):
         # Return the gradient of the linear CCOC, for each time
-        raise Exception('This method is only provided by linear CCOCs')
+        if not self.is_linear:
+            print "WARNING: You have requested the gradient of a nonlinear CCOC"
+        if t is None:
+            y = self.evaluate(x,t)
+            m = (y[1]-y[0])/(x[1]-x[0])
+        else:
+            m = zeros(t.shape)
+            for i in xrange(0,len(m)):
+                y = self.evaluate(x,t[i])
+                m[i] = (y[1]-y[0])/(x[1]-x[0])
+        return m
 
 ######## SPECIFIC CCOC IMPLEMENTATIONS
 
@@ -141,6 +152,11 @@ class cc_noscaleup(ccoc):
         return [0,2e6]
 
 class co_cofun(ccoc):
+
+    def __init__(self,fe_params):
+        ccoc.__init__(self,fe_params)
+        self.is_linear = True
+
     def function(self,x,p,t=None):
         return coeqn(x,p)
 
@@ -177,6 +193,11 @@ class co_cofun(ccoc):
         return grad
 
 class co_linear(ccoc):
+
+    def __init__(self,fe_params):
+        ccoc.__init__(self,fe_params)
+        self.is_linear = True
+
     def function(self,x,p,t=None):
         return linear(x,p)
 
@@ -187,6 +208,11 @@ class co_linear(ccoc):
         return [1,0] # [gradient intercept]
 
 class identity(ccoc):
+
+    def __init__(self,fe_params):
+        ccoc.__init__(self,fe_params)
+        self.is_linear = True
+
     def function(self,x,p,t=None):
         return x
 
