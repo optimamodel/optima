@@ -120,7 +120,7 @@ class Main(QtGui.QMainWindow, Ui_MainWindow):
             this = ischecked[i]
             thisdata = getattr(getattr(self.results,this[0]),this[1])[0]
             axes[-1].plot(self.results.tvec, transpose(array(thisdata)))
-            axes[-1].set_ylabel(this[0]+this[1])
+            axes[-1].set_ylabel(this[0]+' '+this[1])
             axes[-1].set_xlabel('Year')
         
         self.f = f
@@ -129,28 +129,11 @@ class Main(QtGui.QMainWindow, Ui_MainWindow):
 
 
 
-    
-
-
-
-
-#def gui(results):
-#    ''' Actual function to actually be used '''
-
-if __name__ == '__main__':
-    from project import Project
-    P = Project(spreadsheet='test.xlsx')
-    results = P.runsim()
-    results.epikeys = ['prev','numplhiv']
-    results.episubkeys = ['tot','pops']
-    app = QtGui.QApplication(sys.argv)
-    main = Main(results)
-    main.show()
-
 def gui(results):
+    ''' Actual function to actually be used '''
     global app
     global main
-    results.epikeys = ['prev','numplhiv']
+    results.epikeys = ['prev', 'numplhiv', 'numinci', 'numdeath', 'numdiag']
     results.episubkeys = ['tot','pops']
     app = QtGui.QApplication(sys.argv)
     main = Main(results)
