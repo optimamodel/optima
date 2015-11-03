@@ -194,7 +194,7 @@ def minimizemoney(D, objectives=None, constraints=None, maxiters=1000, timelimit
             
             # Try infinite money
             print('========== Checking if infinite allocation meets targets ==========')
-            targetsmet, optparams = objectivecalc(array(optimparams)*1e9, options)
+            targetsmet, optparams = objectivecalc(array(optimparams)*1e9+1e9, options)
             if not(targetsmet):
                 print("DONE: Infinite allocation can't meet targets!")
                 break
