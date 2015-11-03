@@ -100,19 +100,12 @@ class Main(QtGui.QMainWindow, Ui_MainWindow):
         
         # Do plotting
         f = figure()
-#        f.subplots_adjust(left=0.04) # Less space on left
-#        f.subplots_adjust(right=0.99) # Less space on right
-#        f.subplots_adjust(top=0.98) # Less space on bottom
-#        f.subplots_adjust(bottom=0.04) # Less space on bottom
-#        f.subplots_adjust(wspace=0.5) # More space between
-#        f.subplots_adjust(hspace=0.5) # More space between
         axes = []
         for i in range(nplots):
             axes.append(f.add_subplot(int(nrows), int(ncols), i+1))
             this = ischecked[i]
             thisdata = getattr(getattr(results,this[0]),this[1])[0]
             axes[-1].plot(transpose(array(thisdata)))
-            print(axes[-1])
             axes[-1].set_title(this[0]+this[1])
         
         self.f = f
@@ -137,29 +130,19 @@ class Main(QtGui.QMainWindow, Ui_MainWindow):
         self.toolbar.close()
 
 
+
+
+#def gui(results):
+#    ''' Actual function to actually be used '''
+
 if __name__ == '__main__':
     from project import Project
     P = Project(spreadsheet='test.xlsx')
     results = P.runsim()
+#    gui(results)
     
     results.epikeys = ['prev','numplhiv']
     results.episubkeys = ['tot','pops']
-    
-    
-    
-    
-#    for key in epikeys:
-#        totdata  = getattr(results,key).tot[0] # WARNING, shouldn't need the zero
-#        popsdata = getattr(results,key).pops[0]
-#        
-#        figs.append(figure())
-        
-        
-        
-        
-    
-    
-    
     
     fig1 = figure()
     ax1f1 = fig1.add_subplot(111)
@@ -181,4 +164,7 @@ if __name__ == '__main__':
     main.addfig('Two plots', fig2)
     main.addfig('Pcolormesh', fig3)
     main.show()
+
+
+
 
