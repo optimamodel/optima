@@ -26,9 +26,7 @@ translate =  QtGui.QApplication.translate
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow, results):
-        
-        self.epikeys = ['prev','numplhiv', 'inci']
-        self.episubkeys = ['tot','pops']
+        self.results = results
         
         MainWindow.setObjectName(("MainWindow"))
         MainWindow.resize(800, 600)
@@ -50,12 +48,13 @@ class Ui_MainWindow(object):
         
         self.checkboxes = {}
         count = -1;
-        for key in self.epikeys:
-            for subkey in self.episubkeys:
+        for key in results.epikeys:
+            for subkey in results.episubkeys:
                 count += 1
-                name = key+subkey
+                name = key+'-'+subkey
                 self.checkboxes[name] = QtGui.QCheckBox(self.centralwidget)
                 self.checkboxes[name].setObjectName(name)
+                self.checkboxes[name].setChecked(True)
                 self.gridLayout.addWidget(self.checkboxes[name], count, 1, 1, 1)
         
         self.pushButton = QtGui.QPushButton(self.centralwidget)
@@ -69,9 +68,9 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(translate("Optima Results GUI", "Optima Results GUI", None))
         self.pushButton.setText(translate("Optima Results GUI", "Plot", None))
-        for key in self.epikeys:
-            for subkey in self.episubkeys:
-                self.checkboxes[key+subkey].setText(translate("Optima Results GUI", key+' '+subkey, None))
+        for key in self.results.epikeys:
+            for subkey in self.results.episubkeys:
+                self.checkboxes[key+'-'+subkey].setText(translate("Optima Results GUI", key+'-'+subkey, None))
         
         
         
@@ -85,9 +84,26 @@ class Main(QtGui.QMainWindow, Ui_MainWindow):
         self.pushButton.clicked.connect(self.changefig)
         fig = figure()
         self.addmpl(fig)
+        self.results = results
 
     def changefig(self):
+        ischecked = []
+        for key in self.results.epikeys:
+            for subkey in self.results.episubkeys:
+                if self.checkboxes[key+'-'+subkey].isChecked():
+                    ischecked.append([key, subkey])
+        
+        print('HI')
+        print ischecked
+        
+        h = figure()
+        axes = []
+        ax1f1 = fig1.add_subplot(111)
+        ax1f1.plot(np.random.rand(5))        
+        
+        
         text = self.fig_dict.keys()[int(floor(len(self.fig_dict.keys())*rand()))]
+        
         self.rmmpl()
         self.addmpl(self.fig_dict[text])
 
@@ -112,6 +128,9 @@ if __name__ == '__main__':
     from project import Project
     P = Project(spreadsheet='test.xlsx')
     results = P.runsim()
+    
+    results.epikeys = ['prev','numplhiv', 'inci']
+    results.episubkeys = ['tot','pops']
     
     
     
