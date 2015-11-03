@@ -17,7 +17,7 @@ Version: 2015nov02 by cliffk
 from PyQt4 import QtCore, QtGui
 from matplotlib.figure import Figure as figure
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as canvas, NavigationToolbar2QT as toolbar
-from pylab import floor, rand
+from pylab import ceil, sqrt
 import sys
 import numpy as np
 translate =  QtGui.QApplication.translate
@@ -93,19 +93,33 @@ class Main(QtGui.QMainWindow, Ui_MainWindow):
                 if self.checkboxes[key+'-'+subkey].isChecked():
                     ischecked.append([key, subkey])
         
-        print('HI')
-        print ischecked
+        # Calculate rows and columns of subplots
+        nplots = len(ischecked)
+        nrows = ceil(sqrt(nplots))
+        ncols = nrows-1 if nrows*(nrows-1)>=nplots else nrows
         
-        h = figure()
+        # Do plotting
+        f = figure()
+        f.subplots_adjust(left=0.04) # Less space on left
+        f.subplots_adjust(right=0.99) # Less space on right
+        f.subplots_adjust(top=0.98) # Less space on bottom
+        f.subplots_adjust(bottom=0.04) # Less space on bottom
+        f.subplots_adjust(wspace=0.5) # More space between
+        f.subplots_adjust(hspace=0.5) # More space between
         axes = []
-        ax1f1 = fig1.add_subplot(111)
-        ax1f1.plot(np.random.rand(5))        
+        for i in range(nplots):
+            axes.append(f.add_subplot(i+1, int(nrows), int(ncols)))
+            this = ischecked[i]
+            thisdata = getattr(getattr(results,this[0]),this[1])[0]
+            axes[-1].plot(thisdata)
+            print(axes[-1])
+            axes[-1].set_title(this[0]+this[1])
         
         
-        text = self.fig_dict.keys()[int(floor(len(self.fig_dict.keys())*rand()))]
-        
+        self.f = f
         self.rmmpl()
-        self.addmpl(self.fig_dict[text])
+        self.addmpl(self.f)
+
 
     def addfig(self, name, fig):
         self.fig_dict[name] = fig
@@ -129,7 +143,7 @@ if __name__ == '__main__':
     P = Project(spreadsheet='test.xlsx')
     results = P.runsim()
     
-    results.epikeys = ['prev','numplhiv', 'inci']
+    results.epikeys = ['prev','numplhiv']
     results.episubkeys = ['tot','pops']
     
     
