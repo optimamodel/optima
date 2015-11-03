@@ -124,12 +124,69 @@ class TestCCOCs(unittest.TestCase):
 		numpy.testing.assert_allclose(ps.get_outcomes(tvec_1d,budget_1d)['testpop']['testpar'],[0.8])
 		numpy.testing.assert_allclose(ps.get_outcomes(tvec_2d,budget_2d)['testpop']['testpar'],[0.8,0.8])
 
+	def test_overlap_2(self):
+		# Based on 'coverage-outcome calcs.xlsx'
+
+		ps = optima.ProgramSet('Test')
+		cc_inputs = [dict()]
+		cc_inputs[0]['pop'] = 'testpop'
+		cc_inputs[0]['form'] = 'co_cofun'
+		cc_inputs[0]['fe_params'] = [0, 0, 1, 1] # Linear coverage
+		co_inputs = [dict()]
+		co_inputs[0]['pop'] = 'testpop'
+		co_inputs[0]['param'] = 'testpar'
+		co_inputs[0]['form'] = 'co_cofun'
+		co_inputs[0]['fe_params'] = [0.1,0.1, 0.6, 0.6] 
+		ps.programs.append(optima.Program('P1',deepcopy(cc_inputs),deepcopy(co_inputs)))
+		co_inputs[0]['fe_params'] = [0.1,0.1, 0.7, 0.7] 
+		ps.programs.append(optima.Program('P2',deepcopy(cc_inputs),deepcopy(co_inputs)))
+		co_inputs[0]['fe_params'] = [0.1,0.1, 0.2, 0.2] 
+		ps.programs.append(optima.Program('P3',deepcopy(cc_inputs),deepcopy(co_inputs)))
+
+		# Check that the program works
+		p = ps.programs[1] # Pick the second program, for 2x coverage
+
+		# Make the triple program budget
+		tvec_1d = numpy.array([1])
+		budget_1d = numpy.array(([0,0.2,0.3])) # Here is the spending
+		budget_1d.shape = (3,1)
+
+		# Test against the spreadsheet with various program 1 coverage levels
+		budget_1d[0] = 0.1 # 10% coverage for program 1
+
+		ps.specific_reachability_interaction['testpop']['testpar'] = 'additive'
+		numpy.testing.assert_allclose(ps.get_outcomes(tvec_1d,budget_1d)['testpop']['testpar'],[0.3])
+		ps.specific_reachability_interaction['testpop']['testpar'] = 'nested'
+		numpy.testing.assert_allclose(ps.get_outcomes(tvec_1d,budget_1d)['testpop']['testpar'],[0.23])
+
+		budget_1d[0] = 0.2 # 10% coverage for program 1
+
+		ps.specific_reachability_interaction['testpop']['testpar'] = 'additive'
+		numpy.testing.assert_allclose(ps.get_outcomes(tvec_1d,budget_1d)['testpop']['testpar'],[0.35])
+		ps.specific_reachability_interaction['testpop']['testpar'] = 'nested'
+		numpy.testing.assert_allclose(ps.get_outcomes(tvec_1d,budget_1d)['testpop']['testpar'],[0.23])
+
+		budget_1d[0] = 0.5 # 10% coverage for program 1
+
+		ps.specific_reachability_interaction['testpop']['testpar'] = 'additive'
+		numpy.testing.assert_allclose(ps.get_outcomes(tvec_1d,budget_1d)['testpop']['testpar'],[0.5])
+		ps.specific_reachability_interaction['testpop']['testpar'] = 'nested'
+		numpy.testing.assert_allclose(ps.get_outcomes(tvec_1d,budget_1d)['testpop']['testpar'],[0.37])
+
+		budget_1d[0] = 1 # 10% coverage for program 1
+
+		ps.specific_reachability_interaction['testpop']['testpar'] = 'additive'
+		numpy.testing.assert_allclose(ps.get_outcomes(tvec_1d,budget_1d)['testpop']['testpar'],[0.75])
+		ps.specific_reachability_interaction['testpop']['testpar'] = 'nested'
+		numpy.testing.assert_allclose(ps.get_outcomes(tvec_1d,budget_1d)['testpop']['testpar'],[0.62])
+
+
 if __name__ == '__main__':
 	# Run all tests
     # unittest.main()
 
     # Only run particular tests
     suite = unittest.TestSuite()
-    suite.addTest(TestCCOCs('test_overlap_1'))
+    suite.addTest(TestCCOCs('test_overlap_2'))
     unittest.TextTestRunner().run(suite)
 
