@@ -93,7 +93,7 @@ class Main(QtGui.QMainWindow, Ui_MainWindow):
         self.toolbar = toolbar(self.canvas, self.mplwindow, coordinates=True)
         self.mplvl.addWidget(self.toolbar)
 
-    def rmmpl(self,):
+    def rmmpl(self):
         self.mplvl.removeWidget(self.canvas)
         self.canvas.close()
         self.mplvl.removeWidget(self.toolbar)
@@ -107,6 +107,8 @@ if __name__ == '__main__':
     
     epikeys = ['prev','numplhiv']
     episubkeys = ['tot','pops']
+    
+    
     
     
     fig1 = figure()
