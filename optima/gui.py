@@ -25,19 +25,20 @@ translate =  QtGui.QApplication.translate
 
 
 class Ui_MainWindow(object):
-    def setupUi(self, MainWindow):
+    def setupUi(self, MainWindow, results):
+        
+        self.epikeys = ['prev','numplhiv']
+        self.episubkeys = ['tot','pops']
+#        nplots = 
+        
+        
+        
         MainWindow.setObjectName(("MainWindow"))
         MainWindow.resize(800, 600)
         self.centralwidget = QtGui.QWidget(MainWindow)
         self.centralwidget.setObjectName(("centralwidget"))
         self.gridLayout = QtGui.QGridLayout(self.centralwidget)
         self.gridLayout.setObjectName(("gridLayout"))
-        self.checkBox_2 = QtGui.QCheckBox(self.centralwidget)
-        self.checkBox_2.setObjectName(("checkBox_2"))
-        self.gridLayout.addWidget(self.checkBox_2, 1, 2, 1, 1)
-        self.pushButton = QtGui.QPushButton(self.centralwidget)
-        self.pushButton.setObjectName(("pushButton"))
-        self.gridLayout.addWidget(self.pushButton, 2, 2, 1, 1)
         self.mplwindow = QtGui.QWidget(self.centralwidget)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
@@ -48,31 +49,41 @@ class Ui_MainWindow(object):
         self.mplvl = QtGui.QVBoxLayout(self.mplwindow)
         self.mplvl.setMargin(0)
         self.mplvl.setObjectName(("mplvl"))
-        self.gridLayout.addWidget(self.mplwindow, 1, 3, 1, 1)
-        self.checkBox = QtGui.QCheckBox(self.centralwidget)
-        self.checkBox.setObjectName(("checkBox"))
-        self.gridLayout.addWidget(self.checkBox, 0, 2, 1, 1)
+        self.gridLayout.addWidget(self.mplwindow, 5, 2, 1, 1)
+        
+        self.checkboxes = {}
+        count = -1;
+        for key in self.epikeys:
+            for subkey in self.episubkeys:
+                count += 1
+                name = key+subkey
+                self.checkboxes[name] = QtGui.QCheckBox(self.centralwidget)
+                self.checkboxes[name].setObjectName(name)
+                self.gridLayout.addWidget(self.checkboxes[name], count, 1, 1, 1)
+        
+        self.pushButton = QtGui.QPushButton(self.centralwidget)
+        self.pushButton.setObjectName(("pushButton"))
+        self.gridLayout.addWidget(self.pushButton, count+1, 1, 1, 1)        
+        
         MainWindow.setCentralWidget(self.centralwidget)
-
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(translate("Optima Results GUI", "Optima Results GUI", None))
-        self.checkBox_2.setText(translate("Optima Results GUI", "CheckBox", None))
-        self.checkBox.setText(translate("Optima Results GUI", "CheckBox", None))
         self.pushButton.setText(translate("Optima Results GUI", "Plot", None))
-        
-        
+        for key in self.epikeys:
+            for subkey in self.episubkeys:
+                self.checkboxes[key+subkey].setText(translate("Optima Results GUI", key+' '+subkey, None))
         
         
         
 
         
 class Main(QtGui.QMainWindow, Ui_MainWindow):
-    def __init__(self, ):
+    def __init__(self, results):
         super(Main, self).__init__()
-        self.setupUi(self)
+        self.setupUi(self, results)
         self.fig_dict = {}
         self.pushButton.clicked.connect(self.changefig)
         fig = figure()
@@ -105,8 +116,18 @@ if __name__ == '__main__':
     P = Project(spreadsheet='test.xlsx')
     results = P.runsim()
     
-    epikeys = ['prev','numplhiv']
-    episubkeys = ['tot','pops']
+    
+    
+    
+#    for key in epikeys:
+#        totdata  = getattr(results,key).tot[0] # WARNING, shouldn't need the zero
+#        popsdata = getattr(results,key).pops[0]
+#        
+#        figs.append(figure())
+        
+        
+        
+        
     
     
     
@@ -126,7 +147,7 @@ if __name__ == '__main__':
     ax1f3.pcolormesh(np.random.rand(20,20))
 
     app = QtGui.QApplication(sys.argv)
-    main = Main()
+    main = Main(results)
     main.addfig('One plot', fig1)
     main.addfig('Two plots', fig2)
     main.addfig('Pcolormesh', fig3)
