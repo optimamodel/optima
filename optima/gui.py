@@ -92,10 +92,6 @@ class Main(QtGui.QMainWindow, Ui_MainWindow):
         self.canvas.draw()
         self.toolbar = toolbar(self.canvas, self.mplwindow, coordinates=True)
         self.mplvl.addWidget(self.toolbar)
-# This is the alternate toolbar placement. Susbstitute the three lines above
-# for these lines to see the different look.
-#        self.toolbar = toolbar(self.canvas, self, coordinates=True)
-#        self.addToolBar(self.toolbar)
 
     def rmmpl(self,):
         self.mplvl.removeWidget(self.canvas)
@@ -106,7 +102,11 @@ class Main(QtGui.QMainWindow, Ui_MainWindow):
 
 if __name__ == '__main__':
     from project import Project
-    P = Project(spreadsheet='test.xlsx')    
+    P = Project(spreadsheet='test.xlsx')
+    results = P.runsim()
+    
+    epikeys = ['prev','numplhiv']
+    episubkeys = ['tot','pops']
     
     
     fig1 = figure()
