@@ -1,13 +1,13 @@
 '''
-RESULTSGUI
+GUI
 
 A "quick" Python GUI for plotting the results.
 
 Usage:
 
 results = P.runsim()
-from pygui import resultsgui
-resultsgui(results)
+from gui import gui # put this in P?
+gui(results)
 
 Version: 2015nov02 by cliffk
 '''
@@ -115,6 +115,10 @@ class Main(QtGui.QMainWindow, Ui_MainWindow):
 
 
 if __name__ == '__main__':
+    from project import Project
+    P = Project(spreadsheet='test.xlsx')    
+    
+    
     fig1 = figure()
     ax1f1 = fig1.add_subplot(111)
     ax1f1.plot(np.random.rand(5))
@@ -135,5 +139,5 @@ if __name__ == '__main__':
     main.addfig('Two plots', fig2)
     main.addfig('Pcolormesh', fig3)
     main.show()
-    sys.exit(app.exec_())
+#    sys.exit(app.exec_())
 
