@@ -151,7 +151,7 @@ def gui(results):
     global main
     results.epikeys = ['prev','numplhiv']
     results.episubkeys = ['tot','pops']
-    QtGui.QApplication(sys.argv)
+    app = QtGui.QApplication(sys.argv)
     main = Main(results)
     main.show()
 

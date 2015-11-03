@@ -15,7 +15,6 @@ tests = [
 'saveload',
 'loadspreadsheet',
 'runsim',
-'gui'
 ]
 
 numericalassertions = True # Whether or not to actually run things and test their values
@@ -127,28 +126,18 @@ if 'runsim' in tests:
     t = tic()
     print('Running runsim test...')
     
+    from pylab import plot, xlabel, ylabel, show
     from project import Project
     P = Project(spreadsheet='test.xlsx')
     results = P.runsim('default')
+    if doplot:
+        from gui import gui
+        gui(results)
     
     done(t)
 
 
 
-
-
-## Run the GUI
-if 'gui' in tests:
-    t = tic()
-    print('Running GUI test...')
-    
-    from project import Project
-    P = Project(spreadsheet='test.xlsx')
-    results = P.runsim('default')
-    from gui import gui
-    gui(results)
-    
-    done(t)
 
 
 
