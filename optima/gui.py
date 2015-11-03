@@ -20,7 +20,8 @@ from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as canvas, Navi
 from pylab import ceil, sqrt, transpose, array
 import sys
 translate =  QtGui.QApplication.translate
-
+global app
+global main
 
 
 class Ui_MainWindow(object):
@@ -117,7 +118,7 @@ class Main(QtGui.QMainWindow, Ui_MainWindow):
         for i in range(nplots):
             axes.append(f.add_subplot(int(nrows), int(ncols), i+1))
             this = ischecked[i]
-            thisdata = getattr(getattr(results,this[0]),this[1])[0]
+            thisdata = getattr(getattr(self.results,this[0]),this[1])[0]
             axes[-1].plot(transpose(array(thisdata)))
             axes[-1].set_title(this[0]+this[1])
         
@@ -139,15 +140,19 @@ if __name__ == '__main__':
     from project import Project
     P = Project(spreadsheet='test.xlsx')
     results = P.runsim()
-#    gui(results)
-    
     results.epikeys = ['prev','numplhiv']
     results.episubkeys = ['tot','pops']
-
     app = QtGui.QApplication(sys.argv)
     main = Main(results)
     main.show()
 
-
+def gui(results):
+    global app
+    global main
+    results.epikeys = ['prev','numplhiv']
+    results.episubkeys = ['tot','pops']
+    QtGui.QApplication(sys.argv)
+    main = Main(results)
+    main.show()
 
 
