@@ -224,8 +224,8 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
     fundingchanges = dict()
     keys1 = ['year','total']
     keys2 = ['dec','inc']
-    abslims = {'dec':0, 'inc':1e9}
-    rellims = {'dec':-1e9, 'inc':1e9}
+    abslims = {'dec':0, 'inc':1e18}
+    rellims = {'dec':-1e18, 'inc':1e18}
     smallchanges = {'dec':1.0, 'inc':1.0} # WARNING BIZARRE
     for key1 in keys1:
         fundingchanges[key1] = dict()
