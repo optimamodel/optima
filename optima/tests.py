@@ -129,9 +129,9 @@ if 'runsim' in tests:
     from pylab import plot, xlabel, ylabel, show
     from project import Project
     P = Project(spreadsheet='test.xlsx')
-    S = P.runsim('default')
+    results = P.runsim('default')
     if doplot:
-        plot(S['tvec'], S['people'][0,0,:])
+        plot(results.tvec, results.people[0,0,:])
         xlabel('Year')
         ylabel('Number of susceptibles')
         show()
