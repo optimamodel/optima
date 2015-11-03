@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'window.ui'
 #
-# Created: Mon Nov  2 21:39:08 2015
+# Created: Mon Nov  2 22:07:21 2015
 #      by: PyQt4 UI code generator 4.11.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -34,15 +34,9 @@ class Ui_MainWindow(object):
         self.checkBox_2 = QtGui.QCheckBox(self.centralwidget)
         self.checkBox_2.setObjectName(_fromUtf8("checkBox_2"))
         self.gridLayout.addWidget(self.checkBox_2, 1, 2, 1, 1)
-        self.mplfigs = QtGui.QListWidget(self.centralwidget)
-        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.mplfigs.sizePolicy().hasHeightForWidth())
-        self.mplfigs.setSizePolicy(sizePolicy)
-        self.mplfigs.setMaximumSize(QtCore.QSize(200, 16777215))
-        self.mplfigs.setObjectName(_fromUtf8("mplfigs"))
-        self.gridLayout.addWidget(self.mplfigs, 2, 2, 1, 1)
+        self.pushButton = QtGui.QPushButton(self.centralwidget)
+        self.pushButton.setObjectName(_fromUtf8("pushButton"))
+        self.gridLayout.addWidget(self.pushButton, 2, 2, 1, 1)
         self.mplwindow = QtGui.QWidget(self.centralwidget)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
@@ -57,9 +51,6 @@ class Ui_MainWindow(object):
         self.checkBox = QtGui.QCheckBox(self.centralwidget)
         self.checkBox.setObjectName(_fromUtf8("checkBox"))
         self.gridLayout.addWidget(self.checkBox, 0, 2, 1, 1)
-        self.pushButton = QtGui.QPushButton(self.centralwidget)
-        self.pushButton.setObjectName(_fromUtf8("pushButton"))
-        self.gridLayout.addWidget(self.pushButton, 3, 2, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
 
         self.retranslateUi(MainWindow)
@@ -68,6 +59,6 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow", None))
         self.checkBox_2.setText(_translate("MainWindow", "CheckBox", None))
-        self.checkBox.setText(_translate("MainWindow", "CheckBox", None))
         self.pushButton.setText(_translate("MainWindow", "Plot", None))
+        self.checkBox.setText(_translate("MainWindow", "CheckBox", None))
 

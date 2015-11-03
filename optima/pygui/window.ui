@@ -23,18 +23,9 @@
      </widget>
     </item>
     <item row="2" column="2">
-     <widget class="QListWidget" name="mplfigs">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <property name="maximumSize">
-       <size>
-        <width>200</width>
-        <height>16777215</height>
-       </size>
+     <widget class="QPushButton" name="pushButton">
+      <property name="text">
+       <string>Plot</string>
       </property>
      </widget>
     </item>
@@ -53,13 +44,6 @@
      <widget class="QCheckBox" name="checkBox">
       <property name="text">
        <string>CheckBox</string>
-      </property>
-     </widget>
-    </item>
-    <item row="3" column="2">
-     <widget class="QPushButton" name="pushButton">
-      <property name="text">
-       <string>Plot</string>
       </property>
      </widget>
     </item>

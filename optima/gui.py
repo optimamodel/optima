@@ -139,5 +139,4 @@ if __name__ == '__main__':
     main.addfig('Two plots', fig2)
     main.addfig('Pcolormesh', fig3)
     main.show()
-#    sys.exit(app.exec_())
 
