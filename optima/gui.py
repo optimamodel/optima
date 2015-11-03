@@ -49,7 +49,7 @@ class Ui_MainWindow(object):
         self.mplvl = QtGui.QVBoxLayout(self.mplwindow)
         self.mplvl.setMargin(0)
         self.mplvl.setObjectName(("mplvl"))
-        self.gridLayout.addWidget(self.mplwindow, 5, 2, 1, 1)
+        self.gridLayout.addWidget(self.mplwindow, 0, 0, -1, 1)
         
         self.checkboxes = {}
         count = -1;
