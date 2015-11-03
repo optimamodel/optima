@@ -26,7 +26,7 @@ translate =  QtGui.QApplication.translate
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
-        MainWindow.setObjectName(("Optima Results GUI"))
+        MainWindow.setObjectName(("MainWindow"))
         MainWindow.resize(800, 600)
         self.centralwidget = QtGui.QWidget(MainWindow)
         self.centralwidget.setObjectName(("centralwidget"))
@@ -35,15 +35,9 @@ class Ui_MainWindow(object):
         self.checkBox_2 = QtGui.QCheckBox(self.centralwidget)
         self.checkBox_2.setObjectName(("checkBox_2"))
         self.gridLayout.addWidget(self.checkBox_2, 1, 2, 1, 1)
-        self.mplfigs = QtGui.QListWidget(self.centralwidget)
-        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.mplfigs.sizePolicy().hasHeightForWidth())
-        self.mplfigs.setSizePolicy(sizePolicy)
-        self.mplfigs.setMaximumSize(QtCore.QSize(200, 16777215))
-        self.mplfigs.setObjectName(("mplfigs"))
-        self.gridLayout.addWidget(self.mplfigs, 2, 2, 1, 1)
+        self.pushButton = QtGui.QPushButton(self.centralwidget)
+        self.pushButton.setObjectName(("pushButton"))
+        self.gridLayout.addWidget(self.pushButton, 2, 2, 1, 1)
         self.mplwindow = QtGui.QWidget(self.centralwidget)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
@@ -58,9 +52,6 @@ class Ui_MainWindow(object):
         self.checkBox = QtGui.QCheckBox(self.centralwidget)
         self.checkBox.setObjectName(("checkBox"))
         self.gridLayout.addWidget(self.checkBox, 0, 2, 1, 1)
-        self.pushButton = QtGui.QPushButton(self.centralwidget)
-        self.pushButton.setObjectName(("pushButton"))
-        self.gridLayout.addWidget(self.pushButton, 3, 2, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
 
         self.retranslateUi(MainWindow)
@@ -94,7 +85,6 @@ class Main(QtGui.QMainWindow, Ui_MainWindow):
 
     def addfig(self, name, fig):
         self.fig_dict[name] = fig
-        self.mplfigs.addItem(name)
 
     def addmpl(self, fig):
         self.canvas = canvas(fig)
