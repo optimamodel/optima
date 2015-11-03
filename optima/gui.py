@@ -119,8 +119,9 @@ class Main(QtGui.QMainWindow, Ui_MainWindow):
             axes.append(f.add_subplot(int(nrows), int(ncols), i+1))
             this = ischecked[i]
             thisdata = getattr(getattr(self.results,this[0]),this[1])[0]
-            axes[-1].plot(transpose(array(thisdata)))
-            axes[-1].set_title(this[0]+this[1])
+            axes[-1].plot(self.results.tvec, transpose(array(thisdata)))
+            axes[-1].set_ylabel(this[0]+this[1])
+            axes[-1].set_xlabel('Year')
         
         self.f = f
         self.rmmpl()
