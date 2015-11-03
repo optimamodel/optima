@@ -1,3 +1,19 @@
+'''
+RESULTSGUI
+
+A "quick" Python GUI for plotting the results.
+
+Usage:
+
+results = P.runsim()
+from pygui import resultsgui
+resultsgui(results)
+
+Version: 2015nov02 by cliffk
+'''
+
+
+## Imports
 from PyQt4 import QtCore, QtGui
 from matplotlib.figure import Figure as figure
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as canvas, NavigationToolbar2QT as toolbar
