@@ -192,7 +192,9 @@ def reconcileacts(symmetricmatrix,popsize,popacts):
 class Parameter(object):
     ''' The definition of a single parameter '''
     
-    def __init__(self, t=[], y=[], m=1):
+    def __init__(self, t=None, y=None, m=1):
+        if t is None: t = []
+        if y is None: y = []
         self.t = t # Time data, e.g. [2002, 2008]
         self.y = y # Value data, e.g. [0.3, 0.7]
         self.m = m # Multiplicative metaparameter, e.g. 1
