@@ -27,11 +27,8 @@ translate =  QtGui.QApplication.translate
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow, results):
         
-        self.epikeys = ['prev','numplhiv']
+        self.epikeys = ['prev','numplhiv', 'inci']
         self.episubkeys = ['tot','pops']
-#        nplots = 
-        
-        
         
         MainWindow.setObjectName(("MainWindow"))
         MainWindow.resize(800, 600)
