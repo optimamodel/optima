@@ -247,10 +247,10 @@ class ProgramSet(object):
                     assert(effect not in outcomes[pop].keys()) # Multiple programs should not be able to write to the same parameter *without* going through the overlapping calculation
                     outcomes[pop][effect] = prog.get_outcome(pop,effect,this_coverage,t=tvec,perturb=perturb) # Get the program outcome and store it in the outcomes dict
                 else:
-                    print 'OVERLAPPING MODALITIES DETECTED'
-                    print 'Pop: %s Effect: %s' % (pop,effect)
-                    print 'Programs ',[x.name for x in effects[effect]]
-                    print
+                    # print 'OVERLAPPING MODALITIES DETECTED'
+                    # print 'Pop: %s Effect: %s' % (pop,effect)
+                    # print 'Programs ',[x.name for x in effects[effect]]
+                    # print
                     
                     # 'coverage' is an array matched to 'progs_reaching_pop'
                     # However, not all of those programs may target the parameter examined here
@@ -281,25 +281,53 @@ class ProgramSet(object):
                     outcomes[pop][effect] = zero_coverage_outcome[0]
 
                     if interaction == 'random':
-                        # Outcome = c1(1-c2)* delta_out1 + c2(1-c2)*delta_out2 + c1c2* max(delta_out1,delta_out2)
-                        outcomes[pop][effect] = 0;
+                        # Outcome += c1(1-c2)* delta_out1 + c2(1-c2)*delta_out2 + c1c2* max(delta_out1,delta_out2)
+
+                        # Programs in isolation
+                        for i in xrange(0,len(proglist)): 
+                            prod = numpy.ones(this_coverage[0].shape)
+                            for j in xrange(0,len(proglist)):
+                                if i != j:
+                                    prod *= (1-this_coverage[j])
+                            outcomes[pop][effect] += delta_out[i]*this_coverage[i]*prod 
+
+                        # Now iterate over overlap levels
+                        def overlap_calc(indexes,target_depth):
+                            print indexes
+                            if len(indexes) < target_depth:
+                                accum = 0
+                                for j in xrange(indexes[-1]+1,len(delta_out)):
+                                    accum += overlap_calc(indexes+[j],target_depth)
+                                return this_coverage[indexes[-1]]*accum
+                            else:
+                                return this_coverage[indexes[-1]]*numpy.max([delta_out[x] for x in indexes]) # Innermost part
+
+                        # Intermediate levels
+                        for i in xrange(2,len(proglist)): # Iterate over numbers of overlapping programs
+                            for j in xrange(0,len(proglist)-1): # Iterate over the index of the first program in the sum
+                                print 'OVERLAP LEVEL %d '
+                                outcomes[pop][effect] += overlap_calc([j],len(proglist)-1)
+
+                        # Final overlap
+                        # print this_coverage
+                        # print numpy.prod(this_coverage,0)
+                        # print numpy.max(this_outcome,0)
+                        # print numpy.prod(this_coverage,0)*numpy.max(this_outcome,0)
+                        outcomes[pop][effect] += numpy.prod(this_coverage,0)*numpy.max(delta_out,0)
+
                     elif interaction == 'additive':
-                        # Outcome = c1*delta_out1 + c2*delta_out2
+                        # Outcome += c1*delta_out1 + c2*delta_out2
 
                         for i in xrange(0,len(this_coverage)):
                             outcomes[pop][effect] += this_coverage[i]*delta_out[i]
 
-                        outcomes[pop][effect] = numpy.minimum(outcomes[pop][effect],numpy.ones(outcomes[pop][effect].shape))
-
                     elif interaction == 'nested':
-                        # Outcome =c3*max(delta_out1,delta_out2,delta_out3) + (c2-c3)*max(delta_out1,delta_out2) + (c1 -c2)*delta_out1, where c3<c2<c1.
-                        print "ZERO: ",zero_coverage_outcome
+                        # Outcome += c3*max(delta_out1,delta_out2,delta_out3) + (c2-c3)*max(delta_out1,delta_out2) + (c1 -c2)*delta_out1, where c3<c2<c1.
                         # The items at each time need to be sorted
                         # Iterate over time
                         for i in xrange(0,len(tvec)):
                             cov = [x[i] for x in this_coverage]
                             cov_tuple = sorted(zip(cov,delta_out)) # A tuple storing the coverage and delta out, ordered by coverage
-                            print cov_tuple
                             for j in xrange(0,len(cov_tuple)): # For each entry in here
                                 if j == 0:
                                     c1 = cov_tuple[j][0]
@@ -308,6 +336,8 @@ class ProgramSet(object):
                                 outcomes[pop][effect][i] += c1*numpy.max([x[1] for x in cov_tuple[j:]])
                     else:
                         raise Exception('Unknown reachability type "%s"',interaction)
+                    
+                    outcomes[pop][effect] = numpy.minimum(outcomes[pop][effect],numpy.ones(outcomes[pop][effect].shape))
 
         
         return outcomes

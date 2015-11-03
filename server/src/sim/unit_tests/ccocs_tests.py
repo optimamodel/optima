@@ -181,6 +181,15 @@ class TestCCOCs(unittest.TestCase):
 		numpy.testing.assert_allclose(ps.get_outcomes(tvec_1d,budget_1d)['testpop']['testpar'],[0.62])
 
 
+		# Go through this calculation by hand
+		ps.specific_reachability_interaction['testpop']['testpar'] = 'random'
+		numpy.testing.assert_allclose(ps.get_outcomes(tvec_1d,budget_1d)['testpop']['testpar'],[0.722])
+
+		# A0 = 0.1
+		# Efficacy prog1 = 0.5
+		# Efficacy prog2 = 0.6
+		# Efficacy prog3 = 0.1
+
 if __name__ == '__main__':
 	# Run all tests
     # unittest.main()
