@@ -4,35 +4,20 @@ from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as canvas, Navi
 from pylab import floor, rand
 import sys
 import numpy as np
+translate =  QtGui.QApplication.translate
 
 
-
-
-
-try:
-    _fromUtf8 = QtCore.QString.fromUtf8
-except AttributeError:
-    def _fromUtf8(s):
-        return s
-
-try:
-    _encoding = QtGui.QApplication.UnicodeUTF8
-    def _translate(context, text, disambig):
-        return QtGui.QApplication.translate(context, text, disambig, _encoding)
-except AttributeError:
-    def _translate(context, text, disambig):
-        return QtGui.QApplication.translate(context, text, disambig)
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
-        MainWindow.setObjectName(_fromUtf8("MainWindow"))
+        MainWindow.setObjectName(("MainWindow"))
         MainWindow.resize(800, 600)
         self.centralwidget = QtGui.QWidget(MainWindow)
-        self.centralwidget.setObjectName(_fromUtf8("centralwidget"))
+        self.centralwidget.setObjectName(("centralwidget"))
         self.gridLayout = QtGui.QGridLayout(self.centralwidget)
-        self.gridLayout.setObjectName(_fromUtf8("gridLayout"))
+        self.gridLayout.setObjectName(("gridLayout"))
         self.checkBox_2 = QtGui.QCheckBox(self.centralwidget)
-        self.checkBox_2.setObjectName(_fromUtf8("checkBox_2"))
+        self.checkBox_2.setObjectName(("checkBox_2"))
         self.gridLayout.addWidget(self.checkBox_2, 1, 2, 1, 1)
         self.mplfigs = QtGui.QListWidget(self.centralwidget)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
@@ -41,7 +26,7 @@ class Ui_MainWindow(object):
         sizePolicy.setHeightForWidth(self.mplfigs.sizePolicy().hasHeightForWidth())
         self.mplfigs.setSizePolicy(sizePolicy)
         self.mplfigs.setMaximumSize(QtCore.QSize(200, 16777215))
-        self.mplfigs.setObjectName(_fromUtf8("mplfigs"))
+        self.mplfigs.setObjectName(("mplfigs"))
         self.gridLayout.addWidget(self.mplfigs, 2, 2, 1, 1)
         self.mplwindow = QtGui.QWidget(self.centralwidget)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Preferred)
@@ -49,16 +34,16 @@ class Ui_MainWindow(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.mplwindow.sizePolicy().hasHeightForWidth())
         self.mplwindow.setSizePolicy(sizePolicy)
-        self.mplwindow.setObjectName(_fromUtf8("mplwindow"))
+        self.mplwindow.setObjectName(("mplwindow"))
         self.mplvl = QtGui.QVBoxLayout(self.mplwindow)
         self.mplvl.setMargin(0)
-        self.mplvl.setObjectName(_fromUtf8("mplvl"))
+        self.mplvl.setObjectName(("mplvl"))
         self.gridLayout.addWidget(self.mplwindow, 1, 3, 1, 1)
         self.checkBox = QtGui.QCheckBox(self.centralwidget)
-        self.checkBox.setObjectName(_fromUtf8("checkBox"))
+        self.checkBox.setObjectName(("checkBox"))
         self.gridLayout.addWidget(self.checkBox, 0, 2, 1, 1)
         self.pushButton = QtGui.QPushButton(self.centralwidget)
-        self.pushButton.setObjectName(_fromUtf8("pushButton"))
+        self.pushButton.setObjectName(("pushButton"))
         self.gridLayout.addWidget(self.pushButton, 3, 2, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
 
@@ -66,10 +51,10 @@ class Ui_MainWindow(object):
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
-        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow", None))
-        self.checkBox_2.setText(_translate("MainWindow", "CheckBox", None))
-        self.checkBox.setText(_translate("MainWindow", "CheckBox", None))
-        self.pushButton.setText(_translate("MainWindow", "Plot", None))
+        MainWindow.setWindowTitle(translate("MainWindow", "MainWindow", None))
+        self.checkBox_2.setText(translate("MainWindow", "CheckBox", None))
+        self.checkBox.setText(translate("MainWindow", "CheckBox", None))
+        self.pushButton.setText(translate("MainWindow", "Plot", None))
         
         
         
