@@ -1,11 +1,8 @@
-from PyQt4.uic import loadUiType
+from PyQt4.uic import loadUiType as loaduitype
+from matplotlib.figure import Figure as figure
+from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as canvas, NavigationToolbar2QT as toolbar
 
-from matplotlib.figure import Figure
-from matplotlib.backends.backend_qt4agg import (
-    FigureCanvasQTAgg as FigureCanvas,
-    NavigationToolbar2QT as NavigationToolbar)
-
-Ui_MainWindow, QMainWindow = loadUiType('window.ui')
+Ui_MainWindow, QMainWindow = loaduitype('window.ui')
 
         
 class Main(QMainWindow, Ui_MainWindow):
@@ -13,10 +10,8 @@ class Main(QMainWindow, Ui_MainWindow):
         super(Main, self).__init__()
         self.setupUi(self)
         self.fig_dict = {}
-
         self.mplfigs.itemClicked.connect(self.changefig)
-
-        fig = Figure()
+        fig = figure()
         self.addmpl(fig)
 
     def changefig(self, item):
@@ -29,16 +24,14 @@ class Main(QMainWindow, Ui_MainWindow):
         self.mplfigs.addItem(name)
 
     def addmpl(self, fig):
-        self.canvas = FigureCanvas(fig)
+        self.canvas = canvas(fig)
         self.mplvl.addWidget(self.canvas)
         self.canvas.draw()
-        self.toolbar = NavigationToolbar(self.canvas, 
-                self.mplwindow, coordinates=True)
+        self.toolbar = toolbar(self.canvas, self.mplwindow, coordinates=True)
         self.mplvl.addWidget(self.toolbar)
 # This is the alternate toolbar placement. Susbstitute the three lines above
 # for these lines to see the different look.
-#        self.toolbar = NavigationToolbar(self.canvas,
-#                self, coordinates=True)
+#        self.toolbar = toolbar(self.canvas, self, coordinates=True)
 #        self.addToolBar(self.toolbar)
 
     def rmmpl(self,):
@@ -47,22 +40,23 @@ class Main(QMainWindow, Ui_MainWindow):
         self.mplvl.removeWidget(self.toolbar)
         self.toolbar.close()
 
+
 if __name__ == '__main__':
     import sys
     from PyQt4 import QtGui
     import numpy as np
 
-    fig1 = Figure()
+    fig1 = figure()
     ax1f1 = fig1.add_subplot(111)
     ax1f1.plot(np.random.rand(5))
 
-    fig2 = Figure()
+    fig2 = figure()
     ax1f2 = fig2.add_subplot(121)
     ax1f2.plot(np.random.rand(5))
     ax2f2 = fig2.add_subplot(122)
     ax2f2.plot(np.random.rand(10))
 
-    fig3 = Figure()
+    fig3 = figure()
     ax1f3 = fig3.add_subplot(111)
     ax1f3.pcolormesh(np.random.rand(20,20))
 
