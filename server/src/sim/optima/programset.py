@@ -291,9 +291,8 @@ class ProgramSet(object):
                                     prod *= (1-this_coverage[j])
                             outcomes[pop][effect] += delta_out[i]*this_coverage[i]*prod 
 
-                        # Now iterate over overlap levels
+                        # Recursion over overlap levels
                         def overlap_calc(indexes,target_depth):
-                            print indexes
                             if len(indexes) < target_depth:
                                 accum = 0
                                 for j in xrange(indexes[-1]+1,len(delta_out)):
@@ -302,22 +301,16 @@ class ProgramSet(object):
                             else:
                                 return this_coverage[indexes[-1]]*numpy.max([delta_out[x] for x in indexes]) # Innermost part
 
-                        # Intermediate levels
+                        # Iterate over overlap levels
                         for i in xrange(2,len(proglist)): # Iterate over numbers of overlapping programs
                             for j in xrange(0,len(proglist)-1): # Iterate over the index of the first program in the sum
-                                print 'OVERLAP LEVEL %d '
                                 outcomes[pop][effect] += overlap_calc([j],len(proglist)-1)
 
-                        # Final overlap
-                        # print this_coverage
-                        # print numpy.prod(this_coverage,0)
-                        # print numpy.max(this_outcome,0)
-                        # print numpy.prod(this_coverage,0)*numpy.max(this_outcome,0)
+                        # All programs together
                         outcomes[pop][effect] += numpy.prod(this_coverage,0)*numpy.max(delta_out,0)
 
                     elif interaction == 'additive':
                         # Outcome += c1*delta_out1 + c2*delta_out2
-
                         for i in xrange(0,len(this_coverage)):
                             outcomes[pop][effect] += this_coverage[i]*delta_out[i]
 
@@ -327,7 +320,9 @@ class ProgramSet(object):
                         # Iterate over time
                         for i in xrange(0,len(tvec)):
                             cov = [x[i] for x in this_coverage]
-                            cov_tuple = sorted(zip(cov,delta_out)) # A tuple storing the coverage and delta out, ordered by coverage
+                            delt = [x[i] for x in delta_out]
+
+                            cov_tuple = sorted(zip(cov,delt)) # A tuple storing the coverage and delta out, ordered by coverage
                             for j in xrange(0,len(cov_tuple)): # For each entry in here
                                 if j == 0:
                                     c1 = cov_tuple[j][0]

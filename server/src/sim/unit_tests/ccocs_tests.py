@@ -108,8 +108,8 @@ class TestCCOCs(unittest.TestCase):
 
 		# Test additive
 		ps.specific_reachability_interaction['testpop']['testpar'] = 'additive'
-		numpy.testing.assert_allclose(ps.get_outcomes(tvec_1d,budget_1d)['testpop']['testpar'],[1.3])
-		numpy.testing.assert_allclose(ps.get_outcomes(tvec_2d,budget_2d)['testpop']['testpar'],[1.3,1.3])
+		numpy.testing.assert_allclose(ps.get_outcomes(tvec_1d,budget_1d)['testpop']['testpar'],[1])
+		numpy.testing.assert_allclose(ps.get_outcomes(tvec_2d,budget_2d)['testpop']['testpar'],[1,1])
 
 		# Test nested
 		# COVERAGE: 0.4,0.3,0.1
@@ -147,55 +147,28 @@ class TestCCOCs(unittest.TestCase):
 		p = ps.programs[1] # Pick the second program, for 2x coverage
 
 		# Make the triple program budget
-		tvec_1d = numpy.array([1])
-		budget_1d = numpy.array(([0,0.2,0.3])) # Here is the spending
-		budget_1d.shape = (3,1)
-
+		tvec = numpy.array([1,2,3,4])
+		budget = numpy.array(([0.1,0.2,0.5,1],[0.2,0.2,0.2,0.2],[0.3,0.3,0.3,0.3]))
 		# Test against the spreadsheet with various program 1 coverage levels
-		budget_1d[0] = 0.1 # 10% coverage for program 1
 
 		ps.specific_reachability_interaction['testpop']['testpar'] = 'additive'
-		numpy.testing.assert_allclose(ps.get_outcomes(tvec_1d,budget_1d)['testpop']['testpar'],[0.3])
+		numpy.testing.assert_allclose(ps.get_outcomes(tvec,budget)['testpop']['testpar'],[0.3,0.35,0.5,0.75])
+
+
 		ps.specific_reachability_interaction['testpop']['testpar'] = 'nested'
-		numpy.testing.assert_allclose(ps.get_outcomes(tvec_1d,budget_1d)['testpop']['testpar'],[0.23])
-
-		budget_1d[0] = 0.2 # 10% coverage for program 1
-
-		ps.specific_reachability_interaction['testpop']['testpar'] = 'additive'
-		numpy.testing.assert_allclose(ps.get_outcomes(tvec_1d,budget_1d)['testpop']['testpar'],[0.35])
-		ps.specific_reachability_interaction['testpop']['testpar'] = 'nested'
-		numpy.testing.assert_allclose(ps.get_outcomes(tvec_1d,budget_1d)['testpop']['testpar'],[0.23])
-
-		budget_1d[0] = 0.5 # 10% coverage for program 1
-
-		ps.specific_reachability_interaction['testpop']['testpar'] = 'additive'
-		numpy.testing.assert_allclose(ps.get_outcomes(tvec_1d,budget_1d)['testpop']['testpar'],[0.5])
-		ps.specific_reachability_interaction['testpop']['testpar'] = 'nested'
-		numpy.testing.assert_allclose(ps.get_outcomes(tvec_1d,budget_1d)['testpop']['testpar'],[0.37])
-
-		budget_1d[0] = 1 # 10% coverage for program 1
-
-		ps.specific_reachability_interaction['testpop']['testpar'] = 'additive'
-		numpy.testing.assert_allclose(ps.get_outcomes(tvec_1d,budget_1d)['testpop']['testpar'],[0.75])
-		ps.specific_reachability_interaction['testpop']['testpar'] = 'nested'
-		numpy.testing.assert_allclose(ps.get_outcomes(tvec_1d,budget_1d)['testpop']['testpar'],[0.62])
+		numpy.testing.assert_allclose(ps.get_outcomes(tvec,budget)['testpop']['testpar'],[0.23,0.23,0.37,0.62])
 
 
-		# Go through this calculation by hand
 		ps.specific_reachability_interaction['testpop']['testpar'] = 'random'
-		numpy.testing.assert_allclose(ps.get_outcomes(tvec_1d,budget_1d)['testpop']['testpar'],[0.722])
+		numpy.testing.assert_allclose(ps.get_outcomes(tvec,budget)['testpop']['testpar'],[0.2918,0.3396,0.483,0.7220])
 
-		# A0 = 0.1
-		# Efficacy prog1 = 0.5
-		# Efficacy prog2 = 0.6
-		# Efficacy prog3 = 0.1
 
 if __name__ == '__main__':
 	# Run all tests
-    # unittest.main()
+    unittest.main()
 
     # Only run particular tests
-    suite = unittest.TestSuite()
-    suite.addTest(TestCCOCs('test_overlap_2'))
+    #suite = unittest.TestSuite()
+    #suite.addTest(TestCCOCs('test_overlap_2'))
     unittest.TextTestRunner().run(suite)
 
