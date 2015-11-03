@@ -100,21 +100,20 @@ class Main(QtGui.QMainWindow, Ui_MainWindow):
         
         # Do plotting
         f = figure()
-        f.subplots_adjust(left=0.04) # Less space on left
-        f.subplots_adjust(right=0.99) # Less space on right
-        f.subplots_adjust(top=0.98) # Less space on bottom
-        f.subplots_adjust(bottom=0.04) # Less space on bottom
-        f.subplots_adjust(wspace=0.5) # More space between
-        f.subplots_adjust(hspace=0.5) # More space between
+#        f.subplots_adjust(left=0.04) # Less space on left
+#        f.subplots_adjust(right=0.99) # Less space on right
+#        f.subplots_adjust(top=0.98) # Less space on bottom
+#        f.subplots_adjust(bottom=0.04) # Less space on bottom
+#        f.subplots_adjust(wspace=0.5) # More space between
+#        f.subplots_adjust(hspace=0.5) # More space between
         axes = []
         for i in range(nplots):
-            axes.append(f.add_subplot(i+1, int(nrows), int(ncols)))
+            axes.append(f.add_subplot(int(nrows), int(ncols), i+1))
             this = ischecked[i]
             thisdata = getattr(getattr(results,this[0]),this[1])[0]
-            axes[-1].plot(thisdata)
+            axes[-1].plot(transpose(array(thisdata)))
             print(axes[-1])
             axes[-1].set_title(this[0]+this[1])
-        
         
         self.f = f
         self.rmmpl()
