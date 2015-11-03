@@ -3,6 +3,10 @@ Test script to see if Optima works.
 
 To use: comment out lines in the definition of 'tests' to not run those tests.
 
+NOTE: for best results, run in interactive mode, e.g.
+
+python -i tests.py
+
 Version: 2015nov01 by cliffk
 """
 
