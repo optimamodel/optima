@@ -17,9 +17,8 @@ Version: 2015nov02 by cliffk
 from PyQt4 import QtCore, QtGui
 from matplotlib.figure import Figure as figure
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as canvas, NavigationToolbar2QT as toolbar
-from pylab import ceil, sqrt
+from pylab import ceil, sqrt, transpose, array
 import sys
-import numpy as np
 translate =  QtGui.QApplication.translate
 
 
@@ -28,22 +27,22 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow, results):
         self.results = results
         
-        MainWindow.setObjectName(("MainWindow"))
+        MainWindow.setObjectName("MainWindow")
         MainWindow.resize(800, 600)
         self.centralwidget = QtGui.QWidget(MainWindow)
-        self.centralwidget.setObjectName(("centralwidget"))
+        self.centralwidget.setObjectName("centralwidget")
         self.gridLayout = QtGui.QGridLayout(self.centralwidget)
-        self.gridLayout.setObjectName(("gridLayout"))
+        self.gridLayout.setObjectName("gridLayout")
         self.mplwindow = QtGui.QWidget(self.centralwidget)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.mplwindow.sizePolicy().hasHeightForWidth())
         self.mplwindow.setSizePolicy(sizePolicy)
-        self.mplwindow.setObjectName(("mplwindow"))
+        self.mplwindow.setObjectName("mplwindow")
         self.mplvl = QtGui.QVBoxLayout(self.mplwindow)
         self.mplvl.setMargin(0)
-        self.mplvl.setObjectName(("mplvl"))
+        self.mplvl.setObjectName("mplvl")
         self.gridLayout.addWidget(self.mplwindow, 0, 0, -1, 1)
         
         self.checkboxes = {}
@@ -58,7 +57,7 @@ class Ui_MainWindow(object):
                 self.gridLayout.addWidget(self.checkboxes[name], count, 1, 1, 1)
         
         self.pushButton = QtGui.QPushButton(self.centralwidget)
-        self.pushButton.setObjectName(("pushButton"))
+        self.pushButton.setObjectName("Plot")
         self.gridLayout.addWidget(self.pushButton, count+1, 1, 1, 1)        
         
         MainWindow.setCentralWidget(self.centralwidget)
@@ -86,7 +85,21 @@ class Main(QtGui.QMainWindow, Ui_MainWindow):
         self.addmpl(fig)
         self.results = results
 
+    def addmpl(self, fig):
+        self.canvas = canvas(fig)
+        self.mplvl.addWidget(self.canvas)
+        self.canvas.draw()
+        self.toolbar = toolbar(self.canvas, self.mplwindow, coordinates=True)
+        self.mplvl.addWidget(self.toolbar)
+
+    def rmmpl(self):
+        self.mplvl.removeWidget(self.canvas)
+        self.canvas.close()
+        self.mplvl.removeWidget(self.toolbar)
+        self.toolbar.close()
+
     def changefig(self):
+        ''' Main function that actually does plotting '''
         ischecked = []
         for key in self.results.epikeys:
             for subkey in self.results.episubkeys:
@@ -113,21 +126,8 @@ class Main(QtGui.QMainWindow, Ui_MainWindow):
         self.addmpl(self.f)
 
 
-    def addfig(self, name, fig):
-        self.fig_dict[name] = fig
 
-    def addmpl(self, fig):
-        self.canvas = canvas(fig)
-        self.mplvl.addWidget(self.canvas)
-        self.canvas.draw()
-        self.toolbar = toolbar(self.canvas, self.mplwindow, coordinates=True)
-        self.mplvl.addWidget(self.toolbar)
-
-    def rmmpl(self):
-        self.mplvl.removeWidget(self.canvas)
-        self.canvas.close()
-        self.mplvl.removeWidget(self.toolbar)
-        self.toolbar.close()
+    
 
 
 
@@ -143,26 +143,9 @@ if __name__ == '__main__':
     
     results.epikeys = ['prev','numplhiv']
     results.episubkeys = ['tot','pops']
-    
-    fig1 = figure()
-    ax1f1 = fig1.add_subplot(111)
-    ax1f1.plot(np.random.rand(5))
-
-    fig2 = figure()
-    ax1f2 = fig2.add_subplot(121)
-    ax1f2.plot(np.random.rand(5))
-    ax2f2 = fig2.add_subplot(122)
-    ax2f2.plot(np.random.rand(10))
-
-    fig3 = figure()
-    ax1f3 = fig3.add_subplot(111)
-    ax1f3.pcolormesh(np.random.rand(20,20))
 
     app = QtGui.QApplication(sys.argv)
     main = Main(results)
-    main.addfig('One plot', fig1)
-    main.addfig('Two plots', fig2)
-    main.addfig('Pcolormesh', fig3)
     main.show()
 
 
