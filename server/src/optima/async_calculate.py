@@ -15,12 +15,15 @@ sentinel = {
 # acceptable exit statuses
 good_exit_status = set(['completed', 'cancelled'])
 
-def start_or_report_calculation(user_id, project_id, func, db_session): #only called from the application
+def start_or_report_calculation(user_id, project_id, func, db_session, is_admin): #only called from the application
     work_type = func.__name__
     can_start = False
     can_join = False
 
-    project = db_session.query(ProjectDb).filter_by(user_id=user_id, id=project_id).first()
+    if is_admin:
+        project = db_session.query(ProjectDb).filter_by(id=project_id).first()
+    else:
+        project = db_session.query(ProjectDb).filter_by(user_id=user_id, id=project_id).first()
     if project is not None:
         work_log = WorkLogDb(project_id=project.id, work_type = work_type)
         db_session.add(work_log)
