@@ -48,6 +48,8 @@ define(['./module', 'underscore'], function (module, _) {
       $scope.state.costOutcomeCharts = [];
       $scope.state.coverageOutcomeCharts = [];
       $scope.state.outcomeTitles = [];
+      $scope.state.outcomeParamsInPercentage = [];
+      $scope.state.outcomeParamsMax = [];
     };
 
     /* Methods
@@ -65,6 +67,7 @@ define(['./module', 'underscore'], function (module, _) {
         funding: $scope.state.knownFundingValue,
         scaleup: $scope.state.scaleUpParameter,
         nonhivdalys: $scope.state.nonHivDalys,
+        xupperlim: $scope.state.xAxisMaximum,
         cpibaseyear: $scope.state.displayYear,
         perperson: $scope.state.calculatePerPerson
       };
@@ -136,6 +139,13 @@ define(['./module', 'underscore'], function (module, _) {
         $scope.state.outcomeTitles = _(response.fig_co).map(function(chart) {
           return chart.axes[0].texts[2].text;
         });
+        $scope.state.outcomeParamsInPercentage = _($scope.state.outcomeTitles).map(function(title) {
+          return title.indexOf('Number of sexual acts') === -1 ? true : false;
+        });
+        $scope.state.outcomeParamsMax = _($scope.state.outcomeParamsInPercentage).map(function(inPercentage) {
+          return inPercentage ? 100 : undefined;
+        });
+
         $scope.state.coverageOutcomeCharts = response.fig_co;
         _($scope.state.coverageOutcomeCharts).each(function(chart) {
           chart.axes[0].texts.splice(2, 1);
@@ -164,6 +174,7 @@ define(['./module', 'underscore'], function (module, _) {
       $scope.state.scaleUpParameter = program.ccparams.scaleup;
       $scope.state.nonHivDalys = program.ccparams.nonhivdalys;
       $scope.state.displayYear = program.ccparams.cpibaseyear;
+      $scope.state.xAxisMaximum = program.ccparams.xupperlim;
       $scope.state.calculatePerPerson = program.ccparams.perperson;
       $scope.state.info = info;
 

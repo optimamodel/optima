@@ -4,7 +4,7 @@ from numpy import linspace, ndim
 from nested import getnested, setnested
 from utils import findinds
 
-def runscenarios(D, scenariolist=None, verbose=2):
+def runscenarios(D, scenariolist=None, verbose=2, debug=False):
     """
     Run all the scenarios. The hard work is actually done by makescenarios, which
     takes the list of scenarios and makes the required changes to the model parameters
@@ -45,10 +45,11 @@ def runscenarios(D, scenariolist=None, verbose=2):
     D['plot']['scens'] = gathermultidata(D, D['scens'], verbose=verbose)
     
     # Clean up -- inefficient, yes!
-    for scen in xrange(nscenarios):
-        D['scens'][scen].pop('M')
-        D['scens'][scen].pop('S')
-        D['scens'][scen].pop('R')
+    if not(debug):
+        for scen in xrange(nscenarios):
+            D['scens'][scen].pop('M')
+            D['scens'][scen].pop('S')
+            D['scens'][scen].pop('R')
     
     printv('...done running scenarios.', 2, verbose)
     return D
@@ -70,12 +71,12 @@ def makescenarios(D, scenariolist, verbose=2):
                 if thesepars['pops'] < len(data):
                     newdata = data[thesepars['pops']] # If it's more than one dimension, use population data too
                 else:
-                    newdata = data[:] # Get all populations
+                    newdata = deepcopy(data[:]) # Get all populations
             else:
-                newdata = data # If it's not, just use the whole thing
+                newdata = deepcopy(data) # If it's not, just use the whole thing
             
             # Get current values
-            initialindex = findinds(D['opt']['partvec'], thesepars['startyear'])
+            initialindex = findinds(D['opt']['partvec'], thesepars['startyear']) # WARNING -- should convert from array to scalar
             finalindex = findinds(D['opt']['partvec'], thesepars['endyear'])
             if thesepars['startval'] == -1:
                 if ndim(newdata)==1: initialvalue = newdata[initialindex]
@@ -102,6 +103,7 @@ def makescenarios(D, scenariolist, verbose=2):
                 for p in xrange(len(newdata)):
                     newdata[p,initialindex:finalindex] = newvalues
                     newdata[p,finalindex:] = newvalues[-1] # Fill in the rest of the array with the last value
+
             
             # Update data
             if ndim(data)>1 and ndim(newdata)==1:
@@ -110,6 +112,11 @@ def makescenarios(D, scenariolist, verbose=2):
                 data = newdata # In all other cases, reset the whole thing (if both are 1D, or if both are 2D
 
             setnested(scenariopars[scen]['M'], thesepars['names'], data)
+            
+            ## Calculate total acts
+            from makemodelpars import totalacts
+            npts = len(scenariopars[scen]['M']['tvec'])
+            scenariopars[scen]['M']['totalacts'] = totalacts(scenariopars[scen]['M'], npts)
                 
     return scenariopars
 

@@ -6,6 +6,24 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   module.controller('ProjectOpenController',
     function ($scope, $http, activeProject, projects, modalService, fileUpload, UserManager) {
 
+    $scope.sortType = 'name'; // set the default sort type
+    $scope.sortReverse = false;  // set the default sort order
+
+    $scope.filterByName = function (project) {
+      if ($scope.searchTerm) {
+        return project.name.toLowerCase().indexOf($scope.searchTerm.toLowerCase()) !== -1;
+      }
+      return true;
+    }
+
+    $scope.updateSorting = function (sortType) {
+      if ($scope.sortType === sortType) {
+        $scope.sortReverse = !$scope.sortReverse;
+      } else {
+        $scope.sortType = sortType;
+      }
+    }
+
     $scope.projects = _.map(projects.projects, function(project){
       project.creation_time = Date.parse(project.creation_time);
       project.updated_time = Date.parse(project.updated_time);

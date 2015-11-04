@@ -9,3 +9,11 @@ server/p-env
 server/build
 \~\$*
 *.prj
+*.bin
+*.json
+*.xlsx
+*.npz
+*.db
+
+client/source/assets/fonts/FontAwesome*
+client/source/assets/fonts/fontawesome*

@@ -131,7 +131,9 @@
                   3. [Optional] Specify scale-up parameters:
                   <input type="number" class="txbox __inline __xl"
                          name="scaleUpParameter"
-                         min="0" max="0.999999999999"
+                         min="0"
+                         max="0.999999999999"
+                         step="0.1"
                          placeholder="e.g. 0.5"
                          ng-model="state.scaleUpParameter"
                          ng-change="updateCurves()">
@@ -157,7 +159,20 @@
                   </div>
                 </div>
                 <div class="section">
-                  5. [Optional] Display program cost data in
+                  5. [Optional] Specify the maximum funding (for plotting only):
+                  <input type="number" class="txbox __inline __xl"
+                         name="xAxisMaximum"
+                         min="1" placeholder="e.g. 1000000"
+                         ng-model="state.xAxisMaximum"
+                         ng-change="updateCurves()">
+                  <div ng-messages="state.CostCoverageForm.xAxisMaximum.$error"
+                       ng-show="state.CostCoverageForm.xAxisMaximum.$touched && state.CostCoverageForm.xAxisMaximum.$invalid">
+                    <div class="error-hint" ng-message="min">The minimum value is 1</div>
+                    <div class="error-hint" ng-message="number">The value should be a number</div>
+                  </div>
+                </div>
+                <div class="section">
+                  6. [Optional] Display program cost data in
                   <input type="number" class="txbox __inline __l"
                          name="displayYear"
                          placeholder="e.g.{{ state.info.dataEnd }}"
@@ -174,7 +189,7 @@
                   </div>
                 </div>
                 <div class="section">
-                  6. [Optional] Display program costs in dollar spent per person in the targeted population
+                  7. [Optional] Display program costs in dollar spent per person in the targeted population
                   <input type="checkbox" ng-model="state.calculatePerPerson" class="__inline" ng-change="updateCurves()"/>
                 </div>
               </form>
@@ -183,6 +198,10 @@
         </div>
 
         <form name="state.CombinedAdjustmentForms">
+          <div ng-show="state.costOutcomeCharts.length === 0" class="info-hint">
+            You have not defined any effects for this program.
+          </div>
+
           <div class="section" ng-if="state.costOutcomeCharts.length" ng-repeat="chart in state.costOutcomeCharts track by chart.id">
             <h2 class="section">{{ state.outcomeTitles[$index] }}</h2>
 
@@ -219,36 +238,38 @@
                          class="txbox __inline"
                          name="withoutProgramRangeStart"
                          min="0"
-                         max="100"
+                         max="{{ state.outcomeParamsMax[$index] }}"
                          step="1"
                          ng-required="costOutcomeFormIsPartlyFilledOut($index)"
                          ng-change="updateCurve($index,state.AdjustmentForm{{$index}})"
                          ng-model="state.coParams[$index][0]"
-                         less-than="state.coParams[$index][1]">%
+                         less-than="state.coParams[$index][1]">
+                  <span ng-if="state.outcomeParamsInPercentage[$index]">%</span>
                   and
 
                   <input type="number" class="txbox __inline"
                          name="withoutProgramRangeEnd"
                          min="0"
-                         max="100"
+                         max="{{ state.outcomeParamsMax[$index] }}"
                          step="1"
                          ng-required="costOutcomeFormIsPartlyFilledOut($index)"
                          ng-change="updateCurve($index,state.AdjustmentForm{{$index}})"
                          ng-model="state.coParams[$index][1]"
-                         more-than="state.coParams[$index][0]">%
+                         more-than="state.coParams[$index][0]">
+                  <span ng-if="state.outcomeParamsInPercentage[$index]">%</span>
 
                   <div ng-messages="state.AdjustmentForm{{$index}}.withoutProgramRangeStart.$error"
                        ng-show="state.AdjustmentForm{{$index}}.withoutProgramRangeStart.$invalid">
                     <div class="error-hint" ng-message="min">The minimum value is 0</div>
-                    <div class="error-hint" ng-message="max">The maximum value is 100</div>
+                    <div class="error-hint" ng-message="max">The maximum value is {{ state.outcomeParamsMax[$index] }}</div>
                     <div class="error-hint" ng-message="lessThan">The first parameter must be lower than the second one</div>
-                    <div class="error-hint" ng-message="number">The value should be a number from 0 to 100</div>
+                    <div class="error-hint" ng-message="number">The value should be a number.</div>
                   </div>
                   <div ng-messages="state.AdjustmentForm{{$index}}.withoutProgramRangeEnd.$error"
                        ng-show="state.AdjustmentForm{{$index}}.withoutProgramRangeEnd.$touched && state.AdjustmentForm{{$index}}.withoutProgramRangeEnd.$invalid">
                     <div class="error-hint" ng-message="min">The minimum value is 0</div>
-                    <div class="error-hint" ng-message="max">The maximum value is 100</div>
-                    <div class="error-hint" ng-message="number">The value should be a number from 0 to 100</div>
+                    <div class="error-hint" ng-message="max">The maximum value is {{ state.outcomeParamsMax[$index] }}</div>
+                    <div class="error-hint" ng-message="number">The value should be a number.</div>
                   </div>
                 </div>
                 <div class="section">
@@ -256,36 +277,38 @@
                   <input type="number"
                          name="fullCoverageRangeStart"
                          min="0"
-                         max="100"
+                         max="{{ state.outcomeParamsMax[$index] }}"
                          step="1"
                          ng-required="costOutcomeFormIsPartlyFilledOut($index)"
                          ng-change="updateCurve($index,state.AdjustmentForm{{$index}})"
                          class="txbox __inline"
                          ng-model="state.coParams[$index][2]"
-                         less-than="state.coParams[$index][3]">%
+                         less-than="state.coParams[$index][3]">
+                  <span ng-if="state.outcomeParamsInPercentage[$index]">%</span>
                   and
                   <input type="number"
                          name="fullCoverageRangeEnd"
                          min="0"
-                         max="100"
+                         max="{{ state.outcomeParamsMax[$index] }}"
                          step="1"
                          ng-required="costOutcomeFormIsPartlyFilledOut($index)"
                          ng-change="updateCurve($index,state.AdjustmentForm{{$index}})"
                          class="txbox __inline"
-                         ng-model="state.coParams[$index][3]">%
+                         ng-model="state.coParams[$index][3]">
+                  <span ng-if="state.outcomeParamsInPercentage[$index]">%</span>
 
                   <div ng-messages="state.AdjustmentForm{{$index}}.fullCoverageRangeStart.$error"
                        ng-show="state.AdjustmentForm{{$index}}.fullCoverageRangeStart.$invalid">
                     <div class="error-hint" ng-message="min">The minimum value is 0</div>
-                    <div class="error-hint" ng-message="max">The maximum value is 100</div>
+                    <div class="error-hint" ng-message="max">The maximum value is {{ state.outcomeParamsMax[$index] }}</div>
                     <div class="error-hint" ng-message="lessThan">The first parameter must be lower than the second one</div>
-                    <div class="error-hint" ng-message="number">The value should be a number from 0 to 100</div>
+                    <div class="error-hint" ng-message="number">The value should be a number.</div>
                   </div>
                   <div ng-messages="state.AdjustmentForm{{$index}}.fullCoverageRangeEnd.$error"
                        ng-show="state.AdjustmentForm{{$index}}.fullCoverageRangeEnd.$touched && state.AdjustmentForm{{$index}}.fullCoverageRangeEnd.$invalid">
                     <div class="error-hint" ng-message="min">The minimum value is 0</div>
-                    <div class="error-hint" ng-message="max">The maximum value is 100</div>
-                    <div class="error-hint" ng-message="number">The value should be a number from 0 to 100</div>
+                    <div class="error-hint" ng-message="max">The maximum value is {{ state.outcomeParamsMax[$index] }}</div>
+                    <div class="error-hint" ng-message="number">The value should be a number.</div>
                   </div>
 
                   <div ng-messages="state.AdjustmentForm{{$index}}.$error"

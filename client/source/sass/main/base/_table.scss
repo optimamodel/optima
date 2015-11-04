@@ -246,3 +246,12 @@ table {
     }
   }
 }
+
+th.sortable {
+  white-space: nowrap;
+}
+
+th.sortable:hover {
+  background: #bedff4;
+  cursor: pointer;
+}
