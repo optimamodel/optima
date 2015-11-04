@@ -64,7 +64,7 @@ def startOptimization():
     project_id = request.project_id
     project_name = request.project_name
     can_start, can_join, current_calculation = start_or_report_calculation(
-        current_user.id, project_id, optimize, db.session, current_user.is_admin)
+        current_user.id, project_id, optimize, db.session)
     if can_start:
         # Prepare arguments
         args = {'verbose':2}
