@@ -162,13 +162,38 @@ class TestCCOCs(unittest.TestCase):
 		ps.specific_reachability_interaction['testpop']['testpar'] = 'random'
 		numpy.testing.assert_allclose(ps.get_outcomes(tvec,budget)['testpop']['testpar'],[0.2918,0.3396,0.483,0.7220])
 
+	def test_linear_timevarying(self):
+		# Test linear CC and CO functions (for testing modalities)
+		# note that ccocs.linear_timevarying.defaults() returns:
+		# fe_params = dict()
+		# fe_params['time'] = [2015,2030] # t-values corresponding to unit cost
+		# fe_params['unit_cost'] = [1,2] # Unit cost - gradient of the CCOC
+		# fe_params['baseline'] = [0,0] # Parameter value with zero coverage
+
+		coverage_outcome = ccocs.linear_timevarying()
+
+		# Test start year
+		self.assertAlmostEqual(coverage_outcome.evaluate(0.0,2015),0,places=7) 
+		self.assertAlmostEqual(coverage_outcome.evaluate(0.5,2015),0.5,places=7) 
+		self.assertAlmostEqual(coverage_outcome.evaluate(1.0,2015),1,places=7) 
+
+		# Test end year
+		self.assertAlmostEqual(coverage_outcome.evaluate(0.0,2030),0,places=7) 
+		self.assertAlmostEqual(coverage_outcome.evaluate(0.5,2030),1,places=7) 
+		self.assertAlmostEqual(coverage_outcome.evaluate(1.0,2030),2,places=7) 
+
+		# Test in between
+		self.assertAlmostEqual(coverage_outcome.evaluate(0.0,2020),0,places=7) 
+		self.assertAlmostEqual(coverage_outcome.evaluate(0.5,2020),0.5*(4.0/3),places=7) 
+		self.assertAlmostEqual(coverage_outcome.evaluate(1.0,2020),1*(4.0/3),places=7) 
 
 if __name__ == '__main__':
 	# Run all tests
-    unittest.main()
+    #unittest.main()
 
     # Only run particular tests
-    #suite = unittest.TestSuite()
-    #suite.addTest(TestCCOCs('test_overlap_2'))
+    suite = unittest.TestSuite()
+    suite.addTest(TestCCOCs('test_linear_timevarying'))
+    
     unittest.TextTestRunner().run(suite)
 
