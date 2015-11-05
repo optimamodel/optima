@@ -86,7 +86,7 @@ class Program(object):
         self.modelpars = modelpars if modelpars else []
         self.pops = list(set([x['pop'] for x in modelpars])) if modelpars else []
         self.ccpars = ccpars if ccpars else {'t':[],'saturation':[],'unitcost':[]}
-        self.ccdata = ccdata if ccdata else {'t':[],'saturation':[],'unitcost':[]}
+        self.ccdata = ccdata if ccdata else {'t':[],'cost':[],'coverage':[]}
         
     def __repr__(self):
         ''' Print out useful info'''
