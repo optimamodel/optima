@@ -292,7 +292,7 @@ class ProgramSet(object):
                                     accum += overlap_calc(indexes+[j],target_depth)
                                 return this_coverage[indexes[-1]]*accum
                             else:
-                                return this_coverage[indexes[-1]]*numpy.max([delta_out[x] for x in indexes]) # Innermost part
+                                return this_coverage[indexes[-1]]*numpy.max([delta_out[x] for x in indexes],0) # Innermost part
 
                         # Iterate over overlap levels
                         for i in xrange(2,len(proglist)): # Iterate over numbers of overlapping programs
