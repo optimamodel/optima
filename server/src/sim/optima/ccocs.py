@@ -87,7 +87,7 @@ class ccoc(object):
         else:
             m = np.zeros(t.shape)
             for i in xrange(0,len(m)):
-                y = self.evaluate(x,t[i])
+                y = self.evaluate(np.array(x),np.array(t[i]))
                 m[i] = (y[1]-y[0])/(x[1]-x[0])
         return m
 
