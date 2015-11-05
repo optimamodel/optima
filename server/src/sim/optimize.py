@@ -177,7 +177,7 @@ def objectivecalc(optimparams, options):
     
     
     
-def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None, verbose=5, name='Default', stoppingfunc = None):
+def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None, verbose=5, name='Default', stoppingfunc = None, mmorigalloc = None):
     
     # Hack to divert optimize function to minimizemoney if relevant objectives have been specified.
     if objectives is not None:
@@ -198,6 +198,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
 
     origR = deepcopy(D['R'])
     origalloc = D['data']['origalloc']
+    if mmorigalloc == None: mmorigalloc = origalloc     # This is for allowing minimize-money optimize function calls to be constrained on the ORIGINAL original allocation.
     
     # Make sure objectives and constraints exist, and overwrite using saved ones if available
     if objectives is None: objectives = defaultobjectives(D, verbose=verbose)
@@ -236,9 +237,9 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
                 this = constraints[fullkey][p] # Shorten name
                 if key1=='total':
                     if not(opttrue[p]): # Not an optimized parameter
-                        fundingchanges[key1][key2].append(origalloc[p]*smallchanges[key2])
+                        fundingchanges[key1][key2].append(mmorigalloc[p]*smallchanges[key2])
                     elif this['use'] and objectives['funding'] != 'variable': # Don't constrain variable-year-spend optimizations
-                        newlim = this['by']/100.*origalloc[p]
+                        newlim = this['by']/100.*mmorigalloc[p]
                         fundingchanges[key1][key2].append(newlim)
                     else: 
                         fundingchanges[key1][key2].append(abslims[key2])
