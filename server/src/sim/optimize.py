@@ -203,7 +203,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
     if objectives is None: objectives = defaultobjectives(D, verbose=verbose)
     if constraints is None: constraints = defaultconstraints(D, verbose=verbose)
 
-    if not "optimizations" in D: saveoptimization(D, name, objectives, constraints)
+    if not "optimizations" in D or not name in D["optimizations"]: saveoptimization(D, name, objectives, constraints)
 
 
     # Do this so if e.g. /100 won't have problems
@@ -579,7 +579,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
     
     result_to_save = {'plot': [plot_result]}
 
-    ## Save optimization to D
+    ## Save optimization with results to D
     D = saveoptimization(D, name, objectives, constraints, result_to_save, verbose=2)
 
     D['debugresult'] = result
