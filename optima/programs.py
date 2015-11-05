@@ -197,9 +197,10 @@ class Program(object):
 
     def getcoverage(self,year,popsize,x):
         '''Returns coverage in a given year for a given spending amount. Currently assumes coverage is a proportion.'''
-        from math import exp
+        from numpy import exp
         u = self.getccpar(year)['unitcost']
         s = self.getccpar(year)['saturation']
         y = (2*s/(1+exp(-2*x/(popsize*s*u)))-s)*popsize
         return y      
         
+
