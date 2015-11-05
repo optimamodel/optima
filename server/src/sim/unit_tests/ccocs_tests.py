@@ -187,13 +187,50 @@ class TestCCOCs(unittest.TestCase):
 		self.assertAlmostEqual(coverage_outcome.evaluate(0.5,2020),0.5*(4.0/3),places=7) 
 		self.assertAlmostEqual(coverage_outcome.evaluate(1.0,2020),1*(4.0/3),places=7) 
 
+	def test_overlap_timevarying(self):
+		# Based on 'coverage-outcome calcs.xlsx'
+
+		ps = optima.ProgramSet('Test')
+		cc_inputs = [dict()]
+		cc_inputs[0]['pop'] = 'testpop'
+		cc_inputs[0]['form'] = 'co_cofun'
+		cc_inputs[0]['fe_params'] = [0, 0, 1, 1] # Linear coverage
+		co_inputs = [dict()]
+		co_inputs[0]['pop'] = 'testpop'
+		co_inputs[0]['param'] = 'testpar'
+		co_inputs[0]['form'] = 'linear_timevarying'
+		co_inputs[0]['fe_params'] = {'time':[2015,2030],'unit_cost':[0.5,0.5],'baseline':[0.1,0.1]}
+		ps.programs.append(optima.Program('P1',deepcopy(cc_inputs),deepcopy(co_inputs)))
+		co_inputs[0]['fe_params'] = {'time':[2015,2030],'unit_cost':[0.6,0.3],'baseline':[0.1,0.1]}
+		ps.programs.append(optima.Program('P2',deepcopy(cc_inputs),deepcopy(co_inputs)))
+		co_inputs[0]['fe_params'] = {'time':[2015,2030],'unit_cost':[0.1,0.4],'baseline':[0.1,0.1]} 
+		ps.programs.append(optima.Program('P3',deepcopy(cc_inputs),deepcopy(co_inputs)))
+
+		# Check that the program works
+		p = ps.programs[1] # Pick the second program, for 2x coverage
+
+		# Make the triple program budget
+		tvec = numpy.array([2015,2020,2025,2030])
+		budget = numpy.array(([0.1,0.2,0.5,1],[0.2,0.2,0.2,0.2],[0.3,0.3,0.3,0.3]))
+		# Test against the spreadsheet with various program 1 coverage levels
+
+		
+		ps.specific_reachability_interaction['testpop']['testpar'] = 'additive'
+		numpy.testing.assert_allclose(ps.get_outcomes(tvec,budget)['testpop']['testpar'],[0.3,0.36,0.52,0.78])
+
+		ps.specific_reachability_interaction['testpop']['testpar'] = 'nested'
+		numpy.testing.assert_allclose(ps.get_outcomes(tvec,budget)['testpop']['testpar'],[0.23,0.22,0.35,0.6])
+
+		ps.specific_reachability_interaction['testpop']['testpar'] = 'random'
+		numpy.testing.assert_allclose(ps.get_outcomes(tvec,budget)['testpop']['testpar'],[0.2918,0.3364,0.468,0.684])
+
 if __name__ == '__main__':
 	# Run all tests
     #unittest.main()
 
     # Only run particular tests
     suite = unittest.TestSuite()
-    suite.addTest(TestCCOCs('test_linear_timevarying'))
+    suite.addTest(TestCCOCs('test_overlap_timevarying'))
     
     unittest.TextTestRunner().run(suite)
 
