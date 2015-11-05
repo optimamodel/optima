@@ -644,6 +644,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     $scope.initTimer = function (status) {
       if ( !angular.isDefined( optimizationTimer ) ) {
+        $scope.optimizationInProgress = true;
         // Keep polling for updated values after every 5 seconds till we get an error.
         // Error indicates that the model is not optimizing anymore.
         optimizationTimer = $interval(checkWorkingOptimization, 30000, 0, false);
@@ -667,7 +668,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       var params = optimizationHelpers.toRequestParameters($scope.params, $scope.state.activeOptimizationName, $scope.state.timelimit);
       $http.post('/api/analysis/optimization/start', params, {ignoreLoadingBar: true})
         .success(function (data, status, headers, config) {
-          $scope.optimizationInProgress = true;
           if (data.join) {
             $scope.initTimer(statusEnum.RUNNING);
           } else {
@@ -694,11 +694,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               modalService.inform(angular.noop, 'Okay', message, 'Server Error', data.exception);
             }
             $scope.errorText = data.exception;
-            $scope.optimizationInProgress = false;
             stopTimer();
           } else {
             if (data.status == 'Done') {
-              $scope.optimizationInProgress = false;
               stopTimer();
             } else {
               if (data.status == 'Running') $scope.state.optimizationStatus = statusEnum.RUNNING;
@@ -714,7 +712,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             $scope.errorText = data.exception;
           }
           stopTimer();
-          $scope.optimizationInProgress = false;
         });
     }
 
@@ -742,6 +739,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         $interval.cancel(optimizationTimer);
         optimizationTimer = undefined;
         $scope.state.optimizationStatus = statusEnum.NOT_RUNNING;
+        $scope.optimizationInProgress = false;
         cfpLoadingBar.complete();
       }
     }
