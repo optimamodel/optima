@@ -441,14 +441,14 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2, safetymargin=0.8, bench
                 progin = dt*prog[cd4-1]*people[undx[cd4-1],:,t]
             else: 
                 progin = 0 # Cannot progress into acute stage
-            if cd4<ncd4-1: 
-                progout = dt*prog[cd4]*people[undx[cd4],:,t]
+            if cd4<ncd4-1: # CHECK: many subsequent commands will break if cd4<0 - should this whole block (and those below) be moved into the case when cd4>0?
+                progout = dt*prog[cd4]*people[undx[cd4],:,t]  # will break if cd4<0
                 testingrate[cd4] = hivtest[:,t] # Population specific testing rates
             else: 
                 progout = 0  # Cannot progress out of AIDS stage
                 testingrate[cd4] = maximum(hivtest[:,t], aidstest[t]) # Testing rate in the AIDS stage (if larger!)
             if propdx is None: # No proportion diagnosed information, go with testing rate
-                newdiagnoses[cd4] = dt * people[undx[cd4],:,t] * testingrate[cd4] * dxtime[t]
+                newdiagnoses[cd4] = dt * people[undx[cd4],:,t] * testingrate[cd4] * dxtime[t] # will break if cd4<0
             else: # It exists, use what's calculated before
                 newdiagnoses[cd4] = fractiontodx * people[undx[cd4],:,t]
             hivdeaths   = dt * people[undx[cd4],:,t] * death[cd4]
@@ -467,7 +467,7 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2, safetymargin=0.8, bench
                 progin = dt*prog[cd4-1]*people[dx[cd4-1],:,t]
             else: 
                 progin = 0 # Cannot progress into acute stage
-            if cd4<ncd4-1: 
+            if cd4<ncd4-1: # CHECK: many subsequent commands will break if cd4<0 (like it was in the code above)
                 progout = dt*prog[cd4]*people[dx[cd4],:,t]
             else: 
                 progout = 0 # Cannot progress out of AIDS stage
@@ -498,7 +498,6 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2, safetymargin=0.8, bench
             dT1.append(recovin - recovout + newtreat1[cd4] - hivdeaths - otherdeaths)
             dT1[cd4] = negativepeople('treat1', dT1[cd4], people[tx1[cd4],:,t], t)
             S['death'][:,t] += hivdeaths/dt # Save annual HIV deaths 
-        
 
 
         ###############################################################################
