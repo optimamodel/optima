@@ -11,7 +11,7 @@ Version: 2015feb06 by cliffk
 
 from printv import printv
 from copy import deepcopy
-from numpy import ones, zeros, concatenate, arange, inf, hstack, argmin, array, ndim
+from numpy import ones, zeros, concatenate, arange, inf, hstack, argmin, array, ndim, isnan
 from utils import findinds
 from makeresults import makeresults
 from timevarying import timevarying, multiyear
@@ -181,9 +181,13 @@ def objectivecalc(optimparams, options):
     
     
 <<<<<<< HEAD:optima/legacy/optimize.py
+<<<<<<< HEAD:optima/legacy/optimize.py
 def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None, verbose=5, name='Default', stoppingfunc = None, returnresult=False):
 =======
 def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None, verbose=5, name='Default', stoppingfunc = None):
+=======
+def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None, verbose=5, name='Default', stoppingfunc = None, mmorigalloc = None):
+>>>>>>> develop:server/src/sim/optimize.py
     
     # Hack to divert optimize function to minimizemoney if relevant objectives have been specified.
     if objectives is not None:
@@ -205,12 +209,25 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
 
     origR = deepcopy(D['R'])
     origalloc = D['data']['origalloc']
+    if mmorigalloc == None: mmorigalloc = origalloc     # This is for allowing minimize-money optimize function calls to be constrained on the ORIGINAL original allocation.
     
     # Make sure objectives and constraints exist, and overwrite using saved ones if available
-    if objectives is None: objectives = defaultobjectives(D, verbose=verbose)
-    if constraints is None: constraints = defaultconstraints(D, verbose=verbose)
 
-    if not "optimizations" in D: saveoptimization(D, name, objectives, constraints)
+    # 1. Take the defaults
+    active_objectives = defaultobjectives(D, verbose=verbose)
+    active_constraints =  defaultconstraints(D, verbose=verbose)
+
+    # 2. Update with actually set values
+    if objectives is not None: 
+        update_dict(active_objectives, objectives)
+    if constraints is not None: 
+        update_dict(active_constraints, constraints)
+
+    # 3. Use for further processing
+    objectives = active_objectives
+    constraints = active_constraints
+
+    if not "optimizations" in D or not name in D["optimizations"]: saveoptimization(D, name, objectives, constraints)
 
 
     # Do this so if e.g. /100 won't have problems
@@ -231,8 +248,8 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
     fundingchanges = dict()
     keys1 = ['year','total']
     keys2 = ['dec','inc']
-    abslims = {'dec':0, 'inc':1e9}
-    rellims = {'dec':-1e9, 'inc':1e9}
+    abslims = {'dec':0, 'inc':1e18}
+    rellims = {'dec':-1e18, 'inc':1e18}
     smallchanges = {'dec':1.0, 'inc':1.0} # WARNING BIZARRE
     for key1 in keys1:
         fundingchanges[key1] = dict()
@@ -243,9 +260,9 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
                 this = constraints[fullkey][p] # Shorten name
                 if key1=='total':
                     if not(opttrue[p]): # Not an optimized parameter
-                        fundingchanges[key1][key2].append(origalloc[p]*smallchanges[key2])
+                        fundingchanges[key1][key2].append(mmorigalloc[p]*smallchanges[key2])
                     elif this['use'] and objectives['funding'] != 'variable': # Don't constrain variable-year-spend optimizations
-                        newlim = this['by']/100.*origalloc[p]
+                        newlim = this['by']/100.*mmorigalloc[p]
                         fundingchanges[key1][key2].append(newlim)
                     else: 
                         fundingchanges[key1][key2].append(abslims[key2])
@@ -582,12 +599,12 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
     ## Gather plot data
     from gatherplotdata import gatheroptimdata
     plot_result = gatheroptimdata(D, result, verbose=verbose)
-    if 'optim' not in D['plot']: D['plot']['optim'] = [] # Initialize list if required
+    if 'optim' not in D['plot']: D['plot']['optim'] = [] # Initialize list if require
     D['plot']['optim'].append(plot_result) # In any case, append
     
     result_to_save = {'plot': [plot_result]}
 
-    ## Save optimization to D
+    ## Save optimization with results to D
     D = saveoptimization(D, name, objectives, constraints, result_to_save, verbose=2)
 
     D['debugresult'] = result
@@ -630,6 +647,42 @@ def removeoptimization(D, name):
         except:
             pass
     return D
+
+
+def update_list(base_list, extra_list):
+    """
+    Recursively updates base list with the data from extra list.
+    Used to ensure that optimization is not getting called with mangled objectives or constraints.
+    """
+    if not extra_list or not isinstance(extra_list, list): return None
+    for i, (base_elem, extra_elem) in enumerate(zip(base_list, extra_list)):
+        if isinstance(base_elem, dict):
+            update_dict(base_elem, extra_elem)
+        elif isinstance(base_elem, list):
+            update_list(base_elem, extra_elem)
+        else:
+            if extra_elem is not None and base_elem!=extra_elem:
+                base_list[i] = extra_elem
+    return None
+
+
+def update_dict(base_dict, extra_dict):
+    """
+    Returns base dict recursively updated with values from extra dict.
+    Used to ensure that optimization is not getting called with mangled objectives or constraints.
+    """
+    if not extra_dict or not isinstance(extra_dict, dict): return None
+    for k, v in base_dict.iteritems():
+        if not k in extra_dict or extra_dict[k] is None: continue
+        if isinstance(v, dict):
+            update_dict(base_dict[k], extra_dict[k])
+        elif isinstance(v, list):
+            update_list(base_dict[k], extra_dict[k])
+        else:
+            if extra_dict[k]!=base_dict[k] and not isnan(extra_dict[k]): 
+                base_dict[k] = extra_dict[k]
+    return None # pythonic convention: return None for objects changed in-place
+
 
 def defaultobjectives(D, verbose=2):
     """

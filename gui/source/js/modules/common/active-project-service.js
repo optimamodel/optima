@@ -13,14 +13,18 @@ define([
     'app.local-storage'
     ])
     .factory('activeProject', [ 
-      '$http', 'localStorage',
-      function ($http, localStorage) {
+      '$http', 'localStorage', 'isASCII',
+      function ($http, localStorage, isASCII) {
         var project = {
           setActiveProjectFor: function (projectName, projectId, user) { 
             // Sets the active project to be projectName for the given user.
             project.name = projectName;
             project.id   = projectId;
-            $http.defaults.headers.common.project = project.name;
+            if (isASCII(project.name)) {
+              $http.defaults.headers.common.project = project.name;
+            } else {
+              $http.defaults.headers.common.project = "PROJECT_ID:" + project.id;
+            }
             $http.defaults.headers.common['project-id'] = project.id;
             localStorage[project.getProjectKeyFor(user)] = JSON.stringify({'name':project.name,'id':project.id});
           },
@@ -31,7 +35,11 @@ define([
             var loaded_project = JSON.parse(project.getProjectFor(user));
             project.name = loaded_project.name;
             project.id = loaded_project.id;
-            $http.defaults.headers.common.project = project.name;
+            if (isASCII(project.name)) {
+              $http.defaults.headers.common.project = project.name;
+            } else {
+              $http.defaults.headers.common.project = "PROJECT_ID:" + project.id;
+            }
             $http.defaults.headers.common['project-id'] = project.id;
           },
           getProjectKeyFor: function (user) {
@@ -74,6 +82,10 @@ define([
 
         return project;
 
+    }]).factory('isASCII', [function() {
+      return function (str) {
+        return /^[\x00-\x7F]*$/.test(str);
+      }
     }]);
 
 });
