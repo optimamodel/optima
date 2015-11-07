@@ -704,7 +704,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               $scope.initTimer($scope.state.optimizationStatus);
             }
             $scope.state.isDirty = data.dirty;
-            $scope.initOptimizations(data.optimizations, $scope.state.activeOptimizationName);
+            $scope.initOptimizations(data.optimizations, $scope.state.activeOptimizationName, true);
           }
         })
         .error( function (data, status, headers, config) {
