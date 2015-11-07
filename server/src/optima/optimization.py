@@ -152,17 +152,17 @@ def getWorkingModel(): # pylint: disable=R0912, R0914, R0915
         if optimizations and name in names:
             index = names.index(name)
             if ('result' in optimizations[index]) and (new_optimization.get('result')!=optimizations[index]['result']):
+                current_app.logger.debug("Found updated result for: name %s" % name)
                 new_optimizations[new_index] = deepcopy(optimizations[index])
                 #warn that these results are transient
                 is_dirty = True
+
+    response_status = 200
     result['status'] = status
     result['optimizations'] = new_optimizations
     result['dirty'] = is_dirty
     if error_text:
         result['exception'] = error_text
-    response_status = 200
-    if status == 'Failed':
-        response_status = 500
     return jsonify(result), response_status
 
 
