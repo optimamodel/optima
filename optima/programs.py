@@ -5,9 +5,7 @@ set of programs, respectively.
 
 Version: 2015nov04 by robynstuart
 """
-from uuid import uuid4
-from datetime import datetime
-from utils import getdate
+from utils import getdate, today, uuid
 from collections import defaultdict
 import abc
 
@@ -16,12 +14,12 @@ class Programset(object):
     def __init__(self, name='default',programs=None):
         ''' Initialize '''
         self.name = name
-        self.id = uuid4()
+        self.id = uuid()
         self.programs = programs if programs else []
         self.getpops() if programs else []
         self.setcostcov() if programs else []
-        self.created = datetime.today()
-        self.modified = datetime.today()
+        self.created = today()
+        self.modified = today()
 
     def __repr__(self):
         ''' Print out useful information'''
@@ -52,7 +50,7 @@ class Programset(object):
                 for x in prog.pops: self.pops.append(x)
             self.pops = list(set(self.pops))
     
-    def setcostcov(self):
+    def setcostcov(self,ccopars):
         '''Sets up the required coverage-outcome curves'''
         self.getpops()
         self.covout = {}
@@ -60,8 +58,17 @@ class Programset(object):
             self.covout[pop] = {}
             for modelpar in self.progs_by_modelpar(pop).keys():
                 self.covout[pop][modelpar] = {}
-                for prog in self.progs_by_modelpar(pop)[modelpar]: self.covout[pop][modelpar][prog.name] = Covout(usedefaults=False)
+                for prog in self.progs_by_modelpar(pop)[modelpar]: self.covout[pop][modelpar][prog.name] = Covout(ccopars)
 
+    def addprog(self, prog, overwrite=False):
+        if prog not in self.programs:
+            self.programs.append(prog)
+            self.getpops()
+            self.setcostcov()
+            print('\nAdded program "%s" to programset "%s". \nPrograms in this programset are: %s' % (prog.name, self.name, [p.name for p in self.programs]))
+        else:
+            raise Exception('Program "%s" is already present in programset "%s".' % (prog.name, self.name))
+        
     def optimizable(self):
         return [True if prog.modelpars else False for prog in self.programs]
 
@@ -118,14 +125,14 @@ class Program(object):
     ccpars, e.g. {'t': [2015,2016], 'saturation': [.90,1.], 'unitcost': [40,30]}
     modelpars, e.g. [{'param': 'hivtest', 'pop': 'FSW'}, {'param': 'hivtest', 'pop': 'MSM'}]'''
 
-    def __init__(self,name,modelpars=None,ccpars=None,ccdata=None,nonhivdalys=0):
+    def __init__(self,name,modelpars=None,ccpars=None,costcovdata=None,nonhivdalys=0):
         '''Initialize'''
         self.name = name
         self.id = uuid4()
         self.modelpars = modelpars if modelpars else []            
         self.pops = list(set([x['pop'] for x in modelpars])) if modelpars else []
         self.costcov = Costcov(ccopars=ccpars)
-        self.ccdata = ccdata if ccdata else {'t':[],'cost':[],'coverage':[]}
+        self.costcovdata = costcovdata if costcovdata else {'t':[],'cost':[],'coverage':[]}
         
     def __repr__(self):
         ''' Print out useful info'''
@@ -156,34 +163,34 @@ class Program(object):
             print('\nRemoved model parameter "%s" from the list of model parameters affected by "%s". \nAffected parameters are: %s' % (modelpar, self.name, self.modelpars))
         return None
         
-    def addccdatum(self,ccdatum,ow=False):
+    def addcostcovdatum(self,costcovdatum,overwrite=False):
         '''Add cost-coverage data point'''
-        if ccdatum['t'] not in self.ccdata['t']:
-            self.ccdata['t'].append(ccdatum['t'])
-            self.ccdata['cost'].append(ccdatum['cost'])
-            self.ccdata['coverage'].append(ccdatum['coverage'])
-            print('\nAdded cc data "%s" to program: "%s". \nCC data for this program are: %s' % (ccdatum, self.name, self.ccdata))
+        if costcovdatum['t'] not in self.costcovdata['t']:
+            self.costcovdata['t'].append(costcovdatum['t'])
+            self.costcovdata['cost'].append(costcovdatum['cost'])
+            self.costcovdata['coverage'].append(costcovdatum['coverage'])
+            print('\nAdded cc data "%s" to program: "%s". \nCC data for this program are: %s' % (costcovdatum, self.name, self.costcovdata))
         else:
-            if ow:
-                ind = self.ccdata['t'].index(int(ccdatum['t']))
-                oldccdatum = {'t':self.ccdata['t'][ind],'cost':self.ccdata['cost'][ind],'coverage':self.ccdata['coverage'][ind]}
-                self.ccdata['t'][ind] = ccdatum['t']
-                self.ccdata['cost'][ind] = ccdatum['cost']
-                self.ccdata['coverage'][ind] = ccdatum['coverage']
-                newccdatum = {'t':self.ccdata['t'][ind],'cost':self.ccdata['cost'][ind],'coverage':self.ccdata['coverage'][ind]}
-                print('\nModified cc data from "%s" to "%s" for program: "%s". \nCC data for this program are: %s' % (oldccdatum, newccdatum, self.name, self.ccdata))
+            if overwrite:
+                ind = self.costcovdata['t'].index(int(costcovdatum['t']))
+                oldcostcovdatum = {'t':self.costcovdata['t'][ind],'cost':self.costcovdata['cost'][ind],'coverage':self.costcovdata['coverage'][ind]}
+                self.costcovdata['t'][ind] = costcovdatum['t']
+                self.costcovdata['cost'][ind] = costcovdatum['cost']
+                self.costcovdata['coverage'][ind] = costcovdatum['coverage']
+                newcostcovdatum = {'t':self.costcovdata['t'][ind],'cost':self.costcovdata['cost'][ind],'coverage':self.costcovdata['coverage'][ind]}
+                print('\nModified cc data from "%s" to "%s" for program: "%s". \nCC data for this program are: %s' % (oldcostcovdatum, newcostcovdatum, self.name, self.costcovdata))
             else:
-                raise Exception('You have already entered cost and/or coverage data for the year %s .' % ccdatum['t'])
+                raise Exception('You have already entered cost and/or coverage data for the year %s .' % costcovdatum['t'])
 
-    def rmccdatum(self,year):
+    def rmcostcovdatum(self,year):
         '''Remove cost-coverage data point. The point to be removed can be specified by year (int or float).'''
-        if int(year) in self.ccdata['t']:
-            self.ccdata['cost'].pop(self.ccdata['t'].index(int(year)))
-            self.ccdata['coverage'].pop(self.ccdata['t'].index(int(year)))
-            self.ccdata['t'].pop(self.ccdata['t'].index(int(year)))
-            print('\nRemoved cc data in year "%s" from program: "%s". \nCC data for this program are: %s' % (year, self.name, self.ccdata))
+        if int(year) in self.costcovdata['t']:
+            self.costcovdata['cost'].pop(self.costcovdata['t'].index(int(year)))
+            self.costcovdata['coverage'].pop(self.costcovdata['t'].index(int(year)))
+            self.costcovdata['t'].pop(self.costcovdata['t'].index(int(year)))
+            print('\nRemoved cc data in year "%s" from program: "%s". \nCC data for this program are: %s' % (year, self.name, self.costcovdata))
         else:
-            raise Exception('You have asked to remove data for the year %s, but no data was added for that year. Cost coverage data are: %s' % (year, self.ccdata))
+            raise Exception('You have asked to remove data for the year %s, but no data was added for that year. Cost coverage data are: %s' % (year, self.costcovdata))
 
     def getcoverage(self,t,popsize,x):
         '''Returns coverage in a given year for a given spending amount. Currently assumes coverage is a proportion.'''
@@ -206,7 +213,7 @@ class CCOF(object):
         output += '\n'
         return output
 
-    def addccopar(self,ccopar,ow=False):
+    def addccopar(self,ccopar,overwrite=False):
         ''' Add or replace parameters for cost-coverage-outcome functions'''
         if self.ccopars is None:
             self.ccopars = {}
@@ -220,7 +227,7 @@ class CCOF(object):
                 if self.ccopars.get('saturation') and not ccopar['saturation']: self.ccopars[partype].append(1.)
                 print('\nAdded CCO parameters "%s". \nCCO parameters are: %s' % (ccopar, self.ccopars))
             else:
-                if ow:
+                if overwrite:
                     ind = self.ccopars['t'].index(int(ccopar['t']))
                     oldccopar = {}
                     for partype in self.ccopars.keys():
@@ -229,7 +236,7 @@ class CCOF(object):
                     if self.ccopars.get('saturation') and not ccopar['saturation']: self.ccopars[partype].append(1.)
                     print('\nModified CCO parameter from "%s" to "%s". \nCCO parameters for are: %s' % (oldccopar, ccopar, self.ccopars))
                 else:
-                    raise Exception('You have already entered CCO parameters for the year %s. If you want to overwrite it, set ow=True when calling addccopar().' % ccopar['t'])
+                    raise Exception('You have already entered CCO parameters for the year %s. If you want to overwrite it, set overwrite=True when calling addccopar().' % ccopar['t'])
         return None
 
     def rmccopar(self,t):
@@ -244,38 +251,35 @@ class CCOF(object):
                 raise Exception('You have asked to remove CCO parameters for the year %s, but no data was added for that year. Available parameters are: %s' % (t, self.ccopars))            
         return None
 
-    def getccopar(self,t,perturb=False,bounds=None):
+    def getccopar(self,t,randseed=None,bounds=None):
         '''Get a cost-coverage-outcome parameter set for any year in range 1900-2100'''
         from utils import smoothinterp, findinds
         from numpy import array, arange
         from copy import deepcopy
         
-        ccopars_no_t = deepcopy(self.ccopars.keys())
-        ccopars_no_t.pop(ccopars_no_t.index('t'))
-        ccoparlist = sorted(zip(self.ccopars['t'],self.ccopars[ccopars_no_t[0]],self.ccopars[ccopars_no_t[1]]))
-        knowntt = array([tt for (tt,p1,p2) in ccoparlist])
-        knownp1 = array([p1 for (tt,p1,p2) in ccoparlist])
-        knownp2 = array([p2 for (tt,p1,p2) in ccoparlist])
+        if randseed and bounds:
+            raise Exception('Either select bounds or specify randseed')            
+        ccopar = {}
+        ccopars_no_t = deepcopy(self.ccopars)
+        del ccopars_no_t['t']
+        ccopartuples = sorted(zip(self.ccopars['t'], *ccopars_no_t.values()))
+        knownt = array([ccopartuple[0] for ccopartuple in ccopartuples])
         allt = arange(1900,2100)
-        allp1 = smoothinterp(allt, knowntt, knownp1, smoothness=1)
-        allp2 = smoothinterp(allt, knowntt, knownp2, smoothness=1)
+        j = 1
+        for param in ccopars_no_t.keys():
+            knownparam = array([ccopartuple[j] for ccopartuple in ccopartuples])
+            allparams = smoothinterp(allt, knownt, knownparam, smoothness=1)
+            ccopar[param] = allparams[findinds(allt,t)]
+            j += 1
+        ccopar['t'] = t
+        return ccopar
 
-        newp1 = allp1[findinds(allt,t)]
-        newp2 = allp2[findinds(allt,t)]
-        
-        return {'t':t, ccopars_no_t[0]:newp1, ccopars_no_t[1]:newp2}
-
-    def evaluate(self,x,popsize,t,perturb=False,bounds=None):
-        ccopar = self.getccopar(t,perturb,bounds)
+    def evaluate(self,x,popsize,t,randseed=None,bounds=None):
+        ccopar = self.getccopar(t,randseed,bounds)
         return self.function(x,ccopar,popsize)
 
     @abc.abstractmethod # This method must be defined by the derived class
     def function(self,x,ccopar,popsize):
-        pass
-
-    @abc.abstractmethod # This method must be defined by the derived class
-    def defaults(self):
-        # Return default fe_params for this CCOC
         pass
 
 ######## SPECIFIC CCOF IMPLEMENTATIONS
@@ -289,14 +293,7 @@ class Costcov(CCOF):
         s = ccopar['saturation']
         y = (2*s/(1+exp(-2*x/(popsize*s*u)))-s)*popsize
         return y      
-                
-    def defaults(self):
-        ccopars = {}
-        ccopars['saturation'] = [1.]
-        ccopars['unitcost'] = [40]
-        ccopars['t'] = [2015.]
-        return ccopars
-        
+                        
 class Covout(CCOF):
     '''Coverage-outcome objects'''
 
@@ -307,10 +304,3 @@ class Covout(CCOF):
         y = i + (x*g)/popsize
         return y
       
-    def defaults(self):
-        ccopars = {}
-        ccopars['intercept'] = [0.]
-        ccopars['gradient'] = [1.]
-        ccopars['t'] = [2015]
-        return ccopars
-
