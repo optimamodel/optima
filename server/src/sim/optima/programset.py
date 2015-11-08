@@ -324,6 +324,7 @@ class ProgramSet(object):
                     else:
                         raise Exception('Unknown reachability type "%s"',interaction)
                     
+                    # This means that all outcomes must be less than 1...?
                     outcomes[pop][effect] = numpy.minimum(outcomes[pop][effect],numpy.ones(outcomes[pop][effect].shape))
 
         

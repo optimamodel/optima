@@ -162,6 +162,49 @@ class TestCCOCs(unittest.TestCase):
 		ps.specific_reachability_interaction['testpop']['testpar'] = 'random'
 		numpy.testing.assert_allclose(ps.get_outcomes(tvec,budget)['testpop']['testpar'],[0.2918,0.3396,0.483,0.7220])
 
+	def test_overlap_2_progs(self):
+		# Based on 'coverage-outcome calcs.xlsx'
+
+		ps = optima.ProgramSet('Test')
+		cc_inputs = [dict()]
+		cc_inputs[0]['pop'] = 'testpop'
+		cc_inputs[0]['form'] = 'co_cofun'
+		cc_inputs[0]['fe_params'] = [0, 0, 1, 1] # Linear coverage
+		co_inputs = [dict()]
+		co_inputs[0]['pop'] = 'testpop'
+		co_inputs[0]['param'] = 'testpar'
+		co_inputs[0]['form'] = 'co_cofun'
+		co_inputs[0]['fe_params'] = [0.2,0.2,1.2,1.2] 
+		ps.programs.append(optima.Program('P1',deepcopy(cc_inputs),deepcopy(co_inputs)))
+		co_inputs[0]['fe_params'] = [0.2,0.2,1.2,1.2] 
+		ps.programs.append(optima.Program('P2',deepcopy(cc_inputs),deepcopy(co_inputs)))
+
+
+		# Check that the program works
+		p = ps.programs[1] # Pick the second program, for 2x coverage
+
+		# Make the triple program budget
+		tvec = numpy.array([1])
+		budget = numpy.array([0.6,0.7])
+		budget.shape = (2,1)
+		# Test against the spreadsheet with various program 1 coverage levels
+
+		ps.specific_reachability_interaction['testpop']['testpar'] = 'additive'
+		numpy.testing.assert_allclose(ps.get_outcomes(tvec,budget)['testpop']['testpar'],[1])
+
+		# Outcome += c3*max(delta_out1,delta_out2,delta_out3) + (c2-c3)*max(delta_out1,delta_out2) + (c1 -c2)*delta_out1, where c3<c2<c1.
+
+		ps.specific_reachability_interaction['testpop']['testpar'] = 'nested'
+		numpy.testing.assert_allclose(ps.get_outcomes(tvec,budget)['testpop']['testpar'],[0.2+0.6*1+0.1*1])
+
+		a = [0.2+0.6,0.2+0.7]
+		p = [0.6,0.7]
+		parval = 0.2 + a[0]*p[0]*(1-p[1]) + a[1]*p[1]*(1-p[0]) + p[0]*p[1]*a[1] + p[0]*p[1]*numpy.max(a)
+		parval = numpy.min([1.0,parval])
+		ps.specific_reachability_interaction['testpop']['testpar'] = 'random'
+		numpy.testing.assert_allclose(ps.get_outcomes(tvec,budget)['testpop']['testpar'],[parval])
+
+
 	def test_linear_timevarying(self):
 		# Test linear CC and CO functions (for testing modalities)
 		# note that ccocs.linear_timevarying.defaults() returns:
@@ -226,11 +269,10 @@ class TestCCOCs(unittest.TestCase):
 
 if __name__ == '__main__':
 	# Run all tests
-    #unittest.main()
+    unittest.main()
 
     # Only run particular tests
-    suite = unittest.TestSuite()
-    suite.addTest(TestCCOCs('test_overlap_timevarying'))
-    
-    unittest.TextTestRunner().run(suite)
+    #suite = unittest.TestSuite()
+    #suite.addTest(TestCCOCs('test_overlap_2_progs'))
+    #unittest.TextTestRunner().run(suite)
 
