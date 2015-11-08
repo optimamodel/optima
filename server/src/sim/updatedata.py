@@ -71,7 +71,8 @@ def getrealcosts(data):
     Add inflation-adjsted costs to data structure
     '''
 
-    from math import isnan
+    import math
+    import numpy
     from datetime import date
     from utils import smoothinterp, sanitize
 
@@ -91,7 +92,17 @@ def getrealcosts(data):
         if len(cost[prog])==1: # If it's an assumption, assume it's already in current prices
             realcost[prog] = cost[prog]
         else:
-            realcost[prog] = [cost[prog][j]*(cpi[cpibaseyearindex]/cpi[j]) if ~isnan(cost[prog][j]) else float('nan') for j in xrange(len(cost[prog]))]
+            realcost[prog] = [cost[prog][j]*(cpi[cpibaseyearindex]/cpi[j]) if ~math.isnan(cost[prog][j]) else float('nan') for j in xrange(len(cost[prog]))]
+
+        # Origalloc should also use inflation-adjusted figures
+        temp_cost = numpy.array(realcost[prog])[:cpibaseyearindex]
+        temp_cost = temp_cost[~numpy.isnan(temp_cost)]
+        try:
+            temp_cost = temp_cost[-1]
+        except:
+            print('WARNING, no cost data entered for %s' % data['meta']['progs']['short'][prog])
+            temp_cost = 0 # No data entered for this program
+        data['origalloc'][prog] = temp_cost
     
     data['costcov']['realcost'] = realcost
     
