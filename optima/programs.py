@@ -16,10 +16,10 @@ class Programset(object):
         self.name = name
         self.id = uuid()
         self.programs = programs if programs else []
-        self.getpops() if programs else []
-        self.getmodelpars() if programs else []
-        self.getpartypes() if programs else []
-        self.setcostcov() if programs else []
+        self.gettargetpops() if programs else []
+        self.gettargetpars() if programs else []
+        self.gettargetpartypes() if programs else []
+        self.initialize_covout() if programs else []
         self.created = today()
         self.modified = today()
 
@@ -28,7 +28,7 @@ class Programset(object):
         output = '\n'
         output += '       Response name: %s\n'    % self.name
         output += '            Programs: %s\n'    % [prog.name for prog in self.programs]
-        output += 'Targeted populations: %s\n'    % self.pops
+        output += 'Targeted populations: %s\n'    % self.targetpops
         output += '        Date created: %s\n'    % getdate(self.created)
         output += '       Date modified: %s\n'    % getdate(self.modified)
         output += '                  ID: %s\n'    % self.id
@@ -44,154 +44,160 @@ class Programset(object):
         print [prog.name for prog in self.programs]
         raise Exception('Program "%s" not found' % (name))
 
-    def getpops(self):
+    def gettargetpops(self):
         '''Lists populations targeted by some program in the response'''
-        self.pops = []
+        self.targetpops = []
         if self.programs:
             for prog in self.programs:
-                for x in prog.pops: self.pops.append(x)
-            self.pops = list(set(self.pops))
+                for x in prog.targetpops: self.targetpops.append(x)
+            self.targetpops = list(set(self.targetpops))
     
-    def getmodelpars(self):
+    def gettargetpars(self):
         '''Lists model parameters targeted by some program in the response'''
-        self.modelpars = []
+        self.targetpars = []
         if self.programs:
             for prog in self.programs:
-                for x in prog.modelpars: self.modelpars.append(x)
+                for x in prog.targetpars: self.targetpars.append(x)
 
-    def getpartypes(self):
+    def gettargetpartypes(self):
         '''Lists model parameters targeted by some program in the response'''
-        self.partypes = []
+        self.targetpartypes = []
         if self.programs:
             for prog in self.programs:
-                for x in prog.partypes: self.partypes.append(x)
-            self.partypes = list(set(self.partypes))
+                for x in prog.targetpartypes: self.targetpartypes.append(x)
+            self.targetpartypes = list(set(self.targetpartypes))
 
-    def setcostcov(self,ccopars=None):
-        '''Sets up the required coverage-outcome curves'''
-        self.getpops()
+    def initialize_covout(self):
+        '''Initializes the required coverage-outcome curves.
+           Parameters for actually defining these should be added using 
+           R.covout[paramtype][parampop][program].addccopar()'''
+        self.gettargetpops()
         self.covout = {}
-        for partype in self.partypes:
-            self.covout[partype] = {}
-            for pop in self.progs_by_modelpar(partype).keys():
-                self.covout[partype][pop] = {}
-                for prog in self.progs_by_modelpar(partype)[pop]: self.covout[partype][pop][prog.name] = Covout(ccopars)
+        for targetpartype in self.targetpartypes:
+            self.covout[targetpartype] = {}
+            for targetpop in self.progs_by_targetpar(targetpartype).keys():
+                self.covout[targetpartype][targetpop] = {}
+                for prog in self.progs_by_targetpar(targetpartype)[targetpop]: self.covout[targetpartype][targetpop][prog.name] = Covout()
 
-    def addprog(self, prog, overwrite=False):
+    def addprog(self,prog,overwrite=False):
         if prog not in self.programs:
             self.programs.append(prog)
-            self.getpops()
-            self.setcostcov()
+            self.gettargetpops()
+            self.gettargetpartypes
+            self.initialize_covout()
             print('\nAdded program "%s" to programset "%s". \nPrograms in this programset are: %s' % (prog.name, self.name, [p.name for p in self.programs]))
         else:
             raise Exception('Program "%s" is already present in programset "%s".' % (prog.name, self.name))
         
     def optimizable(self):
-        return [True if prog.modelpars else False for prog in self.programs]
+        return [True if prog.targetpars else False for prog in self.programs]
 
-    def progs_by_pop(self, filter_pop=None):
+    def progs_by_targetpop(self, filter_pop=None):
         '''Return a dictionary with:
              keys: all populations targeted by programs
              values: programs targeting that population '''
-        progs_by_pop = defaultdict(list)
+        progs_by_targetpop = defaultdict(list)
         for prog in self.programs:
-            pops_reached = prog.pops if prog.pops else None
-            if pops_reached:
-                for pop in pops_reached:
-                    progs_by_pop[pop].append(prog)
-        if filter_pop: return dict(progs_by_pop)[filter_pop]
-        else: return dict(progs_by_pop)
+            targetpops = prog.targetpops if prog.targetpops else None
+            if targetpops:
+                for targetpop in targetpops:
+                    progs_by_targetpop[targetpop].append(prog)
+        if filter_pop: return dict(progs_by_targetpop)[filter_pop]
+        else: return dict(progs_by_targetpop)
             
-    def progs_by_partype(self, filter_partype=None):
+    def progs_by_targetpartype(self, filter_partype=None):
         '''Return a dictionary with:
              keys: all populations targeted by programs
              values: programs targeting that population '''
-        progs_by_partype = defaultdict(list)
+        progs_by_targetpartype = defaultdict(list)
         for prog in self.programs:
-            partypes_reached = prog.partypes if prog.partypes else None
-            if partypes_reached:
-                for partype in partypes_reached:
-                    progs_by_partype[partype].append(prog)
-        if filter_partype: return dict(progs_by_partype)[filter_partype]
-        else: return dict(progs_by_partype)
+            targetpartypes = prog.targetpartypes if prog.targetpartypes else None
+            if targetpartypes:
+                for targetpartype in targetpartypes :
+                    progs_by_targetpartype[targetpartype].append(prog)
+        if filter_partype: return dict(progs_by_targetpartype)[filter_partype]
+        else: return dict(progs_by_targetpartype)
 
-    def progs_by_modelpar(self, filter_partype=None):
+    def progs_by_targetpar(self, filter_partype=None):
         '''Return a dictionary with:
              keys: all populations targeted by programs
              values: programs targeting that population '''
-        progs_by_modelpar = {}
-        for partype in self.partypes:
-            progs_by_modelpar[partype] = defaultdict(list)
-            for prog in self.progs_by_partype(partype):
-                modelpars_targeted = prog.modelpars if prog.modelpars else None
-                for par in modelpars_targeted:
-                    if partype==par['param']: progs_by_modelpar[partype][par['pop']].append(prog)
-            progs_by_modelpar[partype] = dict(progs_by_modelpar[partype])
-        if filter_partype: return dict(progs_by_modelpar)[filter_partype]
-        else: return dict(progs_by_modelpar)
+        progs_by_targetpar = {}
+        for targetpartype in self.targetpartypes:
+            progs_by_targetpar[targetpartype] = defaultdict(list)
+            for prog in self.progs_by_targetpartype(targetpartype):
+                targetpars = prog.targetpars if prog.targetpars else None
+                for targetpar in targetpars:
+                    if targetpartype==targetpar['param']: progs_by_targetpar[targetpartype][targetpar['pop']].append(prog)
+            progs_by_targetpar[targetpartype] = dict(progs_by_targetpar[targetpartype])
+        if filter_partype: return dict(progs_by_targetpar)[filter_partype]
+        else: return dict(progs_by_targetpar)
             
-    def modelpars_by_prog(self,filter_prog=None):
+    def targetpars_by_prog(self,filter_prog=None):
         '''Return a dictionary with:
              keys: all programs
              values: all model parameters targeted by that program'''
-        modelpars_by_prog = {}
-        progs_by_pop = self.progs_by_pop()
-        for pop in progs_by_pop.keys():
-            for prog in progs_by_pop[pop]:
-                modelpars_by_prog[prog.name] = defaultdict(list)
-                for par in prog.modelpars:
-                    modelpars_by_prog[prog.name][par['pop']].append(par['param'])
-                modelpars_by_prog[prog.name] = dict(modelpars_by_prog[prog.name])
-        if filter_prog: return modelpars_by_prog[filter_prog]
-        else: return modelpars_by_prog
+        targetpars_by_prog = {}
+        progs_by_targetpop = self.progs_by_targetpop()
+        for targetpop in progs_by_targetpop.keys():
+            for prog in progs_by_targetpop[targetpop]:
+                targetpars_by_prog[prog.name] = defaultdict(list)
+                for targetpar in prog.targetpars:
+                    targetpars_by_prog[prog.name][targetpar['pop']].append(targetpar['param'])
+                targetpars_by_prog[prog.name] = dict(targetpars_by_prog[prog.name])
+        if filter_prog: return targetpars_by_prog[filter_prog]
+        else: return targetpars_by_prog
 
-    def get_outcomes(self,tvec,budget,perturb=False):
+    def getcoverage(self,tvec,budget,perturb=False):
+        coverage = dict()
+        return coverage
+        
+    def getoutcomes(self,tvec,budget,perturb=False):
         outcomes = dict()
         return outcomes
 
 class Program(object):
     ''' Defines a single program. 
-    Can be initialised with:
+    Can be initialized with:
     ccpars, e.g. {'t': [2015,2016], 'saturation': [.90,1.], 'unitcost': [40,30]}
     modelpars, e.g. [{'param': 'hivtest', 'pop': 'FSW'}, {'param': 'hivtest', 'pop': 'MSM'}]'''
 
-    def __init__(self,name,modelpars=None,ccopars=None,costcovdata=None,nonhivdalys=0):
+    def __init__(self,name,targetpars=None,targetpops =None,ccopars=None,costcovdata=None,nonhivdalys=0):
         '''Initialize'''
         self.name = name
         self.id = uuid()
-        self.modelpars = modelpars if modelpars else []            
-        self.pops = list(set([x['pop'] for x in modelpars])) if modelpars else []
-        self.partypes = list(set([x['param'] for x in modelpars])) if modelpars else []
-        self.costcov = Costcov(ccopars=ccopars)
+        self.targetpars = targetpars if targetpars else []            
+        self.targetpops = targetpops if targetpops else []
+        self.targetpartypes = list(set([x['param'] for x in targetpars])) if targetpars else []
+        self.costcovfn = Costcov(ccopars=ccopars)
         self.costcovdata = costcovdata if costcovdata else {'t':[],'cost':[],'coverage':[]}
         
     def __repr__(self):
         ''' Print out useful info'''
         output = '\n'
         output += '          Program name: %s\n'    % self.name
-        output += '  Targeted populations: %s\n'    % self.pops 
-        output += '   Targeted parameters: %s\n'    % self.modelpars 
+        output += '  Targeted populations: %s\n'    % self.targetpops 
+        output += '   Targeted parameters: %s\n'    % self.targetpars 
         output += '\n'
         return output
 
-    def addmodelpar(self,modelpar):
+    def addtargetpar(self,targetpar):
         '''Add a model parameter to be targeted by this program'''
-        if modelpar not in self.modelpars:
-            if not modelpar.get('covout'): modelpar['covout'] = Covout()
-            self.modelpars.append(modelpar)
-            self.pops = list(set([x['pop'] for x in self.modelpars]))
-            print('\nAdded model parameter "%s" to the list of model parameters affected by "%s". \nAffected parameters are: %s' % (modelpar, self.name, self.modelpars))
+        if targetpar not in self.targetpars:
+            if not targetpar.get('covout'): targetpar['covout'] = Covout()
+            self.targetpars.append(targetpar)
+            print('\nAdded target parameter "%s" to the list of target parameters affected by "%s". \nAffected parameters are: %s' % (targetpar, self.name, self.targetpars))
         else:
-            raise Exception('The model parameter you are trying to add is already present in the list of model parameters affected by this program:%s.' % self.modelpars)
+            raise Exception('The target parameter you are trying to add is already present in the list of target parameters affected by this program:%s.' % self.targetpars)
         return None
         
-    def rmmodelpar(self,modelpar):
+    def rmtargetpar(self,targetpar):
         '''Remove a model parameter from those targeted by this program'''
-        if modelpar not in self.modelpars:
-            raise Exception('The model parameter you have selected for removal is not in the list of model parameters affected by this program:%s.' % self.modelpars)
+        if targetpar not in self.targetpars:
+            raise Exception('The target parameter you have selected for removal is not in the list of target parameters affected by this program:%s.' % self.targetpars)
         else:
-            self.modelpars.pop(self.modelpars.index(modelpar))
-            print('\nRemoved model parameter "%s" from the list of model parameters affected by "%s". \nAffected parameters are: %s' % (modelpar, self.name, self.modelpars))
+            self.targetpars.pop(self.targetpars.index(targetpar))
+            print('\nRemoved model parameter "%s" from the list of model parameters affected by "%s". \nAffected parameters are: %s' % (targetpar, self.name, self.targetpars))
         return None
         
     def addcostcovdatum(self,costcovdatum,overwrite=False):
@@ -225,7 +231,7 @@ class Program(object):
 
     def getcoverage(self,t,popsize,x):
         '''Returns coverage in a given year for a given spending amount. Currently assumes coverage is a proportion.'''
-        y = self.costcov.evaluate()
+        y = self.costcovfn.evaluate()
         return y      
         
 class CCOF(object):
@@ -246,23 +252,23 @@ class CCOF(object):
         ''' Add or replace parameters for cost-coverage-outcome functions'''
         if self.ccopars is None:
             self.ccopars = {}
-            for partype in ccopar.keys():
-                self.ccopars[partype] = [ccopar[partype]]
-            if ccopar.get('unitcost') and not ccopar['saturation']: self.ccopars[partype].append(1.)
+            for ccopartype in ccopar.keys():
+                self.ccopars[ccopartype] = [ccopar[ccopartype]]
+            if ccopar.get('unitcost') and not ccopar['saturation']: self.ccopars[ccopartype].append(1.)
         else:
             if ccopar['t'] not in self.ccopars['t']:
-                for partype in self.ccopars.keys():
-                    self.ccopars[partype].append(ccopar[partype])
-                if self.ccopars.get('saturation') and not ccopar['saturation']: self.ccopars[partype].append(1.)
+                for ccopartype in self.ccopars.keys():
+                    self.ccopars[ccopartype].append(ccopar[ccopartype])
+                if self.ccopars.get('saturation') and not ccopar['saturation']: self.ccopars[ccopartype].append(1.)
                 print('\nAdded CCO parameters "%s". \nCCO parameters are: %s' % (ccopar, self.ccopars))
             else:
                 if overwrite:
                     ind = self.ccopars['t'].index(int(ccopar['t']))
                     oldccopar = {}
-                    for partype in self.ccopars.keys():
-                        oldccopar[partype] = self.ccopars[partype][ind]
-                        self.ccopars[partype][ind] = ccopar[partype]
-                    if self.ccopars.get('saturation') and not ccopar['saturation']: self.ccopars[partype].append(1.)
+                    for ccopartype in self.ccopars.keys():
+                        oldccopar[ccopartype] = self.ccopars[ccopartype][ind]
+                        self.ccopars[ccopartype][ind] = ccopar[ccopartype]
+                    if self.ccopars.get('saturation') and not ccopar['saturation']: self.ccopars[ccopartype].append(1.)
                     print('\nModified CCO parameter from "%s" to "%s". \nCCO parameters for are: %s' % (oldccopar, ccopar, self.ccopars))
                 else:
                     raise Exception('You have already entered CCO parameters for the year %s. If you want to overwrite it, set overwrite=True when calling addccopar().' % ccopar['t'])
@@ -273,8 +279,8 @@ class CCOF(object):
         if isinstance(t,int) or isinstance(t,float):
             if int(t) in self.ccopars['t']:
                 ind = self.ccopars['t'].index(int(t))
-                for partype in self.ccopars.keys():
-                    self.ccopars[partype].pop(ind)
+                for ccopartype in self.ccopars.keys():
+                    self.ccopars[ccopartype].pop(ind)
                 print('\nRemoved CCO parameters in year "%s". \nCCO parameters are: %s' % (t, self.ccopars))
             else:
                 raise Exception('You have asked to remove CCO parameters for the year %s, but no data was added for that year. Available parameters are: %s' % (t, self.ccopars))            
