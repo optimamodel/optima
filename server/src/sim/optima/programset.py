@@ -297,7 +297,7 @@ class ProgramSet(object):
                         # Iterate over overlap levels
                         for i in xrange(2,len(proglist)): # Iterate over numbers of overlapping programs
                             for j in xrange(0,len(proglist)-1): # Iterate over the index of the first program in the sum
-                                outcomes[pop][effect] += overlap_calc([j],len(proglist)-1)
+                                outcomes[pop][effect] += overlap_calc([j],i)
 
                         # All programs together
                         outcomes[pop][effect] += numpy.prod(this_coverage,0)*numpy.max(delta_out,0)

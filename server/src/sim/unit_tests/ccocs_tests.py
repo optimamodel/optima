@@ -60,7 +60,7 @@ class TestCCOCs(unittest.TestCase):
 		self.assertEqual(co.evaluate(1.0),co2.evaluate(1.0)) 
 		self.assertEqual(co.evaluate(2.0),co2.evaluate(2.0)) 
 
-	def test_overlap_1(self):
+	def test_overlap(self):
 		# Make a programset for testing
 		ps = optima.ProgramSet('Test')
 		cc_inputs = [dict()]
@@ -124,7 +124,8 @@ class TestCCOCs(unittest.TestCase):
 		numpy.testing.assert_allclose(ps.get_outcomes(tvec_1d,budget_1d)['testpop']['testpar'],[0.8])
 		numpy.testing.assert_allclose(ps.get_outcomes(tvec_2d,budget_2d)['testpop']['testpar'],[0.8,0.8])
 
-	def test_overlap_2(self):
+	def test_overlap_3_progs(self):
+		# Test overlap with 3 programs
 		# Based on 'coverage-outcome calcs.xlsx'
 
 		ps = optima.ProgramSet('Test')
@@ -164,6 +165,7 @@ class TestCCOCs(unittest.TestCase):
 
 	def test_overlap_2_progs(self):
 		# Based on 'coverage-outcome calcs.xlsx'
+		# Test overlap with 2 programs
 
 		ps = optima.ProgramSet('Test')
 		cc_inputs = [dict()]
@@ -206,12 +208,7 @@ class TestCCOCs(unittest.TestCase):
 
 
 	def test_linear_timevarying(self):
-		# Test linear CC and CO functions (for testing modalities)
-		# note that ccocs.linear_timevarying.defaults() returns:
-		# fe_params = dict()
-		# fe_params['time'] = [2015,2030] # t-values corresponding to unit cost
-		# fe_params['unit_cost'] = [1,2] # Unit cost - gradient of the CCOC
-		# fe_params['baseline'] = [0,0] # Parameter value with zero coverage
+		# Test basic timevarying functionality
 
 		coverage_outcome = ccocs.linear_timevarying()
 
@@ -231,7 +228,7 @@ class TestCCOCs(unittest.TestCase):
 		self.assertAlmostEqual(coverage_outcome.evaluate(1.0,2020),1*(4.0/3),places=7) 
 
 	def test_overlap_timevarying(self):
-		# Based on 'coverage-outcome calcs.xlsx'
+		# Test 3 overlapping programs at different times, where 2 programs are timevarying
 
 		ps = optima.ProgramSet('Test')
 		cc_inputs = [dict()]
@@ -269,8 +266,6 @@ class TestCCOCs(unittest.TestCase):
 
 
 	def test_overlap_4_progs(self):
-		# Based on 'coverage-outcome calcs.xlsx'
-
 		ps = optima.ProgramSet('Test')
 		cc_inputs = [dict()]
 		cc_inputs[0]['pop'] = 'testpop'
@@ -288,6 +283,59 @@ class TestCCOCs(unittest.TestCase):
 		ps.programs.append(optima.Program('P3',deepcopy(cc_inputs),deepcopy(co_inputs)))
 		co_inputs[0]['fe_params'] = [0.1,0.1, 0.5, 0.5] 
 		ps.programs.append(optima.Program('P4',deepcopy(cc_inputs),deepcopy(co_inputs)))
+
+		tvec = numpy.array([2010,2020])
+		budget = numpy.array(([0.6,0.5,0.4,0.3],[0.6,0.5,0.4,0.3]))
+		budget.shape = (4,2)
+
+		# The coverages are
+		# p = [0.6,0.5,0.4,0.3]
+		# The outcomes are
+		# A = 0.1 + [0.6*0.1,0.5*0.2,0.4*0.3,0.3*0.4] = 0.1600 0.2000 0.2200 0.2200
+		# The deltas are
+		# delta_out = [0.1,0.2,0.3,0.4]
+
+		# Test against the spreadsheet with various program 1 coverage levels
+		# Additive should return 0.1 + sum([0.6*0.1,0.5*0.2,0.4*0.3,0.3*0.4]) = 0.5
+		ps.specific_reachability_interaction['testpop']['testpar'] = 'additive'
+		numpy.testing.assert_allclose(ps.get_outcomes(tvec,budget)['testpop']['testpar'],[0.5])
+
+		# Nested should return
+		# 0.1 + 0.3*0.4 + 0.1*0.3 + 0.1*0.2 + 0.1*0.1 = 0.28
+		# Outcome += c3*max(delta_out1,delta_out2,delta_out3) + (c2-c3)*max(delta_out1,delta_out2) + (c1 -c2)*delta_out1, where c3<c2<c1.
+		ps.specific_reachability_interaction['testpop']['testpar'] = 'nested'
+		numpy.testing.assert_allclose(ps.get_outcomes(tvec,budget)['testpop']['testpar'],[0.28])
+
+		# Random should return
+		# Baseline = 0.1
+		# Single = 0.1*0.6*(1-0.5)*(1-0.4)*(1-0.3) + 0.2*0.5*(1-0.6)*(1-0.4)*(1-0.3) + 0.3*0.4*(1-0.6)*(1-0.5)*(1-0.3) + 0.4*0.3*(1-0.6)*(1-0.5)*(1-0.4) = 0.0606
+		# Two = 0.6*(0.5*(0.2) + 0.4*(0.3) + 0.3*(0.4)) + 0.5*(0.4*(0.3) + 0.3*(0.4)) + 0.4*(0.3*(0.4) ) = 0.372
+		# Three = 0.6*(0.5*(0.4*0.3) + 0.4*(0.3*0.4) + 0.5*(0.3*0.4)) + 0.5*(0.4*(0.3*0.4) + 0.3*(0) ) + 0.4*(0.3*(0)) =  0.1248
+		# Four = 0.6*0.5*0.4*0.3*0.4 = 0.0144
+		# Outcome = 0.1 + 0.0606 + 0.372 + 0.1248 + 0.0144 = 0.4763
+		ps.specific_reachability_interaction['testpop']['testpar'] = 'random'
+		numpy.testing.assert_allclose(ps.get_outcomes(tvec,budget)['testpop']['testpar'],[0.6718])
+
+	def test_overlap_4_progs_timevarying(self):
+		# Based on 'coverage-outcome calcs.xlsx'
+		ps = optima.ProgramSet('Test')
+		cc_inputs = [dict()]
+		cc_inputs[0]['pop'] = 'testpop'
+		cc_inputs[0]['form'] = 'co_cofun'
+		cc_inputs[0]['fe_params'] = [0, 0, 1, 1] # Linear coverage
+		co_inputs = [dict()]
+		co_inputs[0]['pop'] = 'testpop'
+		co_inputs[0]['param'] = 'testpar'
+		co_inputs[0]['form'] = 'linear_timevarying'
+		co_inputs[0]['fe_params'] = {'time':[2010,2030],'unit_cost':[0.1,0.1*3],'baseline':[0.1,0.3]}
+		ps.programs.append(optima.Program('P1',deepcopy(cc_inputs),deepcopy(co_inputs)))
+		co_inputs[0]['fe_params'] = {'time':[2010,2030],'unit_cost':[0.2,0.2*3],'baseline':[0.1,0.3]}
+		ps.programs.append(optima.Program('P2',deepcopy(cc_inputs),deepcopy(co_inputs)))
+		co_inputs[0]['fe_params'] = {'time':[2010,2030],'unit_cost':[0.3,0.3*3],'baseline':[0.1,0.3]} 
+		ps.programs.append(optima.Program('P3',deepcopy(cc_inputs),deepcopy(co_inputs)))
+		co_inputs[0]['fe_params'] = {'time':[2010,2030],'unit_cost':[0.4,0.4*3],'baseline':[0.1,0.3]} 
+		ps.programs.append(optima.Program('P3',deepcopy(cc_inputs),deepcopy(co_inputs)))
+		
 
 		# Make the triple program budget
 		tvec = numpy.array([1])
@@ -321,8 +369,6 @@ class TestCCOCs(unittest.TestCase):
 		# Outcome = 0.1 + 0.0606 + 0.372 + 0.1248 + 0.0144 = 0.4763
 		ps.specific_reachability_interaction['testpop']['testpar'] = 'random'
 		numpy.testing.assert_allclose(ps.get_outcomes(tvec,budget)['testpop']['testpar'],[0.6718])
-
-
 
 if __name__ == '__main__':
 	# Run all tests
