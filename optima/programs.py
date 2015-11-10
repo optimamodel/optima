@@ -17,6 +17,8 @@ class Programset(object):
         self.id = uuid()
         self.programs = programs if programs else []
         self.getpops() if programs else []
+        self.getmodelpars() if programs else []
+        self.getpartypes() if programs else []
         self.setcostcov() if programs else []
         self.created = today()
         self.modified = today()
@@ -50,15 +52,30 @@ class Programset(object):
                 for x in prog.pops: self.pops.append(x)
             self.pops = list(set(self.pops))
     
-    def setcostcov(self,ccopars):
+    def getmodelpars(self):
+        '''Lists model parameters targeted by some program in the response'''
+        self.modelpars = []
+        if self.programs:
+            for prog in self.programs:
+                for x in prog.modelpars: self.modelpars.append(x)
+
+    def getpartypes(self):
+        '''Lists model parameters targeted by some program in the response'''
+        self.partypes = []
+        if self.programs:
+            for prog in self.programs:
+                for x in prog.partypes: self.partypes.append(x)
+            self.partypes = list(set(self.partypes))
+
+    def setcostcov(self,ccopars=None):
         '''Sets up the required coverage-outcome curves'''
         self.getpops()
         self.covout = {}
-        for pop in self.pops:
-            self.covout[pop] = {}
-            for modelpar in self.progs_by_modelpar(pop).keys():
-                self.covout[pop][modelpar] = {}
-                for prog in self.progs_by_modelpar(pop)[modelpar]: self.covout[pop][modelpar][prog.name] = Covout(ccopars)
+        for partype in self.partypes:
+            self.covout[partype] = {}
+            for pop in self.progs_by_modelpar(partype).keys():
+                self.covout[partype][pop] = {}
+                for prog in self.progs_by_modelpar(partype)[pop]: self.covout[partype][pop][prog.name] = Covout(ccopars)
 
     def addprog(self, prog, overwrite=False):
         if prog not in self.programs:
@@ -85,21 +102,34 @@ class Programset(object):
         if filter_pop: return dict(progs_by_pop)[filter_pop]
         else: return dict(progs_by_pop)
             
-    def progs_by_modelpar(self,filter_pop=None):
+    def progs_by_partype(self, filter_partype=None):
         '''Return a dictionary with:
-             keys: all parameters targeted by programs
-             values: programs targeting that parameter '''
+             keys: all populations targeted by programs
+             values: programs targeting that population '''
+        progs_by_partype = defaultdict(list)
+        for prog in self.programs:
+            partypes_reached = prog.partypes if prog.partypes else None
+            if partypes_reached:
+                for partype in partypes_reached:
+                    progs_by_partype[partype].append(prog)
+        if filter_partype: return dict(progs_by_partype)[filter_partype]
+        else: return dict(progs_by_partype)
+
+    def progs_by_modelpar(self, filter_partype=None):
+        '''Return a dictionary with:
+             keys: all populations targeted by programs
+             values: programs targeting that population '''
         progs_by_modelpar = {}
-        progs_by_pop = self.progs_by_pop()
-        for pop in progs_by_pop.keys():
-            progs_by_modelpar[pop] = defaultdict(list)
-            for prog in progs_by_pop[pop]:
-                for par in prog.modelpars:
-                    if pop==par['pop']: progs_by_modelpar[pop][par['param']].append(prog)
-            progs_by_modelpar[pop] = dict(progs_by_modelpar[pop])
-        if filter_pop: return progs_by_modelpar[filter_pop]
-        else: return progs_by_modelpar
-        
+        for partype in self.partypes:
+            progs_by_modelpar[partype] = defaultdict(list)
+            for prog in self.progs_by_partype(partype):
+                modelpars_targeted = prog.modelpars if prog.modelpars else None
+                for par in modelpars_targeted:
+                    if partype==par['param']: progs_by_modelpar[partype][par['pop']].append(prog)
+            progs_by_modelpar[partype] = dict(progs_by_modelpar[partype])
+        if filter_partype: return dict(progs_by_modelpar)[filter_partype]
+        else: return dict(progs_by_modelpar)
+            
     def modelpars_by_prog(self,filter_prog=None):
         '''Return a dictionary with:
              keys: all programs
@@ -125,13 +155,14 @@ class Program(object):
     ccpars, e.g. {'t': [2015,2016], 'saturation': [.90,1.], 'unitcost': [40,30]}
     modelpars, e.g. [{'param': 'hivtest', 'pop': 'FSW'}, {'param': 'hivtest', 'pop': 'MSM'}]'''
 
-    def __init__(self,name,modelpars=None,ccpars=None,costcovdata=None,nonhivdalys=0):
+    def __init__(self,name,modelpars=None,ccopars=None,costcovdata=None,nonhivdalys=0):
         '''Initialize'''
         self.name = name
-        self.id = uuid4()
+        self.id = uuid()
         self.modelpars = modelpars if modelpars else []            
         self.pops = list(set([x['pop'] for x in modelpars])) if modelpars else []
-        self.costcov = Costcov(ccopars=ccpars)
+        self.partypes = list(set([x['param'] for x in modelpars])) if modelpars else []
+        self.costcov = Costcov(ccopars=ccopars)
         self.costcovdata = costcovdata if costcovdata else {'t':[],'cost':[],'coverage':[]}
         
     def __repr__(self):
@@ -201,9 +232,7 @@ class CCOF(object):
     '''Cost-coverage, coverage-outcome and cost-outcome objects'''
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self,ccopars=None,usedefaults=True):
-        if ccopars is None and usedefaults:
-            ccopars = self.defaults()
+    def __init__(self,ccopars=None):
         self.ccopars = ccopars
 
     def __repr__(self):
@@ -257,6 +286,8 @@ class CCOF(object):
         from numpy import array, arange
         from copy import deepcopy
         
+        if not self.ccopars:
+            raise Exception('Need parameters for at least one year before function can be evaluated.')            
         if randseed and bounds:
             raise Exception('Either select bounds or specify randseed')            
         ccopar = {}
@@ -279,6 +310,10 @@ class CCOF(object):
         return self.function(x,ccopar,popsize)
 
     @abc.abstractmethod # This method must be defined by the derived class
+    def emptypars(self):
+        pass
+
+    @abc.abstractmethod # This method must be defined by the derived class
     def function(self,x,ccopar,popsize):
         pass
 
@@ -293,14 +328,30 @@ class Costcov(CCOF):
         s = ccopar['saturation']
         y = (2*s/(1+exp(-2*x/(popsize*s*u)))-s)*popsize
         return y      
-                        
+
+    def emptypars(self):
+        ccopars = {}
+        ccopars['saturation'] = None
+        ccopars['unitcost'] = None
+        ccopars['t'] = None
+        return ccopars                        
+
 class Covout(CCOF):
     '''Coverage-outcome objects'''
 
     def function(self,x,ccopar,popsize):
         '''Returns coverage in a given year for a given spending amount. Currently assumes coverage is a proportion.'''
+        from numpy import array
         i = ccopar['intercept'][0]
         g = ccopar['gradient'][0]
         y = i + (x*g)/popsize
-        return y
+        if isinstance(y,float): return min(y,1)
+        else: return array([min(j,1) for j in y]) 
       
+    def emptypars(self):
+        ccopars = {}
+        ccopars['intercept'] = None
+        ccopars['gradient'] = None
+        ccopars['t'] = None
+        return ccopars                        
+
