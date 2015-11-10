@@ -267,12 +267,69 @@ class TestCCOCs(unittest.TestCase):
 		ps.specific_reachability_interaction['testpop']['testpar'] = 'random'
 		numpy.testing.assert_allclose(ps.get_outcomes(tvec,budget)['testpop']['testpar'],[0.2918,0.3364,0.468,0.684])
 
+
+	def test_overlap_4_progs(self):
+		# Based on 'coverage-outcome calcs.xlsx'
+
+		ps = optima.ProgramSet('Test')
+		cc_inputs = [dict()]
+		cc_inputs[0]['pop'] = 'testpop'
+		cc_inputs[0]['form'] = 'co_cofun'
+		cc_inputs[0]['fe_params'] = [0, 0, 1, 1] # Linear coverage
+		co_inputs = [dict()]
+		co_inputs[0]['pop'] = 'testpop'
+		co_inputs[0]['param'] = 'testpar'
+		co_inputs[0]['form'] = 'co_cofun'
+		co_inputs[0]['fe_params'] = [0.1,0.1, 0.2, 0.2] 
+		ps.programs.append(optima.Program('P1',deepcopy(cc_inputs),deepcopy(co_inputs)))
+		co_inputs[0]['fe_params'] = [0.1,0.1, 0.3, 0.3] 
+		ps.programs.append(optima.Program('P2',deepcopy(cc_inputs),deepcopy(co_inputs)))
+		co_inputs[0]['fe_params'] = [0.1,0.1, 0.4, 0.4] 
+		ps.programs.append(optima.Program('P3',deepcopy(cc_inputs),deepcopy(co_inputs)))
+		co_inputs[0]['fe_params'] = [0.1,0.1, 0.5, 0.5] 
+		ps.programs.append(optima.Program('P4',deepcopy(cc_inputs),deepcopy(co_inputs)))
+
+		# Make the triple program budget
+		tvec = numpy.array([1])
+		budget = numpy.array(([0.6,0.5,0.4,0.3]))
+		budget.shape = (4,1)
+
+		# The coverages are
+		# p = [0.6,0.5,0.4,0.3]
+		# The outcomes are
+		# A = 0.1 + [0.6*0.1,0.5*0.2,0.4*0.3,0.3*0.4] = 0.1600 0.2000 0.2200 0.2200
+		# The deltas are
+		# delta_out = [0.1,0.2,0.3,0.4]
+
+		# Test against the spreadsheet with various program 1 coverage levels
+		# Additive should return 0.1 + sum([0.6*0.1,0.5*0.2,0.4*0.3,0.3*0.4]) = 0.5
+		ps.specific_reachability_interaction['testpop']['testpar'] = 'additive'
+		numpy.testing.assert_allclose(ps.get_outcomes(tvec,budget)['testpop']['testpar'],[0.5])
+
+		# Nested should return
+		# 0.1 + 0.3*0.4 + 0.1*0.3 + 0.1*0.2 + 0.1*0.1 = 0.28
+		# Outcome += c3*max(delta_out1,delta_out2,delta_out3) + (c2-c3)*max(delta_out1,delta_out2) + (c1 -c2)*delta_out1, where c3<c2<c1.
+		ps.specific_reachability_interaction['testpop']['testpar'] = 'nested'
+		numpy.testing.assert_allclose(ps.get_outcomes(tvec,budget)['testpop']['testpar'],[0.28])
+
+		# Random should return
+		# Baseline = 0.1
+		# Single = 0.1*0.6*(1-0.5)*(1-0.4)*(1-0.3) + 0.2*0.5*(1-0.6)*(1-0.4)*(1-0.3) + 0.3*0.4*(1-0.6)*(1-0.5)*(1-0.3) + 0.4*0.3*(1-0.6)*(1-0.5)*(1-0.4) = 0.0606
+		# Two = 0.6*(0.5*(0.2) + 0.4*(0.3) + 0.3*(0.4)) + 0.5*(0.4*(0.3) + 0.3*(0.4)) + 0.4*(0.3*(0.4) ) = 0.372
+		# Three = 0.6*(0.5*(0.4*0.3) + 0.4*(0.3*0.4) + 0.5*(0.3*0.4)) + 0.5*(0.4*(0.3*0.4) + 0.3*(0) ) + 0.4*(0.3*(0)) =  0.1248
+		# Four = 0.6*0.5*0.4*0.3*0.4 = 0.0144
+		# Outcome = 0.1 + 0.0606 + 0.372 + 0.1248 + 0.0144 = 0.4763
+		ps.specific_reachability_interaction['testpop']['testpar'] = 'random'
+		numpy.testing.assert_allclose(ps.get_outcomes(tvec,budget)['testpop']['testpar'],[0.6718])
+
+
+
 if __name__ == '__main__':
 	# Run all tests
-    unittest.main()
+    #unittest.main()
 
     # Only run particular tests
-    #suite = unittest.TestSuite()
-    #suite.addTest(TestCCOCs('test_overlap_2_progs'))
-    #unittest.TextTestRunner().run(suite)
+    suite = unittest.TestSuite()
+    suite.addTest(TestCCOCs('test_overlap_4_progs'))
+    unittest.TextTestRunner().run(suite)
 
