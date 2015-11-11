@@ -56,6 +56,7 @@ def savedata(filename, data, update=True, verbose=2):
 
     wfid = open(filename,'wb')
     dump(tojson(data), wfid)
+    wfid.close()
     printv('..created new file', 3, verbose)
     printv(' ...done saving data at %s.' % filename, 2, verbose)
     return filename
@@ -74,7 +75,7 @@ def loaddata(filename, verbose=2):
     import json
     rfid = open(filename,'rb')
     data = fromjson(json.load(rfid))
-
+    rfid.close()
     printv('...done loading data.', 2, verbose)
     return data
 

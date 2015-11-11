@@ -15,6 +15,8 @@ from model import model
 from makemodelpars import makemodelpars
 from quantile import quantile
 from optimize import saveoptimization, defaultobjectives, defaultconstraints, partialupdateM
+from getcurrentbudget import getcoverage
+from optimize import optimize
 
 
 
@@ -30,8 +32,21 @@ def runmodelalloc(D, optimparams, parindices, randseed, rerunfinancial=False, ve
 
     thisalloc = timevarying(optimparams, ntimepm=1, nprogs=len(optimparams), tvec=D['opt']['partvec'], totalspend=sum(optimparams)) 
     
-    newD, newcov, newnonhivdalysaverted = getcurrentbudget(newD, thisalloc, randseed=randseed) # Get cost-outcome curves with uncertainty
+    newD = getcurrentbudget(newD, thisalloc, randseed=randseed) # Get cost-outcome curves with uncertainty
+#    newD, newcov, newnonhivdalysaverted = getcurrentbudget(newD, thisalloc, randseed=randseed) # Get cost-outcome curves with uncertainty
     newM = makemodelpars(newD['P'], newD['opt'], withwhat='c', verbose=0) # Don't print out
+    
+    # Hideous hack for ART to use linear unit cost
+    try:
+        from utils import sanitize
+        artind = D['data']['meta']['progs']['short'].index('ART')
+        currcost = sanitize(D['data']['costcov']['cost'][artind])[-1]
+        currcov = sanitize(D['data']['costcov']['cov'][artind])[-1]
+        unitcost = currcost/currcov
+        newM['tx1'].flat[parindices] = thisalloc[artind]/unitcost
+    except:
+        print('Attempt to calculate ART coverage failed for an unknown reason')
+    
     newD['M'] = partialupdateM(D['M'], newM, parindices)
     S = model(newD['G'], newD['M'], newD['F'][0], newD['opt'], verbose=verbose)
     R = makeresults(D, allsims=[S], rerunfinancial=rerunfinancial, verbose=0)
@@ -47,14 +62,20 @@ def runmodelalloc(D, optimparams, parindices, randseed, rerunfinancial=False, ve
 def objectivecalc(optimparams, options):
     """ Calculate the objective function """
 
+    from optimize import constrainbudget
+    preconparams = optimparams
+    optimparams = constrainbudget(preconparams, total=sum(preconparams), limits=options['fundingchanges']['total'])
 
     R = runmodelalloc(options['D'], optimparams, options['parindices'], options['randseed'], rerunfinancial=False) # Actually run
     
     targetsmet = False
     for key in options['targets']:
         if options['targets'][key]['use']: # Don't bother unless it's actually used
-            orig = R[key]['tot'][0][options['outindices'][0]]
-            new = R[key]['tot'][0][options['outindices'][-1]]
+            key1 = key
+            if key == 'deaths': key1 = 'death'   # Horrible hack to handle bug on the front-end that does not seem to be tracked.
+            if key == 'dalys': key1 = 'daly'            
+            orig = R[key1]['tot'][0][options['outindices'][0]]
+            new = R[key1]['tot'][0][options['outindices'][-1]]
             if options['targets'][key]['by_active']:
                 if new < orig*options['targets'][key]['by']:
                     targetsmet = True
@@ -87,6 +108,8 @@ def minimizemoney(D, objectives=None, constraints=None, maxiters=1000, timelimit
 
     # Do this so if e.g. /100 won't have problems
     objectives = deepcopy(objectives)
+#    if objectives['money']['objectives']['death']['use']: objectives['outcome']['death'] = True     # Setup death outcome optimisation if need be.
+#    if objectives['money']['objectives']['dalys']['use']: objectives['outcome']['daly'] = True      # Setup daly outcome optimisation if need be.
     constraints = deepcopy(constraints)
     ntimepm=1 + int(objectives['timevarying'])*int(objectives['funding']=='constant') # Either 1 or 2, but only if funding==constant
 
@@ -102,8 +125,8 @@ def minimizemoney(D, objectives=None, constraints=None, maxiters=1000, timelimit
     fundingchanges = dict()
     keys1 = ['year','total']
     keys2 = ['dec','inc']
-    abslims = {'dec':0, 'inc':1e9}
-    rellims = {'dec':-1e9, 'inc':1e9}
+    abslims = {'dec':0, 'inc':1e18}
+    rellims = {'dec':-1e18, 'inc':1e18}
     smallchanges = {'dec':1.0, 'inc':1.0} # WARNING BIZARRE
     for key1 in keys1:
         fundingchanges[key1] = dict()
@@ -137,6 +160,7 @@ def minimizemoney(D, objectives=None, constraints=None, maxiters=1000, timelimit
         
     # Concatenate parameters to be optimised
     optimparams = deepcopy(origalloc)
+    baseorigalloc = deepcopy(origalloc)
         
     
     
@@ -168,29 +192,60 @@ def minimizemoney(D, objectives=None, constraints=None, maxiters=1000, timelimit
             
             options['randseed'] = s
             
-            # First, see if it meets targets already
-            print('========== Checking if current allocation meets targets ==========')
-            targetsmet, optparams = objectivecalc(optimparams, options)
-            if targetsmet:
-                print('DONE: Current allocation meets targets!')
-                break
+            # Run current allocation for debugging purposes, as this may affect 'options' persistently somehow...
+            print('========== Running current allocation to set up baseline ==========')
+            targetsmet, optparams = objectivecalc(optimparams, options)            
             
-            # Now try infinite money
+            # Try infinite money
             print('========== Checking if infinite allocation meets targets ==========')
-            targetsmet, optparams = objectivecalc(array(optimparams)*1e9, options)
+            targetsmet, optparams = objectivecalc(array(optimparams)*1e9+1e9, options)
             if not(targetsmet):
                 print("DONE: Infinite allocation can't meet targets!")
                 break
             
+            # Try zero money
+            print('========== Checking if zero allocation meets targets ==========')
+            targetsmet, optparams = objectivecalc(array(fundingchanges['total']['dec'])+1e-9, options)
+            if targetsmet:
+                print("DONE: Even zero allocation meets targets!")
+                break
+            
+             # Sneak in an optimisation to begin with so that our baseline multiplied by factors isn't horrible.
+            print('========== Initial optimization ==========')            
+            tempD = deepcopy(D)
+            tempD['data']['origalloc'] = optimparams
+            newD = optimize(tempD, objectives=None, constraints=constraints, maxiters=max(maxiters,20), timelimit=max(timelimit,100), verbose=5, name='tmp_minimizemoney', stoppingfunc = None, mmorigalloc = baseorigalloc) # Run default optimization
+            optimparams = newD['debugresult']['allocarr'][1][0]  # Copy optimization parameters out of newD
+            print optimparams
+            
+            # First, see if it meets targets already
+            print('========== Checking if current allocation meets targets ==========')
+            targetsmet, optparams = objectivecalc(optimparams, options)
+            
+            # Halve funding if targets are already met...
+            print('========== Halve funding until floor is reached ==========')
+            fundingfactor = 1.0
+            while targetsmet:
+                fundingfactor /= 2
+                targetsmet, optparams = objectivecalc(array(optimparams)*fundingfactor, options)
+                print('Current funding factor: %f' % fundingfactor)
             
             # Keep doubling funding till targets are met...
             print('========== Doubling funding until ceiling is reached ==========')
-            fundingfactor = 1.0
-            targetsmet = False
             while not(targetsmet):
                 fundingfactor *= 2
                 targetsmet, optparams = objectivecalc(array(optimparams)*fundingfactor, options)
                 print('Current funding factor: %f' % fundingfactor)
+            
+            
+            # Optimize spending
+            print('========== Extra optimization ==========')
+            tempD = deepcopy(D)
+            tempD['data']['origalloc'] = optparams
+            newD = optimize(tempD, objectives=None, constraints=constraints, maxiters=max(maxiters,20), timelimit=max(timelimit,100), verbose=5, name='tmp_minimizemoney', stoppingfunc = None, mmorigalloc = baseorigalloc) # Run default optimization
+            optimparams = newD['debugresult']['allocarr'][1][0]/fundingfactor  # Copy optimization parameters out of newD
+
+
             
             # Now home in on the solution
             print('========== Homing in on solution ==========')
@@ -202,6 +257,8 @@ def minimizemoney(D, objectives=None, constraints=None, maxiters=1000, timelimit
                 print('Current funding factor (low, high): %f (%f, %f)' % (fundingfactor, lowerlim, upperlim))
                 if targetsmet: upperlim=fundingfactor
                 else: lowerlim=fundingfactor
+            if (upperlim-lowerlim<=0.1):    # Just to make sure that the optimal allocation returned is for the goals-meeting upperlim factor!
+                targetsmet, optparams = objectivecalc(array(optimparams)*upperlim, options)
             
         
             optparams[opttrue] = optparams[opttrue] / optparams[opttrue].sum() * (sum(optparams) - optparams[~opttrue].sum()) # Make sure it's normalized -- WARNING KLUDGY
@@ -212,7 +269,13 @@ def minimizemoney(D, objectives=None, constraints=None, maxiters=1000, timelimit
         result['kind'] = 'constant'
         result['allocarr'] = [] # List of allocations
         result['allocarr'].append(quantile([origalloc])) # Kludgy -- run fake quantile on duplicated origalloc just so it matches
-        result['allocarr'].append(quantile(allocarr)) # Calculate allocation arrays 
+        result['allocarr'].append(quantile(allocarr)) # Calculate allocation arrays
+        result['covnumarr'] = [] # List of coverage levels
+        result['covnumarr'].append(getcoverage(D, alloc=result['allocarr'][0].T)['num'].T) # Original coverage
+        result['covnumarr'].append(getcoverage(D, alloc=result['allocarr'][-1].T)['num'].T) # Coverage under last-run optimization
+        result['covperarr'] = [] # List of coverage levels
+        result['covperarr'].append(getcoverage(D, alloc=result['allocarr'][0].T)['per'].T) # Original coverage
+        result['covperarr'].append(getcoverage(D, alloc=result['allocarr'][-1].T)['per'].T) # Coverage under last-run optimization
         labels = ['Original','Optimal']
         result['Rarr'] = [dict(), dict()]
         result['Rarr'][0]['R'] = options['tmpbestdata'][0]['R']
@@ -231,6 +294,8 @@ def minimizemoney(D, objectives=None, constraints=None, maxiters=1000, timelimit
 
     ## Save optimization to D
     D = saveoptimization(D, name, objectives, constraints, result_to_save, verbose=2)
+    
+    D['debugresult'] = result
 
     printv('...done optimizing programs.', 2, verbose)
     return D

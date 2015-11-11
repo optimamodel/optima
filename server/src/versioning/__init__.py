@@ -1,5 +1,6 @@
 # how to run it locally:
 # curl -XPOST -i http://localhost:5000/api/project/data/migrate?secret=40a0233e6b155cd08d8f8f4cd3ea85d854af454b334e80f896afff61
+# if that does not succeed, add option --max-time XXX (e.g. max-time 300 means the request has up to 5 min to run)
 
 migrations = {
     0:'001_inhomogenities',

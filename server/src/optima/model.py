@@ -16,7 +16,7 @@ from signal import *
 from optima.dbconn import db
 from sim.autofit import autofit
 from sim.updatedata import updatedata
-from sim.plotccocs import plot_cost_coverage, plot_cost_outcome, plot_coverage_outcome
+from optima.plotting import generate_cost_coverage_chart, generate_coverage_outcome_chart, generate_cost_outcome_chart
 
 # route prefix: /api/model
 model = Blueprint('model',  __name__, static_folder = '../static')
@@ -69,7 +69,8 @@ def doAutoCalibration():
 
     project_name = request.project_name
     project_id = request.project_id
-    can_start, can_join, current_calculation = start_or_report_calculation(current_user.id, project_id, autofit, db.session)
+    can_start, can_join, current_calculation = start_or_report_calculation(
+        current_user.id, project_id, autofit, db.session)
     if can_start:
         args = {'verbose':1}
         startyear = data.get("startyear")
@@ -324,11 +325,10 @@ def doCostCoverage(): # pylint: disable=R0914
             D['programs'][programIndex]['effects'] = new_effects
         args['D'] = D
         # effectnames are actually effects
-        figsize = (3,2)
         plotdata_cco, plotdata_co, plotdata_cc, effectnames, D = plotallcurves(**args)
-        dict_fig_cc = plot_cost_coverage(plotdata_cc, figsize)
-        dict_fig_co = map(lambda key: plot_coverage_outcome(plotdata_co[key], figsize), plotdata_co.keys())
-        dict_fig_cco = map(lambda key: plot_cost_outcome(plotdata_cco[key], figsize), plotdata_cco.keys())
+        dict_fig_cc = generate_cost_coverage_chart(plotdata_cc)
+        dict_fig_co = map(lambda key: generate_coverage_outcome_chart(plotdata_co[key]), plotdata_co.keys())
+        dict_fig_cco = map(lambda key: generate_cost_outcome_chart(plotdata_cco[key]), plotdata_cco.keys())
         if do_save:
             D_dict = tojson(D)
             save_model(request.project_id, D_dict)
@@ -358,10 +358,9 @@ def doCostCoverageEffect():
         if args.get('coparams'):
             args['coparams'] = map(lambda param: float(param) if param or (type(param) is int and param == 0) else None, args['coparams'])
         # effectnames are actually effects
-        figsize = (3,2)
         plotdata, plotdata_co, _ = makecco(**args) # plotdata is actually plotdata_cco
-        dict_fig_co = plot_coverage_outcome(plotdata_co, figsize)
-        dict_fig_cco = plot_cost_outcome(plotdata, figsize)
+        dict_fig_co = generate_coverage_outcome_chart(plotdata_co)
+        dict_fig_cco = generate_cost_outcome_chart(plotdata)
     except Exception:
         var = traceback.format_exc()
         return jsonify({"exception":var}), 500
@@ -384,5 +383,6 @@ def reloadSpreadsheet(project_id):
     project = load_project(project_id)
     D = load_model(project_id)
     D = updatedata(D, input_programs = project.programs, savetofile = False, rerun = True)
-
+    D_dict = tojson(D)
+    save_model(project_id, D_dict)
     return jsonify({})

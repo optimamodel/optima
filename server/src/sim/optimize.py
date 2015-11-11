@@ -11,7 +11,7 @@ Version: 2015feb06 by cliffk
 
 from printv import printv
 from copy import deepcopy
-from numpy import ones, zeros, concatenate, arange, inf, hstack, argmin, array, ndim
+from numpy import ones, zeros, concatenate, arange, inf, hstack, argmin, array, ndim, isnan
 from utils import findinds
 from makeresults import makeresults
 from timevarying import timevarying, multiyear
@@ -20,13 +20,14 @@ from model import model
 from makemodelpars import makemodelpars
 from quantile import quantile
 from ballsd import ballsd
+from getcurrentbudget import getcoverage
 
 
 
 def runmodelalloc(D, thisalloc, origalloc, parindices, randseed, rerunfinancial=False, verbose=2):
     """ Little function to do calculation since it appears so many times """
     newD = deepcopy(D)
-    newD, newcov, newnonhivdalysaverted = getcurrentbudget(newD, thisalloc, randseed=randseed) # Get cost-outcome curves with uncertainty
+    newD = getcurrentbudget(newD, thisalloc, randseed=randseed) # Get cost-outcome curves with uncertainty
     newM = makemodelpars(newD['P'], newD['opt'], withwhat='c', verbose=0) # Don't print out
     
     # Hideous hack for ART to use linear unit cost
@@ -126,11 +127,14 @@ def objectivecalc(optimparams, options):
     outcome = 0 # Preallocate objective value 
     for key in options['outcomekeys']:
         if options['weights'][key]>0: # Don't bother unless it's actually used
-            if key!='costann': thisoutcome = R[key]['tot'][0][options['outindices']].sum()
-            else: thisoutcome = R[key]['total']['total'][0][options['outindices']].sum() # Special case for costann
-            tmpplotdata.append(R[key]['tot'][0][options['outindices']]) # TEMP
+            if key!='costann':
+                thisoutcome = R[key]['tot'][0][options['outindices']].sum()
+                tmpplotdata.append(R[key]['tot'][0][options['outindices']]) # TEMP
+            else:
+                thisoutcome = R[key]['total']['total'][0][options['outindices']].sum() # Special case for costann
+                tmpplotdata.append(R[key]['total']['total'][0][options['outindices']]) # TEMP
             outcome += thisoutcome * options['weights'][key] / float(options['normalizations'][key]) * options['D']['opt']['dt'] # Calculate objective
-    
+            print
 #    print('DEBUGGING....................................................................................')
 #    from matplotlib.pylab import figure, plot, hold, subplot, show, close, pie
 #    close('all')
@@ -173,7 +177,15 @@ def objectivecalc(optimparams, options):
     
     
     
-def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None, verbose=5, name='Default', stoppingfunc = None):
+def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None, verbose=5, name='Default', stoppingfunc = None, mmorigalloc = None):
+    
+    # Hack to divert optimize function to minimizemoney if relevant objectives have been specified.
+    if objectives is not None:
+        if objectives['what'] == 'money':
+            from minimizemoney import minimizemoney
+            D = minimizemoney(D, objectives, constraints, maxiters, timelimit, verbose, name, stoppingfunc)
+            return D
+
     """ Perform the actual optimization """
     from time import sleep
     
@@ -186,12 +198,25 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
 
     origR = deepcopy(D['R'])
     origalloc = D['data']['origalloc']
+    if mmorigalloc == None: mmorigalloc = origalloc     # This is for allowing minimize-money optimize function calls to be constrained on the ORIGINAL original allocation.
     
     # Make sure objectives and constraints exist, and overwrite using saved ones if available
-    if objectives is None: objectives = defaultobjectives(D, verbose=verbose)
-    if constraints is None: constraints = defaultconstraints(D, verbose=verbose)
 
-    if not "optimizations" in D: saveoptimization(D, name, objectives, constraints)
+    # 1. Take the defaults
+    active_objectives = defaultobjectives(D, verbose=verbose)
+    active_constraints =  defaultconstraints(D, verbose=verbose)
+
+    # 2. Update with actually set values
+    if objectives is not None: 
+        update_dict(active_objectives, objectives)
+    if constraints is not None: 
+        update_dict(active_constraints, constraints)
+
+    # 3. Use for further processing
+    objectives = active_objectives
+    constraints = active_constraints
+
+    if not "optimizations" in D or not name in D["optimizations"]: saveoptimization(D, name, objectives, constraints)
 
 
     # Do this so if e.g. /100 won't have problems
@@ -212,8 +237,8 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
     fundingchanges = dict()
     keys1 = ['year','total']
     keys2 = ['dec','inc']
-    abslims = {'dec':0, 'inc':1e9}
-    rellims = {'dec':-1e9, 'inc':1e9}
+    abslims = {'dec':0, 'inc':1e18}
+    rellims = {'dec':-1e18, 'inc':1e18}
     smallchanges = {'dec':1.0, 'inc':1.0} # WARNING BIZARRE
     for key1 in keys1:
         fundingchanges[key1] = dict()
@@ -224,9 +249,9 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
                 this = constraints[fullkey][p] # Shorten name
                 if key1=='total':
                     if not(opttrue[p]): # Not an optimized parameter
-                        fundingchanges[key1][key2].append(origalloc[p]*smallchanges[key2])
+                        fundingchanges[key1][key2].append(mmorigalloc[p]*smallchanges[key2])
                     elif this['use'] and objectives['funding'] != 'variable': # Don't constrain variable-year-spend optimizations
-                        newlim = this['by']/100.*origalloc[p]
+                        newlim = this['by']/100.*mmorigalloc[p]
                         fundingchanges[key1][key2].append(newlim)
                     else: 
                         fundingchanges[key1][key2].append(abslims[key2])
@@ -331,7 +356,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
                 bestallocval = fvalarr[s][-1]
                 bestallocind = s
         if bestallocind == -1: print('WARNING, best allocation value seems to be infinity!')
-        
+
         # Update the model and store the results
         result = dict()
         result['kind'] = 'constant'
@@ -339,6 +364,12 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         result['allocarr'] = [] # List of allocations
         result['allocarr'].append(quantile([origalloc])) # Kludgy -- run fake quantile on duplicated origalloc just so it matches
         result['allocarr'].append(quantile(allocarr)) # Calculate allocation arrays 
+        result['covnumarr'] = [] # List of coverage levels
+        result['covnumarr'].append(getcoverage(D, alloc=result['allocarr'][0].T)['num'].T) # Original coverage
+        result['covnumarr'].append(getcoverage(D, alloc=result['allocarr'][-1].T)['num'].T) # Coverage under last-run optimization
+        result['covperarr'] = [] # List of coverage levels
+        result['covperarr'].append(getcoverage(D, alloc=result['allocarr'][0].T)['per'].T) # Original coverage
+        result['covperarr'].append(getcoverage(D, alloc=result['allocarr'][-1].T)['per'].T) # Coverage under last-run optimization
         labels = ['Original','Optimal']
         result['Rarr'] = [dict(), dict()]
         result['Rarr'][0]['R'] = options['tmpbestdata'][0]['R']
@@ -386,7 +417,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         options['fundingchanges'] = fundingchanges # Constraints-based funding changes
         parammin = concatenate((fundingchanges['total']['dec'], ones(nprogs)*-1e9))  
         parammax = concatenate((fundingchanges['total']['inc'], ones(nprogs)*1e9))  
-        options['randseed'] = None
+        options['randseed'] = 1
         
         
         
@@ -556,13 +587,15 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
     ## Gather plot data
     from gatherplotdata import gatheroptimdata
     plot_result = gatheroptimdata(D, result, verbose=verbose)
-    if 'optim' not in D['plot']: D['plot']['optim'] = [] # Initialize list if required
+    if 'optim' not in D['plot']: D['plot']['optim'] = [] # Initialize list if require
     D['plot']['optim'].append(plot_result) # In any case, append
     
     result_to_save = {'plot': [plot_result]}
 
-    ## Save optimization to D
+    ## Save optimization with results to D
     D = saveoptimization(D, name, objectives, constraints, result_to_save, verbose=2)
+
+    D['debugresult'] = result
 
     printv('...done optimizing programs.', 2, verbose)
     return D
@@ -595,6 +628,45 @@ def removeoptimization(D, name):
         except:
             pass
     return D
+
+
+def update_list(base_list, extra_list):
+    """
+    Recursively updates base list with the data from extra list.
+    Used to ensure that optimization is not getting called with mangled objectives or constraints.
+    """
+    if not extra_list or not isinstance(extra_list, list): return None
+    for i, (base_elem, extra_elem) in enumerate(zip(base_list, extra_list)):
+        if isinstance(base_elem, dict):
+            update_dict(base_elem, extra_elem)
+        elif isinstance(base_elem, list):
+            update_list(base_elem, extra_elem)
+        else:
+            if extra_elem is not None and base_elem!=extra_elem:
+                base_list[i] = extra_elem
+    return None
+
+
+def update_dict(base_dict, extra_dict):
+    """
+    Returns base dict recursively updated with values from extra dict.
+    Used to ensure that optimization is not getting called with mangled objectives or constraints.
+    """
+    if not extra_dict or not isinstance(extra_dict, dict): return None
+    for k, v in base_dict.iteritems():
+        if not k in extra_dict or extra_dict[k] is None: continue
+        if isinstance(v, dict):
+            update_dict(base_dict[k], extra_dict[k])
+        elif isinstance(v, list):
+            update_list(base_dict[k], extra_dict[k])
+        else:
+            new_v = extra_dict[k]
+            if isinstance(v, int) and not isinstance(new_v, int): new_v = int(new_v)
+            if isinstance(v, float) and not isinstance(new_v, float): new_v = float(new_v)
+            if new_v!=base_dict[k] and not isnan(new_v):
+                base_dict[k] = new_v
+    return None # pythonic convention: return None for objects changed in-place
+
 
 def defaultobjectives(D, verbose=2):
     """
