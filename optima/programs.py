@@ -15,7 +15,7 @@ class Programset(object):
         ''' Initialize '''
         self.name = name
         self.id = uuid()
-        self.programs = programs if programs else []
+        self.programs = programs if programs else {}
         self.gettargetpops() if programs else []
         self.gettargetpars() if programs else []
         self.gettargetpartypes() if programs else []
@@ -27,28 +27,18 @@ class Programset(object):
         ''' Print out useful information'''
         output = '\n'
         output += '       Response name: %s\n'    % self.name
-        output += '            Programs: %s\n'    % [prog.name for prog in self.programs]
+        output += '            Programs: %s\n'    % [prog.name for prog in self.programs.values()]
         output += 'Targeted populations: %s\n'    % self.targetpops
         output += '        Date created: %s\n'    % getdate(self.created)
         output += '       Date modified: %s\n'    % getdate(self.modified)
         output += '                  ID: %s\n'    % self.id
         return output
 
-    def __getitem__(self,name):
-        ''' Support dict-style indexing based on name e.g.
-            R.programs[1] might be the same as programset['MSM programs']'''
-        for prog in self.programs:
-            if prog.name == name:
-                return prog
-        print "Available programs:"
-        print [prog.name for prog in self.programs]
-        raise Exception('Program "%s" not found' % (name))
-
     def gettargetpops(self):
         '''Lists populations targeted by some program in the response'''
         self.targetpops = []
         if self.programs:
-            for prog in self.programs:
+            for prog in self.programs.values():
                 for x in prog.targetpops: self.targetpops.append(x)
             self.targetpops = list(set(self.targetpops))
     
@@ -56,21 +46,21 @@ class Programset(object):
         '''Lists model parameters targeted by some program in the response'''
         self.targetpars = []
         if self.programs:
-            for prog in self.programs:
+            for prog in self.programs.values():
                 for x in prog.targetpars: self.targetpars.append(x)
 
     def gettargetpartypes(self):
         '''Lists model parameters targeted by some program in the response'''
         self.targetpartypes = []
         if self.programs:
-            for prog in self.programs:
+            for prog in self.programs.values():
                 for x in prog.targetpartypes: self.targetpartypes.append(x)
             self.targetpartypes = list(set(self.targetpartypes))
 
     def initialize_covout(self):
         '''Initializes the required coverage-outcome curves.
            Parameters for actually defining these should be added using 
-           R.covout[paramtype][parampop][program].addccopar()'''
+           R.covout[paramtype][parampop].addccopar()'''
         self.gettargetpops()
         self.covout = {}
         for targetpartype in self.targetpartypes:
@@ -79,25 +69,25 @@ class Programset(object):
                 self.covout[targetpartype][targetpop] = {}
                 for prog in self.progs_by_targetpar(targetpartype)[targetpop]: self.covout[targetpartype][targetpop][prog.name] = Covout()
 
-    def addprog(self,prog,overwrite=False):
-        if prog not in self.programs:
-            self.programs.append(prog)
+    def addprog(self,newprog,overwrite=False):
+        if newprog not in self.programs.keys():
+            self.programs[newprog.keys()[0]] = newprog.values()[0]
             self.gettargetpops()
             self.gettargetpartypes
             self.initialize_covout()
-            print('\nAdded program "%s" to programset "%s". \nPrograms in this programset are: %s' % (prog.name, self.name, [p.name for p in self.programs]))
+            print('\nAdded program "%s" to programset "%s". \nPrograms in this programset are: %s' % (newprog.keys()[0], self.name, [p.name for p in self.programs.values()]))
         else:
-            raise Exception('Program "%s" is already present in programset "%s".' % (prog.name, self.name))
+            raise Exception('Program "%s" is already present in programset "%s".' % (newprog.name, self.name))
         
     def optimizable(self):
-        return [True if prog.targetpars else False for prog in self.programs]
+        return [True if prog.targetpars else False for prog in self.programs.values()]
 
     def progs_by_targetpop(self, filter_pop=None):
         '''Return a dictionary with:
              keys: all populations targeted by programs
              values: programs targeting that population '''
         progs_by_targetpop = defaultdict(list)
-        for prog in self.programs:
+        for prog in self.programs.values():
             targetpops = prog.targetpops if prog.targetpops else None
             if targetpops:
                 for targetpop in targetpops:
@@ -110,7 +100,7 @@ class Programset(object):
              keys: all populations targeted by programs
              values: programs targeting that population '''
         progs_by_targetpartype = defaultdict(list)
-        for prog in self.programs:
+        for prog in self.programs.values():
             targetpartypes = prog.targetpartypes if prog.targetpartypes else None
             if targetpartypes:
                 for targetpartype in targetpartypes :
