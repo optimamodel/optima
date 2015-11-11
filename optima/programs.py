@@ -15,7 +15,7 @@ class Programset(object):
         ''' Initialize '''
         self.name = name
         self.id = uuid()
-        self.programs = programs if programs else {}
+        self.programs = {program.name: program for program in programs} if programs else {}
         self.gettargetpops() if programs else []
         self.gettargetpars() if programs else []
         self.gettargetpartypes() if programs else []
@@ -72,7 +72,7 @@ class Programset(object):
         if newprog not in self.programs.keys():
             self.programs[newprog.keys()[0]] = newprog.values()[0]
             self.gettargetpops()
-            self.gettargetpartypes
+            self.gettargetpartypes()
             self.initialize_covout()
             print('\nAdded program "%s" to programset "%s". \nPrograms in this programset are: %s' % (newprog.keys()[0], self.name, [p.name for p in self.programs.values()]))
         else:
@@ -147,8 +147,12 @@ class Programset(object):
         if filter_prog: return targetpars_by_prog[filter_prog]
         else: return targetpars_by_prog
 
-    def getcoverage(self,tvec,budget,perturb=False):
-        coverage = dict()
+    def getprogcoverage(self,budget,popsize,t,perturb=False):
+        '''Budget is currently assumed to be a DICTIONARY OF ARRAYS'''        
+        coverage = []        
+        for prog in self.programs.keys():
+            spending = budget[prog] # Get the amount of money spent on this program
+            coverage.append(self.programs[prog].getcoverage(spending,popsize=popsize,t=t))
         return coverage
         
     def getoutcomes(self,tvec,budget,perturb=False):
@@ -168,6 +172,7 @@ class Program(object):
         self.targetpars = targetpars if targetpars else []            
         self.targetpops = targetpops if targetpops else []
         self.targetpartypes = list(set([x['param'] for x in targetpars])) if targetpars else []
+        self.optimizable()
         self.costcovfn = Costcov(ccopars=ccopars)
         self.costcovdata = costcovdata if costcovdata else {'t':[],'cost':[],'coverage':[]}
         
@@ -180,10 +185,14 @@ class Program(object):
         output += '\n'
         return output
 
+    def optimizable(self):
+        return True if self.targetpars else False
+
     def addtargetpar(self,targetpar):
         '''Add a model parameter to be targeted by this program'''
         if targetpar not in self.targetpars:
             self.targetpars.append(targetpar)
+            self.optimizable
             print('\nAdded target parameter "%s" to the list of target parameters affected by "%s". \nAffected parameters are: %s' % (targetpar, self.name, self.targetpars))
         else:
             raise Exception('The target parameter you are trying to add is already present in the list of target parameters affected by this program:%s.' % self.targetpars)
@@ -195,6 +204,7 @@ class Program(object):
             raise Exception('The target parameter you have selected for removal is not in the list of target parameters affected by this program:%s.' % self.targetpars)
         else:
             self.targetpars.pop(self.targetpars.index(targetpar))
+            self.optimizable
             print('\nRemoved model parameter "%s" from the list of model parameters affected by "%s". \nAffected parameters are: %s' % (targetpar, self.name, self.targetpars))
         return None
         
@@ -229,8 +239,28 @@ class Program(object):
 
     def getcoverage(self,x,popsize,t):
         '''Returns coverage in a given year for a given spending amount. Currently assumes coverage is a proportion.'''
+        from numpy import array, ndarray
+        
+        # Figure out input data type, transform if necessary
+        if isinstance(t,(float,int)):
+            if not isinstance(popsize,(float,int)): raise Exception('Please enter consistent datatypes for popsize and years.')
+            else:
+                datatype = 'singleyear'
+                t,popsize = array([t]),array([popsize])
+        elif isinstance(t,list):
+            if not isinstance(popsize,list): raise Exception('Please enter consistent datatypes for popsize and years.')
+            else: 
+                datatype = 'multipleyear'
+                t,popsize = array(t),array(popsize)
+        elif isinstance(t,ndarray):
+            if not isinstance(popsize,ndarray): raise Exception('Please enter consistent datatypes for popsize and years.')
+            if popsize.shape != t.shape: raise Exception('Please enter consistent datatypes for popsize and years.')
+            else: datatype = 'multipleyear'
+
+        # Evaluate, transform back to match input data type in necessary
         y = self.costcovfn.evaluate(x,popsize,t)
-        return y      
+        if datatype=='singleyear': return y[0]
+        if datatype=='multipleyear': return y
         
 class CCOF(object):
     '''Cost-coverage, coverage-outcome and cost-outcome objects'''
@@ -287,25 +317,36 @@ class CCOF(object):
     def getccopar(self,t,randseed=None,bounds=None):
         '''Get a cost-coverage-outcome parameter set for any year in range 1900-2100'''
         from utils import smoothinterp, findinds
-        from numpy import array, arange
+        from numpy import array, arange, zeros
         from copy import deepcopy
         
+        # Error checks
         if not self.ccopars:
             raise Exception('Need parameters for at least one year before function can be evaluated.')            
         if randseed and bounds:
             raise Exception('Either select bounds or specify randseed')            
+
+        # Set up necessary variables
         ccopar = {}
+        if isinstance(t,(float,int)): t = [t]
+        nyrs = len(t)
         ccopars_no_t = deepcopy(self.ccopars)
         del ccopars_no_t['t']
         ccopartuples = sorted(zip(self.ccopars['t'], *ccopars_no_t.values()))
         knownt = array([ccopartuple[0] for ccopartuple in ccopartuples])
         allt = arange(1900,2100)
         j = 1
+        
+        # Calculate interpolated parameters
         for param in ccopars_no_t.keys():
             knownparam = array([ccopartuple[j] for ccopartuple in ccopartuples])
             allparams = smoothinterp(allt, knownt, knownparam, smoothness=1)
-            ccopar[param] = allparams[findinds(allt,t)]
+            ccopar[param] = zeros(nyrs)
+            for yr in range(nyrs):
+                ccopar[param][yr] = allparams[findinds(allt,t[yr])]
+            if isinstance(t,list): ccopar[param] = ccopar[param].tolist()
             j += 1
+
         ccopar['t'] = t
         return ccopar
 
@@ -327,11 +368,16 @@ class Costcov(CCOF):
     
     def function(self,x,ccopar,popsize):
         '''Returns coverage in a given year for a given spending amount. Currently assumes coverage is a proportion.'''
-        from numpy import exp
+        from numpy import exp, zeros, array
         u = ccopar['unitcost']
         s = ccopar['saturation']
-        y = (2*s/(1+exp(-2*x/(popsize*s*u)))-s)*popsize
-        return y      
+        if isinstance(x,(float,int)): typex, x = 'single',array([x])
+        else: typex = 'multiple'
+        nyrs,npts = len(u),len(x)
+        y = zeros((nyrs,npts))
+        for yr in range(nyrs):
+            y[yr,:] = (2*s[yr]/(1+exp(-2*x/(popsize[yr]*s[yr]*u[yr])))-s[yr])*popsize[yr]
+        return y if not typex=='single' else y[0]     
 
     def emptypars(self):
         ccopars = {}
