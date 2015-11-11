@@ -66,8 +66,7 @@ class Programset(object):
         for targetpartype in self.targetpartypes:
             self.covout[targetpartype] = {}
             for targetpop in self.progs_by_targetpar(targetpartype).keys():
-                self.covout[targetpartype][targetpop] = {}
-                for prog in self.progs_by_targetpar(targetpartype)[targetpop]: self.covout[targetpartype][targetpop][prog.name] = Covout()
+                self.covout[targetpartype][targetpop] = Covout()
 
     def addprog(self,newprog,overwrite=False):
         if newprog not in self.programs.keys():
