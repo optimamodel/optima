@@ -321,10 +321,10 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2, safetymargin=0.8, bench
                         circsmoving = numcirc[p1] * transrate * dt
                         numcirc[p1] -= circsmoving
                         numcirc[p2] += circsmoving
-                    elif male[p1] and not male[p2] and transrate > 0: # Sanity check for males moving into female populations
-                        raise Exception('Males are transitioning into a female population! (%s->%s)' % (G['meta']['pops']['short'][p1], G['meta']['pops']['short'][p2]))
-                    elif male[p2] and not male[p1] and transrate > 0: # Sanity check for females moving into male populations   
-                        raise Exception('Females are transitioning into a male population! (%s->%s)' % (G['meta']['pops']['short'][p1], G['meta']['pops']['short'][p2]))
+#                    elif male[p1] and not male[p2] and transrate > 0: # Sanity check for males moving into female populations
+#                        raise Exception('Males are transitioning into a female population! (%s->%s)' % (G['meta']['pops']['short'][p1], G['meta']['pops']['short'][p2]))
+#                    elif male[p2] and not male[p1] and transrate > 0: # Sanity check for females moving into male populations   
+#                        raise Exception('Females are transitioning into a male population! (%s->%s)' % (G['meta']['pops']['short'][p1], G['meta']['pops']['short'][p2]))
                         
                     # Now actually do it for the people array
                     if transrate > 0: # Normal situation, e.g. aging - people move from one pop to another
