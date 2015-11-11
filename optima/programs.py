@@ -68,7 +68,7 @@ class Programset(object):
             for targetpop in self.progs_by_targetpar(targetpartype).keys():
                 self.covout[targetpartype][targetpop] = Covout()
 
-    def addprog(self,newprog,overwrite=False):
+    def addprog(self,newprog):
         if newprog not in self.programs.keys():
             self.programs[newprog.keys()[0]] = newprog.values()[0]
             self.gettargetpops()
@@ -77,6 +77,16 @@ class Programset(object):
             print('\nAdded program "%s" to programset "%s". \nPrograms in this programset are: %s' % (newprog.keys()[0], self.name, [p.name for p in self.programs.values()]))
         else:
             raise Exception('Program "%s" is already present in programset "%s".' % (newprog.name, self.name))
+        
+    def rmprog(self,prog):
+        if prog not in self.programs.keys():
+            raise Exception('You have asked to remove program "%s", but there is no program by this name in programset "%s". Available programs are' % (prog.name, self.name, [p.name for p in self.programs.values()]))
+        else:
+            del self.programs[prog]
+            self.gettargetpops()
+            self.gettargetpartypes
+            self.initialize_covout()
+            print('\nRemoved program "%s" from programset "%s". \nPrograms in this programset are: %s' % (prog, self.name, [p.name for p in self.programs.values()]))
         
     def optimizable(self):
         return [True if prog.targetpars else False for prog in self.programs.values()]
@@ -173,7 +183,6 @@ class Program(object):
     def addtargetpar(self,targetpar):
         '''Add a model parameter to be targeted by this program'''
         if targetpar not in self.targetpars:
-            if not targetpar.get('covout'): targetpar['covout'] = Covout()
             self.targetpars.append(targetpar)
             print('\nAdded target parameter "%s" to the list of target parameters affected by "%s". \nAffected parameters are: %s' % (targetpar, self.name, self.targetpars))
         else:
@@ -218,9 +227,9 @@ class Program(object):
         else:
             raise Exception('You have asked to remove data for the year %s, but no data was added for that year. Cost coverage data are: %s' % (year, self.costcovdata))
 
-    def getcoverage(self,t,popsize,x):
+    def getcoverage(self,x,popsize,t):
         '''Returns coverage in a given year for a given spending amount. Currently assumes coverage is a proportion.'''
-        y = self.costcovfn.evaluate()
+        y = self.costcovfn.evaluate(x,popsize,t)
         return y      
         
 class CCOF(object):
@@ -239,16 +248,17 @@ class CCOF(object):
 
     def addccopar(self,ccopar,overwrite=False):
         ''' Add or replace parameters for cost-coverage-outcome functions'''
+
+        if ccopar.get('unitcost') and not ccopar.get('saturation'): ccopar['saturation'] = 1.
+
         if self.ccopars is None:
             self.ccopars = {}
             for ccopartype in ccopar.keys():
                 self.ccopars[ccopartype] = [ccopar[ccopartype]]
-            if ccopar.get('unitcost') and not ccopar['saturation']: self.ccopars[ccopartype].append(1.)
         else:
             if ccopar['t'] not in self.ccopars['t']:
                 for ccopartype in self.ccopars.keys():
                     self.ccopars[ccopartype].append(ccopar[ccopartype])
-                if self.ccopars.get('saturation') and not ccopar['saturation']: self.ccopars[ccopartype].append(1.)
                 print('\nAdded CCO parameters "%s". \nCCO parameters are: %s' % (ccopar, self.ccopars))
             else:
                 if overwrite:
@@ -257,7 +267,6 @@ class CCOF(object):
                     for ccopartype in self.ccopars.keys():
                         oldccopar[ccopartype] = self.ccopars[ccopartype][ind]
                         self.ccopars[ccopartype][ind] = ccopar[ccopartype]
-                    if self.ccopars.get('saturation') and not ccopar['saturation']: self.ccopars[ccopartype].append(1.)
                     print('\nModified CCO parameter from "%s" to "%s". \nCCO parameters for are: %s' % (oldccopar, ccopar, self.ccopars))
                 else:
                     raise Exception('You have already entered CCO parameters for the year %s. If you want to overwrite it, set overwrite=True when calling addccopar().' % ccopar['t'])
