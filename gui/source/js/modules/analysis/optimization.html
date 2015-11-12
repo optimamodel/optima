@@ -537,15 +537,15 @@
           <div><h2>Treatment eligibility</h2></div>
           <div>
             <label>
-              <input type="radio" name="eligibility" ng-model="params.constraints.txelig" value="1">
+              <input type="radio" name="eligibility" ng-model="params.constraints.txelig" ng-value="values.constraints.txelig[0]">
               All people living with HIV
             </label><br>
             <label>
-              <input type="radio" name="eligibility" ng-model="params.constraints.txelig" value="2">
+              <input type="radio" name="eligibility" ng-model="params.constraints.txelig" ng-value="values.constraints.txelig[1]">
               All people living with HIV with CD4 count < 500
             </label><br>
             <label>
-              <input type="radio" name="eligibility" ng-model="params.constraints.txelig" value="3">
+              <input type="radio" name="eligibility" ng-model="params.constraints.txelig" ng-value="values.constraints.txelig[2]">
               All people living with HIV with CD4 count < 350
             </label>
           </div>

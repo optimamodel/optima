@@ -679,8 +679,11 @@ def update_dict(base_dict, extra_dict):
         elif isinstance(v, list):
             update_list(base_dict[k], extra_dict[k])
         else:
-            if extra_dict[k]!=base_dict[k] and not isnan(extra_dict[k]): 
-                base_dict[k] = extra_dict[k]
+            new_v = extra_dict[k]
+            if isinstance(v, int) and not isinstance(new_v, int): new_v = int(new_v)
+            if isinstance(v, float) and not isinstance(new_v, float): new_v = float(new_v)
+            if new_v!=base_dict[k] and not isnan(new_v):
+                base_dict[k] = new_v
     return None # pythonic convention: return None for objects changed in-place
 
 

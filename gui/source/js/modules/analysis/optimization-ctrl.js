@@ -92,6 +92,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       var errorMessages = [];
 
+      // scope for values
+      $scope.values = {};
+      $scope.values.constraints = {};
+      // need to define values for radiobutton which are not strings
+      $scope.values.constraints.txelig = [1,2,3];
+
       // Set defaults
       $scope.params = {};
 
