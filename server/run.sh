@@ -19,4 +19,4 @@ then
   pip install -r ./requirements.txt
 fi
 
-python src/api.py
+python api.py
