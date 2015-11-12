@@ -1,5 +1,5 @@
  ## Imports
-from numpy import array, arange, zeros, exp, maximum, minimum, nonzero, concatenate, hstack, absolute, median
+from numpy import array, zeros, exp, maximum, minimum, nonzero, concatenate, hstack, absolute, median
 from printv import printv
 from math import pow as mpow
 from copy import deepcopy
@@ -129,8 +129,12 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2, safetymargin=0.8, bench
     propcirc = M['circum']    # Proportion of men circumcised (P)
     tobecirc = M['numcircum'] # Number of men to be circumcised (N)
     mtx1     = M['tx1']       # 1st line treatement (N) -- tx1 already used for index of people on treatment
+    mtxtotal = M['txtotal']   # WARNING, this is kludgy
     hivtest  = M['hivtest']   # HIV testing (P)
     aidstest = M['aidstest']  # HIV testing in AIDS stage (P)
+    
+    # Handle treatment
+    mtx1 = maximum(mtx1, mtxtotal) # Find the maximum of either the number of people on first-line treatment, or the number total
     
     # Force of infection metaparameter
     Fforce = array(F['force'])
