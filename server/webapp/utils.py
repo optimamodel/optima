@@ -1,11 +1,11 @@
 import os
-from sim.dataio import DATADIR, TEMPLATEDIR, upload_dir_user, fromjson, tojson
+from sim.dataio import TEMPLATEDIR, upload_dir_user, fromjson, tojson
 from flask import helpers, current_app
 from flask.ext.login import current_user # pylint: disable=E0611,F0401
 from functools import wraps
 from flask import request, jsonify, abort
-from optima.dbconn import db
-from optima.dbmodels import ProjectDb, UserDb
+from webapp.dbconn import db
+from webapp.dbmodels import ProjectDb, UserDb
 import traceback
 
 ALLOWED_EXTENSIONS = {'txt', 'xlsx', 'xls', 'json'}
@@ -89,8 +89,6 @@ def allowed_file(filename):
 
 def loaddir(app):
     the_loaddir = app.config['UPLOAD_FOLDER']
-    if not the_loaddir:
-        the_loaddir = DATADIR
     return the_loaddir
 
 def send_as_json_file(data):
@@ -133,7 +131,7 @@ def load_project(project_id, all_data = False):
         current_app.logger.warning("no such project found: %s for user %s %s" % (project_id, cu.id, cu.name))
     return project
 
-def save_data_spreadsheet(name, folder=DATADIR):
+def save_data_spreadsheet(name, folder=app.config['UPLOAD_FOLDER']):
     spreadsheet_file = name
     user_dir = upload_dir_user(folder)
     if not spreadsheet_file.startswith(user_dir):
@@ -141,7 +139,7 @@ def save_data_spreadsheet(name, folder=DATADIR):
 
 def delete_spreadsheet(name, user_id = None):
     spreadsheet_file = name
-    for parent_dir in [TEMPLATEDIR, DATADIR]:
+    for parent_dir in [TEMPLATEDIR, app.config['UPLOAD_FOLDER']]:
         user_dir = upload_dir_user(parent_dir, user_id)
         if not spreadsheet_file.startswith(user_dir):
             spreadsheet_file = helpers.safe_join(user_dir, name+ '.xlsx')

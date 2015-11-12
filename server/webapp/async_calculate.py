@@ -5,7 +5,7 @@ from signal import *
 
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sim.dataio import fromjson, tojson
-from optima.dbmodels import ProjectDb, WorkingProjectDb, WorkLogDb
+from webapp.dbmodels import ProjectDb, WorkingProjectDb, WorkLogDb
 
 # Sentinel object used for async calculation
 sentinel = {

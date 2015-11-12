@@ -2,16 +2,16 @@ import json
 from flask import Blueprint, helpers, request, jsonify, current_app, Response
 from werkzeug.utils import secure_filename
 import os
-from sim.dataio import upload_dir_user, DATADIR, TEMPLATEDIR, fullpath
+from sim.dataio import upload_dir_user, TEMPLATEDIR, fullpath
 from sim.updatedata import updatedata
 from sim.makeproject import makeproject, makeworkbook
-from optima.utils import allowed_file, project_exists, delete_spreadsheet, load_project
-from optima.utils import check_project_name, report_exception, model_as_bunch, model_as_dict
-from optima.utils import verify_admin_request
-from optima.utils import load_model, save_model
+from webapp.utils import allowed_file, project_exists, delete_spreadsheet, load_project
+from webapp.utils import check_project_name, report_exception, model_as_bunch, model_as_dict
+from webapp.utils import verify_admin_request
+from webapp.utils import load_model, save_model
 from flask.ext.login import login_required, current_user # pylint: disable=E0611,F0401
-from optima.dbconn import db
-from optima.dbmodels import ProjectDb, WorkingProjectDb, ProjectDataDb, WorkLogDb
+from webapp.dbconn import db
+from webapp.dbmodels import ProjectDb, WorkingProjectDb, ProjectDataDb, WorkLogDb
 import datetime
 import dateutil.tz
 from datetime import datetime
@@ -188,6 +188,9 @@ def update_project(project_id): # pylint: disable=too-many-locals,too-many-state
     This happens after users edit the project.
 
     """
+
+    # TODO replace this with app.config
+    DATADIR = current_app.config['UPLOAD_FOLDER']
 
     from sim.dataio import projectpath, tojson
     current_app.logger.debug("updateProject %s for user %s" % (project_id, current_user.email))
@@ -557,6 +560,10 @@ def uploadExcel(): # pylint: disable=too-many-locals
     Uploads Excel file, uses it to update the corresponding model.
     Precondition: model should exist.
     """
+
+    # TODO replace this with app.config
+    DATADIR = current_app.config['UPLOAD_FOLDER']
+
     from sim.dataio import projectpath
     current_app.logger.debug("api/project/update")
     project_name = request.project_name

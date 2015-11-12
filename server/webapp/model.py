@@ -1,22 +1,22 @@
 from flask import Blueprint, request, jsonify
 import json
 import traceback
-from optima.async_calculate import CalculatingThread, start_or_report_calculation
-from optima.async_calculate import cancel_calculation, check_calculation
-from optima.async_calculate import check_calculation_status, good_exit_status
+from webapp.async_calculate import CalculatingThread, start_or_report_calculation
+from webapp.async_calculate import cancel_calculation, check_calculation
+from webapp.async_calculate import check_calculation_status, good_exit_status
 from sim.manualfit import manualfit
 from sim.dataio import fromjson, tojson
 from sim.runsimulation import runsimulation
 from sim.makeccocs import makecco, plotallcurves #, default_effectname, default_ccparams, default_coparams
-from optima.utils import load_model, save_model, save_working_model_as_default, revert_working_model_to_default, pick_params, check_project_name, for_fe
-from optima.utils import report_exception, check_project_exists
+from webapp.utils import load_model, save_model, save_working_model_as_default, revert_working_model_to_default, pick_params, check_project_name, for_fe
+from webapp.utils import report_exception, check_project_exists
 from flask.ext.login import login_required, current_user # pylint: disable=E0611,F0401
 from flask import current_app
 from signal import *
-from optima.dbconn import db
+from webapp.dbconn import db
 from sim.autofit import autofit
 from sim.updatedata import updatedata
-from optima.plotting import generate_cost_coverage_chart, generate_coverage_outcome_chart, generate_cost_outcome_chart
+from webapp.plotting import generate_cost_coverage_chart, generate_coverage_outcome_chart, generate_cost_outcome_chart
 
 # route prefix: /api/model
 model = Blueprint('model',  __name__, static_folder = '../static')
@@ -378,7 +378,7 @@ def reloadSpreadsheet(project_id):
     """
     Reload the excel spreadsheet and re-run the simulations.
     """
-    from optima.utils import load_project
+    from webapp.utils import load_project
 
     project = load_project(project_id)
     D = load_model(project_id)

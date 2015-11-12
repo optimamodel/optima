@@ -1,8 +1,8 @@
 #!/bin/env python
 # -*- coding: utf-8 -*-
 from api import app, init_db
-from optima.dbconn import db
-from optima.dbmodels import ProjectDb
+from webapp.dbconn import db
+from webapp.dbmodels import ProjectDb
 import unittest
 import hashlib
 import json
