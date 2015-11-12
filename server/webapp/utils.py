@@ -1,5 +1,5 @@
 import os
-from sim.dataio import TEMPLATEDIR, upload_dir_user, fromjson, tojson
+from dataio import TEMPLATEDIR, upload_dir_user, fromjson, tojson
 from flask import helpers, current_app
 from flask.ext.login import current_user # pylint: disable=E0611,F0401
 from functools import wraps
@@ -131,7 +131,9 @@ def load_project(project_id, all_data = False):
         current_app.logger.warning("no such project found: %s for user %s %s" % (project_id, cu.id, cu.name))
     return project
 
-def save_data_spreadsheet(name, folder=app.config['UPLOAD_FOLDER']):
+def save_data_spreadsheet(name, folder=None):
+    if folder == None:
+        folder = current_app.config['UPLOAD_FOLDER']
     spreadsheet_file = name
     user_dir = upload_dir_user(folder)
     if not spreadsheet_file.startswith(user_dir):

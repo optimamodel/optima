@@ -19,7 +19,7 @@ class AnalysisTestCase(OptimaTestCase):
 
     def test_list_scenarios(self):
         from sim.scenarios import defaultscenarios
-        from sim.dataio import tojson
+        from dataio import tojson
         response = self.create_user()
         response = self.login()
         project_id = self.create_project('test')

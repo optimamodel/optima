@@ -4,18 +4,23 @@ import traceback
 from webapp.async_calculate import CalculatingThread, start_or_report_calculation
 from webapp.async_calculate import cancel_calculation, check_calculation
 from webapp.async_calculate import check_calculation_status, good_exit_status
-from sim.manualfit import manualfit
-from sim.dataio import fromjson, tojson
-from sim.runsimulation import runsimulation
-from sim.makeccocs import makecco, plotallcurves #, default_effectname, default_ccparams, default_coparams
+# TODO fix after v2
+# from sim.manualfit import manualfit
+from dataio import fromjson, tojson
+# TODO fix after v2
+# from sim.runsimulation import runsimulation
+# TODO fix after v2
+# from sim.makeccocs import makecco, plotallcurves #, default_effectname, default_ccparams, default_coparams
 from webapp.utils import load_model, save_model, save_working_model_as_default, revert_working_model_to_default, pick_params, check_project_name, for_fe
 from webapp.utils import report_exception, check_project_exists
 from flask.ext.login import login_required, current_user # pylint: disable=E0611,F0401
 from flask import current_app
 from signal import *
 from webapp.dbconn import db
-from sim.autofit import autofit
-from sim.updatedata import updatedata
+# TODO fix after v2
+# from sim.autofit import autofit
+# TODO fix after v2
+# from sim.updatedata import updatedata
 from webapp.plotting import generate_cost_coverage_chart, generate_coverage_outcome_chart, generate_cost_outcome_chart
 
 # route prefix: /api/model
@@ -69,8 +74,10 @@ def doAutoCalibration():
 
     project_name = request.project_name
     project_id = request.project_id
-    can_start, can_join, current_calculation = start_or_report_calculation(
-        current_user.id, project_id, autofit, db.session)
+    # TODO fix after v2
+    # can_start, can_join, current_calculation = start_or_report_calculation(
+    #     current_user.id, project_id, autofit, db.session)
+    can_start, can_join, current_calculation = (False, False, None)
     if can_start:
         args = {'verbose':1}
         startyear = data.get("startyear")
@@ -81,7 +88,8 @@ def doAutoCalibration():
             args["endyear"] = int(endyear)
         timelimit = int(data.get("timelimit")) # for the thread
         args["timelimit"] = timelimit # for the autocalibrate function
-        CalculatingThread(db.engine, current_user, project_id, timelimit, 1, autofit, args).start() #run it once
+        # TODO fix after v2
+        # CalculatingThread(db.engine, current_user, project_id, timelimit, 1, autofit, args).start() #run it once
         msg = "Starting thread for user %s project %s:%s" % (current_user.name, project_id, project_name)
         return jsonify({"result": msg, "join": True})
     else:
@@ -95,7 +103,8 @@ def stopCalibration():
     """ Stops calibration """
     project_id = request.project_id
     project_name = request.project_name
-    cancel_calculation(current_user.id, project_id, autofit, db.session)
+    # TODO fix after v2
+    # cancel_calculation(current_user.id, project_id, autofit, db.session)
     return jsonify({"result": "autofit calculation for user %s project %s:%s requested to stop" % \
         (current_user.name, project_id, project_name)})
 
@@ -109,7 +118,9 @@ def getWorkingModel():
     # Make sure model is calibrating
     project_id = request.project_id
     error_text = None
-    if check_calculation(current_user.id, project_id, autofit, db.session):
+    # TODO fix after v2
+    # if check_calculation(current_user.id, project_id, autofit, db.session):
+    if False:
         status = 'Running'
     else:
         current_app.logger.debug('No longer calibrating')
@@ -192,7 +203,8 @@ def doManualCalibration():
     args['F'] = F
     Mlist = data.get("M",[])
     args['Mlist'] = Mlist
-    D = manualfit(**args)
+    # TODO fix after v2
+    # D = manualfit(**args)
     D_dict = tojson(D)
     if dosave:
         current_app.logger.debug("model: %s" % project_id)
@@ -279,7 +291,8 @@ def doRunSimulation():
         if endyear:
             args["endyear"] = int(endyear)
         args["dosave"] = False
-        D = runsimulation(**args)
+        # TODO fix after v2
+        # D = runsimulation(**args)
         D_dict = tojson(D)
         save_model(request.project_id, D_dict)
         result = {'graph':D_dict.get('plot',{}).get('E',{})}
@@ -325,10 +338,14 @@ def doCostCoverage(): # pylint: disable=R0914
             D['programs'][programIndex]['effects'] = new_effects
         args['D'] = D
         # effectnames are actually effects
-        plotdata_cco, plotdata_co, plotdata_cc, effectnames, D = plotallcurves(**args)
-        dict_fig_cc = generate_cost_coverage_chart(plotdata_cc)
-        dict_fig_co = map(lambda key: generate_coverage_outcome_chart(plotdata_co[key]), plotdata_co.keys())
-        dict_fig_cco = map(lambda key: generate_cost_outcome_chart(plotdata_cco[key]), plotdata_cco.keys())
+        # TODO fix after v2
+        # plotdata_cco, plotdata_co, plotdata_cc, effectnames, D = plotallcurves(**args)
+        # dict_fig_cc = generate_cost_coverage_chart(plotdata_cc)
+        # dict_fig_co = map(lambda key: generate_coverage_outcome_chart(plotdata_co[key]), plotdata_co.keys())
+        # dict_fig_cco = map(lambda key: generate_cost_outcome_chart(plotdata_cco[key]), plotdata_cco.keys())
+        dict_fig_cc = dict()
+        dict_fig_co = dict()
+        dict_fig_cco = dict()
         if do_save:
             D_dict = tojson(D)
             save_model(request.project_id, D_dict)
@@ -358,9 +375,12 @@ def doCostCoverageEffect():
         if args.get('coparams'):
             args['coparams'] = map(lambda param: float(param) if param or (type(param) is int and param == 0) else None, args['coparams'])
         # effectnames are actually effects
-        plotdata, plotdata_co, _ = makecco(**args) # plotdata is actually plotdata_cco
-        dict_fig_co = generate_coverage_outcome_chart(plotdata_co)
-        dict_fig_cco = generate_cost_outcome_chart(plotdata)
+        # TODO fix after v2
+        # plotdata, plotdata_co, _ = makecco(**args) # plotdata is actually plotdata_cco
+        # dict_fig_co = generate_coverage_outcome_chart(plotdata_co)
+        # dict_fig_cco = generate_cost_outcome_chart(plotdata)
+        dict_fig_co = dict()
+        dict_fig_cco = dict()
     except Exception:
         var = traceback.format_exc()
         return jsonify({"exception":var}), 500
@@ -382,7 +402,8 @@ def reloadSpreadsheet(project_id):
 
     project = load_project(project_id)
     D = load_model(project_id)
-    D = updatedata(D, input_programs = project.programs, savetofile = False, rerun = True)
+    # TODO fix after v2
+    # D = updatedata(D, input_programs = project.programs, savetofile = False, rerun = True)
     D_dict = tojson(D)
     save_model(project_id, D_dict)
     return jsonify({})

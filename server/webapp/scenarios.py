@@ -1,8 +1,9 @@
 from flask import Blueprint, request, jsonify, current_app
 import json
 import traceback
-from sim.dataio import tojson, fromjson
-from sim.scenarios import runscenarios
+from dataio import tojson, fromjson
+# TODO fix after v2
+# from sim.scenarios import runscenarios
 from webapp.utils import load_model, save_model, check_project_exists, check_project_name, report_exception, load_project
 from flask.ext.login import login_required # pylint: disable=E0611,F0401
 
@@ -89,7 +90,8 @@ def runScenarios():
     try:
         D = load_model(project_id)
         args['D'] = D
-        D = runscenarios(**args)
+        # TODO fix after v2
+        # D = runscenarios(**args)
         D_dict = tojson(D)
         if dosave:
             current_app.logger.debug("model: %s" % project_id)

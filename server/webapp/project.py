@@ -2,9 +2,11 @@ import json
 from flask import Blueprint, helpers, request, jsonify, current_app, Response
 from werkzeug.utils import secure_filename
 import os
-from sim.dataio import upload_dir_user, TEMPLATEDIR, fullpath
-from sim.updatedata import updatedata
-from sim.makeproject import makeproject, makeworkbook
+from dataio import upload_dir_user, TEMPLATEDIR, fullpath
+# TODO fix after v2
+# from sim.updatedata import updatedata
+# TODO fix after v2
+# from sim.makeproject import makeproject, makeworkbook
 from webapp.utils import allowed_file, project_exists, delete_spreadsheet, load_project
 from webapp.utils import check_project_name, report_exception, model_as_bunch, model_as_dict
 from webapp.utils import verify_admin_request
@@ -140,7 +142,7 @@ def create_project(project_name): # pylint: disable=too-many-locals
 
     """
     from sim.makeproject import default_datastart, default_dataend, default_pops, default_progs
-    from sim.dataio import tojson
+    from dataio import tojson
     current_app.logger.debug("createProject %s for user %s" % (project_name, current_user.email))
     raw_data = json.loads(request.data)
     # get current user
@@ -192,7 +194,7 @@ def update_project(project_id): # pylint: disable=too-many-locals,too-many-state
     # TODO replace this with app.config
     DATADIR = current_app.config['UPLOAD_FOLDER']
 
-    from sim.dataio import projectpath, tojson
+    from dataio import projectpath, tojson
     current_app.logger.debug("updateProject %s for user %s" % (project_id, current_user.email))
     raw_data = json.loads(request.data)
 
@@ -248,7 +250,8 @@ def update_project(project_id): # pylint: disable=too-many-locals,too-many-state
         D['G']['workbookname'] = D['G']['projectname'] + '.xlsx'
         D['G']['inputprograms'] = deepcopy(project_entry.programs)
         D['G']['inputpopulations'] = deepcopy(project_entry.populations)
-        D = updatedata(D, input_programs = project_entry.programs, savetofile = False)
+        # TODO fix after v2
+        # D = updatedata(D, input_programs = project_entry.programs, savetofile = False)
         #and now, because workbook was uploaded, we have to correct the programs and populations
         model = model_as_dict(D)
         project_entry.model = model
@@ -318,8 +321,9 @@ def giveWorkbook(project_id):
         # if no project data found
             D = project_entry.model
             wb_name = D['G']['workbookname']
-            makeworkbook(wb_name, project_entry.populations, project_entry.programs, \
-                project_entry.datastart, project_entry.dataend)
+            # TODO fix after v2
+            # makeworkbook(wb_name, project_entry.populations, project_entry.programs, \
+            #     project_entry.datastart, project_entry.dataend)
             current_app.logger.debug("project %s template created: %s" % (project_entry.name, wb_name))
             (dirname, basename) = (upload_dir_user(TEMPLATEDIR), wb_name)
             #deliberately don't save the template as uploaded data
@@ -465,7 +469,7 @@ def copyProject(project_id):
     usage: /api/project/copy/<project_id>?to=<new_project_name>
     """
     from sqlalchemy.orm.session import make_transient
-    from sim.dataio import projectpath
+    from dataio import projectpath
     new_project_name = request.args.get('to')
     if not new_project_name:
         reply = {'reason': 'New project name is not given'}
@@ -564,7 +568,7 @@ def uploadExcel(): # pylint: disable=too-many-locals
     # TODO replace this with app.config
     DATADIR = current_app.config['UPLOAD_FOLDER']
 
-    from sim.dataio import projectpath
+    from dataio import projectpath
     current_app.logger.debug("api/project/update")
     project_name = request.project_name
     project_id = request.project_id
@@ -606,7 +610,8 @@ def uploadExcel(): # pylint: disable=too-many-locals
         # Is this the first time? if so then we have to run simulations
         should_re_run = 'S' not in D
 
-        D = updatedata(D, input_programs = project_entry.programs, savetofile=False, rerun=should_re_run)
+        # TODO fix after v2
+        # D = updatedata(D, input_programs = project_entry.programs, savetofile=False, rerun=should_re_run)
         model = model_as_dict(D)
         project_entry.model = model
         #update the programs and populations based on the data
