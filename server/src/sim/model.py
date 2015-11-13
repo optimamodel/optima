@@ -45,6 +45,7 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2, safetymargin=0.8, bench
     S['newtx1']   = zeros((npops, npts)) # Number initiating ART1 per timestep
     S['newtx2']   = zeros((npops, npts)) # Number initiating ART2 per timestep -- UNUSED
     S['death']    = zeros((npops, npts)) # Number of deaths per timestep
+    S['newpeople']    = zeros((npops, npts)) # Number of deaths per timestep
     effhivprev = zeros((npops, 1))    # HIV effective prevalence (prevalence times infectiousness)
     inhomo = zeros(npops)    # Inhomogeneity calculations
     
@@ -520,7 +521,8 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2, safetymargin=0.8, bench
             newpeople = popsize[:,t+1]-people[:,:,t+1].sum(axis=0) # Number of people to add according to M['popsize'] (can be negative)
             for pop in xrange(npops): # Loop over each population, since some might grow and others might shrink
                 if newpeople[pop]>=0: # People are entering: they enter the susceptible population
-                    people[0,pop,t+1] += newpeople[pop]
+#                    people[0,pop,t+1] += newpeople[pop]
+                    people[:,pop,t+1] *= popsize[pop,t]/sum(people[:,pop,t])
                 else: # People are leaving: they leave from each health state equally
                     people[:,pop,t+1] *= popsize[pop,t]/sum(people[:,pop,t]);
             if not((people[:,:,t+1]>=0).all()): # If not every element is a real number >0, throw an error
@@ -529,6 +531,7 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2, safetymargin=0.8, bench
                         if not(people[errstate,errpop,t+1]>=0):
                             printv('WARNING, Non-positive people found: people[%s, %s, %s] = %s' % (errstate, errpop, t+1, people[errstate,errpop,t+1]), 4, verbose=verbose)
                             people[errstate,errpop,t+1] = 0 # Reset
+            S['newpeople'][:,t] = newpeople
         
         # Do some sanity checks
         for key in S.keys():
