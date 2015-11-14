@@ -521,8 +521,8 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2, safetymargin=0.8, bench
             newpeople = popsize[:,t+1]-people[:,:,t+1].sum(axis=0) # Number of people to add according to M['popsize'] (can be negative)
             for pop in xrange(npops): # Loop over each population, since some might grow and others might shrink
                 if newpeople[pop]>=0: # People are entering: they enter the susceptible population
-#                    people[0,pop,t+1] += newpeople[pop]
-                    people[:,pop,t+1] *= popsize[pop,t]/sum(people[:,pop,t])
+                    people[0,pop,t+1] += newpeople[pop]
+ #                   people[:,pop,t+1] *= popsize[pop,t]/sum(people[:,pop,t])
                 else: # People are leaving: they leave from each health state equally
                     people[:,pop,t+1] *= popsize[pop,t]/sum(people[:,pop,t]);
             if not((people[:,:,t+1]>=0).all()): # If not every element is a real number >0, throw an error
