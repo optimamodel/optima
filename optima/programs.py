@@ -5,7 +5,7 @@ set of programs, respectively.
 
 Version: 2015nov04 by robynstuart
 """
-from utils import getdate, today, uuid
+from utils import getdate, today, uuid, printv
 from collections import defaultdict
 import abc
 
@@ -15,7 +15,7 @@ class Programset(object):
         ''' Initialize '''
         self.name = name
         self.id = uuid()
-        self.programs = {program.name: program for program in programs} if programs else {}
+        self.programs = {program.name: program for program in programs.values()} if programs else {}
         self.gettargetpops() if programs else []
         self.gettargetpars() if programs else []
         self.gettargetpartypes() if programs else []
@@ -84,7 +84,7 @@ class Programset(object):
         else:
             del self.programs[prog]
             self.gettargetpops()
-            self.gettargetpartypes
+            self.gettargetpartypes()
             self.initialize_covout()
             print('\nRemoved program "%s" from programset "%s". \nPrograms in this programset are: %s' % (prog, self.name, [p.name for p in self.programs.values()]))
         
@@ -147,12 +147,18 @@ class Programset(object):
         if filter_prog: return targetpars_by_prog[filter_prog]
         else: return targetpars_by_prog
 
-    def getprogcoverage(self,budget,popsize,t,perturb=False):
+    def getprogcoverage(self,budget,t,P,parsetname,perturb=False,verbose=2):
         '''Budget is currently assumed to be a DICTIONARY OF ARRAYS'''        
-        coverage = []        
+        coverage = {}       
         for prog in self.programs.keys():
-            spending = budget[prog] # Get the amount of money spent on this program
-            coverage.append(self.programs[prog].getcoverage(spending,popsize=popsize,t=t))
+            if self.programs[prog].optimizable():
+                if not self.programs[prog].costcovfn.ccopars:
+                    printv('WARNING: no cost-coverage function defined for optimizable program, setting coverage to None...', 1, verbose)
+                    coverage[prog] = None
+                else:
+                    spending = budget[prog] # Get the amount of money spent on this program
+                    coverage[prog] = self.programs[prog].getcoverage(x=spending,t=t,P=P,parsetname='default') # Two equivalent ways to do this, probably redundant  
+            else: coverage[prog] = None
         return coverage
         
     def getoutcomes(self,tvec,budget,perturb=False):
@@ -165,7 +171,7 @@ class Program(object):
     ccpars, e.g. {'t': [2015,2016], 'saturation': [.90,1.], 'unitcost': [40,30]}
     modelpars, e.g. [{'param': 'hivtest', 'pop': 'FSW'}, {'param': 'hivtest', 'pop': 'MSM'}]'''
 
-    def __init__(self,name,targetpars=None,targetpops =None,ccopars=None,costcovdata=None,nonhivdalys=0):
+    def __init__(self,name,targetpars=None,targetpops=None,ccopars=None,costcovdata=None,nonhivdalys=0):
         '''Initialize'''
         self.name = name
         self.id = uuid()
@@ -237,30 +243,26 @@ class Program(object):
         else:
             raise Exception('You have asked to remove data for the year %s, but no data was added for that year. Cost coverage data are: %s' % (year, self.costcovdata))
 
-    def getcoverage(self,x,popsize,t):
+    def gettargetpopsize(self,t,P,parsetname):
         '''Returns coverage in a given year for a given spending amount. Currently assumes coverage is a proportion.'''
-        from numpy import array, ndarray
-        
-        # Figure out input data type, transform if necessary
-        if isinstance(t,(float,int)):
-            if not isinstance(popsize,(float,int)): raise Exception('Please enter consistent datatypes for popsize and years.')
-            else:
-                datatype = 'singleyear'
-                t,popsize = array([t]),array([popsize])
-        elif isinstance(t,list):
-            if not isinstance(popsize,list): raise Exception('Please enter consistent datatypes for popsize and years.')
-            else: 
-                datatype = 'multipleyear'
-                t,popsize = array(t),array(popsize)
-        elif isinstance(t,ndarray):
-            if not isinstance(popsize,ndarray): raise Exception('Please enter consistent datatypes for popsize and years.')
-            if popsize.shape != t.shape: raise Exception('Please enter consistent datatypes for popsize and years.')
-            else: datatype = 'multipleyear'
+        from numpy import array, zeros_like
 
-        # Evaluate, transform back to match input data type in necessary
-        y = self.costcovfn.evaluate(x,popsize,t)
-        if datatype=='singleyear': return y[0]
-        if datatype=='multipleyear': return y
+        # Figure out input data type, transform if necessary
+        if isinstance(t,(float,int)): t = 'singleyear'
+        elif isinstance(t,list): t = array(t)
+
+        # Sum the target populations
+        targetpopsize = zeros_like(t)
+        allpops = getpopsizes(P,parsetname,years=t)
+        for targetpop in self.targetpops:
+            targetpopsize += allpops[targetpop]
+        return targetpopsize
+
+    def getcoverage(self,x,t,P,parsetname):
+        '''Returns coverage in a given year for a given spending amount. Currently assumes coverage is a proportion.'''
+        targetpopsize = self.gettargetpopsize(t,P,parsetname)
+        y = self.costcovfn.evaluate(x,targetpopsize,t)
+        return y
         
 class CCOF(object):
     '''Cost-coverage, coverage-outcome and cost-outcome objects'''
@@ -372,6 +374,7 @@ class Costcov(CCOF):
         u = ccopar['unitcost']
         s = ccopar['saturation']
         if isinstance(x,(float,int)): typex, x = 'single',array([x])
+        if isinstance(popsize,(float,int)): popsize = array([popsize])
         else: typex = 'multiple'
         nyrs,npts = len(u),len(x)
         y = zeros((nyrs,npts))
@@ -405,3 +408,30 @@ class Covout(CCOF):
         ccopars['t'] = None
         return ccopars                        
 
+
+#######################################################
+# What needs to happen to get population sizes...
+#######################################################
+
+def getpopsizes(P, parsetname, years, filter_pop=None):
+    '''Get population sizes in given years from a parset.'''
+    from utils import findinds
+    from numpy import array, zeros
+    
+    if isinstance(years,(float,int)): years = array([years])
+    elif isinstance(years,list): years = array(years)
+    
+    initpopsizes = P.parsets[parsetname].interp(start=min(years), end=max(years), filter_param='popsize')
+    tvec = P.parsets[parsetname].interp(start=min(years), end=max(years), filter_param='tvec') # TODO: calling this twice is stupid.
+    popsizes = {}
+
+    for popnumber, pop in enumerate(P.data['pops']['short']):
+        popsizes[pop] = zeros(len(years))
+        for yrno, yr in enumerate(years):
+            popsizes[pop][yrno] = initpopsizes[popnumber,findinds(tvec,yr)[0]]
+
+    if filter_pop: return {filter_pop: popsizes[filter_pop]}
+    else: return popsizes
+   
+#def getrelativepopsizes(popsizes, parsetname, years, filter_pop=None):
+#    '''Get population sizes in given years from a parset.'''

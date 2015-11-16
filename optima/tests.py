@@ -147,7 +147,7 @@ if 'makeprograms' in tests:
     from programs import Program, Programset
 
     # First set up some programs. Programs need to be initialized with a name. Often they will also be initialized with targetpars and targetpops
-    HTC = Program(name='HTC', targetpars=[{'param': 'hivtest', 'pop': 'MSM'},{'param': 'hivtest', 'pop': 'FSW'}],targetpops=['FSW','MSM'])
+    HTC = Program(name='HTC', targetpars=[{'param': 'hivtest', 'pop': 'Females 15-49'}],targetpops=['Females 15-49','Males 15-49'])
 
     # Run additional tests if asked
     if runalltests:
@@ -185,12 +185,16 @@ if 'makeprograms' in tests:
         # 9. Get parameters for defining cost-coverage function for any given year (even if not explicitly entered).
         HTC.costcovfn.getccopar(2014)
     
-        # 10. Evaluate cost-coverage function to get coverage for a given year, spending amount and population size
-        HTC.costcovfn.evaluate(1e6,1e5,2015)
-        HTC.getcoverage(1e6,1e5,2015) # Two equivalent ways to do this, probably redundant
+        # 10. Get target population size
+        HTC.gettargetpopsize(t=[2013,2015],P=P,parsetname='default')
+
+        # 11. Evaluate cost-coverage function to get coverage for a given year, spending amount and population size
+        HTC.getcoverage(x=1e6,t=[2013,2015],P=P,parsetname='default')
+        # If you want to evaluate it for a particular population size, can also do...
+        HTC.costcovfn.evaluate(x=1e6,targtepopsize=1e5,t=2015)
 
     print('Running make programs set test...')
-    R = Programset(programs={'HTC':HTC,'FSW':FSW,'MGT':MGT})
+    R = Programset(programs={'HTC':HTC,'FSW programs':FSW,'MGT':MGT})
 
     # Run additional tests if asked
     if runalltests:
@@ -218,9 +222,25 @@ if 'makeprograms' in tests:
         R.progs_by_targetpar()
     
         # 7. Get a vector of coverage levels corresponding to a vector of program allocations
-        R.getcoverage(tvec=None,budget=None)
+        from numpy import array
+        budget={'HTC':array([2e5,3e5]),'FSW programs':array([1e5,2e5]),'MGT':array([2e5,3e5])}
+        R.getprogcoverage(budget=budget,t=[2015,2016],P=P,parsetname='default')
+
+        # 8. Add parameters for defining coverage-outcome function.
+        R.covout['condoms']['FSW'].addccopar({'intercept': 0.3, 't': 2013.0, 'gradient': 0.6})
+        R.covout['condoms']['FSW'].addccopar({'intercept': 0.3, 't': 2016.0, 'gradient': 0.65})
+        R.covout['condoms']['FSW'].addccopar({'intercept': 0.4, 't': 2017.0, 'gradient': 0.65})
     
-        # 8. Get a set of parameter values corresponding to a vector of program allocations
+        # 9. Overwrite parameters for defining coverage-outcome function.
+        R.covout['condoms']['FSW'].addccopar({'intercept': 0.3, 't': 2013.0, 'gradient': 0.55},overwrite=True)
+    
+        # 10. Remove parameters for defining coverage-outcome function.
+        R.covout['condoms']['FSW'].rmccopar(2017)
+        
+        # 11. Get parameters for defining cost-coverage function for any given year (even if not explicitly entered).
+        R.covout['condoms']['FSW'].getccopar(2014)
+
+        # 12. Get a set of parameter values corresponding to a vector of program allocations
         R.getoutcomes(tvec=None,budget=None)
 
     done(t)

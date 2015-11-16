@@ -250,7 +250,7 @@ class Parameterset(object):
 
 
 
-    def interp(self, ind=0, start=2000, end=2030, dt=0.2, verbose=2):
+    def interp(self, filter_param=None, ind=0, start=2000, end=2030, dt=0.2, verbose=2):
     
         ###############################################################################
         ##### 2.0 STATUS: still legacy!!! Just put in hacks to get it to work; search for TODO
@@ -354,7 +354,8 @@ class Parameterset(object):
         M['const'] = P['const']
         
         ## Calculate total acts
-        M['totalacts'] = totalacts(M, npts)
+        if not filter_param or filter_param == 'totalacts':
+            M['totalacts'] = totalacts(M, npts)
         
         ## Program parameters not related to data
         M['propaware'] = zeros(shape(M['hivtest'])) # Initialize proportion of PLHIV aware of their status
@@ -362,7 +363,8 @@ class Parameterset(object):
         
         
         printv('...done making model parameters.', 2, verbose)
-        return M
+        if filter_param: return M[filter_param]
+        else: return M
     
     
             
