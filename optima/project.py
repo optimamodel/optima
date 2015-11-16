@@ -104,9 +104,9 @@ class Project(object):
     ## Built-in methods -- initialization, and the thing to print if you call a project
     #######################################################################################################
     
-    def __init__(self, name='default', spreadsheet=None, strategy = None):
+    def __init__(self, name='default', spreadsheet=None, strategy = None, project_id = None):
         ''' Initialize the project ''' 
-        
+
         ## Specify the strategy
         if not strategy:
             self.strategy = FileSerialisationStrategy()
@@ -123,7 +123,7 @@ class Project(object):
         
         ## Define metadata
         self.filename = None
-        self.id = uuid()
+        self.id = project_id or uuid()
         self.created = today()
         self.modified = today()
         self.spreadsheetdate = 'Spreadsheet never loaded'

@@ -94,7 +94,7 @@ if 'saveload' in tests:
     print('  Checking loading...')
     Q = load(filename)
     Q.save()
-    Q.loadfromfile()
+    Q.load()
     
     print('  Checking defaults...')
     Z = Project()
