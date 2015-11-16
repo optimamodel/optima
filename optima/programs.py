@@ -66,7 +66,10 @@ class Programset(object):
         for targetpartype in self.targetpartypes:
             self.covout[targetpartype] = {}
             for targetpop in self.progs_by_targetpar(targetpartype).keys():
-                self.covout[targetpartype][targetpop] = Covout()
+                targetingprogs = [x.name for x in self.progs_by_targetpar(targetpartype)[targetpop]]                
+                initccoparams = {k: [] for k in targetingprogs}
+                initccoparams['t'],initccoparams['intercept'] = [], []
+                self.covout[targetpartype][targetpop] = Covout(initccoparams)                
 
     def addprog(self,newprog):
         if newprog not in self.programs.keys():
@@ -279,7 +282,7 @@ class CCOF(object):
         return output
 
     def addccopar(self,ccopar,overwrite=False):
-        ''' Add or replace parameters for cost-coverage-outcome functions'''
+        ''' Add or replace parameters for cost-coverage functions'''
 
         if ccopar.get('unitcost') and not ccopar.get('saturation'): ccopar['saturation'] = 1.
 
@@ -288,7 +291,7 @@ class CCOF(object):
             for ccopartype in ccopar.keys():
                 self.ccopars[ccopartype] = [ccopar[ccopartype]]
         else:
-            if ccopar['t'] not in self.ccopars['t']:
+            if (not self.ccopars['t']) or (ccopar['t'] not in self.ccopars['t']):
                 for ccopartype in self.ccopars.keys():
                     self.ccopars[ccopartype].append(ccopar[ccopartype])
                 print('\nAdded CCO parameters "%s". \nCCO parameters are: %s' % (ccopar, self.ccopars))
@@ -367,7 +370,7 @@ class CCOF(object):
 ######## SPECIFIC CCOF IMPLEMENTATIONS
 class Costcov(CCOF):
     '''Cost-coverage objects'''
-    
+            
     def function(self,x,ccopar,popsize):
         '''Returns coverage in a given year for a given spending amount. Currently assumes coverage is a proportion.'''
         from numpy import exp, zeros, array
