@@ -396,13 +396,25 @@ class Covout(CCOF):
     '''Coverage-outcome objects'''
 
     def function(self,x,ccopar,popsize):
-        '''Returns coverage in a given year for a given spending amount. Currently assumes coverage is a proportion.'''
-        from numpy import array
-        i = ccopar['intercept'][0]
-        g = ccopar['gradient'][0]
-        y = i + (x*g)/popsize
-        if isinstance(y,float): return min(y,1)
-        else: return array([min(j,1) for j in y]) 
+        ''' Returns outcome given parameters'''
+        
+
+
+
+
+
+
+
+
+
+#    def function(self,x,ccopar,popsize):
+#        '''Returns coverage in a given year for a given spending amount. Currently assumes coverage is a proportion.'''
+#        from numpy import array
+#        i = ccopar['intercept'][0]
+#        g = ccopar['gradient'][0]
+#        y = i + (x*g)/popsize
+#        if isinstance(y,float): return min(y,1)
+#        else: return array([min(j,1) for j in y]) 
       
     def emptypars(self):
         ccopars = {}
@@ -436,5 +448,3 @@ def getpopsizes(P, parsetname, years, filter_pop=None):
     if filter_pop: return {filter_pop: popsizes[filter_pop]}
     else: return popsizes
    
-#def getrelativepopsizes(popsizes, parsetname, years, filter_pop=None):
-#    '''Get population sizes in given years from a parset.'''
