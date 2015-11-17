@@ -164,8 +164,26 @@ class Programset(object):
             else: coverage[prog] = None
         return coverage
         
+    def getpopcoverage(self,budget,t,P,parsetname,perturb=False,verbose=2):
+        '''Get the number of people from each population covered by each program...'''
+        popcoverage = {}
+        
+        for prog in self.programs.keys():
+            if self.programs[prog].optimizable():
+                if not self.programs[prog].costcovfn.ccopars:
+                    printv('WARNING: no cost-coverage function defined for optimizable program, setting coverage to None...', 1, verbose)
+                    popcoverage[prog] = None
+                else:
+                    spending = budget[prog] # Get the amount of money spent on this program
+                    popcoverage[prog] = self.programs[prog].getcoverage(x=spending,t=t,P=P,parsetname='default',total=False) # Two equivalent ways to do this, probably redundant  
+            else: popcoverage[prog] = None
+        return popcoverage
+
     def getoutcomes(self,tvec,budget,perturb=False):
         outcomes = dict()
+        
+        # First, disaggregate the coverage...
+        
         return outcomes
 
 class Program(object):
@@ -246,26 +264,38 @@ class Program(object):
         else:
             raise Exception('You have asked to remove data for the year %s, but no data was added for that year. Cost coverage data are: %s' % (year, self.costcovdata))
 
-    def gettargetpopsize(self,t,P,parsetname):
+    def gettargetpopsize(self,t,P,parsetname,total=True):
         '''Returns coverage in a given year for a given spending amount. Currently assumes coverage is a proportion.'''
-        from numpy import array, zeros_like
+        from numpy import array
 
         # Figure out input data type, transform if necessary
         if isinstance(t,(float,int)): t = 'singleyear'
         elif isinstance(t,list): t = array(t)
 
         # Sum the target populations
-        targetpopsize = zeros_like(t)
-        allpops = getpopsizes(P,parsetname,years=t)
+        targetpopsize = {}
+        allpops = getpopsizes(P=P,parsetname=parsetname,years=t)
         for targetpop in self.targetpops:
-            targetpopsize += allpops[targetpop]
-        return targetpopsize
+            targetpopsize[targetpop] = allpops[targetpop]
+        if total: return sum(targetpopsize.values())
+        else: return targetpopsize
 
-    def getcoverage(self,x,t,P,parsetname):
-        '''Returns coverage in a given year for a given spending amount. Currently assumes coverage is a proportion.'''
-        targetpopsize = self.gettargetpopsize(t,P,parsetname)
-        y = self.costcovfn.evaluate(x,targetpopsize,t)
-        return y
+    def getcoverage(self,x,t,P,parsetname,targetpopprop=None,total=True,proportion=False):
+        '''Returns coverage in a given year for a given spending amount'''
+        from numpy import transpose
+        poptargeted = self.gettargetpopsize(t=t,P=P,parsetname=parsetname,total=False)
+        totaltargeted = sum(poptargeted.values())
+        totalreached = self.costcovfn.evaluate(x,totaltargeted,t)
+        
+        popreached = {}
+        if not total and not targetpopprop: # calculate targeting since it hasn't been provided
+            targetpopprop = {}
+            for targetpop in self.targetpops:
+                targetpopprop[targetpop] = poptargeted[targetpop]/totaltargeted
+                popreached[targetpop] = transpose(transpose(totalreached)*targetpopprop[targetpop]/transpose(totaltargeted)) # Obviously need to fix this
+
+        if total: return transpose(transpose(totalreached)/totaltargeted) if proportion else totalreached
+        else: return popreached
         
 class CCOF(object):
     '''Cost-coverage, coverage-outcome and cost-outcome objects'''
@@ -433,8 +463,8 @@ def getpopsizes(P, parsetname, years, filter_pop=None):
     from utils import findinds
     from numpy import array, zeros
     
-    if isinstance(years,(float,int)): years = array([years])
-    elif isinstance(years,list): years = array(years)
+    if isinstance(years,(float,int)): years = array([[years]])
+    elif isinstance(years,list): years = array([years])
     
     initpopsizes = P.parsets[parsetname].interp(start=min(years), end=max(years), filter_param='popsize')
     tvec = P.parsets[parsetname].interp(start=min(years), end=max(years), filter_param='tvec') # TODO: calling this twice is stupid.

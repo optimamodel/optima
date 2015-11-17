@@ -160,6 +160,8 @@ if 'makeprograms' in tests:
         # 1. Adding a target parameter to a program
         HTC.addtargetpar({'param': 'hivtest', 'pop': 'FSW'})
         HTC.addtargetpar({'param': 'hivtest', 'pop': 'Males 15-49'})
+        ## NOTE that adding a targeted parameter does NOT automatically add a targeted population! Do this separately, e.g.
+        HTC.targetpops.append('Males 15-49')
             
         # 2. Removing a target parameter from a program
         HTC.rmtargetpar({'param': 'hivtest', 'pop': 'FSW'})
@@ -191,7 +193,8 @@ if 'makeprograms' in tests:
         HTC.gettargetpopsize(t=[2013,2015],P=P,parsetname='default')
 
         # 11. Evaluate cost-coverage function to get coverage for a given year, spending amount and population size
-        HTC.getcoverage(x=1e6,t=[2013,2015],P=P,parsetname='default')
+        from numpy import linspace
+        HTC.getcoverage(x=linspace(0,1e6,11),t=[2013,2015],P=P,parsetname='default',total=False)
         # If you want to evaluate it for a particular population size, can also do...
         HTC.costcovfn.evaluate(x=1e6,popsize=1e5,t=2015)
 
@@ -227,6 +230,7 @@ if 'makeprograms' in tests:
         from numpy import array
         budget={'HTC':array([2e5,3e5]),'FSW programs':array([1e5,2e5]),'MGT':array([2e5,3e5])}
         R.getprogcoverage(budget=budget,t=[2015,2016],P=P,parsetname='default')
+        R.getpopcoverage(budget=budget,t=[2015,2016],P=P,parsetname='default')
 
         # 8. Add parameters for defining coverage-outcome function.
         R.covout['hivtest']['Females 15-49'].addccopar({'intercept': 0.3, 't': 2013.0, 'HTC': 0.6, 'SBCC':0.1})
