@@ -11,20 +11,7 @@ Version: 2015nov02 by cliffk
 ## Header -- imports and version
 #######################################################################################################
 
-
-## Load general modules
-from numpy import array # TEMP?
-
-## Load classes
-from settings import Settings
-from parameters import Parameterset
-
-
-## Load other Optima functions
-from loadspreadsheet import loadspreadsheet
-#from makesimpars import makesimpars
-from model import model
-from utils import run, getdate, uuid, today, deepcopy
+from optima import array, Settings, Parameterset, loadspreadsheet, model, run, getdate, today, uuid, dcp
 
 ## Specify the version, for the purposes of figuring out which version was used to create a project
 version = 2.0
@@ -205,7 +192,7 @@ class Project(object):
         ''' Copy an entry in a structure list '''
         structlist = self.getwhat(what)
         self.checkname(what, checkexists=orig, checkabsent=new, overwrite=overwrite)
-        structlist[new] = deepcopy(structlist[orig])
+        structlist[new] = dcp(structlist[orig])
         print('Item "%s" copied to structure list "%s"' % (new, what))
         return None
     
