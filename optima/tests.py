@@ -94,12 +94,6 @@ if 'saveload' in tests:
     
     print('  Checking loading...')
     Q = load(filename)
-    save(Q)
-    Q = load(filename)
-    
-    print('  Checking defaults...')
-    Z = Project()
-    save(Z)
     
     done(t)
 

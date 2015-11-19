@@ -107,7 +107,6 @@ class Project(object):
         output = '\n'
         output += '============================================================\n'
         output += '      Project name: %s\n'    % self.name
-        output += '          Filename: %s\n'    % self.filename
         output += '\n'
         output += '    Parameter sets: %i\n'    % len(self.parsets)
         output += '     Response sets: %i\n'    % len(self.respsets)
