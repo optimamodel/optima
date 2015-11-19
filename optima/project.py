@@ -11,7 +11,7 @@ Version: 2015nov02 by cliffk
 ## Header -- imports and version
 #######################################################################################################
 
-from optima import Settings, Parameterset, loadspreadsheet, model, run, getdate, today, uuid, dcp
+from . import Settings, Parameterset, loadspreadsheet, model, run, getdate, today, uuid, dcp
 from numpy import array
 
 ## Specify the version, for the purposes of figuring out which version was used to create a project
