@@ -30,43 +30,6 @@ from utils import save, load, run, getdate, uuid, today, deepcopy
 version = 2.0
 
 
-class SerialisationStrategy(object):
-    @classmethod
-    def load(cls, parameter):
-        return None
-
-    @classmethod
-    def save(cls, parameter, value):
-        return None
-
-
-class FileSerialisationStrategy(SerialisationStrategy):
-    @classmethod
-    def load(cls, parameter, value):
-        ''' Replace the contents of the current project from the file -- WARNING, do we need this?'''
-        filename = cls.reconcilefilenames(value, parameter)
-        project = load(filename)
-        return project
-
-    @classmethod
-    def save(cls, parameter, value):
-        ''' Save the current project '''
-        filename = cls.reconcilefilenames(value, parameter)
-        save(value, filename)
-        return None
-        
-    @staticmethod
-    def reconcilefilenames(project, filename=None):
-        ''' If filename exists, update metadata; if not, take from metadata; if that doesn't exist, then generate '''
-        if filename: # filename is available
-            project.filename = filename # Update stored filename with the new filename
-        else: # filename isn't available
-            if project.filename is None: # metadata.filename isn't available
-                project.filename = project.name+'.prj' # Use project name as filename if none provided
-            filename = project.filename # Replace filename with stored filename            
-        return filename
-
-
 #######################################################################################################
 ## Project class -- this contains everything else!
 #######################################################################################################
@@ -104,12 +67,9 @@ class Project(object):
     ## Built-in methods -- initialization, and the thing to print if you call a project
     #######################################################################################################
     
-    def __init__(self, name='default', spreadsheet=None, strategy = None, project_id = None):
+    def __init__(self, name='default', spreadsheet=None, filename = None, project_id = None):
         ''' Initialize the project ''' 
 
-        ## Specify the strategy
-        if not strategy:
-            self.strategy = FileSerialisationStrategy()
         ## Define the structure sets
         self.parsets = {}
         self.respsets = {}
@@ -122,7 +82,7 @@ class Project(object):
         self.data = {} # Data from the spreadsheet
         
         ## Define metadata
-        self.filename = None
+        self.filename = filename
         self.id = project_id or uuid()
         self.created = today()
         self.modified = today()
@@ -173,17 +133,7 @@ class Project(object):
     ## Methods for I/O and spreadsheet loading
     #######################################################################################################
     
-    
-    def load(self, filename=None):
-        ''' Replace the contents of the current project from the file -- WARNING, do we need this?'''
-        return self.strategy.load(parameter = filename, value = self)
-
-
-    def save(self, filename=None):
-        ''' Save the current project '''
-        return self.strategy.save(parameter = filename, value = self)
-        
-        
+            
     def reconcilefilenames(self, filename=None):
         ''' If filename exists, update metadata; if not, take from metadata; if that doesn't exist, then generate '''
         if filename: # filename is available

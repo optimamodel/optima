@@ -549,3 +549,21 @@ def setdate(obj):
     from datetime import datetime
     obj.modified = datetime.today()
     return None
+
+
+#################################################################################################
+#
+# Project loading and saving
+#
+#################################################################################################
+
+def loadproject(filename):
+    project = load(filename)
+    project.reconcilefilenames(filename)
+    return project
+
+
+def saveproject(project, filename = None):
+    project.reconcilefilenames(filename)
+    save(project, project.filename)
+    return None
