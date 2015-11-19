@@ -27,9 +27,12 @@ from utils import *
 from project import *
 from parameters import *
 from settings import *
+from results import *
 
 ## Load other Optima functions
 from loadspreadsheet import *
+from makesimpars import *
+from makespreadsheet import *
 from model import *
 
 ## Optional imports

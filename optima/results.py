@@ -4,7 +4,7 @@ This module defines the Results class, which stores the results of a single simu
 Version: 2015nov02 by cliffk
 """
 
-from utils import uuid, today, quantile, printv
+from optima import uuid, today, quantile, printv
 from numpy import array
 
 

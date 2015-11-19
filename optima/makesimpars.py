@@ -2,7 +2,7 @@
 ##### 2.0 STATUS: still legacy!!! Just put in hacks to get it to work; search for TODO
 ###############################################################################
 
-from utils import printv
+from optima import printv
 from numpy import zeros, array, arange, exp, shape
 eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
 TEMPGROWTH = 0.0

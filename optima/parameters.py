@@ -8,7 +8,7 @@ Version: 2015oct22 by cliffk
 
 
 from numpy import array, isnan, zeros, shape, mean
-from utils import printv, sanitize, save, uuid, today, getdate
+from optima import printv, sanitize, uuid, today, getdate
 
 eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
 
