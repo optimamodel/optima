@@ -24,7 +24,7 @@ from parameters import Parameterset
 from loadspreadsheet import loadspreadsheet
 #from makesimpars import makesimpars
 from model import model
-from utils import save, load, run, getdate, uuid, today, deepcopy
+from utils import run, getdate, uuid, today, deepcopy
 
 ## Specify the version, for the purposes of figuring out which version was used to create a project
 version = 2.0
@@ -58,7 +58,7 @@ class Project(object):
         4. rename -- rename a structure in the list
         5. show -- show information on all items in the list(s)
     
-    Version: 2015nov02 by cliffk
+    Version: 2015nov19 by cliffk
     """
     
     
@@ -67,7 +67,7 @@ class Project(object):
     ## Built-in methods -- initialization, and the thing to print if you call a project
     #######################################################################################################
     
-    def __init__(self, name='default', spreadsheet=None, filename = None, project_id = None):
+    def __init__(self, name='default', spreadsheet=None):
         ''' Initialize the project ''' 
 
         ## Define the structure sets
@@ -82,8 +82,7 @@ class Project(object):
         self.data = {} # Data from the spreadsheet
         
         ## Define metadata
-        self.filename = filename
-        self.id = project_id or uuid()
+        self.uuid = uuid()
         self.created = today()
         self.modified = today()
         self.spreadsheetdate = 'Spreadsheet never loaded'
@@ -121,7 +120,7 @@ class Project(object):
         output += 'Spreadsheet loaded: %s\n'    % getdate(self.spreadsheetdate)
         output += '        Git branch: %s\n'    % self.gitbranch
         output += '       Git version: %s\n'    % self.gitversion
-        output += '                ID: %s\n'    % self.id
+        output += '              UUID: %s\n'    % self.uuid
         output += '============================================================'
         return output
     
@@ -132,18 +131,6 @@ class Project(object):
     #######################################################################################################
     ## Methods for I/O and spreadsheet loading
     #######################################################################################################
-    
-            
-    def reconcilefilenames(self, filename=None):
-        ''' If filename exists, update metadata; if not, take from metadata; if that doesn't exist, then generate '''
-        if filename: # filename is available
-            self.filename = filename # Update stored filename with the new filename
-        else: # filename isn't available
-            if self.filename is None: # metadata.filename isn't available
-                self.filename = self.name+'.prj' # Use project name as filename if none provided
-            filename = self.filename # Replace filename with stored filename            
-        return filename
-    
     
     
     def loadspreadsheet(self, filename, name='default'):
