@@ -20,7 +20,7 @@ class Results(object):
     ''' Lightweight structure to hold results -- use this instead of a dict '''
     def __init__(self):
         # Basic info
-        self.id = uuid()
+        self.uuid = uuid()
         self.created = today()
         self.projectinfo = None
         self.pars = None

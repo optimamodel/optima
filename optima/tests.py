@@ -84,21 +84,16 @@ if 'saveload' in tests:
     t = tic()
     print('Running save/load test...')
     
-    from project import Project, load
+    from utils import save, load
+    from project import Project
     filename = 'testproject.prj'
     
     print('  Checking saving...')
     P = Project()
-    P.save(filename)
+    save(P, filename)
     
     print('  Checking loading...')
     Q = load(filename)
-    Q.save()
-    Q.loadfromfile()
-    
-    print('  Checking defaults...')
-    Z = Project()
-    Z.save()
     
     done(t)
 
