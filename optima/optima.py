@@ -8,7 +8,8 @@ import optima as op
 or
 from optima import *
 
-
+NB: the GUI is not imported, since this requires PyQt4, which is both not likely to exist
+and slow to import.
 
 Version: 2015nov19
 """
@@ -23,18 +24,12 @@ from ballsd import *
 from colortools import *
 from utils import *
 
-## Load Optima classes
-from project import *
-from parameters import *
+## Load Optima functions and classes
 from settings import *
-from results import *
-
-## Load other Optima functions
 from loadspreadsheet import *
 from makesimpars import *
 from makespreadsheet import *
+from parameters import *
+from results import *
 from model import *
-
-## Optional imports
-try: from gui import *
-except:pass
+from project import *
